@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/adapters/moonbook"
+
+import {
+  "moonbitlang/core/json",
+  "vectie/moondesk/core",
+}
+
+// Values
+pub fn canonical_sections() -> Array[MoonBookSection]
+
+pub fn generated_site_entry(String) -> @core.DeskFileEntry
+
+pub fn section_entries(String) -> Array[@core.DeskFileEntry]
+
+pub fn workspace_from_root(String, String) -> @core.DeskWorkspace
+
+// Errors
+
+// Types and methods
+pub struct MoonBookSection {
+  label : String
+  path : String
+  layer : @core.SourceLayer
+  writable : Bool
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,11 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/core/env",
+  "moonbitlang/core/strconv",
+  "vectie/moondesk/host",
+  "vectie/moondesk/internal/httpserve",
+}
+
+options(
+  "is-main": true,
+)

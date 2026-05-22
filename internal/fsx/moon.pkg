@@ -1,0 +1,5 @@
+import {
+  "moonbitlang/async/fs",
+  "vectie/moondesk/internal/pathx",
+  "moonbitlang/core/encoding/utf8" @encoding/utf8,
+}

@@ -1,0 +1,165 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/core"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn artifact_entry(workspace_id~ : String, path~ : String) -> DeskFileEntry
+
+pub fn clamp_quality_threshold(Int) -> Int
+
+pub fn display_name(StringView) -> String
+
+pub fn extension(StringView) -> String
+
+pub fn file_entry(workspace_id~ : String, path~ : String, is_directory? : Bool, writable? : Bool, readable? : Bool, size_bytes? : Int?, modified_at? : String?) -> DeskFileEntry
+
+pub fn file_entry_detail(workspace_id~ : String, path~ : String, display_name~ : String, kind~ : EntryKind, source_layer~ : SourceLayer, readable? : Bool, writable? : Bool, size_bytes? : Int?, modified_at? : String?) -> DeskFileEntry
+
+pub fn infer_entry_kind(StringView, is_directory? : Bool) -> EntryKind
+
+pub fn infer_source_layer(StringView) -> SourceLayer
+
+pub fn preview(DeskFileEntry, body~ : String, warnings? : Array[String]) -> DeskPreview
+
+pub fn renderer_for_kind(EntryKind) -> PreviewRenderer
+
+pub fn run_artifact(id~ : String, path~ : String, title? : String, kind? : EntryKind) -> DeskRunArtifact
+
+pub fn run_projection(run_id~ : String, book_id~ : String, status~ : String, phase~ : String, summary~ : String, artifacts~ : Array[DeskRunArtifact], goal_id? : String?, started_at? : String?, updated_at? : String?) -> DeskRunProjection
+
+pub fn stable_id(String, String) -> String
+
+pub fn workspace(id~ : String, name~ : String, root_path~ : String, kind~ : WorkspaceKind, status? : WorkspaceStatus, last_seen_at? : String?) -> DeskWorkspace
+
+// Errors
+
+// Types and methods
+pub struct DeskFileEntry {
+  id : String
+  workspace_id : String
+  path : String
+  display_name : String
+  kind : EntryKind
+  source_layer : SourceLayer
+  readable : Bool
+  writable : Bool
+  size_bytes : Int?
+  modified_at : String?
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub struct DeskPreview {
+  entry_id : String
+  renderer : PreviewRenderer
+  title : String
+  body : String
+  metadata : Map[String, String]
+  warnings : Array[String]
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub struct DeskRunArtifact {
+  id : String
+  path : String
+  title : String
+  kind : EntryKind
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub struct DeskRunProjection {
+  run_id : String
+  book_id : String
+  goal_id : String?
+  status : String
+  phase : String
+  summary : String
+  artifacts : Array[DeskRunArtifact]
+  started_at : String?
+  updated_at : String?
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub struct DeskTaskSubmission {
+  id : String
+  target_book_id : String
+  title : String
+  prompt : String
+  context_entries : Array[String]
+  cadence : SubmissionCadence
+  quality_threshold : Int
+  source_policy : SourcePolicy
+  created_at : String
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub struct DeskWorkspace {
+  id : String
+  name : String
+  root_path : String
+  kind : WorkspaceKind
+  status : WorkspaceStatus
+  last_seen_at : String?
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) enum EntryKind {
+  Markdown
+  Html
+  Json
+  Image
+  Directory
+  Artifact
+  Text
+  Unknown
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) enum PreviewRenderer {
+  Markdown
+  Html
+  Json
+  Image
+  Text
+  ArtifactSummary
+  DirectoryListing
+  Unsupported
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) enum SourceLayer {
+  Wiki
+  RawEvidence
+  GeneratedSite
+  BookOutput
+  Review
+  History
+  RunArtifact
+  Inbox
+  Config
+  Workspace
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) enum SourcePolicy {
+  BookOnly
+  WebFirst
+  ProvidedFilesOnly
+  Mixed
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) enum SubmissionCadence {
+  OneShot
+  StandingWatch(String)
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) enum WorkspaceKind {
+  MoonBook
+  LooseFolder
+  TownRoot
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) enum WorkspaceStatus {
+  Ready
+  Missing
+  NeedsAttention
+  Unknown
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+// Type aliases
+
+// Traits
+

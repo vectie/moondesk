@@ -1,0 +1,9 @@
+import {
+  "moonbit-community/rabbita",
+  "moonbit-community/rabbita/html",
+  "vectie/moondesk/core" @desk,
+}
+
+options(
+  "is-main": true,
+)

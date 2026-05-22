@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/adapters/moontown"
+
+import {
+  "moonbitlang/core/json",
+  "vectie/moondesk/core",
+}
+
+// Values
+pub fn normalize_request(OperatorRequestDraft) -> OperatorRequestDraft
+
+pub fn request_id(String) -> String
+
+pub fn snapshot_paths(String) -> TownSnapshotRef
+
+// Errors
+
+// Types and methods
+pub struct OperatorRequestDraft {
+  title : String
+  prompt : String
+  target_book_id : String
+  cadence_ticks : Int
+  source_policy : @core.SourcePolicy
+  quality_threshold : Int
+  context_entries : Array[String]
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub struct TownSnapshotRef {
+  town_json_path : String
+  daemon_json_path : String
+  standing_goals_path : String
+  watcher_dir : String
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+// Type aliases
+
+// Traits
+

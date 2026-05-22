@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/internal/fsx"
+
+// Values
+pub async fn exists(StringView) -> Bool
+
+pub async fn list_directory(StringView) -> Array[String]
+
+pub async fn make_directory(StringView, recursive? : Bool, exists_ok? : Bool) -> Unit
+
+pub async fn read_file(StringView) -> String
+
+pub async fn write_to_file(StringView, StringView, create? : Int) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

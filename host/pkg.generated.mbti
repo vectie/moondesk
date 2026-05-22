@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/host"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn default_config(String) -> HostConfig
+
+pub fn is_path_under_root(String, String) -> Bool
+
+pub async fn read_scoped_text(String, String) -> String?
+
+// Errors
+
+// Types and methods
+pub struct DeskRoot {
+  id : String
+  label : String
+  path : String
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub struct HostConfig {
+  roots : Array[DeskRoot]
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+// Type aliases
+
+// Traits
+

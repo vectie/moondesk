@@ -1,0 +1,18 @@
+{
+  "name": "vectie/moondesk-rabbita",
+  "version": "0.1.0",
+  "deps": {
+    "moonbit-community/rabbita": {
+      "path": "../../../rba/rabbita"
+    },
+    "vectie/moondesk": {
+      "path": "../.."
+    }
+  },
+  "readme": "README.md",
+  "repository": "",
+  "license": "Apache-2.0",
+  "keywords": [],
+  "description": "Rabbita frontend for Moondesk",
+  "preferred-target": "js"
+}

@@ -1,0 +1,15 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/http",
+  "moonbitlang/async/io",
+  "moonbitlang/async/socket",
+  "moonbitlang/core/json",
+  "vectie/moondesk/core" @desk,
+  "vectie/moondesk/internal/fsx",
+  "vectie/moondesk/internal/pathx",
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"

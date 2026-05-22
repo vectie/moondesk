@@ -1,0 +1,6 @@
+import {
+  "moonbitlang/core/json",
+  "vectie/moondesk/core" @moondesk_core,
+  "vectie/moondesk/internal/fsx",
+  "vectie/moondesk/internal/pathx",
+}

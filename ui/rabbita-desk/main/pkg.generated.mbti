@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk-rabbita/main"
+
+// Values
+
+// Errors
+
+// Types and methods
+type Activity derive(Eq)
+
+type ActivityButton
+
+type DrawerRecord
+
+type ExplorerNode
+
+type Model
+
+type Msg
+
+type PreviewTab
+
+type TabKey derive(Eq)
+
+// Type aliases
+
+// Traits
+
