@@ -2,6 +2,8 @@
 
 ## M0: Plan And Skeleton
 
+Status: complete.
+
 Deliverables:
 
 - product plan
@@ -17,6 +19,10 @@ Acceptance:
 - `npm run build` works for the UI package after it exists
 
 ## M1: Read-Only Workspace Browser
+
+Status: partially complete. The host API can discover books, list entries,
+preview files, serve raw files, and list MoonClaw runs/artifacts. The Rabbita UI
+still needs live API binding.
 
 Deliverables:
 
@@ -35,6 +41,9 @@ Acceptance:
 
 ## M2: Human Inbox And Editing
 
+Status: started. The host can create markdown inbox notes through
+`POST /api/workspaces/:id/inbox`; UI creation and editing are not wired yet.
+
 Deliverables:
 
 - create note
@@ -50,6 +59,10 @@ Acceptance:
 
 ## M3: Submit To Moontown
 
+Status: started. The host can stage request records under
+`.moontown/moondesk-requests/`; daemon submission, standing-goal creation, and
+UI request flow are not wired yet.
+
 Deliverables:
 
 - request composer
@@ -64,6 +77,10 @@ Acceptance:
 - standing-watch requests can be created from the desktop
 
 ## M4: Pure MoonBit Desktop Host
+
+Status: partially complete. `cmd/main serve` runs a pure MoonBit local host and
+serves the built Rabbita shell. Desktop launch, import/open flows, OS helpers,
+and notifications remain future work.
 
 Deliverables:
 

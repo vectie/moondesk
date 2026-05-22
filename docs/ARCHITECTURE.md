@@ -84,7 +84,7 @@ Local development command:
 - serve the Rabbita UI
 - expose JSON APIs for configured roots
 - run doctor checks
-- run read-only indexing
+- run read-only indexing later
 
 ### `host`
 
@@ -114,10 +114,19 @@ Moondesk should be executable as a MoonBit-hosted Rabbita application first.
 ### Browser Dev Mode
 
 ```text
-moon run cmd/main -- serve --root ~/Workspace
+moon run cmd/main -- serve [root] [--ui ui/rabbita-desk/dist] \
+  [--host 127.0.0.1] [--port 4188]
 ```
 
-Uses a local HTTP server and Rabbita bundle. This is fastest for development.
+Uses a local HTTP server and built Rabbita bundle. This is the implemented
+development mode.
+
+Example:
+
+```text
+npm --prefix ui/rabbita-desk run build
+moon run cmd/main -- serve ../moontown --ui ui/rabbita-desk/dist --port 4199
+```
 
 ### MoonBit Desktop Host Mode
 
@@ -125,7 +134,8 @@ Uses a local HTTP server and Rabbita bundle. This is fastest for development.
 moon run cmd/main -- desktop --root ~/Workspace
 ```
 
-Runs the MoonBit local host and serves the Rabbita desk shell.
+Planned. The current host is already pure MoonBit, but there is not yet a
+separate desktop launch mode.
 
 ### Packaged Mode
 
@@ -133,9 +143,8 @@ Runs the MoonBit local host and serves the Rabbita desk shell.
 moon run cmd/main -- bundle --target local
 ```
 
-Packages the MoonBit host plus static Rabbita assets. The first implementation
-can be a local web app; app packaging can be added later without introducing
-Rust into this repository.
+Planned. Packaging can be added later without introducing Rust into this
+repository.
 
 ## Adapter Rules
 
@@ -152,6 +161,7 @@ Rust into this repository.
 GET  /api/workspaces
 GET  /api/workspaces/:id/entries?path=...
 GET  /api/workspaces/:id/preview?path=...
+GET  /api/workspaces/:id/raw?path=...
 POST /api/workspaces/:id/inbox
 GET  /api/town/state
 GET  /api/town/messages
@@ -159,6 +169,22 @@ POST /api/town/requests
 GET  /api/moonclaw/runs?workspace=...
 GET  /api/moonclaw/runs/:id/artifacts
 ```
+
+Implemented behavior:
+
+- `GET /api/workspaces` discovers MoonBooks under `.moontown/books`, or returns
+  the configured root as a loose folder.
+- `entries`, `preview`, and `raw` scope all paths under the selected workspace
+  root and reject traversal.
+- `preview` returns a `DeskPreview`; image previews point to the `raw` route.
+- `POST /api/workspaces/:id/inbox` writes a markdown note into `inbox/`.
+- `GET /api/town/state` returns the town state JSON when present.
+- `GET /api/town/messages` lists recent `.moontown/book-results/*.json`
+  records.
+- `POST /api/town/requests` stages a request under
+  `.moontown/moondesk-requests/`. It does not yet dispatch work to the daemon.
+- MoonClaw run routes list run workspaces and visible `report.md`,
+  `result.json`, and `outputs/*.md|*.json` artifacts.
 
 ## Persistence
 
