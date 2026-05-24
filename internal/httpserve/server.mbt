@@ -137,6 +137,16 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "workspaces", workspace_id, "reveal"] =>
+      if method_ is @http.RequestMethod::Post {
+        handle_workspace_reveal(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "search"] =>
       if is_read_method(method_) {
         handle_search(workspace_root, request_path, method_, conn)
@@ -148,6 +158,22 @@ async fn handle_api_request(
     ["api", "town", "state"] =>
       if is_read_method(method_) {
         handle_town_state(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "daemon"] =>
+      if is_read_method(method_) {
+        handle_town_daemon(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "analytics"] =>
+      if is_read_method(method_) {
+        handle_town_analytics(workspace_root, method_, conn)
       } else {
         send_api_error(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
@@ -166,6 +192,24 @@ async fn handle_api_request(
         handle_town_requests(workspace_root, method_, conn)
       } else if method_ is @http.RequestMethod::Post {
         handle_town_request(workspace_root, body, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "standing-goals"] =>
+      if is_read_method(method_) {
+        handle_town_standing_goals(workspace_root, method_, conn)
+      } else if method_ is @http.RequestMethod::Post {
+        handle_create_standing_goal(workspace_root, body, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "dispatch"] =>
+      if method_ is @http.RequestMethod::Post {
+        handle_town_dispatch(workspace_root, body, method_, conn)
       } else {
         send_api_error(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
@@ -532,6 +576,62 @@ async fn handle_workspace_inbox(
 }
 
 ///|
+async fn handle_workspace_reveal(
+  workspace_root : String,
+  workspace_id : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let workspace = match find_workspace(workspace_root, workspace_id) {
+    Some(workspace) => workspace
+    None => {
+      send_api_error(conn, method_, 404, "Not Found", "Unknown workspace")
+      return
+    }
+  }
+  let payload = read_json_body(body).unwrap_or(Json::object({}))
+  let relative = json_string(payload, "path", default="")
+  match resolve_workspace_path(workspace.root_path, relative) {
+    Some((absolute, clean_relative)) =>
+      if @fs.exists(absolute) {
+        let code = reveal_path(absolute)
+        send_json(conn, method_, {
+          "ok": code == 0,
+          "status": if code == 0 {
+            "revealed"
+          } else {
+            "reveal failed"
+          },
+          "exit_code": code,
+          "workspace_id": workspace.id,
+          "path": clean_relative,
+          "absolute_path": absolute,
+        })
+      } else {
+        send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
+      }
+    None => send_api_error(conn, method_, 400, "Bad Request", "Invalid path")
+  }
+}
+
+///|
+async fn reveal_path(absolute : String) -> Int {
+  let mac = @process.run("open", ["-R", absolute]) catch { _ => -1 }
+  if mac == 0 {
+    return mac
+  }
+  let target = if is_directory(absolute) {
+    absolute
+  } else {
+    @pathx.dirname(absolute).to_string()
+  }
+  @process.run("xdg-open", [target]) catch {
+    _ => mac
+  }
+}
+
+///|
 async fn handle_search(
   workspace_root : String,
   request_path : String,
@@ -677,6 +777,183 @@ async fn handle_town_state(
   } else {
     send_json(conn, method_, Json::object({}))
   }
+}
+
+///|
+async fn handle_town_daemon(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let daemon = read_json_file_or_object(town_daemon_path(workspace_root))
+  send_json(conn, method_, daemon)
+}
+
+///|
+async fn handle_town_standing_goals(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  send_json(
+    conn,
+    method_,
+    Json::array(read_json_array_file(town_standing_goals_path(workspace_root))),
+  )
+}
+
+///|
+async fn handle_create_standing_goal(
+  workspace_root : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let payload = match read_json_body(body) {
+    Some(json) => json
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid JSON body")
+      return
+    }
+  }
+  let root = @pathx.normalize(workspace_root)
+  let town_root = @pathx.join(root, ".moontown")
+  @fsx.make_directory(town_root, recursive=true, exists_ok=true) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not create town state directory",
+      )
+      return
+    }
+  }
+  let path = town_standing_goals_path(root)
+  let daemon = read_json_file_or_object(town_daemon_path(root))
+  let record = standing_goal_record_from_payload(
+    payload,
+    daemon_tick=json_int(daemon, "tick_sequence", default=0),
+  )
+  let goals = upsert_record_by_id(read_json_array_file(path), record)
+  @fsx.write_to_file(
+    path,
+    Json::array(goals).stringify(indent=2) + "\n",
+    create=0o644,
+  ) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not write standing goal",
+      )
+      return
+    }
+  }
+  send_json(conn, method_, record)
+}
+
+///|
+async fn handle_town_dispatch(
+  workspace_root : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  ignore(body)
+  let root = @pathx.normalize(workspace_root)
+  let dispatch_root = @pathx.join(root, ".moontown/moondesk-dispatches")
+  @fsx.make_directory(dispatch_root, recursive=true, exists_ok=true) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not create dispatch ledger",
+      )
+      return
+    }
+  }
+  let id = @desk.stable_id("dispatch", @async.now().to_string())
+  let path = ".moontown/moondesk-dispatches/" + id + ".json"
+  let absolute = @pathx.join(root, path)
+  let can_run = @fs.exists(@pathx.join(root, "moon.mod")) &&
+    @fs.exists(@pathx.join(root, "cmd/main/moon.pkg"))
+  let mut exit_code = -1
+  let mut stdout = ""
+  let mut stderr = ""
+  if can_run {
+    let collected = Some(
+      @process.collect_output(
+        "moon",
+        ["run", "cmd/main", "--", "daemon", "tick"],
+        cwd=root,
+      ),
+    ) catch {
+      error => {
+        stderr = "Could not run Moontown daemon tick: \{error}"
+        None
+      }
+    }
+    match collected {
+      Some((code, out, err)) => {
+        exit_code = code
+        stdout = out.text()
+        stderr = err.text()
+      }
+      None => ()
+    }
+  } else {
+    stderr = "Configured root is not a runnable Moontown checkout: \{root}"
+  }
+  let record : Json = {
+    "id": id,
+    "ok": exit_code == 0,
+    "status": if exit_code == 0 {
+      "daemon tick completed"
+    } else {
+      "daemon tick failed"
+    },
+    "exit_code": exit_code,
+    "path": path,
+    "stdout": trim_for_record(stdout),
+    "stderr": trim_for_record(stderr),
+  }
+  @fsx.write_to_file(absolute, record.stringify(indent=2) + "\n", create=0o644) catch {
+    _ => ()
+  }
+  send_json(conn, method_, record)
+}
+
+///|
+async fn handle_town_analytics(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let root = @pathx.normalize(workspace_root)
+  let daemon = read_json_file_or_object(town_daemon_path(root))
+  let daemon_tick = json_int(daemon, "tick_sequence", default=0)
+  let goals = read_json_array_file(town_standing_goals_path(root))
+  let watcher_records = read_watcher_records(root, 400)
+  let request_count = count_matching_files(
+    @pathx.join(root, ".moontown/moondesk-requests"),
+    ".json",
+  )
+  let message_count = count_matching_files(
+    @pathx.join(root, ".moontown/book-results"),
+    ".json",
+  )
+  let run_count = count_run_workspaces(root)
+  let active_goal_count = json_string_array_len(daemon, "active_goal_ids")
+  send_json(conn, method_, {
+    "daemon_tick": daemon_tick,
+    "standing_goal_count": goals.length(),
+    "due_goal_count": count_due_goals(goals, daemon_tick),
+    "active_goal_count": active_goal_count,
+    "request_count": request_count,
+    "message_count": message_count,
+    "run_count": run_count,
+    "watcher_run_count": watcher_records.length(),
+    "updates": count_watcher_decision(watcher_records, "Update"),
+    "no_changes": count_watcher_decision(watcher_records, "NoChange"),
+    "needs_review": count_watcher_decision(watcher_records, "NeedsReview"),
+    "failures": count_watcher_decision(watcher_records, "Failed"),
+    "deferred": count_watcher_decision(watcher_records, "Deferred"),
+    "next_due_tick": next_due_tick(goals),
+  })
 }
 
 ///|
@@ -1108,6 +1385,256 @@ fn json_string_opt(json : Json, key : String) -> String? {
 }
 
 ///|
+fn json_int(json : Json, key : String, default~ : Int) -> Int {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(value) =>
+          @json.from_json(value) catch {
+            _ =>
+              match value {
+                Json::String(text) =>
+                  @string.parse_int(text) catch {
+                    _ => default
+                  }
+                _ => default
+              }
+          }
+        None => default
+      }
+    _ => default
+  }
+}
+
+///|
+fn json_bool(json : Json, key : String, default~ : Bool) -> Bool {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(value) => @json.from_json(value) catch { _ => default }
+        None => default
+      }
+    _ => default
+  }
+}
+
+///|
+fn json_string_array_len(json : Json, key : String) -> Int {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(value) => {
+          let items : Array[String] = @json.from_json(value) catch { _ => [] }
+          items.length()
+        }
+        None => 0
+      }
+    _ => 0
+  }
+}
+
+///|
+async fn read_json_file_or_object(path : String) -> Json {
+  if !@fs.exists(path) {
+    return Json::object({})
+  }
+  @json.parse(@fs.read_file(path).text()) catch {
+    _ => Json::object({})
+  }
+}
+
+///|
+async fn read_json_array_file(path : String) -> Array[Json] {
+  if !@fs.exists(path) {
+    return []
+  }
+  let parsed = @json.parse(@fs.read_file(path).text()) catch { _ => return [] }
+  @json.from_json(parsed) catch {
+    _ => []
+  }
+}
+
+///|
+fn town_daemon_path(workspace_root : String) -> String {
+  @pathx.join(@pathx.normalize(workspace_root), ".moontown/daemon.json")
+}
+
+///|
+fn town_standing_goals_path(workspace_root : String) -> String {
+  @pathx.join(@pathx.normalize(workspace_root), ".moontown/standing-goals.json")
+}
+
+///|
+fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
+  }
+}
+
+///|
+fn standing_goal_record_from_payload(
+  payload : Json,
+  daemon_tick~ : Int,
+) -> Json {
+  let title = json_string(payload, "title", default="Moondesk standing watch")
+  let id = json_string(payload, "id", default=@desk.stable_id("watch", title))
+  let cadence = clamp_int(
+    json_int(payload, "cadence_ticks", default=60),
+    1,
+    525600,
+  )
+  let quality = clamp_int(
+    json_int(payload, "quality_threshold", default=85),
+    1,
+    100,
+  )
+  let next_due = json_int(payload, "next_due_tick", default=daemon_tick)
+  {
+    "id": id,
+    "title": title,
+    "prompt": json_string(payload, "prompt", default=""),
+    "target_book_id": json_string(payload, "target_book_id", default=""),
+    "cadence_ticks": cadence,
+    "next_due_tick": next_due,
+    "last_run_tick": match json_int(payload, "last_run_tick", default=-1) {
+      -1 => Json::null()
+      tick => tick.to_json()
+    },
+    "enabled": json_bool(payload, "enabled", default=true),
+    "source_policy": json_string(payload, "source_policy", default="web-first"),
+    "quality_threshold": quality,
+  }
+}
+
+///|
+fn upsert_record_by_id(records : Array[Json], record : Json) -> Array[Json] {
+  let id = json_string(record, "id", default="")
+  let next : Array[Json] = []
+  let mut replaced = false
+  for item in records {
+    if json_string(item, "id", default="") == id {
+      next.push(record)
+      replaced = true
+    } else {
+      next.push(item)
+    }
+  }
+  if !replaced {
+    next.push(record)
+  }
+  next
+}
+
+///|
+fn trim_for_record(text : String) -> String {
+  let text = text.trim().to_string()
+  if text.length() > 4000 {
+    text[:4000].to_string()
+  } else {
+    text
+  }
+}
+
+///|
+async fn read_watcher_records(root : String, limit : Int) -> Array[Json] {
+  let records : Array[Json] = []
+  let watcher_root = @pathx.join(root, ".moontown/watchers")
+  for name in read_directory_names(watcher_root, include_hidden=false) {
+    if !name.has_suffix(".jsonl") {
+      continue
+    }
+    let text = @fs.read_file(@pathx.join(watcher_root, name)).text() catch {
+      _ => continue
+    }
+    for line in text.split("\n") {
+      let line = line.to_string().trim().to_string()
+      if line == "" {
+        continue
+      }
+      let record = Some(@json.parse(line)) catch { _ => None }
+      match record {
+        Some(record) => if records.length() < limit { records.push(record) }
+        None => ()
+      }
+    }
+  }
+  records
+}
+
+///|
+fn count_watcher_decision(records : Array[Json], decision : String) -> Int {
+  let mut count = 0
+  for record in records {
+    if json_string(record, "decision", default="") == decision {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+fn count_due_goals(goals : Array[Json], daemon_tick : Int) -> Int {
+  let mut count = 0
+  for goal in goals {
+    if json_bool(goal, "enabled", default=true) &&
+      daemon_tick >= json_int(goal, "next_due_tick", default=0) {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+fn next_due_tick(goals : Array[Json]) -> Int {
+  let mut found = false
+  let mut next = 0
+  for goal in goals {
+    if !json_bool(goal, "enabled", default=true) {
+      continue
+    }
+    let due = json_int(goal, "next_due_tick", default=0)
+    if !found || due < next {
+      found = true
+      next = due
+    }
+  }
+  if found {
+    next
+  } else {
+    0
+  }
+}
+
+///|
+async fn count_matching_files(root : String, suffix : String) -> Int {
+  let mut count = 0
+  for name in read_directory_names(root, include_hidden=false) {
+    if name.has_suffix(suffix) {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+async fn count_run_workspaces(workspace_root : String) -> Int {
+  let mut count = 0
+  for workspace in discover_workspaces(workspace_root) {
+    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    for name in read_directory_names(run_root, include_hidden=false) {
+      if name.has_prefix("run-") && is_directory(@pathx.join(run_root, name)) {
+        count += 1
+      }
+    }
+  }
+  count
+}
+
+///|
 async fn send_file(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
@@ -1236,6 +1763,34 @@ test "request body helpers handle optional strings" {
   assert_eq(json_string(payload, "title", default="Fallback"), "Draft")
   assert_eq(json_string_opt(payload, "path"), Some("inbox/draft.md"))
   assert_eq(json_string_opt(payload, "missing"), None)
+}
+
+///|
+test "standing goal records normalize host payloads" {
+  let record = standing_goal_record_from_payload(
+    {
+      "title": "Track APIs",
+      "prompt": "Watch API docs",
+      "target_book_id": "research-api",
+      "cadence_ticks": "0",
+      "quality_threshold": 120,
+      "source_policy": "web-first",
+    },
+    daemon_tick=42,
+  )
+  assert_eq(json_string(record, "id", default=""), "watch-track-apis")
+  assert_eq(json_int(record, "cadence_ticks", default=0), 1)
+  assert_eq(json_int(record, "quality_threshold", default=0), 100)
+  assert_eq(json_int(record, "next_due_tick", default=0), 42)
+}
+
+///|
+test "standing goal upsert replaces by id" {
+  let original : Json = { "id": "watch-a", "title": "A" }
+  let replacement : Json = { "id": "watch-a", "title": "B" }
+  let records = upsert_record_by_id([original], replacement)
+  assert_eq(records.length(), 1)
+  assert_eq(json_string(records[0], "title", default=""), "B")
 }
 
 ///|

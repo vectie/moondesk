@@ -1,9 +1,12 @@
 import {
   "moonbitlang/async",
+  "moonbitlang/async/process",
   "moonbitlang/core/env",
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string",
   "vectie/moondesk/host",
+  "vectie/moondesk/internal/fsx",
   "vectie/moondesk/internal/httpserve",
+  "vectie/moondesk/internal/pathx",
 }
 
 options(

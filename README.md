@@ -36,12 +36,14 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
 - A built Rabbita UI with live workspace discovery, explorer browsing,
   markdown/html/json/image previews, raw links, MoonClaw run artifacts,
   inbox note creation/editing, Moontown request staging, request ledger,
-  town messages, cross-book search, favorites, recent context, and a daily
-  operating summary.
+  town messages, standing-watch creation, daemon tick dispatch, cross-book
+  search, favorites, recent context, scoped Finder reveal, cadence summaries,
+  a calendar-like due-tick view, outcome analytics, and daily analytics.
 
-It is still a local MoonBit-hosted browser application, not a packaged `.app`.
-The `desktop` command is a browser-compatible launch mode that keeps the host
-pure MoonBit and avoids Rust, Cargo, Tauri, and broad filesystem permissions.
+The `desktop` command is a browser-compatible launch mode, and `bundle` creates
+a macOS `.app` shell bundle around that pure MoonBit host. It is not yet a
+signed/self-contained native distribution, and it still avoids Rust, Cargo,
+Tauri, and broad filesystem permissions.
 
 ## Run Locally
 
@@ -61,6 +63,12 @@ Desktop-compatible launch mode:
 
 ```sh
 moon run cmd/main -- desktop ../moontown --ui ui/rabbita-desk/dist --port 4199
+```
+
+Create a macOS app-shell bundle:
+
+```sh
+moon run cmd/main -- bundle ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199
 ```
 
 Open:

@@ -92,6 +92,7 @@ Operational visibility:
 - MoonClaw run events
 - build output
 - validation warnings
+- latest daemon and standing-watch summary
 
 ## Command Palette
 
@@ -101,6 +102,9 @@ Required commands:
 - Create Book Inbox Note
 - Import Files
 - Submit to Town
+- Run Daemon Tick
+- View Cadence Calendar
+- Review Outcome Analytics
 - Build Book Site
 - Open Generated Site
 - Show Run Artifacts
@@ -119,6 +123,8 @@ The composer should support:
 - quality threshold
 - source policy
 - submit to Moontown
+- create or update standing-watch records in `.moontown/standing-goals.json`
+- run a single daemon tick through the scoped host action
 
 ## Desktop Interactions
 
@@ -131,11 +137,12 @@ Phase 1 browser mode:
 Phase 2 MoonBit host mode:
 
 - host-backed open/import flows
-- reveal in Finder
+- scoped reveal in Finder
 - open with external app
 - drag/drop from Finder
 - clipboard images
 - desktop notifications
+- local `.app` shell bundle launched through `cmd/main bundle`
 
 ## Codex Outlook Matching
 

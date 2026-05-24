@@ -452,6 +452,17 @@ button {
   padding: 0 10px;
 }
 
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.compact-fields + .line-input {
+  margin-top: 8px;
+}
+
 .side-textarea {
   min-height: 120px;
   margin-top: 8px;
@@ -536,6 +547,114 @@ button {
 .artifact-link:hover {
   color: var(--ink);
   border-color: rgba(91, 141, 239, 0.42);
+}
+
+.cadence-list {
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.cadence-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.cadence-row:last-child {
+  border-bottom: 0;
+}
+
+.cadence-row strong,
+.cadence-row small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cadence-row small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.calendar-cell,
+.outcome-row {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-panel);
+}
+
+.calendar-cell {
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+}
+
+.calendar-cell strong,
+.calendar-cell small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-cell small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.calendar-cell.due {
+  border-color: rgba(224, 108, 117, 0.72);
+}
+
+.calendar-cell.soon {
+  border-color: rgba(216, 168, 79, 0.72);
+}
+
+.outcome-mix {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.outcome-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px;
+}
+
+.outcome-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.outcome-row.updates {
+  border-color: rgba(82, 183, 136, 0.62);
+}
+
+.outcome-row.review,
+.outcome-row.deferred {
+  border-color: rgba(216, 168, 79, 0.62);
+}
+
+.outcome-row.failure {
+  border-color: rgba(224, 108, 117, 0.62);
 }
 
 .preview-center {

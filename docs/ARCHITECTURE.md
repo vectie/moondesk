@@ -140,11 +140,13 @@ host. It does not package a native `.app` yet.
 ### Packaged Mode
 
 ```text
-moon run cmd/main -- bundle --target local
+moon run cmd/main -- bundle [root] [--ui ui/rabbita-desk/dist] [--out dist]
 ```
 
-Planned. Packaging can be added later without introducing Rust into this
-repository.
+Implemented as a MoonBit-generated macOS `.app` shell bundle. The bundle
+launches `moon run cmd/main -- desktop ...` and keeps the runtime in the pure
+MoonBit host. Signing, notarization, and a self-contained binary distribution
+can be added later without introducing Rust into this repository.
 
 ## Adapter Rules
 
@@ -165,11 +167,17 @@ GET  /api/workspaces/:id/raw?path=...
 POST /api/workspaces/:id/inbox
 GET  /api/search?query=...
 GET  /api/town/state
+GET  /api/town/daemon
+GET  /api/town/analytics
 GET  /api/town/messages
 GET  /api/town/requests
 POST /api/town/requests
+GET  /api/town/standing-goals
+POST /api/town/standing-goals
+POST /api/town/dispatch
 GET  /api/moonclaw/runs?workspace=...
 GET  /api/moonclaw/runs/:id/artifacts
+POST /api/workspaces/:id/reveal
 ```
 
 Implemented behavior:
@@ -184,14 +192,26 @@ Implemented behavior:
 - `GET /api/search?query=...` searches readable text-like files across
   discovered workspaces with bounded results.
 - `GET /api/town/state` returns the town state JSON when present.
+- `GET /api/town/daemon` returns `.moontown/daemon.json` when present.
+- `GET /api/town/analytics` returns a flat operating summary: daemon tick,
+  standing-goal counts, due/active goals, watcher decision counts, request
+  count, town message count, and visible MoonClaw run count.
 - `GET /api/town/messages` lists recent `.moontown/book-results/*.json`
   records.
 - `GET /api/town/requests` lists staged request records under
   `.moontown/moondesk-requests/`.
 - `POST /api/town/requests` stages a request under
-  `.moontown/moondesk-requests/`. It does not yet dispatch work to the daemon.
+  `.moontown/moondesk-requests/`.
+- `GET /api/town/standing-goals` reads `.moontown/standing-goals.json`.
+- `POST /api/town/standing-goals` validates/upserts a standing-watch record in
+  `.moontown/standing-goals.json`.
+- `POST /api/town/dispatch` runs one Moontown daemon tick when the configured
+  root is a runnable Moontown checkout, then records stdout/stderr/status under
+  `.moontown/moondesk-dispatches/`.
 - MoonClaw run routes list run workspaces and visible `report.md`,
   `result.json`, and `outputs/*.md|*.json` artifacts.
+- `POST /api/workspaces/:id/reveal` reveals a scoped workspace path in Finder
+  on macOS or opens the containing folder on Linux.
 
 ## Persistence
 

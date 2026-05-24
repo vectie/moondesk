@@ -68,6 +68,59 @@ struct RequestRecord {
 } derive(FromJson)
 
 ///|
+struct StandingGoalRecord {
+  id : String
+  title : String
+  prompt : String
+  target_book_id : String
+  cadence_ticks : Int
+  next_due_tick : Int
+  last_run_tick : Int?
+  enabled : Bool
+  source_policy : String
+  quality_threshold : Int
+} derive(FromJson)
+
+///|
+struct TownAnalytics {
+  daemon_tick : Int
+  standing_goal_count : Int
+  due_goal_count : Int
+  active_goal_count : Int
+  request_count : Int
+  message_count : Int
+  run_count : Int
+  watcher_run_count : Int
+  updates : Int
+  no_changes : Int
+  needs_review : Int
+  failures : Int
+  deferred : Int
+  next_due_tick : Int
+} derive(FromJson)
+
+///|
+struct DaemonDispatchResult {
+  id : String
+  ok : Bool
+  status : String
+  exit_code : Int
+  path : String
+  stdout : String
+  stderr : String
+} derive(FromJson)
+
+///|
+struct RevealResult {
+  ok : Bool
+  status : String
+  exit_code : Int
+  workspace_id : String
+  path : String
+  absolute_path : String
+} derive(FromJson)
+
+///|
 struct InboxCreated {
   ok : Bool
   workspace_id : String
@@ -101,6 +154,8 @@ struct Model {
   request_prompt : String
   request_status : String
   requests : Array[RequestRecord]
+  standing_goals : Array[StandingGoalRecord]
+  analytics : TownAnalytics?
   town_messages : Array[TownMessage]
   runs : Array[@desk.DeskRunProjection]
   inbox_title : String
@@ -112,6 +167,12 @@ struct Model {
   search_hits : Array[SearchHit]
   favorites : Array[String]
   recent_paths : Array[String]
+  goal_title : String
+  goal_cadence_ticks : String
+  goal_quality_threshold : String
+  goal_source_policy : String
+  dispatch_status : String
+  reveal_status : String
   notification_status : String
 }
 
@@ -123,9 +184,14 @@ enum Msg {
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
   LoadedTownMessages(Result[Array[TownMessage], String])
   LoadedRequests(Result[Array[RequestRecord], String])
+  LoadedStandingGoals(Result[Array[StandingGoalRecord], String])
+  LoadedAnalytics(Result[TownAnalytics, String])
   LoadedSearch(Result[Array[SearchHit], String])
   SavedInbox(Result[InboxCreated, String])
   SubmittedRequest(Result[RequestRecord, String])
+  CreatedStandingGoal(Result[StandingGoalRecord, String])
+  DispatchedDaemon(Result[DaemonDispatchResult, String])
+  RevealedSelection(Result[RevealResult, String])
   SelectActivity(Activity)
   SelectWorkspace(String)
   SelectPath(String)
@@ -135,6 +201,13 @@ enum Msg {
   ToggleCommand
   SetRequestPrompt(String)
   SubmitRequest
+  SetGoalTitle(String)
+  SetGoalCadenceTicks(String)
+  SetGoalQualityThreshold(String)
+  SetGoalSourcePolicy(String)
+  CreateStandingGoal
+  DispatchDaemonTick
+  RevealSelection
   SetInboxTitle(String)
   SetInboxContent(String)
   LoadSelectionIntoInbox
@@ -164,6 +237,8 @@ fn init_model() -> Model {
     request_prompt: "Analyze the selected context and propose source-backed updates for this MoonBook.",
     request_status: "draft",
     requests: [],
+    standing_goals: [],
+    analytics: None,
     town_messages: [],
     runs: [],
     inbox_title: "Operator note",
@@ -175,6 +250,12 @@ fn init_model() -> Model {
     search_hits: [],
     favorites: [],
     recent_paths: [],
+    goal_title: "Standing watch",
+    goal_cadence_ticks: "60",
+    goal_quality_threshold: "85",
+    goal_source_policy: "web-first",
+    dispatch_status: "daemon idle",
+    reveal_status: "reveal idle",
     notification_status: "notifications idle",
   }
 }
@@ -343,6 +424,22 @@ fn trimmed_or(value : String, fallback : String) -> String {
 }
 
 ///|
+fn int_text(value : String, fallback : Int) -> Int {
+  @string.parse_int(value.trim().to_owned()) catch { _ => fallback }
+}
+
+///|
+fn clamp_int(value : Int, min : Int, max : Int) -> Int {
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
+  }
+}
+
+///|
 fn raw_url(model : Model, path : String) -> String {
   if model.selected_workspace_id == "" {
     "#"
@@ -470,6 +567,30 @@ fn fetch_requests_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_standing_goals_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/town/standing-goals",
+    expect=@http.Json(fn(result) { dispatch(LoadedStandingGoals(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid standing goal registry")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_analytics_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/town/analytics",
+    expect=@http.Json(fn(result) { dispatch(LoadedAnalytics(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid town analytics")
+      }
+    }),
+  )
+}
+
+///|
 fn fetch_search_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   query : String,
@@ -539,6 +660,63 @@ fn submit_request_cmd(
 }
 
 ///|
+fn create_standing_goal_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let title = trimmed_or(model.goal_title, "Standing watch")
+  let cadence = clamp_int(int_text(model.goal_cadence_ticks, 60), 1, 525600)
+  let quality = clamp_int(int_text(model.goal_quality_threshold, 85), 1, 100)
+  let body : Json = {
+    "title": title,
+    "prompt": trimmed_or(model.request_prompt, "Watch the selected MoonBook context for useful updates."),
+    "target_book_id": model.selected_workspace_id,
+    "cadence_ticks": cadence,
+    "source_policy": trimmed_or(model.goal_source_policy, "web-first"),
+    "quality_threshold": quality,
+    "enabled": true,
+  }
+  @http.post(
+    "/api/town/standing-goals",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) { dispatch(CreatedStandingGoal(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not create standing watch")
+      }
+    }),
+  )
+}
+
+///|
+fn dispatch_daemon_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.post(
+    "/api/town/dispatch",
+    @http.Body::Json(Json::object({})),
+    expect=@http.Json(fn(result) { dispatch(DispatchedDaemon(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not dispatch daemon tick")
+      }
+    }),
+  )
+}
+
+///|
+fn reveal_selection_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  @http.post(
+    "/api/workspaces/\{model.selected_workspace_id}/reveal",
+    @http.Body::Json({ "path": model.selected_path }),
+    expect=@http.Json(fn(result) { dispatch(RevealedSelection(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not reveal selection")
+      }
+    }),
+  )
+}
+
+///|
 fn reload_workspace_cmds(
   dispatch : (Msg) -> @rabbita.Cmd,
   workspace_id : String,
@@ -553,6 +731,8 @@ fn reload_workspace_cmds(
       fetch_runs_cmd(dispatch, workspace_id),
       fetch_messages_cmd(dispatch),
       fetch_requests_cmd(dispatch),
+      fetch_standing_goals_cmd(dispatch),
+      fetch_analytics_cmd(dispatch),
     ])
   }
 }
@@ -627,6 +807,13 @@ fn update(
     LoadedRequests(Ok(requests)) => (@rabbita.none, { ..model, requests })
     LoadedRequests(Err(error)) =>
       (@rabbita.none, { ..model, request_status: error })
+    LoadedStandingGoals(Ok(standing_goals)) =>
+      (@rabbita.none, { ..model, standing_goals })
+    LoadedStandingGoals(Err(error)) =>
+      (@rabbita.none, { ..model, dispatch_status: error })
+    LoadedAnalytics(Ok(analytics)) => (@rabbita.none, { ..model, analytics: Some(analytics) })
+    LoadedAnalytics(Err(error)) =>
+      (@rabbita.none, { ..model, dispatch_status: error })
     LoadedSearch(Ok(search_hits)) =>
       (
         @rabbita.none,
@@ -659,7 +846,11 @@ fn update(
       (@rabbita.none, { ..model, inbox_status: error })
     SubmittedRequest(Ok(record)) =>
       (
-        @rabbita.batch([fetch_requests_cmd(dispatch), fetch_messages_cmd(dispatch)]),
+        @rabbita.batch([
+          fetch_requests_cmd(dispatch),
+          fetch_messages_cmd(dispatch),
+          fetch_analytics_cmd(dispatch),
+        ]),
         {
           ..model,
           activity: Activity::Town,
@@ -669,6 +860,55 @@ fn update(
       )
     SubmittedRequest(Err(error)) =>
       (@rabbita.none, { ..model, request_status: error })
+    CreatedStandingGoal(Ok(goal)) =>
+      (
+        @rabbita.batch([
+          fetch_standing_goals_cmd(dispatch),
+          fetch_analytics_cmd(dispatch),
+        ]),
+        {
+          ..model,
+          activity: Activity::Town,
+          dispatch_status: "created \{goal.id}",
+        },
+      )
+    CreatedStandingGoal(Err(error)) =>
+      (@rabbita.none, { ..model, dispatch_status: error })
+    DispatchedDaemon(Ok(result)) =>
+      (
+        @rabbita.batch([
+          fetch_requests_cmd(dispatch),
+          fetch_messages_cmd(dispatch),
+          fetch_standing_goals_cmd(dispatch),
+          fetch_analytics_cmd(dispatch),
+          fetch_runs_cmd(dispatch, model.selected_workspace_id),
+        ]),
+        {
+          ..model,
+          activity: Activity::Town,
+          dispatch_status: if result.ok {
+            "\{result.status} (\{result.id}) -> \{result.path}"
+          } else {
+            "\{result.status} (\{result.exit_code}) \{result.path}: \{if result.stderr == "" { result.stdout } else { result.stderr }}"
+          },
+        },
+      )
+    DispatchedDaemon(Err(error)) =>
+      (@rabbita.none, { ..model, dispatch_status: error })
+    RevealedSelection(Ok(result)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          reveal_status: if result.ok {
+            "\{result.status}: \{result.path}"
+          } else {
+            "\{result.status} (\{result.exit_code}) \{result.absolute_path} [\{result.workspace_id}]"
+          },
+        },
+      )
+    RevealedSelection(Err(error)) =>
+      (@rabbita.none, { ..model, reveal_status: error })
     SelectActivity(activity) => (@rabbita.none, { ..model, activity })
     SelectWorkspace(workspace_id) =>
       (
@@ -765,6 +1005,28 @@ fn update(
         submit_request_cmd(dispatch, model),
         { ..model, request_status: "staging request" },
       )
+    SetGoalTitle(title) => (@rabbita.none, { ..model, goal_title: title })
+    SetGoalCadenceTicks(value) =>
+      (@rabbita.none, { ..model, goal_cadence_ticks: value })
+    SetGoalQualityThreshold(value) =>
+      (@rabbita.none, { ..model, goal_quality_threshold: value })
+    SetGoalSourcePolicy(value) =>
+      (@rabbita.none, { ..model, goal_source_policy: value })
+    CreateStandingGoal =>
+      (
+        create_standing_goal_cmd(dispatch, model),
+        { ..model, dispatch_status: "creating standing watch" },
+      )
+    DispatchDaemonTick =>
+      (
+        dispatch_daemon_cmd(dispatch),
+        { ..model, dispatch_status: "running daemon tick" },
+      )
+    RevealSelection =>
+      (
+        reveal_selection_cmd(dispatch, model),
+        { ..model, reveal_status: "revealing selection" },
+      )
     SetInboxTitle(title) => (@rabbita.none, { ..model, inbox_title: title })
     SetInboxContent(content) =>
       (@rabbita.none, { ..model, inbox_content: content, inbox_status: "draft" })
@@ -831,7 +1093,7 @@ fn update(
       (
         notify_cmd(
           "Moondesk daily surface",
-          "\{model.requests.length()} requests, \{model.runs.length()} runs, \{model.town_messages.length()} town messages",
+          "\{model.requests.length()} requests, \{model.runs.length()} runs, \{model.standing_goals.length()} standing goals",
         ),
         { ..model, notification_status: "notification requested" },
       )
@@ -841,6 +1103,8 @@ fn update(
           fetch_workspaces_cmd(dispatch),
           fetch_messages_cmd(dispatch),
           fetch_requests_cmd(dispatch),
+          fetch_standing_goals_cmd(dispatch),
+          fetch_analytics_cmd(dispatch),
         ]),
         { ..model, host_status: "refreshing" },
       )
@@ -1114,7 +1378,10 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
       div([p(class="eyebrow", "moontown"), h2("Requests")]),
-      button(class="icon-button", title="Refresh", on_click=dispatch(RefreshAll), "R"),
+      div(class="toolbar-actions", [
+        button(class="icon-button", title="Run Daemon Tick", on_click=dispatch(DispatchDaemonTick), "D"),
+        button(class="icon-button", title="Refresh", on_click=dispatch(RefreshAll), "R"),
+      ]),
     ]),
     section(class="side-section", [
       textarea(
@@ -1128,8 +1395,71 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       button(class="primary-button full", on_click=dispatch(SubmitRequest), "Submit to Town"),
       p(class="status-line", model.request_status),
     ]),
+    section(class="side-section", [
+      h3("Standing Watch"),
+      input(
+        class="line-input",
+        value=model.goal_title,
+        placeholder="Watch title",
+        on_input=fn(value) { dispatch(SetGoalTitle(value)) },
+        "",
+      ),
+      div(class="field-grid compact-fields", [
+        input(
+          class="line-input",
+          value=model.goal_cadence_ticks,
+          placeholder="Cadence ticks",
+          on_input=fn(value) { dispatch(SetGoalCadenceTicks(value)) },
+          "",
+        ),
+        input(
+          class="line-input",
+          value=model.goal_quality_threshold,
+          placeholder="Quality",
+          on_input=fn(value) { dispatch(SetGoalQualityThreshold(value)) },
+          "",
+        ),
+      ]),
+      input(
+        class="line-input",
+        value=model.goal_source_policy,
+        placeholder="Source policy",
+        on_input=fn(value) { dispatch(SetGoalSourcePolicy(value)) },
+        "",
+      ),
+      div(class="toolbar-actions stack-actions", [
+        button(class="secondary-button", on_click=dispatch(CreateStandingGoal), "Create Watch"),
+        button(class="secondary-button", on_click=dispatch(DispatchDaemonTick), "Run Tick"),
+      ]),
+      p(class="status-line", model.dispatch_status),
+    ]),
+    render_standing_goal_list(model),
     render_request_list(model),
   ])
+}
+
+///|
+fn render_standing_goal_list(model : Model) -> @rabbita.Html {
+  div(
+    class="side-records",
+    model.standing_goals.map(goal => {
+      div(class="side-record", [
+        span(class="record-kind", if goal.enabled { "enabled" } else { "paused" }),
+        strong(goal.title),
+        small("\{goal.target_book_id} / every \{goal.cadence_ticks} ticks"),
+        small("next \{goal.next_due_tick} / last \{last_run_label(goal)}"),
+        small("quality \{goal.quality_threshold}% / \{goal.prompt}"),
+      ])
+    }),
+  )
+}
+
+///|
+fn last_run_label(goal : StandingGoalRecord) -> String {
+  match goal.last_run_tick {
+    Some(tick) => tick.to_string()
+    None => "never"
+  }
 }
 
 ///|
@@ -1199,15 +1529,159 @@ fn render_settings_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Htm
       info_row("Requests", model.requests.length().to_string()),
       info_row("Runs", model.runs.length().to_string()),
       info_row("Messages", model.town_messages.length().to_string()),
+      info_row("Goals", model.standing_goals.length().to_string()),
       info_row("Favorites", model.favorites.length().to_string()),
       button(class="primary-button full", on_click=dispatch(NotifyDaily), "Notify Summary"),
       p(class="status-line", model.notification_status),
     ]),
+    render_cadence_panel(model),
+    render_cadence_calendar(model),
+    render_analytics_panel(model),
     section(class="side-section", [
       h3("Export Snapshot"),
       pre(class="source-block compact", code(export_snapshot(model))),
     ]),
   ])
+}
+
+///|
+fn render_cadence_panel(model : Model) -> @rabbita.Html {
+  section(class="side-section", [
+    h3("Cadence"),
+    div(
+      class="cadence-list",
+      model.standing_goals.map(goal => {
+        let due_label = match model.analytics {
+          Some(analytics) if analytics.daemon_tick >= goal.next_due_tick => "due"
+          Some(analytics) => "\{goal.next_due_tick - analytics.daemon_tick} ticks"
+          None => "next \{goal.next_due_tick}"
+        }
+        div(class="cadence-row", [
+          span(class="record-kind", due_label),
+          div([
+            strong(goal.title),
+            small("\{goal.source_policy} / every \{goal.cadence_ticks}"),
+          ]),
+        ])
+      }),
+    ),
+  ])
+}
+
+///|
+fn render_cadence_calendar(model : Model) -> @rabbita.Html {
+  let tick = match model.analytics {
+    Some(analytics) => analytics.daemon_tick
+    None => 0
+  }
+  let cells = if model.standing_goals.length() == 0 {
+    [p(class="status-line", "no standing watches")]
+  } else {
+    model.standing_goals.map(goal => {
+      let class_name = "calendar-cell " + cadence_state(tick, goal)
+      div(class=class_name, [
+        span(class="record-kind", cadence_due_label(tick, goal.next_due_tick)),
+        strong(goal.title),
+        small("tick \{goal.next_due_tick}"),
+        small("every \{goal.cadence_ticks} ticks"),
+      ])
+    })
+  }
+  section(class="side-section", [
+    h3("Calendar"),
+    div(class="calendar-grid", cells),
+  ])
+}
+
+///|
+fn cadence_state(tick : Int, goal : StandingGoalRecord) -> String {
+  if tick > 0 && tick >= goal.next_due_tick {
+    "due"
+  } else if tick > 0 && goal.next_due_tick - tick <= 12 {
+    "soon"
+  } else {
+    "scheduled"
+  }
+}
+
+///|
+fn cadence_due_label(tick : Int, next_due_tick : Int) -> String {
+  if tick > 0 {
+    let delta = next_due_tick - tick
+    if delta <= 0 {
+      "due"
+    } else {
+      "+\{delta}"
+    }
+  } else {
+    "tick"
+  }
+}
+
+///|
+fn render_analytics_panel(model : Model) -> @rabbita.Html {
+  match model.analytics {
+    Some(analytics) => {
+      let outcomes = analytics.no_changes +
+        analytics.updates +
+        analytics.needs_review +
+        analytics.failures +
+        analytics.deferred
+      section(class="side-section", [
+        h3("Analytics"),
+        info_row("Daemon", "tick \{analytics.daemon_tick}"),
+        info_row("Goals", "\{analytics.standing_goal_count} total"),
+        info_row("Due", "\{analytics.due_goal_count} / active \{analytics.active_goal_count}"),
+        info_row("Next Due", analytics.next_due_tick.to_string()),
+        info_row("Requests", analytics.request_count.to_string()),
+        info_row("Messages", analytics.message_count.to_string()),
+        info_row("Runs", analytics.run_count.to_string()),
+        info_row("Watcher", "\{analytics.watcher_run_count} runs"),
+        info_row("No-change", analytics.no_changes.to_string()),
+        info_row("Updates", analytics.updates.to_string()),
+        info_row("Review", analytics.needs_review.to_string()),
+        info_row("Failures", analytics.failures.to_string()),
+        info_row("Deferred", analytics.deferred.to_string()),
+        div(class="outcome-mix", [
+          outcome_row("updates", analytics.updates, outcomes, "updates"),
+          outcome_row("no-change", analytics.no_changes, outcomes, "quiet"),
+          outcome_row("review", analytics.needs_review, outcomes, "review"),
+          outcome_row("failures", analytics.failures, outcomes, "failure"),
+          outcome_row("deferred", analytics.deferred, outcomes, "deferred"),
+        ]),
+      ])
+    }
+    None =>
+      section(class="side-section", [
+        h3("Analytics"),
+        p(class="status-line", "waiting for town analytics"),
+      ])
+  }
+}
+
+///|
+fn outcome_row(label : String, value : Int, total : Int, tone : String) -> @rabbita.Html {
+  div(class="outcome-row " + tone, [
+    span(label),
+    code("\{value} / \{percent_text(value, total)}"),
+  ])
+}
+
+///|
+fn percent_text(value : Int, total : Int) -> String {
+  if total <= 0 {
+    "0%"
+  } else {
+    "\{value * 100 / total}%"
+  }
+}
+
+///|
+fn daemon_snapshot_label(model : Model) -> String {
+  match model.analytics {
+    Some(analytics) => "tick \{analytics.daemon_tick}"
+    None => "unknown"
+  }
 }
 
 ///|
@@ -1218,6 +1692,8 @@ fn export_snapshot(model : Model) -> String {
   "requests: \{model.requests.length()}\n" +
   "runs: \{model.runs.length()}\n" +
   "messages: \{model.town_messages.length()}\n" +
+  "standing goals: \{model.standing_goals.length()}\n" +
+  "daemon: \{daemon_snapshot_label(model)}\n" +
   "favorites: \{model.favorites.join(", ")}\n"
 }
 
@@ -1371,6 +1847,11 @@ fn render_preview_center(
           "Open Raw",
         ),
         button(
+          class="secondary-button",
+          on_click=dispatch(RevealSelection),
+          "Reveal",
+        ),
+        button(
           class="primary-button",
           on_click=dispatch(ToggleCommand),
           "Command",
@@ -1393,6 +1874,7 @@ fn render_inspector(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       info_row("Book", workspace_name(model)),
       info_row("Layer", selected_layer(model)),
       info_row("Writable", if is_inbox_path(model.selected_path) { "yes" } else { "inbox only" }),
+      info_row("Reveal", model.reveal_status),
       button(
         class="secondary-button full",
         on_click=dispatch(StageSelectedLink),
@@ -1549,6 +2031,7 @@ fn render_command_palette(
           palette_command(dispatch, "Search Books", "Find files across MoonBooks", SelectActivity(Activity::Search)),
           palette_command(dispatch, "Create Inbox Note", "Stage a safe draft in inbox", SelectActivity(Activity::Inbox)),
           palette_command(dispatch, "Submit to Town", "Send selected context to Moontown", SubmitRequest),
+          palette_command(dispatch, "Run Daemon Tick", "Dispatch one Moontown scheduler tick", DispatchDaemonTick),
           palette_command(dispatch, "Show Run Artifacts", "Open MoonClaw run projection", SelectActivity(Activity::Runs)),
           palette_command(dispatch, "Daily Surface", "Open operating summary", SelectActivity(Activity::Settings)),
         ]),
@@ -1615,9 +2098,14 @@ test {
   ignore(fetch_runs_cmd)
   ignore(fetch_messages_cmd)
   ignore(fetch_requests_cmd)
+  ignore(fetch_standing_goals_cmd)
+  ignore(fetch_analytics_cmd)
   ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
   ignore(submit_request_cmd)
+  ignore(create_standing_goal_cmd)
+  ignore(dispatch_daemon_cmd)
+  ignore(reveal_selection_cmd)
   ignore(notify_cmd)
 }
 
