@@ -6,4 +6,4 @@
         <p>Preparing the explorer, previews, inspector, and activity drawer.</p>
       </div>
     </div>
-  `);await E(()=>import("./_rabbita_main-entry-D3Jkqv1g.js"),[]);
+  `);await E(()=>import("./_rabbita_main-entry-C_6F0f3z.js"),[]);

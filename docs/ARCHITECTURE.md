@@ -134,8 +134,8 @@ moon run cmd/main -- serve ../moontown --ui ui/rabbita-desk/dist --port 4199
 moon run cmd/main -- desktop --root ~/Workspace
 ```
 
-Planned. The current host is already pure MoonBit, but there is not yet a
-separate desktop launch mode.
+Implemented as a browser-compatible launch alias over the same pure MoonBit
+host. It does not package a native `.app` yet.
 
 ### Packaged Mode
 
@@ -163,8 +163,10 @@ GET  /api/workspaces/:id/entries?path=...
 GET  /api/workspaces/:id/preview?path=...
 GET  /api/workspaces/:id/raw?path=...
 POST /api/workspaces/:id/inbox
+GET  /api/search?query=...
 GET  /api/town/state
 GET  /api/town/messages
+GET  /api/town/requests
 POST /api/town/requests
 GET  /api/moonclaw/runs?workspace=...
 GET  /api/moonclaw/runs/:id/artifacts
@@ -177,10 +179,15 @@ Implemented behavior:
 - `entries`, `preview`, and `raw` scope all paths under the selected workspace
   root and reject traversal.
 - `preview` returns a `DeskPreview`; image previews point to the `raw` route.
-- `POST /api/workspaces/:id/inbox` writes a markdown note into `inbox/`.
+- `POST /api/workspaces/:id/inbox` writes a markdown note into `inbox/`; when a
+  `path` field is provided it edits only scoped `inbox/*` paths.
+- `GET /api/search?query=...` searches readable text-like files across
+  discovered workspaces with bounded results.
 - `GET /api/town/state` returns the town state JSON when present.
 - `GET /api/town/messages` lists recent `.moontown/book-results/*.json`
   records.
+- `GET /api/town/requests` lists staged request records under
+  `.moontown/moondesk-requests/`.
 - `POST /api/town/requests` stages a request under
   `.moontown/moondesk-requests/`. It does not yet dispatch work to the daemon.
 - MoonClaw run routes list run workspaces and visible `report.md`,

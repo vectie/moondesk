@@ -137,6 +137,14 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "search"] =>
+      if is_read_method(method_) {
+        handle_search(workspace_root, request_path, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "town", "state"] =>
       if is_read_method(method_) {
         handle_town_state(workspace_root, method_, conn)
@@ -154,7 +162,9 @@ async fn handle_api_request(
         )
       }
     ["api", "town", "requests"] =>
-      if method_ is @http.RequestMethod::Post {
+      if is_read_method(method_) {
+        handle_town_requests(workspace_root, method_, conn)
+      } else if method_ is @http.RequestMethod::Post {
         handle_town_request(workspace_root, body, method_, conn)
       } else {
         send_api_error(
@@ -445,6 +455,51 @@ async fn handle_workspace_inbox(
     "content",
     default=json_string(payload, "prompt", default=""),
   )
+  match json_string_opt(payload, "path") {
+    Some(path) => {
+      let relative = decode_query_value(path)
+      match resolve_workspace_path(workspace.root_path, relative) {
+        Some((absolute, clean_relative)) =>
+          if !is_writable_entry(clean_relative) {
+            send_api_error(
+              conn, method_, 400, "Bad Request", "Inbox edits must stay under inbox/",
+            )
+            return
+          } else {
+            let parent = @pathx.dirname(absolute).to_string()
+            @fsx.make_directory(parent, recursive=true, exists_ok=true) catch {
+              _ => {
+                send_api_error(
+                  conn, method_, 500, "Internal Server Error", "Could not create inbox directory",
+                )
+                return
+              }
+            }
+            @fsx.write_to_file(absolute, content, create=0o644) catch {
+              _ => {
+                send_api_error(
+                  conn, method_, 500, "Internal Server Error", "Could not edit inbox note",
+                )
+                return
+              }
+            }
+            send_json(conn, method_, {
+              "ok": true,
+              "workspace_id": workspace.id,
+              "path": clean_relative,
+            })
+            return
+          }
+        None => {
+          send_api_error(
+            conn, method_, 400, "Bad Request", "Invalid inbox path",
+          )
+          return
+        }
+      }
+    }
+    None => ()
+  }
   let inbox_root = @pathx.join(workspace.root_path, "inbox")
   @fsx.make_directory(inbox_root, recursive=true, exists_ok=true) catch {
     _ => {
@@ -474,6 +529,137 @@ async fn handle_workspace_inbox(
     "workspace_id": workspace.id,
     "path": relative,
   })
+}
+
+///|
+async fn handle_search(
+  workspace_root : String,
+  request_path : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let query = decode_query_value(
+      query_value(request_path, "query").unwrap_or(""),
+    )
+    .trim()
+    .to_string()
+  if query == "" {
+    send_json(conn, method_, Json::array([]))
+    return
+  }
+  let workspace_filter = query_value(request_path, "workspace")
+  let query_lower = query.to_lower()
+  let hits : Array[Json] = []
+  for workspace in discover_workspaces(workspace_root) {
+    match workspace_filter {
+      Some(id) if id != workspace.id => continue
+      _ => ()
+    }
+    collect_search_hits(workspace, "", query_lower, hits, 0, 80)
+    if hits.length() >= 80 {
+      break
+    }
+  }
+  send_json(conn, method_, Json::array(hits))
+}
+
+///|
+async fn collect_search_hits(
+  workspace : @desk.DeskWorkspace,
+  relative : String,
+  query_lower : String,
+  hits : Array[Json],
+  depth : Int,
+  limit : Int,
+) -> Unit {
+  if hits.length() >= limit || depth > 6 {
+    return
+  }
+  let absolute = if relative == "" {
+    workspace.root_path
+  } else {
+    @pathx.join(workspace.root_path, relative)
+  }
+  for name in read_directory_names(absolute, include_hidden=true) {
+    if hits.length() >= limit {
+      break
+    }
+    if should_hide_file_entry(name) {
+      continue
+    }
+    let child_relative = if relative == "" {
+      name
+    } else {
+      relative + "/" + name
+    }
+    let child_absolute = @pathx.join(workspace.root_path, child_relative)
+    if is_directory(child_absolute) {
+      collect_search_hits(
+        workspace,
+        child_relative,
+        query_lower,
+        hits,
+        depth + 1,
+        limit,
+      )
+    } else {
+      let entry = @desk.file_entry(
+        workspace_id=workspace.id,
+        path=child_relative,
+        writable=is_writable_entry(child_relative),
+      )
+      if !is_searchable_entry(entry.kind) {
+        continue
+      }
+      let path_match = child_relative.to_lower().contains(query_lower)
+      let text = @fs.read_file(child_absolute).text() catch { _ => "" }
+      let body_match = text.to_lower().contains(query_lower)
+      if path_match || body_match {
+        hits.push({
+          "workspace_id": workspace.id,
+          "workspace_name": workspace.name,
+          "path": entry.path,
+          "title": entry.display_name,
+          "kind": entry.kind,
+          "source_layer": entry.source_layer,
+          "snippet": search_snippet(text, query_lower, fallback=entry.path),
+        })
+      }
+    }
+  }
+}
+
+///|
+fn is_searchable_entry(kind : @desk.EntryKind) -> Bool {
+  match kind {
+    @desk.EntryKind::Markdown
+    | @desk.EntryKind::Html
+    | @desk.EntryKind::Json
+    | @desk.EntryKind::Text
+    | @desk.EntryKind::Unknown => true
+    _ => false
+  }
+}
+
+///|
+fn search_snippet(
+  text : String,
+  query_lower : String,
+  fallback~ : String,
+) -> String {
+  let trimmed = text.trim().to_string()
+  if trimmed == "" {
+    return fallback
+  }
+  let lower = trimmed.to_lower()
+  let start = match lower.find(query_lower) {
+    Some(index) if index > 60 => index - 60
+    Some(_) => 0
+    None => 0
+  }
+  let remaining = trimmed.length() - start
+  let take = if remaining > 180 { 180 } else { remaining }
+  trimmed[start:start + take].replace_all(old="\n", new=" ").to_string()
 }
 
 ///|
@@ -519,6 +705,41 @@ async fn handle_town_messages(
     })
   }
   send_json(conn, method_, Json::array(messages))
+}
+
+///|
+async fn handle_town_requests(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let requests_root = @pathx.join(
+    @pathx.normalize(workspace_root),
+    ".moontown/moondesk-requests",
+  )
+  let requests : Array[Json] = []
+  let names = read_directory_names(requests_root, include_hidden=false)
+  let start = if names.length() > 80 { names.length() - 80 } else { 0 }
+  for index = start; index < names.length(); index = index + 1 {
+    let name = names[index]
+    if !name.has_suffix(".json") {
+      continue
+    }
+    let absolute = @pathx.join(requests_root, name)
+    let record = @json.parse(@fs.read_file(absolute).text()) catch {
+      _ => {
+        let fallback : Json = {
+          "id": @desk.stable_id("request", name),
+          "status": "unreadable",
+          "path": ".moontown/moondesk-requests/" + name,
+          "request": { "title": name },
+        }
+        fallback
+      }
+    }
+    requests.push(record)
+  }
+  send_json(conn, method_, Json::array(requests))
 }
 
 ///|
@@ -875,6 +1096,18 @@ fn json_string(json : Json, key : String, default~ : String) -> String {
 }
 
 ///|
+fn json_string_opt(json : Json, key : String) -> String? {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(Json::String(value)) => Some(value)
+        _ => None
+      }
+    _ => None
+  }
+}
+
+///|
 async fn send_file(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,
@@ -995,4 +1228,23 @@ test "api path helpers handle queries and traversal" {
   assert_eq(clean_relative_path("wiki/../raw/README.md"), Some("raw/README.md"))
   assert_eq(clean_relative_path("../secret"), None)
   assert_eq(clean_relative_path("/tmp/secret"), None)
+}
+
+///|
+test "request body helpers handle optional strings" {
+  let payload : Json = { "title": "Draft", "path": "inbox/draft.md" }
+  assert_eq(json_string(payload, "title", default="Fallback"), "Draft")
+  assert_eq(json_string_opt(payload, "path"), Some("inbox/draft.md"))
+  assert_eq(json_string_opt(payload, "missing"), None)
+}
+
+///|
+test "search snippets are bounded and single line" {
+  let snippet = search_snippet(
+    "alpha beta gamma\ndelta epsilon zeta",
+    "epsilon",
+    fallback="fallback",
+  )
+  assert_true(snippet.contains("epsilon"))
+  assert_eq(snippet.contains("\n"), false)
 }

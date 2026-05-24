@@ -27,18 +27,21 @@ Start here:
 
 ## Current Status
 
-Moondesk currently has a pure MoonBit host plus a Rabbita desk shell:
+Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
 
 - MoonBit domain models for workspaces, file entries, previews, task
   submissions, and run projections.
 - Adapters for MoonBook, Moontown, and MoonClaw workspace concepts.
 - A local HTTP host that serves the built UI and scoped `/api/*` routes.
-- A built Rabbita UI shell with activity rail, explorer, preview center,
-  inspector, request composer, bottom drawer, and command palette.
+- A built Rabbita UI with live workspace discovery, explorer browsing,
+  markdown/html/json/image previews, raw links, MoonClaw run artifacts,
+  inbox note creation/editing, Moontown request staging, request ledger,
+  town messages, cross-book search, favorites, recent context, and a daily
+  operating summary.
 
-The UI is still mostly static. The host API is available for the next step:
-binding the explorer, preview tabs, request composer, and run drawer to live
-workspace data.
+It is still a local MoonBit-hosted browser application, not a packaged `.app`.
+The `desktop` command is a browser-compatible launch mode that keeps the host
+pure MoonBit and avoids Rust, Cargo, Tauri, and broad filesystem permissions.
 
 ## Run Locally
 
@@ -52,6 +55,12 @@ Serve Moondesk against a Moontown workspace:
 
 ```sh
 moon run cmd/main -- serve ../moontown --ui ui/rabbita-desk/dist --port 4199
+```
+
+Desktop-compatible launch mode:
+
+```sh
+moon run cmd/main -- desktop ../moontown --ui ui/rabbita-desk/dist --port 4199
 ```
 
 Open:

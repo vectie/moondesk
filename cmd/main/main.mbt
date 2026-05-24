@@ -110,6 +110,7 @@ fn print_usage() -> Unit {
       #|Usage:
       #|  moon run cmd/main -- doctor [root]
       #|  moon run cmd/main -- serve [root] [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188]
+      #|  moon run cmd/main -- desktop [root] [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188]
       #|
       #|Build the UI first with:
       #|  npm --prefix ui/rabbita-desk run build
@@ -122,6 +123,7 @@ async fn main {
   let args = @env.args()
   match args[1:] {
     ["serve", .. rest] => run_serve(rest.to_array())
+    ["desktop", .. rest] => run_serve(rest.to_array())
     ["doctor", .. rest] => run_doctor(rest.to_array())
     _ => print_usage()
   }

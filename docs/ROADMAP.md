@@ -20,9 +20,9 @@ Acceptance:
 
 ## M1: Read-Only Workspace Browser
 
-Status: partially complete. The host API can discover books, list entries,
-preview files, serve raw files, and list MoonClaw runs/artifacts. The Rabbita UI
-still needs live API binding.
+Status: complete for browser-hosted use. The host API discovers books, lists
+entries, previews files, serves raw files, and lists MoonClaw runs/artifacts.
+The Rabbita UI is bound to those APIs.
 
 Deliverables:
 
@@ -41,8 +41,10 @@ Acceptance:
 
 ## M2: Human Inbox And Editing
 
-Status: started. The host can create markdown inbox notes through
-`POST /api/workspaces/:id/inbox`; UI creation and editing are not wired yet.
+Status: complete for markdown inbox notes. The host can create new inbox notes
+and edit existing `inbox/*` paths through `POST /api/workspaces/:id/inbox`.
+The UI provides note title/content editing, preview, selection loading, and
+safe link-to-inbox staging.
 
 Deliverables:
 
@@ -59,9 +61,10 @@ Acceptance:
 
 ## M3: Submit To Moontown
 
-Status: started. The host can stage request records under
-`.moontown/moondesk-requests/`; daemon submission, standing-goal creation, and
-UI request flow are not wired yet.
+Status: partially complete. The UI can submit selected context to the host, the
+host stages request records under `.moontown/moondesk-requests/`, and the UI can
+read the request ledger and town messages. Direct daemon dispatch and standing
+goal creation remain future work.
 
 Deliverables:
 
@@ -78,9 +81,10 @@ Acceptance:
 
 ## M4: Pure MoonBit Desktop Host
 
-Status: partially complete. `cmd/main serve` runs a pure MoonBit local host and
-serves the built Rabbita shell. Desktop launch, import/open flows, OS helpers,
-and notifications remain future work.
+Status: partially complete. `cmd/main serve` and `cmd/main desktop` run a pure
+MoonBit local host and serve the built Rabbita shell. Browser notification
+permission can be requested from the UI. Packaged native launch, Finder reveal,
+and OS helper allowlists remain future work.
 
 Deliverables:
 
@@ -101,6 +105,10 @@ Acceptance:
 
 ## M5: Search And Cross-Book Workflows
 
+Status: started. The host exposes `GET /api/search?query=...` across discovered
+MoonBooks. The UI can search, open hits, favorite paths, and copy selected
+context into inbox notes.
+
 Deliverables:
 
 - cross-book search
@@ -115,6 +123,10 @@ Acceptance:
 - user can assemble context from multiple books and submit a task safely
 
 ## M6: Daily Human Operating System
+
+Status: started. The UI has a daily operating surface with request/run/message
+counts, browser notification trigger, recent/favorite context, and a text export
+snapshot. Calendar cadence views and richer analytics remain future work.
 
 Deliverables:
 
