@@ -197,6 +197,14 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "town", "daemon", "agent"] =>
+      if is_read_method(method_) || method_ is @http.RequestMethod::Post {
+        handle_daemon_agent(workspace_root, body, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "town", "daemon", action] =>
       if method_ is @http.RequestMethod::Post &&
         (action == "start" || action == "stop" || action == "restart") {
@@ -217,6 +225,14 @@ async fn handle_api_request(
     ["api", "town", "progress"] =>
       if is_read_method(method_) {
         handle_town_progress(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "events"] =>
+      if is_read_method(method_) {
+        handle_town_events(workspace_root, method_, conn)
       } else {
         send_api_error(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
@@ -282,9 +298,35 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "moonclaw", "events"] =>
+      if is_read_method(method_) {
+        handle_moonclaw_events(workspace_root, request_path, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "moonclaw", "runs", run_id, "artifacts"] =>
       if is_read_method(method_) {
         handle_moonclaw_artifacts(workspace_root, run_id, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "review", "items"] =>
+      if is_read_method(method_) {
+        handle_review_items(workspace_root, request_path, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "workspaces", workspace_id, "review-diff"] =>
+      if is_read_method(method_) {
+        handle_workspace_review_diff(
+          workspace_root, workspace_id, request_path, method_, conn,
+        )
       } else {
         send_api_error(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
@@ -729,6 +771,8 @@ async fn handle_workspace_import(
 fn import_markdown(payload : Json, kind : String, title : String) -> String {
   let url = json_string(payload, "url", default="")
   let filename = json_string(payload, "filename", default="")
+  let content_type = json_string(payload, "content_type", default="")
+  let browser_import_id = json_string(payload, "browser_import_id", default="")
   let note = json_string(payload, "note", default="")
   let content = json_string(payload, "content", default="")
   let mut body = "# \{title}\n\n"
@@ -738,6 +782,12 @@ fn import_markdown(payload : Json, kind : String, title : String) -> String {
   }
   if filename != "" {
     body = body + "- File: \{filename}\n"
+  }
+  if content_type != "" {
+    body = body + "- Content type: \{content_type}\n"
+  }
+  if browser_import_id != "" {
+    body = body + "- Browser import id: \{browser_import_id}\n"
   }
   if note != "" {
     body = body + "\n## Note\n\n\{note}\n"
@@ -1106,6 +1156,7 @@ async fn handle_town_analytics(
   let daemon_tick = json_int(daemon, "tick_sequence", default=0)
   let goals = read_json_array_file(town_standing_goals_path(root))
   let watcher_records = read_watcher_records(root, 400)
+  let events = collect_town_event_records(root, 160)
   let request_count = count_matching_files(
     @pathx.join(root, ".moontown/moondesk-requests"),
     ".json",
@@ -1130,6 +1181,11 @@ async fn handle_town_analytics(
     "needs_review": count_watcher_decision(watcher_records, "NeedsReview"),
     "failures": count_watcher_decision(watcher_records, "Failed"),
     "deferred": count_watcher_decision(watcher_records, "Deferred"),
+    "event_count": events.length(),
+    "failure_event_count": count_event_severity(events, "failure"),
+    "review_event_count": count_event_severity(events, "review"),
+    "last_failure": latest_event_title(events, "failure"),
+    "review_item_count": count_review_items(root),
     "next_due_tick": next_due_tick(goals),
   })
 }

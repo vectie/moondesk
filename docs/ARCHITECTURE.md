@@ -136,7 +136,10 @@ moon run cmd/main -- desktop [root] [--ui ui/rabbita-desk/dist] \
 ```
 
 Implemented as a browser-compatible launch alias over the same pure MoonBit
-host. Unlike `serve`, `desktop` opens the browser after the server binds.
+host. Unlike `serve`, `desktop` opens the browser after the server binds. This
+is the explicit windowing decision for the current product: Moondesk owns the
+native host process and uses the system browser as the desktop shell instead of
+embedding a native WebView.
 
 ### Packaged Mode
 
@@ -147,22 +150,30 @@ moon run cmd/main -- bundle [root] [--ui ui/rabbita-desk/dist] [--out dist]
 Implemented as a MoonBit-generated macOS `.app` distribution. The bundle command
 builds the native MoonBit executable, copies it to `Contents/MacOS/moondesk`,
 copies the built Rabbita UI into `Contents/Resources/ui`, writes
-`Contents/Resources/moondesk-config.json`, signs the app with `codesign` using
-ad-hoc identity `-` by default, and creates `Moondesk.app.zip` unless
-`--no-archive` is supplied. The packaged executable also opens the browser after
-binding. `cmd/main release` wraps the bundle output with a release manifest and
-optional `xcrun notarytool submit --keychain-profile ... --wait` plus stapling,
-without introducing Rust into this repository.
+`Contents/Resources/moondesk-config.json`, records version/channel/browser-shell
+metadata, signs the app with `codesign` using ad-hoc identity `-` by default,
+and creates `Moondesk.app.zip` unless `--no-archive` is supplied. The packaged
+executable also opens the browser after binding. `cmd/main release` wraps the
+bundle output with `release-manifest.json`, `updates.json`, signing
+verification, DMG creation, and optional
+`xcrun notarytool submit --keychain-profile ... --wait` plus stapling, without
+introducing Rust into this repository.
 
-### Launch Agent Template
+### Launch Agents
 
 ```text
-moon run cmd/main -- launch-agent [root] [--out dist/app.vectie.moondesk.plist]
+moon run cmd/main -- launch-agent [root] [--service desk|town] \
+  [--out dist/app.vectie.moondesk.plist]
+moon run cmd/main -- install-agent [root] [--service desk|town]
+moon run cmd/main -- uninstall-agent [--service desk|town]
+moon run cmd/main -- agent-status [--service desk|town]
 ```
 
-Writes a macOS LaunchAgent template for login startup. The command does not
-install or load the agent automatically; a user-facing install/uninstall flow
-can be added once the daemon policy is finalized.
+`launch-agent` writes a macOS LaunchAgent template. `install-agent`,
+`uninstall-agent`, and `agent-status` manage the corresponding plist through
+`launchctl` for either the desk host or the Moontown daemon. The UI also exposes
+Moontown daemon agent status plus install/remove controls through
+`GET|POST /api/town/daemon/agent`.
 
 ## Adapter Rules
 
@@ -182,6 +193,7 @@ GET  /api/workspaces/:id/preview?path=...
 GET  /api/workspaces/:id/raw?path=...
 POST /api/workspaces/:id/inbox
 POST /api/workspaces/:id/import
+GET  /api/workspaces/:id/review-diff?path=...
 GET  /api/search?query=...
 GET  /api/town/state
 GET  /api/town/daemon
@@ -191,7 +203,10 @@ POST /api/town/daemon/supervision
 POST /api/town/daemon/start
 POST /api/town/daemon/stop
 POST /api/town/daemon/restart
+GET  /api/town/daemon/agent
+POST /api/town/daemon/agent
 GET  /api/town/analytics
+GET  /api/town/events
 GET  /api/town/progress
 GET  /api/town/calendar.ics
 GET  /api/town/messages
@@ -200,9 +215,11 @@ POST /api/town/requests
 GET  /api/town/standing-goals
 POST /api/town/standing-goals
 POST /api/town/dispatch
+GET  /api/moonclaw/events?workspace=...
 GET  /api/moonclaw/runs?workspace=...
 GET  /api/moonclaw/progress?workspace=...
 GET  /api/moonclaw/runs/:id/artifacts
+GET  /api/review/items?workspace=...
 POST /api/workspaces/:id/reveal
 GET  /api/preferences/views
 POST /api/preferences/views
@@ -221,6 +238,9 @@ Implemented behavior:
   `path` field is provided it edits only scoped `inbox/*` paths.
 - `POST /api/workspaces/:id/import` stages URL/file/data-url metadata into
   `inbox/imports/` and keeps all writes scoped under the selected workspace.
+- `GET /api/workspaces/:id/review-diff?path=...` compares a selected review file
+  to the nearest wiki/base/orig/previous file and returns a bounded line-level
+  summary.
 - `GET /api/search?query=...` searches readable text-like files across
   discovered workspaces with bounded results.
 - `GET /api/town/state` returns the town state JSON when present.
@@ -235,9 +255,14 @@ Implemented behavior:
 - `POST /api/town/daemon/stop` sends the managed process `SIGTERM` and persists
   the lifecycle state.
 - `POST /api/town/daemon/restart` stops then starts the managed daemon loop.
+- `GET|POST /api/town/daemon/agent` reports, installs, or removes the Moontown
+  daemon LaunchAgent.
 - `GET /api/town/analytics` returns a flat operating summary: daemon tick,
   standing-goal counts, due/active goals, watcher decision counts, request
-  count, town message count, and visible MoonClaw run count.
+  count, town message count, visible MoonClaw run count, event counts, failure
+  counts, review counts, latest failure, and review queue size.
+- `GET /api/town/events` returns recent Moontown watcher/request/dispatch
+  events with normalized severities.
 - `GET /api/town/progress` returns the current daemon tick/status, supervision
   state, queued request/dispatch/message counts, and latest visible run.
 - `GET /api/town/calendar.ics` exports enabled standing goals as VTODO records.
@@ -255,8 +280,12 @@ Implemented behavior:
   `.moontown/moondesk-dispatches/`.
 - MoonClaw run routes list run workspaces and visible `report.md`,
   `result.json`, and `outputs/*.md|*.json` artifacts.
+- `GET /api/moonclaw/events` projects visible MoonClaw event/result files into
+  normalized live events.
 - `GET /api/moonclaw/progress` returns aggregate run/ready/artifact counts and
   latest run status for a selected workspace or all workspaces.
+- `GET /api/review/items` lists review/failure items from review folders and
+  Moontown event signals.
 - `POST /api/workspaces/:id/reveal` reveals a scoped workspace path in Finder
   on macOS or opens the containing folder on Linux.
 - `GET|POST /api/preferences/views` persists saved view records under

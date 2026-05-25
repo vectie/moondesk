@@ -39,22 +39,28 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
   inbox note creation/editing, Moontown request staging, request ledger,
   town messages, standing-watch creation, daemon tick dispatch, cross-book
   search, favorites, saved views, tags, recent context, scoped Finder reveal,
-  supervised daemon policy, live progress summaries, URL import staging,
-  cadence summaries, a calendar-like due-tick view, ICS export, outcome
-  analytics, and daily analytics.
+  supervised daemon policy, LaunchAgent install/remove controls, live
+  event/failure/review summaries, URL and local file import staging, cadence
+  summaries, a calendar-like due-tick view, ICS export, outcome analytics, and
+  daily analytics.
 
-The `desktop` command is a browser-compatible launch mode, and `bundle` now
-creates a self-contained macOS `.app` distribution with the native MoonBit host
-executable, bundled UI resources, ad-hoc code signing by default, and an
-optional zip archive. `desktop` and bundled app launches open the browser
-explicitly. `release` can write a release manifest and submit the zip through
-Apple notarytool when a keychain profile is provided. It still avoids Rust,
-Cargo, Tauri, and broad filesystem permissions.
+Moondesk now makes an explicit browser-shell product decision: `desktop` and
+the packaged app launch the native MoonBit host and open the system browser as
+the supported shell instead of embedding a native WebView. `bundle` creates a
+self-contained macOS `.app` with bundled UI resources, version/channel metadata,
+and ad-hoc or identity-based code signing. `release` creates zip/DMG artifacts,
+`release-manifest.json`, `updates.json`, verifies signing, and can submit the
+archive through Apple notarytool when a keychain profile is provided. It still
+avoids Rust, Cargo, Tauri, and broad filesystem permissions.
 
 See [Current Status](docs/STATUS.md) for the honest completion picture:
-Moondesk is usable as a local single-user alpha, but not yet a polished
-Codex-style native desktop app with notarized distribution and native window
-ownership.
+Moondesk is usable as a local single-user alpha and roughly 95% complete for
+the chosen browser-shell daily-use target. The self-contained `.app` bundle is
+about 90% of the standalone local distribution target: it includes the native
+MoonBit host, bundled UI, release/update manifests, and DMG creation. A
+production distribution is closer to 85% complete because real Developer ID
+signing/notarization, update hosting, and clean-machine validation are external
+release steps rather than code-only changes.
 
 ## Run Locally
 
@@ -82,14 +88,22 @@ Create a LaunchAgent template for login startup:
 moon run cmd/main -- launch-agent ../moontown --out dist/app.vectie.moondesk.plist --port 4199
 ```
 
+Install, remove, or inspect LaunchAgents:
+
+```sh
+moon run cmd/main -- install-agent ../moontown --service town
+moon run cmd/main -- agent-status --service town
+moon run cmd/main -- uninstall-agent --service town
+```
+
 Create a signed self-contained macOS app bundle:
 
 ```sh
-moon run cmd/main -- bundle ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199
+moon run cmd/main -- bundle ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199 --version 0.1.0 --channel local
 ```
 
-Create a release manifest and optionally notarize with an Apple keychain
-profile:
+Create release artifacts, update metadata, and optionally notarize with an
+Apple keychain profile:
 
 ```sh
 moon run cmd/main -- release ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199 --notary-profile <profile>

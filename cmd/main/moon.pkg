@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
+  "moonbitlang/x/sys",
   "vectie/moondesk/host",
   "vectie/moondesk/internal/fsx",
   "vectie/moondesk/internal/httpserve",

@@ -189,6 +189,7 @@ button {
 .rail-button {
   width: 42px;
   height: 42px;
+  text-decoration: none;
 }
 
 .rail-button:hover,
@@ -516,6 +517,63 @@ button {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.4;
+}
+
+.import-dropzone,
+.event-row {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: #151821;
+}
+
+.import-dropzone {
+  margin-top: 10px;
+}
+
+.import-dropzone strong,
+.event-row strong,
+.event-row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-dropzone small,
+.event-row small,
+.event-row p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.event-list {
+  display: grid;
+  gap: 7px;
+}
+
+.event-row p {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.event-row.failure {
+  border-color: rgba(224, 108, 117, 0.7);
+}
+
+.event-row.review,
+.event-row.deferred {
+  border-color: rgba(216, 168, 79, 0.68);
+}
+
+.event-row.success {
+  border-color: rgba(82, 183, 136, 0.62);
 }
 
 .artifact-list {

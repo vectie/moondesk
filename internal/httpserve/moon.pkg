@@ -8,6 +8,7 @@ import {
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
   "moonbitlang/core/json",
   "moonbitlang/core/string",
+  "moonbitlang/x/sys",
   "vectie/moondesk/core" @desk,
   "vectie/moondesk/internal/fsx",
   "vectie/moondesk/internal/pathx",

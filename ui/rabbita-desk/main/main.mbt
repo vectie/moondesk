@@ -96,6 +96,11 @@ struct TownAnalytics {
   needs_review : Int
   failures : Int
   deferred : Int
+  event_count : Int
+  failure_event_count : Int
+  review_event_count : Int
+  last_failure : String
+  review_item_count : Int
   next_due_tick : Int
 } derive(FromJson)
 
@@ -162,6 +167,20 @@ struct DaemonLifecycleResult {
 } derive(FromJson)
 
 ///|
+struct DaemonAgentResult {
+  ok : Bool
+  action : String
+  installed : Bool
+  loaded : Bool
+  label : String
+  plist_path : String
+  command : String
+  cwd : String
+  exit_code : Int
+  message : String
+} derive(FromJson)
+
+///|
 struct RevealResult {
   ok : Bool
   status : String
@@ -208,6 +227,60 @@ struct TagRecord {
 } derive(FromJson)
 
 ///|
+struct DeskEvent {
+  id : String
+  source : String
+  kind : String
+  severity : String
+  title : String
+  detail : String
+  path : String
+  run_id : String
+  tick : Int
+  created_at : String
+} derive(FromJson)
+
+///|
+struct ReviewItem {
+  id : String
+  workspace_id : String
+  path : String
+  title : String
+  kind : String
+  status : String
+  detail : String
+} derive(FromJson)
+
+///|
+struct ReviewDiff {
+  ok : Bool
+  workspace_id : String
+  path : String
+  base_path : String
+  comparison_path : String
+  added : Int
+  removed : Int
+  changed : Bool
+  body : String
+} derive(FromJson)
+
+///|
+struct LocalImportFile {
+  id : String
+  name : String
+  media_type : String
+  content : String
+  source : String
+} derive(FromJson)
+
+///|
+struct BrowserLocalImportBatch {
+  ok : Bool
+  files : Array[LocalImportFile]
+  error : String?
+} derive(FromJson)
+
+///|
 struct SearchHit {
   workspace_id : String
   workspace_name : String
@@ -239,6 +312,10 @@ struct Model {
   town_progress : TownProgress?
   moonclaw_progress : MoonclawProgress?
   daemon_lifecycle : DaemonLifecycleResult?
+  daemon_agent : DaemonAgentResult?
+  events : Array[DeskEvent]
+  review_items : Array[ReviewItem]
+  review_diff : ReviewDiff?
   town_messages : Array[TownMessage]
   runs : Array[@desk.DeskRunProjection]
   inbox_title : String
@@ -278,6 +355,9 @@ enum Msg {
   LoadedAnalytics(Result[TownAnalytics, String])
   LoadedTownProgress(Result[TownProgress, String])
   LoadedMoonclawProgress(Result[MoonclawProgress, String])
+  LoadedEvents(Result[Array[DeskEvent], String])
+  LoadedReviewItems(Result[Array[ReviewItem], String])
+  LoadedReviewDiff(Result[ReviewDiff, String])
   LoadedSavedViews(Result[Array[SavedViewRecord], String])
   LoadedTags(Result[Array[TagRecord], String])
   LoadedSearch(Result[Array[SearchHit], String])
@@ -290,7 +370,10 @@ enum Msg {
   DispatchedDaemon(Result[DaemonDispatchResult, String])
   LoadedDaemonLifecycle(Result[DaemonLifecycleResult, String])
   ManagedDaemon(Result[DaemonLifecycleResult, String])
+  LoadedDaemonAgent(Result[DaemonAgentResult, String])
+  ManagedDaemonAgent(Result[DaemonAgentResult, String])
   RevealedSelection(Result[RevealResult, String])
+  LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectActivity(Activity)
   SelectWorkspace(String)
   SelectPath(String)
@@ -312,12 +395,16 @@ enum Msg {
   RestartDaemon
   EnableDaemonSupervision
   DisableDaemonSupervision
+  InstallDaemonAgent
+  UninstallDaemonAgent
   RevealSelection
   SetInboxTitle(String)
   SetInboxContent(String)
   SetImportUrl(String)
   SetImportNote(String)
   ImportUrlToInbox
+  ImportLocalFiles
+  PollDroppedImports
   LoadSelectionIntoInbox
   SaveInboxNote
   StageSelectedLink
@@ -333,9 +420,43 @@ enum Msg {
 }
 
 ///|
+fn initial_activity() -> Activity {
+  activity_from_slug(browser_initial_activity())
+}
+
+///|
+fn activity_from_slug(slug : String) -> Activity {
+  match slug {
+    "search" => Activity::Search
+    "inbox" => Activity::Inbox
+    "town" => Activity::Town
+    "runs" => Activity::Runs
+    "settings" => Activity::Settings
+    _ => Activity::Explorer
+  }
+}
+
+///|
+fn activity_slug(activity : Activity) -> String {
+  match activity {
+    Activity::Explorer => "explorer"
+    Activity::Search => "search"
+    Activity::Inbox => "inbox"
+    Activity::Town => "town"
+    Activity::Runs => "runs"
+    Activity::Settings => "settings"
+  }
+}
+
+///|
+fn activity_href(activity : Activity) -> String {
+  "?activity=\{activity_slug(activity)}"
+}
+
+///|
 fn init_model() -> Model {
   {
-    activity: Activity::Explorer,
+    activity: initial_activity(),
     command_open: false,
     loading: true,
     host_status: "connecting to local host",
@@ -354,6 +475,10 @@ fn init_model() -> Model {
     town_progress: None,
     moonclaw_progress: None,
     daemon_lifecycle: None,
+    daemon_agent: None,
+    events: [],
+    review_items: [],
+    review_diff: None,
     town_messages: [],
     runs: [],
     inbox_title: "Operator note",
@@ -568,6 +693,16 @@ fn daemon_lifecycle_label(result : DaemonLifecycleResult) -> String {
 }
 
 ///|
+fn daemon_agent_label(result : DaemonAgentResult) -> String {
+  let state = if result.installed {
+    if result.loaded { "loaded" } else { "installed" }
+  } else {
+    "not installed"
+  }
+  "LaunchAgent \{state}: \{result.message}"
+}
+
+///|
 fn raw_url(model : Model, path : String) -> String {
   if model.selected_workspace_id == "" {
     "#"
@@ -593,6 +728,11 @@ extern "js" fn encode_component(text : String) -> String =
 
 ///|
 #cfg(target="js")
+extern "js" fn browser_initial_activity() -> String =
+  #| () => new URLSearchParams(globalThis.location?.search || "").get("activity") || ""
+
+///|
+#cfg(target="js")
 extern "js" fn send_browser_notification(title : String, body : String) =
   #| (title, body) => {
   #|   if (!("Notification" in window)) return;
@@ -607,8 +747,158 @@ extern "js" fn send_browser_notification(title : String, body : String) =
   #| }
 
 ///|
+#cfg(target="js")
+extern "js" fn browser_pick_import_files() -> String =
+  #| async () => {
+  #|   const readFile = async (file, source) => {
+  #|     const textLike =
+  #|       file.type.startsWith("text/") ||
+  #|       /\.(md|txt|json|mbt|js|ts|tsx|jsx|css|html|xml|yaml|yml|toml|csv)$/i.test(file.name);
+  #|     const content = textLike
+  #|       ? await file.text()
+  #|       : await new Promise((resolve, reject) => {
+  #|           const reader = new FileReader();
+  #|           reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+  #|           reader.onload = () => resolve(String(reader.result ?? ""));
+  #|           reader.readAsDataURL(file);
+  #|         });
+  #|     return {
+  #|       id: `${source}:${file.name}:${file.size}:${file.lastModified}`,
+  #|       name: file.name || "pasted-file",
+  #|       media_type: file.type || "application/octet-stream",
+  #|       content,
+  #|       source,
+  #|     };
+  #|   };
+  #|   try {
+  #|     const input = document.createElement("input");
+  #|     input.type = "file";
+  #|     input.multiple = true;
+  #|     const files = await new Promise((resolve) => {
+  #|       input.onchange = () => resolve(Array.from(input.files || []));
+  #|       input.click();
+  #|     });
+  #|     const loaded = await Promise.all(files.map((file) => readFile(file, "picker")));
+  #|     return JSON.stringify({ ok: true, files: loaded, error: null });
+  #|   } catch (error) {
+  #|     return JSON.stringify({ ok: false, files: [], error: String(error) });
+  #|   }
+  #| }
+
+///|
+#cfg(target="js")
+extern "js" fn browser_take_dropped_import_files() -> String =
+  #| async () => {
+  #|   const state =
+  #|     (window.__moondeskImportState ||= { installed: false, queue: [] });
+  #|   const readFile = async (file, source) => {
+  #|     const textLike =
+  #|       file.type.startsWith("text/") ||
+  #|       /\.(md|txt|json|mbt|js|ts|tsx|jsx|css|html|xml|yaml|yml|toml|csv)$/i.test(file.name);
+  #|     const content = textLike
+  #|       ? await file.text()
+  #|       : await new Promise((resolve, reject) => {
+  #|           const reader = new FileReader();
+  #|           reader.onerror = () => reject(reader.error ?? new Error("Failed to read local file"));
+  #|           reader.onload = () => resolve(String(reader.result ?? ""));
+  #|           reader.readAsDataURL(file);
+  #|         });
+  #|     return {
+  #|       id: `${source}:${file.name}:${file.size}:${file.lastModified}`,
+  #|       name: file.name || `${source}-image-${Date.now()}.png`,
+  #|       media_type: file.type || "application/octet-stream",
+  #|       content,
+  #|       source,
+  #|     };
+  #|   };
+  #|   if (!state.installed) {
+  #|     const stop = (event) => {
+  #|       event.preventDefault();
+  #|       event.stopPropagation();
+  #|     };
+  #|     window.addEventListener("dragover", stop);
+  #|     window.addEventListener("drop", (event) => {
+  #|       stop(event);
+  #|       const files = Array.from(event.dataTransfer?.files || []);
+  #|       Promise.all(files.map((file) => readFile(file, "drop")))
+  #|         .then((loaded) => state.queue.push(...loaded))
+  #|         .catch((error) => state.queue.push({
+  #|           id: `drop-error:${Date.now()}`,
+  #|           name: "drop-error.txt",
+  #|           media_type: "text/plain",
+  #|           content: String(error),
+  #|           source: "drop",
+  #|         }));
+  #|     });
+  #|     window.addEventListener("paste", (event) => {
+  #|       const files = Array.from(event.clipboardData?.files || []);
+  #|       if (files.length === 0) return;
+  #|       Promise.all(files.map((file) => readFile(file, "paste")))
+  #|         .then((loaded) => state.queue.push(...loaded))
+  #|         .catch((error) => state.queue.push({
+  #|           id: `paste-error:${Date.now()}`,
+  #|           name: "paste-error.txt",
+  #|           media_type: "text/plain",
+  #|           content: String(error),
+  #|           source: "paste",
+  #|         }));
+  #|     });
+  #|     state.installed = true;
+  #|   }
+  #|   const files = state.queue.splice(0, state.queue.length);
+  #|   return JSON.stringify({ ok: true, files, error: null });
+  #| }
+
+///|
 fn notify_cmd(title : String, body : String) -> @rabbita.Cmd {
   @cmd.raw_effect(_ => send_browser_notification(title, body), kind=@cmd.after_render)
+}
+
+///|
+fn parse_browser_import_batch(
+  text : String,
+) -> Result[Array[LocalImportFile], String] {
+  if text.trim().to_string() == "" {
+    return Ok([])
+  }
+  let json : Result[Json, Error] = try? @json.parse(text)
+  let payload = match json {
+    Ok(json) =>
+      match
+        (try? @json.from_json(json) : Result[BrowserLocalImportBatch, Error]) {
+        Ok(payload) => payload
+        Err(error) => return Err("Failed to parse local import batch: \{error}")
+      }
+    Err(error) => return Err("Failed to parse local import wrapper: \{error}")
+  }
+  match payload.error {
+    Some(error) => Err(error)
+    None =>
+      if payload.ok {
+        Ok(payload.files)
+      } else {
+        Err("Local file import failed")
+      }
+  }
+}
+
+///|
+fn pick_import_files_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @rabbita.perform(fn(result) { dispatch(LocalFilesPicked(result)) }, fn() noraise {
+    parse_browser_import_batch(browser_pick_import_files())
+  })
+}
+
+///|
+fn take_dropped_imports_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @rabbita.perform(fn(result) { dispatch(LocalFilesPicked(result)) }, fn() noraise {
+    parse_browser_import_batch(browser_take_dropped_import_files())
+  })
+}
+
+///|
+fn schedule_import_drop_poll(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @rabbita.delay(dispatch(PollDroppedImports), 1200)
 }
 
 ///|
@@ -746,6 +1036,66 @@ fn fetch_moonclaw_progress_cmd(
 }
 
 ///|
+fn fetch_events_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  workspace_id : String,
+) -> @rabbita.Cmd {
+  @http.get(
+    "/api/moonclaw/events?workspace=\{encode_component(workspace_id)}",
+    expect=@http.Json(fn(result) { dispatch(LoadedEvents(result)) }, json => {
+      let moonclaw_events : Result[Array[DeskEvent], Error] = try? @json.from_json(json)
+      match moonclaw_events {
+        Ok(events) => Ok(events)
+        Err(_) => Err("Invalid event stream")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_town_events_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/town/events",
+    expect=@http.Json(fn(result) { dispatch(LoadedEvents(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid town event stream")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_review_items_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  workspace_id : String,
+) -> @rabbita.Cmd {
+  @http.get(
+    "/api/review/items?workspace=\{encode_component(workspace_id)}",
+    expect=@http.Json(fn(result) { dispatch(LoadedReviewItems(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid review queue")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_review_diff_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  workspace_id : String,
+  path : String,
+) -> @rabbita.Cmd {
+  @http.get(
+    "/api/workspaces/\{workspace_id}/review-diff?path=\{encode_component(path)}",
+    expect=@http.Json(fn(result) { dispatch(LoadedReviewDiff(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid review diff")
+      }
+    }),
+  )
+}
+
+///|
 fn fetch_saved_views_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
   @http.get(
     "/api/preferences/views",
@@ -776,6 +1126,18 @@ fn fetch_daemon_lifecycle_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd 
     expect=@http.Json(fn(result) { dispatch(LoadedDaemonLifecycle(result)) }, json => {
       Ok(@json.from_json(json)) catch {
         _ => Err("Invalid daemon lifecycle status")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_daemon_agent_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/town/daemon/agent",
+    expect=@http.Json(fn(result) { dispatch(LoadedDaemonAgent(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid daemon agent status")
       }
     }),
   )
@@ -834,6 +1196,33 @@ fn import_url_cmd(dispatch : (Msg) -> @rabbita.Cmd, model : Model) -> @rabbita.C
     expect=@http.Json(fn(result) { dispatch(ImportedInbox(result)) }, json => {
       Ok(@json.from_json(json)) catch {
         _ => Err("Could not import URL")
+      }
+    }),
+  )
+}
+
+///|
+fn import_local_file_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+  file : LocalImportFile,
+) -> @rabbita.Cmd {
+  let is_data_url = file.content.has_prefix("data:")
+  @http.post(
+    "/api/workspaces/\{model.selected_workspace_id}/import",
+    @http.Body::Json({
+      "kind": if file.source == "paste" { "paste" } else { "file" },
+      "title": file.name,
+      "filename": file.name,
+      "browser_import_id": file.id,
+      "content_type": file.media_type,
+      "note": model.import_note,
+      "content": if is_data_url { "" } else { file.content },
+      "data_url": if is_data_url { file.content } else { "" },
+    }),
+    expect=@http.Json(fn(result) { dispatch(ImportedInbox(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not import local file")
       }
     }),
   )
@@ -979,6 +1368,22 @@ fn set_daemon_supervision_cmd(
 }
 
 ///|
+fn manage_daemon_agent_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  action : String,
+) -> @rabbita.Cmd {
+  @http.post(
+    "/api/town/daemon/agent",
+    @http.Body::Json({ "action": action }),
+    expect=@http.Json(fn(result) { dispatch(ManagedDaemonAgent(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not update daemon LaunchAgent")
+      }
+    }),
+  )
+}
+
+///|
 fn reveal_selection_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   model : Model,
@@ -1013,7 +1418,11 @@ fn reload_workspace_cmds(
       fetch_standing_goals_cmd(dispatch),
       fetch_analytics_cmd(dispatch),
       fetch_town_progress_cmd(dispatch),
+      fetch_town_events_cmd(dispatch),
       fetch_daemon_lifecycle_cmd(dispatch),
+      fetch_daemon_agent_cmd(dispatch),
+      fetch_review_items_cmd(dispatch, workspace_id),
+      fetch_review_diff_cmd(dispatch, workspace_id, selected_path),
       fetch_saved_views_cmd(dispatch),
       fetch_tags_cmd(dispatch),
     ])
@@ -1105,6 +1514,17 @@ fn update(
       (@rabbita.none, { ..model, moonclaw_progress: Some(progress) })
     LoadedMoonclawProgress(Err(error)) =>
       (@rabbita.none, { ..model, host_status: error })
+    LoadedEvents(Ok(events)) => (@rabbita.none, { ..model, events })
+    LoadedEvents(Err(error)) =>
+      (@rabbita.none, { ..model, dispatch_status: error })
+    LoadedReviewItems(Ok(review_items)) =>
+      (@rabbita.none, { ..model, review_items })
+    LoadedReviewItems(Err(error)) =>
+      (@rabbita.none, { ..model, reveal_status: error })
+    LoadedReviewDiff(Ok(review_diff)) =>
+      (@rabbita.none, { ..model, review_diff: Some(review_diff) })
+    LoadedReviewDiff(Err(error)) =>
+      (@rabbita.none, { ..model, reveal_status: error })
     LoadedSavedViews(Ok(saved_views)) =>
       (@rabbita.none, { ..model, saved_views })
     LoadedSavedViews(Err(error)) =>
@@ -1201,6 +1621,7 @@ fn update(
           fetch_messages_cmd(dispatch),
           fetch_analytics_cmd(dispatch),
           fetch_town_progress_cmd(dispatch),
+          fetch_town_events_cmd(dispatch),
         ]),
         {
           ..model,
@@ -1217,6 +1638,7 @@ fn update(
           fetch_standing_goals_cmd(dispatch),
           fetch_analytics_cmd(dispatch),
           fetch_town_progress_cmd(dispatch),
+          fetch_town_events_cmd(dispatch),
         ]),
         {
           ..model,
@@ -1234,9 +1656,11 @@ fn update(
           fetch_standing_goals_cmd(dispatch),
           fetch_analytics_cmd(dispatch),
           fetch_town_progress_cmd(dispatch),
+          fetch_town_events_cmd(dispatch),
           fetch_runs_cmd(dispatch, model.selected_workspace_id),
           fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
           fetch_daemon_lifecycle_cmd(dispatch),
+          fetch_daemon_agent_cmd(dispatch),
         ]),
         {
           ..model,
@@ -1255,7 +1679,9 @@ fn update(
         @rabbita.batch([
           fetch_analytics_cmd(dispatch),
           fetch_town_progress_cmd(dispatch),
+          fetch_town_events_cmd(dispatch),
           fetch_daemon_lifecycle_cmd(dispatch),
+          fetch_daemon_agent_cmd(dispatch),
         ]),
         {
           ..model,
@@ -1267,6 +1693,29 @@ fn update(
       )
     ManagedDaemon(Err(error)) =>
       (@rabbita.none, { ..model, daemon_status: error, dispatch_status: error })
+    LoadedDaemonAgent(Ok(result)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          daemon_agent: Some(result),
+          daemon_status: daemon_agent_label(result),
+        },
+      )
+    LoadedDaemonAgent(Err(error)) =>
+      (@rabbita.none, { ..model, daemon_status: error })
+    ManagedDaemonAgent(Ok(result)) =>
+      (
+        fetch_daemon_agent_cmd(dispatch),
+        {
+          ..model,
+          daemon_agent: Some(result),
+          daemon_status: daemon_agent_label(result),
+          dispatch_status: result.message,
+        },
+      )
+    ManagedDaemonAgent(Err(error)) =>
+      (@rabbita.none, { ..model, daemon_status: error })
     RevealedSelection(Ok(result)) =>
       (
         @rabbita.none,
@@ -1281,6 +1730,27 @@ fn update(
       )
     RevealedSelection(Err(error)) =>
       (@rabbita.none, { ..model, reveal_status: error })
+    LocalFilesPicked(Ok(files)) =>
+      if files.length() == 0 {
+        (@rabbita.none, model)
+      } else if model.selected_workspace_id == "" {
+        (@rabbita.none, { ..model, inbox_status: "select a workspace first" })
+      } else {
+        let cmds : Array[@rabbita.Cmd] = []
+        for file in files {
+          cmds.push(import_local_file_cmd(dispatch, model, file))
+        }
+        (
+          @rabbita.batch(cmds),
+          {
+            ..model,
+            activity: Activity::Inbox,
+            inbox_status: "importing \{files.length()} local file(s)",
+          },
+        )
+      }
+    LocalFilesPicked(Err(error)) =>
+      (@rabbita.none, { ..model, inbox_status: "local import failed: \{error}" })
     SelectActivity(activity) => (@rabbita.none, { ..model, activity })
     SelectWorkspace(workspace_id) =>
       (
@@ -1304,9 +1774,13 @@ fn update(
         @rabbita.batch([
           fetch_entries_cmd(dispatch, model.selected_workspace_id, path),
           fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
+          fetch_review_diff_cmd(dispatch, model.selected_workspace_id, path),
         ])
       } else {
-        fetch_preview_cmd(dispatch, model.selected_workspace_id, path)
+        @rabbita.batch([
+          fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
+          fetch_review_diff_cmd(dispatch, model.selected_workspace_id, path),
+        ])
       }
       (
         cmd,
@@ -1340,7 +1814,10 @@ fn update(
       )
     OpenQuickPath(path) =>
       (
-        fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
+        @rabbita.batch([
+          fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
+          fetch_review_diff_cmd(dispatch, model.selected_workspace_id, path),
+        ]),
         {
           ..model,
           selected_path: path,
@@ -1354,6 +1831,7 @@ fn update(
           fetch_entries_cmd(dispatch, workspace_id, ""),
           fetch_preview_cmd(dispatch, workspace_id, path),
           fetch_runs_cmd(dispatch, workspace_id),
+          fetch_review_diff_cmd(dispatch, workspace_id, path),
         ]),
         {
           ..model,
@@ -1424,6 +1902,16 @@ fn update(
         set_daemon_supervision_cmd(dispatch, false),
         { ..model, daemon_status: "disabling supervision" },
       )
+    InstallDaemonAgent =>
+      (
+        manage_daemon_agent_cmd(dispatch, "install"),
+        { ..model, daemon_status: "installing LaunchAgent" },
+      )
+    UninstallDaemonAgent =>
+      (
+        manage_daemon_agent_cmd(dispatch, "uninstall"),
+        { ..model, daemon_status: "removing LaunchAgent" },
+      )
     RevealSelection =>
       (
         reveal_selection_cmd(dispatch, model),
@@ -1446,6 +1934,19 @@ fn update(
         )
       }
     }
+    ImportLocalFiles =>
+      (
+        pick_import_files_cmd(dispatch),
+        { ..model, activity: Activity::Inbox, inbox_status: "opening file picker" },
+      )
+    PollDroppedImports =>
+      (
+        @rabbita.batch([
+          take_dropped_imports_cmd(dispatch),
+          schedule_import_drop_poll(dispatch),
+        ]),
+        model,
+      )
     LoadSelectionIntoInbox => {
       let content = match model.preview {
         Some(preview) if is_textual_renderer(preview.renderer) => preview.body
@@ -1534,8 +2035,12 @@ fn update(
           fetch_standing_goals_cmd(dispatch),
           fetch_analytics_cmd(dispatch),
           fetch_town_progress_cmd(dispatch),
+          fetch_town_events_cmd(dispatch),
           fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
           fetch_daemon_lifecycle_cmd(dispatch),
+          fetch_daemon_agent_cmd(dispatch),
+          fetch_review_items_cmd(dispatch, model.selected_workspace_id),
+          fetch_review_diff_cmd(dispatch, model.selected_workspace_id, model.selected_path),
           fetch_saved_views_cmd(dispatch),
           fetch_tags_cmd(dispatch),
         ]),
@@ -1546,7 +2051,6 @@ fn update(
 
 ///|
 fn render_activity_rail(
-  dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
   aside(class="activity-rail", [
@@ -1559,10 +2063,10 @@ fn render_activity_rail(
         } else {
           "rail-button"
         }
-        button(
+        a(
           class=class_name,
           title=item.label,
-          on_click=dispatch(SelectActivity(item.key)),
+          href=activity_href(item.key),
           [
             span(class="rail-icon", item.icon),
             span(class="sr-only", item.label),
@@ -1816,7 +2320,15 @@ fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         on_input=fn(value) { dispatch(SetImportNote(value)) },
         "",
       ),
-      button(class="secondary-button full", on_click=dispatch(ImportUrlToInbox), "Import URL"),
+      div(class="toolbar-actions stack-actions", [
+        button(class="secondary-button", on_click=dispatch(ImportUrlToInbox), "Import URL"),
+        button(class="secondary-button", on_click=dispatch(ImportLocalFiles), "Import Files"),
+      ]),
+      div(class="import-dropzone", [
+        span(class="record-kind", "local"),
+        strong("File and Image Intake"),
+        small("Queued drops and pasted images are staged as inbox imports."),
+      ]),
     ]),
     section(class="side-section", [
       h3("Preview"),
@@ -1886,6 +2398,7 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       p(class="status-line", model.dispatch_status),
     ]),
     render_town_progress_panel(model),
+    render_event_panel(model),
     render_daemon_lifecycle_panel(dispatch, model),
     render_standing_goal_list(model),
     render_request_list(model),
@@ -1932,6 +2445,41 @@ fn latest_run_label(progress : TownProgress) -> String {
 }
 
 ///|
+fn render_event_panel(model : Model) -> @rabbita.Html {
+  section(class="side-section", [
+    h3("Events"),
+    if model.events.length() == 0 {
+      p(class="status-line", "no recent events")
+    } else {
+      div(
+        class="event-list",
+        model.events[:event_limit(model.events)].map(event =>
+          div(class="event-row " + event.severity, [
+            span(class="record-kind", event.severity),
+            strong(event.title),
+            small("\{event.source} / \{event.kind} / \{event.id} / \{event_time_label(event)}"),
+            p(event.detail),
+          ])
+        ),
+      )
+    },
+  ])
+}
+
+///|
+fn event_limit(events : Array[DeskEvent]) -> Int {
+  if events.length() > 8 { 8 } else { events.length() }
+}
+
+///|
+fn event_time_label(event : DeskEvent) -> String {
+  let tick = if event.tick > 0 { "tick \{event.tick}" } else { "no tick" }
+  let run = if event.run_id == "" { "no run" } else { event.run_id }
+  let time = if event.created_at == "" { empty_label(event.path) } else { event.created_at }
+  "\{tick} / \{run} / \{time}"
+}
+
+///|
 fn render_daemon_lifecycle_panel(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -1970,9 +2518,29 @@ fn render_daemon_lifecycle_panel(
       button(class="secondary-button", on_click=dispatch(FetchDaemonLifecycle), "Status"),
       button(class="secondary-button", on_click=dispatch(EnableDaemonSupervision), "Supervise"),
       button(class="secondary-button", on_click=dispatch(DisableDaemonSupervision), "Unsupervise"),
+      button(class="secondary-button", on_click=dispatch(InstallDaemonAgent), "Install Agent"),
+      button(class="secondary-button", on_click=dispatch(UninstallDaemonAgent), "Remove Agent"),
     ]),
+    render_daemon_agent_state(model),
     p(class="status-line", model.daemon_status),
   ])
+}
+
+///|
+fn render_daemon_agent_state(model : Model) -> @rabbita.Html {
+  match model.daemon_agent {
+    Some(agent) =>
+      div(class="daemon-state", [
+        info_row("Agent", if agent.installed { if agent.loaded { "loaded" } else { "installed" } } else { "none" }),
+        info_row("Result", if agent.ok { "ok" } else { "failed \{agent.exit_code}" }),
+        info_row("Action", agent.action),
+        info_row("Label", agent.label),
+        info_row("Plist", agent.plist_path),
+        info_row("Command", agent.command),
+        info_row("CWD", agent.cwd),
+      ])
+    None => div(class="daemon-state", [info_row("Agent", "unknown")])
+  }
 }
 
 ///|
@@ -2106,6 +2674,7 @@ fn render_settings_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Htm
       p(class="status-line", model.notification_status),
     ]),
     render_saved_views_panel(dispatch, model),
+    render_review_queue_panel(dispatch, model),
     section(class="side-section", [
       h3("Calendar Export"),
       a(
@@ -2157,6 +2726,44 @@ fn render_saved_views_panel(dispatch : Dispatch[Msg], model : Model) -> @rabbita
       }),
     ),
   ])
+}
+
+///|
+fn render_review_queue_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="side-section", [
+    h3("Review Queue"),
+    if model.review_items.length() == 0 {
+      p(class="status-line", "none")
+    } else {
+      div(
+        class="mini-list",
+        model.review_items[:review_limit(model.review_items)].map(item => {
+          let msg = if item.workspace_id == "" {
+            SelectActivity(Activity::Town)
+          } else {
+            SelectSearchHit(item.workspace_id, item.path)
+          }
+          button(
+            class="mini-link",
+            title="\{item.id} / \{item.kind} / \{item.detail}",
+            on_click=dispatch(msg),
+            [
+              span(item.title),
+              small("\{item.status} / \{item.path}"),
+            ],
+          )
+        }),
+      )
+    },
+  ])
+}
+
+///|
+fn review_limit(items : Array[ReviewItem]) -> Int {
+  if items.length() > 8 { 8 } else { items.length() }
 }
 
 ///|
@@ -2257,6 +2864,11 @@ fn render_analytics_panel(model : Model) -> @rabbita.Html {
         info_row("Review", analytics.needs_review.to_string()),
         info_row("Failures", analytics.failures.to_string()),
         info_row("Deferred", analytics.deferred.to_string()),
+        info_row("Events", analytics.event_count.to_string()),
+        info_row("Failure Events", analytics.failure_event_count.to_string()),
+        info_row("Review Events", analytics.review_event_count.to_string()),
+        info_row("Review Queue", analytics.review_item_count.to_string()),
+        info_row("Last Failure", empty_label(analytics.last_failure)),
         div(class="outcome-mix", [
           outcome_row("updates", analytics.updates, outcomes, "updates"),
           outcome_row("no-change", analytics.no_changes, outcomes, "quiet"),
@@ -2508,6 +3120,7 @@ fn render_inspector(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       button(class="secondary-button full", on_click=dispatch(TagSelection), "Tag Selection"),
       render_tag_list(model),
     ]),
+    render_review_diff_panel(model),
     section(class="inspector-section", [
       h3("Favorites"),
       render_path_list(dispatch, model.favorites),
@@ -2532,6 +3145,29 @@ fn render_inspector(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       ),
       p(class="status-line", model.request_status),
     ]),
+  ])
+}
+
+///|
+fn render_review_diff_panel(model : Model) -> @rabbita.Html {
+  section(class="inspector-section", [
+    h3("Review"),
+    match model.review_diff {
+      Some(diff) =>
+        div(class="review-diff", [
+          info_row("Base", empty_label(diff.base_path)),
+          info_row("Path", diff.path),
+          info_row("Workspace", diff.workspace_id),
+          info_row("Compare", empty_label(diff.comparison_path)),
+          info_row("Ready", if diff.ok { "yes" } else { "no" }),
+          info_row("Added", diff.added.to_string()),
+          info_row("Removed", diff.removed.to_string()),
+          info_row("Changed", if diff.changed { "yes" } else { "no" }),
+          pre(class="source-block compact", code(diff.body)),
+        ])
+      None =>
+        p(class="status-line", "waiting for diff")
+    },
   ])
 }
 
@@ -2740,7 +3376,7 @@ fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   div(class="desk-shell", [
     render_title_bar(dispatch, model),
     div(class="desk-main", [
-      render_activity_rail(dispatch, model),
+      render_activity_rail(model),
       render_explorer(dispatch, model),
       render_preview_center(dispatch, model),
       render_inspector(dispatch, model),
@@ -2763,17 +3399,27 @@ test {
   ignore(fetch_analytics_cmd)
   ignore(fetch_town_progress_cmd)
   ignore(fetch_moonclaw_progress_cmd)
+  ignore(fetch_town_events_cmd)
+  ignore(fetch_events_cmd)
+  ignore(fetch_review_items_cmd)
+  ignore(fetch_review_diff_cmd)
   ignore(fetch_saved_views_cmd)
   ignore(fetch_tags_cmd)
+  ignore(fetch_daemon_agent_cmd)
   ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
   ignore(import_url_cmd)
+  ignore(import_local_file_cmd)
   ignore(save_view_cmd)
   ignore(save_tag_cmd)
   ignore(submit_request_cmd)
   ignore(create_standing_goal_cmd)
   ignore(dispatch_daemon_cmd)
   ignore(set_daemon_supervision_cmd)
+  ignore(manage_daemon_agent_cmd)
+  ignore(pick_import_files_cmd)
+  ignore(take_dropped_imports_cmd)
+  ignore(schedule_import_drop_poll)
   ignore(reveal_selection_cmd)
   ignore(notify_cmd)
 }
@@ -2785,6 +3431,9 @@ fn main {
     model,
   ) => render_app(dispatch, model))
   let app = @rabbita.new(cell)
-  app.with_init(fetch_workspaces_cmd(dispatch))
+  app.with_init(@rabbita.batch([
+    fetch_workspaces_cmd(dispatch),
+    schedule_import_drop_poll(dispatch),
+  ]))
   app.mount("app")
 }

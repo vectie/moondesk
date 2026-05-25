@@ -2,10 +2,12 @@
 
 For the current implementation/readiness summary, see
 [Moondesk Status](STATUS.md). In brief: Moondesk is usable as a local
-single-user alpha. M0-M4 are functionally complete for local use, M5-M6 have
-working first slices, and production native distribution still needs
-credentialed notarization/installer policy, a native window shell if browser
-launch is not enough, and product hardening.
+single-user alpha. It is roughly 90% complete for browser-hosted daily use,
+90% complete for a self-contained local `.app` bundle, and 85% complete for a
+production browser-shell desktop app. M0-M4 are functionally complete for local
+use, M5-M6 have working first slices with review/event/analytics coverage, and
+production distribution now mainly needs credentialed notarization, update
+hosting policy, clean-machine validation, and long-running hardening.
 
 ## M0: Plan And Skeleton
 
@@ -48,11 +50,12 @@ Acceptance:
 
 ## M2: Human Inbox And Editing
 
-Status: complete for markdown inbox notes and URL import staging. The host can
+Status: complete for markdown inbox notes and import staging. The host can
 create new inbox notes, edit existing `inbox/*` paths through
 `POST /api/workspaces/:id/inbox`, and stage URL/data-url imports through
 `POST /api/workspaces/:id/import`. The UI provides note title/content editing,
-preview, selection loading, safe link-to-inbox staging, and a URL importer.
+preview, selection loading, safe link-to-inbox staging, URL import, local file
+picker import, drag/drop import, and pasted file/image import.
 
 Deliverables:
 
@@ -94,17 +97,19 @@ Acceptance:
 
 ## M4: Pure MoonBit Desktop Host
 
-Status: desktop packaging slice complete. `cmd/main serve` and
-`cmd/main desktop` run a pure MoonBit local host and serve the built Rabbita
-shell; `desktop` opens the browser explicitly. Browser notification permission
-can be requested from the UI. Scoped Finder reveal is available through
-`POST /api/workspaces/:id/reveal`, and `cmd/main bundle` creates a
-self-contained macOS `.app` distribution with the native MoonBit host
-executable, bundled UI resources, ad-hoc signing by default, browser launch on
-bundle start, and an optional zip archive. `cmd/main release` writes a release
-manifest and can submit the zip through `xcrun notarytool` when a keychain
-profile is provided. `cmd/main launch-agent` writes a LaunchAgent template for
-supervised login startup.
+Status: desktop packaging slice complete for the explicit browser-shell target.
+`cmd/main serve` and `cmd/main desktop` run a pure MoonBit local host and serve
+the built Rabbita shell; `desktop` opens the browser explicitly. Browser
+notification permission can be requested from the UI. Scoped Finder reveal is
+available through `POST /api/workspaces/:id/reveal`, and `cmd/main bundle`
+creates a self-contained macOS `.app` distribution with the native MoonBit host
+executable, bundled UI resources, ad-hoc or identity-based signing,
+version/channel metadata, browser launch on bundle start, and an optional zip
+archive. `cmd/main release` writes release/update manifests, creates a DMG,
+verifies signing, and can submit the zip through `xcrun notarytool` when a
+keychain profile is provided. `cmd/main launch-agent`, `install-agent`,
+`uninstall-agent`, and `agent-status` cover LaunchAgent templates and install
+state for the desk host or Moontown daemon.
 
 Deliverables:
 
@@ -118,6 +123,9 @@ Deliverables:
 - local macOS app-shell bundle command
 - self-contained native executable distribution
 - ad-hoc or identity-based app signing
+- explicit browser-shell metadata
+- DMG/release/update manifest generation
+- LaunchAgent install/remove/status flow
 
 Acceptance:
 
@@ -127,14 +135,15 @@ Acceptance:
 - no broad arbitrary filesystem access is required
 - scoped reveal works only for paths under the selected workspace
 - app bundle does not depend on `moon run` at launch
+- release output contains enough metadata for install/update hosting
 
 ## M5: Search And Cross-Book Workflows
 
 Status: first workflow slice complete. The host exposes
 `GET /api/search?query=...` across discovered MoonBooks plus preference routes
 for saved views and path tags. The UI can search, open hits, favorite paths,
-save the current view, tag selected context, and copy selected context into
-inbox notes.
+save the current view, tag selected context, copy selected context into inbox
+notes, inspect review queues, and view line-level review diffs.
 
 Deliverables:
 
@@ -155,8 +164,9 @@ Status: first operating slice complete. The UI has a daily operating surface
 with request/run/message/standing-goal counts, browser notification trigger,
 recent/favorite context, saved views, tags, a text export snapshot, a cadence
 list and calendar-like due-tick view for standing goals, host-backed analytics,
-live Moontown/MoonClaw progress summaries, and ICS calendar export. Rich trend
-charts and polished external calendar subscription flows remain future work.
+live Moontown/MoonClaw progress summaries, event/failure/review projections,
+review queue, and ICS calendar export. Rich trend charts and polished external
+calendar subscription flows remain refinement work.
 
 Deliverables:
 

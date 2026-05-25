@@ -15,6 +15,9 @@ priv struct BundleOptions {
   host : String
   port : Int
   sign_identity : String
+  version : String
+  channel : String
+  shell_policy : String
   archive : Bool
   skip_sign : Bool
 }
@@ -40,6 +43,9 @@ fn default_bundle_options() -> BundleOptions {
     host: serve.host,
     port: 4199,
     sign_identity: "-",
+    version: "0.1.0",
+    channel: "local",
+    shell_policy: "browser-shell",
     archive: true,
     skip_sign: false,
   }
@@ -152,6 +158,31 @@ fn parse_bundle_args(args : Array[String]) -> BundleOptions? {
       "--sign-identity" =>
         if index + 1 < args.length() {
           options = { ..options, sign_identity: args[index + 1] }
+          index += 2
+        } else {
+          return None
+        }
+      "--version" =>
+        if index + 1 < args.length() {
+          options = { ..options, version: args[index + 1] }
+          index += 2
+        } else {
+          return None
+        }
+      "--channel" =>
+        if index + 1 < args.length() {
+          options = { ..options, channel: args[index + 1] }
+          index += 2
+        } else {
+          return None
+        }
+      "--shell" =>
+        if index + 1 < args.length() {
+          let shell = args[index + 1]
+          if shell != "browser" && shell != "browser-shell" {
+            return None
+          }
+          options = { ..options, shell_policy: "browser-shell" }
           index += 2
         } else {
           return None
@@ -309,7 +340,7 @@ async fn run_bundle(args : Array[String]) -> Unit {
   }
   @fsx.write_to_file(
     @pathx.join(contents, "Info.plist"),
-    info_plist(),
+    info_plist(options.version),
     create=0o644,
   ) catch {
     error => {
@@ -329,7 +360,7 @@ async fn run_bundle(args : Array[String]) -> Unit {
   }
   @fsx.write_to_file(
     @pathx.join(resources, "README.txt"),
-    "Moondesk.app contains a native MoonBit host executable and bundled Rabbita UI resources. It serves \{options.workspace_root} on \{options.host}:\{options.port}.\n",
+    "Moondesk.app contains a native MoonBit host executable and bundled Rabbita UI resources. It serves \{options.workspace_root} on \{options.host}:\{options.port} using the explicit \{options.shell_policy} desktop shell.\n",
     create=0o644,
   ) catch {
     error => {
@@ -373,6 +404,7 @@ async fn run_release(args : Array[String]) -> Unit {
   let bundle_args : Array[String] = []
   let mut notary_profile = ""
   let mut staple = true
+  let mut create_dmg = true
   let mut index = 0
   while index < args.length() {
     match args[index] {
@@ -386,6 +418,10 @@ async fn run_release(args : Array[String]) -> Unit {
         }
       "--no-staple" => {
         staple = false
+        index += 1
+      }
+      "--no-dmg" => {
+        create_dmg = false
         index += 1
       }
       value => {
@@ -406,57 +442,92 @@ async fn run_release(args : Array[String]) -> Unit {
   let out_dir = absolute_path(parsed.out_dir, repo_root)
   let app_root = @pathx.join(out_dir, "Moondesk.app")
   let archive_path = @pathx.join(out_dir, "Moondesk.app.zip")
+  let dmg_path = @pathx.join(out_dir, "Moondesk-\{parsed.version}.dmg")
+  let update_manifest_path = @pathx.join(out_dir, "updates.json")
   if !@fsx.exists(app_root) {
     println("release failed: app bundle was not created")
     return
   }
+  let signed = verify_codesign(app_root)
+  let dmg_created = if create_dmg {
+    create_release_dmg(app_root, dmg_path)
+  } else {
+    false
+  }
+  let mut notarized = false
+  if notary_profile != "" && @fsx.exists(archive_path) {
+    let notary_code = @process.run("xcrun", [
+      "notarytool", "submit", archive_path, "--keychain-profile", notary_profile,
+      "--wait",
+    ]) catch {
+      _ => -1
+    }
+    if notary_code != 0 {
+      println("release warning: notarytool exited with \{notary_code}")
+    } else {
+      notarized = true
+      if staple {
+        let staple_code = @process.run("xcrun", ["stapler", "staple", app_root]) catch {
+          _ => -1
+        }
+        if staple_code != 0 {
+          println("release warning: stapler exited with \{staple_code}")
+          notarized = false
+        }
+      }
+    }
+  } else if notary_profile == "" {
+    println(
+      "release ready: add --notary-profile <profile> to submit the archive with xcrun notarytool",
+    )
+  } else {
+    println(
+      "release warning: archive not found at \{archive_path}; notarization skipped",
+    )
+  }
+  let manifest = release_manifest_json(
+    parsed,
+    app_root,
+    archive_path,
+    dmg_path,
+    update_manifest_path,
+    notary_profile,
+    signed~,
+    dmg_created~,
+    notarized~,
+  )
   @fsx.write_to_file(
     @pathx.join(out_dir, "release-manifest.json"),
-    release_manifest_json(parsed, app_root, archive_path, notary_profile).stringify(
-      indent=2,
-    ) +
-    "\n",
+    manifest.stringify(indent=2) + "\n",
     create=0o644,
   ) catch {
     error => println("release warning: could not write manifest: \{error}")
   }
-  if notary_profile == "" {
-    println(
-      "release ready: add --notary-profile <profile> to submit the archive with xcrun notarytool",
-    )
-    return
+  @fsx.write_to_file(
+    update_manifest_path,
+    update_manifest_json(
+      parsed,
+      archive_path,
+      dmg_path,
+      dmg_created~,
+      notarized~,
+    ).stringify(indent=2) +
+    "\n",
+    create=0o644,
+  ) catch {
+    error =>
+      println("release warning: could not write update manifest: \{error}")
   }
-  if !@fsx.exists(archive_path) {
-    println(
-      "release warning: archive not found at \{archive_path}; notarization skipped",
-    )
-    return
-  }
-  let notary_code = @process.run("xcrun", [
-    "notarytool", "submit", archive_path, "--keychain-profile", notary_profile, "--wait",
-  ]) catch {
-    _ => -1
-  }
-  if notary_code != 0 {
-    println("release warning: notarytool exited with \{notary_code}")
-    return
-  }
-  if staple {
-    let staple_code = @process.run("xcrun", ["stapler", "staple", app_root]) catch {
-      _ => -1
-    }
-    if staple_code != 0 {
-      println("release warning: stapler exited with \{staple_code}")
-      return
-    }
-  }
-  println("release notarized: \{app_root}")
+  println(
+    "release complete: \{app_root} (\{parsed.shell_policy}, signed=\{signed}, notarized=\{notarized}, dmg=\{dmg_created})",
+  )
 }
 
 ///|
 async fn run_launch_agent(args : Array[String]) -> Unit {
   let mut options = default_serve_options()
   let mut out_path = "dist/app.vectie.moondesk.plist"
+  let mut service = "desk"
   let mut index = 0
   let mut seen_root = false
   while index < args.length() {
@@ -464,6 +535,18 @@ async fn run_launch_agent(args : Array[String]) -> Unit {
       "--out" =>
         if index + 1 < args.length() {
           out_path = args[index + 1]
+          index += 2
+        } else {
+          print_usage()
+          return
+        }
+      "--service" =>
+        if index + 1 < args.length() {
+          service = args[index + 1]
+          if service != "desk" && service != "town" {
+            print_usage()
+            return
+          }
           index += 2
         } else {
           print_usage()
@@ -509,7 +592,12 @@ async fn run_launch_agent(args : Array[String]) -> Unit {
   }
   @fsx.write_to_file(
     absolute_out,
-    launch_agent_plist(repo_root, absolute_root, options.port),
+    launch_agent_plist_for_service(
+      repo_root,
+      absolute_root,
+      options.port,
+      service,
+    ),
     create=0o644,
   ) catch {
     error => {
@@ -521,22 +609,250 @@ async fn run_launch_agent(args : Array[String]) -> Unit {
 }
 
 ///|
-fn release_manifest_json(
+async fn run_install_agent(args : Array[String]) -> Unit {
+  let mut options = default_serve_options()
+  let mut service = "desk"
+  let mut index = 0
+  let mut seen_root = false
+  while index < args.length() {
+    match args[index] {
+      "--service" =>
+        if index + 1 < args.length() {
+          service = args[index + 1]
+          if service != "desk" && service != "town" {
+            print_usage()
+            return
+          }
+          index += 2
+        } else {
+          print_usage()
+          return
+        }
+      "--port" =>
+        if index + 1 < args.length() {
+          let port = @string.parse_int(args[index + 1]) catch {
+            _ => {
+              print_usage()
+              return
+            }
+          }
+          options = { ..options, port, }
+          index += 2
+        } else {
+          print_usage()
+          return
+        }
+      value =>
+        if !seen_root && !value.has_prefix("-") {
+          options = { ..options, workspace_root: value }
+          seen_root = true
+          index += 1
+        } else {
+          print_usage()
+          return
+        }
+    }
+  }
+  let repo_root = @pathx.normalize(@env.current_dir().unwrap_or("."))
+  let absolute_root = absolute_path(options.workspace_root, repo_root)
+  let label = launch_agent_label(service)
+  let plist_path = launch_agent_user_path(label)
+  @fsx.make_directory(
+    @pathx.dirname(plist_path).to_string(),
+    recursive=true,
+    exists_ok=true,
+  ) catch {
+    error => {
+      println("install-agent failed: \{error}")
+      return
+    }
+  }
+  @fsx.write_to_file(
+    plist_path,
+    launch_agent_plist_for_service(
+      repo_root,
+      absolute_root,
+      options.port,
+      service,
+    ),
+    create=0o644,
+  ) catch {
+    error => {
+      println("install-agent failed: \{error}")
+      return
+    }
+  }
+  ignore(launchctl_unload(label, plist_path))
+  let code = launchctl_load(label, plist_path)
+  println(
+    "install-agent \{service}: \{if code == 0 { "loaded" } else { "written" }} \{plist_path} (launchctl \{code})",
+  )
+}
+
+///|
+async fn run_uninstall_agent(args : Array[String]) -> Unit {
+  let service = match args {
+    ["--service", value] => value
+    [] => "desk"
+    _ => {
+      print_usage()
+      return
+    }
+  }
+  if service != "desk" && service != "town" {
+    print_usage()
+    return
+  }
+  let label = launch_agent_label(service)
+  let plist_path = launch_agent_user_path(label)
+  let code = launchctl_unload(label, plist_path)
+  @fs.remove(plist_path) catch {
+    _ => ()
+  }
+  println(
+    "uninstall-agent \{service}: removed \{plist_path} (launchctl \{code})",
+  )
+}
+
+///|
+async fn run_agent_status(args : Array[String]) -> Unit {
+  let service = match args {
+    ["--service", value] => value
+    [] => "desk"
+    _ => {
+      print_usage()
+      return
+    }
+  }
+  if service != "desk" && service != "town" {
+    print_usage()
+    return
+  }
+  let label = launch_agent_label(service)
+  let plist_path = launch_agent_user_path(label)
+  let loaded = launchctl_status(label) == 0
+  println(
+    "\{service} agent installed=\{@fsx.exists(plist_path)} loaded=\{loaded} label=\{label} path=\{plist_path}",
+  )
+}
+
+///|
+async fn release_manifest_json(
   options : BundleOptions,
   app_root : String,
   archive_path : String,
+  dmg_path : String,
+  update_manifest_path : String,
   notary_profile : String,
+  signed~ : Bool,
+  dmg_created~ : Bool,
+  notarized~ : Bool,
 ) -> Json {
   {
     "app": app_root,
     "archive": archive_path,
+    "archive_sha256": file_sha256(archive_path),
+    "dmg": dmg_path,
+    "dmg_created": dmg_created,
+    "dmg_sha256": file_sha256(dmg_path),
+    "update_manifest": update_manifest_path,
     "workspace_root": options.workspace_root,
     "ui_dir": options.ui_dir,
     "host": options.host,
     "port": options.port,
+    "version": options.version,
+    "channel": options.channel,
+    "distribution_mode": "self-contained-local-app",
+    "shell_policy": options.shell_policy,
+    "native_window": false,
     "sign_identity": options.sign_identity,
+    "signed": signed,
     "notary_profile": notary_profile,
-    "notarized": notary_profile != "",
+    "notarized": notarized,
+    "installer": if dmg_created {
+      "dmg"
+    } else {
+      "zip"
+    },
+  }
+}
+
+///|
+async fn update_manifest_json(
+  options : BundleOptions,
+  archive_path : String,
+  dmg_path : String,
+  dmg_created~ : Bool,
+  notarized~ : Bool,
+) -> Json {
+  let artifacts : Array[Json] = []
+  artifacts.push({
+    "kind": "zip",
+    "path": archive_path,
+    "sha256": file_sha256(archive_path),
+  })
+  if dmg_created {
+    artifacts.push({
+      "kind": "dmg",
+      "path": dmg_path,
+      "sha256": file_sha256(dmg_path),
+    })
+  }
+  {
+    "name": "Moondesk",
+    "version": options.version,
+    "channel": options.channel,
+    "shell_policy": options.shell_policy,
+    "native_window": false,
+    "notarized": notarized,
+    "artifacts": Json::array(artifacts),
+    "install": {
+      "macos": "Open the DMG or unzip Moondesk.app, then drag the app to Applications.",
+      "daemon": "Use the in-app daemon panel to install or remove the Moontown LaunchAgent.",
+    },
+  }
+}
+
+///|
+async fn verify_codesign(app_root : String) -> Bool {
+  (@process.run("codesign", ["--verify", "--deep", "--strict", app_root]) catch {
+    _ => -1
+  }) ==
+  0
+}
+
+///|
+async fn create_release_dmg(app_root : String, dmg_path : String) -> Bool {
+  @fs.remove(dmg_path) catch {
+    _ => ()
+  }
+  let code = @process.run("hdiutil", [
+    "create", "-volname", "Moondesk", "-srcfolder", app_root, "-ov", "-format", "UDZO",
+    dmg_path,
+  ]) catch {
+    _ => -1
+  }
+  if code != 0 {
+    println("release warning: hdiutil exited with \{code}")
+  }
+  code == 0
+}
+
+///|
+async fn file_sha256(path : String) -> String {
+  if !@fsx.exists(path) {
+    return ""
+  }
+  let output = @process.collect_output("shasum", ["-a", "256", path]) catch {
+    _ => return ""
+  }
+  if output.0 != 0 {
+    return ""
+  }
+  let text = (output.1.text() catch { _ => "" }).trim().to_string()
+  match text.find(" ") {
+    Some(index) => text[:index].to_string()
+    None => text
   }
 }
 
@@ -575,6 +891,111 @@ fn launch_agent_plist(
 }
 
 ///|
+fn town_daemon_launch_agent_plist(workspace_root : String) -> String {
+  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+  "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
+  "<plist version=\"1.0\">\n" +
+  "<dict>\n" +
+  "  <key>Label</key>\n" +
+  "  <string>app.vectie.moondesk.moontown</string>\n" +
+  "  <key>WorkingDirectory</key>\n" +
+  "  <string>\{xml_escape(workspace_root)}</string>\n" +
+  "  <key>ProgramArguments</key>\n" +
+  "  <array>\n" +
+  "    <string>moon</string>\n" +
+  "    <string>run</string>\n" +
+  "    <string>cmd/main</string>\n" +
+  "    <string>--</string>\n" +
+  "    <string>daemon</string>\n" +
+  "    <string>run</string>\n" +
+  "  </array>\n" +
+  "  <key>RunAtLoad</key>\n" +
+  "  <true/>\n" +
+  "  <key>KeepAlive</key>\n" +
+  "  <true/>\n" +
+  "  <key>StandardOutPath</key>\n" +
+  "  <string>\{xml_escape(@pathx.join(workspace_root, ".moontown/moondesk-daemon/launch-agent.out.log"))}</string>\n" +
+  "  <key>StandardErrorPath</key>\n" +
+  "  <string>\{xml_escape(@pathx.join(workspace_root, ".moontown/moondesk-daemon/launch-agent.err.log"))}</string>\n" +
+  "</dict>\n" +
+  "</plist>\n"
+}
+
+///|
+fn launch_agent_plist_for_service(
+  repo_root : String,
+  workspace_root : String,
+  port : Int,
+  service : String,
+) -> String {
+  if service == "town" {
+    town_daemon_launch_agent_plist(workspace_root)
+  } else {
+    launch_agent_plist(repo_root, workspace_root, port)
+  }
+}
+
+///|
+fn launch_agent_label(service : String) -> String {
+  if service == "town" {
+    "app.vectie.moondesk.moontown"
+  } else {
+    "app.vectie.moondesk"
+  }
+}
+
+///|
+fn launch_agent_user_path(label : String) -> String {
+  let home = @sys.get_env_var("HOME").unwrap_or(
+    @env.current_dir().unwrap_or("."),
+  )
+  @pathx.join(@pathx.join(home, "Library/LaunchAgents"), label + ".plist")
+}
+
+///|
+async fn current_uid() -> String {
+  let output = @process.collect_output("id", ["-u"]) catch { _ => return "" }
+  if output.0 == 0 {
+    (output.1.text() catch { _ => "" }).trim().to_string()
+  } else {
+    ""
+  }
+}
+
+///|
+async fn launchctl_domain() -> String {
+  let uid = current_uid()
+  if uid == "" {
+    "gui/0"
+  } else {
+    "gui/\{uid}"
+  }
+}
+
+///|
+async fn launchctl_load(label : String, plist_path : String) -> Int {
+  ignore(label)
+  @process.run("launchctl", ["bootstrap", launchctl_domain(), plist_path]) catch {
+    _ => -1
+  }
+}
+
+///|
+async fn launchctl_unload(label : String, plist_path : String) -> Int {
+  ignore(plist_path)
+  @process.run("launchctl", ["bootout", launchctl_domain() + "/" + label]) catch {
+    _ => -1
+  }
+}
+
+///|
+async fn launchctl_status(label : String) -> Int {
+  @process.run("launchctl", ["print", launchctl_domain() + "/" + label]) catch {
+    _ => -1
+  }
+}
+
+///|
 async fn open_browser_url(url : String) -> Unit {
   let mac = @process.run("open", [url]) catch { _ => -1 }
   if mac == 0 {
@@ -600,6 +1021,10 @@ fn bundle_config_json(options : BundleOptions) -> Json {
     "host": options.host,
     "port": options.port,
     "open_browser": true,
+    "version": options.version,
+    "channel": options.channel,
+    "shell_policy": options.shell_policy,
+    "native_window": false,
   }
 }
 
@@ -707,8 +1132,8 @@ fn xml_escape(text : String) -> String {
 }
 
 ///|
-fn info_plist() -> String {
-  (
+fn info_plist(version : String) -> String {
+  let template =
     #|<?xml version="1.0" encoding="UTF-8"?>
     #|<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     #|<plist version="1.0">
@@ -720,16 +1145,16 @@ fn info_plist() -> String {
     #|  <key>CFBundleIdentifier</key>
     #|  <string>app.vectie.moondesk</string>
     #|  <key>CFBundleVersion</key>
-    #|  <string>0.1.0</string>
+    #|  <string>MOONDESK_VERSION</string>
     #|  <key>CFBundleShortVersionString</key>
-    #|  <string>0.1.0</string>
+    #|  <string>MOONDESK_VERSION</string>
     #|  <key>CFBundleExecutable</key>
     #|  <string>moondesk</string>
     #|  <key>CFBundlePackageType</key>
     #|  <string>APPL</string>
     #|</dict>
     #|</plist>
-  )
+  template.replace_all(old="MOONDESK_VERSION", new=version).to_string()
 }
 
 ///|
@@ -756,8 +1181,11 @@ fn print_usage() -> Unit {
       #|  moon run cmd/main -- serve [root] [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188] [--open]
       #|  moon run cmd/main -- desktop [root] [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188]
       #|  moon run cmd/main -- bundle [root] [--ui ui/rabbita-desk/dist] [--out dist] [--host 127.0.0.1] [--port 4199] [--sign-identity -] [--skip-sign] [--no-archive]
-      #|  moon run cmd/main -- release [root] [bundle options] [--notary-profile keychain-profile] [--no-staple]
-      #|  moon run cmd/main -- launch-agent [root] [--out dist/app.vectie.moondesk.plist] [--port 4188]
+      #|  moon run cmd/main -- release [root] [bundle options] [--notary-profile keychain-profile] [--no-staple] [--no-dmg]
+      #|  moon run cmd/main -- launch-agent [root] [--service desk|town] [--out dist/app.vectie.moondesk.plist] [--port 4188]
+      #|  moon run cmd/main -- install-agent [root] [--service desk|town] [--port 4188]
+      #|  moon run cmd/main -- uninstall-agent [--service desk|town]
+      #|  moon run cmd/main -- agent-status [--service desk|town]
       #|
       #|Build the UI first with:
       #|  npm --prefix ui/rabbita-desk run build
@@ -774,6 +1202,9 @@ async fn main {
     ["bundle", .. rest] => run_bundle(rest.to_array())
     ["release", .. rest] => run_release(rest.to_array())
     ["launch-agent", .. rest] => run_launch_agent(rest.to_array())
+    ["install-agent", .. rest] => run_install_agent(rest.to_array())
+    ["uninstall-agent", .. rest] => run_uninstall_agent(rest.to_array())
+    ["agent-status", .. rest] => run_agent_status(rest.to_array())
     ["doctor", .. rest] => run_doctor(rest.to_array())
     [] => if !run_app_bundle(args) { print_usage() }
     _ => print_usage()
