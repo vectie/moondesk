@@ -137,6 +137,16 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "workspaces", workspace_id, "import"] =>
+      if method_ is @http.RequestMethod::Post {
+        handle_workspace_import(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "workspaces", workspace_id, "reveal"] =>
       if method_ is @http.RequestMethod::Post {
         handle_workspace_reveal(
@@ -171,9 +181,50 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "town", "daemon", "status"] =>
+      if is_read_method(method_) {
+        handle_daemon_lifecycle(workspace_root, "status", body, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "daemon", "supervision"] =>
+      if is_read_method(method_) || method_ is @http.RequestMethod::Post {
+        handle_daemon_supervision(workspace_root, body, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "daemon", action] =>
+      if method_ is @http.RequestMethod::Post &&
+        (action == "start" || action == "stop" || action == "restart") {
+        handle_daemon_lifecycle(workspace_root, action, body, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "town", "analytics"] =>
       if is_read_method(method_) {
         handle_town_analytics(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "progress"] =>
+      if is_read_method(method_) {
+        handle_town_progress(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "town", "calendar.ics"] =>
+      if is_read_method(method_) {
+        handle_town_calendar(workspace_root, method_, conn)
       } else {
         send_api_error(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
@@ -223,9 +274,37 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "moonclaw", "progress"] =>
+      if is_read_method(method_) {
+        handle_moonclaw_progress(workspace_root, request_path, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "moonclaw", "runs", run_id, "artifacts"] =>
       if is_read_method(method_) {
         handle_moonclaw_artifacts(workspace_root, run_id, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "preferences", "views"] =>
+      if is_read_method(method_) {
+        handle_saved_views(workspace_root, method_, conn)
+      } else if method_ is @http.RequestMethod::Post {
+        handle_save_view(workspace_root, body, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "preferences", "tags"] =>
+      if is_read_method(method_) {
+        handle_tags(workspace_root, method_, conn)
+      } else if method_ is @http.RequestMethod::Post {
+        handle_save_tag(workspace_root, body, method_, conn)
       } else {
         send_api_error(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
@@ -573,6 +652,105 @@ async fn handle_workspace_inbox(
     "workspace_id": workspace.id,
     "path": relative,
   })
+}
+
+///|
+async fn handle_workspace_import(
+  workspace_root : String,
+  workspace_id : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let workspace = match find_workspace(workspace_root, workspace_id) {
+    Some(workspace) => workspace
+    None => {
+      send_api_error(conn, method_, 404, "Not Found", "Unknown workspace")
+      return
+    }
+  }
+  let payload = match read_json_body(body) {
+    Some(json) => json
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid JSON body")
+      return
+    }
+  }
+  let kind = json_string(payload, "kind", default="note")
+  let title = json_string(payload, "title", default="Moondesk import")
+  let inbox_root = @pathx.join(workspace.root_path, "inbox/imports")
+  @fsx.make_directory(inbox_root, recursive=true, exists_ok=true) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not create import inbox",
+      )
+      return
+    }
+  }
+  let id = @desk.stable_id("import", title + "-" + @async.now().to_string())
+  let relative = "inbox/imports/" + id + ".md"
+  let absolute = @pathx.join(workspace.root_path, relative)
+  @fsx.write_to_file(
+    absolute,
+    import_markdown(payload, kind, title),
+    create=0o644,
+  ) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not write import note",
+      )
+      return
+    }
+  }
+  let data_url = json_string(payload, "data_url", default="")
+  let data_path = if data_url == "" {
+    ""
+  } else {
+    let data_relative = "inbox/imports/" + id + ".data-url.txt"
+    @fsx.write_to_file(
+      @pathx.join(workspace.root_path, data_relative),
+      data_url,
+      create=0o644,
+    ) catch {
+      _ => ()
+    }
+    data_relative
+  }
+  send_json(conn, method_, {
+    "ok": true,
+    "workspace_id": workspace.id,
+    "path": relative,
+    "kind": kind,
+    "data_path": data_path,
+  })
+}
+
+///|
+fn import_markdown(payload : Json, kind : String, title : String) -> String {
+  let url = json_string(payload, "url", default="")
+  let filename = json_string(payload, "filename", default="")
+  let note = json_string(payload, "note", default="")
+  let content = json_string(payload, "content", default="")
+  let mut body = "# \{title}\n\n"
+  body = body + "- Import kind: \{kind}\n"
+  if url != "" {
+    body = body + "- URL: \{url}\n"
+  }
+  if filename != "" {
+    body = body + "- File: \{filename}\n"
+  }
+  if note != "" {
+    body = body + "\n## Note\n\n\{note}\n"
+  }
+  if content != "" {
+    body = body + "\n## Content\n\n\{content}\n"
+  }
+  let data_url = json_string(payload, "data_url", default="")
+  if data_url != "" {
+    body = body +
+      "\n## Attachment\n\nThe browser captured an attachment data URL next to this note as `.data-url.txt`.\n"
+  }
+  body
 }
 
 ///|
@@ -954,6 +1132,210 @@ async fn handle_town_analytics(
     "deferred": count_watcher_decision(watcher_records, "Deferred"),
     "next_due_tick": next_due_tick(goals),
   })
+}
+
+///|
+async fn handle_town_progress(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let root = @pathx.normalize(workspace_root)
+  let daemon = read_json_file_or_object(town_daemon_path(root))
+  let lifecycle = daemon_status_record(root, "progress")
+  let goals = read_json_array_file(town_standing_goals_path(root))
+  let daemon_tick = json_int(daemon, "tick_sequence", default=0)
+  let dispatch_root = @pathx.join(root, ".moontown/moondesk-dispatches")
+  let request_root = @pathx.join(root, ".moontown/moondesk-requests")
+  let message_root = @pathx.join(root, ".moontown/book-results")
+  let latest_run = latest_run_info(root)
+  send_json(conn, method_, {
+    "daemon_tick": daemon_tick,
+    "daemon_running": json_bool(lifecycle, "running", default=false),
+    "daemon_status": json_string(lifecycle, "status", default="unknown"),
+    "supervision_enabled": json_bool(
+      lifecycle,
+      "supervision_enabled",
+      default=false,
+    ),
+    "due_goal_count": count_due_goals(goals, daemon_tick),
+    "next_due_tick": next_due_tick(goals),
+    "request_count": count_matching_files(request_root, ".json"),
+    "message_count": count_matching_files(message_root, ".json"),
+    "dispatch_count": count_matching_files(dispatch_root, ".json"),
+    "run_count": count_run_workspaces(root),
+    "latest_request": latest_matching_name(request_root, ".json"),
+    "latest_message": latest_matching_name(message_root, ".json"),
+    "latest_dispatch": latest_matching_name(dispatch_root, ".json"),
+    "latest_run": json_string(latest_run, "run_id", default=""),
+    "latest_run_status": json_string(latest_run, "status", default=""),
+    "latest_run_artifacts": json_int(latest_run, "artifact_count", default=0),
+  })
+}
+
+///|
+async fn handle_moonclaw_progress(
+  workspace_root : String,
+  request_path : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let requested_workspace = query_value(request_path, "workspace")
+  let summary = moonclaw_progress_summary(workspace_root, requested_workspace)
+  send_json(conn, method_, summary)
+}
+
+///|
+async fn handle_town_calendar(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let root = @pathx.normalize(workspace_root)
+  let daemon = read_json_file_or_object(town_daemon_path(root))
+  let daemon_tick = json_int(daemon, "tick_sequence", default=0)
+  let goals = read_json_array_file(town_standing_goals_path(root))
+  let mut body = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Vectie//Moondesk//EN\r\n"
+  for goal in goals {
+    if !json_bool(goal, "enabled", default=true) {
+      continue
+    }
+    let id = json_string(
+      goal,
+      "id",
+      default=@desk.stable_id(
+        "watch",
+        json_string(goal, "title", default="watch"),
+      ),
+    )
+    let title = json_string(goal, "title", default="Moondesk watch")
+    let next_due = json_int(goal, "next_due_tick", default=0)
+    let delta = next_due - daemon_tick
+    body = body +
+      "BEGIN:VTODO\r\n" +
+      "UID:\{ics_escape(id)}@moondesk\r\n" +
+      "SUMMARY:\{ics_escape(title)}\r\n" +
+      "STATUS:NEEDS-ACTION\r\n" +
+      "DESCRIPTION:\{ics_escape("Next due tick \{next_due}; current daemon tick \{daemon_tick}; delta \{delta}.")}\r\n" +
+      "END:VTODO\r\n"
+  }
+  body = body + "END:VCALENDAR\r\n"
+  send_text(conn, method_, "text/calendar; charset=utf-8", body)
+}
+
+///|
+async fn handle_saved_views(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  send_json(
+    conn,
+    method_,
+    Json::array(read_json_array_file(saved_views_path(workspace_root))),
+  )
+}
+
+///|
+async fn handle_save_view(
+  workspace_root : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let payload = match read_json_body(body) {
+    Some(json) => json
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid JSON body")
+      return
+    }
+  }
+  let title = json_string(payload, "title", default="Saved view")
+  let id = json_string(payload, "id", default=@desk.stable_id("view", title))
+  let record : Json = {
+    "id": id,
+    "title": title,
+    "query": json_string(payload, "query", default=""),
+    "workspace_id": json_string(payload, "workspace_id", default=""),
+    "path": json_string(payload, "path", default=""),
+    "created_at": json_string(
+      payload,
+      "created_at",
+      default=@async.now().to_string(),
+    ),
+    "updated_at": @async.now().to_string(),
+  }
+  let path = saved_views_path(workspace_root)
+  write_preference_records(
+    path,
+    upsert_record_by_id(read_json_array_file(path), record),
+  ) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not save view",
+      )
+      return
+    }
+  }
+  send_json(conn, method_, record)
+}
+
+///|
+async fn handle_tags(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  send_json(
+    conn,
+    method_,
+    Json::array(read_json_array_file(tags_path(workspace_root))),
+  )
+}
+
+///|
+async fn handle_save_tag(
+  workspace_root : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let payload = match read_json_body(body) {
+    Some(json) => json
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid JSON body")
+      return
+    }
+  }
+  let workspace_id = json_string(payload, "workspace_id", default="")
+  let path_value = json_string(payload, "path", default="")
+  let tag = json_string(payload, "tag", default="")
+  if workspace_id == "" || path_value == "" || tag == "" {
+    send_api_error(
+      conn, method_, 400, "Bad Request", "workspace_id, path, and tag are required",
+    )
+    return
+  }
+  let record : Json = {
+    "id": @desk.stable_id("tag", workspace_id + ":" + path_value + ":" + tag),
+    "workspace_id": workspace_id,
+    "path": path_value,
+    "tag": tag,
+    "created_at": @async.now().to_string(),
+  }
+  let path = tags_path(workspace_root)
+  write_preference_records(
+    path,
+    upsert_record_by_id(read_json_array_file(path), record),
+  ) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not save tag",
+      )
+      return
+    }
+  }
+  send_json(conn, method_, record)
 }
 
 ///|
@@ -1621,6 +2003,20 @@ async fn count_matching_files(root : String, suffix : String) -> Int {
 }
 
 ///|
+async fn latest_matching_name(root : String, suffix : String) -> String {
+  let names = read_directory_names(root, include_hidden=false)
+  let mut index = names.length()
+  while index > 0 {
+    index -= 1
+    let name = names[index]
+    if name.has_suffix(suffix) {
+      return name
+    }
+  }
+  ""
+}
+
+///|
 async fn count_run_workspaces(workspace_root : String) -> Int {
   let mut count = 0
   for workspace in discover_workspaces(workspace_root) {
@@ -1632,6 +2028,134 @@ async fn count_run_workspaces(workspace_root : String) -> Int {
     }
   }
   count
+}
+
+///|
+async fn latest_run_info(workspace_root : String) -> Json {
+  let root = @pathx.normalize(workspace_root)
+  let mut latest : Json = {
+    "workspace_id": "",
+    "run_id": "",
+    "status": "",
+    "artifact_count": 0,
+  }
+  for workspace in discover_workspaces(root) {
+    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    let names = read_directory_names(run_root, include_hidden=false)
+    let mut index = names.length()
+    while index > 0 {
+      index -= 1
+      let name = names[index]
+      let absolute = @pathx.join(run_root, name)
+      if name.has_prefix("run-") && is_directory(absolute) {
+        let artifacts = run_artifacts(workspace, name, absolute)
+        latest = {
+          "workspace_id": workspace.id,
+          "run_id": name,
+          "status": if @fs.exists(@pathx.join(absolute, "result.json")) {
+            "ready"
+          } else {
+            "available"
+          },
+          "artifact_count": artifacts.length(),
+        }
+        break
+      }
+    }
+  }
+  latest
+}
+
+///|
+async fn moonclaw_progress_summary(
+  workspace_root : String,
+  requested_workspace : String?,
+) -> Json {
+  let mut run_count = 0
+  let mut ready_count = 0
+  let mut artifact_count = 0
+  let mut latest_run = ""
+  let mut latest_status = ""
+  for workspace in discover_workspaces(workspace_root) {
+    match requested_workspace {
+      Some(id) if id != workspace.id => continue
+      _ => ()
+    }
+    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    let names = read_directory_names(run_root, include_hidden=false)
+    for name in names {
+      if !name.has_prefix("run-") {
+        continue
+      }
+      let absolute = @pathx.join(run_root, name)
+      if !is_directory(absolute) {
+        continue
+      }
+      let artifacts = run_artifacts(workspace, name, absolute)
+      let status = if @fs.exists(@pathx.join(absolute, "result.json")) {
+        "ready"
+      } else {
+        "available"
+      }
+      run_count += 1
+      if status == "ready" {
+        ready_count += 1
+      }
+      artifact_count += artifacts.length()
+      latest_run = name
+      latest_status = status
+    }
+  }
+  {
+    "run_count": run_count,
+    "ready_count": ready_count,
+    "artifact_count": artifact_count,
+    "latest_run": latest_run,
+    "latest_status": latest_status,
+  }
+}
+
+///|
+fn preference_dir(workspace_root : String) -> String {
+  @pathx.join(
+    @pathx.normalize(workspace_root),
+    ".moontown/moondesk-preferences",
+  )
+}
+
+///|
+fn saved_views_path(workspace_root : String) -> String {
+  @pathx.join(preference_dir(workspace_root), "views.json")
+}
+
+///|
+fn tags_path(workspace_root : String) -> String {
+  @pathx.join(preference_dir(workspace_root), "tags.json")
+}
+
+///|
+async fn write_preference_records(path : String, records : Array[Json]) -> Unit {
+  @fsx.make_directory(
+    @pathx.dirname(path).to_string(),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.write_to_file(
+    path,
+    Json::array(records).stringify(indent=2) + "\n",
+    create=0o644,
+  )
+}
+
+///|
+fn ics_escape(text : String) -> String {
+  text
+  .replace_all(old="\\", new="\\\\")
+  .replace_all(old="\r", new=" ")
+  .replace_all(old="\n", new=" ")
+  .replace_all(old=",", new="\\,")
+  .replace_all(old=";", new="\\;")
+  .to_string()
 }
 
 ///|
@@ -1685,6 +2209,22 @@ async fn send_json_text(
   conn.send_response(200, "OK", extra_headers={
     "content-type": "application/json; charset=utf-8",
   })
+  if method_ is @http.RequestMethod::Head {
+    conn.end_response()
+    return
+  }
+  conn.write(body)
+  conn.end_response()
+}
+
+///|
+async fn send_text(
+  conn : @http.ServerConnection,
+  method_ : @http.RequestMethod,
+  content_type : String,
+  body : String,
+) -> Unit {
+  conn.send_response(200, "OK", extra_headers={ "content-type": content_type })
   if method_ is @http.RequestMethod::Head {
     conn.end_response()
     return
@@ -1763,6 +2303,29 @@ test "request body helpers handle optional strings" {
   assert_eq(json_string(payload, "title", default="Fallback"), "Draft")
   assert_eq(json_string_opt(payload, "path"), Some("inbox/draft.md"))
   assert_eq(json_string_opt(payload, "missing"), None)
+}
+
+///|
+test "import markdown records URL and attachment sidecar" {
+  let markdown = import_markdown(
+    {
+      "url": "https://example.com",
+      "note": "keep this",
+      "data_url": "data:image/png;base64,abc",
+    },
+    "url",
+    "Example",
+  )
+  assert_true(markdown.contains("# Example"))
+  assert_true(markdown.contains("- URL: https://example.com"))
+  assert_true(markdown.contains("keep this"))
+  assert_true(markdown.contains(".data-url.txt"))
+}
+
+///|
+test "calendar escaping keeps ICS text single-line" {
+  let escaped = ics_escape("A, B; C\nD")
+  assert_eq(escaped, "A\\, B\\; C D")
 }
 
 ///|

@@ -1,7 +1,9 @@
 import {
   "moonbitlang/async",
+  "moonbitlang/async/fs",
   "moonbitlang/async/process",
   "moonbitlang/core/env",
+  "moonbitlang/core/json",
   "moonbitlang/core/string",
   "vectie/moondesk/host",
   "vectie/moondesk/internal/fsx",

@@ -24,6 +24,7 @@ Start here:
 - [UI Design](docs/UI_DESIGN.md)
 - [Reuse Map](docs/REUSE_MAP.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Current Status](docs/STATUS.md)
 
 ## Current Status
 
@@ -37,13 +38,23 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
   markdown/html/json/image previews, raw links, MoonClaw run artifacts,
   inbox note creation/editing, Moontown request staging, request ledger,
   town messages, standing-watch creation, daemon tick dispatch, cross-book
-  search, favorites, recent context, scoped Finder reveal, cadence summaries,
-  a calendar-like due-tick view, outcome analytics, and daily analytics.
+  search, favorites, saved views, tags, recent context, scoped Finder reveal,
+  supervised daemon policy, live progress summaries, URL import staging,
+  cadence summaries, a calendar-like due-tick view, ICS export, outcome
+  analytics, and daily analytics.
 
-The `desktop` command is a browser-compatible launch mode, and `bundle` creates
-a macOS `.app` shell bundle around that pure MoonBit host. It is not yet a
-signed/self-contained native distribution, and it still avoids Rust, Cargo,
-Tauri, and broad filesystem permissions.
+The `desktop` command is a browser-compatible launch mode, and `bundle` now
+creates a self-contained macOS `.app` distribution with the native MoonBit host
+executable, bundled UI resources, ad-hoc code signing by default, and an
+optional zip archive. `desktop` and bundled app launches open the browser
+explicitly. `release` can write a release manifest and submit the zip through
+Apple notarytool when a keychain profile is provided. It still avoids Rust,
+Cargo, Tauri, and broad filesystem permissions.
+
+See [Current Status](docs/STATUS.md) for the honest completion picture:
+Moondesk is usable as a local single-user alpha, but not yet a polished
+Codex-style native desktop app with notarized distribution and native window
+ownership.
 
 ## Run Locally
 
@@ -65,10 +76,23 @@ Desktop-compatible launch mode:
 moon run cmd/main -- desktop ../moontown --ui ui/rabbita-desk/dist --port 4199
 ```
 
-Create a macOS app-shell bundle:
+Create a LaunchAgent template for login startup:
+
+```sh
+moon run cmd/main -- launch-agent ../moontown --out dist/app.vectie.moondesk.plist --port 4199
+```
+
+Create a signed self-contained macOS app bundle:
 
 ```sh
 moon run cmd/main -- bundle ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199
+```
+
+Create a release manifest and optionally notarize with an Apple keychain
+profile:
+
+```sh
+moon run cmd/main -- release ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199 --notary-profile <profile>
 ```
 
 Open:

@@ -100,6 +100,35 @@ struct TownAnalytics {
 } derive(FromJson)
 
 ///|
+struct TownProgress {
+  daemon_tick : Int
+  daemon_running : Bool
+  daemon_status : String
+  supervision_enabled : Bool
+  due_goal_count : Int
+  next_due_tick : Int
+  request_count : Int
+  message_count : Int
+  dispatch_count : Int
+  run_count : Int
+  latest_request : String
+  latest_message : String
+  latest_dispatch : String
+  latest_run : String
+  latest_run_status : String
+  latest_run_artifacts : Int
+} derive(FromJson)
+
+///|
+struct MoonclawProgress {
+  run_count : Int
+  ready_count : Int
+  artifact_count : Int
+  latest_run : String
+  latest_status : String
+} derive(FromJson)
+
+///|
 struct DaemonDispatchResult {
   id : String
   ok : Bool
@@ -108,6 +137,28 @@ struct DaemonDispatchResult {
   path : String
   stdout : String
   stderr : String
+} derive(FromJson)
+
+///|
+struct DaemonLifecycleResult {
+  ok : Bool
+  action : String
+  status : String
+  running : Bool
+  pid : Int
+  command : String
+  cwd : String
+  started_at : String
+  stopped_at : String
+  pid_file : String
+  stdout_path : String
+  stderr_path : String
+  message : String
+  supervision_enabled : Bool
+  desired_state : String
+  restart_count : Int
+  last_health_check : String
+  policy_file : String
 } derive(FromJson)
 
 ///|
@@ -125,6 +176,35 @@ struct InboxCreated {
   ok : Bool
   workspace_id : String
   path : String
+} derive(FromJson)
+
+///|
+struct InboxImportResult {
+  ok : Bool
+  workspace_id : String
+  path : String
+  kind : String
+  data_path : String
+} derive(FromJson)
+
+///|
+struct SavedViewRecord {
+  id : String
+  title : String
+  query : String
+  workspace_id : String
+  path : String
+  created_at : String
+  updated_at : String
+} derive(FromJson)
+
+///|
+struct TagRecord {
+  id : String
+  workspace_id : String
+  path : String
+  tag : String
+  created_at : String
 } derive(FromJson)
 
 ///|
@@ -156,22 +236,32 @@ struct Model {
   requests : Array[RequestRecord]
   standing_goals : Array[StandingGoalRecord]
   analytics : TownAnalytics?
+  town_progress : TownProgress?
+  moonclaw_progress : MoonclawProgress?
+  daemon_lifecycle : DaemonLifecycleResult?
   town_messages : Array[TownMessage]
   runs : Array[@desk.DeskRunProjection]
   inbox_title : String
   inbox_content : String
+  import_url : String
+  import_note : String
   editing_inbox_path : String
   inbox_status : String
   search_query : String
   search_status : String
   search_hits : Array[SearchHit]
   favorites : Array[String]
+  saved_views : Array[SavedViewRecord]
+  tags : Array[TagRecord]
   recent_paths : Array[String]
+  view_title : String
+  tag_value : String
   goal_title : String
   goal_cadence_ticks : String
   goal_quality_threshold : String
   goal_source_policy : String
   dispatch_status : String
+  daemon_status : String
   reveal_status : String
   notification_status : String
 }
@@ -186,11 +276,20 @@ enum Msg {
   LoadedRequests(Result[Array[RequestRecord], String])
   LoadedStandingGoals(Result[Array[StandingGoalRecord], String])
   LoadedAnalytics(Result[TownAnalytics, String])
+  LoadedTownProgress(Result[TownProgress, String])
+  LoadedMoonclawProgress(Result[MoonclawProgress, String])
+  LoadedSavedViews(Result[Array[SavedViewRecord], String])
+  LoadedTags(Result[Array[TagRecord], String])
   LoadedSearch(Result[Array[SearchHit], String])
   SavedInbox(Result[InboxCreated, String])
+  ImportedInbox(Result[InboxImportResult, String])
+  SavedView(Result[SavedViewRecord, String])
+  SavedTag(Result[TagRecord, String])
   SubmittedRequest(Result[RequestRecord, String])
   CreatedStandingGoal(Result[StandingGoalRecord, String])
   DispatchedDaemon(Result[DaemonDispatchResult, String])
+  LoadedDaemonLifecycle(Result[DaemonLifecycleResult, String])
+  ManagedDaemon(Result[DaemonLifecycleResult, String])
   RevealedSelection(Result[RevealResult, String])
   SelectActivity(Activity)
   SelectWorkspace(String)
@@ -207,15 +306,28 @@ enum Msg {
   SetGoalSourcePolicy(String)
   CreateStandingGoal
   DispatchDaemonTick
+  FetchDaemonLifecycle
+  StartDaemon
+  StopDaemon
+  RestartDaemon
+  EnableDaemonSupervision
+  DisableDaemonSupervision
   RevealSelection
   SetInboxTitle(String)
   SetInboxContent(String)
+  SetImportUrl(String)
+  SetImportNote(String)
+  ImportUrlToInbox
   LoadSelectionIntoInbox
   SaveInboxNote
   StageSelectedLink
   SetSearchQuery(String)
   SearchNow
   ToggleFavorite(String)
+  SetViewTitle(String)
+  SaveCurrentView
+  SetTagValue(String)
+  TagSelection
   NotifyDaily
   RefreshAll
 }
@@ -239,22 +351,32 @@ fn init_model() -> Model {
     requests: [],
     standing_goals: [],
     analytics: None,
+    town_progress: None,
+    moonclaw_progress: None,
+    daemon_lifecycle: None,
     town_messages: [],
     runs: [],
     inbox_title: "Operator note",
     inbox_content: "",
+    import_url: "",
+    import_note: "",
     editing_inbox_path: "",
     inbox_status: "draft",
     search_query: "",
     search_status: "enter a query",
     search_hits: [],
     favorites: [],
+    saved_views: [],
+    tags: [],
     recent_paths: [],
+    view_title: "Current view",
+    tag_value: "",
     goal_title: "Standing watch",
     goal_cadence_ticks: "60",
     goal_quality_threshold: "85",
     goal_source_policy: "web-first",
     dispatch_status: "daemon idle",
+    daemon_status: "daemon manager idle",
     reveal_status: "reveal idle",
     notification_status: "notifications idle",
   }
@@ -440,6 +562,12 @@ fn clamp_int(value : Int, min : Int, max : Int) -> Int {
 }
 
 ///|
+fn daemon_lifecycle_label(result : DaemonLifecycleResult) -> String {
+  let pid = if result.pid > 0 { " pid \{result.pid}" } else { "" }
+  "\{result.status}\{pid}: \{result.message}"
+}
+
+///|
 fn raw_url(model : Model, path : String) -> String {
   if model.selected_workspace_id == "" {
     "#"
@@ -591,6 +719,69 @@ fn fetch_analytics_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_town_progress_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/town/progress",
+    expect=@http.Json(fn(result) { dispatch(LoadedTownProgress(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid town progress")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_moonclaw_progress_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  workspace_id : String,
+) -> @rabbita.Cmd {
+  @http.get(
+    "/api/moonclaw/progress?workspace=\{encode_component(workspace_id)}",
+    expect=@http.Json(fn(result) { dispatch(LoadedMoonclawProgress(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonClaw progress")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_saved_views_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/preferences/views",
+    expect=@http.Json(fn(result) { dispatch(LoadedSavedViews(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid saved views")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_tags_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/preferences/tags",
+    expect=@http.Json(fn(result) { dispatch(LoadedTags(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid tags")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_daemon_lifecycle_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/town/daemon/status",
+    expect=@http.Json(fn(result) { dispatch(LoadedDaemonLifecycle(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid daemon lifecycle status")
+      }
+    }),
+  )
+}
+
+///|
 fn fetch_search_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   query : String,
@@ -623,6 +814,61 @@ fn save_inbox_cmd(
     expect=@http.Json(fn(result) { dispatch(SavedInbox(result)) }, json => {
       Ok(@json.from_json(json)) catch {
         _ => Err("Could not save inbox note")
+      }
+    }),
+  )
+}
+
+///|
+fn import_url_cmd(dispatch : (Msg) -> @rabbita.Cmd, model : Model) -> @rabbita.Cmd {
+  let url = model.import_url.trim().to_owned()
+  let title = if url == "" { "Imported URL" } else { url }
+  @http.post(
+    "/api/workspaces/\{model.selected_workspace_id}/import",
+    @http.Body::Json({
+      "kind": "url",
+      "title": title,
+      "url": url,
+      "note": model.import_note,
+    }),
+    expect=@http.Json(fn(result) { dispatch(ImportedInbox(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not import URL")
+      }
+    }),
+  )
+}
+
+///|
+fn save_view_cmd(dispatch : (Msg) -> @rabbita.Cmd, model : Model) -> @rabbita.Cmd {
+  @http.post(
+    "/api/preferences/views",
+    @http.Body::Json({
+      "title": trimmed_or(model.view_title, "Current view"),
+      "query": model.search_query,
+      "workspace_id": model.selected_workspace_id,
+      "path": model.selected_path,
+    }),
+    expect=@http.Json(fn(result) { dispatch(SavedView(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not save view")
+      }
+    }),
+  )
+}
+
+///|
+fn save_tag_cmd(dispatch : (Msg) -> @rabbita.Cmd, model : Model) -> @rabbita.Cmd {
+  @http.post(
+    "/api/preferences/tags",
+    @http.Body::Json({
+      "workspace_id": model.selected_workspace_id,
+      "path": model.selected_path,
+      "tag": trimmed_or(model.tag_value, "review"),
+    }),
+    expect=@http.Json(fn(result) { dispatch(SavedTag(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not save tag")
       }
     }),
   )
@@ -701,6 +947,38 @@ fn dispatch_daemon_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
 }
 
 ///|
+fn manage_daemon_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  action : String,
+) -> @rabbita.Cmd {
+  @http.post(
+    "/api/town/daemon/\{action}",
+    @http.Body::Json(Json::object({})),
+    expect=@http.Json(fn(result) { dispatch(ManagedDaemon(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not manage daemon lifecycle")
+      }
+    }),
+  )
+}
+
+///|
+fn set_daemon_supervision_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  enabled : Bool,
+) -> @rabbita.Cmd {
+  @http.post(
+    "/api/town/daemon/supervision",
+    @http.Body::Json({ "enabled": enabled }),
+    expect=@http.Json(fn(result) { dispatch(ManagedDaemon(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not update daemon supervision")
+      }
+    }),
+  )
+}
+
+///|
 fn reveal_selection_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   model : Model,
@@ -729,10 +1007,15 @@ fn reload_workspace_cmds(
       fetch_entries_cmd(dispatch, workspace_id, ""),
       fetch_preview_cmd(dispatch, workspace_id, selected_path),
       fetch_runs_cmd(dispatch, workspace_id),
+      fetch_moonclaw_progress_cmd(dispatch, workspace_id),
       fetch_messages_cmd(dispatch),
       fetch_requests_cmd(dispatch),
       fetch_standing_goals_cmd(dispatch),
       fetch_analytics_cmd(dispatch),
+      fetch_town_progress_cmd(dispatch),
+      fetch_daemon_lifecycle_cmd(dispatch),
+      fetch_saved_views_cmd(dispatch),
+      fetch_tags_cmd(dispatch),
     ])
   }
 }
@@ -814,6 +1097,31 @@ fn update(
     LoadedAnalytics(Ok(analytics)) => (@rabbita.none, { ..model, analytics: Some(analytics) })
     LoadedAnalytics(Err(error)) =>
       (@rabbita.none, { ..model, dispatch_status: error })
+    LoadedTownProgress(Ok(progress)) =>
+      (@rabbita.none, { ..model, town_progress: Some(progress) })
+    LoadedTownProgress(Err(error)) =>
+      (@rabbita.none, { ..model, dispatch_status: error })
+    LoadedMoonclawProgress(Ok(progress)) =>
+      (@rabbita.none, { ..model, moonclaw_progress: Some(progress) })
+    LoadedMoonclawProgress(Err(error)) =>
+      (@rabbita.none, { ..model, host_status: error })
+    LoadedSavedViews(Ok(saved_views)) =>
+      (@rabbita.none, { ..model, saved_views })
+    LoadedSavedViews(Err(error)) =>
+      (@rabbita.none, { ..model, host_status: error })
+    LoadedTags(Ok(tags)) => (@rabbita.none, { ..model, tags })
+    LoadedTags(Err(error)) => (@rabbita.none, { ..model, host_status: error })
+    LoadedDaemonLifecycle(Ok(result)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          daemon_lifecycle: Some(result),
+          daemon_status: daemon_lifecycle_label(result),
+        },
+      )
+    LoadedDaemonLifecycle(Err(error)) =>
+      (@rabbita.none, { ..model, daemon_status: error })
     LoadedSearch(Ok(search_hits)) =>
       (
         @rabbita.none,
@@ -844,12 +1152,55 @@ fn update(
       )
     SavedInbox(Err(error)) =>
       (@rabbita.none, { ..model, inbox_status: error })
+    ImportedInbox(Ok(created)) =>
+      (
+        @rabbita.batch([
+          fetch_entries_cmd(dispatch, created.workspace_id, "inbox/imports"),
+          fetch_preview_cmd(dispatch, created.workspace_id, created.path),
+        ]),
+        {
+          ..model,
+          activity: Activity::Inbox,
+          current_directory: "inbox/imports",
+          selected_workspace_id: created.workspace_id,
+          selected_path: created.path,
+          import_url: "",
+          import_note: "",
+          inbox_status: if created.ok {
+            if created.data_path == "" {
+              "imported \{created.kind} to \{created.path}"
+            } else {
+              "imported \{created.kind} to \{created.path} and \{created.data_path}"
+            }
+          } else {
+            "import returned without ok"
+          },
+          preview_status: "loading import",
+        },
+      )
+    ImportedInbox(Err(error)) =>
+      (@rabbita.none, { ..model, inbox_status: error })
+    SavedView(Ok(view)) =>
+      (
+        fetch_saved_views_cmd(dispatch),
+        { ..model, host_status: "saved view \{view.title}" },
+      )
+    SavedView(Err(error)) =>
+      (@rabbita.none, { ..model, host_status: error })
+    SavedTag(Ok(tag)) =>
+      (
+        fetch_tags_cmd(dispatch),
+        { ..model, tag_value: "", reveal_status: "tagged \{tag.path} as \{tag.tag}" },
+      )
+    SavedTag(Err(error)) =>
+      (@rabbita.none, { ..model, reveal_status: error })
     SubmittedRequest(Ok(record)) =>
       (
         @rabbita.batch([
           fetch_requests_cmd(dispatch),
           fetch_messages_cmd(dispatch),
           fetch_analytics_cmd(dispatch),
+          fetch_town_progress_cmd(dispatch),
         ]),
         {
           ..model,
@@ -865,6 +1216,7 @@ fn update(
         @rabbita.batch([
           fetch_standing_goals_cmd(dispatch),
           fetch_analytics_cmd(dispatch),
+          fetch_town_progress_cmd(dispatch),
         ]),
         {
           ..model,
@@ -881,7 +1233,10 @@ fn update(
           fetch_messages_cmd(dispatch),
           fetch_standing_goals_cmd(dispatch),
           fetch_analytics_cmd(dispatch),
+          fetch_town_progress_cmd(dispatch),
           fetch_runs_cmd(dispatch, model.selected_workspace_id),
+          fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          fetch_daemon_lifecycle_cmd(dispatch),
         ]),
         {
           ..model,
@@ -895,6 +1250,23 @@ fn update(
       )
     DispatchedDaemon(Err(error)) =>
       (@rabbita.none, { ..model, dispatch_status: error })
+    ManagedDaemon(Ok(result)) =>
+      (
+        @rabbita.batch([
+          fetch_analytics_cmd(dispatch),
+          fetch_town_progress_cmd(dispatch),
+          fetch_daemon_lifecycle_cmd(dispatch),
+        ]),
+        {
+          ..model,
+          activity: Activity::Town,
+          daemon_lifecycle: Some(result),
+          daemon_status: daemon_lifecycle_label(result),
+          dispatch_status: result.message,
+        },
+      )
+    ManagedDaemon(Err(error)) =>
+      (@rabbita.none, { ..model, daemon_status: error, dispatch_status: error })
     RevealedSelection(Ok(result)) =>
       (
         @rabbita.none,
@@ -1022,6 +1394,36 @@ fn update(
         dispatch_daemon_cmd(dispatch),
         { ..model, dispatch_status: "running daemon tick" },
       )
+    FetchDaemonLifecycle =>
+      (
+        fetch_daemon_lifecycle_cmd(dispatch),
+        { ..model, daemon_status: "checking daemon" },
+      )
+    StartDaemon =>
+      (
+        manage_daemon_cmd(dispatch, "start"),
+        { ..model, daemon_status: "starting daemon" },
+      )
+    StopDaemon =>
+      (
+        manage_daemon_cmd(dispatch, "stop"),
+        { ..model, daemon_status: "stopping daemon" },
+      )
+    RestartDaemon =>
+      (
+        manage_daemon_cmd(dispatch, "restart"),
+        { ..model, daemon_status: "restarting daemon" },
+      )
+    EnableDaemonSupervision =>
+      (
+        set_daemon_supervision_cmd(dispatch, true),
+        { ..model, daemon_status: "enabling supervision" },
+      )
+    DisableDaemonSupervision =>
+      (
+        set_daemon_supervision_cmd(dispatch, false),
+        { ..model, daemon_status: "disabling supervision" },
+      )
     RevealSelection =>
       (
         reveal_selection_cmd(dispatch, model),
@@ -1030,6 +1432,20 @@ fn update(
     SetInboxTitle(title) => (@rabbita.none, { ..model, inbox_title: title })
     SetInboxContent(content) =>
       (@rabbita.none, { ..model, inbox_content: content, inbox_status: "draft" })
+    SetImportUrl(url) =>
+      (@rabbita.none, { ..model, import_url: url, inbox_status: "import draft" })
+    SetImportNote(note) =>
+      (@rabbita.none, { ..model, import_note: note, inbox_status: "import draft" })
+    ImportUrlToInbox => {
+      if model.import_url.trim().to_owned() == "" {
+        (@rabbita.none, { ..model, inbox_status: "enter a URL to import" })
+      } else {
+        (
+          import_url_cmd(dispatch, model),
+          { ..model, inbox_status: "importing URL" },
+        )
+      }
+    }
     LoadSelectionIntoInbox => {
       let content = match model.preview {
         Some(preview) if is_textual_renderer(preview.renderer) => preview.body
@@ -1089,6 +1505,18 @@ fn update(
     }
     ToggleFavorite(path) =>
       (@rabbita.none, { ..model, favorites: toggle_string(model.favorites, path) })
+    SetViewTitle(title) => (@rabbita.none, { ..model, view_title: title })
+    SaveCurrentView =>
+      (
+        save_view_cmd(dispatch, model),
+        { ..model, host_status: "saving view" },
+      )
+    SetTagValue(tag) => (@rabbita.none, { ..model, tag_value: tag })
+    TagSelection =>
+      (
+        save_tag_cmd(dispatch, model),
+        { ..model, reveal_status: "saving tag" },
+      )
     NotifyDaily =>
       (
         notify_cmd(
@@ -1105,6 +1533,11 @@ fn update(
           fetch_requests_cmd(dispatch),
           fetch_standing_goals_cmd(dispatch),
           fetch_analytics_cmd(dispatch),
+          fetch_town_progress_cmd(dispatch),
+          fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          fetch_daemon_lifecycle_cmd(dispatch),
+          fetch_saved_views_cmd(dispatch),
+          fetch_tags_cmd(dispatch),
         ]),
         { ..model, host_status: "refreshing" },
       )
@@ -1367,6 +1800,25 @@ fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       p(class="status-line", model.inbox_status),
     ]),
     section(class="side-section", [
+      h3("Import"),
+      input(
+        class="line-input",
+        value=model.import_url,
+        placeholder="https://...",
+        on_input=fn(value) { dispatch(SetImportUrl(value)) },
+        "",
+      ),
+      textarea(
+        class="side-textarea compact-textarea",
+        rows=4,
+        value=model.import_note,
+        placeholder="Why this belongs in the inbox.",
+        on_input=fn(value) { dispatch(SetImportNote(value)) },
+        "",
+      ),
+      button(class="secondary-button full", on_click=dispatch(ImportUrlToInbox), "Import URL"),
+    ]),
+    section(class="side-section", [
       h3("Preview"),
       pre(class="source-block compact", code(model.inbox_content)),
     ]),
@@ -1433,9 +1885,105 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       ]),
       p(class="status-line", model.dispatch_status),
     ]),
+    render_town_progress_panel(model),
+    render_daemon_lifecycle_panel(dispatch, model),
     render_standing_goal_list(model),
     render_request_list(model),
   ])
+}
+
+///|
+fn render_town_progress_panel(model : Model) -> @rabbita.Html {
+  match model.town_progress {
+    Some(progress) =>
+      section(class="side-section", [
+        h3("Live Progress"),
+        info_row("Daemon", "\{progress.daemon_status} / tick \{progress.daemon_tick}"),
+        info_row("Running", if progress.daemon_running { "yes" } else { "no" }),
+        info_row("Supervision", if progress.supervision_enabled { "enabled" } else { "disabled" }),
+        info_row("Due", "\{progress.due_goal_count} / next \{progress.next_due_tick}"),
+        info_row("Queued", "\{progress.request_count} requests / \{progress.dispatch_count} dispatches"),
+        info_row("Outputs", "\{progress.message_count} messages / \{progress.run_count} runs"),
+        info_row("Latest Request", empty_label(progress.latest_request)),
+        info_row("Latest Message", empty_label(progress.latest_message)),
+        info_row("Latest Dispatch", empty_label(progress.latest_dispatch)),
+        info_row("Latest Run", latest_run_label(progress)),
+      ])
+    None =>
+      section(class="side-section", [
+        h3("Live Progress"),
+        p(class="status-line", "waiting for progress"),
+      ])
+  }
+}
+
+///|
+fn empty_label(value : String) -> String {
+  if value == "" { "none" } else { value }
+}
+
+///|
+fn latest_run_label(progress : TownProgress) -> String {
+  if progress.latest_run == "" {
+    "none"
+  } else {
+    "\{progress.latest_run} / \{progress.latest_run_status} / \{progress.latest_run_artifacts} artifacts"
+  }
+}
+
+///|
+fn render_daemon_lifecycle_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="side-section", [
+    h3("Daemon Lifecycle"),
+    match model.daemon_lifecycle {
+      Some(result) =>
+        div(class="daemon-state", [
+          info_row("Result", if result.ok { "ok" } else { "failed" }),
+          info_row("Action", result.action),
+          info_row("Status", if result.running { "running" } else { result.status }),
+          info_row("PID", if result.pid > 0 { result.pid.to_string() } else { "none" }),
+          info_row("Command", result.command),
+          info_row("CWD", result.cwd),
+          info_row("Started", if result.started_at == "" { "none" } else { result.started_at }),
+          info_row("Stopped", if result.stopped_at == "" { "none" } else { result.stopped_at }),
+          info_row("Desired", result.desired_state),
+          info_row("Supervision", if result.supervision_enabled { "enabled" } else { "disabled" }),
+          info_row("Restarts", result.restart_count.to_string()),
+          info_row("Health", if result.last_health_check == "" { "none" } else { result.last_health_check }),
+          info_row("State File", result.pid_file),
+          info_row("Policy File", result.policy_file),
+          info_row("Logs", daemon_log_label(result)),
+        ])
+      None =>
+        div(class="daemon-state", [
+          info_row("Status", "unknown"),
+          info_row("PID", "none"),
+        ])
+    },
+    div(class="toolbar-actions stack-actions", [
+      button(class="secondary-button", on_click=dispatch(StartDaemon), "Start"),
+      button(class="secondary-button", on_click=dispatch(StopDaemon), "Stop"),
+      button(class="secondary-button", on_click=dispatch(RestartDaemon), "Restart"),
+      button(class="secondary-button", on_click=dispatch(FetchDaemonLifecycle), "Status"),
+      button(class="secondary-button", on_click=dispatch(EnableDaemonSupervision), "Supervise"),
+      button(class="secondary-button", on_click=dispatch(DisableDaemonSupervision), "Unsupervise"),
+    ]),
+    p(class="status-line", model.daemon_status),
+  ])
+}
+
+///|
+fn daemon_log_label(result : DaemonLifecycleResult) -> String {
+  if result.stdout_path == "" && result.stderr_path == "" {
+    "none"
+  } else if result.stderr_path == "" {
+    result.stdout_path
+  } else {
+    result.stdout_path + " / " + result.stderr_path
+  }
 }
 
 ///|
@@ -1488,6 +2036,7 @@ fn render_runs_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "R",
       ),
     ]),
+    render_moonclaw_progress_panel(model),
     div(
       class="side-records",
       model.runs.map(run => {
@@ -1518,6 +2067,28 @@ fn render_runs_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 }
 
 ///|
+fn render_moonclaw_progress_panel(model : Model) -> @rabbita.Html {
+  match model.moonclaw_progress {
+    Some(progress) =>
+      section(class="side-section", [
+        h3("Progress"),
+        info_row("Runs", "\{progress.ready_count} ready / \{progress.run_count} total"),
+        info_row("Artifacts", progress.artifact_count.to_string()),
+        info_row("Latest", if progress.latest_run == "" {
+          "none"
+        } else {
+          "\{progress.latest_run} / \{progress.latest_status}"
+        }),
+      ])
+    None =>
+      section(class="side-section", [
+        h3("Progress"),
+        p(class="status-line", "waiting for run progress"),
+      ])
+  }
+}
+
+///|
 fn render_settings_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
@@ -1534,6 +2105,17 @@ fn render_settings_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Htm
       button(class="primary-button full", on_click=dispatch(NotifyDaily), "Notify Summary"),
       p(class="status-line", model.notification_status),
     ]),
+    render_saved_views_panel(dispatch, model),
+    section(class="side-section", [
+      h3("Calendar Export"),
+      a(
+        class="secondary-button link-button full",
+        href="/api/town/calendar.ics",
+        target=@html.Target::Blank,
+        rel="noreferrer",
+        "Open ICS",
+      ),
+    ]),
     render_cadence_panel(model),
     render_cadence_calendar(model),
     render_analytics_panel(model),
@@ -1541,6 +2123,39 @@ fn render_settings_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Htm
       h3("Export Snapshot"),
       pre(class="source-block compact", code(export_snapshot(model))),
     ]),
+  ])
+}
+
+///|
+fn render_saved_views_panel(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+  section(class="side-section", [
+    h3("Saved Views"),
+    input(
+      class="line-input",
+      value=model.view_title,
+      placeholder="View title",
+      on_input=fn(value) { dispatch(SetViewTitle(value)) },
+      "",
+    ),
+    button(class="secondary-button full", on_click=dispatch(SaveCurrentView), "Save Current View"),
+    div(
+      class="mini-list",
+      model.saved_views.map(view => {
+        button(
+          class="mini-link",
+          title="\{view.id} / \{view.updated_at}",
+          on_click=dispatch(SelectSearchHit(view.workspace_id, view.path)),
+          [
+            span(view.title),
+            small(if view.query == "" {
+              "\{view.path} / \{view.created_at}"
+            } else {
+              "\{view.query} / \{view.path}"
+            }),
+          ],
+        )
+      }),
+    ),
   ])
 }
 
@@ -1882,6 +2497,18 @@ fn render_inspector(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       ),
     ]),
     section(class="inspector-section", [
+      h3("Tags"),
+      input(
+        class="line-input",
+        value=model.tag_value,
+        placeholder="tag",
+        on_input=fn(value) { dispatch(SetTagValue(value)) },
+        "",
+      ),
+      button(class="secondary-button full", on_click=dispatch(TagSelection), "Tag Selection"),
+      render_tag_list(model),
+    ]),
+    section(class="inspector-section", [
       h3("Favorites"),
       render_path_list(dispatch, model.favorites),
     ]),
@@ -1906,6 +2533,36 @@ fn render_inspector(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       p(class="status-line", model.request_status),
     ]),
   ])
+}
+
+///|
+fn render_tag_list(model : Model) -> @rabbita.Html {
+  let tags = selection_tags(model)
+  if tags.length() == 0 {
+    p(class="status-line", "none")
+  } else {
+    div(
+      class="mini-list",
+      tags.map(tag =>
+        span(
+          class="option-chip active",
+          title="\{tag.id} / \{tag.created_at}",
+          tag.tag,
+        )
+      ),
+    )
+  }
+}
+
+///|
+fn selection_tags(model : Model) -> Array[TagRecord] {
+  let selected : Array[TagRecord] = []
+  for tag in model.tags {
+    if tag.workspace_id == model.selected_workspace_id && tag.path == model.selected_path {
+      selected.push(tag)
+    }
+  }
+  selected
 }
 
 ///|
@@ -2030,8 +2687,12 @@ fn render_command_palette(
         div(class="palette-list", [
           palette_command(dispatch, "Search Books", "Find files across MoonBooks", SelectActivity(Activity::Search)),
           palette_command(dispatch, "Create Inbox Note", "Stage a safe draft in inbox", SelectActivity(Activity::Inbox)),
+          palette_command(dispatch, "Import URL", "Open the inbox importer", SelectActivity(Activity::Inbox)),
           palette_command(dispatch, "Submit to Town", "Send selected context to Moontown", SubmitRequest),
           palette_command(dispatch, "Run Daemon Tick", "Dispatch one Moontown scheduler tick", DispatchDaemonTick),
+          palette_command(dispatch, "Start Daemon", "Start the managed Moontown daemon loop", StartDaemon),
+          palette_command(dispatch, "Enable Supervision", "Restart the daemon when the policy says it should run", EnableDaemonSupervision),
+          palette_command(dispatch, "Stop Daemon", "Stop the managed Moontown daemon loop", StopDaemon),
           palette_command(dispatch, "Show Run Artifacts", "Open MoonClaw run projection", SelectActivity(Activity::Runs)),
           palette_command(dispatch, "Daily Surface", "Open operating summary", SelectActivity(Activity::Settings)),
         ]),
@@ -2100,11 +2761,19 @@ test {
   ignore(fetch_requests_cmd)
   ignore(fetch_standing_goals_cmd)
   ignore(fetch_analytics_cmd)
+  ignore(fetch_town_progress_cmd)
+  ignore(fetch_moonclaw_progress_cmd)
+  ignore(fetch_saved_views_cmd)
+  ignore(fetch_tags_cmd)
   ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
+  ignore(import_url_cmd)
+  ignore(save_view_cmd)
+  ignore(save_tag_cmd)
   ignore(submit_request_cmd)
   ignore(create_standing_goal_cmd)
   ignore(dispatch_daemon_cmd)
+  ignore(set_daemon_supervision_cmd)
   ignore(reveal_selection_cmd)
   ignore(notify_cmd)
 }

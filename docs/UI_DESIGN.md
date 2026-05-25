@@ -101,10 +101,19 @@ Required commands:
 - Open Book
 - Create Book Inbox Note
 - Import Files
+- Import URL
 - Submit to Town
 - Run Daemon Tick
+- Start Daemon
+- Stop Daemon
+- Restart Daemon
+- Enable Daemon Supervision
+- Disable Daemon Supervision
 - View Cadence Calendar
+- Open Calendar Export
 - Review Outcome Analytics
+- Save Current View
+- Tag Selection
 - Build Book Site
 - Open Generated Site
 - Show Run Artifacts
@@ -125,6 +134,7 @@ The composer should support:
 - submit to Moontown
 - create or update standing-watch records in `.moontown/standing-goals.json`
 - run a single daemon tick through the scoped host action
+- start, stop, restart, supervise, and inspect the background daemon loop
 
 ## Desktop Interactions
 
@@ -133,6 +143,7 @@ Phase 1 browser mode:
 - drag files into inbox using browser APIs where available
 - click previews
 - local API writes staged inbox files
+- URL import writes staged inbox/import notes
 
 Phase 2 MoonBit host mode:
 
@@ -142,7 +153,9 @@ Phase 2 MoonBit host mode:
 - drag/drop from Finder
 - clipboard images
 - desktop notifications
-- local `.app` shell bundle launched through `cmd/main bundle`
+- signed self-contained `.app` bundle created through `cmd/main bundle`
+- release manifest/notarization path through `cmd/main release`
+- LaunchAgent template generation for login startup policy
 
 ## Codex Outlook Matching
 

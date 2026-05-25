@@ -131,11 +131,12 @@ moon run cmd/main -- serve ../moontown --ui ui/rabbita-desk/dist --port 4199
 ### MoonBit Desktop Host Mode
 
 ```text
-moon run cmd/main -- desktop --root ~/Workspace
+moon run cmd/main -- desktop [root] [--ui ui/rabbita-desk/dist] \
+  [--host 127.0.0.1] [--port 4188]
 ```
 
 Implemented as a browser-compatible launch alias over the same pure MoonBit
-host. It does not package a native `.app` yet.
+host. Unlike `serve`, `desktop` opens the browser after the server binds.
 
 ### Packaged Mode
 
@@ -143,10 +144,25 @@ host. It does not package a native `.app` yet.
 moon run cmd/main -- bundle [root] [--ui ui/rabbita-desk/dist] [--out dist]
 ```
 
-Implemented as a MoonBit-generated macOS `.app` shell bundle. The bundle
-launches `moon run cmd/main -- desktop ...` and keeps the runtime in the pure
-MoonBit host. Signing, notarization, and a self-contained binary distribution
-can be added later without introducing Rust into this repository.
+Implemented as a MoonBit-generated macOS `.app` distribution. The bundle command
+builds the native MoonBit executable, copies it to `Contents/MacOS/moondesk`,
+copies the built Rabbita UI into `Contents/Resources/ui`, writes
+`Contents/Resources/moondesk-config.json`, signs the app with `codesign` using
+ad-hoc identity `-` by default, and creates `Moondesk.app.zip` unless
+`--no-archive` is supplied. The packaged executable also opens the browser after
+binding. `cmd/main release` wraps the bundle output with a release manifest and
+optional `xcrun notarytool submit --keychain-profile ... --wait` plus stapling,
+without introducing Rust into this repository.
+
+### Launch Agent Template
+
+```text
+moon run cmd/main -- launch-agent [root] [--out dist/app.vectie.moondesk.plist]
+```
+
+Writes a macOS LaunchAgent template for login startup. The command does not
+install or load the agent automatically; a user-facing install/uninstall flow
+can be added once the daemon policy is finalized.
 
 ## Adapter Rules
 
@@ -165,10 +181,19 @@ GET  /api/workspaces/:id/entries?path=...
 GET  /api/workspaces/:id/preview?path=...
 GET  /api/workspaces/:id/raw?path=...
 POST /api/workspaces/:id/inbox
+POST /api/workspaces/:id/import
 GET  /api/search?query=...
 GET  /api/town/state
 GET  /api/town/daemon
+GET  /api/town/daemon/status
+GET  /api/town/daemon/supervision
+POST /api/town/daemon/supervision
+POST /api/town/daemon/start
+POST /api/town/daemon/stop
+POST /api/town/daemon/restart
 GET  /api/town/analytics
+GET  /api/town/progress
+GET  /api/town/calendar.ics
 GET  /api/town/messages
 GET  /api/town/requests
 POST /api/town/requests
@@ -176,8 +201,13 @@ GET  /api/town/standing-goals
 POST /api/town/standing-goals
 POST /api/town/dispatch
 GET  /api/moonclaw/runs?workspace=...
+GET  /api/moonclaw/progress?workspace=...
 GET  /api/moonclaw/runs/:id/artifacts
 POST /api/workspaces/:id/reveal
+GET  /api/preferences/views
+POST /api/preferences/views
+GET  /api/preferences/tags
+POST /api/preferences/tags
 ```
 
 Implemented behavior:
@@ -189,13 +219,28 @@ Implemented behavior:
 - `preview` returns a `DeskPreview`; image previews point to the `raw` route.
 - `POST /api/workspaces/:id/inbox` writes a markdown note into `inbox/`; when a
   `path` field is provided it edits only scoped `inbox/*` paths.
+- `POST /api/workspaces/:id/import` stages URL/file/data-url metadata into
+  `inbox/imports/` and keeps all writes scoped under the selected workspace.
 - `GET /api/search?query=...` searches readable text-like files across
   discovered workspaces with bounded results.
 - `GET /api/town/state` returns the town state JSON when present.
 - `GET /api/town/daemon` returns `.moontown/daemon.json` when present.
+- `GET /api/town/daemon/status` reports the Moondesk-managed background daemon
+  PID, running state, command, supervision policy, restart count, and log paths.
+- `GET|POST /api/town/daemon/supervision` reads or updates the desired-state
+  supervision policy. When enabled with desired state `running`, status checks
+  reconcile a stopped managed daemon by starting it again.
+- `POST /api/town/daemon/start` starts `moon run cmd/main -- daemon run` as a
+  managed background process under the configured Moontown root.
+- `POST /api/town/daemon/stop` sends the managed process `SIGTERM` and persists
+  the lifecycle state.
+- `POST /api/town/daemon/restart` stops then starts the managed daemon loop.
 - `GET /api/town/analytics` returns a flat operating summary: daemon tick,
   standing-goal counts, due/active goals, watcher decision counts, request
   count, town message count, and visible MoonClaw run count.
+- `GET /api/town/progress` returns the current daemon tick/status, supervision
+  state, queued request/dispatch/message counts, and latest visible run.
+- `GET /api/town/calendar.ics` exports enabled standing goals as VTODO records.
 - `GET /api/town/messages` lists recent `.moontown/book-results/*.json`
   records.
 - `GET /api/town/requests` lists staged request records under
@@ -210,8 +255,14 @@ Implemented behavior:
   `.moontown/moondesk-dispatches/`.
 - MoonClaw run routes list run workspaces and visible `report.md`,
   `result.json`, and `outputs/*.md|*.json` artifacts.
+- `GET /api/moonclaw/progress` returns aggregate run/ready/artifact counts and
+  latest run status for a selected workspace or all workspaces.
 - `POST /api/workspaces/:id/reveal` reveals a scoped workspace path in Finder
   on macOS or opens the containing folder on Linux.
+- `GET|POST /api/preferences/views` persists saved view records under
+  `.moontown/moondesk-preferences/views.json`.
+- `GET|POST /api/preferences/tags` persists selected path tags under
+  `.moontown/moondesk-preferences/tags.json`.
 
 ## Persistence
 

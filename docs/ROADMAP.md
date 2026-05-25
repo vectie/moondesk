@@ -1,5 +1,12 @@
 # Moondesk Roadmap
 
+For the current implementation/readiness summary, see
+[Moondesk Status](STATUS.md). In brief: Moondesk is usable as a local
+single-user alpha. M0-M4 are functionally complete for local use, M5-M6 have
+working first slices, and production native distribution still needs
+credentialed notarization/installer policy, a native window shell if browser
+launch is not enough, and product hardening.
+
 ## M0: Plan And Skeleton
 
 Status: complete.
@@ -41,10 +48,11 @@ Acceptance:
 
 ## M2: Human Inbox And Editing
 
-Status: complete for markdown inbox notes. The host can create new inbox notes
-and edit existing `inbox/*` paths through `POST /api/workspaces/:id/inbox`.
-The UI provides note title/content editing, preview, selection loading, and
-safe link-to-inbox staging.
+Status: complete for markdown inbox notes and URL import staging. The host can
+create new inbox notes, edit existing `inbox/*` paths through
+`POST /api/workspaces/:id/inbox`, and stage URL/data-url imports through
+`POST /api/workspaces/:id/import`. The UI provides note title/content editing,
+preview, selection loading, safe link-to-inbox staging, and a URL importer.
 
 Deliverables:
 
@@ -86,13 +94,17 @@ Acceptance:
 
 ## M4: Pure MoonBit Desktop Host
 
-Status: first desktop packaging slice complete. `cmd/main serve` and
+Status: desktop packaging slice complete. `cmd/main serve` and
 `cmd/main desktop` run a pure MoonBit local host and serve the built Rabbita
-shell. Browser notification permission can be requested from the UI. Scoped
-Finder reveal is available through `POST /api/workspaces/:id/reveal`, and
-`cmd/main bundle` creates a macOS `.app` shell bundle that launches the pure
-MoonBit desktop host. A fully signed/distributed native app remains future
-work.
+shell; `desktop` opens the browser explicitly. Browser notification permission
+can be requested from the UI. Scoped Finder reveal is available through
+`POST /api/workspaces/:id/reveal`, and `cmd/main bundle` creates a
+self-contained macOS `.app` distribution with the native MoonBit host
+executable, bundled UI resources, ad-hoc signing by default, browser launch on
+bundle start, and an optional zip archive. `cmd/main release` writes a release
+manifest and can submit the zip through `xcrun notarytool` when a keychain
+profile is provided. `cmd/main launch-agent` writes a LaunchAgent template for
+supervised login startup.
 
 Deliverables:
 
@@ -104,20 +116,25 @@ Deliverables:
 - optional desktop notifications through allowlisted host commands
 - scoped filesystem roots
 - local macOS app-shell bundle command
+- self-contained native executable distribution
+- ad-hoc or identity-based app signing
 
 Acceptance:
 
-- app runs through a MoonBit command
+- app runs through a MoonBit command or bundled native `.app`
 - app can import local files through scoped host APIs
 - no Rust, Cargo, Tauri, or `src-tauri` files exist
 - no broad arbitrary filesystem access is required
 - scoped reveal works only for paths under the selected workspace
+- app bundle does not depend on `moon run` at launch
 
 ## M5: Search And Cross-Book Workflows
 
-Status: started. The host exposes `GET /api/search?query=...` across discovered
-MoonBooks. The UI can search, open hits, favorite paths, and copy selected
-context into inbox notes.
+Status: first workflow slice complete. The host exposes
+`GET /api/search?query=...` across discovered MoonBooks plus preference routes
+for saved views and path tags. The UI can search, open hits, favorite paths,
+save the current view, tag selected context, and copy selected context into
+inbox notes.
 
 Deliverables:
 
@@ -136,11 +153,10 @@ Acceptance:
 
 Status: first operating slice complete. The UI has a daily operating surface
 with request/run/message/standing-goal counts, browser notification trigger,
-recent/favorite context, a text export snapshot, a cadence list and
-calendar-like due-tick view for standing goals, and host-backed analytics for
-daemon tick, due goals, watcher decisions, requests, messages, run counts, and
-outcome mix percentages. Rich trend charts and external calendar integration
-remain future work.
+recent/favorite context, saved views, tags, a text export snapshot, a cadence
+list and calendar-like due-tick view for standing goals, host-backed analytics,
+live Moontown/MoonClaw progress summaries, and ICS calendar export. Rich trend
+charts and polished external calendar subscription flows remain future work.
 
 Deliverables:
 
