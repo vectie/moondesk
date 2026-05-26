@@ -6,8 +6,8 @@ inspecting MoonClaw run artifacts.
 
 Current milestone slice:
 
-- browser-hosted workspace explorer, previews, raw links, search, favorites, and
-  inbox writes/imports
+- workspace explorer, previews, raw links, search, favorites, and inbox
+  writes/imports
 - Moontown request ledger, standing-watch creation, town messages, and one-shot
   daemon tick dispatch
 - managed background daemon lifecycle: start, stop, restart, status, and
@@ -16,13 +16,14 @@ Current milestone slice:
 - saved views, selected-path tags, live Moontown/MoonClaw progress, daily
   cadence calendar, ICS export, and outcome analytics for standing goals and
   watcher decisions
-- MoonBit-only `desktop`, `bundle`, `release`, and `launch-agent` commands; no
-  Tauri/Rust app shell
+- MoonBit-only `desktop`, `bundle`, `release`, and `launch-agent` commands; the
+  default app bundle uses a native AppKit/WebKit window plus an internal MoonBit
+  host, with no Tauri/Rust app shell
 
 See [`docs/STATUS.md`](docs/STATUS.md) for the current completeness assessment.
-Short version: it is a usable local single-user alpha, not yet a polished
-Codex-style native desktop app with native window ownership or a credentialed
-release channel.
+Short version: it is a usable local single-user alpha with native window
+ownership in the generated macOS app bundle; production distribution still
+needs a credentialed release channel.
 
 Run locally:
 
@@ -31,7 +32,7 @@ npm --prefix ui/rabbita-desk run build
 moon run cmd/main -- serve ../moontown --ui ui/rabbita-desk/dist --port 4199
 ```
 
-Create the signed self-contained macOS app bundle:
+Create the signed self-contained native-window macOS app bundle:
 
 ```bash
 moon run cmd/main -- bundle ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199

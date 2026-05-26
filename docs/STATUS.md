@@ -5,35 +5,35 @@ Last validated: 2026-05-26.
 ## Summary
 
 Moondesk is a usable local alpha for a single operator working against an
-existing Moontown/MoonBook/MoonClaw checkout. The browser-hosted desk, scoped
-host APIs, Moontown request flow, managed daemon lifecycle controls, and
-self-contained macOS bundle all have working implementations. The latest slice
-adds an explicit browser-shell product decision, release/update manifests,
-DMG creation, LaunchAgent install/remove/status flows, event/failure/review
-queues, local file import staging, richer review diffs, and expanded operating
-analytics. The current slice adds a Codex-like Agents activity: Moondesk can
-discover/start the local MoonClaw daemon, create book-scoped MoonClaw tasks,
-send selected-context chat messages, cancel task work, persist session records,
-and keep per-book sessions visible from the desk.
+existing Moontown/MoonBook/MoonClaw checkout. The desk, scoped host APIs,
+Moontown request flow, managed daemon lifecycle controls, and self-contained
+macOS bundle all have working implementations. The latest slice replaces the
+browser-shell-only package with a native AppKit/WebKit window launcher, keeps a
+browser-shell fallback via `bundle --shell browser`, and includes
+release/update manifests, DMG creation, LaunchAgent install/remove/status
+flows, event/failure/review queues, local file import staging, richer review
+diffs, expanded operating analytics, and a Codex-like Agents activity.
 
-It is not a native-WebView desktop app by design. The current `.app` is a
-self-contained native MoonBit host that serves the Rabbita UI from bundled
-resources and opens the browser explicitly as the supported desktop shell.
+The current `.app` is a foreground native macOS window. The bundle executable
+is an AppKit/WebKit launcher, and the MoonBit HTTP host runs as an internal
+`moondesk-host` helper from the same bundle. Browser dev mode remains available
+through `serve`/`desktop` and as an explicit fallback shell.
 Developer ID notarization is wired through `cmd/main release`, but real
 distribution still depends on external Apple credentials, update hosting, and
 clean-machine validation.
 
 ## Standalone App Answer
 
-Moondesk is standalone at the host/package level, with an explicit
-browser-shell windowing decision.
+Moondesk is standalone at the host/package level and now owns a native macOS
+window in the packaged app.
 
-- Standalone today: `cmd/main bundle` creates `Moondesk.app` with the native
-  MoonBit host executable and bundled UI assets. Launching the bundle does not
-  require `moon run`, Cargo, Rust, Tauri, or a dev server.
-- Windowing decision: the bundled app binds the local HTTP host and opens the
-  system browser. A native WebView is intentionally out of scope unless the
-  product direction changes.
+- Standalone today: `cmd/main bundle` creates `Moondesk.app` with a native
+  AppKit/WebKit launcher, the internal `moondesk-host` MoonBit executable, and
+  bundled UI assets. Launching the bundle does not require `moon run`, Cargo,
+  Rust, Tauri, or a dev server.
+- Windowing decision: the bundled app opens a real macOS window and loads the
+  local Rabbita UI in WebKit. `bundle --shell browser` preserves the previous
+  browser-shell behavior for fallback/debug use.
 - Release-ready shape exists: `cmd/main release` creates a release manifest,
   update manifest, zip, and DMG, verifies signing, and can submit the zip
   through Apple notarytool when a real keychain profile is supplied.
@@ -54,26 +54,26 @@ browser-shell windowing decision.
 | Background daemon lifecycle | Working | UI/API support status, start, stop, restart, desired-state supervision policy, reconcile-on-status restart, LaunchAgent install/remove/status, persisted state, and log paths under `.moontown/moondesk-daemon/`. Log rotation and multi-root daemon governance are still hardening work. |
 | MoonClaw run/artifact projection | Working first slice | Lists visible run workspaces and common artifacts, aggregate progress counts/latest run status, event records, result summaries, and failure/review signals. |
 | Daily operating surface | Working first slice | Shows counts, cadence list, due-tick calendar, watcher outcome mix, browser notifications, saved views, tags, event/review analytics, review queue, and an ICS export. Trend charts and external calendar subscription polish are optional refinements. |
-| Scoped desktop helpers | Working first slice | Finder reveal is scoped under the selected workspace. Explicit browser launch is implemented for desktop/bundled runs. Local file picker/drop/paste import is staged through host APIs. Open-with-external-app remains future polish. |
-| Native packaging | Working local distribution | `bundle` builds a native MoonBit executable, copies bundled UI resources, writes absolute runtime config, signs with `codesign` by default, creates a zip, and bundled launch opens the browser. `release` writes release/update manifests, verifies signing, creates a DMG, and can submit the archive through `xcrun notarytool --keychain-profile`. Native WebView ownership is intentionally deferred by the browser-shell decision. |
+| Scoped desktop helpers | Working first slice | Finder reveal is scoped under the selected workspace. Browser launch is still implemented for `desktop` and `bundle --shell browser`. Local file picker/drop/paste import is staged through host APIs. Open-with-external-app remains future polish. |
+| Native packaging | Working local distribution | `bundle` builds the native MoonBit host helper plus an AppKit/WebKit launcher, copies bundled UI resources, writes absolute runtime config, signs with `codesign` by default, creates a zip, and bundled launch opens a native window. `release` writes release/update manifests, verifies signing, creates a DMG, and can submit the archive through `xcrun notarytool --keychain-profile`. |
 
 ## How Far To Fully Functioning
 
 | Target | Readiness | Meaning |
 | --- | --- | --- |
-| Local browser-shell daily use | 95% | The planned M0-M7 workflow is implemented for a single operator: browse, preview, search, inbox/import, submit, talk to MoonClaw in book-scoped sessions, supervise daemon actions, inspect runs, use saved views/tags/review queues, and export cadence. |
-| Self-contained local `.app` bundle | 90% | The bundle contains the native MoonBit host and UI assets, launches without `moon run`, declares browser-shell mode, and has release/update manifests plus DMG output. |
-| Production browser-shell desktop app | 85% | Core data plumbing, local workflow surfaces, release packaging, and daemon install UX exist. Remaining work is mostly real credentialed notarization, artifact hosting/update policy, clean-machine validation, and long-running reliability testing. |
+| Local native-window daily use | 95% | The planned M0-M7 workflow is implemented for a single operator: browse, preview, search, inbox/import, submit, talk to MoonClaw in book-scoped sessions, supervise daemon actions, inspect runs, use saved views/tags/review queues, and export cadence. |
+| Self-contained local `.app` bundle | 95% | The bundle contains the AppKit/WebKit launcher, internal native MoonBit host, and UI assets, launches without `moon run`, declares native-window mode, and has release/update manifests plus DMG output. |
+| Production native-window desktop app | 85% | Core data plumbing, local workflow surfaces, release packaging, native windowing, and daemon install UX exist. Remaining work is mostly real credentialed notarization, artifact hosting/update policy, clean-machine validation, and long-running reliability testing. |
 | Multi-user or organization-grade deployment | 50% | There is not yet a hardened permissions model, fleet distribution, remote policy, multi-root daemon governance, audit log, or support/update story. |
 
 The practical answer: Moondesk is already useful as a local single-user alpha
-and close to functionally complete for the chosen browser-shell desktop target.
-It is not trying to match Codex's native window ownership yet; the supported
-shell is the browser opened by the bundled native host.
+and close to functionally complete for the native-window desktop target. It now
+matches the core Codex-style packaging shape: a normal macOS app window backed
+by a bundled local host.
 
 Current assessment after the M7 agent-console pass:
 
-- Feature-complete for local single-user browser-shell use except daily-use
+- Feature-complete for local single-user native-window use except daily-use
   polish and long-running reliability hardening.
 - Standalone as a self-contained local `.app`; production distribution still
   depends on real signing/notarization credentials, hosted update artifacts,
@@ -104,7 +104,8 @@ scope when these are true:
 
 - A user can install and launch it without a terminal. Implemented for bundle
   creation; still needs clean-machine validation.
-- Browser launch is the explicit supported desktop shell. Implemented.
+- Native AppKit/WebKit windowing is the default packaged desktop shell.
+  Implemented. Browser-shell launch remains available as fallback.
 - The shipped artifact is signed, notarized, and reproducible from documented
   release commands. Implemented except for real credentialed notarization.
 - The daemon can be installed, supervised, inspected, and removed from the UI.
@@ -158,5 +159,6 @@ Manual smoke checks:
 - `POST /api/town/daemon/start` starts the Moontown daemon.
 - `POST /api/town/daemon/stop` stops it and final status reports `running:
   false`.
-- Running `Moondesk.app/Contents/MacOS/moondesk` from outside the repo serves
-  bundled UI resources and can still reach the configured workspace root.
+- Running `open Moondesk.app` from outside the repo opens the native window,
+  starts `Contents/MacOS/moondesk-host`, serves bundled UI resources, and can
+  still reach the configured workspace root.

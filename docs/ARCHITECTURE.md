@@ -144,9 +144,8 @@ moon run cmd/main -- desktop [root] [--ui ui/rabbita-desk/dist] \
 
 Implemented as a browser-compatible launch alias over the same pure MoonBit
 host. Unlike `serve`, `desktop` opens the browser after the server binds. This
-is the explicit windowing decision for the current product: Moondesk owns the
-native host process and uses the system browser as the desktop shell instead of
-embedding a native WebView.
+mode remains useful for development and fallback debugging, while packaged
+daily use is owned by the native-window bundle.
 
 ### Packaged Mode
 
@@ -155,13 +154,18 @@ moon run cmd/main -- bundle [root] [--ui ui/rabbita-desk/dist] [--out dist]
 ```
 
 Implemented as a MoonBit-generated macOS `.app` distribution. The bundle command
-builds the native MoonBit executable, copies it to `Contents/MacOS/moondesk`,
-copies the built Rabbita UI into `Contents/Resources/ui`, writes
-`Contents/Resources/moondesk-config.json`, records version/channel/browser-shell
-metadata, signs the app with `codesign` using ad-hoc identity `-` by default,
-and creates `Moondesk.app.zip` unless `--no-archive` is supplied. The packaged
-executable also opens the browser after binding. `cmd/main release` wraps the
-bundle output with `release-manifest.json`, `updates.json`, signing
+builds the native MoonBit executable, copies it to
+`Contents/MacOS/moondesk-host`, compiles a small AppKit/WebKit launcher as
+`Contents/MacOS/moondesk`, copies the built Rabbita UI into
+`Contents/Resources/ui`, writes `Contents/Resources/moondesk-config.json`,
+records version/channel/native-window metadata, signs the app with `codesign`
+using ad-hoc identity `-` by default, and creates `Moondesk.app.zip` unless
+`--no-archive` is supplied. The packaged executable opens a foreground macOS
+window and loads the bundled UI through the internal host. `bundle --shell
+browser` preserves the older browser-shell bundle shape when needed. The native
+launcher is compiled with the system `/usr/bin/clang` against AppKit and WebKit;
+there is no Rust, Tauri, or vendored desktop runtime. `cmd/main release` wraps
+the bundle output with `release-manifest.json`, `updates.json`, signing
 verification, DMG creation, and optional
 `xcrun notarytool submit --keychain-profile ... --wait` plus stapling, without
 introducing Rust into this repository.

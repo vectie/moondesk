@@ -45,24 +45,26 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
   summaries, a calendar-like due-tick view, ICS export, outcome analytics, and
   daily analytics.
 
-Moondesk now makes an explicit browser-shell product decision: `desktop` and
-the packaged app launch the native MoonBit host and open the system browser as
-the supported shell instead of embedding a native WebView. `bundle` creates a
-self-contained macOS `.app` with bundled UI resources, version/channel metadata,
-and ad-hoc or identity-based code signing. `release` creates zip/DMG artifacts,
+Moondesk now ships a native-window macOS bundle: `bundle` creates
+`Moondesk.app` with an AppKit/WebKit foreground launcher, an internal native
+MoonBit host executable, bundled UI resources, version/channel metadata, and
+ad-hoc or identity-based code signing. `desktop` remains a browser-compatible
+developer launch alias, and `bundle --shell browser` is available as an
+explicit fallback shell. Native-window packaging uses macOS system
+AppKit/WebKit frameworks and `/usr/bin/clang`; it does not vendor another app
+runtime. `release` creates zip/DMG artifacts,
 `release-manifest.json`, `updates.json`, verifies signing, and can submit the
 archive through Apple notarytool when a keychain profile is provided. It still
 avoids Rust, Cargo, Tauri, and broad filesystem permissions.
 
 See [Current Status](docs/STATUS.md) for the honest completion picture:
-Moondesk is feature-complete for a local single-user browser-shell alpha and
-roughly 95% complete for the chosen daily-use target. The self-contained `.app`
-bundle is about 90% of the standalone local distribution target: it includes
-the native MoonBit host, bundled UI, release/update manifests, and DMG
-creation. A production distribution is closer to 85% complete because real
-Developer ID signing/notarization, update hosting, clean-machine validation,
-and long-running reliability proof are release hardening steps rather than
-code-only changes.
+Moondesk is feature-complete for a local single-user native-window alpha and
+roughly 95% complete for the daily-use target. The self-contained `.app` bundle
+now includes the AppKit/WebKit launcher, native MoonBit host, bundled UI,
+release/update manifests, and DMG creation. A production distribution is closer
+to 85% complete because real Developer ID signing/notarization, update hosting,
+clean-machine validation, and long-running reliability proof are release
+hardening steps rather than code-only changes.
 
 ## Run Locally
 
@@ -98,10 +100,16 @@ moon run cmd/main -- agent-status --service town
 moon run cmd/main -- uninstall-agent --service town
 ```
 
-Create a signed self-contained macOS app bundle:
+Create a signed self-contained native-window macOS app bundle:
 
 ```sh
 moon run cmd/main -- bundle ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199 --version 0.1.0 --channel local
+```
+
+Use the browser fallback shell only when explicitly needed:
+
+```sh
+moon run cmd/main -- bundle ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199 --shell browser
 ```
 
 Create release artifacts, update metadata, and optionally notarize with an
@@ -111,7 +119,7 @@ Apple keychain profile:
 moon run cmd/main -- release ../moontown --ui ui/rabbita-desk/dist --out dist --port 4199 --notary-profile <profile>
 ```
 
-Open:
+Browser dev mode opens at:
 
 ```text
 http://127.0.0.1:4199/

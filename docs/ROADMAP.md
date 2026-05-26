@@ -2,9 +2,9 @@
 
 For the current implementation/readiness summary, see
 [Moondesk Status](STATUS.md). In brief: Moondesk is usable as a local
-single-user alpha. It is roughly 95% complete for browser-hosted daily use,
-90% complete for a self-contained local `.app` bundle, and 85% complete for a
-production browser-shell desktop app. M0-M4 are functionally complete for local
+single-user alpha. It is roughly 95% complete for native-window daily use,
+95% complete for a self-contained local `.app` bundle, and 85% complete for a
+production native-window desktop app. M0-M4 are functionally complete for local
 use, M5-M7 have working first slices with review/event/analytics and agent-chat
 coverage, and production distribution now mainly needs credentialed
 notarization, update hosting policy, clean-machine validation, and long-running
@@ -30,7 +30,7 @@ Acceptance:
 
 ## M1: Read-Only Workspace Browser
 
-Status: complete for browser-hosted use. The host API discovers books, lists
+Status: complete for local desk use. The host API discovers books, lists
 entries, previews files, serves raw files, and lists MoonClaw runs/artifacts.
 The Rabbita UI is bound to those APIs.
 
@@ -98,25 +98,26 @@ Acceptance:
 
 ## M4: Pure MoonBit Desktop Host
 
-Status: desktop packaging slice complete for the explicit browser-shell target.
+Status: desktop packaging slice complete for the native-window target.
 `cmd/main serve` and `cmd/main desktop` run a pure MoonBit local host and serve
-the built Rabbita shell; `desktop` opens the browser explicitly. Browser
-notification permission can be requested from the UI. Scoped Finder reveal is
-available through `POST /api/workspaces/:id/reveal`, and `cmd/main bundle`
-creates a self-contained macOS `.app` distribution with the native MoonBit host
-executable, bundled UI resources, ad-hoc or identity-based signing,
-version/channel metadata, browser launch on bundle start, and an optional zip
-archive. `cmd/main release` writes release/update manifests, creates a DMG,
-verifies signing, and can submit the zip through `xcrun notarytool` when a
-keychain profile is provided. `cmd/main launch-agent`, `install-agent`,
-`uninstall-agent`, and `agent-status` cover LaunchAgent templates and install
-state for the desk host or Moontown daemon.
+the built Rabbita shell; `desktop` opens the browser explicitly for development
+and fallback use. Browser notification permission can be requested from the UI.
+Scoped Finder reveal is available through `POST /api/workspaces/:id/reveal`,
+and `cmd/main bundle` creates a self-contained macOS `.app` distribution with an
+AppKit/WebKit launcher, internal native MoonBit host executable, bundled UI
+resources, ad-hoc or identity-based signing, version/channel metadata,
+native-window metadata, and an optional zip archive. `cmd/main release` writes
+release/update manifests, creates a DMG, verifies signing, and can submit the
+zip through `xcrun notarytool` when a keychain profile is provided. `cmd/main
+launch-agent`, `install-agent`, `uninstall-agent`, and `agent-status` cover
+LaunchAgent templates and install state for the desk host or Moontown daemon.
 
 Deliverables:
 
 - MoonBit host package
 - scoped file APIs
 - browser-compatible desktop shell launch command
+- native AppKit/WebKit packaged shell
 - host-backed import/open flows
 - reveal in Finder
 - optional desktop notifications through allowlisted host commands
@@ -124,7 +125,7 @@ Deliverables:
 - local macOS app-shell bundle command
 - self-contained native executable distribution
 - ad-hoc or identity-based app signing
-- explicit browser-shell metadata
+- explicit native-window metadata plus browser-shell fallback
 - DMG/release/update manifest generation
 - LaunchAgent install/remove/status flow
 
@@ -185,7 +186,7 @@ Acceptance:
 
 ## M7: Interactive MoonClaw Agent Console
 
-Status: local browser-shell slice complete. The UI has an Agents activity and
+Status: local native-window slice complete. The UI has an Agents activity and
 bottom-drawer summary. The host exposes a narrow `/api/agents/*` bridge that
 reads `~/.moonclaw/daemon.json`, starts a runnable sibling/configured MoonClaw
 daemon from a native executable when needed, lists models/tasks, creates or

@@ -371,6 +371,7 @@ struct Model {
   current_directory : String
   entries : Array[@desk.DeskFileEntry]
   selected_path : String
+  primary_preview_path : String
   preview : @desk.DeskPreview?
   preview_status : String
   request_prompt : String
@@ -555,6 +556,7 @@ fn init_model() -> Model {
     current_directory: "",
     entries: [],
     selected_path: "wiki/index.md",
+    primary_preview_path: "wiki/index.md",
     preview: None,
     preview_status: "waiting for workspace",
     request_prompt: "Analyze the selected context and propose source-backed updates for this MoonBook.",
@@ -751,6 +753,20 @@ fn is_inbox_path(path : String) -> Bool {
 }
 
 ///|
+fn is_generated_site_path(path : String) -> Bool {
+  path == "book/site/generated" || path.has_prefix("book/site/generated/")
+}
+
+///|
+fn remember_primary_preview_path(model : Model, path : String) -> String {
+  if path != "" && !is_generated_site_path(path) {
+    path
+  } else {
+    model.primary_preview_path
+  }
+}
+
+///|
 fn is_textual_renderer(renderer : @desk.PreviewRenderer) -> Bool {
   match renderer {
     @desk.PreviewRenderer::Markdown
@@ -889,6 +905,20 @@ fn raw_url(model : Model, path : String) -> String {
 }
 
 ///|
+fn file_url(model : Model, path : String) -> String {
+  if model.selected_workspace_id == "" {
+    "#"
+  } else {
+    "/api/workspaces/\{model.selected_workspace_id}/file/\{encode_path(path)}"
+  }
+}
+
+///|
+fn html_preview_url(model : Model, path : String) -> String {
+  file_url(model, path)
+}
+
+///|
 fn workspace_entries_url(workspace_id : String, path : String) -> String {
   "/api/workspaces/\{workspace_id}/entries?path=\{encode_component(path)}"
 }
@@ -901,6 +931,11 @@ fn workspace_preview_url(workspace_id : String, path : String) -> String {
 ///|
 #cfg(target="js")
 extern "js" fn encode_component(text : String) -> String = "(text)=>encodeURIComponent(text)"
+
+///|
+#cfg(target="js")
+extern "js" fn encode_path(text : String) -> String =
+  #| (text) => String(text).split("/").map(encodeURIComponent).join("/")
 
 ///|
 #cfg(target="js")
@@ -1917,6 +1952,7 @@ fn update(
           current_directory: "inbox",
           selected_workspace_id: created.workspace_id,
           selected_path: created.path,
+          primary_preview_path: created.path,
           editing_inbox_path: created.path,
           inbox_status: if created.ok {
             "saved \{created.path}"
@@ -1943,6 +1979,7 @@ fn update(
           current_directory: "inbox/imports",
           selected_workspace_id: created.workspace_id,
           selected_path: created.path,
+          primary_preview_path: created.path,
           import_url: "",
           import_note: "",
           inbox_status: if created.ok {
@@ -2402,6 +2439,7 @@ fn update(
           selected_workspace_id: workspace_id,
           selected_agent_session_id: "",
           selected_path: "wiki/index.md",
+          primary_preview_path: "wiki/index.md",
           current_directory: "",
           preview: None,
           preview_status: "loading preview",
@@ -2430,6 +2468,7 @@ fn update(
         {
           ..model,
           selected_path: path,
+          primary_preview_path: remember_primary_preview_path(model, path),
           current_directory: if is_directory {
             path
           } else {
@@ -2455,6 +2494,7 @@ fn update(
           ..model,
           current_directory: path,
           selected_path: path,
+          primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
           preview_status: "loading directory",
         },
@@ -2468,6 +2508,7 @@ fn update(
         {
           ..model,
           selected_path: path,
+          primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
           preview_status: "loading preview",
         },
@@ -2489,6 +2530,11 @@ fn update(
           command_open: false,
           selected_workspace_id: workspace_id,
           selected_path: path,
+          primary_preview_path: if is_generated_site_path(path) {
+            "wiki/index.md"
+          } else {
+            path
+          },
           current_directory: "",
           preview: None,
           preview_status: "loading search result",
@@ -4024,30 +4070,47 @@ fn export_snapshot(model : Model) -> String {
 ///|
 fn preview_tabs(model : Model) -> Array[PreviewTab] {
   let tabs : Array[PreviewTab] = []
-  let renderer = match model.preview {
-    Some(preview) => preview.renderer
-    None => @desk.PreviewRenderer::Unsupported
+  let primary_path = if is_generated_site_path(model.selected_path) {
+    model.primary_preview_path
+  } else {
+    model.selected_path
   }
   tabs.push({
-    title: @desk.display_name(model.selected_path),
-    path: model.selected_path,
-    renderer,
+    title: @desk.display_name(primary_path),
+    path: primary_path,
+    renderer: tab_renderer(model, primary_path),
   })
-  tabs.push({
-    title: "generated site",
-    path: "book/site/generated/index.html",
-    renderer: @desk.PreviewRenderer::Html,
-  })
+  if primary_path != "book/site/generated/index.html" {
+    tabs.push({
+      title: "generated site",
+      path: "book/site/generated/index.html",
+      renderer: @desk.PreviewRenderer::Html,
+    })
+  }
   match first_run_report_path(model) {
     Some(path) =>
-      tabs.push({
-        title: "run report",
-        path,
-        renderer: @desk.PreviewRenderer::ArtifactSummary,
-      })
+      if path != primary_path && path != "book/site/generated/index.html" {
+        tabs.push({
+          title: "run report",
+          path,
+          renderer: @desk.PreviewRenderer::ArtifactSummary,
+        })
+      }
     None => ()
   }
   tabs
+}
+
+///|
+fn tab_renderer(model : Model, path : String) -> @desk.PreviewRenderer {
+  if path == model.selected_path {
+    match model.preview {
+      Some(preview) => preview.renderer
+      None => @desk.renderer_for_kind(@desk.infer_entry_kind(path))
+    }
+  } else {
+    @desk.renderer_for_kind(@desk.infer_entry_kind(path))
+  }
 }
 
 ///|
@@ -4102,7 +4165,7 @@ fn render_preview_body(model : Model) -> @rabbita.Html {
               span(model.selected_path),
               a(
                 class="secondary-button link-button",
-                href=raw_url(model, model.selected_path),
+                href=html_preview_url(model, model.selected_path),
                 target=@html.Target::Blank,
                 rel="noreferrer",
                 "Open",
@@ -4110,7 +4173,7 @@ fn render_preview_body(model : Model) -> @rabbita.Html {
             ]),
             iframe(
               class="site-iframe",
-              src=raw_url(model, model.selected_path),
+              src=html_preview_url(model, model.selected_path),
               title=preview.title,
               sandbox="allow-same-origin allow-scripts",
             ),

@@ -45,7 +45,7 @@ fn default_bundle_options() -> BundleOptions {
     sign_identity: "-",
     version: "0.1.0",
     channel: "local",
-    shell_policy: "browser-shell",
+    shell_policy: "native-window",
     archive: true,
     skip_sign: false,
   }
@@ -179,10 +179,11 @@ fn parse_bundle_args(args : Array[String]) -> BundleOptions? {
       "--shell" =>
         if index + 1 < args.length() {
           let shell = args[index + 1]
-          if shell != "browser" && shell != "browser-shell" {
+          let shell_policy = normalize_shell_policy(shell)
+          if shell_policy == "" {
             return None
           }
-          options = { ..options, shell_policy: "browser-shell" }
+          options = { ..options, shell_policy, }
           index += 2
         } else {
           return None
@@ -310,6 +311,7 @@ async fn run_bundle(args : Array[String]) -> Unit {
     return
   }
   let launcher = @pathx.join(macos, "moondesk")
+  let host_binary = @pathx.join(macos, "moondesk-host")
   let binary = @pathx.join(
     repo_root, "_build/native/debug/build/cmd/main/main.exe",
   )
@@ -319,14 +321,52 @@ async fn run_bundle(args : Array[String]) -> Unit {
       return
     }
   }
-  @fs.write_file(launcher, binary_data, create=0o755, truncate=true) catch {
+  let native_window = bundle_uses_native_window(options)
+  let runtime_binary = if native_window { host_binary } else { launcher }
+  @fs.write_file(runtime_binary, binary_data, create=0o755, truncate=true) catch {
     error => {
       println("bundle failed: could not copy native executable: \{error}")
       return
     }
   }
-  @fs.chmod(launcher, 0o755) catch {
+  @fs.chmod(runtime_binary, 0o755) catch {
     _ => ()
+  }
+  if native_window {
+    let launcher_source_path = @pathx.join(out_dir, "MoondeskLauncher.m")
+    @fsx.write_to_file(
+      launcher_source_path,
+      native_launcher_source(),
+      create=0o644,
+    ) catch {
+      error => {
+        println(
+          "bundle failed: could not write native launcher source: \{error}",
+        )
+        return
+      }
+    }
+    let compile_code = @process.run("clang", [
+      "-fobjc-arc", "-framework", "Cocoa", "-framework", "WebKit", launcher_source_path,
+      "-o", launcher,
+    ]) catch {
+      error => {
+        println("bundle failed: could not compile native launcher: \{error}")
+        return
+      }
+    }
+    if compile_code != 0 {
+      println(
+        "bundle failed: native launcher compile exited with \{compile_code}",
+      )
+      return
+    }
+    @fs.remove(launcher_source_path) catch {
+      _ => ()
+    }
+    @fs.chmod(launcher, 0o755) catch {
+      _ => ()
+    }
   }
   let copy_code = @process.run("cp", ["-R", options.ui_dir + "/.", bundled_ui]) catch {
     error => {
@@ -340,7 +380,7 @@ async fn run_bundle(args : Array[String]) -> Unit {
   }
   @fsx.write_to_file(
     @pathx.join(contents, "Info.plist"),
-    info_plist(options.version),
+    info_plist(options.version, native_window),
     create=0o644,
   ) catch {
     error => {
@@ -360,7 +400,7 @@ async fn run_bundle(args : Array[String]) -> Unit {
   }
   @fsx.write_to_file(
     @pathx.join(resources, "README.txt"),
-    "Moondesk.app contains a native MoonBit host executable and bundled Rabbita UI resources. It serves \{options.workspace_root} on \{options.host}:\{options.port} using the explicit \{options.shell_policy} desktop shell.\n",
+    "Moondesk.app contains a native MoonBit host executable, bundled Rabbita UI resources, and the \{options.shell_policy} desktop shell. It serves \{options.workspace_root} on \{options.host}:\{options.port}.\n",
     create=0o644,
   ) catch {
     error => {
@@ -1014,18 +1054,218 @@ fn absolute_path(path : String, base : String) -> String {
 }
 
 ///|
+fn normalize_shell_policy(shell : String) -> String {
+  match shell {
+    "native" | "native-window" | "webview" => "native-window"
+    "browser" | "browser-shell" => "browser-shell"
+    _ => ""
+  }
+}
+
+///|
+fn bundle_uses_native_window(options : BundleOptions) -> Bool {
+  options.shell_policy == "native-window"
+}
+
+///|
 fn bundle_config_json(options : BundleOptions) -> Json {
+  let native_window = bundle_uses_native_window(options)
   {
     "workspace_root": options.workspace_root,
     "ui_dir": "../Resources/ui",
     "host": options.host,
     "port": options.port,
-    "open_browser": true,
+    "open_browser": !native_window,
     "version": options.version,
     "channel": options.channel,
     "shell_policy": options.shell_policy,
-    "native_window": false,
+    "native_window": native_window,
   }
+}
+
+///|
+fn native_launcher_source() -> String {
+  (
+    #|#import <Cocoa/Cocoa.h>
+    #|#import <WebKit/WebKit.h>
+    #|
+    #|@interface MoondeskAppDelegate : NSObject <NSApplicationDelegate, WKNavigationDelegate>
+    #|@property(nonatomic, strong) NSWindow *window;
+    #|@property(nonatomic, strong) WKWebView *webView;
+    #|@property(nonatomic, strong) NSTask *hostTask;
+    #|@property(nonatomic, strong) NSURL *appURL;
+    #|@property(nonatomic, assign) NSInteger attempts;
+    #|@end
+    #|
+    #|@implementation MoondeskAppDelegate
+    #|
+    #|- (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    #|  (void)notification;
+    #|  [self installMenu];
+    #|  [self launchHost];
+    #|  [self createWindow];
+    #|  [self waitForHost];
+    #|}
+    #|
+    #|- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)sender {
+    #|  (void)sender;
+    #|  return YES;
+    #|}
+    #|
+    #|- (void)applicationWillTerminate:(NSNotification *)notification {
+    #|  (void)notification;
+    #|  [self stopHost];
+    #|}
+    #|
+    #|- (void)installMenu {
+    #|  NSMenu *mainMenu = [[NSMenu alloc] initWithTitle:@""];
+    #|  NSMenuItem *appMenuItem = [[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""];
+    #|  [mainMenu addItem:appMenuItem];
+    #|  NSMenu *appMenu = [[NSMenu alloc] initWithTitle:@"Moondesk"];
+    #|  NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"Quit Moondesk" action:@selector(terminate:) keyEquivalent:@"q"];
+    #|  [appMenu addItem:quitItem];
+    #|  [appMenuItem setSubmenu:appMenu];
+    #|  [NSApp setMainMenu:mainMenu];
+    #|}
+    #|
+    #|- (NSDictionary *)loadConfig {
+    #|  NSString *path = [[NSBundle mainBundle] pathForResource:@"moondesk-config" ofType:@"json"];
+    #|  if (path == nil) {
+    #|    return @{};
+    #|  }
+    #|  NSData *data = [NSData dataWithContentsOfFile:path];
+    #|  if (data == nil) {
+    #|    return @{};
+    #|  }
+    #|  id json = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    #|  if ([json isKindOfClass:[NSDictionary class]]) {
+    #|    return (NSDictionary *)json;
+    #|  }
+    #|  return @{};
+    #|}
+    #|
+    #|- (NSString *)configString:(NSDictionary *)config key:(NSString *)key fallback:(NSString *)fallback {
+    #|  id value = config[key];
+    #|  if ([value isKindOfClass:[NSString class]]) {
+    #|    return (NSString *)value;
+    #|  }
+    #|  return fallback;
+    #|}
+    #|
+    #|- (NSInteger)configInteger:(NSDictionary *)config key:(NSString *)key fallback:(NSInteger)fallback {
+    #|  id value = config[key];
+    #|  if ([value respondsToSelector:@selector(integerValue)]) {
+    #|    return [value integerValue];
+    #|  }
+    #|  return fallback;
+    #|}
+    #|
+    #|- (void)launchHost {
+    #|  NSString *hostPath = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"moondesk-host"];
+    #|  if (hostPath == nil) {
+    #|    [self showLaunchError:@"The Moondesk host executable is missing from this app bundle."];
+    #|    return;
+    #|  }
+    #|  self.hostTask = [[NSTask alloc] init];
+    #|  self.hostTask.executableURL = [NSURL fileURLWithPath:hostPath];
+    #|  self.hostTask.currentDirectoryURL = [NSURL fileURLWithPath:[[NSBundle mainBundle] resourcePath]];
+    #|  self.hostTask.standardOutput = [NSFileHandle fileHandleWithNullDevice];
+    #|  self.hostTask.standardError = [NSFileHandle fileHandleWithNullDevice];
+    #|  NSError *error = nil;
+    #|  if (![self.hostTask launchAndReturnError:&error]) {
+    #|    NSString *message = [NSString stringWithFormat:@"Moondesk could not start its local host. %@", error.localizedDescription ?: @""];
+    #|    [self showLaunchError:message];
+    #|  }
+    #|}
+    #|
+    #|- (void)createWindow {
+    #|  NSDictionary *config = [self loadConfig];
+    #|  NSString *host = [self configString:config key:@"host" fallback:@"127.0.0.1"];
+    #|  NSInteger port = [self configInteger:config key:@"port" fallback:4199];
+    #|  self.appURL = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@:%ld/", host, (long)port]];
+    #|
+    #|  NSRect frame = NSMakeRect(0, 0, 1280, 820);
+    #|  NSUInteger style = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
+    #|  self.window = [[NSWindow alloc] initWithContentRect:frame styleMask:style backing:NSBackingStoreBuffered defer:NO];
+    #|  self.window.title = @"Moondesk";
+    #|  self.window.minSize = NSMakeSize(960, 640);
+    #|  [self.window center];
+    #|
+    #|  WKWebViewConfiguration *webConfig = [[WKWebViewConfiguration alloc] init];
+    #|  self.webView = [[WKWebView alloc] initWithFrame:self.window.contentView.bounds configuration:webConfig];
+    #|  self.webView.navigationDelegate = self;
+    #|  self.webView.allowsBackForwardNavigationGestures = YES;
+    #|  self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    #|  [self.window.contentView addSubview:self.webView];
+    #|
+    #|  [self.window makeFirstResponder:self.webView];
+    #|  [self.window makeKeyAndOrderFront:nil];
+    #|  [NSApp activateIgnoringOtherApps:YES];
+    #|}
+    #|
+    #|- (void)waitForHost {
+    #|  if (self.appURL == nil) {
+    #|    return;
+    #|  }
+    #|  self.attempts += 1;
+    #|  if (self.attempts > 240) {
+    #|    [self.webView loadRequest:[NSURLRequest requestWithURL:self.appURL]];
+    #|    return;
+    #|  }
+    #|  NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:self.appURL];
+    #|  request.timeoutInterval = 0.35;
+    #|  request.HTTPMethod = @"GET";
+    #|  NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+    #|    (void)data;
+    #|    dispatch_async(dispatch_get_main_queue(), ^{
+    #|      NSHTTPURLResponse *http = [response isKindOfClass:[NSHTTPURLResponse class]] ? (NSHTTPURLResponse *)response : nil;
+    #|      if (error == nil && http != nil && http.statusCode >= 200 && http.statusCode < 500) {
+    #|        [self.webView loadRequest:[NSURLRequest requestWithURL:self.appURL]];
+    #|      } else {
+    #|        [self performSelector:@selector(waitForHost) withObject:nil afterDelay:0.15];
+    #|      }
+    #|    });
+    #|  }];
+    #|  [task resume];
+    #|}
+    #|
+    #|- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    #|  (void)webView;
+    #|  (void)navigation;
+    #|  (void)error;
+    #|  [self performSelector:@selector(waitForHost) withObject:nil afterDelay:0.5];
+    #|}
+    #|
+    #|- (void)showLaunchError:(NSString *)message {
+    #|  NSAlert *alert = [[NSAlert alloc] init];
+    #|  alert.messageText = @"Moondesk could not open";
+    #|  alert.informativeText = message;
+    #|  [alert addButtonWithTitle:@"Quit"];
+    #|  [alert runModal];
+    #|  [NSApp terminate:nil];
+    #|}
+    #|
+    #|- (void)stopHost {
+    #|  if (self.hostTask != nil && self.hostTask.isRunning) {
+    #|    [self.hostTask terminate];
+    #|  }
+    #|}
+    #|
+    #|@end
+    #|
+    #|int main(int argc, const char *argv[]) {
+    #|  (void)argc;
+    #|  (void)argv;
+    #|  @autoreleasepool {
+    #|    NSApplication *app = [NSApplication sharedApplication];
+    #|    [app setActivationPolicy:NSApplicationActivationPolicyRegular];
+    #|    MoondeskAppDelegate *delegate = [[MoondeskAppDelegate alloc] init];
+    #|    app.delegate = delegate;
+    #|    [app run];
+    #|  }
+    #|  return 0;
+    #|}
+  )
 }
 
 ///|
@@ -1132,7 +1372,25 @@ fn xml_escape(text : String) -> String {
 }
 
 ///|
-fn info_plist(version : String) -> String {
+fn info_plist(version : String, native_window : Bool) -> String {
+  let shell_keys = if native_window {
+    (
+      #|  <key>NSPrincipalClass</key>
+      #|  <string>NSApplication</string>
+      #|  <key>NSHighResolutionCapable</key>
+      #|  <true/>
+      #|  <key>NSAppTransportSecurity</key>
+      #|  <dict>
+      #|    <key>NSAllowsLocalNetworking</key>
+      #|    <true/>
+      #|  </dict>
+    )
+  } else {
+    (
+      #|  <key>LSBackgroundOnly</key>
+      #|  <true/>
+    )
+  }
   let template =
     #|<?xml version="1.0" encoding="UTF-8"?>
     #|<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -1152,9 +1410,15 @@ fn info_plist(version : String) -> String {
     #|  <string>moondesk</string>
     #|  <key>CFBundlePackageType</key>
     #|  <string>APPL</string>
+    #|MOONDESK_SHELL_KEYS
+    #|  <key>LSMultipleInstancesProhibited</key>
+    #|  <true/>
     #|</dict>
     #|</plist>
-  template.replace_all(old="MOONDESK_VERSION", new=version).to_string()
+  template
+  .replace_all(old="MOONDESK_VERSION", new=version)
+  .replace_all(old="MOONDESK_SHELL_KEYS", new=shell_keys)
+  .to_string()
 }
 
 ///|
@@ -1180,7 +1444,7 @@ fn print_usage() -> Unit {
       #|  moon run cmd/main -- doctor [root]
       #|  moon run cmd/main -- serve [root] [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188] [--open]
       #|  moon run cmd/main -- desktop [root] [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188]
-      #|  moon run cmd/main -- bundle [root] [--ui ui/rabbita-desk/dist] [--out dist] [--host 127.0.0.1] [--port 4199] [--sign-identity -] [--skip-sign] [--no-archive]
+      #|  moon run cmd/main -- bundle [root] [--ui ui/rabbita-desk/dist] [--out dist] [--host 127.0.0.1] [--port 4199] [--shell native-window|browser] [--sign-identity -] [--skip-sign] [--no-archive]
       #|  moon run cmd/main -- release [root] [bundle options] [--notary-profile keychain-profile] [--no-staple] [--no-dmg]
       #|  moon run cmd/main -- launch-agent [root] [--service desk|town] [--out dist/app.vectie.moondesk.plist] [--port 4188]
       #|  moon run cmd/main -- install-agent [root] [--service desk|town] [--port 4188]
