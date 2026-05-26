@@ -57,12 +57,18 @@ Talks to Moontown surfaces:
 
 ### `adapters/moonclaw`
 
-Read-only run/artifact projection at first:
+Run/artifact projection plus a narrow interactive agent bridge:
 
 - list run workspaces
 - inspect `events.jsonl`, `meta.json`, `result.json`, `report.md`
 - expose artifact preview entries
 - map worker/run status back to the UI
+- inspect `~/.moonclaw/daemon.json`
+- proxy to MoonClaw daemon `GET /v1/models`, `GET /v1/tasks`,
+  `POST /v1/task`, `POST /v1/task/:id/message`, and
+  `POST /v1/task/:id/cancel`
+- persist Moondesk-owned session metadata without owning MoonClaw
+  conversation/runtime state
 
 ### `ui/rabbita-desk`
 
@@ -76,6 +82,7 @@ Rabbita desktop application:
 - command palette
 - request composer
 - file drop surface
+- Agents activity for book-scoped MoonClaw chat sessions
 
 ### `cmd/main`
 
@@ -182,7 +189,9 @@ Moontown daemon agent status plus install/remove controls through
   workspace internals everywhere.
 - Moondesk should call `MoontownAdapter.submit_request`, not write daemon files
   directly except through an approved local dev API.
-- Moondesk should call `MoonClawAdapter.list_runs`, not own job execution.
+- Moondesk should call `MoonClawAdapter.list_runs` for artifacts and proxy
+  interactive chat through the MoonClaw daemon; it should not own MoonClaw job
+  execution internals.
 
 ## Initial API Surface
 
@@ -219,6 +228,13 @@ GET  /api/moonclaw/events?workspace=...
 GET  /api/moonclaw/runs?workspace=...
 GET  /api/moonclaw/progress?workspace=...
 GET  /api/moonclaw/runs/:id/artifacts
+GET  /api/agents/daemon
+GET  /api/agents/models
+GET  /api/agents/tasks
+GET  /api/agents/sessions?workspace=...
+POST /api/agents/sessions
+POST /api/agents/sessions/:id/message
+POST /api/agents/sessions/:id/cancel
 GET  /api/review/items?workspace=...
 POST /api/workspaces/:id/reveal
 GET  /api/preferences/views
@@ -284,6 +300,25 @@ Implemented behavior:
   normalized live events.
 - `GET /api/moonclaw/progress` returns aggregate run/ready/artifact counts and
   latest run status for a selected workspace or all workspaces.
+- `GET /api/agents/daemon` reports the local MoonClaw daemon pid/port/root from
+  `~/.moonclaw/daemon.json`.
+- `GET /api/agents/models` lists daemon models when MoonClaw is running.
+- `GET /api/agents/tasks` lists active MoonClaw daemon tasks when available.
+- `GET /api/agents/sessions?workspace=...` lists persisted Moondesk agent
+  sessions, enriched with live MoonClaw task status when the daemon is running
+  and saved MoonClaw conversation events when a task transcript exists, with a
+  bounded workspace `.moonclaw/log.jsonl` progress fallback for in-flight or
+  incomplete task output.
+- `POST /api/agents/sessions` validates the target workspace, starts MoonClaw
+  from a native `cmd/main` executable when a runnable checkout is found,
+  creating that executable when necessary, creates or reuses the workspace-root
+  task, sends an initial selected-context message, and persists a session
+  record.
+- `POST /api/agents/sessions/:id/message` sends a follow-up contextual user
+  message to the attached MoonClaw task and appends local transcript/status
+  records.
+- `POST /api/agents/sessions/:id/cancel` forwards cancellation to MoonClaw and
+  records the result in the local session transcript.
 - `GET /api/review/items` lists review/failure items from review folders and
   Moontown event signals.
 - `POST /api/workspaces/:id/reveal` reveals a scoped workspace path in Finder
@@ -303,5 +338,7 @@ Moondesk should keep only desktop preferences and cache:
 - recent files
 - preview cache
 - UI preferences
+- agent session metadata and desk-visible transcripts under
+  `.moontown/moondesk-agent-sessions/`
 
 Canonical content remains in MoonBook, Moontown, or MoonClaw.

@@ -1,6 +1,6 @@
 # Moondesk Status
 
-Last validated: 2026-05-25.
+Last validated: 2026-05-26.
 
 ## Summary
 
@@ -11,7 +11,10 @@ self-contained macOS bundle all have working implementations. The latest slice
 adds an explicit browser-shell product decision, release/update manifests,
 DMG creation, LaunchAgent install/remove/status flows, event/failure/review
 queues, local file import staging, richer review diffs, and expanded operating
-analytics.
+analytics. The current slice adds a Codex-like Agents activity: Moondesk can
+discover/start the local MoonClaw daemon, create book-scoped MoonClaw tasks,
+send selected-context chat messages, cancel task work, persist session records,
+and keep per-book sessions visible from the desk.
 
 It is not a native-WebView desktop app by design. The current `.app` is a
 self-contained native MoonBit host that serves the Rabbita UI from bundled
@@ -47,6 +50,7 @@ browser-shell windowing decision.
 | Inbox notes | Working | Creates markdown inbox notes, edits scoped `inbox/*` paths, imports URLs/data-url attachments, and stages local file picker/drop/paste imports into `inbox/imports`. |
 | Search and context assembly | Working first slice | Cross-book text search, favorites, recent paths, copy-to-inbox, saved views, path tags, review queues, and review diff summaries are present. Richer output-library navigation can still be refined. |
 | Moontown submissions | Working first slice | Stages request records, shows request ledger and town messages, creates standing-watch records, runs one daemon tick, and exposes progress plus event/failure/review summaries. |
+| MoonClaw agent sessions | Working | The Agents activity lists per-book sessions, starts or connects to the MoonClaw daemon through a native MoonClaw executable, creates/reuses the book-scoped task for the workspace root, sends contextual user messages, folds saved MoonClaw assistant/tool/failure events and workspace `.moonclaw/log.jsonl` progress rows into the transcript, supports web-search/model selection, cancels active task work, and persists local session metadata under `.moontown/moondesk-agent-sessions/`. |
 | Background daemon lifecycle | Working | UI/API support status, start, stop, restart, desired-state supervision policy, reconcile-on-status restart, LaunchAgent install/remove/status, persisted state, and log paths under `.moontown/moondesk-daemon/`. Log rotation and multi-root daemon governance are still hardening work. |
 | MoonClaw run/artifact projection | Working first slice | Lists visible run workspaces and common artifacts, aggregate progress counts/latest run status, event records, result summaries, and failure/review signals. |
 | Daily operating surface | Working first slice | Shows counts, cadence list, due-tick calendar, watcher outcome mix, browser notifications, saved views, tags, event/review analytics, review queue, and an ICS export. Trend charts and external calendar subscription polish are optional refinements. |
@@ -57,7 +61,7 @@ browser-shell windowing decision.
 
 | Target | Readiness | Meaning |
 | --- | --- | --- |
-| Local browser-shell daily use | 95% | The planned M0-M6 workflow is implemented for a single operator: browse, preview, search, inbox/import, submit, supervise daemon actions, inspect runs, use saved views/tags/review queues, and export cadence. |
+| Local browser-shell daily use | 95% | The planned M0-M7 workflow is implemented for a single operator: browse, preview, search, inbox/import, submit, talk to MoonClaw in book-scoped sessions, supervise daemon actions, inspect runs, use saved views/tags/review queues, and export cadence. |
 | Self-contained local `.app` bundle | 90% | The bundle contains the native MoonBit host and UI assets, launches without `moon run`, declares browser-shell mode, and has release/update manifests plus DMG output. |
 | Production browser-shell desktop app | 85% | Core data plumbing, local workflow surfaces, release packaging, and daemon install UX exist. Remaining work is mostly real credentialed notarization, artifact hosting/update policy, clean-machine validation, and long-running reliability testing. |
 | Multi-user or organization-grade deployment | 50% | There is not yet a hardened permissions model, fleet distribution, remote policy, multi-root daemon governance, audit log, or support/update story. |
@@ -78,8 +82,9 @@ High-priority work before calling it production-ready:
 - Add log rotation and multi-root policy for long-running LaunchAgent use.
 - Reconcile Moondesk-managed daemon state with any independently running
   Moontown daemon.
-- Deepen output-library navigation, trend analytics, and calendar subscription
-  polish after more real workspace usage.
+- Deepen output-library navigation, direct MoonClaw SSE event-stream rendering,
+  trend analytics, and calendar subscription polish after more real workspace
+  usage.
 
 ## Full Functioning Criteria
 
@@ -93,10 +98,13 @@ scope when these are true:
   release commands. Implemented except for real credentialed notarization.
 - The daemon can be installed, supervised, inspected, and removed from the UI.
   Implemented for the Moontown LaunchAgent and Moondesk-managed daemon loop.
+- A user can talk to MoonClaw from Moondesk in the selected book/workspace
+  context. Implemented through the Agents activity and `/api/agents/*` bridge.
 - Inbox import covers URL, text/data URL, file picker, drag/drop, and pasted
   files/images. Implemented as staged inbox imports.
 - Moontown/MoonClaw progress includes event records and actionable failure/review
-  states. Implemented as polling summaries and queues.
+  states. Implemented as polling summaries, queues, and agent transcript
+  projection from saved/logged MoonClaw events.
 - Search, saved views, tags, run artifacts, output libraries, and review/diff
   workflows are usable for repeated daily work. Implemented first slices; polish
   continues with real use.
@@ -129,6 +137,12 @@ Manual smoke checks:
   comparison for review files.
 - `GET|POST /api/town/daemon/agent` reports and manages the Moontown
   LaunchAgent install state.
+- `GET /api/agents/daemon`, `GET /api/agents/models`, and
+  `GET /api/agents/sessions?workspace=...` return MoonClaw agent state.
+- `POST /api/agents/sessions` starts a book-scoped MoonClaw task and sends the
+  initial message.
+- `POST /api/agents/sessions/:id/message` sends a follow-up contextual message.
+- `POST /api/agents/sessions/:id/cancel` cancels active MoonClaw task work.
 - `GET /api/town/calendar.ics` returns a valid calendar payload.
 - `POST /api/town/daemon/start` starts the Moontown daemon.
 - `POST /api/town/daemon/stop` stops it and final status reports `running:

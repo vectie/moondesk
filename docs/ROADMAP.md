@@ -2,12 +2,13 @@
 
 For the current implementation/readiness summary, see
 [Moondesk Status](STATUS.md). In brief: Moondesk is usable as a local
-single-user alpha. It is roughly 90% complete for browser-hosted daily use,
+single-user alpha. It is roughly 95% complete for browser-hosted daily use,
 90% complete for a self-contained local `.app` bundle, and 85% complete for a
 production browser-shell desktop app. M0-M4 are functionally complete for local
-use, M5-M6 have working first slices with review/event/analytics coverage, and
-production distribution now mainly needs credentialed notarization, update
-hosting policy, clean-machine validation, and long-running hardening.
+use, M5-M7 have working first slices with review/event/analytics and agent-chat
+coverage, and production distribution now mainly needs credentialed
+notarization, update hosting policy, clean-machine validation, and long-running
+hardening.
 
 ## M0: Plan And Skeleton
 
@@ -181,3 +182,36 @@ Acceptance:
 
 - user can run Moondesk as the daily control surface for all personal Moon
   workspaces
+
+## M7: Interactive MoonClaw Agent Console
+
+Status: local browser-shell slice complete. The UI has an Agents activity and
+bottom-drawer summary. The host exposes a narrow `/api/agents/*` bridge that
+reads `~/.moonclaw/daemon.json`, starts a runnable sibling/configured MoonClaw
+daemon from a native executable when needed, lists models/tasks, creates or
+reuses the selected book/workspace task, sends contextual messages, folds saved
+MoonClaw assistant/tool/failure events plus bounded workspace-log progress rows
+into the visible transcript, cancels active work, and stores Moondesk session
+records under
+`.moontown/moondesk-agent-sessions/`.
+
+Deliverables:
+
+- dedicated Agents rail activity
+- book-scoped session list
+- selected-path contextual prompt composer
+- MoonClaw daemon status and best-effort startup
+- model and web-search controls
+- create session, send follow-up message, cancel work
+- persisted local session transcript/status records
+- saved MoonClaw conversation event projection for assistant/tool/failure turns
+- bounded workspace `.moonclaw/log.jsonl` fallback for live/progress rows
+- command palette entry for agent chat
+
+Acceptance:
+
+- user can select a book, open Agents, and start a MoonClaw coding/help session
+  without leaving Moondesk
+- each MoonBook can keep separate Moondesk-visible agent sessions
+- messages carry the selected workspace root and selected path to MoonClaw
+- failed daemon/model/task operations surface as visible session/status errors

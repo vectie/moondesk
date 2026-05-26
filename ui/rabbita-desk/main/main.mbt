@@ -32,6 +32,7 @@ enum Activity {
   Explorer
   Search
   Inbox
+  Agents
   Town
   Runs
   Settings
@@ -281,6 +282,58 @@ struct BrowserLocalImportBatch {
 } derive(FromJson)
 
 ///|
+struct AgentDaemonStatus {
+  ok : Bool
+  running : Bool
+  port : Int
+  pid : Int
+  info_path : String
+  moonclaw_root : String
+  message : String
+} derive(FromJson)
+
+///|
+struct AgentModel {
+  name : String
+} derive(FromJson)
+
+///|
+struct AgentModelsResult {
+  ok : Bool
+  daemon : AgentDaemonStatus
+  models : Array[AgentModel]
+} derive(FromJson)
+
+///|
+struct AgentMessage {
+  id : String
+  role : String
+  content : String
+  status : String
+  created_at : String
+} derive(FromJson)
+
+///|
+struct AgentSession {
+  id : String
+  workspace_id : String
+  workspace_name : String
+  workspace_root : String
+  cwd : String
+  moonclaw_task_id : String
+  title : String
+  model : String
+  status : String
+  port : Int
+  web_search : Bool
+  queued_count : Int
+  created_at : String
+  updated_at : String
+  last_message : String
+  transcript : Array[AgentMessage]
+} derive(FromJson)
+
+///|
 struct SearchHit {
   workspace_id : String
   workspace_name : String
@@ -313,6 +366,14 @@ struct Model {
   moonclaw_progress : MoonclawProgress?
   daemon_lifecycle : DaemonLifecycleResult?
   daemon_agent : DaemonAgentResult?
+  agent_daemon : AgentDaemonStatus?
+  agent_models : Array[AgentModel]
+  agent_sessions : Array[AgentSession]
+  selected_agent_session_id : String
+  agent_prompt : String
+  agent_model : String
+  agent_web_search : Bool
+  agent_status : String
   events : Array[DeskEvent]
   review_items : Array[ReviewItem]
   review_diff : ReviewDiff?
@@ -372,9 +433,23 @@ enum Msg {
   ManagedDaemon(Result[DaemonLifecycleResult, String])
   LoadedDaemonAgent(Result[DaemonAgentResult, String])
   ManagedDaemonAgent(Result[DaemonAgentResult, String])
+  LoadedAgentDaemon(Result[AgentDaemonStatus, String])
+  LoadedAgentModels(Result[AgentModelsResult, String])
+  LoadedAgentSessions(Result[Array[AgentSession], String])
+  CreatedAgentSession(Result[AgentSession, String])
+  SentAgentMessage(Result[AgentSession, String])
+  CancelledAgentSession(Result[AgentSession, String])
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectActivity(Activity)
+  SelectAgentSession(String)
+  NewAgentSession
+  SetAgentPrompt(String)
+  SetAgentModel(String)
+  ToggleAgentWebSearch
+  SendAgentMessage
+  CancelAgentSession
+  PollAgentSessions
   SelectWorkspace(String)
   SelectPath(String)
   OpenDirectory(String)
@@ -429,6 +504,7 @@ fn activity_from_slug(slug : String) -> Activity {
   match slug {
     "search" => Activity::Search
     "inbox" => Activity::Inbox
+    "agents" => Activity::Agents
     "town" => Activity::Town
     "runs" => Activity::Runs
     "settings" => Activity::Settings
@@ -442,6 +518,7 @@ fn activity_slug(activity : Activity) -> String {
     Activity::Explorer => "explorer"
     Activity::Search => "search"
     Activity::Inbox => "inbox"
+    Activity::Agents => "agents"
     Activity::Town => "town"
     Activity::Runs => "runs"
     Activity::Settings => "settings"
@@ -476,6 +553,14 @@ fn init_model() -> Model {
     moonclaw_progress: None,
     daemon_lifecycle: None,
     daemon_agent: None,
+    agent_daemon: None,
+    agent_models: [],
+    agent_sessions: [],
+    selected_agent_session_id: "",
+    agent_prompt: "Help me improve this book/code workspace. Use the selected context and explain the concrete changes you recommend.",
+    agent_model: "",
+    agent_web_search: false,
+    agent_status: "agent idle",
     events: [],
     review_items: [],
     review_diff: None,
@@ -513,6 +598,7 @@ fn activities() -> Array[ActivityButton] {
     { key: Activity::Explorer, icon: "F", label: "Explorer" },
     { key: Activity::Search, icon: "S", label: "Search" },
     { key: Activity::Inbox, icon: "I", label: "Inbox" },
+    { key: Activity::Agents, icon: "A", label: "Agents" },
     { key: Activity::Town, icon: "T", label: "Town" },
     { key: Activity::Runs, icon: "R", label: "Runs" },
     { key: Activity::Settings, icon: "G", label: "Settings" },
@@ -555,6 +641,59 @@ fn workspace_root(model : Model) -> String {
     }
   }
   "not connected"
+}
+
+///|
+fn selected_agent_session(model : Model) -> AgentSession? {
+  if model.selected_agent_session_id != "" {
+    for session in model.agent_sessions {
+      if session.id == model.selected_agent_session_id {
+        return Some(session)
+      }
+    }
+  }
+  for session in model.agent_sessions {
+    if session.workspace_id == model.selected_workspace_id {
+      return Some(session)
+    }
+  }
+  None
+}
+
+///|
+fn first_agent_session_id(
+  sessions : Array[AgentSession],
+  workspace_id : String,
+) -> String {
+  for session in sessions {
+    if workspace_id == "" || session.workspace_id == workspace_id {
+      return session.id
+    }
+  }
+  ""
+}
+
+///|
+fn agent_session_exists(sessions : Array[AgentSession], session_id : String) -> Bool {
+  for session in sessions {
+    if session.id == session_id {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn selected_agent_task_label(model : Model) -> String {
+  match selected_agent_session(model) {
+    Some(session) =>
+      if session.moonclaw_task_id == "" {
+        "not attached"
+      } else {
+        "\{session.moonclaw_task_id} / \{session.status}"
+      }
+    None => "new session"
+  }
 }
 
 ///|
@@ -858,7 +997,7 @@ fn notify_cmd(title : String, body : String) -> @rabbita.Cmd {
 fn parse_browser_import_batch(
   text : String,
 ) -> Result[Array[LocalImportFile], String] {
-  if text.trim().to_string() == "" {
+  if text.trim().to_owned() == "" {
     return Ok([])
   }
   let json : Result[Json, Error] = try? @json.parse(text)
@@ -1144,6 +1283,50 @@ fn fetch_daemon_agent_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_agent_daemon_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/agents/daemon",
+    expect=@http.Json(fn(result) { dispatch(LoadedAgentDaemon(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonClaw daemon status")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_agent_models_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/agents/models",
+    expect=@http.Json(fn(result) { dispatch(LoadedAgentModels(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonClaw model listing")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_agent_sessions_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  workspace_id : String,
+) -> @rabbita.Cmd {
+  let query = if workspace_id == "" {
+    ""
+  } else {
+    "?workspace=\{encode_component(workspace_id)}"
+  }
+  @http.get(
+    "/api/agents/sessions\{query}",
+    expect=@http.Json(fn(result) { dispatch(LoadedAgentSessions(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid agent session listing")
+      }
+    }),
+  )
+}
+
+///|
 fn fetch_search_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   query : String,
@@ -1400,6 +1583,72 @@ fn reveal_selection_cmd(
 }
 
 ///|
+fn create_agent_session_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "workspace_id": model.selected_workspace_id,
+    "title": "Agent - \{workspace_name(model)}",
+    "message": trimmed_or(model.agent_prompt, "Help me improve this workspace."),
+    "model": model.agent_model,
+    "web_search": model.agent_web_search,
+    "context_path": model.selected_path,
+  }
+  @http.post(
+    "/api/agents/sessions",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) { dispatch(CreatedAgentSession(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not create agent session")
+      }
+    }),
+  )
+}
+
+///|
+fn send_agent_message_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+  session : AgentSession,
+) -> @rabbita.Cmd {
+  @http.post(
+    "/api/agents/sessions/\{session.id}/message",
+    @http.Body::Json({
+      "message": trimmed_or(model.agent_prompt, "Continue helping with this workspace."),
+      "web_search": model.agent_web_search,
+      "context_path": model.selected_path,
+    }),
+    expect=@http.Json(fn(result) { dispatch(SentAgentMessage(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not send agent message")
+      }
+    }),
+  )
+}
+
+///|
+fn cancel_agent_session_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session : AgentSession,
+) -> @rabbita.Cmd {
+  @http.post(
+    "/api/agents/sessions/\{session.id}/cancel",
+    @http.Body::Json(Json::object({})),
+    expect=@http.Json(fn(result) { dispatch(CancelledAgentSession(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not cancel agent session")
+      }
+    }),
+  )
+}
+
+///|
+fn schedule_agent_poll(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @rabbita.delay(dispatch(PollAgentSessions), 5000)
+}
+
+///|
 fn reload_workspace_cmds(
   dispatch : (Msg) -> @rabbita.Cmd,
   workspace_id : String,
@@ -1421,6 +1670,9 @@ fn reload_workspace_cmds(
       fetch_town_events_cmd(dispatch),
       fetch_daemon_lifecycle_cmd(dispatch),
       fetch_daemon_agent_cmd(dispatch),
+      fetch_agent_daemon_cmd(dispatch),
+      fetch_agent_models_cmd(dispatch),
+      fetch_agent_sessions_cmd(dispatch, workspace_id),
       fetch_review_items_cmd(dispatch, workspace_id),
       fetch_review_diff_cmd(dispatch, workspace_id, selected_path),
       fetch_saved_views_cmd(dispatch),
@@ -1716,6 +1968,107 @@ fn update(
       )
     ManagedDaemonAgent(Err(error)) =>
       (@rabbita.none, { ..model, daemon_status: error })
+    LoadedAgentDaemon(Ok(status)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          agent_daemon: Some(status),
+          agent_status: if status.running {
+            "MoonClaw daemon running on \{status.port}"
+          } else {
+            status.message
+          },
+        },
+      )
+    LoadedAgentDaemon(Err(error)) =>
+      (@rabbita.none, { ..model, agent_status: error })
+    LoadedAgentModels(Ok(result)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          agent_daemon: Some(result.daemon),
+          agent_models: result.models,
+          agent_model: if model.agent_model == "" && result.models.length() > 0 {
+            result.models[0].name
+          } else {
+            model.agent_model
+          },
+          agent_status: if result.ok {
+            "\{result.models.length()} model(s) available"
+          } else {
+            result.daemon.message
+          },
+        },
+      )
+    LoadedAgentModels(Err(error)) =>
+      (@rabbita.none, { ..model, agent_status: error })
+    LoadedAgentSessions(Ok(agent_sessions)) => {
+      let selected = if model.selected_agent_session_id != "" &&
+        agent_session_exists(agent_sessions, model.selected_agent_session_id) {
+        model.selected_agent_session_id
+      } else {
+        first_agent_session_id(agent_sessions, model.selected_workspace_id)
+      }
+      (
+        @rabbita.none,
+        {
+          ..model,
+          agent_sessions,
+          selected_agent_session_id: selected,
+          agent_status: "\{agent_sessions.length()} agent session(s)",
+        },
+      )
+    }
+    LoadedAgentSessions(Err(error)) =>
+      (@rabbita.none, { ..model, agent_status: error })
+    CreatedAgentSession(Ok(session)) =>
+      (
+        @rabbita.batch([
+          fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+          fetch_agent_daemon_cmd(dispatch),
+          fetch_agent_models_cmd(dispatch),
+          schedule_agent_poll(dispatch),
+        ]),
+        {
+          ..model,
+          activity: Activity::Agents,
+          selected_agent_session_id: session.id,
+          agent_prompt: "",
+          agent_status: "created \{session.title}",
+        },
+      )
+    CreatedAgentSession(Err(error)) =>
+      (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: error })
+    SentAgentMessage(Ok(session)) =>
+      (
+        @rabbita.batch([
+          fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+          schedule_agent_poll(dispatch),
+        ]),
+        {
+          ..model,
+          activity: Activity::Agents,
+          selected_agent_session_id: session.id,
+          agent_prompt: "",
+          agent_status: "\{session.status} / \{session.queued_count} queued",
+        },
+      )
+    SentAgentMessage(Err(error)) =>
+      (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: error })
+    CancelledAgentSession(Ok(session)) =>
+      (
+        fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+        {
+          ..model,
+          activity: Activity::Agents,
+          selected_agent_session_id: session.id,
+          agent_status: "cancel requested",
+        },
+      )
+    CancelledAgentSession(Err(error)) =>
+      (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: error })
     RevealedSelection(Ok(result)) =>
       (
         @rabbita.none,
@@ -1752,12 +2105,81 @@ fn update(
     LocalFilesPicked(Err(error)) =>
       (@rabbita.none, { ..model, inbox_status: "local import failed: \{error}" })
     SelectActivity(activity) => (@rabbita.none, { ..model, activity })
+    SelectAgentSession(session_id) =>
+      (@rabbita.none, { ..model, selected_agent_session_id: session_id })
+    NewAgentSession =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          activity: Activity::Agents,
+          selected_agent_session_id: "",
+          agent_prompt: "Help me improve \{workspace_name(model)} using the selected context \{model.selected_path}.",
+          agent_status: "new session draft",
+        },
+      )
+    SetAgentPrompt(prompt) =>
+      (@rabbita.none, { ..model, agent_prompt: prompt, agent_status: "draft" })
+    SetAgentModel(value) =>
+      (@rabbita.none, { ..model, agent_model: value, agent_status: "model selected" })
+    ToggleAgentWebSearch =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          agent_web_search: !model.agent_web_search,
+          agent_status: if !model.agent_web_search { "web search on" } else { "web search off" },
+        },
+      )
+    SendAgentMessage => {
+      if model.selected_workspace_id == "" {
+        (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: "select a book first" })
+      } else if model.agent_prompt.trim().to_owned() == "" {
+        (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: "enter a message" })
+      } else {
+        match selected_agent_session(model) {
+          Some(session) =>
+            (
+              send_agent_message_cmd(dispatch, model, session),
+              { ..model, activity: Activity::Agents, agent_status: "sending to MoonClaw" },
+            )
+          None =>
+            (
+              create_agent_session_cmd(dispatch, model),
+              { ..model, activity: Activity::Agents, agent_status: "starting MoonClaw session" },
+            )
+        }
+      }
+    }
+    CancelAgentSession =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            cancel_agent_session_cmd(dispatch, session),
+            { ..model, activity: Activity::Agents, agent_status: "cancelling agent work" },
+          )
+        None =>
+          (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: "no session selected" })
+      }
+    PollAgentSessions =>
+      (
+        @rabbita.batch([
+          fetch_agent_daemon_cmd(dispatch),
+          fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+          schedule_agent_poll(dispatch),
+        ]),
+        model,
+      )
     SelectWorkspace(workspace_id) =>
       (
-        reload_workspace_cmds(dispatch, workspace_id, "wiki/index.md"),
+        @rabbita.batch([
+          reload_workspace_cmds(dispatch, workspace_id, "wiki/index.md"),
+          fetch_agent_sessions_cmd(dispatch, workspace_id),
+        ]),
         {
           ..model,
           selected_workspace_id: workspace_id,
+          selected_agent_session_id: "",
           selected_path: "wiki/index.md",
           current_directory: "",
           preview: None,
@@ -2039,6 +2461,9 @@ fn update(
           fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
           fetch_daemon_lifecycle_cmd(dispatch),
           fetch_daemon_agent_cmd(dispatch),
+          fetch_agent_daemon_cmd(dispatch),
+          fetch_agent_models_cmd(dispatch),
+          fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
           fetch_review_items_cmd(dispatch, model.selected_workspace_id),
           fetch_review_diff_cmd(dispatch, model.selected_workspace_id, model.selected_path),
           fetch_saved_views_cmd(dispatch),
@@ -2126,6 +2551,7 @@ fn render_explorer(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   match model.activity {
     Activity::Search => render_search_pane(dispatch, model)
     Activity::Inbox => render_inbox_pane(dispatch, model)
+    Activity::Agents => render_agents_pane(dispatch, model)
     Activity::Town => render_town_pane(dispatch, model)
     Activity::Runs => render_runs_pane(dispatch, model)
     Activity::Settings => render_settings_pane(dispatch, model)
@@ -2335,6 +2761,79 @@ fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       pre(class="source-block compact", code(model.inbox_content)),
     ]),
   ])
+}
+
+///|
+fn render_agents_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+  aside(class="explorer-pane", [
+    div(class="pane-heading", [
+      div([p(class="eyebrow", "moonclaw"), h2("Agents")]),
+      div(class="toolbar-actions", [
+        button(class="icon-button", title="New Session", on_click=dispatch(NewAgentSession), "N"),
+        button(class="icon-button", title="Refresh Agents", on_click=dispatch(PollAgentSessions), "R"),
+      ]),
+    ]),
+    section(class="side-section", [
+      h3("Daemon"),
+      render_agent_daemon_state(model),
+      p(class="status-line", model.agent_status),
+    ]),
+    section(class="side-section", [
+      h3("Book Sessions"),
+      button(class="primary-button full", on_click=dispatch(NewAgentSession), "New Session"),
+      div(
+        class="agent-session-list",
+        if model.agent_sessions.length() == 0 {
+          [p(class="status-line", "no agent sessions yet")]
+        } else {
+          model.agent_sessions.map(session => {
+            let selected = selected_agent_session(model).map(fn(item) { item.id }).unwrap_or("") == session.id
+            button(
+              class=if selected { "agent-session active" } else { "agent-session" },
+              title="\{session.id} / \{session.cwd}",
+              on_click=dispatch(SelectAgentSession(session.id)),
+              [
+                span(class="record-kind", session.status),
+                strong(session.title),
+                small("\{session.workspace_name} / \{agent_session_task_line(session)}"),
+                small("\{session.transcript.length()} messages / \{session.updated_at}"),
+              ],
+            )
+          })
+        },
+      ),
+    ]),
+  ])
+}
+
+///|
+fn render_agent_daemon_state(model : Model) -> @rabbita.Html {
+  match model.agent_daemon {
+    Some(daemon) =>
+      div(class="daemon-state", [
+        info_row("Running", if daemon.running { "yes" } else { "no" }),
+        info_row("Port", if daemon.port > 0 { daemon.port.to_string() } else { "none" }),
+        info_row("PID", if daemon.pid > 0 { daemon.pid.to_string() } else { "none" }),
+        info_row("Root", empty_label(daemon.moonclaw_root)),
+        info_row("Info", daemon.info_path),
+      ])
+    None =>
+      div(class="daemon-state", [
+        info_row("Running", "unknown"),
+        info_row("Port", "none"),
+      ])
+  }
+}
+
+///|
+fn agent_session_task_line(session : AgentSession) -> String {
+  let model = if session.model == "" { "default" } else { session.model }
+  let task = if session.moonclaw_task_id == "" {
+    "not attached"
+  } else {
+    session.moonclaw_task_id
+  }
+  "\{model} / \{task} / queued \{session.queued_count}"
 }
 
 ///|
@@ -3090,6 +3589,151 @@ fn render_preview_center(
 }
 
 ///|
+fn render_agent_center(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  let session = selected_agent_session(model)
+  main_(class="preview-center agent-center", [
+    div(class="preview-toolbar", [
+      span(class="path-pill", selected_agent_task_label(model)),
+      div(class="toolbar-actions", [
+        button(class="secondary-button", on_click=dispatch(NewAgentSession), "New"),
+        button(class="secondary-button", on_click=dispatch(PollAgentSessions), "Refresh"),
+        button(class="secondary-button", on_click=dispatch(CancelAgentSession), "Cancel"),
+      ]),
+    ]),
+    section(class="agent-chat-surface", [
+      match session {
+        Some(session) => render_agent_transcript(session)
+        None =>
+          div(class="agent-empty", [
+            h1("Agents"),
+            p(class="lead", "Start a book-scoped MoonClaw session for the selected workspace."),
+          ])
+      },
+      div(class="agent-composer", [
+        textarea(
+          class="agent-input",
+          rows=7,
+          value=model.agent_prompt,
+          placeholder="Ask MoonClaw to inspect, code, refactor, test, or explain this book/code workspace.",
+          on_input=fn(value) { dispatch(SetAgentPrompt(value)) },
+          "",
+        ),
+        div(class="composer-options", [
+          span(class="option-chip active", workspace_name(model)),
+          span(class="option-chip", model.selected_path),
+          button(
+            class=if model.agent_web_search { "secondary-button active" } else { "secondary-button" },
+            on_click=dispatch(ToggleAgentWebSearch),
+            if model.agent_web_search { "Web On" } else { "Web Off" },
+          ),
+          button(class="primary-button", on_click=dispatch(SendAgentMessage), "Send"),
+        ]),
+        p(class="status-line", model.agent_status),
+      ]),
+    ]),
+  ])
+}
+
+///|
+fn render_agent_transcript(session : AgentSession) -> @rabbita.Html {
+  if session.transcript.length() == 0 {
+    div(class="agent-empty", [
+      h1(session.title),
+      p(class="lead", "No messages yet."),
+    ])
+  } else {
+    div(
+      class="agent-transcript",
+      session.transcript.map(message => {
+        div(class="agent-message " + message.role + " " + message.status, [
+          div(class="agent-message-head", [
+            span(class="record-kind", message.role),
+            small("\{message.status} / \{message.created_at}"),
+          ]),
+          pre(class="agent-message-body", code(message.content)),
+        ])
+      }),
+    )
+  }
+}
+
+///|
+fn render_agent_inspector(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  aside(class="inspector-pane", [
+    div(class="pane-heading compact", [
+      div([p(class="eyebrow", "agent context"), h2("Session")]),
+    ]),
+    section(class="inspector-section", [
+      h3("Book Scope"),
+      info_row("Book", workspace_name(model)),
+      info_row("Root", workspace_root(model)),
+      info_row("Selected", model.selected_path),
+      button(class="secondary-button full", on_click=dispatch(SendAgentMessage), "Send To Agent"),
+    ]),
+    section(class="inspector-section", [
+      h3("Runtime"),
+      match selected_agent_session(model) {
+        Some(session) =>
+          div(class="daemon-state", [
+            info_row("Session", session.id),
+            info_row("Task", empty_label(session.moonclaw_task_id)),
+            info_row("Status", session.status),
+            info_row("Model", empty_label(session.model)),
+            info_row("Port", if session.port > 0 { session.port.to_string() } else { "none" }),
+            info_row("Web", if session.web_search { "on" } else { "off" }),
+            info_row("Queued", session.queued_count.to_string()),
+            info_row("Updated", session.updated_at),
+          ])
+        None =>
+          div(class="daemon-state", [
+            info_row("Session", "new"),
+            info_row("Task", "not attached"),
+          ])
+      },
+      input(
+        class="line-input",
+        value=model.agent_model,
+        placeholder=if model.agent_models.length() == 0 {
+          "model (daemon not connected)"
+        } else {
+          model.agent_models[0].name
+        },
+        on_input=fn(value) { dispatch(SetAgentModel(value)) },
+        "",
+      ),
+      div(class="toolbar-actions stack-actions", [
+        button(class="secondary-button", on_click=dispatch(ToggleAgentWebSearch), if model.agent_web_search { "Disable Web" } else { "Enable Web" }),
+        button(class="secondary-button", on_click=dispatch(CancelAgentSession), "Cancel"),
+      ]),
+    ]),
+    section(class="inspector-section", [
+      h3("Available Models"),
+      if model.agent_models.length() == 0 {
+        p(class="status-line", "none")
+      } else {
+        div(
+          class="mini-list",
+          model.agent_models.map(model_info =>
+            button(
+              class="mini-link",
+              title=model_info.name,
+              on_click=dispatch(SetAgentModel(model_info.name)),
+              model_info.name,
+            )
+          ),
+        )
+      },
+    ]),
+  ])
+}
+
+///|
 fn render_inspector(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="inspector-pane", [
     div(class="pane-heading compact", [
@@ -3235,12 +3879,14 @@ fn render_bottom_drawer(
       span(class="drawer-tab active", "Requests"),
       span(class="drawer-tab", "Town Messages"),
       span(class="drawer-tab", "Runs"),
+      span(class="drawer-tab", "Agents"),
       span(class="drawer-tab", "Recent"),
     ]),
     div(class="drawer-records", [
       render_request_drawer(model),
       render_message_drawer(model),
       render_run_drawer(dispatch, model),
+      render_agent_drawer(dispatch, model),
     ]),
   ])
 }
@@ -3296,6 +3942,25 @@ fn render_run_drawer(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 }
 
 ///|
+fn render_agent_drawer(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+  div(class="drawer-record", [
+    span(class="record-kind", "agents"),
+    div([
+      h3("\{model.agent_sessions.length()} sessions"),
+      match selected_agent_session(model) {
+        Some(session) =>
+          button(
+            class="mini-link inline",
+            on_click=dispatch(SelectActivity(Activity::Agents)),
+            "\{session.title} / \{session.status}",
+          )
+        None => p("No agent session selected.")
+      },
+    ]),
+  ])
+}
+
+///|
 fn render_command_palette(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -3324,6 +3989,7 @@ fn render_command_palette(
           palette_command(dispatch, "Search Books", "Find files across MoonBooks", SelectActivity(Activity::Search)),
           palette_command(dispatch, "Create Inbox Note", "Stage a safe draft in inbox", SelectActivity(Activity::Inbox)),
           palette_command(dispatch, "Import URL", "Open the inbox importer", SelectActivity(Activity::Inbox)),
+          palette_command(dispatch, "Talk To Agent", "Open a book-scoped MoonClaw coding session", SelectActivity(Activity::Agents)),
           palette_command(dispatch, "Submit to Town", "Send selected context to Moontown", SubmitRequest),
           palette_command(dispatch, "Run Daemon Tick", "Dispatch one Moontown scheduler tick", DispatchDaemonTick),
           palette_command(dispatch, "Start Daemon", "Start the managed Moontown daemon loop", StartDaemon),
@@ -3373,13 +4039,23 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 
 ///|
 fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+  let center = if model.activity == Activity::Agents {
+    render_agent_center(dispatch, model)
+  } else {
+    render_preview_center(dispatch, model)
+  }
+  let inspector = if model.activity == Activity::Agents {
+    render_agent_inspector(dispatch, model)
+  } else {
+    render_inspector(dispatch, model)
+  }
   div(class="desk-shell", [
     render_title_bar(dispatch, model),
     div(class="desk-main", [
       render_activity_rail(model),
       render_explorer(dispatch, model),
-      render_preview_center(dispatch, model),
-      render_inspector(dispatch, model),
+      center,
+      inspector,
     ]),
     render_bottom_drawer(dispatch, model),
     render_command_palette(dispatch, model),
@@ -3406,6 +4082,9 @@ test {
   ignore(fetch_saved_views_cmd)
   ignore(fetch_tags_cmd)
   ignore(fetch_daemon_agent_cmd)
+  ignore(fetch_agent_daemon_cmd)
+  ignore(fetch_agent_models_cmd)
+  ignore(fetch_agent_sessions_cmd)
   ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
   ignore(import_url_cmd)
@@ -3417,6 +4096,10 @@ test {
   ignore(dispatch_daemon_cmd)
   ignore(set_daemon_supervision_cmd)
   ignore(manage_daemon_agent_cmd)
+  ignore(create_agent_session_cmd)
+  ignore(send_agent_message_cmd)
+  ignore(cancel_agent_session_cmd)
+  ignore(schedule_agent_poll)
   ignore(pick_import_files_cmd)
   ignore(take_dropped_imports_cmd)
   ignore(schedule_import_drop_poll)
@@ -3433,6 +4116,10 @@ fn main {
   let app = @rabbita.new(cell)
   app.with_init(@rabbita.batch([
     fetch_workspaces_cmd(dispatch),
+    fetch_agent_daemon_cmd(dispatch),
+    fetch_agent_models_cmd(dispatch),
+    fetch_agent_sessions_cmd(dispatch, ""),
+    schedule_agent_poll(dispatch),
     schedule_import_drop_poll(dispatch),
   ]))
   app.mount("app")

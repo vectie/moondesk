@@ -33,6 +33,7 @@ linked visualization, while Moondesk is the practical human workspace.
 - Explorer
 - Search
 - Inbox
+- Agents
 - Town
 - Runs
 - Settings
@@ -71,6 +72,19 @@ The central area should support:
 - artifact summary
 - diff/review view
 
+### Agents
+
+The agent surface should support:
+
+- per-book MoonClaw session list
+- selected-path prompt composer
+- visible daemon/model/task state
+- model and web-search controls
+- send/cancel/refresh actions
+- persisted transcript/status records plus saved MoonClaw assistant/tool/failure
+  event projection and bounded workspace-log progress fallback
+- bottom-drawer summary for the selected session
+
 ### Right Inspector
 
 Context for the selected file or workspace:
@@ -102,6 +116,7 @@ Required commands:
 - Create Book Inbox Note
 - Import Files
 - Import URL
+- Talk To Agent
 - Submit to Town
 - Run Daemon Tick
 - Start Daemon

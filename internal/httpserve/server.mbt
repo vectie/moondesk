@@ -314,6 +314,36 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "agents", "daemon"] =>
+      if is_read_method(method_) {
+        handle_agent_daemon(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "agents", "models"] =>
+      if is_read_method(method_) {
+        handle_agent_models(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "agents", "tasks"] =>
+      if is_read_method(method_) {
+        handle_agent_tasks(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
+    ["api", "agents", "sessions"] =>
+      handle_agent_sessions(workspace_root, request_path, body, method_, conn)
+    ["api", "agents", "sessions", session_id, action] =>
+      handle_agent_session_action(
+        workspace_root, session_id, action, body, method_, conn,
+      )
     ["api", "review", "items"] =>
       if is_read_method(method_) {
         handle_review_items(workspace_root, request_path, method_, conn)
