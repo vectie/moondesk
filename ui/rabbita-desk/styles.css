@@ -1235,6 +1235,10 @@ button {
   padding: 12px;
 }
 
+.drawer-records.drawer-records-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .drawer-record {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr);
@@ -1265,6 +1269,7 @@ button {
 
 .palette-backdrop {
   position: fixed;
+  z-index: 20;
   inset: 0;
   display: grid;
   place-items: start center;

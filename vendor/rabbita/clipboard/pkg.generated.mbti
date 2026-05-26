@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/rabbita/clipboard"
+
+import {
+  "moonbit-community/rabbita/internal/runtime",
+}
+
+// Values
+pub fn copy(Item, copied? : @runtime.Cmd, failed? : (String) -> @runtime.Cmd) -> @runtime.Cmd
+
+pub fn paste(pasted~ : (Item) -> @runtime.Cmd, failed? : (String) -> @runtime.Cmd) -> @runtime.Cmd
+
+// Errors
+
+// Types and methods
+pub(all) enum Item {
+  Text(String)
+}
+
+// Type aliases
+
+// Traits
+

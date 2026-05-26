@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "vectie/moondesk-rabbita/main"
 
+import {
+  "moonbitlang/core/json",
+}
+
 // Values
 
 // Errors
@@ -10,17 +14,65 @@ type Activity derive(Eq)
 
 type ActivityButton
 
-type DrawerRecord
+type AgentDaemonStatus derive(@json.FromJson)
 
-type ExplorerNode
+type AgentMessage derive(@json.FromJson)
+
+type AgentModel derive(@json.FromJson)
+
+type AgentModelsResult derive(@json.FromJson)
+
+type AgentSession derive(@json.FromJson)
+
+type BrowserLocalImportBatch derive(@json.FromJson)
+
+type DaemonAgentResult derive(@json.FromJson)
+
+type DaemonDispatchResult derive(@json.FromJson)
+
+type DaemonLifecycleResult derive(@json.FromJson)
+
+type DeskEvent derive(@json.FromJson)
+
+type DrawerTab derive(Eq)
+
+type DrawerTabButton
+
+type InboxCreated derive(@json.FromJson)
+
+type InboxImportResult derive(@json.FromJson)
+
+type LocalImportFile derive(@json.FromJson)
 
 type Model
+
+type MoonclawProgress derive(@json.FromJson)
 
 type Msg
 
 type PreviewTab
 
-type TabKey derive(Eq)
+type RequestRecord derive(@json.FromJson)
+
+type RevealResult derive(@json.FromJson)
+
+type ReviewDiff derive(@json.FromJson)
+
+type ReviewItem derive(@json.FromJson)
+
+type SavedViewRecord derive(@json.FromJson)
+
+type SearchHit derive(@json.FromJson)
+
+type StandingGoalRecord derive(@json.FromJson)
+
+type TagRecord derive(@json.FromJson)
+
+type TownAnalytics derive(@json.FromJson)
+
+type TownMessage derive(@json.FromJson)
+
+type TownProgress derive(@json.FromJson)
 
 // Type aliases
 

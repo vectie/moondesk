@@ -1,0 +1,4 @@
+import {
+  "moonbit-community/rabbita/internal/runtime",
+  "moonbit-community/rabbita/js",
+}

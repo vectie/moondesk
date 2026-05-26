@@ -3,6 +3,7 @@ import {
   "moonbit-community/rabbita",
   "moonbit-community/rabbita/html",
   "moonbit-community/rabbita/http",
+  "moonbit-community/rabbita/js",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
   "vectie/moondesk/core" @desk,

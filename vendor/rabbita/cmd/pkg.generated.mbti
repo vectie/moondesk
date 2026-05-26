@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/rabbita/cmd"
+
+import {
+  "moonbit-community/rabbita/internal/runtime",
+}
+
+// Values
+pub let after_render : @runtime.EffectKind
+
+pub fn[A, E : Error] attempt((Result[A, E]) -> @runtime.Cmd, async () -> A raise E) -> @runtime.Cmd
+
+pub fn batch(Array[@runtime.Cmd]) -> @runtime.Cmd
+
+pub fn delay(@runtime.Cmd, Int) -> @runtime.Cmd
+
+pub fn effect(async () -> Unit noraise) -> @runtime.Cmd
+
+pub let immediately : @runtime.EffectKind
+
+pub let none : @runtime.Cmd
+
+pub fn[A] perform((A) -> @runtime.Cmd, async () -> A noraise) -> @runtime.Cmd
+
+pub fn raw_effect((&@runtime.Scheduler) -> Unit, kind? : @runtime.EffectKind) -> @runtime.Cmd
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @runtime {type Cmd}
+
+pub using @runtime {type EffectKind}
+
+pub using @runtime {trait Scheduler}
+
+// Traits
+

@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/rabbita/nav"
+
+import {
+  "moonbit-community/rabbita/internal/runtime",
+}
+
+// Values
+pub fn back() -> @runtime.Cmd
+
+pub fn forward() -> @runtime.Cmd
+
+pub fn load(String) -> @runtime.Cmd
+
+pub fn push_url(String) -> @runtime.Cmd
+
+pub fn reload() -> @runtime.Cmd
+
+pub fn replace_url(String) -> @runtime.Cmd
+
+pub fn scroll_by_pos(Int, Int) -> @runtime.Cmd
+
+pub fn scroll_to(String) -> @runtime.Cmd
+
+pub fn scroll_to_bottom() -> @runtime.Cmd
+
+pub fn scroll_to_pos(Int, Int) -> @runtime.Cmd
+
+pub fn scroll_to_top() -> @runtime.Cmd
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

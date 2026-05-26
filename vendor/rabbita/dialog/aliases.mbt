@@ -1,0 +1,2 @@
+///|
+using @runtime {type Cmd}

@@ -1,0 +1,93 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/rabbita/internal/runtime"
+
+import {
+  "moonbit-community/rabbita/dom",
+  "moonbit-community/rabbita/url",
+  "moonbit-community/rabbita/variant",
+}
+
+// Values
+pub fn batch(Array[Cmd]) -> Cmd
+
+pub fn effect((&Scheduler) -> Unit, kind~ : EffectKind) -> Cmd
+
+pub fn message(Id, () -> Unit) -> Cmd
+
+pub let none : Cmd
+
+pub fn server_side_render(&IsCell) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Children[T] {
+  Array(Array[T])
+  Map(Map[String, T])
+}
+
+type Cmd
+
+pub(all) enum EffectKind {
+  Immediately
+  AfterRender
+}
+
+type Flags
+pub fn Flags::id(Self) -> Id
+pub fn Flags::mark_dirty(Self) -> Unit
+pub fn Flags::new() -> Self
+
+type Id
+pub impl Compare for Id
+pub impl Eq for Id
+pub impl Hash for Id
+pub impl Show for Id
+
+pub struct Props {
+  handlers : Map[String, (@dom.Event, &Scheduler) -> Unit]
+  attrs : Map[String, String]
+  props : Map[String, @variant.Variant]
+  styles : Map[String, String]
+  // private fields
+}
+pub fn Props::copy(Self) -> Self
+pub fn Props::new(Map[String, String], Map[String, @variant.Variant], Map[String, String], Map[String, (@dom.Event, &Scheduler) -> Unit]) -> Self
+
+pub(all) struct Sandbox {
+  mut mount : String
+  mut on_url_changed : ((@url.Url) -> Cmd)?
+  mut on_url_request : ((@url.UrlRequest) -> Cmd)?
+  // private fields
+}
+pub fn Sandbox::flush(Self) -> Unit
+pub fn Sandbox::initialize(Self) -> Unit
+pub fn Sandbox::new(&IsCell) -> Self
+pub impl Scheduler for Sandbox
+
+pub enum VNode {
+  Elem(String, Props, Children[VNode], namespace_uri~ : String?)
+  Text(String)
+  Frag(Array[VNode])
+  Slot(&IsCell)
+}
+pub fn VNode::elem(String, Props, Children[Self], namespace_uri? : String) -> Self
+pub fn VNode::fragment(Array[Self]) -> Self
+pub fn VNode::link(Props, Children[Self], escape? : Bool) -> Self
+pub fn VNode::slot(&IsCell) -> Self
+pub fn VNode::text(String) -> Self
+
+// Type aliases
+
+// Traits
+pub(open) trait IsCell {
+  step(Self, &Scheduler) -> Unit
+  view(Self) -> VNode
+  flags(Self) -> Flags
+}
+
+pub trait Scheduler {
+  add(Self, Cmd) -> Unit
+  add_url_changed(Self, @url.Url) -> Unit
+}
+

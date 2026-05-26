@@ -1,0 +1,11 @@
+import {
+  "moonbit-community/rabbita/internal/runtime" @runtime,
+  "moonbit-community/rabbita/dom",
+  "moonbit-community/rabbita/variant",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/list",
+}
+
+import {
+  "moonbit-community/rabbita",
+} for "test"

@@ -46,6 +46,21 @@ struct ActivityButton {
 }
 
 ///|
+enum DrawerTab {
+  DrawerRequests
+  DrawerMessages
+  DrawerRuns
+  DrawerAgents
+  DrawerRecent
+} derive(Eq)
+
+///|
+struct DrawerTabButton {
+  key : DrawerTab
+  label : String
+}
+
+///|
 struct PreviewTab {
   title : String
   path : String
@@ -348,6 +363,7 @@ struct SearchHit {
 struct Model {
   activity : Activity
   command_open : Bool
+  drawer_tab : DrawerTab
   loading : Bool
   host_status : String
   workspaces : Array[@desk.DeskWorkspace]
@@ -442,6 +458,7 @@ enum Msg {
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectActivity(Activity)
+  SelectDrawerTab(DrawerTab)
   SelectAgentSession(String)
   NewAgentSession
   SetAgentPrompt(String)
@@ -526,15 +543,11 @@ fn activity_slug(activity : Activity) -> String {
 }
 
 ///|
-fn activity_href(activity : Activity) -> String {
-  "?activity=\{activity_slug(activity)}"
-}
-
-///|
 fn init_model() -> Model {
   {
     activity: initial_activity(),
     command_open: false,
+    drawer_tab: DrawerTab::DrawerRequests,
     loading: true,
     host_status: "connecting to local host",
     workspaces: [],
@@ -602,6 +615,17 @@ fn activities() -> Array[ActivityButton] {
     { key: Activity::Town, icon: "T", label: "Town" },
     { key: Activity::Runs, icon: "R", label: "Runs" },
     { key: Activity::Settings, icon: "G", label: "Settings" },
+  ]
+}
+
+///|
+fn drawer_tabs() -> Array[DrawerTabButton] {
+  [
+    { key: DrawerTab::DrawerRequests, label: "Requests" },
+    { key: DrawerTab::DrawerMessages, label: "Town Messages" },
+    { key: DrawerTab::DrawerRuns, label: "Runs" },
+    { key: DrawerTab::DrawerAgents, label: "Agents" },
+    { key: DrawerTab::DrawerRecent, label: "Recent" },
   ]
 }
 
@@ -674,7 +698,10 @@ fn first_agent_session_id(
 }
 
 ///|
-fn agent_session_exists(sessions : Array[AgentSession], session_id : String) -> Bool {
+fn agent_session_exists(
+  sessions : Array[AgentSession],
+  session_id : String,
+) -> Bool {
   for session in sessions {
     if session.id == session_id {
       return true
@@ -710,10 +737,11 @@ fn find_entry(model : Model, path : String) -> @desk.DeskFileEntry? {
 fn selected_layer(model : Model) -> String {
   match find_entry(model, model.selected_path) {
     Some(entry) => layer_label(entry.source_layer)
-    None => match model.preview {
-      Some(preview) => renderer_label(preview.renderer)
-      None => "unknown"
-    }
+    None =>
+      match model.preview {
+        Some(preview) => renderer_label(preview.renderer)
+        None => "unknown"
+      }
   }
 }
 
@@ -806,12 +834,18 @@ fn request_title(record : RequestRecord) -> String {
 ///|
 fn trimmed_or(value : String, fallback : String) -> String {
   let value = value.trim().to_owned()
-  if value == "" { fallback } else { value }
+  if value == "" {
+    fallback
+  } else {
+    value
+  }
 }
 
 ///|
 fn int_text(value : String, fallback : Int) -> Int {
-  @string.parse_int(value.trim().to_owned()) catch { _ => fallback }
+  @string.parse_int(value.trim().to_owned()) catch {
+    _ => fallback
+  }
 }
 
 ///|
@@ -834,7 +868,11 @@ fn daemon_lifecycle_label(result : DaemonLifecycleResult) -> String {
 ///|
 fn daemon_agent_label(result : DaemonAgentResult) -> String {
   let state = if result.installed {
-    if result.loaded { "loaded" } else { "installed" }
+    if result.loaded {
+      "loaded"
+    } else {
+      "installed"
+    }
   } else {
     "not installed"
   }
@@ -862,13 +900,35 @@ fn workspace_preview_url(workspace_id : String, path : String) -> String {
 
 ///|
 #cfg(target="js")
-extern "js" fn encode_component(text : String) -> String =
-  "(text)=>encodeURIComponent(text)"
+extern "js" fn encode_component(text : String) -> String = "(text)=>encodeURIComponent(text)"
 
 ///|
 #cfg(target="js")
 extern "js" fn browser_initial_activity() -> String =
   #| () => new URLSearchParams(globalThis.location?.search || "").get("activity") || ""
+
+///|
+#cfg(target="js")
+extern "js" fn browser_set_activity(slug : String) =
+  #| (slug) => {
+  #|   if (!globalThis.location || !globalThis.history) return;
+  #|   const url = new URL(globalThis.location.href);
+  #|   url.searchParams.set("activity", slug);
+  #|   globalThis.history.replaceState(null, "", url.toString());
+  #| }
+
+///|
+fn sync_activity_cmd(activity : Activity) -> @rabbita.Cmd {
+  @cmd.raw_effect(
+    _ => browser_set_activity(activity_slug(activity)),
+    kind=@cmd.after_render,
+  )
+}
+
+///|
+fn sync_activity_batch(activity : Activity, cmd : @rabbita.Cmd) -> @rabbita.Cmd {
+  @rabbita.batch([cmd, sync_activity_cmd(activity)])
+}
 
 ///|
 #cfg(target="js")
@@ -887,7 +947,7 @@ extern "js" fn send_browser_notification(title : String, body : String) =
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_pick_import_files() -> String =
+extern "js" fn browser_pick_import_files() -> @js.Promise =
   #| async () => {
   #|   const readFile = async (file, source) => {
   #|     const textLike =
@@ -927,7 +987,7 @@ extern "js" fn browser_pick_import_files() -> String =
 ///|
 #cfg(target="js")
 extern "js" fn browser_take_dropped_import_files() -> String =
-  #| async () => {
+  #| () => {
   #|   const state =
   #|     (window.__moondeskImportState ||= { installed: false, queue: [] });
   #|   const readFile = async (file, source) => {
@@ -990,7 +1050,10 @@ extern "js" fn browser_take_dropped_import_files() -> String =
 
 ///|
 fn notify_cmd(title : String, body : String) -> @rabbita.Cmd {
-  @cmd.raw_effect(_ => send_browser_notification(title, body), kind=@cmd.after_render)
+  @cmd.raw_effect(
+    _ => send_browser_notification(title, body),
+    kind=@cmd.after_render,
+  )
 }
 
 ///|
@@ -1023,8 +1086,11 @@ fn parse_browser_import_batch(
 
 ///|
 fn pick_import_files_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
-  @rabbita.perform(fn(result) { dispatch(LocalFilesPicked(result)) }, fn() noraise {
-    parse_browser_import_batch(browser_pick_import_files())
+  @rabbita.perform(fn(result) { dispatch(LocalFilesPicked(result)) }, async fn() noraise {
+    let text : String = browser_pick_import_files().wait().cast() catch {
+        error => return Err("Failed to read local files: \{error}")
+      }
+    parse_browser_import_batch(text)
   })
 }
 
@@ -1182,7 +1248,9 @@ fn fetch_events_cmd(
   @http.get(
     "/api/moonclaw/events?workspace=\{encode_component(workspace_id)}",
     expect=@http.Json(fn(result) { dispatch(LoadedEvents(result)) }, json => {
-      let moonclaw_events : Result[Array[DeskEvent], Error] = try? @json.from_json(json)
+      let moonclaw_events : Result[Array[DeskEvent], Error] = try? @json.from_json(
+        json,
+      )
       match moonclaw_events {
         Ok(events) => Ok(events)
         Err(_) => Err("Invalid event stream")
@@ -1365,7 +1433,10 @@ fn save_inbox_cmd(
 }
 
 ///|
-fn import_url_cmd(dispatch : (Msg) -> @rabbita.Cmd, model : Model) -> @rabbita.Cmd {
+fn import_url_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
   let url = model.import_url.trim().to_owned()
   let title = if url == "" { "Imported URL" } else { url }
   @http.post(
@@ -1394,14 +1465,26 @@ fn import_local_file_cmd(
   @http.post(
     "/api/workspaces/\{model.selected_workspace_id}/import",
     @http.Body::Json({
-      "kind": if file.source == "paste" { "paste" } else { "file" },
+      "kind": if file.source == "paste" {
+        "paste"
+      } else {
+        "file"
+      },
       "title": file.name,
       "filename": file.name,
       "browser_import_id": file.id,
       "content_type": file.media_type,
       "note": model.import_note,
-      "content": if is_data_url { "" } else { file.content },
-      "data_url": if is_data_url { file.content } else { "" },
+      "content": if is_data_url {
+        ""
+      } else {
+        file.content
+      },
+      "data_url": if is_data_url {
+        file.content
+      } else {
+        ""
+      },
     }),
     expect=@http.Json(fn(result) { dispatch(ImportedInbox(result)) }, json => {
       Ok(@json.from_json(json)) catch {
@@ -1412,7 +1495,10 @@ fn import_local_file_cmd(
 }
 
 ///|
-fn save_view_cmd(dispatch : (Msg) -> @rabbita.Cmd, model : Model) -> @rabbita.Cmd {
+fn save_view_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
   @http.post(
     "/api/preferences/views",
     @http.Body::Json({
@@ -1430,7 +1516,10 @@ fn save_view_cmd(dispatch : (Msg) -> @rabbita.Cmd, model : Model) -> @rabbita.Cm
 }
 
 ///|
-fn save_tag_cmd(dispatch : (Msg) -> @rabbita.Cmd, model : Model) -> @rabbita.Cmd {
+fn save_tag_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
   @http.post(
     "/api/preferences/tags",
     @http.Body::Json({
@@ -1487,7 +1576,10 @@ fn create_standing_goal_cmd(
   let quality = clamp_int(int_text(model.goal_quality_threshold, 85), 1, 100)
   let body : Json = {
     "title": title,
-    "prompt": trimmed_or(model.request_prompt, "Watch the selected MoonBook context for useful updates."),
+    "prompt": trimmed_or(
+      model.request_prompt,
+      "Watch the selected MoonBook context for useful updates.",
+    ),
     "target_book_id": model.selected_workspace_id,
     "cadence_ticks": cadence,
     "source_policy": trimmed_or(model.goal_source_policy, "web-first"),
@@ -1615,7 +1707,10 @@ fn send_agent_message_cmd(
   @http.post(
     "/api/agents/sessions/\{session.id}/message",
     @http.Body::Json({
-      "message": trimmed_or(model.agent_prompt, "Continue helping with this workspace."),
+      "message": trimmed_or(
+        model.agent_prompt,
+        "Continue helping with this workspace.",
+      ),
       "web_search": model.agent_web_search,
       "context_path": model.selected_path,
     }),
@@ -1690,9 +1785,9 @@ fn update(
   match msg {
     LoadedWorkspaces(Ok(workspaces)) => {
       let selected_workspace_id = if has_workspace(
-        workspaces,
-        model.selected_workspace_id,
-      ) {
+          workspaces,
+          model.selected_workspace_id,
+        ) {
         model.selected_workspace_id
       } else {
         first_workspace_id(workspaces)
@@ -1742,20 +1837,21 @@ fn update(
       )
     LoadedPreview(Err(error)) =>
       (@rabbita.none, { ..model, preview: None, preview_status: error })
-    LoadedRuns(Ok(runs)) => (@rabbita.none, { ..model, runs })
+    LoadedRuns(Ok(runs)) => (@rabbita.none, { ..model, runs, })
     LoadedRuns(Err(error)) => (@rabbita.none, { ..model, host_status: error })
     LoadedTownMessages(Ok(town_messages)) =>
-      (@rabbita.none, { ..model, town_messages })
+      (@rabbita.none, { ..model, town_messages, })
     LoadedTownMessages(Err(error)) =>
       (@rabbita.none, { ..model, host_status: error })
-    LoadedRequests(Ok(requests)) => (@rabbita.none, { ..model, requests })
+    LoadedRequests(Ok(requests)) => (@rabbita.none, { ..model, requests, })
     LoadedRequests(Err(error)) =>
       (@rabbita.none, { ..model, request_status: error })
     LoadedStandingGoals(Ok(standing_goals)) =>
-      (@rabbita.none, { ..model, standing_goals })
+      (@rabbita.none, { ..model, standing_goals, })
     LoadedStandingGoals(Err(error)) =>
       (@rabbita.none, { ..model, dispatch_status: error })
-    LoadedAnalytics(Ok(analytics)) => (@rabbita.none, { ..model, analytics: Some(analytics) })
+    LoadedAnalytics(Ok(analytics)) =>
+      (@rabbita.none, { ..model, analytics: Some(analytics) })
     LoadedAnalytics(Err(error)) =>
       (@rabbita.none, { ..model, dispatch_status: error })
     LoadedTownProgress(Ok(progress)) =>
@@ -1766,11 +1862,11 @@ fn update(
       (@rabbita.none, { ..model, moonclaw_progress: Some(progress) })
     LoadedMoonclawProgress(Err(error)) =>
       (@rabbita.none, { ..model, host_status: error })
-    LoadedEvents(Ok(events)) => (@rabbita.none, { ..model, events })
+    LoadedEvents(Ok(events)) => (@rabbita.none, { ..model, events, })
     LoadedEvents(Err(error)) =>
       (@rabbita.none, { ..model, dispatch_status: error })
     LoadedReviewItems(Ok(review_items)) =>
-      (@rabbita.none, { ..model, review_items })
+      (@rabbita.none, { ..model, review_items, })
     LoadedReviewItems(Err(error)) =>
       (@rabbita.none, { ..model, reveal_status: error })
     LoadedReviewDiff(Ok(review_diff)) =>
@@ -1778,10 +1874,10 @@ fn update(
     LoadedReviewDiff(Err(error)) =>
       (@rabbita.none, { ..model, reveal_status: error })
     LoadedSavedViews(Ok(saved_views)) =>
-      (@rabbita.none, { ..model, saved_views })
+      (@rabbita.none, { ..model, saved_views, })
     LoadedSavedViews(Err(error)) =>
       (@rabbita.none, { ..model, host_status: error })
-    LoadedTags(Ok(tags)) => (@rabbita.none, { ..model, tags })
+    LoadedTags(Ok(tags)) => (@rabbita.none, { ..model, tags, })
     LoadedTags(Err(error)) => (@rabbita.none, { ..model, host_status: error })
     LoadedDaemonLifecycle(Ok(result)) =>
       (
@@ -1807,32 +1903,43 @@ fn update(
       (@rabbita.none, { ..model, search_status: error })
     SavedInbox(Ok(created)) =>
       (
-        @rabbita.batch([
-          fetch_entries_cmd(dispatch, created.workspace_id, "inbox"),
-          fetch_preview_cmd(dispatch, created.workspace_id, created.path),
-        ]),
+        sync_activity_batch(
+          Activity::Inbox,
+          @rabbita.batch([
+            fetch_entries_cmd(dispatch, created.workspace_id, "inbox"),
+            fetch_preview_cmd(dispatch, created.workspace_id, created.path),
+          ]),
+        ),
         {
           ..model,
           activity: Activity::Inbox,
+          command_open: false,
           current_directory: "inbox",
           selected_workspace_id: created.workspace_id,
           selected_path: created.path,
           editing_inbox_path: created.path,
-          inbox_status: if created.ok { "saved \{created.path}" } else { "save returned without ok" },
+          inbox_status: if created.ok {
+            "saved \{created.path}"
+          } else {
+            "save returned without ok"
+          },
           preview_status: "loading saved note",
         },
       )
-    SavedInbox(Err(error)) =>
-      (@rabbita.none, { ..model, inbox_status: error })
+    SavedInbox(Err(error)) => (@rabbita.none, { ..model, inbox_status: error })
     ImportedInbox(Ok(created)) =>
       (
-        @rabbita.batch([
-          fetch_entries_cmd(dispatch, created.workspace_id, "inbox/imports"),
-          fetch_preview_cmd(dispatch, created.workspace_id, created.path),
-        ]),
+        sync_activity_batch(
+          Activity::Inbox,
+          @rabbita.batch([
+            fetch_entries_cmd(dispatch, created.workspace_id, "inbox/imports"),
+            fetch_preview_cmd(dispatch, created.workspace_id, created.path),
+          ]),
+        ),
         {
           ..model,
           activity: Activity::Inbox,
+          command_open: false,
           current_directory: "inbox/imports",
           selected_workspace_id: created.workspace_id,
           selected_path: created.path,
@@ -1857,24 +1964,29 @@ fn update(
         fetch_saved_views_cmd(dispatch),
         { ..model, host_status: "saved view \{view.title}" },
       )
-    SavedView(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+    SavedView(Err(error)) => (@rabbita.none, { ..model, host_status: error })
     SavedTag(Ok(tag)) =>
       (
         fetch_tags_cmd(dispatch),
-        { ..model, tag_value: "", reveal_status: "tagged \{tag.path} as \{tag.tag}" },
+        {
+          ..model,
+          tag_value: "",
+          reveal_status: "tagged \{tag.path} as \{tag.tag}",
+        },
       )
-    SavedTag(Err(error)) =>
-      (@rabbita.none, { ..model, reveal_status: error })
+    SavedTag(Err(error)) => (@rabbita.none, { ..model, reveal_status: error })
     SubmittedRequest(Ok(record)) =>
       (
-        @rabbita.batch([
-          fetch_requests_cmd(dispatch),
-          fetch_messages_cmd(dispatch),
-          fetch_analytics_cmd(dispatch),
-          fetch_town_progress_cmd(dispatch),
-          fetch_town_events_cmd(dispatch),
-        ]),
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_requests_cmd(dispatch),
+            fetch_messages_cmd(dispatch),
+            fetch_analytics_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+          ]),
+        ),
         {
           ..model,
           activity: Activity::Town,
@@ -1886,15 +1998,19 @@ fn update(
       (@rabbita.none, { ..model, request_status: error })
     CreatedStandingGoal(Ok(goal)) =>
       (
-        @rabbita.batch([
-          fetch_standing_goals_cmd(dispatch),
-          fetch_analytics_cmd(dispatch),
-          fetch_town_progress_cmd(dispatch),
-          fetch_town_events_cmd(dispatch),
-        ]),
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_standing_goals_cmd(dispatch),
+            fetch_analytics_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+          ]),
+        ),
         {
           ..model,
           activity: Activity::Town,
+          command_open: false,
           dispatch_status: "created \{goal.id}",
         },
       )
@@ -1902,21 +2018,25 @@ fn update(
       (@rabbita.none, { ..model, dispatch_status: error })
     DispatchedDaemon(Ok(result)) =>
       (
-        @rabbita.batch([
-          fetch_requests_cmd(dispatch),
-          fetch_messages_cmd(dispatch),
-          fetch_standing_goals_cmd(dispatch),
-          fetch_analytics_cmd(dispatch),
-          fetch_town_progress_cmd(dispatch),
-          fetch_town_events_cmd(dispatch),
-          fetch_runs_cmd(dispatch, model.selected_workspace_id),
-          fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
-          fetch_daemon_lifecycle_cmd(dispatch),
-          fetch_daemon_agent_cmd(dispatch),
-        ]),
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_requests_cmd(dispatch),
+            fetch_messages_cmd(dispatch),
+            fetch_standing_goals_cmd(dispatch),
+            fetch_analytics_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+            fetch_runs_cmd(dispatch, model.selected_workspace_id),
+            fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+            fetch_daemon_lifecycle_cmd(dispatch),
+            fetch_daemon_agent_cmd(dispatch),
+          ]),
+        ),
         {
           ..model,
           activity: Activity::Town,
+          command_open: false,
           dispatch_status: if result.ok {
             "\{result.status} (\{result.id}) -> \{result.path}"
           } else {
@@ -1928,16 +2048,20 @@ fn update(
       (@rabbita.none, { ..model, dispatch_status: error })
     ManagedDaemon(Ok(result)) =>
       (
-        @rabbita.batch([
-          fetch_analytics_cmd(dispatch),
-          fetch_town_progress_cmd(dispatch),
-          fetch_town_events_cmd(dispatch),
-          fetch_daemon_lifecycle_cmd(dispatch),
-          fetch_daemon_agent_cmd(dispatch),
-        ]),
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_analytics_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+            fetch_daemon_lifecycle_cmd(dispatch),
+            fetch_daemon_agent_cmd(dispatch),
+          ]),
+        ),
         {
           ..model,
           activity: Activity::Town,
+          command_open: false,
           daemon_lifecycle: Some(result),
           daemon_status: daemon_lifecycle_label(result),
           dispatch_status: result.message,
@@ -2025,50 +2149,86 @@ fn update(
       (@rabbita.none, { ..model, agent_status: error })
     CreatedAgentSession(Ok(session)) =>
       (
-        @rabbita.batch([
-          fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
-          fetch_agent_daemon_cmd(dispatch),
-          fetch_agent_models_cmd(dispatch),
-          schedule_agent_poll(dispatch),
-        ]),
+        sync_activity_batch(
+          Activity::Agents,
+          @rabbita.batch([
+            fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+            fetch_agent_daemon_cmd(dispatch),
+            fetch_agent_models_cmd(dispatch),
+            schedule_agent_poll(dispatch),
+          ]),
+        ),
         {
           ..model,
           activity: Activity::Agents,
+          command_open: false,
           selected_agent_session_id: session.id,
           agent_prompt: "",
           agent_status: "created \{session.title}",
         },
       )
     CreatedAgentSession(Err(error)) =>
-      (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: error })
-    SentAgentMessage(Ok(session)) =>
       (
-        @rabbita.batch([
-          fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
-          schedule_agent_poll(dispatch),
-        ]),
+        sync_activity_cmd(Activity::Agents),
         {
           ..model,
           activity: Activity::Agents,
+          command_open: false,
+          agent_status: error,
+        },
+      )
+    SentAgentMessage(Ok(session)) =>
+      (
+        sync_activity_batch(
+          Activity::Agents,
+          @rabbita.batch([
+            fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+            schedule_agent_poll(dispatch),
+          ]),
+        ),
+        {
+          ..model,
+          activity: Activity::Agents,
+          command_open: false,
           selected_agent_session_id: session.id,
           agent_prompt: "",
           agent_status: "\{session.status} / \{session.queued_count} queued",
         },
       )
     SentAgentMessage(Err(error)) =>
-      (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: error })
-    CancelledAgentSession(Ok(session)) =>
       (
-        fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+        sync_activity_cmd(Activity::Agents),
         {
           ..model,
           activity: Activity::Agents,
+          command_open: false,
+          agent_status: error,
+        },
+      )
+    CancelledAgentSession(Ok(session)) =>
+      (
+        sync_activity_batch(
+          Activity::Agents,
+          fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+        ),
+        {
+          ..model,
+          activity: Activity::Agents,
+          command_open: false,
           selected_agent_session_id: session.id,
           agent_status: "cancel requested",
         },
       )
     CancelledAgentSession(Err(error)) =>
-      (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: error })
+      (
+        sync_activity_cmd(Activity::Agents),
+        {
+          ..model,
+          activity: Activity::Agents,
+          command_open: false,
+          agent_status: error,
+        },
+      )
     RevealedSelection(Ok(result)) =>
       (
         @rabbita.none,
@@ -2094,25 +2254,32 @@ fn update(
           cmds.push(import_local_file_cmd(dispatch, model, file))
         }
         (
-          @rabbita.batch(cmds),
+          sync_activity_batch(Activity::Inbox, @rabbita.batch(cmds)),
           {
             ..model,
             activity: Activity::Inbox,
+            command_open: false,
             inbox_status: "importing \{files.length()} local file(s)",
           },
         )
       }
     LocalFilesPicked(Err(error)) =>
-      (@rabbita.none, { ..model, inbox_status: "local import failed: \{error}" })
-    SelectActivity(activity) => (@rabbita.none, { ..model, activity })
+      (
+        @rabbita.none,
+        { ..model, inbox_status: "local import failed: \{error}" },
+      )
+    SelectActivity(activity) =>
+      (sync_activity_cmd(activity), { ..model, activity, command_open: false })
+    SelectDrawerTab(tab) => (@rabbita.none, { ..model, drawer_tab: tab })
     SelectAgentSession(session_id) =>
       (@rabbita.none, { ..model, selected_agent_session_id: session_id })
     NewAgentSession =>
       (
-        @rabbita.none,
+        sync_activity_cmd(Activity::Agents),
         {
           ..model,
           activity: Activity::Agents,
+          command_open: false,
           selected_agent_session_id: "",
           agent_prompt: "Help me improve \{workspace_name(model)} using the selected context \{model.selected_path}.",
           agent_status: "new session draft",
@@ -2121,45 +2288,99 @@ fn update(
     SetAgentPrompt(prompt) =>
       (@rabbita.none, { ..model, agent_prompt: prompt, agent_status: "draft" })
     SetAgentModel(value) =>
-      (@rabbita.none, { ..model, agent_model: value, agent_status: "model selected" })
+      (
+        @rabbita.none,
+        { ..model, agent_model: value, agent_status: "model selected" },
+      )
     ToggleAgentWebSearch =>
       (
         @rabbita.none,
         {
           ..model,
           agent_web_search: !model.agent_web_search,
-          agent_status: if !model.agent_web_search { "web search on" } else { "web search off" },
+          agent_status: if !model.agent_web_search {
+            "web search on"
+          } else {
+            "web search off"
+          },
         },
       )
-    SendAgentMessage => {
+    SendAgentMessage =>
       if model.selected_workspace_id == "" {
-        (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: "select a book first" })
+        (
+          sync_activity_cmd(Activity::Agents),
+          {
+            ..model,
+            activity: Activity::Agents,
+            command_open: false,
+            agent_status: "select a book first",
+          },
+        )
       } else if model.agent_prompt.trim().to_owned() == "" {
-        (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: "enter a message" })
+        (
+          sync_activity_cmd(Activity::Agents),
+          {
+            ..model,
+            activity: Activity::Agents,
+            command_open: false,
+            agent_status: "enter a message",
+          },
+        )
       } else {
         match selected_agent_session(model) {
           Some(session) =>
             (
-              send_agent_message_cmd(dispatch, model, session),
-              { ..model, activity: Activity::Agents, agent_status: "sending to MoonClaw" },
+              sync_activity_batch(
+                Activity::Agents,
+                send_agent_message_cmd(dispatch, model, session),
+              ),
+              {
+                ..model,
+                activity: Activity::Agents,
+                command_open: false,
+                agent_status: "sending to MoonClaw",
+              },
             )
           None =>
             (
-              create_agent_session_cmd(dispatch, model),
-              { ..model, activity: Activity::Agents, agent_status: "starting MoonClaw session" },
+              sync_activity_batch(
+                Activity::Agents,
+                create_agent_session_cmd(dispatch, model),
+              ),
+              {
+                ..model,
+                activity: Activity::Agents,
+                command_open: false,
+                agent_status: "starting MoonClaw session",
+              },
             )
         }
       }
-    }
     CancelAgentSession =>
       match selected_agent_session(model) {
         Some(session) =>
           (
-            cancel_agent_session_cmd(dispatch, session),
-            { ..model, activity: Activity::Agents, agent_status: "cancelling agent work" },
+            sync_activity_batch(
+              Activity::Agents,
+              cancel_agent_session_cmd(dispatch, session),
+            ),
+            {
+              ..model,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "cancelling agent work",
+            },
           )
         None =>
-          (@rabbita.none, { ..model, activity: Activity::Agents, agent_status: "no session selected" })
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "no session selected",
+            },
+          )
       }
     PollAgentSessions =>
       (
@@ -2209,7 +2430,11 @@ fn update(
         {
           ..model,
           selected_path: path,
-          current_directory: if is_directory { path } else { model.current_directory },
+          current_directory: if is_directory {
+            path
+          } else {
+            model.current_directory
+          },
           preview: None,
           preview_status: "loading preview",
           editing_inbox_path: if is_inbox_path(path) {
@@ -2249,15 +2474,19 @@ fn update(
       )
     SelectSearchHit(workspace_id, path) =>
       (
-        @rabbita.batch([
-          fetch_entries_cmd(dispatch, workspace_id, ""),
-          fetch_preview_cmd(dispatch, workspace_id, path),
-          fetch_runs_cmd(dispatch, workspace_id),
-          fetch_review_diff_cmd(dispatch, workspace_id, path),
-        ]),
+        sync_activity_batch(
+          Activity::Explorer,
+          @rabbita.batch([
+            fetch_entries_cmd(dispatch, workspace_id, ""),
+            fetch_preview_cmd(dispatch, workspace_id, path),
+            fetch_runs_cmd(dispatch, workspace_id),
+            fetch_review_diff_cmd(dispatch, workspace_id, path),
+          ]),
+        ),
         {
           ..model,
           activity: Activity::Explorer,
+          command_open: false,
           selected_workspace_id: workspace_id,
           selected_path: path,
           current_directory: "",
@@ -2274,8 +2503,13 @@ fn update(
       )
     SubmitRequest =>
       (
-        submit_request_cmd(dispatch, model),
-        { ..model, request_status: "staging request" },
+        sync_activity_batch(Activity::Town, submit_request_cmd(dispatch, model)),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          request_status: "staging request",
+        },
       )
     SetGoalTitle(title) => (@rabbita.none, { ..model, goal_title: title })
     SetGoalCadenceTicks(value) =>
@@ -2286,53 +2520,127 @@ fn update(
       (@rabbita.none, { ..model, goal_source_policy: value })
     CreateStandingGoal =>
       (
-        create_standing_goal_cmd(dispatch, model),
-        { ..model, dispatch_status: "creating standing watch" },
+        sync_activity_batch(
+          Activity::Town,
+          create_standing_goal_cmd(dispatch, model),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          dispatch_status: "creating standing watch",
+        },
       )
     DispatchDaemonTick =>
       (
-        dispatch_daemon_cmd(dispatch),
-        { ..model, dispatch_status: "running daemon tick" },
+        sync_activity_batch(Activity::Town, dispatch_daemon_cmd(dispatch)),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          dispatch_status: "running daemon tick",
+        },
       )
     FetchDaemonLifecycle =>
       (
-        fetch_daemon_lifecycle_cmd(dispatch),
-        { ..model, daemon_status: "checking daemon" },
+        sync_activity_batch(
+          Activity::Town,
+          fetch_daemon_lifecycle_cmd(dispatch),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          daemon_status: "checking daemon",
+        },
       )
     StartDaemon =>
       (
-        manage_daemon_cmd(dispatch, "start"),
-        { ..model, daemon_status: "starting daemon" },
+        sync_activity_batch(
+          Activity::Town,
+          manage_daemon_cmd(dispatch, "start"),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          daemon_status: "starting daemon",
+        },
       )
     StopDaemon =>
       (
-        manage_daemon_cmd(dispatch, "stop"),
-        { ..model, daemon_status: "stopping daemon" },
+        sync_activity_batch(Activity::Town, manage_daemon_cmd(dispatch, "stop")),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          daemon_status: "stopping daemon",
+        },
       )
     RestartDaemon =>
       (
-        manage_daemon_cmd(dispatch, "restart"),
-        { ..model, daemon_status: "restarting daemon" },
+        sync_activity_batch(
+          Activity::Town,
+          manage_daemon_cmd(dispatch, "restart"),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          daemon_status: "restarting daemon",
+        },
       )
     EnableDaemonSupervision =>
       (
-        set_daemon_supervision_cmd(dispatch, true),
-        { ..model, daemon_status: "enabling supervision" },
+        sync_activity_batch(
+          Activity::Town,
+          set_daemon_supervision_cmd(dispatch, true),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          daemon_status: "enabling supervision",
+        },
       )
     DisableDaemonSupervision =>
       (
-        set_daemon_supervision_cmd(dispatch, false),
-        { ..model, daemon_status: "disabling supervision" },
+        sync_activity_batch(
+          Activity::Town,
+          set_daemon_supervision_cmd(dispatch, false),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          daemon_status: "disabling supervision",
+        },
       )
     InstallDaemonAgent =>
       (
-        manage_daemon_agent_cmd(dispatch, "install"),
-        { ..model, daemon_status: "installing LaunchAgent" },
+        sync_activity_batch(
+          Activity::Town,
+          manage_daemon_agent_cmd(dispatch, "install"),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          daemon_status: "installing LaunchAgent",
+        },
       )
     UninstallDaemonAgent =>
       (
-        manage_daemon_agent_cmd(dispatch, "uninstall"),
-        { ..model, daemon_status: "removing LaunchAgent" },
+        sync_activity_batch(
+          Activity::Town,
+          manage_daemon_agent_cmd(dispatch, "uninstall"),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          daemon_status: "removing LaunchAgent",
+        },
       )
     RevealSelection =>
       (
@@ -2341,12 +2649,21 @@ fn update(
       )
     SetInboxTitle(title) => (@rabbita.none, { ..model, inbox_title: title })
     SetInboxContent(content) =>
-      (@rabbita.none, { ..model, inbox_content: content, inbox_status: "draft" })
+      (
+        @rabbita.none,
+        { ..model, inbox_content: content, inbox_status: "draft" },
+      )
     SetImportUrl(url) =>
-      (@rabbita.none, { ..model, import_url: url, inbox_status: "import draft" })
+      (
+        @rabbita.none,
+        { ..model, import_url: url, inbox_status: "import draft" },
+      )
     SetImportNote(note) =>
-      (@rabbita.none, { ..model, import_note: note, inbox_status: "import draft" })
-    ImportUrlToInbox => {
+      (
+        @rabbita.none,
+        { ..model, import_note: note, inbox_status: "import draft" },
+      )
+    ImportUrlToInbox =>
       if model.import_url.trim().to_owned() == "" {
         (@rabbita.none, { ..model, inbox_status: "enter a URL to import" })
       } else {
@@ -2355,11 +2672,15 @@ fn update(
           { ..model, inbox_status: "importing URL" },
         )
       }
-    }
     ImportLocalFiles =>
       (
-        pick_import_files_cmd(dispatch),
-        { ..model, activity: Activity::Inbox, inbox_status: "opening file picker" },
+        sync_activity_batch(Activity::Inbox, pick_import_files_cmd(dispatch)),
+        {
+          ..model,
+          activity: Activity::Inbox,
+          command_open: false,
+          inbox_status: "opening file picker",
+        },
       )
     PollDroppedImports =>
       (
@@ -2375,10 +2696,11 @@ fn update(
         _ => model.inbox_content
       }
       (
-        @rabbita.none,
+        sync_activity_cmd(Activity::Inbox),
         {
           ..model,
           activity: Activity::Inbox,
+          command_open: false,
           inbox_title: @desk.display_name(model.selected_path),
           inbox_content: content,
           editing_inbox_path: if is_inbox_path(model.selected_path) {
@@ -2409,7 +2731,12 @@ fn update(
         "- Path: \{model.selected_path}\n" +
         "- Layer: \{selected_layer(model)}\n"
       (
-        save_inbox_cmd(dispatch, { ..model, editing_inbox_path: "" }, title, content),
+        save_inbox_cmd(
+          dispatch,
+          { ..model, editing_inbox_path: "" },
+          title,
+          content,
+        ),
         { ..model, inbox_status: "copying selection to inbox" },
       )
     }
@@ -2421,25 +2748,30 @@ fn update(
         (@rabbita.none, { ..model, search_status: "enter a query" })
       } else {
         (
-          fetch_search_cmd(dispatch, query),
-          { ..model, activity: Activity::Search, search_status: "searching" },
+          sync_activity_batch(
+            Activity::Search,
+            fetch_search_cmd(dispatch, query),
+          ),
+          {
+            ..model,
+            activity: Activity::Search,
+            command_open: false,
+            search_status: "searching",
+          },
         )
       }
     }
     ToggleFavorite(path) =>
-      (@rabbita.none, { ..model, favorites: toggle_string(model.favorites, path) })
+      (
+        @rabbita.none,
+        { ..model, favorites: toggle_string(model.favorites, path) },
+      )
     SetViewTitle(title) => (@rabbita.none, { ..model, view_title: title })
     SaveCurrentView =>
-      (
-        save_view_cmd(dispatch, model),
-        { ..model, host_status: "saving view" },
-      )
+      (save_view_cmd(dispatch, model), { ..model, host_status: "saving view" })
     SetTagValue(tag) => (@rabbita.none, { ..model, tag_value: tag })
     TagSelection =>
-      (
-        save_tag_cmd(dispatch, model),
-        { ..model, reveal_status: "saving tag" },
-      )
+      (save_tag_cmd(dispatch, model), { ..model, reveal_status: "saving tag" })
     NotifyDaily =>
       (
         notify_cmd(
@@ -2465,7 +2797,11 @@ fn update(
           fetch_agent_models_cmd(dispatch),
           fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
           fetch_review_items_cmd(dispatch, model.selected_workspace_id),
-          fetch_review_diff_cmd(dispatch, model.selected_workspace_id, model.selected_path),
+          fetch_review_diff_cmd(
+            dispatch,
+            model.selected_workspace_id,
+            model.selected_path,
+          ),
           fetch_saved_views_cmd(dispatch),
           fetch_tags_cmd(dispatch),
         ]),
@@ -2476,6 +2812,7 @@ fn update(
 
 ///|
 fn render_activity_rail(
+  dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
   aside(class="activity-rail", [
@@ -2488,10 +2825,10 @@ fn render_activity_rail(
         } else {
           "rail-button"
         }
-        a(
+        button(
           class=class_name,
           title=item.label,
-          href=activity_href(item.key),
+          on_click=dispatch(SelectActivity(item.key)),
           [
             span(class="rail-icon", item.icon),
             span(class="sr-only", item.label),
@@ -2574,22 +2911,38 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     render_workspace_card(dispatch, model),
     div(class="explorer-section-tabs", [
       button(
-        class=if model.current_directory == "" { "section-pill active" } else { "section-pill" },
+        class=if model.current_directory == "" {
+          "section-pill active"
+        } else {
+          "section-pill"
+        },
         on_click=dispatch(OpenDirectory("")),
         "Root",
       ),
       button(
-        class=if model.current_directory == "wiki" { "section-pill active" } else { "section-pill" },
+        class=if model.current_directory == "wiki" {
+          "section-pill active"
+        } else {
+          "section-pill"
+        },
         on_click=dispatch(OpenDirectory("wiki")),
         "Wiki",
       ),
       button(
-        class=if model.current_directory == "inbox" { "section-pill active" } else { "section-pill" },
+        class=if model.current_directory == "inbox" {
+          "section-pill active"
+        } else {
+          "section-pill"
+        },
         on_click=dispatch(OpenDirectory("inbox")),
         "Inbox",
       ),
       button(
-        class=if model.current_directory == "book/site/generated" { "section-pill active" } else { "section-pill" },
+        class=if model.current_directory == "book/site/generated" {
+          "section-pill active"
+        } else {
+          "section-pill"
+        },
         on_click=dispatch(OpenDirectory("book/site/generated")),
         "Outputs",
       ),
@@ -2606,10 +2959,7 @@ fn render_workspace_card(
   div(class="workspace-stack", [
     div(class="workspace-card", [
       span(class="status-dot live", ""),
-      div([
-        h3(workspace_name(model)),
-        p(workspace_root(model)),
-      ]),
+      div([h3(workspace_name(model)), p(workspace_root(model))]),
     ]),
     div(
       class="workspace-list",
@@ -2623,10 +2973,7 @@ fn render_workspace_card(
           class=class_name,
           title=workspace.root_path,
           on_click=dispatch(SelectWorkspace(workspace.id)),
-          [
-            span(workspace.name),
-            small(workspace.kind.to_string()),
-          ],
+          [span(workspace.name), small(workspace.kind.to_string())],
         )
       }),
     ),
@@ -2636,10 +2983,7 @@ fn render_workspace_card(
 ///|
 fn render_tree(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   if model.entries.length() == 0 {
-    div(class="empty-state", [
-      strong("No entries loaded"),
-      p(model.host_status),
-    ])
+    div(class="empty-state", [strong("No entries loaded"), p(model.host_status)])
   } else {
     ul(
       class="tree-list",
@@ -2662,7 +3006,12 @@ fn render_search_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
   aside(class="explorer-pane", [
     div(class="pane-heading", [
       div([p(class="eyebrow", "cross-book"), h2("Search")]),
-      button(class="icon-button", title="Run Search", on_click=dispatch(SearchNow), "S"),
+      button(
+        class="icon-button",
+        title="Run Search",
+        on_click=dispatch(SearchNow),
+        "S",
+      ),
     ]),
     section(class="side-section", [
       input(
@@ -2672,7 +3021,11 @@ fn render_search_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
         on_input=fn(value) { dispatch(SetSearchQuery(value)) },
         "",
       ),
-      button(class="primary-button full", on_click=dispatch(SearchNow), "Search Books"),
+      button(
+        class="primary-button full",
+        on_click=dispatch(SearchNow),
+        "Search Books",
+      ),
       p(class="status-line", model.search_status),
     ]),
     div(
@@ -2685,7 +3038,9 @@ fn render_search_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
           [
             span(class="record-kind", layer_label(hit.source_layer)),
             strong(hit.title),
-            small("\{icon_for_kind(hit.kind)} \{hit.workspace_name} / \{hit.path}"),
+            small(
+              "\{icon_for_kind(hit.kind)} \{hit.workspace_name} / \{hit.path}",
+            ),
             p(hit.snippet),
           ],
         )
@@ -2723,10 +3078,22 @@ fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "",
       ),
       div(class="toolbar-actions stack-actions", [
-        button(class="secondary-button", on_click=dispatch(LoadSelectionIntoInbox), "Load Selection"),
-        button(class="secondary-button", on_click=dispatch(StageSelectedLink), "Link Selection"),
+        button(
+          class="secondary-button",
+          on_click=dispatch(LoadSelectionIntoInbox),
+          "Load Selection",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(StageSelectedLink),
+          "Link Selection",
+        ),
       ]),
-      button(class="primary-button full", on_click=dispatch(SaveInboxNote), "Save Inbox Note"),
+      button(
+        class="primary-button full",
+        on_click=dispatch(SaveInboxNote),
+        "Save Inbox Note",
+      ),
       p(class="status-line", model.inbox_status),
     ]),
     section(class="side-section", [
@@ -2747,8 +3114,16 @@ fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "",
       ),
       div(class="toolbar-actions stack-actions", [
-        button(class="secondary-button", on_click=dispatch(ImportUrlToInbox), "Import URL"),
-        button(class="secondary-button", on_click=dispatch(ImportLocalFiles), "Import Files"),
+        button(
+          class="secondary-button",
+          on_click=dispatch(ImportUrlToInbox),
+          "Import URL",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(ImportLocalFiles),
+          "Import Files",
+        ),
       ]),
       div(class="import-dropzone", [
         span(class="record-kind", "local"),
@@ -2769,8 +3144,18 @@ fn render_agents_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
     div(class="pane-heading", [
       div([p(class="eyebrow", "moonclaw"), h2("Agents")]),
       div(class="toolbar-actions", [
-        button(class="icon-button", title="New Session", on_click=dispatch(NewAgentSession), "N"),
-        button(class="icon-button", title="Refresh Agents", on_click=dispatch(PollAgentSessions), "R"),
+        button(
+          class="icon-button",
+          title="New Session",
+          on_click=dispatch(NewAgentSession),
+          "N",
+        ),
+        button(
+          class="icon-button",
+          title="Refresh Agents",
+          on_click=dispatch(PollAgentSessions),
+          "R",
+        ),
       ]),
     ]),
     section(class="side-section", [
@@ -2780,23 +3165,38 @@ fn render_agents_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
     ]),
     section(class="side-section", [
       h3("Book Sessions"),
-      button(class="primary-button full", on_click=dispatch(NewAgentSession), "New Session"),
+      button(
+        class="primary-button full",
+        on_click=dispatch(NewAgentSession),
+        "New Session",
+      ),
       div(
         class="agent-session-list",
         if model.agent_sessions.length() == 0 {
           [p(class="status-line", "no agent sessions yet")]
         } else {
           model.agent_sessions.map(session => {
-            let selected = selected_agent_session(model).map(fn(item) { item.id }).unwrap_or("") == session.id
+            let selected = selected_agent_session(model)
+              .map(fn(item) { item.id })
+              .unwrap_or("") ==
+              session.id
             button(
-              class=if selected { "agent-session active" } else { "agent-session" },
+              class=if selected {
+                "agent-session active"
+              } else {
+                "agent-session"
+              },
               title="\{session.id} / \{session.cwd}",
               on_click=dispatch(SelectAgentSession(session.id)),
               [
                 span(class="record-kind", session.status),
                 strong(session.title),
-                small("\{session.workspace_name} / \{agent_session_task_line(session)}"),
-                small("\{session.transcript.length()} messages / \{session.updated_at}"),
+                small(
+                  "\{session.workspace_name} / \{agent_session_task_line(session)}",
+                ),
+                small(
+                  "\{session.transcript.length()} messages / \{session.updated_at}",
+                ),
               ],
             )
           })
@@ -2812,8 +3212,22 @@ fn render_agent_daemon_state(model : Model) -> @rabbita.Html {
     Some(daemon) =>
       div(class="daemon-state", [
         info_row("Running", if daemon.running { "yes" } else { "no" }),
-        info_row("Port", if daemon.port > 0 { daemon.port.to_string() } else { "none" }),
-        info_row("PID", if daemon.pid > 0 { daemon.pid.to_string() } else { "none" }),
+        info_row(
+          "Port",
+          if daemon.port > 0 {
+            daemon.port.to_string()
+          } else {
+            "none"
+          },
+        ),
+        info_row(
+          "PID",
+          if daemon.pid > 0 {
+            daemon.pid.to_string()
+          } else {
+            "none"
+          },
+        ),
         info_row("Root", empty_label(daemon.moonclaw_root)),
         info_row("Info", daemon.info_path),
       ])
@@ -2842,8 +3256,18 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     div(class="pane-heading", [
       div([p(class="eyebrow", "moontown"), h2("Requests")]),
       div(class="toolbar-actions", [
-        button(class="icon-button", title="Run Daemon Tick", on_click=dispatch(DispatchDaemonTick), "D"),
-        button(class="icon-button", title="Refresh", on_click=dispatch(RefreshAll), "R"),
+        button(
+          class="icon-button",
+          title="Run Daemon Tick",
+          on_click=dispatch(DispatchDaemonTick),
+          "D",
+        ),
+        button(
+          class="icon-button",
+          title="Refresh",
+          on_click=dispatch(RefreshAll),
+          "R",
+        ),
       ]),
     ]),
     section(class="side-section", [
@@ -2855,7 +3279,11 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         on_input=fn(value) { dispatch(SetRequestPrompt(value)) },
         "",
       ),
-      button(class="primary-button full", on_click=dispatch(SubmitRequest), "Submit to Town"),
+      button(
+        class="primary-button full",
+        on_click=dispatch(SubmitRequest),
+        "Submit to Town",
+      ),
       p(class="status-line", model.request_status),
     ]),
     section(class="side-section", [
@@ -2891,8 +3319,16 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "",
       ),
       div(class="toolbar-actions stack-actions", [
-        button(class="secondary-button", on_click=dispatch(CreateStandingGoal), "Create Watch"),
-        button(class="secondary-button", on_click=dispatch(DispatchDaemonTick), "Run Tick"),
+        button(
+          class="secondary-button",
+          on_click=dispatch(CreateStandingGoal),
+          "Create Watch",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(DispatchDaemonTick),
+          "Run Tick",
+        ),
       ]),
       p(class="status-line", model.dispatch_status),
     ]),
@@ -2910,12 +3346,31 @@ fn render_town_progress_panel(model : Model) -> @rabbita.Html {
     Some(progress) =>
       section(class="side-section", [
         h3("Live Progress"),
-        info_row("Daemon", "\{progress.daemon_status} / tick \{progress.daemon_tick}"),
+        info_row(
+          "Daemon",
+          "\{progress.daemon_status} / tick \{progress.daemon_tick}",
+        ),
         info_row("Running", if progress.daemon_running { "yes" } else { "no" }),
-        info_row("Supervision", if progress.supervision_enabled { "enabled" } else { "disabled" }),
-        info_row("Due", "\{progress.due_goal_count} / next \{progress.next_due_tick}"),
-        info_row("Queued", "\{progress.request_count} requests / \{progress.dispatch_count} dispatches"),
-        info_row("Outputs", "\{progress.message_count} messages / \{progress.run_count} runs"),
+        info_row(
+          "Supervision",
+          if progress.supervision_enabled {
+            "enabled"
+          } else {
+            "disabled"
+          },
+        ),
+        info_row(
+          "Due",
+          "\{progress.due_goal_count} / next \{progress.next_due_tick}",
+        ),
+        info_row(
+          "Queued",
+          "\{progress.request_count} requests / \{progress.dispatch_count} dispatches",
+        ),
+        info_row(
+          "Outputs",
+          "\{progress.message_count} messages / \{progress.run_count} runs",
+        ),
         info_row("Latest Request", empty_label(progress.latest_request)),
         info_row("Latest Message", empty_label(progress.latest_message)),
         info_row("Latest Dispatch", empty_label(progress.latest_dispatch)),
@@ -2931,7 +3386,11 @@ fn render_town_progress_panel(model : Model) -> @rabbita.Html {
 
 ///|
 fn empty_label(value : String) -> String {
-  if value == "" { "none" } else { value }
+  if value == "" {
+    "none"
+  } else {
+    value
+  }
 }
 
 ///|
@@ -2952,14 +3411,16 @@ fn render_event_panel(model : Model) -> @rabbita.Html {
     } else {
       div(
         class="event-list",
-        model.events[:event_limit(model.events)].map(event =>
+        model.events[:event_limit(model.events)].map(event => {
           div(class="event-row " + event.severity, [
             span(class="record-kind", event.severity),
             strong(event.title),
-            small("\{event.source} / \{event.kind} / \{event.id} / \{event_time_label(event)}"),
+            small(
+              "\{event.source} / \{event.kind} / \{event.id} / \{event_time_label(event)}",
+            ),
             p(event.detail),
           ])
-        ),
+        }),
       )
     },
   ])
@@ -2967,14 +3428,22 @@ fn render_event_panel(model : Model) -> @rabbita.Html {
 
 ///|
 fn event_limit(events : Array[DeskEvent]) -> Int {
-  if events.length() > 8 { 8 } else { events.length() }
+  if events.length() > 8 {
+    8
+  } else {
+    events.length()
+  }
 }
 
 ///|
 fn event_time_label(event : DeskEvent) -> String {
   let tick = if event.tick > 0 { "tick \{event.tick}" } else { "no tick" }
   let run = if event.run_id == "" { "no run" } else { event.run_id }
-  let time = if event.created_at == "" { empty_label(event.path) } else { event.created_at }
+  let time = if event.created_at == "" {
+    empty_label(event.path)
+  } else {
+    event.created_at
+  }
   "\{tick} / \{run} / \{time}"
 }
 
@@ -2990,16 +3459,58 @@ fn render_daemon_lifecycle_panel(
         div(class="daemon-state", [
           info_row("Result", if result.ok { "ok" } else { "failed" }),
           info_row("Action", result.action),
-          info_row("Status", if result.running { "running" } else { result.status }),
-          info_row("PID", if result.pid > 0 { result.pid.to_string() } else { "none" }),
+          info_row(
+            "Status",
+            if result.running {
+              "running"
+            } else {
+              result.status
+            },
+          ),
+          info_row(
+            "PID",
+            if result.pid > 0 {
+              result.pid.to_string()
+            } else {
+              "none"
+            },
+          ),
           info_row("Command", result.command),
           info_row("CWD", result.cwd),
-          info_row("Started", if result.started_at == "" { "none" } else { result.started_at }),
-          info_row("Stopped", if result.stopped_at == "" { "none" } else { result.stopped_at }),
+          info_row(
+            "Started",
+            if result.started_at == "" {
+              "none"
+            } else {
+              result.started_at
+            },
+          ),
+          info_row(
+            "Stopped",
+            if result.stopped_at == "" {
+              "none"
+            } else {
+              result.stopped_at
+            },
+          ),
           info_row("Desired", result.desired_state),
-          info_row("Supervision", if result.supervision_enabled { "enabled" } else { "disabled" }),
+          info_row(
+            "Supervision",
+            if result.supervision_enabled {
+              "enabled"
+            } else {
+              "disabled"
+            },
+          ),
           info_row("Restarts", result.restart_count.to_string()),
-          info_row("Health", if result.last_health_check == "" { "none" } else { result.last_health_check }),
+          info_row(
+            "Health",
+            if result.last_health_check == "" {
+              "none"
+            } else {
+              result.last_health_check
+            },
+          ),
           info_row("State File", result.pid_file),
           info_row("Policy File", result.policy_file),
           info_row("Logs", daemon_log_label(result)),
@@ -3013,12 +3524,36 @@ fn render_daemon_lifecycle_panel(
     div(class="toolbar-actions stack-actions", [
       button(class="secondary-button", on_click=dispatch(StartDaemon), "Start"),
       button(class="secondary-button", on_click=dispatch(StopDaemon), "Stop"),
-      button(class="secondary-button", on_click=dispatch(RestartDaemon), "Restart"),
-      button(class="secondary-button", on_click=dispatch(FetchDaemonLifecycle), "Status"),
-      button(class="secondary-button", on_click=dispatch(EnableDaemonSupervision), "Supervise"),
-      button(class="secondary-button", on_click=dispatch(DisableDaemonSupervision), "Unsupervise"),
-      button(class="secondary-button", on_click=dispatch(InstallDaemonAgent), "Install Agent"),
-      button(class="secondary-button", on_click=dispatch(UninstallDaemonAgent), "Remove Agent"),
+      button(
+        class="secondary-button",
+        on_click=dispatch(RestartDaemon),
+        "Restart",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(FetchDaemonLifecycle),
+        "Status",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(EnableDaemonSupervision),
+        "Supervise",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(DisableDaemonSupervision),
+        "Unsupervise",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(InstallDaemonAgent),
+        "Install Agent",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(UninstallDaemonAgent),
+        "Remove Agent",
+      ),
     ]),
     render_daemon_agent_state(model),
     p(class="status-line", model.daemon_status),
@@ -3030,8 +3565,26 @@ fn render_daemon_agent_state(model : Model) -> @rabbita.Html {
   match model.daemon_agent {
     Some(agent) =>
       div(class="daemon-state", [
-        info_row("Agent", if agent.installed { if agent.loaded { "loaded" } else { "installed" } } else { "none" }),
-        info_row("Result", if agent.ok { "ok" } else { "failed \{agent.exit_code}" }),
+        info_row(
+          "Agent",
+          if agent.installed {
+            if agent.loaded {
+              "loaded"
+            } else {
+              "installed"
+            }
+          } else {
+            "none"
+          },
+        ),
+        info_row(
+          "Result",
+          if agent.ok {
+            "ok"
+          } else {
+            "failed \{agent.exit_code}"
+          },
+        ),
         info_row("Action", agent.action),
         info_row("Label", agent.label),
         info_row("Plist", agent.plist_path),
@@ -3059,7 +3612,14 @@ fn render_standing_goal_list(model : Model) -> @rabbita.Html {
     class="side-records",
     model.standing_goals.map(goal => {
       div(class="side-record", [
-        span(class="record-kind", if goal.enabled { "enabled" } else { "paused" }),
+        span(
+          class="record-kind",
+          if goal.enabled {
+            "enabled"
+          } else {
+            "paused"
+          },
+        ),
         strong(goal.title),
         small("\{goal.target_book_id} / every \{goal.cadence_ticks} ticks"),
         small("next \{goal.next_due_tick} / last \{last_run_label(goal)}"),
@@ -3139,13 +3699,19 @@ fn render_moonclaw_progress_panel(model : Model) -> @rabbita.Html {
     Some(progress) =>
       section(class="side-section", [
         h3("Progress"),
-        info_row("Runs", "\{progress.ready_count} ready / \{progress.run_count} total"),
+        info_row(
+          "Runs",
+          "\{progress.ready_count} ready / \{progress.run_count} total",
+        ),
         info_row("Artifacts", progress.artifact_count.to_string()),
-        info_row("Latest", if progress.latest_run == "" {
-          "none"
-        } else {
-          "\{progress.latest_run} / \{progress.latest_status}"
-        }),
+        info_row(
+          "Latest",
+          if progress.latest_run == "" {
+            "none"
+          } else {
+            "\{progress.latest_run} / \{progress.latest_status}"
+          },
+        ),
       ])
     None =>
       section(class="side-section", [
@@ -3156,11 +3722,19 @@ fn render_moonclaw_progress_panel(model : Model) -> @rabbita.Html {
 }
 
 ///|
-fn render_settings_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+fn render_settings_pane(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
       div([p(class="eyebrow", "daily"), h2("Operating Surface")]),
-      button(class="icon-button", title="Notify", on_click=dispatch(NotifyDaily), "N"),
+      button(
+        class="icon-button",
+        title="Notify",
+        on_click=dispatch(NotifyDaily),
+        "N",
+      ),
     ]),
     section(class="side-section", [
       h3("Today"),
@@ -3169,7 +3743,11 @@ fn render_settings_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Htm
       info_row("Messages", model.town_messages.length().to_string()),
       info_row("Goals", model.standing_goals.length().to_string()),
       info_row("Favorites", model.favorites.length().to_string()),
-      button(class="primary-button full", on_click=dispatch(NotifyDaily), "Notify Summary"),
+      button(
+        class="primary-button full",
+        on_click=dispatch(NotifyDaily),
+        "Notify Summary",
+      ),
       p(class="status-line", model.notification_status),
     ]),
     render_saved_views_panel(dispatch, model),
@@ -3195,7 +3773,10 @@ fn render_settings_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Htm
 }
 
 ///|
-fn render_saved_views_panel(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+fn render_saved_views_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
   section(class="side-section", [
     h3("Saved Views"),
     input(
@@ -3205,7 +3786,11 @@ fn render_saved_views_panel(dispatch : Dispatch[Msg], model : Model) -> @rabbita
       on_input=fn(value) { dispatch(SetViewTitle(value)) },
       "",
     ),
-    button(class="secondary-button full", on_click=dispatch(SaveCurrentView), "Save Current View"),
+    button(
+      class="secondary-button full",
+      on_click=dispatch(SaveCurrentView),
+      "Save Current View",
+    ),
     div(
       class="mini-list",
       model.saved_views.map(view => {
@@ -3215,11 +3800,13 @@ fn render_saved_views_panel(dispatch : Dispatch[Msg], model : Model) -> @rabbita
           on_click=dispatch(SelectSearchHit(view.workspace_id, view.path)),
           [
             span(view.title),
-            small(if view.query == "" {
-              "\{view.path} / \{view.created_at}"
-            } else {
-              "\{view.query} / \{view.path}"
-            }),
+            small(
+              if view.query == "" {
+                "\{view.path} / \{view.created_at}"
+              } else {
+                "\{view.query} / \{view.path}"
+              },
+            ),
           ],
         )
       }),
@@ -3249,10 +3836,7 @@ fn render_review_queue_panel(
             class="mini-link",
             title="\{item.id} / \{item.kind} / \{item.detail}",
             on_click=dispatch(msg),
-            [
-              span(item.title),
-              small("\{item.status} / \{item.path}"),
-            ],
+            [span(item.title), small("\{item.status} / \{item.path}")],
           )
         }),
       )
@@ -3262,7 +3846,11 @@ fn render_review_queue_panel(
 
 ///|
 fn review_limit(items : Array[ReviewItem]) -> Int {
-  if items.length() > 8 { 8 } else { items.length() }
+  if items.length() > 8 {
+    8
+  } else {
+    items.length()
+  }
 }
 
 ///|
@@ -3273,8 +3861,10 @@ fn render_cadence_panel(model : Model) -> @rabbita.Html {
       class="cadence-list",
       model.standing_goals.map(goal => {
         let due_label = match model.analytics {
-          Some(analytics) if analytics.daemon_tick >= goal.next_due_tick => "due"
-          Some(analytics) => "\{goal.next_due_tick - analytics.daemon_tick} ticks"
+          Some(analytics) if analytics.daemon_tick >= goal.next_due_tick =>
+            "due"
+          Some(analytics) =>
+            "\{goal.next_due_tick - analytics.daemon_tick} ticks"
           None => "next \{goal.next_due_tick}"
         }
         div(class="cadence-row", [
@@ -3352,7 +3942,10 @@ fn render_analytics_panel(model : Model) -> @rabbita.Html {
         h3("Analytics"),
         info_row("Daemon", "tick \{analytics.daemon_tick}"),
         info_row("Goals", "\{analytics.standing_goal_count} total"),
-        info_row("Due", "\{analytics.due_goal_count} / active \{analytics.active_goal_count}"),
+        info_row(
+          "Due",
+          "\{analytics.due_goal_count} / active \{analytics.active_goal_count}",
+        ),
         info_row("Next Due", analytics.next_due_tick.to_string()),
         info_row("Requests", analytics.request_count.to_string()),
         info_row("Messages", analytics.message_count.to_string()),
@@ -3386,7 +3979,12 @@ fn render_analytics_panel(model : Model) -> @rabbita.Html {
 }
 
 ///|
-fn outcome_row(label : String, value : Int, total : Int, tone : String) -> @rabbita.Html {
+fn outcome_row(
+  label : String,
+  value : Int,
+  total : Int,
+  tone : String,
+) -> @rabbita.Html {
   div(class="outcome-row " + tone, [
     span(label),
     code("\{value} / \{percent_text(value, total)}"),
@@ -3598,9 +4196,21 @@ fn render_agent_center(
     div(class="preview-toolbar", [
       span(class="path-pill", selected_agent_task_label(model)),
       div(class="toolbar-actions", [
-        button(class="secondary-button", on_click=dispatch(NewAgentSession), "New"),
-        button(class="secondary-button", on_click=dispatch(PollAgentSessions), "Refresh"),
-        button(class="secondary-button", on_click=dispatch(CancelAgentSession), "Cancel"),
+        button(
+          class="secondary-button",
+          on_click=dispatch(NewAgentSession),
+          "New",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(PollAgentSessions),
+          "Refresh",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(CancelAgentSession),
+          "Cancel",
+        ),
       ]),
     ]),
     section(class="agent-chat-surface", [
@@ -3609,7 +4219,10 @@ fn render_agent_center(
         None =>
           div(class="agent-empty", [
             h1("Agents"),
-            p(class="lead", "Start a book-scoped MoonClaw session for the selected workspace."),
+            p(
+              class="lead",
+              "Start a book-scoped MoonClaw session for the selected workspace.",
+            ),
           ])
       },
       div(class="agent-composer", [
@@ -3625,11 +4238,23 @@ fn render_agent_center(
           span(class="option-chip active", workspace_name(model)),
           span(class="option-chip", model.selected_path),
           button(
-            class=if model.agent_web_search { "secondary-button active" } else { "secondary-button" },
+            class=if model.agent_web_search {
+              "secondary-button active"
+            } else {
+              "secondary-button"
+            },
             on_click=dispatch(ToggleAgentWebSearch),
-            if model.agent_web_search { "Web On" } else { "Web Off" },
+            if model.agent_web_search {
+              "Web On"
+            } else {
+              "Web Off"
+            },
           ),
-          button(class="primary-button", on_click=dispatch(SendAgentMessage), "Send"),
+          button(
+            class="primary-button",
+            on_click=dispatch(SendAgentMessage),
+            "Send",
+          ),
         ]),
         p(class="status-line", model.agent_status),
       ]),
@@ -3674,7 +4299,11 @@ fn render_agent_inspector(
       info_row("Book", workspace_name(model)),
       info_row("Root", workspace_root(model)),
       info_row("Selected", model.selected_path),
-      button(class="secondary-button full", on_click=dispatch(SendAgentMessage), "Send To Agent"),
+      button(
+        class="secondary-button full",
+        on_click=dispatch(SendAgentMessage),
+        "Send To Agent",
+      ),
     ]),
     section(class="inspector-section", [
       h3("Runtime"),
@@ -3685,7 +4314,14 @@ fn render_agent_inspector(
             info_row("Task", empty_label(session.moonclaw_task_id)),
             info_row("Status", session.status),
             info_row("Model", empty_label(session.model)),
-            info_row("Port", if session.port > 0 { session.port.to_string() } else { "none" }),
+            info_row(
+              "Port",
+              if session.port > 0 {
+                session.port.to_string()
+              } else {
+                "none"
+              },
+            ),
             info_row("Web", if session.web_search { "on" } else { "off" }),
             info_row("Queued", session.queued_count.to_string()),
             info_row("Updated", session.updated_at),
@@ -3708,8 +4344,20 @@ fn render_agent_inspector(
         "",
       ),
       div(class="toolbar-actions stack-actions", [
-        button(class="secondary-button", on_click=dispatch(ToggleAgentWebSearch), if model.agent_web_search { "Disable Web" } else { "Enable Web" }),
-        button(class="secondary-button", on_click=dispatch(CancelAgentSession), "Cancel"),
+        button(
+          class="secondary-button",
+          on_click=dispatch(ToggleAgentWebSearch),
+          if model.agent_web_search {
+            "Disable Web"
+          } else {
+            "Enable Web"
+          },
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(CancelAgentSession),
+          "Cancel",
+        ),
       ]),
     ]),
     section(class="inspector-section", [
@@ -3719,14 +4367,14 @@ fn render_agent_inspector(
       } else {
         div(
           class="mini-list",
-          model.agent_models.map(model_info =>
+          model.agent_models.map(model_info => {
             button(
               class="mini-link",
               title=model_info.name,
               on_click=dispatch(SetAgentModel(model_info.name)),
               model_info.name,
             )
-          ),
+          }),
         )
       },
     ]),
@@ -3744,7 +4392,14 @@ fn render_inspector(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       info_row("Path", model.selected_path),
       info_row("Book", workspace_name(model)),
       info_row("Layer", selected_layer(model)),
-      info_row("Writable", if is_inbox_path(model.selected_path) { "yes" } else { "inbox only" }),
+      info_row(
+        "Writable",
+        if is_inbox_path(model.selected_path) {
+          "yes"
+        } else {
+          "inbox only"
+        },
+      ),
       info_row("Reveal", model.reveal_status),
       button(
         class="secondary-button full",
@@ -3761,7 +4416,11 @@ fn render_inspector(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         on_input=fn(value) { dispatch(SetTagValue(value)) },
         "",
       ),
-      button(class="secondary-button full", on_click=dispatch(TagSelection), "Tag Selection"),
+      button(
+        class="secondary-button full",
+        on_click=dispatch(TagSelection),
+        "Tag Selection",
+      ),
       render_tag_list(model),
     ]),
     render_review_diff_panel(model),
@@ -3809,8 +4468,7 @@ fn render_review_diff_panel(model : Model) -> @rabbita.Html {
           info_row("Changed", if diff.changed { "yes" } else { "no" }),
           pre(class="source-block compact", code(diff.body)),
         ])
-      None =>
-        p(class="status-line", "waiting for diff")
+      None => p(class="status-line", "waiting for diff")
     },
   ])
 }
@@ -3823,13 +4481,13 @@ fn render_tag_list(model : Model) -> @rabbita.Html {
   } else {
     div(
       class="mini-list",
-      tags.map(tag =>
+      tags.map(tag => {
         span(
           class="option-chip active",
           title="\{tag.id} / \{tag.created_at}",
           tag.tag,
         )
-      ),
+      }),
     )
   }
 }
@@ -3838,7 +4496,8 @@ fn render_tag_list(model : Model) -> @rabbita.Html {
 fn selection_tags(model : Model) -> Array[TagRecord] {
   let selected : Array[TagRecord] = []
   for tag in model.tags {
-    if tag.workspace_id == model.selected_workspace_id && tag.path == model.selected_path {
+    if tag.workspace_id == model.selected_workspace_id &&
+      tag.path == model.selected_path {
       selected.push(tag)
     }
   }
@@ -3846,7 +4505,10 @@ fn selection_tags(model : Model) -> Array[TagRecord] {
 }
 
 ///|
-fn render_path_list(dispatch : Dispatch[Msg], paths : Array[String]) -> @rabbita.Html {
+fn render_path_list(
+  dispatch : Dispatch[Msg],
+  paths : Array[String],
+) -> @rabbita.Html {
   if paths.length() == 0 {
     p(class="status-line", "none")
   } else {
@@ -3875,19 +4537,31 @@ fn render_bottom_drawer(
   model : Model,
 ) -> @rabbita.Html {
   section(class="bottom-drawer", [
-    div(class="drawer-tabs", [
-      span(class="drawer-tab active", "Requests"),
-      span(class="drawer-tab", "Town Messages"),
-      span(class="drawer-tab", "Runs"),
-      span(class="drawer-tab", "Agents"),
-      span(class="drawer-tab", "Recent"),
-    ]),
-    div(class="drawer-records", [
-      render_request_drawer(model),
-      render_message_drawer(model),
-      render_run_drawer(dispatch, model),
-      render_agent_drawer(dispatch, model),
-    ]),
+    div(
+      class="drawer-tabs",
+      drawer_tabs().map(tab => {
+        let class_name = if tab.key == model.drawer_tab {
+          "drawer-tab active"
+        } else {
+          "drawer-tab"
+        }
+        button(
+          class=class_name,
+          on_click=dispatch(SelectDrawerTab(tab.key)),
+          tab.label,
+        )
+      }),
+    ),
+    div(
+      class="drawer-records drawer-records-single",
+      match model.drawer_tab {
+        DrawerTab::DrawerRequests => [render_request_drawer(model)]
+        DrawerTab::DrawerMessages => [render_message_drawer(model)]
+        DrawerTab::DrawerRuns => [render_run_drawer(dispatch, model)]
+        DrawerTab::DrawerAgents => [render_agent_drawer(dispatch, model)]
+        DrawerTab::DrawerRecent => [render_recent_drawer(dispatch, model)]
+      },
+    ),
   ])
 }
 
@@ -3897,11 +4571,13 @@ fn render_request_drawer(model : Model) -> @rabbita.Html {
     span(class="record-kind", "requests"),
     div([
       h3("\{model.requests.length()} staged"),
-      p(if model.requests.length() == 0 {
-        "No Moondesk requests staged yet."
-      } else {
-        request_title(model.requests[model.requests.length() - 1])
-      }),
+      p(
+        if model.requests.length() == 0 {
+          "No Moondesk requests staged yet."
+        } else {
+          request_title(model.requests[model.requests.length() - 1])
+        },
+      ),
     ]),
   ])
 }
@@ -3912,12 +4588,14 @@ fn render_message_drawer(model : Model) -> @rabbita.Html {
     span(class="record-kind", "town"),
     div([
       h3("\{model.town_messages.length()} messages"),
-      p(if model.town_messages.length() == 0 {
-        "No recent town messages."
-      } else {
-        let message = model.town_messages[model.town_messages.length() - 1]
-        "\{message.kind} \{message.id}: \{message.title} (\{message.path})"
-      }),
+      p(
+        if model.town_messages.length() == 0 {
+          "No recent town messages."
+        } else {
+          let message = model.town_messages[model.town_messages.length() - 1]
+          "\{message.kind} \{message.id}: \{message.title} (\{message.path})"
+        },
+      ),
     ]),
   ])
 }
@@ -3942,7 +4620,10 @@ fn render_run_drawer(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 }
 
 ///|
-fn render_agent_drawer(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+fn render_agent_drawer(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
   div(class="drawer-record", [
     span(class="record-kind", "agents"),
     div([
@@ -3955,6 +4636,33 @@ fn render_agent_drawer(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html
             "\{session.title} / \{session.status}",
           )
         None => p("No agent session selected.")
+      },
+    ]),
+  ])
+}
+
+///|
+fn render_recent_drawer(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  div(class="drawer-record", [
+    span(class="record-kind", "recent"),
+    div([
+      h3("\{model.recent_paths.length()} paths"),
+      if model.recent_paths.length() == 0 {
+        p("No recent paths yet.")
+      } else {
+        div(
+          class="mini-list",
+          model.recent_paths.map(path => {
+            button(
+              class="mini-link",
+              on_click=dispatch(OpenQuickPath(path)),
+              path,
+            )
+          }),
+        )
       },
     ]),
   ])
@@ -3986,17 +4694,72 @@ fn render_command_palette(
           ),
         ]),
         div(class="palette-list", [
-          palette_command(dispatch, "Search Books", "Find files across MoonBooks", SelectActivity(Activity::Search)),
-          palette_command(dispatch, "Create Inbox Note", "Stage a safe draft in inbox", SelectActivity(Activity::Inbox)),
-          palette_command(dispatch, "Import URL", "Open the inbox importer", SelectActivity(Activity::Inbox)),
-          palette_command(dispatch, "Talk To Agent", "Open a book-scoped MoonClaw coding session", SelectActivity(Activity::Agents)),
-          palette_command(dispatch, "Submit to Town", "Send selected context to Moontown", SubmitRequest),
-          palette_command(dispatch, "Run Daemon Tick", "Dispatch one Moontown scheduler tick", DispatchDaemonTick),
-          palette_command(dispatch, "Start Daemon", "Start the managed Moontown daemon loop", StartDaemon),
-          palette_command(dispatch, "Enable Supervision", "Restart the daemon when the policy says it should run", EnableDaemonSupervision),
-          palette_command(dispatch, "Stop Daemon", "Stop the managed Moontown daemon loop", StopDaemon),
-          palette_command(dispatch, "Show Run Artifacts", "Open MoonClaw run projection", SelectActivity(Activity::Runs)),
-          palette_command(dispatch, "Daily Surface", "Open operating summary", SelectActivity(Activity::Settings)),
+          palette_command(
+            dispatch,
+            "Search Books",
+            "Find files across MoonBooks",
+            SelectActivity(Activity::Search),
+          ),
+          palette_command(
+            dispatch,
+            "Create Inbox Note",
+            "Stage a safe draft in inbox",
+            SelectActivity(Activity::Inbox),
+          ),
+          palette_command(
+            dispatch,
+            "Import URL",
+            "Open the inbox importer",
+            SelectActivity(Activity::Inbox),
+          ),
+          palette_command(
+            dispatch,
+            "Talk To Agent",
+            "Open a book-scoped MoonClaw coding session",
+            SelectActivity(Activity::Agents),
+          ),
+          palette_command(
+            dispatch,
+            "Submit to Town",
+            "Send selected context to Moontown",
+            SubmitRequest,
+          ),
+          palette_command(
+            dispatch,
+            "Run Daemon Tick",
+            "Dispatch one Moontown scheduler tick",
+            DispatchDaemonTick,
+          ),
+          palette_command(
+            dispatch,
+            "Start Daemon",
+            "Start the managed Moontown daemon loop",
+            StartDaemon,
+          ),
+          palette_command(
+            dispatch,
+            "Enable Supervision",
+            "Restart the daemon when the policy says it should run",
+            EnableDaemonSupervision,
+          ),
+          palette_command(
+            dispatch,
+            "Stop Daemon",
+            "Stop the managed Moontown daemon loop",
+            StopDaemon,
+          ),
+          palette_command(
+            dispatch,
+            "Show Run Artifacts",
+            "Open MoonClaw run projection",
+            SelectActivity(Activity::Runs),
+          ),
+          palette_command(
+            dispatch,
+            "Daily Surface",
+            "Open operating summary",
+            SelectActivity(Activity::Settings),
+          ),
         ]),
       ]),
     ])
@@ -4018,7 +4781,11 @@ fn palette_command(
 
 ///|
 fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  let status = if model.loading { "loading workspace" } else { model.host_status }
+  let status = if model.loading {
+    "loading workspace"
+  } else {
+    model.host_status
+  }
   header(class="title-bar", [
     div(class="title-copy", [
       span(class="app-dot", ""),
@@ -4030,10 +4797,7 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       on_click=dispatch(ToggleCommand),
       "Command Palette",
     ),
-    div(class="sync-status", [
-      span(class="status-dot live", ""),
-      span(status),
-    ]),
+    div(class="sync-status", [span(class="status-dot live", ""), span(status)]),
   ])
 }
 
@@ -4052,7 +4816,7 @@ fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   div(class="desk-shell", [
     render_title_bar(dispatch, model),
     div(class="desk-main", [
-      render_activity_rail(model),
+      render_activity_rail(dispatch, model),
       render_explorer(dispatch, model),
       center,
       inspector,
@@ -4109,18 +4873,21 @@ test {
 
 ///|
 fn main {
-  let (dispatch, cell) = @rabbita.cell_with_dispatch(model=init_model(), update~, view=(
-    dispatch,
-    model,
-  ) => render_app(dispatch, model))
+  let (dispatch, cell) = @rabbita.cell_with_dispatch(
+    model=init_model(),
+    update~,
+    view=(dispatch, model) => render_app(dispatch, model),
+  )
   let app = @rabbita.new(cell)
-  app.with_init(@rabbita.batch([
-    fetch_workspaces_cmd(dispatch),
-    fetch_agent_daemon_cmd(dispatch),
-    fetch_agent_models_cmd(dispatch),
-    fetch_agent_sessions_cmd(dispatch, ""),
-    schedule_agent_poll(dispatch),
-    schedule_import_drop_poll(dispatch),
-  ]))
+  app.with_init(
+    @rabbita.batch([
+      fetch_workspaces_cmd(dispatch),
+      fetch_agent_daemon_cmd(dispatch),
+      fetch_agent_models_cmd(dispatch),
+      fetch_agent_sessions_cmd(dispatch, ""),
+      schedule_agent_poll(dispatch),
+      schedule_import_drop_poll(dispatch),
+    ]),
+  )
   app.mount("app")
 }
