@@ -55,13 +55,14 @@ archive through Apple notarytool when a keychain profile is provided. It still
 avoids Rust, Cargo, Tauri, and broad filesystem permissions.
 
 See [Current Status](docs/STATUS.md) for the honest completion picture:
-Moondesk is usable as a local single-user alpha and roughly 95% complete for
-the chosen browser-shell daily-use target. The self-contained `.app` bundle is
-about 90% of the standalone local distribution target: it includes the native
-MoonBit host, bundled UI, release/update manifests, and DMG creation. A
-production distribution is closer to 85% complete because real Developer ID
-signing/notarization, update hosting, and clean-machine validation are external
-release steps rather than code-only changes.
+Moondesk is feature-complete for a local single-user browser-shell alpha and
+roughly 95% complete for the chosen daily-use target. The self-contained `.app`
+bundle is about 90% of the standalone local distribution target: it includes
+the native MoonBit host, bundled UI, release/update manifests, and DMG
+creation. A production distribution is closer to 85% complete because real
+Developer ID signing/notarization, update hosting, clean-machine validation,
+and long-running reliability proof are release hardening steps rather than
+code-only changes.
 
 ## Run Locally
 

@@ -71,6 +71,17 @@ and close to functionally complete for the chosen browser-shell desktop target.
 It is not trying to match Codex's native window ownership yet; the supported
 shell is the browser opened by the bundled native host.
 
+Current assessment after the M7 agent-console pass:
+
+- Feature-complete for local single-user browser-shell use except daily-use
+  polish and long-running reliability hardening.
+- Standalone as a self-contained local `.app`; production distribution still
+  depends on real signing/notarization credentials, hosted update artifacts,
+  and clean-machine validation.
+- Not organization-grade yet because multi-root governance, hardened
+  permission policy, audit trails, remote policy, and support/update operations
+  are not implemented.
+
 ## Remaining Work
 
 High-priority work before calling it production-ready:
@@ -82,9 +93,9 @@ High-priority work before calling it production-ready:
 - Add log rotation and multi-root policy for long-running LaunchAgent use.
 - Reconcile Moondesk-managed daemon state with any independently running
   Moontown daemon.
-- Deepen output-library navigation, direct MoonClaw SSE event-stream rendering,
-  trend analytics, and calendar subscription polish after more real workspace
-  usage.
+- Deepen output-library navigation, direct MoonClaw SSE event-stream rendering
+  beyond the current saved/logged event projection, trend analytics, and
+  calendar subscription polish after more real workspace usage.
 
 ## Full Functioning Criteria
 

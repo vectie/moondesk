@@ -52,9 +52,11 @@ Moondesk should let the user:
 2. See `wiki/`, `raw/`, `site/generated/`, and `history/`.
 3. Read the latest standing-watch messages.
 4. Drop PDFs, links, or notes into an inbox.
-5. Submit "analyze these files and update the OPC book" to Moontown.
-6. Watch the assigned worker activity and MoonClaw artifacts.
-7. Open the generated report/site/course output.
+5. Talk to MoonClaw from the selected book context when they want an
+   interactive coding/research assistant.
+6. Submit "analyze these files and update the OPC book" to Moontown.
+7. Watch the assigned worker activity and MoonClaw artifacts.
+8. Open the generated report/site/course output.
 
 ## Non-Goals
 
@@ -116,7 +118,7 @@ Human request composer:
 
 ### Agent Activity
 
-Read-only projection of Moontown and MoonClaw state:
+Interactive projection of Moontown and MoonClaw state:
 
 - Mayor messages
 - standing goals
@@ -124,6 +126,14 @@ Read-only projection of Moontown and MoonClaw state:
 - worker runs
 - run artifacts
 - recent failures/retries
+- book-scoped MoonClaw agent sessions
+- selected-path chat context
+- model and web-search controls
+- transcript, progress, tool, and failure rows
+- task cancellation and daemon refresh controls
+
+Moondesk does not become an agent runtime here. It provides the human-facing
+session surface and delegates execution to MoonClaw through the local daemon.
 
 ### Output Library
 
