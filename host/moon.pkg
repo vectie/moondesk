@@ -4,3 +4,7 @@ import {
   "vectie/moondesk/internal/fsx",
   "vectie/moondesk/internal/pathx",
 }
+
+options(
+  targets: { "host.mbt": [ "native" ] },
+)

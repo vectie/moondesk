@@ -1686,14 +1686,19 @@ async fn handle_moonclaw_artifacts(
   conn : @http.ServerConnection,
 ) -> Unit {
   match find_run(workspace_root, run_id) {
-    Some(run) => {
-      let workspace = find_workspace(workspace_root, run.workspace_id).unwrap()
-      send_json(
-        conn,
-        method_,
-        run_artifacts(workspace, run.run_id, run.run_root).to_json(),
-      )
-    }
+    Some(run) =>
+      match find_workspace(workspace_root, run.workspace_id) {
+        Some(workspace) =>
+          send_json(
+            conn,
+            method_,
+            run_artifacts(workspace, run.run_id, run.run_root).to_json(),
+          )
+        None =>
+          send_api_error(
+            conn, method_, 404, "Not Found", "Run workspace is no longer available",
+          )
+      }
     None => send_api_error(conn, method_, 404, "Not Found", "Unknown run")
   }
 }

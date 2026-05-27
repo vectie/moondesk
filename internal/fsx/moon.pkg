@@ -3,3 +3,13 @@ import {
   "vectie/moondesk/internal/pathx",
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
 }
+
+options(
+  targets: {
+    "exists.mbt": [ "native" ],
+    "list_directory.mbt": [ "native" ],
+    "make_directory.mbt": [ "native" ],
+    "read_file.mbt": [ "native" ],
+    "write_file.mbt": [ "native" ],
+  },
+)

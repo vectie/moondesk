@@ -17,3 +17,12 @@ import {
 import {
   "moonbitlang/core/test",
 } for "test"
+
+options(
+  targets: {
+    "agent_sessions.mbt": [ "native" ],
+    "daemon_agent_review.mbt": [ "native" ],
+    "daemon_lifecycle.mbt": [ "native" ],
+    "server.mbt": [ "native" ],
+  },
+)
