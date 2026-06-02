@@ -349,6 +349,119 @@ struct AgentSession {
 } derive(FromJson)
 
 ///|
+struct PdfEvidenceWatchBookResult {
+  book_id : String
+  workspace_id : String
+  standing_goal : Json
+  moontown_publish : Json
+  readiness : Json
+} derive(FromJson)
+
+///|
+struct EbSampleRunResult {
+  book_id : String
+  run_id : String
+  status : String
+  output_path : String
+  watcher_goal_id : String
+  verification : Json
+  run_health : Json
+} derive(FromJson)
+
+///|
+struct MoonclawImportResult {
+  ok : Bool
+  status : String
+  book_id : String
+  proposal_id : String
+  run_id : String
+  receipt_path : String
+  run_health : Json
+} derive(FromJson)
+
+///|
+struct MoonclawRunResult {
+  ok : Bool
+  status : String
+  book_id : String
+  run_id : String
+  receipt_path : String
+  run_health : Json
+} derive(FromJson)
+
+///|
+struct MoonclawReconcileResult {
+  ok : Bool
+  status : String
+  book_id : String
+  run_id : String
+  output_path : String
+  source_screen_path : String
+  run_health : Json
+} derive(FromJson)
+
+///|
+struct EbRecoveredOutputResult {
+  ok : Bool
+  status : String
+  book_id : String
+  run_id : String
+  output_path : String
+  source_screen_path : String
+  receipt_path : String
+  run_health : Json
+  failed_checks : Array[String]
+} derive(FromJson)
+
+///|
+struct EbProductionProofResult {
+  ok : Bool
+  status : String
+  book_id : String
+  run_id : String
+  proof_level : String
+  receipt_path : String
+  run_health : Json
+  failed_checks : Array[String]
+} derive(FromJson)
+
+///|
+struct ProductionChecklistItem {
+  id : String
+  label : String
+  ok : Bool
+  requirement : String
+  evidence : String
+} derive(FromJson)
+
+struct BookPatternRecord {
+  id : String
+  title : String
+  base_type : String
+  description : String
+  output : String
+  default_topic : String
+  default_cadence_minutes : Int
+  default_source_policy : String
+  default_websites : Array[String]
+  skills : Array[String]
+} derive(FromJson)
+
+///|
+struct BookBaseTypeRecord {
+  id : String
+  title : String
+  description : String
+  owner : String
+  source : String
+  creation_palette_source : String
+  moonbook_layout_refs : Array[String]
+  template_registry_refs : Array[String]
+  supported_patterns : Array[String]
+  required_roots : Array[String]
+} derive(FromJson)
+
+///|
 struct SearchHit {
   workspace_id : String
   workspace_name : String
@@ -415,6 +528,61 @@ struct Model {
   goal_cadence_ticks : String
   goal_quality_threshold : String
   goal_source_policy : String
+  book_base_types : Array[BookBaseTypeRecord]
+  selected_book_base_type : String
+  book_patterns : Array[BookPatternRecord]
+  selected_book_pattern_id : String
+  pdf_watch_book_id : String
+  pdf_watch_topic : String
+  pdf_watch_purpose : String
+  pdf_watch_websites : String
+  pdf_watch_cadence_minutes : String
+  pdf_watch_source_policy : String
+  pdf_watch_notify_rule : String
+  pdf_watch_skill_pack : String
+  pdf_watch_analysis_method : String
+  pdf_watch_last_book_id : String
+  eb_bond_code : String
+  eb_bond_short_name : String
+  eb_issuer : String
+  eb_underlying_company : String
+  eb_exchange : String
+  eb_as_of : String
+  eb_additional_bonds : String
+  eb_production_checklist : Array[ProductionChecklistItem]
+  eb_production_proof_receipt_path : String
+  eb_production_proof_status : String
+  eb_production_proof_level : String
+  eb_production_proof_run_id : String
+  eb_production_proof_failed_checks : Array[String]
+  eb_moonclaw_import_run_id : String
+  eb_moonclaw_import_status : String
+  eb_moonclaw_import_receipt_recovered : Bool
+  eb_moonclaw_import_recovery_source : String
+  eb_moonclaw_retry_recommended : Bool
+  eb_moonclaw_orphaned_after_timeout : Bool
+  eb_moonclaw_confirmed_run_status : String
+  eb_moonclaw_run_receipt_path : String
+  eb_moonclaw_retry_import_receipt_path : String
+  eb_moonclaw_retry_import_status : String
+  eb_moonclaw_result_path : String
+  eb_book_result_path : String
+  eb_output_path : String
+  eb_base_type_selection_path : String
+  eb_base_type_selection_ready : Bool
+  eb_base_type : String
+  eb_base_type_handoff_target : String
+  eb_moontown_publish_receipt_path : String
+  eb_moontown_publish_receipt_ready : Bool
+  eb_global_standing_goal_ready : Bool
+  eb_standing_goal_registration_ready : Bool
+  eb_expected_output_contract_path : String
+  eb_expected_output_contract_ready : Bool
+  eb_expected_output_contract_id : String
+  eb_workbook_validation_path : String
+  eb_source_screen_path : String
+  eb_output_validation_status : String
+  pdf_watch_status : String
   dispatch_status : String
   daemon_status : String
   reveal_status : String
@@ -439,12 +607,22 @@ enum Msg {
   LoadedSavedViews(Result[Array[SavedViewRecord], String])
   LoadedTags(Result[Array[TagRecord], String])
   LoadedSearch(Result[Array[SearchHit], String])
+  LoadedBookBaseTypes(Result[Array[BookBaseTypeRecord], String])
+  LoadedBookPatterns(Result[Array[BookPatternRecord], String])
   SavedInbox(Result[InboxCreated, String])
   ImportedInbox(Result[InboxImportResult, String])
   SavedView(Result[SavedViewRecord, String])
   SavedTag(Result[TagRecord, String])
   SubmittedRequest(Result[RequestRecord, String])
   CreatedStandingGoal(Result[StandingGoalRecord, String])
+  CreatedPdfEvidenceWatchBook(Result[PdfEvidenceWatchBookResult, String])
+  ImportedMoonclawPacket(Result[MoonclawImportResult, String])
+  RanConfirmedMoonclawJob(Result[MoonclawRunResult, String])
+  ReconciledMoonclawResult(Result[MoonclawReconcileResult, String])
+  AcceptedRecoveredEbOutput(Result[EbRecoveredOutputResult, String])
+  ProvedEbProduction(Result[EbProductionProofResult, String])
+  RanEbSampleValidation(Result[EbSampleRunResult, String])
+  AuditedEbProductionHealth(Result[Json, String])
   DispatchedDaemon(Result[DaemonDispatchResult, String])
   LoadedDaemonLifecycle(Result[DaemonLifecycleResult, String])
   ManagedDaemon(Result[DaemonLifecycleResult, String])
@@ -481,6 +659,34 @@ enum Msg {
   SetGoalQualityThreshold(String)
   SetGoalSourcePolicy(String)
   CreateStandingGoal
+  SetPdfWatchBookId(String)
+  SetPdfWatchTopic(String)
+  SetPdfWatchPurpose(String)
+  SetPdfWatchWebsites(String)
+  SetPdfWatchCadenceMinutes(String)
+  SetPdfWatchSourcePolicy(String)
+  SetPdfWatchNotifyRule(String)
+  SetPdfWatchSkillPack(String)
+  SetPdfWatchAnalysisMethod(String)
+  SetEbBondCode(String)
+  SetEbBondShortName(String)
+  SetEbIssuer(String)
+  SetEbUnderlyingCompany(String)
+  SetEbExchange(String)
+  SetEbAsOf(String)
+  SetEbAdditionalBonds(String)
+  SelectBookBaseType(String)
+  SelectBookPattern(String)
+  CreatePdfEvidenceWatchBook
+  ImportMoonclawPacket
+  LaunchMoonclawRun
+  RunConfirmedMoonclawJob
+  ReconcileMoonclawResult
+  AcceptRecoveredEbOutput
+  ProveEbProduction
+  FreshRetryEbProduction
+  RunEbSampleValidation
+  AuditEbProductionHealth
   DispatchDaemonTick
   FetchDaemonLifecycle
   StartDaemon
@@ -600,10 +806,149 @@ fn init_model() -> Model {
     goal_cadence_ticks: "60",
     goal_quality_threshold: "85",
     goal_source_policy: "web-first",
+    book_base_types: [],
+    selected_book_base_type: "research-book",
+    book_patterns: [],
+    selected_book_pattern_id: "pdf-evidence-watch",
+    pdf_watch_book_id: "research-my-domain-pdf-watch",
+    pdf_watch_topic: "my domain",
+    pdf_watch_purpose: "Watch approved websites for relevant PDFs, extract full text, analyze with the book-owned method, and notify only when accepted knowledge changes.",
+    pdf_watch_websites: "https://example.org/reports\nhttps://example.com/publications",
+    pdf_watch_cadence_minutes: "30",
+    pdf_watch_source_policy: "web-first",
+    pdf_watch_notify_rule: "accepted_new_knowledge",
+    pdf_watch_skill_pack: "pdf-watch\npdf-analysis",
+    pdf_watch_analysis_method: default_pdf_builder_method(),
+    pdf_watch_last_book_id: "",
+    eb_bond_code: "",
+    eb_bond_short_name: "",
+    eb_issuer: "",
+    eb_underlying_company: "",
+    eb_exchange: "上交所/深交所",
+    eb_as_of: "20260601",
+    eb_additional_bonds: "",
+    eb_production_checklist: [],
+    eb_production_proof_receipt_path: "",
+    eb_production_proof_status: "not_run",
+    eb_production_proof_level: "",
+    eb_production_proof_run_id: "",
+    eb_production_proof_failed_checks: [],
+    eb_moonclaw_import_run_id: "",
+    eb_moonclaw_import_status: "",
+    eb_moonclaw_import_receipt_recovered: false,
+    eb_moonclaw_import_recovery_source: "",
+    eb_moonclaw_retry_recommended: false,
+    eb_moonclaw_orphaned_after_timeout: false,
+    eb_moonclaw_confirmed_run_status: "",
+    eb_moonclaw_run_receipt_path: "",
+    eb_moonclaw_retry_import_receipt_path: "",
+    eb_moonclaw_retry_import_status: "",
+    eb_moonclaw_result_path: "",
+    eb_book_result_path: "",
+    eb_output_path: "",
+    eb_base_type_selection_path: "",
+    eb_base_type_selection_ready: false,
+    eb_base_type: "",
+    eb_base_type_handoff_target: "",
+    eb_moontown_publish_receipt_path: "",
+    eb_moontown_publish_receipt_ready: false,
+    eb_global_standing_goal_ready: false,
+    eb_standing_goal_registration_ready: false,
+    eb_expected_output_contract_path: "",
+    eb_expected_output_contract_ready: false,
+    eb_expected_output_contract_id: "",
+    eb_workbook_validation_path: "",
+    eb_source_screen_path: "",
+    eb_output_validation_status: "",
+    pdf_watch_status: "ready to publish a book pattern",
     dispatch_status: "daemon idle",
     daemon_status: "daemon manager idle",
     reveal_status: "reveal idle",
     notification_status: "notifications idle",
+  }
+}
+
+///|
+fn default_pdf_builder_method() -> String {
+  "# PDF Evidence Watch Method\n\nScreen PDFs for source quality, extract claims that change the current book baseline, and queue Bookkeeper review before accepted knowledge is published."
+}
+
+///|
+fn default_eb_builder_method() -> String {
+  "# Exchangeable Bond Tracking Method\n\nRole: act as an exchangeable-bond credit research and compliance tracking analyst. Use official disclosure PDFs first, reject third-party repost URLs for accepted knowledge, and track one or more EB instruments through issuance/listing, periodic reports, interim events, exchange-window management, redemption/sell-back, and repayment/exit.\n\nOfficial source priority:\n- P0 SSE/SZSE: bond disclosure pages, prospectus, issuance, listing, exchange, redemption, sell-back notices.\n- P1 CNInfo: underlying listed-company mirrored announcements, equity-change reports, control-risk notices, periodic reports.\n- P2 ChinaBond: issuance, tendering, valuation, custody information.\n- P3 SHCH: registration, custody, coupon, redemption and repayment information.\n- P4 CSRC or official review sites: approval, registration, review progress.\n\nLifecycle checklist:\n1. 发行与上市: approval/registration, prospectus, issuance announcement, listing notice, pledge/trust registration.\n2. 存续期定期报告: EB special disclosure in annual/semiannual reports and tracking rating reports.\n3. 存续期临时公告: exchange-price adjustment, ST/suspension/delisting, frozen or defective pledged shares, coverage deterioration, control-transfer risk.\n4. 换股期管理: exchange-start notice, progress notices, 20-trading-day end reminders, equity-change reports.\n5. 赎回与回售: trigger notices, at least 3 implementation reminders, result notices.\n6. 兑付与退出: coupon, principal/interest repayment, delisting, pledge/trust release.\n\nRequired outputs:\n- Maintain accepted findings in wiki/findings/.\n- Produce XLSX files under book/outputs/ named EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx only after Bookkeeper acceptance.\n- Include Sheet 1 公告追踪主表 and Sheet 2 关键指标监控表 with official source URLs and evidence notes.\n- Mark expected-but-missing disclosures as 未检索到 with reason.\n- Apply cross-verification, timing checks, cumulative-share reconciliation, and official-link validation.\n- Notify only when accepted source-backed knowledge changes the baseline."
+}
+
+///|
+fn default_eb_builder_websites() -> String {
+  [
+    "https://www.sse.com.cn/",
+    "https://www.szse.cn/",
+    "https://www.cninfo.com.cn/",
+    "https://www.chinabond.com.cn/",
+    "https://www.shclearing.com.cn/",
+    "https://www.csrc.gov.cn/",
+  ].join("\n")
+}
+
+///|
+fn apply_selected_book_pattern(model : Model, pattern_id : String) -> Model {
+  if pattern_id == "exchangeable-bond-evidence-watch" {
+    {
+      ..model,
+      selected_book_base_type: "research-book",
+      selected_book_pattern_id: pattern_id,
+      pdf_watch_book_id: "research-exchangeable-bond-credit-compliance-eb-watch",
+      pdf_watch_topic: "exchangeable bond credit compliance",
+      pdf_watch_purpose: "Standing research-book for official-source PDF discovery, exchangeable bond lifecycle extraction, credit/compliance review, Bookkeeper acceptance, and durable XLSX/wiki outputs when accepted knowledge changes.",
+      pdf_watch_websites: default_eb_builder_websites(),
+      pdf_watch_cadence_minutes: "30",
+      pdf_watch_source_policy: "web-first",
+      pdf_watch_notify_rule: "accepted_new_knowledge",
+      pdf_watch_skill_pack: "pdf-watch\npdf-analysis\neb-credit-compliance",
+      pdf_watch_analysis_method: default_eb_builder_method(),
+      eb_bond_code: "",
+      eb_bond_short_name: "",
+      eb_issuer: "",
+      eb_underlying_company: "",
+      eb_exchange: "",
+      eb_as_of: "20260601",
+      eb_additional_bonds: "",
+      pdf_watch_status: "fill a real EB target before launching MoonClaw",
+    }
+  } else if pattern_id == "pdf-evidence-watch" || pattern_id == "" {
+    {
+      ..model,
+      selected_book_base_type: "research-book",
+      selected_book_pattern_id: "pdf-evidence-watch",
+      pdf_watch_book_id: "research-my-domain-pdf-watch",
+      pdf_watch_topic: "my domain",
+      pdf_watch_purpose: "Watch approved websites for relevant PDFs, extract full text, analyze with the book-owned method, and notify only when accepted knowledge changes.",
+      pdf_watch_websites: "https://example.org/reports\nhttps://example.com/publications",
+      pdf_watch_cadence_minutes: "30",
+      pdf_watch_source_policy: "web-first",
+      pdf_watch_notify_rule: "accepted_new_knowledge",
+      pdf_watch_skill_pack: "pdf-watch\npdf-analysis",
+      pdf_watch_analysis_method: default_pdf_builder_method(),
+      eb_bond_code: "",
+      eb_bond_short_name: "",
+      eb_issuer: "",
+      eb_underlying_company: "",
+      eb_exchange: "上交所/深交所",
+      eb_as_of: "20260601",
+      eb_additional_bonds: "",
+      pdf_watch_status: "ready to publish PDF Evidence Watch Book",
+    }
+  } else {
+    {
+      ..model,
+      selected_book_base_type: book_pattern_base_type_from_model(
+        model,
+        pattern_id,
+        default=model.selected_book_base_type,
+      ),
+      selected_book_pattern_id: pattern_id,
+      pdf_watch_status: "discovered registry pattern `\{pattern_id}`; the current creator supports PDF/EB research-book patterns",
+    }
   }
 }
 
@@ -667,6 +1012,107 @@ fn workspace_root(model : Model) -> String {
     }
   }
   "not connected"
+}
+
+///|
+fn selected_book_id_for_validation(model : Model) -> String {
+  if model.pdf_watch_last_book_id != "" {
+    model.pdf_watch_last_book_id
+  } else if model.pdf_watch_book_id.trim() != "" {
+    model.pdf_watch_book_id.trim().to_owned()
+  } else if model.selected_workspace_id.has_prefix("book-") {
+    model.selected_workspace_id["book-".length():].to_string()
+  } else {
+    ""
+  }
+}
+
+///|
+fn apply_selected_book_base_type(model : Model, base_type : String) -> Model {
+  let selected = if base_type == "" { "research-book" } else { base_type }
+  let pattern_id = if pattern_matches_base_type(
+    model.selected_book_pattern_id,
+    selected,
+    model.book_patterns,
+  ) {
+    model.selected_book_pattern_id
+  } else {
+    first_pattern_for_base_type(model.book_patterns, selected)
+  }
+  apply_selected_book_pattern(
+    { ..model, selected_book_base_type: selected },
+    pattern_id,
+  )
+}
+
+///|
+fn pattern_matches_base_type(
+  pattern_id : String,
+  base_type : String,
+  patterns : Array[BookPatternRecord],
+) -> Bool {
+  for pattern in patterns {
+    if pattern.id == pattern_id && pattern.base_type == base_type {
+      return true
+    }
+  }
+  pattern_id == "pdf-evidence-watch" && base_type == "research-book"
+}
+
+///|
+fn first_pattern_for_base_type(
+  patterns : Array[BookPatternRecord],
+  base_type : String,
+) -> String {
+  for pattern in patterns {
+    if pattern.base_type == base_type {
+      return pattern.id
+    }
+  }
+  "pdf-evidence-watch"
+}
+
+///|
+fn selected_pattern_is_eb(model : Model) -> Bool {
+  model.selected_book_pattern_id == "exchangeable-bond-evidence-watch" ||
+  selected_book_id_for_validation(model).contains("-eb-watch")
+}
+
+///|
+fn selected_book_pattern_title(model : Model) -> String {
+  for pattern in model.book_patterns {
+    if pattern.id == model.selected_book_pattern_id {
+      return pattern.title
+    }
+  }
+  if selected_pattern_is_eb(model) {
+    "Exchangeable Bond Evidence Watch"
+  } else {
+    "PDF Evidence Watch Book"
+  }
+}
+
+///|
+fn book_pattern_base_type_from_model(
+  model : Model,
+  pattern_id : String,
+  default~ : String,
+) -> String {
+  for pattern in model.book_patterns {
+    if pattern.id == pattern_id {
+      return pattern.base_type
+    }
+  }
+  default
+}
+
+///|
+fn pdf_watch_builder_pattern_supported(model : Model) -> Bool {
+  model.selected_book_base_type == "research-book" &&
+  (
+    model.selected_book_pattern_id == "pdf-evidence-watch" ||
+    model.selected_book_pattern_id == "exchangeable-bond-evidence-watch"
+  )
 }
 
 ///|
@@ -831,6 +1277,195 @@ fn json_string_array(items : Array[String]) -> Json {
 }
 
 ///|
+fn pipe_field(parts : Array[String], index : Int) -> String {
+  if index < parts.length() {
+    parts[index]
+  } else {
+    ""
+  }
+}
+
+///|
+fn eb_bond_target_json(
+  code : String,
+  short_name : String,
+  issuer : String,
+  underlying : String,
+  exchange : String,
+) -> Json {
+  {
+    "bond_code": code,
+    "bond_full_name_or_short_name": short_name,
+    "issuer": issuer,
+    "underlying_listed_company": underlying,
+    "exchange": exchange,
+  }
+}
+
+///|
+fn eb_bond_target_has_identity(target : Json) -> Bool {
+  json_field_string(target, "bond_code", default="") != "" ||
+  json_field_string(target, "bond_full_name_or_short_name", default="") != "" ||
+  json_field_string(target, "issuer", default="") != "" ||
+  json_field_string(target, "underlying_listed_company", default="") != ""
+}
+
+///|
+fn eb_target_text_is_placeholder(text : String) -> Bool {
+  let clean = text.trim().to_owned()
+  clean == "" ||
+  clean.contains("示例") ||
+  clean.contains("样例") ||
+  clean.contains("测试") ||
+  clean.contains("请在此处填入") ||
+  clean.contains("[") ||
+  clean.contains("]") ||
+  clean.to_lower().contains("example") ||
+  clean.to_lower().contains("placeholder")
+}
+
+///|
+fn eb_target_code_is_production(code : String) -> Bool {
+  let clean = code.trim().to_owned()
+  if clean.length() != 6 || !clean.has_prefix("132") || clean == "132001" {
+    return false
+  }
+  for ch in clean {
+    if ch < '0' || ch > '9' {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn eb_target_exchange_is_production(exchange : String) -> Bool {
+  let clean = exchange.trim().to_owned()
+  clean == "上交所" ||
+  clean == "深交所" ||
+  clean == "上海证券交易所" ||
+  clean == "深圳证券交易所"
+}
+
+///|
+fn eb_target_production_failed_checks(target : Json) -> Array[String] {
+  let failed : Array[String] = []
+  if !eb_target_code_is_production(
+      json_field_string(target, "bond_code", default=""),
+    ) {
+    failed.push("real 132XXX EB code")
+  }
+  if eb_target_text_is_placeholder(
+    json_field_string(target, "bond_full_name_or_short_name", default=""),
+  ) {
+    failed.push("bond full/short name")
+  }
+  if eb_target_text_is_placeholder(
+    json_field_string(target, "issuer", default=""),
+  ) {
+    failed.push("issuer")
+  }
+  if eb_target_text_is_placeholder(
+    json_field_string(target, "underlying_listed_company", default=""),
+  ) {
+    failed.push("underlying listed company")
+  }
+  if !eb_target_exchange_is_production(
+      json_field_string(target, "exchange", default=""),
+    ) {
+    failed.push("exchange 上交所/深交所")
+  }
+  failed
+}
+
+///|
+fn eb_targets_production_failed_checks(model : Model) -> Array[String] {
+  let failed : Array[String] = []
+  let targets = eb_target_bonds_from_model(model)
+  if targets.length() == 0 {
+    failed.push("add at least one EB target")
+    return failed
+  }
+  for index, target in targets {
+    let target_failed = eb_target_production_failed_checks(target)
+    if target_failed.length() > 0 {
+      failed.push(
+        "target " + (index + 1).to_string() + " needs " +
+        target_failed.join(", "),
+      )
+    }
+  }
+  failed
+}
+
+///|
+fn eb_targets_production_ready(model : Model) -> Bool {
+  selected_pattern_is_eb(model) &&
+  eb_targets_production_failed_checks(model).length() == 0
+}
+
+///|
+fn eb_target_readiness_summary(model : Model) -> String {
+  let failed = eb_targets_production_failed_checks(model)
+  if failed.length() == 0 {
+    "EB target ready for MoonClaw production run"
+  } else {
+    "Production target blocked: " + failed.join("; ")
+  }
+}
+
+///|
+fn eb_builder_moonclaw_action_blocked(model : Model) -> Bool {
+  model.pdf_watch_last_book_id != "" &&
+  model.selected_book_pattern_id == "exchangeable-bond-evidence-watch" &&
+  !eb_targets_production_ready(model)
+}
+
+///|
+fn text_lines(value : String) -> Array[String] {
+  let lines : Array[String] = []
+  for line in value.split("\n") {
+    let line = line.to_string().trim().to_owned()
+    if line != "" {
+      lines.push(line)
+    }
+  }
+  lines
+}
+
+///|
+fn eb_target_bonds_from_model(model : Model) -> Array[Json] {
+  let bonds : Array[Json] = []
+  let primary = eb_bond_target_json(
+    trimmed_or(model.eb_bond_code, ""),
+    trimmed_or(model.eb_bond_short_name, ""),
+    trimmed_or(model.eb_issuer, ""),
+    trimmed_or(model.eb_underlying_company, ""),
+    trimmed_or(model.eb_exchange, ""),
+  )
+  if eb_bond_target_has_identity(primary) {
+    bonds.push(primary)
+  }
+  for line in text_lines(model.eb_additional_bonds) {
+    let parts : Array[String] = []
+    for part in line.split("|") {
+      parts.push(part.to_string().trim().to_owned())
+    }
+    let target = eb_bond_target_json(
+      pipe_field(parts, 0),
+      pipe_field(parts, 1),
+      pipe_field(parts, 2),
+      pipe_field(parts, 3),
+      pipe_field(parts, 4),
+    )
+    if eb_bond_target_has_identity(target) {
+      bonds.push(target)
+    }
+  }
+  bonds
+}
+
+///|
 fn json_field_string(json : Json, key : String, default~ : String) -> String {
   match json {
     Json::Object(object) =>
@@ -843,6 +1478,607 @@ fn json_field_string(json : Json, key : String, default~ : String) -> String {
 }
 
 ///|
+fn json_path_string(json : Json, keys : Array[String], default~ : String) -> String {
+  let mut current = json
+  for key in keys {
+    match current {
+      Json::Object(object) =>
+        match object.get(key) {
+          Some(value) => current = value
+          None => return default
+        }
+      _ => return default
+    }
+  }
+  match current {
+    Json::String(value) => value
+    _ => default
+  }
+}
+
+///|
+fn json_field_object_or_self(json : Json, key : String) -> Json {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(value) =>
+          match value {
+            Json::Object(_) => value
+            _ => json
+          }
+        _ => json
+      }
+    _ => json
+  }
+}
+
+///|
+fn json_field_bool_label(json : Json, key : String) -> String {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(value) => {
+          let parsed : Bool = @json.from_json(value) catch { _ => false }
+          if parsed { "true" } else { "false" }
+        }
+        _ => "false"
+      }
+    _ => "false"
+  }
+}
+
+///|
+fn json_path_bool_label(json : Json, keys : Array[String]) -> String {
+  let mut current = json
+  for key in keys {
+    match current {
+      Json::Object(object) =>
+        match object.get(key) {
+          Some(value) => current = value
+          None => return "false"
+        }
+      _ => return "false"
+    }
+  }
+  let parsed : Bool = @json.from_json(current) catch { _ => false }
+  if parsed { "true" } else { "false" }
+}
+
+///|
+fn json_field_bool(json : Json, key : String, default~ : Bool) -> Bool {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(value) => @json.from_json(value) catch { _ => default }
+        _ => default
+      }
+    _ => default
+  }
+}
+
+///|
+fn json_field_string_array_summary(
+  json : Json,
+  key : String,
+  limit~ : Int = 2,
+) -> String {
+  let items : Array[String] = []
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(Json::Array(values)) =>
+          for value in values {
+            match value {
+              Json::String(text) => if text != "" { items.push(text) }
+              _ => ()
+            }
+          }
+        _ => ()
+      }
+    _ => ()
+  }
+  if items.length() == 0 {
+    "none"
+  } else if items.length() <= limit {
+    items.join("; ")
+  } else {
+    items[:limit].join("; ") + " +" + (items.length() - limit).to_string()
+  }
+}
+
+///|
+fn json_field_string_array_items(json : Json, key : String) -> Array[String] {
+  let items : Array[String] = []
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(Json::Array(values)) =>
+          for value in values {
+            match value {
+              Json::String(text) => if text != "" { items.push(text) }
+              _ => ()
+            }
+          }
+        _ => ()
+      }
+    _ => ()
+  }
+  items
+}
+
+///|
+fn production_checklist_item_from_json(
+  json : Json,
+) -> ProductionChecklistItem? {
+  match json {
+    Json::Object(_) =>
+      Some({
+        id: json_field_string(json, "id", default=""),
+        label: json_field_string(json, "label", default="Production gate"),
+        ok: json_field_bool(json, "ok", default=false),
+        requirement: json_field_string(json, "requirement", default=""),
+        evidence: json_field_string(json, "evidence", default=""),
+      })
+    _ => None
+  }
+}
+
+///|
+fn production_checklist_from_json(json : Json) -> Array[ProductionChecklistItem] {
+  let items : Array[ProductionChecklistItem] = []
+  match json {
+    Json::Object(object) =>
+      match object.get("production_checklist") {
+        Some(Json::Array(values)) =>
+          for value in values {
+            match production_checklist_item_from_json(value) {
+              Some(item) => items.push(item)
+              None => ()
+            }
+          }
+        _ => ()
+      }
+    _ => ()
+  }
+  items
+}
+
+///|
+fn model_with_eb_health_json(model : Model, health : Json) -> Model {
+  {
+    ..model,
+    eb_production_checklist: production_checklist_from_json(health),
+    eb_production_proof_receipt_path: json_field_string(
+      health,
+      "production_proof_receipt_path",
+      default="",
+    ),
+    eb_production_proof_status: json_field_string(
+      health,
+      "production_proof_status",
+      default="not_run",
+    ),
+    eb_production_proof_level: json_field_string(
+      health,
+      "production_proof_level",
+      default="",
+    ),
+    eb_production_proof_run_id: json_field_string(
+      health,
+      "production_proof_run_id",
+      default="",
+    ),
+    eb_production_proof_failed_checks: json_field_string_array_items(
+      health,
+      "production_proof_failed_checks",
+    ),
+    eb_moonclaw_import_run_id: json_field_string(
+      health,
+      "moonclaw_import_run_id",
+      default="",
+    ),
+    eb_moonclaw_import_status: json_field_string(
+      health,
+      "moonclaw_import_status",
+      default="",
+    ),
+    eb_moonclaw_import_receipt_recovered: json_field_bool(
+      health,
+      "moonclaw_import_receipt_recovered",
+      default=false,
+    ),
+    eb_moonclaw_import_recovery_source: json_field_string(
+      health,
+      "moonclaw_import_recovery_source",
+      default="",
+    ),
+    eb_moonclaw_retry_recommended: json_field_bool(
+      health,
+      "moonclaw_run_retry_recommended",
+      default=false,
+    ),
+    eb_moonclaw_orphaned_after_timeout: json_field_bool(
+      health,
+      "moonclaw_run_orphaned_after_timeout",
+      default=false,
+    ),
+    eb_moonclaw_confirmed_run_status: json_field_string(
+      health,
+      "moonclaw_confirmed_run_status",
+      default="",
+    ),
+    eb_moonclaw_run_receipt_path: json_field_string(
+      health,
+      "moonclaw_run_receipt_path",
+      default="",
+    ),
+    eb_moonclaw_retry_import_receipt_path: json_field_string(
+      health,
+      "moonclaw_retry_import_receipt_path",
+      default="",
+    ),
+    eb_moonclaw_retry_import_status: json_field_string(
+      health,
+      "moonclaw_retry_import_status",
+      default="",
+    ),
+    eb_moonclaw_result_path: json_field_string(
+      health,
+      "moonclaw_result_path",
+      default="",
+    ),
+    eb_book_result_path: json_field_string(
+      health,
+      "book_result_path",
+      default="",
+    ),
+    eb_output_path: json_field_string(health, "output_path", default=""),
+    eb_base_type_selection_path: json_field_string(
+      health,
+      "base_type_selection_path",
+      default="",
+    ),
+    eb_base_type_selection_ready: json_field_bool(
+      health,
+      "base_type_selection_ready",
+      default=false,
+    ),
+    eb_base_type: json_field_string(health, "base_type", default=""),
+    eb_base_type_handoff_target: json_field_string(
+      health,
+      "base_type_handoff_target",
+      default="",
+    ),
+    eb_moontown_publish_receipt_path: json_field_string(
+      health,
+      "moontown_template_publish_receipt_path",
+      default="",
+    ),
+    eb_moontown_publish_receipt_ready: json_field_bool(
+      health,
+      "moontown_template_publish_receipt_ready",
+      default=false,
+    ),
+    eb_global_standing_goal_ready: json_field_bool(
+      health,
+      "global_standing_goal_ready",
+      default=false,
+    ),
+    eb_standing_goal_registration_ready: json_field_bool(
+      health,
+      "standing_goal_registration_ready",
+      default=false,
+    ),
+    eb_expected_output_contract_path: json_field_string(
+      health,
+      "expected_output_contract_path",
+      default="",
+    ),
+    eb_expected_output_contract_ready: json_field_bool(
+      health,
+      "expected_output_contract_ready",
+      default=false,
+    ),
+    eb_expected_output_contract_id: json_path_string(
+      health,
+      ["expected_output_contract", "output_contract"],
+      default="",
+    ),
+    eb_workbook_validation_path: json_field_string(
+      health,
+      "workbook_validation_path",
+      default="",
+    ),
+    eb_source_screen_path: json_field_string(
+      health,
+      "source_screen_path",
+      default="",
+    ),
+    eb_output_validation_status: json_path_string(
+      health,
+      ["output_validation", "status"],
+      default="",
+    ),
+  }
+}
+
+fn moonclaw_import_status_summary(result : MoonclawImportResult) -> String {
+  let run_status = json_field_string(
+    result.run_health,
+    "moonclaw_confirmed_run_status",
+    default="unknown",
+  )
+  let stderr_clean = json_field_bool_label(
+    result.run_health,
+    "moonclaw_execution_stderr_clean",
+  )
+  let production = json_field_bool_label(result.run_health, "production_ready")
+  let workbook_validation = json_field_bool_label(
+    result.run_health,
+    "workbook_validation_ready",
+  )
+  let workbook_xml = json_field_bool_label(
+    result.run_health,
+    "workbook_internal_contract_ready",
+  )
+  let appendix_notes = json_field_bool_label(
+    result.run_health,
+    "workbook_appendix_notes_ready",
+  )
+  let data_rows = json_field_bool_label(
+    result.run_health,
+    "workbook_data_proof_ready",
+  )
+  let hyperlinks = json_field_bool_label(
+    result.run_health,
+    "workbook_hyperlinks_ready",
+  )
+  let quality_proof = json_field_bool_label(
+    result.run_health,
+    "workbook_quality_proof_ready",
+  )
+  let lifecycle_proof = json_field_bool_label(
+    result.run_health,
+    "workbook_lifecycle_proof_ready",
+  )
+  let target_match = json_field_bool_label(
+    result.run_health,
+    "output_target_match_ready",
+  )
+  let production_failed = json_field_string_array_summary(
+    result.run_health,
+    "production_failed_checks",
+    limit=2,
+  )
+  let expected_output = json_field_bool_label(
+    result.run_health,
+    "expected_output_contract_ready",
+  )
+  "MoonClaw import \{result.status}; proposal \{empty_label(result.proposal_id)}; run \{run_status}; execution stderr clean \{stderr_clean}; expected output contract \{expected_output}; workbook validation \{workbook_validation}; workbook XML \{workbook_xml}; data rows \{data_rows}; hyperlinks \{hyperlinks}; appendix notes \{appendix_notes}; quality proof \{quality_proof}; lifecycle proof \{lifecycle_proof}; target match \{target_match}; production \{production}; blocking \{production_failed}"
+}
+
+///|
+fn moonclaw_run_status_summary(result : MoonclawRunResult) -> String {
+  let run_status = json_field_string(
+    result.run_health,
+    "moonclaw_confirmed_run_status",
+    default=result.status,
+  )
+  let production = json_field_bool_label(result.run_health, "production_ready")
+  let live = json_field_bool_label(
+    result.run_health,
+    "real_moonclaw_result_ready",
+  )
+  let production_source = json_field_bool_label(
+    result.run_health,
+    "source_screen_production_ready",
+  )
+  let workbook_validation = json_field_bool_label(
+    result.run_health,
+    "workbook_validation_ready",
+  )
+  let appendix_notes = json_field_bool_label(
+    result.run_health,
+    "workbook_appendix_notes_ready",
+  )
+  let data_rows = json_field_bool_label(
+    result.run_health,
+    "workbook_data_proof_ready",
+  )
+  let hyperlinks = json_field_bool_label(
+    result.run_health,
+    "workbook_hyperlinks_ready",
+  )
+  let quality_proof = json_field_bool_label(
+    result.run_health,
+    "workbook_quality_proof_ready",
+  )
+  let lifecycle_proof = json_field_bool_label(
+    result.run_health,
+    "workbook_lifecycle_proof_ready",
+  )
+  let target_match = json_field_bool_label(
+    result.run_health,
+    "output_target_match_ready",
+  )
+  let production_failed = json_field_string_array_summary(
+    result.run_health,
+    "production_failed_checks",
+    limit=2,
+  )
+  let expected_output = json_field_bool_label(
+    result.run_health,
+    "expected_output_contract_ready",
+  )
+  "MoonClaw run \{result.status}; run \{empty_label(result.run_id)}; confirmed status \{run_status}; live result \{live}; expected output contract \{expected_output}; workbook validation \{workbook_validation}; data rows \{data_rows}; hyperlinks \{hyperlinks}; appendix notes \{appendix_notes}; quality proof \{quality_proof}; lifecycle proof \{lifecycle_proof}; target match \{target_match}; production source \{production_source}; production \{production}; blocking \{production_failed}"
+}
+
+///|
+fn moonclaw_reconcile_status_summary(result : MoonclawReconcileResult) -> String {
+  let ok = if result.ok { "accepted" } else { "waiting" }
+  let health_status = json_field_string(
+    result.run_health,
+    "status",
+    default="unknown",
+  )
+  let durable = json_field_bool_label(result.run_health, "durable_ready")
+  let production = json_field_bool_label(result.run_health, "production_ready")
+  let live = json_field_bool_label(
+    result.run_health,
+    "real_moonclaw_result_ready",
+  )
+  let production_source = json_field_bool_label(
+    result.run_health,
+    "source_screen_production_ready",
+  )
+  let workbook_validation = json_field_bool_label(
+    result.run_health,
+    "workbook_validation_ready",
+  )
+  let workbook_xml = json_field_bool_label(
+    result.run_health,
+    "workbook_internal_contract_ready",
+  )
+  let appendix_notes = json_field_bool_label(
+    result.run_health,
+    "workbook_appendix_notes_ready",
+  )
+  let data_rows = json_field_bool_label(
+    result.run_health,
+    "workbook_data_proof_ready",
+  )
+  let hyperlinks = json_field_bool_label(
+    result.run_health,
+    "workbook_hyperlinks_ready",
+  )
+  let quality_proof = json_field_bool_label(
+    result.run_health,
+    "workbook_quality_proof_ready",
+  )
+  let lifecycle_proof = json_field_bool_label(
+    result.run_health,
+    "workbook_lifecycle_proof_ready",
+  )
+  let sample_validation = json_field_bool_label(
+    result.run_health,
+    "workbook_validation_sample_run",
+  )
+  let target_match = json_field_bool_label(
+    result.run_health,
+    "output_target_match_ready",
+  )
+  let production_failed = json_field_string_array_summary(
+    result.run_health,
+    "production_failed_checks",
+    limit=2,
+  )
+  let expected_output = json_field_bool_label(
+    result.run_health,
+    "expected_output_contract_ready",
+  )
+  "MoonClaw reconcile \{result.status} (\{ok}); book \{empty_label(result.book_id)}; run \{empty_label(result.run_id)}; output \{empty_label(result.output_path)}; source screen \{empty_label(result.source_screen_path)}; durable \{durable}; production \{production}; live result \{live}; production source \{production_source}; expected output contract \{expected_output}; workbook validation \{workbook_validation}; workbook XML \{workbook_xml}; data rows \{data_rows}; hyperlinks \{hyperlinks}; appendix notes \{appendix_notes}; quality proof \{quality_proof}; lifecycle proof \{lifecycle_proof}; sample validation \{sample_validation}; target match \{target_match}; health \{health_status}; blocking \{production_failed}"
+}
+
+///|
+fn eb_recovered_output_status_summary(result : EbRecoveredOutputResult) -> String {
+  let ok = if result.ok { "accepted" } else { "rejected" }
+  let durable = json_field_bool_label(result.run_health, "durable_ready")
+  let production = json_field_bool_label(result.run_health, "production_ready")
+  let live = json_field_bool_label(
+    result.run_health,
+    "real_moonclaw_result_ready",
+  )
+  let production_source = json_field_bool_label(
+    result.run_health,
+    "source_screen_production_ready",
+  )
+  let target_match = json_field_bool_label(
+    result.run_health,
+    "output_target_match_ready",
+  )
+  let workbook_validation = json_field_bool_label(
+    result.run_health,
+    "workbook_validation_ready",
+  )
+  let production_failed = json_field_string_array_summary(
+    result.run_health,
+    "production_failed_checks",
+    limit=2,
+  )
+  let expected_output = json_field_bool_label(
+    result.run_health,
+    "expected_output_contract_ready",
+  )
+  "Recovered EB output \{result.status} (\{ok}); run \{empty_label(result.run_id)}; output \{empty_label(result.output_path)}; source screen \{empty_label(result.source_screen_path)}; durable \{durable}; production \{production}; live MoonClaw result \{live}; production source \{production_source}; expected output contract \{expected_output}; workbook validation \{workbook_validation}; target match \{target_match}; blocking \{production_failed}"
+}
+
+///|
+fn eb_production_proof_status_summary(result : EbProductionProofResult) -> String {
+  let production = json_field_bool_label(result.run_health, "production_ready")
+  let durable = json_field_bool_label(result.run_health, "durable_ready")
+  let targets = json_field_bool_label(
+    result.run_health,
+    "targets_production_ready",
+  )
+  let health_status = json_field_string(
+    result.run_health,
+    "status",
+    default="unknown",
+  )
+  let recovered = json_field_bool_label(
+    result.run_health,
+    "moonclaw_import_receipt_recovered",
+  )
+  let retry = json_field_bool_label(
+    result.run_health,
+    "moonclaw_run_retry_recommended",
+  )
+  let expected_output = json_field_bool_label(
+    result.run_health,
+    "expected_output_contract_ready",
+  )
+  let base_type = json_field_bool_label(
+    result.run_health,
+    "base_type_selection_ready",
+  )
+  let moontown_publish = json_field_bool_label(
+    result.run_health,
+    "moontown_template_publish_receipt_ready",
+  )
+  let import_run = json_field_string(
+    result.run_health,
+    "moonclaw_import_run_id",
+    default=result.run_id,
+  )
+  let blockers = if result.failed_checks.length() == 0 {
+    "none"
+  } else if result.failed_checks.length() <= 2 {
+    result.failed_checks.join("; ")
+  } else {
+    result.failed_checks[:2].join("; ") +
+    " +" +
+    (result.failed_checks.length() - 2).to_string()
+  }
+  "EB production proof \{result.status}; level \{result.proof_level}; run \{empty_label(import_run)}; base type \{base_type}; Moontown publish \{moontown_publish}; recovered import \{recovered}; retry recommended \{retry}; targets \{targets}; expected output contract \{expected_output}; durable \{durable}; production \{production}; health \{health_status}; receipt \{result.receipt_path}; blocking \{blockers}"
+}
+
+fn eb_run_health_json_status_summary(health : Json) -> String {
+  let production_failed = json_field_string_array_items(
+    health,
+    "production_failed_checks",
+  )
+  let blocking = if production_failed.length() == 0 {
+    "none"
+  } else if production_failed.length() <= 2 {
+    production_failed.join("; ")
+  } else {
+    production_failed[:2].join("; ") +
+    " +" +
+    (production_failed.length() - 2).to_string()
+  }
+  "Production audit \{json_field_string(health, "status", default="unknown")}; durable \{json_field_bool_label(health, "durable_ready")}; production \{json_field_bool_label(health, "production_ready")}; base type \{json_field_bool_label(health, "base_type_selection_ready")}; Moontown publish \{json_field_bool_label(health, "moontown_template_publish_receipt_ready")}; standing goal \{json_field_bool_label(health, "standing_goal_registration_ready")}; run \{empty_label(json_field_string(health, "moonclaw_import_run_id", default=""))}; run status \{empty_label(json_field_string(health, "moonclaw_confirmed_run_status", default=""))}; recovered import \{json_field_bool_label(health, "moonclaw_import_receipt_recovered")}; retry recommended \{json_field_bool_label(health, "moonclaw_run_retry_recommended")}; confirmed \{json_field_bool_label(health, "moonclaw_confirmed_run_ready")}; succeeded \{json_field_bool_label(health, "moonclaw_confirmed_run_succeeded")}; live result \{json_field_bool_label(health, "real_moonclaw_result_ready")}; expected output contract \{json_field_bool_label(health, "expected_output_contract_ready")}; workbook validation \{json_field_bool_label(health, "workbook_validation_ready")}; workbook XML \{json_field_bool_label(health, "workbook_internal_contract_ready")}; data rows \{json_field_bool_label(health, "workbook_data_proof_ready")}; hyperlinks \{json_field_bool_label(health, "workbook_hyperlinks_ready")}; appendix notes \{json_field_bool_label(health, "workbook_appendix_notes_ready")}; quality proof \{json_field_bool_label(health, "workbook_quality_proof_ready")}; lifecycle proof \{json_field_bool_label(health, "workbook_lifecycle_proof_ready")}; sample validation \{json_field_bool_label(health, "workbook_validation_sample_run")}; target match \{json_field_bool_label(health, "output_target_match_ready")}; source production \{json_field_bool_label(health, "source_screen_production_ready")}; blocking \{blocking}"
+}
+
 fn request_title(record : RequestRecord) -> String {
   json_field_string(record.request, "title", default="Moondesk request")
 }
@@ -1445,6 +2681,30 @@ fn fetch_search_cmd(
 }
 
 ///|
+fn fetch_book_patterns_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/books/patterns",
+    expect=@http.Json(fn(result) { dispatch(LoadedBookPatterns(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid book pattern catalog")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_book_base_types_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @http.get(
+    "/api/books/base-types",
+    expect=@http.Json(fn(result) { dispatch(LoadedBookBaseTypes(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid book base-type catalog")
+      }
+    }),
+  )
+}
+
+///|
 fn save_inbox_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   model : Model,
@@ -1633,6 +2893,251 @@ fn create_standing_goal_cmd(
 }
 
 ///|
+fn create_pdf_evidence_watch_book_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let cadence = clamp_int(
+    int_text(model.pdf_watch_cadence_minutes, 30),
+    1,
+    525600,
+  )
+  let websites = text_lines(model.pdf_watch_websites)
+  let skill_pack = text_lines(model.pdf_watch_skill_pack)
+  let notify_on = [
+    trimmed_or(model.pdf_watch_notify_rule, "accepted_new_knowledge"),
+  ]
+  let body : Json = {
+    "base_type": model.selected_book_base_type,
+    "pattern_id": model.selected_book_pattern_id,
+    "book_id": trimmed_or(model.pdf_watch_book_id, ""),
+    "topic": trimmed_or(model.pdf_watch_topic, "my domain"),
+    "purpose": trimmed_or(model.pdf_watch_purpose, ""),
+    "websites": json_string_array(websites),
+    "cadence_minutes": cadence,
+    "source_policy": trimmed_or(model.pdf_watch_source_policy, "web-first"),
+    "notify_on": json_string_array(notify_on),
+    "skill_pack": json_string_array(skill_pack),
+    "analysis_method": trimmed_or(
+      model.pdf_watch_analysis_method,
+      "# My Analysis Method\n\nScreen PDFs against the current book baseline and queue Bookkeeper review before accepted knowledge is published.",
+    ),
+    "notify_rule": trimmed_or(
+      model.pdf_watch_notify_rule,
+      "accepted_new_knowledge",
+    ),
+    "watch": {
+      "cadence_minutes": cadence,
+      "source_policy": trimmed_or(model.pdf_watch_source_policy, "web-first"),
+      "websites": json_string_array(websites),
+      "file_types": json_string_array(["pdf"]),
+      "dedupe_by": json_string_array(["url", "title", "sha256"]),
+    },
+    "analysis": {
+      "method_page": "wiki/methods/my-analysis-method.md",
+      "notify_on": json_string_array(notify_on),
+    },
+    "bond_code": trimmed_or(model.eb_bond_code, ""),
+    "bond_short_name": trimmed_or(model.eb_bond_short_name, ""),
+    "issuer": trimmed_or(model.eb_issuer, ""),
+    "underlying_company": trimmed_or(model.eb_underlying_company, ""),
+    "exchange": trimmed_or(model.eb_exchange, ""),
+    "target_bonds": Json::array(eb_target_bonds_from_model(model)),
+  }
+  @http.post(
+    "/api/books/from-pattern",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(CreatedPdfEvidenceWatchBook(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not publish PDF evidence watch book")
+      }
+    }),
+  )
+}
+
+///|
+fn run_eb_sample_validation_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "book_id": selected_book_id_for_validation(model),
+    "bond_code": trimmed_or(model.eb_bond_code, "132001"),
+    "bond_short_name": trimmed_or(model.eb_bond_short_name, "示例EB"),
+    "as_of": trimmed_or(model.eb_as_of, "20260601"),
+  }
+  @http.post(
+    "/api/books/eb-sample-run",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(RanEbSampleValidation(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not run EB output validation")
+      }
+    }),
+  )
+}
+
+///|
+fn import_eb_moonclaw_packet_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+  confirm : Bool,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "book_id": selected_book_id_for_validation(model),
+    "confirm": confirm,
+    "inline": false,
+  }
+  @http.post(
+    "/api/books/moonclaw-import",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(ImportedMoonclawPacket(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not import MoonClaw proposal packet")
+      }
+    }),
+  )
+}
+
+///|
+fn run_confirmed_eb_moonclaw_job_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "book_id": selected_book_id_for_validation(model),
+    "timeout_ms": 120000,
+  }
+  @http.post(
+    "/api/books/moonclaw-run",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(RanConfirmedMoonclawJob(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not run confirmed MoonClaw job")
+      }
+    }),
+  )
+}
+
+///|
+fn reconcile_eb_moonclaw_result_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "book_id": selected_book_id_for_validation(model),
+  }
+  @http.post(
+    "/api/books/moonclaw-reconcile",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(ReconciledMoonclawResult(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not reconcile MoonClaw result")
+      }
+    }),
+  )
+}
+
+///|
+fn accept_recovered_eb_output_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "book_id": selected_book_id_for_validation(model),
+    "reason": "Operator accepted the currently validated EB workbook/source-screen package as recovered durable output.",
+  }
+  @http.post(
+    "/api/books/accept-recovered-eb-output",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(AcceptedRecoveredEbOutput(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not accept recovered EB output")
+      }
+    }),
+  )
+}
+
+///|
+fn prove_eb_production_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "book_id": selected_book_id_for_validation(model),
+    "launch_if_missing": true,
+    "execute_moonclaw": true,
+    "force_execute": false,
+    "timeout_ms": 300000,
+  }
+  @http.post(
+    "/api/books/eb-production-proof",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(ProvedEbProduction(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not prove EB production run")
+      }
+    }),
+  )
+}
+
+///|
+fn fresh_retry_eb_production_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "book_id": selected_book_id_for_validation(model),
+    "launch_if_missing": true,
+    "execute_moonclaw": true,
+    "force_execute": true,
+    "timeout_ms": 300000,
+  }
+  @http.post(
+    "/api/books/eb-production-proof",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(ProvedEbProduction(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not retry EB production run")
+      }
+    }),
+  )
+}
+
+///|
+fn audit_eb_production_health_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = { "book_id": selected_book_id_for_validation(model) }
+  @http.post(
+    "/api/books/refresh-eb-runtime",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(AuditedEbProductionHealth(result))
+    }, json => {
+      Ok(json_field_object_or_self(json, "run_health"))
+    }),
+  )
+}
+
+///|
 fn dispatch_daemon_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
   @http.post(
     "/api/town/dispatch",
@@ -1807,6 +3312,8 @@ fn reload_workspace_cmds(
       fetch_review_diff_cmd(dispatch, workspace_id, selected_path),
       fetch_saved_views_cmd(dispatch),
       fetch_tags_cmd(dispatch),
+      fetch_book_base_types_cmd(dispatch),
+      fetch_book_patterns_cmd(dispatch),
     ])
   }
 }
@@ -1936,6 +3443,14 @@ fn update(
       )
     LoadedSearch(Err(error)) =>
       (@rabbita.none, { ..model, search_status: error })
+    LoadedBookBaseTypes(Ok(book_base_types)) =>
+      (@rabbita.none, { ..model, book_base_types })
+    LoadedBookBaseTypes(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    LoadedBookPatterns(Ok(book_patterns)) =>
+      (@rabbita.none, { ..model, book_patterns })
+    LoadedBookPatterns(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
     SavedInbox(Ok(created)) =>
       (
         sync_activity_batch(
@@ -2053,6 +3568,259 @@ fn update(
       )
     CreatedStandingGoal(Err(error)) =>
       (@rabbita.none, { ..model, dispatch_status: error })
+    CreatedPdfEvidenceWatchBook(Ok(result)) => {
+      let goal_id = json_field_string(result.standing_goal, "id", default="watch")
+      let output_summary = if selected_pattern_is_eb(model) {
+        let output_status = json_path_string(
+          result.readiness,
+          ["contract_verification", "output_validation", "status"],
+          default="output gate unknown",
+        )
+        let workbook_gate = json_path_bool_label(
+          result.readiness,
+          [
+            "contract_verification", "output_validation", "template_workbook_validation_ready",
+          ],
+        )
+        let expected_contract_gate = json_path_bool_label(
+          result.readiness,
+          [
+            "contract_verification", "output_validation", "expected_output_contract_ready",
+          ],
+        )
+        "; output gate \{output_status}; expected output contract \{expected_contract_gate}; workbook validation gate \{workbook_gate}"
+      } else {
+        "; reusable research-book pattern"
+      }
+      let publish_status = json_field_string(
+        result.moontown_publish,
+        "status",
+        default="published",
+      )
+      let publish_config = json_field_string(
+        result.moontown_publish,
+        "config_relative_path",
+        default="book-template-config",
+      )
+      let operator_config = json_field_string(
+        result.moontown_publish,
+        "operator_config_path",
+        default="raw/inbox/pdf-evidence-watch-config.json",
+      )
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_workspaces_cmd(dispatch),
+            reload_workspace_cmds(dispatch, result.workspace_id, "wiki/index.md"),
+            fetch_standing_goals_cmd(dispatch),
+            fetch_analytics_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+          ]),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          selected_workspace_id: result.workspace_id,
+          selected_path: "wiki/index.md",
+          primary_preview_path: "wiki/index.md",
+          current_directory: "",
+          preview: None,
+          preview_status: "loading published book",
+          pdf_watch_last_book_id: result.book_id,
+          eb_production_checklist: [],
+          eb_production_proof_receipt_path: "",
+          eb_production_proof_status: "not_run",
+          eb_production_proof_level: "",
+          eb_production_proof_run_id: "",
+          eb_production_proof_failed_checks: [],
+          eb_moonclaw_import_run_id: "",
+          eb_moonclaw_import_status: "",
+          eb_moonclaw_import_receipt_recovered: false,
+          eb_moonclaw_import_recovery_source: "",
+          eb_moonclaw_retry_recommended: false,
+          eb_moonclaw_orphaned_after_timeout: false,
+          eb_moonclaw_confirmed_run_status: "",
+          eb_moonclaw_run_receipt_path: "",
+          eb_moonclaw_retry_import_receipt_path: "",
+          eb_moonclaw_retry_import_status: "",
+          eb_moonclaw_result_path: "",
+          eb_book_result_path: "",
+          eb_output_path: "",
+          eb_base_type_selection_path: "",
+          eb_base_type_selection_ready: false,
+          eb_base_type: "",
+          eb_base_type_handoff_target: "",
+          eb_moontown_publish_receipt_path: "",
+          eb_moontown_publish_receipt_ready: false,
+          eb_global_standing_goal_ready: false,
+          eb_standing_goal_registration_ready: false,
+          eb_expected_output_contract_path: "",
+          eb_expected_output_contract_ready: false,
+          eb_expected_output_contract_id: "",
+          eb_workbook_validation_path: "",
+          eb_source_screen_path: "",
+          eb_output_validation_status: "",
+          pdf_watch_status: "published \{result.book_id}; Moontown \{publish_status} via \{publish_config}; editable config \{operator_config}\{output_summary}; registered standing watch",
+          dispatch_status: "created \{goal_id}",
+        },
+      )
+    }
+    CreatedPdfEvidenceWatchBook(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    ImportedMoonclawPacket(Ok(result)) => {
+      let next = model_with_eb_health_json(model, result.run_health)
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_runs_cmd(dispatch, model.selected_workspace_id),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+          ]),
+        ),
+        {
+          ..next,
+          activity: Activity::Town,
+          pdf_watch_status: moonclaw_import_status_summary(result),
+        },
+      )
+    }
+    ImportedMoonclawPacket(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    RanConfirmedMoonclawJob(Ok(result)) => {
+      let next = model_with_eb_health_json(model, result.run_health)
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_runs_cmd(dispatch, model.selected_workspace_id),
+            fetch_messages_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+            fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          ]),
+        ),
+        {
+          ..next,
+          activity: Activity::Town,
+          pdf_watch_status: moonclaw_run_status_summary(result),
+        },
+      )
+    }
+    RanConfirmedMoonclawJob(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    ReconciledMoonclawResult(Ok(result)) => {
+      let next = model_with_eb_health_json(model, result.run_health)
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_runs_cmd(dispatch, model.selected_workspace_id),
+            fetch_messages_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+            fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          ]),
+        ),
+        {
+          ..next,
+          activity: Activity::Town,
+          pdf_watch_status: moonclaw_reconcile_status_summary(result),
+        },
+      )
+    }
+    ReconciledMoonclawResult(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    AcceptedRecoveredEbOutput(Ok(result)) => {
+      let next = model_with_eb_health_json(model, result.run_health)
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_runs_cmd(dispatch, model.selected_workspace_id),
+            fetch_messages_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+            fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          ]),
+        ),
+        {
+          ..next,
+          activity: Activity::Town,
+          pdf_watch_status: eb_recovered_output_status_summary(result),
+        },
+      )
+    }
+    AcceptedRecoveredEbOutput(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    ProvedEbProduction(Ok(result)) => {
+      let next = model_with_eb_health_json(model, result.run_health)
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_runs_cmd(dispatch, model.selected_workspace_id),
+            fetch_messages_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+            fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          ]),
+        ),
+        {
+          ..next,
+          activity: Activity::Town,
+          pdf_watch_status: eb_production_proof_status_summary(result),
+        },
+      )
+    }
+    ProvedEbProduction(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    RanEbSampleValidation(Ok(result)) => {
+      let next = model_with_eb_health_json(model, result.run_health)
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_runs_cmd(dispatch, model.selected_workspace_id),
+            fetch_messages_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+          ]),
+        ),
+        {
+          ..next,
+          activity: Activity::Town,
+          pdf_watch_status: "validated EB output \{result.output_path}; durable run \{json_field_string(result.run_health, "status", default="unknown")}; expected output contract \{json_field_bool_label(result.run_health, "expected_output_contract_ready")}; workbook validation \{json_field_bool_label(result.run_health, "workbook_validation_ready")}; workbook XML \{json_field_bool_label(result.run_health, "workbook_internal_contract_ready")}; data rows \{json_field_bool_label(result.run_health, "workbook_data_proof_ready")}; hyperlinks \{json_field_bool_label(result.run_health, "workbook_hyperlinks_ready")}; quality proof \{json_field_bool_label(result.run_health, "workbook_quality_proof_ready")}; lifecycle proof \{json_field_bool_label(result.run_health, "workbook_lifecycle_proof_ready")}; production \{json_field_bool_label(result.run_health, "production_ready")}; goal \{result.watcher_goal_id}",
+        },
+      )
+    }
+    RanEbSampleValidation(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    AuditedEbProductionHealth(Ok(result)) => {
+      let next = model_with_eb_health_json(model, result)
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_runs_cmd(dispatch, model.selected_workspace_id),
+            fetch_messages_cmd(dispatch),
+            fetch_town_progress_cmd(dispatch),
+            fetch_town_events_cmd(dispatch),
+            fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          ]),
+        ),
+        {
+          ..next,
+          activity: Activity::Town,
+          pdf_watch_status: eb_run_health_json_status_summary(result),
+        },
+      )
+    }
+    AuditedEbProductionHealth(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
     DispatchedDaemon(Ok(result)) =>
       (
         sync_activity_batch(
@@ -2564,6 +4332,38 @@ fn update(
       (@rabbita.none, { ..model, goal_quality_threshold: value })
     SetGoalSourcePolicy(value) =>
       (@rabbita.none, { ..model, goal_source_policy: value })
+    SetPdfWatchBookId(value) =>
+      (@rabbita.none, { ..model, pdf_watch_book_id: value })
+    SetPdfWatchTopic(value) =>
+      (@rabbita.none, { ..model, pdf_watch_topic: value })
+    SetPdfWatchPurpose(value) =>
+      (@rabbita.none, { ..model, pdf_watch_purpose: value })
+    SetPdfWatchWebsites(value) =>
+      (@rabbita.none, { ..model, pdf_watch_websites: value })
+    SetPdfWatchCadenceMinutes(value) =>
+      (@rabbita.none, { ..model, pdf_watch_cadence_minutes: value })
+    SetPdfWatchSourcePolicy(value) =>
+      (@rabbita.none, { ..model, pdf_watch_source_policy: value })
+    SetPdfWatchNotifyRule(value) =>
+      (@rabbita.none, { ..model, pdf_watch_notify_rule: value })
+    SetPdfWatchSkillPack(value) =>
+      (@rabbita.none, { ..model, pdf_watch_skill_pack: value })
+    SetPdfWatchAnalysisMethod(value) =>
+      (@rabbita.none, { ..model, pdf_watch_analysis_method: value })
+    SetEbBondCode(value) => (@rabbita.none, { ..model, eb_bond_code: value })
+    SetEbBondShortName(value) =>
+      (@rabbita.none, { ..model, eb_bond_short_name: value })
+    SetEbIssuer(value) => (@rabbita.none, { ..model, eb_issuer: value })
+    SetEbUnderlyingCompany(value) =>
+      (@rabbita.none, { ..model, eb_underlying_company: value })
+    SetEbExchange(value) => (@rabbita.none, { ..model, eb_exchange: value })
+    SetEbAsOf(value) => (@rabbita.none, { ..model, eb_as_of: value })
+    SetEbAdditionalBonds(value) =>
+      (@rabbita.none, { ..model, eb_additional_bonds: value })
+    SelectBookBaseType(base_type) =>
+      (@rabbita.none, apply_selected_book_base_type(model, base_type))
+    SelectBookPattern(pattern_id) =>
+      (@rabbita.none, apply_selected_book_pattern(model, pattern_id))
     CreateStandingGoal =>
       (
         sync_activity_batch(
@@ -2577,6 +4377,234 @@ fn update(
           dispatch_status: "creating standing watch",
         },
       )
+    CreatePdfEvidenceWatchBook =>
+      if !pdf_watch_builder_pattern_supported(model) {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            pdf_watch_status: "select `pdf-evidence-watch` or `exchangeable-bond-evidence-watch`; `\{model.selected_book_pattern_id}` is registry-visible but not handled by this creator",
+          },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            create_pdf_evidence_watch_book_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "publishing PDF evidence watch book",
+          },
+        )
+      }
+    RunEbSampleValidation =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            run_eb_sample_validation_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "running EB durable output validation",
+          },
+        )
+      }
+    ImportMoonclawPacket =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else if eb_builder_moonclaw_action_blocked(model) {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: eb_target_readiness_summary(model) },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            import_eb_moonclaw_packet_cmd(dispatch, model, false),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "importing MoonClaw proposal packet",
+          },
+        )
+      }
+    LaunchMoonclawRun =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else if eb_builder_moonclaw_action_blocked(model) {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: eb_target_readiness_summary(model) },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            import_eb_moonclaw_packet_cmd(dispatch, model, true),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "launching MoonClaw run",
+          },
+        )
+      }
+    RunConfirmedMoonclawJob =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else if eb_builder_moonclaw_action_blocked(model) {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: eb_target_readiness_summary(model) },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            run_confirmed_eb_moonclaw_job_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "running confirmed MoonClaw job",
+          },
+        )
+      }
+    ReconcileMoonclawResult =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            reconcile_eb_moonclaw_result_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "reconciling completed MoonClaw result",
+          },
+        )
+      }
+    AcceptRecoveredEbOutput =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            accept_recovered_eb_output_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "accepting recovered EB output evidence",
+          },
+        )
+      }
+    ProveEbProduction =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else if eb_builder_moonclaw_action_blocked(model) {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: eb_target_readiness_summary(model) },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            prove_eb_production_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "proving EB production run",
+          },
+        )
+      }
+    FreshRetryEbProduction =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else if eb_builder_moonclaw_action_blocked(model) {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: eb_target_readiness_summary(model) },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            fresh_retry_eb_production_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "retrying EB production run from orphaned MoonClaw state",
+          },
+        )
+      }
+    AuditEbProductionHealth =>
+      if selected_book_id_for_validation(model) == "" {
+        (
+          @rabbita.none,
+          { ..model, pdf_watch_status: "publish or select an EB watch book first" },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            audit_eb_production_health_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "auditing EB production health",
+          },
+        )
+      }
     DispatchDaemonTick =>
       (
         sync_activity_batch(Activity::Town, dispatch_daemon_cmd(dispatch)),
@@ -2850,6 +4878,7 @@ fn update(
           ),
           fetch_saved_views_cmd(dispatch),
           fetch_tags_cmd(dispatch),
+          fetch_book_patterns_cmd(dispatch),
         ]),
         { ..model, host_status: "refreshing" },
       )
@@ -3297,6 +5326,524 @@ fn agent_session_task_line(session : AgentSession) -> String {
 }
 
 ///|
+fn book_base_type_buttons(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> Array[@rabbita.Html] {
+  if model.book_base_types.length() == 0 {
+    [
+      button(
+        class=book_base_type_button_class(model, "research-book"),
+        title="MoonBook base type for source-backed research books",
+        on_click=dispatch(SelectBookBaseType("research-book")),
+        "Research Book",
+      ),
+    ]
+  } else {
+    model.book_base_types.map(base => {
+      button(
+        class=book_base_type_button_class(model, base.id),
+        title=book_base_type_tooltip(base),
+        on_click=dispatch(SelectBookBaseType(base.id)),
+        base.title,
+      )
+    })
+  }
+}
+
+///|
+fn book_base_type_tooltip(base : BookBaseTypeRecord) -> String {
+  [
+    base.description,
+    "Owner: " + base.owner,
+    "Source: " + base.source,
+    "Creation palette: " + base.creation_palette_source,
+    "MoonBook refs: " + base.moonbook_layout_refs.join(", "),
+    "Template refs: " + base.template_registry_refs.join(", "),
+    "Patterns: " + base.supported_patterns.join(", "),
+    "Roots: " + base.required_roots.join(", "),
+  ].join("\n")
+}
+
+///|
+fn book_base_type_button_class(model : Model, base_type : String) -> String {
+  if model.selected_book_base_type == base_type {
+    "option-chip active"
+  } else {
+    "option-chip"
+  }
+}
+
+///|
+fn book_pattern_buttons(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> Array[@rabbita.Html] {
+  if model.book_patterns.length() == 0 {
+    [
+      button(
+        class=book_pattern_button_class(model, "pdf-evidence-watch"),
+        on_click=dispatch(SelectBookPattern("pdf-evidence-watch")),
+        "PDF Evidence Watch",
+      ),
+      button(
+        class=book_pattern_button_class(model, "exchangeable-bond-evidence-watch"),
+        on_click=dispatch(SelectBookPattern("exchangeable-bond-evidence-watch")),
+        "EB Evidence Watch",
+      ),
+    ]
+  } else {
+    let buttons : Array[@rabbita.Html] = []
+    for pattern in model.book_patterns {
+      if pattern.base_type == model.selected_book_base_type {
+        buttons.push(
+          button(
+            class=book_pattern_button_class(model, pattern.id),
+            title=book_pattern_tooltip(pattern),
+            on_click=dispatch(SelectBookPattern(pattern.id)),
+            pattern.title,
+          ),
+        )
+      }
+    }
+    buttons
+  }
+}
+
+///|
+fn book_pattern_tooltip(pattern : BookPatternRecord) -> String {
+  [
+    pattern.base_type + " / " + pattern.output,
+    pattern.description,
+    "Default topic: " + pattern.default_topic,
+    "Cadence: \{pattern.default_cadence_minutes} minutes",
+    "Source policy: " + pattern.default_source_policy,
+    "Sites: \{pattern.default_websites.length()}",
+    "Skills: " + pattern.skills.join(", "),
+  ].join("\n")
+}
+
+///|
+fn book_pattern_button_class(model : Model, pattern_id : String) -> String {
+  if model.selected_book_pattern_id == pattern_id {
+    "option-chip active"
+  } else {
+    "option-chip"
+  }
+}
+
+///|
+fn eb_moonclaw_action_button_class(model : Model) -> String {
+  if eb_builder_moonclaw_action_blocked(model) {
+    "secondary-button full disabled"
+  } else {
+    "secondary-button full"
+  }
+}
+
+///|
+fn render_eb_tracking_fields(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  if !selected_pattern_is_eb(model) {
+    return span(class="hidden-inline", "")
+  }
+  let ready = eb_targets_production_ready(model)
+  div(class="eb-target-fields", [
+    p(
+      class=if ready { "status-line good" } else { "status-line warning" },
+      eb_target_readiness_summary(model),
+    ),
+    div(class="field-grid compact-fields", [
+      input(
+        class="line-input",
+        value=model.eb_bond_code,
+        placeholder="Bond code, e.g. 132018",
+        on_input=fn(value) { dispatch(SetEbBondCode(value)) },
+        "",
+      ),
+      input(
+        class="line-input",
+        value=model.eb_bond_short_name,
+        placeholder="Bond full/short name",
+        on_input=fn(value) { dispatch(SetEbBondShortName(value)) },
+        "",
+      ),
+    ]),
+    input(
+      class="line-input",
+      value=model.eb_issuer,
+      placeholder="Issuer",
+      on_input=fn(value) { dispatch(SetEbIssuer(value)) },
+      "",
+    ),
+    input(
+      class="line-input",
+      value=model.eb_underlying_company,
+      placeholder="Underlying listed company",
+      on_input=fn(value) { dispatch(SetEbUnderlyingCompany(value)) },
+      "",
+    ),
+    div(class="field-grid compact-fields", [
+      input(
+        class="line-input",
+        value=model.eb_exchange,
+        placeholder="上交所 or 深交所",
+        on_input=fn(value) { dispatch(SetEbExchange(value)) },
+        "",
+      ),
+      input(
+        class="line-input",
+        value=model.eb_as_of,
+        placeholder="YYYYMMDD",
+        on_input=fn(value) { dispatch(SetEbAsOf(value)) },
+        "",
+      ),
+    ]),
+    textarea(
+      class="side-textarea compact-textarea",
+      rows=3,
+      value=model.eb_additional_bonds,
+      placeholder="Additional bonds: code | short name | issuer | underlying | exchange",
+      on_input=fn(value) { dispatch(SetEbAdditionalBonds(value)) },
+      "",
+    ),
+  ])
+}
+
+///|
+fn pdf_watch_wizard_step_class(done : Bool) -> String {
+  if done {
+    "wizard-step done"
+  } else {
+    "wizard-step"
+  }
+}
+
+///|
+fn production_checklist_item_class(item : ProductionChecklistItem) -> String {
+  if item.ok {
+    "production-gate-row good"
+  } else {
+    "production-gate-row blocked"
+  }
+}
+
+///|
+fn nonempty_or_dash(value : String) -> String {
+  if value.trim().is_empty() {
+    "-"
+  } else {
+    value
+  }
+}
+
+///|
+fn bool_word(value : Bool) -> String {
+  if value {
+    "true"
+  } else {
+    "false"
+  }
+}
+
+///|
+fn render_eb_production_audit_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  if !selected_pattern_is_eb(model) ||
+    (model.eb_production_checklist.length() == 0 &&
+      model.eb_production_proof_receipt_path == "") {
+    return span(class="hidden-inline", "")
+  }
+  let blocker_limit = if model.eb_production_proof_failed_checks.length() < 5 {
+    model.eb_production_proof_failed_checks.length()
+  } else {
+    5
+  }
+  let blockers = if model.eb_production_proof_failed_checks.length() == 0 {
+    [span(class="record-kind good", "no proof blockers recorded")]
+  } else {
+    model.eb_production_proof_failed_checks[:blocker_limit].map(check =>
+      span(class="record-kind warning", check)
+    )
+  }
+  div(class="production-audit-panel", [
+    div(class="production-audit-header", [
+      div([
+        p(class="eyebrow", "durable evidence"),
+        h3("Production Audit"),
+      ]),
+      span(
+        class="record-kind",
+        nonempty_or_dash(model.eb_production_proof_status),
+      ),
+    ]),
+    div(class="audit-proof-grid", [
+      div([
+        span(class="mini-label", "Proof receipt"),
+        code(nonempty_or_dash(model.eb_production_proof_receipt_path)),
+      ]),
+      div([
+        span(class="mini-label", "Proof level"),
+        code(nonempty_or_dash(model.eb_production_proof_level)),
+      ]),
+      div([
+        span(class="mini-label", "Base type"),
+        code(nonempty_or_dash(model.eb_base_type)),
+      ]),
+      div([
+        span(class="mini-label", "Base selection"),
+        code(nonempty_or_dash(model.eb_base_type_selection_path)),
+      ]),
+      div([
+        span(class="mini-label", "Base selection ready"),
+        code(bool_word(model.eb_base_type_selection_ready)),
+      ]),
+      div([
+        span(class="mini-label", "Handoff target"),
+        code(nonempty_or_dash(model.eb_base_type_handoff_target)),
+      ]),
+      div([
+        span(class="mini-label", "Moontown publish"),
+        code(nonempty_or_dash(model.eb_moontown_publish_receipt_path)),
+      ]),
+      div([
+        span(class="mini-label", "Moontown publish ready"),
+        code(bool_word(model.eb_moontown_publish_receipt_ready)),
+      ]),
+      div([
+        span(class="mini-label", "Standing goal registered"),
+        code(bool_word(model.eb_standing_goal_registration_ready)),
+      ]),
+      div([
+        span(class="mini-label", "Global standing goal"),
+        code(bool_word(model.eb_global_standing_goal_ready)),
+      ]),
+      div([
+        span(class="mini-label", "Run id"),
+        code(
+          nonempty_or_dash(
+            trimmed_or(
+              model.eb_production_proof_run_id,
+              model.eb_moonclaw_import_run_id,
+            ),
+          ),
+        ),
+      ]),
+      div([
+        span(class="mini-label", "MoonClaw status"),
+        code(nonempty_or_dash(model.eb_moonclaw_confirmed_run_status)),
+      ]),
+      div([
+        span(class="mini-label", "Import status"),
+        code(nonempty_or_dash(model.eb_moonclaw_import_status)),
+      ]),
+      div([
+        span(class="mini-label", "Recovered import"),
+        code(if model.eb_moonclaw_import_receipt_recovered { "true" } else { "false" }),
+      ]),
+      div([
+        span(class="mini-label", "Recovery source"),
+        code(nonempty_or_dash(model.eb_moonclaw_import_recovery_source)),
+      ]),
+      div([
+        span(class="mini-label", "Retry recommended"),
+        code(if model.eb_moonclaw_retry_recommended { "true" } else { "false" }),
+      ]),
+    ]),
+    div(class="audit-output-evidence", [
+      div([
+        span(class="mini-label", "Run receipt"),
+        code(nonempty_or_dash(model.eb_moonclaw_run_receipt_path)),
+      ]),
+      div([
+        span(class="mini-label", "Retry import"),
+        code(nonempty_or_dash(model.eb_moonclaw_retry_import_receipt_path)),
+      ]),
+      div([
+        span(class="mini-label", "Retry status"),
+        code(nonempty_or_dash(model.eb_moonclaw_retry_import_status)),
+      ]),
+      div([
+        span(class="mini-label", "Accepted workbook"),
+        code(nonempty_or_dash(model.eb_output_path)),
+      ]),
+      div([
+        span(class="mini-label", "Expected output contract"),
+        code(nonempty_or_dash(model.eb_expected_output_contract_path)),
+      ]),
+      div([
+        span(class="mini-label", "Expected contract ready"),
+        code(bool_word(model.eb_expected_output_contract_ready)),
+      ]),
+      div([
+        span(class="mini-label", "Output contract id"),
+        code(nonempty_or_dash(model.eb_expected_output_contract_id)),
+      ]),
+      div([
+        span(class="mini-label", "Workbook validation"),
+        code(nonempty_or_dash(model.eb_workbook_validation_path)),
+      ]),
+      div([
+        span(class="mini-label", "Source screen"),
+        code(nonempty_or_dash(model.eb_source_screen_path)),
+      ]),
+      div([
+        span(class="mini-label", "Book result"),
+        code(nonempty_or_dash(model.eb_book_result_path)),
+      ]),
+      div([
+        span(class="mini-label", "MoonClaw result"),
+        code(nonempty_or_dash(model.eb_moonclaw_result_path)),
+      ]),
+      div([
+        span(class="mini-label", "Output validation"),
+        code(nonempty_or_dash(model.eb_output_validation_status)),
+      ]),
+    ]),
+    if model.eb_moonclaw_orphaned_after_timeout ||
+      model.eb_moonclaw_retry_recommended {
+      div(class="orphaned-run-callout", [
+        strong("MoonClaw run is orphaned after timeout"),
+        p(
+          "The confirmed run is still recorded as Running after Moondesk's bounded execution window. Start a fresh production proof to import a replacement run instead of reusing the abandoned one.",
+        ),
+        button(
+          class="secondary-button full",
+          on_click=dispatch(FreshRetryEbProduction),
+          "Fresh Retry Orphaned Run",
+        ),
+      ])
+    } else {
+      span(class="hidden-inline", "")
+    },
+    div(class="proof-blockers", blockers),
+    ul(
+      class="production-gate-list",
+      model.eb_production_checklist.map(item => {
+        li(class=production_checklist_item_class(item), [
+          div(class="gate-main", [
+            span(class="gate-state", if item.ok { "ok" } else { "wait" }),
+            strong(item.label),
+          ]),
+          p(class="gate-requirement", item.requirement),
+          if item.evidence.trim().is_empty() {
+            span(class="gate-evidence empty", "no evidence path yet")
+          } else {
+            code(item.evidence)
+          },
+        ])
+      }),
+    ),
+  ])
+}
+
+///|
+fn render_pdf_watch_wizard(model : Model) -> @rabbita.Html {
+  let websites = text_lines(model.pdf_watch_websites)
+  let skills = text_lines(model.pdf_watch_skill_pack)
+  let method_ready = !model.pdf_watch_analysis_method.trim().is_empty()
+  let book_ready = pdf_watch_builder_pattern_supported(model)
+  let cadence = @string.parse_int(model.pdf_watch_cadence_minutes) catch {
+    _ => 0
+  }
+  let watch_ready = websites.length() > 0 && cadence > 0
+  let notify_ready = !model.pdf_watch_notify_rule.trim().is_empty()
+  div(class="book-wizard", [
+    div(class="book-wizard-header", [
+      strong(selected_book_pattern_title(model)),
+      span(class="record-kind", model.selected_book_base_type + " pattern"),
+    ]),
+    ul(class="wizard-steps", [
+      li(class=pdf_watch_wizard_step_class(book_ready), [
+        span(class="wizard-index", "1"),
+        span(
+          if book_ready {
+            "Choose research-book + " + model.selected_book_pattern_id
+          } else {
+            "Select a PDF/EB research-book pattern to publish"
+          },
+        ),
+      ]),
+      li(class=pdf_watch_wizard_step_class(websites.length() > 0), [
+        span(class="wizard-index", "2"),
+        span("\{websites.length()} source website(s)"),
+      ]),
+      li(class=pdf_watch_wizard_step_class(method_ready), [
+        span(class="wizard-index", "3"),
+        span("Write wiki/methods/my-analysis-method.md"),
+      ]),
+      li(class=pdf_watch_wizard_step_class(skills.contains("pdf-watch") && skills.contains("pdf-analysis")), [
+        span(class="wizard-index", "4"),
+        span("Select pdf-watch + pdf-analysis skills"),
+      ]),
+      li(class=pdf_watch_wizard_step_class(watch_ready), [
+        span(class="wizard-index", "5"),
+        span("Enable standing watch every " + model.pdf_watch_cadence_minutes + " minutes"),
+      ]),
+      li(class=pdf_watch_wizard_step_class(notify_ready), [
+        span(class="wizard-index", "6"),
+        span("Notify on " + model.pdf_watch_notify_rule),
+      ]),
+      li(class=pdf_watch_wizard_step_class(model.pdf_watch_last_book_id != ""), [
+        span(class="wizard-index", "7"),
+        span("Publish book to Moontown"),
+      ]),
+    ]),
+    pre(
+      class="source-block compact builder-config-preview",
+      code(pdf_watch_builder_config_preview(model)),
+    ),
+  ])
+}
+
+///|
+fn pdf_watch_builder_config_preview(model : Model) -> String {
+  let websites = text_lines(model.pdf_watch_websites)
+  let skills = text_lines(model.pdf_watch_skill_pack)
+  let targets = eb_target_bonds_from_model(model)
+  (
+    {
+      "id": trimmed_or(model.pdf_watch_book_id, "research-my-domain-pdf-watch"),
+      "type": "research-book",
+      "specialization": model.selected_book_pattern_id,
+      "pattern_components": {
+        "source_adapter": "websites",
+        "extractor": "pdf-full-text",
+        "analysis_skill": "pdf-analysis",
+        "standing_watch": true,
+      },
+      "watch": {
+        "cadence_minutes": @string.parse_int(model.pdf_watch_cadence_minutes) catch {
+          _ => 30
+        },
+        "source_policy": trimmed_or(model.pdf_watch_source_policy, "web-first"),
+        "websites": json_string_array(websites),
+        "file_types": json_string_array(["pdf"]),
+        "dedupe_by": json_string_array(["url", "title", "sha256"]),
+      },
+      "analysis": {
+        "method_page": "wiki/methods/my-analysis-method.md",
+        "notify_on": json_string_array([
+          trimmed_or(model.pdf_watch_notify_rule, "accepted_new_knowledge"),
+        ]),
+        "skill_pack": json_string_array(skills),
+      },
+      "targets": {
+        "production_ready": if selected_pattern_is_eb(model) {
+          eb_targets_production_ready(model).to_json()
+        } else {
+          Json::null()
+        },
+        "bonds": Json::array(targets),
+      },
+    } : Json).stringify(indent=2)
+}
+
+///|
 fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
@@ -3331,6 +5878,151 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "Submit to Town",
       ),
       p(class="status-line", model.request_status),
+    ]),
+    section(class="side-section", [
+      h3("Book Pattern Builder"),
+      render_pdf_watch_wizard(model),
+      div(
+        class="pattern-picker",
+        book_base_type_buttons(dispatch, model),
+      ),
+      div(
+        class="pattern-picker",
+        book_pattern_buttons(dispatch, model),
+      ),
+      input(
+        class="line-input",
+        value=model.pdf_watch_book_id,
+        placeholder="Book id, e.g. research-my-domain-pdf-watch",
+        on_input=fn(value) { dispatch(SetPdfWatchBookId(value)) },
+        "",
+      ),
+      input(
+        class="line-input",
+        value=model.pdf_watch_topic,
+        placeholder="Domain title/topic",
+        on_input=fn(value) { dispatch(SetPdfWatchTopic(value)) },
+        "",
+      ),
+      textarea(
+        class="side-textarea compact-textarea",
+        rows=3,
+        value=model.pdf_watch_purpose,
+        placeholder="Book purpose",
+        on_input=fn(value) { dispatch(SetPdfWatchPurpose(value)) },
+        "",
+      ),
+      textarea(
+        class="side-textarea compact-textarea",
+        rows=4,
+        value=model.pdf_watch_websites,
+        placeholder="One source website per line",
+        on_input=fn(value) { dispatch(SetPdfWatchWebsites(value)) },
+        "",
+      ),
+      div(class="field-grid compact-fields", [
+        input(
+          class="line-input",
+          value=model.pdf_watch_cadence_minutes,
+          placeholder="Cadence minutes",
+          on_input=fn(value) { dispatch(SetPdfWatchCadenceMinutes(value)) },
+          "",
+        ),
+        input(
+          class="line-input",
+          value=model.pdf_watch_source_policy,
+          placeholder="Source policy",
+          on_input=fn(value) { dispatch(SetPdfWatchSourcePolicy(value)) },
+          "",
+        ),
+      ]),
+      input(
+        class="line-input",
+        value=model.pdf_watch_notify_rule,
+        placeholder="Notification rule",
+        on_input=fn(value) { dispatch(SetPdfWatchNotifyRule(value)) },
+        "",
+      ),
+      textarea(
+        class="side-textarea mini-textarea",
+        rows=3,
+        value=model.pdf_watch_skill_pack,
+        placeholder="Skill pack, one skill per line",
+        on_input=fn(value) { dispatch(SetPdfWatchSkillPack(value)) },
+        "",
+      ),
+      render_eb_tracking_fields(dispatch, model),
+      textarea(
+        class="side-textarea compact-textarea",
+        rows=6,
+        value=model.pdf_watch_analysis_method,
+        placeholder="wiki/methods/my-analysis-method.md",
+        on_input=fn(value) { dispatch(SetPdfWatchAnalysisMethod(value)) },
+        "",
+      ),
+      div(class="toolbar-actions stack-actions", [
+        button(
+          class=if pdf_watch_builder_pattern_supported(model) {
+            "primary-button full"
+          } else {
+            "secondary-button full"
+          },
+          on_click=dispatch(CreatePdfEvidenceWatchBook),
+          if pdf_watch_builder_pattern_supported(model) {
+            "Publish Book + Watch"
+          } else {
+            "Choose PDF/EB Pattern First"
+          },
+        ),
+        if selected_pattern_is_eb(model) {
+          div(class="button-stack", [
+            button(
+              class=eb_moonclaw_action_button_class(model),
+              on_click=dispatch(ImportMoonclawPacket),
+              "Import MoonClaw Packet",
+            ),
+            button(
+              class=eb_moonclaw_action_button_class(model),
+              on_click=dispatch(LaunchMoonclawRun),
+              "Launch MoonClaw Run",
+            ),
+            button(
+              class=eb_moonclaw_action_button_class(model),
+              on_click=dispatch(RunConfirmedMoonclawJob),
+              "Run Confirmed MoonClaw",
+            ),
+            button(
+              class="secondary-button full",
+              on_click=dispatch(ReconcileMoonclawResult),
+              "Reconcile MoonClaw Result",
+            ),
+            button(
+              class="secondary-button full",
+              on_click=dispatch(AcceptRecoveredEbOutput),
+              "Accept Recovered Output",
+            ),
+            button(
+              class=eb_moonclaw_action_button_class(model),
+              on_click=dispatch(ProveEbProduction),
+              "Prove Production Run",
+            ),
+            button(
+              class="secondary-button full",
+              on_click=dispatch(AuditEbProductionHealth),
+              "Audit Production Health",
+            ),
+            button(
+              class="secondary-button full",
+              on_click=dispatch(RunEbSampleValidation),
+              "Validate EB Output",
+            ),
+          ])
+        } else {
+          span(class="hidden-inline", "")
+        },
+      ]),
+      p(class="status-line", model.pdf_watch_status),
+      render_eb_production_audit_panel(dispatch, model),
     ]),
     section(class="side-section", [
       h3("Standing Watch"),
@@ -4789,6 +7481,12 @@ fn render_command_palette(
           ),
           palette_command(
             dispatch,
+            "PDF Evidence Watch",
+            "Publish a research-book with PDF sources, analysis method, skills, and standing watch",
+            SelectActivity(Activity::Town),
+          ),
+          palette_command(
+            dispatch,
             "Run Daemon Tick",
             "Dispatch one Moontown scheduler tick",
             DispatchDaemonTick,
@@ -4912,6 +7610,7 @@ test {
   ignore(fetch_agent_daemon_cmd)
   ignore(fetch_agent_models_cmd)
   ignore(fetch_agent_sessions_cmd)
+  ignore(fetch_book_patterns_cmd)
   ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
   ignore(import_url_cmd)
@@ -4948,6 +7647,8 @@ fn main {
       fetch_agent_daemon_cmd(dispatch),
       fetch_agent_models_cmd(dispatch),
       fetch_agent_sessions_cmd(dispatch, ""),
+      fetch_book_base_types_cmd(dispatch),
+      fetch_book_patterns_cmd(dispatch),
       schedule_agent_poll(dispatch),
       schedule_import_drop_poll(dispatch),
     ]),
