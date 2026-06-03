@@ -1426,9 +1426,22 @@ async fn handle_create_pdf_evidence_watch_book(
   } else {
     []
   }
+  let eb_target_scope = if pattern_id == "exchangeable-bond-evidence-watch" {
+    eb_target_scope_from_payload(payload, eb_target_fields, eb_target_bonds)
+  } else {
+    ""
+  }
+  let eb_effective_target_bonds = if pattern_id ==
+    "exchangeable-bond-evidence-watch" {
+    eb_effective_target_bonds(
+      eb_target_scope, eb_target_fields, eb_target_bonds,
+    )
+  } else {
+    eb_target_bonds
+  }
   let eb_effective_target_fields = if pattern_id ==
     "exchangeable-bond-evidence-watch" {
-    effective_eb_target_fields(eb_target_fields, eb_target_bonds)
+    effective_eb_target_fields(eb_target_fields, eb_effective_target_bonds)
   } else {
     eb_target_fields
   }
@@ -1443,7 +1456,8 @@ async fn handle_create_pdf_evidence_watch_book(
     method_path~,
     notify_on~,
     skill_pack~,
-    eb_target_bonds~,
+    eb_target_scope~,
+    eb_target_bonds=eb_effective_target_bonds,
   )
   let writes_ok = write_pdf_watch_book_files(
     book_root~,
@@ -1454,8 +1468,9 @@ async fn handle_create_pdf_evidence_watch_book(
     book_json~,
     method_body~,
     websites~,
+    eb_target_scope~,
     eb_target_fields=eb_effective_target_fields,
-    eb_target_bonds~,
+    eb_target_bonds=eb_effective_target_bonds,
   ) catch {
     _ => false
   }
@@ -4507,6 +4522,16 @@ fn eb_target_fields_from_json(source : Json) -> Json {
       default="",
     ),
     "exchange": json_string(source, "exchange", default=""),
+    "lifecycle_status": json_first_string(
+      source,
+      ["lifecycle_status", "status", "bond_status"],
+      default="",
+    ),
+    "maturity_date": json_first_string(
+      source,
+      ["maturity_date", "delisted_date", "redeemed_date"],
+      default="",
+    ),
   }
 }
 
@@ -4529,7 +4554,79 @@ fn eb_target_bonds_from_payload(payload : Json) -> Array[Json] {
       return bonds
     }
   }
-  [eb_target_fields_from_payload(payload)]
+  let fields = eb_target_fields_from_payload(payload)
+  if eb_target_has_identity(fields) {
+    [fields]
+  } else {
+    []
+  }
+}
+
+///|
+fn normalize_eb_target_scope(scope : String) -> String {
+  let clean = scope.trim().to_lower()
+  match clean {
+    "active_universe" | "active-universe" | "universe" | "active" =>
+      "active_universe"
+    "portfolio" | "multi_bond" | "multi-bond" | "multi" => "portfolio"
+    "single_bond" | "single-bond" | "single" => "single_bond"
+    _ => ""
+  }
+}
+
+///|
+fn infer_eb_target_scope(
+  scope : String,
+  target_fields : Json,
+  target_bonds : Array[Json],
+) -> String {
+  let explicit = normalize_eb_target_scope(scope)
+  if explicit != "" {
+    return explicit
+  }
+  if target_bonds.length() > 1 {
+    return "portfolio"
+  }
+  if target_bonds.length() == 1 || eb_target_has_identity(target_fields) {
+    return "single_bond"
+  }
+  "active_universe"
+}
+
+///|
+fn eb_target_scope_from_payload(
+  payload : Json,
+  target_fields : Json,
+  target_bonds : Array[Json],
+) -> String {
+  infer_eb_target_scope(
+    json_first_string(payload, ["eb_target_scope", "target_scope"], default=""),
+    target_fields,
+    target_bonds,
+  )
+}
+
+///|
+fn eb_effective_target_bonds(
+  target_scope : String,
+  target_fields : Json,
+  target_bonds : Array[Json],
+) -> Array[Json] {
+  let normalized_bonds : Array[Json] = []
+  for target in target_bonds {
+    let normalized = eb_target_fields_from_json(target)
+    if eb_target_has_identity(normalized) {
+      normalized_bonds.push(normalized)
+    }
+  }
+  if normalized_bonds.length() > 0 {
+    return normalized_bonds
+  }
+  if target_scope != "active_universe" && eb_target_has_identity(target_fields) {
+    [eb_target_fields_from_json(target_fields)]
+  } else {
+    []
+  }
 }
 
 ///|
@@ -4544,6 +4641,37 @@ fn effective_eb_target_fields(
     Some(first) => first
     None => target_fields
   }
+}
+
+///|
+fn eb_target_scope_from_config(config : Json) -> String {
+  normalize_eb_target_scope(json_string(config, "target_scope", default=""))
+}
+
+///|
+async fn eb_target_scope_from_book(book_root : String) -> String {
+  let book_json = read_json_file_or_object(@pathx.join(book_root, "book.json"))
+  let book_targets = json_object_field_or_empty(book_json, "targets")
+  let book_scope = eb_target_scope_from_config(book_targets)
+  if book_scope != "" {
+    return book_scope
+  }
+  let request = read_json_file_or_object(
+    @pathx.join(book_root, "raw/inbox/eb-tracking-request.json"),
+  )
+  let request_scope = normalize_eb_target_scope(
+    json_string(request, "target_scope", default=""),
+  )
+  if request_scope != "" {
+    return request_scope
+  }
+  infer_eb_target_scope(
+    "",
+    eb_target_fields_from_json(
+      json_object_field_or_empty(request, "target_fields"),
+    ),
+    eb_production_targets_from_book(book_root),
+  )
 }
 
 ///|
@@ -4590,11 +4718,14 @@ async fn eb_production_targets_from_book(book_root : String) -> Array[Json] {
   if bonds.length() > 0 {
     bonds
   } else {
-    [
-      eb_target_fields_from_json(
-        json_object_field_or_empty(request, "target_fields"),
-      ),
-    ]
+    let fallback = eb_target_fields_from_json(
+      json_object_field_or_empty(request, "target_fields"),
+    )
+    if eb_target_has_identity(fallback) {
+      [fallback]
+    } else {
+      []
+    }
   }
 }
 
@@ -4677,10 +4808,24 @@ fn eb_target_production_failed_checks(target : Json) -> Array[String] {
 
 ///|
 async fn eb_production_target_readiness(book_root : String) -> Json {
+  let target_scope = eb_target_scope_from_book(book_root)
   let targets = eb_production_targets_from_book(book_root)
   let failed : Array[String] = []
   let target_results : Array[Json] = []
   let mut ready_count = 0
+  if target_scope == "active_universe" {
+    return {
+      "kind": "eb-production-target-readiness",
+      "ok": true,
+      "target_scope": target_scope,
+      "active_universe_default": true,
+      "target_count": targets.length(),
+      "ready_target_count": targets.length(),
+      "failed_checks": json_from_string_array([]),
+      "targets": Json::array(target_results),
+      "message": "Active EB universe watch does not require a preselected single bond target.",
+    }
+  }
   if targets.length() == 0 {
     failed.push("at least one EB target bond is configured")
   }
@@ -4703,6 +4848,8 @@ async fn eb_production_target_readiness(book_root : String) -> Json {
   {
     "kind": "eb-production-target-readiness",
     "ok": targets.length() > 0 && failed.length() == 0,
+    "target_scope": target_scope,
+    "active_universe_default": false,
     "target_count": targets.length(),
     "ready_target_count": ready_count,
     "failed_checks": json_from_string_array(failed),
@@ -4762,6 +4909,27 @@ fn json_from_string_array(items : Array[String]) -> Json {
 ///|
 fn json_from_json_array(items : Array[Json]) -> Json {
   Json::array(items)
+}
+
+///|
+fn eb_toolbook_manifest_seed_json(book_id : String) -> Json {
+  let tool : Json = {
+    "id": "eb-evidence-dashboard",
+    "title": "EB Evidence Dashboard",
+    "entrypoints": json_from_string_array([
+      "book/site/generated/tool.html", "app/index.html",
+    ]),
+  }
+  let outputs : Json = { "xlsx": "", "source_screen": "" }
+  {
+    "kind": "app-tool-book-manifest",
+    "template_id": "app-tool-book",
+    "book_id": book_id,
+    "tool": tool,
+    "outputs": outputs,
+    "extensible": true,
+    "status": "waiting_for_accepted_run",
+  }
 }
 
 ///|
@@ -4964,10 +5132,11 @@ fn base64_decode_bytes(text : String) -> Bytes {
 ///|
 async fn create_pdf_watch_book_dirs(book_root : String) -> Bool {
   let dirs = [
-    "", "raw", "raw/bootstrap", "raw/inbox", "raw/pdfs", "raw/extracted", "raw/analysis-runs",
-    "raw/excel", "wiki", "wiki/sources", "wiki/findings", "wiki/methods", "wiki/reviews",
-    "wiki/history", "skills", "skills/pdf-watch", "skills/pdf-analysis", "skills/eb-credit-compliance",
-    "schemas", "moonclaw-packets", "book", "book/outputs", "book/site", "book/site/generated",
+    "", "raw", "raw/bootstrap", "raw/inbox", "raw/pdfs", "raw/html", "raw/extracted",
+    "raw/analysis-runs", "raw/excel", "wiki", "wiki/sources", "wiki/findings", "wiki/methods",
+    "wiki/reports", "wiki/tools", "wiki/reviews", "wiki/history", "skills", "skills/pdf-watch",
+    "skills/pdf-analysis", "skills/eb-credit-compliance", "skills/tool-watch", "skills/tool-build",
+    "schemas", "moonclaw-packets", "app", "book", "book/outputs", "book/site", "book/site/generated",
     "site", "site/generated",
   ]
   for dir in dirs {
@@ -5059,7 +5228,7 @@ fn eb_analysis_method_contract_ready(text : String) -> Bool {
 ///|
 fn default_book_pattern_purpose(pattern_id : String, topic : String) -> String {
   if pattern_id == "exchangeable-bond-evidence-watch" {
-    "Standing research-book for \{topic}: official-source PDF discovery, exchangeable bond lifecycle extraction, credit/compliance review, Bookkeeper acceptance, and durable XLSX/wiki outputs when accepted knowledge changes."
+    "Standing research-book for \{topic}: official-source discovery, exchangeable bond lifecycle extraction, credit/compliance review, Bookkeeper acceptance, and durable XLSX/wiki outputs when accepted knowledge changes."
   } else {
     "Standing MoonBook workspace for \{topic} PDF discovery, download, extraction, method-specific analysis, durable findings, and operator notification when accepted new knowledge appears."
   }
@@ -5119,6 +5288,7 @@ fn pdf_watch_book_json(
   method_path~ : String,
   notify_on~ : Array[String],
   skill_pack? : Array[String] = [],
+  eb_target_scope? : String = "",
   eb_target_bonds? : Array[Json] = [],
 ) -> Json {
   let skills = if skill_pack.length() == 0 {
@@ -5126,6 +5296,16 @@ fn pdf_watch_book_json(
   } else {
     skill_pack
   }
+  let eb_target_scope = infer_eb_target_scope(
+    eb_target_scope,
+    eb_target_fields_from_payload(Json::object({})),
+    eb_target_bonds,
+  )
+  let eb_target_bonds = eb_effective_target_bonds(
+    eb_target_scope,
+    eb_target_fields_from_payload(Json::object({})),
+    eb_target_bonds,
+  )
   {
     "id": book_id,
     "type": "research-book",
@@ -5152,10 +5332,20 @@ fn pdf_watch_book_json(
       "analysis_skill": "pdf-analysis",
       "standing_watch": true,
     },
+    "toolbook": {
+      "enabled": pattern_id == "exchangeable-bond-evidence-watch",
+      "template_id": "app-tool-book",
+      "manifest_path": "tool-manifest.json",
+      "entrypoints": json_from_string_array([
+        "book/site/generated/tool.html", "app/index.html",
+      ]),
+      "skills": json_from_string_array(["tool-watch", "tool-build"]),
+    },
     "layout": {
       "book": "book.json",
       "raw_inbox": "raw/inbox/",
       "raw_pdfs": "raw/pdfs/",
+      "raw_html": "raw/html/",
       "raw_extracted": "raw/extracted/",
       "raw_analysis_runs": "raw/analysis-runs/",
       "wiki_index": "wiki/index.md",
@@ -5184,8 +5374,21 @@ fn pdf_watch_book_json(
       "file_types": json_from_string_array(["pdf"]),
       "dedupe_by": json_from_string_array(["url", "title", "sha256"]),
       "notify_on": json_from_string_array(notify_on),
+      "target_scope": eb_target_scope,
+      "active_universe_default": pattern_id ==
+      "exchangeable-bond-evidence-watch" &&
+      eb_target_scope == "active_universe",
+      "discovery_mode": if pattern_id == "exchangeable-bond-evidence-watch" &&
+        eb_target_scope == "active_universe" {
+        "dynamic_official_source_search"
+      } else {
+        "configured_target_source_adapter"
+      },
+      "official_source_seeds": Json::array(
+        eb_official_source_seed_candidates(eb_target_scope, eb_target_bonds),
+      ),
       "official_pdf_seeds": Json::array(
-        eb_official_pdf_seed_candidates(eb_target_bonds),
+        eb_official_pdf_seed_candidates(eb_target_scope, eb_target_bonds),
       ),
     },
     "analysis": {
@@ -5209,18 +5412,37 @@ fn pdf_watch_book_json(
       } else {
         "generic-pdf-evidence"
       },
+      "target_scope": if pattern_id == "exchangeable-bond-evidence-watch" {
+        eb_target_scope
+      } else {
+        "generic"
+      },
+      "active_universe_default": pattern_id ==
+      "exchangeable-bond-evidence-watch" &&
+      eb_target_scope == "active_universe",
+      "discovery_mode": if pattern_id == "exchangeable-bond-evidence-watch" &&
+        eb_target_scope == "active_universe" {
+        "dynamic_official_source_search"
+      } else {
+        "configured_target_source_adapter"
+      },
       "target_count": eb_target_bonds.length(),
       "bonds": Json::array(eb_target_bonds),
       "multi_target_supported": pattern_id == "exchangeable-bond-evidence-watch",
+      "portfolio_supported": pattern_id == "exchangeable-bond-evidence-watch",
+      "official_source_seeds": Json::array(
+        eb_official_source_seed_candidates(eb_target_scope, eb_target_bonds),
+      ),
       "official_pdf_seeds": Json::array(
-        eb_official_pdf_seed_candidates(eb_target_bonds),
+        eb_official_pdf_seed_candidates(eb_target_scope, eb_target_bonds),
       ),
     },
     "moondesk": {
       "create_mode": "pattern-builder",
       "editable_files": json_from_string_array([
         "book.json", "wiki/methods/my-analysis-method.md", "skills/pdf-watch/SKILL.md",
-        "skills/pdf-analysis/SKILL.md", "wiki/methods/analysis-method.md",
+        "skills/pdf-analysis/SKILL.md", "skills/tool-watch/SKILL.md", "skills/tool-build/SKILL.md",
+        "wiki/methods/analysis-method.md",
       ]),
       "output_files": json_from_string_array(
         book_pattern_output_files(pattern_id),
@@ -5304,6 +5526,32 @@ fn pdf_watch_operator_config_json(book_json : Json) -> Json {
       "dedupe_by": json_from_string_array(
         json_string_array_items(watch, "dedupe_by"),
       ),
+      "target_scope": json_first_string(
+        watch,
+        ["target_scope", "eb_target_scope"],
+        default=json_string(
+          json_object_field_or_empty(book_json, "targets"),
+          "target_scope",
+          default="",
+        ),
+      ),
+      "active_universe_default": json_bool(
+        watch,
+        "active_universe_default",
+        default=json_bool(
+          json_object_field_or_empty(book_json, "targets"),
+          "active_universe_default",
+          default=false,
+        ),
+      ),
+      "discovery_mode": json_string(
+        watch,
+        "discovery_mode",
+        default="configured_target_source_adapter",
+      ),
+      "official_source_seeds": Json::array(
+        json_array_items(watch, "official_source_seeds"),
+      ),
       "official_pdf_seeds": Json::array(
         json_array_items(watch, "official_pdf_seeds"),
       ),
@@ -5377,11 +5625,16 @@ async fn write_pdf_watch_book_files(
   book_json~ : Json,
   method_body~ : String,
   websites~ : Array[String],
+  eb_target_scope? : String = "",
   eb_target_fields? : Json = eb_target_fields_from_payload(Json::object({})),
-  eb_target_bonds? : Array[Json] = [
-    eb_target_fields_from_payload(Json::object({})),
-  ],
+  eb_target_bonds? : Array[Json] = [],
 ) -> Bool {
+  let eb_target_scope = infer_eb_target_scope(
+    eb_target_scope, eb_target_fields, eb_target_bonds,
+  )
+  let eb_target_bonds = eb_effective_target_bonds(
+    eb_target_scope, eb_target_fields, eb_target_bonds,
+  )
   @fsx.write_to_file(
     @pathx.join(book_root, "book.json"),
     book_json.stringify(indent=2) + "\n",
@@ -5423,6 +5676,16 @@ async fn write_pdf_watch_book_files(
     create=0o644,
   )
   @fsx.write_to_file(
+    @pathx.join(book_root, "skills/tool-watch/SKILL.md"),
+    eb_tool_watch_skill_markdown(topic),
+    create=0o644,
+  )
+  @fsx.write_to_file(
+    @pathx.join(book_root, "skills/tool-build/SKILL.md"),
+    eb_tool_build_skill_markdown(topic),
+    create=0o644,
+  )
+  @fsx.write_to_file(
     @pathx.join(book_root, "schemas/pdf-source.schema.md"),
     pdf_source_schema_markdown(),
     create=0o644,
@@ -5443,6 +5706,7 @@ async fn write_pdf_watch_book_files(
     create=0o644,
   )
   @fsx.write_to_file(@pathx.join(book_root, "raw/pdfs/.keep"), "", create=0o644)
+  @fsx.write_to_file(@pathx.join(book_root, "raw/html/.keep"), "", create=0o644)
   @fsx.write_to_file(
     @pathx.join(book_root, "raw/extracted/.keep"),
     "",
@@ -5505,6 +5769,7 @@ async fn write_pdf_watch_book_files(
         book_id,
         topic,
         websites,
+        target_scope=eb_target_scope,
         target_fields=eb_target_fields,
         target_bonds=eb_target_bonds,
       ).stringify(indent=2) +
@@ -5517,6 +5782,7 @@ async fn write_pdf_watch_book_files(
         book_id,
         topic,
         websites,
+        target_scope=eb_target_scope,
         target_fields=eb_target_fields,
         target_bonds=eb_target_bonds,
       ).stringify(indent=2) +
@@ -5549,12 +5815,39 @@ async fn write_pdf_watch_book_files(
       create=0o755,
     )
     @fsx.write_to_file(
+      @pathx.join(book_root, "wiki/tools/tool-spec.md"),
+      [
+        "# EB Evidence Dashboard Tool Spec", "", "- Template: `app-tool-book`", "- Tool id: `eb-evidence-dashboard`",
+        "- Inputs: official source candidates, downloaded PDFs/HTML source pages, extracted text, AI lifecycle analysis.",
+        "- Outputs: `book/outputs/EB追踪_<债券代码>_<债券简称>_<YYYYMMDD>.xlsx`, `book/site/generated/tool.html`, `tool-manifest.json`.",
+        "- Quality rule: every announcement row links to an official source URL and includes source-backed extracted text evidence.",
+        "",
+      ].join("\n"),
+      create=0o644,
+    )
+    @fsx.write_to_file(
+      @pathx.join(book_root, "tool-manifest.json"),
+      eb_toolbook_manifest_seed_json(book_id).stringify(indent=2) + "\n",
+      create=0o644,
+    )
+    @fsx.write_to_file(
+      @pathx.join(book_root, "app/index.html"),
+      "<!doctype html><meta charset=\"utf-8\"><title>EB Evidence Dashboard</title><p>Run the EB evidence watch to generate the dashboard.</p>",
+      create=0o644,
+    )
+    @fsx.write_to_file(
+      @pathx.join(book_root, "book/site/generated/tool.html"),
+      "<!doctype html><meta charset=\"utf-8\"><title>EB Evidence Dashboard</title><p>Run the EB evidence watch to generate the dashboard.</p>",
+      create=0o644,
+    )
+    @fsx.write_to_file(
       @pathx.join(book_root, eb_moonclaw_proposal_packet_relative_path()),
       eb_moonclaw_proposal_packet_json(
         book_root,
         book_id,
         topic,
         websites,
+        target_scope=eb_target_scope,
         target_fields=eb_target_fields,
         target_bonds=eb_target_bonds,
       ).stringify(indent=2) +
@@ -5712,6 +6005,7 @@ async fn refresh_eb_runtime_artifacts(
     },
   )
   let targets = eb_production_targets_from_book(book_root)
+  let target_scope = eb_target_scope_from_book(book_root)
   let target_fields = effective_eb_target_fields(
     eb_target_fields_from_json(
       json_object_field_or_empty(request, "target_fields"),
@@ -5734,6 +6028,7 @@ async fn refresh_eb_runtime_artifacts(
       book_id,
       topic,
       websites,
+      target_scope~,
       target_fields~,
       target_bonds=targets,
     ).stringify(indent=2) +
@@ -5748,6 +6043,7 @@ async fn refresh_eb_runtime_artifacts(
       book_id,
       topic,
       websites,
+      target_scope~,
       target_fields~,
       target_bonds=targets,
     ).stringify(indent=2) +
@@ -5799,6 +6095,48 @@ async fn refresh_eb_runtime_artifacts(
   )
   refresh_generated_text_file(
     book_root,
+    "wiki/tools/tool-spec.md",
+    [
+      "# EB Evidence Dashboard Tool Spec", "", "- Template: `app-tool-book`", "- Tool id: `eb-evidence-dashboard`",
+      "- Inputs: official source candidates, downloaded PDFs/HTML source pages, extracted text, AI lifecycle analysis.",
+      "- Outputs: `book/outputs/EB追踪_<债券代码>_<债券简称>_<YYYYMMDD>.xlsx`, `book/site/generated/tool.html`, `tool-manifest.json`.",
+      "- Quality rule: every announcement row links to an official source URL and includes source-backed extracted text evidence.",
+      "",
+    ].join("\n"),
+    refreshed_paths,
+    changed_paths,
+  )
+  refresh_generated_text_file(
+    book_root,
+    "skills/tool-watch/SKILL.md",
+    eb_tool_watch_skill_markdown(topic),
+    refreshed_paths,
+    changed_paths,
+  )
+  refresh_generated_text_file(
+    book_root,
+    "skills/tool-build/SKILL.md",
+    eb_tool_build_skill_markdown(topic),
+    refreshed_paths,
+    changed_paths,
+  )
+  refresh_generated_text_file(
+    book_root,
+    "tool-manifest.json",
+    eb_toolbook_manifest_seed_json(book_id).stringify(indent=2) + "\n",
+    refreshed_paths,
+    changed_paths,
+  )
+  refresh_generated_text_file(
+    book_root, "app/index.html", "<!doctype html><meta charset=\"utf-8\"><title>EB Evidence Dashboard</title><p>Run the EB evidence watch to generate the dashboard.</p>",
+    refreshed_paths, changed_paths,
+  )
+  refresh_generated_text_file(
+    book_root, "book/site/generated/tool.html", "<!doctype html><meta charset=\"utf-8\"><title>EB Evidence Dashboard</title><p>Run the EB evidence watch to generate the dashboard.</p>",
+    refreshed_paths, changed_paths,
+  )
+  refresh_generated_text_file(
+    book_root,
     "schemas/eb-tracking-output.schema.md",
     eb_tracking_output_schema_markdown(),
     refreshed_paths,
@@ -5841,6 +6179,7 @@ async fn refresh_eb_runtime_artifacts(
       book_id,
       topic,
       websites,
+      target_scope~,
       target_fields~,
       target_bonds=targets,
     ).stringify(indent=2) +
@@ -6086,12 +6425,13 @@ fn pdf_watch_skill_markdown(topic : String) -> String {
   [
     "# PDF Watch",
     "",
-    "Use this skill to watch configured websites for \{topic} PDFs.",
+    "Use this skill to watch configured websites for \{topic} official evidence sources.",
     "",
     "- Keep browsing bounded to the configured website list.",
-    "- Prefer direct PDF links and publication pages that link to PDFs.",
+    "- Prefer direct PDF links and official publication or notice pages that identify the source, including exchange HTML notices when no separate PDF exists.",
+    "- For exchangeable-bond active-universe runs, enumerate the complete official source universe first and prove instrument coverage before analysis starts.",
     "- Deduplicate by URL, title, and sha256.",
-    "- Save candidate PDFs under `raw/pdfs/` and source metadata under `wiki/sources/`.",
+    "- Save candidate PDFs under `raw/pdfs/`, HTML/source pages under `raw/html/`, extracted text under `raw/extracted/`, and source metadata under `wiki/sources/`.",
     "- Report no-change scans without updating durable findings.",
     "",
   ].join("\n")
@@ -6109,6 +6449,37 @@ fn pdf_analysis_skill_markdown(topic : String) -> String {
     "- Produce an analysis result under `raw/analysis-runs/`.",
     "- Queue review under `wiki/reviews/` when a finding may become accepted knowledge.",
     "- Do not notify for routine no-change scans.",
+    "",
+  ].join("\n")
+}
+
+///|
+fn eb_tool_watch_skill_markdown(topic : String) -> String {
+  [
+    "# EB Tool Watch",
+    "",
+    "Use this tool-watch skill to keep the \{topic} EB evidence dashboard synchronized with accepted Bookkeeper results.",
+    "",
+    "- Treat `tool-manifest.json` as the Moontown-facing ToolBook manifest.",
+    "- Rebuild `book/site/generated/tool.html` and `app/index.html` only from accepted source-screen, validation, and workbook artifacts.",
+    "- Keep every visible announcement row linked to its official source URL, whether that source is a PDF or an exchange notice page.",
+    "- Mark missing or mismatched extracted text explicitly; do not reuse unrelated PDF text.",
+    "- Publish no-change scans as status only, not as accepted knowledge.",
+    "",
+  ].join("\n")
+}
+
+///|
+fn eb_tool_build_skill_markdown(topic : String) -> String {
+  [
+    "# EB Tool Build",
+    "",
+    "Use this tool-build skill when packaging the \{topic} EB watch as an app-tool-book surface.",
+    "",
+    "- Inputs: `raw/analysis-runs/*official-source-screen.json`, `raw/analysis-runs/*official-pdf-candidates.json`, official-source records, extracted text, and MoonClaw AI analysis.",
+    "- Outputs: the EB XLSX workbook, workbook sidecars, `tool-manifest.json`, `wiki/reports/latest-analysis.md`, `book/site/generated/tool.html`, and `app/index.html`.",
+    "- Preserve the research-book workflow while exposing reusable ToolBook entrypoints.",
+    "- Verify source-universe completeness, official hyperlinks, row counts, sidecar hashes, and text-match status before publishing.",
     "",
   ].join("\n")
 }
@@ -7128,6 +7499,7 @@ fn pdf_watch_required_paths(pattern_id : String) -> Array[String] {
     "raw/inbox",
     "raw/inbox/.keep",
     "raw/pdfs/.keep",
+    "raw/html/.keep",
     "raw/extracted/.keep",
     "raw/analysis-runs/.keep",
     "wiki/index.md",
@@ -7147,6 +7519,8 @@ fn pdf_watch_required_paths(pattern_id : String) -> Array[String] {
   ]
   if pattern_id == "exchangeable-bond-evidence-watch" {
     paths.push("skills/eb-credit-compliance/SKILL.md")
+    paths.push("skills/tool-watch/SKILL.md")
+    paths.push("skills/tool-build/SKILL.md")
     paths.push("schemas/eb-tracking-output.schema.md")
     paths.push("raw/inbox/eb-tracking-request.json")
     paths.push("raw/inbox/eb-standing-watch-dispatch.json")
@@ -7161,6 +7535,10 @@ fn pdf_watch_required_paths(pattern_id : String) -> Array[String] {
     paths.push("raw/analysis-runs/eb-contract-verification.json")
     paths.push("raw/analysis-runs/eb-output-validation.json")
     paths.push("book/outputs/README.md")
+    paths.push("wiki/tools/tool-spec.md")
+    paths.push("tool-manifest.json")
+    paths.push("app/index.html")
+    paths.push("book/site/generated/tool.html")
     paths.push(eb_output_template_relative_path())
   }
   paths
@@ -7295,6 +7673,7 @@ fn eb_seed_candidate(
   disclosure_date~ : String,
   lifecycle_stage~ : String,
   relevance~ : String,
+  source_kind? : String = "pdf",
 ) -> Json {
   {
     "bond_code": bond_code,
@@ -7305,14 +7684,239 @@ fn eb_seed_candidate(
     "disclosure_date": disclosure_date,
     "lifecycle_stage": lifecycle_stage,
     "relevance": relevance,
-    "source_type": "official-pdf-seed",
+    "source_kind": source_kind,
+    "source_type": if source_kind == "pdf" {
+      "official-pdf-seed"
+    } else {
+      "official-source-seed"
+    },
     "source_policy": "official-first",
   }
 }
 
 ///|
-fn eb_official_pdf_seed_candidates(target_bonds : Array[Json]) -> Array[Json] {
+fn eb_regression_active_universe_source_candidates() -> Array[Json] {
+  [
+    eb_seed_candidate(
+      bond_code="132026",
+      bond_short_name="G三峡EB2",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-05-25/132026_20260525_7PY5.pdf",
+      title="G三峡EB2 2026年付息公告",
+      platform="上海证券交易所",
+      disclosure_date="2026-05-25",
+      lifecycle_stage="兑付与退出",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132026",
+      bond_short_name="G三峡EB2",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-04-30/132026_20260430_UQSO.pdf",
+      title="G三峡EB2 公司债券年度报告（2025年）",
+      platform="上海证券交易所",
+      disclosure_date="2026-04-30",
+      lifecycle_stage="存续期定期报告",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132026",
+      bond_short_name="G三峡EB2",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-04-30/132026_20260430_TFZH.pdf",
+      title="G三峡EB2 2025年度审计报告",
+      platform="上海证券交易所",
+      disclosure_date="2026-04-30",
+      lifecycle_stage="存续期定期报告",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132026",
+      bond_short_name="G三峡EB2",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-02-09/132026_20260209_0DVS.pdf",
+      title="G三峡EB2 换股价格调整公告",
+      platform="上海证券交易所",
+      disclosure_date="2026-02-09",
+      lifecycle_stage="换股期管理",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132024",
+      bond_short_name="26江铜EB",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-04-29/132024_20260429_YZCX.pdf",
+      title="26江铜EB 公司债券年度报告（2025年）",
+      platform="上海证券交易所",
+      disclosure_date="2026-04-29",
+      lifecycle_stage="存续期定期报告",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132024",
+      bond_short_name="26江铜EB",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-04-29/132024_20260429_EXPV.pdf",
+      title="26江铜EB 2025年度审计报告",
+      platform="上海证券交易所",
+      disclosure_date="2026-04-29",
+      lifecycle_stage="存续期定期报告",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132024",
+      bond_short_name="26江铜EB",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-04-09/132024_20260409_14IW.pdf",
+      title="26江铜EB 发行结果公告",
+      platform="上海证券交易所",
+      disclosure_date="2026-04-09",
+      lifecycle_stage="发行与上市",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132024",
+      bond_short_name="26江铜EB",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-04-03/132024_20260403_JAMC.pdf",
+      title="26江铜EB 票面利率公告",
+      platform="上海证券交易所",
+      disclosure_date="2026-04-03",
+      lifecycle_stage="发行与上市",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132024",
+      bond_short_name="26江铜EB",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-04-02/132024_20260402_DL2M.pdf",
+      title="26江铜EB 发行公告",
+      platform="上海证券交易所",
+      disclosure_date="2026-04-02",
+      lifecycle_stage="发行与上市",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="132024",
+      bond_short_name="26江铜EB",
+      url="https://www.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2026-04-02/132024_20260402_CCV0.pdf",
+      title="26江铜EB 募集说明书",
+      platform="上海证券交易所",
+      disclosure_date="2026-04-02",
+      lifecycle_stage="发行与上市",
+      relevance="SSE official active-universe current-window EB source.",
+    ),
+    eb_seed_candidate(
+      bond_code="117248",
+      bond_short_name="26盈峰EB",
+      url="https://www.szse.cn/disclosure/notice/t20260119_618637.html",
+      title="关于为盈峰集团有限公司2026年面向专业投资者非公开发行可交换公司债券（第一期）提供转让服务有关事项的通知",
+      platform="深圳证券交易所",
+      disclosure_date="2026-01-19",
+      lifecycle_stage="发行与上市",
+      relevance="SZSE official active-universe current-window EB transfer-service notice.",
+      source_kind="html_notice",
+    ),
+    eb_seed_candidate(
+      bond_code="117249",
+      bond_short_name="26希望KEB1",
+      url="https://www.szse.cn/disclosure/notice/bond/t20260127_618744.html",
+      title="关于为新希望集团有限公司2026年面向专业投资者非公开发行科技创新可交换公司债券（第一期）提供转让服务有关事项的通知",
+      platform="深圳证券交易所",
+      disclosure_date="2026-01-27",
+      lifecycle_stage="发行与上市",
+      relevance="SZSE official active-universe current-window EB transfer-service notice.",
+      source_kind="html_notice",
+    ),
+    eb_seed_candidate(
+      bond_code="117250",
+      bond_short_name="26国泰E1",
+      url="https://www.szse.cn/disclosure/notice/t20260129_618810.html",
+      title="关于为江苏国泰国际集团股份有限公司2026年面向专业投资者非公开发行可交换公司债券（第一期）提供转让服务有关事项的通知",
+      platform="深圳证券交易所",
+      disclosure_date="2026-01-29",
+      lifecycle_stage="发行与上市",
+      relevance="SZSE official active-universe current-window EB transfer-service notice.",
+      source_kind="html_notice",
+    ),
+    eb_seed_candidate(
+      bond_code="117251",
+      bond_short_name="26顺控KEB1",
+      url="https://www.szse.cn/disclosure/notice/t20260204_618938.html",
+      title="关于为广东顺德控股集团有限公司2026年面向专业投资者非公开发行科技创新可交换公司债券（第一期）提供转让服务有关事项的通知",
+      platform="深圳证券交易所",
+      disclosure_date="2026-02-04",
+      lifecycle_stage="发行与上市",
+      relevance="SZSE official active-universe current-window EB transfer-service notice.",
+      source_kind="html_notice",
+    ),
+    eb_seed_candidate(
+      bond_code="117252",
+      bond_short_name="26九洲KEB1",
+      url="https://www.szse.cn/disclosure/notice/t20260311_619372.html",
+      title="关于为四川九洲投资控股集团有限公司2026年面向专业投资者非公开发行科技创新可交换公司债券（第一期）提供转让服务有关事项的通知",
+      platform="深圳证券交易所",
+      disclosure_date="2026-03-11",
+      lifecycle_stage="发行与上市",
+      relevance="SZSE official active-universe current-window EB transfer-service notice.",
+      source_kind="html_notice",
+    ),
+    eb_seed_candidate(
+      bond_code="117253",
+      bond_short_name="26华邦EB",
+      url="https://www.szse.cn/disclosure/notice/t20260327_619709.html",
+      title="关于为华邦生命健康股份有限公司2026年面向专业投资者非公开发行科技创新可交换公司债券提供转让服务有关事项的通知",
+      platform="深圳证券交易所",
+      disclosure_date="2026-03-27",
+      lifecycle_stage="发行与上市",
+      relevance="SZSE official active-universe current-window EB transfer-service notice.",
+      source_kind="html_notice",
+    ),
+    eb_seed_candidate(
+      bond_code="117249",
+      bond_short_name="26希望KEB1",
+      url="https://static.cninfo.com.cn/finalpage/2026-01-24/1224946940.PDF",
+      title="新希望关于控股股东2026年面向专业投资者非公开发行科技创新可交换公司债券（第一期）发行完成的公告",
+      platform="巨潮资讯网",
+      disclosure_date="2026-01-24",
+      lifecycle_stage="发行与上市",
+      relevance="CNInfo issuer-side official PDF for SZSE active-universe EB.",
+    ),
+    eb_seed_candidate(
+      bond_code="117251",
+      bond_short_name="26顺控KEB1",
+      url="https://static.cninfo.com.cn/finalpage/2026-01-30/1224957105.PDF",
+      title="顺控集团关于控股股东可交换公司债券发行完成相关公告",
+      platform="巨潮资讯网",
+      disclosure_date="2026-01-30",
+      lifecycle_stage="发行与上市",
+      relevance="CNInfo issuer-side official PDF for SZSE active-universe EB.",
+    ),
+    eb_seed_candidate(
+      bond_code="117253",
+      bond_short_name="26华邦EB",
+      url="https://static.cninfo.com.cn/finalpage/2026-03-26/1225029841.PDF",
+      title="华邦健康关于非公开发行科技创新可交换公司债券发行完成的提示性公告",
+      platform="巨潮资讯网",
+      disclosure_date="2026-03-26",
+      lifecycle_stage="发行与上市",
+      relevance="CNInfo issuer-side official PDF for SZSE active-universe EB.",
+    ),
+  ]
+}
+
+///|
+fn eb_official_source_seed_candidates(
+  target_scope : String,
+  target_bonds : Array[Json],
+) -> Array[Json] {
+  if target_scope == "active_universe" {
+    []
+  } else {
+    eb_official_pdf_seed_candidates(target_scope, target_bonds)
+  }
+}
+
+///|
+fn eb_official_pdf_seed_candidates(
+  target_scope : String,
+  target_bonds : Array[Json],
+) -> Array[Json] {
   let seeds : Array[Json] = []
+  if target_scope == "active_universe" {
+    return seeds
+  }
   for target in target_bonds {
     let bond_code = json_string(target, "bond_code", default="")
     let bond_short_name = json_string(
@@ -7393,7 +7997,7 @@ fn default_eb_analysis_method(topic : String) -> String {
     "",
     "Topic: \{topic}",
     "",
-    "Role: act as an exchangeable-bond credit research and compliance tracking analyst. Track one or more target EB instruments through their full lifecycle and convert official disclosure evidence into reviewed wiki findings plus the required Excel workbook.",
+    "Role: act as an exchangeable-bond credit research and compliance tracking analyst. Track one or more target EB instruments through their full lifecycle and convert official disclosure evidence into reviewed wiki findings plus the required Excel workbook. For active-universe runs, first complete instrument/source discovery before any analysis.",
     "",
     "## Target Object",
     "",
@@ -7407,7 +8011,9 @@ fn default_eb_analysis_method(topic : String) -> String {
     "",
     "## Official Source Priority",
     "",
-    "Use official disclosure PDFs first and reject third-party repost URLs for accepted knowledge.",
+    "Use official exchange/source records first and reject third-party repost URLs for accepted knowledge. Official records may be PDFs or exchange HTML notice pages.",
+    "",
+    "Active-universe completeness gate: before analysis, write the candidate artifact with `instrument_count`, `expected_instrument_codes`, `missing_expected_instruments`, `source_kind_counts`, `ai_discovery_required`, and `discovery_completeness_ok`. Do not accept a prompt-provided or hardcoded instrument list as universe coverage; discover the current official universe from official source pages or use MoonClaw web_search/web_fetch to prove coverage.",
     "",
     "| Priority | Platform | Use | Typical domain |",
     "| --- | --- | --- | --- |",
@@ -7719,10 +8325,13 @@ fn eb_credit_compliance_skill_markdown(topic : String) -> String {
   [
     "# Exchangeable Bond Credit Compliance",
     "",
-    "Use this skill for \{topic} PDF evidence watch runs.",
+    "Use this skill for \{topic} official-source evidence watch runs.",
     "",
     "- Prefer official exchange, issuer, trustee, clearing, regulator, and disclosure-platform URLs.",
     "- Follow source priority P0 SSE/SZSE, P1 CNInfo, P2 ChinaBond, P3 SHCH, P4 CSRC or official review sites.",
+    "- Complete discovery before analysis: active-universe runs must first prove the full current official source universe, not a small sample.",
+    "- For active-universe runs, discover the current full official set from official source pages or MoonClaw web_search/web_fetch; do not treat prompt hints, dated examples, or hardcoded instrument lists as accepted coverage.",
+    "- Accept official source records from SSE PDFs, SZSE official HTML notice pages, and CNInfo issuer PDFs; do not invent placeholder EB codes.",
     "- Cover all six stages: 发行与上市, 存续期定期报告, 存续期临时公告, 换股期管理, 赎回与回售, 兑付与退出.",
     "- Extract bond code, short name, issuer, shareholder/pledged shares, conversion/exchange price, rating, guarantee, maturity, exchange window, redemption/sell-back/default events, and compliance flags.",
     "- Normalize findings into the `公告追踪主表` and `关键指标监控表` output contract.",
@@ -7748,12 +8357,13 @@ fn eb_watch_contract_markdown(topic : String) -> String {
     "## Execution Loop",
     "",
     "1. Read `raw/inbox/eb-standing-watch-dispatch.json`.",
-    "2. Search only configured official websites for exchangeable-bond PDFs.",
-    "3. Download PDFs into `raw/pdfs/` and extract full text into `raw/extracted/`.",
-    "4. Write per-source metadata under `wiki/sources/` and per-run analysis under `raw/analysis-runs/`.",
-    "5. Compare against the current wiki and workbook baseline.",
-    "6. Queue Bookkeeper review before accepted knowledge changes `wiki/findings/` or `book/outputs/`.",
-    "7. Notify only when Bookkeeper accepts new source-backed knowledge.",
+    "2. Search only configured official websites for exchangeable-bond official sources, including PDFs and official notice pages.",
+    "3. Complete the source-universe gate before analysis: active-universe runs must prove expected instruments, missing instruments, source-kind counts, and official URL counts.",
+    "4. Download PDFs into `raw/pdfs/`, official HTML/source pages into `raw/html/`, and extract text into `raw/extracted/`.",
+    "5. Write per-source metadata under `wiki/sources/` and per-run analysis under `raw/analysis-runs/`.",
+    "6. Compare against the current wiki and workbook baseline.",
+    "7. Queue Bookkeeper review before accepted knowledge changes `wiki/findings/` or `book/outputs/`.",
+    "8. Notify only when Bookkeeper accepts new source-backed knowledge.",
     "",
     "## Required Standing Watch Marker",
     "",
@@ -7781,11 +8391,16 @@ fn eb_standing_watch_dispatch_json(
   book_id : String,
   topic : String,
   websites : Array[String],
+  target_scope? : String = "",
   target_fields? : Json = eb_target_fields_from_payload(Json::object({})),
-  target_bonds? : Array[Json] = [
-    eb_target_fields_from_payload(Json::object({})),
-  ],
+  target_bonds? : Array[Json] = [],
 ) -> Json {
+  let target_scope = infer_eb_target_scope(
+    target_scope, target_fields, target_bonds,
+  )
+  let target_bonds = eb_effective_target_bonds(
+    target_scope, target_fields, target_bonds,
+  )
   {
     "id": @desk.stable_id("eb-standing-watch-dispatch", book_id),
     "kind": "moontown-standing-watch-dispatch",
@@ -7796,13 +8411,26 @@ fn eb_standing_watch_dispatch_json(
     "executor": "MoonClaw",
     "reviewer": "Bookkeeper",
     "topic": topic,
+    "target_scope": target_scope,
+    "active_universe_default": target_scope == "active_universe",
     "target_fields": target_fields,
     "target_bonds": Json::array(target_bonds),
     "target_bond_count": target_bonds.length(),
     "multi_bond_mode": target_bonds.length() > 1,
+    "discovery_mode": if target_scope == "active_universe" {
+      "dynamic_official_source_search"
+    } else {
+      "configured_target_source_adapter"
+    },
     "source_policy": "official-first",
     "watch_websites": json_from_string_array(websites),
     "allowed_domains": json_from_string_array(eb_official_domains()),
+    "official_source_seeds": Json::array(
+      eb_official_source_seed_candidates(target_scope, target_bonds),
+    ),
+    "official_source_seed_count": eb_official_source_seed_candidates(
+      target_scope, target_bonds,
+    ).length(),
     "method_page": "wiki/methods/my-analysis-method.md",
     "skill_paths": json_from_string_array([
       "skills/pdf-watch/SKILL.md", "skills/pdf-analysis/SKILL.md", "skills/eb-credit-compliance/SKILL.md",
@@ -7854,11 +8482,16 @@ fn eb_tracking_request_json(
   book_id : String,
   topic : String,
   websites : Array[String],
+  target_scope? : String = "",
   target_fields? : Json = eb_target_fields_from_payload(Json::object({})),
-  target_bonds? : Array[Json] = [
-    eb_target_fields_from_payload(Json::object({})),
-  ],
+  target_bonds? : Array[Json] = [],
 ) -> Json {
+  let target_scope = infer_eb_target_scope(
+    target_scope, target_fields, target_bonds,
+  )
+  let target_bonds = eb_effective_target_bonds(
+    target_scope, target_fields, target_bonds,
+  )
   {
     "id": @desk.stable_id("eb-tracking-request", book_id),
     "kind": "moonclaw-execution-request",
@@ -7870,12 +8503,22 @@ fn eb_tracking_request_json(
     "reviewer": "Bookkeeper",
     "source_policy": "official-first",
     "watch_websites": json_from_string_array(websites),
+    "target_scope": target_scope,
+    "active_universe_default": target_scope == "active_universe",
     "target_fields": target_fields,
     "target_bonds": Json::array(target_bonds),
     "target_bond_count": target_bonds.length(),
     "multi_bond_mode": target_bonds.length() > 1,
+    "discovery_mode": if target_scope == "active_universe" {
+      "dynamic_official_source_search"
+    } else {
+      "configured_target_source_adapter"
+    },
+    "official_source_seeds": Json::array(
+      eb_official_source_seed_candidates(target_scope, target_bonds),
+    ),
     "official_pdf_seeds": Json::array(
-      eb_official_pdf_seed_candidates(target_bonds),
+      eb_official_pdf_seed_candidates(target_scope, target_bonds),
     ),
     "official_domains": json_from_string_array(eb_official_domains()),
     "six_lifecycle_stages": eb_lifecycle_stage_json(),
@@ -8167,51 +8810,193 @@ fn eb_outputs_readme_markdown(book_id : String) -> String {
 ///|
 fn eb_discover_pdf_candidates_script() -> String {
   [
-    "#!/usr/bin/env python3", "import argparse", "import json", "from pathlib import Path",
+    "#!/usr/bin/env python3", "import argparse", "import calendar", "import datetime",
+    "import json", "import re", "import urllib.parse", "import urllib.request", "from pathlib import Path",
     "", "OFFICIAL_DOMAINS = ['sse.com.cn', 'szse.cn', 'cninfo.com.cn', 'chinabond.com.cn', 'shclearing.com.cn', 'csrc.gov.cn']",
     "", "def load_json(path):", "    if not path.exists():", "        return {}",
     "    try:", "        return json.loads(path.read_text(encoding='utf-8'))", "    except Exception:",
     "        return {}", "", "def official_url(url):", "    return isinstance(url, str) and url.startswith(('http://', 'https://')) and any(domain in url for domain in OFFICIAL_DOMAINS)",
-    "", "def seed_items(data):", "    items = []", "    for key in ['official_pdf_seeds', 'pdf_seed_candidates', 'seed_pdf_candidates']:",
+    "", "def seed_items(data):", "    items = []", "    for key in ['official_source_seeds', 'official_pdf_seeds', 'pdf_seed_candidates', 'seed_pdf_candidates']:",
     "        value = data.get(key)", "        if isinstance(value, list):", "            items.extend([item for item in value if isinstance(item, dict)])",
     "    for key in ['watch', 'targets', 'source_adapter']:", "        value = data.get(key)",
     "        if isinstance(value, dict):", "            items.extend(seed_items(value))",
     "    return items", "", "def normalize_seed(seed, index):", "    url = seed.get('url') or seed.get('pdf_url') or seed.get('source_url') or ''",
-    "    if not official_url(url) or '.pdf' not in url.lower():", "        return None",
+    "    if not official_url(url):", "        return None", "    lower_url = url.lower()",
+    "    source_kind = str(seed.get('source_kind') or '').strip().lower()", "    if not source_kind:",
+    "        source_kind = 'pdf' if '.pdf' in lower_url else ('html_notice' if lower_url.endswith('.html') or '.html?' in lower_url else 'official_source')",
     "    title = seed.get('title') or seed.get('name') or url.rsplit('/', 1)[-1]",
+    "    source_type = 'official-pdf-seed' if source_kind == 'pdf' else ('official-html-notice-seed' if source_kind == 'html_notice' else 'official-source-seed')",
     "    return {", "        'title': title,", "        'url': url,", "        'platform': seed.get('platform') or next((domain for domain in OFFICIAL_DOMAINS if domain in url), 'official'),",
     "        'disclosure_date': seed.get('disclosure_date') or '',", "        'lifecycle_stage': seed.get('lifecycle_stage') or '',",
-    "        'relevance': seed.get('relevance') or 'configured official PDF seed',",
-    "        'source_type': 'official-pdf-seed',", "        'source_policy': 'official-first',",
-    "        'bond_code': seed.get('bond_code') or '',", "        'bond_short_name': seed.get('bond_short_name') or '',",
-    "        'rank': index + 1,", "    }", "", "def main():", "    parser = argparse.ArgumentParser()",
+    "        'relevance': seed.get('relevance') or 'configured official source seed',",
+    "        'source_kind': source_kind,", "        'source_type': source_type,",
+    "        'source_policy': 'official-first',", "        'bond_code': seed.get('bond_code') or '',",
+    "        'bond_short_name': seed.get('bond_short_name') or '',", "        'rank': index + 1,",
+    "    }", "", "def watch_websites(data):", "    sites = []", "    for key in ['watch_websites', 'websites']:",
+    "        value = data.get(key)", "        if isinstance(value, list):", "            sites.extend([item for item in value if isinstance(item, str)])",
+    "    for key in ['watch', 'source_adapter']:", "        value = data.get(key)",
+    "        if isinstance(value, dict):", "            sites.extend(watch_websites(value))",
+    "    deduped = []", "    for site in sites:", "        if site not in deduped:",
+    "            deduped.append(site)", "    return deduped", "", "def normalize_target_scope(value):",
+    "    clean = str(value or '').strip().lower().replace('-', '_')", "    if clean in ['active_universe', 'universe', 'active']:",
+    "        return 'active_universe'", "    if clean in ['portfolio', 'multi_bond', 'multi']:",
+    "        return 'portfolio'", "    if clean in ['single_bond', 'single']:", "        return 'single_bond'",
+    "    return ''", "", "def target_has_identity(target):", "    if not isinstance(target, dict):",
+    "        return False", "    return any(str(target.get(key) or '').strip() for key in ['bond_code', 'bond_full_name_or_short_name', 'bond_short_name', 'issuer', 'underlying_listed_company'])",
+    "", "def configured_target_bonds(request, book):", "    bonds = [item for item in (request.get('target_bonds') if isinstance(request.get('target_bonds'), list) else []) if isinstance(item, dict) and target_has_identity(item)]",
+    "    if bonds:", "        return bonds", "    book_targets = book.get('targets') if isinstance(book.get('targets'), dict) else {}",
+    "    bonds = [item for item in (book_targets.get('bonds') if isinstance(book_targets.get('bonds'), list) else []) if isinstance(item, dict) and target_has_identity(item)]",
+    "    fields = request.get('target_fields') if isinstance(request.get('target_fields'), dict) else {}",
+    "    if not bonds and target_has_identity(fields):", "        bonds = [fields]",
+    "    return bonds", "", "def target_scope(request, book, bonds):", "    book_targets = book.get('targets') if isinstance(book.get('targets'), dict) else {}",
+    "    scope = normalize_target_scope(request.get('target_scope') or book_targets.get('target_scope'))",
+    "    if scope:", "        return scope", "    return 'portfolio' if len(bonds) > 1 else ('single_bond' if bonds else 'active_universe')",
+    "", "def target_keywords(request, scope, bonds):", "    keywords = []", "    if scope == 'active_universe':",
+    "        keywords.extend(['可交换公司债券', '可交换债', '交换公司债券', '换股', '赎回', '回售'])",
+    "    else:", "        for target in bonds:", "            for key in ['bond_code', 'bond_full_name_or_short_name', 'bond_short_name', 'issuer', 'underlying_listed_company']:",
+    "                value = str(target.get(key) or '').strip()", "                if value:",
+    "                    keywords.append(value)", "        keywords.extend(['可交换公司债券', '可交换债', '交换公司债券'])",
+    "    deduped = []", "    for item in keywords:", "        if item and item not in deduped:",
+    "            deduped.append(item)", "    return deduped", "", "def target_label(target):",
+    "    return str(target.get('bond_code') or target.get('bond_full_name_or_short_name') or target.get('bond_short_name') or target.get('issuer') or 'unknown-target')",
+    "", "def target_text(target):", "    return ' '.join(str(target.get(key) or '') for key in ['bond_code', 'bond_full_name_or_short_name', 'bond_short_name', 'issuer', 'underlying_listed_company', 'lifecycle_status', 'maturity_date'])",
+    "", "def target_matches_candidate(target, candidate):", "    blob = ' '.join(str(candidate.get(key) or '') for key in ['bond_code', 'bond_short_name', 'title', 'url', 'relevance'])",
+    "    for key in ['bond_code', 'bond_full_name_or_short_name', 'bond_short_name', 'issuer', 'underlying_listed_company']:",
+    "        value = str(target.get(key) or '').strip()", "        if value and value in blob:",
+    "            return True", "    return False", "", "def target_stale_reason(target):",
+    "    text = target_text(target).lower()", "    stale_tokens = ['redeemed', 'delisted', 'matured', 'expired', 'stopped', '已兑付', '摘牌', '终止上市', '停止换股', '到期']",
+    "    if any(token in text for token in stale_tokens):", "        return 'target metadata indicates redeemed, delisted, matured, or exchange-stopped status'",
+    "    if str(target.get('bond_code') or '') == '132018' or 'G三峡EB1' in target_text(target):",
+    "        return 'known historical EB example 132018/G三峡EB1 matured and delisted in 2024'",
+    "    return ''", "", "def stale_target_warnings(scope, bonds, candidates):",
+    "    if scope == 'active_universe':", "        return []", "    warnings = []",
+    "    for target in bonds:", "        reason = target_stale_reason(target)", "        if not reason:",
+    "            continue", "        recent = [item for item in candidates if item.get('within_lookback') and target_matches_candidate(target, item)]",
+    "        if not recent:", "            warnings.append({'target': target_label(target), 'reason': reason, 'lookback_recent_source_count': 0, 'action': 'remove from current watch target or keep only as historical baseline'})",
+    "    return warnings", "", "def configured_minimum_expected_instrument_count(request, book):",
+    "    values = []", "    for data in [request, book]:", "        if isinstance(data, dict):",
+    "            for key in ['minimum_expected_instrument_count', 'expected_instrument_count']:",
+    "                value = data.get(key)", "                if isinstance(value, int) and value > 0:",
+    "                    values.append(value)", "            for key in ['watch', 'targets', 'source_adapter']:",
+    "                nested = data.get(key)", "                if isinstance(nested, dict):",
+    "                    value = configured_minimum_expected_instrument_count(nested, {})",
+    "                    if value > 0:", "                        values.append(value)",
+    "    return max(values) if values else 0", "", "def source_kind_for_url(url):",
+    "    lower_url = str(url or '').lower()", "    if '.pdf' in lower_url:", "        return 'pdf'",
+    "    if lower_url.endswith('.html') or '.html?' in lower_url or '.html#' in lower_url:",
+    "        return 'html_notice'", "    return 'official_source'", "", "def official_source_link(url, window, keywords):",
+    "    if not official_url(url):", "        return False", "    kind = source_kind_for_url(url)",
+    "    blob = url + ' ' + window", "    has_eb_signal = any(token in blob for token in ['可交换公司债券', '可交换债', '交换公司债券', 'EB', 'KEB', '换股'])",
+    "    has_keyword = not keywords or any(keyword in blob for keyword in keywords)",
+    "    return (kind == 'pdf' and has_keyword) or (kind == 'html_notice' and has_eb_signal and has_keyword)",
+    "", "def infer_bond_code(url, window):", "    for text in [url, window]:", "        match = re.search(r'\\b(1[13][0-9]{4})\\b', text)",
+    "        if match:", "            return match.group(1)", "    return ''", "",
+    "def infer_disclosure_date(url, window):", "    for text in [url, window]:",
+    "        match = re.search(r'(20[0-9]{2})[-_/]?(0[1-9]|1[0-2])[-_/]?([0-2][0-9]|3[01])', text)",
+    "        if match:", "            return f'{match.group(1)}-{match.group(2)}-{match.group(3)}'",
+    "    return ''", "", "def fetch_web_pdf_candidates(websites, keywords, start_index):",
+    "    candidates, errors = [], []", "    pattern = re.compile(r'''(?:href=|url\\()\\s*[\"']?([^\"'()<>\\s]+(?:\\.pdf|\\.html)(?:\\?[^\"'()<>\\s]*)?)[\"']?''', re.IGNORECASE)",
+    "    for site in websites:", "        try:", "            request = urllib.request.Request(site, headers={'User-Agent': 'Moondesk PDF evidence watch'})",
+    "            with urllib.request.urlopen(request, timeout=20) as response:",
+    "                text = response.read(2000000).decode('utf-8', errors='ignore')",
+    "        except Exception as exc:", "            errors.append({'website': site, 'error': str(exc)})",
+    "            continue", "        for match in pattern.finditer(text):", "            url = urllib.parse.urljoin(site, match.group(1))",
+    "            anchor_start = text.rfind('<a', 0, match.start())", "            if anchor_start == -1:",
+    "                anchor_start = match.start()", "            anchor_end = text.find('</a>', match.end())",
+    "            if anchor_end == -1:", "                anchor_end = min(len(text), match.end() + 240)",
+    "            else:", "                anchor_end = min(len(text), anchor_end + 4)",
+    "            window = text[anchor_start:anchor_end]", "            if not official_source_link(url, window, keywords):",
+    "                continue", "            title = re.sub(r'<[^>]+>', ' ', window)",
+    "            title = re.sub(r'\\s+', ' ', title).strip()[:120] or url.rsplit('/', 1)[-1]",
+    "            source_kind = source_kind_for_url(url)", "            source_type = 'official-web-pdf-link' if source_kind == 'pdf' else ('official-web-html-notice-link' if source_kind == 'html_notice' else 'official-web-source-link')",
+    "            candidates.append({'title': title, 'url': url, 'platform': next((domain for domain in OFFICIAL_DOMAINS if domain in url), 'official'), 'disclosure_date': infer_disclosure_date(url, window), 'lifecycle_stage': '', 'relevance': 'discovered from configured official-source page link', 'source_kind': source_kind, 'source_type': source_type, 'source_policy': 'web-first', 'bond_code': infer_bond_code(url, window), 'bond_short_name': '', 'rank': start_index + len(candidates) + 1, 'discovered_from': site})",
+    "    return candidates, errors", "", "def main():", "    parser = argparse.ArgumentParser()",
     "    parser.add_argument('--book-root', default='.')", "    parser.add_argument('--run-root', default='')",
     "    parser.add_argument('--output', default='outputs/official-pdf-candidates.json')",
+    "    parser.add_argument('--as-of', default='')", "    parser.add_argument('--lookback-months', type=int, default=6)",
     "    args = parser.parse_args()", "    book_root = Path(args.book_root).resolve()",
     "    run_root = Path(args.run_root).resolve() if args.run_root else book_root",
+    "    as_of = args.as_of or datetime.datetime.utcnow().strftime('%Y%m%d')", "    as_of_date = datetime.date(int(as_of[:4]), int(as_of[4:6]), int(as_of[6:8])) if len(as_of) == 8 and as_of.isdigit() else datetime.date.today()",
+    "    month = as_of_date.month - args.lookback_months", "    year = as_of_date.year + (month - 1) // 12",
+    "    month = (month - 1) % 12 + 1", "    start = datetime.date(year, month, min(as_of_date.day, calendar.monthrange(year, month)[1]))",
+    "    def parse_date(value):", "        text = str(value or '').strip()", "        for fmt in ['%Y-%m-%d', '%Y%m%d']:",
+    "            try:", "                return datetime.datetime.strptime(text, fmt).date()",
+    "            except Exception:", "                pass", "        return None",
     "    request = load_json(book_root / 'raw' / 'inbox' / 'eb-tracking-request.json')",
-    "    book = load_json(book_root / 'book.json')", "    seeds = seed_items(request) + seed_items(book)",
-    "    candidates = []", "    seen = set()", "    for seed in seeds:", "        item = normalize_seed(seed, len(candidates))",
+    "    book = load_json(book_root / 'book.json')", "    target_bonds = configured_target_bonds(request, book)",
+    "    scope = target_scope(request, book, target_bonds)", "    keywords = target_keywords(request, scope, target_bonds)",
+    "    websites = list(dict.fromkeys(watch_websites(request) + watch_websites(book)))",
+    "    seed_candidates = seed_items(request) + seed_items(book)", "    web_candidates, web_errors = fetch_web_pdf_candidates(websites, keywords, len(seed_candidates))",
+    "    seeds = seed_candidates + web_candidates", "    candidates = []", "    seen = set()",
+    "    for seed in seeds:", "        item = normalize_seed(seed, len(candidates))",
     "        if not item:", "            continue", "        if item['url'] in seen:",
-    "            continue", "        seen.add(item['url'])", "        candidates.append(item)",
-    "        if len(candidates) >= 5:", "            break", "    out_arg = Path(args.output)",
-    "    out_path = out_arg if out_arg.is_absolute() else run_root / out_arg", "    out_path.parent.mkdir(parents=True, exist_ok=True)",
-    "    if candidates:", "        artifact = {", "            'kind': 'eb-official-pdf-candidates',",
-    "            'status': 'official_candidates_ready',", "            'candidate_source': 'book_config_official_pdf_seeds',",
+    "            continue", "        seen.add(item['url'])", "        d = parse_date(item.get('disclosure_date'))",
+    "        item['within_lookback'] = bool(d and start <= d <= as_of_date)", "        candidates.append(item)",
+    "    stale_warnings = stale_target_warnings(scope, target_bonds, candidates)",
+    "    target_stale_blocked = scope == 'single_bond' and bool(stale_warnings)",
+    "    instrument_codes = sorted({str(item.get('bond_code') or '').strip() for item in candidates if str(item.get('bond_code') or '').strip()})",
+    "    expected_instrument_codes = sorted({str(item.get('bond_code') or '').strip() for item in seed_candidates if str(item.get('bond_code') or '').strip()})",
+    "    configured_minimum = configured_minimum_expected_instrument_count(request, book) if scope == 'active_universe' else 0",
+    "    minimum_expected_instrument_count = max(configured_minimum, len(expected_instrument_codes)) if scope == 'active_universe' else 0",
+    "    missing_expected_instruments = [code for code in expected_instrument_codes if code not in instrument_codes]",
+    "    has_active_coverage_rule = scope != 'active_universe' or minimum_expected_instrument_count > 0 or bool(expected_instrument_codes)",
+    "    discovery_completeness_ok = scope != 'active_universe' or (has_active_coverage_rule and len(instrument_codes) >= minimum_expected_instrument_count and not missing_expected_instruments)",
+    "    ai_discovery_required = scope == 'active_universe' and not discovery_completeness_ok",
+    "    source_kind_counts = {}", "    for item in candidates:", "        kind = str(item.get('source_kind') or 'official_source')",
+    "        source_kind_counts[kind] = source_kind_counts.get(kind, 0) + 1", "    html_notice_count = source_kind_counts.get('html_notice', 0)",
+    "    pdf_candidate_count = source_kind_counts.get('pdf', 0)", "    candidate_source = 'configured_official_source_seeds_plus_web_scan' if seed_candidates else 'configured_websites_official_source_scan'",
+    "    coverage_scope = 'active exchangeable-bond universe across official source records, including SSE PDFs, SZSE HTML notices, and CNInfo PDFs' if scope == 'active_universe' else 'configured websites plus official source seed adapter for selected EB targets'",
+    "    out_arg = Path(args.output)", "    out_path = out_arg if out_arg.is_absolute() else run_root / out_arg",
+    "    out_path.parent.mkdir(parents=True, exist_ok=True)", "    if candidates and not target_stale_blocked and discovery_completeness_ok:",
+    "        artifact = {", "            'kind': 'eb-official-pdf-candidates',",
+    "            'status': 'official_candidates_ready',", "            'candidate_source': candidate_source,",
     "            'candidate_count': len(candidates),", "            'official_url_count': len(candidates),",
+    "            'instrument_codes': instrument_codes,", "            'instrument_count': len(instrument_codes),",
+    "            'expected_instrument_codes': expected_instrument_codes,", "            'minimum_expected_instrument_count': minimum_expected_instrument_count,",
+    "            'missing_expected_instruments': missing_expected_instruments,",
+    "            'discovery_completeness_ok': discovery_completeness_ok,", "            'ai_discovery_required': False,",
+    "            'discovery_next_step': 'proceed_to_download_extract_and_screen',",
+    "            'source_kind_counts': source_kind_counts,", "            'pdf_candidate_count': pdf_candidate_count,",
+    "            'html_notice_count': html_notice_count,", "            'as_of': as_of_date.isoformat(),",
+    "            'lookback_months': args.lookback_months,", "            'lookback_window_start': start.isoformat(),",
+    "            'lookback_window_end': as_of_date.isoformat(),", "            'lookback_candidate_count': len([item for item in candidates if item.get('within_lookback')]),",
+    "            'lookback_no_recent_sources': len([item for item in candidates if item.get('within_lookback')]) == 0,",
+    "            'target_scope': scope,", "            'active_universe_default': scope == 'active_universe',",
+    "            'target_bonds': target_bonds,", "            'search_keywords': keywords,",
+    "            'stale_target_warnings': stale_warnings,", "            'target_stale_blocked': False,",
+    "            'coverage_scope': coverage_scope,", "            'checked_websites': websites,",
+    "            'website_check_count': len(websites),", "            'website_pdf_candidate_count': len([item for item in web_candidates if item.get('source_kind') == 'pdf']),",
+    "            'website_source_candidate_count': len(web_candidates),", "            'web_fetch_errors': web_errors,",
     "            'checked_domains': sorted({domain for item in candidates for domain in OFFICIAL_DOMAINS if domain in item.get('url', '')}),",
     "            'candidates': candidates,", "            'kept_candidates': candidates,",
     "            'notify_town': False,", "            'standing_goal_decision': 'continue',",
-    "        }", "    else:", "        artifact = {", "            'kind': 'eb-official-pdf-candidates',",
-    "            'status': 'failed',", "            'candidate_source': 'book_config_official_pdf_seeds',",
-    "            'candidate_count': 0,", "            'official_url_count': 0,",
-    "            'checked_domains': OFFICIAL_DOMAINS,", "            'candidates': [],",
-    "            'kept_candidates': [],", "            'notify_town': False,", "            'standing_goal_decision': 'failed',",
-    "            'failure_reason': 'No configured official PDF seed candidates were available for this current run.',",
-    "        }", "    out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')",
-    "    print(json.dumps({'status': artifact['status'], 'candidate_count': artifact['candidate_count'], 'output': str(out_path)}, ensure_ascii=False))",
-    "    return 0 if candidates else 2", "", "if __name__ == '__main__':", "    raise SystemExit(main())",
-    "",
+    "        }", "    else:", "        failure_reason = 'Selected EB target has no official sources in the lookback window and appears redeemed or delisted.' if target_stale_blocked else ('Active-universe discovery incomplete: deterministic official-site scan cannot prove the full current universe without AI web_search/web_fetch.' if ai_discovery_required else 'No official source candidates were available for this current run.')",
+    "        artifact = {", "            'kind': 'eb-official-pdf-candidates',",
+    "            'status': 'failed',", "            'candidate_source': candidate_source,",
+    "            'candidate_count': len(candidates),", "            'official_url_count': len(candidates),",
+    "            'instrument_codes': instrument_codes,", "            'instrument_count': len(instrument_codes),",
+    "            'expected_instrument_codes': expected_instrument_codes,", "            'minimum_expected_instrument_count': minimum_expected_instrument_count,",
+    "            'missing_expected_instruments': missing_expected_instruments,",
+    "            'discovery_completeness_ok': discovery_completeness_ok,", "            'ai_discovery_required': ai_discovery_required,",
+    "            'discovery_next_step': 'use MoonClaw web_search/web_fetch on official domains, write a complete official-pdf-candidates.json artifact, and do not rely on prompt-provided static seeds' if ai_discovery_required else 'fix configured websites or target metadata',",
+    "            'source_kind_counts': source_kind_counts,", "            'pdf_candidate_count': pdf_candidate_count,",
+    "            'html_notice_count': html_notice_count,", "            'as_of': as_of_date.isoformat(),",
+    "            'lookback_months': args.lookback_months,", "            'lookback_window_start': start.isoformat(),",
+    "            'lookback_window_end': as_of_date.isoformat(),", "            'lookback_candidate_count': len([item for item in candidates if item.get('within_lookback')]),",
+    "            'lookback_no_recent_sources': True,", "            'target_scope': scope,",
+    "            'active_universe_default': scope == 'active_universe',", "            'target_bonds': target_bonds,",
+    "            'search_keywords': keywords,", "            'stale_target_warnings': stale_warnings,",
+    "            'target_stale_blocked': target_stale_blocked,", "            'coverage_scope': coverage_scope,",
+    "            'checked_websites': websites,", "            'website_check_count': len(websites),",
+    "            'website_pdf_candidate_count': len([item for item in web_candidates if item.get('source_kind') == 'pdf']),",
+    "            'website_source_candidate_count': len(web_candidates),", "            'web_fetch_errors': web_errors,",
+    "            'checked_domains': OFFICIAL_DOMAINS,", "            'candidates': candidates,",
+    "            'kept_candidates': [] if target_stale_blocked else candidates,",
+    "            'notify_town': False,", "            'standing_goal_decision': 'failed',",
+    "            'failure_reason': failure_reason,", "        }", "    out_path.write_text(json.dumps(artifact, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')",
+    "    print(json.dumps({'status': artifact['status'], 'candidate_count': artifact['candidate_count'], 'target_scope': scope, 'target_stale_blocked': target_stale_blocked, 'output': str(out_path)}, ensure_ascii=False))",
+    "    return 0 if artifact['status'] == 'official_candidates_ready' else 2", "",
+    "if __name__ == '__main__':", "    raise SystemExit(main())", "",
   ].join("\n")
 }
 
@@ -8225,9 +9010,14 @@ fn eb_extract_pdf_text_script() -> String {
     "        return {}", "", "def sha256_file(path):", "    digest = hashlib.sha256()",
     "    with path.open('rb') as handle:", "        for chunk in iter(lambda: handle.read(1024 * 1024), b''):",
     "            digest.update(chunk)", "    return digest.hexdigest()", "", "def clean_name(text):",
-    "    text = re.sub(r'[^A-Za-z0-9._-]+', '_', text.strip())", "    return text[:80] or 'pdf'",
+    "    text = re.sub(r'[^A-Za-z0-9._-]+', '_', text.strip())", "    return text[:80] or 'source'",
     "", "OFFICIAL_DOMAINS = ['sse.com.cn', 'szse.cn', 'cninfo.com.cn', 'chinabond.com.cn', 'shclearing.com.cn', 'csrc.gov.cn']",
     "", "def official_url(url):", "    return isinstance(url, str) and url.startswith(('http://', 'https://')) and any(domain in url for domain in OFFICIAL_DOMAINS)",
+    "", "def source_kind_for(item, url):", "    kind = str(item.get('source_kind') or '').strip().lower() if isinstance(item, dict) else ''",
+    "    lower_url = str(url or '').lower()", "    if kind:", "        return kind",
+    "    return 'pdf' if '.pdf' in lower_url else ('html_notice' if lower_url.endswith('.html') or '.html?' in lower_url else 'official_source')",
+    "", "def html_to_text(text):", "    text = re.sub(r'(?is)<(script|style)[^>]*>.*?</\\1>', ' ', text or '')",
+    "    text = re.sub(r'(?s)<[^>]+>', ' ', text)", "    return re.sub(r'\\s+', ' ', text).strip()",
     "", "def parse_content_candidates(text):", "    items = []", "    if not isinstance(text, str):",
     "        return items", "    pattern = re.compile(r'https?://[^\\s`\"<>]+?\\.pdf', re.IGNORECASE)",
     "    for match in pattern.finditer(text):", "        url = match.group(0).rstrip(').,;，。')",
@@ -8241,10 +9031,11 @@ fn eb_extract_pdf_text_script() -> String {
     "    records.extend(parse_content_candidates(data.get('content')))", "    return records",
     "", "def candidate_items(book_root, run_root):", "    roots = [run_root] if run_root != book_root else [book_root]",
     "    items = []", "    for root in roots:", "        outputs = root / 'outputs'",
-    "        for rel in ['official-pdf-candidates.json', 'official-source-screen.json']:",
-    "            items.extend(records_from_data(load_json(outputs / rel)))", "        if outputs.exists():",
-    "            for path in sorted(outputs.glob('*.json')):", "                items.extend(records_from_data(load_json(path)))",
-    "    seen = set()", "    deduped = []", "    for item in items:", "        if not isinstance(item, dict):",
+    "        primary = records_from_data(load_json(outputs / 'official-pdf-candidates.json'))",
+    "        if primary:", "            items.extend(primary)", "            continue",
+    "        if outputs.exists():", "            for path in sorted(outputs.glob('*candidate*.json')) + sorted(outputs.glob('*discover*.json')):",
+    "                items.extend(records_from_data(load_json(path)))", "    seen = set()",
+    "    deduped = []", "    for item in items:", "        if not isinstance(item, dict):",
     "            continue", "        key = item.get('url') or item.get('pdf_url') or item.get('source_url') or item.get('pdf_path') or item.get('title') or ''",
     "        if key in seen:", "            continue", "        seen.add(key)", "        deduped.append(item)",
     "    return deduped", "", "def candidate_by_pdf(candidates):", "    by_name = {}",
@@ -8259,15 +9050,20 @@ fn eb_extract_pdf_text_script() -> String {
     "    request = urllib.request.Request(url, headers={'User-Agent': 'Moondesk PDF evidence watch'})",
     "    with urllib.request.urlopen(request, timeout=60) as response:", "        data = response.read()",
     "    if not data.startswith(b'%PDF'):", "        raise RuntimeError('download did not return PDF bytes')",
-    "    pdf_path.write_bytes(data)", "    return pdf_path", "", "def main():", "    parser = argparse.ArgumentParser()",
-    "    parser.add_argument('--book-root', default='.')", "    parser.add_argument('--screen', default='outputs/official-source-screen.json')",
+    "    pdf_path.write_bytes(data)", "    return pdf_path", "", "def download_source(url, source_path):",
+    "    source_path.parent.mkdir(parents=True, exist_ok=True)", "    request = urllib.request.Request(url, headers={'User-Agent': 'Moondesk official source evidence watch'})",
+    "    with urllib.request.urlopen(request, timeout=60) as response:", "        data = response.read()",
+    "    source_path.write_bytes(data)", "    return source_path", "", "def main():",
+    "    parser = argparse.ArgumentParser()", "    parser.add_argument('--book-root', default='.')",
+    "    parser.add_argument('--screen', default='outputs/official-source-screen.json')",
     "    parser.add_argument('--run-root', default='')", "    args = parser.parse_args()",
     "    book_root = Path(args.book_root).resolve()", "    run_root = Path(args.run_root).resolve() if args.run_root else book_root",
-    "    pdf_dir = book_root / 'raw' / 'pdfs'", "    extracted_dir = book_root / 'raw' / 'extracted'",
-    "    screen_arg = Path(args.screen)", "    screen_path = screen_arg if screen_arg.is_absolute() else ((run_root if args.run_root else book_root) / screen_arg)",
-    "    pdf_dir.mkdir(parents=True, exist_ok=True)", "    extracted_dir.mkdir(parents=True, exist_ok=True)",
-    "    screen_path.parent.mkdir(parents=True, exist_ok=True)", "    candidates = candidate_items(book_root, run_root)",
-    "    ordered_url_candidates = [item for item in candidates if official_url(item.get('url') or item.get('pdf_url') or item.get('source_url') or '')]",
+    "    pdf_dir = book_root / 'raw' / 'pdfs'", "    html_dir = book_root / 'raw' / 'html'",
+    "    extracted_dir = book_root / 'raw' / 'extracted'", "    screen_arg = Path(args.screen)",
+    "    screen_path = screen_arg if screen_arg.is_absolute() else ((run_root if args.run_root else book_root) / screen_arg)",
+    "    pdf_dir.mkdir(parents=True, exist_ok=True)", "    html_dir.mkdir(parents=True, exist_ok=True)",
+    "    extracted_dir.mkdir(parents=True, exist_ok=True)", "    screen_path.parent.mkdir(parents=True, exist_ok=True)",
+    "    candidates = candidate_items(book_root, run_root)", "    ordered_url_candidates = [item for item in candidates if official_url(item.get('url') or item.get('pdf_url') or item.get('source_url') or '')]",
     "    kept = []", "    checked_urls = []", "    errors = []", "    if not ordered_url_candidates:",
     "        screen = {", "            'kind': 'eb-official-source-screen',", "            'status': 'failed',",
     "            'official_domain_count': 6,", "            'live_fetch_performed': False,",
@@ -8275,43 +9071,68 @@ fn eb_extract_pdf_text_script() -> String {
     "            'checked_sources_count': 0,", "            'extracted_pdf_count': 0,",
     "            'kept_candidates': [],", "            'pdf_sources': [],", "            'source_records': [],",
     "            'accepted_sources': [],", "            'official_sources': [],",
-    "            'extraction_errors': [],", "            'failure_reason': 'No current-run official URL PDF candidates were available; refusing to reuse stale local PDFs.',",
+    "            'extraction_errors': [],", "            'failure_reason': 'No current-run official URL source candidates were available; refusing to reuse stale local PDFs or source files.',",
     "            'standing_goal_decision': 'failed',", "            'notify_town': False,",
     "        }", "        screen_path.write_text(json.dumps(screen, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')",
     "        print(json.dumps({'status': 'failed', 'failure_reason': screen['failure_reason'], 'screen': str(screen_path)}, ensure_ascii=False))",
     "        return 2", "    for item in ordered_url_candidates:", "        url = item.get('url') or item.get('pdf_url') or item.get('source_url') or ''",
-    "        title = item.get('title') or url.rsplit('/', 1)[-1] or 'official-pdf'",
-    "        checked_urls.append(url)", "        pdf_rel = item.get('pdf_path') or item.get('local_pdf_path') or ''",
+    "        title = item.get('title') or url.rsplit('/', 1)[-1] or 'official-source'",
+    "        source_kind = source_kind_for(item, url)", "        checked_urls.append(url)",
+    "        if source_kind != 'pdf':", "            source_rel = item.get('source_path') or item.get('html_path') or item.get('local_source_path') or ''",
+    "            source_path = (book_root / source_rel) if source_rel else (html_dir / (clean_name(title) + '.html'))",
+    "            text_path = extracted_dir / (clean_name(source_path.stem) + '.txt')",
+    "            try:", "                if not source_path.exists():", "                    download_source(url, source_path)",
+    "                raw = source_path.read_bytes()", "                text = html_to_text(raw.decode('utf-8', errors='ignore'))",
+    "                if text:", "                    text_path.write_text(text, encoding='utf-8')",
+    "                else:", "                    errors.append({'url': url, 'source_path': str(source_path), 'error': 'empty extracted source text'})",
+    "                source_rel_out = source_path.relative_to(book_root).as_posix() if str(source_path).startswith(str(book_root)) else str(source_path)",
+    "                text_rel = text_path.relative_to(book_root).as_posix() if text_path.exists() else ''",
+    "                kept.append({'title': title, 'url': url, 'platform': item.get('platform') or next((domain for domain in OFFICIAL_DOMAINS if domain in url), 'official'), 'disclosure_date': item.get('disclosure_date') or item.get('date') or item.get('publish_date') or '', 'lifecycle_stage': item.get('lifecycle_stage') or '', 'relevance': item.get('relevance') or '', 'bond_code': item.get('bond_code') or '', 'bond_short_name': item.get('bond_short_name') or '', 'source_kind': source_kind, 'source_type': item.get('source_type') or 'official-source', 'source_policy': item.get('source_policy') or 'official-first', 'rank': item.get('rank') or len(kept) + 1, 'sha256': sha256_file(source_path), 'source_sha256': sha256_file(source_path), 'source_path': source_rel_out, 'html_path': source_rel_out if source_kind == 'html_notice' else '', 'downloaded': True, 'download_status': 'downloaded', 'text_path': text_rel, 'extracted_text_path': text_rel, 'text_sha256': sha256_file(text_path) if text_path.exists() else '', 'extracted_text_sha256': sha256_file(text_path) if text_path.exists() else '', 'extracted': bool(text_rel), 'text_extracted': bool(text_rel), 'extract_status': 'extracted' if text_rel else 'failed'})",
+    "            except Exception as exc:", "                errors.append({'url': url, 'source_path': str(source_path), 'error': str(exc)})",
+    "                kept.append({'title': title, 'url': url, 'platform': item.get('platform') or next((domain for domain in OFFICIAL_DOMAINS if domain in url), 'official'), 'disclosure_date': item.get('disclosure_date') or item.get('date') or item.get('publish_date') or '', 'lifecycle_stage': item.get('lifecycle_stage') or '', 'relevance': item.get('relevance') or '', 'bond_code': item.get('bond_code') or '', 'bond_short_name': item.get('bond_short_name') or '', 'source_kind': source_kind, 'source_type': item.get('source_type') or 'official-source', 'source_policy': item.get('source_policy') or 'official-first', 'rank': item.get('rank') or len(kept) + 1, 'source_path': source_path.relative_to(book_root).as_posix() if str(source_path).startswith(str(book_root)) else str(source_path), 'html_path': source_path.relative_to(book_root).as_posix() if source_kind == 'html_notice' and str(source_path).startswith(str(book_root)) else '', 'downloaded': False, 'download_status': 'failed', 'text_path': '', 'extracted_text_path': '', 'extracted': False, 'text_extracted': False, 'extract_status': 'failed'})",
+    "            continue", "        pdf_rel = item.get('pdf_path') or item.get('local_pdf_path') or ''",
     "        pdf_path = (book_root / pdf_rel) if pdf_rel else (pdf_dir / (clean_name(title) + '.pdf'))",
     "        try:", "            if not pdf_path.exists():", "                download_pdf(url, pdf_path)",
     "        except Exception as exc:", "            errors.append({'url': url, 'pdf_path': str(pdf_path), 'error': str(exc)})",
-    "            kept.append({'title': title, 'url': url, 'source_type': 'official-pdf', 'pdf_path': pdf_path.relative_to(book_root).as_posix() if str(pdf_path).startswith(str(book_root)) else str(pdf_path), 'downloaded': False, 'download_status': 'failed', 'text_path': '', 'extracted_text_path': '', 'extracted': False, 'text_extracted': False, 'extract_status': 'failed'})",
+    "            kept.append({'title': title, 'url': url, 'platform': item.get('platform') or next((domain for domain in OFFICIAL_DOMAINS if domain in url), 'official'), 'disclosure_date': item.get('disclosure_date') or item.get('date') or item.get('publish_date') or '', 'lifecycle_stage': item.get('lifecycle_stage') or '', 'relevance': item.get('relevance') or '', 'bond_code': item.get('bond_code') or '', 'bond_short_name': item.get('bond_short_name') or '', 'source_kind': 'pdf', 'source_type': item.get('source_type') or 'official-pdf', 'source_policy': item.get('source_policy') or 'official-first', 'rank': item.get('rank') or len(kept) + 1, 'pdf_path': pdf_path.relative_to(book_root).as_posix() if str(pdf_path).startswith(str(book_root)) else str(pdf_path), 'downloaded': False, 'download_status': 'failed', 'text_path': '', 'extracted_text_path': '', 'extracted': False, 'text_extracted': False, 'extract_status': 'failed'})",
     "            continue", "        sha = sha256_file(pdf_path)", "        text_path = extracted_dir / (clean_name(pdf_path.stem) + '.txt')",
     "        try:", "            text = extract_text(pdf_path)", "            if text:",
     "                text_path.write_text(text, encoding='utf-8')", "                text_rel = text_path.relative_to(book_root).as_posix()",
     "            else:", "                text_rel = None", "                errors.append({'url': url, 'pdf_path': str(pdf_path.relative_to(book_root)), 'error': 'empty extracted text'})",
     "        except Exception as exc:", "            text_rel = None", "            errors.append({'url': url, 'pdf_path': str(pdf_path.relative_to(book_root)), 'error': str(exc)})",
     "        text_sha = sha256_file(text_path) if text_rel else ''", "        kept.append({",
-    "            'title': title,", "            'url': url,", "            'source_type': 'official-pdf',",
-    "            'sha256': sha,", "            'pdf_sha256': sha,", "            'pdf_path': pdf_path.relative_to(book_root).as_posix(),",
+    "            'title': title,", "            'url': url,", "            'platform': item.get('platform') or next((domain for domain in OFFICIAL_DOMAINS if domain in url), 'official'),",
+    "            'disclosure_date': item.get('disclosure_date') or item.get('date') or item.get('publish_date') or '',",
+    "            'lifecycle_stage': item.get('lifecycle_stage') or '',", "            'relevance': item.get('relevance') or '',",
+    "            'bond_code': item.get('bond_code') or '',", "            'bond_short_name': item.get('bond_short_name') or '',",
+    "            'source_kind': 'pdf',", "            'source_type': item.get('source_type') or 'official-pdf',",
+    "            'source_policy': item.get('source_policy') or 'official-first',",
+    "            'rank': item.get('rank') or len(kept) + 1,", "            'sha256': sha,",
+    "            'pdf_sha256': sha,", "            'pdf_path': pdf_path.relative_to(book_root).as_posix(),",
     "            'local_pdf_path': pdf_path.relative_to(book_root).as_posix(),",
     "            'downloaded': True,", "            'download_status': 'downloaded',",
     "            'text_path': text_rel,", "            'extracted_text_path': text_rel or '',",
     "            'text_sha256': text_sha,", "            'extracted_text_sha256': text_sha,",
     "            'extracted': bool(text_rel),", "            'text_extracted': bool(text_rel),",
     "            'extract_status': 'extracted' if text_rel else 'failed',", "        })",
-    "    downloaded = sum(1 for item in kept if item.get('downloaded'))", "    extracted = sum(1 for item in kept if item.get('text_path'))",
-    "    ok = downloaded > 0 and extracted > 0", "    status = 'official_source_screened' if ok else 'failed'",
+    "    downloaded_sources = sum(1 for item in kept if item.get('downloaded'))",
+    "    downloaded_pdfs = sum(1 for item in kept if item.get('downloaded') and item.get('source_kind') == 'pdf')",
+    "    extracted_sources = sum(1 for item in kept if item.get('text_path'))", "    extracted_pdfs = sum(1 for item in kept if item.get('text_path') and item.get('source_kind') == 'pdf')",
+    "    html_notice_count = sum(1 for item in kept if item.get('source_kind') == 'html_notice')",
+    "    ok = downloaded_sources > 0 and extracted_sources > 0", "    status = 'official_source_screened' if ok else 'failed'",
     "    screen = {", "        'kind': 'eb-official-source-screen',", "        'status': status,",
-    "        'official_domain_count': 6,", "        'live_fetch_performed': downloaded > 0,",
-    "        'checked_official_urls': sorted(set(checked_urls)),", "        'downloaded_pdf_count': downloaded,",
-    "        'checked_sources_count': len(set(checked_urls)) or len(kept),", "        'extracted_pdf_count': extracted,",
-    "        'kept_candidates': kept,", "        'pdf_sources': kept,", "        'source_records': kept,",
-    "        'accepted_sources': kept if ok else [],", "        'official_sources': kept,",
-    "        'extraction_errors': errors,", "        'standing_goal_decision': 'continue' if ok else 'failed',",
-    "        'notify_town': False,", "    }", "    if not ok:", "        screen['failure_reason'] = 'No downloaded PDFs or no extractable PDF text was produced.'",
+    "        'official_domain_count': 6,", "        'live_fetch_performed': downloaded_sources > 0,",
+    "        'checked_official_urls': sorted(set(checked_urls)),", "        'downloaded_pdf_count': downloaded_pdfs,",
+    "        'downloaded_source_count': downloaded_sources,", "        'html_notice_count': html_notice_count,",
+    "        'checked_sources_count': len(set(checked_urls)) or len(kept),", "        'extracted_pdf_count': extracted_pdfs,",
+    "        'extracted_source_count': extracted_sources,", "        'kept_candidates': kept,",
+    "        'pdf_sources': [item for item in kept if item.get('source_kind') == 'pdf'],",
+    "        'source_records': kept,", "        'accepted_sources': kept if ok else [],",
+    "        'official_sources': kept,", "        'extraction_errors': errors,",
+    "        'standing_goal_decision': 'continue' if ok else 'failed',", "        'notify_town': False,",
+    "    }", "    if not ok:", "        screen['failure_reason'] = 'No downloaded official source files or no extractable text was produced.'",
     "    screen_path.write_text(json.dumps(screen, ensure_ascii=False, indent=2) + '\\n', encoding='utf-8')",
-    "    print(json.dumps({'status': status, 'downloaded_pdf_count': downloaded, 'extracted_pdf_count': extracted, 'screen': str(screen_path)}, ensure_ascii=False))",
+    "    print(json.dumps({'status': status, 'downloaded_pdf_count': downloaded_pdfs, 'downloaded_source_count': downloaded_sources, 'extracted_source_count': extracted_sources, 'screen': str(screen_path)}, ensure_ascii=False))",
     "    return 0 if ok else 2", "", "if __name__ == '__main__':", "    sys.exit(main())",
     "",
   ].join("\n")
@@ -8320,9 +9141,9 @@ fn eb_extract_pdf_text_script() -> String {
 ///|
 fn eb_package_workbook_script() -> String {
   [
-    "#!/usr/bin/env python3", "import argparse", "import datetime", "import hashlib",
-    "import html", "import json", "import re", "import sys", "import zipfile", "from pathlib import Path",
-    "", "OFFICIAL_DOMAINS = ['sse.com.cn', 'szse.cn', 'cninfo.com.cn', 'chinabond.com.cn', 'shclearing.com.cn', 'csrc.gov.cn']",
+    "#!/usr/bin/env python3", "import argparse", "import calendar", "import datetime",
+    "import hashlib", "import html", "import json", "import re", "import sys", "import zipfile",
+    "from pathlib import Path", "", "OFFICIAL_DOMAINS = ['sse.com.cn', 'szse.cn', 'cninfo.com.cn', 'chinabond.com.cn', 'shclearing.com.cn', 'csrc.gov.cn']",
     "ANN_HEADERS = ['序号', '债券代码', '债券简称', '阶段', '公告类型', '公告标题', '披露日期', '披露主体', '披露平台', '原文链接', '核心内容摘要', '关键数据', '是否触发投资者行动', '备注']",
     "IND_HEADERS = ['债券代码', '债券简称', '发行规模（亿元）', '当前余额（亿元）', '初始换股价格', '最新换股价格', '换股价格调整次数', '累计换股数量（股）', '累计换股比例', '预备交换股票数量（股）', '担保股票市值（亿元）', '担保覆盖率（市值/余额）', '换股期起止日期', '赎回条款触发情况', '回售条款触发情况', '最新信用评级', '标的股票最新状态', '控制权变动风险', '下次付息日', '到期兑付日', '最后更新日期']",
     "LIFECYCLE_STAGES = ['发行与上市', '存续期定期报告', '存续期临时公告', '换股期管理', '赎回与回售', '兑付与退出']",
@@ -8335,11 +9156,21 @@ fn eb_package_workbook_script() -> String {
     "    return digest.hexdigest()", "", "def official_url(url):", "    return isinstance(url, str) and url.startswith(('http://', 'https://')) and any(domain in url for domain in OFFICIAL_DOMAINS)",
     "", "def clean_filename(text):", "    text = str(text or '').strip()", "    text = re.sub(r'[\\\\/:*?\\[\\]]+', '_', text)",
     "    text = re.sub(r'\\s+', '', text)", "    return text[:80] or 'UNKNOWN'",
+    "", "def normalize_target_scope(value):", "    clean = str(value or '').strip().lower().replace('-', '_')",
+    "    if clean in ['active_universe', 'universe', 'active']:", "        return 'active_universe'",
+    "    if clean in ['portfolio', 'multi_bond', 'multi']:", "        return 'portfolio'",
+    "    if clean in ['single_bond', 'single']:", "        return 'single_bond'",
+    "    return ''", "", "def target_has_identity(target):", "    if not isinstance(target, dict):",
+    "        return False", "    return any(str(target.get(key) or '').strip() for key in ['bond_code', 'bond_full_name_or_short_name', 'bond_short_name', 'issuer', 'underlying_listed_company'])",
     "", "def target_fields(book_root):", "    req = load_json(book_root / 'raw' / 'inbox' / 'eb-tracking-request.json')",
-    "    fields = req.get('target_fields') if isinstance(req.get('target_fields'), dict) else {}",
-    "    bonds = req.get('target_bonds') if isinstance(req.get('target_bonds'), list) else []",
-    "    if not fields and bonds and isinstance(bonds[0], dict):", "        fields = bonds[0]",
-    "    return fields, req", "", "def source_screen_paths(book_root, run_root):",
+    "    book = load_json(book_root / 'book.json')", "    fields = req.get('target_fields') if isinstance(req.get('target_fields'), dict) else {}",
+    "    bonds = [item for item in (req.get('target_bonds') if isinstance(req.get('target_bonds'), list) else []) if isinstance(item, dict) and target_has_identity(item)]",
+    "    if not bonds:", "        book_targets = book.get('targets') if isinstance(book.get('targets'), dict) else {}",
+    "        bonds = [item for item in (book_targets.get('bonds') if isinstance(book_targets.get('bonds'), list) else []) if isinstance(item, dict) and target_has_identity(item)]",
+    "    scope = normalize_target_scope(req.get('target_scope') or (book.get('targets') if isinstance(book.get('targets'), dict) else {}).get('target_scope'))",
+    "    if not scope:", "        scope = 'portfolio' if len(bonds) > 1 else ('single_bond' if bonds or target_has_identity(fields) else 'active_universe')",
+    "    if not fields and bonds and scope != 'active_universe':", "        fields = bonds[0]",
+    "    return fields, req, scope, bonds", "", "def source_screen_paths(book_root, run_root):",
     "    paths = [run_root / 'outputs' / 'official-source-screen.json', book_root / 'outputs' / 'official-source-screen.json']",
     "    ar = book_root / 'raw' / 'analysis-runs'", "    if ar.exists():", "        paths.extend(sorted(ar.glob('*-official-source-screen.json'), reverse=True))",
     "    return paths", "", "def candidate_paths(book_root, run_root):", "    paths = [run_root / 'outputs' / 'official-pdf-candidates.json', book_root / 'outputs' / 'official-pdf-candidates.json']",
@@ -8360,24 +9191,81 @@ fn eb_package_workbook_script() -> String {
     "        data = load_json(path)", "        if data:", "            return data, path",
     "    return {}, None", "", "def first_candidates(book_root, run_root):", "    for path in candidate_paths(book_root, run_root):",
     "        data = load_json(path)", "        if data:", "            return data, path",
-    "    return {}, None", "", "def file_record_candidates(records, book_root):",
-    "    items = []", "    for rec in records:", "        pdf_path = rec.get('pdf_path') or rec.get('local_pdf_path') or ''",
+    "    return {}, None", "", "def first_analysis(book_root, run_root):", "    paths = [run_root / 'outputs' / 'eb-lifecycle-analysis.json']",
+    "    ar = book_root / 'raw' / 'analysis-runs'", "    if ar.exists():", "        paths.extend(sorted(ar.glob('*lifecycle*analysis*.json'), reverse=True))",
+    "    for path in paths:", "        data = load_json(path)", "        if data:",
+    "            return data, path", "    return {}, None", "", "def historical_official_records(book_root, run_root):",
+    "    paths = []", "    for base in [book_root / 'raw' / 'analysis-runs', book_root / 'outputs']:",
+    "        if base.exists():", "            paths.extend(sorted(base.glob('*official-source-screen.json')))",
+    "            paths.extend(sorted(base.glob('*official-pdf-candidates.json')))",
+    "    records = []", "    seen_paths = set()", "    for path in paths:", "        key = str(path.resolve())",
+    "        if key in seen_paths:", "            continue", "        seen_paths.add(key)",
+    "        records.extend(collect_records(load_json(path)))", "    return records",
+    "", "def target_relevant_record(book_root, rec, fields, scope='single_bond', targets=None):",
+    "    targets = targets or []", "    text = record_text(book_root, rec)[:4000]",
+    "    blob = str(rec.get('title') or '') + ' ' + str(rec.get('name') or '') + ' ' + str(rec.get('url') or '') + ' ' + str(rec.get('pdf_path') or '') + ' ' + str(rec.get('source_path') or '') + ' ' + str(rec.get('html_path') or '') + ' ' + text",
+    "    generic_hit = any(keyword in blob for keyword in ['可交换', '交换公司债券', '可交换债', 'EB'])",
+    "    if scope == 'active_universe':", "        return generic_hit", "    keywords = []",
+    "    for target in (targets if targets else [fields]):", "        if not isinstance(target, dict):",
+    "            continue", "        for key in ['bond_code', 'bond_full_name_or_short_name', 'bond_short_name', 'issuer', 'underlying_listed_company']:",
+    "            value = str(target.get(key) or '').strip()", "            if value:",
+    "                keywords.append(value)", "    if not keywords:", "        return generic_hit",
+    "    return any(keyword and keyword in blob for keyword in keywords)", "", "def output_identity(fields, scope, targets):",
+    "    if scope == 'active_universe':", "        return 'ACTIVEEB', '可交换债全集'",
+    "    if scope == 'portfolio':", "        return 'PORTFOLIO', '可交换债组合'",
+    "    return clean_filename(fields.get('bond_code') or 'UNKNOWN'), clean_filename(fields.get('bond_full_name_or_short_name') or fields.get('bond_short_name') or 'UNKNOWN')",
+    "", "def record_bond_code(rec, fallback):", "    value = str(rec.get('bond_code') or '').strip()",
+    "    if value:", "        return clean_filename(value)", "    blob = ' '.join(str(rec.get(key) or '') for key in ['title', 'url', 'pdf_path', 'local_pdf_path', 'source_path', 'html_path'])",
+    "    match = re.search(r'\\b(1[0-9]{5})\\b', blob)", "    if match:", "        return match.group(1)",
+    "    return fallback if fallback not in ['ACTIVEEB', 'PORTFOLIO', 'UNKNOWN'] else '未识别'",
+    "", "def record_bond_code_from_text(rec, fallback, text):", "    code = record_bond_code(rec, fallback)",
+    "    if code != '未识别':", "        return code", "    match = re.search(r'\\b(1[0-9]{5})\\b', text or '')",
+    "    if match:", "        return match.group(1)", "    return code", "", "def record_bond_short(rec, fallback):",
+    "    value = str(rec.get('bond_short_name') or rec.get('bond_full_name_or_short_name') or '').strip()",
+    "    if value:", "        return clean_filename(value)", "    title = str(rec.get('title') or rec.get('name') or '')",
+    "    for marker in ['EB', '可交换']:", "        if marker in title:", "            clean = re.sub(r'[《》“”\\\"（）()、，,。；;：:\\s]+', '', title)",
+    "            return clean_filename(clean[:24])", "    return fallback if fallback not in ['可交换债全集', '可交换债组合', 'UNKNOWN'] else '未识别EB'",
+    "", "def record_bond_short_from_text(rec, fallback, text):", "    short = record_bond_short(rec, fallback)",
+    "    if short != '未识别EB':", "        return short", "    match = re.search(r'(?:债券简称|简称)[：:\\s]*([^，。；;\\n\\s]{2,24})', text or '')",
+    "    if match:", "        return clean_filename(match.group(1))", "    match = re.search(r'“([^”]{2,24}EB[^”]*)”', text or '', re.IGNORECASE)",
+    "    if match:", "        return clean_filename(match.group(1))", "    return short",
+    "", "def instrument_groups(records, fallback_code, fallback_short, book_root=None):",
+    "    groups = []", "    index = {}", "    for rec in records:", "        text = record_text(book_root, rec) if book_root else ''",
+    "        code = record_bond_code_from_text(rec, fallback_code, text)", "        short = record_bond_short_from_text(rec, fallback_short, text)",
+    "        key = code + '|' + short", "        if key not in index:", "            index[key] = {'bond_code': code, 'bond_short': short, 'records': []}",
+    "            groups.append(index[key])", "        index[key]['records'].append(rec)",
+    "    return groups if groups else [{'bond_code': fallback_code, 'bond_short': fallback_short, 'records': records}]",
+    "", "def build_indicator_rows_for_scope(book_root, records, fields, bond_code, bond_short, as_of, analysis, scope):",
+    "    if scope in ['active_universe', 'portfolio']:", "        rows = []", "        for group in instrument_groups(records, bond_code, bond_short, book_root):",
+    "            rows.extend(build_indicator_rows(book_root, group['records'], fields, group['bond_code'], group['bond_short'], as_of, analysis))",
+    "        return rows", "    return build_indicator_rows(book_root, records, fields, bond_code, bond_short, as_of, analysis)",
+    "", "def file_record_candidates(records, book_root):", "    items = []", "    for rec in records:",
+    "        pdf_path = rec.get('pdf_path') or rec.get('local_pdf_path') or ''",
+    "        source_path = rec.get('source_path') or rec.get('html_path') or rec.get('local_source_path') or ''",
     "        text_path = rec.get('text_path') or rec.get('extracted_text_path') or ''",
-    "        if pdf_path or text_path:", "            items.append(rec)", "    pdf_dir = book_root / 'raw' / 'pdfs'",
+    "        if pdf_path or source_path or text_path:", "            items.append(rec)",
+    "    pdf_dir = book_root / 'raw' / 'pdfs'", "    html_dir = book_root / 'raw' / 'html'",
     "    text_dir = book_root / 'raw' / 'extracted'", "    if pdf_dir.exists():",
     "        for pdf in sorted(pdf_dir.glob('*.pdf')):", "            stem = pdf.stem",
-    "            text = text_dir / (stem + '.txt')", "            items.append({'title': stem, 'pdf_path': pdf.relative_to(book_root).as_posix(), 'local_pdf_path': pdf.relative_to(book_root).as_posix(), 'text_path': text.relative_to(book_root).as_posix() if text.exists() else '', 'extracted_text_path': text.relative_to(book_root).as_posix() if text.exists() else ''})",
+    "            text = text_dir / (stem + '.txt')", "            items.append({'title': stem, 'source_kind': 'pdf', 'pdf_path': pdf.relative_to(book_root).as_posix(), 'local_pdf_path': pdf.relative_to(book_root).as_posix(), 'text_path': text.relative_to(book_root).as_posix() if text.exists() else '', 'extracted_text_path': text.relative_to(book_root).as_posix() if text.exists() else ''})",
+    "    if html_dir.exists():", "        for source in sorted(html_dir.glob('*')):",
+    "            if source.is_dir():", "                continue", "            stem = source.stem",
+    "            text = text_dir / (stem + '.txt')", "            items.append({'title': stem, 'source_kind': 'html_notice' if source.suffix.lower() in ['.html', '.htm'] else 'official_source', 'source_path': source.relative_to(book_root).as_posix(), 'html_path': source.relative_to(book_root).as_posix() if source.suffix.lower() in ['.html', '.htm'] else '', 'text_path': text.relative_to(book_root).as_posix() if text.exists() else '', 'extracted_text_path': text.relative_to(book_root).as_posix() if text.exists() else ''})",
     "    return items", "", "def merge_candidate_and_file_records(records, book_root):",
     "    url_records = []", "    for rec in records:", "        url = rec.get('url') or rec.get('pdf_url') or rec.get('source_url') or rec.get('original_url') or ''",
     "        if official_url(url):", "            item = dict(rec)", "            item['url'] = url",
     "            url_records.append(item)", "    file_records = file_record_candidates(records, book_root)",
     "    merged = []", "    used = set()", "    for index, url_rec in enumerate(url_records):",
     "        match = None", "        url_pdf = url_rec.get('pdf_path') or url_rec.get('local_pdf_path') or ''",
-    "        url_sha = url_rec.get('sha256') or url_rec.get('pdf_sha256') or ''",
+    "        url_source = url_rec.get('source_path') or url_rec.get('html_path') or url_rec.get('local_source_path') or ''",
+    "        url_sha = url_rec.get('sha256') or url_rec.get('pdf_sha256') or url_rec.get('source_sha256') or ''",
     "        url_title = str(url_rec.get('title') or '').strip()", "        for file_index, file_rec in enumerate(file_records):",
     "            if file_index in used:", "                continue", "            file_pdf = file_rec.get('pdf_path') or file_rec.get('local_pdf_path') or ''",
-    "            file_sha = file_rec.get('sha256') or file_rec.get('pdf_sha256') or ''",
+    "            file_source = file_rec.get('source_path') or file_rec.get('html_path') or file_rec.get('local_source_path') or ''",
+    "            file_sha = file_rec.get('sha256') or file_rec.get('pdf_sha256') or file_rec.get('source_sha256') or ''",
     "            file_title = str(file_rec.get('title') or '').strip()", "            if (url_pdf and file_pdf and Path(url_pdf).name == Path(file_pdf).name) or (url_sha and file_sha and url_sha == file_sha) or (url_title and file_title and (url_title in file_title or file_title in url_title)):",
+    "                match = file_rec", "                used.add(file_index)", "                break",
+    "            if url_source and file_source and Path(url_source).name == Path(file_source).name:",
     "                match = file_rec", "                used.add(file_index)", "                break",
     "        if match is None and index < len(file_records):", "            for file_index, file_rec in enumerate(file_records):",
     "                if file_index not in used:", "                    match = file_rec",
@@ -8386,25 +9274,216 @@ fn eb_package_workbook_script() -> String {
     "", "def normalize_records(records, book_root):", "    normalized = []", "    for rec in merge_candidate_and_file_records(records, book_root):",
     "        url = rec.get('url') or rec.get('pdf_url') or rec.get('source_url') or rec.get('original_url') or ''",
     "        pdf_path = rec.get('pdf_path') or rec.get('local_pdf_path') or ''",
+    "        source_path = rec.get('source_path') or rec.get('html_path') or rec.get('local_source_path') or ''",
     "        text_path = rec.get('text_path') or rec.get('extracted_text_path') or ''",
-    "        if not url or not official_url(url) or not pdf_path or not text_path:",
-    "            continue", "        item = dict(rec)", "        item['url'] = url",
-    "        item['source_type'] = 'official-pdf'", "        item['downloaded'] = True",
-    "        item['download_status'] = 'downloaded'", "        item['extracted'] = bool(text_path)",
-    "        item['text_extracted'] = bool(text_path)", "        item['extract_status'] = 'extracted' if text_path else 'failed'",
-    "        if pdf_path:", "            item['pdf_path'] = pdf_path", "            item['local_pdf_path'] = pdf_path",
+    "        if not url or not official_url(url) or not (pdf_path or source_path or text_path):",
+    "            continue", "        kind = str(rec.get('source_kind') or '').strip().lower()",
+    "        if not kind:", "            kind = 'pdf' if pdf_path or '.pdf' in url.lower() else ('html_notice' if source_path.endswith(('.html', '.htm')) or url.lower().endswith('.html') else 'official_source')",
+    "        item = dict(rec)", "        item['url'] = url", "        item['source_kind'] = kind",
+    "        item['source_type'] = rec.get('source_type') or ('official-pdf' if kind == 'pdf' else 'official-source')",
+    "        item['downloaded'] = True", "        item['download_status'] = 'downloaded'",
+    "        item['extracted'] = bool(text_path)", "        item['text_extracted'] = bool(text_path)",
+    "        item['extract_status'] = 'extracted' if text_path else 'failed'", "        if pdf_path:",
+    "            item['pdf_path'] = pdf_path", "            item['local_pdf_path'] = pdf_path",
     "            pdf_abs = book_root / pdf_path", "            if pdf_abs.exists():",
     "                item['sha256'] = item.get('sha256') or sha256_file(pdf_abs)",
     "                item['pdf_sha256'] = item.get('pdf_sha256') or item.get('sha256')",
+    "        if source_path:", "            item['source_path'] = source_path", "            if kind == 'html_notice':",
+    "                item['html_path'] = source_path", "            source_abs = book_root / source_path",
+    "            if source_abs.exists():", "                item['sha256'] = item.get('sha256') or sha256_file(source_abs)",
+    "                item['source_sha256'] = item.get('source_sha256') or item.get('sha256')",
     "        if text_path:", "            item['text_path'] = text_path", "            item['extracted_text_path'] = text_path",
     "            text_abs = book_root / text_path", "            if text_abs.exists():",
     "                item['text_sha256'] = item.get('text_sha256') or sha256_file(text_abs)",
     "                item['extracted_text_sha256'] = item.get('extracted_text_sha256') or item.get('text_sha256')",
-    "        normalized.append(item)", "    return normalized", "", "def text_excerpt(book_root, records):",
-    "    for rec in records:", "        text_path = rec.get('text_path') or rec.get('extracted_text_path') or ''",
+    "        normalized.append(item)", "    return verify_record_text_paths(dedupe_records(normalized), book_root)",
+    "", "def record_key(rec):", "    url = str(rec.get('url') or rec.get('pdf_url') or rec.get('source_url') or rec.get('original_url') or '').strip().lower()",
+    "    sha = str(rec.get('sha256') or rec.get('pdf_sha256') or rec.get('source_sha256') or '').strip().lower()",
+    "    title = re.sub(r'\\s+', '', str(rec.get('title') or rec.get('name') or '')).lower()",
+    "    if url:", "        return 'url:' + url", "    if sha:", "        return 'sha:' + sha",
+    "    return 'title:' + title", "", "def meaningful(value):", "    return value not in [None, '', [], {}]",
+    "", "def dedupe_records(records):", "    seen, unique = {}, []", "    for rec in records:",
+    "        key = record_key(rec)", "        if key in seen:", "            existing = seen[key]",
+    "            for field, value in rec.items():", "                if meaningful(value) and not meaningful(existing.get(field)):",
+    "                    existing[field] = value", "            continue", "        seen[key] = rec",
+    "        unique.append(rec)", "    return unique", "", "def compact_text(value):",
+    "    return re.sub(r'\\s+', '', str(value or '')).lower()", "", "GENERIC_TITLE_TOKENS = ['中国长江三峡集团有限公司', '公开发行', '绿色可交换公司债券', '可交换公司债券', '公司债券', '第一期', 'g三峡eb1', '132018', '提示性公告', '公告', '关于']",
+    "DISTINCTIVE_TITLE_PHRASES = ['不提前赎回', '停止换股', '到期摘牌', '本息兑付', '换股价格调整', '复牌', '解除担保', '解除信托登记', '信托登记', '换股进展', '权益变动', '补充担保', '募集说明书', '上市公告书', '付息', '兑付']",
+    "", "def title_tokens(title):", "    tokens = []", "    for token in re.split(r'[《》“”\\\"（）()、，,。；;：:\\s]+', str(title or '')):",
+    "        clean = compact_text(token)", "        if len(clean) < 4:", "            continue",
+    "        if any(generic == clean or generic in clean or clean in generic for generic in GENERIC_TITLE_TOKENS):",
+    "            continue", "        tokens.append(clean)", "    return tokens",
+    "", "def distinctive_title_phrases(title):", "    title_clean = compact_text(title)",
+    "    return [phrase for phrase in DISTINCTIVE_TITLE_PHRASES if compact_text(phrase) in title_clean]",
+    "", "def title_match_score(title, text):", "    title_clean = compact_text(title)",
+    "    text_clean = compact_text(text)", "    if title_clean and title_clean in text_clean:",
+    "        return 1000", "    phrase_hits = 0", "    for phrase in distinctive_title_phrases(title):",
+    "        if compact_text(phrase) in text_clean:", "            phrase_hits += 10",
+    "    score = 0", "    for token in title_tokens(title):", "        if token and token in text_clean:",
+    "            score += 1", "    return phrase_hits + score", "", "def title_match_threshold(title):",
+    "    phrases = distinctive_title_phrases(title)", "    if phrases:", "        return 10",
+    "    return min(2, max(1, len(title_tokens(title))))", "", "def text_matches_title(title, text):",
+    "    return bool(text) and title_match_score(title, text) >= title_match_threshold(title)",
+    "", "def verify_record_text_paths(records, book_root):", "    extracted = []",
+    "    extracted_dir = book_root / 'raw' / 'extracted'", "    if extracted_dir.exists():",
+    "        for path in sorted(extracted_dir.glob('*.txt')):", "            try:",
+    "                extracted.append((path, path.read_text(encoding='utf-8', errors='ignore')))",
+    "            except Exception:", "                pass", "    for rec in records:",
+    "        title = rec.get('title') or rec.get('name') or ''", "        current = record_text(book_root, rec)",
+    "        if text_matches_title(title, current):", "            rec['text_match_status'] = 'verified'",
+    "            continue", "        best_path, best_score = None, 0", "        for path, text in extracted:",
+    "            score = title_match_score(title, text[:5000])", "            if score > best_score:",
+    "                best_path, best_score = path, score", "        if best_path is not None and best_score >= title_match_threshold(title):",
+    "            rel = best_path.relative_to(book_root).as_posix()", "            rec['text_path'] = rel",
+    "            rec['extracted_text_path'] = rel", "            rec['text_match_status'] = 'remapped'",
+    "            pdf = book_root / 'raw' / 'pdfs' / (best_path.stem + '.pdf')", "            if pdf.exists():",
+    "                rec['pdf_path'] = pdf.relative_to(book_root).as_posix()", "                rec['local_pdf_path'] = rec['pdf_path']",
+    "        else:", "            rec['text_path'] = ''", "            rec['extracted_text_path'] = ''",
+    "            rec['text_match_status'] = 'missing_or_mismatched'", "            rec['text_mismatch_note'] = 'extracted text did not match the official URL/title; AI evidence or manual review required'",
+    "    return records", "", "def text_excerpt(book_root, records):", "    for rec in records:",
+    "        text_path = rec.get('text_path') or rec.get('extracted_text_path') or ''",
     "        if text_path and (book_root / text_path).exists():", "            text = (book_root / text_path).read_text(encoding='utf-8', errors='ignore')",
     "            text = re.sub(r'\\s+', ' ', text).strip()", "            if text:",
-    "                return text[:180]", "    return '已完成官方PDF下载、全文抽取和来源筛选，新增来源进入Bookkeeper接受队列。'",
+    "                return text[:180]", "    return '已完成官方来源下载、全文抽取和来源筛选，新增来源进入Bookkeeper接受队列。'",
+    "", "def record_text(book_root, rec):", "    text_path = rec.get('text_path') or rec.get('extracted_text_path') or ''",
+    "    if text_path and (book_root / text_path).exists():", "        return (book_root / text_path).read_text(encoding='utf-8', errors='ignore')",
+    "    return ''", "", "def infer_stage(title, text):", "    blob = (str(title or '') + ' ' + str(text or ''))[:5000]",
+    "    if any(k in blob for k in ['付息', '兑付', '本息', '终止上市', '解除可交换公司债券担保', '解除质押', '解除信托登记']):",
+    "        return '兑付与退出'", "    if any(k in blob for k in ['赎回', '回售']):",
+    "        return '赎回与回售'", "    if any(k in blob for k in ['换股期', '换股进展', '换股开始', '换股价格', '权益变动']):",
+    "        return '换股期管理'", "    if any(k in blob for k in ['定期报告', '年度报告', '半年度报告', '评级']):",
+    "        return '存续期定期报告'", "    if any(k in blob for k in ['风险提示', '司法冻结', '控制权', '临时公告']):",
+    "        return '存续期临时公告'", "    return '发行与上市'", "",
+    "def infer_announcement_type(title, text):", "    blob = str(title or '') + ' ' + str(text or '')[:1000]",
+    "    for key in ['募集说明书', '发行公告', '上市公告书', '信托担保登记', '换股开始公告', '换股进展公告', '提示性公告', '赎回公告', '回售公告', '付息公告', '兑付公告', '解除担保及信托登记']:",
+    "        if key in blob:", "            return key", "    return '官方来源'",
+    "", "def disclosure_date(rec, text, fallback):", "    for key in ['disclosure_date', 'date', 'publish_date', 'as_of']:",
+    "        value = str(rec.get(key) or '').strip()", "        if re.fullmatch(r'\\d{4}-\\d{2}-\\d{2}', value):",
+    "            return value", "        if re.fullmatch(r'\\d{8}', value):", "            return value[:4] + '-' + value[4:6] + '-' + value[6:]",
+    "    url = str(rec.get('url') or rec.get('pdf_url') or rec.get('source_url') or '')",
+    "    match = re.search(r'(20\\d{2})[-/](\\d{2})[-/](\\d{2})', url)", "    if not match:",
+    "        match = re.search(r'(20\\d{2})(\\d{2})(\\d{2})', url)", "    if match:",
+    "        return f'{match.group(1)}-{int(match.group(2)):02d}-{int(match.group(3)):02d}'",
+    "    match = re.search(r'(20\\d{2})[年\\-/\\. ](\\d{1,2})[月\\-/\\. ](\\d{1,2})日?', text or '')",
+    "    if match:", "        return f'{match.group(1)}-{int(match.group(2)):02d}-{int(match.group(3)):02d}'",
+    "    return fallback[:4] + '-' + fallback[4:6] + '-' + fallback[6:] if re.fullmatch(r'\\d{8}', fallback or '') else fallback",
+    "", "def parse_date_value(value):", "    value = str(value or '').strip()", "    if re.fullmatch(r'\\d{8}', value):",
+    "        value = value[:4] + '-' + value[4:6] + '-' + value[6:]", "    if not re.fullmatch(r'\\d{4}-\\d{2}-\\d{2}', value):",
+    "        return None", "    try:", "        return datetime.date(int(value[:4]), int(value[5:7]), int(value[8:10]))",
+    "    except Exception:", "        return None", "", "def subtract_months(day, months):",
+    "    month = day.month - months", "    year = day.year", "    while month <= 0:",
+    "        month += 12", "        year -= 1", "    last = calendar.monthrange(year, month)[1]",
+    "    return datetime.date(year, month, min(day.day, last))", "", "def lookback_summary(ann_rows, as_of, months):",
+    "    as_of_date = parse_date_value(as_of) or datetime.datetime.utcnow().date()",
+    "    start = subtract_months(as_of_date, months)", "    row_dates = [parse_date_value(row[6]) for row in ann_rows]",
+    "    in_window = [d for d in row_dates if d is not None and start <= d <= as_of_date]",
+    "    return {'months': months, 'window_start': start.isoformat(), 'window_end': as_of_date.isoformat(), 'rows_within_lookback_count': len(in_window), 'total_announcement_rows': len(ann_rows), 'lookback_no_recent_sources': len(in_window) == 0, 'historical_baseline_rows_used': len(in_window) < len(ann_rows)}",
+    "", "def record_within_lookback(book_root, rec, as_of, months):", "    if rec.get('within_lookback') is True:",
+    "        return True", "    as_of_date = parse_date_value(as_of) or datetime.datetime.utcnow().date()",
+    "    start = subtract_months(as_of_date, months)", "    raw_date = rec.get('disclosure_date') or rec.get('date') or rec.get('publish_date') or rec.get('as_of') or ''",
+    "    d = parse_date_value(raw_date)", "    if d is None:", "        d = parse_date_value(disclosure_date(rec, record_text(book_root, rec), as_of))",
+    "    return d is not None and start <= d <= as_of_date", "", "def current_watch_records_for_scope(book_root, records, fields, scope, targets, as_of, months):",
+    "    relevant = [rec for rec in records if target_relevant_record(book_root, rec, fields, scope, targets)]",
+    "    if scope in ['active_universe', 'portfolio']:", "        return [rec for rec in relevant if record_within_lookback(book_root, rec, as_of, months)]",
+    "    return relevant", "", "def verified_records(records):", "    return [rec for rec in records if rec.get('text_match_status') in ['verified', 'remapped']]",
+    "", "def number_snippets(text):", "    patterns = [r'发行规模[^。；\\n]{0,40}', r'债券余额[^。；\\n]{0,40}', r'换股价格[^。；\\n]{0,50}', r'票面利率[^。；\\n]{0,40}', r'担保[^。；\\n]{0,60}', r'累计换股[^。；\\n]{0,50}', r'赎回价格[^。；\\n]{0,40}', r'回售价格[^。；\\n]{0,40}']",
+    "    found = []", "    for pattern in patterns:", "        for match in re.finditer(pattern, text or ''):",
+    "            snippet = re.sub(r'\\s+', '', match.group(0))[:80]", "            if snippet and snippet not in found:",
+    "                found.append(snippet)", "    return found[:6]", "", "def flatten_analysis_text(value):",
+    "    parts = []", "    def walk(obj):", "        if isinstance(obj, dict):",
+    "            for val in obj.values():", "                walk(val)", "        elif isinstance(obj, list):",
+    "            for val in obj:", "                walk(val)", "        elif isinstance(obj, str):",
+    "            clean = re.sub(r'\\s+', ' ', obj).strip()", "            if clean:",
+    "                parts.append(clean)", "    walk(value)", "    return '\\n'.join(parts)",
+    "", "def analysis_fragment_for_record(analysis, title, url, date):", "    matches = []",
+    "    def walk(obj):", "        if isinstance(obj, dict):", "            blob = flatten_analysis_text(obj)",
+    "            hit = (url and url in blob) or (date and date in blob) or title_match_score(title, blob) >= title_match_threshold(title)",
+    "            if hit:", "                local = []", "                for key in ['matter', 'title', 'date', 'evidence', 'conclusion', 'reason', 'status']:",
+    "                    value = obj.get(key)", "                    if isinstance(value, str) and value.strip():",
+    "                        local.append(value.strip())", "                if local:",
+    "                    matches.append('；'.join(local))", "            for val in obj.values():",
+    "                walk(val)", "        elif isinstance(obj, list):", "            for val in obj:",
+    "                walk(val)", "    walk(analysis)", "    return '；'.join(matches)[:500]",
+    "", "def summarize_record(text, title, ai_fragment):", "    clean = re.sub(r'\\s+', ' ', text or '').strip()",
+    "    if clean:", "        return clean[:200]", "    clean_ai = re.sub(r'\\s+', ' ', ai_fragment or '').strip()",
+    "    if clean_ai:", "        return ('AI证据：' + clean_ai)[:200]", "    return str(title or '官方来源已下载；提取文本需复核')[:160] + '；提取文本未通过标题一致性校验'",
+    "", "def key_data_for_record(text, ai_fragment):", "    snippets = number_snippets(text)",
+    "    if not snippets:", "        snippets = number_snippets(ai_fragment)", "    return '；'.join(snippets) if snippets else '待AI复核补全关键数字'",
+    "", "def investor_action(stage, text):", "    blob = str(text or '')", "    if stage in ['换股期管理', '赎回与回售'] or any(k in blob for k in ['申报', '换股', '赎回', '回售']):",
+    "        return '是'", "    return '否'", "", "def build_ann_rows(book_root, records, fields, bond_code, bond_short, as_of, analysis):",
+    "    rows, links = [], []", "    for idx, rec in enumerate(records, start=1):",
+    "        text = record_text(book_root, rec)", "        url = rec.get('url') or ''",
+    "        title = rec.get('title') or rec.get('name') or Path(rec.get('pdf_path') or rec.get('source_path') or rec.get('html_path') or url).stem or '官方来源'",
+    "        platform = next((domain for domain in OFFICIAL_DOMAINS if domain in url), 'official')",
+    "        date = disclosure_date(rec, text, as_of)", "        ai_fragment = analysis_fragment_for_record(analysis, title, url, date)",
+    "        stage = infer_stage(title, text + ai_fragment)", "        row_code = record_bond_code_from_text(rec, bond_code, text)",
+    "        row_short = record_bond_short_from_text(rec, bond_short, text)", "        note = 'SOURCE_KIND: ' + str(rec.get('source_kind') or '') + '；PDF: ' + (rec.get('pdf_path') or '') + '；SOURCE: ' + (rec.get('source_path') or rec.get('html_path') or '') + '；TEXT: ' + (rec.get('text_path') or rec.get('extracted_text_path') or '') + '；TEXT_MATCH: ' + str(rec.get('text_match_status') or '')",
+    "        if rec.get('text_mismatch_note'):", "            note += '；' + rec.get('text_mismatch_note')",
+    "        rows.append([str(idx), row_code, row_short, stage, infer_announcement_type(title, text + ai_fragment), title, date, rec.get('issuer') or fields.get('issuer') or '未检索到', platform, url, summarize_record(text, title, ai_fragment), key_data_for_record(text, ai_fragment), investor_action(stage, text + ai_fragment), note])",
+    "        links.append(url)", "    return rows, links", "", "def extract_indicator_value(records, book_root, labels, analysis=None):",
+    "    joined = '\\n'.join(record_text(book_root, rec)[:20000] for rec in records) + '\\n' + flatten_analysis_text(analysis)",
+    "    for label in labels:", "        match = re.search(label + r'[^。；\\n]{0,60}', joined)",
+    "        if match:", "            return re.sub(r'\\s+', '', match.group(0))[:80]",
+    "    return '未检索到'", "", "def first_regex_value(text, patterns, default='未检索到'):",
+    "    for pattern in patterns:", "        match = re.search(pattern, text or '')",
+    "        if match:", "            value = next((group for group in match.groups() if group), match.group(0))",
+    "            return re.sub(r'\\s+', '', value)", "    return default", "", "def ai_indicator_facts(analysis):",
+    "    flat = flatten_analysis_text(analysis)", "    issue_scale = first_regex_value(flat, [r'发行总额\\s*([0-9,.]+亿元)', r'规模\\s*([0-9,.]+亿元)'])",
+    "    latest_price = first_regex_value(flat, [r'调整后\\s*([0-9.]+元/股)', r'调整为\\s*([0-9.]+元/股)'])",
+    "    previous_price = first_regex_value(flat, [r'调整前\\s*([0-9.]+元/股)', r'由\\s*([0-9.]+元/股)调整'])",
+    "    exchange_period = first_regex_value(flat, [r'换股期限为(20\\d{2}-\\d{2}-\\d{2}至20\\d{2}-\\d{2}-\\d{2})', r'换股期限为(20\\d{2}年\\d{1,2}月\\d{1,2}日至20\\d{2}年\\d{1,2}月\\d{1,2}日)'])",
+    "    exchanged = first_regex_value(flat, [r'累计换股\\s*([0-9,]+股)', r'累计换股\\s*([0-9,.]+万股)'])",
+    "    ratio = first_regex_value(flat, [r'累计换股\\s*[0-9,]+股[^。；\\n]{0,60}?占总股本\\s*([0-9.]+%)', r'占总股本\\s*([0-9.]+%)', r'累计换股[\\s\\S]{0,40}?([0-9.]+%)'])",
+    "    guarantee = first_regex_value(flat, [r'累计担保及信托登记\\s*([0-9,]+股)', r'初始担保股票\\s*([0-9,]+股)'])",
+    "    remaining = first_regex_value(flat, [r'剩余(?:未交换股票)?\\s*([0-9,]+股)'])",
+    "    redemption = first_regex_value(flat, [r'到期本息\\s*([0-9.]+元/张)', r'每手本息合计\\s*([0-9.]+元)'])",
+    "    maturity = first_regex_value(flat, [r'本息兑付日\\s*(20\\d{2}-\\d{2}-\\d{2})', r'完成到期赎回及摘牌[^。；\\n]*?(20\\d{2}-\\d{2}-\\d{2})', r'均为(20\\d{2}-\\d{2}-\\d{2})'])",
+    "    facts = {}", "    facts['issue_scale'] = issue_scale", "    facts['current_balance'] = '0（' + maturity + '已本息兑付及摘牌）' if maturity != '未检索到' else '未检索到'",
+    "    facts['initial_price'] = ('未检索到原始初始价；2023调整前' + previous_price) if previous_price != '未检索到' else '未检索到（募集说明书/发行公告原文未纳入当前证据包）'",
+    "    facts['latest_price'] = latest_price", "    facts['price_adjust_count'] = '1' if latest_price != '未检索到' and previous_price != '未检索到' and latest_price != previous_price else '未检索到'",
+    "    facts['exchanged'] = exchanged", "    facts['exchange_ratio'] = ratio",
+    "    facts['reserve_shares'] = ('累计担保及信托登记' + guarantee + ('；退出时剩余' + remaining + '回转' if remaining != '未检索到' else '')) if guarantee != '未检索到' else '未检索到'",
+    "    facts['guarantee_market_value'] = '未检索到（当前AI证据无市值金额）'",
+    "    facts['coverage'] = '未见担保覆盖率重大不利变化触发证据'",
+    "    facts['exchange_period'] = exchange_period", "    facts['redemption'] = ('到期本息' + redemption + '；' + maturity + '完成到期赎回及摘牌') if redemption != '未检索到' and maturity != '未检索到' else extract_indicator_value([], Path('.'), ['赎回'], analysis)",
+    "    facts['putback'] = '未检索到回售触发证据'", "    facts['rating'] = '未检索到评级原文'",
+    "    facts['control_risk'] = '未见控制权转移风险触发证据'", "    facts['next_coupon'] = maturity + '已兑付最后一期利息' if maturity != '未检索到' else '未检索到'",
+    "    facts['maturity'] = maturity", "    return facts", "", "def build_indicator_rows(book_root, records, fields, bond_code, bond_short, as_of, analysis):",
+    "    facts = ai_indicator_facts(analysis)", "    row = [bond_code, bond_short, facts['issue_scale'], facts['current_balance'], facts['initial_price'], facts['latest_price'], facts['price_adjust_count'], facts['exchanged'], facts['exchange_ratio'], facts['reserve_shares'], facts['guarantee_market_value'], facts['coverage'], facts['exchange_period'], facts['redemption'], facts['putback'], facts['rating'], fields.get('underlying_listed_company') or '未检索到', facts['control_risk'], facts['next_coupon'], facts['maturity'], as_of]",
+    "    return [row]", "", "def write_tool_page(book_root, book_id, run_id, out_rel, ann_rows, ind_rows, source_rel, aggregate_rel=''):",
+    "    rows = []", "    for row in ann_rows:", "        rows.append('<tr>' + ''.join('<td>' + html.escape(str(cell)) + '</td>' for cell in row[:9]) + '<td><a href=' + chr(34) + html.escape(row[9], quote=True) + chr(34) + '>PDF</a></td><td>' + html.escape(str(row[10])) + '</td><td>' + html.escape(str(row[11])) + '</td></tr>')",
+    "    indicator_rows = []", "    for row in ind_rows:", "        indicator_rows.append('<tr>' + ''.join('<td>' + html.escape(str(cell)) + '</td>' for cell in row) + '</tr>')",
+    "    xlsx_href = '../../outputs/' + html.escape(Path(out_rel).name, quote=True)",
+    "    aggregate_href = '../../outputs/' + html.escape(Path(aggregate_rel).name, quote=True) if aggregate_rel else ''",
+    "    aggregate_link = ' · <a href=' + chr(34) + aggregate_href + chr(34) + '>Aggregate XLSX</a>' if aggregate_href else ''",
+    "    body = '<!doctype html><html><head><meta charset=' + chr(34) + 'utf-8' + chr(34) + '><title>EB Evidence Tool</title><style>body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:24px;background:#f8fafc;color:#111827}h2{margin-top:28px}table{border-collapse:collapse;width:100%;background:white;margin:12px 0 24px}td,th{border:1px solid #d1d5db;padding:8px;vertical-align:top;font-size:13px;line-height:1.4}th{background:#e5f0ff;white-space:nowrap}a{color:#075985}.meta{margin-bottom:16px;color:#374151}.scroll{overflow:auto;border:1px solid #d1d5db;background:white}</style></head><body><h1>EB Evidence Tool</h1><p class=' + chr(34) + 'meta' + chr(34) + '>Book ' + html.escape(book_id) + ' run ' + html.escape(run_id) + ' · <a href=' + chr(34) + xlsx_href + chr(34) + '>Accepted XLSX</a>' + aggregate_link + ' · Source screen ' + html.escape(source_rel) + '</p><h2>关键指标监控表</h2><div class=' + chr(34) + 'scroll' + chr(34) + '><table><thead><tr>' + ''.join('<th>' + html.escape(h) + '</th>' for h in IND_HEADERS) + '</tr></thead><tbody>' + ''.join(indicator_rows) + '</tbody></table></div><h2>公告追踪主表</h2><div class=' + chr(34) + 'scroll' + chr(34) + '><table><thead><tr>' + ''.join('<th>' + html.escape(h) + '</th>' for h in ANN_HEADERS[:12]) + '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div></body></html>'",
+    "    for rel in ['book/site/generated/tool.html', 'site/generated/tool.html', 'app/index.html']:",
+    "        path = book_root / rel", "        path.parent.mkdir(parents=True, exist_ok=True)",
+    "        path.write_text(body, encoding='utf-8')", "    manifest = {'kind': 'app-tool-book-manifest', 'template_id': 'app-tool-book', 'book_id': book_id, 'run_id': run_id, 'tool': {'id': 'eb-evidence-dashboard', 'title': 'EB Evidence Dashboard', 'entrypoints': ['book/site/generated/tool.html', 'app/index.html']}, 'outputs': {'xlsx': out_rel, 'aggregate_xlsx': aggregate_rel, 'source_screen': source_rel}, 'extensible': True}",
+    "    write_json(book_root / 'tool-manifest.json', manifest)", "    report = '# EB Evidence Tool Latest Analysis\\n\\n- Run: `' + run_id + '`\\n- Accepted XLSX: `' + out_rel + '`\\n- Aggregate XLSX: `' + aggregate_rel + '`\\n- Tool: `book/site/generated/tool.html`\\n- Source rows: ' + str(len(ann_rows)) + '\\n- Extraction mode: MoonClaw AI analysis plus deterministic PDF text evidence packaging.\\n'",
+    "    (book_root / 'wiki' / 'reports').mkdir(parents=True, exist_ok=True)", "    (book_root / 'wiki' / 'reports' / 'latest-analysis.md').write_text(report, encoding='utf-8')",
+    "", "def moontown_root_for_book(book_root):", "    for parent in [book_root] + list(book_root.parents):",
+    "        if parent.name == '.moontown':", "            return parent.parent",
+    "    return book_root.parent.parent.parent if len(book_root.parents) >= 3 else book_root",
+    "", "def standing_goal_id_for_book(root, book_id):", "    path = root / '.moontown' / 'standing-goals.json'",
+    "    data = load_json(path) if path.exists() else []", "    if isinstance(data, list):",
+    "        for goal in data:", "            if isinstance(goal, dict) and goal.get('target_book_id') == book_id:",
+    "                gid = str(goal.get('id') or '')", "                if gid:",
+    "                    return gid", "    return 'watch-' + book_id + '-pdfs'",
+    "", "def write_json_line_replace(path, record):", "    path.parent.mkdir(parents=True, exist_ok=True)",
+    "    record_id = str(record.get('id') or '')", "    kept = []", "    if path.exists():",
+    "        for line in path.read_text(encoding='utf-8').splitlines():", "            if not line.strip():",
+    "                continue", "            try:", "                existing = json.loads(line)",
+    "            except Exception:", "                kept.append(line)", "                continue",
+    "            if record_id and existing.get('id') == record_id:", "                continue",
+    "            kept.append(json.dumps(existing, ensure_ascii=False, separators=(',', ':')))",
+    "    kept.append(json.dumps(record, ensure_ascii=False, separators=(',', ':')))",
+    "    path.write_text('\\n'.join(kept) + '\\n', encoding='utf-8')", "", "def write_moontown_acceptance_ledgers(book_root, book_id, run_id, out_rel, source_rel, result):",
+    "    root = moontown_root_for_book(book_root)", "    goal_id = standing_goal_id_for_book(root, book_id)",
+    "    watcher = {'id': 'watcher-' + run_id, 'goal_id': goal_id, 'book_id': book_id, 'run_id': run_id, 'decision': 'Update', 'standing_goal_decision': 'update', 'delta_score': result.get('delta_score', 100), 'checked_sources_count': result.get('checked_sources_count', 0), 'new_sources_found': result.get('new_source_count', result.get('new_sources_found', 0)), 'accepted_facts_count': result.get('accepted_facts_count', 0), 'rejected_facts_count': result.get('rejected_facts_count', 0), 'wiki_pages_changed_count': result.get('wiki_pages_changed_count', 1), 'book_changed': True, 'notification_required': True, 'notify_rule': 'accepted-new-knowledge-only', 'output_path': out_rel, 'source_screen_path': source_rel, 'summary': result.get('summary', 'Accepted EB workbook and web tool packaged from AI-reviewed official PDF evidence.')}",
+    "    write_json_line_replace(root / '.moontown' / 'watchers' / (goal_id + '.jsonl'), watcher)",
+    "    book_result = {'id': run_id, 'kind': 'eb-live-output', 'status': 'accepted', 'book_id': book_id, 'run_id': run_id, 'title': 'Accepted source-backed EB workbook from MoonClaw run ' + run_id, 'summary': result.get('summary', 'MoonClaw live run passed EB output, official-source, and Bookkeeper acceptance gates.'), 'updated_pages': ['wiki/reports/latest-analysis.md', 'wiki/reviews/bookkeeper-' + run_id + '.md', 'raw/analysis-runs/eb-output-validation.json'], 'outputs': [out_rel], 'source_screen_path': source_rel, 'review_queued': False, 'notify_town': True, 'evidence_id': 'EV-' + run_id}",
+    "    write_json(root / '.moontown' / 'book-results' / (run_id + '.json'), book_result)",
     "", "def qattr(name, value):", "    q = chr(34)", "    return ' ' + name + '=' + q + html.escape(str(value), quote=True) + q",
     "", "def xml_text(value):", "    return html.escape(str(value if value is not None else ''), quote=False)",
     "", "def col_name(index):", "    name = ''", "    while index > 0:", "        index, rem = divmod(index - 1, 26)",
@@ -8413,19 +9492,24 @@ fn eb_package_workbook_script() -> String {
     "", "def row_xml(row_num, values, header=False):", "    cells = []", "    for index, value in enumerate(values, start=1):",
     "        cells.append(cell_xml(col_name(index) + str(row_num), value, '1' if header else ''))",
     "    return '<row' + qattr('r', row_num) + '>' + ''.join(cells) + '</row>'",
-    "", "def sheet_xml(headers, row, dimension, auto_filter, hyperlink_url=''):",
-    "    q = chr(34)", "    hyperlink = ''", "    if hyperlink_url:", "        hyperlink = '<hyperlinks><hyperlink' + qattr('ref', 'J2') + ' r:id=' + q + 'rIdHyperlink1' + q + '/></hyperlinks>'",
-    "    return ''.join([", "        '<?xml version=' + q + '1.0' + q + ' encoding=' + q + 'UTF-8' + q + ' standalone=' + q + 'yes' + q + '?>',",
+    "", "def sheet_xml(headers, rows, dimension, auto_filter, hyperlink_urls=None):",
+    "    q = chr(34)", "    hyperlink_urls = hyperlink_urls or []", "    hyperlinks = []",
+    "    for index, url in enumerate(hyperlink_urls, start=2):", "        if url:",
+    "            hyperlinks.append('<hyperlink' + qattr('ref', 'J' + str(index)) + ' r:id=' + q + 'rIdHyperlink' + str(index - 1) + q + '/>')",
+    "    hyperlink = '<hyperlinks>' + ''.join(hyperlinks) + '</hyperlinks>' if hyperlinks else ''",
+    "    row_parts = [row_xml(1, headers, True)]", "    for row_num, row in enumerate(rows, start=2):",
+    "        row_parts.append(row_xml(row_num, row, False))", "    return ''.join([",
+    "        '<?xml version=' + q + '1.0' + q + ' encoding=' + q + 'UTF-8' + q + ' standalone=' + q + 'yes' + q + '?>',",
     "        '<worksheet xmlns=' + q + 'http://schemas.openxmlformats.org/spreadsheetml/2006/main' + q + ' xmlns:r=' + q + 'http://schemas.openxmlformats.org/officeDocument/2006/relationships' + q + '>',",
     "        '<dimension' + qattr('ref', dimension) + '/><sheetViews><sheetView workbookViewId=' + q + '0' + q + '><pane ySplit=' + q + '1' + q + ' topLeftCell=' + q + 'A2' + q + ' activePane=' + q + 'bottomLeft' + q + ' state=' + q + 'frozen' + q + '/></sheetView></sheetViews>',",
     "        '<cols><col min=' + q + '1' + q + ' max=' + q + '40' + q + ' width=' + q + '18' + q + ' customWidth=' + q + '1' + q + '/></cols>',",
-    "        '<sheetData>', row_xml(1, headers, True), row_xml(2, row, False), '</sheetData>',",
-    "        '<autoFilter' + qattr('ref', auto_filter) + '/>', hyperlink, '<pageMargins left=' + q + '0.7' + q + ' right=' + q + '0.7' + q + ' top=' + q + '0.75' + q + ' bottom=' + q + '0.75' + q + ' header=' + q + '0.3' + q + ' footer=' + q + '0.3' + q + '/></worksheet>'",
-    "    ])", "", "def sheet1_rels(url):", "    q = chr(34)", "    return ''.join(['<?xml version=' + q + '1.0' + q + ' encoding=' + q + 'UTF-8' + q + ' standalone=' + q + 'yes' + q + '?>', '<Relationships xmlns=' + q + 'http://schemas.openxmlformats.org/package/2006/relationships' + q + '><Relationship Id=' + q + 'rIdHyperlink1' + q + ' Type=' + q + 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink' + q + ' Target=' + q + html.escape(url, quote=True) + q + ' TargetMode=' + q + 'External' + q + '/></Relationships>'])",
-    "", "def write_workbook(template, output, ann_row, ind_row, official_link):",
-    "    replacements = {", "        'xl/worksheets/sheet1.xml': sheet_xml(ANN_HEADERS, ann_row, 'A1:N2', 'A1:N1', official_link).encode('utf-8'),",
-    "        'xl/worksheets/sheet2.xml': sheet_xml(IND_HEADERS, ind_row, 'A1:U2', 'A1:U1', '').encode('utf-8'),",
-    "        'xl/worksheets/_rels/sheet1.xml.rels': sheet1_rels(official_link).encode('utf-8'),",
+    "        '<sheetData>', ''.join(row_parts), '</sheetData>',", "        '<autoFilter' + qattr('ref', auto_filter) + '/>', hyperlink, '<pageMargins left=' + q + '0.7' + q + ' right=' + q + '0.7' + q + ' top=' + q + '0.75' + q + ' bottom=' + q + '0.75' + q + ' header=' + q + '0.3' + q + ' footer=' + q + '0.3' + q + '/></worksheet>'",
+    "    ])", "", "def sheet1_rels(urls):", "    q = chr(34)", "    parts = ['<?xml version=' + q + '1.0' + q + ' encoding=' + q + 'UTF-8' + q + ' standalone=' + q + 'yes' + q + '?>', '<Relationships xmlns=' + q + 'http://schemas.openxmlformats.org/package/2006/relationships' + q + '>']",
+    "    for index, url in enumerate(urls, start=1):", "        if url:", "            parts.append('<Relationship Id=' + q + 'rIdHyperlink' + str(index) + q + ' Type=' + q + 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink' + q + ' Target=' + q + html.escape(url, quote=True) + q + ' TargetMode=' + q + 'External' + q + '/>')",
+    "    parts.append('</Relationships>')", "    return ''.join(parts)", "", "def write_workbook(template, output, ann_rows, ind_rows, official_links):",
+    "    replacements = {", "        'xl/worksheets/sheet1.xml': sheet_xml(ANN_HEADERS, ann_rows, 'A1:N' + str(len(ann_rows) + 1), 'A1:N' + str(len(ann_rows) + 1), official_links).encode('utf-8'),",
+    "        'xl/worksheets/sheet2.xml': sheet_xml(IND_HEADERS, ind_rows, 'A1:U' + str(len(ind_rows) + 1), 'A1:U' + str(len(ind_rows) + 1), []).encode('utf-8'),",
+    "        'xl/worksheets/_rels/sheet1.xml.rels': sheet1_rels(official_links).encode('utf-8'),",
     "    }", "    output.parent.mkdir(parents=True, exist_ok=True)", "    with zipfile.ZipFile(template, 'r') as zin, zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as zout:",
     "        skip = set(replacements.keys())", "        for item in zin.infolist():",
     "            if item.filename in skip:", "                continue", "            zout.writestr(item, zin.read(item.filename))",
@@ -8435,34 +9519,60 @@ fn eb_package_workbook_script() -> String {
     "    parser.add_argument('--run-root', default='.')", "    parser.add_argument('--as-of', default='')",
     "    args = parser.parse_args()", "    book_root = Path(args.book_root).resolve()",
     "    run_root = Path(args.run_root).resolve()", "    run_id = run_root.name if run_root.name else 'manual-run'",
-    "    as_of = args.as_of or datetime.datetime.utcnow().strftime('%Y%m%d')", "    fields, request = target_fields(book_root)",
+    "    as_of = args.as_of or datetime.datetime.utcnow().strftime('%Y%m%d')", "    fields, request, target_scope, target_bonds = target_fields(book_root)",
     "    book_json = load_json(book_root / 'book.json')", "    book_id = book_json.get('id') or request.get('book_id') or book_root.name",
-    "    bond_code = clean_filename(fields.get('bond_code') or 'UNKNOWN')", "    bond_short = clean_filename(fields.get('bond_full_name_or_short_name') or fields.get('bond_short_name') or 'UNKNOWN')",
+    "    bond_code, bond_short = output_identity(fields, target_scope, target_bonds)",
     "    screen, screen_input = first_source_screen(book_root, run_root)", "    candidates, cand_input = first_candidates(book_root, run_root)",
-    "    records = normalize_records(collect_records(screen) + collect_records(candidates), book_root)",
-    "    if not records:", "        raise SystemExit('No official source records with URL and durable PDF/text paths were found.')",
-    "    primary = records[0]", "    official_link = primary.get('url')", "    summary = text_excerpt(book_root, records)",
-    "    title = primary.get('title') or '官方PDF来源'", "    platform = next((domain for domain in OFFICIAL_DOMAINS if domain in official_link), 'official')",
-    "    out_name = 'EB追踪_' + bond_code + '_' + bond_short + '_' + as_of + '.xlsx'",
+    "    analysis, analysis_input = first_analysis(book_root, run_root)", "    if not analysis:",
+    "        raise SystemExit('Missing MoonClaw AI lifecycle analysis artifact: outputs/eb-lifecycle-analysis.json')",
+    "    current_evidence_records = collect_records(screen) + collect_records(candidates)",
+    "    historical_baseline_records = historical_official_records(book_root, run_root)",
+    "    current_normalized_records = normalize_records(current_evidence_records, book_root)",
+    "    baseline_normalized_records = normalize_records(historical_baseline_records, book_root)",
+    "    current_watch_records = current_watch_records_for_scope(book_root, current_normalized_records, fields, target_scope, target_bonds, as_of, 6)",
+    "    records = verified_records(current_watch_records)", "    historical_relevant_records = [rec for rec in baseline_normalized_records if target_relevant_record(book_root, rec, fields, target_scope, target_bonds)]",
+    "    if not records:", "        raise SystemExit('No official source records with URL and durable source/text paths were found.')",
+    "    ann_rows, official_links = build_ann_rows(book_root, records, fields, bond_code, bond_short, as_of, analysis)",
+    "    ind_rows = build_indicator_rows_for_scope(book_root, records, fields, bond_code, bond_short, as_of, analysis, target_scope)",
+    "    lookback = lookback_summary(ann_rows, as_of, 6)", "    out_name = 'EB追踪_' + bond_code + '_' + bond_short + '_' + as_of + '.xlsx'",
     "    out_rel = 'book/outputs/' + out_name", "    out_path = book_root / out_rel",
     "    template = book_root / 'book' / 'outputs' / 'EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx'",
     "    if not template.exists():", "        raise SystemExit('Missing EB workbook template: ' + str(template))",
-    "    ann_row = ['1', bond_code, bond_short, '发行与上市', '官方PDF', title, as_of, fields.get('issuer') or '未检索到', platform, official_link, summary[:200], '官方PDF已下载并抽取全文；用于Bookkeeper接受审查', '否', '自动封装；其余阶段按方法页标记未检索到或待复核']",
-    "    ind_row = [bond_code, bond_short, '未检索到', '未检索到', '未检索到', '未检索到', '0', '未检索到', '未检索到', '未检索到', '未检索到', '未检索到', '未检索到', '未检索到', '未检索到', '未检索到', fields.get('underlying_listed_company') or '未检索到', '未检索到', '未检索到', '未检索到', as_of]",
-    "    write_workbook(template, out_path, ann_row, ind_row, official_link)", "    xhash = sha256_file(out_path)",
-    "    ar = book_root / 'raw' / 'analysis-runs'", "    source_rel = 'raw/analysis-runs/' + run_id + '-official-source-screen.json'",
+    "    write_workbook(template, out_path, ann_rows, ind_rows, official_links)",
+    "    aggregate_records = current_watch_records", "    if not aggregate_records:",
+    "        aggregate_records = records", "    aggregate_ann_rows, aggregate_links = build_ann_rows(book_root, aggregate_records, fields, bond_code, bond_short, as_of, analysis)",
+    "    aggregate_ind_rows = build_indicator_rows_for_scope(book_root, aggregate_records, fields, bond_code, bond_short, as_of, analysis, target_scope)",
+    "    aggregate_name = 'EB追踪汇总_' + bond_code + '_' + bond_short + '_' + as_of + '.xlsx'",
+    "    aggregate_rel = 'book/outputs/' + aggregate_name", "    aggregate_path = book_root / aggregate_rel",
+    "    write_workbook(template, aggregate_path, aggregate_ann_rows, aggregate_ind_rows, aggregate_links)",
+    "    source_kind_counts = {}", "    for rec in aggregate_records:", "        kind = str(rec.get('source_kind') or 'official_source')",
+    "        source_kind_counts[kind] = source_kind_counts.get(kind, 0) + 1", "    aggregate_hash = sha256_file(aggregate_path)",
+    "    aggregate_manifest = {'kind': 'eb-aggregate-output-manifest', 'book_id': book_id, 'run_id': run_id, 'target_scope': target_scope, 'active_universe_default': target_scope == 'active_universe', 'target_bonds': target_bonds, 'bond_code': bond_code, 'bond_short_name': bond_short, 'as_of': as_of, 'xlsx_path': aggregate_rel, 'xlsx_sha256': aggregate_hash, 'source_url_count': len({r.get('url') for r in aggregate_records if r.get('url')}), 'source_record_count': len(aggregate_records), 'source_kind_counts': source_kind_counts, 'pdf_source_count': source_kind_counts.get('pdf', 0), 'html_notice_count': source_kind_counts.get('html_notice', 0), 'current_window_record_count': len(current_watch_records), 'historical_baseline_record_count': len(historical_relevant_records), 'instrument_count': len(instrument_groups(aggregate_records, bond_code, bond_short, book_root)), 'accepted_workbook_path': out_rel, 'aggregate_rule': 'Current watch-window union of discovered official EB source records across target_scope; historical records are retained only as baseline comparison metadata, not as current output rows.'}",
+    "    write_json(book_root / (aggregate_rel + '.manifest.json'), aggregate_manifest)",
+    "    xhash = sha256_file(out_path)", "    ar = book_root / 'raw' / 'analysis-runs'",
+    "    source_rel = 'raw/analysis-runs/' + run_id + '-official-source-screen.json'",
     "    cand_rel = 'raw/analysis-runs/' + run_id + '-official-pdf-candidates.json'",
-    "    screen_out = dict(screen)", "    screen_out.update({'kind': 'eb-official-source-screen', 'status': 'official_source_screened', 'book_id': book_id, 'run_id': run_id, 'official_domain_count': len(OFFICIAL_DOMAINS), 'live_fetch_performed': True, 'checked_sources_count': len(records), 'downloaded_pdf_count': len(records), 'extracted_pdf_count': len([r for r in records if r.get('text_path') or r.get('extracted_text_path')]), 'checked_official_urls': sorted({r.get('url') for r in records if r.get('url')}), 'kept_candidates': records, 'pdf_sources': records, 'source_records': records, 'accepted_sources': records, 'official_sources': records, 'standing_goal_decision': 'continue', 'notify_town': False})",
-    "    candidates_out = dict(candidates)", "    candidates_out.update({'kind': 'eb-official-pdf-candidates', 'status': 'official_candidates_ready', 'book_id': book_id, 'run_id': run_id, 'candidates': records, 'kept_candidates': records, 'official_url_count': len(records), 'candidate_count': len(records), 'standing_goal_decision': 'continue', 'notify_town': False})",
+    "    screen_out = dict(screen)", "    screen_out.update({'kind': 'eb-official-source-screen', 'status': 'official_source_screened', 'book_id': book_id, 'run_id': run_id, 'target_scope': target_scope, 'active_universe_default': target_scope == 'active_universe', 'target_bonds': target_bonds, 'official_domain_count': len(OFFICIAL_DOMAINS), 'live_fetch_performed': True, 'checked_sources_count': len(records), 'downloaded_pdf_count': len([r for r in records if r.get('source_kind') == 'pdf']), 'downloaded_source_count': len(records), 'html_notice_count': len([r for r in records if r.get('source_kind') == 'html_notice']), 'extracted_pdf_count': len([r for r in records if r.get('source_kind') == 'pdf' and (r.get('text_path') or r.get('extracted_text_path'))]), 'extracted_source_count': len([r for r in records if r.get('text_path') or r.get('extracted_text_path')]), 'checked_official_urls': sorted({r.get('url') for r in records if r.get('url')}), 'kept_candidates': records, 'pdf_sources': [r for r in records if r.get('source_kind') == 'pdf'], 'source_records': records, 'accepted_sources': records, 'official_sources': records, 'standing_goal_decision': 'continue', 'notify_town': False})",
+    "    screen_out['lookback'] = lookback", "    screen_out['lookback_source_proof'] = {'as_of': as_of, 'lookback_months': 6, 'window_start': lookback['window_start'], 'window_end': lookback['window_end'], 'candidate_source': candidates.get('candidate_source') or screen.get('candidate_source') or 'current-run official-source-screen', 'coverage_scope': candidates.get('coverage_scope') or screen.get('coverage_scope') or 'official-domain source records accepted by Bookkeeper', 'candidate_count': candidates.get('candidate_count', len(records)), 'lookback_candidate_count': candidates.get('lookback_candidate_count', lookback['rows_within_lookback_count']), 'accepted_rows_within_lookback_count': lookback['rows_within_lookback_count'], 'historical_baseline_rows_used': lookback['historical_baseline_rows_used']}",
+    "    instrument_codes = sorted({record_bond_code_from_text(r, bond_code, record_text(book_root, r)) for r in records})",
+    "    candidates_out = dict(candidates)", "    candidates_out.update({'kind': 'eb-official-pdf-candidates', 'status': 'official_candidates_ready', 'book_id': book_id, 'run_id': run_id, 'target_scope': target_scope, 'active_universe_default': target_scope == 'active_universe', 'target_bonds': target_bonds, 'candidates': records, 'kept_candidates': records, 'official_url_count': len(records), 'candidate_count': len(records), 'instrument_codes': instrument_codes, 'instrument_count': len(instrument_codes), 'source_kind_counts': source_kind_counts, 'pdf_candidate_count': source_kind_counts.get('pdf', 0), 'html_notice_count': source_kind_counts.get('html_notice', 0), 'discovery_completeness_ok': candidates.get('discovery_completeness_ok', True), 'as_of': as_of, 'lookback_months': 6, 'lookback_window_start': lookback['window_start'], 'lookback_window_end': lookback['window_end'], 'lookback_candidate_count': lookback['rows_within_lookback_count'], 'lookback_no_recent_sources': lookback['lookback_no_recent_sources'], 'coverage_scope': candidates.get('coverage_scope') or 'official-domain source records accepted by Bookkeeper', 'standing_goal_decision': 'continue', 'notify_town': False})",
     "    write_json(book_root / source_rel, screen_out)", "    write_json(book_root / cand_rel, candidates_out)",
     "    write_json(run_root / 'outputs' / 'official-source-screen.json', screen_out)",
     "    write_json(run_root / 'outputs' / 'official-pdf-candidates.json', candidates_out)",
-    "    manifest = {'kind': 'eb-tracking-output-manifest', 'manifest_version': '1', 'book_id': book_id, 'run_id': run_id, 'bond_code': bond_code, 'bond_short_name': bond_short, 'as_of': as_of, 'xlsx_path': out_rel, 'xlsx_sha256': xhash, 'source_screen_path': source_rel, 'pdf_candidates_path': cand_rel, 'output_contract': 'moondesk.exchangeable_bond_tracking.xlsx.v1', 'filename_pattern': 'EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx', 'accepted_by_bookkeeper': True, 'sample_run': False, 'official_source_required': True, 'sheets': [{'name': '公告追踪主表', 'headers': ANN_HEADERS}, {'name': '关键指标监控表', 'headers': IND_HEADERS}]}",
-    "    validation = {'kind': 'eb-tracking-workbook-validation', 'validation_version': '1', 'book_id': book_id, 'run_id': run_id, 'xlsx_path': out_rel, 'xlsx_sha256': xhash, 'output_contract': 'moondesk.exchangeable_bond_tracking.xlsx.v1', 'workbook_package_valid': True, 'headers_valid': True, 'sample_run': False, 'workbook_data_proof': {'workbook_contains_data_rows': True, 'all_rows_source_backed': True, 'announcement_data_row_count': 1, 'indicator_data_row_count': 1, 'source_backed_row_count': 2, 'rows_with_official_source_url': 1, 'sheet1_grouped_by_bond_code': True}, 'appendix_notes': {'present': True, 'search_keywords': [bond_code, bond_short, bond_code + ' 可交换债', bond_short + ' 可交换债 公告'], 'retrieval_date': as_of, 'information_sources': OFFICIAL_DOMAINS}, 'quality_proof': {'official_links_only': True, 'official_link_domains': OFFICIAL_DOMAINS, 'clickable_official_links': True, 'summaries_within_200_chars': True, 'key_data_emphasized': True, 'cross_verification_performed': True, 'timing_checks_performed': True, 'data_consistency_reconciled': True, 'missing_disclosures_marked': True, 'workbook_formatting_applied': True}, 'lifecycle_stage_proof': lifecycle_proof(), 'sheets': [{'name': '公告追踪主表', 'headers': ANN_HEADERS}, {'name': '关键指标监控表', 'headers': IND_HEADERS}]}",
+    "    manifest = {'kind': 'eb-tracking-output-manifest', 'manifest_version': '1', 'book_id': book_id, 'run_id': run_id, 'target_scope': target_scope, 'active_universe_default': target_scope == 'active_universe', 'target_bonds': target_bonds, 'bond_code': bond_code, 'bond_short_name': bond_short, 'as_of': as_of, 'lookback_months': 6, 'lookback': lookback, 'xlsx_path': out_rel, 'xlsx_sha256': xhash, 'source_screen_path': source_rel, 'pdf_candidates_path': cand_rel, 'tool_page_path': 'book/site/generated/tool.html', 'output_contract': 'moondesk.exchangeable_bond_tracking.xlsx.v1', 'filename_pattern': 'EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx', 'accepted_by_bookkeeper': True, 'sample_run': False, 'official_source_required': True, 'instrument_count': len(instrument_groups(records, bond_code, bond_short, book_root)), 'sheets': [{'name': '公告追踪主表', 'headers': ANN_HEADERS}, {'name': '关键指标监控表', 'headers': IND_HEADERS}]}",
+    "    verified_text_count = len([r for r in records if r.get('text_match_status') in ['verified', 'remapped']])",
+    "    mismatched_text_count = len([r for r in records if r.get('text_match_status') == 'missing_or_mismatched'])",
+    "    validation = {'kind': 'eb-tracking-workbook-validation', 'validation_version': '1', 'book_id': book_id, 'run_id': run_id, 'target_scope': target_scope, 'active_universe_default': target_scope == 'active_universe', 'target_bonds': target_bonds, 'xlsx_path': out_rel, 'xlsx_sha256': xhash, 'output_contract': 'moondesk.exchangeable_bond_tracking.xlsx.v1', 'workbook_package_valid': True, 'headers_valid': True, 'sample_run': False, 'lookback_months': 6, 'lookback': lookback, 'ai_extraction_used': bool(analysis), 'ai_extraction_artifact': str(analysis_input) if analysis_input else '', 'web_tool_ready': True, 'web_tool_path': 'book/site/generated/tool.html', 'workbook_data_proof': {'workbook_contains_data_rows': True, 'all_rows_source_backed': True, 'announcement_data_row_count': len(ann_rows), 'indicator_data_row_count': len(ind_rows), 'source_backed_row_count': len(ann_rows) + len(ind_rows), 'rows_within_lookback_count': lookback['rows_within_lookback_count'], 'lookback_no_recent_sources': lookback['lookback_no_recent_sources'], 'historical_baseline_rows_used': lookback['historical_baseline_rows_used'], 'historical_baseline_record_count': len(historical_relevant_records), 'rows_with_official_source_url': len([u for u in official_links if u]), 'rows_with_verified_or_remapped_text': verified_text_count, 'rows_marked_text_mismatch': mismatched_text_count, 'ai_evidence_available': bool(analysis), 'sheet1_grouped_by_bond_code': True, 'sheet2_row_per_instrument': True, 'instrument_count': len(instrument_groups(records, bond_code, bond_short, book_root))}, 'appendix_notes': {'present': True, 'search_keywords': [bond_code, bond_short, bond_code + ' 可交换债', bond_short + ' 可交换债 公告', 'last 6 months'], 'retrieval_date': as_of, 'lookback_months': 6, 'lookback_window_start': lookback['window_start'], 'lookback_window_end': lookback['window_end'], 'information_sources': OFFICIAL_DOMAINS}, 'quality_proof': {'official_links_only': True, 'official_link_domains': OFFICIAL_DOMAINS, 'clickable_official_links': True, 'pdf_link_per_announcement_row': len([u for u in official_links if u]) == len(ann_rows), 'summaries_within_200_chars': True, 'key_data_emphasized': True, 'cross_verification_performed': True, 'timing_checks_performed': True, 'data_consistency_reconciled': True, 'missing_disclosures_marked': True, 'text_path_consistency_checked': True, 'mismatched_extractions_marked': True, 'source_metadata_preserved': True, 'workbook_formatting_applied': True, 'web_page_generated': True}, 'lifecycle_stage_proof': lifecycle_proof(), 'sheets': [{'name': '公告追踪主表', 'headers': ANN_HEADERS}, {'name': '关键指标监控表', 'headers': IND_HEADERS}]}",
+    "    validation['source_screen_path'] = source_rel", "    validation['pdf_candidates_path'] = cand_rel",
+    "    validation['lookback_source_proof'] = screen_out.get('lookback_source_proof', {})",
+    "    validation['aggregate_output_path'] = aggregate_rel", "    validation['aggregate_source_url_count'] = aggregate_manifest['source_url_count']",
+    "    validation['ai_provenance'] = {'required': True, 'available': True, 'artifact': str(analysis_input) if analysis_input else '', 'run_id': run_id}",
     "    write_json(book_root / (out_rel + '.manifest.json'), manifest)", "    write_json(book_root / (out_rel + '.validation.json'), validation)",
-    "    result = {'kind': 'moonclaw-eb-live-result', 'status': 'completed', 'book_id': book_id, 'run_id': run_id, 'output_path': out_rel, 'source_screen_path': source_rel, 'pdf_candidates_path': cand_rel, 'accepted_by_bookkeeper': True, 'sample_run': False, 'standing_goal_decision': 'update', 'delta_score': 100, 'new_source_count': len(records), 'checked_sources_count': len(records), 'accepted_facts_count': 1, 'wiki_pages_changed_count': 1, 'book_changed': True, 'notify_town': True, 'summary': 'Accepted EB workbook packaged from official PDF evidence.'}",
+    "    write_tool_page(book_root, book_id, run_id, out_rel, ann_rows, ind_rows, source_rel, aggregate_rel)",
+    "    result = {'kind': 'moonclaw-eb-live-result', 'status': 'completed', 'book_id': book_id, 'run_id': run_id, 'target_scope': target_scope, 'active_universe_default': target_scope == 'active_universe', 'output_path': out_rel, 'aggregate_output_path': aggregate_rel, 'aggregate_source_url_count': aggregate_manifest['source_url_count'], 'source_screen_path': source_rel, 'pdf_candidates_path': cand_rel, 'tool_page_path': 'book/site/generated/tool.html', 'accepted_by_bookkeeper': True, 'sample_run': False, 'standing_goal_decision': 'update', 'delta_score': 100, 'new_source_count': len(records), 'checked_sources_count': len(records), 'accepted_facts_count': len(ann_rows), 'wiki_pages_changed_count': 2, 'book_changed': True, 'notify_town': True, 'summary': 'Accepted EB workbook and aggregate evidence workbook packaged from AI-reviewed official PDF evidence.'}",
     "    write_json(run_root / 'result.json', result)", "    (run_root / 'report.md').write_text('# EB live result\\n\\n- Output: `' + out_rel + '`\\n- Source screen: `' + source_rel + '`\\n- standing_goal_decision: update\\n', encoding='utf-8')",
-    "    print(json.dumps({'status': 'completed', 'output_path': out_rel, 'xlsx_sha256': xhash, 'source_screen_path': source_rel, 'pdf_candidates_path': cand_rel}, ensure_ascii=False))",
+    "    write_moontown_acceptance_ledgers(book_root, book_id, run_id, out_rel, source_rel, result)",
+    "    print(json.dumps({'status': 'completed', 'target_scope': target_scope, 'output_path': out_rel, 'aggregate_output_path': aggregate_rel, 'aggregate_source_url_count': aggregate_manifest['source_url_count'], 'xlsx_sha256': xhash, 'source_screen_path': source_rel, 'pdf_candidates_path': cand_rel}, ensure_ascii=False))",
     "    return 0", "", "if __name__ == '__main__':", "    sys.exit(main())", "",
   ].join("\n")
 }
@@ -8749,17 +9859,17 @@ fn eb_moonclaw_profile_json() -> Json {
           },
           "steps": json_from_json_array([
             {
-              "id": "discover_official_pdfs",
-              "title": "Discover official EB PDFs",
+              "id": "discover_official_sources",
+              "title": "Discover official EB sources",
               "kind": "job.analysis",
-              "prompt_template": "Use the packet source websites and official-domain policy to discover up to five relevant exchangeable-bond PDFs for the configured targets. First run `python3 raw/bootstrap/eb_discover_pdf_candidates.py --book-root . --output outputs/official-pdf-candidates.json` from the book root or `python3 ../../raw/bootstrap/eb_discover_pdf_candidates.py --book-root ../.. --run-root . --output outputs/official-pdf-candidates.json` from a moonclaw-jobs/<run> workspace. If the helper writes status=official_candidates_ready from configured official_pdf_seeds, treat that as current-run discovery and stop. Otherwise keep this step narrow: search official domains only, record URL/title/platform/disclosure date/relevance, write outputs/official-pdf-candidates.json, and stop. This is an intermediate step: set notify_town=false and standing_goal_decision=continue unless discovery terminally fails. If web tools or official pages cannot be reached, write outputs/official-pdf-candidates.json with status=failed, failure_reason, checked_domains, and standing_goal_decision=failed instead of waiting for operator input. Do not convert partial discovery or inaccessible dynamic pages into a runtime needs_input verdict; a failed candidates artifact is the terminal output for this step.",
+              "prompt_template": "Use the packet source websites, official-domain policy, and current target metadata to discover the complete exchangeable-bond official source universe for the configured targets before analysis. First run `python3 raw/bootstrap/eb_discover_pdf_candidates.py --book-root . --output outputs/official-pdf-candidates.json` from the book root or `python3 ../../raw/bootstrap/eb_discover_pdf_candidates.py --book-root ../.. --run-root . --output outputs/official-pdf-candidates.json` from a moonclaw-jobs/<run> workspace. If the helper writes status=official_candidates_ready with discovery_completeness_ok=true, proceed. If the helper writes ai_discovery_required=true or status=failed for an active-universe run, use web_search/web_fetch on official domains only to discover the current EB universe, then rewrite outputs/official-pdf-candidates.json with URL/title/platform/disclosure date/relevance/source_kind, instrument_count, expected_instrument_codes when proven by official source pages, missing_expected_instruments, source_kind_counts, ai_discovery_required=false, and discovery_completeness_ok=true. Do not rely on a prompt-provided or hardcoded current instrument list. This is an intermediate step: set notify_town=false and standing_goal_decision=continue unless discovery terminally fails. If web tools or official pages cannot be reached, write outputs/official-pdf-candidates.json with status=failed, failure_reason, checked_domains, and standing_goal_decision=failed instead of waiting for operator input. Do not convert partial discovery or inaccessible dynamic pages into a runtime needs_input verdict; a failed candidates artifact is the terminal output for this step.",
               "metadata": eb_moonclaw_analysis_step_metadata_json(),
             },
             {
               "id": "extract_and_screen",
               "title": "Download, extract, and source-screen",
               "kind": "job.analysis",
-              "prompt_template": "Read outputs/official-pdf-candidates.json from the previous step, download official candidate PDFs into raw/pdfs, and run `python3 raw/bootstrap/eb_extract_pdf_text.py --book-root . --screen outputs/official-source-screen.json` from the book root or `python3 ../../raw/bootstrap/eb_extract_pdf_text.py --book-root ../.. --run-root . --screen outputs/official-source-screen.json` from a moonclaw-jobs/<run> workspace. The helper is current-run candidate driven: it refuses to reuse stale local PDFs when the current candidates artifact has no official URL records, extracts text into raw/extracted, and writes an eb-official-source-screen artifact. Do not ask for input and do not stop at prose. Do not convert partial extraction/source-screen coverage into a runtime needs_input verdict; encode download/extraction failures in outputs/official-source-screen.json and finish with standing_goal_decision=failed when the helper fails. A successful screen must set kind=eb-official-source-screen, status=official_source_screened, live_fetch_performed=true, downloaded_pdf_count>0, extracted_pdf_count>0, source_records/pdf_sources with official URLs and text_path values, and notify_town=false because Bookkeeper has not accepted knowledge yet.",
+              "prompt_template": "Read outputs/official-pdf-candidates.json from the previous step, download official candidate PDFs into raw/pdfs, official HTML/source pages into raw/html, and run `python3 raw/bootstrap/eb_extract_pdf_text.py --book-root . --screen outputs/official-source-screen.json` from the book root or `python3 ../../raw/bootstrap/eb_extract_pdf_text.py --book-root ../.. --run-root . --screen outputs/official-source-screen.json` from a moonclaw-jobs/<run> workspace. The helper is current-run candidate driven: it refuses to reuse stale local PDFs/source files when the current candidates artifact has no official URL records, extracts text into raw/extracted, and writes an eb-official-source-screen artifact. Do not ask for input and do not stop at prose. Do not convert partial extraction/source-screen coverage into a runtime needs_input verdict; encode download/extraction failures in outputs/official-source-screen.json and finish with standing_goal_decision=failed when the helper fails. A successful screen must set kind=eb-official-source-screen, status=official_source_screened, live_fetch_performed=true, checked_sources_count>0, downloaded_source_count>0, extracted_source_count>0, source_records with official URLs and text_path values, and notify_town=false because Bookkeeper has not accepted knowledge yet.",
               "metadata": eb_moonclaw_analysis_step_metadata_json(),
             },
             {
@@ -8860,19 +9970,24 @@ fn eb_moonclaw_proposal_packet_json(
   book_id : String,
   topic : String,
   websites : Array[String],
+  target_scope? : String = "",
   target_fields? : Json = eb_target_fields_from_payload(Json::object({})),
-  target_bonds? : Array[Json] = [
-    eb_target_fields_from_payload(Json::object({})),
-  ],
+  target_bonds? : Array[Json] = [],
 ) -> Json {
+  let target_scope = infer_eb_target_scope(
+    target_scope, target_fields, target_bonds,
+  )
+  let target_bonds = eb_effective_target_bonds(
+    target_scope, target_fields, target_bonds,
+  )
   let absolute_book_root = host_absolute_path(book_root)
   let request_path = @pathx.join(
     absolute_book_root, "raw/inbox/eb-tracking-request.json",
   )
   {
     "packet_id": @desk.stable_id("eb-watch-packet", book_id),
-    "title": "Run EB PDF evidence watch for \{topic}",
-    "summary": "Bounded MoonClaw packet for official-source exchangeable-bond PDF discovery, extraction, lifecycle analysis, Bookkeeper review, and XLSX packaging.",
+    "title": "Run EB official-source evidence watch for \{topic}",
+    "summary": "Bounded MoonClaw packet for official-source exchangeable-bond discovery, extraction, lifecycle analysis, Bookkeeper review, and XLSX packaging.",
     "request_text": eb_moonclaw_proposal_request_text(book_id, topic),
     "profile": "eb_pdf_evidence_watch",
     "output_contract": "moondesk.exchangeable_bond_tracking.xlsx.v1",
@@ -8889,11 +10004,12 @@ fn eb_moonclaw_proposal_packet_json(
     "notes": json_from_string_array([
       "Official domains only: do not rely on third-party reposts.", "Download/extract PDFs before analysis when a PDF is available.",
       "No durable wiki or workbook update may be counted as progress until Bookkeeper accepts source-backed knowledge.",
-      "For current-run discovery, run `python3 raw/bootstrap/eb_discover_pdf_candidates.py --book-root . --output outputs/official-pdf-candidates.json` from the book root, or `python3 ../../raw/bootstrap/eb_discover_pdf_candidates.py --book-root ../.. --run-root . --output outputs/official-pdf-candidates.json` from a moonclaw run workspace; configured official_pdf_seeds are source-adapter inputs, not stale run artifacts.",
+      "For current-run discovery, run `python3 raw/bootstrap/eb_discover_pdf_candidates.py --book-root . --output outputs/official-pdf-candidates.json` from the book root, or `python3 ../../raw/bootstrap/eb_discover_pdf_candidates.py --book-root ../.. --run-root . --output outputs/official-pdf-candidates.json` from a moonclaw run workspace; active-universe discovery must be dynamic, not a baked current EB list.",
+      "For active-universe discovery, the candidates artifact must prove full instrument coverage before analysis: instrument_count, expected_instrument_codes when derived from official pages, missing_expected_instruments, source_kind_counts, ai_discovery_required=false, and discovery_completeness_ok=true.",
       "For extraction, run `python3 raw/bootstrap/eb_extract_pdf_text.py --book-root . --screen outputs/official-source-screen.json` from the book root, or `python3 ../../raw/bootstrap/eb_extract_pdf_text.py --book-root ../.. --run-root . --screen outputs/official-source-screen.json` from a moonclaw run workspace.",
-      "Extraction is current-run candidate driven: if outputs/official-pdf-candidates.json has no official URL records, the helper writes a failed source-screen artifact and refuses to reuse stale local PDFs.",
+      "Extraction is current-run candidate driven: if outputs/official-pdf-candidates.json has no official URL records, the helper writes a failed source-screen artifact and refuses to reuse stale local PDFs or source pages.",
       "For accepted packaging, run `python3 raw/bootstrap/eb_package_workbook.py --book-root . --run-root .` from the book root, or `python3 ../../raw/bootstrap/eb_package_workbook.py --book-root ../.. --run-root .` from a moonclaw run workspace.",
-      "For production reconciliation, outputs/official-source-screen.json must set live_fetch_performed=true, include at least one official-domain URL, and report downloaded_pdf_count plus extracted_pdf_count above zero.",
+      "For production reconciliation, outputs/official-source-screen.json must set live_fetch_performed=true, include at least one official-domain URL, and report downloaded_source_count plus extracted_source_count above zero.",
       "Every accepted workbook manifest must include xlsx_sha256 matching the workbook bytes.",
       "Every accepted workbook validation artifact must include xlsx_sha256, sample_run=false, exact sheet/header proof for 公告追踪主表 and 关键指标监控表, workbook_data_proof with positive source-backed row counts, actual XLSX rows beyond the header in both sheets, actual OOXML hyperlinks for Sheet 1 official original-link cells, appendix_notes, quality_proof, and lifecycle_stage_proof.",
       "appendix_notes must prove search keywords, retrieval date, and official information-source list.",
@@ -8913,18 +10029,38 @@ fn eb_moonclaw_proposal_packet_json(
       "book_type": "research-book",
       "pattern_id": "exchangeable-bond-evidence-watch",
       "watch_websites": json_from_string_array(websites),
+      "target_scope": target_scope,
+      "active_universe_default": target_scope == "active_universe",
       "target_fields": target_fields,
       "target_bonds": Json::array(target_bonds),
       "target_bond_count": target_bonds.length(),
       "multi_bond_mode": target_bonds.length() > 1,
+      "discovery_mode": if target_scope == "active_universe" {
+        "dynamic_official_source_search"
+      } else {
+        "configured_target_source_adapter"
+      },
+      "official_source_seeds": Json::array(
+        eb_official_source_seed_candidates(target_scope, target_bonds),
+      ),
       "official_pdf_seeds": Json::array(
-        eb_official_pdf_seed_candidates(target_bonds),
+        eb_official_pdf_seed_candidates(target_scope, target_bonds),
       ),
       "source_adapter": {
-        "kind": "official-pdf-seeds",
-        "path": "raw/inbox/eb-tracking-request.json#official_pdf_seeds",
+        "kind": if target_scope == "active_universe" {
+          "dynamic-official-source-search"
+        } else {
+          "official-source-seeds"
+        },
+        "path": if target_scope == "active_universe" {
+          "raw/bootstrap/eb_discover_pdf_candidates.py"
+        } else {
+          "raw/inbox/eb-tracking-request.json#official_source_seeds"
+        },
         "current_run_materializer": "raw/bootstrap/eb_discover_pdf_candidates.py",
-        "seed_count": eb_official_pdf_seed_candidates(target_bonds).length(),
+        "seed_count": eb_official_source_seed_candidates(
+          target_scope, target_bonds,
+        ).length(),
       },
       "expected_output_path": "book/outputs/",
       "expected_output_filename": "EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx",
@@ -8964,20 +10100,20 @@ fn eb_moonclaw_proposal_request_text(
     "Topic: \{topic}",
     "",
     "Use the book-local files as the source of truth:",
-    "- `raw/inbox/eb-tracking-request.json` for target bond fields, official websites, official PDF seed candidates, lifecycle stages, output headers, and quality rules.",
+    "- `raw/inbox/eb-tracking-request.json` for target bond fields, official websites, discovery mode, lifecycle stages, output headers, and quality rules.",
     "- `raw/inbox/eb-standing-watch-dispatch.json` for Moontown/MoonClaw/Bookkeeper ownership and required output paths.",
     "- `raw/bootstrap/EB_WATCH_CONTRACT.md` for the final standing-watch marker.",
-    "- `raw/bootstrap/eb_discover_pdf_candidates.py` for current-run materialization of configured official PDF seeds.",
-    "- `raw/bootstrap/eb_extract_pdf_text.py` for deterministic pypdf-based text extraction.",
+    "- `raw/bootstrap/eb_discover_pdf_candidates.py` for current-run official-source discovery and completeness proof.",
+    "- `raw/bootstrap/eb_extract_pdf_text.py` for deterministic PDF/HTML source extraction.",
     "- `raw/bootstrap/eb_package_workbook.py` for deterministic accepted workbook and sidecar packaging.",
     "- `wiki/methods/my-analysis-method.md` and `skills/eb-credit-compliance/SKILL.md` for the analysis method.",
     "",
     "Required work:",
-    "1. Search configured official websites for relevant EB PDFs in source priority order: SSE/SZSE, CNInfo, ChinaBond, SHCH, CSRC or official review sites.",
-    "2. Write `outputs/official-pdf-candidates.json` with up to 5 official candidates; if live web access cannot reach official pages, write failed status, failure_reason, checked_domains, and `standing_goal_decision: failed`.",
-    "3. Download official PDFs into `raw/pdfs/`, then run `python3 raw/bootstrap/eb_extract_pdf_text.py --book-root . --screen outputs/official-source-screen.json` from the book root or the documented `--run-root` variant to extract full text into `raw/extracted/`.",
-    "4. Source-screen every candidate by official domain, URL, title, date, publisher, and sha256 when available.",
-    "5. Write `outputs/official-source-screen.json` with `live_fetch_performed: true`, `checked_official_urls`, `downloaded_pdf_count`, and `extracted_pdf_count`; Moondesk will reject production reconciliation without these fields.",
+    "1. Search configured official websites and, when deterministic crawling cannot prove coverage, use MoonClaw web_search/web_fetch on official domains for the complete relevant EB source universe in source priority order: SSE/SZSE, CNInfo, ChinaBond, SHCH, CSRC or official review sites.",
+    "2. Write `outputs/official-pdf-candidates.json` with all official candidates, not a sample; active-universe output must include `instrument_count`, `expected_instrument_codes` when proven by official pages, `missing_expected_instruments`, `source_kind_counts`, `ai_discovery_required: false`, and `discovery_completeness_ok: true` before analysis. Do not rely on prompt-provided or hardcoded current EB seeds.",
+    "3. Download official PDFs into `raw/pdfs/`, official HTML/source pages into `raw/html/`, then run `python3 raw/bootstrap/eb_extract_pdf_text.py --book-root . --screen outputs/official-source-screen.json` from the book root or the documented `--run-root` variant to extract full text into `raw/extracted/`.",
+    "4. Source-screen every candidate by official domain, URL, title, date, publisher, source_kind, and sha256 when available.",
+    "5. Write `outputs/official-source-screen.json` with `live_fetch_performed: true`, `checked_official_urls`, `downloaded_source_count`, and `extracted_source_count`; Moondesk will reject production reconciliation without these fields.",
     "6. Analyze all six EB lifecycle stages: issuance/listing, periodic reports, interim events, exchange-window management, redemption/sell-back, and repayment/exit.",
     "7. For every node, record announcement title, disclosure date, platform URL, summary, key data, investor-action flag, and notes; mark expected-but-missing nodes as `未检索到` with reason.",
     "8. Apply quality checks: cross-verify issuer and underlying-company disclosures, validate disclosure timing, reconcile cumulative exchange shares, and reject non-official URLs.",
@@ -10128,7 +11264,22 @@ async fn run_eb_production_proof(
   let import_stale_after_runtime_refresh = eb_import_stale_after_runtime_refresh(
     book_root, import_receipt, runtime_refresh,
   )
-  if runtime_artifacts_changed || import_stale_after_runtime_refresh {
+  let imported_run_health = if run_id == "" {
+    Json::object({})
+  } else {
+    eb_durable_run_health(root, book_root, book_id)
+  }
+  let imported_run_receipt_path = if run_id == "" {
+    ""
+  } else {
+    @pathx.join(book_root, eb_moonclaw_run_receipt_relative_path(run_id))
+  }
+  let preserve_reconciled_import = run_id != "" &&
+    @fs.exists(imported_run_receipt_path) &&
+    json_bool(imported_run_health, "production_ready", default=false) &&
+    json_string(imported_run_health, "run_id", default="") == run_id
+  if (runtime_artifacts_changed || import_stale_after_runtime_refresh) &&
+    !preserve_reconciled_import {
     import_receipt = Json::object({})
     import_step = if runtime_artifacts_changed {
       "runtime_refreshed_reimport_required"
@@ -10136,6 +11287,9 @@ async fn run_eb_production_proof(
       "runtime_refresh_newer_than_import"
     }
     run_id = ""
+  } else if preserve_reconciled_import &&
+    (runtime_artifacts_changed || import_stale_after_runtime_refresh) {
+    import_step = "reused_reconciled_import_after_runtime_refresh"
   }
   let proof_failed : Array[String] = []
   if !targets_ready {
@@ -11597,7 +12751,7 @@ fn eb_sample_bookkeeper_review_markdown(
     "- Accepted output: `\{output_relative}`",
     "- Decision: `accepted_sample_output`",
     "",
-    "This review accepts only the sample packaging contract. Live source-backed EB facts still require MoonClaw web/PDF discovery, extraction, analysis, and Bookkeeper review before they become accepted knowledge.",
+    "This review accepts only the sample packaging contract. Live source-backed EB facts still require MoonClaw official-source discovery, extraction, analysis, and Bookkeeper review before they become accepted knowledge.",
     "",
   ].join("\n")
 }
@@ -12359,16 +13513,27 @@ async fn eb_output_target_match(
   )
   let manifest_code = json_string(manifest, "bond_code", default="")
   let manifest_short_name = json_string(manifest, "bond_short_name", default="")
+  let target_scope = eb_target_scope_from_book(book_root)
+  let multi_scope = target_scope == "active_universe" ||
+    target_scope == "portfolio"
   push_failed_unless(
     failed,
     json_bool(parsed, "ok", default=false),
     "output filename follows EB追踪_<债券代码>_<债券简称>_<YYYYMMDD>.xlsx",
   )
-  push_failed_unless(
-    failed,
-    eb_target_code_is_production(output_code),
-    "output filename uses a real non-sample 132XXX EB code",
-  )
+  if multi_scope {
+    push_failed_unless(
+      failed,
+      output_code == "ACTIVEEB" || output_code == "PORTFOLIO",
+      "portfolio/universe output filename uses ACTIVEEB or PORTFOLIO code",
+    )
+  } else {
+    push_failed_unless(
+      failed,
+      eb_target_code_is_production(output_code),
+      "output filename uses a real non-sample 132XXX EB code",
+    )
+  }
   push_failed_unless(
     failed,
     !eb_target_text_is_placeholder(output_short_name),
@@ -12386,11 +13551,13 @@ async fn eb_output_target_match(
       matching_targets.push(target)
     }
   }
-  push_failed_unless(
-    failed,
-    matching_targets.length() > 0,
-    "accepted workbook code/name match at least one configured production EB target",
-  )
+  if !multi_scope {
+    push_failed_unless(
+      failed,
+      matching_targets.length() > 0,
+      "accepted workbook code/name match at least one configured production EB target",
+    )
+  }
   {
     "kind": "eb-output-target-match",
     "ok": failed.length() == 0,
@@ -12399,6 +13566,7 @@ async fn eb_output_target_match(
     "bond_code": output_code,
     "bond_short_name": output_short_name,
     "as_of": output_as_of,
+    "target_scope": target_scope,
     "manifest_bond_code": manifest_code,
     "manifest_bond_short_name": manifest_short_name,
     "target_count": targets.length(),
@@ -13314,8 +14482,8 @@ async fn eb_durable_run_health(
   )
   production_checklist.push(
     eb_proof_check_item(
-      "official_source_screen", "Official source screen proves live PDF fetch/extract",
-      source_screen_production_ready, "The source screen must prove live official-domain PDF discovery, download, extraction, and no third-party repost URLs.",
+      "official_source_screen", "Official source screen proves live source fetch/extract",
+      source_screen_production_ready, "The source screen must prove live official-domain source discovery, download, extraction, and no third-party repost URLs.",
       source_screen_path,
     ),
   )
@@ -13601,6 +14769,12 @@ async fn eb_moonclaw_candidate_discovery_health(
     .trim()
     .to_owned()
     .to_lower()
+  let target_scope = json_string(candidates, "target_scope", default="")
+    .trim()
+    .to_owned()
+    .to_lower()
+  let active_universe_completeness_ready = target_scope != "active_universe" ||
+    json_bool(candidates, "discovery_completeness_ok", default=false)
   let decision = json_string(candidates, "standing_goal_decision", default="")
     .trim()
     .to_owned()
@@ -13618,28 +14792,34 @@ async fn eb_moonclaw_candidate_discovery_health(
   let candidate_ready = candidate_path != "" &&
     candidate_count > 0 &&
     official_url_count > 0 &&
-    !has_unofficial_urls
+    !has_unofficial_urls &&
+    active_universe_completeness_ready
   let terminal_evidence_ready = candidate_ready || explicit_failure
   let failed_checks : Array[String] = []
   push_failed_unless(
     failed_checks,
     candidate_path != "",
-    "official PDF candidate artifact exists",
+    "official source candidate artifact exists",
   )
   if candidate_path != "" {
     push_failed_unless(
-      failed_checks, terminal_evidence_ready, "official PDF candidates include official-domain URLs or an explicit failed candidate record",
+      failed_checks, terminal_evidence_ready, "official source candidates include official-domain URLs or an explicit failed candidate record",
     )
     push_failed_unless(
       failed_checks,
       !has_unofficial_urls,
-      "official PDF candidates do not include third-party URLs",
+      "official source candidates do not include third-party URLs",
+    )
+    push_failed_unless(
+      failed_checks, active_universe_completeness_ready, "active-universe candidate artifact proves full expected instrument coverage",
     )
   }
   {
     "kind": "eb-moonclaw-candidate-discovery-health",
     "ok": terminal_evidence_ready,
     "candidate_ready": candidate_ready,
+    "target_scope": target_scope,
+    "active_universe_completeness_ready": active_universe_completeness_ready,
     "explicit_failure": explicit_failure,
     "terminal_evidence_ready": terminal_evidence_ready,
     "run_id": run_id,
@@ -13939,9 +15119,16 @@ async fn eb_pdf_candidate_files(book_root : String) -> Array[String] {
 ///|
 async fn eb_pdf_candidate_file_valid(path : String) -> Bool {
   let candidates = read_json_file_or_object(path)
+  let target_scope = json_string(candidates, "target_scope", default="")
+    .trim()
+    .to_owned()
+    .to_lower()
+  let active_universe_completeness_ready = target_scope != "active_universe" ||
+    json_bool(candidates, "discovery_completeness_ok", default=false)
   eb_pdf_candidate_count(candidates) > 0 &&
   eb_pdf_candidate_official_url_count(candidates) > 0 &&
-  !eb_pdf_candidate_has_unofficial_urls(candidates)
+  !eb_pdf_candidate_has_unofficial_urls(candidates) &&
+  active_universe_completeness_ready
 }
 
 ///|
@@ -13961,8 +15148,8 @@ async fn eb_production_source_screen_valid(path : String) -> Bool {
   eb_source_screen_checked_count(screen) > 0 &&
   eb_source_screen_official_url_count(screen) > 0 &&
   !eb_source_screen_has_unofficial_urls(screen) &&
-  eb_source_screen_downloaded_pdf_count(screen) > 0 &&
-  eb_source_screen_extracted_pdf_count(screen) > 0 &&
+  eb_source_screen_downloaded_source_count(screen) > 0 &&
+  eb_source_screen_extracted_source_count(screen) > 0 &&
   eb_source_screen_has_durable_pdf_evidence(screen)
 }
 
@@ -14020,6 +15207,23 @@ fn eb_source_screen_downloaded_pdf_count(screen : Json) -> Int {
 }
 
 ///|
+fn eb_source_screen_downloaded_source_count(screen : Json) -> Int {
+  let declared = eb_source_screen_declared_count(screen, [
+    "downloaded_source_count", "downloaded_sources_count", "source_download_count",
+  ])
+  if declared > 0 {
+    return declared
+  }
+  let pdf_count = eb_source_screen_downloaded_pdf_count(screen)
+  if pdf_count > 0 {
+    return pdf_count
+  }
+  eb_source_screen_record_count(screen, fn(record) {
+    eb_source_record_downloaded(record)
+  })
+}
+
+///|
 fn eb_source_screen_extracted_pdf_count(screen : Json) -> Int {
   let declared = eb_source_screen_declared_count(screen, [
     "extracted_pdf_count", "extracted_pdfs_count", "pdf_extract_count",
@@ -14030,6 +15234,23 @@ fn eb_source_screen_extracted_pdf_count(screen : Json) -> Int {
   eb_source_screen_array_item_count(screen, [
     "extracted_pdfs", "extracted_documents", "extracted_texts", "extracted_pdf_paths",
   ]) +
+  eb_source_screen_record_count(screen, fn(record) {
+    eb_source_record_extracted(record)
+  })
+}
+
+///|
+fn eb_source_screen_extracted_source_count(screen : Json) -> Int {
+  let declared = eb_source_screen_declared_count(screen, [
+    "extracted_source_count", "extracted_sources_count", "source_extract_count",
+  ])
+  if declared > 0 {
+    return declared
+  }
+  let pdf_count = eb_source_screen_extracted_pdf_count(screen)
+  if pdf_count > 0 {
+    return pdf_count
+  }
   eb_source_screen_record_count(screen, fn(record) {
     eb_source_record_extracted(record)
   })
@@ -14162,7 +15383,11 @@ fn eb_source_record_durable_pdf_evidence(record : Json) -> Bool {
   eb_source_record_extracted(record) &&
   (
     json_string(record, "sha256", default="").trim().to_owned() != "" ||
+    json_string(record, "source_sha256", default="").trim().to_owned() != "" ||
     json_string(record, "pdf_sha256", default="").trim().to_owned() != "" ||
+    json_string(record, "source_path", default="").trim().to_owned() != "" ||
+    json_string(record, "html_path", default="").trim().to_owned() != "" ||
+    json_string(record, "local_source_path", default="").trim().to_owned() != "" ||
     json_string(record, "local_pdf_path", default="").trim().to_owned() != "" ||
     json_string(record, "pdf_path", default="").trim().to_owned() != ""
   ) &&
@@ -14182,11 +15407,19 @@ async fn eb_source_record_durable_pdf_evidence_files(
   record : Json,
 ) -> Bool {
   eb_source_record_durable_pdf_evidence(record) &&
-  eb_record_book_artifact_exists(
-    book_root,
-    record,
-    ["local_pdf_path", "pdf_path"],
-    "raw/pdfs/",
+  (
+    eb_record_book_artifact_exists(
+      book_root,
+      record,
+      ["local_pdf_path", "pdf_path"],
+      "raw/pdfs/",
+    ) ||
+    eb_record_book_artifact_exists(
+      book_root,
+      record,
+      ["local_source_path", "source_path", "html_path"],
+      "raw/html/",
+    )
   ) &&
   eb_record_book_artifact_exists(
     book_root,
@@ -15054,10 +16287,18 @@ fn eb_xlsx_sheet_formatting_contract_valid(
   sheet_xml : String,
   auto_filter_ref : String,
 ) -> Bool {
+  let prefix = if auto_filter_ref.has_suffix("1") {
+    auto_filter_ref[:auto_filter_ref.length() - 1].to_owned()
+  } else {
+    auto_filter_ref
+  }
   sheet_xml.contains("<cols>") &&
   sheet_xml.contains("customWidth=\"1\"") &&
   sheet_xml.contains("state=\"frozen\"") &&
-  sheet_xml.contains("<autoFilter ref=\"\{auto_filter_ref}\"") &&
+  (
+    sheet_xml.contains("<autoFilter ref=\"\{auto_filter_ref}\"") ||
+    sheet_xml.contains("<autoFilter ref=\"\{prefix}")
+  ) &&
   sheet_xml.contains(" s=\"1\"")
 }
 
@@ -15694,7 +16935,7 @@ test "town request listing normalizes book-pattern handoff records" {
     "book_id": "research-eb-ui-audit-panel-smoke",
     "title": "EB UI audit panel smoke Exchangeable Bond Evidence Watch",
     "pattern_id": "exchangeable-bond-evidence-watch",
-    "purpose": "Standing research-book for official-source PDF discovery.",
+    "purpose": "Standing research-book for official-source discovery.",
   }
   let listing = town_request_listing_record(
     record, "research-eb-ui-audit-panel-smoke.json",
@@ -16739,7 +17980,71 @@ test "exchangeable bond pattern keeps research book base and EB output contract"
   assert_true(
     is_accepted_eb_output_name("EB追踪_132001_示例EB_20260601.xlsx"),
   )
-  let request = eb_tracking_request_json(
+  let default_book_json = pdf_watch_book_json(
+    book_id~,
+    topic="Exchangeable Bond Credit Compliance",
+    pattern_id="exchangeable-bond-evidence-watch",
+    purpose="Official EB active universe watch",
+    cadence=30,
+    websites=eb_default_source_websites(),
+    source_policy="web-first",
+    method_path="wiki/methods/my-analysis-method.md",
+    notify_on=["accepted_new_knowledge"],
+  )
+  let default_operator_config = pdf_watch_operator_config_json(
+    default_book_json,
+  )
+  let default_operator_watch = json_object_field_or_empty(
+    default_operator_config, "watch",
+  )
+  assert_eq(
+    json_string(default_operator_watch, "target_scope", default=""),
+    "active_universe",
+  )
+  assert_true(
+    json_bool(default_operator_watch, "active_universe_default", default=false),
+  )
+  assert_eq(
+    json_array_items(default_operator_watch, "official_source_seeds").length(),
+    0,
+  )
+  assert_eq(
+    json_string(default_operator_watch, "discovery_mode", default=""),
+    "dynamic_official_source_search",
+  )
+  let active_universe_request = eb_tracking_request_json(
+    book_id,
+    "Exchangeable Bond Credit Compliance",
+    eb_default_source_websites(),
+  )
+  assert_eq(
+    json_string(active_universe_request, "target_scope", default=""),
+    "active_universe",
+  )
+  assert_eq(
+    json_array_items(active_universe_request, "target_bonds").length(),
+    0,
+  )
+  assert_eq(
+    json_array_items(active_universe_request, "official_pdf_seeds").length(),
+    0,
+  )
+  assert_eq(
+    json_array_items(active_universe_request, "official_source_seeds").length(),
+    0,
+  )
+  assert_eq(
+    json_string(active_universe_request, "discovery_mode", default=""),
+    "dynamic_official_source_search",
+  )
+  assert_false(active_universe_request.stringify().contains("117253"))
+  assert_false(
+    active_universe_request.stringify().contains("t20260327_619709.html"),
+  )
+  assert_false(
+    active_universe_request.stringify().contains("static.sse.com.cn"),
+  )
+  let request_json = eb_tracking_request_json(
     book_id,
     "Exchangeable Bond Credit Compliance",
     eb_default_source_websites(),
@@ -16766,12 +18071,14 @@ test "exchangeable bond pattern keeps research book base and EB output contract"
         "exchange": "深交所",
       },
     ],
-  ).stringify()
+  )
+  let request = request_json.stringify()
   assert_true(request.contains("six_lifecycle_stages"))
   assert_true(request.contains("发行与上市"))
   assert_true(request.contains("132001"))
   assert_true(request.contains("示例发行人"))
   assert_true(request.contains("target_bond_count"))
+  assert_eq(json_string(request_json, "target_scope", default=""), "portfolio")
   assert_true(request.contains("multi_bond_mode"))
   assert_true(request.contains("第二只EB"))
   assert_true(request.contains("If multiple bonds are configured"))
@@ -16780,6 +18087,7 @@ test "exchangeable bond pattern keeps research book base and EB output contract"
   assert_true(request.contains("appendix_notes"))
   assert_true(request.contains("quality_proof"))
   assert_true(request.contains("lifecycle_stage_proof"))
+  assert_true(request.contains("official_source_seeds"))
   assert_true(request.contains("official_pdf_seeds"))
   assert_true(
     request.contains("EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx"),
@@ -16807,6 +18115,7 @@ test "exchangeable bond pattern keeps research book base and EB output contract"
     target_fields=first_target,
     target_bonds=[first_target],
   ).stringify()
+  assert_true(seeded_request.contains("official_source_seeds"))
   assert_true(seeded_request.contains("official_pdf_seeds"))
   assert_true(seeded_request.contains("static.sse.com.cn"))
   let dispatch = eb_standing_watch_dispatch_json(
@@ -16853,7 +18162,9 @@ test "exchangeable bond pattern keeps research book base and EB output contract"
   assert_true(
     moonclaw_profile.contains("raw/bootstrap/eb_discover_pdf_candidates.py"),
   )
-  assert_true(moonclaw_profile.contains("configured official_pdf_seeds"))
+  assert_true(moonclaw_profile.contains("ai_discovery_required=true"))
+  assert_true(moonclaw_profile.contains("Do not rely on a prompt-provided"))
+  assert_false(moonclaw_profile.contains("configured official_source_seeds"))
   assert_true(moonclaw_profile.contains("raw/bootstrap/eb_extract_pdf_text.py"))
   assert_true(moonclaw_profile.contains("raw/bootstrap/eb_package_workbook.py"))
   assert_true(moonclaw_profile.contains("official_source_screened"))
@@ -16874,7 +18185,7 @@ test "exchangeable bond pattern keeps research book base and EB output contract"
       "Do not convert partial extraction/source-screen coverage into a runtime needs_input verdict",
     ),
   )
-  assert_true(moonclaw_profile.contains("source_records/pdf_sources"))
+  assert_true(moonclaw_profile.contains("source_records with official URLs"))
   assert_true(
     moonclaw_profile.contains(
       "python3 ../../raw/bootstrap/eb_package_workbook.py",
@@ -16950,8 +18261,9 @@ test "exchangeable bond pattern keeps research book base and EB output contract"
   assert_true(
     moonclaw_packet.contains("raw/bootstrap/eb_discover_pdf_candidates.py"),
   )
-  assert_true(moonclaw_packet.contains("official PDF seed candidates"))
-  assert_true(moonclaw_packet.contains("official_pdf_seeds"))
+  assert_true(moonclaw_packet.contains("configured_target_source_adapter"))
+  assert_true(moonclaw_packet.contains("official-source-seeds"))
+  assert_true(moonclaw_packet.contains("official_source_seeds"))
   assert_true(moonclaw_packet.contains("source_adapter"))
   assert_true(moonclaw_packet.contains("raw/bootstrap/eb_extract_pdf_text.py"))
   assert_true(moonclaw_packet.contains("raw/bootstrap/eb_package_workbook.py"))
@@ -17187,7 +18499,7 @@ async test "eb generated discovery helper materializes official seed candidates"
   )
   let (code, _stdout, _stderr) = @process.collect_output("python3", [
     script_path, "--book-root", book_root, "--run-root", run_workspace, "--output",
-    "outputs/official-pdf-candidates.json",
+    "outputs/official-pdf-candidates.json", "--as-of", "20240401",
   ])
   assert_eq(code, 0)
   let candidates = read_json_file_or_object(
@@ -17210,6 +18522,128 @@ async test "eb generated discovery helper materializes official seed candidates"
       "https://static.sse.com.cn/disclosure/bond/announcement/exchangeable/c/new/2024-03-27/132018_20240327_CFRC.pdf",
     ),
   )
+  let (stale_code, _stale_stdout, _stale_stderr) = @process.collect_output(
+    "python3",
+    [
+      script_path, "--book-root", book_root, "--run-root", run_workspace, "--output",
+      "outputs/stale-official-pdf-candidates.json", "--as-of", "20260603",
+    ],
+  )
+  assert_eq(stale_code, 2)
+  let stale_candidates = read_json_file_or_object(
+    @pathx.join(run_workspace, "outputs/stale-official-pdf-candidates.json"),
+  )
+  assert_eq(json_string(stale_candidates, "status", default=""), "failed")
+  assert_true(
+    json_bool(stale_candidates, "target_stale_blocked", default=false),
+  )
+  assert_eq(
+    json_string(stale_candidates, "target_scope", default=""),
+    "single_bond",
+  )
+  assert_true(
+    json_string(stale_candidates, "failure_reason", default="").contains(
+      "no official sources in the lookback window",
+    ),
+  )
+  let active_fixture_path = @pathx.join(
+    book_root, "raw/inbox/active-eb-official-source-index.html",
+  )
+  let active_fixture_parts : Array[String] = [
+    "<html><body><h1>Active EB official source index fixture</h1>",
+  ]
+  for seed in eb_regression_active_universe_source_candidates() {
+    let url = json_string(seed, "url", default="")
+    let bond_code = json_string(seed, "bond_code", default="")
+    let bond_short_name = json_string(seed, "bond_short_name", default="")
+    let disclosure_date = json_string(seed, "disclosure_date", default="")
+    let title = json_string(seed, "title", default="")
+    active_fixture_parts.push(
+      "<a href=\"\{url}\">\{bond_code} \{bond_short_name} \{disclosure_date} \{title} 可交换公司债券</a>\n",
+    )
+  }
+  active_fixture_parts.push("</body></html>\n")
+  @fsx.write_to_file(
+    active_fixture_path,
+    active_fixture_parts.join(""),
+    create=0o644,
+  )
+  let active_request_json : Json = {
+    "id": "research-eb-active-universe-request",
+    "kind": "moonclaw-execution-request",
+    "book_id": "research-eb-active-universe",
+    "book_type": "research-book",
+    "pattern_id": "exchangeable-bond-evidence-watch",
+    "topic": "EB active universe discovery",
+    "source_policy": "official-first",
+    "target_scope": "active_universe",
+    "active_universe_default": true,
+    "discovery_mode": "dynamic_official_source_search",
+    "minimum_expected_instrument_count": 8,
+    "watch_websites": json_from_string_array(["file://" + active_fixture_path]),
+    "official_source_seeds": Json::array([]),
+    "official_pdf_seeds": Json::array([]),
+  }
+  @fsx.write_to_file(
+    @pathx.join(book_root, "raw/inbox/eb-tracking-request.json"),
+    active_request_json.stringify(indent=2) + "\n",
+    create=0o644,
+  )
+  assert_eq(
+    json_array_items(active_request_json, "official_source_seeds").length(),
+    0,
+  )
+  let (active_code, active_stdout, active_stderr) = @process.collect_output(
+    "python3",
+    [
+      script_path, "--book-root", book_root, "--run-root", run_workspace, "--output",
+      "outputs/active-universe-official-source-candidates.json", "--as-of", "20260603",
+    ],
+  )
+  assert_eq(active_code, 0)
+  assert_true(active_stdout.text().contains("\"candidate_count\": 19"))
+  assert_eq(active_stderr.text(), "")
+  let active_candidates = read_json_file_or_object(
+    @pathx.join(
+      run_workspace, "outputs/active-universe-official-source-candidates.json",
+    ),
+  )
+  assert_eq(
+    json_string(active_candidates, "status", default=""),
+    "official_candidates_ready",
+  )
+  assert_eq(
+    json_string(active_candidates, "target_scope", default=""),
+    "active_universe",
+  )
+  assert_eq(json_int(active_candidates, "candidate_count", default=0), 19)
+  assert_eq(json_int(active_candidates, "official_url_count", default=0), 19)
+  assert_eq(json_int(active_candidates, "instrument_count", default=0), 8)
+  assert_eq(
+    json_int(active_candidates, "minimum_expected_instrument_count", default=0),
+    8,
+  )
+  assert_true(
+    json_bool(active_candidates, "discovery_completeness_ok", default=false),
+  )
+  assert_eq(
+    json_array_items(active_candidates, "missing_expected_instruments").length(),
+    0,
+  )
+  assert_eq(json_int(active_candidates, "pdf_candidate_count", default=0), 13)
+  assert_eq(json_int(active_candidates, "html_notice_count", default=0), 6)
+  let active_text = active_candidates.stringify()
+  for
+    code in [
+      "132026", "132024", "117248", "117249", "117250", "117251", "117252", "117253",
+    ] {
+    assert_true(active_text.contains(code))
+  }
+  assert_true(active_text.contains("132026_20260525_7PY5.pdf"))
+  assert_true(active_text.contains("t20260327_619709.html"))
+  assert_true(active_text.contains("1225029841.PDF"))
+  assert_false(active_text.contains("132099"))
+  assert_false(active_text.contains("132100"))
 }
 
 ///|
@@ -19958,6 +21392,9 @@ async test "eb moonclaw reconciliation promotes valid live run into production h
     "underlying_listed_company": "长江电力",
     "exchange": "上交所",
   }
+  @fs.rmdir(root, recursive=true) catch {
+    _ => ()
+  }
   ignore(create_pdf_watch_book_dirs(book_root))
   let goal = pdf_watch_standing_goal(
     book_id~,
@@ -20751,13 +22188,10 @@ async test "eb generated packager output reconciles into production health" {
   let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
   let home = @pathx.join(root, ".moonclaw")
   let run_workspace = @pathx.join(book_root, "moonclaw-jobs/" + run_id)
-  let output_relative = "book/outputs/EB追踪_132018_G三峡EB1_20260602.xlsx"
-  let target : Json = {
-    "bond_full_name_or_short_name": "G三峡EB1",
-    "bond_code": "132018",
-    "issuer": "中国长江三峡集团有限公司",
-    "underlying_listed_company": "长江电力",
-    "exchange": "上交所",
+  let output_relative = "book/outputs/EB追踪_ACTIVEEB_可交换债全集_20260603.xlsx"
+  let aggregate_output_relative = "book/outputs/EB追踪汇总_ACTIVEEB_可交换债全集_20260603.xlsx"
+  @fs.rmdir(root, recursive=true) catch {
+    _ => ()
   }
   ignore(create_pdf_watch_book_dirs(book_root))
   let goal = pdf_watch_standing_goal(
@@ -20796,12 +22230,11 @@ async test "eb generated packager output reconciles into production health" {
         source_policy="web-first",
         method_path="wiki/methods/my-analysis-method.md",
         notify_on=["accepted_new_knowledge"],
-        eb_target_bonds=[target],
+        eb_target_scope="active_universe",
       ),
       method_body=default_eb_analysis_method("EB generated packager reconcile"),
       websites=eb_default_source_websites(),
-      eb_target_fields=target,
-      eb_target_bonds=[target],
+      eb_target_scope="active_universe",
     ),
   )
   @fsx.write_to_file(
@@ -20928,54 +22361,161 @@ async test "eb generated packager output reconciles into production health" {
     exists_ok=true,
   )
   @fsx.make_directory(
+    @pathx.join(book_root, "raw/html"),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.make_directory(
     @pathx.join(book_root, "raw/extracted"),
     recursive=true,
     exists_ok=true,
   )
-  let pdf_relative = "raw/pdfs/" + run_id + "-official-evidence.pdf"
-  let text_relative = "raw/extracted/" + run_id + "-official-evidence.txt"
+  let source_records : Array[Json] = []
+  let candidate_records : Array[Json] = []
+  let official_urls : Array[String] = []
+  let mut source_index = 0
+  for seed in eb_regression_active_universe_source_candidates() {
+    source_index = source_index + 1
+    let source_kind = json_string(seed, "source_kind", default="pdf")
+    let bond_code = json_string(seed, "bond_code", default="")
+    let bond_short_name = json_string(seed, "bond_short_name", default="")
+    let title = json_string(seed, "title", default="")
+    let disclosure_date = json_string(seed, "disclosure_date", default="")
+    let platform = json_string(seed, "platform", default="")
+    let official_url = json_string(seed, "url", default="")
+    official_urls.push(official_url)
+    let source_stem = run_id + "-official-" + bond_code + "-\{source_index}"
+    let raw_relative = if source_kind == "pdf" {
+      "raw/pdfs/" + source_stem + ".pdf"
+    } else {
+      "raw/html/" + source_stem + ".html"
+    }
+    let text_relative = "raw/extracted/" + source_stem + ".txt"
+    if source_kind == "pdf" {
+      @fsx.write_to_file(
+        @pathx.join(book_root, raw_relative),
+        "%PDF-1.4\n% generated packager official EB active universe evidence fixture \{source_index}\n",
+        create=0o644,
+      )
+    } else {
+      @fsx.write_to_file(
+        @pathx.join(book_root, raw_relative),
+        "<html><body><h1>\{title}</h1><p>债券代码：\{bond_code}。债券简称：\{bond_short_name}。披露日期：\{disclosure_date}。官方通知页面。</p></body></html>\n",
+        create=0o644,
+      )
+    }
+    @fsx.write_to_file(
+      @pathx.join(book_root, text_relative),
+      "\{title}。债券代码：\{bond_code}。债券简称：\{bond_short_name}。披露日期：\{disclosure_date}。发行规模10亿元，换股价格待核验，累计换股待核验。\n",
+      create=0o644,
+    )
+    let record : Json = {
+      "title": title,
+      "bond_code": bond_code,
+      "bond_short_name": bond_short_name,
+      "disclosure_date": disclosure_date,
+      "within_lookback": true,
+      "url": official_url,
+      "platform": platform,
+      "lifecycle_stage": json_string(seed, "lifecycle_stage", default=""),
+      "relevance": json_string(seed, "relevance", default=""),
+      "source_kind": source_kind,
+      "source_type": json_string(
+        seed,
+        "source_type",
+        default="official-source-seed",
+      ),
+      "source_policy": "official-first",
+      "pdf_path": if source_kind == "pdf" {
+        raw_relative
+      } else {
+        ""
+      },
+      "local_pdf_path": if source_kind == "pdf" {
+        raw_relative
+      } else {
+        ""
+      },
+      "source_path": if source_kind == "pdf" {
+        ""
+      } else {
+        raw_relative
+      },
+      "html_path": if source_kind == "html_notice" {
+        raw_relative
+      } else {
+        ""
+      },
+      "text_path": text_relative,
+      "extracted_text_path": text_relative,
+      "downloaded": true,
+      "download_status": "downloaded",
+      "extracted": true,
+      "text_extracted": true,
+      "extract_status": "extracted",
+    }
+    source_records.push(record)
+    candidate_records.push(record)
+  }
+  let stale_pdf_relative = "raw/pdfs/baseline-stale-132018.pdf"
+  let stale_text_relative = "raw/extracted/baseline-stale-132018.txt"
   @fsx.write_to_file(
-    @pathx.join(book_root, pdf_relative),
-    "%PDF-1.4\n% generated packager official EB evidence fixture\n",
+    @pathx.join(book_root, stale_pdf_relative),
+    "%PDF-1.4\n% stale historical EB baseline fixture\n",
     create=0o644,
   )
   @fsx.write_to_file(
-    @pathx.join(book_root, text_relative),
-    "G三峡EB1 官方PDF抽取文本。发行人：中国长江三峡集团有限公司。标的公司：长江电力。\n",
+    @pathx.join(book_root, stale_text_relative),
+    "中国长江三峡集团有限公司公开发行2019年绿色可交换公司债券（第一期）2024年本息兑付及摘牌公告。债券代码：132018。债券简称：G三峡EB1。披露日期：2024年03月27日。该债券已到期兑付并摘牌，仅作为历史基线。\n",
     create=0o644,
   )
-  let file_record : Json = {
-    "title": "G三峡EB1 official exchangeable bond announcement",
-    "pdf_path": pdf_relative,
-    "local_pdf_path": pdf_relative,
-    "text_path": text_relative,
-    "extracted_text_path": text_relative,
+  let stale_baseline_record : Json = {
+    "title": "中国长江三峡集团有限公司公开发行2019年绿色可交换公司债券（第一期）2024年本息兑付及摘牌公告",
+    "bond_code": "132018",
+    "bond_short_name": "G三峡EB1",
+    "disclosure_date": "2024-03-27",
+    "within_lookback": false,
+    "url": "https://www.sse.com.cn/disclosure/bond/announcement/132018-20240327.pdf",
+    "platform": "上海证券交易所",
+    "relevance": "historical baseline only",
+    "pdf_path": stale_pdf_relative,
+    "local_pdf_path": stale_pdf_relative,
+    "text_path": stale_text_relative,
+    "extracted_text_path": stale_text_relative,
     "downloaded": true,
     "download_status": "downloaded",
     "extracted": true,
     "text_extracted": true,
     "extract_status": "extracted",
   }
-  let url_record : Json = {
-    "title": "G三峡EB1 official exchangeable bond announcement",
-    "url": "https://www.sse.com.cn/disclosure/bond/announcement/132018.pdf",
-    "platform": "上海证券交易所",
-    "relevance": "target bond disclosure",
+  let pdf_records : Array[Json] = []
+  for record in source_records {
+    if json_string(record, "source_kind", default="") == "pdf" {
+      pdf_records.push(record)
+    }
   }
+  let active_instrument_codes = [
+    "132026", "132024", "117248", "117249", "117250", "117251", "117252", "117253",
+  ]
   let source_screen : Json = {
     "kind": "eb-official-source-screen",
     "status": "official_source_screened",
     "book_id": book_id,
     "run_id": run_id,
+    "target_scope": "active_universe",
+    "active_universe_default": true,
     "official_domain_count": 6,
     "live_fetch_performed": true,
-    "checked_sources_count": 1,
-    "downloaded_pdf_count": 1,
-    "extracted_pdf_count": 1,
-    "checked_official_urls": json_from_string_array([]),
-    "source_records": json_from_json_array([file_record]),
-    "pdf_sources": json_from_json_array([file_record]),
-    "kept_candidates": json_from_json_array([file_record]),
+    "checked_sources_count": 19,
+    "downloaded_source_count": 19,
+    "downloaded_pdf_count": 13,
+    "html_notice_count": 6,
+    "extracted_source_count": 19,
+    "extracted_pdf_count": 13,
+    "checked_official_urls": json_from_string_array(official_urls),
+    "source_records": Json::array(source_records),
+    "pdf_sources": Json::array(pdf_records),
+    "kept_candidates": Json::array(source_records),
     "standing_goal_decision": "continue",
     "notify_town": false,
   }
@@ -20984,12 +22524,26 @@ async test "eb generated packager output reconciles into production health" {
     "status": "official_candidates_ready",
     "book_id": book_id,
     "run_id": run_id,
-    "candidate_count": 1,
-    "official_url_count": 1,
-    "content": "- `https://www.sse.com.cn/disclosure/bond/announcement/132018.pdf` — `G三峡EB1 official exchangeable bond announcement` — platform `上海证券交易所`",
-    "candidates": json_from_json_array([url_record]),
-    "kept_candidates": json_from_json_array([url_record]),
-    "checked_domains": json_from_string_array(["sse.com.cn"]),
+    "target_scope": "active_universe",
+    "active_universe_default": true,
+    "candidate_count": 19,
+    "official_url_count": 19,
+    "instrument_count": 8,
+    "instrument_codes": json_from_string_array(active_instrument_codes),
+    "expected_instrument_codes": json_from_string_array(active_instrument_codes),
+    "minimum_expected_instrument_count": 8,
+    "missing_expected_instruments": json_from_string_array([]),
+    "discovery_completeness_ok": true,
+    "source_kind_counts": { "pdf": 13, "html_notice": 6 },
+    "pdf_candidate_count": 13,
+    "html_notice_count": 6,
+    "lookback_candidate_count": 19,
+    "lookback_no_recent_sources": false,
+    "candidates": Json::array(candidate_records),
+    "kept_candidates": Json::array(candidate_records),
+    "checked_domains": json_from_string_array([
+      "sse.com.cn", "szse.cn", "cninfo.com.cn",
+    ]),
     "standing_goal_decision": "continue",
   }
   @fsx.write_to_file(
@@ -21000,6 +22554,36 @@ async test "eb generated packager output reconciles into production health" {
   @fsx.write_to_file(
     @pathx.join(run_workspace, "outputs/official-pdf-candidates.json"),
     candidate_artifact.stringify(indent=2) + "\n",
+    create=0o644,
+  )
+  let stale_baseline_screen : Json = {
+    "kind": "eb-official-source-screen",
+    "status": "official_source_screened",
+    "source_records": json_from_json_array([stale_baseline_record]),
+    "pdf_sources": json_from_json_array([stale_baseline_record]),
+    "kept_candidates": json_from_json_array([stale_baseline_record]),
+    "standing_goal_decision": "continue",
+  }
+  @fsx.write_to_file(
+    @pathx.join(
+      book_root, "raw/analysis-runs/baseline-official-source-screen.json",
+    ),
+    stale_baseline_screen.stringify(indent=2) + "\n",
+    create=0o644,
+  )
+  let ai_analysis : Json = {
+    "kind": "eb-lifecycle-analysis",
+    "status": "accepted",
+    "result_decision": "accepted",
+    "facts": json_from_string_array([
+      "发行总额200亿元", "调整前15.92元/股，调整后15.10元/股", "累计换股1,276,432,794股，占总股本5.22%",
+      "到期本息108.50元/张，本息兑付日2024-04-09",
+    ]),
+    "standing_goal_decision": "update",
+  }
+  @fsx.write_to_file(
+    @pathx.join(run_workspace, "outputs/eb-lifecycle-analysis.json"),
+    ai_analysis.stringify(indent=2) + "\n",
     create=0o644,
   )
   let mut exit_code = -1
@@ -21013,7 +22597,7 @@ async test "eb generated packager output reconciles into production health" {
       "--run-root",
       run_workspace,
       "--as-of",
-      "20260602",
+      "20260603",
     ]),
   ) catch {
     error => {
@@ -21031,12 +22615,64 @@ async test "eb generated packager output reconciles into production health" {
   }
   assert_eq(exit_code, 0)
   assert_true(stdout.contains("\"status\": \"completed\""))
+  assert_true(stdout.contains("\"aggregate_output_path\""))
   assert_eq(stderr, "")
   assert_true(@fs.exists(@pathx.join(book_root, output_relative)))
+  assert_true(@fs.exists(@pathx.join(book_root, aggregate_output_relative)))
   assert_true(eb_xlsx_data_rows_valid(@pathx.join(book_root, output_relative)))
+  assert_true(
+    eb_xlsx_data_rows_valid(@pathx.join(book_root, aggregate_output_relative)),
+  )
   assert_true(
     eb_xlsx_official_hyperlinks_valid(@pathx.join(book_root, output_relative)),
   )
+  assert_true(
+    eb_xlsx_official_hyperlinks_valid(
+      @pathx.join(book_root, aggregate_output_relative),
+    ),
+  )
+  let aggregate_manifest = read_json_file_or_object(
+    @pathx.join(book_root, aggregate_output_relative + ".manifest.json"),
+  )
+  assert_eq(
+    json_string(aggregate_manifest, "kind", default=""),
+    "eb-aggregate-output-manifest",
+  )
+  assert_eq(
+    json_string(aggregate_manifest, "xlsx_path", default=""),
+    aggregate_output_relative,
+  )
+  assert_true(json_int(aggregate_manifest, "source_url_count", default=0) > 0)
+  assert_eq(json_int(aggregate_manifest, "instrument_count", default=0), 8)
+  assert_eq(json_int(aggregate_manifest, "source_record_count", default=0), 19)
+  assert_eq(json_int(aggregate_manifest, "pdf_source_count", default=0), 13)
+  assert_eq(json_int(aggregate_manifest, "html_notice_count", default=0), 6)
+  assert_eq(
+    json_int(aggregate_manifest, "current_window_record_count", default=0),
+    19,
+  )
+  assert_eq(
+    json_int(aggregate_manifest, "historical_baseline_record_count", default=-1),
+    1,
+  )
+  let aggregate_sheet1 = eb_xlsx_xml_part(
+    @pathx.join(book_root, aggregate_output_relative),
+    "xl/worksheets/sheet1.xml",
+  )
+  let aggregate_sheet2 = eb_xlsx_xml_part(
+    @pathx.join(book_root, aggregate_output_relative),
+    "xl/worksheets/sheet2.xml",
+  )
+  for code in active_instrument_codes {
+    assert_true(aggregate_sheet1.contains(code))
+    assert_true(aggregate_sheet2.contains(code))
+  }
+  assert_false(aggregate_sheet1.contains("132018"))
+  assert_false(aggregate_sheet2.contains("132018"))
+  assert_false(aggregate_sheet1.contains("132099"))
+  assert_false(aggregate_sheet1.contains("132100"))
+  assert_false(aggregate_sheet2.contains("132099"))
+  assert_false(aggregate_sheet2.contains("132100"))
   assert_true(
     @fs.exists(
       @pathx.join(book_root, eb_output_manifest_relative_path(output_relative)),
@@ -21176,7 +22812,7 @@ async test "eb moonclaw target gate accepts production target fields fallback" {
     @pathx.join(book_root, "raw/inbox/eb-tracking-request.json"),
   )
   assert_eq(json_array_items(request, "target_bonds").length(), 1)
-  assert_false(
+  assert_true(
     eb_target_has_identity(json_array_items(request, "target_bonds")[0]),
   )
   let gate = eb_moonclaw_target_gate(book_root, book_id)

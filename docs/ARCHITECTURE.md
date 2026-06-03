@@ -464,9 +464,16 @@ Implemented behavior:
   normal bounded step evidence.
   It also looks for the first-step candidate artifact at
   `outputs/official-pdf-candidates.json` in the MoonClaw run workspace. That
-  artifact must either contain official-domain PDF candidates or an explicit
-  failed record with checked domains and a failure reason. This
-  `moonclaw_pdf_candidates` checklist item makes PDF discovery terminal
+  artifact must either contain official-domain source candidates or an explicit
+  failed record with checked domains and a failure reason. For active-universe
+  EB runs, the artifact must also prove complete dynamic discovery with
+  instrument counts, expected/missing instrument codes when official pages prove
+  them, source-kind counts, `ai_discovery_required=false`, and
+  `discovery_completeness_ok=true` before analysis can be accepted. A generated
+  active-universe request does not embed a dated current EB list; if configured
+  official-site crawling cannot prove coverage, MoonClaw must use
+  official-domain search/fetch and write the completed candidate artifact. This
+  `moonclaw_pdf_candidates` checklist item makes source discovery terminal
   evidence visible before the stricter source-screen/workbook/Bookkeeper gates
   can pass. During reconciliation, Moondesk copies that artifact into
   `raw/analysis-runs/<run>-official-pdf-candidates.json`, so partial MoonClaw
@@ -634,16 +641,21 @@ Implemented behavior:
   records carry `recovery_mode: accepted_output_recovery` and are explicitly
   excluded from the live MoonClaw result predicate, so they can satisfy
   `durable_ready` but cannot satisfy `production_ready`.
-  The generated EB runtime includes `raw/bootstrap/eb_extract_pdf_text.py`,
-  which uses the locally available pypdf library to make the MoonClaw
-  extract/source-screen step deterministic: downloaded official PDFs become
-  `raw/extracted/*.txt`, and missing extraction input becomes a failed
-  source-screen artifact instead of a best-effort prose continuation. The
-  generated runtime also includes `raw/bootstrap/eb_package_workbook.py`, a
-  standard-library packager that writes the accepted EB workbook, sibling
-  manifest, validation sidecar, MoonClaw `result.json`, run report, durable
-  PDF-candidate artifact, and durable source-screen artifact from official
-  source records after Bookkeeper acceptance. The
+  The generated EB runtime includes `raw/bootstrap/eb_discover_pdf_candidates.py`,
+  which scans configured official-source pages for PDF and HTML notice links and
+  emits a failed `ai_discovery_required` artifact when deterministic crawling
+  cannot prove active-universe completeness. It also includes
+  `raw/bootstrap/eb_extract_pdf_text.py`,
+  which makes the MoonClaw extract/source-screen step deterministic: downloaded
+  official PDFs become `raw/pdfs/*.pdf` plus `raw/extracted/*.txt`, official
+  HTML/source pages become `raw/html/*` plus `raw/extracted/*.txt`, and missing
+  extraction input becomes a failed source-screen artifact instead of a
+  best-effort prose continuation. The generated runtime also includes
+  `raw/bootstrap/eb_package_workbook.py`, a standard-library packager that
+  writes the accepted EB workbook, sibling manifest, validation sidecar,
+  MoonClaw `result.json`, run report, durable candidate artifact, and durable
+  source-screen artifact from official source records after Bookkeeper
+  acceptance. The
   MoonClaw profile and packet set `best_effort_on_missing_input: false` for
   this production path.
 - `POST /api/books/from-pattern` creates a reusable book pattern under

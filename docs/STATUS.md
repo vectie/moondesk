@@ -272,27 +272,38 @@ Manual smoke checks:
   `outputs/official-pdf-candidates.json` or an explicit failed candidate record
   instead of retrying the same broad official-site search.
   EB runtime generation also writes
-  `raw/bootstrap/eb_discover_pdf_candidates.py`, a book-local official PDF
-  seed materializer that converts configured `official_pdf_seeds` into
-  current-run `outputs/official-pdf-candidates.json` evidence before falling
-  back to broader official-site search. It writes those seeds into the EB
-  request, `book.json` for new books, and the MoonClaw proposal packet as a
-  reusable source-adapter input instead of a hardcoded Moontown feature.
-  It also writes `raw/bootstrap/eb_extract_pdf_text.py`, a
-  book-local pypdf helper used by the extract/source-screen step to turn
-  downloaded `raw/pdfs/*.pdf` files into `raw/extracted/*.txt` and a terminal
-  `outputs/official-source-screen.json`. It also writes
+  `raw/bootstrap/eb_discover_pdf_candidates.py`, a book-local official-source
+  discovery helper that scans configured official websites for PDFs and HTML
+  notice pages, classifies source kind, infers dates/codes when possible, and
+  writes current-run `outputs/official-pdf-candidates.json` evidence.
+  Active-universe production books no longer embed a dated current EB universe
+  in `book.json`, the execution request, or the MoonClaw packet. If
+  deterministic crawling cannot prove complete active-universe coverage, the
+  helper writes `ai_discovery_required: true` and MoonClaw must use
+  official-domain `web_search`/`web_fetch` to produce a complete candidate
+  artifact before analysis. The old 2025-12-03 to 2026-06-03 EB source list is
+  retained only as a regression fixture for tests that validate packaging and
+  discovery behavior. Active-universe discovery must prove `instrument_count`,
+  `expected_instrument_codes` when derived from official pages,
+  `missing_expected_instruments`, `source_kind_counts`,
+  `ai_discovery_required: false`, and `discovery_completeness_ok` before
+  analysis. It also writes `raw/bootstrap/eb_extract_pdf_text.py`, a
+  book-local helper used by the extract/source-screen step to turn downloaded
+  `raw/pdfs/*.pdf` files and `raw/html/*` source pages into
+  `raw/extracted/*.txt` plus a terminal `outputs/official-source-screen.json`.
+  It also writes
   `raw/bootstrap/eb_package_workbook.py`, which packages accepted official
   source records into the required workbook, sidecars, run result, durable
-  PDF-candidate artifact, and durable source-screen artifact from either the
+  candidate artifact, and durable source-screen artifact from either the
   book root or `moonclaw-jobs/<run>` workspace. The MoonClaw EB profile and packet now
   set `best_effort_on_missing_input: false`, so missing extraction input must
   produce a failed evidence artifact rather than a prose-only continuation.
-- Production official-source screens now require durable PDF evidence records,
-  not just counters. At least one official-domain source record must prove
-  download and extraction with a PDF hash/path plus extracted-text hash/path
-  and the referenced book-local `raw/pdfs/` plus `raw/extracted/` files must
-  exist before the production source-screen gate can pass.
+- Production official-source screens now require durable source evidence
+  records, not just counters. At least one official-domain source record must
+  prove download and extraction with a PDF path/hash or HTML/source path/hash
+  plus extracted-text hash/path, and the referenced book-local `raw/pdfs/`,
+  `raw/html/`, and `raw/extracted/` files must exist before the production
+  source-screen gate can pass.
 - Moondesk also performs a best-effort all-book standing-goal repair before town
   progress, analytics, calendar, standing-goal reads, and dispatch. Missing
   receipts on stale explicit PDF-watch draft books are reported as skipped
@@ -616,7 +627,7 @@ Manual smoke checks:
   manifest, then returns `run_health.status=durable_output_ready` when all
   durable artifacts agree.
   This verifies packaging and handoff durability without claiming live official
-  PDF evidence collection.
+  source evidence collection.
 - `GET /api/agents/daemon`, `GET /api/agents/models`, and
   `GET /api/agents/sessions?workspace=...` return MoonClaw agent state.
 - `POST /api/agents/sessions` starts a book-scoped MoonClaw task and sends the
