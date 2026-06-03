@@ -116,6 +116,60 @@ Pure MoonBit local host APIs:
 - operator request endpoints
 - optional OS helper commands behind explicit allowlists
 
+## Internal HTTP Host Modules
+
+`internal/httpserve` is intentionally a single MoonBit package split into
+cohesive files. File names are organizational boundaries, not public modules;
+declarations still share package scope.
+
+- `server.mbt`: `Server`, HTTP routing, and command-facing server
+  orchestration. Handler implementations live in the files below.
+- `workspace_api_handlers.mbt` and `workspace_entry_helpers.mbt`: workspace
+  discovery, entry listing, previews, raw/site assets, inbox/import, Finder
+  reveal, and scoped entry filtering.
+- `search_api_handlers.mbt`: cross-workspace search and bounded snippet
+  generation.
+- `town_api_handlers.mbt`: Moontown state, daemon, standing-goal, dispatch,
+  analytics, progress, calendar, saved-view, tag, message, and request APIs.
+- `book_api_handlers.mbt`: book-pattern creation/verification, standing-goal
+  sync, EB runtime refresh, EB MoonClaw import/run/reconcile, accepted-output
+  recovery, production proof, and EB run-health endpoints.
+- `moonclaw_artifact_handlers.mbt`: MoonClaw run and artifact projection.
+- `http_request_helpers.mbt`: request path normalization, query parsing,
+  scoped relative path validation, JSON body extraction, and markdown metadata
+  parsing.
+- `book_pattern_helpers.mbt`: Moontown/MoonBook pattern registry helpers,
+  base-type derivation, template readiness, JSON utility helpers, Moondesk
+  target config support, and shared file/base64 helpers.
+- `pdf_watch_builder.mbt`, `pdf_watch_content.mbt`,
+  `pdf_watch_moontown_publish.mbt`, and `pdf_watch_verification.mbt`: reusable
+  PDF Evidence Watch book scaffolding, nested operator config, skill/schema/
+  method content, Moontown publish receipts, standing-goal sync, generated-site
+  seed content, and contract verification.
+- `eb_prompt_contracts.mbt`, `eb_lifecycle_contracts.mbt`,
+  `eb_generated_scripts.mbt`, `eb_moonclaw_contracts.mbt`, and
+  `eb_output_contracts.mbt`: Exchangeable Bond Evidence Watch source defaults,
+  prompts, lifecycle/schema contracts, generated helper scripts, MoonClaw
+  packet contracts, and accepted-output manifest contracts.
+- `eb_runtime_refresh.mbt`, `eb_moonclaw_flow.mbt`,
+  `eb_workbook_artifacts.mbt`, `eb_result_records.mbt`,
+  `eb_output_validation.mbt`, `eb_run_health.mbt`, and
+  `eb_contract_verification.mbt`: EB runtime repair, MoonClaw import/run/
+  reconcile flows, sample/live/recovered result records, workbook validation,
+  production proof, output health, source-screen gates, XLSX contract checks,
+  and deterministic Bookkeeper review artifacts.
+- `runtime_support.mbt`: shared response helpers plus Moontown/MoonClaw
+  runtime projections for preferences, progress, events, failures, and review
+  queues.
+- `daemon_lifecycle.mbt`, `daemon_agent_review.mbt`, and
+  `agent_sessions.mbt`: daemon supervision, LaunchAgent management, review
+  projection, and Codex-like MoonClaw agent-session metadata.
+- `httpserve_*_wbtest.mbt`, `pdf_watch_*_wbtest.mbt`, and
+  `eb_*_wbtest.mbt`: whitebox tests grouped by fixture, request helper,
+  PDF-watch pattern, EB pattern, EB output validation, EB run-health, and EB
+  reconciliation/proof scenarios. Dated EB fixture seeds live only in
+  `httpserve_fixtures_wbtest.mbt` so production discovery remains dynamic.
+
 ## Tauri Reference Strategy
 
 Use `../tauri` only as a design reference:
@@ -466,12 +520,14 @@ Implemented behavior:
   `outputs/official-pdf-candidates.json` in the MoonClaw run workspace. That
   artifact must either contain official-domain source candidates or an explicit
   failed record with checked domains and a failure reason. For active-universe
-  EB runs, the artifact must also prove complete dynamic discovery with
-  instrument counts, expected/missing instrument codes when official pages prove
-  them, source-kind counts, `ai_discovery_required=false`, and
-  `discovery_completeness_ok=true` before analysis can be accepted. A generated
-  active-universe request does not embed a dated current EB list; if configured
-  official-site crawling cannot prove coverage, MoonClaw must use
+  EB runs, the artifact must also prove fact-based dynamic discovery with
+  observed instrument codes, source-kind counts,
+  `fact_based_universe_evidence=true`, `universe_evidence_basis`,
+  `universe_evidence_sources`, `ai_discovery_required=false`, and
+  `discovery_completeness_ok=true` before analysis can be accepted. Counts are
+  review hints only; they are never minimum or maximum pass/fail thresholds. A
+  generated active-universe request does not embed a dated current EB list; if
+  configured official-site crawling cannot prove coverage, MoonClaw must use
   official-domain search/fetch and write the completed candidate artifact. This
   `moonclaw_pdf_candidates` checklist item makes source discovery terminal
   evidence visible before the stricter source-screen/workbook/Bookkeeper gates
@@ -594,14 +650,19 @@ Implemented behavior:
   Its `ok` flag is exactly the
   final `production_ready` health flag, so it records `not-proven` rather than
   weakening any live-source, workbook, Bookkeeper, or run-metadata gate. Before
-  importing or launching MoonClaw it also checks `book.json.targets.bonds` (falling back to
-  `raw/inbox/eb-tracking-request.json`) and requires every EB target to have a
-  real non-sample `132XXX` code, bond name, issuer, underlying listed company,
-  and `上交所`/`深交所` exchange. The default `132001 / 示例EB` target remains
-  usable for deterministic sample validation but blocks production proof and
-  MoonClaw import/run execution. The builder starts EB target fields empty,
-  shows target-readiness blockers inline, and marks MoonClaw action buttons as
-  unavailable for the just-created book until the target is production-ready.
+  importing or launching MoonClaw it also reads the EB `target_scope`.
+  `active_universe` is production-ready without preselected bonds and relies on
+  dynamic official-source discovery, producing the `ACTIVEEB` aggregate output.
+  `single_bond` and `portfolio` scopes check `book.json.targets.bonds` (falling
+  back to `raw/inbox/eb-tracking-request.json`) and require every EB target to
+  have a real non-sample `132XXX` code, bond name, issuer, underlying listed
+  company, and `上交所`/`深交所` exchange. The default `132001 / 示例EB` target
+  remains usable for deterministic sample validation but blocks production proof
+  and MoonClaw import/run execution. The builder exposes an explicit
+  active-universe/single-bond/portfolio scope switch, starts in active-universe
+  mode, shows target-readiness blockers only for configured-target modes, and
+  marks MoonClaw action buttons unavailable only when the selected scope is not
+  production-ready.
 - `POST /api/books/moonclaw-reconcile` is the strict bridge from a completed
   MoonClaw run back into Moondesk/Moontown health. It defaults the run id from
   `raw/analysis-runs/moonclaw-proposal-import.json`, reads the persisted
@@ -655,7 +716,13 @@ Implemented behavior:
   writes the accepted EB workbook, sibling manifest, validation sidecar,
   MoonClaw `result.json`, run report, durable candidate artifact, and durable
   source-screen artifact from official source records after Bookkeeper
-  acceptance. The
+  acceptance. MoonClaw now also writes
+  `outputs/eb-indicator-extraction.json` as a structured AI extractor artifact
+  for Sheet 2 core metrics. The packager treats that artifact as a fallback
+  extractor only: deterministic official-text parsing wins, and an AI metric is
+  accepted only when it carries a value plus an official source URL/path and a
+  snippet that can be matched back to downloaded extracted text. Uncited model
+  prose is kept out of workbook metrics. The
   MoonClaw profile and packet set `best_effort_on_missing_input: false` for
   this production path.
 - `POST /api/books/from-pattern` creates a reusable book pattern under
@@ -697,9 +764,12 @@ Implemented behavior:
   generic installer still rewrites `book.json` into an older generic shape, so
   a `pending` request is not safe for Moondesk-built research-book patterns
   until that installer preserves the richer schema. Generic PDF-watch books publish `targets.target_count:
-  0`; EB books accept either the single target fields or a `target_bonds` array
-  and preserve that array through `book.json`, the MoonClaw execution request,
-  the Moontown dispatch packet, and the importable MoonClaw proposal packet.
+  0`; EB books publish an explicit `target_scope`. Active-universe EB books keep
+  `target_bonds` empty and use dynamic official-source discovery; single-bond
+  and portfolio books accept either the single target fields or a `target_bonds`
+  array and preserve that array through `book.json`, the MoonClaw execution
+  request, the Moontown dispatch packet, and the importable MoonClaw proposal
+  packet.
 - `POST /api/books/pdf-evidence-watch` remains a compatibility alias for the
   same pattern creation flow.
 - The PDF evidence watch layout follows the latest Moontown contract:

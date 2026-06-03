@@ -542,6 +542,7 @@ struct Model {
   pdf_watch_skill_pack : String
   pdf_watch_analysis_method : String
   pdf_watch_last_book_id : String
+  eb_target_scope : String
   eb_bond_code : String
   eb_bond_short_name : String
   eb_issuer : String
@@ -668,6 +669,7 @@ enum Msg {
   SetPdfWatchNotifyRule(String)
   SetPdfWatchSkillPack(String)
   SetPdfWatchAnalysisMethod(String)
+  SetEbTargetScope(String)
   SetEbBondCode(String)
   SetEbBondShortName(String)
   SetEbIssuer(String)
@@ -820,6 +822,7 @@ fn init_model() -> Model {
     pdf_watch_skill_pack: "pdf-watch\npdf-analysis",
     pdf_watch_analysis_method: default_pdf_builder_method(),
     pdf_watch_last_book_id: "",
+    eb_target_scope: "active_universe",
     eb_bond_code: "",
     eb_bond_short_name: "",
     eb_issuer: "",
@@ -906,6 +909,7 @@ fn apply_selected_book_pattern(model : Model, pattern_id : String) -> Model {
       pdf_watch_notify_rule: "accepted_new_knowledge",
       pdf_watch_skill_pack: "pdf-watch\npdf-analysis\neb-credit-compliance",
       pdf_watch_analysis_method: default_eb_builder_method(),
+      eb_target_scope: "active_universe",
       eb_bond_code: "",
       eb_bond_short_name: "",
       eb_issuer: "",
@@ -929,6 +933,7 @@ fn apply_selected_book_pattern(model : Model, pattern_id : String) -> Model {
       pdf_watch_notify_rule: "accepted_new_knowledge",
       pdf_watch_skill_pack: "pdf-watch\npdf-analysis",
       pdf_watch_analysis_method: default_pdf_builder_method(),
+      eb_target_scope: "active_universe",
       eb_bond_code: "",
       eb_bond_short_name: "",
       eb_issuer: "",
@@ -1381,10 +1386,17 @@ fn eb_target_production_failed_checks(target : Json) -> Array[String] {
 ///|
 fn eb_targets_production_failed_checks(model : Model) -> Array[String] {
   let failed : Array[String] = []
+  let target_scope = eb_target_scope_from_model(model)
+  if target_scope == "active_universe" {
+    return failed
+  }
   let targets = eb_target_bonds_from_model(model)
   if targets.length() == 0 {
-    failed.push("add at least one EB target")
+    failed.push("add at least one EB target or switch to active universe")
     return failed
+  }
+  if target_scope == "portfolio" && targets.length() < 2 {
+    failed.push("portfolio scope needs at least two EB targets")
   }
   for index, target in targets {
     let target_failed = eb_target_production_failed_checks(target)
@@ -1406,6 +1418,9 @@ fn eb_targets_production_ready(model : Model) -> Bool {
 
 ///|
 fn eb_target_readiness_summary(model : Model) -> String {
+  if eb_target_scope_from_model(model) == "active_universe" {
+    return "Active EB universe ready; MoonClaw will discover official sources dynamically"
+  }
   let failed = eb_targets_production_failed_checks(model)
   if failed.length() == 0 {
     "EB target ready for MoonClaw production run"
@@ -1419,6 +1434,18 @@ fn eb_builder_moonclaw_action_blocked(model : Model) -> Bool {
   model.pdf_watch_last_book_id != "" &&
   model.selected_book_pattern_id == "exchangeable-bond-evidence-watch" &&
   !eb_targets_production_ready(model)
+}
+
+///|
+fn eb_target_scope_from_model(model : Model) -> String {
+  if !selected_pattern_is_eb(model) {
+    return ""
+  }
+  match model.eb_target_scope.trim().to_lower() {
+    "single_bond" | "single-bond" | "single" => "single_bond"
+    "portfolio" | "multi_bond" | "multi-bond" | "multi" => "portfolio"
+    _ => "active_universe"
+  }
 }
 
 ///|
@@ -1436,6 +1463,9 @@ fn text_lines(value : String) -> Array[String] {
 ///|
 fn eb_target_bonds_from_model(model : Model) -> Array[Json] {
   let bonds : Array[Json] = []
+  if eb_target_scope_from_model(model) == "active_universe" {
+    return bonds
+  }
   let primary = eb_bond_target_json(
     trimmed_or(model.eb_bond_code, ""),
     trimmed_or(model.eb_bond_short_name, ""),
@@ -2942,6 +2972,7 @@ fn create_pdf_evidence_watch_book_cmd(
     "issuer": trimmed_or(model.eb_issuer, ""),
     "underlying_company": trimmed_or(model.eb_underlying_company, ""),
     "exchange": trimmed_or(model.eb_exchange, ""),
+    "target_scope": eb_target_scope_from_model(model),
     "target_bonds": Json::array(eb_target_bonds_from_model(model)),
   }
   @http.post(
@@ -4350,6 +4381,8 @@ fn update(
       (@rabbita.none, { ..model, pdf_watch_skill_pack: value })
     SetPdfWatchAnalysisMethod(value) =>
       (@rabbita.none, { ..model, pdf_watch_analysis_method: value })
+    SetEbTargetScope(value) =>
+      (@rabbita.none, { ..model, eb_target_scope: value })
     SetEbBondCode(value) => (@rabbita.none, { ..model, eb_bond_code: value })
     SetEbBondShortName(value) =>
       (@rabbita.none, { ..model, eb_bond_short_name: value })
@@ -5433,6 +5466,15 @@ fn book_pattern_button_class(model : Model, pattern_id : String) -> String {
 }
 
 ///|
+fn eb_target_scope_button_class(model : Model, target_scope : String) -> String {
+  if eb_target_scope_from_model(model) == target_scope {
+    "option-chip active"
+  } else {
+    "option-chip"
+  }
+}
+
+///|
 fn eb_moonclaw_action_button_class(model : Model) -> String {
   if eb_builder_moonclaw_action_blocked(model) {
     "secondary-button full disabled"
@@ -5450,65 +5492,98 @@ fn render_eb_tracking_fields(
     return span(class="hidden-inline", "")
   }
   let ready = eb_targets_production_ready(model)
+  let target_scope = eb_target_scope_from_model(model)
   div(class="eb-target-fields", [
+    div(class="toolbar-actions scope-toggle", [
+      button(
+        class=eb_target_scope_button_class(model, "active_universe"),
+        on_click=dispatch(SetEbTargetScope("active_universe")),
+        "Active Universe",
+      ),
+      button(
+        class=eb_target_scope_button_class(model, "single_bond"),
+        on_click=dispatch(SetEbTargetScope("single_bond")),
+        "Single Bond",
+      ),
+      button(
+        class=eb_target_scope_button_class(model, "portfolio"),
+        on_click=dispatch(SetEbTargetScope("portfolio")),
+        "Portfolio",
+      ),
+    ]),
     p(
       class=if ready { "status-line good" } else { "status-line warning" },
       eb_target_readiness_summary(model),
     ),
-    div(class="field-grid compact-fields", [
-      input(
-        class="line-input",
-        value=model.eb_bond_code,
-        placeholder="Bond code, e.g. 132018",
-        on_input=fn(value) { dispatch(SetEbBondCode(value)) },
-        "",
-      ),
-      input(
-        class="line-input",
-        value=model.eb_bond_short_name,
-        placeholder="Bond full/short name",
-        on_input=fn(value) { dispatch(SetEbBondShortName(value)) },
-        "",
-      ),
-    ]),
-    input(
-      class="line-input",
-      value=model.eb_issuer,
-      placeholder="Issuer",
-      on_input=fn(value) { dispatch(SetEbIssuer(value)) },
-      "",
-    ),
-    input(
-      class="line-input",
-      value=model.eb_underlying_company,
-      placeholder="Underlying listed company",
-      on_input=fn(value) { dispatch(SetEbUnderlyingCompany(value)) },
-      "",
-    ),
-    div(class="field-grid compact-fields", [
-      input(
-        class="line-input",
-        value=model.eb_exchange,
-        placeholder="上交所 or 深交所",
-        on_input=fn(value) { dispatch(SetEbExchange(value)) },
-        "",
-      ),
-      input(
-        class="line-input",
-        value=model.eb_as_of,
-        placeholder="YYYYMMDD",
-        on_input=fn(value) { dispatch(SetEbAsOf(value)) },
-        "",
-      ),
-    ]),
-    textarea(
-      class="side-textarea compact-textarea",
-      rows=3,
-      value=model.eb_additional_bonds,
-      placeholder="Additional bonds: code | short name | issuer | underlying | exchange",
-      on_input=fn(value) { dispatch(SetEbAdditionalBonds(value)) },
-      "",
-    ),
+    if target_scope == "active_universe" {
+      div(class="field-grid compact-fields", [
+        input(
+          class="line-input",
+          value=model.eb_as_of,
+          placeholder="YYYYMMDD",
+          on_input=fn(value) { dispatch(SetEbAsOf(value)) },
+          "",
+        ),
+        code("ACTIVEEB aggregate"),
+      ])
+    } else {
+      div(class="eb-target-fields", [
+        div(class="field-grid compact-fields", [
+          input(
+            class="line-input",
+            value=model.eb_bond_code,
+            placeholder="Bond code, e.g. 132018",
+            on_input=fn(value) { dispatch(SetEbBondCode(value)) },
+            "",
+          ),
+          input(
+            class="line-input",
+            value=model.eb_bond_short_name,
+            placeholder="Bond full/short name",
+            on_input=fn(value) { dispatch(SetEbBondShortName(value)) },
+            "",
+          ),
+        ]),
+        input(
+          class="line-input",
+          value=model.eb_issuer,
+          placeholder="Issuer",
+          on_input=fn(value) { dispatch(SetEbIssuer(value)) },
+          "",
+        ),
+        input(
+          class="line-input",
+          value=model.eb_underlying_company,
+          placeholder="Underlying listed company",
+          on_input=fn(value) { dispatch(SetEbUnderlyingCompany(value)) },
+          "",
+        ),
+        div(class="field-grid compact-fields", [
+          input(
+            class="line-input",
+            value=model.eb_exchange,
+            placeholder="上交所 or 深交所",
+            on_input=fn(value) { dispatch(SetEbExchange(value)) },
+            "",
+          ),
+          input(
+            class="line-input",
+            value=model.eb_as_of,
+            placeholder="YYYYMMDD",
+            on_input=fn(value) { dispatch(SetEbAsOf(value)) },
+            "",
+          ),
+        ]),
+        textarea(
+          class="side-textarea compact-textarea",
+          rows=3,
+          value=model.eb_additional_bonds,
+          placeholder="Additional bonds: code | short name | issuer | underlying | exchange",
+          on_input=fn(value) { dispatch(SetEbAdditionalBonds(value)) },
+          "",
+        ),
+      ])
+    },
   ])
 }
 
@@ -5833,11 +5908,15 @@ fn pdf_watch_builder_config_preview(model : Model) -> String {
         "skill_pack": json_string_array(skills),
       },
       "targets": {
+        "target_scope": eb_target_scope_from_model(model),
+        "active_universe_default": eb_target_scope_from_model(model) ==
+        "active_universe",
         "production_ready": if selected_pattern_is_eb(model) {
           eb_targets_production_ready(model).to_json()
         } else {
           Json::null()
         },
+        "target_count": targets.length(),
         "bonds": Json::array(targets),
       },
     } : Json).stringify(indent=2)

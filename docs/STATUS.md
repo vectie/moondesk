@@ -1,6 +1,6 @@
 # Moondesk Status
 
-Last validated: 2026-06-02. Latest local Moontown reference checked:
+Last validated: 2026-06-03. Latest local Moontown reference checked:
 `e060e6e Implement live autonomy spine`.
 
 ## Summary
@@ -15,6 +15,18 @@ release/update manifests, DMG creation, LaunchAgent install/remove/status
 flows, event/failure/review queues, local file import staging, richer review
 diffs, expanded operating analytics, a Codex-like Agents activity, and stricter
 PDF Evidence Watch production gating for MoonClaw web-tool execution.
+
+The host implementation has also been refactored from a monolithic
+`internal/httpserve/server.mbt` into responsibility-sized package-local modules:
+router shell, workspace/search/town/book/MoonClaw API handlers, request helpers,
+book-pattern registry support, PDF-watch builder/publish/verification logic, EB
+prompt/lifecycle/script/MoonClaw/output contracts, EB runtime
+refresh/flow/result/validation/health/proof logic, runtime projections,
+daemon/session support, and focused whitebox test files. This is a
+behavior-preserving modular split: public HTTP/API contracts are unchanged,
+while dated EB fixture seeds now live only in
+`httpserve_fixtures_wbtest.mbt` so production EB discovery continues to rely on
+dynamic source discovery rather than baked-in prompt hints.
 
 The current `.app` is a foreground native macOS window. The bundle executable
 is an AppKit/WebKit launcher, and the MoonBit HTTP host runs as an internal
@@ -283,11 +295,13 @@ Manual smoke checks:
   official-domain `web_search`/`web_fetch` to produce a complete candidate
   artifact before analysis. The old 2025-12-03 to 2026-06-03 EB source list is
   retained only as a regression fixture for tests that validate packaging and
-  discovery behavior. Active-universe discovery must prove `instrument_count`,
-  `expected_instrument_codes` when derived from official pages,
-  `missing_expected_instruments`, `source_kind_counts`,
-  `ai_discovery_required: false`, and `discovery_completeness_ok` before
-  analysis. It also writes `raw/bootstrap/eb_extract_pdf_text.py`, a
+  discovery behavior. Active-universe discovery must prove observed facts:
+  `instrument_count`, `observed_instrument_codes`, `source_kind_counts`,
+  `fact_based_universe_evidence: true`, `universe_evidence_basis`,
+  `universe_evidence_sources`, `ai_discovery_required: false`, and
+  `discovery_completeness_ok` before analysis. Counts may guide review, but
+  they are not minimum/maximum readiness gates. It also writes
+  `raw/bootstrap/eb_extract_pdf_text.py`, a
   book-local helper used by the extract/source-screen step to turn downloaded
   `raw/pdfs/*.pdf` files and `raw/html/*` source pages into
   `raw/extracted/*.txt` plus a terminal `outputs/official-source-screen.json`.
@@ -295,7 +309,11 @@ Manual smoke checks:
   `raw/bootstrap/eb_package_workbook.py`, which packages accepted official
   source records into the required workbook, sidecars, run result, durable
   candidate artifact, and durable source-screen artifact from either the
-  book root or `moonclaw-jobs/<run>` workspace. The MoonClaw EB profile and packet now
+  book root or `moonclaw-jobs/<run>` workspace. MoonClaw now has a structured
+  AI extractor contract at `outputs/eb-indicator-extraction.json`; the packager
+  consumes those AI facts only as source-backed fallbacks for missing Sheet 2
+  metrics, requiring a value, official source URL/path, and snippet matched to
+  extracted official text. The MoonClaw EB profile and packet now
   set `best_effort_on_missing_input: false`, so missing extraction input must
   produce a failed evidence artifact rather than a prose-only continuation.
 - Production official-source screens now require durable source evidence
@@ -397,13 +415,17 @@ Manual smoke checks:
   the latest proof attempt is visible without opening raw JSON. The verdict is `production_ready`
   only when the existing strict live gates pass; otherwise it records
   `not-proven_*` with the blocking checks. Production proof now preflights the
-  persisted EB targets and will not import, launch, or run MoonClaw against
-  placeholder/sample targets; each target needs a non-sample `132XXX` code,
-  bond name, issuer, underlying listed company, and recognized exchange. The
-  builder starts EB target fields empty, shows target-readiness blockers inline,
-  and marks MoonClaw action buttons as unavailable for the just-created book
-  until the target is production-ready. The sample `132001 / 示例EB` path stays
-  available for deterministic packaging validation only.
+  persisted EB target scope. `active_universe` is valid with no configured
+  bonds and drives dynamic official-source discovery plus the `ACTIVEEB`
+  aggregate workbook; `single_bond` and `portfolio` still reject
+  placeholder/sample targets, and each configured target needs a non-sample
+  `132XXX` code, bond name, issuer, underlying listed company, and recognized
+  exchange. The builder now exposes an explicit active-universe/single/portfolio
+  scope switch, starts in active-universe mode for the EB pattern, sends
+  `target_scope` in the create payload, shows target-readiness blockers only for
+  configured-target modes, and keeps MoonClaw action buttons available for
+  active-universe books. The sample `132001 / 示例EB` path stays available for
+  deterministic packaging validation only.
 - EB production health now also checks `moonclaw_web_tool_contract_ready`. The
   generated MoonClaw profile and proposal packet request executor/full runtime,
   `allow_execution_tools: true`, and required `web_search`/`web_fetch` tools.
@@ -589,8 +611,10 @@ Manual smoke checks:
   method is shorter than the required contract, Moondesk preserves it and
   appends the mandatory official-source, six-stage lifecycle, missing-marker,
   and two-sheet workbook requirements. Generic PDF-watch books keep
-  `targets.target_count` at `0`; EB books accept `target_bonds` and carry the
-  same multi-bond target list through `book.json`,
+  `targets.target_count` at `0`; EB books now carry explicit `target_scope`.
+  Active-universe EB books keep `target_bonds` empty and discover the official
+  source universe dynamically; configured single/portfolio books accept
+  `target_bonds` and carry the same target list through `book.json`,
   `raw/inbox/eb-tracking-request.json`,
   `raw/inbox/eb-standing-watch-dispatch.json`, and
   `moonclaw-packets/eb-standing-watch-proposal.json`. For EB, it also creates
