@@ -51,6 +51,13 @@ window in the packaged app.
 - Release-ready shape exists: `cmd/main release` creates a release manifest,
   update manifest, zip, and DMG, verifies signing, and can submit the zip
   through Apple notarytool when a real keychain profile is supplied.
+- App-tool books now have a separate portable artifact: `POST
+  /api/books/app-tool-portable` writes `portable/app-tool/index.html`,
+  `portable/app-tool/portable-manifest.json`, copied entrypoints, declared
+  outputs, app assets, generated site assets, skills, schemas, and tool docs.
+  This is a static per-book bundle that another standalone shell can open
+  without Moondesk; the validator reports `portable_with_api_warnings` if copied
+  text assets still call `/api/*`.
 - Production distribution dependency: a real notarized artifact still requires
   Developer ID credentials, hosting the update manifest/artifacts, and validating
   the installed app on a clean machine.
@@ -246,6 +253,17 @@ Manual smoke checks:
   `moontown_standing_goal_registration_ready` and
   `moontown_global_standing_goal_ready`, so a durable Moondesk handoff can pass
   while stale global Moontown scheduling is still visible.
+- `GET /api/books/app-tool-portable?book_id=<id>` reports whether a MoonBook
+  declares `app-tool-book` metadata through `book.json` or
+  `tool-manifest.json`, which entrypoints exist, whether
+  `portable/app-tool/index.html` is ready, and whether copied assets still
+  reference Moondesk APIs.
+- `POST /api/books/app-tool-portable` exports any app-tool MoonBook, including
+  direct `toolbook` templates and `research-book` patterns such as EB evidence
+  watches with a ToolBook manifest, into a static `portable/app-tool/` bundle
+  that preserves book-relative app/output paths for another standalone host.
+  The Town book tools expose the same operation as `Export Portable App` and
+  open the generated bundle preview when the export succeeds.
 - `POST /api/books/sync-standing-goal` repairs stale global scheduling for an
   existing PDF Evidence Watch book by reading the book-local
   `raw/analysis-runs/moontown-standing-goal-registration.json` receipt,

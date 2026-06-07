@@ -23,6 +23,8 @@ import {
 options(
   targets: {
     "agent_sessions.mbt": [ "native" ],
+    "app_tool_portable.mbt": [ "native" ],
+    "app_tool_portable_wbtest.mbt": [ "native" ],
     "book_pattern_helpers.mbt": [ "native" ],
     "book_api_handlers.mbt": [ "native" ],
     "daemon_agent_review.mbt": [ "native" ],

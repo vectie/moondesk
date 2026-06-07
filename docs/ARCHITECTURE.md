@@ -410,6 +410,13 @@ Implemented behavior:
   template request/config receipt. The verifier accepts the book-local receipt
   as durable handoff proof and separately reports
   `moontown_global_standing_goal_ready` for stale global scheduler state.
+- `GET /api/books/app-tool-portable?book_id=<id>` and `POST
+  /api/books/app-tool-portable` are the generic app-tool portability seam.
+  They detect direct `toolbook` templates and `research-book` patterns with an
+  `app-tool-book` manifest, copy entrypoints/outputs/assets into
+  `portable/app-tool/`, write a static shell `index.html`, preserve
+  book-relative paths for another standalone host, and report
+  `portable_with_api_warnings` when copied text assets still call Moondesk APIs.
 - `POST /api/books/sync-standing-goal` repairs that stale scheduler state for
   any PDF Evidence Watch pattern. It requires the book-local
   `raw/analysis-runs/moontown-standing-goal-registration.json` receipt,

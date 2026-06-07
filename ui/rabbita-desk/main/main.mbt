@@ -624,6 +624,7 @@ enum Msg {
   ProvedEbProduction(Result[EbProductionProofResult, String])
   RanEbSampleValidation(Result[EbSampleRunResult, String])
   AuditedEbProductionHealth(Result[Json, String])
+  ExportedAppToolPortable(Result[Json, String])
   DispatchedDaemon(Result[DaemonDispatchResult, String])
   LoadedDaemonLifecycle(Result[DaemonLifecycleResult, String])
   ManagedDaemon(Result[DaemonLifecycleResult, String])
@@ -689,6 +690,7 @@ enum Msg {
   FreshRetryEbProduction
   RunEbSampleValidation
   AuditEbProductionHealth
+  ExportAppToolPortable
   DispatchDaemonTick
   FetchDaemonLifecycle
   StartDaemon
@@ -1026,9 +1028,18 @@ fn selected_book_id_for_validation(model : Model) -> String {
   } else if model.pdf_watch_book_id.trim() != "" {
     model.pdf_watch_book_id.trim().to_owned()
   } else if model.selected_workspace_id.has_prefix("book-") {
-    model.selected_workspace_id["book-".length():].to_string()
+    model.selected_workspace_id["book-".length():].to_owned()
   } else {
     ""
+  }
+}
+
+///|
+fn selected_book_id_for_portable_export(model : Model) -> String {
+  if model.selected_workspace_id.has_prefix("book-") {
+    model.selected_workspace_id["book-".length():].to_owned()
+  } else {
+    selected_book_id_for_validation(model)
   }
 }
 
@@ -2109,6 +2120,34 @@ fn eb_run_health_json_status_summary(health : Json) -> String {
   "Production audit \{json_field_string(health, "status", default="unknown")}; durable \{json_field_bool_label(health, "durable_ready")}; production \{json_field_bool_label(health, "production_ready")}; base type \{json_field_bool_label(health, "base_type_selection_ready")}; Moontown publish \{json_field_bool_label(health, "moontown_template_publish_receipt_ready")}; standing goal \{json_field_bool_label(health, "standing_goal_registration_ready")}; run \{empty_label(json_field_string(health, "moonclaw_import_run_id", default=""))}; run status \{empty_label(json_field_string(health, "moonclaw_confirmed_run_status", default=""))}; recovered import \{json_field_bool_label(health, "moonclaw_import_receipt_recovered")}; retry recommended \{json_field_bool_label(health, "moonclaw_run_retry_recommended")}; confirmed \{json_field_bool_label(health, "moonclaw_confirmed_run_ready")}; succeeded \{json_field_bool_label(health, "moonclaw_confirmed_run_succeeded")}; live result \{json_field_bool_label(health, "real_moonclaw_result_ready")}; expected output contract \{json_field_bool_label(health, "expected_output_contract_ready")}; workbook validation \{json_field_bool_label(health, "workbook_validation_ready")}; workbook XML \{json_field_bool_label(health, "workbook_internal_contract_ready")}; data rows \{json_field_bool_label(health, "workbook_data_proof_ready")}; hyperlinks \{json_field_bool_label(health, "workbook_hyperlinks_ready")}; appendix notes \{json_field_bool_label(health, "workbook_appendix_notes_ready")}; quality proof \{json_field_bool_label(health, "workbook_quality_proof_ready")}; lifecycle proof \{json_field_bool_label(health, "workbook_lifecycle_proof_ready")}; sample validation \{json_field_bool_label(health, "workbook_validation_sample_run")}; target match \{json_field_bool_label(health, "output_target_match_ready")}; source production \{json_field_bool_label(health, "source_screen_production_ready")}; blocking \{blocking}"
 }
 
+///|
+fn app_tool_portable_status_summary(result : Json) -> String {
+  let status = json_field_string(result, "status", default="unknown")
+  let book_id = json_field_string(result, "book_id", default="")
+  let index_path = json_field_string(
+    result,
+    "index_path",
+    default=json_field_string(
+      result,
+      "portable_index_path",
+      default="portable/app-tool/index.html",
+    ),
+  )
+  let manifest_path = json_field_string(
+    result,
+    "manifest_path",
+    default=json_field_string(
+      result,
+      "portable_manifest_path",
+      default="portable/app-tool/portable-manifest.json",
+    ),
+  )
+  let copied = json_field_string_array_items(result, "copied_paths").length()
+  let missing = json_field_string_array_items(result, "missing_paths").length()
+  let api_free = json_field_bool_label(result, "operatable_without_moondesk_api")
+  "Portable app-tool export \{status}; book \{empty_label(book_id)}; index \{index_path}; manifest \{manifest_path}; copied \{copied}; missing \{missing}; API-free \{api_free}"
+}
+
 fn request_title(record : RequestRecord) -> String {
   json_field_string(record.request, "title", default="Moondesk request")
 }
@@ -3169,6 +3208,25 @@ fn audit_eb_production_health_cmd(
 }
 
 ///|
+fn export_app_tool_portable_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = { "book_id": selected_book_id_for_portable_export(model) }
+  @http.post(
+    "/api/books/app-tool-portable",
+    @http.Body::Json(body),
+    expect=@http.Json(fn(result) {
+      dispatch(ExportedAppToolPortable(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not export portable app-tool bundle")
+      }
+    }),
+  )
+}
+
+///|
 fn dispatch_daemon_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
   @http.post(
     "/api/town/dispatch",
@@ -3851,6 +3909,43 @@ fn update(
       )
     }
     AuditedEbProductionHealth(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    ExportedAppToolPortable(Ok(result)) => {
+      let book_id = json_field_string(
+        result,
+        "book_id",
+        default=selected_book_id_for_portable_export(model),
+      )
+      let workspace_id = if model.selected_workspace_id.has_prefix("book-") {
+        model.selected_workspace_id
+      } else {
+        @desk.stable_id("book", book_id)
+      }
+      (
+        sync_activity_batch(
+          Activity::Town,
+          @rabbita.batch([
+            fetch_workspaces_cmd(dispatch),
+            reload_workspace_cmds(
+              dispatch,
+              workspace_id,
+              "portable/app-tool/index.html",
+            ),
+          ]),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          selected_workspace_id: workspace_id,
+          selected_path: "portable/app-tool/index.html",
+          primary_preview_path: "portable/app-tool/index.html",
+          preview: None,
+          preview_status: "loading portable app-tool bundle",
+          pdf_watch_status: app_tool_portable_status_summary(result),
+        },
+      )
+    }
+    ExportedAppToolPortable(Err(error)) =>
       (@rabbita.none, { ..model, pdf_watch_status: error })
     DispatchedDaemon(Ok(result)) =>
       (
@@ -4635,6 +4730,29 @@ fn update(
             activity: Activity::Town,
             command_open: false,
             pdf_watch_status: "auditing EB production health",
+          },
+        )
+      }
+    ExportAppToolPortable =>
+      if selected_book_id_for_portable_export(model) == "" {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            pdf_watch_status: "publish or select an app-tool MoonBook first",
+          },
+        )
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Town,
+            export_app_tool_portable_cmd(dispatch, model),
+          ),
+          {
+            ..model,
+            activity: Activity::Town,
+            command_open: false,
+            pdf_watch_status: "exporting portable app-tool bundle",
           },
         )
       }
@@ -6052,6 +6170,11 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           } else {
             "Choose PDF/EB Pattern First"
           },
+        ),
+        button(
+          class="secondary-button full",
+          on_click=dispatch(ExportAppToolPortable),
+          "Export Portable App",
         ),
         if selected_pattern_is_eb(model) {
           div(class="button-stack", [
