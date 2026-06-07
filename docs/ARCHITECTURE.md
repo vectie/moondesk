@@ -415,8 +415,15 @@ Implemented behavior:
   They detect direct `toolbook` templates and `research-book` patterns with an
   `app-tool-book` manifest, copy entrypoints/outputs/assets into
   `portable/app-tool/`, write a static shell `index.html`, preserve
-  book-relative paths for another standalone host, and report
-  `portable_with_api_warnings` when copied text assets still call Moondesk APIs.
+  book-relative paths for another standalone host, require an existing
+  `.html`/`.htm` entrypoint for iframe operability, bundle a read-only
+  `moondesk-api-snapshot.json`, and inject `moondesk-api-shim.js` into copied
+  HTML entrypoints so supported `/api/*` fetches run without Moondesk. The
+  status manifest records `api_dependency_paths`, `api_compatibility_paths`,
+  `api_snapshot_routes`, `api_reference_routes`, `api_unsupported_routes`, and
+  `api_dependency_warnings`; unsupported API routes or unresolved resource-style
+  API dependencies keep the status at
+  `portable_with_api_warnings`.
 - `GET/POST /api/books/app-tool-portable/all` applies the same contract across
   every discovered app-tool MoonBook under `.moontown/books`, returning
   aggregate counts while ignoring ordinary non-tool books.

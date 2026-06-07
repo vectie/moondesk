@@ -56,8 +56,15 @@ window in the packaged app.
   `portable/app-tool/portable-manifest.json`, copied entrypoints, declared
   outputs, app assets, generated site assets, skills, schemas, and tool docs.
   This is a static per-book bundle that another standalone shell can open
-  without Moondesk; the validator reports `portable_with_api_warnings` if copied
-  text assets still call `/api/*`.
+  without Moondesk when the book has an existing HTML entrypoint. Exports now
+  include `moondesk-api-snapshot.json` and
+  `moondesk-api-shim.js`; copied HTML entrypoints load the shim so supported
+  read-only Moondesk API calls such as `/api/books/patterns`,
+  `/api/books/base-types`, `/api/books/template-registry`, and
+  `/api/workspaces` resolve from the portable bundle. The validator reports
+  `portable_with_api_warnings` only when copied assets still contain API
+  dependencies the shim cannot cover, such as unsupported `/api/*` routes or
+  direct resource links.
 - Workspace-wide export is available through
   `GET/POST /api/books/app-tool-portable/all`: it discovers every MoonBook under
   `.moontown/books` that declares direct `toolbook` or `app-tool-book` metadata,
@@ -261,14 +268,21 @@ Manual smoke checks:
 - `GET /api/books/app-tool-portable?book_id=<id>` reports whether a MoonBook
   declares `app-tool-book` metadata through `book.json` or
   `tool-manifest.json`, which entrypoints exist, whether
-  `portable/app-tool/index.html` is ready, and whether copied assets still
-  reference Moondesk APIs.
+  `portable/app-tool/index.html` is ready, which copied assets reference
+  Moondesk APIs, which HTML files received the offline snapshot shim, and
+  whether any unsupported API route or unresolved API dependency remains.
 - `POST /api/books/app-tool-portable` exports any app-tool MoonBook, including
   direct `toolbook` templates and `research-book` patterns such as EB evidence
   watches with a ToolBook manifest, into a static `portable/app-tool/` bundle
-  that preserves book-relative app/output paths for another standalone host.
-  The Town book tools expose the same operation as `Export Portable App` and
-  open the generated bundle preview when the export succeeds.
+  that preserves book-relative app/output paths for another standalone host. It
+  requires an existing `.html`/`.htm` entrypoint because the generated portable
+  shell opens the tool in an iframe; books with only non-HTML entrypoints report
+  `unsupported_entrypoint` instead of a false portable-ready state.
+  It writes `moondesk-api-snapshot.json` plus `moondesk-api-shim.js` and injects
+  the shim into copied HTML files so supported read-only `/api/*` calls run
+  without a live Moondesk process. The Town book tools expose the same operation
+  as `Export Portable App` and open the generated bundle preview when the export
+  succeeds.
 - `GET /api/books/app-tool-portable/all` reports aggregate portability for all
   discovered app-tool MoonBooks in the workspace. `POST` to the same endpoint
   exports every discovered app-tool MoonBook and returns `exported_count`,
