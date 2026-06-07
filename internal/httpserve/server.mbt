@@ -364,6 +364,16 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "books", "app-tool-portable", "all"] =>
+      if is_read_method(method_) {
+        handle_app_tool_portable_all_status(workspace_root, method_, conn)
+      } else if method_ is @http.RequestMethod::Post {
+        handle_app_tool_portable_all_export(workspace_root, method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "books", "sync-standing-goal"] =>
       if method_ is @http.RequestMethod::Post {
         handle_book_sync_standing_goal(workspace_root, body, method_, conn)

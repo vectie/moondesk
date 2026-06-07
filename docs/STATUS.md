@@ -58,6 +58,11 @@ window in the packaged app.
   This is a static per-book bundle that another standalone shell can open
   without Moondesk; the validator reports `portable_with_api_warnings` if copied
   text assets still call `/api/*`.
+- Workspace-wide export is available through
+  `GET/POST /api/books/app-tool-portable/all`: it discovers every MoonBook under
+  `.moontown/books` that declares direct `toolbook` or `app-tool-book` metadata,
+  ignores ordinary research books, and returns per-book portability status plus
+  aggregate counts. The Town book tools expose this as `Export All Portable Apps`.
 - Production distribution dependency: a real notarized artifact still requires
   Developer ID credentials, hosting the update manifest/artifacts, and validating
   the installed app on a clean machine.
@@ -264,6 +269,11 @@ Manual smoke checks:
   that preserves book-relative app/output paths for another standalone host.
   The Town book tools expose the same operation as `Export Portable App` and
   open the generated bundle preview when the export succeeds.
+- `GET /api/books/app-tool-portable/all` reports aggregate portability for all
+  discovered app-tool MoonBooks in the workspace. `POST` to the same endpoint
+  exports every discovered app-tool MoonBook and returns `exported_count`,
+  `failure_count`, `api_warning_count`, and per-book receipts. The Town UI
+  exposes the operation as `Export All Portable Apps`.
 - `POST /api/books/sync-standing-goal` repairs stale global scheduling for an
   existing PDF Evidence Watch book by reading the book-local
   `raw/analysis-runs/moontown-standing-goal-registration.json` receipt,

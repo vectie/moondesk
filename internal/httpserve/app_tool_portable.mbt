@@ -25,14 +25,17 @@ async fn handle_app_tool_portable_status(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let book_id = decode_query_value(
+  let raw_book_id = decode_query_value(
       query_value(request_path, "book_id").unwrap_or(""),
     )
     .trim()
     .to_owned()
-  if book_id == "" {
-    send_api_error(conn, method_, 400, "Bad Request", "book_id is required")
-    return
+  let book_id = match app_tool_clean_book_id(raw_book_id) {
+    Some(book_id) => book_id
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "book_id is required")
+      return
+    }
   }
   let root = @pathx.normalize(workspace_root)
   let book_root = app_tool_book_root_for_id(root, book_id)
@@ -41,6 +44,26 @@ async fn handle_app_tool_portable_status(
     return
   }
   send_json(conn, method_, app_tool_portable_status(root, book_root, book_id))
+}
+
+///|
+async fn handle_app_tool_portable_all_status(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let root = @pathx.normalize(workspace_root)
+  send_json(conn, method_, app_tool_portable_all_status(root))
+}
+
+///|
+async fn handle_app_tool_portable_all_export(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let root = @pathx.normalize(workspace_root)
+  send_json(conn, method_, export_all_app_tool_portable_bundles(root))
 }
 
 ///|
@@ -57,10 +80,15 @@ async fn handle_app_tool_portable_export(
       return
     }
   }
-  let book_id = json_string(payload, "book_id", default="").trim().to_owned()
-  if book_id == "" {
-    send_api_error(conn, method_, 400, "Bad Request", "book_id is required")
-    return
+  let raw_book_id = json_string(payload, "book_id", default="")
+    .trim()
+    .to_owned()
+  let book_id = match app_tool_clean_book_id(raw_book_id) {
+    Some(book_id) => book_id
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "book_id is required")
+      return
+    }
   }
   let root = @pathx.normalize(workspace_root)
   let book_root = app_tool_book_root_for_id(root, book_id)
@@ -98,8 +126,228 @@ async fn handle_app_tool_portable_export(
 }
 
 ///|
+fn app_tool_books_root(root : String) -> String {
+  @pathx.join(root, ".moontown/books")
+}
+
+///|
 fn app_tool_book_root_for_id(root : String, book_id : String) -> String {
-  @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  @pathx.join(app_tool_books_root(root), book_id)
+}
+
+///|
+fn app_tool_clean_book_id(book_id : String) -> String? {
+  let trimmed = book_id.trim().to_owned()
+  if trimmed == "" {
+    return None
+  }
+  match clean_relative_path(trimmed) {
+    Some(path) =>
+      if path != "" && !path.contains("/") {
+        Some(path)
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
+async fn app_tool_book_ids_for_workspace(root : String) -> Array[String] {
+  let book_ids : Array[String] = []
+  let books_root = app_tool_books_root(root)
+  if !is_directory(books_root) {
+    return book_ids
+  }
+  for name in read_directory_names(books_root, include_hidden=false) {
+    let book_id = match app_tool_clean_book_id(name) {
+      Some(book_id) => book_id
+      None => continue
+    }
+    let book_root = app_tool_book_root_for_id(root, book_id)
+    if !is_directory(book_root) ||
+      !@fs.exists(@pathx.join(book_root, "book.json")) {
+      continue
+    }
+    let book_json = read_json_file_or_object(
+      @pathx.join(book_root, "book.json"),
+    )
+    let manifest = read_json_file_or_object(
+      @pathx.join(book_root, app_tool_manifest_relative_path(book_json)),
+    )
+    if app_tool_book_is_app_tool(book_json, manifest) {
+      book_ids.push(book_id)
+    }
+  }
+  book_ids
+}
+
+///|
+async fn app_tool_portable_all_status(root : String) -> Json {
+  let book_ids = app_tool_book_ids_for_workspace(root)
+  let books : Array[Json] = []
+  let mut portable_ready_count = 0
+  let mut api_warning_count = 0
+  let mut export_required_count = 0
+  let mut missing_entrypoint_count = 0
+  for book_id in book_ids {
+    let status = app_tool_portable_status(
+      root,
+      app_tool_book_root_for_id(root, book_id),
+      book_id,
+    )
+    books.push(status)
+    match json_string(status, "status", default="unknown") {
+      "portable_ready" => portable_ready_count += 1
+      "portable_with_api_warnings" => api_warning_count += 1
+      "export_required" => export_required_count += 1
+      "missing_entrypoint" => missing_entrypoint_count += 1
+      _ => ()
+    }
+  }
+  let overall_status = app_tool_portable_all_status_label(
+    book_ids.length(),
+    portable_ready_count,
+    api_warning_count,
+    export_required_count,
+    missing_entrypoint_count,
+  )
+  {
+    "kind": "moondesk-app-tool-portable-all-status",
+    "ok": missing_entrypoint_count == 0,
+    "status": overall_status,
+    "message": app_tool_portable_all_status_message(overall_status),
+    "workspace_root": root,
+    "app_tool_book_count": book_ids.length(),
+    "book_ids": json_from_string_array(book_ids),
+    "portable_ready_count": portable_ready_count,
+    "api_warning_count": api_warning_count,
+    "export_required_count": export_required_count,
+    "missing_entrypoint_count": missing_entrypoint_count,
+    "portable_bundle_path": app_tool_portable_bundle_relative_dir(),
+    "standalone_runtime": "static-file-bundle",
+    "operatable_without_moondesk_api": book_ids.length() > 0 &&
+    export_required_count == 0 &&
+    missing_entrypoint_count == 0 &&
+    api_warning_count == 0,
+    "books": Json::array(books),
+  }
+}
+
+///|
+async fn export_all_app_tool_portable_bundles(root : String) -> Json {
+  let book_ids = app_tool_book_ids_for_workspace(root)
+  let results : Array[Json] = []
+  let mut exported_count = 0
+  let mut failure_count = 0
+  let mut api_warning_count = 0
+  for book_id in book_ids {
+    let book_root = app_tool_book_root_for_id(root, book_id)
+    let result = export_app_tool_portable_bundle(root, book_root, book_id) catch {
+      error => {
+        failure_count += 1
+        results.push({
+          "kind": "moondesk-app-tool-portable-export",
+          "ok": false,
+          "status": "export_failed",
+          "message": "Could not export app-tool portable bundle: \{error}",
+          "book_id": book_id,
+        })
+        continue
+      }
+    }
+    results.push(result)
+    if json_bool(result, "ok", default=false) {
+      exported_count += 1
+      if json_string(result, "status", default="") ==
+        "portable_with_api_warnings" {
+        api_warning_count += 1
+      }
+    } else {
+      failure_count += 1
+    }
+  }
+  let status = app_tool_portable_all_export_status_label(
+    book_ids.length(),
+    failure_count,
+    api_warning_count,
+  )
+  {
+    "kind": "moondesk-app-tool-portable-all-export",
+    "ok": failure_count == 0,
+    "status": status,
+    "message": app_tool_portable_all_status_message(status),
+    "workspace_root": root,
+    "app_tool_book_count": book_ids.length(),
+    "book_ids": json_from_string_array(book_ids),
+    "exported_count": exported_count,
+    "failure_count": failure_count,
+    "api_warning_count": api_warning_count,
+    "portable_bundle_path": app_tool_portable_bundle_relative_dir(),
+    "standalone_runtime": "static-file-bundle",
+    "operatable_without_moondesk_api": book_ids.length() > 0 &&
+    failure_count == 0 &&
+    api_warning_count == 0,
+    "books": Json::array(results),
+  }
+}
+
+///|
+fn app_tool_portable_all_status_label(
+  book_count : Int,
+  portable_ready_count : Int,
+  api_warning_count : Int,
+  export_required_count : Int,
+  missing_entrypoint_count : Int,
+) -> String {
+  if book_count == 0 {
+    "no_app_tool_books"
+  } else if missing_entrypoint_count > 0 {
+    "missing_entrypoint"
+  } else if export_required_count > 0 {
+    "export_required"
+  } else if api_warning_count > 0 {
+    "portable_with_api_warnings"
+  } else if portable_ready_count == book_count {
+    "portable_ready"
+  } else {
+    "unknown"
+  }
+}
+
+///|
+fn app_tool_portable_all_export_status_label(
+  book_count : Int,
+  failure_count : Int,
+  api_warning_count : Int,
+) -> String {
+  if book_count == 0 {
+    "no_app_tool_books"
+  } else if failure_count > 0 {
+    "partial_failure"
+  } else if api_warning_count > 0 {
+    "portable_with_api_warnings"
+  } else {
+    "portable_ready"
+  }
+}
+
+///|
+fn app_tool_portable_all_status_message(status : String) -> String {
+  match status {
+    "no_app_tool_books" =>
+      "No app-tool MoonBooks were discovered in this workspace."
+    "missing_entrypoint" =>
+      "One or more app-tool MoonBooks declare metadata but have no existing entrypoint."
+    "export_required" =>
+      "One or more app-tool MoonBooks are exportable but do not have a generated portable bundle yet."
+    "portable_ready" =>
+      "Every discovered app-tool MoonBook has a portable bundle with no detected Moondesk API dependency."
+    "portable_with_api_warnings" =>
+      "Every discovered app-tool MoonBook was exported, but at least one copied asset still references Moondesk APIs."
+    "partial_failure" => "Some app-tool MoonBooks could not be exported."
+    _ => "Unknown app-tool portable workspace status."
+  }
 }
 
 ///|

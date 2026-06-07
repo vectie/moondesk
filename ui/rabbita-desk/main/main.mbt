@@ -625,6 +625,7 @@ enum Msg {
   RanEbSampleValidation(Result[EbSampleRunResult, String])
   AuditedEbProductionHealth(Result[Json, String])
   ExportedAppToolPortable(Result[Json, String])
+  ExportedAllAppToolPortable(Result[Json, String])
   DispatchedDaemon(Result[DaemonDispatchResult, String])
   LoadedDaemonLifecycle(Result[DaemonLifecycleResult, String])
   ManagedDaemon(Result[DaemonLifecycleResult, String])
@@ -691,6 +692,7 @@ enum Msg {
   RunEbSampleValidation
   AuditEbProductionHealth
   ExportAppToolPortable
+  ExportAllAppToolPortable
   DispatchDaemonTick
   FetchDaemonLifecycle
   StartDaemon
@@ -1598,6 +1600,18 @@ fn json_field_bool(json : Json, key : String, default~ : Bool) -> Bool {
 }
 
 ///|
+fn json_field_int(json : Json, key : String, default~ : Int) -> Int {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(value) => @json.from_json(value) catch { _ => default }
+        _ => default
+      }
+    _ => default
+  }
+}
+
+///|
 fn json_field_string_array_summary(
   json : Json,
   key : String,
@@ -2146,6 +2160,19 @@ fn app_tool_portable_status_summary(result : Json) -> String {
   let missing = json_field_string_array_items(result, "missing_paths").length()
   let api_free = json_field_bool_label(result, "operatable_without_moondesk_api")
   "Portable app-tool export \{status}; book \{empty_label(book_id)}; index \{index_path}; manifest \{manifest_path}; copied \{copied}; missing \{missing}; API-free \{api_free}"
+}
+
+///|
+fn app_tool_portable_all_status_summary(result : Json) -> String {
+  let status = json_field_string(result, "status", default="unknown")
+  let book_count = json_field_int(result, "app_tool_book_count", default=0)
+  let exported = json_field_int(result, "exported_count", default=0)
+  let failures = json_field_int(result, "failure_count", default=0)
+  let warnings = json_field_int(result, "api_warning_count", default=0)
+  let ready = json_field_int(result, "portable_ready_count", default=0)
+  let required = json_field_int(result, "export_required_count", default=0)
+  let api_free = json_field_bool_label(result, "operatable_without_moondesk_api")
+  "Portable app-tool batch \{status}; books \{book_count}; exported \{exported}; ready \{ready}; export required \{required}; failures \{failures}; API warnings \{warnings}; API-free \{api_free}"
 }
 
 fn request_title(record : RequestRecord) -> String {
@@ -3227,6 +3254,23 @@ fn export_app_tool_portable_cmd(
 }
 
 ///|
+fn export_all_app_tool_portable_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+) -> @rabbita.Cmd {
+  @http.post(
+    "/api/books/app-tool-portable/all",
+    @http.Body::Json(Json::object({})),
+    expect=@http.Json(fn(result) {
+      dispatch(ExportedAllAppToolPortable(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not export all portable app-tool bundles")
+      }
+    }),
+  )
+}
+
+///|
 fn dispatch_daemon_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
   @http.post(
     "/api/town/dispatch",
@@ -3946,6 +3990,54 @@ fn update(
       )
     }
     ExportedAppToolPortable(Err(error)) =>
+      (@rabbita.none, { ..model, pdf_watch_status: error })
+    ExportedAllAppToolPortable(Ok(result)) => {
+      let book_ids = json_field_string_array_items(result, "book_ids")
+      let has_book = book_ids.length() > 0
+      let workspace_id = if has_book {
+        @desk.stable_id("book", book_ids[0])
+      } else {
+        model.selected_workspace_id
+      }
+      let command = if has_book {
+        @rabbita.batch([
+          fetch_workspaces_cmd(dispatch),
+          reload_workspace_cmds(
+            dispatch,
+            workspace_id,
+            "portable/app-tool/index.html",
+          ),
+        ])
+      } else {
+        fetch_workspaces_cmd(dispatch)
+      }
+      (
+        sync_activity_batch(Activity::Town, command),
+        {
+          ..model,
+          activity: Activity::Town,
+          selected_workspace_id: workspace_id,
+          selected_path: if has_book {
+            "portable/app-tool/index.html"
+          } else {
+            model.selected_path
+          },
+          primary_preview_path: if has_book {
+            "portable/app-tool/index.html"
+          } else {
+            model.primary_preview_path
+          },
+          preview: if has_book { None } else { model.preview },
+          preview_status: if has_book {
+            "loading portable app-tool bundle"
+          } else {
+            model.preview_status
+          },
+          pdf_watch_status: app_tool_portable_all_status_summary(result),
+        },
+      )
+    }
+    ExportedAllAppToolPortable(Err(error)) =>
       (@rabbita.none, { ..model, pdf_watch_status: error })
     DispatchedDaemon(Ok(result)) =>
       (
@@ -4756,6 +4848,19 @@ fn update(
           },
         )
       }
+    ExportAllAppToolPortable =>
+      (
+        sync_activity_batch(
+          Activity::Town,
+          export_all_app_tool_portable_cmd(dispatch),
+        ),
+        {
+          ..model,
+          activity: Activity::Town,
+          command_open: false,
+          pdf_watch_status: "exporting all portable app-tool bundles",
+        },
+      )
     DispatchDaemonTick =>
       (
         sync_activity_batch(Activity::Town, dispatch_daemon_cmd(dispatch)),
@@ -6175,6 +6280,11 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           class="secondary-button full",
           on_click=dispatch(ExportAppToolPortable),
           "Export Portable App",
+        ),
+        button(
+          class="secondary-button full",
+          on_click=dispatch(ExportAllAppToolPortable),
+          "Export All Portable Apps",
         ),
         if selected_pattern_is_eb(model) {
           div(class="button-stack", [

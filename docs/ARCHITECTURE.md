@@ -417,6 +417,9 @@ Implemented behavior:
   `portable/app-tool/`, write a static shell `index.html`, preserve
   book-relative paths for another standalone host, and report
   `portable_with_api_warnings` when copied text assets still call Moondesk APIs.
+- `GET/POST /api/books/app-tool-portable/all` applies the same contract across
+  every discovered app-tool MoonBook under `.moontown/books`, returning
+  aggregate counts while ignoring ordinary non-tool books.
 - `POST /api/books/sync-standing-goal` repairs that stale scheduler state for
   any PDF Evidence Watch pattern. It requires the book-local
   `raw/analysis-runs/moontown-standing-goal-registration.json` receipt,
