@@ -1050,8 +1050,9 @@ Patch review state and patch execution state are deliberately separate:
 operator `apply_patch` / `revert_patch` commands record intent and review
 receipts, while MoonClaw or standalone `mooncode` must emit `patch_applied` or
 `patch_reverted` runtime events after actually changing files. MoonClaw now
-executes bounded reviewed text replacements and single-file unified-diff hunks,
-including target-path inference from diff headers. Moondesk
+executes bounded reviewed text replacements plus single-file or multi-file
+unified-diff patchsets, including target-path inference from diff headers.
+Moondesk
 normalizes those events into `runtime.patch_applied` /
 `runtime.patch_reverted` proof records and exposes the aggregate
 `runtime_patch_execution_proof_count` in session readiness.
@@ -1261,9 +1262,9 @@ commands use the hunk target as `context_path`. It deliberately remains
 MoonBook-owned and protocol-shaped rather than Moondesk-private UI state, so
 MoonClaw or a future standalone `mooncode` runtime can own the real
 apply/revert operation while Moondesk only renders proof and review state.
-MoonClaw's native patch tool currently handles reviewed text replacements and
-single-file unified-diff hunks; multi-file patchsets and richer hunk-addressed
-runtime dispatch are still future protocol/runtime work.
+MoonClaw's native patch tool currently handles reviewed text replacements plus
+single-file or multi-file unified-diff patchsets; richer hunk-addressed runtime
+dispatch is still future protocol/runtime work.
 The command preflight contract now returns a stable `selected_patch` object for
 the requested `context_path`, including `matched`, `review_state`,
 `execution_state`, `gate_status`, `next_action`, `blocked_reason`, and
