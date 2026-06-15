@@ -381,7 +381,10 @@ acknowledgement, session stream, eval-report projection, and the first
 book-local `runtime-turn` path. That turn path claims the next durable command,
 executes explicit `runtime_tool_calls` or deterministic built-in fallbacks such
 as `run_tests -> moon_check + finish`, appends runtime/tool events, and closes
-the command with `runtime-completed` or `runtime-failed`. Native command
+the command with `runtime-completed` or `runtime-failed`. Native `run_tests`
+now emits command-scoped `test_result` proof from MoonClaw `moon_check`
+evidence, and Moondesk accepts both `exit_code` and native `exit_status` when
+normalizing that proof. Native command
 ingestion still supports the compatibility path that binds the Moondesk
 MoonCode session to the MoonClaw task for the selected book root and forwards
 accepted commands into MoonClaw's existing task/agent runtime.
@@ -432,9 +435,9 @@ review state into command-level action items with states such as
 `queued-for-runtime`, `awaiting-proof`, `blocked`, `ready-for-review`,
 `runtime-retry`, and `completed`. The MoonCode center renders this as an Action
 Plan panel with acceptance gates and `next_required_action`; a delivered
-`run_tests` command remains `awaiting-proof` until MoonClaw emits test-result
-evidence, and accept/package actions are blocked while required gates are
-missing. Action rows now also include command-scoped runtime evidence:
+`run_tests` command remains `awaiting-proof` until MoonClaw's native
+`test_result` evidence arrives, and accept/package actions are blocked while
+required gates are missing. Action rows now also include command-scoped runtime evidence:
 `runtime_evidence_status`, required/proven event counts, and exact
 missing/failed required event names derived from the native result contract.
 Only matching `command_packet.command_id` events satisfy this proof, so

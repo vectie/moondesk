@@ -1069,10 +1069,12 @@ The `action-plan` route is the operator/runtime view. It combines the command
 queue, dispatch receipts, event lanes, test-run evidence, package candidates,
 and review state into one MoonBook-owned plan with a `next_required_action`.
 For example, a delivered `run_tests` command remains `awaiting-proof` until
-MoonClaw emits both the required test-result event and the expected typed tool
-proof for `read`, `moon_check`, `shell`, and `finish`; an `accept` command is
-blocked while tests are failing, tool approvals are pending, file diffs have not
-been tested, or the runtime has not proven its expected package/finish tools.
+MoonClaw's native `test_result` event and the expected typed tool proof for
+`read`, `moon_check`, `shell`, and `finish` arrive; Moondesk normalizes both
+`exit_code` and native MoonClaw `exit_status` for this proof. An `accept`
+command is blocked while tests are failing, tool approvals are pending, file
+diffs have not been tested, or the runtime has not proven its expected
+package/finish tools.
 Each row exposes `runtime_evidence_status` and proof counts so the UI can show
 exactly which OpenSeek/MoonClaw events are still missing for that command.
 `POST /api/mooncode/sessions/<session-id>/commands` enforces the same command

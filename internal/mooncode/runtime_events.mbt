@@ -334,8 +334,16 @@ pub fn normalize_runtime_event(
           status=json_string(event, "status", default="done"),
           created_at~,
           detail=runtime_first_string(event, ["detail", "content"], default=""),
-          command=json_string(event, "command", default=""),
-          exit_code=runtime_json_int(event, "exit_code", default=0),
+          command=runtime_first_string(
+            event,
+            ["command", "target", "tool"],
+            default="",
+          ),
+          exit_code=runtime_json_int(
+            event,
+            "exit_code",
+            default=runtime_json_int(event, "exit_status", default=0),
+          ),
           command_packet=runtime_event_command_packet(event, "run_tests"),
         ),
       )
@@ -442,6 +450,16 @@ pub fn canonical_event_record(
     default=fallback_created_at,
   )
   let id = runtime_json_string(event, "id", default=fallback_id)
+  let command = if kind == "test_result" {
+    runtime_first_string(event, ["command", "target", "tool"], default="")
+  } else {
+    json_string(event, "command", default="")
+  }
+  let exit_code = runtime_json_int(
+    event,
+    "exit_code",
+    default=runtime_json_int(event, "exit_status", default=0),
+  )
   event_record(
     id~,
     lane~,
@@ -458,8 +476,8 @@ pub fn canonical_event_record(
     detail=runtime_first_string(event, ["detail", "content"], default=""),
     path=json_string(event, "path", default=""),
     diff=json_string(event, "diff", default=""),
-    command=json_string(event, "command", default=""),
-    exit_code=runtime_json_int(event, "exit_code", default=0),
+    command~,
+    exit_code~,
     command_packet=runtime_json_object_field_or_empty(event, "command_packet"),
   )
 }
@@ -1299,6 +1317,46 @@ test "mooncode runtime event ingest report accepts canonical and openseek events
     json_string(progress, "kind", default=""),
     "mooncode-runtime-event-command-progress",
   )
+}
+
+///|
+test "mooncode runtime event ingest accepts moonclaw run_tests proof events" {
+  let events = runtime_ingest_events(
+    {
+      "events": [
+        {
+          "protocol": "mooncode.v1",
+          "session_id": "session-tests",
+          "command_id": "cmd-tests",
+          "command_packet": { "command_id": "cmd-tests", "action": "run_tests" },
+          "lane": "test",
+          "kind": "test_result",
+          "event": "test_result",
+          "title": "MoonCode tests failed",
+          "status": "failed",
+          "test_status": "failed",
+          "detail": "moon check failed with status 7",
+          "content": "failure output",
+          "output": "failure output",
+          "tool": "moon_check",
+          "target": "cmd/daemon",
+          "exit_status": 7,
+          "created_at": "2026-06-15T00:00:00Z",
+          "source": "moonclaw-native-runtime-turn",
+        },
+      ],
+    },
+    ingested_at="2026-06-15T00:00:01Z",
+  )
+  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "lane", default=""), "test")
+  assert_eq(json_string(events[0], "kind", default=""), "test_result")
+  assert_eq(json_string(events[0], "status", default=""), "failed")
+  assert_eq(json_string(events[0], "command", default=""), "cmd/daemon")
+  assert_eq(runtime_json_int(events[0], "exit_code", default=0), 7)
+  let packet = runtime_json_object_field_or_empty(events[0], "command_packet")
+  assert_eq(json_string(packet, "command_id", default=""), "cmd-tests")
+  assert_eq(json_string(packet, "action", default=""), "run_tests")
 }
 
 ///|
