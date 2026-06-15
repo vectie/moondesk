@@ -181,10 +181,13 @@ the model until `finish`, failure, cancel, or `planner_max_steps`. It records
 planner events, `planner_steps`, step limits, native `reasoning_delta` progress,
 optional assistant deltas, and pre-execution `tool_call` events before matching
 `tool_result` events. It falls back to deterministic planning when the model is
-unavailable or emits no supported calls. MoonClaw's native runtime-loop now
+unavailable or emits no supported calls. Native steer commands now settle with
+`steer_applied` / `steer_dropped` events, so Moondesk's pending steering counts
+are backed by MoonClaw-owned evidence instead of only projected intent.
+MoonClaw's native runtime-loop now
 supervises repeated runtime-turns over the durable queue until idle, failure,
 cancel, or max-turns. The remaining engine work is the persistent OpenSeek-style
-service with live steering/cancel semantics, diff-aware review, and
+service with long-running live steering/cancel UX, diff-aware review, and
 model-backed eval proof.
 It also owns runtime-neutral durable event helpers: safe session-id validation,
 event record construction, JSONL rendering, JSONL parsing for events, command
@@ -607,7 +610,8 @@ checkout, daemon, `/v1/models`, `/v1/tasks`, prompt/message/cancel bridge,
 append-only command queue, append-only session log, MoonClaw adapter readiness,
 native runtime-turn availability, native runtime-loop queue supervision,
 optional bounded model/tool feedback planning, and the remaining autonomous
-MoonClaw-owned live steering/diff-review/model-backed eval proof. The
+MoonClaw-owned long-running steering UX, diff-review, and model-backed eval
+proof. The
 live probes still happen in `internal/moonwiki`, but the readiness projection
 itself now lives in `internal/mooncode`: endpoint rows, bridge-vs-production
 status, and check metadata are extractable protocol data rather than

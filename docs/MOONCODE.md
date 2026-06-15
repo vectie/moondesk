@@ -1109,9 +1109,11 @@ runtime dispatch from bridge compatibility mode.
 
 MoonClaw's native endpoint now treats `prompt`, `steer`, and `cancel` as
 control commands instead of plain prose-only task messages. `prompt` and
-general command packets bind or reuse the book-scoped task; `steer` is delivered
-to the same task with `steer.accepted` runtime evidence; `cancel` targets an
-existing bound task and deliberately does not spawn a new task. MoonClaw also
+general command packets bind or reuse the book-scoped task; native runtime-turn
+settles `steer` commands with `steer_applied` / `steer_dropped` runtime
+evidence so pending steering acknowledgements clear from the session summary;
+`cancel` targets an existing bound task and deliberately does not spawn a new
+task. MoonClaw also
 accepts native package-result proof at
 `POST /v1/mooncode/sessions/<session-id>/package-result`, recording
 `package_built` and `package_verified` evidence for a command-scoped executable
@@ -1141,7 +1143,7 @@ command queue until idle, failure, cancel, or max-turns, and Moondesk prefers
 that endpoint while falling back to runtime-turn for older daemons. This is the
 first durable MoonClaw-owned session, tool, model-planning, and
 queue-supervision store; the remaining MoonClaw-side gap is turning that store
-into a production OpenSeek-style service with live steering/cancel semantics,
+into a production OpenSeek-style service with live steering/cancel UX,
 diff-aware review, long-running resume UX, and broader model-backed coding
 evals without relying on the daemon's in-memory binding.
 
