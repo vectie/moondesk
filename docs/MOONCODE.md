@@ -1118,10 +1118,14 @@ book-local native MoonCode sidecars under
 native OpenSeek-style `read`, `edit`, `write`, `shell`, `moon_check`, and
 `finish` tool contract. Those tool calls run inside the selected MoonBook root,
 reject paths that escape it, and append command-scoped proof events to the
-native event sidecar. This is the first durable MoonClaw-owned session and tool
-store; the remaining MoonClaw-side gap is turning that store into a full
-OpenSeek-style typed agent loop that can choose tools, resume, claim, execute,
-and steer turns without relying on the daemon's in-memory binding.
+native event sidecar. Runtime-turn can also use an explicitly selected model for
+one bounded OpenSeek-style tool-call planning batch, recording planner
+start/selection/failure events and falling back to deterministic planning when
+the model is unavailable or produces no supported calls. This is the first
+durable MoonClaw-owned session, tool, and model-planning store; the remaining
+MoonClaw-side gap is turning that store into a full OpenSeek-style typed agent
+loop that can choose tools across multiple steps, resume, claim, execute, and
+steer turns without relying on the daemon's in-memory binding.
 
 The native MoonCode command body now carries an explicit runtime contract beside
 the human text. `execution_plan` names the action, dispatch policy, target path,
@@ -1410,7 +1414,8 @@ fallback.
 
 MoonClaw's current native eval endpoint already runs a first deterministic
 tool/file-edit harness for `read`, `write`, `edit`, `shell`, `moon_check`, and
-`finish`; the remaining runtime work is model-backed, multi-turn coding evals.
+`finish`, and runtime-turn now has an opt-in one-batch model planner; the
+remaining runtime work is multi-step model-backed coding evals.
 MoonClaw or a future standalone `mooncode/eval` runner can also submit the same
 native proof directly with `POST /api/mooncode/sessions/<session-id>/eval-report`.
 The Eval Report panel also exposes a typed `run_eval` command that enters the

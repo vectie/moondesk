@@ -1320,9 +1320,11 @@ Implemented behavior:
   source inventory, missing/invalid markers, and file size/SHA-256 evidence
   when source exists, creating a durable package candidate. MoonClaw native
   runtime-turn can now also write the same MoonBook manifest/index shape for
-  generated tools and miniapps and append `package_built`/`package_verified`
-  proof after book-local verification, while broader model-backed bundle
-  assembly remains a MoonClaw/standalone-MoonCode responsibility. Moondesk
+  generated tools and miniapps, append `package_built`/`package_verified`
+  proof after book-local verification, and use an explicitly selected model for
+  one bounded OpenSeek-style tool-call planning batch with deterministic
+  fallback. Broader multi-step model-backed bundle assembly remains a
+  MoonClaw/standalone-MoonCode responsibility. Moondesk
   exposes saved candidates through
   `GET /api/mooncode/sessions/:id/package-candidates` and renders them in the
   MoonCode center pane.
