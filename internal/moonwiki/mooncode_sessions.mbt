@@ -2415,7 +2415,7 @@ async fn mooncode_stream_state_projection(
     "/api/mooncode/sessions/\{session_id}/stream-state",
     "/api/mooncode/sessions/\{session_id}/runtime-events",
     "/api/mooncode/sessions/\{session_id}/stream?format=sse&since=\{since}&live=true&timeout_ms=8000",
-    "/v1/mooncode/sessions/<id>/stream",
+    mooncode_native_stream_path(session_id, workspace_root, "sse", since),
   )
 }
 
@@ -2436,10 +2436,11 @@ fn mooncode_stream_content_type(format : String) -> String {
 ///|
 fn mooncode_native_stream_path(
   session_id : String,
+  book_root : String,
   format : String,
   since : Int,
 ) -> String {
-  "/v1/mooncode/sessions/\{session_id}/stream?format=\{format}&since=\{since}"
+  "/v1/mooncode/sessions/\{session_id}/stream?book_root=\{encode_query_value(book_root)}&format=\{encode_query_value(format)}&since=\{since}"
 }
 
 ///|
@@ -2459,7 +2460,7 @@ async fn mooncode_native_stream_text(
   }
   moonclaw_get_text(
     daemon,
-    mooncode_native_stream_path(session_id, format, since),
+    mooncode_native_stream_path(session_id, workspace_root, format, since),
   )
 }
 
@@ -9625,13 +9626,25 @@ async test "mooncode stream state records resumable checkpoint" {
       "/api/mooncode/sessions/agent-demo/stream-state",
     ),
   )
+  let native_tail = json_string(
+    json_object_field_or_empty(resumed, "live_tail_boundary"),
+    "native_blocking_tail",
+    default="",
+  )
+  assert_true(
+    native_tail.contains(
+      "/v1/mooncode/sessions/agent-demo/stream?book_root=" +
+      encode_query_value(root),
+    ),
+  )
+  assert_true(native_tail.contains("&format=sse&since=2"))
 }
 
 ///|
 test "mooncode native stream path targets typed runtime endpoint" {
   assert_eq(
-    mooncode_native_stream_path("agent-demo", "sse", 7),
-    "/v1/mooncode/sessions/agent-demo/stream?format=sse&since=7",
+    mooncode_native_stream_path("agent-demo", "/tmp/moon book", "sse", 7),
+    "/v1/mooncode/sessions/agent-demo/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7",
   )
 }
 

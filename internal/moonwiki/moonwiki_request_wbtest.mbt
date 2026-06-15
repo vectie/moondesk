@@ -63,6 +63,11 @@ test "api path helpers handle queries and traversal" {
     query_value("/api?path=wiki%2Findex.md&other=1", "path"),
     Some("wiki%2Findex.md"),
   )
+  assert_eq(encode_query_value("/tmp/moon book"), "%2Ftmp%2Fmoon%20book")
+  assert_eq(
+    decode_query_value(encode_query_value("/tmp/moon book")),
+    "/tmp/moon book",
+  )
   assert_eq(decode_query_value("wiki%2Findex.md"), "wiki/index.md")
   assert_eq(
     decode_query_value(
