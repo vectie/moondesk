@@ -37,6 +37,8 @@ pub fn capabilities_json() -> Json {
       "stream_state_endpoint": "/api/mooncode/sessions/<session-id>/stream-state?consumer=<consumer>&since=<sequence>",
       "eval_harness_contract_endpoint": "/api/mooncode/eval-harness",
       "runtime_event_ingest_endpoint": "/api/mooncode/sessions/<session-id>/runtime-events",
+      "native_package_result_endpoint": "/v1/mooncode/sessions/<session-id>/package-result",
+      "native_durable_session_store": ".moonclaw/mooncode/sessions/<session-id>/session.json, commands.jsonl, events.jsonl, and package-results.jsonl under the selected MoonBook root",
       "command_queue_endpoint": "/api/mooncode/sessions/<session-id>/commands",
       "runtime_claim_endpoint": "/api/mooncode/sessions/<session-id>/runtime-claim",
       "runtime_execution_plan_endpoint": "/api/mooncode/sessions/<session-id>/runtime-execution-plan",

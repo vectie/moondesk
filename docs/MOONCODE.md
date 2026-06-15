@@ -1053,9 +1053,20 @@ MoonClaw's native endpoint now treats `prompt`, `steer`, and `cancel` as
 control commands instead of plain prose-only task messages. `prompt` and
 general command packets bind or reuse the book-scoped task; `steer` is delivered
 to the same task with `steer.accepted` runtime evidence; `cancel` targets an
-existing bound task and deliberately does not spawn a new task. Native package
-acknowledgement and richer command-scoped runtime proof are still the remaining
-MoonClaw-side gaps before this becomes a complete OpenSeek-style engine.
+existing bound task and deliberately does not spawn a new task. MoonClaw also
+accepts native package-result proof at
+`POST /v1/mooncode/sessions/<session-id>/package-result`, recording
+`package_built` and `package_verified` evidence for a command-scoped executable
+MoonBook artifact. Its native stream now also normalizes bound MoonClaw task
+events into MoonCode transcript, tool, review, and runtime lanes, so assistant
+deltas, tool calls/results, cancel, and failure events can be consumed as
+MoonCode proof without the legacy task-event adapter. MoonClaw now persists
+book-local native MoonCode sidecars under
+`.moonclaw/mooncode/sessions/<session-id>/`: `session.json`, `commands.jsonl`,
+`events.jsonl`, and `package-results.jsonl`. This is the first durable
+MoonClaw-owned session store; the remaining MoonClaw-side gap is turning that
+store into a full OpenSeek-style typed agent loop that can resume, claim,
+execute, and steer turns without relying on the daemon's in-memory binding.
 
 The native MoonCode command body now carries an explicit runtime contract beside
 the human text. `execution_plan` names the action, dispatch policy, target path,
