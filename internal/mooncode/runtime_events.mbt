@@ -823,9 +823,10 @@ fn runtime_tool_result_event(
   let name = runtime_tool_event_name(event)
   let content = json_string(event, "content", default="")
   let path = runtime_tool_event_path(event)
+  let diff = json_string(event, "diff", default="")
   let command = runtime_tool_event_command(event)
   let arguments = runtime_tool_event_arguments(event)
-  let lane = tool_lane(name, path, "", command, content)
+  let lane = tool_lane(name, path, diff, command, content)
   let status = if json_bool(event, "is_error", default=false) {
     "failed"
   } else {
@@ -847,6 +848,7 @@ fn runtime_tool_result_event(
         created_at~,
         detail=content,
         path~,
+        diff~,
         command~,
         command_packet=runtime_event_command_packet(
           event,
@@ -1348,6 +1350,7 @@ test "mooncode normalizes nested tool results for approval correlation" {
         },
         "command_id": "cmd-prompt-1",
         "content": "wrote tools/demo/main.mbt",
+        "diff": "--- /dev/null\n+++ b/tools/demo/main.mbt\n@@\n+fn main { println(1) }\n",
       },
       fallback_id="runtime-write-result",
       fallback_created_at="2026-06-15T00:00:00Z",
@@ -1358,6 +1361,11 @@ test "mooncode normalizes nested tool results for approval correlation" {
   assert_eq(json_string(result, "lane", default=""), "diff")
   assert_eq(json_string(result, "kind", default=""), "write")
   assert_eq(json_string(result, "path", default=""), "tools/demo/main.mbt")
+  assert_true(
+    json_string(result, "diff", default="").contains(
+      "+++ b/tools/demo/main.mbt",
+    ),
+  )
   assert_eq(
     json_string(result, "tool_call_id", default=""),
     "call-write-result",
