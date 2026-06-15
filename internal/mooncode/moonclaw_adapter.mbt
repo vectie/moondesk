@@ -14,7 +14,7 @@ pub fn moonclaw_adapter_contract_json() -> Json {
     },
     "event_mapping": moonclaw_event_mapping_json(),
     "tool_mapping": Json::array(moonclaw_tool_mapping_rows()),
-    "native_gap": "Current MoonClaw daemon routes expose generic task creation/forwarding and task event streams. A native MoonCode runtime should implement /v1/mooncode/capabilities, command ingestion, session stream, eval report, and package-result acknowledgement while preserving this compatibility mapping.",
+    "native_gap": "Current MoonClaw daemon routes now expose native MoonCode capabilities, command ingestion, session stream snapshots, eval-report snapshots, and prompt/steer/cancel controls. Remaining native gaps are package-result acknowledgement, richer streamed runtime proof, and typed durable MoonClaw-owned MoonCode sessions beyond the in-memory daemon binding.",
     "boundary": {
       "moondesk": "records MoonCode command/session/review state and normalizes MoonClaw compatibility events",
       "moonclaw": "executes tools, streams events, enforces approvals, and reports proof",

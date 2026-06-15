@@ -1049,6 +1049,14 @@ path and falls back to the attached task cancel endpoint when needed. The
 session summary exposes `dispatch_mode` so operators can distinguish native
 runtime dispatch from bridge compatibility mode.
 
+MoonClaw's native endpoint now treats `prompt`, `steer`, and `cancel` as
+control commands instead of plain prose-only task messages. `prompt` and
+general command packets bind or reuse the book-scoped task; `steer` is delivered
+to the same task with `steer.accepted` runtime evidence; `cancel` targets an
+existing bound task and deliberately does not spawn a new task. Native package
+acknowledgement and richer command-scoped runtime proof are still the remaining
+MoonClaw-side gaps before this becomes a complete OpenSeek-style engine.
+
 The native MoonCode command body now carries an explicit runtime contract beside
 the human text. `execution_plan` names the action, dispatch policy, target path,
 tool sequence, expected events, required outputs, recommended test/package/commit
