@@ -534,8 +534,11 @@ plus an accepted target before `apply_patch` and an applied target before
 review state and MoonClaw runtime proof are sufficient. This moves the MoonCode
 UI buttons from advisory controls toward enforceable review gates.
 Commit remains runtime-owned: Moondesk records operator intent and review
-receipts, while MoonClaw or standalone `mooncode` must emit `commit_created`
-proof with the commit SHA after running git inside the selected MoonBook.
+receipts, while MoonClaw native runtime-turn now handles `commit` by running
+git inside the selected MoonBook, excluding MoonClaw/Moontown sidecars from
+staging, and emitting `runtime.commit_created` proof with the commit SHA after
+`git commit` and `rev-parse HEAD` succeed. A future standalone `mooncode`
+runtime should preserve the same proof contract.
 Blocked attempts stay out of `commands.jsonl`, but Moondesk records them as
 `preflight.blocked` events in `events.jsonl`, returns the preflight object in
 the 409 response, refreshes the UI panels after failures, and projects the
