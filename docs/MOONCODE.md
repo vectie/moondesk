@@ -1113,7 +1113,11 @@ general command packets bind or reuse the book-scoped task; native runtime-turn
 settles `steer` commands with `steer_applied` / `steer_dropped` runtime
 evidence so pending steering acknowledgements clear from the session summary;
 `cancel` targets an existing bound task and deliberately does not spawn a new
-task. MoonClaw also
+task. Native `accept` and `reject` commands now settle with compatible
+MoonBook-owned review receipts under `wiki/reviews/mooncode/<session-id>/` and
+review-lane `receipt.accept` / `receipt.reject` evidence, so accepted/rejected
+review state can come from the runtime path as well as Moondesk's local review
+controls. MoonClaw also
 accepts native package-result proof at
 `POST /v1/mooncode/sessions/<session-id>/package-result`, recording
 `package_built` and `package_verified` evidence for a command-scoped executable
@@ -1202,7 +1206,9 @@ Rabbita live tail keeps a bounded, id-deduped recent buffer from successive
 polls, so a quiet poll does not erase the operator's visible progress timeline.
 
 Operator review ownership is also written into the selected MoonBook. For
-`accept`, `reject`, `package`, and `commit`, Moondesk records a durable JSON receipt:
+`accept`, `reject`, `package`, and `commit`, Moondesk records a durable JSON receipt;
+MoonClaw's native runtime-turn now writes the same shape for runtime-consumed
+`accept` and `reject` commands:
 
 ```text
 wiki/reviews/mooncode/<session-id>/<action>-<command-id>.json

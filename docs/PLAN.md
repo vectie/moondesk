@@ -184,6 +184,9 @@ optional assistant deltas, and pre-execution `tool_call` events before matching
 unavailable or emits no supported calls. Native steer commands now settle with
 `steer_applied` / `steer_dropped` events, so Moondesk's pending steering counts
 are backed by MoonClaw-owned evidence instead of only projected intent.
+Native accept/reject commands now also write MoonBook-owned review receipts and
+emit `receipt.accept` / `receipt.reject` review-lane events, so review state can
+be proven by MoonClaw-owned runtime evidence instead of only desktop intent.
 MoonClaw's native runtime-loop now
 supervises repeated runtime-turns over the durable queue until idle, failure,
 cancel, or max-turns. The remaining engine work is the persistent OpenSeek-style
@@ -469,8 +472,11 @@ Accept, reject, package, and commit commands now also write MoonBook-owned
 `mooncode-review-receipt` files under
 `wiki/reviews/mooncode/<session-id>/<action>-<command-id>.json`, with matching
 `receipt.<action>` stream events, so accepted coding outputs have durable book
-review state instead of only Moondesk session state. Every command now also
-refreshes a MoonBook-owned `mooncode-change-set` manifest under
+review state instead of only Moondesk session state. Moondesk writes these
+receipts for desktop-side review commands, and MoonClaw's native runtime-turn
+now writes compatible accept/reject receipts when it consumes review commands
+directly. Every command now also refreshes a MoonBook-owned
+`mooncode-change-set` manifest under
 `wiki/reviews/mooncode/<session-id>/change-set.json`, grouping current diff,
 test, artifact, and review evidence into a durable Bookkeeper review object.
 Moondesk exposes it through `GET /api/mooncode/sessions/<id>/change-set` and

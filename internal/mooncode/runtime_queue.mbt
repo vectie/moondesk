@@ -32,7 +32,7 @@ pub fn runtime_protocol_contract_json() -> Json {
         "command_error", "turn_failed", "steer_applied", "steer_dropped", "usage",
         "file_change", "diff", "patch_applied", "patch_reverted", "test_result",
         "package_manifest", "package_index", "package_built", "package_verified",
-        "commit_created", "artifact",
+        "review_receipt", "receipt.accept", "receipt.reject", "commit_created", "artifact",
       ],
       "normalization": "MoonClaw/OpenSeek JSONL events are normalized into MoonCode lanes: transcript, runtime, tool, diff, test, artifact, and review.",
     },
@@ -2763,6 +2763,8 @@ test "mooncode runtime protocol advertises proof event names" {
   assert_true(events.contains("patch_reverted"))
   assert_true(events.contains("package_built"))
   assert_true(events.contains("package_verified"))
+  assert_true(events.contains("receipt.accept"))
+  assert_true(events.contains("receipt.reject"))
   assert_true(events.contains("commit_created"))
   guard rq_json_object_field(contract, "tool_registry") is Some(registry) else {
     fail("missing tool registry contract")
