@@ -664,8 +664,15 @@ use the same validation and preserve the same fields when present, including
 nested OpenSeek `tool_call.function.arguments`. Unknown or malformed tool calls
 normalize to failed `tool_call_decode_error` events instead of tool evidence.
 This lets approval manifests, result rows, and command proof stay correlated
-while MoonClaw remains responsible for execution and Moondesk owns durable
-display and review state.
+when the runtime posts evidence through Moondesk. MoonClaw now also exposes the
+engine-owned counterpart at
+`GET`/`POST /v1/mooncode/sessions/<session-id>/runtime-events?book_root=<path>`,
+normalizing single events or `{"events":[...]}` batches into its book-local
+`.moonclaw/mooncode/sessions/<session-id>/events.jsonl` sidecar. That closes
+the durable stream-ingress slice on the MoonClaw side; the remaining native
+gap is the full typed agent loop that emits those events while executing
+claimed commands without the in-memory task bridge. MoonClaw remains
+responsible for execution, while Moondesk owns durable display and review state.
 
 The MoonCode UI renders the same sink as a Runtime Events panel near Runtime
 Replay. It shows the durable event log path, event count, POST endpoint,
