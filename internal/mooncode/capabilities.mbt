@@ -53,7 +53,7 @@ pub fn capabilities_json() -> Json {
       "runtime_supervisor_endpoint": "/api/mooncode/sessions/<session-id>/runtime-supervisor",
       "serve_scheduler": "GET /serve-scheduler projects OpenSeek-style ordered prompt/steer/cancel semantics from commands.jsonl plus runtime lifecycle state, so MoonClaw or standalone mooncode can enforce one active turn, queued prompts, steer delivery, and cancel withdrawal without relying on Moondesk UI state.",
       "runtime_supervisor": "GET /runtime-supervisor returns a declarative launch packet that tells MoonClaw or standalone mooncode how to load session state, claim the next turn, execute the OpenSeek-compatible command, stream proof events, acknowledge completion/failure, and report native eval evidence. The packet embeds mooncode-runtime-supervisor-readiness so blocked launches expose missing command, scheduler, endpoint, request-template, or loop requirements.",
-      "runtime_claim_state": "GET /runtime-claim returns claimable, claimed, delivered, failed, invalid, tool-authorization-blocked, and order-blocked command projections; POST /runtime-claim appends runtime-claimed lease receipts only for claimable commands before execution. MoonClaw also exposes native /v1 runtime-claim, runtime-dispatch, runtime-turn, and runtime-loop endpoints over its book-local commands.jsonl/runtime-dispatches.jsonl/events.jsonl sidecars, so a native loop can claim, execute explicit, deterministic, or one-batch model-planned MoonCode tools, and close durable commands without reading Moondesk UI state.",
+      "runtime_claim_state": "GET /runtime-claim returns claimable, claimed, delivered, failed, invalid, tool-authorization-blocked, and order-blocked command projections; POST /runtime-claim appends runtime-claimed lease receipts only for claimable commands before execution. MoonClaw also exposes native /v1 runtime-claim, runtime-dispatch, runtime-turn, and runtime-loop endpoints over its book-local commands.jsonl/runtime-dispatches.jsonl/events.jsonl sidecars, so a native loop can claim, execute explicit, deterministic, or bounded model-planned MoonCode tools with tool-result feedback, and close durable commands without reading Moondesk UI state.",
       "runtime_replay_endpoint": "/api/mooncode/sessions/<session-id>/runtime-replay",
       "openseek_serve_jsonl_endpoint": "/api/mooncode/sessions/<session-id>/serve-jsonl?scope=pending|all",
       "action_plan_endpoint": "/api/mooncode/sessions/<session-id>/action-plan",
@@ -464,7 +464,7 @@ pub fn engine_status_projection_json(
         "adapter=\{adapter_status}; normalizes current MoonClaw task/tool events into mooncode.v1 runtime events",
       ),
       engine_check_json(
-        "eval_harness_evidence", "OpenSeek-style eval evidence", "partial", "MoonClaw reports a first native tool_harness/file_edit eval slice; production-grade behavior still needs model-backed multi-turn planning evals.",
+        "eval_harness_evidence", "OpenSeek-style eval evidence", "partial", "MoonClaw reports a first native tool_harness/file_edit eval slice; production-grade behavior still needs broader model-backed coding evals for live steering, diff review, and long-running resume/cancel cases.",
       ),
     ],
   }

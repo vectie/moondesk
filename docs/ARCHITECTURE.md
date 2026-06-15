@@ -1322,12 +1322,12 @@ Implemented behavior:
   runtime-turn can now also write the same MoonBook manifest/index shape for
   generated tools and miniapps, append `package_built`/`package_verified`
   proof after book-local verification, and use an explicitly selected model for
-  one bounded OpenSeek-style tool-call planning batch with deterministic
-  fallback. MoonClaw native runtime-loop now supervises repeated runtime-turns
-  over the durable queue until idle, failure, cancel, or max-turns, and Moondesk
-  prefers that endpoint with runtime-turn fallback. Broader multi-step
-  model-backed bundle assembly remains a
-  MoonClaw/standalone-MoonCode responsibility. Moondesk
+  bounded OpenSeek-style tool-call planning with tool-result feedback and
+  deterministic fallback. MoonClaw native runtime-loop now supervises repeated
+  runtime-turns over the durable queue until idle, failure, cancel, or
+  max-turns, and Moondesk prefers that endpoint with runtime-turn fallback.
+  Broader production-grade live steering, diff review, and model-backed bundle
+  evals remain a MoonClaw/standalone-MoonCode responsibility. Moondesk
   exposes saved candidates through
   `GET /api/mooncode/sessions/:id/package-candidates` and renders them in the
   MoonCode center pane.
