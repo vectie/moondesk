@@ -320,8 +320,12 @@ responses, and saved runtime handoff manifests. The packet gives MoonClaw or a
 future standalone `mooncode` runtime a single declarative launch view: current
 status, bridge/native mode, workspace root, MoonClaw root, claim/ack/event
 endpoints, launch-blocked reason, launch request, and ordered supervisor loop.
-This is still data only; the runtime must claim the command, execute tools,
-stream proof events, and acknowledge completion.
+`POST /api/mooncode/sessions/<id>/runtime-supervisor` is now the operator launch
+action for that boundary: Moondesk asks MoonClaw to run a bounded native
+runtime-loop, falls back to a single native runtime-turn when needed, ingests
+returned MoonCode events, refreshes review/test/package/evidence manifests, and
+saves the enriched session. The MoonCode workspace exposes this as `Run Native
+Loop`; Moondesk still does not execute tools directly.
 The launch packet now embeds a `mooncode-runtime-supervisor-readiness` report
 that checks the command id, scheduler permission, claim/ack/event/session
 endpoints, claim/ack request templates, and required supervisor loop steps. The

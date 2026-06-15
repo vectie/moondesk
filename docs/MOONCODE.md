@@ -231,6 +231,8 @@ GET /api/mooncode/sessions/<session-id>/runtime-events
 POST /api/mooncode/sessions/<session-id>/runtime-events
 GET /api/mooncode/sessions/<session-id>/runtime-claim
 GET /api/mooncode/sessions/<session-id>/runtime-execution-plan
+GET /api/mooncode/sessions/<session-id>/runtime-supervisor
+POST /api/mooncode/sessions/<session-id>/runtime-supervisor
 GET /api/mooncode/sessions/<session-id>/serve-scheduler
 GET /api/mooncode/sessions/<session-id>/runtime-replay
 POST /api/mooncode/sessions/<session-id>/runtime-claim
@@ -635,6 +637,15 @@ This is the current extraction boundary for MoonClaw. The packet is declarative:
 Moondesk publishes it, while MoonClaw or standalone `mooncode` owns model calls,
 tool execution, path policy, approvals, tests, diffs, packaging, cancellation,
 and final acknowledgement.
+
+Moondesk also exposes `POST
+/api/mooncode/sessions/<id>/runtime-supervisor` as the operator launch action
+for this boundary. The action asks MoonClaw to run a bounded native
+`/v1/mooncode/sessions/<id>/runtime-loop`, falls back to one native
+runtime-turn if the loop endpoint is unavailable, ingests returned MoonCode
+events, refreshes review/test/package/evidence manifests, saves the session,
+and returns the enriched session projection. The MoonCode workspace surfaces
+this as `Run Native Loop`; Moondesk still does not execute the tools itself.
 
 The supervisor packet also embeds `readiness`, a
 `mooncode-runtime-supervisor-readiness` report. It verifies that the packet has a

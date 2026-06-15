@@ -693,6 +693,10 @@ async fn handle_api_request(
         handle_mooncode_session_runtime_supervisor(
           workspace_root, session_id, method_, conn,
         )
+      } else if method_ is @http.RequestMethod::Post {
+        handle_mooncode_session_runtime_supervisor_run(
+          workspace_root, session_id, body, method_, conn,
+        )
       } else {
         send_api_error(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",

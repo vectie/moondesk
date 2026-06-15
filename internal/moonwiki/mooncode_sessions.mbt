@@ -1370,6 +1370,134 @@ async fn handle_mooncode_session_runtime_supervisor(
 }
 
 ///|
+async fn handle_mooncode_session_runtime_supervisor_run(
+  workspace_root : String,
+  session_id : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let payload = read_json_body(body).unwrap_or(Json::object({}))
+  let session = match read_agent_session_record(workspace_root, session_id) {
+    Some(session) => session
+    None => {
+      send_api_error(
+        conn, method_, 404, "Not Found", "Unknown MoonCode session",
+      )
+      return
+    }
+  }
+  let daemon = moonclaw_daemon_status(workspace_root)
+  if !json_bool(daemon, "running", default=false) {
+    send_api_error(
+      conn, method_, 409, "Conflict", "MoonClaw daemon is not running",
+    )
+    return
+  }
+  if !mooncode_native_runtime_ready(daemon) {
+    send_api_error(
+      conn, method_, 409, "Conflict", "MoonClaw native MoonCode runtime is not available",
+    )
+    return
+  }
+  let loop_body : Json = {
+    "protocol": "mooncode.v1",
+    "session_id": session_id,
+    "book_root": workspace_root,
+    "consumer_id": json_string(
+      payload,
+      "consumer_id",
+      default="moondesk-ui-runtime-loop",
+    ),
+    "max_turns": json_int(payload, "max_turns", default=8),
+  }
+  let runtime_response = match
+    moonclaw_post_json(
+      daemon,
+      "/v1/mooncode/sessions/\{session_id}/runtime-loop",
+      loop_body,
+    ) {
+    Ok(response) => Ok(response)
+    Err(_) =>
+      moonclaw_post_json(
+        daemon,
+        "/v1/mooncode/sessions/\{session_id}/runtime-turn",
+        {
+          "protocol": "mooncode.v1",
+          "session_id": session_id,
+          "book_root": workspace_root,
+          "consumer_id": "moondesk-ui-runtime-turn",
+        },
+      )
+  }
+  let response = match runtime_response {
+    Ok(response) => response
+    Err(error) => {
+      send_api_error(conn, method_, 502, "Bad Gateway", error)
+      return
+    }
+  }
+  let status = if json_bool(response, "accepted", default=false) {
+    "done"
+  } else {
+    "failed"
+  }
+  let detail = json_string(
+    response,
+    "message",
+    default=if status == "done" {
+      "MoonClaw native MoonCode runtime loop completed"
+    } else {
+      "MoonClaw native MoonCode runtime loop did not accept work"
+    },
+  )
+  let with_response = append_agent_message(
+    mooncode_append_native_response_events(session, response),
+    role="status",
+    content=detail,
+    status~,
+  )
+  let with_dispatch = agent_session_with_field(
+    with_response,
+    "mooncode_dispatch_mode",
+    if json_string(response, "kind", default="") == "mooncode-runtime-loop" {
+      "moonclaw-mooncode-runtime-loop".to_json()
+    } else {
+      "moonclaw-mooncode-runtime-turn".to_json()
+    },
+  )
+  let with_updated = agent_session_with_field(
+    with_dispatch,
+    "updated_at",
+    @async.now().to_string().to_json(),
+  )
+  let refreshed = refresh_mooncode_runtime_review_artifacts(
+    workspace_root, with_updated,
+  )
+  write_agent_session_record(workspace_root, refreshed) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not save MoonCode session after native runtime loop",
+      )
+      return
+    }
+  }
+  append_new_mooncode_command_events(workspace_root, session, refreshed) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not append MoonCode event log after native runtime loop",
+      )
+      return
+    }
+  }
+  send_json(
+    conn,
+    method_,
+    enrich_agent_session_for_response(workspace_root, refreshed, []),
+  )
+}
+
+///|
 async fn handle_mooncode_session_runtime_dispatch(
   workspace_root : String,
   session_id : String,
