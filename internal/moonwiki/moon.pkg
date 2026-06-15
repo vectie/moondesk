@@ -47,6 +47,7 @@ options(
     "http_request_helpers.mbt": [ "native" ],
     "mooncode_contracts.mbt": [ "native" ],
     "mooncode_event_log.mbt": [ "native" ],
+    "mooncode_runtime_protocol.mbt": [ "native" ],
     "mooncode_sessions.mbt": [ "native" ],
     "mooncode_streams.mbt": [ "native" ],
     "mooncode_tool_contracts.mbt": [ "native" ],

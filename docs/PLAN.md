@@ -271,7 +271,13 @@ projection, native stream proxy path, and stream-specific tests now live in
 `internal/moonwiki/mooncode_streams.mbt` instead of the monolithic MoonCode
 session file. This keeps Moondesk-owned IO/proxy behavior separate from the
 pure stream protocol in `internal/mooncode`, making the future `mooncode`
-extraction boundary easier to audit. The command route
+extraction boundary easier to audit.
+The host-side runtime/command protocol adapter is now similarly split into
+`internal/moonwiki/mooncode_runtime_protocol.mbt`: command packet construction,
+preflight event shaping, replay/claim/lifecycle projections, runtime
+supervisor packets, runtime event ingest normalization, and Moondesk stable-id
+wrappers live outside the session router while delegating pure rules to
+`internal/mooncode`. The command route
 records every normalized `command_packet` into an ordered
 `.moontown/mooncode-sessions/<session-id>/commands.jsonl` queue and records
 the engine-facing command adapter to
