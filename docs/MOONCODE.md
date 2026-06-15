@@ -1109,10 +1109,15 @@ deltas, tool calls/results, cancel, and failure events can be consumed as
 MoonCode proof without the legacy task-event adapter. MoonClaw now persists
 book-local native MoonCode sidecars under
 `.moonclaw/mooncode/sessions/<session-id>/`: `session.json`, `commands.jsonl`,
-`events.jsonl`, and `package-results.jsonl`. This is the first durable
-MoonClaw-owned session store; the remaining MoonClaw-side gap is turning that
-store into a full OpenSeek-style typed agent loop that can resume, claim,
-execute, and steer turns without relying on the daemon's in-memory binding.
+`events.jsonl`, and `package-results.jsonl`. MoonClaw also exposes
+`POST /v1/mooncode/sessions/<session-id>/tool-exec?book_root=<path>` for the
+native OpenSeek-style `read`, `edit`, `write`, `shell`, `moon_check`, and
+`finish` tool contract. Those tool calls run inside the selected MoonBook root,
+reject paths that escape it, and append command-scoped proof events to the
+native event sidecar. This is the first durable MoonClaw-owned session and tool
+store; the remaining MoonClaw-side gap is turning that store into a full
+OpenSeek-style typed agent loop that can choose tools, resume, claim, execute,
+and steer turns without relying on the daemon's in-memory binding.
 
 The native MoonCode command body now carries an explicit runtime contract beside
 the human text. `execution_plan` names the action, dispatch policy, target path,
