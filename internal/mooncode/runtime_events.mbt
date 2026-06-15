@@ -25,6 +25,49 @@ pub fn normalize_runtime_event_with_defaults(
 }
 
 ///|
+pub fn normalize_runtime_loop_response_event(
+  response : Json,
+  fallback_id~ : String,
+  fallback_created_at~ : String,
+) -> Json? {
+  if json_string(response, "kind", default="") != "mooncode-runtime-loop" {
+    return None
+  }
+  let stopped_by = runtime_json_string(
+    response,
+    "stopped_by",
+    default="unknown",
+  )
+  let status = match stopped_by {
+    "failed" => "failed"
+    "cancelled" => "cancelled"
+    "max_turns" => "running"
+    _ => "done"
+  }
+  Some(
+    event_record(
+      id=runtime_json_string(response, "id", default=fallback_id),
+      lane="runtime",
+      kind="runtime_loop",
+      title="Native runtime loop: \{stopped_by}",
+      status~,
+      created_at=runtime_first_string(
+        response,
+        ["created_at", "created"],
+        default=fallback_created_at,
+      ),
+      detail=runtime_json_string(
+        response,
+        "message",
+        default="MoonClaw native runtime loop stopped by \{stopped_by}",
+      ),
+      path=runtime_json_string(response, "book_root", default=""),
+      command="runtime-loop",
+    ),
+  )
+}
+
+///|
 pub fn runtime_event_ingest_report(
   payload : Json,
   session_id~ : String,
@@ -1501,6 +1544,75 @@ test "mooncode rejects unknown runtime tool calls during normalization" {
   assert_eq(json_string(packet, "command_id", default=""), "cmd-danger")
   assert_eq(json_string(packet, "action", default=""), "prompt")
   assert_eq(json_string(rejected, "source_event", default=""), "tool_call")
+}
+
+///|
+test "mooncode normalizes native runtime loop responses" {
+  guard normalize_runtime_loop_response_event(
+      {
+        "kind": "mooncode-runtime-loop",
+        "protocol": "mooncode.v1",
+        "session_id": "agent-demo",
+        "book_root": "/tmp/demo-book",
+        "consumer_id": "moonclaw-native-runtime-loop",
+        "ran_turn_count": 0,
+        "failed_turn_count": 0,
+        "stopped_by": "idle",
+        "message": "MoonClaw native runtime loop found no claimable MoonCode commands.",
+      },
+      fallback_id="loop-idle",
+      fallback_created_at="2026-06-16T00:00:00Z",
+    )
+    is Some(idle_event) else {
+    fail("idle runtime loop was not normalized")
+  }
+  assert_eq(json_string(idle_event, "id", default=""), "loop-idle")
+  assert_eq(json_string(idle_event, "lane", default=""), "runtime")
+  assert_eq(json_string(idle_event, "kind", default=""), "runtime_loop")
+  assert_eq(json_string(idle_event, "status", default=""), "done")
+  assert_eq(
+    json_string(idle_event, "created_at", default=""),
+    "2026-06-16T00:00:00Z",
+  )
+  assert_eq(json_string(idle_event, "path", default=""), "/tmp/demo-book")
+  assert_eq(json_string(idle_event, "command", default=""), "runtime-loop")
+  assert_true(
+    json_string(idle_event, "detail", default="").contains("no claimable"),
+  )
+  guard normalize_runtime_loop_response_event(
+      {
+        "kind": "mooncode-runtime-loop",
+        "stopped_by": "failed",
+        "message": "failed",
+      },
+      fallback_id="loop-failed",
+      fallback_created_at="2026-06-16T00:00:01Z",
+    )
+    is Some(failed_event) else {
+    fail("failed runtime loop was not normalized")
+  }
+  assert_eq(json_string(failed_event, "status", default=""), "failed")
+  guard normalize_runtime_loop_response_event(
+      {
+        "kind": "mooncode-runtime-loop",
+        "stopped_by": "cancelled",
+        "message": "cancelled",
+      },
+      fallback_id="loop-cancelled",
+      fallback_created_at="2026-06-16T00:00:02Z",
+    )
+    is Some(cancelled_event) else {
+    fail("cancelled runtime loop was not normalized")
+  }
+  assert_eq(json_string(cancelled_event, "status", default=""), "cancelled")
+  guard normalize_runtime_loop_response_event(
+      { "kind": "mooncode-runtime-turn" },
+      fallback_id="turn",
+      fallback_created_at="2026-06-16T00:00:03Z",
+    )
+    is None else {
+    fail("runtime turn response normalized as a loop")
+  }
 }
 
 ///|

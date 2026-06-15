@@ -4335,46 +4335,28 @@ fn mooncode_native_runtime_loop_event(response : Json) -> Json? {
     return None
   }
   let stopped_by = json_string(response, "stopped_by", default="unknown")
-  let status = match stopped_by {
-    "failed" => "failed"
-    "cancelled" => "cancelled"
-    "max_turns" => "running"
-    _ => "done"
-  }
   let ran_turn_count = json_int(response, "ran_turn_count", default=0)
   let failed_turn_count = json_int(response, "failed_turn_count", default=0)
   let session_id = json_string(response, "session_id", default="")
   let consumer_id = json_string(response, "consumer_id", default="")
   let created_at = @async.now().to_string()
-  Some(
-    mooncode_event_record(
-      id=@desk.stable_id(
-        "mooncode-runtime-loop",
-        session_id +
-        ":" +
-        consumer_id +
-        ":" +
-        created_at +
-        ":" +
-        stopped_by +
-        ":" +
-        ran_turn_count.to_string() +
-        ":" +
-        failed_turn_count.to_string(),
-      ),
-      lane="runtime",
-      kind="runtime_loop",
-      title="Native runtime loop: \{stopped_by}",
-      status~,
-      created_at~,
-      detail=json_string(
-        response,
-        "message",
-        default="MoonClaw native runtime loop stopped by \{stopped_by}",
-      ),
-      path=json_string(response, "book_root", default=""),
-      command="runtime-loop",
+  @mooncode.normalize_runtime_loop_response_event(
+    response,
+    fallback_id=@desk.stable_id(
+      "mooncode-runtime-loop",
+      session_id +
+      ":" +
+      consumer_id +
+      ":" +
+      created_at +
+      ":" +
+      stopped_by +
+      ":" +
+      ran_turn_count.to_string() +
+      ":" +
+      failed_turn_count.to_string(),
     ),
+    fallback_created_at=created_at,
   )
 }
 

@@ -244,6 +244,8 @@ pub fn normalize_runtime_event(Json, fallback_id~ : String, fallback_created_at~
 
 pub fn normalize_runtime_event_with_defaults(Json, fallback_created_at~ : String) -> Json?
 
+pub fn normalize_runtime_loop_response_event(Json, fallback_id~ : String, fallback_created_at~ : String) -> Json?
+
 pub fn openseek_serve_command(String, Json) -> Json
 
 pub fn package_candidate_paths(String) -> Array[String]

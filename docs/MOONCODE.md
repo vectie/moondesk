@@ -648,7 +648,9 @@ and returns the enriched session projection. The MoonCode workspace surfaces
 this as `Run Native Loop`; Moondesk still does not execute the tools itself.
 Loop responses are also projected into a durable `runtime_loop` event, so idle,
 failed, cancelled, and max-turn outcomes appear in the MoonCode transcript and
-runtime panels even when the loop did not produce per-turn tool output.
+runtime panels even when the loop did not produce per-turn tool output. The
+normalization rule lives in `internal/mooncode`, with Moondesk only supplying
+the local fallback event id and timestamp.
 
 The supervisor packet also embeds `readiness`, a
 `mooncode-runtime-supervisor-readiness` report. It verifies that the packet has a
