@@ -34,6 +34,8 @@ pub fn action_plan_status(Int, Int, Int, Int, Int, Int) -> String
 
 pub fn action_required_gates(String) -> Array[String]
 
+pub fn append_native_response_events(Json, Json, loop_fallback_id~ : String, loop_fallback_created_at~ : String) -> Json
+
 pub fn artifact_safe_id(String, fallback~ : String) -> String
 
 pub fn canonical_event_record(Json, fallback_id~ : String, fallback_created_at~ : String) -> Json

@@ -112,6 +112,26 @@ pub fn native_response_event_items(
 }
 
 ///|
+pub fn append_native_response_events(
+  session : Json,
+  response : Json,
+  loop_fallback_id~ : String,
+  loop_fallback_created_at~ : String,
+) -> Json {
+  let incoming = native_response_event_items(
+    response,
+    loop_fallback_id~,
+    loop_fallback_created_at~,
+  )
+  if incoming.length() == 0 {
+    return session
+  }
+  let current = runtime_json_array_items(session, "mooncode_command_events")
+  let events = merge_events(current, incoming, [])
+  runtime_with_field(session, "mooncode_command_events", Json::array(events))
+}
+
+///|
 pub fn runtime_event_ingest_report(
   payload : Json,
   session_id~ : String,
@@ -1731,6 +1751,57 @@ test "mooncode extracts native response events from loop payloads" {
   assert_eq(json_string(events[3], "id", default=""), "package-event")
   assert_eq(json_string(events[4], "id", default=""), "receipt-event")
   assert_eq(json_string(events[5], "id", default=""), "nested-event")
+}
+
+///|
+test "mooncode appends native response events with durable id dedupe" {
+  let existing_event = event_record(
+    id="native-event",
+    lane="runtime",
+    kind="tool_call",
+    title="Tool call",
+    status="running",
+    created_at="1",
+    detail="existing",
+  )
+  let new_event = event_record(
+    id="execution-event",
+    lane="runtime",
+    kind="tool_result",
+    title="Tool result",
+    status="done",
+    created_at="2",
+    detail="execution",
+  )
+  let package_event = event_record(
+    id="package-event",
+    lane="artifact",
+    kind="runtime.package_verified",
+    title="Package verified",
+    status="verified",
+    created_at="3",
+    detail="package",
+  )
+  let session = append_native_response_events(
+    { "mooncode_command_events": [existing_event] },
+    {
+      "kind": "mooncode-runtime-loop",
+      "protocol": "mooncode.v1",
+      "session_id": "agent-demo",
+      "stopped_by": "idle",
+      "events": [existing_event],
+      "execution": { "events": [new_event] },
+      "package_events": [package_event],
+    },
+    loop_fallback_id="loop-event",
+    loop_fallback_created_at="2026-06-16T00:00:00Z",
+  )
+  let events = runtime_json_array_items(session, "mooncode_command_events")
+  assert_eq(events.length(), 4)
+  assert_eq(json_string(events[0], "id", default=""), "native-event")
+  assert_eq(json_string(events[1], "id", default=""), "execution-event")
+  assert_eq(json_string(events[2], "id", default=""), "loop-event")
+  assert_eq(json_string(events[3], "id", default=""), "package-event")
 }
 
 ///|

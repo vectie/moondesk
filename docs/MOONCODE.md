@@ -651,8 +651,10 @@ failed, cancelled, and max-turn outcomes appear in the MoonCode transcript and
 runtime panels even when the loop did not produce per-turn tool output.
 `internal/mooncode` now owns native response event extraction for top-level
 events, `execution.events`, `package_events`, `turn_receipt.events`, nested
-`turns`, and loop-status projection; Moondesk only supplies the local fallback
-event id and timestamp.
+`turns`, and loop-status projection. It also owns the append/merge rule that
+folds those returned native events into `mooncode_command_events` with durable
+event-id dedupe; Moondesk only supplies the local fallback event id/timestamp
+and persists the enriched session.
 
 The supervisor packet also embeds `readiness`, a
 `mooncode-runtime-supervisor-readiness` report. It verifies that the packet has a

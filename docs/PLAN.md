@@ -334,7 +334,10 @@ cancellations, and max-turn stops show up in the transcript/runtime panels
 instead of only as an HTTP response. Native response event extraction now lives
 in `internal/mooncode`, including top-level events, execution events, package
 events, turn receipts, nested turns, and loop-status projection, keeping those
-rules extractable from the Moondesk host.
+rules extractable from the Moondesk host. Native response session append now
+lives there as well: the pure MoonCode helper folds returned runtime events
+into `mooncode_command_events` with durable id dedupe while Moondesk only
+supplies the local fallback id/timestamp and saves the enriched session.
 The launch packet now embeds a `mooncode-runtime-supervisor-readiness` report
 that checks the command id, scheduler permission, claim/ack/event/session
 endpoints, claim/ack request templates, and required supervisor loop steps. The

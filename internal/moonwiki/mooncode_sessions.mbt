@@ -4277,41 +4277,14 @@ fn mooncode_append_native_response_events(
   session : Json,
   response : Json,
 ) -> Json {
-  let incoming = mooncode_native_response_event_items(response)
-  if incoming.length() == 0 {
-    return session
-  }
-  let events = json_array_items(session, "mooncode_command_events")
-  let seen : Map[String, Bool] = {}
-  for event in events {
-    let id = json_string(event, "id", default="")
-    if id != "" {
-      seen[id] = true
-    }
-  }
-  for event in incoming {
-    let id = json_string(event, "id", default="")
-    if id != "" && !seen.contains(id) {
-      events.push(event)
-      seen[id] = true
-    }
-  }
-  agent_session_with_field(
-    session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-}
-
-///|
-fn mooncode_native_response_event_items(response : Json) -> Array[Json] {
   let stopped_by = json_string(response, "stopped_by", default="unknown")
   let ran_turn_count = json_int(response, "ran_turn_count", default=0)
   let failed_turn_count = json_int(response, "failed_turn_count", default=0)
   let session_id = json_string(response, "session_id", default="")
   let consumer_id = json_string(response, "consumer_id", default="")
   let created_at = @async.now().to_string()
-  @mooncode.native_response_event_items(
+  @mooncode.append_native_response_events(
+    session,
     response,
     loop_fallback_id=@desk.stable_id(
       "mooncode-runtime-loop",
