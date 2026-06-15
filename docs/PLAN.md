@@ -187,11 +187,15 @@ are backed by MoonClaw-owned evidence instead of only projected intent.
 Native accept/reject commands now also write MoonBook-owned review receipts and
 emit `receipt.accept` / `receipt.reject` review-lane events, so review state can
 be proven by MoonClaw-owned runtime evidence instead of only desktop intent.
+Native `run_eval` commands now run MoonClaw's OpenSeek-style tool/file-edit
+harnesses from runtime-turn, write a MoonBook-owned
+`wiki/reviews/mooncode/<session-id>/eval-report.json`, and emit
+`eval_report.manifest` evidence with `tool_harness` and `file_edit` results.
 MoonClaw's native runtime-loop now
 supervises repeated runtime-turns over the durable queue until idle, failure,
 cancel, or max-turns. The remaining engine work is the persistent OpenSeek-style
 service with long-running live steering/cancel UX, diff-aware review, and
-model-backed eval proof.
+broader model-backed coding eval cases.
 It also owns runtime-neutral durable event helpers: safe session-id validation,
 event record construction, JSONL rendering, JSONL parsing for events, command
 queues, runtime command feeds, runtime dispatch receipts, and event
