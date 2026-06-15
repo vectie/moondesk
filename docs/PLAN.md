@@ -265,7 +265,13 @@ when `/v1/mooncode/capabilities` responds,
 proxying `/v1/mooncode/sessions/<id>/stream`; otherwise it emits JSONL or SSE
 append-log incremental records over the current event projection plus
 `.moontown/mooncode-sessions/<session-id>/events.jsonl` and labels that replay
-with `stream_source: "moondesk-append-log-projection"`. The command route
+with `stream_source: "moondesk-append-log-projection"`.
+The host-side stream HTTP handlers, bounded live-tail fallback, checkpoint
+projection, native stream proxy path, and stream-specific tests now live in
+`internal/moonwiki/mooncode_streams.mbt` instead of the monolithic MoonCode
+session file. This keeps Moondesk-owned IO/proxy behavior separate from the
+pure stream protocol in `internal/mooncode`, making the future `mooncode`
+extraction boundary easier to audit. The command route
 records every normalized `command_packet` into an ordered
 `.moontown/mooncode-sessions/<session-id>/commands.jsonl` queue and records
 the engine-facing command adapter to

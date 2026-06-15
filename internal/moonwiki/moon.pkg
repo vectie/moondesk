@@ -48,6 +48,7 @@ options(
     "mooncode_contracts.mbt": [ "native" ],
     "mooncode_event_log.mbt": [ "native" ],
     "mooncode_sessions.mbt": [ "native" ],
+    "mooncode_streams.mbt": [ "native" ],
     "mooncode_tool_contracts.mbt": [ "native" ],
     "moonclaw_artifact_handlers.mbt": [ "native" ],
     "pdf_watch_builder.mbt": [ "native" ],
