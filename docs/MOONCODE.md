@@ -283,9 +283,11 @@ task. MoonClaw now also exposes
 `POST /v1/mooncode/sessions/<id>/runtime-dispatch?book_root=<path>`, which
 claims the next durable command if needed, forwards the claimed command to the
 MoonClaw task runtime, and appends a `runtime-delivered` or `runtime-failed`
-receipt. This gives native cold sidecar sessions a daemon-owned path from
-claim to delivery; the remaining gap is the full OpenSeek-style typed loop
-around model/tool execution, steering, cancellation, and eval proof.
+receipt. Durable `cancel` commands go through MoonClaw's task cancellation path
+and record terminal `runtime-cancelled` receipts instead of being forwarded as
+chat. This gives native cold sidecar sessions a daemon-owned path from claim to
+delivery; the remaining gap is the full OpenSeek-style typed loop around
+model/tool execution, steering, cancellation, and eval proof.
 
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references
