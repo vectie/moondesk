@@ -1103,7 +1103,11 @@ existing bound task and deliberately does not spawn a new task. MoonClaw also
 accepts native package-result proof at
 `POST /v1/mooncode/sessions/<session-id>/package-result`, recording
 `package_built` and `package_verified` evidence for a command-scoped executable
-MoonBook artifact. Its native stream now also normalizes bound MoonClaw task
+MoonBook artifact. Its native runtime-turn now also writes the first
+MoonBook-owned package manifests and package index for generated tools and
+miniapps under `portable/app-tool/mooncode/<session-id>/`, then appends
+`package_built`/`package_verified` proof when the book-local verification shell
+step succeeds. Its native stream now also normalizes bound MoonClaw task
 events into MoonCode transcript, tool, review, and runtime lanes, so assistant
 deltas, tool calls/results, cancel, and failure events can be consumed as
 MoonCode proof without the legacy task-event adapter. MoonClaw now persists

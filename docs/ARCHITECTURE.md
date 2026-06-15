@@ -1318,10 +1318,14 @@ Implemented behavior:
   `portable/app-tool/mooncode/<session-id>/package-<command-id>.json` and append
   a `package.manifest` artifact event. The manifest includes candidate-path
   source inventory, missing/invalid markers, and file size/SHA-256 evidence
-  when source exists, creating a durable package candidate before future
-  MoonClaw/MoonCode runtime bundle assembly. Moondesk exposes saved candidates
-  through `GET /api/mooncode/sessions/:id/package-candidates` and renders them
-  in the MoonCode center pane.
+  when source exists, creating a durable package candidate. MoonClaw native
+  runtime-turn can now also write the same MoonBook manifest/index shape for
+  generated tools and miniapps and append `package_built`/`package_verified`
+  proof after book-local verification, while broader model-backed bundle
+  assembly remains a MoonClaw/standalone-MoonCode responsibility. Moondesk
+  exposes saved candidates through
+  `GET /api/mooncode/sessions/:id/package-candidates` and renders them in the
+  MoonCode center pane.
 - `GET /api/agents/daemon` reports the local MoonClaw daemon pid/port/root from
   `~/.moonclaw/daemon.json`.
 - `GET /api/agents/models` lists daemon models when MoonClaw is running.

@@ -531,10 +531,12 @@ summary/readiness gate for package manifest evidence. Package commands also
 refresh a MoonBook-owned session package registry at
 `portable/app-tool/mooncode/<session-id>/index.json`, emit a `package.index`
 artifact event, and expose executable-ready entry points for the future
-MoonClaw/standalone-MoonCode bundler. MoonClaw or standalone `mooncode` must
-then emit `package_built` or `package_verified` runtime events after actual
-bundle assembly/checking; Moondesk normalizes those into package proof counts
-and per-candidate execution state. Moondesk now exposes saved package
+MoonClaw/standalone-MoonCode bundler. MoonClaw native runtime-turn now emits the
+first deterministic `package_built`/`package_verified` proof for generated
+tools and miniapps after book-local write/shell verification, while standalone
+`mooncode` still needs the same contract for model-backed bundle
+assembly/checking. Moondesk normalizes those into package proof counts and
+per-candidate execution state. Moondesk now exposes saved package
 manifests and the package index through
 `GET /api/mooncode/sessions/<id>/package-candidates` and renders a Package
 Candidates panel with source-bound/missing-source counts, executable-ready
