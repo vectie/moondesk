@@ -235,7 +235,7 @@ async fn run_desktop(args : Array[String]) -> Unit {
 
 ///|
 async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
-  let server = @httpserve.Server::new(options.host, options.port) catch {
+  let server = @moonwiki.Server::new(options.host, options.port) catch {
     _ => {
       println("failed to bind \{options.host}:\{options.port}")
       return
@@ -1285,7 +1285,7 @@ async fn run_app_bundle(args : Array[String]) -> Bool {
             port: config_int(json, "port", default=4199),
             open_browser: config_bool(json, "open_browser", default=true),
           }
-          let server = @httpserve.Server::new(options.host, options.port) catch {
+          let server = @moonwiki.Server::new(options.host, options.port) catch {
             _ => {
               println("failed to bind \{options.host}:\{options.port}")
               return true

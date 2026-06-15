@@ -13,6 +13,7 @@ import {
   "moonbitlang/x/sys",
   "vectie/moondesk/core" @desk,
   "vectie/moondesk/internal/fsx",
+  "vectie/moondesk/internal/mooncode",
   "vectie/moondesk/internal/pathx",
 }
 
@@ -41,9 +42,13 @@ options(
     "eb_run_health.mbt": [ "native" ],
     "eb_runtime_refresh.mbt": [ "native" ],
     "eb_workbook_artifacts.mbt": [ "native" ],
-    "httpserve_fixtures_wbtest.mbt": [ "native" ],
-    "httpserve_request_wbtest.mbt": [ "native" ],
+    "moonwiki_fixtures_wbtest.mbt": [ "native" ],
+    "moonwiki_request_wbtest.mbt": [ "native" ],
     "http_request_helpers.mbt": [ "native" ],
+    "mooncode_contracts.mbt": [ "native" ],
+    "mooncode_event_log.mbt": [ "native" ],
+    "mooncode_sessions.mbt": [ "native" ],
+    "mooncode_tool_contracts.mbt": [ "native" ],
     "moonclaw_artifact_handlers.mbt": [ "native" ],
     "pdf_watch_builder.mbt": [ "native" ],
     "pdf_watch_content.mbt": [ "native" ],

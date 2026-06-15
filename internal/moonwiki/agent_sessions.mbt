@@ -120,7 +120,9 @@ async fn handle_agent_session_list(
       json_string(record, "workspace_id", default="") != workspace_filter {
       continue
     }
-    sessions.push(enrich_agent_session_for_response(record, tasks))
+    sessions.push(
+      enrich_agent_session_for_response(workspace_root, record, tasks),
+    )
   }
   sessions.sort_by(fn(left, right) {
     json_string(right, "updated_at", default="").compare(
@@ -236,7 +238,11 @@ async fn handle_create_agent_session(
       return
     }
   }
-  send_json(conn, method_, enrich_agent_session_for_response(session, [task]))
+  send_json(
+    conn,
+    method_,
+    enrich_agent_session_for_response(workspace_root, session, [task]),
+  )
 }
 
 ///|
@@ -336,7 +342,11 @@ async fn handle_agent_session_message(
       return
     }
   }
-  send_json(conn, method_, enrich_agent_session_for_response(next, [task]))
+  send_json(
+    conn,
+    method_,
+    enrich_agent_session_for_response(workspace_root, next, [task]),
+  )
 }
 
 ///|
@@ -376,7 +386,11 @@ async fn handle_agent_session_cancel(
   write_agent_session_record(workspace_root, next) catch {
     _ => ()
   }
-  send_json(conn, method_, enrich_agent_session_for_response(next, []))
+  send_json(
+    conn,
+    method_,
+    enrich_agent_session_for_response(workspace_root, next, []),
+  )
 }
 
 ///|
@@ -624,6 +638,25 @@ async fn moonclaw_get_json(
     return Err("MoonClaw GET \{path} returned \{response.code}: \{text}")
   }
   Ok(@json.parse(text) catch { _ => Json::object({}) })
+}
+
+///|
+async fn moonclaw_get_text(
+  daemon : Json,
+  path : String,
+) -> Result[String, String] {
+  let port = json_int(daemon, "port", default=0)
+  if port <= 0 {
+    return Err("MoonClaw daemon port is not available")
+  }
+  let (response, data) = @http.get("http://localhost:\{port}\{path}") catch {
+    error => return Err("MoonClaw GET \{path} failed: \{error}")
+  }
+  let text = data.text() catch { _ => "" }
+  if response.code < 200 || response.code > 299 {
+    return Err("MoonClaw GET \{path} returned \{response.code}: \{text}")
+  }
+  Ok(text)
 }
 
 ///|
@@ -927,11 +960,61 @@ fn enrich_agent_session(session : Json, tasks : Array[Json]) -> Json {
 
 ///|
 async fn enrich_agent_session_for_response(
+  workspace_root : String,
   session : Json,
   tasks : Array[Json],
 ) -> Json {
   let session = enrich_agent_session(session, tasks)
-  sync_agent_conversation_transcript(session)
+  let session = agent_session_response_defaults(session)
+  let session = sync_agent_conversation_transcript(session)
+  attach_mooncode_session_projection(workspace_root, session)
+}
+
+///|
+fn agent_session_response_defaults(session : Json) -> Json {
+  let workspace_root = json_string(session, "workspace_root", default="")
+  let next = agent_session_with_default_field(
+    session,
+    "cwd",
+    workspace_root.to_json(),
+  )
+  let next = agent_session_with_default_field(next, "model", "".to_json())
+  let next = agent_session_with_default_field(next, "port", (0).to_json())
+  let next = agent_session_with_default_field(
+    next,
+    "web_search",
+    false.to_json(),
+  )
+  let next = agent_session_with_default_field(
+    next,
+    "queued_count",
+    (0).to_json(),
+  )
+  let next = agent_session_with_default_field(
+    next,
+    "title",
+    "Session".to_json(),
+  )
+  let next = agent_session_with_default_field(next, "created_at", "".to_json())
+  let next = agent_session_with_default_field(next, "updated_at", "".to_json())
+  let next = agent_session_with_default_field(
+    next,
+    "last_message",
+    "".to_json(),
+  )
+  agent_session_with_default_field(next, "transcript", Json::array([]))
+}
+
+///|
+fn agent_session_with_default_field(
+  session : Json,
+  key : String,
+  value : Json,
+) -> Json {
+  match json_object_field(session, key) {
+    Some(_) => session
+    None => agent_session_with_field(session, key, value)
+  }
 }
 
 ///|
@@ -1239,7 +1322,7 @@ fn agent_message_from_moonclaw_event(event : Json) -> Json? {
         ),
       )
     "PreToolCall" => {
-      let name = json_string(desc, "name", default="tool")
+      let name = mooncode_tool_name(desc)
       Some(
         agent_message_record_with_id(
           id="moonclaw-\{event_id}",
@@ -1286,7 +1369,7 @@ fn agent_message_from_moonclaw_event(event : Json) -> Json? {
       }
     }
     "PostToolCall" => {
-      let name = json_string(desc, "name", default="tool")
+      let name = mooncode_tool_name(desc)
       let text = json_string(desc, "text", default="")
       let content = if text == "" {
         "Tool finished: \{name}"
@@ -1684,6 +1767,27 @@ test "agent transcript avoids duplicate moonclaw events" {
   let once = merge_agent_transcript([], [event])
   let twice = merge_agent_transcript(once, [event])
   assert_eq(twice.length(), 1)
+}
+
+///|
+test "agent response defaults make sparse mooncode sessions decodable" {
+  let session : Json = {
+    "id": "agent-demo",
+    "workspace_id": "book-demo",
+    "workspace_name": "Demo Book",
+    "workspace_root": "/tmp/book-demo",
+    "moonclaw_task_id": "task-demo",
+  }
+  let normalized = agent_session_response_defaults(
+    enrich_agent_session(session, []),
+  )
+  assert_eq(json_string(normalized, "cwd", default=""), "/tmp/book-demo")
+  assert_eq(json_string(normalized, "status", default=""), "saved")
+  assert_eq(json_string(normalized, "model", default="missing"), "")
+  assert_eq(json_int(normalized, "port", default=-1), 0)
+  assert_false(json_bool(normalized, "web_search", default=true))
+  assert_eq(json_int(normalized, "queued_count", default=-1), 0)
+  assert_eq(json_array_items(normalized, "transcript").length(), 0)
 }
 
 ///|

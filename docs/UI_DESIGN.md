@@ -28,6 +28,19 @@ linked visualization, while Moondesk is the practical human workspace.
 
 ## Main Surfaces
 
+### Workspace Mode Switcher
+
+The title bar exposes two first-class modes for the selected book:
+
+- `MoonWiki` keeps the existing book/wiki workspace for files, previews,
+  inbox, publishing, town status, and review.
+- `MoonCode` switches the same book into a coding/chat workspace with the
+  session list, transcript, composer, runtime status, and code-oriented review
+  panels.
+
+The switch is a product boundary, not a visual shortcut. MoonCode can later be
+extracted as a standalone component while Moondesk remains the native host.
+
 ### Activity Rail
 
 - Explorer
@@ -74,15 +87,158 @@ The central area should support:
 
 ### Agents
 
-The agent surface should support:
+The agent surface is the first MoonCode UI slice. It should support:
 
 - per-book MoonClaw session list
 - selected-path prompt composer
 - visible daemon/model/task state
 - model and web-search controls
 - send/cancel/refresh actions
+- MoonCode review controls for run tests, package, accept, reject, and cancel
+  commands
+- MoonCode contract inspector for protocol, command specs, display tool specs,
+  executable tool contract, approval policy, expected event lanes, tool hints,
+  output roots, native/OpenSeek tool-call wire shapes, unknown-tool rejection
+  policy, and the OpenSeek-like runtime contract for agent runtime, session
+  store, tool registry, loop, wire protocol, eval harness ownership,
+  the `/api/mooncode/eval-harness` contract endpoint, and OpenSeek eval
+  reference paths
+- MoonCode engine-readiness panel that shows the configured MoonClaw checkout,
+  daemon bridge, safe `/v1/models` and `/v1/tasks` probes, prompt/message/cancel
+  bridge, sidecar append-only log, missing MoonClaw runtime contract endpoint,
+  and missing OpenSeek-style eval evidence
+- visible dispatch mode for the selected session, distinguishing native
+  `/v1/mooncode/sessions/<id>/commands` dispatch from legacy `/v1/task` bridge
+  compatibility mode
+- visible stream source for the selected session/live tail, distinguishing
+  native `/v1/mooncode/sessions/<id>/stream` events from Moondesk's
+  append-log projection fallback
+- MoonCode readiness/eval checklist for book scope, task attachment,
+  transcript, tool, diff, test, artifact, review, append-log, typed command
+  packets, typed session snapshot, verified test results, MoonBook review
+  receipts, source-bound package manifests, and live-stream coverage, including
+  the current incremental stream cursor endpoint
+- MoonCode Eval Report panel in the center pane that exposes bridge score,
+  passed/missing checks, required native harnesses, persisted
+  `wiki/reviews/mooncode/<session-id>/eval-report.json` path, native eval
+  source/endpoint, native proof ingest endpoint, and the MoonClaw-owned eval
+  proof gap before raw event lanes
+- MoonCode Runtime Handoff panel in the center pane that exposes the resumable
+  `wiki/reviews/mooncode/<session-id>/runtime-handoff.json` artifact, ordered
+  session snapshot, command/event log paths, runtime command feed path,
+  Moondesk session-store, stream, command, and runtime-feed endpoints, native
+  MoonClaw endpoints, output roots, dispatch mode, and next runtime step for an
+  extractable `mooncode` backend
+- MoonCode Runtime Supervisor panel in the same handoff board that shows
+  whether the next turn is launchable, the bridge/native mode, scheduler
+  effect, command/action, claim/ack/event/session endpoints, MoonClaw root, and
+  ordered supervisor loop without making Moondesk execute tools. It also shows
+  the embedded readiness status and missing launch requirements, so blocked
+  turns are diagnosable without opening JSON.
+- MoonCode session header at the top of the coding workspace that shows the
+  selected book/session, next required action, stream source, dispatch state,
+  event/diff/test/tool/package counts, eval score, and durable resume/log paths
+  before the transcript and review panels
+- MoonCode preflight gates panel that reads the server-side package, accept,
+  commit, and selected-path apply/revert patch gates before command dispatch,
+  showing exact selected file/hunk blockers for tests, diffs, source-bound
+  packages, runtime patch proof, and tool approvals
+- MoonCode Action Plan rows show command-scoped runtime evidence status,
+  required/proven event counts, and exact missing/failed MoonClaw/OpenSeek event
+  names so operators can tell whether a command is merely delivered, running, or
+  actually proven by typed runtime events
+- MoonCode code-review queue that promotes diff-lane events into open,
+  file-targeted accept/reject, and package controls before the broader
+  tool/event lane grid
+- MoonBook receipt visibility for accepted/rejected/packaged coding results,
+  sourced from `wiki/reviews/mooncode/<session-id>/...json`
+- MoonBook change-set visibility for the current session, sourced from
+  `wiki/reviews/mooncode/<session-id>/change-set.json`, so the operator can see
+  whether diff/test/artifact/review evidence has a durable book-owned review
+  object
+- MoonBook patch-set visibility for the current session, sourced from
+  `wiki/reviews/mooncode/<session-id>/patch-set.json`, so file diffs have a
+  durable pending/accepted/rejected/applied/reverted staging object with
+  stable hunk targets, compact hunk counts, gate status, next action,
+  per-file Open/Accept/Reject/Apply/Revert/Package controls, and per-hunk
+  Accept/Reject/Apply/Revert commands before MoonClaw owns true patch execution
+- MoonCode command-queue visibility in the center pane and readiness/contract
+  surfaces, sourced from
+  `.moontown/mooncode-sessions/<session-id>/commands.jsonl`, so operator
+  intent is auditable as ordered `mooncode.v1` packets separately from rendered
+  transcript and event progress, with latest packet rows and target-aware Test
+  and Package controls
+- MoonCode composer semantics match OpenSeek serve mode: no selected session
+  starts a session, an idle selected session sends the text as a typed `prompt`
+  command, and a running or queued selected session sends the text as a typed
+  `steer` command instead of using the legacy agent-message route
+- MoonCode pending-steer feedback in the session header and command queue,
+  computed from durable `steer` commands minus `steer_applied`/`steer_dropped`
+  runtime events, so a sent steer is visible while MoonClaw or standalone
+  `mooncode` has not yet confirmed whether it was applied or dropped
+- MoonCode Eval Report has a Run Eval control that dispatches a typed
+  `run_eval` command through the ordered runtime queue, asking MoonClaw or
+  standalone `mooncode` for `tool_harness` and `file_edit` native proof instead
+  of executing harnesses inside Moondesk
+- MoonCode runtime-feed visibility in the center pane, sourced from
+  `.moontown/mooncode-sessions/<session-id>/runtime-commands.jsonl`, so the
+  MoonClaw-facing feed is visible even before dispatch receipts or runtime
+  leases exist, with compact execution summaries for planned tools, expected
+  events, required outputs, and replay/event sinks
+- MoonCode runtime-replay visibility in the center pane, sourced from
+  `/api/mooncode/sessions/<session-id>/runtime-replay`, so operators can inspect
+  pending OpenSeek JSONL wire commands, replay readiness, delivered/claimed/
+  invalid counts, and per-command decode status before MoonClaw or standalone
+  MoonCode executes the queue
+- MoonCode runtime-claim controls in the Runtime Claims panel, sourced from
+  `POST /api/mooncode/sessions/<session-id>/runtime-claim`, with Claim Next and
+  Force Claim buttons that lease one runtime command for the
+  `moondesk-ui-inspector` consumer without executing tools in Moondesk
+- MoonCode runtime-replay acknowledgement controls on claimed Runtime Claims
+  rows, sourced from `POST /api/mooncode/sessions/<session-id>/runtime-replay`,
+  with Ack, Complete, and Fail buttons that record operator/debug receipts and
+  refresh replay, dispatch, event, handoff, and action-plan state
+- MoonCode runtime-event sink visibility in the center pane, sourced from
+  `/api/mooncode/sessions/<session-id>/runtime-events`, so operators can inspect
+  the event log path, event count, POST endpoint, accepted MoonClaw/OpenSeek
+  payload shapes, normalization rule, and latest normalized runtime events
+  before they are projected into lanes, plans, evals, and review artifacts
+- MoonCode live-tail visibility keeps a bounded, id-deduped recent stream
+  buffer across successive polls, so the operator sees stable coding progress
+  even when the latest poll returns no new event rows
+- MoonCode action-plan visibility for the current execution/review state,
+  sourced from `wiki/reviews/mooncode/<session-id>/action-plan.json`, with
+  compact acceptance gates, `next_required_action`, command state rows, and
+  target-aware Test/Package/Accept/Reject controls
+- MoonCode runtime-evidence visibility, sourced from
+  `GET /api/mooncode/sessions/<session-id>/runtime-evidence`, with aggregate
+  command proof counts, runtime/event log paths, and per-command missing or
+  failed required runtime events so operators can distinguish queued intent
+  from MoonClaw-proven execution
+- MoonCode tool-authorization probes for the selected session/path, sourced
+  from `POST /api/mooncode/sessions/<session-id>/tool-authorization`, with
+  explicit Read/Write/Shell probe buttons, current decision, approval state,
+  target, reason, and matching approval row before MoonClaw executes a gated
+  tool
+- MoonCode runtime execution summaries that render the ordered claim/tool/event/
+  output/ack checklist from each command's `result_contract`, so operators can
+  compare MoonClaw progress against machine-readable execution requirements
+- MoonCode tool-approval visibility for policy/review-gated shell, write/edit,
+  diff, and artifact work, sourced from
+  `wiki/reviews/mooncode/<session-id>/tool-approvals.json`, with per-row Open,
+  Approve, and Reject controls
+- MoonCode test-run visibility for test/build evidence, sourced from
+  `wiki/reviews/mooncode/<session-id>/test-runs.json`, with passed/failed,
+  running/queued counts and per-row Open, Rerun, and Package controls
+- MoonBook package-manifest visibility for package candidates, sourced from
+  `portable/app-tool/mooncode/<session-id>/package-...json`, including
+  source-bound/missing status, manifest/receipt paths, source inventory, file
+  hash evidence, and Open/Test/Accept/Package controls
 - persisted transcript/status records plus saved MoonClaw assistant/tool/failure
   event projection and bounded workspace-log progress fallback
+- MoonCode lanes for tools, diffs, tests, artifacts, and review decisions
+- MoonCode live-tail panel driven by the bounded
+  `/stream?format=jsonl&live=true` cursor for the selected session
 - bottom-drawer summary for the selected session
 
 ### Right Inspector

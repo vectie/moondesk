@@ -39,6 +39,12 @@ enum Activity {
 } derive(Eq)
 
 ///|
+enum WorkspaceMode {
+  MoonWiki
+  MoonCode
+} derive(Eq)
+
+///|
 struct ActivityButton {
   key : Activity
   icon : String
@@ -321,11 +327,1128 @@ struct AgentModelsResult {
 
 ///|
 struct AgentMessage {
-  id : String
+  id : String?
   role : String
   content : String
   status : String
   created_at : String
+} derive(FromJson)
+
+///|
+struct MoonCodeEvent {
+  id : String
+  lane : String
+  kind : String
+  title : String
+  status : String
+  created_at : String
+  detail : String
+  path : String
+  diff : String
+  command : String
+  exit_code : Int
+} derive(FromJson)
+
+///|
+struct MoonCodeSummary {
+  protocol : String
+  session_id : String
+  workspace_id : String
+  task_id : String
+  stream_url : String
+  stream_mode : String
+  stream_source : String
+  dispatch_mode : String
+  live_stream_ready : Bool
+  incremental_stream_ready : Bool
+  incremental_stream_url : String
+  event_log_path : String
+  append_log_ready : Bool
+  append_log_count : Int
+  command_log_path : String
+  command_log_ready : Bool
+  command_log_count : Int
+  runtime_command_log_path : String
+  runtime_command_feed_ready : Bool
+  runtime_command_count : Int
+  runtime_dispatch_log_path : String
+  runtime_dispatch_ready : Bool
+  runtime_dispatch_count : Int
+  session_snapshot_path : String
+  session_snapshot_ready : Bool
+  event_count : Int
+  tool_count : Int
+  diff_count : Int
+  test_count : Int
+  verified_test_count : Int
+  failed_test_count : Int
+  artifact_count : Int
+  source_bound_package_count : Int
+  runtime_package_proof_count : Int
+  runtime_verified_package_count : Int
+  runtime_commit_proof_count : Int
+  steer_command_count : Int
+  steer_settlement_count : Int
+  pending_steer_count : Int
+  review_count : Int
+  pending_diff_count : Int
+  accepted_review_count : Int
+  rejected_review_count : Int
+  review_state : String
+  runtime_count : Int
+  transcript_count : Int
+  has_packaging_candidate : Bool
+  moonbook_package_manifest_count : Int
+  moonbook_package_index_manifest_count : Int
+  moonbook_change_set_manifest_count : Int
+  moonbook_patch_set_manifest_count : Int
+  runtime_patch_execution_proof_count : Int
+  moonbook_tool_approvals_manifest_count : Int
+  moonbook_test_runs_manifest_count : Int
+  moonbook_eval_report_manifest_count : Int
+  mooncode_runtime_evidence_manifest_count : Int
+  mooncode_runtime_handoff_manifest_count : Int
+  pending_tool_approval_count : Int
+  extractable_component : String
+  eval_score : Int
+  eval_level : String
+  eval_checks : Array[MoonCodeEvalCheck]
+} derive(FromJson)
+
+///|
+struct MoonCodeEvalCheck {
+  id : String
+  label : String
+  ok : Bool
+  evidence : String
+} derive(FromJson)
+
+///|
+struct MoonCodeEvalReport {
+  kind : String
+  protocol : String
+  status : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  runtime_owner : String
+  ui_owner : String
+  artifact_owner : String
+  extractable_component : String
+  bridge_score : Int
+  bridge_level : String
+  recorded_at : String
+  manifest_path : String
+  absolute_manifest_path : String
+  passed_check_count : Int
+  missing_check_count : Int
+  check_count : Int
+  checks : Array[MoonCodeEvalCheck]
+  native_eval_evidence_ready : Bool
+  native_eval_source : String
+  native_eval_endpoint : String
+  native_eval_ingest_method : String
+  native_eval_ingest_endpoint : String
+  required_native_harnesses : Array[String]
+  minimum_native_evidence : Array[String]
+  current_gap : String
+} derive(FromJson)
+
+///|
+struct MoonCodeResumeContract {
+  session_snapshot_path : String
+  session_store_endpoint : String
+  command_log_path : String
+  runtime_command_log_path : String
+  runtime_dispatch_log_path : String
+  event_log_path : String
+  stream_endpoint : String
+  runtime_event_ingest_endpoint : String
+  command_queue_endpoint : String
+  runtime_command_feed_endpoint : String
+  runtime_claim_endpoint : String
+  runtime_dispatch_endpoint : String
+  runtime_replay_endpoint : String
+  action_plan_endpoint : String
+  native_command_endpoint : String
+  native_eval_endpoint : String
+  ordering_rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeEngine {
+  daemon_running : Bool
+  native_runtime_ready : Bool
+  dispatch_mode : String
+  bridge_status : String
+  moonclaw_root : String
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeConsumerEndpoints {
+  runtime_claim : String
+  runtime_replay : String
+  runtime_events : String
+  runtime_commands : String
+  stream : String
+  native_commands : String
+  native_eval_report : String
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeConsumer {
+  kind : String
+  protocol : String
+  session_id : String
+  status : String
+  native_runtime_ready : Bool
+  ready_to_claim : Bool
+  ready_to_replay : Bool
+  claimable_command_count : Int
+  claimed_command_count : Int
+  pending_command_count : Int
+  invalid_command_count : Int
+  next_action : String
+  endpoints : MoonCodeRuntimeConsumerEndpoints
+  required_loop : Array[String]
+  safety_boundary : String
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeHandoff {
+  kind : String
+  protocol : String
+  status : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  workspace_root : String
+  task_id : String
+  recorded_at : String
+  manifest_path : String
+  absolute_manifest_path : String
+  resume_contract : MoonCodeResumeContract
+  command_count : Int
+  commands : Array[MoonCodeQueuedCommand]
+  book_output_roots : Array[String]
+  engine : MoonCodeRuntimeEngine
+  runtime_consumer : MoonCodeRuntimeConsumer?
+  runtime_execution_plan : Json?
+  runtime_turn_packet : Json?
+  runtime_supervisor : Json?
+  summary : MoonCodeSummary
+  next_runtime_step : String
+} derive(FromJson)
+
+///|
+struct MoonCodeBoundary {
+  moondesk : Array[String]
+  moonclaw : Array[String]
+  moonbook : Array[String]
+} derive(FromJson)
+
+///|
+struct MoonCodeWorkspaceModeInfo {
+  id : String
+  title : String
+  purpose : String
+} derive(FromJson)
+
+///|
+struct MoonCodeSessionProtocol {
+  transport_target : String
+  preferred_stream : String
+  stream_endpoint : String
+  stream_state_endpoint : String
+  runtime_event_ingest_endpoint : String
+  command_queue_endpoint : String
+  runtime_claim_endpoint : String
+  runtime_replay_endpoint : String
+  action_plan_endpoint : String
+  commands : Array[String]
+  events : Array[String]
+  durability : String
+} derive(FromJson)
+
+///|
+struct MoonCodeToolSpec {
+  id : String
+  owner : String
+  lane : String
+  approval : String
+  purpose : String
+  outputs : Array[String]
+} derive(FromJson)
+
+///|
+struct MoonCodeCommandSpec {
+  action : String
+  dispatch : String
+  approval : String
+  expected_lanes : Array[String]
+  tool_hints : Array[String]
+} derive(FromJson)
+
+///|
+struct MoonCodeQueuedCommand {
+  protocol : String
+  kind : String
+  command_id : String
+  action : String
+  dispatch : String
+  approval : String
+  created_at : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  workspace_root : String
+  task_id : String
+  context_path : String
+  target : String
+  message : String
+  web_search : Bool
+  expected_lanes : Array[String]
+  tool_hints : Array[String]
+} derive(FromJson)
+
+///|
+struct MoonCodeCommandQueue {
+  protocol : String
+  kind : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  command_log_path : String
+  command_count : Int
+  commands : Array[MoonCodeQueuedCommand]
+  ordering_rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeDispatchReceipt {
+  protocol : String
+  kind : String
+  dispatch_id : String
+  command_id : String
+  session_id : String
+  action : String
+  dispatch : String
+  status : String
+  dispatch_mode : String
+  created_at : String
+  openseek_wire_valid : Bool
+  native_mooncode_endpoint : String
+  legacy_bridge_endpoint : String
+  detail : String
+  runtime_command : Json
+  owner : Json
+  previous_dispatch_status : String?
+  previous_dispatch_id : String?
+  previous_claim_id : String?
+  previous_consumer_id : String?
+  claimed_by_same_consumer : Bool?
+  ack_order_status : String?
+  order_blocker : Json?
+  requested_status : String?
+  proof_gate : Json?
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeDispatchState {
+  protocol : String
+  kind : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  dispatch_mode : String
+  runtime_command_count : Int
+  runtime_dispatch_count : Int
+  runtime_dispatch_pending_count : Int
+  runtime_command_log_path : String
+  runtime_dispatch_log_path : String
+  dispatch_receipts : Array[MoonCodeRuntimeDispatchReceipt]
+  pending_command_ids : Array[String]
+  runtime_protocol : Json
+  owner : Json
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeCommandFeed {
+  protocol : String
+  kind : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  runtime_command_log_path : String
+  runtime_command_count : Int
+  runtime_dispatch_log_path : String
+  runtime_claim_endpoint : String
+  runtime_dispatch_count : Int
+  runtime_dispatch_pending_count : Int
+  commands : Array[Json]
+  execution_summaries : Array[Json]
+  dispatch_receipts : Array[MoonCodeRuntimeDispatchReceipt]
+  runtime_replay : Json
+  decode_reports : Array[Json]
+  wire_protocol : Json
+  runtime_protocol : Json
+  runtime_claim_contract : Json
+  command_lifecycle : Json
+  owner : Json
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeReplayItem {
+  index : Int
+  command_id : String
+  action : String
+  dispatch : String
+  serve_command : String
+  created_at : String
+  target : String
+  context_path : String
+  receipt_status : String
+  replay_status : String
+  previous_claim_expired : Bool
+  latest_receipt : Json
+  proof_event_count : Int
+  submitted_event_count : Int
+  normalized_event_count : Int
+  runtime_event_summary : Json
+  openseek_wire_command : Json
+  native_mooncode_body : Json
+  decode_report : Json
+  previous_completion_missing_proof : Bool?
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeReplayState {
+  protocol : String
+  kind : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  runtime_command_log_path : String
+  runtime_dispatch_log_path : String
+  command_count : Int
+  valid_command_count : Int
+  invalid_command_count : Int
+  delivered_command_count : Int
+  claimed_command_count : Int
+  failed_dispatch_count : Int
+  pending_command_count : Int
+  first_pending_index : Int
+  first_invalid_command_id : String
+  replay_ready : Bool
+  replay_policy : String
+  ordering_rule : String
+  decode_reports : Array[Json]
+  replay_items : Array[MoonCodeRuntimeReplayItem]
+  pending_commands : Array[MoonCodeRuntimeReplayItem]
+  pending_openseek_jsonl : String
+  runtime_protocol : Json
+  owner : Json
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeEventSink {
+  protocol : String
+  kind : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  event_log_path : String
+  event_count : Int
+  events : Array[MoonCodeEvent]
+  command_progress : Json
+  post_contract : Json
+  runtime_protocol : Json
+  owner : Json
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeClaimItem {
+  index : Int
+  command_id : String
+  action : String
+  dispatch : String
+  serve_command : String
+  created_at : String
+  target : String
+  context_path : String
+  claim_status : String
+  receipt_status : String
+  tool_authorization_state : String
+  runtime_may_execute_tools : Bool
+  tool_authorization_blocked : Bool
+  tool_authorization_blocked_reason : String
+  blocked_by_command_id : String
+  blocked_by_status : String
+  consumer_id : String
+  claim_id : String
+  claimed_at : String
+  lease_expires_at : String
+  ack_endpoint : String
+  runtime_command : Json
+  latest_receipt : Json
+  decode_report : Json
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeClaimState {
+  protocol : String
+  kind : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  runtime_command_log_path : String
+  runtime_dispatch_log_path : String
+  command_count : Int
+  receipt_count : Int
+  claimable_command_count : Int
+  claimed_command_count : Int
+  delivered_command_count : Int
+  failed_command_count : Int
+  invalid_command_count : Int
+  order_blocked_command_count : Int
+  tool_authorization_blocked_command_count : Int
+  claim_ready : Bool
+  claim_endpoint : String
+  ack_endpoint : String
+  ordering_rule : String
+  lease_policy : String
+  claim_items : Array[MoonCodeRuntimeClaimItem]
+  claimable_commands : Array[MoonCodeRuntimeClaimItem]
+  claimed_commands : Array[MoonCodeRuntimeClaimItem]
+  delivered_commands : Array[MoonCodeRuntimeClaimItem]
+  failed_commands : Array[MoonCodeRuntimeClaimItem]
+  invalid_commands : Array[MoonCodeRuntimeClaimItem]
+  order_blocked_commands : Array[MoonCodeRuntimeClaimItem]
+  tool_authorization_blocked_commands : Array[MoonCodeRuntimeClaimItem]
+  consumer_contract : Json
+  owner : Json
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeComponent {
+  id : String
+  owner : String
+  reference : String
+  purpose : String
+  moondesk_role : String
+} derive(FromJson)
+
+///|
+struct MoonCodeWireCommand {
+  command : String
+  required_fields : Array[String]
+  purpose : String
+} derive(FromJson)
+
+///|
+struct MoonCodeWireProtocol {
+  transport : String
+  input_commands : Array[MoonCodeWireCommand]
+  output_events : Array[String]
+  ordering_rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeSessionStoreContract {
+  owner : String
+  shape : String
+  resume_modes : Array[String]
+  moondesk_projection : String
+} derive(FromJson)
+
+///|
+struct MoonCodeEvalContract {
+  required_harnesses : Array[String]
+  harness_contract_endpoint : String
+  reference_paths : Array[String]
+  minimum_evidence : Array[String]
+  native_eval_report : MoonCodeNativeEvalReportContract
+  current_gap : String
+} derive(FromJson)
+
+///|
+struct MoonCodeNativeEvalReportContract {
+  owner : String
+  endpoint : String
+  transport : String
+  purpose : String
+  required_fields : Array[String]
+  status_values : Array[String]
+  normalization_rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeToolRuntimeContract {
+  id : String
+  owner : String
+  lane : String
+  approval : String
+  input_fields : Array[Json]
+  output_events : Array[String]
+  mutates_files : Bool
+  requires_review : Bool
+  executable_boundary : String
+  safety_policy : String
+} derive(FromJson)
+
+///|
+struct MoonCodeToolContractConstraints {
+  workspace_scope : String
+  path_rule : String
+  diff_rule : String
+  test_rule : String
+  approval_rule : String
+  extraction_rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeToolContract {
+  kind : String
+  protocol : String
+  version : Int
+  owner : String
+  execution_owner : String
+  approval_owner : String
+  artifact_owner : String
+  supported_tools : Array[String]
+  tools : Array[MoonCodeToolRuntimeContract]
+  constraints : MoonCodeToolContractConstraints
+} derive(FromJson)
+
+///|
+struct MoonCodeToolCallWireContract {
+  kind : String
+  protocol : String
+  owner : String
+  runtime_owner : String
+  reference : String
+  accepted_shapes : Array[String]
+  supported_tools : Array[String]
+  argument_rule : String
+  unknown_tool_policy : String
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeContract {
+  reference : String
+  target_component : String
+  extractable_component : String
+  status : String
+  components : Array[MoonCodeRuntimeComponent]
+  wire_protocol : MoonCodeWireProtocol
+  session_store : MoonCodeSessionStoreContract
+  tool_contract : MoonCodeToolContract
+  eval_contract : MoonCodeEvalContract
+} derive(FromJson)
+
+///|
+struct MoonCodeEngineCheck {
+  id : String
+  label : String
+  status : String
+  evidence : String
+} derive(FromJson)
+
+///|
+struct MoonCodeEngineStatus {
+  ok : Bool
+  status : String
+  bridge_mode : String
+  production_ready : Bool
+  native_runtime_ready : Bool
+  legacy_task_bridge_ready : Bool
+  adapter_status : String
+  moonclaw_root : String
+  message : String
+  daemon : AgentDaemonStatus
+  supported_endpoints : Array[String]
+  checks : Array[MoonCodeEngineCheck]
+} derive(FromJson)
+
+///|
+struct MoonCodeExtractable {
+  future_package : String
+  rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeCapabilities {
+  ok : Bool
+  component : String
+  version : Int
+  boundary : MoonCodeBoundary
+  workspace_modes : Array[MoonCodeWorkspaceModeInfo]
+  session_protocol : MoonCodeSessionProtocol
+  runtime_contract : MoonCodeRuntimeContract
+  tool_contract : MoonCodeToolContract
+  tool_call_wire : MoonCodeToolCallWireContract
+  engine_status : MoonCodeEngineStatus
+  command_specs : Array[MoonCodeCommandSpec]
+  tools : Array[String]
+  tool_specs : Array[MoonCodeToolSpec]
+  book_outputs : Array[String]
+  extractable : MoonCodeExtractable
+} derive(FromJson)
+
+///|
+struct MoonCodeStreamPoll {
+  session_id : String
+  stream : String
+  stream_source : String
+  since : Int
+  next_since : Int
+  emitted_count : Int
+  events : Array[MoonCodeEvent]
+}
+
+///|
+struct MoonCodeStreamState {
+  kind : String
+  session_id : String
+  consumer_id : String
+  latest_sequence : Int
+  next_since : Int
+  checkpoint_ready : Bool
+  checkpoint_path : String
+} derive(FromJson)
+
+///|
+struct MoonCodeChangeSetEntry {
+  id : String
+  kind : String
+  title : String
+  status : String
+  path : String
+  command : String
+  exit_code : Int
+  created_at : String
+  detail : String
+  diff : String
+  command_id : String
+} derive(FromJson)
+
+///|
+struct MoonCodeChangeSet {
+  kind : String
+  protocol : String
+  status : String
+  session_id : String
+  workspace_id : String
+  task_id : String
+  recorded_at : String
+  manifest_path : String
+  diff_count : Int
+  test_count : Int
+  artifact_count : Int
+  review_count : Int
+  accepted_review_count : Int
+  rejected_review_count : Int
+  pending_diff_count : Int
+  verified_test_count : Int
+  failed_test_count : Int
+  diffs : Array[MoonCodeChangeSetEntry]
+  tests : Array[MoonCodeChangeSetEntry]
+  artifacts : Array[MoonCodeChangeSetEntry]
+  reviews : Array[MoonCodeChangeSetEntry]
+} derive(FromJson)
+
+///|
+struct MoonCodePatchSetEntry {
+  id : String
+  path : String
+  title : String
+  status : String
+  review_state : String
+  execution_state : String
+  created_at : String
+  detail : String
+  diff : String
+  diff_present : Bool
+  hunks : Array[MoonCodePatchHunk]
+  hunk_count : Int
+  command : String
+  command_id : String
+  accepted_review_count : Int
+  rejected_review_count : Int
+  applied_review_count : Int
+  reverted_review_count : Int
+  runtime_applied_count : Int
+  runtime_reverted_count : Int
+  runtime_proof_count : Int
+  execution_verified : Bool
+  package_review_count : Int
+  gate_status : String?
+  next_action : String?
+  blocked_reason : String?
+} derive(FromJson)
+
+///|
+struct MoonCodePatchHunk {
+  id : String
+  index : Int
+  target : String
+  header : String
+  review_state : String
+  execution_state : String
+  added_lines : Int
+  removed_lines : Int
+  context_lines : Int
+  line_count : Int
+  preview : String
+  accepted_review_count : Int
+  rejected_review_count : Int
+  applied_review_count : Int
+  reverted_review_count : Int
+  runtime_applied_count : Int
+  runtime_reverted_count : Int
+  runtime_proof_count : Int
+  gate_status : String?
+  next_action : String?
+  blocked_reason : String?
+} derive(FromJson)
+
+///|
+struct MoonCodePatchSet {
+  kind : String
+  protocol : String
+  status : String
+  execution_status : String
+  session_id : String
+  workspace_id : String
+  task_id : String
+  recorded_at : String
+  manifest_path : String
+  patch_count : Int
+  accepted_patch_count : Int
+  rejected_patch_count : Int
+  applied_patch_count : Int
+  reverted_patch_count : Int
+  pending_patch_count : Int
+  runtime_applied_patch_count : Int
+  runtime_reverted_patch_count : Int
+  runtime_pending_patch_count : Int
+  runtime_patch_proof_count : Int
+  patches : Array[MoonCodePatchSetEntry]
+} derive(FromJson)
+
+///|
+struct MoonCodeToolApprovalEntry {
+  id : String
+  event_id : String
+  tool_id : String
+  title : String
+  status : String
+  approval : String
+  approval_state : String
+  created_at : String
+  detail : String
+  path : String
+  command : String
+  target : String
+  target_kind : String
+  target_label : String
+  approved_review_count : Int
+  rejected_review_count : Int
+} derive(FromJson)
+
+///|
+struct MoonCodeToolApprovals {
+  kind : String
+  protocol : String
+  status : String
+  session_id : String
+  workspace_id : String
+  task_id : String
+  recorded_at : String
+  manifest_path : String
+  approval_count : Int
+  pending_approval_count : Int
+  approved_approval_count : Int
+  rejected_approval_count : Int
+  approvals : Array[MoonCodeToolApprovalEntry]
+} derive(FromJson)
+
+///|
+struct MoonCodeToolAuthorization {
+  kind : String
+  protocol : String
+  session_id : String
+  decision : String
+  allowed : Bool
+  requires_approval : Bool
+  blocked : Bool
+  approval : String
+  approval_state : String
+  target : String
+  tool_call_id : String
+  tool_id : String
+  path : String
+  command : String
+  reason : String
+  preview_event : Json
+  approval_entry : Json
+  tool_approvals : Json
+} derive(FromJson)
+
+///|
+struct MoonCodeTestRunEntry {
+  id : String
+  title : String
+  kind : String
+  status : String
+  run_state : String
+  created_at : String
+  path : String
+  command : String
+  exit_code : Int
+  detail : String
+  target : String
+  verified : Bool
+  command_id : String
+} derive(FromJson)
+
+///|
+struct MoonCodeTestRuns {
+  kind : String
+  protocol : String
+  status : String
+  session_id : String
+  workspace_id : String
+  task_id : String
+  recorded_at : String
+  manifest_path : String
+  run_count : Int
+  passed_run_count : Int
+  failed_run_count : Int
+  running_run_count : Int
+  queued_run_count : Int
+  verified_run_count : Int
+  runs : Array[MoonCodeTestRunEntry]
+} derive(FromJson)
+
+///|
+struct MoonCodePackageSourceRecord {
+  path : String
+  exists : Bool
+  kind : String
+  size_bytes : Int?
+  sha256 : String?
+  package_ready : Bool
+} derive(FromJson)
+
+///|
+struct MoonCodePackageCandidate {
+  kind : String
+  protocol : String
+  status : String
+  package_kind : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  context_path : String
+  candidate_paths : Array[String]
+  source_inventory : Array[MoonCodePackageSourceRecord]
+  source_inventory_count : Int
+  source_present_count : Int
+  source_inventory_status : String
+  execution_state : String
+  runtime_built_count : Int
+  runtime_verified_count : Int
+  runtime_proof_count : Int
+  execution_verified : Bool
+  command_id : String
+  command_created_at : String
+  recorded_at : String
+  manifest_path : String
+  absolute_manifest_path : String
+  review_receipt_path : String
+  detail : String
+} derive(FromJson)
+
+///|
+struct MoonCodePackageCandidates {
+  kind : String
+  protocol : String
+  status : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  recorded_at : String
+  package_count : Int
+  source_bound_package_count : Int
+  missing_source_package_count : Int
+  runtime_built_package_count : Int
+  runtime_verified_package_count : Int
+  runtime_package_proof_count : Int
+  package_index_status : String
+  package_index_path : String
+  package_index_source_bound_count : Int
+  package_index_executable_ready_count : Int
+  package_index_entry_points : Array[String]
+  packages : Array[MoonCodePackageCandidate]
+  rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeActionPlanItem {
+  index : Int
+  command_id : String
+  action : String
+  dispatch : String
+  approval : String
+  state : String
+  runtime_state : String
+  created_at : String
+  target : String
+  context_path : String
+  message : String
+  expected_lanes : Array[String]
+  tool_hints : Array[String]
+  required_gates : Array[String]
+  runtime_evidence_status : String
+  required_event_count : Int
+  proven_required_event_count : Int
+  missing_required_events : Array[String]
+  failed_required_events : Array[String]
+  tool_harness_status : String?
+  tool_harness_expected_tool_count : Int?
+  tool_harness_proven_tool_count : Int?
+  tool_harness_missing_tool_count : Int?
+  tool_harness_failed_tool_count : Int?
+  blocking_reason : String
+  next_step : String
+} derive(FromJson)
+
+///|
+struct MoonCodeActionPlanGates {
+  no_failing_tests : Bool
+  has_verified_tests : Bool
+  tool_approvals_resolved : Bool
+  diffs_resolved : Bool
+  has_source_bound_package : Bool
+} derive(FromJson)
+
+///|
+struct MoonCodeSelectedPatchPreflight {
+  context_path : String
+  matched : Bool
+  review_state : String
+  execution_state : String
+  gate_status : String
+  next_action : String
+  blocked_reason : String
+  runtime_proven : Bool
+} derive(FromJson)
+
+///|
+struct MoonCodeCommandPreflight {
+  action : String
+  blocked : Bool
+  reason : String
+  context_path : String
+  acceptance_gates : MoonCodeActionPlanGates
+  selected_patch : MoonCodeSelectedPatchPreflight
+} derive(FromJson)
+
+///|
+struct MoonCodeActionPlan {
+  kind : String
+  protocol : String
+  status : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  recorded_at : String
+  manifest_path : String
+  action_count : Int
+  pending_runtime_count : Int
+  running_count : Int
+  blocked_count : Int
+  ready_for_review_count : Int
+  completed_count : Int
+  run_test_command_count : Int
+  package_command_count : Int
+  commit_command_count : Int
+  accept_command_count : Int
+  review_command_count : Int
+  verified_test_count : Int
+  failed_test_count : Int
+  pending_diff_count : Int
+  pending_tool_approval_count : Int
+  source_bound_package_count : Int
+  next_required_action : String
+  actions : Array[MoonCodeActionPlanItem]
+  acceptance_gates : MoonCodeActionPlanGates
+  rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeEvidenceItem {
+  index : Int
+  command_id : String
+  action : String
+  created_at : String
+  context_path : String
+  message : String
+  runtime_command_recorded : Bool
+  status : String
+  required_event_count : Int
+  proven_required_event_count : Int
+  missing_required_events : Array[String]
+  failed_required_events : Array[String]
+  tool_harness_status : String?
+  tool_harness_expected_tool_count : Int?
+  tool_harness_proven_tool_count : Int?
+} derive(FromJson)
+
+///|
+struct MoonCodeRuntimeEvidence {
+  kind : String
+  protocol : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  task_id : String
+  recorded_at : String
+  command_count : Int
+  runtime_command_count : Int
+  proof_event_count : Int
+  proven_command_count : Int
+  missing_evidence_command_count : Int
+  failed_evidence_command_count : Int
+  missing_runtime_command_count : Int
+  required_event_count : Int
+  proven_required_event_count : Int
+  missing_required_event_count : Int
+  failed_required_event_count : Int
+  tool_harness_status : String?
+  tool_harness_expected_tool_count : Int?
+  tool_harness_proven_tool_count : Int?
+  tool_harness_missing_tool_count : Int?
+  tool_harness_failed_tool_count : Int?
+  status : String
+  manifest_path : String
+  absolute_manifest_path : String
+  command_log_path : String
+  runtime_command_log_path : String
+  event_log_path : String
+  items : Array[MoonCodeRuntimeEvidenceItem]
+  rule : String
 } derive(FromJson)
 
 ///|
@@ -346,6 +1469,8 @@ struct AgentSession {
   updated_at : String
   last_message : String
   transcript : Array[AgentMessage]
+  mooncode_events : Array[MoonCodeEvent]
+  mooncode_summary : MoonCodeSummary
 } derive(FromJson)
 
 ///|
@@ -474,6 +1599,7 @@ struct SearchHit {
 
 ///|
 struct Model {
+  workspace_mode : WorkspaceMode
   activity : Activity
   command_open : Bool
   drawer_tab : DrawerTab
@@ -500,6 +1626,65 @@ struct Model {
   agent_models : Array[AgentModel]
   agent_sessions : Array[AgentSession]
   selected_agent_session_id : String
+  mooncode_capabilities : MoonCodeCapabilities?
+  mooncode_status : String
+  mooncode_stream_session_id : String
+  mooncode_stream_cursor : Int
+  mooncode_stream_status : String
+  mooncode_stream_checkpoint_session_id : String
+  mooncode_stream_checkpoint_status : String
+  mooncode_stream_events : Array[MoonCodeEvent]
+  mooncode_runtime_event_sink_session_id : String
+  mooncode_runtime_event_sink_status : String
+  mooncode_runtime_event_sink : MoonCodeRuntimeEventSink?
+  mooncode_change_set_session_id : String
+  mooncode_change_set_status : String
+  mooncode_change_set : MoonCodeChangeSet?
+  mooncode_eval_report_session_id : String
+  mooncode_eval_report_status : String
+  mooncode_eval_report : MoonCodeEvalReport?
+  mooncode_runtime_handoff_session_id : String
+  mooncode_runtime_handoff_status : String
+  mooncode_runtime_handoff : MoonCodeRuntimeHandoff?
+  mooncode_patch_set_session_id : String
+  mooncode_patch_set_status : String
+  mooncode_patch_set : MoonCodePatchSet?
+  mooncode_tool_approvals_session_id : String
+  mooncode_tool_approvals_status : String
+  mooncode_tool_approvals : MoonCodeToolApprovals?
+  mooncode_tool_authorization_session_id : String
+  mooncode_tool_authorization_status : String
+  mooncode_tool_authorization : MoonCodeToolAuthorization?
+  mooncode_test_runs_session_id : String
+  mooncode_test_runs_status : String
+  mooncode_test_runs : MoonCodeTestRuns?
+  mooncode_package_candidates_session_id : String
+  mooncode_package_candidates_status : String
+  mooncode_package_candidates : MoonCodePackageCandidates?
+  mooncode_action_plan_session_id : String
+  mooncode_action_plan_status : String
+  mooncode_action_plan : MoonCodeActionPlan?
+  mooncode_runtime_evidence_session_id : String
+  mooncode_runtime_evidence_status : String
+  mooncode_runtime_evidence : MoonCodeRuntimeEvidence?
+  mooncode_command_queue_session_id : String
+  mooncode_command_queue_status : String
+  mooncode_command_queue : MoonCodeCommandQueue?
+  mooncode_runtime_command_feed_session_id : String
+  mooncode_runtime_command_feed_status : String
+  mooncode_runtime_command_feed : MoonCodeRuntimeCommandFeed?
+  mooncode_runtime_replay_session_id : String
+  mooncode_runtime_replay_status : String
+  mooncode_runtime_replay : MoonCodeRuntimeReplayState?
+  mooncode_preflight_session_id : String
+  mooncode_preflight_status : String
+  mooncode_preflights : Array[MoonCodeCommandPreflight]
+  mooncode_runtime_dispatch_session_id : String
+  mooncode_runtime_dispatch_status : String
+  mooncode_runtime_dispatch : MoonCodeRuntimeDispatchState?
+  mooncode_runtime_claim_session_id : String
+  mooncode_runtime_claim_status : String
+  mooncode_runtime_claim : MoonCodeRuntimeClaimState?
   agent_prompt : String
   agent_model : String
   agent_web_search : Bool
@@ -634,11 +1819,67 @@ enum Msg {
   LoadedAgentDaemon(Result[AgentDaemonStatus, String])
   LoadedAgentModels(Result[AgentModelsResult, String])
   LoadedAgentSessions(Result[Array[AgentSession], String])
+  LoadedMoonCodeCapabilities(Result[MoonCodeCapabilities, String])
+  LoadedMoonCodeStream(String, Result[MoonCodeStreamPoll, String])
+  SavedMoonCodeStreamCheckpoint(String, Result[MoonCodeStreamState, String])
+  LoadedMoonCodeRuntimeEventSink(
+    String,
+    Result[MoonCodeRuntimeEventSink, String],
+  )
+  LoadedMoonCodeChangeSet(String, Result[MoonCodeChangeSet, String])
+  LoadedMoonCodeEvalReport(String, Result[MoonCodeEvalReport, String])
+  LoadedMoonCodeRuntimeHandoff(String, Result[MoonCodeRuntimeHandoff, String])
+  LoadedMoonCodePatchSet(String, Result[MoonCodePatchSet, String])
+  LoadedMoonCodeToolApprovals(String, Result[MoonCodeToolApprovals, String])
+  LoadedMoonCodeToolAuthorization(
+    String,
+    String,
+    Result[MoonCodeToolAuthorization, String],
+  )
+  LoadedMoonCodeTestRuns(String, Result[MoonCodeTestRuns, String])
+  LoadedMoonCodePackageCandidates(String, Result[MoonCodePackageCandidates, String])
+  LoadedMoonCodeActionPlan(String, Result[MoonCodeActionPlan, String])
+  LoadedMoonCodeRuntimeEvidence(String, Result[MoonCodeRuntimeEvidence, String])
+  LoadedMoonCodeCommandQueue(String, Result[MoonCodeCommandQueue, String])
+  LoadedMoonCodeRuntimeCommandFeed(
+    String,
+    Result[MoonCodeRuntimeCommandFeed, String],
+  )
+  LoadedMoonCodeRuntimeReplay(
+    String,
+    Result[MoonCodeRuntimeReplayState, String],
+  )
+  LoadedMoonCodeCommandPreflight(
+    String,
+    String,
+    Result[MoonCodeCommandPreflight, String],
+  )
+  LoadedMoonCodeRuntimeDispatch(
+    String,
+    Result[MoonCodeRuntimeDispatchState, String],
+  )
+  LoadedMoonCodeRuntimeClaimState(
+    String,
+    Result[MoonCodeRuntimeClaimState, String],
+  )
+  ClaimedMoonCodeRuntime(
+    String,
+    Bool,
+    Result[Json, String],
+  )
+  AckedMoonCodeRuntimeCommand(
+    String,
+    String,
+    String,
+    Result[Json, String],
+  )
   CreatedAgentSession(Result[AgentSession, String])
   SentAgentMessage(Result[AgentSession, String])
   CancelledAgentSession(Result[AgentSession, String])
+  CompletedMoonCodeCommand(Result[AgentSession, String])
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
+  SelectWorkspaceMode(WorkspaceMode)
   SelectActivity(Activity)
   SelectDrawerTab(DrawerTab)
   SelectAgentSession(String)
@@ -647,7 +1888,12 @@ enum Msg {
   SetAgentModel(String)
   ToggleAgentWebSearch
   SendAgentMessage
-  CancelAgentSession
+  RunMoonCodeCommand(String)
+  RunMoonCodeCommandForPath(String, String)
+  RunMoonCodeCommandOverride(String, String)
+  ProbeMoonCodeToolAuthorization(String)
+  ClaimMoonCodeRuntime(Bool)
+  AckMoonCodeRuntimeCommand(String, String)
   PollAgentSessions
   SelectWorkspace(String)
   SelectPath(String)
@@ -756,8 +2002,25 @@ fn activity_slug(activity : Activity) -> String {
 }
 
 ///|
+fn workspace_mode_summary(mode : WorkspaceMode) -> String {
+  match mode {
+    WorkspaceMode::MoonWiki => "book/wiki workspace"
+    WorkspaceMode::MoonCode => "coding/chat workspace"
+  }
+}
+
+///|
+fn workspace_mode_for_activity(activity : Activity) -> WorkspaceMode {
+  match activity {
+    Activity::Agents => WorkspaceMode::MoonCode
+    _ => WorkspaceMode::MoonWiki
+  }
+}
+
+///|
 fn init_model() -> Model {
   {
+    workspace_mode: workspace_mode_for_activity(initial_activity()),
     activity: initial_activity(),
     command_open: false,
     drawer_tab: DrawerTab::DrawerRequests,
@@ -784,6 +2047,65 @@ fn init_model() -> Model {
     agent_models: [],
     agent_sessions: [],
     selected_agent_session_id: "",
+    mooncode_capabilities: None,
+    mooncode_status: "MoonCode contract not loaded",
+    mooncode_stream_session_id: "",
+    mooncode_stream_cursor: 0,
+    mooncode_stream_status: "stream idle",
+    mooncode_stream_checkpoint_session_id: "",
+    mooncode_stream_checkpoint_status: "checkpoint idle",
+    mooncode_stream_events: [],
+    mooncode_runtime_event_sink_session_id: "",
+    mooncode_runtime_event_sink_status: "runtime events idle",
+    mooncode_runtime_event_sink: None,
+    mooncode_change_set_session_id: "",
+    mooncode_change_set_status: "change set idle",
+    mooncode_change_set: None,
+    mooncode_eval_report_session_id: "",
+    mooncode_eval_report_status: "eval report idle",
+    mooncode_eval_report: None,
+    mooncode_runtime_handoff_session_id: "",
+    mooncode_runtime_handoff_status: "runtime handoff idle",
+    mooncode_runtime_handoff: None,
+    mooncode_patch_set_session_id: "",
+    mooncode_patch_set_status: "patch set idle",
+    mooncode_patch_set: None,
+    mooncode_tool_approvals_session_id: "",
+    mooncode_tool_approvals_status: "tool approvals idle",
+    mooncode_tool_approvals: None,
+    mooncode_tool_authorization_session_id: "",
+    mooncode_tool_authorization_status: "tool authorization idle",
+    mooncode_tool_authorization: None,
+    mooncode_test_runs_session_id: "",
+    mooncode_test_runs_status: "test runs idle",
+    mooncode_test_runs: None,
+  mooncode_package_candidates_session_id: "",
+  mooncode_package_candidates_status: "package candidates idle",
+  mooncode_package_candidates: None,
+  mooncode_action_plan_session_id: "",
+  mooncode_action_plan_status: "action plan idle",
+  mooncode_action_plan: None,
+  mooncode_runtime_evidence_session_id: "",
+  mooncode_runtime_evidence_status: "runtime evidence idle",
+  mooncode_runtime_evidence: None,
+  mooncode_command_queue_session_id: "",
+  mooncode_command_queue_status: "command queue idle",
+  mooncode_command_queue: None,
+  mooncode_runtime_command_feed_session_id: "",
+  mooncode_runtime_command_feed_status: "runtime feed idle",
+  mooncode_runtime_command_feed: None,
+  mooncode_runtime_replay_session_id: "",
+  mooncode_runtime_replay_status: "runtime replay idle",
+  mooncode_runtime_replay: None,
+  mooncode_preflight_session_id: "",
+  mooncode_preflight_status: "preflight idle",
+  mooncode_preflights: [],
+    mooncode_runtime_dispatch_session_id: "",
+    mooncode_runtime_dispatch_status: "runtime dispatch idle",
+    mooncode_runtime_dispatch: None,
+    mooncode_runtime_claim_session_id: "",
+    mooncode_runtime_claim_status: "runtime claim idle",
+    mooncode_runtime_claim: None,
     agent_prompt: "Help me improve this book/code workspace. Use the selected context and explain the concrete changes you recommend.",
     agent_model: "",
     agent_web_search: false,
@@ -1295,6 +2617,97 @@ fn json_string_array(items : Array[String]) -> Json {
 }
 
 ///|
+fn json_field(json : Json, key : String) -> Json? {
+  match json {
+    Json::Object(object) => object.get(key)
+    _ => None
+  }
+}
+
+///|
+fn json_string_value(json : Json, key : String, default~ : String) -> String {
+  match json_field(json, key) {
+    Some(value) =>
+      @json.from_json(value) catch {
+        _ => default
+      }
+    None => default
+  }
+}
+
+///|
+fn json_int_value(json : Json, key : String, default~ : Int) -> Int {
+  match json_field(json, key) {
+    Some(value) =>
+      @json.from_json(value) catch {
+        _ => default
+      }
+    None => default
+  }
+}
+
+///|
+fn parse_mooncode_stream_text(text : String) -> Result[MoonCodeStreamPoll, String] {
+  let events : Array[MoonCodeEvent] = []
+  let mut session_id = ""
+  let mut stream = "append-log-incremental"
+  let mut stream_source = "unknown"
+  let mut since = 0
+  let mut next_since = 0
+  let mut emitted_count = 0
+  for line in text.split("\n") {
+    let trimmed = line.trim()
+    if trimmed.is_empty() {
+      continue
+    }
+    let record = @json.parse(trimmed.to_owned()) catch {
+      _ => { return Err("Invalid MoonCode stream record") }
+    }
+    let record_type = json_string_value(record, "type", default="")
+    if record_type == "meta" {
+      session_id = json_string_value(record, "session_id", default=session_id)
+      stream = json_string_value(record, "stream", default=stream)
+      stream_source = json_string_value(
+        record, "stream_source", default=stream_source,
+      )
+      since = json_int_value(record, "since", default=since)
+      next_since = json_int_value(record, "next_since", default=next_since)
+      emitted_count = json_int_value(
+        record, "emitted_count", default=emitted_count,
+      )
+    } else if record_type == "event" {
+      match json_field(record, "event") {
+        Some(event_json) => {
+          let event : MoonCodeEvent = @json.from_json(event_json) catch {
+            _ => { return Err("Invalid MoonCode stream event") }
+          }
+          events.push(event)
+        }
+        None => return Err("MoonCode stream event missing payload")
+      }
+    } else if record_type == "done" {
+      session_id = json_string_value(record, "session_id", default=session_id)
+      stream_source = json_string_value(
+        record, "stream_source", default=stream_source,
+      )
+      next_since = json_int_value(record, "next_since", default=next_since)
+      emitted_count = json_int_value(
+        record, "emitted_count", default=emitted_count,
+      )
+    }
+  }
+  Ok({
+    session_id,
+    stream,
+    stream_source,
+    since,
+    next_since,
+    emitted_count,
+    events,
+  })
+}
+
+///|
 fn pipe_field(parts : Array[String], index : Int) -> String {
   if index < parts.length() {
     parts[index]
@@ -1653,6 +3066,23 @@ fn json_field_string_array_items(json : Json, key : String) -> Array[String] {
               Json::String(text) => if text != "" { items.push(text) }
               _ => ()
             }
+          }
+        _ => ()
+      }
+    _ => ()
+  }
+  items
+}
+
+///|
+fn json_field_json_array_items(json : Json, key : String) -> Array[Json] {
+  let items : Array[Json] = []
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(Json::Array(values)) =>
+          for value in values {
+            items.push(value)
           }
         _ => ()
       }
@@ -2742,6 +4172,20 @@ fn fetch_agent_models_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_mooncode_capabilities_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd
+) -> @rabbita.Cmd {
+  @http.get(
+    "/api/mooncode/capabilities",
+    expect=@http.Json(fn(result) { dispatch(LoadedMoonCodeCapabilities(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode capability contract")
+      }
+    }),
+  )
+}
+
+///|
 fn fetch_agent_sessions_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   workspace_id : String,
@@ -2759,6 +4203,534 @@ fn fetch_agent_sessions_cmd(
       }
     }),
   )
+}
+
+///|
+fn fetch_mooncode_stream_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+  since : Int,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/stream?format=jsonl&since=\{since}&live=true&timeout_ms=1000&poll_ms=100",
+    expect=@http.Text(fn(result) {
+      let decoded : Result[MoonCodeStreamPoll, String] = match result {
+        Ok(text) => parse_mooncode_stream_text(text)
+        Err(error) => Err(error)
+      }
+      dispatch(LoadedMoonCodeStream(session_id, decoded))
+    }),
+  )
+}
+
+///|
+fn save_mooncode_stream_checkpoint_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+  next_since : Int,
+) -> @rabbita.Cmd {
+  if session_id == "" || next_since <= 0 {
+    return @rabbita.none
+  }
+  @http.post(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/stream-state",
+    @http.Body::Json({
+      "consumer_id": "moondesk-ui",
+      "last_seen_sequence": next_since,
+    }),
+    expect=@http.Json(
+      fn(result) { dispatch(SavedMoonCodeStreamCheckpoint(session_id, result)) },
+      json => {
+        Ok(@json.from_json(json)) catch {
+          _ => Err("Could not save MoonCode stream checkpoint")
+        }
+      },
+    ),
+  )
+}
+
+///|
+fn fetch_mooncode_change_set_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/change-set",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeChangeSet(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode change set")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_runtime_event_sink_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-events",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeRuntimeEventSink(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime event sink")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_eval_report_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/eval-report",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeEvalReport(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode eval report")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_runtime_handoff_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-handoff",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeRuntimeHandoff(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime handoff")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_patch_set_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/patch-set",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodePatchSet(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode patch set")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_tool_approvals_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/tool-approvals",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeToolApprovals(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode tool approvals")
+      }
+    }),
+  )
+}
+
+///|
+fn mooncode_tool_authorization_probe_payload(
+  selected_path : String,
+  tool_id : String,
+) -> Json {
+  let path = if selected_path == "" { "wiki/index.md" } else { selected_path }
+  match tool_id {
+    "read" => {
+      "tool_call_id": "moondesk-ui-probe-read",
+      "tool_name": "read",
+      "path": path,
+      "arguments": "{\"path\":\"\{path}\"}",
+    }
+    "write" => {
+      "tool_call_id": "moondesk-ui-probe-write",
+      "tool_name": "write",
+      "path": path,
+      "arguments": "{\"path\":\"\{path}\",\"content\":\"MoonCode authorization probe\"}",
+    }
+    "shell" => {
+      "tool_call_id": "moondesk-ui-probe-shell",
+      "tool_name": "shell",
+      "command": "moon check",
+      "arguments": "{\"cmd\":[\"moon\",\"check\"]}",
+    }
+    _ => {
+      "tool_call_id": "moondesk-ui-probe-\{tool_id}",
+      "tool_name": tool_id,
+      "path": path,
+      "arguments": "{\"path\":\"\{path}\"}",
+    }
+  }
+}
+
+///|
+fn probe_mooncode_tool_authorization_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+  selected_path : String,
+  tool_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.post(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/tool-authorization",
+    @http.Body::Json(
+      mooncode_tool_authorization_probe_payload(selected_path, tool_id),
+    ),
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeToolAuthorization(session_id, tool_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode tool authorization")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_test_runs_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/test-runs",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeTestRuns(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode test runs")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_package_candidates_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/package-candidates",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodePackageCandidates(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode package candidates")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_action_plan_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/action-plan",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeActionPlan(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode action plan")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_runtime_evidence_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-evidence",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeRuntimeEvidence(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime evidence")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_command_queue_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/commands",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeCommandQueue(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode command queue")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_runtime_command_feed_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-commands",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeRuntimeCommandFeed(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime command feed")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_runtime_replay_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-replay",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeRuntimeReplay(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime replay state")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_command_preflight_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+  action : String,
+  context_path : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/preflight?action=\{encode_component(action)}&context_path=\{encode_component(context_path)}",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeCommandPreflight(session_id, action, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode command preflight")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_preflight_matrix_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+  context_path : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @rabbita.batch([
+    fetch_mooncode_command_preflight_cmd(
+      dispatch, session_id, "package", context_path,
+    ),
+    fetch_mooncode_command_preflight_cmd(
+      dispatch, session_id, "commit", context_path,
+    ),
+    fetch_mooncode_command_preflight_cmd(
+      dispatch, session_id, "accept", context_path,
+    ),
+    fetch_mooncode_command_preflight_cmd(
+      dispatch, session_id, "apply_patch", context_path,
+    ),
+    fetch_mooncode_command_preflight_cmd(
+      dispatch, session_id, "revert_patch", context_path,
+    ),
+  ])
+}
+
+///|
+fn fetch_mooncode_runtime_dispatch_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-dispatch",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeRuntimeDispatch(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime dispatch state")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_mooncode_runtime_claim_state_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-claim",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeRuntimeClaimState(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime claim state")
+      }
+    }),
+  )
+}
+
+///|
+fn claim_mooncode_runtime_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+  force : Bool,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.post(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-claim",
+    @http.Body::Json({
+      "consumer_id": "moondesk-ui-inspector",
+      "max_count": 1,
+      "force": force,
+    }),
+    expect=@http.Json(fn(result) {
+      dispatch(ClaimedMoonCodeRuntime(session_id, force, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime claim response")
+      }
+    }),
+  )
+}
+
+///|
+fn ack_mooncode_runtime_command_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+  command_id : String,
+  status : String,
+) -> @rabbita.Cmd {
+  if session_id == "" || command_id == "" {
+    return @rabbita.none
+  }
+  @http.post(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-replay",
+    @http.Body::Json({
+      "consumer_id": "moondesk-ui-inspector",
+      "command_id": command_id,
+      "status": status,
+      "detail": "Moondesk UI inspector recorded runtime \{status} for \{command_id}.",
+    }),
+    expect=@http.Json(fn(result) {
+      dispatch(AckedMoonCodeRuntimeCommand(session_id, command_id, status, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode runtime replay acknowledgement")
+      }
+    }),
+  )
+}
+
+///|
+fn fetch_selected_mooncode_stream_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  match selected_agent_session(model) {
+    Some(session) => {
+      let since = if model.mooncode_stream_session_id == session.id {
+        model.mooncode_stream_cursor
+      } else {
+        0
+      }
+      fetch_mooncode_stream_cmd(dispatch, session.id, since)
+    }
+    None => @rabbita.none
+  }
 }
 
 ///|
@@ -3352,16 +5324,33 @@ fn create_agent_session_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   model : Model,
 ) -> @rabbita.Cmd {
+  let mooncode_mode = model.workspace_mode == WorkspaceMode::MoonCode
   let body : Json = {
     "workspace_id": model.selected_workspace_id,
-    "title": "Agent - \{workspace_name(model)}",
-    "message": trimmed_or(model.agent_prompt, "Help me improve this workspace."),
+    "title": if mooncode_mode {
+      "MoonCode - \{workspace_name(model)}"
+    } else {
+      "Agent - \{workspace_name(model)}"
+    },
+    "message": trimmed_or(
+      model.agent_prompt,
+      if mooncode_mode {
+        "Create, inspect, test, or package executable code inside this MoonBook."
+      } else {
+        "Help me improve this workspace."
+      },
+    ),
     "model": model.agent_model,
     "web_search": model.agent_web_search,
     "context_path": model.selected_path,
   }
+  let endpoint = if mooncode_mode {
+    "/api/mooncode/sessions"
+  } else {
+    "/api/agents/sessions"
+  }
   @http.post(
-    "/api/agents/sessions",
+    endpoint,
     @http.Body::Json(body),
     expect=@http.Json(fn(result) { dispatch(CreatedAgentSession(result)) }, json => {
       Ok(@json.from_json(json)) catch {
@@ -3396,6 +5385,51 @@ fn send_agent_message_cmd(
 }
 
 ///|
+fn send_mooncode_composer_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+  session : AgentSession,
+) -> @rabbita.Cmd {
+  let action = mooncode_composer_action(model, session)
+  mooncode_session_command_cmd(
+    dispatch,
+    model,
+    session,
+    action,
+    message=model.agent_prompt.trim().to_owned(),
+  )
+}
+
+///|
+fn mooncode_composer_action(
+  model : Model,
+  session : AgentSession
+) -> String {
+  if mooncode_session_accepts_steer(model, session) {
+    "steer"
+  } else {
+    "prompt"
+  }
+}
+
+///|
+fn mooncode_session_accepts_steer(
+  model : Model,
+  session : AgentSession
+) -> Bool {
+  if session.status == "running" ||
+    session.status == "queued" ||
+    session.queued_count > 0 {
+    return true
+  }
+  match model.mooncode_action_plan {
+    Some(plan) if model.mooncode_action_plan_session_id == session.id =>
+      plan.running_count > 0 || plan.pending_runtime_count > 0
+    _ => false
+  }
+}
+
+///|
 fn cancel_agent_session_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   session : AgentSession,
@@ -3406,6 +5440,40 @@ fn cancel_agent_session_cmd(
     expect=@http.Json(fn(result) { dispatch(CancelledAgentSession(result)) }, json => {
       Ok(@json.from_json(json)) catch {
         _ => Err("Could not cancel agent session")
+      }
+    }),
+  )
+}
+
+///|
+fn mooncode_session_command_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+  session : AgentSession,
+  action : String,
+  context_path? : String = "",
+  message? : String = "",
+  force_preflight? : Bool = false,
+) -> @rabbita.Cmd {
+  let target_path = if context_path == "" {
+    model.selected_path
+  } else {
+    context_path
+  }
+  @http.post(
+    "/api/mooncode/sessions/\{session.id}/commands",
+    @http.Body::Json({
+      "action": action,
+      "message": message,
+      "web_search": model.agent_web_search,
+      "context_path": target_path,
+      "force_preflight": force_preflight,
+    }),
+    expect=@http.Json(fn(result) {
+      dispatch(CompletedMoonCodeCommand(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not run MoonCode command")
       }
     }),
   )
@@ -3441,6 +5509,7 @@ fn reload_workspace_cmds(
       fetch_agent_daemon_cmd(dispatch),
       fetch_agent_models_cmd(dispatch),
       fetch_agent_sessions_cmd(dispatch, workspace_id),
+      fetch_mooncode_capabilities_cmd(dispatch),
       fetch_review_items_cmd(dispatch, workspace_id),
       fetch_review_diff_cmd(dispatch, workspace_id, selected_path),
       fetch_saved_views_cmd(dispatch),
@@ -4158,18 +6227,1079 @@ fn update(
       } else {
         first_agent_session_id(agent_sessions, model.selected_workspace_id)
       }
+      let stream_session_id = if selected == model.mooncode_stream_session_id {
+        model.mooncode_stream_session_id
+      } else {
+        ""
+      }
+      let stream_cursor = if selected == model.mooncode_stream_session_id {
+        model.mooncode_stream_cursor
+      } else {
+        0
+      }
+      let stream_events = if selected == model.mooncode_stream_session_id {
+        model.mooncode_stream_events
+      } else {
+        []
+      }
+      let runtime_event_sink = if selected ==
+        model.mooncode_runtime_event_sink_session_id {
+        model.mooncode_runtime_event_sink
+      } else {
+        None
+      }
+      let stream_checkpoint_session_id = if selected ==
+        model.mooncode_stream_checkpoint_session_id {
+        model.mooncode_stream_checkpoint_session_id
+      } else {
+        ""
+      }
+      let change_set = if selected == model.mooncode_change_set_session_id {
+        model.mooncode_change_set
+      } else {
+        None
+      }
+      let eval_report = if selected == model.mooncode_eval_report_session_id {
+        model.mooncode_eval_report
+      } else {
+        None
+      }
+      let runtime_handoff = if selected ==
+        model.mooncode_runtime_handoff_session_id {
+        model.mooncode_runtime_handoff
+      } else {
+        None
+      }
+      let patch_set = if selected == model.mooncode_patch_set_session_id {
+        model.mooncode_patch_set
+      } else {
+        None
+      }
+      let tool_approvals = if selected == model.mooncode_tool_approvals_session_id {
+        model.mooncode_tool_approvals
+      } else {
+        None
+      }
+      let tool_authorization = if selected ==
+        model.mooncode_tool_authorization_session_id {
+        model.mooncode_tool_authorization
+      } else {
+        None
+      }
+      let test_runs = if selected == model.mooncode_test_runs_session_id {
+        model.mooncode_test_runs
+      } else {
+        None
+      }
+      let package_candidates = if selected ==
+        model.mooncode_package_candidates_session_id {
+        model.mooncode_package_candidates
+      } else {
+        None
+      }
+      let action_plan = if selected == model.mooncode_action_plan_session_id {
+        model.mooncode_action_plan
+      } else {
+        None
+      }
+      let runtime_evidence = if selected ==
+        model.mooncode_runtime_evidence_session_id {
+        model.mooncode_runtime_evidence
+      } else {
+        None
+      }
+      let command_queue = if selected == model.mooncode_command_queue_session_id {
+        model.mooncode_command_queue
+      } else {
+        None
+      }
+      let runtime_command_feed = if selected ==
+        model.mooncode_runtime_command_feed_session_id {
+        model.mooncode_runtime_command_feed
+      } else {
+        None
+      }
+      let runtime_replay = if selected ==
+        model.mooncode_runtime_replay_session_id {
+        model.mooncode_runtime_replay
+      } else {
+        None
+      }
+      let runtime_dispatch = if selected ==
+        model.mooncode_runtime_dispatch_session_id {
+        model.mooncode_runtime_dispatch
+      } else {
+        None
+      }
+      let runtime_claim = if selected ==
+        model.mooncode_runtime_claim_session_id {
+        model.mooncode_runtime_claim
+      } else {
+        None
+      }
       (
-        @rabbita.none,
+        if selected == "" {
+          @rabbita.none
+        } else {
+          @rabbita.batch([
+            fetch_mooncode_runtime_event_sink_cmd(dispatch, selected),
+            fetch_mooncode_change_set_cmd(dispatch, selected),
+            fetch_mooncode_eval_report_cmd(dispatch, selected),
+            fetch_mooncode_runtime_handoff_cmd(dispatch, selected),
+            fetch_mooncode_patch_set_cmd(dispatch, selected),
+            fetch_mooncode_tool_approvals_cmd(dispatch, selected),
+            fetch_mooncode_test_runs_cmd(dispatch, selected),
+            fetch_mooncode_package_candidates_cmd(dispatch, selected),
+            fetch_mooncode_action_plan_cmd(dispatch, selected),
+            fetch_mooncode_runtime_evidence_cmd(dispatch, selected),
+            fetch_mooncode_command_queue_cmd(dispatch, selected),
+            fetch_mooncode_runtime_command_feed_cmd(dispatch, selected),
+            fetch_mooncode_runtime_replay_cmd(dispatch, selected),
+            fetch_mooncode_preflight_matrix_cmd(
+              dispatch, selected, model.selected_path,
+            ),
+            fetch_mooncode_runtime_dispatch_cmd(dispatch, selected),
+            fetch_mooncode_runtime_claim_state_cmd(dispatch, selected),
+          ])
+        },
         {
           ..model,
           agent_sessions,
           selected_agent_session_id: selected,
+          mooncode_stream_session_id: stream_session_id,
+          mooncode_stream_cursor: stream_cursor,
+          mooncode_stream_events: stream_events,
+          mooncode_stream_status: if selected == "" {
+            "stream idle"
+          } else if selected == model.mooncode_stream_session_id {
+            model.mooncode_stream_status
+          } else {
+            "stream cursor reset"
+          },
+          mooncode_stream_checkpoint_session_id: stream_checkpoint_session_id,
+          mooncode_stream_checkpoint_status: if selected == "" {
+            "checkpoint idle"
+          } else if selected == model.mooncode_stream_checkpoint_session_id {
+            model.mooncode_stream_checkpoint_status
+          } else {
+            "checkpoint idle"
+          },
+          mooncode_runtime_event_sink_session_id: if selected ==
+            model.mooncode_runtime_event_sink_session_id {
+            model.mooncode_runtime_event_sink_session_id
+          } else {
+            ""
+          },
+          mooncode_runtime_event_sink: runtime_event_sink,
+          mooncode_runtime_event_sink_status: if selected == "" {
+            "runtime events idle"
+          } else if selected == model.mooncode_runtime_event_sink_session_id {
+            model.mooncode_runtime_event_sink_status
+          } else {
+            "loading runtime events"
+          },
+          mooncode_change_set_session_id: if selected == model.mooncode_change_set_session_id {
+            model.mooncode_change_set_session_id
+          } else {
+            ""
+          },
+          mooncode_change_set: change_set,
+          mooncode_change_set_status: if selected == "" {
+            "change set idle"
+          } else if selected == model.mooncode_change_set_session_id {
+            model.mooncode_change_set_status
+          } else {
+            "loading change set"
+          },
+          mooncode_eval_report_session_id: if selected ==
+            model.mooncode_eval_report_session_id {
+            model.mooncode_eval_report_session_id
+          } else {
+            ""
+          },
+          mooncode_eval_report: eval_report,
+          mooncode_eval_report_status: if selected == "" {
+            "eval report idle"
+          } else if selected == model.mooncode_eval_report_session_id {
+            model.mooncode_eval_report_status
+          } else {
+            "loading eval report"
+          },
+          mooncode_runtime_handoff_session_id: if selected ==
+            model.mooncode_runtime_handoff_session_id {
+            model.mooncode_runtime_handoff_session_id
+          } else {
+            ""
+          },
+          mooncode_runtime_handoff: runtime_handoff,
+          mooncode_runtime_handoff_status: if selected == "" {
+            "runtime handoff idle"
+          } else if selected == model.mooncode_runtime_handoff_session_id {
+            model.mooncode_runtime_handoff_status
+          } else {
+            "loading runtime handoff"
+          },
+          mooncode_patch_set_session_id: if selected == model.mooncode_patch_set_session_id {
+            model.mooncode_patch_set_session_id
+          } else {
+            ""
+          },
+          mooncode_patch_set: patch_set,
+          mooncode_patch_set_status: if selected == "" {
+            "patch set idle"
+          } else if selected == model.mooncode_patch_set_session_id {
+            model.mooncode_patch_set_status
+          } else {
+            "loading patch set"
+          },
+          mooncode_tool_approvals_session_id: if selected ==
+            model.mooncode_tool_approvals_session_id {
+            model.mooncode_tool_approvals_session_id
+          } else {
+            ""
+          },
+          mooncode_tool_approvals: tool_approvals,
+          mooncode_tool_approvals_status: if selected == "" {
+            "tool approvals idle"
+          } else if selected == model.mooncode_tool_approvals_session_id {
+            model.mooncode_tool_approvals_status
+          } else {
+            "loading tool approvals"
+          },
+          mooncode_tool_authorization_session_id: if selected ==
+            model.mooncode_tool_authorization_session_id {
+            model.mooncode_tool_authorization_session_id
+          } else {
+            ""
+          },
+          mooncode_tool_authorization: tool_authorization,
+          mooncode_tool_authorization_status: if selected == "" {
+            "tool authorization idle"
+          } else if selected == model.mooncode_tool_authorization_session_id {
+            model.mooncode_tool_authorization_status
+          } else {
+            "tool authorization idle"
+          },
+          mooncode_test_runs_session_id: if selected ==
+            model.mooncode_test_runs_session_id {
+            model.mooncode_test_runs_session_id
+          } else {
+            ""
+          },
+          mooncode_test_runs: test_runs,
+          mooncode_test_runs_status: if selected == "" {
+            "test runs idle"
+          } else if selected == model.mooncode_test_runs_session_id {
+            model.mooncode_test_runs_status
+          } else {
+            "loading test runs"
+          },
+          mooncode_package_candidates_session_id: if selected ==
+            model.mooncode_package_candidates_session_id {
+            model.mooncode_package_candidates_session_id
+          } else {
+            ""
+          },
+          mooncode_package_candidates: package_candidates,
+          mooncode_package_candidates_status: if selected == "" {
+            "package candidates idle"
+          } else if selected == model.mooncode_package_candidates_session_id {
+            model.mooncode_package_candidates_status
+          } else {
+            "loading package candidates"
+          },
+          mooncode_action_plan_session_id: if selected ==
+            model.mooncode_action_plan_session_id {
+            model.mooncode_action_plan_session_id
+          } else {
+            ""
+          },
+          mooncode_action_plan: action_plan,
+          mooncode_action_plan_status: if selected == "" {
+            "action plan idle"
+          } else if selected == model.mooncode_action_plan_session_id {
+            model.mooncode_action_plan_status
+          } else {
+            "loading action plan"
+          },
+          mooncode_runtime_evidence_session_id: if selected ==
+            model.mooncode_runtime_evidence_session_id {
+            model.mooncode_runtime_evidence_session_id
+          } else {
+            ""
+          },
+          mooncode_runtime_evidence: runtime_evidence,
+          mooncode_runtime_evidence_status: if selected == "" {
+            "runtime evidence idle"
+          } else if selected == model.mooncode_runtime_evidence_session_id {
+            model.mooncode_runtime_evidence_status
+          } else {
+            "loading runtime evidence"
+          },
+          mooncode_command_queue_session_id: if selected ==
+            model.mooncode_command_queue_session_id {
+            model.mooncode_command_queue_session_id
+          } else {
+            ""
+          },
+          mooncode_command_queue: command_queue,
+          mooncode_command_queue_status: if selected == "" {
+            "command queue idle"
+          } else if selected == model.mooncode_command_queue_session_id {
+            model.mooncode_command_queue_status
+          } else {
+            "loading command queue"
+          },
+          mooncode_runtime_command_feed_session_id: if selected ==
+            model.mooncode_runtime_command_feed_session_id {
+            model.mooncode_runtime_command_feed_session_id
+          } else {
+            ""
+          },
+          mooncode_runtime_command_feed: runtime_command_feed,
+          mooncode_runtime_command_feed_status: if selected == "" {
+            "runtime feed idle"
+          } else if selected == model.mooncode_runtime_command_feed_session_id {
+            model.mooncode_runtime_command_feed_status
+          } else {
+            "loading runtime feed"
+          },
+          mooncode_runtime_replay_session_id: if selected ==
+            model.mooncode_runtime_replay_session_id {
+            model.mooncode_runtime_replay_session_id
+          } else {
+            ""
+          },
+          mooncode_runtime_replay: runtime_replay,
+          mooncode_runtime_replay_status: if selected == "" {
+            "runtime replay idle"
+          } else if selected == model.mooncode_runtime_replay_session_id {
+            model.mooncode_runtime_replay_status
+          } else {
+            "loading runtime replay"
+          },
+          mooncode_preflight_session_id: if selected ==
+            model.mooncode_preflight_session_id {
+            model.mooncode_preflight_session_id
+          } else {
+            ""
+          },
+          mooncode_preflights: if selected == model.mooncode_preflight_session_id {
+            model.mooncode_preflights
+          } else {
+            []
+          },
+          mooncode_preflight_status: if selected == "" {
+            "preflight idle"
+          } else if selected == model.mooncode_preflight_session_id {
+            model.mooncode_preflight_status
+          } else {
+            "loading preflight gates"
+          },
+          mooncode_runtime_dispatch_session_id: if selected ==
+            model.mooncode_runtime_dispatch_session_id {
+            model.mooncode_runtime_dispatch_session_id
+          } else {
+            ""
+          },
+          mooncode_runtime_dispatch: runtime_dispatch,
+          mooncode_runtime_dispatch_status: if selected == "" {
+            "runtime dispatch idle"
+          } else if selected == model.mooncode_runtime_dispatch_session_id {
+            model.mooncode_runtime_dispatch_status
+          } else {
+            "loading runtime dispatch"
+          },
+          mooncode_runtime_claim_session_id: if selected ==
+            model.mooncode_runtime_claim_session_id {
+            model.mooncode_runtime_claim_session_id
+          } else {
+            ""
+          },
+          mooncode_runtime_claim: runtime_claim,
+          mooncode_runtime_claim_status: if selected == "" {
+            "runtime claim idle"
+          } else if selected == model.mooncode_runtime_claim_session_id {
+            model.mooncode_runtime_claim_status
+          } else {
+            "loading runtime claim"
+          },
           agent_status: "\{agent_sessions.length()} agent session(s)",
         },
       )
     }
     LoadedAgentSessions(Err(error)) =>
       (@rabbita.none, { ..model, agent_status: error })
+    LoadedMoonCodeCapabilities(Ok(capabilities)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_capabilities: Some(capabilities),
+          mooncode_status: "MoonCode \{capabilities.component}.v\{capabilities.version} contract loaded",
+        },
+      )
+    LoadedMoonCodeCapabilities(Err(error)) =>
+      (@rabbita.none, { ..model, mooncode_status: error })
+    LoadedMoonCodeStream(session_id, Ok(stream)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        let stream_events = if session_id == model.mooncode_stream_session_id {
+          mooncode_merge_stream_events(model.mooncode_stream_events, stream.events)
+        } else {
+          mooncode_merge_stream_events([], stream.events)
+        }
+        (
+          save_mooncode_stream_checkpoint_cmd(
+            dispatch, session_id, stream.next_since,
+          ),
+          {
+            ..model,
+            mooncode_stream_session_id: session_id,
+            mooncode_stream_cursor: stream.next_since,
+            mooncode_stream_events: stream_events,
+            mooncode_stream_status: "live tail / \{stream.stream_source} / \{stream.stream} +\{stream.emitted_count} event(s), cursor \{stream.next_since}",
+            mooncode_stream_checkpoint_session_id: session_id,
+            mooncode_stream_checkpoint_status: if stream.next_since > 0 {
+              "saving checkpoint \{stream.next_since}"
+            } else {
+              "checkpoint idle"
+            },
+          },
+        )
+      }
+    LoadedMoonCodeStream(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_stream_session_id: session_id,
+            mooncode_stream_status: error,
+          },
+        )
+      }
+    SavedMoonCodeStreamCheckpoint(session_id, Ok(state)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_stream_checkpoint_session_id: session_id,
+            mooncode_stream_checkpoint_status: "\{state.consumer_id} checkpoint \{state.next_since} / latest \{state.latest_sequence}",
+          },
+        )
+      }
+    SavedMoonCodeStreamCheckpoint(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_stream_checkpoint_session_id: session_id,
+            mooncode_stream_checkpoint_status: "checkpoint failed: \{error}",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeEventSink(session_id, Ok(sink)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_event_sink_session_id: session_id,
+            mooncode_runtime_event_sink: Some(sink),
+            mooncode_runtime_event_sink_status: "\{sink.event_count} runtime event(s)",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeEventSink(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_event_sink_session_id: session_id,
+            mooncode_runtime_event_sink: None,
+            mooncode_runtime_event_sink_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeChangeSet(session_id, Ok(change_set)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_change_set_session_id: session_id,
+            mooncode_change_set: Some(change_set),
+            mooncode_change_set_status: "\{change_set.status} / \{change_set.diff_count} diff(s), \{change_set.test_count} test(s)",
+          },
+        )
+      }
+    LoadedMoonCodeChangeSet(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_change_set_session_id: session_id,
+            mooncode_change_set: None,
+            mooncode_change_set_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeEvalReport(session_id, Ok(report)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_eval_report_session_id: session_id,
+            mooncode_eval_report: Some(report),
+            mooncode_eval_report_status: "\{report.status} / \{report.passed_check_count} passed, \{report.missing_check_count} missing",
+          },
+        )
+      }
+    LoadedMoonCodeEvalReport(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_eval_report_session_id: session_id,
+            mooncode_eval_report: None,
+            mooncode_eval_report_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeHandoff(session_id, Ok(handoff)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_handoff_session_id: session_id,
+            mooncode_runtime_handoff: Some(handoff),
+            mooncode_runtime_handoff_status: "\{handoff.status} / \{handoff.command_count} command(s)",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeHandoff(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_handoff_session_id: session_id,
+            mooncode_runtime_handoff: None,
+            mooncode_runtime_handoff_status: error,
+          },
+        )
+      }
+    LoadedMoonCodePatchSet(session_id, Ok(patch_set)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_patch_set_session_id: session_id,
+            mooncode_patch_set: Some(patch_set),
+            mooncode_patch_set_status: "\{patch_set.status} / \{patch_set.patch_count} patch(es)",
+          },
+        )
+      }
+    LoadedMoonCodePatchSet(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_patch_set_session_id: session_id,
+            mooncode_patch_set: None,
+            mooncode_patch_set_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeToolApprovals(session_id, Ok(approvals)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_tool_approvals_session_id: session_id,
+            mooncode_tool_approvals: Some(approvals),
+            mooncode_tool_approvals_status: "\{approvals.status} / \{approvals.pending_approval_count} pending",
+          },
+        )
+      }
+    LoadedMoonCodeToolApprovals(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_tool_approvals_session_id: session_id,
+            mooncode_tool_approvals: None,
+            mooncode_tool_approvals_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeToolAuthorization(session_id, tool_id, Ok(authorization)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Agents,
+            @rabbita.batch([
+              fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+              fetch_mooncode_tool_approvals_cmd(dispatch, session_id),
+              fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
+              fetch_mooncode_preflight_matrix_cmd(
+                dispatch, session_id, model.selected_path,
+              ),
+            ]),
+          ),
+          {
+            ..model,
+            mooncode_tool_authorization_session_id: session_id,
+            mooncode_tool_authorization: Some(authorization),
+            mooncode_tool_authorization_status: "\{tool_id}: \{authorization.decision}",
+          },
+        )
+      }
+    LoadedMoonCodeToolAuthorization(session_id, tool_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_tool_authorization_session_id: session_id,
+            mooncode_tool_authorization: None,
+            mooncode_tool_authorization_status: "\{tool_id}: \{error}",
+          },
+        )
+      }
+    LoadedMoonCodeTestRuns(session_id, Ok(test_runs)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_test_runs_session_id: session_id,
+            mooncode_test_runs: Some(test_runs),
+            mooncode_test_runs_status: "\{test_runs.status} / \{test_runs.passed_run_count} passed, \{test_runs.failed_run_count} failed",
+          },
+        )
+      }
+    LoadedMoonCodeTestRuns(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_test_runs_session_id: session_id,
+            mooncode_test_runs: None,
+            mooncode_test_runs_status: error,
+          },
+        )
+      }
+    LoadedMoonCodePackageCandidates(session_id, Ok(candidates)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_package_candidates_session_id: session_id,
+            mooncode_package_candidates: Some(candidates),
+            mooncode_package_candidates_status: "\{candidates.status} / \{candidates.source_bound_package_count} source-bound, \{candidates.missing_source_package_count} missing-source",
+          },
+        )
+      }
+    LoadedMoonCodePackageCandidates(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_package_candidates_session_id: session_id,
+            mooncode_package_candidates: None,
+            mooncode_package_candidates_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeActionPlan(session_id, Ok(plan)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_action_plan_session_id: session_id,
+            mooncode_action_plan: Some(plan),
+            mooncode_action_plan_status: "\{plan.status} / \{plan.next_required_action}",
+          },
+        )
+      }
+    LoadedMoonCodeActionPlan(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_action_plan_session_id: session_id,
+            mooncode_action_plan: None,
+            mooncode_action_plan_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeEvidence(session_id, Ok(evidence)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_evidence_session_id: session_id,
+            mooncode_runtime_evidence: Some(evidence),
+            mooncode_runtime_evidence_status: "\{evidence.status} / \{evidence.proven_command_count}/\{evidence.command_count} command(s) proven",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeEvidence(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_evidence_session_id: session_id,
+            mooncode_runtime_evidence: None,
+            mooncode_runtime_evidence_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeCommandQueue(session_id, Ok(queue)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_command_queue_session_id: session_id,
+            mooncode_command_queue: Some(queue),
+            mooncode_command_queue_status: "\{queue.command_count} command(s)",
+          },
+        )
+      }
+    LoadedMoonCodeCommandQueue(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_command_queue_session_id: session_id,
+            mooncode_command_queue: None,
+            mooncode_command_queue_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeCommandFeed(session_id, Ok(feed)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_command_feed_session_id: session_id,
+            mooncode_runtime_command_feed: Some(feed),
+            mooncode_runtime_command_feed_status: "\{feed.runtime_command_count} runtime command(s), \{feed.runtime_dispatch_pending_count} pending dispatch",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeCommandFeed(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_command_feed_session_id: session_id,
+            mooncode_runtime_command_feed: None,
+            mooncode_runtime_command_feed_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeReplay(session_id, Ok(replay)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_replay_session_id: session_id,
+            mooncode_runtime_replay: Some(replay),
+            mooncode_runtime_replay_status: "\{replay.pending_command_count} pending, \{replay.delivered_command_count} delivered",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeReplay(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_replay_session_id: session_id,
+            mooncode_runtime_replay: None,
+            mooncode_runtime_replay_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeCommandPreflight(session_id, _action, Ok(preflight)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        let preflights = mooncode_replace_command_preflight(
+          model.mooncode_preflights, preflight,
+        )
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_preflight_session_id: session_id,
+            mooncode_preflights: preflights,
+            mooncode_preflight_status: mooncode_preflight_status(preflights),
+          },
+        )
+      }
+    LoadedMoonCodeCommandPreflight(session_id, action, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_preflight_session_id: session_id,
+            mooncode_preflight_status: "\{action}: \{error}",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeDispatch(session_id, Ok(state)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_dispatch_session_id: session_id,
+            mooncode_runtime_dispatch: Some(state),
+            mooncode_runtime_dispatch_status: "\{state.runtime_dispatch_count} receipt(s), \{state.runtime_dispatch_pending_count} pending",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeDispatch(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_dispatch_session_id: session_id,
+            mooncode_runtime_dispatch: None,
+            mooncode_runtime_dispatch_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeClaimState(session_id, Ok(state)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_claim_session_id: session_id,
+            mooncode_runtime_claim: Some(state),
+            mooncode_runtime_claim_status: "\{state.claimable_command_count} claimable, \{state.claimed_command_count} claimed, \{state.tool_authorization_blocked_command_count} auth blocked",
+          },
+        )
+      }
+    LoadedMoonCodeRuntimeClaimState(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_claim_session_id: session_id,
+            mooncode_runtime_claim: None,
+            mooncode_runtime_claim_status: error,
+          },
+        )
+      }
+    ClaimedMoonCodeRuntime(session_id, force, Ok(response)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        let claimed_count = json_field_int(response, "claimed_count", default=0)
+        (
+          sync_activity_batch(
+            Activity::Agents,
+            @rabbita.batch([
+              fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+              fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_replay_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
+              fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_handoff_cmd(dispatch, session_id),
+            ]),
+          ),
+          {
+            ..model,
+            mooncode_runtime_claim_session_id: session_id,
+            mooncode_runtime_claim_status: if force {
+              "force-claimed \{claimed_count} command(s)"
+            } else {
+              "claimed \{claimed_count} command(s)"
+            },
+            agent_status: if claimed_count == 0 {
+              "no claimable MoonCode runtime command"
+            } else if force {
+              "force-claimed MoonCode runtime command"
+            } else {
+              "claimed MoonCode runtime command"
+            },
+          },
+        )
+      }
+    ClaimedMoonCodeRuntime(session_id, force, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_claim_session_id: session_id,
+            mooncode_runtime_claim_status: if force {
+              "force claim failed: \{error}"
+            } else {
+              "claim failed: \{error}"
+            },
+            agent_status: error,
+          },
+        )
+      }
+    AckedMoonCodeRuntimeCommand(session_id, _command_id, status, Ok(response)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        let accepted_count = json_field_int(
+          response, "accepted_receipt_count", default=0,
+        )
+        (
+          sync_activity_batch(
+            Activity::Agents,
+            @rabbita.batch([
+              fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+              fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_replay_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
+              fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_handoff_cmd(dispatch, session_id),
+            ]),
+          ),
+          {
+            ..model,
+            mooncode_runtime_claim_session_id: session_id,
+            mooncode_runtime_claim_status: "runtime \{status}: \{accepted_count} receipt(s)",
+            agent_status: if accepted_count == 0 {
+              "MoonCode runtime acknowledgement recorded no receipts"
+            } else {
+              "MoonCode runtime \{status} recorded"
+            },
+          },
+        )
+      }
+    AckedMoonCodeRuntimeCommand(session_id, _command_id, status, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_runtime_claim_session_id: session_id,
+            mooncode_runtime_claim_status: "runtime \{status} failed: \{error}",
+            agent_status: error,
+          },
+        )
+      }
     CreatedAgentSession(Ok(session)) =>
       (
         sync_activity_batch(
@@ -4178,11 +7308,26 @@ fn update(
             fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
             fetch_agent_daemon_cmd(dispatch),
             fetch_agent_models_cmd(dispatch),
+            fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
+            fetch_mooncode_eval_report_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_handoff_cmd(dispatch, session.id),
+            fetch_mooncode_command_queue_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_replay_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
+            fetch_mooncode_package_candidates_cmd(dispatch, session.id),
+            fetch_mooncode_action_plan_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
+            fetch_mooncode_preflight_matrix_cmd(
+              dispatch, session.id, model.selected_path,
+            ),
             schedule_agent_poll(dispatch),
           ]),
         ),
         {
           ..model,
+          workspace_mode: WorkspaceMode::MoonCode,
           activity: Activity::Agents,
           command_open: false,
           selected_agent_session_id: session.id,
@@ -4195,6 +7340,7 @@ fn update(
         sync_activity_cmd(Activity::Agents),
         {
           ..model,
+          workspace_mode: WorkspaceMode::MoonCode,
           activity: Activity::Agents,
           command_open: false,
           agent_status: error,
@@ -4206,11 +7352,30 @@ fn update(
           Activity::Agents,
           @rabbita.batch([
             fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+            fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
+            fetch_mooncode_change_set_cmd(dispatch, session.id),
+            fetch_mooncode_eval_report_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_handoff_cmd(dispatch, session.id),
+            fetch_mooncode_patch_set_cmd(dispatch, session.id),
+            fetch_mooncode_tool_approvals_cmd(dispatch, session.id),
+            fetch_mooncode_test_runs_cmd(dispatch, session.id),
+            fetch_mooncode_package_candidates_cmd(dispatch, session.id),
+            fetch_mooncode_action_plan_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
+            fetch_mooncode_command_queue_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_replay_cmd(dispatch, session.id),
+            fetch_mooncode_preflight_matrix_cmd(
+              dispatch, session.id, model.selected_path,
+            ),
+            fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
             schedule_agent_poll(dispatch),
           ]),
         ),
         {
           ..model,
+          workspace_mode: WorkspaceMode::MoonCode,
           activity: Activity::Agents,
           command_open: false,
           selected_agent_session_id: session.id,
@@ -4223,6 +7388,7 @@ fn update(
         sync_activity_cmd(Activity::Agents),
         {
           ..model,
+          workspace_mode: WorkspaceMode::MoonCode,
           activity: Activity::Agents,
           command_open: false,
           agent_status: error,
@@ -4232,10 +7398,24 @@ fn update(
       (
         sync_activity_batch(
           Activity::Agents,
-          fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+          @rabbita.batch([
+            fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+            fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
+            fetch_mooncode_command_queue_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_replay_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
+            fetch_mooncode_action_plan_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
+            fetch_mooncode_preflight_matrix_cmd(
+              dispatch, session.id, model.selected_path,
+            ),
+          ]),
         ),
         {
           ..model,
+          workspace_mode: WorkspaceMode::MoonCode,
           activity: Activity::Agents,
           command_open: false,
           selected_agent_session_id: session.id,
@@ -4247,11 +7427,97 @@ fn update(
         sync_activity_cmd(Activity::Agents),
         {
           ..model,
+          workspace_mode: WorkspaceMode::MoonCode,
           activity: Activity::Agents,
           command_open: false,
           agent_status: error,
         },
       )
+    CompletedMoonCodeCommand(Ok(session)) =>
+      (
+        sync_activity_batch(
+          Activity::Agents,
+          @rabbita.batch([
+            fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+            fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
+            fetch_mooncode_change_set_cmd(dispatch, session.id),
+            fetch_mooncode_eval_report_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_handoff_cmd(dispatch, session.id),
+            fetch_mooncode_patch_set_cmd(dispatch, session.id),
+            fetch_mooncode_tool_approvals_cmd(dispatch, session.id),
+            fetch_mooncode_test_runs_cmd(dispatch, session.id),
+            fetch_mooncode_package_candidates_cmd(dispatch, session.id),
+            fetch_mooncode_action_plan_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
+            fetch_mooncode_command_queue_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_replay_cmd(dispatch, session.id),
+            fetch_mooncode_preflight_matrix_cmd(
+              dispatch, session.id, model.selected_path,
+            ),
+            fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
+            schedule_agent_poll(dispatch),
+          ]),
+        ),
+        {
+          ..model,
+          workspace_mode: WorkspaceMode::MoonCode,
+          activity: Activity::Agents,
+          command_open: false,
+          selected_agent_session_id: session.id,
+          agent_status: "MoonCode command queued",
+        },
+      )
+    CompletedMoonCodeCommand(Err(error)) =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            sync_activity_batch(
+              Activity::Agents,
+              @rabbita.batch([
+                fetch_mooncode_stream_cmd(
+                  dispatch,
+                  session.id,
+                  if model.mooncode_stream_session_id == session.id {
+                    model.mooncode_stream_cursor
+                  } else {
+                    0
+                  },
+                ),
+                fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
+                fetch_mooncode_action_plan_cmd(dispatch, session.id),
+                fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
+                fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+                fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
+                fetch_mooncode_command_queue_cmd(dispatch, session.id),
+                fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
+                fetch_mooncode_runtime_replay_cmd(dispatch, session.id),
+                fetch_mooncode_preflight_matrix_cmd(
+                  dispatch, session.id, model.selected_path,
+                ),
+              ]),
+            ),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: error,
+            },
+          )
+        None =>
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: error,
+            },
+          )
+      }
     RevealedSelection(Ok(result)) =>
       (
         @rabbita.none,
@@ -4291,16 +7557,138 @@ fn update(
         @rabbita.none,
         { ..model, inbox_status: "local import failed: \{error}" },
       )
+    SelectWorkspaceMode(mode) => {
+      let activity = if mode == WorkspaceMode::MoonCode {
+        Activity::Agents
+      } else if model.activity == Activity::Agents {
+        Activity::Explorer
+      } else {
+        model.activity
+      }
+      let prompt = if mode == WorkspaceMode::MoonCode &&
+        model.agent_prompt.trim().to_owned() == "" {
+        "Help me improve \{workspace_name(model)} by adding or changing executable code for the selected MoonBook."
+      } else {
+        model.agent_prompt
+      }
+      (
+        sync_activity_cmd(activity),
+        {
+          ..model,
+          workspace_mode: mode,
+          activity,
+          command_open: false,
+          agent_prompt: prompt,
+          agent_status: if mode == WorkspaceMode::MoonCode {
+            "MoonCode workspace ready"
+          } else {
+            model.agent_status
+          },
+        },
+      )
+    }
     SelectActivity(activity) =>
-      (sync_activity_cmd(activity), { ..model, activity, command_open: false })
+      (
+        sync_activity_cmd(activity),
+        {
+          ..model,
+          workspace_mode: workspace_mode_for_activity(activity),
+          activity,
+          command_open: false,
+        },
+      )
     SelectDrawerTab(tab) => (@rabbita.none, { ..model, drawer_tab: tab })
     SelectAgentSession(session_id) =>
-      (@rabbita.none, { ..model, selected_agent_session_id: session_id })
+      (
+        @rabbita.batch([
+          fetch_mooncode_stream_cmd(dispatch, session_id, 0),
+          fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
+          fetch_mooncode_change_set_cmd(dispatch, session_id),
+          fetch_mooncode_eval_report_cmd(dispatch, session_id),
+          fetch_mooncode_runtime_handoff_cmd(dispatch, session_id),
+          fetch_mooncode_patch_set_cmd(dispatch, session_id),
+          fetch_mooncode_tool_approvals_cmd(dispatch, session_id),
+          fetch_mooncode_test_runs_cmd(dispatch, session_id),
+          fetch_mooncode_package_candidates_cmd(dispatch, session_id),
+          fetch_mooncode_action_plan_cmd(dispatch, session_id),
+          fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
+          fetch_mooncode_command_queue_cmd(dispatch, session_id),
+          fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
+          fetch_mooncode_runtime_replay_cmd(dispatch, session_id),
+          fetch_mooncode_preflight_matrix_cmd(
+            dispatch, session_id, model.selected_path,
+          ),
+          fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
+          fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
+        ]),
+        {
+          ..model,
+          selected_agent_session_id: session_id,
+          mooncode_stream_session_id: "",
+          mooncode_stream_cursor: 0,
+          mooncode_stream_events: [],
+          mooncode_stream_status: "stream cursor reset",
+          mooncode_stream_checkpoint_session_id: "",
+          mooncode_stream_checkpoint_status: "checkpoint idle",
+          mooncode_runtime_event_sink_session_id: "",
+          mooncode_runtime_event_sink_status: "loading runtime events",
+          mooncode_runtime_event_sink: None,
+          mooncode_change_set_session_id: "",
+          mooncode_change_set_status: "loading change set",
+          mooncode_change_set: None,
+          mooncode_eval_report_session_id: "",
+          mooncode_eval_report_status: "loading eval report",
+          mooncode_eval_report: None,
+          mooncode_runtime_handoff_session_id: "",
+          mooncode_runtime_handoff_status: "loading runtime handoff",
+          mooncode_runtime_handoff: None,
+          mooncode_patch_set_session_id: "",
+          mooncode_patch_set_status: "loading patch set",
+          mooncode_patch_set: None,
+          mooncode_tool_approvals_session_id: "",
+          mooncode_tool_approvals_status: "loading tool approvals",
+          mooncode_tool_approvals: None,
+          mooncode_tool_authorization_session_id: "",
+          mooncode_tool_authorization_status: "tool authorization idle",
+          mooncode_tool_authorization: None,
+          mooncode_test_runs_session_id: "",
+          mooncode_test_runs_status: "loading test runs",
+          mooncode_test_runs: None,
+          mooncode_package_candidates_session_id: "",
+          mooncode_package_candidates_status: "loading package candidates",
+          mooncode_package_candidates: None,
+          mooncode_action_plan_session_id: "",
+          mooncode_action_plan_status: "loading action plan",
+          mooncode_action_plan: None,
+          mooncode_runtime_evidence_session_id: "",
+          mooncode_runtime_evidence_status: "loading runtime evidence",
+          mooncode_runtime_evidence: None,
+          mooncode_command_queue_session_id: "",
+          mooncode_command_queue_status: "loading command queue",
+          mooncode_command_queue: None,
+          mooncode_runtime_command_feed_session_id: "",
+          mooncode_runtime_command_feed_status: "loading runtime feed",
+          mooncode_runtime_command_feed: None,
+          mooncode_runtime_replay_session_id: "",
+          mooncode_runtime_replay_status: "loading runtime replay",
+          mooncode_runtime_replay: None,
+          mooncode_preflight_session_id: "",
+          mooncode_preflight_status: "loading preflight gates",
+          mooncode_preflights: [],
+          mooncode_runtime_dispatch_session_id: "",
+          mooncode_runtime_dispatch_status: "loading runtime dispatch",
+          mooncode_runtime_dispatch: None,
+          mooncode_runtime_claim_session_id: "",
+          mooncode_runtime_claim_status: "loading runtime claim",
+          mooncode_runtime_claim: None,
+        },
+      )
     NewAgentSession =>
       (
         sync_activity_cmd(Activity::Agents),
         {
           ..model,
+          workspace_mode: WorkspaceMode::MoonCode,
           activity: Activity::Agents,
           command_open: false,
           selected_agent_session_id: "",
@@ -4334,6 +7722,7 @@ fn update(
           sync_activity_cmd(Activity::Agents),
           {
             ..model,
+            workspace_mode: WorkspaceMode::MoonCode,
             activity: Activity::Agents,
             command_open: false,
             agent_status: "select a book first",
@@ -4344,6 +7733,7 @@ fn update(
           sync_activity_cmd(Activity::Agents),
           {
             ..model,
+            workspace_mode: WorkspaceMode::MoonCode,
             activity: Activity::Agents,
             command_open: false,
             agent_status: "enter a message",
@@ -4352,18 +7742,39 @@ fn update(
       } else {
         match selected_agent_session(model) {
           Some(session) =>
-            (
-              sync_activity_batch(
-                Activity::Agents,
-                send_agent_message_cmd(dispatch, model, session),
-              ),
-              {
-                ..model,
-                activity: Activity::Agents,
-                command_open: false,
-                agent_status: "sending to MoonClaw",
-              },
-            )
+            if model.workspace_mode == WorkspaceMode::MoonCode {
+              let action = mooncode_composer_action(model, session)
+              (
+                sync_activity_batch(
+                  Activity::Agents,
+                  send_mooncode_composer_cmd(dispatch, model, session),
+                ),
+                {
+                  ..model,
+                  workspace_mode: WorkspaceMode::MoonCode,
+                  activity: Activity::Agents,
+                  command_open: false,
+                  agent_status: if action == "steer" {
+                    "steering MoonCode turn"
+                  } else {
+                    "prompting MoonCode runtime"
+                  },
+                },
+              )
+            } else {
+              (
+                sync_activity_batch(
+                  Activity::Agents,
+                  send_agent_message_cmd(dispatch, model, session),
+                ),
+                {
+                  ..model,
+                  activity: Activity::Agents,
+                  command_open: false,
+                  agent_status: "sending to MoonClaw",
+                },
+              )
+            }
           None =>
             (
               sync_activity_batch(
@@ -4372,6 +7783,7 @@ fn update(
               ),
               {
                 ..model,
+                workspace_mode: WorkspaceMode::MoonCode,
                 activity: Activity::Agents,
                 command_open: false,
                 agent_status: "starting MoonClaw session",
@@ -4379,19 +7791,26 @@ fn update(
             )
         }
       }
-    CancelAgentSession =>
+    RunMoonCodeCommand(action) =>
       match selected_agent_session(model) {
         Some(session) =>
           (
-            sync_activity_batch(
-              Activity::Agents,
-              cancel_agent_session_cmd(dispatch, session),
-            ),
+              sync_activity_batch(
+                Activity::Agents,
+                mooncode_session_command_cmd(
+                  dispatch,
+                  model,
+                  session,
+                  action,
+                  message=mooncode_command_message_from_prompt(model, action),
+                ),
+              ),
             {
               ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
               activity: Activity::Agents,
               command_open: false,
-              agent_status: "cancelling agent work",
+              agent_status: "queued MoonCode \{action}",
             },
           )
         None =>
@@ -4399,9 +7818,181 @@ fn update(
             sync_activity_cmd(Activity::Agents),
             {
               ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
               activity: Activity::Agents,
               command_open: false,
-              agent_status: "no session selected",
+              agent_status: "start or select a MoonCode session first",
+            },
+          )
+      }
+    RunMoonCodeCommandForPath(action, context_path) =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            sync_activity_batch(
+              Activity::Agents,
+              mooncode_session_command_cmd(
+                dispatch,
+                model,
+                session,
+                action,
+                context_path~,
+              ),
+            ),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "queued MoonCode \{action} for \{context_path}",
+            },
+          )
+        None =>
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "start or select a MoonCode session first",
+            },
+          )
+      }
+    RunMoonCodeCommandOverride(action, context_path) =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            sync_activity_batch(
+              Activity::Agents,
+              mooncode_session_command_cmd(
+                dispatch,
+                model,
+                session,
+                action,
+                context_path~,
+                force_preflight=true,
+              ),
+            ),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "forced MoonCode \{action} for \{context_path}",
+            },
+          )
+        None =>
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "start or select a MoonCode session first",
+            },
+          )
+      }
+    ProbeMoonCodeToolAuthorization(tool_id) =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            sync_activity_batch(
+              Activity::Agents,
+              probe_mooncode_tool_authorization_cmd(
+                dispatch, session.id, model.selected_path, tool_id,
+              ),
+            ),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              mooncode_tool_authorization_session_id: session.id,
+              mooncode_tool_authorization_status: "probing \{tool_id}",
+              agent_status: "probing MoonCode \{tool_id} authorization",
+            },
+          )
+        None =>
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "start or select a MoonCode session first",
+            },
+          )
+      }
+    ClaimMoonCodeRuntime(force) =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            sync_activity_batch(
+              Activity::Agents,
+              claim_mooncode_runtime_cmd(dispatch, session.id, force),
+            ),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              mooncode_runtime_claim_session_id: session.id,
+              mooncode_runtime_claim_status: if force {
+                "force-claiming runtime command"
+              } else {
+                "claiming runtime command"
+              },
+              agent_status: if force {
+                "force-claiming MoonCode runtime command"
+              } else {
+                "claiming MoonCode runtime command"
+              },
+            },
+          )
+        None =>
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "start or select a MoonCode session first",
+            },
+          )
+      }
+    AckMoonCodeRuntimeCommand(command_id, status) =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            sync_activity_batch(
+              Activity::Agents,
+              ack_mooncode_runtime_command_cmd(
+                dispatch, session.id, command_id, status,
+              ),
+            ),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              mooncode_runtime_claim_session_id: session.id,
+              mooncode_runtime_claim_status: "recording runtime \{status}",
+              agent_status: "recording MoonCode runtime acknowledgement",
+            },
+          )
+        None =>
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "start or select a MoonCode session first",
             },
           )
       }
@@ -4410,6 +8001,22 @@ fn update(
         @rabbita.batch([
           fetch_agent_daemon_cmd(dispatch),
           fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+          fetch_selected_mooncode_stream_cmd(dispatch, model),
+          fetch_mooncode_runtime_event_sink_cmd(
+            dispatch, model.selected_agent_session_id,
+          ),
+          fetch_mooncode_change_set_cmd(
+            dispatch, model.selected_agent_session_id,
+          ),
+          fetch_mooncode_eval_report_cmd(
+            dispatch, model.selected_agent_session_id,
+          ),
+          fetch_mooncode_runtime_handoff_cmd(
+            dispatch, model.selected_agent_session_id,
+          ),
+          fetch_mooncode_patch_set_cmd(
+            dispatch, model.selected_agent_session_id,
+          ),
           schedule_agent_poll(dispatch),
         ]),
         model,
@@ -4437,7 +8044,7 @@ fn update(
         Some(entry) => entry.kind is @desk.EntryKind::Directory
         None => false
       }
-      let cmd = if is_directory {
+      let base_cmd = if is_directory {
         @rabbita.batch([
           fetch_entries_cmd(dispatch, model.selected_workspace_id, path),
           fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
@@ -4448,6 +8055,14 @@ fn update(
           fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
           fetch_review_diff_cmd(dispatch, model.selected_workspace_id, path),
         ])
+      }
+      let cmd = match selected_agent_session(model) {
+        Some(session) =>
+          @rabbita.batch([
+            base_cmd,
+            fetch_mooncode_preflight_matrix_cmd(dispatch, session.id, path),
+          ])
+        None => base_cmd
       }
       (
         cmd,
@@ -4462,6 +8077,11 @@ fn update(
           },
           preview: None,
           preview_status: "loading preview",
+          mooncode_preflight_status: if model.selected_agent_session_id == "" {
+            model.mooncode_preflight_status
+          } else {
+            "loading preflight gates"
+          },
           editing_inbox_path: if is_inbox_path(path) {
             path
           } else {
@@ -4475,6 +8095,11 @@ fn update(
         @rabbita.batch([
           fetch_entries_cmd(dispatch, model.selected_workspace_id, path),
           fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
+          match selected_agent_session(model) {
+            Some(session) =>
+              fetch_mooncode_preflight_matrix_cmd(dispatch, session.id, path)
+            None => @rabbita.none
+          },
         ]),
         {
           ..model,
@@ -4483,6 +8108,11 @@ fn update(
           primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
           preview_status: "loading directory",
+          mooncode_preflight_status: if model.selected_agent_session_id == "" {
+            model.mooncode_preflight_status
+          } else {
+            "loading preflight gates"
+          },
         },
       )
     OpenQuickPath(path) =>
@@ -4490,6 +8120,11 @@ fn update(
         @rabbita.batch([
           fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
           fetch_review_diff_cmd(dispatch, model.selected_workspace_id, path),
+          match selected_agent_session(model) {
+            Some(session) =>
+              fetch_mooncode_preflight_matrix_cmd(dispatch, session.id, path)
+            None => @rabbita.none
+          },
         ]),
         {
           ..model,
@@ -4497,6 +8132,11 @@ fn update(
           primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
           preview_status: "loading preview",
+          mooncode_preflight_status: if model.selected_agent_session_id == "" {
+            model.mooncode_preflight_status
+          } else {
+            "loading preflight gates"
+          },
         },
       )
     SelectSearchHit(workspace_id, path) =>
@@ -5126,6 +8766,7 @@ fn update(
           fetch_agent_daemon_cmd(dispatch),
           fetch_agent_models_cmd(dispatch),
           fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+          fetch_mooncode_capabilities_cmd(dispatch),
           fetch_review_items_cmd(dispatch, model.selected_workspace_id),
           fetch_review_diff_cmd(
             dispatch,
@@ -7275,14 +10916,61 @@ fn render_agent_center(
         ),
         button(
           class="secondary-button",
-          on_click=dispatch(CancelAgentSession),
+          on_click=dispatch(RunMoonCodeCommand("run_tests")),
+          "Run Tests",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("package")),
+          "Package",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("commit")),
+          "Commit",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("accept")),
+          "Accept",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("reject")),
+          "Reject",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("cancel")),
           "Cancel",
         ),
       ]),
     ]),
     section(class="agent-chat-surface", [
       match session {
-        Some(session) => render_agent_transcript(session)
+        Some(session) => div(class="agent-session-surface", [
+          render_mooncode_session_header(dispatch, model, session),
+          render_mooncode_preflight_panel(dispatch, model),
+          render_mooncode_transcript(model, session),
+          render_mooncode_command_queue_panel(dispatch, model),
+          render_mooncode_runtime_command_feed_panel(model),
+          render_mooncode_runtime_replay_panel(model),
+          render_mooncode_runtime_event_sink_panel(model),
+          render_mooncode_action_plan_panel(dispatch, model),
+          render_mooncode_runtime_evidence_panel(model),
+          render_mooncode_runtime_claim_panel(dispatch, model),
+          render_mooncode_runtime_dispatch_panel(model),
+          render_mooncode_eval_report_panel(dispatch, model),
+          render_mooncode_runtime_handoff_panel(model),
+          render_mooncode_review_queue(dispatch, session),
+          render_mooncode_change_set_panel(model),
+          render_mooncode_test_runs_panel(dispatch, model),
+          render_mooncode_package_candidates_panel(dispatch, model),
+          render_mooncode_patch_set_panel(dispatch, model),
+          render_mooncode_tool_authorization_panel(dispatch, model),
+          render_mooncode_tool_approvals_panel(dispatch, model),
+          render_mooncode_event_lanes(model, session),
+        ])
         None =>
           div(class="agent-empty", [
             h1("Agents"),
@@ -7320,7 +11008,7 @@ fn render_agent_center(
           button(
             class="primary-button",
             on_click=dispatch(SendAgentMessage),
-            "Send",
+            mooncode_composer_button_label(model, session),
           ),
         ]),
         p(class="status-line", model.agent_status),
@@ -7330,26 +11018,4212 @@ fn render_agent_center(
 }
 
 ///|
-fn render_agent_transcript(session : AgentSession) -> @rabbita.Html {
-  if session.transcript.length() == 0 {
+fn mooncode_command_message_from_prompt(
+  model : Model,
+  action : String
+) -> String {
+  match action {
+    "prompt" | "steer" => model.agent_prompt.trim().to_owned()
+    _ => ""
+  }
+}
+
+///|
+fn mooncode_composer_button_label(
+  model : Model,
+  session : AgentSession?
+) -> String {
+  match session {
+    Some(active) if mooncode_session_accepts_steer(model, active) => "Steer"
+    Some(_) => "Prompt"
+    None => "Start"
+  }
+}
+
+///|
+fn render_mooncode_session_header(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session : AgentSession,
+) -> @rabbita.Html {
+  let summary = session.mooncode_summary
+  let action_state = match model.mooncode_action_plan {
+    Some(plan) => "\{plan.status} / \{plan.next_required_action}"
+    None => model.mooncode_action_plan_status
+  }
+  let dispatch_state = match model.mooncode_runtime_dispatch {
+    Some(dispatch_state) =>
+      "\{dispatch_state.runtime_dispatch_count} receipt(s), \{dispatch_state.runtime_dispatch_pending_count} pending"
+    None => model.mooncode_runtime_dispatch_status
+  }
+  div(class="mooncode-session-header", [
+    div(class="mooncode-session-title", [
+      div([
+        p(class="eyebrow", "mooncode session"),
+        h2(session.title),
+        small(
+          "\{session.workspace_name} / \{agent_session_task_line(session)}",
+        ),
+      ]),
+      div(class="toolbar-actions", [
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("steer")),
+          "Steer",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("cancel")),
+          "Cancel",
+        ),
+        button(
+          class="primary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_tests")),
+          "Run Tests",
+        ),
+      ]),
+    ]),
+    div(class="mooncode-session-grid", [
+      info_chip("next action", action_state),
+      info_chip("stream", "\{summary.stream_source} / \{summary.stream_mode}"),
+      info_chip("dispatch", "\{summary.dispatch_mode} / \{dispatch_state}"),
+      info_chip("pending steers", mooncode_summary_pending_steer_label(summary)),
+      info_chip("events", summary.event_count.to_string()),
+      info_chip("diffs pending", summary.pending_diff_count.to_string()),
+      info_chip("tests verified", summary.verified_test_count.to_string()),
+      info_chip("tool approvals", summary.pending_tool_approval_count.to_string()),
+      info_chip("packages", summary.source_bound_package_count.to_string()),
+    ]),
+    div(class="mooncode-session-evidence", [
+      info_row("Session", session.id),
+      info_row("Snapshot", empty_label(summary.session_snapshot_path)),
+      info_row("Command Log", empty_label(summary.command_log_path)),
+      info_row("Runtime Feed", empty_label(summary.runtime_command_log_path)),
+      info_row("Event Log", empty_label(summary.event_log_path)),
+      info_row("Eval", "\{summary.eval_level} / \{summary.eval_score}"),
+    ]),
+  ])
+}
+
+///|
+fn render_mooncode_transcript(
+  model : Model,
+  session : AgentSession,
+) -> @rabbita.Html {
+  let events = mooncode_transcript_events(model, session)
+  if session.transcript.length() == 0 && events.length() == 0 {
     div(class="agent-empty", [
       h1(session.title),
-      p(class="lead", "No messages yet."),
+      p(
+        class="lead",
+        "Start a MoonCode prompt to stream reasoning, tool calls, diffs, tests, and packaging evidence here.",
+      ),
     ])
   } else {
-    div(
-      class="agent-transcript",
-      session.transcript.map(message => {
-        div(class="agent-message " + message.role + " " + message.status, [
-          div(class="agent-message-head", [
-            span(class="record-kind", message.role),
-            small("\{message.status} / \{message.created_at}"),
+    let children : Array[@rabbita.Html] = []
+    for message in session.transcript {
+      children.push(render_agent_message(message))
+    }
+    for event in events {
+      children.push(render_mooncode_transcript_event(event))
+    }
+    div(class="agent-transcript mooncode-transcript", children)
+  }
+}
+
+///|
+fn render_agent_message(message : AgentMessage) -> @rabbita.Html {
+  div(class="agent-message " + message.role + " " + message.status, [
+    div(class="agent-message-head", [
+      span(class="record-kind", message.role),
+      small("\{message.status} / \{message.created_at}"),
+    ]),
+    pre(class="agent-message-body", code(message.content)),
+  ])
+}
+
+///|
+fn mooncode_transcript_events(
+  model : Model,
+  session : AgentSession,
+) -> Array[MoonCodeEvent] {
+  let events = mooncode_merge_stream_events(session.mooncode_events, [])
+  if model.mooncode_stream_session_id == session.id {
+    mooncode_merge_stream_events(events, model.mooncode_stream_events)
+  } else {
+    events
+  }
+}
+
+///|
+fn render_mooncode_transcript_event(event : MoonCodeEvent) -> @rabbita.Html {
+  let message_class = "agent-message mooncode-transcript-event " +
+    mooncode_transcript_event_class(event)
+  div(class=message_class, [
+    div(class="agent-message-head", [
+      span(class="record-kind", event.lane),
+      small("\{event.status} / \{event.created_at}"),
+    ]),
+    div(class="mooncode-transcript-event-title", [
+      strong(event.title),
+      if event.command == "" {
+        span(class="hidden-inline", "")
+      } else {
+        code(event.command)
+      },
+    ]),
+    if event.path == "" {
+      span(class="hidden-inline", "")
+    } else {
+      code(class="mooncode-transcript-path", event.path)
+    },
+    if event.diff != "" {
+      pre(class="source-block compact", code(event.diff))
+    } else {
+      pre(
+        class="agent-message-body",
+        code(
+          if event.detail == "" {
+            mooncode_transcript_event_fallback_detail(event)
+          } else {
+            event.detail
+          },
+        ),
+      )
+    },
+  ])
+}
+
+///|
+fn mooncode_transcript_event_class(event : MoonCodeEvent) -> String {
+  let lane = if event.lane == "" {
+    "runtime"
+  } else {
+    event.lane
+  }
+  let state = if event.status == "failed" || event.status == "blocked" {
+    "failed"
+  } else {
+    event.status
+  }
+  "\{lane} \{state}"
+}
+
+///|
+fn mooncode_transcript_event_fallback_detail(event : MoonCodeEvent) -> String {
+  let mut detail = if event.kind == "" {
+    "MoonCode runtime event"
+  } else {
+    event.kind
+  }
+  if event.exit_code != 0 {
+    detail = "\{detail}\nexit code: \{event.exit_code}"
+  }
+  detail
+}
+
+///|
+fn mooncode_replace_command_preflight(
+  preflights : Array[MoonCodeCommandPreflight],
+  preflight : MoonCodeCommandPreflight,
+) -> Array[MoonCodeCommandPreflight] {
+  let next : Array[MoonCodeCommandPreflight] = []
+  let mut replaced = false
+  for existing in preflights {
+    if existing.action == preflight.action {
+      next.push(preflight)
+      replaced = true
+    } else {
+      next.push(existing)
+    }
+  }
+  if !replaced {
+    next.push(preflight)
+  }
+  next
+}
+
+///|
+fn mooncode_preflight_status(preflights : Array[MoonCodeCommandPreflight]) -> String {
+  if preflights.length() == 0 {
+    return "preflight idle"
+  }
+  let mut blocked = 0
+  for preflight in preflights {
+    if preflight.blocked {
+      blocked += 1
+    }
+  }
+  if blocked == 0 {
+    "\{preflights.length()} gate(s) ready"
+  } else {
+    "\{blocked} blocked / \{preflights.length()} gate(s)"
+  }
+}
+
+///|
+fn render_mooncode_preflight_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board preflight-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "server-side gates"),
+        h3("Preflight Gates"),
+      ]),
+      span(class="record-kind", model.mooncode_preflight_status),
+    ]),
+    if model.mooncode_preflights.length() == 0 {
+      p(class="muted", "Select a MoonCode session to load command gates.")
+    } else {
+      div(
+        class="mooncode-review-list",
+        model.mooncode_preflights.map(preflight =>
+          render_mooncode_preflight_item(dispatch, preflight)
+        ),
+      )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_preflight_item(
+  dispatch : Dispatch[Msg],
+  preflight : MoonCodeCommandPreflight,
+) -> @rabbita.Html {
+  let state = if preflight.blocked { "failed" } else { "approved" }
+  div(class="mooncode-review-item " + state, [
+    div(class="mooncode-review-head", [
+      div([
+        strong(preflight.action),
+        small(
+          if preflight.context_path == "" {
+            "this MoonBook code workspace"
+          } else {
+            preflight.context_path
+          },
+        ),
+      ]),
+      span(
+        class="record-kind",
+        if preflight.blocked { "blocked" } else { "ready" },
+      ),
+    ]),
+    p(
+      class="mooncode-event-detail",
+      if preflight.blocked {
+        preflight.reason
+      } else {
+        "Ready to dispatch with the current MoonBook evidence."
+      },
+    ),
+    div(class="mooncode-stats", [
+      info_chip(
+        "failing tests",
+        if preflight.acceptance_gates.no_failing_tests { "clear" } else { "blocked" },
+      ),
+      info_chip(
+        "verified tests",
+        if preflight.acceptance_gates.has_verified_tests { "ready" } else { "missing" },
+      ),
+      info_chip(
+        "tool approvals",
+        if preflight.acceptance_gates.tool_approvals_resolved { "clear" } else { "pending" },
+      ),
+      info_chip(
+        "diffs",
+        if preflight.acceptance_gates.diffs_resolved { "resolved" } else { "pending" },
+      ),
+      info_chip(
+        "package",
+        if preflight.acceptance_gates.has_source_bound_package { "source-bound" } else { "missing" },
+      ),
+    ]),
+    render_mooncode_preflight_selected_patch(preflight.selected_patch),
+    div(class="toolbar-actions", [
+      button(
+        class=if preflight.blocked { "secondary-button" } else { "primary-button" },
+        on_click=if preflight.context_path == "" {
+          if preflight.blocked {
+            dispatch(RunMoonCodeCommandOverride(preflight.action, ""))
+          } else {
+            dispatch(RunMoonCodeCommand(preflight.action))
+          }
+        } else {
+          if preflight.blocked {
+            dispatch(
+              RunMoonCodeCommandOverride(
+                preflight.action, preflight.context_path,
+              ),
+            )
+          } else {
+            dispatch(
+              RunMoonCodeCommandForPath(
+                preflight.action, preflight.context_path,
+              ),
+            )
+          }
+        },
+        if preflight.blocked { "Try Anyway" } else { "Run" },
+      ),
+    ]),
+  ])
+}
+
+///|
+fn render_mooncode_preflight_selected_patch(
+  selected : MoonCodeSelectedPatchPreflight,
+) -> @rabbita.Html {
+  if !selected.matched {
+    span(class="hidden-inline", "")
+  } else {
+    div(class="daemon-state compact-state mooncode-selected-patch", [
+      info_row("Patch Target", selected.context_path),
+      info_row("Review", empty_label(selected.review_state)),
+      info_row("Execution", empty_label(selected.execution_state)),
+      info_row("Gate", empty_label(selected.gate_status)),
+      info_row("Next", empty_label(selected.next_action)),
+      info_row(
+        "Runtime Proof",
+        if selected.runtime_proven { "recorded" } else { "missing" },
+      ),
+      if selected.blocked_reason == "" {
+        span(class="hidden-inline", "")
+      } else {
+        p(class="mooncode-event-detail", selected.blocked_reason)
+      },
+    ])
+  }
+}
+
+///|
+fn render_mooncode_command_queue_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board command-queue-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "ordered command queue"),
+        h3("Command Queue"),
+      ]),
+      span(class="record-kind", model.mooncode_command_queue_status),
+    ]),
+    match model.mooncode_command_queue {
+      Some(queue) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Commands", queue.command_count.to_string()),
+            info_chip("Prompts", mooncode_command_queue_count(queue, "prompt").to_string()),
+            info_chip("Steers", mooncode_command_queue_count(queue, "steer").to_string()),
+            info_chip("Pending Steers", mooncode_pending_steer_count(model, queue.session_id).to_string()),
+            info_chip("Cancels", mooncode_command_queue_count(queue, "cancel").to_string()),
+            info_chip("Reviews", mooncode_command_queue_review_count(queue).to_string()),
           ]),
-          pre(class="agent-message-body", code(message.content)),
+          div(class="daemon-state compact-state", [
+            info_row("Queue", queue.command_log_path),
+            info_row("Session", queue.session_id),
+            info_row("Task", empty_label(queue.task_id)),
+            info_row("Ordering", queue.ordering_rule),
+          ]),
+          div(class="toolbar-actions", [
+            button(
+              class="secondary-button",
+              on_click=dispatch(RunMoonCodeCommand("steer")),
+              "Steer",
+            ),
+            button(
+              class="secondary-button",
+              on_click=dispatch(RunMoonCodeCommand("cancel")),
+              "Cancel",
+            ),
+          ]),
+          mooncode_pending_steer_status_line(model, queue.session_id),
+          if queue.commands.length() == 0 {
+            p(class="status-line", "no command packets recorded")
+          } else {
+            div(
+              class="mooncode-review-list command-queue-list",
+              mooncode_recent_commands(queue.commands).map(command =>
+                render_mooncode_queued_command(dispatch, command)
+              ),
+            )
+          },
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No durable MoonCode command queue has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_recent_commands(
+  commands : Array[MoonCodeQueuedCommand]
+) -> Array[MoonCodeQueuedCommand] {
+  let recent : Array[MoonCodeQueuedCommand] = []
+  let mut index = commands.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 8 {
+    index -= 1
+    recent.push(commands[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn mooncode_command_queue_count(
+  queue : MoonCodeCommandQueue,
+  action : String,
+) -> Int {
+  let mut count = 0
+  for command in queue.commands {
+    if command.action == action {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+fn mooncode_pending_steer_count(model : Model, session_id : String) -> Int {
+  let steer_count = match model.mooncode_command_queue {
+    Some(queue) if queue.session_id == session_id =>
+      mooncode_command_queue_count(queue, "steer")
+    _ => 0
+  }
+  let settled_count = mooncode_steer_settlement_count(model, session_id)
+  if steer_count > settled_count {
+    steer_count - settled_count
+  } else {
+    0
+  }
+}
+
+///|
+fn mooncode_pending_steer_label(model : Model, session_id : String) -> String {
+  let count = mooncode_pending_steer_count(model, session_id)
+  if count == 0 {
+    "settled"
+  } else if count == 1 {
+    "1 pending"
+  } else {
+    "\{count} pending"
+  }
+}
+
+///|
+fn mooncode_summary_pending_steer_label(summary : MoonCodeSummary) -> String {
+  let count = summary.pending_steer_count
+  if count == 0 {
+    "settled"
+  } else if count == 1 {
+    "1 pending"
+  } else {
+    "\{count} pending"
+  }
+}
+
+///|
+fn mooncode_pending_steer_status_line(
+  model : Model,
+  session_id : String,
+) -> @rabbita.Html {
+  let count = mooncode_pending_steer_count(model, session_id)
+  if count == 0 {
+    @html.nothing
+  } else {
+    p(
+      class="status-line",
+      "\{count} steer request(s) are waiting for runtime apply/drop confirmation.",
+    )
+  }
+}
+
+///|
+fn mooncode_steer_settlement_count(model : Model, session_id : String) -> Int {
+  match model.mooncode_runtime_event_sink {
+    Some(sink) if model.mooncode_runtime_event_sink_session_id == session_id =>
+      mooncode_steer_settlement_count_from_events(sink.events)
+    _ =>
+      if model.mooncode_stream_session_id == session_id {
+        mooncode_steer_settlement_count_from_events(model.mooncode_stream_events)
+      } else {
+        0
+      }
+  }
+}
+
+///|
+fn mooncode_steer_settlement_count_from_events(events : Array[MoonCodeEvent]) -> Int {
+  let mut count = 0
+  for event in events {
+    if mooncode_event_settles_steer(event) {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+fn mooncode_event_settles_steer(event : MoonCodeEvent) -> Bool {
+  let text = (event.kind + "\n" + event.title + "\n" + event.detail).to_lower()
+  text.contains("steer_applied") ||
+  text.contains("steer applied") ||
+  text.contains("steer_dropped") ||
+  text.contains("steer dropped")
+}
+
+///|
+fn mooncode_command_queue_review_count(queue : MoonCodeCommandQueue) -> Int {
+  let mut count = 0
+  for command in queue.commands {
+    if command.approval == "operator" {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+fn render_mooncode_queued_command(
+  dispatch : Dispatch[Msg],
+  command : MoonCodeQueuedCommand,
+) -> @rabbita.Html {
+  div(class="mooncode-review-item " + mooncode_command_queue_item_state(command), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(command.action + " -> " + command.dispatch),
+        small(command.approval + " / " + command.created_at),
+      ]),
+      div(class="toolbar-actions", [
+        if command.context_path == "" {
+          span(class="hidden-inline", "")
+        } else {
+          button(
+            class="secondary-button",
+            on_click=dispatch(OpenQuickPath(command.context_path)),
+            "Open",
+          )
+        },
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("run_tests", command.target)),
+          "Test",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("package", command.target)),
+          "Package",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("commit", command.target)),
+          "Commit",
+        ),
+      ]),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Lanes", command.expected_lanes.length().to_string()),
+      info_chip("Tools", command.tool_hints.length().to_string()),
+      info_chip("Web", if command.web_search { "on" } else { "off" }),
+    ]),
+    if command.context_path == "" {
+      code(command.target)
+    } else {
+      code(command.context_path)
+    },
+    p(class="mooncode-event-detail", command.message),
+    small(class="status-line", command.command_id),
+  ])
+}
+
+///|
+fn mooncode_command_queue_item_state(command : MoonCodeQueuedCommand) -> String {
+  match command.action {
+    "cancel" => "rejected"
+    "accept" | "approve_tool" | "apply_patch" => "accepted"
+    "reject" | "reject_tool" | "revert_patch" => "rejected"
+    "run_tests" | "run_eval" => "running"
+    "package" => "pending"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_runtime_command_feed_panel(model : Model) -> @rabbita.Html {
+  section(class="mooncode-review-board runtime-command-feed-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "engine-facing command feed"),
+        h3("Runtime Feed"),
+      ]),
+      span(class="record-kind", model.mooncode_runtime_command_feed_status),
+    ]),
+    match model.mooncode_runtime_command_feed {
+      Some(feed) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Commands", feed.runtime_command_count.to_string()),
+            info_chip("Receipts", feed.runtime_dispatch_count.to_string()),
+            info_chip("Pending", feed.runtime_dispatch_pending_count.to_string()),
+            info_chip("Summaries", feed.execution_summaries.length().to_string()),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Runtime Feed", feed.runtime_command_log_path),
+            info_row("Dispatch Log", feed.runtime_dispatch_log_path),
+            info_row("Claim Endpoint", feed.runtime_claim_endpoint),
+            info_row("Task", empty_label(feed.task_id)),
+          ]),
+          render_mooncode_runtime_command_lifecycle(feed.command_lifecycle),
+          if feed.commands.length() == 0 {
+            p(class="status-line", "no runtime commands have been recorded")
+          } else {
+            div(
+              class="mooncode-review-list runtime-command-feed-list",
+              mooncode_recent_runtime_commands(feed.commands).map(command =>
+                render_mooncode_runtime_command_feed_item(command)
+              ),
+            )
+          },
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode runtime command feed has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_recent_runtime_commands(commands : Array[Json]) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = commands.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 8 {
+    index -= 1
+    recent.push(commands[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_runtime_command_lifecycle(
+  lifecycle : Json
+) -> @rabbita.Html {
+  let commands = json_field_json_array_items(lifecycle, "commands")
+  div(class="mooncode-output-roots", [
+    div(class="mooncode-stream-header compact-header", [
+      div([
+        p(class="eyebrow", "runtime command lifecycle"),
+        h3("Lifecycle"),
+      ]),
+      span(
+        class="record-kind",
+        empty_label(json_field_string(lifecycle, "next_status", default="idle")),
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Pending", json_field_int(lifecycle, "pending_count", default=0).to_string()),
+      info_chip("Running", json_field_int(lifecycle, "running_count", default=0).to_string()),
+      info_chip("Dispatched", json_field_int(lifecycle, "dispatched_count", default=0).to_string()),
+      info_chip("Completed", json_field_int(lifecycle, "completed_count", default=0).to_string()),
+      info_chip("Failed", json_field_int(lifecycle, "failed_count", default=0).to_string()),
+      info_chip("Blocked", json_field_int(lifecycle, "blocked_count", default=0).to_string()),
+    ]),
+    div(class="daemon-state compact-state", [
+      info_row("Next Command", empty_label(json_field_string(lifecycle, "next_command_id", default=""))),
+      info_row("Next Action", empty_label(json_field_string(lifecycle, "next_action", default=""))),
+      info_row("Scoped Events", json_field_int(lifecycle, "scoped_event_count", default=0).to_string()),
+    ]),
+    if commands.length() == 0 {
+      p(class="status-line", "no lifecycle rows yet")
+    } else {
+      div(
+        class="mooncode-review-list compact",
+        mooncode_recent_runtime_lifecycle_commands(commands).map(command =>
+          render_mooncode_runtime_lifecycle_item(command)
+        ),
+      )
+    },
+    p(
+      class="mooncode-event-detail",
+      json_field_string(lifecycle, "rule", default=""),
+    ),
+  ])
+}
+
+///|
+fn mooncode_recent_runtime_lifecycle_commands(
+  commands : Array[Json]
+) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = commands.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 6 {
+    index -= 1
+    recent.push(commands[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_runtime_lifecycle_item(command : Json) -> @rabbita.Html {
+  let status = json_field_string(command, "status", default="pending")
+  div(class="mooncode-review-item " + mooncode_runtime_lifecycle_class(status), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(
+          json_field_string(command, "action", default="prompt") +
+          " -> " +
+          status,
+        ),
+        small(json_field_string(command, "receipt_status", default="missing")),
+      ]),
+      span(
+        class=if json_field_bool(command, "valid_wire", default=false) {
+          "record-kind good"
+        } else {
+          "record-kind warning"
+        },
+        if json_field_bool(command, "valid_wire", default=false) {
+          "wire ok"
+        } else {
+          "wire blocked"
+        },
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Proof", json_field_int(command, "proof_event_count", default=0).to_string()),
+      info_chip("Events", json_field_int(command, "scoped_event_count", default=0).to_string()),
+      info_chip("Running", json_field_int(command, "running_event_count", default=0).to_string()),
+      info_chip("Failed", json_field_int(command, "failed_event_count", default=0).to_string()),
+      info_chip("Auth", empty_label(json_field_string(command, "tool_authorization_state", default=""))),
+    ]),
+    code(json_field_string(command, "command_id", default="")),
+    p(
+      class="mooncode-event-detail",
+      mooncode_runtime_lifecycle_detail(command),
+    ),
+  ])
+}
+
+///|
+fn mooncode_runtime_lifecycle_detail(command : Json) -> String {
+  let blocker = json_field_string(command, "blocking_reason", default="")
+  if blocker != "" {
+    return blocker
+  }
+  let latest = json_field_string(command, "latest_event_title", default="")
+  let step = json_field_string(command, "next_step", default="")
+  if latest != "" {
+    latest + " / " + step
+  } else {
+    step
+  }
+}
+
+///|
+fn mooncode_runtime_lifecycle_class(status : String) -> String {
+  match status {
+    "completed" => "accepted"
+    "failed" | "blocked-invalid" | "blocked-tool-authorization" => "rejected"
+    "running" | "dispatched" => "running"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_runtime_replay_panel(model : Model) -> @rabbita.Html {
+  section(class="mooncode-review-board runtime-replay-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "OpenSeek serve replay"),
+        h3("Runtime Replay"),
+      ]),
+      span(class="record-kind", model.mooncode_runtime_replay_status),
+    ]),
+    match model.mooncode_runtime_replay {
+      Some(state) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Commands", state.command_count.to_string()),
+            info_chip("Pending", state.pending_command_count.to_string()),
+            info_chip("Delivered", state.delivered_command_count.to_string()),
+            info_chip("Claimed", state.claimed_command_count.to_string()),
+            info_chip("Failed", state.failed_dispatch_count.to_string()),
+            info_chip("Invalid", state.invalid_command_count.to_string()),
+            info_chip("Replay", if state.replay_ready { "ready" } else { "idle" }),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Runtime Feed", state.runtime_command_log_path),
+            info_row("Dispatch Log", state.runtime_dispatch_log_path),
+            info_row("First Pending", state.first_pending_index.to_string()),
+            info_row("First Invalid", empty_label(state.first_invalid_command_id)),
+          ]),
+          if state.pending_openseek_jsonl == "" {
+            p(class="status-line", "no pending OpenSeek JSONL commands")
+          } else {
+            div(class="mooncode-output-roots", [
+              small("Pending OpenSeek JSONL"),
+              pre(
+                class="source-block compact",
+                code(state.pending_openseek_jsonl),
+              ),
+            ])
+          },
+          if state.pending_commands.length() == 0 {
+            p(class="status-line", "runtime replay has no pending commands")
+          } else {
+            div(
+              class="mooncode-review-list runtime-replay-list",
+              mooncode_recent_replay_items(state.pending_commands).map(item =>
+                render_mooncode_runtime_replay_item(item)
+              ),
+            )
+          },
+          small(class="status-line", state.replay_policy),
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode runtime replay state has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_recent_replay_items(
+  items : Array[MoonCodeRuntimeReplayItem]
+) -> Array[MoonCodeRuntimeReplayItem] {
+  let recent : Array[MoonCodeRuntimeReplayItem] = []
+  let mut index = 0
+  while index < items.length() && recent.length() < 8 {
+    recent.push(items[index])
+    index += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_runtime_replay_item(
+  item : MoonCodeRuntimeReplayItem
+) -> @rabbita.Html {
+  let wire_ok = json_field_bool(item.decode_report, "ok", default=false)
+  div(class="mooncode-review-item " + mooncode_runtime_replay_item_class(item), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(item.action + " -> " + item.replay_status),
+        small(item.serve_command + " / " + item.created_at),
+      ]),
+      span(
+        class=if wire_ok { "record-kind good" } else { "record-kind warning" },
+        if wire_ok { "wire valid" } else { "decode error" },
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Receipt", item.receipt_status),
+      info_chip("Dispatch", item.dispatch),
+      info_chip(
+        "Lease",
+        if item.previous_claim_expired { "expired" } else { "current" },
+      ),
+      info_chip("Proof", item.proof_event_count.to_string()),
+      info_chip("Events", item.normalized_event_count.to_string() + "/" + item.submitted_event_count.to_string()),
+    ]),
+    render_mooncode_runtime_proof_gate(
+      json_field(item.latest_receipt, "proof_gate"),
+    ),
+    if item.target == "" {
+      code(item.command_id)
+    } else {
+      code(item.target)
+    },
+    p(
+      class="mooncode-event-detail",
+      if wire_ok {
+        mooncode_runtime_replay_item_detail(item)
+      } else {
+        json_field_string(item.decode_report, "error", default="Invalid wire command")
+      },
+    ),
+    small(class="status-line", item.command_id),
+  ])
+}
+
+///|
+fn mooncode_runtime_replay_item_detail(
+  item : MoonCodeRuntimeReplayItem
+) -> String {
+  let proof_gate = json_field(item.latest_receipt, "proof_gate")
+  let proof_status = mooncode_runtime_proof_gate_status(proof_gate)
+  if item.replay_status == "missing-proof-pending-retry" ||
+    item.receipt_status == "proof-missing" {
+    let missing = mooncode_runtime_proof_gate_missing_label(proof_gate)
+    if missing == "" {
+      "Runtime requested completion, but required command-scoped proof is missing."
+    } else {
+      "Runtime requested completion, but missing proof: " + missing
+    }
+  } else if proof_status == "passed" {
+    "Runtime completion proof gate passed."
+  } else if item.proof_event_count > 0 {
+    let lanes = json_field_string_array_items(
+      item.runtime_event_summary, "proof_lanes",
+    )
+    if lanes.length() > 0 {
+      "Runtime acknowledgement submitted proof lanes: " + lanes.join(", ")
+    } else {
+      "Runtime acknowledgement submitted \{item.proof_event_count.to_string()} proof event(s)."
+    }
+  } else if item.replay_status == "delivered" {
+    "Delivered without attached proof events; inspect runtime logs or eval evidence if review gates remain blocked."
+  } else {
+    "Ready for a MoonClaw or standalone MoonCode runtime consumer."
+  }
+}
+
+///|
+fn mooncode_runtime_replay_item_class(item : MoonCodeRuntimeReplayItem) -> String {
+  match item.replay_status {
+    "delivered" => "accepted"
+    "claimed" => "running"
+    "pending" | "failed-pending-retry" | "expired-claim-pending-retry" =>
+      "queued"
+    "missing-proof-pending-retry" => "rejected"
+    "blocked-invalid" => "rejected"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_runtime_event_sink_panel(model : Model) -> @rabbita.Html {
+  section(class="mooncode-review-board runtime-event-sink-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "runtime event ingress"),
+        h3("Runtime Events"),
+      ]),
+      span(class="record-kind", model.mooncode_runtime_event_sink_status),
+    ]),
+    match model.mooncode_runtime_event_sink {
+      Some(sink) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Events", sink.event_count.to_string()),
+            info_chip(
+              "Payloads",
+              json_field_string_array_items(
+                sink.post_contract, "accepted_payloads",
+              ).length().to_string(),
+            ),
+            info_chip(
+              "Producer",
+              json_field_string(
+                sink.post_contract, "producer", default="moonclaw",
+              ),
+            ),
+            info_chip(
+              "Commands",
+              json_field_int(
+                sink.command_progress, "command_count", default=0,
+              ).to_string(),
+            ),
+            info_chip(
+              "Scoped",
+              json_field_int(
+                sink.command_progress, "scoped_event_count", default=0,
+              ).to_string(),
+            ),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Event Log", sink.event_log_path),
+            info_row(
+              "Post Endpoint",
+              json_field_string(sink.post_contract, "endpoint", default=""),
+            ),
+            info_row(
+              "Method",
+              json_field_string(sink.post_contract, "method", default="POST"),
+            ),
+            info_row(
+              "Ordering",
+              json_field_string(sink.post_contract, "ordering_rule", default=""),
+            ),
+          ]),
+          div(class="mooncode-output-roots", [
+            small("Accepted payloads"),
+            p(
+              json_field_string_array_items(
+                sink.post_contract, "accepted_payloads",
+              ).join("; "),
+            ),
+          ]),
+          p(
+            class="mooncode-event-detail",
+            json_field_string(sink.post_contract, "normalization", default=""),
+          ),
+          render_mooncode_runtime_event_command_progress(sink.command_progress),
+          if sink.events.length() == 0 {
+            p(class="status-line", "no durable runtime events recorded")
+          } else {
+            div(
+              class="mooncode-event-list compact",
+              mooncode_recent_runtime_sink_events(sink.events).map(event =>
+                render_mooncode_event(event)
+              ),
+            )
+          },
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode runtime event sink has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_runtime_event_command_progress(
+  progress : Json
+) -> @rabbita.Html {
+  let commands = json_field_json_array_items(progress, "commands")
+  div(class="mooncode-review-board embedded-board", [
+    div(class="mooncode-stream-header compact-header", [
+      div([
+        p(class="eyebrow", "command-scoped runtime proof"),
+        h3("Command Progress"),
+      ]),
+      span(
+        class="record-kind",
+        json_field_int(progress, "command_count", default=0).to_string() +
+        " command(s)",
+      ),
+    ]),
+    if commands.length() == 0 {
+      p(
+        class="status-line",
+        "no command-scoped runtime events have been recorded",
+      )
+    } else {
+      div(
+        class="mooncode-review-list compact",
+        mooncode_recent_runtime_command_progress(commands).map(command =>
+          render_mooncode_runtime_command_progress_item(command)
+        ),
+      )
+    },
+    p(
+      class="mooncode-event-detail",
+      json_field_string(progress, "rule", default=""),
+    ),
+  ])
+}
+
+///|
+fn mooncode_recent_runtime_command_progress(
+  commands : Array[Json]
+) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = commands.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 6 {
+    index -= 1
+    recent.push(commands[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_runtime_command_progress_item(command : Json) -> @rabbita.Html {
+  let status = json_field_string(command, "status", default="idle")
+  div(class="mooncode-review-item " + mooncode_runtime_command_progress_class(status), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(
+          json_field_string(command, "action", default="prompt") +
+          " -> " +
+          status,
+        ),
+        small(empty_label(json_field_string(command, "latest_created_at", default=""))),
+      ]),
+      span(class="record-kind", json_field_string(command, "latest_event_id", default="event")),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Events", json_field_int(command, "event_count", default=0).to_string()),
+      info_chip("Running", json_field_int(command, "running_event_count", default=0).to_string()),
+      info_chip("Done", json_field_int(command, "done_event_count", default=0).to_string()),
+      info_chip("Failed", json_field_int(command, "failed_event_count", default=0).to_string()),
+      info_chip("Tools", "\{json_field_int(command, "tool_call_count", default=0)}/\{json_field_int(command, "tool_result_count", default=0)}"),
+    ]),
+    code(json_field_string(command, "command_id", default="")),
+    p(
+      class="mooncode-event-detail",
+      "lanes " +
+      json_field_string_array_items(command, "lanes").join(", ") +
+      "; latest " +
+      empty_label(json_field_string(command, "latest_title", default="")),
+    ),
+  ])
+}
+
+///|
+fn mooncode_runtime_command_progress_class(status : String) -> String {
+  match status {
+    "done" => "accepted"
+    "failed" => "rejected"
+    "running" => "running"
+    _ => "queued"
+  }
+}
+
+///|
+fn mooncode_recent_runtime_sink_events(
+  events : Array[MoonCodeEvent]
+) -> Array[MoonCodeEvent] {
+  let recent : Array[MoonCodeEvent] = []
+  let mut index = events.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 8 {
+    index -= 1
+    recent.push(events[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_runtime_command_feed_item(command : Json) -> @rabbita.Html {
+  let action = json_field_string(command, "action", default="command")
+  let dispatch = json_field_string(command, "dispatch", default="prompt")
+  let command_id = json_field_string(command, "command_id", default="")
+  let target = json_field_string(command, "target", default="")
+  let auth_state = mooncode_command_tool_authorization_state(command)
+  div(class="mooncode-review-item " + mooncode_runtime_command_feed_item_class(command), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(action + " -> " + dispatch),
+        small(json_field_string(command, "created_at", default="")),
+      ]),
+      span(
+        class=if json_field_bool(command, "openseek_wire_valid", default=false) {
+          "record-kind good"
+        } else {
+          "record-kind"
+        },
+        if json_field_bool(command, "openseek_wire_valid", default=false) {
+          "wire valid"
+        } else {
+          "wire invalid"
+        },
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Approval", json_field_string(command, "approval", default="none")),
+      info_chip("Auth", if auth_state == "" { "unknown" } else { auth_state }),
+      info_chip("Serve", json_field_string(command, "serve_command", default="")),
+      info_chip(
+        "Native",
+        if json_field_string(command, "native_mooncode_endpoint", default="") == "" {
+          "none"
+        } else {
+          "ready"
+        },
+      ),
+    ]),
+    if target == "" {
+      code(command_id)
+    } else {
+      code(target)
+    },
+    render_mooncode_runtime_execution_summary(command),
+    small(class="status-line", command_id),
+  ])
+}
+
+///|
+fn mooncode_command_tool_authorization_state(command : Json) -> String {
+  let direct = json_field_string(command, "tool_authorization_state", default="")
+  if direct != "" {
+    return direct
+  }
+  match json_field(command, "tool_authorization") {
+    Some(auth) => json_field_string(auth, "enforcement_state", default="")
+    None => ""
+  }
+}
+
+///|
+fn mooncode_runtime_command_feed_item_class(command : Json) -> String {
+  match json_field_string(command, "action", default="") {
+    "cancel" => "rejected"
+    "run_tests" | "run_eval" => "running"
+    "package" => "pending"
+    "accept" | "approve_tool" | "apply_patch" => "accepted"
+    "reject" | "reject_tool" | "revert_patch" => "rejected"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_action_plan_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board action-plan-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "execution and review plan"),
+        h3("Action Plan"),
+      ]),
+      span(class="record-kind", model.mooncode_action_plan_status),
+    ]),
+    match model.mooncode_action_plan {
+      Some(plan) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Actions", plan.action_count.to_string()),
+            info_chip("Pending runtime", plan.pending_runtime_count.to_string()),
+            info_chip("Running", plan.running_count.to_string()),
+            info_chip("Blocked", plan.blocked_count.to_string()),
+            info_chip("Ready review", plan.ready_for_review_count.to_string()),
+            info_chip("Completed", plan.completed_count.to_string()),
+            info_chip("Tests", plan.run_test_command_count.to_string()),
+            info_chip("Packages", plan.package_command_count.to_string()),
+            info_chip("Commits", plan.commit_command_count.to_string()),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Status", plan.status),
+            info_row("Next", plan.next_required_action),
+            info_row("Manifest", empty_label(plan.manifest_path)),
+            info_row("Recorded", empty_label(plan.recorded_at)),
+            info_row("Task", empty_label(plan.task_id)),
+          ]),
+          render_mooncode_action_plan_gates(plan.acceptance_gates),
+          if plan.actions.length() == 0 {
+            p(class="status-line", "no MoonCode actions queued yet")
+          } else {
+            div(
+              class="mooncode-review-list action-plan-list",
+              plan.actions[:mooncode_action_plan_limit(plan.actions)].map(action =>
+                render_mooncode_action_plan_item(dispatch, action)
+              ),
+            )
+          },
+          p(class="mooncode-event-detail", plan.rule),
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode action plan has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_action_plan_gates(
+  gates : MoonCodeActionPlanGates
+) -> @rabbita.Html {
+  div(class="mooncode-stats gate-stats", [
+    info_chip("No failing tests", if gates.no_failing_tests { "yes" } else { "no" }),
+    info_chip("Verified tests", if gates.has_verified_tests { "yes" } else { "no" }),
+    info_chip(
+      "Tool approvals",
+      if gates.tool_approvals_resolved { "resolved" } else { "pending" },
+    ),
+    info_chip("Diffs", if gates.diffs_resolved { "resolved" } else { "pending" }),
+    info_chip(
+      "Package",
+      if gates.has_source_bound_package { "source-bound" } else { "missing" },
+    ),
+  ])
+}
+
+///|
+fn mooncode_action_plan_limit(actions : Array[MoonCodeActionPlanItem]) -> Int {
+  if actions.length() > 8 {
+    8
+  } else {
+    actions.length()
+  }
+}
+
+///|
+fn render_mooncode_action_plan_item(
+  dispatch : Dispatch[Msg],
+  action : MoonCodeActionPlanItem,
+) -> @rabbita.Html {
+  let target = if action.context_path == "" {
+    action.target
+  } else {
+    action.context_path
+  }
+  div(class="mooncode-review-item " + mooncode_action_plan_item_class(action), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(action.action + " -> " + action.state),
+        small(action.runtime_state + " / " + action.created_at),
+      ]),
+      div(class="toolbar-actions", [
+        if action.context_path == "" {
+          span(class="hidden-inline", "")
+        } else {
+          button(
+            class="secondary-button",
+            on_click=dispatch(OpenQuickPath(action.context_path)),
+            "Open",
+          )
+        },
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("run_tests", target)),
+          "Test",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("package", target)),
+          "Package",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("commit", target)),
+          "Commit",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("accept", target)),
+          "Accept",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("reject", target)),
+          "Reject",
+        ),
+      ]),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Approval", action.approval),
+      info_chip("Dispatch", action.dispatch),
+      info_chip("Lanes", action.expected_lanes.length().to_string()),
+      info_chip("Tools", action.tool_hints.length().to_string()),
+      info_chip("Evidence", action.runtime_evidence_status),
+      info_chip(
+        "Proof",
+        "\{action.proven_required_event_count}/\{action.required_event_count}",
+      ),
+      info_chip(
+        "Tool Proof",
+        mooncode_optional_ratio_label(
+          action.tool_harness_proven_tool_count,
+          action.tool_harness_expected_tool_count,
+        ),
+      ),
+      info_chip(
+        "Tool Harness",
+        mooncode_optional_text_label(action.tool_harness_status),
+      ),
+    ]),
+    code(if target == "" { action.command_id } else { target }),
+    div(class="mooncode-output-roots", [
+      small("Required gates"),
+      p(if action.required_gates.length() == 0 {
+        "none"
+      } else {
+        action.required_gates.join(", ")
+      }),
+    ]),
+    render_mooncode_action_plan_evidence(action),
+    if action.blocking_reason == "" {
+      p(class="mooncode-event-detail", action.next_step)
+    } else {
+      p(class="mooncode-event-detail", action.blocking_reason)
+    },
+    small(class="status-line", action.command_id),
+  ])
+}
+
+///|
+fn render_mooncode_action_plan_evidence(
+  action : MoonCodeActionPlanItem
+) -> @rabbita.Html {
+  if action.required_event_count == 0 {
+    return span(class="hidden-inline", "")
+  }
+  div(class="mooncode-output-roots", [
+    small("Runtime evidence"),
+    p(
+      "required " +
+      action.required_event_count.to_string() +
+      ", proven " +
+      action.proven_required_event_count.to_string() +
+      mooncode_action_plan_event_gap_text(
+        action.missing_required_events, "missing",
+      ) +
+      mooncode_action_plan_event_gap_text(
+        action.failed_required_events, "failed",
+      ),
+    ),
+    if action.tool_harness_status is Some(_) {
+      p(
+        class="mooncode-event-detail",
+        "tool harness " +
+        mooncode_optional_text_label(action.tool_harness_status) +
+        " / proven " +
+        mooncode_optional_ratio_label(
+          action.tool_harness_proven_tool_count,
+          action.tool_harness_expected_tool_count,
+        ) +
+        " / missing " +
+        mooncode_optional_int_label(action.tool_harness_missing_tool_count) +
+        " / failed " +
+        mooncode_optional_int_label(action.tool_harness_failed_tool_count),
+      )
+    } else {
+      span(class="hidden-inline", "")
+    },
+  ])
+}
+
+///|
+fn mooncode_action_plan_event_gap_text(
+  events : Array[String],
+  label : String,
+) -> String {
+  if events.length() == 0 {
+    ""
+  } else {
+    "; " + label + " " + events.join(", ")
+  }
+}
+
+///|
+fn mooncode_action_plan_item_class(action : MoonCodeActionPlanItem) -> String {
+  match action.state {
+    "completed" => "accepted"
+    "ready-for-review" => "pending"
+    "blocked" | "runtime-retry" => "rejected"
+    "awaiting-proof" => "running"
+    "running" => "running"
+    "queued-for-runtime" => "queued"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_runtime_evidence_panel(model : Model) -> @rabbita.Html {
+  section(class="mooncode-review-board runtime-evidence-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "session proof contract"),
+        h3("Runtime Evidence"),
+      ]),
+      span(class="record-kind", model.mooncode_runtime_evidence_status),
+    ]),
+    match model.mooncode_runtime_evidence {
+      Some(evidence) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Status", evidence.status),
+            info_chip("Commands", evidence.command_count.to_string()),
+            info_chip("Proven", evidence.proven_command_count.to_string()),
+            info_chip(
+              "Missing",
+              evidence.missing_evidence_command_count.to_string(),
+            ),
+            info_chip("Failed", evidence.failed_evidence_command_count.to_string()),
+            info_chip(
+              "Proof",
+              "\{evidence.proven_required_event_count}/\{evidence.required_event_count}",
+            ),
+            info_chip(
+              "Tool Proof",
+              mooncode_optional_ratio_label(
+                evidence.tool_harness_proven_tool_count,
+                evidence.tool_harness_expected_tool_count,
+              ),
+            ),
+            info_chip(
+              "Tool Missing",
+              mooncode_optional_int_label(
+                evidence.tool_harness_missing_tool_count,
+              ),
+            ),
+            info_chip(
+              "Tool Failed",
+              mooncode_optional_int_label(
+                evidence.tool_harness_failed_tool_count,
+              ),
+            ),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Recorded", empty_label(evidence.recorded_at)),
+            info_row(
+              "Tool Harness",
+              mooncode_optional_text_label(evidence.tool_harness_status),
+            ),
+            info_row("Manifest", empty_label(evidence.manifest_path)),
+            info_row("Commands Log", empty_label(evidence.command_log_path)),
+            info_row(
+              "Runtime Feed",
+              empty_label(evidence.runtime_command_log_path),
+            ),
+            info_row("Event Log", empty_label(evidence.event_log_path)),
+            info_row(
+              "Artifact",
+              empty_label(evidence.absolute_manifest_path),
+            ),
+            info_row("Task", empty_label(evidence.task_id)),
+          ]),
+          if evidence.items.length() == 0 {
+            p(class="status-line", "no commands have runtime evidence yet")
+          } else {
+            div(
+              class="mooncode-review-list runtime-evidence-list",
+              evidence.items[:mooncode_runtime_evidence_limit(evidence.items)].map(item =>
+                render_mooncode_runtime_evidence_item(item)
+              ),
+            )
+          },
+          p(class="mooncode-event-detail", evidence.rule),
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode runtime evidence has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_runtime_evidence_limit(
+  items : Array[MoonCodeRuntimeEvidenceItem]
+) -> Int {
+  if items.length() > 8 {
+    8
+  } else {
+    items.length()
+  }
+}
+
+///|
+fn render_mooncode_runtime_evidence_item(
+  item : MoonCodeRuntimeEvidenceItem
+) -> @rabbita.Html {
+  let target = if item.context_path == "" {
+    item.command_id
+  } else {
+    item.context_path
+  }
+  div(class="mooncode-review-item " + mooncode_runtime_evidence_item_class(item), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(item.action + " -> " + item.status),
+        small(item.created_at),
+      ]),
+      span(
+        class="record-kind",
+        if item.runtime_command_recorded {
+          "runtime command"
+        } else {
+          "missing runtime command"
+        },
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip(
+        "Proof",
+        "\{item.proven_required_event_count}/\{item.required_event_count}",
+      ),
+      info_chip(
+        "Tools",
+        mooncode_optional_ratio_label(
+          item.tool_harness_proven_tool_count,
+          item.tool_harness_expected_tool_count,
+        ),
+      ),
+      info_chip(
+        "Tool Harness",
+        mooncode_optional_text_label(item.tool_harness_status),
+      ),
+      info_chip("Missing", item.missing_required_events.length().to_string()),
+      info_chip("Failed", item.failed_required_events.length().to_string()),
+    ]),
+    code(target),
+    if item.message == "" {
+      span(class="hidden-inline", "")
+    } else {
+      p(class="mooncode-event-detail", item.message)
+    },
+    if item.required_event_count == 0 {
+      p(class="mooncode-event-detail", "no required runtime events")
+    } else {
+      p(
+        class="mooncode-event-detail",
+        "required " +
+        item.required_event_count.to_string() +
+        ", proven " +
+        item.proven_required_event_count.to_string() +
+        mooncode_action_plan_event_gap_text(
+          item.missing_required_events, "missing",
+        ) +
+        mooncode_action_plan_event_gap_text(
+          item.failed_required_events, "failed",
+        ),
+      )
+    },
+  ])
+}
+
+///|
+fn mooncode_runtime_evidence_item_class(
+  item : MoonCodeRuntimeEvidenceItem
+) -> String {
+  match item.status {
+    "proven" => "accepted"
+    "failed" => "rejected"
+    "missing-evidence" => "running"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_runtime_claim_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board runtime-claim-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "runtime lease state"),
+        h3("Runtime Claims"),
+      ]),
+      span(class="record-kind", model.mooncode_runtime_claim_status),
+    ]),
+    div(class="toolbar-actions", [
+      button(
+        class="secondary-button",
+        on_click=dispatch(ClaimMoonCodeRuntime(false)),
+        "Claim Next",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(ClaimMoonCodeRuntime(true)),
+        "Force Claim",
+      ),
+    ]),
+    match model.mooncode_runtime_claim {
+      Some(state) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Commands", state.command_count.to_string()),
+            info_chip("Claimable", state.claimable_command_count.to_string()),
+            info_chip("Claimed", state.claimed_command_count.to_string()),
+            info_chip("Delivered", state.delivered_command_count.to_string()),
+            info_chip("Failed", state.failed_command_count.to_string()),
+            info_chip("Invalid", state.invalid_command_count.to_string()),
+            info_chip(
+              "Auth Blocked",
+              state.tool_authorization_blocked_command_count.to_string(),
+            ),
+            info_chip(
+              "Order Blocked",
+              state.order_blocked_command_count.to_string(),
+            ),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Claim Endpoint", state.claim_endpoint),
+            info_row("Ack Endpoint", state.ack_endpoint),
+            info_row("Runtime Feed", state.runtime_command_log_path),
+            info_row("Dispatch Log", state.runtime_dispatch_log_path),
+          ]),
+          if state.claimed_commands.length() == 0 &&
+            state.claimable_commands.length() == 0 &&
+            state.tool_authorization_blocked_commands.length() == 0 &&
+            state.order_blocked_commands.length() == 0 {
+            p(class="status-line", "no runtime commands are leased or claimable")
+          } else {
+            div(
+              class="mooncode-review-list runtime-claim-list",
+              mooncode_recent_claim_items(
+                state.claimed_commands,
+                state.claimable_commands,
+                state.tool_authorization_blocked_commands,
+                state.order_blocked_commands,
+              ).map(item =>
+                render_mooncode_runtime_claim_item(dispatch, item)
+              ),
+            )
+          },
+          small(class="status-line", state.lease_policy),
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode runtime claim state has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_recent_claim_items(
+  claimed : Array[MoonCodeRuntimeClaimItem],
+  claimable : Array[MoonCodeRuntimeClaimItem],
+  auth_blocked : Array[MoonCodeRuntimeClaimItem],
+  order_blocked : Array[MoonCodeRuntimeClaimItem],
+) -> Array[MoonCodeRuntimeClaimItem] {
+  let items : Array[MoonCodeRuntimeClaimItem] = []
+  for item in claimable {
+    if items.length() < 8 {
+      items.push(item)
+    }
+  }
+  for item in auth_blocked {
+    if items.length() < 8 {
+      items.push(item)
+    }
+  }
+  for item in claimed {
+    if items.length() < 8 {
+      items.push(item)
+    }
+  }
+  for item in order_blocked {
+    if items.length() < 8 {
+      items.push(item)
+    }
+  }
+  items
+}
+
+///|
+fn render_mooncode_runtime_claim_item(
+  dispatch : Dispatch[Msg],
+  item : MoonCodeRuntimeClaimItem
+) -> @rabbita.Html {
+  div(class="mooncode-review-item " + mooncode_runtime_claim_item_class(item), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(item.action + " -> " + item.claim_status),
+        small(
+          if item.claimed_at == "" {
+            item.created_at
+          } else {
+            item.consumer_id + " / " + item.claimed_at
+          },
+        ),
+      ]),
+      div(
+        class="toolbar-actions",
+        render_mooncode_runtime_claim_actions(dispatch, item),
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Dispatch", item.dispatch),
+      info_chip("Serve", item.serve_command),
+      info_chip("Lease", empty_label(item.lease_expires_at)),
+      info_chip("Auth", empty_label(item.tool_authorization_state)),
+      info_chip(
+        "Tool Run",
+        if item.runtime_may_execute_tools { "allowed" } else { "blocked" },
+      ),
+    ]),
+    if item.tool_authorization_blocked {
+      p(
+        class="status-line",
+        "Tool authorization blocks this command: " +
+        empty_label(item.tool_authorization_blocked_reason),
+      )
+    } else if item.blocked_by_command_id != "" {
+      p(
+        class="status-line",
+        "Waiting behind " + item.blocked_by_command_id + " (" +
+        empty_label(item.blocked_by_status) + ")",
+      )
+    } else {
+      span(class="sr-only", "")
+    },
+    if item.target == "" {
+      code(item.command_id)
+    } else {
+      code(item.target)
+    },
+    render_mooncode_runtime_execution_summary(item.runtime_command),
+    small(class="status-line", item.ack_endpoint),
+  ])
+}
+
+///|
+fn render_mooncode_runtime_claim_actions(
+  dispatch : Dispatch[Msg],
+  item : MoonCodeRuntimeClaimItem
+) -> Array[@rabbita.Html] {
+  let actions : Array[@rabbita.Html] = [
+    span(class="record-kind", item.receipt_status),
+  ]
+  if item.claim_status == "claimed" {
+    actions.push(
+      button(
+        class="secondary-button",
+        on_click=dispatch(
+          AckMoonCodeRuntimeCommand(item.command_id, "runtime-acknowledged"),
+        ),
+        "Ack",
+      ),
+    )
+    actions.push(
+      button(
+        class="secondary-button",
+        on_click=dispatch(
+          AckMoonCodeRuntimeCommand(item.command_id, "runtime-completed"),
+        ),
+        "Complete",
+      ),
+    )
+    actions.push(
+      button(
+        class="secondary-button",
+        on_click=dispatch(AckMoonCodeRuntimeCommand(item.command_id, "failed")),
+        "Fail",
+      ),
+    )
+  }
+  actions
+}
+
+///|
+fn mooncode_runtime_claim_item_class(item : MoonCodeRuntimeClaimItem) -> String {
+  match item.claim_status {
+    "claimed" => "running"
+    "claimable" => "queued"
+    "delivered" => "accepted"
+    "blocked-tool-authorization" | "failed" | "invalid" => "rejected"
+    "blocked-by-prior-command" => "running"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_runtime_dispatch_panel(model : Model) -> @rabbita.Html {
+  section(class="mooncode-review-board runtime-dispatch-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "runtime delivery audit"),
+        h3("Dispatch Receipts"),
+      ]),
+      span(class="record-kind", model.mooncode_runtime_dispatch_status),
+    ]),
+    match model.mooncode_runtime_dispatch {
+      Some(state) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Commands", state.runtime_command_count.to_string()),
+            info_chip("Receipts", state.runtime_dispatch_count.to_string()),
+            info_chip("Pending", state.runtime_dispatch_pending_count.to_string()),
+            info_chip("Mode", state.dispatch_mode),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Runtime Feed", state.runtime_command_log_path),
+            info_row("Dispatch Log", state.runtime_dispatch_log_path),
+            info_row("Session", state.session_id),
+            info_row("Task", empty_label(state.task_id)),
+          ]),
+          if state.pending_command_ids.length() == 0 {
+            p(class="status-line", "all runtime commands have dispatch receipts")
+          } else {
+            div(class="mooncode-output-roots", [
+              small("Pending command ids"),
+              p(state.pending_command_ids.join(", ")),
+            ])
+          },
+          if state.dispatch_receipts.length() == 0 {
+            p(class="status-line", "no dispatch receipts recorded yet")
+          } else {
+            div(
+              class="mooncode-review-list runtime-dispatch-list",
+              mooncode_recent_dispatch_receipts(state.dispatch_receipts).map(receipt =>
+                render_mooncode_runtime_dispatch_receipt(receipt)
+              ),
+            )
+          },
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode runtime dispatch state has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_recent_dispatch_receipts(
+  receipts : Array[MoonCodeRuntimeDispatchReceipt]
+) -> Array[MoonCodeRuntimeDispatchReceipt] {
+  let recent : Array[MoonCodeRuntimeDispatchReceipt] = []
+  let mut index = receipts.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 8 {
+    index -= 1
+    recent.push(receipts[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_runtime_dispatch_receipt(
+  receipt : MoonCodeRuntimeDispatchReceipt
+) -> @rabbita.Html {
+  let target = json_field_string(receipt.runtime_command, "target", default="")
+  div(class="mooncode-review-item " + mooncode_runtime_dispatch_state(receipt), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(receipt.action + " -> " + receipt.status),
+        small(receipt.dispatch_mode + " / " + receipt.created_at),
+      ]),
+      span(
+        class=if receipt.openseek_wire_valid {
+          "record-kind good"
+        } else {
+          "record-kind"
+        },
+        if receipt.openseek_wire_valid { "wire valid" } else { "wire pending" },
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Dispatch", receipt.dispatch),
+      info_chip("Ack Order", mooncode_ack_order_status_label(receipt)),
+      info_chip(
+        "Requested",
+        mooncode_optional_text_label(receipt.requested_status),
+      ),
+      info_chip(
+        "Native",
+        if receipt.native_mooncode_endpoint == "" {
+          "none"
+        } else {
+          "ready"
+        },
+      ),
+      info_chip("Legacy", empty_label(receipt.legacy_bridge_endpoint)),
+    ]),
+    if target == "" {
+      code(receipt.command_id)
+    } else {
+      code(target)
+    },
+    render_mooncode_runtime_ack_audit(receipt),
+    render_mooncode_runtime_proof_gate(receipt.proof_gate),
+    render_mooncode_runtime_execution_summary(receipt.runtime_command),
+    p(class="mooncode-event-detail", receipt.detail),
+    small(class="status-line", receipt.dispatch_id),
+  ])
+}
+
+///|
+fn mooncode_ack_order_status_label(
+  receipt : MoonCodeRuntimeDispatchReceipt
+) -> String {
+  match receipt.ack_order_status {
+    Some(status) => if status == "" { "n/a" } else { status }
+    None => "n/a"
+  }
+}
+
+///|
+fn mooncode_optional_text_label(value : String?) -> String {
+  match value {
+    Some(text) => if text == "" { "none" } else { text }
+    None => "none"
+  }
+}
+
+///|
+fn mooncode_optional_bool_label(value : Bool?) -> String {
+  match value {
+    Some(true) => "yes"
+    Some(false) => "no"
+    None => "n/a"
+  }
+}
+
+///|
+fn render_mooncode_runtime_ack_audit(
+  receipt : MoonCodeRuntimeDispatchReceipt
+) -> @rabbita.Html {
+  match receipt.ack_order_status {
+    Some(_) =>
+      div(class="daemon-state compact-state", [
+        info_row(
+          "Previous Dispatch",
+          mooncode_optional_text_label(receipt.previous_dispatch_status),
+        ),
+        info_row(
+          "Previous Claim",
+          mooncode_optional_text_label(receipt.previous_claim_id),
+        ),
+        info_row(
+          "Previous Consumer",
+          mooncode_optional_text_label(receipt.previous_consumer_id),
+        ),
+        info_row(
+          "Same Consumer",
+          mooncode_optional_bool_label(receipt.claimed_by_same_consumer),
+        ),
+        render_mooncode_runtime_ack_blocker(receipt.order_blocker),
+      ])
+    None => span(class="hidden-inline", "")
+  }
+}
+
+///|
+fn render_mooncode_runtime_ack_blocker(blocker : Json?) -> @rabbita.Html {
+  match blocker {
+    Some(value) => {
+      let command_id = json_field_string(value, "command_id", default="")
+      if command_id == "" {
+        span(class="hidden-inline", "")
+      } else {
+        info_row(
+          "Order Blocker",
+          "\{command_id} / \{json_field_string(value, "status", default="blocked")}",
+        )
+      }
+    }
+    None => span(class="hidden-inline", "")
+  }
+}
+
+///|
+fn render_mooncode_runtime_proof_gate(gate : Json?) -> @rabbita.Html {
+  match gate {
+    Some(value) => {
+      let kind = json_field_string(value, "kind", default="")
+      if kind == "" {
+        span(class="hidden-inline", "")
+      } else {
+        let status = json_field_string(value, "status", default="unknown")
+        let blocked = json_field_bool(value, "completion_blocked", default=false)
+        let missing = mooncode_runtime_proof_gate_missing_label(Some(value))
+        let failed = json_field_string_array_items(
+          value, "failed_required_events",
+        )
+        let gate_class = if blocked {
+          "blocked"
+        } else if status == "passed" {
+          "passed"
+        } else {
+          "idle"
+        }
+        let badge_class = if blocked {
+          "record-kind warning"
+        } else if status == "passed" {
+          "record-kind good"
+        } else {
+          "record-kind"
+        }
+        let missing_text = if missing == "" {
+          "missing none"
+        } else {
+          "missing " + missing
+        }
+        let failed_text = if failed.length() == 0 {
+          "failed none"
+        } else {
+          "failed " + failed.join(", ")
+        }
+        div(class="mooncode-proof-gate " + gate_class, [
+            div(class="mooncode-tool-head", [
+              strong("Completion proof"),
+              span(class=badge_class, status),
+            ]),
+            div(class="mooncode-stats", [
+              info_chip(
+                "Required",
+                json_field_int(value, "required_event_count", default=0).to_string(),
+              ),
+              info_chip(
+                "Proven",
+                json_field_int(value, "proven_required_event_count", default=0).to_string(),
+              ),
+              info_chip(
+                "Missing",
+                json_field_int(value, "missing_required_event_count", default=0).to_string(),
+              ),
+              info_chip(
+                "Failed",
+                json_field_int(value, "failed_required_event_count", default=0).to_string(),
+              ),
+            ]),
+            if missing == "" && failed.length() == 0 {
+              small("Required command-scoped proof is satisfied or not required.")
+            } else {
+              small(
+                [missing_text, failed_text].join(" / "),
+              )
+            },
+          ])
+      }
+    }
+    None => span(class="hidden-inline", "")
+  }
+}
+
+///|
+fn mooncode_runtime_proof_gate_status(gate : Json?) -> String {
+  match gate {
+    Some(value) => json_field_string(value, "status", default="")
+    None => ""
+  }
+}
+
+///|
+fn mooncode_runtime_proof_gate_missing_label(gate : Json?) -> String {
+  match gate {
+    Some(value) => {
+      let missing = json_field_string_array_items(
+        value, "missing_required_events",
+      )
+      if missing.length() == 0 {
+        ""
+      } else {
+        missing.join(", ")
+      }
+    }
+    None => ""
+  }
+}
+
+///|
+fn render_mooncode_runtime_execution_summary(command : Json) -> @rabbita.Html {
+  match json_field(command, "execution_summary") {
+    Some(summary) => {
+      let tool_sequence = json_field_string_array_items(
+        summary, "tool_sequence",
+      )
+      let expected_events = json_field_string_array_items(
+        summary, "expected_events",
+      )
+      let required_outputs = json_field_string_array_items(
+        summary, "required_outputs",
+      )
+      let execution_checklist = json_field_json_array_items(
+        summary, "execution_checklist",
+      )
+      let tool_policies = json_field_json_array_items(summary, "tool_policies")
+      let recommended = json_field_string_array_items(
+        summary, "recommended_commands",
+      )
+      div(class="mooncode-runtime-summary", [
+        div(class="mooncode-stats", [
+          info_chip(
+            "Plan",
+            json_field_string(summary, "action", default="command"),
+          ),
+          info_chip(
+            "Tools",
+            if tool_sequence.length() == 0 {
+              "none"
+            } else {
+              tool_sequence.join(" -> ")
+            },
+          ),
+          info_chip("Events", expected_events.length().to_string()),
+          info_chip("Outputs", required_outputs.length().to_string()),
+          info_chip(
+            "Checklist",
+            json_field_int(
+              summary,
+              "checklist_count",
+              default=execution_checklist.length(),
+            ).to_string(),
+          ),
+          info_chip(
+            "Review",
+            if json_field_bool(summary, "review_required", default=false) {
+              "required"
+            } else {
+              "not required"
+            },
+          ),
+          info_chip(
+            "Auth",
+            empty_label(
+              json_field_string(
+                summary,
+                "tool_authorization_state",
+                default="",
+              ),
+            ),
+          ),
+          info_chip(
+            "Tool Run",
+            if json_field_bool(summary, "runtime_may_execute_tools", default=true) {
+              "allowed"
+            } else {
+              "blocked"
+            },
+          ),
+        ]),
+        if recommended.length() == 0 {
+          span(class="hidden-inline", "")
+        } else {
+          div(class="mooncode-output-roots", [
+            small("Recommended commands"),
+            p(recommended.join(", ")),
+          ])
+        },
+        div(class="mooncode-output-roots", [
+          small("Required outputs"),
+          p(if required_outputs.length() == 0 {
+            "none"
+          } else {
+            required_outputs.join(", ")
+          }),
+        ]),
+        render_mooncode_tool_policy_list(tool_policies),
+        render_mooncode_execution_checklist(execution_checklist),
+        div(class="daemon-state compact-state", [
+          info_row(
+            "Events",
+            if expected_events.length() == 0 {
+              "none"
+            } else {
+              expected_events.join(", ")
+            },
+          ),
+          info_row(
+            "Event Sink",
+            empty_label(json_field_string(summary, "event_sink", default="")),
+          ),
+          info_row(
+            "Ack Sink",
+            empty_label(json_field_string(summary, "ack_sink", default="")),
+          ),
+        ]),
+      ])
+    }
+    None => span(class="hidden-inline", "")
+  }
+}
+
+///|
+fn render_mooncode_tool_policy_list(policies : Array[Json]) -> @rabbita.Html {
+  if policies.length() == 0 {
+    span(class="hidden-inline", "")
+  } else {
+    div(class="mooncode-tool-policy-list", [
+      small("Tool policies"),
+      div(
+        class="mooncode-review-list compact-list",
+        mooncode_tool_policy_limit(policies).map(render_mooncode_tool_policy),
+      ),
+    ])
+  }
+}
+
+///|
+fn mooncode_tool_policy_limit(policies : Array[Json]) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = 0
+  while index < policies.length() && recent.length() < 6 {
+    recent.push(policies[index])
+    index += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_tool_policy(policy : Json) -> @rabbita.Html {
+  let required_inputs = json_field_string_array_items(policy, "required_inputs")
+  let proof_events = json_field_string_array_items(policy, "proof_events")
+  let guardrails = json_field_string_array_items(policy, "guardrails")
+  div(class="mooncode-tool-policy", [
+    div(class="mooncode-tool-head", [
+      strong(json_field_string(policy, "tool", default="tool")),
+      span(
+        class=if json_field_bool(policy, "mutates_files", default=false) {
+          "record-kind warning"
+        } else {
+          "record-kind good"
+        },
+        json_field_string(policy, "approval", default="policy"),
+      ),
+    ]),
+    small(
+      [
+        "inputs " + mooncode_inline_list(required_inputs),
+        "proof " + mooncode_inline_list(proof_events),
+      ].join(" / "),
+    ),
+    p(
+      if guardrails.length() == 0 {
+        "Runtime must enforce this tool before execution."
+      } else {
+        guardrails.join("; ")
+      },
+    ),
+  ])
+}
+
+///|
+fn mooncode_inline_list(items : Array[String]) -> String {
+  if items.length() == 0 {
+    "none"
+  } else {
+    items.join(", ")
+  }
+}
+
+///|
+fn render_mooncode_execution_checklist(items : Array[Json]) -> @rabbita.Html {
+  if items.length() == 0 {
+    span(class="hidden-inline", "")
+  } else {
+    div(class="mooncode-execution-checklist", [
+      small("Runtime checklist"),
+      div(
+        class="mooncode-review-list compact-list",
+        items.map(item => render_mooncode_execution_checklist_item(item)),
+      ),
+    ])
+  }
+}
+
+///|
+fn render_mooncode_execution_checklist_item(item : Json) -> @rabbita.Html {
+  let required_event = json_field_string(item, "required_event", default="")
+  let required_output = json_field_string(item, "required_output", default="")
+  let endpoint = json_field_string(item, "endpoint", default="")
+  div(class="mooncode-checklist-row", [
+    span(
+      class="record-kind",
+      json_field_int(item, "index", default=0).to_string(),
+    ),
+    div([
+      strong(json_field_string(item, "title", default="Runtime step")),
+      small(json_field_string(item, "owner", default="moonclaw")),
+      if required_event == "" && required_output == "" && endpoint == "" {
+        span(class="hidden-inline", "")
+      } else {
+        small(
+          [
+            empty_label(required_event),
+            empty_label(required_output),
+            empty_label(endpoint),
+          ].join(" / "),
+        )
+      },
+    ]),
+  ])
+}
+
+///|
+fn mooncode_runtime_dispatch_state(
+  receipt : MoonCodeRuntimeDispatchReceipt
+) -> String {
+  match receipt.ack_order_status {
+    Some("blocked-by-prior-command") | Some("consumer-mismatch") => return "rejected"
+    Some("matching-claim") | Some("already-delivered") => return "accepted"
+    _ => ()
+  }
+  match receipt.status {
+    "native-dispatched" | "runtime-acknowledged" | "runtime-completed" =>
+      "accepted"
+    "legacy-bridged" => "pending"
+    "failed" => "rejected"
+    "recorded" => "queued"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_event_lanes(
+  model : Model,
+  session : AgentSession,
+) -> @rabbita.Html {
+  let summary = session.mooncode_summary
+  section(class="mooncode-stream", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", summary.protocol),
+        h3("MoonCode Stream"),
+      ]),
+      span(
+        class=if summary.has_packaging_candidate {
+          "record-kind good"
+        } else {
+          "record-kind"
+        },
+        if summary.has_packaging_candidate {
+          "package ready"
+        } else {
+          "\{summary.event_count} events"
+        },
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Tools", summary.tool_count.to_string()),
+      info_chip("Diffs", summary.diff_count.to_string()),
+      info_chip("Tests", summary.test_count.to_string()),
+      info_chip("Verified", summary.verified_test_count.to_string()),
+      info_chip("Artifacts", summary.artifact_count.to_string()),
+      info_chip("Source-bound", summary.source_bound_package_count.to_string()),
+      info_chip("Review", summary.review_count.to_string()),
+      info_chip("Pending", summary.pending_diff_count.to_string()),
+      info_chip("Cursor", model.mooncode_stream_cursor.to_string()),
+    ]),
+    render_mooncode_live_tail(model),
+    div(class="mooncode-lane-grid", [
+      render_mooncode_lane(session, "tool", "Tools"),
+      render_mooncode_lane(session, "diff", "Diffs"),
+      render_mooncode_lane(session, "test", "Tests"),
+      render_mooncode_lane(session, "artifact", "Artifacts"),
+      render_mooncode_lane(session, "review", "Review"),
+    ]),
+  ])
+}
+
+///|
+fn render_mooncode_live_tail(model : Model) -> @rabbita.Html {
+  div(class="mooncode-live-tail", [
+    div(class="mooncode-lane-title", [
+      strong("Live Tail"),
+      span(class="record-kind", model.mooncode_stream_status),
+      span(class="record-kind", model.mooncode_stream_checkpoint_status),
+    ]),
+    if model.mooncode_stream_events.length() == 0 {
+      p(class="status-line", "waiting for incremental stream events")
+    } else {
+      div(
+        class="mooncode-event-list compact",
+        model.mooncode_stream_events[:mooncode_lane_limit(
+          model.mooncode_stream_events,
+        )].map(event => render_mooncode_event(event)),
+      )
+    },
+  ])
+}
+
+///|
+fn info_chip(label : String, value : String) -> @rabbita.Html {
+  span(class="info-chip", [strong(value), small(label)])
+}
+
+///|
+fn render_mooncode_lane(
+  session : AgentSession,
+  lane : String,
+  title : String,
+) -> @rabbita.Html {
+  let events = mooncode_lane_events(session, lane)
+  div(class="mooncode-lane " + lane, [
+    div(class="mooncode-lane-title", [
+      strong(title),
+      span(class="record-kind", events.length().to_string()),
+    ]),
+    if events.length() == 0 {
+      p(class="status-line", "waiting")
+    } else {
+      div(
+        class="mooncode-event-list",
+        events[:mooncode_lane_limit(events)].map(event => render_mooncode_event(event)),
+      )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_eval_report_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board eval-report-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "OpenSeek-style evidence"),
+        h3("Eval Report"),
+      ]),
+      div(class="toolbar-actions", [
+        span(class="record-kind", model.mooncode_eval_report_status),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_eval")),
+          "Run Eval",
+        ),
+      ]),
+    ]),
+    match model.mooncode_eval_report {
+      Some(report) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Score", report.bridge_score.to_string()),
+            info_chip("Level", report.bridge_level),
+            info_chip("Passed", report.passed_check_count.to_string()),
+            info_chip("Missing", report.missing_check_count.to_string()),
+            info_chip(
+              "Native",
+              if report.native_eval_evidence_ready { "ready" } else { "missing" },
+            ),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Status", report.status),
+            info_row("Runtime", report.runtime_owner),
+            info_row("UI", report.ui_owner),
+            info_row("Artifact", report.artifact_owner),
+            info_row("Extractable", report.extractable_component),
+            info_row("Native Source", report.native_eval_source),
+            info_row("Native Endpoint", report.native_eval_endpoint),
+            info_row(
+              "Native Ingest",
+              report.native_eval_ingest_method +
+              " " +
+              report.native_eval_ingest_endpoint,
+            ),
+            info_row("Manifest", empty_label(report.manifest_path)),
+            info_row("Recorded", empty_label(report.recorded_at)),
+            info_row("Task", empty_label(report.task_id)),
+          ]),
+          p(class="mooncode-event-detail", report.current_gap),
+          div(class="mooncode-output-roots", [
+            small("Required native harnesses"),
+            p(report.required_native_harnesses.join(", ")),
+          ]),
+          ul(
+            class="mooncode-evidence-list",
+            report.minimum_native_evidence.map(item => li(item)),
+          ),
+          render_mooncode_eval_checks(report.checks),
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode eval report has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_runtime_handoff_panel(model : Model) -> @rabbita.Html {
+  section(class="mooncode-review-board runtime-handoff-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "extractable runtime contract"),
+        h3("Runtime Handoff"),
+      ]),
+      span(class="record-kind", model.mooncode_runtime_handoff_status),
+    ]),
+    match model.mooncode_runtime_handoff {
+      Some(handoff) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Commands", handoff.command_count.to_string()),
+            info_chip(
+              "Runtime",
+              if handoff.engine.native_runtime_ready { "native" } else { "bridge" },
+            ),
+            info_chip(
+              "Daemon",
+              if handoff.engine.daemon_running { "running" } else { "stopped" },
+            ),
+            info_chip("Eval", handoff.summary.eval_level),
+            info_chip("Score", handoff.summary.eval_score.to_string()),
+            info_chip(
+              "Dispatches",
+              handoff.summary.runtime_dispatch_count.to_string(),
+            ),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Status", handoff.status),
+            info_row("Manifest", empty_label(handoff.manifest_path)),
+            info_row("Workspace", empty_label(handoff.workspace_root)),
+            info_row("Task", empty_label(handoff.task_id)),
+            info_row("Dispatch", handoff.engine.dispatch_mode),
+            info_row("Bridge", handoff.engine.bridge_status),
+            info_row("MoonClaw", empty_label(handoff.engine.moonclaw_root)),
+          ]),
+          render_mooncode_runtime_consumer(handoff.runtime_consumer),
+          render_mooncode_runtime_turn_packet(handoff.runtime_turn_packet),
+          render_mooncode_runtime_supervisor(handoff.runtime_supervisor),
+          render_mooncode_runtime_execution_plan(
+            handoff.runtime_execution_plan,
+          ),
+          div(class="daemon-state compact-state", [
+            info_row(
+              "Session Snapshot",
+              handoff.resume_contract.session_snapshot_path,
+            ),
+            info_row(
+              "Session Store",
+              handoff.resume_contract.session_store_endpoint,
+            ),
+            info_row("Command Log", handoff.resume_contract.command_log_path),
+            info_row(
+              "Runtime Feed",
+              handoff.resume_contract.runtime_command_log_path,
+            ),
+            info_row(
+              "Runtime Dispatch",
+              handoff.resume_contract.runtime_dispatch_log_path,
+            ),
+            info_row("Event Log", handoff.resume_contract.event_log_path),
+            info_row("Stream", handoff.resume_contract.stream_endpoint),
+            info_row(
+              "Event Sink",
+              handoff.resume_contract.runtime_event_ingest_endpoint,
+            ),
+            info_row("Queue", handoff.resume_contract.command_queue_endpoint),
+            info_row(
+              "Runtime Queue",
+              handoff.resume_contract.runtime_command_feed_endpoint,
+            ),
+            info_row(
+              "Dispatch State",
+              handoff.resume_contract.runtime_dispatch_endpoint,
+            ),
+            info_row(
+              "Runtime Replay",
+              handoff.resume_contract.runtime_replay_endpoint,
+            ),
+            info_row(
+              "Runtime Claim",
+              handoff.resume_contract.runtime_claim_endpoint,
+            ),
+            info_row(
+              "Action Plan",
+              handoff.resume_contract.action_plan_endpoint,
+            ),
+            info_row(
+              "Native Command",
+              handoff.resume_contract.native_command_endpoint,
+            ),
+            info_row("Native Eval", handoff.resume_contract.native_eval_endpoint),
+          ]),
+          div(class="mooncode-output-roots", [
+            small("MoonBook output roots"),
+            p(handoff.book_output_roots.join(", ")),
+          ]),
+          p(class="mooncode-event-detail", handoff.next_runtime_step),
+          small(class="status-line", handoff.resume_contract.ordering_rule),
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No MoonCode runtime handoff has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_runtime_turn_packet(packet : Json?) -> @rabbita.Html {
+  match packet {
+    Some(packet) => {
+      let endpoints = json_field_object_or_self(packet, "endpoints")
+      div(class="mooncode-wire-block runtime-consumer-block", [
+        div(class="mooncode-tool-head", [
+          strong("Runtime Turn Packet"),
+          span(
+            class=mooncode_runtime_consumer_status_class(
+              json_field_string(packet, "status", default="idle"),
+            ),
+            json_field_string(packet, "status", default="idle"),
+          ),
+          span(
+            class=if json_field_bool(
+              packet,
+              "scheduler_allows_turn",
+              default=false,
+            ) {
+              "record-kind good"
+            } else {
+              "record-kind warning"
+            },
+            json_field_string(packet, "scheduler_effect", default="none"),
+          ),
+        ]),
+        div(class="mooncode-stats", [
+          info_chip("Operation", json_field_string(packet, "operation", default="wait")),
+          info_chip("Action", empty_label(json_field_string(packet, "action", default=""))),
+          info_chip("Command", empty_label(json_field_string(packet, "command_id", default=""))),
+          info_chip(
+            "Claim",
+            if json_field_bool(packet, "ready_to_claim", default=false) {
+              "ready"
+            } else {
+              "no"
+            },
+          ),
+          info_chip(
+            "Ack",
+            if json_field_bool(packet, "ready_to_ack", default=false) {
+              "ready"
+            } else {
+              "no"
+            },
+          ),
+        ]),
+        div(class="daemon-state compact-state", [
+          info_row("Claim", json_field_string(endpoints, "claim", default="")),
+          info_row("Ack", json_field_string(endpoints, "ack", default="")),
+          info_row(
+            "Events",
+            json_field_string(endpoints, "runtime_events", default=""),
+          ),
+          info_row(
+            "Native",
+            json_field_string(endpoints, "native_commands", default=""),
+          ),
+        ]),
+        div(class="mooncode-output-roots", [
+          small("Required proof events"),
+          p(json_field_string_array_summary(packet, "required_events")),
+        ]),
+        p(
+          class="mooncode-event-detail",
+          json_field_string(packet, "next_step", default=""),
+        ),
+        small(json_field_string(packet, "safety_boundary", default="")),
+      ])
+    }
+    None =>
+      div(class="mooncode-wire-block runtime-consumer-block", [
+        div(class="mooncode-tool-head", [
+          strong("Runtime Turn Packet"),
+          span(class="record-kind warning", "missing"),
+        ]),
+        p(class="status-line", "No runtime turn packet has been projected yet."),
+      ])
+  }
+}
+
+///|
+fn render_mooncode_runtime_supervisor(supervisor : Json?) -> @rabbita.Html {
+  match supervisor {
+    Some(supervisor) => {
+      let endpoints = json_field_object_or_self(supervisor, "endpoints")
+      let readiness = json_field_object_or_self(supervisor, "readiness")
+      let loop_steps = json_field_json_array_items(supervisor, "supervisor_loop")
+      div(class="mooncode-wire-block runtime-consumer-block", [
+        div(class="mooncode-tool-head", [
+          strong("Runtime Supervisor"),
+          span(
+            class=if json_field_bool(
+              supervisor,
+              "ready_to_launch",
+              default=false,
+            ) {
+              "record-kind good"
+            } else {
+              "record-kind warning"
+            },
+            if json_field_bool(supervisor, "ready_to_launch", default=false) {
+              "launchable"
+            } else {
+              "blocked"
+            },
+          ),
+          span(
+            class="record-kind",
+            json_field_string(supervisor, "mode", default="bridge"),
+          ),
+        ]),
+        div(class="mooncode-stats", [
+          info_chip("Status", json_field_string(supervisor, "status", default="idle")),
+          info_chip(
+            "Action",
+            empty_label(json_field_string(supervisor, "action", default="")),
+          ),
+          info_chip(
+            "Command",
+            empty_label(json_field_string(supervisor, "command_id", default="")),
+          ),
+          info_chip(
+            "Scheduler",
+            json_field_string(supervisor, "scheduler_effect", default="none"),
+          ),
+          info_chip(
+            "Readiness",
+            json_field_string(readiness, "status", default="unknown"),
+          ),
+        ]),
+        div(class="daemon-state compact-state", [
+          info_row("Claim", json_field_string(endpoints, "claim", default="")),
+          info_row("Ack", json_field_string(endpoints, "ack", default="")),
+          info_row(
+            "Events",
+            json_field_string(endpoints, "runtime_events", default=""),
+          ),
+          info_row(
+            "Supervisor",
+            json_field_string(endpoints, "runtime_supervisor", default=""),
+          ),
+          info_row(
+            "Session",
+            json_field_string(endpoints, "session_store", default=""),
+          ),
+          info_row(
+            "MoonClaw",
+            empty_label(json_field_string(supervisor, "moonclaw_root", default="")),
+          ),
+        ]),
+        if json_field_bool(supervisor, "ready_to_launch", default=false) {
+          p(
+            class="mooncode-event-detail",
+            "MoonClaw can claim and execute this turn through the listed loop.",
+          )
+        } else {
+          p(
+            class="mooncode-event-detail",
+            json_field_string(
+              supervisor,
+              "launch_blocked_reason",
+              default="No launchable runtime command.",
+            ),
+          )
+        },
+        div(class="mooncode-output-roots", [
+          small("Missing launch requirements"),
+          p(
+            if json_field_int(
+              readiness,
+              "missing_requirement_count",
+              default=0,
+            ) == 0 {
+              "none"
+            } else {
+              json_field_string_array_summary(
+                readiness,
+                "missing_requirements",
+              )
+            },
+          ),
+        ]),
+        div(class="mooncode-consumer-loop", [
+          small("Supervisor loop"),
+          ul(
+            class="mooncode-evidence-list",
+            loop_steps.map(step => {
+              let http_method = json_field_string(step, "method", default="")
+              let endpoint = json_field_string(
+                step,
+                "endpoint",
+                default=json_field_string(step, "id", default=""),
+              )
+              li("\{http_method} \{endpoint}")
+            }),
+          ),
+        ]),
+        small(json_field_string(supervisor, "safety_boundary", default="")),
+      ])
+    }
+    None =>
+      div(class="mooncode-wire-block runtime-consumer-block", [
+        div(class="mooncode-tool-head", [
+          strong("Runtime Supervisor"),
+          span(class="record-kind warning", "missing"),
+        ]),
+        p(
+          class="status-line",
+          "This handoff predates the runtime supervisor launch packet.",
+        ),
+      ])
+  }
+}
+
+///|
+fn render_mooncode_runtime_execution_plan(plan : Json?) -> @rabbita.Html {
+  match plan {
+    Some(plan) =>
+      div(class="mooncode-wire-block runtime-consumer-block", [
+        div(class="mooncode-tool-head", [
+          strong("Runtime Execution Plan"),
+          span(
+            class=mooncode_runtime_consumer_status_class(
+              json_field_string(plan, "status", default="idle"),
+            ),
+            json_field_string(plan, "status", default="idle"),
+          ),
+        ]),
+        div(class="mooncode-stats", [
+          info_chip("Operation", json_field_string(plan, "operation", default="wait")),
+          info_chip("Action", empty_label(json_field_string(plan, "action", default=""))),
+          info_chip("Command", empty_label(json_field_string(plan, "command_id", default=""))),
+          info_chip(
+            "Execute",
+            if json_field_bool(plan, "ready_to_execute", default=false) {
+              "ready"
+            } else {
+              "no"
+            },
+          ),
+          info_chip(
+            "Proof",
+            json_field_int(plan, "required_event_count", default=0).to_string(),
+          ),
+        ]),
+        div(class="daemon-state compact-state", [
+          info_row("Target", empty_label(json_field_string(plan, "target", default=""))),
+          info_row(
+            "Context",
+            empty_label(json_field_string(plan, "context_path", default="")),
+          ),
+          info_row("Claim", json_field_string(plan, "claim_endpoint", default="")),
+          info_row("Ack", json_field_string(plan, "ack_endpoint", default="")),
+          info_row(
+            "Events",
+            json_field_string(plan, "runtime_event_ingest_endpoint", default=""),
+          ),
+          info_row(
+            "Native",
+            json_field_string(plan, "native_command_endpoint", default=""),
+          ),
+        ]),
+        div(class="mooncode-output-roots", [
+          small("Required proof events"),
+          p(json_field_string_array_summary(plan, "required_events")),
+        ]),
+        p(class="mooncode-event-detail", json_field_string(plan, "next_step", default="")),
+        small(json_field_string(plan, "safety_boundary", default="")),
+      ])
+    None =>
+      div(class="mooncode-wire-block runtime-consumer-block", [
+        div(class="mooncode-tool-head", [
+          strong("Runtime Execution Plan"),
+          span(class="status-warn", "missing"),
+        ]),
+        p(
+          class="status-line",
+          "This handoff predates the runtime execution plan. Queue or refresh a MoonCode command to regenerate it.",
+        ),
+      ])
+  }
+}
+
+///|
+fn render_mooncode_runtime_consumer(
+  consumer : MoonCodeRuntimeConsumer?,
+) -> @rabbita.Html {
+  match consumer {
+    Some(consumer) =>
+      div(class="mooncode-wire-block runtime-consumer-block", [
+        div(class="mooncode-tool-head", [
+          strong("Runtime Consumer"),
+          span(
+            class=mooncode_runtime_consumer_status_class(consumer.status),
+            consumer.status,
+          ),
+        ]),
+        div(class="mooncode-stats", [
+          info_chip("Claimable", consumer.claimable_command_count.to_string()),
+          info_chip("Claimed", consumer.claimed_command_count.to_string()),
+          info_chip("Pending", consumer.pending_command_count.to_string()),
+          info_chip("Invalid", consumer.invalid_command_count.to_string()),
+          info_chip(
+            "Claim",
+            if consumer.ready_to_claim { "ready" } else { "no" },
+          ),
+          info_chip(
+            "Replay",
+            if consumer.ready_to_replay { "ready" } else { "no" },
+          ),
+        ]),
+        p(consumer.next_action),
+        div(class="daemon-state compact-state", [
+          info_row("Claim", consumer.endpoints.runtime_claim),
+          info_row("Replay", consumer.endpoints.runtime_replay),
+          info_row("Events", consumer.endpoints.runtime_events),
+          info_row("Runtime Feed", consumer.endpoints.runtime_commands),
+          info_row("Stream", consumer.endpoints.stream),
+          info_row("Native Commands", consumer.endpoints.native_commands),
+          info_row("Native Eval", consumer.endpoints.native_eval_report),
+        ]),
+        div(class="mooncode-consumer-loop", [
+          small("Required loop"),
+          ul(
+            class="mooncode-evidence-list",
+            consumer.required_loop.map(step => li(step)),
+          ),
+        ]),
+        small(consumer.safety_boundary),
+      ])
+    None =>
+      div(class="mooncode-wire-block runtime-consumer-block", [
+        div(class="mooncode-tool-head", [
+          strong("Runtime Consumer"),
+          span(class="record-kind warning", "missing"),
+        ]),
+        p(
+          "This handoff predates the runtime consumer contract. Refresh the session or enqueue a MoonCode command to regenerate it.",
+        ),
+      ])
+  }
+}
+
+///|
+fn mooncode_runtime_consumer_status_class(status : String) -> String {
+  match status {
+    "claim-ready" => "record-kind good"
+    "delivered" => "record-kind good"
+    "lease-held" => "record-kind"
+    "replay-ready" => "record-kind"
+    "idle" => "record-kind"
+    _ => "record-kind warning"
+  }
+}
+
+///|
+fn render_mooncode_review_queue(
+  dispatch : Dispatch[Msg],
+  session : AgentSession,
+) -> @rabbita.Html {
+  let summary = session.mooncode_summary
+  let diffs = mooncode_lane_events(session, "diff")
+  section(class="mooncode-review-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "review"),
+        h3("Code Review"),
+      ]),
+      span(
+        class=match summary.review_state {
+          "accepted" => "record-kind good"
+          "rejected" => "record-kind"
+          "pending" => "record-kind"
+          _ => "record-kind"
+        },
+        summary.review_state,
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Diffs", summary.diff_count.to_string()),
+      info_chip("Pending", summary.pending_diff_count.to_string()),
+      info_chip("Accepted", summary.accepted_review_count.to_string()),
+      info_chip("Rejected", summary.rejected_review_count.to_string()),
+      info_chip("Change Sets", summary.moonbook_change_set_manifest_count.to_string()),
+      info_chip("Patch Sets", summary.moonbook_patch_set_manifest_count.to_string()),
+    ]),
+    if diffs.length() == 0 {
+      p(class="status-line", "no diff candidates")
+    } else {
+      div(
+        class="mooncode-review-list",
+        diffs[:mooncode_review_limit(diffs)].map(event =>
+          render_mooncode_review_item(dispatch, event)
+        ),
+      )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_change_set_panel(model : Model) -> @rabbita.Html {
+  section(class="mooncode-review-board change-set-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "moonbook review object"),
+        h3("Change Set"),
+      ]),
+      span(class="record-kind", model.mooncode_change_set_status),
+    ]),
+    match model.mooncode_change_set {
+      Some(change_set) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Diffs", change_set.diff_count.to_string()),
+            info_chip("Tests", change_set.test_count.to_string()),
+            info_chip("Verified", change_set.verified_test_count.to_string()),
+            info_chip("Failed", change_set.failed_test_count.to_string()),
+            info_chip("Artifacts", change_set.artifact_count.to_string()),
+            info_chip("Reviews", change_set.review_count.to_string()),
+            info_chip("Pending", change_set.pending_diff_count.to_string()),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Manifest", change_set.manifest_path),
+            info_row("Recorded", change_set.recorded_at),
+            info_row("Status", change_set.status),
+          ]),
+          div(class="mooncode-lane-grid change-set-grid", [
+            render_mooncode_change_set_group("Diffs", change_set.diffs),
+            render_mooncode_change_set_group("Tests", change_set.tests),
+            render_mooncode_change_set_group("Artifacts", change_set.artifacts),
+            render_mooncode_change_set_group("Review", change_set.reviews),
+          ]),
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No durable MoonBook change set has been recorded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_patch_set_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board patch-set-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "file review object"),
+        h3("Patch Set"),
+      ]),
+      span(class="record-kind", model.mooncode_patch_set_status),
+    ]),
+    match model.mooncode_patch_set {
+      Some(patch_set) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Patches", patch_set.patch_count.to_string()),
+            info_chip("Pending", patch_set.pending_patch_count.to_string()),
+            info_chip("Accepted", patch_set.accepted_patch_count.to_string()),
+            info_chip("Rejected", patch_set.rejected_patch_count.to_string()),
+            info_chip("Applied", patch_set.applied_patch_count.to_string()),
+            info_chip("Reverted", patch_set.reverted_patch_count.to_string()),
+            info_chip(
+              "Runtime applied",
+              patch_set.runtime_applied_patch_count.to_string(),
+            ),
+            info_chip(
+              "Runtime proof",
+              patch_set.runtime_patch_proof_count.to_string(),
+            ),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Manifest", patch_set.manifest_path),
+            info_row("Recorded", patch_set.recorded_at),
+            info_row("Status", patch_set.status),
+            info_row("Execution", patch_set.execution_status),
+          ]),
+          if patch_set.patches.length() == 0 {
+            p(class="status-line", "no staged file patches")
+          } else {
+            div(
+              class="mooncode-review-list patch-set-list",
+              patch_set.patches[:mooncode_patch_set_limit(patch_set.patches)].map(
+                patch => render_mooncode_patch_set_entry(dispatch, patch),
+              ),
+            )
+          },
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No durable MoonBook patch set has been recorded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_test_runs_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board test-runs-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "test/build object"),
+        h3("Test Runs"),
+      ]),
+      span(class="record-kind", model.mooncode_test_runs_status),
+    ]),
+    match model.mooncode_test_runs {
+      Some(test_runs) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Runs", test_runs.run_count.to_string()),
+            info_chip("Passed", test_runs.passed_run_count.to_string()),
+            info_chip("Failed", test_runs.failed_run_count.to_string()),
+            info_chip("Running", test_runs.running_run_count.to_string()),
+            info_chip("Queued", test_runs.queued_run_count.to_string()),
+            info_chip("Verified", test_runs.verified_run_count.to_string()),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Manifest", test_runs.manifest_path),
+            info_row("Recorded", test_runs.recorded_at),
+            info_row("Status", test_runs.status),
+          ]),
+          if test_runs.runs.length() == 0 {
+            p(class="status-line", "no test/build runs recorded")
+          } else {
+            div(
+              class="mooncode-review-list test-run-list",
+              test_runs.runs[:mooncode_test_run_limit(test_runs.runs)].map(run =>
+                render_mooncode_test_run_entry(dispatch, run)
+              ),
+            )
+          },
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No durable MoonBook test-run manifest has been recorded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_test_run_limit(entries : Array[MoonCodeTestRunEntry]) -> Int {
+  if entries.length() > 6 {
+    6
+  } else {
+    entries.length()
+  }
+}
+
+///|
+fn render_mooncode_test_run_entry(
+  dispatch : Dispatch[Msg],
+  run : MoonCodeTestRunEntry,
+) -> @rabbita.Html {
+  let target = if run.target == "" {
+    if run.path == "" { run.command } else { run.path }
+  } else {
+    run.target
+  }
+  div(class="mooncode-review-item " + run.run_state, [
+    div(class="mooncode-review-head", [
+      div([
+        strong(if run.command == "" { run.title } else { run.command }),
+        small(run.run_state + " / " + run.created_at),
+      ]),
+      div(class="toolbar-actions", [
+        if run.path == "" {
+          span(class="hidden-inline", "")
+        } else {
+          button(
+            class="secondary-button",
+            on_click=dispatch(OpenQuickPath(run.path)),
+            "Open",
+          )
+        },
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("run_tests", target)),
+          "Rerun",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("package", target)),
+          "Package",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("commit", target)),
+          "Commit",
+        ),
+      ]),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Exit", run.exit_code.to_string()),
+      info_chip("Verified", if run.verified { "yes" } else { "no" }),
+      info_chip("Kind", run.kind),
+    ]),
+    if run.path != "" {
+      code(run.path)
+    } else if run.command != "" {
+      code(run.command)
+    } else {
+      code(run.id)
+    },
+    p(class="mooncode-event-detail", run.detail),
+  ])
+}
+
+///|
+fn render_mooncode_package_candidates_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board package-candidate-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "MoonBook package candidates"),
+        h3("Package Candidates"),
+      ]),
+      span(class="record-kind", model.mooncode_package_candidates_status),
+    ]),
+    match model.mooncode_package_candidates {
+      Some(candidates) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Packages", candidates.package_count.to_string()),
+            info_chip("Source-bound", candidates.source_bound_package_count.to_string()),
+            info_chip("Missing source", candidates.missing_source_package_count.to_string()),
+            info_chip(
+              "Runtime verified",
+              candidates.runtime_verified_package_count.to_string(),
+            ),
+            info_chip(
+              "Runtime proof",
+              candidates.runtime_package_proof_count.to_string(),
+            ),
+            info_chip(
+              "Executable-ready",
+              candidates.package_index_executable_ready_count.to_string(),
+            ),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Status", candidates.status),
+            info_row("Index", candidates.package_index_status),
+            info_row("Index Path", empty_label(candidates.package_index_path)),
+            info_row(
+              "Index Sources",
+              candidates.package_index_source_bound_count.to_string(),
+            ),
+            info_row(
+              "Entry Points",
+              if candidates.package_index_entry_points.length() == 0 {
+                "none yet"
+              } else {
+                candidates.package_index_entry_points.join(", ")
+              },
+            ),
+            info_row("Session", candidates.session_id),
+            info_row("Task", empty_label(candidates.task_id)),
+            info_row("Rule", candidates.rule),
+          ]),
+          if candidates.packages.length() == 0 {
+            p(
+              class="status-line",
+              "no MoonBook package candidate has been recorded for this session yet",
+            )
+          } else {
+            div(
+              class="mooncode-review-list package-candidate-list",
+              candidates.packages[:mooncode_package_candidate_limit(candidates.packages)].map(
+                candidate =>
+                  render_mooncode_package_candidate(dispatch, candidate),
+              ),
+            )
+          },
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No durable MoonBook package-candidate projection has been loaded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_package_candidate_limit(
+  entries : Array[MoonCodePackageCandidate]
+) -> Int {
+  if entries.length() > 6 {
+    6
+  } else {
+    entries.length()
+  }
+}
+
+///|
+fn render_mooncode_package_candidate(
+  dispatch : Dispatch[Msg],
+  candidate : MoonCodePackageCandidate,
+) -> @rabbita.Html {
+  let target = if candidate.context_path == "" {
+    candidate.manifest_path
+  } else {
+    candidate.context_path
+  }
+  div(class="mooncode-review-item " + candidate.source_inventory_status, [
+    div(class="mooncode-review-head", [
+      div([
+        strong(if target == "" { candidate.package_kind } else { target }),
+        small(
+          candidate.package_kind +
+          " / " +
+          candidate.source_inventory_status +
+          " / " +
+          candidate.recorded_at,
+        ),
+      ]),
+      div(class="toolbar-actions", [
+        if candidate.manifest_path == "" {
+          span(class="hidden-inline", "")
+        } else {
+          button(
+            class="secondary-button",
+            on_click=dispatch(OpenQuickPath(candidate.manifest_path)),
+            "Open",
+          )
+        },
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("run_tests", target)),
+          "Test",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("accept", target)),
+          "Accept",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("package", target)),
+          "Package",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("commit", target)),
+          "Commit",
+        ),
+      ]),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Sources", candidate.source_inventory_count.to_string()),
+      info_chip("Ready", candidate.source_present_count.to_string()),
+      info_chip("Command", empty_label(candidate.command_id)),
+    ]),
+    div(class="daemon-state compact-state", [
+            info_row("Manifest", candidate.manifest_path),
+            info_row("Receipt", empty_label(candidate.review_receipt_path)),
+            info_row("Context", empty_label(candidate.context_path)),
+            info_row("Execution", candidate.execution_state),
+            info_row("Candidates", mooncode_candidate_paths_label(candidate.candidate_paths)),
+          ]),
+    div(class="mooncode-stats", [
+      info_chip("Runtime built", candidate.runtime_built_count.to_string()),
+      info_chip("Runtime verified", candidate.runtime_verified_count.to_string()),
+      info_chip("Runtime proof", candidate.runtime_proof_count.to_string()),
+      info_chip("Verified", if candidate.execution_verified { "yes" } else { "no" }),
+    ]),
+    render_mooncode_package_source_inventory(candidate.source_inventory),
+    p(class="mooncode-event-detail", candidate.detail),
+  ])
+}
+
+///|
+fn mooncode_candidate_paths_label(paths : Array[String]) -> String {
+  if paths.length() == 0 {
+    "none"
+  } else if paths.length() <= 3 {
+    paths.join(", ")
+  } else {
+    paths[:3].join(", ") + " +" + (paths.length() - 3).to_string()
+  }
+}
+
+///|
+fn render_mooncode_package_source_inventory(
+  records : Array[MoonCodePackageSourceRecord]
+) -> @rabbita.Html {
+  if records.length() == 0 {
+    p(class="status-line", "no source inventory recorded")
+  } else {
+    div(
+      class="mooncode-event-list compact package-source-list",
+      records[:mooncode_package_source_limit(records)].map(record => {
+        div(class="mooncode-event " + mooncode_package_source_state(record), [
+          div(class="mooncode-event-head", [
+            span(class="record-kind", record.kind),
+            strong(record.path),
+          ]),
+          div(class="mooncode-stats", [
+            info_chip("Exists", if record.exists { "yes" } else { "no" }),
+            info_chip(
+              "Ready",
+              if record.package_ready { "yes" } else { "no" },
+            ),
+            info_chip("Size", mooncode_optional_int_label(record.size_bytes)),
+            info_chip("SHA", mooncode_optional_hash_label(record.sha256)),
+          ]),
         ])
       }),
     )
   }
+}
+
+///|
+fn mooncode_package_source_limit(
+  records : Array[MoonCodePackageSourceRecord]
+) -> Int {
+  if records.length() > 4 {
+    4
+  } else {
+    records.length()
+  }
+}
+
+///|
+fn mooncode_package_source_state(
+  record : MoonCodePackageSourceRecord
+) -> String {
+  if record.package_ready {
+    "ready"
+  } else if record.exists {
+    "partial"
+  } else {
+    "missing"
+  }
+}
+
+///|
+fn mooncode_optional_int_label(value : Int?) -> String {
+  match value {
+    Some(number) => number.to_string()
+    None => "none"
+  }
+}
+
+///|
+fn mooncode_optional_ratio_label(
+  numerator : Int?,
+  denominator : Int?,
+) -> String {
+  match (numerator, denominator) {
+    (Some(proven), Some(expected)) => "\{proven}/\{expected}"
+    _ => "none"
+  }
+}
+
+///|
+fn mooncode_optional_hash_label(value : String?) -> String {
+  match value {
+    Some(text) =>
+      if text.length() > 12 {
+        text[:12].to_owned()
+      } else {
+        text
+      }
+    None => "none"
+  }
+}
+
+///|
+fn render_mooncode_tool_authorization_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board tool-authorization-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "runtime authorization gate"),
+        h3("Tool Authorization"),
+      ]),
+      span(class="record-kind", model.mooncode_tool_authorization_status),
+    ]),
+    div(class="toolbar-actions", [
+      button(
+        class="secondary-button",
+        on_click=dispatch(ProbeMoonCodeToolAuthorization("read")),
+        "Probe Read",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(ProbeMoonCodeToolAuthorization("write")),
+        "Probe Write",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(ProbeMoonCodeToolAuthorization("shell")),
+        "Probe Shell",
+      ),
+    ]),
+    match model.mooncode_tool_authorization {
+      Some(authorization) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Decision", authorization.decision),
+            info_chip("Approval", authorization.approval),
+            info_chip("State", authorization.approval_state),
+            info_chip("Tool", authorization.tool_id),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Session", authorization.session_id),
+            info_row("Target", empty_label(authorization.target)),
+            info_row("Path", empty_label(authorization.path)),
+            info_row("Command", empty_label(authorization.command)),
+            info_row("Tool Call", empty_label(authorization.tool_call_id)),
+            info_row(
+              "Flags",
+              "allowed=\{authorization.allowed}, requires_approval=\{authorization.requires_approval}, blocked=\{authorization.blocked}",
+            ),
+          ]),
+          p(class="mooncode-event-detail", authorization.reason),
+          render_mooncode_tool_authorization_approval_entry(authorization),
+        ])
+      None =>
+        p(
+          class="status-line",
+          "Probe read, write, or shell to ask the MoonCode authorization endpoint for the current decision.",
+        )
+    },
+  ])
+}
+
+///|
+fn render_mooncode_tool_authorization_approval_entry(
+  authorization : MoonCodeToolAuthorization
+) -> @rabbita.Html {
+  let entry = authorization.approval_entry
+  let entry_state = json_field_string(entry, "approval_state", default="")
+  if entry_state == "" {
+    span(class="hidden-inline", "")
+  } else {
+    div(class="mooncode-wire-block", [
+      div(class="mooncode-tool-head", [
+        strong("Matching Approval"),
+        span(class="record-kind", entry_state),
+      ]),
+      div(class="daemon-state compact-state", [
+        info_row("Approval", json_field_string(entry, "approval", default="")),
+        info_row("Tool", json_field_string(entry, "tool_id", default="")),
+        info_row("Target", json_field_string(entry, "target", default="")),
+        info_row("Path", json_field_string(entry, "path", default="")),
+        info_row("Command", json_field_string(entry, "command", default="")),
+      ]),
+    ])
+  }
+}
+
+///|
+fn render_mooncode_tool_approvals_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="mooncode-review-board tool-approval-board", [
+    div(class="mooncode-stream-header", [
+      div([
+        p(class="eyebrow", "tool approval object"),
+        h3("Tool Approvals"),
+      ]),
+      span(class="record-kind", model.mooncode_tool_approvals_status),
+    ]),
+    match model.mooncode_tool_approvals {
+      Some(approvals) =>
+        div([
+          div(class="mooncode-stats", [
+            info_chip("Tools", approvals.approval_count.to_string()),
+            info_chip("Pending", approvals.pending_approval_count.to_string()),
+            info_chip("Approved", approvals.approved_approval_count.to_string()),
+            info_chip("Rejected", approvals.rejected_approval_count.to_string()),
+          ]),
+          div(class="daemon-state compact-state", [
+            info_row("Manifest", approvals.manifest_path),
+            info_row("Recorded", approvals.recorded_at),
+            info_row("Status", approvals.status),
+          ]),
+          if approvals.approvals.length() == 0 {
+            p(class="status-line", "no policy or review-gated tool calls")
+          } else {
+            div(
+              class="mooncode-review-list tool-approval-list",
+              approvals.approvals[:mooncode_tool_approval_limit(approvals.approvals)].map(
+                approval =>
+                  render_mooncode_tool_approval_entry(dispatch, approval),
+              ),
+            )
+          },
+        ])
+      None =>
+        p(
+          class="status-line",
+          "No durable MoonBook tool approval manifest has been recorded for this session yet.",
+        )
+    },
+  ])
+}
+
+///|
+fn mooncode_tool_approval_limit(
+  entries : Array[MoonCodeToolApprovalEntry]
+) -> Int {
+  if entries.length() > 6 {
+    6
+  } else {
+    entries.length()
+  }
+}
+
+///|
+fn render_mooncode_tool_approval_entry(
+  dispatch : Dispatch[Msg],
+  approval : MoonCodeToolApprovalEntry,
+) -> @rabbita.Html {
+  let target = if approval.target == "" {
+    approval.event_id
+  } else {
+    approval.target
+  }
+  div(class="mooncode-review-item " + approval.approval_state, [
+    div(class="mooncode-review-head", [
+      div([
+        strong(approval.title),
+        small(
+          approval.tool_id +
+          " / " +
+          approval.approval +
+          " / " +
+          approval.approval_state,
+        ),
+      ]),
+      div(class="toolbar-actions", [
+        if approval.path == "" {
+          span(class="hidden-inline", "")
+        } else {
+          button(
+            class="secondary-button",
+            on_click=dispatch(OpenQuickPath(approval.path)),
+            "Open",
+          )
+        },
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("approve_tool", target)),
+          "Approve",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("reject_tool", target)),
+          "Reject",
+        ),
+      ]),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Approves", approval.approved_review_count.to_string()),
+      info_chip("Rejects", approval.rejected_review_count.to_string()),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Target", approval.target_kind),
+      info_chip("Call", approval.target),
+    ]),
+    code(
+      if approval.target_label != "" {
+        approval.target_label
+      } else if approval.path != "" {
+        approval.path
+      } else if approval.command != "" {
+        approval.command
+      } else {
+        approval.event_id
+      },
+    ),
+    p(class="mooncode-event-detail", approval.detail),
+  ])
+}
+
+///|
+fn mooncode_patch_set_limit(entries : Array[MoonCodePatchSetEntry]) -> Int {
+  if entries.length() > 6 {
+    6
+  } else {
+    entries.length()
+  }
+}
+
+///|
+fn render_mooncode_patch_set_entry(
+  dispatch : Dispatch[Msg],
+  patch : MoonCodePatchSetEntry,
+) -> @rabbita.Html {
+  div(class="mooncode-review-item " + patch.review_state, [
+    div(class="mooncode-review-head", [
+      div([
+        strong(if patch.path == "" { patch.title } else { patch.path }),
+        small(patch.review_state + " / " + patch.created_at),
+        small("execution: " + patch.execution_state),
+      ]),
+      div(class="toolbar-actions", [
+        if patch.path == "" {
+          span(class="hidden-inline", "")
+        } else {
+          button(
+            class="secondary-button",
+            on_click=dispatch(OpenQuickPath(patch.path)),
+            "Open",
+          )
+        },
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("accept", patch.path)),
+          "Accept",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("reject", patch.path)),
+          "Reject",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("apply_patch", patch.path)),
+          "Apply",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("revert_patch", patch.path)),
+          "Revert",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("package", patch.path)),
+          "Package",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("commit", patch.path)),
+          "Commit",
+        ),
+      ]),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Gate", mooncode_optional_text_label(patch.gate_status)),
+      info_chip("Next", mooncode_optional_text_label(patch.next_action)),
+      info_chip("Accepts", patch.accepted_review_count.to_string()),
+      info_chip("Rejects", patch.rejected_review_count.to_string()),
+      info_chip("Applies", patch.applied_review_count.to_string()),
+      info_chip("Reverts", patch.reverted_review_count.to_string()),
+      info_chip("Runtime", patch.runtime_proof_count.to_string()),
+      info_chip("Executed", if patch.execution_verified { "yes" } else { "no" }),
+      info_chip("Packages", patch.package_review_count.to_string()),
+      info_chip("Hunks", patch.hunk_count.to_string()),
+    ]),
+    match patch.blocked_reason {
+      Some(reason) =>
+        if reason == "" {
+          span(class="hidden-inline", "")
+        } else {
+          p(class="mooncode-event-detail", reason)
+        }
+      None => span(class="hidden-inline", "")
+    },
+    render_mooncode_patch_hunks(dispatch, patch),
+    if patch.diff_present {
+      pre(class="source-block compact", code(patch.diff))
+    } else {
+      p(class="mooncode-event-detail", patch.detail)
+    },
+  ])
+}
+
+///|
+fn render_mooncode_patch_hunks(
+  dispatch : Dispatch[Msg],
+  patch : MoonCodePatchSetEntry,
+) -> @rabbita.Html {
+  if patch.hunks.length() == 0 {
+    p(class="status-line", "no hunk metadata")
+  } else {
+    div(
+      class="mooncode-hunk-list",
+      patch.hunks[:mooncode_patch_hunk_limit(patch.hunks)].map(hunk => {
+        div(class="mooncode-hunk " + hunk.review_state, [
+          div(class="mooncode-event-head", [
+            span(class="record-kind", hunk.id),
+            strong(if hunk.header == "" { "synthetic" } else { hunk.header }),
+          ]),
+          div(class="mooncode-stats", [
+            info_chip("Gate", mooncode_optional_text_label(hunk.gate_status)),
+            info_chip("Next", mooncode_optional_text_label(hunk.next_action)),
+            info_chip("State", hunk.review_state),
+            info_chip("Exec", hunk.execution_state),
+            info_chip("+", hunk.added_lines.to_string()),
+            info_chip("-", hunk.removed_lines.to_string()),
+            info_chip("ctx", hunk.context_lines.to_string()),
+            info_chip("Accepts", hunk.accepted_review_count.to_string()),
+            info_chip("Rejects", hunk.rejected_review_count.to_string()),
+            info_chip("Runtime", hunk.runtime_proof_count.to_string()),
+          ]),
+          div(class="toolbar-actions hunk-actions", [
+            button(
+              class="secondary-button",
+              on_click=dispatch(RunMoonCodeCommandForPath("accept", hunk.target)),
+              "Accept",
+            ),
+            button(
+              class="secondary-button",
+              on_click=dispatch(RunMoonCodeCommandForPath("reject", hunk.target)),
+              "Reject",
+            ),
+            button(
+              class="secondary-button",
+              on_click=dispatch(
+                RunMoonCodeCommandForPath("apply_patch", hunk.target),
+              ),
+              "Apply",
+            ),
+            button(
+              class="secondary-button",
+              on_click=dispatch(
+                RunMoonCodeCommandForPath("revert_patch", hunk.target),
+              ),
+              "Revert",
+            ),
+          ]),
+          match hunk.blocked_reason {
+            Some(reason) =>
+              if reason == "" {
+                span(class="hidden-inline", "")
+              } else {
+                small(class="status-line", reason)
+              }
+            None => span(class="hidden-inline", "")
+          },
+        ])
+      }),
+    )
+  }
+}
+
+///|
+fn mooncode_patch_hunk_limit(hunks : Array[MoonCodePatchHunk]) -> Int {
+  if hunks.length() > 4 {
+    4
+  } else {
+    hunks.length()
+  }
+}
+
+///|
+fn render_mooncode_change_set_group(
+  title : String,
+  entries : Array[MoonCodeChangeSetEntry],
+) -> @rabbita.Html {
+  div(class="mooncode-lane change-set-group", [
+    div(class="mooncode-lane-title", [
+      strong(title),
+      span(class="record-kind", entries.length().to_string()),
+    ]),
+    if entries.length() == 0 {
+      p(class="status-line", "none")
+    } else {
+      div(
+        class="mooncode-event-list compact",
+        entries[:mooncode_change_set_limit(entries)].map(entry =>
+          render_mooncode_change_set_entry(entry)
+        ),
+      )
+    },
+  ])
+}
+
+///|
+fn mooncode_change_set_limit(
+  entries : Array[MoonCodeChangeSetEntry]
+) -> Int {
+  if entries.length() > 3 {
+    3
+  } else {
+    entries.length()
+  }
+}
+
+///|
+fn render_mooncode_change_set_entry(
+  entry : MoonCodeChangeSetEntry
+) -> @rabbita.Html {
+  div(class="mooncode-event " + entry.status, [
+    div(class="mooncode-event-head", [
+      span(class="record-kind", entry.status),
+      strong(if entry.path == "" { entry.title } else { entry.path }),
+    ]),
+    if entry.command == "" {
+      span(class="hidden-inline", "")
+    } else {
+      code(entry.command + " -> " + entry.exit_code.to_string())
+    },
+    if entry.diff == "" {
+      p(class="mooncode-event-detail", entry.detail)
+    } else {
+      pre(class="source-block compact", code(entry.diff))
+    },
+  ])
+}
+
+///|
+fn mooncode_review_limit(events : Array[MoonCodeEvent]) -> Int {
+  if events.length() > 6 {
+    6
+  } else {
+    events.length()
+  }
+}
+
+///|
+fn render_mooncode_review_item(
+  dispatch : Dispatch[Msg],
+  event : MoonCodeEvent,
+) -> @rabbita.Html {
+  div(class="mooncode-review-item " + event.status, [
+    div(class="mooncode-review-head", [
+      div([
+        strong(if event.path == "" { event.title } else { event.path }),
+        small(event.status + " / " + event.created_at),
+      ]),
+      div(class="toolbar-actions", [
+        if event.path == "" {
+          span(class="hidden-inline", "")
+        } else {
+          button(
+            class="secondary-button",
+            on_click=dispatch(OpenQuickPath(event.path)),
+            "Open",
+          )
+        },
+        button(
+          class="secondary-button",
+          on_click=if event.path == "" {
+            dispatch(RunMoonCodeCommand("accept"))
+          } else {
+            dispatch(RunMoonCodeCommandForPath("accept", event.path))
+          },
+          "Accept",
+        ),
+        button(
+          class="secondary-button",
+          on_click=if event.path == "" {
+            dispatch(RunMoonCodeCommand("reject"))
+          } else {
+            dispatch(RunMoonCodeCommandForPath("reject", event.path))
+          },
+          "Reject",
+        ),
+        button(
+          class="secondary-button",
+          on_click=if event.path == "" {
+            dispatch(RunMoonCodeCommand("package"))
+          } else {
+            dispatch(RunMoonCodeCommandForPath("package", event.path))
+          },
+          "Package",
+        ),
+        button(
+          class="secondary-button",
+          on_click=if event.path == "" {
+            dispatch(RunMoonCodeCommand("commit"))
+          } else {
+            dispatch(RunMoonCodeCommandForPath("commit", event.path))
+          },
+          "Commit",
+        ),
+      ]),
+    ]),
+    if event.diff == "" {
+      p(class="mooncode-event-detail", event.detail)
+    } else {
+      pre(class="source-block compact", code(event.diff))
+    },
+  ])
+}
+
+///|
+fn mooncode_lane_events(
+  session : AgentSession,
+  lane : String,
+) -> Array[MoonCodeEvent] {
+  let events : Array[MoonCodeEvent] = []
+  for event in session.mooncode_events {
+    if event.lane == lane {
+      events.push(event)
+    }
+  }
+  events
+}
+
+///|
+fn mooncode_lane_limit(events : Array[MoonCodeEvent]) -> Int {
+  if events.length() > 4 {
+    4
+  } else {
+    events.length()
+  }
+}
+
+///|
+fn mooncode_stream_buffer_limit() -> Int {
+  80
+}
+
+///|
+fn mooncode_merge_stream_events(
+  existing : Array[MoonCodeEvent],
+  incoming : Array[MoonCodeEvent],
+) -> Array[MoonCodeEvent] {
+  let merged : Array[MoonCodeEvent] = []
+  for event in existing {
+    mooncode_push_unique_stream_event(merged, event)
+  }
+  for event in incoming {
+    mooncode_push_unique_stream_event(merged, event)
+  }
+  mooncode_trim_stream_events(merged, mooncode_stream_buffer_limit())
+}
+
+///|
+fn mooncode_push_unique_stream_event(
+  events : Array[MoonCodeEvent],
+  event : MoonCodeEvent,
+) -> Unit {
+  if event.id != "" {
+    for existing in events {
+      if existing.id == event.id {
+        return
+      }
+    }
+  }
+  events.push(event)
+}
+
+///|
+fn mooncode_trim_stream_events(
+  events : Array[MoonCodeEvent],
+  limit : Int,
+) -> Array[MoonCodeEvent] {
+  if events.length() <= limit {
+    events
+  } else {
+    let trimmed : Array[MoonCodeEvent] = []
+    let start = events.length() - limit
+    for index in start..<events.length() {
+      trimmed.push(events[index])
+    }
+    trimmed
+  }
+}
+
+///|
+fn render_mooncode_event(event : MoonCodeEvent) -> @rabbita.Html {
+  div(class="mooncode-event " + event.status, [
+    div(class="mooncode-event-head", [
+      span(class="record-kind", event.status),
+      strong(event.title),
+    ]),
+    if event.path == "" {
+      span(class="hidden-inline", "")
+    } else {
+      code(event.path)
+    },
+    if event.command == "" {
+      span(class="hidden-inline", "")
+    } else {
+      code(event.command + " -> " + event.exit_code.to_string())
+    },
+    if event.diff == "" {
+      p(class="mooncode-event-detail", event.detail)
+    } else {
+      pre(class="source-block compact", code(event.diff))
+    },
+  ])
 }
 
 ///|
@@ -7369,7 +15243,7 @@ fn render_agent_inspector(
       button(
         class="secondary-button full",
         on_click=dispatch(SendAgentMessage),
-        "Send To Agent",
+        mooncode_inspector_send_label(model),
       ),
     ]),
     section(class="inspector-section", [
@@ -7422,11 +15296,38 @@ fn render_agent_inspector(
         ),
         button(
           class="secondary-button",
-          on_click=dispatch(CancelAgentSession),
+          on_click=dispatch(RunMoonCodeCommand("cancel")),
           "Cancel",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_tests")),
+          "Run Tests",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("package")),
+          "Package",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("commit")),
+          "Commit",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("accept")),
+          "Accept",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("reject")),
+          "Reject",
         ),
       ]),
     ]),
+    render_mooncode_readiness(model),
+    render_mooncode_capability_panel(model),
     section(class="inspector-section", [
       h3("Available Models"),
       if model.agent_models.length() == 0 {
@@ -7446,6 +15347,631 @@ fn render_agent_inspector(
       },
     ]),
   ])
+}
+
+///|
+fn mooncode_inspector_send_label(model : Model) -> String {
+  match selected_agent_session(model) {
+    Some(session) if model.workspace_mode == WorkspaceMode::MoonCode =>
+      mooncode_composer_button_label(model, Some(session)) + " MoonCode"
+    Some(_) => "Send To Agent"
+    None =>
+      if model.workspace_mode == WorkspaceMode::MoonCode {
+        "Start MoonCode"
+      } else {
+        "Send To Agent"
+      }
+  }
+}
+
+///|
+fn render_mooncode_capability_panel(model : Model) -> @rabbita.Html {
+  section(class="inspector-section", [
+    h3("MoonCode Contract"),
+    match model.mooncode_capabilities {
+      Some(capabilities) =>
+        div(class="mooncode-contract", [
+          div(class="daemon-state", [
+            info_row(
+              "Version",
+              "\{capabilities.component}.v\{capabilities.version}",
+            ),
+            info_row("Transport", capabilities.session_protocol.preferred_stream),
+            info_row(
+              "Target",
+              capabilities.session_protocol.transport_target,
+            ),
+            info_row("Stream", capabilities.session_protocol.stream_endpoint),
+            info_row(
+              "Stream State",
+              capabilities.session_protocol.stream_state_endpoint,
+            ),
+            info_row(
+              "Command Queue",
+              capabilities.session_protocol.command_queue_endpoint,
+            ),
+            info_row(
+              "Runtime Replay",
+              capabilities.session_protocol.runtime_replay_endpoint,
+            ),
+            info_row(
+              "Runtime Claim",
+              capabilities.session_protocol.runtime_claim_endpoint,
+            ),
+            info_row(
+              "Event Sink",
+              capabilities.session_protocol.runtime_event_ingest_endpoint,
+            ),
+            info_row(
+              "Action Plan",
+              capabilities.session_protocol.action_plan_endpoint,
+            ),
+            info_row(
+              "Runtime",
+              capabilities.runtime_contract.target_component +
+              " / " +
+              capabilities.runtime_contract.status,
+            ),
+            info_row("Engine", capabilities.engine_status.status),
+            info_row("Bridge", capabilities.engine_status.bridge_mode),
+            info_row("Adapter", capabilities.engine_status.adapter_status),
+            info_row(
+              "Commands",
+              capabilities.command_specs.length().to_string(),
+            ),
+            info_row("Tools", capabilities.tool_specs.length().to_string()),
+            info_row("Future", capabilities.extractable.future_package),
+          ]),
+          div(
+            class="mooncode-command-row",
+            capabilities.session_protocol.commands.map(command => {
+              span(class="option-chip", command)
+            }),
+          ),
+          render_mooncode_engine_status(capabilities.engine_status),
+          render_mooncode_runtime_contract(capabilities.runtime_contract),
+          render_mooncode_tool_call_wire_contract(
+            capabilities.tool_call_wire,
+          ),
+          div(
+            class="mooncode-tool-list",
+            if capabilities.command_specs.length() == 0 {
+              [p(class="status-line", "no command specs")]
+            } else {
+              capabilities.command_specs.map(spec =>
+                render_mooncode_command_spec(spec)
+              )
+            },
+          ),
+          div(
+            class="mooncode-tool-list",
+            if capabilities.tool_specs.length() == 0 {
+              [p(class="status-line", "no tool specs")]
+            } else {
+              capabilities.tool_specs.map(tool => render_mooncode_tool_spec(tool))
+            },
+          ),
+          div(class="mooncode-output-roots", [
+            small("Outputs"),
+            p(capabilities.book_outputs.join(", ")),
+          ]),
+        ])
+      None =>
+        div(class="daemon-state", [
+          info_row("Status", model.mooncode_status),
+          info_row("Endpoint", "/api/mooncode/capabilities"),
+        ])
+    },
+  ])
+}
+
+///|
+fn render_mooncode_engine_status(
+  engine : MoonCodeEngineStatus
+) -> @rabbita.Html {
+  let root_label = if engine.moonclaw_root == "" {
+    "not configured"
+  } else {
+    engine.moonclaw_root
+  }
+  div(class="mooncode-engine-status", [
+    div(class="mooncode-wire-block", [
+      div(class="mooncode-tool-head", [
+        strong("Engine readiness"),
+        span(
+          class=if engine.production_ready {
+            "record-kind good"
+          } else if engine.ok {
+            "record-kind"
+          } else {
+            "record-kind warning"
+          },
+          engine.status,
+        ),
+      ]),
+      p(engine.message),
+      small("root: " + root_label),
+      p(
+        class="status-line",
+        "adapter: " +
+        engine.adapter_status +
+        "; native runtime: " +
+        (if engine.native_runtime_ready { "yes" } else { "no" }) +
+        "; legacy task bridge: " +
+        (if engine.legacy_task_bridge_ready { "yes" } else { "no" }),
+      ),
+      p(
+        class="status-line",
+        "endpoints: " + engine.supported_endpoints.join(", "),
+      ),
+    ]),
+    div(
+      class="mooncode-engine-checks",
+      engine.checks.map(check => render_mooncode_engine_check(check)),
+    ),
+  ])
+}
+
+///|
+fn render_mooncode_engine_check(
+  check : MoonCodeEngineCheck
+) -> @rabbita.Html {
+  let class_name = match check.status {
+    "ready" => "mooncode-eval-check ok"
+    "bridged" => "mooncode-eval-check bridged"
+    "blocked" => "mooncode-eval-check missing"
+    _ => "mooncode-eval-check missing"
+  }
+  div(class=class_name, [
+    span(
+      class=match check.status {
+        "ready" => "record-kind good"
+        "bridged" => "record-kind"
+        _ => "record-kind warning"
+      },
+      check.status,
+    ),
+    div([
+      strong(check.label),
+      small(check.evidence),
+    ]),
+  ])
+}
+
+///|
+fn render_mooncode_runtime_contract(
+  contract : MoonCodeRuntimeContract
+) -> @rabbita.Html {
+  div(class="mooncode-runtime-contract", [
+    div(class="mooncode-output-roots", [
+      small("Runtime boundary"),
+      p(
+        "\{contract.reference} -> \{contract.target_component}; extractable as \{contract.extractable_component}",
+      ),
+    ]),
+    div(
+      class="mooncode-tool-list",
+      contract.components.map(component =>
+        render_mooncode_runtime_component(component)
+      ),
+    ),
+    div(class="mooncode-wire-block", [
+      div(class="mooncode-tool-head", [
+        strong("Wire protocol"),
+        span(class="record-kind", contract.wire_protocol.transport),
+      ]),
+      div(
+        class="mooncode-command-row",
+        contract.wire_protocol.input_commands.map(command =>
+          span(
+            class="option-chip",
+            command.command + " {" + command.required_fields.join(", ") + "}",
+          )
+        ),
+      ),
+      small(contract.wire_protocol.ordering_rule),
+      p(
+        class="status-line",
+        "events: " + contract.wire_protocol.output_events.join(", "),
+      ),
+    ]),
+    div(class="mooncode-wire-block", [
+      div(class="mooncode-tool-head", [
+        strong("Session store"),
+        span(class="record-kind", contract.session_store.owner),
+      ]),
+      p(contract.session_store.shape),
+      small("resume: " + contract.session_store.resume_modes.join(", ")),
+      p(class="status-line", contract.session_store.moondesk_projection),
+    ]),
+    render_mooncode_tool_contract(contract.tool_contract),
+    div(class="mooncode-wire-block", [
+      div(class="mooncode-tool-head", [
+        strong("Eval contract"),
+        span(
+          class="record-kind",
+          contract.eval_contract.required_harnesses.join(" + "),
+        ),
+      ]),
+      ul(
+        class="mooncode-evidence-list",
+        contract.eval_contract.minimum_evidence.map(item => li(item)),
+      ),
+      div(class="daemon-state compact-state", [
+        info_row(
+          "Harness Contract",
+          contract.eval_contract.harness_contract_endpoint,
+        ),
+        info_row(
+          "OpenSeek Refs",
+          contract.eval_contract.reference_paths.join(", "),
+        ),
+        info_row(
+          "Native Owner",
+          contract.eval_contract.native_eval_report.owner,
+        ),
+        info_row(
+          "Native Endpoint",
+          contract.eval_contract.native_eval_report.endpoint,
+        ),
+        info_row(
+          "Transport",
+          contract.eval_contract.native_eval_report.transport,
+        ),
+        info_row(
+          "Status",
+          contract.eval_contract.native_eval_report.status_values.join(", "),
+        ),
+      ]),
+      small(contract.eval_contract.native_eval_report.normalization_rule),
+      p(class="status-line", contract.eval_contract.current_gap),
+    ]),
+  ])
+}
+
+///|
+fn render_mooncode_tool_contract(contract : MoonCodeToolContract) -> @rabbita.Html {
+  div(class="mooncode-wire-block", [
+    div(class="mooncode-tool-head", [
+      strong("Tool contract"),
+      span(class="record-kind", contract.execution_owner),
+    ]),
+    p(
+      "\{contract.supported_tools.length()} tools; approvals by \{contract.approval_owner}; artifacts by \{contract.artifact_owner}",
+    ),
+    div(
+      class="mooncode-tool-list",
+      contract.tools.map(tool => render_mooncode_tool_contract_spec(tool)),
+    ),
+    div(class="daemon-state compact-state", [
+      info_row("Path Rule", contract.constraints.path_rule),
+      info_row("Diff Rule", contract.constraints.diff_rule),
+      info_row("Test Rule", contract.constraints.test_rule),
+      info_row("Approval Rule", contract.constraints.approval_rule),
+    ]),
+    small(contract.constraints.extraction_rule),
+  ])
+}
+
+///|
+fn render_mooncode_tool_call_wire_contract(
+  contract : MoonCodeToolCallWireContract
+) -> @rabbita.Html {
+  div(class="mooncode-wire-block", [
+    div(class="mooncode-tool-head", [
+      strong("Tool-call wire"),
+      span(class="record-kind", contract.runtime_owner),
+      span(class="record-kind", contract.protocol),
+    ]),
+    p(
+      "accepts " +
+      contract.accepted_shapes.length().to_string() +
+      " shapes; " +
+      contract.supported_tools.length().to_string() +
+      " bounded tools",
+    ),
+    div(
+      class="mooncode-command-row",
+      contract.supported_tools.map(tool => span(class="option-chip", tool)),
+    ),
+    ul(
+      class="mooncode-evidence-list",
+      contract.accepted_shapes.map(shape => li(shape)),
+    ),
+    div(class="daemon-state compact-state", [
+      info_row("Owner", contract.owner),
+      info_row("Runtime Owner", contract.runtime_owner),
+      info_row("Reference", contract.reference),
+    ]),
+    small(contract.argument_rule),
+    p(class="status-line", contract.unknown_tool_policy),
+  ])
+}
+
+///|
+fn render_mooncode_tool_contract_spec(
+  tool : MoonCodeToolRuntimeContract
+) -> @rabbita.Html {
+  let badges : Array[@rabbita.Html] = [
+    span(class="record-kind", tool.lane),
+    span(class="record-kind", tool.approval),
+  ]
+  let badges = if tool.mutates_files {
+    badges + [span(class="record-kind warning", "mutates files")]
+  } else {
+    badges
+  }
+  let badges = if tool.requires_review {
+    badges + [span(class="record-kind", "review")]
+  } else {
+    badges
+  }
+  div(class="mooncode-tool-spec", [
+    div(class="mooncode-tool-head", [strong(tool.id)] + badges),
+    p(tool.safety_policy),
+    small("inputs: " + mooncode_tool_field_summary(tool.input_fields)),
+    p(class="status-line", "events: " + tool.output_events.join(", ")),
+    small(tool.executable_boundary),
+  ])
+}
+
+///|
+fn mooncode_tool_field_summary(
+  fields : Array[Json]
+) -> String {
+  if fields.length() == 0 {
+    return "none"
+  }
+  fields
+  .map(field =>
+    if json_field_bool(field, "required", default=false) {
+      json_field_string(field, "name", default="field") +
+      ":" +
+      json_field_string(field, "type", default="value")
+    } else {
+      json_field_string(field, "name", default="field") +
+      "?:" +
+      json_field_string(field, "type", default="value")
+    }
+  )
+  .join(", ")
+}
+
+///|
+fn render_mooncode_runtime_component(
+  component : MoonCodeRuntimeComponent
+) -> @rabbita.Html {
+  div(class="mooncode-tool-spec", [
+    div(class="mooncode-tool-head", [
+      strong(component.id),
+      span(class="record-kind", component.owner),
+    ]),
+    p(component.purpose),
+    small(component.reference),
+    p(class="status-line", component.moondesk_role),
+  ])
+}
+
+///|
+fn render_mooncode_command_spec(spec : MoonCodeCommandSpec) -> @rabbita.Html {
+  div(class="mooncode-tool-spec", [
+    div(class="mooncode-tool-head", [
+      strong(spec.action),
+      span(class="record-kind", spec.dispatch),
+    ]),
+    p(
+      "approval: \{spec.approval}; lanes: \{spec.expected_lanes.join(", ")}",
+    ),
+    small("tools: \{spec.tool_hints.join(", ")}"),
+  ])
+}
+
+///|
+fn render_mooncode_tool_spec(tool : MoonCodeToolSpec) -> @rabbita.Html {
+  div(class="mooncode-tool-spec", [
+    div(class="mooncode-tool-head", [
+      strong(tool.id),
+      span(class="record-kind", tool.lane),
+    ]),
+    p(tool.purpose),
+    small(
+      "\{tool.owner} / approval: \{tool.approval} / outputs: \{tool.outputs.join(", ")}",
+    ),
+  ])
+}
+
+///|
+fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
+  section(class="inspector-section", [
+    h3("MoonCode Readiness"),
+    match selected_agent_session(model) {
+      Some(session) => {
+        let summary = session.mooncode_summary
+        div(class="mooncode-readiness", [
+          div(class="daemon-state", [
+            info_row("Protocol", summary.protocol),
+            info_row("Component", summary.extractable_component),
+            info_row("Dispatch", summary.dispatch_mode),
+            info_row("Stream", summary.stream_url),
+            info_row("Stream Mode", summary.stream_mode),
+            info_row("Stream Source", summary.stream_source),
+            info_row(
+              "Incremental",
+              if summary.incremental_stream_ready {
+                summary.incremental_stream_url
+              } else {
+                "not ready"
+              },
+            ),
+            info_row(
+              "Live Stream",
+              if summary.live_stream_ready { "ready" } else { "not ready" },
+            ),
+            info_row(
+              "Append Log",
+              if summary.append_log_ready {
+                "\{summary.append_log_count} event(s)"
+              } else {
+                "empty"
+              },
+            ),
+            info_row("Log Path", summary.event_log_path),
+            info_row(
+              "Command Queue",
+              if summary.command_log_ready {
+                "\{summary.command_log_count} command(s)"
+              } else {
+                "empty"
+              },
+            ),
+            info_row("Command Path", summary.command_log_path),
+            info_row(
+              "Runtime Feed",
+              if summary.runtime_command_feed_ready {
+                "\{summary.runtime_command_count} command(s)"
+              } else {
+                "empty"
+              },
+            ),
+            info_row("Runtime Path", summary.runtime_command_log_path),
+            info_row(
+              "Runtime Dispatch",
+              if summary.runtime_dispatch_ready {
+                "\{summary.runtime_dispatch_count} receipt(s)"
+              } else {
+                "empty"
+              },
+            ),
+            info_row("Dispatch Path", summary.runtime_dispatch_log_path),
+            info_row(
+              "Session Snapshot",
+              if summary.session_snapshot_ready {
+                summary.session_snapshot_path
+              } else {
+                "missing"
+              },
+            ),
+            info_row(
+              "Eval",
+              "\{summary.eval_level} / \{summary.eval_score}",
+            ),
+            info_row("Events", summary.event_count.to_string()),
+            info_row("Transcript", summary.transcript_count.to_string()),
+            info_row("Runtime", summary.runtime_count.to_string()),
+            info_row("Tools", summary.tool_count.to_string()),
+            info_row("Diffs", summary.diff_count.to_string()),
+            info_row("Tests", summary.test_count.to_string()),
+            info_row("Verified Tests", summary.verified_test_count.to_string()),
+            info_row("Failed Tests", summary.failed_test_count.to_string()),
+            info_row("Artifacts", summary.artifact_count.to_string()),
+            info_row(
+              "Source-bound Packages",
+              summary.source_bound_package_count.to_string(),
+            ),
+            info_row(
+              "Package Execution",
+              "\{summary.runtime_verified_package_count} verified / \{summary.runtime_package_proof_count} proof event(s)",
+            ),
+            info_row(
+              "Commit Execution",
+              "\{summary.runtime_commit_proof_count} proof event(s)",
+            ),
+            info_row(
+              "Steering",
+              "\{summary.pending_steer_count} pending / \{summary.steer_settlement_count} settled",
+            ),
+            info_row("Review", summary.review_count.to_string()),
+            info_row("Review State", summary.review_state),
+            info_row("Pending Diffs", summary.pending_diff_count.to_string()),
+            info_row("Accepted", summary.accepted_review_count.to_string()),
+            info_row("Rejected", summary.rejected_review_count.to_string()),
+            info_row(
+              "Package",
+              if summary.has_packaging_candidate {
+                "candidate available"
+              } else {
+                "none yet"
+              },
+            ),
+            info_row(
+              "Manifest",
+              "\{summary.moonbook_package_manifest_count} package manifest(s)",
+            ),
+            info_row(
+              "Package Index",
+              "\{summary.moonbook_package_index_manifest_count} manifest(s)",
+            ),
+            info_row(
+              "Change Set",
+              "\{summary.moonbook_change_set_manifest_count} manifest(s)",
+            ),
+            info_row(
+              "Patch Set",
+              "\{summary.moonbook_patch_set_manifest_count} manifest(s)",
+            ),
+            info_row(
+              "Patch Execution",
+              "\{summary.runtime_patch_execution_proof_count} runtime proof event(s)",
+            ),
+            info_row(
+              "Tool Approvals",
+              "\{summary.moonbook_tool_approvals_manifest_count} manifest(s), \{summary.pending_tool_approval_count} pending",
+            ),
+            info_row(
+              "Test Runs",
+              "\{summary.moonbook_test_runs_manifest_count} manifest(s)",
+            ),
+            info_row(
+              "Eval Report",
+              "\{summary.moonbook_eval_report_manifest_count} manifest(s)",
+            ),
+            info_row(
+              "Runtime Handoff",
+              "\{summary.mooncode_runtime_handoff_manifest_count} manifest(s)",
+            ),
+          ]),
+          render_mooncode_eval_checks(summary.eval_checks),
+        ])
+      }
+      None =>
+        div(class="daemon-state", [
+          info_row("Protocol", "mooncode.v1"),
+          info_row("Session", "none"),
+        ])
+    },
+  ])
+}
+
+///|
+fn render_mooncode_eval_checks(
+  checks : Array[MoonCodeEvalCheck]
+) -> @rabbita.Html {
+  if checks.length() == 0 {
+    p(class="status-line", "no eval checks")
+  } else {
+    div(
+      class="mooncode-eval-list",
+      checks.map(check => {
+        div(
+          class=if check.ok {
+            "mooncode-eval-check ok"
+          } else {
+            "mooncode-eval-check missing"
+          },
+          [
+            span(
+              class=if check.ok { "record-kind good" } else { "record-kind" },
+              if check.ok { "ok" } else { "missing" },
+            ),
+            div([
+              strong(check.label),
+              small(check.evidence),
+            ]),
+          ],
+        )
+      }),
+    )
+  }
 }
 
 ///|
@@ -7864,6 +16390,21 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       span(class="app-dot", ""),
       h1("Moondesk"),
       span(class="workspace-switcher", workspace_name(model)),
+      span(class="mode-caption", workspace_mode_summary(model.workspace_mode)),
+    ]),
+    div(class="workspace-mode-toggle", [
+      button(
+        class=workspace_mode_button_class(model, WorkspaceMode::MoonWiki),
+        title="Switch to the MoonWiki book workspace",
+        on_click=dispatch(SelectWorkspaceMode(WorkspaceMode::MoonWiki)),
+        "MoonWiki",
+      ),
+      button(
+        class=workspace_mode_button_class(model, WorkspaceMode::MoonCode),
+        title="Switch to the MoonCode coding workspace",
+        on_click=dispatch(SelectWorkspaceMode(WorkspaceMode::MoonCode)),
+        "MoonCode",
+      ),
     ]),
     button(
       class="command-button",
@@ -7875,22 +16416,37 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 }
 
 ///|
+fn workspace_mode_button_class(model : Model, mode : WorkspaceMode) -> String {
+  if model.workspace_mode == mode {
+    "mode-button active"
+  } else {
+    "mode-button"
+  }
+}
+
+///|
 fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  let center = if model.activity == Activity::Agents {
+  let code_mode = model.workspace_mode == WorkspaceMode::MoonCode
+  let center = if code_mode {
     render_agent_center(dispatch, model)
   } else {
     render_preview_center(dispatch, model)
   }
-  let inspector = if model.activity == Activity::Agents {
+  let inspector = if code_mode {
     render_agent_inspector(dispatch, model)
   } else {
     render_inspector(dispatch, model)
+  }
+  let side = if code_mode {
+    render_agents_pane(dispatch, model)
+  } else {
+    render_explorer(dispatch, model)
   }
   div(class="desk-shell", [
     render_title_bar(dispatch, model),
     div(class="desk-main", [
       render_activity_rail(dispatch, model),
-      render_explorer(dispatch, model),
+      side,
       center,
       inspector,
     ]),
@@ -7922,6 +16478,7 @@ test {
   ignore(fetch_agent_daemon_cmd)
   ignore(fetch_agent_models_cmd)
   ignore(fetch_agent_sessions_cmd)
+  ignore(fetch_mooncode_capabilities_cmd)
   ignore(fetch_book_patterns_cmd)
   ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
@@ -7959,6 +16516,7 @@ fn main {
       fetch_agent_daemon_cmd(dispatch),
       fetch_agent_models_cmd(dispatch),
       fetch_agent_sessions_cmd(dispatch, ""),
+      fetch_mooncode_capabilities_cmd(dispatch),
       fetch_book_base_types_cmd(dispatch),
       fetch_book_patterns_cmd(dispatch),
       schedule_agent_poll(dispatch),

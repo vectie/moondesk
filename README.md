@@ -22,6 +22,7 @@ Start here:
 - [Product Plan](docs/PLAN.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [UI Design](docs/UI_DESIGN.md)
+- [MoonCode Workspace](docs/MOONCODE.md)
 - [Reuse Map](docs/REUSE_MAP.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Current Status](docs/STATUS.md)
@@ -33,7 +34,7 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
 - MoonBit domain models for workspaces, file entries, previews, task
   submissions, and run projections.
 - Adapters for MoonBook, Moontown, and MoonClaw workspace concepts.
-- A local HTTP host that serves the built UI and scoped `/api/*` routes.
+- A local MoonWiki host that serves the built UI and scoped `/api/*` routes.
 - A built Rabbita UI with live workspace discovery, explorer browsing,
   markdown/html/json/image previews, raw links, MoonClaw run artifacts,
   inbox note creation/editing, Moontown request staging, request ledger,
@@ -133,7 +134,8 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
   identity, daemon tick dispatch, cross-book search, favorites,
   saved views,
   tags, recent context, scoped Finder reveal,
-  MoonClaw agent sessions, book-scoped chat/task handoff, supervised daemon
+  a switchable MoonWiki/MoonCode workspace shell, native MoonClaw MoonCode
+  command sessions, book-scoped chat/task handoff, supervised daemon
   policy, transcript progress projection, LaunchAgent install/remove controls, live
   event/failure/review summaries, URL and local file import staging, cadence
   summaries, a calendar-like due-tick view, ICS export, outcome analytics, and

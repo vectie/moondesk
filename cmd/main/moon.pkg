@@ -8,7 +8,7 @@ import {
   "moonbitlang/x/sys",
   "vectie/moondesk/host",
   "vectie/moondesk/internal/fsx",
-  "vectie/moondesk/internal/httpserve",
+  "vectie/moondesk/internal/moonwiki",
   "vectie/moondesk/internal/pathx",
 }
 

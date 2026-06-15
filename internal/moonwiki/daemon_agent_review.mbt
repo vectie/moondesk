@@ -103,8 +103,8 @@ async fn daemon_agent_record(
 ) -> Json {
   let label = daemon_agent_label()
   let plist_path = daemon_agent_plist_path(root)
-  let loaded = launchctl_print(label) == 0
   let installed = @fsx.exists(plist_path)
+  let loaded = daemon_agent_loaded_status(installed, label)
   {
     "ok": if action == "status" {
       true
@@ -132,6 +132,15 @@ async fn daemon_agent_record(
     } else {
       message
     },
+  }
+}
+
+///|
+async fn daemon_agent_loaded_status(installed : Bool, label : String) -> Bool {
+  if installed {
+    launchctl_print(label) == 0
+  } else {
+    false
   }
 }
 
@@ -244,6 +253,25 @@ async fn launchctl_print(label : String) -> Int {
   @process.run("launchctl", ["print", launchctl_target(label)]) catch {
     _ => -1
   }
+}
+
+///|
+async test "daemon agent status is quiet when launchagent is not installed" {
+  let root = "/tmp/moondesk-daemon-agent-status-wbtest-" +
+    @desk.stable_id("daemon-agent-status", @async.now().to_string())
+  let record = daemon_agent_record(
+    root,
+    action="status",
+    exit_code=0,
+    message="",
+  )
+  assert_true(json_bool(record, "ok", default=false))
+  assert_false(json_bool(record, "installed", default=true))
+  assert_false(json_bool(record, "loaded", default=true))
+  assert_eq(
+    json_string(record, "message", default=""),
+    "LaunchAgent is not installed",
+  )
 }
 
 ///|

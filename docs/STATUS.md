@@ -17,7 +17,7 @@ diffs, expanded operating analytics, a Codex-like Agents activity, and stricter
 PDF Evidence Watch production gating for MoonClaw web-tool execution.
 
 The host implementation has also been refactored from a monolithic
-`internal/httpserve/server.mbt` into responsibility-sized package-local modules:
+`internal/moonwiki/server.mbt` into responsibility-sized package-local modules:
 router shell, workspace/search/town/book/MoonClaw API handlers, request helpers,
 book-pattern registry support, PDF-watch builder/publish/verification logic, EB
 prompt/lifecycle/script/MoonClaw/output contracts, EB runtime
@@ -25,11 +25,11 @@ refresh/flow/result/validation/health/proof logic, runtime projections,
 daemon/session support, and focused whitebox test files. This is a
 behavior-preserving modular split: public HTTP/API contracts are unchanged,
 while dated EB fixture seeds now live only in
-`httpserve_fixtures_wbtest.mbt` so production EB discovery continues to rely on
+`moonwiki_fixtures_wbtest.mbt` so production EB discovery continues to rely on
 dynamic source discovery rather than baked-in prompt hints.
 
 The current `.app` is a foreground native macOS window. The bundle executable
-is an AppKit/WebKit launcher, and the MoonBit HTTP host runs as an internal
+is an AppKit/WebKit launcher, and the MoonBit MoonWiki host runs as an internal
 `moondesk-host` helper from the same bundle. Browser dev mode remains available
 through `serve`/`desktop` and as an explicit fallback shell.
 Developer ID notarization is wired through `cmd/main release`, but real

@@ -82,7 +82,7 @@ button {
 
 .title-bar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 460px) minmax(180px, auto);
+  grid-template-columns: minmax(0, 1fr) auto minmax(280px, 460px) minmax(180px, auto);
   align-items: center;
   gap: 12px;
   padding: 0 14px;
@@ -137,6 +137,44 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mode-caption {
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.workspace-mode-toggle {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(92px, 1fr));
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--rail);
+}
+
+.mode-button {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.mode-button:hover {
+  color: var(--ink);
+}
+
+.mode-button.active {
+  background: var(--bg-panel-strong);
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .command-button {
@@ -1170,6 +1208,12 @@ button {
   padding: 18px;
 }
 
+.mooncode-transcript {
+  background:
+    linear-gradient(180deg, rgba(77, 182, 198, 0.04), transparent 180px),
+    #11141b;
+}
+
 .agent-empty {
   display: grid;
   align-content: center;
@@ -1218,6 +1262,43 @@ button {
   border-color: rgba(224, 108, 117, 0.62);
 }
 
+.agent-message.mooncode-transcript-event {
+  border-left-width: 3px;
+}
+
+.agent-message.mooncode-transcript-event.runtime {
+  border-color: rgba(154, 164, 178, 0.42);
+}
+
+.agent-message.mooncode-transcript-event.transcript {
+  border-color: rgba(77, 182, 198, 0.48);
+}
+
+.agent-message.mooncode-transcript-event.tool {
+  border-color: rgba(214, 160, 85, 0.55);
+}
+
+.agent-message.mooncode-transcript-event.diff {
+  border-color: rgba(91, 141, 239, 0.52);
+}
+
+.agent-message.mooncode-transcript-event.test {
+  border-color: rgba(82, 183, 136, 0.55);
+}
+
+.agent-message.mooncode-transcript-event.artifact {
+  border-color: rgba(175, 139, 245, 0.55);
+}
+
+.agent-message.mooncode-transcript-event.review {
+  border-color: rgba(224, 108, 117, 0.5);
+}
+
+.agent-message.mooncode-transcript-event.failed {
+  border-color: rgba(224, 108, 117, 0.72);
+  background: rgba(183, 70, 70, 0.12);
+}
+
 .agent-message-head {
   display: flex;
   justify-content: space-between;
@@ -1242,6 +1323,29 @@ button {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.mooncode-transcript-event-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.mooncode-transcript-event-title strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mooncode-transcript-event-title code,
+.mooncode-transcript-path {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .agent-composer {
@@ -1634,6 +1738,479 @@ button {
   color: var(--accent);
 }
 
+.agent-session-surface {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+}
+
+.mooncode-session-header {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+  background: #11151d;
+}
+
+.mooncode-session-title {
+  min-width: 0;
+  display: flex;
+  gap: 12px;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.mooncode-session-title h2 {
+  margin: 2px 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.mooncode-session-title small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mooncode-session-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+  gap: 8px;
+}
+
+.mooncode-session-evidence {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 7px 12px;
+}
+
+.mooncode-stream,
+.mooncode-review-board {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0d1017;
+}
+
+.mooncode-stream-header,
+.mooncode-lane-title,
+.mooncode-event-head,
+.mooncode-review-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mooncode-stream-header h3 {
+  margin: 2px 0 0;
+  font-size: 15px;
+}
+
+.mooncode-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+  gap: 8px;
+}
+
+.mooncode-selected-patch {
+  border-color: rgba(86, 132, 199, 0.24);
+  background: rgba(86, 132, 199, 0.06);
+}
+
+.info-chip {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-panel);
+}
+
+.info-chip strong {
+  font-size: 16px;
+}
+
+.info-chip small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.mooncode-lane-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mooncode-lane {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 132px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-panel);
+}
+
+.mooncode-lane.diff {
+  border-color: rgba(74, 171, 126, 0.35);
+}
+
+.mooncode-lane.test {
+  border-color: rgba(235, 183, 96, 0.35);
+}
+
+.mooncode-lane.artifact {
+  border-color: rgba(104, 154, 255, 0.35);
+}
+
+.mooncode-lane.review {
+  border-color: rgba(220, 140, 82, 0.34);
+}
+
+.mooncode-live-tail {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(104, 154, 255, 0.25);
+  border-radius: 8px;
+  background: var(--bg-panel);
+}
+
+.mooncode-event-list.compact .mooncode-event-detail {
+  -webkit-line-clamp: 2;
+}
+
+.mooncode-contract {
+  display: grid;
+  gap: 10px;
+}
+
+.mooncode-command-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mooncode-tool-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mooncode-runtime-contract {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.mooncode-runtime-summary {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(104, 154, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(104, 154, 255, 0.04);
+}
+
+.mooncode-proof-gate {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-panel);
+}
+
+.mooncode-proof-gate.blocked {
+  border-color: rgba(179, 85, 45, 0.36);
+  background: rgba(179, 85, 45, 0.08);
+}
+
+.mooncode-proof-gate.passed {
+  border-color: rgba(58, 128, 84, 0.32);
+  background: rgba(58, 128, 84, 0.08);
+}
+
+.mooncode-engine-status {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mooncode-engine-checks {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mooncode-wire-block {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-panel);
+}
+
+.mooncode-tool-spec,
+.mooncode-tool-policy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-panel);
+}
+
+.mooncode-tool-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mooncode-tool-spec p,
+.mooncode-tool-policy p,
+.mooncode-output-roots p,
+.mooncode-wire-block p {
+  margin: 0;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mooncode-tool-spec small,
+.mooncode-tool-policy small,
+.mooncode-output-roots small,
+.mooncode-wire-block small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.mooncode-tool-policy-list {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mooncode-output-roots {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mooncode-execution-checklist {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mooncode-checklist-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid rgba(104, 154, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(13, 16, 23, 0.5);
+}
+
+.mooncode-checklist-row > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mooncode-consumer-loop {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mooncode-evidence-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.mooncode-readiness {
+  display: grid;
+  gap: 10px;
+}
+
+.mooncode-eval-list {
+  display: grid;
+  gap: 6px;
+}
+
+.mooncode-eval-check {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-panel);
+}
+
+.mooncode-eval-check.ok {
+  border-color: rgba(74, 171, 126, 0.28);
+}
+
+.mooncode-eval-check.bridged {
+  border-color: rgba(114, 154, 212, 0.28);
+}
+
+.mooncode-eval-check.missing {
+  border-color: rgba(220, 140, 82, 0.28);
+}
+
+.mooncode-eval-check div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mooncode-eval-check small {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.mooncode-event-list {
+  display: grid;
+  gap: 8px;
+}
+
+.mooncode-review-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mooncode-review-item {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid rgba(74, 171, 126, 0.25);
+  border-radius: 8px;
+  background: var(--bg-panel);
+}
+
+.mooncode-review-item.failed {
+  border-color: rgba(183, 70, 70, 0.4);
+}
+
+.mooncode-review-item.applied,
+.mooncode-review-item.accepted,
+.mooncode-review-item.approved,
+.mooncode-review-item.passed {
+  border-color: rgba(74, 171, 126, 0.35);
+}
+
+.mooncode-review-item.reverted,
+.mooncode-review-item.rejected {
+  border-color: rgba(220, 140, 82, 0.36);
+}
+
+.mooncode-review-item.pending {
+  border-color: rgba(199, 165, 89, 0.38);
+}
+
+.mooncode-review-item.running,
+.mooncode-review-item.queued {
+  border-color: rgba(86, 132, 199, 0.38);
+}
+
+.mooncode-review-head {
+  align-items: flex-start;
+}
+
+.mooncode-review-head > div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mooncode-review-head strong {
+  overflow-wrap: anywhere;
+}
+
+.mooncode-review-head small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.mooncode-event {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 6px;
+  background: #111620;
+}
+
+.mooncode-event.failed {
+  background: rgba(183, 70, 70, 0.12);
+}
+
+.mooncode-event code {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mooncode-event-detail {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.mooncode-hunk-list {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mooncode-hunk {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #111620;
+}
+
+.mooncode-hunk strong {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
 @media (max-width: 1120px) {
   .desk-main {
     grid-template-columns: 54px minmax(220px, 280px) minmax(0, 1fr);
@@ -1672,6 +2249,11 @@ button {
   }
 
   .artifact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mooncode-stats,
+  .mooncode-lane-grid {
     grid-template-columns: 1fr;
   }
 }
