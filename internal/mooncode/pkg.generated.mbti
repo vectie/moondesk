@@ -208,6 +208,8 @@ pub fn moonclaw_event_to_runtime_event(Json, fallback_id~ : String, fallback_cre
 
 pub fn moonclaw_status_event_record(Json, fallback_id~ : String) -> Json?
 
+pub fn moonclaw_tool_event_record(Json, fallback_id~ : String) -> Json?
+
 pub fn moonclaw_tool_mapping_rows() -> Array[Json]
 
 pub fn moonclaw_tool_to_mooncode_tool(String) -> String

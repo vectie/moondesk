@@ -235,6 +235,69 @@ pub fn moonclaw_status_event_record(
 }
 
 ///|
+pub fn moonclaw_tool_event_record(event : Json, fallback_id~ : String) -> Json? {
+  let desc = moonclaw_json_object_field_or_empty(event, "desc")
+  let msg = moonclaw_json_string(desc, "msg", default="")
+  let event_id = moonclaw_json_field_text(event, "id", default=fallback_id)
+  let created_at = moonclaw_json_field_text(event, "created", default=event_id)
+  match msg {
+    "PreToolCall" => {
+      let name = moonclaw_tool_name(desc)
+      Some(
+        event_record(
+          id=event_id,
+          lane="tool",
+          kind="tool_call",
+          title="Tool started: \{name}",
+          status="running",
+          created_at~,
+          detail=moonclaw_tool_arguments_from_desc(desc),
+          command=moonclaw_tool_command(desc),
+          path=moonclaw_tool_path(desc),
+        ),
+      )
+    }
+    "PostToolCall" => {
+      let name = moonclaw_tool_name(desc)
+      let path = moonclaw_tool_path(desc)
+      let diff = moonclaw_tool_diff(desc)
+      let command = moonclaw_tool_command(desc)
+      let exit_code = moonclaw_tool_exit_code(desc)
+      let text = moonclaw_tool_text(desc)
+      let status = if moonclaw_json_object_field(desc, "error") is Some(_) ||
+        exit_code > 0 {
+        "failed"
+      } else {
+        "done"
+      }
+      let lane = tool_lane(name, path, diff, command, text)
+      let title = match lane {
+        "diff" => "File changed: \{event_label(path)}"
+        "test" => "Test/build command: \{event_label(command)}"
+        "artifact" => "Artifact packaged: \{event_label(path)}"
+        _ => "Tool finished: \{name}"
+      }
+      Some(
+        event_record(
+          id=event_id,
+          lane~,
+          kind=name,
+          title~,
+          status~,
+          created_at~,
+          detail=text,
+          path~,
+          diff~,
+          command~,
+          exit_code~,
+        ),
+      )
+    }
+    _ => None
+  }
+}
+
+///|
 fn moonclaw_status_event_status(msg : String) -> String {
   match msg {
     "Failed" => "failed"
@@ -295,6 +358,104 @@ fn moonclaw_tool_event(
       "done"
     },
   }
+}
+
+///|
+fn moonclaw_tool_name(desc : Json) -> String {
+  let direct = moonclaw_json_string(desc, "name", default="")
+  if direct != "" {
+    return direct
+  }
+  let tool_call = moonclaw_json_object_field_or_empty(desc, "tool_call")
+  let function = moonclaw_json_object_field_or_empty(tool_call, "function")
+  moonclaw_json_string(function, "name", default="tool")
+}
+
+///|
+fn moonclaw_tool_arguments_from_desc(desc : Json) -> String {
+  let tool_call = moonclaw_json_object_field_or_empty(desc, "tool_call")
+  moonclaw_tool_call_arguments(tool_call)
+}
+
+///|
+fn moonclaw_tool_result_object(desc : Json) -> Json {
+  match moonclaw_json_object_field_or_empty(desc, "result") {
+    Json::Object(_) as object => object
+    Json::Array(items) =>
+      if items.length() > 1 {
+        items[1]
+      } else {
+        Json::object({})
+      }
+    _ => Json::object({})
+  }
+}
+
+///|
+fn moonclaw_tool_path(desc : Json) -> String {
+  let result = moonclaw_tool_result_object(desc)
+  let path = moonclaw_first_string(
+    result,
+    ["path", "file", "target"],
+    default="",
+  )
+  if path != "" {
+    return path
+  }
+  let args = @json.parse(moonclaw_tool_arguments_from_desc(desc)) catch {
+    _ => Json::object({})
+  }
+  moonclaw_first_string(args, ["path", "file", "target"], default="")
+}
+
+///|
+fn moonclaw_tool_diff(desc : Json) -> String {
+  let result = moonclaw_tool_result_object(desc)
+  let diff = moonclaw_json_string(result, "diff", default="")
+  if diff != "" {
+    diff
+  } else {
+    let text = moonclaw_tool_text(desc)
+    if text.contains("\n+") || text.contains("\n-") {
+      text
+    } else {
+      ""
+    }
+  }
+}
+
+///|
+fn moonclaw_tool_command(desc : Json) -> String {
+  let result = moonclaw_tool_result_object(desc)
+  let command = moonclaw_json_string(result, "command", default="")
+  if command != "" {
+    return command
+  }
+  let args = @json.parse(moonclaw_tool_arguments_from_desc(desc)) catch {
+    _ => Json::object({})
+  }
+  moonclaw_first_string(args, ["command", "cmd"], default="")
+}
+
+///|
+fn moonclaw_tool_exit_code(desc : Json) -> Int {
+  moonclaw_json_int(moonclaw_tool_result_object(desc), "status", default=0)
+}
+
+///|
+fn moonclaw_tool_text(desc : Json) -> String {
+  let text = moonclaw_json_string(
+    desc,
+    "text",
+    default=moonclaw_json_string(desc, "rendered", default=""),
+  )
+  if text != "" {
+    return text
+  }
+  let result = moonclaw_tool_result_object(desc)
+  let stdout = moonclaw_json_string(result, "stdout", default="")
+  let stderr = moonclaw_json_string(result, "stderr", default="")
+  [stdout, stderr].join("\n")
 }
 
 ///|
@@ -519,6 +680,55 @@ test "mooncode moonclaw adapter shapes legacy status events" {
   assert_true(
     json_string(failed_event, "detail", default="").contains("tool failed"),
   )
+}
+
+///|
+test "mooncode moonclaw adapter shapes legacy tool lane events" {
+  guard moonclaw_tool_event_record(
+      {
+        "id": "evt-diff",
+        "created": "2026-06-16T00:00:00Z",
+        "desc": {
+          "msg": "PostToolCall",
+          "name": "write_to_file",
+          "result": {
+            "path": "tools/demo/main.mbt",
+            "diff": "\n+fn main { println(\"ok\") }",
+          },
+          "text": "updated tools/demo/main.mbt",
+        },
+      },
+      fallback_id="fallback",
+    )
+    is Some(diff_event) else {
+    fail("diff tool event was not projected")
+  }
+  assert_eq(json_string(diff_event, "lane", default=""), "diff")
+  assert_eq(json_string(diff_event, "path", default=""), "tools/demo/main.mbt")
+  assert_eq(
+    json_string(diff_event, "title", default=""),
+    "File changed: tools/demo/main.mbt",
+  )
+  guard moonclaw_tool_event_record(
+      {
+        "id": "evt-test",
+        "desc": {
+          "msg": "PostToolCall",
+          "name": "execute_command",
+          "tool_call": {
+            "function": { "arguments": "{\"command\":\"moon test\"}" },
+          },
+          "result": { "status": 0, "stdout": "ok", "stderr": "" },
+        },
+      },
+      fallback_id="fallback",
+    )
+    is Some(test_event) else {
+    fail("test tool event was not projected")
+  }
+  assert_eq(json_string(test_event, "lane", default=""), "test")
+  assert_eq(json_string(test_event, "command", default=""), "moon test")
+  assert_eq(event_json_int(test_event, "exit_code", default=-1), 0)
 }
 
 ///|

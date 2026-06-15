@@ -4425,23 +4425,8 @@ fn mooncode_event_from_moonclaw_event(event : Json) -> Json? {
           },
         ),
       )
-    "PreToolCall" => {
-      let name = mooncode_tool_name(desc)
-      Some(
-        mooncode_event_record(
-          id=event_id,
-          lane="tool",
-          kind="tool_call",
-          title="Tool started: \{name}",
-          status="running",
-          created_at~,
-          detail=mooncode_tool_arguments(desc),
-          command=mooncode_tool_command(desc),
-          path=mooncode_tool_path(desc),
-        ),
-      )
-    }
-    "PostToolCall" => Some(mooncode_post_tool_event(event_id, created_at, desc))
+    "PreToolCall" | "PostToolCall" =>
+      @mooncode.moonclaw_tool_event_record(event, fallback_id=event_id)
     "MessageQueued"
     | "MessageUnqueued"
     | "PreConversation"
@@ -4454,183 +4439,6 @@ fn mooncode_event_from_moonclaw_event(event : Json) -> Json? {
       @mooncode.moonclaw_status_event_record(event, fallback_id=event_id)
     _ => None
   }
-}
-
-///|
-fn mooncode_post_tool_event(
-  id : String,
-  created_at : String,
-  desc : Json,
-) -> Json {
-  let name = mooncode_tool_name(desc)
-  let path = mooncode_tool_path(desc)
-  let diff = mooncode_tool_diff(desc)
-  let command = mooncode_tool_command(desc)
-  let exit_code = mooncode_tool_exit_code(desc)
-  let status = if json_object_field(desc, "error") is Some(_) || exit_code > 0 {
-    "failed"
-  } else {
-    "done"
-  }
-  let lane = mooncode_tool_lane(
-    name,
-    path,
-    diff,
-    command,
-    mooncode_tool_text(desc),
-  )
-  let title = match lane {
-    "diff" => "File changed: \{mooncode_label(path)}"
-    "test" => "Test/build command: \{mooncode_label(command)}"
-    "artifact" => "Artifact packaged: \{mooncode_label(path)}"
-    _ => "Tool finished: \{name}"
-  }
-  mooncode_event_record(
-    id~,
-    lane~,
-    kind=name,
-    title~,
-    status~,
-    created_at~,
-    detail=mooncode_tool_text(desc),
-    path~,
-    diff~,
-    command~,
-    exit_code~,
-  )
-}
-
-///|
-fn mooncode_tool_lane(
-  name : String,
-  path : String,
-  diff : String,
-  command : String,
-  text : String,
-) -> String {
-  @mooncode.tool_lane(name, path, diff, command, text)
-}
-
-///|
-fn mooncode_tool_name(desc : Json) -> String {
-  let direct = json_string(desc, "name", default="")
-  if direct != "" {
-    return direct
-  }
-  let tool_call = mooncode_tool_call(desc)
-  let function = match json_object_field(tool_call, "function") {
-    Some(function) => function
-    None => Json::object({})
-  }
-  json_string(function, "name", default="tool")
-}
-
-///|
-fn mooncode_tool_arguments(desc : Json) -> String {
-  let tool_call = mooncode_tool_call(desc)
-  let function = match json_object_field(tool_call, "function") {
-    Some(function) => function
-    None => Json::object({})
-  }
-  json_string(function, "arguments", default="")
-}
-
-///|
-fn mooncode_label(value : String) -> String {
-  @mooncode.event_label(value)
-}
-
-///|
-fn mooncode_tool_call(desc : Json) -> Json {
-  match json_object_field(desc, "tool_call") {
-    Some(tool_call) => tool_call
-    None => Json::object({})
-  }
-}
-
-///|
-fn mooncode_tool_result(desc : Json) -> Json {
-  match json_object_field(desc, "result") {
-    Some(result) => result
-    None => Json::object({})
-  }
-}
-
-///|
-fn mooncode_tool_result_object(desc : Json) -> Json {
-  match mooncode_tool_result(desc) {
-    Json::Object(_) as object => object
-    Json::Array(items) =>
-      if items.length() > 1 {
-        items[1]
-      } else {
-        Json::object({})
-      }
-    _ => Json::object({})
-  }
-}
-
-///|
-fn mooncode_tool_path(desc : Json) -> String {
-  let result = mooncode_tool_result_object(desc)
-  let path = json_first_string(result, ["path", "file", "target"], default="")
-  if path != "" {
-    return path
-  }
-  let args = @json.parse(mooncode_tool_arguments(desc)) catch {
-    _ => Json::object({})
-  }
-  json_first_string(args, ["path", "file", "target"], default="")
-}
-
-///|
-fn mooncode_tool_diff(desc : Json) -> String {
-  let result = mooncode_tool_result_object(desc)
-  let diff = json_string(result, "diff", default="")
-  if diff != "" {
-    diff
-  } else {
-    let text = mooncode_tool_text(desc)
-    if text.contains("\n+") || text.contains("\n-") {
-      text
-    } else {
-      ""
-    }
-  }
-}
-
-///|
-fn mooncode_tool_command(desc : Json) -> String {
-  let result = mooncode_tool_result_object(desc)
-  let command = json_string(result, "command", default="")
-  if command != "" {
-    return command
-  }
-  let args = @json.parse(mooncode_tool_arguments(desc)) catch {
-    _ => Json::object({})
-  }
-  json_first_string(args, ["command", "cmd"], default="")
-}
-
-///|
-fn mooncode_tool_exit_code(desc : Json) -> Int {
-  json_int(mooncode_tool_result_object(desc), "status", default=0)
-}
-
-///|
-fn mooncode_tool_text(desc : Json) -> String {
-  let text = json_string(
-    desc,
-    "text",
-    default=json_string(desc, "rendered", default=""),
-  )
-  if text != "" {
-    return trim_for_record(text)
-  }
-  let result = mooncode_tool_result_object(desc)
-  let stdout = json_string(result, "stdout", default="")
-  let stderr = json_string(result, "stderr", default="")
-  trim_for_record([stdout, stderr].join("\n"))
 }
 
 ///|
@@ -4731,12 +4539,22 @@ test "mooncode projects file write and test lanes" {
 
 ///|
 test "mooncode marks portable app tool outputs as artifacts" {
-  let event = mooncode_post_tool_event("artifact", "1", {
-    "msg": "PostToolCall",
-    "name": "package_app_tool",
-    "result": { "path": "portable/app-tool/demo.zip" },
-    "text": "packaged portable/app-tool/demo.zip",
-  })
+  guard @mooncode.moonclaw_tool_event_record(
+      {
+        "id": "artifact",
+        "created": "1",
+        "desc": {
+          "msg": "PostToolCall",
+          "name": "package_app_tool",
+          "result": { "path": "portable/app-tool/demo.zip" },
+          "text": "packaged portable/app-tool/demo.zip",
+        },
+      },
+      fallback_id="artifact",
+    )
+    is Some(event) else {
+    fail("package app tool event was not projected")
+  }
   assert_eq(json_string(event, "lane", default=""), "artifact")
   assert_true(
     json_bool(

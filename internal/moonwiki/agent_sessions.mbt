@@ -1322,7 +1322,7 @@ fn agent_message_from_moonclaw_event(event : Json) -> Json? {
         ),
       )
     "PreToolCall" => {
-      let name = mooncode_tool_name(desc)
+      let name = legacy_agent_tool_name(desc)
       Some(
         agent_message_record_with_id(
           id="moonclaw-\{event_id}",
@@ -1369,7 +1369,7 @@ fn agent_message_from_moonclaw_event(event : Json) -> Json? {
       }
     }
     "PostToolCall" => {
-      let name = mooncode_tool_name(desc)
+      let name = legacy_agent_tool_name(desc)
       let text = json_string(desc, "text", default="")
       let content = if text == "" {
         "Tool finished: \{name}"
@@ -1433,6 +1433,23 @@ fn moonclaw_context_pruned_text(desc : Json) -> String {
   } else {
     "MoonClaw pruned context: \{origin} -> \{pruned} tokens"
   }
+}
+
+///|
+fn legacy_agent_tool_name(desc : Json) -> String {
+  let direct = json_string(desc, "name", default="")
+  if direct != "" {
+    return direct
+  }
+  let tool_call = match json_object_field(desc, "tool_call") {
+    Some(tool_call) => tool_call
+    None => Json::object({})
+  }
+  let function = match json_object_field(tool_call, "function") {
+    Some(function) => function
+    None => Json::object({})
+  }
+  json_string(function, "name", default="tool")
 }
 
 ///|

@@ -84,14 +84,15 @@ dispatch status/detail classification, and runtime-dispatch receipt body
 construction, including the
 response-normalized dispatch receipt view used by
 operator/runtime feed endpoints. It also owns the tool-authorization contract
-and preview/allowed/requires-approval/blocked decision projection; Moondesk
+and preview/allowed/requires-approval/blocked decision projection. It also
+owns legacy MoonClaw `desc.msg` status/progress and tool call/result lane
+shaping, including diff/test/artifact path and command extraction; Moondesk
 supplies stable ids, timestamps, persistence, and host observations but no
 longer owns those durable-session, runtime-feed, dispatch-receipt, or
 authorization-decision schemas. The
 filesystem-backed sidecar store, HTTP query parsing, live polling, checkpoint
 file paths, checkpoint writes, host fallback ids/timestamps, log reads, source
-inventory reads, native/daemon readiness probes, legacy MoonClaw `desc.msg`
-tool-result/path translation, action-plan manifest persistence,
+inventory reads, native/daemon readiness probes, action-plan manifest persistence,
 tool-authorization HTTP handshakes, and
 dispatch/claim/replay receipt appends still live in `internal/moonwiki`;
 future MoonCode work should move more storage and eval contracts behind the
