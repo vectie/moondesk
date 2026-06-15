@@ -4310,6 +4310,9 @@ fn mooncode_native_response_event_items(response : Json) -> Array[Json] {
   for event in json_array_items(execution, "events") {
     incoming.push(event)
   }
+  for event in json_array_items(response, "package_events") {
+    incoming.push(event)
+  }
   let turn_receipt = json_object_field_or_empty(response, "turn_receipt")
   for event in json_array_items(turn_receipt, "events") {
     incoming.push(event)
@@ -7022,15 +7025,27 @@ test "mooncode native response appends runtime events" {
     created_at="2",
     detail="turn",
   )
+  let package_event = mooncode_event_record(
+    id="runtime-package-event",
+    lane="artifact",
+    kind="runtime.package_verified",
+    title="Package verified",
+    status="verified",
+    created_at="3",
+    detail="package",
+  )
   let session = mooncode_append_native_response_events(Json::object({}), {
     "events": [event],
     "execution": { "events": [turn_event] },
     "turn_receipt": { "events": [turn_event] },
+    "package_events": [package_event],
+    "turns": [{ "package_events": [package_event] }],
   })
   let events = json_array_items(session, "mooncode_command_events")
-  assert_eq(events.length(), 2)
+  assert_eq(events.length(), 3)
   assert_eq(json_string(events[0], "id", default=""), "native-event")
   assert_eq(json_string(events[1], "id", default=""), "runtime-turn-event")
+  assert_eq(json_string(events[2], "id", default=""), "runtime-package-event")
 }
 
 ///|

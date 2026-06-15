@@ -325,7 +325,10 @@ action for that boundary: Moondesk asks MoonClaw to run a bounded native
 runtime-loop, falls back to a single native runtime-turn when needed, ingests
 returned MoonCode events, refreshes review/test/package/evidence manifests, and
 saves the enriched session. The MoonCode workspace exposes this as `Run Native
-Loop`; Moondesk still does not execute tools directly.
+Loop`; Moondesk still does not execute tools directly. Native runtime-loop and
+runtime-turn responses now also ingest MoonClaw `package_events`, so package
+build/verification proof appears in the MoonCode artifact/package panels as
+soon as the bounded native run returns.
 The launch packet now embeds a `mooncode-runtime-supervisor-readiness` report
 that checks the command id, scheduler permission, claim/ack/event/session
 endpoints, claim/ack request templates, and required supervisor loop steps. The
@@ -601,8 +604,10 @@ MoonClaw/standalone-MoonCode bundler. MoonClaw native runtime-turn now emits the
 first deterministic `package_built`/`package_verified` proof for generated
 tools and miniapps after book-local write/shell verification, while standalone
 `mooncode` still needs the same contract for model-backed bundle
-assembly/checking. Moondesk normalizes those into package proof counts and
-per-candidate execution state. Moondesk now exposes saved package
+assembly/checking. Moondesk ingests those proof events from native runtime-turn
+and runtime-loop responses, normalizes them into package proof counts and
+per-candidate execution state, and persists them with the rest of the MoonCode
+event log. Moondesk now exposes saved package
 manifests and the package index through
 `GET /api/mooncode/sessions/<id>/package-candidates` and renders a Package
 Candidates panel with source-bound/missing-source counts, executable-ready

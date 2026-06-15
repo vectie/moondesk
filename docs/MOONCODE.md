@@ -1405,7 +1405,10 @@ The MoonCode stream gets `package.manifest`, `package.index`,
 `mooncode_summary` exposes package manifest/index gates plus runtime package
 proof counts. Source-bound package candidates show that package inputs exist;
 runtime package proof shows that MoonClaw or standalone `mooncode` actually
-assembled and checked a bundle.
+assembled and checked a bundle. Moondesk ingests MoonClaw `package_events`
+returned by native runtime-turn/runtime-loop calls, so package verification
+proof is visible immediately after `Run Native Loop` without waiting for a
+separate stream poll.
 
 Those candidates are inspectable through:
 
