@@ -273,6 +273,14 @@ spawning a task, so Moondesk or a future standalone `mooncode` process can
 discover and show durable sessions after daemon restart. The records include
 live-binding status, snapshot payload, storage paths, and command/event/package
 log counts.
+MoonClaw also exposes the first native durable lease point:
+`GET /v1/mooncode/sessions/<id>/runtime-claim?book_root=<path>` and
+`POST /v1/mooncode/sessions/<id>/runtime-claim?book_root=<path>`. The GET
+route projects the next claimable command from the native `commands.jsonl`
+sidecar and existing `runtime-dispatches.jsonl` receipts. The POST route appends
+a `runtime-claimed` receipt for the next unresolved command without spawning a
+task. This is the native handoff point for a future MoonClaw loop to execute
+claimed durable commands directly.
 
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references
@@ -419,14 +427,16 @@ MoonClaw owns a parallel native book-local store for the runtime side:
 ```text
 .moonclaw/mooncode/sessions/<session-id>/session.json
 .moonclaw/mooncode/sessions/<session-id>/commands.jsonl
+.moonclaw/mooncode/sessions/<session-id>/runtime-dispatches.jsonl
 .moonclaw/mooncode/sessions/<session-id>/events.jsonl
 .moonclaw/mooncode/sessions/<session-id>/package-results.jsonl
 ```
 
-The native list/show endpoints read this store directly. This removes the
-previous pure in-memory discovery gap, but the full OpenSeek-style loop is not
-complete until MoonClaw can claim, execute, resume, and steer turns from that
-durable store without relying on a current in-memory task binding.
+The native list/show and runtime-claim endpoints read this store directly. This
+removes the previous pure in-memory discovery and claim gap, but the full
+OpenSeek-style loop is not complete until MoonClaw can execute, resume, and
+steer turns from claimed durable commands without relying on a current
+in-memory task binding.
 
 MoonCode session creation uses `POST /api/mooncode/sessions`. It creates a
 normal Moondesk agent session bound to the selected MoonBook and MoonClaw task,
