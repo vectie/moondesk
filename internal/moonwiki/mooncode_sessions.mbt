@@ -5259,17 +5259,32 @@ async fn send_mooncode_native_runtime_command(
     Err(error) => return Err(error)
   }
   let queue_accepted = json_bool(queue_response, "accepted", default=true)
-  let turn_response = if queue_accepted {
-    moonclaw_post_json(
+  let runtime_response = if queue_accepted {
+    let loop_response = moonclaw_post_json(
       daemon,
-      "/v1/mooncode/sessions/\{session_id}/runtime-turn",
+      "/v1/mooncode/sessions/\{session_id}/runtime-loop",
       {
         "protocol": "mooncode.v1",
         "session_id": session_id,
         "book_root": json_string(body, "book_root", default=""),
-        "consumer_id": "moondesk-native-runtime-turn",
+        "consumer_id": "moondesk-native-runtime-loop",
+        "max_turns": 8,
       },
     )
+    match loop_response {
+      Ok(_) => loop_response
+      Err(_) =>
+        moonclaw_post_json(
+          daemon,
+          "/v1/mooncode/sessions/\{session_id}/runtime-turn",
+          {
+            "protocol": "mooncode.v1",
+            "session_id": session_id,
+            "book_root": json_string(body, "book_root", default=""),
+            "consumer_id": "moondesk-native-runtime-turn",
+          },
+        )
+    }
   } else {
     Err(
       json_string(
@@ -5279,37 +5294,38 @@ async fn send_mooncode_native_runtime_command(
       ),
     )
   }
-  let turn_payload = match turn_response {
+  let runtime_payload = match runtime_response {
     Ok(payload) => payload
     Err(_) => Json::object({})
   }
-  let turn_accepted = json_bool(turn_payload, "accepted", default=false)
+  let runtime_accepted = json_bool(runtime_payload, "accepted", default=false)
   let status = if !queue_accepted {
     "failed"
-  } else if turn_response is Err(_) {
+  } else if runtime_response is Err(_) {
     "failed"
-  } else if turn_accepted {
+  } else if runtime_accepted {
     "done"
   } else {
     "failed"
   }
   let detail = json_string(
-    turn_payload,
+    runtime_payload,
     "message",
-    default=match turn_response {
+    default=match runtime_response {
       Ok(_) =>
         json_string(
           queue_response,
           "message",
           default="MoonClaw MoonCode runtime accepted \{json_string(command_packet, "action", default="command")}",
         )
-      Err(error) => "MoonClaw queued command but runtime-turn failed: \{error}"
+      Err(error) =>
+        "MoonClaw queued command but native runtime execution failed: \{error}"
     },
   )
   let with_status = append_agent_message(
     mooncode_append_native_response_events(
       mooncode_append_native_response_events(session, queue_response),
-      turn_payload,
+      runtime_payload,
     ),
     role="status",
     content=detail,
@@ -5328,8 +5344,13 @@ async fn send_mooncode_native_runtime_command(
           command_packet,
         ),
         "mooncode_dispatch_mode",
-        if turn_accepted {
-          "moonclaw-mooncode-runtime-turn".to_json()
+        if runtime_accepted {
+          if json_string(runtime_payload, "kind", default="") ==
+            "mooncode-runtime-loop" {
+            "moonclaw-mooncode-runtime-loop".to_json()
+          } else {
+            "moonclaw-mooncode-runtime-turn".to_json()
+          }
         } else {
           "moonclaw-mooncode-runtime".to_json()
         },
@@ -5403,6 +5424,11 @@ fn mooncode_native_response_event_items(response : Json) -> Array[Json] {
   let turn_receipt = json_object_field_or_empty(response, "turn_receipt")
   for event in json_array_items(turn_receipt, "events") {
     incoming.push(event)
+  }
+  for turn in json_array_items(response, "turns") {
+    for event in mooncode_native_response_event_items(turn) {
+      incoming.push(event)
+    }
   }
   incoming
 }

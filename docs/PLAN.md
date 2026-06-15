@@ -178,8 +178,10 @@ MoonClaw's native runtime-turn now supports explicit tool calls, deterministic
 prompt planning, and an opt-in model-planned single tool-call batch when the
 queued command carries a selected model; it records planner events and falls
 back to deterministic planning when the model is unavailable or emits no
-supported calls. The remaining engine work is the persistent multi-step
-OpenSeek-style loop with model-backed eval proof.
+supported calls. MoonClaw's native runtime-loop now supervises repeated
+runtime-turns over the durable queue until idle, failure, cancel, or max-turns.
+The remaining engine work is the persistent multi-step OpenSeek-style loop with
+model-backed eval proof.
 It also owns runtime-neutral durable event helpers: safe session-id validation,
 event record construction, JSONL rendering, JSONL parsing for events, command
 queues, runtime command feeds, runtime dispatch receipts, and event
@@ -586,8 +588,9 @@ response now carries
 a live `engine_status` compatibility block that checks the configured MoonClaw
 checkout, daemon, `/v1/models`, `/v1/tasks`, prompt/message/cancel bridge,
 append-only command queue, append-only session log, MoonClaw adapter readiness,
-native runtime-turn availability, optional one-batch model planning, and the
-remaining autonomous MoonClaw-owned multi-step loop/model-backed eval proof. The
+native runtime-turn availability, native runtime-loop queue supervision,
+optional one-batch model planning, and the remaining autonomous MoonClaw-owned
+multi-step loop/model-backed eval proof. The
 live probes still happen in `internal/moonwiki`, but the readiness projection
 itself now lives in `internal/mooncode`: endpoint rows, bridge-vs-production
 status, and check metadata are extractable protocol data rather than

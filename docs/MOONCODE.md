@@ -1121,11 +1121,15 @@ reject paths that escape it, and append command-scoped proof events to the
 native event sidecar. Runtime-turn can also use an explicitly selected model for
 one bounded OpenSeek-style tool-call planning batch, recording planner
 start/selection/failure events and falling back to deterministic planning when
-the model is unavailable or produces no supported calls. This is the first
-durable MoonClaw-owned session, tool, and model-planning store; the remaining
-MoonClaw-side gap is turning that store into a full OpenSeek-style typed agent
-loop that can choose tools across multiple steps, resume, claim, execute, and
-steer turns without relying on the daemon's in-memory binding.
+the model is unavailable or produces no supported calls. Runtime-loop now
+supervises repeated runtime-turns over the durable command queue until idle,
+failure, cancel, or max-turns, and Moondesk prefers that endpoint while falling
+back to runtime-turn for older daemons. This is the first durable
+MoonClaw-owned session, tool, model-planning, and queue-supervision store; the
+remaining MoonClaw-side gap is turning that store into a full OpenSeek-style
+typed agent loop that can choose tools across multiple model steps, resume,
+claim, execute, and steer turns without relying on the daemon's in-memory
+binding.
 
 The native MoonCode command body now carries an explicit runtime contract beside
 the human text. `execution_plan` names the action, dispatch policy, target path,
@@ -1414,7 +1418,8 @@ fallback.
 
 MoonClaw's current native eval endpoint already runs a first deterministic
 tool/file-edit harness for `read`, `write`, `edit`, `shell`, `moon_check`, and
-`finish`, and runtime-turn now has an opt-in one-batch model planner; the
+`finish`, runtime-turn now has an opt-in one-batch model planner, and
+runtime-loop can drain the durable queue until idle/failure/cancel/limits; the
 remaining runtime work is multi-step model-backed coding evals.
 MoonClaw or a future standalone `mooncode/eval` runner can also submit the same
 native proof directly with `POST /api/mooncode/sessions/<session-id>/eval-report`.
