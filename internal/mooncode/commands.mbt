@@ -355,6 +355,7 @@ pub fn native_command_body(
   {
     "protocol": "mooncode.v1",
     "command": action,
+    "native_dispatch_mode": "queue-only",
     "text": message,
     "session_id": json_string(session, "id", default=""),
     "book_root": json_string(
