@@ -68,6 +68,50 @@ pub fn normalize_runtime_loop_response_event(
 }
 
 ///|
+pub fn native_response_event_items(
+  response : Json,
+  loop_fallback_id~ : String,
+  loop_fallback_created_at~ : String,
+) -> Array[Json] {
+  let incoming = runtime_json_array_items(response, "events")
+  let execution = runtime_json_object_field_or_empty(response, "execution")
+  for event in runtime_json_array_items(execution, "events") {
+    incoming.push(event)
+  }
+  match
+    normalize_runtime_loop_response_event(
+      response,
+      fallback_id=loop_fallback_id,
+      fallback_created_at=loop_fallback_created_at,
+    ) {
+    Some(event) => incoming.push(event)
+    None => ()
+  }
+  for event in runtime_json_array_items(response, "package_events") {
+    incoming.push(event)
+  }
+  let turn_receipt = runtime_json_object_field_or_empty(
+    response, "turn_receipt",
+  )
+  for event in runtime_json_array_items(turn_receipt, "events") {
+    incoming.push(event)
+  }
+  let mut turn_index = 0
+  for turn in runtime_json_array_items(response, "turns") {
+    for
+      event in native_response_event_items(
+        turn,
+        loop_fallback_id=loop_fallback_id + "-turn-" + turn_index.to_string(),
+        loop_fallback_created_at~,
+      ) {
+      incoming.push(event)
+    }
+    turn_index += 1
+  }
+  incoming
+}
+
+///|
 pub fn runtime_event_ingest_report(
   payload : Json,
   session_id~ : String,
@@ -1613,6 +1657,80 @@ test "mooncode normalizes native runtime loop responses" {
     is None else {
     fail("runtime turn response normalized as a loop")
   }
+}
+
+///|
+test "mooncode extracts native response events from loop payloads" {
+  let event = event_record(
+    id="native-event",
+    lane="runtime",
+    kind="runtime_update",
+    title="Runtime update",
+    status="running",
+    created_at="1",
+    detail="native",
+  )
+  let execution_event = event_record(
+    id="execution-event",
+    lane="tool",
+    kind="tool_result",
+    title="Tool result",
+    status="done",
+    created_at="2",
+    detail="execution",
+  )
+  let package_event = event_record(
+    id="package-event",
+    lane="artifact",
+    kind="runtime.package_verified",
+    title="Package verified",
+    status="verified",
+    created_at="3",
+    detail="package",
+  )
+  let receipt_event = event_record(
+    id="receipt-event",
+    lane="runtime",
+    kind="runtime_acknowledged",
+    title="Runtime acknowledged",
+    status="done",
+    created_at="4",
+    detail="receipt",
+  )
+  let nested_event = event_record(
+    id="nested-event",
+    lane="review",
+    kind="finish",
+    title="Finished",
+    status="done",
+    created_at="5",
+    detail="nested",
+  )
+  let events = native_response_event_items(
+    {
+      "kind": "mooncode-runtime-loop",
+      "protocol": "mooncode.v1",
+      "session_id": "agent-demo",
+      "book_root": "/tmp/demo-book",
+      "stopped_by": "idle",
+      "message": "MoonClaw native runtime loop reached idle.",
+      "events": [event],
+      "execution": { "events": [execution_event] },
+      "package_events": [package_event],
+      "turn_receipt": { "events": [receipt_event] },
+      "turns": [{ "events": [nested_event] }],
+    },
+    loop_fallback_id="loop-event",
+    loop_fallback_created_at="2026-06-16T00:00:00Z",
+  )
+  assert_eq(events.length(), 6)
+  assert_eq(json_string(events[0], "id", default=""), "native-event")
+  assert_eq(json_string(events[1], "id", default=""), "execution-event")
+  assert_eq(json_string(events[2], "id", default=""), "loop-event")
+  assert_eq(json_string(events[2], "kind", default=""), "runtime_loop")
+  assert_eq(json_string(events[3], "id", default=""), "package-event")
+  assert_eq(json_string(events[4], "id", default=""), "receipt-event")
+  assert_eq(json_string(events[5], "id", default=""), "nested-event")
 }
 
 ///|

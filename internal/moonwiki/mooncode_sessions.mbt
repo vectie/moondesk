@@ -4305,44 +4305,15 @@ fn mooncode_append_native_response_events(
 
 ///|
 fn mooncode_native_response_event_items(response : Json) -> Array[Json] {
-  let incoming = json_array_items(response, "events")
-  let execution = json_object_field_or_empty(response, "execution")
-  for event in json_array_items(execution, "events") {
-    incoming.push(event)
-  }
-  match mooncode_native_runtime_loop_event(response) {
-    Some(event) => incoming.push(event)
-    None => ()
-  }
-  for event in json_array_items(response, "package_events") {
-    incoming.push(event)
-  }
-  let turn_receipt = json_object_field_or_empty(response, "turn_receipt")
-  for event in json_array_items(turn_receipt, "events") {
-    incoming.push(event)
-  }
-  for turn in json_array_items(response, "turns") {
-    for event in mooncode_native_response_event_items(turn) {
-      incoming.push(event)
-    }
-  }
-  incoming
-}
-
-///|
-fn mooncode_native_runtime_loop_event(response : Json) -> Json? {
-  if json_string(response, "kind", default="") != "mooncode-runtime-loop" {
-    return None
-  }
   let stopped_by = json_string(response, "stopped_by", default="unknown")
   let ran_turn_count = json_int(response, "ran_turn_count", default=0)
   let failed_turn_count = json_int(response, "failed_turn_count", default=0)
   let session_id = json_string(response, "session_id", default="")
   let consumer_id = json_string(response, "consumer_id", default="")
   let created_at = @async.now().to_string()
-  @mooncode.normalize_runtime_loop_response_event(
+  @mooncode.native_response_event_items(
     response,
-    fallback_id=@desk.stable_id(
+    loop_fallback_id=@desk.stable_id(
       "mooncode-runtime-loop",
       session_id +
       ":" +
@@ -4356,7 +4327,7 @@ fn mooncode_native_runtime_loop_event(response : Json) -> Json? {
       ":" +
       failed_turn_count.to_string(),
     ),
-    fallback_created_at=created_at,
+    loop_fallback_created_at=created_at,
   )
 }
 

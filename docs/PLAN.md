@@ -331,9 +331,10 @@ build/verification proof appears in the MoonCode artifact/package panels as
 soon as the bounded native run returns. Runtime-loop responses are also recorded
 as durable `runtime_loop` events, so no-work idle loops, failures,
 cancellations, and max-turn stops show up in the transcript/runtime panels
-instead of only as an HTTP response. The loop-response normalization now lives
-in `internal/mooncode`, keeping the status mapping extractable from the
-Moondesk host.
+instead of only as an HTTP response. Native response event extraction now lives
+in `internal/mooncode`, including top-level events, execution events, package
+events, turn receipts, nested turns, and loop-status projection, keeping those
+rules extractable from the Moondesk host.
 The launch packet now embeds a `mooncode-runtime-supervisor-readiness` report
 that checks the command id, scheduler permission, claim/ack/event/session
 endpoints, claim/ack request templates, and required supervisor loop steps. The

@@ -234,6 +234,8 @@ pub fn native_command_tool_sequence(String) -> Array[String]
 
 pub fn native_eval_report_contract_json() -> Json
 
+pub fn native_response_event_items(Json, loop_fallback_id~ : String, loop_fallback_created_at~ : String) -> Array[Json]
+
 pub fn normalize_event_lane(String) -> String
 
 pub fn normalize_event_record(Json) -> Json
