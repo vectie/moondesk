@@ -1162,7 +1162,7 @@ MoonClaw is expected to execute without opening raw JSON.
 
 The MoonCode stream endpoint follows the same boundary rule. When MoonClaw
 reports the native MoonCode runtime, Moondesk proxies
-`/v1/mooncode/sessions/<id>/stream?format=jsonl|sse&since=<sequence>` and
+`/v1/mooncode/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<sequence>` and
 returns MoonClaw's typed stream. If that endpoint is not available, Moondesk
 falls back to its local append-log projection from
 `.moontown/mooncode-sessions/<session-id>/events.jsonl`; with `live=true`, it
@@ -1393,7 +1393,7 @@ wiki/reviews/mooncode/<session-id>/eval-report.json
 When MoonClaw exposes a native MoonCode runtime, Moondesk first probes:
 
 ```text
-/v1/mooncode/sessions/<session-id>/eval-report
+/v1/mooncode/sessions/<session-id>/eval-report?book_root=<path>
 ```
 
 and attaches that response as `native_eval_report`. Native reports are

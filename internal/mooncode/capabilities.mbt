@@ -40,6 +40,7 @@ pub fn capabilities_json() -> Json {
       "native_session_list_endpoint": "/v1/mooncode/sessions?book_root=<path>",
       "native_session_show_endpoint": "/v1/mooncode/sessions/<session-id>?book_root=<path>",
       "native_package_result_endpoint": "/v1/mooncode/sessions/<session-id>/package-result",
+      "native_eval_report_endpoint": "/v1/mooncode/sessions/<session-id>/eval-report?book_root=<path>",
       "native_runtime_claim_endpoint": "/v1/mooncode/sessions/<session-id>/runtime-claim?book_root=<path>",
       "native_runtime_dispatch_endpoint": "/v1/mooncode/sessions/<session-id>/runtime-dispatch?book_root=<path>",
       "native_runtime_turn_endpoint": "/v1/mooncode/sessions/<session-id>/runtime-turn?book_root=<path>",
@@ -247,7 +248,7 @@ pub fn eval_harness_contract_json() -> Json {
     "reference": "../openseek/eval",
     "owner": "moonclaw-or-extractable-mooncode",
     "moondesk_role": "display harness status, expose missing evidence, and block production-ready claims until MoonClaw reports passing tool and file-edit evals",
-    "moonclaw_result_endpoint": "/v1/mooncode/sessions/<id>/eval-report",
+    "moonclaw_result_endpoint": "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
     "moondesk_projection_endpoint": "/api/mooncode/sessions/<id>/eval-report",
     "required_harnesses": [
       {
@@ -301,7 +302,7 @@ pub fn eval_harness_contract_json() -> Json {
 pub fn native_eval_report_contract_json() -> Json {
   {
     "owner": "moonclaw",
-    "endpoint": "/v1/mooncode/sessions/<id>/eval-report",
+    "endpoint": "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
     "transport": "http-json",
     "purpose": "Report MoonClaw-owned OpenSeek-style eval proof for the selected durable MoonCode session.",
     "required_fields": [
@@ -477,17 +478,17 @@ fn supported_engine_endpoints() -> Array[String] {
     "/v1/task/<id>/cancel", "/v1/mooncode/capabilities", "/v1/mooncode/sessions?book_root=<path>",
     "/v1/mooncode/sessions/<id>?book_root=<path>", "/v1/mooncode/sessions/<id>/commands",
     "/v1/mooncode/sessions/<id>/runtime-claim?book_root=<path>", "/v1/mooncode/sessions/<id>/runtime-dispatch?book_root=<path>",
-    "/v1/mooncode/sessions/<id>/runtime-turn?book_root=<path>", "/v1/mooncode/sessions/<id>/stream",
-    "/v1/mooncode/sessions/<id>/eval-report", "/api/mooncode/sessions", "/api/mooncode/sessions/<id>/tool-approvals",
-    "/api/mooncode/sessions/<id>/tool-authorization", "/api/mooncode/sessions/<id>/test-runs",
-    "/api/mooncode/sessions/<id>/package-candidates", "/api/mooncode/sessions/<id>/preflight",
-    "/api/mooncode/sessions/<id>/action-plan", "/api/mooncode/sessions/<id>/runtime-evidence",
-    "/api/mooncode/sessions/<id>/eval-report", "/api/mooncode/sessions/<id>/runtime-handoff",
-    "/api/mooncode/sessions/<id>/session-store", "/api/mooncode/sessions/<id>/runtime-commands",
-    "/api/mooncode/sessions/<id>/runtime-dispatch", "/api/mooncode/sessions/<id>/runtime-events",
-    "GET /api/mooncode/sessions/<id>/runtime-claim", "/api/mooncode/sessions/<id>/runtime-execution-plan",
-    "POST /api/mooncode/sessions/<id>/runtime-claim", "/api/mooncode/sessions/<id>/runtime-supervisor",
-    "/api/mooncode/sessions/<id>/runtime-replay",
+    "/v1/mooncode/sessions/<id>/runtime-turn?book_root=<path>", "/v1/mooncode/sessions/<id>/stream?book_root=<path>",
+    "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>", "/api/mooncode/sessions",
+    "/api/mooncode/sessions/<id>/tool-approvals", "/api/mooncode/sessions/<id>/tool-authorization",
+    "/api/mooncode/sessions/<id>/test-runs", "/api/mooncode/sessions/<id>/package-candidates",
+    "/api/mooncode/sessions/<id>/preflight", "/api/mooncode/sessions/<id>/action-plan",
+    "/api/mooncode/sessions/<id>/runtime-evidence", "/api/mooncode/sessions/<id>/eval-report",
+    "/api/mooncode/sessions/<id>/runtime-handoff", "/api/mooncode/sessions/<id>/session-store",
+    "/api/mooncode/sessions/<id>/runtime-commands", "/api/mooncode/sessions/<id>/runtime-dispatch",
+    "/api/mooncode/sessions/<id>/runtime-events", "GET /api/mooncode/sessions/<id>/runtime-claim",
+    "/api/mooncode/sessions/<id>/runtime-execution-plan", "POST /api/mooncode/sessions/<id>/runtime-claim",
+    "/api/mooncode/sessions/<id>/runtime-supervisor", "/api/mooncode/sessions/<id>/runtime-replay",
   ]
 }
 
@@ -571,7 +572,9 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"harness_contract_endpoint\""))
   assert_true(payload.contains("/api/mooncode/eval-harness"))
   assert_true(payload.contains("\"native_eval_report\""))
-  assert_true(payload.contains("/v1/mooncode/sessions/<id>/eval-report"))
+  assert_true(
+    payload.contains("/v1/mooncode/sessions/<id>/eval-report?book_root=<path>"),
+  )
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/action-plan"),
   )
@@ -690,7 +693,7 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
   assert_eq(json_string(native_eval_report, "owner", default=""), "moonclaw")
   assert_eq(
     json_string(native_eval_report, "endpoint", default=""),
-    "/v1/mooncode/sessions/<id>/eval-report",
+    "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
   )
   assert_true(
     json_array_items(native_eval_report, "required_fields")
@@ -718,7 +721,7 @@ test "mooncode eval harness contract names openseek cases and evidence" {
   assert_eq(json_string(contract, "reference", default=""), "../openseek/eval")
   assert_eq(
     json_string(contract, "moonclaw_result_endpoint", default=""),
-    "/v1/mooncode/sessions/<id>/eval-report",
+    "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
   )
   let harnesses = json_array_items(contract, "required_harnesses")
   assert_eq(harnesses.length(), 2)

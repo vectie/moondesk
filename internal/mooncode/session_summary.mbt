@@ -560,7 +560,7 @@ pub fn eval_report_projection(session : Json) -> Json {
     "native_eval_endpoint": json_string(
       native_eval,
       "endpoint",
-      default="/v1/mooncode/sessions/<id>/eval-report",
+      default="/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
     ),
     "native_eval_ingest_method": "POST",
     "native_eval_ingest_endpoint": if session_id == "" {

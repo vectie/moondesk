@@ -5214,7 +5214,7 @@ async fn sync_mooncode_native_eval_report(
   if !mooncode_native_runtime_ready(daemon) {
     return session
   }
-  let endpoint = "/v1/mooncode/sessions/\{session_id}/eval-report"
+  let endpoint = "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=\{encode_query_value(workspace_root)}"
   match moonclaw_get_json(daemon, endpoint) {
     Ok(report) =>
       agent_session_with_field(
@@ -9105,7 +9105,7 @@ test "mooncode summary exposes eval readiness gates" {
   )
   assert_eq(
     json_string(eval_report, "native_eval_endpoint", default=""),
-    "/v1/mooncode/sessions/<id>/eval-report",
+    "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
   )
   assert_eq(
     json_string(eval_report, "native_eval_ingest_method", default=""),
@@ -9330,7 +9330,11 @@ async test "mooncode native eval report ingress persists moonbook proof" {
     "evidence": ["OpenSeek-style harnesses passed"],
   }
   let with_report = persist_mooncode_native_eval_report(
-    root, session, native_payload, "/v1/mooncode/sessions/agent-demo/eval-report",
+    root,
+    session,
+    native_payload,
+    "/v1/mooncode/sessions/agent-demo/eval-report?book_root=" +
+    encode_query_value(root),
   )
   let after_plan = mooncode_action_plan_projection(root, with_report)
   let after_actions = json_array_items(after_plan, "actions")
@@ -9346,7 +9350,8 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   )
   assert_eq(
     json_string(native_report, "endpoint", default=""),
-    "/v1/mooncode/sessions/agent-demo/eval-report",
+    "/v1/mooncode/sessions/agent-demo/eval-report?book_root=" +
+    encode_query_value(root),
   )
   let manifest = json_object_field_or_empty(
     with_report, "mooncode_last_eval_report_manifest",

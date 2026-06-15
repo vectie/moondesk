@@ -555,7 +555,7 @@ manifest event to `.moontown/mooncode-sessions/<session-id>/events.jsonl`, so
 Bookkeeper and a future standalone `mooncode` runtime can resume from the same
 proof boundary. When a native
 MoonClaw MoonCode runtime is present, the same endpoint probes
-`/v1/mooncode/sessions/<id>/eval-report`, delegates native report
+`/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`, delegates native report
 normalization to `internal/mooncode`, and persists the MoonClaw-owned report as
 `native_eval_report`. Moondesk also refreshes a MoonBook-owned runtime handoff at
 `wiki/reviews/mooncode/<session-id>/runtime-handoff.json`, exposes it through
