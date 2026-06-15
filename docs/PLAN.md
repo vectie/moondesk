@@ -485,16 +485,17 @@ execution state: MoonClaw or standalone `mooncode` must emit `patch_applied` or
 `patch_reverted` runtime events after actual file mutation, and Moondesk normalizes those into
 `runtime.patch_applied` / `runtime.patch_reverted` proof counts on the patch
 set and session summary. MoonClaw now provides native bounded
-`apply_patch`/`revert_patch` tool execution for reviewed text replacements
-inside the selected MoonBook root, emitting those proof events directly.
+`apply_patch`/`revert_patch` tool execution for reviewed text replacements and
+single-file unified-diff hunks inside the selected MoonBook root, inferring the
+target from diff headers when needed and emitting those proof events directly.
 Moondesk exposes it
 through `GET /api/mooncode/sessions/<id>/patch-set` and renders it as a Patch
 Set panel with per-file Open, Accept, Reject, Apply, Revert, and Package
 controls plus hunk-level Accept, Reject, Apply, and Revert controls, including
 visible gate and next-action chips for each target. Moondesk
-still does not edit files directly; the remaining MoonClaw work is richer
-unified-diff/hunk patch application, verified post-apply tests, and source
-output promotion.
+still does not edit files directly; the remaining MoonClaw work is multi-file
+patchset support, richer per-hunk runtime dispatch, verified post-apply tests,
+and source output promotion.
 Moondesk also writes a MoonBook-owned `mooncode-tool-approvals` manifest under
 `wiki/reviews/mooncode/<session-id>/tool-approvals.json`, exposes it through
 `GET /api/mooncode/sessions/<id>/tool-approvals`, and renders it as a Tool

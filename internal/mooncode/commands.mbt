@@ -53,8 +53,8 @@ pub fn command_tool_hints(action : String) -> Array[String] {
     "reject" => ["finish"]
     "approve_tool" | "reject_tool" =>
       ["read", "edit", "write", "shell", "moon_check"]
-    "apply_patch" => ["apply_patch", "edit", "write", "moon_check"]
-    "revert_patch" => ["apply_patch", "edit", "write", "moon_check"]
+    "apply_patch" => ["apply_patch", "moon_check"]
+    "revert_patch" => ["apply_patch", "moon_check"]
     "prompt" | "steer" =>
       ["read", "edit", "write", "shell", "moon_check", "finish"]
     "cancel" => []
