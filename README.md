@@ -135,7 +135,8 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
   saved views,
   tags, recent context, scoped Finder reveal,
   a switchable MoonWiki/MoonCode workspace shell, native MoonClaw MoonCode
-  command sessions, book-scoped chat/task handoff, supervised daemon
+  command sessions, book-scoped chat/task handoff, native runtime-turn
+  claim/execution receipts for explicit or deterministic tools, supervised daemon
   policy, transcript progress projection, LaunchAgent install/remove controls, live
   event/failure/review summaries, URL and local file import staging, cadence
   summaries, a calendar-like due-tick view, ICS export, outcome analytics, and

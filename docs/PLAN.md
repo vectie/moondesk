@@ -334,12 +334,17 @@ bridged into MoonCode transcript/tool/test/review/runtime lanes. The adapter
 maps MoonClaw tools such as `execute_command`, `read_file`, `write_to_file`,
 `replace_in_file`, `patch_edit`, and `apply_patch` onto the MoonCode tool
 vocabulary and is advertised from `/api/mooncode/capabilities` as a
-compatibility bridge. MoonClaw now implements the first native `/v1/mooncode/*`
-slice: capabilities, command ingestion, session stream, and eval-report
-projection. Native command ingestion binds the Moondesk MoonCode session to the
-MoonClaw task for the selected book root and forwards accepted commands into
-MoonClaw's existing task/agent runtime. Package-result acknowledgement remains
-future work.
+compatibility bridge. MoonClaw now implements native `/v1/mooncode/*` slices
+for capabilities, command ingestion, cold sidecar list/show, runtime claim,
+runtime dispatch, runtime event ingest, native tool execution, package-result
+acknowledgement, session stream, eval-report projection, and the first
+book-local `runtime-turn` path. That turn path claims the next durable command,
+executes explicit `runtime_tool_calls` or deterministic built-in fallbacks such
+as `run_tests -> moon_check + finish`, appends runtime/tool events, and closes
+the command with `runtime-completed` or `runtime-failed`. Native command
+ingestion still supports the compatibility path that binds the Moondesk
+MoonCode session to the MoonClaw task for the selected book root and forwards
+accepted commands into MoonClaw's existing task/agent runtime.
 The live engine status now includes adapter readiness as `native-ready`,
 `compatibility-bridge`, or `missing-runtime`, so the UI can distinguish current
 MoonClaw task-event compatibility from a real MoonClaw-owned MoonCode runtime.
@@ -573,7 +578,8 @@ response now carries
 a live `engine_status` compatibility block that checks the configured MoonClaw
 checkout, daemon, `/v1/models`, `/v1/tasks`, prompt/message/cancel bridge,
 append-only command queue, append-only session log, MoonClaw adapter readiness,
-and the still-missing MoonClaw-owned runtime/eval proof. The live probes still happen in
+native runtime-turn availability, and the still-missing autonomous
+MoonClaw-owned prompt-planning/eval proof. The live probes still happen in
 `internal/moonwiki`, but the readiness projection itself now lives in
 `internal/mooncode`: endpoint rows, bridge-vs-production status, and check
 metadata are extractable protocol data rather than desktop-only logic. It also
@@ -596,9 +602,8 @@ It also consumes the bounded `?live=true` JSONL stream for the selected
 session, shows the latest batch as a Live Tail, and renders a Code Review queue
 from diff-lane events, with file-open and file-targeted accept/reject/package
 controls that preserve the selected diff path in the command event. Per-hunk staging, real patch
-promotion, verified bundle assembly, MoonClaw-owned
-`/v1/mooncode/capabilities`, and MoonClaw-owned eval evidence are still future
-runtime work.
+promotion, verified bundle assembly, autonomous prompt-planning turns, and
+MoonClaw-owned eval evidence are still future runtime work.
 
 ### Output Library
 
