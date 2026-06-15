@@ -277,7 +277,13 @@ The host-side runtime/command protocol adapter is now similarly split into
 preflight event shaping, replay/claim/lifecycle projections, runtime
 supervisor packets, runtime event ingest normalization, and Moondesk stable-id
 wrappers live outside the session router while delegating pure rules to
-`internal/mooncode`. The command route
+`internal/mooncode`.
+MoonBook artifact write orchestration is also split into
+`internal/moonwiki/mooncode_artifact_writes.mbt`: review receipt creation,
+change/patch/tool/test/action-plan/runtime-evidence manifest writes, and
+session updates now sit outside the HTTP session router while the durable
+artifact shapes still come from `internal/mooncode` and the files remain
+MoonBook-owned. The command route
 records every normalized `command_packet` into an ordered
 `.moontown/mooncode-sessions/<session-id>/commands.jsonl` queue and records
 the engine-facing command adapter to

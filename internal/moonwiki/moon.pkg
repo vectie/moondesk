@@ -46,6 +46,7 @@ options(
     "moonwiki_request_wbtest.mbt": [ "native" ],
     "http_request_helpers.mbt": [ "native" ],
     "mooncode_contracts.mbt": [ "native" ],
+    "mooncode_artifact_writes.mbt": [ "native" ],
     "mooncode_event_log.mbt": [ "native" ],
     "mooncode_runtime_protocol.mbt": [ "native" ],
     "mooncode_sessions.mbt": [ "native" ],
