@@ -178,12 +178,14 @@ MoonClaw's native runtime-turn now supports explicit tool calls, deterministic
 prompt planning, and opt-in bounded model-planned tool-call batches when the
 queued command carries a selected model; successful tool results are fed back to
 the model until `finish`, failure, cancel, or `planner_max_steps`. It records
-planner events, `planner_steps`, and step limits, and falls back to deterministic
-planning when the model is unavailable or emits no supported calls. MoonClaw's
-native runtime-loop now supervises repeated runtime-turns over the durable queue
-until idle, failure, cancel, or max-turns. The remaining engine work is the
-persistent OpenSeek-style service with live steering/cancel semantics,
-diff-aware review, and model-backed eval proof.
+planner events, `planner_steps`, step limits, native `reasoning_delta` progress,
+optional assistant deltas, and pre-execution `tool_call` events before matching
+`tool_result` events. It falls back to deterministic planning when the model is
+unavailable or emits no supported calls. MoonClaw's native runtime-loop now
+supervises repeated runtime-turns over the durable queue until idle, failure,
+cancel, or max-turns. The remaining engine work is the persistent OpenSeek-style
+service with live steering/cancel semantics, diff-aware review, and
+model-backed eval proof.
 It also owns runtime-neutral durable event helpers: safe session-id validation,
 event record construction, JSONL rendering, JSONL parsing for events, command
 queues, runtime command feeds, runtime dispatch receipts, and event

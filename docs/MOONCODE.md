@@ -1120,12 +1120,14 @@ native OpenSeek-style `read`, `edit`, `write`, `shell`, `moon_check`, and
 reject paths that escape it, and append command-scoped proof events to the
 native event sidecar. Runtime-turn can also use an explicitly selected model for
 bounded OpenSeek-style tool-call planning with tool-result feedback, recording
-planner start/selection/failure events, `planner_steps`, and step limits while
-falling back to deterministic planning when the model is unavailable or produces
-no supported calls. Runtime-loop now supervises repeated runtime-turns over the
-durable command queue until idle, failure, cancel, or max-turns, and Moondesk
-prefers that endpoint while falling back to runtime-turn for older daemons. This
-is the first durable MoonClaw-owned session, tool, model-planning, and
+planner start/selection/failure events, `planner_steps`, step limits, native
+`reasoning_delta` progress, optional assistant deltas, and pre-execution
+`tool_call` events before matching `tool_result` evidence while falling back to
+deterministic planning when the model is unavailable or produces no supported
+calls. Runtime-loop now supervises repeated runtime-turns over the durable
+command queue until idle, failure, cancel, or max-turns, and Moondesk prefers
+that endpoint while falling back to runtime-turn for older daemons. This is the
+first durable MoonClaw-owned session, tool, model-planning, and
 queue-supervision store; the remaining MoonClaw-side gap is turning that store
 into a production OpenSeek-style service with live steering/cancel semantics,
 diff-aware review, long-running resume UX, and broader model-backed coding
@@ -1418,9 +1420,10 @@ fallback.
 
 MoonClaw's current native eval endpoint already runs a first deterministic
 tool/file-edit harness for `read`, `write`, `edit`, `shell`, `moon_check`, and
-`finish`, runtime-turn now has an opt-in bounded model/tool feedback planner,
-and runtime-loop can drain the durable queue until idle/failure/cancel/limits;
-the remaining runtime work is production-grade live steering, diff review, and
+`finish`, runtime-turn now has an opt-in bounded model/tool feedback planner
+that emits reasoning/assistant/tool-call/tool-result event evidence, and
+runtime-loop can drain the durable queue until idle/failure/cancel/limits; the
+remaining runtime work is production-grade live steering, diff review, and
 model-backed coding evals.
 MoonClaw or a future standalone `mooncode/eval` runner can also submit the same
 native proof directly with `POST /api/mooncode/sessions/<session-id>/eval-report`.
