@@ -129,10 +129,10 @@ runtime-consumer status/action block and runtime event-ingest contract, so
 append-log session state, claim/replay consumer state, and runtime resume
 manifests are data-only MoonCode protocol objects. Initial typed session
 record construction, command action/context/message defaults, command event
-shaping, command-event session append/update, command packet construction,
-OpenSeek serve-wire wrapping, native MoonCode command bodies, execution plans,
-result contracts, and compact execution summaries are also `internal/mooncode`
-protocol behavior. Runtime
+shaping, command-event session append/update, transcript-message event shaping,
+command packet construction, OpenSeek serve-wire wrapping, native MoonCode
+command bodies, execution plans, result contracts, and compact execution
+summaries are also `internal/mooncode` protocol behavior. Runtime
 dispatch status/detail classification and runtime-dispatch receipt body
 construction live there too, including the response-normalized dispatch receipt
 view used by operator/runtime feed endpoints; Moondesk supplies stable ids,
@@ -153,8 +153,8 @@ checkpoints, rendering the tool contract, normalizing OpenSeek-style runtime
 events, canonicalizing incoming MoonCode events, and enforcing/read-projecting
 MoonCode command preflight gates, action-plan rows, session summaries, and
 eval-report responses. It now also delegates typed session-record creation,
-command action/context/message defaults, command-event creation and append,
-MoonBook
+command action/context/message defaults, command-event creation/append,
+transcript-message event shaping, MoonBook
 change-set, patch-set, tool-approval, test-run, package-manifest,
 package-index, package-candidate, typed session snapshot, runtime-handoff
 manifest, runtime-consumer handoff, and runtime event-ingest contract body

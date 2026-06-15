@@ -77,10 +77,11 @@ event-ingest contract, keeping append-log session state, claim/replay consumer
 state, and runtime resume manifests independent of HTTP routes or desktop
 storage. It also owns initial typed session record construction, command
 action/context/message defaults, command event shaping, command-event
-session append/update, command packet construction, OpenSeek serve-wire
-wrapping, native MoonCode command bodies, execution plans, result contracts,
-compact execution summaries, runtime dispatch status/detail classification,
-and runtime-dispatch receipt body construction, including the
+session append/update, transcript-message event shaping, command packet
+construction, OpenSeek serve-wire wrapping, native MoonCode command bodies,
+execution plans, result contracts, compact execution summaries, runtime
+dispatch status/detail classification, and runtime-dispatch receipt body
+construction, including the
 response-normalized dispatch receipt view used by
 operator/runtime feed endpoints. It also owns the tool-authorization contract
 and preview/allowed/requires-approval/blocked decision projection; Moondesk

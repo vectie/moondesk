@@ -4362,35 +4362,10 @@ async fn send_mooncode_cancel_command(
 
 ///|
 fn mooncode_event_from_transcript_message(message : Json) -> Json {
-  let role = json_string(message, "role", default="status")
-  let lane = match role {
-    "assistant" | "user" => "transcript"
-    "tool" => "tool"
-    _ => "runtime"
-  }
-  mooncode_event_record(
-    id=json_string(
-      message,
-      "id",
-      default=@desk.stable_id("mooncode-message", message.stringify()),
-    ),
-    lane~,
-    kind=role,
-    title=mooncode_title_for_role(role),
-    status=json_string(message, "status", default="done"),
-    created_at=json_string(message, "created_at", default=""),
-    detail=json_string(message, "content", default=""),
+  @mooncode.transcript_message_event(
+    message,
+    fallback_id=@desk.stable_id("mooncode-message", message.stringify()),
   )
-}
-
-///|
-fn mooncode_title_for_role(role : String) -> String {
-  match role {
-    "user" => "User prompt"
-    "assistant" => "Assistant response"
-    "tool" => "Tool result"
-    _ => "Runtime status"
-  }
 }
 
 ///|

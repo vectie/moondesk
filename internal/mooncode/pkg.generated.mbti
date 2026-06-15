@@ -522,6 +522,8 @@ pub fn tool_id_from_event(Json) -> String
 
 pub fn tool_lane(String, String, String, String, String) -> String
 
+pub fn transcript_message_event(Json, fallback_id~ : String) -> Json
+
 // Errors
 
 // Types and methods

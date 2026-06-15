@@ -29,6 +29,35 @@ pub fn append_command_event(
 }
 
 ///|
+pub fn transcript_message_event(message : Json, fallback_id~ : String) -> Json {
+  let role = json_string(message, "role", default="status")
+  let lane = match role {
+    "assistant" | "user" => "transcript"
+    "tool" => "tool"
+    _ => "runtime"
+  }
+  event_record(
+    id=json_string(message, "id", default=fallback_id),
+    lane~,
+    kind=role,
+    title=transcript_role_title(role),
+    status=json_string(message, "status", default="done"),
+    created_at=json_string(message, "created_at", default=""),
+    detail=json_string(message, "content", default=""),
+  )
+}
+
+///|
+fn transcript_role_title(role : String) -> String {
+  match role {
+    "user" => "User prompt"
+    "assistant" => "Assistant response"
+    "tool" => "Tool result"
+    _ => "Runtime status"
+  }
+}
+
+///|
 fn session_with_field(base : Json, key : String, value : Json) -> Json {
   match base {
     Json::Object(fields) => {
@@ -77,4 +106,28 @@ test "mooncode appends command event to durable session events" {
   assert_eq(json_string(events[0], "lane", default=""), "test")
   assert_eq(json_string(events[0], "kind", default=""), "command.run_tests")
   assert_eq(json_string(events[0], "command", default=""), "run_tests")
+}
+
+///|
+test "mooncode shapes transcript messages as reusable lane events" {
+  let user_event = transcript_message_event(
+    {
+      "role": "user",
+      "content": "Create a CLI tool",
+      "created_at": "2026-06-16T00:00:00Z",
+    },
+    fallback_id="message-fallback",
+  )
+  assert_eq(json_string(user_event, "id", default=""), "message-fallback")
+  assert_eq(json_string(user_event, "lane", default=""), "transcript")
+  assert_eq(json_string(user_event, "kind", default=""), "user")
+  assert_eq(json_string(user_event, "title", default=""), "User prompt")
+  assert_eq(json_string(user_event, "detail", default=""), "Create a CLI tool")
+  let tool_event = transcript_message_event(
+    { "role": "tool", "id": "tool-message", "content": "done" },
+    fallback_id="unused",
+  )
+  assert_eq(json_string(tool_event, "id", default=""), "tool-message")
+  assert_eq(json_string(tool_event, "lane", default=""), "tool")
+  assert_eq(json_string(tool_event, "title", default=""), "Tool result")
 }
