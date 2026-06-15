@@ -646,6 +646,9 @@ runtime-turn if the loop endpoint is unavailable, ingests returned MoonCode
 events, refreshes review/test/package/evidence manifests, saves the session,
 and returns the enriched session projection. The MoonCode workspace surfaces
 this as `Run Native Loop`; Moondesk still does not execute the tools itself.
+Loop responses are also projected into a durable `runtime_loop` event, so idle,
+failed, cancelled, and max-turn outcomes appear in the MoonCode transcript and
+runtime panels even when the loop did not produce per-turn tool output.
 
 The supervisor packet also embeds `readiness`, a
 `mooncode-runtime-supervisor-readiness` report. It verifies that the packet has a

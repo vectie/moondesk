@@ -328,7 +328,10 @@ saves the enriched session. The MoonCode workspace exposes this as `Run Native
 Loop`; Moondesk still does not execute tools directly. Native runtime-loop and
 runtime-turn responses now also ingest MoonClaw `package_events`, so package
 build/verification proof appears in the MoonCode artifact/package panels as
-soon as the bounded native run returns.
+soon as the bounded native run returns. Runtime-loop responses are also recorded
+as durable `runtime_loop` events, so no-work idle loops, failures,
+cancellations, and max-turn stops show up in the transcript/runtime panels
+instead of only as an HTTP response.
 The launch packet now embeds a `mooncode-runtime-supervisor-readiness` report
 that checks the command id, scheduler permission, claim/ack/event/session
 endpoints, claim/ack request templates, and required supervisor loop steps. The
@@ -678,8 +681,9 @@ It also consumes the bounded `?live=true` JSONL stream for the selected
 session, shows the latest batch as a Live Tail, and renders a Code Review queue
 from diff-lane events, with file-open and file-targeted accept/reject/package
 controls that preserve the selected diff path in the command event. Per-hunk
-staging and selected-hunk patch dispatch are present; richer patch promotion,
-verified bundle assembly, autonomous prompt-planning turns, and broader
+staging and selected-hunk patch dispatch are present. Native loop status now
+lands as a runtime event, improving idle/failure/cancel visibility; richer patch
+promotion, signed bundle assembly, persistent long-running steering, and broader
 model-backed eval evidence are still future runtime work.
 
 ### Output Library

@@ -4310,6 +4310,10 @@ fn mooncode_native_response_event_items(response : Json) -> Array[Json] {
   for event in json_array_items(execution, "events") {
     incoming.push(event)
   }
+  match mooncode_native_runtime_loop_event(response) {
+    Some(event) => incoming.push(event)
+    None => ()
+  }
   for event in json_array_items(response, "package_events") {
     incoming.push(event)
   }
@@ -4323,6 +4327,55 @@ fn mooncode_native_response_event_items(response : Json) -> Array[Json] {
     }
   }
   incoming
+}
+
+///|
+fn mooncode_native_runtime_loop_event(response : Json) -> Json? {
+  if json_string(response, "kind", default="") != "mooncode-runtime-loop" {
+    return None
+  }
+  let stopped_by = json_string(response, "stopped_by", default="unknown")
+  let status = match stopped_by {
+    "failed" => "failed"
+    "cancelled" => "cancelled"
+    "max_turns" => "running"
+    _ => "done"
+  }
+  let ran_turn_count = json_int(response, "ran_turn_count", default=0)
+  let failed_turn_count = json_int(response, "failed_turn_count", default=0)
+  let session_id = json_string(response, "session_id", default="")
+  let consumer_id = json_string(response, "consumer_id", default="")
+  let created_at = @async.now().to_string()
+  Some(
+    mooncode_event_record(
+      id=@desk.stable_id(
+        "mooncode-runtime-loop",
+        session_id +
+        ":" +
+        consumer_id +
+        ":" +
+        created_at +
+        ":" +
+        stopped_by +
+        ":" +
+        ran_turn_count.to_string() +
+        ":" +
+        failed_turn_count.to_string(),
+      ),
+      lane="runtime",
+      kind="runtime_loop",
+      title="Native runtime loop: \{stopped_by}",
+      status~,
+      created_at~,
+      detail=json_string(
+        response,
+        "message",
+        default="MoonClaw native runtime loop stopped by \{stopped_by}",
+      ),
+      path=json_string(response, "book_root", default=""),
+      command="runtime-loop",
+    ),
+  )
 }
 
 ///|
@@ -7046,6 +7099,31 @@ test "mooncode native response appends runtime events" {
   assert_eq(json_string(events[0], "id", default=""), "native-event")
   assert_eq(json_string(events[1], "id", default=""), "runtime-turn-event")
   assert_eq(json_string(events[2], "id", default=""), "runtime-package-event")
+}
+
+///|
+test "mooncode native runtime loop response records loop status event" {
+  let session = mooncode_append_native_response_events(Json::object({}), {
+    "kind": "mooncode-runtime-loop",
+    "protocol": "mooncode.v1",
+    "session_id": "agent-demo",
+    "book_root": "/tmp/demo-book",
+    "consumer_id": "moondesk-native-runtime-loop",
+    "ran_turn_count": 0,
+    "failed_turn_count": 0,
+    "stopped_by": "idle",
+    "message": "MoonClaw native runtime loop found no claimable MoonCode commands.",
+  })
+  let events = json_array_items(session, "mooncode_command_events")
+  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "lane", default=""), "runtime")
+  assert_eq(json_string(events[0], "kind", default=""), "runtime_loop")
+  assert_eq(json_string(events[0], "status", default=""), "done")
+  assert_eq(json_string(events[0], "command", default=""), "runtime-loop")
+  assert_eq(json_string(events[0], "path", default=""), "/tmp/demo-book")
+  assert_true(
+    json_string(events[0], "detail", default="").contains("no claimable"),
+  )
 }
 
 ///|
