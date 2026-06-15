@@ -180,10 +180,10 @@ call `@mooncode.session_summary` and `@mooncode.eval_report_projection`.
 `internal/moonwiki` retains stable id/timestamp generation, path selection,
 source inventory reads, file writes, daemon/native-runtime probes, and the
 MoonClaw-facing tool-authorization HTTP handshake. `internal/mooncode` now owns
-legacy MoonClaw runtime status/progress `desc.msg` shaping for queued, started,
-model-loaded, token-counted, failed, cancelled, and conversation-finished
-events, plus legacy tool call/result lane shaping for `PreToolCall` and
-`PostToolCall`, including diff/test/artifact path and command extraction. The
+legacy MoonClaw `desc.msg` event-record shaping for `UserMessage`,
+`AssistantMessageDelta`, `AssistantMessage`, `RequestCompleted`, runtime
+status/progress events, `PreToolCall`, and `PostToolCall`, including
+diff/test/artifact path and command extraction. The
 filesystem-backed sidecar store, HTTP query parsing, live-tail polling,
 checkpoint file writes, host fallback ids/timestamps, action-plan manifest persistence, and
 dispatch/claim/replay receipt appends remain in `internal/moonwiki`; new

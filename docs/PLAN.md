@@ -253,9 +253,10 @@ sidecar store, checkpoint file paths/writes, dispatch/claim/replay receipt
 appends, request query parsing, bounded live-tail polling, host fallback
 ids/timestamps, stable id generation, log reads, source inventory reads,
 native/daemon readiness probes, action-plan manifest persistence, and tool-authorization HTTP
-handshakes still live in `internal/moonwiki`; legacy MoonClaw runtime
-status/progress and tool call/result lane `desc.msg` shaping now live in
-`internal/mooncode`, including diff/test/artifact path and command extraction. Future
+handshakes still live in `internal/moonwiki`; legacy MoonClaw transcript,
+runtime status/progress, and tool call/result lane `desc.msg` shaping now live in
+`internal/mooncode`, including assistant deltas, request-completed message
+content, diff/test/artifact path extraction, and command extraction. Future
 session storage, eval, and packaging contracts should move through
 `internal/mooncode` before being split into a standalone `mooncode` component.
 The `.moontown/mooncode-sessions/<session-id>/` sidecar layout is now also

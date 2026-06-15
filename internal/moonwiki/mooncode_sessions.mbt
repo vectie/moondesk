@@ -4378,67 +4378,12 @@ fn mooncode_event_from_moonclaw_event(event : Json) -> Json? {
         fallback_created_at=@async.now().to_string(),
       )
   }
-  let msg = json_string(desc, "msg", default="")
   let event_id = json_field_text(
     event,
     "id",
     default=@desk.stable_id("mooncode-event", desc.stringify()),
   )
-  let created_at = json_field_text(event, "created", default=event_id)
-  match msg {
-    "UserMessage" =>
-      Some(
-        mooncode_event_record(
-          id=event_id,
-          lane="transcript",
-          kind="user",
-          title="User prompt",
-          status="done",
-          created_at~,
-          detail=json_string(desc, "content", default=""),
-        ),
-      )
-    "AssistantMessage" =>
-      Some(
-        mooncode_event_record(
-          id=event_id,
-          lane="transcript",
-          kind="assistant",
-          title="Assistant response",
-          status="done",
-          created_at~,
-          detail=json_string(desc, "content", default=""),
-        ),
-      )
-    "RequestCompleted" =>
-      Some(
-        mooncode_event_record(
-          id=event_id,
-          lane="transcript",
-          kind="assistant",
-          title="Assistant response",
-          status="done",
-          created_at~,
-          detail=match json_object_field(desc, "message") {
-            Some(message) => openai_message_content_text(message)
-            None => ""
-          },
-        ),
-      )
-    "PreToolCall" | "PostToolCall" =>
-      @mooncode.moonclaw_tool_event_record(event, fallback_id=event_id)
-    "MessageQueued"
-    | "MessageUnqueued"
-    | "PreConversation"
-    | "PostConversation"
-    | "ModelLoaded"
-    | "TokenCounted"
-    | "ContextPruned"
-    | "Failed"
-    | "Cancelled" =>
-      @mooncode.moonclaw_status_event_record(event, fallback_id=event_id)
-    _ => None
-  }
+  @mooncode.moonclaw_event_record(event, fallback_id=event_id)
 }
 
 ///|

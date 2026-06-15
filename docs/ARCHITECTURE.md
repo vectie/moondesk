@@ -85,8 +85,9 @@ construction, including the
 response-normalized dispatch receipt view used by
 operator/runtime feed endpoints. It also owns the tool-authorization contract
 and preview/allowed/requires-approval/blocked decision projection. It also
-owns legacy MoonClaw `desc.msg` status/progress and tool call/result lane
-shaping, including diff/test/artifact path and command extraction; Moondesk
+owns legacy MoonClaw `desc.msg` event-record shaping for transcript, runtime,
+tool, diff, test, and artifact lanes, including assistant deltas,
+request-completed messages, path extraction, and command extraction; Moondesk
 supplies stable ids, timestamps, persistence, and host observations but no
 longer owns those durable-session, runtime-feed, dispatch-receipt, or
 authorization-decision schemas. The

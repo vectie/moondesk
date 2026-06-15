@@ -204,6 +204,8 @@ pub fn moonclaw_adapter_readiness(Bool, Bool, Bool, Bool) -> Json
 
 pub fn moonclaw_event_mapping_json() -> Json
 
+pub fn moonclaw_event_record(Json, fallback_id~ : String) -> Json?
+
 pub fn moonclaw_event_to_runtime_event(Json, fallback_id~ : String, fallback_created_at~ : String) -> Json?
 
 pub fn moonclaw_status_event_record(Json, fallback_id~ : String) -> Json?

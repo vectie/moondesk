@@ -235,6 +235,79 @@ pub fn moonclaw_status_event_record(
 }
 
 ///|
+pub fn moonclaw_event_record(event : Json, fallback_id~ : String) -> Json? {
+  let desc = moonclaw_json_object_field_or_empty(event, "desc")
+  let msg = moonclaw_json_string(desc, "msg", default="")
+  let event_id = moonclaw_json_field_text(event, "id", default=fallback_id)
+  let created_at = moonclaw_json_field_text(event, "created", default=event_id)
+  match msg {
+    "UserMessage" =>
+      Some(
+        event_record(
+          id=event_id,
+          lane="transcript",
+          kind="user",
+          title="User prompt",
+          status="done",
+          created_at~,
+          detail=moonclaw_json_string(desc, "content", default=""),
+        ),
+      )
+    "AssistantMessageDelta" =>
+      Some(
+        event_record(
+          id=event_id,
+          lane="transcript",
+          kind="assistant_delta",
+          title="Assistant response",
+          status="running",
+          created_at~,
+          detail=moonclaw_json_string(desc, "content", default=""),
+        ),
+      )
+    "AssistantMessage" =>
+      Some(
+        event_record(
+          id=event_id,
+          lane="transcript",
+          kind="assistant",
+          title="Assistant response",
+          status="done",
+          created_at~,
+          detail=moonclaw_json_string(desc, "content", default=""),
+        ),
+      )
+    "RequestCompleted" =>
+      Some(
+        event_record(
+          id=event_id,
+          lane="transcript",
+          kind="assistant",
+          title="Assistant response",
+          status="done",
+          created_at~,
+          detail=match moonclaw_json_object_field(desc, "message") {
+            Some(message) => moonclaw_openai_message_content_text(message)
+            None => ""
+          },
+        ),
+      )
+    "PreToolCall" | "PostToolCall" =>
+      moonclaw_tool_event_record(event, fallback_id=event_id)
+    "MessageQueued"
+    | "MessageUnqueued"
+    | "PreConversation"
+    | "PostConversation"
+    | "ModelLoaded"
+    | "TokenCounted"
+    | "ContextPruned"
+    | "Failed"
+    | "Cancelled" => moonclaw_status_event_record(event, fallback_id=event_id)
+    _ => None
+  }
+}
+
+///|
 pub fn moonclaw_tool_event_record(event : Json, fallback_id~ : String) -> Json? {
   let desc = moonclaw_json_object_field_or_empty(event, "desc")
   let msg = moonclaw_json_string(desc, "msg", default="")
@@ -459,6 +532,30 @@ fn moonclaw_tool_text(desc : Json) -> String {
 }
 
 ///|
+fn moonclaw_openai_message_content_text(message : Json) -> String {
+  match moonclaw_json_object_field(message, "content") {
+    Some(Json::String(content)) => content
+    Some(Json::Array(parts)) => {
+      let chunks : Array[String] = []
+      for part in parts {
+        match part {
+          Json::String(text) => chunks.push(text)
+          Json::Object(fields) =>
+            match fields.get("text") {
+              Some(Json::String(text)) => chunks.push(text)
+              _ => ()
+            }
+          _ => ()
+        }
+      }
+      chunks.join("\n")
+    }
+    Some(value) => value.stringify()
+    None => ""
+  }
+}
+
+///|
 fn moonclaw_tool_call_with_name(tool_call : Json, tool_name : String) -> Json {
   let function = moonclaw_json_object_field_or_empty(tool_call, "function")
   let next_function = moonclaw_json_with_string(function, "name", tool_name)
@@ -679,6 +776,45 @@ test "mooncode moonclaw adapter shapes legacy status events" {
   assert_eq(json_string(failed_event, "status", default=""), "failed")
   assert_true(
     json_string(failed_event, "detail", default="").contains("tool failed"),
+  )
+}
+
+///|
+test "mooncode moonclaw adapter shapes legacy transcript events" {
+  guard moonclaw_event_record(
+      {
+        "id": "evt-user",
+        "created": "2026-06-16T00:00:00Z",
+        "desc": { "msg": "UserMessage", "content": "Create a MoonBook tool" },
+      },
+      fallback_id="fallback",
+    )
+    is Some(user_event) else {
+    fail("user event was not projected")
+  }
+  assert_eq(moonclaw_json_string(user_event, "lane", default=""), "transcript")
+  assert_eq(moonclaw_json_string(user_event, "kind", default=""), "user")
+  guard moonclaw_event_record(
+      {
+        "id": "evt-request",
+        "desc": {
+          "msg": "RequestCompleted",
+          "message": {
+            "content": [
+              { "text": "Implemented the tool." },
+              { "text": "Tests pass." },
+            ],
+          },
+        },
+      },
+      fallback_id="fallback",
+    )
+    is Some(request_event) else {
+    fail("request-completed event was not projected")
+  }
+  assert_eq(
+    moonclaw_json_string(request_event, "detail", default=""),
+    "Implemented the tool.\nTests pass.",
   )
 }
 
