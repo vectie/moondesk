@@ -2209,7 +2209,6 @@ fn append_mooncode_command_event(
   path? : String = "",
   command_packet? : Json = Json::object({}),
 ) -> Json {
-  let events = json_array_items(session, "mooncode_command_events")
   let event_id = json_string(
     command_packet,
     "command_id",
@@ -2218,23 +2217,16 @@ fn append_mooncode_command_event(
       action + ":" + status + ":" + created_at + ":" + detail,
     ),
   )
-  events.push(
-    @mooncode.command_event(
-      action~,
-      status~,
-      detail~,
-      created_at~,
-      path~,
-      command_packet~,
-      event_id~,
-    ),
-  )
-  let next = agent_session_with_field(
+  @mooncode.append_command_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
+    action~,
+    status~,
+    detail~,
+    created_at~,
+    path~,
+    command_packet~,
+    event_id~,
   )
-  agent_session_with_field(next, "updated_at", created_at.to_json())
 }
 
 ///|
