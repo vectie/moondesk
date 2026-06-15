@@ -239,6 +239,7 @@ pub fn package_manifest(
   source_inventory : Array[Json],
 ) -> Json {
   let source_present_count = package_source_present_count(source_inventory)
+  let promoted_source_count = package_source_promoted_count(source_inventory)
   {
     "kind": "mooncode-package-manifest",
     "protocol": "mooncode.v1",
@@ -251,8 +252,19 @@ pub fn package_manifest(
     "context_path": context_path,
     "candidate_paths": string_array_json(package_candidate_paths(context_path)),
     "source_inventory": Json::array(source_inventory),
+    "promoted_sources": Json::array(source_inventory),
     "source_inventory_count": source_inventory.length(),
     "source_present_count": source_present_count,
+    "promoted_source_count": promoted_source_count,
+    "source_promotion_status": if promoted_source_count ==
+      source_inventory.length() &&
+      source_inventory.length() > 0 {
+      "promoted"
+    } else if promoted_source_count > 0 {
+      "partially-promoted"
+    } else {
+      "not-promoted"
+    },
     "source_inventory_status": if source_present_count > 0 {
       "source-bound"
     } else {
@@ -269,6 +281,17 @@ pub fn package_manifest(
     "owner": package_artifact_owner(),
     "next_runtime_step": "MoonClaw or standalone MoonCode should turn this candidate manifest into a verified tool, miniapp, generated site, or app-tool bundle.",
   }
+}
+
+///|
+fn package_source_promoted_count(source_inventory : Array[Json]) -> Int {
+  let mut count = 0
+  for source in source_inventory {
+    if json_bool(source, "promoted", default=false) {
+      count += 1
+    }
+  }
+  count
 }
 
 ///|

@@ -546,8 +546,11 @@ Package commands also
 write MoonBook-owned `mooncode-package-manifest` candidate JSON under
 `portable/app-tool/mooncode/<session-id>/package-<command-id>.json`, with a
 matching `package.manifest` artifact event, source inventory for candidate
-paths, file `size_bytes`/`sha256` evidence when source is present, and a
-summary/readiness gate for package manifest evidence. Package commands also
+paths, file `size_bytes`/`sha256` evidence when source is present, promoted
+source copies under
+`portable/app-tool/mooncode/<session-id>/sources/<command-id>/...`, promotion
+status/count metadata, and a summary/readiness gate for package manifest
+evidence. Package commands also
 refresh a MoonBook-owned session package registry at
 `portable/app-tool/mooncode/<session-id>/index.json`, emit a `package.index`
 artifact event, and expose executable-ready entry points for the future
@@ -561,7 +564,7 @@ manifests and the package index through
 `GET /api/mooncode/sessions/<id>/package-candidates` and renders a Package
 Candidates panel with source-bound/missing-source counts, executable-ready
 count, runtime built/verified proof counts, manifest/receipt paths, source
-inventory, index status/path, ready entry points, and Open/Test/Accept/Package
+inventory, promoted-source paths, index status/path, ready entry points, and Open/Test/Accept/Package
 controls. Moondesk also exposes
 `GET /api/mooncode/sessions/<id>/eval-report` plus
 `POST /api/mooncode/sessions/<id>/eval-report` for MoonClaw-owned native eval

@@ -4733,7 +4733,10 @@ async fn write_mooncode_package_manifest_for_receipt(
   let recorded_at = @async.now().to_string()
   let candidate_paths = @mooncode.package_candidate_paths(context_path)
   let source_inventory = mooncode_package_source_inventory(
-    book_root, candidate_paths,
+    book_root,
+    candidate_paths,
+    package_root=@pathx.dirname(relative).to_owned(),
+    command_id~,
   )
   let manifest = @mooncode.package_manifest(
     session, receipt, command_packet, context_path, detail, command_created_at, recorded_at,
@@ -4817,10 +4820,19 @@ async fn write_mooncode_package_index_manifest(
 async fn mooncode_package_source_inventory(
   book_root : String,
   candidate_paths : Array[String],
+  package_root~ : String,
+  command_id~ : String,
 ) -> Array[Json] {
   let records : Array[Json] = []
   for candidate in candidate_paths {
-    records.push(mooncode_package_source_record(book_root, candidate))
+    records.push(
+      mooncode_package_source_record(
+        book_root,
+        candidate,
+        package_root~,
+        command_id~,
+      ),
+    )
   }
   records
 }
@@ -4829,6 +4841,8 @@ async fn mooncode_package_source_inventory(
 async fn mooncode_package_source_record(
   book_root : String,
   candidate : String,
+  package_root~ : String,
+  command_id~ : String,
 ) -> Json {
   match resolve_workspace_path(book_root, candidate) {
     Some((absolute, relative)) =>
@@ -4856,8 +4870,21 @@ async fn mooncode_package_source_record(
               "exists": true,
               "kind": "directory",
               "package_ready": true,
+              "promoted": false,
+              "promotion": {
+                "promoted": false,
+                "status": "directory-source",
+                "source_path": relative,
+              },
             }
-          _ => mooncode_package_file_record(absolute, relative)
+          _ =>
+            mooncode_package_file_record(
+              absolute,
+              relative,
+              book_root~,
+              package_root~,
+              command_id~,
+            )
         }
       }
     None =>
@@ -4874,6 +4901,9 @@ async fn mooncode_package_source_record(
 async fn mooncode_package_file_record(
   absolute : String,
   relative : String,
+  book_root~ : String,
+  package_root~ : String,
+  command_id~ : String,
 ) -> Json {
   let bytes = @fs.read_file(absolute).binary() catch {
     _ =>
@@ -4884,13 +4914,90 @@ async fn mooncode_package_file_record(
         "package_ready": false,
       }
   }
+  let text = @fs.read_file(absolute).text() catch { _ => "" }
+  let promotion = mooncode_promote_package_source(
+    book_root,
+    package_root,
+    command_id,
+    relative,
+    text,
+    can_promote=text != "",
+  )
   {
     "path": relative,
     "exists": true,
     "kind": "file",
     "size_bytes": bytes.length(),
     "sha256": @crypto.bytes_to_hex_string(@crypto.sha256(bytes.to_fixedarray())),
+    "promotion": promotion,
+    "promoted": json_bool(promotion, "promoted", default=false),
+    "promoted_path": json_string(promotion, "promoted_path", default=""),
+    "promoted_absolute_path": json_string(
+      promotion,
+      "promoted_absolute_path",
+      default="",
+    ),
     "package_ready": true,
+  }
+}
+
+///|
+async fn mooncode_promote_package_source(
+  book_root : String,
+  package_root : String,
+  command_id : String,
+  relative : String,
+  content : String,
+  can_promote~ : Bool,
+) -> Json {
+  let safe_command = mooncode_safe_receipt_id(command_id, fallback="command")
+  let promoted_path = "\{package_root}/sources/\{safe_command}/\{relative}"
+  let promoted_absolute = @pathx.join(book_root, promoted_path)
+  if !can_promote {
+    return {
+      "promoted": false,
+      "status": "non-text-source",
+      "source_path": relative,
+      "promoted_path": promoted_path,
+      "promoted_absolute_path": promoted_absolute,
+    }
+  }
+  @fsx.make_directory(
+    @pathx.dirname(promoted_absolute),
+    recursive=true,
+    exists_ok=true,
+  ) catch {
+    error =>
+      return {
+        "promoted": false,
+        "status": "failed",
+        "source_path": relative,
+        "promoted_path": promoted_path,
+        "promoted_absolute_path": promoted_absolute,
+        "error": "\{error}",
+      }
+  }
+  @fsx.write_to_file(promoted_absolute, content) catch {
+    error =>
+      return {
+        "promoted": false,
+        "status": "failed",
+        "source_path": relative,
+        "promoted_path": promoted_path,
+        "promoted_absolute_path": promoted_absolute,
+        "error": "\{error}",
+      }
+  }
+  {
+    "promoted": true,
+    "status": "promoted",
+    "source_path": relative,
+    "promoted_path": promoted_path,
+    "promoted_absolute_path": promoted_absolute,
+    "size_bytes": content.length(),
+    "sha256": @crypto.bytes_to_hex_string(
+      @crypto.sha256(@encoding/utf8.encode(content)),
+    ),
   }
 }
 
@@ -8300,6 +8407,11 @@ async test "mooncode review actions write moonbook receipts" {
         "source-bound",
       )
       assert_eq(json_int(saved_manifest, "source_present_count", default=0), 1)
+      assert_eq(
+        json_string(saved_manifest, "source_promotion_status", default=""),
+        "promoted",
+      )
+      assert_eq(json_int(saved_manifest, "promoted_source_count", default=0), 1)
       let inventory = json_array_items(saved_manifest, "source_inventory")
       assert_eq(inventory.length(), 1)
       assert_eq(
@@ -8313,6 +8425,19 @@ async test "mooncode review actions write moonbook receipts" {
         "fn main { println(\"mooncode\") }\n".length(),
       )
       assert_true(json_string(inventory[0], "sha256", default="").length() > 20)
+      assert_true(json_bool(inventory[0], "promoted", default=false))
+      let promoted_path = json_string(inventory[0], "promoted_path", default="")
+      assert_true(
+        promoted_path.has_prefix(
+          "portable/app-tool/mooncode/agent-demo/sources/",
+        ),
+      )
+      assert_true(promoted_path.has_suffix("/tools/demo/main.mbt"))
+      assert_true(@fs.exists(@pathx.join(root, promoted_path)))
+      assert_eq(
+        @fs.read_file(@pathx.join(root, promoted_path)).text(),
+        "fn main { println(\"mooncode\") }\n",
+      )
       let index_manifest = json_object_field_or_empty(
         next, "mooncode_last_package_index_manifest",
       )

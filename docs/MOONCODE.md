@@ -801,7 +801,12 @@ Queued `run_tests` commands and package intents do not count as verified runtime
 evidence. `verified_test_count` only increments for completed MoonClaw
 test/build result events without failure status, and
 `source_bound_package_count` only increments when a MoonBook package manifest
-includes source inventory evidence for the candidate being packaged.
+includes source inventory evidence for the candidate being packaged. Package
+manifests now also include `promoted_sources`, `promoted_source_count`, and
+`source_promotion_status`; Moondesk and MoonClaw copy text source files into
+`portable/app-tool/mooncode/<session-id>/sources/<command-id>/...` so a package
+candidate can be reviewed from a MoonBook-owned artifact root instead of only
+from live workspace paths.
 `runtime_package_proof_count` and `runtime_verified_package_count` are separate
 runtime evidence: they only increment when MoonClaw or standalone `mooncode`
 emits `package_built` or `package_verified` events after assembling/checking a
@@ -1386,8 +1391,8 @@ GET /api/mooncode/sessions/<session-id>/package-candidates
 The response is a `mooncode-package-candidates` projection over saved MoonBook
 package manifests under `portable/app-tool/mooncode/<session-id>/`, with
 package count, source-bound count, missing-source count, candidate paths,
-manifest paths, receipt paths, source inventory records, package-index status,
-package-index path, executable-ready count, ready entry points, runtime
+manifest paths, receipt paths, source inventory records, promoted-source paths,
+package-index status, package-index path, executable-ready count, ready entry points, runtime
 built/verified counts, and per-candidate `execution_state`. The MoonCode center
 pane renders this as a Package Candidates panel between Test Runs and Patch Set,
 with Open, Test, Accept, and Package controls. This keeps executable artifact
