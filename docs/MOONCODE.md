@@ -179,10 +179,13 @@ also been removed; `internal/moonwiki` keeps only compatibility wrappers that
 call `@mooncode.session_summary` and `@mooncode.eval_report_projection`.
 `internal/moonwiki` retains stable id/timestamp generation, path selection,
 source inventory reads, file writes, daemon/native-runtime probes, and the
-MoonClaw-facing tool-authorization HTTP handshake. The
+MoonClaw-facing tool-authorization HTTP handshake. `internal/mooncode` now owns
+legacy MoonClaw runtime status/progress `desc.msg` shaping for queued, started,
+model-loaded, token-counted, failed, cancelled, and conversation-finished
+events. The
 filesystem-backed sidecar store, HTTP query parsing, live-tail polling,
 checkpoint file writes, host fallback ids/timestamps, legacy MoonClaw
-`desc.msg` translation, action-plan manifest persistence, and
+tool-result/path `desc.msg` translation, action-plan manifest persistence, and
 dispatch/claim/replay receipt appends remain in `internal/moonwiki`; new
 runtime-neutral MoonCode contracts should move into `internal/mooncode` before
 becoming part of a standalone `mooncode` component.

@@ -197,6 +197,71 @@ pub fn moonclaw_event_to_runtime_event(
 }
 
 ///|
+pub fn moonclaw_status_event_record(
+  event : Json,
+  fallback_id~ : String,
+) -> Json? {
+  let desc = moonclaw_json_object_field_or_empty(event, "desc")
+  let msg = moonclaw_json_string(desc, "msg", default="")
+  let event_id = moonclaw_json_field_text(event, "id", default=fallback_id)
+  let created_at = moonclaw_json_field_text(event, "created", default=event_id)
+  match msg {
+    "MessageQueued"
+    | "MessageUnqueued"
+    | "PreConversation"
+    | "PostConversation"
+    | "ModelLoaded"
+    | "TokenCounted"
+    | "ContextPruned"
+    | "Failed"
+    | "Cancelled" =>
+      Some(
+        event_record(
+          id=event_id,
+          lane="runtime",
+          kind=msg,
+          title=moonclaw_status_event_title(msg, desc),
+          status=moonclaw_status_event_status(msg),
+          created_at~,
+          detail=if msg == "Failed" {
+            moonclaw_json_field_text(desc, "error", default="")
+          } else {
+            desc.stringify()
+          },
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+fn moonclaw_status_event_status(msg : String) -> String {
+  match msg {
+    "Failed" => "failed"
+    "Cancelled" => "cancelled"
+    "PostConversation" => "done"
+    _ => "running"
+  }
+}
+
+///|
+fn moonclaw_status_event_title(msg : String, desc : Json) -> String {
+  match msg {
+    "ModelLoaded" =>
+      "Model loaded: \{moonclaw_json_string(desc, "name", default="default")}"
+    "TokenCounted" =>
+      "Context measured: \{moonclaw_json_int(desc, "token_count", default=0)} tokens"
+    "ContextPruned" => "Context pruned"
+    "Failed" => "MoonClaw failed"
+    "Cancelled" => "MoonClaw cancelled"
+    "PostConversation" => "Conversation finished"
+    "MessageQueued" => "Message queued"
+    "MessageUnqueued" => "Message started"
+    _ => "Runtime: \{msg}"
+  }
+}
+
+///|
 fn moonclaw_tool_event(
   event_name~ : String,
   event_id~ : String,
@@ -281,6 +346,39 @@ fn moonclaw_json_string(json : Json, key : String, default~ : String) -> String 
       match object.get(key) {
         Some(Json::String(value)) => value
         Some(Json::Number(value, ..)) => value.to_string()
+        _ => default
+      }
+    _ => default
+  }
+}
+
+///|
+fn moonclaw_json_field_text(
+  json : Json,
+  key : String,
+  default~ : String,
+) -> String {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(Json::String(value)) => value
+        Some(Json::Null) | None => default
+        Some(value) => value.stringify()
+      }
+    _ => default
+  }
+}
+
+///|
+fn moonclaw_json_int(json : Json, key : String, default~ : Int) -> Int {
+  match json {
+    Json::Object(object) =>
+      match object.get(key) {
+        Some(Json::Number(value, ..)) => value.to_int()
+        Some(Json::String(value)) =>
+          @string.parse_int(value) catch {
+            _ => default
+          }
         _ => default
       }
     _ => default
@@ -389,6 +487,38 @@ test "mooncode moonclaw adapter normalizes tool events" {
   let tool_call = moonclaw_json_object_field_or_empty(event, "tool_call")
   let function = moonclaw_json_object_field_or_empty(tool_call, "function")
   assert_eq(moonclaw_json_string(function, "name", default=""), "shell")
+}
+
+///|
+test "mooncode moonclaw adapter shapes legacy status events" {
+  guard moonclaw_status_event_record(
+      {
+        "id": "evt-model",
+        "created": "2026-06-16T00:00:00Z",
+        "desc": { "msg": "ModelLoaded", "name": "dev-model" },
+      },
+      fallback_id="fallback",
+    )
+    is Some(event) else {
+    fail("status event was not projected")
+  }
+  assert_eq(json_string(event, "lane", default=""), "runtime")
+  assert_eq(json_string(event, "kind", default=""), "ModelLoaded")
+  assert_eq(json_string(event, "title", default=""), "Model loaded: dev-model")
+  assert_eq(json_string(event, "status", default=""), "running")
+  guard moonclaw_status_event_record(
+      { "desc": { "msg": "Failed", "error": { "message": "tool failed" } } },
+      fallback_id="fallback-failed",
+    )
+    is Some(failed_event) else {
+    fail("failed event was not projected")
+  }
+  assert_eq(json_string(failed_event, "id", default=""), "fallback-failed")
+  assert_eq(json_string(failed_event, "title", default=""), "MoonClaw failed")
+  assert_eq(json_string(failed_event, "status", default=""), "failed")
+  assert_true(
+    json_string(failed_event, "detail", default="").contains("tool failed"),
+  )
 }
 
 ///|

@@ -91,8 +91,8 @@ authorization-decision schemas. The
 filesystem-backed sidecar store, HTTP query parsing, live polling, checkpoint
 file paths, checkpoint writes, host fallback ids/timestamps, log reads, source
 inventory reads, native/daemon readiness probes, legacy MoonClaw `desc.msg`
-translation, action-plan manifest persistence, tool-authorization HTTP
-handshakes, and
+tool-result/path translation, action-plan manifest persistence,
+tool-authorization HTTP handshakes, and
 dispatch/claim/replay receipt appends still live in `internal/moonwiki`;
 future MoonCode work should move more storage and eval contracts behind the
 same boundary before it is split into a standalone `mooncode` component.

@@ -4451,50 +4451,9 @@ fn mooncode_event_from_moonclaw_event(event : Json) -> Json? {
     | "ContextPruned"
     | "Failed"
     | "Cancelled" =>
-      Some(mooncode_runtime_event(event_id, created_at, msg, desc))
+      @mooncode.moonclaw_status_event_record(event, fallback_id=event_id)
     _ => None
   }
-}
-
-///|
-fn mooncode_runtime_event(
-  id : String,
-  created_at : String,
-  msg : String,
-  desc : Json,
-) -> Json {
-  let status = match msg {
-    "Failed" => "failed"
-    "Cancelled" => "cancelled"
-    "PostConversation" => "done"
-    _ => "running"
-  }
-  let title = match msg {
-    "ModelLoaded" =>
-      "Model loaded: \{json_string(desc, "name", default="default")}"
-    "TokenCounted" =>
-      "Context measured: \{json_int(desc, "token_count", default=0)} tokens"
-    "ContextPruned" => "Context pruned"
-    "Failed" => "MoonClaw failed"
-    "Cancelled" => "MoonClaw cancelled"
-    "PostConversation" => "Conversation finished"
-    "MessageQueued" => "Message queued"
-    "MessageUnqueued" => "Message started"
-    _ => "Runtime: \{msg}"
-  }
-  mooncode_event_record(
-    id~,
-    lane="runtime",
-    kind=msg,
-    title~,
-    status~,
-    created_at~,
-    detail=if msg == "Failed" {
-      json_field_text(desc, "error", default="")
-    } else {
-      desc.stringify()
-    },
-  )
 }
 
 ///|
