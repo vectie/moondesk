@@ -491,15 +491,17 @@ root, inferring target paths from diff headers when needed and emitting those
 proof events directly. Patch tool packets can also request post-change
 verification through `verification_command`, `test_command`, `verify_after`, or
 `moon_check_target`; MoonClaw stores the verification command, status, capped
-output, and pass/fail result under the patch proof metadata.
+output, and pass/fail result under the patch proof metadata. MoonClaw also
+supports selected-hunk dispatch through `hunk_index`/`hunk_id` or
+`path#hunk-N` targets, emitting `hunk_dispatch_scope`, `selected_hunk_index`,
+`available_hunk_count`, and `file_path` metadata on the patch proof event.
 Moondesk exposes it
 through `GET /api/mooncode/sessions/<id>/patch-set` and renders it as a Patch
 Set panel with per-file Open, Accept, Reject, Apply, Revert, and Package
 controls plus hunk-level Accept, Reject, Apply, and Revert controls, including
 visible gate and next-action chips for each target. Moondesk
 still does not edit files directly; the remaining MoonClaw work is richer
-per-hunk runtime dispatch, source output promotion, and broader model-backed
-coding eval coverage.
+diff-review polish and broader model-backed coding eval coverage.
 Moondesk also writes a MoonBook-owned `mooncode-tool-approvals` manifest under
 `wiki/reviews/mooncode/<session-id>/tool-approvals.json`, exposes it through
 `GET /api/mooncode/sessions/<id>/tool-approvals`, and renders it as a Tool
@@ -628,9 +630,10 @@ event/diff/test/tool/package counts, eval score, and durable resume/log paths.
 It also consumes the bounded `?live=true` JSONL stream for the selected
 session, shows the latest batch as a Live Tail, and renders a Code Review queue
 from diff-lane events, with file-open and file-targeted accept/reject/package
-controls that preserve the selected diff path in the command event. Per-hunk staging, real patch
-promotion, verified bundle assembly, autonomous prompt-planning turns, and
-broader model-backed eval evidence are still future runtime work.
+controls that preserve the selected diff path in the command event. Per-hunk
+staging and selected-hunk patch dispatch are present; richer patch promotion,
+verified bundle assembly, autonomous prompt-planning turns, and broader
+model-backed eval evidence are still future runtime work.
 
 ### Output Library
 

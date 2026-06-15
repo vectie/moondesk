@@ -1272,8 +1272,12 @@ MoonBook-owned and protocol-shaped rather than Moondesk-private UI state, so
 MoonClaw or a future standalone `mooncode` runtime can own the real
 apply/revert operation while Moondesk only renders proof and review state.
 MoonClaw's native patch tool currently handles reviewed text replacements plus
-single-file or multi-file unified-diff patchsets; richer hunk-addressed runtime
-dispatch is still future protocol/runtime work.
+single-file or multi-file unified-diff patchsets. It now accepts
+`hunk_index`/`hunk_id` or `context_path`/`target` values such as
+`tools/demo/main.mbt#hunk-1`, applies only that selected hunk, and emits
+`runtime.patch_applied` / `runtime.patch_reverted` proof metadata with
+`hunk_dispatch_scope`, `selected_hunk_index`, `available_hunk_count`, and the
+underlying `file_path`.
 The command preflight contract now returns a stable `selected_patch` object for
 the requested `context_path`, including `matched`, `review_state`,
 `execution_state`, `gate_status`, `next_action`, `blocked_reason`, and
