@@ -10,11 +10,11 @@ pub fn moonclaw_adapter_contract_json() -> Json {
       "legacy_task_create": "POST /v1/task",
       "legacy_task_events": "GET /v1/task/<task-id>/events",
       "legacy_task_forward": "ANY /v1/task/<task-id>/...",
-      "native_target": "/v1/mooncode/capabilities plus /v1/mooncode/sessions?book_root=<path>, /v1/mooncode/sessions/<id>?book_root=<path>, /v1/mooncode/sessions/<id>/runtime-claim?book_root=<path>, /v1/mooncode/sessions/<id>/commands, and /v1/mooncode/sessions/<id>/package-result",
+      "native_target": "/v1/mooncode/capabilities plus /v1/mooncode/sessions?book_root=<path>, /v1/mooncode/sessions/<id>?book_root=<path>, /v1/mooncode/sessions/<id>/runtime-claim?book_root=<path>, /v1/mooncode/sessions/<id>/runtime-dispatch?book_root=<path>, /v1/mooncode/sessions/<id>/commands, and /v1/mooncode/sessions/<id>/package-result",
     },
     "event_mapping": moonclaw_event_mapping_json(),
     "tool_mapping": Json::array(moonclaw_tool_mapping_rows()),
-    "native_gap": "Current MoonClaw daemon routes now expose native MoonCode capabilities, cold book-local sidecar list/show, native runtime-claim receipts, command ingestion, session stream snapshots, eval-report snapshots, prompt/steer/cancel controls, package-result acknowledgement, normalized MoonClaw task stream proof, and book-local durable MoonCode sidecars. Remaining native gap is a full OpenSeek-style typed agent loop that can execute, resume, and steer turns from claimed durable commands without relying on an in-memory daemon binding.",
+    "native_gap": "Current MoonClaw daemon routes now expose native MoonCode capabilities, cold book-local sidecar list/show, native runtime-claim receipts, native runtime-dispatch delivery receipts, command ingestion, session stream snapshots, eval-report snapshots, prompt/steer/cancel controls, package-result acknowledgement, normalized MoonClaw task stream proof, and book-local durable MoonCode sidecars. Remaining native gap is a full OpenSeek-style typed agent loop that can execute, resume, and steer turns from claimed durable commands without relying on an in-memory daemon binding.",
     "boundary": {
       "moondesk": "records MoonCode command/session/review state and normalizes MoonClaw compatibility events",
       "moonclaw": "executes tools, streams events, enforces approvals, and reports proof",
