@@ -265,6 +265,14 @@ values, and Moondesk's normalization rule for persisting native proof into
 `wiki/reviews/mooncode/<session-id>/eval-report.json`. Moondesk reads this
 route into the MoonCode inspector so the coding-agent boundary is visible at
 runtime instead of only documented.
+MoonClaw now also exposes read-only cold session-store routes:
+`GET /v1/mooncode/sessions?book_root=<path>` and
+`GET /v1/mooncode/sessions/<id>?book_root=<path>`. These project the
+book-local `.moonclaw/mooncode/sessions/<session-id>/` sidecars without
+spawning a task, so Moondesk or a future standalone `mooncode` process can
+discover and show durable sessions after daemon restart. The records include
+live-binding status, snapshot payload, storage paths, and command/event/package
+log counts.
 
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references
@@ -405,6 +413,20 @@ event log:
 .moontown/mooncode-sessions/<session-id>/stream-checkpoints/<consumer>.json
 .moontown/mooncode-sessions/<session-id>/session.json
 ```
+
+MoonClaw owns a parallel native book-local store for the runtime side:
+
+```text
+.moonclaw/mooncode/sessions/<session-id>/session.json
+.moonclaw/mooncode/sessions/<session-id>/commands.jsonl
+.moonclaw/mooncode/sessions/<session-id>/events.jsonl
+.moonclaw/mooncode/sessions/<session-id>/package-results.jsonl
+```
+
+The native list/show endpoints read this store directly. This removes the
+previous pure in-memory discovery gap, but the full OpenSeek-style loop is not
+complete until MoonClaw can claim, execute, resume, and steer turns from that
+durable store without relying on a current in-memory task binding.
 
 MoonCode session creation uses `POST /api/mooncode/sessions`. It creates a
 normal Moondesk agent session bound to the selected MoonBook and MoonClaw task,

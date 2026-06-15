@@ -37,6 +37,8 @@ pub fn capabilities_json() -> Json {
       "stream_state_endpoint": "/api/mooncode/sessions/<session-id>/stream-state?consumer=<consumer>&since=<sequence>",
       "eval_harness_contract_endpoint": "/api/mooncode/eval-harness",
       "runtime_event_ingest_endpoint": "/api/mooncode/sessions/<session-id>/runtime-events",
+      "native_session_list_endpoint": "/v1/mooncode/sessions?book_root=<path>",
+      "native_session_show_endpoint": "/v1/mooncode/sessions/<session-id>?book_root=<path>",
       "native_package_result_endpoint": "/v1/mooncode/sessions/<session-id>/package-result",
       "native_durable_session_store": ".moonclaw/mooncode/sessions/<session-id>/session.json, commands.jsonl, events.jsonl, and package-results.jsonl under the selected MoonBook root",
       "command_queue_endpoint": "/api/mooncode/sessions/<session-id>/commands",
@@ -63,7 +65,7 @@ pub fn capabilities_json() -> Json {
         "assistant_delta", "reasoning_delta", "tool_call", "tool_result", "file_change",
         "diff", "test_result", "artifact", "review", "terminal",
       ],
-      "durability": "append-only commands.jsonl plus events.jsonl owned by MoonClaw or extractable MoonCode runtime; Moondesk supports ordered command replay, checkpointed cursor state, pollable incremental event replay with stable sequence numbers, and a session-level runtime evidence proof projection",
+      "durability": "append-only commands.jsonl plus events.jsonl owned by MoonClaw or extractable MoonCode runtime; Moondesk supports ordered command replay, checkpointed cursor state, pollable incremental event replay with stable sequence numbers, and a session-level runtime evidence proof projection. MoonClaw also exposes cold book-local sidecar list/show endpoints for .moonclaw/mooncode/sessions so sessions can be discovered after daemon restart without spawning a task.",
     },
     "runtime_protocol": runtime_protocol_contract_json(),
     "runtime_contract": runtime_contract_json(),
@@ -431,10 +433,10 @@ pub fn engine_status_projection_json(
         },
       ),
       engine_check_json(
-        "append_only_session_log", "Append-only session log", "bridged", ".moontown/mooncode-sessions/<session-id>/events.jsonl is owned by the bridge until MoonClaw owns the typed store",
+        "append_only_session_log", "Append-only session log", "ready", "MoonClaw owns book-local .moonclaw/mooncode/sessions/<session-id>/events.jsonl sidecars and exposes /v1/mooncode/sessions?book_root=<path> for cold discovery; Moondesk still mirrors UI-side logs under .moontown/mooncode-sessions",
       ),
       engine_check_json(
-        "append_only_command_queue", "Append-only command queue", "bridged", ".moontown/mooncode-sessions/<session-id>/commands.jsonl records ordered mooncode.v1 command packets until MoonClaw owns the typed store",
+        "append_only_command_queue", "Append-only command queue", "ready", "MoonClaw owns book-local .moonclaw/mooncode/sessions/<session-id>/commands.jsonl sidecars and reports command counts from the native session show endpoint; Moondesk still mirrors UI-side command logs under .moontown/mooncode-sessions",
       ),
       engine_check_json(
         "typed_runtime_contract",
@@ -469,7 +471,8 @@ pub fn engine_status_projection_json(
 fn supported_engine_endpoints() -> Array[String] {
   [
     "/api/mooncode/eval-harness", "/v1/models", "/v1/tasks", "/v1/task", "/v1/task/<id>/message",
-    "/v1/task/<id>/cancel", "/v1/mooncode/capabilities", "/v1/mooncode/sessions/<id>/commands",
+    "/v1/task/<id>/cancel", "/v1/mooncode/capabilities", "/v1/mooncode/sessions?book_root=<path>",
+    "/v1/mooncode/sessions/<id>?book_root=<path>", "/v1/mooncode/sessions/<id>/commands",
     "/v1/mooncode/sessions/<id>/stream", "/v1/mooncode/sessions/<id>/eval-report",
     "/api/mooncode/sessions", "/api/mooncode/sessions/<id>/tool-approvals", "/api/mooncode/sessions/<id>/tool-authorization",
     "/api/mooncode/sessions/<id>/test-runs", "/api/mooncode/sessions/<id>/package-candidates",
