@@ -512,7 +512,8 @@ pub fn native_command_tool_sequence(action : String) -> Array[String] {
     "commit" => ["read", "moon_check", "shell", "finish"]
     "accept" => ["read", "package_app_tool", "finish"]
     "reject" => ["read", "finish"]
-    "apply_patch" | "revert_patch" => ["read", "edit", "moon_check", "finish"]
+    "apply_patch" | "revert_patch" =>
+      ["read", "apply_patch", "moon_check", "finish"]
     "approve_tool" | "reject_tool" => ["finish"]
     "prompt" | "steer" => ["read", "edit", "write", "moon_check", "finish"]
     "cancel" => ["finish"]
@@ -1392,6 +1393,10 @@ test "mooncode command metadata exposes tool and lane contracts" {
   assert_true(
     native_command_expected_events("revert_patch").contains("patch_reverted"),
   )
+  assert_true(
+    native_command_tool_sequence("apply_patch").contains("apply_patch"),
+  )
+  assert_false(native_command_tool_sequence("apply_patch").contains("edit"))
   assert_true(
     native_command_required_outputs("apply_patch").contains(
       "patch_applied proof event",

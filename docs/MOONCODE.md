@@ -1140,7 +1140,8 @@ commands, package kind, review requirement, and path policy. `tool_contract`
 states the bounded tool registry and approval boundary MoonClaw or standalone
 MoonCode must enforce. The registry covers OpenSeek-compatible `read`, `edit`,
 `write`, `shell`, `moon_check`, and `finish`, plus MoonCode's executable-output
-extensions `apply_patch` and `package_app_tool`. `result_contract` names the
+extensions `apply_patch`, `revert_patch`, and `package_app_tool`.
+`result_contract` names the
 required evidence and the durable sinks for streamed runtime events and replay
 acknowledgements. It also includes an ordered `execution_checklist` with claim,
 tool, event, output, native-eval-report, and acknowledgement steps. This lets
@@ -1154,7 +1155,7 @@ helpers for the MoonClaw/standalone `mooncode` side of the boundary:
 outcomes into the `/runtime-replay` acknowledgement shape. The helper does not
 execute tools inside Moondesk; it creates the same command-scoped event payload
 MoonClaw must emit after it executes `read`, `moon_check`, `shell`,
-`package_app_tool`, `apply_patch`, and `finish`. Missing expected tool outcomes
+`package_app_tool`, `apply_patch`, `revert_patch`, and `finish`. Missing expected tool outcomes
 become failed tool proof, so the replay proof gate keeps the command retryable
 instead of marking it complete.
 For package commands, `runtime_consumer_package_output_ack` builds the complete
