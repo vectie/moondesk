@@ -571,11 +571,11 @@ pub fn native_command_required_outputs(action : String) -> Array[String] {
     "reject" => ["review receipt", "rejection note"]
     "apply_patch" =>
       [
-        "diff event", "changed paths", "patch_applied proof event", "post-change test result",
+        "diff event", "changed paths", "patch_applied proof event", "post-change verification metadata",
       ]
     "revert_patch" =>
       [
-        "diff event", "changed paths", "patch_reverted proof event", "post-change test result",
+        "diff event", "changed paths", "patch_reverted proof event", "post-change verification metadata",
       ]
     "approve_tool" | "reject_tool" => ["tool authorization decision"]
     "prompt" | "steer" =>

@@ -1052,6 +1052,10 @@ receipts, while MoonClaw or standalone `mooncode` must emit `patch_applied` or
 `patch_reverted` runtime events after actually changing files. MoonClaw now
 executes bounded reviewed text replacements plus single-file or multi-file
 unified-diff patchsets, including target-path inference from diff headers.
+Patch execution packets can request post-change verification through
+`verification_command`, `test_command`, `verify_after`, or `moon_check_target`;
+MoonClaw stores the verification command, status, capped output, and pass/fail
+result under the patch proof metadata.
 Moondesk
 normalizes those events into `runtime.patch_applied` /
 `runtime.patch_reverted` proof records and exposes the aggregate

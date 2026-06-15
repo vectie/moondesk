@@ -488,15 +488,18 @@ set and session summary. MoonClaw now provides native bounded
 `apply_patch`/`revert_patch` tool execution for reviewed text replacements plus
 single-file or multi-file unified-diff patchsets inside the selected MoonBook
 root, inferring target paths from diff headers when needed and emitting those
-proof events directly.
+proof events directly. Patch tool packets can also request post-change
+verification through `verification_command`, `test_command`, `verify_after`, or
+`moon_check_target`; MoonClaw stores the verification command, status, capped
+output, and pass/fail result under the patch proof metadata.
 Moondesk exposes it
 through `GET /api/mooncode/sessions/<id>/patch-set` and renders it as a Patch
 Set panel with per-file Open, Accept, Reject, Apply, Revert, and Package
 controls plus hunk-level Accept, Reject, Apply, and Revert controls, including
 visible gate and next-action chips for each target. Moondesk
 still does not edit files directly; the remaining MoonClaw work is richer
-per-hunk runtime dispatch, verified post-apply tests, and source output
-promotion.
+per-hunk runtime dispatch, source output promotion, and broader model-backed
+coding eval coverage.
 Moondesk also writes a MoonBook-owned `mooncode-tool-approvals` manifest under
 `wiki/reviews/mooncode/<session-id>/tool-approvals.json`, exposes it through
 `GET /api/mooncode/sessions/<id>/tool-approvals`, and renders it as a Tool
