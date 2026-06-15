@@ -515,7 +515,11 @@ pub fn eval_report_projection(session : Json) -> Json {
   let native_eval = summary_json_object_field_or_empty(
     session, "mooncode_native_eval_report",
   )
-  let native_ready = json_bool(native_eval, "ok", default=false)
+  let native_ready = native_eval_report_ready(native_eval)
+  let native_harnesses = native_eval_report_harnesses(native_eval)
+  let native_passed_harness_count = native_eval_passed_harness_count(
+    native_harnesses,
+  )
   let bridge_score = summary_json_int(summary, "eval_score", default=0)
   let bridge_level = json_string(summary, "eval_level", default="empty")
   let status = if native_ready && missing_count == 0 {
@@ -552,6 +556,12 @@ pub fn eval_report_projection(session : Json) -> Json {
     "checks": Json::array(checks),
     "native_eval_evidence_ready": native_ready,
     "native_eval_report": native_eval,
+    "native_eval_status": json_string(native_eval, "status", default="missing"),
+    "native_eval_harness_count": native_harnesses.length(),
+    "native_eval_passed_harness_count": native_passed_harness_count,
+    "native_eval_failed_harness_count": native_harnesses.length() -
+    native_passed_harness_count,
+    "native_eval_harnesses": Json::array(native_harnesses),
     "native_eval_source": if native_ready {
       json_string(native_eval, "source", default="moonclaw-native-runtime")
     } else {
@@ -581,7 +591,7 @@ pub fn eval_report_projection(session : Json) -> Json {
       "test/build execution with stdout/stderr", "package assembly proof for generated tools and miniapps",
     ]),
     "current_gap": if native_ready {
-      "MoonClaw reported native eval evidence; remaining gaps are reflected in the checks array."
+      "MoonClaw reported native eval evidence; remaining bridge/runtime gaps are reflected in the checks array."
     } else {
       "Bridge evidence is visible, but MoonClaw still needs OpenSeek-style tool_harness and file_edit eval results before Moondesk can claim production-grade coding-agent behavior."
     },
@@ -591,11 +601,7 @@ pub fn eval_report_projection(session : Json) -> Json {
 
 ///|
 pub fn normalize_native_eval_report(report : Json, endpoint : String) -> Json {
-  let ok = json_bool(
-    report,
-    "ok",
-    default=json_bool(report, "native_eval_evidence_ready", default=false),
-  )
+  let ok = native_eval_report_ready(report)
   eval_report_with_field(
     eval_report_with_field(
       eval_report_with_field(report, "ok", ok.to_json()),
@@ -605,6 +611,51 @@ pub fn normalize_native_eval_report(report : Json, endpoint : String) -> Json {
     "endpoint",
     endpoint.to_json(),
   )
+}
+
+///|
+fn native_eval_report_ready(report : Json) -> Bool {
+  match summary_json_object_field(report, "ok") {
+    Some(value) => return @json.from_json(value) catch { _ => false }
+    None => ()
+  }
+  if json_bool(report, "native_eval_evidence_ready", default=false) {
+    return true
+  }
+  let status = json_string(report, "status", default="")
+  if status == "accepted" || status == "passed" || status == "production-ready" {
+    return true
+  }
+  let native_eval = summary_json_object_field_or_empty(report, "native_eval")
+  let nested_status = json_string(native_eval, "status", default="")
+  if nested_status == "passed" || nested_status == "accepted" {
+    return true
+  }
+  let harnesses = native_eval_report_harnesses(report)
+  harnesses.length() > 0 &&
+  native_eval_passed_harness_count(harnesses) == harnesses.length()
+}
+
+///|
+fn native_eval_report_harnesses(report : Json) -> Array[Json] {
+  let native_eval = summary_json_object_field_or_empty(report, "native_eval")
+  let nested = json_array_items(native_eval, "harnesses")
+  if nested.length() > 0 {
+    return nested
+  }
+  json_array_items(report, "harnesses")
+}
+
+///|
+fn native_eval_passed_harness_count(harnesses : Array[Json]) -> Int {
+  let mut count = 0
+  for harness in harnesses {
+    let status = json_string(harness, "status", default="")
+    if status == "passed" || status == "accepted" {
+      count += 1
+    }
+  }
+  count
 }
 
 ///|
@@ -1735,6 +1786,43 @@ test "mooncode native eval report normalization accepts legacy readiness" {
     "/v1/mooncode/sessions/s1/eval-report",
   )
   assert_eq(json_array_items(native_eval, "harnesses").length(), 2)
+}
+
+///|
+test "mooncode native eval report normalization accepts MoonClaw harness status" {
+  let native_eval = normalize_native_eval_report(
+    {
+      "kind": "mooncode-native-eval-report",
+      "protocol": "mooncode.v1",
+      "status": "accepted",
+      "native_eval": {
+        "status": "passed",
+        "harnesses": [
+          { "id": "tool_harness", "status": "passed" },
+          { "id": "file_edit", "status": "passed" },
+        ],
+      },
+    },
+    "/v1/mooncode/sessions/s1/eval-report?book_root=/tmp/book",
+  )
+  assert_true(json_bool(native_eval, "ok", default=false))
+  let report = eval_report_projection({
+    "id": "s1",
+    "workspace_id": "book",
+    "moonclaw_task_id": "task",
+    "mooncode_native_eval_report": native_eval,
+    "mooncode_summary": {
+      "eval_score": 100,
+      "eval_level": "ready",
+      "eval_checks": [],
+    },
+  })
+  assert_eq(json_string(report, "status", default=""), "production-ready")
+  assert_eq(summary_json_int(report, "native_eval_harness_count", default=0), 2)
+  assert_eq(
+    summary_json_int(report, "native_eval_passed_harness_count", default=0),
+    2,
+  )
 }
 
 ///|

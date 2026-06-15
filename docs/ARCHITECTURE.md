@@ -1079,7 +1079,7 @@ Implemented behavior:
   `eval_report.manifest` review event, and includes the manifest path/timestamp
   in the endpoint response. If the MoonClaw daemon exposes the native MoonCode
   runtime, Moondesk also probes
-  `/v1/mooncode/sessions/<id>/eval-report`, delegates the returned report to
+  `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`, delegates the returned report to
   the shared `internal/mooncode` normalization contract for `ok`, `source`,
   and `endpoint`, and persists it as `native_eval_report`.
   This gives the UI, Bookkeeper, and future standalone `mooncode` component a
@@ -1256,7 +1256,7 @@ Implemented behavior:
   `tool_specs`. It also returns a structured `runtime_contract` modeled on
   OpenSeek's `agent_runtime`, `agent_session`, `agent_tool`, `agent` loop,
   serve-mode command wire, append-only session store, eval harness split, and
-  native eval-report schema for `/v1/mooncode/sessions/<id>/eval-report`, plus
+  native eval-report schema for `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`, plus
   a data-only `mooncode-tool-contract` for `read`, `edit`, `write`, `shell`,
   `moon_check`, and `finish`. That tool contract defines input fields, required
   output events, mutating-tool review requirements, path/diff/test/approval
@@ -1270,11 +1270,11 @@ Implemented behavior:
 - `GET /api/mooncode/eval-harness` returns the standalone
   `mooncode-eval-harness-contract`. It names `../openseek/eval/tool_harness`
   and `../openseek/eval/file_edit` as references, requires deterministic tool
-  coverage for `read`, `write`, `edit`, `shell`, `moon_check`, `moon_cmd`,
-  `moon_ide`, and `finish`, requires file-edit cases for exact replacement,
+  coverage for `read`, `write`, `edit`, `shell`, `moon_check`, and `finish`,
+  requires file-edit cases for exact replacement,
   ambiguous replacement, multiline edit, file creation, and compile fix, and
   defines the report schema that MoonClaw must publish through
-  `/v1/mooncode/sessions/<id>/eval-report`. Moondesk renders and gates on this
+  `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`. Moondesk renders and gates on this
   proof; it does not run the coding eval engine itself.
 - `POST /api/mooncode/sessions/:id/commands` records `mooncode.v1` command
   packets to `.moontown/mooncode-sessions/<session-id>/commands.jsonl` and

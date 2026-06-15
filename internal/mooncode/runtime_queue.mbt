@@ -643,7 +643,7 @@ pub fn runtime_consumer_handoff(
       "runtime_commands": "/api/mooncode/sessions/\{session_id}/runtime-commands",
       "stream": "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=<sequence>",
       "native_commands": "/v1/mooncode/sessions/\{session_id}/commands",
-      "native_eval_report": "/v1/mooncode/sessions/\{session_id}/eval-report",
+      "native_eval_report": "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=<path>",
     },
     "required_loop": [
       "GET runtime-handoff or session-store", "GET runtime-claim", "POST runtime-claim with consumer_id before execution",
@@ -1070,7 +1070,7 @@ pub fn runtime_supervisor_launch_packet(
         "method": "POST",
         "endpoint": runtime_supervisor_url(
           host_base_url,
-          "/v1/mooncode/sessions/\{session_id}/eval-report",
+          "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=<path>",
         ),
         "purpose": "Attach native tool/file-edit eval harness evidence when available.",
       },

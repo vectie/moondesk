@@ -139,7 +139,7 @@ pub fn runtime_handoff_manifest(
       "preflight_endpoint": "/api/mooncode/sessions/\{session_id}/preflight?action=<action>&context_path=<path>",
       "action_plan_endpoint": "/api/mooncode/sessions/\{session_id}/action-plan",
       "native_command_endpoint": "/v1/mooncode/sessions/\{session_id}/commands",
-      "native_eval_endpoint": "/v1/mooncode/sessions/\{session_id}/eval-report",
+      "native_eval_endpoint": "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=<path>",
       "ordering_rule": "consume runtime-commands.jsonl in append order; commands.jsonl remains the UI/operator queue; emit progress to events.jsonl or the compatible native MoonCode stream",
     },
     "command_count": commands.length(),

@@ -233,7 +233,7 @@ pub fn runtime_contract_json() -> Json {
         "moon_check/test failures surface as test_result events", "finish produces a terminal review summary",
       ],
       "native_eval_report": native_eval_report_contract_json(),
-      "current_gap": "Moondesk exposes readiness gates, but MoonClaw still needs to own and report these OpenSeek-style eval results.",
+      "current_gap": "Moondesk exposes readiness gates and MoonClaw now reports a first native tool/file-edit eval harness; the remaining engine gap is autonomous model-backed planning across multi-turn coding work.",
     },
   }
 }
@@ -257,13 +257,11 @@ pub fn eval_harness_contract_json() -> Json {
         "execution": "deterministic-host-side",
         "purpose": "Dispatch every built-in coding tool through the same typed registry used by the agent loop.",
         "required_tools": [
-          "read", "write", "edit", "shell", "moon_check", "moon_cmd", "moon_ide",
-          "finish",
+          "read", "write", "edit", "shell", "moon_check", "finish",
         ],
         "required_evidence": [
           "tool registry builds", "each tool returns a typed result event", "filesystem mutations match expected disk state",
-          "moon_check/moon_cmd/moon_ide execute against a temporary MoonBit package",
-          "finish emits a terminal agent_finished event",
+          "moon_check executes against a temporary MoonBit package", "finish emits a terminal agent_finished event",
         ],
       },
       {
@@ -310,7 +308,7 @@ pub fn native_eval_report_contract_json() -> Json {
       "tool_harness", "file_edit", "passed_count", "failed_count", "evidence",
     ],
     "status_values": ["production-ready", "native-partial", "failed", "missing"],
-    "normalization_rule": "Moondesk treats ok=true or native_eval_evidence_ready=true as native evidence, then annotates source=moonclaw-native-runtime and endpoint before persisting wiki/reviews/mooncode/<session-id>/eval-report.json.",
+    "normalization_rule": "Moondesk treats explicit ok=true, native_eval_evidence_ready=true, accepted/passed status, or passing nested native_eval harnesses as native evidence; explicit ok=false is preserved. Moondesk annotates source=moonclaw-native-runtime and endpoint before persisting wiki/reviews/mooncode/<session-id>/eval-report.json.",
   }
 }
 
@@ -465,7 +463,7 @@ pub fn engine_status_projection_json(
         "adapter=\{adapter_status}; normalizes current MoonClaw task/tool events into mooncode.v1 runtime events",
       ),
       engine_check_json(
-        "eval_harness_evidence", "OpenSeek-style eval evidence", "missing", "MoonClaw still needs tool_harness and file_edit eval results before Moondesk can claim production-grade coding-agent behavior",
+        "eval_harness_evidence", "OpenSeek-style eval evidence", "partial", "MoonClaw reports a first native tool_harness/file_edit eval slice; production-grade behavior still needs model-backed multi-turn planning evals.",
       ),
     ],
   }
@@ -731,7 +729,8 @@ test "mooncode eval harness contract names openseek cases and evidence" {
   let payload = contract.stringify()
   assert_true(payload.contains("../openseek/eval/tool_harness"))
   assert_true(payload.contains("../openseek/eval/file_edit"))
-  assert_true(payload.contains("\"moon_ide\""))
+  assert_true(payload.contains("\"moon_check\""))
+  assert_false(payload.contains("\"moon_ide\""))
   assert_true(payload.contains("\"compile_fix\""))
   assert_true(payload.contains("file-edit-eval:<case>"))
   assert_true(payload.contains("\"future_package\":\"mooncode/eval\""))

@@ -538,7 +538,7 @@ async fn handle_mooncode_session_eval_report_ingest(
   let endpoint = json_string(
     payload,
     "endpoint",
-    default="/v1/mooncode/sessions/\{session_id}/eval-report",
+    default="/v1/mooncode/sessions/\{session_id}/eval-report?book_root=\{encode_query_value(workspace_root)}",
   )
   let with_manifest = persist_mooncode_native_eval_report(
     workspace_root, session, payload, endpoint,

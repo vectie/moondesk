@@ -164,7 +164,7 @@ session, event, stream, eval-harness, and command routes. The eval-harness
 route (`GET /api/mooncode/eval-harness`) is the standalone, extractable
 OpenSeek-style proof contract MoonClaw must eventually own: deterministic
 `tool_harness` coverage for `read`, `write`, `edit`, `shell`, `moon_check`,
-`moon_cmd`, `moon_ide`, and `finish`, plus model-facing `file_edit` cases for
+and `finish`, plus model-facing `file_edit` cases for
 exact replacement, ambiguous replacement, multiline edits, file creation, and
 compile fixes. The first runtime-neutral code has moved into
 `internal/mooncode`: a pure package for OpenSeek-compatible serve-wire helpers
@@ -571,15 +571,15 @@ outputs, and safety policies. The capability route also carries an OpenSeek-shap
 `runtime_contract` for `agent_runtime`, `agent_session`, `agent_tool`,
 `agent_loop`, the prompt/steer/cancel JSONL wire, append-only session store, and
 tool/file-edit eval harnesses plus a native eval-report schema for
-`/v1/mooncode/sessions/<id>/eval-report` and a concrete
+`/v1/mooncode/sessions/<id>/eval-report?book_root=<path>` and a concrete
 `/api/mooncode/eval-harness` contract endpoint. The inspector renders that
 contract as the MoonClaw/MoonCode extraction boundary. The same capability
 response now carries
 a live `engine_status` compatibility block that checks the configured MoonClaw
 checkout, daemon, `/v1/models`, `/v1/tasks`, prompt/message/cancel bridge,
 append-only command queue, append-only session log, MoonClaw adapter readiness,
-native runtime-turn availability, and the still-missing autonomous
-MoonClaw-owned prompt-planning/eval proof. The live probes still happen in
+native runtime-turn availability, and the remaining autonomous
+MoonClaw-owned prompt-planning/model-backed eval proof. The live probes still happen in
 `internal/moonwiki`, but the readiness projection itself now lives in
 `internal/mooncode`: endpoint rows, bridge-vs-production status, and check
 metadata are extractable protocol data rather than desktop-only logic. It also
@@ -603,7 +603,7 @@ session, shows the latest batch as a Live Tail, and renders a Code Review queue
 from diff-lane events, with file-open and file-targeted accept/reject/package
 controls that preserve the selected diff path in the command event. Per-hunk staging, real patch
 promotion, verified bundle assembly, autonomous prompt-planning turns, and
-MoonClaw-owned eval evidence are still future runtime work.
+broader model-backed eval evidence are still future runtime work.
 
 ### Output Library
 

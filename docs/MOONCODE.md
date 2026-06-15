@@ -91,7 +91,7 @@ MoonCode tool vocabulary. MoonClaw now implements the first native endpoint
 slice: `/v1/mooncode/capabilities`,
 `/v1/mooncode/sessions/<id>/commands`,
 `/v1/mooncode/sessions/<id>/stream`, and
-`/v1/mooncode/sessions/<id>/eval-report`. The native command endpoint binds a
+`/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`. The native command endpoint binds a
 Moondesk MoonCode session to the MoonClaw task for the target book root and
 forwards accepted commands into the existing MoonClaw task/agent runtime.
 Package acknowledgement remains future work. The same package now exposes live adapter readiness
@@ -260,7 +260,7 @@ standalone `mooncode` process can enforce one active turn, queued prompts,
 steer-to-active-or-pending, and cancel-active-or-withdraw-pending behavior
 without reading Moondesk component state. The eval contract
 includes a `native_eval_report` target for MoonClaw:
-`/v1/mooncode/sessions/<id>/eval-report`, required fields, accepted status
+`/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`, required fields, accepted status
 values, and Moondesk's normalization rule for persisting native proof into
 `wiki/reviews/mooncode/<session-id>/eval-report.json`. Moondesk reads this
 route into the MoonCode inspector so the coding-agent boundary is visible at
@@ -292,13 +292,13 @@ model/tool execution, steering, cancellation, and eval proof.
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references
 `../openseek/eval/tool_harness` and `../openseek/eval/file_edit`, required tool
-coverage (`read`, `write`, `edit`, `shell`, `moon_check`, `moon_cmd`,
-`moon_ide`, `finish`), file-edit cases (`exact_replace`, `ambiguous_replace`,
+coverage (`read`, `write`, `edit`, `shell`, `moon_check`, `finish`),
+file-edit cases (`exact_replace`, `ambiguous_replace`,
 `multiline_replace`, `create_file`, `compile_fix`), evidence rules, report
 schema, and the production rule that both harnesses must be fresh and passing
 for the current MoonClaw build. Moondesk only exposes and renders this contract;
 MoonClaw or a future standalone `mooncode/eval` package must run the harnesses
-and publish `/v1/mooncode/sessions/<id>/eval-report`.
+and publish `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`.
 Each command spec names action, dispatch mode, approval policy, expected event
 lanes, and tool hints. Each tool spec names the tool id, owner, event lane,
 approval policy, purpose, and expected outputs.
@@ -1398,11 +1398,15 @@ When MoonClaw exposes a native MoonCode runtime, Moondesk first probes:
 
 and attaches that response as `native_eval_report`. Native reports are
 normalized by the `internal/mooncode` contract with `ok`,
-`source: "moonclaw-native-runtime"`, and `endpoint` fields. Moondesk only
+`source: "moonclaw-native-runtime"`, `endpoint`, and native harness summary
+fields. Moondesk only
 performs daemon probing, persistence, and response serving. If the daemon or
 endpoint is unavailable, the report remains a Moondesk bridge-evidence
 fallback.
 
+MoonClaw's current native eval endpoint already runs a first deterministic
+tool/file-edit harness for `read`, `write`, `edit`, `shell`, `moon_check`, and
+`finish`; the remaining runtime work is model-backed, multi-turn coding evals.
 MoonClaw or a future standalone `mooncode/eval` runner can also submit the same
 native proof directly with `POST /api/mooncode/sessions/<session-id>/eval-report`.
 The Eval Report panel also exposes a typed `run_eval` command that enters the
