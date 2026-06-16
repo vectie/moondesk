@@ -1555,46 +1555,19 @@ async fn handle_mooncode_session_runtime_event_ingest(
       return
     }
   }
-  send_json(conn, method_, {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode-runtime-event-ingest-result",
-    "session_id": session_id,
-    "accepted_event_count": events.length(),
-    "ingest_report": ingest_report,
-    "event_log_path": mooncode_event_log_path(workspace_root, session_id),
-    "command_progress": @mooncode.runtime_event_command_progress(
+  send_json(
+    conn,
+    method_,
+    @mooncode.runtime_event_ingest_result_response(
+      session_id,
+      events,
       read_mooncode_event_log(workspace_root, session_id),
-    ),
-    "action_plan": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_action_plan_manifest",
-    ),
-    "change_set": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_change_set_manifest",
-    ),
-    "patch_set": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_patch_set_manifest",
-    ),
-    "tool_approvals": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_tool_approvals_manifest",
-    ),
-    "test_runs": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_test_runs_manifest",
-    ),
-    "runtime_evidence": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_runtime_evidence_manifest",
-    ),
-    "eval_report": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_eval_report_manifest",
-    ),
-    "runtime_handoff": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_runtime_handoff_manifest",
-    ),
-    "session": enrich_agent_session_for_response(
-      workspace_root,
+      ingest_report,
       with_runtime_handoff,
-      [],
+      enrich_agent_session_for_response(workspace_root, with_runtime_handoff, []),
+      event_log_path=mooncode_event_log_path(workspace_root, session_id),
     ),
-  })
+  )
 }
 
 ///|

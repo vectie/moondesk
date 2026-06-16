@@ -198,6 +198,52 @@ pub fn runtime_event_sink_response(
 }
 
 ///|
+pub fn runtime_event_ingest_result_response(
+  session_id : String,
+  accepted_events : Array[Json],
+  all_events : Array[Json],
+  ingest_report : Json,
+  final_session : Json,
+  session_response : Json,
+  event_log_path~ : String,
+) -> Json {
+  {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode-runtime-event-ingest-result",
+    "session_id": session_id,
+    "accepted_event_count": accepted_events.length(),
+    "ingest_report": ingest_report,
+    "event_log_path": event_log_path,
+    "command_progress": runtime_event_command_progress(all_events),
+    "action_plan": runtime_json_object_field_or_empty(
+      final_session, "mooncode_last_action_plan_manifest",
+    ),
+    "change_set": runtime_json_object_field_or_empty(
+      final_session, "mooncode_last_change_set_manifest",
+    ),
+    "patch_set": runtime_json_object_field_or_empty(
+      final_session, "mooncode_last_patch_set_manifest",
+    ),
+    "tool_approvals": runtime_json_object_field_or_empty(
+      final_session, "mooncode_last_tool_approvals_manifest",
+    ),
+    "test_runs": runtime_json_object_field_or_empty(
+      final_session, "mooncode_last_test_runs_manifest",
+    ),
+    "runtime_evidence": runtime_json_object_field_or_empty(
+      final_session, "mooncode_last_runtime_evidence_manifest",
+    ),
+    "eval_report": runtime_json_object_field_or_empty(
+      final_session, "mooncode_last_eval_report_manifest",
+    ),
+    "runtime_handoff": runtime_json_object_field_or_empty(
+      final_session, "mooncode_last_runtime_handoff_manifest",
+    ),
+    "session": session_response,
+  }
+}
+
+///|
 pub fn runtime_ingest_events(
   payload : Json,
   ingested_at~ : String,
@@ -2114,5 +2160,83 @@ test "mooncode runtime event sink response owns event surface" {
       default=0,
     ),
     1,
+  )
+}
+
+///|
+test "mooncode runtime event ingest result response owns manifest surface" {
+  let packet : Json = { "command_id": "cmd-1", "action": "run_tests" }
+  let event = event_record(
+    id="event-1",
+    lane="test",
+    kind="test_result",
+    title="Tests passed",
+    status="done",
+    created_at="2026-06-15T00:00:00Z",
+    detail="Total tests: 1, passed: 1",
+    command="moon test",
+    command_packet=packet,
+  )
+  let ingest_report : Json = {
+    "kind": "mooncode-runtime-event-ingest-report",
+    "accepted_count": 1,
+  }
+  let final_session : Json = {
+    "mooncode_last_action_plan_manifest": { "kind": "mooncode-action-plan" },
+    "mooncode_last_change_set_manifest": { "kind": "mooncode-change-set" },
+    "mooncode_last_patch_set_manifest": { "kind": "mooncode-patch-set" },
+    "mooncode_last_tool_approvals_manifest": {
+      "kind": "mooncode-tool-approvals",
+    },
+    "mooncode_last_test_runs_manifest": { "kind": "mooncode-test-runs" },
+    "mooncode_last_runtime_evidence_manifest": {
+      "kind": "mooncode-runtime-evidence",
+    },
+    "mooncode_last_eval_report_manifest": { "kind": "mooncode-eval-report" },
+    "mooncode_last_runtime_handoff_manifest": {
+      "kind": "mooncode-runtime-handoff",
+    },
+  }
+  let response = runtime_event_ingest_result_response(
+    "session-demo",
+    [event],
+    [event],
+    ingest_report,
+    final_session,
+    { "id": "session-demo", "kind": "mooncode-session" },
+    event_log_path="/tmp/session/events.jsonl",
+  )
+  assert_eq(
+    json_string(response, "kind", default=""),
+    "mooncode-runtime-event-ingest-result",
+  )
+  assert_eq(runtime_json_int(response, "accepted_event_count", default=0), 1)
+  assert_eq(
+    json_string(response, "event_log_path", default=""),
+    "/tmp/session/events.jsonl",
+  )
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(response, "action_plan"),
+      "kind",
+      default="",
+    ),
+    "mooncode-action-plan",
+  )
+  assert_eq(
+    runtime_json_int(
+      runtime_json_object_field_or_empty(response, "command_progress"),
+      "command_count",
+      default=0,
+    ),
+    1,
+  )
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(response, "session"),
+      "id",
+      default="",
+    ),
+    "session-demo",
   )
 }
