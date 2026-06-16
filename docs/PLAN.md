@@ -495,6 +495,10 @@ The same evidence is now available through
 `GET /api/mooncode/sessions/<id>/runtime-evidence` as a session-level
 `mooncode-session-runtime-evidence` projection, giving MoonClaw and future
 standalone `mooncode` consumers a UI-independent proof contract.
+Command-level proof construction and session-level evidence aggregation are now
+separate MoonCode implementation files, keeping per-command event matching
+extractable while leaving session rollups as a distinct consumer-facing
+projection.
 Runtime proof events now normalize `command_id`/`command_packet` into
 a `mooncode.v1` command reference. When scoped proofs exist for an action, the
 plan only completes the matching command id; unscoped proof events remain a
