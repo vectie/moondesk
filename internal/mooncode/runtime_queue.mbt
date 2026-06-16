@@ -1651,6 +1651,22 @@ pub fn runtime_dispatch_receipt_for_response(
 }
 
 ///|
+pub fn runtime_dispatch_receipts_for_response(
+  receipts : Array[Json],
+) -> Array[Json] {
+  [
+    for index, receipt in receipts => {
+      runtime_dispatch_receipt_for_response(
+        receipt,
+        fallback_dispatch_id=runtime_dispatch_receipt_fallback_id(
+          receipt, index,
+        ),
+      )
+    }
+  ]
+}
+
+///|
 pub fn runtime_dispatch_state_response(
   session_id : String,
   commands : Array[Json],
@@ -1936,6 +1952,15 @@ fn runtime_command_execution_summary_from_record(command : Json) -> Json {
         rq_json_object_field_or_empty(command, "native_mooncode_body"),
       )
   }
+}
+
+///|
+fn runtime_dispatch_receipt_fallback_id(receipt : Json, index : Int) -> String {
+  let seed = "\{index}:" + receipt.stringify()
+  let digest = @crypto.bytes_to_hex_string(
+    @crypto.sha256(@encoding/utf8.encode(seed).to_fixedarray()),
+  )
+  "mooncode-runtime-dispatch-" + digest[:16].to_owned()
 }
 
 ///|
@@ -3207,6 +3232,24 @@ test "mooncode runtime dispatch receipt response fills legacy defaults" {
     rq_json_object_field(response, "runtime_command") is Some(Json::Object(_)),
   )
   assert_true(rq_json_object_field(response, "owner") is Some(Json::Object(_)))
+  let responses = runtime_dispatch_receipts_for_response([
+    { "command_id": "cmd-legacy", "status": "legacy-bridged" },
+    {
+      "command_id": "cmd-existing",
+      "status": "runtime-completed",
+      "dispatch_id": "dispatch-existing",
+    },
+  ])
+  assert_eq(responses.length(), 2)
+  assert_true(
+    rq_json_string(responses[0], "dispatch_id", default="").has_prefix(
+      "mooncode-runtime-dispatch-",
+    ),
+  )
+  assert_eq(
+    rq_json_string(responses[1], "dispatch_id", default=""),
+    "dispatch-existing",
+  )
 }
 
 ///|

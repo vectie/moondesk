@@ -403,24 +403,7 @@ fn mooncode_runtime_claim_receipts(
 fn mooncode_runtime_dispatch_receipts_for_response(
   receipts : Array[Json],
 ) -> Array[Json] {
-  [
-    for receipt in receipts => {
-      mooncode_runtime_dispatch_receipt_for_response(receipt)
-    }
-  ]
-}
-
-///|
-fn mooncode_runtime_dispatch_receipt_for_response(receipt : Json) -> Json {
-  @mooncode.runtime_dispatch_receipt_for_response(
-    receipt,
-    fallback_dispatch_id=@desk.stable_id(
-      "mooncode-runtime-dispatch",
-      json_string(receipt, "command_id", default="") +
-      ":" +
-      json_string(receipt, "status", default="unknown"),
-    ),
-  )
+  @mooncode.runtime_dispatch_receipts_for_response(receipts)
 }
 
 ///|
