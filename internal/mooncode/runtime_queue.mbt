@@ -1380,6 +1380,24 @@ pub fn runtime_replay_ack_receipts(
 }
 
 ///|
+pub fn runtime_replay_ack_receipts_with_defaults(
+  session : Json,
+  commands : Array[Json],
+  payload : Json,
+  acknowledged_at~ : String,
+  dispatch_receipts? : Array[Json] = [],
+  prior_events? : Array[Json] = [],
+) -> Array[Json] {
+  runtime_replay_ack_receipts(
+    session,
+    commands,
+    rq_json_with_missing_string(payload, "acknowledged_at", acknowledged_at),
+    dispatch_receipts~,
+    prior_events~,
+  )
+}
+
+///|
 pub fn runtime_replay_ack_response(
   session_id : String,
   commands : Array[Json],
@@ -1464,6 +1482,26 @@ pub fn runtime_claim_receipts(
     )
   }
   claimed
+}
+
+///|
+pub fn runtime_claim_receipts_with_defaults(
+  session : Json,
+  commands : Array[Json],
+  receipts : Array[Json],
+  payload : Json,
+  now~ : String,
+) -> Array[Json] {
+  runtime_claim_receipts(
+    session,
+    commands,
+    receipts,
+    rq_json_with_missing_string(
+      rq_json_with_missing_string(payload, "now", now),
+      "claimed_at",
+      now,
+    ),
+  )
 }
 
 ///|
@@ -3852,6 +3890,18 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
   )
   assert_eq(claimed.length(), 1)
   assert_eq(rq_json_string(claimed[0], "command_id", default=""), "cmd-failed")
+  let defaulted_claimed = runtime_claim_receipts_with_defaults(
+    { "id": "session-demo" },
+    commands,
+    receipts,
+    { "consumer_id": "moonclaw-runtime", "max_count": 1 },
+    now="2026-06-15T00:01:00Z",
+  )
+  assert_eq(defaulted_claimed.length(), 1)
+  assert_eq(
+    rq_json_string(defaulted_claimed[0], "claimed_at", default=""),
+    "2026-06-15T00:01:00Z",
+  )
 }
 
 ///|
@@ -4018,6 +4068,22 @@ test "mooncode runtime replay ack records matching claim context" {
   )
   assert_true(
     rq_json_bool(receipts[0], "claimed_by_same_consumer", default=false),
+  )
+  let defaulted_receipts = runtime_replay_ack_receipts_with_defaults(
+    session,
+    commands,
+    {
+      "consumer_id": "moonclaw-runtime",
+      "command_id": "cmd-claimed",
+      "status": "runtime-completed",
+    },
+    acknowledged_at="2026-06-15T00:02:00Z",
+    dispatch_receipts=dispatches,
+  )
+  assert_eq(defaulted_receipts.length(), 1)
+  assert_eq(
+    rq_json_string(defaulted_receipts[0], "created_at", default=""),
+    "2026-06-15T00:02:00Z",
   )
 }
 

@@ -358,6 +358,8 @@ pub fn runtime_claim_max_count(Json) -> Int
 
 pub fn runtime_claim_receipts(Json, Array[Json], Array[Json], Json) -> Array[Json]
 
+pub fn runtime_claim_receipts_with_defaults(Json, Array[Json], Array[Json], Json, now~ : String) -> Array[Json]
+
 pub fn runtime_claim_response(String, Array[Json], Json, Json, Json) -> Json
 
 pub fn runtime_claim_state(String, Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, task_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, lease_now? : String) -> Json
@@ -463,6 +465,8 @@ pub fn runtime_replay_ack_detail(String) -> String
 pub fn runtime_replay_ack_normalized_events(Array[Json]) -> Array[Json]
 
 pub fn runtime_replay_ack_receipts(Json, Array[Json], Json, dispatch_receipts? : Array[Json], prior_events? : Array[Json]) -> Array[Json]
+
+pub fn runtime_replay_ack_receipts_with_defaults(Json, Array[Json], Json, acknowledged_at~ : String, dispatch_receipts? : Array[Json], prior_events? : Array[Json]) -> Array[Json]
 
 pub fn runtime_replay_ack_response(String, Array[Json], Array[Json], Array[Json], Array[Json], Json, Json, workspace_id~ : String, workspace_name~ : String, task_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
 

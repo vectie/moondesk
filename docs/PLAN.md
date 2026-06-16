@@ -206,11 +206,12 @@ records, and stream-state records. It also owns the runtime queue contract:
 runtime protocol metadata, command decode reports, delivered/claimed/pending/
 expired-lease classification, pending OpenSeek JSONL export, runtime replay
 state, runtime claim state, claim/replay consumer contracts, replay
-acknowledgement request expansion, acknowledgement status/detail rules, claim
-request limits, runtime-claim response shape, runtime dispatch-state response
-shape, command-queue response shape, runtime-replay acknowledgement response
-shape, MoonClaw native command/runtime-loop/runtime-turn/stream/eval endpoint
-shapes, native runtime-loop/turn request bodies, and dispatch-mode
+acknowledgement request expansion, replay/claim timestamp defaulting,
+acknowledgement status/detail rules, claim request limits, runtime-claim
+response shape, runtime dispatch-state response shape, command-queue response
+shape, runtime-replay acknowledgement response shape, MoonClaw native
+command/runtime-loop/runtime-turn/stream/eval endpoint shapes, native
+runtime-loop/turn request bodies, and dispatch-mode
 classification, runtime command-feed response shape, runtime event-sink response
 shape, runtime event-ingest result response shape, runtime execution-plan
 response shape, runtime-supervisor response shape, and dispatch receipt record

@@ -356,14 +356,11 @@ fn mooncode_runtime_replay_ack_receipts(
   dispatch_receipts? : Array[Json] = [],
   prior_events? : Array[Json] = [],
 ) -> Array[Json] {
-  @mooncode.runtime_replay_ack_receipts(
+  @mooncode.runtime_replay_ack_receipts_with_defaults(
     session,
     commands,
-    mooncode_json_with_missing_string(
-      payload,
-      "acknowledged_at",
-      @async.now().to_string(),
-    ),
+    payload,
+    acknowledged_at=@async.now().to_string(),
     dispatch_receipts~,
     prior_events~,
   )
@@ -383,29 +380,13 @@ fn mooncode_runtime_claim_receipts(
   receipts : Array[Json],
   payload : Json,
 ) -> Array[Json] {
-  let now = @async.now().to_string()
-  @mooncode.runtime_claim_receipts(
+  @mooncode.runtime_claim_receipts_with_defaults(
     session,
     commands,
     receipts,
-    mooncode_json_with_missing_string(
-      mooncode_json_with_missing_string(payload, "now", now),
-      "claimed_at",
-      now,
-    ),
+    payload,
+    now=@async.now().to_string(),
   )
-}
-
-///|
-fn mooncode_json_with_missing_string(
-  object : Json,
-  field : String,
-  value : String,
-) -> Json {
-  match json_object_field(object, field) {
-    Some(_) => object
-    None => agent_session_with_field(object, field, value.to_json())
-  }
 }
 
 ///|
