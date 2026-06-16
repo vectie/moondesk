@@ -685,6 +685,7 @@ async fn handle_mooncode_session_runtime_execution_plan(
       let receipts = read_mooncode_runtime_dispatch_log(
         workspace_root, session_id,
       )
+      let events = read_mooncode_event_log(workspace_root, session_id)
       let daemon = moonclaw_daemon_status(workspace_root)
       let native_ready = if json_bool(daemon, "running", default=false) {
         mooncode_native_runtime_ready(daemon) catch {
@@ -702,6 +703,8 @@ async fn handle_mooncode_session_runtime_execution_plan(
           session_id,
           commands,
           receipts,
+          events,
+          moonclaw_root=json_string(daemon, "moonclaw_root", default=""),
           native_ready~,
           lease_now=@async.now().to_string(),
         ),
@@ -5507,6 +5510,8 @@ test "mooncode runtime execution plan endpoint projection exposes next command" 
     "session-demo",
     commands,
     [],
+    [],
+    moonclaw_root="/tmp/moonclaw",
     native_ready=true,
     lease_now="2026-06-15T00:00:00Z",
   )
