@@ -3719,16 +3719,6 @@ fn mooncode_event_record(
 }
 
 ///|
-fn mooncode_session_summary(session : Json, events : Array[Json]) -> Json {
-  @mooncode.session_summary(session, events)
-}
-
-///|
-fn mooncode_eval_report_projection(session : Json) -> Json {
-  @mooncode.eval_report_projection(session)
-}
-
-///|
 test "mooncode projects file write and test lanes" {
   let raw_events : Array[Json] = [
     {
@@ -7476,7 +7466,7 @@ test "mooncode prompt command packet seeds durable session creation" {
 }
 
 ///|
-test "mooncode summary and eval report delegate to extracted protocol" {
+test "mooncode summary and eval report use extracted protocol" {
   let event = mooncode_event_record(
     id="d1",
     lane="diff",
@@ -7496,27 +7486,22 @@ test "mooncode summary and eval report delegate to extracted protocol" {
     "mooncode_command_log_count": 1,
     "mooncode_runtime_command_log_count": 1,
   }
-  let legacy_summary = mooncode_session_summary(session, [event])
   let extracted_summary = @mooncode.session_summary(session, [event])
+  assert_eq(json_int(extracted_summary, "diff_count", default=0), 1)
   assert_eq(
-    json_int(legacy_summary, "diff_count", default=0),
-    json_int(extracted_summary, "diff_count", default=0),
-  )
-  assert_eq(
-    json_string(legacy_summary, "review_state", default=""),
     json_string(extracted_summary, "review_state", default=""),
+    "pending",
   )
   let with_summary = agent_session_with_field(
     session, "mooncode_summary", extracted_summary,
   )
-  let delegated_report = mooncode_eval_report_projection(with_summary)
   let extracted_report = @mooncode.eval_report_projection(with_summary)
   assert_eq(
-    json_string(delegated_report, "kind", default=""),
     json_string(extracted_report, "kind", default=""),
+    "mooncode-eval-report",
   )
   assert_eq(
-    json_string(delegated_report, "extractable_component", default=""),
     json_string(extracted_report, "extractable_component", default=""),
+    "mooncode",
   )
 }
