@@ -512,6 +512,9 @@ Plan panel with acceptance gates and `next_required_action`; a delivered
 required gates are missing. Action rows now also include command-scoped runtime evidence:
 `runtime_evidence_status`, required/proven event counts, and exact
 missing/failed required event names derived from the native result contract.
+Runtime command lookup and lease/receipt state classification are now a
+separate MoonCode action-plan slice from per-action gate decisions, keeping
+queue-state evidence distinct from acceptance policy.
 Only matching `command_packet.command_id` events satisfy this proof, so
 concurrent test/package/commit commands cannot complete each other by accident.
 The same evidence is now available through
