@@ -1410,13 +1410,11 @@ async fn handle_mooncode_session_runtime_events(
       send_json(
         conn,
         method_,
-        @mooncode.runtime_event_sink_response(
+        @mooncode.runtime_event_sink_result_response(
           session_id,
           events,
+          session,
           event_log_path=mooncode_event_log_path(workspace_root, session_id),
-          workspace_id=json_string(session, "workspace_id", default=""),
-          workspace_name=json_string(session, "workspace_name", default=""),
-          task_id=json_string(session, "moonclaw_task_id", default=""),
         ),
       )
     }

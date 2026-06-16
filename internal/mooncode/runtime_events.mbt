@@ -198,6 +198,23 @@ pub fn runtime_event_sink_response(
 }
 
 ///|
+pub fn runtime_event_sink_result_response(
+  session_id : String,
+  events : Array[Json],
+  session : Json,
+  event_log_path~ : String,
+) -> Json {
+  runtime_event_sink_response(
+    session_id,
+    events,
+    event_log_path~,
+    workspace_id=runtime_json_string(session, "workspace_id", default=""),
+    workspace_name=runtime_json_string(session, "workspace_name", default=""),
+    task_id=runtime_json_string(session, "moonclaw_task_id", default=""),
+  )
+}
+
+///|
 pub fn runtime_event_ingest_result_response(
   session_id : String,
   accepted_events : Array[Json],
@@ -2161,6 +2178,24 @@ test "mooncode runtime event sink response owns event surface" {
     ),
     1,
   )
+  let aggregate = runtime_event_sink_result_response(
+    "session-demo",
+    [event],
+    {
+      "id": "session-demo",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo",
+      "moonclaw_task_id": "task-demo",
+    },
+    event_log_path="/tmp/session/events.jsonl",
+  )
+  assert_eq(
+    json_string(aggregate, "kind", default=""),
+    "mooncode-runtime-event-sink",
+  )
+  assert_eq(json_string(aggregate, "workspace_id", default=""), "book-demo")
+  assert_eq(json_string(aggregate, "workspace_name", default=""), "Demo")
+  assert_eq(json_string(aggregate, "task_id", default=""), "task-demo")
 }
 
 ///|

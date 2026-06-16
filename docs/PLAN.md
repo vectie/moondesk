@@ -215,9 +215,10 @@ response assembly, MoonClaw native command/runtime-loop/runtime-turn/stream/eval
 endpoint shapes, native runtime-loop/turn request bodies, and dispatch-mode
 classification, runtime command-feed response shape, aggregate runtime
 command-feed response assembly, runtime event-sink response shape, runtime
-event-ingest result response shape, runtime execution-plan response shape,
-runtime-supervisor response shape, and dispatch receipt record shape, dispatch
-receipt-list response normalization, aggregate runtime-dispatch response shape,
+event-sink response assembly, runtime event-ingest result response shape,
+runtime execution-plan response shape, runtime-supervisor response shape, and
+dispatch receipt record shape, dispatch receipt-list response normalization,
+aggregate runtime-dispatch response shape,
 aggregate runtime-claim response assembly, runtime response receipt
 normalization, session snapshot and runtime-handoff receipt normalization, plus
 serve-scheduler response shape. It
