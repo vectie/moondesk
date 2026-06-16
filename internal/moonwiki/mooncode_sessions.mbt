@@ -2328,16 +2328,13 @@ async fn write_mooncode_session_snapshot_if_possible(
   let runtime_dispatches = read_mooncode_runtime_dispatch_log(
     workspace_root, session_id,
   )
-  let normalized_runtime_dispatches = mooncode_runtime_dispatch_receipts_for_response(
-    runtime_dispatches,
-  )
   let session_id = json_string(session, "id", default="")
   let snapshot = @mooncode.session_snapshot(
     session,
     events,
     commands,
     runtime_commands,
-    normalized_runtime_dispatches,
+    runtime_dispatches,
     recorded_at=@async.now().to_string(),
     snapshot_path=mooncode_session_snapshot_path(workspace_root, session_id),
     command_log_path=mooncode_command_log_path(workspace_root, session_id),
@@ -2380,9 +2377,6 @@ async fn write_mooncode_runtime_handoff_manifest(
   let runtime_dispatches = read_mooncode_runtime_dispatch_log(
     workspace_root, session_id,
   )
-  let normalized_runtime_dispatches = mooncode_runtime_dispatch_receipts_for_response(
-    runtime_dispatches,
-  )
   let summary = @mooncode.session_summary(session, events)
   let daemon = moonclaw_daemon_status(workspace_root)
   let daemon_running = json_bool(daemon, "running", default=false)
@@ -2396,7 +2390,7 @@ async fn write_mooncode_runtime_handoff_manifest(
   let runtime_replay = mooncode_runtime_replay_state(
     session_id,
     runtime_commands,
-    normalized_runtime_dispatches,
+    runtime_dispatches,
     workspace_id=json_string(session, "workspace_id", default=""),
     workspace_name=json_string(session, "workspace_name", default=""),
     task_id=json_string(session, "moonclaw_task_id", default=""),
@@ -2410,7 +2404,7 @@ async fn write_mooncode_runtime_handoff_manifest(
   let runtime_claim = mooncode_runtime_claim_state(
     session_id,
     runtime_commands,
-    normalized_runtime_dispatches,
+    runtime_dispatches,
     workspace_id=json_string(session, "workspace_id", default=""),
     workspace_name=json_string(session, "workspace_name", default=""),
     task_id=json_string(session, "moonclaw_task_id", default=""),
@@ -2429,7 +2423,7 @@ async fn write_mooncode_runtime_handoff_manifest(
     runtime_claim,
     commands,
     runtime_commands,
-    normalized_runtime_dispatches,
+    runtime_dispatches,
     daemon,
     native_ready,
     recorded_at~,

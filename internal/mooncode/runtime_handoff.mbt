@@ -66,6 +66,9 @@ pub fn runtime_handoff_manifest(
   stream_checkpoint_path~ : String,
 ) -> Json {
   let session_id = json_string(session, "id", default="")
+  let normalized_runtime_dispatches = runtime_dispatch_receipts_for_response(
+    runtime_dispatches,
+  )
   let status = if native_ready {
     "native-runtime-ready"
   } else if commands.length() > 0 {
@@ -76,7 +79,7 @@ pub fn runtime_handoff_manifest(
   let lifecycle = runtime_command_lifecycle(
     session_id,
     runtime_commands,
-    runtime_dispatches,
+    normalized_runtime_dispatches,
     [],
     lease_now=recorded_at,
   )
@@ -146,13 +149,13 @@ pub fn runtime_handoff_manifest(
     "commands": Json::array(commands),
     "runtime_command_count": runtime_commands.length(),
     "runtime_commands": Json::array(runtime_commands),
-    "runtime_dispatch_count": runtime_dispatches.length(),
+    "runtime_dispatch_count": normalized_runtime_dispatches.length(),
     "runtime_dispatch_pending_count": runtime_dispatch_pending_count(
       runtime_commands,
-      runtime_dispatches,
+      normalized_runtime_dispatches,
       lease_now=recorded_at,
     ),
-    "runtime_dispatches": Json::array(runtime_dispatches),
+    "runtime_dispatches": Json::array(normalized_runtime_dispatches),
     "runtime_replay": runtime_replay,
     "runtime_claim": runtime_claim,
     "runtime_consumer": runtime_consumer_handoff(
@@ -256,10 +259,13 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
       "openseek_wire_command": { "command": "prompt", "text": "build tool" },
     },
   ]
+  let runtime_dispatches : Array[Json] = [
+    { "command_id": "cmd-other", "status": "runtime-completed" },
+  ]
   let runtime_replay = runtime_replay_state(
     "s1",
     runtime_commands,
-    [],
+    runtime_dispatches,
     workspace_id="book",
     workspace_name="Book",
     task_id="task",
@@ -269,7 +275,7 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
   let runtime_claim = runtime_claim_state(
     "s1",
     runtime_commands,
-    [],
+    runtime_dispatches,
     workspace_id="book",
     workspace_name="Book",
     task_id="task",
@@ -283,7 +289,7 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     runtime_claim,
     [{ "command_id": "cmd-1", "action": "prompt" }],
     runtime_commands,
-    [],
+    runtime_dispatches,
     { "running": true, "status": "running", "moonclaw_root": "../moonclaw" },
     false,
     recorded_at="2026-06-15T00:00:00Z",
@@ -305,6 +311,14 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
   assert_eq(
     summary_json_int(manifest, "runtime_dispatch_pending_count", default=0),
     1,
+  )
+  assert_eq(summary_json_int(manifest, "runtime_dispatch_count", default=0), 1)
+  let dispatches = json_array_items(manifest, "runtime_dispatches")
+  assert_eq(dispatches.length(), 1)
+  assert_true(
+    json_string(dispatches[0], "dispatch_id", default="").has_prefix(
+      "mooncode-runtime-dispatch-",
+    ),
   )
   let tool_call_wire = summary_json_object_field_or_empty(
     manifest, "tool_call_wire",

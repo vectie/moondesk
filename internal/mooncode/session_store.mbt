@@ -12,6 +12,9 @@ pub fn session_snapshot(
   runtime_dispatch_log_path~ : String,
   event_log_path~ : String,
 ) -> Json {
+  let normalized_runtime_dispatches = runtime_dispatch_receipts_for_response(
+    runtime_dispatches,
+  )
   {
     "kind": "mooncode-session-snapshot",
     "protocol": "mooncode.v1",
@@ -38,11 +41,11 @@ pub fn session_snapshot(
     "command_count": commands.length(),
     "runtime_commands": Json::array(runtime_commands),
     "runtime_command_count": runtime_commands.length(),
-    "runtime_dispatches": Json::array(runtime_dispatches),
-    "runtime_dispatch_count": runtime_dispatches.length(),
+    "runtime_dispatches": Json::array(normalized_runtime_dispatches),
+    "runtime_dispatch_count": normalized_runtime_dispatches.length(),
     "runtime_dispatch_pending_count": runtime_dispatch_pending_count(
       runtime_commands,
-      runtime_dispatches,
+      normalized_runtime_dispatches,
       lease_now=recorded_at,
     ),
     "events": Json::array(events),
@@ -112,6 +115,9 @@ test "mooncode session snapshot records durable queue and event state" {
       "openseek_wire_command": { "type": "prompt", "prompt": "create a tool" },
     },
   ]
+  let runtime_dispatches : Array[Json] = [
+    { "command_id": "cmd-other", "status": "runtime-completed" },
+  ]
   let snapshot = session_snapshot(
     session,
     [
@@ -127,7 +133,7 @@ test "mooncode session snapshot records durable queue and event state" {
     ],
     commands,
     runtime_commands,
-    [],
+    runtime_dispatches,
     recorded_at="2026-06-15T00:01:00Z",
     snapshot_path="/tmp/book/.moontown/mooncode-sessions/s1/session.json",
     command_log_path="/tmp/book/.moontown/mooncode-sessions/s1/commands.jsonl",
@@ -142,9 +148,17 @@ test "mooncode session snapshot records durable queue and event state" {
   assert_eq(summary_json_int(snapshot, "transcript_count", default=0), 2)
   assert_eq(summary_json_int(snapshot, "command_count", default=0), 1)
   assert_eq(summary_json_int(snapshot, "runtime_command_count", default=0), 1)
+  assert_eq(summary_json_int(snapshot, "runtime_dispatch_count", default=0), 1)
   assert_eq(
     summary_json_int(snapshot, "runtime_dispatch_pending_count", default=0),
     1,
+  )
+  let dispatches = json_array_items(snapshot, "runtime_dispatches")
+  assert_eq(dispatches.length(), 1)
+  assert_true(
+    json_string(dispatches[0], "dispatch_id", default="").has_prefix(
+      "mooncode-runtime-dispatch-",
+    ),
   )
   assert_eq(summary_json_int(snapshot, "event_count", default=0), 1)
   let tool_call_wire = summary_json_object_field_or_empty(
