@@ -739,8 +739,11 @@ outputs, and safety policies. The capability route also carries an OpenSeek-shap
 tool/file-edit eval harnesses plus a native eval-report schema for
 `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>` and a concrete
 `/api/mooncode/eval-harness` contract endpoint. The inspector renders that
-contract as the MoonClaw/MoonCode extraction boundary. The same capability
-response now carries
+contract as the MoonClaw/MoonCode extraction boundary. Runtime-contract
+construction is now separated from top-level capability response assembly, so
+the OpenSeek/MoonClaw engine contract can move with a future standalone
+`mooncode` package without dragging the whole Moondesk capability payload. The
+same capability response now carries
 a live `engine_status` compatibility block that checks the configured MoonClaw
 checkout, daemon, `/v1/models`, `/v1/tasks`, prompt/message/cancel bridge,
 append-only command queue, append-only session log, MoonClaw adapter readiness,

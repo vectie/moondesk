@@ -1269,7 +1269,10 @@ Implemented behavior:
   serve-mode command wire, append-only session store, eval harness split, and
   native eval-report schema for `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`, plus
   a data-only `mooncode-tool-contract` for `read`, `edit`, `write`, `shell`,
-  `moon_check`, and `finish`. That tool contract defines input fields, required
+  `moon_check`, and `finish`. Runtime-contract construction is a separate
+  MoonCode implementation slice from top-level capability response assembly,
+  keeping the OpenSeek/MoonClaw engine contract extractable from the broader
+  Moondesk inspector payload. That tool contract defines input fields, required
   output events, mutating-tool review requirements, path/diff/test/approval
   constraints, and the execution boundary where MoonClaw executes, Moondesk
   renders/reviews, and MoonBook stores accepted artifacts. The
