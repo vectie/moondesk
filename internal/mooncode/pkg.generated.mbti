@@ -412,6 +412,8 @@ pub fn runtime_dispatch_receipt_for_response(Json, fallback_dispatch_id~ : Strin
 
 pub fn runtime_dispatch_receipts_for_response(Array[Json]) -> Array[Json]
 
+pub fn runtime_dispatch_response(String, Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, task_id~ : String, dispatch_mode~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, lease_now~ : String) -> Json
+
 pub fn runtime_dispatch_state_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, task_id~ : String, dispatch_mode~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
 
 pub fn runtime_dispatch_status(Json, Json) -> String

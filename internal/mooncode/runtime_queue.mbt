@@ -1700,6 +1700,34 @@ pub fn runtime_dispatch_state_response(
 }
 
 ///|
+pub fn runtime_dispatch_response(
+  session_id : String,
+  commands : Array[Json],
+  receipts : Array[Json],
+  workspace_id~ : String,
+  workspace_name~ : String,
+  task_id~ : String,
+  dispatch_mode~ : String,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  lease_now~ : String,
+) -> Json {
+  let dispatch_receipts = runtime_dispatch_receipts_for_response(receipts)
+  runtime_dispatch_state_response(
+    session_id,
+    commands,
+    dispatch_receipts,
+    runtime_pending_command_ids(commands, receipts, lease_now~),
+    workspace_id~,
+    workspace_name~,
+    task_id~,
+    dispatch_mode~,
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+  )
+}
+
+///|
 pub fn runtime_command_feed_response(
   session_id : String,
   commands : Array[Json],
@@ -3302,6 +3330,33 @@ test "mooncode runtime dispatch state response records queue state" {
       default="",
     ),
     "moonclaw",
+  )
+  let aggregate = runtime_dispatch_response(
+    "session-demo",
+    [command],
+    [{ "command_id": "cmd-0", "status": "runtime-completed" }],
+    workspace_id="book-demo",
+    workspace_name="Demo",
+    task_id="task-demo",
+    dispatch_mode="moonclaw-mooncode-runtime",
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    lease_now="2026-06-15T00:00:00Z",
+  )
+  assert_eq(
+    rq_json_string(aggregate, "kind", default=""),
+    "mooncode-runtime-dispatch-state",
+  )
+  assert_eq(
+    rq_json_int(aggregate, "runtime_dispatch_pending_count", default=0),
+    1,
+  )
+  let aggregate_receipts = rq_json_array_items(aggregate, "dispatch_receipts")
+  assert_eq(aggregate_receipts.length(), 1)
+  assert_true(
+    rq_json_string(aggregate_receipts[0], "dispatch_id", default="").has_prefix(
+      "mooncode-runtime-dispatch-",
+    ),
   )
 }
 

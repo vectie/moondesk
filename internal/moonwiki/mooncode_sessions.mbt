@@ -1398,11 +1398,10 @@ async fn handle_mooncode_session_runtime_dispatch(
       send_json(
         conn,
         method_,
-        @mooncode.runtime_dispatch_state_response(
+        @mooncode.runtime_dispatch_response(
           session_id,
           commands,
-          mooncode_runtime_dispatch_receipts_for_response(receipts),
-          mooncode_runtime_pending_command_ids(commands, receipts),
+          receipts,
           workspace_id=json_string(session, "workspace_id", default=""),
           workspace_name=json_string(session, "workspace_name", default=""),
           task_id=json_string(session, "moonclaw_task_id", default=""),
@@ -1417,6 +1416,7 @@ async fn handle_mooncode_session_runtime_dispatch(
           runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
             workspace_root, session_id,
           ),
+          lease_now=@async.now().to_string(),
         ),
       )
     }
