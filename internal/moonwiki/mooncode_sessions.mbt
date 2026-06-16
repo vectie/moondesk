@@ -71,14 +71,14 @@ async fn handle_create_mooncode_session(
     json_string(payload, "title", default="MoonCode - \{workspace.name}"),
     fallback="MoonCode - \{workspace.name}",
   )
-  let context_path = mooncode_command_context_path(payload)
+  let context_path = @mooncode.command_context_path(payload)
   let base = mooncode_new_session_record(
     workspace, task, title, now, message, payload,
   )
   let command_packet = mooncode_command_packet(
     base, payload, "prompt", message, now, context_path,
   )
-  let runtime_command = mooncode_runtime_command_record(
+  let runtime_command = @mooncode.runtime_command_record(
     base, payload, message, command_packet,
   )
   append_mooncode_command_log(
@@ -215,7 +215,7 @@ fn mooncode_new_session_record(
     updated_at=now,
     last_message=message,
     transcript=[],
-    initial_context_path=mooncode_command_context_path(payload),
+    initial_context_path=@mooncode.command_context_path(payload),
   )
 }
 
@@ -1556,8 +1556,8 @@ async fn handle_mooncode_session_preflight(
   conn : @http.ServerConnection,
 ) -> Unit {
   let payload = mooncode_preflight_payload_from_request(request_path)
-  let action = mooncode_command_action(payload)
-  if !mooncode_command_is_supported(action) {
+  let action = @mooncode.command_action(payload)
+  if !@mooncode.command_is_supported(action) {
     send_api_error(
       conn,
       method_,
@@ -1609,8 +1609,8 @@ async fn handle_mooncode_session_command(
       return
     }
   }
-  let action = mooncode_command_action(payload)
-  if !mooncode_command_is_supported(action) {
+  let action = @mooncode.command_action(payload)
+  if !@mooncode.command_is_supported(action) {
     send_api_error(
       conn,
       method_,
@@ -1644,8 +1644,8 @@ async fn handle_mooncode_session_command(
     })
     return
   }
-  let context_path = mooncode_command_context_path(payload)
-  let message = mooncode_command_message(action, payload)
+  let context_path = @mooncode.command_context_path(payload)
+  let message = @mooncode.command_message(action, payload)
   let now = @async.now().to_string()
   if json_bool(preflight, "blocked", default=false) && force_preflight {
     let event = mooncode_command_preflight_override_event(
@@ -1663,7 +1663,7 @@ async fn handle_mooncode_session_command(
   let command_packet = mooncode_command_packet(
     session, payload, action, message, now, context_path,
   )
-  let runtime_command = mooncode_runtime_command_record(
+  let runtime_command = @mooncode.runtime_command_record(
     session, payload, message, command_packet,
   )
   append_mooncode_command_log(workspace_root, session_id, command_packet) catch {
@@ -3355,7 +3355,7 @@ async fn send_mooncode_command_to_agent(
     status="sending",
     created_at=sent_at,
   )
-  let runtime_message = mooncode_command_runtime_message(
+  let runtime_message = @mooncode.command_runtime_message(
     message, command_packet,
   )
   let moonclaw_message = agent_session_message(
@@ -3807,28 +3807,28 @@ test "mooncode command events project into review lanes" {
     Json::object({}),
     action="run_tests",
     status="queued",
-    detail=mooncode_command_message("run_tests", Json::object({})),
+    detail=@mooncode.command_message("run_tests", Json::object({})),
     created_at="1",
   )
   let session = append_mooncode_command_event(
     session,
     action="package",
     status="queued",
-    detail=mooncode_command_message("package", Json::object({})),
+    detail=@mooncode.command_message("package", Json::object({})),
     created_at="2",
   )
   let session = append_mooncode_command_event(
     session,
     action="accept",
     status="queued",
-    detail=mooncode_command_message("accept", Json::object({})),
+    detail=@mooncode.command_message("accept", Json::object({})),
     created_at="3",
   )
   let session = append_mooncode_command_event(
     session,
     action="reject",
     status="queued",
-    detail=mooncode_command_message("reject", Json::object({})),
+    detail=@mooncode.command_message("reject", Json::object({})),
     created_at="4",
   )
   let events = project_mooncode_events(session, [], [])
@@ -4075,12 +4075,12 @@ test "mooncode forced preflight command creates override audit event and packet"
 ///|
 test "mooncode review commands preserve target path" {
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
-  let target_path = mooncode_command_context_path(payload)
+  let target_path = @mooncode.command_context_path(payload)
   let session = append_mooncode_command_event(
     Json::object({}),
     action="accept",
     status="queued",
-    detail=mooncode_command_message("accept", payload),
+    detail=@mooncode.command_message("accept", payload),
     created_at="1",
     path=target_path,
   )
@@ -4153,58 +4153,60 @@ test "mooncode patch set groups diff candidates by review state" {
 
 ///|
 test "mooncode command prompts are book coding specific" {
-  assert_true(mooncode_command_is_supported("reject"))
-  assert_true(mooncode_command_is_supported("approve_tool"))
-  assert_true(mooncode_command_is_supported("reject_tool"))
-  assert_true(mooncode_command_is_supported("apply_patch"))
-  assert_true(mooncode_command_is_supported("revert_patch"))
-  assert_true(mooncode_command_is_supported("cancel"))
-  assert_true(mooncode_command_is_supported("run_eval"))
-  assert_true(mooncode_command_is_supported("commit"))
+  assert_true(@mooncode.command_is_supported("reject"))
+  assert_true(@mooncode.command_is_supported("approve_tool"))
+  assert_true(@mooncode.command_is_supported("reject_tool"))
+  assert_true(@mooncode.command_is_supported("apply_patch"))
+  assert_true(@mooncode.command_is_supported("revert_patch"))
+  assert_true(@mooncode.command_is_supported("cancel"))
+  assert_true(@mooncode.command_is_supported("run_eval"))
+  assert_true(@mooncode.command_is_supported("commit"))
   assert_true(
-    mooncode_command_message("run_tests", Json::object({})).contains("tests"),
+    @mooncode.command_message("run_tests", Json::object({})).contains("tests"),
   )
   assert_true(
-    mooncode_command_message("run_eval", Json::object({})).contains(
+    @mooncode.command_message("run_eval", Json::object({})).contains(
       "eval harnesses",
     ),
   )
   assert_true(
-    mooncode_command_message("package", Json::object({})).contains("MoonBook"),
+    @mooncode.command_message("package", Json::object({})).contains("MoonBook"),
   )
   assert_true(
-    mooncode_command_message("commit", Json::object({})).contains(
+    @mooncode.command_message("commit", Json::object({})).contains(
       "commit_created",
     ),
   )
   assert_true(
-    mooncode_command_message("accept", Json::object({})).contains(
+    @mooncode.command_message("accept", Json::object({})).contains(
       "operator accepts",
     ),
   )
   assert_true(
-    mooncode_command_message("reject", Json::object({})).contains(
+    @mooncode.command_message("reject", Json::object({})).contains(
       "operator rejects",
     ),
   )
   assert_true(
-    mooncode_command_message("approve_tool", Json::object({})).contains(
+    @mooncode.command_message("approve_tool", Json::object({})).contains(
       "Approve",
     ),
   )
   assert_true(
-    mooncode_command_message("reject_tool", Json::object({})).contains("Reject"),
+    @mooncode.command_message("reject_tool", Json::object({})).contains(
+      "Reject",
+    ),
   )
   assert_true(
-    mooncode_command_message("apply_patch", Json::object({})).contains("Apply"),
+    @mooncode.command_message("apply_patch", Json::object({})).contains("Apply"),
   )
   assert_true(
-    mooncode_command_message("revert_patch", Json::object({})).contains(
+    @mooncode.command_message("revert_patch", Json::object({})).contains(
       "Revert",
     ),
   )
   assert_true(
-    mooncode_command_message("cancel", Json::object({})).contains("Cancel"),
+    @mooncode.command_message("cancel", Json::object({})).contains("Cancel"),
   )
 }
 
@@ -4273,7 +4275,7 @@ test "mooncode command packet preserves runtime boundary" {
     "context_path": "tools/demo/main.mbt",
     "web_search": false,
   }
-  let message = mooncode_command_message("run_tests", payload)
+  let message = @mooncode.command_message("run_tests", payload)
   let packet = mooncode_command_packet(
     session, payload, "run_tests", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
@@ -4293,7 +4295,7 @@ test "mooncode command packet preserves runtime boundary" {
     json_string_array_items(output_contract, "roots").contains("tools/"),
   )
   assert_true(
-    mooncode_command_runtime_message(message, packet).contains(
+    @mooncode.command_runtime_message(message, packet).contains(
       "MoonCode command packet",
     ),
   )
@@ -4506,11 +4508,11 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
     "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
-  let message = mooncode_command_message("run_tests", payload)
+  let message = @mooncode.command_message("run_tests", payload)
   let packet = mooncode_command_packet(
     session, payload, "run_tests", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
-  let runtime_command = mooncode_runtime_command_record(
+  let runtime_command = @mooncode.runtime_command_record(
     session, payload, message, packet,
   )
   append_mooncode_command_log(root, "agent-demo", packet)
@@ -4666,11 +4668,11 @@ async test "mooncode runtime replay ack events persist as session evidence" {
     "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
-  let message = mooncode_command_message("run_tests", payload)
+  let message = @mooncode.command_message("run_tests", payload)
   let packet = mooncode_command_packet(
     session, payload, "run_tests", message, "2026-06-15T00:00:00Z", "tools/demo/main.mbt",
   )
-  let runtime_command = mooncode_runtime_command_record(
+  let runtime_command = @mooncode.runtime_command_record(
     session, payload, message, packet,
   )
   append_mooncode_command_log(root, "agent-demo", packet)
@@ -4996,11 +4998,11 @@ test "mooncode runtime command stores compact execution summary" {
     "context_path": "tools/demo/main.mbt",
     "package_kind": "miniapp",
   }
-  let message = mooncode_command_message("package", payload)
+  let message = @mooncode.command_message("package", payload)
   let packet = mooncode_command_packet(
     session, payload, "package", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
-  let command = mooncode_runtime_command_record(
+  let command = @mooncode.runtime_command_record(
     session, payload, message, packet,
   )
   let summary = json_object_field_or_empty(command, "execution_summary")
@@ -5933,11 +5935,11 @@ async test "mooncode action plan writes durable moonbook manifest" {
     "workspace_root": root,
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
-  let message = mooncode_command_message("run_tests", payload)
+  let message = @mooncode.command_message("run_tests", payload)
   let packet = mooncode_command_packet(
     session, payload, "run_tests", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
-  let runtime_command = mooncode_runtime_command_record(
+  let runtime_command = @mooncode.runtime_command_record(
     session, payload, message, packet,
   )
   append_mooncode_command_log(root, "agent-demo", packet)
@@ -6041,7 +6043,7 @@ test "mooncode command events keep typed command packet" {
     "moonclaw_task_id": "task-demo",
   }
   let payload : Json = { "context_path": "apps/demo/app.mbt" }
-  let message = mooncode_command_message("package", payload)
+  let message = @mooncode.command_message("package", payload)
   let packet = mooncode_command_packet(
     base, payload, "package", message, "2026-06-14T00:00:00Z", "apps/demo/app.mbt",
   )
@@ -6098,7 +6100,7 @@ async test "mooncode review actions write moonbook receipts" {
     @pathx.join(root, "tools/demo/main.mbt"),
     "fn main { println(\"mooncode\") }\n",
   )
-  let message = mooncode_command_message("accept", payload)
+  let message = @mooncode.command_message("accept", payload)
   let packet = mooncode_command_packet(
     session, payload, "accept", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
@@ -6136,7 +6138,7 @@ async test "mooncode review actions write moonbook receipts" {
       session,
       payload,
       "package",
-      mooncode_command_message("package", payload),
+      @mooncode.command_message("package", payload),
       "2026-06-14T00:01:00Z",
       "tools/demo/main.mbt",
     ),
@@ -6516,7 +6518,7 @@ async test "mooncode review actions write moonbook receipts" {
       append_mooncode_runtime_command_log(
         root,
         "agent-demo",
-        mooncode_runtime_command_record(
+        @mooncode.runtime_command_record(
           with_eval_report, package_payload, "Package it.", package_packet,
         ),
       )
@@ -7139,11 +7141,11 @@ async test "mooncode native eval report ingress persists moonbook proof" {
     "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
   }
   let eval_payload : Json = { "context_path": "tools/demo/main.mbt" }
-  let eval_message = mooncode_command_message("run_eval", eval_payload)
+  let eval_message = @mooncode.command_message("run_eval", eval_payload)
   let eval_packet = mooncode_command_packet(
     session, eval_payload, "run_eval", eval_message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
-  let eval_runtime_command = mooncode_runtime_command_record(
+  let eval_runtime_command = @mooncode.runtime_command_record(
     session, eval_payload, eval_message, eval_packet,
   )
   append_mooncode_command_log(root, "agent-demo", eval_packet)

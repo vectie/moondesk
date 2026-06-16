@@ -1,14 +1,4 @@
 ///|
-fn mooncode_command_action(payload : Json) -> String {
-  @mooncode.command_action(payload)
-}
-
-///|
-fn mooncode_command_is_supported(action : String) -> Bool {
-  @mooncode.command_is_supported(action)
-}
-
-///|
 fn mooncode_preflight_payload_from_request(request_path : String) -> Json {
   let action = match query_value(request_path, "action") {
     Some(value) => decode_query_value(value).trim().to_owned()
@@ -36,7 +26,7 @@ fn mooncode_command_preflight(
   @mooncode.command_preflight(
     session_id=json_string(session, "id", default=""),
     action~,
-    context_path=mooncode_command_context_path(payload),
+    context_path=@mooncode.command_context_path(payload),
     summary~,
     patch_entries=mooncode_patch_set_entries(events),
   )
@@ -54,7 +44,7 @@ fn mooncode_command_preflight_blocked_event(
     "reason",
     default="MoonCode command is blocked by current review gates",
   )
-  let target = mooncode_command_context_path(payload)
+  let target = @mooncode.command_context_path(payload)
   @mooncode.command_preflight_blocked_event(
     preflight,
     action~,
@@ -79,7 +69,7 @@ fn mooncode_command_preflight_override_event(
     "reason",
     default="MoonCode command preflight was overridden by the operator",
   )
-  let target = mooncode_command_context_path(payload)
+  let target = @mooncode.command_context_path(payload)
   @mooncode.command_preflight_override_event(
     preflight,
     action~,
@@ -104,16 +94,6 @@ fn mooncode_command_preflight_has_patch_target(
 }
 
 ///|
-fn mooncode_command_message(action : String, payload : Json) -> String {
-  @mooncode.command_message(action, payload)
-}
-
-///|
-fn mooncode_command_context_path(payload : Json) -> String {
-  @mooncode.command_context_path(payload)
-}
-
-///|
 fn mooncode_command_packet(
   session : Json,
   payload : Json,
@@ -135,16 +115,6 @@ fn mooncode_command_packet(
     context_path,
     command_id~,
   )
-}
-
-///|
-fn mooncode_runtime_command_record(
-  session : Json,
-  payload : Json,
-  message : String,
-  command_packet : Json,
-) -> Json {
-  @mooncode.runtime_command_record(session, payload, message, command_packet)
 }
 
 ///|
@@ -435,12 +405,4 @@ fn mooncode_legacy_moonclaw_ingest_events(payload : Json) -> Array[Json] {
     }
   }
   events
-}
-
-///|
-fn mooncode_command_runtime_message(
-  message : String,
-  command_packet : Json,
-) -> String {
-  @mooncode.command_runtime_message(message, command_packet)
 }
