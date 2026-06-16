@@ -552,6 +552,46 @@ pub fn review_receipt_event(
 }
 
 ///|
+pub fn review_receipt_manifest(
+  session : Json,
+  action : String,
+  command_packet : Json,
+  context_path : String,
+  detail : String,
+  command_created_at : String,
+  command_id~ : String,
+  recorded_at~ : String,
+  receipt_path~ : String,
+  absolute_receipt_path~ : String,
+) -> Json {
+  {
+    "kind": "mooncode-review-receipt",
+    "protocol": "mooncode.v1",
+    "status": "recorded",
+    "action": action,
+    "session_id": json_string(session, "id", default=""),
+    "workspace_id": json_string(session, "workspace_id", default=""),
+    "workspace_name": json_string(session, "workspace_name", default=""),
+    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "context_path": context_path,
+    "command_id": command_id,
+    "command_created_at": command_created_at,
+    "recorded_at": recorded_at,
+    "receipt_path": receipt_path,
+    "absolute_receipt_path": absolute_receipt_path,
+    "detail": detail,
+    "command_packet": command_packet,
+    "owner": {
+      "ui": "moondesk",
+      "runtime": "moonclaw",
+      "artifact": "moonbook",
+      "review": "moonbook",
+      "extractable_component": "mooncode",
+    },
+  }
+}
+
+///|
 pub fn package_manifest_event(
   manifest : Json,
   context_path : String,
@@ -2251,6 +2291,59 @@ test "mooncode package source records keep promotion contract extractable" {
       default="",
     ),
     "missing",
+  )
+}
+
+///|
+test "mooncode review receipt manifest records ownership split" {
+  let session : Json = {
+    "id": "agent-demo",
+    "workspace_id": "book-1",
+    "workspace_name": "Demo Book",
+    "moonclaw_task_id": "task-1",
+  }
+  let command_packet : Json = {
+    "protocol": "mooncode.v1",
+    "command_id": "cmd/1",
+    "action": "accept",
+  }
+  let manifest = review_receipt_manifest(
+    session,
+    "accept",
+    command_packet,
+    "tools/demo/main.mbt",
+    "Accept this patch",
+    "2026-06-14T00:00:00Z",
+    command_id="command",
+    recorded_at="2026-06-14T00:01:00Z",
+    receipt_path="wiki/reviews/mooncode/agent-demo/accept-command.json",
+    absolute_receipt_path="/tmp/book/wiki/reviews/mooncode/agent-demo/accept-command.json",
+  )
+  assert_eq(
+    json_string(manifest, "kind", default=""),
+    "mooncode-review-receipt",
+  )
+  assert_eq(json_string(manifest, "protocol", default=""), "mooncode.v1")
+  assert_eq(json_string(manifest, "command_id", default=""), "command")
+  assert_eq(
+    json_string(manifest, "receipt_path", default=""),
+    "wiki/reviews/mooncode/agent-demo/accept-command.json",
+  )
+  assert_eq(
+    json_string(
+      summary_json_object_field_or_empty(manifest, "owner"),
+      "extractable_component",
+      default="",
+    ),
+    "mooncode",
+  )
+  assert_eq(
+    json_string(
+      summary_json_object_field_or_empty(manifest, "command_packet"),
+      "protocol",
+      default="",
+    ),
+    "mooncode.v1",
   )
 }
 

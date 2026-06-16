@@ -328,6 +328,8 @@ pub fn pending_steer_count(Int, Int) -> Int
 
 pub fn review_receipt_event(String, String, String, String, Json, String) -> Json
 
+pub fn review_receipt_manifest(Json, String, Json, String, String, String, command_id~ : String, recorded_at~ : String, receipt_path~ : String, absolute_receipt_path~ : String) -> Json
+
 pub fn review_receipt_relative_path(String, String, String) -> String
 
 pub fn review_state(Int, Int, Int) -> String

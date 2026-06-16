@@ -3184,31 +3184,18 @@ async fn write_mooncode_review_receipt(
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let recorded_at = @async.now().to_string()
-  let receipt : Json = {
-    "kind": "mooncode-review-receipt",
-    "protocol": "mooncode.v1",
-    "status": "recorded",
-    "action": action,
-    "session_id": json_string(session, "id", default=""),
-    "workspace_id": json_string(session, "workspace_id", default=""),
-    "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
-    "context_path": context_path,
-    "command_id": command_id,
-    "command_created_at": command_created_at,
-    "recorded_at": recorded_at,
-    "receipt_path": relative,
-    "absolute_receipt_path": absolute,
-    "detail": detail,
-    "command_packet": command_packet,
-    "owner": {
-      "ui": "moondesk",
-      "runtime": "moonclaw",
-      "artifact": "moonbook",
-      "review": "moonbook",
-      "extractable_component": "mooncode",
-    },
-  }
+  let receipt = @mooncode.review_receipt_manifest(
+    session,
+    action,
+    command_packet,
+    context_path,
+    detail,
+    command_created_at,
+    command_id~,
+    recorded_at~,
+    receipt_path=relative,
+    absolute_receipt_path=absolute,
+  )
   @fsx.write_to_file(absolute, receipt.stringify(indent=2) + "\n")
   receipt
 }

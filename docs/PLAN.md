@@ -221,10 +221,12 @@ also owns change-set, patch-set, tool-approval, test-run, package-manifest,
 package-index, and package-candidate projection: reviewable lane entries,
 patch hunk grouping, approval/test row grouping, package status/index/
 entry-point derivation, review-state derivation, and manifest status/count
-fields are now host-neutral protocol objects. Review receipt events, manifest
-events, package manifest/index events, and runtime-handoff manifest events are
-also now MoonCode protocol records; Moondesk supplies stable ids and handles
-filesystem persistence. The artifact path contract for
+fields are now host-neutral protocol objects. Review receipt manifests/events,
+manifest events, package manifest/index events, and runtime-handoff manifest
+events are also now MoonCode protocol records; Moondesk supplies stable ids and
+handles filesystem persistence. MoonWiki computes book-local paths and writes
+review receipts, but the `mooncode-review-receipt` JSON contract and owner split
+are constructed by MoonCode. The artifact path contract for
 `wiki/reviews/mooncode/<session-id>/...` and
 `portable/app-tool/mooncode/<session-id>/...` is also now in
 `internal/mooncode`, including safe session/command id normalization. Package
