@@ -326,13 +326,10 @@ fn mooncode_runtime_supervisor_launch_packet(
   lease_now? : String = "",
 ) -> Json {
   let now = if lease_now == "" { @async.now().to_string() } else { lease_now }
-  let normalized_receipts = mooncode_runtime_dispatch_receipts_for_response(
-    receipts,
-  )
   @mooncode.runtime_supervisor_response(
     session_id,
     commands,
-    normalized_receipts,
+    receipts,
     events,
     workspace_id=json_string(session, "workspace_id", default=""),
     workspace_name=json_string(session, "workspace_name", default=""),

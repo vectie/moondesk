@@ -1731,7 +1731,7 @@ pub fn runtime_dispatch_response(
 pub fn runtime_command_feed_response(
   session_id : String,
   commands : Array[Json],
-  dispatch_receipts : Array[Json],
+  receipts : Array[Json],
   events : Array[Json],
   workspace_id~ : String,
   workspace_name~ : String,
@@ -1744,6 +1744,7 @@ pub fn runtime_command_feed_response(
   native_ready~ : Bool,
   lease_now~ : String,
 ) -> Json {
+  let dispatch_receipts = runtime_dispatch_receipts_for_response(receipts)
   let replay = runtime_replay_state(
     session_id,
     commands,
@@ -1841,7 +1842,7 @@ pub fn runtime_command_feed_response(
 pub fn runtime_execution_plan_response(
   session_id : String,
   commands : Array[Json],
-  dispatch_receipts : Array[Json],
+  receipts : Array[Json],
   events : Array[Json],
   workspace_id~ : String,
   workspace_name~ : String,
@@ -1854,6 +1855,7 @@ pub fn runtime_execution_plan_response(
   native_ready~ : Bool,
   lease_now~ : String,
 ) -> Json {
+  let dispatch_receipts = runtime_dispatch_receipts_for_response(receipts)
   let replay = runtime_replay_state(
     session_id,
     commands,
@@ -1913,7 +1915,7 @@ pub fn runtime_execution_plan_response(
 pub fn runtime_supervisor_response(
   session_id : String,
   commands : Array[Json],
-  dispatch_receipts : Array[Json],
+  receipts : Array[Json],
   events : Array[Json],
   workspace_id~ : String,
   workspace_name~ : String,
@@ -1926,6 +1928,7 @@ pub fn runtime_supervisor_response(
   native_ready~ : Bool,
   lease_now~ : String,
 ) -> Json {
+  let dispatch_receipts = runtime_dispatch_receipts_for_response(receipts)
   let replay = runtime_replay_state(
     session_id,
     commands,
@@ -3385,10 +3388,14 @@ test "mooncode runtime command feed response owns runtime surface" {
     },
     "openseek_wire_command": { "command": "prompt", "text": "build it" },
   }
+  let raw_receipt : Json = {
+    "command_id": "cmd-other",
+    "status": "runtime-completed",
+  }
   let response = runtime_command_feed_response(
     "session-demo",
     [command],
-    [],
+    [raw_receipt],
     [],
     workspace_id="book-demo",
     workspace_name="Demo",
@@ -3409,6 +3416,14 @@ test "mooncode runtime command feed response owns runtime surface" {
   assert_eq(
     rq_json_int(response, "runtime_dispatch_pending_count", default=0),
     1,
+  )
+  assert_eq(rq_json_int(response, "runtime_dispatch_count", default=0), 1)
+  let response_receipts = rq_json_array_items(response, "dispatch_receipts")
+  assert_eq(response_receipts.length(), 1)
+  assert_true(
+    rq_json_string(response_receipts[0], "dispatch_id", default="").has_prefix(
+      "mooncode-runtime-dispatch-",
+    ),
   )
   assert_eq(
     rq_json_string(response, "runtime_claim_endpoint", default=""),

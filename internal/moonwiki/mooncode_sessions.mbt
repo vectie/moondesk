@@ -769,9 +769,6 @@ async fn handle_mooncode_session_runtime_commands(
         workspace_root, session_id,
       )
       let events = read_mooncode_event_log(workspace_root, session_id)
-      let dispatch_receipts = mooncode_runtime_dispatch_receipts_for_response(
-        receipts,
-      )
       let daemon = moonclaw_daemon_status(workspace_root)
       send_json(
         conn,
@@ -779,7 +776,7 @@ async fn handle_mooncode_session_runtime_commands(
         @mooncode.runtime_command_feed_response(
           session_id,
           commands,
-          dispatch_receipts,
+          receipts,
           events,
           workspace_id=json_string(session, "workspace_id", default=""),
           workspace_name=json_string(session, "workspace_name", default=""),
