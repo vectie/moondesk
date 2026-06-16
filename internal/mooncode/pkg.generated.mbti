@@ -212,6 +212,10 @@ pub fn moonclaw_event_record(Json, fallback_id~ : String) -> Json?
 
 pub fn moonclaw_event_to_runtime_event(Json, fallback_id~ : String, fallback_created_at~ : String) -> Json?
 
+pub fn moonclaw_runtime_loop_request(String, String, consumer_id? : String, max_turns? : Int) -> Json
+
+pub fn moonclaw_runtime_turn_request(String, String, consumer_id? : String) -> Json
+
 pub fn moonclaw_status_event_record(Json, fallback_id~ : String) -> Json?
 
 pub fn moonclaw_tool_event_record(Json, fallback_id~ : String) -> Json?

@@ -24,6 +24,36 @@ pub fn moonclaw_adapter_contract_json() -> Json {
 }
 
 ///|
+pub fn moonclaw_runtime_loop_request(
+  session_id : String,
+  book_root : String,
+  consumer_id? : String = "moonclaw-native-runtime-loop",
+  max_turns? : Int = 8,
+) -> Json {
+  {
+    "protocol": "mooncode.v1",
+    "session_id": session_id,
+    "book_root": book_root,
+    "consumer_id": consumer_id,
+    "max_turns": max_turns,
+  }
+}
+
+///|
+pub fn moonclaw_runtime_turn_request(
+  session_id : String,
+  book_root : String,
+  consumer_id? : String = "moonclaw-native-runtime-turn",
+) -> Json {
+  {
+    "protocol": "mooncode.v1",
+    "session_id": session_id,
+    "book_root": book_root,
+    "consumer_id": consumer_id,
+  }
+}
+
+///|
 pub fn moonclaw_event_mapping_json() -> Json {
   {
     "AssistantMessageDelta": {
@@ -776,6 +806,36 @@ test "mooncode moonclaw adapter shapes legacy status events" {
   assert_eq(json_string(failed_event, "status", default=""), "failed")
   assert_true(
     json_string(failed_event, "detail", default="").contains("tool failed"),
+  )
+}
+
+///|
+test "mooncode moonclaw adapter owns native runtime request bodies" {
+  let loop_request = moonclaw_runtime_loop_request(
+    "session-demo",
+    "/tmp/book",
+    consumer_id="moondesk-ui-runtime-loop",
+    max_turns=5,
+  )
+  assert_eq(json_string(loop_request, "protocol", default=""), "mooncode.v1")
+  assert_eq(json_string(loop_request, "session_id", default=""), "session-demo")
+  assert_eq(json_string(loop_request, "book_root", default=""), "/tmp/book")
+  assert_eq(
+    json_string(loop_request, "consumer_id", default=""),
+    "moondesk-ui-runtime-loop",
+  )
+  assert_eq(moonclaw_json_int(loop_request, "max_turns", default=0), 5)
+  let turn_request = moonclaw_runtime_turn_request(
+    "session-demo",
+    "/tmp/book",
+    consumer_id="moondesk-ui-runtime-turn",
+  )
+  assert_eq(json_string(turn_request, "protocol", default=""), "mooncode.v1")
+  assert_eq(json_string(turn_request, "session_id", default=""), "session-demo")
+  assert_eq(json_string(turn_request, "book_root", default=""), "/tmp/book")
+  assert_eq(
+    json_string(turn_request, "consumer_id", default=""),
+    "moondesk-ui-runtime-turn",
   )
 }
 

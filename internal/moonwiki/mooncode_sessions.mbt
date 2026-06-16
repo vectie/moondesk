@@ -1280,17 +1280,16 @@ async fn handle_mooncode_session_runtime_supervisor_run(
     )
     return
   }
-  let loop_body : Json = {
-    "protocol": "mooncode.v1",
-    "session_id": session_id,
-    "book_root": workspace_root,
-    "consumer_id": json_string(
+  let loop_body = @mooncode.moonclaw_runtime_loop_request(
+    session_id,
+    workspace_root,
+    consumer_id=json_string(
       payload,
       "consumer_id",
       default="moondesk-ui-runtime-loop",
     ),
-    "max_turns": json_int(payload, "max_turns", default=8),
-  }
+    max_turns=json_int(payload, "max_turns", default=8),
+  )
   let runtime_response = match
     moonclaw_post_json(
       daemon,
@@ -1302,12 +1301,11 @@ async fn handle_mooncode_session_runtime_supervisor_run(
       moonclaw_post_json(
         daemon,
         "/v1/mooncode/sessions/\{session_id}/runtime-turn",
-        {
-          "protocol": "mooncode.v1",
-          "session_id": session_id,
-          "book_root": workspace_root,
-          "consumer_id": "moondesk-ui-runtime-turn",
-        },
+        @mooncode.moonclaw_runtime_turn_request(
+          session_id,
+          workspace_root,
+          consumer_id="moondesk-ui-runtime-turn",
+        ),
       )
   }
   let response = match runtime_response {
@@ -3636,13 +3634,12 @@ async fn send_mooncode_native_runtime_command(
     let loop_response = moonclaw_post_json(
       daemon,
       "/v1/mooncode/sessions/\{session_id}/runtime-loop",
-      {
-        "protocol": "mooncode.v1",
-        "session_id": session_id,
-        "book_root": json_string(body, "book_root", default=""),
-        "consumer_id": "moondesk-native-runtime-loop",
-        "max_turns": 8,
-      },
+      @mooncode.moonclaw_runtime_loop_request(
+        session_id,
+        json_string(body, "book_root", default=""),
+        consumer_id="moondesk-native-runtime-loop",
+        max_turns=8,
+      ),
     )
     match loop_response {
       Ok(_) => loop_response
@@ -3650,12 +3647,11 @@ async fn send_mooncode_native_runtime_command(
         moonclaw_post_json(
           daemon,
           "/v1/mooncode/sessions/\{session_id}/runtime-turn",
-          {
-            "protocol": "mooncode.v1",
-            "session_id": session_id,
-            "book_root": json_string(body, "book_root", default=""),
-            "consumer_id": "moondesk-native-runtime-turn",
-          },
+          @mooncode.moonclaw_runtime_turn_request(
+            session_id,
+            json_string(body, "book_root", default=""),
+            consumer_id="moondesk-native-runtime-turn",
+          ),
         )
     }
   } else {
