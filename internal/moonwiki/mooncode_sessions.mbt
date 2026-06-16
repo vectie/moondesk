@@ -3358,36 +3358,14 @@ async fn mooncode_package_source_record(
   match resolve_workspace_path(book_root, candidate) {
     Some((absolute, relative)) =>
       if !@fs.exists(absolute) {
-        {
-          "path": relative,
-          "exists": false,
-          "kind": "missing",
-          "package_ready": false,
-        }
+        @mooncode.package_source_missing_record(relative)
       } else {
         let kind = @fs.kind(absolute) catch {
-          _ =>
-            return {
-              "path": relative,
-              "exists": true,
-              "kind": "unknown",
-              "package_ready": false,
-            }
+          _ => return @mooncode.package_source_unknown_record(relative)
         }
         match kind {
           @fs.FileKind::Directory =>
-            {
-              "path": relative,
-              "exists": true,
-              "kind": "directory",
-              "package_ready": true,
-              "promoted": false,
-              "promotion": {
-                "promoted": false,
-                "status": "directory-source",
-                "source_path": relative,
-              },
-            }
+            @mooncode.package_source_directory_record(relative)
           _ =>
             mooncode_package_file_record(
               absolute,
@@ -3398,13 +3376,7 @@ async fn mooncode_package_source_record(
             )
         }
       }
-    None =>
-      {
-        "path": candidate,
-        "exists": false,
-        "kind": "invalid",
-        "package_ready": false,
-      }
+    None => @mooncode.package_source_invalid_record(candidate)
   }
 }
 
@@ -3417,13 +3389,7 @@ async fn mooncode_package_file_record(
   command_id~ : String,
 ) -> Json {
   let bytes = @fs.read_file(absolute).binary() catch {
-    _ =>
-      return {
-        "path": relative,
-        "exists": true,
-        "kind": "file",
-        "package_ready": false,
-      }
+    _ => return @mooncode.package_source_unknown_record(relative)
   }
   let text = @fs.read_file(absolute).text() catch { _ => "" }
   let promotion = mooncode_promote_package_source(
@@ -3434,22 +3400,12 @@ async fn mooncode_package_file_record(
     text,
     can_promote=text != "",
   )
-  {
-    "path": relative,
-    "exists": true,
-    "kind": "file",
-    "size_bytes": bytes.length(),
-    "sha256": @crypto.bytes_to_hex_string(@crypto.sha256(bytes.to_fixedarray())),
-    "promotion": promotion,
-    "promoted": json_bool(promotion, "promoted", default=false),
-    "promoted_path": json_string(promotion, "promoted_path", default=""),
-    "promoted_absolute_path": json_string(
-      promotion,
-      "promoted_absolute_path",
-      default="",
-    ),
-    "package_ready": true,
-  }
+  @mooncode.package_source_file_record(
+    relative,
+    bytes.length(),
+    @crypto.bytes_to_hex_string(@crypto.sha256(bytes.to_fixedarray())),
+    promotion,
+  )
 }
 
 ///|
@@ -3461,17 +3417,14 @@ async fn mooncode_promote_package_source(
   content : String,
   can_promote~ : Bool,
 ) -> Json {
-  let safe_command = mooncode_safe_receipt_id(command_id, fallback="command")
-  let promoted_path = "\{package_root}/sources/\{safe_command}/\{relative}"
+  let promoted_path = @mooncode.package_source_promotion_path(
+    package_root, command_id, relative,
+  )
   let promoted_absolute = @pathx.join(book_root, promoted_path)
   if !can_promote {
-    return {
-      "promoted": false,
-      "status": "non-text-source",
-      "source_path": relative,
-      "promoted_path": promoted_path,
-      "promoted_absolute_path": promoted_absolute,
-    }
+    return @mooncode.package_source_non_text_promotion(
+      relative, promoted_path, promoted_absolute,
+    )
   }
   @fsx.make_directory(
     @pathx.dirname(promoted_absolute),
@@ -3479,37 +3432,25 @@ async fn mooncode_promote_package_source(
     exists_ok=true,
   ) catch {
     error =>
-      return {
-        "promoted": false,
-        "status": "failed",
-        "source_path": relative,
-        "promoted_path": promoted_path,
-        "promoted_absolute_path": promoted_absolute,
-        "error": "\{error}",
-      }
+      return @mooncode.package_source_failed_promotion(
+        relative,
+        promoted_path,
+        promoted_absolute,
+        "\{error}",
+      )
   }
   @fsx.write_to_file(promoted_absolute, content) catch {
     error =>
-      return {
-        "promoted": false,
-        "status": "failed",
-        "source_path": relative,
-        "promoted_path": promoted_path,
-        "promoted_absolute_path": promoted_absolute,
-        "error": "\{error}",
-      }
+      return @mooncode.package_source_failed_promotion(
+        relative,
+        promoted_path,
+        promoted_absolute,
+        "\{error}",
+      )
   }
-  {
-    "promoted": true,
-    "status": "promoted",
-    "source_path": relative,
-    "promoted_path": promoted_path,
-    "promoted_absolute_path": promoted_absolute,
-    "size_bytes": content.length(),
-    "sha256": @crypto.bytes_to_hex_string(
-      @crypto.sha256(@encoding/utf8.encode(content)),
-    ),
-  }
+  @mooncode.package_source_promoted_promotion(
+    relative, promoted_path, promoted_absolute, content,
+  )
 }
 
 ///|

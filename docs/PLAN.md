@@ -227,7 +227,12 @@ also now MoonCode protocol records; Moondesk supplies stable ids and handles
 filesystem persistence. The artifact path contract for
 `wiki/reviews/mooncode/<session-id>/...` and
 `portable/app-tool/mooncode/<session-id>/...` is also now in
-`internal/mooncode`, including safe session/command id normalization. Durable session snapshot
+`internal/mooncode`, including safe session/command id normalization. Package
+source-inventory record shapes, source-promotion status records, and the
+`portable/app-tool/mooncode/<session-id>/sources/<command-id>/...` promoted
+source path convention are also MoonCode-owned; MoonWiki resolves workspace
+paths and writes files but no longer constructs those JSON contracts locally.
+Durable session snapshot
 projection and runtime-handoff projection are also data-only
 `internal/mooncode` protocol objects, including the runtime-consumer
 status/action block, runtime event-ingest contract, and current-handoff
