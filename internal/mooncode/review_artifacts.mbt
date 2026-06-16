@@ -742,6 +742,18 @@ pub fn review_receipt_relative_path(
 }
 
 ///|
+pub fn command_writes_review_receipt(action : String) -> Bool {
+  action == "accept" ||
+  action == "reject" ||
+  action == "package" ||
+  action == "commit" ||
+  action == "approve_tool" ||
+  action == "reject_tool" ||
+  action == "apply_patch" ||
+  action == "revert_patch"
+}
+
+///|
 pub fn package_manifest_relative_path(
   session_id : String,
   command_id : String,
@@ -2052,6 +2064,20 @@ test "mooncode artifact paths sanitize session and command ids" {
     package_index_manifest_relative_path("s1"),
     "portable/app-tool/mooncode/s1/index.json",
   )
+}
+
+///|
+test "mooncode review receipt policy covers review and execution decisions" {
+  for
+    action in [
+      "accept", "reject", "package", "commit", "approve_tool", "reject_tool", "apply_patch",
+      "revert_patch",
+    ] {
+    assert_true(command_writes_review_receipt(action))
+  }
+  for action in ["prompt", "steer", "cancel", "run_test", "run_eval"] {
+    assert_false(command_writes_review_receipt(action))
+  }
 }
 
 ///|

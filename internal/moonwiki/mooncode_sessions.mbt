@@ -2874,25 +2874,7 @@ async fn mooncode_read_runtime_handoff_manifest(session : Json) -> Json? {
 
 ///|
 fn mooncode_runtime_handoff_manifest_current(manifest : Json) -> Bool {
-  let contract = json_object_field_or_empty(manifest, "resume_contract")
-  let runtime_consumer = json_object_field_or_empty(
-    manifest, "runtime_consumer",
-  )
-  let runtime_consumer_endpoints = json_object_field_or_empty(
-    runtime_consumer, "endpoints",
-  )
-  json_string(contract, "runtime_command_feed_endpoint", default="") != "" &&
-  json_string(contract, "runtime_command_log_path", default="") != "" &&
-  json_string(contract, "runtime_claim_endpoint", default="") != "" &&
-  json_string(contract, "runtime_dispatch_endpoint", default="") != "" &&
-  json_string(contract, "runtime_dispatch_log_path", default="") != "" &&
-  json_string(contract, "runtime_event_ingest_endpoint", default="") != "" &&
-  json_string(contract, "runtime_replay_endpoint", default="") != "" &&
-  json_string(contract, "action_plan_endpoint", default="") != "" &&
-  json_string(runtime_consumer, "status", default="") != "" &&
-  json_string(runtime_consumer, "next_action", default="") != "" &&
-  json_string(runtime_consumer_endpoints, "runtime_claim", default="") != "" &&
-  json_string(runtime_consumer_endpoints, "runtime_replay", default="") != ""
+  @mooncode.runtime_handoff_manifest_current(manifest)
 }
 
 ///|
@@ -3168,14 +3150,7 @@ fn mooncode_eval_report_manifest_event(manifest : Json) -> Json {
 
 ///|
 fn mooncode_command_writes_review_receipt(action : String) -> Bool {
-  action == "accept" ||
-  action == "reject" ||
-  action == "package" ||
-  action == "commit" ||
-  action == "approve_tool" ||
-  action == "reject_tool" ||
-  action == "apply_patch" ||
-  action == "revert_patch"
+  @mooncode.command_writes_review_receipt(action)
 }
 
 ///|

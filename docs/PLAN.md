@@ -230,7 +230,10 @@ filesystem persistence. The artifact path contract for
 `internal/mooncode`, including safe session/command id normalization. Durable session snapshot
 projection and runtime-handoff projection are also data-only
 `internal/mooncode` protocol objects, including the runtime-consumer
-status/action block and runtime event-ingest contract. Command packet
+status/action block, runtime event-ingest contract, and current-handoff
+freshness checks. The command policy for which actions write MoonBook review
+receipts is also protocol-owned, so MoonWiki no longer carries that decision
+table in its host/session file. Command packet
 construction, initial typed session record construction, command
 action/context/message defaults, command event shaping, command-event
 session append/update, transcript-message event shaping, OpenSeek serve-wire

@@ -214,6 +214,29 @@ pub fn runtime_handoff_manifest(
 }
 
 ///|
+pub fn runtime_handoff_manifest_current(manifest : Json) -> Bool {
+  let contract = summary_json_object_field_or_empty(manifest, "resume_contract")
+  let runtime_consumer = summary_json_object_field_or_empty(
+    manifest, "runtime_consumer",
+  )
+  let runtime_consumer_endpoints = summary_json_object_field_or_empty(
+    runtime_consumer, "endpoints",
+  )
+  json_string(contract, "runtime_command_feed_endpoint", default="") != "" &&
+  json_string(contract, "runtime_command_log_path", default="") != "" &&
+  json_string(contract, "runtime_claim_endpoint", default="") != "" &&
+  json_string(contract, "runtime_dispatch_endpoint", default="") != "" &&
+  json_string(contract, "runtime_dispatch_log_path", default="") != "" &&
+  json_string(contract, "runtime_event_ingest_endpoint", default="") != "" &&
+  json_string(contract, "runtime_replay_endpoint", default="") != "" &&
+  json_string(contract, "action_plan_endpoint", default="") != "" &&
+  json_string(runtime_consumer, "status", default="") != "" &&
+  json_string(runtime_consumer, "next_action", default="") != "" &&
+  json_string(runtime_consumer_endpoints, "runtime_claim", default="") != "" &&
+  json_string(runtime_consumer_endpoints, "runtime_replay", default="") != ""
+}
+
+///|
 test "mooncode runtime handoff manifest advertises resume and review contracts" {
   let session : Json = {
     "id": "s1",
@@ -376,4 +399,44 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     ),
     "wiki/reviews/mooncode/s1/patch-set.json",
   )
+}
+
+///|
+test "mooncode runtime handoff currency requires consumer endpoints" {
+  let current : Json = {
+    "kind": "mooncode-runtime-handoff",
+    "resume_contract": {
+      "runtime_command_feed_endpoint": "/api/mooncode/sessions/s1/runtime-commands",
+      "runtime_command_log_path": "runtime-commands.jsonl",
+      "runtime_claim_endpoint": "/api/mooncode/sessions/s1/runtime-claim",
+      "runtime_dispatch_endpoint": "/api/mooncode/sessions/s1/runtime-dispatch",
+      "runtime_dispatch_log_path": "runtime-dispatches.jsonl",
+      "runtime_event_ingest_endpoint": "/api/mooncode/sessions/s1/runtime-events",
+      "runtime_replay_endpoint": "/api/mooncode/sessions/s1/runtime-replay",
+      "action_plan_endpoint": "/api/mooncode/sessions/s1/action-plan",
+    },
+    "runtime_consumer": {
+      "status": "lease-held",
+      "next_action": "execute",
+      "endpoints": {
+        "runtime_claim": "/api/mooncode/sessions/s1/runtime-claim",
+        "runtime_replay": "/api/mooncode/sessions/s1/runtime-replay",
+      },
+    },
+  }
+  assert_true(runtime_handoff_manifest_current(current))
+  let legacy : Json = {
+    "kind": "mooncode-runtime-handoff",
+    "resume_contract": {
+      "runtime_command_feed_endpoint": "/api/mooncode/sessions/s1/runtime-commands",
+      "runtime_command_log_path": "runtime-commands.jsonl",
+      "runtime_claim_endpoint": "/api/mooncode/sessions/s1/runtime-claim",
+      "runtime_dispatch_endpoint": "/api/mooncode/sessions/s1/runtime-dispatch",
+      "runtime_dispatch_log_path": "runtime-dispatches.jsonl",
+      "runtime_event_ingest_endpoint": "/api/mooncode/sessions/s1/runtime-events",
+      "runtime_replay_endpoint": "/api/mooncode/sessions/s1/runtime-replay",
+      "action_plan_endpoint": "/api/mooncode/sessions/s1/action-plan",
+    },
+  }
+  assert_false(runtime_handoff_manifest_current(legacy))
 }
