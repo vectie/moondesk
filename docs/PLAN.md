@@ -174,6 +174,9 @@ approval policy, projecting tool hints/lanes, or exporting `/serve-jsonl`.
 Command queue API response shaping is now a separate MoonCode slice from the
 action metadata catalog, keeping HTTP-facing queue envelopes apart from core
 command semantics.
+Default MoonCode command prompt text is also isolated from routing metadata, so
+MoonClaw-facing task instructions can evolve without changing dispatch,
+approval, lane, or command support tables.
 The same package now owns the data-only tool contract for the OpenSeek-style
 `read`, `edit`, `write`, `shell`, `moon_check`, and `finish` tools, including
 input schemas, output event requirements, review policy, and safety constraints.
