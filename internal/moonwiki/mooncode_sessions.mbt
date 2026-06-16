@@ -1295,14 +1295,14 @@ async fn handle_mooncode_session_runtime_supervisor_run(
   let runtime_response = match
     moonclaw_post_json(
       daemon,
-      "/v1/mooncode/sessions/\{session_id}/runtime-loop",
+      @mooncode.moonclaw_native_runtime_loop_endpoint(session_id),
       loop_body,
     ) {
     Ok(response) => Ok(response)
     Err(_) =>
       moonclaw_post_json(
         daemon,
-        "/v1/mooncode/sessions/\{session_id}/runtime-turn",
+        @mooncode.moonclaw_native_runtime_turn_endpoint(session_id),
         @mooncode.moonclaw_runtime_turn_request(
           session_id,
           workspace_root,
@@ -3623,7 +3623,7 @@ async fn send_mooncode_native_runtime_command(
   let queue_response = match
     moonclaw_post_json(
       daemon,
-      "/v1/mooncode/sessions/\{session_id}/commands",
+      @mooncode.moonclaw_native_command_endpoint(session_id),
       body,
     ) {
     Ok(response) => response
@@ -3633,7 +3633,7 @@ async fn send_mooncode_native_runtime_command(
   let runtime_response = if queue_accepted {
     let loop_response = moonclaw_post_json(
       daemon,
-      "/v1/mooncode/sessions/\{session_id}/runtime-loop",
+      @mooncode.moonclaw_native_runtime_loop_endpoint(session_id),
       @mooncode.moonclaw_runtime_loop_request(
         session_id,
         json_string(body, "book_root", default=""),
@@ -3646,7 +3646,7 @@ async fn send_mooncode_native_runtime_command(
       Err(_) =>
         moonclaw_post_json(
           daemon,
-          "/v1/mooncode/sessions/\{session_id}/runtime-turn",
+          @mooncode.moonclaw_native_runtime_turn_endpoint(session_id),
           @mooncode.moonclaw_runtime_turn_request(
             session_id,
             json_string(body, "book_root", default=""),

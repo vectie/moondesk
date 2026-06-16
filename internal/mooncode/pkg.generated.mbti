@@ -212,7 +212,15 @@ pub fn moonclaw_event_record(Json, fallback_id~ : String) -> Json?
 
 pub fn moonclaw_event_to_runtime_event(Json, fallback_id~ : String, fallback_created_at~ : String) -> Json?
 
+pub fn moonclaw_native_command_endpoint(String) -> String
+
 pub fn moonclaw_native_eval_report_endpoint(String, String) -> String
+
+pub fn moonclaw_native_runtime_loop_endpoint(String) -> String
+
+pub fn moonclaw_native_runtime_turn_endpoint(String) -> String
+
+pub fn moonclaw_native_stream_endpoint(String, String, String, Int) -> String
 
 pub fn moonclaw_runtime_dispatch_mode(Json, accepted? : Bool) -> String
 

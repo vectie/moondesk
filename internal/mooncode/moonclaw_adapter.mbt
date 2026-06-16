@@ -69,11 +69,36 @@ pub fn moonclaw_runtime_dispatch_mode(
 }
 
 ///|
+pub fn moonclaw_native_command_endpoint(session_id : String) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/commands"
+}
+
+///|
+pub fn moonclaw_native_runtime_loop_endpoint(session_id : String) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/runtime-loop"
+}
+
+///|
+pub fn moonclaw_native_runtime_turn_endpoint(session_id : String) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/runtime-turn"
+}
+
+///|
 pub fn moonclaw_native_eval_report_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
   "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/eval-report?book_root=\{moonclaw_query_value(book_root)}"
+}
+
+///|
+pub fn moonclaw_native_stream_endpoint(
+  session_id : String,
+  book_root : String,
+  format : String,
+  since : Int,
+) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/stream?book_root=\{moonclaw_query_value(book_root)}&format=\{moonclaw_query_value(format)}&since=\{since}"
 }
 
 ///|
@@ -933,6 +958,22 @@ test "mooncode moonclaw adapter owns native runtime request bodies" {
   assert_eq(
     moonclaw_native_eval_report_endpoint("session one", "/tmp/moon book"),
     "/v1/mooncode/sessions/session%20one/eval-report?book_root=%2Ftmp%2Fmoon%20book",
+  )
+  assert_eq(
+    moonclaw_native_command_endpoint("session one"),
+    "/v1/mooncode/sessions/session%20one/commands",
+  )
+  assert_eq(
+    moonclaw_native_runtime_loop_endpoint("session one"),
+    "/v1/mooncode/sessions/session%20one/runtime-loop",
+  )
+  assert_eq(
+    moonclaw_native_runtime_turn_endpoint("session one"),
+    "/v1/mooncode/sessions/session%20one/runtime-turn",
+  )
+  assert_eq(
+    moonclaw_native_stream_endpoint("session one", "/tmp/moon book", "sse", 7),
+    "/v1/mooncode/sessions/session%20one/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7",
   )
 }
 

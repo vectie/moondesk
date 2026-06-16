@@ -367,7 +367,9 @@ fn mooncode_native_stream_path(
   format : String,
   since : Int,
 ) -> String {
-  "/v1/mooncode/sessions/\{session_id}/stream?book_root=\{encode_query_value(book_root)}&format=\{encode_query_value(format)}&since=\{since}"
+  @mooncode.moonclaw_native_stream_endpoint(
+    session_id, book_root, format, since,
+  )
 }
 
 ///|
@@ -577,11 +579,9 @@ async test "mooncode stream state records resumable checkpoint" {
   )
   assert_true(
     native_tail.contains(
-      "/v1/mooncode/sessions/agent-demo/stream?book_root=" +
-      encode_query_value(root),
+      @mooncode.moonclaw_native_stream_endpoint("agent-demo", root, "sse", 2),
     ),
   )
-  assert_true(native_tail.contains("&format=sse&since=2"))
 }
 
 ///|
