@@ -1304,8 +1304,12 @@ Implemented behavior:
   MoonClaw-owned native MoonCode runtime when `/v1/mooncode/capabilities`
   responds, posting the packet to `/v1/mooncode/sessions/<id>/commands`; if
   that endpoint is absent, it falls back to the `/v1/task` prompt/message/cancel
-  bridge and records `dispatch_mode` in the session summary. For `accept`,
-  `reject`, and `package`, the route also writes a MoonBook-owned
+  bridge and records `dispatch_mode` in the session summary. Native MoonClaw
+  endpoint path and query-string construction is owned by `internal/mooncode`,
+  separate from the adapter contract/readiness projection, so MoonWiki handlers
+  dispatch through reusable protocol helpers instead of assembling daemon URLs
+  inline. For `accept`, `reject`, and `package`, the route also writes a
+  MoonBook-owned
   `mooncode-review-receipt` under
   `wiki/reviews/mooncode/<session-id>/<action>-<command-id>.json` and appends a
   `receipt.<action>` review event to the MoonCode log. Receipt events do not

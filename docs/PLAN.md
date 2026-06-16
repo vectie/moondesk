@@ -446,7 +446,10 @@ bridged into MoonCode transcript/tool/test/review/runtime lanes. The adapter
 maps MoonClaw tools such as `execute_command`, `read_file`, `write_to_file`,
 `replace_in_file`, `patch_edit`, and `apply_patch` onto the MoonCode tool
 vocabulary and is advertised from `/api/mooncode/capabilities` as a
-compatibility bridge. MoonClaw now implements native `/v1/mooncode/*` slices
+compatibility bridge. Native MoonClaw MoonCode endpoint builders and query
+encoding are now a separate MoonCode slice from the adapter contract, runtime
+request, event mapping, tool mapping, and readiness projection. MoonClaw now
+implements native `/v1/mooncode/*` slices
 for capabilities, command ingestion, cold sidecar list/show, runtime claim,
 runtime dispatch, runtime event ingest, native tool execution, package-result
 acknowledgement, session stream, eval-report projection, and the first
