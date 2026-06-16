@@ -2121,7 +2121,7 @@ async fn mooncode_session_runtime_evidence_projection(
             (if session_id == "" {
               ""
             } else {
-              mooncode_runtime_evidence_manifest_relative_path(session_id)
+              @mooncode.runtime_evidence_manifest_relative_path(session_id)
             }).to_json(),
           ),
           "absolute_manifest_path",
@@ -2130,7 +2130,7 @@ async fn mooncode_session_runtime_evidence_projection(
           } else {
             @pathx.join(
               workspace_root,
-              mooncode_runtime_evidence_manifest_relative_path(session_id),
+              @mooncode.runtime_evidence_manifest_relative_path(session_id),
             )
           }).to_json(),
         ),
@@ -2170,7 +2170,7 @@ async fn write_mooncode_eval_report_manifest(session : Json) -> Json {
     json_string(session, "id", default="session"),
     fallback="session",
   )
-  let relative = mooncode_eval_report_manifest_relative_path(session_id)
+  let relative = @mooncode.eval_report_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let events = project_mooncode_events(session, [], [])
@@ -2247,7 +2247,7 @@ async fn write_mooncode_runtime_handoff_manifest(
     json_string(session, "id", default="session"),
     fallback="session",
   )
-  let relative = mooncode_runtime_handoff_manifest_relative_path(session_id)
+  let relative = @mooncode.runtime_handoff_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let events = project_mooncode_events(session, [], [])
@@ -2331,52 +2331,6 @@ async fn write_mooncode_runtime_handoff_manifest(
 }
 
 ///|
-fn mooncode_change_set_manifest_relative_path(session_id : String) -> String {
-  @mooncode.change_set_manifest_relative_path(session_id)
-}
-
-///|
-fn mooncode_patch_set_manifest_relative_path(session_id : String) -> String {
-  @mooncode.patch_set_manifest_relative_path(session_id)
-}
-
-///|
-fn mooncode_tool_approvals_manifest_relative_path(
-  session_id : String,
-) -> String {
-  @mooncode.tool_approvals_manifest_relative_path(session_id)
-}
-
-///|
-fn mooncode_test_runs_manifest_relative_path(session_id : String) -> String {
-  @mooncode.test_runs_manifest_relative_path(session_id)
-}
-
-///|
-fn mooncode_action_plan_manifest_relative_path(session_id : String) -> String {
-  @mooncode.action_plan_manifest_relative_path(session_id)
-}
-
-///|
-fn mooncode_runtime_evidence_manifest_relative_path(
-  session_id : String,
-) -> String {
-  @mooncode.runtime_evidence_manifest_relative_path(session_id)
-}
-
-///|
-fn mooncode_eval_report_manifest_relative_path(session_id : String) -> String {
-  @mooncode.eval_report_manifest_relative_path(session_id)
-}
-
-///|
-fn mooncode_runtime_handoff_manifest_relative_path(
-  session_id : String,
-) -> String {
-  @mooncode.runtime_handoff_manifest_relative_path(session_id)
-}
-
-///|
 async fn mooncode_read_change_set_manifest(session : Json) -> Json? {
   match json_object_field(session, "mooncode_last_change_set_manifest") {
     Some(manifest) =>
@@ -2398,7 +2352,7 @@ async fn mooncode_read_change_set_manifest(session : Json) -> Json? {
   )
   let absolute = @pathx.join(
     book_root,
-    mooncode_change_set_manifest_relative_path(session_id),
+    @mooncode.change_set_manifest_relative_path(session_id),
   )
   let text = @fs.read_file(absolute).text() catch { _ => return None }
   let manifest = @json.parse(text) catch { _ => return None }
@@ -2431,7 +2385,7 @@ async fn mooncode_read_patch_set_manifest(session : Json) -> Json? {
   )
   let absolute = @pathx.join(
     book_root,
-    mooncode_patch_set_manifest_relative_path(session_id),
+    @mooncode.patch_set_manifest_relative_path(session_id),
   )
   let text = @fs.read_file(absolute).text() catch { _ => return None }
   let manifest = @json.parse(text) catch { _ => return None }
@@ -2464,7 +2418,7 @@ async fn mooncode_read_tool_approvals_manifest(session : Json) -> Json? {
   )
   let absolute = @pathx.join(
     book_root,
-    mooncode_tool_approvals_manifest_relative_path(session_id),
+    @mooncode.tool_approvals_manifest_relative_path(session_id),
   )
   let text = @fs.read_file(absolute).text() catch { _ => return None }
   let manifest = @json.parse(text) catch { _ => return None }
@@ -2497,7 +2451,7 @@ async fn mooncode_read_test_runs_manifest(session : Json) -> Json? {
   )
   let absolute = @pathx.join(
     book_root,
-    mooncode_test_runs_manifest_relative_path(session_id),
+    @mooncode.test_runs_manifest_relative_path(session_id),
   )
   let text = @fs.read_file(absolute).text() catch { _ => return None }
   let manifest = @json.parse(text) catch { _ => return None }
@@ -2530,7 +2484,7 @@ async fn mooncode_read_eval_report_manifest(session : Json) -> Json? {
   )
   let absolute = @pathx.join(
     book_root,
-    mooncode_eval_report_manifest_relative_path(session_id),
+    @mooncode.eval_report_manifest_relative_path(session_id),
   )
   let text = @fs.read_file(absolute).text() catch { _ => return None }
   let manifest = @json.parse(text) catch { _ => return None }
@@ -2563,7 +2517,7 @@ async fn mooncode_read_runtime_handoff_manifest(session : Json) -> Json? {
   )
   let absolute = @pathx.join(
     book_root,
-    mooncode_runtime_handoff_manifest_relative_path(session_id),
+    @mooncode.runtime_handoff_manifest_relative_path(session_id),
   )
   let text = @fs.read_file(absolute).text() catch { _ => return None }
   let manifest = @json.parse(text) catch { _ => return None }
@@ -2893,7 +2847,9 @@ async fn write_mooncode_package_manifest_for_receipt(
     json_string(command_packet, "command_id", default="command"),
     fallback="command",
   )
-  let relative = mooncode_package_manifest_relative_path(session_id, command_id)
+  let relative = @mooncode.package_manifest_relative_path(
+    session_id, command_id,
+  )
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let recorded_at = @async.now().to_string()
@@ -2933,19 +2889,6 @@ async fn write_mooncode_package_manifest_for_receipt(
 }
 
 ///|
-fn mooncode_package_manifest_relative_path(
-  session_id : String,
-  command_id : String,
-) -> String {
-  @mooncode.package_manifest_relative_path(session_id, command_id)
-}
-
-///|
-fn mooncode_package_index_manifest_relative_path(session_id : String) -> String {
-  @mooncode.package_index_manifest_relative_path(session_id)
-}
-
-///|
 async fn write_mooncode_package_index_manifest(
   session : Json,
   session_id : String,
@@ -2958,7 +2901,7 @@ async fn write_mooncode_package_index_manifest(
   if book_root == "" {
     fail("MoonCode package index needs a MoonBook workspace root")
   }
-  let relative = mooncode_package_index_manifest_relative_path(session_id)
+  let relative = @mooncode.package_index_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let packages = mooncode_package_candidate_manifests(session, session_id)
@@ -3138,7 +3081,7 @@ async fn mooncode_package_index_manifest(
   }
   let absolute = @pathx.join(
     book_root,
-    mooncode_package_index_manifest_relative_path(session_id),
+    @mooncode.package_index_manifest_relative_path(session_id),
   )
   let text = @fs.read_file(absolute).text() catch {
     _ => return Json::object({})
@@ -4422,7 +4365,7 @@ async test "mooncode durable native tool call creates pending approval manifest"
     @fs.exists(
       @pathx.join(
         root,
-        mooncode_tool_approvals_manifest_relative_path("agent-demo"),
+        @mooncode.tool_approvals_manifest_relative_path("agent-demo"),
       ),
     ),
   )
@@ -4741,13 +4684,13 @@ async test "mooncode runtime replay ack events persist as session evidence" {
   assert_eq(json_int(projection, "missing_required_event_count", default=-1), 0)
   assert_eq(
     json_string(projection, "manifest_path", default=""),
-    mooncode_runtime_evidence_manifest_relative_path("agent-demo"),
+    @mooncode.runtime_evidence_manifest_relative_path("agent-demo"),
   )
   assert_eq(
     json_string(projection, "absolute_manifest_path", default=""),
     @pathx.join(
       root,
-      mooncode_runtime_evidence_manifest_relative_path("agent-demo"),
+      @mooncode.runtime_evidence_manifest_relative_path("agent-demo"),
     ),
   )
   let with_manifest = write_mooncode_runtime_evidence_if_possible(root, session)
@@ -4761,7 +4704,7 @@ async test "mooncode runtime replay ack events persist as session evidence" {
   assert_eq(json_string(manifest, "status", default=""), "proven")
   assert_eq(
     json_string(manifest, "manifest_path", default=""),
-    mooncode_runtime_evidence_manifest_relative_path("agent-demo"),
+    @mooncode.runtime_evidence_manifest_relative_path("agent-demo"),
   )
   assert_true(
     @fs.exists(json_string(manifest, "absolute_manifest_path", default="")),

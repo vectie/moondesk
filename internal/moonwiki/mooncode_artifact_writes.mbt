@@ -214,7 +214,7 @@ async fn write_mooncode_change_set_manifest(session : Json) -> Json {
     json_string(session, "id", default="session"),
     fallback="session",
   )
-  let relative = mooncode_change_set_manifest_relative_path(session_id)
+  let relative = @mooncode.change_set_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let events = project_mooncode_events(session, [], [])
@@ -243,7 +243,7 @@ async fn write_mooncode_patch_set_manifest(session : Json) -> Json {
     json_string(session, "id", default="session"),
     fallback="session",
   )
-  let relative = mooncode_patch_set_manifest_relative_path(session_id)
+  let relative = @mooncode.patch_set_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let events = project_mooncode_events(session, [], [])
@@ -272,7 +272,7 @@ async fn write_mooncode_tool_approvals_manifest(session : Json) -> Json {
     json_string(session, "id", default="session"),
     fallback="session",
   )
-  let relative = mooncode_tool_approvals_manifest_relative_path(session_id)
+  let relative = @mooncode.tool_approvals_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let events = project_mooncode_events(session, [], [])
@@ -301,7 +301,7 @@ async fn write_mooncode_test_runs_manifest(session : Json) -> Json {
     json_string(session, "id", default="session"),
     fallback="session",
   )
-  let relative = mooncode_test_runs_manifest_relative_path(session_id)
+  let relative = @mooncode.test_runs_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let events = project_mooncode_events(session, [], [])
@@ -333,7 +333,7 @@ async fn write_mooncode_action_plan_manifest(
     json_string(session, "id", default="session"),
     fallback="session",
   )
-  let relative = mooncode_action_plan_manifest_relative_path(session_id)
+  let relative = @mooncode.action_plan_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let manifest = agent_session_with_field(
@@ -365,7 +365,7 @@ async fn write_mooncode_runtime_evidence_manifest(
     json_string(session, "id", default="session"),
     fallback="session",
   )
-  let relative = mooncode_runtime_evidence_manifest_relative_path(session_id)
+  let relative = @mooncode.runtime_evidence_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let manifest = agent_session_with_field(
