@@ -101,10 +101,11 @@ generic MoonCode session router while still joining MoonClaw task events,
 sidecar JSONL, and MoonCode-owned summary contracts for the desktop API; the
 host-side command-event id/default adapter is also outside the route wrapper,
 and the create-session HTTP flow has its own MoonWiki adapter file, so the
-generic session file keeps moving toward list/event dispatch and manifest
-lookup only. Action-plan and runtime-evidence route/projection adapters are
-also isolated from the session router while still delegating their response
-contracts to `internal/mooncode`;
+generic session file now keeps only list/event dispatch. Review-artifact
+manifest lookup and refresh have a dedicated MoonWiki adapter, while
+action-plan and runtime-evidence route/projection adapters are also isolated
+from the session router while still delegating their response contracts to
+`internal/mooncode`;
 future MoonCode work should move more storage and eval contracts behind the
 same boundary before it is split into a standalone `mooncode` component.
 
