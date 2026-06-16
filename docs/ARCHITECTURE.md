@@ -1039,6 +1039,9 @@ Implemented behavior:
   reviewable file diffs with per-path pending/accepted/rejected/applied/reverted
   state and parsed hunk metadata so a future MoonClaw or standalone `mooncode`
   engine can replace the producer without changing the Moondesk review surface.
+  The file/hunk review and runtime execution-state matcher is a focused
+  MoonCode slice shared by patch sets, hunk rows, and preflight gates rather
+  than being embedded in generic review artifact assembly.
 - `GET /api/mooncode/sessions/:id/tool-approvals` returns the durable
   MoonBook-owned `mooncode-tool-approvals` manifest from
   `wiki/reviews/mooncode/<session-id>/tool-approvals.json` or the latest

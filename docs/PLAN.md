@@ -257,7 +257,9 @@ also owns change-set, patch-set, tool-approval, test-run, package-manifest,
 package-index, and package-candidate projection: reviewable lane entries,
 patch hunk grouping, approval/test row grouping, package status/index/
 entry-point derivation, review-state derivation, and manifest status/count
-fields are now host-neutral protocol objects. Review receipt manifests/events,
+fields are now host-neutral protocol objects. Patch review/execution state
+matching is also a separate MoonCode slice from patch-set manifest assembly, so
+file-level and hunk-level gates share one target-matching contract. Review receipt manifests/events,
 manifest events, package manifest/index events, and runtime-handoff manifest
 events are also now MoonCode protocol records; Moondesk supplies stable ids and
 handles filesystem persistence. MoonWiki computes book-local paths and writes
@@ -625,6 +627,10 @@ controls plus hunk-level Accept, Reject, Apply, and Revert controls, including
 visible gate and next-action chips for each target. Moondesk
 still does not edit files directly; the remaining MoonClaw work is richer
 diff-review polish and broader model-backed coding eval coverage.
+The pure MoonCode package now keeps patch review/execution state projection in a
+focused slice shared by patch sets, parsed hunks, and preflight gates. Patch-set
+manifest assembly can change independently from target matching, runtime proof
+counting, and accepted/applied/reverted state derivation.
 Moondesk also writes a MoonBook-owned `mooncode-tool-approvals` manifest under
 `wiki/reviews/mooncode/<session-id>/tool-approvals.json`, exposes it through
 `GET /api/mooncode/sessions/<id>/tool-approvals`, and renders it as a Tool

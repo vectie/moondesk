@@ -163,51 +163,6 @@ pub fn count_package_runtime_state(events : Array[Json], state : String) -> Int 
 }
 
 ///|
-pub fn patch_review_state_for_path(
-  path : String,
-  events : Array[Json],
-) -> String {
-  if patch_review_event_count(path, "revert_patch", events) > 0 {
-    "reverted"
-  } else if patch_review_event_count(path, "apply_patch", events) > 0 {
-    "applied"
-  } else if patch_review_event_count(path, "reject", events) > 0 {
-    "rejected"
-  } else if patch_review_event_count(path, "accept", events) > 0 {
-    "accepted"
-  } else {
-    "pending"
-  }
-}
-
-///|
-pub fn patch_execution_state_for_path(
-  path : String,
-  events : Array[Json],
-) -> String {
-  if patch_execution_event_count(path, "runtime.patch_reverted", events) > 0 {
-    "reverted"
-  } else if patch_execution_event_count(path, "runtime.patch_applied", events) >
-    0 {
-    "applied"
-  } else {
-    "pending"
-  }
-}
-
-///|
-pub fn patch_review_target_matches(
-  target : String,
-  event_path : String,
-) -> Bool {
-  target == "" ||
-  event_path == "" ||
-  event_path == target ||
-  event_path == patch_review_parent_target(target) ||
-  event_path.has_prefix(target + "#hunk-")
-}
-
-///|
 fn review_artifact_owner(artifact_owner : String) -> Json {
   {
     "ui": "moondesk",

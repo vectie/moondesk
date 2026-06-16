@@ -104,3 +104,37 @@ pub fn count_test_run_state(runs : Array[Json], state : String) -> Int {
   }
   count
 }
+
+///|
+fn test_run_entry(event : Json) -> Json {
+  let command = json_string(event, "command", default="")
+  let packet = summary_json_object_field_or_empty(event, "command_packet")
+  {
+    "id": json_string(event, "id", default="test:\{event.stringify()}"),
+    "title": json_string(event, "title", default="Test/build run"),
+    "kind": json_string(event, "kind", default=""),
+    "status": json_string(event, "status", default=""),
+    "run_state": test_run_state(event),
+    "created_at": json_string(event, "created_at", default=""),
+    "path": json_string(event, "path", default=""),
+    "command": command,
+    "exit_code": summary_json_int(event, "exit_code", default=0),
+    "detail": json_string(event, "detail", default=""),
+    "target": test_run_target(event),
+    "verified": test_event_is_completed(event) && !test_event_failed(event),
+    "command_id": json_string(packet, "command_id", default=""),
+  }
+}
+
+///|
+fn test_run_target(event : Json) -> String {
+  let command = json_string(event, "command", default="")
+  if command != "" {
+    return command
+  }
+  let path = json_string(event, "path", default="")
+  if path != "" {
+    return path
+  }
+  json_string(event, "id", default="test:\{event.stringify()}")
+}
