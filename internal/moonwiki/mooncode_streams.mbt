@@ -31,14 +31,14 @@ async fn handle_mooncode_session_stream(
               conn,
               method_,
               content_type,
-              mooncode_sse_stream_text(projected, events, since~),
+              @mooncode.stream_sse_text(projected, events, since~),
             )
           } else {
             send_text(
               conn,
               method_,
               content_type,
-              mooncode_jsonl_stream_text(projected, events, since~),
+              @mooncode.stream_jsonl_text(projected, events, since~),
             )
           }
         }
@@ -81,7 +81,7 @@ async fn handle_mooncode_session_stream_state(
     let consumer_id = mooncode_stream_checkpoint_consumer(request_path, payload)
     let projected = attach_mooncode_session_projection(workspace_root, session)
     let events = json_array_items(projected, "mooncode_events")
-    let requested_sequence = mooncode_stream_checkpoint_sequence(
+    let requested_sequence = @mooncode.stream_checkpoint_sequence(
       payload,
       since,
       events.length(),
@@ -123,24 +123,6 @@ async fn handle_mooncode_session_stream_state(
       ),
     )
   }
-}
-
-///|
-fn mooncode_jsonl_stream_text(
-  session : Json,
-  events : Array[Json],
-  since? : Int = 0,
-) -> String {
-  @mooncode.stream_jsonl_text(session, events, since~)
-}
-
-///|
-fn mooncode_sse_stream_text(
-  session : Json,
-  events : Array[Json],
-  since? : Int = 0,
-) -> String {
-  @mooncode.stream_sse_text(session, events, since~)
 }
 
 ///|
@@ -264,24 +246,6 @@ fn mooncode_stream_checkpoint_consumer(
 }
 
 ///|
-fn mooncode_stream_checkpoint_sequence(
-  payload : Json,
-  fallback_since : Int,
-  latest_sequence : Int,
-) -> Int {
-  @mooncode.stream_checkpoint_sequence(payload, fallback_since, latest_sequence)
-}
-
-///|
-fn mooncode_stream_tail_event_records(
-  session : Json,
-  events : Array[Json],
-  since : Int,
-) -> Array[Json] {
-  @mooncode.stream_tail_event_records(session, events, since)
-}
-
-///|
 fn mooncode_stream_checkpoint_record(
   workspace_root : String,
   session : Json,
@@ -320,7 +284,7 @@ async fn mooncode_stream_state_projection(
   let session_id = json_string(projected, "id", default="")
   let events = json_array_items(projected, "mooncode_events")
   let latest_sequence = events.length()
-  let emitted_count = mooncode_stream_emitted_count(events, since)
+  let emitted_count = @mooncode.stream_emitted_count(events, since)
   let checkpoint = read_mooncode_stream_checkpoint(
     workspace_root, session_id, consumer_id,
   )
@@ -336,19 +300,16 @@ async fn mooncode_stream_state_projection(
     checkpoint_ready,
     mooncode_stream_checkpoint_path(workspace_root, session_id, consumer_id),
     checkpoint,
-    mooncode_stream_tail_event_records(projected, events, since),
+    @mooncode.stream_tail_event_records(projected, events, since),
     "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=\{since}",
     "/api/mooncode/sessions/\{session_id}/stream?format=sse&since=\{since}",
     "/api/mooncode/sessions/\{session_id}/stream-state",
     "/api/mooncode/sessions/\{session_id}/runtime-events",
     "/api/mooncode/sessions/\{session_id}/stream?format=sse&since=\{since}&live=true&timeout_ms=8000",
-    mooncode_native_stream_path(session_id, workspace_root, "sse", since),
+    @mooncode.moonclaw_native_stream_endpoint(
+      session_id, workspace_root, "sse", since,
+    ),
   )
-}
-
-///|
-fn mooncode_stream_emitted_count(events : Array[Json], since : Int) -> Int {
-  @mooncode.stream_emitted_count(events, since)
 }
 
 ///|
@@ -358,18 +319,6 @@ fn mooncode_stream_content_type(format : String) -> String {
   } else {
     "application/x-ndjson; charset=utf-8"
   }
-}
-
-///|
-fn mooncode_native_stream_path(
-  session_id : String,
-  book_root : String,
-  format : String,
-  since : Int,
-) -> String {
-  @mooncode.moonclaw_native_stream_endpoint(
-    session_id, book_root, format, since,
-  )
 }
 
 ///|
@@ -389,7 +338,9 @@ async fn mooncode_native_stream_text(
   }
   moonclaw_get_text(
     daemon,
-    mooncode_native_stream_path(session_id, workspace_root, format, since),
+    @mooncode.moonclaw_native_stream_endpoint(
+      session_id, workspace_root, format, since,
+    ),
   )
 }
 
@@ -410,7 +361,7 @@ test "mooncode jsonl stream includes meta events and done records" {
   fields["moonclaw_task_id"] = "task".to_json()
   fields["mooncode_events"] = Json::array([event])
   let session = Json::object(fields)
-  let text = mooncode_jsonl_stream_text(session, [event])
+  let text = @mooncode.stream_jsonl_text(session, [event])
   let lines = text.trim().split("\n").to_array()
   assert_eq(lines.length(), 3)
   let meta = @json.parse(lines[0].to_owned()) catch { _ => Json::object({}) }
@@ -463,7 +414,7 @@ test "mooncode jsonl stream supports incremental since sequence" {
   fields["id"] = "s1".to_json()
   fields["mooncode_events"] = Json::array([first, second])
   let session = Json::object(fields)
-  let text = mooncode_jsonl_stream_text(session, [first, second], since=1)
+  let text = @mooncode.stream_jsonl_text(session, [first, second], since=1)
   let lines = text.trim().split("\n").to_array()
   assert_eq(lines.length(), 3)
   let meta = @json.parse(lines[0].to_owned()) catch { _ => Json::object({}) }
@@ -587,7 +538,9 @@ async test "mooncode stream state records resumable checkpoint" {
 ///|
 test "mooncode native stream path targets typed runtime endpoint" {
   assert_eq(
-    mooncode_native_stream_path("agent-demo", "/tmp/moon book", "sse", 7),
+    @mooncode.moonclaw_native_stream_endpoint(
+      "agent-demo", "/tmp/moon book", "sse", 7,
+    ),
     "/v1/mooncode/sessions/agent-demo/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7",
   )
 }
@@ -635,7 +588,7 @@ test "mooncode sse stream uses named events" {
   fields["id"] = "s1".to_json()
   fields["mooncode_events"] = Json::array([event])
   let session = Json::object(fields)
-  let text = mooncode_sse_stream_text(session, [event])
+  let text = @mooncode.stream_sse_text(session, [event])
   assert_true(text.contains("event: mooncode.meta\n"))
   assert_true(text.contains("event: mooncode.event\n"))
   assert_true(text.contains("event: mooncode.done\n"))
