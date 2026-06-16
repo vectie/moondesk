@@ -397,13 +397,6 @@ fn mooncode_runtime_claim_receipts(
 }
 
 ///|
-fn mooncode_runtime_dispatch_receipts_for_response(
-  receipts : Array[Json],
-) -> Array[Json] {
-  @mooncode.runtime_dispatch_receipts_for_response(receipts)
-}
-
-///|
 fn mooncode_json_with_missing_string(
   object : Json,
   field : String,

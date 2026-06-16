@@ -5692,7 +5692,7 @@ test "mooncode runtime claim marks pending command without completing it" {
     json_string(order_blocked[0], "blocked_by_command_id", default=""),
     "cmd-1",
   )
-  let response_receipts = mooncode_runtime_dispatch_receipts_for_response(
+  let response_receipts = @mooncode.runtime_dispatch_receipts_for_response(
     receipts,
   )
   assert_eq(
