@@ -213,7 +213,8 @@ shape, MoonClaw native command/runtime-loop/runtime-turn/stream/eval endpoint
 shapes, native runtime-loop/turn request bodies, and dispatch-mode
 classification, runtime command-feed response shape, runtime event-sink response
 shape, runtime event-ingest result response shape, runtime execution-plan
-response shape, and dispatch receipt record shape. It also owns OpenSeek-style
+response shape, runtime-supervisor response shape, and dispatch receipt record
+shape. It also owns OpenSeek-style
 runtime event normalization, canonical MoonCode event shaping, event lane
 validation, runtime event titles, tool lane classification, command preflight
 rules, acceptance-gate projection, required action-gate metadata, patch-target

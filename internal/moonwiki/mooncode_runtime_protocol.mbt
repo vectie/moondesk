@@ -326,10 +326,11 @@ fn mooncode_runtime_supervisor_launch_packet(
   let normalized_receipts = mooncode_runtime_dispatch_receipts_for_response(
     receipts,
   )
-  let replay = mooncode_runtime_replay_state(
+  @mooncode.runtime_supervisor_response(
     session_id,
     commands,
     normalized_receipts,
+    events,
     workspace_id=json_string(session, "workspace_id", default=""),
     workspace_name=json_string(session, "workspace_name", default=""),
     task_id=json_string(session, "moonclaw_task_id", default=""),
@@ -339,40 +340,11 @@ fn mooncode_runtime_supervisor_launch_packet(
     runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
       workspace_root, session_id,
     ),
-    lease_now=now,
-  )
-  let claim = mooncode_runtime_claim_state(
-    session_id,
-    commands,
-    normalized_receipts,
-    workspace_id=json_string(session, "workspace_id", default=""),
-    workspace_name=json_string(session, "workspace_name", default=""),
-    task_id=json_string(session, "moonclaw_task_id", default=""),
-    runtime_command_log_path=mooncode_runtime_command_log_path(
-      workspace_root, session_id,
-    ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
-      workspace_root, session_id,
-    ),
-    lease_now=now,
-  )
-  let lifecycle = mooncode_runtime_command_lifecycle(
-    session_id, commands, normalized_receipts, events,
-  )
-  let scheduler = mooncode_serve_scheduler_projection(
-    session_id, commands, lifecycle,
-  )
-  let turn_packet = @mooncode.runtime_turn_packet(
-    session_id, replay, claim, scheduler, native_ready,
-  )
-  @mooncode.runtime_supervisor_launch_packet(
-    session_id,
-    turn_packet,
-    @mooncode.runtime_consumer_handoff(session_id, replay, claim, native_ready),
     workspace_root~,
     moonclaw_root=json_string(daemon, "moonclaw_root", default=""),
     host_base_url="",
-    native_ready,
+    native_ready~,
+    lease_now=now,
   )
 }
 

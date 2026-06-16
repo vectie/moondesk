@@ -1866,6 +1866,67 @@ pub fn runtime_execution_plan_response(
 }
 
 ///|
+pub fn runtime_supervisor_response(
+  session_id : String,
+  commands : Array[Json],
+  dispatch_receipts : Array[Json],
+  events : Array[Json],
+  workspace_id~ : String,
+  workspace_name~ : String,
+  task_id~ : String,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  workspace_root~ : String,
+  moonclaw_root~ : String,
+  host_base_url~ : String,
+  native_ready~ : Bool,
+  lease_now~ : String,
+) -> Json {
+  let replay = runtime_replay_state(
+    session_id,
+    commands,
+    dispatch_receipts,
+    workspace_id~,
+    workspace_name~,
+    task_id~,
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+    lease_now~,
+  )
+  let claim = runtime_claim_state(
+    session_id,
+    commands,
+    dispatch_receipts,
+    workspace_id~,
+    workspace_name~,
+    task_id~,
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+    lease_now~,
+  )
+  let lifecycle = runtime_command_lifecycle(
+    session_id,
+    commands,
+    dispatch_receipts,
+    events,
+    lease_now~,
+  )
+  let scheduler = serve_scheduler_projection(session_id, commands, lifecycle)
+  let turn_packet = runtime_turn_packet(
+    session_id, replay, claim, scheduler, native_ready,
+  )
+  runtime_supervisor_launch_packet(
+    session_id,
+    turn_packet,
+    runtime_consumer_handoff(session_id, replay, claim, native_ready),
+    workspace_root~,
+    moonclaw_root~,
+    host_base_url~,
+    native_ready,
+  )
+}
+
+///|
 fn runtime_command_execution_summary_from_record(command : Json) -> Json {
   match rq_json_object_field(command, "execution_summary") {
     Some(summary) => summary
@@ -3299,6 +3360,39 @@ test "mooncode runtime command feed response owns runtime surface" {
   )
   assert_true(
     rq_json_object_field(plan, "runtime_supervisor") is Some(Json::Object(_)),
+  )
+  let supervisor = runtime_supervisor_response(
+    "session-demo",
+    [command],
+    [],
+    [],
+    workspace_id="book-demo",
+    workspace_name="Demo",
+    task_id="task-demo",
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    workspace_root="/tmp/book",
+    moonclaw_root="/tmp/moonclaw",
+    host_base_url="",
+    native_ready=true,
+    lease_now="2026-06-15T00:00:00Z",
+  )
+  assert_eq(
+    rq_json_string(supervisor, "kind", default=""),
+    "mooncode-runtime-supervisor-launch",
+  )
+  assert_eq(
+    rq_json_string(supervisor, "session_id", default=""),
+    "session-demo",
+  )
+  assert_eq(rq_json_string(supervisor, "command_id", default=""), "cmd-1")
+  assert_true(rq_json_bool(supervisor, "ready_to_launch", default=false))
+  assert_true(
+    rq_json_object_field(supervisor, "runtime_consumer")
+    is Some(Json::Object(_)),
+  )
+  assert_true(
+    rq_json_object_field(supervisor, "readiness") is Some(Json::Object(_)),
   )
   assert_eq(rq_json_array_items(response, "decode_reports").length(), 1)
   assert_eq(rq_json_array_items(response, "execution_summaries").length(), 1)
