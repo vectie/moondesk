@@ -250,6 +250,9 @@ session summaries. It also owns session summary and eval-report projection:
 event lane counts, review state, pending diff/tool approval counts, verified
 test counts, MoonBook manifest counters, bridge readiness checks, and native
 eval report status are now data-only `internal/mooncode` protocol objects. It
+now has a separate MoonWiki event/summary projection adapter outside the
+generic session router; that adapter gathers MoonClaw task events and durable
+JSONL sidecars, then delegates summary shaping to MoonCode-owned contracts. It
 also owns the aggregate action-plan response surface and runtime-replay block
 composition; Moondesk gathers durable logs and timestamps but no longer builds
 that JSON contract locally. It

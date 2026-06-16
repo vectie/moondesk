@@ -152,8 +152,9 @@ batches, rendering `/stream-state` payloads, rendering `/runtime-replay` and
 checkpoints, rendering the tool contract, normalizing OpenSeek-style runtime
 events, canonicalizing incoming MoonCode events, and enforcing/read-projecting
 MoonCode command preflight gates, action-plan rows, session summaries, and
-eval-report responses. It now also delegates typed session-record creation,
-command action/context/message defaults, command-event creation/append,
+eval-report responses. Its host-side event/summary projection adapter now lives
+outside the generic session router. It now also delegates typed session-record
+creation, command action/context/message defaults, command-event creation/append,
 transcript-message event shaping, MoonBook
 change-set, patch-set, tool-approval, test-run, package-manifest,
 package-index, package-candidate, typed session snapshot, runtime-handoff

@@ -96,6 +96,9 @@ file paths, checkpoint writes, host fallback ids/timestamps, log reads, source
 inventory reads, native/daemon readiness probes, action-plan manifest persistence,
 tool-authorization HTTP handshakes, and
 dispatch/claim/replay receipt appends still live in `internal/moonwiki`;
+MoonWiki's durable event/summary projection adapter now lives outside the
+generic MoonCode session router while still joining MoonClaw task events,
+sidecar JSONL, and MoonCode-owned summary contracts for the desktop API;
 future MoonCode work should move more storage and eval contracts behind the
 same boundary before it is split into a standalone `mooncode` component.
 
