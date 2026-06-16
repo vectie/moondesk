@@ -306,28 +306,14 @@ pub fn runtime_claim_state(
     let tool_authorization_blocked = runtime_command_tool_authorization_blocks(
       command,
     )
-    let base_claim_status = if !valid {
-      "invalid"
-    } else if runtime_receipt_status_delivered(receipt_status) {
-      "delivered"
-    } else if runtime_receipt_status_claimed(receipt_status) && !expired_claim {
-      "claimed"
-    } else if tool_authorization_blocked {
-      "blocked-tool-authorization"
-    } else if expired_claim {
-      "claimable"
-    } else if previous_dispatch_failed {
-      "claimable"
-    } else {
-      "claimable"
-    }
+    let base_claim_status = runtime_claim_base_status(
+      valid, receipt_status, expired_claim, tool_authorization_blocked,
+    )
     let order_blocked = order_blocker_id != "" &&
       base_claim_status != "delivered"
-    let claim_status = if order_blocked {
-      "blocked-by-prior-command"
-    } else {
-      base_claim_status
-    }
+    let claim_status = runtime_claim_status_with_order_blocker(
+      base_claim_status, order_blocker_id,
+    )
     let item : Json = {
       "index": index,
       "command_id": command_id,
@@ -398,11 +384,7 @@ pub fn runtime_claim_state(
       _ => invalid_items.push(item)
     }
     if order_blocker_id == "" &&
-      (
-        base_claim_status == "invalid" ||
-        base_claim_status == "claimed" ||
-        base_claim_status == "blocked-tool-authorization"
-      ) {
+      runtime_claim_status_blocks_following(base_claim_status) {
       order_blocker_id = command_id
       order_blocker_status = base_claim_status
     }
