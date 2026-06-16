@@ -109,76 +109,10 @@ pub fn runtime_replay_state(
       failed_count += 1
     }
     let wire = rq_json_object_field_or_empty(command, "openseek_wire_command")
-    let item : Json = {
-      "index": index,
-      "command_id": command_id,
-      "action": rq_json_string(command, "action", default="prompt"),
-      "dispatch": rq_json_string(command, "dispatch", default="prompt"),
-      "serve_command": rq_json_string(
-        command,
-        "serve_command",
-        default="prompt",
-      ),
-      "created_at": rq_json_string(command, "created_at", default=""),
-      "target": rq_json_string(command, "target", default=""),
-      "context_path": rq_json_string(command, "context_path", default=""),
-      "receipt_status": receipt_status,
-      "replay_status": replay_status,
-      "previous_claim_expired": expired_claim,
-      "blocked_by_command_id": if order_blocked {
-        replay_blocker_id
-      } else {
-        ""
-      },
-      "blocked_by_status": if order_blocked {
-        replay_blocker_status
-      } else {
-        ""
-      },
-      "latest_receipt": latest_receipt,
-      "proof_event_count": rq_json_int(
-        latest_receipt,
-        "proof_event_count",
-        default=0,
-      ),
-      "submitted_event_count": rq_json_int(
-        latest_receipt,
-        "submitted_event_count",
-        default=0,
-      ),
-      "normalized_event_count": rq_json_int(
-        latest_receipt,
-        "normalized_event_count",
-        default=0,
-      ),
-      "runtime_event_summary": rq_json_object_field_or_empty(
-        latest_receipt, "runtime_event_summary",
-      ),
-      "openseek_wire_command": wire,
-      "native_mooncode_body": rq_json_object_field_or_empty(
-        command, "native_mooncode_body",
-      ),
-      "tool_authorization": rq_json_object_field_or_empty(
-        command, "tool_authorization",
-      ),
-      "tool_authorization_state": rq_json_string(
-        rq_json_object_field_or_empty(command, "tool_authorization"),
-        "enforcement_state",
-        default="",
-      ),
-      "runtime_may_execute_tools": rq_json_bool(
-        rq_json_object_field_or_empty(command, "tool_authorization"),
-        "runtime_may_execute",
-        default=true,
-      ),
-      "tool_authorization_blocked": runtime_command_tool_authorization_blocks(
-        command,
-      ),
-      "tool_authorization_blocked_reason": runtime_command_tool_authorization_block_reason(
-        command,
-      ),
-      "decode_report": report,
-    }
+    let item = runtime_replay_item(
+      index, command, command_id, receipt_status, replay_status, expired_claim, order_blocked,
+      replay_blocker_id, replay_blocker_status, latest_receipt, wire, report,
+    )
     replay_items.push(item)
     if runtime_replay_status_is_pending(replay_status) {
       if first_pending_index < 0 {
@@ -314,56 +248,11 @@ pub fn runtime_claim_state(
     let claim_status = runtime_claim_status_with_order_blocker(
       base_claim_status, order_blocker_id,
     )
-    let item : Json = {
-      "index": index,
-      "command_id": command_id,
-      "action": rq_json_string(command, "action", default="prompt"),
-      "dispatch": rq_json_string(command, "dispatch", default="prompt"),
-      "serve_command": rq_json_string(
-        command,
-        "serve_command",
-        default="prompt",
-      ),
-      "created_at": rq_json_string(command, "created_at", default=""),
-      "target": rq_json_string(command, "target", default=""),
-      "context_path": rq_json_string(command, "context_path", default=""),
-      "claim_status": claim_status,
-      "receipt_status": receipt_status,
-      "previous_claim_expired": expired_claim,
-      "previous_dispatch_failed": previous_dispatch_failed,
-      "previous_completion_missing_proof": previous_completion_missing_proof,
-      "tool_authorization": runtime_command_tool_authorization(command),
-      "tool_authorization_state": runtime_command_tool_authorization_state(
-        command,
-      ),
-      "runtime_may_execute_tools": !tool_authorization_blocked,
-      "tool_authorization_blocked": tool_authorization_blocked,
-      "tool_authorization_blocked_reason": runtime_command_tool_authorization_block_reason(
-        command,
-      ),
-      "blocked_by_command_id": if order_blocked {
-        order_blocker_id
-      } else {
-        ""
-      },
-      "blocked_by_status": if order_blocked {
-        order_blocker_status
-      } else {
-        ""
-      },
-      "consumer_id": rq_json_string(latest_receipt, "consumer_id", default=""),
-      "claim_id": rq_json_string(latest_receipt, "claim_id", default=""),
-      "claimed_at": rq_json_string(latest_receipt, "claimed_at", default=""),
-      "lease_expires_at": rq_json_string(
-        latest_receipt,
-        "lease_expires_at",
-        default="",
-      ),
-      "ack_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-replay",
-      "runtime_command": command,
-      "latest_receipt": latest_receipt,
-      "decode_report": report,
-    }
+    let item = runtime_claim_item(
+      session_id, index, command, command_id, claim_status, receipt_status, expired_claim,
+      previous_dispatch_failed, previous_completion_missing_proof, tool_authorization_blocked,
+      order_blocked, order_blocker_id, order_blocker_status, latest_receipt, report,
+    )
     claim_items.push(item)
     if expired_claim {
       expired_claim_items.push(item)
