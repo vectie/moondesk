@@ -605,6 +605,9 @@ returns `allowed`, `requires_approval`, or `blocked` for MoonClaw to enforce.
 This captures policy/review-gated shell, write/edit, diff, and artifact work as
 durable operator intent while keeping execution in MoonClaw or standalone
 `mooncode`.
+The pure MoonCode package now separates approval queue projection from the live
+authorization decision contract, keeping MoonBook review rows reusable while
+MoonClaw-facing allow/block decisions stay in the authorization slice.
 The command endpoint now also performs server-side preflight before appending
 or dispatching review/package/commit/apply commands. `accept`, `package`, and `commit` return
 `409 Conflict` while projected events show failing tests, pending tool
