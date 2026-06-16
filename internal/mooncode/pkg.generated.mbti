@@ -488,6 +488,8 @@ pub fn serve_scheduler_decisions(Array[Json], Array[Json], String, Array[String]
 
 pub fn serve_scheduler_projection(String, Array[Json], Json) -> Json
 
+pub fn serve_scheduler_response(String, Array[Json], Array[Json], Array[Json], Array[Json], lease_now~ : String) -> Json
+
 pub fn serve_wire_valid(Json) -> Bool
 
 pub fn session_eval_checks(Json, Array[Json]) -> Array[Json]

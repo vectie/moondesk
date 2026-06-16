@@ -191,22 +191,6 @@ fn mooncode_runtime_pending_command_ids(
 }
 
 ///|
-fn mooncode_runtime_command_lifecycle(
-  session_id : String,
-  commands : Array[Json],
-  receipts : Array[Json],
-  events : Array[Json],
-) -> Json {
-  @mooncode.runtime_command_lifecycle(
-    session_id,
-    commands,
-    receipts,
-    events,
-    lease_now=@async.now().to_string(),
-  )
-}
-
-///|
 fn mooncode_runtime_replay_state(
   session_id : String,
   commands : Array[Json],
@@ -248,6 +232,25 @@ fn mooncode_serve_scheduler_projection(
   lifecycle : Json,
 ) -> Json {
   @mooncode.serve_scheduler_projection(session_id, command_log, lifecycle)
+}
+
+///|
+fn mooncode_serve_scheduler_response(
+  session_id : String,
+  command_log : Array[Json],
+  runtime_commands : Array[Json],
+  receipts : Array[Json],
+  events : Array[Json],
+  lease_now? : String = "",
+) -> Json {
+  @mooncode.serve_scheduler_response(
+    session_id,
+    command_log,
+    runtime_commands,
+    receipts,
+    events,
+    lease_now=if lease_now == "" { @async.now().to_string() } else { lease_now },
+  )
 }
 
 ///|

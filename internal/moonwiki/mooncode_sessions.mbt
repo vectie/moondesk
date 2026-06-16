@@ -1191,13 +1191,17 @@ async fn handle_mooncode_session_serve_scheduler(
         workspace_root, session_id,
       )
       let events = read_mooncode_event_log(workspace_root, session_id)
-      let lifecycle = mooncode_runtime_command_lifecycle(
-        session_id, runtime_commands, receipts, events,
-      )
       send_json(
         conn,
         method_,
-        mooncode_serve_scheduler_projection(session_id, commands, lifecycle),
+        mooncode_serve_scheduler_response(
+          session_id,
+          commands,
+          runtime_commands,
+          receipts,
+          events,
+          lease_now=@async.now().to_string(),
+        ),
       )
     }
     None =>
