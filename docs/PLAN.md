@@ -623,6 +623,10 @@ MoonCode center renders a Preflight Gates panel for `package`, `commit`,
 `accept`, and selected-path or selected-hunk `apply_patch`/`revert_patch`,
 making test/build, diff, patch-state, runtime-proof, package, and tool approval
 blockers visible before the operator dispatches a command.
+Selected file and hunk patch target resolution now lives in a focused
+MoonCode implementation file, keeping the command preflight entrypoint separate
+from the reusable patch-review target contract consumed by MoonWiki routes,
+tests, and future standalone `mooncode` runtimes.
 Moondesk also writes a MoonBook-owned `mooncode-test-runs` manifest under
 `wiki/reviews/mooncode/<session-id>/test-runs.json`, exposes it through
 `GET /api/mooncode/sessions/<id>/test-runs`, and renders it as a Test Runs
