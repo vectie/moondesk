@@ -2,7 +2,18 @@
 // MoonCode runtime feed, execution-plan, and supervisor response projections.
 
 ///|
-pub fn runtime_command_feed_response(
+priv struct RuntimeResponseProjection {
+  dispatch_receipts : Array[Json]
+  replay : Json
+  claim : Json
+  lifecycle : Json
+  scheduler : Json
+  turn_packet : Json
+  supervisor : Json
+}
+
+///|
+fn runtime_response_projection(
   session_id : String,
   commands : Array[Json],
   receipts : Array[Json],
@@ -17,7 +28,7 @@ pub fn runtime_command_feed_response(
   host_base_url~ : String,
   native_ready~ : Bool,
   lease_now~ : String,
-) -> Json {
+) -> RuntimeResponseProjection {
   let dispatch_receipts = runtime_dispatch_receipts_for_response(receipts)
   let replay = runtime_replay_state(
     session_id,
@@ -62,6 +73,50 @@ pub fn runtime_command_feed_response(
     native_ready,
   )
   {
+    dispatch_receipts,
+    replay,
+    claim,
+    lifecycle,
+    scheduler,
+    turn_packet,
+    supervisor,
+  }
+}
+
+///|
+pub fn runtime_command_feed_response(
+  session_id : String,
+  commands : Array[Json],
+  receipts : Array[Json],
+  events : Array[Json],
+  workspace_id~ : String,
+  workspace_name~ : String,
+  task_id~ : String,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  workspace_root~ : String,
+  moonclaw_root~ : String,
+  host_base_url~ : String,
+  native_ready~ : Bool,
+  lease_now~ : String,
+) -> Json {
+  let projection = runtime_response_projection(
+    session_id,
+    commands,
+    receipts,
+    events,
+    workspace_id~,
+    workspace_name~,
+    task_id~,
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+    workspace_root~,
+    moonclaw_root~,
+    host_base_url~,
+    native_ready~,
+    lease_now~,
+  )
+  {
     "protocol": "mooncode.v1",
     "kind": "mooncode-runtime-command-feed",
     "session_id": session_id,
@@ -72,15 +127,15 @@ pub fn runtime_command_feed_response(
     "runtime_command_count": commands.length(),
     "runtime_dispatch_log_path": runtime_dispatch_log_path,
     "runtime_claim_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-claim",
-    "runtime_dispatch_count": dispatch_receipts.length(),
+    "runtime_dispatch_count": projection.dispatch_receipts.length(),
     "runtime_dispatch_pending_count": runtime_dispatch_pending_count(
       commands,
-      dispatch_receipts,
+      projection.dispatch_receipts,
       lease_now~,
     ),
     "commands": Json::array(commands),
-    "dispatch_receipts": Json::array(dispatch_receipts),
-    "runtime_replay": replay,
+    "dispatch_receipts": Json::array(projection.dispatch_receipts),
+    "runtime_replay": projection.replay,
     "decode_reports": Json::array(
       [
         for command in commands => runtime_command_decode_report(command)
@@ -93,10 +148,10 @@ pub fn runtime_command_feed_response(
         }
       ],
     ),
-    "command_lifecycle": lifecycle,
-    "serve_scheduler": scheduler,
-    "runtime_turn_packet": turn_packet,
-    "runtime_supervisor": supervisor,
+    "command_lifecycle": projection.lifecycle,
+    "serve_scheduler": projection.scheduler,
+    "runtime_turn_packet": projection.turn_packet,
+    "runtime_supervisor": projection.supervisor,
     "wire_protocol": {
       "openseek_serve_commands": Json::array(
         [
@@ -162,59 +217,36 @@ pub fn runtime_execution_plan_response(
   native_ready~ : Bool,
   lease_now~ : String,
 ) -> Json {
-  let dispatch_receipts = runtime_dispatch_receipts_for_response(receipts)
-  let replay = runtime_replay_state(
+  let projection = runtime_response_projection(
     session_id,
     commands,
-    dispatch_receipts,
+    receipts,
+    events,
     workspace_id~,
     workspace_name~,
     task_id~,
     runtime_command_log_path~,
     runtime_dispatch_log_path~,
-    lease_now~,
-  )
-  let claim = runtime_claim_state(
-    session_id,
-    commands,
-    dispatch_receipts,
-    workspace_id~,
-    workspace_name~,
-    task_id~,
-    runtime_command_log_path~,
-    runtime_dispatch_log_path~,
+    workspace_root~,
+    moonclaw_root~,
+    host_base_url~,
+    native_ready~,
     lease_now~,
   )
   let plan = runtime_consumer_execution_plan(
-    session_id, replay, claim, native_ready,
-  )
-  let lifecycle = runtime_command_lifecycle(
     session_id,
-    commands,
-    dispatch_receipts,
-    events,
-    lease_now~,
-  )
-  let scheduler = serve_scheduler_projection(session_id, commands, lifecycle)
-  let turn_packet = runtime_turn_packet(
-    session_id, replay, claim, scheduler, native_ready,
+    projection.replay,
+    projection.claim,
+    native_ready,
   )
   rq_json_with_field(
     rq_json_with_field(
-      rq_json_with_field(plan, "serve_scheduler", scheduler),
+      rq_json_with_field(plan, "serve_scheduler", projection.scheduler),
       "runtime_turn_packet",
-      turn_packet,
+      projection.turn_packet,
     ),
     "runtime_supervisor",
-    runtime_supervisor_launch_packet(
-      session_id,
-      turn_packet,
-      runtime_consumer_handoff(session_id, replay, claim, native_ready),
-      workspace_root~,
-      moonclaw_root~,
-      host_base_url~,
-      native_ready,
-    ),
+    projection.supervisor,
   )
 }
 
@@ -235,49 +267,22 @@ pub fn runtime_supervisor_response(
   native_ready~ : Bool,
   lease_now~ : String,
 ) -> Json {
-  let dispatch_receipts = runtime_dispatch_receipts_for_response(receipts)
-  let replay = runtime_replay_state(
+  runtime_response_projection(
     session_id,
     commands,
-    dispatch_receipts,
-    workspace_id~,
-    workspace_name~,
-    task_id~,
-    runtime_command_log_path~,
-    runtime_dispatch_log_path~,
-    lease_now~,
-  )
-  let claim = runtime_claim_state(
-    session_id,
-    commands,
-    dispatch_receipts,
-    workspace_id~,
-    workspace_name~,
-    task_id~,
-    runtime_command_log_path~,
-    runtime_dispatch_log_path~,
-    lease_now~,
-  )
-  let lifecycle = runtime_command_lifecycle(
-    session_id,
-    commands,
-    dispatch_receipts,
+    receipts,
     events,
-    lease_now~,
-  )
-  let scheduler = serve_scheduler_projection(session_id, commands, lifecycle)
-  let turn_packet = runtime_turn_packet(
-    session_id, replay, claim, scheduler, native_ready,
-  )
-  runtime_supervisor_launch_packet(
-    session_id,
-    turn_packet,
-    runtime_consumer_handoff(session_id, replay, claim, native_ready),
+    workspace_id~,
+    workspace_name~,
+    task_id~,
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
     workspace_root~,
     moonclaw_root~,
     host_base_url~,
-    native_ready,
-  )
+    native_ready~,
+    lease_now~,
+  ).supervisor
 }
 
 ///|
