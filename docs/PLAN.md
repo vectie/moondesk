@@ -174,6 +174,9 @@ approval policy, projecting tool hints/lanes, or exporting `/serve-jsonl`.
 The same package now owns the data-only tool contract for the OpenSeek-style
 `read`, `edit`, `write`, `shell`, `moon_check`, and `finish` tools, including
 input schemas, output event requirements, review policy, and safety constraints.
+That contract catalog is now separated from reusable MoonCode JSON helpers and
+tool-entry builders, so the future standalone `mooncode` package can lift the
+schema without dragging generic support code behind a catalog file.
 MoonClaw's native runtime-turn now supports explicit tool calls, deterministic
 prompt planning, and opt-in bounded model-planned tool-call batches when the
 queued command carries a selected model; successful tool results are fed back to
