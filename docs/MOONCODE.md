@@ -1375,6 +1375,9 @@ new gated shell/write/edit/package previews as pending approval rows, refreshes
 the same MoonBook review artifacts, and returns `allowed`, `requires_approval`,
 or `blocked` with the matching approval row. MoonClaw remains responsible for
 enforcing the decision before it executes the tool.
+The Moondesk route handlers for this handshake are isolated from the generic
+session router; they are an adapter over MoonCode's approval contract and
+MoonBook-owned review artifacts, not a session-management responsibility.
 
 The MoonCode UI also exposes this boundary as a Tool Authorization panel beside
 Tool Approvals. It can explicitly probe representative `read`, `write`, and

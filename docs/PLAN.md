@@ -648,6 +648,10 @@ durable operator intent while keeping execution in MoonClaw or standalone
 The pure MoonCode package now separates approval queue projection from the live
 authorization decision contract, keeping MoonBook review rows reusable while
 MoonClaw-facing allow/block decisions stay in the authorization slice.
+The MoonWiki adapter also keeps the tool-approval and tool-authorization HTTP
+handlers outside the generic MoonCode session router, so the desktop bridge can
+change approval persistence without coupling that work to session creation or
+list/event projection.
 The test-run manifest projection is also split into a focused MoonCode slice,
 separate from change-set, patch-set, and tool-approval artifacts. That keeps
 MoonBook-owned test/build evidence reusable by action-plan gates, eval-readiness

@@ -1058,7 +1058,9 @@ Implemented behavior:
   approval row exists, refreshes the MoonBook review artifacts, and returns
   `allowed`, `requires_approval`, or `blocked`. Moondesk owns the decision
   surface; MoonClaw remains responsible for honoring the decision before
-  executing the tool.
+  executing the tool. The MoonWiki HTTP handlers for this handshake now live
+  outside the generic session router so approval persistence/replay can evolve
+  independently from session listing and projection.
 - `GET /api/mooncode/sessions/:id/test-runs` returns the durable
   MoonBook-owned `mooncode-test-runs` manifest from
   `wiki/reviews/mooncode/<session-id>/test-runs.json` or the latest persisted
