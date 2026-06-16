@@ -93,34 +93,14 @@ pub fn runtime_replay_state(
     let expired_claim = runtime_receipt_status_claimed(receipt_status) &&
       runtime_receipt_claim_expired(latest_receipt, lease_now)
     let delivered = runtime_receipt_status_delivered(receipt_status)
-    let base_replay_status = if !valid {
-      "blocked-invalid"
-    } else if delivered {
-      "delivered"
-    } else if expired_claim {
-      if runtime_command_tool_authorization_blocks(command) {
-        "blocked-tool-authorization"
-      } else {
-        "expired-claim-pending-retry"
-      }
-    } else if runtime_command_tool_authorization_blocks(command) {
-      "blocked-tool-authorization"
-    } else if runtime_receipt_status_claimed(receipt_status) {
-      "claimed"
-    } else if receipt_status == "proof-missing" {
-      "missing-proof-pending-retry"
-    } else if receipt_status == "failed" {
-      "failed-pending-retry"
-    } else {
-      "pending"
-    }
+    let base_replay_status = runtime_replay_base_status(
+      command, valid, receipt_status, expired_claim,
+    )
     let order_blocked = replay_blocker_id != "" &&
       base_replay_status != "delivered"
-    let replay_status = if order_blocked {
-      "blocked-by-prior-command"
-    } else {
-      base_replay_status
-    }
+    let replay_status = runtime_replay_status_with_order_blocker(
+      base_replay_status, replay_blocker_id,
+    )
     if delivered {
       delivered_count += 1
     } else if runtime_receipt_status_claimed(receipt_status) && !expired_claim {
@@ -200,10 +180,7 @@ pub fn runtime_replay_state(
       "decode_report": report,
     }
     replay_items.push(item)
-    if replay_status == "pending" ||
-      replay_status == "failed-pending-retry" ||
-      replay_status == "missing-proof-pending-retry" ||
-      replay_status == "expired-claim-pending-retry" {
+    if runtime_replay_status_is_pending(replay_status) {
       if first_pending_index < 0 {
         first_pending_index = index
       }
@@ -211,11 +188,7 @@ pub fn runtime_replay_state(
       pending_jsonl_lines.push(wire.stringify())
     }
     if replay_blocker_id == "" &&
-      (
-        base_replay_status == "blocked-invalid" ||
-        base_replay_status == "claimed" ||
-        base_replay_status == "blocked-tool-authorization"
-      ) {
+      runtime_replay_status_blocks_following(base_replay_status) {
       replay_blocker_id = command_id
       replay_blocker_status = base_replay_status
     }
