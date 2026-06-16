@@ -3512,30 +3512,19 @@ async fn send_mooncode_native_runtime_command(
     Ok(payload) => payload
     Err(_) => Json::object({})
   }
-  let runtime_accepted = json_bool(runtime_payload, "accepted", default=false)
-  let status = if !queue_accepted {
-    "failed"
-  } else if runtime_response is Err(_) {
-    "failed"
-  } else if runtime_accepted {
-    "done"
-  } else {
-    "failed"
-  }
-  let detail = json_string(
+  let dispatch_result = @mooncode.moonclaw_native_runtime_dispatch_result(
+    queue_response,
     runtime_payload,
-    "message",
-    default=match runtime_response {
-      Ok(_) =>
-        json_string(
-          queue_response,
-          "message",
-          default="MoonClaw MoonCode runtime accepted \{json_string(command_packet, "action", default="command")}",
-        )
-      Err(error) =>
-        "MoonClaw queued command but native runtime execution failed: \{error}"
+    command_packet,
+    queue_accepted~,
+    runtime_succeeded=runtime_response is Ok(_),
+    runtime_error=match runtime_response {
+      Ok(_) => ""
+      Err(error) => error
     },
   )
+  let status = json_string(dispatch_result, "status", default="failed")
+  let detail = json_string(dispatch_result, "detail", default="")
   let with_status = append_agent_message(
     mooncode_append_native_response_events(
       mooncode_append_native_response_events(session, queue_response),
@@ -3558,10 +3547,7 @@ async fn send_mooncode_native_runtime_command(
           command_packet,
         ),
         "mooncode_dispatch_mode",
-        @mooncode.moonclaw_runtime_dispatch_mode(
-          runtime_payload,
-          accepted=runtime_accepted,
-        ).to_json(),
+        json_string(dispatch_result, "dispatch_mode", default="").to_json(),
       ),
       "updated_at",
       @async.now().to_string().to_json(),

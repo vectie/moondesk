@@ -264,9 +264,10 @@ action/context/message defaults, command event shaping, command-event
 session append/update, transcript-message event shaping, OpenSeek serve-wire
 wrapping, native MoonCode command bodies, execution plans, result contracts,
 compact execution summaries, runtime dispatch status/detail classification,
-runtime-dispatch receipt body construction, and response-normalized dispatch
-receipt projection, and native eval-report projection cleanup are also
-data-only `internal/mooncode` protocol behavior now. Tool-authorization
+native runtime dispatch result status/detail/mode projection, runtime-dispatch
+receipt body construction, response-normalized dispatch receipt projection, and
+native eval-report projection cleanup are also data-only `internal/mooncode`
+protocol behavior now. Tool-authorization
 contract rendering and
 preview/allowed/requires-approval/blocked decision projection are also
 extracted into `internal/mooncode`; Moondesk only supplies fallback ids and

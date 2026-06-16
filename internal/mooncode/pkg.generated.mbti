@@ -220,6 +220,8 @@ pub fn moonclaw_native_command_endpoint(String) -> String
 
 pub fn moonclaw_native_eval_report_endpoint(String, String) -> String
 
+pub fn moonclaw_native_runtime_dispatch_result(Json, Json, Json, queue_accepted~ : Bool, runtime_succeeded~ : Bool, runtime_error~ : String) -> Json
+
 pub fn moonclaw_native_runtime_loop_endpoint(String) -> String
 
 pub fn moonclaw_native_runtime_turn_endpoint(String) -> String

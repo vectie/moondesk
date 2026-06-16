@@ -69,6 +69,53 @@ pub fn moonclaw_runtime_dispatch_mode(
 }
 
 ///|
+pub fn moonclaw_native_runtime_dispatch_result(
+  queue_response : Json,
+  runtime_payload : Json,
+  command_packet : Json,
+  queue_accepted~ : Bool,
+  runtime_succeeded~ : Bool,
+  runtime_error~ : String,
+) -> Json {
+  let runtime_accepted = json_bool(runtime_payload, "accepted", default=false)
+  let status = if !queue_accepted {
+    "failed"
+  } else if !runtime_succeeded {
+    "failed"
+  } else if runtime_accepted {
+    "done"
+  } else {
+    "failed"
+  }
+  let detail = json_string(
+    runtime_payload,
+    "message",
+    default=if runtime_succeeded {
+      json_string(
+        queue_response,
+        "message",
+        default="MoonClaw MoonCode runtime accepted \{json_string(command_packet, "action", default="command")}",
+      )
+    } else {
+      "MoonClaw queued command but native runtime execution failed: \{runtime_error}"
+    },
+  )
+  {
+    "kind": "mooncode-native-runtime-dispatch-result",
+    "protocol": "mooncode.v1",
+    "queue_accepted": queue_accepted,
+    "runtime_succeeded": runtime_succeeded,
+    "runtime_accepted": runtime_accepted,
+    "status": status,
+    "detail": detail,
+    "dispatch_mode": moonclaw_runtime_dispatch_mode(
+      runtime_payload,
+      accepted=runtime_accepted,
+    ),
+  }
+}
+
+///|
 pub fn moonclaw_native_command_endpoint(session_id : String) -> String {
   "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/commands"
 }
@@ -974,6 +1021,36 @@ test "mooncode moonclaw adapter owns native runtime request bodies" {
   assert_eq(
     moonclaw_native_stream_endpoint("session one", "/tmp/moon book", "sse", 7),
     "/v1/mooncode/sessions/session%20one/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7",
+  )
+  let accepted = moonclaw_native_runtime_dispatch_result(
+    { "message": "queued" },
+    {
+      "kind": "mooncode-runtime-loop",
+      "accepted": true,
+      "message": "loop completed",
+    },
+    { "action": "run_tests" },
+    queue_accepted=true,
+    runtime_succeeded=true,
+    runtime_error="",
+  )
+  assert_eq(json_string(accepted, "status", default=""), "done")
+  assert_eq(json_string(accepted, "detail", default=""), "loop completed")
+  assert_eq(
+    json_string(accepted, "dispatch_mode", default=""),
+    "moonclaw-mooncode-runtime-loop",
+  )
+  let failed = moonclaw_native_runtime_dispatch_result(
+    { "message": "queued" },
+    Json::object({}),
+    { "action": "package" },
+    queue_accepted=true,
+    runtime_succeeded=false,
+    runtime_error="network failed",
+  )
+  assert_eq(json_string(failed, "status", default=""), "failed")
+  assert_true(
+    json_string(failed, "detail", default="").contains("network failed"),
   )
 }
 
