@@ -216,8 +216,9 @@ classification, runtime command-feed response shape, runtime event-sink response
 shape, runtime event-ingest result response shape, runtime execution-plan
 response shape, runtime-supervisor response shape, and dispatch receipt record
 shape, dispatch receipt-list response normalization, aggregate runtime-dispatch
-response shape, runtime response receipt normalization, session snapshot and
-runtime-handoff receipt normalization, plus serve-scheduler response shape. It
+response shape, aggregate runtime-claim response assembly, runtime response
+receipt normalization, session snapshot and runtime-handoff receipt
+normalization, plus serve-scheduler response shape. It
 also owns OpenSeek-style
 runtime event normalization, canonical MoonCode event shaping, event lane
 validation, runtime event titles, tool lane classification, command preflight

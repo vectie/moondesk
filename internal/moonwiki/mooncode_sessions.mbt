@@ -1130,43 +1130,21 @@ async fn handle_mooncode_session_runtime_claim(
   let next_receipts = read_mooncode_runtime_dispatch_log(
     workspace_root, session_id,
   )
-  let runtime_replay = mooncode_runtime_replay_state(
-    session_id,
-    commands,
-    next_receipts,
-    workspace_id=json_string(session, "workspace_id", default=""),
-    workspace_name=json_string(session, "workspace_name", default=""),
-    task_id=json_string(session, "moonclaw_task_id", default=""),
-    runtime_command_log_path=mooncode_runtime_command_log_path(
-      workspace_root, session_id,
-    ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
-      workspace_root, session_id,
-    ),
-  )
-  let claim_state = mooncode_runtime_claim_state(
-    session_id,
-    commands,
-    next_receipts,
-    workspace_id=json_string(session, "workspace_id", default=""),
-    workspace_name=json_string(session, "workspace_name", default=""),
-    task_id=json_string(session, "moonclaw_task_id", default=""),
-    runtime_command_log_path=mooncode_runtime_command_log_path(
-      workspace_root, session_id,
-    ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
-      workspace_root, session_id,
-    ),
-  )
   send_json(
     conn,
     method_,
-    @mooncode.runtime_claim_response(
+    @mooncode.runtime_claim_result_response(
       session_id,
+      commands,
+      next_receipts,
       claim_receipts,
-      runtime_replay,
-      claim_state,
       enrich_agent_session_for_response(workspace_root, with_runtime_handoff, []),
+      runtime_command_log_path=mooncode_runtime_command_log_path(
+        workspace_root, session_id,
+      ),
+      runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+        workspace_root, session_id,
+      ),
     ),
   )
 }

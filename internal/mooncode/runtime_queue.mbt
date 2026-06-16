@@ -1533,6 +1533,43 @@ pub fn runtime_claim_response(
 }
 
 ///|
+pub fn runtime_claim_result_response(
+  session_id : String,
+  commands : Array[Json],
+  next_receipts : Array[Json],
+  claim_receipts : Array[Json],
+  session : Json,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+) -> Json {
+  runtime_claim_response(
+    session_id,
+    claim_receipts,
+    runtime_replay_state(
+      session_id,
+      commands,
+      next_receipts,
+      workspace_id=rq_json_string(session, "workspace_id", default=""),
+      workspace_name=rq_json_string(session, "workspace_name", default=""),
+      task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+      runtime_command_log_path~,
+      runtime_dispatch_log_path~,
+    ),
+    runtime_claim_state(
+      session_id,
+      commands,
+      next_receipts,
+      workspace_id=rq_json_string(session, "workspace_id", default=""),
+      workspace_name=rq_json_string(session, "workspace_name", default=""),
+      task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+      runtime_command_log_path~,
+      runtime_dispatch_log_path~,
+    ),
+    session,
+  )
+}
+
+///|
 pub fn runtime_claim_max_count(payload : Json) -> Int {
   let requested = rq_json_int(payload, "max_count", default=1)
   if requested <= 0 {
@@ -3757,6 +3794,41 @@ test "mooncode runtime claim response records claimed commands" {
       default="",
     ),
     "/api/mooncode/sessions/session-demo/runtime-claim",
+  )
+  let aggregate = runtime_claim_result_response(
+    "session-demo",
+    [runtime_command],
+    [receipt],
+    [receipt],
+    {
+      "id": "session-demo",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo",
+      "moonclaw_task_id": "task-demo",
+    },
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+  )
+  assert_eq(
+    rq_json_string(aggregate, "kind", default=""),
+    "mooncode-runtime-claim",
+  )
+  assert_eq(rq_json_int(aggregate, "claimed_count", default=0), 1)
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(aggregate, "runtime_replay"),
+      "workspace_id",
+      default="",
+    ),
+    "book-demo",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(aggregate, "claim_state"),
+      "task_id",
+      default="",
+    ),
+    "task-demo",
   )
 }
 
