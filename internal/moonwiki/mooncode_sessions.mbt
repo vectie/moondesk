@@ -331,7 +331,7 @@ async fn handle_mooncode_session_tool_authorization_contract(
       send_json(
         conn,
         method_,
-        mooncode_tool_authorization_contract(session_id, manifest),
+        @mooncode.tool_authorization_contract(session_id, manifest),
       )
     }
     None =>
@@ -369,10 +369,10 @@ async fn handle_mooncode_session_tool_authorization(
   let preview = mooncode_tool_authorization_preview_event(payload, now)
   let projected = attach_mooncode_session_projection(workspace_root, session)
   let events = json_array_items(projected, "mooncode_events")
-  let approval = mooncode_tool_event_approval(preview)
-  let target = mooncode_tool_approval_target(preview)
+  let approval = @mooncode.tool_event_approval(preview)
+  let target = @mooncode.tool_approval_target(preview)
   let should_record = approval != "" &&
-    !mooncode_tool_authorization_has_target(events, target)
+    !@mooncode.tool_authorization_has_target(events, target)
   let with_preview = if should_record {
     append_mooncode_event_log(workspace_root, session_id, preview) catch {
       _ => {
@@ -607,7 +607,7 @@ async fn handle_mooncode_session_runtime_handoff(
     Some(session) =>
       match mooncode_read_runtime_handoff_manifest(session) {
         Some(manifest) =>
-          if mooncode_runtime_handoff_manifest_current(manifest) {
+          if @mooncode.runtime_handoff_manifest_current(manifest) {
             send_json(conn, method_, manifest)
           } else {
             let projected = attach_mooncode_session_projection(
@@ -2529,37 +2529,6 @@ async fn mooncode_read_runtime_handoff_manifest(session : Json) -> Json? {
 }
 
 ///|
-fn mooncode_runtime_handoff_manifest_current(manifest : Json) -> Bool {
-  @mooncode.runtime_handoff_manifest_current(manifest)
-}
-
-///|
-fn mooncode_patch_set_entries(events : Array[Json]) -> Array[Json] {
-  @mooncode.patch_set_entries(events)
-}
-
-///|
-fn mooncode_count_patch_review_state(
-  patches : Array[Json],
-  state : String,
-) -> Int {
-  @mooncode.count_patch_review_state(patches, state)
-}
-
-///|
-fn mooncode_tool_approval_entries(events : Array[Json]) -> Array[Json] {
-  @mooncode.tool_approval_entries(events)
-}
-
-///|
-fn mooncode_tool_authorization_contract(
-  session_id : String,
-  manifest : Json,
-) -> Json {
-  @mooncode.tool_authorization_contract(session_id, manifest)
-}
-
-///|
 fn mooncode_tool_authorization_preview_event(
   payload : Json,
   created_at : String,
@@ -2589,32 +2558,6 @@ fn mooncode_tool_authorization_response(
 }
 
 ///|
-fn mooncode_tool_authorization_has_target(
-  events : Array[Json],
-  target : String,
-) -> Bool {
-  @mooncode.tool_authorization_has_target(events, target)
-}
-
-///|
-fn mooncode_tool_event_approval(event : Json) -> String {
-  @mooncode.tool_event_approval(event)
-}
-
-///|
-fn mooncode_tool_approval_target(event : Json) -> String {
-  @mooncode.tool_approval_target(event)
-}
-
-///|
-fn mooncode_count_tool_approval_state(
-  approvals : Array[Json],
-  state : String,
-) -> Int {
-  @mooncode.count_tool_approval_state(approvals, state)
-}
-
-///|
 fn mooncode_action_plan_items(
   session : Json,
   commands : Array[Json],
@@ -2630,45 +2573,6 @@ fn mooncode_action_plan_items(
     events,
     summary,
     lease_now=@async.now().to_string(),
-  )
-}
-
-///|
-fn mooncode_action_plan_runtime_state_at(
-  command_id : String,
-  runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
-  lease_now~ : String,
-) -> String {
-  @mooncode.action_plan_runtime_state_at(
-    command_id,
-    runtime_commands,
-    runtime_dispatches,
-    lease_now~,
-  )
-}
-
-///|
-fn mooncode_action_plan_item_state(
-  action : String,
-  runtime_state : String,
-  summary : Json,
-) -> String {
-  @mooncode.action_plan_item_state(action, runtime_state, summary)
-}
-
-///|
-fn mooncode_action_plan_status(
-  pending_runtime_count : Int,
-  running_count : Int,
-  blocked_count : Int,
-  ready_for_review_count : Int,
-  completed_count : Int,
-  action_count : Int,
-) -> String {
-  @mooncode.action_plan_status(
-    pending_runtime_count, running_count, blocked_count, ready_for_review_count,
-    completed_count, action_count,
   )
 }
 
@@ -2768,11 +2672,6 @@ fn mooncode_eval_report_manifest_event(manifest : Json) -> Json {
       manifest_path,
     ),
   )
-}
-
-///|
-fn mooncode_command_writes_review_receipt(action : String) -> Bool {
-  @mooncode.command_writes_review_receipt(action)
 }
 
 ///|
@@ -4068,7 +3967,7 @@ test "mooncode patch set groups diff candidates by review state" {
       command_packet~,
     ),
   ]
-  let patches = mooncode_patch_set_entries(events)
+  let patches = @mooncode.patch_set_entries(events)
   assert_eq(patches.length(), 1)
   assert_eq(json_string(patches[0], "path", default=""), "tools/demo/main.mbt")
   assert_eq(json_string(patches[0], "review_state", default=""), "applied")
@@ -4090,8 +3989,8 @@ test "mooncode patch set groups diff candidates by review state" {
     ),
   )
   assert_eq(json_int(patches[0], "applied_review_count", default=0), 1)
-  assert_eq(mooncode_count_patch_review_state(patches, "pending"), 0)
-  assert_eq(mooncode_count_patch_review_state(patches, "applied"), 1)
+  assert_eq(@mooncode.count_patch_review_state(patches, "pending"), 0)
+  assert_eq(@mooncode.count_patch_review_state(patches, "applied"), 1)
 }
 
 ///|
@@ -4195,14 +4094,14 @@ test "mooncode tool approvals identify policy and review gated tools" {
       command_packet=approve_packet,
     ),
   ]
-  let approvals = mooncode_tool_approval_entries(events)
+  let approvals = @mooncode.tool_approval_entries(events)
   assert_eq(approvals.length(), 2)
   assert_eq(json_string(approvals[0], "approval", default=""), "policy")
   assert_eq(json_string(approvals[0], "approval_state", default=""), "approved")
   assert_eq(json_string(approvals[1], "approval", default=""), "review")
   assert_eq(json_string(approvals[1], "approval_state", default=""), "pending")
-  assert_eq(mooncode_count_tool_approval_state(approvals, "approved"), 1)
-  assert_eq(mooncode_count_tool_approval_state(approvals, "pending"), 1)
+  assert_eq(@mooncode.count_tool_approval_state(approvals, "approved"), 1)
+  assert_eq(@mooncode.count_tool_approval_state(approvals, "pending"), 1)
 }
 
 ///|
@@ -5665,7 +5564,7 @@ test "mooncode runtime claim recovers expired leases" {
     "now": "1999-12-31T23:59:00Z",
   })
   assert_eq(active.length(), 0)
-  let runtime_state = mooncode_action_plan_runtime_state_at(
+  let runtime_state = @mooncode.action_plan_runtime_state_at(
     "cmd-stale",
     commands,
     receipts,
@@ -5673,7 +5572,7 @@ test "mooncode runtime claim recovers expired leases" {
   )
   assert_eq(runtime_state, "expired-claim")
   assert_eq(
-    mooncode_action_plan_item_state("prompt", runtime_state, {}),
+    @mooncode.action_plan_item_state("prompt", runtime_state, {}),
     "runtime-retry",
   )
 }
@@ -5718,7 +5617,7 @@ test "mooncode action plan treats claimed runtime commands as running" {
   assert_eq(items.length(), 1)
   assert_eq(json_string(items[0], "runtime_state", default=""), "claimed")
   assert_eq(json_string(items[0], "state", default=""), "running")
-  assert_eq(mooncode_action_plan_status(0, 1, 0, 0, 0, 1), "running")
+  assert_eq(@mooncode.action_plan_status(0, 1, 0, 0, 0, 1), "running")
 }
 
 ///|
@@ -6564,7 +6463,7 @@ async test "mooncode review actions write moonbook receipts" {
         "lease-held",
       )
       assert_false(json_bool(runtime_consumer, "ready_to_claim", default=true))
-      assert_true(mooncode_runtime_handoff_manifest_current(runtime_handoff))
+      assert_true(@mooncode.runtime_handoff_manifest_current(runtime_handoff))
       let legacy_runtime_handoff : Json = {
         "kind": "mooncode-runtime-handoff",
         "resume_contract": {
@@ -6579,7 +6478,7 @@ async test "mooncode review actions write moonbook receipts" {
         },
       }
       assert_false(
-        mooncode_runtime_handoff_manifest_current(legacy_runtime_handoff),
+        @mooncode.runtime_handoff_manifest_current(legacy_runtime_handoff),
       )
       let runtime_claim = json_object_field_or_empty(
         runtime_handoff, "runtime_claim",

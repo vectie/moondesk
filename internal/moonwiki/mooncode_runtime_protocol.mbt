@@ -28,7 +28,7 @@ fn mooncode_command_preflight(
     action~,
     context_path=@mooncode.command_context_path(payload),
     summary~,
-    patch_entries=mooncode_patch_set_entries(events),
+    patch_entries=@mooncode.patch_set_entries(events),
   )
 }
 
@@ -88,7 +88,7 @@ fn mooncode_command_preflight_has_patch_target(
   target : String,
 ) -> Bool {
   @mooncode.command_preflight_has_patch_target(
-    mooncode_patch_set_entries(events),
+    @mooncode.patch_set_entries(events),
     target,
   )
 }

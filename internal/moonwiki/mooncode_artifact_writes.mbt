@@ -7,7 +7,7 @@ async fn write_mooncode_review_receipt_if_needed(
   detail : String,
   command_created_at : String,
 ) -> Json? {
-  if !mooncode_command_writes_review_receipt(action) {
+  if !@mooncode.command_writes_review_receipt(action) {
     return None
   }
   let receipt = write_mooncode_review_receipt(
