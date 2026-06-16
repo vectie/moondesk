@@ -525,6 +525,10 @@ Command-level proof construction and session-level evidence aggregation are now
 separate MoonCode implementation files, keeping per-command event matching
 extractable while leaving session rollups as a distinct consumer-facing
 projection.
+Runtime feed response projection is also separated from endpoint-specific
+response assembly, so shared dispatch, replay, claim, lifecycle, scheduler,
+turn-packet, and supervisor rollups stay reusable across feed, plan, and
+supervisor views.
 Runtime proof events now normalize `command_id`/`command_packet` into
 a `mooncode.v1` command reference. When scoped proofs exist for an action, the
 plan only completes the matching command id; unscoped proof events remain a

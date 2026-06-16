@@ -1134,6 +1134,10 @@ Implemented behavior:
   decode validity, tool authorization, and lease expiry. Moondesk renders this
   as the Lifecycle block, while MoonClaw or a future standalone `mooncode`
   runtime can use the same object to decide the next claim/replay action.
+  The reusable response projection that assembles dispatch receipts, replay,
+  claim, lifecycle, scheduler, runtime-turn, and supervisor state now lives
+  outside the endpoint builder, keeping shared runtime state extractable from
+  HTTP response shape.
 - `GET /api/mooncode/sessions/:id/runtime-supervisor` returns a declarative
   MoonClaw/standalone-MoonCode launch packet for the next turn. It combines the
   runtime turn packet, runtime consumer handoff, workspace root, MoonClaw root,
