@@ -27,33 +27,7 @@ pub fn runtime_dispatch_pending_count(
   receipts : Array[Json],
   lease_now? : String = "",
 ) -> Int {
-  let latest_receipts = runtime_latest_receipts(receipts)
-  let dispatched : Map[String, Bool] = {}
-  for receipt in receipts {
-    let command_id = rq_json_string(receipt, "command_id", default="")
-    let status = rq_json_string(receipt, "status", default="")
-    if command_id != "" &&
-      (
-        runtime_receipt_status_delivered(status) ||
-        (
-          runtime_receipt_status_claimed(status) &&
-          !runtime_receipt_claim_expired(
-            latest_receipts.get(command_id).unwrap_or(receipt),
-            lease_now,
-          )
-        )
-      ) {
-      dispatched[command_id] = true
-    }
-  }
-  let mut pending = 0
-  for command in commands {
-    let command_id = rq_json_string(command, "command_id", default="")
-    if command_id != "" && !dispatched.get(command_id).unwrap_or(false) {
-      pending += 1
-    }
-  }
-  pending
+  runtime_dispatch_pending_commands(commands, receipts, lease_now).length()
 }
 
 ///|
@@ -62,31 +36,11 @@ pub fn runtime_pending_command_ids(
   receipts : Array[Json],
   lease_now? : String = "",
 ) -> Array[Json] {
-  let latest_receipts = runtime_latest_receipts(receipts)
-  let dispatched : Map[String, Bool] = {}
-  for receipt in receipts {
-    let command_id = rq_json_string(receipt, "command_id", default="")
-    let status = rq_json_string(receipt, "status", default="")
-    if command_id != "" &&
-      (
-        runtime_receipt_status_delivered(status) ||
-        (
-          runtime_receipt_status_claimed(status) &&
-          !runtime_receipt_claim_expired(
-            latest_receipts.get(command_id).unwrap_or(receipt),
-            lease_now,
-          )
-        )
-      ) {
-      dispatched[command_id] = true
-    }
-  }
   let pending : Array[Json] = []
-  for command in commands {
+  for
+    command in runtime_dispatch_pending_commands(commands, receipts, lease_now) {
     let command_id = rq_json_string(command, "command_id", default="")
-    if command_id != "" && !dispatched.get(command_id).unwrap_or(false) {
-      pending.push(Json::string(command_id))
-    }
+    pending.push(Json::string(command_id))
   }
   pending
 }
