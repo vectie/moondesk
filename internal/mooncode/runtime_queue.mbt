@@ -1942,6 +1942,39 @@ pub fn runtime_command_feed_response(
 }
 
 ///|
+pub fn runtime_command_feed_result_response(
+  session_id : String,
+  commands : Array[Json],
+  receipts : Array[Json],
+  events : Array[Json],
+  session : Json,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  workspace_root~ : String,
+  moonclaw_root~ : String,
+  host_base_url~ : String,
+  native_ready~ : Bool,
+  lease_now~ : String,
+) -> Json {
+  runtime_command_feed_response(
+    session_id,
+    commands,
+    receipts,
+    events,
+    workspace_id=rq_json_string(session, "workspace_id", default=""),
+    workspace_name=rq_json_string(session, "workspace_name", default=""),
+    task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+    workspace_root~,
+    moonclaw_root~,
+    host_base_url~,
+    native_ready~,
+    lease_now~,
+  )
+}
+
+///|
 pub fn runtime_execution_plan_response(
   session_id : String,
   commands : Array[Json],
@@ -3547,6 +3580,32 @@ test "mooncode runtime command feed response owns runtime surface" {
     rq_json_object_field(response, "runtime_supervisor")
     is Some(Json::Object(_)),
   )
+  let aggregate = runtime_command_feed_result_response(
+    "session-demo",
+    [command],
+    [raw_receipt],
+    [],
+    {
+      "id": "session-demo",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo",
+      "moonclaw_task_id": "task-demo",
+    },
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    workspace_root="/tmp/book",
+    moonclaw_root="/tmp/moonclaw",
+    host_base_url="",
+    native_ready=false,
+    lease_now="2026-06-15T00:00:00Z",
+  )
+  assert_eq(
+    rq_json_string(aggregate, "kind", default=""),
+    "mooncode-runtime-command-feed",
+  )
+  assert_eq(rq_json_string(aggregate, "workspace_id", default=""), "book-demo")
+  assert_eq(rq_json_string(aggregate, "workspace_name", default=""), "Demo")
+  assert_eq(rq_json_string(aggregate, "task_id", default=""), "task-demo")
   let plan = runtime_execution_plan_response(
     "session-demo",
     [command],

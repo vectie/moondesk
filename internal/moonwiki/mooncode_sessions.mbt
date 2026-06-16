@@ -773,14 +773,12 @@ async fn handle_mooncode_session_runtime_commands(
       send_json(
         conn,
         method_,
-        @mooncode.runtime_command_feed_response(
+        @mooncode.runtime_command_feed_result_response(
           session_id,
           commands,
           receipts,
           events,
-          workspace_id=json_string(session, "workspace_id", default=""),
-          workspace_name=json_string(session, "workspace_name", default=""),
-          task_id=json_string(session, "moonclaw_task_id", default=""),
+          session,
           runtime_command_log_path=mooncode_runtime_command_log_path(
             workspace_root, session_id,
           ),
