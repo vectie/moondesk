@@ -396,7 +396,12 @@ state: one active turn, pending turn ids, per-command effects such as
 `start-turn`, `queue-turn`, `deliver-steer`, `queue-steer`, `cancel-active`,
 `withdraw-pending`, and idle dropped controls. This projection lives in
 `internal/mooncode`, so MoonClaw or a standalone `mooncode` runtime can enforce
-prompt/steer/cancel ordering without depending on Moondesk UI state. `GET
+prompt/steer/cancel ordering without depending on Moondesk UI state.
+Command-scoped runtime lifecycle event counting now lives in a focused
+MoonCode implementation file, separate from queue lifecycle assembly, so
+MoonClaw and future standalone `mooncode` consumers can reuse the same
+command-id/action matching contract.
+`GET
 /api/mooncode/sessions/<id>/runtime-claim` now exposes claimable, claimed,
 delivered, failed, and invalid commands for the UI and runtime consumers. `POST
 /api/mooncode/sessions/<id>/runtime-claim` lets MoonClaw or standalone
