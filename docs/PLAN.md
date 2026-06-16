@@ -259,7 +259,10 @@ patch hunk grouping, approval/test row grouping, package status/index/
 entry-point derivation, review-state derivation, and manifest status/count
 fields are now host-neutral protocol objects. Patch review/execution state
 matching is also a separate MoonCode slice from patch-set manifest assembly, so
-file-level and hunk-level gates share one target-matching contract. Review receipt manifests/events,
+file-level and hunk-level gates share one target-matching contract. Aggregate
+package-candidate projection is likewise separate from per-command package
+manifest construction and package-index construction, so MoonWiki can persist
+MoonBook artifacts while MoonCode owns the API/UI readiness summary. Review receipt manifests/events,
 manifest events, package manifest/index events, and runtime-handoff manifest
 events are also now MoonCode protocol records; Moondesk supplies stable ids and
 handles filesystem persistence. MoonWiki computes book-local paths and writes
@@ -714,9 +717,11 @@ Candidates panel with source-bound/missing-source counts, executable-ready
 count, runtime built/verified proof counts, manifest/receipt paths, source
 inventory, promoted-source paths, index status/path, ready entry points, and Open/Test/Accept/Package
 controls.
-The pure MoonCode package now keeps package-index construction and per-candidate
-runtime proof matching in separate implementation files, leaving MoonWiki to
-resolve file paths and persist the MoonBook-owned artifacts.
+The pure MoonCode package now keeps per-command package-manifest construction,
+aggregate package-candidate response projection, package-index construction,
+and per-candidate runtime proof matching in separate implementation files,
+leaving MoonWiki to resolve file paths and persist the MoonBook-owned
+artifacts.
 Moondesk also exposes
 `GET /api/mooncode/sessions/<id>/eval-report` plus
 `POST /api/mooncode/sessions/<id>/eval-report` for MoonClaw-owned native eval
