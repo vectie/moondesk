@@ -1435,6 +1435,34 @@ pub fn runtime_replay_ack_response(
 }
 
 ///|
+pub fn runtime_replay_ack_result_response(
+  session_id : String,
+  commands : Array[Json],
+  next_receipts : Array[Json],
+  ack_receipts : Array[Json],
+  events : Array[Json],
+  runtime_evidence : Json,
+  session : Json,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+) -> Json {
+  runtime_replay_ack_response(
+    session_id,
+    commands,
+    next_receipts,
+    ack_receipts,
+    events,
+    runtime_evidence,
+    session,
+    workspace_id=rq_json_string(session, "workspace_id", default=""),
+    workspace_name=rq_json_string(session, "workspace_name", default=""),
+    task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+  )
+}
+
+///|
 pub fn runtime_claim_receipts(
   session : Json,
   commands : Array[Json],
@@ -4231,6 +4259,37 @@ test "mooncode runtime replay ack response owns accepted ack surface" {
       default="",
     ),
     "mooncode-session-runtime-evidence",
+  )
+  let aggregate = runtime_replay_ack_result_response(
+    "session-demo",
+    commands,
+    receipts,
+    receipts,
+    events,
+    { "kind": "mooncode-session-runtime-evidence" },
+    session,
+    runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-dispatches.jsonl",
+  )
+  assert_eq(
+    rq_json_string(aggregate, "kind", default=""),
+    "mooncode-runtime-replay-ack",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(aggregate, "runtime_replay"),
+      "workspace_id",
+      default="",
+    ),
+    "book-demo",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(aggregate, "runtime_replay"),
+      "task_id",
+      default="",
+    ),
+    "task-demo",
   )
 }
 

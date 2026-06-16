@@ -983,7 +983,7 @@ async fn handle_mooncode_session_runtime_replay_ack(
   send_json(
     conn,
     method_,
-    @mooncode.runtime_replay_ack_response(
+    @mooncode.runtime_replay_ack_result_response(
       session_id,
       commands,
       next_receipts,
@@ -993,9 +993,6 @@ async fn handle_mooncode_session_runtime_replay_ack(
         with_runtime_handoff, "mooncode_last_runtime_evidence_manifest",
       ),
       enrich_agent_session_for_response(workspace_root, with_runtime_handoff, []),
-      workspace_id=json_string(session, "workspace_id", default=""),
-      workspace_name=json_string(session, "workspace_name", default=""),
-      task_id=json_string(session, "moonclaw_task_id", default=""),
       runtime_command_log_path=mooncode_runtime_command_log_path(
         workspace_root, session_id,
       ),
