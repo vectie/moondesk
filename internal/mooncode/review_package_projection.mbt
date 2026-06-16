@@ -68,64 +68,6 @@ fn package_source_promoted_count(source_inventory : Array[Json]) -> Int {
 }
 
 ///|
-pub fn package_index_manifest(
-  session : Json,
-  session_id : String,
-  latest_manifest : Json,
-  packages : Array[Json],
-  recorded_at : String,
-  manifest_path : String,
-  absolute_manifest_path : String,
-  package_root : String,
-) -> Json {
-  let source_bound = count_package_candidate_status(packages, "source-bound")
-  let missing_source = count_package_candidate_status(packages, "no-source-yet")
-  let events = json_array_items(session, "mooncode_command_events")
-  let runtime_built = count_package_runtime_state(events, "built")
-  let runtime_verified = count_package_runtime_state(events, "verified")
-  {
-    "kind": "mooncode-package-index",
-    "protocol": "mooncode.v1",
-    "status": if runtime_verified > 0 {
-      "verified"
-    } else if runtime_built > 0 {
-      "built"
-    } else if source_bound > 0 {
-      "source-bound"
-    } else if packages.length() > 0 {
-      "candidate"
-    } else {
-      "empty"
-    },
-    "session_id": json_string(session, "id", default=session_id),
-    "workspace_id": json_string(session, "workspace_id", default=""),
-    "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
-    "recorded_at": recorded_at,
-    "manifest_path": manifest_path,
-    "absolute_manifest_path": absolute_manifest_path,
-    "package_root": package_root,
-    "package_count": packages.length(),
-    "source_bound_package_count": source_bound,
-    "missing_source_package_count": missing_source,
-    "executable_ready_count": source_bound,
-    "runtime_built_package_count": runtime_built,
-    "runtime_verified_package_count": runtime_verified,
-    "runtime_package_proof_count": count_package_runtime_proofs(events),
-    "package_kinds": string_array_json(package_index_kinds(packages)),
-    "entry_points": string_array_json(package_index_entry_points(packages)),
-    "packages": Json::array(packages),
-    "latest_package_manifest": latest_manifest,
-    "descriptor_contract": {
-      "owner": "moonbook",
-      "consumer": "moonclaw-or-standalone-mooncode",
-      "rule": "This index is the stable MoonBook package registry for a MoonCode session. Per-command package manifests remain audit records; index.json is the resumable handoff for bundle assembly, review, and extraction into a future mooncode component.",
-    },
-    "owner": package_artifact_owner(),
-  }
-}
-
-///|
 pub fn package_candidates_projection(
   session : Json,
   session_id : String,
@@ -212,38 +154,6 @@ pub fn count_package_candidate_status(
 }
 
 ///|
-fn package_index_kinds(packages : Array[Json]) -> Array[String] {
-  let kinds : Array[String] = []
-  let seen : Map[String, Bool] = {}
-  for pkg in packages {
-    let kind = json_string(pkg, "package_kind", default="")
-    if kind != "" && !seen.get(kind).unwrap_or(false) {
-      seen[kind] = true
-      kinds.push(kind)
-    }
-  }
-  kinds
-}
-
-///|
-fn package_index_entry_points(packages : Array[Json]) -> Array[String] {
-  let entries : Array[String] = []
-  let seen : Map[String, Bool] = {}
-  for pkg in packages {
-    for source in json_array_items(pkg, "source_inventory") {
-      let path = json_string(source, "path", default="")
-      if path != "" &&
-        json_bool(source, "package_ready", default=false) &&
-        !seen.get(path).unwrap_or(false) {
-        seen[path] = true
-        entries.push(path)
-      }
-    }
-  }
-  entries
-}
-
-///|
 fn package_projection_entries(
   packages : Array[Json],
   events : Array[Json],
@@ -288,77 +198,6 @@ fn package_projection_entry(manifest : Json, events : Array[Json]) -> Json {
     proof_count.to_json(),
   )
   package_with_field(with_proof, "execution_verified", (verified > 0).to_json())
-}
-
-///|
-fn count_package_runtime_state_for_manifest(
-  manifest : Json,
-  events : Array[Json],
-  state : String,
-) -> Int {
-  let mut count = 0
-  for event in events {
-    if package_runtime_event_state(event) == state &&
-      json_string(event, "status", default="") != "failed" &&
-      package_runtime_event_matches_manifest(manifest, event) {
-      count += 1
-    }
-  }
-  count
-}
-
-///|
-fn package_runtime_event_matches_manifest(
-  manifest : Json,
-  event : Json,
-) -> Bool {
-  let path = json_string(event, "path", default="")
-  if path == "" {
-    return false
-  }
-  if package_runtime_path_matches(
-      path,
-      json_string(manifest, "context_path", default=""),
-    ) ||
-    package_runtime_path_matches(
-      path,
-      json_string(manifest, "manifest_path", default=""),
-    ) ||
-    package_runtime_path_matches(
-      path,
-      json_string(manifest, "review_receipt_path", default=""),
-    ) {
-    return true
-  }
-  for candidate in json_array_items(manifest, "candidate_paths") {
-    match candidate {
-      Json::String(candidate_path) =>
-        if package_runtime_path_matches(path, candidate_path) {
-          return true
-        }
-      _ => ()
-    }
-  }
-  false
-}
-
-///|
-fn package_runtime_path_matches(path : String, target : String) -> Bool {
-  target != "" &&
-  (
-    path == target ||
-    path.has_prefix(target + "/") ||
-    target.has_prefix(path + "/")
-  )
-}
-
-///|
-fn package_runtime_event_state(event : Json) -> String {
-  match json_string(event, "kind", default="") {
-    "runtime.package_verified" => "verified"
-    "runtime.package_built" => "built"
-    _ => ""
-  }
 }
 
 ///|

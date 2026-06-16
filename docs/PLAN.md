@@ -655,7 +655,11 @@ manifests and the package index through
 Candidates panel with source-bound/missing-source counts, executable-ready
 count, runtime built/verified proof counts, manifest/receipt paths, source
 inventory, promoted-source paths, index status/path, ready entry points, and Open/Test/Accept/Package
-controls. Moondesk also exposes
+controls.
+The pure MoonCode package now keeps package-index construction and per-candidate
+runtime proof matching in separate implementation files, leaving MoonWiki to
+resolve file paths and persist the MoonBook-owned artifacts.
+Moondesk also exposes
 `GET /api/mooncode/sessions/<id>/eval-report` plus
 `POST /api/mooncode/sessions/<id>/eval-report` for MoonClaw-owned native eval
 proof ingestion, and renders an Eval Report panel with bridge score, bridge
