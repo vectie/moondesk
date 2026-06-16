@@ -764,33 +764,18 @@ async fn handle_mooncode_session_runtime_commands(
         workspace_root, session_id,
       )
       let events = read_mooncode_event_log(workspace_root, session_id)
-      send_json(conn, method_, {
-        "protocol": "mooncode.v1",
-        "kind": "mooncode-runtime-command-feed",
-        "session_id": session_id,
-        "workspace_id": json_string(session, "workspace_id", default=""),
-        "workspace_name": json_string(session, "workspace_name", default=""),
-        "task_id": json_string(session, "moonclaw_task_id", default=""),
-        "runtime_command_log_path": mooncode_runtime_command_log_path(
-          workspace_root, session_id,
-        ),
-        "runtime_command_count": commands.length(),
-        "runtime_dispatch_log_path": mooncode_runtime_dispatch_log_path(
-          workspace_root, session_id,
-        ),
-        "runtime_claim_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-claim",
-        "runtime_dispatch_count": receipts.length(),
-        "runtime_dispatch_pending_count": mooncode_runtime_dispatch_pending_count(
-          commands, receipts,
-        ),
-        "commands": Json::array(commands),
-        "dispatch_receipts": Json::array(
-          mooncode_runtime_dispatch_receipts_for_response(receipts),
-        ),
-        "runtime_replay": mooncode_runtime_replay_state(
+      let dispatch_receipts = mooncode_runtime_dispatch_receipts_for_response(
+        receipts,
+      )
+      let daemon = moonclaw_daemon_status(workspace_root)
+      send_json(
+        conn,
+        method_,
+        @mooncode.runtime_command_feed_response(
           session_id,
           commands,
-          receipts,
+          dispatch_receipts,
+          events,
           workspace_id=json_string(session, "workspace_id", default=""),
           workspace_name=json_string(session, "workspace_name", default=""),
           task_id=json_string(session, "moonclaw_task_id", default=""),
@@ -800,101 +785,13 @@ async fn handle_mooncode_session_runtime_commands(
           runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
             workspace_root, session_id,
           ),
-        ),
-        "decode_reports": Json::array(
-          [
-            for command in commands => {
-              @mooncode.runtime_command_decode_report(command)
-            }
-          ],
-        ),
-        "execution_summaries": Json::array(
-          [
-            for command in commands => {
-              mooncode_runtime_command_execution_summary(command)
-            }
-          ],
-        ),
-        "command_lifecycle": mooncode_runtime_command_lifecycle(
-          session_id, commands, receipts, events,
-        ),
-        "serve_scheduler": mooncode_serve_scheduler_projection(
-          session_id,
-          commands,
-          mooncode_runtime_command_lifecycle(
-            session_id, commands, receipts, events,
-          ),
-        ),
-        "runtime_turn_packet": @mooncode.runtime_turn_packet(
-          session_id,
-          mooncode_runtime_replay_state(
-            session_id,
-            commands,
-            receipts,
-            workspace_id=json_string(session, "workspace_id", default=""),
-            workspace_name=json_string(session, "workspace_name", default=""),
-            task_id=json_string(session, "moonclaw_task_id", default=""),
-            runtime_command_log_path=mooncode_runtime_command_log_path(
-              workspace_root, session_id,
-            ),
-            runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
-              workspace_root, session_id,
-            ),
-          ),
-          mooncode_runtime_claim_state(
-            session_id,
-            commands,
-            receipts,
-            workspace_id=json_string(session, "workspace_id", default=""),
-            workspace_name=json_string(session, "workspace_name", default=""),
-            task_id=json_string(session, "moonclaw_task_id", default=""),
-            runtime_command_log_path=mooncode_runtime_command_log_path(
-              workspace_root, session_id,
-            ),
-            runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
-              workspace_root, session_id,
-            ),
-          ),
-          mooncode_serve_scheduler_projection(
-            session_id,
-            commands,
-            mooncode_runtime_command_lifecycle(
-              session_id, commands, receipts, events,
-            ),
-          ),
-          false,
-        ),
-        "runtime_supervisor": mooncode_runtime_supervisor_launch_packet(
-          workspace_root,
-          session,
-          session_id,
-          commands,
-          receipts,
-          events,
-          moonclaw_daemon_status(workspace_root),
+          workspace_root~,
+          moonclaw_root=json_string(daemon, "moonclaw_root", default=""),
+          host_base_url="",
           native_ready=false,
+          lease_now=@async.now().to_string(),
         ),
-        "wire_protocol": {
-          "openseek_serve_commands": Json::array(
-            [
-              for command in @mooncode.serve_command_names() => {
-                Json::string(command)
-              }
-            ],
-          ),
-          "native_mooncode_endpoint": "/v1/mooncode/sessions/\{session_id}/commands",
-          "ordering_rule": "append-only runtime-commands.jsonl; consume in file order",
-        },
-        "runtime_protocol": @mooncode.runtime_protocol_contract_json(),
-        "runtime_claim_contract": mooncode_runtime_claim_consumer_contract_json(
-          session_id,
-        ),
-        "owner": {
-          "ui": "moondesk",
-          "runtime": "moonclaw",
-          "extractable_component": "mooncode",
-        },
-      })
+      )
     }
     None =>
       send_api_error(
@@ -3875,18 +3772,6 @@ async fn send_mooncode_native_runtime_command(
       @async.now().to_string().to_json(),
     ),
   )
-}
-
-///|
-fn mooncode_runtime_command_execution_summary(command : Json) -> Json {
-  match json_object_field(command, "execution_summary") {
-    Some(summary) => summary
-    None =>
-      @mooncode.native_command_execution_summary(
-        json_object_field_or_empty(command, "command_packet"),
-        json_object_field_or_empty(command, "native_mooncode_body"),
-      )
-  }
 }
 
 ///|
