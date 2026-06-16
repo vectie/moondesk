@@ -196,15 +196,6 @@ fn mooncode_runtime_serve_jsonl(
 }
 
 ///|
-fn mooncode_serve_scheduler_projection(
-  session_id : String,
-  command_log : Array[Json],
-  lifecycle : Json,
-) -> Json {
-  @mooncode.serve_scheduler_projection(session_id, command_log, lifecycle)
-}
-
-///|
 fn mooncode_serve_scheduler_response(
   session_id : String,
   command_log : Array[Json],
@@ -334,13 +325,6 @@ fn mooncode_runtime_replay_ack_receipts(
     dispatch_receipts~,
     prior_events~,
   )
-}
-
-///|
-fn mooncode_runtime_replay_ack_normalized_events(
-  receipts : Array[Json],
-) -> Array[Json] {
-  @mooncode.runtime_replay_ack_normalized_events(receipts)
 }
 
 ///|

@@ -242,7 +242,7 @@ fn mooncode_stream_checkpoint_consumer(
   } else {
     "moondesk-ui"
   }
-  mooncode_safe_receipt_id(candidate, fallback="moondesk-ui")
+  @mooncode.artifact_safe_id(candidate, fallback="moondesk-ui")
 }
 
 ///|

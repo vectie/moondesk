@@ -210,7 +210,7 @@ async fn write_mooncode_change_set_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode change set needs a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -239,7 +239,7 @@ async fn write_mooncode_patch_set_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode patch set needs a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -268,7 +268,7 @@ async fn write_mooncode_tool_approvals_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode tool approvals need a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -297,7 +297,7 @@ async fn write_mooncode_test_runs_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode test runs need a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -329,7 +329,7 @@ async fn write_mooncode_action_plan_manifest(
   if book_root == "" {
     fail("MoonCode action plan needs a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -361,7 +361,7 @@ async fn write_mooncode_runtime_evidence_manifest(
   if book_root == "" {
     fail("MoonCode runtime evidence needs a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )

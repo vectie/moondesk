@@ -909,7 +909,7 @@ async fn handle_mooncode_session_runtime_replay_ack(
       }
     }
   }
-  let events = mooncode_runtime_replay_ack_normalized_events(ack_receipts)
+  let events = @mooncode.runtime_replay_ack_normalized_events(ack_receipts)
   for event in events {
     append_mooncode_event_log(workspace_root, session_id, event) catch {
       _ => {
@@ -2166,7 +2166,7 @@ async fn write_mooncode_eval_report_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode eval report needs a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -2243,7 +2243,7 @@ async fn write_mooncode_runtime_handoff_manifest(
   if book_root == "" {
     fail("MoonCode runtime handoff needs a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -2346,7 +2346,7 @@ async fn mooncode_read_change_set_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -2379,7 +2379,7 @@ async fn mooncode_read_patch_set_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -2412,7 +2412,7 @@ async fn mooncode_read_tool_approvals_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -2445,7 +2445,7 @@ async fn mooncode_read_test_runs_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -2478,7 +2478,7 @@ async fn mooncode_read_eval_report_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -2511,7 +2511,7 @@ async fn mooncode_read_runtime_handoff_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(session, "id", default="session"),
     fallback="session",
   )
@@ -2687,7 +2687,7 @@ async fn write_mooncode_review_receipt(
   if book_root == "" {
     fail("MoonCode review receipt needs a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(
       session,
       "id",
@@ -2695,11 +2695,11 @@ async fn write_mooncode_review_receipt(
     ),
     fallback="session",
   )
-  let command_id = mooncode_safe_receipt_id(
+  let command_id = @mooncode.artifact_safe_id(
     json_string(command_packet, "command_id", default="command"),
     fallback="command",
   )
-  let relative = mooncode_review_receipt_relative_path(
+  let relative = @mooncode.review_receipt_relative_path(
     session_id, command_id, action,
   )
   let absolute = @pathx.join(book_root, relative)
@@ -2734,7 +2734,7 @@ async fn write_mooncode_package_manifest_for_receipt(
   if book_root == "" {
     fail("MoonCode package manifest needs a MoonBook workspace root")
   }
-  let session_id = mooncode_safe_receipt_id(
+  let session_id = @mooncode.artifact_safe_id(
     json_string(
       session,
       "id",
@@ -2742,7 +2742,7 @@ async fn write_mooncode_package_manifest_for_receipt(
     ),
     fallback="session",
   )
-  let command_id = mooncode_safe_receipt_id(
+  let command_id = @mooncode.artifact_safe_id(
     json_string(command_packet, "command_id", default="command"),
     fallback="command",
   )
@@ -3001,7 +3001,10 @@ async fn mooncode_package_candidate_manifests(
   let manifests : Array[Json] = []
   let book_root = json_string(session, "workspace_root", default="")
   if book_root != "" {
-    let safe_session = mooncode_safe_receipt_id(session_id, fallback="session")
+    let safe_session = @mooncode.artifact_safe_id(
+      session_id,
+      fallback="session",
+    )
     let root = @pathx.join(
       book_root,
       "portable/app-tool/mooncode/\{safe_session}",
@@ -3047,20 +3050,6 @@ fn mooncode_review_receipt_book_root(
   } else {
     ""
   }
-}
-
-///|
-fn mooncode_review_receipt_relative_path(
-  session_id : String,
-  command_id : String,
-  action : String,
-) -> String {
-  @mooncode.review_receipt_relative_path(session_id, command_id, action)
-}
-
-///|
-fn mooncode_safe_receipt_id(value : String, fallback~ : String) -> String {
-  @mooncode.artifact_safe_id(value, fallback~)
 }
 
 ///|
@@ -4556,7 +4545,7 @@ async test "mooncode runtime replay ack events persist as session evidence" {
   )
   assert_eq(ack_receipts.length(), 1)
   append_mooncode_runtime_dispatch_log(root, "agent-demo", ack_receipts[0])
-  let ack_events = mooncode_runtime_replay_ack_normalized_events(ack_receipts)
+  let ack_events = @mooncode.runtime_replay_ack_normalized_events(ack_receipts)
   assert_eq(ack_events.length(), 4)
   for event in ack_events {
     append_mooncode_event_log(root, "agent-demo", event)
@@ -5244,7 +5233,7 @@ test "mooncode serve scheduler projection exposes ordered control decisions" {
       { "command_id": "cmd-steer", "action": "steer", "status": "pending" },
     ],
   }
-  let scheduler = mooncode_serve_scheduler_projection(
+  let scheduler = @mooncode.serve_scheduler_projection(
     "session-demo", command_log, lifecycle,
   )
   assert_eq(
