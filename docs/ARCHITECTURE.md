@@ -1064,7 +1064,9 @@ Implemented behavior:
   verification state. Moondesk renders this as the Test Runs board with Open,
   Rerun, and Package controls; MoonClaw or standalone `mooncode` must own
   actual execution, stdout/stderr streaming, and native test-run evidence in
-  the final runtime.
+  the final runtime. The projection lives in a focused MoonCode test-run
+  artifact slice so action-plan/eval gates can reuse MoonBook test evidence
+  without depending on change-set or tool-approval manifest assembly.
 - `GET /api/mooncode/sessions/:id/package-candidates` returns a
   `mooncode-package-candidates` projection over saved MoonBook-owned package
   manifests under `portable/app-tool/mooncode/<session-id>/` plus the

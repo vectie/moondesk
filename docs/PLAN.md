@@ -639,6 +639,11 @@ durable operator intent while keeping execution in MoonClaw or standalone
 The pure MoonCode package now separates approval queue projection from the live
 authorization decision contract, keeping MoonBook review rows reusable while
 MoonClaw-facing allow/block decisions stay in the authorization slice.
+The test-run manifest projection is also split into a focused MoonCode slice,
+separate from change-set, patch-set, and tool-approval artifacts. That keeps
+MoonBook-owned test/build evidence reusable by action-plan gates, eval-readiness
+checks, and a future standalone `mooncode` runtime without making the review
+artifact file the owner of every operator panel.
 The command endpoint now also performs server-side preflight before appending
 or dispatching review/package/commit/apply commands. `accept`, `package`, and `commit` return
 `409 Conflict` while projected events show failing tests, pending tool
