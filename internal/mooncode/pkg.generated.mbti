@@ -442,6 +442,8 @@ pub fn runtime_replay_ack_normalized_events(Array[Json]) -> Array[Json]
 
 pub fn runtime_replay_ack_receipts(Json, Array[Json], Json, dispatch_receipts? : Array[Json], prior_events? : Array[Json]) -> Array[Json]
 
+pub fn runtime_replay_ack_response(String, Array[Json], Array[Json], Array[Json], Array[Json], Json, Json, workspace_id~ : String, workspace_name~ : String, task_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
+
 pub fn runtime_replay_ack_status(Json) -> String
 
 pub fn runtime_replay_consumer_contract_json(String) -> Json

@@ -1380,6 +1380,43 @@ pub fn runtime_replay_ack_receipts(
 }
 
 ///|
+pub fn runtime_replay_ack_response(
+  session_id : String,
+  commands : Array[Json],
+  next_receipts : Array[Json],
+  ack_receipts : Array[Json],
+  events : Array[Json],
+  runtime_evidence : Json,
+  session : Json,
+  workspace_id~ : String,
+  workspace_name~ : String,
+  task_id~ : String,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+) -> Json {
+  {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode-runtime-replay-ack",
+    "session_id": session_id,
+    "accepted_receipt_count": ack_receipts.length(),
+    "accepted_event_count": events.length(),
+    "receipts": Json::array(ack_receipts),
+    "runtime_replay": runtime_replay_state(
+      session_id,
+      commands,
+      next_receipts,
+      workspace_id~,
+      workspace_name~,
+      task_id~,
+      runtime_command_log_path~,
+      runtime_dispatch_log_path~,
+    ),
+    "runtime_evidence": runtime_evidence,
+    "session": session,
+  }
+}
+
+///|
 pub fn runtime_claim_receipts(
   session : Json,
   commands : Array[Json],
@@ -3672,6 +3709,81 @@ test "mooncode runtime replay ack records matching claim context" {
   )
   assert_true(
     rq_json_bool(receipts[0], "claimed_by_same_consumer", default=false),
+  )
+}
+
+///|
+test "mooncode runtime replay ack response owns accepted ack surface" {
+  let session : Json = {
+    "id": "session-demo",
+    "workspace_id": "book-demo",
+    "workspace_name": "Demo Book",
+    "moonclaw_task_id": "task-demo",
+  }
+  let commands : Array[Json] = [
+    {
+      "protocol": "mooncode.v1",
+      "kind": "mooncode.runtime-command",
+      "command_id": "cmd-claimed",
+      "session_id": "session-demo",
+      "action": "prompt",
+      "dispatch": "prompt",
+      "serve_command": "prompt",
+      "openseek_wire_command": { "command": "prompt", "text": "build it" },
+    },
+  ]
+  let receipts = runtime_replay_ack_receipts(session, commands, {
+    "consumer_id": "moonclaw-runtime",
+    "command_id": "cmd-claimed",
+    "status": "runtime-acknowledged",
+    "events": [
+      {
+        "event": "tool_result",
+        "id": "evt-tool",
+        "tool_name": "finish",
+        "tool_call_id": "call-finish",
+        "status": "done",
+        "result": "Runtime recorded command completion.",
+      },
+    ],
+  })
+  let events = runtime_replay_ack_normalized_events(receipts)
+  let response = runtime_replay_ack_response(
+    "session-demo",
+    commands,
+    receipts,
+    receipts,
+    events,
+    { "kind": "mooncode-session-runtime-evidence" },
+    { "id": "session-demo", "kind": "mooncode-session" },
+    workspace_id="book-demo",
+    workspace_name="Demo Book",
+    task_id="task-demo",
+    runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-dispatches.jsonl",
+  )
+  assert_eq(
+    rq_json_string(response, "kind", default=""),
+    "mooncode-runtime-replay-ack",
+  )
+  assert_eq(rq_json_int(response, "accepted_receipt_count", default=0), 1)
+  assert_eq(rq_json_int(response, "accepted_event_count", default=0), 1)
+  assert_eq(rq_json_array_items(response, "receipts").length(), 1)
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(response, "runtime_replay"),
+      "kind",
+      default="",
+    ),
+    "mooncode-runtime-replay",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(response, "runtime_evidence"),
+      "kind",
+      default="",
+    ),
+    "mooncode-session-runtime-evidence",
   )
 }
 

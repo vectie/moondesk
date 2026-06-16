@@ -978,17 +978,19 @@ async fn handle_mooncode_session_runtime_replay_ack(
   let next_receipts = read_mooncode_runtime_dispatch_log(
     workspace_root, session_id,
   )
-  send_json(conn, method_, {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode-runtime-replay-ack",
-    "session_id": session_id,
-    "accepted_receipt_count": ack_receipts.length(),
-    "accepted_event_count": events.length(),
-    "receipts": Json::array(ack_receipts),
-    "runtime_replay": mooncode_runtime_replay_state(
+  send_json(
+    conn,
+    method_,
+    @mooncode.runtime_replay_ack_response(
       session_id,
       commands,
       next_receipts,
+      ack_receipts,
+      events,
+      json_object_field_or_empty(
+        with_runtime_handoff, "mooncode_last_runtime_evidence_manifest",
+      ),
+      enrich_agent_session_for_response(workspace_root, with_runtime_handoff, []),
       workspace_id=json_string(session, "workspace_id", default=""),
       workspace_name=json_string(session, "workspace_name", default=""),
       task_id=json_string(session, "moonclaw_task_id", default=""),
@@ -999,15 +1001,7 @@ async fn handle_mooncode_session_runtime_replay_ack(
         workspace_root, session_id,
       ),
     ),
-    "runtime_evidence": json_object_field_or_empty(
-      with_runtime_handoff, "mooncode_last_runtime_evidence_manifest",
-    ),
-    "session": enrich_agent_session_for_response(
-      workspace_root,
-      with_runtime_handoff,
-      [],
-    ),
-  })
+  )
 }
 
 ///|
