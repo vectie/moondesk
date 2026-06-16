@@ -570,7 +570,7 @@ async fn persist_mooncode_native_eval_report(
   let native_report = mooncode_normalize_native_eval_report(payload, endpoint)
   let projected = attach_mooncode_session_projection(
     workspace_root,
-    mooncode_session_without_eval_report_projection(session),
+    @mooncode.session_without_eval_report_projection(session),
   )
   let with_native = agent_session_with_field(
     projected, "mooncode_native_eval_report", native_report,
@@ -594,22 +594,6 @@ async fn persist_mooncode_native_eval_report(
   append_new_mooncode_command_events(workspace_root, projected, refreshed)
   write_agent_session_record(workspace_root, refreshed)
   refreshed
-}
-
-///|
-fn mooncode_session_without_eval_report_projection(session : Json) -> Json {
-  let object : Map[String, Json] = {}
-  match session {
-    Json::Object(fields) =>
-      for key, value in fields {
-        if key != "mooncode_last_eval_report_manifest" &&
-          key != "mooncode_summary" {
-          object[key] = value
-        }
-      }
-    _ => ()
-  }
-  Json::object(object)
 }
 
 ///|

@@ -614,6 +614,22 @@ pub fn normalize_native_eval_report(report : Json, endpoint : String) -> Json {
 }
 
 ///|
+pub fn session_without_eval_report_projection(session : Json) -> Json {
+  let object : Map[String, Json] = {}
+  match session {
+    Json::Object(fields) =>
+      for key, value in fields {
+        if key != "mooncode_last_eval_report_manifest" &&
+          key != "mooncode_summary" {
+          object[key] = value
+        }
+      }
+    _ => ()
+  }
+  Json::object(object)
+}
+
+///|
 fn native_eval_report_ready(report : Json) -> Bool {
   match summary_json_object_field(report, "ok") {
     Some(value) => return @json.from_json(value) catch { _ => false }
@@ -1835,5 +1851,26 @@ test "mooncode native eval report normalization preserves explicit false" {
   assert_eq(
     json_string(native_eval, "endpoint", default=""),
     "/v1/mooncode/sessions/s2/eval-report",
+  )
+}
+
+///|
+test "mooncode eval report projection cleanup is MoonCode-owned" {
+  let cleaned = session_without_eval_report_projection({
+    "id": "s1",
+    "workspace_id": "book",
+    "mooncode_summary": { "eval_score": 20 },
+    "mooncode_last_eval_report_manifest": { "kind": "mooncode-eval-report" },
+    "mooncode_native_eval_report": { "ok": true },
+  })
+  assert_eq(json_string(cleaned, "id", default=""), "s1")
+  assert_eq(json_string(cleaned, "workspace_id", default=""), "book")
+  assert_true(summary_json_object_field(cleaned, "mooncode_summary") is None)
+  assert_true(
+    summary_json_object_field(cleaned, "mooncode_last_eval_report_manifest")
+    is None,
+  )
+  assert_true(
+    summary_json_object_field(cleaned, "mooncode_native_eval_report") is Some(_),
   )
 }

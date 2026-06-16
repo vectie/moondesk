@@ -526,6 +526,8 @@ pub fn session_snapshot_relative_path(String) -> String
 
 pub fn session_summary(Json, Array[Json]) -> Json
 
+pub fn session_without_eval_report_projection(Json) -> Json
+
 pub fn sessions_relative_dir() -> String
 
 pub fn stream_checkpoint_record(Json, String, Int, Int, String, String, String, String, String, String) -> Json
