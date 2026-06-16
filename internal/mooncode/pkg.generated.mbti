@@ -98,6 +98,8 @@ pub fn command_proof_count(Array[Json], String, String, proof_kind~ : String) ->
 
 pub fn command_proofs_are_scoped(Array[Json], String) -> Bool
 
+pub fn command_queue_response(String, Array[Json], workspace_id~ : String, workspace_name~ : String, task_id~ : String, command_log_path~ : String) -> Json
+
 pub fn command_runtime_evidence(Json, Json, Array[Json]) -> Json
 
 pub fn command_runtime_message(String, Json) -> String

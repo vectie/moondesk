@@ -1580,25 +1580,18 @@ async fn handle_mooncode_session_commands(
   match read_agent_session_record(workspace_root, session_id) {
     Some(session) => {
       let commands = read_mooncode_command_log(workspace_root, session_id)
-      send_json(conn, method_, {
-        "protocol": "mooncode.v1",
-        "kind": "mooncode-command-queue",
-        "session_id": session_id,
-        "workspace_id": json_string(session, "workspace_id", default=""),
-        "workspace_name": json_string(session, "workspace_name", default=""),
-        "task_id": json_string(session, "moonclaw_task_id", default=""),
-        "command_log_path": mooncode_command_log_path(
-          workspace_root, session_id,
+      send_json(
+        conn,
+        method_,
+        @mooncode.command_queue_response(
+          session_id,
+          commands,
+          workspace_id=json_string(session, "workspace_id", default=""),
+          workspace_name=json_string(session, "workspace_name", default=""),
+          task_id=json_string(session, "moonclaw_task_id", default=""),
+          command_log_path=mooncode_command_log_path(workspace_root, session_id),
         ),
-        "command_count": commands.length(),
-        "commands": Json::array(commands),
-        "ordering_rule": "append-only commands.jsonl; MoonClaw or standalone MoonCode consumes commands in file order",
-        "owner": {
-          "ui": "moondesk",
-          "runtime": "moonclaw",
-          "extractable_component": "mooncode",
-        },
-      })
+      )
     }
     None =>
       send_api_error(

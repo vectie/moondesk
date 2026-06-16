@@ -80,6 +80,34 @@ pub fn command_expected_lanes(action : String) -> Array[String] {
 }
 
 ///|
+pub fn command_queue_response(
+  session_id : String,
+  commands : Array[Json],
+  workspace_id~ : String,
+  workspace_name~ : String,
+  task_id~ : String,
+  command_log_path~ : String,
+) -> Json {
+  {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode-command-queue",
+    "session_id": session_id,
+    "workspace_id": workspace_id,
+    "workspace_name": workspace_name,
+    "task_id": task_id,
+    "command_log_path": command_log_path,
+    "command_count": commands.length(),
+    "commands": Json::array(commands),
+    "ordering_rule": "append-only commands.jsonl; MoonClaw or standalone MoonCode consumes commands in file order",
+    "owner": {
+      "ui": "moondesk",
+      "runtime": "moonclaw",
+      "extractable_component": "mooncode",
+    },
+  }
+}
+
+///|
 pub fn command_lane(action : String) -> String {
   match action {
     "run_tests" => "test"
@@ -1272,6 +1300,40 @@ test "mooncode command packet and runtime feed preserve execution boundary" {
     command_checklist_contains_id_prefix(checklist, "emit-event-package.index"),
   )
   assert_true(command_checklist_contains_id(checklist, "ack-command"))
+}
+
+///|
+test "mooncode command queue response owns queue surface" {
+  let command : Json = {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.command",
+    "command_id": "cmd-1",
+    "action": "prompt",
+  }
+  let response = command_queue_response(
+    "session-demo",
+    [command],
+    workspace_id="book-demo",
+    workspace_name="Demo Book",
+    task_id="task-demo",
+    command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/commands.jsonl",
+  )
+  assert_eq(json_string(response, "kind", default=""), "mooncode-command-queue")
+  assert_eq(json_string(response, "session_id", default=""), "session-demo")
+  assert_eq(
+    json_string(response, "command_log_path", default=""),
+    "/tmp/book/.moontown/mooncode-sessions/session-demo/commands.jsonl",
+  )
+  assert_eq(command_json_int(response, "command_count", default=0), 1)
+  assert_eq(json_array_items(response, "commands").length(), 1)
+  assert_eq(
+    json_string(
+      command_json_object_field_or_empty(response, "owner"),
+      "extractable_component",
+      default="",
+    ),
+    "mooncode",
+  )
 }
 
 ///|
