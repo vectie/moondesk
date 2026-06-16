@@ -83,17 +83,6 @@ fn mooncode_command_preflight_override_event(
 }
 
 ///|
-fn mooncode_command_preflight_has_patch_target(
-  events : Array[Json],
-  target : String,
-) -> Bool {
-  @mooncode.command_preflight_has_patch_target(
-    @mooncode.patch_set_entries(events),
-    target,
-  )
-}
-
-///|
 fn mooncode_command_packet(
   session : Json,
   payload : Json,
