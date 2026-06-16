@@ -4310,66 +4310,57 @@ test "mooncode command packet preserves runtime boundary" {
 }
 
 ///|
-fn mooncode_runtime_test_ingested_events(payload : Json) -> Array[Json] {
-  json_array_items(
-    @mooncode.runtime_event_ingest_report(
-      payload,
-      session_id="agent-demo",
-      ingested_at="2026-06-15T00:00:00Z",
-    ),
-    "events",
-  )
-}
-
-///|
 test "mooncode runtime event ingest normalizes batches" {
-  let events = mooncode_runtime_test_ingested_events({
-    "events": [
-      {
-        "id": "tool-call-1",
-        "event": "tool_call",
-        "created_at": "0",
-        "tool_name": "shell",
-        "arguments": "{\"cmd\":[\"moon\",\"test\",\"tools/demo\"]}",
-      },
-      {
-        "id": "assistant-1",
-        "event": "assistant_message",
-        "created_at": "1",
-        "content": "done",
-      },
-      {
-        "id": "test-1",
-        "event": "test_result",
-        "created_at": "2",
-        "status": "done",
-        "command": "moon test",
-        "exit_code": 0,
-        "detail": "Total tests: 1, passed: 1",
-      },
-      {
-        "id": "steer-1",
-        "event": "steer_applied",
-        "created_at": "3",
-        "content": "focus tests",
-      },
-      {
-        "id": "steer-2",
-        "event": "steer_dropped",
-        "created_at": "4",
-        "content": "too late",
-      },
-      {
-        "id": "canonical-1",
-        "lane": "artifact",
-        "kind": "artifact",
-        "title": "Packaged tool",
-        "status": "done",
-        "created_at": "5",
-        "path": "portable/app-tool/demo.zip",
-      },
-    ],
-  })
+  let events = @mooncode.runtime_ingest_events(
+    {
+      "events": [
+        {
+          "id": "tool-call-1",
+          "event": "tool_call",
+          "created_at": "0",
+          "tool_name": "shell",
+          "arguments": "{\"cmd\":[\"moon\",\"test\",\"tools/demo\"]}",
+        },
+        {
+          "id": "assistant-1",
+          "event": "assistant_message",
+          "created_at": "1",
+          "content": "done",
+        },
+        {
+          "id": "test-1",
+          "event": "test_result",
+          "created_at": "2",
+          "status": "done",
+          "command": "moon test",
+          "exit_code": 0,
+          "detail": "Total tests: 1, passed: 1",
+        },
+        {
+          "id": "steer-1",
+          "event": "steer_applied",
+          "created_at": "3",
+          "content": "focus tests",
+        },
+        {
+          "id": "steer-2",
+          "event": "steer_dropped",
+          "created_at": "4",
+          "content": "too late",
+        },
+        {
+          "id": "canonical-1",
+          "lane": "artifact",
+          "kind": "artifact",
+          "title": "Packaged tool",
+          "status": "done",
+          "created_at": "5",
+          "path": "portable/app-tool/demo.zip",
+        },
+      ],
+    },
+    ingested_at="2026-06-15T00:00:00Z",
+  )
   assert_eq(events.length(), 6)
   assert_eq(json_string(events[0], "lane", default=""), "test")
   assert_eq(json_string(events[0], "kind", default=""), "shell")
@@ -4409,13 +4400,16 @@ async test "mooncode durable native tool call creates pending approval manifest"
     },
   }
   for
-    event in mooncode_runtime_test_ingested_events({
-      "event": "tool_call",
-      "id": "tool-call-shell",
-      "created_at": "2026-06-14T00:00:00Z",
-      "tool_name": "shell",
-      "arguments": "{\"cmd\":[\"npm\",\"run\",\"build\"],\"cwd\":\"apps/demo\"}",
-    }) {
+    event in @mooncode.runtime_ingest_events(
+      {
+        "event": "tool_call",
+        "id": "tool-call-shell",
+        "created_at": "2026-06-14T00:00:00Z",
+        "tool_name": "shell",
+        "arguments": "{\"cmd\":[\"npm\",\"run\",\"build\"],\"cwd\":\"apps/demo\"}",
+      },
+      ingested_at="2026-06-15T00:00:00Z",
+    ) {
     append_mooncode_event_log(root, "agent-demo", event)
   }
   let projected = attach_mooncode_session_projection(root, session)
@@ -4544,88 +4538,91 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
   )
   let command_id = json_string(packet, "command_id", default="")
   for
-    event in mooncode_runtime_test_ingested_events({
-      "events": [
-        {
-          "event": "tool_call",
-          "id": "tool-call-read",
-          "created_at": "2026-06-14T00:00:30Z",
-          "tool_name": "read",
-          "tool_call_id": "call-read",
-          "arguments": "{\"path\":\"tools/demo/main.mbt\"}",
-          "command_id": command_id,
-          "action": "run_tests",
-        },
-        {
-          "event": "tool_result",
-          "id": "tool-result-read",
-          "created_at": "2026-06-14T00:00:45Z",
-          "tool_name": "read",
-          "tool_call_id": "call-read",
-          "content": "fn main { println(\"demo\") }",
-          "command_id": command_id,
-          "action": "run_tests",
-        },
-        {
-          "event": "tool_call",
-          "id": "tool-call-1",
-          "created_at": "2026-06-14T00:01:00Z",
-          "tool_name": "moon_check",
-          "tool_call_id": "call-check",
-          "arguments": "{\"command\":\"moon check\"}",
-          "command_id": command_id,
-          "action": "run_tests",
-        },
-        {
-          "event": "tool_result",
-          "id": "tool-result-1",
-          "created_at": "2026-06-14T00:01:30Z",
-          "tool_name": "moon_check",
-          "tool_call_id": "call-check",
-          "content": "moon check passed",
-          "command_id": command_id,
-          "action": "run_tests",
-        },
-        {
-          "event": "tool_call",
-          "id": "tool-call-shell",
-          "created_at": "2026-06-14T00:01:40Z",
-          "tool_name": "shell",
-          "tool_call_id": "call-shell",
-          "arguments": "{\"command\":\"moon test\"}",
-          "command_id": command_id,
-          "action": "run_tests",
-        },
-        {
-          "event": "tool_result",
-          "id": "tool-result-shell",
-          "created_at": "2026-06-14T00:01:50Z",
-          "tool_name": "shell",
-          "tool_call_id": "call-shell",
-          "content": "moon test passed",
-          "command_id": command_id,
-          "action": "run_tests",
-        },
-        {
-          "event": "test_result",
-          "id": "test-result-1",
-          "created_at": "2026-06-14T00:02:00Z",
-          "status": "done",
-          "command": "moon test",
-          "exit_code": 0,
-          "detail": "Total tests: 1, passed: 1",
-          "command_id": command_id,
-        },
-        {
-          "event": "agent_finished",
-          "id": "finish-1",
-          "created_at": "2026-06-14T00:03:00Z",
-          "answer": "done",
-          "command_id": command_id,
-          "action": "run_tests",
-        },
-      ],
-    }) {
+    event in @mooncode.runtime_ingest_events(
+      {
+        "events": [
+          {
+            "event": "tool_call",
+            "id": "tool-call-read",
+            "created_at": "2026-06-14T00:00:30Z",
+            "tool_name": "read",
+            "tool_call_id": "call-read",
+            "arguments": "{\"path\":\"tools/demo/main.mbt\"}",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_result",
+            "id": "tool-result-read",
+            "created_at": "2026-06-14T00:00:45Z",
+            "tool_name": "read",
+            "tool_call_id": "call-read",
+            "content": "fn main { println(\"demo\") }",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_call",
+            "id": "tool-call-1",
+            "created_at": "2026-06-14T00:01:00Z",
+            "tool_name": "moon_check",
+            "tool_call_id": "call-check",
+            "arguments": "{\"command\":\"moon check\"}",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_result",
+            "id": "tool-result-1",
+            "created_at": "2026-06-14T00:01:30Z",
+            "tool_name": "moon_check",
+            "tool_call_id": "call-check",
+            "content": "moon check passed",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_call",
+            "id": "tool-call-shell",
+            "created_at": "2026-06-14T00:01:40Z",
+            "tool_name": "shell",
+            "tool_call_id": "call-shell",
+            "arguments": "{\"command\":\"moon test\"}",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_result",
+            "id": "tool-result-shell",
+            "created_at": "2026-06-14T00:01:50Z",
+            "tool_name": "shell",
+            "tool_call_id": "call-shell",
+            "content": "moon test passed",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "test_result",
+            "id": "test-result-1",
+            "created_at": "2026-06-14T00:02:00Z",
+            "status": "done",
+            "command": "moon test",
+            "exit_code": 0,
+            "detail": "Total tests: 1, passed: 1",
+            "command_id": command_id,
+          },
+          {
+            "event": "agent_finished",
+            "id": "finish-1",
+            "created_at": "2026-06-14T00:03:00Z",
+            "answer": "done",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+        ],
+      },
+      ingested_at="2026-06-15T00:00:00Z",
+    ) {
     append_mooncode_event_log(root, "agent-demo", event)
   }
   let after = mooncode_action_plan_projection(root, session)
@@ -7175,89 +7172,92 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   )
   let command_id = json_string(eval_packet, "command_id", default="")
   for
-    event in mooncode_runtime_test_ingested_events({
-      "events": [
-        {
-          "event": "tool_call",
-          "id": "eval-tool-call-read",
-          "created_at": "2026-06-14T00:00:30Z",
-          "tool_name": "read",
-          "tool_call_id": "eval-call-read",
-          "arguments": "{\"path\":\"tools/demo/main.mbt\"}",
-          "command_id": command_id,
-          "action": "run_eval",
-        },
-        {
-          "event": "tool_result",
-          "id": "eval-tool-result-read",
-          "created_at": "2026-06-14T00:00:45Z",
-          "tool_name": "read",
-          "tool_call_id": "eval-call-read",
-          "content": "fn main { println(\"demo\") }",
-          "command_id": command_id,
-          "action": "run_eval",
-        },
-        {
-          "event": "tool_call",
-          "id": "eval-tool-call-check",
-          "created_at": "2026-06-14T00:01:00Z",
-          "tool_name": "moon_check",
-          "tool_call_id": "eval-call-check",
-          "arguments": "{\"command\":\"moon check\"}",
-          "command_id": command_id,
-          "action": "run_eval",
-        },
-        {
-          "event": "tool_result",
-          "id": "eval-tool-result-check",
-          "created_at": "2026-06-14T00:01:20Z",
-          "tool_name": "moon_check",
-          "tool_call_id": "eval-call-check",
-          "content": "moon check passed",
-          "command_id": command_id,
-          "action": "run_eval",
-        },
-        {
-          "event": "tool_call",
-          "id": "eval-tool-call-shell",
-          "created_at": "2026-06-14T00:01:40Z",
-          "tool_name": "shell",
-          "tool_call_id": "eval-call-shell",
-          "arguments": "{\"command\":\"moon test\"}",
-          "command_id": command_id,
-          "action": "run_eval",
-        },
-        {
-          "event": "tool_result",
-          "id": "eval-tool-result-shell",
-          "created_at": "2026-06-14T00:01:55Z",
-          "tool_name": "shell",
-          "tool_call_id": "eval-call-shell",
-          "content": "moon test passed",
-          "command_id": command_id,
-          "action": "run_eval",
-        },
-        {
-          "event": "test_result",
-          "id": "eval-test-result",
-          "created_at": "2026-06-14T00:02:10Z",
-          "status": "done",
-          "command": "moon test",
-          "exit_code": 0,
-          "detail": "Total tests: 1, passed: 1",
-          "command_id": command_id,
-          "action": "run_eval",
-        },
-        {
-          "event": "agent_finished",
-          "id": "eval-finish",
-          "created_at": "2026-06-14T00:02:30Z",
-          "answer": "eval passed",
-          "command_id": command_id,
-          "action": "run_eval",
-        },
-      ],
-    }) {
+    event in @mooncode.runtime_ingest_events(
+      {
+        "events": [
+          {
+            "event": "tool_call",
+            "id": "eval-tool-call-read",
+            "created_at": "2026-06-14T00:00:30Z",
+            "tool_name": "read",
+            "tool_call_id": "eval-call-read",
+            "arguments": "{\"path\":\"tools/demo/main.mbt\"}",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_result",
+            "id": "eval-tool-result-read",
+            "created_at": "2026-06-14T00:00:45Z",
+            "tool_name": "read",
+            "tool_call_id": "eval-call-read",
+            "content": "fn main { println(\"demo\") }",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_call",
+            "id": "eval-tool-call-check",
+            "created_at": "2026-06-14T00:01:00Z",
+            "tool_name": "moon_check",
+            "tool_call_id": "eval-call-check",
+            "arguments": "{\"command\":\"moon check\"}",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_result",
+            "id": "eval-tool-result-check",
+            "created_at": "2026-06-14T00:01:20Z",
+            "tool_name": "moon_check",
+            "tool_call_id": "eval-call-check",
+            "content": "moon check passed",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_call",
+            "id": "eval-tool-call-shell",
+            "created_at": "2026-06-14T00:01:40Z",
+            "tool_name": "shell",
+            "tool_call_id": "eval-call-shell",
+            "arguments": "{\"command\":\"moon test\"}",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_result",
+            "id": "eval-tool-result-shell",
+            "created_at": "2026-06-14T00:01:55Z",
+            "tool_name": "shell",
+            "tool_call_id": "eval-call-shell",
+            "content": "moon test passed",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "test_result",
+            "id": "eval-test-result",
+            "created_at": "2026-06-14T00:02:10Z",
+            "status": "done",
+            "command": "moon test",
+            "exit_code": 0,
+            "detail": "Total tests: 1, passed: 1",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "agent_finished",
+            "id": "eval-finish",
+            "created_at": "2026-06-14T00:02:30Z",
+            "answer": "eval passed",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+        ],
+      },
+      ingested_at="2026-06-15T00:00:00Z",
+    ) {
     append_mooncode_event_log(root, "agent-demo", event)
   }
   let native_payload : Json = {
