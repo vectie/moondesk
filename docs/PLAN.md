@@ -209,12 +209,12 @@ state, runtime claim state, claim/replay consumer contracts, replay
 acknowledgement request expansion, acknowledgement status/detail rules, claim
 request limits, runtime-claim response shape, runtime dispatch-state response
 shape, command-queue response shape, runtime-replay acknowledgement response
-shape, MoonClaw native runtime-loop/turn request bodies and dispatch-mode
-classification, runtime command-feed response shape, runtime event-sink response
-shape, runtime event-ingest result response shape, and dispatch receipt record
-shape. It also owns OpenSeek-style runtime event normalization, canonical
-MoonCode event shaping, event lane validation, runtime event titles, tool lane
-classification, command preflight
+shape, MoonClaw native runtime-loop/turn request bodies, dispatch-mode
+classification, and native eval-report endpoint shape, runtime command-feed
+response shape, runtime event-sink response shape, runtime event-ingest result
+response shape, and dispatch receipt record shape. It also owns OpenSeek-style
+runtime event normalization, canonical MoonCode event shaping, event lane
+validation, runtime event titles, tool lane classification, command preflight
 rules, acceptance-gate projection, required action-gate metadata, patch-target
 checks, `preflight.blocked` event shaping, and action-plan item/state
 projection over command logs, runtime receipts, preflight events, and current
