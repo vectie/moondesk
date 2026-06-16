@@ -100,7 +100,8 @@ MoonWiki's durable event/summary projection adapter now lives outside the
 generic MoonCode session router while still joining MoonClaw task events,
 sidecar JSONL, and MoonCode-owned summary contracts for the desktop API; the
 host-side command-event id/default adapter is also outside the route wrapper,
-so the generic session file keeps moving toward request dispatch and manifest
+and the create-session HTTP flow has its own MoonWiki adapter file, so the
+generic session file keeps moving toward list/event dispatch and manifest
 lookup only. Action-plan and runtime-evidence route/projection adapters are
 also isolated from the session router while still delegating their response
 contracts to `internal/mooncode`;

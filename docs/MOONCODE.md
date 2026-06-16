@@ -155,10 +155,13 @@ MoonCode command preflight gates, action-plan rows, session summaries, and
 eval-report responses. Its host-side event/summary projection adapter now lives
 outside the generic session router, and the host-side command-event id/default
 adapter is likewise isolated with the command handlers instead of the session
-route wrapper. The action-plan and runtime-evidence HTTP/projection adapters
-are separate from that router as well, so route wrappers gather host logs while
-MoonCode owns the response contracts. It now also delegates typed session-record
-creation, command action/context/message defaults, command-event creation/append,
+route wrapper. The create-session HTTP flow also lives in a dedicated
+MoonWiki adapter file, leaving the generic session router focused on list,
+event, and manifest reads. The action-plan and runtime-evidence
+HTTP/projection adapters are separate from that router as well, so route
+wrappers gather host logs while MoonCode owns the response contracts. It now
+also delegates typed session-record creation, command action/context/message defaults,
+command-event creation/append,
 transcript-message event shaping, MoonBook
 change-set, patch-set, tool-approval, test-run, package-manifest,
 package-index, package-candidate, typed session snapshot, runtime-handoff
