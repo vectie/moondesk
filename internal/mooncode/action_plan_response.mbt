@@ -213,26 +213,6 @@ fn action_plan_json_array(json : Json, key : String) -> Json {
 }
 
 ///|
-fn action_plan_json_string_array_items(
-  json : Json,
-  key : String,
-) -> Array[String] {
-  match runtime_json_object_field(json, key) {
-    Some(Json::Array(values)) => {
-      let result : Array[String] = []
-      for value in values {
-        match value {
-          Json::String(item) => result.push(item)
-          _ => ()
-        }
-      }
-      result
-    }
-    _ => []
-  }
-}
-
-///|
 fn action_plan_string_array_json(items : Array[String]) -> Json {
   Json::array([ for item in items => item.to_json() ])
 }
