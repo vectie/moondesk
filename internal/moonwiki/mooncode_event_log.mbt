@@ -353,7 +353,7 @@ fn merge_mooncode_events(
 
 ///|
 test "mooncode parses jsonl event log and skips invalid lines" {
-  let event = mooncode_event_record(
+  let event = @mooncode.event_record(
     id="event-1",
     lane="runtime",
     kind="command.note",
@@ -371,7 +371,7 @@ test "mooncode parses jsonl event log and skips invalid lines" {
 
 ///|
 test "mooncode event merge dedupes durable log against inline commands" {
-  let event = mooncode_event_record(
+  let event = @mooncode.event_record(
     id="event-1",
     lane="review",
     kind="command.accept",
@@ -390,7 +390,7 @@ async test "mooncode appends and replays durable session event log" {
   let root = "/tmp/moondesk-mooncode-event-log-wbtest-" +
     @async.now().to_string()
   let session_id = "session-a"
-  let event = mooncode_event_record(
+  let event = @mooncode.event_record(
     id="event-1",
     lane="runtime",
     kind="command.note",
@@ -399,7 +399,7 @@ async test "mooncode appends and replays durable session event log" {
     created_at="1",
     detail="hello",
   )
-  let second = mooncode_event_record(
+  let second = @mooncode.event_record(
     id="event-2",
     lane="test",
     kind="test_result",

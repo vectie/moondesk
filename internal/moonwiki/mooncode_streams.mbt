@@ -346,7 +346,7 @@ async fn mooncode_native_stream_text(
 
 ///|
 test "mooncode jsonl stream includes meta events and done records" {
-  let event = mooncode_event_record(
+  let event = @mooncode.event_record(
     id="e1",
     lane="test",
     kind="command.run_tests",
@@ -392,7 +392,7 @@ test "mooncode jsonl stream includes meta events and done records" {
 
 ///|
 test "mooncode jsonl stream supports incremental since sequence" {
-  let first = mooncode_event_record(
+  let first = @mooncode.event_record(
     id="e1",
     lane="tool",
     kind="tool.read",
@@ -401,7 +401,7 @@ test "mooncode jsonl stream supports incremental since sequence" {
     created_at="1",
     detail="first",
   )
-  let second = mooncode_event_record(
+  let second = @mooncode.event_record(
     id="e2",
     lane="diff",
     kind="tool.write",
@@ -455,7 +455,7 @@ async test "mooncode stream state records resumable checkpoint" {
   append_mooncode_event_log(
     root,
     "agent-demo",
-    mooncode_event_record(
+    @mooncode.event_record(
       id="event-1",
       lane="runtime",
       kind="assistant_delta",
@@ -468,7 +468,7 @@ async test "mooncode stream state records resumable checkpoint" {
   append_mooncode_event_log(
     root,
     "agent-demo",
-    mooncode_event_record(
+    @mooncode.event_record(
       id="event-2",
       lane="test",
       kind="test_result",
@@ -575,7 +575,7 @@ test "mooncode stream live query opts into bounded tail" {
 
 ///|
 test "mooncode sse stream uses named events" {
-  let event = mooncode_event_record(
+  let event = @mooncode.event_record(
     id="e1",
     lane="artifact",
     kind="command.package",

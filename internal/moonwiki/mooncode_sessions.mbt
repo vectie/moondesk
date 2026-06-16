@@ -3519,37 +3519,6 @@ fn mooncode_event_from_moonclaw_event(event : Json) -> Json? {
 }
 
 ///|
-fn mooncode_event_record(
-  id~ : String,
-  lane~ : String,
-  kind~ : String,
-  title~ : String,
-  status~ : String,
-  created_at~ : String,
-  detail~ : String,
-  path? : String = "",
-  diff? : String = "",
-  command? : String = "",
-  exit_code? : Int = 0,
-  command_packet? : Json = Json::object({}),
-) -> Json {
-  @mooncode.event_record(
-    id~,
-    lane~,
-    kind~,
-    title~,
-    status~,
-    created_at~,
-    detail~,
-    path~,
-    diff~,
-    command~,
-    exit_code~,
-    command_packet~,
-  )
-}
-
-///|
 test "mooncode projects file write and test lanes" {
   let raw_events : Array[Json] = [
     {
@@ -3679,7 +3648,7 @@ test "mooncode command events project into review lanes" {
 
 ///|
 test "mooncode command preflight blocks accept until changed code is tested" {
-  let diff_event = mooncode_event_record(
+  let diff_event = @mooncode.event_record(
     id="diff-1",
     lane="diff",
     kind="write",
@@ -3708,7 +3677,7 @@ test "mooncode command preflight blocks accept until changed code is tested" {
   assert_true(
     json_string(blocked, "reason", default="").contains("run tests/builds"),
   )
-  let test_event = mooncode_event_record(
+  let test_event = @mooncode.event_record(
     id="test-1",
     lane="test",
     kind="test_result",
@@ -3758,7 +3727,7 @@ test "mooncode command preflight blocks package while tool approvals are pending
 
 ///|
 test "mooncode command preflight requires selected accepted patch target for apply" {
-  let diff_event = mooncode_event_record(
+  let diff_event = @mooncode.event_record(
     id="diff-1",
     lane="diff",
     kind="write",
@@ -3769,7 +3738,7 @@ test "mooncode command preflight requires selected accepted patch target for app
     path="tools/demo/main.mbt",
     diff="+fn main { println(1) }",
   )
-  let accept_event = mooncode_event_record(
+  let accept_event = @mooncode.event_record(
     id="review-1",
     lane="review",
     kind="command.accept",
@@ -3932,7 +3901,7 @@ test "mooncode patch set groups diff candidates by review state" {
     "action": "apply_patch",
   }
   let events = [
-    mooncode_event_record(
+    @mooncode.event_record(
       id="diff",
       lane="diff",
       kind="file.write",
@@ -3943,7 +3912,7 @@ test "mooncode patch set groups diff candidates by review state" {
       path="tools/demo/main.mbt",
       diff="@@ -1,1 +1,1 @@\n-fn main { println(\"old\") }\n+fn main { println(\"ok\") }",
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="review",
       lane="review",
       kind="command.apply_patch",
@@ -4049,7 +4018,7 @@ test "mooncode tool approvals identify policy and review gated tools" {
     "action": "approve_tool",
   }
   let events = [
-    mooncode_event_record(
+    @mooncode.event_record(
       id="shell",
       lane="tool",
       kind="execute_command",
@@ -4059,7 +4028,7 @@ test "mooncode tool approvals identify policy and review gated tools" {
       detail="ran command",
       command="npm test",
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="write",
       lane="diff",
       kind="meta_write_to_file",
@@ -4070,7 +4039,7 @@ test "mooncode tool approvals identify policy and review gated tools" {
       path="tools/demo/main.mbt",
       diff="+fn main { println(\"ok\") }",
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="approve",
       lane="review",
       kind="command.approve_tool",
@@ -5694,7 +5663,7 @@ test "mooncode action plan classifies review and test gates" {
     },
   ]
   let events = [
-    mooncode_event_record(
+    @mooncode.event_record(
       id="diff",
       lane="diff",
       kind="file.write",
@@ -5798,7 +5767,7 @@ async test "mooncode action plan writes durable moonbook manifest" {
 
 ///|
 test "mooncode native response appends runtime events" {
-  let event = mooncode_event_record(
+  let event = @mooncode.event_record(
     id="native-event",
     lane="runtime",
     kind="runtime_update",
@@ -5807,7 +5776,7 @@ test "mooncode native response appends runtime events" {
     created_at="1",
     detail="native",
   )
-  let turn_event = mooncode_event_record(
+  let turn_event = @mooncode.event_record(
     id="runtime-turn-event",
     lane="tool",
     kind="tool_result",
@@ -5816,7 +5785,7 @@ test "mooncode native response appends runtime events" {
     created_at="2",
     detail="turn",
   )
-  let package_event = mooncode_event_record(
+  let package_event = @mooncode.event_record(
     id="runtime-package-event",
     lane="artifact",
     kind="runtime.package_verified",
@@ -6589,7 +6558,7 @@ test "mooncode summary exposes eval readiness gates" {
     "tools/demo/main.mbt",
   )
   let events = [
-    mooncode_event_record(
+    @mooncode.event_record(
       id="transcript",
       lane="transcript",
       kind="message.user",
@@ -6598,7 +6567,7 @@ test "mooncode summary exposes eval readiness gates" {
       created_at="1",
       detail="Please edit this book tool.",
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="tool",
       lane="tool",
       kind="tool.read",
@@ -6607,7 +6576,7 @@ test "mooncode summary exposes eval readiness gates" {
       created_at="2",
       detail="read source",
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="diff",
       lane="diff",
       kind="file.write",
@@ -6618,7 +6587,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="tools/demo/main.mbt",
       diff="+fn main { println(\"ok\") }",
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="test",
       lane="test",
       kind="tool.moon_check",
@@ -6628,7 +6597,7 @@ test "mooncode summary exposes eval readiness gates" {
       detail="passed",
       command="moon test",
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="artifact",
       lane="artifact",
       kind="artifact.package",
@@ -6637,7 +6606,7 @@ test "mooncode summary exposes eval readiness gates" {
       created_at="5",
       detail="packaged",
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="review",
       lane="review",
       kind="review.accept",
@@ -6647,7 +6616,7 @@ test "mooncode summary exposes eval readiness gates" {
       detail="accepted",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="approve-tool",
       lane="review",
       kind="command.approve_tool",
@@ -6659,7 +6628,7 @@ test "mooncode summary exposes eval readiness gates" {
       command="approve_tool",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="approve-artifact",
       lane="review",
       kind="command.approve_tool",
@@ -6671,7 +6640,7 @@ test "mooncode summary exposes eval readiness gates" {
       command="approve_tool",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="receipt",
       lane="review",
       kind="receipt.accept",
@@ -6682,7 +6651,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="wiki/reviews/mooncode/s1/accept-command.json",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="manifest",
       lane="artifact",
       kind="package.manifest",
@@ -6693,7 +6662,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="portable/app-tool/mooncode/s1/package-command.json",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="package-index",
       lane="artifact",
       kind="package.index",
@@ -6704,7 +6673,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="portable/app-tool/mooncode/s1/index.json",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="change-set",
       lane="review",
       kind="change_set.manifest",
@@ -6715,7 +6684,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="wiki/reviews/mooncode/s1/change-set.json",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="patch-set",
       lane="review",
       kind="patch_set.manifest",
@@ -6726,7 +6695,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="wiki/reviews/mooncode/s1/patch-set.json",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="tool-approvals",
       lane="review",
       kind="tool_approvals.manifest",
@@ -6737,7 +6706,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="wiki/reviews/mooncode/s1/tool-approvals.json",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="test-runs",
       lane="review",
       kind="test_runs.manifest",
@@ -6748,7 +6717,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="wiki/reviews/mooncode/s1/test-runs.json",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="runtime-evidence",
       lane="runtime",
       kind="runtime_evidence.manifest",
@@ -6759,7 +6728,7 @@ test "mooncode summary exposes eval readiness gates" {
       path="wiki/reviews/mooncode/s1/runtime-evidence.json",
       command_packet~,
     ),
-    mooncode_event_record(
+    @mooncode.event_record(
       id="runtime-handoff",
       lane="runtime",
       kind="runtime.handoff",
@@ -7300,7 +7269,7 @@ test "mooncode prompt command packet seeds durable session creation" {
 
 ///|
 test "mooncode summary and eval report use extracted protocol" {
-  let event = mooncode_event_record(
+  let event = @mooncode.event_record(
     id="d1",
     lane="diff",
     kind="tool.write",
