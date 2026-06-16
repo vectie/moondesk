@@ -546,6 +546,9 @@ can show pending shell/file-write approval state before the tool result
 arrives. Native `tool_result` events preserve the same identity fields when
 present and parse nested OpenSeek tool-call arguments, so approval rows, result
 rows, and command proof can stay correlated.
+Runtime-event sink and ingest result response builders are now a separate
+MoonCode file from normalization and ingest-report construction, keeping the
+engine-facing event parser independent from Moondesk endpoint payload shape.
 This closes the first engine-to-desktop half of the runtime boundary while
 leaving actual execution with MoonClaw.
 The capability and runtime-handoff payloads now also carry a machine-readable

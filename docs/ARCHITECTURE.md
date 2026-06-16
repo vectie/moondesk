@@ -1211,6 +1211,9 @@ Implemented behavior:
   patch-set, tool-approval, test-run, action-plan, eval-report,
   session-snapshot, and runtime-handoff artifacts. Moondesk remains the UI and
   review surface; MoonClaw remains the execution owner.
+  The reusable event ingestion code is split from sink/result response builders,
+  so runtime event normalization and OpenSeek/MoonClaw payload acceptance stay
+  independent from HTTP response assembly.
 - `GET /api/mooncode/sessions/:id/stream?format=jsonl|sse&since=<sequence>`
   prefers the MoonClaw-owned native MoonCode runtime when
   `/v1/mooncode/capabilities` responds, proxying
