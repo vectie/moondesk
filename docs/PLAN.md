@@ -177,6 +177,9 @@ command semantics.
 Default MoonCode command prompt text is also isolated from routing metadata, so
 MoonClaw-facing task instructions can evolve without changing dispatch,
 approval, lane, or command support tables.
+Payload action/context extraction is separated too, keeping request decoding
+reusable across Moondesk HTTP handlers and future MoonClaw-facing command
+ingestion without mixing it into the command metadata catalog.
 The same package now owns the data-only tool contract for the OpenSeek-style
 `read`, `edit`, `write`, `shell`, `moon_check`, and `finish` tools, including
 input schemas, output event requirements, review policy, and safety constraints.
