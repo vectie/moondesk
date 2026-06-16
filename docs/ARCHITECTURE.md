@@ -98,10 +98,12 @@ tool-authorization HTTP handshakes, and
 dispatch/claim/replay receipt appends still live in `internal/moonwiki`;
 MoonWiki's durable event/summary projection adapter now lives outside the
 generic MoonCode session router while still joining MoonClaw task events,
-sidecar JSONL, and MoonCode-owned summary contracts for the desktop API;
-action-plan and runtime-evidence route/projection adapters are also isolated
-from the session router while still delegating their response contracts to
-`internal/mooncode`;
+sidecar JSONL, and MoonCode-owned summary contracts for the desktop API; the
+host-side command-event id/default adapter is also outside the route wrapper,
+so the generic session file keeps moving toward request dispatch and manifest
+lookup only. Action-plan and runtime-evidence route/projection adapters are
+also isolated from the session router while still delegating their response
+contracts to `internal/mooncode`;
 future MoonCode work should move more storage and eval contracts behind the
 same boundary before it is split into a standalone `mooncode` component.
 
