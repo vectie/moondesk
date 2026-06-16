@@ -54,6 +54,21 @@ pub fn moonclaw_runtime_turn_request(
 }
 
 ///|
+pub fn moonclaw_runtime_dispatch_mode(
+  response : Json,
+  accepted? : Bool = true,
+) -> String {
+  if !accepted {
+    return "moonclaw-mooncode-runtime"
+  }
+  if json_string(response, "kind", default="") == "mooncode-runtime-loop" {
+    "moonclaw-mooncode-runtime-loop"
+  } else {
+    "moonclaw-mooncode-runtime-turn"
+  }
+}
+
+///|
 pub fn moonclaw_event_mapping_json() -> Json {
   {
     "AssistantMessageDelta": {
@@ -836,6 +851,21 @@ test "mooncode moonclaw adapter owns native runtime request bodies" {
   assert_eq(
     json_string(turn_request, "consumer_id", default=""),
     "moondesk-ui-runtime-turn",
+  )
+  assert_eq(
+    moonclaw_runtime_dispatch_mode({ "kind": "mooncode-runtime-loop" }),
+    "moonclaw-mooncode-runtime-loop",
+  )
+  assert_eq(
+    moonclaw_runtime_dispatch_mode({ "kind": "mooncode-runtime-turn" }),
+    "moonclaw-mooncode-runtime-turn",
+  )
+  assert_eq(
+    moonclaw_runtime_dispatch_mode(
+      { "kind": "mooncode-runtime-turn" },
+      accepted=false,
+    ),
+    "moonclaw-mooncode-runtime",
   )
 }
 

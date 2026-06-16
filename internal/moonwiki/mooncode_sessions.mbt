@@ -1338,11 +1338,7 @@ async fn handle_mooncode_session_runtime_supervisor_run(
   let with_dispatch = agent_session_with_field(
     with_response,
     "mooncode_dispatch_mode",
-    if json_string(response, "kind", default="") == "mooncode-runtime-loop" {
-      "moonclaw-mooncode-runtime-loop".to_json()
-    } else {
-      "moonclaw-mooncode-runtime-turn".to_json()
-    },
+    @mooncode.moonclaw_runtime_dispatch_mode(response).to_json(),
   )
   let with_updated = agent_session_with_field(
     with_dispatch,
@@ -3713,16 +3709,10 @@ async fn send_mooncode_native_runtime_command(
           command_packet,
         ),
         "mooncode_dispatch_mode",
-        if runtime_accepted {
-          if json_string(runtime_payload, "kind", default="") ==
-            "mooncode-runtime-loop" {
-            "moonclaw-mooncode-runtime-loop".to_json()
-          } else {
-            "moonclaw-mooncode-runtime-turn".to_json()
-          }
-        } else {
-          "moonclaw-mooncode-runtime".to_json()
-        },
+        @mooncode.moonclaw_runtime_dispatch_mode(
+          runtime_payload,
+          accepted=runtime_accepted,
+        ).to_json(),
       ),
       "updated_at",
       @async.now().to_string().to_json(),
