@@ -402,6 +402,8 @@ pub fn runtime_event_ingest_contract(String) -> Json
 
 pub fn runtime_event_ingest_report(Json, session_id~ : String, ingested_at~ : String) -> Json
 
+pub fn runtime_event_sink_response(String, Array[Json], event_log_path~ : String, workspace_id~ : String, workspace_name~ : String, task_id~ : String) -> Json
+
 pub fn runtime_event_title(String) -> String
 
 pub fn runtime_evidence_manifest_event(Json, String) -> Json

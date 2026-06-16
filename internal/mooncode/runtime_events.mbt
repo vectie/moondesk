@@ -172,6 +172,32 @@ pub fn runtime_event_ingest_report(
 }
 
 ///|
+pub fn runtime_event_sink_response(
+  session_id : String,
+  events : Array[Json],
+  event_log_path~ : String,
+  workspace_id~ : String,
+  workspace_name~ : String,
+  task_id~ : String,
+) -> Json {
+  {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode-runtime-event-sink",
+    "session_id": session_id,
+    "workspace_id": workspace_id,
+    "workspace_name": workspace_name,
+    "task_id": task_id,
+    "event_log_path": event_log_path,
+    "event_count": events.length(),
+    "events": Json::array(events),
+    "command_progress": runtime_event_command_progress(events),
+    "post_contract": runtime_event_ingest_contract(session_id),
+    "runtime_protocol": runtime_protocol_contract_json(),
+    "owner": runtime_owner_record(),
+  }
+}
+
+///|
 pub fn runtime_ingest_events(
   payload : Json,
   ingested_at~ : String,
@@ -2020,5 +2046,73 @@ test "mooncode runtime event command progress groups scoped events" {
   )
   assert_true(
     runtime_json_string_array_items(commands[0], "lanes").contains("review"),
+  )
+}
+
+///|
+test "mooncode runtime event sink response owns event surface" {
+  let packet : Json = { "command_id": "cmd-1", "action": "prompt" }
+  let event = event_record(
+    id="event-1",
+    lane="runtime",
+    kind="runtime_update",
+    title="Runtime update",
+    status="done",
+    created_at="2026-06-15T00:00:00Z",
+    detail="ready",
+    command_packet=packet,
+  )
+  let response = runtime_event_sink_response(
+    "session-demo",
+    [event],
+    event_log_path="/tmp/session/events.jsonl",
+    workspace_id="book-demo",
+    workspace_name="Demo",
+    task_id="task-demo",
+  )
+  assert_eq(
+    json_string(response, "kind", default=""),
+    "mooncode-runtime-event-sink",
+  )
+  assert_eq(runtime_json_int(response, "event_count", default=0), 1)
+  assert_eq(
+    json_string(response, "event_log_path", default=""),
+    "/tmp/session/events.jsonl",
+  )
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(response, "post_contract"),
+      "endpoint",
+      default="",
+    ),
+    "/api/mooncode/sessions/session-demo/runtime-events",
+  )
+  assert_true(
+    runtime_json_object_field(response, "runtime_protocol")
+    is Some(Json::Object(_)),
+  )
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(response, "owner"),
+      "runtime",
+      default="",
+    ),
+    "moonclaw",
+  )
+  assert_eq(
+    runtime_json_int(
+      runtime_json_object_field_or_empty(response, "command_progress"),
+      "command_count",
+      default=0,
+    ),
+    1,
+  )
+  assert_eq(
+    runtime_json_int(
+      runtime_json_object_field_or_empty(response, "command_progress"),
+      "scoped_event_count",
+      default=0,
+    ),
+    1,
   )
 }

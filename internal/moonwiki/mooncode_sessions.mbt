@@ -1543,25 +1543,18 @@ async fn handle_mooncode_session_runtime_events(
   match read_agent_session_record(workspace_root, session_id) {
     Some(session) => {
       let events = read_mooncode_event_log(workspace_root, session_id)
-      send_json(conn, method_, {
-        "protocol": "mooncode.v1",
-        "kind": "mooncode-runtime-event-sink",
-        "session_id": session_id,
-        "workspace_id": json_string(session, "workspace_id", default=""),
-        "workspace_name": json_string(session, "workspace_name", default=""),
-        "task_id": json_string(session, "moonclaw_task_id", default=""),
-        "event_log_path": mooncode_event_log_path(workspace_root, session_id),
-        "event_count": events.length(),
-        "events": Json::array(events),
-        "command_progress": @mooncode.runtime_event_command_progress(events),
-        "post_contract": mooncode_runtime_event_ingest_contract(session_id),
-        "runtime_protocol": @mooncode.runtime_protocol_contract_json(),
-        "owner": {
-          "ui": "moondesk",
-          "runtime": "moonclaw",
-          "extractable_component": "mooncode",
-        },
-      })
+      send_json(
+        conn,
+        method_,
+        @mooncode.runtime_event_sink_response(
+          session_id,
+          events,
+          event_log_path=mooncode_event_log_path(workspace_root, session_id),
+          workspace_id=json_string(session, "workspace_id", default=""),
+          workspace_name=json_string(session, "workspace_name", default=""),
+          task_id=json_string(session, "moonclaw_task_id", default=""),
+        ),
+      )
     }
     None =>
       send_api_error(

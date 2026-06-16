@@ -508,11 +508,6 @@ fn mooncode_runtime_claim_consumer_contract_json(session_id : String) -> Json {
 }
 
 ///|
-fn mooncode_runtime_event_ingest_contract(session_id : String) -> Json {
-  @mooncode.runtime_event_ingest_contract(session_id)
-}
-
-///|
 fn mooncode_runtime_ingest_report(session_id : String, payload : Json) -> Json {
   let ingested_at = @async.now().to_string()
   let report = @mooncode.runtime_event_ingest_report(
