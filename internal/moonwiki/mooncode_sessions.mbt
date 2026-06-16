@@ -6,6 +6,7 @@ async fn handle_mooncode_sessions(
   conn : @http.ServerConnection,
 ) -> Unit {
   let workspace_filter = query_value(request_path, "workspace").unwrap_or("")
+  let list_format = query_value(request_path, "format").unwrap_or("full")
   let sessions : Array[Json] = []
   for record in read_agent_session_records(workspace_root) {
     if workspace_filter != "" &&
@@ -19,7 +20,21 @@ async fn handle_mooncode_sessions(
       json_string(left, "updated_at", default=""),
     )
   })
-  send_json(conn, method_, Json::array(sessions))
+  if list_format == "listing" {
+    send_json(
+      conn,
+      method_,
+      Json::array(
+        [
+          for session in sessions => {
+            @mooncode.session_listing_row(session, Json::null())
+          }
+        ],
+      ),
+    )
+  } else {
+    send_json(conn, method_, Json::array(sessions))
+  }
 }
 
 ///|

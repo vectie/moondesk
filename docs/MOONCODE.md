@@ -221,6 +221,7 @@ Moondesk exposes the first extractable MoonCode contract at:
 GET /api/mooncode/capabilities
 GET /api/mooncode/eval-harness
 GET /api/mooncode/sessions
+GET /api/mooncode/sessions?format=listing
 POST /api/mooncode/sessions
 GET /api/mooncode/sessions/<session-id>/events
 GET /api/mooncode/sessions/<session-id>/stream?format=jsonl&since=<sequence>
@@ -256,6 +257,15 @@ GET /api/mooncode/sessions/<session-id>/runtime-evidence
 GET /api/mooncode/sessions/<session-id>/commands
 POST /api/mooncode/sessions/<session-id>/commands
 ```
+
+`GET /api/mooncode/sessions?format=listing` returns the OpenSeek-style compact
+machine picker shape owned by `internal/mooncode`: each row includes `id`,
+`title`, `updated_at`, `updated_at_ms`, workspace identity, status/model, and
+session/stream URLs. The full session projection remains the default response
+for existing Moondesk UI surfaces. Moondesk supplies persistence and optional
+host timestamps; the title and row contract are MoonCode protocol behavior so
+MoonClaw or a standalone `mooncode` runtime can expose the same shape from
+native sidecars.
 
 The response names the ownership split, workspace modes, preferred command and
 event protocol, typed `command_specs`, expected tools, typed `tool_specs`, book

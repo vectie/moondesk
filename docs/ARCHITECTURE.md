@@ -421,6 +421,7 @@ GET  /api/moonclaw/runs/:id/artifacts
 GET  /api/mooncode/capabilities
 GET  /api/mooncode/eval-harness
 GET  /api/mooncode/sessions?workspace=...
+GET  /api/mooncode/sessions?format=listing
 POST /api/mooncode/sessions
 GET  /api/mooncode/sessions/:id/events
 GET  /api/mooncode/sessions/:id/change-set
@@ -1032,6 +1033,10 @@ Implemented behavior:
 - `GET /api/mooncode/sessions` and `/api/mooncode/sessions/:id/events` project
   persisted agent sessions plus saved MoonClaw events into `mooncode.v1` lanes:
   transcript, runtime, tool, diff, test, artifact, and review.
+  `GET /api/mooncode/sessions?format=listing` returns the compact
+  OpenSeek-style machine list row (`id`, `title`, `updated_at_ms`, workspace
+  context, status/model, and session/stream URLs) through `internal/mooncode`,
+  keeping sidebar/resume discovery out of MoonWiki route code.
 - `POST /api/mooncode/sessions` creates a book-scoped coding session through
   the MoonClaw task bridge, tags the persisted session with
   `component=mooncode`, `protocol=mooncode.v1`, and
