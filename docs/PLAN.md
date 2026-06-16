@@ -171,6 +171,9 @@ compile fixes. The first runtime-neutral code has moved into
 and command/action metadata that `internal/moonwiki` consumes when validating
 queued runtime commands, building command packets, calculating dispatch and
 approval policy, projecting tool hints/lanes, or exporting `/serve-jsonl`.
+Command queue API response shaping is now a separate MoonCode slice from the
+action metadata catalog, keeping HTTP-facing queue envelopes apart from core
+command semantics.
 The same package now owns the data-only tool contract for the OpenSeek-style
 `read`, `edit`, `write`, `shell`, `moon_check`, and `finish` tools, including
 input schemas, output event requirements, review policy, and safety constraints.
