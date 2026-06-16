@@ -1237,56 +1237,45 @@ async fn handle_mooncode_session_runtime_claim(
   let next_receipts = read_mooncode_runtime_dispatch_log(
     workspace_root, session_id,
   )
-  send_json(conn, method_, {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode-runtime-claim",
-    "session_id": session_id,
-    "claimed_count": claim_receipts.length(),
-    "claim_receipts": Json::array(claim_receipts),
-    "claimed_commands": Json::array(
-      [
-        for receipt in claim_receipts => {
-          json_object_field_or_empty(receipt, "runtime_command")
-        }
-      ],
+  let runtime_replay = mooncode_runtime_replay_state(
+    session_id,
+    commands,
+    next_receipts,
+    workspace_id=json_string(session, "workspace_id", default=""),
+    workspace_name=json_string(session, "workspace_name", default=""),
+    task_id=json_string(session, "moonclaw_task_id", default=""),
+    runtime_command_log_path=mooncode_runtime_command_log_path(
+      workspace_root, session_id,
     ),
-    "runtime_replay": mooncode_runtime_replay_state(
+    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+      workspace_root, session_id,
+    ),
+  )
+  let claim_state = mooncode_runtime_claim_state(
+    session_id,
+    commands,
+    next_receipts,
+    workspace_id=json_string(session, "workspace_id", default=""),
+    workspace_name=json_string(session, "workspace_name", default=""),
+    task_id=json_string(session, "moonclaw_task_id", default=""),
+    runtime_command_log_path=mooncode_runtime_command_log_path(
+      workspace_root, session_id,
+    ),
+    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+      workspace_root, session_id,
+    ),
+  )
+  send_json(
+    conn,
+    method_,
+    @mooncode.runtime_claim_response(
       session_id,
-      commands,
-      next_receipts,
-      workspace_id=json_string(session, "workspace_id", default=""),
-      workspace_name=json_string(session, "workspace_name", default=""),
-      task_id=json_string(session, "moonclaw_task_id", default=""),
-      runtime_command_log_path=mooncode_runtime_command_log_path(
-        workspace_root, session_id,
-      ),
-      runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
-        workspace_root, session_id,
-      ),
+      claim_receipts,
+      runtime_replay,
+      claim_state,
+      enrich_agent_session_for_response(workspace_root, with_runtime_handoff, []),
     ),
-    "claim_state": mooncode_runtime_claim_state(
-      session_id,
-      commands,
-      next_receipts,
-      workspace_id=json_string(session, "workspace_id", default=""),
-      workspace_name=json_string(session, "workspace_name", default=""),
-      task_id=json_string(session, "moonclaw_task_id", default=""),
-      runtime_command_log_path=mooncode_runtime_command_log_path(
-        workspace_root, session_id,
-      ),
-      runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
-        workspace_root, session_id,
-      ),
-    ),
-    "consumer_contract": mooncode_runtime_claim_consumer_contract_json(
-      session_id,
-    ),
-    "session": enrich_agent_session_for_response(
-      workspace_root,
-      with_runtime_handoff,
-      [],
-    ),
-  })
+  )
 }
 
 ///|

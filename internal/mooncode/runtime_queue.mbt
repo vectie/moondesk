@@ -1430,6 +1430,34 @@ pub fn runtime_claim_receipts(
 }
 
 ///|
+pub fn runtime_claim_response(
+  session_id : String,
+  claim_receipts : Array[Json],
+  runtime_replay : Json,
+  runtime_claim : Json,
+  session : Json,
+) -> Json {
+  {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode-runtime-claim",
+    "session_id": session_id,
+    "claimed_count": claim_receipts.length(),
+    "claim_receipts": Json::array(claim_receipts),
+    "claimed_commands": Json::array(
+      [
+        for receipt in claim_receipts => {
+          rq_json_object_field_or_empty(receipt, "runtime_command")
+        }
+      ],
+    ),
+    "runtime_replay": runtime_replay,
+    "claim_state": runtime_claim,
+    "consumer_contract": runtime_claim_consumer_contract_json(session_id),
+    "session": session,
+  }
+}
+
+///|
 pub fn runtime_claim_max_count(payload : Json) -> Int {
   let requested = rq_json_int(payload, "max_count", default=1)
   if requested <= 0 {
@@ -3013,6 +3041,50 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
   })
   assert_eq(claimed.length(), 0)
   assert_eq(runtime_serve_jsonl(commands, [], scope="pending"), "")
+}
+
+///|
+test "mooncode runtime claim response records claimed commands" {
+  let runtime_command : Json = {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.runtime-command",
+    "command_id": "cmd-1",
+    "session_id": "session-demo",
+    "action": "prompt",
+  }
+  let receipt : Json = {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.runtime-dispatch",
+    "command_id": "cmd-1",
+    "status": "runtime-claimed",
+    "runtime_command": runtime_command,
+  }
+  let response = runtime_claim_response(
+    "session-demo",
+    [receipt],
+    { "kind": "mooncode-runtime-replay" },
+    { "kind": "mooncode-runtime-claim-state" },
+    { "id": "session-demo", "workspace_id": "book-demo" },
+  )
+  assert_eq(rq_json_string(response, "protocol", default=""), "mooncode.v1")
+  assert_eq(
+    rq_json_string(response, "kind", default=""),
+    "mooncode-runtime-claim",
+  )
+  assert_eq(rq_json_int(response, "claimed_count", default=0), 1)
+  let claimed_commands = rq_json_array_items(response, "claimed_commands")
+  assert_eq(
+    rq_json_string(claimed_commands[0], "command_id", default=""),
+    "cmd-1",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(response, "consumer_contract"),
+      "endpoint",
+      default="",
+    ),
+    "/api/mooncode/sessions/session-demo/runtime-claim",
+  )
 }
 
 ///|
