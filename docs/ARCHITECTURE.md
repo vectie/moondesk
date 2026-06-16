@@ -1103,7 +1103,9 @@ Implemented behavior:
   refreshes the MoonBook-owned
   `wiki/reviews/mooncode/<session-id>/eval-report.json`, and returns the
   updated `mooncode-eval-report` projection. This route receives eval evidence;
-  it does not run the harness in Moondesk.
+  it does not run the harness in Moondesk. The MoonWiki HTTP handlers and
+  native proof persistence are isolated from the generic session router so eval
+  evidence ingestion can evolve independently of session-list/projection logic.
 - `GET /api/mooncode/sessions/:id/runtime-handoff` returns the durable
   `mooncode-runtime-handoff` manifest at
   `wiki/reviews/mooncode/<session-id>/runtime-handoff.json`. It names the

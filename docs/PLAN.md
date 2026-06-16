@@ -745,6 +745,9 @@ normalization to `internal/mooncode`, and persists the MoonClaw-owned report as
 Handoff panel with the ordered command log, event log, stream/command
 endpoints, native MoonClaw endpoints, output roots, dispatch mode, and next
 runtime step for MoonClaw or a future standalone `mooncode` runtime. The
+MoonWiki eval-report GET/POST handlers and native proof persistence now live
+outside the generic MoonCode session router, keeping session lookup/projection
+separate from eval evidence ingestion. The
 capability route now carries
 typed `command_specs`, display `tool_specs`, and the executable
 `mooncode-tool-contract`, and the MoonCode inspector renders those tool owners,
