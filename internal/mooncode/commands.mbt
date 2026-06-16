@@ -108,6 +108,23 @@ pub fn command_queue_response(
 }
 
 ///|
+pub fn command_queue_result_response(
+  session_id : String,
+  commands : Array[Json],
+  session : Json,
+  command_log_path~ : String,
+) -> Json {
+  command_queue_response(
+    session_id,
+    commands,
+    workspace_id=json_string(session, "workspace_id", default=""),
+    workspace_name=json_string(session, "workspace_name", default=""),
+    task_id=json_string(session, "moonclaw_task_id", default=""),
+    command_log_path~,
+  )
+}
+
+///|
 pub fn command_lane(action : String) -> String {
   match action {
     "run_tests" => "test"
@@ -1334,6 +1351,20 @@ test "mooncode command queue response owns queue surface" {
     ),
     "mooncode",
   )
+  let aggregate = command_queue_result_response(
+    "session-demo",
+    [command],
+    {
+      "id": "session-demo",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo Book",
+      "moonclaw_task_id": "task-demo",
+    },
+    command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/commands.jsonl",
+  )
+  assert_eq(json_string(aggregate, "workspace_id", default=""), "book-demo")
+  assert_eq(json_string(aggregate, "workspace_name", default=""), "Demo Book")
+  assert_eq(json_string(aggregate, "task_id", default=""), "task-demo")
 }
 
 ///|

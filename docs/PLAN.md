@@ -209,10 +209,10 @@ state, runtime claim state, claim/replay consumer contracts, replay
 acknowledgement request expansion, replay/claim timestamp defaulting,
 acknowledgement status/detail rules, claim request limits, runtime-claim
 response shape, runtime dispatch-state response shape, command-queue response
-shape, runtime-replay acknowledgement response shape, aggregate
-runtime-replay acknowledgement response assembly, MoonClaw native
-command/runtime-loop/runtime-turn/stream/eval endpoint shapes, native
-runtime-loop/turn request bodies, and dispatch-mode
+shape, aggregate command-queue response assembly, runtime-replay
+acknowledgement response shape, aggregate runtime-replay acknowledgement
+response assembly, MoonClaw native command/runtime-loop/runtime-turn/stream/eval
+endpoint shapes, native runtime-loop/turn request bodies, and dispatch-mode
 classification, runtime command-feed response shape, runtime event-sink response
 shape, runtime event-ingest result response shape, runtime execution-plan
 response shape, runtime-supervisor response shape, and dispatch receipt record
