@@ -126,30 +126,6 @@ fn mooncode_runtime_dispatch_receipt(
 }
 
 ///|
-fn mooncode_runtime_dispatch_pending_count(
-  commands : Array[Json],
-  receipts : Array[Json],
-) -> Int {
-  @mooncode.runtime_dispatch_pending_count(
-    commands,
-    receipts,
-    lease_now=@async.now().to_string(),
-  )
-}
-
-///|
-fn mooncode_runtime_pending_command_ids(
-  commands : Array[Json],
-  receipts : Array[Json],
-) -> Array[Json] {
-  @mooncode.runtime_pending_command_ids(
-    commands,
-    receipts,
-    lease_now=@async.now().to_string(),
-  )
-}
-
-///|
 fn mooncode_runtime_replay_state(
   session_id : String,
   commands : Array[Json],
