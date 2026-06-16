@@ -253,6 +253,9 @@ eval report status are now data-only `internal/mooncode` protocol objects. It
 now has a separate MoonWiki event/summary projection adapter outside the
 generic session router; that adapter gathers MoonClaw task events and durable
 JSONL sidecars, then delegates summary shaping to MoonCode-owned contracts. It
+now has focused MoonWiki adapter files for action-plan and runtime-evidence
+routes too, keeping host log gathering separate from the generic session
+router while retaining MoonCode-owned response contracts. It
 also owns the aggregate action-plan response surface and runtime-replay block
 composition; Moondesk gathers durable logs and timestamps but no longer builds
 that JSON contract locally. It

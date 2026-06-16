@@ -99,6 +99,9 @@ dispatch/claim/replay receipt appends still live in `internal/moonwiki`;
 MoonWiki's durable event/summary projection adapter now lives outside the
 generic MoonCode session router while still joining MoonClaw task events,
 sidecar JSONL, and MoonCode-owned summary contracts for the desktop API;
+action-plan and runtime-evidence route/projection adapters are also isolated
+from the session router while still delegating their response contracts to
+`internal/mooncode`;
 future MoonCode work should move more storage and eval contracts behind the
 same boundary before it is split into a standalone `mooncode` component.
 
@@ -1213,7 +1216,9 @@ Implemented behavior:
   state such as `queued-for-runtime`, `awaiting-proof`, `blocked`,
   `ready-for-review`, `runtime-retry`, or `completed`, plus required gates and a
   next step. Commands refresh the durable MoonBook artifact at
-  `wiki/reviews/mooncode/<session-id>/action-plan.json`.
+  `wiki/reviews/mooncode/<session-id>/action-plan.json`. The HTTP wrapper and
+  host-side log gathering live in a focused MoonWiki action-plan handler file;
+  the response shape remains MoonCode-owned.
 - `GET/POST /api/mooncode/sessions/:id/runtime-events` is the MoonClaw to
   Moondesk event boundary. GET exposes the durable sink contract and current
   `events.jsonl` contents. POST accepts OpenSeek-style JSONL event objects,
