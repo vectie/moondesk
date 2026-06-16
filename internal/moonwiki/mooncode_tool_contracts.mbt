@@ -1,19 +1,9 @@
 ///|
-fn mooncode_tool_contract_json() -> Json {
-  @mooncode.tool_contract_json()
-}
-
-///|
-fn mooncode_tool_contract_tool_ids(contract : Json) -> Array[String] {
-  @mooncode.tool_contract_tool_ids(contract)
-}
-
-///|
 test "mooncode tool contract covers OpenSeek-style builtins" {
-  let contract = mooncode_tool_contract_json()
+  let contract = @mooncode.tool_contract_json()
   assert_eq(json_string(contract, "kind", default=""), "mooncode-tool-contract")
   assert_eq(json_string(contract, "owner", default=""), "moonclaw")
-  let ids = mooncode_tool_contract_tool_ids(contract)
+  let ids = @mooncode.tool_contract_tool_ids(contract)
   for required in @mooncode.runtime_tool_names() {
     assert_true(ids.contains(required))
   }
@@ -30,7 +20,7 @@ test "mooncode tool contract covers OpenSeek-style builtins" {
 
 ///|
 test "mooncode mutating tools require diff-producing review" {
-  let contract = mooncode_tool_contract_json()
+  let contract = @mooncode.tool_contract_json()
   for tool in json_array_items(contract, "tools") {
     if json_bool(tool, "mutates_files", default=false) {
       assert_true(json_bool(tool, "requires_review", default=false))

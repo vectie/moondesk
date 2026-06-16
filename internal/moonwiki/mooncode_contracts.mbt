@@ -12,36 +12,16 @@ async fn handle_mooncode_eval_harness_contract(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  send_json(conn, method_, mooncode_eval_harness_contract_json())
+  send_json(conn, method_, @mooncode.eval_harness_contract_json())
 }
 
 ///|
 async fn mooncode_capabilities_response_json(workspace_root : String) -> Json {
   agent_session_with_field(
-    mooncode_capabilities_json(),
+    @mooncode.capabilities_json(),
     "engine_status",
     mooncode_engine_status_json(workspace_root),
   )
-}
-
-///|
-fn mooncode_capabilities_json() -> Json {
-  @mooncode.capabilities_json()
-}
-
-///|
-fn mooncode_runtime_contract_json() -> Json {
-  @mooncode.runtime_contract_json()
-}
-
-///|
-fn mooncode_eval_harness_contract_json() -> Json {
-  @mooncode.eval_harness_contract_json()
-}
-
-///|
-fn mooncode_native_eval_report_contract_json() -> Json {
-  @mooncode.native_eval_report_contract_json()
 }
 
 ///|
@@ -93,7 +73,7 @@ async fn mooncode_engine_status_json(workspace_root : String) -> Json {
 
 ///|
 test "mooncode http contract delegates static capability shape to mooncode package" {
-  let payload = mooncode_capabilities_json().stringify()
+  let payload = @mooncode.capabilities_json().stringify()
   assert_true(payload.contains("\"component\":\"mooncode\""))
   assert_true(payload.contains("\"runtime_contract\""))
   assert_true(payload.contains("\"moonclaw_adapter_contract\""))
@@ -106,16 +86,24 @@ test "mooncode http contract delegates static capability shape to mooncode packa
     payload.contains("/v1/mooncode/sessions/<id>/eval-report?book_root=<path>"),
   )
   assert_eq(
-    mooncode_runtime_contract_json().stringify(),
-    @mooncode.runtime_contract_json().stringify(),
+    json_string(
+      @mooncode.runtime_contract_json(),
+      "target_component",
+      default="",
+    ),
+    "moonclaw",
   )
   assert_eq(
-    mooncode_eval_harness_contract_json().stringify(),
-    @mooncode.eval_harness_contract_json().stringify(),
+    json_string(@mooncode.eval_harness_contract_json(), "kind", default=""),
+    "mooncode-eval-harness-contract",
   )
   assert_eq(
-    mooncode_native_eval_report_contract_json().stringify(),
-    @mooncode.native_eval_report_contract_json().stringify(),
+    json_string(
+      @mooncode.native_eval_report_contract_json(),
+      "owner",
+      default="",
+    ),
+    "moonclaw",
   )
 }
 
