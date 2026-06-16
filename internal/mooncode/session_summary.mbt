@@ -522,21 +522,6 @@ fn summary_json_object_field_or_empty(json : Json, key : String) -> Json {
 }
 
 ///|
-fn eval_report_with_field(base : Json, key : String, value : Json) -> Json {
-  match base {
-    Json::Object(fields) => {
-      let next : Map[String, Json] = {}
-      for item in fields {
-        next[item.0] = item.1
-      }
-      next[key] = value
-      Json::object(next)
-    }
-    _ => base
-  }
-}
-
-///|
 fn summary_json_int(json : Json, key : String, default~ : Int) -> Int {
   match summary_json_object_field(json, key) {
     Some(Json::Number(value, ..)) => value.to_int()

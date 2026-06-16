@@ -110,6 +110,21 @@ pub fn normalize_native_eval_report(report : Json, endpoint : String) -> Json {
 }
 
 ///|
+fn eval_report_with_field(base : Json, key : String, value : Json) -> Json {
+  match base {
+    Json::Object(fields) => {
+      let next : Map[String, Json] = {}
+      for item in fields {
+        next[item.0] = item.1
+      }
+      next[key] = value
+      Json::object(next)
+    }
+    _ => base
+  }
+}
+
+///|
 pub fn session_without_eval_report_projection(session : Json) -> Json {
   let object : Map[String, Json] = {}
   match session {
