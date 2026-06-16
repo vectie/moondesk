@@ -24,6 +24,8 @@ pub fn action_plan_next_required_action(Json, Array[Json]) -> String
 
 pub fn action_plan_preflight_item(Int, Json) -> Json
 
+pub fn action_plan_response(String, Json, Array[Json], Json, Array[Json], Array[Json], recorded_at~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
+
 pub fn action_plan_review_count(Array[Json]) -> Int
 
 pub fn action_plan_runtime_state_at(String, Array[Json], Array[Json], lease_now? : String) -> String

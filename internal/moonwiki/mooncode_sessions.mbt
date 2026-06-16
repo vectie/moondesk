@@ -2039,98 +2039,26 @@ async fn mooncode_action_plan_projection(
   let actions = mooncode_action_plan_items(
     session, commands, runtime_commands, runtime_dispatches, events,
   )
-  let pending_runtime_count = mooncode_action_plan_state_count(
-      actions, "queued-for-runtime",
-    ) +
-    mooncode_action_plan_state_count(actions, "runtime-retry")
-  let running_count = mooncode_action_plan_state_count(actions, "running")
-  let blocked_count = mooncode_action_plan_state_count(actions, "blocked")
-  let ready_for_review_count = mooncode_action_plan_state_count(
-    actions, "ready-for-review",
-  )
-  let completed_count = mooncode_action_plan_state_count(actions, "completed")
   let summary = @mooncode.session_summary(session, events)
-  {
-    "kind": "mooncode-action-plan",
-    "protocol": "mooncode.v1",
-    "status": mooncode_action_plan_status(
-      pending_runtime_count,
-      running_count,
-      blocked_count,
-      ready_for_review_count,
-      completed_count,
-      actions.length(),
-    ),
-    "session_id": session_id,
-    "workspace_id": json_string(session, "workspace_id", default=""),
-    "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
-    "recorded_at": @async.now().to_string(),
-    "manifest_path": "",
-    "absolute_manifest_path": "",
-    "action_count": actions.length(),
-    "pending_runtime_count": pending_runtime_count,
-    "running_count": running_count,
-    "blocked_count": blocked_count,
-    "ready_for_review_count": ready_for_review_count,
-    "completed_count": completed_count,
-    "run_test_command_count": mooncode_action_plan_command_count(
-      actions, "run_tests",
-    ),
-    "package_command_count": mooncode_action_plan_command_count(
-      actions, "package",
-    ),
-    "commit_command_count": mooncode_action_plan_command_count(
-      actions, "commit",
-    ),
-    "accept_command_count": mooncode_action_plan_command_count(
-      actions, "accept",
-    ),
-    "review_command_count": mooncode_action_plan_review_count(actions),
-    "verified_test_count": json_int(summary, "verified_test_count", default=0),
-    "failed_test_count": json_int(summary, "failed_test_count", default=0),
-    "pending_diff_count": json_int(summary, "pending_diff_count", default=0),
-    "pending_tool_approval_count": json_int(
-      summary,
-      "pending_tool_approval_count",
-      default=0,
-    ),
-    "source_bound_package_count": json_int(
-      summary,
-      "source_bound_package_count",
-      default=0,
-    ),
-    "next_required_action": mooncode_action_plan_next_required_action(
-      summary, actions,
-    ),
-    "actions": Json::array(actions),
-    "runtime_replay": mooncode_runtime_replay_state(
-      session_id,
-      runtime_commands,
-      runtime_dispatches,
-      workspace_id=json_string(session, "workspace_id", default=""),
-      workspace_name=json_string(session, "workspace_name", default=""),
-      task_id=json_string(session, "moonclaw_task_id", default=""),
-      runtime_command_log_path=if session_id == "" {
-        ""
-      } else {
-        mooncode_runtime_command_log_path(workspace_root, session_id)
-      },
-      runtime_dispatch_log_path=if session_id == "" {
-        ""
-      } else {
-        mooncode_runtime_dispatch_log_path(workspace_root, session_id)
-      },
-    ),
-    "acceptance_gates": mooncode_action_plan_acceptance_gates(summary),
-    "owner": {
-      "ui": "moondesk",
-      "runtime": "moonclaw",
-      "artifact": "moonbook",
-      "extractable_component": "mooncode",
+  @mooncode.action_plan_response(
+    session_id,
+    session,
+    actions,
+    summary,
+    runtime_commands,
+    runtime_dispatches,
+    recorded_at=@async.now().to_string(),
+    runtime_command_log_path=if session_id == "" {
+      ""
+    } else {
+      mooncode_runtime_command_log_path(workspace_root, session_id)
     },
-    "rule": "This plan is Moondesk's compact execution/review contract. MoonClaw or standalone MoonCode consumes the command queue, emits proof events, then Moondesk updates this plan without executing tools itself.",
-  }
+    runtime_dispatch_log_path=if session_id == "" {
+      ""
+    } else {
+      mooncode_runtime_dispatch_log_path(workspace_root, session_id)
+    },
+  )
 }
 
 ///|
@@ -2788,40 +2716,6 @@ fn mooncode_action_plan_status(
     pending_runtime_count, running_count, blocked_count, ready_for_review_count,
     completed_count, action_count,
   )
-}
-
-///|
-fn mooncode_action_plan_state_count(
-  actions : Array[Json],
-  state : String,
-) -> Int {
-  @mooncode.action_plan_state_count(actions, state)
-}
-
-///|
-fn mooncode_action_plan_command_count(
-  actions : Array[Json],
-  command : String,
-) -> Int {
-  @mooncode.action_plan_command_count(actions, command)
-}
-
-///|
-fn mooncode_action_plan_review_count(actions : Array[Json]) -> Int {
-  @mooncode.action_plan_review_count(actions)
-}
-
-///|
-fn mooncode_action_plan_next_required_action(
-  summary : Json,
-  actions : Array[Json],
-) -> String {
-  @mooncode.action_plan_next_required_action(summary, actions)
-}
-
-///|
-fn mooncode_action_plan_acceptance_gates(summary : Json) -> Json {
-  @mooncode.command_acceptance_gates(summary)
 }
 
 ///|

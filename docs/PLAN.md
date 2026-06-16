@@ -232,6 +232,9 @@ session summaries. It also owns session summary and eval-report projection:
 event lane counts, review state, pending diff/tool approval counts, verified
 test counts, MoonBook manifest counters, bridge readiness checks, and native
 eval report status are now data-only `internal/mooncode` protocol objects. It
+also owns the aggregate action-plan response surface and runtime-replay block
+composition; Moondesk gathers durable logs and timestamps but no longer builds
+that JSON contract locally. It
 also owns change-set, patch-set, tool-approval, test-run, package-manifest,
 package-index, and package-candidate projection: reviewable lane entries,
 patch hunk grouping, approval/test row grouping, package status/index/
