@@ -1614,6 +1614,39 @@ pub fn runtime_dispatch_receipt_for_response(
 }
 
 ///|
+pub fn runtime_dispatch_state_response(
+  session_id : String,
+  commands : Array[Json],
+  dispatch_receipts : Array[Json],
+  pending_command_ids : Array[Json],
+  workspace_id~ : String,
+  workspace_name~ : String,
+  task_id~ : String,
+  dispatch_mode~ : String,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+) -> Json {
+  {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode-runtime-dispatch-state",
+    "session_id": session_id,
+    "workspace_id": workspace_id,
+    "workspace_name": workspace_name,
+    "task_id": task_id,
+    "dispatch_mode": dispatch_mode,
+    "runtime_command_count": commands.length(),
+    "runtime_dispatch_count": dispatch_receipts.length(),
+    "runtime_dispatch_pending_count": pending_command_ids.length(),
+    "runtime_command_log_path": runtime_command_log_path,
+    "runtime_dispatch_log_path": runtime_dispatch_log_path,
+    "dispatch_receipts": Json::array(dispatch_receipts),
+    "pending_command_ids": Json::array(pending_command_ids),
+    "runtime_protocol": runtime_protocol_contract_json(),
+    "owner": runtime_owner_record(),
+  }
+}
+
+///|
 pub fn runtime_receipt_status_delivered(status : String) -> Bool {
   status == "native-dispatched" ||
   status == "legacy-bridged" ||
@@ -2882,6 +2915,59 @@ test "mooncode runtime dispatch receipt response fills legacy defaults" {
     rq_json_object_field(response, "runtime_command") is Some(Json::Object(_)),
   )
   assert_true(rq_json_object_field(response, "owner") is Some(Json::Object(_)))
+}
+
+///|
+test "mooncode runtime dispatch state response records queue state" {
+  let command : Json = {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.runtime-command",
+    "command_id": "cmd-1",
+  }
+  let dispatch : Json = {
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.runtime-dispatch",
+    "command_id": "cmd-0",
+    "status": "runtime-completed",
+    "dispatch_id": "dispatch-0",
+  }
+  let response = runtime_dispatch_state_response(
+    "session-demo",
+    [command],
+    [dispatch],
+    [Json::string("cmd-1")],
+    workspace_id="book-demo",
+    workspace_name="Demo",
+    task_id="task-demo",
+    dispatch_mode="moonclaw-mooncode-runtime",
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+  )
+  assert_eq(
+    rq_json_string(response, "kind", default=""),
+    "mooncode-runtime-dispatch-state",
+  )
+  assert_eq(rq_json_int(response, "runtime_command_count", default=0), 1)
+  assert_eq(rq_json_int(response, "runtime_dispatch_count", default=0), 1)
+  assert_eq(
+    rq_json_int(response, "runtime_dispatch_pending_count", default=0),
+    1,
+  )
+  assert_eq(
+    rq_json_string_array_items(response, "pending_command_ids")[0],
+    "cmd-1",
+  )
+  assert_true(
+    rq_json_object_field(response, "runtime_protocol") is Some(Json::Object(_)),
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(response, "owner"),
+      "runtime",
+      default="",
+    ),
+    "moonclaw",
+  )
 }
 
 ///|

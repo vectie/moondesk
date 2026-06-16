@@ -207,8 +207,9 @@ runtime protocol metadata, command decode reports, delivered/claimed/pending/
 expired-lease classification, pending OpenSeek JSONL export, runtime replay
 state, runtime claim state, claim/replay consumer contracts, replay
 acknowledgement request expansion, acknowledgement status/detail rules, claim
-request limits, runtime-claim response shape, and dispatch receipt record shape.
-It also owns OpenSeek-style runtime event normalization, canonical MoonCode event shaping, event lane
+request limits, runtime-claim response shape, runtime dispatch-state response
+shape, and dispatch receipt record shape. It also owns OpenSeek-style runtime
+event normalization, canonical MoonCode event shaping, event lane
 validation, runtime event titles, tool lane classification, command preflight
 rules, acceptance-gate projection, required action-gate metadata, patch-target
 checks, `preflight.blocked` event shaping, and action-plan item/state

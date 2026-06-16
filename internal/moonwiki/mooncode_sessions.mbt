@@ -1501,42 +1501,30 @@ async fn handle_mooncode_session_runtime_dispatch(
       let receipts = read_mooncode_runtime_dispatch_log(
         workspace_root, session_id,
       )
-      send_json(conn, method_, {
-        "protocol": "mooncode.v1",
-        "kind": "mooncode-runtime-dispatch-state",
-        "session_id": session_id,
-        "workspace_id": json_string(session, "workspace_id", default=""),
-        "workspace_name": json_string(session, "workspace_name", default=""),
-        "task_id": json_string(session, "moonclaw_task_id", default=""),
-        "dispatch_mode": json_string(
-          session,
-          "mooncode_dispatch_mode",
-          default="unknown",
-        ),
-        "runtime_command_count": commands.length(),
-        "runtime_dispatch_count": receipts.length(),
-        "runtime_dispatch_pending_count": mooncode_runtime_dispatch_pending_count(
-          commands, receipts,
-        ),
-        "runtime_command_log_path": mooncode_runtime_command_log_path(
-          workspace_root, session_id,
-        ),
-        "runtime_dispatch_log_path": mooncode_runtime_dispatch_log_path(
-          workspace_root, session_id,
-        ),
-        "dispatch_receipts": Json::array(
+      send_json(
+        conn,
+        method_,
+        @mooncode.runtime_dispatch_state_response(
+          session_id,
+          commands,
           mooncode_runtime_dispatch_receipts_for_response(receipts),
-        ),
-        "pending_command_ids": Json::array(
           mooncode_runtime_pending_command_ids(commands, receipts),
+          workspace_id=json_string(session, "workspace_id", default=""),
+          workspace_name=json_string(session, "workspace_name", default=""),
+          task_id=json_string(session, "moonclaw_task_id", default=""),
+          dispatch_mode=json_string(
+            session,
+            "mooncode_dispatch_mode",
+            default="unknown",
+          ),
+          runtime_command_log_path=mooncode_runtime_command_log_path(
+            workspace_root, session_id,
+          ),
+          runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+            workspace_root, session_id,
+          ),
         ),
-        "runtime_protocol": @mooncode.runtime_protocol_contract_json(),
-        "owner": {
-          "ui": "moondesk",
-          "runtime": "moonclaw",
-          "extractable_component": "mooncode",
-        },
-      })
+      )
     }
     None =>
       send_api_error(
