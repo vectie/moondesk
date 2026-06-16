@@ -180,6 +180,9 @@ approval, lane, or command support tables.
 Payload action/context extraction is separated too, keeping request decoding
 reusable across Moondesk HTTP handlers and future MoonClaw-facing command
 ingestion without mixing it into the command metadata catalog.
+OpenSeek serve-wire wrapping and runtime-command record assembly are now
+separate MoonCode slices as well, leaving the core command file focused on
+durable command packets and command events.
 The same package now owns the data-only tool contract for the OpenSeek-style
 `read`, `edit`, `write`, `shell`, `moon_check`, and `finish` tools, including
 input schemas, output event requirements, review policy, and safety constraints.
