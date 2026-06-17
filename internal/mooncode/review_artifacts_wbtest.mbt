@@ -111,7 +111,7 @@ test "mooncode package manifest and index summarize executable candidates" {
     "moonclaw_task_id": "task",
   }
   let command_packet : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "command_id": "cmd-1",
     "session_id": "s1",
   }
@@ -340,6 +340,10 @@ test "mooncode artifact paths sanitize session and command ids" {
     "portable/app-tool/mooncode/s1/package-cmd-1.json",
   )
   assert_eq(
+    package_session_root_relative_path("s/1"),
+    "portable/app-tool/mooncode/session",
+  )
+  assert_eq(
     package_index_manifest_relative_path("s1"),
     "portable/app-tool/mooncode/s1/index.json",
   )
@@ -424,7 +428,7 @@ test "mooncode review receipt manifest records ownership split" {
     "moonclaw_task_id": "task-1",
   }
   let command_packet : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "command_id": "cmd/1",
     "action": "accept",
   }
@@ -581,4 +585,99 @@ test "mooncode package and receipt events preserve review targets" {
   )
   assert_eq(json_string(runtime_event, "lane", default=""), "runtime")
   assert_eq(json_string(runtime_event, "kind", default=""), "runtime.handoff")
+}
+
+///|
+test "mooncode projected review manifest events own stable ids" {
+  let manifest : Json = {
+    "session_id": "s1",
+    "status": "recorded",
+    "recorded_at": "2026-06-15T00:00:00Z",
+    "manifest_path": "wiki/reviews/mooncode/s1/change-set.json",
+    "last_command_packet": { "command_id": "cmd-1" },
+  }
+  let first = change_set_manifest_projected_event(manifest)
+  let second = change_set_manifest_projected_event(manifest)
+  assert_eq(
+    json_string(first, "id", default=""),
+    json_string(second, "id", default=""),
+  )
+  assert_eq(json_string(first, "lane", default=""), "review")
+  assert_eq(json_string(first, "kind", default=""), "change_set.manifest")
+  assert_eq(
+    json_string(first, "path", default=""),
+    "wiki/reviews/mooncode/s1/change-set.json",
+  )
+
+  let other = change_set_manifest_projected_event({
+    "session_id": "s1",
+    "recorded_at": "2026-06-15T00:00:00Z",
+    "manifest_path": "wiki/reviews/mooncode/s1/change-set-other.json",
+  })
+  assert_true(
+    json_string(first, "id", default="") != json_string(other, "id", default=""),
+  )
+  assert_eq(
+    json_string(
+      action_plan_manifest_projected_event(manifest),
+      "lane",
+      default="",
+    ),
+    "runtime",
+  )
+  assert_eq(
+    json_string(
+      runtime_handoff_manifest_projected_event(manifest),
+      "kind",
+      default="",
+    ),
+    "runtime.handoff",
+  )
+}
+
+///|
+test "mooncode projected package and receipt events own stable ids" {
+  let packet : Json = { "command_id": "cmd-1" }
+  let receipt = review_receipt_projected_event(
+    "accept", "wiki/reviews/mooncode/s1/accept-cmd-1.json", "tools/demo/main.mbt",
+    "2026-06-15T00:00:00Z", packet,
+  )
+  assert_eq(
+    json_string(receipt, "id", default=""),
+    json_string(
+      review_receipt_projected_event(
+        "accept", "wiki/reviews/mooncode/s1/accept-cmd-1.json", "tools/demo/main.mbt",
+        "2026-06-15T00:00:00Z", packet,
+      ),
+      "id",
+      default="",
+    ),
+  )
+  assert_eq(json_string(receipt, "kind", default=""), "receipt.accept")
+  assert_eq(json_string(receipt, "path", default=""), "tools/demo/main.mbt")
+
+  let manifest : Json = {
+    "session_id": "s1",
+    "status": "candidate",
+    "command_id": "cmd-1",
+    "recorded_at": "2026-06-15T00:01:00Z",
+    "manifest_path": "portable/app-tool/mooncode/s1/package-cmd-1.json",
+  }
+  let package_event = package_manifest_projected_event(
+    manifest, "", "2026-06-15T00:01:00Z", packet,
+  )
+  assert_eq(json_string(package_event, "lane", default=""), "artifact")
+  assert_eq(json_string(package_event, "kind", default=""), "package.manifest")
+  assert_eq(
+    json_string(package_event, "path", default=""),
+    "portable/app-tool/mooncode/s1/package-cmd-1.json",
+  )
+  assert_eq(
+    json_string(
+      package_index_manifest_projected_event(manifest),
+      "kind",
+      default="",
+    ),
+    "package.index",
+  )
 }

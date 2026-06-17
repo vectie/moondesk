@@ -129,7 +129,7 @@ pub fn session_runtime_evidence(
   }
   {
     "kind": "mooncode-session-runtime-evidence",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
@@ -178,6 +178,88 @@ pub fn session_runtime_evidence(
     },
     "rule": "This projection is the session-level proof contract. Moondesk records and displays it, while MoonClaw or standalone MoonCode must satisfy it with command-scoped runtime events.",
   }
+}
+
+///|
+pub fn session_runtime_evidence_manifest_response(
+  evidence : Json,
+  manifest_path : String,
+  absolute_manifest_path : String,
+) -> Json {
+  evidence
+  |> runtime_with_field("manifest_path", manifest_path.to_json())
+  |> runtime_with_field(
+    "absolute_manifest_path",
+    absolute_manifest_path.to_json(),
+  )
+}
+
+///|
+pub fn session_runtime_evidence_response(
+  evidence : Json,
+  manifest_path : String,
+  absolute_manifest_path : String,
+  command_log_path : String,
+  runtime_command_log_path : String,
+  event_log_path : String,
+) -> Json {
+  session_runtime_evidence_manifest_response(
+    evidence, manifest_path, absolute_manifest_path,
+  )
+  |> runtime_with_field("command_log_path", command_log_path.to_json())
+  |> runtime_with_field(
+    "runtime_command_log_path",
+    runtime_command_log_path.to_json(),
+  )
+  |> runtime_with_field("event_log_path", event_log_path.to_json())
+}
+
+///|
+pub fn session_runtime_evidence_response_with_native(
+  evidence : Json,
+  manifest_path : String,
+  absolute_manifest_path : String,
+  command_log_path : String,
+  runtime_command_log_path : String,
+  event_log_path : String,
+  local_event_count~ : Int,
+  native_state~ : Json,
+  native_report~ : Json,
+) -> Json {
+  session_runtime_evidence_response(
+    evidence, manifest_path, absolute_manifest_path, command_log_path, runtime_command_log_path,
+    event_log_path,
+  )
+  |> runtime_with_field("local_event_count", local_event_count.to_json())
+  |> runtime_with_field(
+    "native_event_count",
+    runtime_json_array_items(native_report, "events").length().to_json(),
+  )
+  |> runtime_with_field(
+    "native_runtime_ready",
+    json_bool(native_state, "native_runtime_ready", default=false).to_json(),
+  )
+  |> runtime_with_field(
+    "native_runtime_events_endpoint",
+    runtime_json_string(native_state, "endpoint", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "native_runtime_events_error",
+    runtime_json_string(native_state, "error", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "native_runtime_events_submitted_count",
+    runtime_json_int(native_report, "submitted_count", default=0).to_json(),
+  )
+  |> runtime_with_field(
+    "native_runtime_events_accepted_count",
+    runtime_json_int(native_report, "accepted_count", default=0).to_json(),
+  )
+  |> runtime_with_field(
+    "native_runtime_events_rejected_count",
+    runtime_json_int(native_report, "rejected_count", default=0).to_json(),
+  )
+  |> runtime_with_field("native_runtime_events_report", native_report)
 }
 
 ///|

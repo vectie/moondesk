@@ -7,6 +7,8 @@ test "mooncode tool contract covers openseek builtins" {
   for required in runtime_tool_names() {
     assert_true(ids.contains(required))
   }
+  assert_true(ids.contains("moon_ide"))
+  assert_true(ids.contains("moon_cmd"))
   assert_true(
     json_string(contract, "execution_owner", default="").contains("mooncode"),
   )
@@ -19,6 +21,40 @@ test "mooncode tool contract covers openseek builtins" {
       "validates paths",
     ),
   )
+}
+
+///|
+test "mooncode tool contract distinguishes moon ide and moon command safety" {
+  let contract = tool_contract_json()
+  let mut found_ide = false
+  let mut found_cmd = false
+  for tool in json_array_items(contract, "tools") {
+    match json_string(tool, "id", default="") {
+      "moon_ide" => {
+        found_ide = true
+        assert_eq(json_string(tool, "approval", default=""), "auto")
+        assert_false(json_bool(tool, "mutates_files", default=true))
+        assert_false(json_bool(tool, "requires_review", default=true))
+        assert_true(
+          json_string(tool, "safety_policy", default="").contains("read-only"),
+        )
+      }
+      "moon_cmd" => {
+        found_cmd = true
+        assert_eq(json_string(tool, "approval", default=""), "policy")
+        assert_true(json_bool(tool, "mutates_files", default=false))
+        assert_true(json_bool(tool, "requires_review", default=false))
+        assert_true(
+          json_string(tool, "safety_policy", default="").contains(
+            "test --update",
+          ),
+        )
+      }
+      _ => ()
+    }
+  }
+  assert_true(found_ide)
+  assert_true(found_cmd)
 }
 
 ///|

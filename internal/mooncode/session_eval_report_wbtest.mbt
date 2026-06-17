@@ -24,6 +24,81 @@ test "mooncode eval report projection stays extractable" {
 }
 
 ///|
+test "mooncode eval report manifest response owns summary and path stamping" {
+  let event = event_record(
+    id="test-1",
+    lane="test",
+    kind="tool.moon_check",
+    title="Moon check",
+    status="done",
+    created_at="2026-06-17T00:00:00Z",
+    detail="passed",
+    command="moon check",
+  )
+  let manifest = eval_report_manifest_response_for_session(
+    { "id": "s1", "workspace_id": "book" },
+    [event],
+    recorded_at="2026-06-17T00:01:00Z",
+    manifest_path="wiki/reviews/mooncode/s1/eval-report.json",
+    absolute_manifest_path="/tmp/book/wiki/reviews/mooncode/s1/eval-report.json",
+  )
+  assert_eq(json_string(manifest, "kind", default=""), "mooncode-eval-report")
+  assert_eq(
+    json_string(manifest, "recorded_at", default=""),
+    "2026-06-17T00:01:00Z",
+  )
+  assert_eq(
+    json_string(manifest, "manifest_path", default=""),
+    "wiki/reviews/mooncode/s1/eval-report.json",
+  )
+  assert_eq(
+    summary_json_int(
+      summary_json_object_field_or_empty(manifest, "summary"),
+      "verified_test_count",
+      default=0,
+    ),
+    1,
+  )
+}
+
+///|
+test "mooncode eval report manifest session update refreshes summary" {
+  let manifest : Json = {
+    "kind": "mooncode-eval-report",
+    "manifest_path": "wiki/reviews/mooncode/s1/eval-report.json",
+  }
+  let event = eval_report_manifest_projected_event(manifest)
+  let session = session_with_eval_report_manifest_event(
+    {
+      "id": "s1",
+      "workspace_id": "book",
+      "transcript": [{ "role": "user", "content": "Add a miniapp" }],
+    },
+    manifest,
+    event,
+  )
+  assert_eq(
+    json_string(
+      summary_json_object_field_or_empty(
+        session, "mooncode_last_eval_report_manifest",
+      ),
+      "manifest_path",
+      default="",
+    ),
+    "wiki/reviews/mooncode/s1/eval-report.json",
+  )
+  assert_eq(
+    summary_json_int(
+      summary_json_object_field_or_empty(session, "mooncode_summary"),
+      "moonbook_eval_report_manifest_count",
+      default=0,
+    ),
+    1,
+  )
+  assert_eq(json_array_items(session, "mooncode_command_events").length(), 1)
+}
+
+///|
 test "mooncode native eval report normalization accepts legacy readiness" {
   let native_eval = normalize_native_eval_report(
     {
@@ -49,7 +124,7 @@ test "mooncode native eval report normalization accepts MoonClaw harness status"
   let native_eval = normalize_native_eval_report(
     {
       "kind": "mooncode-native-eval-report",
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "status": "accepted",
       "native_eval": {
         "status": "passed",
@@ -78,6 +153,28 @@ test "mooncode native eval report normalization accepts MoonClaw harness status"
   assert_eq(
     summary_json_int(report, "native_eval_passed_harness_count", default=0),
     2,
+  )
+}
+
+///|
+test "mooncode native eval report session patch is MoonCode owned" {
+  let session = session_with_native_eval_report(
+    { "id": "s1", "workspace_id": "book" },
+    { "native_eval_evidence_ready": true, "harnesses": ["tool_harness"] },
+    "/v1/mooncode/sessions/s1/eval-report",
+  )
+  assert_eq(json_string(session, "id", default=""), "s1")
+  let native = summary_json_object_field_or_empty(
+    session, "mooncode_native_eval_report",
+  )
+  assert_true(json_bool(native, "ok", default=false))
+  assert_eq(
+    json_string(native, "endpoint", default=""),
+    "/v1/mooncode/sessions/s1/eval-report",
+  )
+  assert_eq(
+    json_string(native, "source", default=""),
+    "moonclaw-native-runtime",
   )
 }
 
@@ -113,4 +210,61 @@ test "mooncode eval report projection cleanup is MoonCode-owned" {
   assert_true(
     summary_json_object_field(cleaned, "mooncode_native_eval_report") is Some(_),
   )
+}
+
+///|
+test "mooncode saved eval manifest updates session and carries native evidence" {
+  let next = session_with_saved_eval_manifest({ "id": "s1" }, {
+    "kind": "mooncode-eval-report",
+    "manifest_path": "wiki/reviews/mooncode/s1/eval-report.json",
+    "native_eval_report": { "ok": true, "status": "accepted" },
+  })
+  assert_eq(
+    json_string(
+      summary_json_object_field_or_empty(
+        next, "mooncode_last_eval_report_manifest",
+      ),
+      "manifest_path",
+      default="",
+    ),
+    "wiki/reviews/mooncode/s1/eval-report.json",
+  )
+  let native = summary_json_object_field_or_empty(
+    next, "mooncode_native_eval_report",
+  )
+  assert_true(json_bool(native, "ok", default=false))
+  assert_eq(json_string(native, "status", default=""), "accepted")
+}
+
+///|
+test "mooncode saved eval manifest keeps existing accepted native evidence" {
+  let next = session_with_saved_eval_manifest(
+    {
+      "id": "s1",
+      "mooncode_native_eval_report": {
+        "ok": true,
+        "status": "previously-accepted",
+      },
+    },
+    {
+      "kind": "mooncode-eval-report",
+      "native_eval_report": { "ok": true, "status": "newer" },
+    },
+  )
+  let native = summary_json_object_field_or_empty(
+    next, "mooncode_native_eval_report",
+  )
+  assert_eq(json_string(native, "status", default=""), "previously-accepted")
+}
+
+///|
+test "mooncode saved eval manifest does not promote failed native evidence" {
+  let next = session_with_saved_eval_manifest({ "id": "s1" }, {
+    "kind": "mooncode-eval-report",
+    "native_eval_report": { "ok": false, "status": "failed" },
+  })
+  let native = summary_json_object_field_or_empty(
+    next, "mooncode_native_eval_report",
+  )
+  assert_eq(native.stringify(), "{}")
 }

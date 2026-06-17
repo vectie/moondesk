@@ -34,7 +34,7 @@ pub fn eval_report_projection(session : Json) -> Json {
   )
   {
     "kind": "mooncode-eval-report",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": status,
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
@@ -96,6 +96,46 @@ pub fn eval_report_projection(session : Json) -> Json {
 }
 
 ///|
+pub fn eval_report_manifest_response_for_session(
+  session : Json,
+  events : Array[Json],
+  recorded_at~ : String,
+  manifest_path~ : String,
+  absolute_manifest_path~ : String,
+) -> Json {
+  let summary = session_summary(session, events)
+  let report = eval_report_projection(
+    runtime_with_field(session, "mooncode_summary", summary),
+  )
+  runtime_with_field(
+    runtime_with_field(
+      runtime_with_field(report, "recorded_at", recorded_at.to_json()),
+      "manifest_path",
+      manifest_path.to_json(),
+    ),
+    "absolute_manifest_path",
+    absolute_manifest_path.to_json(),
+  )
+}
+
+///|
+pub fn session_with_eval_report_manifest_event(
+  session : Json,
+  manifest : Json,
+  event : Json,
+) -> Json {
+  let with_manifest = session_with_manifest_event(
+    session, "mooncode_last_eval_report_manifest", manifest, event,
+  )
+  let events = project_session_events_for_session(with_manifest, [], [])
+  session_with_field(
+    with_manifest,
+    "mooncode_summary",
+    session_summary(with_manifest, events),
+  )
+}
+
+///|
 pub fn normalize_native_eval_report(report : Json, endpoint : String) -> Json {
   let ok = native_eval_report_ready(report)
   eval_report_with_field(
@@ -106,6 +146,19 @@ pub fn normalize_native_eval_report(report : Json, endpoint : String) -> Json {
     ),
     "endpoint",
     endpoint.to_json(),
+  )
+}
+
+///|
+pub fn session_with_native_eval_report(
+  session : Json,
+  report : Json,
+  endpoint : String,
+) -> Json {
+  runtime_with_field(
+    session,
+    "mooncode_native_eval_report",
+    normalize_native_eval_report(report, endpoint),
   )
 }
 
@@ -138,6 +191,31 @@ pub fn session_without_eval_report_projection(session : Json) -> Json {
     _ => ()
   }
   Json::object(object)
+}
+
+///|
+pub fn session_with_saved_eval_manifest(
+  session : Json,
+  manifest : Json,
+) -> Json {
+  let with_manifest = runtime_with_field(
+    session, "mooncode_last_eval_report_manifest", manifest,
+  )
+  let native_report = summary_json_object_field_or_empty(
+    manifest, "native_eval_report",
+  )
+  if json_bool(native_report, "ok", default=false) &&
+    !json_bool(
+      summary_json_object_field_or_empty(session, "mooncode_native_eval_report"),
+      "ok",
+      default=false,
+    ) {
+    runtime_with_field(
+      with_manifest, "mooncode_native_eval_report", native_report,
+    )
+  } else {
+    with_manifest
+  }
 }
 
 ///|

@@ -6,7 +6,7 @@ test "mooncode runtime replay ack records matching claim context" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-claimed",
       "session_id": "session-demo",
@@ -18,8 +18,8 @@ test "mooncode runtime replay ack records matching claim context" {
   ]
   let dispatches : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "dispatch_id": "claim-1",
       "claim_id": "claim-1",
       "command_id": "cmd-claimed",
@@ -81,7 +81,7 @@ test "mooncode runtime replay ack response owns accepted ack surface" {
   }
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-claimed",
       "session_id": "session-demo",
@@ -97,7 +97,7 @@ test "mooncode runtime replay ack response owns accepted ack surface" {
     "status": "runtime-acknowledged",
     "events": [
       {
-        "event": "tool_result",
+        "event": event_tool_result(),
         "id": "evt-tool",
         "tool_name": "finish",
         "tool_call_id": "call-finish",
@@ -182,7 +182,7 @@ test "mooncode runtime replay completion is blocked without required proof" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-tests",
       "session_id": "session-demo",
@@ -254,7 +254,7 @@ test "mooncode runtime replay completion can use prior streamed proof events" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-tests",
       "session_id": "session-demo",
@@ -283,6 +283,38 @@ test "mooncode runtime replay completion can use prior streamed proof events" {
       "kind": "read",
       "status": "done",
       "tool_call_id": "call-read",
+      "command_packet": command_packet,
+    },
+    {
+      "id": "evt-ide-call",
+      "lane": "tool",
+      "kind": "moon_ide",
+      "status": "running",
+      "tool_call_id": "call-ide",
+      "command_packet": command_packet,
+    },
+    {
+      "id": "evt-ide-result",
+      "lane": "tool",
+      "kind": "moon_ide",
+      "status": "done",
+      "tool_call_id": "call-ide",
+      "command_packet": command_packet,
+    },
+    {
+      "id": "evt-cmd-call",
+      "lane": "tool",
+      "kind": "moon_cmd",
+      "status": "running",
+      "tool_call_id": "call-cmd",
+      "command_packet": command_packet,
+    },
+    {
+      "id": "evt-cmd-result",
+      "lane": "tool",
+      "kind": "moon_cmd",
+      "status": "done",
+      "tool_call_id": "call-cmd",
       "command_packet": command_packet,
     },
     {
@@ -347,11 +379,11 @@ test "mooncode runtime replay completion can use prior streamed proof events" {
   let gate = rq_json_object_field_or_empty(receipts[0], "proof_gate")
   assert_false(rq_json_bool(gate, "completion_blocked", default=true))
   assert_eq(rq_json_string(gate, "status", default=""), "passed")
-  assert_eq(rq_json_int(gate, "prior_event_count", default=0), 8)
+  assert_eq(rq_json_int(gate, "prior_event_count", default=0), 12)
   assert_eq(rq_json_int(gate, "missing_required_event_count", default=-1), 0)
   assert_eq(rq_json_int(gate, "proven_required_event_count", default=0), 4)
   assert_eq(rq_json_string(gate, "tool_harness_status", default=""), "proven")
-  assert_eq(rq_json_int(gate, "tool_harness_proven_tool_count", default=0), 4)
+  assert_eq(rq_json_int(gate, "tool_harness_proven_tool_count", default=0), 6)
 }
 
 ///|
@@ -359,7 +391,7 @@ test "mooncode runtime replay ack summarizes submitted proof events" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-proof",
       "session_id": "session-demo",
@@ -376,7 +408,7 @@ test "mooncode runtime replay ack summarizes submitted proof events" {
     "acknowledged_at": "2026-06-15T00:00:00Z",
     "events": [
       {
-        "event": "tool_call",
+        "event": event_tool_call(),
         "id": "evt-tool",
         "tool_name": "shell",
         "tool_call_id": "call-shell",
@@ -390,14 +422,14 @@ test "mooncode runtime replay ack summarizes submitted proof events" {
         "diff": "@@ -1 +1",
       },
       {
-        "event": "test_result",
+        "event": event_test_result(),
         "id": "evt-test",
         "command": "moon test",
         "status": "passed",
         "exit_code": 0,
       },
       {
-        "event": "package_verified",
+        "event": event_package_verified(),
         "id": "evt-package",
         "path": "portable/app-tool/demo",
       },
@@ -462,7 +494,7 @@ test "mooncode runtime replay ack exposes prior-order blocker" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-active",
       "session_id": "session-demo",
@@ -472,7 +504,7 @@ test "mooncode runtime replay ack exposes prior-order blocker" {
       "openseek_wire_command": { "command": "prompt", "text": "first" },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-later",
       "session_id": "session-demo",
@@ -484,8 +516,8 @@ test "mooncode runtime replay ack exposes prior-order blocker" {
   ]
   let dispatches : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "dispatch_id": "claim-active",
       "claim_id": "claim-active",
       "command_id": "cmd-active",

@@ -6,14 +6,22 @@ async fn handle_mooncode_session_stream(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
+  let format = query_value(request_path, "format").unwrap_or("jsonl")
+  let since = @mooncode.stream_since_value(
+    query_value(request_path, "since").unwrap_or(""),
+  )
+  let content_type = @mooncode.stream_content_type(format)
   match read_agent_session_record(workspace_root, session_id) {
     Some(session) => {
-      let format = query_value(request_path, "format").unwrap_or("jsonl")
-      let since = mooncode_stream_since(request_path)
-      let live = mooncode_stream_live_enabled(request_path)
-      let live_timeout_ms = mooncode_stream_live_timeout_ms(request_path)
-      let live_poll_ms = mooncode_stream_live_poll_ms(request_path)
-      let content_type = mooncode_stream_content_type(format)
+      let live = @mooncode.stream_live_enabled_value(
+        query_value(request_path, "live").unwrap_or(""),
+      )
+      let live_timeout_ms = @mooncode.stream_live_timeout_ms_value(
+        query_value(request_path, "timeout_ms").unwrap_or(""),
+      )
+      let live_poll_ms = @mooncode.stream_live_poll_ms_value(
+        query_value(request_path, "poll_ms").unwrap_or(""),
+      )
       match
         mooncode_native_stream_text(workspace_root, session_id, format, since) {
         Ok(text) => send_text(conn, method_, content_type, text)
@@ -45,9 +53,14 @@ async fn handle_mooncode_session_stream(
       }
     }
     None =>
-      send_api_error(
-        conn, method_, 404, "Not Found", "Unknown MoonCode session",
-      )
+      match
+        mooncode_native_stream_text(workspace_root, session_id, format, since) {
+        Ok(text) => send_text(conn, method_, content_type, text)
+        Err(_) =>
+          send_api_error(
+            conn, method_, 404, "Not Found", "Unknown MoonCode session",
+          )
+      }
   }
 }
 
@@ -69,7 +82,9 @@ async fn handle_mooncode_session_stream_state(
       return
     }
   }
-  let since = mooncode_stream_since(request_path)
+  let since = @mooncode.stream_since_value(
+    query_value(request_path, "since").unwrap_or(""),
+  )
   if method_ is @http.RequestMethod::Post {
     let payload = match read_json_body(body) {
       Some(json) => json
@@ -78,7 +93,10 @@ async fn handle_mooncode_session_stream_state(
         return
       }
     }
-    let consumer_id = mooncode_stream_checkpoint_consumer(request_path, payload)
+    let consumer_id = @mooncode.stream_checkpoint_consumer_id(
+      payload,
+      query_value(request_path, "consumer").unwrap_or(""),
+    )
     let projected = attach_mooncode_session_projection(workspace_root, session)
     let events = json_array_items(projected, "mooncode_events")
     let requested_sequence = @mooncode.stream_checkpoint_sequence(
@@ -111,9 +129,9 @@ async fn handle_mooncode_session_stream_state(
       ),
     )
   } else {
-    let consumer_id = mooncode_stream_checkpoint_consumer(
-      request_path,
+    let consumer_id = @mooncode.stream_checkpoint_consumer_id(
       Json::object({}),
+      query_value(request_path, "consumer").unwrap_or(""),
     )
     send_json(
       conn,
@@ -122,56 +140,6 @@ async fn handle_mooncode_session_stream_state(
         workspace_root, session, since, consumer_id,
       ),
     )
-  }
-}
-
-///|
-fn mooncode_stream_since(request_path : String) -> Int {
-  let value = query_value(request_path, "since").unwrap_or("")
-  let parsed = @string.parse_int(value) catch { _ => 0 }
-  if parsed < 0 {
-    0
-  } else {
-    parsed
-  }
-}
-
-///|
-fn mooncode_stream_live_enabled(request_path : String) -> Bool {
-  let value = query_value(request_path, "live").unwrap_or("").to_lower()
-  value == "1" || value == "true" || value == "tail" || value == "wait"
-}
-
-///|
-fn mooncode_stream_live_timeout_ms(request_path : String) -> Int {
-  mooncode_clamp_int(
-    @string.parse_int(query_value(request_path, "timeout_ms").unwrap_or("")) catch {
-      _ => 8000
-    },
-    0,
-    15000,
-  )
-}
-
-///|
-fn mooncode_stream_live_poll_ms(request_path : String) -> Int {
-  mooncode_clamp_int(
-    @string.parse_int(query_value(request_path, "poll_ms").unwrap_or("")) catch {
-      _ => 250
-    },
-    50,
-    1000,
-  )
-}
-
-///|
-fn mooncode_clamp_int(value : Int, min : Int, max : Int) -> Int {
-  if value < min {
-    min
-  } else if value > max {
-    max
-  } else {
-    value
   }
 }
 
@@ -191,7 +159,7 @@ async fn mooncode_live_stream_projection(
     timeout_ms <= 0 {
     return initial
   }
-  let attempts = mooncode_live_stream_attempt_count(timeout_ms, poll_ms)
+  let attempts = @mooncode.stream_live_attempt_count(timeout_ms, poll_ms)
   for _ in 0..<attempts {
     @async.sleep(poll_ms)
     match read_agent_session_record(workspace_root, session_id) {
@@ -213,39 +181,6 @@ async fn mooncode_live_stream_projection(
 }
 
 ///|
-fn mooncode_live_stream_attempt_count(timeout_ms : Int, poll_ms : Int) -> Int {
-  if timeout_ms <= 0 {
-    0
-  } else {
-    let count = timeout_ms / poll_ms
-    if count * poll_ms < timeout_ms {
-      count + 1
-    } else if count == 0 {
-      1
-    } else {
-      count
-    }
-  }
-}
-
-///|
-fn mooncode_stream_checkpoint_consumer(
-  request_path : String,
-  payload : Json,
-) -> String {
-  let from_payload = json_string(payload, "consumer_id", default="")
-  let from_query = query_value(request_path, "consumer").unwrap_or("")
-  let candidate = if from_payload != "" {
-    from_payload
-  } else if from_query != "" {
-    from_query
-  } else {
-    "moondesk-ui"
-  }
-  @mooncode.artifact_safe_id(candidate, fallback="moondesk-ui")
-}
-
-///|
 fn mooncode_stream_checkpoint_record(
   workspace_root : String,
   session : Json,
@@ -259,17 +194,13 @@ fn mooncode_stream_checkpoint_record(
     0,
     latest_sequence,
   )
-  @mooncode.stream_checkpoint_record(
+  @mooncode.moondesk_stream_checkpoint_record(
     session,
     consumer_id,
-    last_seen_sequence,
+    clamped,
     latest_sequence,
     @async.now().to_string(),
     mooncode_stream_checkpoint_path(workspace_root, session_id, consumer_id),
-    "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=\{clamped}",
-    "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=\{clamped}",
-    "/api/mooncode/sessions/\{session_id}/stream-state?consumer=\{consumer_id}&since=\{clamped}",
-    "/api/mooncode/sessions/\{session_id}/runtime-events",
   )
 }
 
@@ -283,42 +214,21 @@ async fn mooncode_stream_state_projection(
   let projected = attach_mooncode_session_projection(workspace_root, session)
   let session_id = json_string(projected, "id", default="")
   let events = json_array_items(projected, "mooncode_events")
-  let latest_sequence = events.length()
-  let emitted_count = @mooncode.stream_emitted_count(events, since)
   let checkpoint = read_mooncode_stream_checkpoint(
     workspace_root, session_id, consumer_id,
   )
-  let checkpoint_ready = json_string(checkpoint, "kind", default="") ==
-    "mooncode-stream-checkpoint"
-  @mooncode.stream_state_record(
+  @mooncode.moondesk_stream_state_projection_record(
     projected,
-    consumer_id,
+    events,
     since,
-    latest_sequence,
-    emitted_count,
+    consumer_id,
     mooncode_event_log_path(workspace_root, session_id),
-    checkpoint_ready,
     mooncode_stream_checkpoint_path(workspace_root, session_id, consumer_id),
     checkpoint,
-    @mooncode.stream_tail_event_records(projected, events, since),
-    "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=\{since}",
-    "/api/mooncode/sessions/\{session_id}/stream?format=sse&since=\{since}",
-    "/api/mooncode/sessions/\{session_id}/stream-state",
-    "/api/mooncode/sessions/\{session_id}/runtime-events",
-    "/api/mooncode/sessions/\{session_id}/stream?format=sse&since=\{since}&live=true&timeout_ms=8000",
     @mooncode.moonclaw_native_stream_endpoint(
       session_id, workspace_root, "sse", since,
     ),
   )
-}
-
-///|
-fn mooncode_stream_content_type(format : String) -> String {
-  if format == "sse" {
-    "text/event-stream; charset=utf-8"
-  } else {
-    "application/x-ndjson; charset=utf-8"
-  }
 }
 
 ///|
@@ -548,29 +458,46 @@ test "mooncode native stream path targets typed runtime endpoint" {
 ///|
 test "mooncode stream live query opts into bounded tail" {
   assert_true(
-    mooncode_stream_live_enabled(
-      "/api/mooncode/sessions/s1/stream?format=sse&since=2&live=true",
+    @mooncode.stream_live_enabled_value(
+      query_value(
+        "/api/mooncode/sessions/s1/stream?format=sse&since=2&live=true", "live",
+      ).unwrap_or(""),
     ),
   )
   assert_true(
-    mooncode_stream_live_enabled(
-      "/api/mooncode/sessions/s1/stream?format=jsonl&live=wait",
+    @mooncode.stream_live_enabled_value(
+      query_value(
+        "/api/mooncode/sessions/s1/stream?format=jsonl&live=wait", "live",
+      ).unwrap_or(""),
     ),
   )
   assert_false(
-    mooncode_stream_live_enabled("/api/mooncode/sessions/s1/stream?live=false"),
+    @mooncode.stream_live_enabled_value(
+      query_value("/api/mooncode/sessions/s1/stream?live=false", "live").unwrap_or(
+        "",
+      ),
+    ),
   )
   assert_eq(
-    mooncode_stream_live_timeout_ms(
-      "/api/mooncode/sessions/s1/stream?timeout_ms=20000",
+    @mooncode.stream_live_timeout_ms_value(
+      query_value(
+        "/api/mooncode/sessions/s1/stream?timeout_ms=20000", "timeout_ms",
+      ).unwrap_or(""),
     ),
     15000,
   )
   assert_eq(
-    mooncode_stream_live_poll_ms("/api/mooncode/sessions/s1/stream?poll_ms=10"),
+    @mooncode.stream_live_poll_ms_value(
+      query_value("/api/mooncode/sessions/s1/stream?poll_ms=10", "poll_ms").unwrap_or(
+        "",
+      ),
+    ),
     50,
   )
-  assert_eq(mooncode_live_stream_attempt_count(801, 250), 4)
+  assert_eq(
+    @mooncode.stream_content_type("sse"),
+    "text/event-stream; charset=utf-8",
+  )
 }
 
 ///|

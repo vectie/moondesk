@@ -45,29 +45,44 @@ async fn mooncode_engine_status_json(workspace_root : String) -> Json {
   } else {
     Err("MoonClaw daemon is not running")
   }
+  let native_readiness : Json = match runtime_probe {
+    Ok(capabilities) =>
+      @mooncode.moonclaw_native_capabilities_readiness(capabilities)
+    Err(error) => @mooncode.moonclaw_native_capabilities_unavailable(error)
+  }
   let models_ready = models_probe is Ok(_)
   let tasks_ready = tasks_probe is Ok(_)
-  let runtime_contract_ready = runtime_probe is Ok(_)
-  @mooncode.engine_status_projection_json(
-    daemon~,
-    moonclaw_root=root,
-    checkout_ready~,
-    running~,
-    models_ready~,
-    tasks_ready~,
-    runtime_contract_ready~,
-    model_evidence=match models_probe {
-      Ok(_) => "/v1/models responded"
-      Err(error) => error
-    },
-    task_evidence=match tasks_probe {
-      Ok(_) => "/v1/tasks responded"
-      Err(error) => error
-    },
-    runtime_evidence=match runtime_probe {
-      Ok(_) => "/v1/mooncode/capabilities responded"
-      Err(error) => error
-    },
+  let runtime_contract_ready = json_bool(native_readiness, "ok", default=false)
+  agent_session_with_field(
+    @mooncode.engine_status_projection_json(
+      daemon~,
+      moonclaw_root=root,
+      checkout_ready~,
+      running~,
+      models_ready~,
+      tasks_ready~,
+      runtime_contract_ready~,
+      model_evidence=match models_probe {
+        Ok(_) => "/v1/models responded"
+        Err(error) => error
+      },
+      task_evidence=match tasks_probe {
+        Ok(_) => "/v1/tasks responded"
+        Err(error) => error
+      },
+      runtime_evidence=match runtime_probe {
+        Ok(_) =>
+          if runtime_contract_ready {
+            "/v1/mooncode/capabilities passed MoonCode compatibility check"
+          } else {
+            "/v1/mooncode/capabilities failed MoonCode compatibility check: " +
+            json_string(native_readiness, "status", default="incompatible")
+          }
+        Err(error) => error
+      },
+    ),
+    "native_capabilities_readiness",
+    native_readiness,
   )
 }
 
@@ -120,6 +135,14 @@ async test "mooncode engine status distinguishes bridge readiness from productio
   assert_eq(
     json_string(status, "adapter_status", default=""),
     "missing-runtime",
+  )
+  let native_readiness = json_object_field_or_empty(
+    status, "native_capabilities_readiness",
+  )
+  assert_false(json_bool(native_readiness, "ok", default=true))
+  assert_eq(
+    json_string(native_readiness, "status", default=""),
+    "native-runtime-unavailable",
   )
   let checks = json_array_items(status, "checks")
   assert_eq(checks.length(), 10)

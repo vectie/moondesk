@@ -57,7 +57,7 @@ pub fn runtime_command_lifecycle(
   }
   {
     "kind": "mooncode-runtime-command-lifecycle",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "session_id": session_id,
     "command_count": items.length(),
     "pending_count": pending_count,

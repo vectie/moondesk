@@ -26,8 +26,8 @@ pub fn runtime_turn_packet(
     scheduler_effect == "withdraw-pending" ||
     scheduler_effect == "queue-turn"
   {
-    "kind": "mooncode-runtime-turn-packet",
-    "protocol": "mooncode.v1",
+    "kind": kind_runtime_turn_packet(),
+    "protocol": protocol_version(),
     "reference": "../openseek/cmd/openseek/serve.mbt",
     "session_id": session_id,
     "status": rq_json_string(plan, "status", default="idle"),
@@ -71,9 +71,24 @@ pub fn runtime_turn_packet(
         default="",
       ),
       "stream": rq_json_string(plan, "stream_endpoint", default=""),
+      "native_session_listing": rq_json_string(
+        plan,
+        "native_session_listing_endpoint",
+        default="",
+      ),
       "native_commands": rq_json_string(
         plan,
         "native_command_endpoint",
+        default="",
+      ),
+      "native_serve_scheduler": rq_json_string(
+        plan,
+        "native_serve_scheduler_endpoint",
+        default="",
+      ),
+      "native_eval_report": rq_json_string(
+        plan,
+        "native_eval_report_endpoint",
         default="",
       ),
     },
@@ -116,6 +131,21 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
   if rq_json_string(endpoints, "runtime_events", default="") == "" {
     missing.push("endpoint.runtime_events")
   }
+  if rq_json_string(endpoints, "stream", default="") == "" {
+    missing.push("endpoint.stream")
+  }
+  if rq_json_string(endpoints, "native_session_listing", default="") == "" {
+    missing.push("endpoint.native_session_listing")
+  }
+  if rq_json_string(endpoints, "native_commands", default="") == "" {
+    missing.push("endpoint.native_commands")
+  }
+  if rq_json_string(endpoints, "native_serve_scheduler", default="") == "" {
+    missing.push("endpoint.native_serve_scheduler")
+  }
+  if rq_json_string(endpoints, "native_eval_report", default="") == "" {
+    missing.push("endpoint.native_eval_report")
+  }
   if rq_json_object_field_or_empty(launch_request, "claim_request").stringify() ==
     "{}" {
     missing.push("launch_request.claim_request")
@@ -139,10 +169,13 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
   if !runtime_supervisor_has_loop_step(loop_steps, "acknowledge") {
     missing.push("loop.acknowledge")
   }
+  if !runtime_supervisor_has_loop_step(loop_steps, "report-eval") {
+    missing.push("loop.report-eval")
+  }
   let ok = missing.length() == 0
   {
     "kind": "mooncode-runtime-supervisor-readiness",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "ok": ok,
     "status": if ok {
       "launch-ready"
@@ -158,7 +191,12 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
     "endpoint_ready": rq_json_string(endpoints, "claim", default="") != "" &&
     rq_json_string(endpoints, "ack", default="") != "" &&
     rq_json_string(endpoints, "runtime_events", default="") != "" &&
-    rq_json_string(endpoints, "session_store", default="") != "",
+    rq_json_string(endpoints, "session_store", default="") != "" &&
+    rq_json_string(endpoints, "stream", default="") != "" &&
+    rq_json_string(endpoints, "native_session_listing", default="") != "" &&
+    rq_json_string(endpoints, "native_commands", default="") != "" &&
+    rq_json_string(endpoints, "native_serve_scheduler", default="") != "" &&
+    rq_json_string(endpoints, "native_eval_report", default="") != "",
     "launch_request_ready": rq_json_object_field_or_empty(
       launch_request, "claim_request",
     ).stringify() !=
@@ -171,7 +209,8 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
     runtime_supervisor_has_loop_step(loop_steps, "claim-command") &&
     runtime_supervisor_has_loop_step(loop_steps, "execute-turn") &&
     runtime_supervisor_has_loop_step(loop_steps, "stream-events") &&
-    runtime_supervisor_has_loop_step(loop_steps, "acknowledge"),
+    runtime_supervisor_has_loop_step(loop_steps, "acknowledge") &&
+    runtime_supervisor_has_loop_step(loop_steps, "report-eval"),
     "safety_boundary": "Readiness means the launch packet is well formed for a MoonClaw or standalone mooncode consumer. It does not mean Moondesk may execute tools.",
   }
 }

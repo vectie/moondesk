@@ -51,7 +51,7 @@ pub fn count_steer_settlements(events : Array[Json]) -> Int {
   let mut count = 0
   for event in events {
     let kind = json_string(event, "kind", default="")
-    if kind == "steer_applied" || kind == "steer_dropped" {
+    if kind == event_steer_applied() || kind == event_steer_dropped() {
       count += 1
     }
   }
@@ -77,7 +77,7 @@ pub fn count_command_packets(events : Array[Json]) -> Int {
   for event in events {
     match summary_json_object_field(event, "command_packet") {
       Some(packet) =>
-        if json_string(packet, "protocol", default="") == "mooncode.v1" {
+        if json_string(packet, "protocol", default="") == protocol_version() {
           let command_id = json_string(
             packet,
             "command_id",

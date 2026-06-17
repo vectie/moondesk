@@ -5,7 +5,7 @@
 test "mooncode normalizes nested tool results for approval correlation" {
   guard normalize_runtime_event(
       {
-        "event": "tool_result",
+        "event": event_tool_result(),
         "tool_call": {
           "id": "call-write-result",
           "function": {
@@ -44,7 +44,7 @@ test "mooncode normalizes nested tool results for approval correlation" {
 test "mooncode normalizes mutating native tool calls into diff review" {
   guard normalize_runtime_event(
       {
-        "event": "tool_started",
+        "event": event_tool_started(),
         "tool_call": {
           "id": "call-write",
           "function": {
@@ -75,7 +75,7 @@ test "mooncode normalizes mutating native tool calls into diff review" {
 test "mooncode rejects unknown runtime tool calls during normalization" {
   guard normalize_runtime_event(
       {
-        "event": "tool_call",
+        "event": event_tool_call(),
         "tool_call_id": "call-danger",
         "tool_name": "delete_everything",
         "arguments": "{\"path\":\"tools/demo/main.mbt\"}",

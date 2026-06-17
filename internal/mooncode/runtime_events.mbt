@@ -153,7 +153,7 @@ pub fn normalize_runtime_event(
           id=event_id,
           lane="artifact",
           kind="runtime.\{name}",
-          title=if name == "package_verified" {
+          title=if name == event_package_verified() {
             "Package verified by runtime"
           } else {
             "Package built by runtime"
@@ -217,7 +217,7 @@ pub fn normalize_runtime_event(
         event_record(
           id=event_id,
           lane="test",
-          kind="test_result",
+          kind=event_test_result(),
           title=json_string(event, "title", default="Test result"),
           status=json_string(event, "status", default="done"),
           created_at~,

@@ -51,8 +51,8 @@ pub fn runtime_dispatch_receipt(
   )
   let status = runtime_dispatch_status(session, runtime_command)
   {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "protocol": protocol_version(),
+    "kind": kind_runtime_dispatch(),
     "dispatch_id": dispatch_id,
     "command_id": rq_json_string(runtime_command, "command_id", default=""),
     "session_id": rq_json_string(runtime_command, "session_id", default=""),
@@ -79,6 +79,24 @@ pub fn runtime_dispatch_receipt(
     "runtime_command": runtime_command,
     "owner": runtime_owner_record(),
   }
+}
+
+///|
+pub fn projected_runtime_dispatch_receipt(
+  session : Json,
+  runtime_command : Json,
+  created_at : String,
+) -> Json {
+  let command_id = rq_json_string(runtime_command, "command_id", default="")
+  let status = runtime_dispatch_status(session, runtime_command)
+  runtime_dispatch_receipt(
+    session,
+    runtime_command,
+    dispatch_id=stable_runtime_dispatch_id(
+      command_id + ":" + status + ":" + created_at,
+    ),
+    created_at~,
+  )
 }
 
 ///|
@@ -143,7 +161,7 @@ pub fn runtime_dispatch_state_response(
   runtime_dispatch_log_path~ : String,
 ) -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-runtime-dispatch-state",
     "session_id": session_id,
     "workspace_id": workspace_id,
@@ -193,6 +211,11 @@ pub fn runtime_dispatch_response(
 ///|
 fn runtime_dispatch_receipt_fallback_id(receipt : Json, index : Int) -> String {
   let seed = "\{index}:" + receipt.stringify()
+  stable_runtime_dispatch_id(seed)
+}
+
+///|
+fn stable_runtime_dispatch_id(seed : String) -> String {
   let digest = @crypto.bytes_to_hex_string(
     @crypto.sha256(@encoding/utf8.encode(seed).to_fixedarray()),
   )

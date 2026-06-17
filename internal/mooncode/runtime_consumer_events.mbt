@@ -67,7 +67,7 @@ fn runtime_consumer_tool_call_event(
   acknowledged_at : String,
 ) -> Json {
   runtime_consumer_scoped_raw_event(runtime_command, {
-    "event": "tool_call",
+    "event": event_tool_call(),
     "id": runtime_consumer_event_id(runtime_command, "tool-call", index),
     "created_at": acknowledged_at,
     "tool_name": rq_json_string(outcome, "tool", default=""),
@@ -87,7 +87,7 @@ fn runtime_consumer_tool_result_event(
   acknowledged_at : String,
 ) -> Json {
   runtime_consumer_scoped_raw_event(runtime_command, {
-    "event": "tool_result",
+    "event": event_tool_result(),
     "id": runtime_consumer_event_id(runtime_command, "tool-result", index),
     "created_at": acknowledged_at,
     "tool_name": rq_json_string(outcome, "tool", default=""),
@@ -129,7 +129,7 @@ fn runtime_consumer_tool_missing_event(
   acknowledged_at : String,
 ) -> Json {
   {
-    "event": "tool_call_decode_error",
+    "event": event_tool_call_decode_error(),
     "id": "\{command_id}:missing-tool:\{index}",
     "created_at": acknowledged_at,
     "tool_name": tool,

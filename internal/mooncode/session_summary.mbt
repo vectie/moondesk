@@ -85,7 +85,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let rejected_count = count_review_command(events, "reject")
   let session_id = json_string(session, "id", default="")
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
     "task_id": json_string(session, "moonclaw_task_id", default=""),
@@ -194,4 +194,53 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "eval_level": eval_level(eval_checks),
     "eval_checks": Json::array(eval_checks),
   }
+}
+
+///|
+pub fn session_projection_response(
+  session : Json,
+  events : Array[Json],
+  event_log_path~ : String,
+  append_log_count~ : Int,
+  command_log_path~ : String,
+  command_log_count~ : Int,
+  runtime_command_log_path~ : String,
+  runtime_command_log_count~ : Int,
+  runtime_dispatch_log_path~ : String,
+  runtime_dispatch_log_count~ : Int,
+) -> Json {
+  let summary_session = session
+    |> runtime_with_field("mooncode_event_log_path", event_log_path.to_json())
+    |> runtime_with_field(
+      "mooncode_append_log_count",
+      append_log_count.to_json(),
+    )
+    |> runtime_with_field(
+      "mooncode_command_log_path",
+      command_log_path.to_json(),
+    )
+    |> runtime_with_field(
+      "mooncode_command_log_count",
+      command_log_count.to_json(),
+    )
+    |> runtime_with_field(
+      "mooncode_runtime_command_log_path",
+      runtime_command_log_path.to_json(),
+    )
+    |> runtime_with_field(
+      "mooncode_runtime_command_log_count",
+      runtime_command_log_count.to_json(),
+    )
+    |> runtime_with_field(
+      "mooncode_runtime_dispatch_log_path",
+      runtime_dispatch_log_path.to_json(),
+    )
+    |> runtime_with_field(
+      "mooncode_runtime_dispatch_log_count",
+      runtime_dispatch_log_count.to_json(),
+    )
+  let summary = session_summary(summary_session, events)
+  session
+  |> runtime_with_field("mooncode_events", Json::array(events))
+  |> runtime_with_field("mooncode_summary", summary)
 }

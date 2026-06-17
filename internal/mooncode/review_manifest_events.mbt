@@ -14,6 +14,14 @@ pub fn change_set_manifest_event(manifest : Json, event_id : String) -> Json {
 }
 
 ///|
+pub fn change_set_manifest_projected_event(manifest : Json) -> Json {
+  change_set_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-change-set", manifest),
+  )
+}
+
+///|
 pub fn patch_set_manifest_event(manifest : Json, event_id : String) -> Json {
   review_manifest_event(
     manifest,
@@ -25,6 +33,14 @@ pub fn patch_set_manifest_event(manifest : Json, event_id : String) -> Json {
     command_packet=summary_json_object_field_or_empty(
       manifest, "last_command_packet",
     ),
+  )
+}
+
+///|
+pub fn patch_set_manifest_projected_event(manifest : Json) -> Json {
+  patch_set_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-patch-set", manifest),
   )
 }
 
@@ -47,6 +63,14 @@ pub fn tool_approvals_manifest_event(
 }
 
 ///|
+pub fn tool_approvals_manifest_projected_event(manifest : Json) -> Json {
+  tool_approvals_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-tool-approvals", manifest),
+  )
+}
+
+///|
 pub fn test_runs_manifest_event(manifest : Json, event_id : String) -> Json {
   review_manifest_event(
     manifest,
@@ -62,6 +86,14 @@ pub fn test_runs_manifest_event(manifest : Json, event_id : String) -> Json {
 }
 
 ///|
+pub fn test_runs_manifest_projected_event(manifest : Json) -> Json {
+  test_runs_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-test-runs", manifest),
+  )
+}
+
+///|
 pub fn action_plan_manifest_event(manifest : Json, event_id : String) -> Json {
   review_manifest_event(
     manifest,
@@ -70,6 +102,14 @@ pub fn action_plan_manifest_event(manifest : Json, event_id : String) -> Json {
     kind="action_plan.manifest",
     title="MoonCode action plan",
     detail_prefix="MoonCode action plan recorded at",
+  )
+}
+
+///|
+pub fn action_plan_manifest_projected_event(manifest : Json) -> Json {
+  action_plan_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-action-plan", manifest),
   )
 }
 
@@ -89,6 +129,14 @@ pub fn runtime_evidence_manifest_event(
 }
 
 ///|
+pub fn runtime_evidence_manifest_projected_event(manifest : Json) -> Json {
+  runtime_evidence_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-runtime-evidence", manifest),
+  )
+}
+
+///|
 pub fn eval_report_manifest_event(manifest : Json, event_id : String) -> Json {
   review_manifest_event(
     manifest,
@@ -100,6 +148,14 @@ pub fn eval_report_manifest_event(manifest : Json, event_id : String) -> Json {
     command_packet=summary_json_object_field_or_empty(
       manifest, "last_command_packet",
     ),
+  )
+}
+
+///|
+pub fn eval_report_manifest_projected_event(manifest : Json) -> Json {
+  eval_report_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-eval-report", manifest),
   )
 }
 
@@ -126,6 +182,32 @@ pub fn review_receipt_event(
 }
 
 ///|
+pub fn review_receipt_projected_event(
+  action : String,
+  receipt_path : String,
+  context_path : String,
+  recorded_at : String,
+  command_packet : Json,
+) -> Json {
+  let command_id = json_string(command_packet, "command_id", default="command")
+  review_receipt_event(
+    action,
+    receipt_path,
+    context_path,
+    recorded_at,
+    command_packet,
+    stable_event_id(
+      "mooncode-review-receipt:" +
+      action +
+      ":" +
+      command_id +
+      ":" +
+      receipt_path,
+    ),
+  )
+}
+
+///|
 pub fn review_receipt_manifest(
   session : Json,
   action : String,
@@ -140,7 +222,7 @@ pub fn review_receipt_manifest(
 ) -> Json {
   {
     "kind": "mooncode-review-receipt",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": "recorded",
     "action": action,
     "session_id": json_string(session, "id", default=""),
@@ -188,6 +270,28 @@ pub fn package_manifest_event(
 }
 
 ///|
+pub fn package_manifest_projected_event(
+  manifest : Json,
+  context_path : String,
+  recorded_at : String,
+  command_packet : Json,
+) -> Json {
+  let manifest_path = json_string(manifest, "manifest_path", default="")
+  package_manifest_event(
+    manifest,
+    context_path,
+    recorded_at,
+    command_packet,
+    stable_event_id(
+      "mooncode-package-manifest:" +
+      json_string(manifest, "command_id", default="command") +
+      ":" +
+      manifest_path,
+    ),
+  )
+}
+
+///|
 pub fn package_index_manifest_event(manifest : Json, event_id : String) -> Json {
   review_manifest_event(
     manifest,
@@ -200,6 +304,14 @@ pub fn package_index_manifest_event(manifest : Json, event_id : String) -> Json 
       summary_json_object_field_or_empty(manifest, "latest_package_manifest"),
       "command_packet",
     ),
+  )
+}
+
+///|
+pub fn package_index_manifest_projected_event(manifest : Json) -> Json {
+  package_index_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-package-index", manifest),
   )
 }
 
@@ -218,6 +330,14 @@ pub fn runtime_handoff_manifest_event(
     command_packet=summary_json_object_field_or_empty(
       manifest, "last_command_packet",
     ),
+  )
+}
+
+///|
+pub fn runtime_handoff_manifest_projected_event(manifest : Json) -> Json {
+  runtime_handoff_manifest_event(
+    manifest,
+    manifest_event_id("mooncode-runtime-handoff", manifest),
   )
 }
 
@@ -242,5 +362,16 @@ fn review_manifest_event(
     detail="\{detail_prefix} \{manifest_path}",
     path=manifest_path,
     command_packet~,
+  )
+}
+
+///|
+fn manifest_event_id(prefix : String, manifest : Json) -> String {
+  stable_event_id(
+    prefix +
+    ":" +
+    json_string(manifest, "session_id", default="session") +
+    ":" +
+    json_string(manifest, "manifest_path", default=""),
   )
 }

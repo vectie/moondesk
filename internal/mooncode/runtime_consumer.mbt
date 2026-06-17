@@ -50,7 +50,7 @@ pub fn runtime_consumer_test_result_event(
   detail? : String = "",
 ) -> Json {
   {
-    "event": "test_result",
+    "event": event_test_result(),
     "command": command,
     "status": status,
     "exit_code": exit_code,
@@ -71,7 +71,7 @@ pub fn runtime_consumer_package_verified_event(
   path : String,
   detail? : String = "",
 ) -> Json {
-  { "event": "package_verified", "path": path, "detail": detail }
+  { "event": event_package_verified(), "path": path, "detail": detail }
 }
 
 ///|

@@ -14,7 +14,7 @@ pub fn runtime_replay_ack_response(
   runtime_dispatch_log_path~ : String,
 ) -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-runtime-replay-ack",
     "session_id": session_id,
     "accepted_receipt_count": ack_receipts.length(),

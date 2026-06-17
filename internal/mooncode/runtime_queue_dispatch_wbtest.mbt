@@ -87,6 +87,40 @@ test "mooncode runtime dispatch receipt classifies bridge outcomes" {
 }
 
 ///|
+test "mooncode projected runtime dispatch receipt owns stable dispatch ids" {
+  let runtime_command : Json = {
+    "command_id": "cmd-1",
+    "session_id": "session-demo",
+    "action": "prompt",
+    "dispatch": "prompt",
+  }
+  let session : Json = {
+    "workspace_id": "book-demo",
+    "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
+  }
+  let first = projected_runtime_dispatch_receipt(
+    session, runtime_command, "2026-06-15T00:00:00Z",
+  )
+  let second = projected_runtime_dispatch_receipt(
+    session, runtime_command, "2026-06-15T00:00:00Z",
+  )
+  assert_eq(
+    rq_json_string(first, "dispatch_id", default=""),
+    rq_json_string(second, "dispatch_id", default=""),
+  )
+  assert_true(
+    rq_json_string(first, "dispatch_id", default="").has_prefix(
+      "mooncode-runtime-dispatch-",
+    ),
+  )
+  assert_eq(rq_json_string(first, "status", default=""), "native-dispatched")
+  assert_eq(
+    rq_json_string(first, "created_at", default=""),
+    "2026-06-15T00:00:00Z",
+  )
+}
+
+///|
 test "mooncode runtime dispatch receipt response fills legacy defaults" {
   let response = runtime_dispatch_receipt_for_response(
     { "command_id": "cmd-legacy", "status": "legacy-bridged" },
@@ -126,13 +160,13 @@ test "mooncode runtime dispatch receipt response fills legacy defaults" {
 ///|
 test "mooncode runtime dispatch state response records queue state" {
   let command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-1",
   }
   let dispatch : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "protocol": protocol_version(),
+    "kind": kind_runtime_dispatch(),
     "command_id": "cmd-0",
     "status": "runtime-completed",
     "dispatch_id": "dispatch-0",

@@ -5,7 +5,7 @@
 test "mooncode runtime claim blocks commands with pending tool authorization" {
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-tool",
       "session_id": "session-demo",
@@ -15,14 +15,14 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
       "openseek_wire_command": { "command": "prompt", "text": "run tests" },
       "tool_authorization": {
         "kind": "mooncode-tool-authorization-snapshot",
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "enforcement_state": "requires-approval",
         "runtime_may_execute": false,
         "pending_approval_count": 1,
       },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-later",
       "session_id": "session-demo",
@@ -95,15 +95,15 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
 ///|
 test "mooncode runtime claim response records claimed commands" {
   let runtime_command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-1",
     "session_id": "session-demo",
     "action": "prompt",
   }
   let receipt : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "protocol": protocol_version(),
+    "kind": kind_runtime_dispatch(),
     "command_id": "cmd-1",
     "status": "runtime-claimed",
     "runtime_command": runtime_command,
@@ -175,7 +175,7 @@ test "mooncode runtime claim response records claimed commands" {
 test "mooncode runtime queue classifies expired leases as claimable" {
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-stale",
       "session_id": "session-demo",
@@ -187,8 +187,8 @@ test "mooncode runtime queue classifies expired leases as claimable" {
   ]
   let receipts : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-stale",
       "status": "runtime-claimed",
       "claim_id": "claim-old",
@@ -232,7 +232,7 @@ test "mooncode runtime queue classifies expired leases as claimable" {
 test "mooncode runtime queue classifies failed dispatches as retryable claims" {
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-failed",
       "session_id": "session-demo",
@@ -244,8 +244,8 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
   ]
   let receipts : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-failed",
       "status": "failed",
       "consumer_id": "moonclaw-runtime",
@@ -320,7 +320,7 @@ test "mooncode runtime claim preserves ordering behind active leases" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-active",
       "session_id": "session-demo",
@@ -330,7 +330,7 @@ test "mooncode runtime claim preserves ordering behind active leases" {
       "openseek_wire_command": { "command": "prompt", "text": "first" },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-later",
       "session_id": "session-demo",
@@ -342,8 +342,8 @@ test "mooncode runtime claim preserves ordering behind active leases" {
   ]
   let receipts : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-active",
       "status": "runtime-claimed",
       "claim_id": "claim-active",
@@ -388,14 +388,14 @@ test "mooncode runtime claim preserves ordering behind active leases" {
 test "mooncode runtime claim stops at invalid earlier command" {
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-invalid",
       "session_id": "session-demo",
       "openseek_wire_command": { "command": "prompt" },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-later",
       "session_id": "session-demo",

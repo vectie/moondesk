@@ -102,6 +102,20 @@ fn moonclaw_first_string(
 }
 
 ///|
+fn moonclaw_missing_strings(
+  required : Array[String],
+  available : Array[String],
+) -> Array[String] {
+  let missing : Array[String] = []
+  for item in required {
+    if !runtime_string_array_contains(available, item) {
+      missing.push(item)
+    }
+  }
+  missing
+}
+
+///|
 fn moonclaw_json_with_string(json : Json, key : String, value : String) -> Json {
   let object : Map[String, Json] = {}
   match json {

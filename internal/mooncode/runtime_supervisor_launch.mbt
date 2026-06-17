@@ -70,14 +70,30 @@ pub fn runtime_supervisor_launch_packet(
       host_base_url,
       runtime_supervisor_endpoint_from_turn(turn_packet, "stream"),
     ),
+    "native_session_listing": runtime_supervisor_url(
+      host_base_url,
+      runtime_supervisor_endpoint_from_turn(
+        turn_packet, "native_session_listing",
+      ),
+    ),
     "native_commands": runtime_supervisor_url(
       host_base_url,
       runtime_supervisor_endpoint_from_turn(turn_packet, "native_commands"),
     ),
+    "native_serve_scheduler": runtime_supervisor_url(
+      host_base_url,
+      runtime_supervisor_endpoint_from_turn(
+        turn_packet, "native_serve_scheduler",
+      ),
+    ),
+    "native_eval_report": runtime_supervisor_url(
+      host_base_url,
+      runtime_supervisor_endpoint_from_turn(turn_packet, "native_eval_report"),
+    ),
   }
   let packet : Json = {
     "kind": "mooncode-runtime-supervisor-launch",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "reference": "../openseek/cmd/openseek/serve.mbt",
     "session_id": session_id,
     "status": status,
@@ -102,7 +118,7 @@ pub fn runtime_supervisor_launch_packet(
     ),
     "endpoints": endpoints,
     "launch_request": {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "session_id": session_id,
       "command_id": command_id,
       "action": action,
@@ -188,7 +204,9 @@ pub fn runtime_supervisor_launch_packet(
         "method": "POST",
         "endpoint": runtime_supervisor_url(
           host_base_url,
-          "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=<path>",
+          runtime_supervisor_endpoint_from_turn(
+            turn_packet, "native_eval_report",
+          ),
         ),
         "purpose": "Attach native tool/file-edit eval harness evidence when available.",
       },

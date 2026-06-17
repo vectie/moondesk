@@ -12,13 +12,17 @@ test "mooncode new session record starts with typed coding protocol" {
     "model": "default",
     "web_search": true,
   }
-  let payload : Json = {
-    "context_path": "tools/demo/main.mbt",
-    "web_search": true,
-  }
-  let session = mooncode_new_session_record(
-    workspace, task, "MoonCode - Demo Book", "2026-06-15T00:00:00Z", "Build a demo tool",
-    payload,
+  let session = @mooncode.projected_session_record(
+    workspace_id=workspace.id,
+    workspace_name=workspace.name,
+    workspace_root=workspace.root_path,
+    task~,
+    title="MoonCode - Demo Book",
+    created_at="2026-06-15T00:00:00Z",
+    updated_at="2026-06-15T00:00:00Z",
+    last_message="Build a demo tool",
+    transcript=[],
+    initial_context_path="tools/demo/main.mbt",
   )
   assert_true(json_string(session, "id", default="").has_prefix("mooncode-"))
   assert_eq(json_string(session, "component", default=""), "mooncode")
@@ -46,7 +50,7 @@ test "mooncode prompt command packet seeds durable session creation" {
     "context_path": "tools/demo/main.mbt",
     "web_search": false,
   }
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     session, payload, "prompt", "Build a demo tool", "2026-06-15T00:00:00Z", "tools/demo/main.mbt",
   )
   assert_eq(json_string(packet, "protocol", default=""), "mooncode.v1")
@@ -61,7 +65,7 @@ test "mooncode prompt command packet seeds durable session creation" {
     json_string_array_items(packet, "expected_lanes").contains("diff"),
   )
   assert_true(json_string_array_items(packet, "tool_hints").contains("write"))
-  let queued = append_mooncode_command_event(
+  let queued = @mooncode.append_projected_command_event(
     session,
     action="prompt",
     status="queued",

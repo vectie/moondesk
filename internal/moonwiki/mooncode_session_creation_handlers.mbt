@@ -48,10 +48,19 @@ async fn handle_create_mooncode_session(
     fallback="MoonCode - \{workspace.name}",
   )
   let context_path = @mooncode.command_context_path(payload)
-  let base = mooncode_new_session_record(
-    workspace, task, title, now, message, payload,
+  let base = @mooncode.projected_session_record(
+    workspace_id=workspace.id,
+    workspace_name=workspace.name,
+    workspace_root=workspace.root_path,
+    task~,
+    title~,
+    created_at=now,
+    updated_at=now,
+    last_message=message,
+    transcript=[],
+    initial_context_path=context_path,
   )
-  let command_packet = mooncode_command_packet(
+  let command_packet = @mooncode.projected_command_packet(
     base, payload, "prompt", message, now, context_path,
   )
   let runtime_command = @mooncode.runtime_command_record(
@@ -81,7 +90,7 @@ async fn handle_create_mooncode_session(
       return
     }
   }
-  let queued = append_mooncode_command_event(
+  let queued = @mooncode.append_projected_command_event(
     base,
     action="prompt",
     status="queued",
@@ -96,7 +105,7 @@ async fn handle_create_mooncode_session(
     ) {
     Ok(session) => session
     Err(error) =>
-      append_mooncode_command_event(
+      @mooncode.append_projected_command_event(
         queued,
         action="prompt",
         status="failed",
@@ -109,7 +118,11 @@ async fn handle_create_mooncode_session(
   append_mooncode_runtime_dispatch_log(
     workspace_root,
     json_string(base, "id", default=""),
-    mooncode_runtime_dispatch_receipt(dispatched, runtime_command),
+    @mooncode.projected_runtime_dispatch_receipt(
+      dispatched,
+      runtime_command,
+      @async.now().to_string(),
+    ),
   ) catch {
     _ => ()
   }
@@ -165,32 +178,5 @@ async fn handle_create_mooncode_session(
     enrich_agent_session_for_response(workspace_root, with_runtime_handoff, [
       task,
     ]),
-  )
-}
-
-///|
-fn mooncode_new_session_record(
-  workspace : @desk.DeskWorkspace,
-  task : Json,
-  title : String,
-  now : String,
-  message : String,
-  payload : Json,
-) -> Json {
-  @mooncode.session_record(
-    session_id=@desk.stable_id(
-      "mooncode",
-      workspace.id + ":" + title + ":" + now,
-    ),
-    workspace_id=workspace.id,
-    workspace_name=workspace.name,
-    workspace_root=workspace.root_path,
-    task~,
-    title~,
-    created_at=now,
-    updated_at=now,
-    last_message=message,
-    transcript=[],
-    initial_context_path=@mooncode.command_context_path(payload),
   )
 }

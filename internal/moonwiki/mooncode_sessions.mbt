@@ -21,19 +21,38 @@ async fn handle_mooncode_sessions(
     )
   })
   if list_format == "listing" {
-    send_json(
-      conn,
-      method_,
-      Json::array(
-        [
-          for session in sessions => {
-            @mooncode.session_listing_row(session, Json::null())
-          }
-        ],
-      ),
-    )
+    let rows = mooncode_session_listing_rows(workspace_root, sessions)
+    send_json(conn, method_, Json::array(rows))
   } else {
     send_json(conn, method_, Json::array(sessions))
+  }
+}
+
+///|
+async fn mooncode_session_listing_rows(
+  workspace_root : String,
+  sessions : Array[Json],
+) -> Array[Json] {
+  @mooncode.merge_session_listing_rows(
+    moonclaw_native_session_listing_rows(workspace_root),
+    sessions,
+  )
+}
+
+///|
+async fn moonclaw_native_session_listing_rows(
+  workspace_root : String,
+) -> Array[Json] {
+  let daemon = moonclaw_daemon_status(workspace_root)
+  if !json_bool(daemon, "running", default=false) {
+    return []
+  }
+  let endpoint = @mooncode.moonclaw_native_session_listing_endpoint(
+    workspace_root,
+  )
+  match moonclaw_get_json(daemon, endpoint) {
+    Ok(payload) => @mooncode.native_session_listing_rows(payload)
+    Err(_) => []
   }
 }
 

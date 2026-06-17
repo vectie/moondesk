@@ -33,7 +33,7 @@ pub fn command_runtime_evidence(
   let tool_harness = tool_harness_evidence(command, runtime_command, events)
   {
     "kind": "mooncode-command-runtime-evidence",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "command_id": command_id,
     "action": action,
     "runtime_command_recorded": json_string(

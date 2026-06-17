@@ -12,6 +12,22 @@ pub fn stream_checkpoint_sequence(
 }
 
 ///|
+pub fn stream_checkpoint_consumer_id(
+  payload : Json,
+  query_consumer : String,
+) -> String {
+  let from_payload = stream_json_string(payload, "consumer_id", default="")
+  let candidate = if from_payload != "" {
+    from_payload
+  } else if query_consumer != "" {
+    query_consumer
+  } else {
+    "moondesk-ui"
+  }
+  artifact_safe_id(candidate, fallback="moondesk-ui")
+}
+
+///|
 pub fn stream_checkpoint_record(
   session : Json,
   consumer_id : String,
@@ -26,7 +42,7 @@ pub fn stream_checkpoint_record(
 ) -> Json {
   let clamped = clamp_sequence(last_seen_sequence, latest_sequence)
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-stream-checkpoint",
     "session_id": stream_json_string(session, "id", default=""),
     "consumer_id": consumer_id,
@@ -65,7 +81,7 @@ pub fn stream_state_record(
   native_blocking_tail : String,
 ) -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-stream-state",
     "session_id": stream_json_string(session, "id", default=""),
     "consumer_id": consumer_id,
@@ -103,12 +119,249 @@ pub fn stream_state_record(
 }
 
 ///|
+pub fn moondesk_stream_endpoint(
+  session_id : String,
+  format : String,
+  since : Int,
+) -> String {
+  "/api/mooncode/sessions/\{stream_query_value(session_id)}/stream?format=\{stream_query_value(format)}&since=\{since}"
+}
+
+///|
+pub fn moondesk_live_stream_endpoint(
+  session_id : String,
+  format : String,
+  since : Int,
+  timeout_ms? : Int = 8000,
+) -> String {
+  moondesk_stream_endpoint(session_id, format, since) +
+  "&live=true&timeout_ms=\{timeout_ms}"
+}
+
+///|
+pub fn moondesk_stream_state_endpoint(
+  session_id : String,
+  consumer_id : String,
+  since : Int,
+) -> String {
+  "/api/mooncode/sessions/\{stream_query_value(session_id)}/stream-state?consumer=\{stream_query_value(consumer_id)}&since=\{since}"
+}
+
+///|
+pub fn moondesk_stream_state_base_endpoint(session_id : String) -> String {
+  "/api/mooncode/sessions/\{stream_query_value(session_id)}/stream-state"
+}
+
+///|
+pub fn moondesk_runtime_event_ingest_endpoint(session_id : String) -> String {
+  "/api/mooncode/sessions/\{stream_query_value(session_id)}/runtime-events"
+}
+
+///|
+pub fn moondesk_stream_checkpoint_record(
+  session : Json,
+  consumer_id : String,
+  last_seen_sequence : Int,
+  latest_sequence : Int,
+  recorded_at : String,
+  checkpoint_path : String,
+) -> Json {
+  let session_id = stream_json_string(session, "id", default="")
+  let clamped = clamp_sequence(last_seen_sequence, latest_sequence)
+  stream_checkpoint_record(
+    session,
+    consumer_id,
+    last_seen_sequence,
+    latest_sequence,
+    recorded_at,
+    checkpoint_path,
+    moondesk_stream_endpoint(session_id, "jsonl", clamped),
+    moondesk_stream_endpoint(session_id, "jsonl", clamped),
+    moondesk_stream_state_endpoint(session_id, consumer_id, clamped),
+    moondesk_runtime_event_ingest_endpoint(session_id),
+  )
+}
+
+///|
+pub fn moondesk_stream_state_record(
+  session : Json,
+  consumer_id : String,
+  requested_since : Int,
+  latest_sequence : Int,
+  emitted_count : Int,
+  event_log_path : String,
+  checkpoint_ready : Bool,
+  checkpoint_path : String,
+  checkpoint : Json,
+  tail_events : Array[Json],
+  native_blocking_tail : String,
+) -> Json {
+  let session_id = stream_json_string(session, "id", default="")
+  stream_state_record(
+    session,
+    consumer_id,
+    requested_since,
+    latest_sequence,
+    emitted_count,
+    event_log_path,
+    checkpoint_ready,
+    checkpoint_path,
+    checkpoint,
+    tail_events,
+    moondesk_stream_endpoint(session_id, "jsonl", requested_since),
+    moondesk_stream_endpoint(session_id, "sse", requested_since),
+    moondesk_stream_state_base_endpoint(session_id),
+    moondesk_runtime_event_ingest_endpoint(session_id),
+    moondesk_live_stream_endpoint(session_id, "sse", requested_since),
+    native_blocking_tail,
+  )
+}
+
+///|
+pub fn moondesk_stream_state_projection_record(
+  session : Json,
+  events : Array[Json],
+  since : Int,
+  consumer_id : String,
+  event_log_path : String,
+  checkpoint_path : String,
+  checkpoint : Json,
+  native_blocking_tail : String,
+) -> Json {
+  let latest_sequence = events.length()
+  let checkpoint_ready = stream_json_string(checkpoint, "kind", default="") ==
+    "mooncode-stream-checkpoint"
+  moondesk_stream_state_record(
+    session,
+    consumer_id,
+    since,
+    latest_sequence,
+    stream_emitted_count(events, since),
+    event_log_path,
+    checkpoint_ready,
+    checkpoint_path,
+    checkpoint,
+    stream_tail_event_records(session, events, since),
+    native_blocking_tail,
+  )
+}
+
+///|
 pub fn stream_emitted_count(events : Array[Json], since : Int) -> Int {
   if since >= events.length() {
     0
   } else {
     events.length() - since
   }
+}
+
+///|
+pub fn stream_since_value(value : String) -> Int {
+  let parsed = @string.parse_int(value) catch { _ => 0 }
+  if parsed < 0 {
+    0
+  } else {
+    parsed
+  }
+}
+
+///|
+pub fn stream_live_enabled_value(value : String) -> Bool {
+  let normalized = value.to_lower()
+  normalized == "1" ||
+  normalized == "true" ||
+  normalized == "tail" ||
+  normalized == "wait"
+}
+
+///|
+pub fn stream_live_timeout_ms_value(value : String) -> Int {
+  stream_clamp_int(@string.parse_int(value) catch { _ => 8000 }, 0, 15000)
+}
+
+///|
+pub fn stream_live_poll_ms_value(value : String) -> Int {
+  stream_clamp_int(@string.parse_int(value) catch { _ => 250 }, 50, 1000)
+}
+
+///|
+pub fn stream_live_attempt_count(timeout_ms : Int, poll_ms : Int) -> Int {
+  if timeout_ms <= 0 {
+    0
+  } else {
+    let count = timeout_ms / poll_ms
+    if count * poll_ms < timeout_ms {
+      count + 1
+    } else if count == 0 {
+      1
+    } else {
+      count
+    }
+  }
+}
+
+///|
+pub fn stream_content_type(format : String) -> String {
+  if format == "sse" {
+    "text/event-stream; charset=utf-8"
+  } else {
+    "application/x-ndjson; charset=utf-8"
+  }
+}
+
+///|
+fn stream_query_value(text : String) -> String {
+  let pieces : Array[String] = []
+  for ch in text {
+    if stream_query_safe_char(ch) {
+      pieces.push(String::from_array([ch]))
+    } else {
+      stream_append_percent_encoded_char(pieces, ch)
+    }
+  }
+  pieces.join("")
+}
+
+///|
+fn stream_query_safe_char(ch : Char) -> Bool {
+  (ch >= 'a' && ch <= 'z') ||
+  (ch >= 'A' && ch <= 'Z') ||
+  (ch >= '0' && ch <= '9') ||
+  ch == '-' ||
+  ch == '_' ||
+  ch == '.' ||
+  ch == '~'
+}
+
+///|
+fn stream_append_percent_encoded_char(
+  pieces : Array[String],
+  ch : Char,
+) -> Unit {
+  let code = ch.to_int()
+  if code <= 0x7F {
+    pieces.push(stream_percent_encoded_byte(code))
+  } else if code <= 0x7FF {
+    pieces.push(stream_percent_encoded_byte(0xC0 + code / 64))
+    pieces.push(stream_percent_encoded_byte(0x80 + code % 64))
+  } else if code <= 0xFFFF {
+    pieces.push(stream_percent_encoded_byte(0xE0 + code / 4096))
+    pieces.push(stream_percent_encoded_byte(0x80 + code / 64 % 64))
+    pieces.push(stream_percent_encoded_byte(0x80 + code % 64))
+  } else {
+    pieces.push(stream_percent_encoded_byte(0xF0 + code / 262144))
+    pieces.push(stream_percent_encoded_byte(0x80 + code / 4096 % 64))
+    pieces.push(stream_percent_encoded_byte(0x80 + code / 64 % 64))
+    pieces.push(stream_percent_encoded_byte(0x80 + code % 64))
+  }
+}
+
+///|
+fn stream_percent_encoded_byte(value : Int) -> String {
+  let digits = "0123456789ABCDEF"
+  "%" +
+  digits[value / 16:value / 16 + 1].to_owned() +
+  digits[value % 16:value % 16 + 1].to_owned()
 }
 
 ///|
@@ -133,7 +386,7 @@ pub fn stream_meta_record(
   latest_sequence~ : Int,
 ) -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "stream": stream_mode(since),
     "stream_source": stream_source(),
     "type": "meta",
@@ -155,7 +408,7 @@ pub fn stream_event_record(
   since~ : Int,
 ) -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "stream": stream_mode(since),
     "stream_source": stream_source(),
     "type": "event",
@@ -173,7 +426,7 @@ pub fn stream_done_record(
   emitted_count~ : Int,
 ) -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "stream": stream_mode(since),
     "stream_source": stream_source(),
     "type": "done",
@@ -193,6 +446,17 @@ fn clamp_sequence(sequence : Int, latest_sequence : Int) -> Int {
     latest_sequence
   } else {
     sequence
+  }
+}
+
+///|
+fn stream_clamp_int(value : Int, min : Int, max : Int) -> Int {
+  if value < min {
+    min
+  } else if value > max {
+    max
+  } else {
+    value
   }
 }
 

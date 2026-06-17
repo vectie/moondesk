@@ -53,17 +53,13 @@ async fn mooncode_action_plan_projection(
   } else {
     read_mooncode_runtime_dispatch_log(workspace_root, session_id)
   }
-  let actions = mooncode_action_plan_items(
-    session, commands, runtime_commands, runtime_dispatches, events,
-  )
-  let summary = @mooncode.session_summary(session, events)
-  @mooncode.action_plan_response(
+  @mooncode.action_plan_projection_response(
     session_id,
     session,
-    actions,
-    summary,
+    commands,
     runtime_commands,
     runtime_dispatches,
+    events,
     recorded_at=@async.now().to_string(),
     runtime_command_log_path=if session_id == "" {
       ""

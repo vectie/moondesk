@@ -79,7 +79,7 @@ test "mooncode tool harness evidence fails malformed tool events" {
     event_record(
       id="decode-error",
       lane="tool",
-      kind="tool_call_decode_error",
+      kind=event_tool_call_decode_error(),
       title="Tool decode failed",
       status="failed",
       created_at="2026-06-15T00:00:00Z",

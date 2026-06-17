@@ -116,9 +116,7 @@ pub fn normalize_event_record(event : Json) -> Json {
   object["diff"] = trim_event_text(json_string(event, "diff", default="")).to_json()
   object["command"] = json_string(event, "command", default="").to_json()
   object["exit_code"] = event_json_int(event, "exit_code", default=0).to_json()
-  object["command_packet"] = event_json_object_field_or_empty(
-    event, "command_packet",
-  )
+  object["command_packet"] = canonical_event_command_packet(event)
   Json::object(object)
 }
 
@@ -131,28 +129,41 @@ pub fn parse_event_log_text(text : String) -> Array[Json] {
 
 ///|
 pub fn parse_command_log_text(text : String) -> Array[Json] {
-  parse_jsonl_records(text, fn(record) {
-    json_string(record, "protocol", default="") == "mooncode.v1" &&
-    json_string(record, "command_id", default="") != ""
-  })
+  parse_jsonl_records(text, fn(record) { command_packet_valid(record) })
 }
 
 ///|
 pub fn parse_runtime_command_log_text(text : String) -> Array[Json] {
-  parse_jsonl_records(text, fn(record) {
-    json_string(record, "protocol", default="") == "mooncode.v1" &&
-    json_string(record, "kind", default="") == "mooncode.runtime-command" &&
-    json_string(record, "command_id", default="") != ""
-  })
+  parse_jsonl_records(text, fn(record) { runtime_command_record_valid(record) })
 }
 
 ///|
 pub fn parse_runtime_dispatch_log_text(text : String) -> Array[Json] {
-  parse_jsonl_records(text, fn(record) {
-    json_string(record, "protocol", default="") == "mooncode.v1" &&
-    json_string(record, "kind", default="") == "mooncode.runtime-dispatch" &&
-    json_string(record, "command_id", default="") != ""
-  })
+  parse_jsonl_records(text, fn(record) { runtime_dispatch_record_valid(record) })
+}
+
+///|
+pub fn command_packet_valid(command_packet : Json) -> Bool {
+  json_string(command_packet, "protocol", default="") == protocol_version() &&
+  json_string(command_packet, "command_id", default="") != ""
+}
+
+///|
+pub fn runtime_command_record_valid(runtime_command : Json) -> Bool {
+  command_packet_valid(runtime_command) &&
+  json_string(runtime_command, "kind", default="") == kind_runtime_command()
+}
+
+///|
+pub fn runtime_dispatch_record_valid(receipt : Json) -> Bool {
+  command_packet_valid(receipt) &&
+  json_string(receipt, "kind", default="") == kind_runtime_dispatch()
+}
+
+///|
+pub fn session_snapshot_valid(snapshot : Json) -> Bool {
+  json_string(snapshot, "kind", default="") == "mooncode-session-snapshot" &&
+  json_string(snapshot, "protocol", default="") == protocol_version()
 }
 
 ///|
@@ -177,12 +188,35 @@ pub fn merge_events(
 }
 
 ///|
+pub fn project_session_events(
+  projected : Array[Json],
+  inline_events : Array[Json],
+  durable_events : Array[Json],
+) -> Array[Json] {
+  let normalized : Array[Json] = []
+  for event in merge_events(projected, inline_events, durable_events) {
+    normalized.push(normalize_event_record(event))
+  }
+  normalized
+}
+
+///|
 pub fn jsonl_text(items : Array[Json]) -> String {
   if items.length() == 0 {
     ""
   } else {
     [ for item in items => item.stringify() ].join("\n") + "\n"
   }
+}
+
+///|
+pub fn append_jsonl_text(existing : String, item : Json) -> String {
+  let prefix = if existing == "" || existing.has_suffix("\n") {
+    existing
+  } else {
+    existing + "\n"
+  }
+  prefix + item.stringify() + "\n"
 }
 
 ///|
@@ -217,14 +251,6 @@ fn stable_event_id(seed : String) -> String {
     @crypto.sha256(@encoding/utf8.encode(seed).to_fixedarray()),
   )
   "mooncode-event-" + digest[:16].to_owned()
-}
-
-///|
-fn event_json_object_field_or_empty(json : Json, key : String) -> Json {
-  match event_json_object_field(json, key) {
-    Some(Json::Object(_) as value) => value
-    _ => Json::object({})
-  }
 }
 
 ///|

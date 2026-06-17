@@ -82,7 +82,7 @@ pub fn runtime_handoff_manifest(
   let daemon_running = json_bool(daemon, "running", default=false)
   {
     "kind": "mooncode-runtime-handoff",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": status,
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
@@ -120,6 +120,7 @@ pub fn runtime_handoff_manifest(
       "preflight_endpoint": "/api/mooncode/sessions/\{session_id}/preflight?action=<action>&context_path=<path>",
       "action_plan_endpoint": "/api/mooncode/sessions/\{session_id}/action-plan",
       "native_command_endpoint": "/v1/mooncode/sessions/\{session_id}/commands",
+      "native_serve_scheduler_endpoint": "/v1/mooncode/sessions/\{session_id}/serve-scheduler?book_root=<path>",
       "native_eval_endpoint": "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=<path>",
       "ordering_rule": "consume runtime-commands.jsonl in append order; commands.jsonl remains the UI/operator queue; emit progress to events.jsonl or the compatible native MoonCode stream",
     },
@@ -211,8 +212,13 @@ pub fn runtime_handoff_manifest_current(manifest : Json) -> Bool {
   json_string(contract, "runtime_event_ingest_endpoint", default="") != "" &&
   json_string(contract, "runtime_replay_endpoint", default="") != "" &&
   json_string(contract, "action_plan_endpoint", default="") != "" &&
+  json_string(contract, "native_serve_scheduler_endpoint", default="") != "" &&
   json_string(runtime_consumer, "status", default="") != "" &&
   json_string(runtime_consumer, "next_action", default="") != "" &&
   json_string(runtime_consumer_endpoints, "runtime_claim", default="") != "" &&
-  json_string(runtime_consumer_endpoints, "runtime_replay", default="") != ""
+  json_string(runtime_consumer_endpoints, "runtime_replay", default="") != "" &&
+  json_string(runtime_consumer_endpoints, "native_session_listing", default="") !=
+  "" &&
+  json_string(runtime_consumer_endpoints, "native_serve_scheduler", default="") !=
+  ""
 }

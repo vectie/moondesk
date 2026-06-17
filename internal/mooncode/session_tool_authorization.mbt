@@ -5,7 +5,7 @@ pub fn tool_authorization_contract(
 ) -> Json {
   {
     "kind": "mooncode-tool-authorization-contract",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "session_id": session_id,
     "endpoint": "/api/mooncode/sessions/\{session_id}/tool-authorization",
     "method": "POST",
@@ -48,7 +48,7 @@ pub fn tool_authorization_response(
   }
   {
     "kind": "mooncode-tool-authorization",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "session_id": session_id,
     "decision": decision,
     "allowed": decision == "allowed",
@@ -86,6 +86,19 @@ pub fn tool_authorization_has_target(
     }
   }
   false
+}
+
+///|
+pub fn tool_authorization_should_record(
+  preview : Json,
+  events : Array[Json],
+) -> Bool {
+  let approval = tool_event_approval(preview)
+  if approval == "" {
+    return false
+  }
+  let target = tool_approval_target(preview)
+  !tool_authorization_has_target(events, target)
 }
 
 ///|

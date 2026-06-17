@@ -103,11 +103,11 @@ async fn handle_mooncode_session_command(
   let preflight = mooncode_command_preflight(projected, payload, action)
   let force_preflight = json_bool(payload, "force_preflight", default=false)
   if json_bool(preflight, "blocked", default=false) && !force_preflight {
-    let event = mooncode_command_preflight_blocked_event(
+    let event = @mooncode.command_preflight_blocked_projected_event(
       preflight,
-      payload,
-      action,
-      @async.now().to_string(),
+      action~,
+      context_path=@mooncode.command_context_path(payload),
+      created_at=@async.now().to_string(),
     )
     append_mooncode_event_log(workspace_root, session_id, event) catch {
       _ => ()
@@ -127,8 +127,11 @@ async fn handle_mooncode_session_command(
   let message = @mooncode.command_message(action, payload)
   let now = @async.now().to_string()
   if json_bool(preflight, "blocked", default=false) && force_preflight {
-    let event = mooncode_command_preflight_override_event(
-      preflight, payload, action, now,
+    let event = @mooncode.command_preflight_override_projected_event(
+      preflight,
+      action~,
+      context_path=@mooncode.command_context_path(payload),
+      created_at=now,
     )
     append_mooncode_event_log(workspace_root, session_id, event) catch {
       _ => {
@@ -139,7 +142,7 @@ async fn handle_mooncode_session_command(
       }
     }
   }
-  let command_packet = mooncode_command_packet(
+  let command_packet = @mooncode.projected_command_packet(
     session, payload, action, message, now, context_path,
   )
   let runtime_command = @mooncode.runtime_command_record(
@@ -163,7 +166,7 @@ async fn handle_mooncode_session_command(
       return
     }
   }
-  let with_command = append_mooncode_command_event(
+  let with_command = @mooncode.append_projected_command_event(
     session,
     action~,
     status="queued",
@@ -185,7 +188,7 @@ async fn handle_mooncode_session_command(
       ) {
       Ok(session) => session
       Err(error) =>
-        append_mooncode_command_event(
+        @mooncode.append_projected_command_event(
           with_command,
           action~,
           status="failed",
@@ -199,7 +202,11 @@ async fn handle_mooncode_session_command(
   append_mooncode_runtime_dispatch_log(
     workspace_root,
     session_id,
-    mooncode_runtime_dispatch_receipt(dispatched, runtime_command),
+    @mooncode.projected_runtime_dispatch_receipt(
+      dispatched,
+      runtime_command,
+      @async.now().to_string(),
+    ),
   ) catch {
     _ => ()
   }
@@ -381,18 +388,13 @@ async fn send_mooncode_command_to_agent(
       )
   }
   Ok(
-    agent_session_with_field(
-      agent_session_with_field(
-        agent_session_with_field(
-          agent_session_with_field(next, "last_message", message.to_json()),
-          "mooncode_last_command_packet",
-          command_packet,
-        ),
-        "mooncode_dispatch_mode",
-        "moonclaw-task-bridge".to_json(),
+    @mooncode.apply_moonclaw_runtime_session_patch(
+      next,
+      @mooncode.moonclaw_task_bridge_session_patch(
+        command_packet,
+        message,
+        @async.now().to_string(),
       ),
-      "updated_at",
-      @async.now().to_string().to_json(),
     ),
   )
 }
@@ -400,7 +402,8 @@ async fn send_mooncode_command_to_agent(
 ///|
 async fn mooncode_native_runtime_ready(daemon : Json) -> Bool {
   match moonclaw_get_json(daemon, "/v1/mooncode/capabilities") {
-    Ok(_) => true
+    Ok(capabilities) =>
+      @mooncode.moonclaw_native_capabilities_ready(capabilities)
     Err(_) => false
   }
 }
@@ -426,21 +429,9 @@ async fn sync_mooncode_native_eval_report(
   )
   match moonclaw_get_json(daemon, endpoint) {
     Ok(report) =>
-      agent_session_with_field(
-        session,
-        "mooncode_native_eval_report",
-        mooncode_normalize_native_eval_report(report, endpoint),
-      )
+      @mooncode.session_with_native_eval_report(session, report, endpoint)
     Err(_) => session
   }
-}
-
-///|
-fn mooncode_normalize_native_eval_report(
-  report : Json,
-  endpoint : String,
-) -> Json {
-  @mooncode.normalize_native_eval_report(report, endpoint)
 }
 
 ///|
@@ -468,13 +459,14 @@ async fn send_mooncode_native_runtime_command(
     Err(error) => return Err(error)
   }
   let queue_accepted = json_bool(queue_response, "accepted", default=true)
+  let book_root = json_string(body, "book_root", default="")
   let runtime_response = if queue_accepted {
     let loop_response = moonclaw_post_json(
       daemon,
-      @mooncode.moonclaw_native_runtime_loop_endpoint(session_id),
+      @mooncode.moonclaw_native_runtime_loop_endpoint(session_id, book_root),
       @mooncode.moonclaw_runtime_loop_request(
         session_id,
-        json_string(body, "book_root", default=""),
+        book_root,
         consumer_id="moondesk-native-runtime-loop",
         max_turns=8,
       ),
@@ -484,10 +476,10 @@ async fn send_mooncode_native_runtime_command(
       Err(_) =>
         moonclaw_post_json(
           daemon,
-          @mooncode.moonclaw_native_runtime_turn_endpoint(session_id),
+          @mooncode.moonclaw_native_runtime_turn_endpoint(session_id, book_root),
           @mooncode.moonclaw_runtime_turn_request(
             session_id,
-            json_string(body, "book_root", default=""),
+            book_root,
             consumer_id="moondesk-native-runtime-turn",
           ),
         )
@@ -516,68 +508,31 @@ async fn send_mooncode_native_runtime_command(
       Err(error) => error
     },
   )
-  let status = json_string(dispatch_result, "status", default="failed")
-  let detail = json_string(dispatch_result, "detail", default="")
+  let updated_at = @async.now().to_string()
+  let session_patch = @mooncode.moonclaw_native_runtime_session_patch(
+    dispatch_result, command_packet, message, updated_at,
+  )
+  let status_message = json_object_field_or_empty(
+    session_patch, "status_message",
+  )
+  let queue_observed_at = @async.now().to_string()
+  let runtime_observed_at = @async.now().to_string()
   let with_status = append_agent_message(
-    mooncode_append_native_response_events(
-      mooncode_append_native_response_events(session, queue_response),
+    @mooncode.append_projected_native_response_events(
+      @mooncode.append_projected_native_response_events(
+        session,
+        queue_response,
+        loop_fallback_created_at=queue_observed_at,
+      ),
       runtime_payload,
+      loop_fallback_created_at=runtime_observed_at,
     ),
     role="status",
-    content=detail,
-    status~,
+    content=json_string(status_message, "content", default=""),
+    status=json_string(status_message, "status", default="failed"),
+    created_at=json_string(status_message, "created_at", default=updated_at),
   )
-  Ok(
-    agent_session_with_field(
-      agent_session_with_field(
-        agent_session_with_field(
-          agent_session_with_field(
-            with_status,
-            "last_message",
-            message.to_json(),
-          ),
-          "mooncode_last_command_packet",
-          command_packet,
-        ),
-        "mooncode_dispatch_mode",
-        json_string(dispatch_result, "dispatch_mode", default="").to_json(),
-      ),
-      "updated_at",
-      @async.now().to_string().to_json(),
-    ),
-  )
-}
-
-///|
-fn mooncode_append_native_response_events(
-  session : Json,
-  response : Json,
-) -> Json {
-  let stopped_by = json_string(response, "stopped_by", default="unknown")
-  let ran_turn_count = json_int(response, "ran_turn_count", default=0)
-  let failed_turn_count = json_int(response, "failed_turn_count", default=0)
-  let session_id = json_string(response, "session_id", default="")
-  let consumer_id = json_string(response, "consumer_id", default="")
-  let created_at = @async.now().to_string()
-  @mooncode.append_native_response_events(
-    session,
-    response,
-    loop_fallback_id=@desk.stable_id(
-      "mooncode-runtime-loop",
-      session_id +
-      ":" +
-      consumer_id +
-      ":" +
-      created_at +
-      ":" +
-      stopped_by +
-      ":" +
-      ran_turn_count.to_string() +
-      ":" +
-      failed_turn_count.to_string(),
-    ),
-    loop_fallback_created_at=created_at,
-  )
+  Ok(@mooncode.apply_moonclaw_runtime_session_patch(with_status, session_patch))
 }
 
 ///|
@@ -591,7 +546,7 @@ async fn send_mooncode_cancel_command(
 ) -> Json {
   let daemon = moonclaw_daemon_status(workspace_root)
   if !json_bool(daemon, "running", default=false) {
-    return append_mooncode_command_event(
+    return @mooncode.append_projected_command_event(
       session,
       action~,
       status="failed",
@@ -606,7 +561,7 @@ async fn send_mooncode_cancel_command(
       ) {
       Ok(next) => next
       Err(error) =>
-        append_mooncode_command_event(
+        @mooncode.append_projected_command_event(
           session,
           action~,
           status="failed",
@@ -617,7 +572,7 @@ async fn send_mooncode_cancel_command(
   }
   let task_id = json_string(session, "moonclaw_task_id", default="")
   if task_id == "" {
-    return append_mooncode_command_event(
+    return @mooncode.append_projected_command_event(
       session,
       action~,
       status="failed",
@@ -631,7 +586,7 @@ async fn send_mooncode_cancel_command(
     Err(error) => ("failed", error)
   }
   append_agent_message(
-    append_mooncode_command_event(
+    @mooncode.append_projected_command_event(
       session,
       action~,
       status~,
@@ -642,30 +597,4 @@ async fn send_mooncode_cancel_command(
     content=detail,
     status~,
   )
-}
-
-///|
-fn mooncode_event_from_transcript_message(message : Json) -> Json {
-  @mooncode.transcript_message_event(
-    message,
-    fallback_id=@desk.stable_id("mooncode-message", message.stringify()),
-  )
-}
-
-///|
-fn mooncode_event_from_moonclaw_event(event : Json) -> Json? {
-  let desc = match json_object_field(event, "desc") {
-    Some(desc) => desc
-    None =>
-      return @mooncode.normalize_runtime_event_with_defaults(
-        event,
-        fallback_created_at=@async.now().to_string(),
-      )
-  }
-  let event_id = json_field_text(
-    event,
-    "id",
-    default=@desk.stable_id("mooncode-event", desc.stringify()),
-  )
-  @mooncode.moonclaw_event_record(event, fallback_id=event_id)
 }

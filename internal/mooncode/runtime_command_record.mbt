@@ -14,8 +14,8 @@ pub fn runtime_command_record(
     session, payload, message, command_packet,
   )
   {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-command",
+    "protocol": protocol_version(),
+    "kind": kind_runtime_command(),
     "command_id": json_string(command_packet, "command_id", default=""),
     "action": json_string(command_packet, "action", default="prompt"),
     "dispatch": json_string(command_packet, "dispatch", default="prompt"),

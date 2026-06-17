@@ -115,7 +115,7 @@ fn runtime_tool_call_decode_error_event(
             event_record(
               id~,
               lane="tool",
-              kind="tool_call_decode_error",
+              kind=event_tool_call_decode_error(),
               title="Tool decode failed",
               status="failed",
               created_at~,
@@ -154,8 +154,8 @@ fn runtime_event_command_packet(event : Json, action : String) -> Json {
     Json::object({})
   } else {
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.command-ref",
+      "protocol": protocol_version(),
+      "kind": kind_command_ref(),
       "command_id": command_id,
       "action": action,
       "dispatch": command_dispatch(action),

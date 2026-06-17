@@ -78,7 +78,7 @@ test "mooncode tool call wire decodes native openseek function calls" {
 ///|
 test "mooncode tool call wire decodes runtime event wrappers" {
   guard decode_tool_call({
-      "event": "tool_started",
+      "event": event_tool_started(),
       "tool_call": {
         "id": "call-write",
         "function": {
@@ -125,6 +125,36 @@ test "mooncode tool call wire rejects unknown or malformed tools" {
   })
   assert_true(serve_json_bool(report, "ok", default=false))
   assert_eq(serve_json_string(report, "tool_name", default=""), "moon_check")
+}
+
+///|
+test "mooncode tool call wire accepts moonbit specific coding tools" {
+  guard decode_tool_call({
+      "id": "call-ide",
+      "function": {
+        "name": "moon_ide",
+        "arguments": "{\"action\":\"outline\",\"path\":\"internal/mooncode\"}",
+      },
+    })
+    is Ok(ide) else {
+    fail("moon_ide tool call did not decode")
+  }
+  assert_eq(serve_json_string(ide, "tool_name", default=""), "moon_ide")
+  assert_false(serve_json_bool(ide, "mutates_files", default=true))
+  assert_false(serve_json_bool(ide, "requires_review", default=true))
+  guard decode_tool_call({
+      "id": "call-cmd",
+      "function": {
+        "name": "moon_cmd",
+        "arguments": "{\"command\":\"test\",\"path\":\"internal/mooncode\"}",
+      },
+    })
+    is Ok(cmd) else {
+    fail("moon_cmd tool call did not decode")
+  }
+  assert_eq(serve_json_string(cmd, "tool_name", default=""), "moon_cmd")
+  assert_true(serve_json_bool(cmd, "mutates_files", default=false))
+  assert_true(serve_json_bool(cmd, "requires_review", default=false))
 }
 
 ///|

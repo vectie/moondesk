@@ -21,7 +21,7 @@ pub fn package_candidates_projection(
   }
   {
     "kind": "mooncode-package-candidates",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": if runtime_verified > 0 {
       "verified"
     } else if runtime_built > 0 {

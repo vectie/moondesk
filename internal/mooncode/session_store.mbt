@@ -17,7 +17,7 @@ pub fn session_snapshot(
   )
   {
     "kind": "mooncode-session-snapshot",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "component": "mooncode",
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),

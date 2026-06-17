@@ -83,28 +83,28 @@ test "mooncode marks portable app tool outputs as artifacts" {
 
 ///|
 test "mooncode command events project into review lanes" {
-  let session = append_mooncode_command_event(
+  let session = @mooncode.append_projected_command_event(
     Json::object({}),
     action="run_tests",
     status="queued",
     detail=@mooncode.command_message("run_tests", Json::object({})),
     created_at="1",
   )
-  let session = append_mooncode_command_event(
+  let session = @mooncode.append_projected_command_event(
     session,
     action="package",
     status="queued",
     detail=@mooncode.command_message("package", Json::object({})),
     created_at="2",
   )
-  let session = append_mooncode_command_event(
+  let session = @mooncode.append_projected_command_event(
     session,
     action="accept",
     status="queued",
     detail=@mooncode.command_message("accept", Json::object({})),
     created_at="3",
   )
-  let session = append_mooncode_command_event(
+  let session = @mooncode.append_projected_command_event(
     session,
     action="reject",
     status="queued",

@@ -18,7 +18,7 @@ pub fn command_preflight(
   let blocked = reason != ""
   {
     "kind": "mooncode-command-preflight",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "action": action,
     "session_id": session_id,
     "allowed": !blocked,
@@ -35,6 +35,23 @@ pub fn command_preflight(
       "extractable_component": "mooncode",
     },
   }
+}
+
+///|
+pub fn command_preflight_for_session(
+  session : Json,
+  payload : Json,
+  events : Array[Json],
+  action~ : String,
+) -> Json {
+  let summary = session_summary(session, events)
+  command_preflight(
+    session_id=json_string(session, "id", default=""),
+    action~,
+    context_path=command_context_path(payload),
+    summary~,
+    patch_entries=patch_set_entries(events),
+  )
 }
 
 ///|
@@ -166,6 +183,36 @@ pub fn command_preflight_blocked_event(
 }
 
 ///|
+pub fn command_preflight_blocked_projected_event(
+  preflight : Json,
+  action~ : String,
+  context_path~ : String,
+  created_at~ : String,
+) -> Json {
+  let reason = json_string(
+    preflight,
+    "reason",
+    default="MoonCode command is blocked by current review gates",
+  )
+  command_preflight_blocked_event(
+    preflight,
+    action~,
+    context_path~,
+    created_at~,
+    event_id=stable_event_id(
+      "mooncode-preflight-blocked:" +
+      action +
+      ":" +
+      context_path +
+      ":" +
+      created_at +
+      ":" +
+      reason,
+    ),
+  )
+}
+
+///|
 pub fn command_preflight_override_event(
   preflight : Json,
   action~ : String,
@@ -189,6 +236,36 @@ pub fn command_preflight_override_event(
     path=context_path,
     command=action,
     command_packet=preflight,
+  )
+}
+
+///|
+pub fn command_preflight_override_projected_event(
+  preflight : Json,
+  action~ : String,
+  context_path~ : String,
+  created_at~ : String,
+) -> Json {
+  let reason = json_string(
+    preflight,
+    "reason",
+    default="MoonCode command preflight was overridden by the operator",
+  )
+  command_preflight_override_event(
+    preflight,
+    action~,
+    context_path~,
+    created_at~,
+    event_id=stable_event_id(
+      "mooncode-preflight-override:" +
+      action +
+      ":" +
+      context_path +
+      ":" +
+      created_at +
+      ":" +
+      reason,
+    ),
   )
 }
 

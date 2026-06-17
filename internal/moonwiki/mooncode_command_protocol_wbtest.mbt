@@ -12,7 +12,7 @@ test "mooncode command preflight blocks accept until changed code is tested" {
     diff="+fn main { println(1) }",
   )
   let session : Json = { "id": "agent-demo", "mooncode_events": [diff_event] }
-  let session = append_mooncode_command_event(
+  let session = @mooncode.append_projected_command_event(
     session,
     action="approve_tool",
     status="queued",
@@ -55,7 +55,7 @@ test "mooncode command preflight blocks accept until changed code is tested" {
 
 ///|
 test "mooncode command preflight blocks package while tool approvals are pending" {
-  let preview = mooncode_tool_authorization_preview_event(
+  let preview = @mooncode.tool_authorization_preview_projected_event(
     {
       "tool_call_id": "call-build",
       "tool_name": "shell",
@@ -166,11 +166,11 @@ test "mooncode command preflight blocked attempts become runtime events" {
     "blocked": true,
     "reason": "resolve pending tool approvals before package",
   }
-  let event = mooncode_command_preflight_blocked_event(
+  let event = @mooncode.command_preflight_blocked_projected_event(
     preflight,
-    { "context_path": "tools/demo/main.mbt" },
-    "package",
-    "2026-06-14T00:02:00Z",
+    action="package",
+    context_path="tools/demo/main.mbt",
+    created_at="2026-06-14T00:02:00Z",
   )
   assert_eq(json_string(event, "kind", default=""), "preflight.blocked")
   assert_eq(json_string(event, "lane", default=""), "artifact")
@@ -202,8 +202,11 @@ test "mooncode forced preflight command creates override audit event and packet"
     "blocked": true,
     "reason": "accept reviewed file changes before commit",
   }
-  let event = mooncode_command_preflight_override_event(
-    preflight, payload, "commit", "2026-06-15T00:03:00Z",
+  let event = @mooncode.command_preflight_override_projected_event(
+    preflight,
+    action="commit",
+    context_path=@mooncode.command_context_path(payload),
+    created_at="2026-06-15T00:03:00Z",
   )
   assert_eq(json_string(event, "kind", default=""), "preflight.override")
   assert_eq(json_string(event, "status", default=""), "override")
@@ -213,7 +216,7 @@ test "mooncode forced preflight command creates override audit event and packet"
       "accept reviewed file changes",
     ),
   )
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     { "id": "agent-demo", "workspace_root": "/tmp/book" },
     payload,
     "commit",
@@ -228,7 +231,7 @@ test "mooncode forced preflight command creates override audit event and packet"
 test "mooncode review commands preserve target path" {
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
   let target_path = @mooncode.command_context_path(payload)
-  let session = append_mooncode_command_event(
+  let session = @mooncode.append_projected_command_event(
     Json::object({}),
     action="accept",
     status="queued",
@@ -429,7 +432,7 @@ test "mooncode command packet preserves runtime boundary" {
     "web_search": false,
   }
   let message = @mooncode.command_message("run_tests", payload)
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     session, payload, "run_tests", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
   assert_eq(json_string(packet, "protocol", default=""), "mooncode.v1")

@@ -15,18 +15,11 @@ async fn write_mooncode_review_receipt_if_needed(
   )
   let receipt_path = json_string(receipt, "receipt_path", default="")
   let recorded_at = json_string(receipt, "recorded_at", default="")
-  let event = mooncode_review_receipt_event(
+  let event = @mooncode.review_receipt_projected_event(
     action, receipt_path, context_path, recorded_at, command_packet,
   )
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(event)
-  let with_receipt_events = agent_session_with_field(
-    session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-  let with_receipt = agent_session_with_field(
-    with_receipt_events, "mooncode_last_review_receipt", receipt,
+  let with_receipt = @mooncode.session_with_review_receipt_event(
+    session, receipt, event,
   )
   let with_package = if action == "package" {
     write_mooncode_package_manifest_for_receipt(
@@ -43,60 +36,44 @@ async fn write_mooncode_review_receipt_if_needed(
 ///|
 async fn write_mooncode_change_set_if_possible(session : Json) -> Json {
   let manifest = write_mooncode_change_set_manifest(session)
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(mooncode_change_set_manifest_event(manifest))
-  let with_events = agent_session_with_field(
+  @mooncode.session_with_manifest_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-  agent_session_with_field(
-    with_events, "mooncode_last_change_set_manifest", manifest,
+    "mooncode_last_change_set_manifest",
+    manifest,
+    @mooncode.change_set_manifest_projected_event(manifest),
   )
 }
 
 ///|
 async fn write_mooncode_patch_set_if_possible(session : Json) -> Json {
   let manifest = write_mooncode_patch_set_manifest(session)
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(mooncode_patch_set_manifest_event(manifest))
-  let with_events = agent_session_with_field(
+  @mooncode.session_with_manifest_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-  agent_session_with_field(
-    with_events, "mooncode_last_patch_set_manifest", manifest,
+    "mooncode_last_patch_set_manifest",
+    manifest,
+    @mooncode.patch_set_manifest_projected_event(manifest),
   )
 }
 
 ///|
 async fn write_mooncode_tool_approvals_if_possible(session : Json) -> Json {
   let manifest = write_mooncode_tool_approvals_manifest(session)
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(mooncode_tool_approvals_manifest_event(manifest))
-  let with_events = agent_session_with_field(
+  @mooncode.session_with_manifest_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-  agent_session_with_field(
-    with_events, "mooncode_last_tool_approvals_manifest", manifest,
+    "mooncode_last_tool_approvals_manifest",
+    manifest,
+    @mooncode.tool_approvals_manifest_projected_event(manifest),
   )
 }
 
 ///|
 async fn write_mooncode_test_runs_if_possible(session : Json) -> Json {
   let manifest = write_mooncode_test_runs_manifest(session)
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(mooncode_test_runs_manifest_event(manifest))
-  let with_events = agent_session_with_field(
+  @mooncode.session_with_manifest_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-  agent_session_with_field(
-    with_events, "mooncode_last_test_runs_manifest", manifest,
+    "mooncode_last_test_runs_manifest",
+    manifest,
+    @mooncode.test_runs_manifest_projected_event(manifest),
   )
 }
 
@@ -106,15 +83,11 @@ async fn write_mooncode_action_plan_if_possible(
   session : Json,
 ) -> Json {
   let manifest = write_mooncode_action_plan_manifest(workspace_root, session)
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(mooncode_action_plan_manifest_event(manifest))
-  let with_events = agent_session_with_field(
+  @mooncode.session_with_manifest_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-  agent_session_with_field(
-    with_events, "mooncode_last_action_plan_manifest", manifest,
+    "mooncode_last_action_plan_manifest",
+    manifest,
+    @mooncode.action_plan_manifest_projected_event(manifest),
   )
 }
 
@@ -126,36 +99,22 @@ async fn write_mooncode_runtime_evidence_if_possible(
   let manifest = write_mooncode_runtime_evidence_manifest(
     workspace_root, session,
   )
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(mooncode_runtime_evidence_manifest_event(manifest))
-  let with_events = agent_session_with_field(
+  @mooncode.session_with_manifest_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-  agent_session_with_field(
-    with_events, "mooncode_last_runtime_evidence_manifest", manifest,
+    "mooncode_last_runtime_evidence_manifest",
+    manifest,
+    @mooncode.runtime_evidence_manifest_projected_event(manifest),
   )
 }
 
 ///|
 async fn write_mooncode_eval_report_if_possible(session : Json) -> Json {
   let manifest = write_mooncode_eval_report_manifest(session)
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(mooncode_eval_report_manifest_event(manifest))
-  let with_events = agent_session_with_field(
+  @mooncode.session_with_eval_report_manifest_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
+    manifest,
+    @mooncode.eval_report_manifest_projected_event(manifest),
   )
-  let with_manifest = agent_session_with_field(
-    with_events, "mooncode_last_eval_report_manifest", manifest,
-  )
-  let refreshed_events = project_mooncode_events(with_manifest, [], [])
-  let refreshed_summary = @mooncode.session_summary(
-    with_manifest, refreshed_events,
-  )
-  agent_session_with_field(with_manifest, "mooncode_summary", refreshed_summary)
 }
 
 ///|
@@ -166,39 +125,12 @@ async fn write_mooncode_runtime_handoff_if_possible(
   let manifest = write_mooncode_runtime_handoff_manifest(
     workspace_root, session,
   )
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(mooncode_runtime_handoff_manifest_event(manifest))
-  let with_events = agent_session_with_field(
+  @mooncode.session_with_manifest_event(
     session,
-    "mooncode_command_events",
-    Json::array(events),
+    "mooncode_last_runtime_handoff_manifest",
+    manifest,
+    @mooncode.runtime_handoff_manifest_projected_event(manifest),
   )
-  agent_session_with_field(
-    with_events, "mooncode_last_runtime_handoff_manifest", manifest,
-  )
-}
-
-///|
-fn mooncode_session_with_saved_eval_manifest(
-  session : Json,
-  manifest : Json,
-) -> Json {
-  let with_manifest = agent_session_with_field(
-    session, "mooncode_last_eval_report_manifest", manifest,
-  )
-  let native_report = json_object_field_or_empty(manifest, "native_eval_report")
-  if json_bool(native_report, "ok", default=false) &&
-    !json_bool(
-      json_object_field_or_empty(session, "mooncode_native_eval_report"),
-      "ok",
-      default=false,
-    ) {
-    agent_session_with_field(
-      with_manifest, "mooncode_native_eval_report", native_report,
-    )
-  } else {
-    with_manifest
-  }
 }
 
 ///|
@@ -210,10 +142,7 @@ async fn write_mooncode_change_set_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode change set needs a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let relative = @mooncode.change_set_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
@@ -239,10 +168,7 @@ async fn write_mooncode_patch_set_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode patch set needs a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let relative = @mooncode.patch_set_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
@@ -268,10 +194,7 @@ async fn write_mooncode_tool_approvals_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode tool approvals need a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let relative = @mooncode.tool_approvals_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
@@ -297,10 +220,7 @@ async fn write_mooncode_test_runs_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode test runs need a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let relative = @mooncode.test_runs_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
@@ -329,21 +249,14 @@ async fn write_mooncode_action_plan_manifest(
   if book_root == "" {
     fail("MoonCode action plan needs a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let relative = @mooncode.action_plan_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
-  let manifest = agent_session_with_field(
-    agent_session_with_field(
-      mooncode_action_plan_projection(workspace_root, session),
-      "manifest_path",
-      relative.to_json(),
-    ),
-    "absolute_manifest_path",
-    absolute.to_json(),
+  let manifest = @mooncode.action_plan_manifest_response(
+    mooncode_action_plan_projection(workspace_root, session),
+    relative,
+    absolute,
   )
   @fsx.write_to_file(absolute, manifest.stringify(indent=2) + "\n")
   manifest
@@ -361,21 +274,14 @@ async fn write_mooncode_runtime_evidence_manifest(
   if book_root == "" {
     fail("MoonCode runtime evidence needs a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let relative = @mooncode.runtime_evidence_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
-  let manifest = agent_session_with_field(
-    agent_session_with_field(
-      mooncode_session_runtime_evidence_projection(workspace_root, session),
-      "manifest_path",
-      relative.to_json(),
-    ),
-    "absolute_manifest_path",
-    absolute.to_json(),
+  let manifest = @mooncode.session_runtime_evidence_manifest_response(
+    mooncode_session_runtime_evidence_projection(workspace_root, session),
+    relative,
+    absolute,
   )
   @fsx.write_to_file(absolute, manifest.stringify(indent=2) + "\n")
   manifest

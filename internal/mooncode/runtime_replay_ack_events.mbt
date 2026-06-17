@@ -75,7 +75,7 @@ fn runtime_replay_ack_event_summary(
     review_event_count
   {
     "kind": "mooncode-runtime-ack-event-summary",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "submitted_event_count": submitted.length(),
     "normalized_event_count": normalized.length(),
     "proof_event_count": proof_event_count,
@@ -115,8 +115,8 @@ fn runtime_replay_ack_scoped_event(
 ///|
 fn runtime_replay_ack_command_packet(runtime_command : Json) -> Json {
   {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command-ref",
+    "protocol": protocol_version(),
+    "kind": kind_command_ref(),
     "command_id": rq_json_string(runtime_command, "command_id", default=""),
     "action": rq_json_string(runtime_command, "action", default="prompt"),
     "dispatch": rq_json_string(runtime_command, "dispatch", default="prompt"),

@@ -11,8 +11,8 @@ pub fn command_packet(
   let workspace_id = json_string(session, "workspace_id", default="")
   let task_id = json_string(session, "moonclaw_task_id", default="")
   {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
+    "protocol": protocol_version(),
+    "kind": kind_command(),
     "command_id": command_id,
     "action": action,
     "dispatch": command_dispatch(action),
@@ -49,6 +49,36 @@ pub fn command_packet(
       "extractable_component": "mooncode",
     },
   }
+}
+
+///|
+pub fn projected_command_packet(
+  session : Json,
+  payload : Json,
+  action : String,
+  message : String,
+  created_at : String,
+  context_path : String,
+) -> Json {
+  command_packet(
+    session,
+    payload,
+    action,
+    message,
+    created_at,
+    context_path,
+    command_id=stable_command_id(
+      action + ":" + created_at + ":" + context_path + ":" + message,
+    ),
+  )
+}
+
+///|
+fn stable_command_id(seed : String) -> String {
+  let digest = @crypto.bytes_to_hex_string(
+    @crypto.sha256(@encoding/utf8.encode(seed).to_fixedarray()),
+  )
+  "mooncode-command-" + digest[:16].to_owned()
 }
 
 ///|

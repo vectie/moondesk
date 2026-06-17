@@ -128,7 +128,7 @@ async test "mooncode durable native tool call creates pending approval manifest"
 ///|
 test "mooncode tool authorization follows approval state" {
   let session : Json = { "id": "agent-demo" }
-  let preview = mooncode_tool_authorization_preview_event(
+  let preview = @mooncode.tool_authorization_preview_projected_event(
     {
       "tool_call_id": "call-build",
       "tool_name": "shell",
@@ -136,12 +136,17 @@ test "mooncode tool authorization follows approval state" {
     },
     "2026-06-14T00:00:00Z",
   )
-  let pending = mooncode_tool_authorization_response(session, preview, [preview])
+  let pending = @mooncode.tool_authorization_response(
+    json_string(session, "id", default=""),
+    preview,
+    [preview],
+    json_object_field_or_empty(session, "mooncode_last_tool_approvals_manifest"),
+  )
   assert_eq(json_string(pending, "decision", default=""), "requires_approval")
   assert_eq(json_string(pending, "approval", default=""), "policy")
   assert_eq(json_string(pending, "approval_state", default=""), "pending")
   assert_eq(json_string(pending, "command", default=""), "npm run build")
-  let approve_session = append_mooncode_command_event(
+  let approve_session = @mooncode.append_projected_command_event(
     session,
     action="approve_tool",
     status="queued",
@@ -150,12 +155,17 @@ test "mooncode tool authorization follows approval state" {
     path="tool_call:call-build",
   )
   let approved_events = project_mooncode_events(approve_session, [], [preview])
-  let approved = mooncode_tool_authorization_response(
-    approve_session, preview, approved_events,
+  let approved = @mooncode.tool_authorization_response(
+    json_string(approve_session, "id", default=""),
+    preview,
+    approved_events,
+    json_object_field_or_empty(
+      approve_session, "mooncode_last_tool_approvals_manifest",
+    ),
   )
   assert_eq(json_string(approved, "decision", default=""), "allowed")
   assert_true(json_bool(approved, "allowed", default=false))
-  let reject_session = append_mooncode_command_event(
+  let reject_session = @mooncode.append_projected_command_event(
     session,
     action="reject_tool",
     status="queued",
@@ -164,8 +174,13 @@ test "mooncode tool authorization follows approval state" {
     path="tool_call:call-build",
   )
   let rejected_events = project_mooncode_events(reject_session, [], [preview])
-  let rejected = mooncode_tool_authorization_response(
-    reject_session, preview, rejected_events,
+  let rejected = @mooncode.tool_authorization_response(
+    json_string(reject_session, "id", default=""),
+    preview,
+    rejected_events,
+    json_object_field_or_empty(
+      reject_session, "mooncode_last_tool_approvals_manifest",
+    ),
   )
   assert_eq(json_string(rejected, "decision", default=""), "blocked")
   assert_true(json_bool(rejected, "blocked", default=false))
@@ -173,7 +188,7 @@ test "mooncode tool authorization follows approval state" {
 
 ///|
 test "mooncode tool authorization allows read tools without approval" {
-  let preview = mooncode_tool_authorization_preview_event(
+  let preview = @mooncode.tool_authorization_preview_projected_event(
     {
       "tool_call_id": "call-read",
       "tool_name": "read",
@@ -181,10 +196,12 @@ test "mooncode tool authorization allows read tools without approval" {
     },
     "2026-06-14T00:00:00Z",
   )
-  let response = mooncode_tool_authorization_response(
-    { "id": "agent-demo" },
+  let session : Json = { "id": "agent-demo" }
+  let response = @mooncode.tool_authorization_response(
+    json_string(session, "id", default=""),
     preview,
     [preview],
+    json_object_field_or_empty(session, "mooncode_last_tool_approvals_manifest"),
   )
   assert_eq(json_string(response, "decision", default=""), "allowed")
   assert_eq(json_string(response, "approval", default=""), "auto")

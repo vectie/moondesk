@@ -20,7 +20,7 @@ pub fn patch_set_manifest(
   let runtime_pending_count = count_patch_execution_state(patches, "pending")
   {
     "kind": "mooncode-patch-set",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": patch_set_status(
       accepted_count, rejected_count, applied_count, reverted_count, pending_count,
     ),

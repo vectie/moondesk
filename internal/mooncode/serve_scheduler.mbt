@@ -2,7 +2,7 @@
 pub fn serve_scheduler_contract_json() -> Json {
   {
     "kind": "mooncode-serve-scheduler-contract",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "owner": "mooncode",
     "runtime_owner": "moonclaw-or-standalone-mooncode",
     "reference": "../openseek/cmd/openseek/serve.mbt",
@@ -39,7 +39,7 @@ pub fn serve_scheduler_projection(
   )
   {
     "kind": "mooncode-serve-scheduler-state",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "session_id": session_id,
     "command_count": command_log.length(),
     "lifecycle_command_count": lifecycle_items.length(),

@@ -77,7 +77,7 @@ pub fn runtime_claim_response(
   session : Json,
 ) -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-runtime-claim",
     "session_id": session_id,
     "claimed_count": claim_receipts.length(),
@@ -164,8 +164,8 @@ fn runtime_claim_receipt(
     fallback="mooncode-runtime-claim:\{command_id}:\{consumer_id}:\{claimed_at}",
   )
   {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "protocol": protocol_version(),
+    "kind": kind_runtime_dispatch(),
     "dispatch_id": lease_id,
     "claim_id": lease_id,
     "command_id": command_id,

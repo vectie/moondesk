@@ -92,8 +92,8 @@ fn runtime_replay_ack_receipt(
   )
   let status = runtime_replay_ack_effective_status(requested_status, proof_gate)
   {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "protocol": protocol_version(),
+    "kind": kind_runtime_dispatch(),
     "dispatch_id": dispatch_id,
     "command_id": command_id,
     "session_id": rq_json_string(runtime_command, "session_id", default=""),

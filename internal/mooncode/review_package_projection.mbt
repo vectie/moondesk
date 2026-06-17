@@ -15,7 +15,7 @@ pub fn package_manifest(
   let promoted_source_count = package_source_promoted_count(source_inventory)
   {
     "kind": "mooncode-package-manifest",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": "candidate",
     "package_kind": package_kind_for_path(context_path),
     "session_id": json_string(session, "id", default=""),

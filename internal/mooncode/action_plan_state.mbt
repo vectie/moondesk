@@ -99,7 +99,7 @@ pub fn action_plan_item_state_for_command(
     proof_events,
     command_id,
     action,
-    proof_kind="test_result",
+    proof_kind=event_test_result(),
   )
   let command_source_bound_packages = command_proof_count(
       proof_events,

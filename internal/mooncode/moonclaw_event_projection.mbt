@@ -183,6 +183,24 @@ pub fn moonclaw_event_record(event : Json, fallback_id~ : String) -> Json? {
 }
 
 ///|
+pub fn moonclaw_projected_event_record(
+  event : Json,
+  fallback_created_at~ : String,
+) -> Json? {
+  let desc = match moonclaw_json_object_field(event, "desc") {
+    Some(desc) => desc
+    None =>
+      return normalize_runtime_event_with_defaults(event, fallback_created_at~)
+  }
+  let event_id = moonclaw_json_field_text(
+    event,
+    "id",
+    default=stable_event_id("mooncode-event:" + desc.stringify()),
+  )
+  moonclaw_event_record(event, fallback_id=event_id)
+}
+
+///|
 pub fn moonclaw_tool_event_record(event : Json, fallback_id~ : String) -> Json? {
   let desc = moonclaw_json_object_field_or_empty(event, "desc")
   let msg = moonclaw_json_string(desc, "msg", default="")

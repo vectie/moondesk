@@ -13,7 +13,7 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
   let message = @mooncode.command_message("run_tests", payload)
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     session, payload, "run_tests", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
   let runtime_command = @mooncode.runtime_command_record(
@@ -24,7 +24,9 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
   append_mooncode_runtime_dispatch_log(
     root,
     "agent-demo",
-    mooncode_runtime_dispatch_receipt(session, runtime_command),
+    @mooncode.projected_runtime_dispatch_receipt(
+      session, runtime_command, "2026-06-14T00:01:00Z",
+    ),
   )
   let before = mooncode_action_plan_projection(root, session)
   let before_actions = json_array_items(before, "actions")
@@ -54,6 +56,46 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
             "tool_name": "read",
             "tool_call_id": "call-read",
             "content": "fn main { println(\"demo\") }",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_call",
+            "id": "tool-call-ide",
+            "created_at": "2026-06-14T00:00:50Z",
+            "tool_name": "moon_ide",
+            "tool_call_id": "call-ide",
+            "arguments": "{\"action\":\"outline\",\"path\":\"tools/demo/main.mbt\"}",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_result",
+            "id": "tool-result-ide",
+            "created_at": "2026-06-14T00:00:55Z",
+            "tool_name": "moon_ide",
+            "tool_call_id": "call-ide",
+            "content": "main : () -> Unit",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_call",
+            "id": "tool-call-cmd",
+            "created_at": "2026-06-14T00:00:56Z",
+            "tool_name": "moon_cmd",
+            "tool_call_id": "call-cmd",
+            "arguments": "{\"command\":\"moon info\"}",
+            "command_id": command_id,
+            "action": "run_tests",
+          },
+          {
+            "event": "tool_result",
+            "id": "tool-result-cmd",
+            "created_at": "2026-06-14T00:00:57Z",
+            "tool_name": "moon_cmd",
+            "tool_call_id": "call-cmd",
+            "content": "moon info passed",
             "command_id": command_id,
             "action": "run_tests",
           },
@@ -173,7 +215,7 @@ async test "mooncode runtime replay ack events persist as session evidence" {
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
   let message = @mooncode.command_message("run_tests", payload)
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     session, payload, "run_tests", message, "2026-06-15T00:00:00Z", "tools/demo/main.mbt",
   )
   let runtime_command = @mooncode.runtime_command_record(
@@ -182,7 +224,7 @@ async test "mooncode runtime replay ack events persist as session evidence" {
   append_mooncode_command_log(root, "agent-demo", packet)
   append_mooncode_runtime_command_log(root, "agent-demo", runtime_command)
   let command_id = json_string(packet, "command_id", default="")
-  let ack_receipts = mooncode_runtime_replay_ack_receipts(
+  let ack_receipts = @mooncode.runtime_replay_ack_receipts_with_defaults(
     session,
     [runtime_command],
     {
@@ -215,6 +257,7 @@ async test "mooncode runtime replay ack events persist as session evidence" {
         { "event": "agent_finished", "id": "evt-finish", "answer": "done" },
       ],
     },
+    acknowledged_at="2026-06-15T00:01:00Z",
   )
   assert_eq(ack_receipts.length(), 1)
   append_mooncode_runtime_dispatch_log(root, "agent-demo", ack_receipts[0])

@@ -90,9 +90,14 @@ pub fn package_manifest_relative_path(
 }
 
 ///|
-pub fn package_index_manifest_relative_path(session_id : String) -> String {
+pub fn package_session_root_relative_path(session_id : String) -> String {
   let safe_session = artifact_safe_id(session_id, fallback="session")
-  "portable/app-tool/mooncode/\{safe_session}/index.json"
+  "portable/app-tool/mooncode/\{safe_session}"
+}
+
+///|
+pub fn package_index_manifest_relative_path(session_id : String) -> String {
+  "\{package_session_root_relative_path(session_id)}/index.json"
 }
 
 ///|

@@ -34,8 +34,24 @@ test "mooncode normalizes sparse runtime event records" {
   assert_eq(json_string(normalized, "diff", default=""), "patch")
   assert_eq(json_string(normalized, "path", default="x"), "")
   assert_eq(event_json_int(normalized, "exit_code", default=-1), 0)
-  let packet = event_json_object_field_or_empty(normalized, "command_packet")
+  let packet = runtime_json_object_field_or_empty(normalized, "command_packet")
   assert_eq(json_string(packet, "command_id", default=""), "cmd-1")
+}
+
+///|
+test "mooncode normalizes native compact command ids into packets" {
+  let normalized = normalize_event_record({
+    "id": "native-event",
+    "lane": "tool",
+    "kind": "runtime.tool_result",
+    "command_id": "cmd-native",
+    "raw_event": {
+      "command_packet": { "command_id": "cmd-native", "action": "prompt" },
+    },
+  })
+  let packet = runtime_json_object_field_or_empty(normalized, "command_packet")
+  assert_eq(json_string(packet, "command_id", default=""), "cmd-native")
+  assert_eq(json_string(packet, "action", default=""), "prompt")
 }
 
 ///|
@@ -50,20 +66,20 @@ test "mooncode parses durable jsonl protocol records" {
     detail="hello",
   )
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
+    "protocol": protocol_version(),
+    "kind": kind_command(),
     "command_id": "cmd-1",
     "action": "prompt",
   }
   let runtime : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-1",
     "serve_command": "prompt",
   }
   let dispatch : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "protocol": protocol_version(),
+    "kind": kind_runtime_dispatch(),
     "command_id": "cmd-1",
     "status": "bridged",
   }
@@ -72,6 +88,51 @@ test "mooncode parses durable jsonl protocol records" {
   assert_eq(parse_command_log_text(text).length(), 3)
   assert_eq(parse_runtime_command_log_text(text).length(), 1)
   assert_eq(parse_runtime_dispatch_log_text(text).length(), 1)
+}
+
+///|
+test "mooncode appends durable jsonl text with newline repair" {
+  let item : Json = { "id": "event-2", "lane": "runtime" }
+  assert_eq(append_jsonl_text("", item), item.stringify() + "\n")
+  assert_eq(
+    append_jsonl_text("{\"id\":\"event-1\"}", item),
+    "{\"id\":\"event-1\"}\n" + item.stringify() + "\n",
+  )
+  assert_eq(
+    append_jsonl_text("{\"id\":\"event-1\"}\n", item),
+    "{\"id\":\"event-1\"}\n" + item.stringify() + "\n",
+  )
+}
+
+///|
+test "mooncode validates durable protocol records centrally" {
+  let command : Json = {
+    "protocol": protocol_version(),
+    "kind": kind_command(),
+    "command_id": "cmd-1",
+  }
+  let runtime : Json = {
+    "protocol": protocol_version(),
+    "kind": "mooncode.runtime-command",
+    "command_id": "cmd-1",
+  }
+  let dispatch : Json = {
+    "protocol": protocol_version(),
+    "kind": kind_runtime_dispatch(),
+    "command_id": "cmd-1",
+  }
+  let snapshot : Json = {
+    "protocol": protocol_version(),
+    "kind": "mooncode-session-snapshot",
+  }
+  assert_true(command_packet_valid(command))
+  assert_false(command_packet_valid({ "protocol": protocol_version() }))
+  assert_true(runtime_command_record_valid(runtime))
+  assert_false(runtime_command_record_valid(command))
+  assert_true(runtime_dispatch_record_valid(dispatch))
+  assert_false(runtime_dispatch_record_valid(runtime))
+  assert_true(session_snapshot_valid(snapshot))
+  assert_false(session_snapshot_valid({ "protocol": protocol_version() }))
 }
 
 ///|
@@ -88,6 +149,45 @@ test "mooncode event merge dedupes by durable event id" {
   let merged = merge_events([], [event], [event])
   assert_eq(merged.length(), 1)
   assert_eq(json_string(merged[0], "lane", default=""), "review")
+}
+
+///|
+test "mooncode session event projection merges and normalizes sources" {
+  let inline = event_record(
+    id="event-inline",
+    lane="review",
+    kind="command.accept",
+    title="Accept",
+    status="queued",
+    created_at="2026-06-15T00:00:00Z",
+    detail=" accepted ",
+  )
+  let durable : Json = {
+    "id": "event-durable",
+    "detail": " durable note ",
+    "command_id": "cmd-native",
+  }
+  let duplicate = event_record(
+    id="event-inline",
+    lane="runtime",
+    kind="runtime.duplicate",
+    title="Duplicate",
+    status="done",
+    created_at="2026-06-15T00:00:01Z",
+    detail="ignored",
+  )
+  let projected = project_session_events([inline], [duplicate], [durable])
+  assert_eq(projected.length(), 2)
+  assert_eq(json_string(projected[0], "id", default=""), "event-inline")
+  assert_eq(json_string(projected[0], "detail", default=""), "accepted")
+  assert_eq(json_string(projected[1], "lane", default=""), "runtime")
+  assert_eq(json_string(projected[1], "kind", default=""), "runtime_update")
+  assert_eq(json_string(projected[1], "detail", default=""), "durable note")
+  let packet = runtime_json_object_field_or_empty(
+    projected[1],
+    "command_packet",
+  )
+  assert_eq(json_string(packet, "command_id", default=""), "cmd-native")
 }
 
 ///|

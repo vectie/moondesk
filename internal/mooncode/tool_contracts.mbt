@@ -2,7 +2,7 @@
 pub fn tool_contract_json() -> Json {
   {
     "kind": "mooncode-tool-contract",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "version": 1,
     "owner": "moonclaw",
     "execution_owner": "moonclaw-or-standalone-mooncode",
@@ -126,6 +126,94 @@ pub fn tool_contract_json() -> Json {
         ],
         output_events=["tool_result", "runtime_update"],
         safety_policy="Run bounded commands under the selected book root; destructive or networked commands require explicit policy approval.",
+      ),
+      tool_contract_entry(
+        id="moon_ide",
+        lane="tool",
+        approval="auto",
+        mutates_files=false,
+        requires_review=false,
+        input_fields=[
+          tool_field(
+            "action",
+            "string",
+            required=true,
+            "Read-only MoonBit IDE action: doc, outline, peek_def, hover, or find_references.",
+          ),
+          tool_field(
+            "query",
+            "string",
+            required=false,
+            "Symbol or text query for doc, peek_def, hover, and find_references.",
+          ),
+          tool_field(
+            "path",
+            "string",
+            required=false,
+            "Book-relative package or file path for outline.",
+          ),
+          tool_field(
+            "loc",
+            "string",
+            required=false,
+            "Optional location as path:line:column for semantic navigation.",
+          ),
+          tool_field(
+            "target",
+            "string",
+            required=false,
+            "Optional MoonBit backend target.",
+          ),
+        ],
+        output_events=["tool_result", "runtime_update"],
+        safety_policy="Run read-only moon ide commands under the selected MoonBook root before broad file reads or edits.",
+      ),
+      tool_contract_entry(
+        id="moon_cmd",
+        lane="test",
+        approval="policy",
+        mutates_files=true,
+        requires_review=true,
+        input_fields=[
+          tool_field(
+            "command",
+            "string",
+            required=true,
+            "MoonBit command: check, test, run, info, fmt, or build.",
+          ),
+          tool_field(
+            "cwd",
+            "string",
+            required=false,
+            "Book-relative working directory.",
+          ),
+          tool_field(
+            "target",
+            "string",
+            required=false,
+            "Optional MoonBit backend target.",
+          ),
+          tool_field(
+            "args",
+            "array<string>",
+            required=false,
+            "Additional bounded MoonBit command arguments.",
+          ),
+          tool_field(
+            "program_args",
+            "array<string>",
+            required=false,
+            "Arguments after -- for moon run.",
+          ),
+          tool_field(
+            "test_update_kind",
+            "string",
+            required=false,
+            "Required when running snapshot-updating tests: stale_snapshot or intentional_output_change.",
+          ),
+        ],
+        output_events=["tool_result", "test_result", "runtime_update", "diff"],
+        safety_policy="Prefer structured MoonBit commands over raw shell; mutation-capable commands such as fmt or test --update require policy approval and diff/test proof.",
       ),
       tool_contract_entry(
         id="moon_check",

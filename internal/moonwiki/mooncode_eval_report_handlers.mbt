@@ -21,7 +21,7 @@ async fn handle_mooncode_session_eval_report(
       let with_saved_manifest = match
         mooncode_read_eval_report_manifest(projected) {
         Some(manifest) =>
-          mooncode_session_with_saved_eval_manifest(projected, manifest)
+          @mooncode.session_with_saved_eval_manifest(projected, manifest)
         None => projected
       }
       send_json(
@@ -93,13 +93,12 @@ async fn persist_mooncode_native_eval_report(
   payload : Json,
   endpoint : String,
 ) -> Json {
-  let native_report = mooncode_normalize_native_eval_report(payload, endpoint)
   let projected = attach_mooncode_session_projection(
     workspace_root,
     @mooncode.session_without_eval_report_projection(session),
   )
-  let with_native = agent_session_with_field(
-    projected, "mooncode_native_eval_report", native_report,
+  let with_native = @mooncode.session_with_native_eval_report(
+    projected, payload, endpoint,
   )
   let with_snapshot = write_mooncode_session_snapshot_if_possible(
     workspace_root, with_native,

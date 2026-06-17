@@ -5,7 +5,7 @@ pub fn runtime_command_decode_report(command : Json) -> Json {
     Ok(decoded) =>
       {
         "ok": true,
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "command_id": rq_json_string(command, "command_id", default=""),
         "serve_command": decoded,
         "dispatch": rq_json_string(command, "dispatch", default="prompt"),
@@ -13,7 +13,7 @@ pub fn runtime_command_decode_report(command : Json) -> Json {
     Err(message) =>
       {
         "ok": false,
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "command_id": rq_json_string(command, "command_id", default=""),
         "error": message,
         "wire": wire,
@@ -128,7 +128,7 @@ pub fn runtime_replay_state(
     }
   }
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-runtime-replay",
     "session_id": session_id,
     "workspace_id": workspace_id,
@@ -156,6 +156,28 @@ pub fn runtime_replay_state(
     "runtime_protocol": runtime_protocol_contract_json(),
     "owner": runtime_owner_record(),
   }
+}
+
+///|
+pub fn runtime_replay_state_for_session(
+  session : Json,
+  commands : Array[Json],
+  receipts : Array[Json],
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  lease_now? : String = "",
+) -> Json {
+  runtime_replay_state(
+    rq_json_string(session, "id", default=""),
+    commands,
+    receipts,
+    workspace_id=rq_json_string(session, "workspace_id", default=""),
+    workspace_name=rq_json_string(session, "workspace_name", default=""),
+    task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+    lease_now~,
+  )
 }
 
 ///|
@@ -279,7 +301,7 @@ pub fn runtime_claim_state(
     }
   }
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-runtime-claim-state",
     "session_id": session_id,
     "workspace_id": workspace_id,
@@ -316,4 +338,26 @@ pub fn runtime_claim_state(
     "consumer_contract": runtime_claim_consumer_contract_json(session_id),
     "owner": runtime_owner_record(),
   }
+}
+
+///|
+pub fn runtime_claim_state_for_session(
+  session : Json,
+  commands : Array[Json],
+  receipts : Array[Json],
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  lease_now? : String = "",
+) -> Json {
+  runtime_claim_state(
+    rq_json_string(session, "id", default=""),
+    commands,
+    receipts,
+    workspace_id=rq_json_string(session, "workspace_id", default=""),
+    workspace_name=rq_json_string(session, "workspace_name", default=""),
+    task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+    lease_now~,
+  )
 }

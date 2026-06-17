@@ -181,8 +181,7 @@ async fn read_mooncode_session_snapshot(
     _ => return None
   }
   let snapshot = @json.parse(text) catch { _ => return None }
-  if json_string(snapshot, "kind", default="") == "mooncode-session-snapshot" &&
-    json_string(snapshot, "protocol", default="") == "mooncode.v1" {
+  if @mooncode.session_snapshot_valid(snapshot) {
     Some(snapshot)
   } else {
     None
@@ -229,12 +228,7 @@ async fn append_mooncode_event_log(
 ///|
 async fn append_mooncode_jsonl_file(path : String, item : Json) -> Unit {
   let existing = @fs.read_file(path).text() catch { _ => "" }
-  let prefix = if existing == "" || existing.has_suffix("\n") {
-    existing
-  } else {
-    existing + "\n"
-  }
-  @fsx.write_to_file(path, prefix + item.stringify() + "\n")
+  @fsx.write_to_file(path, @mooncode.append_jsonl_text(existing, item))
 }
 
 ///|
@@ -264,8 +258,7 @@ async fn append_mooncode_command_log(
   if !mooncode_valid_session_id(session_id) {
     fail("invalid MoonCode session id: \{session_id}")
   }
-  if json_string(command_packet, "protocol", default="") != "mooncode.v1" ||
-    json_string(command_packet, "command_id", default="") == "" {
+  if !@mooncode.command_packet_valid(command_packet) {
     fail("invalid MoonCode command packet")
   }
   let dir = mooncode_session_log_dir(workspace_root, session_id)
@@ -285,10 +278,7 @@ async fn append_mooncode_runtime_command_log(
   if !mooncode_valid_session_id(session_id) {
     fail("invalid MoonCode session id: \{session_id}")
   }
-  if json_string(runtime_command, "protocol", default="") != "mooncode.v1" ||
-    json_string(runtime_command, "kind", default="") !=
-    "mooncode.runtime-command" ||
-    json_string(runtime_command, "command_id", default="") == "" {
+  if !@mooncode.runtime_command_record_valid(runtime_command) {
     fail("invalid MoonCode runtime command")
   }
   let dir = mooncode_session_log_dir(workspace_root, session_id)
@@ -308,9 +298,7 @@ async fn append_mooncode_runtime_dispatch_log(
   if !mooncode_valid_session_id(session_id) {
     fail("invalid MoonCode session id: \{session_id}")
   }
-  if json_string(receipt, "protocol", default="") != "mooncode.v1" ||
-    json_string(receipt, "kind", default="") != "mooncode.runtime-dispatch" ||
-    json_string(receipt, "command_id", default="") == "" {
+  if !@mooncode.runtime_dispatch_record_valid(receipt) {
     fail("invalid MoonCode runtime dispatch receipt")
   }
   let dir = mooncode_session_log_dir(workspace_root, session_id)
@@ -330,8 +318,7 @@ async fn write_mooncode_session_snapshot(
   if !mooncode_valid_session_id(session_id) {
     fail("invalid MoonCode session id: \{session_id}")
   }
-  if json_string(snapshot, "kind", default="") != "mooncode-session-snapshot" ||
-    json_string(snapshot, "protocol", default="") != "mooncode.v1" {
+  if !@mooncode.session_snapshot_valid(snapshot) {
     fail("invalid MoonCode session snapshot")
   }
   let dir = mooncode_session_log_dir(workspace_root, session_id)
@@ -340,15 +327,6 @@ async fn write_mooncode_session_snapshot(
     mooncode_session_snapshot_path(workspace_root, session_id),
     snapshot.stringify(indent=2) + "\n",
   )
-}
-
-///|
-fn merge_mooncode_events(
-  projected : Array[Json],
-  inline_events : Array[Json],
-  durable_events : Array[Json],
-) -> Array[Json] {
-  @mooncode.merge_events(projected, inline_events, durable_events)
 }
 
 ///|
@@ -380,7 +358,7 @@ test "mooncode event merge dedupes durable log against inline commands" {
     created_at="1",
     detail="accepted",
   )
-  let merged = merge_mooncode_events([], [event], [event])
+  let merged = @mooncode.merge_events([], [event], [event])
   assert_eq(merged.length(), 1)
   assert_eq(json_string(merged[0], "lane", default=""), "review")
 }
@@ -420,8 +398,8 @@ async test "mooncode appends and replays durable session event log" {
 ///|
 test "mooncode parses command log and requires typed packets" {
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
+    "protocol": @mooncode.protocol_version(),
+    "kind": @mooncode.kind_command(),
     "command_id": "cmd-1",
     "action": "prompt",
   }
@@ -436,8 +414,8 @@ test "mooncode parses command log and requires typed packets" {
 ///|
 test "mooncode parses runtime command log and requires typed records" {
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-command",
+    "protocol": @mooncode.protocol_version(),
+    "kind": @mooncode.kind_runtime_command(),
     "command_id": "cmd-1",
     "serve_command": "prompt",
   }
@@ -452,8 +430,8 @@ test "mooncode parses runtime command log and requires typed records" {
 ///|
 test "mooncode parses runtime dispatch log and requires typed receipts" {
   let receipt : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "protocol": @mooncode.protocol_version(),
+    "kind": @mooncode.kind_runtime_dispatch(),
     "command_id": "cmd-1",
     "status": "bridged",
   }
@@ -471,8 +449,8 @@ async test "mooncode appends and replays durable command queue" {
     @async.now().to_string()
   let session_id = "session-a"
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
+    "protocol": @mooncode.protocol_version(),
+    "kind": @mooncode.kind_command(),
     "command_id": "cmd-1",
     "action": "prompt",
   }
@@ -489,8 +467,8 @@ async test "mooncode appends and replays durable runtime command feed" {
     @async.now().to_string()
   let session_id = "session-a"
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-command",
+    "protocol": @mooncode.protocol_version(),
+    "kind": @mooncode.kind_runtime_command(),
     "command_id": "cmd-1",
     "serve_command": "prompt",
   }
@@ -507,8 +485,8 @@ async test "mooncode appends and replays durable runtime dispatch receipts" {
     @async.now().to_string()
   let session_id = "session-a"
   let receipt : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "protocol": @mooncode.protocol_version(),
+    "kind": @mooncode.kind_runtime_dispatch(),
     "command_id": "cmd-1",
     "status": "bridged",
   }
@@ -526,7 +504,7 @@ async test "mooncode writes and reads typed durable session snapshot" {
   let session_id = "session-a"
   let snapshot : Json = {
     "kind": "mooncode-session-snapshot",
-    "protocol": "mooncode.v1",
+    "protocol": @mooncode.protocol_version(),
     "session_id": session_id,
   }
   write_mooncode_session_snapshot(root, session_id, snapshot)

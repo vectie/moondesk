@@ -67,7 +67,7 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
   ]
   let runtime_commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-done",
       "action": "prompt",
@@ -76,7 +76,7 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
       "openseek_wire_command": { "command": "prompt", "text": "done" },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-next",
       "action": "prompt",
@@ -85,7 +85,7 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
       "openseek_wire_command": { "command": "prompt", "text": "next" },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-steer",
       "action": "steer",
@@ -96,8 +96,8 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
   ]
   let receipts : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-done",
       "status": "runtime-completed",
       "created_at": "2026-06-15T00:00:00Z",

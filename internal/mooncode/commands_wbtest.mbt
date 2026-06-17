@@ -164,10 +164,39 @@ test "mooncode command packet and runtime feed preserve execution boundary" {
 }
 
 ///|
+test "mooncode projected command packet owns stable command ids" {
+  let session : Json = {
+    "id": "agent-demo",
+    "workspace_id": "book-demo",
+    "workspace_root": "/tmp/demo-book",
+  }
+  let payload : Json = {
+    "context_path": "tools/demo/main.mbt",
+    "web_search": true,
+  }
+  let first = projected_command_packet(
+    session, payload, "prompt", "Build a miniapp", "2026-06-16T00:00:00Z", "tools/demo/main.mbt",
+  )
+  let second = projected_command_packet(
+    session, payload, "prompt", "Build a miniapp", "2026-06-16T00:00:00Z", "tools/demo/main.mbt",
+  )
+  assert_eq(
+    json_string(first, "command_id", default=""),
+    json_string(second, "command_id", default=""),
+  )
+  assert_true(
+    json_string(first, "command_id", default="").has_prefix("mooncode-command-"),
+  )
+  assert_eq(json_string(first, "protocol", default=""), "mooncode.v1")
+  assert_eq(json_string(first, "action", default=""), "prompt")
+  assert_true(json_bool(first, "web_search", default=false))
+}
+
+///|
 test "mooncode command queue response owns queue surface" {
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
+    "protocol": protocol_version(),
+    "kind": kind_command(),
     "command_id": "cmd-1",
     "action": "prompt",
   }
@@ -220,7 +249,7 @@ test "mooncode runtime commands carry tool authorization snapshots" {
     "workspace_root": "/tmp/demo-book",
     "mooncode_last_tool_approvals_manifest": {
       "kind": "mooncode-tool-approvals",
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "status": "pending",
       "manifest_path": "wiki/reviews/mooncode/agent-demo/tool-approvals.json",
       "approval_count": 1,
@@ -370,6 +399,16 @@ test "mooncode native command tool policies expose OpenSeek style guardrails" {
     "prompt", "tools/demo/main.mbt",
   )
   assert_true(
+    command_policy_has_guardrail(
+      prompt_policies, "moon_ide", "semantic discovery",
+    ),
+  )
+  assert_true(
+    command_policy_has_guardrail(
+      prompt_policies, "moon_cmd", "selected moon commands",
+    ),
+  )
+  assert_true(
     command_policy_has_guardrail(prompt_policies, "edit", "recent bounded read"),
   )
   assert_true(
@@ -393,4 +432,8 @@ test "mooncode native command tool policies expose OpenSeek style guardrails" {
       package_policies, "package_app_tool", "runtime-proven",
     ),
   )
+  let sequence = native_command_tool_sequence("run_tests")
+  assert_true(sequence.contains("moon_ide"))
+  assert_true(sequence.contains("moon_cmd"))
+  assert_true(sequence.contains("moon_check"))
 }

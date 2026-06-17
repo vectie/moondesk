@@ -56,6 +56,47 @@ test "mooncode session summary counts reviewable code events" {
 }
 
 ///|
+test "mooncode session projection response attaches events and summary without leaking host fields" {
+  let event = event_record(
+    id="evt-1",
+    lane="tool",
+    kind="tool.read",
+    title="Read file",
+    status="done",
+    created_at="1",
+    detail="read source",
+    path="tools/demo/main.mbt",
+  )
+  let projected = session_projection_response(
+    { "id": "s1", "workspace_id": "book" },
+    [event],
+    event_log_path="/tmp/mooncode/events.jsonl",
+    append_log_count=2,
+    command_log_path="/tmp/mooncode/commands.jsonl",
+    command_log_count=3,
+    runtime_command_log_path="/tmp/mooncode/runtime-commands.jsonl",
+    runtime_command_log_count=4,
+    runtime_dispatch_log_path="/tmp/mooncode/runtime-dispatch.jsonl",
+    runtime_dispatch_log_count=5,
+  )
+  assert_eq(json_array_items(projected, "mooncode_events").length(), 1)
+  assert_true(
+    summary_json_object_field(projected, "mooncode_event_log_path") is None,
+  )
+  let summary = summary_json_object_field_or_empty(
+    projected, "mooncode_summary",
+  )
+  assert_eq(
+    json_string(summary, "event_log_path", default=""),
+    "/tmp/mooncode/events.jsonl",
+  )
+  assert_eq(summary_json_int(summary, "append_log_count", default=0), 2)
+  assert_eq(summary_json_int(summary, "command_log_count", default=0), 3)
+  assert_eq(summary_json_int(summary, "runtime_command_count", default=0), 4)
+  assert_eq(summary_json_int(summary, "runtime_dispatch_count", default=0), 5)
+}
+
+///|
 test "mooncode session summary counts runtime patch execution proof" {
   let events : Array[Json] = [
     event_record(
@@ -174,7 +215,7 @@ test "mooncode session summary tracks pending steer acknowledgements" {
       created_at="1",
       path="tools/demo/main.mbt",
       command_packet={
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "command_id": "cmd-steer-1",
         "action": "steer",
       },
@@ -187,7 +228,7 @@ test "mooncode session summary tracks pending steer acknowledgements" {
       created_at="2",
       path="tools/demo/main.mbt",
       command_packet={
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "command_id": "cmd-steer-2",
         "action": "steer",
       },

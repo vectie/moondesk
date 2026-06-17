@@ -28,6 +28,15 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"harness_contract_endpoint\""))
   assert_true(payload.contains("/api/mooncode/eval-harness"))
   assert_true(payload.contains("\"native_eval_report\""))
+  assert_true(payload.contains("\"native_session_listing_endpoint\""))
+  assert_true(
+    payload.contains("/v1/mooncode/sessions?book_root=<path>&format=json"),
+  )
+  assert_true(
+    payload.contains(
+      "/v1/mooncode/sessions/<session-id>/serve-scheduler?book_root=<path>",
+    ),
+  )
   assert_true(
     payload.contains("/v1/mooncode/sessions/<id>/eval-report?book_root=<path>"),
   )
@@ -36,6 +45,14 @@ test "mooncode capability contract names the split packages" {
   )
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/runtime-events"),
+  )
+  assert_true(
+    payload.contains("/api/mooncode/sessions/<session-id>/package-result"),
+  )
+  assert_true(
+    payload.contains(
+      "/v1/mooncode/sessions/<session-id>/package-result?book_root=<path>",
+    ),
   )
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/serve-jsonl"),
@@ -143,6 +160,8 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
     .map(item => item.stringify())
     .contains("\"../openseek/eval/tool_harness\""),
   )
+  assert_true(contract.stringify().contains("\"moon_ide\""))
+  assert_true(contract.stringify().contains("\"moon_cmd\""))
   let native_eval_report = summary_json_object_field_or_empty(
     eval, "native_eval_report",
   )
@@ -164,6 +183,8 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
     "mooncode-tool-contract",
   )
   assert_true(tool_contract_tool_ids(tool_contract).contains("moon_check"))
+  assert_true(tool_contract_tool_ids(tool_contract).contains("moon_ide"))
+  assert_true(tool_contract_tool_ids(tool_contract).contains("moon_cmd"))
 }
 
 ///|
@@ -188,7 +209,8 @@ test "mooncode eval harness contract names openseek cases and evidence" {
   assert_true(payload.contains("../openseek/eval/tool_harness"))
   assert_true(payload.contains("../openseek/eval/file_edit"))
   assert_true(payload.contains("\"moon_check\""))
-  assert_false(payload.contains("\"moon_ide\""))
+  assert_true(payload.contains("\"moon_ide\""))
+  assert_true(payload.contains("\"moon_cmd\""))
   assert_true(payload.contains("\"compile_fix\""))
   assert_true(payload.contains("file-edit-eval:<case>"))
   assert_true(payload.contains("\"future_package\":\"mooncode/eval\""))

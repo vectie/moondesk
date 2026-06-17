@@ -36,6 +36,49 @@ test "mooncode command preflight blocks accept until changed code is tested" {
 }
 
 ///|
+test "mooncode command preflight for session derives summary and patch entries" {
+  let diff_event = event_record(
+    id="diff-1",
+    lane="diff",
+    kind="tool.write",
+    title="File changed",
+    status="done",
+    created_at="2026-06-17T00:00:00Z",
+    detail="changed",
+    path="tools/demo/main.mbt",
+    diff="+fn main { println(1) }",
+  )
+  let payload : Json = { "context_path": "tools/demo/main.mbt" }
+  let blocked = command_preflight_for_session(
+    { "id": "agent-demo" },
+    payload,
+    [diff_event],
+    action="accept",
+  )
+  assert_true(json_bool(blocked, "blocked", default=false))
+  assert_eq(
+    runtime_json_int(
+      runtime_json_object_field_or_empty(blocked, "summary"),
+      "diff_count",
+      default=0,
+    ),
+    1,
+  )
+  assert_true(
+    json_bool(
+      runtime_json_object_field_or_empty(blocked, "selected_patch"),
+      "matched",
+      default=false,
+    ),
+  )
+  assert_true(json_string(blocked, "reason", default="") != "")
+  let command_gates = runtime_json_object_field_or_empty(
+    blocked, "acceptance_gates",
+  )
+  assert_false(json_bool(command_gates, "has_verified_tests", default=true))
+}
+
+///|
 test "mooncode command preflight gates package on pending approvals" {
   let summary : Json = {
     "failed_test_count": 0,
@@ -314,7 +357,7 @@ test "mooncode command preflight requires applied patch target before revert" {
 test "mooncode command preflight blocked attempts become review events" {
   let preflight : Json = {
     "kind": "mooncode-command-preflight",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "action": "package",
     "blocked": true,
     "reason": "resolve pending tool approvals before package",
@@ -336,10 +379,42 @@ test "mooncode command preflight blocked attempts become review events" {
 }
 
 ///|
+test "mooncode command preflight blocked projection owns stable event ids" {
+  let preflight : Json = {
+    "kind": "mooncode-command-preflight",
+    "protocol": protocol_version(),
+    "action": "package",
+    "blocked": true,
+    "reason": "resolve pending tool approvals before package",
+  }
+  let first = command_preflight_blocked_projected_event(
+    preflight,
+    action="package",
+    context_path="tools/demo/main.mbt",
+    created_at="2026-06-14T00:02:00Z",
+  )
+  let second = command_preflight_blocked_projected_event(
+    preflight,
+    action="package",
+    context_path="tools/demo/main.mbt",
+    created_at="2026-06-14T00:02:00Z",
+  )
+  assert_eq(
+    json_string(first, "id", default=""),
+    json_string(second, "id", default=""),
+  )
+  assert_true(
+    json_string(first, "id", default="").has_prefix("mooncode-event-"),
+  )
+  assert_eq(json_string(first, "kind", default=""), "preflight.blocked")
+  assert_eq(json_string(first, "lane", default=""), "artifact")
+}
+
+///|
 test "mooncode command preflight override attempts become audit events" {
   let preflight : Json = {
     "kind": "mooncode-command-preflight",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "action": "commit",
     "blocked": true,
     "reason": "accept reviewed file changes before commit",
@@ -355,4 +430,36 @@ test "mooncode command preflight override attempts become audit events" {
   assert_eq(json_string(event, "lane", default=""), "review")
   assert_eq(json_string(event, "status", default=""), "override")
   assert_true(json_string(event, "detail", default="").contains("Operator"))
+}
+
+///|
+test "mooncode command preflight override projection owns stable event ids" {
+  let preflight : Json = {
+    "kind": "mooncode-command-preflight",
+    "protocol": protocol_version(),
+    "action": "commit",
+    "blocked": true,
+    "reason": "accept reviewed file changes before commit",
+  }
+  let first = command_preflight_override_projected_event(
+    preflight,
+    action="commit",
+    context_path="tools/demo/main.mbt",
+    created_at="2026-06-15T00:02:00Z",
+  )
+  let second = command_preflight_override_projected_event(
+    preflight,
+    action="commit",
+    context_path="tools/demo/main.mbt",
+    created_at="2026-06-15T00:02:00Z",
+  )
+  assert_eq(
+    json_string(first, "id", default=""),
+    json_string(second, "id", default=""),
+  )
+  assert_true(
+    json_string(first, "id", default="").has_prefix("mooncode-event-"),
+  )
+  assert_eq(json_string(first, "kind", default=""), "preflight.override")
+  assert_eq(json_string(first, "lane", default=""), "review")
 }

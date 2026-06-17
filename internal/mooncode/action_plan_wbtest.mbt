@@ -2,8 +2,8 @@
 test "mooncode action plan treats claimed runtime commands as running" {
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.command",
+      "protocol": protocol_version(),
+      "kind": kind_command(),
       "command_id": "cmd-1",
       "action": "prompt",
       "dispatch": "prompt",
@@ -12,7 +12,7 @@ test "mooncode action plan treats claimed runtime commands as running" {
   ]
   let runtime_commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-1",
       "action": "prompt",
@@ -22,8 +22,8 @@ test "mooncode action plan treats claimed runtime commands as running" {
   ]
   let receipts : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-1",
       "status": "runtime-claimed",
     },
@@ -45,7 +45,7 @@ test "mooncode action plan treats claimed runtime commands as running" {
 test "mooncode action plan marks expired claims for runtime retry" {
   let runtime_commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-stale",
       "action": "prompt",
@@ -54,8 +54,8 @@ test "mooncode action plan marks expired claims for runtime retry" {
   ]
   let receipts : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-stale",
       "status": "runtime-claimed",
       "lease_expires_at": "2000-01-01T00:05:00Z",
@@ -125,8 +125,8 @@ test "mooncode action plan correlates runtime proof to command id" {
     "detail": "abc1234",
     "command": "commit",
     "command_packet": {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.command-ref",
+      "protocol": protocol_version(),
+      "kind": kind_command_ref(),
       "command_id": "cmd-a",
       "action": "commit",
     },
@@ -165,15 +165,15 @@ test "mooncode action plan correlates runtime proof to command id" {
 ///|
 test "mooncode action plan exposes command runtime evidence" {
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
+    "protocol": protocol_version(),
+    "kind": kind_command(),
     "command_id": "cmd-test",
     "action": "run_tests",
     "dispatch": "command",
     "approval": "auto",
   }
   let runtime_command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-test",
     "action": "run_tests",
@@ -190,8 +190,8 @@ test "mooncode action plan exposes command runtime evidence" {
     [runtime_command],
     [
       {
-        "protocol": "mooncode.v1",
-        "kind": "mooncode.runtime-dispatch",
+        "protocol": protocol_version(),
+        "kind": kind_runtime_dispatch(),
         "command_id": "cmd-test",
         "status": "runtime-completed",
       },
@@ -200,7 +200,7 @@ test "mooncode action plan exposes command runtime evidence" {
       event_record(
         id="test-result",
         lane="test",
-        kind="test_result",
+        kind=event_test_result(),
         title="Test result",
         status="done",
         created_at="2026-06-15T00:00:00Z",
@@ -226,15 +226,15 @@ test "mooncode action plan exposes command runtime evidence" {
 ///|
 test "mooncode action plan waits for tool harness proof after delivery" {
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
+    "protocol": protocol_version(),
+    "kind": kind_command(),
     "command_id": "cmd-test",
     "action": "run_tests",
     "dispatch": "command",
     "approval": "auto",
   }
   let runtime_command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-test",
     "action": "run_tests",
@@ -252,8 +252,8 @@ test "mooncode action plan waits for tool harness proof after delivery" {
     [runtime_command],
     [
       {
-        "protocol": "mooncode.v1",
-        "kind": "mooncode.runtime-dispatch",
+        "protocol": protocol_version(),
+        "kind": kind_runtime_dispatch(),
         "command_id": "cmd-test",
         "status": "runtime-completed",
       },
@@ -262,7 +262,7 @@ test "mooncode action plan waits for tool harness proof after delivery" {
       event_record(
         id="test-result",
         lane="test",
-        kind="test_result",
+        kind=event_test_result(),
         title="Test result",
         status="done",
         created_at="2026-06-15T00:00:00Z",
@@ -300,15 +300,15 @@ test "mooncode action plan waits for tool harness proof after delivery" {
 ///|
 test "mooncode action plan retries failed tool harness proof" {
   let command : Json = {
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
+    "protocol": protocol_version(),
+    "kind": kind_command(),
     "command_id": "cmd-test",
     "action": "run_tests",
     "dispatch": "command",
     "approval": "auto",
   }
   let runtime_command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-test",
     "action": "run_tests",
@@ -325,8 +325,8 @@ test "mooncode action plan retries failed tool harness proof" {
     [runtime_command],
     [
       {
-        "protocol": "mooncode.v1",
-        "kind": "mooncode.runtime-dispatch",
+        "protocol": protocol_version(),
+        "kind": kind_runtime_dispatch(),
         "command_id": "cmd-test",
         "status": "runtime-completed",
       },
@@ -335,7 +335,7 @@ test "mooncode action plan retries failed tool harness proof" {
       event_record(
         id="decode-error",
         lane="tool",
-        kind="tool_call_decode_error",
+        kind=event_tool_call_decode_error(),
         title="Tool decode failed",
         status="failed",
         created_at="2026-06-15T00:00:00Z",
@@ -347,7 +347,7 @@ test "mooncode action plan retries failed tool harness proof" {
       event_record(
         id="test-result",
         lane="test",
-        kind="test_result",
+        kind=event_test_result(),
         title="Test result",
         status="done",
         created_at="2026-06-15T00:00:01Z",
@@ -380,7 +380,7 @@ test "mooncode action plan includes blocked command preflight attempts" {
   let blocked = command_preflight_blocked_event(
     {
       "kind": "mooncode-command-preflight",
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "action": "accept",
       "blocked": true,
       "reason": "run tests/builds before accept for pending file changes",
@@ -410,7 +410,7 @@ test "mooncode action plan includes operator preflight overrides" {
   let override_event = command_preflight_override_event(
     {
       "kind": "mooncode-command-preflight",
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "action": "commit",
       "blocked": true,
       "reason": "accept reviewed file changes before commit",

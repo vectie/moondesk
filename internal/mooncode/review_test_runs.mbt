@@ -16,7 +16,7 @@ pub fn test_runs_manifest(
   let queued_count = count_test_run_state(runs, "queued")
   {
     "kind": "mooncode-test-runs",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": if failed_count > 0 {
       "failed"
     } else if running_count > 0 {

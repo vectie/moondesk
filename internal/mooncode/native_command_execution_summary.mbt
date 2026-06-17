@@ -16,7 +16,7 @@ pub fn native_command_execution_summary(
   let path_policy = command_json_object_field_or_empty(plan, "path_policy")
   {
     "kind": "mooncode-runtime-execution-summary",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "command_id": json_string(command_packet, "command_id", default=""),
     "action": json_string(
       plan,

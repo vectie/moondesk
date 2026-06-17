@@ -36,6 +36,16 @@ fn mooncode_json_array_contains_id_for_test(
 }
 
 ///|
+fn mooncode_runtime_flow_session_for_test() -> Json {
+  {
+    "id": "session-demo",
+    "workspace_id": "book-demo",
+    "workspace_name": "Demo",
+    "moonclaw_task_id": "task-demo",
+  }
+}
+
+///|
 test "mooncode native command body uses typed runtime protocol" {
   let session : Json = {
     "id": "agent-demo",
@@ -263,7 +273,7 @@ test "mooncode runtime command stores compact execution summary" {
     "package_kind": "miniapp",
   }
   let message = @mooncode.command_message("package", payload)
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     session, payload, "package", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
   let command = @mooncode.runtime_command_record(
@@ -376,13 +386,10 @@ test "mooncode runtime replay skips delivered commands and emits pending jsonl" 
       "status": "native-dispatched",
     },
   ]
-  let state = mooncode_runtime_replay_state(
-    "session-demo",
+  let state = @mooncode.runtime_replay_state_for_session(
+    mooncode_runtime_flow_session_for_test(),
     commands,
     receipts,
-    workspace_id="book-demo",
-    workspace_name="Demo",
-    task_id="task-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
     lease_now="2000-01-01T00:06:00Z",
@@ -439,7 +446,7 @@ test "mooncode runtime serve jsonl exports pending or all wire commands" {
       "status": "runtime-completed",
     },
   ]
-  let pending = mooncode_runtime_serve_jsonl(
+  let pending = @mooncode.runtime_serve_jsonl(
     commands,
     receipts,
     scope="pending",
@@ -449,7 +456,7 @@ test "mooncode runtime serve jsonl exports pending or all wire commands" {
   assert_true(pending.contains("add tests"))
   assert_false(pending.contains("cmd-bad"))
   assert_true(pending.has_suffix("\n"))
-  let all = mooncode_runtime_serve_jsonl(commands, receipts, scope="all")
+  let all = @mooncode.runtime_serve_jsonl(commands, receipts, scope="all")
   assert_true(all.contains("build it"))
   assert_true(all.contains("add tests"))
   assert_false(all.contains("cmd-bad"))
@@ -487,7 +494,7 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
       "consumer_id": "moonclaw-native",
     },
   ]
-  let receipts = mooncode_runtime_replay_ack_receipts(
+  let receipts = @mooncode.runtime_replay_ack_receipts_with_defaults(
     session,
     commands,
     {
@@ -496,6 +503,7 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
       "status": "runtime-completed",
       "detail": "turn finished",
     },
+    acknowledged_at="2026-06-15T00:01:00Z",
     dispatch_receipts=claims,
   )
   assert_eq(receipts.length(), 1)
@@ -524,13 +532,10 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
     json_string(receipts[0], "dispatch_mode", default=""),
     "mooncode-runtime-replay",
   )
-  let state = mooncode_runtime_replay_state(
-    "session-demo",
+  let state = @mooncode.runtime_replay_state_for_session(
+    mooncode_runtime_flow_session_for_test(),
     commands,
     receipts,
-    workspace_id="book-demo",
-    workspace_name="Demo",
-    task_id="task-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
     lease_now="2000-01-01T00:06:00Z",
@@ -543,11 +548,16 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
 ///|
 test "mooncode runtime replay acknowledgement ignores unknown commands" {
   let session : Json = { "id": "session-demo" }
-  let receipts = mooncode_runtime_replay_ack_receipts(session, [], {
-    "consumer_id": "moonclaw-native",
-    "command_id": "missing-command",
-    "status": "runtime-completed",
-  })
+  let receipts = @mooncode.runtime_replay_ack_receipts_with_defaults(
+    session,
+    [],
+    {
+      "consumer_id": "moonclaw-native",
+      "command_id": "missing-command",
+      "status": "runtime-completed",
+    },
+    acknowledged_at="2026-06-15T00:01:00Z",
+  )
   assert_eq(receipts.length(), 0)
 }
 
@@ -720,11 +730,17 @@ test "mooncode runtime claim marks pending command without completing it" {
       "openseek_wire_command": { "command": "steer", "text": "add tests" },
     },
   ]
-  let receipts = mooncode_runtime_claim_receipts(session, commands, [], {
-    "consumer_id": "moonclaw-runtime",
-    "max_count": 1,
-    "claimed_at": "2026-06-15T00:00:00Z",
-  })
+  let receipts = @mooncode.runtime_claim_receipts_with_defaults(
+    session,
+    commands,
+    [],
+    {
+      "consumer_id": "moonclaw-runtime",
+      "max_count": 1,
+      "claimed_at": "2026-06-15T00:00:00Z",
+    },
+    now="2026-06-15T00:00:00Z",
+  )
   assert_eq(receipts.length(), 1)
   assert_eq(json_string(receipts[0], "status", default=""), "runtime-claimed")
   assert_eq(
@@ -740,13 +756,10 @@ test "mooncode runtime claim marks pending command without completing it" {
     mooncode_runtime_dispatch_pending_count_for_test(commands, receipts),
     1,
   )
-  let state = mooncode_runtime_replay_state(
-    "session-demo",
+  let state = @mooncode.runtime_replay_state_for_session(
+    mooncode_runtime_flow_session_for_test(),
     commands,
     receipts,
-    workspace_id="book-demo",
-    workspace_name="Demo",
-    task_id="task-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
     lease_now="2000-01-01T00:06:00Z",
@@ -761,15 +774,13 @@ test "mooncode runtime claim marks pending command without completing it" {
     "blocked-by-prior-command",
   )
   assert_eq(json_string(items[1], "blocked_by_command_id", default=""), "cmd-1")
-  let claim_state = mooncode_runtime_claim_state(
-    "session-demo",
+  let claim_state = @mooncode.runtime_claim_state_for_session(
+    mooncode_runtime_flow_session_for_test(),
     commands,
     receipts,
-    workspace_id="book-demo",
-    workspace_name="Demo",
-    task_id="task-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(
     json_string(claim_state, "kind", default=""),
@@ -823,15 +834,13 @@ test "mooncode runtime claim exposes tool authorization blocked commands" {
       },
     },
   ]
-  let claim_state = mooncode_runtime_claim_state(
-    "session-demo",
+  let claim_state = @mooncode.runtime_claim_state_for_session(
+    mooncode_runtime_flow_session_for_test(),
     commands,
     [],
-    workspace_id="book-demo",
-    workspace_name="Demo",
-    task_id="task-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(json_int(claim_state, "claimable_command_count", default=0), 0)
   assert_eq(
@@ -842,10 +851,13 @@ test "mooncode runtime claim exposes tool authorization blocked commands" {
     claim_state, "tool_authorization_blocked_commands",
   )
   assert_eq(json_string(blocked[0], "command_id", default=""), "cmd-tool")
-  let receipts = mooncode_runtime_claim_receipts(session, commands, [], {
-    "consumer_id": "moonclaw-runtime",
-    "max_count": 1,
-  })
+  let receipts = @mooncode.runtime_claim_receipts_with_defaults(
+    session,
+    commands,
+    [],
+    { "consumer_id": "moonclaw-runtime", "max_count": 1 },
+    now="2026-06-15T00:00:00Z",
+  )
   assert_eq(receipts.length(), 0)
 }
 
@@ -889,16 +901,21 @@ test "mooncode runtime claim preserves ordering behind claimed commands" {
       "status": "runtime-completed",
     },
   ]
-  let claimed = mooncode_runtime_claim_receipts(session, commands, existing, {
-    "consumer_id": "moonclaw-runtime",
-    "max_count": 10,
-  })
+  let claimed = @mooncode.runtime_claim_receipts_with_defaults(
+    session,
+    commands,
+    existing,
+    { "consumer_id": "moonclaw-runtime", "max_count": 10 },
+    now="2026-06-15T00:00:00Z",
+  )
   assert_eq(claimed.length(), 0)
-  let forced = mooncode_runtime_claim_receipts(session, commands, existing, {
-    "consumer_id": "moonclaw-runtime",
-    "max_count": 10,
-    "force": true,
-  })
+  let forced = @mooncode.runtime_claim_receipts_with_defaults(
+    session,
+    commands,
+    existing,
+    { "consumer_id": "moonclaw-runtime", "max_count": 10, "force": true },
+    now="2026-06-15T00:00:00Z",
+  )
   assert_eq(forced.length(), 2)
   assert_eq(json_string(forced[0], "command_id", default=""), "cmd-1")
   assert_eq(json_string(forced[1], "command_id", default=""), "cmd-3")
@@ -941,13 +958,10 @@ test "mooncode runtime claim recovers expired leases" {
       "lease_expires_at": "2000-01-01T00:05:00Z",
     },
   ]
-  let state = mooncode_runtime_claim_state(
-    "session-demo",
+  let state = @mooncode.runtime_claim_state_for_session(
+    mooncode_runtime_flow_session_for_test(),
     commands,
     receipts,
-    workspace_id="book-demo",
-    workspace_name="Demo",
-    task_id="task-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
     lease_now="2000-01-01T00:06:00Z",
@@ -958,13 +972,10 @@ test "mooncode runtime claim recovers expired leases" {
   let expired = json_array_items(state, "expired_claim_commands")
   assert_eq(json_string(expired[0], "command_id", default=""), "cmd-stale")
   assert_true(json_bool(expired[0], "previous_claim_expired", default=false))
-  let replay = mooncode_runtime_replay_state(
-    "session-demo",
+  let replay = @mooncode.runtime_replay_state_for_session(
+    mooncode_runtime_flow_session_for_test(),
     commands,
     receipts,
-    workspace_id="book-demo",
-    workspace_name="Demo",
-    task_id="task-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
     lease_now="2000-01-01T00:06:00Z",
@@ -975,13 +986,19 @@ test "mooncode runtime claim recovers expired leases" {
     "expired-claim-pending-retry",
   )
   assert_eq(json_int(replay, "pending_command_count", default=0), 2)
-  let claimed = mooncode_runtime_claim_receipts(session, commands, receipts, {
-    "consumer_id": "moonclaw-runtime",
-    "max_count": 1,
-    "now": "2000-01-01T00:06:00Z",
-    "claimed_at": "2000-01-01T00:06:30Z",
-    "lease_expires_at": "2000-01-01T00:11:30Z",
-  })
+  let claimed = @mooncode.runtime_claim_receipts_with_defaults(
+    session,
+    commands,
+    receipts,
+    {
+      "consumer_id": "moonclaw-runtime",
+      "max_count": 1,
+      "now": "2000-01-01T00:06:00Z",
+      "claimed_at": "2000-01-01T00:06:30Z",
+      "lease_expires_at": "2000-01-01T00:11:30Z",
+    },
+    now="2000-01-01T00:06:00Z",
+  )
   assert_eq(claimed.length(), 1)
   assert_eq(json_string(claimed[0], "command_id", default=""), "cmd-stale")
   assert_true(json_bool(claimed[0], "recovered_expired_claim", default=false))
@@ -989,11 +1006,17 @@ test "mooncode runtime claim recovers expired leases" {
     json_string(claimed[0], "previous_claim_id", default=""),
     "claim-old",
   )
-  let active = mooncode_runtime_claim_receipts(session, commands, receipts, {
-    "consumer_id": "moonclaw-runtime",
-    "max_count": 1,
-    "now": "1999-12-31T23:59:00Z",
-  })
+  let active = @mooncode.runtime_claim_receipts_with_defaults(
+    session,
+    commands,
+    receipts,
+    {
+      "consumer_id": "moonclaw-runtime",
+      "max_count": 1,
+      "now": "1999-12-31T23:59:00Z",
+    },
+    now="1999-12-31T23:59:00Z",
+  )
   assert_eq(active.length(), 0)
   let runtime_state = @mooncode.action_plan_runtime_state_at(
     "cmd-stale",
@@ -1038,7 +1061,7 @@ test "mooncode action plan treats claimed runtime commands as running" {
       "status": "runtime-claimed",
     },
   ]
-  let items = mooncode_action_plan_items(
+  let items = @mooncode.action_plan_actions_for_session(
     Json::object({}),
     commands,
     runtime_commands,
@@ -1064,15 +1087,13 @@ test "mooncode runtime replay blocks invalid openseek wire rows" {
       "openseek_wire_command": { "command": "prompt" },
     },
   ]
-  let state = mooncode_runtime_replay_state(
-    "session-demo",
+  let state = @mooncode.runtime_replay_state_for_session(
+    mooncode_runtime_flow_session_for_test(),
     commands,
     [],
-    workspace_id="book-demo",
-    workspace_name="Demo",
-    task_id="task-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(json_int(state, "invalid_command_count", default=0), 1)
   assert_eq(
@@ -1148,7 +1169,7 @@ test "mooncode action plan classifies review and test gates" {
       diff="+fn main { println(\"ok\") }",
     ),
   ]
-  let actions = mooncode_action_plan_items(
+  let actions = @mooncode.action_plan_actions_for_session(
     Json::object({}),
     commands,
     runtime_commands,
@@ -1170,15 +1191,19 @@ test "mooncode action plan includes blocked command preflight attempts" {
     "blocked": true,
     "reason": "run tests/builds before accept for pending file changes",
   }
-  let blocked = mooncode_command_preflight_blocked_event(
+  let blocked = @mooncode.command_preflight_blocked_projected_event(
     preflight,
-    { "context_path": "tools/demo/main.mbt" },
-    "accept",
-    "2026-06-14T00:02:00Z",
+    action="accept",
+    context_path="tools/demo/main.mbt",
+    created_at="2026-06-14T00:02:00Z",
   )
-  let actions = mooncode_action_plan_items(Json::object({}), [], [], [], [
-    blocked,
-  ])
+  let actions = @mooncode.action_plan_actions_for_session(
+    Json::object({}),
+    [],
+    [],
+    [],
+    [blocked],
+  )
   assert_eq(actions.length(), 1)
   assert_eq(json_string(actions[0], "dispatch", default=""), "preflight")
   assert_eq(json_string(actions[0], "state", default=""), "blocked")

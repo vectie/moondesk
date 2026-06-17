@@ -1,7 +1,7 @@
 ///|
 pub fn runtime_protocol_contract_json() -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "reference": "../openseek/cmd/openseek/serve.mbt",
     "serve_commands": Json::array(
       [

@@ -8,7 +8,7 @@ pub fn command_queue_response(
   command_log_path~ : String,
 ) -> Json {
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-command-queue",
     "session_id": session_id,
     "workspace_id": workspace_id,

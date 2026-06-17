@@ -1,15 +1,15 @@
 ///|
 test "mooncode runtime command feed response owns runtime surface" {
   let command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-1",
     "action": "prompt",
     "dispatch": "prompt",
     "serve_command": "prompt",
     "command_packet": {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.command",
+      "protocol": protocol_version(),
+      "kind": kind_command(),
       "command_id": "cmd-1",
       "action": "prompt",
       "dispatch": "prompt",
@@ -181,10 +181,94 @@ test "mooncode runtime command feed response owns runtime surface" {
 }
 
 ///|
+test "mooncode derives runtime response metadata from session records" {
+  let command : Json = {
+    "protocol": protocol_version(),
+    "kind": "mooncode.runtime-command",
+    "command_id": "cmd-1",
+    "action": "prompt",
+    "dispatch": "prompt",
+    "serve_command": "prompt",
+    "openseek_wire_command": { "command": "prompt", "text": "build it" },
+  }
+  let session : Json = {
+    "id": "session-demo",
+    "workspace_id": "book-demo",
+    "workspace_name": "Demo",
+    "moonclaw_task_id": "task-demo",
+  }
+  let replay = runtime_replay_state_for_session(
+    session,
+    [command],
+    [],
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    lease_now="2026-06-15T00:00:00Z",
+  )
+  assert_eq(rq_json_string(replay, "session_id", default=""), "session-demo")
+  assert_eq(rq_json_string(replay, "workspace_id", default=""), "book-demo")
+  assert_eq(rq_json_string(replay, "workspace_name", default=""), "Demo")
+  assert_eq(rq_json_string(replay, "task_id", default=""), "task-demo")
+  let claim = runtime_claim_state_for_session(
+    session,
+    [command],
+    [],
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    lease_now="2026-06-15T00:00:00Z",
+  )
+  assert_eq(rq_json_string(claim, "session_id", default=""), "session-demo")
+  assert_eq(rq_json_int(claim, "claimable_command_count", default=0), 1)
+  let plan = runtime_execution_plan_response_for_session(
+    session,
+    [command],
+    [],
+    [],
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    workspace_root="/tmp/book",
+    moonclaw_root="/tmp/moonclaw",
+    host_base_url="",
+    native_ready=true,
+    lease_now="2026-06-15T00:00:00Z",
+  )
+  assert_eq(
+    rq_json_string(plan, "kind", default=""),
+    "mooncode-runtime-consumer-execution-plan",
+  )
+  assert_true(rq_json_bool(plan, "native_runtime_ready", default=false))
+  let supervisor = runtime_supervisor_response_for_session(
+    session,
+    [command],
+    [],
+    [],
+    runtime_command_log_path="/tmp/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    workspace_root="/tmp/book",
+    moonclaw_root="/tmp/moonclaw",
+    host_base_url="",
+    native_ready=true,
+    lease_now="2026-06-15T00:00:00Z",
+  )
+  assert_eq(
+    rq_json_string(supervisor, "kind", default=""),
+    "mooncode-runtime-supervisor-launch",
+  )
+  assert_eq(
+    rq_json_string(supervisor, "session_id", default=""),
+    "session-demo",
+  )
+  assert_eq(
+    rq_json_string(supervisor, "workspace_root", default=""),
+    "/tmp/book",
+  )
+}
+
+///|
 test "mooncode runtime queue exports pending replay state" {
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-1",
       "action": "prompt",
@@ -194,7 +278,7 @@ test "mooncode runtime queue exports pending replay state" {
       "openseek_wire_command": { "command": "prompt", "text": "build it" },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-2",
       "action": "steer",
@@ -204,7 +288,7 @@ test "mooncode runtime queue exports pending replay state" {
       "openseek_wire_command": { "command": "steer", "text": "add tests" },
       "tool_authorization": {
         "kind": "mooncode-tool-authorization-snapshot",
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "enforcement_state": "authorized",
         "runtime_may_execute": true,
         "pending_approval_count": 0,
@@ -213,8 +297,8 @@ test "mooncode runtime queue exports pending replay state" {
   ]
   let receipts : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "protocol": protocol_version(),
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-1",
       "status": "runtime-completed",
     },
@@ -252,7 +336,7 @@ test "mooncode runtime queue exports pending replay state" {
 test "mooncode runtime consumer execution plan exposes next claimable command" {
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-tests",
       "session_id": "s1",
@@ -279,7 +363,7 @@ test "mooncode runtime consumer execution plan exposes next claimable command" {
         "completion_rule": "Append test_result and acknowledge completion.",
       },
       "native_mooncode_body": {
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "command": "run_tests",
         "session_id": "s1",
       },
@@ -337,6 +421,18 @@ test "mooncode runtime consumer execution plan exposes next claimable command" {
     "prompt",
   )
   assert_true(rq_json_array_items(plan, "execution_checklist").length() >= 2)
+  assert_eq(
+    rq_json_string(plan, "native_session_listing_endpoint", default=""),
+    "/v1/mooncode/sessions?book_root=<path>&format=json",
+  )
+  assert_eq(
+    rq_json_string(plan, "native_serve_scheduler_endpoint", default=""),
+    "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
+  )
+  assert_eq(
+    rq_json_string(plan, "native_eval_report_endpoint", default=""),
+    "/v1/mooncode/sessions/s1/eval-report?book_root=<path>",
+  )
   let lifecycle = runtime_command_lifecycle("s1", commands, [], [])
   let scheduler = serve_scheduler_projection("s1", commands, lifecycle)
   let packet = runtime_turn_packet("s1", replay, claim, scheduler, false)
@@ -359,6 +455,30 @@ test "mooncode runtime consumer execution plan exposes next claimable command" {
     "prompt",
   )
   assert_eq(rq_json_array_items(packet, "required_events").length(), 4)
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(packet, "endpoints"),
+      "native_session_listing",
+      default="",
+    ),
+    "/v1/mooncode/sessions?book_root=<path>&format=json",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(packet, "endpoints"),
+      "native_serve_scheduler",
+      default="",
+    ),
+    "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(packet, "endpoints"),
+      "native_eval_report",
+      default="",
+    ),
+    "/v1/mooncode/sessions/s1/eval-report?book_root=<path>",
+  )
   assert_true(
     rq_json_string(packet, "safety_boundary", default="").contains(
       "Moondesk does not execute",
@@ -393,6 +513,30 @@ test "mooncode runtime consumer execution plan exposes next claimable command" {
   )
   assert_eq(
     rq_json_string(
+      rq_json_object_field_or_empty(supervisor, "endpoints"),
+      "native_session_listing",
+      default="",
+    ),
+    "http://127.0.0.1:4304/v1/mooncode/sessions?book_root=<path>&format=json",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(supervisor, "endpoints"),
+      "native_serve_scheduler",
+      default="",
+    ),
+    "http://127.0.0.1:4304/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(supervisor, "endpoints"),
+      "native_eval_report",
+      default="",
+    ),
+    "http://127.0.0.1:4304/v1/mooncode/sessions/s1/eval-report?book_root=<path>",
+  )
+  assert_eq(
+    rq_json_string(
       rq_json_object_field_or_empty(supervisor, "launch_request"),
       "command_id",
       default="",
@@ -421,8 +565,8 @@ test "mooncode runtime consumer execution plan exposes next claimable command" {
 ///|
 test "mooncode runtime supervisor launch explains idle state" {
   let packet : Json = {
-    "kind": "mooncode-runtime-turn-packet",
-    "protocol": "mooncode.v1",
+    "kind": kind_runtime_turn_packet(),
+    "protocol": protocol_version(),
     "session_id": "s1",
     "status": "idle",
     "operation": "wait",
@@ -469,6 +613,16 @@ test "mooncode runtime supervisor launch explains idle state" {
     ),
   )
   assert_true(
+    rq_json_string_array_items(readiness, "missing_requirements").contains(
+      "endpoint.native_session_listing",
+    ),
+  )
+  assert_true(
+    rq_json_string_array_items(readiness, "missing_requirements").contains(
+      "endpoint.native_serve_scheduler",
+    ),
+  )
+  assert_true(
     rq_json_string(readiness, "safety_boundary", default="").contains(
       "does not mean Moondesk may execute tools",
     ),
@@ -503,13 +657,29 @@ test "mooncode runtime consumer handoff reports claim readiness" {
   assert_true(
     rq_json_string(handoff, "next_action", default="").contains("runtime-claim"),
   )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(handoff, "endpoints"),
+      "native_serve_scheduler",
+      default="",
+    ),
+    "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(handoff, "endpoints"),
+      "native_session_listing",
+      default="",
+    ),
+    "/v1/mooncode/sessions?book_root=<path>&format=json",
+  )
 }
 
 ///|
 test "mooncode runtime command lifecycle summarizes queue state" {
   let commands : Array[Json] = [
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-tests",
       "session_id": "session-demo",
@@ -523,7 +693,7 @@ test "mooncode runtime command lifecycle summarizes queue state" {
       },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-package",
       "session_id": "session-demo",
@@ -537,7 +707,7 @@ test "mooncode runtime command lifecycle summarizes queue state" {
       },
     },
     {
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-shell",
       "session_id": "session-demo",
@@ -554,12 +724,12 @@ test "mooncode runtime command lifecycle summarizes queue state" {
   ]
   let receipts : Array[Json] = [
     {
-      "kind": "mooncode.runtime-dispatch",
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-tests",
       "status": "runtime-completed",
     },
     {
-      "kind": "mooncode.runtime-dispatch",
+      "kind": kind_runtime_dispatch(),
       "command_id": "cmd-package",
       "status": "runtime-claimed",
       "consumer_id": "moonclaw-runtime",

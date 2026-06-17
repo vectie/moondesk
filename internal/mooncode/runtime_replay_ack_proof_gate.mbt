@@ -51,7 +51,7 @@ fn runtime_replay_ack_proof_gate(
     (status != "proven" || tool_harness_blocked)
   {
     "kind": "mooncode-runtime-completion-proof-gate",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "action": action,
     "proof_required_for_completion": proof_required,
     "completion_blocked": completion_blocked,

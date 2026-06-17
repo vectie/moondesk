@@ -129,7 +129,7 @@ pub fn action_plan_response(
   let completed_count = action_plan_state_count(actions, "completed")
   {
     "kind": "mooncode-action-plan",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": action_plan_status(
       pending_runtime_count,
       running_count,
@@ -202,6 +202,75 @@ pub fn action_plan_response(
     },
     "rule": "This plan is Moondesk's compact execution/review contract. MoonClaw or standalone MoonCode consumes the command queue, emits proof events, then Moondesk updates this plan without executing tools itself.",
   }
+}
+
+///|
+pub fn action_plan_actions_for_session(
+  session : Json,
+  commands : Array[Json],
+  runtime_commands : Array[Json],
+  runtime_dispatches : Array[Json],
+  events : Array[Json],
+  lease_now? : String = "",
+) -> Array[Json] {
+  let summary = session_summary(session, events)
+  action_plan_items(
+    commands,
+    runtime_commands,
+    runtime_dispatches,
+    events,
+    summary,
+    lease_now~,
+  )
+}
+
+///|
+pub fn action_plan_projection_response(
+  session_id : String,
+  session : Json,
+  commands : Array[Json],
+  runtime_commands : Array[Json],
+  runtime_dispatches : Array[Json],
+  events : Array[Json],
+  recorded_at~ : String,
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  lease_now? : String = "",
+) -> Json {
+  let summary = session_summary(session, events)
+  let actions = action_plan_items(
+    commands,
+    runtime_commands,
+    runtime_dispatches,
+    events,
+    summary,
+    lease_now~,
+  )
+  action_plan_response(
+    session_id,
+    session,
+    actions,
+    summary,
+    runtime_commands,
+    runtime_dispatches,
+    recorded_at~,
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+  )
+}
+
+///|
+pub fn action_plan_manifest_response(
+  action_plan : Json,
+  manifest_path : String,
+  absolute_manifest_path : String,
+) -> Json {
+  action_plan
+  |> runtime_with_field("manifest_path", manifest_path.to_json())
+  |> runtime_with_field(
+    "absolute_manifest_path",
+    absolute_manifest_path.to_json(),
+  )
 }
 
 ///|

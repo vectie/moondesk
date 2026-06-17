@@ -77,6 +77,39 @@ pub fn native_command_tool_policy(
           "require bounded timeout and capped output", "destructive, networked, or broad workspace commands require operator policy approval",
         ],
       )
+    "moon_ide" =>
+      native_command_tool_policy_entry(
+        tool,
+        action,
+        context_path,
+        approval="auto",
+        mutates_files=false,
+        required_inputs=["action"],
+        proof_events=["tool_call", "tool_result", "runtime_update"],
+        guardrails=[
+          "run only read-only moon ide actions: doc, outline, peek_def, hover, or find_references",
+          "resolve cwd and path relative to selected MoonBook root", "prefer semantic discovery before broad source reads or edits",
+          "cap output so semantic lookup cannot flood the transcript",
+        ],
+      )
+    "moon_cmd" =>
+      native_command_tool_policy_entry(
+        tool,
+        action,
+        context_path,
+        approval="policy",
+        mutates_files=true,
+        required_inputs=["command"],
+        proof_events=[
+          "tool_call", "tool_result", "test_result", "runtime_update", "diff",
+        ],
+        guardrails=[
+          "run selected moon commands directly instead of asking the shell to parse raw prose",
+          "require book-relative cwd, bounded output, and explicit target/program args",
+          "treat fmt and test --update as mutation-capable and require policy approval plus diff proof",
+          "require test_update_kind and test_update_reason before snapshot-updating tests",
+        ],
+      )
     "moon_check" =>
       native_command_tool_policy_entry(
         tool,

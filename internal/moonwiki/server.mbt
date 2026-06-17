@@ -640,6 +640,16 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "mooncode", "sessions", session_id, "package-result"] =>
+      if method_ is @http.RequestMethod::Post {
+        handle_mooncode_session_package_result(
+          workspace_root, session_id, body, method_, conn,
+        )
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "mooncode", "sessions", session_id, "runtime-handoff"] =>
       if is_read_method(method_) {
         handle_mooncode_session_runtime_handoff(

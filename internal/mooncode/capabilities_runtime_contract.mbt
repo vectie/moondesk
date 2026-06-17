@@ -19,7 +19,7 @@ pub fn runtime_contract_json() -> Json {
         "select, list, resume, and project sessions for the native UI",
       ),
       runtime_component(
-        "agent_tool", "openseek/agent_tool + agent/tool_definition.mbt", "Typed registry for read, edit, write, shell, moon_check, and finish tools with explicit output/control actions.",
+        "agent_tool", "openseek/agent_tool + agent/tool_definition.mbt", "Typed registry for read, edit, write, shell, moon_ide, moon_cmd, moon_check, and finish tools with explicit output/control actions.",
         "show tool calls, approval state, outputs, and failures",
       ),
       runtime_component(
@@ -72,7 +72,8 @@ pub fn runtime_contract_json() -> Json {
       ],
       "minimum_evidence": [
         "each built-in tool dispatches through the typed registry", "file edit cases prove final file contents",
-        "moon_check/test failures surface as test_result events", "finish produces a terminal review summary",
+        "moon_ide provides semantic discovery", "moon_cmd/moon_check/test failures surface as test_result events",
+        "finish produces a terminal review summary",
       ],
       "native_eval_report": native_eval_report_contract_json(),
       "current_gap": "Moondesk exposes readiness gates and MoonClaw now reports a first native tool/file-edit eval harness; the remaining engine gap is autonomous model-backed planning across multi-turn coding work.",

@@ -8,7 +8,8 @@ priv enum ServeCommand {
 ///|
 pub fn runtime_tool_names() -> Array[String] {
   [
-    "shell", "read", "edit", "write", "moon_check", "finish", "apply_patch", "package_app_tool",
+    "shell", "read", "edit", "write", "moon_ide", "moon_cmd", "moon_check", "finish",
+    "apply_patch", "package_app_tool",
   ]
 }
 
@@ -20,8 +21,8 @@ pub fn serve_command_names() -> Array[String] {
 ///|
 pub fn tool_call_wire_contract_json() -> Json {
   {
-    "kind": "mooncode-tool-call-wire-contract",
-    "protocol": "mooncode.v1",
+    "kind": kind_tool_call_wire_contract(),
+    "protocol": protocol_version(),
     "owner": "mooncode",
     "runtime_owner": "moonclaw",
     "reference": "../openseek/deepseek/json_decode.mbt",
@@ -48,8 +49,8 @@ pub fn decode_tool_call(json : Json) -> Result[Json, String] {
   }
   let arguments = tool_call_arguments(json, payload)
   Ok({
-    "kind": "mooncode-tool-call",
-    "protocol": "mooncode.v1",
+    "kind": kind_tool_call(),
+    "protocol": protocol_version(),
     "tool_call_id": tool_call_id,
     "tool_name": tool_name,
     "arguments": arguments,
@@ -70,7 +71,7 @@ pub fn tool_call_decode_report(json : Json) -> Json {
     Ok(decoded) =>
       {
         "ok": true,
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "tool_call": decoded,
         "tool_name": serve_json_string(decoded, "tool_name", default=""),
         "tool_call_id": serve_json_string(decoded, "tool_call_id", default=""),
@@ -78,7 +79,7 @@ pub fn tool_call_decode_report(json : Json) -> Json {
     Err(message) =>
       {
         "ok": false,
-        "protocol": "mooncode.v1",
+        "protocol": protocol_version(),
         "error": message,
         "tool_call": Json::object({}),
       }
@@ -182,6 +183,7 @@ fn tool_call_arguments_json(arguments : String) -> Json {
 fn tool_call_mutates_files(tool_name : String) -> Bool {
   tool_name == "edit" ||
   tool_name == "write" ||
+  tool_name == "moon_cmd" ||
   tool_name == "apply_patch" ||
   tool_name == "package_app_tool"
 }

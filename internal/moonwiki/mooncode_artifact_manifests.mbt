@@ -7,27 +7,18 @@ async fn write_mooncode_eval_report_manifest(session : Json) -> Json {
   if book_root == "" {
     fail("MoonCode eval report needs a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let relative = @mooncode.eval_report_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
   let events = project_mooncode_events(session, [], [])
-  let summary = @mooncode.session_summary(session, events)
-  let report = @mooncode.eval_report_projection(
-    agent_session_with_field(session, "mooncode_summary", summary),
-  )
   let recorded_at = @async.now().to_string()
-  let manifest = agent_session_with_field(
-    agent_session_with_field(
-      agent_session_with_field(report, "recorded_at", recorded_at.to_json()),
-      "manifest_path",
-      relative.to_json(),
-    ),
-    "absolute_manifest_path",
-    absolute.to_json(),
+  let manifest = @mooncode.eval_report_manifest_response_for_session(
+    session,
+    events,
+    recorded_at~,
+    manifest_path=relative,
+    absolute_manifest_path=absolute,
   )
   @fsx.write_to_file(absolute, manifest.stringify(indent=2) + "\n")
   manifest
@@ -84,10 +75,7 @@ async fn write_mooncode_runtime_handoff_manifest(
   if book_root == "" {
     fail("MoonCode runtime handoff needs a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let relative = @mooncode.runtime_handoff_manifest_relative_path(session_id)
   let absolute = @pathx.join(book_root, relative)
   @fsx.make_directory(@pathx.dirname(absolute), recursive=true, exists_ok=true)
@@ -109,33 +97,29 @@ async fn write_mooncode_runtime_handoff_manifest(
   } else {
     false
   }
-  let runtime_replay = mooncode_runtime_replay_state(
-    session_id,
+  let runtime_replay = @mooncode.runtime_replay_state_for_session(
+    session,
     runtime_commands,
     runtime_dispatches,
-    workspace_id=json_string(session, "workspace_id", default=""),
-    workspace_name=json_string(session, "workspace_name", default=""),
-    task_id=json_string(session, "moonclaw_task_id", default=""),
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
     runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
       workspace_root, session_id,
     ),
+    lease_now=@async.now().to_string(),
   )
-  let runtime_claim = mooncode_runtime_claim_state(
-    session_id,
+  let runtime_claim = @mooncode.runtime_claim_state_for_session(
+    session,
     runtime_commands,
     runtime_dispatches,
-    workspace_id=json_string(session, "workspace_id", default=""),
-    workspace_name=json_string(session, "workspace_name", default=""),
-    task_id=json_string(session, "moonclaw_task_id", default=""),
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
     runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
       workspace_root, session_id,
     ),
+    lease_now=@async.now().to_string(),
   )
   let recorded_at = @async.now().to_string()
   let manifest = @mooncode.runtime_handoff_manifest(
@@ -187,10 +171,7 @@ async fn mooncode_read_change_set_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let absolute = @pathx.join(
     book_root,
     @mooncode.change_set_manifest_relative_path(session_id),
@@ -220,10 +201,7 @@ async fn mooncode_read_patch_set_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let absolute = @pathx.join(
     book_root,
     @mooncode.patch_set_manifest_relative_path(session_id),
@@ -253,10 +231,7 @@ async fn mooncode_read_tool_approvals_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let absolute = @pathx.join(
     book_root,
     @mooncode.tool_approvals_manifest_relative_path(session_id),
@@ -286,10 +261,7 @@ async fn mooncode_read_test_runs_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let absolute = @pathx.join(
     book_root,
     @mooncode.test_runs_manifest_relative_path(session_id),
@@ -319,10 +291,7 @@ async fn mooncode_read_eval_report_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let absolute = @pathx.join(
     book_root,
     @mooncode.eval_report_manifest_relative_path(session_id),
@@ -352,10 +321,7 @@ async fn mooncode_read_runtime_handoff_manifest(session : Json) -> Json? {
   if book_root == "" {
     return None
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(session, "id", default="session"),
-    fallback="session",
-  )
+  let session_id = json_string(session, "id", default="session")
   let absolute = @pathx.join(
     book_root,
     @mooncode.runtime_handoff_manifest_relative_path(session_id),
@@ -370,161 +336,3 @@ async fn mooncode_read_runtime_handoff_manifest(session : Json) -> Json? {
 }
 
 ///|
-fn mooncode_tool_authorization_preview_event(
-  payload : Json,
-  created_at : String,
-) -> Json {
-  @mooncode.tool_authorization_preview_event(
-    payload,
-    created_at,
-    fallback_id=@desk.stable_id(
-      "mooncode-tool-auth",
-      payload.stringify() + ":" + created_at,
-    ),
-  )
-}
-
-///|
-fn mooncode_tool_authorization_response(
-  session : Json,
-  preview : Json,
-  events : Array[Json],
-) -> Json {
-  @mooncode.tool_authorization_response(
-    json_string(session, "id", default=""),
-    preview,
-    events,
-    json_object_field_or_empty(session, "mooncode_last_tool_approvals_manifest"),
-  )
-}
-
-///|
-fn mooncode_action_plan_items(
-  session : Json,
-  commands : Array[Json],
-  runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
-  events : Array[Json],
-) -> Array[Json] {
-  let summary = @mooncode.session_summary(session, events)
-  @mooncode.action_plan_items(
-    commands,
-    runtime_commands,
-    runtime_dispatches,
-    events,
-    summary,
-    lease_now=@async.now().to_string(),
-  )
-}
-
-///|
-fn mooncode_change_set_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.change_set_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-change-set",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_patch_set_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.patch_set_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-patch-set",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_tool_approvals_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.tool_approvals_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-tool-approvals",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_test_runs_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.test_runs_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-test-runs",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_action_plan_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.action_plan_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-action-plan",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_runtime_evidence_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.runtime_evidence_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-runtime-evidence",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_eval_report_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.eval_report_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-eval-report",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_runtime_handoff_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.runtime_handoff_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-runtime-handoff",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}

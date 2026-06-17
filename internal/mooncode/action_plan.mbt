@@ -69,7 +69,7 @@ pub fn action_plan_preflight_item(index : Int, event : Json) -> Json {
     ),
     "runtime_evidence": {
       "kind": "mooncode-command-runtime-evidence",
-      "protocol": "mooncode.v1",
+      "protocol": protocol_version(),
       "command_id": json_string(event, "id", default=""),
       "action": action,
       "status": if overridden {

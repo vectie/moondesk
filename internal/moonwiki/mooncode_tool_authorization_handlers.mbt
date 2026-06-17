@@ -81,13 +81,14 @@ async fn handle_mooncode_session_tool_authorization(
     }
   }
   let now = @async.now().to_string()
-  let preview = mooncode_tool_authorization_preview_event(payload, now)
+  let preview = @mooncode.tool_authorization_preview_projected_event(
+    payload, now,
+  )
   let projected = attach_mooncode_session_projection(workspace_root, session)
   let events = json_array_items(projected, "mooncode_events")
-  let approval = @mooncode.tool_event_approval(preview)
-  let target = @mooncode.tool_approval_target(preview)
-  let should_record = approval != "" &&
-    !@mooncode.tool_authorization_has_target(events, target)
+  let should_record = @mooncode.tool_authorization_should_record(
+    preview, events,
+  )
   let with_preview = if should_record {
     append_mooncode_event_log(workspace_root, session_id, preview) catch {
       _ => {
@@ -115,8 +116,13 @@ async fn handle_mooncode_session_tool_authorization(
     projected
   }
   let final_events = json_array_items(with_preview, "mooncode_events")
-  let response = mooncode_tool_authorization_response(
-    with_preview, preview, final_events,
+  let response = @mooncode.tool_authorization_response(
+    json_string(with_preview, "id", default=""),
+    preview,
+    final_events,
+    json_object_field_or_empty(
+      with_preview, "mooncode_last_tool_approvals_manifest",
+    ),
   )
   send_json(conn, method_, response)
 }

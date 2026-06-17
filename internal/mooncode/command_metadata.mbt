@@ -45,18 +45,23 @@ pub fn command_approval(action : String) -> String {
 ///|
 pub fn command_tool_hints(action : String) -> Array[String] {
   match action {
-    "run_tests" => ["moon_check", "shell"]
-    "run_eval" => ["eval_harness", "shell", "moon_check"]
-    "package" => ["package_app_tool", "moon_check", "shell"]
-    "commit" => ["read", "moon_check", "shell", "finish"]
+    "run_tests" => ["moon_ide", "moon_cmd", "moon_check", "shell"]
+    "run_eval" =>
+      ["eval_harness", "moon_ide", "moon_cmd", "shell", "moon_check"]
+    "package" =>
+      ["package_app_tool", "moon_ide", "moon_cmd", "moon_check", "shell"]
+    "commit" =>
+      ["read", "moon_ide", "moon_cmd", "moon_check", "shell", "finish"]
     "accept" => ["finish", "package_app_tool"]
     "reject" => ["finish"]
     "approve_tool" | "reject_tool" =>
-      ["read", "edit", "write", "shell", "moon_check"]
-    "apply_patch" => ["apply_patch", "moon_check"]
-    "revert_patch" => ["apply_patch", "moon_check"]
+      ["read", "edit", "write", "shell", "moon_ide", "moon_cmd", "moon_check"]
+    "apply_patch" => ["moon_ide", "apply_patch", "moon_cmd", "moon_check"]
+    "revert_patch" => ["moon_ide", "apply_patch", "moon_cmd", "moon_check"]
     "prompt" | "steer" =>
-      ["read", "edit", "write", "shell", "moon_check", "finish"]
+      [
+        "moon_ide", "read", "edit", "write", "shell", "moon_cmd", "moon_check", "finish",
+      ]
     "cancel" => []
     _ => []
   }

@@ -37,46 +37,18 @@ async fn attach_mooncode_session_projection(
   } else {
     mooncode_runtime_dispatch_log_path(workspace_root, session_id)
   }
-  let summary_session = agent_session_with_field(
-    agent_session_with_field(
-      agent_session_with_field(
-        agent_session_with_field(
-          agent_session_with_field(
-            agent_session_with_field(
-              agent_session_with_field(
-                agent_session_with_field(
-                  session,
-                  "mooncode_event_log_path",
-                  log_path.to_json(),
-                ),
-                "mooncode_runtime_dispatch_log_path",
-                runtime_dispatch_log_path.to_json(),
-              ),
-              "mooncode_runtime_dispatch_log_count",
-              durable_runtime_dispatches.length().to_json(),
-            ),
-            "mooncode_runtime_command_log_path",
-            runtime_command_log_path.to_json(),
-          ),
-          "mooncode_runtime_command_log_count",
-          durable_runtime_commands.length().to_json(),
-        ),
-        "mooncode_append_log_count",
-        durable_events.length().to_json(),
-      ),
-      "mooncode_command_log_path",
-      command_log_path.to_json(),
-    ),
-    "mooncode_command_log_count",
-    durable_commands.length().to_json(),
-  )
-  let summary = @mooncode.session_summary(summary_session, events)
-  let next = agent_session_with_field(
+  @mooncode.session_projection_response(
     session,
-    "mooncode_events",
-    Json::array(events),
+    events,
+    event_log_path=log_path,
+    append_log_count=durable_events.length(),
+    command_log_path~,
+    command_log_count=durable_commands.length(),
+    runtime_command_log_path~,
+    runtime_command_log_count=durable_runtime_commands.length(),
+    runtime_dispatch_log_path~,
+    runtime_dispatch_log_count=durable_runtime_dispatches.length(),
   )
-  agent_session_with_field(next, "mooncode_summary", summary)
 }
 
 ///|
@@ -99,30 +71,10 @@ fn project_mooncode_events(
   raw_events : Array[Json],
   durable_events : Array[Json],
 ) -> Array[Json] {
-  let projected : Array[Json] = []
-  for event in json_array_items(session, "mooncode_events") {
-    projected.push(event)
-  }
-  if raw_events.length() > 0 {
-    for event in raw_events {
-      match mooncode_event_from_moonclaw_event(event) {
-        Some(item) => projected.push(item)
-        None => ()
-      }
-    }
-  } else {
-    for message in json_array_items(session, "transcript") {
-      projected.push(mooncode_event_from_transcript_message(message))
-    }
-  }
-  let merged = merge_mooncode_events(
-    projected,
-    json_array_items(session, "mooncode_command_events"),
+  @mooncode.project_session_events_for_session(
+    session,
+    raw_events,
     durable_events,
+    fallback_created_at=@async.now().to_string(),
   )
-  let normalized : Array[Json] = []
-  for event in merged {
-    normalized.push(@mooncode.normalize_event_record(event))
-  }
-  normalized
 }

@@ -22,7 +22,7 @@ pub fn tool_harness_evidence(
   }
   {
     "kind": "mooncode-tool-harness-evidence",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "reference": "../openseek/eval/tool_harness",
     "command_id": command_id,
     "action": action,

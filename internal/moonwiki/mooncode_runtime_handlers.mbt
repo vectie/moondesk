@@ -204,19 +204,17 @@ async fn handle_mooncode_session_runtime_replay(
       send_json(
         conn,
         method_,
-        mooncode_runtime_replay_state(
-          session_id,
+        @mooncode.runtime_replay_state_for_session(
+          session,
           commands,
           receipts,
-          workspace_id=json_string(session, "workspace_id", default=""),
-          workspace_name=json_string(session, "workspace_name", default=""),
-          task_id=json_string(session, "moonclaw_task_id", default=""),
           runtime_command_log_path=mooncode_runtime_command_log_path(
             workspace_root, session_id,
           ),
           runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
             workspace_root, session_id,
           ),
+          lease_now=@async.now().to_string(),
         ),
       )
     }
@@ -251,7 +249,7 @@ async fn handle_mooncode_session_serve_jsonl(
         conn,
         method_,
         "application/x-ndjson; charset=utf-8",
-        mooncode_runtime_serve_jsonl(commands, receipts, scope~),
+        @mooncode.runtime_serve_jsonl(commands, receipts, scope~),
       )
     }
     None =>
@@ -288,10 +286,11 @@ async fn handle_mooncode_session_runtime_replay_ack(
   let commands = read_mooncode_runtime_command_log(workspace_root, session_id)
   let receipts = read_mooncode_runtime_dispatch_log(workspace_root, session_id)
   let prior_events = read_mooncode_event_log(workspace_root, session_id)
-  let ack_receipts = mooncode_runtime_replay_ack_receipts(
+  let ack_receipts = @mooncode.runtime_replay_ack_receipts_with_defaults(
     session,
     commands,
     payload,
+    acknowledged_at=@async.now().to_string(),
     dispatch_receipts=receipts,
     prior_events~,
   )
@@ -406,20 +405,20 @@ async fn handle_mooncode_session_runtime_claim_state(
       send_json(
         conn,
         method_,
-        mooncode_runtime_claim_state(
-          session_id,
+        @mooncode.runtime_claim_state_for_session(
+          session,
           commands,
           receipts,
-          workspace_id=json_string(session, "workspace_id", default=""),
-          workspace_name=json_string(session, "workspace_name", default=""),
-          task_id=json_string(session, "moonclaw_task_id", default=""),
           runtime_command_log_path=mooncode_runtime_command_log_path(
             workspace_root, session_id,
           ),
           runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
             workspace_root, session_id,
           ),
-          lease_now=query_value(request_path, "now").unwrap_or(""),
+          lease_now=match query_value(request_path, "now") {
+            Some(value) if value != "" => value
+            _ => @async.now().to_string()
+          },
         ),
       )
     }
@@ -456,8 +455,12 @@ async fn handle_mooncode_session_runtime_claim(
   }
   let commands = read_mooncode_runtime_command_log(workspace_root, session_id)
   let receipts = read_mooncode_runtime_dispatch_log(workspace_root, session_id)
-  let claim_receipts = mooncode_runtime_claim_receipts(
-    session, commands, receipts, payload,
+  let claim_receipts = @mooncode.runtime_claim_receipts_with_defaults(
+    session,
+    commands,
+    receipts,
+    payload,
+    now=@async.now().to_string(),
   )
   for receipt in claim_receipts {
     append_mooncode_runtime_dispatch_log(workspace_root, session_id, receipt) catch {
@@ -550,7 +553,7 @@ async fn handle_mooncode_session_serve_scheduler(
       send_json(
         conn,
         method_,
-        mooncode_serve_scheduler_response(
+        @mooncode.serve_scheduler_response(
           session_id,
           commands,
           runtime_commands,
@@ -658,14 +661,18 @@ async fn handle_mooncode_session_runtime_supervisor_run(
   let runtime_response = match
     moonclaw_post_json(
       daemon,
-      @mooncode.moonclaw_native_runtime_loop_endpoint(session_id),
+      @mooncode.moonclaw_native_runtime_loop_endpoint(
+        session_id, workspace_root,
+      ),
       loop_body,
     ) {
     Ok(response) => Ok(response)
     Err(_) =>
       moonclaw_post_json(
         daemon,
-        @mooncode.moonclaw_native_runtime_turn_endpoint(session_id),
+        @mooncode.moonclaw_native_runtime_turn_endpoint(
+          session_id, workspace_root,
+        ),
         @mooncode.moonclaw_runtime_turn_request(
           session_id,
           workspace_root,
@@ -680,35 +687,26 @@ async fn handle_mooncode_session_runtime_supervisor_run(
       return
     }
   }
-  let status = if json_bool(response, "accepted", default=false) {
-    "done"
-  } else {
-    "failed"
-  }
-  let detail = json_string(
-    response,
-    "message",
-    default=if status == "done" {
-      "MoonClaw native MoonCode runtime loop completed"
-    } else {
-      "MoonClaw native MoonCode runtime loop did not accept work"
-    },
+  let updated_at = @async.now().to_string()
+  let session_patch = @mooncode.moonclaw_runtime_supervisor_run_session_patch(
+    response, updated_at,
+  )
+  let status_message = json_object_field_or_empty(
+    session_patch, "status_message",
   )
   let with_response = append_agent_message(
-    mooncode_append_native_response_events(session, response),
+    @mooncode.append_projected_native_response_events(
+      session,
+      response,
+      loop_fallback_created_at=updated_at,
+    ),
     role="status",
-    content=detail,
-    status~,
+    content=json_string(status_message, "content", default=""),
+    status=json_string(status_message, "status", default="failed"),
+    created_at=json_string(status_message, "created_at", default=updated_at),
   )
-  let with_dispatch = agent_session_with_field(
-    with_response,
-    "mooncode_dispatch_mode",
-    @mooncode.moonclaw_runtime_dispatch_mode(response).to_json(),
-  )
-  let with_updated = agent_session_with_field(
-    with_dispatch,
-    "updated_at",
-    @async.now().to_string().to_json(),
+  let with_updated = @mooncode.apply_moonclaw_runtime_session_patch(
+    with_response, session_patch,
   )
   let refreshed = refresh_mooncode_runtime_review_artifacts(
     workspace_root, with_updated,
@@ -792,22 +790,94 @@ async fn handle_mooncode_session_runtime_events(
 ) -> Unit {
   match read_agent_session_record(workspace_root, session_id) {
     Some(session) => {
-      let events = read_mooncode_event_log(workspace_root, session_id)
+      let local_events = read_mooncode_event_log(workspace_root, session_id)
+      let native = mooncode_native_runtime_events_state(
+        workspace_root, session_id,
+      )
+      let native_report = @mooncode.runtime_native_event_report(
+        native,
+        session_id~,
+        observed_at=@async.now().to_string(),
+      )
+      let native_events = @mooncode.native_runtime_events_for_projection(
+        native_report,
+      )
+      let events = @mooncode.merge_events([], native_events, local_events)
       send_json(
         conn,
         method_,
-        @mooncode.runtime_event_sink_result_response(
+        @mooncode.runtime_event_sink_result_response_with_native(
           session_id,
           events,
           session,
           event_log_path=mooncode_event_log_path(workspace_root, session_id),
+          local_event_count=local_events.length(),
+          native_state=native,
+          native_report~,
         ),
       )
     }
-    None =>
-      send_api_error(
-        conn, method_, 404, "Not Found", "Unknown MoonCode session",
+    None => {
+      let native = mooncode_native_runtime_events_state(
+        workspace_root, session_id,
       )
+      let native_report = @mooncode.runtime_native_event_report(
+        native,
+        session_id~,
+        observed_at=@async.now().to_string(),
+      )
+      let native_events = @mooncode.native_runtime_events_for_projection(
+        native_report,
+      )
+      if !mooncode_native_session_known(
+          workspace_root, session_id, native_events,
+        ) {
+        send_api_error(
+          conn, method_, 404, "Not Found", "Unknown MoonCode session",
+        )
+        return
+      }
+      send_json(
+        conn,
+        method_,
+        @mooncode.runtime_event_sink_result_response_with_native(
+          session_id,
+          native_events,
+          @mooncode.native_runtime_session_stub(workspace_root, session_id),
+          event_log_path="",
+          local_event_count=0,
+          native_state=native,
+          native_report~,
+        ),
+      )
+    }
+  }
+}
+
+///|
+async fn mooncode_native_runtime_events_state(
+  workspace_root : String,
+  session_id : String,
+) -> Json {
+  let endpoint = @mooncode.moonclaw_native_runtime_events_endpoint(
+    session_id, workspace_root,
+  )
+  let daemon = moonclaw_daemon_status(workspace_root)
+  if !json_bool(daemon, "running", default=false) {
+    return @mooncode.native_runtime_events_unavailable_state(
+      endpoint, "MoonClaw daemon is not running",
+    )
+  }
+  if !mooncode_native_runtime_ready(daemon) {
+    return @mooncode.native_runtime_events_unavailable_state(
+      endpoint, "MoonClaw MoonCode runtime is not available",
+    )
+  }
+  match moonclaw_get_json(daemon, endpoint) {
+    Ok(payload) =>
+      @mooncode.native_runtime_events_available_state(payload, endpoint)
+    Err(message) =>
+      @mooncode.native_runtime_events_unavailable_state(endpoint, message)
   }
 }
 
@@ -835,7 +905,11 @@ async fn handle_mooncode_session_runtime_event_ingest(
       return
     }
   }
-  let ingest_report = mooncode_runtime_ingest_report(session_id, payload)
+  let ingest_report = @mooncode.runtime_event_ingest_report_with_moonclaw_adapter(
+    payload,
+    session_id~,
+    ingested_at=@async.now().to_string(),
+  )
   let events = json_array_items(ingest_report, "events")
   if events.length() == 0 {
     send_api_error(
@@ -843,15 +917,40 @@ async fn handle_mooncode_session_runtime_event_ingest(
     )
     return
   }
-  for event in events {
-    append_mooncode_event_log(workspace_root, session_id, event) catch {
-      _ => {
-        send_api_error(
-          conn, method_, 500, "Internal Server Error", "Could not append MoonCode runtime event",
-        )
-        return
-      }
+  let with_runtime_handoff = persist_mooncode_runtime_events_and_projection(
+    workspace_root, session_id, session, events,
+  ) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not save MoonCode session after runtime event ingest",
+      )
+      return
     }
+  }
+  send_json(
+    conn,
+    method_,
+    @mooncode.runtime_event_ingest_result_response(
+      session_id,
+      events,
+      read_mooncode_event_log(workspace_root, session_id),
+      ingest_report,
+      with_runtime_handoff,
+      enrich_agent_session_for_response(workspace_root, with_runtime_handoff, []),
+      event_log_path=mooncode_event_log_path(workspace_root, session_id),
+    ),
+  )
+}
+
+///|
+async fn persist_mooncode_runtime_events_and_projection(
+  workspace_root : String,
+  session_id : String,
+  session : Json,
+  events : Array[Json],
+) -> Json {
+  for event in events {
+    append_mooncode_event_log(workspace_root, session_id, event)
   }
   let updated = agent_session_with_field(
     session,
@@ -898,25 +997,6 @@ async fn handle_mooncode_session_runtime_event_ingest(
   ) catch {
     _ => with_session_snapshot
   }
-  write_agent_session_record(workspace_root, with_runtime_handoff) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not save MoonCode session after runtime event ingest",
-      )
-      return
-    }
-  }
-  send_json(
-    conn,
-    method_,
-    @mooncode.runtime_event_ingest_result_response(
-      session_id,
-      events,
-      read_mooncode_event_log(workspace_root, session_id),
-      ingest_report,
-      with_runtime_handoff,
-      enrich_agent_session_for_response(workspace_root, with_runtime_handoff, []),
-      event_log_path=mooncode_event_log_path(workspace_root, session_id),
-    ),
-  )
+  write_agent_session_record(workspace_root, with_runtime_handoff)
+  with_runtime_handoff
 }

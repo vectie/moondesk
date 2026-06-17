@@ -69,8 +69,8 @@ test "mooncode tool approval entries expose tool call id" {
       "id": "tool-call-build",
       "tool_call_id": "call-build",
       "command_packet": {
-        "protocol": "mooncode.v1",
-        "kind": "mooncode.command-ref",
+        "protocol": protocol_version(),
+        "kind": kind_command_ref(),
         "command_id": "cmd-build",
         "action": "prompt",
       },
@@ -174,4 +174,31 @@ test "mooncode tool authorization allows auto-approved read previews" {
   assert_eq(json_string(response, "approval", default=""), "auto")
   assert_true(json_bool(response, "allowed", default=false))
   assert_false(tool_authorization_has_target([preview], "wiki/index.md"))
+}
+
+///|
+test "mooncode tool authorization records only new gated previews" {
+  let shell_preview = tool_authorization_preview_projected_event(
+    {
+      "tool_call_id": "call-build",
+      "tool_name": "shell",
+      "arguments": "{\"cmd\":[\"npm\",\"run\",\"build\"]}",
+    },
+    "2026-06-17T00:00:00Z",
+  )
+  assert_true(tool_authorization_should_record(shell_preview, []))
+  assert_false(tool_authorization_should_record(shell_preview, [shell_preview]))
+}
+
+///|
+test "mooncode tool authorization skips auto-approved read previews" {
+  let read_preview = tool_authorization_preview_projected_event(
+    {
+      "tool_call_id": "call-read",
+      "tool_name": "read",
+      "arguments": "{\"path\":\"wiki/index.md\"}",
+    },
+    "2026-06-17T00:00:00Z",
+  )
+  assert_false(tool_authorization_should_record(read_preview, []))
 }

@@ -14,7 +14,7 @@ pub fn native_command_body(
     session, command_packet,
   )
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "command": action,
     "native_dispatch_mode": "queue-only",
     "text": message,

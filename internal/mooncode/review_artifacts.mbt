@@ -14,7 +14,7 @@ pub fn change_set_manifest(
   let rejected_count = count_review_command(events, "reject")
   {
     "kind": "mooncode-change-set",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": review_state(diff_events.length(), accepted_count, rejected_count),
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
@@ -68,7 +68,7 @@ pub fn tool_approvals_manifest(
   let pending_count = count_tool_approval_state(approvals, "pending")
   {
     "kind": "mooncode-tool-approvals",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": if rejected_count > 0 {
       "rejected"
     } else if pending_count > 0 {

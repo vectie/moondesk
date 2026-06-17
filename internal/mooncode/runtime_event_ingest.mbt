@@ -132,6 +132,57 @@ pub fn append_native_response_events(
 }
 
 ///|
+pub fn append_projected_native_response_events(
+  session : Json,
+  response : Json,
+  loop_fallback_created_at~ : String,
+) -> Json {
+  append_native_response_events(
+    session,
+    response,
+    loop_fallback_id=projected_runtime_loop_fallback_id(
+      response, loop_fallback_created_at,
+    ),
+    loop_fallback_created_at~,
+  )
+}
+
+///|
+fn projected_runtime_loop_fallback_id(
+  response : Json,
+  loop_fallback_created_at : String,
+) -> String {
+  let stopped_by = runtime_json_string(
+    response,
+    "stopped_by",
+    default="unknown",
+  )
+  let ran_turn_count = runtime_json_int(response, "ran_turn_count", default=0)
+  let failed_turn_count = runtime_json_int(
+    response,
+    "failed_turn_count",
+    default=0,
+  )
+  let session_id = runtime_json_string(response, "session_id", default="")
+  let consumer_id = runtime_json_string(response, "consumer_id", default="")
+  let seed = session_id +
+    ":" +
+    consumer_id +
+    ":" +
+    loop_fallback_created_at +
+    ":" +
+    stopped_by +
+    ":" +
+    ran_turn_count.to_string() +
+    ":" +
+    failed_turn_count.to_string()
+  let digest = @crypto.bytes_to_hex_string(
+    @crypto.sha256(@encoding/utf8.encode(seed).to_fixedarray()),
+  )
+  "mooncode-runtime-loop-" + digest[:16].to_owned()
+}
+
+///|
 pub fn runtime_event_ingest_report(
   payload : Json,
   session_id~ : String,
@@ -153,7 +204,7 @@ pub fn runtime_event_ingest_report(
   }
   {
     "kind": "mooncode-runtime-event-ingest-report",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "session_id": session_id,
     "ingested_at": ingested_at,
     "submitted_count": incoming.length(),
@@ -169,6 +220,76 @@ pub fn runtime_event_ingest_report(
     },
     "owner": { "runtime": "moonclaw", "protocol": "mooncode", "ui": "moondesk" },
   }
+}
+
+///|
+pub fn runtime_event_ingest_report_with_moonclaw_adapter(
+  payload : Json,
+  session_id~ : String,
+  ingested_at~ : String,
+) -> Json {
+  let report = runtime_event_ingest_report(payload, session_id~, ingested_at~)
+  if runtime_json_int(report, "accepted_count", default=0) > 0 {
+    return report
+  }
+  let legacy_events = moonclaw_adapter_ingest_events(payload, ingested_at)
+  if legacy_events.length() == 0 {
+    return report
+  }
+  report
+  |> runtime_with_field("status", "accepted-legacy-moonclaw".to_json())
+  |> runtime_with_field("accepted_count", legacy_events.length().to_json())
+  |> runtime_with_field("events", Json::array(legacy_events))
+  |> runtime_with_field("legacy_adapter", "mooncode.moonclaw.desc".to_json())
+}
+
+///|
+fn moonclaw_adapter_ingest_events(
+  payload : Json,
+  ingested_at : String,
+) -> Array[Json] {
+  let candidates = json_array_items(payload, "events")
+  let incoming = if candidates.length() > 0 { candidates } else { [payload] }
+  let events : Array[Json] = []
+  for candidate in incoming {
+    match
+      moonclaw_projected_event_record(
+        candidate,
+        fallback_created_at=ingested_at,
+      ) {
+      Some(event) => events.push(event)
+      None => ()
+    }
+  }
+  events
+}
+
+///|
+pub fn runtime_native_event_report(
+  payload : Json,
+  session_id~ : String,
+  observed_at~ : String,
+) -> Json {
+  runtime_event_ingest_report(payload, session_id~, ingested_at=observed_at)
+  |> runtime_with_field(
+    "kind",
+    "mooncode-native-runtime-event-report".to_json(),
+  )
+  |> runtime_with_field(
+    "native_payload_kind",
+    runtime_json_string(payload, "kind", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "native_payload_event_count",
+    runtime_json_array_items(payload, "events").length().to_json(),
+  )
+}
+
+///|
+pub fn native_runtime_events_for_projection(
+  native_report : Json,
+) -> Array[Json] {
+  runtime_json_array_items(native_report, "events")
 }
 
 ///|

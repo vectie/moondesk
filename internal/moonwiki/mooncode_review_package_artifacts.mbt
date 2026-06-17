@@ -11,18 +11,12 @@ async fn write_mooncode_review_receipt(
   if book_root == "" {
     fail("MoonCode review receipt needs a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(
-      session,
-      "id",
-      default=json_string(command_packet, "session_id", default=""),
-    ),
-    fallback="session",
+  let session_id = json_string(
+    session,
+    "id",
+    default=json_string(command_packet, "session_id", default="session"),
   )
-  let command_id = @mooncode.artifact_safe_id(
-    json_string(command_packet, "command_id", default="command"),
-    fallback="command",
-  )
+  let command_id = json_string(command_packet, "command_id", default="command")
   let relative = @mooncode.review_receipt_relative_path(
     session_id, command_id, action,
   )
@@ -58,18 +52,12 @@ async fn write_mooncode_package_manifest_for_receipt(
   if book_root == "" {
     fail("MoonCode package manifest needs a MoonBook workspace root")
   }
-  let session_id = @mooncode.artifact_safe_id(
-    json_string(
-      session,
-      "id",
-      default=json_string(command_packet, "session_id", default=""),
-    ),
-    fallback="session",
+  let session_id = json_string(
+    session,
+    "id",
+    default=json_string(command_packet, "session_id", default="session"),
   )
-  let command_id = @mooncode.artifact_safe_id(
-    json_string(command_packet, "command_id", default="command"),
-    fallback="command",
-  )
+  let command_id = json_string(command_packet, "command_id", default="command")
   let relative = @mooncode.package_manifest_relative_path(
     session_id, command_id,
   )
@@ -91,23 +79,14 @@ async fn write_mooncode_package_manifest_for_receipt(
   let index_manifest = write_mooncode_package_index_manifest(
     session, session_id, manifest,
   )
-  let events = json_array_items(session, "mooncode_command_events")
-  events.push(
-    mooncode_package_manifest_event(
+  @mooncode.session_with_package_manifest_events(
+    session,
+    manifest,
+    @mooncode.package_manifest_projected_event(
       manifest, context_path, recorded_at, command_packet,
     ),
-  )
-  events.push(mooncode_package_index_manifest_event(index_manifest))
-  let with_events = agent_session_with_field(
-    session,
-    "mooncode_command_events",
-    Json::array(events),
-  )
-  let with_manifest = agent_session_with_field(
-    with_events, "mooncode_last_package_manifest", manifest,
-  )
-  agent_session_with_field(
-    with_manifest, "mooncode_last_package_index_manifest", index_manifest,
+    index_manifest,
+    @mooncode.package_index_manifest_projected_event(index_manifest),
   )
 }
 
@@ -325,13 +304,9 @@ async fn mooncode_package_candidate_manifests(
   let manifests : Array[Json] = []
   let book_root = json_string(session, "workspace_root", default="")
   if book_root != "" {
-    let safe_session = @mooncode.artifact_safe_id(
-      session_id,
-      fallback="session",
-    )
     let root = @pathx.join(
       book_root,
-      "portable/app-tool/mooncode/\{safe_session}",
+      @mooncode.package_session_root_relative_path(session_id),
     )
     for name in read_directory_names(root, include_hidden=false) {
       if name.has_prefix("package-") && name.has_suffix(".json") {
@@ -377,59 +352,3 @@ fn mooncode_review_receipt_book_root(
 }
 
 ///|
-fn mooncode_review_receipt_event(
-  action : String,
-  receipt_path : String,
-  context_path : String,
-  recorded_at : String,
-  command_packet : Json,
-) -> Json {
-  let command_id = json_string(command_packet, "command_id", default="command")
-  @mooncode.review_receipt_event(
-    action,
-    receipt_path,
-    context_path,
-    recorded_at,
-    command_packet,
-    @desk.stable_id(
-      "mooncode-review-receipt",
-      action + ":" + command_id + ":" + receipt_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_package_manifest_event(
-  manifest : Json,
-  context_path : String,
-  recorded_at : String,
-  command_packet : Json,
-) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.package_manifest_event(
-    manifest,
-    context_path,
-    recorded_at,
-    command_packet,
-    @desk.stable_id(
-      "mooncode-package-manifest",
-      json_string(manifest, "command_id", default="command") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}
-
-///|
-fn mooncode_package_index_manifest_event(manifest : Json) -> Json {
-  let manifest_path = json_string(manifest, "manifest_path", default="")
-  @mooncode.package_index_manifest_event(
-    manifest,
-    @desk.stable_id(
-      "mooncode-package-index",
-      json_string(manifest, "session_id", default="session") +
-      ":" +
-      manifest_path,
-    ),
-  )
-}

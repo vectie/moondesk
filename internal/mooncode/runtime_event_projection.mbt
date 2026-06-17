@@ -46,8 +46,48 @@ pub fn canonical_event_record(
     diff=json_string(event, "diff", default=""),
     command~,
     exit_code~,
-    command_packet=runtime_json_object_field_or_empty(event, "command_packet"),
+    command_packet=canonical_event_command_packet(event),
   )
+}
+
+///|
+fn canonical_event_command_packet(event : Json) -> Json {
+  let packet = runtime_json_object_field_or_empty(event, "command_packet")
+  if json_string(packet, "command_id", default="") != "" {
+    return packet
+  }
+  let raw = runtime_json_object_field_or_empty(event, "raw_event")
+  let raw_packet = runtime_json_object_field_or_empty(raw, "command_packet")
+  if json_string(raw_packet, "command_id", default="") != "" {
+    return raw_packet
+  }
+  let command_id = runtime_first_string(
+    event,
+    ["command_id", "commandId", "mooncode_command_id"],
+    default="",
+  )
+  if command_id == "" {
+    Json::object({})
+  } else {
+    {
+      "protocol": protocol_version(),
+      "kind": kind_command_ref(),
+      "command_id": command_id,
+      "action": runtime_first_string(
+        event,
+        ["action", "serve_command"],
+        default="prompt",
+      ),
+      "dispatch": runtime_first_string(
+        event,
+        ["dispatch"],
+        default="moonclaw-native",
+      ),
+      "runtime_proof": true,
+      "session_id": json_string(event, "session_id", default=""),
+      "task_id": json_string(event, "task_id", default=""),
+    }
+  }
 }
 
 ///|
@@ -109,6 +149,20 @@ pub fn tool_authorization_preview_event(
       )
     }
   }
+}
+
+///|
+pub fn tool_authorization_preview_projected_event(
+  payload : Json,
+  created_at : String,
+) -> Json {
+  tool_authorization_preview_event(
+    payload,
+    created_at,
+    fallback_id=stable_event_id(
+      "mooncode-tool-auth:" + payload.stringify() + ":" + created_at,
+    ),
+  )
 }
 
 ///|

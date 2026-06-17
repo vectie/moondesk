@@ -16,7 +16,7 @@ pub fn package_index_manifest(
   let runtime_verified = count_package_runtime_state(events, "verified")
   {
     "kind": "mooncode-package-index",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "status": if runtime_verified > 0 {
       "verified"
     } else if runtime_built > 0 {

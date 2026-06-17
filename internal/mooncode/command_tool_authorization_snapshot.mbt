@@ -38,7 +38,7 @@ pub fn command_tool_authorization_snapshot(
   }
   {
     "kind": "mooncode-tool-authorization-snapshot",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "session_id": session_id,
     "command_id": json_string(command_packet, "command_id", default=""),
     "action": action,

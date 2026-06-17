@@ -35,7 +35,7 @@ pub fn runtime_command_feed_response(
     lease_now~,
   )
   {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode-runtime-command-feed",
     "session_id": session_id,
     "workspace_id": workspace_id,
@@ -169,6 +169,38 @@ pub fn runtime_execution_plan_response(
 }
 
 ///|
+pub fn runtime_execution_plan_response_for_session(
+  session : Json,
+  commands : Array[Json],
+  receipts : Array[Json],
+  events : Array[Json],
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  workspace_root~ : String,
+  moonclaw_root~ : String,
+  host_base_url~ : String,
+  native_ready~ : Bool,
+  lease_now~ : String,
+) -> Json {
+  runtime_execution_plan_response(
+    rq_json_string(session, "id", default=""),
+    commands,
+    receipts,
+    events,
+    workspace_id=rq_json_string(session, "workspace_id", default=""),
+    workspace_name=rq_json_string(session, "workspace_name", default=""),
+    task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+    workspace_root~,
+    moonclaw_root~,
+    host_base_url~,
+    native_ready~,
+    lease_now~,
+  )
+}
+
+///|
 pub fn runtime_supervisor_response(
   session_id : String,
   commands : Array[Json],
@@ -201,6 +233,38 @@ pub fn runtime_supervisor_response(
     native_ready~,
     lease_now~,
   ).supervisor
+}
+
+///|
+pub fn runtime_supervisor_response_for_session(
+  session : Json,
+  commands : Array[Json],
+  receipts : Array[Json],
+  events : Array[Json],
+  runtime_command_log_path~ : String,
+  runtime_dispatch_log_path~ : String,
+  workspace_root~ : String,
+  moonclaw_root~ : String,
+  host_base_url~ : String,
+  native_ready~ : Bool,
+  lease_now~ : String,
+) -> Json {
+  runtime_supervisor_response(
+    rq_json_string(session, "id", default=""),
+    commands,
+    receipts,
+    events,
+    workspace_id=rq_json_string(session, "workspace_id", default=""),
+    workspace_name=rq_json_string(session, "workspace_name", default=""),
+    task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+    runtime_command_log_path~,
+    runtime_dispatch_log_path~,
+    workspace_root~,
+    moonclaw_root~,
+    host_base_url~,
+    native_ready~,
+    lease_now~,
+  )
 }
 
 ///|

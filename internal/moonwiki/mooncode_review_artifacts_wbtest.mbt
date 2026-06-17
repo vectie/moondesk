@@ -14,7 +14,7 @@ async test "mooncode action plan writes durable moonbook manifest" {
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
   let message = @mooncode.command_message("run_tests", payload)
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     session, payload, "run_tests", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
   let runtime_command = @mooncode.runtime_command_record(
@@ -41,6 +41,79 @@ async test "mooncode action plan writes durable moonbook manifest" {
   assert_true(@fs.exists(@pathx.join(root, relative)))
   let actions = json_array_items(manifest, "actions")
   assert_eq(json_string(actions[0], "runtime_state", default=""), "delivered")
+}
+
+///|
+async test "mooncode package artifacts preserve raw ids while paths stay safe" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-mooncode-package-id-wbtest-" +
+    @desk.stable_id("mooncode-package-id-test", @async.now().to_string()),
+  )
+  @fsx.make_directory(root, recursive=true, exists_ok=true)
+  let session : Json = {
+    "id": "agent/unsafe",
+    "workspace_id": "book-demo",
+    "workspace_name": "Demo Book",
+    "workspace_root": root,
+  }
+  let command_packet : Json = {
+    "protocol": "mooncode.v1",
+    "command_id": "cmd/unsafe",
+    "session_id": "agent/unsafe",
+    "workspace_root": root,
+  }
+  match
+    write_mooncode_review_receipt_if_needed(
+      session, "package", command_packet, "tools/demo/main.mbt", "Package unsafe id command",
+      "2026-06-16T00:00:00Z",
+    ) {
+    Some(with_package) => {
+      let receipt = json_object_field_or_empty(
+        with_package, "mooncode_last_review_receipt",
+      )
+      assert_eq(json_string(receipt, "session_id", default=""), "agent/unsafe")
+      assert_eq(json_string(receipt, "command_id", default=""), "cmd/unsafe")
+      assert_eq(
+        json_string(receipt, "receipt_path", default=""),
+        "wiki/reviews/mooncode/session/package-command.json",
+      )
+      assert_true(
+        @fs.exists(
+          @pathx.join(root, json_string(receipt, "receipt_path", default="")),
+        ),
+      )
+      let package_manifest = json_object_field_or_empty(
+        with_package, "mooncode_last_package_manifest",
+      )
+      assert_eq(
+        json_string(package_manifest, "session_id", default=""),
+        "agent/unsafe",
+      )
+      assert_eq(
+        json_string(package_manifest, "command_id", default=""),
+        "cmd/unsafe",
+      )
+      assert_eq(
+        json_string(package_manifest, "manifest_path", default=""),
+        "portable/app-tool/mooncode/session/package-command.json",
+      )
+      let index = json_object_field_or_empty(
+        with_package, "mooncode_last_package_index_manifest",
+      )
+      assert_eq(json_string(index, "session_id", default=""), "agent/unsafe")
+      assert_eq(
+        json_string(index, "package_root", default=""),
+        "portable/app-tool/mooncode/session",
+      )
+      assert_true(
+        @fs.exists(
+          @pathx.join(root, "portable/app-tool/mooncode/session/index.json"),
+        ),
+      )
+    }
+    None => fail("package action should write review/package artifacts")
+  }
 }
 
 ///|
@@ -72,13 +145,17 @@ test "mooncode native response appends runtime events" {
     created_at="3",
     detail="package",
   )
-  let session = mooncode_append_native_response_events(Json::object({}), {
-    "events": [event],
-    "execution": { "events": [turn_event] },
-    "turn_receipt": { "events": [turn_event] },
-    "package_events": [package_event],
-    "turns": [{ "package_events": [package_event] }],
-  })
+  let session = @mooncode.append_projected_native_response_events(
+    Json::object({}),
+    {
+      "events": [event],
+      "execution": { "events": [turn_event] },
+      "turn_receipt": { "events": [turn_event] },
+      "package_events": [package_event],
+      "turns": [{ "package_events": [package_event] }],
+    },
+    loop_fallback_created_at="2026-06-17T00:00:00Z",
+  )
   let events = json_array_items(session, "mooncode_command_events")
   assert_eq(events.length(), 3)
   assert_eq(json_string(events[0], "id", default=""), "native-event")
@@ -88,17 +165,21 @@ test "mooncode native response appends runtime events" {
 
 ///|
 test "mooncode native runtime loop response records loop status event" {
-  let session = mooncode_append_native_response_events(Json::object({}), {
-    "kind": "mooncode-runtime-loop",
-    "protocol": "mooncode.v1",
-    "session_id": "agent-demo",
-    "book_root": "/tmp/demo-book",
-    "consumer_id": "moondesk-native-runtime-loop",
-    "ran_turn_count": 0,
-    "failed_turn_count": 0,
-    "stopped_by": "idle",
-    "message": "MoonClaw native runtime loop found no claimable MoonCode commands.",
-  })
+  let session = @mooncode.append_projected_native_response_events(
+    Json::object({}),
+    {
+      "kind": "mooncode-runtime-loop",
+      "protocol": "mooncode.v1",
+      "session_id": "agent-demo",
+      "book_root": "/tmp/demo-book",
+      "consumer_id": "moondesk-native-runtime-loop",
+      "ran_turn_count": 0,
+      "failed_turn_count": 0,
+      "stopped_by": "idle",
+      "message": "MoonClaw native runtime loop found no claimable MoonCode commands.",
+    },
+    loop_fallback_created_at="2026-06-17T00:00:00Z",
+  )
   let events = json_array_items(session, "mooncode_command_events")
   assert_eq(events.length(), 1)
   assert_eq(json_string(events[0], "lane", default=""), "runtime")
@@ -122,10 +203,10 @@ test "mooncode command events keep typed command packet" {
   }
   let payload : Json = { "context_path": "apps/demo/app.mbt" }
   let message = @mooncode.command_message("package", payload)
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     base, payload, "package", message, "2026-06-14T00:00:00Z", "apps/demo/app.mbt",
   )
-  let session = append_mooncode_command_event(
+  let session = @mooncode.append_projected_command_event(
     base,
     action="package",
     status="queued",
@@ -179,7 +260,7 @@ async test "mooncode review actions write moonbook receipts" {
     "fn main { println(\"mooncode\") }\n",
   )
   let message = @mooncode.command_message("accept", payload)
-  let packet = mooncode_command_packet(
+  let packet = @mooncode.projected_command_packet(
     session, payload, "accept", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
   let receipt = write_mooncode_review_receipt(
@@ -212,7 +293,7 @@ async test "mooncode review actions write moonbook receipts" {
   let recorded = write_mooncode_review_receipt_if_needed(
     session,
     "package",
-    mooncode_command_packet(
+    @mooncode.projected_command_packet(
       session,
       payload,
       "package",
@@ -472,14 +553,14 @@ async test "mooncode review actions write moonbook receipts" {
         1,
       )
       let with_tool_approvals = write_mooncode_tool_approvals_if_possible(
-        append_mooncode_command_event(
+        @mooncode.append_projected_command_event(
           with_patch_set,
           action="approve_tool",
           status="queued",
           detail="Approve shell",
           created_at="2026-06-14T00:02:00Z",
           path="moon test",
-          command_packet=mooncode_command_packet(
+          command_packet=@mooncode.projected_command_packet(
             with_patch_set,
             { "context_path": "moon test" },
             "approve_tool",
@@ -513,14 +594,14 @@ async test "mooncode review actions write moonbook receipts" {
           )
         None => fail("tool-approval manifest should be readable from session")
       }
-      let with_test_event = append_mooncode_command_event(
+      let with_test_event = @mooncode.append_projected_command_event(
         with_tool_approvals,
         action="run_tests",
         status="passed",
         detail="moon test passed",
         created_at="2026-06-14T00:03:00Z",
         path="tools/demo/main.mbt",
-        command_packet=mooncode_command_packet(
+        command_packet=@mooncode.projected_command_packet(
           with_tool_approvals,
           { "context_path": "tools/demo/main.mbt" },
           "run_tests",
@@ -588,7 +669,7 @@ async test "mooncode review actions write moonbook receipts" {
         None => fail("eval-report manifest should be readable from session")
       }
       let package_payload : Json = { "context_path": "tools/demo/main.mbt" }
-      let package_packet = mooncode_command_packet(
+      let package_packet = @mooncode.projected_command_packet(
         with_eval_report, package_payload, "package", "Package it.", "2026-06-14T00:04:00Z",
         "tools/demo/main.mbt",
       )

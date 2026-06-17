@@ -39,7 +39,7 @@ test "mooncode summary exposes eval readiness gates" {
       "manifest_path": "wiki/reviews/mooncode/s1/runtime-handoff.json",
     },
   }
-  let command_packet = mooncode_command_packet(
+  let command_packet = @mooncode.projected_command_packet(
     base_session,
     { "context_path": "tools/demo/main.mbt" },
     "accept",
@@ -341,7 +341,7 @@ test "mooncode summary exposes eval readiness gates" {
   assert_true(
     json_string(eval_report, "current_gap", default="").contains("MoonClaw"),
   )
-  let native_eval = mooncode_normalize_native_eval_report(
+  let native_eval = @mooncode.normalize_native_eval_report(
     { "native_eval_evidence_ready": true, "harnesses": ["tool_harness"] },
     "/v1/mooncode/sessions/s1/eval-report",
   )
@@ -432,7 +432,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   }
   let eval_payload : Json = { "context_path": "tools/demo/main.mbt" }
   let eval_message = @mooncode.command_message("run_eval", eval_payload)
-  let eval_packet = mooncode_command_packet(
+  let eval_packet = @mooncode.projected_command_packet(
     session, eval_payload, "run_eval", eval_message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
   let eval_runtime_command = @mooncode.runtime_command_record(
@@ -443,7 +443,9 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   append_mooncode_runtime_dispatch_log(
     root,
     "agent-demo",
-    mooncode_runtime_dispatch_receipt(session, eval_runtime_command),
+    @mooncode.projected_runtime_dispatch_receipt(
+      session, eval_runtime_command, "2026-06-14T00:01:00Z",
+    ),
   )
   let before_plan = mooncode_action_plan_projection(root, session)
   let before_actions = json_array_items(before_plan, "actions")
@@ -474,6 +476,46 @@ async test "mooncode native eval report ingress persists moonbook proof" {
             "tool_name": "read",
             "tool_call_id": "eval-call-read",
             "content": "fn main { println(\"demo\") }",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_call",
+            "id": "eval-tool-call-ide",
+            "created_at": "2026-06-14T00:00:50Z",
+            "tool_name": "moon_ide",
+            "tool_call_id": "eval-call-ide",
+            "arguments": "{\"action\":\"outline\",\"path\":\"tools/demo/main.mbt\"}",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_result",
+            "id": "eval-tool-result-ide",
+            "created_at": "2026-06-14T00:00:55Z",
+            "tool_name": "moon_ide",
+            "tool_call_id": "eval-call-ide",
+            "content": "main : () -> Unit",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_call",
+            "id": "eval-tool-call-cmd",
+            "created_at": "2026-06-14T00:00:56Z",
+            "tool_name": "moon_cmd",
+            "tool_call_id": "eval-call-cmd",
+            "arguments": "{\"command\":\"moon info\"}",
+            "command_id": command_id,
+            "action": "run_eval",
+          },
+          {
+            "event": "tool_result",
+            "id": "eval-tool-result-cmd",
+            "created_at": "2026-06-14T00:00:57Z",
+            "tool_name": "moon_cmd",
+            "tool_call_id": "eval-call-cmd",
+            "content": "moon info passed",
             "command_id": command_id,
             "action": "run_eval",
           },

@@ -35,7 +35,7 @@ pub fn runtime_event_command_progress(events : Array[Json]) -> Json {
   }
   {
     "kind": "mooncode-runtime-event-command-progress",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "command_count": items.length(),
     "scoped_event_count": total_scoped_events,
     "running_command_count": running_commands,
@@ -44,6 +44,29 @@ pub fn runtime_event_command_progress(events : Array[Json]) -> Json {
     "commands": Json::array(items),
     "rule": "Progress is grouped only from runtime events with a command_packet.command_id or OpenSeek/MoonCode command_id; unscoped transcript/runtime events remain visible but do not prove a command.",
   }
+}
+
+///|
+pub fn runtime_event_command_rows(
+  events : Array[Json],
+  source~ : String,
+) -> Array[Json] {
+  let progress = runtime_event_command_progress(events)
+  let commands = runtime_json_array_items(progress, "commands")
+  let rows : Array[Json] = []
+  for command in commands {
+    rows.push({
+      "command_id": json_string(command, "command_id", default=""),
+      "action": json_string(command, "action", default="prompt"),
+      "status": json_string(command, "status", default=""),
+      "created_at": json_string(command, "latest_created_at", default=""),
+      "message": json_string(command, "latest_title", default=""),
+      "source": source,
+      "event_count": runtime_json_int(command, "event_count", default=0),
+      "latest_event_id": json_string(command, "latest_event_id", default=""),
+    })
+  }
+  rows
 }
 
 ///|

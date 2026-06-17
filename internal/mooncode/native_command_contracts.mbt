@@ -10,7 +10,7 @@ pub fn native_command_execution_plan(
 ) -> Json {
   {
     "kind": "mooncode-native-command-execution-plan",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "action": action,
     "dispatch": json_string(command_packet, "dispatch", default="command"),
     "approval": json_string(command_packet, "approval", default="none"),

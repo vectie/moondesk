@@ -4,16 +4,24 @@
 ///|
 pub fn native_command_tool_sequence(action : String) -> Array[String] {
   match action {
-    "run_tests" => ["read", "moon_check", "shell", "finish"]
-    "run_eval" => ["read", "moon_check", "shell", "finish"]
-    "package" => ["read", "moon_check", "shell", "package_app_tool", "finish"]
-    "commit" => ["read", "moon_check", "shell", "finish"]
+    "run_tests" =>
+      ["read", "moon_ide", "moon_cmd", "moon_check", "shell", "finish"]
+    "run_eval" =>
+      ["read", "moon_ide", "moon_cmd", "moon_check", "shell", "finish"]
+    "package" =>
+      [
+        "read", "moon_ide", "moon_cmd", "moon_check", "shell", "package_app_tool",
+        "finish",
+      ]
+    "commit" =>
+      ["read", "moon_ide", "moon_cmd", "moon_check", "shell", "finish"]
     "accept" => ["read", "package_app_tool", "finish"]
     "reject" => ["read", "finish"]
     "apply_patch" | "revert_patch" =>
-      ["read", "apply_patch", "moon_check", "finish"]
+      ["read", "moon_ide", "apply_patch", "moon_cmd", "moon_check", "finish"]
     "approve_tool" | "reject_tool" => ["finish"]
-    "prompt" | "steer" => ["read", "edit", "write", "moon_check", "finish"]
+    "prompt" | "steer" =>
+      ["moon_ide", "read", "edit", "write", "moon_cmd", "moon_check", "finish"]
     "cancel" => ["finish"]
     _ => ["finish"]
   }

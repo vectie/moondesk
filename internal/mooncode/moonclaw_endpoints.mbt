@@ -7,13 +7,19 @@ pub fn moonclaw_native_command_endpoint(session_id : String) -> String {
 }
 
 ///|
-pub fn moonclaw_native_runtime_loop_endpoint(session_id : String) -> String {
-  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/runtime-loop"
+pub fn moonclaw_native_runtime_loop_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/runtime-loop?book_root=\{moonclaw_query_value(book_root)}"
 }
 
 ///|
-pub fn moonclaw_native_runtime_turn_endpoint(session_id : String) -> String {
-  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/runtime-turn"
+pub fn moonclaw_native_runtime_turn_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/runtime-turn?book_root=\{moonclaw_query_value(book_root)}"
 }
 
 ///|
@@ -25,6 +31,27 @@ pub fn moonclaw_native_eval_report_endpoint(
 }
 
 ///|
+pub fn moonclaw_native_package_result_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/package-result?book_root=\{moonclaw_query_value(book_root)}"
+}
+
+///|
+pub fn moonclaw_native_serve_scheduler_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/serve-scheduler?book_root=\{moonclaw_query_value(book_root)}"
+}
+
+///|
+pub fn moonclaw_native_session_listing_endpoint(book_root : String) -> String {
+  "/v1/mooncode/sessions?book_root=\{moonclaw_query_value(book_root)}&format=json"
+}
+
+///|
 pub fn moonclaw_native_stream_endpoint(
   session_id : String,
   book_root : String,
@@ -32,6 +59,14 @@ pub fn moonclaw_native_stream_endpoint(
   since : Int,
 ) -> String {
   "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/stream?book_root=\{moonclaw_query_value(book_root)}&format=\{moonclaw_query_value(format)}&since=\{since}"
+}
+
+///|
+pub fn moonclaw_native_runtime_events_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/runtime-events?book_root=\{moonclaw_query_value(book_root)}"
 }
 
 ///|

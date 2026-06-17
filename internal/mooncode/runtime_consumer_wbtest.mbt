@@ -2,7 +2,7 @@
 test "mooncode runtime consumer ack completes run_tests with typed tool proof" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let runtime_command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-tests",
     "session_id": "session-demo",
@@ -70,7 +70,7 @@ test "mooncode runtime consumer ack completes run_tests with typed tool proof" {
 test "mooncode runtime consumer ack is proof-missing when an expected tool outcome is absent" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let runtime_command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-tests",
     "session_id": "session-demo",
@@ -116,7 +116,7 @@ test "mooncode runtime consumer ack is proof-missing when an expected tool outco
 test "mooncode runtime consumer package output ack proves executable package completion" {
   let session : Json = { "id": "session-demo", "workspace_id": "book-demo" }
   let runtime_command : Json = {
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-package",
     "session_id": "session-demo",

@@ -6,7 +6,7 @@ pub fn eval_harness_contract_json() -> Json {
   {
     "ok": true,
     "kind": "mooncode-eval-harness-contract",
-    "protocol": "mooncode.v1",
+    "protocol": protocol_version(),
     "version": 1,
     "reference": "../openseek/eval",
     "owner": "moonclaw-or-extractable-mooncode",
@@ -20,11 +20,14 @@ pub fn eval_harness_contract_json() -> Json {
         "execution": "deterministic-host-side",
         "purpose": "Dispatch every built-in coding tool through the same typed registry used by the agent loop.",
         "required_tools": [
-          "read", "write", "edit", "shell", "moon_check", "finish",
+          "read", "write", "edit", "shell", "moon_ide", "moon_cmd", "moon_check",
+          "finish",
         ],
         "required_evidence": [
           "tool registry builds", "each tool returns a typed result event", "filesystem mutations match expected disk state",
-          "moon_check executes against a temporary MoonBit package", "finish emits a terminal agent_finished event",
+          "moon_ide runs semantic navigation against a temporary MoonBit package",
+          "moon_cmd executes structured MoonBit commands with bounded output", "moon_check executes against a temporary MoonBit package",
+          "finish emits a terminal agent_finished event",
         ],
       },
       {
