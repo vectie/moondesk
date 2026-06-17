@@ -42,12 +42,20 @@ record/stream helpers. MoonWiki server code in `internal/moonwiki` consumes that
 instead of owning the
 prompt/steer/cancel protocol, dispatch policy, approval policy, tool hints,
 expected lanes, supported tools, tool input/output schemas, and tool safety
-constraints directly. It also delegates session id validation, event record
+constraints directly. `internal/mooncode/protocol.mbt` is the local owner of
+the `mooncode.v1` wire version, command/runtime kinds, runtime-turn/tool-call
+contract kinds, and canonical tool/test/package/control event names; MoonWiki
+must consume those helpers rather than re-declaring wire atoms in route code.
+It also delegates session id validation, event record
 construction, event/command/runtime-dispatch JSONL parsing, and event
-merge/dedupe to `internal/mooncode`, along with JSONL/SSE stream batch
+merge/dedupe to `internal/mooncode`, along with compact session-list row
+projection, native/local session-list merge and dedupe, JSONL/SSE stream batch
 rendering, meta/event/done stream records, 1-based tail records, stream mode,
-stream source, checkpoint cursor selection, checkpoint records, and
-stream-state records. It now also delegates runtime queue classification to
+stream source, bounded live-tail option defaults/clamping/attempt counts,
+stream content type selection, Moondesk stream endpoint construction,
+checkpoint cursor selection, checkpoint records, and stream-state records,
+including the Moondesk checkpoint/state wrapper records that fill resumable
+stream, live-tail, and runtime-event ingest endpoints. It now also delegates runtime queue classification to
 `internal/mooncode`: protocol metadata, command decode reports,
 pending/delivered/claimed/expired lease state, pending OpenSeek JSONL export,
 runtime replay state, runtime claim state, claim/replay consumer contracts,
@@ -58,37 +66,111 @@ event lane validation, runtime event titles, tool lane classification, command
 preflight rules, acceptance-gate projection, required action-gate metadata,
 patch-target checks, `preflight.blocked` event shaping, and action-plan
 item/state projection over command logs, runtime receipts, preflight events,
-and current session summaries. It also owns the host-neutral session summary
-and eval-report projection: event lane counts, review state, pending diff/tool
+and current session summaries. It also owns the saved action-plan manifest
+response wrapper that stamps durable manifest paths while MoonWiki only chooses
+host paths and writes files. It also owns the generic manifest-event, review
+receipt, and package/index session patches that append shaped events to
+`mooncode_command_events` and stamp the matching `mooncode_last_*` fields. It also owns the host-neutral session projection
+response wrapper that attaches projected events and session summary while
+keeping MoonWiki limited to reading host logs and supplying log paths/counts.
+It also owns the runtime-evidence response and persisted manifest wrappers:
+MoonWiki supplies host-selected manifest/log paths, while MoonCode stamps the
+`manifest_path`, `absolute_manifest_path`, and durable log-path fields onto the
+session proof projection.
+It also owns the runtime-event and package-result response wrappers that attach
+native readiness, endpoint, error, and count metadata; MoonWiki only supplies
+host log paths, enriched session state, and fetched MoonClaw native state.
+Native runtime-events unavailable/available state shapes are MoonCode-owned as
+well; MoonWiki only checks daemon readiness and performs the GET.
+Package-result native forwarding report shapes, including unavailable-daemon
+and partial-rejection states, are MoonCode-owned too; MoonWiki only performs the
+HTTP post loop.
+It also owns the host-neutral session summary, eval-report projection, and
+saved eval-report manifest session patch:
+event lane counts, review state, pending diff/tool
 approval counts, verified test counts, MoonBook manifest counters, bridge
-readiness checks, and native eval report status. It also owns host-neutral
+readiness checks, native eval report status, and accepted native eval evidence
+carry-forward from saved eval-report manifests. Native eval-report session
+patching is MoonCode-owned too: MoonWiki decides when to fetch or persist
+native proof, but MoonCode normalizes and stores
+`mooncode_native_eval_report`. It also owns host-neutral
 change-set, patch-set, tool-approval, test-run, package-manifest,
 package-index, and package-candidate projection: reviewable lane entries,
 patch hunk grouping, approval/test row grouping, package status/index/
 entry-point derivation, review-state derivation, and manifest status/count
 fields. It also owns the event-record shapes for review receipts, review
-manifests, package manifests/indexes, and runtime-handoff manifests; Moondesk
-only supplies stable ids and persists those records. It also owns the artifact
+manifests, package manifests/indexes, and runtime-handoff manifests, including
+their canonical projected event IDs; Moondesk only persists those records and
+supplies host timestamps/paths where the protocol requires observed host state.
+Tool-authorization preview event IDs and normalized preview records are also
+MoonCode-owned, and command preflight blocked/override event IDs are now
+MoonCode-owned too, so MoonWiki only forwards payloads, actions, paths, and
+observed timestamps. Runtime-dispatch receipt IDs and native runtime-loop
+fallback event IDs are also MoonCode-owned; the desktop supplies observed
+dispatch/runtime timestamps and persisted session state. It also owns the artifact
 path contract for `wiki/reviews/mooncode/<session-id>/...` and
 `portable/app-tool/mooncode/<session-id>/...`, including safe session/command
 id normalization. It also owns durable session snapshot projection and runtime-handoff
 projection, including the runtime-consumer status/action block and runtime
 event-ingest contract, keeping append-log session state, claim/replay consumer
 state, and runtime resume manifests independent of HTTP routes or desktop
-storage. It also owns initial typed session record construction, command
+storage. It also owns initial typed session ID projection and record construction, command
 action/context/message defaults, command event shaping, command-event
-session append/update, transcript-message event shaping, command packet
-construction, OpenSeek serve-wire wrapping, native MoonCode command bodies,
+session append/update, command-event fallback id projection,
+transcript-message event shaping, command packet construction and stable
+command-id projection, OpenSeek serve-wire wrapping, native MoonCode command bodies,
 execution plans, result contracts, compact execution summaries, runtime
-dispatch status/detail classification, and runtime-dispatch receipt body
+dispatch status/detail classification, runtime-dispatch receipt id projection,
+and runtime-dispatch receipt body
 construction, including the
 response-normalized dispatch receipt view used by
-operator/runtime feed endpoints. It also owns the tool-authorization contract
+operator/runtime feed endpoints. It also owns the MoonClaw task-bridge and
+native runtime session patch shapes and the host-neutral patch application over
+session JSON, including status/detail,
+`mooncode_dispatch_mode`, `last_message`, `mooncode_last_command_packet`, and
+the status transcript row. It also owns the native runtime-supervisor launch
+result patch applied after MoonClaw loop/turn execution, including the status
+transcript row, dispatch mode, and updated timestamp fields. The reusable
+MoonCode adapter also owns native MoonClaw capability readiness: MoonWiki fetches
+`/v1/mooncode/capabilities`, while MoonCode verifies the component, protocol,
+`mooncode-native-capability-surface.v1` capability contract id, required
+endpoint set, required tool set, and nested `capability_surface` object before
+treating MoonClaw as native-runtime-ready. MoonCode also shapes
+unavailable-daemon readiness reports, including the expected capability contract
+id, so MoonWiki supplies the observed error or capability payload without
+constructing MoonCode protocol JSON. The required endpoint/tool lists,
+capability contract id, canonical native capability surface, and surface
+fingerprint are now owned by the package-level `mooncode/core` contract package.
+`internal/mooncode/protocol.mbt` keeps the existing public wrappers beside the
+other `mooncode.v1` wire atoms for call-site compatibility, but no longer owns
+those shared constants directly. The same core package also builds the canonical
+`mooncode-native-capability-surface` JSON object that readiness reports expose
+as `expected_capability_surface` and compare with MoonClaw's advertised
+`capability_surface`. That surface also carries a SHA-256
+`capability_surface_fingerprint` over the protocol, capability contract id,
+required endpoint list, and required tool list. Moondesk refuses native dispatch
+when the daemon's nested surface fingerprint differs, giving the current
+two-repo implementation a drift guard. MoonClaw now has the matching
+`mooncode/core` package and its daemon protocol wrappers consume that package,
+so the remaining consolidation step is replacing the mirrored per-repo core
+packages with one physically shared MoonCode module. Until that module exists,
+`scripts/verify-mooncode-core-sync.sh` is the repository gate for this boundary:
+it compares the hand-authored `mooncode/core` package files and the normalized
+generated public interface across Moondesk and MoonClaw. The broader
+`scripts/validate-core-boundaries.sh` command composes that sync gate with the
+targeted Moondesk MoonCode/MoonWiki tests, MoonClaw daemon tests, and lightweight
+MoonBook/Moontown contract checks that cover the current desktop/book/town/agent
+ownership split.
+MoonWiki
+appends UI status messages,
+supplies observed timestamps, and persists the patched session.
+It also owns the tool-authorization contract
 and preview/allowed/requires-approval/blocked decision projection. It also
 owns legacy MoonClaw `desc.msg` event-record shaping for transcript, runtime,
 tool, diff, test, and artifact lanes, including assistant deltas,
 request-completed messages, path extraction, and command extraction; Moondesk
-supplies stable ids, timestamps, persistence, and host observations but no
+now delegates the runtime ingest report's descriptor fallback to MoonCode as
+well. Moondesk supplies timestamps, persistence, and host observations but no
 longer owns those durable-session, runtime-feed, dispatch-receipt, or
 authorization-decision schemas. The
 filesystem-backed sidecar store, HTTP query parsing, live polling, checkpoint
@@ -99,7 +181,8 @@ dispatch/claim/replay receipt appends still live in `internal/moonwiki`;
 MoonWiki's durable event/summary projection adapter now lives outside the
 generic MoonCode session router while still joining MoonClaw task events,
 sidecar JSONL, and MoonCode-owned summary contracts for the desktop API; the
-host-side command-event id/default adapter is also outside the route wrapper,
+host-side command-event default adapter delegates command-event id projection
+to MoonCode and is also outside the route wrapper,
 and the create-session HTTP flow has its own MoonWiki adapter file, so the
 generic session file now keeps only list/event dispatch. Review-artifact
 manifest lookup and refresh have a dedicated MoonWiki adapter, while
@@ -1035,8 +1118,32 @@ Implemented behavior:
   transcript, runtime, tool, diff, test, artifact, and review.
   `GET /api/mooncode/sessions?format=listing` returns the compact
   OpenSeek-style machine list row (`id`, `title`, `updated_at_ms`, workspace
-  context, status/model, and session/stream URLs) through `internal/mooncode`,
-  keeping sidebar/resume discovery out of MoonWiki route code.
+  context, status/model, and session/stream URLs). The route first merges
+  MoonClaw-native `format=json` rows for the selected book root when a daemon
+  is reachable, accepting OpenSeek's raw `[...]` JSON session-list response and
+  MoonClaw's richer `{ "sessions": [...] }` envelope for compatibility, then falls back to
+  `internal/mooncode` local projection so sidebar/resume discovery stays out of
+  MoonWiki route code. Native
+  `updated_at_ms` is owned by MoonClaw and is based on live `last_updated` or
+  durable sidecar mtimes, matching OpenSeek's machine-readable session-list
+  contract. MoonClaw sorts native listing rows newest first, with undated rows
+  last, and Moondesk preserves that daemon order before appending local fallback
+  rows.
+  MoonClaw also owns native `moon_check` watcher state under
+  `.moonclaw/mooncode/watchers/moon-check.json`: watcher action
+  (`started`, `reused`, `replaced`, `restarted`), textual watcher status,
+  numeric `exit_status`, `seq`, restart count, and command line. Moondesk
+  renders that proof as runtime/test evidence and does not create competing
+  checkers in the desktop layer. MoonClaw's native runtime-events GET also
+  projects that watcher sidecar into a synthetic test-lane
+  `[moon_check update]` event; `event_count` includes projected evidence while
+  `durable_event_count` stays tied to persisted `events.jsonl` rows. Moondesk's
+  runtime-events GET route consumes the native MoonClaw endpoint when available,
+  merges native events ahead of local append-log events by event id, and exposes
+  native/local event counts plus the native endpoint/error so the desktop UI can
+  distinguish engine proof from fallback proof. The Runtime Evidence projection
+  uses the same merged event set, so action/evidence gates can count MoonClaw
+  native sidecar proof instead of only Moondesk-local append-log rows.
 - `POST /api/mooncode/sessions` creates a book-scoped coding session through
   the MoonClaw task bridge, tags the persisted session with
   `component=mooncode`, `protocol=mooncode.v1`, and
@@ -1128,10 +1235,11 @@ Implemented behavior:
   `wiki/reviews/mooncode/<session-id>/runtime-handoff.json`. It names the
   typed session snapshot path, command log, runtime command log, event log,
   session-store endpoint, stream endpoint, command queue endpoint, runtime
-  command feed endpoint, native MoonClaw command/eval endpoints, book output
-  roots, artifact manifest pointers, dispatch mode, and next runtime step. This
-  is the current explicit resume/extraction object for MoonClaw or a future
-  standalone `mooncode` runtime, while Moondesk only renders and refreshes it.
+  command feed endpoint, native MoonClaw session-listing/command/eval
+  endpoints, book output roots, artifact manifest pointers, dispatch mode, and
+  next runtime step. This is the current explicit resume/extraction object for
+  MoonClaw or a future standalone `mooncode` runtime, while Moondesk only
+  renders and refreshes it.
   The manifest includes normalized dispatch receipts plus a
   `runtime_consumer` block that states whether an external runtime should claim,
   resume a lease, wait, repair invalid commands, or publish completion/eval
@@ -1159,6 +1267,10 @@ Implemented behavior:
   decode validity, tool authorization, and lease expiry. Moondesk renders this
   as the Lifecycle block, while MoonClaw or a future standalone `mooncode`
   runtime can use the same object to decide the next claim/replay action.
+  MoonClaw's native runtime-turn now also returns and enforces the corresponding
+  `serve_scheduler_state` / `serve_scheduler_decision`, closing idle `steer` and
+  `cancel` controls as `steer_dropped` / `cancel_dropped` proof instead of
+  planning fallback tool calls.
   The reusable response projection that assembles dispatch receipts, replay,
   claim, lifecycle, scheduler, runtime-turn, and supervisor state now lives
   outside the endpoint builder, keeping shared runtime state extractable from
@@ -1230,7 +1342,12 @@ Implemented behavior:
   the response shape remains MoonCode-owned.
 - `GET/POST /api/mooncode/sessions/:id/runtime-events` is the MoonClaw to
   Moondesk event boundary. GET exposes the durable sink contract and current
-  `events.jsonl` contents. POST accepts OpenSeek-style JSONL event objects,
+  `events.jsonl` contents. Native GET payloads from MoonClaw are normalized
+  through the same OpenSeek/MoonClaw adapter before merge, so id-less native
+  `tool_result` or watcher rows receive canonical MoonCode ids instead of being
+  dropped by event-id de-duplication. GET responses expose native
+  submitted/accepted/rejected counts and the full native normalization report.
+  POST accepts OpenSeek-style JSONL event objects,
   native `tool_call`/`tool_started` progress, legacy MoonClaw `desc.msg`
   events, canonical MoonCode events, or
   `{"events":[...]}` batches, normalizes them into MoonCode lanes, appends them
@@ -1239,8 +1356,9 @@ Implemented behavior:
   session-snapshot, and runtime-handoff artifacts. Moondesk remains the UI and
   review surface; MoonClaw remains the execution owner.
   The reusable event ingestion code is split from sink/result response builders,
-  so runtime event normalization and OpenSeek/MoonClaw payload acceptance stay
-  independent from HTTP response assembly.
+  so runtime event normalization, descriptor-only MoonClaw fallback acceptance,
+  and OpenSeek/MoonClaw payload reporting stay independent from HTTP response
+  assembly.
 - `GET /api/mooncode/sessions/:id/stream?format=jsonl|sse&since=<sequence>`
   prefers the MoonClaw-owned native MoonCode runtime when
   `/v1/mooncode/capabilities` responds, proxying
@@ -1296,7 +1414,9 @@ Implemented behavior:
   serve-mode command wire, append-only session store, eval harness split, and
   native eval-report schema for `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`, plus
   a data-only `mooncode-tool-contract` for `read`, `edit`, `write`, `shell`,
-  `moon_check`, and `finish`. Runtime-contract construction is a separate
+  `moon_ide`, `moon_cmd`, `moon_check`, and `finish`. `moon_ide` is read-only
+  semantic MoonBit navigation; `moon_cmd` is the structured MoonBit command
+  runner for bounded check/test/build/run/info/fmt execution. Runtime-contract construction is a separate
   MoonCode implementation slice from top-level capability response assembly,
   keeping the OpenSeek/MoonClaw engine contract extractable from the broader
   Moondesk inspector payload. That tool contract defines input fields, required
@@ -1311,7 +1431,8 @@ Implemented behavior:
 - `GET /api/mooncode/eval-harness` returns the standalone
   `mooncode-eval-harness-contract`. It names `../openseek/eval/tool_harness`
   and `../openseek/eval/file_edit` as references, requires deterministic tool
-  coverage for `read`, `write`, `edit`, `shell`, `moon_check`, and `finish`,
+  coverage for `read`, `write`, `edit`, `shell`, `moon_ide`, `moon_cmd`,
+  `moon_check`, and `finish`,
   requires file-edit cases for exact replacement,
   ambiguous replacement, multiline edit, file creation, and compile fix, and
   defines the report schema that MoonClaw must publish through
@@ -1319,7 +1440,10 @@ Implemented behavior:
   proof; it does not run the coding eval engine itself.
 - `POST /api/mooncode/sessions/:id/commands` records `mooncode.v1` command
   packets to `.moontown/mooncode-sessions/<session-id>/commands.jsonl` and
-  command events to the event log. The normalized `command_packet` JSON
+  command events to the event log. MoonCode owns command packet id projection,
+  preflight blocked/override event id projection, and command-event fallback id
+  projection when a packet has no explicit `command_id`. The normalized
+  `command_packet` JSON
   contains action, dispatch, approval, session/workspace/task ids, context path,
   expected lanes, tool hints, output contract, and ownership boundary. Before
   recording or dispatching, Moondesk runs the same projected-event preflight
@@ -1332,8 +1456,9 @@ Implemented behavior:
   `events.jsonl`, included in the 409 JSON response, and projected into the
   Action Plan as blocked rows. Moondesk now prefers the
   MoonClaw-owned native MoonCode runtime when `/v1/mooncode/capabilities`
-  responds, posting the packet to `/v1/mooncode/sessions/<id>/commands`; if
-  that endpoint is absent, it falls back to the `/v1/task` prompt/message/cancel
+  passes the MoonCode-owned compatibility check, posting the packet to
+  `/v1/mooncode/sessions/<id>/commands`; if that endpoint or required contract
+  surface is absent, it falls back to the `/v1/task` prompt/message/cancel
   bridge and records `dispatch_mode` in the session summary. Native MoonClaw
   endpoint path and query-string construction is owned by `internal/mooncode`,
   separate from the adapter contract/readiness projection, so MoonWiki handlers
@@ -1366,9 +1491,11 @@ Implemented behavior:
   when source exists, creating a durable package candidate. MoonClaw native
   runtime-turn can now also write the same MoonBook manifest/index shape for
   generated tools and miniapps, append `package_built`/`package_verified`
-  proof after book-local verification, and use an explicitly selected model for
+  proof after book-local verification, execute native `moon_ide` and `moon_cmd`
+  tool calls inside the selected MoonBook root, and use an explicitly selected model for
   bounded OpenSeek-style tool-call planning with tool-result feedback, planner
-  reasoning/assistant/tool-call events, and deterministic fallback. MoonClaw
+  reasoning/assistant/tool-call events, deterministic fallback, and
+  scheduler-owned idle control drops. MoonClaw
   native runtime-loop now supervises repeated runtime-turns over the durable
   queue until idle, failure, cancel, or max-turns, and Moondesk prefers that
   endpoint with runtime-turn fallback.
