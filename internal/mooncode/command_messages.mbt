@@ -21,6 +21,8 @@ pub fn command_message(action : String, payload : Json) -> String {
   match action {
     "run_tests" =>
       "Run the relevant tests or build checks for \{target}. Report the exact command, result, failures, and next fix."
+    "run_build" =>
+      "Run the relevant build checks for \{target}. Prefer the structured MoonBit build command when available, report the exact command, result, failures, and next fix."
     "run_eval" =>
       "Run the OpenSeek-style MoonCode eval harnesses for \{target}, especially tool_harness and file_edit. Publish the native eval report to `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>` or POST equivalent proof to Moondesk's eval-report ingest endpoint, including harness ids, pass/fail counts, evidence, and failure details."
     "package" =>

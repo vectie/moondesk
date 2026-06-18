@@ -4,7 +4,7 @@
 ///|
 pub fn native_command_tool_sequence(action : String) -> Array[String] {
   match action {
-    "run_tests" =>
+    "run_tests" | "run_build" =>
       ["read", "moon_ide", "moon_cmd", "moon_check", "shell", "finish"]
     "run_eval" =>
       ["read", "moon_ide", "moon_cmd", "moon_check", "shell", "finish"]
@@ -30,7 +30,8 @@ pub fn native_command_tool_sequence(action : String) -> Array[String] {
 ///|
 pub fn native_command_expected_events(action : String) -> Array[String] {
   match action {
-    "run_tests" => ["tool_call", "tool_result", "test_result", "agent_finished"]
+    "run_tests" | "run_build" =>
+      ["tool_call", "tool_result", "test_result", "agent_finished"]
     "run_eval" =>
       [
         "tool_call", "tool_result", "test_result", "eval_report.manifest", "agent_finished",
@@ -62,6 +63,7 @@ pub fn native_command_expected_events(action : String) -> Array[String] {
 pub fn native_command_required_outputs(action : String) -> Array[String] {
   match action {
     "run_tests" => ["test command", "exit code", "test_result event"]
+    "run_build" => ["build command", "exit code", "test_result event"]
     "run_eval" =>
       [
         "tool_harness result", "file_edit result", "native eval report", "eval_report.manifest event",
@@ -104,6 +106,14 @@ pub fn native_command_recommended_commands(
         ["moon check", "moon test"]
       } else {
         ["moon check", "moon test", "package-specific test command if present"]
+      }
+    "run_build" =>
+      if context_path.has_suffix(".mbt") || context_path.contains("moon.pkg") {
+        ["moon build", "moon check"]
+      } else {
+        [
+          "moon build", "moon check", "package-specific build command if present",
+        ]
       }
     "run_eval" =>
       [

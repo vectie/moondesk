@@ -67,8 +67,9 @@ pub fn capabilities_json() -> Json {
       "tool_authorization_snapshot": "Every native MoonCode command body and runtime-command row includes a mooncode-tool-authorization-snapshot with manifest path, approval counts, current approval rows, enforcement_state, and runtime_may_execute. MoonClaw or standalone MoonCode must enforce this snapshot and recheck /tool-authorization before gated tool execution. Commands with runtime_may_execute=false are excluded from pending replay/claim and block later non-delivered rows until approval state is resolved.",
       "command_preflight": "GET /preflight returns the same gate projection without mutation; POST /commands rejects blocked accept/package/commit/apply/revert commands before command log append when tests fail, approvals are pending, file changes lack verified tests, reviewed changes are missing for commit, or no selected patch target exists; rejected attempts are recorded as preflight.blocked events and projected into the Action Plan without entering the runtime command queue. Payloads with force_preflight=true append preflight.override audit events, then enter the normal command/runtime command queue as operator overrides that still require runtime evidence before output is trusted",
       "commands": [
-        "prompt", "steer", "run_tests", "run_eval", "package", "commit", "accept",
-        "reject", "apply_patch", "revert_patch", "approve_tool", "reject_tool", "cancel",
+        "prompt", "steer", "run_tests", "run_build", "run_eval", "package", "commit",
+        "accept", "reject", "apply_patch", "revert_patch", "approve_tool", "reject_tool",
+        "cancel",
       ],
       "events": [
         "assistant_delta", "reasoning_delta", "tool_call", "tool_result", "file_change",
@@ -187,8 +188,9 @@ pub fn capabilities_json() -> Json {
 ///|
 fn command_specs_json() -> Array[Json] {
   let actions = [
-    "prompt", "steer", "run_tests", "run_eval", "package", "commit", "accept", "reject",
-    "approve_tool", "reject_tool", "apply_patch", "revert_patch", "cancel",
+    "prompt", "steer", "run_tests", "run_build", "run_eval", "package", "commit",
+    "accept", "reject", "approve_tool", "reject_tool", "apply_patch", "revert_patch",
+    "cancel",
   ]
   actions.map(action => {
     "action": action,

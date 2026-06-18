@@ -11095,6 +11095,11 @@ fn render_agent_center(
         ),
         button(
           class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_build")),
+          "Run Build",
+        ),
+        button(
+          class="secondary-button",
           on_click=dispatch(RunMoonCodeCommand("package")),
           "Package",
         ),
@@ -11259,6 +11264,11 @@ fn render_mooncode_session_header(
           class="primary-button",
           on_click=dispatch(RunMoonCodeCommand("run_tests")),
           "Run Tests",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_build")),
+          "Run Build",
         ),
       ]),
     ]),
@@ -11796,6 +11806,11 @@ fn render_mooncode_queued_command(
         ),
         button(
           class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("run_build", command.target)),
+          "Build",
+        ),
+        button(
+          class="secondary-button",
           on_click=dispatch(RunMoonCodeCommandForPath("package", command.target)),
           "Package",
         ),
@@ -11827,7 +11842,7 @@ fn mooncode_command_queue_item_state(command : MoonCodeQueuedCommand) -> String 
     "cancel" => "rejected"
     "accept" | "approve_tool" | "apply_patch" => "accepted"
     "reject" | "reject_tool" | "revert_patch" => "rejected"
-    "run_tests" | "run_eval" => "running"
+    "run_tests" | "run_build" | "run_eval" => "running"
     "package" => "pending"
     _ => "queued"
   }
@@ -12446,7 +12461,7 @@ fn mooncode_command_tool_authorization_state(command : Json) -> String {
 fn mooncode_runtime_command_feed_item_class(command : Json) -> String {
   match json_field_string(command, "action", default="") {
     "cancel" => "rejected"
-    "run_tests" | "run_eval" => "running"
+    "run_tests" | "run_build" | "run_eval" => "running"
     "package" => "pending"
     "accept" | "approve_tool" | "apply_patch" => "accepted"
     "reject" | "reject_tool" | "revert_patch" => "rejected"
@@ -12568,6 +12583,11 @@ fn render_mooncode_action_plan_item(
           class="secondary-button",
           on_click=dispatch(RunMoonCodeCommandForPath("run_tests", target)),
           "Test",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("run_build", target)),
+          "Build",
         ),
         button(
           class="secondary-button",
@@ -14506,6 +14526,11 @@ fn render_mooncode_test_run_entry(
         ),
         button(
           class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("run_build", target)),
+          "Build",
+        ),
+        button(
+          class="secondary-button",
           on_click=dispatch(RunMoonCodeCommandForPath("package", target)),
           "Package",
         ),
@@ -14656,6 +14681,11 @@ fn render_mooncode_package_candidate(
           class="secondary-button",
           on_click=dispatch(RunMoonCodeCommandForPath("run_tests", target)),
           "Test",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommandForPath("run_build", target)),
+          "Build",
         ),
         button(
           class="secondary-button",
@@ -15487,6 +15517,11 @@ fn render_agent_inspector(
           class="secondary-button",
           on_click=dispatch(RunMoonCodeCommand("run_tests")),
           "Run Tests",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_build")),
+          "Run Build",
         ),
         button(
           class="secondary-button",

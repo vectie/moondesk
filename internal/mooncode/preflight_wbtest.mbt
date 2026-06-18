@@ -239,6 +239,7 @@ test "mooncode command preflight requires selected patch proof before commit" {
 
 ///|
 test "mooncode action required gates are protocol metadata" {
+  assert_true(action_required_gates("run_build").contains("test_result-event"))
   assert_true(action_required_gates("run_eval").contains("file_edit"))
   assert_true(action_required_gates("package").contains("package-index"))
   assert_true(action_required_gates("commit").contains("git-commit-proof"))

@@ -272,7 +272,7 @@ pub fn command_preflight_override_projected_event(
 ///|
 pub fn action_required_gates(action : String) -> Array[String] {
   match action {
-    "run_tests" =>
+    "run_tests" | "run_build" =>
       ["runtime-dispatch", "moon_check-or-shell-tool", "test_result-event"]
     "run_eval" =>
       ["runtime-dispatch", "tool_harness", "file_edit", "native-eval-report"]

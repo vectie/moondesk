@@ -10,6 +10,7 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"command_specs\""))
   assert_true(payload.contains("\"dispatch\":\"steer\""))
   assert_true(payload.contains("\"approval\":\"operator\""))
+  assert_true(payload.contains("\"action\":\"run_build\""))
   assert_true(payload.contains("\"action\":\"approve_tool\""))
   assert_true(payload.contains("\"action\":\"commit\""))
   assert_true(payload.contains("\"runtime_contract\""))

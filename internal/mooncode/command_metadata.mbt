@@ -4,6 +4,7 @@ pub fn command_is_supported(action : String) -> Bool {
     "prompt"
     | "steer"
     | "run_tests"
+    | "run_build"
     | "run_eval"
     | "package"
     | "commit"
@@ -35,7 +36,7 @@ pub fn command_approval(action : String) -> String {
     "accept" | "reject" | "package" | "commit" => "operator"
     "approve_tool" | "reject_tool" => "operator"
     "apply_patch" | "revert_patch" => "operator"
-    "run_tests" | "run_eval" => "auto"
+    "run_tests" | "run_build" | "run_eval" => "auto"
     "cancel" => "operator"
     "prompt" | "steer" => "user"
     _ => "none"
@@ -45,7 +46,7 @@ pub fn command_approval(action : String) -> String {
 ///|
 pub fn command_tool_hints(action : String) -> Array[String] {
   match action {
-    "run_tests" => ["moon_ide", "moon_cmd", "moon_check", "shell"]
+    "run_tests" | "run_build" => ["moon_ide", "moon_cmd", "moon_check", "shell"]
     "run_eval" =>
       ["eval_harness", "moon_ide", "moon_cmd", "shell", "moon_check"]
     "package" =>
@@ -70,7 +71,7 @@ pub fn command_tool_hints(action : String) -> Array[String] {
 ///|
 pub fn command_expected_lanes(action : String) -> Array[String] {
   match action {
-    "run_tests" => ["test", "tool", "runtime"]
+    "run_tests" | "run_build" => ["test", "tool", "runtime"]
     "run_eval" => ["runtime", "test", "review"]
     "package" => ["artifact", "test", "review"]
     "commit" => ["review", "runtime", "tool"]
@@ -87,8 +88,7 @@ pub fn command_expected_lanes(action : String) -> Array[String] {
 ///|
 pub fn command_lane(action : String) -> String {
   match action {
-    "run_tests" => "test"
-    "run_eval" => "test"
+    "run_tests" | "run_build" | "run_eval" => "test"
     "package" => "artifact"
     "commit" => "review"
     "accept"
@@ -106,6 +106,7 @@ pub fn command_lane(action : String) -> String {
 pub fn command_title(action : String, status : String) -> String {
   let label = match action {
     "run_tests" => "Run tests"
+    "run_build" => "Run build"
     "run_eval" => "Run eval"
     "package" => "Package result"
     "commit" => "Commit result"

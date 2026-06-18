@@ -45,6 +45,7 @@ fn command_policy_has_guardrail(
 ///|
 test "mooncode command metadata captures runtime dispatch and approval" {
   assert_true(command_is_supported("prompt"))
+  assert_true(command_is_supported("run_build"))
   assert_true(command_is_supported("run_eval"))
   assert_true(command_is_supported("commit"))
   assert_false(command_is_supported("deploy_global"))
@@ -55,6 +56,7 @@ test "mooncode command metadata captures runtime dispatch and approval" {
   assert_eq(command_dispatch("commit"), "command")
   assert_eq(command_approval("package"), "operator")
   assert_eq(command_approval("commit"), "operator")
+  assert_eq(command_approval("run_build"), "auto")
   assert_eq(command_approval("run_eval"), "auto")
   assert_eq(command_approval("prompt"), "user")
 }
@@ -71,6 +73,11 @@ test "mooncode command defaults are book coding oriented" {
   assert_true(
     command_message("run_tests", payload).contains(
       "Run the relevant tests or build checks",
+    ),
+  )
+  assert_true(
+    command_message("run_build", payload).contains(
+      "Run the relevant build checks",
     ),
   )
   let explicit : Json = { "message": "Use the local harness." }
@@ -393,10 +400,12 @@ test "mooncode command event is reusable outside moonwiki" {
 ///|
 test "mooncode command metadata exposes tool and lane contracts" {
   assert_true(command_tool_hints("run_eval").contains("eval_harness"))
+  assert_true(command_tool_hints("run_build").contains("moon_cmd"))
   assert_true(command_tool_hints("prompt").contains("edit"))
   assert_true(command_expected_lanes("prompt").contains("diff"))
   assert_true(command_expected_lanes("package").contains("artifact"))
   assert_true(command_expected_lanes("commit").contains("review"))
+  assert_eq(command_lane("run_build"), "test")
   assert_eq(command_lane("run_tests"), "test")
   assert_eq(command_lane("accept"), "review")
   assert_eq(command_lane("commit"), "review")
@@ -483,4 +492,18 @@ test "mooncode native command tool policies expose OpenSeek style guardrails" {
   assert_true(sequence.contains("moon_ide"))
   assert_true(sequence.contains("moon_cmd"))
   assert_true(sequence.contains("moon_check"))
+  let build_sequence = native_command_tool_sequence("run_build")
+  assert_true(build_sequence.contains("moon_cmd"))
+  assert_true(build_sequence.contains("moon_check"))
+  assert_true(
+    native_command_expected_events("run_build").contains("test_result"),
+  )
+  assert_true(
+    native_command_required_outputs("run_build").contains("build command"),
+  )
+  assert_true(
+    native_command_recommended_commands("run_build", "tools/demo/main.mbt").contains(
+      "moon build",
+    ),
+  )
 }
