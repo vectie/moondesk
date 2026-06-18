@@ -292,14 +292,20 @@ pub fn normalize_runtime_event(
           ),
         ),
       )
-    "steer_applied" | "steer_dropped" =>
+    "steer_applied" | "steer_dropped" | "steer_deferred" =>
       Some(
         event_record(
           id=event_id,
           lane="runtime",
           kind=name,
           title=runtime_event_title(name),
-          status=if name == "steer_applied" { "done" } else { "failed" },
+          status=if name == "steer_applied" {
+            "done"
+          } else if name == "steer_deferred" {
+            "queued"
+          } else {
+            "failed"
+          },
           created_at~,
           detail=json_string(event, "content", default=""),
           command_packet=runtime_event_command_packet(event, "steer"),

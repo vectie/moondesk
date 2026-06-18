@@ -114,6 +114,11 @@ pub fn event_steer_dropped() -> String {
 }
 
 ///|
+pub fn event_steer_deferred() -> String {
+  "steer_deferred"
+}
+
+///|
 pub fn event_cancel_dropped() -> String {
   "cancel_dropped"
 }

@@ -180,7 +180,7 @@ test "mooncode serve scheduler starts first pending turn and queues controls" {
 }
 
 ///|
-test "mooncode serve scheduler drops idle steer and treats package as turn" {
+test "mooncode serve scheduler queues steer to pending package turn" {
   let commands : Array[Json] = [
     {
       "command_id": "cmd-steer",
@@ -214,5 +214,34 @@ test "mooncode serve scheduler drops idle steer and treats package as turn" {
   assert_eq(
     scheduler_json_string(decisions[1], "effect", default=""),
     "start-turn",
+  )
+}
+
+///|
+test "mooncode serve scheduler defers truly idle steer" {
+  let commands : Array[Json] = [
+    {
+      "command_id": "cmd-steer",
+      "action": "steer",
+      "dispatch": "steer",
+      "message": "apply to the next turn",
+    },
+  ]
+  let lifecycle : Json = {
+    "commands": [
+      { "command_id": "cmd-steer", "action": "steer", "status": "pending" },
+    ],
+  }
+  let projection = serve_scheduler_projection("s1", commands, lifecycle)
+  assert_eq(scheduler_json_string(projection, "active_turn_id", default=""), "")
+  let decisions = scheduler_json_array_items(projection, "decisions")
+  assert_eq(decisions.length(), 1)
+  assert_eq(
+    scheduler_json_string(decisions[0], "effect", default=""),
+    "defer-steer",
+  )
+  assert_eq(
+    scheduler_json_string(decisions[0], "target_command_id", default=""),
+    "",
   )
 }

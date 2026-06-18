@@ -833,9 +833,11 @@ session, shows the latest batch as a Live Tail, and renders a Code Review queue
 from diff-lane events, with file-open and file-targeted accept/reject/package
 controls that preserve the selected diff path in the command event. Per-hunk
 staging and selected-hunk patch dispatch are present. Native loop status now
-lands as a runtime event, improving idle/failure/cancel visibility; richer patch
-promotion, signed bundle assembly, persistent long-running steering, and broader
-model-backed eval evidence are still future runtime work.
+lands as a runtime event, improving idle/failure/cancel visibility. Idle steer
+is now persisted as deferred steering context and injected into the next
+eligible MoonCode turn instead of being dropped; richer patch promotion, signed
+bundle assembly, broader long-running steering UX, and broader model-backed
+eval evidence are still future runtime work.
 
 ### Output Library
 

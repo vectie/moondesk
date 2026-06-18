@@ -6,7 +6,7 @@ pub fn serve_scheduler_contract_json() -> Json {
     "owner": "mooncode",
     "runtime_owner": "moonclaw-or-standalone-mooncode",
     "reference": "../openseek/cmd/openseek/serve.mbt",
-    "rule": "A MoonCode runtime consumes one ordered command queue. Prompt and command actions start turns, steer targets the active turn or next pending turn, and cancel targets the active turn or withdraws the next pending turn.",
+    "rule": "A MoonCode runtime consumes one ordered command queue. Prompt and command actions start turns, steer targets the active turn, next pending turn, or defers into the next future turn, and cancel targets the active turn or withdraws the next pending turn.",
     "turn_starting_actions": "all supported actions except steer, cancel, and note",
     "active_statuses": ["running", "dispatched"],
     "terminal_statuses": ["completed", "failed"],
@@ -14,8 +14,9 @@ pub fn serve_scheduler_contract_json() -> Json {
       "blocked-invalid", "blocked-tool-authorization", "blocked-missing-proof",
     ],
     "wire_effects": [
-      "start-turn", "queue-turn", "deliver-steer", "queue-steer", "drop-steer", "cancel-active",
-      "withdraw-pending", "drop-cancel", "record-note", "wait-for-proof", "blocked",
+      "start-turn", "queue-turn", "deliver-steer", "queue-steer", "defer-steer",
+      "cancel-active", "withdraw-pending", "drop-cancel", "record-note", "wait-for-proof",
+      "blocked",
     ],
     "boundary": {
       "ui": "Moondesk records commands and renders decisions.",

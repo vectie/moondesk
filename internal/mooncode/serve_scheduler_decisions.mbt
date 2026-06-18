@@ -29,7 +29,7 @@ pub fn serve_scheduler_decisions(
           pending_turn_ids,
           active_effect="deliver-steer",
           pending_effect="queue-steer",
-          idle_effect="drop-steer",
+          idle_effect="defer-steer",
         )
       "cancel" =>
         scheduler_control_decision(

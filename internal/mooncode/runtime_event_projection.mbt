@@ -186,6 +186,7 @@ pub fn runtime_event_title(name : String) -> String {
     "turn_failed" => "Turn failed"
     "command_error" => "Command error"
     "steer_applied" => "Steering applied"
+    "steer_deferred" => "Steering deferred"
     "steer_dropped" => "Steering dropped"
     _ => name
   }

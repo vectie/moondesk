@@ -141,6 +141,19 @@ test "mooncode normalizes OpenSeek runtime events into lanes" {
     "steer_dropped",
   )
   assert_eq(json_string(steer_dropped_event, "status", default=""), "failed")
+  guard normalize_runtime_event(
+      { "event": "steer_deferred", "content": "next turn" },
+      fallback_id="runtime-6",
+      fallback_created_at="2026-06-15T00:00:00Z",
+    )
+    is Some(steer_deferred_event) else {
+    fail("steer_deferred was not normalized")
+  }
+  assert_eq(
+    json_string(steer_deferred_event, "kind", default=""),
+    "steer_deferred",
+  )
+  assert_eq(json_string(steer_deferred_event, "status", default=""), "queued")
 }
 
 ///|

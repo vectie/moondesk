@@ -240,6 +240,8 @@ pub fn event_record(id~ : String, lane~ : String, kind~ : String, title~ : Strin
 
 pub fn event_steer_applied() -> String
 
+pub fn event_steer_deferred() -> String
+
 pub fn event_steer_dropped() -> String
 
 pub fn event_test_result() -> String
