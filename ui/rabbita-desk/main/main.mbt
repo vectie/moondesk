@@ -360,6 +360,7 @@ struct MoonCodeSummary {
   stream_source : String
   dispatch_mode : String
   live_stream_ready : Bool
+  live_stream_url : String
   incremental_stream_ready : Bool
   incremental_stream_url : String
   event_log_path : String
@@ -17140,7 +17141,11 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
             ),
             info_row(
               "Live Stream",
-              if summary.live_stream_ready { "ready" } else { "not ready" },
+              if summary.live_stream_ready {
+                summary.live_stream_url
+              } else {
+                "not ready"
+              },
             ),
             info_row(
               "Append Log",

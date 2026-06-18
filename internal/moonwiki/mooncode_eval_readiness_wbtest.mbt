@@ -239,7 +239,15 @@ test "mooncode summary exposes eval readiness gates" {
     json_string(summary, "stream_source", default=""),
     "moondesk-append-log-projection",
   )
-  assert_false(json_bool(summary, "live_stream_ready", default=true))
+  assert_true(json_bool(summary, "live_stream_ready", default=false))
+  assert_true(
+    json_string(summary, "live_stream_url", default="").contains("live=true"),
+  )
+  assert_true(
+    json_string(summary, "live_stream_url", default="").contains(
+      "timeout_ms=8000",
+    ),
+  )
   assert_true(json_bool(summary, "incremental_stream_ready", default=false))
   assert_true(
     json_string(summary, "incremental_stream_url", default="").contains(

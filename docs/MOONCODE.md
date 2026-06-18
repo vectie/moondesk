@@ -1008,9 +1008,9 @@ lifecycle panels, making restart/resume readiness visible without opening the
 runtime handoff manifest.
 
 Each session also carries a `mooncode_summary` readiness/eval block. It records
-the stream mode, `live_stream_ready`, event log path, append-log count, command
-log path, command-log count, typed session snapshot path,
-`session_snapshot_ready`, `incremental_stream_ready`,
+the stream mode, `live_stream_ready`, `live_stream_url`, event log path,
+append-log count, command log path, command-log count, typed session snapshot
+path, `session_snapshot_ready`, `incremental_stream_ready`,
 `incremental_stream_url`, event-lane counts, pending
 diff count, accepted/rejected review counts, MoonBook review receipt count,
 MoonBook package manifest count, verified/failing test-build result counts,
