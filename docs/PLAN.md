@@ -414,6 +414,9 @@ OpenSeek wire command, native MoonCode body, required proof events, endpoint
 map, and claim/ack/failure templates. This moves the execution boundary closer
 to OpenSeek serve mode while keeping Moondesk as recorder and renderer, not the
 tool executor.
+The saved handoff resume contract now also includes the compact
+`production-readiness` endpoint, so the runtime boundary exposes both the next
+action packet and the production gate used by the Moondesk Readiness panel.
 Moondesk also now exposes
 `GET /api/mooncode/sessions/<id>/runtime-supervisor`, and embeds the same
 `runtime_supervisor` launch packet into execution-plan responses, runtime-feed

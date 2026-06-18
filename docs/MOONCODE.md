@@ -853,6 +853,10 @@ summary, required proof events/outputs, claim template, ack/failure templates,
 runtime event ingest endpoint, and safety boundary. It is deliberately data-only.
 Moondesk publishes and renders this plan; MoonClaw owns claiming it, running
 tools, streaming evidence, and acknowledging completion or failure.
+The resume contract also carries
+`GET /api/mooncode/sessions/<session-id>/production-readiness`, so a native
+consumer can fetch the same production gate that the Moondesk Readiness panel
+uses before claiming that a session is product-ready.
 The plan now embeds a stricter `runtime_turn_packet`, and the saved
 `runtime-handoff.json` carries the same packet. The packet combines the next
 claimable or leased command, OpenSeek serve command, native MoonCode body,
@@ -1070,14 +1074,14 @@ wiki/reviews/mooncode/<session-id>/runtime-handoff.json
 `mooncode-runtime-handoff` object. It is the compact resumable bridge between
 Moondesk and MoonClaw or a future standalone `mooncode` runtime: typed session
 snapshot path, command log, event log, session-store endpoint, stream endpoint,
-command queue endpoint, runtime command feed endpoint, native MoonClaw
-endpoints, book output roots, artifact manifest pointers, engine dispatch mode,
-the `tool_call_wire` decoder contract, and the next runtime step. Its runtime
-event sink repeats the same `tool_call_wire` contract so MoonClaw can validate
-OpenSeek-native function calls, wrapped tool events, and flattened MoonCode
-tool events before executing or reporting tool results. Moondesk renders it as
-the Runtime Handoff panel so the extractable boundary is visible in the product,
-not just in source comments.
+command queue endpoint, runtime command feed endpoint, action-plan endpoint,
+production-readiness endpoint, native MoonClaw endpoints, book output roots,
+artifact manifest pointers, engine dispatch mode, the `tool_call_wire` decoder
+contract, and the next runtime step. Its runtime event sink repeats the same
+`tool_call_wire` contract so MoonClaw can validate OpenSeek-native function
+calls, wrapped tool events, and flattened MoonCode tool events before executing
+or reporting tool results. Moondesk renders it as the Runtime Handoff panel so
+the extractable boundary is visible in the product, not just in source comments.
 
 Moondesk also writes the OpenSeek-style durable session snapshot at:
 

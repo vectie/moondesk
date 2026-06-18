@@ -830,6 +830,14 @@ async test "mooncode review actions write moonbook receipts" {
         ),
         "/api/mooncode/sessions/agent-demo/runtime-commands",
       )
+      assert_eq(
+        json_string(
+          resume_contract,
+          "production_readiness_endpoint",
+          default="",
+        ),
+        "/api/mooncode/sessions/agent-demo/production-readiness",
+      )
       let engine = json_object_field_or_empty(runtime_handoff, "engine")
       assert_false(json_bool(engine, "native_runtime_ready", default=true))
       match mooncode_read_runtime_handoff_manifest(with_runtime_handoff) {

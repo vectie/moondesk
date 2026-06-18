@@ -1479,7 +1479,9 @@ Implemented behavior:
   the whole transcript while keeping the scoring contract in `internal/mooncode`.
   The MoonCode Readiness panel uses this compact endpoint for the selected
   session and falls back to the full session summary only until the audit
-  payload arrives.
+  payload arrives. Runtime handoff manifests also advertise this endpoint in
+  `resume_contract.production_readiness_endpoint`, so MoonClaw or a standalone
+  `mooncode` runtime can use the same gate after replaying or packaging work.
 - `GET /api/mooncode/eval-harness` returns the standalone
   `mooncode-eval-harness-contract`. It names `../openseek/eval/tool_harness`
   and `../openseek/eval/file_edit` as references, requires deterministic tool

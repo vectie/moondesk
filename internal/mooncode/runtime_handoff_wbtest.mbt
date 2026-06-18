@@ -132,6 +132,10 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     json_string(resume_contract, "native_serve_scheduler_endpoint", default=""),
     "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
   )
+  assert_eq(
+    json_string(resume_contract, "production_readiness_endpoint", default=""),
+    "/api/mooncode/sessions/s1/production-readiness",
+  )
   let consumer = summary_json_object_field_or_empty(
     manifest, "runtime_consumer",
   )
@@ -213,6 +217,7 @@ test "mooncode runtime handoff currency requires consumer endpoints" {
       "runtime_event_ingest_endpoint": "/api/mooncode/sessions/s1/runtime-events",
       "runtime_replay_endpoint": "/api/mooncode/sessions/s1/runtime-replay",
       "action_plan_endpoint": "/api/mooncode/sessions/s1/action-plan",
+      "production_readiness_endpoint": "/api/mooncode/sessions/s1/production-readiness",
       "native_serve_scheduler_endpoint": "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
     },
     "runtime_consumer": {
