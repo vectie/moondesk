@@ -1321,9 +1321,13 @@ readiness when available or falls back to action-plan state only for thin
 callers. It
 distinguishes UI runtime-loop actions from queued MoonCode commands, so the
 Action Plan can offer `Run Native Loop`, `Retry Runtime`, `Refresh Proof`,
-`Fix Tests`, `Run Tests`, `Package`, `Resume`, and `Start Next Turn`, and it
-can expose paired choices such as `Accept`/`Reject` or
-`Approve Tool`/`Reject Tool` without making Moondesk execute tools itself.
+`Fix Tests`, `Run Tests`, `Run Eval`, `Package`, `Resume`, and
+`Start Next Turn`, and it can expose paired choices such as `Accept`/`Reject`
+or `Approve Tool`/`Reject Tool` without making Moondesk execute tools itself.
+If the compact production gate reports `native_eval_ready` as the first blocker
+and no runtime/eval proof is already queued or pending, the plan maps that gap
+to `Run Eval` so the operator can ask MoonClaw or standalone MoonCode to produce
+the required native harness proof instead of guessing from the score.
 For runtime-backed next steps, the same recommendation array now also offers
 `Start Service` beside the one-shot native loop action, routing the operator to
 MoonClaw's daemon-owned MoonCode supervisor when they want Codex/OpenSeek-style

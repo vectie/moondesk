@@ -887,9 +887,12 @@ eligible MoonCode turn instead of being dropped. The action-plan contract now
 also publishes a primary `recommended_command` plus a `recommended_commands`
 array, and the MoonCode center pane renders it as an action strip for
 runtime-loop recovery, proof refresh, failed-test repair, test/package
-dispatch, session resume, deferred steering, review accept/reject, and
-tool-approval approve/reject choices. Those controls still send typed commands
-through MoonClaw/MoonCode instead of executing tools in the UI. Richer patch
+dispatch, native eval proof generation, session resume, deferred steering,
+review accept/reject, and tool-approval approve/reject choices. The plan now
+maps a `native_eval_ready` production blocker to a typed `run_eval` command
+unless runtime proof is already queued or awaiting completion. Those controls
+still send typed commands through MoonClaw/MoonCode instead of executing tools
+in the UI. Richer patch
 promotion, signed bundle assembly, broader long-running steering UX, and
 broader model-backed eval evidence beyond the baseline native harness set are
 still future runtime work.

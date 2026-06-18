@@ -182,6 +182,16 @@ pub fn action_plan_recommended_command(next_required_action : String) -> Json {
         "message": "",
         "status": "queued MoonCode package from action plan",
       }
+    "run_native_eval" =>
+      {
+        "available": true,
+        "ui_action": "mooncode_command",
+        "action": "run_eval",
+        "label": "Run Eval",
+        "context_path": "",
+        "message": "",
+        "status": "queued MoonCode native eval from action plan",
+      }
     "start_or_resume_session" =>
       {
         "available": true,
@@ -242,6 +252,13 @@ pub fn action_plan_recommended_commands(
         action_plan_recommended_command(next_required_action),
         action_plan_runtime_service_command(
           "starting MoonClaw native MoonCode service for proof refresh",
+        ),
+      ]
+    "run_native_eval" =>
+      [
+        action_plan_recommended_command(next_required_action),
+        action_plan_runtime_service_command(
+          "starting MoonClaw native MoonCode service for eval proof",
         ),
       ]
     "resolve_tool_approvals" =>
@@ -340,9 +357,14 @@ pub fn action_plan_response(
     actions, "ready-for-review",
   )
   let completed_count = action_plan_state_count(actions, "completed")
-  let next_required_action = action_plan_next_required_action(summary, actions)
+  let base_next_required_action = action_plan_next_required_action(
+    summary, actions,
+  )
   let production_readiness = action_plan_production_readiness(
-    summary, actions, next_required_action,
+    summary, actions, base_next_required_action,
+  )
+  let next_required_action = action_plan_next_required_action_with_readiness(
+    production_readiness, base_next_required_action,
   )
   {
     "kind": "mooncode-action-plan",
@@ -450,6 +472,30 @@ fn action_plan_production_readiness(
 }
 
 ///|
+fn action_plan_next_required_action_with_readiness(
+  production_readiness : Json,
+  base_next_required_action : String,
+) -> String {
+  match base_next_required_action {
+    "dispatch_or_replay_runtime_commands"
+    | "retry_failed_runtime_dispatch"
+    | "await_runtime_proof"
+    | "start_next_turn_for_deferred_steering"
+    | "fix_failed_tests"
+    | "run_tests"
+    | "resolve_tool_approvals"
+    | "accept_or_reject_changes"
+    | "await_commit_proof"
+    | "start_or_resume_session" => base_next_required_action
+    _ =>
+      match json_string(production_readiness, "first_blocker_id", default="") {
+        "native_eval_ready" => "run_native_eval"
+        _ => base_next_required_action
+      }
+  }
+}
+
+///|
 fn action_plan_fallback_production_readiness(
   actions : Array[Json],
   next_required_action : String,
@@ -545,6 +591,7 @@ fn action_plan_next_owner(next_required_action : String) -> String {
     | "start_next_turn_for_deferred_steering" =>
       "moonclaw-or-standalone-mooncode"
     "fix_failed_tests" | "run_tests" => "moonclaw"
+    "run_native_eval" => "moonclaw-or-standalone-mooncode"
     "package_executable_output" => "moonbook-moonclaw"
     "resolve_tool_approvals" | "accept_or_reject_changes" => "moondesk"
     "await_commit_proof" => "moonclaw"

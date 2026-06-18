@@ -270,6 +270,16 @@ test "mooncode action plan recommends runtime loop and repair prompts" {
     json_string(proof_commands[1], "ui_action", default=""),
     "runtime_service",
   )
+  let eval = action_plan_recommended_command("run_native_eval")
+  assert_eq(json_string(eval, "ui_action", default=""), "mooncode_command")
+  assert_eq(json_string(eval, "action", default=""), "run_eval")
+  assert_eq(json_string(eval, "label", default=""), "Run Eval")
+  let eval_commands = action_plan_recommended_commands("run_native_eval")
+  assert_eq(eval_commands.length(), 2)
+  assert_eq(
+    json_string(eval_commands[1], "ui_action", default=""),
+    "runtime_service",
+  )
   let retry_commands = action_plan_recommended_commands(
     "retry_failed_runtime_dispatch",
   )
@@ -299,6 +309,113 @@ test "mooncode action plan recommends runtime loop and repair prompts" {
   assert_eq(json_string(resume_command, "label", default=""), "Resume")
   let review = action_plan_recommended_command("accept_or_reject_changes")
   assert_false(json_bool(review, "available", default=true))
+}
+
+///|
+test "mooncode action plan recommends native eval for production readiness gap" {
+  let response = action_plan_response(
+    "session-eval",
+    {
+      "id": "session-eval",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo Book",
+      "moonclaw_task_id": "task-demo",
+    },
+    [
+      { "command_id": "cmd-tests", "action": "run_tests", "state": "completed" },
+      { "command_id": "cmd-package", "action": "package", "state": "completed" },
+    ],
+    {
+      "verified_test_count": 1,
+      "failed_test_count": 0,
+      "pending_diff_count": 0,
+      "pending_tool_approval_count": 0,
+      "pending_steer_count": 0,
+      "deferred_steer_count": 0,
+      "source_bound_package_count": 1,
+      "production_readiness": {
+        "kind": "mooncode-production-readiness",
+        "ready": false,
+        "first_blocker_id": "native_eval_ready",
+        "next_action": "run_native_eval",
+        "next_owner": "moonclaw-or-standalone-mooncode",
+      },
+    },
+    [],
+    [],
+    recorded_at="2026-06-16T00:00:00Z",
+    runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+  )
+  assert_eq(
+    json_string(response, "next_required_action", default=""),
+    "run_native_eval",
+  )
+  let recommended = runtime_json_object_field_or_empty(
+    response, "recommended_command",
+  )
+  assert_eq(json_string(recommended, "action", default=""), "run_eval")
+  assert_eq(
+    json_string(recommended, "ui_action", default=""),
+    "mooncode_command",
+  )
+  assert_eq(json_string(recommended, "label", default=""), "Run Eval")
+  let recommended_commands = runtime_json_array_items(
+    response, "recommended_commands",
+  )
+  assert_eq(recommended_commands.length(), 2)
+  assert_eq(
+    json_string(recommended_commands[1], "ui_action", default=""),
+    "runtime_service",
+  )
+}
+
+///|
+test "mooncode action plan keeps awaiting proof ahead of native eval recommendation" {
+  let response = action_plan_response(
+    "session-eval",
+    {
+      "id": "session-eval",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo Book",
+      "moonclaw_task_id": "task-demo",
+    },
+    [
+      {
+        "command_id": "cmd-eval",
+        "action": "run_eval",
+        "state": "awaiting-proof",
+      },
+    ],
+    {
+      "verified_test_count": 1,
+      "failed_test_count": 0,
+      "pending_diff_count": 0,
+      "pending_tool_approval_count": 0,
+      "pending_steer_count": 0,
+      "deferred_steer_count": 0,
+      "source_bound_package_count": 1,
+      "production_readiness": {
+        "kind": "mooncode-production-readiness",
+        "ready": false,
+        "first_blocker_id": "native_eval_ready",
+        "next_action": "run_native_eval",
+      },
+    },
+    [],
+    [],
+    recorded_at="2026-06-16T00:00:00Z",
+    runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+  )
+  assert_eq(
+    json_string(response, "next_required_action", default=""),
+    "await_runtime_proof",
+  )
+  let recommended = runtime_json_object_field_or_empty(
+    response, "recommended_command",
+  )
+  assert_eq(json_string(recommended, "action", default=""), "runtime_loop")
 }
 
 ///|

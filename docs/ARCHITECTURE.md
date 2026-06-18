@@ -1372,7 +1372,11 @@ Implemented behavior:
   next step. The response also includes `production_readiness`, preferring the
   full session summary contract and falling back to action-plan state for thin
   callers, so the plan, header, and inspector share one production blocker
-  interpretation. Commands refresh the durable MoonBook artifact at
+  interpretation. When full readiness reports `native_eval_ready` as the first
+  blocker and no runtime proof is already queued or awaiting completion, the
+  plan recommends a typed `run_eval` command plus native runtime service action
+  so MoonClaw or standalone MoonCode can generate the required harness proof.
+  Commands refresh the durable MoonBook artifact at
   `wiki/reviews/mooncode/<session-id>/action-plan.json`. The HTTP wrapper and
   host-side log gathering live in a focused MoonWiki action-plan handler file;
   the response shape remains MoonCode-owned.
