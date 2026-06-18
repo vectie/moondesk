@@ -1942,7 +1942,9 @@ enum Msg {
   RunMoonCodeCommandWithMessage(String, String, String, String)
   RunMoonCodeCommandOverride(String, String)
   RunMoonCodeRuntimeLoop
+  StartMoonCodeRuntimeService
   RanMoonCodeRuntimeLoop(String, Result[AgentSession, String])
+  StartedMoonCodeRuntimeService(String, Result[AgentSession, String])
   ProbeMoonCodeToolAuthorization(String)
   ClaimMoonCodeRuntime(Bool)
   AckMoonCodeRuntimeCommand(String, String)
@@ -4760,6 +4762,32 @@ fn run_mooncode_runtime_loop_cmd(
     }, json => {
       Ok(@json.from_json(json)) catch {
         _ => Err("Invalid MoonCode native runtime loop response")
+      }
+    }),
+  )
+}
+
+///|
+fn start_mooncode_runtime_service_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.post(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-service",
+    @http.Body::Json({
+      "consumer_id": "moondesk-ui-runtime-service",
+      "max_turns": 8,
+      "live_wait_ms": 5000,
+      "poll_ms": 250,
+    }),
+    expect=@http.Json(fn(result) {
+      dispatch(StartedMoonCodeRuntimeService(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode native runtime service response")
       }
     }),
   )
@@ -8126,6 +8154,123 @@ fn update(
             activity: Activity::Agents,
             mooncode_runtime_claim_session_id: session_id,
             mooncode_runtime_claim_status: "native runtime loop failed: \{error}",
+            agent_status: error,
+          },
+        )
+      }
+    StartMoonCodeRuntimeService =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            sync_activity_batch(
+              Activity::Agents,
+              start_mooncode_runtime_service_cmd(dispatch, session.id),
+            ),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              mooncode_runtime_claim_session_id: session.id,
+              mooncode_runtime_claim_status: "starting native runtime service",
+              agent_status: "starting MoonClaw native MoonCode service",
+            },
+          )
+        None =>
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "start or select a MoonCode session first",
+            },
+          )
+      }
+    StartedMoonCodeRuntimeService(session_id, Ok(session)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Agents,
+            @rabbita.batch([
+              fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
+              fetch_mooncode_stream_cmd(
+                dispatch,
+                session.id,
+                if model.mooncode_stream_session_id == session.id {
+                  model.mooncode_stream_cursor
+                } else {
+                  0
+                },
+              ),
+              fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
+              fetch_mooncode_change_set_cmd(dispatch, session.id),
+              fetch_mooncode_eval_report_cmd(dispatch, session.id),
+              fetch_mooncode_runtime_handoff_cmd(dispatch, session.id),
+              fetch_mooncode_patch_set_cmd(dispatch, session.id),
+              fetch_mooncode_tool_approvals_cmd(dispatch, session.id),
+              fetch_mooncode_test_runs_cmd(dispatch, session.id),
+              fetch_mooncode_package_candidates_cmd(dispatch, session.id),
+              fetch_mooncode_action_plan_cmd(dispatch, session.id),
+              fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
+              fetch_mooncode_command_queue_cmd(dispatch, session.id),
+              fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
+              fetch_mooncode_runtime_replay_cmd(dispatch, session.id),
+              fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+              fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
+              fetch_mooncode_preflight_matrix_cmd(
+                dispatch, session.id, model.selected_path,
+              ),
+              schedule_agent_poll(dispatch),
+            ]),
+          ),
+          {
+            ..model,
+            workspace_mode: WorkspaceMode::MoonCode,
+            activity: Activity::Agents,
+            selected_agent_session_id: session.id,
+            mooncode_runtime_claim_session_id: session.id,
+            mooncode_runtime_claim_status: "native runtime service started",
+            agent_status: "MoonClaw native MoonCode service started",
+          },
+        )
+      }
+    StartedMoonCodeRuntimeService(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          sync_activity_batch(
+            Activity::Agents,
+            @rabbita.batch([
+              fetch_mooncode_stream_cmd(
+                dispatch,
+                session_id,
+                if model.mooncode_stream_session_id == session_id {
+                  model.mooncode_stream_cursor
+                } else {
+                  0
+                },
+              ),
+              fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
+              fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
+              fetch_mooncode_command_queue_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_replay_cmd(dispatch, session_id),
+            ]),
+          ),
+          {
+            ..model,
+            workspace_mode: WorkspaceMode::MoonCode,
+            activity: Activity::Agents,
+            mooncode_runtime_claim_session_id: session_id,
+            mooncode_runtime_claim_status: "native runtime service failed: \{error}",
             agent_status: error,
           },
         )
@@ -13044,6 +13189,11 @@ fn render_mooncode_runtime_claim_panel(
         class="primary-button",
         on_click=dispatch(RunMoonCodeRuntimeLoop),
         "Run Native Loop",
+      ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(StartMoonCodeRuntimeService),
+        "Start Service",
       ),
     ]),
     match model.mooncode_runtime_claim {

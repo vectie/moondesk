@@ -667,6 +667,27 @@ test "mooncode moonclaw adapter shapes supervisor run session patch" {
   assert_true(
     json_string(failed, "detail", default="").contains("did not accept work"),
   )
+  let service = moonclaw_runtime_supervisor_run_session_patch(
+    {
+      "kind": "mooncode-runtime-service",
+      "accepted": true,
+      "message": "runtime service started",
+    },
+    "2026-06-16T16:00:02Z",
+  )
+  assert_eq(json_string(service, "status", default=""), "running")
+  assert_eq(
+    json_string(service, "detail", default=""),
+    "runtime service started",
+  )
+  assert_eq(
+    json_string(service, "mooncode_dispatch_mode", default=""),
+    "moonclaw-mooncode-runtime-service",
+  )
+  let service_message = moonclaw_json_object_field_or_empty(
+    service, "status_message",
+  )
+  assert_eq(json_string(service_message, "status", default=""), "running")
 }
 
 ///|

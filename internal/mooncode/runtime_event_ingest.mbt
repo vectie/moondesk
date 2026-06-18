@@ -78,6 +78,18 @@ pub fn native_response_event_items(
   for event in runtime_json_array_items(execution, "events") {
     incoming.push(event)
   }
+  let started_event = runtime_json_object_field_or_empty(
+    response, "started_event",
+  )
+  if runtime_json_string(started_event, "kind", default="") != "" {
+    incoming.push(started_event)
+  }
+  let finished_event = runtime_json_object_field_or_empty(
+    response, "finished_event",
+  )
+  if runtime_json_string(finished_event, "kind", default="") != "" {
+    incoming.push(finished_event)
+  }
   match
     normalize_runtime_loop_response_event(
       response,

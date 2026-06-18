@@ -659,6 +659,24 @@ test "mooncode appends native response events with durable id dedupe" {
     created_at="3",
     detail="package",
   )
+  let service_started_event = event_record(
+    id="service-started",
+    lane="runtime",
+    kind="runtime.service_started",
+    title="Runtime service started",
+    status="running",
+    created_at="2026-06-16T00:00:04Z",
+    detail="service started",
+  )
+  let service_finished_event = event_record(
+    id="service-finished",
+    lane="runtime",
+    kind="runtime.service_finished",
+    title="Runtime service finished",
+    status="done",
+    created_at="2026-06-16T00:00:05Z",
+    detail="service finished",
+  )
   let session = append_native_response_events(
     { "mooncode_command_events": [existing_event] },
     {
@@ -668,17 +686,21 @@ test "mooncode appends native response events with durable id dedupe" {
       "stopped_by": "idle",
       "events": [existing_event],
       "execution": { "events": [new_event] },
+      "started_event": service_started_event,
+      "finished_event": service_finished_event,
       "package_events": [package_event],
     },
     loop_fallback_id="loop-event",
     loop_fallback_created_at="2026-06-16T00:00:00Z",
   )
   let events = runtime_json_array_items(session, "mooncode_command_events")
-  assert_eq(events.length(), 4)
+  assert_eq(events.length(), 6)
   assert_eq(json_string(events[0], "id", default=""), "native-event")
   assert_eq(json_string(events[1], "id", default=""), "execution-event")
-  assert_eq(json_string(events[2], "id", default=""), "loop-event")
-  assert_eq(json_string(events[3], "id", default=""), "package-event")
+  assert_eq(json_string(events[2], "id", default=""), "service-started")
+  assert_eq(json_string(events[3], "id", default=""), "service-finished")
+  assert_eq(json_string(events[4], "id", default=""), "loop-event")
+  assert_eq(json_string(events[5], "id", default=""), "package-event")
 }
 
 ///|

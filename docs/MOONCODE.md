@@ -560,9 +560,13 @@ MoonClaw also exposes a daemon-owned background supervisor slice at
 task-group service outside the request lifecycle, appends
 `runtime.service_started` and `runtime.service_finished` events to the selected
 book's `events.jsonl`, and executes the same bounded native `runtime-loop`.
-This gives Moondesk and a future standalone `mooncode` a real service endpoint
-to discover through `/v1/mooncode/capabilities`; richer multi-session service
-lifecycle controls and resume UX are still product hardening work.
+Moondesk exposes this through
+`POST /api/mooncode/sessions/<id>/runtime-service` and a `Start Service` action
+beside `Run Native Loop`, then refreshes the stream, claim state, evidence,
+tests, packages, and action plan. This gives Moondesk and a future standalone
+`mooncode` a real service endpoint to discover through
+`/v1/mooncode/capabilities`; richer multi-session service lifecycle controls
+and resume UX are still product hardening work.
 
 Output events include assistant/reasoning deltas, tool calls/results, runtime
 updates, file changes, diffs, test results, artifacts, finish/abort, command

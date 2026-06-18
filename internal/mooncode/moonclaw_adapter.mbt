@@ -250,10 +250,11 @@ pub fn moonclaw_runtime_dispatch_mode(
   if !accepted {
     return "moonclaw-mooncode-runtime"
   }
-  if json_string(response, "kind", default="") == "mooncode-runtime-loop" {
-    "moonclaw-mooncode-runtime-loop"
-  } else {
-    "moonclaw-mooncode-runtime-turn"
+  match json_string(response, "kind", default="") {
+    "mooncode-runtime-loop" => "moonclaw-mooncode-runtime-loop"
+    "mooncode-runtime-service" => "moonclaw-mooncode-runtime-service"
+    "mooncode-runtime-service-result" => "moonclaw-mooncode-runtime-service"
+    _ => "moonclaw-mooncode-runtime-turn"
   }
 }
 
@@ -354,11 +355,22 @@ pub fn moonclaw_runtime_supervisor_run_session_patch(
   updated_at : String,
 ) -> Json {
   let accepted = json_bool(response, "accepted", default=false)
-  let status = if accepted { "done" } else { "failed" }
+  let service_started = json_string(response, "kind", default="") ==
+    "mooncode-runtime-service" &&
+    accepted
+  let status = if service_started {
+    "running"
+  } else if accepted {
+    "done"
+  } else {
+    "failed"
+  }
   let detail = json_string(
     response,
     "message",
-    default=if accepted {
+    default=if service_started {
+      "MoonClaw native MoonCode runtime service started"
+    } else if accepted {
       "MoonClaw native MoonCode runtime loop completed"
     } else {
       "MoonClaw native MoonCode runtime loop did not accept work"
