@@ -838,9 +838,13 @@ controls that preserve the selected diff path in the command event. Per-hunk
 staging and selected-hunk patch dispatch are present. Native loop status now
 lands as a runtime event, improving idle/failure/cancel visibility. Idle steer
 is now persisted as deferred steering context and injected into the next
-eligible MoonCode turn instead of being dropped; richer patch promotion, signed
-bundle assembly, broader long-running steering UX, and broader model-backed
-eval evidence are still future runtime work.
+eligible MoonCode turn instead of being dropped. The action-plan contract now
+also publishes a `recommended_command`, and the MoonCode center pane renders it
+as a one-click next step such as `Start Next Turn` for deferred steering, while
+still sending a typed command through MoonClaw/MoonCode instead of executing in
+the UI. Richer patch promotion, signed bundle assembly, broader long-running
+steering UX, and broader model-backed eval evidence are still future runtime
+work.
 
 ### Output Library
 

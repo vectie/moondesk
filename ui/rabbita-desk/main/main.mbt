@@ -1390,6 +1390,16 @@ struct MoonCodeCommandPreflight {
 } derive(FromJson)
 
 ///|
+struct MoonCodeActionPlanRecommendedCommand {
+  available : Bool
+  action : String
+  label : String
+  context_path : String
+  message : String
+  status : String
+} derive(FromJson)
+
+///|
 struct MoonCodeActionPlan {
   kind : String
   protocol : String
@@ -1419,6 +1429,7 @@ struct MoonCodeActionPlan {
   deferred_steer_count : Int
   source_bound_package_count : Int
   next_required_action : String
+  recommended_command : MoonCodeActionPlanRecommendedCommand
   actions : Array[MoonCodeActionPlanItem]
   acceptance_gates : MoonCodeActionPlanGates
   rule : String
@@ -1917,6 +1928,7 @@ enum Msg {
   SendAgentMessage
   RunMoonCodeCommand(String)
   RunMoonCodeCommandForPath(String, String)
+  RunMoonCodeCommandWithMessage(String, String, String, String)
   RunMoonCodeCommandOverride(String, String)
   RunMoonCodeRuntimeLoop
   RanMoonCodeRuntimeLoop(String, Result[AgentSession, String])
@@ -7914,6 +7926,45 @@ fn update(
             },
           )
       }
+    RunMoonCodeCommandWithMessage(action, context_path, message, status) =>
+      match selected_agent_session(model) {
+        Some(session) =>
+          (
+            sync_activity_batch(
+              Activity::Agents,
+              mooncode_session_command_cmd(
+                dispatch,
+                model,
+                session,
+                action,
+                context_path~,
+                message~,
+              ),
+            ),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: if status == "" {
+                "queued MoonCode \{action}"
+              } else {
+                status
+              },
+            },
+          )
+        None =>
+          (
+            sync_activity_cmd(Activity::Agents),
+            {
+              ..model,
+              workspace_mode: WorkspaceMode::MoonCode,
+              activity: Activity::Agents,
+              command_open: false,
+              agent_status: "start or select a MoonCode session first",
+            },
+          )
+      }
     RunMoonCodeCommandOverride(action, context_path) =>
       match selected_agent_session(model) {
         Some(session) =>
@@ -12507,6 +12558,7 @@ fn render_mooncode_action_plan_panel(
             info_row("Recorded", empty_label(plan.recorded_at)),
             info_row("Task", empty_label(plan.task_id)),
           ]),
+          render_mooncode_action_plan_recommended_command(dispatch, plan),
           render_mooncode_action_plan_gates(plan.acceptance_gates),
           if plan.actions.length() == 0 {
             p(class="status-line", "no MoonCode actions queued yet")
@@ -12527,6 +12579,33 @@ fn render_mooncode_action_plan_panel(
         )
     },
   ])
+}
+
+///|
+fn render_mooncode_action_plan_recommended_command(
+  dispatch : Dispatch[Msg],
+  plan : MoonCodeActionPlan,
+) -> @rabbita.Html {
+  let command = plan.recommended_command
+  if command.available && command.action != "" && command.label != "" {
+    div(class="toolbar-actions action-plan-actions", [
+      button(
+        class="primary-button",
+        on_click=dispatch(
+          RunMoonCodeCommandWithMessage(
+            command.action,
+            command.context_path,
+            command.message,
+            command.status,
+          ),
+        ),
+        command.label,
+      ),
+      span(class="status-line", plan.next_required_action),
+    ])
+  } else {
+    span(class="hidden-inline", "")
+  }
 }
 
 ///|

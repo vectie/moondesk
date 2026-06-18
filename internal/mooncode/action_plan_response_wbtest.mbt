@@ -53,6 +53,11 @@ test "mooncode action plan response owns aggregate surface" {
     json_string(response, "next_required_action", default=""),
     "package_executable_output",
   )
+  let recommended = runtime_json_object_field_or_empty(
+    response, "recommended_command",
+  )
+  assert_eq(json_string(recommended, "action", default=""), "package")
+  assert_eq(json_string(recommended, "label", default=""), "Package")
   assert_true(runtime_json_object_field(response, "runtime_replay") is Some(_))
   assert_true(
     runtime_json_object_field(response, "acceptance_gates") is Some(_),
@@ -132,4 +137,46 @@ test "mooncode action plan projection derives actions and summary" {
   let actions = runtime_json_array_items(response, "actions")
   assert_eq(actions.length(), 1)
   assert_eq(json_string(actions[0], "runtime_state", default=""), "claimed")
+}
+
+///|
+test "mooncode action plan recommends a next turn for deferred steering" {
+  let response = action_plan_response(
+    "session-deferred",
+    {
+      "id": "session-deferred",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo Book",
+      "moonclaw_task_id": "task-demo",
+    },
+    [{ "command_id": "cmd-steer", "action": "steer", "state": "completed" }],
+    {
+      "verified_test_count": 0,
+      "failed_test_count": 0,
+      "pending_diff_count": 0,
+      "pending_tool_approval_count": 0,
+      "pending_steer_count": 1,
+      "deferred_steer_count": 1,
+      "source_bound_package_count": 0,
+    },
+    [],
+    [],
+    recorded_at="2026-06-16T00:00:00Z",
+    runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+  )
+  assert_eq(
+    json_string(response, "next_required_action", default=""),
+    "start_next_turn_for_deferred_steering",
+  )
+  let recommended = runtime_json_object_field_or_empty(
+    response, "recommended_command",
+  )
+  assert_eq(json_string(recommended, "action", default=""), "prompt")
+  assert_eq(json_string(recommended, "label", default=""), "Start Next Turn")
+  assert_eq(
+    json_string(recommended, "status", default=""),
+    "queued next MoonCode turn for deferred steering",
+  )
+  assert_true(json_string(recommended, "message", default="").length() > 0)
 }

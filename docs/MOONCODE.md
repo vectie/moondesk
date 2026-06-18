@@ -1210,6 +1210,11 @@ queued selected session it POSTs a `steer` command carrying the user's text,
 matching OpenSeek serve mode's "Enter prompts when idle, steers while a turn is
 open" interaction. The legacy `/api/agents/sessions/<id>/message` route remains
 for non-MoonCode agent sessions only.
+The action-plan response now includes a `recommended_command` object for
+single-step operator recovery. When steering has been deferred, the Action Plan
+renders a `Start Next Turn` control that queues a typed `prompt` command with a
+bounded continuation message, so MoonClaw or standalone MoonCode can apply the
+saved steering in the next eligible turn.
 It also renders a Dispatch Receipts panel from
 `GET /api/mooncode/sessions/<session-id>/runtime-dispatch`, showing native
 dispatch, legacy bridge dispatch, failed dispatch, pending command ids, and

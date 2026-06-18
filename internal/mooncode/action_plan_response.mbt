@@ -110,6 +110,48 @@ pub fn action_plan_next_required_action(
 }
 
 ///|
+pub fn action_plan_recommended_command(next_required_action : String) -> Json {
+  match next_required_action {
+    "start_next_turn_for_deferred_steering" =>
+      {
+        "available": true,
+        "action": "prompt",
+        "label": "Start Next Turn",
+        "context_path": "",
+        "message": "Continue this MoonCode session and apply the deferred steering already saved in the command queue.",
+        "status": "queued next MoonCode turn for deferred steering",
+      }
+    "run_tests" =>
+      {
+        "available": true,
+        "action": "run_tests",
+        "label": "Run Tests",
+        "context_path": "",
+        "message": "",
+        "status": "queued MoonCode tests from action plan",
+      }
+    "package_executable_output" =>
+      {
+        "available": true,
+        "action": "package",
+        "label": "Package",
+        "context_path": "",
+        "message": "",
+        "status": "queued MoonCode package from action plan",
+      }
+    _ =>
+      {
+        "available": false,
+        "action": "",
+        "label": "",
+        "context_path": "",
+        "message": "",
+        "status": "",
+      }
+  }
+}
+
+///|
 pub fn action_plan_response(
   session_id : String,
   session : Json,
@@ -196,6 +238,9 @@ pub fn action_plan_response(
       default=0,
     ),
     "next_required_action": action_plan_next_required_action(summary, actions),
+    "recommended_command": action_plan_recommended_command(
+      action_plan_next_required_action(summary, actions),
+    ),
     "actions": Json::array(actions),
     "runtime_replay": runtime_replay_state(
       session_id,
