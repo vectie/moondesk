@@ -470,6 +470,9 @@ contains the compact readiness summary, score, level, first blocker, next
 action, next owner, all check evidence, the static rubric, and durable evidence
 paths. Moondesk dashboards can poll this endpoint for regular production-grade
 scoring without loading the full session transcript.
+The MoonCode Readiness panel now loads this endpoint for the selected session
+and falls back to the full session summary only while the compact audit payload
+is still loading.
 
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references

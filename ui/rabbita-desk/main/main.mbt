@@ -442,6 +442,29 @@ struct MoonCodeEvalCheck {
 } derive(FromJson)
 
 ///|
+struct MoonCodeProductionReadiness {
+  kind : String
+  protocol : String
+  extractable_component : String
+  session_id : String
+  workspace_id : String
+  readiness : Json
+  score : Int
+  level : String
+  passed_count : Int
+  check_count : Int
+  blocked_count : Int
+  first_blocker_id : String
+  next_action : String
+  next_owner : String
+  checks : Array[MoonCodeEvalCheck]
+  rubric : Json
+  evidence_paths : Json
+  endpoint : String
+  rule : String
+} derive(FromJson)
+
+///|
 struct MoonCodeEvalReport {
   kind : String
   protocol : String
@@ -1761,6 +1784,9 @@ struct Model {
   mooncode_action_plan_session_id : String
   mooncode_action_plan_status : String
   mooncode_action_plan : MoonCodeActionPlan?
+  mooncode_production_readiness_session_id : String
+  mooncode_production_readiness_status : String
+  mooncode_production_readiness : MoonCodeProductionReadiness?
   mooncode_runtime_evidence_session_id : String
   mooncode_runtime_evidence_status : String
   mooncode_runtime_evidence : MoonCodeRuntimeEvidence?
@@ -1936,6 +1962,10 @@ enum Msg {
   LoadedMoonCodeTestRuns(String, Result[MoonCodeTestRuns, String])
   LoadedMoonCodePackageCandidates(String, Result[MoonCodePackageCandidates, String])
   LoadedMoonCodeActionPlan(String, Result[MoonCodeActionPlan, String])
+  LoadedMoonCodeProductionReadiness(
+    String,
+    Result[MoonCodeProductionReadiness, String],
+  )
   LoadedMoonCodeRuntimeEvidence(String, Result[MoonCodeRuntimeEvidence, String])
   LoadedMoonCodeCommandQueue(String, Result[MoonCodeCommandQueue, String])
   LoadedMoonCodeRuntimeCommandFeed(
@@ -2187,6 +2217,9 @@ fn init_model() -> Model {
   mooncode_action_plan_session_id: "",
   mooncode_action_plan_status: "action plan idle",
   mooncode_action_plan: None,
+  mooncode_production_readiness_session_id: "",
+  mooncode_production_readiness_status: "production readiness idle",
+  mooncode_production_readiness: None,
   mooncode_runtime_evidence_session_id: "",
   mooncode_runtime_evidence_status: "runtime evidence idle",
   mooncode_runtime_evidence: None,
@@ -4594,6 +4627,26 @@ fn fetch_mooncode_action_plan_cmd(
 }
 
 ///|
+fn fetch_mooncode_production_readiness_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if session_id == "" {
+    return @rabbita.none
+  }
+  @http.get(
+    "/api/mooncode/sessions/\{encode_component(session_id)}/production-readiness",
+    expect=@http.Json(fn(result) {
+      dispatch(LoadedMoonCodeProductionReadiness(session_id, result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Invalid MoonCode production readiness")
+      }
+    }),
+  )
+}
+
+///|
 fn fetch_mooncode_runtime_evidence_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   session_id : String,
@@ -6467,6 +6520,12 @@ fn update(
       } else {
         None
       }
+      let production_readiness = if selected ==
+        model.mooncode_production_readiness_session_id {
+        model.mooncode_production_readiness
+      } else {
+        None
+      }
       let runtime_evidence = if selected ==
         model.mooncode_runtime_evidence_session_id {
         model.mooncode_runtime_evidence
@@ -6516,6 +6575,7 @@ fn update(
             fetch_mooncode_test_runs_cmd(dispatch, selected),
             fetch_mooncode_package_candidates_cmd(dispatch, selected),
             fetch_mooncode_action_plan_cmd(dispatch, selected),
+            fetch_mooncode_production_readiness_cmd(dispatch, selected),
             fetch_mooncode_runtime_evidence_cmd(dispatch, selected),
             fetch_mooncode_command_queue_cmd(dispatch, selected),
             fetch_mooncode_runtime_command_feed_cmd(dispatch, selected),
@@ -6686,6 +6746,20 @@ fn update(
             model.mooncode_action_plan_status
           } else {
             "loading action plan"
+          },
+          mooncode_production_readiness_session_id: if selected ==
+            model.mooncode_production_readiness_session_id {
+            model.mooncode_production_readiness_session_id
+          } else {
+            ""
+          },
+          mooncode_production_readiness: production_readiness,
+          mooncode_production_readiness_status: if selected == "" {
+            "production readiness idle"
+          } else if selected == model.mooncode_production_readiness_session_id {
+            model.mooncode_production_readiness_status
+          } else {
+            "loading production readiness"
           },
           mooncode_runtime_evidence_session_id: if selected ==
             model.mooncode_runtime_evidence_session_id {
@@ -7057,6 +7131,7 @@ fn update(
               fetch_agent_sessions_cmd(dispatch, model.selected_workspace_id),
               fetch_mooncode_tool_approvals_cmd(dispatch, session_id),
               fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_production_readiness_cmd(dispatch, session_id),
               fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
               fetch_mooncode_preflight_matrix_cmd(
                 dispatch, session_id, model.selected_path,
@@ -7166,6 +7241,34 @@ fn update(
             mooncode_action_plan_session_id: session_id,
             mooncode_action_plan: None,
             mooncode_action_plan_status: error,
+          },
+        )
+      }
+    LoadedMoonCodeProductionReadiness(session_id, Ok(readiness)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_production_readiness_session_id: session_id,
+            mooncode_production_readiness: Some(readiness),
+            mooncode_production_readiness_status: "\{readiness.level} / \{readiness.score} / \{readiness.blocked_count} blocker(s)",
+          },
+        )
+      }
+    LoadedMoonCodeProductionReadiness(session_id, Err(error)) =>
+      if session_id != model.selected_agent_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_production_readiness_session_id: session_id,
+            mooncode_production_readiness: None,
+            mooncode_production_readiness_status: error,
           },
         )
       }
@@ -7382,6 +7485,7 @@ fn update(
               fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
               fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
               fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_production_readiness_cmd(dispatch, session_id),
               fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
               fetch_mooncode_runtime_handoff_cmd(dispatch, session_id),
             ]),
@@ -7440,6 +7544,7 @@ fn update(
               fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
               fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
               fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_production_readiness_cmd(dispatch, session_id),
               fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
               fetch_mooncode_runtime_handoff_cmd(dispatch, session_id),
             ]),
@@ -7488,6 +7593,7 @@ fn update(
             fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
             fetch_mooncode_package_candidates_cmd(dispatch, session.id),
             fetch_mooncode_action_plan_cmd(dispatch, session.id),
+            fetch_mooncode_production_readiness_cmd(dispatch, session.id),
             fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
             fetch_mooncode_preflight_matrix_cmd(
               dispatch, session.id, model.selected_path,
@@ -7531,6 +7637,7 @@ fn update(
             fetch_mooncode_test_runs_cmd(dispatch, session.id),
             fetch_mooncode_package_candidates_cmd(dispatch, session.id),
             fetch_mooncode_action_plan_cmd(dispatch, session.id),
+            fetch_mooncode_production_readiness_cmd(dispatch, session.id),
             fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
             fetch_mooncode_command_queue_cmd(dispatch, session.id),
             fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
@@ -7577,6 +7684,7 @@ fn update(
             fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
             fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
             fetch_mooncode_action_plan_cmd(dispatch, session.id),
+            fetch_mooncode_production_readiness_cmd(dispatch, session.id),
             fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
             fetch_mooncode_preflight_matrix_cmd(
               dispatch, session.id, model.selected_path,
@@ -7618,6 +7726,7 @@ fn update(
             fetch_mooncode_test_runs_cmd(dispatch, session.id),
             fetch_mooncode_package_candidates_cmd(dispatch, session.id),
             fetch_mooncode_action_plan_cmd(dispatch, session.id),
+            fetch_mooncode_production_readiness_cmd(dispatch, session.id),
             fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
             fetch_mooncode_command_queue_cmd(dispatch, session.id),
             fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
@@ -7657,6 +7766,7 @@ fn update(
                 ),
                 fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
                 fetch_mooncode_action_plan_cmd(dispatch, session.id),
+                fetch_mooncode_production_readiness_cmd(dispatch, session.id),
                 fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
                 fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
                 fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
@@ -7781,6 +7891,7 @@ fn update(
           fetch_mooncode_test_runs_cmd(dispatch, session_id),
           fetch_mooncode_package_candidates_cmd(dispatch, session_id),
           fetch_mooncode_action_plan_cmd(dispatch, session_id),
+          fetch_mooncode_production_readiness_cmd(dispatch, session_id),
           fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
           fetch_mooncode_command_queue_cmd(dispatch, session_id),
           fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
@@ -7830,6 +7941,9 @@ fn update(
           mooncode_action_plan_session_id: "",
           mooncode_action_plan_status: "loading action plan",
           mooncode_action_plan: None,
+          mooncode_production_readiness_session_id: "",
+          mooncode_production_readiness_status: "loading production readiness",
+          mooncode_production_readiness: None,
           mooncode_runtime_evidence_session_id: "",
           mooncode_runtime_evidence_status: "loading runtime evidence",
           mooncode_runtime_evidence: None,
@@ -8160,6 +8274,7 @@ fn update(
               fetch_mooncode_test_runs_cmd(dispatch, session.id),
               fetch_mooncode_package_candidates_cmd(dispatch, session.id),
               fetch_mooncode_action_plan_cmd(dispatch, session.id),
+              fetch_mooncode_production_readiness_cmd(dispatch, session.id),
               fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
               fetch_mooncode_command_queue_cmd(dispatch, session.id),
               fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
@@ -8202,6 +8317,7 @@ fn update(
               ),
               fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
               fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_production_readiness_cmd(dispatch, session_id),
               fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
               fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
               fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
@@ -8277,6 +8393,7 @@ fn update(
               fetch_mooncode_test_runs_cmd(dispatch, session.id),
               fetch_mooncode_package_candidates_cmd(dispatch, session.id),
               fetch_mooncode_action_plan_cmd(dispatch, session.id),
+              fetch_mooncode_production_readiness_cmd(dispatch, session.id),
               fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
               fetch_mooncode_command_queue_cmd(dispatch, session.id),
               fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
@@ -8319,6 +8436,7 @@ fn update(
               ),
               fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
               fetch_mooncode_action_plan_cmd(dispatch, session_id),
+              fetch_mooncode_production_readiness_cmd(dispatch, session_id),
               fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
               fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
               fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
@@ -17172,6 +17290,36 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
     match selected_agent_session(model) {
       Some(session) => {
         let summary = session.mooncode_summary
+        let production_audit = match model.mooncode_production_readiness {
+          Some(readiness)
+              if model.mooncode_production_readiness_session_id == session.id =>
+            Some(readiness)
+          _ => None
+        }
+        let production_readiness_json = match production_audit {
+          Some(readiness) => readiness.readiness
+          None => summary.production_readiness
+        }
+        let production_level = match production_audit {
+          Some(readiness) => readiness.level
+          None => summary.production_level
+        }
+        let production_score = match production_audit {
+          Some(readiness) => readiness.score
+          None => summary.production_score
+        }
+        let production_passed_count = match production_audit {
+          Some(readiness) => readiness.passed_count
+          None => summary.production_passed_check_count
+        }
+        let production_check_count = match production_audit {
+          Some(readiness) => readiness.check_count
+          None => summary.production_check_count
+        }
+        let production_checks = match production_audit {
+          Some(readiness) => readiness.checks
+          None => summary.production_checks
+        }
         div(class="mooncode-readiness", [
           div(class="daemon-state", [
             info_row("Protocol", summary.protocol),
@@ -17247,12 +17395,23 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
             ),
             info_row(
               "Production Grade",
-              "\{summary.production_level} / \{summary.production_score} (\{summary.production_passed_check_count}/\{summary.production_check_count})",
+              "\{production_level} / \{production_score} (\{production_passed_count}/\{production_check_count})",
+            ),
+            info_row(
+              "Production Audit",
+              model.mooncode_production_readiness_status,
+            ),
+            info_row(
+              "Audit Endpoint",
+              match production_audit {
+                Some(readiness) => readiness.endpoint
+                None => "/api/mooncode/sessions/\{session.id}/production-readiness"
+              },
             ),
             info_row(
               "Next Production Action",
               json_string_value(
-                summary.production_readiness,
+                production_readiness_json,
                 "next_action",
                 default="inspect_production_check",
               ),
@@ -17260,7 +17419,7 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
             info_row(
               "Next Owner",
               json_string_value(
-                summary.production_readiness,
+                production_readiness_json,
                 "next_owner",
                 default="mooncode",
               ),
@@ -17268,7 +17427,7 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
             info_row(
               "First Blocker",
               json_string_value(
-                summary.production_readiness,
+                production_readiness_json,
                 "first_blocker_label",
                 default="none",
               ),
@@ -17276,7 +17435,7 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
             info_row(
               "Blocker Evidence",
               json_string_value(
-                summary.production_readiness,
+                production_readiness_json,
                 "first_blocker_evidence",
                 default="none",
               ),
@@ -17358,7 +17517,7 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
           ]),
           div(class="mooncode-output-roots", [
             small("Production-grade checklist"),
-            render_mooncode_eval_checks(summary.production_checks),
+            render_mooncode_eval_checks(production_checks),
           ]),
           div(class="mooncode-output-roots", [
             small("Eval-readiness checklist"),

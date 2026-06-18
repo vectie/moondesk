@@ -1477,6 +1477,9 @@ Implemented behavior:
   action, next owner, all check evidence, the static rubric, and durable
   evidence paths. It lets Moondesk poll production-grade status without loading
   the whole transcript while keeping the scoring contract in `internal/mooncode`.
+  The MoonCode Readiness panel uses this compact endpoint for the selected
+  session and falls back to the full session summary only until the audit
+  payload arrives.
 - `GET /api/mooncode/eval-harness` returns the standalone
   `mooncode-eval-harness-contract`. It names `../openseek/eval/tool_harness`
   and `../openseek/eval/file_edit` as references, requires deterministic tool
