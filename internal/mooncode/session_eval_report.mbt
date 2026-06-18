@@ -13,6 +13,9 @@ pub fn eval_report_projection(session : Json) -> Json {
   )
   let native_ready = native_eval_report_ready(native_eval)
   let native_harnesses = native_eval_report_harnesses(native_eval)
+  let missing_required_native_harnesses = native_eval_missing_required_harnesses(
+    native_eval,
+  )
   let native_passed_harness_count = native_eval_passed_harness_count(
     native_harnesses,
   )
@@ -58,6 +61,11 @@ pub fn eval_report_projection(session : Json) -> Json {
     "native_eval_failed_harness_count": native_harnesses.length() -
     native_passed_harness_count,
     "native_eval_harnesses": Json::array(native_harnesses),
+    "required_native_harness_count": required_native_eval_harness_ids().length(),
+    "missing_required_native_harness_count": missing_required_native_harnesses.length(),
+    "missing_required_native_harnesses": string_array_json(
+      missing_required_native_harnesses,
+    ),
     "native_eval_source": if native_ready {
       json_string(native_eval, "source", default="moonclaw-native-runtime")
     } else {
@@ -81,15 +89,18 @@ pub fn eval_report_projection(session : Json) -> Json {
       "absolute_manifest_path",
       default="",
     ),
-    "required_native_harnesses": string_array_json(["tool_harness", "file_edit"]),
+    "required_native_harnesses": string_array_json(
+      required_native_eval_harness_ids(),
+    ),
     "minimum_native_evidence": string_array_json([
       "read/edit/write/shell/moon_check tool reliability", "file-edit task success/failure fixtures",
-      "test/build execution with stdout/stderr", "package assembly proof for generated tools and miniapps",
+      "patch review and apply/revert proof", "ordered command execution for prompt/steer/cancel/test/build/eval/package/review",
+      "package assembly proof for generated tools and miniapps",
     ]),
     "current_gap": if native_ready {
       "MoonClaw reported native eval evidence; remaining bridge/runtime gaps are reflected in the checks array."
     } else {
-      "Bridge evidence is visible, but MoonClaw still needs OpenSeek-style tool_harness and file_edit eval results before Moondesk can claim production-grade coding-agent behavior."
+      "Bridge evidence is visible, but MoonClaw still needs OpenSeek-style tool_harness, file_edit, patch_review, command_execution, and package_output eval results before Moondesk can claim production-grade coding-agent behavior."
     },
     "summary": summary,
   }
@@ -221,24 +232,13 @@ pub fn session_with_saved_eval_manifest(
 ///|
 fn native_eval_report_ready(report : Json) -> Bool {
   match summary_json_object_field(report, "ok") {
-    Some(value) => return @json.from_json(value) catch { _ => false }
+    Some(value) =>
+      if !(@json.from_json(value) catch { _ => false }) {
+        return false
+      }
     None => ()
   }
-  if json_bool(report, "native_eval_evidence_ready", default=false) {
-    return true
-  }
-  let status = json_string(report, "status", default="")
-  if status == "accepted" || status == "passed" || status == "production-ready" {
-    return true
-  }
-  let native_eval = summary_json_object_field_or_empty(report, "native_eval")
-  let nested_status = json_string(native_eval, "status", default="")
-  if nested_status == "passed" || nested_status == "accepted" {
-    return true
-  }
-  let harnesses = native_eval_report_harnesses(report)
-  harnesses.length() > 0 &&
-  native_eval_passed_harness_count(harnesses) == harnesses.length()
+  native_eval_missing_required_harnesses(report).length() == 0
 }
 
 ///|
@@ -252,11 +252,55 @@ fn native_eval_report_harnesses(report : Json) -> Array[Json] {
 }
 
 ///|
+fn required_native_eval_harness_ids() -> Array[String] {
+  [
+    "tool_harness", "file_edit", "patch_review", "command_execution", "package_output",
+  ]
+}
+
+///|
+fn native_eval_missing_required_harnesses(report : Json) -> Array[String] {
+  let harnesses = native_eval_report_harnesses(report)
+  let missing : Array[String] = []
+  for required in required_native_eval_harness_ids() {
+    let mut found = false
+    for harness in harnesses {
+      if native_eval_harness_id(harness) == required &&
+        native_eval_harness_passed(harness) {
+        found = true
+      }
+    }
+    if !found {
+      missing.push(required)
+    }
+  }
+  missing
+}
+
+///|
+fn native_eval_harness_id(harness : Json) -> String {
+  match harness {
+    Json::String(value) => value
+    _ => json_string(harness, "id", default="")
+  }
+}
+
+///|
+fn native_eval_harness_passed(harness : Json) -> Bool {
+  match harness {
+    Json::String(_) => false
+    _ => {
+      let status = json_string(harness, "status", default="")
+      status == "passed" || status == "accepted"
+    }
+  }
+}
+
+///|
 fn native_eval_passed_harness_count(harnesses : Array[Json]) -> Int {
   let mut count = 0
   for harness in harnesses {
-    let status = json_string(harness, "status", default="")
-    if status == "passed" || status == "accepted" {
+    if native_eval_harness_passed(harness) {
       count += 1
     }
   }

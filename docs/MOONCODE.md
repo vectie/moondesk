@@ -1824,18 +1824,21 @@ fallback.
 
 MoonClaw's current native eval endpoint already runs a first deterministic
 tool/file-edit harness for `read`, `write`, `edit`, `shell`, `moon_ide`,
-`moon_cmd`, `moon_check`, and `finish`, runtime-turn now has an opt-in bounded model/tool feedback planner
+`moon_cmd`, `moon_check`, and `finish`, and the shared eval contract now also
+requires `patch_review`, `command_execution`, and `package_output` harness
+proof before native eval can be treated as production-ready. Runtime-turn now has an opt-in bounded model/tool feedback planner
 that emits reasoning/assistant/tool-call/tool-result event evidence, and
 runtime-loop can drain the durable queue until idle/failure/cancel/limits; the
-remaining runtime work is production-grade live steering, diff review, and
-model-backed coding evals.
+remaining runtime work is production-grade live steering and broader
+model-backed coding eval cases.
 MoonClaw or a future standalone `mooncode/eval` runner can also submit the same
 native proof directly with `POST /api/mooncode/sessions/<session-id>/eval-report`.
 The Eval Report panel also exposes a typed `run_eval` command that enters the
 same ordered `mooncode.v1` command/runtime queue. Its execution plan asks
-MoonClaw or standalone `mooncode` to run the OpenSeek-style `tool_harness` and
-`file_edit` harnesses and then publish native eval proof through the native
-eval endpoint or Moondesk ingest endpoint.
+MoonClaw or standalone `mooncode` to run the OpenSeek-style `tool_harness`,
+`file_edit`, `patch_review`, `command_execution`, and `package_output`
+harnesses and then publish native eval proof through the native eval endpoint
+or Moondesk ingest endpoint.
 The shared MoonCode contract normalizes the payload; Moondesk stores it on the
 durable session, refreshes
 the resumable session snapshot under
@@ -1848,8 +1851,9 @@ updated projection. This is only an evidence-ingress and persistence boundary;
 Moondesk still does not run the eval harness or execute MoonCode tools.
 
 The report records bridge score, bridge level, passed and missing readiness
-checks, required native harnesses (`tool_harness` and `file_edit`), minimum
-native evidence, native eval source/endpoint, the current gap, `manifest_path`,
+checks, required native harnesses (`tool_harness`, `file_edit`,
+`patch_review`, `command_execution`, and `package_output`), missing required
+native harnesses, minimum native evidence, native eval source/endpoint, the current gap, `manifest_path`,
 `absolute_manifest_path`, and `recorded_at`. This deliberately distinguishes
 Moondesk bridge evidence from MoonClaw-native eval proof while still giving
 Bookkeeper and future standalone `mooncode` a durable review object. The

@@ -1215,7 +1215,11 @@ Implemented behavior:
 - `GET /api/mooncode/sessions/:id/eval-report` returns a
   `mooncode-eval-report` projection over the session summary checks. It reports
   bridge score, bridge level, passed/missing checks, required native harnesses,
-  minimum native evidence, and whether MoonClaw has supplied native eval proof.
+  missing required native harnesses, minimum native evidence, and whether
+  MoonClaw has supplied native eval proof. Native eval readiness now requires
+  passing `tool_harness`, `file_edit`, `patch_review`, `command_execution`, and
+  `package_output` proof, so older two-harness reports remain visible but do
+  not satisfy production-ready native eval by themselves.
   After each command Moondesk persists the same object at
   `wiki/reviews/mooncode/<session-id>/eval-report.json`, appends an
   `eval_report.manifest` review event, and includes the manifest path/timestamp

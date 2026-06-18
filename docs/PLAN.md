@@ -229,6 +229,9 @@ Native `run_eval` commands now run MoonClaw's OpenSeek-style tool/file-edit
 harnesses from runtime-turn, write a MoonBook-owned
 `wiki/reviews/mooncode/<session-id>/eval-report.json`, and emit
 `eval_report.manifest` evidence with `tool_harness` and `file_edit` results.
+The shared native eval readiness contract now also requires `patch_review`,
+`command_execution`, and `package_output` harness proof, so older tool/file-edit
+reports remain visible but cannot satisfy production-ready native eval alone.
 MoonClaw's native runtime-loop now
 supervises repeated runtime-turns over the durable queue until idle, failure,
 cancel, or max-turns. It also accepts `live_wait_ms` and `poll_ms` for opt-in
@@ -694,7 +697,8 @@ projects `patch_lifecycle` from those patch-set rows, and the MoonCode header
 renders needs-review/runtime-needed/runtime-proven/blocked counts plus recent
 patch rows before the full review panel. Moondesk
 still does not edit files directly; the remaining MoonClaw work is richer
-diff-review polish and broader model-backed coding eval coverage.
+diff-review polish and broader model-backed coding eval coverage beyond the
+baseline patch/command/package harness proof categories.
 The pure MoonCode package now keeps patch review/execution state projection in a
 focused slice shared by patch sets, parsed hunks, and preflight gates. Patch-set
 manifest assembly can change independently from target matching, runtime proof
@@ -828,7 +832,7 @@ lanes, approval policies, input fields, mutation/review flags, purposes,
 outputs, and safety policies. The capability route also carries an OpenSeek-shaped
 `runtime_contract` for `agent_runtime`, `agent_session`, `agent_tool`,
 `agent_loop`, the prompt/steer/cancel JSONL wire, append-only session store, and
-tool/file-edit eval harnesses plus a native eval-report schema for
+tool/file-edit/patch-review/command-execution/package-output eval harnesses plus a native eval-report schema for
 `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>` and a concrete
 `/api/mooncode/eval-harness` contract endpoint. The inspector renders that
 contract as the MoonClaw/MoonCode extraction boundary. Runtime-contract
@@ -841,8 +845,8 @@ checkout, daemon, `/v1/models`, `/v1/tasks`, prompt/message/cancel bridge,
 append-only command queue, append-only session log, MoonClaw adapter readiness,
 native runtime-turn availability, native runtime-loop queue supervision,
 optional bounded model/tool feedback planning, and the remaining autonomous
-MoonClaw-owned long-running steering UX, diff-review, and model-backed eval
-proof. The
+MoonClaw-owned long-running steering UX, diff-review polish, and broader
+model-backed eval cases. The
 live probes still happen in `internal/moonwiki`, but the readiness projection
 itself now lives in `internal/mooncode`: endpoint rows, bridge-vs-production
 status, and check metadata are extractable protocol data rather than
@@ -877,7 +881,8 @@ dispatch, session resume, deferred steering, review accept/reject, and
 tool-approval approve/reject choices. Those controls still send typed commands
 through MoonClaw/MoonCode instead of executing tools in the UI. Richer patch
 promotion, signed bundle assembly, broader long-running steering UX, and
-broader model-backed eval evidence are still future runtime work.
+broader model-backed eval evidence beyond the baseline native harness set are
+still future runtime work.
 
 ### Output Library
 

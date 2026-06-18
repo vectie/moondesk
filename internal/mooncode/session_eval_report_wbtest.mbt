@@ -99,7 +99,7 @@ test "mooncode eval report manifest session update refreshes summary" {
 }
 
 ///|
-test "mooncode native eval report normalization accepts legacy readiness" {
+test "mooncode native eval report normalization keeps legacy readiness partial" {
   let native_eval = normalize_native_eval_report(
     {
       "native_eval_evidence_ready": true,
@@ -107,7 +107,7 @@ test "mooncode native eval report normalization accepts legacy readiness" {
     },
     "/v1/mooncode/sessions/s1/eval-report",
   )
-  assert_true(json_bool(native_eval, "ok", default=false))
+  assert_false(json_bool(native_eval, "ok", default=true))
   assert_eq(
     json_string(native_eval, "source", default=""),
     "moonclaw-native-runtime",
@@ -131,6 +131,9 @@ test "mooncode native eval report normalization accepts MoonClaw harness status"
         "harnesses": [
           { "id": "tool_harness", "status": "passed" },
           { "id": "file_edit", "status": "passed" },
+          { "id": "patch_review", "status": "passed" },
+          { "id": "command_execution", "status": "passed" },
+          { "id": "package_output", "status": "passed" },
         ],
       },
     },
@@ -149,10 +152,18 @@ test "mooncode native eval report normalization accepts MoonClaw harness status"
     },
   })
   assert_eq(json_string(report, "status", default=""), "production-ready")
-  assert_eq(summary_json_int(report, "native_eval_harness_count", default=0), 2)
+  assert_eq(summary_json_int(report, "native_eval_harness_count", default=0), 5)
   assert_eq(
     summary_json_int(report, "native_eval_passed_harness_count", default=0),
-    2,
+    5,
+  )
+  assert_eq(
+    summary_json_int(
+      report,
+      "missing_required_native_harness_count",
+      default=-1,
+    ),
+    0,
   )
 }
 
@@ -160,7 +171,17 @@ test "mooncode native eval report normalization accepts MoonClaw harness status"
 test "mooncode native eval report session patch is MoonCode owned" {
   let session = session_with_native_eval_report(
     { "id": "s1", "workspace_id": "book" },
-    { "native_eval_evidence_ready": true, "harnesses": ["tool_harness"] },
+    {
+      "native_eval": {
+        "harnesses": [
+          { "id": "tool_harness", "status": "passed" },
+          { "id": "file_edit", "status": "passed" },
+          { "id": "patch_review", "status": "passed" },
+          { "id": "command_execution", "status": "passed" },
+          { "id": "package_output", "status": "passed" },
+        ],
+      },
+    },
     "/v1/mooncode/sessions/s1/eval-report",
   )
   assert_eq(json_string(session, "id", default=""), "s1")
@@ -176,6 +197,50 @@ test "mooncode native eval report session patch is MoonCode owned" {
     json_string(native, "source", default=""),
     "moonclaw-native-runtime",
   )
+}
+
+///|
+test "mooncode native eval report exposes missing required harnesses" {
+  let native_eval = normalize_native_eval_report(
+    {
+      "status": "accepted",
+      "native_eval": {
+        "status": "passed",
+        "harnesses": [
+          { "id": "tool_harness", "status": "passed" },
+          { "id": "file_edit", "status": "passed" },
+        ],
+      },
+    },
+    "/v1/mooncode/sessions/s1/eval-report?book_root=/tmp/book",
+  )
+  assert_false(json_bool(native_eval, "ok", default=true))
+  let report = eval_report_projection({
+    "id": "s1",
+    "workspace_id": "book",
+    "moonclaw_task_id": "task",
+    "mooncode_native_eval_report": native_eval,
+    "mooncode_summary": {
+      "eval_score": 100,
+      "eval_level": "ready",
+      "eval_checks": [],
+    },
+  })
+  assert_eq(json_string(report, "status", default=""), "bridge-ready")
+  assert_eq(
+    summary_json_int(
+      report,
+      "missing_required_native_harness_count",
+      default=-1,
+    ),
+    3,
+  )
+  let missing = eval_report_wbtest_json_string_array_items(
+    report, "missing_required_native_harnesses",
+  )
+  assert_true(missing.contains("patch_review"))
+  assert_true(missing.contains("command_execution"))
+  assert_true(missing.contains("package_output"))
 }
 
 ///|
@@ -255,6 +320,22 @@ test "mooncode saved eval manifest keeps existing accepted native evidence" {
     next, "mooncode_native_eval_report",
   )
   assert_eq(json_string(native, "status", default=""), "previously-accepted")
+}
+
+///|
+fn eval_report_wbtest_json_string_array_items(
+  json : Json,
+  key : String,
+) -> Array[String] {
+  let values = json_array_items(json, key)
+  let result : Array[String] = []
+  for value in values {
+    match value {
+      Json::String(item) => result.push(item)
+      _ => ()
+    }
+  }
+  result
 }
 
 ///|

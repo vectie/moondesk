@@ -342,7 +342,17 @@ test "mooncode summary exposes eval readiness gates" {
     json_string(eval_report, "current_gap", default="").contains("MoonClaw"),
   )
   let native_eval = @mooncode.normalize_native_eval_report(
-    { "native_eval_evidence_ready": true, "harnesses": ["tool_harness"] },
+    {
+      "native_eval": {
+        "harnesses": [
+          { "id": "tool_harness", "status": "passed" },
+          { "id": "file_edit", "status": "passed" },
+          { "id": "patch_review", "status": "passed" },
+          { "id": "command_execution", "status": "passed" },
+          { "id": "package_output", "status": "passed" },
+        ],
+      },
+    },
     "/v1/mooncode/sessions/s1/eval-report",
   )
   assert_true(json_bool(native_eval, "ok", default=false))
@@ -586,14 +596,22 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   }
   let native_payload : Json = {
     "ok": true,
-    "required_harnesses": ["tool_harness", "file_edit"],
+    "required_harnesses": [
+      "tool_harness", "file_edit", "patch_review", "command_execution", "package_output",
+    ],
     "harnesses": [
       { "id": "tool_harness", "status": "passed" },
       { "id": "file_edit", "status": "passed" },
+      { "id": "patch_review", "status": "passed" },
+      { "id": "command_execution", "status": "passed" },
+      { "id": "package_output", "status": "passed" },
     ],
     "tool_harness": { "status": "passed", "passed_count": 8 },
     "file_edit": { "status": "passed", "passed_count": 5 },
-    "passed_count": 13,
+    "patch_review": { "status": "passed", "passed_count": 4 },
+    "command_execution": { "status": "passed", "passed_count": 9 },
+    "package_output": { "status": "passed", "passed_count": 3 },
+    "passed_count": 29,
     "failed_count": 0,
     "evidence": ["OpenSeek-style harnesses passed"],
   }
