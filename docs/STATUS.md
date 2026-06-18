@@ -98,7 +98,9 @@ resume modes, and the next resume action from runtime command/dispatch logs.
 Package lifecycle reports package/source-bound/missing-source, executable-ready,
 runtime-built, and runtime-verified state, while the detailed package-candidate
 panel remains the place for manifest paths, source inventory, and operator
-commands.
+commands. The MoonCode production score now gates on healthy resume lifecycle
+and verified package lifecycle evidence, so `production-grade` requires both
+durable resumability and executable-ready package proof.
 
 EB evidence-watch books now also write `raw/analysis-runs/eb-expected-output-contract.json`, a book-local receipt for the exact final XLSX filename, sheet/header, sidecar, lifecycle, official-source, multi-bond, and Bookkeeper acceptance requirements. Contract verification and deterministic output validation use that receipt so the expected workbook shape is auditable without reconstructing it from the prompt, schema, dispatch packet, and starter workbook.
 Run health now surfaces the same receipt as `expected_output_contract_ready` plus an `expected_output_contract` production-checklist item, so missing or stale workbook-contract proof blocks final EB output readiness and appears in the operator-facing health report.

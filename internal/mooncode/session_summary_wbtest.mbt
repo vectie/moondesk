@@ -55,7 +55,7 @@ test "mooncode session summary counts reviewable code events" {
   assert_eq(summary_json_int(summary, "pending_diff_count", default=9), 0)
   assert_true(summary_json_int(summary, "production_score", default=0) > 0)
   assert_eq(json_string(summary, "production_level", default=""), "prototype")
-  assert_eq(json_array_items(summary, "production_checks").length(), 14)
+  assert_eq(json_array_items(summary, "production_checks").length(), 16)
 }
 
 ///|
@@ -265,11 +265,25 @@ test "mooncode session summary scores production-grade coding flow" {
   )
   assert_eq(
     summary_json_int(summary, "production_passed_check_count", default=0),
-    14,
+    16,
   )
-  assert_eq(summary_json_int(summary, "production_check_count", default=0), 14)
+  assert_eq(summary_json_int(summary, "production_check_count", default=0), 16)
   let checks = json_array_items(summary, "production_checks")
   assert_eq(json_string(checks[0], "id", default=""), "moonbook_selected")
+  let mut found_resume_lifecycle = false
+  let mut found_package_lifecycle = false
+  for check in checks {
+    if json_string(check, "id", default="") == "resume_lifecycle" {
+      found_resume_lifecycle = true
+      assert_true(json_bool(check, "ok", default=false))
+    }
+    if json_string(check, "id", default="") == "package_lifecycle" {
+      found_package_lifecycle = true
+      assert_true(json_bool(check, "ok", default=false))
+    }
+  }
+  assert_true(found_resume_lifecycle)
+  assert_true(found_package_lifecycle)
   assert_eq(
     json_string(checks[checks.length() - 1], "id", default=""),
     "extractable_boundary",

@@ -1231,10 +1231,11 @@ Implemented behavior:
   (`production_score`, `production_level`, and `production_checks`) over the
   end-to-end user workflow: selected book, MoonClaw attachment, durable session,
   chat, typed commands, live runtime stream, tool events, diffs, tests/builds,
-  review receipts, package result, current action-plan manifest, clear live
-  blockers, and extractable runtime handoff. This keeps the regular
-  production-grade score aligned with the product success criteria while the
-  eval report remains focused on bridge/native harness proof.
+  review receipts, package result, healthy resume lifecycle, verified package
+  lifecycle, current action-plan manifest, clear live blockers, and extractable
+  runtime handoff. This keeps the regular production-grade score aligned with
+  the product success criteria while the eval report remains focused on
+  bridge/native harness proof.
 - `POST /api/mooncode/sessions/:id/eval-report` is the native proof ingress for
   MoonClaw or a future standalone `mooncode/eval` runner. It accepts a
   MoonClaw-owned eval report payload, delegates normalization to the shared

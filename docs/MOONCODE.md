@@ -1864,13 +1864,16 @@ The session summary also carries a separate product-grade score:
 the end-to-end MoonCode workspace criteria: selected MoonBook, MoonClaw
 attachment, durable session, chat transcript, typed command queue, live runtime
 stream, tool execution, diff review, test/build proof, review receipts,
-package result, the current action-plan manifest, clear live blockers, and
+package result, explicit `resume_lifecycle` health, verified
+`package_lifecycle`, the current action-plan manifest, clear live blockers, and
 extractable MoonCode boundary. A session with historical proof but an action
 plan that still reports blocked actions, unresolved diffs, pending tool
 approvals, pending steering, or failing tests cannot score as
-`production-grade`. It is intentionally separate from `eval_score`: eval score
-measures bridge/native harness evidence, while production score measures whether
-the selected session proves the user-facing MoonCode product workflow.
+`production-grade`; neither can a session whose resume lifecycle is missing or
+blocked, or whose package lifecycle lacks executable-ready verified package
+proof. It is intentionally separate from `eval_score`: eval score measures
+bridge/native harness evidence, while production score measures whether the
+selected session proves the user-facing MoonCode product workflow.
 
 ## Completion Criteria
 

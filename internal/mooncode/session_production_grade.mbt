@@ -109,6 +109,25 @@ pub fn session_production_checks(
   )
   let session_snapshot_ready = json_string(snapshot, "kind", default="") ==
     "mooncode-session-snapshot"
+  let resume_lifecycle = session_resume_lifecycle(session, events)
+  let resume_status = json_string(resume_lifecycle, "latest_status", default="")
+  let resume_ok = json_bool(resume_lifecycle, "snapshot_ready", default=false) &&
+    resume_status != "missing-snapshot" &&
+    resume_status != "blocked"
+  let package_lifecycle = session_package_lifecycle(session, events)
+  let package_lifecycle_status = json_string(
+    package_lifecycle,
+    "latest_status",
+    default="",
+  )
+  let package_lifecycle_verified = package_lifecycle_status == "verified" &&
+    summary_json_int(
+      package_lifecycle,
+      "runtime_verified_package_count",
+      default=0,
+    ) >
+    0 &&
+    summary_json_int(package_lifecycle, "executable_ready_count", default=0) > 0
   [
     production_grade_check(
       "moonbook_selected",
@@ -135,6 +154,12 @@ pub fn session_production_checks(
       "Durable session",
       append_log_count > 0 && command_log_count > 0 && session_snapshot_ready,
       "\{append_log_count} event(s), \{command_log_count} command(s), snapshot \{if session_snapshot_ready { "ready" } else { "missing" }}",
+    ),
+    production_grade_check(
+      "resume_lifecycle",
+      "Resume lifecycle",
+      resume_ok,
+      "status \{empty_production_label(resume_status)}, pending \{summary_json_int(resume_lifecycle, "pending_count", default=0)}, running \{summary_json_int(resume_lifecycle, "running_count", default=0)}, blocked \{summary_json_int(resume_lifecycle, "blocked_count", default=0)}",
     ),
     production_grade_check(
       "chat_transcript",
@@ -195,6 +220,12 @@ pub fn session_production_checks(
       package_index_manifest_count > 0 &&
       runtime_verified_package_count > 0,
       "\{artifact_count} artifact event(s), \{source_bound_package_count} source-bound package(s), \{package_index_manifest_count} package index manifest(s), \{runtime_verified_package_count}/\{runtime_package_proof_count} verified runtime package proof",
+    ),
+    production_grade_check(
+      "package_lifecycle",
+      "Package lifecycle",
+      package_lifecycle_verified,
+      "status \{empty_production_label(package_lifecycle_status)}, executable-ready \{summary_json_int(package_lifecycle, "executable_ready_count", default=0)}, verified \{summary_json_int(package_lifecycle, "runtime_verified_package_count", default=0)}",
     ),
     production_grade_check(
       "action_plan_current",

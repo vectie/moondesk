@@ -400,7 +400,10 @@ The session summary now also carries `resume_lifecycle`, a compact projection
 over the typed session snapshot plus runtime command/dispatch logs. The
 MoonCode header shows snapshot readiness, pending/running/blocked/completed
 runtime work, the next command/action/status, resume modes, and the next resume
-step before the command-specific lifecycle panels.
+step before the command-specific lifecycle panels. Product-grade scoring now
+uses this projection, plus verified `package_lifecycle` state, so the
+`production-grade` label requires both resumable durable state and
+executable-ready package proof.
 The runtime feed, runtime execution plan, and saved runtime handoff now also
 include a `runtime_turn_packet`: a self-contained MoonClaw/standalone-MoonCode
 turn handoff that combines replay/claim state, the serve-scheduler decision,
