@@ -252,6 +252,8 @@ pub fn event_tool_result() -> String
 
 pub fn event_tool_started() -> String
 
+pub fn extraction_boundary_json() -> Json
+
 pub fn jsonl_text(Array[Json]) -> String
 
 pub fn kind_command() -> String

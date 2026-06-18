@@ -47,7 +47,11 @@ This keeps the implementation extractable. A future standalone `mooncode`
 component should be able to take the coding runtime/protocol without taking the
 MoonWiki UI or the rest of Moondesk.
 
-The extraction starts in code at `internal/mooncode`, which is intentionally
+The extraction boundary is now split into two MoonCode packages. The portable
+kernel is `mooncode/core`; it owns `mooncode.v1`, the native capability surface,
+and a machine-readable `mooncode-extraction-boundary` record that names the
+core, Moondesk projection, MoonWiki host, and MoonClaw runtime responsibilities.
+The larger Moondesk projection is `internal/mooncode`; it is intentionally
 pure and UI-free. It currently owns the OpenSeek-compatible serve-wire helper
 surface for `prompt`, `steer`, and `cancel`, plus native function tool-call
 wire decoding for OpenSeek/DeepSeek shapes like
@@ -59,8 +63,9 @@ local wire atoms are centralized in `internal/mooncode/protocol.mbt`:
 `mooncode.v1`, command/runtime-dispatch kinds, runtime-turn/tool-call contract
 kinds, and canonical tool/test/package/control event names. MoonWiki route
 code should consume those helpers instead of re-declaring protocol strings;
-when `mooncode` becomes a standalone component, this file is the first shared
-protocol surface to extract.
+when `mooncode` becomes a standalone component, `mooncode/core` is the first
+shared package to lift and `internal/mooncode` is the projection layer to split
+next.
 The
 package also owns command/action metadata:
 supported actions, dispatch policy, approval policy, tool hints, expected

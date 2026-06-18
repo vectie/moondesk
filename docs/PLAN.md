@@ -532,9 +532,10 @@ next step.
 named consumer checkpoints under
 `.moontown/mooncode-sessions/<session-id>/stream-checkpoints/`, so the UI,
 MoonClaw, or standalone `mooncode` can resume from a known append-log cursor
-without replaying the entire session. This is the durable cursor boundary for
-the future blocking live tail; Moondesk still does not own the long-running
-agent event producer.
+without replaying the entire session. The selected MoonCode session now uses
+bounded `?live=true` JSONL tailing against that cursor; Moondesk still does not
+own the long-running agent event producer, which remains MoonClaw or future
+standalone `mooncode` runtime responsibility.
 Moondesk also writes and exposes a compact MoonBook-owned action plan at
 `wiki/reviews/mooncode/<session-id>/action-plan.json` and
 `GET /api/mooncode/sessions/<id>/action-plan`. The plan merges command packets,

@@ -21,6 +21,26 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"kind\":\"mooncode-tool-contract\""))
   assert_true(payload.contains("\"tool_call_wire\""))
   assert_true(payload.contains("\"kind\":\"mooncode-tool-call-wire-contract\""))
+  assert_true(payload.contains("\"extraction_boundary\""))
+  assert_true(payload.contains("\"kind\":\"mooncode-extraction-boundary\""))
+  assert_true(
+    payload.contains(
+      "\"portable_core_package\":\"vectie/moondesk/mooncode/core\"",
+    ),
+  )
+  assert_true(
+    payload.contains(
+      "\"moondesk_projection_package\":\"vectie/moondesk/internal/mooncode\"",
+    ),
+  )
+  assert_true(
+    payload.contains(
+      "\"moonwiki_host_package\":\"vectie/moondesk/internal/moonwiki\"",
+    ),
+  )
+  assert_true(payload.contains("\"core_package\":\"mooncode/core\""))
+  assert_true(payload.contains("\"projection_package\":\"internal/mooncode\""))
+  assert_true(payload.contains("\"host_package\":\"internal/moonwiki\""))
   assert_true(payload.contains("openseek/agent_runtime"))
   assert_true(payload.contains("\"command\":\"prompt\""))
   assert_true(payload.contains("\"agent_finished\""))

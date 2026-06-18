@@ -80,6 +80,7 @@ pub fn capabilities_json() -> Json {
     "runtime_contract": runtime_contract_json(),
     "serve_scheduler_contract": serve_scheduler_contract_json(),
     "moonclaw_adapter_contract": moonclaw_adapter_contract_json(),
+    "extraction_boundary": extraction_boundary_json(),
     "tool_contract": tool_contract_json(),
     "tool_call_wire": tool_call_wire_contract_json(),
     "command_specs": command_specs_json(),
@@ -175,6 +176,9 @@ pub fn capabilities_json() -> Json {
     ],
     "extractable": {
       "future_package": "mooncode",
+      "core_package": "mooncode/core",
+      "projection_package": "internal/mooncode",
+      "host_package": "internal/moonwiki",
       "rule": "Moondesk may render and approve MoonCode sessions, but the coding engine and durable protocol must remain movable out of Moondesk.",
     },
   }

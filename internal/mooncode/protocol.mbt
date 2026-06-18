@@ -29,6 +29,11 @@ pub fn native_capability_surface_json() -> Json {
 }
 
 ///|
+pub fn extraction_boundary_json() -> Json {
+  @mooncode_core.extraction_boundary_json()
+}
+
+///|
 pub fn kind_command() -> String {
   "mooncode.command"
 }
