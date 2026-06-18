@@ -66,7 +66,8 @@ pub fn native_command_required_outputs(action : String) -> Array[String] {
     "run_build" => ["build command", "exit code", "test_result event"]
     "run_eval" =>
       [
-        "tool_harness result", "file_edit result", "native eval report", "eval_report.manifest event",
+        "tool_harness result", "file_edit result", "patch_review result", "command_execution result",
+        "package_output result", "native eval report", "eval_report.manifest event",
       ]
     "package" =>
       [
@@ -117,7 +118,9 @@ pub fn native_command_recommended_commands(
       }
     "run_eval" =>
       [
-        "run tool_harness eval fixtures", "run file_edit eval fixtures", "POST /api/mooncode/sessions/<id>/eval-report",
+        "run tool_harness eval fixtures", "run file_edit eval fixtures", "run patch_review eval fixtures",
+        "run command_execution eval fixtures", "run package_output eval fixtures",
+        "POST /api/mooncode/sessions/<id>/eval-report",
       ]
     "package" => ["moon check", "moon test", "build/package selected artifact"]
     "commit" =>

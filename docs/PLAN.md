@@ -225,13 +225,13 @@ become synthetic work.
 Native accept/reject commands now also write MoonBook-owned review receipts and
 emit `receipt.accept` / `receipt.reject` review-lane events, so review state can
 be proven by MoonClaw-owned runtime evidence instead of only desktop intent.
-Native `run_eval` commands now run MoonClaw's OpenSeek-style tool/file-edit
-harnesses from runtime-turn, write a MoonBook-owned
+Native `run_eval` commands now ask MoonClaw or standalone MoonCode for the full
+OpenSeek-style native harness set from runtime-turn, write a MoonBook-owned
 `wiki/reviews/mooncode/<session-id>/eval-report.json`, and emit
-`eval_report.manifest` evidence with `tool_harness` and `file_edit` results.
-The shared native eval readiness contract now also requires `patch_review`,
-`command_execution`, and `package_output` harness proof, so older tool/file-edit
-reports remain visible but cannot satisfy production-ready native eval alone.
+`eval_report.manifest` evidence. The required proof is `tool_harness`,
+`file_edit`, `patch_review`, `command_execution`, and `package_output`, so
+older tool/file-edit reports remain visible but cannot satisfy production-ready
+native eval alone.
 MoonClaw's native runtime-loop now
 supervises repeated runtime-turns over the durable queue until idle, failure,
 cancel, or max-turns. It also accepts `live_wait_ms` and `poll_ms` for opt-in

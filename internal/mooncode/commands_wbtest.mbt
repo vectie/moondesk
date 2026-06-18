@@ -447,6 +447,20 @@ test "mooncode command metadata exposes tool and lane contracts" {
       "commit_created proof event",
     ),
   )
+  let eval_outputs = native_command_required_outputs("run_eval")
+  assert_true(eval_outputs.contains("tool_harness result"))
+  assert_true(eval_outputs.contains("file_edit result"))
+  assert_true(eval_outputs.contains("patch_review result"))
+  assert_true(eval_outputs.contains("command_execution result"))
+  assert_true(eval_outputs.contains("package_output result"))
+  let eval_commands = native_command_recommended_commands(
+    "run_eval", "tools/demo/main.mbt",
+  )
+  assert_true(eval_commands.contains("run tool_harness eval fixtures"))
+  assert_true(eval_commands.contains("run file_edit eval fixtures"))
+  assert_true(eval_commands.contains("run patch_review eval fixtures"))
+  assert_true(eval_commands.contains("run command_execution eval fixtures"))
+  assert_true(eval_commands.contains("run package_output eval fixtures"))
 }
 
 ///|
