@@ -15,11 +15,12 @@ pub fn session_snapshot(
   let normalized_runtime_dispatches = runtime_dispatch_receipts_for_response(
     runtime_dispatches,
   )
+  let session_id = json_string(session, "id", default="")
   {
     "kind": "mooncode-session-snapshot",
     "protocol": protocol_version(),
     "component": "mooncode",
-    "session_id": json_string(session, "id", default=""),
+    "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
     "workspace_root": json_string(session, "workspace_root", default=""),
@@ -57,6 +58,18 @@ pub fn session_snapshot(
     "last_runtime_handoff": summary_json_object_field_or_empty(
       session, "mooncode_last_runtime_handoff_manifest",
     ),
+    "resume_endpoints": {
+      "session_store": "/api/mooncode/sessions/\{session_id}/session-store",
+      "runtime_handoff": "/api/mooncode/sessions/\{session_id}/runtime-handoff",
+      "runtime_claim": "/api/mooncode/sessions/\{session_id}/runtime-claim",
+      "runtime_replay": "/api/mooncode/sessions/\{session_id}/runtime-replay",
+      "runtime_events": "/api/mooncode/sessions/\{session_id}/runtime-events",
+      "runtime_commands": "/api/mooncode/sessions/\{session_id}/runtime-commands",
+      "stream": "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=<sequence>",
+      "stream_state": "/api/mooncode/sessions/\{session_id}/stream-state?consumer=<consumer>&since=<sequence>",
+      "action_plan": "/api/mooncode/sessions/\{session_id}/action-plan",
+      "production_readiness": "/api/mooncode/sessions/\{session_id}/production-readiness",
+    },
     "store_contract": {
       "shape": "typed session header plus transcript, commands.jsonl, runtime-commands.jsonl, runtime-dispatches.jsonl, events.jsonl, and projected MoonCode events",
       "append_only_inputs": [

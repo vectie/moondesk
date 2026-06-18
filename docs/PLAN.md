@@ -638,9 +638,11 @@ Moondesk also writes a typed durable session snapshot to
 `.moontown/mooncode-sessions/<session-id>/session.json` and exposes it through
 `GET /api/mooncode/sessions/<id>/session-store`. That snapshot captures the
 MoonCode protocol, selected book/workspace identity, MoonClaw task id, command
-packets, runtime feed rows, event projection, summary, and resume endpoints so
-MoonClaw or a future standalone `mooncode` runtime can resume without depending
-on generic Moondesk agent-session storage. The same packet is embedded in delegated MoonClaw
+packets, runtime feed rows, event projection, summary, and a `resume_endpoints`
+map with session-store, runtime handoff, claim/replay/events, stream,
+action-plan, and production-readiness URLs so MoonClaw or a future standalone
+`mooncode` runtime can resume without depending on generic Moondesk
+agent-session storage. The same packet is embedded in delegated MoonClaw
 prompts until the standalone MoonCode runtime
 takes over; cancel commands still go to the attached daemon task.
 The dispatch path now prefers a MoonClaw-owned native MoonCode runtime when

@@ -94,4 +94,19 @@ test "mooncode session snapshot records durable queue and event state" {
     ),
     "cmd-1",
   )
+  let resume_endpoints = summary_json_object_field_or_empty(
+    snapshot, "resume_endpoints",
+  )
+  assert_eq(
+    json_string(resume_endpoints, "session_store", default=""),
+    "/api/mooncode/sessions/s1/session-store",
+  )
+  assert_eq(
+    json_string(resume_endpoints, "runtime_handoff", default=""),
+    "/api/mooncode/sessions/s1/runtime-handoff",
+  )
+  assert_eq(
+    json_string(resume_endpoints, "production_readiness", default=""),
+    "/api/mooncode/sessions/s1/production-readiness",
+  )
 }

@@ -1278,9 +1278,11 @@ Implemented behavior:
   the MoonCode protocol, selected book/workspace identity, MoonClaw task id,
   command log path, runtime command log path, event log path, command packets,
   runtime commands, normalized dispatch receipts, event projection, summary,
-  and resume endpoints as a compact OpenSeek-style session object. This keeps
-  resumability and future extraction out of the generic Moondesk agent-session
-  record.
+  and a `resume_endpoints` map as a compact OpenSeek-style session object. That
+  map includes the production-readiness endpoint beside session-store,
+  runtime-handoff, claim/replay/events, runtime-commands, stream, stream-state,
+  and action-plan endpoints. This keeps resumability and future extraction out
+  of the generic Moondesk agent-session record.
 - `GET /api/mooncode/sessions/:id/runtime-commands` returns the durable
   `mooncode-runtime-command-feed` from
   `.moontown/mooncode-sessions/<session-id>/runtime-commands.jsonl`. Each row

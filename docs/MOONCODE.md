@@ -1096,7 +1096,9 @@ book/workspace identity, task id, command packets, event projection, summary,
 runtime command packets, the `tool_call_wire` decoder contract, and resume
 endpoints in one typed object that MoonClaw or a standalone `mooncode` runtime
 can resume without depending on MoonWiki internals or the Moondesk capability
-endpoint.
+endpoint. The `resume_endpoints` map includes session-store, runtime handoff,
+runtime claim/replay/events, runtime commands, JSONL stream, stream state,
+action-plan, and production-readiness URLs for the selected session.
 Event projection is normalized by `internal/mooncode`, not the Moondesk HTTP
 handler: missing event ids, lane/kind/title/status defaults, trimmed detail and
 diff text, numeric exit codes, and optional command packets are shaped before
@@ -1277,6 +1279,7 @@ POST /api/mooncode/sessions/<session-id>/runtime-claim
 POST /api/mooncode/sessions/<session-id>/runtime-replay
 GET /api/mooncode/sessions/<session-id>/preflight?action=<action>&context_path=<path>
 GET /api/mooncode/sessions/<session-id>/action-plan
+GET /api/mooncode/sessions/<session-id>/production-readiness
 GET /api/mooncode/sessions/<session-id>/tool-authorization
 POST /api/mooncode/sessions/<session-id>/tool-authorization
 ```

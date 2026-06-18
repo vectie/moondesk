@@ -705,6 +705,17 @@ async test "mooncode review actions write moonbook receipts" {
       assert_true(
         @fs.exists(json_string(session_snapshot, "snapshot_path", default="")),
       )
+      let snapshot_resume_endpoints = json_object_field_or_empty(
+        session_snapshot, "resume_endpoints",
+      )
+      assert_eq(
+        json_string(
+          snapshot_resume_endpoints,
+          "production_readiness",
+          default="",
+        ),
+        "/api/mooncode/sessions/agent-demo/production-readiness",
+      )
       assert_eq(
         json_int(session_snapshot, "runtime_command_count", default=0),
         1,
