@@ -4752,6 +4752,8 @@ fn run_mooncode_runtime_loop_cmd(
     @http.Body::Json({
       "consumer_id": "moondesk-ui-runtime-loop",
       "max_turns": 8,
+      "live_wait_ms": 5000,
+      "poll_ms": 250,
     }),
     expect=@http.Json(fn(result) {
       dispatch(RanMoonCodeRuntimeLoop(session_id, result))

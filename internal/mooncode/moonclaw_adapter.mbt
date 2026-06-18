@@ -214,6 +214,8 @@ pub fn moonclaw_runtime_loop_request(
   book_root : String,
   consumer_id? : String = "moonclaw-native-runtime-loop",
   max_turns? : Int = 8,
+  live_wait_ms? : Int = 0,
+  poll_ms? : Int = 250,
 ) -> Json {
   {
     "protocol": protocol_version(),
@@ -221,6 +223,8 @@ pub fn moonclaw_runtime_loop_request(
     "book_root": book_root,
     "consumer_id": consumer_id,
     "max_turns": max_turns,
+    "live_wait_ms": live_wait_ms,
+    "poll_ms": poll_ms,
   }
 }
 

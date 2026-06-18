@@ -233,10 +233,12 @@ MoonClaw's native runtime-loop now
 supervises repeated runtime-turns over the durable queue until idle, failure,
 cancel, or max-turns. It also accepts `live_wait_ms` and `poll_ms` for opt-in
 bounded live polling of newly appended prompt, steer, and cancel commands before
-returning idle, and reports per-iteration wait evidence back to Moondesk. The
-remaining engine work is the persistent OpenSeek-style service process around
-that loop, broader long-running steering/cancel UX, diff-aware review, and
-broader model-backed coding eval cases.
+returning idle, and reports per-iteration wait evidence back to Moondesk.
+Moondesk now passes those options for both automatic native command drains and
+the explicit `Run Native Loop` UI action. The remaining engine work is the
+persistent OpenSeek-style service process around that loop, broader
+long-running steering/cancel UX, diff-aware review, and broader model-backed
+coding eval cases.
 It also owns runtime-neutral durable event helpers: safe session-id validation,
 event record construction, JSONL rendering, JSONL parsing for events, command
 queues, runtime command feeds, runtime dispatch receipts, and event

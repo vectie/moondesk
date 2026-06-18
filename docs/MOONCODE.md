@@ -550,6 +550,10 @@ mode: callers may pass `live_wait_ms` and `poll_ms` when posting to
 polls `commands.jsonl` for newly appended prompt, steer, or cancel commands
 before returning idle and reports `waits`, `live_wait_attempt_count`, and
 `live_wait_elapsed_ms` in the response.
+Moondesk now uses this mode in both native launch paths: automatic command
+drains request a short wait for rapid follow-on steering, while the explicit
+`Run Native Loop` action posts `live_wait_ms=5000` and `poll_ms=250` unless an
+API caller overrides those values.
 
 Output events include assistant/reasoning deltas, tool calls/results, runtime
 updates, file changes, diffs, test results, artifacts, finish/abort, command

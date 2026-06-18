@@ -657,6 +657,8 @@ async fn handle_mooncode_session_runtime_supervisor_run(
       default="moondesk-ui-runtime-loop",
     ),
     max_turns=json_int(payload, "max_turns", default=8),
+    live_wait_ms=json_int(payload, "live_wait_ms", default=5000),
+    poll_ms=json_int(payload, "poll_ms", default=250),
   )
   let runtime_response = match
     moonclaw_post_json(

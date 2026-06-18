@@ -469,6 +469,8 @@ async fn send_mooncode_native_runtime_command(
         book_root,
         consumer_id="moondesk-native-runtime-loop",
         max_turns=8,
+        live_wait_ms=750,
+        poll_ms=100,
       ),
     )
     match loop_response {

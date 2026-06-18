@@ -396,6 +396,8 @@ test "mooncode moonclaw adapter owns native runtime request bodies" {
     "/tmp/book",
     consumer_id="moondesk-ui-runtime-loop",
     max_turns=5,
+    live_wait_ms=5000,
+    poll_ms=250,
   )
   assert_eq(json_string(loop_request, "protocol", default=""), "mooncode.v1")
   assert_eq(json_string(loop_request, "session_id", default=""), "session-demo")
@@ -405,6 +407,19 @@ test "mooncode moonclaw adapter owns native runtime request bodies" {
     "moondesk-ui-runtime-loop",
   )
   assert_eq(moonclaw_json_int(loop_request, "max_turns", default=0), 5)
+  assert_eq(moonclaw_json_int(loop_request, "live_wait_ms", default=-1), 5000)
+  assert_eq(moonclaw_json_int(loop_request, "poll_ms", default=-1), 250)
+  let immediate_loop_request = moonclaw_runtime_loop_request(
+    "session-demo", "/tmp/book",
+  )
+  assert_eq(
+    moonclaw_json_int(immediate_loop_request, "live_wait_ms", default=-1),
+    0,
+  )
+  assert_eq(
+    moonclaw_json_int(immediate_loop_request, "poll_ms", default=-1),
+    250,
+  )
   let turn_request = moonclaw_runtime_turn_request(
     "session-demo",
     "/tmp/book",
