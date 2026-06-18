@@ -72,7 +72,56 @@ test "mooncode session summary counts reviewable code events" {
   assert_eq(summary_json_int(summary, "pending_diff_count", default=9), 0)
   assert_true(summary_json_int(summary, "production_score", default=0) > 0)
   assert_eq(json_string(summary, "production_level", default=""), "prototype")
-  assert_eq(json_array_items(summary, "production_checks").length(), 16)
+  assert_eq(json_array_items(summary, "production_checks").length(), 17)
+}
+
+///|
+fn production_ready_runtime_supervisor_fixture() -> Json {
+  let turn_packet : Json = {
+    "kind": "mooncode-runtime-turn-packet",
+    "protocol": protocol_version(),
+    "session_id": "s1",
+    "command_id": "cmd-1",
+    "status": "ready",
+    "operation": "claim-command",
+    "action": "prompt",
+    "scheduler_effect": "start-turn",
+    "scheduler_allows_turn": true,
+    "ready_to_execute": true,
+    "endpoints": {
+      "claim": "/api/mooncode/sessions/s1/runtime-claim",
+      "ack": "/api/mooncode/sessions/s1/runtime-dispatch",
+      "runtime_events": "/api/mooncode/sessions/s1/runtime-events",
+      "stream": "/api/mooncode/sessions/s1/stream?format=sse",
+      "native_session_listing": "/v1/mooncode/sessions?book_root=<path>&format=json",
+      "native_commands": "/v1/mooncode/sessions/s1/commands?book_root=<path>",
+      "native_serve_scheduler": "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
+      "native_eval_report": "/v1/mooncode/sessions/s1/eval-report?book_root=<path>",
+    },
+    "claim_request_template": { "command_id": "cmd-1", "lease_id": "lease-1" },
+    "ack_request_template": {
+      "command_id": "cmd-1",
+      "status": "runtime-completed",
+    },
+    "failure_ack_template": { "command_id": "cmd-1", "status": "failed" },
+    "openseek_wire_command": { "command": "prompt", "text": "build tool" },
+    "native_mooncode_body": {
+      "protocol": protocol_version(),
+      "command": "prompt",
+      "session_id": "s1",
+    },
+    "required_events": ["assistant_delta", "tool_result"],
+    "required_outputs": ["diff", "test_result"],
+  }
+  runtime_supervisor_launch_packet(
+    "s1",
+    turn_packet,
+    { "kind": "mooncode-runtime-consumer", "status": "claim-ready" },
+    workspace_root="/tmp/book",
+    moonclaw_root="../moonclaw",
+    host_base_url="",
+    false,
+  )
 }
 
 ///|
@@ -272,6 +321,10 @@ test "mooncode session summary scores production-grade coding flow" {
         "pending_steer_count": 0,
         "failed_test_count": 0,
       },
+      "mooncode_last_runtime_handoff_manifest": {
+        "kind": "mooncode-runtime-handoff",
+        "runtime_supervisor": production_ready_runtime_supervisor_fixture(),
+      },
     },
     events,
   )
@@ -282,9 +335,9 @@ test "mooncode session summary scores production-grade coding flow" {
   )
   assert_eq(
     summary_json_int(summary, "production_passed_check_count", default=0),
-    16,
+    17,
   )
-  assert_eq(summary_json_int(summary, "production_check_count", default=0), 16)
+  assert_eq(summary_json_int(summary, "production_check_count", default=0), 17)
   let readiness = summary_json_object_field_or_empty(
     summary, "production_readiness",
   )
@@ -299,10 +352,15 @@ test "mooncode session summary scores production-grade coding flow" {
   let checks = json_array_items(summary, "production_checks")
   assert_eq(json_string(checks[0], "id", default=""), "moonbook_selected")
   let mut found_resume_lifecycle = false
+  let mut found_runtime_supervisor = false
   let mut found_package_lifecycle = false
   for check in checks {
     if json_string(check, "id", default="") == "resume_lifecycle" {
       found_resume_lifecycle = true
+      assert_true(json_bool(check, "ok", default=false))
+    }
+    if json_string(check, "id", default="") == "runtime_supervisor_ready" {
+      found_runtime_supervisor = true
       assert_true(json_bool(check, "ok", default=false))
     }
     if json_string(check, "id", default="") == "package_lifecycle" {
@@ -311,6 +369,7 @@ test "mooncode session summary scores production-grade coding flow" {
     }
   }
   assert_true(found_resume_lifecycle)
+  assert_true(found_runtime_supervisor)
   assert_true(found_package_lifecycle)
   assert_eq(
     json_string(checks[checks.length() - 1], "id", default=""),

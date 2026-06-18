@@ -42,6 +42,9 @@ pub fn production_grade_rubric_json() -> Json {
       "resume_lifecycle", "Resume lifecycle", "session snapshot can be resumed and is not blocked",
     ),
     production_grade_rubric_check(
+      "runtime_supervisor_ready", "Runtime supervisor ready", "runtime handoff embeds a launch-ready supervisor with production-readiness checkpoint",
+    ),
+    production_grade_rubric_check(
       "chat_transcript", "Chat transcript", "assistant/transcript lane has durable chat evidence",
     ),
     production_grade_rubric_check(
@@ -121,6 +124,19 @@ pub fn session_production_checks(
   let patch_set_manifest_count = count_patch_set_manifests(events)
   let test_runs_manifest_count = count_test_runs_manifests(events)
   let runtime_handoff_manifest_count = count_runtime_handoff_manifests(events)
+  let runtime_supervisor_readiness = session_runtime_supervisor_readiness(
+    session,
+  )
+  let runtime_supervisor_status = json_string(
+    runtime_supervisor_readiness,
+    "status",
+    default="",
+  )
+  let runtime_supervisor_missing_count = summary_json_int(
+    runtime_supervisor_readiness,
+    "missing_requirement_count",
+    default=0,
+  )
   let action_plan = summary_json_object_field_or_empty(
     session, "mooncode_last_action_plan_manifest",
   )
@@ -248,6 +264,12 @@ pub fn session_production_checks(
       "status \{empty_production_label(resume_status)}, pending \{summary_json_int(resume_lifecycle, "pending_count", default=0)}, running \{summary_json_int(resume_lifecycle, "running_count", default=0)}, blocked \{summary_json_int(resume_lifecycle, "blocked_count", default=0)}",
     ),
     production_grade_check(
+      "runtime_supervisor_ready",
+      "Runtime supervisor ready",
+      json_bool(runtime_supervisor_readiness, "ok", default=false),
+      "status \{empty_production_label(runtime_supervisor_status)}, missing requirements \{runtime_supervisor_missing_count}",
+    ),
+    production_grade_check(
       "chat_transcript",
       "Chat transcript",
       transcript_count > 0,
@@ -350,6 +372,17 @@ fn empty_production_label(value : String) -> String {
   } else {
     value
   }
+}
+
+///|
+fn session_runtime_supervisor_readiness(session : Json) -> Json {
+  let handoff = summary_json_object_field_or_empty(
+    session, "mooncode_last_runtime_handoff_manifest",
+  )
+  let supervisor = summary_json_object_field_or_empty(
+    handoff, "runtime_supervisor",
+  )
+  runtime_supervisor_readiness_report(supervisor)
 }
 
 ///|
@@ -518,6 +551,7 @@ fn production_next_action(blocker_id : String) -> String {
     "moonclaw_attached" => "attach_moonclaw_session"
     "durable_session" => "persist_session_snapshot"
     "resume_lifecycle" => "resume_runtime"
+    "runtime_supervisor_ready" => "refresh_runtime_supervisor"
     "chat_transcript" => "send_prompt"
     "typed_command_queue" => "queue_prompt_command"
     "live_runtime_stream" => "run_native_runtime_service"
@@ -542,6 +576,7 @@ fn production_next_owner(blocker_id : String) -> String {
     "moonclaw_attached" => "moondesk-moonclaw"
     "durable_session" => "mooncode-moonbook"
     "resume_lifecycle" => "moonclaw-or-standalone-mooncode"
+    "runtime_supervisor_ready" => "moonclaw-or-standalone-mooncode"
     "chat_transcript" => "moondesk-moonclaw"
     "typed_command_queue" => "mooncode"
     "live_runtime_stream" => "moonclaw-or-standalone-mooncode"
