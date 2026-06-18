@@ -392,6 +392,11 @@ struct MoonCodeSummary {
   deferred_steer_count : Int
   pending_steer_count : Int
   steering_lifecycle : Json
+  cancel_command_count : Int
+  cancel_dropped_count : Int
+  cancel_settlement_count : Int
+  pending_cancel_count : Int
+  cancel_lifecycle : Json
   review_count : Int
   pending_diff_count : Int
   accepted_review_count : Int
@@ -11523,6 +11528,7 @@ fn render_mooncode_session_header(
       info_chip("stream", "\{summary.stream_source} / \{summary.stream_mode}"),
       info_chip("dispatch", "\{summary.dispatch_mode} / \{dispatch_state}"),
       info_chip("pending steers", mooncode_summary_pending_steer_label(summary)),
+      info_chip("pending cancels", summary.pending_cancel_count.to_string()),
       info_chip("events", summary.event_count.to_string()),
       info_chip("diffs pending", summary.pending_diff_count.to_string()),
       info_chip("tests verified", summary.verified_test_count.to_string()),
@@ -11538,6 +11544,7 @@ fn render_mooncode_session_header(
       info_row("Eval", "\{summary.eval_level} / \{summary.eval_score}"),
     ]),
     render_mooncode_steering_lifecycle(summary),
+    render_mooncode_cancel_lifecycle(summary),
   ])
 }
 
@@ -11641,6 +11648,110 @@ fn mooncode_steering_lifecycle_class(status : String) -> String {
     "applied" => "accepted"
     "deferred" | "pending" => "queued"
     "dropped" => "rejected"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_cancel_lifecycle(
+  summary : MoonCodeSummary
+) -> @rabbita.Html {
+  let lifecycle = summary.cancel_lifecycle
+  let rows = json_field_json_array_items(lifecycle, "rows")
+  div(class="mooncode-output-roots cancel-lifecycle", [
+    div(class="mooncode-stream-header compact-header", [
+      div([
+        p(class="eyebrow", "prompt/steer/cancel lifecycle"),
+        h3("Cancel Lifecycle"),
+      ]),
+      span(
+        class="record-kind",
+        empty_label(json_field_string(lifecycle, "latest_status", default="idle")),
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Cancelled", json_field_int(lifecycle, "cancelled_count", default=0).to_string()),
+      info_chip("Dropped", json_field_int(lifecycle, "dropped_count", default=0).to_string()),
+      info_chip("Failed", json_field_int(lifecycle, "failed_count", default=0).to_string()),
+      info_chip("Pending", json_field_int(lifecycle, "pending_count", default=0).to_string()),
+    ]),
+    if rows.length() == 0 {
+      p(class="status-line", "no cancel commands recorded")
+    } else {
+      div(
+        class="mooncode-review-list compact",
+        mooncode_recent_cancel_rows(rows).map(row =>
+          render_mooncode_cancel_lifecycle_row(row)
+        ),
+      )
+    },
+    p(
+      class="mooncode-event-detail",
+      json_field_string(lifecycle, "next_step", default=""),
+    ),
+  ])
+}
+
+///|
+fn mooncode_recent_cancel_rows(rows : Array[Json]) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = rows.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 4 {
+    index -= 1
+    recent.push(rows[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_cancel_lifecycle_row(row : Json) -> @rabbita.Html {
+  let status = json_field_string(row, "status", default="pending")
+  div(class="mooncode-review-item " + mooncode_cancel_lifecycle_class(status), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(json_field_string(row, "command_id", default="cancel")),
+        small(empty_label(json_field_string(row, "settlement_kind", default=""))),
+      ]),
+      span(class="record-kind", status),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip(
+        "Command",
+        if json_field_bool(row, "command_recorded", default=false) {
+          "recorded"
+        } else {
+          "missing"
+        },
+      ),
+      info_chip(
+        "Settlement",
+        if json_field_bool(row, "settlement_recorded", default=false) {
+          "recorded"
+        } else {
+          "pending"
+        },
+      ),
+      info_chip(
+        "Command Status",
+        empty_label(json_field_string(row, "command_status", default="")),
+      ),
+    ]),
+    code(empty_label(json_field_string(row, "target", default=""))),
+    p(
+      class="mooncode-event-detail",
+      empty_label(json_field_string(row, "message", default="")),
+    ),
+  ])
+}
+
+///|
+fn mooncode_cancel_lifecycle_class(status : String) -> String {
+  match status {
+    "cancelled" => "accepted"
+    "dropped" | "failed" => "rejected"
+    "pending" => "queued"
     _ => "queued"
   }
 }

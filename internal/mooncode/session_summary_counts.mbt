@@ -70,6 +70,29 @@ pub fn count_deferred_steers(events : Array[Json]) -> Int {
 }
 
 ///|
+pub fn count_cancel_dropped(events : Array[Json]) -> Int {
+  let mut count = 0
+  for event in events {
+    if json_string(event, "kind", default="") == event_cancel_dropped() {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+pub fn pending_cancel_count(
+  cancel_command_count : Int,
+  cancel_settlement_count : Int,
+) -> Int {
+  if cancel_command_count > cancel_settlement_count {
+    cancel_command_count - cancel_settlement_count
+  } else {
+    0
+  }
+}
+
+///|
 pub fn pending_steer_count(
   steer_command_count : Int,
   steer_settlement_count : Int,

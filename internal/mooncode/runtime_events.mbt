@@ -274,6 +274,14 @@ pub fn normalize_runtime_event(
           status="cancelled",
           created_at~,
           detail=json_string(event, "reason", default="interrupted"),
+          command_packet=runtime_event_command_packet(
+            event,
+            runtime_first_string(
+              event,
+              ["action", "serve_command"],
+              default="cancel",
+            ),
+          ),
         ),
       )
     "max_steps_exhausted" | "turn_failed" | "command_error" =>
@@ -309,6 +317,23 @@ pub fn normalize_runtime_event(
           created_at~,
           detail=json_string(event, "content", default=""),
           command_packet=runtime_event_command_packet(event, "steer"),
+        ),
+      )
+    "cancel_dropped" =>
+      Some(
+        event_record(
+          id=event_id,
+          lane="runtime",
+          kind=event_cancel_dropped(),
+          title=runtime_event_title(event_cancel_dropped()),
+          status="done",
+          created_at~,
+          detail=runtime_first_string(
+            event,
+            ["detail", "content"],
+            default="MoonClaw dropped cancel because no active or pending turn existed.",
+          ),
+          command_packet=runtime_event_command_packet(event, "cancel"),
         ),
       )
     "usage" =>

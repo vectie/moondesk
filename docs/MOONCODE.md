@@ -986,7 +986,12 @@ row-level projection of durable steer command packets plus command-scoped
 `steer_applied`, `steer_deferred`, and `steer_dropped` runtime events. The
 MoonCode session header renders that lifecycle with applied/deferred/dropped/
 pending counts and recent rows, so deferred or dropped steering is visible
-without opening raw event JSON.
+without opening raw event JSON. Cancel is now projected the same way:
+`cancel_lifecycle` folds durable `cancel` command packets with command-scoped
+`agent_aborted` and `cancel_dropped` runtime evidence, and the header shows
+cancelled/dropped/failed/pending rows so operators can tell whether a stop
+request reached active work, arrived while idle, failed before MoonClaw accepted
+it, or is still waiting for proof.
 
 Each session also carries a `mooncode_summary` readiness/eval block. It records
 the stream mode, `live_stream_ready`, event log path, append-log count, command
@@ -997,7 +1002,9 @@ diff count, accepted/rejected review counts, MoonBook review receipt count,
 MoonBook package manifest count, verified/failing test-build result counts,
 source-bound package count, `review_state`, an `eval_score`, an `eval_level`,
 `steer_command_count`, `steer_settlement_count`, `deferred_steer_count`,
-`pending_steer_count`, `steering_lifecycle`, and
+`pending_steer_count`, `steering_lifecycle`, `cancel_command_count`,
+`cancel_dropped_count`, `cancel_settlement_count`, `pending_cancel_count`,
+`cancel_lifecycle`, and
 `eval_checks` for book scope, MoonClaw task attachment, transcript, tool
 events, file diffs, tests/builds, verified test results, artifacts, review
 decisions, append-only log coverage, typed command packets, ordered command
@@ -1423,8 +1430,9 @@ general command packets bind or reuse the book-scoped task; native runtime-turn
 checks the native serve-scheduler decision for the claimed command, settles
 `steer` commands with `steer_applied`, `steer_deferred`, or `steer_dropped`
 runtime evidence, and settles idle `cancel` commands with `cancel_dropped`
-evidence so pending control acknowledgements clear from the session summary;
-live `cancel` still
+evidence while active task cancellation lands as command-scoped
+`agent_aborted`. Both paths clear or classify pending cancel acknowledgements
+in the session summary; live `cancel` still
 targets an existing bound task and deliberately does not spawn a new task.
 Native `accept` and `reject` commands now settle with compatible
 MoonBook-owned review receipts under `wiki/reviews/mooncode/<session-id>/` and

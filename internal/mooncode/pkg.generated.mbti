@@ -148,6 +148,8 @@ pub fn command_tool_hints(String) -> Array[String]
 
 pub fn command_writes_review_receipt(String) -> Bool
 
+pub fn count_cancel_dropped(Array[Json]) -> Int
+
 pub fn count_change_set_manifests(Array[Json]) -> Int
 
 pub fn count_command_events(Array[Json], String) -> Int
@@ -506,6 +508,8 @@ pub fn patch_set_manifest_projected_event(Json) -> Json
 
 pub fn patch_set_manifest_relative_path(String) -> String
 
+pub fn pending_cancel_count(Int, Int) -> Int
+
 pub fn pending_diff_count(Int, Int, Int) -> Int
 
 pub fn pending_steer_count(Int, Int) -> Int
@@ -725,6 +729,8 @@ pub fn serve_scheduler_projection(String, Array[Json], Json) -> Json
 pub fn serve_scheduler_response(String, Array[Json], Array[Json], Array[Json], Array[Json], lease_now~ : String) -> Json
 
 pub fn serve_wire_valid(Json) -> Bool
+
+pub fn session_cancel_lifecycle(Array[Json]) -> Json
 
 pub fn session_eval_checks(Json, Array[Json]) -> Array[Json]
 

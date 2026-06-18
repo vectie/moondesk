@@ -154,6 +154,31 @@ test "mooncode normalizes OpenSeek runtime events into lanes" {
     "steer_deferred",
   )
   assert_eq(json_string(steer_deferred_event, "status", default=""), "queued")
+  guard normalize_runtime_event(
+      {
+        "event": event_cancel_dropped(),
+        "command_id": "cmd-cancel-1",
+        "content": "nothing active",
+      },
+      fallback_id="runtime-7",
+      fallback_created_at="2026-06-15T00:00:00Z",
+    )
+    is Some(cancel_dropped_event) else {
+    fail("cancel_dropped was not normalized")
+  }
+  assert_eq(
+    json_string(cancel_dropped_event, "kind", default=""),
+    event_cancel_dropped(),
+  )
+  assert_eq(json_string(cancel_dropped_event, "status", default=""), "done")
+  let cancel_packet = runtime_json_object_field_or_empty(
+    cancel_dropped_event, "command_packet",
+  )
+  assert_eq(
+    json_string(cancel_packet, "command_id", default=""),
+    "cmd-cancel-1",
+  )
+  assert_eq(json_string(cancel_packet, "action", default=""), "cancel")
 }
 
 ///|

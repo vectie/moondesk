@@ -555,6 +555,104 @@ test "mooncode session summary tracks pending steer acknowledgements" {
 }
 
 ///|
+test "mooncode session summary tracks cancel lifecycle evidence" {
+  let events : Array[Json] = [
+    command_event(
+      action="cancel",
+      status="queued",
+      detail="stop active run",
+      created_at="1",
+      path="tools/demo/main.mbt",
+      command_packet={
+        "protocol": protocol_version(),
+        "command_id": "cmd-cancel-1",
+        "action": "cancel",
+      },
+      event_id="cmd-cancel-1",
+    ),
+    command_event(
+      action="cancel",
+      status="queued",
+      detail="cancel idle",
+      created_at="2",
+      path="tools/demo/main.mbt",
+      command_packet={
+        "protocol": protocol_version(),
+        "command_id": "cmd-cancel-2",
+        "action": "cancel",
+      },
+      event_id="cmd-cancel-2",
+    ),
+    command_event(
+      action="cancel",
+      status="queued",
+      detail="still pending",
+      created_at="3",
+      path="tools/demo/main.mbt",
+      command_packet={
+        "protocol": protocol_version(),
+        "command_id": "cmd-cancel-3",
+        "action": "cancel",
+      },
+      event_id="cmd-cancel-3",
+    ),
+    event_record(
+      id="cancel-proof-1",
+      lane="runtime",
+      kind="agent_aborted",
+      title="Agent interrupted",
+      status="cancelled",
+      created_at="4",
+      detail="active run cancelled",
+      command_packet={
+        "protocol": protocol_version(),
+        "command_id": "cmd-cancel-1",
+        "action": "cancel",
+      },
+    ),
+    event_record(
+      id="cancel-proof-2",
+      lane="runtime",
+      kind=event_cancel_dropped(),
+      title="Cancel dropped",
+      status="done",
+      created_at="5",
+      detail="no active turn",
+      command_packet={
+        "protocol": protocol_version(),
+        "command_id": "cmd-cancel-2",
+        "action": "cancel",
+      },
+    ),
+  ]
+  let summary = session_summary({ "id": "s1", "workspace_id": "book" }, events)
+  assert_eq(summary_json_int(summary, "cancel_command_count", default=0), 3)
+  assert_eq(summary_json_int(summary, "cancel_dropped_count", default=0), 1)
+  assert_eq(summary_json_int(summary, "cancel_settlement_count", default=0), 2)
+  assert_eq(summary_json_int(summary, "pending_cancel_count", default=0), 1)
+  let lifecycle = summary_json_object_field_or_empty(
+    summary, "cancel_lifecycle",
+  )
+  assert_eq(
+    json_string(lifecycle, "kind", default=""),
+    "mooncode-cancel-lifecycle",
+  )
+  assert_eq(summary_json_int(lifecycle, "cancel_command_count", default=0), 3)
+  assert_eq(summary_json_int(lifecycle, "cancelled_count", default=0), 1)
+  assert_eq(summary_json_int(lifecycle, "dropped_count", default=0), 1)
+  assert_eq(summary_json_int(lifecycle, "pending_count", default=0), 1)
+  let rows = json_array_items(lifecycle, "rows")
+  assert_eq(rows.length(), 3)
+  assert_eq(json_string(rows[0], "command_id", default=""), "cmd-cancel-1")
+  assert_eq(json_string(rows[0], "status", default=""), "cancelled")
+  assert_eq(json_string(rows[1], "command_id", default=""), "cmd-cancel-2")
+  assert_eq(json_string(rows[1], "status", default=""), "dropped")
+  assert_eq(json_string(rows[2], "command_id", default=""), "cmd-cancel-3")
+  assert_eq(json_string(rows[2], "status", default=""), "pending")
+  assert_eq(pending_cancel_count(1, 2), 0)
+}
+
+///|
 test "mooncode session summary tracks pending policy approval" {
   let events : Array[Json] = [
     event_record(

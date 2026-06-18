@@ -84,6 +84,17 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     steer_command_count, steer_settlement_count,
   )
   let steering_lifecycle = session_steering_lifecycle(events)
+  let cancel_command_count = count_command_events(events, "cancel")
+  let cancel_dropped_count = count_cancel_dropped(events)
+  let cancel_lifecycle = session_cancel_lifecycle(events)
+  let cancel_settlement_count = summary_json_int(
+    cancel_lifecycle,
+    "settled_count",
+    default=cancel_dropped_count,
+  )
+  let pending_cancel_count = pending_cancel_count(
+    cancel_command_count, cancel_settlement_count,
+  )
   let accepted_count = count_review_command(events, "accept")
   let rejected_count = count_review_command(events, "reject")
   let session_id = json_string(session, "id", default="")
@@ -184,6 +195,11 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "deferred_steer_count": deferred_steer_count,
     "pending_steer_count": pending_steer_count,
     "steering_lifecycle": steering_lifecycle,
+    "cancel_command_count": cancel_command_count,
+    "cancel_dropped_count": cancel_dropped_count,
+    "cancel_settlement_count": cancel_settlement_count,
+    "pending_cancel_count": pending_cancel_count,
+    "cancel_lifecycle": cancel_lifecycle,
     "review_count": review_count,
     "pending_diff_count": pending_diff_count(
       diff_count, accepted_count, rejected_count,
