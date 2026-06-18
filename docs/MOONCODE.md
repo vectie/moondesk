@@ -1250,6 +1250,10 @@ Action Plan can offer `Run Native Loop`, `Retry Runtime`, `Refresh Proof`,
 `Fix Tests`, `Run Tests`, `Package`, `Resume`, and `Start Next Turn`, and it
 can expose paired choices such as `Accept`/`Reject` or
 `Approve Tool`/`Reject Tool` without making Moondesk execute tools itself.
+For runtime-backed next steps, the same recommendation array now also offers
+`Start Service` beside the one-shot native loop action, routing the operator to
+MoonClaw's daemon-owned MoonCode supervisor when they want Codex/OpenSeek-style
+standing execution instead of a single bounded replay.
 When steering has been deferred, `Start Next Turn` queues a typed `prompt`
 command with a bounded continuation message, so MoonClaw or standalone MoonCode
 can apply the saved steering in the next eligible turn.

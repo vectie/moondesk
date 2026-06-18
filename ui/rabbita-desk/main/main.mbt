@@ -12811,6 +12811,7 @@ fn mooncode_recommended_command_message(
 ) -> Msg {
   match command.ui_action {
     "runtime_loop" => RunMoonCodeRuntimeLoop
+    "runtime_service" => StartMoonCodeRuntimeService
     _ =>
       RunMoonCodeCommandWithMessage(
         command.action,

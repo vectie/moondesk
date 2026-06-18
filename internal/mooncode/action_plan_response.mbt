@@ -206,10 +206,44 @@ pub fn action_plan_recommended_command(next_required_action : String) -> Json {
 }
 
 ///|
+fn action_plan_runtime_service_command(status : String) -> Json {
+  {
+    "available": true,
+    "ui_action": "runtime_service",
+    "action": "runtime_service",
+    "label": "Start Service",
+    "context_path": "",
+    "message": "",
+    "status": status,
+  }
+}
+
+///|
 pub fn action_plan_recommended_commands(
   next_required_action : String,
 ) -> Array[Json] {
   match next_required_action {
+    "dispatch_or_replay_runtime_commands" =>
+      [
+        action_plan_recommended_command(next_required_action),
+        action_plan_runtime_service_command(
+          "starting MoonClaw native MoonCode service",
+        ),
+      ]
+    "retry_failed_runtime_dispatch" =>
+      [
+        action_plan_recommended_command(next_required_action),
+        action_plan_runtime_service_command(
+          "starting MoonClaw native MoonCode service for retry",
+        ),
+      ]
+    "await_runtime_proof" =>
+      [
+        action_plan_recommended_command(next_required_action),
+        action_plan_runtime_service_command(
+          "starting MoonClaw native MoonCode service for proof refresh",
+        ),
+      ]
     "resolve_tool_approvals" =>
       [
         {

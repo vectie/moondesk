@@ -205,9 +205,43 @@ test "mooncode action plan recommends runtime loop and repair prompts" {
   assert_true(json_bool(dispatch, "available", default=false))
   assert_eq(json_string(dispatch, "ui_action", default=""), "runtime_loop")
   assert_eq(json_string(dispatch, "label", default=""), "Run Native Loop")
+  let dispatch_commands = action_plan_recommended_commands(
+    "dispatch_or_replay_runtime_commands",
+  )
+  assert_eq(dispatch_commands.length(), 2)
+  assert_eq(
+    json_string(dispatch_commands[0], "ui_action", default=""),
+    "runtime_loop",
+  )
+  assert_eq(
+    json_string(dispatch_commands[1], "ui_action", default=""),
+    "runtime_service",
+  )
+  assert_eq(
+    json_string(dispatch_commands[1], "label", default=""),
+    "Start Service",
+  )
   let proof = action_plan_recommended_command("await_runtime_proof")
   assert_eq(json_string(proof, "ui_action", default=""), "runtime_loop")
   assert_eq(json_string(proof, "label", default=""), "Refresh Proof")
+  let proof_commands = action_plan_recommended_commands("await_runtime_proof")
+  assert_eq(proof_commands.length(), 2)
+  assert_eq(
+    json_string(proof_commands[1], "ui_action", default=""),
+    "runtime_service",
+  )
+  let retry_commands = action_plan_recommended_commands(
+    "retry_failed_runtime_dispatch",
+  )
+  assert_eq(retry_commands.length(), 2)
+  assert_eq(
+    json_string(retry_commands[0], "label", default=""),
+    "Retry Runtime",
+  )
+  assert_eq(
+    json_string(retry_commands[1], "label", default=""),
+    "Start Service",
+  )
   let failed_tests = action_plan_recommended_command("fix_failed_tests")
   assert_eq(
     json_string(failed_tests, "ui_action", default=""),
