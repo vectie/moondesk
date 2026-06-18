@@ -522,6 +522,8 @@ pub fn production_grade_passed_count(Array[Json]) -> Int
 
 pub fn production_grade_score(Array[Json]) -> Int
 
+pub fn production_readiness_summary(Array[Json]) -> Json
+
 pub fn project_session_events(Array[Json], Array[Json], Array[Json]) -> Array[Json]
 
 pub fn project_session_events_for_session(Json, Array[Json], Array[Json], fallback_created_at? : String) -> Array[Json]

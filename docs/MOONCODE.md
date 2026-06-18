@@ -1867,20 +1867,24 @@ evidence.
 
 The session summary also carries a separate product-grade score:
 `production_score`, `production_level`, `production_passed_check_count`,
-`production_check_count`, and `production_checks`. This score maps directly to
-the end-to-end MoonCode workspace criteria: selected MoonBook, MoonClaw
-attachment, durable session, chat transcript, typed command queue, live runtime
-stream, tool execution, diff review, test/build proof, review receipts,
-package result, explicit `resume_lifecycle` health, verified
+`production_check_count`, `production_readiness`, and `production_checks`. This
+score maps directly to the end-to-end MoonCode workspace criteria: selected
+MoonBook, MoonClaw attachment, durable session, chat transcript, typed command
+queue, live runtime stream, tool execution, diff review, test/build proof,
+review receipts, package result, explicit `resume_lifecycle` health, verified
 `package_lifecycle`, the current action-plan manifest, clear live blockers, and
-extractable MoonCode boundary. A session with historical proof but an action
-plan that still reports blocked actions, unresolved diffs, pending tool
-approvals, pending steering, or failing tests cannot score as
-`production-grade`; neither can a session whose resume lifecycle is missing or
-blocked, or whose package lifecycle lacks executable-ready verified package
-proof. It is intentionally separate from `eval_score`: eval score measures
-bridge/native harness evidence, while production score measures whether the
-selected session proves the user-facing MoonCode product workflow.
+extractable MoonCode boundary. `production_readiness` is the compact contract
+for UI/runtime consumers: it reports readiness, score, first blocker, next
+action, next owner, and blocking check ids so Moondesk, MoonClaw, or a future
+standalone `mooncode` component do not have to reconstruct the next step from
+the raw checklist. A session with historical proof but an action plan that still
+reports blocked actions, unresolved diffs, pending tool approvals, pending
+steering, or failing tests cannot score as `production-grade`; neither can a
+session whose resume lifecycle is missing or blocked, or whose package lifecycle
+lacks executable-ready verified package proof. It is intentionally separate from
+`eval_score`: eval score measures bridge/native harness evidence, while
+production score measures whether the selected session proves the user-facing
+MoonCode product workflow.
 
 ## Completion Criteria
 

@@ -427,6 +427,7 @@ struct MoonCodeSummary {
   production_level : String
   production_passed_check_count : Int
   production_check_count : Int
+  production_readiness : Json
   production_checks : Array[MoonCodeEvalCheck]
 } derive(FromJson)
 
@@ -11489,6 +11490,16 @@ fn render_mooncode_session_header(
       "\{dispatch_state.runtime_dispatch_count} receipt(s), \{dispatch_state.runtime_dispatch_pending_count} pending"
     None => model.mooncode_runtime_dispatch_status
   }
+  let production_next_action = json_string_value(
+    summary.production_readiness,
+    "next_action",
+    default="inspect_production_check",
+  )
+  let production_next_owner = json_string_value(
+    summary.production_readiness,
+    "next_owner",
+    default="mooncode",
+  )
   div(class="mooncode-session-header", [
     div(class="mooncode-session-title", [
       div([
@@ -11528,6 +11539,10 @@ fn render_mooncode_session_header(
     ]),
     div(class="mooncode-session-grid", [
       info_chip("next action", action_state),
+      info_chip(
+        "production next",
+        "\{production_next_action} / \{production_next_owner}",
+      ),
       info_chip("stream", "\{summary.stream_source} / \{summary.stream_mode}"),
       info_chip("dispatch", "\{summary.dispatch_mode} / \{dispatch_state}"),
       info_chip("pending steers", mooncode_summary_pending_steer_label(summary)),
@@ -17153,6 +17168,38 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
             info_row(
               "Production Grade",
               "\{summary.production_level} / \{summary.production_score} (\{summary.production_passed_check_count}/\{summary.production_check_count})",
+            ),
+            info_row(
+              "Next Production Action",
+              json_string_value(
+                summary.production_readiness,
+                "next_action",
+                default="inspect_production_check",
+              ),
+            ),
+            info_row(
+              "Next Owner",
+              json_string_value(
+                summary.production_readiness,
+                "next_owner",
+                default="mooncode",
+              ),
+            ),
+            info_row(
+              "First Blocker",
+              json_string_value(
+                summary.production_readiness,
+                "first_blocker_label",
+                default="none",
+              ),
+            ),
+            info_row(
+              "Blocker Evidence",
+              json_string_value(
+                summary.production_readiness,
+                "first_blocker_evidence",
+                default="none",
+              ),
             ),
             info_row("Events", summary.event_count.to_string()),
             info_row("Transcript", summary.transcript_count.to_string()),

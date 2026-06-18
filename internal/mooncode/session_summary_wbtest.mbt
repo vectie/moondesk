@@ -268,6 +268,17 @@ test "mooncode session summary scores production-grade coding flow" {
     16,
   )
   assert_eq(summary_json_int(summary, "production_check_count", default=0), 16)
+  let readiness = summary_json_object_field_or_empty(
+    summary, "production_readiness",
+  )
+  assert_eq(
+    json_string(readiness, "kind", default=""),
+    "mooncode-production-readiness",
+  )
+  assert_true(json_bool(readiness, "ready", default=false))
+  assert_eq(json_string(readiness, "next_action", default=""), "completed")
+  assert_eq(json_string(readiness, "next_owner", default=""), "none")
+  assert_eq(summary_json_int(readiness, "blocked_count", default=9), 0)
   let checks = json_array_items(summary, "production_checks")
   assert_eq(json_string(checks[0], "id", default=""), "moonbook_selected")
   let mut found_resume_lifecycle = false
@@ -313,6 +324,31 @@ test "mooncode session summary reports live action blockers in production checks
     [],
   )
   let checks = json_array_items(summary, "production_checks")
+  let readiness = summary_json_object_field_or_empty(
+    summary, "production_readiness",
+  )
+  assert_eq(
+    json_string(readiness, "kind", default=""),
+    "mooncode-production-readiness",
+  )
+  assert_false(json_bool(readiness, "ready", default=true))
+  assert_eq(
+    json_string(readiness, "first_blocker_id", default=""),
+    "durable_session",
+  )
+  assert_eq(
+    json_string(readiness, "next_action", default=""),
+    "persist_session_snapshot",
+  )
+  assert_eq(
+    json_string(readiness, "next_owner", default=""),
+    "mooncode-moonbook",
+  )
+  assert_true(
+    json_array_items(readiness, "blocking_check_ids")
+    .map(item => item.stringify())
+    .contains("\"live_blockers_clear\""),
+  )
   let mut found_action_plan = false
   let mut found_blockers = false
   for check in checks {

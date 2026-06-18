@@ -300,3 +300,97 @@ pub fn production_grade_passed_count(checks : Array[Json]) -> Int {
   }
   passed
 }
+
+///|
+pub fn production_readiness_summary(checks : Array[Json]) -> Json {
+  let failed_checks : Array[Json] = []
+  for check in checks {
+    if !json_bool(check, "ok", default=false) {
+      failed_checks.push(check)
+    }
+  }
+  let first_blocker = first_failed_production_check(checks)
+  let blocker_id = json_string(first_blocker, "id", default="")
+  {
+    "kind": "mooncode-production-readiness",
+    "protocol": protocol_version(),
+    "extractable_component": "mooncode",
+    "ready": checks.length() > 0 && failed_checks.length() == 0,
+    "score": production_grade_score(checks),
+    "level": production_grade_level(checks),
+    "passed_count": production_grade_passed_count(checks),
+    "check_count": checks.length(),
+    "blocked_count": failed_checks.length(),
+    "first_blocker_id": blocker_id,
+    "first_blocker_label": json_string(first_blocker, "label", default=""),
+    "first_blocker_evidence": json_string(first_blocker, "evidence", default=""),
+    "next_action": production_next_action(blocker_id),
+    "next_owner": production_next_owner(blocker_id),
+    "blocking_check_ids": Json::array(
+      [
+        for check in failed_checks => {
+          Json::string(json_string(check, "id", default=""))
+        }
+      ],
+    ),
+    "rule": "Production readiness is derived from MoonCode protocol evidence and MoonBook artifacts. Moondesk renders this summary; MoonClaw or standalone mooncode still owns execution.",
+  }
+}
+
+///|
+fn first_failed_production_check(checks : Array[Json]) -> Json {
+  for check in checks {
+    if !json_bool(check, "ok", default=false) {
+      return check
+    }
+  }
+  {}
+}
+
+///|
+fn production_next_action(blocker_id : String) -> String {
+  match blocker_id {
+    "" => "completed"
+    "moonbook_selected" => "select_moonbook"
+    "moonclaw_attached" => "attach_moonclaw_session"
+    "durable_session" => "persist_session_snapshot"
+    "resume_lifecycle" => "resume_runtime"
+    "chat_transcript" => "send_prompt"
+    "typed_command_queue" => "queue_prompt_command"
+    "live_runtime_stream" => "run_native_runtime_service"
+    "tool_execution" => "run_tool_execution"
+    "diff_review" => "review_patch_set"
+    "test_build_execution" => "run_tests_or_build"
+    "review_receipts" => "accept_or_reject_changes"
+    "package_result" => "package_result"
+    "package_lifecycle" => "verify_package"
+    "action_plan_current" => "refresh_action_plan"
+    "live_blockers_clear" => "resolve_live_blockers"
+    "extractable_boundary" => "write_runtime_handoff"
+    _ => "inspect_production_check"
+  }
+}
+
+///|
+fn production_next_owner(blocker_id : String) -> String {
+  match blocker_id {
+    "" => "none"
+    "moonbook_selected" => "moondesk"
+    "moonclaw_attached" => "moondesk-moonclaw"
+    "durable_session" => "mooncode-moonbook"
+    "resume_lifecycle" => "moonclaw-or-standalone-mooncode"
+    "chat_transcript" => "moondesk-moonclaw"
+    "typed_command_queue" => "mooncode"
+    "live_runtime_stream" => "moonclaw-or-standalone-mooncode"
+    "tool_execution" => "moonclaw"
+    "diff_review" => "moondesk-moonbook"
+    "test_build_execution" => "moonclaw"
+    "review_receipts" => "moondesk-moonbook"
+    "package_result" => "moonbook-moonclaw"
+    "package_lifecycle" => "moonbook-moonclaw"
+    "action_plan_current" => "mooncode-moonbook"
+    "live_blockers_clear" => "moondesk-moonclaw"
+    "extractable_boundary" => "mooncode"
+    _ => "mooncode"
+  }
+}

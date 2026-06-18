@@ -47,6 +47,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "mooncode-session-snapshot"
   let eval_checks = session_eval_checks(session, events)
   let production_checks = session_production_checks(session, events)
+  let production_readiness = production_readiness_summary(production_checks)
   let diff_count = count_lane(events, "diff")
   let test_count = count_lane(events, "test")
   let artifact_count = count_lane(events, "artifact")
@@ -226,6 +227,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
       production_checks,
     ),
     "production_check_count": production_checks.length(),
+    "production_readiness": production_readiness,
     "production_checks": Json::array(production_checks),
   }
 }

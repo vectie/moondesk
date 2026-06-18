@@ -1233,14 +1233,17 @@ Implemented behavior:
   stable object for measuring coding-agent readiness without treating Moondesk
   bridge evidence as MoonClaw-owned production proof.
   The session summary separately exposes MoonCode product-grade scoring
-  (`production_score`, `production_level`, and `production_checks`) over the
-  end-to-end user workflow: selected book, MoonClaw attachment, durable session,
-  chat, typed commands, live runtime stream, tool events, diffs, tests/builds,
-  review receipts, package result, healthy resume lifecycle, verified package
-  lifecycle, current action-plan manifest, clear live blockers, and extractable
-  runtime handoff. This keeps the regular production-grade score aligned with
-  the product success criteria while the eval report remains focused on
-  bridge/native harness proof.
+  (`production_score`, `production_level`, `production_readiness`, and
+  `production_checks`) over the end-to-end user workflow: selected book,
+  MoonClaw attachment, durable session, chat, typed commands, live runtime
+  stream, tool events, diffs, tests/builds, review receipts, package result,
+  healthy resume lifecycle, verified package lifecycle, current action-plan
+  manifest, clear live blockers, and extractable runtime handoff. The compact
+  `production_readiness` object names the first blocker, next action, next
+  owner, and blocking check ids so the UI and future standalone MoonCode runtime
+  can share the same readiness interpretation. This keeps the regular
+  production-grade score aligned with the product success criteria while the
+  eval report remains focused on bridge/native harness proof.
 - `POST /api/mooncode/sessions/:id/eval-report` is the native proof ingress for
   MoonClaw or a future standalone `mooncode/eval` runner. It accepts a
   MoonClaw-owned eval report payload, delegates normalization to the shared
