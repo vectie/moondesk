@@ -1847,12 +1847,13 @@ remaining runtime work is production-grade live steering and broader
 model-backed coding eval cases.
 MoonClaw or a future standalone `mooncode/eval` runner can also submit the same
 native proof directly with `POST /api/mooncode/sessions/<session-id>/eval-report`.
-The Eval Report panel also exposes a typed `run_eval` command that enters the
-same ordered `mooncode.v1` command/runtime queue. Its execution plan asks
-MoonClaw or standalone `mooncode` to run the OpenSeek-style `tool_harness`,
-`file_edit`, `patch_review`, `command_execution`, and `package_output`
-harnesses and then publish native eval proof through the native eval endpoint
-or Moondesk ingest endpoint.
+The main MoonCode toolbar, selected-session header, side command card, and Eval
+Report panel all expose a typed `run_eval` command that enters the same ordered
+`mooncode.v1` command/runtime queue. Its execution plan asks MoonClaw or
+standalone `mooncode` to run the OpenSeek-style `tool_harness`, `file_edit`,
+`patch_review`, `command_execution`, and `package_output` harnesses and then
+publish native eval proof through the native eval endpoint or Moondesk ingest
+endpoint.
 The shared MoonCode contract normalizes the payload; Moondesk stores it on the
 durable session, refreshes
 the resumable session snapshot under

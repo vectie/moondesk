@@ -11383,6 +11383,11 @@ fn render_agent_center(
         ),
         button(
           class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_eval")),
+          "Run Eval",
+        ),
+        button(
+          class="secondary-button",
           on_click=dispatch(RunMoonCodeCommand("package")),
           "Package",
         ),
@@ -11562,6 +11567,11 @@ fn render_mooncode_session_header(
           class="secondary-button",
           on_click=dispatch(RunMoonCodeCommand("run_build")),
           "Run Build",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_eval")),
+          "Run Eval",
         ),
       ]),
     ]),
@@ -16598,6 +16608,11 @@ fn render_agent_inspector(
           class="secondary-button",
           on_click=dispatch(RunMoonCodeCommand("run_build")),
           "Run Build",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(RunMoonCodeCommand("run_eval")),
+          "Run Eval",
         ),
         button(
           class="secondary-button",
