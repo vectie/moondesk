@@ -48,6 +48,7 @@ pub fn capabilities_json() -> Json {
       "native_runtime_dispatch_endpoint": "/v1/mooncode/sessions/<session-id>/runtime-dispatch?book_root=<path>",
       "native_runtime_turn_endpoint": "/v1/mooncode/sessions/<session-id>/runtime-turn?book_root=<path>",
       "native_runtime_loop_endpoint": "/v1/mooncode/sessions/<session-id>/runtime-loop?book_root=<path>",
+      "native_runtime_loop_options": native_capability_runtime_loop_options(),
       "native_durable_session_store": ".moonclaw/mooncode/sessions/<session-id>/session.json, commands.jsonl, runtime-dispatches.jsonl, events.jsonl, and package-results.jsonl under the selected MoonBook root",
       "native_capabilities_readiness": "Moondesk treats MoonClaw as native-runtime-ready only when /v1/mooncode/capabilities passes the MoonCode-owned component/protocol, endpoint, and tool-set compatibility check.",
       "command_queue_endpoint": "/api/mooncode/sessions/<session-id>/commands",

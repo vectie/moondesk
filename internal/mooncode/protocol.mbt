@@ -19,6 +19,11 @@ pub fn native_capability_required_tools() -> Array[String] {
 }
 
 ///|
+pub fn native_capability_runtime_loop_options() -> Json {
+  @mooncode_core.native_capability_runtime_loop_options()
+}
+
+///|
 pub fn native_capability_surface_fingerprint() -> String {
   @mooncode_core.native_capability_surface_fingerprint()
 }

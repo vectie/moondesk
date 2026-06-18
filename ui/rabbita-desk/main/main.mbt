@@ -567,6 +567,7 @@ struct MoonCodeSessionProtocol {
   runtime_claim_endpoint : String
   runtime_replay_endpoint : String
   action_plan_endpoint : String
+  native_runtime_loop_options : Json
   commands : Array[String]
   events : Array[String]
   durability : String
@@ -15741,6 +15742,10 @@ fn render_mooncode_capability_panel(model : Model) -> @rabbita.Html {
             info_row(
               "Action Plan",
               capabilities.session_protocol.action_plan_endpoint,
+            ),
+            info_row(
+              "Runtime Loop Options",
+              capabilities.session_protocol.native_runtime_loop_options.stringify(),
             ),
             info_row(
               "Runtime",

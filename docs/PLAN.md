@@ -231,8 +231,11 @@ harnesses from runtime-turn, write a MoonBook-owned
 `eval_report.manifest` evidence with `tool_harness` and `file_edit` results.
 MoonClaw's native runtime-loop now
 supervises repeated runtime-turns over the durable queue until idle, failure,
-cancel, or max-turns. The remaining engine work is the persistent OpenSeek-style
-service with long-running live steering/cancel UX, diff-aware review, and
+cancel, or max-turns. It also accepts `live_wait_ms` and `poll_ms` for opt-in
+bounded live polling of newly appended prompt, steer, and cancel commands before
+returning idle, and reports per-iteration wait evidence back to Moondesk. The
+remaining engine work is the persistent OpenSeek-style service process around
+that loop, broader long-running steering/cancel UX, diff-aware review, and
 broader model-backed coding eval cases.
 It also owns runtime-neutral durable event helpers: safe session-id validation,
 event record construction, JSONL rendering, JSONL parsing for events, command

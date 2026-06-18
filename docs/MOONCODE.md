@@ -543,6 +543,14 @@ prompt/steer/cancel JSONL without parsing the full Moondesk session projection,
 then acknowledge completion through `/runtime-replay` and append streamed events
 through `/runtime-events`.
 
+MoonClaw's native `runtime-loop` can now use the same feed in a bounded live
+mode: callers may pass `live_wait_ms` and `poll_ms` when posting to
+`/v1/mooncode/sessions/<id>/runtime-loop?book_root=<path>`. With
+`live_wait_ms=0` it preserves immediate idle behavior; with a positive value it
+polls `commands.jsonl` for newly appended prompt, steer, or cancel commands
+before returning idle and reports `waits`, `live_wait_attempt_count`, and
+`live_wait_elapsed_ms` in the response.
+
 Output events include assistant/reasoning deltas, tool calls/results, runtime
 updates, file changes, diffs, test results, artifacts, finish/abort, command
 errors, and dropped steering. This is now rendered in the MoonCode inspector as

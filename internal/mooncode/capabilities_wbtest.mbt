@@ -22,6 +22,9 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"kind\":\"mooncode-tool-contract\""))
   assert_true(payload.contains("\"tool_call_wire\""))
   assert_true(payload.contains("\"kind\":\"mooncode-tool-call-wire-contract\""))
+  assert_true(payload.contains("\"native_runtime_loop_options\""))
+  assert_true(payload.contains("\"live_wait_ms\""))
+  assert_true(payload.contains("\"poll_ms\""))
   assert_true(payload.contains("\"extraction_boundary\""))
   assert_true(payload.contains("\"kind\":\"mooncode-extraction-boundary\""))
   assert_true(
