@@ -1149,6 +1149,11 @@ Implemented behavior:
   `component=mooncode`, `protocol=mooncode.v1`, and
   `mooncode_session_kind=coding`, and records the first prompt as an ordered
   `mooncode.v1` command packet in `commands.jsonl` before dispatch.
+- `mooncode_summary.resume_lifecycle` projects the latest typed session
+  snapshot plus runtime command/dispatch logs into snapshot-ready,
+  pending/running/blocked/completed, next-command, resume-mode, and next-step
+  fields. Moondesk renders this as header state only; MoonClaw or standalone
+  `mooncode` still owns ordered runtime consumption.
 - `GET /api/mooncode/sessions/:id/change-set` returns the durable
   MoonBook-owned `mooncode-change-set` manifest for the session from
   `wiki/reviews/mooncode/<session-id>/change-set.json` or the latest persisted

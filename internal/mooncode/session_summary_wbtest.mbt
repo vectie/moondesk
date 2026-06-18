@@ -539,6 +539,68 @@ test "mooncode session summary exposes package lifecycle" {
 }
 
 ///|
+test "mooncode session summary exposes resume lifecycle" {
+  let command : Json = {
+    "protocol": protocol_version(),
+    "kind": kind_runtime_command(),
+    "command_id": "cmd-resume",
+    "session_id": "s1",
+    "action": "prompt",
+    "dispatch": "prompt",
+    "serve_command": "prompt",
+    "openseek_wire_command": { "command": "prompt", "text": "continue work" },
+    "tool_authorization": {
+      "enforcement_state": "approved",
+      "runtime_may_execute": true,
+    },
+  }
+  let summary = session_summary(
+    {
+      "id": "s1",
+      "workspace_id": "book",
+      "moonclaw_task_id": "task",
+      "mooncode_session_snapshot": session_snapshot(
+        {
+          "id": "s1",
+          "workspace_id": "book",
+          "moonclaw_task_id": "task",
+          "transcript": [],
+        },
+        [],
+        [],
+        [command],
+        [],
+        recorded_at="2026-06-18T00:00:00Z",
+        snapshot_path=".moontown/mooncode-sessions/s1/session.json",
+        command_log_path=".moontown/mooncode-sessions/s1/commands.jsonl",
+        runtime_command_log_path=".moontown/mooncode-sessions/s1/runtime-commands.jsonl",
+        runtime_dispatch_log_path=".moontown/mooncode-sessions/s1/runtime-dispatches.jsonl",
+        event_log_path=".moontown/mooncode-sessions/s1/events.jsonl",
+      ),
+    },
+    [],
+  )
+  let lifecycle = summary_json_object_field_or_empty(
+    summary, "resume_lifecycle",
+  )
+  assert_eq(
+    json_string(lifecycle, "kind", default=""),
+    "mooncode-resume-lifecycle",
+  )
+  assert_eq(json_string(lifecycle, "latest_status", default=""), "resumable")
+  assert_true(json_bool(lifecycle, "snapshot_ready", default=false))
+  assert_eq(summary_json_int(lifecycle, "runtime_command_count", default=0), 1)
+  assert_eq(summary_json_int(lifecycle, "pending_count", default=0), 1)
+  assert_eq(json_string(lifecycle, "next_command_id", default=""), "cmd-resume")
+  let rows = json_array_items(lifecycle, "rows")
+  assert_eq(rows.length(), 1)
+  assert_eq(json_string(rows[0], "status", default=""), "pending")
+  assert_true(
+    json_string(lifecycle, "next_step", default="").contains("native loop"),
+  )
+}
+
+///|
 test "mooncode session summary exposes patch lifecycle" {
   let events : Array[Json] = [
     event_record(

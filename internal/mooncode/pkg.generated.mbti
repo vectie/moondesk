@@ -752,6 +752,8 @@ pub fn session_projection_response(Json, Array[Json], event_log_path~ : String, 
 
 pub fn session_record(session_id~ : String, workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, task~ : Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String, transcript~ : Array[Json]) -> Json
 
+pub fn session_resume_lifecycle(Json, Array[Json]) -> Json
+
 pub fn session_runtime_evidence(Json, Array[Json], Array[Json], Array[Json], recorded_at~ : String) -> Json
 
 pub fn session_runtime_evidence_manifest_response(Json, String, String) -> Json

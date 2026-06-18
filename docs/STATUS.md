@@ -91,9 +91,11 @@ window in the packaged app.
 | Scoped desktop helpers | Working first slice | Finder reveal is scoped under the selected workspace. Browser launch is still implemented for `desktop` and `bundle --shell browser`. Local file picker/drop/paste import is staged through host APIs. Open-with-external-app remains future polish. |
 | Native packaging | Working local distribution | `bundle` builds the native MoonBit host helper plus an AppKit/WebKit launcher, copies bundled UI resources, writes absolute runtime config, signs with `codesign` by default, creates a zip, and bundled launch opens a native window. `release` writes release/update manifests, verifies signing, creates a DMG, and can submit the archive through `xcrun notarytool --keychain-profile`. |
 
-MoonCode session summaries now also expose `package_lifecycle`, a compact
-header-level projection over MoonBook package manifests and the package index.
-It reports package/source-bound/missing-source, executable-ready,
+MoonCode session summaries now also expose `resume_lifecycle` and
+`package_lifecycle` compact header-level projections. Resume lifecycle reports
+typed snapshot readiness, pending/running/blocked/completed runtime work,
+resume modes, and the next resume action from runtime command/dispatch logs.
+Package lifecycle reports package/source-bound/missing-source, executable-ready,
 runtime-built, and runtime-verified state, while the detailed package-candidate
 panel remains the place for manifest paths, source inventory, and operator
 commands.

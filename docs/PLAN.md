@@ -396,6 +396,11 @@ feed returns an `execution_summaries` projection so Moondesk can render the
 planned tools, evidence requirements, executable checklist, and replay/event
 sinks in Runtime Feed, Dispatch Receipts, and Runtime Claims without coupling
 the UI to the full native body.
+The session summary now also carries `resume_lifecycle`, a compact projection
+over the typed session snapshot plus runtime command/dispatch logs. The
+MoonCode header shows snapshot readiness, pending/running/blocked/completed
+runtime work, the next command/action/status, resume modes, and the next resume
+step before the command-specific lifecycle panels.
 The runtime feed, runtime execution plan, and saved runtime handoff now also
 include a `runtime_turn_packet`: a self-contained MoonClaw/standalone-MoonCode
 turn handoff that combines replay/claim state, the serve-scheduler decision,

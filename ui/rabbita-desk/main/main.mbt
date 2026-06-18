@@ -411,6 +411,7 @@ struct MoonCodeSummary {
   moonbook_patch_set_manifest_count : Int
   patch_lifecycle : Json
   package_lifecycle : Json
+  resume_lifecycle : Json
   runtime_patch_execution_proof_count : Int
   moonbook_tool_approvals_manifest_count : Int
   moonbook_test_runs_manifest_count : Int
@@ -11545,11 +11546,147 @@ fn render_mooncode_session_header(
       info_row("Event Log", empty_label(summary.event_log_path)),
       info_row("Eval", "\{summary.eval_level} / \{summary.eval_score}"),
     ]),
+    render_mooncode_resume_lifecycle(summary),
     render_mooncode_steering_lifecycle(summary),
     render_mooncode_cancel_lifecycle(summary),
     render_mooncode_patch_lifecycle(summary),
     render_mooncode_package_lifecycle(summary),
   ])
+}
+
+///|
+fn render_mooncode_resume_lifecycle(
+  summary : MoonCodeSummary
+) -> @rabbita.Html {
+  let lifecycle = summary.resume_lifecycle
+  let rows = json_field_json_array_items(lifecycle, "rows")
+  div(class="mooncode-output-roots resume-lifecycle", [
+    div(class="mooncode-stream-header compact-header", [
+      div([
+        p(class="eyebrow", "durable session resume"),
+        h3("Resume Lifecycle"),
+      ]),
+      span(
+        class="record-kind",
+        empty_label(json_field_string(lifecycle, "latest_status", default="idle")),
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip(
+        "Snapshot",
+        if json_field_bool(lifecycle, "snapshot_ready", default=false) {
+          "ready"
+        } else {
+          "missing"
+        },
+      ),
+      info_chip("Pending", json_field_int(lifecycle, "pending_count", default=0).to_string()),
+      info_chip("Running", json_field_int(lifecycle, "running_count", default=0).to_string()),
+      info_chip("Blocked", json_field_int(lifecycle, "blocked_count", default=0).to_string()),
+      info_chip("Complete", json_field_int(lifecycle, "completed_count", default=0).to_string()),
+    ]),
+    if rows.length() == 0 {
+      p(class="status-line", "no runtime commands recorded for resume")
+    } else {
+      div(
+        class="mooncode-review-list compact",
+        mooncode_recent_resume_lifecycle_rows(rows).map(row =>
+          render_mooncode_resume_lifecycle_row(row)
+        ),
+      )
+    },
+    div(class="mooncode-session-evidence", [
+      info_row(
+        "Snapshot",
+        empty_label(json_field_string(lifecycle, "snapshot_path", default="")),
+      ),
+      info_row(
+        "Runtime Feed",
+        empty_label(json_field_string(lifecycle, "runtime_command_log_path", default="")),
+      ),
+      info_row(
+        "Dispatch Log",
+        empty_label(json_field_string(lifecycle, "runtime_dispatch_log_path", default="")),
+      ),
+      info_row(
+        "Resume Modes",
+        json_field_string_array_summary(lifecycle, "resume_modes", limit=3),
+      ),
+    ]),
+    p(
+      class="mooncode-event-detail",
+      json_field_string(lifecycle, "next_step", default=""),
+    ),
+  ])
+}
+
+///|
+fn mooncode_recent_resume_lifecycle_rows(rows : Array[Json]) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = rows.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 4 {
+    index -= 1
+    recent.push(rows[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_resume_lifecycle_row(row : Json) -> @rabbita.Html {
+  let status = json_field_string(row, "status", default="pending")
+  div(class="mooncode-review-item " + mooncode_resume_lifecycle_class(status), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(empty_label(json_field_string(row, "command_id", default=""))),
+        small(
+          json_field_string(row, "action", default="prompt") +
+          " / " +
+          json_field_string(row, "receipt_status", default="missing"),
+        ),
+      ]),
+      span(class="record-kind", status),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Events", json_field_int(row, "scoped_event_count", default=0).to_string()),
+      info_chip("Proof", json_field_int(row, "proof_event_count", default=0).to_string()),
+      info_chip(
+        "Wire",
+        if json_field_bool(row, "valid_wire", default=false) {
+          "valid"
+        } else {
+          "invalid"
+        },
+      ),
+      info_chip(
+        "Tools",
+        if json_field_bool(row, "runtime_may_execute_tools", default=true) {
+          "allowed"
+        } else {
+          "blocked"
+        },
+      ),
+    ]),
+    code(empty_label(json_field_string(row, "target", default=""))),
+    p(
+      class="mooncode-event-detail",
+      empty_label(json_field_string(row, "next_step", default="")),
+    ),
+  ])
+}
+
+///|
+fn mooncode_resume_lifecycle_class(status : String) -> String {
+  match status {
+    "completed" => "accepted"
+    "failed"
+    | "blocked-invalid"
+    | "blocked-tool-authorization"
+    | "blocked-missing-proof" => "rejected"
+    "pending" | "running" | "dispatched" => "queued"
+    _ => "queued"
+  }
 }
 
 ///|

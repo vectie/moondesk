@@ -997,6 +997,12 @@ patch-set entries. The header shows needs-review/runtime-needed/runtime-proven/
 blocked counts plus recent patch rows, so an operator can see whether generated
 file changes need review, runtime apply/revert proof, or tests before scrolling
 to the full patch panel.
+Durable resume state is summarized through `resume_lifecycle`, which projects
+the latest typed session snapshot plus runtime command/dispatch logs into
+snapshot-ready, pending, running, blocked, completed, next-command, and
+next-step fields. The MoonCode header renders this before the command-specific
+lifecycle panels, making restart/resume readiness visible without opening the
+runtime handoff manifest.
 
 Each session also carries a `mooncode_summary` readiness/eval block. It records
 the stream mode, `live_stream_ready`, event log path, append-log count, command
@@ -1009,7 +1015,8 @@ source-bound package count, `review_state`, an `eval_score`, an `eval_level`,
 `steer_command_count`, `steer_settlement_count`, `deferred_steer_count`,
 `pending_steer_count`, `steering_lifecycle`, `cancel_command_count`,
 `cancel_dropped_count`, `cancel_settlement_count`, `pending_cancel_count`,
-`cancel_lifecycle`, `patch_lifecycle`, and
+`cancel_lifecycle`, `patch_lifecycle`, `package_lifecycle`,
+`resume_lifecycle`, and
 `eval_checks` for book scope, MoonClaw task attachment, transcript, tool
 events, file diffs, tests/builds, verified test results, artifacts, review
 decisions, append-only log coverage, typed command packets, ordered command
