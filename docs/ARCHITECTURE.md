@@ -1479,9 +1479,12 @@ Implemented behavior:
   recording or dispatching, Moondesk runs the same projected-event preflight
   used by the Action Plan: `accept` and `package` are rejected with
   `409 Conflict` while tests are failing, tool approvals are pending, or
-  pending diffs lack verified test/build evidence; `apply_patch` and
-  `revert_patch` are rejected when no selected patch path exists or the path is
-  not a known patch candidate. Preflight responses also include shared command
+  pending diffs lack verified test/build evidence; `run_tests`, `run_build`,
+  and `run_eval` are projected through the same read-only preflight matrix so
+  operators see how proof-building commands will route before they click; and
+  `apply_patch` and `revert_patch` are rejected when no selected patch path
+  exists or the path is not a known patch candidate. Preflight responses also
+  include shared command
   metadata (`dispatch`, `approval`, `lane`, `title`, `tool_hints`,
   `expected_lanes`, and `required_gates`) so Moondesk, MoonClaw, and future
   standalone `mooncode` clients render the same ownership and runtime hints.

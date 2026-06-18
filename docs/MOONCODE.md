@@ -1359,10 +1359,11 @@ The `preflight` route is the read-only command-gate projection. It returns the
 same `mooncode-command-preflight` object used by command POST enforcement for a
 requested action and selected `context_path`; `path` is accepted as an alias for
 clients that already model selected files that way. The MoonCode center pane
-fetches `package`, `commit`, `accept`, and selected-path `apply_patch`/`revert_patch`
-gates and renders a Preflight Gates panel before the transcript, so the
-operator sees current test, diff, patch-state, tool-approval, and package
-blockers before clicking a review command.
+fetches `run_tests`, `run_build`, `run_eval`, `package`, `commit`, `accept`,
+and selected-path `apply_patch`/`revert_patch` gates and renders a Preflight
+Gates panel before the transcript, so the operator sees proof-building commands
+and current test, diff, patch-state, tool-approval, and package blockers before
+clicking a review command.
 The preflight object also carries command metadata from the shared MoonCode
 command registry: `dispatch`, `approval`, `lane`, `title`, `tool_hints`,
 `expected_lanes`, and `required_gates`. Moondesk renders those fields in the

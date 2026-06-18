@@ -4706,6 +4706,15 @@ fn fetch_mooncode_preflight_matrix_cmd(
   }
   @rabbita.batch([
     fetch_mooncode_command_preflight_cmd(
+      dispatch, session_id, "run_tests", context_path,
+    ),
+    fetch_mooncode_command_preflight_cmd(
+      dispatch, session_id, "run_build", context_path,
+    ),
+    fetch_mooncode_command_preflight_cmd(
+      dispatch, session_id, "run_eval", context_path,
+    ),
+    fetch_mooncode_command_preflight_cmd(
       dispatch, session_id, "package", context_path,
     ),
     fetch_mooncode_command_preflight_cmd(
