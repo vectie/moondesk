@@ -752,6 +752,8 @@ pub fn session_patch_lifecycle(Array[Json]) -> Json
 
 pub fn session_production_checks(Json, Array[Json]) -> Array[Json]
 
+pub fn session_production_readiness_response(Json) -> Json
+
 pub fn session_projection_response(Json, Array[Json], event_log_path~ : String, append_log_count~ : Int, command_log_path~ : String, command_log_count~ : Int, runtime_command_log_path~ : String, runtime_command_log_count~ : Int, runtime_dispatch_log_path~ : String, runtime_dispatch_log_count~ : Int) -> Json
 
 pub fn session_record(session_id~ : String, workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, task~ : Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String, transcript~ : Array[Json]) -> Json

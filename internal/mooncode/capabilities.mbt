@@ -65,6 +65,7 @@ pub fn capabilities_json() -> Json {
       "runtime_replay_endpoint": "/api/mooncode/sessions/<session-id>/runtime-replay",
       "openseek_serve_jsonl_endpoint": "/api/mooncode/sessions/<session-id>/serve-jsonl?scope=pending|all",
       "action_plan_endpoint": "/api/mooncode/sessions/<session-id>/action-plan",
+      "production_readiness_endpoint": "/api/mooncode/sessions/<session-id>/production-readiness",
       "runtime_evidence_endpoint": "/api/mooncode/sessions/<session-id>/runtime-evidence",
       "preflight_endpoint": "/api/mooncode/sessions/<session-id>/preflight?action=<action>&context_path=<path>",
       "tool_authorization_endpoint": "/api/mooncode/sessions/<session-id>/tool-authorization",

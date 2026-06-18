@@ -168,11 +168,12 @@ fn supported_engine_endpoints() -> Array[String] {
     "/api/mooncode/sessions/<id>/tool-approvals", "/api/mooncode/sessions/<id>/tool-authorization",
     "/api/mooncode/sessions/<id>/test-runs", "/api/mooncode/sessions/<id>/package-candidates",
     "/api/mooncode/sessions/<id>/preflight", "/api/mooncode/sessions/<id>/action-plan",
-    "/api/mooncode/sessions/<id>/runtime-evidence", "/api/mooncode/sessions/<id>/eval-report",
-    "/api/mooncode/sessions/<id>/runtime-handoff", "/api/mooncode/sessions/<id>/session-store",
-    "/api/mooncode/sessions/<id>/runtime-commands", "/api/mooncode/sessions/<id>/runtime-dispatch",
-    "/api/mooncode/sessions/<id>/runtime-events", "GET /api/mooncode/sessions/<id>/runtime-claim",
-    "/api/mooncode/sessions/<id>/runtime-execution-plan", "POST /api/mooncode/sessions/<id>/runtime-claim",
-    "/api/mooncode/sessions/<id>/runtime-supervisor", "/api/mooncode/sessions/<id>/runtime-replay",
+    "/api/mooncode/sessions/<id>/production-readiness", "/api/mooncode/sessions/<id>/runtime-evidence",
+    "/api/mooncode/sessions/<id>/eval-report", "/api/mooncode/sessions/<id>/runtime-handoff",
+    "/api/mooncode/sessions/<id>/session-store", "/api/mooncode/sessions/<id>/runtime-commands",
+    "/api/mooncode/sessions/<id>/runtime-dispatch", "/api/mooncode/sessions/<id>/runtime-events",
+    "GET /api/mooncode/sessions/<id>/runtime-claim", "/api/mooncode/sessions/<id>/runtime-execution-plan",
+    "POST /api/mooncode/sessions/<id>/runtime-claim", "/api/mooncode/sessions/<id>/runtime-supervisor",
+    "/api/mooncode/sessions/<id>/runtime-replay",
   ]
 }

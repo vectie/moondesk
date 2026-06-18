@@ -117,6 +117,9 @@ test "mooncode http contract delegates static capability shape to mooncode packa
     payload.contains("/api/mooncode/sessions/<session-id>/runtime-evidence"),
   )
   assert_true(
+    payload.contains("/api/mooncode/sessions/<session-id>/production-readiness"),
+  )
+  assert_true(
     payload.contains("/v1/mooncode/sessions/<id>/eval-report?book_root=<path>"),
   )
   assert_eq(
@@ -210,6 +213,11 @@ async test "mooncode engine status distinguishes bridge readiness from productio
   assert_true(
     json_string_array_items(status, "supported_endpoints").contains(
       "/v1/mooncode/sessions/<id>/commands",
+    ),
+  )
+  assert_true(
+    json_string_array_items(status, "supported_endpoints").contains(
+      "/api/mooncode/sessions/<id>/production-readiness",
     ),
   )
   assert_true(

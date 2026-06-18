@@ -349,6 +349,7 @@ POST /api/mooncode/sessions/<session-id>/runtime-claim
 POST /api/mooncode/sessions/<session-id>/runtime-replay
 GET /api/mooncode/sessions/<session-id>/preflight?action=<action>&context_path=<path>
 GET /api/mooncode/sessions/<session-id>/action-plan
+GET /api/mooncode/sessions/<session-id>/production-readiness
 GET /api/mooncode/sessions/<session-id>/runtime-evidence
 GET /api/mooncode/sessions/<session-id>/commands
 POST /api/mooncode/sessions/<session-id>/commands
@@ -462,6 +463,13 @@ contract for the `moonwiki`/`mooncode`/`moondesk`/`moonclaw` split.
 score thresholds, evidence requirements, next actions, and responsible owners
 that `production_readiness` uses for each session. This keeps "production
 grade" measurable and stable instead of being a UI-only label.
+
+`GET /api/mooncode/sessions/<session-id>/production-readiness` returns the
+session-scoped `mooncode-session-production-readiness` audit response. It
+contains the compact readiness summary, score, level, first blocker, next
+action, next owner, all check evidence, the static rubric, and durable evidence
+paths. Moondesk dashboards can poll this endpoint for regular production-grade
+scoring without loading the full session transcript.
 
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references
@@ -1914,7 +1922,9 @@ lacks executable-ready verified package proof. It is intentionally separate from
 production score measures whether the selected session proves the user-facing
 MoonCode product workflow. The static rubric is also available at
 `GET /api/mooncode/production-rubric`, so production-grade claims can be audited
-without a selected session.
+without a selected session. For a selected session, use
+`GET /api/mooncode/sessions/<session-id>/production-readiness` to retrieve the
+same score and checklist as a compact audit payload.
 
 ## Completion Criteria
 

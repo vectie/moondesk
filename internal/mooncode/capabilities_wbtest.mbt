@@ -74,6 +74,9 @@ test "mooncode capability contract names the split packages" {
     payload.contains("/api/mooncode/sessions/<session-id>/action-plan"),
   )
   assert_true(
+    payload.contains("/api/mooncode/sessions/<session-id>/production-readiness"),
+  )
+  assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/runtime-events"),
   )
   assert_true(
@@ -125,6 +128,11 @@ test "mooncode engine status projection is extractable from http probing" {
     endpoints
     .map(endpoint => endpoint.stringify())
     .contains("\"/v1/mooncode/sessions/<id>/commands\""),
+  )
+  assert_true(
+    endpoints
+    .map(endpoint => endpoint.stringify())
+    .contains("\"/api/mooncode/sessions/<id>/production-readiness\""),
   )
   let ready = engine_status_projection_json(
     daemon={ "running": true, "message": "running" },

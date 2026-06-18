@@ -43,3 +43,62 @@ test "mooncode production-grade rubric is a standalone contract" {
     "moondesk-moonbook",
   )
 }
+
+///|
+test "mooncode session production readiness response is audit scoped" {
+  let session : Json = {
+    "id": "s1",
+    "workspace_id": "research-book",
+    "mooncode_events": Json::array([
+      event_record(
+        id="chat",
+        lane="transcript",
+        kind="assistant_delta",
+        title="Assistant",
+        status="completed",
+        created_at="1",
+        detail="I will edit the tool.",
+      ),
+    ]),
+  }
+  let response = session_production_readiness_response(session)
+  assert_eq(
+    json_string(response, "kind", default=""),
+    "mooncode-session-production-readiness",
+  )
+  assert_eq(json_string(response, "protocol", default=""), protocol_version())
+  assert_eq(json_string(response, "session_id", default=""), "s1")
+  assert_eq(json_string(response, "workspace_id", default=""), "research-book")
+  assert_eq(
+    json_string(response, "endpoint", default=""),
+    "/api/mooncode/sessions/s1/production-readiness",
+  )
+  assert_eq(summary_json_int(response, "check_count", default=0), 16)
+  assert_true(summary_json_int(response, "score", default=0) > 0)
+  assert_eq(json_string(response, "level", default=""), "prototype")
+  assert_eq(
+    json_string(response, "extractable_component", default=""),
+    "mooncode",
+  )
+  let readiness = summary_json_object_field_or_empty(response, "readiness")
+  assert_eq(
+    json_string(readiness, "kind", default=""),
+    "mooncode-production-readiness",
+  )
+  assert_eq(
+    json_string(response, "first_blocker_id", default=""),
+    "moonclaw_attached",
+  )
+  assert_eq(
+    json_string(response, "next_action", default=""),
+    "attach_moonclaw_session",
+  )
+  assert_eq(
+    json_string(
+      summary_json_object_field_or_empty(response, "rubric"),
+      "kind",
+      default="",
+    ),
+    "mooncode-production-grade-rubric",
+  )
+}

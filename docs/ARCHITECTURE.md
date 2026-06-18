@@ -530,6 +530,7 @@ GET  /api/mooncode/sessions/:id/runtime-replay
 POST /api/mooncode/sessions/:id/runtime-claim
 POST /api/mooncode/sessions/:id/runtime-replay
 GET  /api/mooncode/sessions/:id/action-plan
+GET  /api/mooncode/sessions/:id/production-readiness
 GET  /api/mooncode/sessions/:id/runtime-evidence
 GET  /api/mooncode/sessions/:id/stream?format=jsonl|sse&since=<sequence>
 GET  /api/mooncode/sessions/:id/commands
@@ -1471,6 +1472,11 @@ Implemented behavior:
   per-session `production_readiness`. This makes regular production-grade
   scoring auditable outside the UI and reusable by a standalone `mooncode`
   client.
+- `GET /api/mooncode/sessions/:id/production-readiness` returns the compact
+  session audit response: readiness summary, score, level, first blocker, next
+  action, next owner, all check evidence, the static rubric, and durable
+  evidence paths. It lets Moondesk poll production-grade status without loading
+  the whole transcript while keeping the scoring contract in `internal/mooncode`.
 - `GET /api/mooncode/eval-harness` returns the standalone
   `mooncode-eval-harness-contract`. It names `../openseek/eval/tool_harness`
   and `../openseek/eval/file_edit` as references, requires deterministic tool

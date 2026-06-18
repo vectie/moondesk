@@ -424,6 +424,83 @@ pub fn production_readiness_summary(checks : Array[Json]) -> Json {
 }
 
 ///|
+pub fn session_production_readiness_response(session : Json) -> Json {
+  let events = json_array_items(session, "mooncode_events")
+  let current_summary = summary_json_object_field_or_empty(
+    session, "mooncode_summary",
+  )
+  let summary = if json_string(current_summary, "protocol", default="") == "" {
+    session_summary(session, events)
+  } else {
+    current_summary
+  }
+  let checks = json_array_items(summary, "production_checks")
+  let readiness = summary_json_object_field_or_empty(
+    summary, "production_readiness",
+  )
+  let session_id = json_string(
+    summary,
+    "session_id",
+    default=json_string(session, "id", default=""),
+  )
+  {
+    "kind": "mooncode-session-production-readiness",
+    "protocol": protocol_version(),
+    "extractable_component": "mooncode",
+    "session_id": session_id,
+    "workspace_id": json_string(
+      summary,
+      "workspace_id",
+      default=json_string(session, "workspace_id", default=""),
+    ),
+    "readiness": readiness,
+    "score": summary_json_int(summary, "production_score", default=0),
+    "level": json_string(summary, "production_level", default="empty"),
+    "passed_count": summary_json_int(
+      summary,
+      "production_passed_check_count",
+      default=0,
+    ),
+    "check_count": summary_json_int(
+      summary,
+      "production_check_count",
+      default=0,
+    ),
+    "blocked_count": summary_json_int(readiness, "blocked_count", default=0),
+    "first_blocker_id": json_string(readiness, "first_blocker_id", default=""),
+    "next_action": json_string(readiness, "next_action", default="completed"),
+    "next_owner": json_string(readiness, "next_owner", default="none"),
+    "checks": Json::array(checks),
+    "rubric": production_grade_rubric_json(),
+    "evidence_paths": {
+      "event_log_path": json_string(summary, "event_log_path", default=""),
+      "command_log_path": json_string(summary, "command_log_path", default=""),
+      "runtime_command_log_path": json_string(
+        summary,
+        "runtime_command_log_path",
+        default="",
+      ),
+      "runtime_dispatch_log_path": json_string(
+        summary,
+        "runtime_dispatch_log_path",
+        default="",
+      ),
+      "session_snapshot_path": json_string(
+        summary,
+        "session_snapshot_path",
+        default="",
+      ),
+    },
+    "endpoint": if session_id == "" {
+      ""
+    } else {
+      "/api/mooncode/sessions/\{session_id}/production-readiness"
+    },
+    "rule": "This response is the session-scoped production gate for Moondesk dashboards and standalone mooncode audits. It is derived from projected MoonCode events plus MoonBook review/runtime artifacts, not from UI-only state.",
+  }
+}
+
+///|
 fn first_failed_production_check(checks : Array[Json]) -> Json {
   for check in checks {
     if !json_bool(check, "ok", default=false) {

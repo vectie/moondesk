@@ -632,6 +632,16 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "mooncode", "sessions", session_id, "production-readiness"] =>
+      if is_read_method(method_) {
+        handle_mooncode_session_production_readiness(
+          workspace_root, session_id, method_, conn,
+        )
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "mooncode", "sessions", session_id, "runtime-evidence"] =>
       if is_read_method(method_) {
         handle_mooncode_session_runtime_evidence(
