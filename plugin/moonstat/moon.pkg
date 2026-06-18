@@ -2,5 +2,6 @@ import {
   "moonbitlang/async/http",
   "moonbitlang/core/json",
   "moonbitlang/core/env",
-  "moonbitlang/async",
+  "vectie/moonlib/fsx",
+  "vectie/moonlib/os",
 }
