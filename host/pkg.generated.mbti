@@ -2,6 +2,7 @@
 package "vectie/moondesk/host"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
 
@@ -19,11 +20,11 @@ pub struct DeskRoot {
   id : String
   label : String
   path : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct HostConfig {
   roots : Array[DeskRoot]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 

@@ -2,6 +2,7 @@
 package "vectie/moondesk/adapters/moonbook"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "vectie/moondesk/core",
 }
@@ -23,7 +24,7 @@ pub struct MoonBookSection {
   path : String
   layer : @core.SourceLayer
   writable : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 

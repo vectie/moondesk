@@ -411,9 +411,10 @@ async test "mooncode review actions write moonbook receipts" {
         json_int(index_manifest, "executable_ready_count", default=0),
         1,
       )
-      assert_eq(json_string_array_items(index_manifest, "entry_points"), [
-        "tools/demo/main.mbt",
-      ])
+      assert_true(
+        json_string_array_items(index_manifest, "entry_points") ==
+        ["tools/demo/main.mbt"],
+      )
       let candidates = mooncode_package_candidates_projection(
         next, "agent-demo",
       )

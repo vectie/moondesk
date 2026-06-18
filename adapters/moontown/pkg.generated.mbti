@@ -2,6 +2,7 @@
 package "vectie/moondesk/adapters/moontown"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "vectie/moondesk/core",
 }
@@ -24,14 +25,14 @@ pub struct OperatorRequestDraft {
   source_policy : @core.SourcePolicy
   quality_threshold : Int
   context_entries : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct TownSnapshotRef {
   town_json_path : String
   daemon_json_path : String
   standing_goals_path : String
   watcher_dir : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 
