@@ -508,6 +508,11 @@ test "mooncode session summary tracks pending steer acknowledgements" {
       status="done",
       created_at="3",
       detail="add tests",
+      command_packet={
+        "protocol": protocol_version(),
+        "command_id": "cmd-steer-1",
+        "action": "steer",
+      },
     ),
     event_record(
       id="steer-deferred-1",
@@ -517,6 +522,11 @@ test "mooncode session summary tracks pending steer acknowledgements" {
       status="queued",
       created_at="4",
       detail="tighten scope",
+      command_packet={
+        "protocol": protocol_version(),
+        "command_id": "cmd-steer-2",
+        "action": "steer",
+      },
     ),
   ]
   let summary = session_summary({ "id": "s1", "workspace_id": "book" }, events)
@@ -524,6 +534,23 @@ test "mooncode session summary tracks pending steer acknowledgements" {
   assert_eq(summary_json_int(summary, "steer_settlement_count", default=0), 1)
   assert_eq(summary_json_int(summary, "deferred_steer_count", default=0), 1)
   assert_eq(summary_json_int(summary, "pending_steer_count", default=0), 1)
+  let lifecycle = summary_json_object_field_or_empty(
+    summary, "steering_lifecycle",
+  )
+  assert_eq(
+    json_string(lifecycle, "kind", default=""),
+    "mooncode-steering-lifecycle",
+  )
+  assert_eq(summary_json_int(lifecycle, "steer_command_count", default=0), 2)
+  assert_eq(summary_json_int(lifecycle, "applied_count", default=0), 1)
+  assert_eq(summary_json_int(lifecycle, "deferred_count", default=0), 1)
+  assert_eq(summary_json_int(lifecycle, "pending_count", default=0), 0)
+  let rows = json_array_items(lifecycle, "rows")
+  assert_eq(rows.length(), 2)
+  assert_eq(json_string(rows[0], "command_id", default=""), "cmd-steer-1")
+  assert_eq(json_string(rows[0], "status", default=""), "applied")
+  assert_eq(json_string(rows[1], "command_id", default=""), "cmd-steer-2")
+  assert_eq(json_string(rows[1], "status", default=""), "deferred")
   assert_eq(pending_steer_count(1, 2), 0)
 }
 

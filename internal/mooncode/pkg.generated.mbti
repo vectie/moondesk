@@ -756,6 +756,8 @@ pub fn session_snapshot_relative_path(String) -> String
 
 pub fn session_snapshot_valid(Json) -> Bool
 
+pub fn session_steering_lifecycle(Array[Json]) -> Json
+
 pub fn session_summary(Json, Array[Json]) -> Json
 
 pub fn session_with_eval_report_manifest_event(Json, Json, Json) -> Json

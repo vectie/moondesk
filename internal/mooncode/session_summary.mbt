@@ -83,6 +83,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let pending_steer_count = pending_steer_count(
     steer_command_count, steer_settlement_count,
   )
+  let steering_lifecycle = session_steering_lifecycle(events)
   let accepted_count = count_review_command(events, "accept")
   let rejected_count = count_review_command(events, "reject")
   let session_id = json_string(session, "id", default="")
@@ -182,6 +183,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "steer_settlement_count": steer_settlement_count,
     "deferred_steer_count": deferred_steer_count,
     "pending_steer_count": pending_steer_count,
+    "steering_lifecycle": steering_lifecycle,
     "review_count": review_count,
     "pending_diff_count": pending_diff_count(
       diff_count, accepted_count, rejected_count,

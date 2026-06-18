@@ -981,7 +981,12 @@ minus `steer_settlement_count` becomes `pending_steer_count`, with settlements
 coming from runtime `steer_applied`/`steer_dropped` events and
 `deferred_steer_count` coming from `steer_deferred` runtime evidence. Moondesk
 renders those fields from the same package-level summary used by future
-standalone `mooncode`.
+standalone `mooncode`. The same summary now includes `steering_lifecycle`, a
+row-level projection of durable steer command packets plus command-scoped
+`steer_applied`, `steer_deferred`, and `steer_dropped` runtime events. The
+MoonCode session header renders that lifecycle with applied/deferred/dropped/
+pending counts and recent rows, so deferred or dropped steering is visible
+without opening raw event JSON.
 
 Each session also carries a `mooncode_summary` readiness/eval block. It records
 the stream mode, `live_stream_ready`, event log path, append-log count, command
@@ -992,7 +997,7 @@ diff count, accepted/rejected review counts, MoonBook review receipt count,
 MoonBook package manifest count, verified/failing test-build result counts,
 source-bound package count, `review_state`, an `eval_score`, an `eval_level`,
 `steer_command_count`, `steer_settlement_count`, `deferred_steer_count`,
-`pending_steer_count`, and
+`pending_steer_count`, `steering_lifecycle`, and
 `eval_checks` for book scope, MoonClaw task attachment, transcript, tool
 events, file diffs, tests/builds, verified test results, artifacts, review
 decisions, append-only log coverage, typed command packets, ordered command

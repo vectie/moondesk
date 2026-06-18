@@ -391,6 +391,7 @@ struct MoonCodeSummary {
   steer_settlement_count : Int
   deferred_steer_count : Int
   pending_steer_count : Int
+  steering_lifecycle : Json
   review_count : Int
   pending_diff_count : Int
   accepted_review_count : Int
@@ -11536,7 +11537,112 @@ fn render_mooncode_session_header(
       info_row("Event Log", empty_label(summary.event_log_path)),
       info_row("Eval", "\{summary.eval_level} / \{summary.eval_score}"),
     ]),
+    render_mooncode_steering_lifecycle(summary),
   ])
+}
+
+///|
+fn render_mooncode_steering_lifecycle(
+  summary : MoonCodeSummary
+) -> @rabbita.Html {
+  let lifecycle = summary.steering_lifecycle
+  let rows = json_field_json_array_items(lifecycle, "rows")
+  div(class="mooncode-output-roots steering-lifecycle", [
+    div(class="mooncode-stream-header compact-header", [
+      div([
+        p(class="eyebrow", "prompt/steer/cancel lifecycle"),
+        h3("Steering Lifecycle"),
+      ]),
+      span(
+        class="record-kind",
+        empty_label(json_field_string(lifecycle, "latest_status", default="idle")),
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Applied", json_field_int(lifecycle, "applied_count", default=0).to_string()),
+      info_chip("Deferred", json_field_int(lifecycle, "deferred_count", default=0).to_string()),
+      info_chip("Dropped", json_field_int(lifecycle, "dropped_count", default=0).to_string()),
+      info_chip("Pending", json_field_int(lifecycle, "pending_count", default=0).to_string()),
+    ]),
+    if rows.length() == 0 {
+      p(class="status-line", "no steering commands recorded")
+    } else {
+      div(
+        class="mooncode-review-list compact",
+        mooncode_recent_steering_rows(rows).map(row =>
+          render_mooncode_steering_lifecycle_row(row)
+        ),
+      )
+    },
+    p(
+      class="mooncode-event-detail",
+      json_field_string(lifecycle, "next_step", default=""),
+    ),
+  ])
+}
+
+///|
+fn mooncode_recent_steering_rows(rows : Array[Json]) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = rows.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 4 {
+    index -= 1
+    recent.push(rows[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_steering_lifecycle_row(row : Json) -> @rabbita.Html {
+  let status = json_field_string(row, "status", default="pending")
+  div(class="mooncode-review-item " + mooncode_steering_lifecycle_class(status), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(json_field_string(row, "command_id", default="steer")),
+        small(empty_label(json_field_string(row, "settlement_kind", default=""))),
+      ]),
+      span(class="record-kind", status),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip(
+        "Command",
+        if json_field_bool(row, "command_recorded", default=false) {
+          "recorded"
+        } else {
+          "missing"
+        },
+      ),
+      info_chip(
+        "Settlement",
+        if json_field_bool(row, "settlement_recorded", default=false) {
+          "recorded"
+        } else {
+          "pending"
+        },
+      ),
+      info_chip(
+        "Applied To",
+        empty_label(json_field_string(row, "applied_to_command_id", default="")),
+      ),
+    ]),
+    code(empty_label(json_field_string(row, "target", default=""))),
+    p(
+      class="mooncode-event-detail",
+      empty_label(json_field_string(row, "message", default="")),
+    ),
+  ])
+}
+
+///|
+fn mooncode_steering_lifecycle_class(status : String) -> String {
+  match status {
+    "applied" => "accepted"
+    "deferred" | "pending" => "queued"
+    "dropped" => "rejected"
+    _ => "queued"
+  }
 }
 
 ///|

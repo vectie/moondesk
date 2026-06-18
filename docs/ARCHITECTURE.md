@@ -1511,9 +1511,10 @@ Implemented behavior:
   `runtime.service_started` / `runtime.service_finished` events around that
   bounded loop, and Moondesk verifies the endpoint through the shared native
   capability contract.
-  Broader production-grade live steering lifecycle UX, diff review, and
-  model-backed bundle evals remain a MoonClaw/standalone-MoonCode
-  responsibility. Moondesk
+  Moondesk renders command-scoped steering lifecycle rows from
+  `mooncode_summary.steering_lifecycle`; deeper resume/cancel orchestration,
+  diff review, and model-backed bundle evals remain a MoonClaw/standalone-
+  MoonCode responsibility. Moondesk
   exposes saved candidates through
   `GET /api/mooncode/sessions/:id/package-candidates` and renders them in the
   MoonCode center pane.
