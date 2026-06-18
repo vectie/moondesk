@@ -7,7 +7,7 @@ Moondesk should feel like a focused desktop workbench:
 - Codex-like professional shell
 - Finder-like file navigation
 - research-studio previews
-- agent activity visible but not dominant
+- MoonCode activity visible but not dominant
 
 It should not look like the Wenyu Valley game viewport. The town viewport is a
 linked visualization, while Moondesk is the practical human workspace.
@@ -19,7 +19,7 @@ linked visualization, while Moondesk is the practical human workspace.
 │ title bar / command palette / active workspace / sync status        │
 ├────┬──────────────────────┬──────────────────────────────┬─────────┤
 │rail│ explorer             │ editor / preview tabs         │inspector│
-│    │ books/files/inbox    │ markdown/html/json/images     │agents   │
+│    │ books/files/inbox    │ markdown/html/json/images     │MoonCode │
 │    │                      │ generated outputs             │metadata │
 ├────┴──────────────────────┴──────────────────────────────┴─────────┤
 │ bottom drawer: logs, artifacts, requests, search results            │
@@ -46,7 +46,7 @@ extracted as a standalone component while Moondesk remains the native host.
 - Explorer
 - Search
 - Inbox
-- Agents
+- MoonCode
 - Town
 - Runs
 - Settings
@@ -85,17 +85,17 @@ The central area should support:
 - artifact summary
 - diff/review view
 
-### Agents
+### MoonCode
 
-The agent surface is the first MoonCode UI slice. It should support:
+The MoonCode surface is the first coding/chat workspace slice. It should support:
 
 - per-book MoonClaw session list
 - selected-path prompt composer
 - visible daemon/model/task state
 - model and web-search controls
 - send/cancel/refresh actions
-- MoonCode review controls for run tests, package, accept, reject, and cancel
-  commands
+- MoonCode review controls for run tests, run build, run eval, package,
+  accept, reject, and cancel commands
 - MoonCode contract inspector for protocol, command specs, display tool specs,
   executable tool contract, approval policy, expected event lanes, tool hints,
   output roots, native/OpenSeek tool-call wire shapes, unknown-tool rejection
@@ -177,10 +177,10 @@ The agent surface is the first MoonCode UI slice. It should support:
   runtime events, with `steer_deferred` shown separately as saved next-turn
   context, so a sent steer is visible while MoonClaw or standalone `mooncode`
   has not yet confirmed whether it was applied or dropped
-- MoonCode Eval Report has a Run Eval control that dispatches a typed
-  `run_eval` command through the ordered runtime queue, asking MoonClaw or
-  standalone `mooncode` for `tool_harness` and `file_edit` native proof instead
-  of executing harnesses inside Moondesk
+- MoonCode Eval Report and primary command surfaces have Run Eval controls that
+  dispatch a typed `run_eval` command through the ordered runtime queue, asking
+  MoonClaw or standalone `mooncode` for `tool_harness` and `file_edit` native
+  proof instead of executing harnesses inside Moondesk
 - MoonCode runtime-feed visibility in the center pane, sourced from
   `.moontown/mooncode-sessions/<session-id>/runtime-commands.jsonl`, so the
   MoonClaw-facing feed is visible even before dispatch receipts or runtime
@@ -273,7 +273,7 @@ Required commands:
 - Create Book Inbox Note
 - Import Files
 - Import URL
-- Talk To Agent
+- Open MoonCode
 - Submit to Town
 - Run Daemon Tick
 - Start Daemon

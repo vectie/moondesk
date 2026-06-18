@@ -285,7 +285,7 @@ Rabbita desktop application:
 - command palette
 - request composer
 - file drop surface
-- Agents activity for book-scoped MoonClaw chat sessions
+- MoonCode activity for book-scoped MoonClaw coding sessions
 
 ### `cmd/main`
 

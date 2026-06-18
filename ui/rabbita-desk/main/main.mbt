@@ -2391,7 +2391,7 @@ fn activities() -> Array[ActivityButton] {
     { key: Activity::Explorer, icon: "F", label: "Explorer" },
     { key: Activity::Search, icon: "S", label: "Search" },
     { key: Activity::Inbox, icon: "I", label: "Inbox" },
-    { key: Activity::Agents, icon: "A", label: "Agents" },
+    { key: Activity::Agents, icon: "C", label: "MoonCode" },
     { key: Activity::Town, icon: "T", label: "Town" },
     { key: Activity::Runs, icon: "R", label: "Runs" },
     { key: Activity::Settings, icon: "G", label: "Settings" },
@@ -2404,7 +2404,7 @@ fn drawer_tabs() -> Array[DrawerTabButton] {
     { key: DrawerTab::DrawerRequests, label: "Requests" },
     { key: DrawerTab::DrawerMessages, label: "Town Messages" },
     { key: DrawerTab::DrawerRuns, label: "Runs" },
-    { key: DrawerTab::DrawerAgents, label: "Agents" },
+    { key: DrawerTab::DrawerAgents, label: "MoonCode" },
     { key: DrawerTab::DrawerRecent, label: "Recent" },
   ]
 }
@@ -9557,7 +9557,7 @@ fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 fn render_agents_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
-      div([p(class="eyebrow", "moonclaw"), h2("Agents")]),
+      div([p(class="eyebrow", "mooncode"), h2("MoonCode")]),
       div(class="toolbar-actions", [
         button(
           class="icon-button",
@@ -9567,7 +9567,7 @@ fn render_agents_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
         ),
         button(
           class="icon-button",
-          title="Refresh Agents",
+          title="Refresh MoonCode sessions",
           on_click=dispatch(PollAgentSessions),
           "R",
         ),
@@ -9579,7 +9579,7 @@ fn render_agents_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
       p(class="status-line", model.agent_status),
     ]),
     section(class="side-section", [
-      h3("Book Sessions"),
+      h3("MoonCode Sessions"),
       button(
         class="primary-button full",
         on_click=dispatch(NewAgentSession),
@@ -9588,7 +9588,7 @@ fn render_agents_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
       div(
         class="agent-session-list",
         if model.agent_sessions.length() == 0 {
-          [p(class="status-line", "no agent sessions yet")]
+          [p(class="status-line", "no MoonCode sessions yet")]
         } else {
           model.agent_sessions.map(session => {
             let selected = selected_agent_session(model)
@@ -11440,10 +11440,10 @@ fn render_agent_center(
         ])
         None =>
           div(class="agent-empty", [
-            h1("Agents"),
+            h1("MoonCode"),
             p(
               class="lead",
-              "Start a book-scoped MoonClaw session for the selected workspace.",
+              "Start a book-scoped MoonCode session backed by MoonClaw.",
             ),
           ])
       },
@@ -16533,7 +16533,7 @@ fn render_agent_inspector(
 ) -> @rabbita.Html {
   aside(class="inspector-pane", [
     div(class="pane-heading compact", [
-      div([p(class="eyebrow", "agent context"), h2("Session")]),
+      div([p(class="eyebrow", "mooncode context"), h2("Session")]),
     ]),
     section(class="inspector-section", [
       h3("Book Scope"),
@@ -17651,9 +17651,9 @@ fn render_agent_drawer(
   model : Model,
 ) -> @rabbita.Html {
   div(class="drawer-record", [
-    span(class="record-kind", "agents"),
+    span(class="record-kind", "mooncode"),
     div([
-      h3("\{model.agent_sessions.length()} sessions"),
+      h3("\{model.agent_sessions.length()} MoonCode sessions"),
       match selected_agent_session(model) {
         Some(session) =>
           button(
@@ -17661,7 +17661,7 @@ fn render_agent_drawer(
             on_click=dispatch(SelectActivity(Activity::Agents)),
             "\{session.title} / \{session.status}",
           )
-        None => p("No agent session selected.")
+        None => p("No MoonCode session selected.")
       },
     ]),
   ])
@@ -17740,8 +17740,8 @@ fn render_command_palette(
           ),
           palette_command(
             dispatch,
-            "Talk To Agent",
-            "Open a book-scoped MoonClaw coding session",
+            "Open MoonCode",
+            "Open a book-scoped MoonCode coding session",
             SelectActivity(Activity::Agents),
           ),
           palette_command(
