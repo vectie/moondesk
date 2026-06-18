@@ -520,6 +520,8 @@ pub fn production_grade_level(Array[Json]) -> String
 
 pub fn production_grade_passed_count(Array[Json]) -> Int
 
+pub fn production_grade_rubric_json() -> Json
+
 pub fn production_grade_score(Array[Json]) -> Int
 
 pub fn production_readiness_summary(Array[Json]) -> Json

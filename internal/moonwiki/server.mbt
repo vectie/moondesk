@@ -530,6 +530,14 @@ async fn handle_api_request(
           conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
         )
       }
+    ["api", "mooncode", "production-rubric"] =>
+      if is_read_method(method_) {
+        handle_mooncode_production_rubric_contract(method_, conn)
+      } else {
+        send_api_error(
+          conn, method_, 405, "Method Not Allowed", "Method Not Allowed",
+        )
+      }
     ["api", "mooncode", "sessions"] =>
       if is_read_method(method_) {
         handle_mooncode_sessions(workspace_root, request_path, method_, conn)

@@ -24,6 +24,14 @@ async fn handle_mooncode_extraction_boundary_contract(
 }
 
 ///|
+async fn handle_mooncode_production_rubric_contract(
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  send_json(conn, method_, @mooncode.production_grade_rubric_json())
+}
+
+///|
 async fn mooncode_capabilities_response_json(workspace_root : String) -> Json {
   agent_session_with_field(
     @mooncode.capabilities_json(),
@@ -103,6 +111,8 @@ test "mooncode http contract delegates static capability shape to mooncode packa
   assert_true(payload.contains("\"tool_contract\""))
   assert_true(payload.contains("/api/mooncode/eval-harness"))
   assert_true(payload.contains("/api/mooncode/extraction-boundary"))
+  assert_true(payload.contains("/api/mooncode/production-rubric"))
+  assert_true(payload.contains("\"production_rubric\""))
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/runtime-evidence"),
   )
@@ -124,6 +134,10 @@ test "mooncode http contract delegates static capability shape to mooncode packa
   assert_eq(
     json_string(@mooncode.extraction_boundary_json(), "kind", default=""),
     "mooncode-extraction-boundary",
+  )
+  assert_eq(
+    json_string(@mooncode.production_grade_rubric_json(), "kind", default=""),
+    "mooncode-production-grade-rubric",
   )
   assert_eq(
     json_string(
@@ -176,6 +190,11 @@ async test "mooncode engine status distinguishes bridge readiness from productio
   assert_true(
     json_string_array_items(status, "supported_endpoints").contains(
       "/api/mooncode/extraction-boundary",
+    ),
+  )
+  assert_true(
+    json_string_array_items(status, "supported_endpoints").contains(
+      "/api/mooncode/production-rubric",
     ),
   )
   assert_true(

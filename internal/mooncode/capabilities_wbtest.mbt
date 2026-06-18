@@ -53,6 +53,10 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("/api/mooncode/eval-harness"))
   assert_true(payload.contains("\"extraction_boundary_endpoint\""))
   assert_true(payload.contains("/api/mooncode/extraction-boundary"))
+  assert_true(payload.contains("\"production_rubric_endpoint\""))
+  assert_true(payload.contains("/api/mooncode/production-rubric"))
+  assert_true(payload.contains("\"production_rubric\""))
+  assert_true(payload.contains("\"kind\":\"mooncode-production-grade-rubric\""))
   assert_true(payload.contains("\"native_eval_report\""))
   assert_true(payload.contains("\"native_session_listing_endpoint\""))
   assert_true(

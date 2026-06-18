@@ -158,9 +158,9 @@ pub fn engine_status_projection_json(
 ///|
 fn supported_engine_endpoints() -> Array[String] {
   [
-    "/api/mooncode/eval-harness", "/api/mooncode/extraction-boundary", "/v1/models",
-    "/v1/tasks", "/v1/task", "/v1/task/<id>/message", "/v1/task/<id>/cancel", "/v1/mooncode/capabilities",
-    "/v1/mooncode/sessions?book_root=<path>", "/v1/mooncode/sessions/<id>?book_root=<path>",
+    "/api/mooncode/eval-harness", "/api/mooncode/extraction-boundary", "/api/mooncode/production-rubric",
+    "/v1/models", "/v1/tasks", "/v1/task", "/v1/task/<id>/message", "/v1/task/<id>/cancel",
+    "/v1/mooncode/capabilities", "/v1/mooncode/sessions?book_root=<path>", "/v1/mooncode/sessions/<id>?book_root=<path>",
     "/v1/mooncode/sessions/<id>/commands", "/v1/mooncode/sessions/<id>/runtime-claim?book_root=<path>",
     "/v1/mooncode/sessions/<id>/runtime-dispatch?book_root=<path>", "/v1/mooncode/sessions/<id>/runtime-turn?book_root=<path>",
     "/v1/mooncode/sessions/<id>/runtime-loop?book_root=<path>", "/v1/mooncode/sessions/<id>/stream?book_root=<path>",

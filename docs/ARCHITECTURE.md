@@ -505,6 +505,7 @@ GET  /api/moonclaw/runs/:id/artifacts
 GET  /api/mooncode/capabilities
 GET  /api/mooncode/eval-harness
 GET  /api/mooncode/extraction-boundary
+GET  /api/mooncode/production-rubric
 GET  /api/mooncode/sessions?workspace=...
 GET  /api/mooncode/sessions?format=listing
 POST /api/mooncode/sessions
@@ -1464,6 +1465,12 @@ Implemented behavior:
   engine probes or UI-facing command/tool payloads. It is the narrow API for
   inspecting the portable `mooncode/core`, Moondesk projection, MoonWiki host,
   future standalone `mooncode`, and MoonClaw runtime ownership split.
+- `GET /api/mooncode/production-rubric` returns the static
+  `mooncode-production-grade-rubric`: the 16 production checks, thresholds,
+  evidence requirements, next actions, and responsible owners used by
+  per-session `production_readiness`. This makes regular production-grade
+  scoring auditable outside the UI and reusable by a standalone `mooncode`
+  client.
 - `GET /api/mooncode/eval-harness` returns the standalone
   `mooncode-eval-harness-contract`. It names `../openseek/eval/tool_harness`
   and `../openseek/eval/file_edit` as references, requires deterministic tool

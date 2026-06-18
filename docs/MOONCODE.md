@@ -270,8 +270,9 @@ the nested MoonClaw adapter contract, making compatibility mode explicit.
 `internal/moonwiki` only probes
 the configured MoonClaw daemon and passes the observed facts into that pure
 projection before returning the desktop API response. This keeps
-`/api/mooncode/capabilities`, `/api/mooncode/eval-harness`, and
-`/api/mooncode/extraction-boundary` backed by a package that can later be
+`/api/mooncode/capabilities`, `/api/mooncode/eval-harness`,
+`/api/mooncode/extraction-boundary`, and
+`/api/mooncode/production-rubric` backed by a package that can later be
 extracted as standalone `mooncode` protocol surface.
 The older HTTP-local session-summary and eval-report implementations have
 also been removed; `internal/moonwiki` keeps only compatibility wrappers that
@@ -314,6 +315,7 @@ Moondesk exposes the first extractable MoonCode contract at:
 GET /api/mooncode/capabilities
 GET /api/mooncode/eval-harness
 GET /api/mooncode/extraction-boundary
+GET /api/mooncode/production-rubric
 GET /api/mooncode/sessions
 GET /api/mooncode/sessions?format=listing
 POST /api/mooncode/sessions
@@ -454,6 +456,12 @@ It names the portable core package, Moondesk projection package, MoonWiki host
 package, future standalone package, runtime-engine owner, and extraction rules.
 This gives tests, operators, and future standalone clients a small stable
 contract for the `moonwiki`/`mooncode`/`moondesk`/`moonclaw` split.
+
+`GET /api/mooncode/production-rubric` returns the static
+`mooncode-production-grade-rubric` contract. It lists the 16 production checks,
+score thresholds, evidence requirements, next actions, and responsible owners
+that `production_readiness` uses for each session. This keeps "production
+grade" measurable and stable instead of being a UI-only label.
 
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references
@@ -1904,7 +1912,9 @@ session whose resume lifecycle is missing or blocked, or whose package lifecycle
 lacks executable-ready verified package proof. It is intentionally separate from
 `eval_score`: eval score measures bridge/native harness evidence, while
 production score measures whether the selected session proves the user-facing
-MoonCode product workflow.
+MoonCode product workflow. The static rubric is also available at
+`GET /api/mooncode/production-rubric`, so production-grade claims can be audited
+without a selected session.
 
 ## Completion Criteria
 

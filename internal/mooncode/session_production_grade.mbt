@@ -12,6 +12,92 @@ pub fn production_grade_check(
 }
 
 ///|
+fn production_grade_rubric_check(
+  id : String,
+  label : String,
+  evidence_required : String,
+) -> Json {
+  {
+    "id": id,
+    "label": label,
+    "evidence_required": evidence_required,
+    "next_action": production_next_action(id),
+    "next_owner": production_next_owner(id),
+  }
+}
+
+///|
+pub fn production_grade_rubric_json() -> Json {
+  let checks = [
+    production_grade_rubric_check(
+      "moonbook_selected", "MoonBook selected", "selected workspace/book id is present",
+    ),
+    production_grade_rubric_check(
+      "moonclaw_attached", "MoonClaw session attached", "book-scoped MoonClaw task/session id is present",
+    ),
+    production_grade_rubric_check(
+      "durable_session", "Durable session", "append-only event log, command log, and session snapshot are persisted",
+    ),
+    production_grade_rubric_check(
+      "resume_lifecycle", "Resume lifecycle", "session snapshot can be resumed and is not blocked",
+    ),
+    production_grade_rubric_check(
+      "chat_transcript", "Chat transcript", "assistant/transcript lane has durable chat evidence",
+    ),
+    production_grade_rubric_check(
+      "typed_command_queue", "Typed command queue", "mooncode.v1 command packet and runtime command queue are present",
+    ),
+    production_grade_rubric_check(
+      "live_runtime_stream", "Live runtime stream", "runtime events and dispatch receipts prove live progress",
+    ),
+    production_grade_rubric_check(
+      "tool_execution", "Tool execution", "tool lane has MoonClaw or standalone MoonCode execution evidence",
+    ),
+    production_grade_rubric_check(
+      "diff_review", "Diff review", "diff events plus MoonBook change-set and patch-set manifests exist",
+    ),
+    production_grade_rubric_check(
+      "test_build_execution", "Test/build execution", "verified test/build result exists, no failing tests remain, and test-run manifest exists",
+    ),
+    production_grade_rubric_check(
+      "review_receipts", "Review receipts", "review lane and MoonBook accept/reject receipt are present",
+    ),
+    production_grade_rubric_check(
+      "package_result", "Package result", "source-bound package, package index, artifact event, and verified package proof exist",
+    ),
+    production_grade_rubric_check(
+      "package_lifecycle", "Package lifecycle", "package lifecycle is verified and executable-ready",
+    ),
+    production_grade_rubric_check(
+      "action_plan_current", "Current action plan", "MoonBook action-plan manifest is current",
+    ),
+    production_grade_rubric_check(
+      "live_blockers_clear", "Live blockers clear", "no blocked action, pending diff, pending tool approval, pending steer, or failing test remains",
+    ),
+    production_grade_rubric_check(
+      "extractable_boundary", "Extractable MoonCode boundary", "runtime handoff manifest proves the protocol/runtime boundary",
+    ),
+  ]
+  {
+    "kind": "mooncode-production-grade-rubric",
+    "protocol": protocol_version(),
+    "extractable_component": "mooncode",
+    "score_rule": "score = passed_check_count * 100 / check_count",
+    "thresholds": [
+      { "level": "production-grade", "min_score": 95 },
+      { "level": "near-production", "min_score": 80 },
+      { "level": "working-slice", "min_score": 60 },
+      { "level": "prototype", "min_score": 1 },
+      { "level": "empty", "min_score": 0 },
+    ],
+    "check_count": checks.length(),
+    "checks": checks,
+    "readiness_contract": "production_readiness_summary(checks) returns ready, score, level, first blocker, next action, next owner, and blocking check ids.",
+    "owner_rule": "MoonCode owns the rubric and readiness projection; Moondesk renders the score, MoonClaw or standalone mooncode provides execution evidence, and MoonBook owns accepted artifacts and review state.",
+  }
+}
+
+///|
 pub fn session_production_checks(
   session : Json,
   events : Array[Json],
