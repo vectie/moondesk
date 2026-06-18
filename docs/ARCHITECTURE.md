@@ -504,6 +504,7 @@ GET  /api/moonclaw/progress?workspace=...
 GET  /api/moonclaw/runs/:id/artifacts
 GET  /api/mooncode/capabilities
 GET  /api/mooncode/eval-harness
+GET  /api/mooncode/extraction-boundary
 GET  /api/mooncode/sessions?workspace=...
 GET  /api/mooncode/sessions?format=listing
 POST /api/mooncode/sessions
@@ -1458,6 +1459,11 @@ Implemented behavior:
   MoonClaw, which outputs belong to MoonBook, which actions need review or
   operator approval, which native eval report fields MoonClaw must return, and
   which engine pieces still need MoonClaw-owned implementation evidence.
+- `GET /api/mooncode/extraction-boundary` returns the standalone
+  `mooncode-extraction-boundary` object embedded in capabilities, without
+  engine probes or UI-facing command/tool payloads. It is the narrow API for
+  inspecting the portable `mooncode/core`, Moondesk projection, MoonWiki host,
+  future standalone `mooncode`, and MoonClaw runtime ownership split.
 - `GET /api/mooncode/eval-harness` returns the standalone
   `mooncode-eval-harness-contract`. It names `../openseek/eval/tool_harness`
   and `../openseek/eval/file_edit` as references, requires deterministic tool

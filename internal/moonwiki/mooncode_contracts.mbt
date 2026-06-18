@@ -16,6 +16,14 @@ async fn handle_mooncode_eval_harness_contract(
 }
 
 ///|
+async fn handle_mooncode_extraction_boundary_contract(
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  send_json(conn, method_, @mooncode.extraction_boundary_json())
+}
+
+///|
 async fn mooncode_capabilities_response_json(workspace_root : String) -> Json {
   agent_session_with_field(
     @mooncode.capabilities_json(),
@@ -94,6 +102,7 @@ test "mooncode http contract delegates static capability shape to mooncode packa
   assert_true(payload.contains("\"moonclaw_adapter_contract\""))
   assert_true(payload.contains("\"tool_contract\""))
   assert_true(payload.contains("/api/mooncode/eval-harness"))
+  assert_true(payload.contains("/api/mooncode/extraction-boundary"))
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/runtime-evidence"),
   )
@@ -111,6 +120,10 @@ test "mooncode http contract delegates static capability shape to mooncode packa
   assert_eq(
     json_string(@mooncode.eval_harness_contract_json(), "kind", default=""),
     "mooncode-eval-harness-contract",
+  )
+  assert_eq(
+    json_string(@mooncode.extraction_boundary_json(), "kind", default=""),
+    "mooncode-extraction-boundary",
   )
   assert_eq(
     json_string(
@@ -158,6 +171,11 @@ async test "mooncode engine status distinguishes bridge readiness from productio
   assert_true(
     json_string_array_items(status, "supported_endpoints").contains(
       "/api/mooncode/eval-harness",
+    ),
+  )
+  assert_true(
+    json_string_array_items(status, "supported_endpoints").contains(
+      "/api/mooncode/extraction-boundary",
     ),
   )
   assert_true(

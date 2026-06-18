@@ -36,6 +36,7 @@ pub fn capabilities_json() -> Json {
       "stream_endpoint": "/api/mooncode/sessions/<session-id>/stream?format=jsonl|sse&since=<sequence>",
       "stream_state_endpoint": "/api/mooncode/sessions/<session-id>/stream-state?consumer=<consumer>&since=<sequence>",
       "eval_harness_contract_endpoint": "/api/mooncode/eval-harness",
+      "extraction_boundary_endpoint": "/api/mooncode/extraction-boundary",
       "runtime_event_ingest_endpoint": "/api/mooncode/sessions/<session-id>/runtime-events",
       "package_result_ingest_endpoint": "/api/mooncode/sessions/<session-id>/package-result",
       "native_session_list_endpoint": "/v1/mooncode/sessions?book_root=<path>",

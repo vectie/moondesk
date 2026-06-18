@@ -270,9 +270,9 @@ the nested MoonClaw adapter contract, making compatibility mode explicit.
 `internal/moonwiki` only probes
 the configured MoonClaw daemon and passes the observed facts into that pure
 projection before returning the desktop API response. This keeps
-`/api/mooncode/capabilities` and
-`/api/mooncode/eval-harness` backed by a package that can later be extracted
-as standalone `mooncode` protocol surface.
+`/api/mooncode/capabilities`, `/api/mooncode/eval-harness`, and
+`/api/mooncode/extraction-boundary` backed by a package that can later be
+extracted as standalone `mooncode` protocol surface.
 The older HTTP-local session-summary and eval-report implementations have
 also been removed; `internal/moonwiki` keeps only compatibility wrappers that
 call `@mooncode.session_summary` and `@mooncode.eval_report_projection`.
@@ -313,6 +313,7 @@ Moondesk exposes the first extractable MoonCode contract at:
 ```text
 GET /api/mooncode/capabilities
 GET /api/mooncode/eval-harness
+GET /api/mooncode/extraction-boundary
 GET /api/mooncode/sessions
 GET /api/mooncode/sessions?format=listing
 POST /api/mooncode/sessions
@@ -446,6 +447,13 @@ and record terminal `runtime-cancelled` receipts instead of being forwarded as
 chat. This gives native cold sidecar sessions a daemon-owned path from claim to
 delivery; the remaining gap is the full OpenSeek-style typed loop around
 model/tool execution, steering, cancellation, and eval proof.
+
+`GET /api/mooncode/extraction-boundary` returns the standalone
+`mooncode-extraction-boundary` object without the broader capabilities payload.
+It names the portable core package, Moondesk projection package, MoonWiki host
+package, future standalone package, runtime-engine owner, and extraction rules.
+This gives tests, operators, and future standalone clients a small stable
+contract for the `moonwiki`/`mooncode`/`moondesk`/`moonclaw` split.
 
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references
