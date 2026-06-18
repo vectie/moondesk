@@ -459,7 +459,7 @@ This gives tests, operators, and future standalone clients a small stable
 contract for the `moonwiki`/`mooncode`/`moondesk`/`moonclaw` split.
 
 `GET /api/mooncode/production-rubric` returns the static
-`mooncode-production-grade-rubric` contract. It lists the 17 production checks,
+`mooncode-production-grade-rubric` contract. It lists the 18 production checks,
 score thresholds, evidence requirements, next actions, and responsible owners
 that `production_readiness` uses for each session. This keeps "production
 grade" measurable and stable instead of being a UI-only label.
@@ -1918,10 +1918,11 @@ The session summary also carries a separate product-grade score:
 `production_check_count`, `production_readiness`, and `production_checks`. This
 score maps directly to the end-to-end MoonCode workspace criteria: selected
 MoonBook, MoonClaw attachment, durable session, explicit `resume_lifecycle`
-health, launch-ready runtime supervisor handoff, chat transcript, typed command
-queue, live runtime stream, tool execution, diff review, test/build proof,
-review receipts, package result, verified `package_lifecycle`, the current
-action-plan manifest, clear live blockers, and extractable MoonCode boundary.
+health, launch-ready runtime supervisor handoff, complete native eval proof,
+chat transcript, typed command queue, live runtime stream, tool execution,
+diff review, test/build proof, review receipts, package result, verified
+`package_lifecycle`, the current action-plan manifest, clear live blockers, and
+extractable MoonCode boundary.
 `production_readiness` is the compact contract
 for UI/runtime consumers: it reports readiness, score, first blocker, next
 action, next owner, and blocking check ids so Moondesk, MoonClaw, or a future
@@ -1931,7 +1932,10 @@ reports blocked actions, unresolved diffs, pending tool approvals, pending
 steering, or failing tests cannot score as `production-grade`; neither can a
 session whose resume lifecycle is missing or blocked, or whose package lifecycle
 lacks executable-ready verified package proof, or whose runtime handoff does not
-embed a launch-ready supervisor with the `check-production-readiness` loop step.
+embed a launch-ready supervisor with the `check-production-readiness` loop step,
+or whose saved eval report lacks the complete native harness set
+(`tool_harness`, `file_edit`, `patch_review`, `command_execution`, and
+`package_output`).
 It is intentionally separate from
 `eval_score`: eval score measures bridge/native harness evidence, while
 production score measures whether the selected session proves the user-facing

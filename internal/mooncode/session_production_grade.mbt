@@ -45,6 +45,9 @@ pub fn production_grade_rubric_json() -> Json {
       "runtime_supervisor_ready", "Runtime supervisor ready", "runtime handoff embeds a launch-ready supervisor with production-readiness checkpoint",
     ),
     production_grade_rubric_check(
+      "native_eval_ready", "Native eval ready", "MoonBook eval-report manifest carries complete MoonClaw or standalone MoonCode native harness proof",
+    ),
+    production_grade_rubric_check(
       "chat_transcript", "Chat transcript", "assistant/transcript lane has durable chat evidence",
     ),
     production_grade_rubric_check(
@@ -123,6 +126,7 @@ pub fn session_production_checks(
   let change_set_manifest_count = count_change_set_manifests(events)
   let patch_set_manifest_count = count_patch_set_manifests(events)
   let test_runs_manifest_count = count_test_runs_manifests(events)
+  let eval_report_manifest_count = count_eval_report_manifests(events)
   let runtime_handoff_manifest_count = count_runtime_handoff_manifests(events)
   let runtime_supervisor_readiness = session_runtime_supervisor_readiness(
     session,
@@ -137,6 +141,20 @@ pub fn session_production_checks(
     "missing_requirement_count",
     default=0,
   )
+  let native_eval_report = summary_json_object_field_or_empty(
+    session, "mooncode_native_eval_report",
+  )
+  let native_eval_harness_count = native_eval_report_harnesses(
+    native_eval_report,
+  ).length()
+  let native_eval_passed_harness_count = native_eval_passed_harness_count(
+    native_eval_report_harnesses(native_eval_report),
+  )
+  let native_eval_missing_count = native_eval_missing_required_harnesses(
+    native_eval_report,
+  ).length()
+  let native_eval_ready = native_eval_report_ready(native_eval_report) &&
+    eval_report_manifest_count > 0
   let action_plan = summary_json_object_field_or_empty(
     session, "mooncode_last_action_plan_manifest",
   )
@@ -268,6 +286,12 @@ pub fn session_production_checks(
       "Runtime supervisor ready",
       json_bool(runtime_supervisor_readiness, "ok", default=false),
       "status \{empty_production_label(runtime_supervisor_status)}, missing requirements \{runtime_supervisor_missing_count}",
+    ),
+    production_grade_check(
+      "native_eval_ready",
+      "Native eval ready",
+      native_eval_ready,
+      "status \{empty_production_label(json_string(native_eval_report, "status", default=""))}, manifest \{eval_report_manifest_count}, harnesses \{native_eval_passed_harness_count}/\{required_native_eval_harness_ids().length()} passed, missing required \{native_eval_missing_count}, total \{native_eval_harness_count}",
     ),
     production_grade_check(
       "chat_transcript",
@@ -552,6 +576,7 @@ fn production_next_action(blocker_id : String) -> String {
     "durable_session" => "persist_session_snapshot"
     "resume_lifecycle" => "resume_runtime"
     "runtime_supervisor_ready" => "refresh_runtime_supervisor"
+    "native_eval_ready" => "run_native_eval"
     "chat_transcript" => "send_prompt"
     "typed_command_queue" => "queue_prompt_command"
     "live_runtime_stream" => "run_native_runtime_service"
@@ -577,6 +602,7 @@ fn production_next_owner(blocker_id : String) -> String {
     "durable_session" => "mooncode-moonbook"
     "resume_lifecycle" => "moonclaw-or-standalone-mooncode"
     "runtime_supervisor_ready" => "moonclaw-or-standalone-mooncode"
+    "native_eval_ready" => "moonclaw-or-standalone-mooncode"
     "chat_transcript" => "moondesk-moonclaw"
     "typed_command_queue" => "mooncode"
     "live_runtime_stream" => "moonclaw-or-standalone-mooncode"

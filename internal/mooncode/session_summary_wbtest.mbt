@@ -72,7 +72,26 @@ test "mooncode session summary counts reviewable code events" {
   assert_eq(summary_json_int(summary, "pending_diff_count", default=9), 0)
   assert_true(summary_json_int(summary, "production_score", default=0) > 0)
   assert_eq(json_string(summary, "production_level", default=""), "prototype")
-  assert_eq(json_array_items(summary, "production_checks").length(), 17)
+  assert_eq(json_array_items(summary, "production_checks").length(), 18)
+}
+
+///|
+fn production_ready_native_eval_report_fixture() -> Json {
+  normalize_native_eval_report(
+    {
+      "status": "accepted",
+      "native_eval": {
+        "harnesses": [
+          { "id": "tool_harness", "status": "passed" },
+          { "id": "file_edit", "status": "passed" },
+          { "id": "patch_review", "status": "passed" },
+          { "id": "command_execution", "status": "passed" },
+          { "id": "package_output", "status": "passed" },
+        ],
+      },
+    },
+    "/v1/mooncode/sessions/s1/eval-report?book_root=<path>",
+  )
 }
 
 ///|
@@ -286,6 +305,17 @@ test "mooncode session summary scores production-grade coding flow" {
       path="wiki/reviews/mooncode/s1/runtime-handoff.json",
       command_packet~,
     ),
+    event_record(
+      id="eval-report",
+      lane="review",
+      kind="eval_report.manifest",
+      title="Eval report",
+      status="accepted",
+      created_at="15",
+      detail="native eval report",
+      path="wiki/reviews/mooncode/s1/eval-report.json",
+      command_packet~,
+    ),
   ]
   let summary = session_summary(
     {
@@ -325,6 +355,7 @@ test "mooncode session summary scores production-grade coding flow" {
         "kind": "mooncode-runtime-handoff",
         "runtime_supervisor": production_ready_runtime_supervisor_fixture(),
       },
+      "mooncode_native_eval_report": production_ready_native_eval_report_fixture(),
     },
     events,
   )
@@ -335,9 +366,9 @@ test "mooncode session summary scores production-grade coding flow" {
   )
   assert_eq(
     summary_json_int(summary, "production_passed_check_count", default=0),
-    17,
+    18,
   )
-  assert_eq(summary_json_int(summary, "production_check_count", default=0), 17)
+  assert_eq(summary_json_int(summary, "production_check_count", default=0), 18)
   let readiness = summary_json_object_field_or_empty(
     summary, "production_readiness",
   )
@@ -353,6 +384,7 @@ test "mooncode session summary scores production-grade coding flow" {
   assert_eq(json_string(checks[0], "id", default=""), "moonbook_selected")
   let mut found_resume_lifecycle = false
   let mut found_runtime_supervisor = false
+  let mut found_native_eval = false
   let mut found_package_lifecycle = false
   for check in checks {
     if json_string(check, "id", default="") == "resume_lifecycle" {
@@ -363,6 +395,10 @@ test "mooncode session summary scores production-grade coding flow" {
       found_runtime_supervisor = true
       assert_true(json_bool(check, "ok", default=false))
     }
+    if json_string(check, "id", default="") == "native_eval_ready" {
+      found_native_eval = true
+      assert_true(json_bool(check, "ok", default=false))
+    }
     if json_string(check, "id", default="") == "package_lifecycle" {
       found_package_lifecycle = true
       assert_true(json_bool(check, "ok", default=false))
@@ -370,6 +406,7 @@ test "mooncode session summary scores production-grade coding flow" {
   }
   assert_true(found_resume_lifecycle)
   assert_true(found_runtime_supervisor)
+  assert_true(found_native_eval)
   assert_true(found_package_lifecycle)
   assert_eq(
     json_string(checks[checks.length() - 1], "id", default=""),

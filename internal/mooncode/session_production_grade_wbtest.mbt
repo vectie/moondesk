@@ -10,12 +10,13 @@ test "mooncode production-grade rubric is a standalone contract" {
     json_string(rubric, "extractable_component", default=""),
     "mooncode",
   )
-  assert_eq(summary_json_int(rubric, "check_count", default=0), 17)
+  assert_eq(summary_json_int(rubric, "check_count", default=0), 18)
   let checks = json_array_items(rubric, "checks")
-  assert_eq(checks.length(), 17)
+  assert_eq(checks.length(), 18)
   let ids = checks.map(check => json_string(check, "id", default=""))
   assert_true(ids.contains("moonbook_selected"))
   assert_true(ids.contains("runtime_supervisor_ready"))
+  assert_true(ids.contains("native_eval_ready"))
   assert_true(ids.contains("typed_command_queue"))
   assert_true(ids.contains("test_build_execution"))
   assert_true(ids.contains("package_lifecycle"))
@@ -74,7 +75,7 @@ test "mooncode session production readiness response is audit scoped" {
     json_string(response, "endpoint", default=""),
     "/api/mooncode/sessions/s1/production-readiness",
   )
-  assert_eq(summary_json_int(response, "check_count", default=0), 17)
+  assert_eq(summary_json_int(response, "check_count", default=0), 18)
   assert_true(summary_json_int(response, "score", default=0) > 0)
   assert_eq(json_string(response, "level", default=""), "prototype")
   assert_eq(
