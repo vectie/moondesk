@@ -414,6 +414,11 @@ struct MoonCodeSummary {
   eval_score : Int
   eval_level : String
   eval_checks : Array[MoonCodeEvalCheck]
+  production_score : Int
+  production_level : String
+  production_passed_check_count : Int
+  production_check_count : Int
+  production_checks : Array[MoonCodeEvalCheck]
 } derive(FromJson)
 
 ///|
@@ -16577,6 +16582,10 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
               "Eval",
               "\{summary.eval_level} / \{summary.eval_score}",
             ),
+            info_row(
+              "Production Grade",
+              "\{summary.production_level} / \{summary.production_score} (\{summary.production_passed_check_count}/\{summary.production_check_count})",
+            ),
             info_row("Events", summary.event_count.to_string()),
             info_row("Transcript", summary.transcript_count.to_string()),
             info_row("Runtime", summary.runtime_count.to_string()),
@@ -16652,7 +16661,14 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
               "\{summary.mooncode_runtime_handoff_manifest_count} manifest(s)",
             ),
           ]),
-          render_mooncode_eval_checks(summary.eval_checks),
+          div(class="mooncode-output-roots", [
+            small("Production-grade checklist"),
+            render_mooncode_eval_checks(summary.production_checks),
+          ]),
+          div(class="mooncode-output-roots", [
+            small("Eval-readiness checklist"),
+            render_mooncode_eval_checks(summary.eval_checks),
+          ]),
         ])
       }
       None =>

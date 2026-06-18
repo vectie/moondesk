@@ -1830,6 +1830,17 @@ Queue, so operators can see which Codex/OpenSeek-style behaviors are currently
 proven and which still require MoonClaw or standalone `mooncode` runtime
 evidence.
 
+The session summary also carries a separate product-grade score:
+`production_score`, `production_level`, `production_passed_check_count`,
+`production_check_count`, and `production_checks`. This score maps directly to
+the end-to-end MoonCode workspace criteria: selected MoonBook, MoonClaw
+attachment, durable session, chat transcript, typed command queue, live runtime
+stream, tool execution, diff review, test/build proof, review receipts,
+package result, and extractable MoonCode boundary. It is intentionally separate
+from `eval_score`: eval score measures bridge/native harness evidence, while
+production score measures whether the selected session proves the user-facing
+MoonCode product workflow.
+
 ## Completion Criteria
 
 MoonCode is production-complete when a user can:

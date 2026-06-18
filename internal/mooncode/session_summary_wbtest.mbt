@@ -53,6 +53,215 @@ test "mooncode session summary counts reviewable code events" {
   assert_eq(summary_json_int(summary, "verified_test_count", default=0), 1)
   assert_eq(json_string(summary, "review_state", default=""), "accepted")
   assert_eq(summary_json_int(summary, "pending_diff_count", default=9), 0)
+  assert_true(summary_json_int(summary, "production_score", default=0) > 0)
+  assert_eq(json_string(summary, "production_level", default=""), "prototype")
+  assert_eq(json_array_items(summary, "production_checks").length(), 12)
+}
+
+///|
+test "mooncode session summary scores production-grade coding flow" {
+  let command_packet : Json = {
+    "protocol": protocol_version(),
+    "command_id": "cmd-1",
+    "action": "prompt",
+  }
+  let events : Array[Json] = [
+    event_record(
+      id="transcript-1",
+      lane="transcript",
+      kind="assistant",
+      title="Assistant",
+      status="done",
+      created_at="1",
+      detail="I will edit the tool.",
+      command_packet~,
+    ),
+    event_record(
+      id="runtime-1",
+      lane="runtime",
+      kind="runtime_update",
+      title="Runtime update",
+      status="running",
+      created_at="2",
+      detail="running",
+      command_packet~,
+    ),
+    event_record(
+      id="tool-1",
+      lane="tool",
+      kind="tool.read",
+      title="Read",
+      status="done",
+      created_at="3",
+      detail="read source",
+      command_packet~,
+    ),
+    event_record(
+      id="diff-1",
+      lane="diff",
+      kind="tool.write",
+      title="Write file",
+      status="done",
+      created_at="4",
+      detail="updated tool",
+      path="tools/demo/main.mbt",
+      diff="+fn main { println(\"ok\") }",
+      command_packet~,
+    ),
+    event_record(
+      id="test-1",
+      lane="test",
+      kind="tool.moon_check",
+      title="Moon check",
+      status="passed",
+      created_at="5",
+      detail="passed",
+      command="moon check",
+      command_packet~,
+    ),
+    event_record(
+      id="artifact-1",
+      lane="artifact",
+      kind="artifact",
+      title="Tool artifact",
+      status="done",
+      created_at="6",
+      detail="artifact ready",
+      path="portable/app-tool/mooncode/s1/index.json",
+      command_packet~,
+    ),
+    event_record(
+      id="review-1",
+      lane="review",
+      kind="receipt.accept",
+      title="Accepted",
+      status="done",
+      created_at="7",
+      detail="accepted",
+      path="tools/demo/main.mbt",
+      command="accept",
+      command_packet~,
+    ),
+    event_record(
+      id="package-manifest",
+      lane="artifact",
+      kind="package.manifest",
+      title="Package manifest",
+      status="source-bound",
+      created_at="8",
+      detail="manifest",
+      path="portable/app-tool/mooncode/s1/package.json",
+      command_packet~,
+    ),
+    event_record(
+      id="package-index",
+      lane="artifact",
+      kind="package.index",
+      title="Package index",
+      status="source-bound",
+      created_at="9",
+      detail="index",
+      path="portable/app-tool/mooncode/s1/index.json",
+      command_packet~,
+    ),
+    event_record(
+      id="change-set",
+      lane="review",
+      kind="change_set.manifest",
+      title="Change set",
+      status="done",
+      created_at="10",
+      detail="change set",
+      path="wiki/reviews/mooncode/s1/change-set.json",
+      command_packet~,
+    ),
+    event_record(
+      id="patch-set",
+      lane="review",
+      kind="patch_set.manifest",
+      title="Patch set",
+      status="done",
+      created_at="11",
+      detail="patch set",
+      path="wiki/reviews/mooncode/s1/patch-set.json",
+      command_packet~,
+    ),
+    event_record(
+      id="test-runs",
+      lane="review",
+      kind="test_runs.manifest",
+      title="Test runs",
+      status="passed",
+      created_at="12",
+      detail="test runs",
+      path="wiki/reviews/mooncode/s1/test-runs.json",
+      command_packet~,
+    ),
+    event_record(
+      id="runtime-package-verified",
+      lane="artifact",
+      kind="runtime.package_verified",
+      title="Package verified",
+      status="verified",
+      created_at="13",
+      detail="verified",
+      path="portable/app-tool/mooncode/s1/index.json",
+      command="package",
+      command_packet~,
+    ),
+    event_record(
+      id="runtime-handoff",
+      lane="runtime",
+      kind="runtime.handoff",
+      title="Runtime handoff",
+      status="ready",
+      created_at="14",
+      detail="handoff",
+      path="wiki/reviews/mooncode/s1/runtime-handoff.json",
+      command_packet~,
+    ),
+  ]
+  let summary = session_summary(
+    {
+      "id": "s1",
+      "workspace_id": "book",
+      "moonclaw_task_id": "task",
+      "mooncode_append_log_count": events.length(),
+      "mooncode_command_log_count": 1,
+      "mooncode_runtime_command_log_count": 1,
+      "mooncode_runtime_dispatch_log_count": 1,
+      "mooncode_session_snapshot": {
+        "kind": "mooncode-session-snapshot",
+        "snapshot_path": ".moontown/mooncode-sessions/s1/session.json",
+      },
+      "mooncode_last_package_manifest": {
+        "kind": "mooncode-package-manifest",
+        "source_inventory_status": "source-bound",
+        "source_present_count": 1,
+      },
+      "mooncode_last_package_index_manifest": {
+        "kind": "mooncode-package-index",
+        "source_bound_package_count": 1,
+      },
+    },
+    events,
+  )
+  assert_eq(summary_json_int(summary, "production_score", default=0), 100)
+  assert_eq(
+    json_string(summary, "production_level", default=""),
+    "production-grade",
+  )
+  assert_eq(
+    summary_json_int(summary, "production_passed_check_count", default=0),
+    12,
+  )
+  assert_eq(summary_json_int(summary, "production_check_count", default=0), 12)
+  let checks = json_array_items(summary, "production_checks")
+  assert_eq(json_string(checks[0], "id", default=""), "moonbook_selected")
+  assert_eq(
+    json_string(checks[checks.length() - 1], "id", default=""),
+    "extractable_boundary",
+  )
 }
 
 ///|
