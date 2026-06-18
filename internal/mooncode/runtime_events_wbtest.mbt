@@ -1038,6 +1038,86 @@ test "mooncode runtime event sink response owns event surface" {
 }
 
 ///|
+test "mooncode runtime event sink separates unscoped live events" {
+  let scoped_packet : Json = { "command_id": "cmd-1", "action": "prompt" }
+  let scoped = event_record(
+    id="event-scoped",
+    lane="runtime",
+    kind="runtime_update",
+    title="Runtime update",
+    status="done",
+    created_at="2026-06-15T00:00:00Z",
+    detail="ready",
+    command_packet=scoped_packet,
+  )
+  let unscoped_tool = event_record(
+    id="event-unscoped-tool",
+    lane="tool",
+    kind="read",
+    title="Tool call",
+    status="running",
+    created_at="2026-06-15T00:00:01Z",
+    detail="reading context before command binding",
+  )
+  let unscoped_transcript = event_record(
+    id="event-unscoped-transcript",
+    lane="transcript",
+    kind="assistant_delta",
+    title="Assistant streaming",
+    status="running",
+    created_at="2026-06-15T00:00:02Z",
+    detail="thinking",
+  )
+  let response = runtime_event_sink_response(
+    "session-demo",
+    [scoped, unscoped_tool, unscoped_transcript],
+    event_log_path="/tmp/session/events.jsonl",
+    workspace_id="book-demo",
+    workspace_name="Demo",
+    task_id="task-demo",
+  )
+  let command_progress = runtime_json_object_field_or_empty(
+    response, "command_progress",
+  )
+  assert_eq(runtime_json_int(command_progress, "command_count", default=0), 1)
+  assert_eq(
+    runtime_json_int(command_progress, "scoped_event_count", default=0),
+    1,
+  )
+  let unscoped_progress = runtime_json_object_field_or_empty(
+    response, "unscoped_progress",
+  )
+  assert_eq(
+    json_string(unscoped_progress, "kind", default=""),
+    "mooncode-runtime-unscoped-progress",
+  )
+  assert_eq(runtime_json_int(unscoped_progress, "event_count", default=0), 2)
+  assert_eq(
+    runtime_json_int(unscoped_progress, "running_event_count", default=0),
+    2,
+  )
+  assert_eq(
+    runtime_json_int(unscoped_progress, "tool_event_count", default=0),
+    1,
+  )
+  assert_eq(
+    runtime_json_int(unscoped_progress, "transcript_event_count", default=0),
+    1,
+  )
+  let recent = runtime_json_array_items(unscoped_progress, "recent_events")
+  assert_eq(recent.length(), 2)
+  assert_eq(
+    json_string(recent[0], "id", default=""),
+    "event-unscoped-transcript",
+  )
+  assert_true(
+    json_string(unscoped_progress, "rule", default="").contains(
+      "do not satisfy command proof gates",
+    ),
+  )
+}
+
+///|
 test "mooncode runtime service state tracks daemon service lifecycle" {
   let idle = runtime_service_state("session-demo", [])
   assert_eq(json_string(idle, "status", default=""), "idle")

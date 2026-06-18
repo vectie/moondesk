@@ -790,6 +790,7 @@ struct MoonCodeRuntimeEventSink {
   event_count : Int
   events : Array[MoonCodeEvent]
   command_progress : Json
+  unscoped_progress : Json
   runtime_service : MoonCodeRuntimeServiceState
   post_contract : Json
   runtime_protocol : Json
@@ -12481,6 +12482,12 @@ fn render_mooncode_runtime_event_sink_panel(model : Model) -> @rabbita.Html {
                 sink.command_progress, "scoped_event_count", default=0,
               ).to_string(),
             ),
+            info_chip(
+              "Unscoped",
+              json_field_int(
+                sink.unscoped_progress, "event_count", default=0,
+              ).to_string(),
+            ),
           ]),
           div(class="daemon-state compact-state", [
             info_row("Event Log", sink.event_log_path),
@@ -12510,6 +12517,7 @@ fn render_mooncode_runtime_event_sink_panel(model : Model) -> @rabbita.Html {
             json_field_string(sink.post_contract, "normalization", default=""),
           ),
           render_mooncode_runtime_event_command_progress(sink.command_progress),
+          render_mooncode_runtime_unscoped_progress(sink.unscoped_progress),
           if sink.events.length() == 0 {
             p(class="status-line", "no durable runtime events recorded")
           } else {
@@ -12563,6 +12571,78 @@ fn render_mooncode_runtime_event_command_progress(
     p(
       class="mooncode-event-detail",
       json_field_string(progress, "rule", default=""),
+    ),
+  ])
+}
+
+///|
+fn render_mooncode_runtime_unscoped_progress(
+  progress : Json
+) -> @rabbita.Html {
+  let events = json_field_json_array_items(progress, "recent_events")
+  div(class="mooncode-review-board embedded-board", [
+    div(class="mooncode-stream-header compact-header", [
+      div([
+        p(class="eyebrow", "live events without command proof"),
+        h3("Unscoped Live Events"),
+      ]),
+      span(
+        class=if json_field_int(progress, "event_count", default=0) > 0 {
+          "record-kind warning"
+        } else {
+          "record-kind"
+        },
+        json_field_int(progress, "event_count", default=0).to_string() +
+        " event(s)",
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Running", json_field_int(progress, "running_event_count", default=0).to_string()),
+      info_chip("Done", json_field_int(progress, "done_event_count", default=0).to_string()),
+      info_chip("Failed", json_field_int(progress, "failed_event_count", default=0).to_string()),
+      info_chip("Tools", json_field_int(progress, "tool_event_count", default=0).to_string()),
+      info_chip("Transcript", json_field_int(progress, "transcript_event_count", default=0).to_string()),
+    ]),
+    div(class="daemon-state compact-state", [
+      info_row("Latest", empty_label(json_field_string(progress, "latest_title", default=""))),
+      info_row("Latest Status", empty_label(json_field_string(progress, "latest_status", default=""))),
+      info_row("Lanes", json_field_string_array_items(progress, "lanes").join(", ")),
+    ]),
+    if events.length() == 0 {
+      p(class="status-line", "no unscoped live runtime events")
+    } else {
+      div(
+        class="mooncode-review-list compact",
+        events.map(event => render_mooncode_runtime_unscoped_event_item(event)),
+      )
+    },
+    p(
+      class="mooncode-event-detail",
+      json_field_string(progress, "rule", default=""),
+    ),
+  ])
+}
+
+///|
+fn render_mooncode_runtime_unscoped_event_item(event : Json) -> @rabbita.Html {
+  let status = json_field_string(event, "status", default="done")
+  div(class="mooncode-review-item " + mooncode_runtime_command_progress_class(status), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(
+          json_field_string(event, "lane", default="runtime") +
+          " -> " +
+          json_field_string(event, "kind", default="event"),
+        ),
+        small(empty_label(json_field_string(event, "created_at", default=""))),
+      ]),
+      span(class="record-kind", empty_label(json_field_string(event, "id", default=""))),
+    ]),
+    p(
+      class="mooncode-event-detail",
+      empty_label(json_field_string(event, "title", default="")) +
+      " / " +
+      empty_label(json_field_string(event, "detail", default="")),
     ),
   ])
 }

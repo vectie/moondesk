@@ -634,6 +634,8 @@ pub fn runtime_event_sink_result_response_with_native(String, Array[Json], Json,
 
 pub fn runtime_event_title(String) -> String
 
+pub fn runtime_event_unscoped_progress(Array[Json]) -> Json
+
 pub fn runtime_evidence_manifest_event(Json, String) -> Json
 
 pub fn runtime_evidence_manifest_projected_event(Json) -> Json

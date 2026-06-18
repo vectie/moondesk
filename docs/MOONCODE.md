@@ -925,6 +925,13 @@ normalized events. This gives operators and MoonClaw developers a
 direct view of whether runtime execution is producing the expected event stream
 before those events are projected into lanes, action plans, eval reports, and
 review artifacts.
+The same response now separates command-scoped proof from unscoped live events.
+`command_progress` groups events with `command_packet.command_id`; the
+`unscoped_progress` projection counts and lists recent transcript, reasoning,
+tool, and runtime events that have not yet been bound to a MoonCode command.
+Those unscoped events are visible operator evidence, but they do not satisfy
+command proof gates until MoonClaw or standalone `mooncode` emits them with a
+command packet.
 `GET /api/mooncode/sessions/<session-id>/stream-state` returns the current
 append-log cursor state, tail records after `?since=<sequence>`, and the saved
 checkpoint for a named consumer. `POST /stream-state` persists

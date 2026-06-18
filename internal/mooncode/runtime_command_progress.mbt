@@ -47,6 +47,70 @@ pub fn runtime_event_command_progress(events : Array[Json]) -> Json {
 }
 
 ///|
+pub fn runtime_event_unscoped_progress(events : Array[Json]) -> Json {
+  let lanes : Array[String] = []
+  let kinds : Array[String] = []
+  let unscoped_events : Array[Json] = []
+  let mut running_count = 0
+  let mut done_count = 0
+  let mut failed_count = 0
+  let mut tool_event_count = 0
+  let mut transcript_event_count = 0
+  let mut latest_event_id = ""
+  let mut latest_title = ""
+  let mut latest_status = ""
+  let mut latest_created_at = ""
+  for event in events {
+    if runtime_event_has_command_scope(event) {
+      continue
+    }
+    let lane = json_string(event, "lane", default="runtime")
+    if !runtime_event_string_array_contains(lanes, lane) {
+      lanes.push(lane)
+    }
+    let kind = json_string(event, "kind", default="")
+    if kind != "" && !runtime_event_string_array_contains(kinds, kind) {
+      kinds.push(kind)
+    }
+    match json_string(event, "status", default="") {
+      "running" => running_count += 1
+      "failed" => failed_count += 1
+      _ => done_count += 1
+    }
+    if lane == "tool" || json_string(event, "tool_call_id", default="") != "" {
+      tool_event_count += 1
+    }
+    if lane == "transcript" {
+      transcript_event_count += 1
+    }
+    latest_event_id = json_string(event, "id", default="")
+    latest_title = json_string(event, "title", default="")
+    latest_status = json_string(event, "status", default="")
+    latest_created_at = json_string(event, "created_at", default="")
+    unscoped_events.push(runtime_event_unscoped_progress_item(event))
+  }
+  let recent = runtime_recent_unscoped_events(unscoped_events, limit=6)
+  {
+    "kind": "mooncode-runtime-unscoped-progress",
+    "protocol": protocol_version(),
+    "event_count": unscoped_events.length(),
+    "running_event_count": running_count,
+    "done_event_count": done_count,
+    "failed_event_count": failed_count,
+    "tool_event_count": tool_event_count,
+    "transcript_event_count": transcript_event_count,
+    "lanes": runtime_event_string_array_json(lanes),
+    "kinds": runtime_event_string_array_json(kinds),
+    "latest_event_id": latest_event_id,
+    "latest_title": latest_title,
+    "latest_status": latest_status,
+    "latest_created_at": latest_created_at,
+    "recent_events": Json::array(recent),
+    "rule": "Unscoped runtime events are live transcript, reasoning, tool, or progress records without command_packet.command_id. They are useful live evidence but do not satisfy command proof gates until the runtime binds them to a MoonCode command.",
+  }
+}
+
+///|
 pub fn runtime_event_command_rows(
   events : Array[Json],
   source~ : String,
@@ -67,6 +131,45 @@ pub fn runtime_event_command_rows(
     })
   }
   rows
+}
+
+///|
+fn runtime_event_has_command_scope(event : Json) -> Bool {
+  let packet = runtime_json_object_field_or_empty(event, "command_packet")
+  json_string(packet, "command_id", default="") != ""
+}
+
+///|
+fn runtime_event_unscoped_progress_item(event : Json) -> Json {
+  {
+    "id": json_string(event, "id", default=""),
+    "lane": json_string(event, "lane", default="runtime"),
+    "kind": json_string(event, "kind", default=""),
+    "title": json_string(event, "title", default=""),
+    "status": json_string(event, "status", default=""),
+    "created_at": json_string(event, "created_at", default=""),
+    "detail": runtime_trimmed_text(
+      json_string(event, "detail", default=""),
+      fallback="",
+    ),
+    "path": json_string(event, "path", default=""),
+  }
+}
+
+///|
+fn runtime_recent_unscoped_events(
+  events : Array[Json],
+  limit~ : Int,
+) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = events.length()
+  let mut emitted = 0
+  while index > 0 && emitted < limit {
+    index -= 1
+    recent.push(events[index])
+    emitted += 1
+  }
+  recent
 }
 
 ///|

@@ -21,6 +21,7 @@ pub fn runtime_event_sink_response(
     "event_count": events.length(),
     "events": Json::array(events),
     "command_progress": runtime_event_command_progress(events),
+    "unscoped_progress": runtime_event_unscoped_progress(events),
     "runtime_service": runtime_service_state(session_id, events),
     "post_contract": runtime_event_ingest_contract(session_id),
     "runtime_protocol": runtime_protocol_contract_json(),
