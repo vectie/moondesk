@@ -53,6 +53,26 @@ test "mooncode action plan response owns aggregate surface" {
     json_string(response, "next_required_action", default=""),
     "package_executable_output",
   )
+  let readiness = runtime_json_object_field_or_empty(
+    response, "production_readiness",
+  )
+  assert_eq(
+    json_string(readiness, "kind", default=""),
+    "mooncode-production-readiness",
+  )
+  assert_eq(
+    json_string(readiness, "source", default=""),
+    "action-plan-fallback",
+  )
+  assert_eq(
+    json_string(readiness, "next_action", default=""),
+    "package_executable_output",
+  )
+  assert_eq(
+    json_string(readiness, "next_owner", default=""),
+    "moonbook-moonclaw",
+  )
+  assert_false(json_bool(readiness, "ready", default=true))
   let recommended = runtime_json_object_field_or_empty(
     response, "recommended_command",
   )
@@ -145,6 +165,26 @@ test "mooncode action plan projection derives actions and summary" {
   assert_eq(
     json_string(response, "next_required_action", default=""),
     "package_executable_output",
+  )
+  let readiness = runtime_json_object_field_or_empty(
+    response, "production_readiness",
+  )
+  assert_eq(
+    json_string(readiness, "kind", default=""),
+    "mooncode-production-readiness",
+  )
+  assert_eq(json_string(readiness, "source", default=""), "")
+  assert_eq(
+    json_string(readiness, "first_blocker_id", default=""),
+    "durable_session",
+  )
+  assert_eq(
+    json_string(readiness, "next_action", default=""),
+    "persist_session_snapshot",
+  )
+  assert_eq(
+    json_string(readiness, "next_owner", default=""),
+    "mooncode-moonbook",
   )
   let actions = runtime_json_array_items(response, "actions")
   assert_eq(actions.length(), 1)

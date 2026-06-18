@@ -1477,6 +1477,7 @@ struct MoonCodeActionPlan {
   deferred_steer_count : Int
   source_bound_package_count : Int
   next_required_action : String
+  production_readiness : Json
   recommended_command : MoonCodeActionPlanRecommendedCommand
   recommended_commands : Array[MoonCodeActionPlanRecommendedCommand]
   actions : Array[MoonCodeActionPlanItem]
@@ -13412,6 +13413,30 @@ fn render_mooncode_action_plan_panel(
           div(class="daemon-state compact-state", [
             info_row("Status", plan.status),
             info_row("Next", plan.next_required_action),
+            info_row(
+              "Production Next",
+              json_string_value(
+                plan.production_readiness,
+                "next_action",
+                default=plan.next_required_action,
+              ),
+            ),
+            info_row(
+              "Production Owner",
+              json_string_value(
+                plan.production_readiness,
+                "next_owner",
+                default="mooncode",
+              ),
+            ),
+            info_row(
+              "Production Blocker",
+              json_string_value(
+                plan.production_readiness,
+                "first_blocker_label",
+                default="none",
+              ),
+            ),
             info_row("Manifest", empty_label(plan.manifest_path)),
             info_row("Recorded", empty_label(plan.recorded_at)),
             info_row("Task", empty_label(plan.task_id)),

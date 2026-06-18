@@ -1361,7 +1361,10 @@ Implemented behavior:
   approvals, and review state into command-level action items. Each item has a
   state such as `queued-for-runtime`, `awaiting-proof`, `blocked`,
   `ready-for-review`, `runtime-retry`, or `completed`, plus required gates and a
-  next step. Commands refresh the durable MoonBook artifact at
+  next step. The response also includes `production_readiness`, preferring the
+  full session summary contract and falling back to action-plan state for thin
+  callers, so the plan, header, and inspector share one production blocker
+  interpretation. Commands refresh the durable MoonBook artifact at
   `wiki/reviews/mooncode/<session-id>/action-plan.json`. The HTTP wrapper and
   host-side log gathering live in a focused MoonWiki action-plan handler file;
   the response shape remains MoonCode-owned.

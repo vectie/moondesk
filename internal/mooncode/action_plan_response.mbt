@@ -341,6 +341,9 @@ pub fn action_plan_response(
   )
   let completed_count = action_plan_state_count(actions, "completed")
   let next_required_action = action_plan_next_required_action(summary, actions)
+  let production_readiness = action_plan_production_readiness(
+    summary, actions, next_required_action,
+  )
   {
     "kind": "mooncode-action-plan",
     "protocol": protocol_version(),
@@ -406,6 +409,7 @@ pub fn action_plan_response(
       default=0,
     ),
     "next_required_action": next_required_action,
+    "production_readiness": production_readiness,
     "recommended_command": action_plan_recommended_command(next_required_action),
     "recommended_commands": Json::array(
       action_plan_recommended_commands(next_required_action),
@@ -429,6 +433,124 @@ pub fn action_plan_response(
       "extractable_component": "mooncode",
     },
     "rule": "This plan is Moondesk's compact execution/review contract. MoonClaw or standalone MoonCode consumes the command queue, emits proof events, then Moondesk updates this plan without executing tools itself.",
+  }
+}
+
+///|
+fn action_plan_production_readiness(
+  summary : Json,
+  actions : Array[Json],
+  next_required_action : String,
+) -> Json {
+  match runtime_json_object_field(summary, "production_readiness") {
+    Some(readiness) => readiness
+    None =>
+      action_plan_fallback_production_readiness(actions, next_required_action)
+  }
+}
+
+///|
+fn action_plan_fallback_production_readiness(
+  actions : Array[Json],
+  next_required_action : String,
+) -> Json {
+  let blocked_count = action_plan_state_count(actions, "blocked") +
+    action_plan_state_count(actions, "runtime-retry") +
+    action_plan_state_count(actions, "awaiting-proof") +
+    action_plan_state_count(actions, "queued-for-runtime")
+  let ready = actions.length() > 0 &&
+    blocked_count == 0 &&
+    next_required_action == "ready_for_book_review"
+  let blocker = action_plan_first_blocking_action(actions)
+  let blocker_state = json_string(blocker, "state", default="")
+  {
+    "kind": "mooncode-production-readiness",
+    "protocol": protocol_version(),
+    "extractable_component": "mooncode",
+    "source": "action-plan-fallback",
+    "ready": ready,
+    "score": if ready {
+      100
+    } else {
+      0
+    },
+    "level": if ready {
+      "production-grade"
+    } else {
+      "action-plan-blocked"
+    },
+    "passed_count": if ready {
+      actions.length()
+    } else {
+      0
+    },
+    "check_count": actions.length(),
+    "blocked_count": blocked_count,
+    "first_blocker_id": json_string(blocker, "command_id", default=""),
+    "first_blocker_label": action_plan_blocker_label(blocker),
+    "first_blocker_evidence": json_string(
+      blocker,
+      "blocking_reason",
+      default="",
+    ),
+    "next_action": next_required_action,
+    "next_owner": action_plan_next_owner(next_required_action),
+    "blocking_check_ids": Json::array(
+      if blocker_state == "" {
+        []
+      } else {
+        [Json::string(blocker_state)]
+      },
+    ),
+    "rule": "Fallback action-plan readiness is derived only from command state. Full production readiness comes from the MoonCode session summary when available.",
+  }
+}
+
+///|
+fn action_plan_first_blocking_action(actions : Array[Json]) -> Json {
+  for
+    state in [
+      "blocked", "runtime-retry", "awaiting-proof", "queued-for-runtime",
+    ] {
+    for action in actions {
+      if json_string(action, "state", default="") == state {
+        return action
+      }
+    }
+  }
+  {}
+}
+
+///|
+fn action_plan_blocker_label(action : Json) -> String {
+  let command_id = json_string(action, "command_id", default="")
+  let command = json_string(action, "action", default="")
+  if command_id == "" && command == "" {
+    ""
+  } else if command_id == "" {
+    command
+  } else if command == "" {
+    command_id
+  } else {
+    "\{command}: \{command_id}"
+  }
+}
+
+///|
+fn action_plan_next_owner(next_required_action : String) -> String {
+  match next_required_action {
+    "dispatch_or_replay_runtime_commands"
+    | "retry_failed_runtime_dispatch"
+    | "await_runtime_proof"
+    | "start_next_turn_for_deferred_steering" =>
+      "moonclaw-or-standalone-mooncode"
+    "fix_failed_tests" | "run_tests" => "moonclaw"
+    "package_executable_output" => "moonbook-moonclaw"
+    "resolve_tool_approvals" | "accept_or_reject_changes" => "moondesk"
+    "await_commit_proof" => "moonclaw"
+    "start_or_resume_session" => "moondesk-moonclaw"
+    "ready_for_book_review" => "moondesk-moonbook"
+    _ => "mooncode"
   }
 }
 

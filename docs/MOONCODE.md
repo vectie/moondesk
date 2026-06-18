@@ -1278,7 +1278,10 @@ matching OpenSeek serve mode's "Enter prompts when idle, steers while a turn is
 open" interaction. The legacy `/api/agents/sessions/<id>/message` route remains
 for non-MoonCode agent sessions only.
 The action-plan response now includes a primary `recommended_command` plus a
-`recommended_commands` array for multi-choice operator recovery. It
+`recommended_commands` array for multi-choice operator recovery, and a
+`production_readiness` snapshot that reuses the full session production
+readiness when available or falls back to action-plan state only for thin
+callers. It
 distinguishes UI runtime-loop actions from queued MoonCode commands, so the
 Action Plan can offer `Run Native Loop`, `Retry Runtime`, `Refresh Proof`,
 `Fix Tests`, `Run Tests`, `Package`, `Resume`, and `Start Next Turn`, and it
