@@ -205,14 +205,16 @@ planner events, `planner_steps`, step limits, native `reasoning_delta` progress,
 optional assistant deltas, and pre-execution `tool_call` events before matching
 `tool_result` events. It falls back to deterministic planning when the model is
 unavailable or emits no supported calls. Native steer commands now settle with
-`steer_applied` / `steer_dropped` events, so Moondesk's pending steering counts
-are backed by MoonClaw-owned evidence instead of only projected intent.
+`steer_applied`, `steer_deferred`, or `steer_dropped` events, so Moondesk's
+pending and deferred steering counts are backed by MoonClaw-owned evidence
+instead of only projected intent.
 Native runtime-turn now also reads MoonClaw's OpenSeek-style serve-scheduler
 projection before executing a claimed command, returns both
-`serve_scheduler_state` and `serve_scheduler_decision`, and drops idle
-`steer` / `cancel` commands as `steer_dropped` / `cancel_dropped` evidence
-without invoking tools. This closes one of the main gaps with OpenSeek serve
-mode: stale controls no longer become synthetic work.
+`serve_scheduler_state` and `serve_scheduler_decision`, persists idle `steer`
+commands as `steer_deferred` context for the next eligible turn, and closes idle
+`cancel` commands as `cancel_dropped` evidence without invoking tools. This
+closes one of the main gaps with OpenSeek serve mode: stale controls no longer
+become synthetic work.
 Native accept/reject commands now also write MoonBook-owned review receipts and
 emit `receipt.accept` / `receipt.reject` review-lane events, so review state can
 be proven by MoonClaw-owned runtime evidence instead of only desktop intent.
@@ -504,7 +506,8 @@ center pane now renders the UI queue as a Command Queue panel with latest
 command packets, prompt/steer/cancel/review counts, and quick target-aware
 test/package controls. Pending steer acknowledgement counts are now projected
 by `internal/mooncode` from `command.steer` events minus
-`steer_applied`/`steer_dropped` runtime events, so Moondesk and future
+`steer_applied`/`steer_dropped` runtime events, with `steer_deferred` counted
+separately as saved next-turn steering context, so Moondesk and future
 standalone `mooncode` read the same steering state. It also renders a Dispatch Receipts panel from
 `GET /api/mooncode/sessions/<id>/runtime-dispatch`, including receipt counts,
 pending command ids, native-vs-bridge status, latest receipt details, and

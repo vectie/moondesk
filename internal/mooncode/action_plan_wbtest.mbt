@@ -107,6 +107,25 @@ test "mooncode action plan waits for commit proof" {
 }
 
 ///|
+test "mooncode action plan asks for next turn when steering is deferred" {
+  let summary : Json = {
+    "failed_test_count": 0,
+    "pending_tool_approval_count": 0,
+    "pending_diff_count": 0,
+    "verified_test_count": 0,
+    "runtime_commit_proof_count": 0,
+    "pending_steer_count": 1,
+    "deferred_steer_count": 1,
+  }
+  assert_eq(
+    action_plan_next_required_action(summary, [
+      { "action": "steer", "state": "completed" },
+    ]),
+    "start_next_turn_for_deferred_steering",
+  )
+}
+
+///|
 test "mooncode action plan correlates runtime proof to command id" {
   let summary_with_global_proof : Json = {
     "failed_test_count": 0,

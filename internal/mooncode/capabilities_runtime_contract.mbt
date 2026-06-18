@@ -53,9 +53,9 @@ pub fn runtime_contract_json() -> Json {
       "output_events": [
         "assistant_delta", "reasoning_delta", "assistant_message", "tool_call", "tool_result",
         "runtime_update", "file_change", "diff", "test_result", "artifact", "agent_finished",
-        "agent_aborted", "command_error", "steer_dropped",
+        "agent_aborted", "command_error", "steer_applied", "steer_deferred", "steer_dropped",
       ],
-      "ordering_rule": "one ordered command queue per session; prompts, steer, cancel, turn-done, and shutdown are serialized so steering cannot race terminal events",
+      "ordering_rule": "one ordered command queue per session; prompts, steer, cancel, turn-done, and shutdown are serialized; idle steer is persisted as deferred steering context for the next eligible turn",
     },
     "session_store": {
       "owner": "moonclaw-or-mooncode",

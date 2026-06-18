@@ -243,10 +243,20 @@ test "mooncode session summary tracks pending steer acknowledgements" {
       created_at="3",
       detail="add tests",
     ),
+    event_record(
+      id="steer-deferred-1",
+      lane="runtime",
+      kind=event_steer_deferred(),
+      title="Steering deferred",
+      status="queued",
+      created_at="4",
+      detail="tighten scope",
+    ),
   ]
   let summary = session_summary({ "id": "s1", "workspace_id": "book" }, events)
   assert_eq(summary_json_int(summary, "steer_command_count", default=0), 2)
   assert_eq(summary_json_int(summary, "steer_settlement_count", default=0), 1)
+  assert_eq(summary_json_int(summary, "deferred_steer_count", default=0), 1)
   assert_eq(summary_json_int(summary, "pending_steer_count", default=0), 1)
   assert_eq(pending_steer_count(1, 2), 0)
 }

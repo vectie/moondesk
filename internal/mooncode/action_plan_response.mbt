@@ -77,6 +77,10 @@ pub fn action_plan_next_required_action(
   if action_plan_state_count(actions, "awaiting-proof") > 0 {
     return "await_runtime_proof"
   }
+  if runtime_json_int(summary, "deferred_steer_count", default=0) > 0 &&
+    runtime_json_int(summary, "pending_steer_count", default=0) > 0 {
+    return "start_next_turn_for_deferred_steering"
+  }
   if runtime_json_int(summary, "failed_test_count", default=0) > 0 {
     return "fix_failed_tests"
   }
@@ -174,6 +178,16 @@ pub fn action_plan_response(
     "pending_tool_approval_count": runtime_json_int(
       summary,
       "pending_tool_approval_count",
+      default=0,
+    ),
+    "pending_steer_count": runtime_json_int(
+      summary,
+      "pending_steer_count",
+      default=0,
+    ),
+    "deferred_steer_count": runtime_json_int(
+      summary,
+      "deferred_steer_count",
       default=0,
     ),
     "source_bound_package_count": runtime_json_int(

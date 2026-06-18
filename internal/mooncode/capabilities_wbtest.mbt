@@ -164,6 +164,11 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
   assert_true(
     json_array_items(wire, "output_events")
     .map(item => item.stringify())
+    .contains("\"steer_deferred\""),
+  )
+  assert_true(
+    json_array_items(wire, "output_events")
+    .map(item => item.stringify())
     .contains("\"steer_dropped\""),
   )
   let eval = summary_json_object_field_or_empty(contract, "eval_contract")

@@ -59,6 +59,17 @@ pub fn count_steer_settlements(events : Array[Json]) -> Int {
 }
 
 ///|
+pub fn count_deferred_steers(events : Array[Json]) -> Int {
+  let mut count = 0
+  for event in events {
+    if json_string(event, "kind", default="") == event_steer_deferred() {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
 pub fn pending_steer_count(
   steer_command_count : Int,
   steer_settlement_count : Int,

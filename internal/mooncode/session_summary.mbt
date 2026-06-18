@@ -78,6 +78,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let runtime_commit_proof_count = count_runtime_commit_proofs(events)
   let steer_command_count = count_command_events(events, "steer")
   let steer_settlement_count = count_steer_settlements(events)
+  let deferred_steer_count = count_deferred_steers(events)
   let pending_steer_count = pending_steer_count(
     steer_command_count, steer_settlement_count,
   )
@@ -178,6 +179,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "runtime_commit_proof_count": runtime_commit_proof_count,
     "steer_command_count": steer_command_count,
     "steer_settlement_count": steer_settlement_count,
+    "deferred_steer_count": deferred_steer_count,
     "pending_steer_count": pending_steer_count,
     "review_count": review_count,
     "pending_diff_count": pending_diff_count(

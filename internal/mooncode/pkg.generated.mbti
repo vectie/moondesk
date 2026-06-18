@@ -150,6 +150,8 @@ pub fn count_command_events(Array[Json], String) -> Int
 
 pub fn count_command_packets(Array[Json]) -> Int
 
+pub fn count_deferred_steers(Array[Json]) -> Int
+
 pub fn count_eval_report_manifests(Array[Json]) -> Int
 
 pub fn count_failed_tests(Array[Json]) -> Int

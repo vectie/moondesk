@@ -1268,9 +1268,9 @@ Implemented behavior:
   as the Lifecycle block, while MoonClaw or a future standalone `mooncode`
   runtime can use the same object to decide the next claim/replay action.
   MoonClaw's native runtime-turn now also returns and enforces the corresponding
-  `serve_scheduler_state` / `serve_scheduler_decision`, closing idle `steer` and
-  `cancel` controls as `steer_dropped` / `cancel_dropped` proof instead of
-  planning fallback tool calls.
+  `serve_scheduler_state` / `serve_scheduler_decision`, persisting idle `steer`
+  controls as `steer_deferred` next-turn context and closing idle `cancel`
+  controls as `cancel_dropped` proof instead of planning fallback tool calls.
   The reusable response projection that assembles dispatch receipts, replay,
   claim, lifecycle, scheduler, runtime-turn, and supervisor state now lives
   outside the endpoint builder, keeping shared runtime state extractable from
@@ -1373,8 +1373,9 @@ Implemented behavior:
   stream data from Moondesk replay.
   OpenSeek-style native JSONL events such as `assistant_delta`,
   `reasoning_delta`, `tool_result`, `agent_finished`, `steer_applied`,
-  `steer_dropped`, and `turn_failed` are normalized directly into MoonCode
-  lanes before Moondesk falls back to the older MoonClaw `desc.msg` projection.
+  `steer_deferred`, `steer_dropped`, and `turn_failed` are normalized directly
+  into MoonCode lanes before Moondesk falls back to the older MoonClaw
+  `desc.msg` projection.
 - `GET /api/mooncode/sessions/:id/commands` returns the durable ordered
   `mooncode-command-queue` from
   `.moontown/mooncode-sessions/<session-id>/commands.jsonl`, including

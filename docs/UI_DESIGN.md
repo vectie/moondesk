@@ -174,8 +174,9 @@ The agent surface is the first MoonCode UI slice. It should support:
   `steer` command instead of using the legacy agent-message route
 - MoonCode pending-steer feedback in the session header and command queue,
   computed from durable `steer` commands minus `steer_applied`/`steer_dropped`
-  runtime events, so a sent steer is visible while MoonClaw or standalone
-  `mooncode` has not yet confirmed whether it was applied or dropped
+  runtime events, with `steer_deferred` shown separately as saved next-turn
+  context, so a sent steer is visible while MoonClaw or standalone `mooncode`
+  has not yet confirmed whether it was applied or dropped
 - MoonCode Eval Report has a Run Eval control that dispatches a typed
   `run_eval` command through the ordered runtime queue, asking MoonClaw or
   standalone `mooncode` for `tool_harness` and `file_edit` native proof instead

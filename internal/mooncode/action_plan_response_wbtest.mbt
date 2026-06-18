@@ -28,6 +28,8 @@ test "mooncode action plan response owns aggregate surface" {
       "failed_test_count": 0,
       "pending_diff_count": 0,
       "pending_tool_approval_count": 0,
+      "pending_steer_count": 0,
+      "deferred_steer_count": 0,
       "source_bound_package_count": 0,
     },
     [],
@@ -45,6 +47,8 @@ test "mooncode action plan response owns aggregate surface" {
   assert_eq(runtime_json_int(response, "run_test_command_count", default=0), 1)
   assert_eq(runtime_json_int(response, "package_command_count", default=0), 1)
   assert_eq(runtime_json_int(response, "review_command_count", default=0), 1)
+  assert_eq(runtime_json_int(response, "pending_steer_count", default=-1), 0)
+  assert_eq(runtime_json_int(response, "deferred_steer_count", default=-1), 0)
   assert_eq(
     json_string(response, "next_required_action", default=""),
     "package_executable_output",

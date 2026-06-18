@@ -14,6 +14,7 @@ test "mooncode runtime protocol advertises proof event names" {
   assert_true(events.contains("package_verified"))
   assert_true(events.contains("receipt.accept"))
   assert_true(events.contains("receipt.reject"))
+  assert_true(events.contains("steer_deferred"))
   assert_true(events.contains("commit_created"))
   guard rq_json_object_field(contract, "tool_registry") is Some(registry) else {
     fail("missing tool registry contract")

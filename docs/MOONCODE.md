@@ -97,12 +97,14 @@ status/detail rules, proof-aware completion gates, claim request limits, and
 dispatch receipt record shape. It also owns the OpenSeek-style serve scheduler
 projection: given `commands.jsonl` plus runtime lifecycle state, it computes the
 single active turn, pending turn queue, steer delivery target, cancel target,
-and idle dropped-control decisions without depending on Moondesk UI state.
+and idle deferred/dropped-control decisions without depending on Moondesk UI
+state.
 MoonClaw's native `runtime-turn` now consumes that same projection before
 executing a claimed command, returns `serve_scheduler_state` and
-`serve_scheduler_decision` in the native response, and closes idle `steer` /
-`cancel` controls with `steer_dropped` / `cancel_dropped` evidence instead of
-planning fallback tool calls. That keeps Moondesk as the renderer/recorder
+`serve_scheduler_decision` in the native response, persists idle `steer`
+controls as `steer_deferred` next-turn context, and closes idle `cancel`
+controls with `cancel_dropped` evidence instead of planning fallback tool
+calls. That keeps Moondesk as the renderer/recorder
 while aligning native execution with OpenSeek's ordered prompt/steer/cancel
 serve semantics.
 It also owns OpenSeek-style runtime event normalization, canonical MoonCode
@@ -936,9 +938,10 @@ operator the resume and runtime state needed for a Codex/OpenSeek-like coding
 session without opening the handoff JSON manually. Pending steer accounting is
 now a protocol-owned `mooncode_summary` projection: `steer_command_count`
 minus `steer_settlement_count` becomes `pending_steer_count`, with settlements
-coming from runtime `steer_applied`/`steer_dropped` events. Moondesk renders
-those fields from the same package-level summary used by future standalone
-`mooncode`.
+coming from runtime `steer_applied`/`steer_dropped` events and
+`deferred_steer_count` coming from `steer_deferred` runtime evidence. Moondesk
+renders those fields from the same package-level summary used by future
+standalone `mooncode`.
 
 Each session also carries a `mooncode_summary` readiness/eval block. It records
 the stream mode, `live_stream_ready`, event log path, append-log count, command
@@ -948,7 +951,8 @@ log path, command-log count, typed session snapshot path,
 diff count, accepted/rejected review counts, MoonBook review receipt count,
 MoonBook package manifest count, verified/failing test-build result counts,
 source-bound package count, `review_state`, an `eval_score`, an `eval_level`,
-`steer_command_count`, `steer_settlement_count`, `pending_steer_count`, and
+`steer_command_count`, `steer_settlement_count`, `deferred_steer_count`,
+`pending_steer_count`, and
 `eval_checks` for book scope, MoonClaw task attachment, transcript, tool
 events, file diffs, tests/builds, verified test results, artifacts, review
 decisions, append-only log coverage, typed command packets, ordered command
@@ -1024,7 +1028,8 @@ bundle.
 Runtime proof events may carry a `command_id` or `command_packet`. Moondesk
 normalizes that into a lightweight `mooncode.v1` command reference on
 `test_result`, `package_built`, `package_verified`, `commit_created`,
-`patch_applied`, `patch_reverted`, `steer_applied`, and `steer_dropped` events.
+`patch_applied`, `patch_reverted`, `steer_applied`, `steer_deferred`, and
+`steer_dropped` events.
 When any proof for an action is command-scoped, the Action Plan only marks the
 matching command complete. Older unscoped proof events remain accepted as a
 legacy fallback, but MoonClaw and standalone `mooncode` should emit scoped
@@ -1357,9 +1362,10 @@ MoonClaw's native endpoint now treats `prompt`, `steer`, and `cancel` as
 control commands instead of plain prose-only task messages. `prompt` and
 general command packets bind or reuse the book-scoped task; native runtime-turn
 checks the native serve-scheduler decision for the claimed command, settles
-`steer` commands with `steer_applied` / `steer_dropped` runtime evidence, and
-settles idle `cancel` commands with `cancel_dropped` evidence so pending
-control acknowledgements clear from the session summary; live `cancel` still
+`steer` commands with `steer_applied`, `steer_deferred`, or `steer_dropped`
+runtime evidence, and settles idle `cancel` commands with `cancel_dropped`
+evidence so pending control acknowledgements clear from the session summary;
+live `cancel` still
 targets an existing bound task and deliberately does not spawn a new task.
 Native `accept` and `reject` commands now settle with compatible
 MoonBook-owned review receipts under `wiki/reviews/mooncode/<session-id>/` and

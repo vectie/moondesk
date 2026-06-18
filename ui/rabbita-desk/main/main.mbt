@@ -389,6 +389,7 @@ struct MoonCodeSummary {
   runtime_commit_proof_count : Int
   steer_command_count : Int
   steer_settlement_count : Int
+  deferred_steer_count : Int
   pending_steer_count : Int
   review_count : Int
   pending_diff_count : Int
@@ -1414,6 +1415,8 @@ struct MoonCodeActionPlan {
   failed_test_count : Int
   pending_diff_count : Int
   pending_tool_approval_count : Int
+  pending_steer_count : Int
+  deferred_steer_count : Int
   source_bound_package_count : Int
   next_required_action : String
   actions : Array[MoonCodeActionPlanItem]
@@ -11728,7 +11731,7 @@ fn mooncode_pending_steer_status_line(
   } else {
     p(
       class="status-line",
-      "\{count} steer request(s) are waiting for runtime apply/drop confirmation.",
+      "\{count} steer request(s) are waiting for runtime apply/defer/drop confirmation.",
     )
   }
 }
@@ -12495,6 +12498,7 @@ fn render_mooncode_action_plan_panel(
             info_chip("Tests", plan.run_test_command_count.to_string()),
             info_chip("Packages", plan.package_command_count.to_string()),
             info_chip("Commits", plan.commit_command_count.to_string()),
+            info_chip("Deferred Steers", plan.deferred_steer_count.to_string()),
           ]),
           div(class="daemon-state compact-state", [
             info_row("Status", plan.status),
@@ -13688,6 +13692,7 @@ fn render_mooncode_event_lanes(
       info_chip("Source-bound", summary.source_bound_package_count.to_string()),
       info_chip("Review", summary.review_count.to_string()),
       info_chip("Pending", summary.pending_diff_count.to_string()),
+      info_chip("Deferred Steers", summary.deferred_steer_count.to_string()),
       info_chip("Cursor", model.mooncode_stream_cursor.to_string()),
     ]),
     render_mooncode_live_tail(model),
@@ -16145,7 +16150,7 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
             ),
             info_row(
               "Steering",
-              "\{summary.pending_steer_count} pending / \{summary.steer_settlement_count} settled",
+              "\{summary.pending_steer_count} pending / \{summary.deferred_steer_count} deferred / \{summary.steer_settlement_count} settled",
             ),
             info_row("Review", summary.review_count.to_string()),
             info_row("Review State", summary.review_state),
