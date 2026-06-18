@@ -758,6 +758,27 @@ struct MoonCodeRuntimeReplayState {
 } derive(FromJson)
 
 ///|
+struct MoonCodeRuntimeServiceState {
+  kind : String
+  protocol : String
+  session_id : String
+  service_id : String
+  active : Bool
+  status : String
+  started_at : String
+  finished_at : String
+  detail : String
+  stopped_by : String
+  started_count : Int
+  finished_count : Int
+  failed_count : Int
+  ran_turn_count : Int
+  failed_turn_count : Int
+  control_hint : String
+  owner : String
+} derive(FromJson)
+
+///|
 struct MoonCodeRuntimeEventSink {
   protocol : String
   kind : String
@@ -769,6 +790,7 @@ struct MoonCodeRuntimeEventSink {
   event_count : Int
   events : Array[MoonCodeEvent]
   command_progress : Json
+  runtime_service : MoonCodeRuntimeServiceState
   post_contract : Json
   runtime_protocol : Json
   owner : Json
@@ -6820,13 +6842,18 @@ fn update(
       if session_id != model.selected_agent_session_id {
         (@rabbita.none, model)
       } else {
+        let service_status = if sink.runtime_service.status == "idle" {
+          ""
+        } else {
+          " / service " + sink.runtime_service.status
+        }
         (
           @rabbita.none,
           {
             ..model,
             mooncode_runtime_event_sink_session_id: session_id,
             mooncode_runtime_event_sink: Some(sink),
-            mooncode_runtime_event_sink_status: "\{sink.event_count} runtime event(s)",
+            mooncode_runtime_event_sink_status: "\{sink.event_count} runtime event(s)\{service_status}",
           },
         )
       }
@@ -13195,7 +13222,13 @@ fn render_mooncode_runtime_claim_panel(
         on_click=dispatch(StartMoonCodeRuntimeService),
         "Start Service",
       ),
+      button(
+        class="secondary-button",
+        on_click=dispatch(RunMoonCodeCommand("cancel")),
+        "Stop Service",
+      ),
     ]),
+    render_mooncode_runtime_service_state(model),
     match model.mooncode_runtime_claim {
       Some(state) =>
         div([
@@ -13248,6 +13281,45 @@ fn render_mooncode_runtime_claim_panel(
         )
     },
   ])
+}
+
+///|
+fn render_mooncode_runtime_service_state(model : Model) -> @rabbita.Html {
+  match model.mooncode_runtime_event_sink {
+    Some(sink) if sink.session_id == model.selected_agent_session_id => {
+      let service = sink.runtime_service
+      div(class="daemon-state compact-state runtime-service-state", [
+        info_row("Service", "\{service.status} / \{empty_label(service.service_id)}"),
+        info_row("Active", if service.active { "yes" } else { "no" }),
+        info_row("Started", empty_label(service.started_at)),
+        info_row("Finished", empty_label(service.finished_at)),
+        info_row("Stopped By", empty_label(service.stopped_by)),
+        info_row(
+          "Turns",
+          "\{service.ran_turn_count} ran, \{service.failed_turn_count} failed",
+        ),
+        info_row(
+          "Lifecycle",
+          "\{service.started_count} started, \{service.finished_count} finished, \{service.failed_count} failed",
+        ),
+        info_row("Owner", empty_label(service.owner)),
+        if service.detail == "" {
+          span(class="hidden-inline", "")
+        } else {
+          p(class="mooncode-event-detail", service.detail)
+        },
+        if service.control_hint == "" {
+          span(class="hidden-inline", "")
+        } else {
+          p(class="status-line", service.control_hint)
+        },
+      ])
+    }
+    _ => p(
+      class="status-line",
+      "Runtime service state appears after MoonCode runtime events are loaded.",
+    )
+  }
 }
 
 ///|

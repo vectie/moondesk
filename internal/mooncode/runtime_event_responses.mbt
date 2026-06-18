@@ -21,9 +21,111 @@ pub fn runtime_event_sink_response(
     "event_count": events.length(),
     "events": Json::array(events),
     "command_progress": runtime_event_command_progress(events),
+    "runtime_service": runtime_service_state(session_id, events),
     "post_contract": runtime_event_ingest_contract(session_id),
     "runtime_protocol": runtime_protocol_contract_json(),
     "owner": runtime_owner_record(),
+  }
+}
+
+///|
+pub fn runtime_service_state(session_id : String, events : Array[Json]) -> Json {
+  let mut started_count = 0
+  let mut finished_count = 0
+  let mut failed_count = 0
+  let mut active = false
+  let mut status = "idle"
+  let mut service_id = ""
+  let mut started_at = ""
+  let mut finished_at = ""
+  let mut detail = "No MoonClaw native runtime service lifecycle event has been recorded."
+  let mut stopped_by = ""
+  let mut ran_turn_count = 0
+  let mut failed_turn_count = 0
+  for event in events {
+    let kind = runtime_first_string(event, ["kind", "event"], default="")
+    if kind == "runtime.service_started" {
+      started_count += 1
+      active = true
+      status = "running"
+      service_id = runtime_json_string(event, "service_id", default=service_id)
+      started_at = runtime_first_string(
+        event,
+        ["created_at", "created"],
+        default=started_at,
+      )
+      finished_at = ""
+      stopped_by = ""
+      ran_turn_count = 0
+      failed_turn_count = 0
+      detail = runtime_json_string(
+        event,
+        "detail",
+        default="MoonClaw native runtime service is running.",
+      )
+    } else if kind == "runtime.service_finished" ||
+      kind == "runtime.service_failed" {
+      if kind == "runtime.service_failed" {
+        failed_count += 1
+      } else {
+        finished_count += 1
+      }
+      active = false
+      status = runtime_json_string(
+        event,
+        "status",
+        default=if kind == "runtime.service_failed" { "failed" } else { "done" },
+      )
+      service_id = runtime_json_string(event, "service_id", default=service_id)
+      finished_at = runtime_first_string(
+        event,
+        ["created_at", "created"],
+        default=finished_at,
+      )
+      detail = runtime_json_string(
+        event,
+        "detail",
+        default=if kind == "runtime.service_failed" {
+          "MoonClaw native runtime service failed."
+        } else {
+          "MoonClaw native runtime service finished."
+        },
+      )
+      stopped_by = runtime_json_string(event, "stopped_by", default=stopped_by)
+      ran_turn_count = runtime_json_int(
+        event,
+        "ran_turn_count",
+        default=ran_turn_count,
+      )
+      failed_turn_count = runtime_json_int(
+        event,
+        "failed_turn_count",
+        default=failed_turn_count,
+      )
+    }
+  }
+  {
+    "kind": "mooncode-runtime-service-state",
+    "protocol": protocol_version(),
+    "session_id": session_id,
+    "service_id": service_id,
+    "active": active,
+    "status": status,
+    "started_at": started_at,
+    "finished_at": finished_at,
+    "detail": detail,
+    "stopped_by": stopped_by,
+    "started_count": started_count,
+    "finished_count": finished_count,
+    "failed_count": failed_count,
+    "ran_turn_count": ran_turn_count,
+    "failed_turn_count": failed_turn_count,
+    "control_hint": if active {
+      "Queue a MoonCode cancel command to ask the MoonClaw runtime service to stop at the next scheduler boundary."
+    } else {
+      "Start Service launches the MoonClaw-owned runtime supervisor for this session."
+    },
+    "owner": "moonclaw",
   }
 }
 

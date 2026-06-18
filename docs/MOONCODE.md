@@ -562,9 +562,13 @@ task-group service outside the request lifecycle, appends
 book's `events.jsonl`, and executes the same bounded native `runtime-loop`.
 Moondesk exposes this through
 `POST /api/mooncode/sessions/<id>/runtime-service` and a `Start Service` action
-beside `Run Native Loop`, then refreshes the stream, claim state, evidence,
-tests, packages, and action plan. This gives Moondesk and a future standalone
-`mooncode` a real service endpoint to discover through
+beside `Run Native Loop`, then refreshes the stream, claim state, event sink,
+evidence, tests, packages, and action plan. The runtime panel now also projects
+the latest service lifecycle state from durable `runtime.service_*` events and
+exposes `Stop Service` as an explicit MoonCode `cancel` command, matching the
+OpenSeek serve-mode shape where cancellation is ordered through the runtime
+command stream instead of killing the desktop shell. This gives Moondesk and a
+future standalone `mooncode` a real service endpoint to discover through
 `/v1/mooncode/capabilities`; richer multi-session service lifecycle controls
 and resume UX are still product hardening work.
 

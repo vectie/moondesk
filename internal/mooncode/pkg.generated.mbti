@@ -690,6 +690,8 @@ pub fn runtime_replay_state_for_session(Json, Array[Json], Array[Json], runtime_
 
 pub fn runtime_serve_jsonl(Array[Json], Array[Json], scope~ : String, lease_now? : String) -> String
 
+pub fn runtime_service_state(String, Array[Json]) -> Json
+
 pub fn runtime_supervisor_launch_packet(String, Json, Json, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, Bool) -> Json
 
 pub fn runtime_supervisor_readiness_report(Json) -> Json

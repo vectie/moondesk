@@ -962,6 +962,14 @@ test "mooncode runtime event sink response owns event surface" {
     ),
     1,
   )
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(response, "runtime_service"),
+      "status",
+      default="",
+    ),
+    "idle",
+  )
   let aggregate = runtime_event_sink_result_response(
     "session-demo",
     [event],
@@ -1027,6 +1035,70 @@ test "mooncode runtime event sink response owns event surface" {
     runtime_json_object_field(native, "native_runtime_events_report")
     is Some(Json::Object(_)),
   )
+}
+
+///|
+test "mooncode runtime service state tracks daemon service lifecycle" {
+  let idle = runtime_service_state("session-demo", [])
+  assert_eq(json_string(idle, "status", default=""), "idle")
+  assert_false(json_bool(idle, "active", default=true))
+  let started : Json = {
+    "id": "service-started",
+    "kind": "runtime.service_started",
+    "session_id": "session-demo",
+    "service_id": "svc-demo",
+    "status": "running",
+    "created_at": "2026-06-18T00:00:00Z",
+    "detail": "service running",
+  }
+  let running = runtime_service_state("session-demo", [started])
+  assert_eq(json_string(running, "status", default=""), "running")
+  assert_true(json_bool(running, "active", default=false))
+  assert_eq(json_string(running, "service_id", default=""), "svc-demo")
+  assert_eq(
+    json_string(running, "started_at", default=""),
+    "2026-06-18T00:00:00Z",
+  )
+  assert_eq(runtime_json_int(running, "started_count", default=0), 1)
+  assert_true(
+    json_string(running, "control_hint", default="").contains("cancel"),
+  )
+  let finished : Json = {
+    "id": "service-finished",
+    "kind": "runtime.service_finished",
+    "session_id": "session-demo",
+    "service_id": "svc-demo",
+    "status": "cancelled",
+    "created_at": "2026-06-18T00:00:01Z",
+    "detail": "service stopped after cancel",
+    "stopped_by": "cancelled",
+    "ran_turn_count": 2,
+    "failed_turn_count": 0,
+  }
+  let cancelled = runtime_service_state("session-demo", [started, finished])
+  assert_eq(json_string(cancelled, "status", default=""), "cancelled")
+  assert_false(json_bool(cancelled, "active", default=true))
+  assert_eq(
+    json_string(cancelled, "finished_at", default=""),
+    "2026-06-18T00:00:01Z",
+  )
+  assert_eq(json_string(cancelled, "stopped_by", default=""), "cancelled")
+  assert_eq(runtime_json_int(cancelled, "ran_turn_count", default=0), 2)
+  assert_eq(runtime_json_int(cancelled, "finished_count", default=0), 1)
+  let failed : Json = {
+    "id": "service-failed",
+    "kind": "runtime.service_failed",
+    "session_id": "session-demo",
+    "service_id": "svc-demo",
+    "status": "failed",
+    "created_at": "2026-06-18T00:00:02Z",
+    "detail": "service failed",
+    "failed_turn_count": 1,
+  }
+  let failed_state = runtime_service_state("session-demo", [started, failed])
+  assert_eq(json_string(failed_state, "status", default=""), "failed")
+  assert_eq(runtime_json_int(failed_state, "failed_count", default=0), 1)
+  assert_eq(runtime_json_int(failed_state, "failed_turn_count", default=0), 1)
 }
 
 ///|
