@@ -608,8 +608,14 @@ async fn moonclaw_executable_candidate(root : String) -> String? {
 ///|
 async fn is_runnable_moonclaw(root : String) -> Bool {
   root != "" &&
-  @fsx.exists(@pathx.join(root, "moon.mod.json")) &&
+  moonclaw_has_module_manifest(root) &&
   @fsx.exists(@pathx.join(root, "cmd/main/moon.pkg"))
+}
+
+///|
+async fn moonclaw_has_module_manifest(root : String) -> Bool {
+  @fsx.exists(@pathx.join(root, "moon.mod")) ||
+  @fsx.exists(@pathx.join(root, "moon.mod.json"))
 }
 
 ///|
@@ -1862,4 +1868,38 @@ test "agent moonclaw log record filters by session time" {
   assert_true(
     moonclaw_event_from_log_record(live_record, cutoff=10, upper=10) is None,
   )
+}
+
+///|
+async test "moonclaw checkout readiness accepts moonbit module manifests" {
+  let root = "/tmp/moondesk-moonclaw-checkout-readiness-wbtest"
+  @fs.rmdir(root, recursive=true) catch {
+    _ => ()
+  }
+  let cmd_main = @pathx.join(root, "cmd/main")
+  @fsx.make_directory(cmd_main, recursive=true, exists_ok=true)
+  @fsx.write_to_file(
+    @pathx.join(cmd_main, "moon.pkg"),
+    "import {}\n",
+    create=0o644,
+  )
+  @fsx.write_to_file(
+    @pathx.join(root, "moon.mod"),
+    "module moonclaw\n",
+    create=0o644,
+  )
+  assert_true(is_runnable_moonclaw(root))
+  @fs.remove(@pathx.join(root, "moon.mod")) catch {
+    _ => ()
+  }
+  @fsx.write_to_file(
+    @pathx.join(root, "moon.mod.json"),
+    "{ \"name\": \"moonclaw\" }\n",
+    create=0o644,
+  )
+  assert_true(is_runnable_moonclaw(root))
+  @fs.remove(@pathx.join(root, "cmd/main/moon.pkg")) catch {
+    _ => ()
+  }
+  assert_false(is_runnable_moonclaw(root))
 }
