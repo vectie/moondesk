@@ -122,6 +122,9 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
   if rq_json_string(endpoints, "session_store", default="") == "" {
     missing.push("endpoint.session_store")
   }
+  if rq_json_string(endpoints, "production_readiness", default="") == "" {
+    missing.push("endpoint.production_readiness")
+  }
   if rq_json_string(endpoints, "claim", default="") == "" {
     missing.push("endpoint.claim")
   }
@@ -172,6 +175,9 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
   if !runtime_supervisor_has_loop_step(loop_steps, "report-eval") {
     missing.push("loop.report-eval")
   }
+  if !runtime_supervisor_has_loop_step(loop_steps, "check-production-readiness") {
+    missing.push("loop.check-production-readiness")
+  }
   let ok = missing.length() == 0
   {
     "kind": "mooncode-runtime-supervisor-readiness",
@@ -192,6 +198,7 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
     rq_json_string(endpoints, "ack", default="") != "" &&
     rq_json_string(endpoints, "runtime_events", default="") != "" &&
     rq_json_string(endpoints, "session_store", default="") != "" &&
+    rq_json_string(endpoints, "production_readiness", default="") != "" &&
     rq_json_string(endpoints, "stream", default="") != "" &&
     rq_json_string(endpoints, "native_session_listing", default="") != "" &&
     rq_json_string(endpoints, "native_commands", default="") != "" &&
@@ -210,7 +217,8 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
     runtime_supervisor_has_loop_step(loop_steps, "execute-turn") &&
     runtime_supervisor_has_loop_step(loop_steps, "stream-events") &&
     runtime_supervisor_has_loop_step(loop_steps, "acknowledge") &&
-    runtime_supervisor_has_loop_step(loop_steps, "report-eval"),
+    runtime_supervisor_has_loop_step(loop_steps, "report-eval") &&
+    runtime_supervisor_has_loop_step(loop_steps, "check-production-readiness"),
     "safety_boundary": "Readiness means the launch packet is well formed for a MoonClaw or standalone mooncode consumer. It does not mean Moondesk may execute tools.",
   }
 }

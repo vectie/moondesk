@@ -646,6 +646,16 @@ test "mooncode runtime execution plan endpoint projection exposes next command" 
   )
   assert_eq(json_string(supervisor, "command_id", default=""), "cmd-1")
   assert_true(json_bool(supervisor, "ready_to_launch", default=false))
+  let supervisor_endpoints = json_object_field_or_empty(supervisor, "endpoints")
+  assert_eq(
+    json_string(supervisor_endpoints, "production_readiness", default=""),
+    "/api/mooncode/sessions/session-demo/production-readiness",
+  )
+  let supervisor_loop = json_array_items(supervisor, "supervisor_loop")
+  assert_eq(
+    json_string(supervisor_loop[6], "id", default=""),
+    "check-production-readiness",
+  )
   let readiness = json_object_field_or_empty(supervisor, "readiness")
   assert_eq(
     json_string(readiness, "kind", default=""),

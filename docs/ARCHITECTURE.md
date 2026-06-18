@@ -1308,12 +1308,14 @@ Implemented behavior:
 - `GET /api/mooncode/sessions/:id/runtime-supervisor` returns a declarative
   MoonClaw/standalone-MoonCode launch packet for the next turn. It combines the
   runtime turn packet, runtime consumer handoff, workspace root, MoonClaw root,
-  bridge/native mode, claim/ack/event/session endpoints, launch-blocked reason,
-  launch request, and ordered supervisor loop. Moondesk records and renders this
-  packet, including its embedded readiness report and missing launch
-  requirements; MoonClaw or standalone `mooncode` remains responsible for
-  claiming, executing tools, streaming proof events, and acknowledging
-  completion.
+  bridge/native mode, claim/ack/event/session/production-readiness endpoints,
+  launch-blocked reason, launch request, and ordered supervisor loop. The loop
+  ends with a `check-production-readiness` step after eval reporting, so the
+  runtime can fetch the same compact production gate as the Moondesk Readiness
+  panel. Moondesk records and renders this packet, including its embedded
+  readiness report and missing launch requirements; MoonClaw or standalone
+  `mooncode` remains responsible for claiming, executing tools, streaming proof
+  events, and acknowledging completion.
 - `GET /api/mooncode/sessions/:id/runtime-dispatch` returns durable dispatch
   receipt state from
   `.moontown/mooncode-sessions/<session-id>/runtime-dispatches.jsonl`. Receipts

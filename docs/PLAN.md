@@ -423,7 +423,10 @@ Moondesk also now exposes
 responses, and saved runtime handoff manifests. The packet gives MoonClaw or a
 future standalone `mooncode` runtime a single declarative launch view: current
 status, bridge/native mode, workspace root, MoonClaw root, claim/ack/event
-endpoints, launch-blocked reason, launch request, and ordered supervisor loop.
+endpoints, production-readiness endpoint, launch-blocked reason, launch request,
+and ordered supervisor loop. The loop now ends with
+`check-production-readiness`, making the post-run production gate an explicit
+runtime checkpoint instead of only a UI panel fetch.
 `POST /api/mooncode/sessions/<id>/runtime-supervisor` is now the operator launch
 action for that boundary: Moondesk asks MoonClaw to run a bounded native
 runtime-loop, falls back to a single native runtime-turn when needed, ingests

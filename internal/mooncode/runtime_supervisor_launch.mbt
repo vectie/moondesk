@@ -46,6 +46,10 @@ pub fn runtime_supervisor_launch_packet(
       host_base_url,
       "/api/mooncode/sessions/\{session_id}/runtime-supervisor",
     ),
+    "production_readiness": runtime_supervisor_url(
+      host_base_url,
+      "/api/mooncode/sessions/\{session_id}/production-readiness",
+    ),
     "runtime_commands": runtime_supervisor_url(
       host_base_url,
       "/api/mooncode/sessions/\{session_id}/runtime-commands",
@@ -209,6 +213,15 @@ pub fn runtime_supervisor_launch_packet(
           ),
         ),
         "purpose": "Attach native tool/file-edit/patch-review/command-execution/package-output eval harness evidence when available.",
+      },
+      {
+        "id": "check-production-readiness",
+        "method": "GET",
+        "endpoint": runtime_supervisor_url(
+          host_base_url,
+          "/api/mooncode/sessions/\{session_id}/production-readiness",
+        ),
+        "purpose": "Fetch the compact production gate after replay/eval/package evidence so the runtime and Moondesk agree on remaining blockers.",
       },
     ],
     "turn_packet": turn_packet,

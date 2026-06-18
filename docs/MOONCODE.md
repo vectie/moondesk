@@ -592,14 +592,15 @@ book's `events.jsonl`, and executes the same bounded native `runtime-loop`.
 Moondesk exposes this through
 `POST /api/mooncode/sessions/<id>/runtime-service` and a `Start Service` action
 beside `Run Native Loop`, then refreshes the stream, claim state, event sink,
-evidence, tests, packages, and action plan. The runtime panel now also projects
-the latest service lifecycle state from durable `runtime.service_*` events and
-exposes `Stop Service` as an explicit MoonCode `cancel` command, matching the
-OpenSeek serve-mode shape where cancellation is ordered through the runtime
-command stream instead of killing the desktop shell. This gives Moondesk and a
-future standalone `mooncode` a real service endpoint to discover through
-`/v1/mooncode/capabilities`; richer multi-session service lifecycle controls
-and resume UX are still product hardening work.
+evidence, tests, packages, action plan, and compact production-readiness gate.
+The runtime panel now also projects the latest service lifecycle state from
+durable `runtime.service_*` events and exposes `Stop Service` as an explicit
+MoonCode `cancel` command, matching the OpenSeek serve-mode shape where
+cancellation is ordered through the runtime command stream instead of killing
+the desktop shell. This gives Moondesk and a future standalone `mooncode` a real
+service endpoint to discover through `/v1/mooncode/capabilities`; richer
+multi-session service lifecycle controls and resume UX are still product
+hardening work.
 
 Output events include assistant/reasoning deltas, tool calls/results, runtime
 updates, file changes, diffs, test results, artifacts, finish/abort, command
@@ -911,9 +912,10 @@ and persists the enriched session.
 The supervisor packet also embeds `readiness`, a
 `mooncode-runtime-supervisor-readiness` report. It verifies that the packet has a
 command id, scheduler permission, claim/ack/runtime-event/session/native
-serve-scheduler endpoints, claim and ack request templates, and the required
+serve-scheduler/production-readiness endpoints, claim and ack request templates, and the required
 `load-session`,
-`claim-command`, `execute-turn`, `stream-events`, and `acknowledge` loop steps.
+`claim-command`, `execute-turn`, `stream-events`, `acknowledge`, `report-eval`,
+and `check-production-readiness` loop steps.
 When a launch is blocked, the UI renders the missing requirements rather than
 leaving operators to inspect raw JSON.
 

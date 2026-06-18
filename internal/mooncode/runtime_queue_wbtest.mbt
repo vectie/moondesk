@@ -514,6 +514,14 @@ test "mooncode runtime consumer execution plan exposes next claimable command" {
   assert_eq(
     rq_json_string(
       rq_json_object_field_or_empty(supervisor, "endpoints"),
+      "production_readiness",
+      default="",
+    ),
+    "http://127.0.0.1:4304/api/mooncode/sessions/s1/production-readiness",
+  )
+  assert_eq(
+    rq_json_string(
+      rq_json_object_field_or_empty(supervisor, "endpoints"),
       "native_session_listing",
       default="",
     ),
@@ -543,7 +551,13 @@ test "mooncode runtime consumer execution plan exposes next claimable command" {
     ),
     "cmd-tests",
   )
-  assert_eq(rq_json_array_items(supervisor, "supervisor_loop").length(), 6)
+  assert_eq(rq_json_array_items(supervisor, "supervisor_loop").length(), 7)
+  let loop_steps = rq_json_array_items(supervisor, "supervisor_loop")
+  assert_eq(
+    rq_json_string(loop_steps[6], "id", default=""),
+    "check-production-readiness",
+  )
+  assert_eq(rq_json_string(loop_steps[6], "method", default=""), "GET")
   let readiness = rq_json_object_field_or_empty(supervisor, "readiness")
   assert_eq(
     rq_json_string(readiness, "kind", default=""),
