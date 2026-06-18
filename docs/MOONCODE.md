@@ -1210,11 +1210,13 @@ queued selected session it POSTs a `steer` command carrying the user's text,
 matching OpenSeek serve mode's "Enter prompts when idle, steers while a turn is
 open" interaction. The legacy `/api/agents/sessions/<id>/message` route remains
 for non-MoonCode agent sessions only.
-The action-plan response now includes a `recommended_command` object for
-single-step operator recovery. It distinguishes UI runtime-loop actions from
-queued MoonCode commands, so the Action Plan can offer `Run Native Loop`,
-`Retry Runtime`, `Refresh Proof`, `Fix Tests`, `Run Tests`, `Package`,
-`Resume`, and `Start Next Turn` without making Moondesk execute tools itself.
+The action-plan response now includes a primary `recommended_command` plus a
+`recommended_commands` array for multi-choice operator recovery. It
+distinguishes UI runtime-loop actions from queued MoonCode commands, so the
+Action Plan can offer `Run Native Loop`, `Retry Runtime`, `Refresh Proof`,
+`Fix Tests`, `Run Tests`, `Package`, `Resume`, and `Start Next Turn`, and it
+can expose paired choices such as `Accept`/`Reject` or
+`Approve Tool`/`Reject Tool` without making Moondesk execute tools itself.
 When steering has been deferred, `Start Next Turn` queues a typed `prompt`
 command with a bounded continuation message, so MoonClaw or standalone MoonCode
 can apply the saved steering in the next eligible turn.

@@ -1431,6 +1431,7 @@ struct MoonCodeActionPlan {
   source_bound_package_count : Int
   next_required_action : String
   recommended_command : MoonCodeActionPlanRecommendedCommand
+  recommended_commands : Array[MoonCodeActionPlanRecommendedCommand]
   actions : Array[MoonCodeActionPlanItem]
   acceptance_gates : MoonCodeActionPlanGates
   rule : String
@@ -12587,28 +12588,48 @@ fn render_mooncode_action_plan_recommended_command(
   dispatch : Dispatch[Msg],
   plan : MoonCodeActionPlan,
 ) -> @rabbita.Html {
-  let command = plan.recommended_command
-  if command.available && command.action != "" && command.label != "" {
-    let click = match command.ui_action {
-      "runtime_loop" => RunMoonCodeRuntimeLoop
-      _ =>
-        RunMoonCodeCommandWithMessage(
-          command.action,
-          command.context_path,
-          command.message,
-          command.status,
+  let commands = if plan.recommended_commands.length() > 0 {
+    plan.recommended_commands
+  } else if plan.recommended_command.available {
+    [plan.recommended_command]
+  } else {
+    []
+  }
+  if commands.length() > 0 {
+    let children : Array[@rabbita.Html] = []
+    for index, command in commands {
+      if command.available && command.action != "" && command.label != "" {
+        children.push(
+          button(
+            class=if index == 0 { "primary-button" } else { "secondary-button" },
+            on_click=dispatch(
+              mooncode_recommended_command_message(command),
+            ),
+            command.label,
+          ),
         )
+      }
     }
-    div(class="toolbar-actions action-plan-actions", [
-      button(
-        class="primary-button",
-        on_click=dispatch(click),
-        command.label,
-      ),
-      span(class="status-line", plan.next_required_action),
-    ])
+    children.push(span(class="status-line", plan.next_required_action))
+    div(class="toolbar-actions action-plan-actions", children)
   } else {
     span(class="hidden-inline", "")
+  }
+}
+
+///|
+fn mooncode_recommended_command_message(
+  command : MoonCodeActionPlanRecommendedCommand
+) -> Msg {
+  match command.ui_action {
+    "runtime_loop" => RunMoonCodeRuntimeLoop
+    _ =>
+      RunMoonCodeCommandWithMessage(
+        command.action,
+        command.context_path,
+        command.message,
+        command.status,
+      )
   }
 }
 

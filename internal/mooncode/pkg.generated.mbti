@@ -34,6 +34,8 @@ pub fn action_plan_projection_response(String, Json, Array[Json], Array[Json], A
 
 pub fn action_plan_recommended_command(String) -> Json
 
+pub fn action_plan_recommended_commands(String) -> Array[Json]
+
 pub fn action_plan_response(String, Json, Array[Json], Json, Array[Json], Array[Json], recorded_at~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
 
 pub fn action_plan_review_count(Array[Json]) -> Int

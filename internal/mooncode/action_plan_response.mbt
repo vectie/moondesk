@@ -206,6 +206,85 @@ pub fn action_plan_recommended_command(next_required_action : String) -> Json {
 }
 
 ///|
+pub fn action_plan_recommended_commands(
+  next_required_action : String,
+) -> Array[Json] {
+  match next_required_action {
+    "resolve_tool_approvals" =>
+      [
+        {
+          "available": true,
+          "ui_action": "mooncode_command",
+          "action": "approve_tool",
+          "label": "Approve Tool",
+          "context_path": "",
+          "message": "",
+          "status": "queued MoonCode tool approval",
+        },
+        {
+          "available": true,
+          "ui_action": "mooncode_command",
+          "action": "reject_tool",
+          "label": "Reject Tool",
+          "context_path": "",
+          "message": "",
+          "status": "queued MoonCode tool rejection",
+        },
+      ]
+    "accept_or_reject_changes" =>
+      [
+        {
+          "available": true,
+          "ui_action": "mooncode_command",
+          "action": "accept",
+          "label": "Accept",
+          "context_path": "",
+          "message": "",
+          "status": "queued MoonCode accept from action plan",
+        },
+        {
+          "available": true,
+          "ui_action": "mooncode_command",
+          "action": "reject",
+          "label": "Reject",
+          "context_path": "",
+          "message": "",
+          "status": "queued MoonCode reject from action plan",
+        },
+      ]
+    "ready_for_book_review" =>
+      [
+        {
+          "available": true,
+          "ui_action": "mooncode_command",
+          "action": "package",
+          "label": "Package",
+          "context_path": "",
+          "message": "",
+          "status": "queued MoonCode package from review-ready plan",
+        },
+        {
+          "available": true,
+          "ui_action": "mooncode_command",
+          "action": "commit",
+          "label": "Commit",
+          "context_path": "",
+          "message": "",
+          "status": "queued MoonCode commit from review-ready plan",
+        },
+      ]
+    _ => {
+      let primary = action_plan_recommended_command(next_required_action)
+      if json_bool(primary, "available", default=false) {
+        [primary]
+      } else {
+        []
+      }
+    }
+  }
+}
+
+///|
 pub fn action_plan_response(
   session_id : String,
   session : Json,
@@ -227,6 +306,7 @@ pub fn action_plan_response(
     actions, "ready-for-review",
   )
   let completed_count = action_plan_state_count(actions, "completed")
+  let next_required_action = action_plan_next_required_action(summary, actions)
   {
     "kind": "mooncode-action-plan",
     "protocol": protocol_version(),
@@ -291,9 +371,10 @@ pub fn action_plan_response(
       "source_bound_package_count",
       default=0,
     ),
-    "next_required_action": action_plan_next_required_action(summary, actions),
-    "recommended_command": action_plan_recommended_command(
-      action_plan_next_required_action(summary, actions),
+    "next_required_action": next_required_action,
+    "recommended_command": action_plan_recommended_command(next_required_action),
+    "recommended_commands": Json::array(
+      action_plan_recommended_commands(next_required_action),
     ),
     "actions": Json::array(actions),
     "runtime_replay": runtime_replay_state(

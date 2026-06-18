@@ -62,6 +62,14 @@ test "mooncode action plan response owns aggregate surface" {
     "mooncode_command",
   )
   assert_eq(json_string(recommended, "label", default=""), "Package")
+  let recommended_commands = runtime_json_array_items(
+    response, "recommended_commands",
+  )
+  assert_eq(recommended_commands.length(), 1)
+  assert_eq(
+    json_string(recommended_commands[0], "action", default=""),
+    "package",
+  )
   assert_true(runtime_json_object_field(response, "runtime_replay") is Some(_))
   assert_true(
     runtime_json_object_field(response, "acceptance_gates") is Some(_),
@@ -217,4 +225,67 @@ test "mooncode action plan recommends runtime loop and repair prompts" {
   assert_eq(json_string(resume_command, "label", default=""), "Resume")
   let review = action_plan_recommended_command("accept_or_reject_changes")
   assert_false(json_bool(review, "available", default=true))
+}
+
+///|
+test "mooncode action plan recommends review and tool approval choices" {
+  let review_commands = action_plan_recommended_commands(
+    "accept_or_reject_changes",
+  )
+  assert_eq(review_commands.length(), 2)
+  assert_eq(json_string(review_commands[0], "action", default=""), "accept")
+  assert_eq(json_string(review_commands[0], "label", default=""), "Accept")
+  assert_eq(json_string(review_commands[1], "action", default=""), "reject")
+  assert_eq(json_string(review_commands[1], "label", default=""), "Reject")
+  let tool_commands = action_plan_recommended_commands("resolve_tool_approvals")
+  assert_eq(tool_commands.length(), 2)
+  assert_eq(json_string(tool_commands[0], "action", default=""), "approve_tool")
+  assert_eq(json_string(tool_commands[1], "action", default=""), "reject_tool")
+  let ready_commands = action_plan_recommended_commands("ready_for_book_review")
+  assert_eq(ready_commands.length(), 2)
+  assert_eq(json_string(ready_commands[0], "action", default=""), "package")
+  assert_eq(json_string(ready_commands[1], "action", default=""), "commit")
+}
+
+///|
+test "mooncode action plan response carries multi-choice recommendations" {
+  let response = action_plan_response(
+    "session-review",
+    {
+      "id": "session-review",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo Book",
+      "moonclaw_task_id": "task-demo",
+    },
+    [{ "command_id": "cmd-review", "action": "prompt", "state": "completed" }],
+    {
+      "verified_test_count": 1,
+      "failed_test_count": 0,
+      "pending_diff_count": 1,
+      "pending_tool_approval_count": 0,
+      "pending_steer_count": 0,
+      "deferred_steer_count": 0,
+      "source_bound_package_count": 1,
+    },
+    [],
+    [],
+    recorded_at="2026-06-16T00:00:00Z",
+    runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+  )
+  assert_eq(
+    json_string(response, "next_required_action", default=""),
+    "accept_or_reject_changes",
+  )
+  assert_false(
+    json_bool(
+      runtime_json_object_field_or_empty(response, "recommended_command"),
+      "available",
+      default=true,
+    ),
+  )
+  let commands = runtime_json_array_items(response, "recommended_commands")
+  assert_eq(commands.length(), 2)
+  assert_eq(json_string(commands[0], "action", default=""), "accept")
+  assert_eq(json_string(commands[1], "action", default=""), "reject")
 }
