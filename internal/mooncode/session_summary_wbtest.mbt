@@ -55,7 +55,7 @@ test "mooncode session summary counts reviewable code events" {
   assert_eq(summary_json_int(summary, "pending_diff_count", default=9), 0)
   assert_true(summary_json_int(summary, "production_score", default=0) > 0)
   assert_eq(json_string(summary, "production_level", default=""), "prototype")
-  assert_eq(json_array_items(summary, "production_checks").length(), 12)
+  assert_eq(json_array_items(summary, "production_checks").length(), 14)
 }
 
 ///|
@@ -243,6 +243,18 @@ test "mooncode session summary scores production-grade coding flow" {
         "kind": "mooncode-package-index",
         "source_bound_package_count": 1,
       },
+      "mooncode_last_action_plan_manifest": {
+        "kind": "mooncode-action-plan",
+        "status": "complete",
+        "next_required_action": "completed",
+        "blocked_count": 0,
+        "pending_runtime_count": 0,
+        "running_count": 0,
+        "pending_diff_count": 0,
+        "pending_tool_approval_count": 0,
+        "pending_steer_count": 0,
+        "failed_test_count": 0,
+      },
     },
     events,
   )
@@ -253,15 +265,60 @@ test "mooncode session summary scores production-grade coding flow" {
   )
   assert_eq(
     summary_json_int(summary, "production_passed_check_count", default=0),
-    12,
+    14,
   )
-  assert_eq(summary_json_int(summary, "production_check_count", default=0), 12)
+  assert_eq(summary_json_int(summary, "production_check_count", default=0), 14)
   let checks = json_array_items(summary, "production_checks")
   assert_eq(json_string(checks[0], "id", default=""), "moonbook_selected")
   assert_eq(
     json_string(checks[checks.length() - 1], "id", default=""),
     "extractable_boundary",
   )
+}
+
+///|
+test "mooncode session summary reports live action blockers in production checks" {
+  let summary = session_summary(
+    {
+      "id": "s1",
+      "workspace_id": "book",
+      "moonclaw_task_id": "task",
+      "mooncode_last_action_plan_manifest": {
+        "kind": "mooncode-action-plan",
+        "status": "blocked",
+        "next_required_action": "resolve_tool_approvals",
+        "blocked_count": 1,
+        "pending_runtime_count": 1,
+        "running_count": 0,
+        "pending_diff_count": 1,
+        "pending_tool_approval_count": 1,
+        "pending_steer_count": 0,
+        "failed_test_count": 0,
+      },
+    },
+    [],
+  )
+  let checks = json_array_items(summary, "production_checks")
+  let mut found_action_plan = false
+  let mut found_blockers = false
+  for check in checks {
+    match json_string(check, "id", default="") {
+      "action_plan_current" => {
+        found_action_plan = true
+        assert_true(json_bool(check, "ok", default=false))
+      }
+      "live_blockers_clear" => {
+        found_blockers = true
+        assert_false(json_bool(check, "ok", default=true))
+        assert_true(
+          json_string(check, "evidence", default="").contains("pending tools 1"),
+        )
+      }
+      _ => ()
+    }
+  }
+  assert_true(found_action_plan)
+  assert_true(found_blockers)
 }
 
 ///|

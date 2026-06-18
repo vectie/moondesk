@@ -35,6 +35,48 @@ pub fn session_production_checks(
   let patch_set_manifest_count = count_patch_set_manifests(events)
   let test_runs_manifest_count = count_test_runs_manifests(events)
   let runtime_handoff_manifest_count = count_runtime_handoff_manifests(events)
+  let action_plan = summary_json_object_field_or_empty(
+    session, "mooncode_last_action_plan_manifest",
+  )
+  let action_plan_ready = json_string(action_plan, "kind", default="") ==
+    "mooncode-action-plan"
+  let action_plan_status = json_string(action_plan, "status", default="")
+  let next_required_action = json_string(
+    action_plan,
+    "next_required_action",
+    default="",
+  )
+  let blocked_action_count = summary_json_int(
+    action_plan,
+    "blocked_count",
+    default=0,
+  )
+  let pending_runtime_count = summary_json_int(
+    action_plan,
+    "pending_runtime_count",
+    default=0,
+  )
+  let running_count = summary_json_int(action_plan, "running_count", default=0)
+  let pending_action_diff_count = summary_json_int(
+    action_plan,
+    "pending_diff_count",
+    default=0,
+  )
+  let pending_action_tool_approval_count = summary_json_int(
+    action_plan,
+    "pending_tool_approval_count",
+    default=0,
+  )
+  let pending_action_steer_count = summary_json_int(
+    action_plan,
+    "pending_steer_count",
+    default=0,
+  )
+  let failed_action_test_count = summary_json_int(
+    action_plan,
+    "failed_test_count",
+    default=failed_test_count,
+  )
   let source_bound_package_count = count_source_bound_packages(
     session, package_manifest_count,
   )
@@ -155,12 +197,42 @@ pub fn session_production_checks(
       "\{artifact_count} artifact event(s), \{source_bound_package_count} source-bound package(s), \{package_index_manifest_count} package index manifest(s), \{runtime_verified_package_count}/\{runtime_package_proof_count} verified runtime package proof",
     ),
     production_grade_check(
+      "action_plan_current",
+      "Current action plan",
+      action_plan_ready,
+      if action_plan_ready {
+        "status \{empty_production_label(action_plan_status)}, next \{empty_production_label(next_required_action)}"
+      } else {
+        "no MoonBook action-plan manifest"
+      },
+    ),
+    production_grade_check(
+      "live_blockers_clear",
+      "Live blockers clear",
+      action_plan_ready &&
+      blocked_action_count == 0 &&
+      pending_action_diff_count == 0 &&
+      pending_action_tool_approval_count == 0 &&
+      pending_action_steer_count == 0 &&
+      failed_action_test_count == 0,
+      "blocked \{blocked_action_count}, pending runtime \{pending_runtime_count}, running \{running_count}, pending diffs \{pending_action_diff_count}, pending tools \{pending_action_tool_approval_count}, pending steers \{pending_action_steer_count}, failing tests \{failed_action_test_count}",
+    ),
+    production_grade_check(
       "extractable_boundary",
       "Extractable MoonCode boundary",
       runtime_handoff_manifest_count > 0,
       "\{runtime_handoff_manifest_count} runtime handoff manifest(s); MoonCode owns protocol/projection while MoonClaw owns execution",
     ),
   ]
+}
+
+///|
+fn empty_production_label(value : String) -> String {
+  if value == "" {
+    "empty"
+  } else {
+    value
+  }
 }
 
 ///|
