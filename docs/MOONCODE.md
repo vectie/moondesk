@@ -555,6 +555,15 @@ drains request a short wait for rapid follow-on steering, while the explicit
 `Run Native Loop` action posts `live_wait_ms=5000` and `poll_ms=250` unless an
 API caller overrides those values.
 
+MoonClaw also exposes a daemon-owned background supervisor slice at
+`/v1/mooncode/sessions/<id>/runtime-service?book_root=<path>`. It starts a
+task-group service outside the request lifecycle, appends
+`runtime.service_started` and `runtime.service_finished` events to the selected
+book's `events.jsonl`, and executes the same bounded native `runtime-loop`.
+This gives Moondesk and a future standalone `mooncode` a real service endpoint
+to discover through `/v1/mooncode/capabilities`; richer multi-session service
+lifecycle controls and resume UX are still product hardening work.
+
 Output events include assistant/reasoning deltas, tool calls/results, runtime
 updates, file changes, diffs, test results, artifacts, finish/abort, command
 errors, and dropped steering. This is now rendered in the MoonCode inspector as

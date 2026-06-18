@@ -316,6 +316,8 @@ pub fn moonclaw_native_runtime_events_endpoint(String, String) -> String
 
 pub fn moonclaw_native_runtime_loop_endpoint(String, String) -> String
 
+pub fn moonclaw_native_runtime_service_endpoint(String, String) -> String
+
 pub fn moonclaw_native_runtime_session_patch(Json, Json, String, String) -> Json
 
 pub fn moonclaw_native_runtime_turn_endpoint(String, String) -> String

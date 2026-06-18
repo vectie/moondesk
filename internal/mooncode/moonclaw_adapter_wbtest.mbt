@@ -22,6 +22,11 @@ test "mooncode moonclaw adapter maps moonclaw tools to mooncode tools" {
   assert_true(
     contract
     .stringify()
+    .contains("/v1/mooncode/sessions/<id>/runtime-service?book_root=<path>"),
+  )
+  assert_true(
+    contract
+    .stringify()
     .contains("/v1/mooncode/sessions/<id>/runtime-events?book_root=<path>"),
   )
   assert_true(
@@ -57,6 +62,11 @@ test "mooncode validates moonclaw native capabilities before using runtime" {
   assert_true(
     native_capability_required_endpoints().contains(
       "/v1/mooncode/sessions/<id>/package-result?book_root=<path>",
+    ),
+  )
+  assert_true(
+    native_capability_required_endpoints().contains(
+      "/v1/mooncode/sessions/<id>/runtime-service?book_root=<path>",
     ),
   )
   assert_true(moonclaw_native_required_tools().contains("moon_ide"))
@@ -470,6 +480,10 @@ test "mooncode moonclaw adapter owns native runtime request bodies" {
   assert_eq(
     moonclaw_native_runtime_loop_endpoint("session one", "/tmp/moon book"),
     "/v1/mooncode/sessions/session%20one/runtime-loop?book_root=%2Ftmp%2Fmoon%20book",
+  )
+  assert_eq(
+    moonclaw_native_runtime_service_endpoint("session one", "/tmp/moon book"),
+    "/v1/mooncode/sessions/session%20one/runtime-service?book_root=%2Ftmp%2Fmoon%20book",
   )
   assert_eq(
     moonclaw_native_runtime_turn_endpoint("session one", "/tmp/moon book"),

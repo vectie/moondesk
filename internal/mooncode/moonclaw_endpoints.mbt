@@ -15,6 +15,14 @@ pub fn moonclaw_native_runtime_loop_endpoint(
 }
 
 ///|
+pub fn moonclaw_native_runtime_service_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/runtime-service?book_root=\{moonclaw_query_value(book_root)}"
+}
+
+///|
 pub fn moonclaw_native_runtime_turn_endpoint(
   session_id : String,
   book_root : String,

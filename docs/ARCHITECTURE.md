@@ -1498,10 +1498,14 @@ Implemented behavior:
   reasoning/assistant/tool-call events, deterministic fallback, and
   scheduler-owned idle control drops. MoonClaw
   native runtime-loop now supervises repeated runtime-turns over the durable
-  queue until idle, failure, cancel, or max-turns, and Moondesk prefers that
-  endpoint with runtime-turn fallback.
-  Broader production-grade live steering, diff review, and model-backed bundle
-  evals remain a MoonClaw/standalone-MoonCode responsibility. Moondesk
+  queue until idle, failure, cancel, or max-turns. MoonClaw also exposes a
+  daemon task-group `runtime-service` endpoint that records
+  `runtime.service_started` / `runtime.service_finished` events around that
+  bounded loop, and Moondesk verifies the endpoint through the shared native
+  capability contract.
+  Broader production-grade live steering lifecycle UX, diff review, and
+  model-backed bundle evals remain a MoonClaw/standalone-MoonCode
+  responsibility. Moondesk
   exposes saved candidates through
   `GET /api/mooncode/sessions/:id/package-candidates` and renders them in the
   MoonCode center pane.
