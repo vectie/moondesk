@@ -10,6 +10,7 @@ pub fn command_packet(
 ) -> Json {
   let workspace_id = json_string(session, "workspace_id", default="")
   let task_id = json_string(session, "moonclaw_task_id", default="")
+  let model = command_model(session, payload)
   {
     "protocol": protocol_version(),
     "kind": kind_command(),
@@ -30,6 +31,7 @@ pub fn command_packet(
       context_path
     },
     "message": message,
+    "model": model,
     "web_search": json_bool(payload, "web_search", default=false),
     "force_preflight": json_bool(payload, "force_preflight", default=false),
     "expected_lanes": string_array_json(command_expected_lanes(action)),
@@ -49,6 +51,18 @@ pub fn command_packet(
       "extractable_component": "mooncode",
     },
   }
+}
+
+///|
+fn command_model(session : Json, payload : Json) -> String {
+  trimmed_or(
+    json_string(
+      payload,
+      "model",
+      default=json_string(session, "model", default=""),
+    ),
+    fallback="",
+  )
 }
 
 ///|

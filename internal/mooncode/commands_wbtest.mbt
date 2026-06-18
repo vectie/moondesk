@@ -193,6 +193,53 @@ test "mooncode projected command packet owns stable command ids" {
 }
 
 ///|
+test "mooncode command model reaches runtime and native body" {
+  let session : Json = {
+    "id": "agent-demo",
+    "workspace_id": "book-demo",
+    "workspace_root": "/tmp/demo-book",
+    "model": "session-model",
+  }
+  let payload : Json = {
+    "context_path": "tools/demo/main.mbt",
+    "model": "payload-model",
+  }
+  let packet = projected_command_packet(
+    session, payload, "prompt", "Build a tool", "2026-06-17T00:00:00Z", "tools/demo/main.mbt",
+  )
+  assert_eq(json_string(packet, "model", default=""), "payload-model")
+  let runtime = runtime_command_record(session, payload, "Build a tool", packet)
+  assert_eq(json_string(runtime, "model", default=""), "payload-model")
+  let native = command_json_object_field_or_empty(
+    runtime, "native_mooncode_body",
+  )
+  assert_eq(json_string(native, "model", default=""), "payload-model")
+  let native_packet = command_json_object_field_or_empty(native, "packet")
+  assert_eq(json_string(native_packet, "model", default=""), "payload-model")
+}
+
+///|
+test "mooncode command model falls back to session model" {
+  let session : Json = {
+    "id": "agent-demo",
+    "workspace_id": "book-demo",
+    "workspace_root": "/tmp/demo-book",
+    "model": "session-model",
+  }
+  let payload : Json = { "context_path": "tools/demo/main.mbt" }
+  let packet = projected_command_packet(
+    session, payload, "prompt", "Build a tool", "2026-06-17T00:00:00Z", "tools/demo/main.mbt",
+  )
+  assert_eq(json_string(packet, "model", default=""), "session-model")
+  let runtime = runtime_command_record(session, payload, "Build a tool", packet)
+  assert_eq(json_string(runtime, "model", default=""), "session-model")
+  let native = command_json_object_field_or_empty(
+    runtime, "native_mooncode_body",
+  )
+  assert_eq(json_string(native, "model", default=""), "session-model")
+}
+
+///|
 test "mooncode command queue response owns queue surface" {
   let command : Json = {
     "protocol": protocol_version(),

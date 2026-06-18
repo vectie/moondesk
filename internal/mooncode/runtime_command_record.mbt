@@ -7,6 +7,14 @@ pub fn runtime_command_record(
 ) -> Json {
   let serve_command = openseek_serve_command(message, command_packet)
   let session_id = json_string(session, "id", default="")
+  let model = trimmed_or(
+    json_string(
+      command_packet,
+      "model",
+      default=command_model(session, payload),
+    ),
+    fallback="",
+  )
   let tool_authorization = command_tool_authorization_snapshot(
     session, command_packet,
   )
@@ -22,6 +30,7 @@ pub fn runtime_command_record(
     "approval": json_string(command_packet, "approval", default="none"),
     "serve_command": json_string(serve_command, "command", default="prompt"),
     "text": json_string(serve_command, "text", default=""),
+    "model": model,
     "created_at": json_string(command_packet, "created_at", default=""),
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),

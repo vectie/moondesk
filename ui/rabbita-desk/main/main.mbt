@@ -5510,11 +5510,13 @@ fn mooncode_session_command_cmd(
   } else {
     context_path
   }
+  let selected_model = trimmed_or(model.agent_model, session.model)
   @http.post(
     "/api/mooncode/sessions/\{session.id}/commands",
     @http.Body::Json({
       "action": action,
       "message": message,
+      "model": selected_model,
       "web_search": model.agent_web_search,
       "context_path": target_path,
       "force_preflight": force_preflight,
