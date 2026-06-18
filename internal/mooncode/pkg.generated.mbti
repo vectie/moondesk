@@ -742,6 +742,8 @@ pub fn session_listing_title(Json) -> String
 
 pub fn session_log_relative_dir(String) -> String
 
+pub fn session_package_lifecycle(Json, Array[Json]) -> Json
+
 pub fn session_patch_lifecycle(Array[Json]) -> Json
 
 pub fn session_production_checks(Json, Array[Json]) -> Array[Json]

@@ -778,6 +778,10 @@ Candidates panel with source-bound/missing-source counts, executable-ready
 count, runtime built/verified proof counts, manifest/receipt paths, source
 inventory, promoted-source paths, index status/path, ready entry points, and Open/Test/Accept/Package
 controls.
+The session summary also carries a compact `package_lifecycle` projection so
+the MoonCode header shows package/source-bound/missing-source,
+executable-ready, runtime-built, and runtime-verified state without opening the
+detailed candidate panel.
 The pure MoonCode package now keeps per-command package-manifest construction,
 aggregate package-candidate response projection, package-index construction,
 and per-candidate runtime proof matching in separate implementation files,

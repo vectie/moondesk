@@ -91,6 +91,13 @@ window in the packaged app.
 | Scoped desktop helpers | Working first slice | Finder reveal is scoped under the selected workspace. Browser launch is still implemented for `desktop` and `bundle --shell browser`. Local file picker/drop/paste import is staged through host APIs. Open-with-external-app remains future polish. |
 | Native packaging | Working local distribution | `bundle` builds the native MoonBit host helper plus an AppKit/WebKit launcher, copies bundled UI resources, writes absolute runtime config, signs with `codesign` by default, creates a zip, and bundled launch opens a native window. `release` writes release/update manifests, verifies signing, creates a DMG, and can submit the archive through `xcrun notarytool --keychain-profile`. |
 
+MoonCode session summaries now also expose `package_lifecycle`, a compact
+header-level projection over MoonBook package manifests and the package index.
+It reports package/source-bound/missing-source, executable-ready,
+runtime-built, and runtime-verified state, while the detailed package-candidate
+panel remains the place for manifest paths, source inventory, and operator
+commands.
+
 EB evidence-watch books now also write `raw/analysis-runs/eb-expected-output-contract.json`, a book-local receipt for the exact final XLSX filename, sheet/header, sidecar, lifecycle, official-source, multi-bond, and Bookkeeper acceptance requirements. Contract verification and deterministic output validation use that receipt so the expected workbook shape is auditable without reconstructing it from the prompt, schema, dispatch packet, and starter workbook.
 Run health now surfaces the same receipt as `expected_output_contract_ready` plus an `expected_output_contract` production-checklist item, so missing or stale workbook-contract proof blocks final EB output readiness and appears in the operator-facing health report.
 The Moontown publish receipt, template request, install config, and standing-goal registration receipt now also carry a structured `output_contract` handoff. For EB books that handoff points at `raw/analysis-runs/eb-expected-output-contract.json` and `raw/analysis-runs/eb-output-validation.json`, making the expected XLSX output contract auditable from the scheduler-side records as well as from the book-local verifier.

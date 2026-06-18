@@ -1202,8 +1202,11 @@ Implemented behavior:
   executable-ready count, manifest/receipt paths, candidate paths, source
   inventory, package-index status/path, and ready entry points so Moondesk can
   render Open, Test, Accept, and Package controls without owning bundle
-  assembly. The aggregate response projection is a separate MoonCode slice from
-  per-command package manifest construction and package-index construction.
+  assembly. `mooncode_summary.package_lifecycle` reuses the same MoonBook
+  manifests and index to render header-level package/source-bound/missing-source,
+  executable-ready, runtime-built, and runtime-verified state. The aggregate
+  response projection is a separate MoonCode slice from per-command package
+  manifest construction and package-index construction.
 - `GET /api/mooncode/sessions/:id/eval-report` returns a
   `mooncode-eval-report` projection over the session summary checks. It reports
   bridge score, bridge level, passed/missing checks, required native harnesses,

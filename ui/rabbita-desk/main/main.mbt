@@ -410,6 +410,7 @@ struct MoonCodeSummary {
   moonbook_change_set_manifest_count : Int
   moonbook_patch_set_manifest_count : Int
   patch_lifecycle : Json
+  package_lifecycle : Json
   runtime_patch_execution_proof_count : Int
   moonbook_tool_approvals_manifest_count : Int
   moonbook_test_runs_manifest_count : Int
@@ -11547,6 +11548,7 @@ fn render_mooncode_session_header(
     render_mooncode_steering_lifecycle(summary),
     render_mooncode_cancel_lifecycle(summary),
     render_mooncode_patch_lifecycle(summary),
+    render_mooncode_package_lifecycle(summary),
   ])
 }
 
@@ -11851,6 +11853,119 @@ fn mooncode_patch_lifecycle_class(status : String) -> String {
     "runtime-proven" | "ready" => "accepted"
     "runtime-needed" | "needs-review" => "queued"
     "blocked" => "rejected"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_package_lifecycle(
+  summary : MoonCodeSummary
+) -> @rabbita.Html {
+  let lifecycle = summary.package_lifecycle
+  let rows = json_field_json_array_items(lifecycle, "rows")
+  div(class="mooncode-output-roots package-lifecycle", [
+    div(class="mooncode-stream-header compact-header", [
+      div([
+        p(class="eyebrow", "bundle/package assembly"),
+        h3("Package Lifecycle"),
+      ]),
+      span(
+        class="record-kind",
+        empty_label(json_field_string(lifecycle, "latest_status", default="idle")),
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Packages", json_field_int(lifecycle, "package_count", default=0).to_string()),
+      info_chip("Source-bound", json_field_int(lifecycle, "source_bound_package_count", default=0).to_string()),
+      info_chip("Missing Source", json_field_int(lifecycle, "missing_source_package_count", default=0).to_string()),
+      info_chip("Executable-ready", json_field_int(lifecycle, "executable_ready_count", default=0).to_string()),
+      info_chip("Runtime Verified", json_field_int(lifecycle, "runtime_verified_package_count", default=0).to_string()),
+    ]),
+    if rows.length() == 0 {
+      p(class="status-line", "no package candidates recorded")
+    } else {
+      div(
+        class="mooncode-review-list compact",
+        mooncode_recent_package_lifecycle_rows(rows).map(row =>
+          render_mooncode_package_lifecycle_row(row)
+        ),
+      )
+    },
+    div(class="mooncode-session-evidence", [
+      info_row(
+        "Index",
+        empty_label(json_field_string(lifecycle, "package_index_status", default="")),
+      ),
+      info_row(
+        "Index Path",
+        empty_label(json_field_string(lifecycle, "package_index_path", default="")),
+      ),
+      info_row(
+        "Entry Points",
+        json_field_string_array_summary(lifecycle, "entry_points", limit=3),
+      ),
+    ]),
+    p(
+      class="mooncode-event-detail",
+      json_field_string(lifecycle, "next_step", default=""),
+    ),
+  ])
+}
+
+///|
+fn mooncode_recent_package_lifecycle_rows(rows : Array[Json]) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = rows.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 4 {
+    index -= 1
+    recent.push(rows[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_package_lifecycle_row(row : Json) -> @rabbita.Html {
+  let state = json_field_string(row, "execution_state", default="pending")
+  div(class="mooncode-review-item " + mooncode_package_lifecycle_class(state), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(empty_label(json_field_string(row, "context_path", default=""))),
+        small(
+          json_field_string(row, "package_kind", default="package") +
+          " / " +
+          json_field_string(row, "source_inventory_status", default="unknown"),
+        ),
+      ]),
+      span(class="record-kind", state),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Sources", json_field_int(row, "source_present_count", default=0).to_string()),
+      info_chip("Promoted", json_field_int(row, "promoted_source_count", default=0).to_string()),
+      info_chip("Runtime", json_field_int(row, "runtime_proof_count", default=0).to_string()),
+      info_chip(
+        "Verified",
+        if json_field_bool(row, "execution_verified", default=false) {
+          "yes"
+        } else {
+          "no"
+        },
+      ),
+    ]),
+    code(empty_label(json_field_string(row, "manifest_path", default=""))),
+    p(
+      class="mooncode-event-detail",
+      empty_label(json_field_string(row, "next_runtime_step", default="")),
+    ),
+  ])
+}
+
+///|
+fn mooncode_package_lifecycle_class(status : String) -> String {
+  match status {
+    "verified" => "accepted"
+    "built" | "pending" => "queued"
     _ => "queued"
   }
 }

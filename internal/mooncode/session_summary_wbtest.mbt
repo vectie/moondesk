@@ -451,6 +451,94 @@ test "mooncode session summary counts runtime package proof" {
 }
 
 ///|
+test "mooncode session summary exposes package lifecycle" {
+  let events : Array[Json] = [
+    event_record(
+      id="package-proof-1",
+      lane="artifact",
+      kind="runtime.package_verified",
+      title="Package verified by runtime",
+      status="done",
+      created_at="1",
+      detail="verified",
+      path="tools/demo/main.mbt",
+      command="package",
+    ),
+  ]
+  let session_base : Json = {
+    "id": "s1",
+    "workspace_id": "book",
+    "moonclaw_task_id": "task",
+    "mooncode_command_events": events,
+  }
+  let manifest = package_manifest(
+    session_base,
+    { "receipt_path": "wiki/reviews/mooncode/s1/package-cmd-1.json" },
+    { "command_id": "cmd-1" },
+    "tools/demo/main.mbt",
+    "Package tool",
+    "2026-06-15T00:00:00Z",
+    "2026-06-15T00:01:00Z",
+    "portable/app-tool/mooncode/s1/package-cmd-1.json",
+    "/tmp/book/portable/app-tool/mooncode/s1/package-cmd-1.json",
+    [
+      {
+        "path": "tools/demo/main.mbt",
+        "exists": true,
+        "kind": "file",
+        "package_ready": true,
+      },
+    ],
+  )
+  let index = package_index_manifest(
+    session_base,
+    "s1",
+    manifest,
+    [manifest],
+    "2026-06-15T00:02:00Z",
+    "portable/app-tool/mooncode/s1/index.json",
+    "/tmp/book/portable/app-tool/mooncode/s1/index.json",
+    "portable/app-tool/mooncode/s1",
+  )
+  let summary = session_summary(
+    {
+      "id": "s1",
+      "workspace_id": "book",
+      "moonclaw_task_id": "task",
+      "mooncode_last_package_manifest": manifest,
+      "mooncode_last_package_index_manifest": index,
+    },
+    events,
+  )
+  let lifecycle = summary_json_object_field_or_empty(
+    summary, "package_lifecycle",
+  )
+  assert_eq(
+    json_string(lifecycle, "kind", default=""),
+    "mooncode-package-lifecycle",
+  )
+  assert_eq(json_string(lifecycle, "latest_status", default=""), "verified")
+  assert_eq(summary_json_int(lifecycle, "package_count", default=0), 1)
+  assert_eq(
+    summary_json_int(lifecycle, "source_bound_package_count", default=0),
+    1,
+  )
+  assert_eq(summary_json_int(lifecycle, "executable_ready_count", default=0), 1)
+  assert_eq(
+    summary_json_int(lifecycle, "runtime_verified_package_count", default=0),
+    1,
+  )
+  let rows = json_array_items(lifecycle, "rows")
+  assert_eq(rows.length(), 1)
+  assert_eq(json_string(rows[0], "execution_state", default=""), "verified")
+  assert_true(
+    json_string(lifecycle, "next_step", default="").contains(
+      "Verified package proof",
+    ),
+  )
+}
+
+///|
 test "mooncode session summary exposes patch lifecycle" {
   let events : Array[Json] = [
     event_record(

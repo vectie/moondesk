@@ -1752,13 +1752,16 @@ resume bundle assembly and final packaging.
 
 The MoonCode stream gets `package.manifest`, `package.index`,
 `runtime.package_built`, and `runtime.package_verified` artifact events, and
-`mooncode_summary` exposes package manifest/index gates plus runtime package
-proof counts. Source-bound package candidates show that package inputs exist;
-runtime package proof shows that MoonClaw or standalone `mooncode` actually
-assembled and checked a bundle. Moondesk ingests MoonClaw `package_events`
-returned by native runtime-turn/runtime-loop calls, so package verification
-proof is visible immediately after `Run Native Loop` without waiting for a
-separate stream poll.
+`mooncode_summary` exposes package manifest/index gates, runtime package proof
+counts, and a header-level `package_lifecycle` object. Source-bound package
+candidates show that package inputs exist; runtime package proof shows that
+MoonClaw or standalone `mooncode` actually assembled and checked a bundle.
+Moondesk ingests MoonClaw `package_events` returned by native
+runtime-turn/runtime-loop calls, so package verification proof is visible
+immediately after `Run Native Loop` without waiting for a separate stream poll.
+The package lifecycle projection reports package/source-bound/missing-source,
+executable-ready, runtime-built, and runtime-verified counts plus recent
+candidate rows and the next packaging action.
 
 Those candidates are inspectable through:
 
