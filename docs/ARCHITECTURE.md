@@ -1415,8 +1415,8 @@ Implemented behavior:
   target paths, and quick Test/Package controls.
 - Session responses include a `mooncode_summary` eval block with
   `stream_mode`, `stream_source`, `live_stream_ready`, `live_stream_url`,
-  `incremental_stream_ready`, `incremental_stream_url`, `event_log_path`,
-  `append_log_count`,
+  `incremental_stream_ready`, `incremental_stream_url`, `stream_state_url`,
+  `event_log_path`, `append_log_count`,
   `command_log_path`, `command_log_count`, `command_packet_count`, MoonBook
   review receipt count, `pending_diff_count`,
   accepted/rejected review counts, `review_state`, `eval_score`, `eval_level`,

@@ -254,6 +254,11 @@ test "mooncode summary exposes eval readiness gates" {
       "since=<sequence>",
     ),
   )
+  assert_true(
+    json_string(summary, "stream_state_url", default="").contains(
+      "consumer=moondesk-ui",
+    ),
+  )
   assert_eq(
     json_string(summary, "event_log_path", default=""),
     "/tmp/mooncode/events.jsonl",

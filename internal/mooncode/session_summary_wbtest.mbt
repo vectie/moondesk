@@ -57,6 +57,16 @@ test "mooncode session summary counts reviewable code events" {
   assert_true(
     json_string(summary, "live_stream_url", default="").contains("live=true"),
   )
+  assert_true(
+    json_string(summary, "stream_state_url", default="").contains(
+      "stream-state",
+    ),
+  )
+  assert_true(
+    json_string(summary, "stream_state_url", default="").contains(
+      "consumer=moondesk-ui",
+    ),
+  )
   assert_eq(summary_json_int(summary, "verified_test_count", default=0), 1)
   assert_eq(json_string(summary, "review_state", default=""), "accepted")
   assert_eq(summary_json_int(summary, "pending_diff_count", default=9), 0)

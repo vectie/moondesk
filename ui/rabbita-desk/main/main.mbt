@@ -363,6 +363,7 @@ struct MoonCodeSummary {
   live_stream_url : String
   incremental_stream_ready : Bool
   incremental_stream_url : String
+  stream_state_url : String
   event_log_path : String
   append_log_ready : Bool
   append_log_count : Int
@@ -17147,6 +17148,7 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
                 "not ready"
               },
             ),
+            info_row("Stream State", summary.stream_state_url),
             info_row(
               "Append Log",
               if summary.append_log_ready {
