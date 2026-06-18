@@ -1363,6 +1363,12 @@ fetches `package`, `commit`, `accept`, and selected-path `apply_patch`/`revert_p
 gates and renders a Preflight Gates panel before the transcript, so the
 operator sees current test, diff, patch-state, tool-approval, and package
 blockers before clicking a review command.
+The preflight object also carries command metadata from the shared MoonCode
+command registry: `dispatch`, `approval`, `lane`, `title`, `tool_hints`,
+`expected_lanes`, and `required_gates`. Moondesk renders those fields in the
+Preflight Gates panel, and MoonClaw or a standalone `mooncode` client can use
+the same data to explain why a command is ready, blocked, or routed to a
+particular runtime lane.
 Patch review state and patch execution state are deliberately separate:
 operator `apply_patch` / `revert_patch` commands record intent and review
 receipts, while MoonClaw or standalone `mooncode` must emit `patch_applied` or

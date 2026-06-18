@@ -100,6 +100,13 @@ test "mooncode command preflight gates package on pending approvals" {
       "pending tool approvals",
     ),
   )
+  assert_eq(json_string(blocked, "dispatch", default=""), "command")
+  assert_eq(json_string(blocked, "approval", default=""), "operator")
+  assert_eq(json_string(blocked, "lane", default=""), "artifact")
+  assert_true(json_string(blocked, "title", default="").contains("blocked"))
+  assert_true(json_array_items(blocked, "tool_hints").length() > 0)
+  assert_true(json_array_items(blocked, "expected_lanes").length() > 0)
+  assert_true(json_array_items(blocked, "required_gates").length() > 0)
 }
 
 ///|

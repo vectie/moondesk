@@ -1431,6 +1431,13 @@ struct MoonCodeSelectedPatchPreflight {
 ///|
 struct MoonCodeCommandPreflight {
   action : String
+  dispatch : String
+  approval : String
+  lane : String
+  title : String
+  tool_hints : Array[String]
+  expected_lanes : Array[String]
+  required_gates : Array[String]
   blocked : Bool
   reason : String
   context_path : String
@@ -10512,6 +10519,15 @@ fn empty_label(value : String) -> String {
 }
 
 ///|
+fn string_list_label(values : Array[String]) -> String {
+  if values.length() == 0 {
+    "none"
+  } else {
+    values.join(", ")
+  }
+}
+
+///|
 fn latest_run_label(progress : TownProgress) -> String {
   if progress.latest_run == "" {
     "none"
@@ -12321,7 +12337,7 @@ fn render_mooncode_preflight_item(
   div(class="mooncode-review-item " + state, [
     div(class="mooncode-review-head", [
       div([
-        strong(preflight.action),
+        strong(preflight.title),
         small(
           if preflight.context_path == "" {
             "this MoonBook code workspace"
@@ -12344,6 +12360,9 @@ fn render_mooncode_preflight_item(
       },
     ),
     div(class="mooncode-stats", [
+      info_chip("dispatch", preflight.dispatch),
+      info_chip("approval", preflight.approval),
+      info_chip("lane", preflight.lane),
       info_chip(
         "failing tests",
         if preflight.acceptance_gates.no_failing_tests { "clear" } else { "blocked" },
@@ -12364,6 +12383,11 @@ fn render_mooncode_preflight_item(
         "package",
         if preflight.acceptance_gates.has_source_bound_package { "source-bound" } else { "missing" },
       ),
+    ]),
+    div(class="daemon-state compact-state", [
+      info_row("Expected Lanes", string_list_label(preflight.expected_lanes)),
+      info_row("Tool Hints", string_list_label(preflight.tool_hints)),
+      info_row("Required Gates", string_list_label(preflight.required_gates)),
     ]),
     render_mooncode_preflight_selected_patch(preflight.selected_patch),
     div(class="toolbar-actions", [

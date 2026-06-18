@@ -1481,10 +1481,14 @@ Implemented behavior:
   `409 Conflict` while tests are failing, tool approvals are pending, or
   pending diffs lack verified test/build evidence; `apply_patch` and
   `revert_patch` are rejected when no selected patch path exists or the path is
-  not a known patch candidate. Rejected preflight attempts are not written to
-  `commands.jsonl`, but they are written as `preflight.blocked` events in
-  `events.jsonl`, included in the 409 JSON response, and projected into the
-  Action Plan as blocked rows. Moondesk now prefers the
+  not a known patch candidate. Preflight responses also include shared command
+  metadata (`dispatch`, `approval`, `lane`, `title`, `tool_hints`,
+  `expected_lanes`, and `required_gates`) so Moondesk, MoonClaw, and future
+  standalone `mooncode` clients render the same ownership and runtime hints.
+  Rejected preflight attempts are not written to `commands.jsonl`, but they are
+  written as `preflight.blocked` events in `events.jsonl`, included in the 409
+  JSON response, and projected into the Action Plan as blocked rows. Moondesk
+  now prefers the
   MoonClaw-owned native MoonCode runtime when `/v1/mooncode/capabilities`
   passes the MoonCode-owned compatibility check, posting the packet to
   `/v1/mooncode/sessions/<id>/commands`; if that endpoint or required contract
