@@ -138,6 +138,11 @@ test "mooncode engine status projection is extractable from http probing" {
   assert_true(json_bool(ready, "production_ready", default=false))
   assert_true(json_bool(ready, "native_runtime_ready", default=false))
   assert_true(json_bool(ready, "legacy_task_bridge_ready", default=false))
+  let ready_payload = ready.stringify()
+  assert_true(ready_payload.contains("patch_review"))
+  assert_true(ready_payload.contains("command_execution"))
+  assert_true(ready_payload.contains("package_output"))
+  assert_false(ready_payload.contains("tool_harness/file_edit eval slice"))
 }
 
 ///|
@@ -190,6 +195,12 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
     .map(item => item.stringify())
     .contains("\"file_edit\""),
   )
+  let required_harnesses = json_array_items(eval, "required_harnesses").map(item => {
+    item.stringify()
+  })
+  assert_true(required_harnesses.contains("\"patch_review\""))
+  assert_true(required_harnesses.contains("\"command_execution\""))
+  assert_true(required_harnesses.contains("\"package_output\""))
   assert_eq(
     json_string(eval, "harness_contract_endpoint", default=""),
     "/api/mooncode/eval-harness",
@@ -199,6 +210,12 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
     .map(item => item.stringify())
     .contains("\"../openseek/eval/tool_harness\""),
   )
+  let references = json_array_items(eval, "reference_paths").map(item => {
+    item.stringify()
+  })
+  assert_true(references.contains("\"../openseek/eval/patch_review\""))
+  assert_true(references.contains("\"../openseek/eval/command_execution\""))
+  assert_true(references.contains("\"../openseek/eval/package_output\""))
   assert_true(contract.stringify().contains("\"moon_ide\""))
   assert_true(contract.stringify().contains("\"moon_cmd\""))
   let native_eval_report = summary_json_object_field_or_empty(

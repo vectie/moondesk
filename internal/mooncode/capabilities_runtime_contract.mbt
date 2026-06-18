@@ -41,7 +41,8 @@ pub fn runtime_contract_json() -> Json {
         "send prompt/steer/cancel commands and render the event stream",
       ),
       runtime_component(
-        "eval_harness", "openseek/eval/tool_harness + eval/file_edit", "Deterministic tool and file-edit evals that prove the coding agent can safely modify workspace files.",
+        "eval_harness", "openseek/eval/tool_harness + eval/file_edit + eval/patch_review + eval/command_execution + eval/package_output",
+        "Deterministic tool, file-edit, patch-review, command-execution, and package-output evals that prove the coding agent can safely modify, verify, review, and package workspace files.",
         "display eval scores and block production claims when harness evidence is missing",
       ),
     ],
@@ -79,18 +80,22 @@ pub fn runtime_contract_json() -> Json {
     },
     "tool_contract": tool_contract_json(),
     "eval_contract": {
-      "required_harnesses": ["tool_harness", "file_edit"],
+      "required_harnesses": [
+        "tool_harness", "file_edit", "patch_review", "command_execution", "package_output",
+      ],
       "harness_contract_endpoint": "/api/mooncode/eval-harness",
       "reference_paths": [
-        "../openseek/eval/tool_harness", "../openseek/eval/file_edit",
+        "../openseek/eval/tool_harness", "../openseek/eval/file_edit", "../openseek/eval/patch_review",
+        "../openseek/eval/command_execution", "../openseek/eval/package_output",
       ],
       "minimum_evidence": [
         "each built-in tool dispatches through the typed registry", "file edit cases prove final file contents",
-        "moon_ide provides semantic discovery", "moon_cmd/moon_check/test failures surface as test_result events",
+        "patch review and apply/revert proof remains command-scoped", "moon_ide provides semantic discovery",
+        "moon_cmd/moon_check/test failures surface as test_result events", "package output proof records source-bound executable-ready artifacts",
         "finish produces a terminal review summary",
       ],
       "native_eval_report": native_eval_report_contract_json(),
-      "current_gap": "Moondesk exposes readiness gates and MoonClaw now reports a first native tool/file-edit eval harness; the remaining engine gap is autonomous model-backed planning across multi-turn coding work.",
+      "current_gap": "Moondesk exposes readiness gates and MoonClaw reports native baseline harness evidence; the remaining engine gap is broader autonomous model-backed planning across multi-turn coding work.",
     },
   }
 }

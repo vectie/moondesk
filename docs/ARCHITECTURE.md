@@ -266,8 +266,9 @@ Run/artifact projection plus a narrow interactive MoonCode bridge:
   and perform filesystem IO for `.moontown/mooncode-sessions/<session-id>/`
   logs, snapshots, dispatch receipts, and stream checkpoints
 - expose the read-only MoonCode eval-harness contract that maps OpenSeek's
-  `tool_harness` and `file_edit` requirements to the future MoonClaw or
-  extractable `mooncode/eval` backend
+  `tool_harness`, `file_edit`, `patch_review`, `command_execution`, and
+  `package_output` requirements to the future MoonClaw or extractable
+  `mooncode/eval` backend
 - expose read-only MoonCode command preflight gates so Moondesk can display
   package, accept, and path-specific patch blockers before enqueueing operator
   intent, while the POST command endpoint remains the authoritative gate

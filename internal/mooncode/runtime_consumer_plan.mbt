@@ -88,7 +88,7 @@ pub fn runtime_consumer_handoff(
       "execute claimed OpenSeek-compatible command with MoonClaw/MoonCode tools",
       "POST runtime-events for streamed reasoning/tool/diff/test/artifact events",
       "POST runtime-replay with runtime-acknowledged or runtime-completed receipt",
-      "POST eval-report when native tool/file-edit harness evidence is available",
+      "POST eval-report when native tool/file-edit/patch-review/command-execution/package-output harness evidence is available",
     ],
     "safety_boundary": "Moondesk records queue, review, and display state; MoonClaw or standalone mooncode must enforce path, tool, shell, approval, test, and package policy before execution.",
   }

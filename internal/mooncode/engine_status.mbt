@@ -149,7 +149,7 @@ pub fn engine_status_projection_json(
         "adapter=\{adapter_status}; normalizes current MoonClaw task/tool events into mooncode.v1 runtime events",
       ),
       engine_check_json(
-        "eval_harness_evidence", "OpenSeek-style eval evidence", "partial", "MoonClaw reports a first native tool_harness/file_edit eval slice; production-grade behavior still needs broader model-backed coding evals for live steering, diff review, and long-running resume/cancel cases.",
+        "eval_harness_evidence", "OpenSeek-style eval evidence", "partial", "MoonClaw native eval readiness now requires tool_harness, file_edit, patch_review, command_execution, and package_output proof. Production-grade behavior still needs broader model-backed coding eval cases for live steering, diff-review decisions, and long-running resume/cancel workflows.",
       ),
     ],
   }

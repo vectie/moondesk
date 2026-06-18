@@ -449,15 +449,17 @@ model/tool execution, steering, cancellation, and eval proof.
 
 `GET /api/mooncode/eval-harness` is the standalone eval-harness contract for
 the extractable `mooncode` boundary. It names the OpenSeek references
-`../openseek/eval/tool_harness` and `../openseek/eval/file_edit`, required tool
-coverage (`read`, `write`, `edit`, `shell`, `moon_ide`, `moon_cmd`,
-`moon_check`, `finish`),
-file-edit cases (`exact_replace`, `ambiguous_replace`,
-`multiline_replace`, `create_file`, `compile_fix`), evidence rules, report
-schema, and the production rule that both harnesses must be fresh and passing
-for the current MoonClaw build. Moondesk only exposes and renders this contract;
-MoonClaw or a future standalone `mooncode/eval` package must run the harnesses
-and publish `/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`.
+`../openseek/eval/tool_harness`, `../openseek/eval/file_edit`,
+`../openseek/eval/patch_review`, `../openseek/eval/command_execution`, and
+`../openseek/eval/package_output`; required tool coverage (`read`, `write`,
+`edit`, `shell`, `moon_ide`, `moon_cmd`, `moon_check`, `finish`); file-edit
+cases (`exact_replace`, `ambiguous_replace`, `multiline_replace`,
+`create_file`, `compile_fix`); patch/review, command, and package evidence
+rules; report schema; and the production rule that all required harnesses must
+be fresh and passing for the current MoonClaw build. Moondesk only exposes and
+renders this contract; MoonClaw or a future standalone `mooncode/eval` package
+must run the harnesses and publish
+`/v1/mooncode/sessions/<id>/eval-report?book_root=<path>`.
 Each command spec names action, dispatch mode, approval policy, expected event
 lanes, and tool hints. Each tool spec names the tool id, owner, event lane,
 approval policy, purpose, and expected outputs.
@@ -578,7 +580,8 @@ errors, and dropped steering. This is now rendered in the MoonCode inspector as
 a product/runtime contract together with engine readiness. The implementation
 still delegates through the current MoonClaw daemon bridge until MoonClaw owns
 the native engine and reports `/v1/mooncode/capabilities` plus OpenSeek-style
-tool/file-edit eval results.
+tool, file-edit, patch-review, command-execution, and package-output eval
+results.
 
 The session/event routes project existing MoonClaw task events into MoonCode
 lanes:

@@ -46,6 +46,11 @@ test "mooncode moonclaw adapter maps moonclaw tools to mooncode tools" {
       "read/edit/write/apply_patch/revert_patch/shell/moon_ide/moon_cmd/moon_check/finish",
     ),
   )
+  let payload = contract.stringify()
+  assert_true(payload.contains("patch_review"))
+  assert_true(payload.contains("command_execution"))
+  assert_true(payload.contains("package_output"))
+  assert_false(payload.contains("native tool/file-edit eval-report evidence"))
 }
 
 ///|

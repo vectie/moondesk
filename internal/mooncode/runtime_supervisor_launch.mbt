@@ -208,7 +208,7 @@ pub fn runtime_supervisor_launch_packet(
             turn_packet, "native_eval_report",
           ),
         ),
-        "purpose": "Attach native tool/file-edit eval harness evidence when available.",
+        "purpose": "Attach native tool/file-edit/patch-review/command-execution/package-output eval harness evidence when available.",
       },
     ],
     "turn_packet": turn_packet,

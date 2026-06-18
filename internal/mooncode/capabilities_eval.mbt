@@ -10,7 +10,7 @@ pub fn eval_harness_contract_json() -> Json {
     "version": 1,
     "reference": "../openseek/eval",
     "owner": "moonclaw-or-extractable-mooncode",
-    "moondesk_role": "display harness status, expose missing evidence, and block production-ready claims until MoonClaw reports passing tool and file-edit evals",
+    "moondesk_role": "display harness status, expose missing evidence, and block production-ready claims until MoonClaw reports passing tool, file-edit, patch-review, command-execution, and package-output evals",
     "moonclaw_result_endpoint": "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
     "moondesk_projection_endpoint": "/api/mooncode/sessions/<id>/eval-report",
     "required_harnesses": [
