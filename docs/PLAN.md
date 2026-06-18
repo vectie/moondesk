@@ -159,6 +159,13 @@ Moondesk owns the UI and review controls. MoonClaw owns the typed runtime,
 tools, streaming protocol, and test/build execution. MoonBook owns accepted
 code artifacts and generated outputs.
 
+Naming boundary: `MoonCode` currently appears in two places by design. In
+Moondesk it is the human-facing coding/chat workspace next to MoonWiki; in the
+protocol it is the extractable `mooncode.v1` command/session/tool/review
+contract that can later become a standalone library. MoonClaw remains the
+runtime owner for model planning, tools, filesystem edits, tests, packaging,
+streaming, steering, and cancellation until such a standalone runtime exists.
+
 Current implementation slice: Moondesk exposes `mooncode.v1` capability,
 session, event, stream, eval-harness, and command routes. The eval-harness
 route (`GET /api/mooncode/eval-harness`) is the standalone, extractable

@@ -7,6 +7,20 @@ pub fn runtime_contract_json() -> Json {
     "reference": "../openseek",
     "target_component": "moonclaw",
     "extractable_component": "mooncode",
+    "namespace_roles": [
+      namespace_role(
+        "workspace_mode", "Moondesk MoonCode", "Human-facing coding/chat workspace beside MoonWiki; owns navigation, context selection, review controls, and status projection.",
+      ),
+      namespace_role(
+        "extractable_protocol", "mooncode.v1", "Portable command, session, stream, tool, review, and package contracts that can move out as a standalone mooncode library.",
+      ),
+      namespace_role(
+        "runtime_owner", "MoonClaw", "Executes model planning, tool calls, filesystem edits, test/build commands, packaging, streaming, steering, and cancellation.",
+      ),
+      namespace_role(
+        "artifact_owner", "MoonBook", "Stores accepted code artifacts, miniapps, app-tool packages, reviews, command logs, and durable session evidence.",
+      ),
+    ],
     "status": "contract-specified",
     "runtime_protocol": runtime_protocol_contract_json(),
     "components": [
@@ -79,6 +93,11 @@ pub fn runtime_contract_json() -> Json {
       "current_gap": "Moondesk exposes readiness gates and MoonClaw now reports a first native tool/file-edit eval harness; the remaining engine gap is autonomous model-backed planning across multi-turn coding work.",
     },
   }
+}
+
+///|
+fn namespace_role(id : String, name : String, responsibility : String) -> Json {
+  { "id": id, "name": name, "responsibility": responsibility }
 }
 
 ///|

@@ -847,6 +847,13 @@ struct MoonCodeRuntimeComponent {
 } derive(FromJson)
 
 ///|
+struct MoonCodeNamespaceRole {
+  id : String
+  name : String
+  responsibility : String
+} derive(FromJson)
+
+///|
 struct MoonCodeWireCommand {
   command : String
   required_fields : Array[String]
@@ -946,6 +953,7 @@ struct MoonCodeRuntimeContract {
   reference : String
   target_component : String
   extractable_component : String
+  namespace_roles : Array[MoonCodeNamespaceRole]
   status : String
   components : Array[MoonCodeRuntimeComponent]
   wire_protocol : MoonCodeWireProtocol
@@ -15915,6 +15923,17 @@ fn render_mooncode_extraction_role(
 }
 
 ///|
+fn render_mooncode_namespace_role(role : MoonCodeNamespaceRole) -> @rabbita.Html {
+  div(class="mooncode-tool-card", [
+    div(class="mooncode-tool-head", [
+      strong(role.name),
+      span(class="record-kind", role.id),
+    ]),
+    p(role.responsibility),
+  ])
+}
+
+///|
 fn render_mooncode_runtime_contract(
   contract : MoonCodeRuntimeContract
 ) -> @rabbita.Html {
@@ -15923,6 +15942,18 @@ fn render_mooncode_runtime_contract(
       small("Runtime boundary"),
       p(
         "\{contract.reference} -> \{contract.target_component}; extractable as \{contract.extractable_component}",
+      ),
+    ]),
+    div(class="mooncode-wire-block", [
+      div(class="mooncode-tool-head", [
+        strong("Namespace roles"),
+        span(class="record-kind", "one product boundary"),
+      ]),
+      div(
+        class="mooncode-tool-list",
+        contract.namespace_roles.map(role =>
+          render_mooncode_namespace_role(role)
+        ),
       ),
     ]),
     div(

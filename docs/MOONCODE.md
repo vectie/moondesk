@@ -388,7 +388,11 @@ structured `runtime_protocol` and `runtime_contract` derived from the
 `../openseek` reference shape: serve-mode `prompt`/`steer`/`cancel` commands,
 OpenSeek JSONL event names, runtime state, durable sessions, typed tool
 registry, agent loop, JSONL/SSE wire protocol, session store, and eval harness
-requirements. The `serve-scheduler` endpoint exposes the ordered OpenSeek serve
+requirements. The runtime contract now includes `namespace_roles` to prevent
+the overloaded name from hiding ownership: Moondesk MoonCode is the workspace
+mode, `mooncode.v1` is the extractable protocol/library target, MoonClaw is the
+runtime owner, and MoonBook is the artifact owner. The `serve-scheduler`
+endpoint exposes the ordered OpenSeek serve
 loop semantics over the durable MoonCode logs, so MoonClaw or a future
 standalone `mooncode` process can enforce one active turn, queued prompts,
 steer-to-active-or-pending, and cancel-active-or-withdraw-pending behavior
