@@ -840,11 +840,12 @@ lands as a runtime event, improving idle/failure/cancel visibility. Idle steer
 is now persisted as deferred steering context and injected into the next
 eligible MoonCode turn instead of being dropped. The action-plan contract now
 also publishes a `recommended_command`, and the MoonCode center pane renders it
-as a one-click next step such as `Start Next Turn` for deferred steering, while
-still sending a typed command through MoonClaw/MoonCode instead of executing in
-the UI. Richer patch promotion, signed bundle assembly, broader long-running
-steering UX, and broader model-backed eval evidence are still future runtime
-work.
+as a one-click next step for runtime-loop recovery, proof refresh, failed-test
+repair, test/package dispatch, session resume, and deferred steering, while
+still sending typed commands through MoonClaw/MoonCode instead of executing
+tools in the UI. Richer patch promotion, signed bundle assembly, broader
+long-running steering UX, and broader model-backed eval evidence are still
+future runtime work.
 
 ### Output Library
 

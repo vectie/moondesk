@@ -1392,6 +1392,7 @@ struct MoonCodeCommandPreflight {
 ///|
 struct MoonCodeActionPlanRecommendedCommand {
   available : Bool
+  ui_action : String
   action : String
   label : String
   context_path : String
@@ -12588,17 +12589,20 @@ fn render_mooncode_action_plan_recommended_command(
 ) -> @rabbita.Html {
   let command = plan.recommended_command
   if command.available && command.action != "" && command.label != "" {
+    let click = match command.ui_action {
+      "runtime_loop" => RunMoonCodeRuntimeLoop
+      _ =>
+        RunMoonCodeCommandWithMessage(
+          command.action,
+          command.context_path,
+          command.message,
+          command.status,
+        )
+    }
     div(class="toolbar-actions action-plan-actions", [
       button(
         class="primary-button",
-        on_click=dispatch(
-          RunMoonCodeCommandWithMessage(
-            command.action,
-            command.context_path,
-            command.message,
-            command.status,
-          ),
-        ),
+        on_click=dispatch(click),
         command.label,
       ),
       span(class="status-line", plan.next_required_action),

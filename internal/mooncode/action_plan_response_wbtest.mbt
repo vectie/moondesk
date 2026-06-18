@@ -57,6 +57,10 @@ test "mooncode action plan response owns aggregate surface" {
     response, "recommended_command",
   )
   assert_eq(json_string(recommended, "action", default=""), "package")
+  assert_eq(
+    json_string(recommended, "ui_action", default=""),
+    "mooncode_command",
+  )
   assert_eq(json_string(recommended, "label", default=""), "Package")
   assert_true(runtime_json_object_field(response, "runtime_replay") is Some(_))
   assert_true(
@@ -173,10 +177,44 @@ test "mooncode action plan recommends a next turn for deferred steering" {
     response, "recommended_command",
   )
   assert_eq(json_string(recommended, "action", default=""), "prompt")
+  assert_eq(
+    json_string(recommended, "ui_action", default=""),
+    "mooncode_command",
+  )
   assert_eq(json_string(recommended, "label", default=""), "Start Next Turn")
   assert_eq(
     json_string(recommended, "status", default=""),
     "queued next MoonCode turn for deferred steering",
   )
   assert_true(json_string(recommended, "message", default="").length() > 0)
+}
+
+///|
+test "mooncode action plan recommends runtime loop and repair prompts" {
+  let dispatch = action_plan_recommended_command(
+    "dispatch_or_replay_runtime_commands",
+  )
+  assert_true(json_bool(dispatch, "available", default=false))
+  assert_eq(json_string(dispatch, "ui_action", default=""), "runtime_loop")
+  assert_eq(json_string(dispatch, "label", default=""), "Run Native Loop")
+  let proof = action_plan_recommended_command("await_runtime_proof")
+  assert_eq(json_string(proof, "ui_action", default=""), "runtime_loop")
+  assert_eq(json_string(proof, "label", default=""), "Refresh Proof")
+  let failed_tests = action_plan_recommended_command("fix_failed_tests")
+  assert_eq(
+    json_string(failed_tests, "ui_action", default=""),
+    "mooncode_command",
+  )
+  assert_eq(json_string(failed_tests, "action", default=""), "prompt")
+  assert_eq(json_string(failed_tests, "label", default=""), "Fix Tests")
+  assert_true(
+    json_string(failed_tests, "message", default="").contains("failing"),
+  )
+  let resume_command = action_plan_recommended_command(
+    "start_or_resume_session",
+  )
+  assert_eq(json_string(resume_command, "action", default=""), "prompt")
+  assert_eq(json_string(resume_command, "label", default=""), "Resume")
+  let review = action_plan_recommended_command("accept_or_reject_changes")
+  assert_false(json_bool(review, "available", default=true))
 }
