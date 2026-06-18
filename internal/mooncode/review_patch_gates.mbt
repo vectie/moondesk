@@ -7,7 +7,9 @@ fn patch_review_gate_status(
   execution_state : String,
   runtime_proof_count : Int,
 ) -> String {
-  if review_state == "rejected" {
+  if review_state == "partial" || execution_state == "partial" {
+    "partial"
+  } else if review_state == "rejected" {
     "blocked"
   } else if execution_state == "applied" || execution_state == "reverted" {
     "runtime-proven"
@@ -28,7 +30,9 @@ fn patch_review_next_action(
   execution_state : String,
   runtime_proof_count : Int,
 ) -> String {
-  if review_state == "rejected" {
+  if review_state == "partial" || execution_state == "partial" {
+    "review-or-apply-remaining"
+  } else if review_state == "rejected" {
     "none"
   } else if execution_state == "applied" {
     "run_tests"
@@ -55,7 +59,9 @@ fn patch_review_blocked_reason(
   execution_state : String,
   runtime_proof_count : Int,
 ) -> String {
-  if review_state == "rejected" {
+  if review_state == "partial" || execution_state == "partial" {
+    "Only some hunks for this patch target have review or runtime proof; finish the remaining hunk-level decisions before package or commit."
+  } else if review_state == "rejected" {
     "Operator rejected this patch target; accept it again before applying or packaging."
   } else if execution_state == "applied" {
     "Runtime applied this patch target; run tests before package or commit."

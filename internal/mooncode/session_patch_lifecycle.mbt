@@ -9,9 +9,11 @@ pub fn session_patch_lifecycle(events : Array[Json]) -> Json {
   let rejected_count = count_patch_review_state(patches, "rejected")
   let applied_count = count_patch_review_state(patches, "applied")
   let reverted_count = count_patch_review_state(patches, "reverted")
+  let partial_count = count_patch_review_state(patches, "partial")
   let runtime_applied_count = count_patch_execution_state(patches, "applied")
   let runtime_reverted_count = count_patch_execution_state(patches, "reverted")
   let runtime_pending_count = count_patch_execution_state(patches, "pending")
+  let runtime_partial_count = count_patch_execution_state(patches, "partial")
   let gate_counts = patch_lifecycle_gate_counts(patches)
   let rows = [ for patch in patches => patch_lifecycle_row(patch) ]
   {
@@ -20,18 +22,21 @@ pub fn session_patch_lifecycle(events : Array[Json]) -> Json {
     "patch_count": patches.length(),
     "status": patch_set_status(
       accepted_count, rejected_count, applied_count, reverted_count, pending_count,
+      partial_count,
     ),
     "execution_status": patch_execution_set_status(
-      runtime_applied_count, runtime_reverted_count, runtime_pending_count,
+      runtime_applied_count, runtime_reverted_count, runtime_pending_count, runtime_partial_count,
     ),
     "pending_patch_count": pending_count,
     "accepted_patch_count": accepted_count,
     "rejected_patch_count": rejected_count,
     "applied_patch_count": applied_count,
     "reverted_patch_count": reverted_count,
+    "partial_patch_count": partial_count,
     "runtime_applied_patch_count": runtime_applied_count,
     "runtime_reverted_patch_count": runtime_reverted_count,
     "runtime_pending_patch_count": runtime_pending_count,
+    "runtime_partial_patch_count": runtime_partial_count,
     "runtime_patch_proof_count": count_patch_execution_proofs(events),
     "needs_review_count": summary_json_int(
       gate_counts,
@@ -64,6 +69,7 @@ fn patch_lifecycle_gate_counts(patches : Array[Json]) -> Json {
   let mut runtime_proven_count = 0
   let mut blocked_count = 0
   let mut ready_count = 0
+  let mut partial_count = 0
   for patch in patches {
     match json_string(patch, "gate_status", default="") {
       "needs-review" => needs_review_count += 1
@@ -71,6 +77,7 @@ fn patch_lifecycle_gate_counts(patches : Array[Json]) -> Json {
       "runtime-proven" => runtime_proven_count += 1
       "blocked" => blocked_count += 1
       "ready" => ready_count += 1
+      "partial" => partial_count += 1
       _ => ()
     }
   }
@@ -80,6 +87,7 @@ fn patch_lifecycle_gate_counts(patches : Array[Json]) -> Json {
     "runtime_proven_count": runtime_proven_count,
     "blocked_count": blocked_count,
     "ready_count": ready_count,
+    "partial_count": partial_count,
   }
 }
 
@@ -142,10 +150,13 @@ fn patch_lifecycle_next_step(
     default=0,
   )
   let blocked_count = summary_json_int(gate_counts, "blocked_count", default=0)
+  let partial_count = summary_json_int(gate_counts, "partial_count", default=0)
   if needs_review_count > 0 {
     "Accept or reject pending patch targets before packaging or committing."
   } else if runtime_needed_count > 0 {
     "Dispatch apply_patch or revert_patch through MoonClaw and wait for runtime proof."
+  } else if partial_count > 0 {
+    "Finish remaining hunk-level review or runtime proof before packaging or committing."
   } else if blocked_count > 0 {
     "Rejected patch targets block apply/package until the operator accepts them again."
   } else if runtime_proven_count > 0 {

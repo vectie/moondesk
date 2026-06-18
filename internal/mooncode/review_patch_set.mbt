@@ -15,17 +15,20 @@ pub fn patch_set_manifest(
   let applied_count = count_patch_review_state(patches, "applied")
   let reverted_count = count_patch_review_state(patches, "reverted")
   let pending_count = count_patch_review_state(patches, "pending")
+  let partial_count = count_patch_review_state(patches, "partial")
   let runtime_applied_count = count_patch_execution_state(patches, "applied")
   let runtime_reverted_count = count_patch_execution_state(patches, "reverted")
   let runtime_pending_count = count_patch_execution_state(patches, "pending")
+  let runtime_partial_count = count_patch_execution_state(patches, "partial")
   {
     "kind": "mooncode-patch-set",
     "protocol": protocol_version(),
     "status": patch_set_status(
       accepted_count, rejected_count, applied_count, reverted_count, pending_count,
+      partial_count,
     ),
     "execution_status": patch_execution_set_status(
-      runtime_applied_count, runtime_reverted_count, runtime_pending_count,
+      runtime_applied_count, runtime_reverted_count, runtime_pending_count, runtime_partial_count,
     ),
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
@@ -41,9 +44,11 @@ pub fn patch_set_manifest(
     "applied_patch_count": applied_count,
     "reverted_patch_count": reverted_count,
     "pending_patch_count": pending_count,
+    "partial_patch_count": partial_count,
     "runtime_applied_patch_count": runtime_applied_count,
     "runtime_reverted_patch_count": runtime_reverted_count,
     "runtime_pending_patch_count": runtime_pending_count,
+    "runtime_partial_patch_count": runtime_partial_count,
     "runtime_patch_proof_count": count_patch_execution_proofs(events),
     "last_command_packet": summary_json_object_field_or_empty(
       session, "mooncode_last_command_packet",
@@ -126,8 +131,11 @@ fn patch_set_status(
   applied_count : Int,
   reverted_count : Int,
   pending_count : Int,
+  partial_count : Int,
 ) -> String {
-  if reverted_count > 0 {
+  if partial_count > 0 {
+    "partial"
+  } else if reverted_count > 0 {
     "reverted"
   } else if applied_count > 0 {
     "applied"
@@ -147,8 +155,11 @@ fn patch_execution_set_status(
   applied_count : Int,
   reverted_count : Int,
   pending_count : Int,
+  partial_count : Int,
 ) -> String {
-  if reverted_count > 0 {
+  if partial_count > 0 {
+    "partial"
+  } else if reverted_count > 0 {
     "reverted"
   } else if pending_count > 0 && applied_count > 0 {
     "partial"
@@ -164,9 +175,17 @@ fn patch_set_event_entry(event : Json, events : Array[Json]) -> Json {
   let path = json_string(event, "path", default="")
   let diff = json_string(event, "diff", default="")
   let packet = summary_json_object_field_or_empty(event, "command_packet")
-  let review_state = patch_review_state_for_path(path, events)
-  let execution_state = patch_execution_state_for_path(path, events)
   let hunks = patch_hunks(path, diff, events)
+  let review_state = aggregate_patch_target_state(
+    hunks,
+    "review_state",
+    patch_review_state_for_path(path, events),
+  )
+  let execution_state = aggregate_patch_target_state(
+    hunks,
+    "execution_state",
+    patch_execution_state_for_path(path, events),
+  )
   let runtime_proof_count = patch_execution_event_count(path, "", events)
   {
     "id": json_string(event, "id", default=""),
@@ -211,4 +230,22 @@ fn patch_set_event_entry(event : Json, events : Array[Json]) -> Json {
       review_state, execution_state, runtime_proof_count,
     ),
   }
+}
+
+///|
+fn aggregate_patch_target_state(
+  hunks : Array[Json],
+  field : String,
+  fallback : String,
+) -> String {
+  if hunks.length() == 0 {
+    return fallback
+  }
+  let first = json_string(hunks[0], field, default=fallback)
+  for hunk in hunks {
+    if json_string(hunk, field, default=fallback) != first {
+      return "partial"
+    }
+  }
+  first
 }

@@ -150,3 +150,80 @@ test "mooncode patch set separates runtime execution proof from operator review"
     json_string(lifecycle, "next_step", default="").contains("Run tests"),
   )
 }
+
+///|
+test "mooncode patch set reports partial hunk review and execution" {
+  let diff = "@@ -1,1 +1,1 @@\n-old\n+new\n@@ -10,1 +10,1 @@\n-before\n+after"
+  let events : Array[Json] = [
+    event_record(
+      id="diff-1",
+      lane="diff",
+      kind="tool.edit",
+      title="Edit file",
+      status="done",
+      created_at="1",
+      detail="edited",
+      path="tools/demo/main.mbt",
+      diff~,
+    ),
+    event_record(
+      id="review-1",
+      lane="review",
+      kind="command.apply_patch",
+      title="Apply hunk",
+      status="done",
+      created_at="2",
+      detail="operator applied first hunk",
+      path="tools/demo/main.mbt#hunk-1",
+      command="apply_patch",
+    ),
+    event_record(
+      id="runtime-1",
+      lane="review",
+      kind="runtime.patch_applied",
+      title="Hunk applied by runtime",
+      status="done",
+      created_at="3",
+      detail="applied cleanly",
+      path="tools/demo/main.mbt#hunk-1",
+      command="apply_patch",
+    ),
+  ]
+  let manifest = patch_set_manifest(
+    { "id": "s1", "workspace_id": "book" },
+    events,
+    recorded_at="2026-06-18T00:00:00Z",
+    manifest_path="wiki/reviews/mooncode/s1/patch-set.json",
+    absolute_manifest_path="/tmp/book/wiki/reviews/mooncode/s1/patch-set.json",
+  )
+  assert_eq(json_string(manifest, "status", default=""), "partial")
+  assert_eq(json_string(manifest, "execution_status", default=""), "partial")
+  assert_eq(summary_json_int(manifest, "partial_patch_count", default=0), 1)
+  assert_eq(
+    summary_json_int(manifest, "runtime_partial_patch_count", default=0),
+    1,
+  )
+  let patch = json_array_items(manifest, "patches")[0]
+  assert_eq(json_string(patch, "review_state", default=""), "partial")
+  assert_eq(json_string(patch, "execution_state", default=""), "partial")
+  assert_eq(json_string(patch, "gate_status", default=""), "partial")
+  assert_eq(
+    json_string(patch, "next_action", default=""),
+    "review-or-apply-remaining",
+  )
+  assert_true(
+    json_string(patch, "blocked_reason", default="").contains("some hunks"),
+  )
+  let hunks = json_array_items(patch, "hunks")
+  assert_eq(hunks.length(), 2)
+  assert_eq(json_string(hunks[0], "execution_state", default=""), "applied")
+  assert_eq(json_string(hunks[0], "gate_status", default=""), "runtime-proven")
+  assert_eq(json_string(hunks[1], "review_state", default=""), "pending")
+  assert_eq(json_string(hunks[1], "gate_status", default=""), "needs-review")
+  let lifecycle = session_patch_lifecycle(events)
+  assert_eq(json_string(lifecycle, "latest_status", default=""), "partial")
+  assert_eq(summary_json_int(lifecycle, "partial_patch_count", default=0), 1)
+  assert_true(
+    json_string(lifecycle, "next_step", default="").contains("remaining"),
+  )
+}
