@@ -485,6 +485,46 @@ test "mooncode session summary reports live action blockers in production checks
 }
 
 ///|
+test "mooncode production readiness blocks partial patch lifecycle" {
+  let summary = session_summary(
+    {
+      "id": "s1",
+      "workspace_id": "book",
+      "moonclaw_task_id": "task",
+      "mooncode_last_action_plan_manifest": {
+        "kind": "mooncode-action-plan",
+        "status": "review-ready",
+        "next_required_action": "accept_or_reject_changes",
+        "blocked_count": 0,
+        "pending_runtime_count": 0,
+        "running_count": 0,
+        "pending_diff_count": 0,
+        "patch_needs_review_count": 0,
+        "patch_runtime_needed_count": 0,
+        "partial_patch_count": 1,
+        "runtime_partial_patch_count": 1,
+        "pending_tool_approval_count": 0,
+        "pending_steer_count": 0,
+        "failed_test_count": 0,
+      },
+    },
+    [],
+  )
+  let checks = json_array_items(summary, "production_checks")
+  let mut found_blockers = false
+  for check in checks {
+    if json_string(check, "id", default="") == "live_blockers_clear" {
+      found_blockers = true
+      assert_false(json_bool(check, "ok", default=true))
+      let evidence = json_string(check, "evidence", default="")
+      assert_true(evidence.contains("partial patches 1"))
+      assert_true(evidence.contains("runtime partial patches 1"))
+    }
+  }
+  assert_true(found_blockers)
+}
+
+///|
 test "mooncode session projection response attaches events and summary without leaking host fields" {
   let event = event_record(
     id="evt-1",

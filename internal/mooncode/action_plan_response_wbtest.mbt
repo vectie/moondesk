@@ -480,3 +480,69 @@ test "mooncode action plan response carries multi-choice recommendations" {
   assert_eq(json_string(commands[0], "action", default=""), "accept")
   assert_eq(json_string(commands[1], "action", default=""), "reject")
 }
+
+///|
+test "mooncode action plan blocks partial patch lifecycle" {
+  let response = action_plan_response(
+    "session-partial",
+    {
+      "id": "session-partial",
+      "workspace_id": "book-demo",
+      "workspace_name": "Demo Book",
+      "moonclaw_task_id": "task-demo",
+    },
+    [{ "command_id": "cmd-review", "action": "prompt", "state": "completed" }],
+    {
+      "verified_test_count": 1,
+      "failed_test_count": 0,
+      "pending_diff_count": 0,
+      "pending_tool_approval_count": 0,
+      "pending_steer_count": 0,
+      "deferred_steer_count": 0,
+      "source_bound_package_count": 1,
+      "patch_lifecycle": {
+        "kind": "mooncode-patch-lifecycle",
+        "needs_review_count": 0,
+        "runtime_needed_count": 0,
+        "partial_count": 1,
+        "partial_patch_count": 1,
+        "runtime_partial_patch_count": 1,
+      },
+    },
+    [],
+    [],
+    recorded_at="2026-06-18T00:00:00Z",
+    runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
+    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+  )
+  assert_eq(
+    json_string(response, "next_required_action", default=""),
+    "accept_or_reject_changes",
+  )
+  assert_eq(runtime_json_int(response, "pending_diff_count", default=9), 0)
+  assert_eq(
+    runtime_json_int(response, "patch_needs_review_count", default=9),
+    0,
+  )
+  assert_eq(
+    runtime_json_int(response, "patch_runtime_needed_count", default=9),
+    0,
+  )
+  assert_eq(runtime_json_int(response, "partial_patch_count", default=0), 1)
+  assert_eq(
+    runtime_json_int(response, "runtime_partial_patch_count", default=0),
+    1,
+  )
+  let commands = runtime_json_array_items(response, "recommended_commands")
+  assert_eq(commands.length(), 2)
+  assert_eq(json_string(commands[0], "action", default=""), "accept")
+  assert_eq(json_string(commands[1], "action", default=""), "reject")
+  let readiness = runtime_json_object_field_or_empty(
+    response, "production_readiness",
+  )
+  assert_false(json_bool(readiness, "ready", default=true))
+  assert_eq(
+    json_string(readiness, "next_action", default=""),
+    "accept_or_reject_changes",
+  )
+}

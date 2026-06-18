@@ -612,6 +612,9 @@ Patch-set file rows now also report `partial` review/runtime state when only
 some hunks are accepted, applied, reverted, or proven. That keeps the desktop
 review surface from treating one completed hunk as a completed file, while
 leaving hunk rows addressable for precise apply/revert/package preflight.
+The action plan now carries patch needs-review, runtime-needed, partial, and
+runtime-partial counts from `patch_lifecycle`; production readiness fails
+`live_blockers_clear` while any of those counts remain non-zero.
 Moondesk now also exposes `GET/POST
 /api/mooncode/sessions/<id>/runtime-events` as the runtime event sink. MoonClaw
 or an extractable `mooncode` engine can POST OpenSeek-style JSONL events,

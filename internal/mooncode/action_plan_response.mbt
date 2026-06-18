@@ -68,6 +68,20 @@ pub fn action_plan_next_required_action(
   summary : Json,
   actions : Array[Json],
 ) -> String {
+  let patch_lifecycle = runtime_json_object_field_or_empty(
+    summary, "patch_lifecycle",
+  )
+  let patch_needs_review_count = runtime_json_int(
+      patch_lifecycle,
+      "needs_review_count",
+      default=0,
+    ) +
+    runtime_json_int(patch_lifecycle, "partial_count", default=0)
+  let patch_runtime_needed_count = runtime_json_int(
+    patch_lifecycle,
+    "runtime_needed_count",
+    default=0,
+  )
   if action_plan_state_count(actions, "queued-for-runtime") > 0 {
     return "dispatch_or_replay_runtime_commands"
   }
@@ -86,6 +100,12 @@ pub fn action_plan_next_required_action(
   }
   if runtime_json_int(summary, "pending_tool_approval_count", default=0) > 0 {
     return "resolve_tool_approvals"
+  }
+  if patch_needs_review_count > 0 {
+    return "accept_or_reject_changes"
+  }
+  if patch_runtime_needed_count > 0 {
+    return "await_runtime_proof"
   }
   if runtime_json_int(summary, "pending_diff_count", default=0) > 0 &&
     runtime_json_int(summary, "verified_test_count", default=0) == 0 {
@@ -360,6 +380,29 @@ pub fn action_plan_response(
   let base_next_required_action = action_plan_next_required_action(
     summary, actions,
   )
+  let patch_lifecycle = runtime_json_object_field_or_empty(
+    summary, "patch_lifecycle",
+  )
+  let patch_needs_review_count = runtime_json_int(
+    patch_lifecycle,
+    "needs_review_count",
+    default=0,
+  )
+  let patch_runtime_needed_count = runtime_json_int(
+    patch_lifecycle,
+    "runtime_needed_count",
+    default=0,
+  )
+  let partial_patch_count = runtime_json_int(
+    patch_lifecycle,
+    "partial_patch_count",
+    default=0,
+  )
+  let runtime_partial_patch_count = runtime_json_int(
+    patch_lifecycle,
+    "runtime_partial_patch_count",
+    default=0,
+  )
   let production_readiness = action_plan_production_readiness(
     summary, actions, base_next_required_action,
   )
@@ -410,6 +453,10 @@ pub fn action_plan_response(
       "pending_diff_count",
       default=0,
     ),
+    "patch_needs_review_count": patch_needs_review_count,
+    "patch_runtime_needed_count": patch_runtime_needed_count,
+    "partial_patch_count": partial_patch_count,
+    "runtime_partial_patch_count": runtime_partial_patch_count,
     "pending_tool_approval_count": runtime_json_int(
       summary,
       "pending_tool_approval_count",

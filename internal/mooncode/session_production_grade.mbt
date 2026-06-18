@@ -182,6 +182,26 @@ pub fn session_production_checks(
     "pending_diff_count",
     default=0,
   )
+  let patch_needs_review_count = summary_json_int(
+    action_plan,
+    "patch_needs_review_count",
+    default=0,
+  )
+  let patch_runtime_needed_count = summary_json_int(
+    action_plan,
+    "patch_runtime_needed_count",
+    default=0,
+  )
+  let partial_patch_count = summary_json_int(
+    action_plan,
+    "partial_patch_count",
+    default=0,
+  )
+  let runtime_partial_patch_count = summary_json_int(
+    action_plan,
+    "runtime_partial_patch_count",
+    default=0,
+  )
   let pending_action_tool_approval_count = summary_json_int(
     action_plan,
     "pending_tool_approval_count",
@@ -375,10 +395,14 @@ pub fn session_production_checks(
       action_plan_ready &&
       blocked_action_count == 0 &&
       pending_action_diff_count == 0 &&
+      patch_needs_review_count == 0 &&
+      patch_runtime_needed_count == 0 &&
+      partial_patch_count == 0 &&
+      runtime_partial_patch_count == 0 &&
       pending_action_tool_approval_count == 0 &&
       pending_action_steer_count == 0 &&
       failed_action_test_count == 0,
-      "blocked \{blocked_action_count}, pending runtime \{pending_runtime_count}, running \{running_count}, pending diffs \{pending_action_diff_count}, pending tools \{pending_action_tool_approval_count}, pending steers \{pending_action_steer_count}, failing tests \{failed_action_test_count}",
+      "blocked \{blocked_action_count}, pending runtime \{pending_runtime_count}, running \{running_count}, pending diffs \{pending_action_diff_count}, patch needs-review \{patch_needs_review_count}, patch runtime-needed \{patch_runtime_needed_count}, partial patches \{partial_patch_count}, runtime partial patches \{runtime_partial_patch_count}, pending tools \{pending_action_tool_approval_count}, pending steers \{pending_action_steer_count}, failing tests \{failed_action_test_count}",
     ),
     production_grade_check(
       "extractable_boundary",

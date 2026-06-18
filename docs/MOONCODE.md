@@ -1724,7 +1724,9 @@ Reject, Apply, Revert, and Package controls per file path plus per-hunk Accept,
 Reject, Apply, and Revert controls. The panel also renders each target's gate
 status and next action. File rows now report `partial` when hunk-level review or
 runtime proof is mixed, so one applied hunk no longer makes the whole file look
-ready. Those controls enqueue MoonCode review commands;
+ready. The action plan and production-readiness gate also treat partial patch
+state as an active blocker, so package/commit readiness cannot pass while a file
+has unfinished hunk review or runtime proof. Those controls enqueue MoonCode review commands;
 Moondesk does not directly edit files. Runtime proof chips show whether
 MoonClaw has posted `patch_applied` or `patch_reverted` evidence for the
 selected file or hunk. This is closer to the Codex/OpenSeek review workflow than
