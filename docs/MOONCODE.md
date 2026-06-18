@@ -1499,9 +1499,13 @@ MoonClaw is expected to execute without opening raw JSON.
 
 The MoonCode stream endpoint follows the same boundary rule. When MoonClaw
 reports the native MoonCode runtime, Moondesk proxies
-`/v1/mooncode/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<sequence>` and
-returns MoonClaw's typed stream. If that endpoint is not available, Moondesk
-falls back to its local append-log projection from
+`/v1/mooncode/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<sequence>&wait_ms=<ms>&poll_ms=<ms>` and
+returns MoonClaw's typed stream. The native stream is resumable by sequence and
+supports bounded long-poll live tailing for newly persisted events; the current
+Rabbita UI asks the Moondesk route for `timeout_ms=1000` and `poll_ms=100`,
+which Moondesk forwards as MoonClaw `wait_ms`/`poll_ms` when the native runtime
+is available. If that endpoint is not available, Moondesk falls back to its
+local append-log projection from
 `.moontown/mooncode-sessions/<session-id>/events.jsonl`; with `live=true`, it
 performs a bounded wait before replaying the tail. Local projection records
 include `stream_source: "moondesk-append-log-projection"` so the UI can show

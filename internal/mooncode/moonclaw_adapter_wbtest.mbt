@@ -477,7 +477,18 @@ test "mooncode moonclaw adapter owns native runtime request bodies" {
   )
   assert_eq(
     moonclaw_native_stream_endpoint("session one", "/tmp/moon book", "sse", 7),
-    "/v1/mooncode/sessions/session%20one/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7",
+    "/v1/mooncode/sessions/session%20one/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7&wait_ms=0&poll_ms=100",
+  )
+  assert_eq(
+    moonclaw_native_stream_endpoint(
+      "session one",
+      "/tmp/moon book",
+      "jsonl",
+      7,
+      wait_ms=1000,
+      poll_ms=100,
+    ),
+    "/v1/mooncode/sessions/session%20one/stream?book_root=%2Ftmp%2Fmoon%20book&format=jsonl&since=7&wait_ms=1000&poll_ms=100",
   )
   assert_eq(
     moonclaw_native_runtime_events_endpoint("session one", "/tmp/moon book"),

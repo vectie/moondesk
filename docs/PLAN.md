@@ -349,8 +349,11 @@ are protocol-owned. Moondesk joins those relative paths to the selected
 workspace root and remains responsible for the actual filesystem IO.
 The stream route now prefers MoonClaw's native MoonCode stream
 when `/v1/mooncode/capabilities` responds,
-proxying `/v1/mooncode/sessions/<id>/stream`; otherwise it emits JSONL or SSE
-append-log incremental records over the current event projection plus
+proxying `/v1/mooncode/sessions/<id>/stream`; native stream requests now carry
+the UI's bounded live-tail wait as MoonClaw `wait_ms`/`poll_ms`, so the native
+path no longer collapses `live=true` into an immediate snapshot. Otherwise it
+emits JSONL or SSE append-log incremental records over the current event
+projection plus
 `.moontown/mooncode-sessions/<session-id>/events.jsonl` and labels that replay
 with `stream_source: "moondesk-append-log-projection"`.
 The host-side stream HTTP handlers, bounded live-tail fallback, checkpoint
@@ -548,8 +551,9 @@ named consumer checkpoints under
 `.moontown/mooncode-sessions/<session-id>/stream-checkpoints/`, so the UI,
 MoonClaw, or standalone `mooncode` can resume from a known append-log cursor
 without replaying the entire session. The selected MoonCode session now uses
-bounded `?live=true` JSONL tailing against that cursor; Moondesk still does not
-own the long-running agent event producer, which remains MoonClaw or future
+bounded `?live=true` JSONL tailing against that cursor and forwards that wait
+budget to MoonClaw's native stream when available; Moondesk still does not own
+the long-running agent event producer, which remains MoonClaw or future
 standalone `mooncode` runtime responsibility.
 Moondesk also writes and exposes a compact MoonBook-owned action plan at
 `wiki/reviews/mooncode/<session-id>/action-plan.json` and

@@ -23,7 +23,14 @@ async fn handle_mooncode_session_stream(
         query_value(request_path, "poll_ms").unwrap_or(""),
       )
       match
-        mooncode_native_stream_text(workspace_root, session_id, format, since) {
+        mooncode_native_stream_text(
+          workspace_root,
+          session_id,
+          format,
+          since,
+          wait_ms=if live { live_timeout_ms } else { 0 },
+          poll_ms=live_poll_ms,
+        ) {
         Ok(text) => send_text(conn, method_, content_type, text)
         Err(_) => {
           let projected = if live {
@@ -54,7 +61,14 @@ async fn handle_mooncode_session_stream(
     }
     None =>
       match
-        mooncode_native_stream_text(workspace_root, session_id, format, since) {
+        mooncode_native_stream_text(
+          workspace_root,
+          session_id,
+          format,
+          since,
+          wait_ms=0,
+          poll_ms=100,
+        ) {
         Ok(text) => send_text(conn, method_, content_type, text)
         Err(_) =>
           send_api_error(
@@ -237,6 +251,8 @@ async fn mooncode_native_stream_text(
   session_id : String,
   format : String,
   since : Int,
+  wait_ms? : Int = 0,
+  poll_ms? : Int = 100,
 ) -> Result[String, String] {
   let daemon = moonclaw_daemon_status(workspace_root)
   let running = json_bool(daemon, "running", default=false)
@@ -249,7 +265,12 @@ async fn mooncode_native_stream_text(
   moonclaw_get_text(
     daemon,
     @mooncode.moonclaw_native_stream_endpoint(
-      session_id, workspace_root, format, since,
+      session_id,
+      workspace_root,
+      format,
+      since,
+      wait_ms~,
+      poll_ms~,
     ),
   )
 }
@@ -449,9 +470,14 @@ async test "mooncode stream state records resumable checkpoint" {
 test "mooncode native stream path targets typed runtime endpoint" {
   assert_eq(
     @mooncode.moonclaw_native_stream_endpoint(
-      "agent-demo", "/tmp/moon book", "sse", 7,
+      "agent-demo",
+      "/tmp/moon book",
+      "sse",
+      7,
+      wait_ms=1000,
+      poll_ms=100,
     ),
-    "/v1/mooncode/sessions/agent-demo/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7",
+    "/v1/mooncode/sessions/agent-demo/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7&wait_ms=1000&poll_ms=100",
   )
 }
 

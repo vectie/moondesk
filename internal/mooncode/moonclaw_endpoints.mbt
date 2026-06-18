@@ -57,8 +57,10 @@ pub fn moonclaw_native_stream_endpoint(
   book_root : String,
   format : String,
   since : Int,
+  wait_ms? : Int = 0,
+  poll_ms? : Int = 100,
 ) -> String {
-  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/stream?book_root=\{moonclaw_query_value(book_root)}&format=\{moonclaw_query_value(format)}&since=\{since}"
+  "/v1/mooncode/sessions/\{moonclaw_query_value(session_id)}/stream?book_root=\{moonclaw_query_value(book_root)}&format=\{moonclaw_query_value(format)}&since=\{since}&wait_ms=\{wait_ms}&poll_ms=\{poll_ms}"
 }
 
 ///|
