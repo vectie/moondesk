@@ -980,7 +980,30 @@ struct MoonCodeEngineStatus {
 ///|
 struct MoonCodeExtractable {
   future_package : String
+  core_package : String
+  projection_package : String
+  host_package : String
   rule : String
+} derive(FromJson)
+
+///|
+struct MoonCodeExtractionRole {
+  id : String
+  package : String
+  owner : String
+  responsibility : String
+} derive(FromJson)
+
+///|
+struct MoonCodeExtractionBoundary {
+  kind : String
+  protocol : String
+  portable_core_package : String
+  moondesk_projection_package : String
+  moonwiki_host_package : String
+  future_standalone_package : String
+  roles : Array[MoonCodeExtractionRole]
+  rules : Array[String]
 } derive(FromJson)
 
 ///|
@@ -994,6 +1017,7 @@ struct MoonCodeCapabilities {
   runtime_contract : MoonCodeRuntimeContract
   tool_contract : MoonCodeToolContract
   tool_call_wire : MoonCodeToolCallWireContract
+  extraction_boundary : MoonCodeExtractionBoundary
   engine_status : MoonCodeEngineStatus
   command_specs : Array[MoonCodeCommandSpec]
   tools : Array[String]
@@ -15579,6 +15603,9 @@ fn render_mooncode_capability_panel(model : Model) -> @rabbita.Html {
             ),
             info_row("Tools", capabilities.tool_specs.length().to_string()),
             info_row("Future", capabilities.extractable.future_package),
+            info_row("Core", capabilities.extractable.core_package),
+            info_row("Projection", capabilities.extractable.projection_package),
+            info_row("Host", capabilities.extractable.host_package),
           ]),
           div(
             class="mooncode-command-row",
@@ -15587,6 +15614,9 @@ fn render_mooncode_capability_panel(model : Model) -> @rabbita.Html {
             }),
           ),
           render_mooncode_engine_status(capabilities.engine_status),
+          render_mooncode_extraction_boundary(
+            capabilities.extraction_boundary,
+          ),
           render_mooncode_runtime_contract(capabilities.runtime_contract),
           render_mooncode_tool_call_wire_contract(
             capabilities.tool_call_wire,
@@ -15693,6 +15723,48 @@ fn render_mooncode_engine_check(
       strong(check.label),
       small(check.evidence),
     ]),
+  ])
+}
+
+///|
+fn render_mooncode_extraction_boundary(
+  boundary : MoonCodeExtractionBoundary
+) -> @rabbita.Html {
+  div(class="mooncode-runtime-contract", [
+    div(class="mooncode-output-roots", [
+      small("Extraction boundary"),
+      p(
+        "\{boundary.protocol}: \{boundary.portable_core_package} -> \{boundary.future_standalone_package}",
+      ),
+    ]),
+    div(class="daemon-state compact-state", [
+      info_row("Core", boundary.portable_core_package),
+      info_row("Projection", boundary.moondesk_projection_package),
+      info_row("MoonWiki Host", boundary.moonwiki_host_package),
+      info_row("Standalone", boundary.future_standalone_package),
+    ]),
+    div(
+      class="mooncode-tool-list",
+      boundary.roles.map(role => render_mooncode_extraction_role(role)),
+    ),
+    ul(
+      class="mooncode-evidence-list",
+      boundary.rules.map(rule => li(rule)),
+    ),
+  ])
+}
+
+///|
+fn render_mooncode_extraction_role(
+  role : MoonCodeExtractionRole
+) -> @rabbita.Html {
+  div(class="mooncode-tool-card", [
+    div(class="mooncode-tool-head", [
+      strong(role.id),
+      span(class="record-kind", role.owner),
+    ]),
+    small(role.package),
+    p(role.responsibility),
   ])
 }
 
