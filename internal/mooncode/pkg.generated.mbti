@@ -742,6 +742,8 @@ pub fn session_listing_title(Json) -> String
 
 pub fn session_log_relative_dir(String) -> String
 
+pub fn session_patch_lifecycle(Array[Json]) -> Json
+
 pub fn session_production_checks(Json, Array[Json]) -> Array[Json]
 
 pub fn session_projection_response(Json, Array[Json], event_log_path~ : String, append_log_count~ : Int, command_log_path~ : String, command_log_count~ : Int, runtime_command_log_path~ : String, runtime_command_log_count~ : Int, runtime_dispatch_log_path~ : String, runtime_dispatch_log_count~ : Int) -> Json

@@ -57,6 +57,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let package_index_manifest_count = count_package_index_manifests(events)
   let change_set_manifest_count = count_change_set_manifests(events)
   let patch_set_manifest_count = count_patch_set_manifests(events)
+  let patch_lifecycle = session_patch_lifecycle(events)
   let patch_execution_proof_count = count_patch_execution_proofs(events)
   let tool_approvals_manifest_count = count_tool_approvals_manifests(events)
   let test_runs_manifest_count = count_test_runs_manifests(events)
@@ -154,6 +155,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
       session, "mooncode_last_change_set_manifest",
     ),
     "moonbook_patch_set_manifest_count": patch_set_manifest_count,
+    "patch_lifecycle": patch_lifecycle,
     "runtime_patch_execution_proof_count": patch_execution_proof_count,
     "last_moonbook_patch_set_manifest": summary_json_object_field_or_empty(
       session, "mooncode_last_patch_set_manifest",

@@ -681,7 +681,10 @@ Moondesk exposes it
 through `GET /api/mooncode/sessions/<id>/patch-set` and renders it as a Patch
 Set panel with per-file Open, Accept, Reject, Apply, Revert, and Package
 controls plus hunk-level Accept, Reject, Apply, and Revert controls, including
-visible gate and next-action chips for each target. Moondesk
+visible gate and next-action chips for each target. The session summary also
+projects `patch_lifecycle` from those patch-set rows, and the MoonCode header
+renders needs-review/runtime-needed/runtime-proven/blocked counts plus recent
+patch rows before the full review panel. Moondesk
 still does not edit files directly; the remaining MoonClaw work is richer
 diff-review polish and broader model-backed coding eval coverage.
 The pure MoonCode package now keeps patch review/execution state projection in a

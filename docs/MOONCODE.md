@@ -991,7 +991,12 @@ without opening raw event JSON. Cancel is now projected the same way:
 `agent_aborted` and `cancel_dropped` runtime evidence, and the header shows
 cancelled/dropped/failed/pending rows so operators can tell whether a stop
 request reached active work, arrived while idle, failed before MoonClaw accepted
-it, or is still waiting for proof.
+it, or is still waiting for proof. File diff review is also summarized at the
+same level through `patch_lifecycle`, a MoonCode-owned projection over current
+patch-set entries. The header shows needs-review/runtime-needed/runtime-proven/
+blocked counts plus recent patch rows, so an operator can see whether generated
+file changes need review, runtime apply/revert proof, or tests before scrolling
+to the full patch panel.
 
 Each session also carries a `mooncode_summary` readiness/eval block. It records
 the stream mode, `live_stream_ready`, event log path, append-log count, command
@@ -1004,7 +1009,7 @@ source-bound package count, `review_state`, an `eval_score`, an `eval_level`,
 `steer_command_count`, `steer_settlement_count`, `deferred_steer_count`,
 `pending_steer_count`, `steering_lifecycle`, `cancel_command_count`,
 `cancel_dropped_count`, `cancel_settlement_count`, `pending_cancel_count`,
-`cancel_lifecycle`, and
+`cancel_lifecycle`, `patch_lifecycle`, and
 `eval_checks` for book scope, MoonClaw task attachment, transcript, tool
 events, file diffs, tests/builds, verified test results, artifacts, review
 decisions, append-only log coverage, typed command packets, ordered command

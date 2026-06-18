@@ -1511,11 +1511,12 @@ Implemented behavior:
   `runtime.service_started` / `runtime.service_finished` events around that
   bounded loop, and Moondesk verifies the endpoint through the shared native
   capability contract.
-  Moondesk renders command-scoped steering and cancellation lifecycle rows from
-  `mooncode_summary.steering_lifecycle` and
-  `mooncode_summary.cancel_lifecycle`; deeper resume orchestration, diff review,
-  and model-backed bundle evals remain a MoonClaw/standalone-MoonCode
-  responsibility. Moondesk
+  Moondesk renders command-scoped steering/cancellation lifecycle rows and
+  header-level patch review state from `mooncode_summary.steering_lifecycle`,
+  `mooncode_summary.cancel_lifecycle`, and
+  `mooncode_summary.patch_lifecycle`; deeper resume orchestration, model-backed
+  diff review, and model-backed bundle evals remain a MoonClaw/standalone-
+  MoonCode responsibility. Moondesk
   exposes saved candidates through
   `GET /api/mooncode/sessions/:id/package-candidates` and renders them in the
   MoonCode center pane.

@@ -451,6 +451,35 @@ test "mooncode session summary counts runtime package proof" {
 }
 
 ///|
+test "mooncode session summary exposes patch lifecycle" {
+  let events : Array[Json] = [
+    event_record(
+      id="diff-1",
+      lane="diff",
+      kind="tool.edit",
+      title="Edit file",
+      status="done",
+      created_at="1",
+      detail="edited",
+      path="tools/demo/main.mbt",
+      diff="@@ -1 +1 @@\n-old\n+new",
+    ),
+  ]
+  let summary = session_summary({ "id": "s1", "workspace_id": "book" }, events)
+  let lifecycle = summary_json_object_field_or_empty(summary, "patch_lifecycle")
+  assert_eq(
+    json_string(lifecycle, "kind", default=""),
+    "mooncode-patch-lifecycle",
+  )
+  assert_eq(summary_json_int(lifecycle, "patch_count", default=0), 1)
+  assert_eq(summary_json_int(lifecycle, "needs_review_count", default=0), 1)
+  assert_eq(
+    json_string(lifecycle, "next_step", default=""),
+    "Accept or reject pending patch targets before packaging or committing.",
+  )
+}
+
+///|
 test "mooncode session summary counts runtime commit proof" {
   let events : Array[Json] = [
     event_record(

@@ -56,6 +56,24 @@ test "mooncode patch set groups hunks and review state" {
     summary_json_int(manifest, "runtime_patch_proof_count", default=0),
     0,
   )
+  let lifecycle = session_patch_lifecycle(events)
+  assert_eq(
+    json_string(lifecycle, "kind", default=""),
+    "mooncode-patch-lifecycle",
+  )
+  assert_eq(summary_json_int(lifecycle, "patch_count", default=0), 1)
+  assert_eq(summary_json_int(lifecycle, "runtime_needed_count", default=0), 1)
+  assert_eq(
+    json_string(lifecycle, "latest_status", default=""),
+    "runtime-needed",
+  )
+  let rows = json_array_items(lifecycle, "rows")
+  assert_eq(rows.length(), 1)
+  assert_eq(json_string(rows[0], "path", default=""), "tools/demo/main.mbt")
+  assert_eq(
+    json_string(rows[0], "next_action", default=""),
+    "await-runtime-proof",
+  )
 }
 
 ///|
@@ -118,4 +136,17 @@ test "mooncode patch set separates runtime execution proof from operator review"
   assert_eq(json_string(patch, "gate_status", default=""), "runtime-proven")
   assert_eq(json_string(patch, "next_action", default=""), "run_tests")
   assert_true(json_bool(patch, "execution_verified", default=false))
+  let lifecycle = session_patch_lifecycle(events)
+  assert_eq(summary_json_int(lifecycle, "runtime_proven_count", default=0), 1)
+  assert_eq(
+    summary_json_int(lifecycle, "runtime_patch_proof_count", default=0),
+    1,
+  )
+  assert_eq(
+    json_string(lifecycle, "latest_status", default=""),
+    "runtime-proven",
+  )
+  assert_true(
+    json_string(lifecycle, "next_step", default="").contains("Run tests"),
+  )
 }

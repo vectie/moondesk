@@ -409,6 +409,7 @@ struct MoonCodeSummary {
   moonbook_package_index_manifest_count : Int
   moonbook_change_set_manifest_count : Int
   moonbook_patch_set_manifest_count : Int
+  patch_lifecycle : Json
   runtime_patch_execution_proof_count : Int
   moonbook_tool_approvals_manifest_count : Int
   moonbook_test_runs_manifest_count : Int
@@ -11545,6 +11546,7 @@ fn render_mooncode_session_header(
     ]),
     render_mooncode_steering_lifecycle(summary),
     render_mooncode_cancel_lifecycle(summary),
+    render_mooncode_patch_lifecycle(summary),
   ])
 }
 
@@ -11752,6 +11754,103 @@ fn mooncode_cancel_lifecycle_class(status : String) -> String {
     "cancelled" => "accepted"
     "dropped" | "failed" => "rejected"
     "pending" => "queued"
+    _ => "queued"
+  }
+}
+
+///|
+fn render_mooncode_patch_lifecycle(summary : MoonCodeSummary) -> @rabbita.Html {
+  let lifecycle = summary.patch_lifecycle
+  let rows = json_field_json_array_items(lifecycle, "rows")
+  div(class="mooncode-output-roots patch-lifecycle", [
+    div(class="mooncode-stream-header compact-header", [
+      div([
+        p(class="eyebrow", "diff review/runtime proof"),
+        h3("Patch Lifecycle"),
+      ]),
+      span(
+        class="record-kind",
+        empty_label(json_field_string(lifecycle, "latest_status", default="idle")),
+      ),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Patches", json_field_int(lifecycle, "patch_count", default=0).to_string()),
+      info_chip("Needs Review", json_field_int(lifecycle, "needs_review_count", default=0).to_string()),
+      info_chip("Runtime Needed", json_field_int(lifecycle, "runtime_needed_count", default=0).to_string()),
+      info_chip("Runtime Proven", json_field_int(lifecycle, "runtime_proven_count", default=0).to_string()),
+      info_chip("Blocked", json_field_int(lifecycle, "blocked_count", default=0).to_string()),
+    ]),
+    if rows.length() == 0 {
+      p(class="status-line", "no file diffs recorded for patch review")
+    } else {
+      div(
+        class="mooncode-review-list compact",
+        mooncode_recent_patch_lifecycle_rows(rows).map(row =>
+          render_mooncode_patch_lifecycle_row(row)
+        ),
+      )
+    },
+    p(
+      class="mooncode-event-detail",
+      json_field_string(lifecycle, "next_step", default=""),
+    ),
+  ])
+}
+
+///|
+fn mooncode_recent_patch_lifecycle_rows(rows : Array[Json]) -> Array[Json] {
+  let recent : Array[Json] = []
+  let mut index = rows.length()
+  let mut emitted = 0
+  while index > 0 && emitted < 4 {
+    index -= 1
+    recent.push(rows[index])
+    emitted += 1
+  }
+  recent
+}
+
+///|
+fn render_mooncode_patch_lifecycle_row(row : Json) -> @rabbita.Html {
+  let gate = json_field_string(row, "gate_status", default="needs-review")
+  div(class="mooncode-review-item " + mooncode_patch_lifecycle_class(gate), [
+    div(class="mooncode-review-head", [
+      div([
+        strong(empty_label(json_field_string(row, "path", default=""))),
+        small(
+          json_field_string(row, "review_state", default="pending") +
+          " / " +
+          json_field_string(row, "execution_state", default="pending"),
+        ),
+      ]),
+      span(class="record-kind", gate),
+    ]),
+    div(class="mooncode-stats", [
+      info_chip("Next", empty_label(json_field_string(row, "next_action", default=""))),
+      info_chip("Hunks", json_field_int(row, "hunk_count", default=0).to_string()),
+      info_chip("Runtime", json_field_int(row, "runtime_proof_count", default=0).to_string()),
+      info_chip(
+        "Diff",
+        if json_field_bool(row, "diff_present", default=false) {
+          "yes"
+        } else {
+          "no"
+        },
+      ),
+    ]),
+    p(
+      class="mooncode-event-detail",
+      empty_label(json_field_string(row, "blocked_reason", default="")),
+    ),
+  ])
+}
+
+///|
+fn mooncode_patch_lifecycle_class(status : String) -> String {
+  match status {
+    "runtime-proven" | "ready" => "accepted"
+    "runtime-needed" | "needs-review" => "queued"
+    "blocked" => "rejected"
     _ => "queued"
   }
 }
