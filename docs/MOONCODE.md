@@ -1529,6 +1529,12 @@ include `stream_source: "moondesk-append-log-projection"` so the UI can show
 whether the operator is looking at native runtime events or bridge replay. The
 Rabbita live tail keeps a bounded, id-deduped recent buffer from successive
 polls, so a quiet poll does not erase the operator's visible progress timeline.
+The main MoonCode transcript now merges three ordered sources with the same
+stable-id dedupe: projected session events, the live stream buffer, and the
+runtime event sink. That keeps daemon service lifecycle events, tool proof,
+diff/test/package evidence, and native streamed assistant/reasoning updates in
+the primary Codex/OpenSeek-style conversation instead of hiding them only in
+lower diagnostic panels.
 
 Operator review ownership is also written into the selected MoonBook. For
 `accept`, `reject`, `package`, and `commit`, Moondesk records a durable JSON receipt;

@@ -11576,10 +11576,15 @@ fn mooncode_transcript_events(
   session : AgentSession,
 ) -> Array[MoonCodeEvent] {
   let events = mooncode_merge_stream_events(session.mooncode_events, [])
-  if model.mooncode_stream_session_id == session.id {
+  let with_stream = if model.mooncode_stream_session_id == session.id {
     mooncode_merge_stream_events(events, model.mooncode_stream_events)
   } else {
     events
+  }
+  match model.mooncode_runtime_event_sink {
+    Some(sink) if model.mooncode_runtime_event_sink_session_id == session.id =>
+      mooncode_merge_stream_events(with_stream, sink.events)
+    _ => with_stream
   }
 }
 
