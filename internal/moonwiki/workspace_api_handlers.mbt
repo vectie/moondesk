@@ -1,9 +1,9 @@
 ///|
 fn resolve_request_path(root : String, request_path : StringView) -> String? {
-  let request_path = strip_query(request_path.to_string())
+  let request_path = strip_query(request_path.to_owned())
   let relative = match request_path {
     "/" => "index.html"
-    ['/', .. path] => path.to_string()
+    ['/', .. path] => path.to_owned()
     _ => return None
   }
   let normalized = @pathx.normalize(relative)
@@ -310,7 +310,7 @@ async fn handle_workspace_inbox(
             )
             return
           } else {
-            let parent = @pathx.dirname(absolute).to_string()
+            let parent = @pathx.dirname(absolute).to_owned()
             @fsx.make_directory(parent, recursive=true, exists_ok=true) catch {
               _ => {
                 send_api_error(
@@ -531,7 +531,7 @@ async fn reveal_path(absolute : String) -> Int {
   let target = if is_directory(absolute) {
     absolute
   } else {
-    @pathx.dirname(absolute).to_string()
+    @pathx.dirname(absolute).to_owned()
   }
   @process.run("xdg-open", [target]) catch {
     _ => mac
@@ -549,7 +549,7 @@ async fn handle_search(
       query_value(request_path, "query").unwrap_or(""),
     )
     .trim()
-    .to_string()
+    .to_owned()
   if query == "" {
     send_json(conn, method_, Json::array([]))
     return

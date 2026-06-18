@@ -1,4 +1,4 @@
 ///|
 pub async fn exists(path : StringView) -> Bool {
-  @fs.exists(path.to_string())
+  @fs.exists(path.to_owned())
 }

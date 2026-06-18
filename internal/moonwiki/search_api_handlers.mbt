@@ -82,7 +82,7 @@ fn search_snippet(
   query_lower : String,
   fallback~ : String,
 ) -> String {
-  let trimmed = text.trim().to_string()
+  let trimmed = text.trim().to_owned()
   if trimmed == "" {
     return fallback
   }
@@ -94,7 +94,7 @@ fn search_snippet(
   }
   let remaining = trimmed.length() - start
   let take = if remaining > 180 { 180 } else { remaining }
-  trimmed[start:start + take].replace_all(old="\n", new=" ").to_string()
+  trimmed[start:start + take].replace_all(old="\n", new=" ").to_owned()
 }
 
 ///|

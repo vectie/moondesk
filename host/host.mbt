@@ -3,12 +3,12 @@ pub struct DeskRoot {
   id : String
   label : String
   path : String
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct HostConfig {
   roots : Array[DeskRoot]
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn default_config(workspace_root : String) -> HostConfig {

@@ -4,7 +4,7 @@ pub struct TownSnapshotRef {
   daemon_json_path : String
   standing_goals_path : String
   watcher_dir : String
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct OperatorRequestDraft {
@@ -15,7 +15,7 @@ pub struct OperatorRequestDraft {
   source_policy : @moondesk_core.SourcePolicy
   quality_threshold : Int
   context_entries : Array[String]
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn snapshot_paths(root_path : String) -> TownSnapshotRef {

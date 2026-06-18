@@ -6,7 +6,7 @@ pub let sep : Char = '/'
 
 ///|
 pub fn dirname(path : StringView) -> StringView {
-  let dir = @xpath.Path::dirname(path.to_string()).to_string()
+  let dir = @xpath.Path::dirname(path.to_owned()).to_string()
   if dir.is_empty() {
     "."
   } else {
@@ -16,20 +16,20 @@ pub fn dirname(path : StringView) -> StringView {
 
 ///|
 pub fn ext(path : StringView) -> StringView {
-  Path::extname(path.to_string())
+  Path::extname(path.to_owned())
 }
 
 ///|
 pub fn normalize(view : StringView) -> String {
-  Path::normalize(view.to_string()).0
+  Path::normalize(view.to_owned()).0
 }
 
 ///|
 pub fn join(p : StringView, q : StringView) -> String {
-  Path::join(p.to_string(), q.to_string()).normalize().0
+  Path::join(p.to_owned(), q.to_owned()).normalize().0
 }
 
 ///|
 pub fn is_absolute(path : StringView) -> Bool {
-  Path::is_absolute(path.to_string())
+  Path::is_absolute(path.to_owned())
 }

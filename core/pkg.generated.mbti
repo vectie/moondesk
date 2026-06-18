@@ -2,6 +2,7 @@
 package "vectie/moondesk/core"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
 
@@ -48,7 +49,7 @@ pub struct DeskFileEntry {
   writable : Bool
   size_bytes : Int?
   modified_at : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct DeskPreview {
   entry_id : String
@@ -57,14 +58,14 @@ pub struct DeskPreview {
   body : String
   metadata : Map[String, String]
   warnings : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct DeskRunArtifact {
   id : String
   path : String
   title : String
   kind : EntryKind
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct DeskRunProjection {
   run_id : String
@@ -76,7 +77,7 @@ pub struct DeskRunProjection {
   artifacts : Array[DeskRunArtifact]
   started_at : String?
   updated_at : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct DeskTaskSubmission {
   id : String
@@ -88,7 +89,7 @@ pub struct DeskTaskSubmission {
   quality_threshold : Int
   source_policy : SourcePolicy
   created_at : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct DeskWorkspace {
   id : String
@@ -97,7 +98,7 @@ pub struct DeskWorkspace {
   kind : WorkspaceKind
   status : WorkspaceStatus
   last_seen_at : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum EntryKind {
   Markdown
@@ -108,7 +109,7 @@ pub(all) enum EntryKind {
   Artifact
   Text
   Unknown
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum PreviewRenderer {
   Markdown
@@ -119,7 +120,7 @@ pub(all) enum PreviewRenderer {
   ArtifactSummary
   DirectoryListing
   Unsupported
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum SourceLayer {
   Wiki
@@ -132,32 +133,32 @@ pub(all) enum SourceLayer {
   Inbox
   Config
   Workspace
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum SourcePolicy {
   BookOnly
   WebFirst
   ProvidedFilesOnly
   Mixed
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum SubmissionCadence {
   OneShot
   StandingWatch(String)
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum WorkspaceKind {
   MoonBook
   LooseFolder
   TownRoot
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum WorkspaceStatus {
   Ready
   Missing
   NeedsAttention
   Unknown
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 

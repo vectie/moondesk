@@ -4,7 +4,7 @@ pub struct MoonBookSection {
   path : String
   layer : @moondesk_core.SourceLayer
   writable : Bool
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn workspace_from_root(

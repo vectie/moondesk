@@ -139,12 +139,13 @@ async test "book pattern discovery reads Moontown template registry" {
     "Registry PDF Evidence Watch",
   )
   assert_eq(json_int(pdf, "default_cadence_minutes", default=0), 17)
-  assert_eq(json_string_array_items(pdf, "default_websites"), [
-    "https://registry.example/reports",
-  ])
-  assert_eq(json_string_array_items(pdf, "skills"), [
-    "pdf-watch", "pdf-analysis",
-  ])
+  assert_true(
+    json_string_array_items(pdf, "default_websites") ==
+    ["https://registry.example/reports"],
+  )
+  assert_true(
+    json_string_array_items(pdf, "skills") == ["pdf-watch", "pdf-analysis"],
+  )
   let tool_pattern = match json_record_by_id(patterns, "app-tool-book") {
     Some(record) => record
     None => fail("expected registry app toolbook pattern")
@@ -155,7 +156,7 @@ async test "book pattern discovery reads Moontown template registry" {
     "Registry App ToolBook",
   )
   assert_eq(json_int(tool_pattern, "default_cadence_minutes", default=0), 11)
-  assert_eq(json_string_array_items(tool_pattern, "skills"), ["tool-watch"])
+  assert_true(json_string_array_items(tool_pattern, "skills") == ["tool-watch"])
   let base_types = book_base_type_records_for_workspace(root)
   assert_eq(base_types.length(), 2)
   let base = match json_record_by_id(base_types, "research-book") {

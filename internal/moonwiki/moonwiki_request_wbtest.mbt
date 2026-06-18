@@ -1,10 +1,10 @@
 ///|
 test "resolve request path rejects traversal" {
-  assert_eq(
-    resolve_request_path("/tmp/moondesk", "/"),
-    Some("/tmp/moondesk/index.html"),
+  assert_true(
+    resolve_request_path("/tmp/moondesk", "/")
+    is Some("/tmp/moondesk/index.html"),
   )
-  assert_eq(resolve_request_path("/tmp/moondesk", "/../secret"), None)
+  assert_true(resolve_request_path("/tmp/moondesk", "/../secret") is None)
 }
 
 ///|
@@ -48,9 +48,10 @@ test "eb workbook hyperlink contract requires official external links" {
     ),
   )
   assert_false(eb_xlsx_sheet1_official_hyperlinks_valid(sheet, unofficial_rels))
-  assert_eq(xml_attribute_values(official_rels, "Target"), [
-    "https://www.sse.com.cn/disclosure/bond/announcement/132018.pdf",
-  ])
+  assert_true(
+    xml_attribute_values(official_rels, "Target") ==
+    ["https://www.sse.com.cn/disclosure/bond/announcement/132018.pdf"],
+  )
 }
 
 ///|
@@ -59,9 +60,9 @@ test "api path helpers handle queries and traversal" {
     strip_query("/api/workspaces/book/entries?path=wiki"),
     "/api/workspaces/book/entries",
   )
-  assert_eq(
-    query_value("/api?path=wiki%2Findex.md&other=1", "path"),
-    Some("wiki%2Findex.md"),
+  assert_true(
+    query_value("/api?path=wiki%2Findex.md&other=1", "path")
+    is Some("wiki%2Findex.md"),
   )
   assert_eq(encode_query_value("/tmp/moon book"), "%2Ftmp%2Fmoon%20book")
   assert_eq(
@@ -75,18 +76,20 @@ test "api path helpers handle queries and traversal" {
     ),
     "book/outputs/EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx",
   )
-  assert_eq(path_segments("/api/workspaces"), ["api", "workspaces"])
-  assert_eq(clean_relative_path("wiki/../raw/README.md"), Some("raw/README.md"))
-  assert_eq(clean_relative_path("../secret"), None)
-  assert_eq(clean_relative_path("/tmp/secret"), None)
+  assert_true(path_segments("/api/workspaces") == ["api", "workspaces"])
+  assert_true(
+    clean_relative_path("wiki/../raw/README.md") is Some("raw/README.md"),
+  )
+  assert_true(clean_relative_path("../secret") is None)
+  assert_true(clean_relative_path("/tmp/secret") is None)
 }
 
 ///|
 test "request body helpers handle optional strings" {
   let payload : Json = { "title": "Draft", "path": "inbox/draft.md" }
   assert_eq(json_string(payload, "title", default="Fallback"), "Draft")
-  assert_eq(json_string_opt(payload, "path"), Some("inbox/draft.md"))
-  assert_eq(json_string_opt(payload, "missing"), None)
+  assert_true(json_string_opt(payload, "path") is Some("inbox/draft.md"))
+  assert_true(json_string_opt(payload, "missing") is None)
 }
 
 ///|
@@ -237,10 +240,10 @@ test "pdf evidence watch pattern builds reusable book and goal ids" {
   assert_eq(json_int(targets, "target_count", default=-1), 0)
   assert_false(json_bool(targets, "multi_target_supported", default=true))
   let watch = json_object_field_or_empty(config, "watch")
-  assert_eq(json_string_array_items(watch, "file_types"), ["pdf"])
-  assert_eq(json_string_array_items(watch, "notify_on"), [
-    "accepted_new_knowledge",
-  ])
+  assert_true(json_string_array_items(watch, "file_types") == ["pdf"])
+  assert_true(
+    json_string_array_items(watch, "notify_on") == ["accepted_new_knowledge"],
+  )
   let analysis = json_object_field_or_empty(config, "analysis")
   assert_eq(
     json_string(analysis, "method_page", default=""),
@@ -259,12 +262,12 @@ test "pdf evidence watch pattern builds reusable book and goal ids" {
       "skill_pack",
     ).contains("pdf-analysis"),
   )
-  assert_eq(
-    pdf_watch_notify_on_from_payload({ "notify_on": ["new_finding"] }),
+  assert_true(
+    pdf_watch_notify_on_from_payload({ "notify_on": ["new_finding"] }) ==
     ["new_finding"],
   )
-  assert_eq(
-    pdf_watch_notify_on_from_payload({ "notify_rule": "changed_conclusion" }),
+  assert_true(
+    pdf_watch_notify_on_from_payload({ "notify_rule": "changed_conclusion" }) ==
     ["changed_conclusion"],
   )
   let nested_payload : Json = {
@@ -278,14 +281,16 @@ test "pdf evidence watch pattern builds reusable book and goal ids" {
       "notify_on": ["new_finding", "changed_conclusion"],
     },
   }
-  assert_eq(pdf_watch_websites_from_payload(nested_payload), [
-    "https://example.org/reports",
-  ])
+  assert_true(
+    pdf_watch_websites_from_payload(nested_payload) ==
+    ["https://example.org/reports"],
+  )
   assert_eq(pdf_watch_cadence_from_payload(nested_payload), 45)
   assert_eq(pdf_watch_source_policy_from_payload(nested_payload), "web-first")
-  assert_eq(pdf_watch_notify_on_from_payload(nested_payload), [
-    "new_finding", "changed_conclusion",
-  ])
+  assert_true(
+    pdf_watch_notify_on_from_payload(nested_payload) ==
+    ["new_finding", "changed_conclusion"],
+  )
   assert_eq(
     json_string(
       eb_target_fields_from_payload({

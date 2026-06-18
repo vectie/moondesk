@@ -3,7 +3,7 @@ pub(all) enum WorkspaceKind {
   MoonBook
   LooseFolder
   TownRoot
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum WorkspaceStatus {
@@ -11,7 +11,7 @@ pub(all) enum WorkspaceStatus {
   Missing
   NeedsAttention
   Unknown
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum EntryKind {
@@ -23,7 +23,7 @@ pub(all) enum EntryKind {
   Artifact
   Text
   Unknown
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum SourceLayer {
@@ -37,7 +37,7 @@ pub(all) enum SourceLayer {
   Inbox
   Config
   Workspace
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum PreviewRenderer {
@@ -49,13 +49,13 @@ pub(all) enum PreviewRenderer {
   ArtifactSummary
   DirectoryListing
   Unsupported
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum SubmissionCadence {
   OneShot
   StandingWatch(String)
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum SourcePolicy {
@@ -63,7 +63,7 @@ pub(all) enum SourcePolicy {
   WebFirst
   ProvidedFilesOnly
   Mixed
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct DeskWorkspace {
@@ -73,7 +73,7 @@ pub struct DeskWorkspace {
   kind : WorkspaceKind
   status : WorkspaceStatus
   last_seen_at : String?
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct DeskFileEntry {
@@ -87,7 +87,7 @@ pub struct DeskFileEntry {
   writable : Bool
   size_bytes : Int?
   modified_at : String?
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct DeskPreview {
@@ -97,7 +97,7 @@ pub struct DeskPreview {
   body : String
   metadata : Map[String, String]
   warnings : Array[String]
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct DeskTaskSubmission {
@@ -110,7 +110,7 @@ pub struct DeskTaskSubmission {
   quality_threshold : Int
   source_policy : SourcePolicy
   created_at : String
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct DeskRunArtifact {
@@ -118,7 +118,7 @@ pub struct DeskRunArtifact {
   path : String
   title : String
   kind : EntryKind
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct DeskRunProjection {
@@ -131,4 +131,4 @@ pub struct DeskRunProjection {
   artifacts : Array[DeskRunArtifact]
   started_at : String?
   updated_at : String?
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)

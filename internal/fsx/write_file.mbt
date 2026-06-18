@@ -5,7 +5,7 @@ pub async fn write_to_file(
   create? : Int = 0o644,
 ) -> Unit {
   @fs.write_file(
-    path.to_string(),
+    path.to_owned(),
     @encoding/utf8.encode(content),
     create~,
     truncate=true,

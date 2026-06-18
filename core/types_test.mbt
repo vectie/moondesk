@@ -2,9 +2,9 @@
 test "infer file kind and renderer" {
   let entry = file_entry(workspace_id="research-opc", path="wiki/index.md")
   assert_eq(entry.display_name, "index.md")
-  assert_eq(entry.kind, @core.EntryKind::Markdown)
-  assert_eq(entry.source_layer, @core.SourceLayer::Wiki)
-  assert_eq(renderer_for_kind(entry.kind), @core.PreviewRenderer::Markdown)
+  assert_true(entry.kind == @core.EntryKind::Markdown)
+  assert_true(entry.source_layer == @core.SourceLayer::Wiki)
+  assert_true(renderer_for_kind(entry.kind) == @core.PreviewRenderer::Markdown)
 }
 
 ///|

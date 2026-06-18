@@ -5,7 +5,7 @@ pub async fn make_directory(
   exists_ok? : Bool = false,
 ) -> Unit {
   let dirs : Array[String] = []
-  collect_missing_dirs(path.to_string(), dirs, recursive)
+  collect_missing_dirs(path.to_owned(), dirs, recursive)
   for i = 0; i < dirs.length(); i = i + 1 {
     let dir = dirs[dirs.length() - 1 - i]
     if exists_ok && @fs.exists(dir) {
@@ -30,7 +30,7 @@ async fn collect_missing_dirs(
   if !recursive {
     return
   }
-  let parent = @pathx.dirname(current).to_string()
+  let parent = @pathx.dirname(current).to_owned()
   if parent == current {
     return
   }

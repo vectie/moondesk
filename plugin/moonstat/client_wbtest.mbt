@@ -40,8 +40,8 @@ test "moonstat client parses typed models" {
   }
   assert_eq(models.length(), 2)
   assert_eq(models[0].id, "gpt-5")
-  assert_eq(models[0].owner, Some("openai"))
-  assert_eq(models[0].context_window, Some(128000))
+  assert_true(models[0].owner is Some("openai"))
+  assert_true(models[0].context_window is Some(128000))
   assert_eq(models[1].id, "moon/local")
 }
 

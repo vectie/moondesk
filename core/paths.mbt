@@ -2,11 +2,11 @@
 pub fn display_name(path : StringView) -> String {
   let parts = path.split("/").to_array()
   if parts.length() == 0 {
-    path.to_string()
+    path.to_owned()
   } else {
-    let name = parts[parts.length() - 1].to_string()
+    let name = parts[parts.length() - 1].to_owned()
     if name == "" && parts.length() > 1 {
-      parts[parts.length() - 2].to_string()
+      parts[parts.length() - 2].to_owned()
     } else {
       name
     }
@@ -20,7 +20,7 @@ pub fn extension(path : StringView) -> String {
   if parts.length() <= 1 {
     ""
   } else {
-    "." + parts[parts.length() - 1].to_string().to_lower()
+    "." + parts[parts.length() - 1].to_owned().to_lower()
   }
 }
 
@@ -59,7 +59,7 @@ pub fn renderer_for_kind(kind : EntryKind) -> PreviewRenderer {
 
 ///|
 pub fn infer_source_layer(path : StringView) -> SourceLayer {
-  let path = path.to_string()
+  let path = path.to_owned()
   if path.has_prefix("wiki/history/") || path.contains("/wiki/history/") {
     SourceLayer::History
   } else if path.has_prefix("wiki/") || path.contains("/wiki/") {

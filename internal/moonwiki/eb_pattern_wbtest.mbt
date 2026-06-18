@@ -69,11 +69,11 @@ async test "pdf evidence watch workspace matches Moontown template contract" {
   )
   assert_eq(json_string(operator_config, "type", default=""), "research-book")
   assert_eq(json_string(operator_config, "id", default=""), book_id)
-  assert_eq(
+  assert_true(
     json_string_array_items(
       json_object_field_or_empty(operator_config, "watch"),
       "dedupe_by",
-    ),
+    ) ==
     ["url", "title", "sha256"],
   )
   assert_eq(
@@ -282,9 +282,10 @@ async test "pdf evidence watch workspace matches Moontown template contract" {
     "moontown.pdf_evidence_watch.result.v1",
   )
   assert_eq(json_int(install_config, "cadence_ticks", default=0), 30)
-  assert_eq(json_string_array_items(install_config, "websites"), [
-    "https://example.org/reports",
-  ])
+  assert_true(
+    json_string_array_items(install_config, "websites") ==
+    ["https://example.org/reports"],
+  )
   assert_eq(
     json_string(install_config, "workspace_root", default=""),
     "../books/" + book_id,
