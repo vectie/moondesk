@@ -234,6 +234,29 @@ async fn run_desktop(args : Array[String]) -> Unit {
 }
 
 ///|
+fn moonstat_startup_ready_message(base_url : String) -> String {
+  "Moonstat available at \{base_url}; usage/statistics panels enabled"
+}
+
+///|
+fn moonstat_startup_unavailable_message(
+  base_url : String,
+  error : String,
+) -> String {
+  "Moonstat unavailable at \{base_url}; continuing as standalone Moondesk: \{error}"
+}
+
+///|
+async fn print_moonstat_startup_status() -> Unit {
+  let client = @moonstat.discover()
+  match client.health() {
+    Ok(_) => println(moonstat_startup_ready_message(client.base_url()))
+    Err(error) =>
+      println(moonstat_startup_unavailable_message(client.base_url(), error))
+  }
+}
+
+///|
 async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
   let server = @moonwiki.Server::new(options.host, options.port) catch {
     _ => {
@@ -248,6 +271,7 @@ async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
   if options.open_browser {
     open_browser_url(url)
   }
+  print_moonstat_startup_status()
   server.serve_desk(options.ui_dir, options.workspace_root)
 }
 
