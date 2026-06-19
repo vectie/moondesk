@@ -99,16 +99,16 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
 - MoonCode contract inspector for protocol, command specs, display tool specs,
   executable tool contract, approval policy, expected event lanes, tool hints,
   output roots, native/MoonCode tool-call contract shapes, unknown-tool rejection
-  policy, and the MoonCode-like runtime contract for agent runtime, session
+  policy, and the MoonCode runtime contract for agent runtime, session
   store, tool registry, loop, command protocol, eval harness ownership,
   the `/api/mooncode/eval-harness` contract endpoint, and MoonCode eval
   reference paths
 - MoonCode engine-readiness panel that shows the configured MoonClaw service,
   daemon state, safe `/v1/models` probe, native `/v1/code/capabilities`
   contract state, sidecar append-only log, missing MoonClaw runtime contract endpoint,
-  and missing MoonCode-style eval evidence
-- visible dispatch mode for the selected session, distinguishing native
-  `/v1/code/sessions/<id>/commands` dispatch from recorded or failed commands
+  and missing MoonCode eval evidence
+- visible runtime mode for the selected session, distinguishing native
+  `/v1/code/sessions/<id>/commands` intake from recorded or failed commands
 - visible stream source for the selected session/live tail, distinguishing
   native `/v1/code/sessions/<id>/stream` events from Moondesk's
   append-log projection
@@ -126,7 +126,7 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
   `wiki/reviews/mooncode/<session-id>/runtime-handoff.json` artifact, ordered
   session snapshot, command/event log paths, runtime command feed path,
   Moondesk session-store, stream, command, and runtime-feed endpoints, native
-  MoonClaw endpoints, output roots, dispatch mode, and next runtime step for an
+  MoonClaw endpoints, output roots, runtime mode, and next runtime step for an
   standalone `mooncode` backend
 - MoonCode Runtime Supervisor panel in the same handoff board that shows
   whether the next turn is launchable, the replay/native mode, scheduler
@@ -135,11 +135,11 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
   the embedded readiness status and missing launch requirements, so blocked
   turns are diagnosable without opening JSON.
 - MoonCode session header at the top of the coding workspace that shows the
-  selected book/session, next required action, stream source, dispatch state,
+  selected book/session, next required action, stream source, runtime state,
   event/diff/test/tool/package counts, eval evidence, and durable resume/log paths
   before the transcript and review panels
 - MoonCode preflight gates panel that reads the server-side package, accept,
-  commit, and selected-path apply/revert patch gates before command dispatch,
+  commit, and selected-path apply/revert patch gates before command intake,
   showing exact selected file/hunk blockers for tests, diffs, source-bound
   packages, runtime patch proof, and tool approvals
 - MoonCode Action Plan rows show command-scoped runtime evidence status,
@@ -167,7 +167,7 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
   intent is auditable as ordered `mooncode.v1` packets separately from rendered
   transcript and event progress, with latest packet rows and target-aware Test
   and Package controls
-- MoonCode composer semantics match MoonCode serve mode: no selected session
+- MoonCode composer semantics match the ordered MoonCode command protocol: no selected session
   starts a session, an idle selected session sends the text as a typed `prompt`
   command, and a running or queued selected session sends the text as a typed
   `steer` command through the MoonCode command route
@@ -177,12 +177,12 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
   context, so a sent steer is visible while MoonClaw
   has not yet confirmed whether it was applied or dropped
 - MoonCode Eval Report and primary command surfaces have Run Eval controls that
-  dispatch a typed `run_eval` command through the ordered runtime queue, asking
+  enqueue a typed `run_eval` command through the ordered runtime queue, asking
   MoonClaw for `tool_harness` and `file_edit` native
   proof instead of executing harnesses inside Moondesk
 - MoonCode runtime-feed visibility in the center pane, sourced from
   `.moontown/mooncode-sessions/<session-id>/runtime-commands.jsonl`, so the
-  MoonClaw-facing feed is visible even before dispatch receipts or runtime
+  MoonClaw-facing feed is visible even before runtime receipts or runtime
   leases exist, with compact execution summaries for planned tools, expected
   events, required outputs, and replay/event sinks
 - MoonCode runtime-replay visibility in the center pane, sourced from
@@ -196,7 +196,7 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
 - MoonCode runtime-replay acknowledgement controls on claimed Runtime Claims
   rows, sourced from `POST /api/mooncode/sessions/<session-id>/runtime-replay`,
   with Ack, Complete, and Fail buttons that record operator/debug receipts and
-  refresh replay, dispatch, event, handoff, and action-plan state
+  refresh replay, receipt, event, handoff, and action-plan state
 - MoonCode runtime-event sink visibility in the center pane, sourced from
   `/api/mooncode/sessions/<session-id>/runtime-events`, so operators can inspect
   the event log path, event count, POST endpoint, accepted MoonClaw/MoonCode

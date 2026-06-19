@@ -48,7 +48,7 @@ encounter them through Book, Wiki, Code, Run, Review, and Publish.
 | Moontown | Moontown | Coordination layer for MoonBooks: scheduling, cross-book communication, town events, idea discovery, notifications, and routing. |
 | Bookkeeper | MoonBook/Bookkeeper layer | Acceptance gate for knowledge/code/results before they become durable book truth. |
 | Agent | MoonClaw | Model/tool actor. |
-| Runtime | MoonClaw | Execution substrate: event stream, tool dispatcher, cancellation, durable loop, process/service lifecycle. |
+| Runtime | MoonClaw | Execution substrate: event stream, tool execution, cancellation, durable loop, process/service lifecycle. |
 | Session | MoonClaw, archived into MoonBook | Durable interactive conversation or coding context. Accepted summaries can be stored in the book. |
 | Job | MoonClaw | Bounded executable job. Moontown may request or schedule it, but MoonClaw executes it. |
 | Standing goal | Moontown | Recurring or ongoing intent for a target MoonBook. |
@@ -116,7 +116,7 @@ Multi-book town work:
 Moontown
   -> observes schedules, messages, source signals, and book state
   -> creates or advances standing goals
-  -> dispatches bounded work to MoonClaw for target MoonBooks
+  -> requests bounded MoonClaw work for target MoonBooks
   -> routes proposals/results back to MoonBooks
   -> asks Bookkeeper/review to accept or reject
   -> notifies Moondesk/operator when something meaningful happened

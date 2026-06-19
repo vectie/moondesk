@@ -23,10 +23,15 @@ Moondesk owns the desktop experience:
 
 MoonClaw owns execution:
 
-- model loop and tool dispatch
+- model loop and tool execution
 - prompt, steer, cancel, runtime loop, and runtime service behavior
 - file edits, tests, builds, package generation, and event streaming
 - durable runtime sidecars under the selected book
+
+MoonClaw must remain a standalone agent runtime. Moondesk should be able to
+start, probe, and render it, but the runtime must also be useful to a CLI,
+Moontown worker, or future standalone `mooncode` app without importing
+Moondesk internals.
 
 MoonBook owns durable outputs:
 
@@ -58,6 +63,33 @@ ui/rabbita-desk/main
 This split is the standalone path. A standalone `mooncode` project should be
 able to reuse the protocol/runtime contracts without taking MoonWiki, Rabbita,
 or Moondesk desktop packaging.
+
+## Shared Runtime, Separate Lanes
+
+MoonCode, MoonWiki, and generic automation can share MoonClaw's runtime
+substrate: sessions, event logs, tool execution, cancellation, process
+lifecycle, and model/tool loops. They should not share one vague task/chat API.
+
+- `MoonCode`: coding lane for executable book code, diffs, tests, packages, and
+  proof artifacts.
+- `MoonWiki`: book-editing lane for human-language wiki/source/review changes.
+- `Moontown`: coordination lane for scheduling, book-to-book messages, and
+  standing goals.
+- Generic MoonClaw tasks: bounded background jobs for automation.
+
+Each lane may call the same MoonClaw standalone runtime, but each keeps its own
+typed protocol, durable evidence, and product vocabulary.
+
+The visual shell is intentionally deferred while Lepusa settles. Until then,
+MoonCode work should stay in the backend contracts, durable book layout,
+MoonClaw runtime API, and host projections. New UI-specific behavior belongs
+behind these contracts, not inside them.
+
+`mooncode/core` must stay source-path neutral. It may name stable component ids
+such as `mooncode.projection`, `moonwiki.host`, and `moonclaw.runtime`, but it
+must not name Moondesk internals, MoonWiki implementation packages, or a sibling
+MoonClaw checkout path. Host-specific package paths belong in host projections
+such as `internal/mooncode/capabilities.mbt`.
 
 ## Desktop API
 
@@ -97,10 +129,11 @@ GET  /api/mooncode/sessions/<id>/test-runs
 GET  /api/mooncode/sessions/<id>/package-candidates
 GET  /api/mooncode/sessions/<id>/eval-report
 POST /api/mooncode/sessions/<id>/eval-report
+POST /api/mooncode/sessions/<id>/package-result
 GET  /api/mooncode/sessions/<id>/runtime-handoff
 GET  /api/mooncode/sessions/<id>/session-store
 GET  /api/mooncode/sessions/<id>/runtime-commands
-GET  /api/mooncode/sessions/<id>/runtime-dispatch
+GET  /api/mooncode/sessions/<id>/command-jsonl
 GET  /api/mooncode/sessions/<id>/runtime-events
 POST /api/mooncode/sessions/<id>/runtime-events
 GET  /api/mooncode/sessions/<id>/runtime-claim
@@ -110,7 +143,8 @@ POST /api/mooncode/sessions/<id>/runtime-replay
 GET  /api/mooncode/sessions/<id>/runtime-execution-plan
 GET  /api/mooncode/sessions/<id>/runtime-supervisor
 POST /api/mooncode/sessions/<id>/runtime-supervisor
-GET  /api/mooncode/sessions/<id>/serve-scheduler
+POST /api/mooncode/sessions/<id>/runtime-service
+GET  /api/mooncode/sessions/<id>/runtime-control
 GET  /api/mooncode/sessions/<id>/runtime-evidence
 ```
 
@@ -127,10 +161,16 @@ GET  /v1/code/sessions
 GET  /v1/code/sessions/<id>
 GET  /v1/code/sessions/<id>/stream
 POST /v1/code/sessions/<id>/commands
-GET  /v1/code/sessions/<id>/serve-scheduler
+GET  /v1/code/sessions/<id>/runtime-control
 GET  /v1/code/sessions/<id>/runtime-claim
 POST /v1/code/sessions/<id>/runtime-claim
-POST /v1/code/sessions/<id>/runtime-dispatch
+POST /v1/code/sessions/<id>/runtime-turn
+POST /v1/code/sessions/<id>/runtime-loop
+GET  /v1/code/sessions/<id>/runtime-service
+POST /v1/code/sessions/<id>/runtime-service
+GET  /v1/code/sessions/<id>/runtime-events
+POST /v1/code/sessions/<id>/runtime-events
+POST /v1/code/sessions/<id>/tool-exec
 GET  /v1/code/sessions/<id>/eval-report
 GET  /v1/code/sessions/<id>/package-result
 POST /v1/code/sessions/<id>/package-result
@@ -138,6 +178,14 @@ POST /v1/code/sessions/<id>/package-result
 
 Moondesk may probe these endpoints and render their state. It should not expose
 MoonClaw's noninteractive automation API as the MoonCode product path.
+Durable runtime settlement is represented by claim/turn receipts in
+`runtime-receipts.jsonl`, not a separate runtime API.
+
+The `/v1/code/sessions/<id>/commands` payload is part of the shared
+`mooncode/core` protocol. `native_command_body_required_fields()` and
+`native_command_body_supported_fields()` define the stable top-level command
+envelope so Moondesk producers and MoonClaw intake validation stay aligned
+from the same field contract.
 
 ## Durable Layout
 
@@ -152,7 +200,7 @@ MoonCode session state is book-scoped:
         events.jsonl
         commands.jsonl
         runtime-commands.jsonl
-        runtime-dispatches.jsonl
+        runtime-receipts.jsonl
   wiki/
     reviews/
       mooncode/<session-id>/

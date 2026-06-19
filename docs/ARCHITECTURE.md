@@ -20,7 +20,7 @@ MoonBook
   history, review queue, accepted knowledge
 
 Moontown
-  Mayor, daemon, standing goals, scheduling, dispatch, notifications,
+  Mayor, daemon, standing goals, scheduling, coordination, notifications,
   book-to-book communication, town state
 
 MoonClaw
@@ -65,7 +65,7 @@ The host exposes scoped local routes. Important families:
 - `/api/workspaces`, `/api/workspaces/:id/*`: workspace discovery, file lists,
   previews, raw files, edits, search, tags, saved views, and imports.
 - `/api/town/*`: Moontown requests, standing goals, progress, events, review
-  queue, analytics, and daemon dispatch.
+  queue, analytics, and daemon coordination.
 - `/api/books/*`: base-type/pattern registry, PDF Evidence Watch creation,
   standing-goal sync, template registry reads, and portable app-tool export.
 - `/api/mooncode/*`: book-scoped coding sessions, stream checkpoints, runtime

@@ -68,7 +68,7 @@ uses the host `/api/moonclaw/*` routes.
   runtime event-sink result handling.
 - `main/app_update_mooncode_artifact_results.mbt`: MoonCode review artifact,
   readiness, evidence, queue, replay, and preflight snapshot result handling.
-- `main/app_update_mooncode_runtime_results.mbt`: MoonCode runtime dispatch,
+- `main/app_update_mooncode_runtime_results.mbt`: MoonCode runtime control,
   claim, ack, session creation, and command completion result handling.
 - `main/app_json_helpers.mbt`, `main/app_json_projection_helpers.mbt`,
   `main/app_status_helpers.mbt`, and `main/app_url_helpers.mbt`: shared UI
@@ -149,8 +149,8 @@ uses the host `/api/moonclaw/*` routes.
   acceptance gates, runtime evidence, and command evidence rows.
 - `main/mooncode_runtime_claim_views.mbt`: runtime claim/lease controls,
   runtime service state, claim rows, and manual ack controls.
-- `main/mooncode_runtime_dispatch_receipt_views.mbt`: dispatch receipts, ack
-  audit, proof gates, and dispatch-state classification.
+- `main/mooncode_runtime_receipt_views.mbt`: runtime receipts, ack audit, proof
+  gates, and receipt-state classification.
 - `main/mooncode_runtime_execution_views.mbt`: shared execution summaries,
   tool policies, and runtime execution checklists.
 - `main/mooncode_event_views.mbt`: event lanes, live tail, shared info chips,
