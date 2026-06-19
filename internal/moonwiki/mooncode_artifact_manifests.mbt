@@ -38,7 +38,7 @@ async fn write_mooncode_session_snapshot_if_possible(
   let runtime_commands = read_mooncode_runtime_command_log(
     workspace_root, session_id,
   )
-  let runtime_dispatches = read_mooncode_runtime_dispatch_log(
+  let runtime_receipts = read_mooncode_runtime_receipt_log(
     workspace_root, session_id,
   )
   let session_id = json_string(session, "id", default="")
@@ -47,14 +47,14 @@ async fn write_mooncode_session_snapshot_if_possible(
     events,
     commands,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     recorded_at=@async.now().to_string(),
     snapshot_path=mooncode_session_snapshot_path(workspace_root, session_id),
     command_log_path=mooncode_command_log_path(workspace_root, session_id),
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
       workspace_root, session_id,
     ),
     event_log_path=mooncode_event_log_path(workspace_root, session_id),
@@ -84,7 +84,7 @@ async fn write_mooncode_runtime_handoff_manifest(
   let runtime_commands = read_mooncode_runtime_command_log(
     workspace_root, session_id,
   )
-  let runtime_dispatches = read_mooncode_runtime_dispatch_log(
+  let runtime_receipts = read_mooncode_runtime_receipt_log(
     workspace_root, session_id,
   )
   let summary = @mooncode.session_summary(session, events)
@@ -100,11 +100,11 @@ async fn write_mooncode_runtime_handoff_manifest(
   let runtime_replay = @mooncode.runtime_replay_state_for_session(
     session,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
       workspace_root, session_id,
     ),
     lease_now=@async.now().to_string(),
@@ -112,11 +112,11 @@ async fn write_mooncode_runtime_handoff_manifest(
   let runtime_claim = @mooncode.runtime_claim_state_for_session(
     session,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
       workspace_root, session_id,
     ),
     lease_now=@async.now().to_string(),
@@ -129,7 +129,7 @@ async fn write_mooncode_runtime_handoff_manifest(
     runtime_claim,
     commands,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     daemon,
     native_ready,
     recorded_at~,
@@ -143,7 +143,7 @@ async fn write_mooncode_runtime_handoff_manifest(
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
       workspace_root, session_id,
     ),
     event_log_path=mooncode_event_log_path(workspace_root, session_id),

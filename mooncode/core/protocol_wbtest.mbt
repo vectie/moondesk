@@ -14,12 +14,18 @@ test "mooncode core protocol surface is stable" {
     ),
   )
   assert_true(native_capability_required_tools().contains("apply_patch"))
+  assert_true(native_command_body_required_fields().contains("session_id"))
+  assert_true(native_command_body_supported_fields().contains("packet"))
+  assert_true(native_command_body_field_is_supported("tool_authorization"))
+  assert_false(native_command_body_field_is_supported("extra_mode"))
   assert_eq(native_capability_surface_fingerprint().length(), 64)
   let surface = native_capability_surface_json().stringify()
   assert_true(
     surface.contains("\"kind\":\"mooncode-native-capability-surface\""),
   )
   assert_true(surface.contains("\"capability_surface_fingerprint\""))
+  assert_true(surface.contains("\"command_body_required_fields\""))
+  assert_true(surface.contains("\"command_body_supported_fields\""))
   assert_true(surface.contains("\"runtime_loop_options\""))
   assert_true(surface.contains("\"live_wait_ms\""))
   assert_true(surface.contains("\"stream_options\""))
@@ -34,21 +40,36 @@ test "mooncode core names standalone package boundaries" {
   assert_true(payload.contains("\"protocol\":\"mooncode.v1\""))
   assert_true(payload.contains("\"core_package\":\"mooncode/core\""))
   assert_true(
-    payload.contains(
-      "\"moondesk_projection_package\":\"vectie/moondesk/internal/mooncode\"",
-    ),
+    payload.contains("\"projection_component\":\"mooncode.projection\""),
+  )
+  assert_true(payload.contains("\"host_component\":\"moonwiki.host\""))
+  assert_true(
+    payload.contains("\"runtime_component\":\"moonclaw.standalone-runtime\""),
   )
   assert_true(
-    payload.contains(
-      "\"moonwiki_host_package\":\"vectie/moondesk/internal/moonwiki\"",
-    ),
+    payload.contains("\"runtime_substrate\":\"moonclaw.shared-runtime\""),
   )
-  assert_true(payload.contains("\"runtime_package\":\"mooncode\""))
+  assert_true(payload.contains("\"id\":\"mooncode-coding-lane\""))
+  assert_true(payload.contains("\"id\":\"moonwiki-book-lane\""))
+  assert_true(payload.contains("\"id\":\"moonclaw-task-lane\""))
   assert_true(payload.contains("\"id\":\"mooncode-core\""))
-  assert_true(payload.contains("\"id\":\"moondesk-projection\""))
+  assert_true(payload.contains("\"id\":\"mooncode-projection\""))
   assert_true(payload.contains("\"id\":\"moonwiki-host\""))
-  assert_true(payload.contains("\"id\":\"runtime-engine\""))
+  assert_true(payload.contains("\"id\":\"moonclaw-standalone-runtime\""))
+  assert_true(payload.contains("shared runtime substrate"))
   assert_true(
-    payload.contains("mooncode/core must not import internal/mooncode"),
+    payload.contains(
+      "MoonClaw must remain usable as a standalone agent runtime",
+    ),
   )
+  assert_true(
+    payload.contains("MoonCode, MoonWiki, and generic tasks share MoonClaw"),
+  )
+  assert_true(
+    payload.contains("mooncode/core must contain only stable protocol"),
+  )
+  assert_false(payload.contains("vectie/moondesk"))
+  assert_false(payload.contains("internal/mooncode"))
+  assert_false(payload.contains("internal/moonwiki"))
+  assert_false(payload.contains("../moonclaw"))
 }

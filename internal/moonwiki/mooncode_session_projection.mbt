@@ -13,7 +13,7 @@ async fn attach_mooncode_session_projection(
   let durable_runtime_commands = read_mooncode_runtime_command_log(
     workspace_root, session_id,
   )
-  let durable_runtime_dispatches = read_mooncode_runtime_dispatch_log(
+  let durable_runtime_receipts = read_mooncode_runtime_receipt_log(
     workspace_root, session_id,
   )
   let events = project_mooncode_events(session, raw_events, durable_events)
@@ -32,10 +32,10 @@ async fn attach_mooncode_session_projection(
   } else {
     mooncode_runtime_command_log_path(workspace_root, session_id)
   }
-  let runtime_dispatch_log_path = if session_id == "" {
+  let runtime_receipt_log_path = if session_id == "" {
     ""
   } else {
-    mooncode_runtime_dispatch_log_path(workspace_root, session_id)
+    mooncode_runtime_receipt_log_path(workspace_root, session_id)
   }
   @mooncode.session_projection_response(
     session,
@@ -46,8 +46,8 @@ async fn attach_mooncode_session_projection(
     command_log_count=durable_commands.length(),
     runtime_command_log_path~,
     runtime_command_log_count=durable_runtime_commands.length(),
-    runtime_dispatch_log_path~,
-    runtime_dispatch_log_count=durable_runtime_dispatches.length(),
+    runtime_receipt_log_path~,
+    runtime_receipt_log_count=durable_runtime_receipts.length(),
   )
 }
 

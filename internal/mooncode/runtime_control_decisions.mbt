@@ -1,8 +1,8 @@
 ///|
-// MoonCode serve scheduler command decision engine.
+// MoonCode runtime control command decision engine.
 
 ///|
-pub fn serve_scheduler_decisions(
+pub fn runtime_control_decisions(
   command_log : Array[Json],
   lifecycle_items : Array[Json],
   active_turn_id : String,
@@ -11,16 +11,20 @@ pub fn serve_scheduler_decisions(
   let decisions : Array[Json] = []
   for index in 0..<command_log.length() {
     let command = command_log[index]
-    let action = scheduler_command_action(command)
-    let command_id = scheduler_json_string(command, "command_id", default="")
-    let status = scheduler_lifecycle_status(
+    let action = runtime_control_command_action(command)
+    let command_id = runtime_control_json_string(
+      command,
+      "command_id",
+      default="",
+    )
+    let status = runtime_control_lifecycle_status(
       lifecycle_items,
       command_id,
       default="unknown",
     )
     let decision = match action {
       "steer" =>
-        scheduler_control_decision(
+        runtime_control_command_decision(
           index,
           command,
           action,
@@ -32,7 +36,7 @@ pub fn serve_scheduler_decisions(
           idle_effect="defer-steer",
         )
       "cancel" =>
-        scheduler_control_decision(
+        runtime_control_command_decision(
           index,
           command,
           action,
@@ -44,7 +48,7 @@ pub fn serve_scheduler_decisions(
           idle_effect="drop-cancel",
         )
       "note" =>
-        scheduler_decision(
+        runtime_control_decision(
           index,
           command,
           status,
@@ -54,7 +58,7 @@ pub fn serve_scheduler_decisions(
           detail="Note is recorded in the session and does not start an agent turn.",
         )
       _ =>
-        scheduler_turn_decision(
+        runtime_control_turn_decision(
           index, command, status, active_turn_id, pending_turn_ids,
         )
     }
@@ -64,27 +68,31 @@ pub fn serve_scheduler_decisions(
 }
 
 ///|
-fn scheduler_turn_decision(
+fn runtime_control_turn_decision(
   index : Int,
   command : Json,
   status : String,
   active_turn_id : String,
   pending_turn_ids : Array[String],
 ) -> Json {
-  let command_id = scheduler_json_string(command, "command_id", default="")
+  let command_id = runtime_control_json_string(
+    command,
+    "command_id",
+    default="",
+  )
   if status == "completed" {
-    return scheduler_decision(
+    return runtime_control_decision(
       index,
       command,
       status,
       effect="already-completed",
       target_command_id=command_id,
       target_state="terminal",
-      detail="Turn already completed; no scheduler action is required.",
+      detail="Turn already completed; no runtime-control action is required.",
     )
   }
   if status == "failed" {
-    return scheduler_decision(
+    return runtime_control_decision(
       index,
       command,
       status,
@@ -94,8 +102,8 @@ fn scheduler_turn_decision(
       detail="Turn failed; retry or operator review is required before later queued work should proceed.",
     )
   }
-  if scheduler_status_blocked(status) {
-    return scheduler_decision(
+  if runtime_control_status_blocked(status) {
+    return runtime_control_decision(
       index,
       command,
       status,
@@ -106,7 +114,7 @@ fn scheduler_turn_decision(
     )
   }
   if command_id == active_turn_id {
-    return scheduler_decision(
+    return runtime_control_decision(
       index,
       command,
       status,
@@ -117,7 +125,7 @@ fn scheduler_turn_decision(
     )
   }
   if active_turn_id != "" {
-    return scheduler_decision(
+    return runtime_control_decision(
       index,
       command,
       status,
@@ -128,7 +136,7 @@ fn scheduler_turn_decision(
     )
   }
   if pending_turn_ids.length() > 0 && pending_turn_ids[0] == command_id {
-    scheduler_decision(
+    runtime_control_decision(
       index,
       command,
       status,
@@ -138,7 +146,7 @@ fn scheduler_turn_decision(
       detail="No turn is active; this is the next pending turn to start.",
     )
   } else {
-    scheduler_decision(
+    runtime_control_decision(
       index,
       command,
       status,
@@ -155,7 +163,7 @@ fn scheduler_turn_decision(
 }
 
 ///|
-fn scheduler_control_decision(
+fn runtime_control_command_decision(
   index : Int,
   command : Json,
   action : String,
@@ -167,7 +175,7 @@ fn scheduler_control_decision(
   idle_effect~ : String,
 ) -> Json {
   if active_turn_id != "" {
-    return scheduler_decision(
+    return runtime_control_decision(
       index,
       command,
       status,
@@ -178,7 +186,7 @@ fn scheduler_control_decision(
     )
   }
   if pending_turn_ids.length() > 0 {
-    return scheduler_decision(
+    return runtime_control_decision(
       index,
       command,
       status,
@@ -188,7 +196,7 @@ fn scheduler_control_decision(
       detail="\{action} targets the next pending MoonCode turn.",
     )
   }
-  scheduler_decision(
+  runtime_control_decision(
     index,
     command,
     status,
@@ -200,7 +208,7 @@ fn scheduler_control_decision(
 }
 
 ///|
-fn scheduler_decision(
+fn runtime_control_decision(
   index : Int,
   command : Json,
   status : String,
@@ -209,42 +217,42 @@ fn scheduler_decision(
   target_state~ : String,
   detail~ : String,
 ) -> Json {
-  let action = scheduler_command_action(command)
+  let action = runtime_control_command_action(command)
   {
     "index": index,
-    "command_id": scheduler_json_string(command, "command_id", default=""),
+    "command_id": runtime_control_json_string(command, "command_id", default=""),
     "action": action,
-    "dispatch": scheduler_json_string(
+    "control": runtime_control_json_string(
       command,
-      "dispatch",
-      default=command_dispatch(action),
+      "control",
+      default=command_control(action),
     ),
     "status": status,
     "effect": effect,
     "target_command_id": target_command_id,
     "target_state": target_state,
-    "text": scheduler_json_string(command, "message", default=""),
-    "created_at": scheduler_json_string(command, "created_at", default=""),
-    "mooncode_command": scheduler_mooncode_command(command),
+    "text": runtime_control_json_string(command, "message", default=""),
+    "created_at": runtime_control_json_string(command, "created_at", default=""),
+    "mooncode_command": runtime_control_mooncode_command(command),
     "detail": detail,
-    "owner": { "scheduler": "mooncode", "runtime": "moonclaw" },
+    "owner": { "runtime_control": "mooncode", "runtime": "moonclaw" },
   }
 }
 
 ///|
-fn scheduler_mooncode_command(command : Json) -> Json {
-  let action = scheduler_command_action(command)
+fn runtime_control_mooncode_command(command : Json) -> Json {
+  let action = runtime_control_command_action(command)
   match action {
     "steer" =>
       {
         "command": "steer",
-        "text": scheduler_json_string(command, "message", default=""),
+        "text": runtime_control_json_string(command, "message", default=""),
       }
     "cancel" => { "command": "cancel" }
     _ =>
       {
         "command": "prompt",
-        "text": scheduler_json_string(command, "message", default=""),
+        "text": runtime_control_json_string(command, "message", default=""),
       }
   }
 }

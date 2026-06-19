@@ -158,7 +158,7 @@ fn runtime_event_command_packet(event : Json, action : String) -> Json {
       "kind": kind_command_ref(),
       "command_id": command_id,
       "action": action,
-      "dispatch": command_dispatch(action),
+      "control": command_control(action),
       "runtime_proof": true,
       "session_id": json_string(event, "session_id", default=""),
       "runtime_session_id": json_string(event, "runtime_session_id", default=""),

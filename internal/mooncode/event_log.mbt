@@ -24,8 +24,8 @@ pub fn runtime_command_log_relative_path(session_id : String) -> String {
 }
 
 ///|
-pub fn runtime_dispatch_log_relative_path(session_id : String) -> String {
-  session_log_relative_dir(session_id) + "/runtime-dispatches.jsonl"
+pub fn runtime_receipt_log_relative_path(session_id : String) -> String {
+  session_log_relative_dir(session_id) + "/runtime-receipts.jsonl"
 }
 
 ///|
@@ -138,8 +138,8 @@ pub fn parse_runtime_command_log_text(text : String) -> Array[Json] {
 }
 
 ///|
-pub fn parse_runtime_dispatch_log_text(text : String) -> Array[Json] {
-  parse_jsonl_records(text, fn(record) { runtime_dispatch_record_valid(record) })
+pub fn parse_runtime_receipt_log_text(text : String) -> Array[Json] {
+  parse_jsonl_records(text, fn(record) { runtime_receipt_record_valid(record) })
 }
 
 ///|
@@ -155,9 +155,9 @@ pub fn runtime_command_record_valid(runtime_command : Json) -> Bool {
 }
 
 ///|
-pub fn runtime_dispatch_record_valid(receipt : Json) -> Bool {
+pub fn runtime_receipt_record_valid(receipt : Json) -> Bool {
   command_packet_valid(receipt) &&
-  json_string(receipt, "kind", default="") == kind_runtime_dispatch()
+  json_string(receipt, "kind", default="") == kind_runtime_receipt()
 }
 
 ///|

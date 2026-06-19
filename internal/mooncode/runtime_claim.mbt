@@ -104,7 +104,7 @@ pub fn runtime_claim_result_response(
   claim_receipts : Array[Json],
   session : Json,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
 ) -> Json {
   runtime_claim_response(
     session_id,
@@ -117,7 +117,7 @@ pub fn runtime_claim_result_response(
       workspace_name=rq_json_string(session, "workspace_name", default=""),
       runtime_session_id=session_runtime_session_id(session),
       runtime_command_log_path~,
-      runtime_dispatch_log_path~,
+      runtime_receipt_log_path~,
     ),
     runtime_claim_state(
       session_id,
@@ -127,7 +127,7 @@ pub fn runtime_claim_result_response(
       workspace_name=rq_json_string(session, "workspace_name", default=""),
       runtime_session_id=session_runtime_session_id(session),
       runtime_command_log_path~,
-      runtime_dispatch_log_path~,
+      runtime_receipt_log_path~,
     ),
     session,
   )
@@ -165,8 +165,8 @@ fn runtime_claim_receipt(
   )
   {
     "protocol": protocol_version(),
-    "kind": kind_runtime_dispatch(),
-    "dispatch_id": lease_id,
+    "kind": kind_runtime_receipt(),
+    "receipt_id": lease_id,
     "claim_id": lease_id,
     "command_id": command_id,
     "session_id": rq_json_string(runtime_command, "session_id", default=""),
@@ -174,9 +174,9 @@ fn runtime_claim_receipt(
     "workspace_name": rq_json_string(session, "workspace_name", default=""),
     "runtime_session_id": session_runtime_session_id(session),
     "action": rq_json_string(runtime_command, "action", default="prompt"),
-    "dispatch": rq_json_string(runtime_command, "dispatch", default="prompt"),
+    "control": rq_json_string(runtime_command, "control", default="prompt"),
     "status": "runtime-claimed",
-    "dispatch_mode": "mooncode-runtime-claim",
+    "runtime_mode": "mooncode-runtime-claim",
     "consumer_id": consumer_id,
     "created_at": claimed_at,
     "claimed_at": claimed_at,

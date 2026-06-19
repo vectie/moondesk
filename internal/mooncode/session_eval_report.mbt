@@ -49,7 +49,7 @@ pub fn eval_report_projection(session : Json) -> Json {
     "missing_check_count": missing_count,
     "check_count": checks.length(),
     "checks": Json::array(checks),
-    "native_eval_evidence_ready": native_ready,
+    "native_eval_ready": native_ready,
     "native_eval_report": native_eval,
     "native_eval_status": json_string(native_eval, "status", default="missing"),
     "native_eval_harness_count": native_harnesses.length(),
@@ -74,7 +74,7 @@ pub fn eval_report_projection(session : Json) -> Json {
     ),
     "native_eval_ingest_method": "POST",
     "native_eval_ingest_endpoint": if session_id == "" {
-      "/api/mooncode/sessions/<id>/eval-report"
+      desktop_session_eval_report_endpoint()
     } else {
       "/api/mooncode/sessions/\{session_id}/eval-report"
     },
@@ -96,7 +96,7 @@ pub fn eval_report_projection(session : Json) -> Json {
     "current_gap": if native_ready {
       "MoonClaw reported native eval evidence; remaining runtime gaps are reflected in the checks array."
     } else {
-      "Local evidence is visible, but MoonClaw still needs MoonCode-style tool_harness, file_edit, patch_review, command_execution, and package_output eval results before Moondesk can claim ready coding-agent behavior."
+      "Local evidence is visible, but MoonClaw still needs MoonCode tool_harness, file_edit, patch_review, command_execution, and package_output eval results before Moondesk can claim ready coding-agent behavior."
     },
     "summary": summary,
   }
@@ -145,15 +145,33 @@ pub fn session_with_eval_report_manifest_event(
 ///|
 pub fn normalize_native_eval_report(report : Json, endpoint : String) -> Json {
   let ok = native_eval_report_ready(report)
+  let old_ready_key = ["native_eval", "_evidence_ready"].join("")
+  let strict_report = eval_report_without_fields(report, [old_ready_key])
+  let status = native_eval_report_status(report, ok)
   eval_report_with_field(
     eval_report_with_field(
-      eval_report_with_field(report, "ok", ok.to_json()),
+      eval_report_with_field(
+        eval_report_with_field(strict_report, "status", status.to_json()),
+        "ok",
+        ok.to_json(),
+      ),
       "source",
       "moonclaw-native-runtime".to_json(),
     ),
     "endpoint",
     endpoint.to_json(),
   )
+}
+
+///|
+fn native_eval_report_status(report : Json, ready : Bool) -> String {
+  if ready {
+    "native-ready"
+  } else if native_eval_report_harnesses(report).length() > 0 {
+    "native-partial"
+  } else {
+    "missing"
+  }
 }
 
 ///|
@@ -167,6 +185,22 @@ pub fn session_with_native_eval_report(
     "mooncode_native_eval_report",
     normalize_native_eval_report(report, endpoint),
   )
+}
+
+///|
+fn eval_report_without_fields(base : Json, keys : Array[String]) -> Json {
+  match base {
+    Object(fields) => {
+      let next : Map[String, Json] = {}
+      for item in fields {
+        if !keys.contains(item.0) {
+          next[item.0] = item.1
+        }
+      }
+      Json::object(next)
+    }
+    _ => base
+  }
 }
 
 ///|
@@ -211,7 +245,7 @@ pub fn session_with_saved_eval_manifest(
   let native_report = summary_json_object_field_or_empty(
     manifest, "native_eval_report",
   )
-  if json_bool(native_report, "ok", default=false) &&
+  if native_eval_report_ready(native_report) &&
     !json_bool(
       summary_json_object_field_or_empty(session, "mooncode_native_eval_report"),
       "ok",
@@ -287,7 +321,7 @@ fn native_eval_harness_passed(harness : Json) -> Bool {
     String(_) => false
     _ => {
       let status = json_string(harness, "status", default="")
-      status == "passed" || status == "accepted"
+      status == "passed"
     }
   }
 }

@@ -190,7 +190,7 @@ fn render_mooncode_center(
           render_mooncode_action_plan_panel(dispatch, model),
           render_mooncode_runtime_evidence_panel(model),
           render_mooncode_runtime_claim_panel(dispatch, model),
-          render_mooncode_runtime_dispatch_panel(model),
+          render_mooncode_runtime_receipt_panel(model),
           render_mooncode_eval_report_panel(dispatch, model),
           render_mooncode_runtime_handoff_panel(model),
           render_mooncode_review_queue(dispatch, session),
@@ -282,10 +282,10 @@ fn render_mooncode_session_header(
     Some(plan) => "\{plan.status} / \{plan.next_required_action}"
     None => model.mooncode_action_plan_status
   }
-  let dispatch_state = match model.mooncode_runtime_dispatch {
-    Some(dispatch_state) =>
-      "\{dispatch_state.runtime_dispatch_count} receipt(s), \{dispatch_state.runtime_dispatch_pending_count} pending"
-    None => model.mooncode_runtime_dispatch_status
+  let receipt_state = match model.mooncode_runtime_receipt {
+    Some(receipt_state) =>
+      "\{receipt_state.runtime_receipt_count} receipt(s), \{receipt_state.runtime_receipt_pending_count} pending"
+    None => model.mooncode_runtime_receipt_status
   }
   let readiness_next_action = json_string_value(
     summary.readiness,
@@ -346,7 +346,7 @@ fn render_mooncode_session_header(
         "\{readiness_next_action} / \{readiness_next_owner}",
       ),
       info_chip("stream", "\{summary.stream_source} / \{summary.stream_mode}"),
-      info_chip("dispatch", "\{summary.dispatch_mode} / \{dispatch_state}"),
+      info_chip("runtime", "\{summary.runtime_mode} / \{receipt_state}"),
       info_chip("pending steers", mooncode_summary_pending_steer_label(summary)),
       info_chip("pending cancels", summary.pending_cancel_count.to_string()),
       info_chip("events", summary.event_count.to_string()),

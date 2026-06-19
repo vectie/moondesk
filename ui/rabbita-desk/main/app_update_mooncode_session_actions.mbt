@@ -76,7 +76,7 @@ fn mooncode_selected_session_reload_cmd(
     fetch_mooncode_preflight_matrix_cmd(
       dispatch, session_id, model.selected_path,
     ),
-    fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
+    fetch_mooncode_runtime_receipt_cmd(dispatch, session_id),
     fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
   ])
 }
@@ -140,9 +140,9 @@ fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
     mooncode_preflight_session_id: "",
     mooncode_preflight_status: "loading preflight gates",
     mooncode_preflights: [],
-    mooncode_runtime_dispatch_session_id: "",
-    mooncode_runtime_dispatch_status: "loading runtime dispatch",
-    mooncode_runtime_dispatch: None,
+    mooncode_runtime_receipt_session_id: "",
+    mooncode_runtime_receipt_status: "loading runtime receipt",
+    mooncode_runtime_receipt: None,
     mooncode_runtime_claim_session_id: "",
     mooncode_runtime_claim_status: "loading runtime claim",
     mooncode_runtime_claim: None,

@@ -48,13 +48,13 @@ fn mooncode_runtime_command_log_path(
 }
 
 ///|
-fn mooncode_runtime_dispatch_log_path(
+fn mooncode_runtime_receipt_log_path(
   workspace_root : String,
   session_id : String,
 ) -> String {
   @pathx.join(
     @pathx.normalize(workspace_root),
-    @mooncode.runtime_dispatch_log_relative_path(session_id),
+    @mooncode.runtime_receipt_log_relative_path(session_id),
   )
 }
 
@@ -155,16 +155,16 @@ async fn read_mooncode_stream_checkpoint(
 }
 
 ///|
-async fn read_mooncode_runtime_dispatch_log(
+async fn read_mooncode_runtime_receipt_log(
   workspace_root : String,
   session_id : String,
 ) -> Array[Json] {
   if !mooncode_valid_session_id(session_id) {
     return []
   }
-  let path = mooncode_runtime_dispatch_log_path(workspace_root, session_id)
+  let path = mooncode_runtime_receipt_log_path(workspace_root, session_id)
   let text = @fs.read_file(path).text() catch { _ => return [] }
-  parse_mooncode_runtime_dispatch_log_text(text)
+  parse_mooncode_runtime_receipt_log_text(text)
 }
 
 ///|
@@ -204,8 +204,8 @@ fn parse_mooncode_runtime_command_log_text(text : String) -> Array[Json] {
 }
 
 ///|
-fn parse_mooncode_runtime_dispatch_log_text(text : String) -> Array[Json] {
-  @mooncode.parse_runtime_dispatch_log_text(text)
+fn parse_mooncode_runtime_receipt_log_text(text : String) -> Array[Json] {
+  @mooncode.parse_runtime_receipt_log_text(text)
 }
 
 ///|
@@ -290,7 +290,7 @@ async fn append_mooncode_runtime_command_log(
 }
 
 ///|
-async fn append_mooncode_runtime_dispatch_log(
+async fn append_mooncode_runtime_receipt_log(
   workspace_root : String,
   session_id : String,
   receipt : Json,
@@ -298,13 +298,13 @@ async fn append_mooncode_runtime_dispatch_log(
   if !mooncode_valid_session_id(session_id) {
     fail("invalid MoonCode session id: \{session_id}")
   }
-  if !@mooncode.runtime_dispatch_record_valid(receipt) {
-    fail("invalid MoonCode runtime dispatch receipt")
+  if !@mooncode.runtime_receipt_record_valid(receipt) {
+    fail("invalid MoonCode runtime receipt")
   }
   let dir = mooncode_session_log_dir(workspace_root, session_id)
   @fsx.make_directory(dir, recursive=true, exists_ok=true)
   append_mooncode_jsonl_file(
-    mooncode_runtime_dispatch_log_path(workspace_root, session_id),
+    mooncode_runtime_receipt_log_path(workspace_root, session_id),
     receipt,
   )
 }
@@ -417,25 +417,25 @@ test "mooncode parses runtime command log and requires typed records" {
     "protocol": @mooncode.protocol_version(),
     "kind": @mooncode.kind_runtime_command(),
     "command_id": "cmd-1",
-    "serve_command": "prompt",
+    "code_command": "prompt",
   }
   let commands = parse_mooncode_runtime_command_log_text(
     command.stringify() +
     "\nnot-json\n{\"protocol\":\"mooncode.v1\",\"kind\":\"mooncode.command\",\"command_id\":\"bad\"}\n",
   )
   assert_eq(commands.length(), 1)
-  assert_eq(json_string(commands[0], "serve_command", default=""), "prompt")
+  assert_eq(json_string(commands[0], "code_command", default=""), "prompt")
 }
 
 ///|
-test "mooncode parses runtime dispatch log and requires typed receipts" {
+test "mooncode parses runtime receipt log and requires typed receipts" {
   let receipt : Json = {
     "protocol": @mooncode.protocol_version(),
-    "kind": @mooncode.kind_runtime_dispatch(),
+    "kind": @mooncode.kind_runtime_receipt(),
     "command_id": "cmd-1",
     "status": "recorded",
   }
-  let receipts = parse_mooncode_runtime_dispatch_log_text(
+  let receipts = parse_mooncode_runtime_receipt_log_text(
     receipt.stringify() +
     "\nnot-json\n{\"protocol\":\"mooncode.v1\",\"kind\":\"mooncode.command\",\"command_id\":\"bad\"}\n",
   )
@@ -470,31 +470,31 @@ async test "mooncode appends and replays durable runtime command feed" {
     "protocol": @mooncode.protocol_version(),
     "kind": @mooncode.kind_runtime_command(),
     "command_id": "cmd-1",
-    "serve_command": "prompt",
+    "code_command": "prompt",
   }
   append_mooncode_runtime_command_log(root, session_id, command)
   let commands = read_mooncode_runtime_command_log(root, session_id)
   assert_eq(commands.length(), 1)
-  assert_eq(json_string(commands[0], "serve_command", default=""), "prompt")
+  assert_eq(json_string(commands[0], "code_command", default=""), "prompt")
   assert_true(@fs.exists(mooncode_runtime_command_log_path(root, session_id)))
 }
 
 ///|
-async test "mooncode appends and replays durable runtime dispatch receipts" {
-  let root = "/tmp/moondesk-mooncode-runtime-dispatch-log-wbtest-" +
+async test "mooncode appends and replays durable runtime receipts" {
+  let root = "/tmp/moondesk-mooncode-runtime-receipt-log-wbtest-" +
     @async.now().to_string()
   let session_id = "session-a"
   let receipt : Json = {
     "protocol": @mooncode.protocol_version(),
-    "kind": @mooncode.kind_runtime_dispatch(),
+    "kind": @mooncode.kind_runtime_receipt(),
     "command_id": "cmd-1",
     "status": "recorded",
   }
-  append_mooncode_runtime_dispatch_log(root, session_id, receipt)
-  let receipts = read_mooncode_runtime_dispatch_log(root, session_id)
+  append_mooncode_runtime_receipt_log(root, session_id, receipt)
+  let receipts = read_mooncode_runtime_receipt_log(root, session_id)
   assert_eq(receipts.length(), 1)
   assert_eq(json_string(receipts[0], "status", default=""), "recorded")
-  assert_true(@fs.exists(mooncode_runtime_dispatch_log_path(root, session_id)))
+  assert_true(@fs.exists(mooncode_runtime_receipt_log_path(root, session_id)))
 }
 
 ///|

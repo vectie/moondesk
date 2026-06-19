@@ -1,5 +1,5 @@
 ///|
-// White-box tests for MoonCode runtime dispatch protocol and queue response surfaces.
+// White-box tests for MoonCode runtime receipt protocol and queue response surfaces.
 
 ///|
 test "mooncode runtime protocol advertises proof event names" {
@@ -34,7 +34,7 @@ test "mooncode runtime protocol advertises proof event names" {
 }
 
 ///|
-test "mooncode runtime dispatch receipt classifies runtime outcomes" {
+test "mooncode runtime receipt classifies runtime outcomes" {
   let runtime_command : Json = {
     "command_id": "cmd-1",
     "session_id": "session-demo",
@@ -42,7 +42,7 @@ test "mooncode runtime dispatch receipt classifies runtime outcomes" {
     "workspace_name": "Demo",
     "runtime_session_id": "runtime-demo",
     "action": "prompt",
-    "dispatch": "prompt",
+    "control": "prompt",
     "mooncode_command_valid": true,
     "native_mooncode_endpoint": "/v1/code/sessions/session-demo/commands",
   }
@@ -50,17 +50,17 @@ test "mooncode runtime dispatch receipt classifies runtime outcomes" {
     "workspace_id": "book-demo",
     "workspace_name": "Demo",
     "mooncode_runtime_session_id": "runtime-demo",
-    "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
+    "mooncode_runtime_mode": "moonclaw-mooncode-runtime",
   }
-  let native = runtime_dispatch_receipt(
+  let native = runtime_receipt(
     native_session,
     runtime_command,
-    dispatch_id="dispatch-native",
+    receipt_id="receipt-native",
     created_at="2026-06-15T00:00:00Z",
   )
-  assert_eq(rq_json_string(native, "status", default=""), "native-dispatched")
+  assert_eq(rq_json_string(native, "status", default=""), "runtime-accepted")
   assert_eq(
-    rq_json_string(native, "dispatch_mode", default=""),
+    rq_json_string(native, "runtime_mode", default=""),
     "moonclaw-mooncode-runtime",
   )
   assert_true(rq_json_bool(native, "mooncode_command_valid", default=false))
@@ -69,54 +69,56 @@ test "mooncode runtime dispatch receipt classifies runtime outcomes" {
   )
   let unsupported_session : Json = {
     "mooncode_runtime_session_id": "runtime-demo",
-    "mooncode_dispatch_mode": "unsupported-dispatch-mode",
+    "mooncode_runtime_mode": "unsupported-runtime-mode",
   }
   assert_eq(
-    runtime_dispatch_status(unsupported_session, runtime_command),
+    runtime_receipt_status(unsupported_session, runtime_command),
     "recorded",
   )
-  let recorded_session : Json = { "mooncode_dispatch_mode": "not-dispatched" }
+  let recorded_session : Json = {
+    "mooncode_runtime_mode": "runtime-not-started",
+  }
   assert_eq(
-    runtime_dispatch_status(recorded_session, runtime_command),
+    runtime_receipt_status(recorded_session, runtime_command),
     "recorded",
   )
   let failed_session : Json = {
-    "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
+    "mooncode_runtime_mode": "moonclaw-mooncode-runtime",
     "mooncode_command_events": [
       { "status": "failed", "command_packet": { "command_id": "cmd-1" } },
     ],
   }
-  assert_eq(runtime_dispatch_status(failed_session, runtime_command), "failed")
+  assert_eq(runtime_receipt_status(failed_session, runtime_command), "failed")
 }
 
 ///|
-test "mooncode projected runtime dispatch receipt owns stable dispatch ids" {
+test "mooncode projected runtime receipt owns stable receipt ids" {
   let runtime_command : Json = {
     "command_id": "cmd-1",
     "session_id": "session-demo",
     "action": "prompt",
-    "dispatch": "prompt",
+    "control": "prompt",
   }
   let session : Json = {
     "workspace_id": "book-demo",
-    "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
+    "mooncode_runtime_mode": "moonclaw-mooncode-runtime",
   }
-  let first = projected_runtime_dispatch_receipt(
+  let first = projected_runtime_receipt(
     session, runtime_command, "2026-06-15T00:00:00Z",
   )
-  let second = projected_runtime_dispatch_receipt(
+  let second = projected_runtime_receipt(
     session, runtime_command, "2026-06-15T00:00:00Z",
   )
   assert_eq(
-    rq_json_string(first, "dispatch_id", default=""),
-    rq_json_string(second, "dispatch_id", default=""),
+    rq_json_string(first, "receipt_id", default=""),
+    rq_json_string(second, "receipt_id", default=""),
   )
   assert_true(
-    rq_json_string(first, "dispatch_id", default="").has_prefix(
-      "mooncode-runtime-dispatch-",
+    rq_json_string(first, "receipt_id", default="").has_prefix(
+      "mooncode-runtime-receipt-",
     ),
   )
-  assert_eq(rq_json_string(first, "status", default=""), "native-dispatched")
+  assert_eq(rq_json_string(first, "status", default=""), "runtime-accepted")
   assert_eq(
     rq_json_string(first, "created_at", default=""),
     "2026-06-15T00:00:00Z",
@@ -124,76 +126,76 @@ test "mooncode projected runtime dispatch receipt owns stable dispatch ids" {
 }
 
 ///|
-test "mooncode runtime dispatch receipt response fills native defaults" {
-  let response = runtime_dispatch_receipt_for_response(
+test "mooncode runtime receipt response fills native defaults" {
+  let response = runtime_receipt_for_response(
     { "command_id": "cmd-recorded", "status": "recorded" },
-    fallback_dispatch_id="dispatch-fallback",
+    fallback_receipt_id="receipt-fallback",
   )
   assert_eq(
-    rq_json_string(response, "dispatch_id", default=""),
-    "dispatch-fallback",
+    rq_json_string(response, "receipt_id", default=""),
+    "receipt-fallback",
   )
-  assert_eq(rq_json_string(response, "dispatch_mode", default=""), "unknown")
+  assert_eq(rq_json_string(response, "runtime_mode", default=""), "unknown")
   assert_eq(rq_json_string(response, "created_at", default="missing"), "")
   assert_false(rq_json_bool(response, "mooncode_command_valid", default=true))
   assert_true(
     rq_json_object_field(response, "runtime_command") is Some(Object(_)),
   )
   assert_true(rq_json_object_field(response, "owner") is Some(Object(_)))
-  let responses = runtime_dispatch_receipts_for_response([
+  let responses = runtime_receipts_for_response([
     { "command_id": "cmd-recorded", "status": "recorded" },
     {
       "command_id": "cmd-existing",
       "status": "runtime-completed",
-      "dispatch_id": "dispatch-existing",
+      "receipt_id": "receipt-existing",
     },
   ])
   assert_eq(responses.length(), 2)
   assert_true(
-    rq_json_string(responses[0], "dispatch_id", default="").has_prefix(
-      "mooncode-runtime-dispatch-",
+    rq_json_string(responses[0], "receipt_id", default="").has_prefix(
+      "mooncode-runtime-receipt-",
     ),
   )
   assert_eq(
-    rq_json_string(responses[1], "dispatch_id", default=""),
-    "dispatch-existing",
+    rq_json_string(responses[1], "receipt_id", default=""),
+    "receipt-existing",
   )
 }
 
 ///|
-test "mooncode runtime dispatch state response records queue state" {
+test "mooncode runtime receipt state response records queue state" {
   let command : Json = {
     "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-1",
   }
-  let dispatch : Json = {
+  let control : Json = {
     "protocol": protocol_version(),
-    "kind": kind_runtime_dispatch(),
+    "kind": kind_runtime_receipt(),
     "command_id": "cmd-0",
     "status": "runtime-completed",
-    "dispatch_id": "dispatch-0",
+    "receipt_id": "receipt-0",
   }
-  let response = runtime_dispatch_state_response(
+  let response = runtime_receipt_state_response(
     "session-demo",
     [command],
-    [dispatch],
+    [control],
     [Json::string("cmd-1")],
     workspace_id="book-demo",
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
-    dispatch_mode="moonclaw-mooncode-runtime",
+    runtime_mode="moonclaw-mooncode-runtime",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(
     rq_json_string(response, "kind", default=""),
-    "mooncode-runtime-dispatch-state",
+    "mooncode-runtime-receipt-state",
   )
   assert_eq(rq_json_int(response, "runtime_command_count", default=0), 1)
-  assert_eq(rq_json_int(response, "runtime_dispatch_count", default=0), 1)
+  assert_eq(rq_json_int(response, "runtime_receipt_count", default=0), 1)
   assert_eq(
-    rq_json_int(response, "runtime_dispatch_pending_count", default=0),
+    rq_json_int(response, "runtime_receipt_pending_count", default=0),
     1,
   )
   assert_eq(
@@ -211,31 +213,31 @@ test "mooncode runtime dispatch state response records queue state" {
     ),
     "moonclaw",
   )
-  let aggregate = runtime_dispatch_response(
+  let aggregate = runtime_receipt_response(
     "session-demo",
     [command],
     [{ "command_id": "cmd-0", "status": "runtime-completed" }],
     workspace_id="book-demo",
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
-    dispatch_mode="moonclaw-mooncode-runtime",
+    runtime_mode="moonclaw-mooncode-runtime",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2026-06-15T00:00:00Z",
   )
   assert_eq(
     rq_json_string(aggregate, "kind", default=""),
-    "mooncode-runtime-dispatch-state",
+    "mooncode-runtime-receipt-state",
   )
   assert_eq(
-    rq_json_int(aggregate, "runtime_dispatch_pending_count", default=0),
+    rq_json_int(aggregate, "runtime_receipt_pending_count", default=0),
     1,
   )
-  let aggregate_receipts = rq_json_array_items(aggregate, "dispatch_receipts")
+  let aggregate_receipts = rq_json_array_items(aggregate, "runtime_receipts")
   assert_eq(aggregate_receipts.length(), 1)
   assert_true(
-    rq_json_string(aggregate_receipts[0], "dispatch_id", default="").has_prefix(
-      "mooncode-runtime-dispatch-",
+    rq_json_string(aggregate_receipts[0], "receipt_id", default="").has_prefix(
+      "mooncode-runtime-receipt-",
     ),
   )
 }

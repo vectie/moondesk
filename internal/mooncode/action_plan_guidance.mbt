@@ -15,7 +15,7 @@ pub fn action_plan_blocking_reason(
     if runtime_state == "expired-claim" {
       return "runtime claim lease expired; reclaim the command before execution"
     }
-    return "last runtime dispatch failed; replay or retry the command"
+    return "last runtime receipt failed; replay or retry the command"
   }
   if state == "running" {
     return "MoonClaw has claimed this command and should acknowledge it through runtime replay"
@@ -54,7 +54,7 @@ pub fn action_plan_item_next_step(_action : String, state : String) -> String {
     "queued-for-runtime" =>
       "deliver command through runtime replay or native MoonCode"
     "running" => "wait for runtime acknowledgement or recover a stale claim"
-    "runtime-retry" => "retry dispatch and preserve the failed receipt"
+    "runtime-retry" => "retry runtime and preserve the failed receipt"
     "awaiting-proof" => "wait for MoonClaw to emit typed proof events"
     "blocked" => "resolve blocking gates before continuing"
     "ready-for-review" => "operator can review this action in Moondesk"

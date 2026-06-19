@@ -4,7 +4,7 @@ struct MoonCodeSummary {
   stream_url : String
   stream_mode : String
   stream_source : String
-  dispatch_mode : String
+  runtime_mode : String
   live_stream_ready : Bool
   live_stream_url : String
   incremental_stream_ready : Bool
@@ -19,9 +19,9 @@ struct MoonCodeSummary {
   runtime_command_log_path : String
   runtime_command_feed_ready : Bool
   runtime_command_count : Int
-  runtime_dispatch_log_path : String
-  runtime_dispatch_ready : Bool
-  runtime_dispatch_count : Int
+  runtime_receipt_log_path : String
+  runtime_receipt_ready : Bool
+  runtime_receipt_count : Int
   session_snapshot_path : String
   session_snapshot_ready : Bool
   event_count : Int
@@ -105,7 +105,7 @@ struct MoonCodeEvalReport {
   missing_check_count : Int
   check_count : Int
   checks : Array[MoonCodeEvalCheck]
-  native_eval_evidence_ready : Bool
+  native_eval_ready : Bool
   native_eval_source : String
   native_eval_endpoint : String
   native_eval_ingest_method : String

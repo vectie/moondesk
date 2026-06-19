@@ -96,7 +96,36 @@ pub fn tool_contract_json() -> Json {
           ),
         ],
         output_events=["file_change", "diff", "patch_applied", "tool_result"],
-        safety_policy="Apply only reviewed patches under the selected MoonBook and emit patch_applied or patch_reverted runtime proof.",
+        safety_policy="Apply only reviewed patches under the selected MoonBook and emit patch_applied runtime proof.",
+      ),
+      tool_contract_entry(
+        id="revert_patch",
+        lane="diff",
+        approval="review",
+        mutates_files=true,
+        requires_review=true,
+        input_fields=[
+          tool_field(
+            "patch",
+            "string",
+            required=true,
+            "Unified patch text to reverse inside the selected MoonBook.",
+          ),
+          tool_field(
+            "paths",
+            "array<string>",
+            required=false,
+            "Expected book-relative reverted paths.",
+          ),
+          tool_field(
+            "receipt_id",
+            "string",
+            required=false,
+            "Optional applied-patch receipt being reverted.",
+          ),
+        ],
+        output_events=["file_change", "diff", "patch_reverted", "tool_result"],
+        safety_policy="Revert only reviewed or previously applied patches under the selected MoonBook and emit patch_reverted runtime proof.",
       ),
       tool_contract_entry(
         id="shell",

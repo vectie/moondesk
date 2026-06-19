@@ -95,9 +95,9 @@ pub fn session_readiness_response(session : Json) -> Json {
         "runtime_command_log_path",
         default="",
       ),
-      "runtime_dispatch_log_path": json_string(
+      "runtime_receipt_log_path": json_string(
         summary,
-        "runtime_dispatch_log_path",
+        "runtime_receipt_log_path",
         default="",
       ),
       "session_snapshot_path": json_string(

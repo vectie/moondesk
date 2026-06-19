@@ -16,8 +16,8 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
   } else {
     []
   }
-  let runtime_dispatches = if snapshot_ready {
-    json_array_items(snapshot, "runtime_dispatches")
+  let runtime_receipts = if snapshot_ready {
+    json_array_items(snapshot, "runtime_receipts")
   } else {
     []
   }
@@ -34,7 +34,7 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
   let runtime_lifecycle = runtime_command_lifecycle(
     session_id,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     lifecycle_events,
     lease_now=json_string(snapshot, "recorded_at", default=""),
   )
@@ -60,9 +60,9 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
       "runtime_command_log_path",
       default="",
     ),
-    "runtime_dispatch_log_path": json_string(
+    "runtime_receipt_log_path": json_string(
       snapshot,
-      "runtime_dispatch_log_path",
+      "runtime_receipt_log_path",
       default="",
     ),
     "event_log_path": json_string(snapshot, "event_log_path", default=""),
@@ -77,7 +77,7 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
       "command_count",
       default=0,
     ),
-    "runtime_dispatch_count": runtime_dispatches.length(),
+    "runtime_receipt_count": runtime_receipts.length(),
     "pending_count": summary_json_int(
       runtime_lifecycle,
       "pending_count",
@@ -88,9 +88,9 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
       "running_count",
       default=0,
     ),
-    "dispatched_count": summary_json_int(
+    "runtime_started_count": summary_json_int(
       runtime_lifecycle,
-      "dispatched_count",
+      "runtime_started_count",
       default=0,
     ),
     "completed_count": summary_json_int(
@@ -130,7 +130,7 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
       "session_store": "mooncode",
       "standalone_component": "mooncode",
     },
-    "rule": "Resume lifecycle is computed from the typed MoonCode session snapshot plus runtime command and dispatch logs. Moondesk renders resumability; MoonClaw consumes the ordered runtime queue.",
+    "rule": "Resume lifecycle is computed from the typed MoonCode session snapshot plus runtime command and receipt logs. Moondesk renders resumability; MoonClaw consumes the ordered runtime queue.",
   }
 }
 
@@ -146,7 +146,7 @@ fn resume_lifecycle_status(snapshot_ready : Bool, lifecycle : Json) -> String {
   } else if summary_json_int(lifecycle, "running_count", default=0) > 0 {
     "running"
   } else if summary_json_int(lifecycle, "pending_count", default=0) > 0 ||
-    summary_json_int(lifecycle, "dispatched_count", default=0) > 0 {
+    summary_json_int(lifecycle, "runtime_started_count", default=0) > 0 {
     "resumable"
   } else if command_count > 0 &&
     summary_json_int(lifecycle, "completed_count", default=0) == command_count {
@@ -182,7 +182,7 @@ fn resume_lifecycle_next_step(
   if summary_json_int(lifecycle, "pending_count", default=0) > 0 {
     return "Start the native loop or service to claim the next pending runtime command."
   }
-  if summary_json_int(lifecycle, "dispatched_count", default=0) > 0 {
+  if summary_json_int(lifecycle, "runtime_started_count", default=0) > 0 {
     return "Wait for command-scoped proof events or append completion acknowledgement."
   }
   if summary_json_int(lifecycle, "command_count", default=0) > 0 {

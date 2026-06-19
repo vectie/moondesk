@@ -198,7 +198,7 @@ async test "mooncode engine status requires native runtime readiness" {
   )
   assert_true(
     json_string_array_items(status, "supported_endpoints").contains(
-      "/api/mooncode/sessions/<id>/readiness",
+      @mooncode.desktop_session_readiness_endpoint(),
     ),
   )
   assert_true(

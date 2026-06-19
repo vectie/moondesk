@@ -7,8 +7,8 @@ test "mooncode runtime consumer ack completes run_tests with typed tool proof" {
     "command_id": "cmd-tests",
     "session_id": "session-demo",
     "action": "run_tests",
-    "dispatch": "command",
-    "serve_command": "prompt",
+    "control": "command",
+    "code_command": "prompt",
     "mooncode_command": { "command": "prompt", "text": "run tests" },
     "execution_summary": {
       "tool_sequence": ["read", "moon_check", "shell", "finish"],
@@ -75,8 +75,8 @@ test "mooncode runtime consumer ack is proof-missing when an expected tool outco
     "command_id": "cmd-tests",
     "session_id": "session-demo",
     "action": "run_tests",
-    "dispatch": "command",
-    "serve_command": "prompt",
+    "control": "command",
+    "code_command": "prompt",
     "mooncode_command": { "command": "prompt", "text": "run tests" },
     "execution_summary": {
       "tool_sequence": ["read", "moon_check", "shell", "finish"],
@@ -121,8 +121,8 @@ test "mooncode runtime consumer package output ack proves executable package com
     "command_id": "cmd-package",
     "session_id": "session-demo",
     "action": "package",
-    "dispatch": "command",
-    "serve_command": "prompt",
+    "control": "command",
+    "code_command": "prompt",
     "mooncode_command": { "command": "prompt", "text": "package output" },
     "execution_summary": {
       "tool_sequence": [

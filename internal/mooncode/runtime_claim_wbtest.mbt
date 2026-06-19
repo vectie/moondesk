@@ -10,8 +10,8 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
       "command_id": "cmd-tool",
       "session_id": "session-demo",
       "action": "run_tests",
-      "dispatch": "command",
-      "serve_command": "prompt",
+      "control": "command",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "run tests" },
       "tool_authorization": {
         "kind": "mooncode-tool-authorization-snapshot",
@@ -27,8 +27,8 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
       "command_id": "cmd-later",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "later" },
     },
   ]
@@ -40,7 +40,7 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(rq_json_int(replay, "pending_command_count", default=0), 0)
   assert_eq(rq_json_string(replay, "pending_mooncode_jsonl", default="x"), "")
@@ -65,7 +65,7 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(rq_json_int(state, "claimable_command_count", default=0), 0)
   assert_eq(rq_json_int(state, "invalid_command_count", default=0), 0)
@@ -89,7 +89,7 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
     "force": true,
   })
   assert_eq(claimed.length(), 0)
-  assert_eq(runtime_serve_jsonl(commands, [], scope="pending"), "")
+  assert_eq(runtime_command_jsonl(commands, [], scope="pending"), "")
 }
 
 ///|
@@ -103,7 +103,7 @@ test "mooncode runtime claim response records claimed commands" {
   }
   let receipt : Json = {
     "protocol": protocol_version(),
-    "kind": kind_runtime_dispatch(),
+    "kind": kind_runtime_receipt(),
     "command_id": "cmd-1",
     "status": "runtime-claimed",
     "runtime_command": runtime_command,
@@ -146,7 +146,7 @@ test "mooncode runtime claim response records claimed commands" {
       "mooncode_runtime_session_id": "runtime-demo",
     },
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(
     rq_json_string(aggregate, "kind", default=""),
@@ -180,15 +180,15 @@ test "mooncode runtime queue classifies expired leases as claimable" {
       "command_id": "cmd-stale",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "recover me" },
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
+      "kind": kind_runtime_receipt(),
       "command_id": "cmd-stale",
       "status": "runtime-claimed",
       "claim_id": "claim-old",
@@ -205,7 +205,7 @@ test "mooncode runtime queue classifies expired leases as claimable" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(rq_json_int(state, "claimable_command_count", default=0), 1)
@@ -218,7 +218,7 @@ test "mooncode runtime queue classifies expired leases as claimable" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   let replay_items = rq_json_array_items(replay, "replay_items")
@@ -229,7 +229,7 @@ test "mooncode runtime queue classifies expired leases as claimable" {
 }
 
 ///|
-test "mooncode runtime queue classifies failed dispatches as retryable claims" {
+test "mooncode runtime queue classifies failed runtime receipts as retryable claims" {
   let commands : Array[Json] = [
     {
       "protocol": protocol_version(),
@@ -237,15 +237,15 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
       "command_id": "cmd-failed",
       "session_id": "session-demo",
       "action": "run_tests",
-      "dispatch": "command",
-      "serve_command": "prompt",
+      "control": "command",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "run tests" },
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
+      "kind": kind_runtime_receipt(),
       "command_id": "cmd-failed",
       "status": "failed",
       "consumer_id": "moonclaw-runtime",
@@ -259,7 +259,7 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   let replay_items = rq_json_array_items(replay, "replay_items")
   assert_eq(
@@ -274,7 +274,7 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(rq_json_int(state, "claimable_command_count", default=0), 1)
   assert_eq(rq_json_int(state, "failed_command_count", default=0), 1)
@@ -285,7 +285,7 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
     "cmd-failed",
   )
   assert_true(
-    rq_json_bool(claimable[0], "previous_dispatch_failed", default=false),
+    rq_json_bool(claimable[0], "previous_receipt_failed", default=false),
   )
   let failed = rq_json_array_items(state, "failed_commands")
   assert_eq(rq_json_string(failed[0], "claim_status", default=""), "claimable")
@@ -325,8 +325,8 @@ test "mooncode runtime claim preserves ordering behind active leases" {
       "command_id": "cmd-active",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "first" },
     },
     {
@@ -335,15 +335,15 @@ test "mooncode runtime claim preserves ordering behind active leases" {
       "command_id": "cmd-later",
       "session_id": "session-demo",
       "action": "steer",
-      "dispatch": "steer",
-      "serve_command": "steer",
+      "control": "steer",
+      "code_command": "steer",
       "mooncode_command": { "command": "steer", "text": "later" },
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
+      "kind": kind_runtime_receipt(),
       "command_id": "cmd-active",
       "status": "runtime-claimed",
       "claim_id": "claim-active",
@@ -358,7 +358,7 @@ test "mooncode runtime claim preserves ordering behind active leases" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(rq_json_int(state, "claimable_command_count", default=0), 0)
   assert_eq(rq_json_int(state, "claimed_command_count", default=0), 1)
@@ -410,7 +410,7 @@ test "mooncode runtime claim stops at invalid earlier command" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(rq_json_int(state, "invalid_command_count", default=0), 1)
   assert_eq(rq_json_int(state, "order_blocked_command_count", default=0), 1)

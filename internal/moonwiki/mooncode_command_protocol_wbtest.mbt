@@ -428,7 +428,7 @@ test "mooncode command packet preserves runtime boundary" {
     session, payload, "run_tests", message, "2026-06-14T00:00:00Z", "tools/demo/main.mbt",
   )
   assert_eq(json_string(packet, "protocol", default=""), "mooncode.v1")
-  assert_eq(json_string(packet, "dispatch", default=""), "command")
+  assert_eq(json_string(packet, "control", default=""), "command")
   assert_eq(json_string(packet, "approval", default=""), "auto")
   assert_eq(
     json_string(packet, "context_path", default=""),

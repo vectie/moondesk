@@ -34,7 +34,7 @@ struct MoonCodeToolSpec {
 ///|
 struct MoonCodeCommandSpec {
   action : String
-  dispatch : String
+  control : String
   approval : String
   expected_lanes : Array[String]
   tool_hints : Array[String]

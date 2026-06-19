@@ -27,8 +27,6 @@ using @html {
 ///|
 using @rabbita {type Dispatch}
 
-
-
 ///|
 #cfg(target="js")
 extern "js" fn encode_component(text : String) -> String = "(text)=>encodeURIComponent(text)"

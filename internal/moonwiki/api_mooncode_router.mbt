@@ -216,9 +216,9 @@ async fn route_mooncode_api(
       }
       true
     }
-    ["api", "mooncode", "sessions", session_id, "serve-scheduler"] => {
+    ["api", "mooncode", "sessions", session_id, "runtime-control"] => {
       if is_read_method(method_) {
-        handle_mooncode_session_serve_scheduler(
+        handle_mooncode_session_runtime_control(
           workspace_root, session_id, method_, conn,
         )
       } else {
@@ -244,16 +244,6 @@ async fn route_mooncode_api(
       if method_ is Post {
         handle_mooncode_session_runtime_service_run(
           workspace_root, session_id, body, method_, conn,
-        )
-      } else {
-        send_method_not_allowed(conn, method_)
-      }
-      true
-    }
-    ["api", "mooncode", "sessions", session_id, "runtime-dispatch"] => {
-      if is_read_method(method_) {
-        handle_mooncode_session_runtime_dispatch(
-          workspace_root, session_id, method_, conn,
         )
       } else {
         send_method_not_allowed(conn, method_)
@@ -288,9 +278,9 @@ async fn route_mooncode_api(
       }
       true
     }
-    ["api", "mooncode", "sessions", session_id, "serve-jsonl"] => {
+    ["api", "mooncode", "sessions", session_id, "command-jsonl"] => {
       if is_read_method(method_) {
-        handle_mooncode_session_serve_jsonl(
+        handle_mooncode_session_command_jsonl(
           workspace_root, session_id, request_path, method_, conn,
         )
       } else {

@@ -75,19 +75,19 @@ test "mooncode parses durable jsonl protocol records" {
     "protocol": protocol_version(),
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-1",
-    "serve_command": "prompt",
+    "code_command": "prompt",
   }
-  let dispatch : Json = {
+  let control : Json = {
     "protocol": protocol_version(),
-    "kind": kind_runtime_dispatch(),
+    "kind": kind_runtime_receipt(),
     "command_id": "cmd-1",
     "status": "recorded",
   }
-  let text = jsonl_text([event, command, runtime, dispatch]) + "not-json\n"
+  let text = jsonl_text([event, command, runtime, control]) + "not-json\n"
   assert_eq(parse_event_log_text(text).length(), 1)
   assert_eq(parse_command_log_text(text).length(), 3)
   assert_eq(parse_runtime_command_log_text(text).length(), 1)
-  assert_eq(parse_runtime_dispatch_log_text(text).length(), 1)
+  assert_eq(parse_runtime_receipt_log_text(text).length(), 1)
 }
 
 ///|
@@ -116,9 +116,9 @@ test "mooncode validates durable protocol records centrally" {
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-1",
   }
-  let dispatch : Json = {
+  let control : Json = {
     "protocol": protocol_version(),
-    "kind": kind_runtime_dispatch(),
+    "kind": kind_runtime_receipt(),
     "command_id": "cmd-1",
   }
   let snapshot : Json = {
@@ -129,8 +129,8 @@ test "mooncode validates durable protocol records centrally" {
   assert_false(command_packet_valid({ "protocol": protocol_version() }))
   assert_true(runtime_command_record_valid(runtime))
   assert_false(runtime_command_record_valid(command))
-  assert_true(runtime_dispatch_record_valid(dispatch))
-  assert_false(runtime_dispatch_record_valid(runtime))
+  assert_true(runtime_receipt_record_valid(control))
+  assert_false(runtime_receipt_record_valid(runtime))
   assert_true(session_snapshot_valid(snapshot))
   assert_false(session_snapshot_valid({ "protocol": protocol_version() }))
 }
@@ -217,8 +217,8 @@ test "mooncode sidecar relative paths define durable session layout" {
     ".moontown/mooncode-sessions/s1/runtime-commands.jsonl",
   )
   assert_eq(
-    runtime_dispatch_log_relative_path("s1"),
-    ".moontown/mooncode-sessions/s1/runtime-dispatches.jsonl",
+    runtime_receipt_log_relative_path("s1"),
+    ".moontown/mooncode-sessions/s1/runtime-receipts.jsonl",
   )
   assert_eq(
     session_snapshot_relative_path("s1"),

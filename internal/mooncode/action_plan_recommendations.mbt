@@ -4,7 +4,7 @@
 ///|
 pub fn action_plan_recommended_command(next_required_action : String) -> Json {
   match next_required_action {
-    "dispatch_or_replay_runtime_commands" =>
+    "run_or_replay_runtime_commands" =>
       {
         "available": true,
         "ui_action": "runtime_loop",
@@ -14,7 +14,7 @@ pub fn action_plan_recommended_command(next_required_action : String) -> Json {
         "message": "",
         "status": "running MoonClaw native MoonCode loop",
       }
-    "retry_failed_runtime_dispatch" =>
+    "retry_failed_runtime_receipt" =>
       {
         "available": true,
         "ui_action": "runtime_loop",
@@ -22,7 +22,7 @@ pub fn action_plan_recommended_command(next_required_action : String) -> Json {
         "label": "Retry Runtime",
         "context_path": "",
         "message": "",
-        "status": "retrying failed MoonCode runtime dispatch",
+        "status": "retrying failed MoonCode runtime receipt",
       }
     "await_runtime_proof" =>
       {
@@ -125,14 +125,14 @@ pub fn action_plan_recommended_commands(
   next_required_action : String,
 ) -> Array[Json] {
   match next_required_action {
-    "dispatch_or_replay_runtime_commands" =>
+    "run_or_replay_runtime_commands" =>
       [
         action_plan_recommended_command(next_required_action),
         action_plan_runtime_service_command(
           "starting MoonClaw native MoonCode service",
         ),
       ]
-    "retry_failed_runtime_dispatch" =>
+    "retry_failed_runtime_receipt" =>
       [
         action_plan_recommended_command(next_required_action),
         action_plan_runtime_service_command(

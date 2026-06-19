@@ -5,7 +5,7 @@ fn update_daemon_actions(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    DispatchDaemonTick =>
+    ControlDaemonTick =>
       (
         sync_activity_batch(Town, dispatch_daemon_cmd(dispatch)),
         {

@@ -11,7 +11,7 @@ pub fn runtime_replay_ack_response(
   workspace_name~ : String,
   runtime_session_id~ : String,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
 ) -> Json {
   {
     "protocol": protocol_version(),
@@ -28,7 +28,7 @@ pub fn runtime_replay_ack_response(
       workspace_name~,
       runtime_session_id~,
       runtime_command_log_path~,
-      runtime_dispatch_log_path~,
+      runtime_receipt_log_path~,
     ),
     "runtime_evidence": runtime_evidence,
     "session": session,
@@ -45,7 +45,7 @@ pub fn runtime_replay_ack_result_response(
   runtime_evidence : Json,
   session : Json,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
 ) -> Json {
   runtime_replay_ack_response(
     session_id,
@@ -59,6 +59,6 @@ pub fn runtime_replay_ack_result_response(
     workspace_name=rq_json_string(session, "workspace_name", default=""),
     runtime_session_id=session_runtime_session_id(session),
     runtime_command_log_path~,
-    runtime_dispatch_log_path~,
+    runtime_receipt_log_path~,
   )
 }

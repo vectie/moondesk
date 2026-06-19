@@ -62,7 +62,7 @@ test "mooncode prompt command packet seeds durable session creation" {
   )
   assert_eq(json_string(packet, "protocol", default=""), "mooncode.v1")
   assert_eq(json_string(packet, "action", default=""), "prompt")
-  assert_eq(json_string(packet, "dispatch", default=""), "prompt")
+  assert_eq(json_string(packet, "control", default=""), "prompt")
   assert_eq(json_string(packet, "approval", default=""), "user")
   assert_eq(
     json_string(packet, "context_path", default=""),

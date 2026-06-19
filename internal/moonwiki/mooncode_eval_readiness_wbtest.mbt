@@ -332,9 +332,7 @@ test "mooncode summary exposes eval readiness gates" {
   assert_eq(json_string(eval_report, "status", default=""), "local-partial")
   assert_eq(json_int(eval_report, "check_count", default=0), 28)
   assert_eq(json_int(eval_report, "missing_check_count", default=0), 4)
-  assert_false(
-    json_bool(eval_report, "native_eval_evidence_ready", default=true),
-  )
+  assert_false(json_bool(eval_report, "native_eval_ready", default=true))
   assert_eq(
     json_string(eval_report, "native_eval_source", default=""),
     "missing",
@@ -388,9 +386,7 @@ test "mooncode summary exposes eval readiness gates" {
     json_string(native_eval_report, "status", default=""),
     "native-partial",
   )
-  assert_true(
-    json_bool(native_eval_report, "native_eval_evidence_ready", default=false),
-  )
+  assert_true(json_bool(native_eval_report, "native_eval_ready", default=false))
   assert_eq(
     json_string(native_eval_report, "native_eval_source", default=""),
     "moonclaw-native-runtime",
@@ -453,7 +449,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
     "workspace_name": "Demo Book",
     "workspace_root": root,
     "mooncode_runtime_session_id": "code-demo",
-    "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
+    "mooncode_runtime_mode": "moonclaw-mooncode-runtime",
   }
   let eval_payload : Json = { "context_path": "tools/demo/main.mbt" }
   let eval_message = @mooncode.command_message("run_eval", eval_payload)
@@ -465,10 +461,10 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   )
   append_mooncode_command_log(root, "code-demo", eval_packet)
   append_mooncode_runtime_command_log(root, "code-demo", eval_runtime_command)
-  append_mooncode_runtime_dispatch_log(
+  append_mooncode_runtime_receipt_log(
     root,
     "code-demo",
-    @mooncode.projected_runtime_dispatch_receipt(
+    @mooncode.projected_runtime_receipt(
       session, eval_runtime_command, "2026-06-14T00:01:00Z",
     ),
   )
@@ -628,7 +624,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
     "package_output": { "status": "passed", "passed_count": 3 },
     "passed_count": 29,
     "failed_count": 0,
-    "evidence": ["MoonCode-style harnesses passed"],
+    "evidence": ["MoonCode harnesses passed"],
   }
   let with_report = persist_mooncode_native_eval_report(
     root,
@@ -658,7 +654,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
     with_report, "mooncode_last_eval_report_manifest",
   )
   assert_eq(json_string(manifest, "kind", default=""), "mooncode-eval-report")
-  assert_true(json_bool(manifest, "native_eval_evidence_ready", default=false))
+  assert_true(json_bool(manifest, "native_eval_ready", default=false))
   assert_eq(json_string(manifest, "status", default=""), "native-partial")
   assert_eq(
     json_string(manifest, "native_eval_ingest_endpoint", default=""),

@@ -16,13 +16,13 @@ fn render_mooncode_runtime_replay_panel(model : Model) -> @rabbita.Html {
             info_chip("Pending", state.pending_command_count.to_string()),
             info_chip("Delivered", state.delivered_command_count.to_string()),
             info_chip("Claimed", state.claimed_command_count.to_string()),
-            info_chip("Failed", state.failed_dispatch_count.to_string()),
+            info_chip("Failed", state.failed_receipt_count.to_string()),
             info_chip("Invalid", state.invalid_command_count.to_string()),
             info_chip("Replay", if state.replay_ready { "ready" } else { "idle" }),
           ]),
           div(class="daemon-state compact-state", [
             info_row("Runtime Feed", state.runtime_command_log_path),
-            info_row("Dispatch Log", state.runtime_dispatch_log_path),
+            info_row("Receipt Log", state.runtime_receipt_log_path),
             info_row("First Pending", state.first_pending_index.to_string()),
             info_row("First Invalid", empty_label(state.first_invalid_command_id)),
           ]),
@@ -80,7 +80,7 @@ fn render_mooncode_runtime_replay_item(
     div(class="mooncode-review-head", [
       div([
         strong(item.action + " -> " + item.replay_status),
-        small(item.serve_command + " / " + item.created_at),
+        small(item.code_command + " / " + item.created_at),
       ]),
       span(
         class=if command_ok { "record-kind good" } else { "record-kind warning" },
@@ -89,7 +89,7 @@ fn render_mooncode_runtime_replay_item(
     ]),
     div(class="mooncode-stats", [
       info_chip("Receipt", item.receipt_status),
-      info_chip("Dispatch", item.dispatch),
+      info_chip("Control", item.control),
       info_chip(
         "Lease",
         if item.previous_claim_expired { "expired" } else { "current" },

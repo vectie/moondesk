@@ -100,7 +100,7 @@ test "mooncode command preflight gates package on pending approvals" {
       "pending tool approvals",
     ),
   )
-  assert_eq(json_string(blocked, "dispatch", default=""), "command")
+  assert_eq(json_string(blocked, "control", default=""), "command")
   assert_eq(json_string(blocked, "approval", default=""), "operator")
   assert_eq(json_string(blocked, "lane", default=""), "artifact")
   assert_true(json_string(blocked, "title", default="").contains("blocked"))
@@ -253,7 +253,7 @@ test "mooncode action required gates are protocol metadata" {
   assert_true(action_required_gates("apply_patch").contains("patch-set"))
   let fallback = action_required_gates("unknown")
   assert_eq(fallback.length(), 1)
-  assert_true(fallback.contains("runtime-dispatch"))
+  assert_true(fallback.contains("runtime-receipt"))
 }
 
 ///|

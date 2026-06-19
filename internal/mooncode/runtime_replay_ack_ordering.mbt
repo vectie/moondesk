@@ -54,22 +54,22 @@ fn runtime_replay_ack_order_blocker_record(
 
 ///|
 fn runtime_replay_ack_order_status(
-  previous_dispatch_status : String,
+  previous_receipt_status : String,
   order_blocker : Json,
   claimed_by_same_consumer : Bool,
 ) -> String {
   if rq_json_string(order_blocker, "command_id", default="") != "" {
     "blocked-by-prior-command"
-  } else if previous_dispatch_status == "runtime-claimed" {
+  } else if previous_receipt_status == "runtime-claimed" {
     if claimed_by_same_consumer {
       "matching-claim"
     } else {
       "consumer-mismatch"
     }
-  } else if runtime_receipt_status_delivered(previous_dispatch_status) {
+  } else if runtime_receipt_status_delivered(previous_receipt_status) {
     "already-delivered"
-  } else if previous_dispatch_status == "failed" {
-    "retry-after-failed-dispatch"
+  } else if previous_receipt_status == "failed" {
+    "retry-after-failed-receipt"
   } else {
     "unclaimed-ack"
   }

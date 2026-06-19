@@ -182,7 +182,7 @@ fn mooncode_runtime_refresh_after_success(
         fetch_mooncode_command_queue_cmd(dispatch, session.id),
         fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
         fetch_mooncode_runtime_replay_cmd(dispatch, session.id),
-        fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+        fetch_mooncode_runtime_receipt_cmd(dispatch, session.id),
         fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
         fetch_mooncode_preflight_matrix_cmd(
           dispatch, session.id, model.selected_path,
@@ -230,7 +230,7 @@ fn mooncode_runtime_refresh_after_error(
           fetch_mooncode_action_plan_cmd(dispatch, session_id),
           fetch_mooncode_readiness_cmd(dispatch, session_id),
           fetch_mooncode_runtime_evidence_cmd(dispatch, session_id),
-          fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
+          fetch_mooncode_runtime_receipt_cmd(dispatch, session_id),
           fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
           fetch_mooncode_command_queue_cmd(dispatch, session_id),
           fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),

@@ -16,7 +16,7 @@ pub fn command_packet(
     "kind": kind_command(),
     "command_id": command_id,
     "action": action,
-    "dispatch": command_dispatch(action),
+    "control": command_control(action),
     "approval": command_approval(action),
     "created_at": created_at,
     "session_id": json_string(session, "id", default=""),

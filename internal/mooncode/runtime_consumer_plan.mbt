@@ -79,12 +79,12 @@ pub fn runtime_consumer_handoff(
       "stream": "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=<sequence>",
       "native_session_listing": "/v1/code/sessions?book_root=<path>&format=json",
       "native_commands": "/v1/code/sessions/\{session_id}/commands",
-      "native_serve_scheduler": "/v1/code/sessions/\{session_id}/serve-scheduler?book_root=<path>",
+      "native_runtime_control": "/v1/code/sessions/\{session_id}/runtime-control?book_root=<path>",
       "native_eval_report": "/v1/code/sessions/\{session_id}/eval-report?book_root=<path>",
     },
     "required_loop": [
       "GET runtime-handoff or session-store", "GET runtime-claim", "POST runtime-claim with consumer_id before execution",
-      "GET native serve-scheduler when using MoonClaw's native MoonCode endpoint",
+      "GET native runtime-control when using MoonClaw's native MoonCode endpoint",
       "execute claimed MoonCode command with MoonClaw/MoonCode tools", "POST runtime-events for streamed reasoning/tool/diff/test/artifact events",
       "POST runtime-replay with runtime-acknowledged or runtime-completed receipt",
       "POST eval-report when native tool/file-edit/patch-review/command-execution/package-output harness evidence is available",
@@ -195,7 +195,7 @@ pub fn runtime_consumer_execution_plan(
     "stream_endpoint": "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=<sequence>",
     "native_session_listing_endpoint": "/v1/code/sessions?book_root=<path>&format=json",
     "native_command_endpoint": "/v1/code/sessions/\{session_id}/commands",
-    "native_serve_scheduler_endpoint": "/v1/code/sessions/\{session_id}/serve-scheduler?book_root=<path>",
+    "native_runtime_control_endpoint": "/v1/code/sessions/\{session_id}/runtime-control?book_root=<path>",
     "native_eval_report_endpoint": "/v1/code/sessions/\{session_id}/eval-report?book_root=<path>",
     "claim_request_template": {
       "consumer_id": "moonclaw",

@@ -3,32 +3,32 @@ pub fn runtime_turn_packet(
   session_id : String,
   runtime_replay : Json,
   runtime_claim : Json,
-  serve_scheduler : Json,
+  runtime_control : Json,
   native_ready : Bool,
 ) -> Json {
   let plan = runtime_consumer_execution_plan(
     session_id, runtime_replay, runtime_claim, native_ready,
   )
   let command_id = rq_json_string(plan, "command_id", default="")
-  let scheduler_decision = runtime_scheduler_decision_for_command(
-    serve_scheduler, command_id,
+  let runtime_control_decision = runtime_runtime_control_decision_for_command(
+    runtime_control, command_id,
   )
-  let scheduler_effect = rq_json_string(
-    scheduler_decision,
+  let runtime_control_effect = rq_json_string(
+    runtime_control_decision,
     "effect",
     default="none",
   )
-  let scheduler_allows_turn = scheduler_effect == "start-turn" ||
-    scheduler_effect == "active-turn" ||
-    scheduler_effect == "deliver-steer" ||
-    scheduler_effect == "queue-steer" ||
-    scheduler_effect == "cancel-active" ||
-    scheduler_effect == "withdraw-pending" ||
-    scheduler_effect == "queue-turn"
+  let runtime_control_allows_turn = runtime_control_effect == "start-turn" ||
+    runtime_control_effect == "active-turn" ||
+    runtime_control_effect == "deliver-steer" ||
+    runtime_control_effect == "queue-steer" ||
+    runtime_control_effect == "cancel-active" ||
+    runtime_control_effect == "withdraw-pending" ||
+    runtime_control_effect == "queue-turn"
   {
     "kind": kind_runtime_turn_packet(),
     "protocol": protocol_version(),
-    "reference": "mooncode/runtime/serve",
+    "reference": "mooncode/runtime-turn",
     "session_id": session_id,
     "status": rq_json_string(plan, "status", default="idle"),
     "operation": rq_json_string(plan, "operation", default="wait"),
@@ -38,9 +38,9 @@ pub fn runtime_turn_packet(
     "ready_to_claim": rq_json_bool(plan, "ready_to_claim", default=false),
     "ready_to_execute": rq_json_bool(plan, "ready_to_execute", default=false),
     "ready_to_ack": rq_json_bool(plan, "ready_to_ack", default=false),
-    "scheduler_effect": scheduler_effect,
-    "scheduler_allows_turn": scheduler_allows_turn,
-    "scheduler_decision": scheduler_decision,
+    "runtime_control_effect": runtime_control_effect,
+    "runtime_control_allows_turn": runtime_control_allows_turn,
+    "runtime_control_decision": runtime_control_decision,
     "mooncode_command": rq_json_object_field_or_empty(plan, "mooncode_command"),
     "native_mooncode_body": rq_json_object_field_or_empty(
       plan, "native_mooncode_body",
@@ -79,9 +79,9 @@ pub fn runtime_turn_packet(
         "native_command_endpoint",
         default="",
       ),
-      "native_serve_scheduler": rq_json_string(
+      "native_runtime_control": rq_json_string(
         plan,
-        "native_serve_scheduler_endpoint",
+        "native_runtime_control_endpoint",
         default="",
       ),
       "native_eval_report": rq_json_string(
@@ -95,7 +95,7 @@ pub fn runtime_turn_packet(
     "tool_call_contract": tool_call_contract_json(),
     "completion_rule": rq_json_string(plan, "completion_rule", default=""),
     "next_step": rq_json_string(plan, "next_step", default=""),
-    "safety_boundary": "This packet is a self-contained turn handoff for MoonClaw. Moondesk does not execute it; the runtime must enforce the embedded scheduler, tool, approval, path, test, and package contracts, stream events, then acknowledge through runtime-replay.",
+    "safety_boundary": "This packet is a self-contained turn handoff for MoonClaw. Moondesk does not execute it; the runtime must enforce the embedded runtime control, tool, approval, path, test, and package contracts, stream events, then acknowledge through runtime-replay.",
     "owner": runtime_owner_record(),
   }
 }
@@ -111,8 +111,8 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
   if rq_json_string(supervisor, "command_id", default="") == "" {
     missing.push("command_id")
   }
-  if !rq_json_bool(supervisor, "scheduler_allows_turn", default=false) {
-    missing.push("scheduler_allows_turn")
+  if !rq_json_bool(supervisor, "runtime_control_allows_turn", default=false) {
+    missing.push("runtime_control_allows_turn")
   }
   if !rq_json_bool(supervisor, "ready_to_launch", default=false) {
     missing.push("ready_to_launch")
@@ -141,8 +141,8 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
   if rq_json_string(endpoints, "native_commands", default="") == "" {
     missing.push("endpoint.native_commands")
   }
-  if rq_json_string(endpoints, "native_serve_scheduler", default="") == "" {
-    missing.push("endpoint.native_serve_scheduler")
+  if rq_json_string(endpoints, "native_runtime_control", default="") == "" {
+    missing.push("endpoint.native_runtime_control")
   }
   if rq_json_string(endpoints, "native_eval_report", default="") == "" {
     missing.push("endpoint.native_eval_report")
@@ -200,7 +200,7 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
     rq_json_string(endpoints, "stream", default="") != "" &&
     rq_json_string(endpoints, "native_session_listing", default="") != "" &&
     rq_json_string(endpoints, "native_commands", default="") != "" &&
-    rq_json_string(endpoints, "native_serve_scheduler", default="") != "" &&
+    rq_json_string(endpoints, "native_runtime_control", default="") != "" &&
     rq_json_string(endpoints, "native_eval_report", default="") != "",
     "launch_request_ready": rq_json_object_field_or_empty(
       launch_request, "claim_request",

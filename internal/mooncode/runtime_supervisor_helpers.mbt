@@ -1,12 +1,12 @@
 ///|
-fn runtime_scheduler_decision_for_command(
-  serve_scheduler : Json,
+fn runtime_runtime_control_decision_for_command(
+  runtime_control : Json,
   command_id : String,
 ) -> Json {
   if command_id == "" {
     return Json::object({})
   }
-  for decision in rq_json_array_items(serve_scheduler, "decisions") {
+  for decision in rq_json_array_items(runtime_control, "decisions") {
     if rq_json_string(decision, "command_id", default="") == command_id {
       return decision
     }
@@ -47,12 +47,12 @@ fn runtime_supervisor_blocked_reason(
   command_id : String,
   status : String,
   ready_to_execute : Bool,
-  scheduler_allows_turn : Bool,
+  runtime_control_allows_turn : Bool,
 ) -> String {
   if command_id == "" {
     "no runtime command is ready for execution"
-  } else if !scheduler_allows_turn {
-    "serve scheduler does not allow this turn yet"
+  } else if !runtime_control_allows_turn {
+    "runtime control does not allow this turn yet"
   } else if !ready_to_execute {
     "runtime command status `\{status}` is not executable"
   } else {

@@ -363,7 +363,7 @@ fn update_mooncode_artifact_results(
             ..model,
             mooncode_runtime_command_feed_session_id: session_id,
             mooncode_runtime_command_feed: Some(feed),
-            mooncode_runtime_command_feed_status: "\{feed.runtime_command_count} runtime command(s), \{feed.runtime_dispatch_pending_count} pending dispatch",
+            mooncode_runtime_command_feed_status: "\{feed.runtime_command_count} runtime command(s), \{feed.runtime_receipt_pending_count} pending receipt",
           },
         )
       }

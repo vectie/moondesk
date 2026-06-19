@@ -159,7 +159,7 @@ fn render_mooncode_drawer(
         Some(session) =>
           button(
             class="mini-link inline",
-            on_click=dispatch(SelectActivity(MoonCode)),
+            on_click=dispatch(SelectActivity(Activity::MoonCode)),
             "\{session.title} / \{session.status}",
           )
         None => p("No MoonCode session selected.")

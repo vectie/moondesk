@@ -10,7 +10,7 @@ async fn handle_mooncode_session_runtime_supervisor(
       let commands = read_mooncode_runtime_command_log(
         workspace_root, session_id,
       )
-      let receipts = read_mooncode_runtime_dispatch_log(
+      let receipts = read_mooncode_runtime_receipt_log(
         workspace_root, session_id,
       )
       let events = read_mooncode_event_log(workspace_root, session_id)

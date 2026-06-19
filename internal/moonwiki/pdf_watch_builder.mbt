@@ -135,7 +135,7 @@ fn pdf_watch_book_json(
     "purpose": purpose,
     "ownership": {
       "desktop": "Moondesk",
-      "scheduler": "Moontown",
+      "runtime_control": "Moontown",
       "durable_book": "MoonBook",
       "execution": "MoonClaw",
       "review": "Bookkeeper",

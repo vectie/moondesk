@@ -19,8 +19,8 @@ fn action_plan_next_required_action_with_readiness(
   base_next_required_action : String,
 ) -> String {
   match base_next_required_action {
-    "dispatch_or_replay_runtime_commands"
-    | "retry_failed_runtime_dispatch"
+    "run_or_replay_runtime_commands"
+    | "retry_failed_runtime_receipt"
     | "await_runtime_proof"
     | "start_next_turn_for_deferred_steering"
     | "fix_failed_tests"
@@ -117,8 +117,8 @@ fn action_plan_blocker_label(action : Json) -> String {
 ///|
 fn action_plan_next_owner(next_required_action : String) -> String {
   match next_required_action {
-    "dispatch_or_replay_runtime_commands"
-    | "retry_failed_runtime_dispatch"
+    "run_or_replay_runtime_commands"
+    | "retry_failed_runtime_receipt"
     | "await_runtime_proof"
     | "start_next_turn_for_deferred_steering" => "moonclaw"
     "fix_failed_tests" | "run_tests" => "moonclaw"

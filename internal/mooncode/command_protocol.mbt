@@ -10,10 +10,10 @@ pub fn command_runtime_message(
 }
 
 ///|
-pub fn mooncode_serve_command(message : String, command_packet : Json) -> Json {
-  let dispatch = json_string(command_packet, "dispatch", default="command")
+pub fn mooncode_code_command(message : String, command_packet : Json) -> Json {
+  let control = json_string(command_packet, "control", default="command")
   let action = json_string(command_packet, "action", default="prompt")
-  match dispatch {
+  match control {
     "cancel" => { "command": "cancel" }
     "steer" =>
       {

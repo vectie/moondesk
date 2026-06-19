@@ -7,7 +7,7 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         button(
           class="icon-button",
           title="Run Daemon Tick",
-          on_click=dispatch(DispatchDaemonTick),
+          on_click=dispatch(ControlDaemonTick),
           "D",
         ),
         button(
@@ -181,7 +181,7 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         ),
         button(
           class="secondary-button",
-          on_click=dispatch(DispatchDaemonTick),
+          on_click=dispatch(ControlDaemonTick),
           "Run Tick",
         ),
       ]),

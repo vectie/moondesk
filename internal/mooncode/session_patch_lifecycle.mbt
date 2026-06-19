@@ -154,7 +154,7 @@ fn patch_lifecycle_next_step(
   if needs_review_count > 0 {
     "Accept or reject pending patch targets before packaging or committing."
   } else if runtime_needed_count > 0 {
-    "Dispatch apply_patch or revert_patch through MoonClaw and wait for runtime proof."
+    "Control apply_patch or revert_patch through MoonClaw and wait for runtime proof."
   } else if partial_count > 0 {
     "Finish remaining hunk-level review or runtime proof before packaging or committing."
   } else if blocked_count > 0 {

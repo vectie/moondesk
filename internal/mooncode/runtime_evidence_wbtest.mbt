@@ -85,7 +85,7 @@ test "mooncode runtime evidence accepts command-scoped replay ack events" {
     "command_id": "cmd-tests",
     "session_id": "session-demo",
     "action": "run_tests",
-    "dispatch": "command",
+    "control": "command",
     "execution_summary": {
       "required_events": [
         "tool_call", "tool_result", "test_result", "runtime_finished",

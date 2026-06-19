@@ -130,7 +130,7 @@ async fn handle_mooncode_session_runtime_event_ingest(
   let events = json_array_items(ingest_report, "events")
   if events.length() == 0 {
     send_api_error(
-      conn, method_, 400, "Bad Request", "No valid MoonCode runtime event found. Send a MoonCode-style event object or {\"events\":[...]} payload.",
+      conn, method_, 400, "Bad Request", "No valid MoonCode runtime event found. Send a MoonCode event object or {\"events\":[...]} payload.",
     )
     return
   }

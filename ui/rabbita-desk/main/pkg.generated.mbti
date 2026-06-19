@@ -22,7 +22,7 @@ type BookPatternRecord derive(@json.FromJson)
 
 type BrowserLocalImportBatch derive(@json.FromJson)
 
-type DaemonDispatchResult derive(@json.FromJson)
+type DaemonControlResult derive(@json.FromJson)
 
 type DaemonLifecycleResult derive(@json.FromJson)
 
@@ -124,10 +124,6 @@ type MoonCodeRuntimeConsumerEndpoints derive(@json.FromJson)
 
 type MoonCodeRuntimeContract derive(@json.FromJson)
 
-type MoonCodeRuntimeDispatchReceipt derive(@json.FromJson)
-
-type MoonCodeRuntimeDispatchState derive(@json.FromJson)
-
 type MoonCodeRuntimeEngine derive(@json.FromJson)
 
 type MoonCodeRuntimeEventSink derive(@json.FromJson)
@@ -137,6 +133,10 @@ type MoonCodeRuntimeEvidence derive(@json.FromJson)
 type MoonCodeRuntimeEvidenceItem derive(@json.FromJson)
 
 type MoonCodeRuntimeHandoff derive(@json.FromJson)
+
+type MoonCodeRuntimeReceiptReceipt derive(@json.FromJson)
+
+type MoonCodeRuntimeReceiptState derive(@json.FromJson)
 
 type MoonCodeRuntimeReplayItem derive(@json.FromJson)
 

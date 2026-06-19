@@ -186,7 +186,7 @@ fn render_mooncode_queued_command(
   div(class="mooncode-review-item " + mooncode_command_queue_item_state(command), [
     div(class="mooncode-review-head", [
       div([
-        strong(command.action + " -> " + command.dispatch),
+        strong(command.action + " -> " + command.control),
         small(command.approval + " / " + command.created_at),
       ]),
       div(class="toolbar-actions", [

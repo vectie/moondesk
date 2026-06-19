@@ -102,7 +102,7 @@ test "mooncode owns native runtime session stub shape" {
     "native-session",
   )
   assert_eq(
-    json_string(session, "mooncode_dispatch_mode", default=""),
+    json_string(session, "mooncode_runtime_mode", default=""),
     "moonclaw-native",
   )
   assert_eq(
@@ -125,11 +125,11 @@ test "mooncode owns session response defaults and transcript messages" {
 
   let with_field = session_with_field(
     with_defaults,
-    "mooncode_dispatch_mode",
+    "mooncode_runtime_mode",
     "native".to_json(),
   )
   assert_eq(
-    json_string(with_field, "mooncode_dispatch_mode", default=""),
+    json_string(with_field, "mooncode_runtime_mode", default=""),
     "native",
   )
 

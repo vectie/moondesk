@@ -2,10 +2,10 @@
 pub fn runtime_protocol_contract_json() -> Json {
   {
     "protocol": protocol_version(),
-    "reference": "mooncode/runtime/serve",
-    "serve_commands": Json::array(
+    "reference": "mooncode/runtime-protocol",
+    "code_commands": Json::array(
       [
-        for command in serve_command_names() => Json::string(command)
+        for command in code_command_names() => Json::string(command)
       ],
     ),
     "tool_registry": {

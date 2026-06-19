@@ -106,17 +106,17 @@ fn complete_runtime_supervisor_fixture() -> Json {
     "status": "ready",
     "operation": "claim-command",
     "action": "prompt",
-    "scheduler_effect": "start-turn",
-    "scheduler_allows_turn": true,
+    "runtime_control_effect": "start-turn",
+    "runtime_control_allows_turn": true,
     "ready_to_execute": true,
     "endpoints": {
       "claim": "/api/mooncode/sessions/s1/runtime-claim",
-      "ack": "/api/mooncode/sessions/s1/runtime-dispatch",
+      "ack": "/api/mooncode/sessions/s1/runtime-replay",
       "runtime_events": "/api/mooncode/sessions/s1/runtime-events",
       "stream": "/api/mooncode/sessions/s1/stream?format=sse",
       "native_session_listing": "/v1/code/sessions?book_root=<path>&format=json",
       "native_commands": "/v1/code/sessions/s1/commands?book_root=<path>",
-      "native_serve_scheduler": "/v1/code/sessions/s1/serve-scheduler?book_root=<path>",
+      "native_runtime_control": "/v1/code/sessions/s1/runtime-control?book_root=<path>",
       "native_eval_report": "/v1/code/sessions/s1/eval-report?book_root=<path>",
     },
     "claim_request_template": { "command_id": "cmd-1", "lease_id": "lease-1" },
@@ -327,7 +327,7 @@ test "mooncode session summary reports readiness coding flow" {
       "mooncode_append_log_count": events.length(),
       "mooncode_command_log_count": 1,
       "mooncode_runtime_command_log_count": 1,
-      "mooncode_runtime_dispatch_log_count": 1,
+      "mooncode_runtime_receipt_log_count": 1,
       "mooncode_session_snapshot": {
         "kind": "mooncode-session-snapshot",
         "snapshot_path": ".moontown/mooncode-sessions/s1/session.json",
@@ -533,8 +533,8 @@ test "mooncode session projection response attaches events and summary without l
     command_log_count=3,
     runtime_command_log_path="/tmp/mooncode/runtime-commands.jsonl",
     runtime_command_log_count=4,
-    runtime_dispatch_log_path="/tmp/mooncode/runtime-dispatch.jsonl",
-    runtime_dispatch_log_count=5,
+    runtime_receipt_log_path="/tmp/mooncode/runtime-receipt.jsonl",
+    runtime_receipt_log_count=5,
   )
   assert_eq(json_array_items(projected, "mooncode_events").length(), 1)
   assert_true(
@@ -550,7 +550,7 @@ test "mooncode session projection response attaches events and summary without l
   assert_eq(summary_json_int(summary, "append_log_count", default=0), 2)
   assert_eq(summary_json_int(summary, "command_log_count", default=0), 3)
   assert_eq(summary_json_int(summary, "runtime_command_count", default=0), 4)
-  assert_eq(summary_json_int(summary, "runtime_dispatch_count", default=0), 5)
+  assert_eq(summary_json_int(summary, "runtime_receipt_count", default=0), 5)
 }
 
 ///|
@@ -737,8 +737,8 @@ test "mooncode session summary exposes resume lifecycle" {
     "command_id": "cmd-resume",
     "session_id": "s1",
     "action": "prompt",
-    "dispatch": "prompt",
-    "serve_command": "prompt",
+    "control": "prompt",
+    "code_command": "prompt",
     "mooncode_command": { "command": "prompt", "text": "continue work" },
     "tool_authorization": {
       "enforcement_state": "approved",
@@ -765,7 +765,7 @@ test "mooncode session summary exposes resume lifecycle" {
         snapshot_path=".moontown/mooncode-sessions/s1/session.json",
         command_log_path=".moontown/mooncode-sessions/s1/commands.jsonl",
         runtime_command_log_path=".moontown/mooncode-sessions/s1/runtime-commands.jsonl",
-        runtime_dispatch_log_path=".moontown/mooncode-sessions/s1/runtime-dispatches.jsonl",
+        runtime_receipt_log_path=".moontown/mooncode-sessions/s1/runtime-receipts.jsonl",
         event_log_path=".moontown/mooncode-sessions/s1/events.jsonl",
       ),
     },

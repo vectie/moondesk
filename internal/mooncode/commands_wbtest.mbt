@@ -43,22 +43,49 @@ fn command_policy_has_guardrail(
 }
 
 ///|
-test "mooncode command metadata captures runtime dispatch and approval" {
+test "mooncode command metadata captures runtime receipt and approval" {
+  assert_true(command_advertised_actions().contains("prompt"))
+  assert_true(command_advertised_actions().contains("run_eval"))
+  assert_true(command_advertised_actions().contains("commit"))
+  assert_false(command_advertised_actions().contains("note"))
+  assert_true(command_supported_actions().contains("note"))
   assert_true(command_is_supported("prompt"))
   assert_true(command_is_supported("run_build"))
   assert_true(command_is_supported("run_eval"))
   assert_true(command_is_supported("commit"))
+  assert_true(command_is_supported("note"))
   assert_false(command_is_supported("deploy_global"))
-  assert_eq(command_dispatch("prompt"), "prompt")
-  assert_eq(command_dispatch("steer"), "steer")
-  assert_eq(command_dispatch("cancel"), "cancel")
-  assert_eq(command_dispatch("package"), "command")
-  assert_eq(command_dispatch("commit"), "command")
+  assert_eq(command_control("prompt"), "prompt")
+  assert_eq(command_control("steer"), "steer")
+  assert_eq(command_control("cancel"), "cancel")
+  assert_eq(command_control("package"), "command")
+  assert_eq(command_control("commit"), "command")
   assert_eq(command_approval("package"), "operator")
   assert_eq(command_approval("commit"), "operator")
   assert_eq(command_approval("run_build"), "auto")
   assert_eq(command_approval("run_eval"), "auto")
   assert_eq(command_approval("prompt"), "user")
+}
+
+///|
+test "mooncode command action contracts are unique and advertised actions are supported" {
+  let advertised = command_advertised_actions()
+  for i, action in advertised {
+    assert_true(command_is_supported(action))
+    for j = i + 1; j < advertised.length(); j = j + 1 {
+      if action == advertised[j] {
+        fail("duplicate advertised action: \{action}")
+      }
+    }
+  }
+  let supported = command_supported_actions()
+  for i, action in supported {
+    for j = i + 1; j < supported.length(); j = j + 1 {
+      if action == supported[j] {
+        fail("duplicate supported action: \{action}")
+      }
+    }
+  }
 }
 
 ///|
@@ -405,6 +432,8 @@ test "mooncode command metadata exposes tool and lane contracts" {
   assert_true(command_tool_hints("run_eval").contains("eval_harness"))
   assert_true(command_tool_hints("run_build").contains("moon_cmd"))
   assert_true(command_tool_hints("prompt").contains("edit"))
+  assert_true(command_tool_hints("revert_patch").contains("revert_patch"))
+  assert_false(command_tool_hints("revert_patch").contains("apply_patch"))
   assert_true(command_expected_lanes("prompt").contains("diff"))
   assert_true(command_expected_lanes("package").contains("artifact"))
   assert_true(command_expected_lanes("commit").contains("review"))
@@ -422,6 +451,12 @@ test "mooncode command metadata exposes tool and lane contracts" {
   )
   assert_true(
     native_command_tool_sequence("apply_patch").contains("apply_patch"),
+  )
+  assert_true(
+    native_command_tool_sequence("revert_patch").contains("revert_patch"),
+  )
+  assert_false(
+    native_command_tool_sequence("revert_patch").contains("apply_patch"),
   )
   assert_false(native_command_tool_sequence("apply_patch").contains("edit"))
   assert_true(

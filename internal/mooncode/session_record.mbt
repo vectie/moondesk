@@ -88,7 +88,7 @@ pub fn native_runtime_session_stub(
     "workspace_name": session_id,
     "workspace_root": workspace_root,
     "mooncode_runtime_session_id": session_id,
-    "mooncode_dispatch_mode": "moonclaw-native",
+    "mooncode_runtime_mode": "moonclaw-native",
     "source": "moonclaw-native-session",
   }
 }

@@ -99,7 +99,7 @@ async fn handle_create_mooncode_session(
     path=context_path,
     command_packet~,
   )
-  let dispatched = match
+  let runtime_session = match
     send_mooncode_command_to_runtime(
       workspace_root, queued, payload, message, command_packet,
     ) {
@@ -115,11 +115,11 @@ async fn handle_create_mooncode_session(
         command_packet~,
       )
   }
-  append_mooncode_runtime_dispatch_log(
+  append_mooncode_runtime_receipt_log(
     workspace_root,
     json_string(base, "id", default=""),
-    @mooncode.projected_runtime_dispatch_receipt(
-      dispatched,
+    @mooncode.projected_runtime_receipt(
+      runtime_session,
       runtime_command,
       @async.now().to_string(),
     ),
@@ -127,9 +127,9 @@ async fn handle_create_mooncode_session(
     _ => ()
   }
   let with_native_eval = sync_mooncode_native_eval_report(
-    workspace_root, dispatched,
+    workspace_root, runtime_session,
   ) catch {
-    _ => dispatched
+    _ => runtime_session
   }
   let with_action_plan = write_mooncode_action_plan_if_possible(
     workspace_root, with_native_eval,

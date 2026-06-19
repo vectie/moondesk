@@ -67,7 +67,7 @@ async fn send_mooncode_native_runtime_command(
 ) -> Result[Json, String] {
   let session_id = json_string(session, "id", default="")
   if session_id == "" {
-    return Err("MoonCode native runtime dispatch needs a session id")
+    return Err("MoonCode native runtime receipt needs a session id")
   }
   let body = @mooncode.native_command_body(
     session, payload, message, command_packet,
@@ -109,7 +109,7 @@ async fn send_mooncode_native_runtime_command(
     Ok(payload) => payload
     Err(_) => Json::object({})
   }
-  let dispatch_result = @mooncode.moonclaw_native_runtime_dispatch_result(
+  let receipt_result = @mooncode.moonclaw_native_runtime_receipt_result(
     queue_response,
     runtime_payload,
     command_packet,
@@ -122,7 +122,7 @@ async fn send_mooncode_native_runtime_command(
   )
   let updated_at = @async.now().to_string()
   let session_patch = @mooncode.moonclaw_native_runtime_session_patch(
-    dispatch_result, command_packet, message, updated_at,
+    receipt_result, command_packet, message, updated_at,
   )
   let status_message = json_object_field_or_empty(
     session_patch, "status_message",

@@ -2,7 +2,7 @@
 pub fn action_plan_items(
   commands : Array[Json],
   runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
+  runtime_receipts : Array[Json],
   events : Array[Json],
   summary : Json,
   lease_now? : String = "",
@@ -15,7 +15,7 @@ pub fn action_plan_items(
         index,
         command,
         runtime_commands,
-        runtime_dispatches,
+        runtime_receipts,
         events,
         summary,
         lease_now~,
@@ -44,7 +44,7 @@ pub fn action_plan_preflight_item(index : Int, event : Json) -> Json {
     "index": index,
     "command_id": json_string(event, "id", default=""),
     "action": action,
-    "dispatch": "preflight",
+    "control": "preflight",
     "approval": command_approval(action),
     "state": if overridden {
       "override"
@@ -54,7 +54,7 @@ pub fn action_plan_preflight_item(index : Int, event : Json) -> Json {
     "runtime_state": if overridden {
       "operator-override"
     } else {
-      "blocked-before-dispatch"
+      "blocked-before-runtime"
     },
     "created_at": json_string(event, "created_at", default=""),
     "target": json_string(event, "path", default="moonbook"),
@@ -75,7 +75,7 @@ pub fn action_plan_preflight_item(index : Int, event : Json) -> Json {
       "status": if overridden {
         "operator-override"
       } else {
-        "blocked-before-dispatch"
+        "blocked-before-runtime"
       },
       "required_event_count": 0,
       "proven_required_event_count": 0,
@@ -89,7 +89,7 @@ pub fn action_plan_preflight_item(index : Int, event : Json) -> Json {
     "runtime_evidence_status": if overridden {
       "operator-override"
     } else {
-      "blocked-before-dispatch"
+      "blocked-before-runtime"
     },
     "required_event_count": 0,
     "proven_required_event_count": 0,
@@ -97,7 +97,7 @@ pub fn action_plan_preflight_item(index : Int, event : Json) -> Json {
     "failed_required_events": [],
     "blocking_reason": json_string(event, "detail", default=""),
     "next_step": if overridden {
-      "operator forced dispatch; audit runtime evidence before accepting output"
+      "operator forced runtime execution; audit runtime evidence before accepting output"
     } else {
       "resolve the preflight gates and retry this command"
     },
@@ -109,7 +109,7 @@ pub fn action_plan_item(
   index : Int,
   command : Json,
   runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
+  runtime_receipts : Array[Json],
   proof_events : Array[Json],
   summary : Json,
   lease_now? : String = "",
@@ -119,7 +119,7 @@ pub fn action_plan_item(
   let runtime_state = action_plan_runtime_state_at(
     command_id,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     lease_now~,
   )
   let runtime_command = action_plan_runtime_command_for_id(
@@ -138,7 +138,7 @@ pub fn action_plan_item(
     "index": index,
     "command_id": command_id,
     "action": action,
-    "dispatch": json_string(command, "dispatch", default="command"),
+    "control": json_string(command, "control", default="command"),
     "approval": json_string(command, "approval", default="none"),
     "state": state,
     "runtime_state": runtime_state,

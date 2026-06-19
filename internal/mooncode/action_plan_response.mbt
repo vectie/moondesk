@@ -83,10 +83,10 @@ pub fn action_plan_next_required_action(
     default=0,
   )
   if action_plan_state_count(actions, "queued-for-runtime") > 0 {
-    return "dispatch_or_replay_runtime_commands"
+    return "run_or_replay_runtime_commands"
   }
   if action_plan_state_count(actions, "runtime-retry") > 0 {
-    return "retry_failed_runtime_dispatch"
+    return "retry_failed_runtime_receipt"
   }
   if action_plan_state_count(actions, "awaiting-proof") > 0 {
     return "await_runtime_proof"
@@ -136,10 +136,10 @@ pub fn action_plan_response(
   actions : Array[Json],
   summary : Json,
   runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
+  runtime_receipts : Array[Json],
   recorded_at~ : String,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
 ) -> Json {
   let pending_runtime_count = action_plan_state_count(
       actions, "queued-for-runtime",
@@ -261,12 +261,12 @@ pub fn action_plan_response(
     "runtime_replay": runtime_replay_state(
       session_id,
       runtime_commands,
-      runtime_dispatches,
+      runtime_receipts,
       workspace_id=json_string(session, "workspace_id", default=""),
       workspace_name=json_string(session, "workspace_name", default=""),
       runtime_session_id=session_runtime_session_id(session),
       runtime_command_log_path~,
-      runtime_dispatch_log_path~,
+      runtime_receipt_log_path~,
     ),
     "acceptance_gates": command_acceptance_gates(summary),
     "owner": {
@@ -284,7 +284,7 @@ pub fn action_plan_actions_for_session(
   session : Json,
   commands : Array[Json],
   runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
+  runtime_receipts : Array[Json],
   events : Array[Json],
   lease_now? : String = "",
 ) -> Array[Json] {
@@ -292,7 +292,7 @@ pub fn action_plan_actions_for_session(
   action_plan_items(
     commands,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     events,
     summary,
     lease_now~,
@@ -305,18 +305,18 @@ pub fn action_plan_projection_response(
   session : Json,
   commands : Array[Json],
   runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
+  runtime_receipts : Array[Json],
   events : Array[Json],
   recorded_at~ : String,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
   lease_now? : String = "",
 ) -> Json {
   let summary = session_summary(session, events)
   let actions = action_plan_items(
     commands,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     events,
     summary,
     lease_now~,
@@ -327,10 +327,10 @@ pub fn action_plan_projection_response(
     actions,
     summary,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     recorded_at~,
     runtime_command_log_path~,
-    runtime_dispatch_log_path~,
+    runtime_receipt_log_path~,
   )
 }
 

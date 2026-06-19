@@ -138,7 +138,7 @@ pub fn action_plan_item_state_for_command(
       let eval_report = runtime_json_object_field_or_empty(
         summary, "last_moonbook_eval_report_manifest",
       )
-      if json_bool(eval_report, "native_eval_evidence_ready", default=false) {
+      if json_bool(eval_report, "native_eval_ready", default=false) {
         "completed"
       } else {
         "awaiting-proof"

@@ -36,7 +36,7 @@ test "mooncode action plan response owns aggregate surface" {
     [],
     recorded_at="2026-06-16T00:00:00Z",
     runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+    runtime_receipt_log_path="/tmp/session/runtime-receipt.jsonl",
   )
   assert_eq(json_string(response, "kind", default=""), "mooncode-action-plan")
   assert_eq(json_string(response, "status", default=""), "review-ready")
@@ -115,7 +115,7 @@ test "mooncode action plan projection derives actions and summary" {
       "kind": kind_command(),
       "command_id": "cmd-1",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "created_at": "2026-06-16T00:00:00Z",
       "approval": "none",
     },
@@ -126,14 +126,14 @@ test "mooncode action plan projection derives actions and summary" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-1",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "mooncode_command": { "command": "prompt", "text": "build" },
     },
   ]
-  let runtime_dispatches : Array[Json] = [
+  let runtime_receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
+      "kind": kind_runtime_receipt(),
       "command_id": "cmd-1",
       "status": "runtime-claimed",
       "lease_expires_at": "2026-06-16T00:10:00Z",
@@ -144,11 +144,11 @@ test "mooncode action plan projection derives actions and summary" {
     session,
     commands,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     [],
     recorded_at="2026-06-16T00:01:00Z",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatch.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipt.jsonl",
     lease_now="2026-06-16T00:02:00Z",
   )
   assert_eq(json_string(response, "status", default=""), "running")
@@ -202,7 +202,7 @@ test "mooncode action plan recommends a next turn for deferred steering" {
     [],
     recorded_at="2026-06-16T00:00:00Z",
     runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+    runtime_receipt_log_path="/tmp/session/runtime-receipt.jsonl",
   )
   assert_eq(
     json_string(response, "next_required_action", default=""),
@@ -226,26 +226,26 @@ test "mooncode action plan recommends a next turn for deferred steering" {
 
 ///|
 test "mooncode action plan recommends runtime loop and repair prompts" {
-  let dispatch = action_plan_recommended_command(
-    "dispatch_or_replay_runtime_commands",
+  let control = action_plan_recommended_command(
+    "run_or_replay_runtime_commands",
   )
-  assert_true(json_bool(dispatch, "available", default=false))
-  assert_eq(json_string(dispatch, "ui_action", default=""), "runtime_loop")
-  assert_eq(json_string(dispatch, "label", default=""), "Run Native Loop")
-  let dispatch_commands = action_plan_recommended_commands(
-    "dispatch_or_replay_runtime_commands",
+  assert_true(json_bool(control, "available", default=false))
+  assert_eq(json_string(control, "ui_action", default=""), "runtime_loop")
+  assert_eq(json_string(control, "label", default=""), "Run Native Loop")
+  let runtime_commands = action_plan_recommended_commands(
+    "run_or_replay_runtime_commands",
   )
-  assert_eq(dispatch_commands.length(), 2)
+  assert_eq(runtime_commands.length(), 2)
   assert_eq(
-    json_string(dispatch_commands[0], "ui_action", default=""),
+    json_string(runtime_commands[0], "ui_action", default=""),
     "runtime_loop",
   )
   assert_eq(
-    json_string(dispatch_commands[1], "ui_action", default=""),
+    json_string(runtime_commands[1], "ui_action", default=""),
     "runtime_service",
   )
   assert_eq(
-    json_string(dispatch_commands[1], "label", default=""),
+    json_string(runtime_commands[1], "label", default=""),
     "Start Service",
   )
   let proof = action_plan_recommended_command("await_runtime_proof")
@@ -268,7 +268,7 @@ test "mooncode action plan recommends runtime loop and repair prompts" {
     "runtime_service",
   )
   let retry_commands = action_plan_recommended_commands(
-    "retry_failed_runtime_dispatch",
+    "retry_failed_runtime_receipt",
   )
   assert_eq(retry_commands.length(), 2)
   assert_eq(
@@ -332,7 +332,7 @@ test "mooncode action plan recommends native eval for readiness gap" {
     [],
     recorded_at="2026-06-16T00:00:00Z",
     runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+    runtime_receipt_log_path="/tmp/session/runtime-receipt.jsonl",
   )
   assert_eq(
     json_string(response, "next_required_action", default=""),
@@ -393,7 +393,7 @@ test "mooncode action plan keeps awaiting proof ahead of native eval recommendat
     [],
     recorded_at="2026-06-16T00:00:00Z",
     runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+    runtime_receipt_log_path="/tmp/session/runtime-receipt.jsonl",
   )
   assert_eq(
     json_string(response, "next_required_action", default=""),
@@ -449,7 +449,7 @@ test "mooncode action plan response carries multi-choice recommendations" {
     [],
     recorded_at="2026-06-16T00:00:00Z",
     runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+    runtime_receipt_log_path="/tmp/session/runtime-receipt.jsonl",
   )
   assert_eq(
     json_string(response, "next_required_action", default=""),
@@ -500,7 +500,7 @@ test "mooncode action plan blocks partial patch lifecycle" {
     [],
     recorded_at="2026-06-18T00:00:00Z",
     runtime_command_log_path="/tmp/session/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/session/runtime-dispatch.jsonl",
+    runtime_receipt_log_path="/tmp/session/runtime-receipt.jsonl",
   )
   assert_eq(
     json_string(response, "next_required_action", default=""),

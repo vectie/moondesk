@@ -24,7 +24,6 @@ pub fn native_command_body(
   {
     "protocol": protocol_version(),
     "command": action,
-    "native_dispatch_mode": "queue-only",
     "text": message,
     "model": model,
     "session_id": json_string(session, "id", default=""),

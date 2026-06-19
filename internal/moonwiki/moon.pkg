@@ -69,7 +69,7 @@ options(
     "launch_agent_lifecycle.mbt": [ "native" ],
     "mooncode_contracts.mbt": [ "native" ],
     "mooncode_artifact_writes.mbt": [ "native" ],
-    "mooncode_command_dispatch_handlers.mbt": [ "native" ],
+    "mooncode_command_queue_handlers.mbt": [ "native" ],
     "mooncode_command_handlers.mbt": [ "native" ],
     "mooncode_event_log.mbt": [ "native" ],
     "mooncode_runtime_event_handlers.mbt": [ "native" ],

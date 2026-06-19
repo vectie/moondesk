@@ -27,7 +27,7 @@ fn render_mooncode_eval_report_panel(
             info_chip("Checks", report.check_count.to_string()),
             info_chip(
               "Native",
-              if report.native_eval_evidence_ready { "ready" } else { "missing" },
+              if report.native_eval_ready { "ready" } else { "missing" },
             ),
           ]),
           div(class="daemon-state compact-state", [

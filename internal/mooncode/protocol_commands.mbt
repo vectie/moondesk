@@ -1,5 +1,5 @@
 ///|
-priv enum ServeCommand {
+priv enum CodeCommand {
   Prompt(String)
   Steer(String)
   Cancel
@@ -9,12 +9,12 @@ priv enum ServeCommand {
 pub fn runtime_tool_names() -> Array[String] {
   [
     "shell", "read", "edit", "write", "moon_ide", "moon_cmd", "moon_check", "finish",
-    "apply_patch", "package_app_tool",
+    "apply_patch", "revert_patch", "package_app_tool",
   ]
 }
 
 ///|
-pub fn serve_command_names() -> Array[String] {
+pub fn code_command_names() -> Array[String] {
   ["prompt", "steer", "cancel"]
 }
 
@@ -30,7 +30,7 @@ pub fn tool_call_contract_json() -> Json {
       "native function tool call: {id,type,function:{name,arguments}}", "runtime event wrapper: {event:'tool_call'|'tool_started'|'tool_result',tool_call:{id,function:{name,arguments}}}",
       "flattened runtime event: {tool_call_id,tool_name,arguments}",
     ],
-    "supported_tools": serve_string_array_json(runtime_tool_names()),
+    "supported_tools": protocol_string_array_json(runtime_tool_names()),
     "argument_rule": "function.arguments is kept as the raw JSON string and also exposed as parsed_arguments when it is valid JSON; MoonClaw owns final tool-specific validation before execution.",
     "unknown_tool_policy": "unknown tool names fail this decoder and should be emitted as tool_call_decode_error runtime events, not silently executed",
   }
@@ -73,8 +73,12 @@ pub fn tool_call_decode_report(json : Json) -> Json {
         "ok": true,
         "protocol": protocol_version(),
         "tool_call": decoded,
-        "tool_name": serve_json_string(decoded, "tool_name", default=""),
-        "tool_call_id": serve_json_string(decoded, "tool_call_id", default=""),
+        "tool_name": protocol_json_string(decoded, "tool_name", default=""),
+        "tool_call_id": protocol_json_string(
+          decoded,
+          "tool_call_id",
+          default="",
+        ),
       }
     Err(message) =>
       {
@@ -87,20 +91,20 @@ pub fn tool_call_decode_report(json : Json) -> Json {
 }
 
 ///|
-pub fn decode_serve_command(json : Json) -> Result[Json, String] {
-  match decode_serve_command_enum(json) {
-    Ok(command) => Ok(serve_command_to_json(command))
+pub fn decode_code_command(json : Json) -> Result[Json, String] {
+  match decode_code_command_enum(json) {
+    Ok(command) => Ok(code_command_to_json(command))
     Err(message) => Err(message)
   }
 }
 
 ///|
 pub fn protocol_command_valid(json : Json) -> Bool {
-  decode_serve_command_enum(json) is Ok(_)
+  decode_code_command_enum(json) is Ok(_)
 }
 
 ///|
-fn decode_serve_command_enum(json : Json) -> Result[ServeCommand, String] {
+fn decode_code_command_enum(json : Json) -> Result[CodeCommand, String] {
   match json {
     { "command": "prompt", "text": String(text), .. } => Ok(Prompt(text))
     { "command": "steer", "text": String(text), .. } => Ok(Steer(text))
@@ -113,7 +117,7 @@ fn decode_serve_command_enum(json : Json) -> Result[ServeCommand, String] {
 }
 
 ///|
-fn serve_command_to_json(command : ServeCommand) -> Json {
+fn code_command_to_json(command : CodeCommand) -> Json {
   match command {
     Prompt(text) => { "command": "prompt", "text": text }
     Steer(text) => { "command": "steer", "text": text }
@@ -123,7 +127,7 @@ fn serve_command_to_json(command : ServeCommand) -> Json {
 
 ///|
 fn tool_call_payload(json : Json) -> Json {
-  match serve_json_object_field(json, "tool_call") {
+  match protocol_json_object_field(json, "tool_call") {
     Some(nested) =>
       match nested {
         Object(_) => nested
@@ -135,7 +139,7 @@ fn tool_call_payload(json : Json) -> Json {
 
 ///|
 fn tool_call_id(json : Json, payload : Json) -> String {
-  let direct = serve_first_string(
+  let direct = protocol_first_string(
     json,
     ["tool_call_id", "call_id", "id"],
     default="",
@@ -143,29 +147,29 @@ fn tool_call_id(json : Json, payload : Json) -> String {
   if direct != "" {
     direct
   } else {
-    serve_json_string(payload, "id", default="")
+    protocol_json_string(payload, "id", default="")
   }
 }
 
 ///|
 fn tool_call_name(json : Json, payload : Json) -> String {
-  let direct = serve_first_string(json, ["tool_name", "name"], default="")
+  let direct = protocol_first_string(json, ["tool_name", "name"], default="")
   if direct != "" {
     return direct
   }
-  let function = serve_json_object_field_or_empty(payload, "function")
-  serve_json_string(function, "name", default="")
+  let function = protocol_json_object_field_or_empty(payload, "function")
+  protocol_json_string(function, "name", default="")
 }
 
 ///|
 fn tool_call_arguments(json : Json, payload : Json) -> String {
-  let direct = serve_first_json(json, ["arguments", "args", "input"])
+  let direct = protocol_first_json(json, ["arguments", "args", "input"])
   match direct {
-    Some(value) => serve_json_argument_text(value)
+    Some(value) => protocol_json_argument_text(value)
     None => {
-      let function = serve_json_object_field_or_empty(payload, "function")
-      match serve_json_object_field(function, "arguments") {
-        Some(value) => serve_json_argument_text(value)
+      let function = protocol_json_object_field_or_empty(payload, "function")
+      match protocol_json_object_field(function, "arguments") {
+        Some(value) => protocol_json_argument_text(value)
         None => ""
       }
     }
@@ -185,6 +189,7 @@ fn tool_call_mutates_files(tool_name : String) -> Bool {
   tool_name == "write" ||
   tool_name == "moon_cmd" ||
   tool_name == "apply_patch" ||
+  tool_name == "revert_patch" ||
   tool_name == "package_app_tool"
 }
 
@@ -196,13 +201,13 @@ fn tool_call_requires_review(tool_name : String) -> Bool {
 }
 
 ///|
-fn serve_first_string(
+fn protocol_first_string(
   json : Json,
   keys : Array[String],
   default~ : String,
 ) -> String {
   for key in keys {
-    let value = serve_json_string(json, key, default="")
+    let value = protocol_json_string(json, key, default="")
     if value != "" {
       return value
     }
@@ -211,9 +216,9 @@ fn serve_first_string(
 }
 
 ///|
-fn serve_first_json(json : Json, keys : Array[String]) -> Json? {
+fn protocol_first_json(json : Json, keys : Array[String]) -> Json? {
   for key in keys {
-    match serve_json_object_field(json, key) {
+    match protocol_json_object_field(json, key) {
       Some(value) => return Some(value)
       None => ()
     }
@@ -222,7 +227,7 @@ fn serve_first_json(json : Json, keys : Array[String]) -> Json? {
 }
 
 ///|
-fn serve_json_argument_text(value : Json) -> String {
+fn protocol_json_argument_text(value : Json) -> String {
   match value {
     String(text) => text
     Object(_) | Array(_) => value.stringify()
@@ -231,24 +236,24 @@ fn serve_json_argument_text(value : Json) -> String {
 }
 
 ///|
-fn serve_json_object_field_or_empty(json : Json, key : String) -> Json {
-  match serve_json_object_field(json, key) {
+fn protocol_json_object_field_or_empty(json : Json, key : String) -> Json {
+  match protocol_json_object_field(json, key) {
     Some(value) => value
     None => Json::object({})
   }
 }
 
 ///|
-fn serve_json_object_field(json : Json, key : String) -> Json? {
+fn protocol_json_object_field(json : Json, key : String) -> Json? {
   @mooncore.json_object_field(json, key)
 }
 
 ///|
-fn serve_json_string(json : Json, key : String, default~ : String) -> String {
+fn protocol_json_string(json : Json, key : String, default~ : String) -> String {
   @mooncore.json_string(json, key, default~)
 }
 
 ///|
-fn serve_string_array_json(items : Array[String]) -> Json {
+fn protocol_string_array_json(items : Array[String]) -> Json {
   @mooncore.string_array_json(items)
 }

@@ -4,16 +4,16 @@ pub fn session_snapshot(
   events : Array[Json],
   commands : Array[Json],
   runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
+  runtime_receipts : Array[Json],
   recorded_at~ : String,
   snapshot_path~ : String,
   command_log_path~ : String,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
   event_log_path~ : String,
 ) -> Json {
-  let normalized_runtime_dispatches = runtime_dispatch_receipts_for_response(
-    runtime_dispatches,
+  let normalized_runtime_receipts = runtime_receipts_for_response(
+    runtime_receipts,
   )
   let session_id = json_string(session, "id", default="")
   {
@@ -34,7 +34,7 @@ pub fn session_snapshot(
     "snapshot_path": snapshot_path,
     "command_log_path": command_log_path,
     "runtime_command_log_path": runtime_command_log_path,
-    "runtime_dispatch_log_path": runtime_dispatch_log_path,
+    "runtime_receipt_log_path": runtime_receipt_log_path,
     "event_log_path": event_log_path,
     "transcript": Json::array(json_array_items(session, "transcript")),
     "transcript_count": json_array_items(session, "transcript").length(),
@@ -42,11 +42,11 @@ pub fn session_snapshot(
     "command_count": commands.length(),
     "runtime_commands": Json::array(runtime_commands),
     "runtime_command_count": runtime_commands.length(),
-    "runtime_dispatches": Json::array(normalized_runtime_dispatches),
-    "runtime_dispatch_count": normalized_runtime_dispatches.length(),
-    "runtime_dispatch_pending_count": runtime_dispatch_pending_count(
+    "runtime_receipts": Json::array(normalized_runtime_receipts),
+    "runtime_receipt_count": normalized_runtime_receipts.length(),
+    "runtime_receipt_pending_count": runtime_receipt_pending_count(
       runtime_commands,
-      normalized_runtime_dispatches,
+      normalized_runtime_receipts,
       lease_now=recorded_at,
     ),
     "events": Json::array(events),
@@ -71,12 +71,12 @@ pub fn session_snapshot(
       "readiness": "/api/mooncode/sessions/\{session_id}/readiness",
     },
     "store_contract": {
-      "shape": "typed session header plus transcript, commands.jsonl, runtime-commands.jsonl, runtime-dispatches.jsonl, events.jsonl, and projected MoonCode events",
+      "shape": "typed session header plus transcript, commands.jsonl, runtime-commands.jsonl, runtime-receipts.jsonl, events.jsonl, and projected MoonCode events",
       "append_only_inputs": [
-        "commands.jsonl", "runtime-commands.jsonl", "runtime-dispatches.jsonl", "events.jsonl",
+        "commands.jsonl", "runtime-commands.jsonl", "runtime-receipts.jsonl", "events.jsonl",
       ],
       "resume_modes": [
-        "session_id", "session_snapshot", "command_log", "runtime_command_log", "runtime_dispatch_log",
+        "session_id", "session_snapshot", "command_log", "runtime_command_log", "runtime_receipt_log",
         "event_log", "runtime_handoff",
       ],
       "mooncode_reference": "mooncode/session + mooncode/session_store",

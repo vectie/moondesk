@@ -1,9 +1,9 @@
 ///|
-fn mooncode_runtime_dispatch_pending_count_for_test(
+fn mooncode_runtime_receipt_pending_count_for_test(
   commands : Array[Json],
   receipts : Array[Json],
 ) -> Int {
-  @mooncode.runtime_dispatch_pending_count(
+  @mooncode.runtime_receipt_pending_count(
     commands,
     receipts,
     lease_now=@async.now().to_string(),
@@ -61,7 +61,6 @@ test "mooncode native command body uses typed runtime protocol" {
   )
   assert_eq(json_string(body, "protocol", default=""), "mooncode.v1")
   assert_eq(json_string(body, "command", default=""), "run_tests")
-  assert_eq(json_string(body, "native_dispatch_mode", default=""), "queue-only")
   assert_eq(json_string(body, "session_id", default=""), "code-demo")
   assert_eq(json_string(body, "book_root", default=""), "/tmp/demo-book")
   assert_eq(
@@ -166,7 +165,7 @@ test "mooncode native command body gives package and review actions executable c
   let package_packet : Json = {
     "protocol": "mooncode.v1",
     "action": "package",
-    "dispatch": "command",
+    "control": "command",
     "approval": "operator",
     "context_path": "tools/demo/main.mbt",
     "workspace_root": "/tmp/demo-book",
@@ -206,7 +205,7 @@ test "mooncode native command body gives package and review actions executable c
   let commit_packet : Json = {
     "protocol": "mooncode.v1",
     "action": "commit",
-    "dispatch": "command",
+    "control": "command",
     "approval": "operator",
     "context_path": "tools/demo/main.mbt",
     "workspace_root": "/tmp/demo-book",
@@ -231,7 +230,7 @@ test "mooncode native command body gives package and review actions executable c
   let accept_packet : Json = {
     "protocol": "mooncode.v1",
     "action": "accept",
-    "dispatch": "command",
+    "control": "command",
     "approval": "operator",
     "context_path": "tools/demo/main.mbt",
   }
@@ -317,7 +316,7 @@ test "mooncode runtime command stores compact execution summary" {
 }
 
 ///|
-test "mooncode runtime dispatch pending count ignores delivered receipts" {
+test "mooncode runtime receipt pending count ignores delivered receipts" {
   let commands : Array[Json] = [
     {
       "protocol": "mooncode.v1",
@@ -333,13 +332,13 @@ test "mooncode runtime dispatch pending count ignores delivered receipts" {
   let receipts : Array[Json] = [
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-1",
-      "status": "native-dispatched",
+      "status": "runtime-accepted",
     },
   ]
   assert_eq(
-    mooncode_runtime_dispatch_pending_count_for_test(commands, receipts),
+    mooncode_runtime_receipt_pending_count_for_test(commands, receipts),
     1,
   )
   assert_eq(
@@ -356,8 +355,8 @@ test "mooncode runtime replay skips delivered commands and emits pending jsonl" 
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-1",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "target": "tools/demo",
       "mooncode_command": { "command": "prompt", "text": "build it" },
     },
@@ -366,8 +365,8 @@ test "mooncode runtime replay skips delivered commands and emits pending jsonl" 
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-2",
       "action": "steer",
-      "dispatch": "steer",
-      "serve_command": "steer",
+      "control": "steer",
+      "code_command": "steer",
       "target": "tools/demo",
       "mooncode_command": { "command": "steer", "text": "add tests" },
     },
@@ -375,9 +374,9 @@ test "mooncode runtime replay skips delivered commands and emits pending jsonl" 
   let receipts : Array[Json] = [
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-1",
-      "status": "native-dispatched",
+      "status": "runtime-accepted",
     },
   ]
   let state = @mooncode.runtime_replay_state_for_session(
@@ -385,7 +384,7 @@ test "mooncode runtime replay skips delivered commands and emits pending jsonl" 
     commands,
     receipts,
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(json_string(state, "kind", default=""), "mooncode-runtime-replay")
@@ -412,7 +411,7 @@ test "mooncode runtime serve jsonl exports pending or all protocol commands" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-1",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "mooncode_command": { "command": "prompt", "text": "build it" },
     },
     {
@@ -420,7 +419,7 @@ test "mooncode runtime serve jsonl exports pending or all protocol commands" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-2",
       "action": "steer",
-      "dispatch": "steer",
+      "control": "steer",
       "mooncode_command": { "command": "steer", "text": "add tests" },
     },
     {
@@ -428,19 +427,19 @@ test "mooncode runtime serve jsonl exports pending or all protocol commands" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-bad",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "mooncode_command": { "command": "prompt" },
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-1",
       "status": "runtime-completed",
     },
   ]
-  let pending = @mooncode.runtime_serve_jsonl(
+  let pending = @mooncode.runtime_command_jsonl(
     commands,
     receipts,
     scope="pending",
@@ -450,7 +449,7 @@ test "mooncode runtime serve jsonl exports pending or all protocol commands" {
   assert_true(pending.contains("add tests"))
   assert_false(pending.contains("cmd-bad"))
   assert_true(pending.has_suffix("\n"))
-  let all = @mooncode.runtime_serve_jsonl(commands, receipts, scope="all")
+  let all = @mooncode.runtime_command_jsonl(commands, receipts, scope="all")
   assert_true(all.contains("build it"))
   assert_true(all.contains("add tests"))
   assert_false(all.contains("cmd-bad"))
@@ -470,8 +469,8 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
       "command_id": "cmd-1",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "target": "tools/demo",
       "mooncode_command_valid": true,
       "mooncode_command": { "command": "prompt", "text": "build it" },
@@ -480,8 +479,8 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
   let claims : Array[Json] = [
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
-      "dispatch_id": "claim-1",
+      "kind": "mooncode.runtime-receipt",
+      "receipt_id": "claim-1",
       "claim_id": "claim-1",
       "command_id": "cmd-1",
       "status": "runtime-claimed",
@@ -498,11 +497,11 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
       "detail": "turn finished",
     },
     acknowledged_at="2026-06-15T00:01:00Z",
-    dispatch_receipts=claims,
+    runtime_receipts=claims,
   )
   assert_eq(receipts.length(), 1)
   assert_eq(
-    mooncode_runtime_dispatch_pending_count_for_test(commands, receipts),
+    mooncode_runtime_receipt_pending_count_for_test(commands, receipts),
     0,
   )
   assert_eq(
@@ -511,7 +510,7 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
   )
   assert_eq(
     json_string(receipts[0], "kind", default=""),
-    "mooncode.runtime-dispatch",
+    "mooncode.runtime-receipt",
   )
   assert_eq(json_string(receipts[0], "status", default=""), "runtime-completed")
   assert_eq(
@@ -523,7 +522,7 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
     "claim-1",
   )
   assert_eq(
-    json_string(receipts[0], "dispatch_mode", default=""),
+    json_string(receipts[0], "runtime_mode", default=""),
     "mooncode-runtime-replay",
   )
   let state = @mooncode.runtime_replay_state_for_session(
@@ -531,7 +530,7 @@ test "mooncode runtime replay acknowledgement marks commands delivered" {
     commands,
     receipts,
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(json_int(state, "delivered_command_count", default=0), 1)
@@ -571,7 +570,7 @@ test "mooncode runtime execution plan endpoint projection exposes next command" 
       "command_id": "cmd-1",
       "session_id": "session-demo",
       "action": "run_tests",
-      "dispatch": "command",
+      "control": "command",
       "target": "tools/demo/main.mbt",
       "context_path": "tools/demo/main.mbt",
       "mooncode_command_valid": true,
@@ -621,10 +620,10 @@ test "mooncode runtime execution plan endpoint projection exposes next command" 
     json_string_array_items(plan, "required_events").contains("test_result"),
   )
   assert_eq(json_array_items(plan, "execution_checklist").length(), 2)
-  let scheduler = json_object_field_or_empty(plan, "serve_scheduler")
+  let control = json_object_field_or_empty(plan, "runtime_control")
   assert_eq(
-    json_string(scheduler, "kind", default=""),
-    "mooncode-serve-scheduler-state",
+    json_string(control, "kind", default=""),
+    "mooncode-runtime-control-state",
   )
   let packet = json_object_field_or_empty(plan, "runtime_turn_packet")
   assert_eq(
@@ -632,7 +631,10 @@ test "mooncode runtime execution plan endpoint projection exposes next command" 
     "mooncode-runtime-turn-packet",
   )
   assert_eq(json_string(packet, "command_id", default=""), "cmd-1")
-  assert_eq(json_string(packet, "scheduler_effect", default=""), "start-turn")
+  assert_eq(
+    json_string(packet, "runtime_control_effect", default=""),
+    "start-turn",
+  )
   let supervisor = json_object_field_or_empty(plan, "runtime_supervisor")
   assert_eq(
     json_string(supervisor, "kind", default=""),
@@ -665,18 +667,18 @@ test "mooncode runtime execution plan endpoint projection exposes next command" 
 }
 
 ///|
-test "mooncode serve scheduler projection exposes ordered control decisions" {
+test "mooncode runtime control projection exposes ordered control decisions" {
   let command_log : Array[Json] = [
     {
       "command_id": "cmd-active",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "message": "build a tool",
     },
     {
       "command_id": "cmd-steer",
       "action": "steer",
-      "dispatch": "steer",
+      "control": "steer",
       "message": "focus the package output",
     },
   ]
@@ -686,20 +688,20 @@ test "mooncode serve scheduler projection exposes ordered control decisions" {
       { "command_id": "cmd-steer", "action": "steer", "status": "pending" },
     ],
   }
-  let scheduler = @mooncode.serve_scheduler_projection(
+  let control = @mooncode.runtime_control_projection(
     "session-demo", command_log, lifecycle,
   )
   assert_eq(
-    json_string(scheduler, "kind", default=""),
-    "mooncode-serve-scheduler-state",
+    json_string(control, "kind", default=""),
+    "mooncode-runtime-control-state",
   )
-  assert_eq(json_string(scheduler, "active_turn_id", default=""), "cmd-active")
-  let decisions = json_array_items(scheduler, "decisions")
+  assert_eq(json_string(control, "active_turn_id", default=""), "cmd-active")
+  let decisions = json_array_items(control, "decisions")
   assert_eq(decisions.length(), 2)
   assert_eq(json_string(decisions[0], "effect", default=""), "active-turn")
   assert_eq(json_string(decisions[1], "effect", default=""), "deliver-steer")
   assert_true(
-    json_string(scheduler, "protocol", default="").contains("mooncode.v1"),
+    json_string(control, "protocol", default="").contains("mooncode.v1"),
   )
 }
 
@@ -717,8 +719,8 @@ test "mooncode runtime claim marks pending command without completing it" {
       "command_id": "cmd-1",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command_valid": true,
       "mooncode_command": { "command": "prompt", "text": "build it" },
     },
@@ -728,8 +730,8 @@ test "mooncode runtime claim marks pending command without completing it" {
       "command_id": "cmd-2",
       "session_id": "session-demo",
       "action": "steer",
-      "dispatch": "steer",
-      "serve_command": "steer",
+      "control": "steer",
+      "code_command": "steer",
       "mooncode_command_valid": true,
       "mooncode_command": { "command": "steer", "text": "add tests" },
     },
@@ -748,12 +750,12 @@ test "mooncode runtime claim marks pending command without completing it" {
   assert_eq(receipts.length(), 1)
   assert_eq(json_string(receipts[0], "status", default=""), "runtime-claimed")
   assert_eq(
-    json_string(receipts[0], "dispatch_mode", default=""),
+    json_string(receipts[0], "runtime_mode", default=""),
     "mooncode-runtime-claim",
   )
   assert_eq(json_string(receipts[0], "command_id", default=""), "cmd-1")
   assert_eq(
-    mooncode_runtime_dispatch_pending_count_for_test(commands, receipts),
+    mooncode_runtime_receipt_pending_count_for_test(commands, receipts),
     1,
   )
   let state = @mooncode.runtime_replay_state_for_session(
@@ -761,7 +763,7 @@ test "mooncode runtime claim marks pending command without completing it" {
     commands,
     receipts,
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(json_int(state, "claimed_command_count", default=0), 1)
@@ -779,7 +781,7 @@ test "mooncode runtime claim marks pending command without completing it" {
     commands,
     receipts,
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(
@@ -798,9 +800,7 @@ test "mooncode runtime claim marks pending command without completing it" {
     json_string(order_blocked[0], "blocked_by_command_id", default=""),
     "cmd-1",
   )
-  let response_receipts = @mooncode.runtime_dispatch_receipts_for_response(
-    receipts,
-  )
+  let response_receipts = @mooncode.runtime_receipts_for_response(receipts)
   assert_true(json_object_field(response_receipts[0], "owner") is Some(_))
 }
 
@@ -814,8 +814,8 @@ test "mooncode runtime claim exposes tool authorization blocked commands" {
       "command_id": "cmd-tool",
       "session_id": "session-demo",
       "action": "run_tests",
-      "dispatch": "command",
-      "serve_command": "prompt",
+      "control": "command",
+      "code_command": "prompt",
       "mooncode_command_valid": true,
       "mooncode_command": { "command": "prompt", "text": "run tests" },
       "tool_authorization": {
@@ -832,7 +832,7 @@ test "mooncode runtime claim exposes tool authorization blocked commands" {
     commands,
     [],
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(json_int(claim_state, "claimable_command_count", default=0), 0)
@@ -883,13 +883,13 @@ test "mooncode runtime claim preserves ordering behind claimed commands" {
   let existing : Array[Json] = [
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-1",
       "status": "runtime-claimed",
     },
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-2",
       "status": "runtime-completed",
     },
@@ -924,8 +924,8 @@ test "mooncode runtime claim recovers expired leases" {
       "command_id": "cmd-stale",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "recover me" },
     },
     {
@@ -934,15 +934,15 @@ test "mooncode runtime claim recovers expired leases" {
       "command_id": "cmd-fresh",
       "session_id": "session-demo",
       "action": "steer",
-      "dispatch": "steer",
-      "serve_command": "steer",
+      "control": "steer",
+      "code_command": "steer",
       "mooncode_command": { "command": "steer", "text": "next" },
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-stale",
       "status": "runtime-claimed",
       "claim_id": "claim-old",
@@ -956,7 +956,7 @@ test "mooncode runtime claim recovers expired leases" {
     commands,
     receipts,
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(json_int(state, "claimable_command_count", default=0), 2)
@@ -970,7 +970,7 @@ test "mooncode runtime claim recovers expired leases" {
     commands,
     receipts,
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   let replay_items = json_array_items(replay, "replay_items")
@@ -1032,7 +1032,7 @@ test "mooncode action plan treats claimed runtime commands as running" {
       "kind": "mooncode.command",
       "command_id": "cmd-1",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "approval": "none",
     },
   ]
@@ -1042,14 +1042,14 @@ test "mooncode action plan treats claimed runtime commands as running" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-1",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "mooncode_command": { "command": "prompt", "text": "build it" },
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-1",
       "status": "runtime-claimed",
     },
@@ -1075,8 +1075,8 @@ test "mooncode runtime replay blocks invalid mooncode protocol command rows" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-invalid",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt" },
     },
   ]
@@ -1085,7 +1085,7 @@ test "mooncode runtime replay blocks invalid mooncode protocol command rows" {
     commands,
     [],
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
     lease_now="2000-01-01T00:06:00Z",
   )
   assert_eq(json_int(state, "invalid_command_count", default=0), 1)
@@ -1109,7 +1109,7 @@ test "mooncode action plan classifies review and test gates" {
       "kind": "mooncode.command",
       "command_id": "cmd-test",
       "action": "run_tests",
-      "dispatch": "command",
+      "control": "command",
       "approval": "auto",
       "target": "tools/demo",
     },
@@ -1118,7 +1118,7 @@ test "mooncode action plan classifies review and test gates" {
       "kind": "mooncode.command",
       "command_id": "cmd-accept",
       "action": "accept",
-      "dispatch": "command",
+      "control": "command",
       "approval": "operator",
       "target": "tools/demo",
     },
@@ -1138,15 +1138,15 @@ test "mooncode action plan classifies review and test gates" {
   let receipts : Array[Json] = [
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-test",
-      "status": "native-dispatched",
+      "status": "runtime-accepted",
     },
     {
       "protocol": "mooncode.v1",
-      "kind": "mooncode.runtime-dispatch",
+      "kind": "mooncode.runtime-receipt",
       "command_id": "cmd-accept",
-      "status": "native-dispatched",
+      "status": "runtime-accepted",
     },
   ]
   let events = [
@@ -1198,11 +1198,11 @@ test "mooncode action plan includes blocked command preflight attempts" {
     [blocked],
   )
   assert_eq(actions.length(), 1)
-  assert_eq(json_string(actions[0], "dispatch", default=""), "preflight")
+  assert_eq(json_string(actions[0], "control", default=""), "preflight")
   assert_eq(json_string(actions[0], "state", default=""), "blocked")
   assert_eq(
     json_string(actions[0], "runtime_state", default=""),
-    "blocked-before-dispatch",
+    "blocked-before-runtime",
   )
   assert_true(
     json_string(actions[0], "blocking_reason", default="").contains(

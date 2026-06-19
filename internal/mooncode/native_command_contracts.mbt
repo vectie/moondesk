@@ -12,7 +12,7 @@ pub fn native_command_execution_plan(
     "kind": "mooncode-native-command-execution-plan",
     "protocol": protocol_version(),
     "action": action,
-    "dispatch": json_string(command_packet, "dispatch", default="command"),
+    "control": json_string(command_packet, "control", default="command"),
     "approval": json_string(command_packet, "approval", default="none"),
     "target": if context_path == "" {
       "moonbook"

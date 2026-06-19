@@ -47,11 +47,11 @@ pub fn moonclaw_native_package_result_endpoint(
 }
 
 ///|
-pub fn moonclaw_native_serve_scheduler_endpoint(
+pub fn moonclaw_native_runtime_control_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
-  "/v1/code/sessions/\{moonclaw_query_value(session_id)}/serve-scheduler?book_root=\{moonclaw_query_value(book_root)}"
+  "/v1/code/sessions/\{moonclaw_query_value(session_id)}/runtime-control?book_root=\{moonclaw_query_value(book_root)}"
 }
 
 ///|

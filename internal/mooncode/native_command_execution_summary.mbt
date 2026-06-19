@@ -23,10 +23,10 @@ pub fn native_command_execution_summary(
       "action",
       default=json_string(command_packet, "action", default="prompt"),
     ),
-    "dispatch": json_string(
+    "control": json_string(
       plan,
-      "dispatch",
-      default=json_string(command_packet, "dispatch", default="prompt"),
+      "control",
+      default=json_string(command_packet, "control", default="prompt"),
     ),
     "approval": json_string(
       plan,

@@ -83,9 +83,9 @@ struct Model {
   mooncode_preflight_session_id : String
   mooncode_preflight_status : String
   mooncode_preflights : Array[MoonCodeCommandPreflight]
-  mooncode_runtime_dispatch_session_id : String
-  mooncode_runtime_dispatch_status : String
-  mooncode_runtime_dispatch : MoonCodeRuntimeDispatchState?
+  mooncode_runtime_receipt_session_id : String
+  mooncode_runtime_receipt_status : String
+  mooncode_runtime_receipt : MoonCodeRuntimeReceiptState?
   mooncode_runtime_claim_session_id : String
   mooncode_runtime_claim_status : String
   mooncode_runtime_claim : MoonCodeRuntimeClaimState?
@@ -167,7 +167,7 @@ enum Msg {
   CreatedBookFromPattern(Result[BookPatternCreationResult, String])
   ExportedAppToolPortable(Result[Json, String])
   ExportedAllAppToolPortable(Result[Json, String])
-  DispatchedDaemon(Result[DaemonDispatchResult, String])
+  DispatchedDaemon(Result[DaemonControlResult, String])
   LoadedDaemonLifecycle(Result[DaemonLifecycleResult, String])
   ManagedDaemon(Result[DaemonLifecycleResult, String])
   LoadedLaunchAgent(Result[LaunchAgentResult, String])
@@ -214,9 +214,9 @@ enum Msg {
     String,
     Result[MoonCodeCommandPreflight, String],
   )
-  LoadedMoonCodeRuntimeDispatch(
+  LoadedMoonCodeRuntimeReceipt(
     String,
-    Result[MoonCodeRuntimeDispatchState, String],
+    Result[MoonCodeRuntimeReceiptState, String],
   )
   LoadedMoonCodeRuntimeClaimState(
     String,
@@ -285,7 +285,7 @@ enum Msg {
   CreateBookFromPattern
   ExportAppToolPortable
   ExportAllAppToolPortable
-  DispatchDaemonTick
+  ControlDaemonTick
   FetchDaemonLifecycle
   StartDaemon
   StopDaemon

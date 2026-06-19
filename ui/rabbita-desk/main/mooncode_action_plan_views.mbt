@@ -219,7 +219,7 @@ fn render_mooncode_action_plan_item(
     ]),
     div(class="mooncode-stats", [
       info_chip("Approval", action.approval),
-      info_chip("Dispatch", action.dispatch),
+      info_chip("Control", action.control),
       info_chip("Lanes", action.expected_lanes.length().to_string()),
       info_chip("Tools", action.tool_hints.length().to_string()),
       info_chip("Evidence", action.runtime_evidence_status),

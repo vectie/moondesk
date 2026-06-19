@@ -31,7 +31,7 @@ fn render_town_progress_panel(model : Model) -> @rabbita.Html {
         ),
         info_row("Latest Request", empty_label(progress.latest_request)),
         info_row("Latest Message", empty_label(progress.latest_message)),
-        info_row("Latest Dispatch", empty_label(progress.latest_dispatch)),
+        info_row("Latest Control", empty_label(progress.latest_dispatch)),
         info_row("Latest Run", latest_run_label(progress)),
       ])
     None =>

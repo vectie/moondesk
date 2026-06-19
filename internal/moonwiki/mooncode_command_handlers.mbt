@@ -175,7 +175,7 @@ async fn handle_mooncode_session_command(
     path=context_path,
     command_packet~,
   )
-  let dispatched = if action == "note" {
+  let runtime_session = if action == "note" {
     with_command
   } else if action == "cancel" {
     send_mooncode_cancel_command(
@@ -199,11 +199,11 @@ async fn handle_mooncode_session_command(
         )
     }
   }
-  append_mooncode_runtime_dispatch_log(
+  append_mooncode_runtime_receipt_log(
     workspace_root,
     session_id,
-    @mooncode.projected_runtime_dispatch_receipt(
-      dispatched,
+    @mooncode.projected_runtime_receipt(
+      runtime_session,
       runtime_command,
       @async.now().to_string(),
     ),
@@ -211,7 +211,7 @@ async fn handle_mooncode_session_command(
     _ => ()
   }
   let receipt_session = write_mooncode_review_receipt_if_needed(
-    dispatched, action, command_packet, context_path, message, now,
+    runtime_session, action, command_packet, context_path, message, now,
   ) catch {
     _ => {
       send_api_error(
@@ -222,7 +222,7 @@ async fn handle_mooncode_session_command(
   }
   let next = match receipt_session {
     Some(session) => session
-    None => dispatched
+    None => runtime_session
   }
   let with_change_set = write_mooncode_change_set_if_possible(next) catch {
     _ => next

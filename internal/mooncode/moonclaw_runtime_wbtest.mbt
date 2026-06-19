@@ -221,7 +221,7 @@ test "mooncode validates moonclaw native capabilities before using runtime" {
   )
   assert_true(
     rq_json_string_array_items(stale_report, "missing_endpoints").contains(
-      "/v1/code/sessions/<id>/serve-scheduler?book_root=<path>",
+      "/v1/code/sessions/<id>/runtime-control?book_root=<path>",
     ),
   )
   assert_true(
@@ -383,15 +383,15 @@ test "mooncode moonclaw runtime owns native runtime request bodies" {
     "moondesk-ui-runtime-turn",
   )
   assert_eq(
-    moonclaw_runtime_dispatch_mode({ "kind": "mooncode-runtime-loop" }),
+    moonclaw_runtime_receipt_mode({ "kind": "mooncode-runtime-loop" }),
     "moonclaw-mooncode-runtime-loop",
   )
   assert_eq(
-    moonclaw_runtime_dispatch_mode({ "kind": "mooncode-runtime-turn" }),
+    moonclaw_runtime_receipt_mode({ "kind": "mooncode-runtime-turn" }),
     "moonclaw-mooncode-runtime-turn",
   )
   assert_eq(
-    moonclaw_runtime_dispatch_mode(
+    moonclaw_runtime_receipt_mode(
       { "kind": "mooncode-runtime-turn" },
       accepted=false,
     ),
@@ -406,8 +406,8 @@ test "mooncode moonclaw runtime owns native runtime request bodies" {
     "/v1/code/sessions/session%20one/package-result?book_root=%2Ftmp%2Fmoon%20book",
   )
   assert_eq(
-    moonclaw_native_serve_scheduler_endpoint("session one", "/tmp/moon book"),
-    "/v1/code/sessions/session%20one/serve-scheduler?book_root=%2Ftmp%2Fmoon%20book",
+    moonclaw_native_runtime_control_endpoint("session one", "/tmp/moon book"),
+    "/v1/code/sessions/session%20one/runtime-control?book_root=%2Ftmp%2Fmoon%20book",
   )
   assert_eq(
     moonclaw_native_session_listing_endpoint("/tmp/moon book"),
@@ -448,7 +448,7 @@ test "mooncode moonclaw runtime owns native runtime request bodies" {
     moonclaw_native_runtime_events_endpoint("session one", "/tmp/moon book"),
     "/v1/code/sessions/session%20one/runtime-events?book_root=%2Ftmp%2Fmoon%20book",
   )
-  let accepted = moonclaw_native_runtime_dispatch_result(
+  let accepted = moonclaw_native_runtime_receipt_result(
     { "message": "queued" },
     {
       "kind": "mooncode-runtime-loop",
@@ -463,10 +463,10 @@ test "mooncode moonclaw runtime owns native runtime request bodies" {
   assert_eq(json_string(accepted, "status", default=""), "done")
   assert_eq(json_string(accepted, "detail", default=""), "loop completed")
   assert_eq(
-    json_string(accepted, "dispatch_mode", default=""),
+    json_string(accepted, "runtime_mode", default=""),
     "moonclaw-mooncode-runtime-loop",
   )
-  let failed = moonclaw_native_runtime_dispatch_result(
+  let failed = moonclaw_native_runtime_receipt_result(
     { "message": "queued" },
     Json::object({}),
     { "action": "package" },
@@ -490,7 +490,7 @@ test "mooncode moonclaw runtime owns native runtime request bodies" {
   )
   assert_eq(json_string(patch, "last_message", default=""), "Run tests")
   assert_eq(
-    json_string(patch, "mooncode_dispatch_mode", default=""),
+    json_string(patch, "mooncode_runtime_mode", default=""),
     "moonclaw-mooncode-runtime-loop",
   )
   assert_eq(
@@ -518,17 +518,17 @@ test "mooncode runtime session patch apply preserves absent fields" {
     {
       "id": "code-demo",
       "last_message": "previous",
-      "mooncode_dispatch_mode": "old",
+      "mooncode_runtime_mode": "old",
     },
     {
       "kind": "mooncode-runtime-supervisor-run-session-patch",
-      "mooncode_dispatch_mode": "moonclaw-mooncode-runtime-loop",
+      "mooncode_runtime_mode": "moonclaw-mooncode-runtime-loop",
       "updated_at": "2026-06-17T00:01:00Z",
     },
   )
   assert_eq(json_string(session, "last_message", default=""), "previous")
   assert_eq(
-    json_string(session, "mooncode_dispatch_mode", default=""),
+    json_string(session, "mooncode_runtime_mode", default=""),
     "moonclaw-mooncode-runtime-loop",
   )
   assert_eq(
@@ -554,7 +554,7 @@ test "mooncode moonclaw runtime shapes supervisor run session patch" {
   assert_eq(json_string(patch, "status", default=""), "done")
   assert_eq(json_string(patch, "detail", default=""), "runtime loop completed")
   assert_eq(
-    json_string(patch, "mooncode_dispatch_mode", default=""),
+    json_string(patch, "mooncode_runtime_mode", default=""),
     "moonclaw-mooncode-runtime-loop",
   )
   let message = runtime_json_object_field_or_empty(patch, "status_message")
@@ -586,7 +586,7 @@ test "mooncode moonclaw runtime shapes supervisor run session patch" {
     "runtime service started",
   )
   assert_eq(
-    json_string(service, "mooncode_dispatch_mode", default=""),
+    json_string(service, "mooncode_runtime_mode", default=""),
     "moonclaw-mooncode-runtime-service",
   )
   let service_message = runtime_json_object_field_or_empty(

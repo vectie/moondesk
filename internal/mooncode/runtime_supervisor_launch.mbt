@@ -20,9 +20,9 @@ pub fn runtime_supervisor_launch_packet(
   } else {
     "moondesk-command-replay"
   }
-  let scheduler_allows_turn = rq_json_bool(
+  let runtime_control_allows_turn = rq_json_bool(
     turn_packet,
-    "scheduler_allows_turn",
+    "runtime_control_allows_turn",
     default=false,
   )
   let ready_to_execute = rq_json_bool(
@@ -32,7 +32,7 @@ pub fn runtime_supervisor_launch_packet(
   )
   let ready_to_launch = command_id != "" &&
     ready_to_execute &&
-    scheduler_allows_turn
+    runtime_control_allows_turn
   let endpoints = {
     "session_store": runtime_supervisor_url(
       host_base_url,
@@ -54,9 +54,9 @@ pub fn runtime_supervisor_launch_packet(
       host_base_url,
       "/api/mooncode/sessions/\{session_id}/runtime-commands",
     ),
-    "serve_scheduler": runtime_supervisor_url(
+    "runtime_control": runtime_supervisor_url(
       host_base_url,
-      "/api/mooncode/sessions/\{session_id}/serve-scheduler",
+      "/api/mooncode/sessions/\{session_id}/runtime-control",
     ),
     "claim": runtime_supervisor_url(
       host_base_url,
@@ -84,10 +84,10 @@ pub fn runtime_supervisor_launch_packet(
       host_base_url,
       runtime_supervisor_endpoint_from_turn(turn_packet, "native_commands"),
     ),
-    "native_serve_scheduler": runtime_supervisor_url(
+    "native_runtime_control": runtime_supervisor_url(
       host_base_url,
       runtime_supervisor_endpoint_from_turn(
-        turn_packet, "native_serve_scheduler",
+        turn_packet, "native_runtime_control",
       ),
     ),
     "native_eval_report": runtime_supervisor_url(
@@ -98,7 +98,7 @@ pub fn runtime_supervisor_launch_packet(
   let packet : Json = {
     "kind": "mooncode-runtime-supervisor-launch",
     "protocol": protocol_version(),
-    "reference": "mooncode/runtime/serve",
+    "reference": "mooncode/runtime-supervisor",
     "session_id": session_id,
     "status": status,
     "operation": operation,
@@ -110,15 +110,15 @@ pub fn runtime_supervisor_launch_packet(
     "host_base_url": host_base_url,
     "command_id": command_id,
     "action": action,
-    "scheduler_effect": rq_json_string(
+    "runtime_control_effect": rq_json_string(
       turn_packet,
-      "scheduler_effect",
+      "runtime_control_effect",
       default="none",
     ),
-    "scheduler_allows_turn": scheduler_allows_turn,
+    "runtime_control_allows_turn": runtime_control_allows_turn,
     "ready_to_launch": ready_to_launch,
     "launch_blocked_reason": runtime_supervisor_blocked_reason(
-      command_id, status, ready_to_execute, scheduler_allows_turn,
+      command_id, status, ready_to_execute, runtime_control_allows_turn,
     ),
     "endpoints": endpoints,
     "launch_request": {
@@ -154,7 +154,7 @@ pub fn runtime_supervisor_launch_packet(
           host_base_url,
           "/api/mooncode/sessions/\{session_id}/session-store",
         ),
-        "purpose": "Load durable session, transcript, command log, runtime command log, dispatch receipts, and event log.",
+        "purpose": "Load durable session, transcript, command log, runtime command log, runtime receipts, and event log.",
       },
       {
         "id": "claim-command",

@@ -22,12 +22,12 @@ async test "mooncode action plan writes durable moonbook manifest" {
   )
   append_mooncode_command_log(root, "code-demo", packet)
   append_mooncode_runtime_command_log(root, "code-demo", runtime_command)
-  append_mooncode_runtime_dispatch_log(root, "code-demo", {
+  append_mooncode_runtime_receipt_log(root, "code-demo", {
     "protocol": "mooncode.v1",
-    "kind": "mooncode.runtime-dispatch",
+    "kind": "mooncode.runtime-receipt",
     "command_id": json_string(packet, "command_id", default=""),
     "session_id": "code-demo",
-    "status": "native-dispatched",
+    "status": "runtime-accepted",
   })
   let manifest = write_mooncode_action_plan_manifest(root, session)
   assert_eq(json_string(manifest, "kind", default=""), "mooncode-action-plan")
@@ -247,7 +247,7 @@ async test "mooncode review actions write moonbook receipts" {
     "workspace_name": "Demo Book",
     "workspace_root": root,
     "mooncode_runtime_session_id": "runtime-demo",
-    "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
+    "mooncode_runtime_mode": "moonclaw-mooncode-runtime",
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
   @fsx.make_directory(
@@ -679,14 +679,14 @@ async test "mooncode review actions write moonbook receipts" {
           with_eval_report, package_payload, "Package it.", package_packet,
         ),
       )
-      append_mooncode_runtime_dispatch_log(root, "code-demo", {
+      append_mooncode_runtime_receipt_log(root, "code-demo", {
         "protocol": "mooncode.v1",
-        "kind": "mooncode.runtime-dispatch",
-        "dispatch_id": "outdated-claim-package",
+        "kind": "mooncode.runtime-receipt",
+        "receipt_id": "outdated-claim-package",
         "command_id": json_string(package_packet, "command_id", default=""),
         "session_id": "code-demo",
         "status": "runtime-claimed",
-        "dispatch_mode": "mooncode-runtime-claim",
+        "runtime_mode": "mooncode-runtime-claim",
         "created_at": "2026-06-14T00:04:30Z",
         "mooncode_command_valid": true,
       })
@@ -714,14 +714,14 @@ async test "mooncode review actions write moonbook receipts" {
         json_int(session_snapshot, "runtime_command_count", default=0),
         1,
       )
-      let snapshot_dispatches = json_array_items(
-        session_snapshot, "runtime_dispatches",
+      let snapshot_receipts = json_array_items(
+        session_snapshot, "runtime_receipts",
       )
-      assert_eq(snapshot_dispatches.length(), 1)
+      assert_eq(snapshot_receipts.length(), 1)
       assert_true(
-        json_object_field(snapshot_dispatches[0], "runtime_command") is Some(_),
+        json_object_field(snapshot_receipts[0], "runtime_command") is Some(_),
       )
-      assert_true(json_object_field(snapshot_dispatches[0], "owner") is Some(_))
+      assert_true(json_object_field(snapshot_receipts[0], "owner") is Some(_))
       let with_runtime_handoff = write_mooncode_runtime_handoff_if_possible(
         root, with_session_snapshot,
       )
@@ -750,12 +750,12 @@ async test "mooncode review actions write moonbook receipts" {
         json_int(runtime_handoff, "runtime_command_count", default=0),
         1,
       )
-      let handoff_dispatches = json_array_items(
-        runtime_handoff, "runtime_dispatches",
+      let handoff_receipts = json_array_items(
+        runtime_handoff, "runtime_receipts",
       )
-      assert_eq(handoff_dispatches.length(), 1)
+      assert_eq(handoff_receipts.length(), 1)
       assert_true(
-        json_object_field(handoff_dispatches[0], "runtime_command") is Some(_),
+        json_object_field(handoff_receipts[0], "runtime_command") is Some(_),
       )
       let runtime_consumer = json_object_field_or_empty(
         runtime_handoff, "runtime_consumer",
@@ -776,8 +776,7 @@ async test "mooncode review actions write moonbook receipts" {
           "runtime_command_feed_endpoint": "/api/mooncode/sessions/code-demo/runtime-commands",
           "runtime_command_log_path": "runtime-commands.jsonl",
           "runtime_claim_endpoint": "/api/mooncode/sessions/code-demo/runtime-claim",
-          "runtime_dispatch_endpoint": "/api/mooncode/sessions/code-demo/runtime-dispatch",
-          "runtime_dispatch_log_path": "runtime-dispatches.jsonl",
+          "runtime_receipt_log_path": "runtime-receipts.jsonl",
           "runtime_event_ingest_endpoint": "/api/mooncode/sessions/code-demo/runtime-events",
           "runtime_replay_endpoint": "/api/mooncode/sessions/code-demo/runtime-replay",
           "action_plan_endpoint": "/api/mooncode/sessions/code-demo/action-plan",

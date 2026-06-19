@@ -152,9 +152,9 @@ fn update_mooncode_session_results(
       } else {
         None
       }
-      let runtime_dispatch = if selected ==
-        model.mooncode_runtime_dispatch_session_id {
-        model.mooncode_runtime_dispatch
+      let runtime_receipt = if selected ==
+        model.mooncode_runtime_receipt_session_id {
+        model.mooncode_runtime_receipt
       } else {
         None
       }
@@ -186,7 +186,7 @@ fn update_mooncode_session_results(
             fetch_mooncode_preflight_matrix_cmd(
               dispatch, selected, model.selected_path,
             ),
-            fetch_mooncode_runtime_dispatch_cmd(dispatch, selected),
+            fetch_mooncode_runtime_receipt_cmd(dispatch, selected),
             fetch_mooncode_runtime_claim_state_cmd(dispatch, selected),
           ])
         },
@@ -438,19 +438,19 @@ fn update_mooncode_session_results(
           } else {
             "loading preflight gates"
           },
-          mooncode_runtime_dispatch_session_id: if selected ==
-            model.mooncode_runtime_dispatch_session_id {
-            model.mooncode_runtime_dispatch_session_id
+          mooncode_runtime_receipt_session_id: if selected ==
+            model.mooncode_runtime_receipt_session_id {
+            model.mooncode_runtime_receipt_session_id
           } else {
             ""
           },
-          mooncode_runtime_dispatch: runtime_dispatch,
-          mooncode_runtime_dispatch_status: if selected == "" {
-            "runtime dispatch idle"
-          } else if selected == model.mooncode_runtime_dispatch_session_id {
-            model.mooncode_runtime_dispatch_status
+          mooncode_runtime_receipt: runtime_receipt,
+          mooncode_runtime_receipt_status: if selected == "" {
+            "runtime receipt idle"
+          } else if selected == model.mooncode_runtime_receipt_session_id {
+            model.mooncode_runtime_receipt_status
           } else {
-            "loading runtime dispatch"
+            "loading runtime receipt"
           },
           mooncode_runtime_claim_session_id: if selected ==
             model.mooncode_runtime_claim_session_id {

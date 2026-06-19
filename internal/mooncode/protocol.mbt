@@ -49,8 +49,8 @@ pub fn kind_command_ref() -> String {
 }
 
 ///|
-pub fn kind_runtime_dispatch() -> String {
-  "mooncode.runtime-dispatch"
+pub fn kind_runtime_receipt() -> String {
+  "mooncode.runtime-receipt"
 }
 
 ///|

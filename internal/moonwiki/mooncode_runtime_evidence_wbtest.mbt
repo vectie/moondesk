@@ -9,7 +9,7 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
     "workspace_name": "Demo Book",
     "workspace_root": root,
     "mooncode_runtime_session_id": "runtime-demo",
-    "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
+    "mooncode_runtime_mode": "moonclaw-mooncode-runtime",
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
   let message = @mooncode.command_message("run_tests", payload)
@@ -21,10 +21,10 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
   )
   append_mooncode_command_log(root, "code-demo", packet)
   append_mooncode_runtime_command_log(root, "code-demo", runtime_command)
-  append_mooncode_runtime_dispatch_log(
+  append_mooncode_runtime_receipt_log(
     root,
     "code-demo",
-    @mooncode.projected_runtime_dispatch_receipt(
+    @mooncode.projected_runtime_receipt(
       session, runtime_command, "2026-06-14T00:01:00Z",
     ),
   )
@@ -211,7 +211,7 @@ async test "mooncode runtime replay ack events persist as session evidence" {
     "workspace_name": "Demo Book",
     "workspace_root": root,
     "mooncode_runtime_session_id": "runtime-demo",
-    "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
+    "mooncode_runtime_mode": "moonclaw-mooncode-runtime",
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
   let message = @mooncode.command_message("run_tests", payload)
@@ -260,7 +260,7 @@ async test "mooncode runtime replay ack events persist as session evidence" {
     acknowledged_at="2026-06-15T00:01:00Z",
   )
   assert_eq(ack_receipts.length(), 1)
-  append_mooncode_runtime_dispatch_log(root, "code-demo", ack_receipts[0])
+  append_mooncode_runtime_receipt_log(root, "code-demo", ack_receipts[0])
   let ack_events = @mooncode.runtime_replay_ack_normalized_events(ack_receipts)
   assert_eq(ack_events.length(), 4)
   for event in ack_events {

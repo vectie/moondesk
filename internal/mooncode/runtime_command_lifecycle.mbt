@@ -11,7 +11,7 @@ pub fn runtime_command_lifecycle(
   let items : Array[Json] = []
   let mut pending_count = 0
   let mut running_count = 0
-  let mut dispatched_count = 0
+  let mut runtime_started_count = 0
   let mut completed_count = 0
   let mut failed_count = 0
   let mut blocked_count = 0
@@ -39,7 +39,7 @@ pub fn runtime_command_lifecycle(
     match status {
       "pending" => pending_count += 1
       "running" => running_count += 1
-      "dispatched" => dispatched_count += 1
+      "runtime-started" => runtime_started_count += 1
       "completed" => completed_count += 1
       "failed" => failed_count += 1
       "blocked-invalid"
@@ -62,7 +62,7 @@ pub fn runtime_command_lifecycle(
     "command_count": items.length(),
     "pending_count": pending_count,
     "running_count": running_count,
-    "dispatched_count": dispatched_count,
+    "runtime_started_count": runtime_started_count,
     "completed_count": completed_count,
     "failed_count": failed_count,
     "blocked_count": blocked_count,
@@ -71,7 +71,7 @@ pub fn runtime_command_lifecycle(
     "next_action": next_action,
     "next_status": next_status,
     "commands": Json::array(items),
-    "rule": "Lifecycle is computed from runtime-commands.jsonl, runtime-dispatches.jsonl, command-scoped runtime events, decode validity, tool authorization, and lease expiry. It is a read-only protocol projection for Moondesk, MoonClaw, and future shared MoonCode protocol consumers.",
+    "rule": "Lifecycle is computed from runtime-commands.jsonl, runtime-receipts.jsonl, command-scoped runtime events, decode validity, tool authorization, and lease expiry. It is a read-only protocol projection for Moondesk, MoonClaw, and future shared MoonCode protocol consumers.",
   }
 }
 
@@ -104,8 +104,8 @@ fn runtime_command_lifecycle_item(
     "index": index,
     "command_id": command_id,
     "action": action,
-    "dispatch": rq_json_string(command, "dispatch", default="prompt"),
-    "serve_command": rq_json_string(command, "serve_command", default="prompt"),
+    "control": rq_json_string(command, "control", default="prompt"),
+    "code_command": rq_json_string(command, "code_command", default="prompt"),
     "created_at": rq_json_string(command, "created_at", default=""),
     "target": rq_json_string(command, "target", default=""),
     "context_path": rq_json_string(command, "context_path", default=""),
@@ -192,8 +192,8 @@ fn runtime_command_lifecycle_status(
     return "completed"
   }
   if receipt_status == "runtime-acknowledged" ||
-    receipt_status == "native-dispatched" {
-    return "dispatched"
+    receipt_status == "runtime-accepted" {
+    return "runtime-started"
   }
   if receipt_status == "runtime-claimed" {
     if expired_claim {
@@ -226,7 +226,7 @@ fn runtime_command_lifecycle_blocking_reason(
       runtime_command_tool_authorization_block_reason(command)
     "blocked-missing-proof" =>
       "runtime completion acknowledgement is missing required command-scoped proof events"
-    "failed" => "runtime dispatch or command-scoped proof event failed"
+    "failed" => "runtime receipt or command-scoped proof event failed"
     "pending" =>
       if expired_claim {
         "previous runtime claim expired; command is ready to reclaim"
@@ -249,7 +249,7 @@ fn runtime_command_lifecycle_next_step(status : String) -> String {
     "failed" => "retry the runtime command and preserve failed proof"
     "pending" => "claim or replay this command through MoonClaw/MoonCode"
     "running" => "wait for runtime acknowledgement or recover stale lease"
-    "dispatched" =>
+    "runtime-started" =>
       "wait for command-scoped proof or completion acknowledgement"
     "completed" => "no runtime action required"
     _ => "inspect runtime command"

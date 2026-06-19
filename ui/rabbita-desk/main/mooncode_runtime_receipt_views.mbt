@@ -1,43 +1,43 @@
 ///|
-fn render_mooncode_runtime_dispatch_panel(model : Model) -> @rabbita.Html {
-  section(class="mooncode-review-board runtime-dispatch-board", [
+fn render_mooncode_runtime_receipt_panel(model : Model) -> @rabbita.Html {
+  section(class="mooncode-review-board runtime-receipt-board", [
     div(class="mooncode-stream-header", [
       div([
         p(class="eyebrow", "runtime delivery audit"),
-        h3("Dispatch Receipts"),
+        h3("Control Receipts"),
       ]),
-      span(class="record-kind", model.mooncode_runtime_dispatch_status),
+      span(class="record-kind", model.mooncode_runtime_receipt_status),
     ]),
-    match model.mooncode_runtime_dispatch {
+    match model.mooncode_runtime_receipt {
       Some(state) =>
         div([
           div(class="mooncode-stats", [
             info_chip("Commands", state.runtime_command_count.to_string()),
-            info_chip("Receipts", state.runtime_dispatch_count.to_string()),
-            info_chip("Pending", state.runtime_dispatch_pending_count.to_string()),
-            info_chip("Mode", state.dispatch_mode),
+            info_chip("Receipts", state.runtime_receipt_count.to_string()),
+            info_chip("Pending", state.runtime_receipt_pending_count.to_string()),
+            info_chip("Mode", state.runtime_mode),
           ]),
           div(class="daemon-state compact-state", [
             info_row("Runtime Feed", state.runtime_command_log_path),
-            info_row("Dispatch Log", state.runtime_dispatch_log_path),
+            info_row("Receipt Log", state.runtime_receipt_log_path),
             info_row("Session", state.session_id),
             info_row("Runtime", empty_label(state.runtime_session_id)),
           ]),
           if state.pending_command_ids.length() == 0 {
-            p(class="status-line", "all runtime commands have dispatch receipts")
+            p(class="status-line", "all runtime commands have runtime receipts")
           } else {
             div(class="mooncode-output-roots", [
               small("Pending command ids"),
               p(state.pending_command_ids.join(", ")),
             ])
           },
-          if state.dispatch_receipts.length() == 0 {
-            p(class="status-line", "no dispatch receipts recorded yet")
+          if state.runtime_receipts.length() == 0 {
+            p(class="status-line", "no runtime receipts recorded yet")
           } else {
             div(
-              class="mooncode-review-list runtime-dispatch-list",
-              mooncode_recent_dispatch_receipts(state.dispatch_receipts).map(receipt =>
-                render_mooncode_runtime_dispatch_receipt(receipt)
+              class="mooncode-review-list runtime-receipt-list",
+              mooncode_recent_runtime_receipts(state.runtime_receipts).map(receipt =>
+                render_mooncode_runtime_receipt(receipt)
               ),
             )
           },
@@ -45,17 +45,17 @@ fn render_mooncode_runtime_dispatch_panel(model : Model) -> @rabbita.Html {
       None =>
         p(
           class="status-line",
-          "No MoonCode runtime dispatch state has been loaded for this session yet.",
+          "No MoonCode runtime receipt state has been loaded for this session yet.",
         )
     },
   ])
 }
 
 ///|
-fn mooncode_recent_dispatch_receipts(
-  receipts : Array[MoonCodeRuntimeDispatchReceipt]
-) -> Array[MoonCodeRuntimeDispatchReceipt] {
-  let recent : Array[MoonCodeRuntimeDispatchReceipt] = []
+fn mooncode_recent_runtime_receipts(
+  receipts : Array[MoonCodeRuntimeReceiptReceipt]
+) -> Array[MoonCodeRuntimeReceiptReceipt] {
+  let recent : Array[MoonCodeRuntimeReceiptReceipt] = []
   let mut index = receipts.length()
   let mut emitted = 0
   while index > 0 && emitted < 8 {
@@ -67,15 +67,15 @@ fn mooncode_recent_dispatch_receipts(
 }
 
 ///|
-fn render_mooncode_runtime_dispatch_receipt(
-  receipt : MoonCodeRuntimeDispatchReceipt
+fn render_mooncode_runtime_receipt(
+  receipt : MoonCodeRuntimeReceiptReceipt
 ) -> @rabbita.Html {
   let target = json_field_string(receipt.runtime_command, "target", default="")
-  div(class="mooncode-review-item " + mooncode_runtime_dispatch_state(receipt), [
+  div(class="mooncode-review-item " + mooncode_runtime_receipt_state(receipt), [
     div(class="mooncode-review-head", [
       div([
         strong(receipt.action + " -> " + receipt.status),
-        small(receipt.dispatch_mode + " / " + receipt.created_at),
+        small(receipt.runtime_mode + " / " + receipt.created_at),
       ]),
       span(
         class=if receipt.mooncode_command_valid {
@@ -87,7 +87,7 @@ fn render_mooncode_runtime_dispatch_receipt(
       ),
     ]),
     div(class="mooncode-stats", [
-      info_chip("Dispatch", receipt.dispatch),
+      info_chip("Control", receipt.control),
       info_chip("Ack Order", mooncode_ack_order_status_label(receipt)),
       info_chip(
         "Requested",
@@ -111,13 +111,13 @@ fn render_mooncode_runtime_dispatch_receipt(
     render_mooncode_runtime_proof_gate(receipt.proof_gate),
     render_mooncode_runtime_execution_summary(receipt.runtime_command),
     p(class="mooncode-event-detail", receipt.detail),
-    small(class="status-line", receipt.dispatch_id),
+    small(class="status-line", receipt.receipt_id),
   ])
 }
 
 ///|
 fn mooncode_ack_order_status_label(
-  receipt : MoonCodeRuntimeDispatchReceipt
+  receipt : MoonCodeRuntimeReceiptReceipt
 ) -> String {
   match receipt.ack_order_status {
     Some(status) => if status == "" { "n/a" } else { status }
@@ -144,14 +144,14 @@ fn mooncode_optional_bool_label(value : Bool?) -> String {
 
 ///|
 fn render_mooncode_runtime_ack_audit(
-  receipt : MoonCodeRuntimeDispatchReceipt
+  receipt : MoonCodeRuntimeReceiptReceipt
 ) -> @rabbita.Html {
   match receipt.ack_order_status {
     Some(_) =>
       div(class="daemon-state compact-state", [
         info_row(
-          "Previous Dispatch",
-          mooncode_optional_text_label(receipt.previous_dispatch_status),
+          "Previous Control",
+          mooncode_optional_text_label(receipt.previous_receipt_status),
         ),
         info_row(
           "Previous Claim",
@@ -290,8 +290,8 @@ fn mooncode_runtime_proof_gate_missing_label(gate : Json?) -> String {
 }
 
 ///|
-fn mooncode_runtime_dispatch_state(
-  receipt : MoonCodeRuntimeDispatchReceipt
+fn mooncode_runtime_receipt_state(
+  receipt : MoonCodeRuntimeReceiptReceipt
 ) -> String {
   match receipt.ack_order_status {
     Some("blocked-by-prior-command") | Some("consumer-mismatch") => return "rejected"
@@ -299,7 +299,7 @@ fn mooncode_runtime_dispatch_state(
     _ => ()
   }
   match receipt.status {
-    "native-dispatched" | "runtime-acknowledged" | "runtime-completed" =>
+    "runtime-accepted" | "runtime-acknowledged" | "runtime-completed" =>
       "accepted"
     "failed" => "rejected"
     "recorded" => "queued"

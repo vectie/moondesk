@@ -1,19 +1,19 @@
 ///|
-test "mooncode serve scheduler routes steer and cancel to active turn" {
+test "mooncode runtime control routes steer and cancel to active turn" {
   let commands : Array[Json] = [
     {
       "command_id": "cmd-active",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "message": "build a tool",
     },
     {
       "command_id": "cmd-steer",
       "action": "steer",
-      "dispatch": "steer",
+      "control": "steer",
       "message": "focus tests",
     },
-    { "command_id": "cmd-cancel", "action": "cancel", "dispatch": "cancel" },
+    { "command_id": "cmd-cancel", "action": "cancel", "control": "cancel" },
   ]
   let lifecycle : Json = {
     "commands": [
@@ -22,46 +22,46 @@ test "mooncode serve scheduler routes steer and cancel to active turn" {
       { "command_id": "cmd-cancel", "action": "cancel", "status": "pending" },
     ],
   }
-  let projection = serve_scheduler_projection("s1", commands, lifecycle)
+  let projection = runtime_control_projection("s1", commands, lifecycle)
   assert_eq(
-    scheduler_json_string(projection, "active_turn_id", default=""),
+    runtime_control_json_string(projection, "active_turn_id", default=""),
     "cmd-active",
   )
-  let decisions = scheduler_json_array_items(projection, "decisions")
+  let decisions = runtime_control_json_array_items(projection, "decisions")
   assert_eq(decisions.length(), 3)
   assert_eq(
-    scheduler_json_string(decisions[1], "effect", default=""),
+    runtime_control_json_string(decisions[1], "effect", default=""),
     "deliver-steer",
   )
   assert_eq(
-    scheduler_json_string(decisions[1], "target_command_id", default=""),
+    runtime_control_json_string(decisions[1], "target_command_id", default=""),
     "cmd-active",
   )
   assert_eq(
-    scheduler_json_string(decisions[2], "effect", default=""),
+    runtime_control_json_string(decisions[2], "effect", default=""),
     "cancel-active",
   )
 }
 
 ///|
-test "mooncode serve scheduler response owns lifecycle assembly" {
+test "mooncode runtime control response owns lifecycle assembly" {
   let command_log : Array[Json] = [
     {
       "command_id": "cmd-done",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "message": "already built",
     },
     {
       "command_id": "cmd-next",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "message": "build next",
     },
     {
       "command_id": "cmd-steer",
       "action": "steer",
-      "dispatch": "steer",
+      "control": "steer",
       "message": "focus tests",
     },
   ]
@@ -71,8 +71,8 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-done",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "done" },
     },
     {
@@ -80,8 +80,8 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-next",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "next" },
     },
     {
@@ -89,21 +89,21 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-steer",
       "action": "steer",
-      "dispatch": "steer",
-      "serve_command": "steer",
+      "control": "steer",
+      "code_command": "steer",
       "mooncode_command": { "command": "steer", "text": "tests" },
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
+      "kind": kind_runtime_receipt(),
       "command_id": "cmd-done",
       "status": "runtime-completed",
       "created_at": "2026-06-15T00:00:00Z",
     },
   ]
-  let response = serve_scheduler_response(
+  let response = runtime_control_response(
     "s1",
     command_log,
     runtime_commands,
@@ -112,45 +112,45 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
     lease_now="2026-06-15T00:00:00Z",
   )
   assert_eq(
-    scheduler_json_string(response, "kind", default=""),
-    "mooncode-serve-scheduler-state",
+    runtime_control_json_string(response, "kind", default=""),
+    "mooncode-runtime-control-state",
   )
-  let decisions = scheduler_json_array_items(response, "decisions")
+  let decisions = runtime_control_json_array_items(response, "decisions")
   assert_eq(decisions.length(), 3)
   assert_eq(
-    scheduler_json_string(decisions[0], "effect", default=""),
+    runtime_control_json_string(decisions[0], "effect", default=""),
     "already-completed",
   )
   assert_eq(
-    scheduler_json_string(decisions[1], "effect", default=""),
+    runtime_control_json_string(decisions[1], "effect", default=""),
     "start-turn",
   )
   assert_eq(
-    scheduler_json_string(decisions[2], "effect", default=""),
+    runtime_control_json_string(decisions[2], "effect", default=""),
     "queue-steer",
   )
   assert_eq(
-    scheduler_json_string(decisions[2], "target_command_id", default=""),
+    runtime_control_json_string(decisions[2], "target_command_id", default=""),
     "cmd-next",
   )
 }
 
 ///|
-test "mooncode serve scheduler starts first pending turn and queues controls" {
+test "mooncode runtime control starts first pending turn and queues controls" {
   let commands : Array[Json] = [
     {
       "command_id": "cmd-prompt",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "message": "make miniapp",
     },
     {
       "command_id": "cmd-steer",
       "action": "steer",
-      "dispatch": "steer",
+      "control": "steer",
       "message": "keep it small",
     },
-    { "command_id": "cmd-cancel", "action": "cancel", "dispatch": "cancel" },
+    { "command_id": "cmd-cancel", "action": "cancel", "control": "cancel" },
   ]
   let lifecycle : Json = {
     "commands": [
@@ -159,39 +159,39 @@ test "mooncode serve scheduler starts first pending turn and queues controls" {
       { "command_id": "cmd-cancel", "action": "cancel", "status": "pending" },
     ],
   }
-  let projection = serve_scheduler_projection("s1", commands, lifecycle)
-  let decisions = scheduler_json_array_items(projection, "decisions")
+  let projection = runtime_control_projection("s1", commands, lifecycle)
+  let decisions = runtime_control_json_array_items(projection, "decisions")
   assert_eq(
-    scheduler_json_string(decisions[0], "effect", default=""),
+    runtime_control_json_string(decisions[0], "effect", default=""),
     "start-turn",
   )
   assert_eq(
-    scheduler_json_string(decisions[1], "effect", default=""),
+    runtime_control_json_string(decisions[1], "effect", default=""),
     "queue-steer",
   )
   assert_eq(
-    scheduler_json_string(decisions[1], "target_command_id", default=""),
+    runtime_control_json_string(decisions[1], "target_command_id", default=""),
     "cmd-prompt",
   )
   assert_eq(
-    scheduler_json_string(decisions[2], "effect", default=""),
+    runtime_control_json_string(decisions[2], "effect", default=""),
     "withdraw-pending",
   )
 }
 
 ///|
-test "mooncode serve scheduler queues steer to pending package turn" {
+test "mooncode runtime control queues steer to pending package turn" {
   let commands : Array[Json] = [
     {
       "command_id": "cmd-steer",
       "action": "steer",
-      "dispatch": "steer",
+      "control": "steer",
       "message": "too late",
     },
     {
       "command_id": "cmd-package",
       "action": "package",
-      "dispatch": "command",
+      "control": "command",
       "message": "package output",
     },
   ]
@@ -201,29 +201,29 @@ test "mooncode serve scheduler queues steer to pending package turn" {
       { "command_id": "cmd-package", "action": "package", "status": "pending" },
     ],
   }
-  let projection = serve_scheduler_projection("s1", commands, lifecycle)
-  let decisions = scheduler_json_array_items(projection, "decisions")
+  let projection = runtime_control_projection("s1", commands, lifecycle)
+  let decisions = runtime_control_json_array_items(projection, "decisions")
   assert_eq(
-    scheduler_json_string(decisions[0], "effect", default=""),
+    runtime_control_json_string(decisions[0], "effect", default=""),
     "queue-steer",
   )
   assert_eq(
-    scheduler_json_string(decisions[0], "target_command_id", default=""),
+    runtime_control_json_string(decisions[0], "target_command_id", default=""),
     "cmd-package",
   )
   assert_eq(
-    scheduler_json_string(decisions[1], "effect", default=""),
+    runtime_control_json_string(decisions[1], "effect", default=""),
     "start-turn",
   )
 }
 
 ///|
-test "mooncode serve scheduler defers truly idle steer" {
+test "mooncode runtime control defers truly idle steer" {
   let commands : Array[Json] = [
     {
       "command_id": "cmd-steer",
       "action": "steer",
-      "dispatch": "steer",
+      "control": "steer",
       "message": "apply to the next turn",
     },
   ]
@@ -232,16 +232,19 @@ test "mooncode serve scheduler defers truly idle steer" {
       { "command_id": "cmd-steer", "action": "steer", "status": "pending" },
     ],
   }
-  let projection = serve_scheduler_projection("s1", commands, lifecycle)
-  assert_eq(scheduler_json_string(projection, "active_turn_id", default=""), "")
-  let decisions = scheduler_json_array_items(projection, "decisions")
+  let projection = runtime_control_projection("s1", commands, lifecycle)
+  assert_eq(
+    runtime_control_json_string(projection, "active_turn_id", default=""),
+    "",
+  )
+  let decisions = runtime_control_json_array_items(projection, "decisions")
   assert_eq(decisions.length(), 1)
   assert_eq(
-    scheduler_json_string(decisions[0], "effect", default=""),
+    runtime_control_json_string(decisions[0], "effect", default=""),
     "defer-steer",
   )
   assert_eq(
-    scheduler_json_string(decisions[0], "target_command_id", default=""),
+    runtime_control_json_string(decisions[0], "target_command_id", default=""),
     "",
   )
 }

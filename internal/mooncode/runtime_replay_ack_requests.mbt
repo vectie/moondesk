@@ -5,7 +5,7 @@ pub fn runtime_replay_ack_status(ack : Json) -> String {
     "runtime-acknowledged"
     | "runtime-completed"
     | "proof-missing"
-    | "native-dispatched"
+    | "runtime-accepted"
     | "failed"
     | "skipped" => status
     _ =>

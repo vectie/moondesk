@@ -1,5 +1,5 @@
 ///|
-// MoonCode steering lifecycle projection for MoonCode-style steer visibility.
+// MoonCode steering lifecycle projection for MoonCode steer visibility.
 
 ///|
 pub fn session_steering_lifecycle(events : Array[Json]) -> Json {

@@ -7,11 +7,11 @@ pub fn moonclaw_runtime_contract_json() -> Json {
     "runtime_owner": "moonclaw",
     "reference": "moonclaw:/v1/code",
     "daemon": {
-      "native_target": "/v1/code/capabilities plus /v1/code/sessions?book_root=<path>, /v1/code/sessions?book_root=<path>&format=json, /v1/code/sessions/<id>?book_root=<path>, /v1/code/sessions/<id>/serve-scheduler?book_root=<path>, /v1/code/sessions/<id>/runtime-claim?book_root=<path>, /v1/code/sessions/<id>/runtime-dispatch?book_root=<path>, /v1/code/sessions/<id>/runtime-turn?book_root=<path>, /v1/code/sessions/<id>/runtime-loop?book_root=<path>, /v1/code/sessions/<id>/runtime-service?book_root=<path>, /v1/code/sessions/<id>/runtime-events?book_root=<path>, /v1/code/sessions/<id>/tool-exec?book_root=<path>, /v1/code/sessions/<id>/commands, /v1/code/sessions/<id>/eval-report?book_root=<path>, and /v1/code/sessions/<id>/package-result?book_root=<path>",
+      "native_target": "/v1/code/capabilities plus /v1/code/sessions?book_root=<path>, /v1/code/sessions?book_root=<path>&format=json, /v1/code/sessions/<id>?book_root=<path>, /v1/code/sessions/<id>/runtime-control?book_root=<path>, /v1/code/sessions/<id>/runtime-claim?book_root=<path>, /v1/code/sessions/<id>/runtime-turn?book_root=<path>, /v1/code/sessions/<id>/runtime-loop?book_root=<path>, /v1/code/sessions/<id>/runtime-service?book_root=<path>, /v1/code/sessions/<id>/runtime-events?book_root=<path>, /v1/code/sessions/<id>/tool-exec?book_root=<path>, /v1/code/sessions/<id>/commands, /v1/code/sessions/<id>/eval-report?book_root=<path>, and /v1/code/sessions/<id>/package-result?book_root=<path>",
     },
     "event_mapping": moonclaw_event_mapping_json(),
     "tool_mapping": Json::array(moonclaw_tool_mapping_rows()),
-    "runtime_gap": "Current MoonClaw daemon routes now expose native MoonCode capabilities, cold book-local sidecar list/show, native serve-scheduler projection, native runtime-claim receipts, native runtime-dispatch delivery receipts, native runtime-turn execution receipts for explicit, deterministic, or bounded model-planned tool calls with tool-result feedback plus planner reasoning/assistant/tool-call events, native runtime-loop queue supervision, a daemon runtime-service supervisor, native runtime-events evidence ingress, native read/edit/write/apply_patch/revert_patch/shell/moon_ide/moon_cmd/moon_check/finish tool execution, command ingestion, session stream snapshots, native tool_harness/file_edit/patch_review/command_execution/package_output eval-report evidence, prompt/steer/cancel controls, package-result acknowledgement, and book-local durable MoonCode sidecars. Remaining native gap is readiness long-running service lifecycle UX, diff-aware review polish, richer resume/cancel orchestration, and broader model-backed coding eval cases.",
+    "runtime_gap": "Current MoonClaw daemon routes now expose native MoonCode capabilities, cold book-local sidecar list/show, native runtime-control projection, native runtime-claim receipts, native runtime-turn execution receipts for explicit, deterministic, or bounded model-planned tool calls with tool-result feedback plus planner reasoning/assistant/tool-call events, native runtime-loop queue supervision, a daemon runtime-service supervisor, native runtime-events evidence ingress, native read/edit/write/apply_patch/revert_patch/shell/moon_ide/moon_cmd/moon_check/finish tool execution, command ingestion, session stream snapshots, native tool_harness/file_edit/patch_review/command_execution/package_output eval-report evidence, prompt/steer/cancel controls, package-result acknowledgement, and book-local durable MoonCode sidecars. Remaining native gap is readiness long-running service lifecycle UX, diff-aware review polish, richer resume/cancel orchestration, and broader model-backed coding eval cases.",
     "boundary": {
       "moondesk": "records MoonCode command/session/review state and consumes native MoonClaw MoonCode runtime events",
       "moonclaw": "executes tools, streams events, enforces approvals, and reports proof",
@@ -240,7 +240,7 @@ pub fn moonclaw_runtime_turn_request(
 }
 
 ///|
-pub fn moonclaw_runtime_dispatch_mode(
+pub fn moonclaw_runtime_receipt_mode(
   response : Json,
   accepted? : Bool = true,
 ) -> String {
@@ -256,7 +256,7 @@ pub fn moonclaw_runtime_dispatch_mode(
 }
 
 ///|
-pub fn moonclaw_native_runtime_dispatch_result(
+pub fn moonclaw_native_runtime_receipt_result(
   queue_response : Json,
   runtime_payload : Json,
   command_packet : Json,
@@ -288,14 +288,14 @@ pub fn moonclaw_native_runtime_dispatch_result(
     },
   )
   {
-    "kind": "mooncode-native-runtime-dispatch-result",
+    "kind": "mooncode-native-runtime-receipt-result",
     "protocol": protocol_version(),
     "queue_accepted": queue_accepted,
     "runtime_succeeded": runtime_succeeded,
     "runtime_accepted": runtime_accepted,
     "status": status,
     "detail": detail,
-    "dispatch_mode": moonclaw_runtime_dispatch_mode(
+    "runtime_mode": moonclaw_runtime_receipt_mode(
       runtime_payload,
       accepted=runtime_accepted,
     ),
@@ -304,14 +304,14 @@ pub fn moonclaw_native_runtime_dispatch_result(
 
 ///|
 pub fn moonclaw_native_runtime_session_patch(
-  dispatch_result : Json,
+  receipt_result : Json,
   command_packet : Json,
   message : String,
   updated_at : String,
 ) -> Json {
-  let status = json_string(dispatch_result, "status", default="failed")
-  let detail = json_string(dispatch_result, "detail", default="")
-  let dispatch_mode = json_string(dispatch_result, "dispatch_mode", default="")
+  let status = json_string(receipt_result, "status", default="failed")
+  let detail = json_string(receipt_result, "detail", default="")
+  let runtime_mode = json_string(receipt_result, "runtime_mode", default="")
   {
     "kind": "mooncode-native-runtime-session-patch",
     "protocol": protocol_version(),
@@ -319,7 +319,7 @@ pub fn moonclaw_native_runtime_session_patch(
     "detail": detail,
     "last_message": message,
     "mooncode_last_command_packet": command_packet,
-    "mooncode_dispatch_mode": dispatch_mode,
+    "mooncode_runtime_mode": runtime_mode,
     "updated_at": updated_at,
     "status_message": {
       "role": "status",
@@ -362,7 +362,7 @@ pub fn moonclaw_runtime_supervisor_run_session_patch(
     "protocol": protocol_version(),
     "status": status,
     "detail": detail,
-    "mooncode_dispatch_mode": moonclaw_runtime_dispatch_mode(response),
+    "mooncode_runtime_mode": moonclaw_runtime_receipt_mode(response),
     "updated_at": updated_at,
     "status_message": {
       "role": "status",
@@ -388,9 +388,9 @@ pub fn apply_moonclaw_runtime_session_patch(
       next = session_with_field(next, "mooncode_last_command_packet", value)
     None => ()
   }
-  match moonclaw_patch_field(patch, "mooncode_dispatch_mode") {
+  match moonclaw_patch_field(patch, "mooncode_runtime_mode") {
     Some(value) =>
-      next = session_with_field(next, "mooncode_dispatch_mode", value)
+      next = session_with_field(next, "mooncode_runtime_mode", value)
     None => ()
   }
   match moonclaw_patch_field(patch, "updated_at") {

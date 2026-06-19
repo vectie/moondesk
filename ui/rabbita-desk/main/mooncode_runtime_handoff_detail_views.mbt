@@ -15,14 +15,14 @@ fn render_mooncode_runtime_turn_packet(packet : Json?) -> @rabbita.Html {
           span(
             class=if json_field_bool(
               packet,
-              "scheduler_allows_turn",
+              "runtime_control_allows_turn",
               default=false,
             ) {
               "record-kind good"
             } else {
               "record-kind warning"
             },
-            json_field_string(packet, "scheduler_effect", default="none"),
+            json_field_string(packet, "runtime_control_effect", default="none"),
           ),
         ]),
         div(class="mooncode-stats", [
@@ -123,7 +123,7 @@ fn render_mooncode_runtime_supervisor(supervisor : Json?) -> @rabbita.Html {
           ),
           info_chip(
             "Scheduler",
-            json_field_string(supervisor, "scheduler_effect", default="none"),
+            json_field_string(supervisor, "runtime_control_effect", default="none"),
           ),
           info_chip(
             "Readiness",

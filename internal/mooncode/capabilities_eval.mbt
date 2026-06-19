@@ -3,6 +3,7 @@
 
 ///|
 pub fn eval_harness_contract_json() -> Json {
+  let required_tools = runtime_tool_names()
   {
     "ok": true,
     "kind": "mooncode-eval-harness-contract",
@@ -12,21 +13,19 @@ pub fn eval_harness_contract_json() -> Json {
     "owner": "moonclaw-or-standalone-mooncode",
     "moondesk_role": "display harness status, expose missing evidence, and block ready-state claims until MoonClaw reports passing tool, file-edit, patch-review, command-execution, and package-output evals",
     "moonclaw_result_endpoint": "/v1/code/sessions/<id>/eval-report?book_root=<path>",
-    "moondesk_projection_endpoint": "/api/mooncode/sessions/<id>/eval-report",
+    "moondesk_projection_endpoint": desktop_session_eval_report_endpoint(),
     "required_harnesses": [
       {
         "id": "tool_harness",
         "reference_path": "mooncode/eval/tool_harness",
         "execution": "deterministic-host-side",
-        "purpose": "Dispatch every built-in coding tool through the same typed registry used by the MoonCode turn loop.",
-        "required_tools": [
-          "read", "write", "edit", "shell", "moon_ide", "moon_cmd", "moon_check",
-          "finish",
-        ],
+        "purpose": "Control every built-in coding tool through the same typed registry used by the MoonCode turn loop.",
+        "required_tools": required_tools,
         "required_evidence": [
           "tool registry builds", "each tool returns a typed result event", "filesystem mutations match expected disk state",
           "moon_ide runs semantic navigation against a temporary MoonBit package",
           "moon_cmd executes structured MoonBit commands with bounded output", "moon_check executes against a temporary MoonBit package",
+          "apply_patch and revert_patch emit patch proof events", "package_app_tool emits package artifact proof",
           "finish emits a terminal runtime_finished event",
         ],
       },
@@ -100,13 +99,13 @@ pub fn native_eval_report_contract_json() -> Json {
     "owner": "moonclaw",
     "endpoint": "/v1/code/sessions/<id>/eval-report?book_root=<path>",
     "transport": "http-json",
-    "purpose": "Report MoonClaw-owned MoonCode-style eval proof for the selected durable MoonCode session.",
+    "purpose": "Report MoonClaw-owned MoonCode eval proof for the selected durable MoonCode session.",
     "required_fields": [
       "ok", "source", "endpoint", "session_id", "required_harnesses", "harnesses",
       "tool_harness", "file_edit", "patch_review", "command_execution", "package_output",
       "passed_count", "failed_count", "evidence",
     ],
     "status_values": ["native-ready", "native-partial", "failed", "missing"],
-    "normalization_rule": "Moondesk treats native eval evidence as ready only when all required native harnesses are present and passing; explicit ok=false is preserved. Older native_eval_evidence_ready or accepted/passed reports without the complete harness set remain visible as partial evidence. Moondesk annotates source=moonclaw-native-runtime and endpoint before persisting wiki/reviews/mooncode/<session-id>/eval-report.json.",
+    "normalization_rule": "Moondesk treats native eval evidence as ready only when all required native harnesses are present and each harness reports status=passed. Older boolean shortcut fields are ignored and stripped during normalization; accepted status is not proof. Moondesk annotates source=moonclaw-native-runtime and endpoint before persisting wiki/reviews/mooncode/<session-id>/eval-report.json.",
   }
 }

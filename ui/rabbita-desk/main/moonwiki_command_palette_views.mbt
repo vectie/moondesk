@@ -46,7 +46,7 @@ fn render_command_palette(
             dispatch,
             "Open MoonCode",
             "Open a book-scoped MoonCode coding session",
-            SelectActivity(MoonCode),
+            SelectActivity(Activity::MoonCode),
           ),
           palette_command(
             dispatch,
@@ -63,8 +63,8 @@ fn render_command_palette(
           palette_command(
             dispatch,
             "Run Daemon Tick",
-            "Dispatch one Moontown scheduler tick",
-            DispatchDaemonTick,
+            "Control one Moontown scheduler tick",
+            ControlDaemonTick,
           ),
           palette_command(
             dispatch,
@@ -139,7 +139,7 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       button(
         class=workspace_mode_button_class(model, MoonCode),
         title="Switch to the MoonCode coding workspace",
-        on_click=dispatch(SelectWorkspaceMode(MoonCode)),
+        on_click=dispatch(SelectWorkspaceMode(WorkspaceMode::MoonCode)),
         "MoonCode",
       ),
     ]),

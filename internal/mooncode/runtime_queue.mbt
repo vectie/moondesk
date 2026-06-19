@@ -3,14 +3,14 @@ pub fn runtime_command_decode_report(command : Json) -> Json {
   let protocol_command = rq_json_object_field_or_empty(
     command, "mooncode_command",
   )
-  match decode_serve_command(protocol_command) {
+  match decode_code_command(protocol_command) {
     Ok(decoded) =>
       {
         "ok": true,
         "protocol": protocol_version(),
         "command_id": rq_json_string(command, "command_id", default=""),
-        "serve_command": decoded,
-        "dispatch": rq_json_string(command, "dispatch", default="prompt"),
+        "code_command": decoded,
+        "control": rq_json_string(command, "control", default="prompt"),
       }
     Err(message) =>
       {
@@ -24,12 +24,12 @@ pub fn runtime_command_decode_report(command : Json) -> Json {
 }
 
 ///|
-pub fn runtime_dispatch_pending_count(
+pub fn runtime_receipt_pending_count(
   commands : Array[Json],
   receipts : Array[Json],
   lease_now? : String = "",
 ) -> Int {
-  runtime_dispatch_pending_commands(commands, receipts, lease_now).length()
+  runtime_receipt_pending_commands(commands, receipts, lease_now).length()
 }
 
 ///|
@@ -39,8 +39,7 @@ pub fn runtime_pending_command_ids(
   lease_now? : String = "",
 ) -> Array[Json] {
   let pending : Array[Json] = []
-  for
-    command in runtime_dispatch_pending_commands(commands, receipts, lease_now) {
+  for command in runtime_receipt_pending_commands(commands, receipts, lease_now) {
     let command_id = rq_json_string(command, "command_id", default="")
     pending.push(Json::string(command_id))
   }
@@ -56,7 +55,7 @@ pub fn runtime_replay_state(
   workspace_name~ : String,
   runtime_session_id~ : String,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
   lease_now? : String = "",
 ) -> Json {
   let receipt_statuses = runtime_receipt_statuses(receipts)
@@ -140,19 +139,19 @@ pub fn runtime_replay_state(
     "workspace_name": workspace_name,
     "runtime_session_id": runtime_session_id,
     "runtime_command_log_path": runtime_command_log_path,
-    "runtime_dispatch_log_path": runtime_dispatch_log_path,
+    "runtime_receipt_log_path": runtime_receipt_log_path,
     "command_count": commands.length(),
     "valid_command_count": valid_count,
     "invalid_command_count": invalid_count,
     "delivered_command_count": delivered_count,
     "claimed_command_count": claimed_count,
-    "failed_dispatch_count": failed_count,
+    "failed_receipt_count": failed_count,
     "pending_command_count": pending_items.length(),
     "first_pending_index": first_pending_index,
     "first_invalid_command_id": first_invalid_command_id,
     "replay_ready": invalid_count == 0 && pending_items.length() > 0,
-    "replay_policy": "consume pending MoonCode serve commands in runtime-commands.jsonl order; skip delivered command ids and active leases; expired runtime-claimed leases are retryable pending work",
-    "ordering_rule": "prompt, steer, and cancel records remain serialized in append order, matching MoonCode serve mode's single ordered consumer",
+    "replay_policy": "consume pending MoonCode code commands in runtime-commands.jsonl order; skip delivered command ids and active leases; expired runtime-claimed leases are retryable pending work",
+    "ordering_rule": "prompt, steer, and cancel records remain serialized in append order, matching the MoonCode command protocol's single ordered consumer",
     "consumer_contract": runtime_replay_consumer_contract_json(session_id),
     "decode_reports": Json::array(decode_reports),
     "replay_items": Json::array(replay_items),
@@ -169,7 +168,7 @@ pub fn runtime_replay_state_for_session(
   commands : Array[Json],
   receipts : Array[Json],
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
   lease_now? : String = "",
 ) -> Json {
   runtime_replay_state(
@@ -180,13 +179,13 @@ pub fn runtime_replay_state_for_session(
     workspace_name=rq_json_string(session, "workspace_name", default=""),
     runtime_session_id=session_runtime_session_id(session),
     runtime_command_log_path~,
-    runtime_dispatch_log_path~,
+    runtime_receipt_log_path~,
     lease_now~,
   )
 }
 
 ///|
-pub fn runtime_serve_jsonl(
+pub fn runtime_command_jsonl(
   commands : Array[Json],
   receipts : Array[Json],
   scope~ : String,
@@ -211,7 +210,7 @@ pub fn runtime_serve_jsonl(
       workspace_name="",
       runtime_session_id="",
       runtime_command_log_path="",
-      runtime_dispatch_log_path="",
+      runtime_receipt_log_path="",
       lease_now~,
     )
     for item in rq_json_array_items(replay, "pending_commands") {
@@ -239,7 +238,7 @@ pub fn runtime_claim_state(
   workspace_name~ : String,
   runtime_session_id~ : String,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
   lease_now? : String = "",
 ) -> Json {
   let receipt_statuses = runtime_receipt_statuses(receipts)
@@ -266,7 +265,7 @@ pub fn runtime_claim_state(
       .unwrap_or(Json::object({}))
     let expired_claim = runtime_receipt_status_claimed(receipt_status) &&
       runtime_receipt_claim_expired(latest_receipt, lease_now)
-    let previous_dispatch_failed = receipt_status == "failed"
+    let previous_receipt_failed = receipt_status == "failed"
     let previous_completion_missing_proof = receipt_status == "proof-missing"
     let tool_authorization_blocked = runtime_command_tool_authorization_blocks(
       command,
@@ -281,14 +280,14 @@ pub fn runtime_claim_state(
     )
     let item = runtime_claim_item(
       session_id, index, command, command_id, claim_status, receipt_status, expired_claim,
-      previous_dispatch_failed, previous_completion_missing_proof, tool_authorization_blocked,
+      previous_receipt_failed, previous_completion_missing_proof, tool_authorization_blocked,
       order_blocked, order_blocker_id, order_blocker_status, latest_receipt, report,
     )
     claim_items.push(item)
     if expired_claim {
       expired_claim_items.push(item)
     }
-    if previous_dispatch_failed {
+    if previous_receipt_failed {
       failed_items.push(item)
     }
     if previous_completion_missing_proof {
@@ -317,7 +316,7 @@ pub fn runtime_claim_state(
     "workspace_name": workspace_name,
     "runtime_session_id": runtime_session_id,
     "runtime_command_log_path": runtime_command_log_path,
-    "runtime_dispatch_log_path": runtime_dispatch_log_path,
+    "runtime_receipt_log_path": runtime_receipt_log_path,
     "command_count": commands.length(),
     "receipt_count": receipts.length(),
     "claimable_command_count": claimable_items.length(),
@@ -332,7 +331,7 @@ pub fn runtime_claim_state(
     "claim_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-claim",
     "ack_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-replay",
     "ordering_rule": "MoonClaw claims valid commands in runtime-commands.jsonl order before executing them; active earlier claims and invalid earlier commands block later non-delivered rows until they are acknowledged, failed, expired, forced, or repaired.",
-    "lease_policy": "runtime-claimed receipts hide commands from other consumers until lease_expires_at passes; expired claims and failed dispatches become claimable retry work without force, while delivered receipts remain protected.",
+    "lease_policy": "runtime-claimed receipts hide commands from other consumers until lease_expires_at passes; expired claims and failed runtime receipts become claimable retry work without force, while delivered receipts remain protected.",
     "claim_items": Json::array(claim_items),
     "claimable_commands": Json::array(claimable_items),
     "claimed_commands": Json::array(claimed_items),
@@ -355,7 +354,7 @@ pub fn runtime_claim_state_for_session(
   commands : Array[Json],
   receipts : Array[Json],
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
   lease_now? : String = "",
 ) -> Json {
   runtime_claim_state(
@@ -366,7 +365,7 @@ pub fn runtime_claim_state_for_session(
     workspace_name=rq_json_string(session, "workspace_name", default=""),
     runtime_session_id=session_runtime_session_id(session),
     runtime_command_log_path~,
-    runtime_dispatch_log_path~,
+    runtime_receipt_log_path~,
     lease_now~,
   )
 }

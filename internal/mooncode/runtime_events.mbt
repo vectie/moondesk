@@ -278,7 +278,7 @@ pub fn normalize_runtime_event(
             event,
             runtime_first_string(
               event,
-              ["action", "serve_command"],
+              ["action", "code_command"],
               default="cancel",
             ),
           ),

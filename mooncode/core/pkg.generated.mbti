@@ -16,6 +16,12 @@ pub fn native_capability_surface_fingerprint() -> String
 
 pub fn native_capability_surface_json() -> Json
 
+pub fn native_command_body_field_is_supported(String) -> Bool
+
+pub fn native_command_body_required_fields() -> Array[String]
+
+pub fn native_command_body_supported_fields() -> Array[String]
+
 pub fn protocol_version() -> String
 
 pub fn standalone_boundary_json() -> Json

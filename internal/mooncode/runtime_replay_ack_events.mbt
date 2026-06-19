@@ -119,7 +119,7 @@ fn runtime_replay_ack_command_packet(runtime_command : Json) -> Json {
     "kind": kind_command_ref(),
     "command_id": rq_json_string(runtime_command, "command_id", default=""),
     "action": rq_json_string(runtime_command, "action", default="prompt"),
-    "dispatch": rq_json_string(runtime_command, "dispatch", default="prompt"),
+    "control": rq_json_string(runtime_command, "control", default="prompt"),
     "runtime_proof": true,
     "session_id": rq_json_string(runtime_command, "session_id", default=""),
     "runtime_session_id": rq_json_string(

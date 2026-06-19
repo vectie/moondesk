@@ -73,5 +73,6 @@ fn command_uses_authorized_tools(action : String) -> Bool {
   command_string_array_contains(tools, "shell") ||
   command_string_array_contains(tools, "moon_check") ||
   command_string_array_contains(tools, "apply_patch") ||
+  command_string_array_contains(tools, "revert_patch") ||
   command_string_array_contains(tools, "package_app_tool")
 }

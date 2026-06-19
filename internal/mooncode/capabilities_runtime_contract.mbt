@@ -1,8 +1,9 @@
 ///|
-// MoonCode-style runtime contract advertised by MoonCode capabilities.
+// MoonCode runtime contract advertised by MoonCode capabilities.
 
 ///|
 pub fn runtime_contract_json() -> Json {
+  let tool_registry_names = runtime_tool_names().join(", ")
   {
     "reference": "mooncode",
     "target_component": "moonclaw",
@@ -33,7 +34,9 @@ pub fn runtime_contract_json() -> Json {
         "select, list, resume, and project sessions for the native UI",
       ),
       runtime_component(
-        "mooncode_tool", "mooncode/tool + mooncode/tool_contract", "Typed registry for read, edit, write, shell, moon_ide, moon_cmd, moon_check, and finish tools with explicit output/control actions.",
+        "mooncode_tool",
+        "mooncode/tool + mooncode/tool_contract",
+        "Typed registry for \{tool_registry_names} tools with explicit output/control actions.",
         "show tool calls, approval state, outputs, and failures",
       ),
       runtime_component(
@@ -89,7 +92,7 @@ pub fn runtime_contract_json() -> Json {
         "mooncode/eval/command_execution", "mooncode/eval/package_output",
       ],
       "minimum_evidence": [
-        "each built-in tool dispatches through the typed registry", "file edit cases prove final file contents",
+        "each built-in tool executes through the typed registry", "file edit cases prove final file contents",
         "patch review and apply/revert proof remains command-scoped", "moon_ide provides semantic discovery",
         "moon_cmd/moon_check/test failures surface as test_result events", "package output proof records source-bound executable-ready artifacts",
         "finish produces a terminal review summary",

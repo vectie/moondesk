@@ -24,7 +24,7 @@ test "mooncode session snapshot records durable queue and event state" {
       "mooncode_command": { "type": "prompt", "prompt": "create a tool" },
     },
   ]
-  let runtime_dispatches : Array[Json] = [
+  let runtime_receipts : Array[Json] = [
     { "command_id": "cmd-other", "status": "runtime-completed" },
   ]
   let snapshot = session_snapshot(
@@ -42,12 +42,12 @@ test "mooncode session snapshot records durable queue and event state" {
     ],
     commands,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     recorded_at="2026-06-15T00:01:00Z",
     snapshot_path="/tmp/book/.moontown/mooncode-sessions/s1/session.json",
     command_log_path="/tmp/book/.moontown/mooncode-sessions/s1/commands.jsonl",
     runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/s1/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/book/.moontown/mooncode-sessions/s1/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/book/.moontown/mooncode-sessions/s1/runtime-receipts.jsonl",
     event_log_path="/tmp/book/.moontown/mooncode-sessions/s1/events.jsonl",
   )
   assert_eq(
@@ -57,16 +57,16 @@ test "mooncode session snapshot records durable queue and event state" {
   assert_eq(summary_json_int(snapshot, "transcript_count", default=0), 2)
   assert_eq(summary_json_int(snapshot, "command_count", default=0), 1)
   assert_eq(summary_json_int(snapshot, "runtime_command_count", default=0), 1)
-  assert_eq(summary_json_int(snapshot, "runtime_dispatch_count", default=0), 1)
+  assert_eq(summary_json_int(snapshot, "runtime_receipt_count", default=0), 1)
   assert_eq(
-    summary_json_int(snapshot, "runtime_dispatch_pending_count", default=0),
+    summary_json_int(snapshot, "runtime_receipt_pending_count", default=0),
     1,
   )
-  let dispatches = json_array_items(snapshot, "runtime_dispatches")
-  assert_eq(dispatches.length(), 1)
+  let receipts = json_array_items(snapshot, "runtime_receipts")
+  assert_eq(receipts.length(), 1)
   assert_true(
-    json_string(dispatches[0], "dispatch_id", default="").has_prefix(
-      "mooncode-runtime-dispatch-",
+    json_string(receipts[0], "receipt_id", default="").has_prefix(
+      "mooncode-runtime-receipt-",
     ),
   )
   assert_eq(summary_json_int(snapshot, "event_count", default=0), 1)

@@ -30,14 +30,14 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "mooncode_runtime_command_log_count",
     default=0,
   )
-  let runtime_dispatch_log_path = json_string(
+  let runtime_receipt_log_path = json_string(
     session,
-    "mooncode_runtime_dispatch_log_path",
+    "mooncode_runtime_receipt_log_path",
     default="",
   )
-  let runtime_dispatch_log_count = summary_json_int(
+  let runtime_receipt_log_count = summary_json_int(
     session,
-    "mooncode_runtime_dispatch_log_count",
+    "mooncode_runtime_receipt_log_count",
     default=0,
   )
   let snapshot = summary_json_object_field_or_empty(
@@ -110,10 +110,10 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "stream_url": "/api/mooncode/sessions/\{session_id}/stream",
     "stream_mode": "append-log-incremental",
     "stream_source": stream_source(),
-    "dispatch_mode": json_string(
+    "runtime_mode": json_string(
       session,
-      "mooncode_dispatch_mode",
-      default="not-dispatched",
+      "mooncode_runtime_mode",
+      default="runtime-not-started",
     ),
     "live_stream_ready": true,
     "live_stream_url": "/api/mooncode/sessions/\{session_id}/stream?format=sse&since=<sequence>&live=true&timeout_ms=8000",
@@ -129,9 +129,9 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "runtime_command_log_path": runtime_command_log_path,
     "runtime_command_feed_ready": runtime_command_log_count > 0,
     "runtime_command_count": runtime_command_log_count,
-    "runtime_dispatch_log_path": runtime_dispatch_log_path,
-    "runtime_dispatch_ready": runtime_dispatch_log_count > 0,
-    "runtime_dispatch_count": runtime_dispatch_log_count,
+    "runtime_receipt_log_path": runtime_receipt_log_path,
+    "runtime_receipt_ready": runtime_receipt_log_count > 0,
+    "runtime_receipt_count": runtime_receipt_log_count,
     "session_snapshot_path": if session_snapshot_ready {
       json_string(snapshot, "snapshot_path", default="")
     } else {
@@ -246,8 +246,8 @@ pub fn session_projection_response(
   command_log_count~ : Int,
   runtime_command_log_path~ : String,
   runtime_command_log_count~ : Int,
-  runtime_dispatch_log_path~ : String,
-  runtime_dispatch_log_count~ : Int,
+  runtime_receipt_log_path~ : String,
+  runtime_receipt_log_count~ : Int,
 ) -> Json {
   let summary_session = session
     |> runtime_with_field("mooncode_event_log_path", event_log_path.to_json())
@@ -272,12 +272,12 @@ pub fn session_projection_response(
       runtime_command_log_count.to_json(),
     )
     |> runtime_with_field(
-      "mooncode_runtime_dispatch_log_path",
-      runtime_dispatch_log_path.to_json(),
+      "mooncode_runtime_receipt_log_path",
+      runtime_receipt_log_path.to_json(),
     )
     |> runtime_with_field(
-      "mooncode_runtime_dispatch_log_count",
-      runtime_dispatch_log_count.to_json(),
+      "mooncode_runtime_receipt_log_count",
+      runtime_receipt_log_count.to_json(),
     )
   let summary = session_summary(summary_session, events)
   session

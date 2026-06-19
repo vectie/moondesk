@@ -44,7 +44,7 @@ pub fn readiness_contract_json() -> Json {
       "typed_command_queue", "Typed command queue", "mooncode.v1 command packet and runtime command queue are present",
     ),
     readiness_contract_check(
-      "live_runtime_stream", "Live runtime stream", "runtime events and dispatch receipts prove live progress",
+      "live_runtime_stream", "Live runtime stream", "runtime events and runtime receipts prove live progress",
     ),
     readiness_contract_check(
       "tool_execution", "Tool execution", "tool lane has MoonClaw execution evidence",

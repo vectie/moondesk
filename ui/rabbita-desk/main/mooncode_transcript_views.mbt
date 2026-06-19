@@ -213,11 +213,11 @@ fn render_mooncode_preflight_item(
       if preflight.blocked {
         preflight.reason
       } else {
-        "Ready to dispatch with the current MoonBook evidence."
+        "Ready to run with the current MoonBook evidence."
       },
     ),
     div(class="mooncode-stats", [
-      info_chip("dispatch", preflight.dispatch),
+      info_chip("control", preflight.control),
       info_chip("approval", preflight.approval),
       info_chip("lane", preflight.lane),
       info_chip(

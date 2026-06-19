@@ -178,7 +178,7 @@ fn fetch_mooncode_preflight_matrix_cmd(
 }
 
 ///|
-fn fetch_mooncode_runtime_dispatch_cmd(
+fn fetch_mooncode_runtime_receipt_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   session_id : String,
 ) -> @rabbita.Cmd {
@@ -186,12 +186,12 @@ fn fetch_mooncode_runtime_dispatch_cmd(
     return @rabbita.none
   }
   @http.get(
-    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-dispatch",
+    "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-commands",
     expect=Json(fn(result) {
-      dispatch(LoadedMoonCodeRuntimeDispatch(session_id, result))
+      dispatch(LoadedMoonCodeRuntimeReceipt(session_id, result))
     }, json => {
       Ok(@json.from_json(json)) catch {
-        _ => Err("Invalid MoonCode runtime dispatch state")
+        _ => Err("Invalid MoonCode runtime receipt state")
       }
     }),
   )
@@ -322,4 +322,3 @@ fn ack_mooncode_runtime_command_cmd(
     }),
   )
 }
-

@@ -11,16 +11,16 @@ test "mooncode runtime replay ack records matching claim context" {
       "command_id": "cmd-claimed",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "build it" },
     },
   ]
-  let dispatches : Array[Json] = [
+  let receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
-      "dispatch_id": "claim-1",
+      "kind": kind_runtime_receipt(),
+      "receipt_id": "claim-1",
       "claim_id": "claim-1",
       "command_id": "cmd-claimed",
       "status": "runtime-claimed",
@@ -35,7 +35,7 @@ test "mooncode runtime replay ack records matching claim context" {
       "command_id": "cmd-claimed",
       "status": "runtime-completed",
     },
-    dispatch_receipts=dispatches,
+    runtime_receipts=receipts,
   )
   assert_eq(receipts.length(), 1)
   assert_eq(
@@ -43,7 +43,7 @@ test "mooncode runtime replay ack records matching claim context" {
     "matching-claim",
   )
   assert_eq(
-    rq_json_string(receipts[0], "previous_dispatch_status", default=""),
+    rq_json_string(receipts[0], "previous_receipt_status", default=""),
     "runtime-claimed",
   )
   assert_eq(
@@ -62,7 +62,7 @@ test "mooncode runtime replay ack records matching claim context" {
       "status": "runtime-completed",
     },
     acknowledged_at="2026-06-15T00:02:00Z",
-    dispatch_receipts=dispatches,
+    runtime_receipts=receipts,
   )
   assert_eq(defaulted_receipts.length(), 1)
   assert_eq(
@@ -86,8 +86,8 @@ test "mooncode runtime replay ack response owns accepted ack surface" {
       "command_id": "cmd-claimed",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "build it" },
     },
   ]
@@ -119,7 +119,7 @@ test "mooncode runtime replay ack response owns accepted ack surface" {
     workspace_name="Demo Book",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-receipts.jsonl",
   )
   assert_eq(
     rq_json_string(response, "kind", default=""),
@@ -153,7 +153,7 @@ test "mooncode runtime replay ack response owns accepted ack surface" {
     { "kind": "mooncode-session-runtime-evidence" },
     session,
     runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-receipts.jsonl",
   )
   assert_eq(
     rq_json_string(aggregate, "kind", default=""),
@@ -187,8 +187,8 @@ test "mooncode runtime replay completion is blocked without required proof" {
       "command_id": "cmd-tests",
       "session_id": "session-demo",
       "action": "run_tests",
-      "dispatch": "command",
-      "serve_command": "prompt",
+      "control": "command",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "run tests" },
     },
   ]
@@ -219,7 +219,7 @@ test "mooncode runtime replay completion is blocked without required proof" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(rq_json_int(replay, "delivered_command_count", default=0), 0)
   assert_eq(rq_json_int(replay, "pending_command_count", default=0), 1)
@@ -236,7 +236,7 @@ test "mooncode runtime replay completion is blocked without required proof" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   assert_eq(rq_json_int(claim, "claimable_command_count", default=0), 1)
   let claimable = rq_json_array_items(claim, "claimable_commands")
@@ -259,8 +259,8 @@ test "mooncode runtime replay completion can use prior streamed proof events" {
       "command_id": "cmd-tests",
       "session_id": "session-demo",
       "action": "run_tests",
-      "dispatch": "command",
-      "serve_command": "prompt",
+      "control": "command",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "run tests" },
     },
   ]
@@ -396,8 +396,8 @@ test "mooncode runtime replay ack summarizes submitted proof events" {
       "command_id": "cmd-proof",
       "session_id": "session-demo",
       "action": "run_tests",
-      "dispatch": "command",
-      "serve_command": "prompt",
+      "control": "command",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "run tests" },
     },
   ]
@@ -475,7 +475,7 @@ test "mooncode runtime replay ack summarizes submitted proof events" {
     workspace_name="Demo",
     runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
-    runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
+    runtime_receipt_log_path="/tmp/runtime-receipts.jsonl",
   )
   let replay_items = rq_json_array_items(replay, "replay_items")
   assert_eq(rq_json_int(replay_items[0], "proof_event_count", default=0), 4)
@@ -499,8 +499,8 @@ test "mooncode runtime replay ack exposes prior-order blocker" {
       "command_id": "cmd-active",
       "session_id": "session-demo",
       "action": "prompt",
-      "dispatch": "prompt",
-      "serve_command": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
       "mooncode_command": { "command": "prompt", "text": "first" },
     },
     {
@@ -509,16 +509,16 @@ test "mooncode runtime replay ack exposes prior-order blocker" {
       "command_id": "cmd-later",
       "session_id": "session-demo",
       "action": "steer",
-      "dispatch": "steer",
-      "serve_command": "steer",
+      "control": "steer",
+      "code_command": "steer",
       "mooncode_command": { "command": "steer", "text": "later" },
     },
   ]
-  let dispatches : Array[Json] = [
+  let receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
-      "dispatch_id": "claim-active",
+      "kind": kind_runtime_receipt(),
+      "receipt_id": "claim-active",
       "claim_id": "claim-active",
       "command_id": "cmd-active",
       "status": "runtime-claimed",
@@ -533,7 +533,7 @@ test "mooncode runtime replay ack exposes prior-order blocker" {
       "command_id": "cmd-later",
       "status": "runtime-completed",
     },
-    dispatch_receipts=dispatches,
+    runtime_receipts=receipts,
   )
   assert_eq(receipts.length(), 1)
   assert_eq(

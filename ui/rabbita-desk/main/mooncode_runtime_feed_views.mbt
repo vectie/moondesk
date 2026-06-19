@@ -13,13 +13,13 @@ fn render_mooncode_runtime_command_feed_panel(model : Model) -> @rabbita.Html {
         div([
           div(class="mooncode-stats", [
             info_chip("Commands", feed.runtime_command_count.to_string()),
-            info_chip("Receipts", feed.runtime_dispatch_count.to_string()),
-            info_chip("Pending", feed.runtime_dispatch_pending_count.to_string()),
+            info_chip("Receipts", feed.runtime_receipt_count.to_string()),
+            info_chip("Pending", feed.runtime_receipt_pending_count.to_string()),
             info_chip("Summaries", feed.execution_summaries.length().to_string()),
           ]),
           div(class="daemon-state compact-state", [
             info_row("Runtime Feed", feed.runtime_command_log_path),
-            info_row("Dispatch Log", feed.runtime_dispatch_log_path),
+            info_row("Receipt Log", feed.runtime_receipt_log_path),
             info_row("Claim Endpoint", feed.runtime_claim_endpoint),
             info_row("Runtime", empty_label(feed.runtime_session_id)),
           ]),
@@ -76,7 +76,7 @@ fn render_mooncode_runtime_command_lifecycle(
     div(class="mooncode-stats", [
       info_chip("Pending", json_field_int(lifecycle, "pending_count", default=0).to_string()),
       info_chip("Running", json_field_int(lifecycle, "running_count", default=0).to_string()),
-      info_chip("Dispatched", json_field_int(lifecycle, "dispatched_count", default=0).to_string()),
+      info_chip("Runtime Started", json_field_int(lifecycle, "runtime_started_count", default=0).to_string()),
       info_chip("Completed", json_field_int(lifecycle, "completed_count", default=0).to_string()),
       info_chip("Failed", json_field_int(lifecycle, "failed_count", default=0).to_string()),
       info_chip("Blocked", json_field_int(lifecycle, "blocked_count", default=0).to_string()),
@@ -179,7 +179,7 @@ fn mooncode_runtime_lifecycle_class(status : String) -> String {
   match status {
     "completed" => "accepted"
     "failed" | "blocked-invalid" | "blocked-tool-authorization" => "rejected"
-    "running" | "dispatched" => "running"
+    "running" | "runtime-started" => "running"
     _ => "queued"
   }
 }
@@ -187,14 +187,14 @@ fn mooncode_runtime_lifecycle_class(status : String) -> String {
 ///|
 fn render_mooncode_runtime_command_feed_item(command : Json) -> @rabbita.Html {
   let action = json_field_string(command, "action", default="command")
-  let dispatch = json_field_string(command, "dispatch", default="prompt")
+  let control = json_field_string(command, "control", default="prompt")
   let command_id = json_field_string(command, "command_id", default="")
   let target = json_field_string(command, "target", default="")
   let auth_state = mooncode_command_tool_authorization_state(command)
   div(class="mooncode-review-item " + mooncode_runtime_command_feed_item_class(command), [
     div(class="mooncode-review-head", [
       div([
-        strong(action + " -> " + dispatch),
+        strong(action + " -> " + control),
         small(json_field_string(command, "created_at", default="")),
       ]),
       span(
@@ -213,7 +213,7 @@ fn render_mooncode_runtime_command_feed_item(command : Json) -> @rabbita.Html {
     div(class="mooncode-stats", [
       info_chip("Approval", json_field_string(command, "approval", default="none")),
       info_chip("Auth", if auth_state == "" { "unknown" } else { auth_state }),
-      info_chip("Serve", json_field_string(command, "serve_command", default="")),
+      info_chip("Serve", json_field_string(command, "code_command", default="")),
       info_chip(
         "Native",
         if json_field_string(command, "native_mooncode_endpoint", default="") == "" {
@@ -256,4 +256,3 @@ fn mooncode_runtime_command_feed_item_class(command : Json) -> String {
     _ => "queued"
   }
 }
-

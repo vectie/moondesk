@@ -77,7 +77,7 @@ fn update(
       update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeCommandPreflight(_, _, _) =>
       update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeRuntimeDispatch(_, _) =>
+    LoadedMoonCodeRuntimeReceipt(_, _) =>
       update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeRuntimeClaimState(_, _) =>
       update_mooncode_results(dispatch, msg, model)
@@ -135,7 +135,7 @@ fn update(
     CreateBookFromPattern => update_book_builder_actions(dispatch, msg, model)
     ExportAppToolPortable => update_book_builder_actions(dispatch, msg, model)
     ExportAllAppToolPortable => update_book_builder_actions(dispatch, msg, model)
-    DispatchDaemonTick => update_daemon_actions(dispatch, msg, model)
+    ControlDaemonTick => update_daemon_actions(dispatch, msg, model)
     FetchDaemonLifecycle => update_daemon_actions(dispatch, msg, model)
     StartDaemon => update_daemon_actions(dispatch, msg, model)
     StopDaemon => update_daemon_actions(dispatch, msg, model)

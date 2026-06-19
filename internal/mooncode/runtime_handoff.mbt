@@ -6,7 +6,7 @@ pub fn runtime_event_ingest_contract(session_id : String) -> Json {
     "consumer": "moondesk",
     "producer": "moonclaw",
     "accepted_payloads": [
-      "MoonCode-style JSONL event object with an `event` field", "canonical MoonCode event object with lane/kind/status fields",
+      "MoonCode JSONL event object with an `event` field", "canonical MoonCode event object with lane/kind/status fields",
       "{\"events\":[...]} batch payload",
     ],
     "tool_call_contract": tool_call_contract_json(),
@@ -29,7 +29,7 @@ pub fn runtime_handoff_manifest(
   runtime_claim : Json,
   commands : Array[Json],
   runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
+  runtime_receipts : Array[Json],
   daemon : Json,
   native_ready : Bool,
   recorded_at~ : String,
@@ -39,13 +39,13 @@ pub fn runtime_handoff_manifest(
   session_snapshot_path~ : String,
   command_log_path~ : String,
   runtime_command_log_path~ : String,
-  runtime_dispatch_log_path~ : String,
+  runtime_receipt_log_path~ : String,
   event_log_path~ : String,
   stream_checkpoint_path~ : String,
 ) -> Json {
   let session_id = json_string(session, "id", default="")
-  let normalized_runtime_dispatches = runtime_dispatch_receipts_for_response(
-    runtime_dispatches,
+  let normalized_runtime_receipts = runtime_receipts_for_response(
+    runtime_receipts,
   )
   let status = if native_ready {
     "native-runtime-ready"
@@ -57,16 +57,16 @@ pub fn runtime_handoff_manifest(
   let lifecycle = runtime_command_lifecycle(
     session_id,
     runtime_commands,
-    normalized_runtime_dispatches,
+    normalized_runtime_receipts,
     [],
     lease_now=recorded_at,
   )
-  let scheduler = serve_scheduler_projection(session_id, commands, lifecycle)
+  let control = runtime_control_projection(session_id, commands, lifecycle)
   let execution_plan = runtime_consumer_execution_plan(
     session_id, runtime_replay, runtime_claim, native_ready,
   )
   let turn_packet = runtime_turn_packet(
-    session_id, runtime_replay, runtime_claim, scheduler, native_ready,
+    session_id, runtime_replay, runtime_claim, control, native_ready,
   )
   let supervisor = runtime_supervisor_launch_packet(
     session_id,
@@ -106,7 +106,7 @@ pub fn runtime_handoff_manifest(
       "session_store_endpoint": "/api/mooncode/sessions/\{session_id}/session-store",
       "command_log_path": command_log_path,
       "runtime_command_log_path": runtime_command_log_path,
-      "runtime_dispatch_log_path": runtime_dispatch_log_path,
+      "runtime_receipt_log_path": runtime_receipt_log_path,
       "event_log_path": event_log_path,
       "stream_endpoint": "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=<sequence>",
       "stream_state_endpoint": "/api/mooncode/sessions/\{session_id}/stream-state?consumer=<consumer>&since=<sequence>",
@@ -115,13 +115,12 @@ pub fn runtime_handoff_manifest(
       "command_queue_endpoint": "/api/mooncode/sessions/\{session_id}/commands",
       "runtime_command_feed_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-commands",
       "runtime_claim_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-claim",
-      "runtime_dispatch_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-dispatch",
       "runtime_replay_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-replay",
       "preflight_endpoint": "/api/mooncode/sessions/\{session_id}/preflight?action=<action>&context_path=<path>",
       "action_plan_endpoint": "/api/mooncode/sessions/\{session_id}/action-plan",
       "readiness_endpoint": "/api/mooncode/sessions/\{session_id}/readiness",
       "native_command_endpoint": "/v1/code/sessions/\{session_id}/commands",
-      "native_serve_scheduler_endpoint": "/v1/code/sessions/\{session_id}/serve-scheduler?book_root=<path>",
+      "native_runtime_control_endpoint": "/v1/code/sessions/\{session_id}/runtime-control?book_root=<path>",
       "native_eval_endpoint": "/v1/code/sessions/\{session_id}/eval-report?book_root=<path>",
       "ordering_rule": "consume runtime-commands.jsonl in append order; commands.jsonl remains the UI/operator queue; emit progress to events.jsonl or the native MoonCode stream",
     },
@@ -129,20 +128,20 @@ pub fn runtime_handoff_manifest(
     "commands": Json::array(commands),
     "runtime_command_count": runtime_commands.length(),
     "runtime_commands": Json::array(runtime_commands),
-    "runtime_dispatch_count": normalized_runtime_dispatches.length(),
-    "runtime_dispatch_pending_count": runtime_dispatch_pending_count(
+    "runtime_receipt_count": normalized_runtime_receipts.length(),
+    "runtime_receipt_pending_count": runtime_receipt_pending_count(
       runtime_commands,
-      normalized_runtime_dispatches,
+      normalized_runtime_receipts,
       lease_now=recorded_at,
     ),
-    "runtime_dispatches": Json::array(normalized_runtime_dispatches),
+    "runtime_receipts": Json::array(normalized_runtime_receipts),
     "runtime_replay": runtime_replay,
     "runtime_claim": runtime_claim,
     "runtime_consumer": runtime_consumer_handoff(
       session_id, runtime_replay, runtime_claim, native_ready,
     ),
     "runtime_execution_plan": execution_plan,
-    "serve_scheduler": scheduler,
+    "runtime_control": control,
     "runtime_turn_packet": turn_packet,
     "runtime_supervisor": supervisor,
     "runtime_event_sink": runtime_event_ingest_contract(session_id),
@@ -179,10 +178,10 @@ pub fn runtime_handoff_manifest(
     "engine": {
       "daemon_running": daemon_running,
       "native_runtime_ready": native_ready,
-      "dispatch_mode": json_string(
+      "runtime_mode": json_string(
         session,
-        "mooncode_dispatch_mode",
-        default="not-dispatched",
+        "mooncode_runtime_mode",
+        default="runtime-not-started",
       ),
       "daemon_status": json_string(daemon, "status", default="unknown"),
       "moonclaw_root": json_string(daemon, "moonclaw_root", default=""),
@@ -208,19 +207,18 @@ pub fn runtime_handoff_manifest_current(manifest : Json) -> Bool {
   json_string(contract, "runtime_command_feed_endpoint", default="") != "" &&
   json_string(contract, "runtime_command_log_path", default="") != "" &&
   json_string(contract, "runtime_claim_endpoint", default="") != "" &&
-  json_string(contract, "runtime_dispatch_endpoint", default="") != "" &&
-  json_string(contract, "runtime_dispatch_log_path", default="") != "" &&
+  json_string(contract, "runtime_receipt_log_path", default="") != "" &&
   json_string(contract, "runtime_event_ingest_endpoint", default="") != "" &&
   json_string(contract, "runtime_replay_endpoint", default="") != "" &&
   json_string(contract, "action_plan_endpoint", default="") != "" &&
   json_string(contract, "readiness_endpoint", default="") != "" &&
-  json_string(contract, "native_serve_scheduler_endpoint", default="") != "" &&
+  json_string(contract, "native_runtime_control_endpoint", default="") != "" &&
   json_string(runtime_consumer, "status", default="") != "" &&
   json_string(runtime_consumer, "next_action", default="") != "" &&
   json_string(runtime_consumer_endpoints, "runtime_claim", default="") != "" &&
   json_string(runtime_consumer_endpoints, "runtime_replay", default="") != "" &&
   json_string(runtime_consumer_endpoints, "native_session_listing", default="") !=
   "" &&
-  json_string(runtime_consumer_endpoints, "native_serve_scheduler", default="") !=
+  json_string(runtime_consumer_endpoints, "native_runtime_control", default="") !=
   ""
 }

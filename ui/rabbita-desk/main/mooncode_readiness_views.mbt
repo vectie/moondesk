@@ -44,7 +44,7 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
           div(class="daemon-state", [
             info_row("Protocol", summary.protocol),
             info_row("Component", summary.standalone_component),
-            info_row("Dispatch", summary.dispatch_mode),
+            info_row("Runtime Mode", summary.runtime_mode),
             info_row("Stream", summary.stream_url),
             info_row("Stream Mode", summary.stream_mode),
             info_row("Stream Source", summary.stream_source),
@@ -93,14 +93,14 @@ fn render_mooncode_readiness(model : Model) -> @rabbita.Html {
             ),
             info_row("Runtime Path", summary.runtime_command_log_path),
             info_row(
-              "Runtime Dispatch",
-              if summary.runtime_dispatch_ready {
-                "\{summary.runtime_dispatch_count} receipt(s)"
+              "Runtime Control",
+              if summary.runtime_receipt_ready {
+                "\{summary.runtime_receipt_count} receipt(s)"
               } else {
                 "empty"
               },
             ),
-            info_row("Dispatch Path", summary.runtime_dispatch_log_path),
+            info_row("Receipt Path", summary.runtime_receipt_log_path),
             info_row(
               "Session Snapshot",
               if summary.session_snapshot_ready {

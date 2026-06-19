@@ -62,7 +62,7 @@ fn render_mooncode_runtime_claim_panel(
             info_row("Claim Endpoint", state.claim_endpoint),
             info_row("Ack Endpoint", state.ack_endpoint),
             info_row("Runtime Feed", state.runtime_command_log_path),
-            info_row("Dispatch Log", state.runtime_dispatch_log_path),
+            info_row("Receipt Log", state.runtime_receipt_log_path),
           ]),
           if state.claimed_commands.length() == 0 &&
             state.claimable_commands.length() == 0 &&
@@ -186,8 +186,8 @@ fn render_mooncode_runtime_claim_item(
       ),
     ]),
     div(class="mooncode-stats", [
-      info_chip("Dispatch", item.dispatch),
-      info_chip("Serve", item.serve_command),
+      info_chip("Control", item.control),
+      info_chip("Serve", item.code_command),
       info_chip("Lease", empty_label(item.lease_expires_at)),
       info_chip("Auth", empty_label(item.tool_authorization_state)),
       info_chip(

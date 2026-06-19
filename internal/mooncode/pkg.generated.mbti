@@ -30,13 +30,13 @@ pub fn action_plan_next_required_action(Json, Array[Json]) -> String
 
 pub fn action_plan_preflight_item(Int, Json) -> Json
 
-pub fn action_plan_projection_response(String, Json, Array[Json], Array[Json], Array[Json], Array[Json], recorded_at~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, lease_now? : String) -> Json
+pub fn action_plan_projection_response(String, Json, Array[Json], Array[Json], Array[Json], Array[Json], recorded_at~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, lease_now? : String) -> Json
 
 pub fn action_plan_recommended_command(String) -> Json
 
 pub fn action_plan_recommended_commands(String) -> Array[Json]
 
-pub fn action_plan_response(String, Json, Array[Json], Json, Array[Json], Array[Json], recorded_at~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
+pub fn action_plan_response(String, Json, Array[Json], Json, Array[Json], Array[Json], recorded_at~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String) -> Json
 
 pub fn action_plan_review_count(Array[Json]) -> Int
 
@@ -80,15 +80,19 @@ pub fn change_set_manifest_projected_event(Json) -> Json
 
 pub fn change_set_manifest_relative_path(String) -> String
 
+pub fn code_command_names() -> Array[String]
+
 pub fn command_acceptance_gates(Json) -> Json
 
 pub fn command_action(Json) -> String
+
+pub fn command_advertised_actions() -> Array[String]
 
 pub fn command_approval(String) -> String
 
 pub fn command_context_path(Json) -> String
 
-pub fn command_dispatch(String) -> String
+pub fn command_control(String) -> String
 
 pub fn command_event(action~ : String, status~ : String, detail~ : String, created_at~ : String, path~ : String, command_packet~ : Json, event_id~ : String) -> Json
 
@@ -139,6 +143,8 @@ pub fn command_queue_result_response(String, Array[Json], Json, command_log_path
 pub fn command_runtime_evidence(Json, Json, Array[Json]) -> Json
 
 pub fn command_runtime_message(String, Json) -> String
+
+pub fn command_supported_actions() -> Array[String]
 
 pub fn command_target_label(Json) -> String
 
@@ -208,13 +214,75 @@ pub fn count_tool_approvals_manifests(Array[Json]) -> Int
 
 pub fn count_verified_tests(Array[Json]) -> Int
 
-pub fn decode_serve_command(Json) -> Result[Json, String]
+pub fn decode_code_command(Json) -> Result[Json, String]
 
 pub fn decode_tool_call(Json) -> Result[Json, String]
+
+pub fn desktop_capabilities_endpoint() -> String
+
+pub fn desktop_eval_harness_endpoint() -> String
+
+pub fn desktop_projection_required_endpoints() -> Array[String]
+
+pub fn desktop_readiness_contract_endpoint() -> String
+
+pub fn desktop_session_action_plan_endpoint() -> String
+
+pub fn desktop_session_command_jsonl_endpoint() -> String
+
+pub fn desktop_session_commands_endpoint() -> String
+
+pub fn desktop_session_eval_report_endpoint() -> String
+
+pub fn desktop_session_package_candidates_endpoint() -> String
+
+pub fn desktop_session_package_result_endpoint() -> String
+
+pub fn desktop_session_preflight_endpoint() -> String
+
+pub fn desktop_session_readiness_endpoint() -> String
+
+pub fn desktop_session_runtime_claim_endpoint() -> String
+
+pub fn desktop_session_runtime_commands_endpoint() -> String
+
+pub fn desktop_session_runtime_control_endpoint() -> String
+
+pub fn desktop_session_runtime_events_endpoint() -> String
+
+pub fn desktop_session_runtime_evidence_endpoint() -> String
+
+pub fn desktop_session_runtime_execution_plan_endpoint() -> String
+
+pub fn desktop_session_runtime_handoff_endpoint() -> String
+
+pub fn desktop_session_runtime_replay_endpoint() -> String
+
+pub fn desktop_session_runtime_service_endpoint() -> String
+
+pub fn desktop_session_runtime_supervisor_endpoint() -> String
+
+pub fn desktop_session_store_endpoint() -> String
+
+pub fn desktop_session_stream_endpoint() -> String
+
+pub fn desktop_session_stream_state_endpoint() -> String
+
+pub fn desktop_session_test_runs_endpoint() -> String
+
+pub fn desktop_session_tool_approvals_endpoint() -> String
+
+pub fn desktop_session_tool_authorization_endpoint() -> String
+
+pub fn desktop_sessions_endpoint() -> String
+
+pub fn desktop_standalone_boundary_endpoint() -> String
 
 pub fn engine_check_json(String, String, String, String) -> Json
 
 pub fn engine_status_projection_json(daemon~ : Json, moonclaw_root~ : String, checkout_ready~ : Bool, running~ : Bool, models_ready~ : Bool, runtime_contract_ready~ : Bool, model_evidence~ : String, runtime_evidence~ : String) -> Json
+
+pub fn engine_supported_endpoints() -> Array[String]
 
 pub fn eval_check(String, String, Bool, String) -> Json
 
@@ -268,7 +336,7 @@ pub fn kind_command_ref() -> String
 
 pub fn kind_runtime_command() -> String
 
-pub fn kind_runtime_dispatch() -> String
+pub fn kind_runtime_receipt() -> String
 
 pub fn kind_runtime_turn_packet() -> String
 
@@ -300,11 +368,13 @@ pub fn moonclaw_native_required_endpoints() -> Array[String]
 
 pub fn moonclaw_native_required_tools() -> Array[String]
 
-pub fn moonclaw_native_runtime_dispatch_result(Json, Json, Json, queue_accepted~ : Bool, runtime_succeeded~ : Bool, runtime_error~ : String) -> Json
+pub fn moonclaw_native_runtime_control_endpoint(String, String) -> String
 
 pub fn moonclaw_native_runtime_events_endpoint(String, String) -> String
 
 pub fn moonclaw_native_runtime_loop_endpoint(String, String) -> String
+
+pub fn moonclaw_native_runtime_receipt_result(Json, Json, Json, queue_accepted~ : Bool, runtime_succeeded~ : Bool, runtime_error~ : String) -> Json
 
 pub fn moonclaw_native_runtime_service_endpoint(String, String) -> String
 
@@ -312,19 +382,17 @@ pub fn moonclaw_native_runtime_session_patch(Json, Json, String, String) -> Json
 
 pub fn moonclaw_native_runtime_turn_endpoint(String, String) -> String
 
-pub fn moonclaw_native_serve_scheduler_endpoint(String, String) -> String
-
 pub fn moonclaw_native_session_listing_endpoint(String) -> String
 
 pub fn moonclaw_native_stream_endpoint(String, String, String, Int, wait_ms? : Int, poll_ms? : Int) -> String
 
 pub fn moonclaw_runtime_contract_json() -> Json
 
-pub fn moonclaw_runtime_dispatch_mode(Json, accepted? : Bool) -> String
-
 pub fn moonclaw_runtime_loop_request(String, String, consumer_id? : String, max_turns? : Int, live_wait_ms? : Int, poll_ms? : Int) -> Json
 
 pub fn moonclaw_runtime_readiness(Bool, Bool) -> Json
+
+pub fn moonclaw_runtime_receipt_mode(Json, accepted? : Bool) -> String
 
 pub fn moonclaw_runtime_supervisor_run_session_patch(Json, String) -> Json
 
@@ -334,7 +402,7 @@ pub fn moonclaw_tool_mapping_rows() -> Array[Json]
 
 pub fn moonclaw_tool_to_mooncode_tool(String) -> String
 
-pub fn mooncode_serve_command(String, Json) -> Json
+pub fn mooncode_code_command(String, Json) -> Json
 
 pub fn moondesk_live_stream_endpoint(String, String, Int, timeout_ms? : Int) -> String
 
@@ -472,7 +540,7 @@ pub fn parse_event_log_text(String) -> Array[Json]
 
 pub fn parse_runtime_command_log_text(String) -> Array[Json]
 
-pub fn parse_runtime_dispatch_log_text(String) -> Array[Json]
+pub fn parse_runtime_receipt_log_text(String) -> Array[Json]
 
 pub fn patch_execution_state_for_path(String, Array[Json]) -> String
 
@@ -502,7 +570,7 @@ pub fn project_session_events_for_session(Json, Array[Json], Array[Json], projec
 
 pub fn projected_command_packet(Json, Json, String, String, String, String) -> Json
 
-pub fn projected_runtime_dispatch_receipt(Json, Json, String) -> Json
+pub fn projected_runtime_receipt(Json, Json, String) -> Json
 
 pub fn projected_session_id(String, String, String) -> String
 
@@ -540,17 +608,19 @@ pub fn runtime_claim_receipts_with_defaults(Json, Array[Json], Array[Json], Json
 
 pub fn runtime_claim_response(String, Array[Json], Json, Json, Json) -> Json
 
-pub fn runtime_claim_result_response(String, Array[Json], Array[Json], Array[Json], Json, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
+pub fn runtime_claim_result_response(String, Array[Json], Array[Json], Array[Json], Json, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String) -> Json
 
-pub fn runtime_claim_state(String, Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, lease_now? : String) -> Json
+pub fn runtime_claim_state(String, Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, lease_now? : String) -> Json
 
-pub fn runtime_claim_state_for_session(Json, Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, lease_now? : String) -> Json
+pub fn runtime_claim_state_for_session(Json, Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, lease_now? : String) -> Json
 
 pub fn runtime_command_decode_report(Json) -> Json
 
-pub fn runtime_command_feed_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
+pub fn runtime_command_feed_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
 
-pub fn runtime_command_feed_result_response(String, Array[Json], Array[Json], Array[Json], Json, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
+pub fn runtime_command_feed_result_response(String, Array[Json], Array[Json], Array[Json], Json, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
+
+pub fn runtime_command_jsonl(Array[Json], Array[Json], scope~ : String, lease_now? : String) -> String
 
 pub fn runtime_command_lifecycle(String, Array[Json], Array[Json], Array[Json], lease_now? : String) -> Json
 
@@ -588,25 +658,13 @@ pub fn runtime_consumer_tool_outcome(String, call_id? : String, arguments? : Str
 
 pub fn runtime_contract_json() -> Json
 
-pub fn runtime_dispatch_detail(String, String) -> String
+pub fn runtime_control_contract_json() -> Json
 
-pub fn runtime_dispatch_log_relative_path(String) -> String
+pub fn runtime_control_decisions(Array[Json], Array[Json], String, Array[String]) -> Array[Json]
 
-pub fn runtime_dispatch_pending_count(Array[Json], Array[Json], lease_now? : String) -> Int
+pub fn runtime_control_projection(String, Array[Json], Json) -> Json
 
-pub fn runtime_dispatch_receipt(Json, Json, dispatch_id~ : String, created_at~ : String) -> Json
-
-pub fn runtime_dispatch_receipt_for_response(Json, fallback_dispatch_id~ : String) -> Json
-
-pub fn runtime_dispatch_receipts_for_response(Array[Json]) -> Array[Json]
-
-pub fn runtime_dispatch_record_valid(Json) -> Bool
-
-pub fn runtime_dispatch_response(String, Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, dispatch_mode~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, lease_now~ : String) -> Json
-
-pub fn runtime_dispatch_state_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, dispatch_mode~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
-
-pub fn runtime_dispatch_status(Json, Json) -> String
+pub fn runtime_control_response(String, Array[Json], Array[Json], Array[Json], Array[Json], lease_now~ : String) -> Json
 
 pub fn runtime_event_command_progress(Array[Json]) -> Json
 
@@ -636,11 +694,11 @@ pub fn runtime_evidence_manifest_projected_event(Json) -> Json
 
 pub fn runtime_evidence_manifest_relative_path(String) -> String
 
-pub fn runtime_execution_plan_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
+pub fn runtime_execution_plan_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
 
-pub fn runtime_execution_plan_response_for_session(Json, Array[Json], Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
+pub fn runtime_execution_plan_response_for_session(Json, Array[Json], Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
 
-pub fn runtime_handoff_manifest(Json, Json, Json, Json, Array[Json], Array[Json], Array[Json], Json, Bool, recorded_at~ : String, manifest_path~ : String, absolute_manifest_path~ : String, workspace_root~ : String, session_snapshot_path~ : String, command_log_path~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, event_log_path~ : String, stream_checkpoint_path~ : String) -> Json
+pub fn runtime_handoff_manifest(Json, Json, Json, Json, Array[Json], Array[Json], Array[Json], Json, Bool, recorded_at~ : String, manifest_path~ : String, absolute_manifest_path~ : String, workspace_root~ : String, session_snapshot_path~ : String, command_log_path~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, event_log_path~ : String, stream_checkpoint_path~ : String) -> Json
 
 pub fn runtime_handoff_manifest_current(Json) -> Bool
 
@@ -658,33 +716,51 @@ pub fn runtime_pending_command_ids(Array[Json], Array[Json], lease_now? : String
 
 pub fn runtime_protocol_contract_json() -> Json
 
+pub fn runtime_receipt(Json, Json, receipt_id~ : String, created_at~ : String) -> Json
+
 pub fn runtime_receipt_claim_expired(Json, String) -> Bool
+
+pub fn runtime_receipt_detail(String, String) -> String
+
+pub fn runtime_receipt_for_response(Json, fallback_receipt_id~ : String) -> Json
+
+pub fn runtime_receipt_log_relative_path(String) -> String
+
+pub fn runtime_receipt_pending_count(Array[Json], Array[Json], lease_now? : String) -> Int
+
+pub fn runtime_receipt_record_valid(Json) -> Bool
+
+pub fn runtime_receipt_response(String, Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_mode~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, lease_now~ : String) -> Json
+
+pub fn runtime_receipt_state_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_mode~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String) -> Json
+
+pub fn runtime_receipt_status(Json, Json) -> String
 
 pub fn runtime_receipt_status_claimed(String) -> Bool
 
 pub fn runtime_receipt_status_delivered(String) -> Bool
 
+pub fn runtime_receipts_for_response(Array[Json]) -> Array[Json]
+
 pub fn runtime_replay_ack_detail(String) -> String
 
 pub fn runtime_replay_ack_normalized_events(Array[Json]) -> Array[Json]
 
-pub fn runtime_replay_ack_receipts(Json, Array[Json], Json, dispatch_receipts? : Array[Json], prior_events? : Array[Json]) -> Array[Json]
+pub fn runtime_replay_ack_receipts(Json, Array[Json], Json, runtime_receipts? : Array[Json], prior_events? : Array[Json]) -> Array[Json]
 
-pub fn runtime_replay_ack_receipts_with_defaults(Json, Array[Json], Json, acknowledged_at~ : String, dispatch_receipts? : Array[Json], prior_events? : Array[Json]) -> Array[Json]
+pub fn runtime_replay_ack_receipts_with_defaults(Json, Array[Json], Json, acknowledged_at~ : String, runtime_receipts? : Array[Json], prior_events? : Array[Json]) -> Array[Json]
 
-pub fn runtime_replay_ack_response(String, Array[Json], Array[Json], Array[Json], Array[Json], Json, Json, workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
+pub fn runtime_replay_ack_response(String, Array[Json], Array[Json], Array[Json], Array[Json], Json, Json, workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String) -> Json
 
-pub fn runtime_replay_ack_result_response(String, Array[Json], Array[Json], Array[Json], Array[Json], Json, Json, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String) -> Json
+pub fn runtime_replay_ack_result_response(String, Array[Json], Array[Json], Array[Json], Array[Json], Json, Json, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String) -> Json
 
 pub fn runtime_replay_ack_status(Json) -> String
 
 pub fn runtime_replay_consumer_contract_json(String) -> Json
 
-pub fn runtime_replay_state(String, Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, lease_now? : String) -> Json
+pub fn runtime_replay_state(String, Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, lease_now? : String) -> Json
 
-pub fn runtime_replay_state_for_session(Json, Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, lease_now? : String) -> Json
-
-pub fn runtime_serve_jsonl(Array[Json], Array[Json], scope~ : String, lease_now? : String) -> String
+pub fn runtime_replay_state_for_session(Json, Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, lease_now? : String) -> Json
 
 pub fn runtime_service_state(String, Array[Json]) -> Json
 
@@ -694,23 +770,13 @@ pub fn runtime_supervisor_launch_packet(String, Json, Json, workspace_root~ : St
 
 pub fn runtime_supervisor_readiness_report(Json) -> Json
 
-pub fn runtime_supervisor_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
+pub fn runtime_supervisor_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
 
-pub fn runtime_supervisor_response_for_session(Json, Array[Json], Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
+pub fn runtime_supervisor_response_for_session(Json, Array[Json], Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
 
 pub fn runtime_tool_names() -> Array[String]
 
 pub fn runtime_turn_packet(String, Json, Json, Json, Bool) -> Json
-
-pub fn serve_command_names() -> Array[String]
-
-pub fn serve_scheduler_contract_json() -> Json
-
-pub fn serve_scheduler_decisions(Array[Json], Array[Json], String, Array[String]) -> Array[Json]
-
-pub fn serve_scheduler_projection(String, Array[Json], Json) -> Json
-
-pub fn serve_scheduler_response(String, Array[Json], Array[Json], Array[Json], Array[Json], lease_now~ : String) -> Json
 
 pub fn session_cancel_lifecycle(Array[Json]) -> Json
 
@@ -728,7 +794,7 @@ pub fn session_package_lifecycle(Json, Array[Json]) -> Json
 
 pub fn session_patch_lifecycle(Array[Json]) -> Json
 
-pub fn session_projection_response(Json, Array[Json], event_log_path~ : String, append_log_count~ : Int, command_log_path~ : String, command_log_count~ : Int, runtime_command_log_path~ : String, runtime_command_log_count~ : Int, runtime_dispatch_log_path~ : String, runtime_dispatch_log_count~ : Int) -> Json
+pub fn session_projection_response(Json, Array[Json], event_log_path~ : String, append_log_count~ : Int, command_log_path~ : String, command_log_count~ : Int, runtime_command_log_path~ : String, runtime_command_log_count~ : Int, runtime_receipt_log_path~ : String, runtime_receipt_log_count~ : Int) -> Json
 
 pub fn session_readiness_checks(Json, Array[Json]) -> Array[Json]
 
@@ -748,7 +814,7 @@ pub fn session_runtime_evidence_response(Json, String, String, String, String, S
 
 pub fn session_runtime_evidence_response_with_native(Json, String, String, String, String, String, local_event_count~ : Int, native_state~ : Json, native_report~ : Json) -> Json
 
-pub fn session_snapshot(Json, Array[Json], Array[Json], Array[Json], Array[Json], recorded_at~ : String, snapshot_path~ : String, command_log_path~ : String, runtime_command_log_path~ : String, runtime_dispatch_log_path~ : String, event_log_path~ : String) -> Json
+pub fn session_snapshot(Json, Array[Json], Array[Json], Array[Json], Array[Json], recorded_at~ : String, snapshot_path~ : String, command_log_path~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, event_log_path~ : String) -> Json
 
 pub fn session_snapshot_relative_path(String) -> String
 

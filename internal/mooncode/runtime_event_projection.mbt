@@ -75,12 +75,12 @@ fn canonical_event_command_packet(event : Json) -> Json {
       "command_id": command_id,
       "action": runtime_first_string(
         event,
-        ["action", "serve_command"],
+        ["action", "code_command"],
         default="prompt",
       ),
-      "dispatch": runtime_first_string(
+      "control": runtime_first_string(
         event,
-        ["dispatch"],
+        ["control"],
         default="moonclaw-native",
       ),
       "runtime_proof": true,

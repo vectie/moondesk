@@ -462,7 +462,7 @@ fn render_mooncode_command_spec(spec : MoonCodeCommandSpec) -> @rabbita.Html {
   div(class="mooncode-tool-spec", [
     div(class="mooncode-tool-head", [
       strong(spec.action),
-      span(class="record-kind", spec.dispatch),
+      span(class="record-kind", spec.control),
     ]),
     p(
       "approval: \{spec.approval}; lanes: \{spec.expected_lanes.join(", ")}",

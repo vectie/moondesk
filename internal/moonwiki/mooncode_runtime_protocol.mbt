@@ -42,7 +42,7 @@ fn mooncode_runtime_execution_plan(
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
       workspace_root, session_id,
     ),
     workspace_root~,
@@ -74,7 +74,7 @@ fn mooncode_runtime_supervisor_launch_packet(
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
-    runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
       workspace_root, session_id,
     ),
     workspace_root~,

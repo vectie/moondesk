@@ -49,8 +49,8 @@ fn render_mooncode_resume_lifecycle(
         empty_label(json_field_string(lifecycle, "runtime_command_log_path", default="")),
       ),
       info_row(
-        "Dispatch Log",
-        empty_label(json_field_string(lifecycle, "runtime_dispatch_log_path", default="")),
+        "Receipt Log",
+        empty_label(json_field_string(lifecycle, "runtime_receipt_log_path", default="")),
       ),
       info_row(
         "Resume Modes",
@@ -128,7 +128,7 @@ fn mooncode_resume_lifecycle_class(status : String) -> String {
     | "blocked-invalid"
     | "blocked-tool-authorization"
     | "blocked-missing-proof" => "rejected"
-    "pending" | "running" | "dispatched" => "queued"
+    "pending" | "running" | "runtime-started" => "queued"
     _ => "queued"
   }
 }

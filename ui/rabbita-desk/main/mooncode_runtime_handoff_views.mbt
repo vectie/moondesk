@@ -30,8 +30,8 @@ fn render_mooncode_runtime_handoff_panel(model : Model) -> @rabbita.Html {
               handoff.summary.eval_missing_check_count.to_string(),
             ),
             info_chip(
-              "Dispatches",
-              handoff.summary.runtime_dispatch_count.to_string(),
+              "Receipts",
+              handoff.summary.runtime_receipt_count.to_string(),
             ),
           ]),
           div(class="daemon-state compact-state", [
@@ -39,7 +39,7 @@ fn render_mooncode_runtime_handoff_panel(model : Model) -> @rabbita.Html {
             info_row("Manifest", empty_label(handoff.manifest_path)),
             info_row("Workspace", empty_label(handoff.workspace_root)),
             info_row("Runtime", empty_label(handoff.runtime_session_id)),
-            info_row("Dispatch", handoff.engine.dispatch_mode),
+            info_row("Runtime Mode", handoff.engine.runtime_mode),
             info_row("Daemon", handoff.engine.daemon_status),
             info_row("MoonClaw", empty_label(handoff.engine.moonclaw_root)),
           ]),
@@ -64,8 +64,8 @@ fn render_mooncode_runtime_handoff_panel(model : Model) -> @rabbita.Html {
               handoff.resume_contract.runtime_command_log_path,
             ),
             info_row(
-              "Runtime Dispatch",
-              handoff.resume_contract.runtime_dispatch_log_path,
+              "Runtime Control",
+              handoff.resume_contract.runtime_receipt_log_path,
             ),
             info_row("Event Log", handoff.resume_contract.event_log_path),
             info_row("Stream", handoff.resume_contract.stream_endpoint),
@@ -77,10 +77,6 @@ fn render_mooncode_runtime_handoff_panel(model : Model) -> @rabbita.Html {
             info_row(
               "Runtime Queue",
               handoff.resume_contract.runtime_command_feed_endpoint,
-            ),
-            info_row(
-              "Dispatch State",
-              handoff.resume_contract.runtime_dispatch_endpoint,
             ),
             info_row(
               "Runtime Replay",

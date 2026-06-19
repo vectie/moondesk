@@ -4,14 +4,13 @@ struct MoonCodeResumeContract {
   session_store_endpoint : String
   command_log_path : String
   runtime_command_log_path : String
-  runtime_dispatch_log_path : String
+  runtime_receipt_log_path : String
   event_log_path : String
   stream_endpoint : String
   runtime_event_ingest_endpoint : String
   command_queue_endpoint : String
   runtime_command_feed_endpoint : String
   runtime_claim_endpoint : String
-  runtime_dispatch_endpoint : String
   runtime_replay_endpoint : String
   action_plan_endpoint : String
   native_command_endpoint : String
@@ -23,7 +22,7 @@ struct MoonCodeResumeContract {
 struct MoonCodeRuntimeEngine {
   daemon_running : Bool
   native_runtime_ready : Bool
-  dispatch_mode : String
+  runtime_mode : String
   daemon_status : String
   moonclaw_root : String
 } derive(FromJson)
@@ -76,7 +75,7 @@ struct MoonCodeRuntimeHandoff {
 struct MoonCodeQueuedCommand {
   command_id : String
   action : String
-  dispatch : String
+  control : String
   approval : String
   created_at : String
   context_path : String
@@ -98,19 +97,19 @@ struct MoonCodeCommandQueue {
 } derive(FromJson)
 
 ///|
-struct MoonCodeRuntimeDispatchReceipt {
-  dispatch_id : String
+struct MoonCodeRuntimeReceiptReceipt {
+  receipt_id : String
   command_id : String
   action : String
-  dispatch : String
+  control : String
   status : String
-  dispatch_mode : String
+  runtime_mode : String
   created_at : String
   mooncode_command_valid : Bool
   native_mooncode_endpoint : String
   detail : String
   runtime_command : Json
-  previous_dispatch_status : String?
+  previous_receipt_status : String?
   previous_claim_id : String?
   previous_consumer_id : String?
   claimed_by_same_consumer : Bool?
@@ -121,16 +120,16 @@ struct MoonCodeRuntimeDispatchReceipt {
 } derive(FromJson)
 
 ///|
-struct MoonCodeRuntimeDispatchState {
+struct MoonCodeRuntimeReceiptState {
   session_id : String
   runtime_session_id : String
-  dispatch_mode : String
+  runtime_mode : String
   runtime_command_count : Int
-  runtime_dispatch_count : Int
-  runtime_dispatch_pending_count : Int
+  runtime_receipt_count : Int
+  runtime_receipt_pending_count : Int
   runtime_command_log_path : String
-  runtime_dispatch_log_path : String
-  dispatch_receipts : Array[MoonCodeRuntimeDispatchReceipt]
+  runtime_receipt_log_path : String
+  runtime_receipts : Array[MoonCodeRuntimeReceiptReceipt]
   pending_command_ids : Array[String]
 } derive(FromJson)
 
@@ -139,10 +138,10 @@ struct MoonCodeRuntimeCommandFeed {
   runtime_session_id : String
   runtime_command_log_path : String
   runtime_command_count : Int
-  runtime_dispatch_log_path : String
+  runtime_receipt_log_path : String
   runtime_claim_endpoint : String
-  runtime_dispatch_count : Int
-  runtime_dispatch_pending_count : Int
+  runtime_receipt_count : Int
+  runtime_receipt_pending_count : Int
   commands : Array[Json]
   execution_summaries : Array[Json]
   command_lifecycle : Json
@@ -152,8 +151,8 @@ struct MoonCodeRuntimeCommandFeed {
 struct MoonCodeRuntimeReplayItem {
   command_id : String
   action : String
-  dispatch : String
-  serve_command : String
+  control : String
+  code_command : String
   created_at : String
   target : String
   receipt_status : String
@@ -170,12 +169,12 @@ struct MoonCodeRuntimeReplayItem {
 ///|
 struct MoonCodeRuntimeReplayState {
   runtime_command_log_path : String
-  runtime_dispatch_log_path : String
+  runtime_receipt_log_path : String
   command_count : Int
   invalid_command_count : Int
   delivered_command_count : Int
   claimed_command_count : Int
-  failed_dispatch_count : Int
+  failed_receipt_count : Int
   pending_command_count : Int
   first_pending_index : Int
   first_invalid_command_id : String
@@ -219,8 +218,8 @@ struct MoonCodeRuntimeEventSink {
 struct MoonCodeRuntimeClaimItem {
   command_id : String
   action : String
-  dispatch : String
-  serve_command : String
+  control : String
+  code_command : String
   created_at : String
   target : String
   claim_status : String
@@ -241,7 +240,7 @@ struct MoonCodeRuntimeClaimItem {
 ///|
 struct MoonCodeRuntimeClaimState {
   runtime_command_log_path : String
-  runtime_dispatch_log_path : String
+  runtime_receipt_log_path : String
   command_count : Int
   claimable_command_count : Int
   claimed_command_count : Int

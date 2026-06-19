@@ -7,8 +7,12 @@ test "mooncode tool contract covers mooncode builtins" {
   for required in runtime_tool_names() {
     assert_true(ids.contains(required))
   }
+  for required in native_capability_required_tools() {
+    assert_true(ids.contains(required))
+  }
   assert_true(ids.contains("moon_ide"))
   assert_true(ids.contains("moon_cmd"))
+  assert_true(ids.contains("revert_patch"))
   assert_eq(json_string(contract, "execution_owner", default=""), "moonclaw")
   let constraints = match contract {
     Object(object) => object.get("constraints").unwrap_or({})
@@ -69,4 +73,20 @@ test "mooncode tool contract marks mutating tools for diff review" {
       assert_true(outputs.contains("diff"))
     }
   }
+}
+
+///|
+test "mooncode tool contract aligns supported runtime tools with concrete entries" {
+  let contract = tool_contract_json()
+  let ids = tool_contract_tool_ids(contract)
+  let supported = command_json_string_array_items(contract, "supported_tools")
+  assert_eq(supported.length(), runtime_tool_names().length())
+  for tool in supported {
+    assert_true(runtime_tool_names().contains(tool))
+    assert_true(ids.contains(tool))
+  }
+  for tool in ids {
+    assert_true(supported.contains(tool))
+  }
+  assert_true(supported.contains("revert_patch"))
 }

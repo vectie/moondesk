@@ -18,7 +18,7 @@ fn action_plan_runtime_command_for_id(
 pub fn action_plan_runtime_state_at(
   command_id : String,
   runtime_commands : Array[Json],
-  runtime_dispatches : Array[Json],
+  runtime_receipts : Array[Json],
   lease_now? : String = "",
 ) -> String {
   if command_id == "" {
@@ -30,8 +30,8 @@ pub fn action_plan_runtime_state_at(
       runtime_recorded = true
     }
   }
-  let statuses = runtime_receipt_statuses(runtime_dispatches)
-  let latest_receipts = runtime_latest_receipts(runtime_dispatches)
+  let statuses = runtime_receipt_statuses(runtime_receipts)
+  let latest_receipts = runtime_latest_receipts(runtime_receipts)
   let receipt = statuses.get(command_id).unwrap_or("")
   if runtime_receipt_status_delivered(receipt) {
     "delivered"

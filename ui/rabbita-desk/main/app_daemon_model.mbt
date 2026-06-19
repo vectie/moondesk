@@ -1,5 +1,5 @@
 ///|
-struct DaemonDispatchResult {
+struct DaemonControlResult {
   id : String
   ok : Bool
   status : String

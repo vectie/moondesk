@@ -6,7 +6,7 @@ test "mooncode action plan treats claimed runtime commands as running" {
       "kind": kind_command(),
       "command_id": "cmd-1",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "approval": "none",
     },
   ]
@@ -16,14 +16,14 @@ test "mooncode action plan treats claimed runtime commands as running" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-1",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
       "mooncode_command": { "command": "prompt", "text": "build it" },
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
+      "kind": kind_runtime_receipt(),
       "command_id": "cmd-1",
       "status": "runtime-claimed",
     },
@@ -49,13 +49,13 @@ test "mooncode action plan marks expired claims for runtime retry" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-stale",
       "action": "prompt",
-      "dispatch": "prompt",
+      "control": "prompt",
     },
   ]
   let receipts : Array[Json] = [
     {
       "protocol": protocol_version(),
-      "kind": kind_runtime_dispatch(),
+      "kind": kind_runtime_receipt(),
       "command_id": "cmd-stale",
       "status": "runtime-claimed",
       "lease_expires_at": "2000-01-01T00:05:00Z",
@@ -188,7 +188,7 @@ test "mooncode action plan exposes command runtime evidence" {
     "kind": kind_command(),
     "command_id": "cmd-test",
     "action": "run_tests",
-    "dispatch": "command",
+    "control": "command",
     "approval": "auto",
   }
   let runtime_command : Json = {
@@ -196,7 +196,7 @@ test "mooncode action plan exposes command runtime evidence" {
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-test",
     "action": "run_tests",
-    "dispatch": "command",
+    "control": "command",
     "execution_summary": {
       "required_events": ["test_result", "runtime_finished"],
       "required_outputs": ["exit code"],
@@ -210,7 +210,7 @@ test "mooncode action plan exposes command runtime evidence" {
     [
       {
         "protocol": protocol_version(),
-        "kind": kind_runtime_dispatch(),
+        "kind": kind_runtime_receipt(),
         "command_id": "cmd-test",
         "status": "runtime-completed",
       },
@@ -249,7 +249,7 @@ test "mooncode action plan waits for tool harness proof after delivery" {
     "kind": kind_command(),
     "command_id": "cmd-test",
     "action": "run_tests",
-    "dispatch": "command",
+    "control": "command",
     "approval": "auto",
   }
   let runtime_command : Json = {
@@ -257,7 +257,7 @@ test "mooncode action plan waits for tool harness proof after delivery" {
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-test",
     "action": "run_tests",
-    "dispatch": "command",
+    "control": "command",
     "execution_summary": {
       "tool_sequence": ["read", "moon_check", "finish"],
       "required_events": ["test_result", "runtime_finished"],
@@ -272,7 +272,7 @@ test "mooncode action plan waits for tool harness proof after delivery" {
     [
       {
         "protocol": protocol_version(),
-        "kind": kind_runtime_dispatch(),
+        "kind": kind_runtime_receipt(),
         "command_id": "cmd-test",
         "status": "runtime-completed",
       },
@@ -323,7 +323,7 @@ test "mooncode action plan retries failed tool harness proof" {
     "kind": kind_command(),
     "command_id": "cmd-test",
     "action": "run_tests",
-    "dispatch": "command",
+    "control": "command",
     "approval": "auto",
   }
   let runtime_command : Json = {
@@ -331,7 +331,7 @@ test "mooncode action plan retries failed tool harness proof" {
     "kind": "mooncode.runtime-command",
     "command_id": "cmd-test",
     "action": "run_tests",
-    "dispatch": "command",
+    "control": "command",
     "execution_summary": {
       "tool_sequence": ["moon_check"],
       "required_events": ["test_result", "runtime_finished"],
@@ -345,7 +345,7 @@ test "mooncode action plan retries failed tool harness proof" {
     [
       {
         "protocol": protocol_version(),
-        "kind": kind_runtime_dispatch(),
+        "kind": kind_runtime_receipt(),
         "command_id": "cmd-test",
         "status": "runtime-completed",
       },
@@ -411,11 +411,11 @@ test "mooncode action plan includes blocked command preflight attempts" {
   )
   let actions = action_plan_items([], [], [], [blocked], Json::object({}))
   assert_eq(actions.length(), 1)
-  assert_eq(json_string(actions[0], "dispatch", default=""), "preflight")
+  assert_eq(json_string(actions[0], "control", default=""), "preflight")
   assert_eq(json_string(actions[0], "state", default=""), "blocked")
   assert_eq(
     json_string(actions[0], "runtime_state", default=""),
-    "blocked-before-dispatch",
+    "blocked-before-runtime",
   )
   assert_true(
     json_string(actions[0], "blocking_reason", default="").contains(
@@ -447,7 +447,7 @@ test "mooncode action plan includes operator preflight overrides" {
     Json::object({}),
   )
   assert_eq(actions.length(), 1)
-  assert_eq(json_string(actions[0], "dispatch", default=""), "preflight")
+  assert_eq(json_string(actions[0], "control", default=""), "preflight")
   assert_eq(json_string(actions[0], "state", default=""), "override")
   assert_eq(
     json_string(actions[0], "runtime_state", default=""),

@@ -10,7 +10,7 @@ async fn handle_mooncode_session_runtime_commands(
       let commands = read_mooncode_runtime_command_log(
         workspace_root, session_id,
       )
-      let receipts = read_mooncode_runtime_dispatch_log(
+      let receipts = read_mooncode_runtime_receipt_log(
         workspace_root, session_id,
       )
       let events = read_mooncode_event_log(workspace_root, session_id)
@@ -27,7 +27,7 @@ async fn handle_mooncode_session_runtime_commands(
           runtime_command_log_path=mooncode_runtime_command_log_path(
             workspace_root, session_id,
           ),
-          runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+          runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
             workspace_root, session_id,
           ),
           workspace_root~,
@@ -57,7 +57,7 @@ async fn handle_mooncode_session_runtime_replay(
       let commands = read_mooncode_runtime_command_log(
         workspace_root, session_id,
       )
-      let receipts = read_mooncode_runtime_dispatch_log(
+      let receipts = read_mooncode_runtime_receipt_log(
         workspace_root, session_id,
       )
       send_json(
@@ -70,7 +70,7 @@ async fn handle_mooncode_session_runtime_replay(
           runtime_command_log_path=mooncode_runtime_command_log_path(
             workspace_root, session_id,
           ),
-          runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+          runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
             workspace_root, session_id,
           ),
           lease_now=@async.now().to_string(),
@@ -85,7 +85,7 @@ async fn handle_mooncode_session_runtime_replay(
 }
 
 ///|
-async fn handle_mooncode_session_serve_jsonl(
+async fn handle_mooncode_session_command_jsonl(
   workspace_root : String,
   session_id : String,
   request_path : String,
@@ -97,7 +97,7 @@ async fn handle_mooncode_session_serve_jsonl(
       let commands = read_mooncode_runtime_command_log(
         workspace_root, session_id,
       )
-      let receipts = read_mooncode_runtime_dispatch_log(
+      let receipts = read_mooncode_runtime_receipt_log(
         workspace_root, session_id,
       )
       let scope = match query_value(request_path, "scope") {
@@ -108,7 +108,7 @@ async fn handle_mooncode_session_serve_jsonl(
         conn,
         method_,
         "application/x-ndjson; charset=utf-8",
-        @mooncode.runtime_serve_jsonl(commands, receipts, scope~),
+        @mooncode.runtime_command_jsonl(commands, receipts, scope~),
       )
     }
     None =>
@@ -143,14 +143,14 @@ async fn handle_mooncode_session_runtime_replay_ack(
     }
   }
   let commands = read_mooncode_runtime_command_log(workspace_root, session_id)
-  let receipts = read_mooncode_runtime_dispatch_log(workspace_root, session_id)
+  let receipts = read_mooncode_runtime_receipt_log(workspace_root, session_id)
   let prior_events = read_mooncode_event_log(workspace_root, session_id)
   let ack_receipts = @mooncode.runtime_replay_ack_receipts_with_defaults(
     session,
     commands,
     payload,
     acknowledged_at=@async.now().to_string(),
-    dispatch_receipts=receipts,
+    runtime_receipts=receipts,
     prior_events~,
   )
   if ack_receipts.length() == 0 {
@@ -160,7 +160,7 @@ async fn handle_mooncode_session_runtime_replay_ack(
     return
   }
   for receipt in ack_receipts {
-    append_mooncode_runtime_dispatch_log(workspace_root, session_id, receipt) catch {
+    append_mooncode_runtime_receipt_log(workspace_root, session_id, receipt) catch {
       _ => {
         send_api_error(
           conn, method_, 500, "Internal Server Error", "Could not append MoonCode runtime replay receipt",
@@ -219,7 +219,7 @@ async fn handle_mooncode_session_runtime_replay_ack(
       return
     }
   }
-  let next_receipts = read_mooncode_runtime_dispatch_log(
+  let next_receipts = read_mooncode_runtime_receipt_log(
     workspace_root, session_id,
   )
   send_json(
@@ -238,7 +238,7 @@ async fn handle_mooncode_session_runtime_replay_ack(
       runtime_command_log_path=mooncode_runtime_command_log_path(
         workspace_root, session_id,
       ),
-      runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+      runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
         workspace_root, session_id,
       ),
     ),
@@ -258,7 +258,7 @@ async fn handle_mooncode_session_runtime_claim_state(
       let commands = read_mooncode_runtime_command_log(
         workspace_root, session_id,
       )
-      let receipts = read_mooncode_runtime_dispatch_log(
+      let receipts = read_mooncode_runtime_receipt_log(
         workspace_root, session_id,
       )
       send_json(
@@ -271,7 +271,7 @@ async fn handle_mooncode_session_runtime_claim_state(
           runtime_command_log_path=mooncode_runtime_command_log_path(
             workspace_root, session_id,
           ),
-          runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+          runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
             workspace_root, session_id,
           ),
           lease_now=match query_value(request_path, "now") {
@@ -313,7 +313,7 @@ async fn handle_mooncode_session_runtime_claim(
     }
   }
   let commands = read_mooncode_runtime_command_log(workspace_root, session_id)
-  let receipts = read_mooncode_runtime_dispatch_log(workspace_root, session_id)
+  let receipts = read_mooncode_runtime_receipt_log(workspace_root, session_id)
   let claim_receipts = @mooncode.runtime_claim_receipts_with_defaults(
     session,
     commands,
@@ -322,7 +322,7 @@ async fn handle_mooncode_session_runtime_claim(
     now=@async.now().to_string(),
   )
   for receipt in claim_receipts {
-    append_mooncode_runtime_dispatch_log(workspace_root, session_id, receipt) catch {
+    append_mooncode_runtime_receipt_log(workspace_root, session_id, receipt) catch {
       _ => {
         send_api_error(
           conn, method_, 500, "Internal Server Error", "Could not append MoonCode runtime claim receipt",
@@ -370,7 +370,7 @@ async fn handle_mooncode_session_runtime_claim(
       return
     }
   }
-  let next_receipts = read_mooncode_runtime_dispatch_log(
+  let next_receipts = read_mooncode_runtime_receipt_log(
     workspace_root, session_id,
   )
   send_json(
@@ -385,7 +385,7 @@ async fn handle_mooncode_session_runtime_claim(
       runtime_command_log_path=mooncode_runtime_command_log_path(
         workspace_root, session_id,
       ),
-      runtime_dispatch_log_path=mooncode_runtime_dispatch_log_path(
+      runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
         workspace_root, session_id,
       ),
     ),
@@ -393,7 +393,7 @@ async fn handle_mooncode_session_runtime_claim(
 }
 
 ///|
-async fn handle_mooncode_session_serve_scheduler(
+async fn handle_mooncode_session_runtime_control(
   workspace_root : String,
   session_id : String,
   method_ : @http.RequestMethod,
@@ -405,14 +405,14 @@ async fn handle_mooncode_session_serve_scheduler(
       let runtime_commands = read_mooncode_runtime_command_log(
         workspace_root, session_id,
       )
-      let receipts = read_mooncode_runtime_dispatch_log(
+      let receipts = read_mooncode_runtime_receipt_log(
         workspace_root, session_id,
       )
       let events = read_mooncode_event_log(workspace_root, session_id)
       send_json(
         conn,
         method_,
-        @mooncode.serve_scheduler_response(
+        @mooncode.runtime_control_response(
           session_id,
           commands,
           runtime_commands,

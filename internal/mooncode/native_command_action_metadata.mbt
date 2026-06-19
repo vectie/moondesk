@@ -17,8 +17,10 @@ pub fn native_command_tool_sequence(action : String) -> Array[String] {
       ["read", "moon_ide", "moon_cmd", "moon_check", "shell", "finish"]
     "accept" => ["read", "package_app_tool", "finish"]
     "reject" => ["read", "finish"]
-    "apply_patch" | "revert_patch" =>
+    "apply_patch" =>
       ["read", "moon_ide", "apply_patch", "moon_cmd", "moon_check", "finish"]
+    "revert_patch" =>
+      ["read", "moon_ide", "revert_patch", "moon_cmd", "moon_check", "finish"]
     "approve_tool" | "reject_tool" => ["finish"]
     "prompt" | "steer" =>
       ["moon_ide", "read", "edit", "write", "moon_cmd", "moon_check", "finish"]
@@ -119,9 +121,12 @@ pub fn native_command_recommended_commands(
       }
     "run_eval" =>
       [
-        "run tool_harness eval fixtures", "run file_edit eval fixtures", "run patch_review eval fixtures",
-        "run command_execution eval fixtures", "run package_output eval fixtures",
-        "POST /api/mooncode/sessions/<id>/eval-report",
+        "run tool_harness eval fixtures",
+        "run file_edit eval fixtures",
+        "run patch_review eval fixtures",
+        "run command_execution eval fixtures",
+        "run package_output eval fixtures",
+        "POST \{desktop_session_eval_report_endpoint()}",
       ]
     "package" => ["moon check", "moon test", "build/package selected artifact"]
     "commit" =>

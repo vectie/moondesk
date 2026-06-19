@@ -116,7 +116,7 @@ async fn route_town_api(
       }
       true
     }
-    ["api", "town", "dispatch"] => {
+    ["api", "town", "control"] => {
       if method_ is Post {
         handle_town_dispatch(workspace_root, body, method_, conn)
       } else {

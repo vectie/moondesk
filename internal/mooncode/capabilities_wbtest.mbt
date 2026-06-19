@@ -8,7 +8,7 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("package_app_tool"))
   assert_true(payload.contains("\"tool_specs\""))
   assert_true(payload.contains("\"command_specs\""))
-  assert_true(payload.contains("\"dispatch\":\"steer\""))
+  assert_true(payload.contains("\"control\":\"steer\""))
   assert_true(payload.contains("\"approval\":\"operator\""))
   assert_true(payload.contains("\"action\":\"run_build\""))
   assert_true(payload.contains("\"action\":\"approve_tool\""))
@@ -29,15 +29,16 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"kind\":\"mooncode-standalone-boundary\""))
   assert_true(payload.contains("\"core_package\":\"mooncode/core\""))
   assert_true(
-    payload.contains(
-      "\"moondesk_projection_package\":\"vectie/moondesk/internal/mooncode\"",
-    ),
+    payload.contains("\"projection_component\":\"mooncode.projection\""),
+  )
+  assert_true(payload.contains("\"host_component\":\"moonwiki.host\""))
+  assert_true(
+    payload.contains("\"runtime_component\":\"moonclaw.standalone-runtime\""),
   )
   assert_true(
-    payload.contains(
-      "\"moonwiki_host_package\":\"vectie/moondesk/internal/moonwiki\"",
-    ),
+    payload.contains("\"runtime_substrate\":\"moonclaw.shared-runtime\""),
   )
+  assert_true(payload.contains("\"id\":\"moonclaw-standalone-runtime\""))
   assert_true(payload.contains("\"core_package\":\"mooncode/core\""))
   assert_true(payload.contains("\"projection_package\":\"internal/mooncode\""))
   assert_true(payload.contains("\"host_package\":\"internal/moonwiki\""))
@@ -55,17 +56,10 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"kind\":\"mooncode-readiness-contract\""))
   assert_true(payload.contains("\"native_eval_report\""))
   assert_true(payload.contains("\"native_session_listing_endpoint\""))
-  assert_true(
-    payload.contains("/v1/code/sessions?book_root=<path>&format=json"),
-  )
-  assert_true(
-    payload.contains(
-      "/v1/code/sessions/<session-id>/serve-scheduler?book_root=<path>",
-    ),
-  )
-  assert_true(
-    payload.contains("/v1/code/sessions/<id>/eval-report?book_root=<path>"),
-  )
+  assert_true(payload.contains(native_code_session_listing_endpoint()))
+  assert_true(payload.contains(native_code_session_runtime_control_endpoint()))
+  assert_true(payload.contains(native_code_session_runtime_service_endpoint()))
+  assert_true(payload.contains(native_code_session_eval_report_endpoint()))
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/action-plan"),
   )
@@ -76,14 +70,120 @@ test "mooncode capability contract names the split packages" {
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/package-result"),
   )
+  assert_true(payload.contains(native_code_session_package_result_endpoint()))
   assert_true(
-    payload.contains(
-      "/v1/code/sessions/<session-id>/package-result?book_root=<path>",
-    ),
+    payload.contains("/api/mooncode/sessions/<session-id>/command-jsonl"),
   )
   assert_true(
-    payload.contains("/api/mooncode/sessions/<session-id>/serve-jsonl"),
+    payload.contains("/api/mooncode/sessions/<session-id>/runtime-service"),
   )
+}
+
+///|
+test "mooncode capability native endpoints mirror the core surface" {
+  let capability = capabilities_json()
+  let protocol = summary_json_object_field_or_empty(
+    capability, "session_protocol",
+  )
+  let fields = [
+    "native_session_list_endpoint", "native_session_listing_endpoint", "native_session_show_endpoint",
+    "native_package_result_endpoint", "native_runtime_control_endpoint", "native_eval_report_endpoint",
+    "native_runtime_claim_endpoint", "native_runtime_turn_endpoint", "native_runtime_loop_endpoint",
+    "native_runtime_service_endpoint",
+  ]
+  let endpoints = [
+    native_code_session_list_endpoint(),
+    native_code_session_listing_endpoint(),
+    native_code_session_show_endpoint(),
+    native_code_session_package_result_endpoint(),
+    native_code_session_runtime_control_endpoint(),
+    native_code_session_eval_report_endpoint(),
+    native_code_session_runtime_claim_endpoint(),
+    native_code_session_runtime_turn_endpoint(),
+    native_code_session_runtime_loop_endpoint(),
+    native_code_session_runtime_service_endpoint(),
+  ]
+  assert_eq(fields.length(), endpoints.length())
+  for i, field in fields {
+    let endpoint = endpoints[i]
+    assert_eq(json_string(protocol, field, default=""), endpoint)
+    assert_true(native_capability_required_endpoints().contains(endpoint))
+    assert_false(endpoint.contains("<session-id>"))
+  }
+}
+
+///|
+test "mooncode capability commands derive from advertised command contract" {
+  let capability = capabilities_json()
+  let protocol = summary_json_object_field_or_empty(
+    capability, "session_protocol",
+  )
+  let commands = command_json_string_array_items(protocol, "commands")
+  assert_eq(commands.length(), command_advertised_actions().length())
+  for action in command_advertised_actions() {
+    assert_true(commands.contains(action))
+  }
+  assert_false(commands.contains("note"))
+  let specs = json_array_items(capability, "command_specs")
+  assert_eq(specs.length(), command_advertised_actions().length())
+  for spec in specs {
+    let action = json_string(spec, "action", default="")
+    assert_true(command_advertised_actions().contains(action))
+    assert_eq(json_string(spec, "control", default=""), command_control(action))
+    assert_eq(
+      json_string(spec, "approval", default=""),
+      command_approval(action),
+    )
+  }
+}
+
+///|
+test "mooncode capability tools cover command hints and runtime contract" {
+  let capability = capabilities_json()
+  let tools = command_json_string_array_items(capability, "tools")
+  let expected_tools = capability_tool_names()
+  assert_eq(tools.length(), expected_tools.length())
+  assert_eq(expected_tools.length(), runtime_tool_names().length() + 1)
+  assert_true(expected_tools.contains("eval_harness"))
+  for tool in expected_tools {
+    assert_true(tools.contains(tool))
+  }
+  for runtime_tool in runtime_tool_names() {
+    assert_true(tools.contains(runtime_tool))
+  }
+  for required_tool in native_capability_required_tools() {
+    assert_true(tools.contains(required_tool))
+  }
+  for action in command_advertised_actions() {
+    for hint in command_tool_hints(action) {
+      assert_true(tools.contains(hint))
+    }
+  }
+  let specs = json_array_items(capability, "tool_specs")
+  let expected_specs = capability_tool_specs()
+  assert_eq(specs.length(), tools.length())
+  assert_eq(expected_specs.length(), tools.length())
+  let spec_ids = specs.map(spec => json_string(spec, "id", default=""))
+  for tool in tools {
+    assert_true(spec_ids.contains(tool))
+  }
+  for spec in specs {
+    assert_true(tools.contains(json_string(spec, "id", default="")))
+  }
+  for i, id in spec_ids {
+    for j = i + 1; j < spec_ids.length(); j = j + 1 {
+      if id == spec_ids[j] {
+        fail("duplicate capability tool spec: \{id}")
+      }
+    }
+  }
+  for i, tool in tools {
+    for j = i + 1; j < tools.length(); j = j + 1 {
+      if tool == tools[j] {
+        fail("duplicate capability tool: \{tool}")
+      }
+    }
+  }
 }
 
 ///|
@@ -126,7 +226,7 @@ test "mooncode engine status projection is standalone from http probing" {
   assert_true(
     endpoints
     .map(endpoint => endpoint.stringify())
-    .contains("\"/api/mooncode/sessions/<id>/readiness\""),
+    .contains("\"\{desktop_session_readiness_endpoint()}\""),
   )
   let ready = engine_status_projection_json(
     daemon={ "running": true, "message": "running" },
@@ -151,7 +251,7 @@ test "mooncode engine status projection is standalone from http probing" {
 }
 
 ///|
-test "mooncode runtime contract mirrors mooncode serve/tool boundaries" {
+test "mooncode runtime contract mirrors mooncode runtime/tool boundaries" {
   let contract = runtime_contract_json()
   assert_eq(json_string(contract, "reference", default=""), "mooncode")
   assert_eq(json_string(contract, "target_component", default=""), "moonclaw")
@@ -173,6 +273,17 @@ test "mooncode runtime contract mirrors mooncode serve/tool boundaries" {
   assert_true(ids.contains("mooncode_tool"))
   assert_true(ids.contains("mooncode_turn_loop"))
   assert_true(ids.contains("eval_harness"))
+  let mut found_tool_component = false
+  for component in components {
+    if json_string(component, "id", default="") == "mooncode_tool" {
+      found_tool_component = true
+      let purpose = json_string(component, "purpose", default="")
+      for tool in runtime_tool_names() {
+        assert_true(purpose.contains(tool))
+      }
+    }
+  }
+  assert_true(found_tool_component)
   let command_protocol = summary_json_object_field_or_empty(
     contract, "command_protocol",
   )
@@ -280,7 +391,20 @@ test "mooncode eval harness contract names mooncode cases and evidence" {
   assert_true(payload.contains("\"moon_check\""))
   assert_true(payload.contains("\"moon_ide\""))
   assert_true(payload.contains("\"moon_cmd\""))
+  assert_true(payload.contains("\"revert_patch\""))
+  assert_true(payload.contains("\"package_app_tool\""))
   assert_true(payload.contains("\"compile_fix\""))
   assert_true(payload.contains("file-edit-eval:<case>"))
   assert_true(payload.contains("\"future_package\":\"mooncode/eval\""))
+  for harness in harnesses {
+    if json_string(harness, "id", default="") == "tool_harness" {
+      let required_tools = command_json_string_array_items(
+        harness, "required_tools",
+      )
+      assert_eq(required_tools.length(), runtime_tool_names().length())
+      for tool in runtime_tool_names() {
+        assert_true(required_tools.contains(tool))
+      }
+    }
+  }
 }

@@ -1,5 +1,5 @@
 ///|
-test "mooncode tool contract covers MoonCode-style builtins" {
+test "mooncode tool contract covers MoonCode builtins" {
   let contract = @mooncode.tool_contract_json()
   assert_eq(json_string(contract, "kind", default=""), "mooncode-tool-contract")
   assert_eq(json_string(contract, "owner", default=""), "moonclaw")

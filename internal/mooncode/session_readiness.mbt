@@ -151,9 +151,9 @@ pub fn session_readiness_checks(
     "mooncode_runtime_command_log_count",
     default=0,
   )
-  let runtime_dispatch_log_count = summary_json_int(
+  let runtime_receipt_log_count = summary_json_int(
     session,
-    "mooncode_runtime_dispatch_log_count",
+    "mooncode_runtime_receipt_log_count",
     default=0,
   )
   let snapshot = summary_json_object_field_or_empty(
@@ -240,8 +240,8 @@ pub fn session_readiness_checks(
     readiness_check(
       "live_runtime_stream",
       "Live runtime stream",
-      runtime_count > 0 && runtime_dispatch_log_count > 0,
-      "\{runtime_count} runtime event(s), \{runtime_dispatch_log_count} dispatch receipt(s)",
+      runtime_count > 0 && runtime_receipt_log_count > 0,
+      "\{runtime_count} runtime event(s), \{runtime_receipt_log_count} runtime receipt(s)",
     ),
     readiness_check(
       "tool_execution",

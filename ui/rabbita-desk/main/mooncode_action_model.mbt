@@ -2,7 +2,7 @@
 struct MoonCodeActionPlanItem {
   command_id : String
   action : String
-  dispatch : String
+  control : String
   approval : String
   state : String
   runtime_state : String
@@ -50,7 +50,7 @@ struct MoonCodeSelectedPatchPreflight {
 ///|
 struct MoonCodeCommandPreflight {
   action : String
-  dispatch : String
+  control : String
   approval : String
   lane : String
   title : String

@@ -5,7 +5,7 @@ fn update_mooncode_runtime_results(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    LoadedMoonCodeRuntimeDispatch(session_id, Ok(state)) =>
+    LoadedMoonCodeRuntimeReceipt(session_id, Ok(state)) =>
       if session_id != model.selected_mooncode_session_id {
         (@rabbita.none, model)
       } else {
@@ -13,13 +13,13 @@ fn update_mooncode_runtime_results(
           @rabbita.none,
           {
             ..model,
-            mooncode_runtime_dispatch_session_id: session_id,
-            mooncode_runtime_dispatch: Some(state),
-            mooncode_runtime_dispatch_status: "\{state.runtime_dispatch_count} receipt(s), \{state.runtime_dispatch_pending_count} pending",
+            mooncode_runtime_receipt_session_id: session_id,
+            mooncode_runtime_receipt: Some(state),
+            mooncode_runtime_receipt_status: "\{state.runtime_receipt_count} receipt(s), \{state.runtime_receipt_pending_count} pending",
           },
         )
       }
-    LoadedMoonCodeRuntimeDispatch(session_id, Err(error)) =>
+    LoadedMoonCodeRuntimeReceipt(session_id, Err(error)) =>
       if session_id != model.selected_mooncode_session_id {
         (@rabbita.none, model)
       } else {
@@ -27,9 +27,9 @@ fn update_mooncode_runtime_results(
           @rabbita.none,
           {
             ..model,
-            mooncode_runtime_dispatch_session_id: session_id,
-            mooncode_runtime_dispatch: None,
-            mooncode_runtime_dispatch_status: error,
+            mooncode_runtime_receipt_session_id: session_id,
+            mooncode_runtime_receipt: None,
+            mooncode_runtime_receipt_status: error,
           },
         )
       }
@@ -73,7 +73,7 @@ fn update_mooncode_runtime_results(
               fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
               fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
               fetch_mooncode_runtime_replay_cmd(dispatch, session_id),
-              fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_receipt_cmd(dispatch, session_id),
               fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
               fetch_mooncode_action_plan_cmd(dispatch, session_id),
               fetch_mooncode_readiness_cmd(dispatch, session_id),
@@ -131,7 +131,7 @@ fn update_mooncode_runtime_results(
               fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
               fetch_mooncode_runtime_claim_state_cmd(dispatch, session_id),
               fetch_mooncode_runtime_replay_cmd(dispatch, session_id),
-              fetch_mooncode_runtime_dispatch_cmd(dispatch, session_id),
+              fetch_mooncode_runtime_receipt_cmd(dispatch, session_id),
               fetch_mooncode_runtime_command_feed_cmd(dispatch, session_id),
               fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
               fetch_mooncode_action_plan_cmd(dispatch, session_id),
@@ -180,7 +180,7 @@ fn update_mooncode_runtime_results(
             fetch_mooncode_command_queue_cmd(dispatch, session.id),
             fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),
             fetch_mooncode_runtime_replay_cmd(dispatch, session.id),
-            fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_receipt_cmd(dispatch, session.id),
             fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
             fetch_mooncode_package_candidates_cmd(dispatch, session.id),
             fetch_mooncode_action_plan_cmd(dispatch, session.id),
@@ -236,7 +236,7 @@ fn update_mooncode_runtime_results(
             fetch_mooncode_preflight_matrix_cmd(
               dispatch, session.id, model.selected_path,
             ),
-            fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+            fetch_mooncode_runtime_receipt_cmd(dispatch, session.id),
             fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
             schedule_mooncode_poll(dispatch),
           ]),
@@ -270,7 +270,7 @@ fn update_mooncode_runtime_results(
                 fetch_mooncode_action_plan_cmd(dispatch, session.id),
                 fetch_mooncode_readiness_cmd(dispatch, session.id),
                 fetch_mooncode_runtime_evidence_cmd(dispatch, session.id),
-                fetch_mooncode_runtime_dispatch_cmd(dispatch, session.id),
+                fetch_mooncode_runtime_receipt_cmd(dispatch, session.id),
                 fetch_mooncode_runtime_claim_state_cmd(dispatch, session.id),
                 fetch_mooncode_command_queue_cmd(dispatch, session.id),
                 fetch_mooncode_runtime_command_feed_cmd(dispatch, session.id),

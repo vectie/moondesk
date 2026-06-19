@@ -20,7 +20,7 @@ pub fn command_preflight(
     "kind": "mooncode-command-preflight",
     "protocol": protocol_version(),
     "action": action,
-    "dispatch": command_dispatch(action),
+    "control": command_control(action),
     "approval": command_approval(action),
     "lane": command_lane(action),
     "title": command_title(action, if blocked { "blocked" } else { "ready" }),
@@ -280,12 +280,12 @@ pub fn command_preflight_override_projected_event(
 pub fn action_required_gates(action : String) -> Array[String] {
   match action {
     "run_tests" | "run_build" =>
-      ["runtime-dispatch", "moon_check-or-shell-tool", "test_result-event"]
+      ["runtime-receipt", "moon_check-or-shell-tool", "test_result-event"]
     "run_eval" =>
-      ["runtime-dispatch", "tool_harness", "file_edit", "native-eval-report"]
+      ["runtime-receipt", "tool_harness", "file_edit", "native-eval-report"]
     "package" =>
       [
-        "runtime-dispatch", "source-inventory", "package-index", "operator-review",
+        "runtime-receipt", "source-inventory", "package-index", "operator-review",
       ]
     "commit" =>
       [
@@ -300,9 +300,9 @@ pub fn action_required_gates(action : String) -> Array[String] {
       ["operator-review", "tool-approval-manifest"]
     "apply_patch" | "revert_patch" =>
       ["operator-review", "patch-set", "post-change-test-result"]
-    "cancel" => ["runtime-dispatch", "terminal-event"]
+    "cancel" => ["runtime-receipt", "terminal-event"]
     "prompt" | "steer" =>
-      ["runtime-dispatch", "stream-event", "tool-or-transcript-progress"]
-    _ => ["runtime-dispatch"]
+      ["runtime-receipt", "stream-event", "tool-or-transcript-progress"]
+    _ => ["runtime-receipt"]
   }
 }

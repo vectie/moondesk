@@ -48,17 +48,17 @@ async fn mooncode_action_plan_projection(
   } else {
     read_mooncode_runtime_command_log(workspace_root, session_id)
   }
-  let runtime_dispatches = if session_id == "" {
+  let runtime_receipts = if session_id == "" {
     []
   } else {
-    read_mooncode_runtime_dispatch_log(workspace_root, session_id)
+    read_mooncode_runtime_receipt_log(workspace_root, session_id)
   }
   @mooncode.action_plan_projection_response(
     session_id,
     session,
     commands,
     runtime_commands,
-    runtime_dispatches,
+    runtime_receipts,
     events,
     recorded_at=@async.now().to_string(),
     runtime_command_log_path=if session_id == "" {
@@ -66,10 +66,10 @@ async fn mooncode_action_plan_projection(
     } else {
       mooncode_runtime_command_log_path(workspace_root, session_id)
     },
-    runtime_dispatch_log_path=if session_id == "" {
+    runtime_receipt_log_path=if session_id == "" {
       ""
     } else {
-      mooncode_runtime_dispatch_log_path(workspace_root, session_id)
+      mooncode_runtime_receipt_log_path(workspace_root, session_id)
     },
   )
 }
