@@ -39,7 +39,7 @@ test "mooncode package result ingest response owns native forwarding fields" {
     event_log_path="/tmp/session/events.jsonl",
     native_state={
       "native_package_result_ready": true,
-      "endpoint": "/v1/mooncode/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook",
+      "endpoint": "/v1/code/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook",
       "error": "",
       "submitted_count": 2,
       "accepted_count": 1,
@@ -53,7 +53,7 @@ test "mooncode package result ingest response owns native forwarding fields" {
   assert_true(json_bool(response, "native_package_result_ready", default=false))
   assert_eq(
     json_string(response, "native_package_result_endpoint", default=""),
-    "/v1/mooncode/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook",
+    "/v1/code/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook",
   )
   assert_eq(
     runtime_json_int(
@@ -73,20 +73,19 @@ test "mooncode package result ingest response owns native forwarding fields" {
   )
   assert_true(
     runtime_json_object_field(response, "native_package_result")
-    is Some(Json::Object(_)),
+    is Some(Object(_)),
   )
 }
 
 ///|
 test "mooncode native package result unavailable report is MoonCode owned" {
   let report = native_package_result_unavailable_report(
-    "/v1/mooncode/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook", 3,
-    "MoonClaw daemon is not running",
+    "/v1/code/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook", 3, "MoonClaw daemon is not running",
   )
   assert_false(json_bool(report, "native_package_result_ready", default=true))
   assert_eq(
     json_string(report, "endpoint", default=""),
-    "/v1/mooncode/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook",
+    "/v1/code/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook",
   )
   assert_eq(
     json_string(report, "error", default=""),
@@ -106,8 +105,8 @@ test "mooncode native package result forwarding report records partial failures"
     { "error": "timeout", "request": { "command_id": "cmd-3" } },
   ]
   let report = native_package_result_forwarding_report(
-    "/v1/mooncode/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook", 3,
-    responses, errors,
+    "/v1/code/sessions/session-a/package-result?book_root=%2Ftmp%2Fbook", 3, responses,
+    errors,
   )
   assert_false(json_bool(report, "native_package_result_ready", default=true))
   assert_eq(

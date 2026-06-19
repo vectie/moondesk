@@ -65,7 +65,7 @@ fn runtime_owner_record() -> Json {
   {
     "ui": "moondesk",
     "runtime": "moonclaw",
-    "extractable_component": "mooncode",
+    "standalone_component": "mooncode",
   }
 }
 
@@ -108,7 +108,7 @@ fn rq_json_with_missing_json(
 ///|
 fn rq_json_with_field(object : Json, field : String, value : Json) -> Json {
   match object {
-    Json::Object(fields) => {
+    Object(fields) => {
       let next : Map[String, Json] = {}
       for item in fields {
         next[item.0] = item.1
@@ -138,10 +138,7 @@ fn runtime_safe_id(value : String, fallback~ : String) -> String {
 
 ///|
 fn rq_json_object_field(json : Json, key : String) -> Json? {
-  match json {
-    Json::Object(object) => object.get(key)
-    _ => None
-  }
+  @mooncore.json_object_field(json, key)
 }
 
 ///|
@@ -154,20 +151,13 @@ fn rq_json_object_field_or_empty(json : Json, key : String) -> Json {
 
 ///|
 fn rq_json_array_items(json : Json, key : String) -> Array[Json] {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::Array(items)) => items
-        _ => []
-      }
-    _ => []
-  }
+  @mooncore.json_array_items(json, key)
 }
 
 ///|
 fn rq_json_string_array_items(json : Json, key : String) -> Array[String] {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
         Some(value) => @json.from_json(value) catch { _ => [] }
         _ => []
@@ -178,36 +168,15 @@ fn rq_json_string_array_items(json : Json, key : String) -> Array[String] {
 
 ///|
 fn rq_json_string(json : Json, key : String, default~ : String) -> String {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::String(value)) => value
-        _ => default
-      }
-    _ => default
-  }
+  @mooncore.json_string(json, key, default~)
 }
 
 ///|
 fn rq_json_bool(json : Json, key : String, default~ : Bool) -> Bool {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(value) => @json.from_json(value) catch { _ => default }
-        _ => default
-      }
-    _ => default
-  }
+  @mooncore.json_bool(json, key, default~)
 }
 
 ///|
 fn rq_json_int(json : Json, key : String, default~ : Int) -> Int {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(value) => @json.from_json(value) catch { _ => default }
-        _ => default
-      }
-    _ => default
-  }
+  @mooncore.json_int(json, key, default~)
 }

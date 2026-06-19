@@ -1,7 +1,7 @@
 ///|
 test "mooncode appends command event to durable session events" {
   let session = append_command_event(
-    { "id": "agent-demo" },
+    { "id": "code-demo" },
     action="run_tests",
     status="queued",
     detail="Run tests",
@@ -25,7 +25,7 @@ test "mooncode appends command event to durable session events" {
 ///|
 test "mooncode projected command event preserves packet command id" {
   let session = append_projected_command_event(
-    { "id": "agent-demo" },
+    { "id": "code-demo" },
     action="run_tests",
     status="queued",
     detail="Run tests",
@@ -42,7 +42,7 @@ test "mooncode projected command event preserves packet command id" {
 ///|
 test "mooncode projected command event owns stable fallback ids" {
   let first = append_projected_command_event(
-    { "id": "agent-demo" },
+    { "id": "code-demo" },
     action="accept",
     status="queued",
     detail="Accept tools/demo/main.mbt",
@@ -51,7 +51,7 @@ test "mooncode projected command event owns stable fallback ids" {
     command_packet=Json::object({}),
   )
   let second = append_projected_command_event(
-    { "id": "agent-demo" },
+    { "id": "code-demo" },
     action="accept",
     status="queued",
     detail="Accept tools/demo/main.mbt",
@@ -77,7 +77,7 @@ test "mooncode projected command event owns stable fallback ids" {
 ///|
 test "mooncode projected command event owns default path and packet" {
   let session = append_projected_command_event(
-    { "id": "agent-demo" },
+    { "id": "code-demo" },
     action="cancel",
     status="failed",
     detail="MoonClaw daemon is not running",
@@ -88,8 +88,7 @@ test "mooncode projected command event owns default path and packet" {
   assert_eq(json_string(events[0], "command", default=""), "cancel")
   assert_eq(json_string(events[0], "path", default="fallback"), "")
   assert_true(
-    summary_json_object_field(events[0], "command_packet")
-    is Some(Json::Object(_)),
+    summary_json_object_field(events[0], "command_packet") is Some(Object(_)),
   )
 }
 
@@ -270,27 +269,31 @@ test "mooncode projects session transcript commands and durable events together"
 }
 
 ///|
-test "mooncode prefers raw MoonClaw events over transcript fallback" {
+test "mooncode prefers runtime raw events over transcript projection" {
   let events = project_session_events_for_session(
     {
       "id": "s1",
       "transcript": [
         {
           "role": "user",
-          "id": "fallback-message",
-          "content": "Fallback should not be used",
+          "id": "projected-message",
+          "content": "Transcript projection should not be used",
         },
       ],
     },
     [
       {
         "id": "raw-user",
-        "created": "2026-06-17T00:00:00Z",
-        "desc": { "msg": "UserMessage", "content": "Use raw event" },
+        "created_at": "2026-06-17T00:00:00Z",
+        "lane": "transcript",
+        "kind": "user",
+        "title": "User prompt",
+        "status": "done",
+        "detail": "Use raw event",
       },
     ],
     [],
-    fallback_created_at="2026-06-17T00:00:01Z",
+    projected_created_at="2026-06-17T00:00:01Z",
   )
   assert_eq(events.length(), 1)
   assert_eq(json_string(events[0], "id", default=""), "raw-user")

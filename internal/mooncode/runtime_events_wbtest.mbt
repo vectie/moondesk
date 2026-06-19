@@ -4,11 +4,11 @@
 ///|
 fn runtime_json_string_array_items(json : Json, key : String) -> Array[String] {
   match runtime_json_object_field(json, key) {
-    Some(Json::Array(values)) => {
+    Some(Array(values)) => {
       let result : Array[String] = []
       for value in values {
         match value {
-          Json::String(text) => result.push(text)
+          String(text) => result.push(text)
           _ => ()
         }
       }
@@ -19,7 +19,7 @@ fn runtime_json_string_array_items(json : Json, key : String) -> Array[String] {
 }
 
 ///|
-test "mooncode normalizes OpenSeek runtime events into lanes" {
+test "mooncode normalizes MoonCode runtime events into lanes" {
   let fallback_a = runtime_event_fallback_id({
     "event": "assistant_delta",
     "content": "hello",
@@ -101,12 +101,12 @@ test "mooncode normalizes OpenSeek runtime events into lanes" {
   assert_eq(json_string(test_packet, "command_id", default=""), "cmd-test-1")
   assert_eq(json_string(test_packet, "action", default=""), "run_tests")
   guard normalize_runtime_event(
-      { "event": "agent_finished", "answer": "done" },
+      { "event": "runtime_finished", "answer": "done" },
       fallback_id="runtime-3",
       fallback_created_at="2026-06-15T00:00:00Z",
     )
     is Some(review_event) else {
-    fail("agent_finished was not normalized")
+    fail("runtime_finished was not normalized")
   }
   assert_eq(json_string(review_event, "lane", default=""), "review")
   assert_eq(json_string(review_event, "kind", default=""), "finish")
@@ -182,7 +182,7 @@ test "mooncode normalizes OpenSeek runtime events into lanes" {
 }
 
 ///|
-test "mooncode runtime event ingest report accepts canonical and openseek events" {
+test "mooncode runtime event ingest report accepts canonical and mooncode events" {
   let report = runtime_event_ingest_report(
     {
       "events": [
@@ -202,7 +202,7 @@ test "mooncode runtime event ingest report accepts canonical and openseek events
         { "event": "unknown_runtime_event" },
       ],
     },
-    session_id="agent-demo",
+    session_id="code-demo",
     ingested_at="2026-06-15T00:00:00Z",
   )
   assert_eq(json_string(report, "status", default=""), "accepted")
@@ -226,7 +226,7 @@ test "mooncode runtime event ingest report accepts canonical and openseek events
 }
 
 ///|
-test "mooncode native runtime event report normalizes openseek events before merge" {
+test "mooncode native runtime event report normalizes mooncode events before merge" {
   let report = runtime_native_event_report(
     {
       "kind": "mooncode-runtime-events-state",
@@ -344,7 +344,7 @@ test "mooncode derives runtime command rows from canonical event progress" {
       event_record(
         id="evt-a-1",
         lane="runtime",
-        kind="agent_update",
+        kind="runtime_update",
         title="Started",
         status="done",
         created_at="2026-06-17T00:00:00Z",
@@ -374,7 +374,7 @@ test "mooncode derives runtime command rows from canonical event progress" {
       event_record(
         id="unscoped",
         lane="runtime",
-        kind="agent_update",
+        kind="runtime_update",
         title="Unscoped",
         status="done",
         created_at="2026-06-17T00:00:03Z",
@@ -442,10 +442,10 @@ test "mooncode runtime event ingest accepts moonclaw run_tests proof events" {
 }
 
 ///|
-test "mooncode runtime event ingest accepts moonclaw tool events" {
+test "mooncode runtime event ingest rejects descriptor tool events" {
   let report = runtime_event_ingest_report(
     {
-      "id": "evt-moonclaw-tool",
+      "id": "evt-descriptor-tool",
       "created": 0,
       "desc": {
         "msg": "PostToolCall",
@@ -465,51 +465,11 @@ test "mooncode runtime event ingest accepts moonclaw tool events" {
     session_id="s1",
     ingested_at="2026-06-15T00:00:00Z",
   )
-  assert_eq(json_string(report, "status", default=""), "accepted")
+  assert_eq(json_string(report, "status", default=""), "empty")
+  assert_eq(runtime_json_int(report, "accepted_count", default=-1), 0)
+  assert_eq(runtime_json_int(report, "rejected_count", default=0), 1)
   let events = runtime_json_array_items(report, "events")
-  assert_eq(events.length(), 1)
-  assert_eq(json_string(events[0], "lane", default=""), "test")
-  assert_eq(json_string(events[0], "kind", default=""), "shell")
-  assert_eq(json_string(events[0], "kind", default=""), "shell")
-  assert_true(
-    json_string(events[0], "detail", default="").contains("Total tests"),
-  )
-}
-
-///|
-test "mooncode runtime event ingest report owns moonclaw descriptor fallback" {
-  let report = runtime_event_ingest_report_with_moonclaw_adapter(
-    {
-      "events": [
-        {
-          "created": "2026-06-16T00:00:00Z",
-          "desc": { "msg": "UserMessage", "content": "Create a MoonBook tool" },
-        },
-      ],
-    },
-    session_id="agent-demo",
-    ingested_at="2026-06-16T00:00:01Z",
-  )
-  assert_eq(
-    json_string(report, "status", default=""),
-    "accepted-legacy-moonclaw",
-  )
-  assert_eq(runtime_json_int(report, "accepted_count", default=0), 1)
-  assert_eq(
-    json_string(report, "legacy_adapter", default=""),
-    "mooncode.moonclaw.desc",
-  )
-  let events = runtime_json_array_items(report, "events")
-  assert_eq(events.length(), 1)
-  assert_true(
-    json_string(events[0], "id", default="").has_prefix("mooncode-event-"),
-  )
-  assert_eq(json_string(events[0], "lane", default=""), "transcript")
-  assert_eq(json_string(events[0], "kind", default=""), "user")
-  assert_eq(
-    json_string(events[0], "detail", default=""),
-    "Create a MoonBook tool",
-  )
+  assert_eq(events.length(), 0)
 }
 
 ///|
@@ -518,7 +478,7 @@ test "mooncode normalizes native runtime loop responses" {
       {
         "kind": "mooncode-runtime-loop",
         "protocol": protocol_version(),
-        "session_id": "agent-demo",
+        "session_id": "code-demo",
         "book_root": "/tmp/demo-book",
         "consumer_id": "moonclaw-native-runtime-loop",
         "ran_turn_count": 0,
@@ -632,7 +592,7 @@ test "mooncode extracts native response events from loop payloads" {
     {
       "kind": "mooncode-runtime-loop",
       "protocol": protocol_version(),
-      "session_id": "agent-demo",
+      "session_id": "code-demo",
       "book_root": "/tmp/demo-book",
       "stopped_by": "idle",
       "message": "MoonClaw native runtime loop reached idle.",
@@ -707,7 +667,7 @@ test "mooncode appends native response events with durable id dedupe" {
     {
       "kind": "mooncode-runtime-loop",
       "protocol": protocol_version(),
-      "session_id": "agent-demo",
+      "session_id": "code-demo",
       "stopped_by": "idle",
       "events": [existing_event],
       "execution": { "events": [new_event] },
@@ -733,7 +693,7 @@ test "mooncode projected native response events own loop fallback id" {
   let response : Json = {
     "kind": "mooncode-runtime-loop",
     "protocol": protocol_version(),
-    "session_id": "agent-demo",
+    "session_id": "code-demo",
     "consumer_id": "moondesk-native-runtime-loop",
     "ran_turn_count": 2,
     "failed_turn_count": 1,
@@ -890,7 +850,7 @@ test "mooncode runtime event command progress groups scoped events" {
       id="finish",
       lane="review",
       kind="finish",
-      title="Agent finished",
+      title="Runtime finished",
       status="done",
       created_at="2026-06-15T00:00:03Z",
       detail="done",
@@ -940,7 +900,7 @@ test "mooncode runtime event sink response owns event surface" {
     event_log_path="/tmp/session/events.jsonl",
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
   )
   assert_eq(
     json_string(response, "kind", default=""),
@@ -960,8 +920,7 @@ test "mooncode runtime event sink response owns event surface" {
     "/api/mooncode/sessions/session-demo/runtime-events",
   )
   assert_true(
-    runtime_json_object_field(response, "runtime_protocol")
-    is Some(Json::Object(_)),
+    runtime_json_object_field(response, "runtime_protocol") is Some(Object(_)),
   )
   assert_eq(
     json_string(
@@ -1002,7 +961,7 @@ test "mooncode runtime event sink response owns event surface" {
       "id": "session-demo",
       "workspace_id": "book-demo",
       "workspace_name": "Demo",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     event_log_path="/tmp/session/events.jsonl",
   )
@@ -1012,7 +971,10 @@ test "mooncode runtime event sink response owns event surface" {
   )
   assert_eq(json_string(aggregate, "workspace_id", default=""), "book-demo")
   assert_eq(json_string(aggregate, "workspace_name", default=""), "Demo")
-  assert_eq(json_string(aggregate, "task_id", default=""), "task-demo")
+  assert_eq(
+    json_string(aggregate, "runtime_session_id", default=""),
+    "runtime-demo",
+  )
   let native = runtime_event_sink_result_response_with_native(
     "session-demo",
     [event],
@@ -1020,13 +982,13 @@ test "mooncode runtime event sink response owns event surface" {
       "id": "session-demo",
       "workspace_id": "book-demo",
       "workspace_name": "Demo",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     event_log_path="/tmp/session/events.jsonl",
     local_event_count=1,
     native_state={
       "native_runtime_ready": true,
-      "endpoint": "/v1/mooncode/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
+      "endpoint": "/v1/code/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
       "error": "",
     },
     native_report={
@@ -1054,11 +1016,11 @@ test "mooncode runtime event sink response owns event surface" {
   assert_true(json_bool(native, "native_runtime_ready", default=false))
   assert_eq(
     json_string(native, "native_runtime_events_endpoint", default=""),
-    "/v1/mooncode/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
+    "/v1/code/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
   )
   assert_true(
     runtime_json_object_field(native, "native_runtime_events_report")
-    is Some(Json::Object(_)),
+    is Some(Object(_)),
   )
 }
 
@@ -1099,7 +1061,7 @@ test "mooncode runtime event sink separates unscoped live events" {
     event_log_path="/tmp/session/events.jsonl",
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
   )
   let command_progress = runtime_json_object_field_or_empty(
     response, "command_progress",
@@ -1209,13 +1171,12 @@ test "mooncode runtime service state tracks daemon service lifecycle" {
 ///|
 test "mooncode native runtime events state owns unavailable shape" {
   let state = native_runtime_events_unavailable_state(
-    "/v1/mooncode/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
-    "MoonClaw daemon is not running",
+    "/v1/code/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook", "MoonClaw daemon is not running",
   )
   assert_false(json_bool(state, "native_runtime_ready", default=true))
   assert_eq(
     json_string(state, "endpoint", default=""),
-    "/v1/mooncode/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
+    "/v1/code/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
   )
   assert_eq(
     json_string(state, "error", default=""),
@@ -1231,12 +1192,12 @@ test "mooncode native runtime events state annotates available payload" {
       "kind": "mooncode-native-runtime-events",
       "events": [{ "id": "native-1" }],
     },
-    "/v1/mooncode/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
+    "/v1/code/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
   )
   assert_true(json_bool(state, "native_runtime_ready", default=false))
   assert_eq(
     json_string(state, "endpoint", default=""),
-    "/v1/mooncode/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
+    "/v1/code/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
   )
   assert_eq(json_string(state, "error", default="fallback"), "")
   assert_eq(json_array_items(state, "events").length(), 1)

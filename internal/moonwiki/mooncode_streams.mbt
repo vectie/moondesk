@@ -11,7 +11,7 @@ async fn handle_mooncode_session_stream(
     query_value(request_path, "since").unwrap_or(""),
   )
   let content_type = @mooncode.stream_content_type(format)
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
       let live = @mooncode.stream_live_enabled_value(
         query_value(request_path, "live").unwrap_or(""),
@@ -87,7 +87,7 @@ async fn handle_mooncode_session_stream_state(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let session = match read_agent_session_record(workspace_root, session_id) {
+  let session = match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => session
     None => {
       send_api_error(
@@ -99,7 +99,7 @@ async fn handle_mooncode_session_stream_state(
   let since = @mooncode.stream_since_value(
     query_value(request_path, "since").unwrap_or(""),
   )
-  if method_ is @http.RequestMethod::Post {
+  if method_ is Post {
     let payload = match read_json_body(body) {
       Some(json) => json
       None => {
@@ -176,7 +176,7 @@ async fn mooncode_live_stream_projection(
   let attempts = @mooncode.stream_live_attempt_count(timeout_ms, poll_ms)
   for _ in 0..<attempts {
     @async.sleep(poll_ms)
-    match read_agent_session_record(workspace_root, session_id) {
+    match read_mooncode_session_record(workspace_root, session_id) {
       Some(session) => {
         let projected = attach_mooncode_session_projection(
           workspace_root, session,
@@ -188,7 +188,7 @@ async fn mooncode_live_stream_projection(
       None => ()
     }
   }
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => attach_mooncode_session_projection(workspace_root, session)
     None => initial
   }
@@ -251,8 +251,8 @@ async fn mooncode_native_stream_text(
   session_id : String,
   format : String,
   since : Int,
-  wait_ms? : Int = 0,
-  poll_ms? : Int = 100,
+  wait_ms~ : Int,
+  poll_ms~ : Int,
 ) -> Result[String, String] {
   let daemon = moonclaw_daemon_status(workspace_root)
   let running = json_bool(daemon, "running", default=false)
@@ -289,7 +289,7 @@ test "mooncode jsonl stream includes meta events and done records" {
   let fields : Map[String, Json] = {}
   fields["id"] = "s1".to_json()
   fields["workspace_id"] = "book".to_json()
-  fields["moonclaw_task_id"] = "task".to_json()
+  fields["mooncode_runtime_session_id"] = "runtime".to_json()
   fields["mooncode_events"] = Json::array([event])
   let session = Json::object(fields)
   let text = @mooncode.stream_jsonl_text(session, [event])
@@ -361,7 +361,7 @@ test "mooncode jsonl stream supports incremental since sequence" {
   assert_eq(json_int(meta, "next_since", default=0), 2)
   assert_eq(json_int(item, "sequence", default=0), 2)
   let event_payload = match item {
-    Json::Object(object) => object.get("event").unwrap_or(Json::object({}))
+    Object(object) => object.get("event").unwrap_or(Json::object({}))
     _ => Json::object({})
   }
   assert_eq(json_string(event_payload, "id", default=""), "e2")
@@ -377,15 +377,15 @@ async test "mooncode stream state records resumable checkpoint" {
   )
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": root,
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   append_mooncode_event_log(
     root,
-    "agent-demo",
+    "code-demo",
     @mooncode.event_record(
       id="event-1",
       lane="runtime",
@@ -398,7 +398,7 @@ async test "mooncode stream state records resumable checkpoint" {
   )
   append_mooncode_event_log(
     root,
-    "agent-demo",
+    "code-demo",
     @mooncode.event_record(
       id="event-2",
       lane="test",
@@ -409,7 +409,7 @@ async test "mooncode stream state records resumable checkpoint" {
       detail="second",
     ),
   )
-  assert_eq(read_mooncode_event_log(root, "agent-demo").length(), 2)
+  assert_eq(read_mooncode_event_log(root, "code-demo").length(), 2)
   let state = mooncode_stream_state_projection(root, session, 1, "moondesk-ui")
   assert_eq(json_string(state, "kind", default=""), "mooncode-stream-state")
   assert_eq(json_int(state, "latest_sequence", default=0), 2)
@@ -434,9 +434,7 @@ async test "mooncode stream state records resumable checkpoint" {
     json_int(state, "next_since", default=0),
     2,
   )
-  write_mooncode_stream_checkpoint(
-    root, "agent-demo", "moondesk-ui", checkpoint,
-  )
+  write_mooncode_stream_checkpoint(root, "code-demo", "moondesk-ui", checkpoint)
   let resumed = mooncode_stream_state_projection(
     root, session, 2, "moondesk-ui",
   )
@@ -451,7 +449,7 @@ async test "mooncode stream state records resumable checkpoint" {
   assert_true(@fs.exists(json_string(saved, "checkpoint_path", default="")))
   assert_true(
     json_string(resumed, "checkpoint_endpoint", default="").contains(
-      "/api/mooncode/sessions/agent-demo/stream-state",
+      "/api/mooncode/sessions/code-demo/stream-state",
     ),
   )
   let native_tail = json_string(
@@ -461,7 +459,7 @@ async test "mooncode stream state records resumable checkpoint" {
   )
   assert_true(
     native_tail.contains(
-      @mooncode.moonclaw_native_stream_endpoint("agent-demo", root, "sse", 2),
+      @mooncode.moonclaw_native_stream_endpoint("code-demo", root, "sse", 2),
     ),
   )
 }
@@ -470,14 +468,14 @@ async test "mooncode stream state records resumable checkpoint" {
 test "mooncode native stream path targets typed runtime endpoint" {
   assert_eq(
     @mooncode.moonclaw_native_stream_endpoint(
-      "agent-demo",
+      "code-demo",
       "/tmp/moon book",
       "sse",
       7,
       wait_ms=1000,
       poll_ms=100,
     ),
-    "/v1/mooncode/sessions/agent-demo/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7&wait_ms=1000&poll_ms=100",
+    "/v1/code/sessions/code-demo/stream?book_root=%2Ftmp%2Fmoon%20book&format=sse&since=7&wait_ms=1000&poll_ms=100",
   )
 }
 

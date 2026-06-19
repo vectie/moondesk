@@ -6,6 +6,9 @@ import {
 }
 
 // Values
+pub fn town_service_config_path(String) -> String
+
+pub async fn town_service_descriptor(String, String) -> Json
 
 // Errors
 

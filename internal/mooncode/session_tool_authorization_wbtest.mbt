@@ -11,7 +11,7 @@ test "mooncode tool authorization response follows extracted approval state" {
       command="npm run build",
     )
     |> runtime_with_field("tool_call_id", "call-build".to_json())
-  let pending = tool_authorization_response("agent-demo", preview, [preview], {
+  let pending = tool_authorization_response("code-demo", preview, [preview], {
     "kind": "mooncode-tool-approvals",
   })
   assert_eq(json_string(pending, "decision", default=""), "requires_approval")
@@ -19,7 +19,7 @@ test "mooncode tool authorization response follows extracted approval state" {
   assert_eq(json_string(pending, "approval_state", default=""), "pending")
   assert_eq(json_string(pending, "command", default=""), "npm run build")
   let approved = tool_authorization_response(
-    "agent-demo",
+    "code-demo",
     preview,
     [
       preview,
@@ -40,7 +40,7 @@ test "mooncode tool authorization response follows extracted approval state" {
   assert_eq(json_string(approved, "decision", default=""), "allowed")
   assert_true(json_bool(approved, "allowed", default=false))
   let rejected = tool_authorization_response(
-    "agent-demo",
+    "code-demo",
     preview,
     [
       preview,
@@ -167,7 +167,7 @@ test "mooncode tool authorization allows auto-approved read previews" {
     detail="{\"path\":\"wiki/index.md\"}",
     path="wiki/index.md",
   )
-  let response = tool_authorization_response("agent-demo", preview, [preview], {
+  let response = tool_authorization_response("code-demo", preview, [preview], {
     "kind": "mooncode-tool-approvals",
   })
   assert_eq(json_string(response, "decision", default=""), "allowed")

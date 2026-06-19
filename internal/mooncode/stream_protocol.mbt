@@ -48,7 +48,7 @@ pub fn stream_checkpoint_record(
     "consumer_id": consumer_id,
     "workspace_id": stream_json_string(session, "workspace_id", default=""),
     "workspace_name": stream_json_string(session, "workspace_name", default=""),
-    "task_id": stream_json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "last_seen_sequence": clamped,
     "latest_sequence_at_record": latest_sequence,
     "recorded_at": recorded_at,
@@ -87,7 +87,7 @@ pub fn stream_state_record(
     "consumer_id": consumer_id,
     "workspace_id": stream_json_string(session, "workspace_id", default=""),
     "workspace_name": stream_json_string(session, "workspace_name", default=""),
-    "task_id": stream_json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "requested_since": requested_since,
     "latest_sequence": latest_sequence,
     "emitted_count": emitted_count,
@@ -105,14 +105,14 @@ pub fn stream_state_record(
     "poll_contract": {
       "get": "Read current append-log cursor state and tail records after ?since=<sequence>.",
       "live_get": "Use /stream?format=jsonl|sse&since=<sequence>&live=true for bounded live-tail waiting before replay.",
-      "post": "Persist {consumer_id,last_seen_sequence} after a UI, MoonClaw, or standalone mooncode consumer has processed a tail batch.",
+      "post": "Persist {consumer_id,last_seen_sequence} after a UI, MoonClaw, or protocol consumer has processed a tail batch.",
       "cursor_rule": "Use response.next_since as the next ?since value; sequence numbers are 1-based event positions and ?since means already seen.",
     },
     "live_tail_boundary": {
-      "current": "bounded live append-log tail over the Moondesk projection, falling back to MoonClaw native /v1/mooncode stream when available",
+      "current": "bounded live append-log tail over the Moondesk projection, falling back to MoonClaw native /v1/code stream when available",
       "moondesk_live_endpoint": moondesk_live_endpoint,
       "native_blocking_tail": native_blocking_tail,
-      "rule": "Moondesk owns resumable cursor state and live-tail projection; MoonClaw or standalone mooncode owns event production and native blocking runtime streams.",
+      "rule": "Moondesk owns resumable cursor state and live-tail projection; MoonClaw owns event production and native blocking runtime streams.",
     },
     "owner": stream_owner_record(),
   }
@@ -392,7 +392,7 @@ pub fn stream_meta_record(
     "type": "meta",
     "session_id": stream_json_string(session, "id", default=""),
     "workspace_id": stream_json_string(session, "workspace_id", default=""),
-    "task_id": stream_json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "event_count": stream_json_array_items(session, "mooncode_events").length(),
     "since": since,
     "emitted_count": emitted_count,
@@ -465,50 +465,29 @@ fn stream_owner_record() -> Json {
   {
     "ui": "moondesk",
     "runtime": "moonclaw",
-    "extractable_component": "mooncode",
+    "standalone_component": "mooncode",
   }
 }
 
 ///|
 fn stream_json_array_items(json : Json, key : String) -> Array[Json] {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::Array(items)) => items
-        _ => []
-      }
-    _ => []
-  }
+  @mooncore.json_array_items(json, key)
 }
 
 ///|
 fn stream_json_string(json : Json, key : String, default~ : String) -> String {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::String(value)) => value
-        _ => default
-      }
-    _ => default
-  }
+  @mooncore.json_string(json, key, default~)
 }
 
 ///|
 fn stream_json_int(json : Json, key : String, default~ : Int) -> Int {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(value) => @json.from_json(value) catch { _ => default }
-        _ => default
-      }
-    _ => default
-  }
+  @mooncore.json_int(json, key, default~)
 }
 
 ///|
 fn stream_json_int_opt(json : Json, key : String) -> Int? {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
         Some(value) => Some(@json.from_json(value) catch { _ => 0 })
         _ => None

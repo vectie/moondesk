@@ -8,7 +8,7 @@ pub fn runtime_event_sink_response(
   event_log_path~ : String,
   workspace_id~ : String,
   workspace_name~ : String,
-  task_id~ : String,
+  runtime_session_id~ : String,
 ) -> Json {
   {
     "protocol": protocol_version(),
@@ -16,7 +16,7 @@ pub fn runtime_event_sink_response(
     "session_id": session_id,
     "workspace_id": workspace_id,
     "workspace_name": workspace_name,
-    "task_id": task_id,
+    "runtime_session_id": runtime_session_id,
     "event_log_path": event_log_path,
     "event_count": events.length(),
     "events": Json::array(events),
@@ -143,7 +143,7 @@ pub fn runtime_event_sink_result_response(
     event_log_path~,
     workspace_id=runtime_json_string(session, "workspace_id", default=""),
     workspace_name=runtime_json_string(session, "workspace_name", default=""),
-    task_id=runtime_json_string(session, "moonclaw_task_id", default=""),
+    runtime_session_id=session_runtime_session_id(session),
   )
 }
 

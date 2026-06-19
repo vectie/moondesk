@@ -1,0 +1,37 @@
+///|
+fn pdf_watch_required_paths(pattern_id : String) -> Array[String] {
+  ignore(pattern_id)
+  let paths = [
+    "book.json",
+    pdf_watch_operator_config_relative_path(),
+    "raw/bootstrap/PDF_WATCH_CONTRACT.md",
+    pdf_watch_base_type_selection_relative_path(),
+    "raw/inbox",
+    "raw/inbox/.keep",
+    "raw/pdfs/.keep",
+    "raw/html/.keep",
+    "raw/extracted/.keep",
+    "raw/analysis-runs/.keep",
+    "wiki/index.md",
+    "wiki/methods/my-analysis-method.md",
+    "wiki/methods/analysis-method.md",
+    "wiki/sources/README.md",
+    "wiki/evidence-matrix.md",
+    "wiki/findings/README.md",
+    "wiki/reviews/pdf-watch-review.md",
+    "wiki/history/standing-watch.md",
+    "skills/pdf-watch/SKILL.md",
+    "skills/pdf-analysis/SKILL.md",
+    "schemas/pdf-source.schema.md",
+    "schemas/analysis-result.schema.md",
+    "book/Home.html",
+    "book/site/generated/index.html",
+    "skills/tool-watch/SKILL.md",
+    "skills/tool-build/SKILL.md",
+    "wiki/tools/tool-spec.md",
+    "tool-manifest.json",
+    "app/index.html",
+    "book/site/generated/tool.html",
+  ]
+  paths
+}

@@ -33,7 +33,7 @@ pub fn patch_set_manifest(
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "recorded_at": recorded_at,
     "manifest_path": manifest_path,
     "absolute_manifest_path": absolute_manifest_path,
@@ -60,7 +60,7 @@ pub fn patch_set_manifest(
       session, "mooncode_last_change_set_manifest",
     ),
     "owner": review_artifact_owner("moonbook"),
-    "next_runtime_step": "MoonClaw or standalone MoonCode should turn this patch set into explicit staged hunks with apply/revert and verified test gates.",
+    "next_runtime_step": "MoonClaw should turn this patch set into explicit staged hunks with apply/revert and verified test gates.",
   }
 }
 

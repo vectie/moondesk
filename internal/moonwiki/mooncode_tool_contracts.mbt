@@ -1,5 +1,5 @@
 ///|
-test "mooncode tool contract covers OpenSeek-style builtins" {
+test "mooncode tool contract covers MoonCode-style builtins" {
   let contract = @mooncode.tool_contract_json()
   assert_eq(json_string(contract, "kind", default=""), "mooncode-tool-contract")
   assert_eq(json_string(contract, "owner", default=""), "moonclaw")
@@ -7,9 +7,7 @@ test "mooncode tool contract covers OpenSeek-style builtins" {
   for required in @mooncode.runtime_tool_names() {
     assert_true(ids.contains(required))
   }
-  assert_true(
-    json_string(contract, "execution_owner", default="").contains("mooncode"),
-  )
+  assert_eq(json_string(contract, "execution_owner", default=""), "moonclaw")
   let constraints = json_object_field_or_empty(contract, "constraints")
   assert_true(
     json_string(constraints, "path_rule", default="").contains(

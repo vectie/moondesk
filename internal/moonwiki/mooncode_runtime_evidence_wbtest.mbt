@@ -4,11 +4,11 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
     @desk.stable_id("runtime-event-test", @async.now().to_string())
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": root,
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
     "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
@@ -19,11 +19,11 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
   let runtime_command = @mooncode.runtime_command_record(
     session, payload, message, packet,
   )
-  append_mooncode_command_log(root, "agent-demo", packet)
-  append_mooncode_runtime_command_log(root, "agent-demo", runtime_command)
+  append_mooncode_command_log(root, "code-demo", packet)
+  append_mooncode_runtime_command_log(root, "code-demo", runtime_command)
   append_mooncode_runtime_dispatch_log(
     root,
-    "agent-demo",
+    "code-demo",
     @mooncode.projected_runtime_dispatch_receipt(
       session, runtime_command, "2026-06-14T00:01:00Z",
     ),
@@ -150,7 +150,7 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
             "command_id": command_id,
           },
           {
-            "event": "agent_finished",
+            "event": "runtime_finished",
             "id": "finish-1",
             "created_at": "2026-06-14T00:03:00Z",
             "answer": "done",
@@ -161,7 +161,7 @@ async test "mooncode durable runtime event satisfies action plan test proof" {
       },
       ingested_at="2026-06-15T00:00:00Z",
     ) {
-    append_mooncode_event_log(root, "agent-demo", event)
+    append_mooncode_event_log(root, "code-demo", event)
   }
   let after = mooncode_action_plan_projection(root, session)
   let after_actions = json_array_items(after, "actions")
@@ -206,11 +206,11 @@ async test "mooncode runtime replay ack events persist as session evidence" {
     @desk.stable_id("runtime-replay-proof-test", @async.now().to_string())
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": root,
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
     "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
@@ -221,8 +221,8 @@ async test "mooncode runtime replay ack events persist as session evidence" {
   let runtime_command = @mooncode.runtime_command_record(
     session, payload, message, packet,
   )
-  append_mooncode_command_log(root, "agent-demo", packet)
-  append_mooncode_runtime_command_log(root, "agent-demo", runtime_command)
+  append_mooncode_command_log(root, "code-demo", packet)
+  append_mooncode_runtime_command_log(root, "code-demo", runtime_command)
   let command_id = json_string(packet, "command_id", default="")
   let ack_receipts = @mooncode.runtime_replay_ack_receipts_with_defaults(
     session,
@@ -254,19 +254,19 @@ async test "mooncode runtime replay ack events persist as session evidence" {
           "status": "passed",
           "exit_code": 0,
         },
-        { "event": "agent_finished", "id": "evt-finish", "answer": "done" },
+        { "event": "runtime_finished", "id": "evt-finish", "answer": "done" },
       ],
     },
     acknowledged_at="2026-06-15T00:01:00Z",
   )
   assert_eq(ack_receipts.length(), 1)
-  append_mooncode_runtime_dispatch_log(root, "agent-demo", ack_receipts[0])
+  append_mooncode_runtime_dispatch_log(root, "code-demo", ack_receipts[0])
   let ack_events = @mooncode.runtime_replay_ack_normalized_events(ack_receipts)
   assert_eq(ack_events.length(), 4)
   for event in ack_events {
-    append_mooncode_event_log(root, "agent-demo", event)
+    append_mooncode_event_log(root, "code-demo", event)
   }
-  let stored_events = read_mooncode_event_log(root, "agent-demo")
+  let stored_events = read_mooncode_event_log(root, "code-demo")
   assert_eq(stored_events.length(), 4)
   let stored_packet = json_object_field_or_empty(
     stored_events[0],
@@ -288,13 +288,13 @@ async test "mooncode runtime replay ack events persist as session evidence" {
   assert_eq(json_int(projection, "missing_required_event_count", default=-1), 0)
   assert_eq(
     json_string(projection, "manifest_path", default=""),
-    @mooncode.runtime_evidence_manifest_relative_path("agent-demo"),
+    @mooncode.runtime_evidence_manifest_relative_path("code-demo"),
   )
   assert_eq(
     json_string(projection, "absolute_manifest_path", default=""),
     @pathx.join(
       root,
-      @mooncode.runtime_evidence_manifest_relative_path("agent-demo"),
+      @mooncode.runtime_evidence_manifest_relative_path("code-demo"),
     ),
   )
   let with_manifest = write_mooncode_runtime_evidence_if_possible(root, session)
@@ -308,7 +308,7 @@ async test "mooncode runtime replay ack events persist as session evidence" {
   assert_eq(json_string(manifest, "status", default=""), "proven")
   assert_eq(
     json_string(manifest, "manifest_path", default=""),
-    @mooncode.runtime_evidence_manifest_relative_path("agent-demo"),
+    @mooncode.runtime_evidence_manifest_relative_path("code-demo"),
   )
   assert_true(
     @fs.exists(json_string(manifest, "absolute_manifest_path", default="")),

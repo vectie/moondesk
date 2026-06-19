@@ -15,53 +15,28 @@ pub fn workspace_from_root(
     id=@moondesk_core.stable_id("book", name),
     name~,
     root_path~,
-    kind=@moondesk_core.WorkspaceKind::MoonBook,
+    kind=MoonBook,
   )
 }
 
 ///|
 pub fn canonical_sections() -> Array[MoonBookSection] {
   [
-    {
-      label: "Wiki",
-      path: "wiki",
-      layer: @moondesk_core.SourceLayer::Wiki,
-      writable: false,
-    },
-    {
-      label: "Raw Evidence",
-      path: "raw",
-      layer: @moondesk_core.SourceLayer::RawEvidence,
-      writable: false,
-    },
-    {
-      label: "Inbox",
-      path: "inbox",
-      layer: @moondesk_core.SourceLayer::Inbox,
-      writable: true,
-    },
-    {
-      label: "Reviews",
-      path: "reviews",
-      layer: @moondesk_core.SourceLayer::Review,
-      writable: false,
-    },
+    { label: "Wiki", path: "wiki", layer: Wiki, writable: false },
+    { label: "Raw Evidence", path: "raw", layer: RawEvidence, writable: false },
+    { label: "Inbox", path: "inbox", layer: Inbox, writable: true },
+    { label: "Reviews", path: "reviews", layer: Review, writable: false },
     {
       label: "Generated Site",
       path: "book/site/generated",
-      layer: @moondesk_core.SourceLayer::GeneratedSite,
+      layer: GeneratedSite,
       writable: false,
     },
-    {
-      label: "Journal",
-      path: "wiki/history",
-      layer: @moondesk_core.SourceLayer::History,
-      writable: false,
-    },
+    { label: "Journal", path: "wiki/history", layer: History, writable: false },
     {
       label: "MoonClaw Runs",
       path: "moonclaw-jobs",
-      layer: @moondesk_core.SourceLayer::RunArtifact,
+      layer: RunArtifact,
       writable: false,
     },
   ]
@@ -76,7 +51,7 @@ pub fn section_entries(
       workspace_id~,
       path=section.path,
       display_name=section.label,
-      kind=@moondesk_core.EntryKind::Directory,
+      kind=Directory,
       source_layer=section.layer,
       writable=section.writable,
     )

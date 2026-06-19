@@ -4,10 +4,10 @@ pub fn workspace(
   name~ : String,
   root_path~ : String,
   kind~ : WorkspaceKind,
-  status? : WorkspaceStatus = WorkspaceStatus::Ready,
+  status? : WorkspaceStatus = Ready,
   last_seen_at? : String? = None,
 ) -> DeskWorkspace {
-  DeskWorkspace::{ id, name, root_path, kind, status, last_seen_at }
+  { id, name, root_path, kind, status, last_seen_at }
 }
 
 ///|
@@ -21,7 +21,7 @@ pub fn file_entry(
   modified_at? : String? = None,
 ) -> DeskFileEntry {
   let kind = infer_entry_kind(path, is_directory~)
-  DeskFileEntry::{
+  {
     id: stable_id(workspace_id, path),
     workspace_id,
     path,
@@ -47,7 +47,7 @@ pub fn file_entry_detail(
   size_bytes? : Int? = None,
   modified_at? : String? = None,
 ) -> DeskFileEntry {
-  DeskFileEntry::{
+  {
     id: stable_id(workspace_id, path),
     workspace_id,
     path,
@@ -67,8 +67,8 @@ pub fn artifact_entry(workspace_id~ : String, path~ : String) -> DeskFileEntry {
     workspace_id~,
     path~,
     display_name=display_name(path),
-    kind=EntryKind::Artifact,
-    source_layer=SourceLayer::RunArtifact,
+    kind=Artifact,
+    source_layer=RunArtifact,
   )
 }
 
@@ -78,7 +78,7 @@ pub fn preview(
   body~ : String,
   warnings? : Array[String] = [],
 ) -> DeskPreview {
-  DeskPreview::{
+  {
     entry_id: entry.id,
     renderer: renderer_for_kind(entry.kind),
     title: entry.display_name,
@@ -89,13 +89,12 @@ pub fn preview(
 }
 
 ///|
-pub fn clamp_quality_threshold(value : Int) -> Int {
-  if value < 1 {
-    1
-  } else if value > 100 {
-    100
+pub fn normalize_review_policy(value : String) -> String {
+  let policy = value.trim().to_owned()
+  if policy == "" {
+    "bookkeeper_review"
   } else {
-    value
+    policy
   }
 }
 
@@ -106,7 +105,7 @@ pub fn run_artifact(
   title? : String = display_name(path),
   kind? : EntryKind = infer_entry_kind(path),
 ) -> DeskRunArtifact {
-  DeskRunArtifact::{ id, path, title, kind }
+  { id, path, title, kind }
 }
 
 ///|
@@ -121,7 +120,7 @@ pub fn run_projection(
   started_at? : String? = None,
   updated_at? : String? = None,
 ) -> DeskRunProjection {
-  DeskRunProjection::{
+  {
     run_id,
     book_id,
     goal_id,

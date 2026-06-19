@@ -21,7 +21,7 @@ pub fn package_manifest(
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "context_path": context_path,
     "candidate_paths": string_array_json(package_candidate_paths(context_path)),
     "source_inventory": Json::array(source_inventory),
@@ -52,7 +52,7 @@ pub fn package_manifest(
     "detail": detail,
     "command_packet": command_packet,
     "owner": package_artifact_owner(),
-    "next_runtime_step": "MoonClaw or standalone MoonCode should turn this candidate manifest into a verified tool, miniapp, generated site, or app-tool bundle.",
+    "next_runtime_step": "MoonClaw should turn this candidate manifest into a verified tool, miniapp, generated site, or app-tool bundle.",
   }
 }
 
@@ -85,6 +85,6 @@ fn package_artifact_owner() -> Json {
     "runtime": "moonclaw",
     "artifact": "moonbook",
     "packaging": "moonbook",
-    "extractable_component": "mooncode",
+    "standalone_component": "mooncode",
   }
 }

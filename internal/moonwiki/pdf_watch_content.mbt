@@ -6,8 +6,7 @@ fn pdf_watch_skill_markdown(topic : String) -> String {
     "Use this skill to watch configured websites for \{topic} official evidence sources.",
     "",
     "- Keep browsing bounded to the configured website list.",
-    "- Prefer direct PDF links and official publication or notice pages that identify the source, including exchange HTML notices when no separate PDF exists.",
-    "- For exchangeable-bond active-universe runs, enumerate the complete official source universe first and prove instrument coverage before analysis starts.",
+    "- Prefer direct PDF links and official publication or notice pages that identify the source.",
     "- Deduplicate by URL, title, and sha256.",
     "- Save candidate PDFs under `raw/pdfs/`, HTML/source pages under `raw/html/`, extracted text under `raw/extracted/`, and source metadata under `wiki/sources/`.",
     "- Report no-change scans without updating durable findings.",
@@ -32,32 +31,32 @@ fn pdf_analysis_skill_markdown(topic : String) -> String {
 }
 
 ///|
-fn eb_tool_watch_skill_markdown(topic : String) -> String {
+fn tool_watch_skill_markdown(topic : String) -> String {
   [
-    "# EB Tool Watch",
+    "# Tool Watch",
     "",
-    "Use this tool-watch skill to keep the \{topic} EB evidence dashboard synchronized with accepted Bookkeeper results.",
+    "Use this tool-watch skill to keep generated \{topic} miniapps synchronized with accepted Bookkeeper results.",
     "",
     "- Treat `tool-manifest.json` as the Moontown-facing ToolBook manifest.",
-    "- Rebuild `book/site/generated/tool.html` and `app/index.html` only from accepted source-screen, validation, and workbook artifacts.",
-    "- Keep every visible announcement row linked to its official source URL, whether that source is a PDF or an exchange notice page.",
-    "- Mark missing or mismatched extracted text explicitly; do not reuse unrelated PDF text.",
+    "- Rebuild `book/site/generated/tool.html` and `app/index.html` only from accepted source-screen, validation, and analysis artifacts.",
+    "- Keep every visible record linked to its source URL.",
+    "- Mark missing or mismatched extracted text explicitly; do not reuse unrelated source text.",
     "- Publish no-change scans as status only, not as accepted knowledge.",
     "",
   ].join("\n")
 }
 
 ///|
-fn eb_tool_build_skill_markdown(topic : String) -> String {
+fn tool_build_skill_markdown(topic : String) -> String {
   [
-    "# EB Tool Build",
+    "# Tool Build",
     "",
-    "Use this tool-build skill when packaging the \{topic} EB watch as an app-tool-book surface.",
+    "Use this tool-build skill when packaging \{topic} research evidence as an executable app-tool-book surface.",
     "",
-    "- Inputs: `raw/analysis-runs/*official-source-screen.json`, `raw/analysis-runs/*official-pdf-candidates.json`, official-source records, extracted text, and MoonClaw AI analysis.",
-    "- Outputs: the EB XLSX workbook, workbook sidecars, `tool-manifest.json`, `wiki/reports/latest-analysis.md`, `book/site/generated/tool.html`, and `app/index.html`.",
+    "- Inputs: source records, extracted text, analysis results, and accepted review decisions.",
+    "- Outputs: `tool-manifest.json`, `wiki/reports/latest-analysis.md`, `book/site/generated/tool.html`, and `app/index.html`.",
     "- Preserve the research-book workflow while exposing reusable ToolBook entrypoints.",
-    "- Verify source-universe completeness, official hyperlinks, row counts, sidecar hashes, and text-match status before publishing.",
+    "- Verify source links, provenance, row counts, sidecar hashes, and text-match status before publishing.",
     "",
   ].join("\n")
 }
@@ -85,12 +84,46 @@ fn analysis_result_schema_markdown() -> String {
 }
 
 ///|
-fn book_pattern_title(pattern_id : String, topic : String) -> String {
-  if pattern_id == "exchangeable-bond-evidence-watch" {
-    "\{topic} Exchangeable Bond Evidence Watch"
+fn pdf_watch_index_markdown(
+  topic : String,
+  book_id : String,
+  pattern_id : String,
+  purpose : String,
+  websites : Array[String],
+) -> String {
+  let site_lines = if websites.length() == 0 {
+    "- pending"
   } else {
-    "\{topic} PDF Evidence Watch"
+    websites.map(site => "- \{site}").join("\n")
   }
+  [
+    "# \{book_pattern_title(pattern_id, topic)}",
+    "",
+    "- Book: `\{book_id}`",
+    "- Pattern: `\{pattern_id}`",
+    "- Status: initialized",
+    "",
+    purpose,
+    "",
+    "## Source Websites",
+    "",
+    site_lines,
+    "",
+    "## Workflow",
+    "",
+    "1. Watch configured websites for new PDFs.",
+    "2. Download PDFs and extract full text with provenance.",
+    "3. Analyze sources using `wiki/methods/my-analysis-method.md`.",
+    "4. Compare against the current wiki baseline.",
+    "5. Queue Bookkeeper review and publish only accepted knowledge.",
+    "",
+  ].join("\n")
+}
+
+///|
+fn book_pattern_title(pattern_id : String, topic : String) -> String {
+  ignore(pattern_id)
+  "\{topic} PDF Evidence Watch"
 }
 
 ///|
@@ -100,11 +133,8 @@ fn topic_from_book_title(
   fallback : String,
 ) -> String {
   let clean = title.trim().to_owned()
-  let suffix = if pattern_id == "exchangeable-bond-evidence-watch" {
-    " Exchangeable Bond Evidence Watch"
-  } else {
-    " PDF Evidence Watch"
-  }
+  ignore(pattern_id)
+  let suffix = " PDF Evidence Watch"
   if clean.has_suffix(suffix) && clean.length() > suffix.length() {
     clean[:clean.length() - suffix.length()].trim().to_owned()
   } else if clean != "" {
@@ -120,17 +150,10 @@ fn pdf_watch_goal_prompt(
   topic : String,
   purpose : String,
 ) -> String {
-  if pattern_id == "exchangeable-bond-evidence-watch" {
-    [
-      "Watch configured official websites for new exchangeable-bond PDFs for \{topic}.",
-      "",
-      "Purpose: \{purpose}",
-      "",
-      "Download and extract relevant PDFs, analyze lifecycle/credit/compliance fields using `wiki/methods/my-analysis-method.md`, compare against the existing MoonBook baseline, update wiki and XLSX output contracts only when accepted knowledge changes, queue Bookkeeper review, and notify only after accepted new knowledge.",
-    ].join("\n")
-  } else {
-    "Watch configured websites for new relevant PDFs, download and extract them, analyze using the book's method page, compare against the existing MoonBook baseline, update durable book files only when new knowledge appears, queue Bookkeeper review, and notify the operator only after accepted new knowledge."
-  }
+  ignore(pattern_id)
+  ignore(topic)
+  ignore(purpose)
+  "Watch configured websites for new relevant PDFs, download and extract them, analyze using the book's method page, compare against the existing MoonBook baseline, update durable book files only when new knowledge appears, queue Bookkeeper review, and notify the operator only after accepted new knowledge."
 }
 
 ///|
@@ -140,7 +163,7 @@ fn pdf_watch_catalog_entry(
   pattern_id~ : String,
   purpose~ : String,
   book_root~ : String,
-  skill_pack? : Array[String] = [],
+  skill_pack~ : Array[String],
 ) -> Json {
   let skills = if skill_pack.length() == 0 {
     default_skill_pack_for_pattern(pattern_id)

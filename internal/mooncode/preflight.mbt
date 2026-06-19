@@ -39,7 +39,7 @@ pub fn command_preflight(
       "ui": "moondesk",
       "runtime": "moonclaw",
       "review": "moonbook",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
   }
 }

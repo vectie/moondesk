@@ -22,12 +22,12 @@ pub fn session_listing_row(session : Json, updated_at_ms : Json) -> Json {
 
 ///|
 pub fn merge_session_listing_rows(
-  native_rows : Array[Json],
+  runtime_rows : Array[Json],
   sessions : Array[Json],
 ) -> Array[Json] {
   let rows : Array[Json] = []
   let seen : Map[String, Bool] = {}
-  for row in native_rows {
+  for row in runtime_rows {
     let id = json_string(row, "id", default="")
     if id != "" {
       seen[id] = true
@@ -49,12 +49,12 @@ pub fn merge_session_listing_rows(
 }
 
 ///|
-pub fn native_session_listing_rows(payload : Json) -> Array[Json] {
+pub fn runtime_session_listing_rows(payload : Json) -> Array[Json] {
   match payload {
-    Json::Array(items) => normalize_native_session_listing_rows(items)
-    Json::Object(fields) =>
+    Array(items) => normalize_runtime_session_listing_rows(items)
+    Object(fields) =>
       match fields.get("sessions") {
-        Some(Json::Array(items)) => normalize_native_session_listing_rows(items)
+        Some(Array(items)) => normalize_runtime_session_listing_rows(items)
         _ => []
       }
     _ => []
@@ -62,10 +62,10 @@ pub fn native_session_listing_rows(payload : Json) -> Array[Json] {
 }
 
 ///|
-fn normalize_native_session_listing_rows(items : Array[Json]) -> Array[Json] {
+fn normalize_runtime_session_listing_rows(items : Array[Json]) -> Array[Json] {
   let rows : Array[Json] = []
   for item in items {
-    match normalize_native_session_listing_row(item) {
+    match normalize_runtime_session_listing_row(item) {
       Some(row) => rows.push(row)
       None => ()
     }
@@ -74,16 +74,16 @@ fn normalize_native_session_listing_rows(items : Array[Json]) -> Array[Json] {
 }
 
 ///|
-fn normalize_native_session_listing_row(row : Json) -> Json? {
+fn normalize_runtime_session_listing_row(row : Json) -> Json? {
   match row {
-    Json::Object(fields) => {
+    Object(fields) => {
       guard json_string(row, "id", default="") != "" else { return None }
       let next : Map[String, Json] = {}
       for item in fields {
         next[item.0] = item.1
       }
       if json_string(row, "source", default="") == "" {
-        next["source"] = "mooncode-native-session-listing".to_json()
+        next["source"] = "mooncode-runtime-session-listing".to_json()
       }
       if json_string(row, "protocol", default="") == "" {
         next["protocol"] = protocol_version().to_json()
@@ -128,13 +128,12 @@ fn compare_session_listing_rows(left : Json, right : Json) -> Int {
 ///|
 fn session_listing_updated_at_ms_text(row : Json) -> String {
   match row {
-    Json::Object(fields) =>
+    Object(fields) =>
       match fields.get("updated_at_ms") {
-        Some(Json::Number(_, repr=Some(raw))) =>
-          session_listing_timestamp_digits(raw)
-        Some(Json::Number(value, repr=None)) =>
+        Some(Number(_, repr=Some(raw))) => session_listing_timestamp_digits(raw)
+        Some(Number(value, repr=None)) =>
           session_listing_timestamp_digits(value.to_string())
-        Some(Json::String(raw)) => session_listing_timestamp_digits(raw)
+        Some(String(raw)) => session_listing_timestamp_digits(raw)
         _ => ""
       }
     _ => ""
@@ -198,7 +197,7 @@ fn first_prompt_field_line(session : Json) -> String {
 ///|
 fn session_listing_object_field_or_empty(json : Json, key : String) -> Json {
   match json {
-    Json::Object(fields) =>
+    Object(fields) =>
       match fields.get(key) {
         Some(value) => value
         None => {}

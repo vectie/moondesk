@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/internal/moonfiles"
+
+// Values
+pub async fn read_directory_names(String, include_hidden? : Bool) -> Array[String]
+
+pub async fn read_json_file_or_object(String) -> Json
+
+pub async fn read_json_record_file(String) -> Json?
+
+pub async fn read_json_record_file_or_empty(String) -> Json
+
+pub async fn write_json_record_file(String, Json) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

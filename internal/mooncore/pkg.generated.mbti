@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/internal/mooncore"
+
+// Values
+pub fn append_transcript_message(Json, id_prefix~ : String, role~ : String, content~ : String, status~ : String, created_at? : String) -> Json
+
+pub fn json_array_items(Json, String) -> Array[Json]
+
+pub fn json_bool(Json, String, default~ : Bool) -> Bool
+
+pub fn json_first_string(Json, Array[String], default~ : String) -> String
+
+pub fn json_int(Json, String, default~ : Int) -> Int
+
+pub fn json_object_field(Json, String) -> Json?
+
+pub fn json_string(Json, String, default~ : String) -> String
+
+pub fn json_string_opt(Json, String) -> String?
+
+pub fn session_response_defaults(Json, default_title~ : String) -> Json
+
+pub fn session_with_field(Json, String, Json) -> Json
+
+pub fn string_array_json(Array[String]) -> Json
+
+pub fn transcript_message_record(id_prefix~ : String, role~ : String, content~ : String, status~ : String, created_at~ : String) -> Json
+
+pub fn transcript_message_record_with_id(id~ : String, role~ : String, content~ : String, status~ : String, created_at~ : String) -> Json
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

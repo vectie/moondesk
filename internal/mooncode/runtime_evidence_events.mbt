@@ -88,7 +88,7 @@ fn evidence_event_satisfies(required : String, event : Json) -> Bool {
       json_string(event, "tool_call_id", default="") != "" &&
       kind != "tool_call_decode_error" &&
       json_string(event, "status", default="") != "running"
-    "agent_finished" => kind == "finish"
+    "runtime_finished" => kind == "finish"
     "review.receipt" => kind.has_prefix("receipt.")
     "package_verified" => kind == "runtime.package_verified"
     "package_built" => kind == "runtime.package_built"

@@ -9,7 +9,7 @@ pub fn command_packet(
   command_id~ : String,
 ) -> Json {
   let workspace_id = json_string(session, "workspace_id", default="")
-  let task_id = json_string(session, "moonclaw_task_id", default="")
+  let runtime_session_id = session_runtime_session_id(session)
   let model = command_model(session, payload)
   {
     "protocol": protocol_version(),
@@ -23,7 +23,7 @@ pub fn command_packet(
     "workspace_id": workspace_id,
     "workspace_name": json_string(session, "workspace_name", default=""),
     "workspace_root": json_string(session, "workspace_root", default=""),
-    "task_id": task_id,
+    "runtime_session_id": runtime_session_id,
     "context_path": context_path,
     "target": if context_path == "" {
       "moonbook"
@@ -48,7 +48,7 @@ pub fn command_packet(
       "ui_owner": "moondesk",
       "runtime_owner": "moonclaw",
       "artifact_owner": "moonbook",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
   }
 }

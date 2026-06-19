@@ -4,13 +4,13 @@ pub fn runtime_event_ingest_contract(session_id : String) -> Json {
     "endpoint": "/api/mooncode/sessions/\{session_id}/runtime-events",
     "method": "POST",
     "consumer": "moondesk",
-    "producer": "moonclaw-or-standalone-mooncode",
+    "producer": "moonclaw",
     "accepted_payloads": [
-      "OpenSeek-style JSONL event object with an `event` field", "legacy MoonClaw event object with desc.msg",
-      "canonical MoonCode event object with lane/kind/status fields", "{\"events\":[...]} batch payload",
+      "MoonCode-style JSONL event object with an `event` field", "canonical MoonCode event object with lane/kind/status fields",
+      "{\"events\":[...]} batch payload",
     ],
-    "tool_call_wire": tool_call_wire_contract_json(),
-    "tool_call_validation": "Tool-call and tool-result events should satisfy tool_call_wire before MoonClaw executes or reports a tool; invalid tools should be reported as tool_call_decode_error.",
+    "tool_call_contract": tool_call_contract_json(),
+    "tool_call_validation": "Tool-call and tool-result events should satisfy tool_call_contract before MoonClaw executes or reports a tool; invalid tools should be reported as tool_call_decode_error.",
     "command_scope_rule": "Events intended to satisfy command runtime proof must include `command_packet` or compact `command_id` plus matching `action`; unscoped events render in transcript but do not prove execution.",
     "normalization": "Events are normalized into MoonCode lanes and appended to .moontown/mooncode-sessions/<session-id>/events.jsonl.",
     "refreshes": [
@@ -50,7 +50,7 @@ pub fn runtime_handoff_manifest(
   let status = if native_ready {
     "native-runtime-ready"
   } else if commands.length() > 0 {
-    "bridge-resumable"
+    "replay-resumable"
   } else {
     "empty"
   }
@@ -88,7 +88,7 @@ pub fn runtime_handoff_manifest(
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
     "workspace_root": workspace_root,
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "recorded_at": recorded_at,
     "manifest_path": manifest_path,
     "absolute_manifest_path": absolute_manifest_path,
@@ -96,11 +96,11 @@ pub fn runtime_handoff_manifest(
       "ui_owner": "moondesk",
       "runtime_owner": "moonclaw",
       "artifact_owner": "moonbook",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
     "runtime_protocol": runtime_protocol_contract_json(),
     "tool_contract": tool_contract_json(),
-    "tool_call_wire": tool_call_wire_contract_json(),
+    "tool_call_contract": tool_call_contract_json(),
     "resume_contract": {
       "session_snapshot_path": session_snapshot_path,
       "session_store_endpoint": "/api/mooncode/sessions/\{session_id}/session-store",
@@ -119,11 +119,11 @@ pub fn runtime_handoff_manifest(
       "runtime_replay_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-replay",
       "preflight_endpoint": "/api/mooncode/sessions/\{session_id}/preflight?action=<action>&context_path=<path>",
       "action_plan_endpoint": "/api/mooncode/sessions/\{session_id}/action-plan",
-      "production_readiness_endpoint": "/api/mooncode/sessions/\{session_id}/production-readiness",
-      "native_command_endpoint": "/v1/mooncode/sessions/\{session_id}/commands",
-      "native_serve_scheduler_endpoint": "/v1/mooncode/sessions/\{session_id}/serve-scheduler?book_root=<path>",
-      "native_eval_endpoint": "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=<path>",
-      "ordering_rule": "consume runtime-commands.jsonl in append order; commands.jsonl remains the UI/operator queue; emit progress to events.jsonl or the compatible native MoonCode stream",
+      "readiness_endpoint": "/api/mooncode/sessions/\{session_id}/readiness",
+      "native_command_endpoint": "/v1/code/sessions/\{session_id}/commands",
+      "native_serve_scheduler_endpoint": "/v1/code/sessions/\{session_id}/serve-scheduler?book_root=<path>",
+      "native_eval_endpoint": "/v1/code/sessions/\{session_id}/eval-report?book_root=<path>",
+      "ordering_rule": "consume runtime-commands.jsonl in append order; commands.jsonl remains the UI/operator queue; emit progress to events.jsonl or the native MoonCode stream",
     },
     "command_count": commands.length(),
     "commands": Json::array(commands),
@@ -182,16 +182,16 @@ pub fn runtime_handoff_manifest(
       "dispatch_mode": json_string(
         session,
         "mooncode_dispatch_mode",
-        default="moonclaw-task-bridge",
+        default="not-dispatched",
       ),
-      "bridge_status": json_string(daemon, "status", default="unknown"),
+      "daemon_status": json_string(daemon, "status", default="unknown"),
       "moonclaw_root": json_string(daemon, "moonclaw_root", default=""),
     },
     "summary": summary,
     "next_runtime_step": if native_ready {
       "MoonClaw native MoonCode can consume the command queue, emit typed stream events, run tests/builds, and package accepted output."
     } else {
-      "MoonClaw or a standalone mooncode runtime should consume this handoff, execute queued commands with OpenSeek-style tools, emit typed events, and write native eval evidence."
+      "Start or update the native MoonCode runtime before queued commands can be executed."
     },
   }
 }
@@ -213,7 +213,7 @@ pub fn runtime_handoff_manifest_current(manifest : Json) -> Bool {
   json_string(contract, "runtime_event_ingest_endpoint", default="") != "" &&
   json_string(contract, "runtime_replay_endpoint", default="") != "" &&
   json_string(contract, "action_plan_endpoint", default="") != "" &&
-  json_string(contract, "production_readiness_endpoint", default="") != "" &&
+  json_string(contract, "readiness_endpoint", default="") != "" &&
   json_string(contract, "native_serve_scheduler_endpoint", default="") != "" &&
   json_string(runtime_consumer, "status", default="") != "" &&
   json_string(runtime_consumer, "next_action", default="") != "" &&

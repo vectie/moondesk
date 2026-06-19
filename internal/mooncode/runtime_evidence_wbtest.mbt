@@ -5,7 +5,7 @@ test "mooncode command runtime evidence requires command scoped proof" {
     "command_id": "cmd-test",
     "execution_summary": {
       "required_events": [
-        "tool_call", "tool_result", "test_result", "agent_finished",
+        "tool_call", "tool_result", "test_result", "runtime_finished",
       ],
       "required_outputs": ["exit code"],
     },
@@ -48,7 +48,7 @@ test "mooncode command runtime evidence requires command scoped proof" {
       id="finish",
       lane="review",
       kind="finish",
-      title="Agent finished",
+      title="Runtime finished",
       status="done",
       created_at="2026-06-15T00:00:03Z",
       detail="done",
@@ -61,7 +61,7 @@ test "mooncode command runtime evidence requires command scoped proof" {
       title="Ignored",
       status="done",
       created_at="2026-06-15T00:00:04Z",
-      detail="legacy",
+      detail="unscoped",
     ),
   ])
   assert_eq(json_string(evidence, "status", default=""), "proven")
@@ -88,10 +88,10 @@ test "mooncode runtime evidence accepts command-scoped replay ack events" {
     "dispatch": "command",
     "execution_summary": {
       "required_events": [
-        "tool_call", "tool_result", "test_result", "agent_finished",
+        "tool_call", "tool_result", "test_result", "runtime_finished",
       ],
     },
-    "openseek_wire_command": { "command": "prompt", "text": "run tests" },
+    "mooncode_command": { "command": "prompt", "text": "run tests" },
   }
   let receipts = runtime_replay_ack_receipts(
     { "id": "session-demo", "workspace_id": "book-demo" },
@@ -123,7 +123,7 @@ test "mooncode runtime evidence accepts command-scoped replay ack events" {
           "status": "passed",
           "exit_code": 0,
         },
-        { "event": "agent_finished", "id": "evt-finish", "answer": "done" },
+        { "event": "runtime_finished", "id": "evt-finish", "answer": "done" },
       ],
     },
   )
@@ -258,7 +258,7 @@ test "mooncode session runtime evidence wrappers stamp manifest and log paths" {
     local_event_count=1,
     native_state={
       "native_runtime_ready": true,
-      "endpoint": "/v1/mooncode/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
+      "endpoint": "/v1/code/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
       "error": "",
     },
     native_report={
@@ -285,11 +285,11 @@ test "mooncode session runtime evidence wrappers stamp manifest and log paths" {
   assert_true(json_bool(native, "native_runtime_ready", default=false))
   assert_eq(
     json_string(native, "native_runtime_events_endpoint", default=""),
-    "/v1/mooncode/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
+    "/v1/code/sessions/session-demo/runtime-events?book_root=%2Ftmp%2Fbook",
   )
   assert_true(
     runtime_json_object_field(native, "native_runtime_events_report")
-    is Some(Json::Object(_)),
+    is Some(Object(_)),
   )
 }
 
@@ -300,7 +300,7 @@ test "mooncode command runtime evidence reports missing and failed requirements"
     "command_id": "cmd-commit",
     "execution_summary": {
       "required_events": [
-        "tool_call", "tool_result", "commit_created", "agent_finished",
+        "tool_call", "tool_result", "commit_created", "runtime_finished",
       ],
     },
   }
@@ -324,7 +324,7 @@ test "mooncode command runtime evidence reports missing and failed requirements"
   )
   assert_true(
     evidence_json_string_array_items(evidence, "missing_required_events").contains(
-      "agent_finished",
+      "runtime_finished",
     ),
   )
   assert_true(
@@ -340,7 +340,7 @@ test "mooncode command runtime evidence fails command scoped tool decode errors"
   let runtime_command : Json = {
     "command_id": "cmd-prompt",
     "execution_summary": {
-      "required_events": ["tool_call", "tool_result", "agent_finished"],
+      "required_events": ["tool_call", "tool_result", "runtime_finished"],
     },
   }
   let packet : Json = { "command_id": "cmd-prompt", "action": "prompt" }

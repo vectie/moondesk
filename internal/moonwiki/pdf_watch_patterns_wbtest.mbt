@@ -129,7 +129,7 @@ async test "book pattern discovery reads Moontown template registry" {
     create=0o644,
   )
   let patterns = book_pattern_records_for_workspace(root)
-  assert_eq(patterns.length(), 3)
+  assert_eq(patterns.length(), 2)
   let pdf = match json_record_by_id(patterns, "pdf-evidence-watch") {
     Some(record) => record
     None => fail("expected registry PDF pattern")
@@ -146,6 +146,11 @@ async test "book pattern discovery reads Moontown template registry" {
   assert_true(
     json_string_array_items(pdf, "skills") == ["pdf-watch", "pdf-analysis"],
   )
+  assert_true(json_bool(pdf, "standing_watch", default=false))
+  assert_eq(
+    json_string(pdf, "creation_backend", default=""),
+    "builtin-pdf-evidence-watch",
+  )
   let tool_pattern = match json_record_by_id(patterns, "app-tool-book") {
     Some(record) => record
     None => fail("expected registry app toolbook pattern")
@@ -157,6 +162,8 @@ async test "book pattern discovery reads Moontown template registry" {
   )
   assert_eq(json_int(tool_pattern, "default_cadence_minutes", default=0), 11)
   assert_true(json_string_array_items(tool_pattern, "skills") == ["tool-watch"])
+  assert_false(json_bool(tool_pattern, "standing_watch", default=false))
+  assert_eq(json_string(tool_pattern, "creation_backend", default=""), "")
   let base_types = book_base_type_records_for_workspace(root)
   assert_eq(base_types.length(), 2)
   let base = match json_record_by_id(base_types, "research-book") {
@@ -168,23 +175,18 @@ async test "book pattern discovery reads Moontown template registry" {
       "pdf-evidence-watch",
     ),
   )
-  assert_true(
-    json_string_array_items(base, "supported_patterns").contains(
-      "exchangeable-bond-evidence-watch",
-    ),
-  )
   assert_eq(
     json_string(base, "source", default=""),
-    "moontown-template-registry + moonbook-layout",
+    "moontown-template-registry.v1 + moonbook-layout.v1",
   )
   assert_true(
     json_string_array_items(base, "moonbook_layout_refs").contains(
-      "../moonbook/docs/CLI_AND_LAYOUT.md",
+      "moonbook://layout/book.json",
     ),
   )
   assert_true(
     json_string_array_items(base, "template_registry_refs").contains(
-      "../moontown/templates/books/templates.json",
+      "moontown://templates/books/templates.json",
     ),
   )
   let tool_base = match json_record_by_id(base_types, "toolbook") {
@@ -202,7 +204,7 @@ async test "book pattern discovery reads Moontown template registry" {
   )
   assert_true(
     json_string_array_items(tool_base, "template_registry_refs").contains(
-      @pathx.join(root, "templates/books/app-tool-book/book.json"),
+      "moontown://templates/books/app-tool-book/book.json",
     ),
   )
   let status = book_template_registry_status(root)
@@ -212,33 +214,10 @@ async test "book pattern discovery reads Moontown template registry" {
 }
 
 ///|
-test "custom EB analysis method is preserved and completed with required contract" {
-  let short = "# My EB Method\n\nFocus on official PDFs."
-  let materialized = analysis_method_for_pattern(
-    "exchangeable-bond-evidence-watch", "Exchangeable Bond Credit Compliance", short,
-  )
-  assert_true(materialized.contains(short))
-  assert_true(materialized.contains("Moondesk Required EB Output Contract"))
-  assert_true(materialized.contains("公告追踪主表"))
-  assert_true(materialized.contains("关键指标监控表"))
-  assert_true(
-    materialized.contains(
-      "EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx",
-    ),
-  )
-  assert_true(materialized.contains("未检索到"))
-  assert_true(materialized.contains("sse.com.cn"))
-  assert_true(materialized.contains("shclearing.com.cn"))
-  assert_true(eb_analysis_method_contract_ready(materialized))
-  let complete = default_eb_analysis_method("Complete EB")
+test "custom PDF analysis method is preserved" {
+  let method_text = "# My PDF Method\n\nFocus on official PDFs."
   assert_eq(
-    analysis_method_for_pattern(
-      "exchangeable-bond-evidence-watch", "Complete EB", complete,
-    ),
-    complete,
-  )
-  assert_eq(
-    analysis_method_for_pattern("pdf-evidence-watch", "Policy", short),
-    short,
+    analysis_method_for_pattern("pdf-evidence-watch", "Policy", method_text),
+    method_text,
   )
 }

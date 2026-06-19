@@ -27,7 +27,11 @@ test "mooncode change set manifest summarizes reviewable work" {
     ),
   ]
   let manifest = change_set_manifest(
-    { "id": "s1", "workspace_id": "book", "moonclaw_task_id": "task" },
+    {
+      "id": "s1",
+      "workspace_id": "book",
+      "mooncode_runtime_session_id": "runtime",
+    },
     events,
     recorded_at="2026-06-15T00:00:00Z",
     manifest_path="wiki/reviews/mooncode/s1/change-set.json",
@@ -108,7 +112,7 @@ test "mooncode package manifest and index summarize executable candidates" {
     "id": "s1",
     "workspace_id": "book",
     "workspace_name": "Book",
-    "moonclaw_task_id": "task",
+    "mooncode_runtime_session_id": "runtime",
   }
   let command_packet : Json = {
     "protocol": protocol_version(),
@@ -168,7 +172,7 @@ test "mooncode package manifest and index summarize executable candidates" {
   )
   let entry_points = json_array_items(index, "entry_points")
   assert_eq(entry_points.length(), 1)
-  assert_true(entry_points[0] is Json::String("tools/demo/main.mbt"))
+  assert_true(entry_points[0] is String("tools/demo/main.mbt"))
 
   let candidates = package_candidates_projection(
     session,
@@ -364,7 +368,7 @@ test "mooncode review receipt policy covers review and execution decisions" {
 }
 
 ///|
-test "mooncode package source records keep promotion contract extractable" {
+test "mooncode package source records keep promotion contract standalone" {
   let directory = package_source_directory_record("tools/demo")
   assert_eq(json_string(directory, "kind", default=""), "directory")
   assert_true(json_bool(directory, "package_ready", default=false))
@@ -422,10 +426,10 @@ test "mooncode package source records keep promotion contract extractable" {
 ///|
 test "mooncode review receipt manifest records ownership split" {
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-1",
     "workspace_name": "Demo Book",
-    "moonclaw_task_id": "task-1",
+    "mooncode_runtime_session_id": "runtime-1",
   }
   let command_packet : Json = {
     "protocol": protocol_version(),
@@ -441,8 +445,8 @@ test "mooncode review receipt manifest records ownership split" {
     "2026-06-14T00:00:00Z",
     command_id="command",
     recorded_at="2026-06-14T00:01:00Z",
-    receipt_path="wiki/reviews/mooncode/agent-demo/accept-command.json",
-    absolute_receipt_path="/tmp/book/wiki/reviews/mooncode/agent-demo/accept-command.json",
+    receipt_path="wiki/reviews/mooncode/code-demo/accept-command.json",
+    absolute_receipt_path="/tmp/book/wiki/reviews/mooncode/code-demo/accept-command.json",
   )
   assert_eq(
     json_string(manifest, "kind", default=""),
@@ -452,12 +456,12 @@ test "mooncode review receipt manifest records ownership split" {
   assert_eq(json_string(manifest, "command_id", default=""), "command")
   assert_eq(
     json_string(manifest, "receipt_path", default=""),
-    "wiki/reviews/mooncode/agent-demo/accept-command.json",
+    "wiki/reviews/mooncode/code-demo/accept-command.json",
   )
   assert_eq(
     json_string(
       summary_json_object_field_or_empty(manifest, "owner"),
-      "extractable_component",
+      "standalone_component",
       default="",
     ),
     "mooncode",
@@ -482,7 +486,7 @@ test "mooncode artifact safe id shortens long ids deterministically" {
 }
 
 ///|
-test "mooncode review manifest events keep protocol lanes extractable" {
+test "mooncode review manifest events keep protocol lanes standalone" {
   let packet : Json = { "command_id": "cmd-1" }
   let change_event = change_set_manifest_event(
     {
@@ -576,7 +580,7 @@ test "mooncode package and receipt events preserve review targets" {
   let runtime_event = runtime_handoff_manifest_event(
     {
       "session_id": "s1",
-      "status": "bridge-resumable",
+      "status": "replay-resumable",
       "recorded_at": "2026-06-15T00:02:00Z",
       "manifest_path": "wiki/reviews/mooncode/s1/runtime-handoff.json",
       "last_command_packet": packet,

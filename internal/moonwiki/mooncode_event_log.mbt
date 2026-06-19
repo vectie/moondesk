@@ -433,14 +433,14 @@ test "mooncode parses runtime dispatch log and requires typed receipts" {
     "protocol": @mooncode.protocol_version(),
     "kind": @mooncode.kind_runtime_dispatch(),
     "command_id": "cmd-1",
-    "status": "bridged",
+    "status": "recorded",
   }
   let receipts = parse_mooncode_runtime_dispatch_log_text(
     receipt.stringify() +
     "\nnot-json\n{\"protocol\":\"mooncode.v1\",\"kind\":\"mooncode.command\",\"command_id\":\"bad\"}\n",
   )
   assert_eq(receipts.length(), 1)
-  assert_eq(json_string(receipts[0], "status", default=""), "bridged")
+  assert_eq(json_string(receipts[0], "status", default=""), "recorded")
 }
 
 ///|
@@ -488,12 +488,12 @@ async test "mooncode appends and replays durable runtime dispatch receipts" {
     "protocol": @mooncode.protocol_version(),
     "kind": @mooncode.kind_runtime_dispatch(),
     "command_id": "cmd-1",
-    "status": "bridged",
+    "status": "recorded",
   }
   append_mooncode_runtime_dispatch_log(root, session_id, receipt)
   let receipts = read_mooncode_runtime_dispatch_log(root, session_id)
   assert_eq(receipts.length(), 1)
-  assert_eq(json_string(receipts[0], "status", default=""), "bridged")
+  assert_eq(json_string(receipts[0], "status", default=""), "recorded")
   assert_true(@fs.exists(mooncode_runtime_dispatch_log_path(root, session_id)))
 }
 

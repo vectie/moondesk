@@ -31,7 +31,7 @@ pub fn test_runs_manifest(
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "recorded_at": recorded_at,
     "manifest_path": manifest_path,
     "absolute_manifest_path": absolute_manifest_path,
@@ -56,9 +56,9 @@ pub fn test_runs_manifest(
       "runtime": "moonclaw",
       "artifact": "moonbook",
       "test": "moonbook",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
-    "next_runtime_step": "MoonClaw or standalone MoonCode should execute these commands directly, stream stdout/stderr, and attach exact test/build logs.",
+    "next_runtime_step": "MoonClaw should execute these commands directly, stream stdout/stderr, and attach exact test/build logs.",
   }
 }
 

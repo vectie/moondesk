@@ -81,7 +81,7 @@ test "mooncode parses durable jsonl protocol records" {
     "protocol": protocol_version(),
     "kind": kind_runtime_dispatch(),
     "command_id": "cmd-1",
-    "status": "bridged",
+    "status": "recorded",
   }
   let text = jsonl_text([event, command, runtime, dispatch]) + "not-json\n"
   assert_eq(parse_event_log_text(text).length(), 1)

@@ -73,18 +73,18 @@ async test "mooncode durable native tool call creates pending approval manifest"
     @desk.stable_id("tool-call-test", @async.now().to_string())
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": root,
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
     "mooncode_last_eval_report_manifest": {
-      "manifest_path": "wiki/reviews/mooncode/agent-demo/stale-eval-report.json",
-      "absolute_manifest_path": "/tmp/stale-book/wiki/reviews/mooncode/agent-demo/stale-eval-report.json",
+      "manifest_path": "wiki/reviews/mooncode/code-demo/stale-eval-report.json",
+      "absolute_manifest_path": "/tmp/stale-book/wiki/reviews/mooncode/code-demo/stale-eval-report.json",
     },
     "mooncode_summary": {
       "last_moonbook_eval_report_manifest": {
-        "manifest_path": "wiki/reviews/mooncode/agent-demo/stale-eval-report.json",
+        "manifest_path": "wiki/reviews/mooncode/code-demo/stale-eval-report.json",
       },
     },
   }
@@ -99,7 +99,7 @@ async test "mooncode durable native tool call creates pending approval manifest"
       },
       ingested_at="2026-06-15T00:00:00Z",
     ) {
-    append_mooncode_event_log(root, "agent-demo", event)
+    append_mooncode_event_log(root, "code-demo", event)
   }
   let projected = attach_mooncode_session_projection(root, session)
   let with_tool_approvals = write_mooncode_tool_approvals_if_possible(projected)
@@ -119,7 +119,7 @@ async test "mooncode durable native tool call creates pending approval manifest"
     @fs.exists(
       @pathx.join(
         root,
-        @mooncode.tool_approvals_manifest_relative_path("agent-demo"),
+        @mooncode.tool_approvals_manifest_relative_path("code-demo"),
       ),
     ),
   )
@@ -127,7 +127,7 @@ async test "mooncode durable native tool call creates pending approval manifest"
 
 ///|
 test "mooncode tool authorization follows approval state" {
-  let session : Json = { "id": "agent-demo" }
+  let session : Json = { "id": "code-demo" }
   let preview = @mooncode.tool_authorization_preview_projected_event(
     {
       "tool_call_id": "call-build",
@@ -196,7 +196,7 @@ test "mooncode tool authorization allows read tools without approval" {
     },
     "2026-06-14T00:00:00Z",
   )
-  let session : Json = { "id": "agent-demo" }
+  let session : Json = { "id": "code-demo" }
   let response = @mooncode.tool_authorization_response(
     json_string(session, "id", default=""),
     preview,

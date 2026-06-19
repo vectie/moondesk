@@ -1,5 +1,5 @@
 ///|
-test "mooncode tool contract covers openseek builtins" {
+test "mooncode tool contract covers mooncode builtins" {
   let contract = tool_contract_json()
   assert_eq(json_string(contract, "kind", default=""), "mooncode-tool-contract")
   assert_eq(json_string(contract, "owner", default=""), "moonclaw")
@@ -9,11 +9,9 @@ test "mooncode tool contract covers openseek builtins" {
   }
   assert_true(ids.contains("moon_ide"))
   assert_true(ids.contains("moon_cmd"))
-  assert_true(
-    json_string(contract, "execution_owner", default="").contains("mooncode"),
-  )
+  assert_eq(json_string(contract, "execution_owner", default=""), "moonclaw")
   let constraints = match contract {
-    Json::Object(object) => object.get("constraints").unwrap_or({})
+    Object(object) => object.get("constraints").unwrap_or({})
     _ => {}
   }
   assert_true(

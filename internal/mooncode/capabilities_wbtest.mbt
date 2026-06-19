@@ -14,24 +14,20 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"action\":\"approve_tool\""))
   assert_true(payload.contains("\"action\":\"commit\""))
   assert_true(payload.contains("\"runtime_contract\""))
-  assert_true(payload.contains("\"moonclaw_adapter_contract\""))
+  assert_true(payload.contains("\"moonclaw_runtime_contract\""))
   assert_true(
-    payload.contains("\"kind\":\"mooncode-moonclaw-adapter-contract\""),
+    payload.contains("\"kind\":\"mooncode-moonclaw-runtime-contract\""),
   )
   assert_true(payload.contains("\"tool_contract\""))
   assert_true(payload.contains("\"kind\":\"mooncode-tool-contract\""))
-  assert_true(payload.contains("\"tool_call_wire\""))
-  assert_true(payload.contains("\"kind\":\"mooncode-tool-call-wire-contract\""))
+  assert_true(payload.contains("\"tool_call_contract\""))
+  assert_true(payload.contains("\"kind\":\"mooncode-tool-call-contract\""))
   assert_true(payload.contains("\"native_runtime_loop_options\""))
   assert_true(payload.contains("\"live_wait_ms\""))
   assert_true(payload.contains("\"poll_ms\""))
-  assert_true(payload.contains("\"extraction_boundary\""))
-  assert_true(payload.contains("\"kind\":\"mooncode-extraction-boundary\""))
-  assert_true(
-    payload.contains(
-      "\"portable_core_package\":\"vectie/moondesk/mooncode/core\"",
-    ),
-  )
+  assert_true(payload.contains("\"standalone_boundary\""))
+  assert_true(payload.contains("\"kind\":\"mooncode-standalone-boundary\""))
+  assert_true(payload.contains("\"core_package\":\"mooncode/core\""))
   assert_true(
     payload.contains(
       "\"moondesk_projection_package\":\"vectie/moondesk/internal/mooncode\"",
@@ -45,37 +41,35 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"core_package\":\"mooncode/core\""))
   assert_true(payload.contains("\"projection_package\":\"internal/mooncode\""))
   assert_true(payload.contains("\"host_package\":\"internal/moonwiki\""))
-  assert_true(payload.contains("openseek/agent_runtime"))
+  assert_true(payload.contains("mooncode/runtime"))
   assert_true(payload.contains("\"command\":\"prompt\""))
-  assert_true(payload.contains("\"agent_finished\""))
+  assert_true(payload.contains("\"runtime_finished\""))
   assert_true(payload.contains("\"required_harnesses\""))
   assert_true(payload.contains("\"harness_contract_endpoint\""))
   assert_true(payload.contains("/api/mooncode/eval-harness"))
-  assert_true(payload.contains("\"extraction_boundary_endpoint\""))
-  assert_true(payload.contains("/api/mooncode/extraction-boundary"))
-  assert_true(payload.contains("\"production_rubric_endpoint\""))
-  assert_true(payload.contains("/api/mooncode/production-rubric"))
-  assert_true(payload.contains("\"production_rubric\""))
-  assert_true(payload.contains("\"kind\":\"mooncode-production-grade-rubric\""))
+  assert_true(payload.contains("\"standalone_boundary_endpoint\""))
+  assert_true(payload.contains("/api/mooncode/standalone-boundary"))
+  assert_true(payload.contains("\"readiness_contract_endpoint\""))
+  assert_true(payload.contains("/api/mooncode/readiness-contract"))
+  assert_true(payload.contains("\"readiness_contract\""))
+  assert_true(payload.contains("\"kind\":\"mooncode-readiness-contract\""))
   assert_true(payload.contains("\"native_eval_report\""))
   assert_true(payload.contains("\"native_session_listing_endpoint\""))
   assert_true(
-    payload.contains("/v1/mooncode/sessions?book_root=<path>&format=json"),
+    payload.contains("/v1/code/sessions?book_root=<path>&format=json"),
   )
   assert_true(
     payload.contains(
-      "/v1/mooncode/sessions/<session-id>/serve-scheduler?book_root=<path>",
+      "/v1/code/sessions/<session-id>/serve-scheduler?book_root=<path>",
     ),
   )
   assert_true(
-    payload.contains("/v1/mooncode/sessions/<id>/eval-report?book_root=<path>"),
+    payload.contains("/v1/code/sessions/<id>/eval-report?book_root=<path>"),
   )
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/action-plan"),
   )
-  assert_true(
-    payload.contains("/api/mooncode/sessions/<session-id>/production-readiness"),
-  )
+  assert_true(payload.contains("/api/mooncode/sessions/<session-id>/readiness"))
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/runtime-events"),
   )
@@ -84,7 +78,7 @@ test "mooncode capability contract names the split packages" {
   )
   assert_true(
     payload.contains(
-      "/v1/mooncode/sessions/<session-id>/package-result?book_root=<path>",
+      "/v1/code/sessions/<session-id>/package-result?book_root=<path>",
     ),
   )
   assert_true(
@@ -93,31 +87,31 @@ test "mooncode capability contract names the split packages" {
 }
 
 ///|
-test "mooncode engine status projection is extractable from http probing" {
+test "mooncode engine status projection is standalone from http probing" {
   let missing = engine_status_projection_json(
     daemon={ "running": false, "message": "daemon stopped" },
     moonclaw_root="",
     checkout_ready=false,
     running=false,
     models_ready=false,
-    tasks_ready=false,
     runtime_contract_ready=false,
     model_evidence="MoonClaw daemon is not running",
-    task_evidence="MoonClaw daemon is not running",
     runtime_evidence="MoonClaw daemon is not running",
   )
-  assert_eq(json_string(missing, "status", default=""), "moonclaw-missing")
   assert_eq(
-    json_string(missing, "adapter_status", default=""),
+    json_string(missing, "status", default=""),
+    "moonclaw-service-missing",
+  )
+  assert_eq(
+    json_string(missing, "runtime_status", default=""),
     "missing-runtime",
   )
   assert_false(json_bool(missing, "ok", default=true))
   assert_false(json_bool(missing, "native_runtime_ready", default=true))
-  assert_false(json_bool(missing, "legacy_task_bridge_ready", default=true))
-  assert_eq(json_array_items(missing, "checks").length(), 10)
+  assert_eq(json_array_items(missing, "checks").length(), 9)
   assert_eq(
     json_string(
-      summary_json_object_field_or_empty(missing, "moonclaw_adapter"),
+      summary_json_object_field_or_empty(missing, "moonclaw_runtime"),
       "status",
       default="",
     ),
@@ -127,12 +121,12 @@ test "mooncode engine status projection is extractable from http probing" {
   assert_true(
     endpoints
     .map(endpoint => endpoint.stringify())
-    .contains("\"/v1/mooncode/sessions/<id>/commands\""),
+    .contains("\"/v1/code/sessions/<id>/commands\""),
   )
   assert_true(
     endpoints
     .map(endpoint => endpoint.stringify())
-    .contains("\"/api/mooncode/sessions/<id>/production-readiness\""),
+    .contains("\"/api/mooncode/sessions/<id>/readiness\""),
   )
   let ready = engine_status_projection_json(
     daemon={ "running": true, "message": "running" },
@@ -140,18 +134,15 @@ test "mooncode engine status projection is extractable from http probing" {
     checkout_ready=true,
     running=true,
     models_ready=true,
-    tasks_ready=true,
     runtime_contract_ready=true,
     model_evidence="/v1/models responded",
-    task_evidence="/v1/tasks responded",
-    runtime_evidence="/v1/mooncode/capabilities responded",
+    runtime_evidence="/v1/code/capabilities responded",
   )
-  assert_eq(json_string(ready, "status", default=""), "production-ready")
-  assert_eq(json_string(ready, "adapter_status", default=""), "native-ready")
+  assert_eq(json_string(ready, "status", default=""), "native-ready")
+  assert_eq(json_string(ready, "runtime_status", default=""), "native-ready")
   assert_true(json_bool(ready, "ok", default=false))
-  assert_true(json_bool(ready, "production_ready", default=false))
+  assert_true(json_bool(ready, "ready", default=false))
   assert_true(json_bool(ready, "native_runtime_ready", default=false))
-  assert_true(json_bool(ready, "legacy_task_bridge_ready", default=false))
   let ready_payload = ready.stringify()
   assert_true(ready_payload.contains("patch_review"))
   assert_true(ready_payload.contains("command_execution"))
@@ -160,9 +151,9 @@ test "mooncode engine status projection is extractable from http probing" {
 }
 
 ///|
-test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
+test "mooncode runtime contract mirrors mooncode serve/tool boundaries" {
   let contract = runtime_contract_json()
-  assert_eq(json_string(contract, "reference", default=""), "../openseek")
+  assert_eq(json_string(contract, "reference", default=""), "mooncode")
   assert_eq(json_string(contract, "target_component", default=""), "moonclaw")
   let namespace_roles = json_array_items(contract, "namespace_roles")
   assert_eq(namespace_roles.length(), 4)
@@ -170,36 +161,38 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
     json_string(role, "id", default="")
   })
   assert_true(namespace_ids.contains("workspace_mode"))
-  assert_true(namespace_ids.contains("extractable_protocol"))
+  assert_true(namespace_ids.contains("standalone_protocol"))
   assert_true(namespace_ids.contains("runtime_owner"))
   assert_true(namespace_ids.contains("artifact_owner"))
   assert_true(contract.stringify().contains("\"MoonClaw\""))
   let components = json_array_items(contract, "components")
   assert_eq(components.length(), 5)
   let ids = components.map(component => json_string(component, "id", default=""))
-  assert_true(ids.contains("agent_runtime"))
-  assert_true(ids.contains("agent_session"))
-  assert_true(ids.contains("agent_tool"))
-  assert_true(ids.contains("agent_loop"))
+  assert_true(ids.contains("mooncode_runtime"))
+  assert_true(ids.contains("mooncode_session"))
+  assert_true(ids.contains("mooncode_tool"))
+  assert_true(ids.contains("mooncode_turn_loop"))
   assert_true(ids.contains("eval_harness"))
-  let wire = summary_json_object_field_or_empty(contract, "wire_protocol")
-  let commands = json_array_items(wire, "input_commands")
+  let command_protocol = summary_json_object_field_or_empty(
+    contract, "command_protocol",
+  )
+  let commands = json_array_items(command_protocol, "input_commands")
   assert_eq(commands.length(), 3)
   assert_eq(json_string(commands[0], "command", default=""), "prompt")
   assert_eq(json_string(commands[1], "command", default=""), "steer")
   assert_eq(json_string(commands[2], "command", default=""), "cancel")
   assert_true(
-    json_array_items(wire, "output_events")
+    json_array_items(command_protocol, "output_events")
     .map(item => item.stringify())
     .contains("\"tool_result\""),
   )
   assert_true(
-    json_array_items(wire, "output_events")
+    json_array_items(command_protocol, "output_events")
     .map(item => item.stringify())
     .contains("\"steer_deferred\""),
   )
   assert_true(
-    json_array_items(wire, "output_events")
+    json_array_items(command_protocol, "output_events")
     .map(item => item.stringify())
     .contains("\"steer_dropped\""),
   )
@@ -222,14 +215,14 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
   assert_true(
     json_array_items(eval, "reference_paths")
     .map(item => item.stringify())
-    .contains("\"../openseek/eval/tool_harness\""),
+    .contains("\"mooncode/eval/tool_harness\""),
   )
   let references = json_array_items(eval, "reference_paths").map(item => {
     item.stringify()
   })
-  assert_true(references.contains("\"../openseek/eval/patch_review\""))
-  assert_true(references.contains("\"../openseek/eval/command_execution\""))
-  assert_true(references.contains("\"../openseek/eval/package_output\""))
+  assert_true(references.contains("\"mooncode/eval/patch_review\""))
+  assert_true(references.contains("\"mooncode/eval/command_execution\""))
+  assert_true(references.contains("\"mooncode/eval/package_output\""))
   assert_true(contract.stringify().contains("\"moon_ide\""))
   assert_true(contract.stringify().contains("\"moon_cmd\""))
   let native_eval_report = summary_json_object_field_or_empty(
@@ -238,7 +231,7 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
   assert_eq(json_string(native_eval_report, "owner", default=""), "moonclaw")
   assert_eq(
     json_string(native_eval_report, "endpoint", default=""),
-    "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
+    "/v1/code/sessions/<id>/eval-report?book_root=<path>",
   )
   assert_true(
     json_array_items(native_eval_report, "required_fields")
@@ -258,17 +251,17 @@ test "mooncode runtime contract mirrors openseek serve/tool boundaries" {
 }
 
 ///|
-test "mooncode eval harness contract names openseek cases and evidence" {
+test "mooncode eval harness contract names mooncode cases and evidence" {
   let contract = eval_harness_contract_json()
   assert_eq(
     json_string(contract, "kind", default=""),
     "mooncode-eval-harness-contract",
   )
   assert_eq(json_string(contract, "protocol", default=""), "mooncode.v1")
-  assert_eq(json_string(contract, "reference", default=""), "../openseek/eval")
+  assert_eq(json_string(contract, "reference", default=""), "mooncode/eval")
   assert_eq(
     json_string(contract, "moonclaw_result_endpoint", default=""),
-    "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
+    "/v1/code/sessions/<id>/eval-report?book_root=<path>",
   )
   let harnesses = json_array_items(contract, "required_harnesses")
   assert_eq(harnesses.length(), 5)
@@ -279,11 +272,11 @@ test "mooncode eval harness contract names openseek cases and evidence" {
   assert_true(ids.contains("command_execution"))
   assert_true(ids.contains("package_output"))
   let payload = contract.stringify()
-  assert_true(payload.contains("../openseek/eval/tool_harness"))
-  assert_true(payload.contains("../openseek/eval/file_edit"))
-  assert_true(payload.contains("../openseek/eval/patch_review"))
-  assert_true(payload.contains("../openseek/eval/command_execution"))
-  assert_true(payload.contains("../openseek/eval/package_output"))
+  assert_true(payload.contains("mooncode/eval/tool_harness"))
+  assert_true(payload.contains("mooncode/eval/file_edit"))
+  assert_true(payload.contains("mooncode/eval/patch_review"))
+  assert_true(payload.contains("mooncode/eval/command_execution"))
+  assert_true(payload.contains("mooncode/eval/package_output"))
   assert_true(payload.contains("\"moon_check\""))
   assert_true(payload.contains("\"moon_ide\""))
   assert_true(payload.contains("\"moon_cmd\""))

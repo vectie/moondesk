@@ -31,31 +31,32 @@ pub fn native_command_tool_sequence(action : String) -> Array[String] {
 pub fn native_command_expected_events(action : String) -> Array[String] {
   match action {
     "run_tests" | "run_build" =>
-      ["tool_call", "tool_result", "test_result", "agent_finished"]
+      ["tool_call", "tool_result", "test_result", "runtime_finished"]
     "run_eval" =>
       [
-        "tool_call", "tool_result", "test_result", "eval_report.manifest", "agent_finished",
+        "tool_call", "tool_result", "test_result", "eval_report.manifest", "runtime_finished",
       ]
     "package" =>
       [
         "tool_call", "tool_result", "artifact", "package.manifest", "package.index",
-        "package_verified", "agent_finished",
+        "package_verified", "runtime_finished",
       ]
-    "commit" => ["tool_call", "tool_result", "commit_created", "agent_finished"]
+    "commit" =>
+      ["tool_call", "tool_result", "commit_created", "runtime_finished"]
     "apply_patch" =>
-      ["tool_call", "diff", "patch_applied", "test_result", "agent_finished"]
+      ["tool_call", "diff", "patch_applied", "test_result", "runtime_finished"]
     "revert_patch" =>
-      ["tool_call", "diff", "patch_reverted", "test_result", "agent_finished"]
-    "accept" | "reject" => ["review.receipt", "artifact", "agent_finished"]
+      ["tool_call", "diff", "patch_reverted", "test_result", "runtime_finished"]
+    "accept" | "reject" => ["review.receipt", "artifact", "runtime_finished"]
     "approve_tool" | "reject_tool" =>
-      ["tool_authorization", "review.receipt", "agent_finished"]
+      ["tool_authorization", "review.receipt", "runtime_finished"]
     "prompt" | "steer" =>
       [
         "assistant_delta", "reasoning_delta", "tool_call", "tool_result", "diff",
-        "test_result", "artifact", "agent_finished",
+        "test_result", "artifact", "runtime_finished",
       ]
-    "cancel" => ["agent_aborted", "agent_finished"]
-    _ => ["runtime_update", "agent_finished"]
+    "cancel" => ["runtime_aborted", "runtime_finished"]
+    _ => ["runtime_update", "runtime_finished"]
   }
 }
 

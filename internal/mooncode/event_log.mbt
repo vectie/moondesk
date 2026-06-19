@@ -91,7 +91,7 @@ pub fn event_record(
 pub fn normalize_event_record(event : Json) -> Json {
   let object : Map[String, Json] = {}
   match event {
-    Json::Object(fields) =>
+    Object(fields) =>
       for key, value in fields {
         object[key] = value
       }
@@ -256,7 +256,7 @@ fn stable_event_id(seed : String) -> String {
 ///|
 fn event_json_object_field(json : Json, key : String) -> Json? {
   match json {
-    Json::Object(fields) => fields.get(key)
+    Object(fields) => fields.get(key)
     _ => None
   }
 }
@@ -264,8 +264,8 @@ fn event_json_object_field(json : Json, key : String) -> Json? {
 ///|
 fn event_json_int(json : Json, key : String, default~ : Int) -> Int {
   match event_json_object_field(json, key) {
-    Some(Json::Number(value, ..)) => value.to_int()
-    Some(Json::String(value)) => @string.parse_int(value) catch { _ => default }
+    Some(Number(value, ..)) => value.to_int()
+    Some(String(value)) => @string.parse_int(value) catch { _ => default }
     _ => default
   }
 }

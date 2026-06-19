@@ -1,6 +1,10 @@
 ///|
 pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] {
-  let task_id = json_string(session, "moonclaw_task_id", default="")
+  let runtime_session_id = json_string(
+    session,
+    "mooncode_runtime_session_id",
+    default=json_string(session, "id", default=""),
+  )
   let workspace_id = json_string(session, "workspace_id", default="")
   let transcript_count = count_lane(events, "transcript")
   let tool_count = count_lane(events, "tool")
@@ -63,13 +67,13 @@ pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] 
       },
     ),
     eval_check(
-      "task_attached",
-      "MoonClaw task",
-      task_id != "",
-      if task_id == "" {
+      "runtime_session_attached",
+      "MoonCode runtime session",
+      runtime_session_id != "",
+      if runtime_session_id == "" {
         "not attached"
       } else {
-        task_id
+        runtime_session_id
       },
     ),
     eval_check(
@@ -155,7 +159,7 @@ pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] 
       "Runtime command feed",
       runtime_command_log_count > 0,
       if runtime_command_log_count > 0 {
-        "\{runtime_command_log_count} OpenSeek-compatible runtime command(s)"
+        "\{runtime_command_log_count} MoonCode runtime command(s)"
       } else {
         "no durable runtime-commands.jsonl entries yet"
       },
@@ -257,7 +261,7 @@ pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] 
       "MoonCode runtime handoff",
       runtime_handoff_manifest_count > 0,
       if runtime_handoff_manifest_count > 0 {
-        "\{runtime_handoff_manifest_count} extractable runtime handoff manifest(s)"
+        "\{runtime_handoff_manifest_count} standalone runtime handoff manifest(s)"
       } else {
         "no runtime handoff manifest recorded yet"
       },

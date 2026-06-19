@@ -148,7 +148,7 @@ pub fn native_command_tool_policy(
         approval="auto",
         mutates_files=false,
         required_inputs=["summary"],
-        proof_events=["agent_finished"],
+        proof_events=["runtime_finished"],
         guardrails=[
           "summarize changed paths, test evidence, artifacts, and residual risks",
           "do not claim accepted output without review, test, or package evidence",
@@ -188,7 +188,7 @@ fn native_command_tool_policy_entry(
     "required_inputs": string_array_json(required_inputs),
     "proof_events": string_array_json(proof_events),
     "guardrails": string_array_json(guardrails),
-    "runtime_owner": "moonclaw-or-standalone-mooncode",
+    "runtime_owner": "moonclaw",
     "ui_owner": "moondesk",
     "artifact_owner": "moonbook",
   }

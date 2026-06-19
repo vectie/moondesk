@@ -5,7 +5,7 @@ pub fn runtime_command_record(
   message : String,
   command_packet : Json,
 ) -> Json {
-  let serve_command = openseek_serve_command(message, command_packet)
+  let serve_command = mooncode_serve_command(message, command_packet)
   let session_id = json_string(session, "id", default="")
   let model = trimmed_or(
     json_string(
@@ -36,23 +36,23 @@ pub fn runtime_command_record(
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
     "workspace_root": json_string(session, "workspace_root", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "context_path": json_string(command_packet, "context_path", default=""),
     "target": json_string(command_packet, "target", default="moonbook"),
-    "openseek_wire_command": serve_command,
-    "openseek_wire_valid": serve_wire_valid(serve_command),
-    "native_mooncode_endpoint": "/v1/mooncode/sessions/\{session_id}/commands",
+    "mooncode_command": serve_command,
+    "mooncode_command_valid": protocol_command_valid(serve_command),
+    "native_mooncode_endpoint": "/v1/code/sessions/\{session_id}/commands",
     "tool_authorization": tool_authorization,
     "native_mooncode_body": native_body,
     "execution_summary": native_command_execution_summary(
       command_packet, native_body,
     ),
     "command_packet": command_packet,
-    "ordering_rule": "OpenSeek-compatible serve commands and native MoonCode command bodies share the same command_id and append order.",
+    "ordering_rule": "MoonCode serve commands and native MoonCode command bodies share the same command_id and append order.",
     "owner": {
       "ui": "moondesk",
       "runtime": "moonclaw",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
   }
 }

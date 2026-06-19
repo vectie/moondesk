@@ -1,0 +1,131 @@
+///|
+fn fetch_selected_mooncode_stream_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  match selected_mooncode_session(model) {
+    Some(session) => {
+      let since = if model.mooncode_stream_session_id == session.id {
+        model.mooncode_stream_cursor
+      } else {
+        0
+      }
+      fetch_mooncode_stream_cmd(dispatch, session.id, since)
+    }
+    None => @rabbita.none
+  }
+}
+
+///|
+fn create_mooncode_session_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "workspace_id": model.selected_workspace_id,
+    "title": "MoonCode - \{workspace_name(model)}",
+    "message": trimmed_or(
+      model.mooncode_prompt,
+      "Create, inspect, test, or package executable code inside this MoonBook.",
+    ),
+    "model": model.mooncode_model,
+    "web_search": model.mooncode_web_search,
+    "context_path": model.selected_path,
+  }
+  @http.post(
+    "/api/mooncode/sessions",
+    Json(body),
+    expect=Json(fn(result) { dispatch(CreatedMoonCodeSession(result)) }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not create MoonCode session")
+      }
+    }),
+  )
+}
+
+///|
+fn send_mooncode_composer_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+  session : MoonCodeSession,
+) -> @rabbita.Cmd {
+  let action = mooncode_composer_action(model, session)
+  mooncode_session_command_cmd(
+    dispatch,
+    model,
+    session,
+    action,
+    message=model.mooncode_prompt.trim().to_owned(),
+  )
+}
+
+///|
+fn mooncode_composer_action(
+  model : Model,
+  session : MoonCodeSession
+) -> String {
+  if mooncode_session_accepts_steer(model, session) {
+    "steer"
+  } else {
+    "prompt"
+  }
+}
+
+///|
+fn mooncode_session_accepts_steer(
+  model : Model,
+  session : MoonCodeSession
+) -> Bool {
+  if session.status == "running" ||
+    session.status == "queued" ||
+    session.queued_count > 0 {
+    return true
+  }
+  match model.mooncode_action_plan {
+    Some(plan) if model.mooncode_action_plan_session_id == session.id =>
+      plan.running_count > 0 || plan.pending_runtime_count > 0
+    _ => false
+  }
+}
+
+///|
+fn mooncode_session_command_cmd(
+  dispatch : (Msg) -> @rabbita.Cmd,
+  model : Model,
+  session : MoonCodeSession,
+  action : String,
+  context_path? : String = "",
+  message? : String = "",
+  force_preflight? : Bool = false,
+) -> @rabbita.Cmd {
+  let target_path = if context_path == "" {
+    model.selected_path
+  } else {
+    context_path
+  }
+  let selected_model = trimmed_or(model.mooncode_model, session.model)
+  @http.post(
+    "/api/mooncode/sessions/\{session.id}/commands",
+    Json({
+      "action": action,
+      "message": message,
+      "model": selected_model,
+      "web_search": model.mooncode_web_search,
+      "context_path": target_path,
+      "force_preflight": force_preflight,
+    }),
+    expect=Json(fn(result) {
+      dispatch(CompletedMoonCodeCommand(result))
+    }, json => {
+      Ok(@json.from_json(json)) catch {
+        _ => Err("Could not run MoonCode command")
+      }
+    }),
+  )
+}
+
+///|
+fn schedule_mooncode_poll(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+  @rabbita.delay(dispatch(PollMoonCodeSessions), 5000)
+}
+

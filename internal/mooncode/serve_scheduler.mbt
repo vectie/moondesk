@@ -4,8 +4,8 @@ pub fn serve_scheduler_contract_json() -> Json {
     "kind": "mooncode-serve-scheduler-contract",
     "protocol": protocol_version(),
     "owner": "mooncode",
-    "runtime_owner": "moonclaw-or-standalone-mooncode",
-    "reference": "../openseek/cmd/openseek/serve.mbt",
+    "runtime_owner": "moonclaw",
+    "reference": "mooncode/runtime/serve",
     "rule": "A MoonCode runtime consumes one ordered command queue. Prompt and command actions start turns, steer targets the active turn, next pending turn, or defers into the next future turn, and cancel targets the active turn or withdraws the next pending turn.",
     "turn_starting_actions": "all supported actions except steer, cancel, and note",
     "active_statuses": ["running", "dispatched"],
@@ -13,14 +13,14 @@ pub fn serve_scheduler_contract_json() -> Json {
     "blocked_statuses": [
       "blocked-invalid", "blocked-tool-authorization", "blocked-missing-proof",
     ],
-    "wire_effects": [
+    "protocol_effects": [
       "start-turn", "queue-turn", "deliver-steer", "queue-steer", "defer-steer",
       "cancel-active", "withdraw-pending", "drop-cancel", "record-note", "wait-for-proof",
       "blocked",
     ],
     "boundary": {
       "ui": "Moondesk records commands and renders decisions.",
-      "runtime": "MoonClaw or standalone mooncode enforces the scheduler before executing tools.",
+      "runtime": "MoonClaw enforces the scheduler before executing tools.",
       "store": "commands.jsonl, runtime-commands.jsonl, runtime-dispatches.jsonl, and events.jsonl remain append-only.",
     },
   }
@@ -52,8 +52,8 @@ pub fn serve_scheduler_projection(
     "contract": serve_scheduler_contract_json(),
     "owner": {
       "ui": "moondesk",
-      "runtime": "moonclaw-or-standalone-mooncode",
-      "extractable_component": "mooncode",
+      "runtime": "moonclaw",
+      "standalone_component": "mooncode",
     },
   }
 }
@@ -142,14 +142,7 @@ fn scheduler_command_action(command : Json) -> String {
 
 ///|
 fn scheduler_json_array_items(json : Json, key : String) -> Array[Json] {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::Array(items)) => items
-        _ => []
-      }
-    _ => []
-  }
+  @mooncore.json_array_items(json, key)
 }
 
 ///|
@@ -158,17 +151,10 @@ fn scheduler_json_string(
   key : String,
   default~ : String,
 ) -> String {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::String(value)) => value
-        _ => default
-      }
-    _ => default
-  }
+  @mooncore.json_string(json, key, default~)
 }
 
 ///|
 fn scheduler_string_array_json(items : Array[String]) -> Json {
-  Json::array([ for item in items => Json::string(item) ])
+  @mooncore.string_array_json(items)
 }

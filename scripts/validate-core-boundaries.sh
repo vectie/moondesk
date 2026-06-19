@@ -26,6 +26,140 @@ run_if_package_exists() {
   fi
 }
 
+validate_no_builtin_domain_pack() {
+  local root="$1"
+  local pattern='(^|/)[[:alnum:]]+_(contract_verification|generated_scripts|lifecycle_contracts|moonclaw_contracts|moonclaw_flow|output_contracts|output_validation|prompt_contracts|reconciliation|result_records|run_health|runtime_refresh|workbook_artifacts)(_wbtest)?\.mbt$|(^|/)[[:alnum:]-]+-domain-pack'
+  local stale_example_pattern='(^|[^[:alnum:]_])EB([^[:alnum:]_]|$)|exchangeable|可交换|1320[0-9]{2}|1172[0-9]{2}|G三峡|江铜'
+  local scan_paths=(
+    README.md
+    README.mbt.md
+    docs
+    adapters
+    cmd
+    core
+    host
+    internal
+    mooncode
+    plugin
+    ui/rabbita-desk/main
+  )
+
+  echo "+ validate no built-in domain pack residue"
+  if (cd "${root}" && rg -n --hidden --glob '!**/dist/**' --glob '!**/.moon/**' --glob '!**/.git/**' "${pattern}" "${scan_paths[@]}"); then
+    echo "Domain experiment residue found in Moondesk core." >&2
+    echo "Move domain-specific workflows into standalone MoonBook/MoonClaw packs." >&2
+    exit 1
+  fi
+
+  if (cd "${root}" && rg -n --hidden --glob '!**/dist/**' --glob '!**/.moon/**' --glob '!**/.git/**' "${stale_example_pattern}" "${scan_paths[@]}"); then
+    echo "Stale market-specific example data found in Moondesk core." >&2
+    echo "Keep generated discovery examples in standalone app-tool packs, not in Moondesk." >&2
+    exit 1
+  fi
+}
+
+validate_moonbook_moonwiki_boundary() {
+  local root="$1"
+  local pattern='internal/httpserve|@httpserve|package "vectie/moonbook/internal/httpserve"'
+  local scan_paths=(
+    README.md
+    README.mbt.md
+    cmd
+    docs
+    internal
+    wiki
+  )
+
+  echo "+ validate MoonBook MoonWiki package boundary"
+  if (cd "${root}" && rg -n --hidden --glob '!**/_build/**' --glob '!**/.mooncakes/**' --glob '!**/.git/**' "${pattern}" "${scan_paths[@]}"); then
+    echo "Old MoonBook httpserve package references found." >&2
+    echo "Use internal/moonwiki for the human-language book surface." >&2
+    exit 1
+  fi
+}
+
+validate_provider_runtime_boundary() {
+  local moonbook="$1"
+  local moontown="$2"
+  local pattern='provider-task bridge|provider-task target name|provider-task target named|MoonBook provider-task'
+
+  echo "+ validate provider runtime boundary wording"
+  if rg -n --hidden --glob '!**/_build/**' --glob '!**/.mooncakes/**' --glob '!**/.git/**' "${pattern}" \
+    "${moonbook}/README.md" \
+    "${moonbook}/README.mbt.md" \
+    "${moonbook}/docs" \
+    "${moonbook}/wiki" \
+    "${moonbook}/seed/wiki/skills" \
+    "${moontown}/src/adapters/moonbook"; then
+    echo "MoonBook/Moontown provider boundary still uses provider-task bridge wording." >&2
+    echo "Use provider runtime wording outside MoonClaw's internal provider-task engine." >&2
+    exit 1
+  fi
+}
+
+validate_moonclaw_code_boundary() {
+  local root="$1"
+  local forbidden='OpenSeek|openseek|wire compatibility|/v1/mooncode|bridge_mode'
+  local scan_paths=(
+    docs
+    cmd/daemon
+    job
+    cmd/daemon/README.md
+  )
+  local boundary_doc="${root}/docs/executable_book_runtime_boundary.md"
+
+  echo "+ validate MoonClaw MoonCode boundary wording"
+  if (cd "${root}" && rg -n --hidden --glob '!**/_build/**' --glob '!**/.git/**' "${forbidden}" "${scan_paths[@]}"); then
+    echo "MoonClaw docs still reference external coding-agent compatibility vocabulary or old MoonCode routes." >&2
+    echo "Use standalone MoonCode runtime wording and the /v1/code/* route family." >&2
+    exit 1
+  fi
+  if ! rg -q 'MoonCode should not be implemented as generic task chat' "${boundary_doc}"; then
+    echo "MoonClaw executable-book boundary must state that MoonCode is not generic task chat." >&2
+    exit 1
+  fi
+  if ! rg -q '/v1/code/\*' "${boundary_doc}"; then
+    echo "MoonClaw executable-book boundary must name /v1/code/* as the coding route family." >&2
+    exit 1
+  fi
+}
+
+validate_moondesk_code_runtime_boundary() {
+  local root="$1"
+  local forbidden='moonclaw_adapter|adapter_status|mooncode-moonclaw-adapter|native_gap|wire compatibility|/v1/mooncode|OpenSeek|openseek'
+  local scan_paths=(
+    docs
+    internal/mooncode
+    internal/moonwiki
+    mooncode/core
+    ui/rabbita-desk/main
+  )
+
+  echo "+ validate Moondesk MoonCode runtime wording"
+  if (cd "${root}" && rg -n --hidden --glob '!**/dist/**' --glob '!**/_build/**' --glob '!**/.git/**' "${forbidden}" "${scan_paths[@]}"); then
+    echo "Moondesk still exposes compatibility or adapter-era MoonCode vocabulary." >&2
+    echo "Use native MoonClaw runtime wording and the /v1/code/* route family." >&2
+    exit 1
+  fi
+}
+
+validate_moontown_moonclaw_runtime_boundary() {
+  local root="$1"
+  local forbidden='moonclaw_adapter'
+  local scan_paths=(
+    src/adapters/moonclaw
+    src/moonclaw_runtime
+    docs
+  )
+
+  echo "+ validate Moontown MoonClaw runtime wording"
+  if (cd "${root}" && rg -n --hidden --glob '!**/_build/**' --glob '!**/.git/**' "${forbidden}" "${scan_paths[@]}"); then
+    echo "Moontown still exposes MoonClaw adapter-era helper names." >&2
+    echo "Use MoonClaw runtime wording for scheduler/execution integration." >&2
+    exit 1
+  fi
+}
+
 require_repo() {
   local root="$1"
   local name="$2"
@@ -41,6 +175,12 @@ require_repo "${moonclaw_root}" "moonclaw"
 require_repo "${moonbook_root}" "moonbook"
 require_repo "${moontown_root}" "moontown"
 
+validate_no_builtin_domain_pack "${moondesk_root}"
+validate_moonbook_moonwiki_boundary "${moonbook_root}"
+validate_provider_runtime_boundary "${moonbook_root}" "${moontown_root}"
+validate_moonclaw_code_boundary "${moonclaw_root}"
+validate_moondesk_code_runtime_boundary "${moondesk_root}"
+validate_moontown_moonclaw_runtime_boundary "${moontown_root}"
 "${script_dir}/verify-mooncode-core-sync.sh"
 
 run_if_package_exists "${moondesk_root}" "mooncode/core" test
@@ -51,6 +191,8 @@ run_if_package_exists "${moonclaw_root}" "mooncode/core" test
 run_if_package_exists "${moonclaw_root}" "cmd/daemon" test
 
 run_if_package_exists "${moonbook_root}" "core" check
+run_if_package_exists "${moonbook_root}" "cmd/main" check
+run_if_package_exists "${moonbook_root}" "internal/moonwiki" check
 run_if_package_exists "${moonbook_root}" "wiki" check
 run_if_package_exists "${moonbook_root}" "summary" check
 

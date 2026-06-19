@@ -8,7 +8,7 @@ async fn handle_mooncode_session_action_plan(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
       let projected = attach_mooncode_session_projection(
         workspace_root, session,

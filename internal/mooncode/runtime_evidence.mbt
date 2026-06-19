@@ -94,7 +94,7 @@ pub fn command_runtime_evidence(
     } else {
       "proven"
     },
-    "rule": "Required runtime events are proven only by command-scoped MoonCode events. Unscoped legacy events may still render in the transcript, but they do not satisfy this command-level proof.",
+    "rule": "Required runtime events are proven only by command-scoped MoonCode events. Unscoped events may still render in the transcript, but they do not satisfy this command-level proof.",
   }
 }
 
@@ -111,7 +111,7 @@ fn evidence_required_events(action : String, summary : Json) -> Array[String] {
 ///|
 fn evidence_json_object_field_or_empty(json : Json, key : String) -> Json {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
         Some(value) => value
         None => Json::object({})
@@ -123,9 +123,9 @@ fn evidence_json_object_field_or_empty(json : Json, key : String) -> Json {
 ///|
 fn evidence_json_array(json : Json, key : String) -> Json {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
-        Some(Json::Array(values)) => Json::array(values)
+        Some(Array(values)) => Json::array(values)
         _ => []
       }
     _ => []
@@ -135,13 +135,13 @@ fn evidence_json_array(json : Json, key : String) -> Json {
 ///|
 fn evidence_json_string_array_items(json : Json, key : String) -> Array[String] {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
-        Some(Json::Array(values)) => {
+        Some(Array(values)) => {
           let result : Array[String] = []
           for value in values {
             match value {
-              Json::String(item) => result.push(item)
+              String(item) => result.push(item)
               _ => ()
             }
           }

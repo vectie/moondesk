@@ -4,6 +4,8 @@ import {
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
 }
 
+supported_targets = "native"
+
 options(
   targets: {
     "exists.mbt": [ "native" ],

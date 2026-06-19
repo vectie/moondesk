@@ -1,7 +1,7 @@
 ///|
 pub fn runtime_claim_consumer_contract_json(session_id : String) -> Json {
   {
-    "consumer": "moonclaw-or-standalone-mooncode",
+    "consumer": "moonclaw",
     "endpoint": "/api/mooncode/sessions/\{session_id}/runtime-claim",
     "method": "POST",
     "request": {
@@ -23,16 +23,16 @@ pub fn runtime_claim_consumer_contract_json(session_id : String) -> Json {
 ///|
 pub fn runtime_replay_consumer_contract_json(session_id : String) -> Json {
   {
-    "consumer": "moonclaw-or-standalone-mooncode",
-    "reference": "../openseek/cmd/openseek/serve.mbt",
-    "stdin": "JSONL lines from pending_openseek_jsonl or pending_commands[*].openseek_wire_command",
-    "stdout": "OpenSeek-compatible JSONL runtime events normalized by Moondesk into MoonCode lanes",
+    "consumer": "moonclaw",
+    "reference": "mooncode/runtime/serve",
+    "stdin": "JSONL lines from pending_mooncode_jsonl or pending_commands[*].mooncode_command",
+    "stdout": "MoonCode protocol JSONL runtime events normalized by Moondesk into MoonCode lanes",
     "claim": "POST /api/mooncode/sessions/\{session_id}/runtime-claim with {consumer_id,max_count,force,lease_expires_at,now} to atomically mark commands as runtime-claimed before execution",
     "ack": "POST /api/mooncode/sessions/\{session_id}/runtime-replay with {consumer_id,command_id,status,detail,events[]} or {receipts:[...]} to append dispatch receipts and optional stream events",
     "session_id": session_id,
     "required_order": "one ordered queue; do not start a later prompt before earlier pending prompt/steer/cancel records are handled",
     "authorization_rule": "do not consume pending_commands whose tool_authorization snapshot has runtime_may_execute=false; resolve tool approvals first",
-    "duplicate_guard": "skip command ids with native-dispatched, legacy-bridged, runtime-acknowledged, runtime-completed, active runtime-claimed receipts, or blocked tool authorization; active earlier claims, invalid earlier commands, and tool-authorization-blocked earlier commands block later non-delivered rows; expired claims and failed dispatches are retryable",
-    "event_sink": ".moontown/mooncode-sessions/<session-id>/events.jsonl or /v1/mooncode/sessions/<session-id>/stream",
+    "duplicate_guard": "skip command ids with native-dispatched, runtime-acknowledged, runtime-completed, active runtime-claimed receipts, or blocked tool authorization; active earlier claims, invalid earlier commands, and tool-authorization-blocked earlier commands block later non-delivered rows; expired claims and failed dispatches are retryable",
+    "event_sink": ".moontown/mooncode-sessions/<session-id>/events.jsonl or /v1/code/sessions/<session-id>/stream",
   }
 }

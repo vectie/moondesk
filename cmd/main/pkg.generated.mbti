@@ -6,7 +6,7 @@ package "vectie/moondesk/cmd/main"
 // Errors
 
 // Types and methods
-type ServeOptions derive(Show)
+type ServeOptions
 
 // Type aliases
 

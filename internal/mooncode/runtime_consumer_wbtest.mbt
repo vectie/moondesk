@@ -9,11 +9,11 @@ test "mooncode runtime consumer ack completes run_tests with typed tool proof" {
     "action": "run_tests",
     "dispatch": "command",
     "serve_command": "prompt",
-    "openseek_wire_command": { "command": "prompt", "text": "run tests" },
+    "mooncode_command": { "command": "prompt", "text": "run tests" },
     "execution_summary": {
       "tool_sequence": ["read", "moon_check", "shell", "finish"],
       "required_events": [
-        "tool_call", "tool_result", "test_result", "agent_finished",
+        "tool_call", "tool_result", "test_result", "runtime_finished",
       ],
     },
   }
@@ -77,11 +77,11 @@ test "mooncode runtime consumer ack is proof-missing when an expected tool outco
     "action": "run_tests",
     "dispatch": "command",
     "serve_command": "prompt",
-    "openseek_wire_command": { "command": "prompt", "text": "run tests" },
+    "mooncode_command": { "command": "prompt", "text": "run tests" },
     "execution_summary": {
       "tool_sequence": ["read", "moon_check", "shell", "finish"],
       "required_events": [
-        "tool_call", "tool_result", "test_result", "agent_finished",
+        "tool_call", "tool_result", "test_result", "runtime_finished",
       ],
     },
   }
@@ -123,14 +123,14 @@ test "mooncode runtime consumer package output ack proves executable package com
     "action": "package",
     "dispatch": "command",
     "serve_command": "prompt",
-    "openseek_wire_command": { "command": "prompt", "text": "package output" },
+    "mooncode_command": { "command": "prompt", "text": "package output" },
     "execution_summary": {
       "tool_sequence": [
         "read", "moon_check", "shell", "package_app_tool", "finish",
       ],
       "required_events": [
         "tool_call", "tool_result", "artifact", "package.manifest", "package.index",
-        "package_verified", "agent_finished",
+        "package_verified", "runtime_finished",
       ],
     },
   }

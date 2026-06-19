@@ -5,7 +5,7 @@ async fn handle_mooncode_session_change_set(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) =>
       match mooncode_read_change_set_manifest(session) {
         Some(manifest) => send_json(conn, method_, manifest)
@@ -28,7 +28,7 @@ async fn handle_mooncode_session_patch_set(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) =>
       match mooncode_read_patch_set_manifest(session) {
         Some(manifest) => send_json(conn, method_, manifest)
@@ -51,7 +51,7 @@ async fn handle_mooncode_session_test_runs(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) =>
       match mooncode_read_test_runs_manifest(session) {
         Some(manifest) => send_json(conn, method_, manifest)
@@ -74,7 +74,7 @@ async fn handle_mooncode_session_package_candidates(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) =>
       send_json(
         conn,

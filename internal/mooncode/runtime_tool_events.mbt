@@ -161,7 +161,7 @@ fn runtime_event_command_packet(event : Json, action : String) -> Json {
       "dispatch": command_dispatch(action),
       "runtime_proof": true,
       "session_id": json_string(event, "session_id", default=""),
-      "task_id": json_string(event, "task_id", default=""),
+      "runtime_session_id": json_string(event, "runtime_session_id", default=""),
     }
   }
 }
@@ -253,11 +253,11 @@ fn runtime_tool_event_command(event : Json) -> String {
   }
   let args = runtime_tool_event_args_json(event)
   match runtime_json_object_field(args, "cmd") {
-    Some(Json::Array(parts)) => {
+    Some(Array(parts)) => {
       let values : Array[String] = []
       for part in parts {
         match part {
-          Json::String(text) => values.push(text)
+          String(text) => values.push(text)
           _ => ()
         }
       }

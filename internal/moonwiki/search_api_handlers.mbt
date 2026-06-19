@@ -65,13 +65,41 @@ async fn collect_search_hits(
 }
 
 ///|
+async fn handle_search(
+  workspace_root : String,
+  request_path : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let query = decode_query_value(
+      query_value(request_path, "query").unwrap_or(""),
+    )
+    .trim()
+    .to_owned()
+  if query == "" {
+    send_json(conn, method_, Json::array([]))
+    return
+  }
+  let workspace_filter = query_value(request_path, "workspace")
+  let query_lower = query.to_lower()
+  let hits : Array[Json] = []
+  for workspace in discover_workspaces(workspace_root) {
+    match workspace_filter {
+      Some(id) if id != workspace.id => continue
+      _ => ()
+    }
+    collect_search_hits(workspace, "", query_lower, hits, 0, 80)
+    if hits.length() >= 80 {
+      break
+    }
+  }
+  send_json(conn, method_, Json::array(hits))
+}
+
+///|
 fn is_searchable_entry(kind : @desk.EntryKind) -> Bool {
   match kind {
-    @desk.EntryKind::Markdown
-    | @desk.EntryKind::Html
-    | @desk.EntryKind::Json
-    | @desk.EntryKind::Text
-    | @desk.EntryKind::Unknown => true
+    Markdown | Html | Json | Text | Unknown => true
     _ => false
   }
 }

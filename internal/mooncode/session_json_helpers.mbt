@@ -17,8 +17,8 @@ fn summary_json_object_field_or_empty(json : Json, key : String) -> Json {
 ///|
 fn summary_json_int(json : Json, key : String, default~ : Int) -> Int {
   match summary_json_object_field(json, key) {
-    Some(Json::Number(value, ..)) => value.to_int()
-    Some(Json::String(value)) => @string.parse_int(value) catch { _ => default }
+    Some(Number(value, ..)) => value.to_int()
+    Some(String(value)) => @string.parse_int(value) catch { _ => default }
     _ => default
   }
 }

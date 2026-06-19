@@ -4,7 +4,7 @@ pub fn command_queue_response(
   commands : Array[Json],
   workspace_id~ : String,
   workspace_name~ : String,
-  task_id~ : String,
+  runtime_session_id~ : String,
   command_log_path~ : String,
 ) -> Json {
   {
@@ -13,15 +13,15 @@ pub fn command_queue_response(
     "session_id": session_id,
     "workspace_id": workspace_id,
     "workspace_name": workspace_name,
-    "task_id": task_id,
+    "runtime_session_id": runtime_session_id,
     "command_log_path": command_log_path,
     "command_count": commands.length(),
     "commands": Json::array(commands),
-    "ordering_rule": "append-only commands.jsonl; MoonClaw or standalone MoonCode consumes commands in file order",
+    "ordering_rule": "append-only commands.jsonl; MoonClaw consumes commands in file order",
     "owner": {
       "ui": "moondesk",
       "runtime": "moonclaw",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
   }
 }
@@ -38,7 +38,7 @@ pub fn command_queue_result_response(
     commands,
     workspace_id=json_string(session, "workspace_id", default=""),
     workspace_name=json_string(session, "workspace_name", default=""),
-    task_id=json_string(session, "moonclaw_task_id", default=""),
+    runtime_session_id=session_runtime_session_id(session),
     command_log_path~,
   )
 }

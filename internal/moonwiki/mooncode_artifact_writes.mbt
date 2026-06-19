@@ -29,7 +29,11 @@ async fn write_mooncode_review_receipt_if_needed(
     with_receipt
   }
   Some(
-    agent_session_with_field(with_package, "updated_at", recorded_at.to_json()),
+    mooncode_session_with_field(
+      with_package,
+      "updated_at",
+      recorded_at.to_json(),
+    ),
   )
 }
 

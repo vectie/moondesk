@@ -17,7 +17,7 @@ test "mooncode action plan treats claimed runtime commands as running" {
       "command_id": "cmd-1",
       "action": "prompt",
       "dispatch": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "build it" },
+      "mooncode_command": { "command": "prompt", "text": "build it" },
     },
   ]
   let receipts : Array[Json] = [
@@ -198,7 +198,7 @@ test "mooncode action plan exposes command runtime evidence" {
     "action": "run_tests",
     "dispatch": "command",
     "execution_summary": {
-      "required_events": ["test_result", "agent_finished"],
+      "required_events": ["test_result", "runtime_finished"],
       "required_outputs": ["exit code"],
     },
   }
@@ -237,7 +237,7 @@ test "mooncode action plan exposes command runtime evidence" {
   assert_eq(runtime_json_int(item, "proven_required_event_count", default=0), 1)
   assert_true(
     action_plan_json_string_array_items(item, "missing_required_events").contains(
-      "agent_finished",
+      "runtime_finished",
     ),
   )
 }
@@ -260,7 +260,7 @@ test "mooncode action plan waits for tool harness proof after delivery" {
     "dispatch": "command",
     "execution_summary": {
       "tool_sequence": ["read", "moon_check", "finish"],
-      "required_events": ["test_result", "agent_finished"],
+      "required_events": ["test_result", "runtime_finished"],
       "required_outputs": ["exit code"],
     },
   }
@@ -292,7 +292,7 @@ test "mooncode action plan waits for tool harness proof after delivery" {
         id="finish",
         lane="review",
         kind="finish",
-        title="Agent finished",
+        title="Runtime finished",
         status="done",
         created_at="2026-06-15T00:00:01Z",
         detail="done",
@@ -334,7 +334,7 @@ test "mooncode action plan retries failed tool harness proof" {
     "dispatch": "command",
     "execution_summary": {
       "tool_sequence": ["moon_check"],
-      "required_events": ["test_result", "agent_finished"],
+      "required_events": ["test_result", "runtime_finished"],
     },
   }
   let packet : Json = { "command_id": "cmd-test", "action": "run_tests" }
@@ -377,7 +377,7 @@ test "mooncode action plan retries failed tool harness proof" {
         id="finish",
         lane="review",
         kind="finish",
-        title="Agent finished",
+        title="Runtime finished",
         status="done",
         created_at="2026-06-15T00:00:02Z",
         detail="done",
@@ -466,11 +466,11 @@ fn action_plan_json_string_array_items(
   key : String,
 ) -> Array[String] {
   match runtime_json_object_field(json, key) {
-    Some(Json::Array(values)) => {
+    Some(Array(values)) => {
       let result : Array[String] = []
       for value in values {
         match value {
-          Json::String(item) => result.push(item)
+          String(item) => result.push(item)
           _ => ()
         }
       }

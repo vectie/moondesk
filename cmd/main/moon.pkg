@@ -8,10 +8,13 @@ import {
   "moonbitlang/x/sys",
   "vectie/moondesk/host",
   "vectie/moondesk/internal/fsx",
+  "vectie/moondesk/internal/mooncore",
   "vectie/moondesk/internal/moonwiki",
   "vectie/moondesk/internal/pathx",
   "vectie/moondesk/plugin/moonstat",
 }
+
+supported_targets = "native"
 
 options(
   "is-main": true,

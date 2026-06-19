@@ -14,19 +14,13 @@ type Activity derive(Eq)
 
 type ActivityButton
 
-type AgentDaemonStatus derive(@json.FromJson)
+type BookBaseTypeRecord derive(@json.FromJson)
 
-type AgentMessage derive(@json.FromJson)
+type BookPatternCreationResult derive(@json.FromJson)
 
-type AgentModel derive(@json.FromJson)
-
-type AgentModelsResult derive(@json.FromJson)
-
-type AgentSession derive(@json.FromJson)
+type BookPatternRecord derive(@json.FromJson)
 
 type BrowserLocalImportBatch derive(@json.FromJson)
-
-type DaemonAgentResult derive(@json.FromJson)
 
 type DaemonDispatchResult derive(@json.FromJson)
 
@@ -42,9 +36,155 @@ type InboxCreated derive(@json.FromJson)
 
 type InboxImportResult derive(@json.FromJson)
 
+type LaunchAgentResult derive(@json.FromJson)
+
 type LocalImportFile derive(@json.FromJson)
 
 type Model
+
+type MoonClawDaemonStatus derive(@json.FromJson)
+
+type MoonClawModel derive(@json.FromJson)
+
+type MoonClawModelsResult derive(@json.FromJson)
+
+type MoonCodeActionPlan derive(@json.FromJson)
+
+type MoonCodeActionPlanGates derive(@json.FromJson)
+
+type MoonCodeActionPlanItem derive(@json.FromJson)
+
+type MoonCodeActionPlanRecommendedCommand derive(@json.FromJson)
+
+type MoonCodeBoundary derive(@json.FromJson)
+
+type MoonCodeCapabilities derive(@json.FromJson)
+
+type MoonCodeChangeSet derive(@json.FromJson)
+
+type MoonCodeChangeSetEntry derive(@json.FromJson)
+
+type MoonCodeCommandCommand derive(@json.FromJson)
+
+type MoonCodeCommandPreflight derive(@json.FromJson)
+
+type MoonCodeCommandProtocol derive(@json.FromJson)
+
+type MoonCodeCommandQueue derive(@json.FromJson)
+
+type MoonCodeCommandSpec derive(@json.FromJson)
+
+type MoonCodeEngineCheck derive(@json.FromJson)
+
+type MoonCodeEngineStatus derive(@json.FromJson)
+
+type MoonCodeEvalCheck derive(@json.FromJson)
+
+type MoonCodeEvalContract derive(@json.FromJson)
+
+type MoonCodeEvalReport derive(@json.FromJson)
+
+type MoonCodeEvent derive(@json.FromJson)
+
+type MoonCodeMessage derive(@json.FromJson)
+
+type MoonCodeNamespaceRole derive(@json.FromJson)
+
+type MoonCodeNativeEvalReportContract derive(@json.FromJson)
+
+type MoonCodePackageCandidate derive(@json.FromJson)
+
+type MoonCodePackageCandidates derive(@json.FromJson)
+
+type MoonCodePackageSourceRecord derive(@json.FromJson)
+
+type MoonCodePatchHunk derive(@json.FromJson)
+
+type MoonCodePatchSet derive(@json.FromJson)
+
+type MoonCodePatchSetEntry derive(@json.FromJson)
+
+type MoonCodeQueuedCommand derive(@json.FromJson)
+
+type MoonCodeReadiness derive(@json.FromJson)
+
+type MoonCodeResumeContract derive(@json.FromJson)
+
+type MoonCodeRuntimeClaimItem derive(@json.FromJson)
+
+type MoonCodeRuntimeClaimState derive(@json.FromJson)
+
+type MoonCodeRuntimeCommandFeed derive(@json.FromJson)
+
+type MoonCodeRuntimeComponent derive(@json.FromJson)
+
+type MoonCodeRuntimeConsumer derive(@json.FromJson)
+
+type MoonCodeRuntimeConsumerEndpoints derive(@json.FromJson)
+
+type MoonCodeRuntimeContract derive(@json.FromJson)
+
+type MoonCodeRuntimeDispatchReceipt derive(@json.FromJson)
+
+type MoonCodeRuntimeDispatchState derive(@json.FromJson)
+
+type MoonCodeRuntimeEngine derive(@json.FromJson)
+
+type MoonCodeRuntimeEventSink derive(@json.FromJson)
+
+type MoonCodeRuntimeEvidence derive(@json.FromJson)
+
+type MoonCodeRuntimeEvidenceItem derive(@json.FromJson)
+
+type MoonCodeRuntimeHandoff derive(@json.FromJson)
+
+type MoonCodeRuntimeReplayItem derive(@json.FromJson)
+
+type MoonCodeRuntimeReplayState derive(@json.FromJson)
+
+type MoonCodeRuntimeServiceState derive(@json.FromJson)
+
+type MoonCodeSelectedPatchPreflight derive(@json.FromJson)
+
+type MoonCodeSession derive(@json.FromJson)
+
+type MoonCodeSessionProtocol derive(@json.FromJson)
+
+type MoonCodeSessionStoreContract derive(@json.FromJson)
+
+type MoonCodeStandalone derive(@json.FromJson)
+
+type MoonCodeStandaloneBoundary derive(@json.FromJson)
+
+type MoonCodeStandaloneRole derive(@json.FromJson)
+
+type MoonCodeStreamPoll
+
+type MoonCodeStreamState derive(@json.FromJson)
+
+type MoonCodeSummary derive(@json.FromJson)
+
+type MoonCodeTestRunEntry derive(@json.FromJson)
+
+type MoonCodeTestRuns derive(@json.FromJson)
+
+type MoonCodeToolApprovalEntry derive(@json.FromJson)
+
+type MoonCodeToolApprovals derive(@json.FromJson)
+
+type MoonCodeToolAuthorization derive(@json.FromJson)
+
+type MoonCodeToolCallCommandContract derive(@json.FromJson)
+
+type MoonCodeToolContract derive(@json.FromJson)
+
+type MoonCodeToolContractConstraints derive(@json.FromJson)
+
+type MoonCodeToolRuntimeContract derive(@json.FromJson)
+
+type MoonCodeToolSpec derive(@json.FromJson)
+
+type MoonCodeWorkspaceModeInfo derive(@json.FromJson)
 
 type MoonclawProgress derive(@json.FromJson)
 
@@ -73,6 +213,8 @@ type TownAnalytics derive(@json.FromJson)
 type TownMessage derive(@json.FromJson)
 
 type TownProgress derive(@json.FromJson)
+
+type WorkspaceMode derive(Eq)
 
 // Type aliases
 

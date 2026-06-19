@@ -43,7 +43,7 @@ pub fn session_cancel_lifecycle(events : Array[Json]) -> Json {
       pending_count, failed_count, dropped_count, cancelled_count,
     ),
     "rows": Json::array(rows),
-    "rule": "Cancel lifecycle is derived from durable MoonCode cancel command packets plus command-scoped agent_aborted and cancel_dropped runtime events. A dropped cancel means MoonClaw found no active or pending turn to cancel.",
+    "rule": "Cancel lifecycle is derived from durable MoonCode cancel command packets plus command-scoped runtime_aborted and cancel_dropped runtime events. A dropped cancel means MoonClaw found no active or pending turn to cancel.",
   }
 }
 
@@ -53,7 +53,7 @@ fn cancel_lifecycle_row(command_id : String, events : Array[Json]) -> Json {
   let settlement = cancel_find_settlement_event(command_id, events)
   let settlement_kind = json_string(settlement, "kind", default="")
   let command_status = json_string(command, "status", default="")
-  let status = if settlement_kind == "agent_aborted" {
+  let status = if settlement_kind == "runtime_aborted" {
     "cancelled"
   } else if settlement_kind == event_cancel_dropped() {
     "dropped"
@@ -106,7 +106,7 @@ fn cancel_lifecycle_message(
       "dropped" =>
         "Cancel reached MoonClaw but no active or pending turn existed."
       "failed" => "Cancel command failed before MoonClaw accepted it."
-      _ => "Cancel is waiting for agent_aborted or cancel_dropped evidence."
+      _ => "Cancel is waiting for runtime_aborted or cancel_dropped evidence."
     }
   }
 }
@@ -146,7 +146,7 @@ fn cancel_event_is_command(event : Json) -> Bool {
 ///|
 fn cancel_event_is_settlement(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
-  (kind == "agent_aborted" || kind == event_cancel_dropped()) &&
+  (kind == "runtime_aborted" || kind == event_cancel_dropped()) &&
   json_string(
     summary_json_object_field_or_empty(event, "command_packet"),
     "action",
@@ -195,7 +195,7 @@ fn cancel_next_step(
   cancelled_count : Int,
 ) -> String {
   if pending_count > 0 {
-    "Wait for MoonClaw to emit agent_aborted or cancel_dropped for pending cancellation."
+    "Wait for MoonClaw to emit runtime_aborted or cancel_dropped for pending cancellation."
   } else if failed_count > 0 {
     "Restart or reconnect MoonClaw before sending another cancel command."
   } else if dropped_count > 0 && cancelled_count == 0 {

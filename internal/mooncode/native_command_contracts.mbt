@@ -54,6 +54,6 @@ pub fn native_command_tool_contract(action : String) -> Json {
     "mutating_tools_require_review": true,
     "shell_requires_bounded_timeout": true,
     "moon_check_required_for_code_changes": true,
-    "approval_boundary": "Moondesk records approvals; MoonClaw or standalone mooncode must enforce them before read/edit/write/shell/moon_check/package tools execute.",
+    "approval_boundary": "Moondesk records approvals; MoonClaw must enforce them before read/edit/write/shell/moon_check/package tools execute.",
   }
 }

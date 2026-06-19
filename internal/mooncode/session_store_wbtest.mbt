@@ -5,7 +5,7 @@ test "mooncode session snapshot records durable queue and event state" {
     "workspace_id": "book",
     "workspace_name": "Book",
     "workspace_root": "/tmp/book",
-    "moonclaw_task_id": "task",
+    "mooncode_runtime_session_id": "runtime",
     "title": "Build tool",
     "transcript": [
       { "role": "user", "content": "create a tool" },
@@ -20,8 +20,8 @@ test "mooncode session snapshot records durable queue and event state" {
   let runtime_commands : Array[Json] = [
     {
       "command_id": "cmd-1",
-      "openseek_wire_valid": true,
-      "openseek_wire_command": { "type": "prompt", "prompt": "create a tool" },
+      "mooncode_command_valid": true,
+      "mooncode_command": { "type": "prompt", "prompt": "create a tool" },
     },
   ]
   let runtime_dispatches : Array[Json] = [
@@ -70,14 +70,14 @@ test "mooncode session snapshot records durable queue and event state" {
     ),
   )
   assert_eq(summary_json_int(snapshot, "event_count", default=0), 1)
-  let tool_call_wire = summary_json_object_field_or_empty(
-    snapshot, "tool_call_wire",
+  let tool_call_contract = summary_json_object_field_or_empty(
+    snapshot, "tool_call_contract",
   )
   assert_eq(
-    json_string(tool_call_wire, "kind", default=""),
-    "mooncode-tool-call-wire-contract",
+    json_string(tool_call_contract, "kind", default=""),
+    "mooncode-tool-call-contract",
   )
-  assert_true(tool_call_wire.stringify().contains("moon_check"))
+  assert_true(tool_call_contract.stringify().contains("moon_check"))
   let event_normalization = summary_json_object_field_or_empty(
     snapshot, "event_normalization",
   )
@@ -106,7 +106,7 @@ test "mooncode session snapshot records durable queue and event state" {
     "/api/mooncode/sessions/s1/runtime-handoff",
   )
   assert_eq(
-    json_string(resume_endpoints, "production_readiness", default=""),
-    "/api/mooncode/sessions/s1/production-readiness",
+    json_string(resume_endpoints, "readiness", default=""),
+    "/api/mooncode/sessions/s1/readiness",
   )
 }

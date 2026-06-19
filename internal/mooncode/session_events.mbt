@@ -130,7 +130,7 @@ pub fn project_session_events_for_session(
   session : Json,
   raw_events : Array[Json],
   durable_events : Array[Json],
-  fallback_created_at? : String = "",
+  projected_created_at? : String = "",
 ) -> Array[Json] {
   let projected : Array[Json] = []
   for event in session_json_array_items(session, "mooncode_events") {
@@ -138,9 +138,24 @@ pub fn project_session_events_for_session(
   }
   if raw_events.length() > 0 {
     for event in raw_events {
-      match moonclaw_projected_event_record(event, fallback_created_at~) {
-        Some(item) => projected.push(item)
-        None => ()
+      if json_string(event, "lane", default="") != "" &&
+        json_string(event, "kind", default="") != "" {
+        projected.push(
+          canonical_event_record(
+            event,
+            fallback_id=runtime_event_fallback_id(event),
+            fallback_created_at=projected_created_at,
+          ),
+        )
+      } else {
+        match
+          normalize_runtime_event_with_defaults(
+            event,
+            fallback_created_at=projected_created_at,
+          ) {
+          Some(item) => projected.push(item)
+          None => ()
+        }
       }
     }
   } else {
@@ -193,9 +208,9 @@ fn transcript_role_title(role : String) -> String {
 }
 
 ///|
-fn session_with_field(base : Json, key : String, value : Json) -> Json {
+pub fn session_with_field(base : Json, key : String, value : Json) -> Json {
   match base {
-    Json::Object(fields) => {
+    Object(fields) => {
       let next : Map[String, Json] = {}
       for item in fields {
         next[item.0] = item.1
@@ -210,9 +225,9 @@ fn session_with_field(base : Json, key : String, value : Json) -> Json {
 ///|
 fn session_json_array_items(json : Json, key : String) -> Array[Json] {
   match json {
-    Json::Object(fields) =>
+    Object(fields) =>
       match fields.get(key) {
-        Some(Json::Array(items)) => [ for item in items => item ]
+        Some(Array(items)) => [ for item in items => item ]
         _ => []
       }
     _ => []

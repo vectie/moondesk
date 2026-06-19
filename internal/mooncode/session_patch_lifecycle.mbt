@@ -58,7 +58,7 @@ pub fn session_patch_lifecycle(events : Array[Json]) -> Json {
     "latest_status": patch_lifecycle_latest_status(rows),
     "next_step": patch_lifecycle_next_step(patches, gate_counts),
     "rows": Json::array(rows),
-    "rule": "Patch lifecycle is derived from MoonCode patch-set entries. Moondesk renders this summary and review controls, while MoonClaw or standalone MoonCode must perform apply/revert mutations and emit runtime.patch_applied/runtime.patch_reverted proof.",
+    "rule": "Patch lifecycle is derived from MoonCode patch-set entries. Moondesk renders this summary and review controls, while MoonClaw must perform apply/revert mutations and emit runtime.patch_applied/runtime.patch_reverted proof.",
   }
 }
 

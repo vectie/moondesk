@@ -122,6 +122,10 @@ fn runtime_replay_ack_command_packet(runtime_command : Json) -> Json {
     "dispatch": rq_json_string(runtime_command, "dispatch", default="prompt"),
     "runtime_proof": true,
     "session_id": rq_json_string(runtime_command, "session_id", default=""),
-    "task_id": rq_json_string(runtime_command, "task_id", default=""),
+    "runtime_session_id": rq_json_string(
+      runtime_command,
+      "runtime_session_id",
+      default="",
+    ),
   }
 }

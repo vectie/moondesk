@@ -109,7 +109,7 @@ fn runtime_consumer_finish_event(
   acknowledged_at : String,
 ) -> Json {
   runtime_consumer_scoped_raw_event(runtime_command, {
-    "event": "agent_finished",
+    "event": "runtime_finished",
     "id": runtime_consumer_event_id(runtime_command, "finish", index),
     "created_at": acknowledged_at,
     "answer": if rq_json_string(outcome, "content", default="") == "" {

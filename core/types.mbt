@@ -1,7 +1,6 @@
 ///|
 pub(all) enum WorkspaceKind {
   MoonBook
-  LooseFolder
   TownRoot
 } derive(Debug, Eq, ToJson, FromJson)
 
@@ -107,7 +106,7 @@ pub struct DeskTaskSubmission {
   prompt : String
   context_entries : Array[String]
   cadence : SubmissionCadence
-  quality_threshold : Int
+  review_policy : String
   source_policy : SourcePolicy
   created_at : String
 } derive(Debug, Eq, ToJson, FromJson)

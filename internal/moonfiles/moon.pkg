@@ -1,0 +1,16 @@
+import {
+  "moonbitlang/async/fs",
+  "moonbitlang/core/json",
+  "vectie/moondesk/internal/fsx",
+  "vectie/moondesk/internal/pathx",
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"
+
+import {
+  "moonbitlang/async",
+} for "wbtest"
+
+supported_targets = "native"

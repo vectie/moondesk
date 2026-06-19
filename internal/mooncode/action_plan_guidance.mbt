@@ -18,7 +18,7 @@ pub fn action_plan_blocking_reason(
     return "last runtime dispatch failed; replay or retry the command"
   }
   if state == "running" {
-    return "MoonClaw or standalone MoonCode has claimed this command and should acknowledge it through runtime replay"
+    return "MoonClaw has claimed this command and should acknowledge it through runtime replay"
   }
   if state != "blocked" {
     return ""

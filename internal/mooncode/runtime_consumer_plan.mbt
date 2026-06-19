@@ -77,20 +77,19 @@ pub fn runtime_consumer_handoff(
       "runtime_events": "/api/mooncode/sessions/\{session_id}/runtime-events",
       "runtime_commands": "/api/mooncode/sessions/\{session_id}/runtime-commands",
       "stream": "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=<sequence>",
-      "native_session_listing": "/v1/mooncode/sessions?book_root=<path>&format=json",
-      "native_commands": "/v1/mooncode/sessions/\{session_id}/commands",
-      "native_serve_scheduler": "/v1/mooncode/sessions/\{session_id}/serve-scheduler?book_root=<path>",
-      "native_eval_report": "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=<path>",
+      "native_session_listing": "/v1/code/sessions?book_root=<path>&format=json",
+      "native_commands": "/v1/code/sessions/\{session_id}/commands",
+      "native_serve_scheduler": "/v1/code/sessions/\{session_id}/serve-scheduler?book_root=<path>",
+      "native_eval_report": "/v1/code/sessions/\{session_id}/eval-report?book_root=<path>",
     },
     "required_loop": [
       "GET runtime-handoff or session-store", "GET runtime-claim", "POST runtime-claim with consumer_id before execution",
       "GET native serve-scheduler when using MoonClaw's native MoonCode endpoint",
-      "execute claimed OpenSeek-compatible command with MoonClaw/MoonCode tools",
-      "POST runtime-events for streamed reasoning/tool/diff/test/artifact events",
+      "execute claimed MoonCode command with MoonClaw/MoonCode tools", "POST runtime-events for streamed reasoning/tool/diff/test/artifact events",
       "POST runtime-replay with runtime-acknowledged or runtime-completed receipt",
       "POST eval-report when native tool/file-edit/patch-review/command-execution/package-output harness evidence is available",
     ],
-    "safety_boundary": "Moondesk records queue, review, and display state; MoonClaw or standalone mooncode must enforce path, tool, shell, approval, test, and package policy before execution.",
+    "safety_boundary": "Moondesk records queue, review, and display state; MoonClaw must enforce path, tool, shell, approval, test, and package policy before execution.",
   }
 }
 
@@ -194,30 +193,30 @@ pub fn runtime_consumer_execution_plan(
     "ack_endpoint": ack_sink,
     "runtime_event_ingest_endpoint": event_sink,
     "stream_endpoint": "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=<sequence>",
-    "native_session_listing_endpoint": "/v1/mooncode/sessions?book_root=<path>&format=json",
-    "native_command_endpoint": "/v1/mooncode/sessions/\{session_id}/commands",
-    "native_serve_scheduler_endpoint": "/v1/mooncode/sessions/\{session_id}/serve-scheduler?book_root=<path>",
-    "native_eval_report_endpoint": "/v1/mooncode/sessions/\{session_id}/eval-report?book_root=<path>",
+    "native_session_listing_endpoint": "/v1/code/sessions?book_root=<path>&format=json",
+    "native_command_endpoint": "/v1/code/sessions/\{session_id}/commands",
+    "native_serve_scheduler_endpoint": "/v1/code/sessions/\{session_id}/serve-scheduler?book_root=<path>",
+    "native_eval_report_endpoint": "/v1/code/sessions/\{session_id}/eval-report?book_root=<path>",
     "claim_request_template": {
-      "consumer_id": "moonclaw-or-standalone-mooncode",
+      "consumer_id": "moonclaw",
       "lease_seconds": 300,
       "command_id": command_id,
     },
     "ack_request_template": {
-      "consumer_id": "moonclaw-or-standalone-mooncode",
+      "consumer_id": "moonclaw",
       "command_id": command_id,
       "status": "runtime-completed",
       "events": [],
     },
     "failure_ack_template": {
-      "consumer_id": "moonclaw-or-standalone-mooncode",
+      "consumer_id": "moonclaw",
       "command_id": command_id,
       "status": "failed",
       "detail": "execution failed",
       "events": [],
     },
-    "openseek_wire_command": rq_json_object_field_or_empty(
-      command, "openseek_wire_command",
+    "mooncode_command": rq_json_object_field_or_empty(
+      command, "mooncode_command",
     ),
     "native_mooncode_body": native_body,
     "execution_summary": summary,
@@ -230,7 +229,7 @@ pub fn runtime_consumer_execution_plan(
     "next_step": runtime_consumer_execution_next_step(
       status, operation, command_id, action,
     ),
-    "safety_boundary": "This is an execution plan, not execution. MoonClaw or standalone mooncode must enforce the embedded tool/path/approval/test contracts before running tools, then stream events and acknowledge through the listed endpoints.",
+    "safety_boundary": "This is an execution plan, not execution. MoonClaw must enforce the embedded tool/path/approval/test contracts before running tools, then stream events and acknowledge through the listed endpoints.",
     "owner": runtime_owner_record(),
   }
 }
@@ -244,7 +243,7 @@ fn runtime_consumer_execution_next_step(
 ) -> String {
   let base = match status {
     "ready-to-claim" =>
-      "POST runtime-claim for command `\{command_id}`, execute `\{action}` through the native MoonCode/OpenSeek tool loop, stream required events, then POST runtime-replay."
+      "POST runtime-claim for command `\{command_id}`, execute `\{action}` through the native MoonCode tool loop, stream required events, then POST runtime-replay."
     "lease-held" =>
       "Resume or finish the leased command `\{command_id}`; emit any missing runtime events, then acknowledge completion or failure through runtime-replay."
     "blocked-invalid-command" =>
@@ -273,7 +272,7 @@ fn runtime_consumer_next_action(status : String) -> String {
     "lease-held" =>
       "resume the active consumer lease or use force=true only for an operator-approved stale-lease recovery"
     "replay-ready" =>
-      "consume pending_openseek_jsonl from runtime-replay if single-consumer leasing is not required"
+      "consume pending_mooncode_jsonl from runtime-replay if single-consumer leasing is not required"
     "delivered" =>
       "wait for new runtime commands or append runtime events/eval evidence for completed work"
     _ => "wait for a prompt, steer, cancel, test, package, or review command"

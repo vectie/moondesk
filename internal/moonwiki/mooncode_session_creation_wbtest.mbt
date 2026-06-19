@@ -4,10 +4,10 @@ test "mooncode new session record starts with typed coding protocol" {
     id="book-demo",
     name="Demo Book",
     root_path="/tmp/demo-book",
-    kind=@desk.WorkspaceKind::MoonBook,
+    kind=MoonBook,
   )
-  let task : Json = {
-    "id": "task-demo",
+  let runtime : Json = {
+    "id": "runtime-demo",
     "status": "created",
     "model": "default",
     "web_search": true,
@@ -16,7 +16,7 @@ test "mooncode new session record starts with typed coding protocol" {
     workspace_id=workspace.id,
     workspace_name=workspace.name,
     workspace_root=workspace.root_path,
-    task~,
+    runtime~,
     title="MoonCode - Demo Book",
     created_at="2026-06-15T00:00:00Z",
     updated_at="2026-06-15T00:00:00Z",
@@ -33,7 +33,14 @@ test "mooncode new session record starts with typed coding protocol" {
     "tools/demo/main.mbt",
   )
   assert_eq(json_string(session, "workspace_id", default=""), "book-demo")
-  assert_eq(json_string(session, "moonclaw_task_id", default=""), "task-demo")
+  assert_eq(
+    json_string(session, "mooncode_runtime_session_id", default=""),
+    json_string(session, "id", default=""),
+  )
+  assert_eq(
+    json_string(session, "mooncode_runtime_session_id", default=""),
+    json_string(session, "id", default=""),
+  )
   assert_eq(json_array_items(session, "transcript").length(), 0)
 }
 
@@ -44,7 +51,7 @@ test "mooncode prompt command packet seeds durable session creation" {
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": "/tmp/demo-book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let payload : Json = {
     "context_path": "tools/demo/main.mbt",
@@ -97,7 +104,7 @@ test "mooncode summary and eval report use extracted protocol" {
   let session : Json = {
     "id": "s1",
     "workspace_id": "book-demo",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
     "mooncode_append_log_count": 1,
     "mooncode_command_log_count": 1,
     "mooncode_runtime_command_log_count": 1,
@@ -108,7 +115,7 @@ test "mooncode summary and eval report use extracted protocol" {
     json_string(extracted_summary, "review_state", default=""),
     "pending",
   )
-  let with_summary = agent_session_with_field(
+  let with_summary = mooncode_session_with_field(
     session, "mooncode_summary", extracted_summary,
   )
   let extracted_report = @mooncode.eval_report_projection(with_summary)
@@ -117,7 +124,7 @@ test "mooncode summary and eval report use extracted protocol" {
     "mooncode-eval-report",
   )
   assert_eq(
-    json_string(extracted_report, "extractable_component", default=""),
+    json_string(extracted_report, "standalone_component", default=""),
     "mooncode",
   )
 }

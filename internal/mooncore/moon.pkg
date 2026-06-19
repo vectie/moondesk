@@ -1,0 +1,10 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
+  "vectie/moondesk/core" @desk,
+}
+
+import {
+  "moonbitlang/core/test",
+} for "test"

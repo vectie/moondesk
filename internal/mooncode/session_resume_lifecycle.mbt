@@ -44,7 +44,7 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
     "protocol": protocol_version(),
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "status": status,
     "latest_status": status,
     "snapshot_ready": snapshot_ready,
@@ -128,9 +128,9 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
       "ui": "moondesk",
       "runtime": "moonclaw",
       "session_store": "mooncode",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
-    "rule": "Resume lifecycle is computed from the typed MoonCode session snapshot plus runtime command and dispatch logs. Moondesk renders resumability; MoonClaw or standalone MoonCode consumes the ordered runtime queue.",
+    "rule": "Resume lifecycle is computed from the typed MoonCode session snapshot plus runtime command and dispatch logs. Moondesk renders resumability; MoonClaw consumes the ordered runtime queue.",
   }
 }
 

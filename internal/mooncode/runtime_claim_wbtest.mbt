@@ -12,7 +12,7 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
       "action": "run_tests",
       "dispatch": "command",
       "serve_command": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "run tests" },
+      "mooncode_command": { "command": "prompt", "text": "run tests" },
       "tool_authorization": {
         "kind": "mooncode-tool-authorization-snapshot",
         "protocol": protocol_version(),
@@ -29,7 +29,7 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
       "action": "prompt",
       "dispatch": "prompt",
       "serve_command": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "later" },
+      "mooncode_command": { "command": "prompt", "text": "later" },
     },
   ]
   let replay = runtime_replay_state(
@@ -38,12 +38,12 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
     [],
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
   )
   assert_eq(rq_json_int(replay, "pending_command_count", default=0), 0)
-  assert_eq(rq_json_string(replay, "pending_openseek_jsonl", default="x"), "")
+  assert_eq(rq_json_string(replay, "pending_mooncode_jsonl", default="x"), "")
   let replay_items = rq_json_array_items(replay, "replay_items")
   assert_eq(
     rq_json_string(replay_items[0], "replay_status", default=""),
@@ -63,7 +63,7 @@ test "mooncode runtime claim blocks commands with pending tool authorization" {
     [],
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
   )
@@ -143,7 +143,7 @@ test "mooncode runtime claim response records claimed commands" {
       "id": "session-demo",
       "workspace_id": "book-demo",
       "workspace_name": "Demo",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
@@ -164,10 +164,10 @@ test "mooncode runtime claim response records claimed commands" {
   assert_eq(
     rq_json_string(
       rq_json_object_field_or_empty(aggregate, "claim_state"),
-      "task_id",
+      "runtime_session_id",
       default="",
     ),
-    "task-demo",
+    "runtime-demo",
   )
 }
 
@@ -182,7 +182,7 @@ test "mooncode runtime queue classifies expired leases as claimable" {
       "action": "prompt",
       "dispatch": "prompt",
       "serve_command": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "recover me" },
+      "mooncode_command": { "command": "prompt", "text": "recover me" },
     },
   ]
   let receipts : Array[Json] = [
@@ -203,7 +203,7 @@ test "mooncode runtime queue classifies expired leases as claimable" {
     receipts,
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
     lease_now="2000-01-01T00:06:00Z",
@@ -216,7 +216,7 @@ test "mooncode runtime queue classifies expired leases as claimable" {
     receipts,
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
     lease_now="2000-01-01T00:06:00Z",
@@ -239,7 +239,7 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
       "action": "run_tests",
       "dispatch": "command",
       "serve_command": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "run tests" },
+      "mooncode_command": { "command": "prompt", "text": "run tests" },
     },
   ]
   let receipts : Array[Json] = [
@@ -257,7 +257,7 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
     receipts,
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
   )
@@ -272,7 +272,7 @@ test "mooncode runtime queue classifies failed dispatches as retryable claims" {
     receipts,
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
   )
@@ -327,7 +327,7 @@ test "mooncode runtime claim preserves ordering behind active leases" {
       "action": "prompt",
       "dispatch": "prompt",
       "serve_command": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "first" },
+      "mooncode_command": { "command": "prompt", "text": "first" },
     },
     {
       "protocol": protocol_version(),
@@ -337,7 +337,7 @@ test "mooncode runtime claim preserves ordering behind active leases" {
       "action": "steer",
       "dispatch": "steer",
       "serve_command": "steer",
-      "openseek_wire_command": { "command": "steer", "text": "later" },
+      "mooncode_command": { "command": "steer", "text": "later" },
     },
   ]
   let receipts : Array[Json] = [
@@ -356,7 +356,7 @@ test "mooncode runtime claim preserves ordering behind active leases" {
     receipts,
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
   )
@@ -392,14 +392,14 @@ test "mooncode runtime claim stops at invalid earlier command" {
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-invalid",
       "session_id": "session-demo",
-      "openseek_wire_command": { "command": "prompt" },
+      "mooncode_command": { "command": "prompt" },
     },
     {
       "protocol": protocol_version(),
       "kind": "mooncode.runtime-command",
       "command_id": "cmd-later",
       "session_id": "session-demo",
-      "openseek_wire_command": { "command": "prompt", "text": "later" },
+      "mooncode_command": { "command": "prompt", "text": "later" },
     },
   ]
   let state = runtime_claim_state(
@@ -408,7 +408,7 @@ test "mooncode runtime claim stops at invalid earlier command" {
     [],
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
   )

@@ -3,7 +3,7 @@ test "mooncode summary exposes eval readiness gates" {
   let base_session : Json = {
     "id": "s1",
     "workspace_id": "book",
-    "moonclaw_task_id": "task-1",
+    "mooncode_runtime_session_id": "runtime-1",
     "mooncode_event_log_path": "/tmp/mooncode/events.jsonl",
     "mooncode_append_log_count": 1,
     "mooncode_command_log_path": "/tmp/mooncode/commands.jsonl",
@@ -223,7 +223,7 @@ test "mooncode summary exposes eval readiness gates" {
       lane="runtime",
       kind="runtime.handoff",
       title="MoonCode runtime handoff",
-      status="bridge-resumable",
+      status="replay-resumable",
       created_at="14",
       detail="MoonCode runtime handoff recorded",
       path="wiki/reviews/mooncode/s1/runtime-handoff.json",
@@ -314,22 +314,22 @@ test "mooncode summary exposes eval readiness gates" {
     json_int(summary, "runtime_patch_execution_proof_count", default=-1),
     0,
   )
-  assert_eq(json_int(summary, "eval_score", default=0), 85)
-  assert_eq(json_string(summary, "eval_level", default=""), "ready")
+  assert_eq(json_int(summary, "eval_passed_check_count", default=0), 24)
+  assert_eq(json_int(summary, "eval_check_count", default=0), 28)
+  assert_eq(json_int(summary, "eval_missing_check_count", default=0), 4)
   assert_eq(json_int(summary, "pending_diff_count", default=0), 1)
   assert_eq(json_int(summary, "accepted_review_count", default=0), 0)
   assert_eq(json_string(summary, "review_state", default=""), "pending")
   let checks = json_array_items(summary, "eval_checks")
   assert_eq(checks.length(), 28)
   let eval_report = @mooncode.eval_report_projection(
-    agent_session_with_field(base_session, "mooncode_summary", summary),
+    mooncode_session_with_field(base_session, "mooncode_summary", summary),
   )
   assert_eq(
     json_string(eval_report, "kind", default=""),
     "mooncode-eval-report",
   )
-  assert_eq(json_string(eval_report, "status", default=""), "bridge-partial")
-  assert_eq(json_int(eval_report, "bridge_score", default=0), 85)
+  assert_eq(json_string(eval_report, "status", default=""), "local-partial")
   assert_eq(json_int(eval_report, "check_count", default=0), 28)
   assert_eq(json_int(eval_report, "missing_check_count", default=0), 4)
   assert_false(
@@ -341,7 +341,7 @@ test "mooncode summary exposes eval readiness gates" {
   )
   assert_eq(
     json_string(eval_report, "native_eval_endpoint", default=""),
-    "/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
+    "/v1/code/sessions/<id>/eval-report?book_root=<path>",
   )
   assert_eq(
     json_string(eval_report, "native_eval_ingest_method", default=""),
@@ -366,7 +366,7 @@ test "mooncode summary exposes eval readiness gates" {
         ],
       },
     },
-    "/v1/mooncode/sessions/s1/eval-report",
+    "/v1/code/sessions/s1/eval-report",
   )
   assert_true(json_bool(native_eval, "ok", default=false))
   assert_eq(
@@ -375,11 +375,11 @@ test "mooncode summary exposes eval readiness gates" {
   )
   assert_eq(
     json_string(native_eval, "endpoint", default=""),
-    "/v1/mooncode/sessions/s1/eval-report",
+    "/v1/code/sessions/s1/eval-report",
   )
   let native_eval_report = @mooncode.eval_report_projection(
-    agent_session_with_field(
-      agent_session_with_field(base_session, "mooncode_summary", summary),
+    mooncode_session_with_field(
+      mooncode_session_with_field(base_session, "mooncode_summary", summary),
       "mooncode_native_eval_report",
       native_eval,
     ),
@@ -446,11 +446,13 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   )
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
+    "component": "mooncode",
+    "protocol": @mooncode.protocol_version(),
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": root,
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "code-demo",
     "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
   }
   let eval_payload : Json = { "context_path": "tools/demo/main.mbt" }
@@ -461,11 +463,11 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   let eval_runtime_command = @mooncode.runtime_command_record(
     session, eval_payload, eval_message, eval_packet,
   )
-  append_mooncode_command_log(root, "agent-demo", eval_packet)
-  append_mooncode_runtime_command_log(root, "agent-demo", eval_runtime_command)
+  append_mooncode_command_log(root, "code-demo", eval_packet)
+  append_mooncode_runtime_command_log(root, "code-demo", eval_runtime_command)
   append_mooncode_runtime_dispatch_log(
     root,
-    "agent-demo",
+    "code-demo",
     @mooncode.projected_runtime_dispatch_receipt(
       session, eval_runtime_command, "2026-06-14T00:01:00Z",
     ),
@@ -594,7 +596,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
             "action": "run_eval",
           },
           {
-            "event": "agent_finished",
+            "event": "runtime_finished",
             "id": "eval-finish",
             "created_at": "2026-06-14T00:02:30Z",
             "answer": "eval passed",
@@ -605,7 +607,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
       },
       ingested_at="2026-06-15T00:00:00Z",
     ) {
-    append_mooncode_event_log(root, "agent-demo", event)
+    append_mooncode_event_log(root, "code-demo", event)
   }
   let native_payload : Json = {
     "ok": true,
@@ -626,13 +628,13 @@ async test "mooncode native eval report ingress persists moonbook proof" {
     "package_output": { "status": "passed", "passed_count": 3 },
     "passed_count": 29,
     "failed_count": 0,
-    "evidence": ["OpenSeek-style harnesses passed"],
+    "evidence": ["MoonCode-style harnesses passed"],
   }
   let with_report = persist_mooncode_native_eval_report(
     root,
     session,
     native_payload,
-    "/v1/mooncode/sessions/agent-demo/eval-report?book_root=" +
+    "/v1/code/sessions/code-demo/eval-report?book_root=" +
     encode_query_value(root),
   )
   let after_plan = mooncode_action_plan_projection(root, with_report)
@@ -649,7 +651,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   )
   assert_eq(
     json_string(native_report, "endpoint", default=""),
-    "/v1/mooncode/sessions/agent-demo/eval-report?book_root=" +
+    "/v1/code/sessions/code-demo/eval-report?book_root=" +
     encode_query_value(root),
   )
   let manifest = json_object_field_or_empty(
@@ -660,10 +662,10 @@ async test "mooncode native eval report ingress persists moonbook proof" {
   assert_eq(json_string(manifest, "status", default=""), "native-partial")
   assert_eq(
     json_string(manifest, "native_eval_ingest_endpoint", default=""),
-    "/api/mooncode/sessions/agent-demo/eval-report",
+    "/api/mooncode/sessions/code-demo/eval-report",
   )
   let relative = json_string(manifest, "manifest_path", default="")
-  assert_eq(relative, "wiki/reviews/mooncode/agent-demo/eval-report.json")
+  assert_eq(relative, "wiki/reviews/mooncode/code-demo/eval-report.json")
   assert_true(@fs.exists(@pathx.join(root, relative)))
   let snapshot = json_object_field_or_empty(
     with_report, "mooncode_session_snapshot",
@@ -685,7 +687,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
       json_string(runtime_handoff, "absolute_manifest_path", default=""),
     ),
   )
-  let durable_events = read_mooncode_event_log(root, "agent-demo")
+  let durable_events = read_mooncode_event_log(root, "code-demo")
   let mut saw_eval_report_event = false
   for event in durable_events {
     match json_string(event, "kind", default="") {
@@ -723,7 +725,7 @@ async test "mooncode native eval report ingress persists moonbook proof" {
     ),
     1,
   )
-  match read_agent_session_record(root, "agent-demo") {
+  match read_mooncode_session_record(root, "code-demo") {
     Some(saved) => {
       let saved_native = json_object_field_or_empty(
         saved, "mooncode_native_eval_report",

@@ -1,9 +1,9 @@
 ///|
 test "runtime event ingest contract advertises command-scoped evidence refresh" {
-  let contract = runtime_event_ingest_contract("agent-demo")
+  let contract = runtime_event_ingest_contract("code-demo")
   assert_eq(
     json_string(contract, "endpoint", default=""),
-    "/api/mooncode/sessions/agent-demo/runtime-events",
+    "/api/mooncode/sessions/code-demo/runtime-events",
   )
   assert_true(
     json_string(contract, "command_scope_rule", default="").contains(
@@ -26,7 +26,7 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     "id": "s1",
     "workspace_id": "book",
     "workspace_name": "Book",
-    "moonclaw_task_id": "task",
+    "mooncode_runtime_session_id": "runtime",
     "mooncode_last_command_packet": { "command_id": "cmd-1" },
     "mooncode_last_patch_set_manifest": {
       "kind": "mooncode-patch-set",
@@ -36,8 +36,8 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
   let runtime_commands : Array[Json] = [
     {
       "command_id": "cmd-1",
-      "openseek_wire_valid": true,
-      "openseek_wire_command": { "command": "prompt", "text": "build tool" },
+      "mooncode_command_valid": true,
+      "mooncode_command": { "command": "prompt", "text": "build tool" },
     },
   ]
   let runtime_dispatches : Array[Json] = [
@@ -49,7 +49,7 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     runtime_dispatches,
     workspace_id="book",
     workspace_name="Book",
-    task_id="task",
+    runtime_session_id="runtime",
     runtime_command_log_path="/tmp/book/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/book/runtime-dispatches.jsonl",
   )
@@ -59,7 +59,7 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     runtime_dispatches,
     workspace_id="book",
     workspace_name="Book",
-    task_id="task",
+    runtime_session_id="runtime",
     runtime_command_log_path="/tmp/book/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/book/runtime-dispatches.jsonl",
   )
@@ -71,7 +71,7 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     [{ "command_id": "cmd-1", "action": "prompt" }],
     runtime_commands,
     runtime_dispatches,
-    { "running": true, "status": "running", "moonclaw_root": "../moonclaw" },
+    { "running": true, "status": "running", "moonclaw_root": "/opt/moonclaw" },
     false,
     recorded_at="2026-06-15T00:00:00Z",
     manifest_path="wiki/reviews/mooncode/s1/runtime-handoff.json",
@@ -88,7 +88,7 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     json_string(manifest, "kind", default=""),
     "mooncode-runtime-handoff",
   )
-  assert_eq(json_string(manifest, "status", default=""), "bridge-resumable")
+  assert_eq(json_string(manifest, "status", default=""), "replay-resumable")
   assert_eq(
     summary_json_int(manifest, "runtime_dispatch_pending_count", default=0),
     1,
@@ -101,24 +101,26 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
       "mooncode-runtime-dispatch-",
     ),
   )
-  let tool_call_wire = summary_json_object_field_or_empty(
-    manifest, "tool_call_wire",
+  let tool_call_contract = summary_json_object_field_or_empty(
+    manifest, "tool_call_contract",
   )
   assert_eq(
-    json_string(tool_call_wire, "kind", default=""),
-    "mooncode-tool-call-wire-contract",
+    json_string(tool_call_contract, "kind", default=""),
+    "mooncode-tool-call-contract",
   )
-  assert_true(tool_call_wire.stringify().contains("moon_check"))
+  assert_true(tool_call_contract.stringify().contains("moon_check"))
   let runtime_event_sink = summary_json_object_field_or_empty(
     manifest, "runtime_event_sink",
   )
   assert_eq(
     json_string(
-      summary_json_object_field_or_empty(runtime_event_sink, "tool_call_wire"),
+      summary_json_object_field_or_empty(
+        runtime_event_sink, "tool_call_contract",
+      ),
       "kind",
       default="",
     ),
-    "mooncode-tool-call-wire-contract",
+    "mooncode-tool-call-contract",
   )
   let resume_contract = summary_json_object_field_or_empty(
     manifest, "resume_contract",
@@ -130,11 +132,11 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
   )
   assert_eq(
     json_string(resume_contract, "native_serve_scheduler_endpoint", default=""),
-    "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
+    "/v1/code/sessions/s1/serve-scheduler?book_root=<path>",
   )
   assert_eq(
-    json_string(resume_contract, "production_readiness_endpoint", default=""),
-    "/api/mooncode/sessions/s1/production-readiness",
+    json_string(resume_contract, "readiness_endpoint", default=""),
+    "/api/mooncode/sessions/s1/readiness",
   )
   let consumer = summary_json_object_field_or_empty(
     manifest, "runtime_consumer",
@@ -180,7 +182,10 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
   )
   assert_eq(json_string(supervisor, "command_id", default=""), "cmd-1")
   assert_true(json_bool(supervisor, "ready_to_launch", default=false))
-  assert_eq(json_string(supervisor, "moonclaw_root", default=""), "../moonclaw")
+  assert_eq(
+    json_string(supervisor, "moonclaw_root", default=""),
+    "/opt/moonclaw",
+  )
   let readiness = summary_json_object_field_or_empty(supervisor, "readiness")
   assert_eq(
     json_string(readiness, "kind", default=""),
@@ -217,8 +222,8 @@ test "mooncode runtime handoff currency requires consumer endpoints" {
       "runtime_event_ingest_endpoint": "/api/mooncode/sessions/s1/runtime-events",
       "runtime_replay_endpoint": "/api/mooncode/sessions/s1/runtime-replay",
       "action_plan_endpoint": "/api/mooncode/sessions/s1/action-plan",
-      "production_readiness_endpoint": "/api/mooncode/sessions/s1/production-readiness",
-      "native_serve_scheduler_endpoint": "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
+      "readiness_endpoint": "/api/mooncode/sessions/s1/readiness",
+      "native_serve_scheduler_endpoint": "/v1/code/sessions/s1/serve-scheduler?book_root=<path>",
     },
     "runtime_consumer": {
       "status": "lease-held",
@@ -226,13 +231,13 @@ test "mooncode runtime handoff currency requires consumer endpoints" {
       "endpoints": {
         "runtime_claim": "/api/mooncode/sessions/s1/runtime-claim",
         "runtime_replay": "/api/mooncode/sessions/s1/runtime-replay",
-        "native_session_listing": "/v1/mooncode/sessions?book_root=<path>&format=json",
-        "native_serve_scheduler": "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
+        "native_session_listing": "/v1/code/sessions?book_root=<path>&format=json",
+        "native_serve_scheduler": "/v1/code/sessions/s1/serve-scheduler?book_root=<path>",
       },
     },
   }
   assert_true(runtime_handoff_manifest_current(current))
-  let legacy : Json = {
+  let outdated : Json = {
     "kind": "mooncode-runtime-handoff",
     "resume_contract": {
       "runtime_command_feed_endpoint": "/api/mooncode/sessions/s1/runtime-commands",
@@ -245,5 +250,5 @@ test "mooncode runtime handoff currency requires consumer endpoints" {
       "action_plan_endpoint": "/api/mooncode/sessions/s1/action-plan",
     },
   }
-  assert_false(runtime_handoff_manifest_current(legacy))
+  assert_false(runtime_handoff_manifest_current(outdated))
 }

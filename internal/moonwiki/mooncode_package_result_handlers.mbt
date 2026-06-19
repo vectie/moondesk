@@ -13,7 +13,7 @@ async fn handle_mooncode_session_package_result(
       return
     }
   }
-  let session = match read_agent_session_record(workspace_root, session_id) {
+  let session = match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => session
     None => {
       send_api_error(
@@ -56,7 +56,7 @@ async fn handle_mooncode_session_package_result(
     read_mooncode_event_log(workspace_root, session_id),
     ingest_report,
     with_runtime_handoff,
-    enrich_agent_session_for_response(workspace_root, with_runtime_handoff, []),
+    enrich_mooncode_session_for_response(workspace_root, with_runtime_handoff),
     event_log_path=mooncode_event_log_path(workspace_root, session_id),
     native_state=native,
   )
@@ -90,7 +90,7 @@ async fn mooncode_forward_package_results_to_native(
   let responses : Array[Json] = []
   let errors : Array[Json] = []
   for request in requests {
-    let request = agent_session_with_field(
+    let request = mooncode_session_with_field(
       request,
       "book_root",
       workspace_root.to_json(),

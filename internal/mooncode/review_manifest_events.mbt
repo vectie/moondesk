@@ -228,7 +228,7 @@ pub fn review_receipt_manifest(
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "context_path": context_path,
     "command_id": command_id,
     "command_created_at": command_created_at,
@@ -242,7 +242,7 @@ pub fn review_receipt_manifest(
       "runtime": "moonclaw",
       "artifact": "moonbook",
       "review": "moonbook",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
   }
 }

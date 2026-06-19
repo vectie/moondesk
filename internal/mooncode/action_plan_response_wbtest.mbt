@@ -20,7 +20,7 @@ test "mooncode action plan response owns aggregate surface" {
       "id": "session-demo",
       "workspace_id": "book-demo",
       "workspace_name": "Demo Book",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     actions,
     {
@@ -53,17 +53,9 @@ test "mooncode action plan response owns aggregate surface" {
     json_string(response, "next_required_action", default=""),
     "package_executable_output",
   )
-  let readiness = runtime_json_object_field_or_empty(
-    response, "production_readiness",
-  )
-  assert_eq(
-    json_string(readiness, "kind", default=""),
-    "mooncode-production-readiness",
-  )
-  assert_eq(
-    json_string(readiness, "source", default=""),
-    "action-plan-fallback",
-  )
+  let readiness = runtime_json_object_field_or_empty(response, "readiness")
+  assert_eq(json_string(readiness, "kind", default=""), "mooncode-readiness")
+  assert_eq(json_string(readiness, "source", default=""), "action-plan-derived")
   assert_eq(
     json_string(readiness, "next_action", default=""),
     "package_executable_output",
@@ -115,7 +107,7 @@ test "mooncode action plan projection derives actions and summary" {
     "id": "session-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let commands : Array[Json] = [
     {
@@ -135,7 +127,7 @@ test "mooncode action plan projection derives actions and summary" {
       "command_id": "cmd-1",
       "action": "prompt",
       "dispatch": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "build" },
+      "mooncode_command": { "command": "prompt", "text": "build" },
     },
   ]
   let runtime_dispatches : Array[Json] = [
@@ -166,13 +158,8 @@ test "mooncode action plan projection derives actions and summary" {
     json_string(response, "next_required_action", default=""),
     "package_executable_output",
   )
-  let readiness = runtime_json_object_field_or_empty(
-    response, "production_readiness",
-  )
-  assert_eq(
-    json_string(readiness, "kind", default=""),
-    "mooncode-production-readiness",
-  )
+  let readiness = runtime_json_object_field_or_empty(response, "readiness")
+  assert_eq(json_string(readiness, "kind", default=""), "mooncode-readiness")
   assert_eq(json_string(readiness, "source", default=""), "")
   assert_eq(
     json_string(readiness, "first_blocker_id", default=""),
@@ -199,7 +186,7 @@ test "mooncode action plan recommends a next turn for deferred steering" {
       "id": "session-deferred",
       "workspace_id": "book-demo",
       "workspace_name": "Demo Book",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     [{ "command_id": "cmd-steer", "action": "steer", "state": "completed" }],
     {
@@ -312,14 +299,14 @@ test "mooncode action plan recommends runtime loop and repair prompts" {
 }
 
 ///|
-test "mooncode action plan recommends native eval for production readiness gap" {
+test "mooncode action plan recommends native eval for readiness gap" {
   let response = action_plan_response(
     "session-eval",
     {
       "id": "session-eval",
       "workspace_id": "book-demo",
       "workspace_name": "Demo Book",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     [
       { "command_id": "cmd-tests", "action": "run_tests", "state": "completed" },
@@ -333,12 +320,12 @@ test "mooncode action plan recommends native eval for production readiness gap" 
       "pending_steer_count": 0,
       "deferred_steer_count": 0,
       "source_bound_package_count": 1,
-      "production_readiness": {
-        "kind": "mooncode-production-readiness",
+      "readiness": {
+        "kind": "mooncode-readiness",
         "ready": false,
         "first_blocker_id": "native_eval_ready",
         "next_action": "run_native_eval",
-        "next_owner": "moonclaw-or-standalone-mooncode",
+        "next_owner": "moonclaw",
       },
     },
     [],
@@ -378,7 +365,7 @@ test "mooncode action plan keeps awaiting proof ahead of native eval recommendat
       "id": "session-eval",
       "workspace_id": "book-demo",
       "workspace_name": "Demo Book",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     [
       {
@@ -395,8 +382,8 @@ test "mooncode action plan keeps awaiting proof ahead of native eval recommendat
       "pending_steer_count": 0,
       "deferred_steer_count": 0,
       "source_bound_package_count": 1,
-      "production_readiness": {
-        "kind": "mooncode-production-readiness",
+      "readiness": {
+        "kind": "mooncode-readiness",
         "ready": false,
         "first_blocker_id": "native_eval_ready",
         "next_action": "run_native_eval",
@@ -446,7 +433,7 @@ test "mooncode action plan response carries multi-choice recommendations" {
       "id": "session-review",
       "workspace_id": "book-demo",
       "workspace_name": "Demo Book",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     [{ "command_id": "cmd-review", "action": "prompt", "state": "completed" }],
     {
@@ -489,7 +476,7 @@ test "mooncode action plan blocks partial patch lifecycle" {
       "id": "session-partial",
       "workspace_id": "book-demo",
       "workspace_name": "Demo Book",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     [{ "command_id": "cmd-review", "action": "prompt", "state": "completed" }],
     {
@@ -537,9 +524,7 @@ test "mooncode action plan blocks partial patch lifecycle" {
   assert_eq(commands.length(), 2)
   assert_eq(json_string(commands[0], "action", default=""), "accept")
   assert_eq(json_string(commands[1], "action", default=""), "reject")
-  let readiness = runtime_json_object_field_or_empty(
-    response, "production_readiness",
-  )
+  let readiness = runtime_json_object_field_or_empty(response, "readiness")
   assert_false(json_bool(readiness, "ready", default=true))
   assert_eq(
     json_string(readiness, "next_action", default=""),

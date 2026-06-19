@@ -11,7 +11,7 @@ test "mooncode command preflight blocks accept until changed code is tested" {
     path="tools/demo/main.mbt",
     diff="+fn main { println(1) }",
   )
-  let session : Json = { "id": "agent-demo", "mooncode_events": [diff_event] }
+  let session : Json = { "id": "code-demo", "mooncode_events": [diff_event] }
   let session = @mooncode.append_projected_command_event(
     session,
     action="approve_tool",
@@ -40,7 +40,7 @@ test "mooncode command preflight blocks accept until changed code is tested" {
     command="moon test",
     exit_code=0,
   )
-  let tested = agent_session_with_field(
+  let tested = mooncode_session_with_field(
     session,
     "mooncode_events",
     Json::array([diff_event, test_event]),
@@ -63,7 +63,7 @@ test "mooncode command preflight blocks package while tool approvals are pending
     },
     "2026-06-14T00:00:00Z",
   )
-  let session : Json = { "id": "agent-demo", "mooncode_events": [preview] }
+  let session : Json = { "id": "code-demo", "mooncode_events": [preview] }
   let blocked = mooncode_command_preflight(
     session,
     { "context_path": "apps/demo" },
@@ -101,7 +101,7 @@ test "mooncode command preflight requires selected accepted patch target for app
     path="tools/demo/main.mbt",
     command="accept",
   )
-  let session : Json = { "id": "agent-demo", "mooncode_events": [diff_event] }
+  let session : Json = { "id": "code-demo", "mooncode_events": [diff_event] }
   let missing = mooncode_command_preflight(
     session,
     Json::object({}),
@@ -126,7 +126,7 @@ test "mooncode command preflight requires selected accepted patch target for app
     ),
   )
   let accepted_session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "mooncode_events": [diff_event, accept_event],
   }
   let allowed = mooncode_command_preflight(
@@ -146,14 +146,6 @@ test "mooncode preflight endpoint query builds command payload" {
   assert_eq(
     json_string(payload, "context_path", default=""),
     "tools/demo/main.mbt",
-  )
-  let path_alias = mooncode_preflight_payload_from_request(
-    "/api/mooncode/sessions/s1/preflight?action=accept&path=wiki%2Findex.md",
-  )
-  assert_eq(json_string(path_alias, "action", default=""), "accept")
-  assert_eq(
-    json_string(path_alias, "context_path", default=""),
-    "wiki/index.md",
   )
 }
 
@@ -217,7 +209,7 @@ test "mooncode forced preflight command creates override audit event and packet"
     ),
   )
   let packet = @mooncode.projected_command_packet(
-    { "id": "agent-demo", "workspace_root": "/tmp/book" },
+    { "id": "code-demo", "workspace_root": "/tmp/book" },
     payload,
     "commit",
     "Commit anyway",
@@ -421,11 +413,11 @@ test "mooncode tool approvals identify policy and review gated tools" {
 ///|
 test "mooncode command packet preserves runtime boundary" {
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": "/tmp/demo-book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let payload : Json = {
     "context_path": "tools/demo/main.mbt",

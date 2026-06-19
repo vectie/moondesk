@@ -69,8 +69,8 @@ test "mooncode session listing title prefers stored first prompt fields" {
 }
 
 ///|
-test "mooncode session listing merge prefers native rows and keeps local fallback" {
-  let native_rows : Array[Json] = [
+test "mooncode session listing merge prefers runtime rows and keeps local rows" {
+  let runtime_rows : Array[Json] = [
     {
       "id": "session-a",
       "title": "Native session A",
@@ -93,7 +93,7 @@ test "mooncode session listing merge prefers native rows and keeps local fallbac
       "workspace_root": "/tmp/book",
     },
   ]
-  let rows = merge_session_listing_rows(native_rows, local_sessions)
+  let rows = merge_session_listing_rows(runtime_rows, local_sessions)
   assert_eq(rows.length(), 2)
   assert_eq(json_string(rows[0], "id", default=""), "session-a")
   assert_eq(json_string(rows[0], "title", default=""), "Native session A")
@@ -107,8 +107,8 @@ test "mooncode session listing merge prefers native rows and keeps local fallbac
 }
 
 ///|
-test "mooncode session listing merge sorts native and local rows newest first" {
-  let native_rows : Array[Json] = [
+test "mooncode session listing merge sorts runtime and local rows newest first" {
+  let runtime_rows : Array[Json] = [
     {
       "id": "native-old",
       "title": "Native old",
@@ -128,7 +128,7 @@ test "mooncode session listing merge sorts native and local rows newest first" {
       "updated_at": "2026-06-17T00:00:00Z",
     },
   ]
-  let rows = merge_session_listing_rows(native_rows, local_sessions)
+  let rows = merge_session_listing_rows(runtime_rows, local_sessions)
   assert_eq(rows.length(), 3)
   assert_eq(json_string(rows[0], "id", default=""), "native-new")
   assert_eq(json_string(rows[1], "id", default=""), "native-old")
@@ -136,7 +136,7 @@ test "mooncode session listing merge sorts native and local rows newest first" {
 }
 
 ///|
-test "mooncode native session listing accepts openseek array and moonclaw envelope" {
+test "mooncode runtime session listing accepts mooncode array and moonclaw envelope" {
   let row_a : Json = {
     "id": "a",
     "title": "A",
@@ -147,20 +147,20 @@ test "mooncode native session listing accepts openseek array and moonclaw envelo
     "title": "B",
     "updated_at_ms": Json::number(10.0, repr="10"),
   }
-  let raw = native_session_listing_rows(Json::array([row_a]))
+  let raw = runtime_session_listing_rows(Json::array([row_a]))
   assert_eq(raw.length(), 1)
   assert_eq(json_string(raw[0], "id", default=""), "a")
   assert_eq(
     json_string(raw[0], "source", default=""),
-    "mooncode-native-session-listing",
+    "mooncode-runtime-session-listing",
   )
   assert_eq(json_string(raw[0], "protocol", default=""), "mooncode.v1")
   assert_eq(json_string(raw[0], "component", default=""), "mooncode")
-  let enveloped = native_session_listing_rows({ "sessions": [row_b] })
+  let enveloped = runtime_session_listing_rows({ "sessions": [row_b] })
   assert_eq(enveloped.length(), 1)
   assert_eq(json_string(enveloped[0], "id", default=""), "b")
-  assert_eq(native_session_listing_rows({ "sessions": "bad" }).length(), 0)
-  let mixed = native_session_listing_rows({
+  assert_eq(runtime_session_listing_rows({ "sessions": "bad" }).length(), 0)
+  let mixed = runtime_session_listing_rows({
     "sessions": [
       "not an object",
       { "title": "missing id", "updated_at_ms": 99 },
@@ -172,8 +172,8 @@ test "mooncode native session listing accepts openseek array and moonclaw envelo
 }
 
 ///|
-test "mooncode native session listing preserves rich moonclaw row metadata" {
-  let rows = native_session_listing_rows({
+test "mooncode runtime session listing preserves rich moonclaw row metadata" {
+  let rows = runtime_session_listing_rows({
     "sessions": [
       {
         "id": "native-a",

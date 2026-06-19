@@ -225,17 +225,14 @@ fn scheduler_decision(
     "target_state": target_state,
     "text": scheduler_json_string(command, "message", default=""),
     "created_at": scheduler_json_string(command, "created_at", default=""),
-    "openseek_wire_command": scheduler_openseek_wire_command(command),
+    "mooncode_command": scheduler_mooncode_command(command),
     "detail": detail,
-    "owner": {
-      "scheduler": "mooncode",
-      "runtime": "moonclaw-or-standalone-mooncode",
-    },
+    "owner": { "scheduler": "mooncode", "runtime": "moonclaw" },
   }
 }
 
 ///|
-fn scheduler_openseek_wire_command(command : Json) -> Json {
+fn scheduler_mooncode_command(command : Json) -> Json {
   let action = scheduler_command_action(command)
   match action {
     "steer" =>

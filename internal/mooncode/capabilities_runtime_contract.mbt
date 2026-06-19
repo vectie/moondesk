@@ -1,18 +1,18 @@
 ///|
-// OpenSeek-style runtime contract advertised by MoonCode capabilities.
+// MoonCode-style runtime contract advertised by MoonCode capabilities.
 
 ///|
 pub fn runtime_contract_json() -> Json {
   {
-    "reference": "../openseek",
+    "reference": "mooncode",
     "target_component": "moonclaw",
-    "extractable_component": "mooncode",
+    "standalone_component": "mooncode",
     "namespace_roles": [
       namespace_role(
         "workspace_mode", "Moondesk MoonCode", "Human-facing coding/chat workspace beside MoonWiki; owns navigation, context selection, review controls, and status projection.",
       ),
       namespace_role(
-        "extractable_protocol", "mooncode.v1", "Portable command, session, stream, tool, review, and package contracts that can move out as a standalone mooncode library.",
+        "standalone_protocol", "mooncode.v1", "Portable command, session, stream, tool, review, and package contracts that can move out as a shared MoonCode protocol package.",
       ),
       namespace_role(
         "runtime_owner", "MoonClaw", "Executes model planning, tool calls, filesystem edits, test/build commands, packaging, streaming, steering, and cancellation.",
@@ -25,28 +25,28 @@ pub fn runtime_contract_json() -> Json {
     "runtime_protocol": runtime_protocol_contract_json(),
     "components": [
       runtime_component(
-        "agent_runtime", "openseek/agent_runtime", "Loop-scoped runtime state, workspace root, bounded event queue, task scope, and steering input shared by tools.",
+        "mooncode_runtime", "mooncode/runtime", "Loop-scoped runtime state, workspace root, bounded event queue, command scope, and steering input shared by tools.",
         "observe runtime state and render progress; do not execute tools directly",
       ),
       runtime_component(
-        "agent_session", "openseek/agent_session + agent_session/store", "Typed durable coding conversation with append-only JSONL event storage and resumable session ids.",
+        "mooncode_session", "mooncode/session + mooncode/session_store", "Typed durable coding conversation with append-only JSONL event storage and resumable session ids.",
         "select, list, resume, and project sessions for the native UI",
       ),
       runtime_component(
-        "agent_tool", "openseek/agent_tool + agent/tool_definition.mbt", "Typed registry for read, edit, write, shell, moon_ide, moon_cmd, moon_check, and finish tools with explicit output/control actions.",
+        "mooncode_tool", "mooncode/tool + mooncode/tool_contract", "Typed registry for read, edit, write, shell, moon_ide, moon_cmd, moon_check, and finish tools with explicit output/control actions.",
         "show tool calls, approval state, outputs, and failures",
       ),
       runtime_component(
-        "agent_loop", "openseek/agent/agent.mbt", "run_turn/run_turn_with_append/run_turn_in_scope loop that preserves tool batches, reasoning, tool results, and finish control.",
+        "mooncode_turn_loop", "mooncode/turn_loop", "run_turn/run_turn_with_append/run_turn_in_scope loop that preserves tool batches, reasoning, tool results, and finish control.",
         "send prompt/steer/cancel commands and render the event stream",
       ),
       runtime_component(
-        "eval_harness", "openseek/eval/tool_harness + eval/file_edit + eval/patch_review + eval/command_execution + eval/package_output",
+        "eval_harness", "mooncode/eval/tool_harness + eval/file_edit + eval/patch_review + eval/command_execution + eval/package_output",
         "Deterministic tool, file-edit, patch-review, command-execution, and package-output evals that prove the coding agent can safely modify, verify, review, and package workspace files.",
-        "display eval scores and block production claims when harness evidence is missing",
+        "display eval evidence and keep readiness blocked when harness evidence is missing",
       ),
     ],
-    "wire_protocol": {
+    "command_protocol": {
       "transport": "jsonl-or-sse",
       "input_commands": [
         {
@@ -57,7 +57,7 @@ pub fn runtime_contract_json() -> Json {
         {
           "command": "steer",
           "required_fields": ["command", "text", "session_id"],
-          "purpose": "Inject operator guidance into the active or queued turn without starting an implicit new task.",
+          "purpose": "Inject operator guidance into the active or queued turn without starting an implicit new command.",
         },
         {
           "command": "cancel",
@@ -67,8 +67,8 @@ pub fn runtime_contract_json() -> Json {
       ],
       "output_events": [
         "assistant_delta", "reasoning_delta", "assistant_message", "tool_call", "tool_result",
-        "runtime_update", "file_change", "diff", "test_result", "artifact", "agent_finished",
-        "agent_aborted", "command_error", "steer_applied", "steer_deferred", "steer_dropped",
+        "runtime_update", "file_change", "diff", "test_result", "artifact", "runtime_finished",
+        "runtime_aborted", "command_error", "steer_applied", "steer_deferred", "steer_dropped",
       ],
       "ordering_rule": "one ordered command queue per session; prompts, steer, cancel, turn-done, and shutdown are serialized; idle steer is persisted as deferred steering context for the next eligible turn",
     },
@@ -76,7 +76,7 @@ pub fn runtime_contract_json() -> Json {
       "owner": "moonclaw-or-mooncode",
       "shape": "session header plus append-only commands.jsonl and events.jsonl",
       "resume_modes": ["list", "show", "continue", "session-id"],
-      "moondesk_projection": "MoonCode session list, transcript lanes, review queue, live tail, and readiness score",
+      "moondesk_projection": "MoonCode session list, transcript lanes, review queue, live tail, and readiness evidence",
     },
     "tool_contract": tool_contract_json(),
     "eval_contract": {
@@ -85,8 +85,8 @@ pub fn runtime_contract_json() -> Json {
       ],
       "harness_contract_endpoint": "/api/mooncode/eval-harness",
       "reference_paths": [
-        "../openseek/eval/tool_harness", "../openseek/eval/file_edit", "../openseek/eval/patch_review",
-        "../openseek/eval/command_execution", "../openseek/eval/package_output",
+        "mooncode/eval/tool_harness", "mooncode/eval/file_edit", "mooncode/eval/patch_review",
+        "mooncode/eval/command_execution", "mooncode/eval/package_output",
       ],
       "minimum_evidence": [
         "each built-in tool dispatches through the typed registry", "file edit cases prove final file contents",

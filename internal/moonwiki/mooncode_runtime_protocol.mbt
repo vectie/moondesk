@@ -6,11 +6,7 @@ fn mooncode_preflight_payload_from_request(request_path : String) -> Json {
   }
   let context_path = match query_value(request_path, "context_path") {
     Some(value) => decode_query_value(value).trim().to_owned()
-    None =>
-      match query_value(request_path, "path") {
-        Some(value) => decode_query_value(value).trim().to_owned()
-        None => ""
-      }
+    None => ""
   }
   { "action": action, "context_path": context_path }
 }
@@ -34,8 +30,8 @@ fn mooncode_runtime_execution_plan(
   receipts : Array[Json],
   events : Array[Json],
   moonclaw_root~ : String,
-  native_ready? : Bool = false,
-  lease_now? : String = "",
+  native_ready~ : Bool,
+  lease_now~ : String,
 ) -> Json {
   let now = if lease_now == "" { @async.now().to_string() } else { lease_now }
   @mooncode.runtime_execution_plan_response_for_session(
@@ -66,8 +62,8 @@ fn mooncode_runtime_supervisor_launch_packet(
   receipts : Array[Json],
   events : Array[Json],
   daemon : Json,
-  native_ready? : Bool = false,
-  lease_now? : String = "",
+  native_ready~ : Bool,
+  lease_now~ : String,
 ) -> Json {
   let now = if lease_now == "" { @async.now().to_string() } else { lease_now }
   @mooncode.runtime_supervisor_response_for_session(

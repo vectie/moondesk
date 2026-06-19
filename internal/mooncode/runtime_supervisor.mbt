@@ -28,7 +28,7 @@ pub fn runtime_turn_packet(
   {
     "kind": kind_runtime_turn_packet(),
     "protocol": protocol_version(),
-    "reference": "../openseek/cmd/openseek/serve.mbt",
+    "reference": "mooncode/runtime/serve",
     "session_id": session_id,
     "status": rq_json_string(plan, "status", default="idle"),
     "operation": rq_json_string(plan, "operation", default="wait"),
@@ -41,9 +41,7 @@ pub fn runtime_turn_packet(
     "scheduler_effect": scheduler_effect,
     "scheduler_allows_turn": scheduler_allows_turn,
     "scheduler_decision": scheduler_decision,
-    "openseek_wire_command": rq_json_object_field_or_empty(
-      plan, "openseek_wire_command",
-    ),
+    "mooncode_command": rq_json_object_field_or_empty(plan, "mooncode_command"),
     "native_mooncode_body": rq_json_object_field_or_empty(
       plan, "native_mooncode_body",
     ),
@@ -94,10 +92,10 @@ pub fn runtime_turn_packet(
     },
     "runtime_protocol": runtime_protocol_contract_json(),
     "tool_contract": tool_contract_json(),
-    "tool_call_wire": tool_call_wire_contract_json(),
+    "tool_call_contract": tool_call_contract_json(),
     "completion_rule": rq_json_string(plan, "completion_rule", default=""),
     "next_step": rq_json_string(plan, "next_step", default=""),
-    "safety_boundary": "This packet is a self-contained turn handoff for MoonClaw or standalone mooncode. Moondesk does not execute it; the runtime must enforce the embedded scheduler, tool, approval, path, test, and package contracts, stream events, then acknowledge through runtime-replay.",
+    "safety_boundary": "This packet is a self-contained turn handoff for MoonClaw. Moondesk does not execute it; the runtime must enforce the embedded scheduler, tool, approval, path, test, and package contracts, stream events, then acknowledge through runtime-replay.",
     "owner": runtime_owner_record(),
   }
 }
@@ -122,8 +120,8 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
   if rq_json_string(endpoints, "session_store", default="") == "" {
     missing.push("endpoint.session_store")
   }
-  if rq_json_string(endpoints, "production_readiness", default="") == "" {
-    missing.push("endpoint.production_readiness")
+  if rq_json_string(endpoints, "readiness", default="") == "" {
+    missing.push("endpoint.readiness")
   }
   if rq_json_string(endpoints, "claim", default="") == "" {
     missing.push("endpoint.claim")
@@ -175,8 +173,8 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
   if !runtime_supervisor_has_loop_step(loop_steps, "report-eval") {
     missing.push("loop.report-eval")
   }
-  if !runtime_supervisor_has_loop_step(loop_steps, "check-production-readiness") {
-    missing.push("loop.check-production-readiness")
+  if !runtime_supervisor_has_loop_step(loop_steps, "check-readiness") {
+    missing.push("loop.check-readiness")
   }
   let ok = missing.length() == 0
   {
@@ -198,7 +196,7 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
     rq_json_string(endpoints, "ack", default="") != "" &&
     rq_json_string(endpoints, "runtime_events", default="") != "" &&
     rq_json_string(endpoints, "session_store", default="") != "" &&
-    rq_json_string(endpoints, "production_readiness", default="") != "" &&
+    rq_json_string(endpoints, "readiness", default="") != "" &&
     rq_json_string(endpoints, "stream", default="") != "" &&
     rq_json_string(endpoints, "native_session_listing", default="") != "" &&
     rq_json_string(endpoints, "native_commands", default="") != "" &&
@@ -218,7 +216,7 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
     runtime_supervisor_has_loop_step(loop_steps, "stream-events") &&
     runtime_supervisor_has_loop_step(loop_steps, "acknowledge") &&
     runtime_supervisor_has_loop_step(loop_steps, "report-eval") &&
-    runtime_supervisor_has_loop_step(loop_steps, "check-production-readiness"),
-    "safety_boundary": "Readiness means the launch packet is well formed for a MoonClaw or standalone mooncode consumer. It does not mean Moondesk may execute tools.",
+    runtime_supervisor_has_loop_step(loop_steps, "check-readiness"),
+    "safety_boundary": "Readiness means the launch packet is well formed for a MoonClaw consumer. It does not mean Moondesk may execute tools.",
   }
 }

@@ -57,9 +57,9 @@ fn runtime_replay_ack_receipt(
   session : Json,
   runtime_command : Json,
   ack : Json,
-  previous_dispatch_receipt? : Json = Json::object({}),
-  order_blocker? : Json = Json::object({}),
-  prior_events? : Array[Json] = [],
+  previous_dispatch_receipt~ : Json,
+  order_blocker~ : Json,
+  prior_events~ : Array[Json],
 ) -> Json {
   let command_id = rq_json_string(runtime_command, "command_id", default="")
   let requested_status = runtime_replay_ack_status(ack)
@@ -99,7 +99,7 @@ fn runtime_replay_ack_receipt(
     "session_id": rq_json_string(runtime_command, "session_id", default=""),
     "workspace_id": rq_json_string(session, "workspace_id", default=""),
     "workspace_name": rq_json_string(session, "workspace_name", default=""),
-    "task_id": rq_json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "action": rq_json_string(runtime_command, "action", default="prompt"),
     "dispatch": rq_json_string(runtime_command, "dispatch", default="prompt"),
     "status": status,
@@ -107,9 +107,9 @@ fn runtime_replay_ack_receipt(
     "dispatch_mode": "mooncode-runtime-replay",
     "consumer_id": consumer_id,
     "created_at": acknowledged_at,
-    "openseek_wire_valid": rq_json_bool(
+    "mooncode_command_valid": rq_json_bool(
       runtime_command,
-      "openseek_wire_valid",
+      "mooncode_command_valid",
       default=false,
     ),
     "native_mooncode_endpoint": rq_json_string(
@@ -117,7 +117,6 @@ fn runtime_replay_ack_receipt(
       "native_mooncode_endpoint",
       default="",
     ),
-    "legacy_bridge_endpoint": "/v1/task/<id>/message",
     "replay_ack_endpoint": "/api/mooncode/sessions/\{rq_json_string(runtime_command, "session_id", default="")}/runtime-replay",
     "previous_dispatch_status": previous_dispatch_status,
     "previous_dispatch_id": rq_json_string(
@@ -182,8 +181,8 @@ fn runtime_replay_ack_receipt(
     "consumer_result": ack,
     "owner": {
       "ui": "moondesk",
-      "runtime": "moonclaw-or-standalone-mooncode",
-      "extractable_component": "mooncode",
+      "runtime": "moonclaw",
+      "standalone_component": "mooncode",
     },
   }
 }

@@ -60,7 +60,7 @@ async fn write_mooncode_session_snapshot_if_possible(
     event_log_path=mooncode_event_log_path(workspace_root, session_id),
   )
   write_mooncode_session_snapshot(workspace_root, session_id, snapshot)
-  agent_session_with_field(session, "mooncode_session_snapshot", snapshot)
+  mooncode_session_with_field(session, "mooncode_session_snapshot", snapshot)
 }
 
 ///|

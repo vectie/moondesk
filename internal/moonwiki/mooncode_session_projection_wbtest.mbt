@@ -3,42 +3,24 @@ test "mooncode projects file write and test lanes" {
   let raw_events : Array[Json] = [
     {
       "id": "write",
-      "created": "1",
-      "desc": {
-        "msg": "PostToolCall",
-        "tool_call": {
-          "function": {
-            "name": "meta_write_to_file",
-            "arguments": "{\"path\":\"tools/demo/main.mbt\"}",
-          },
-        },
-        "result": {
-          "path": "tools/demo/main.mbt",
-          "diff": "+fn main { println(\"ok\") }",
-        },
-      },
+      "created_at": "1",
+      "lane": "diff",
+      "kind": "write",
+      "title": "File changed: tools/demo/main.mbt",
+      "status": "done",
+      "path": "tools/demo/main.mbt",
+      "diff": "+fn main { println(\"ok\") }",
     },
     {
       "id": "test",
-      "created": "2",
-      "desc": {
-        "msg": "PostToolCall",
-        "tool_call": {
-          "function": {
-            "name": "execute_command",
-            "arguments": "{\"command\":\"moon test\"}",
-          },
-        },
-        "result": [
-          "Completed",
-          {
-            "command": "moon test",
-            "status": 0,
-            "stdout": "Total tests: 1, passed: 1",
-            "stderr": "",
-          },
-        ],
-      },
+      "created_at": "2",
+      "lane": "test",
+      "kind": "shell",
+      "title": "Test/build command: moon test",
+      "status": "done",
+      "command": "moon test",
+      "exit_code": 0,
+      "detail": "Total tests: 1, passed: 1",
     },
   ]
   let events = project_mooncode_events(Json::object({}), raw_events, [])
@@ -55,21 +37,15 @@ test "mooncode projects file write and test lanes" {
 
 ///|
 test "mooncode marks portable app tool outputs as artifacts" {
-  guard @mooncode.moonclaw_tool_event_record(
-      {
-        "id": "artifact",
-        "created": "1",
-        "desc": {
-          "msg": "PostToolCall",
-          "name": "package_app_tool",
-          "result": { "path": "portable/app-tool/demo.zip" },
-          "text": "packaged portable/app-tool/demo.zip",
-        },
-      },
-      fallback_id="artifact",
-    )
-    is Some(event) else {
-    fail("package app tool event was not projected")
+  let event : Json = {
+    "id": "artifact",
+    "created_at": "1",
+    "lane": "artifact",
+    "kind": "package_app_tool",
+    "title": "Artifact packaged: portable/app-tool/demo.zip",
+    "status": "done",
+    "path": "portable/app-tool/demo.zip",
+    "detail": "packaged portable/app-tool/demo.zip",
   }
   assert_eq(json_string(event, "lane", default=""), "artifact")
   assert_true(

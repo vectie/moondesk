@@ -71,7 +71,7 @@ pub fn runtime_command_lifecycle(
     "next_action": next_action,
     "next_status": next_status,
     "commands": Json::array(items),
-    "rule": "Lifecycle is computed from runtime-commands.jsonl, runtime-dispatches.jsonl, command-scoped runtime events, decode validity, tool authorization, and lease expiry. It is a read-only protocol projection for Moondesk, MoonClaw, and future standalone mooncode consumers.",
+    "rule": "Lifecycle is computed from runtime-commands.jsonl, runtime-dispatches.jsonl, command-scoped runtime events, decode validity, tool authorization, and lease expiry. It is a read-only protocol projection for Moondesk, MoonClaw, and future shared MoonCode protocol consumers.",
   }
 }
 
@@ -112,7 +112,7 @@ fn runtime_command_lifecycle_item(
     "status": status,
     "receipt_status": receipt_status,
     "latest_receipt": latest_receipt,
-    "valid_wire": valid,
+    "valid_command": valid,
     "decode_report": decode_report,
     "tool_authorization_state": runtime_command_tool_authorization_state(
       command,
@@ -192,8 +192,7 @@ fn runtime_command_lifecycle_status(
     return "completed"
   }
   if receipt_status == "runtime-acknowledged" ||
-    receipt_status == "native-dispatched" ||
-    receipt_status == "legacy-bridged" {
+    receipt_status == "native-dispatched" {
     return "dispatched"
   }
   if receipt_status == "runtime-claimed" {
@@ -221,7 +220,7 @@ fn runtime_command_lifecycle_blocking_reason(
       rq_json_string(
         decode_report,
         "error",
-        default="runtime command wire cannot be decoded",
+        default="runtime command protocol command cannot be decoded",
       )
     "blocked-tool-authorization" =>
       runtime_command_tool_authorization_block_reason(command)

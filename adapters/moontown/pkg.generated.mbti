@@ -23,7 +23,7 @@ pub struct OperatorRequestDraft {
   target_book_id : String
   cadence_ticks : Int
   source_policy : @core.SourcePolicy
-  quality_threshold : Int
+  review_policy : String
   context_entries : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 

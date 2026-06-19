@@ -9,7 +9,7 @@ pub fn runtime_replay_ack_response(
   session : Json,
   workspace_id~ : String,
   workspace_name~ : String,
-  task_id~ : String,
+  runtime_session_id~ : String,
   runtime_command_log_path~ : String,
   runtime_dispatch_log_path~ : String,
 ) -> Json {
@@ -26,7 +26,7 @@ pub fn runtime_replay_ack_response(
       next_receipts,
       workspace_id~,
       workspace_name~,
-      task_id~,
+      runtime_session_id~,
       runtime_command_log_path~,
       runtime_dispatch_log_path~,
     ),
@@ -57,7 +57,7 @@ pub fn runtime_replay_ack_result_response(
     session,
     workspace_id=rq_json_string(session, "workspace_id", default=""),
     workspace_name=rq_json_string(session, "workspace_name", default=""),
-    task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+    runtime_session_id=session_runtime_session_id(session),
     runtime_command_log_path~,
     runtime_dispatch_log_path~,
   )

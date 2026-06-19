@@ -5,6 +5,8 @@ import {
   "vectie/moondesk/internal/pathx",
 }
 
+supported_targets = "native"
+
 options(
   targets: { "host.mbt": [ "native" ] },
 )

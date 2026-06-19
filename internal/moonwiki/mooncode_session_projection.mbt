@@ -6,7 +6,7 @@ async fn attach_mooncode_session_projection(
   workspace_root : String,
   session : Json,
 ) -> Json {
-  let raw_events = read_mooncode_raw_events(session)
+  let raw_events : Array[Json] = []
   let session_id = json_string(session, "id", default="")
   let durable_events = read_mooncode_event_log(workspace_root, session_id)
   let durable_commands = read_mooncode_command_log(workspace_root, session_id)
@@ -52,20 +52,6 @@ async fn attach_mooncode_session_projection(
 }
 
 ///|
-async fn read_mooncode_raw_events(session : Json) -> Array[Json] {
-  let task_id = json_string(session, "moonclaw_task_id", default="")
-  if task_id == "" {
-    return []
-  }
-  let events = read_moonclaw_conversation_events(session, task_id)
-  if events.length() > 0 {
-    events
-  } else {
-    read_moonclaw_log_events(session)
-  }
-}
-
-///|
 fn project_mooncode_events(
   session : Json,
   raw_events : Array[Json],
@@ -75,6 +61,6 @@ fn project_mooncode_events(
     session,
     raw_events,
     durable_events,
-    fallback_created_at=@async.now().to_string(),
+    projected_created_at=@async.now().to_string(),
   )
 }

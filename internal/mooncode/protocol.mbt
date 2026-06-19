@@ -34,8 +34,8 @@ pub fn native_capability_surface_json() -> Json {
 }
 
 ///|
-pub fn extraction_boundary_json() -> Json {
-  @mooncode_core.extraction_boundary_json()
+pub fn standalone_boundary_json() -> Json {
+  @mooncode_core.standalone_boundary_json()
 }
 
 ///|
@@ -64,8 +64,8 @@ pub fn kind_runtime_turn_packet() -> String {
 }
 
 ///|
-pub fn kind_tool_call_wire_contract() -> String {
-  "mooncode-tool-call-wire-contract"
+pub fn kind_tool_call_contract() -> String {
+  "mooncode-tool-call-contract"
 }
 
 ///|

@@ -87,11 +87,11 @@ test "mooncode command defaults are book coding oriented" {
 ///|
 test "mooncode command packet and runtime feed preserve execution boundary" {
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": "/tmp/demo-book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let payload : Json = {
     "context_path": "tools/demo/main.mbt",
@@ -120,7 +120,7 @@ test "mooncode command packet and runtime feed preserve execution boundary" {
     ),
   )
   let command = runtime_command_record(session, payload, "Package it", packet)
-  assert_true(json_bool(command, "openseek_wire_valid", default=false))
+  assert_true(json_bool(command, "mooncode_command_valid", default=false))
   let summary = command_json_object_field_or_empty(command, "execution_summary")
   assert_eq(
     json_string(summary, "kind", default=""),
@@ -173,7 +173,7 @@ test "mooncode command packet and runtime feed preserve execution boundary" {
 ///|
 test "mooncode projected command packet owns stable command ids" {
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_root": "/tmp/demo-book",
   }
@@ -202,7 +202,7 @@ test "mooncode projected command packet owns stable command ids" {
 ///|
 test "mooncode command model reaches runtime and native body" {
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_root": "/tmp/demo-book",
     "model": "session-model",
@@ -228,7 +228,7 @@ test "mooncode command model reaches runtime and native body" {
 ///|
 test "mooncode command model falls back to session model" {
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_root": "/tmp/demo-book",
     "model": "session-model",
@@ -259,7 +259,7 @@ test "mooncode command queue response owns queue surface" {
     [command],
     workspace_id="book-demo",
     workspace_name="Demo Book",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/commands.jsonl",
   )
   assert_eq(json_string(response, "kind", default=""), "mooncode-command-queue")
@@ -273,7 +273,7 @@ test "mooncode command queue response owns queue surface" {
   assert_eq(
     json_string(
       command_json_object_field_or_empty(response, "owner"),
-      "extractable_component",
+      "standalone_component",
       default="",
     ),
     "mooncode",
@@ -285,19 +285,22 @@ test "mooncode command queue response owns queue surface" {
       "id": "session-demo",
       "workspace_id": "book-demo",
       "workspace_name": "Demo Book",
-      "moonclaw_task_id": "task-demo",
+      "mooncode_runtime_session_id": "runtime-demo",
     },
     command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/commands.jsonl",
   )
   assert_eq(json_string(aggregate, "workspace_id", default=""), "book-demo")
   assert_eq(json_string(aggregate, "workspace_name", default=""), "Demo Book")
-  assert_eq(json_string(aggregate, "task_id", default=""), "task-demo")
+  assert_eq(
+    json_string(aggregate, "runtime_session_id", default=""),
+    "runtime-demo",
+  )
 }
 
 ///|
 test "mooncode runtime commands carry tool authorization snapshots" {
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": "/tmp/demo-book",
@@ -305,7 +308,7 @@ test "mooncode runtime commands carry tool authorization snapshots" {
       "kind": "mooncode-tool-approvals",
       "protocol": protocol_version(),
       "status": "pending",
-      "manifest_path": "wiki/reviews/mooncode/agent-demo/tool-approvals.json",
+      "manifest_path": "wiki/reviews/mooncode/code-demo/tool-approvals.json",
       "approval_count": 1,
       "pending_approval_count": 1,
       "approved_approval_count": 0,
@@ -362,7 +365,7 @@ test "mooncode runtime commands carry tool authorization snapshots" {
   )
   assert_eq(
     json_string(native_auth, "manifest_path", default=""),
-    "wiki/reviews/mooncode/agent-demo/tool-approvals.json",
+    "wiki/reviews/mooncode/code-demo/tool-approvals.json",
   )
   let summary = command_json_object_field_or_empty(command, "execution_summary")
   assert_eq(
@@ -464,7 +467,7 @@ test "mooncode command metadata exposes tool and lane contracts" {
 }
 
 ///|
-test "mooncode native command tool policies expose OpenSeek style guardrails" {
+test "mooncode native command tool policies expose MoonCode style guardrails" {
   let prompt_policies = native_command_tool_policies(
     "prompt", "tools/demo/main.mbt",
   )

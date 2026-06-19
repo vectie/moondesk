@@ -19,7 +19,7 @@ pub fn change_set_manifest(
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "recorded_at": recorded_at,
     "manifest_path": manifest_path,
     "absolute_manifest_path": absolute_manifest_path,
@@ -50,7 +50,7 @@ pub fn change_set_manifest(
       session, "mooncode_last_package_manifest",
     ),
     "owner": review_artifact_owner("moonbook"),
-    "next_runtime_step": "MoonClaw or standalone MoonCode should promote this change set into verified patch staging, tests, and packaged MoonBook code.",
+    "next_runtime_step": "MoonClaw should promote this change set into verified patch staging, tests, and packaged MoonBook code.",
   }
 }
 
@@ -81,7 +81,7 @@ pub fn tool_approvals_manifest(
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "recorded_at": recorded_at,
     "manifest_path": manifest_path,
     "absolute_manifest_path": absolute_manifest_path,
@@ -100,9 +100,9 @@ pub fn tool_approvals_manifest(
       "ui": "moondesk",
       "runtime": "moonclaw",
       "review": "moonbook",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
-    "next_runtime_step": "MoonClaw or standalone MoonCode should enforce these tool approval decisions before executing policy/review-gated tools.",
+    "next_runtime_step": "MoonClaw should enforce these tool approval decisions before executing policy/review-gated tools.",
   }
 }
 
@@ -169,6 +169,6 @@ fn review_artifact_owner(artifact_owner : String) -> Json {
     "runtime": "moonclaw",
     "artifact": artifact_owner,
     "review": "moonbook",
-    "extractable_component": "mooncode",
+    "standalone_component": "mooncode",
   }
 }

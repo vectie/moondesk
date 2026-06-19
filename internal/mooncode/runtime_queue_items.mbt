@@ -10,7 +10,7 @@ fn runtime_replay_item(
   replay_blocker_id : String,
   replay_blocker_status : String,
   latest_receipt : Json,
-  wire : Json,
+  protocol_command : Json,
   report : Json,
 ) -> Json {
   {
@@ -54,7 +54,7 @@ fn runtime_replay_item(
     "runtime_event_summary": rq_json_object_field_or_empty(
       latest_receipt, "runtime_event_summary",
     ),
-    "openseek_wire_command": wire,
+    "mooncode_command": protocol_command,
     "native_mooncode_body": rq_json_object_field_or_empty(
       command, "native_mooncode_body",
     ),

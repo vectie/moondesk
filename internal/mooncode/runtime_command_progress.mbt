@@ -42,7 +42,7 @@ pub fn runtime_event_command_progress(events : Array[Json]) -> Json {
     "failed_command_count": failed_commands,
     "completed_command_count": completed_commands,
     "commands": Json::array(items),
-    "rule": "Progress is grouped only from runtime events with a command_packet.command_id or OpenSeek/MoonCode command_id; unscoped transcript/runtime events remain visible but do not prove a command.",
+    "rule": "Progress is grouped only from runtime events with a command_packet.command_id or MoonCode command_id; unscoped transcript/runtime events remain visible but do not prove a command.",
   }
 }
 
@@ -294,5 +294,5 @@ fn runtime_event_string_array_contains(
 
 ///|
 fn runtime_event_string_array_json(items : Array[String]) -> Json {
-  Json::array([ for item in items => Json::string(item) ])
+  @mooncore.string_array_json(items)
 }

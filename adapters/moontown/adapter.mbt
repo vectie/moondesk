@@ -13,7 +13,7 @@ pub struct OperatorRequestDraft {
   target_book_id : String
   cadence_ticks : Int
   source_policy : @moondesk_core.SourcePolicy
-  quality_threshold : Int
+  review_policy : String
   context_entries : Array[String]
 } derive(Debug, Eq, ToJson, FromJson)
 
@@ -41,8 +41,6 @@ pub fn normalize_request(draft : OperatorRequestDraft) -> OperatorRequestDraft {
     } else {
       draft.cadence_ticks
     },
-    quality_threshold: @moondesk_core.clamp_quality_threshold(
-      draft.quality_threshold,
-    ),
+    review_policy: @moondesk_core.normalize_review_policy(draft.review_policy),
   }
 }

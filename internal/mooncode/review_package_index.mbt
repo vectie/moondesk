@@ -31,7 +31,7 @@ pub fn package_index_manifest(
     "session_id": json_string(session, "id", default=session_id),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "recorded_at": recorded_at,
     "manifest_path": manifest_path,
     "absolute_manifest_path": absolute_manifest_path,
@@ -49,7 +49,7 @@ pub fn package_index_manifest(
     "latest_package_manifest": latest_manifest,
     "descriptor_contract": {
       "owner": "moonbook",
-      "consumer": "moonclaw-or-standalone-mooncode",
+      "consumer": "moonclaw",
       "rule": "This index is the stable MoonBook package registry for a MoonCode session. Per-command package manifests remain audit records; index.json is the resumable handoff for bundle assembly, review, and extraction into a future mooncode component.",
     },
     "owner": package_artifact_owner(),

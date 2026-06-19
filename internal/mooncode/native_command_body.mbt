@@ -46,7 +46,7 @@ pub fn native_command_body(
       "ui": "moondesk",
       "runtime": "moonclaw",
       "artifact": "moonbook",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
   }
 }

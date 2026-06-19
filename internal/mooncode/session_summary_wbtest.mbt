@@ -38,7 +38,7 @@ test "mooncode session summary counts reviewable code events" {
     {
       "id": "s1",
       "workspace_id": "book",
-      "moonclaw_task_id": "task",
+      "mooncode_runtime_session_id": "runtime",
       "mooncode_append_log_count": 3,
       "mooncode_command_log_count": 1,
       "mooncode_runtime_command_log_count": 1,
@@ -70,13 +70,15 @@ test "mooncode session summary counts reviewable code events" {
   assert_eq(summary_json_int(summary, "verified_test_count", default=0), 1)
   assert_eq(json_string(summary, "review_state", default=""), "accepted")
   assert_eq(summary_json_int(summary, "pending_diff_count", default=9), 0)
-  assert_true(summary_json_int(summary, "production_score", default=0) > 0)
-  assert_eq(json_string(summary, "production_level", default=""), "prototype")
-  assert_eq(json_array_items(summary, "production_checks").length(), 18)
+  assert_eq(summary_json_int(summary, "readiness_check_count", default=0), 18)
+  assert_true(
+    summary_json_int(summary, "readiness_blocked_count", default=0) > 0,
+  )
+  assert_eq(json_array_items(summary, "readiness_checks").length(), 18)
 }
 
 ///|
-fn production_ready_native_eval_report_fixture() -> Json {
+fn complete_native_eval_report_fixture() -> Json {
   normalize_native_eval_report(
     {
       "status": "accepted",
@@ -90,12 +92,12 @@ fn production_ready_native_eval_report_fixture() -> Json {
         ],
       },
     },
-    "/v1/mooncode/sessions/s1/eval-report?book_root=<path>",
+    "/v1/code/sessions/s1/eval-report?book_root=<path>",
   )
 }
 
 ///|
-fn production_ready_runtime_supervisor_fixture() -> Json {
+fn complete_runtime_supervisor_fixture() -> Json {
   let turn_packet : Json = {
     "kind": "mooncode-runtime-turn-packet",
     "protocol": protocol_version(),
@@ -112,10 +114,10 @@ fn production_ready_runtime_supervisor_fixture() -> Json {
       "ack": "/api/mooncode/sessions/s1/runtime-dispatch",
       "runtime_events": "/api/mooncode/sessions/s1/runtime-events",
       "stream": "/api/mooncode/sessions/s1/stream?format=sse",
-      "native_session_listing": "/v1/mooncode/sessions?book_root=<path>&format=json",
-      "native_commands": "/v1/mooncode/sessions/s1/commands?book_root=<path>",
-      "native_serve_scheduler": "/v1/mooncode/sessions/s1/serve-scheduler?book_root=<path>",
-      "native_eval_report": "/v1/mooncode/sessions/s1/eval-report?book_root=<path>",
+      "native_session_listing": "/v1/code/sessions?book_root=<path>&format=json",
+      "native_commands": "/v1/code/sessions/s1/commands?book_root=<path>",
+      "native_serve_scheduler": "/v1/code/sessions/s1/serve-scheduler?book_root=<path>",
+      "native_eval_report": "/v1/code/sessions/s1/eval-report?book_root=<path>",
     },
     "claim_request_template": { "command_id": "cmd-1", "lease_id": "lease-1" },
     "ack_request_template": {
@@ -123,7 +125,7 @@ fn production_ready_runtime_supervisor_fixture() -> Json {
       "status": "runtime-completed",
     },
     "failure_ack_template": { "command_id": "cmd-1", "status": "failed" },
-    "openseek_wire_command": { "command": "prompt", "text": "build tool" },
+    "mooncode_command": { "command": "prompt", "text": "build tool" },
     "native_mooncode_body": {
       "protocol": protocol_version(),
       "command": "prompt",
@@ -137,14 +139,14 @@ fn production_ready_runtime_supervisor_fixture() -> Json {
     turn_packet,
     { "kind": "mooncode-runtime-consumer", "status": "claim-ready" },
     workspace_root="/tmp/book",
-    moonclaw_root="../moonclaw",
+    moonclaw_root="/opt/moonclaw",
     host_base_url="",
     false,
   )
 }
 
 ///|
-test "mooncode session summary scores production-grade coding flow" {
+test "mooncode session summary reports readiness coding flow" {
   let command_packet : Json = {
     "protocol": protocol_version(),
     "command_id": "cmd-1",
@@ -321,7 +323,7 @@ test "mooncode session summary scores production-grade coding flow" {
     {
       "id": "s1",
       "workspace_id": "book",
-      "moonclaw_task_id": "task",
+      "mooncode_runtime_session_id": "runtime",
       "mooncode_append_log_count": events.length(),
       "mooncode_command_log_count": 1,
       "mooncode_runtime_command_log_count": 1,
@@ -353,34 +355,25 @@ test "mooncode session summary scores production-grade coding flow" {
       },
       "mooncode_last_runtime_handoff_manifest": {
         "kind": "mooncode-runtime-handoff",
-        "runtime_supervisor": production_ready_runtime_supervisor_fixture(),
+        "runtime_supervisor": complete_runtime_supervisor_fixture(),
       },
-      "mooncode_native_eval_report": production_ready_native_eval_report_fixture(),
+      "mooncode_native_eval_report": complete_native_eval_report_fixture(),
     },
     events,
   )
-  assert_eq(summary_json_int(summary, "production_score", default=0), 100)
   assert_eq(
-    json_string(summary, "production_level", default=""),
-    "production-grade",
-  )
-  assert_eq(
-    summary_json_int(summary, "production_passed_check_count", default=0),
+    summary_json_int(summary, "readiness_passed_check_count", default=0),
     18,
   )
-  assert_eq(summary_json_int(summary, "production_check_count", default=0), 18)
-  let readiness = summary_json_object_field_or_empty(
-    summary, "production_readiness",
-  )
-  assert_eq(
-    json_string(readiness, "kind", default=""),
-    "mooncode-production-readiness",
-  )
+  assert_eq(summary_json_int(summary, "readiness_check_count", default=0), 18)
+  assert_eq(summary_json_int(summary, "readiness_blocked_count", default=9), 0)
+  let readiness = summary_json_object_field_or_empty(summary, "readiness")
+  assert_eq(json_string(readiness, "kind", default=""), "mooncode-readiness")
   assert_true(json_bool(readiness, "ready", default=false))
   assert_eq(json_string(readiness, "next_action", default=""), "completed")
   assert_eq(json_string(readiness, "next_owner", default=""), "none")
   assert_eq(summary_json_int(readiness, "blocked_count", default=9), 0)
-  let checks = json_array_items(summary, "production_checks")
+  let checks = json_array_items(summary, "readiness_checks")
   assert_eq(json_string(checks[0], "id", default=""), "moonbook_selected")
   let mut found_resume_lifecycle = false
   let mut found_runtime_supervisor = false
@@ -410,17 +403,17 @@ test "mooncode session summary scores production-grade coding flow" {
   assert_true(found_package_lifecycle)
   assert_eq(
     json_string(checks[checks.length() - 1], "id", default=""),
-    "extractable_boundary",
+    "standalone_boundary",
   )
 }
 
 ///|
-test "mooncode session summary reports live action blockers in production checks" {
+test "mooncode session summary reports live action blockers in readiness checks" {
   let summary = session_summary(
     {
       "id": "s1",
       "workspace_id": "book",
-      "moonclaw_task_id": "task",
+      "mooncode_runtime_session_id": "runtime",
       "mooncode_last_action_plan_manifest": {
         "kind": "mooncode-action-plan",
         "status": "blocked",
@@ -436,14 +429,9 @@ test "mooncode session summary reports live action blockers in production checks
     },
     [],
   )
-  let checks = json_array_items(summary, "production_checks")
-  let readiness = summary_json_object_field_or_empty(
-    summary, "production_readiness",
-  )
-  assert_eq(
-    json_string(readiness, "kind", default=""),
-    "mooncode-production-readiness",
-  )
+  let checks = json_array_items(summary, "readiness_checks")
+  let readiness = summary_json_object_field_or_empty(summary, "readiness")
+  assert_eq(json_string(readiness, "kind", default=""), "mooncode-readiness")
   assert_false(json_bool(readiness, "ready", default=true))
   assert_eq(
     json_string(readiness, "first_blocker_id", default=""),
@@ -485,12 +473,12 @@ test "mooncode session summary reports live action blockers in production checks
 }
 
 ///|
-test "mooncode production readiness blocks partial patch lifecycle" {
+test "mooncode readiness blocks partial patch lifecycle" {
   let summary = session_summary(
     {
       "id": "s1",
       "workspace_id": "book",
-      "moonclaw_task_id": "task",
+      "mooncode_runtime_session_id": "runtime",
       "mooncode_last_action_plan_manifest": {
         "kind": "mooncode-action-plan",
         "status": "review-ready",
@@ -510,7 +498,7 @@ test "mooncode production readiness blocks partial patch lifecycle" {
     },
     [],
   )
-  let checks = json_array_items(summary, "production_checks")
+  let checks = json_array_items(summary, "readiness_checks")
   let mut found_blockers = false
   for check in checks {
     if json_string(check, "id", default="") == "live_blockers_clear" {
@@ -671,7 +659,7 @@ test "mooncode session summary exposes package lifecycle" {
   let session_base : Json = {
     "id": "s1",
     "workspace_id": "book",
-    "moonclaw_task_id": "task",
+    "mooncode_runtime_session_id": "runtime",
     "mooncode_command_events": events,
   }
   let manifest = package_manifest(
@@ -707,7 +695,7 @@ test "mooncode session summary exposes package lifecycle" {
     {
       "id": "s1",
       "workspace_id": "book",
-      "moonclaw_task_id": "task",
+      "mooncode_runtime_session_id": "runtime",
       "mooncode_last_package_manifest": manifest,
       "mooncode_last_package_index_manifest": index,
     },
@@ -751,7 +739,7 @@ test "mooncode session summary exposes resume lifecycle" {
     "action": "prompt",
     "dispatch": "prompt",
     "serve_command": "prompt",
-    "openseek_wire_command": { "command": "prompt", "text": "continue work" },
+    "mooncode_command": { "command": "prompt", "text": "continue work" },
     "tool_authorization": {
       "enforcement_state": "approved",
       "runtime_may_execute": true,
@@ -761,12 +749,12 @@ test "mooncode session summary exposes resume lifecycle" {
     {
       "id": "s1",
       "workspace_id": "book",
-      "moonclaw_task_id": "task",
+      "mooncode_runtime_session_id": "runtime",
       "mooncode_session_snapshot": session_snapshot(
         {
           "id": "s1",
           "workspace_id": "book",
-          "moonclaw_task_id": "task",
+          "mooncode_runtime_session_id": "runtime",
           "transcript": [],
         },
         [],
@@ -981,8 +969,8 @@ test "mooncode session summary tracks cancel lifecycle evidence" {
     event_record(
       id="cancel-proof-1",
       lane="runtime",
-      kind="agent_aborted",
-      title="Agent interrupted",
+      kind="runtime_aborted",
+      title="Runtime interrupted",
       status="cancelled",
       created_at="4",
       detail="active run cancelled",

@@ -4,7 +4,6 @@
 ///|
 pub fn runtime_receipt_status_delivered(status : String) -> Bool {
   status == "native-dispatched" ||
-  status == "legacy-bridged" ||
   status == "runtime-acknowledged" ||
   status == "runtime-completed"
 }

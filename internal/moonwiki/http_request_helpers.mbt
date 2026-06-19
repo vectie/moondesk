@@ -22,7 +22,7 @@ fn clean_relative_path(relative : String) -> String? {
   if relative.has_prefix("/") || @pathx.is_absolute(relative) {
     return None
   }
-  let trimmed = relative.trim(chars=['/']).to_string()
+  let trimmed = relative.trim(chars=['/']).to_owned()
   if trimmed == "" {
     return Some("")
   }
@@ -38,13 +38,13 @@ fn clean_relative_path(relative : String) -> String? {
 
 ///|
 fn is_read_method(method_ : @http.RequestMethod) -> Bool {
-  method_ is @http.RequestMethod::Get || method_ is @http.RequestMethod::Head
+  method_ is Get || method_ is Head
 }
 
 ///|
 fn strip_query(path : String) -> String {
   match path.find("?") {
-    Some(index) => path[:index].to_string()
+    Some(index) => path[:index].to_owned()
     None => path
   }
 }
@@ -54,11 +54,11 @@ fn query_value(path : String, key : String) -> String? {
   match path.find("?") {
     Some(index) => {
       for piece in path[index + 1:].split("&") {
-        let entry = piece.to_string()
+        let entry = piece.to_owned()
         match entry.find("=") {
           Some(split) =>
             if entry[:split] == key {
-              return Some(entry[split + 1:].to_string())
+              return Some(entry[split + 1:].to_owned())
             }
           None => ()
         }
@@ -134,12 +134,12 @@ fn append_utf8_char(bytes : Array[Byte], ch : Char) -> Unit {
 ///|
 fn path_segments(path : String) -> Array[String] {
   let path = match path {
-    ['/', .. rest] => rest.to_string()
+    ['/', .. rest] => rest.to_owned()
     _ => path
   }
   let segments : Array[String] = []
   for segment in path.split("/") {
-    let segment = segment.to_string()
+    let segment = segment.to_owned()
     if segment != "" {
       segments.push(segment)
     }
@@ -150,7 +150,7 @@ fn path_segments(path : String) -> Array[String] {
 ///|
 async fn read_json_body(body : &@io.Reader) -> Json? {
   let text = body.read_all().text()
-  if text.trim().to_string() == "" {
+  if text.trim().to_owned() == "" {
     return Some(Json::object({}))
   }
   Some(@json.parse(text)) catch {
@@ -160,26 +160,12 @@ async fn read_json_body(body : &@io.Reader) -> Json? {
 
 ///|
 fn json_string(json : Json, key : String, default~ : String) -> String {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::String(value)) => value
-        _ => default
-      }
-    _ => default
-  }
+  @mooncore.json_string(json, key, default~)
 }
 
 ///|
 fn json_string_opt(json : Json, key : String) -> String? {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::String(value)) => Some(value)
-        _ => None
-      }
-    _ => None
-  }
+  @mooncore.json_string_opt(json, key)
 }
 
 ///|
@@ -188,53 +174,23 @@ fn json_first_string(
   keys : Array[String],
   default~ : String,
 ) -> String {
-  for key in keys {
-    let value = json_string(json, key, default="")
-    if value != "" {
-      return value
-    }
-  }
-  default
+  @mooncore.json_first_string(json, keys, default~)
 }
 
 ///|
 fn json_int(json : Json, key : String, default~ : Int) -> Int {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(value) =>
-          @json.from_json(value) catch {
-            _ =>
-              match value {
-                Json::String(text) =>
-                  @string.parse_int(text) catch {
-                    _ => default
-                  }
-                _ => default
-              }
-          }
-        None => default
-      }
-    _ => default
-  }
+  @mooncore.json_int(json, key, default~)
 }
 
 ///|
 fn json_bool(json : Json, key : String, default~ : Bool) -> Bool {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(value) => @json.from_json(value) catch { _ => default }
-        None => default
-      }
-    _ => default
-  }
+  @mooncore.json_bool(json, key, default~)
 }
 
 ///|
 fn json_string_array_len(json : Json, key : String) -> Int {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
         Some(value) => {
           let items : Array[String] = @json.from_json(value) catch { _ => [] }
@@ -248,52 +204,7 @@ fn json_string_array_len(json : Json, key : String) -> Int {
 
 ///|
 async fn read_json_file_or_object(path : String) -> Json {
-  if !@fs.exists(path) {
-    return Json::object({})
-  }
-  @json.parse(@fs.read_file(path).text()) catch {
-    _ => Json::object({})
-  }
-}
-
-///|
-async fn read_text_file_or_empty(path : String) -> String {
-  if !@fs.exists(path) {
-    return ""
-  }
-  @fs.read_file(path).text() catch {
-    _ => ""
-  }
-}
-
-///|
-fn parse_moonclaw_json_output(text : String) -> Json {
-  let parsed = @json.parse(text) catch { _ => Json::object({}) }
-  if json_string(parsed, "proposal_id", default="") != "" {
-    return parsed
-  }
-  let lines = text.split("\n").to_array()
-  let mut index = lines.length()
-  while index > 0 {
-    index -= 1
-    let line = lines[index].to_string().trim().to_owned()
-    if line == "{" || line.contains("\"proposal_id\"") {
-      let candidate_lines : Array[String] = []
-      let mut cursor = index
-      while cursor < lines.length() {
-        candidate_lines.push(lines[cursor].to_string())
-        cursor += 1
-      }
-      let candidate = candidate_lines.join("\n").trim().to_owned()
-      let candidate_json = @json.parse(candidate) catch {
-        _ => Json::object({})
-      }
-      if json_string(candidate_json, "proposal_id", default="") != "" {
-        return candidate_json
-      }
-    }
-  }
-  Json::object({})
+  @moonfiles.read_json_file_or_object(path)
 }
 
 ///|

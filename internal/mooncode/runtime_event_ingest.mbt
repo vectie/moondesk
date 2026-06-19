@@ -235,48 +235,6 @@ pub fn runtime_event_ingest_report(
 }
 
 ///|
-pub fn runtime_event_ingest_report_with_moonclaw_adapter(
-  payload : Json,
-  session_id~ : String,
-  ingested_at~ : String,
-) -> Json {
-  let report = runtime_event_ingest_report(payload, session_id~, ingested_at~)
-  if runtime_json_int(report, "accepted_count", default=0) > 0 {
-    return report
-  }
-  let legacy_events = moonclaw_adapter_ingest_events(payload, ingested_at)
-  if legacy_events.length() == 0 {
-    return report
-  }
-  report
-  |> runtime_with_field("status", "accepted-legacy-moonclaw".to_json())
-  |> runtime_with_field("accepted_count", legacy_events.length().to_json())
-  |> runtime_with_field("events", Json::array(legacy_events))
-  |> runtime_with_field("legacy_adapter", "mooncode.moonclaw.desc".to_json())
-}
-
-///|
-fn moonclaw_adapter_ingest_events(
-  payload : Json,
-  ingested_at : String,
-) -> Array[Json] {
-  let candidates = json_array_items(payload, "events")
-  let incoming = if candidates.length() > 0 { candidates } else { [payload] }
-  let events : Array[Json] = []
-  for candidate in incoming {
-    match
-      moonclaw_projected_event_record(
-        candidate,
-        fallback_created_at=ingested_at,
-      ) {
-      Some(event) => events.push(event)
-      None => ()
-    }
-  }
-  events
-}
-
-///|
 pub fn runtime_native_event_report(
   payload : Json,
   session_id~ : String,
@@ -333,19 +291,6 @@ fn runtime_ingest_event(event : Json, ingested_at : String) -> Json? {
       fallback_created_at=ingested_at,
     ) {
     Some(normalized) => Some(normalized)
-    None =>
-      match
-        moonclaw_event_to_runtime_event(
-          event,
-          fallback_id=runtime_event_fallback_id(event),
-          fallback_created_at=ingested_at,
-        ) {
-        Some(converted) =>
-          normalize_runtime_event_with_defaults(
-            converted,
-            fallback_created_at=ingested_at,
-          )
-        None => None
-      }
+    None => None
   }
 }

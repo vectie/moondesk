@@ -71,10 +71,10 @@ fn patch_review_blocked_reason(
     if runtime_proof_count > 0 {
       "Runtime proof is present; run tests before package or commit."
     } else {
-      "Operator requested patch execution; MoonClaw or standalone MoonCode must emit runtime proof."
+      "Operator requested patch execution; MoonClaw must emit runtime proof."
     }
   } else if review_state == "accepted" {
-    "Accepted by operator and ready for MoonClaw or standalone MoonCode to apply."
+    "Accepted by operator and ready for MoonClaw to apply."
   } else {
     ""
   }

@@ -187,38 +187,17 @@ fn pdf_watch_moontown_install_config(
 
 ///|
 fn pdf_watch_output_contract_handoff(pattern_id : String) -> Json {
-  if pattern_id == "exchangeable-bond-evidence-watch" {
-    {
-      "kind": "moondesk-output-contract-handoff",
-      "pattern_id": pattern_id,
-      "output_contract": "moondesk.exchangeable_bond_tracking.xlsx.v1",
-      "expected_output_contract_path": eb_expected_output_contract_relative_path(),
-      "output_validation_path": eb_output_validation_relative_path(),
-      "output_directory": "book/outputs/",
-      "file_format": "xlsx",
-      "filename_pattern": "EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx",
-      "sheets": json_from_string_array([
-        "公告追踪主表", "关键指标监控表",
-      ]),
-      "required_sidecars": json_from_string_array([
-        ".manifest.json", ".validation.json",
-      ]),
-      "publish_rule": "Bookkeeper must accept source-backed new knowledge before Moondesk/MoonBook publish the final workbook.",
-      "validation_gate": "GET /api/books/run-health and raw/analysis-runs/eb-output-validation.json require the expected-output contract receipt before final output readiness.",
-    }
-  } else {
-    {
-      "kind": "moondesk-output-contract-handoff",
-      "pattern_id": pattern_id,
-      "output_contract": "moontown.pdf_evidence_watch.result.v1",
-      "result_schema_path": "schemas/analysis-result.schema.md",
-      "source_schema_path": "schemas/pdf-source.schema.md",
-      "accepted_output_paths": json_from_string_array([
-        "wiki/findings/", "wiki/evidence-matrix.md", "site/generated/",
-      ]),
-      "publish_rule": "Bookkeeper must accept source-backed new knowledge before Moondesk/MoonBook update durable findings or notify.",
-      "validation_gate": "GET /api/books/verify checks the reusable research-book + source adapter + extractor + analysis skill + standing watch handoff.",
-    }
+  {
+    "kind": "moondesk-output-contract-handoff",
+    "pattern_id": pattern_id,
+    "output_contract": "moontown.pdf_evidence_watch.result.v1",
+    "result_schema_path": "schemas/analysis-result.schema.md",
+    "source_schema_path": "schemas/pdf-source.schema.md",
+    "accepted_output_paths": json_from_string_array([
+      "wiki/findings/", "wiki/evidence-matrix.md", "site/generated/",
+    ]),
+    "publish_rule": "Bookkeeper must accept source-backed new knowledge before Moondesk/MoonBook update durable findings or notify.",
+    "validation_gate": "GET /api/books/verify checks the reusable research-book + source adapter + extractor + analysis skill + standing watch handoff.",
   }
 }
 
@@ -273,11 +252,8 @@ fn pdf_watch_moontown_publish_mode(pattern_id : String) -> String {
 
 ///|
 fn pdf_watch_moontown_publish_reason(pattern_id : String) -> String {
-  if pattern_id == "pdf-evidence-watch" {
-    "Moondesk created the reusable research-book pattern workspace, wrote the flat PdfEvidenceWatchInstallSpec for Moontown visibility, and registered the standing watch directly. Moontown's current generic `pdf-evidence-watch` installer should not re-run over this book because it still rewrites `book.json` into the narrower template-installer schema instead of preserving the research-book base type."
-  } else {
-    "Moondesk already created the specialized research-book pattern workspace, wrote the flat PdfEvidenceWatchInstallSpec for Moontown visibility, and registered the standing watch directly. Moontown should schedule the standing goal and must not re-run the generic `pdf-evidence-watch` installer over this specialization."
-  }
+  ignore(pattern_id)
+  "Moondesk created the reusable research-book pattern workspace, wrote the flat PdfEvidenceWatchInstallSpec for Moontown visibility, and registered the standing watch directly. Moontown's current generic `pdf-evidence-watch` installer should not re-run over this book because it still rewrites `book.json` into the narrower template-installer schema instead of preserving the research-book base type."
 }
 
 ///|
@@ -396,16 +372,8 @@ async fn pdf_watch_readiness(
       "status",
       default="",
     ),
-    "output_template_path": if pattern_id == "exchangeable-bond-evidence-watch" {
-      eb_output_template_relative_path()
-    } else {
-      ""
-    },
-    "output_template_ready": if pattern_id == "exchangeable-bond-evidence-watch" {
-      @fs.exists(@pathx.join(book_root, eb_output_template_relative_path()))
-    } else {
-      true
-    },
+    "output_template_path": "",
+    "output_template_ready": true,
     "contract_verification": book_contract_verification(
       root, book_root, book_id, pattern_id,
     ),

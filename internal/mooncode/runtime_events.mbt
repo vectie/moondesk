@@ -15,13 +15,13 @@ pub fn normalize_runtime_event(
     default=if event_id == "" { fallback_created_at } else { event_id },
   )
   match name {
-    "agent_step" =>
+    "runtime_step" =>
       Some(
         event_record(
           id=event_id,
           lane="runtime",
-          kind="agent_step",
-          title="Agent step",
+          kind="runtime_step",
+          title="Runtime step",
           status="running",
           created_at~,
           detail=event.stringify(),
@@ -248,13 +248,13 @@ pub fn normalize_runtime_event(
           path=json_string(event, "path", default=""),
         ),
       )
-    "agent_finished" =>
+    "runtime_finished" =>
       Some(
         event_record(
           id=event_id,
           lane="review",
           kind="finish",
-          title="Agent finished",
+          title="Runtime finished",
           status="done",
           created_at~,
           detail=json_string(event, "answer", default=""),
@@ -264,13 +264,13 @@ pub fn normalize_runtime_event(
           ),
         ),
       )
-    "agent_aborted" =>
+    "runtime_aborted" =>
       Some(
         event_record(
           id=event_id,
           lane="runtime",
-          kind="agent_aborted",
-          title="Agent interrupted",
+          kind="runtime_aborted",
+          title="Runtime interrupted",
           status="cancelled",
           created_at~,
           detail=json_string(event, "reason", default="interrupted"),

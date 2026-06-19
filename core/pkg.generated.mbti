@@ -9,8 +9,6 @@ import {
 // Values
 pub fn artifact_entry(workspace_id~ : String, path~ : String) -> DeskFileEntry
 
-pub fn clamp_quality_threshold(Int) -> Int
-
 pub fn display_name(StringView) -> String
 
 pub fn extension(StringView) -> String
@@ -22,6 +20,8 @@ pub fn file_entry_detail(workspace_id~ : String, path~ : String, display_name~ :
 pub fn infer_entry_kind(StringView, is_directory? : Bool) -> EntryKind
 
 pub fn infer_source_layer(StringView) -> SourceLayer
+
+pub fn normalize_review_policy(String) -> String
 
 pub fn preview(DeskFileEntry, body~ : String, warnings? : Array[String]) -> DeskPreview
 
@@ -86,7 +86,7 @@ pub struct DeskTaskSubmission {
   prompt : String
   context_entries : Array[String]
   cadence : SubmissionCadence
-  quality_threshold : Int
+  review_policy : String
   source_policy : SourcePolicy
   created_at : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
@@ -149,7 +149,6 @@ pub(all) enum SubmissionCadence {
 
 pub(all) enum WorkspaceKind {
   MoonBook
-  LooseFolder
   TownRoot
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 

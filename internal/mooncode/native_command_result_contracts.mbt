@@ -62,15 +62,14 @@ pub fn native_command_execution_checklist(
     index += 1
   }
   push_step(
-    "claim-command", "Claim the runtime command before execution", "moonclaw-or-standalone-mooncode",
-    "runtime-claimed receipt", "claim id", "POST /api/mooncode/sessions/<session-id>/runtime-claim",
-    true,
+    "claim-command", "Claim the runtime command before execution", "moonclaw", "runtime-claimed receipt",
+    "claim id", "POST /api/mooncode/sessions/<session-id>/runtime-claim", true,
   )
   for tool in native_command_tool_sequence(action) {
     push_step(
       "run-tool-\{tool}",
       "Run tool: \{tool}",
-      "moonclaw-or-standalone-mooncode",
+      "moonclaw",
       "",
       "",
       "",
@@ -81,7 +80,7 @@ pub fn native_command_execution_checklist(
     push_step(
       "emit-event-\{event}",
       "Emit event: \{event}",
-      "moonclaw-or-standalone-mooncode",
+      "moonclaw",
       event,
       "",
       event_sink,
@@ -92,7 +91,7 @@ pub fn native_command_execution_checklist(
     push_step(
       "produce-output-\{index}",
       "Produce output: \{output}",
-      "moonclaw-or-standalone-mooncode",
+      "moonclaw",
       "",
       output,
       "",
@@ -101,13 +100,13 @@ pub fn native_command_execution_checklist(
   }
   if eval_report_sink != "" {
     push_step(
-      "publish-native-eval-report", "Publish native eval report", "moonclaw-or-standalone-mooncode",
-      "native eval report", "eval-report manifest", eval_report_sink, true,
+      "publish-native-eval-report", "Publish native eval report", "moonclaw", "native eval report",
+      "eval-report manifest", eval_report_sink, true,
     )
   }
   push_step(
-    "ack-command", "Acknowledge command completion", "moonclaw-or-standalone-mooncode",
-    "runtime-completed or runtime-failed receipt", "ack receipt", ack_sink, true,
+    "ack-command", "Acknowledge command completion", "moonclaw", "runtime-completed or runtime-failed receipt",
+    "ack receipt", ack_sink, true,
   )
   items
 }

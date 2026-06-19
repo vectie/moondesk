@@ -8,7 +8,7 @@ async fn handle_mooncode_session_runtime_evidence(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) =>
       send_json(
         conn,
@@ -120,7 +120,7 @@ async fn mooncode_native_session_runtime_evidence_projection(
   let native_events = @mooncode.native_runtime_events_for_projection(
     native_report,
   )
-  if !mooncode_native_session_known(workspace_root, session_id, native_events) {
+  if !mooncode_runtime_session_known(workspace_root, session_id, native_events) {
     return None
   }
   let session = @mooncode.native_runtime_session_stub(

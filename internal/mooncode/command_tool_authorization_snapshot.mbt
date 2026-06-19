@@ -55,12 +55,12 @@ pub fn command_tool_authorization_snapshot(
     "rejected_approval_count": rejected,
     "approvals": command_json_array_field_or_empty(manifest, "approvals"),
     "current_tool_approvals": manifest,
-    "rule": "MoonClaw or standalone MoonCode must request/verify authorization before executing gated tools; pending or rejected approval rows block execution unless the runtime receives a later approving snapshot.",
+    "rule": "MoonClaw must request/verify authorization before executing gated tools; pending or rejected approval rows block execution unless the runtime receives a later approving snapshot.",
     "owner": {
       "ui": "moondesk",
       "runtime": "moonclaw",
       "review": "moonbook",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
   }
 }

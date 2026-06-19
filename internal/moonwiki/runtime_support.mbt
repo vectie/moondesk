@@ -19,11 +19,21 @@ fn upsert_record_by_id(records : Array[Json], record : Json) -> Array[Json] {
 
 ///|
 fn trim_for_record(text : String) -> String {
-  let text = text.trim().to_string()
+  let text = text.trim().to_owned()
   if text.length() > 4000 {
-    text[:4000].to_string()
+    text[:4000].to_owned()
   } else {
     text
+  }
+}
+
+///|
+fn trimmed_text(value : String, fallback~ : String) -> String {
+  let trimmed = value.trim().to_owned()
+  if trimmed == "" {
+    fallback
+  } else {
+    trimmed
   }
 }
 
@@ -39,7 +49,7 @@ async fn read_watcher_records(root : String, limit : Int) -> Array[Json] {
       _ => continue
     }
     for line in text.split("\n") {
-      let line = line.to_string().trim().to_string()
+      let line = line.to_owned().trim().to_owned()
       if line == "" {
         continue
       }
@@ -242,7 +252,7 @@ fn tags_path(workspace_root : String) -> String {
 ///|
 async fn write_preference_records(path : String, records : Array[Json]) -> Unit {
   @fsx.make_directory(
-    @pathx.dirname(path).to_string(),
+    @pathx.dirname(path).to_owned(),
     recursive=true,
     exists_ok=true,
   )
@@ -275,7 +285,7 @@ async fn send_file(
   conn.send_response(code, reason, extra_headers={
     "content-type": content_type(path),
   })
-  if method_ is @http.RequestMethod::Head {
+  if method_ is Head {
     conn.end_response()
     return
   }
@@ -315,7 +325,7 @@ async fn send_json_text(
   conn.send_response(200, "OK", extra_headers={
     "content-type": "application/json; charset=utf-8",
   })
-  if method_ is @http.RequestMethod::Head {
+  if method_ is Head {
     conn.end_response()
     return
   }
@@ -331,7 +341,7 @@ async fn send_text(
   body : String,
 ) -> Unit {
   conn.send_response(200, "OK", extra_headers={ "content-type": content_type })
-  if method_ is @http.RequestMethod::Head {
+  if method_ is Head {
     conn.end_response()
     return
   }
@@ -350,7 +360,7 @@ async fn send_api_error(
   conn.send_response(code, reason, extra_headers={
     "content-type": "application/json; charset=utf-8",
   })
-  if method_ is @http.RequestMethod::Head {
+  if method_ is Head {
     conn.end_response()
     return
   }
@@ -370,7 +380,7 @@ async fn send_api_json_error(
   conn.send_response(code, reason, extra_headers={
     "content-type": "application/json; charset=utf-8",
   })
-  if method_ is @http.RequestMethod::Head {
+  if method_ is Head {
     conn.end_response()
     return
   }

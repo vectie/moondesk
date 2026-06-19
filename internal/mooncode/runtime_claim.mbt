@@ -115,7 +115,7 @@ pub fn runtime_claim_result_response(
       next_receipts,
       workspace_id=rq_json_string(session, "workspace_id", default=""),
       workspace_name=rq_json_string(session, "workspace_name", default=""),
-      task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+      runtime_session_id=session_runtime_session_id(session),
       runtime_command_log_path~,
       runtime_dispatch_log_path~,
     ),
@@ -125,7 +125,7 @@ pub fn runtime_claim_result_response(
       next_receipts,
       workspace_id=rq_json_string(session, "workspace_id", default=""),
       workspace_name=rq_json_string(session, "workspace_name", default=""),
-      task_id=rq_json_string(session, "moonclaw_task_id", default=""),
+      runtime_session_id=session_runtime_session_id(session),
       runtime_command_log_path~,
       runtime_dispatch_log_path~,
     ),
@@ -150,8 +150,8 @@ fn runtime_claim_receipt(
   session : Json,
   runtime_command : Json,
   payload : Json,
-  recovered_expired_claim? : Bool = false,
-  previous_claim_receipt? : Json = Json::object({}),
+  recovered_expired_claim~ : Bool,
+  previous_claim_receipt~ : Json,
 ) -> Json {
   let command_id = rq_json_string(runtime_command, "command_id", default="")
   let consumer_id = runtime_safe_id(
@@ -172,7 +172,7 @@ fn runtime_claim_receipt(
     "session_id": rq_json_string(runtime_command, "session_id", default=""),
     "workspace_id": rq_json_string(session, "workspace_id", default=""),
     "workspace_name": rq_json_string(session, "workspace_name", default=""),
-    "task_id": rq_json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "action": rq_json_string(runtime_command, "action", default="prompt"),
     "dispatch": rq_json_string(runtime_command, "dispatch", default="prompt"),
     "status": "runtime-claimed",
@@ -192,9 +192,9 @@ fn runtime_claim_receipt(
       "lease_expires_at",
       default="",
     ),
-    "openseek_wire_valid": rq_json_bool(
+    "mooncode_command_valid": rq_json_bool(
       runtime_command,
-      "openseek_wire_valid",
+      "mooncode_command_valid",
       default=false,
     ),
     "native_mooncode_endpoint": rq_json_string(
@@ -202,7 +202,6 @@ fn runtime_claim_receipt(
       "native_mooncode_endpoint",
       default="",
     ),
-    "legacy_bridge_endpoint": "",
     "runtime_claim_endpoint": "/api/mooncode/sessions/\{rq_json_string(runtime_command, "session_id", default="")}/runtime-claim",
     "runtime_replay_ack_endpoint": "/api/mooncode/sessions/\{rq_json_string(runtime_command, "session_id", default="")}/runtime-replay",
     "detail": "Runtime consumer claimed command for ordered execution; completion must be reported through runtime-replay acknowledgement.",
@@ -210,8 +209,8 @@ fn runtime_claim_receipt(
     "consumer_request": payload,
     "owner": {
       "ui": "moondesk",
-      "runtime": "moonclaw-or-standalone-mooncode",
-      "extractable_component": "mooncode",
+      "runtime": "moonclaw",
+      "standalone_component": "mooncode",
     },
   }
 }

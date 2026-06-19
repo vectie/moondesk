@@ -40,7 +40,7 @@ fn package_runtime_event_matches_manifest(
   }
   for candidate in json_array_items(manifest, "candidate_paths") {
     match candidate {
-      Json::String(candidate_path) =>
+      String(candidate_path) =>
         if package_runtime_path_matches(path, candidate_path) {
           return true
         }

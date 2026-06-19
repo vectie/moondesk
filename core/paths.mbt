@@ -30,15 +30,15 @@ pub fn infer_entry_kind(
   is_directory? : Bool = false,
 ) -> EntryKind {
   if is_directory {
-    EntryKind::Directory
+    Directory
   } else {
     match extension(path) {
-      ".md" | ".markdown" | ".mbt.md" => EntryKind::Markdown
-      ".html" | ".htm" => EntryKind::Html
-      ".json" | ".jsonl" => EntryKind::Json
-      ".png" | ".jpg" | ".jpeg" | ".gif" | ".webp" | ".svg" => EntryKind::Image
-      ".txt" | ".log" => EntryKind::Text
-      _ => EntryKind::Unknown
+      ".md" | ".markdown" | ".mbt.md" => Markdown
+      ".html" | ".htm" => Html
+      ".json" | ".jsonl" => Json
+      ".png" | ".jpg" | ".jpeg" | ".gif" | ".webp" | ".svg" => Image
+      ".txt" | ".log" => Text
+      _ => Unknown
     }
   }
 }
@@ -46,14 +46,14 @@ pub fn infer_entry_kind(
 ///|
 pub fn renderer_for_kind(kind : EntryKind) -> PreviewRenderer {
   match kind {
-    EntryKind::Markdown => PreviewRenderer::Markdown
-    EntryKind::Html => PreviewRenderer::Html
-    EntryKind::Json => PreviewRenderer::Json
-    EntryKind::Image => PreviewRenderer::Image
-    EntryKind::Text => PreviewRenderer::Text
-    EntryKind::Artifact => PreviewRenderer::ArtifactSummary
-    EntryKind::Directory => PreviewRenderer::DirectoryListing
-    EntryKind::Unknown => PreviewRenderer::Unsupported
+    Markdown => Markdown
+    Html => Html
+    Json => Json
+    Image => Image
+    Text => Text
+    Artifact => ArtifactSummary
+    Directory => DirectoryListing
+    Unknown => Unsupported
   }
 }
 
@@ -61,25 +61,25 @@ pub fn renderer_for_kind(kind : EntryKind) -> PreviewRenderer {
 pub fn infer_source_layer(path : StringView) -> SourceLayer {
   let path = path.to_owned()
   if path.has_prefix("wiki/history/") || path.contains("/wiki/history/") {
-    SourceLayer::History
+    History
   } else if path.has_prefix("wiki/") || path.contains("/wiki/") {
-    SourceLayer::Wiki
+    Wiki
   } else if path.has_prefix("raw/") || path.contains("/raw/") {
-    SourceLayer::RawEvidence
+    RawEvidence
   } else if path.has_prefix("reviews/") || path.contains("/reviews/") {
-    SourceLayer::Review
+    Review
   } else if path.contains("site/generated/") {
-    SourceLayer::GeneratedSite
+    GeneratedSite
   } else if path.has_prefix("book/") || path.contains("/book/") {
-    SourceLayer::BookOutput
+    BookOutput
   } else if path.has_prefix("inbox/") || path.contains("/inbox/") {
-    SourceLayer::Inbox
+    Inbox
   } else if path.contains("moonclaw") || path.contains(".moonclaw") {
-    SourceLayer::RunArtifact
+    RunArtifact
   } else if path.has_prefix(".moontown/") {
-    SourceLayer::Config
+    Config
   } else {
-    SourceLayer::Workspace
+    Workspace
   }
 }
 

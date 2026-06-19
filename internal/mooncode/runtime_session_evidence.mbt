@@ -133,7 +133,7 @@ pub fn session_runtime_evidence(
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "recorded_at": recorded_at,
     "command_count": commands.length(),
     "runtime_command_count": runtime_commands.length(),
@@ -174,9 +174,9 @@ pub fn session_runtime_evidence(
     "owner": {
       "ui": "moondesk",
       "runtime": "moonclaw",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
-    "rule": "This projection is the session-level proof contract. Moondesk records and displays it, while MoonClaw or standalone MoonCode must satisfy it with command-scoped runtime events.",
+    "rule": "This projection is the session-level proof contract. Moondesk records and displays it, while MoonClaw must satisfy it with command-scoped runtime events.",
   }
 }
 

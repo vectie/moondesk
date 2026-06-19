@@ -46,8 +46,8 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let session_snapshot_ready = json_string(snapshot, "kind", default="") ==
     "mooncode-session-snapshot"
   let eval_checks = session_eval_checks(session, events)
-  let production_checks = session_production_checks(session, events)
-  let production_readiness = production_readiness_summary(production_checks)
+  let readiness_checks = session_readiness_checks(session, events)
+  let readiness = readiness_summary(readiness_checks)
   let diff_count = count_lane(events, "diff")
   let test_count = count_lane(events, "test")
   let artifact_count = count_lane(events, "artifact")
@@ -106,14 +106,14 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "protocol": protocol_version(),
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "stream_url": "/api/mooncode/sessions/\{session_id}/stream",
     "stream_mode": "append-log-incremental",
     "stream_source": stream_source(),
     "dispatch_mode": json_string(
       session,
       "mooncode_dispatch_mode",
-      default="moonclaw-task-bridge",
+      default="not-dispatched",
     ),
     "live_stream_ready": true,
     "live_stream_url": "/api/mooncode/sessions/\{session_id}/stream?format=sse&since=<sequence>&live=true&timeout_ms=8000",
@@ -218,18 +218,21 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "runtime_count": count_lane(events, "runtime"),
     "transcript_count": count_lane(events, "transcript"),
     "has_packaging_candidate": artifact_count > 0,
-    "extractable_component": "mooncode",
-    "eval_score": eval_score(eval_checks),
-    "eval_level": eval_level(eval_checks),
+    "standalone_component": "mooncode",
+    "eval_passed_check_count": eval_check_passed_count(eval_checks),
+    "eval_check_count": eval_checks.length(),
+    "eval_missing_check_count": eval_checks.length() -
+    eval_check_passed_count(eval_checks),
     "eval_checks": Json::array(eval_checks),
-    "production_score": production_grade_score(production_checks),
-    "production_level": production_grade_level(production_checks),
-    "production_passed_check_count": production_grade_passed_count(
-      production_checks,
+    "readiness_passed_check_count": readiness_passed_count(readiness_checks),
+    "readiness_check_count": readiness_checks.length(),
+    "readiness_blocked_count": summary_json_int(
+      readiness,
+      "blocked_count",
+      default=0,
     ),
-    "production_check_count": production_checks.length(),
-    "production_readiness": production_readiness,
-    "production_checks": Json::array(production_checks),
+    "readiness": readiness,
+    "readiness_checks": Json::array(readiness_checks),
   }
 }
 

@@ -7,7 +7,7 @@ async test "mooncode action plan writes durable moonbook manifest" {
   )
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": root,
@@ -20,14 +20,14 @@ async test "mooncode action plan writes durable moonbook manifest" {
   let runtime_command = @mooncode.runtime_command_record(
     session, payload, message, packet,
   )
-  append_mooncode_command_log(root, "agent-demo", packet)
-  append_mooncode_runtime_command_log(root, "agent-demo", runtime_command)
-  append_mooncode_runtime_dispatch_log(root, "agent-demo", {
+  append_mooncode_command_log(root, "code-demo", packet)
+  append_mooncode_runtime_command_log(root, "code-demo", runtime_command)
+  append_mooncode_runtime_dispatch_log(root, "code-demo", {
     "protocol": "mooncode.v1",
     "kind": "mooncode.runtime-dispatch",
     "command_id": json_string(packet, "command_id", default=""),
-    "session_id": "agent-demo",
-    "status": "legacy-bridged",
+    "session_id": "code-demo",
+    "status": "native-dispatched",
   })
   let manifest = write_mooncode_action_plan_manifest(root, session)
   assert_eq(json_string(manifest, "kind", default=""), "mooncode-action-plan")
@@ -37,7 +37,7 @@ async test "mooncode action plan writes durable moonbook manifest" {
     "await_runtime_proof",
   )
   let relative = json_string(manifest, "manifest_path", default="")
-  assert_eq(relative, "wiki/reviews/mooncode/agent-demo/action-plan.json")
+  assert_eq(relative, "wiki/reviews/mooncode/code-demo/action-plan.json")
   assert_true(@fs.exists(@pathx.join(root, relative)))
   let actions = json_array_items(manifest, "actions")
   assert_eq(json_string(actions[0], "runtime_state", default=""), "delivered")
@@ -170,7 +170,7 @@ test "mooncode native runtime loop response records loop status event" {
     {
       "kind": "mooncode-runtime-loop",
       "protocol": "mooncode.v1",
-      "session_id": "agent-demo",
+      "session_id": "code-demo",
       "book_root": "/tmp/demo-book",
       "consumer_id": "moondesk-native-runtime-loop",
       "ran_turn_count": 0,
@@ -195,11 +195,11 @@ test "mooncode native runtime loop response records loop status event" {
 ///|
 test "mooncode command events keep typed command packet" {
   let base : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": "/tmp/demo-book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let payload : Json = { "context_path": "apps/demo/app.mbt" }
   let message = @mooncode.command_message("package", payload)
@@ -242,11 +242,11 @@ async test "mooncode review actions write moonbook receipts" {
   )
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "workspace_root": root,
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
     "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
   }
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
@@ -274,7 +274,7 @@ async test "mooncode review actions write moonbook receipts" {
     "tools/demo/main.mbt",
   )
   let relative = json_string(receipt, "receipt_path", default="")
-  assert_true(relative.has_prefix("wiki/reviews/mooncode/agent-demo/accept-"))
+  assert_true(relative.has_prefix("wiki/reviews/mooncode/code-demo/accept-"))
   let absolute = @pathx.join(root, relative)
   assert_true(@fs.exists(absolute))
   let saved = @json.parse(@fs.read_file(absolute).text()) catch {
@@ -326,7 +326,7 @@ async test "mooncode review actions write moonbook receipts" {
       let manifest_relative = json_string(manifest, "manifest_path", default="")
       assert_true(
         manifest_relative.has_prefix(
-          "portable/app-tool/mooncode/agent-demo/package-",
+          "portable/app-tool/mooncode/code-demo/package-",
         ),
       )
       assert_true(@fs.exists(@pathx.join(root, manifest_relative)))
@@ -370,7 +370,7 @@ async test "mooncode review actions write moonbook receipts" {
       let promoted_path = json_string(inventory[0], "promoted_path", default="")
       assert_true(
         promoted_path.has_prefix(
-          "portable/app-tool/mooncode/agent-demo/sources/",
+          "portable/app-tool/mooncode/code-demo/sources/",
         ),
       )
       assert_true(promoted_path.has_suffix("/tools/demo/main.mbt"))
@@ -392,7 +392,7 @@ async test "mooncode review actions write moonbook receipts" {
       )
       assert_eq(
         json_string(index_manifest, "manifest_path", default=""),
-        "portable/app-tool/mooncode/agent-demo/index.json",
+        "portable/app-tool/mooncode/code-demo/index.json",
       )
       assert_true(
         @fs.exists(
@@ -415,9 +415,7 @@ async test "mooncode review actions write moonbook receipts" {
         json_string_array_items(index_manifest, "entry_points") ==
         ["tools/demo/main.mbt"],
       )
-      let candidates = mooncode_package_candidates_projection(
-        next, "agent-demo",
-      )
+      let candidates = mooncode_package_candidates_projection(next, "code-demo")
       assert_eq(
         json_string(candidates, "kind", default=""),
         "mooncode-package-candidates",
@@ -437,7 +435,7 @@ async test "mooncode review actions write moonbook receipts" {
       )
       assert_eq(
         json_string(candidates, "package_index_path", default=""),
-        "portable/app-tool/mooncode/agent-demo/index.json",
+        "portable/app-tool/mooncode/code-demo/index.json",
       )
       assert_eq(
         json_int(candidates, "package_index_executable_ready_count", default=0),
@@ -484,7 +482,7 @@ async test "mooncode review actions write moonbook receipts" {
         default="",
       )
       assert_eq(
-        change_set_relative, "wiki/reviews/mooncode/agent-demo/change-set.json",
+        change_set_relative, "wiki/reviews/mooncode/code-demo/change-set.json",
       )
       assert_true(@fs.exists(@pathx.join(root, change_set_relative)))
       match mooncode_read_change_set_manifest(with_change_set) {
@@ -529,7 +527,7 @@ async test "mooncode review actions write moonbook receipts" {
         default="",
       )
       assert_eq(
-        patch_set_relative, "wiki/reviews/mooncode/agent-demo/patch-set.json",
+        patch_set_relative, "wiki/reviews/mooncode/code-demo/patch-set.json",
       )
       assert_true(@fs.exists(@pathx.join(root, patch_set_relative)))
       match mooncode_read_patch_set_manifest(with_patch_set) {
@@ -584,7 +582,7 @@ async test "mooncode review actions write moonbook receipts" {
         default="",
       )
       assert_eq(
-        tool_approvals_relative, "wiki/reviews/mooncode/agent-demo/tool-approvals.json",
+        tool_approvals_relative, "wiki/reviews/mooncode/code-demo/tool-approvals.json",
       )
       assert_true(@fs.exists(@pathx.join(root, tool_approvals_relative)))
       match mooncode_read_tool_approvals_manifest(with_tool_approvals) {
@@ -625,7 +623,7 @@ async test "mooncode review actions write moonbook receipts" {
         default="",
       )
       assert_eq(
-        test_runs_relative, "wiki/reviews/mooncode/agent-demo/test-runs.json",
+        test_runs_relative, "wiki/reviews/mooncode/code-demo/test-runs.json",
       )
       assert_true(@fs.exists(@pathx.join(root, test_runs_relative)))
       assert_eq(json_int(test_runs, "run_count", default=0), 1)
@@ -655,10 +653,9 @@ async test "mooncode review actions write moonbook receipts" {
         default="",
       )
       assert_eq(
-        eval_report_relative, "wiki/reviews/mooncode/agent-demo/eval-report.json",
+        eval_report_relative, "wiki/reviews/mooncode/code-demo/eval-report.json",
       )
       assert_true(@fs.exists(@pathx.join(root, eval_report_relative)))
-      assert_eq(json_int(eval_report, "bridge_score", default=0), 64)
       assert_eq(json_int(eval_report, "check_count", default=0), 28)
       assert_eq(json_int(eval_report, "missing_check_count", default=0), 10)
       match mooncode_read_eval_report_manifest(with_eval_report) {
@@ -674,24 +671,24 @@ async test "mooncode review actions write moonbook receipts" {
         with_eval_report, package_payload, "package", "Package it.", "2026-06-14T00:04:00Z",
         "tools/demo/main.mbt",
       )
-      append_mooncode_command_log(root, "agent-demo", package_packet)
+      append_mooncode_command_log(root, "code-demo", package_packet)
       append_mooncode_runtime_command_log(
         root,
-        "agent-demo",
+        "code-demo",
         @mooncode.runtime_command_record(
           with_eval_report, package_payload, "Package it.", package_packet,
         ),
       )
-      append_mooncode_runtime_dispatch_log(root, "agent-demo", {
+      append_mooncode_runtime_dispatch_log(root, "code-demo", {
         "protocol": "mooncode.v1",
         "kind": "mooncode.runtime-dispatch",
-        "dispatch_id": "legacy-claim-package",
+        "dispatch_id": "outdated-claim-package",
         "command_id": json_string(package_packet, "command_id", default=""),
-        "session_id": "agent-demo",
+        "session_id": "code-demo",
         "status": "runtime-claimed",
         "dispatch_mode": "mooncode-runtime-claim",
         "created_at": "2026-06-14T00:04:30Z",
-        "openseek_wire_valid": true,
+        "mooncode_command_valid": true,
       })
       let with_session_snapshot = write_mooncode_session_snapshot_if_possible(
         root, with_eval_report,
@@ -710,12 +707,8 @@ async test "mooncode review actions write moonbook receipts" {
         session_snapshot, "resume_endpoints",
       )
       assert_eq(
-        json_string(
-          snapshot_resume_endpoints,
-          "production_readiness",
-          default="",
-        ),
-        "/api/mooncode/sessions/agent-demo/production-readiness",
+        json_string(snapshot_resume_endpoints, "readiness", default=""),
+        "/api/mooncode/sessions/code-demo/readiness",
       )
       assert_eq(
         json_int(session_snapshot, "runtime_command_count", default=0),
@@ -725,14 +718,6 @@ async test "mooncode review actions write moonbook receipts" {
         session_snapshot, "runtime_dispatches",
       )
       assert_eq(snapshot_dispatches.length(), 1)
-      assert_eq(
-        json_string(
-          snapshot_dispatches[0],
-          "legacy_bridge_endpoint",
-          default="missing",
-        ),
-        "",
-      )
       assert_true(
         json_object_field(snapshot_dispatches[0], "runtime_command") is Some(_),
       )
@@ -749,7 +734,7 @@ async test "mooncode review actions write moonbook receipts" {
       )
       assert_eq(
         json_string(runtime_handoff, "status", default=""),
-        "bridge-resumable",
+        "replay-resumable",
       )
       let handoff_relative = json_string(
         runtime_handoff,
@@ -757,7 +742,7 @@ async test "mooncode review actions write moonbook receipts" {
         default="",
       )
       assert_eq(
-        handoff_relative, "wiki/reviews/mooncode/agent-demo/runtime-handoff.json",
+        handoff_relative, "wiki/reviews/mooncode/code-demo/runtime-handoff.json",
       )
       assert_true(@fs.exists(@pathx.join(root, handoff_relative)))
       assert_eq(json_int(runtime_handoff, "command_count", default=0), 1)
@@ -769,14 +754,6 @@ async test "mooncode review actions write moonbook receipts" {
         runtime_handoff, "runtime_dispatches",
       )
       assert_eq(handoff_dispatches.length(), 1)
-      assert_eq(
-        json_string(
-          handoff_dispatches[0],
-          "legacy_bridge_endpoint",
-          default="missing",
-        ),
-        "",
-      )
       assert_true(
         json_object_field(handoff_dispatches[0], "runtime_command") is Some(_),
       )
@@ -793,21 +770,21 @@ async test "mooncode review actions write moonbook receipts" {
       )
       assert_false(json_bool(runtime_consumer, "ready_to_claim", default=true))
       assert_true(@mooncode.runtime_handoff_manifest_current(runtime_handoff))
-      let legacy_runtime_handoff : Json = {
+      let outdated_runtime_handoff : Json = {
         "kind": "mooncode-runtime-handoff",
         "resume_contract": {
-          "runtime_command_feed_endpoint": "/api/mooncode/sessions/agent-demo/runtime-commands",
+          "runtime_command_feed_endpoint": "/api/mooncode/sessions/code-demo/runtime-commands",
           "runtime_command_log_path": "runtime-commands.jsonl",
-          "runtime_claim_endpoint": "/api/mooncode/sessions/agent-demo/runtime-claim",
-          "runtime_dispatch_endpoint": "/api/mooncode/sessions/agent-demo/runtime-dispatch",
+          "runtime_claim_endpoint": "/api/mooncode/sessions/code-demo/runtime-claim",
+          "runtime_dispatch_endpoint": "/api/mooncode/sessions/code-demo/runtime-dispatch",
           "runtime_dispatch_log_path": "runtime-dispatches.jsonl",
-          "runtime_event_ingest_endpoint": "/api/mooncode/sessions/agent-demo/runtime-events",
-          "runtime_replay_endpoint": "/api/mooncode/sessions/agent-demo/runtime-replay",
-          "action_plan_endpoint": "/api/mooncode/sessions/agent-demo/action-plan",
+          "runtime_event_ingest_endpoint": "/api/mooncode/sessions/code-demo/runtime-events",
+          "runtime_replay_endpoint": "/api/mooncode/sessions/code-demo/runtime-replay",
+          "action_plan_endpoint": "/api/mooncode/sessions/code-demo/action-plan",
         },
       }
       assert_false(
-        @mooncode.runtime_handoff_manifest_current(legacy_runtime_handoff),
+        @mooncode.runtime_handoff_manifest_current(outdated_runtime_handoff),
       )
       let runtime_claim = json_object_field_or_empty(
         runtime_handoff, "runtime_claim",
@@ -827,7 +804,7 @@ async test "mooncode review actions write moonbook receipts" {
       )
       assert_eq(
         json_string(resume_contract, "session_store_endpoint", default=""),
-        "/api/mooncode/sessions/agent-demo/session-store",
+        "/api/mooncode/sessions/code-demo/session-store",
       )
       assert_true(
         json_string(resume_contract, "runtime_command_log_path", default="").contains(
@@ -840,15 +817,11 @@ async test "mooncode review actions write moonbook receipts" {
           "runtime_command_feed_endpoint",
           default="",
         ),
-        "/api/mooncode/sessions/agent-demo/runtime-commands",
+        "/api/mooncode/sessions/code-demo/runtime-commands",
       )
       assert_eq(
-        json_string(
-          resume_contract,
-          "production_readiness_endpoint",
-          default="",
-        ),
-        "/api/mooncode/sessions/agent-demo/production-readiness",
+        json_string(resume_contract, "readiness_endpoint", default=""),
+        "/api/mooncode/sessions/code-demo/readiness",
       )
       let engine = json_object_field_or_empty(runtime_handoff, "engine")
       assert_false(json_bool(engine, "native_runtime_ready", default=true))

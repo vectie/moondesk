@@ -8,7 +8,7 @@ test "mooncode command preflight blocks accept until changed code is tested" {
     "source_bound_package_count": 0,
   }
   let blocked = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="accept",
     context_path="tools/demo/main.mbt",
     summary~,
@@ -26,7 +26,7 @@ test "mooncode command preflight blocks accept until changed code is tested" {
     "source_bound_package_count": 0,
   }
   let allowed = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="accept",
     context_path="tools/demo/main.mbt",
     summary=tested,
@@ -50,7 +50,7 @@ test "mooncode command preflight for session derives summary and patch entries" 
   )
   let payload : Json = { "context_path": "tools/demo/main.mbt" }
   let blocked = command_preflight_for_session(
-    { "id": "agent-demo" },
+    { "id": "code-demo" },
     payload,
     [diff_event],
     action="accept",
@@ -88,7 +88,7 @@ test "mooncode command preflight gates package on pending approvals" {
     "source_bound_package_count": 0,
   }
   let blocked = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="package",
     context_path="apps/demo",
     summary~,
@@ -121,7 +121,7 @@ test "mooncode command preflight gates commit on accepted review" {
     "source_bound_package_count": 1,
   }
   let blocked = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="commit",
     context_path="tools/demo/main.mbt",
     summary~,
@@ -139,7 +139,7 @@ test "mooncode command preflight gates commit on accepted review" {
     "source_bound_package_count": 1,
   }
   let allowed = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="commit",
     context_path="tools/demo/main.mbt",
     summary=accepted,
@@ -171,7 +171,7 @@ test "mooncode command preflight is selected patch aware for package" {
     },
   ]
   let blocked = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="package",
     context_path="tools/demo/main.mbt",
     summary~,
@@ -196,7 +196,7 @@ test "mooncode command preflight is selected patch aware for package" {
     },
   ]
   let allowed = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="package",
     context_path="tools/demo/main.mbt",
     summary~,
@@ -227,7 +227,7 @@ test "mooncode command preflight requires selected patch proof before commit" {
     },
   ]
   let blocked = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="commit",
     context_path="tools/demo/main.mbt",
     summary~,
@@ -276,7 +276,7 @@ test "mooncode command preflight requires accepted patch target before apply" {
     },
   ]
   let missing = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="apply_patch",
     context_path="",
     summary~,
@@ -284,7 +284,7 @@ test "mooncode command preflight requires accepted patch target before apply" {
   )
   assert_true(json_bool(missing, "blocked", default=false))
   let wrong = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="apply_patch",
     context_path="tools/other/main.mbt",
     summary~,
@@ -292,7 +292,7 @@ test "mooncode command preflight requires accepted patch target before apply" {
   )
   assert_true(json_bool(wrong, "blocked", default=false))
   let allowed = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="apply_patch",
     context_path="tools/demo/main.mbt",
     summary~,
@@ -305,7 +305,7 @@ test "mooncode command preflight requires accepted patch target before apply" {
     "accepted",
   )
   let unreviewed = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="apply_patch",
     context_path="apps/pending.ts",
     summary~,
@@ -339,7 +339,7 @@ test "mooncode command preflight requires applied patch target before revert" {
     },
   ]
   let blocked = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="revert_patch",
     context_path="tools/demo/main.mbt#hunk-1",
     summary~,
@@ -352,7 +352,7 @@ test "mooncode command preflight requires applied patch target before revert" {
     ),
   )
   let allowed = command_preflight(
-    session_id="agent-demo",
+    session_id="code-demo",
     action="revert_patch",
     context_path="tools/demo/main.mbt#hunk-2",
     summary~,

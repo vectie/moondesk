@@ -19,35 +19,37 @@ test "mooncode runtime protocol advertises proof event names" {
   guard rq_json_object_field(contract, "tool_registry") is Some(registry) else {
     fail("missing tool registry contract")
   }
-  guard rq_json_object_field(registry, "tool_call_wire") is Some(wire) else {
-    fail("missing tool_call_wire contract")
+  guard rq_json_object_field(registry, "tool_call_contract") is Some(contract) else {
+    fail("missing tool_call_contract contract")
   }
   assert_eq(
-    rq_json_string(wire, "kind", default=""),
-    "mooncode-tool-call-wire-contract",
+    rq_json_string(contract, "kind", default=""),
+    "mooncode-tool-call-contract",
   )
   assert_true(
-    rq_json_string_array_items(wire, "supported_tools").contains("moon_check"),
+    rq_json_string_array_items(contract, "supported_tools").contains(
+      "moon_check",
+    ),
   )
 }
 
 ///|
-test "mooncode runtime dispatch receipt classifies bridge outcomes" {
+test "mooncode runtime dispatch receipt classifies runtime outcomes" {
   let runtime_command : Json = {
     "command_id": "cmd-1",
     "session_id": "session-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo",
-    "task_id": "task-demo",
+    "runtime_session_id": "runtime-demo",
     "action": "prompt",
     "dispatch": "prompt",
-    "openseek_wire_valid": true,
-    "native_mooncode_endpoint": "/v1/mooncode/sessions/session-demo/commands",
+    "mooncode_command_valid": true,
+    "native_mooncode_endpoint": "/v1/code/sessions/session-demo/commands",
   }
   let native_session : Json = {
     "workspace_id": "book-demo",
     "workspace_name": "Demo",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
     "mooncode_dispatch_mode": "moonclaw-mooncode-runtime",
   }
   let native = runtime_dispatch_receipt(
@@ -61,17 +63,17 @@ test "mooncode runtime dispatch receipt classifies bridge outcomes" {
     rq_json_string(native, "dispatch_mode", default=""),
     "moonclaw-mooncode-runtime",
   )
-  assert_true(rq_json_bool(native, "openseek_wire_valid", default=false))
+  assert_true(rq_json_bool(native, "mooncode_command_valid", default=false))
   assert_true(
     rq_json_string(native, "detail", default="").contains("native MoonClaw"),
   )
-  let legacy_session : Json = {
-    "moonclaw_task_id": "task-demo",
-    "mooncode_dispatch_mode": "moonclaw-task-bridge",
+  let unsupported_session : Json = {
+    "mooncode_runtime_session_id": "runtime-demo",
+    "mooncode_dispatch_mode": "unsupported-dispatch-mode",
   }
   assert_eq(
-    runtime_dispatch_status(legacy_session, runtime_command),
-    "legacy-bridged",
+    runtime_dispatch_status(unsupported_session, runtime_command),
+    "recorded",
   )
   let recorded_session : Json = { "mooncode_dispatch_mode": "not-dispatched" }
   assert_eq(
@@ -122,9 +124,9 @@ test "mooncode projected runtime dispatch receipt owns stable dispatch ids" {
 }
 
 ///|
-test "mooncode runtime dispatch receipt response fills legacy defaults" {
+test "mooncode runtime dispatch receipt response fills native defaults" {
   let response = runtime_dispatch_receipt_for_response(
-    { "command_id": "cmd-legacy", "status": "legacy-bridged" },
+    { "command_id": "cmd-recorded", "status": "recorded" },
     fallback_dispatch_id="dispatch-fallback",
   )
   assert_eq(
@@ -133,13 +135,13 @@ test "mooncode runtime dispatch receipt response fills legacy defaults" {
   )
   assert_eq(rq_json_string(response, "dispatch_mode", default=""), "unknown")
   assert_eq(rq_json_string(response, "created_at", default="missing"), "")
-  assert_false(rq_json_bool(response, "openseek_wire_valid", default=true))
+  assert_false(rq_json_bool(response, "mooncode_command_valid", default=true))
   assert_true(
-    rq_json_object_field(response, "runtime_command") is Some(Json::Object(_)),
+    rq_json_object_field(response, "runtime_command") is Some(Object(_)),
   )
-  assert_true(rq_json_object_field(response, "owner") is Some(Json::Object(_)))
+  assert_true(rq_json_object_field(response, "owner") is Some(Object(_)))
   let responses = runtime_dispatch_receipts_for_response([
-    { "command_id": "cmd-legacy", "status": "legacy-bridged" },
+    { "command_id": "cmd-recorded", "status": "recorded" },
     {
       "command_id": "cmd-existing",
       "status": "runtime-completed",
@@ -179,7 +181,7 @@ test "mooncode runtime dispatch state response records queue state" {
     [Json::string("cmd-1")],
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     dispatch_mode="moonclaw-mooncode-runtime",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",
@@ -199,7 +201,7 @@ test "mooncode runtime dispatch state response records queue state" {
     "cmd-1",
   )
   assert_true(
-    rq_json_object_field(response, "runtime_protocol") is Some(Json::Object(_)),
+    rq_json_object_field(response, "runtime_protocol") is Some(Object(_)),
   )
   assert_eq(
     rq_json_string(
@@ -215,7 +217,7 @@ test "mooncode runtime dispatch state response records queue state" {
     [{ "command_id": "cmd-0", "status": "runtime-completed" }],
     workspace_id="book-demo",
     workspace_name="Demo",
-    task_id="task-demo",
+    runtime_session_id="runtime-demo",
     dispatch_mode="moonclaw-mooncode-runtime",
     runtime_command_log_path="/tmp/runtime-commands.jsonl",
     runtime_dispatch_log_path="/tmp/runtime-dispatches.jsonl",

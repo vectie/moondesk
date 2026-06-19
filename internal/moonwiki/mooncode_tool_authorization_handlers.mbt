@@ -8,7 +8,7 @@ async fn handle_mooncode_session_tool_approvals(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) =>
       match mooncode_read_tool_approvals_manifest(session) {
         Some(manifest) => send_json(conn, method_, manifest)
@@ -31,7 +31,7 @@ async fn handle_mooncode_session_tool_authorization_contract(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
       let projected = attach_mooncode_session_projection(
         workspace_root, session,
@@ -71,7 +71,7 @@ async fn handle_mooncode_session_tool_authorization(
       return
     }
   }
-  let session = match read_agent_session_record(workspace_root, session_id) {
+  let session = match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => session
     None => {
       send_api_error(
@@ -98,12 +98,16 @@ async fn handle_mooncode_session_tool_authorization(
         return
       }
     }
-    let updated = agent_session_with_field(session, "updated_at", now.to_json())
+    let updated = mooncode_session_with_field(
+      session,
+      "updated_at",
+      now.to_json(),
+    )
     let refreshed = refresh_mooncode_runtime_review_artifacts(
       workspace_root,
       attach_mooncode_session_projection(workspace_root, updated),
     )
-    write_agent_session_record(workspace_root, refreshed) catch {
+    write_mooncode_session_record(workspace_root, refreshed) catch {
       _ => {
         send_api_error(
           conn, method_, 500, "Internal Server Error", "Could not save MoonCode tool authorization state",

@@ -56,7 +56,7 @@ pub fn session_package_lifecycle(session : Json, events : Array[Json]) -> Json {
     "latest_status": latest_status,
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "package_count": package_count,
     "source_bound_package_count": source_bound,
     "missing_source_package_count": missing_source,
@@ -85,7 +85,7 @@ pub fn session_package_lifecycle(session : Json, events : Array[Json]) -> Json {
       package_count, source_bound, missing_source, runtime_built, runtime_verified,
     ),
     "owner": package_artifact_owner(),
-    "rule": "Moondesk renders package readiness and operator commands. MoonClaw or standalone MoonCode must assemble and verify bundles. MoonBook owns the package manifests, source inventory, and package index.",
+    "rule": "Moondesk renders package readiness and operator commands. MoonClaw must assemble and verify bundles. MoonBook owns the package manifests, source inventory, and package index.",
   }
 }
 
@@ -151,6 +151,6 @@ fn package_lifecycle_next_step(
   } else if runtime_built > 0 {
     "Run package verification and record package_verified proof before publishing."
   } else {
-    "Ask MoonClaw or standalone MoonCode to assemble and verify the source-bound package candidates."
+    "Ask MoonClaw to assemble and verify the source-bound package candidates."
   }
 }

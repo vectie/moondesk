@@ -85,7 +85,7 @@ fn canonical_event_command_packet(event : Json) -> Json {
       ),
       "runtime_proof": true,
       "session_id": json_string(event, "session_id", default=""),
-      "task_id": json_string(event, "task_id", default=""),
+      "runtime_session_id": json_string(event, "runtime_session_id", default=""),
     }
   }
 }

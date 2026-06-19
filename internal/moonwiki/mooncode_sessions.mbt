@@ -8,7 +8,7 @@ async fn handle_mooncode_sessions(
   let workspace_filter = query_value(request_path, "workspace").unwrap_or("")
   let list_format = query_value(request_path, "format").unwrap_or("full")
   let sessions : Array[Json] = []
-  for record in read_agent_session_records(workspace_root) {
+  for record in read_mooncode_session_records(workspace_root) {
     if workspace_filter != "" &&
       json_string(record, "workspace_id", default="") != workspace_filter {
       continue
@@ -34,13 +34,13 @@ async fn mooncode_session_listing_rows(
   sessions : Array[Json],
 ) -> Array[Json] {
   @mooncode.merge_session_listing_rows(
-    moonclaw_native_session_listing_rows(workspace_root),
+    moonclaw_runtime_session_listing_rows(workspace_root),
     sessions,
   )
 }
 
 ///|
-async fn moonclaw_native_session_listing_rows(
+async fn moonclaw_runtime_session_listing_rows(
   workspace_root : String,
 ) -> Array[Json] {
   let daemon = moonclaw_daemon_status(workspace_root)
@@ -51,7 +51,7 @@ async fn moonclaw_native_session_listing_rows(
     workspace_root,
   )
   match moonclaw_get_json(daemon, endpoint) {
-    Ok(payload) => @mooncode.native_session_listing_rows(payload)
+    Ok(payload) => @mooncode.runtime_session_listing_rows(payload)
     Err(_) => []
   }
 }
@@ -63,7 +63,7 @@ async fn handle_mooncode_session_events(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
       let projected = attach_mooncode_session_projection(
         workspace_root, session,

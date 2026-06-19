@@ -16,8 +16,6 @@ pub fn runtime_dispatch_status(
     "failed"
   } else if dispatch_mode == "moonclaw-mooncode-runtime" {
     "native-dispatched"
-  } else if dispatch_mode == "moonclaw-task-bridge" {
-    "legacy-bridged"
   } else {
     "recorded"
   }
@@ -28,12 +26,10 @@ pub fn runtime_dispatch_detail(status : String, mode : String) -> String {
   match status {
     "native-dispatched" =>
       "Command was sent to the native MoonClaw MoonCode runtime endpoint."
-    "legacy-bridged" =>
-      "Command was sent through the legacy MoonClaw task/message bridge while native MoonCode is unavailable."
     "failed" =>
       "Command dispatch failed; inspect the session transcript and runtime events."
     _ =>
-      "Command is recorded in the durable runtime feed but has no native dispatch receipt yet. mode=\{mode}"
+      "Command is recorded in the durable runtime feed but has no native runtime dispatch receipt yet. mode=\{mode}"
   }
 }
 
@@ -58,15 +54,15 @@ pub fn runtime_dispatch_receipt(
     "session_id": rq_json_string(runtime_command, "session_id", default=""),
     "workspace_id": rq_json_string(session, "workspace_id", default=""),
     "workspace_name": rq_json_string(session, "workspace_name", default=""),
-    "task_id": rq_json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "action": rq_json_string(runtime_command, "action", default="prompt"),
     "dispatch": rq_json_string(runtime_command, "dispatch", default="prompt"),
     "status": status,
     "dispatch_mode": dispatch_mode,
     "created_at": created_at,
-    "openseek_wire_valid": rq_json_bool(
+    "mooncode_command_valid": rq_json_bool(
       runtime_command,
-      "openseek_wire_valid",
+      "mooncode_command_valid",
       default=false,
     ),
     "native_mooncode_endpoint": rq_json_string(
@@ -74,7 +70,6 @@ pub fn runtime_dispatch_receipt(
       "native_mooncode_endpoint",
       default="",
     ),
-    "legacy_bridge_endpoint": "/v1/task/<id>/message",
     "detail": runtime_dispatch_detail(status, dispatch_mode),
     "runtime_command": runtime_command,
     "owner": runtime_owner_record(),
@@ -107,10 +102,7 @@ pub fn runtime_dispatch_receipt_for_response(
   let with_native = rq_json_with_missing_string(
     receipt, "native_mooncode_endpoint", "",
   )
-  let with_legacy = rq_json_with_missing_string(
-    with_native, "legacy_bridge_endpoint", "",
-  )
-  let with_detail = rq_json_with_missing_string(with_legacy, "detail", "")
+  let with_detail = rq_json_with_missing_string(with_native, "detail", "")
   let with_dispatch_id = rq_json_with_missing_string(
     with_detail, "dispatch_id", fallback_dispatch_id,
   )
@@ -120,11 +112,11 @@ pub fn runtime_dispatch_receipt_for_response(
   let with_created_at = rq_json_with_missing_string(
     with_dispatch_mode, "created_at", "",
   )
-  let with_wire_valid = rq_json_with_missing_bool(
-    with_created_at, "openseek_wire_valid", false,
+  let with_command_valid = rq_json_with_missing_bool(
+    with_created_at, "mooncode_command_valid", false,
   )
   let with_runtime_command = rq_json_with_missing_json(
-    with_wire_valid,
+    with_command_valid,
     "runtime_command",
     {},
   )
@@ -155,7 +147,7 @@ pub fn runtime_dispatch_state_response(
   pending_command_ids : Array[Json],
   workspace_id~ : String,
   workspace_name~ : String,
-  task_id~ : String,
+  runtime_session_id~ : String,
   dispatch_mode~ : String,
   runtime_command_log_path~ : String,
   runtime_dispatch_log_path~ : String,
@@ -166,7 +158,7 @@ pub fn runtime_dispatch_state_response(
     "session_id": session_id,
     "workspace_id": workspace_id,
     "workspace_name": workspace_name,
-    "task_id": task_id,
+    "runtime_session_id": runtime_session_id,
     "dispatch_mode": dispatch_mode,
     "runtime_command_count": commands.length(),
     "runtime_dispatch_count": dispatch_receipts.length(),
@@ -187,7 +179,7 @@ pub fn runtime_dispatch_response(
   receipts : Array[Json],
   workspace_id~ : String,
   workspace_name~ : String,
-  task_id~ : String,
+  runtime_session_id~ : String,
   dispatch_mode~ : String,
   runtime_command_log_path~ : String,
   runtime_dispatch_log_path~ : String,
@@ -201,7 +193,7 @@ pub fn runtime_dispatch_response(
     runtime_pending_command_ids(commands, receipts, lease_now~),
     workspace_id~,
     workspace_name~,
-    task_id~,
+    runtime_session_id~,
     dispatch_mode~,
     runtime_command_log_path~,
     runtime_dispatch_log_path~,

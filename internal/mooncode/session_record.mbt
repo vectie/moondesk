@@ -4,7 +4,7 @@ pub fn session_record(
   workspace_id~ : String,
   workspace_name~ : String,
   workspace_root~ : String,
-  task~ : Json,
+  runtime~ : Json,
   title~ : String,
   created_at~ : String,
   updated_at~ : String,
@@ -18,13 +18,13 @@ pub fn session_record(
     "workspace_name": workspace_name,
     "workspace_root": workspace_root,
     "cwd": workspace_root,
-    "moonclaw_task_id": json_string(task, "id", default=""),
+    "mooncode_runtime_session_id": session_id,
     "title": title,
-    "model": json_string(task, "model", default=""),
-    "status": json_string(task, "status", default="created"),
-    "port": summary_json_int(task, "port", default=0),
-    "web_search": json_bool(task, "web_search", default=false),
-    "queued_count": json_array_items(task, "queued_messages").length(),
+    "model": json_string(runtime, "model", default=""),
+    "status": json_string(runtime, "status", default="created"),
+    "port": summary_json_int(runtime, "port", default=0),
+    "web_search": json_bool(runtime, "web_search", default=false),
+    "queued_count": json_array_items(runtime, "queued_messages").length(),
     "created_at": created_at,
     "updated_at": updated_at,
     "last_message": last_message,
@@ -41,7 +41,7 @@ pub fn projected_session_record(
   workspace_id~ : String,
   workspace_name~ : String,
   workspace_root~ : String,
-  task~ : Json,
+  runtime~ : Json,
   title~ : String,
   created_at~ : String,
   updated_at~ : String,
@@ -54,7 +54,7 @@ pub fn projected_session_record(
     workspace_id~,
     workspace_name~,
     workspace_root~,
-    task~,
+    runtime~,
     title~,
     created_at~,
     updated_at~,
@@ -87,8 +87,31 @@ pub fn native_runtime_session_stub(
     "workspace_id": session_id,
     "workspace_name": session_id,
     "workspace_root": workspace_root,
-    "moonclaw_task_id": "",
+    "mooncode_runtime_session_id": session_id,
     "mooncode_dispatch_mode": "moonclaw-native",
     "source": "moonclaw-native-session",
   }
+}
+
+///|
+pub fn session_response_defaults(session : Json) -> Json {
+  @mooncore.session_response_defaults(session, default_title="MoonCode Session")
+}
+
+///|
+pub fn append_transcript_message(
+  session : Json,
+  role~ : String,
+  content~ : String,
+  status~ : String,
+  created_at~ : String,
+) -> Json {
+  @mooncore.append_transcript_message(
+    session,
+    id_prefix="mooncode-msg",
+    role~,
+    content~,
+    status~,
+    created_at~,
+  )
 }

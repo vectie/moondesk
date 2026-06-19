@@ -164,8 +164,7 @@ async fn mooncode_package_source_record(
           _ => return @mooncode.package_source_unknown_record(relative)
         }
         match kind {
-          @fs.FileKind::Directory =>
-            @mooncode.package_source_directory_record(relative)
+          Directory => @mooncode.package_source_directory_record(relative)
           _ =>
             mooncode_package_file_record(
               absolute,

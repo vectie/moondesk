@@ -55,7 +55,7 @@ test "mooncode tool harness evidence proves command scoped tool calls" {
       id="finish",
       lane="review",
       kind="finish",
-      title="Agent finished",
+      title="Runtime finished",
       status="done",
       created_at="2026-06-15T00:00:04Z",
       detail="done",

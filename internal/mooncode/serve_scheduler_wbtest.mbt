@@ -73,7 +73,7 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
       "action": "prompt",
       "dispatch": "prompt",
       "serve_command": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "done" },
+      "mooncode_command": { "command": "prompt", "text": "done" },
     },
     {
       "protocol": protocol_version(),
@@ -82,7 +82,7 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
       "action": "prompt",
       "dispatch": "prompt",
       "serve_command": "prompt",
-      "openseek_wire_command": { "command": "prompt", "text": "next" },
+      "mooncode_command": { "command": "prompt", "text": "next" },
     },
     {
       "protocol": protocol_version(),
@@ -91,7 +91,7 @@ test "mooncode serve scheduler response owns lifecycle assembly" {
       "action": "steer",
       "dispatch": "steer",
       "serve_command": "steer",
-      "openseek_wire_command": { "command": "steer", "text": "tests" },
+      "mooncode_command": { "command": "steer", "text": "tests" },
     },
   ]
   let receipts : Array[Json] = [

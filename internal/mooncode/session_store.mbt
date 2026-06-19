@@ -24,7 +24,7 @@ pub fn session_snapshot(
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
     "workspace_root": json_string(session, "workspace_root", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "title": json_string(session, "title", default=""),
     "model": json_string(session, "model", default=""),
     "status": json_string(session, "status", default=""),
@@ -51,7 +51,7 @@ pub fn session_snapshot(
     ),
     "events": Json::array(events),
     "event_count": events.length(),
-    "tool_call_wire": tool_call_wire_contract_json(),
+    "tool_call_contract": tool_call_contract_json(),
     "last_command_packet": summary_json_object_field_or_empty(
       session, "mooncode_last_command_packet",
     ),
@@ -68,7 +68,7 @@ pub fn session_snapshot(
       "stream": "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=<sequence>",
       "stream_state": "/api/mooncode/sessions/\{session_id}/stream-state?consumer=<consumer>&since=<sequence>",
       "action_plan": "/api/mooncode/sessions/\{session_id}/action-plan",
-      "production_readiness": "/api/mooncode/sessions/\{session_id}/production-readiness",
+      "readiness": "/api/mooncode/sessions/\{session_id}/readiness",
     },
     "store_contract": {
       "shape": "typed session header plus transcript, commands.jsonl, runtime-commands.jsonl, runtime-dispatches.jsonl, events.jsonl, and projected MoonCode events",
@@ -79,8 +79,8 @@ pub fn session_snapshot(
         "session_id", "session_snapshot", "command_log", "runtime_command_log", "runtime_dispatch_log",
         "event_log", "runtime_handoff",
       ],
-      "openseek_reference": "agent_session + agent_session/store",
-      "tool_call_wire": "tool-call and tool-result records in events.jsonl should satisfy the sibling mooncode-tool-call-wire-contract before runtime execution is trusted",
+      "mooncode_reference": "mooncode/session + mooncode/session_store",
+      "tool_call_contract": "tool-call and tool-result records in events.jsonl should satisfy the sibling mooncode-tool-call-contract before runtime execution is trusted",
     },
     "event_normalization": {
       "owner": "mooncode",
@@ -91,13 +91,13 @@ pub fn session_snapshot(
         "diff", "command", "exit_code", "command_packet",
       ],
       "text_policy": "detail and diff are trimmed and capped before persistence or streaming",
-      "consumer_note": "MoonClaw and standalone mooncode can resume this snapshot without Moondesk HTTP fallback logic for sparse runtime events.",
+      "consumer_note": "MoonClaw can resume this snapshot from the durable event log without depending on Moondesk HTTP projection logic for sparse runtime events.",
     },
     "owner": {
       "ui": "moondesk",
       "runtime": "moonclaw",
       "session_store": "mooncode",
-      "extractable_component": "mooncode",
+      "standalone_component": "mooncode",
     },
   }
 }

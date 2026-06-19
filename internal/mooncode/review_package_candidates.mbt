@@ -34,7 +34,7 @@ pub fn package_candidates_projection(
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "recorded_at": json_string(last_package, "recorded_at", default=""),
     "package_count": packages.length(),
     "source_bound_package_count": source_bound,
@@ -69,7 +69,7 @@ pub fn package_candidates_projection(
     "last_package_manifest": last_package,
     "last_package_index_manifest": index_manifest,
     "owner": package_artifact_owner(),
-    "rule": "Package candidates are MoonBook-owned manifests. Moondesk only renders package readiness and sends operator commands; MoonClaw or standalone MoonCode must assemble verified bundles and emit package_built or package_verified runtime proof events.",
+    "rule": "Package candidates are MoonBook-owned manifests. Moondesk only renders package readiness and sends operator commands; MoonClaw must assemble verified bundles and emit package_built or package_verified runtime proof events.",
   }
 }
 
@@ -137,7 +137,7 @@ fn package_projection_entry(manifest : Json, events : Array[Json]) -> Json {
 ///|
 fn package_with_field(base : Json, key : String, value : Json) -> Json {
   match base {
-    Json::Object(fields) => {
+    Object(fields) => {
       let next : Map[String, Json] = {}
       for item in fields {
         next[item.0] = item.1

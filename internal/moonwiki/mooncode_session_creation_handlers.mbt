@@ -31,14 +31,14 @@ async fn handle_create_mooncode_session(
     )
     return
   }
-  let task = match ensure_moonclaw_task(daemon, workspace, payload) {
-    Ok(task) => task
-    Err(message) => {
-      send_api_error(conn, method_, 502, "Bad Gateway", message)
-      return
-    }
-  }
   let now = @async.now().to_string()
+  let runtime : Json = {
+    "id": "",
+    "status": "created",
+    "model": json_string(payload, "model", default=""),
+    "web_search": json_bool(payload, "web_search", default=false),
+    "queued_messages": [],
+  }
   let message = trimmed_text(
     json_string(payload, "message", default=""),
     fallback="Create, inspect, test, or package executable code inside this MoonBook.",
@@ -52,7 +52,7 @@ async fn handle_create_mooncode_session(
     workspace_id=workspace.id,
     workspace_name=workspace.name,
     workspace_root=workspace.root_path,
-    task~,
+    runtime~,
     title~,
     created_at=now,
     updated_at=now,
@@ -100,7 +100,7 @@ async fn handle_create_mooncode_session(
     command_packet~,
   )
   let dispatched = match
-    send_mooncode_command_to_agent(
+    send_mooncode_command_to_runtime(
       workspace_root, queued, payload, message, command_packet,
     ) {
     Ok(session) => session
@@ -156,7 +156,7 @@ async fn handle_create_mooncode_session(
   ) catch {
     _ => with_session_snapshot
   }
-  write_agent_session_record(workspace_root, with_runtime_handoff) catch {
+  write_mooncode_session_record(workspace_root, with_runtime_handoff) catch {
     _ => {
       send_api_error(
         conn, method_, 500, "Internal Server Error", "Could not save MoonCode session",
@@ -175,8 +175,6 @@ async fn handle_create_mooncode_session(
   send_json(
     conn,
     method_,
-    enrich_agent_session_for_response(workspace_root, with_runtime_handoff, [
-      task,
-    ]),
+    enrich_mooncode_session_for_response(workspace_root, with_runtime_handoff),
   )
 }

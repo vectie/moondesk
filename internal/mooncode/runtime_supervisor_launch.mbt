@@ -18,7 +18,7 @@ pub fn runtime_supervisor_launch_packet(
   let mode = if native_ready {
     "native-mooncode-runtime"
   } else {
-    "moondesk-claim-replay-bridge"
+    "moondesk-command-replay"
   }
   let scheduler_allows_turn = rq_json_bool(
     turn_packet,
@@ -46,9 +46,9 @@ pub fn runtime_supervisor_launch_packet(
       host_base_url,
       "/api/mooncode/sessions/\{session_id}/runtime-supervisor",
     ),
-    "production_readiness": runtime_supervisor_url(
+    "readiness": runtime_supervisor_url(
       host_base_url,
-      "/api/mooncode/sessions/\{session_id}/production-readiness",
+      "/api/mooncode/sessions/\{session_id}/readiness",
     ),
     "runtime_commands": runtime_supervisor_url(
       host_base_url,
@@ -98,13 +98,13 @@ pub fn runtime_supervisor_launch_packet(
   let packet : Json = {
     "kind": "mooncode-runtime-supervisor-launch",
     "protocol": protocol_version(),
-    "reference": "../openseek/cmd/openseek/serve.mbt",
+    "reference": "mooncode/runtime/serve",
     "session_id": session_id,
     "status": status,
     "operation": operation,
     "mode": mode,
     "native_runtime_ready": native_ready,
-    "runtime_owner": "moonclaw-or-standalone-mooncode",
+    "runtime_owner": "moonclaw",
     "workspace_root": workspace_root,
     "moonclaw_root": moonclaw_root,
     "host_base_url": host_base_url,
@@ -137,8 +137,8 @@ pub fn runtime_supervisor_launch_packet(
       "failure_ack": rq_json_object_field_or_empty(
         turn_packet, "failure_ack_template",
       ),
-      "openseek_wire_command": rq_json_object_field_or_empty(
-        turn_packet, "openseek_wire_command",
+      "mooncode_command": rq_json_object_field_or_empty(
+        turn_packet, "mooncode_command",
       ),
       "native_mooncode_body": rq_json_object_field_or_empty(
         turn_packet, "native_mooncode_body",
@@ -171,16 +171,16 @@ pub fn runtime_supervisor_launch_packet(
       {
         "id": "execute-turn",
         "method": "LOCAL",
-        "endpoint": "moonclaw/open-seek-compatible-tool-loop",
+        "endpoint": "moonclaw/mooncode-tool-loop",
         "body": {
-          "openseek_wire_command": rq_json_object_field_or_empty(
-            turn_packet, "openseek_wire_command",
+          "mooncode_command": rq_json_object_field_or_empty(
+            turn_packet, "mooncode_command",
           ),
           "native_mooncode_body": rq_json_object_field_or_empty(
             turn_packet, "native_mooncode_body",
           ),
         },
-        "purpose": "Run the typed MoonClaw/MoonCode agent loop with bounded read, edit, write, shell, moon_check, and finish tools.",
+        "purpose": "Run the typed MoonClaw/MoonCode turn loop with bounded read, edit, write, shell, moon_check, and finish tools.",
       },
       {
         "id": "stream-events",
@@ -215,21 +215,21 @@ pub fn runtime_supervisor_launch_packet(
         "purpose": "Attach native tool/file-edit/patch-review/command-execution/package-output eval harness evidence when available.",
       },
       {
-        "id": "check-production-readiness",
+        "id": "check-readiness",
         "method": "GET",
         "endpoint": runtime_supervisor_url(
           host_base_url,
-          "/api/mooncode/sessions/\{session_id}/production-readiness",
+          "/api/mooncode/sessions/\{session_id}/readiness",
         ),
-        "purpose": "Fetch the compact production gate after replay/eval/package evidence so the runtime and Moondesk agree on remaining blockers.",
+        "purpose": "Fetch session readiness telemetry after replay/eval/package evidence so the runtime and Moondesk agree on remaining blockers.",
       },
     ],
     "turn_packet": turn_packet,
     "runtime_consumer": runtime_consumer,
     "tool_contract": tool_contract_json(),
-    "tool_call_wire": tool_call_wire_contract_json(),
-    "safety_boundary": "This launch packet is declarative. Moondesk may expose it and persist it, but MoonClaw or standalone mooncode must own model calls, tool execution, path policy, approvals, tests, diffs, packaging, cancellation, and final acknowledgement.",
-    "extractable_component": "mooncode",
+    "tool_call_contract": tool_call_contract_json(),
+    "safety_boundary": "This launch packet is declarative. Moondesk may expose it and persist it, but MoonClaw must own model calls, tool execution, path policy, approvals, tests, diffs, packaging, cancellation, and final acknowledgement.",
+    "standalone_component": "mooncode",
   }
   rq_json_with_field(
     packet,

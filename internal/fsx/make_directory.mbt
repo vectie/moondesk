@@ -6,8 +6,10 @@ pub async fn make_directory(
 ) -> Unit {
   let dirs : Array[String] = []
   collect_missing_dirs(path.to_owned(), dirs, recursive)
-  for i = 0; i < dirs.length(); i = i + 1 {
-    let dir = dirs[dirs.length() - 1 - i]
+  let mut index = dirs.length()
+  while index > 0 {
+    index -= 1
+    let dir = dirs[index]
     if exists_ok && @fs.exists(dir) {
       continue
     }

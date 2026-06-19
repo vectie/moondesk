@@ -8,53 +8,6 @@ test "resolve request path rejects traversal" {
 }
 
 ///|
-test "eb workbook formatting contract requires readable workbook features" {
-  let formatted_sheet = "<worksheet><sheetViews><sheetView><pane state=\"frozen\"/></sheetView></sheetViews><cols><col customWidth=\"1\"/></cols><sheetData><row><c s=\"1\"/></row></sheetData><autoFilter ref=\"A1:N1\"/></worksheet>"
-  let indicator_sheet = formatted_sheet.replace_all(old="A1:N1", new="A1:U1")
-  let styles = "<styleSheet><fonts><font><b/></font></fonts><cellXfs><xf applyFont=\"1\"/></cellXfs></styleSheet>"
-  assert_true(
-    eb_xlsx_formatting_contract_valid(formatted_sheet, indicator_sheet, styles),
-  )
-  assert_false(
-    eb_xlsx_formatting_contract_valid(
-      formatted_sheet.replace_all(old="customWidth=\"1\"", new=""),
-      indicator_sheet,
-      styles,
-    ),
-  )
-  assert_false(
-    eb_xlsx_formatting_contract_valid(
-      formatted_sheet,
-      indicator_sheet,
-      styles.replace_all(old="<b/>", new=""),
-    ),
-  )
-}
-
-///|
-test "eb workbook hyperlink contract requires official external links" {
-  let sheet = "<worksheet><sheetData><row r=\"2\"><c r=\"J2\"/></row></sheetData><hyperlinks><hyperlink ref=\"J2\" r:id=\"rIdHyperlink1\"/></hyperlinks></worksheet>"
-  let official_rels = eb_sheet1_hyperlink_rels_xml(
-    "https://www.sse.com.cn/disclosure/bond/announcement/132018.pdf",
-  )
-  let unofficial_rels = eb_sheet1_hyperlink_rels_xml(
-    "https://example.com/repost/132018.pdf",
-  )
-  assert_true(eb_xlsx_sheet1_official_hyperlinks_valid(sheet, official_rels))
-  assert_false(
-    eb_xlsx_sheet1_official_hyperlinks_valid(
-      sheet.replace_all(old="ref=\"J2\"", new="ref=\"A2\""),
-      official_rels,
-    ),
-  )
-  assert_false(eb_xlsx_sheet1_official_hyperlinks_valid(sheet, unofficial_rels))
-  assert_true(
-    xml_attribute_values(official_rels, "Target") ==
-    ["https://www.sse.com.cn/disclosure/bond/announcement/132018.pdf"],
-  )
-}
-
-///|
 test "api path helpers handle queries and traversal" {
   assert_eq(
     strip_query("/api/workspaces/book/entries?path=wiki"),
@@ -71,10 +24,8 @@ test "api path helpers handle queries and traversal" {
   )
   assert_eq(decode_query_value("wiki%2Findex.md"), "wiki/index.md")
   assert_eq(
-    decode_query_value(
-      "book%2Foutputs%2FEB%E8%BF%BD%E8%B8%AA_%5B%E5%80%BA%E5%88%B8%E4%BB%A3%E7%A0%81%5D_%5B%E5%80%BA%E5%88%B8%E7%AE%80%E7%A7%B0%5D_%5BYYYYMMDD%5D.xlsx",
-    ),
-    "book/outputs/EB追踪_[债券代码]_[债券简称]_[YYYYMMDD].xlsx",
+    decode_query_value("wiki%2Fsources%2Freport.md"),
+    "wiki/sources/report.md",
   )
   assert_true(path_segments("/api/workspaces") == ["api", "workspaces"])
   assert_true(
@@ -82,6 +33,40 @@ test "api path helpers handle queries and traversal" {
   )
   assert_true(clean_relative_path("../secret") is None)
   assert_true(clean_relative_path("/tmp/secret") is None)
+}
+
+///|
+async test "workspace discovery ignores plain folders" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-plain-folder-wbtest-" + @async.now().to_string(),
+  )
+  @fsx.make_directory(root, recursive=true, exists_ok=true)
+  let workspaces = discover_workspaces(root)
+  assert_eq(workspaces.length(), 0)
+}
+
+///|
+async test "workspace discovery only exposes town roots and moonbooks" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-town-root-wbtest-" + @async.now().to_string(),
+  )
+  @fsx.make_directory(
+    @pathx.join(root, ".moontown"),
+    recursive=true,
+    exists_ok=true,
+  )
+  let town_workspaces = discover_workspaces(root)
+  assert_eq(town_workspaces.length(), 1)
+  assert_true(town_workspaces[0].kind is TownRoot)
+
+  let book_root = @pathx.join(root, ".moontown/books/research-demo")
+  @fsx.make_directory(book_root, recursive=true, exists_ok=true)
+  let book_workspaces = discover_workspaces(root)
+  assert_eq(book_workspaces.length(), 1)
+  assert_eq(book_workspaces[0].name, "research-demo")
+  assert_true(book_workspaces[0].kind is MoonBook)
 }
 
 ///|
@@ -95,44 +80,74 @@ test "request body helpers handle optional strings" {
 ///|
 test "town request listing normalizes book-pattern handoff records" {
   let record : Json = {
-    "id": "request-publish-research-eb-ui-audit-panel-smoke",
+    "id": "request-publish-research-policy-watch",
     "kind": "book-pattern-publish",
     "status": "ready-for-moontown",
-    "book_id": "research-eb-ui-audit-panel-smoke",
-    "title": "EB UI audit panel smoke Exchangeable Bond Evidence Watch",
-    "pattern_id": "exchangeable-bond-evidence-watch",
+    "book_id": "research-policy-watch",
+    "title": "Policy Reports PDF Evidence Watch",
+    "pattern_id": "pdf-evidence-watch",
     "purpose": "Standing research-book for official-source discovery.",
   }
   let listing = town_request_listing_record(
-    record, "research-eb-ui-audit-panel-smoke.json",
+    record, "research-policy-watch.json",
   )
   assert_eq(
     json_string(listing, "id", default=""),
-    "request-publish-research-eb-ui-audit-panel-smoke",
+    "request-publish-research-policy-watch",
   )
   assert_eq(json_string(listing, "status", default=""), "ready-for-moontown")
   assert_eq(
     json_string(listing, "path", default=""),
-    ".moontown/moondesk-requests/research-eb-ui-audit-panel-smoke.json",
+    ".moontown/moondesk-requests/research-policy-watch.json",
   )
   let request = json_object_field_or_empty(listing, "request")
   assert_eq(
     json_string(request, "title", default=""),
-    "EB UI audit panel smoke Exchangeable Bond Evidence Watch",
+    "Policy Reports PDF Evidence Watch",
   )
   assert_eq(
     json_string(request, "book_id", default=""),
-    "research-eb-ui-audit-panel-smoke",
+    "research-policy-watch",
   )
   assert_eq(
     json_string(request, "pattern_id", default=""),
-    "exchangeable-bond-evidence-watch",
+    "pdf-evidence-watch",
   )
 }
 
 ///|
+fn parse_moonclaw_json_output_for_test(text : String) -> Json {
+  let parsed = @json.parse(text) catch { _ => Json::object({}) }
+  if json_string(parsed, "proposal_id", default="") != "" {
+    return parsed
+  }
+  let lines = text.split("\n").to_array()
+  let mut index = lines.length()
+  while index > 0 {
+    index -= 1
+    let line = lines[index].to_owned().trim().to_owned()
+    if line == "{" || line.contains("\"proposal_id\"") {
+      let candidate_lines : Array[String] = []
+      let mut cursor = index
+      while cursor < lines.length() {
+        candidate_lines.push(lines[cursor].to_owned())
+        cursor += 1
+      }
+      let candidate = candidate_lines.join("\n").trim().to_owned()
+      let candidate_json = @json.parse(candidate) catch {
+        _ => Json::object({})
+      }
+      if json_string(candidate_json, "proposal_id", default="") != "" {
+        return candidate_json
+      }
+    }
+  }
+  Json::object({})
+}
+
+///|
 test "moonclaw json parser tolerates log-prefixed pretty json" {
-  let parsed = parse_moonclaw_json_output(
+  let parsed = parse_moonclaw_json_output_for_test(
     "{\"level\":\"Info\",\"msg\":\"started\"}\n" +
     "{\n  \"proposal_id\": \"proposal-1\",\n  \"run_id\": \"run-1\",\n  \"status\": \"WaitingForInput\"\n}\n",
   )
@@ -172,28 +187,47 @@ test "standing goal records normalize host payloads" {
       "prompt": "Watch API docs",
       "target_book_id": "research-api",
       "cadence_ticks": "0",
-      "quality_threshold": 120,
+      "review_policy": "accepted_new_knowledge",
       "source_policy": "web-first",
     },
     daemon_tick=42,
   )
   assert_eq(json_string(record, "id", default=""), "watch-track-apis")
   assert_eq(json_int(record, "cadence_ticks", default=0), 1)
-  assert_eq(json_int(record, "quality_threshold", default=0), 100)
+  assert_eq(
+    json_string(record, "review_policy", default=""),
+    "accepted_new_knowledge",
+  )
   assert_eq(json_int(record, "next_due_tick", default=0), 42)
 }
 
 ///|
 test "pdf evidence watch pattern builds reusable book and goal ids" {
-  let base_types = book_base_type_records()
+  let base_types = book_base_type_records_from_patterns(book_pattern_records())
   assert_eq(base_types.length(), 1)
   assert_eq(json_string(base_types[0], "id", default=""), "research-book")
   assert_true(base_types[0].stringify().contains("pdf-evidence-watch"))
   assert_eq(book_pattern_base_type("pdf-evidence-watch"), "research-book")
+  assert_eq(book_pattern_base_type("external-pack"), "")
+  assert_true(book_pattern_supported("pdf-evidence-watch"))
+  assert_false(book_pattern_supported("external-pack"))
+  assert_true(book_pattern_supports_standing_watch("pdf-evidence-watch"))
+  assert_false(book_pattern_supports_standing_watch("external-pack"))
   assert_eq(
-    book_pattern_base_type("exchangeable-bond-evidence-watch"),
-    "research-book",
+    book_pattern_creation_backend("pdf-evidence-watch"),
+    "builtin-pdf-evidence-watch",
   )
+  assert_eq(book_pattern_creation_backend("external-pack"), "")
+  assert_true(
+    book_pattern_template_registry_refs("pdf-evidence-watch").contains(
+      "moontown://templates/books/pdf-evidence-watch/book.json",
+    ),
+  )
+  assert_true(
+    default_skill_pack_for_pattern("pdf-evidence-watch") ==
+    ["pdf-watch", "pdf-analysis"],
+  )
+  assert_true(default_skill_pack_for_pattern("external-pack") == [])
   assert_eq(
     normalize_pdf_watch_book_id(
       "research-my-domain-pdf-watch",
@@ -202,7 +236,10 @@ test "pdf evidence watch pattern builds reusable book and goal ids" {
     ),
     "research-my-domain-pdf-watch",
   )
-  let book_id = pdf_watch_book_id("Policy Reports")
+  let book_id = pdf_watch_book_id(
+    "Policy Reports",
+    pattern_id="pdf-evidence-watch",
+  )
   assert_eq(book_id, "research-policy-reports-pdf-watch")
   let goal = pdf_watch_standing_goal(
     book_id~,
@@ -291,57 +328,17 @@ test "pdf evidence watch pattern builds reusable book and goal ids" {
     pdf_watch_notify_on_from_payload(nested_payload) ==
     ["new_finding", "changed_conclusion"],
   )
-  assert_eq(
-    json_string(
-      eb_target_fields_from_payload({
-        "target_fields": {
-          "bond_full_name_or_short_name": "示例EB",
-          "bond_code": "132001",
-          "issuer": "示例发行人",
-          "underlying_listed_company": "示例标的公司",
-          "exchange": "上交所",
-        },
-      }),
-      "bond_code",
-      default="",
-    ),
-    "132001",
+}
+
+///|
+test "book pattern creation requires explicit supported pattern" {
+  assert_true(
+    book_pattern_id_from_creation_payload({ "pattern_id": "pdf-evidence-watch" })
+    is Some("pdf-evidence-watch"),
   )
-  assert_eq(
-    json_string(
-      eb_target_fields_from_payload({
-        "eb_target_fields": {
-          "bond_short_name": "示例EB",
-          "underlying_company": "示例标的公司",
-        },
-      }),
-      "underlying_listed_company",
-      default="",
-    ),
-    "示例标的公司",
-  )
-  let target_bonds = eb_target_bonds_from_payload({
-    "target_bonds": [
-      {
-        "bond_code": "132001",
-        "bond_short_name": "示例EB",
-        "issuer": "示例发行人",
-      },
-      {
-        "bond_code": "132002",
-        "bond_short_name": "第二只EB",
-        "underlying_company": "第二标的公司",
-      },
-    ],
-  })
-  assert_eq(target_bonds.length(), 2)
-  assert_eq(json_string(target_bonds[0], "bond_code", default=""), "132001")
-  assert_eq(
-    json_string(target_bonds[1], "bond_full_name_or_short_name", default=""),
-    "第二只EB",
-  )
-  assert_eq(
-    json_string(target_bonds[1], "underlying_listed_company", default=""),
-    "第二标的公司",
+  assert_true(book_pattern_id_from_creation_payload({}) is None)
+  assert_true(
+    book_pattern_id_from_creation_payload({ "pattern_id": "external-pack" })
+    is None,
   )
 }

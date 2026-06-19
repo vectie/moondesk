@@ -8,7 +8,7 @@ async fn handle_mooncode_session_eval_report(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  match read_agent_session_record(workspace_root, session_id) {
+  match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
       let projected = attach_mooncode_session_projection(
         workspace_root, session,
@@ -52,7 +52,7 @@ async fn handle_mooncode_session_eval_report_ingest(
       return
     }
   }
-  let session = match read_agent_session_record(workspace_root, session_id) {
+  let session = match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => session
     None => {
       send_api_error(
@@ -82,7 +82,7 @@ async fn handle_mooncode_session_eval_report_ingest(
       return
     }
   }
-  write_agent_session_record(workspace_root, with_manifest)
+  write_mooncode_session_record(workspace_root, with_manifest)
   send_json(conn, method_, @mooncode.eval_report_projection(with_manifest))
 }
 
@@ -117,6 +117,6 @@ async fn persist_mooncode_native_eval_report(
     workspace_root, with_manifest,
   )
   append_new_mooncode_command_events(workspace_root, projected, refreshed)
-  write_agent_session_record(workspace_root, refreshed)
+  write_mooncode_session_record(workspace_root, refreshed)
   refreshed
 }

@@ -12,7 +12,7 @@ test "mooncode stream jsonl includes meta event and done records" {
   let session : Json = {
     "id": "s1",
     "workspace_id": "book",
-    "moonclaw_task_id": "task",
+    "mooncode_runtime_session_id": "runtime",
     "mooncode_events": [event],
   }
   let text = stream_jsonl_text(session, [event])
@@ -72,7 +72,7 @@ test "mooncode stream jsonl supports incremental since sequence" {
   assert_eq(stream_json_int(meta, "next_since", default=0), 2)
   assert_eq(stream_json_int(item, "sequence", default=0), 2)
   let event_payload = match item {
-    Json::Object(object) => object.get("event").unwrap_or(Json::object({}))
+    Object(object) => object.get("event").unwrap_or(Json::object({}))
     _ => Json::object({})
   }
   assert_eq(stream_json_string(event_payload, "id", default=""), "e2")
@@ -116,10 +116,10 @@ test "mooncode stream checkpoint clamps and records cursor state" {
     "moondesk-ui",
   )
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let checkpoint = stream_checkpoint_record(
     session, "moondesk-ui", 99, 2, "2026-06-15T00:00:00Z", "/tmp/checkpoint.json",
@@ -148,10 +148,10 @@ test "mooncode stream state record includes resumable tail contract" {
     detail="passed",
   )
   let session : Json = {
-    "id": "agent-demo",
+    "id": "code-demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let state = stream_state_record(
     session,
@@ -169,7 +169,7 @@ test "mooncode stream state record includes resumable tail contract" {
     "/stream-state",
     "/runtime-events",
     "/stream?format=sse&live=true",
-    "/v1/mooncode/sessions/<id>/stream",
+    "/v1/code/sessions/<id>/stream",
   )
   assert_eq(
     stream_json_string(state, "kind", default=""),
@@ -178,50 +178,50 @@ test "mooncode stream state record includes resumable tail contract" {
   assert_eq(stream_json_int(state, "latest_sequence", default=0), 1)
   assert_eq(stream_json_array_items(state, "tail_events").length(), 1)
   let live = match state {
-    Json::Object(object) => object.get("live_tail_boundary").unwrap_or({})
+    Object(object) => object.get("live_tail_boundary").unwrap_or({})
     _ => {}
   }
   assert_eq(
     stream_json_string(live, "native_blocking_tail", default=""),
-    "/v1/mooncode/sessions/<id>/stream",
+    "/v1/code/sessions/<id>/stream",
   )
 }
 
 ///|
 test "mooncode moondesk stream endpoints are protocol owned" {
   assert_eq(
-    moondesk_stream_endpoint("agent demo", "jsonl", 2),
-    "/api/mooncode/sessions/agent%20demo/stream?format=jsonl&since=2",
+    moondesk_stream_endpoint("code demo", "jsonl", 2),
+    "/api/mooncode/sessions/code%20demo/stream?format=jsonl&since=2",
   )
   assert_eq(
-    moondesk_stream_endpoint("agent/unsafe", "sse", 0),
-    "/api/mooncode/sessions/agent%2Funsafe/stream?format=sse&since=0",
+    moondesk_stream_endpoint("code/unsafe", "sse", 0),
+    "/api/mooncode/sessions/code%2Funsafe/stream?format=sse&since=0",
   )
   assert_eq(
-    moondesk_live_stream_endpoint("agent demo", "sse", 7, timeout_ms=12000),
-    "/api/mooncode/sessions/agent%20demo/stream?format=sse&since=7&live=true&timeout_ms=12000",
+    moondesk_live_stream_endpoint("code demo", "sse", 7, timeout_ms=12000),
+    "/api/mooncode/sessions/code%20demo/stream?format=sse&since=7&live=true&timeout_ms=12000",
   )
   assert_eq(
-    moondesk_stream_state_endpoint("agent demo", "ui one", 3),
-    "/api/mooncode/sessions/agent%20demo/stream-state?consumer=ui%20one&since=3",
+    moondesk_stream_state_endpoint("code demo", "ui one", 3),
+    "/api/mooncode/sessions/code%20demo/stream-state?consumer=ui%20one&since=3",
   )
   assert_eq(
-    moondesk_stream_state_base_endpoint("agent demo"),
-    "/api/mooncode/sessions/agent%20demo/stream-state",
+    moondesk_stream_state_base_endpoint("code demo"),
+    "/api/mooncode/sessions/code%20demo/stream-state",
   )
   assert_eq(
-    moondesk_runtime_event_ingest_endpoint("agent demo"),
-    "/api/mooncode/sessions/agent%20demo/runtime-events",
+    moondesk_runtime_event_ingest_endpoint("code demo"),
+    "/api/mooncode/sessions/code%20demo/runtime-events",
   )
 }
 
 ///|
 test "mooncode moondesk stream checkpoint wrapper fills endpoints" {
   let session : Json = {
-    "id": "agent demo",
+    "id": "code demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let checkpoint = moondesk_stream_checkpoint_record(
     session, "ui one", 99, 5, "2026-06-16T16:00:00Z", "/tmp/checkpoint.json",
@@ -229,15 +229,15 @@ test "mooncode moondesk stream checkpoint wrapper fills endpoints" {
   assert_eq(stream_json_int(checkpoint, "last_seen_sequence", default=0), 5)
   assert_eq(
     stream_json_string(checkpoint, "stream_endpoint", default=""),
-    "/api/mooncode/sessions/agent%20demo/stream?format=jsonl&since=5",
+    "/api/mooncode/sessions/code%20demo/stream?format=jsonl&since=5",
   )
   assert_eq(
     stream_json_string(checkpoint, "stream_state_endpoint", default=""),
-    "/api/mooncode/sessions/agent%20demo/stream-state?consumer=ui%20one&since=5",
+    "/api/mooncode/sessions/code%20demo/stream-state?consumer=ui%20one&since=5",
   )
   assert_eq(
     stream_json_string(checkpoint, "runtime_event_ingest_endpoint", default=""),
-    "/api/mooncode/sessions/agent%20demo/runtime-events",
+    "/api/mooncode/sessions/code%20demo/runtime-events",
   )
 }
 
@@ -253,10 +253,10 @@ test "mooncode moondesk stream state wrapper fills endpoints" {
     detail="passed",
   )
   let session : Json = {
-    "id": "agent demo",
+    "id": "code demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let state = moondesk_stream_state_record(
     session,
@@ -273,23 +273,23 @@ test "mooncode moondesk stream state wrapper fills endpoints" {
   )
   assert_eq(
     stream_json_string(state, "stream_endpoint", default=""),
-    "/api/mooncode/sessions/agent%20demo/stream?format=jsonl&since=4",
+    "/api/mooncode/sessions/code%20demo/stream?format=jsonl&since=4",
   )
   assert_eq(
     stream_json_string(state, "sse_stream_endpoint", default=""),
-    "/api/mooncode/sessions/agent%20demo/stream?format=sse&since=4",
+    "/api/mooncode/sessions/code%20demo/stream?format=sse&since=4",
   )
   assert_eq(
     stream_json_string(state, "checkpoint_endpoint", default=""),
-    "/api/mooncode/sessions/agent%20demo/stream-state",
+    "/api/mooncode/sessions/code%20demo/stream-state",
   )
   let live = match state {
-    Json::Object(object) => object.get("live_tail_boundary").unwrap_or({})
+    Object(object) => object.get("live_tail_boundary").unwrap_or({})
     _ => {}
   }
   assert_eq(
     stream_json_string(live, "moondesk_live_endpoint", default=""),
-    "/api/mooncode/sessions/agent%20demo/stream?format=sse&since=4&live=true&timeout_ms=8000",
+    "/api/mooncode/sessions/code%20demo/stream?format=sse&since=4&live=true&timeout_ms=8000",
   )
   assert_eq(
     stream_json_string(live, "native_blocking_tail", default=""),
@@ -318,10 +318,10 @@ test "mooncode moondesk stream state projection computes cursor policy" {
     detail="second",
   )
   let session : Json = {
-    "id": "agent demo",
+    "id": "code demo",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
-    "moonclaw_task_id": "task-demo",
+    "mooncode_runtime_session_id": "runtime-demo",
   }
   let state = moondesk_stream_state_projection_record(
     session,
@@ -336,21 +336,20 @@ test "mooncode moondesk stream state projection computes cursor policy" {
   assert_eq(stream_json_int(state, "latest_sequence", default=0), 2)
   assert_eq(stream_json_int(state, "emitted_count", default=0), 1)
   assert_eq(stream_json_int(state, "next_since", default=0), 2)
-  guard state is Json::Object(fields) &&
-    fields.get("checkpoint_ready") is Some(Json::True) else {
+  guard state is Object(fields) && fields.get("checkpoint_ready") is Some(True) else {
     fail("expected checkpoint_ready=true")
   }
   let tail = stream_json_array_items(state, "tail_events")
   assert_eq(tail.length(), 1)
   assert_eq(stream_json_int(tail[0], "sequence", default=0), 2)
   let payload = match tail[0] {
-    Json::Object(object) => object.get("event").unwrap_or({})
+    Object(object) => object.get("event").unwrap_or({})
     _ => {}
   }
   assert_eq(stream_json_string(payload, "id", default=""), "e2")
   assert_eq(
     stream_json_string(state, "stream_endpoint", default=""),
-    "/api/mooncode/sessions/agent%20demo/stream?format=jsonl&since=1",
+    "/api/mooncode/sessions/code%20demo/stream?format=jsonl&since=1",
   )
 }
 

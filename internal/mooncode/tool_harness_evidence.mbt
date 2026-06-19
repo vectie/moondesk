@@ -23,7 +23,7 @@ pub fn tool_harness_evidence(
   {
     "kind": "mooncode-tool-harness-evidence",
     "protocol": protocol_version(),
-    "reference": "../openseek/eval/tool_harness",
+    "reference": "mooncode/eval/tool_harness",
     "command_id": command_id,
     "action": action,
     "expected_tool_count": tools.length(),
@@ -42,7 +42,7 @@ pub fn tool_harness_evidence(
       "proven"
     },
     "proven": tools.length() > 0 && failed_count == 0 && missing_count == 0,
-    "rule": "MoonClaw or standalone MoonCode must run each expected tool through the typed tool boundary and emit command-scoped tool_call/tool_result proof. Moondesk records and renders the verdict; it does not execute tools.",
+    "rule": "MoonClaw must run each expected tool through the typed tool boundary and emit command-scoped tool_call/tool_result proof. Moondesk records and renders the verdict; it does not execute tools.",
   }
 }
 
@@ -173,7 +173,7 @@ fn tool_harness_event_action(event : Json, packet : Json) -> String {
 fn tool_harness_event_matches_tool(event : Json, tool : String) -> Bool {
   if tool == "finish" {
     let kind = json_string(event, "kind", default="")
-    return kind == "finish" || kind == "agent_finished"
+    return kind == "finish" || kind == "runtime_finished"
   }
   let kind = json_string(event, "kind", default="")
   if kind == tool {
@@ -208,7 +208,7 @@ fn tool_harness_dedup_strings(items : Array[String]) -> Array[String] {
 ///|
 fn tool_harness_json_object_field_or_empty(json : Json, key : String) -> Json {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
         Some(value) => value
         None => Json::object({})
@@ -223,13 +223,13 @@ fn tool_harness_json_string_array_items(
   key : String,
 ) -> Array[String] {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
-        Some(Json::Array(values)) => {
+        Some(Array(values)) => {
           let result : Array[String] = []
           for value in values {
             match value {
-              Json::String(item) => result.push(item)
+              String(item) => result.push(item)
               _ => ()
             }
           }

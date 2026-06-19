@@ -1,5 +1,5 @@
 ///|
-// MoonCode eval-report projection, native evidence normalization, and readiness scoring.
+// MoonCode eval-report projection, native evidence normalization, and readiness telemetry.
 
 ///|
 pub fn eval_report_projection(session : Json) -> Json {
@@ -19,18 +19,16 @@ pub fn eval_report_projection(session : Json) -> Json {
   let native_passed_harness_count = native_eval_passed_harness_count(
     native_harnesses,
   )
-  let bridge_score = summary_json_int(summary, "eval_score", default=0)
-  let bridge_level = json_string(summary, "eval_level", default="empty")
   let status = if native_ready && missing_count == 0 {
-    "production-ready"
+    "native-ready"
   } else if native_ready {
     "native-partial"
   } else if missing_count == 0 {
-    "bridge-ready"
+    "local-ready"
   } else if passed_count > 0 {
-    "bridge-partial"
+    "local-partial"
   } else {
-    "empty"
+    "missing"
   }
   let manifest = summary_json_object_field_or_empty(
     session, "mooncode_last_eval_report_manifest",
@@ -42,13 +40,11 @@ pub fn eval_report_projection(session : Json) -> Json {
     "session_id": session_id,
     "workspace_id": json_string(session, "workspace_id", default=""),
     "workspace_name": json_string(session, "workspace_name", default=""),
-    "task_id": json_string(session, "moonclaw_task_id", default=""),
+    "runtime_session_id": session_runtime_session_id(session),
     "runtime_owner": "moonclaw",
     "ui_owner": "moondesk",
     "artifact_owner": "moonbook",
-    "extractable_component": "mooncode",
-    "bridge_score": bridge_score,
-    "bridge_level": bridge_level,
+    "standalone_component": "mooncode",
     "passed_check_count": passed_count,
     "missing_check_count": missing_count,
     "check_count": checks.length(),
@@ -74,7 +70,7 @@ pub fn eval_report_projection(session : Json) -> Json {
     "native_eval_endpoint": json_string(
       native_eval,
       "endpoint",
-      default="/v1/mooncode/sessions/<id>/eval-report?book_root=<path>",
+      default="/v1/code/sessions/<id>/eval-report?book_root=<path>",
     ),
     "native_eval_ingest_method": "POST",
     "native_eval_ingest_endpoint": if session_id == "" {
@@ -93,14 +89,14 @@ pub fn eval_report_projection(session : Json) -> Json {
       required_native_eval_harness_ids(),
     ),
     "minimum_native_evidence": string_array_json([
-      "read/edit/write/shell/moon_check tool reliability", "file-edit task success/failure fixtures",
+      "read/edit/write/shell/moon_check tool reliability", "file-edit success/failure fixtures",
       "patch review and apply/revert proof", "ordered command execution for prompt/steer/cancel/test/build/eval/package/review",
       "package assembly proof for generated tools and miniapps",
     ]),
     "current_gap": if native_ready {
-      "MoonClaw reported native eval evidence; remaining bridge/runtime gaps are reflected in the checks array."
+      "MoonClaw reported native eval evidence; remaining runtime gaps are reflected in the checks array."
     } else {
-      "Bridge evidence is visible, but MoonClaw still needs OpenSeek-style tool_harness, file_edit, patch_review, command_execution, and package_output eval results before Moondesk can claim production-grade coding-agent behavior."
+      "Local evidence is visible, but MoonClaw still needs MoonCode-style tool_harness, file_edit, patch_review, command_execution, and package_output eval results before Moondesk can claim ready coding-agent behavior."
     },
     "summary": summary,
   }
@@ -176,7 +172,7 @@ pub fn session_with_native_eval_report(
 ///|
 fn eval_report_with_field(base : Json, key : String, value : Json) -> Json {
   match base {
-    Json::Object(fields) => {
+    Object(fields) => {
       let next : Map[String, Json] = {}
       for item in fields {
         next[item.0] = item.1
@@ -192,7 +188,7 @@ fn eval_report_with_field(base : Json, key : String, value : Json) -> Json {
 pub fn session_without_eval_report_projection(session : Json) -> Json {
   let object : Map[String, Json] = {}
   match session {
-    Json::Object(fields) =>
+    Object(fields) =>
       for key, value in fields {
         if key != "mooncode_last_eval_report_manifest" &&
           key != "mooncode_summary" {
@@ -280,7 +276,7 @@ fn native_eval_missing_required_harnesses(report : Json) -> Array[String] {
 ///|
 fn native_eval_harness_id(harness : Json) -> String {
   match harness {
-    Json::String(value) => value
+    String(value) => value
     _ => json_string(harness, "id", default="")
   }
 }
@@ -288,7 +284,7 @@ fn native_eval_harness_id(harness : Json) -> String {
 ///|
 fn native_eval_harness_passed(harness : Json) -> Bool {
   match harness {
-    Json::String(_) => false
+    String(_) => false
     _ => {
       let status = json_string(harness, "status", default="")
       status == "passed" || status == "accepted"
@@ -329,29 +325,3 @@ pub fn eval_check(
 }
 
 ///|
-pub fn eval_score(checks : Array[Json]) -> Int {
-  if checks.length() == 0 {
-    return 0
-  }
-  let mut passed = 0
-  for check in checks {
-    if json_bool(check, "ok", default=false) {
-      passed += 1
-    }
-  }
-  passed * 100 / checks.length()
-}
-
-///|
-pub fn eval_level(checks : Array[Json]) -> String {
-  let score = eval_score(checks)
-  if score >= 85 {
-    "ready"
-  } else if score >= 50 {
-    "partial"
-  } else if score > 0 {
-    "early"
-  } else {
-    "empty"
-  }
-}

@@ -10,26 +10,19 @@ fn trimmed_or(value : String, fallback~ : String) -> String {
 
 ///|
 fn command_json_object_field_or_empty(json : Json, key : String) -> Json {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(value) => value
-        None => Json::object({})
-      }
-    _ => Json::object({})
-  }
+  @mooncore.json_object_field(json, key).unwrap_or(Json::object({}))
 }
 
 ///|
 fn command_json_string_array_items(json : Json, key : String) -> Array[String] {
   match json {
-    Json::Object(object) =>
+    Object(object) =>
       match object.get(key) {
-        Some(Json::Array(values)) => {
+        Some(Array(values)) => {
           let result : Array[String] = []
           for value in values {
             match value {
-              Json::String(item) => result.push(item)
+              String(item) => result.push(item)
               _ => ()
             }
           }
@@ -43,38 +36,17 @@ fn command_json_string_array_items(json : Json, key : String) -> Array[String] {
 
 ///|
 fn command_json_array_field_or_empty(json : Json, key : String) -> Json {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::Array(values)) => Json::array(values)
-        _ => Json::array([])
-      }
-    _ => Json::array([])
-  }
+  Json::array(@mooncore.json_array_items(json, key))
 }
 
 ///|
 fn command_json_array_length(json : Json, key : String) -> Int {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(Json::Array(values)) => values.length()
-        _ => 0
-      }
-    _ => 0
-  }
+  @mooncore.json_array_items(json, key).length()
 }
 
 ///|
 fn command_json_int(json : Json, key : String, default~ : Int) -> Int {
-  match json {
-    Json::Object(object) =>
-      match object.get(key) {
-        Some(value) => @json.from_json(value) catch { _ => default }
-        _ => default
-      }
-    _ => default
-  }
+  @mooncore.json_int(json, key, default~)
 }
 
 ///|
