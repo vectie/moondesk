@@ -9,6 +9,21 @@ pub fn native_capability_contract_id() -> String {
 }
 
 ///|
+pub fn executable_book_lifecycle_contract_id() -> String {
+  @mooncode_core.executable_book_lifecycle_contract_id()
+}
+
+///|
+pub fn executable_book_lifecycle_steps() -> Array[String] {
+  @mooncode_core.executable_book_lifecycle_steps()
+}
+
+///|
+pub fn executable_book_lifecycle_contract_json() -> Json {
+  @mooncode_core.executable_book_lifecycle_contract_json()
+}
+
+///|
 pub fn native_capability_required_endpoints() -> Array[String] {
   @mooncode_core.native_capability_required_endpoints()
 }

@@ -328,6 +328,14 @@ pub fn event_tool_result() -> String
 
 pub fn event_tool_started() -> String
 
+pub fn executable_book_lifecycle_contract_id() -> String
+
+pub fn executable_book_lifecycle_contract_json() -> Json
+
+pub fn executable_book_lifecycle_report_from_checks(Array[Json]) -> Json
+
+pub fn executable_book_lifecycle_steps() -> Array[String]
+
 pub fn jsonl_text(Array[Json]) -> String
 
 pub fn kind_command() -> String
@@ -472,7 +480,7 @@ pub fn native_runtime_events_for_projection(Json) -> Array[Json]
 
 pub fn native_runtime_events_unavailable_state(String, String) -> Json
 
-pub fn native_runtime_session_stub(String, String) -> Json
+pub fn native_runtime_session_projection(String, String) -> Json
 
 pub fn normalize_event_lane(String) -> String
 
@@ -781,6 +789,8 @@ pub fn runtime_turn_packet(String, Json, Json, Json, Bool) -> Json
 pub fn session_cancel_lifecycle(Array[Json]) -> Json
 
 pub fn session_eval_checks(Json, Array[Json]) -> Array[Json]
+
+pub fn session_executable_book_lifecycle(Json, Array[Json]) -> Json
 
 pub fn session_id_valid(String) -> Bool
 

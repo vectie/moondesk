@@ -88,8 +88,10 @@ test "mooncode projected session record owns stable session id policy" {
 }
 
 ///|
-test "mooncode owns native runtime session stub shape" {
-  let session = native_runtime_session_stub("/tmp/book-root", "native-session")
+test "mooncode owns native runtime session projection shape" {
+  let session = native_runtime_session_projection(
+    "/tmp/book-root", "native-session",
+  )
   assert_eq(json_string(session, "id", default=""), "native-session")
   assert_eq(json_string(session, "workspace_id", default=""), "native-session")
   assert_eq(
@@ -107,7 +109,7 @@ test "mooncode owns native runtime session stub shape" {
   )
   assert_eq(
     json_string(session, "source", default=""),
-    "moonclaw-native-session",
+    "moonclaw-native-session-projection",
   )
 }
 

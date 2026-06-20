@@ -78,7 +78,7 @@ pub fn projected_session_id(
 }
 
 ///|
-pub fn native_runtime_session_stub(
+pub fn native_runtime_session_projection(
   workspace_root : String,
   session_id : String,
 ) -> Json {
@@ -89,7 +89,7 @@ pub fn native_runtime_session_stub(
     "workspace_root": workspace_root,
     "mooncode_runtime_session_id": session_id,
     "mooncode_runtime_mode": "moonclaw-native",
-    "source": "moonclaw-native-session",
+    "source": "moonclaw-native-session-projection",
   }
 }
 

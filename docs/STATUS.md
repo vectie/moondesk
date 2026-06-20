@@ -1,6 +1,6 @@
 # Moondesk Status
 
-Last updated: 2026-06-19.
+Last updated: 2026-06-20.
 
 See [Executable Book Architecture](EXECUTABLE_BOOK_ARCHITECTURE.md) for the
 cross-repo product boundary: MoonBook owns executable books, Moondesk owns the
@@ -72,6 +72,16 @@ to be launchable. Portable bundles also resolve copied files relative to the
 injected runtime script, which lets the same generated app run inside
 Moondesk's nested preview route and as a standalone served static bundle.
 
+The boundary validator enforces this across Moondesk, MoonClaw, MoonBook, and
+Moontown. Market-specific examples must remain in external packs even when they
+are useful regression fixtures; product runtime code and core docs should keep
+only generic book-pattern, MoonCode, MoonWiki, and app-tool contracts. Cross-repo
+validation requires explicit checkout roots through `MOONCLAW_ROOT`,
+`MOONBOOK_ROOT`, and `MOONTOWN_ROOT`; Moondesk tooling should not assume sibling
+repository layout or local-machine executable paths. Put `moon` on `PATH`, or
+set `MOON=/path/to/moon` when running validation from an environment without a
+MoonBit CLI path.
+
 ## Validation Commands
 
 Use these checks before handoff:
@@ -85,4 +95,5 @@ moon info --target js
 (cd ui/rabbita-desk && moon check --target js --warn-list +unnecessary_annotation --diagnostic-limit 1000)
 npm --prefix ui/rabbita-desk run build
 git diff --check
+MOONCLAW_ROOT=/path/to/moonclaw MOONBOOK_ROOT=/path/to/moonbook MOONTOWN_ROOT=/path/to/moontown scripts/validate-core-boundaries.sh
 ```

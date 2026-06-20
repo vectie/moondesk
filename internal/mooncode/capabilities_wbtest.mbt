@@ -27,6 +27,12 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"poll_ms\""))
   assert_true(payload.contains("\"standalone_boundary\""))
   assert_true(payload.contains("\"kind\":\"mooncode-standalone-boundary\""))
+  assert_true(payload.contains("\"executable_book_lifecycle\""))
+  assert_true(
+    payload.contains("\"kind\":\"mooncode-executable-book-lifecycle\""),
+  )
+  assert_true(payload.contains("\"acceptance_owner\":\"bookkeeper\""))
+  assert_true(payload.contains("\"id\":\"package_output\""))
   assert_true(payload.contains("\"core_package\":\"mooncode/core\""))
   assert_true(
     payload.contains("\"projection_component\":\"mooncode.projection\""),
@@ -77,6 +83,34 @@ test "mooncode capability contract names the split packages" {
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/runtime-service"),
   )
+}
+
+///|
+test "mooncode capability lifecycle contract is backend portable" {
+  let capability = capabilities_json()
+  let lifecycle = summary_json_object_field_or_empty(
+    capability, "executable_book_lifecycle",
+  )
+  assert_eq(
+    json_string(lifecycle, "contract_id", default=""),
+    executable_book_lifecycle_contract_id(),
+  )
+  let required = command_json_string_array_items(lifecycle, "required_steps")
+  assert_eq(required.length(), executable_book_lifecycle_steps().length())
+  for step in executable_book_lifecycle_steps() {
+    assert_true(required.contains(step))
+  }
+  let steps = json_array_items(lifecycle, "steps")
+  assert_eq(steps.length(), required.length())
+  for step in steps {
+    assert_true(required.contains(json_string(step, "id", default="")))
+    assert_true(json_array_items(step, "required_evidence").length() > 0)
+  }
+  let payload = lifecycle.stringify()
+  assert_false(payload.contains("Rabbita"))
+  assert_false(payload.contains("rabbita"))
+  assert_false(payload.contains("internal/mooncode"))
+  assert_false(payload.contains("internal/moonwiki"))
 }
 
 ///|

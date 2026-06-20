@@ -1,6 +1,6 @@
 # Executable Book Architecture
 
-Last validated against local checkouts: 2026-06-18.
+Last validated against explicit local checkouts: 2026-06-20.
 
 ## Standalone Project Rule
 
@@ -194,15 +194,17 @@ are still valid for standing-watch work, research execution, and automation.
 
 ## Current Codebase Validation
 
-This validation is based on static inspection of the local sibling checkouts on
-2026-06-18. It proves architectural alignment only where the current code/docs
+This validation is based on static inspection of explicitly configured local
+checkouts on 2026-06-20. The validator requires `MOONCLAW_ROOT`,
+`MOONBOOK_ROOT`, and `MOONTOWN_ROOT`; it does not infer sibling source
+directories. It proves architectural alignment only where the current code/docs
 actually expose matching concepts.
 
 | Codebase | Evidence | Alignment | Gaps |
 | --- | --- | --- | --- |
-| Moondesk | `mooncode/core/protocol.mbt` advertises `/v1/code/*`; `internal/moonwiki/mooncode_command_handlers.mbt` probes `/v1/code/capabilities`; the UI calls `/api/mooncode/sessions`; MoonClaw automation runs are no longer proxied through Moondesk as the coding path. | Mostly aligned with Moondesk as shell/projection and MoonCode as code-session UI. | Keep trimming historical run wording so future work does not reintroduce execution ownership in Moondesk. |
-| MoonClaw | `cmd/daemon` has automation endpoints plus MoonCode session binding, runtime turn/loop/service files, and MoonCode sidecar persistence behind `/v1/code/*`. | Correct owner for agent/session/runtime and Code execution. | Remaining work is runtime maturity: long-running service UX, richer cancellation/resume, and stronger coding eval coverage. |
-| MoonBook | README/docs show `wiki init`, `wiki ingest`, `wiki review`, `wiki lint`, `raw/bootstrap`, `wiki/reviews`, seeded skills, standing-watch decisions, and an agent-agnostic workspace. | Aligned as durable book/wiki/source/review owner. | Executable-code directories such as `tools/`, `apps/`, package manifests, and MoonCode review artifacts are not yet the primary MoonBook story; they need first-class documentation and templates. |
+| Moondesk | `mooncode/core/protocol.mbt` advertises `/v1/code/*` and `mooncode-executable-book-lifecycle.v1`; `internal/mooncode/session_executable_lifecycle.mbt` verifies ordered lifecycle evidence from readiness checks; `internal/moonwiki/mooncode_command_handlers.mbt` probes `/v1/code/capabilities`; the desktop API remains `/api/mooncode/sessions`. | Aligned as shell/projection and MoonCode session surface. | Keep Moondesk thin while future desktop frameworks render the same backend contracts. |
+| MoonClaw | `cmd/daemon` has automation endpoints plus MoonCode session binding, runtime turn/loop/service files, and MoonCode sidecar persistence behind `/v1/code/*`. | Correct owner for agent/session/runtime and Code execution. | Implement the full executable-book lifecycle contract end to end: select/start/propose/edit/verify/review/accept/package/resume, plus stronger coding eval coverage. |
+| MoonBook | README/docs show `wiki init`, `wiki ingest`, `wiki review`, `wiki lint`, `raw/bootstrap`, `wiki/reviews`, seeded skills, standing-watch decisions, and an agent-agnostic workspace. | Aligned as durable book/wiki/source/review owner. | Make executable-code directories, package manifests, MoonCode review artifacts, and lifecycle evidence first-class MoonBook templates. |
 | Moontown | README and `src/*` expose daemon ticks, standing goals, target book ids, town synthesis, runtime status, worker routing, and book repair loops. | Aligned as scheduler plus coordination network for MoonBooks. | The “communication and new ideas” role exists in pieces, but should be made explicit as town messages/events and cross-book proposal routing rather than only scheduling language. |
 
 ## Immediate Refactor Implications
@@ -212,8 +214,8 @@ actually expose matching concepts.
    `/v1/code`.
 3. Keep MoonClaw's Code runtime on `/v1/code`; automation run routes belong to
    MoonClaw and Moontown, not the Moondesk desktop API.
-4. Document MoonBook executable-code layout as a first-class part of MoonBook,
-   not only as Moondesk/MoonCode artifacts.
+4. Implement `mooncode-executable-book-lifecycle.v1` in MoonClaw and MoonBook,
+   with Moondesk or any future desktop shell only rendering the evidence.
 5. Strengthen Moontown docs and APIs around book-to-book messages, town events,
    idea discovery, and proposal routing.
 6. Keep engineering judgment in development practice and evidence gates, not in

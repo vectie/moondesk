@@ -248,6 +248,34 @@ The response lists checks, evidence, first blocker, next action, and next
 owner. Missing evidence keeps a session blocked until MoonClaw, MoonBook, or
 Moondesk supplies the responsible artifact.
 
+## Executable-Book Lifecycle
+
+The portable lifecycle contract lives in `mooncode/core` as
+`executable_book_lifecycle_contract_json()`. It is intentionally independent of
+any desktop framework. The required path is:
+
+```text
+select_book
+-> start_session
+-> propose_change
+-> edit_code
+-> verify_code
+-> review_diff
+-> accept_result
+-> package_output
+-> resume_session
+```
+
+MoonClaw owns runtime evidence, MoonBook owns accepted artifacts, and
+Bookkeeper owns acceptance. A host may render or select, but completion is
+proved only by current evidence for the same `book_root` and `session_id`.
+
+`internal/mooncode` derives
+`mooncode-executable-book-lifecycle-report` from the same readiness evidence
+and attaches it to `session_summary` as `executable_book_lifecycle`. This keeps
+the executable-book proof backend-owned and reusable by Rabbita, Lepusa, a CLI,
+or another host without changing the runtime protocol.
+
 ## Completion Criteria
 
 MoonCode is complete when a user can:
@@ -265,3 +293,5 @@ MoonCode is complete when a user can:
 10. Resume from durable session, command, and event logs.
 11. Extract the MoonCode protocol/runtime contracts without breaking MoonWiki
     or Moondesk.
+12. Prove every step in `mooncode-executable-book-lifecycle.v1` without relying
+    on a specific desktop framework.

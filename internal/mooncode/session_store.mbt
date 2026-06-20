@@ -80,7 +80,7 @@ pub fn session_snapshot(
         "event_log", "runtime_handoff",
       ],
       "mooncode_reference": "mooncode/session + mooncode/session_store",
-      "tool_call_contract": "tool-call and tool-result records in events.jsonl should satisfy the sibling mooncode-tool-call-contract before runtime execution is trusted",
+      "tool_call_contract": "tool-call and tool-result records in events.jsonl should satisfy the shared mooncode-tool-call-contract before runtime execution is trusted",
     },
     "event_normalization": {
       "owner": "mooncode",

@@ -48,6 +48,9 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let eval_checks = session_eval_checks(session, events)
   let readiness_checks = session_readiness_checks(session, events)
   let readiness = readiness_summary(readiness_checks)
+  let executable_book_lifecycle = executable_book_lifecycle_report_from_checks(
+    readiness_checks,
+  )
   let diff_count = count_lane(events, "diff")
   let test_count = count_lane(events, "test")
   let artifact_count = count_lane(events, "artifact")
@@ -233,6 +236,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     ),
     "readiness": readiness,
     "readiness_checks": Json::array(readiness_checks),
+    "executable_book_lifecycle": executable_book_lifecycle,
   }
 }
 
