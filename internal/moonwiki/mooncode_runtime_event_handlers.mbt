@@ -60,7 +60,9 @@ async fn handle_mooncode_session_runtime_events(
         @mooncode.runtime_event_sink_result_response_with_native(
           session_id,
           native_events,
-          @mooncode.native_runtime_session_stub(workspace_root, session_id),
+          @mooncode.native_runtime_session_projection(
+            workspace_root, session_id,
+          ),
           event_log_path="",
           local_event_count=0,
           native_state=native,

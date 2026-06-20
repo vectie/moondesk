@@ -123,7 +123,7 @@ async fn mooncode_native_session_runtime_evidence_projection(
   if !mooncode_runtime_session_known(workspace_root, session_id, native_events) {
     return None
   }
-  let session = @mooncode.native_runtime_session_stub(
+  let session = @mooncode.native_runtime_session_projection(
     workspace_root, session_id,
   )
   let runtime_commands = @mooncode.runtime_event_command_rows(

@@ -3,14 +3,26 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 moondesk_root="$(cd "${script_dir}/.." && pwd)"
-moonclaw_root="${MOONCLAW_ROOT:-$(cd "${moondesk_root}/../moonclaw" && pwd)}"
+
+if [[ -z "${MOONCLAW_ROOT:-}" ]]; then
+  echo "MOONCLAW_ROOT is required for MoonCode core sync validation." >&2
+  echo "Set MOONCLAW_ROOT to the MoonClaw checkout path explicitly." >&2
+  exit 2
+fi
+
+if [[ ! -d "${MOONCLAW_ROOT}" ]]; then
+  echo "MOONCLAW_ROOT does not exist: ${MOONCLAW_ROOT}" >&2
+  exit 2
+fi
+
+moonclaw_root="$(cd "${MOONCLAW_ROOT}" && pwd)"
 
 moondesk_core="${moondesk_root}/mooncode/core"
 moonclaw_core="${moonclaw_root}/mooncode/core"
 
 if [[ ! -d "${moonclaw_core}" ]]; then
   echo "MoonClaw mooncode/core package not found: ${moonclaw_core}" >&2
-  echo "Set MOONCLAW_ROOT to the MoonClaw checkout when it is not ../moonclaw." >&2
+  echo "Set MOONCLAW_ROOT to the MoonClaw checkout path explicitly." >&2
   exit 2
 fi
 

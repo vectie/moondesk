@@ -3,10 +3,33 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 moondesk_root="$(cd "${script_dir}/.." && pwd)"
-moon_bin="${MOON:-/Users/kq/.moon/bin/moon}"
-moonclaw_root="${MOONCLAW_ROOT:-${moondesk_root}/../moonclaw}"
-moonbook_root="${MOONBOOK_ROOT:-${moondesk_root}/../moonbook}"
-moontown_root="${MOONTOWN_ROOT:-${moondesk_root}/../moontown}"
+moon_bin="${MOON:-moon}"
+
+if ! command -v "${moon_bin}" >/dev/null 2>&1; then
+  echo "MoonBit CLI not found: ${moon_bin}" >&2
+  echo "Install MoonBit on PATH or set MOON to the moon executable path." >&2
+  exit 2
+fi
+
+required_repo_root() {
+  local variable="$1"
+  local name="$2"
+  local value="${!variable:-}"
+  if [[ -z "${value}" ]]; then
+    echo "${variable} is required for cross-repo boundary validation." >&2
+    echo "Set ${variable} to the ${name} checkout path explicitly." >&2
+    exit 2
+  fi
+  if [[ ! -d "${value}" ]]; then
+    echo "${variable} does not exist: ${value}" >&2
+    exit 2
+  fi
+  cd "${value}" && pwd
+}
+
+moonclaw_root="$(required_repo_root MOONCLAW_ROOT MoonClaw)"
+moonbook_root="$(required_repo_root MOONBOOK_ROOT MoonBook)"
+moontown_root="$(required_repo_root MOONTOWN_ROOT Moontown)"
 
 run_moon() {
   local root="$1"
@@ -29,7 +52,6 @@ run_if_package_exists() {
 validate_no_builtin_domain_pack() {
   local root="$1"
   local pattern='(^|/)[[:alnum:]]+_(contract_verification|generated_scripts|lifecycle_contracts|moonclaw_contracts|moonclaw_flow|output_contracts|output_validation|prompt_contracts|reconciliation|result_records|run_health|runtime_refresh|workbook_artifacts)(_wbtest)?\.mbt$|(^|/)[[:alnum:]-]+-domain-pack'
-  local stale_example_pattern='(^|[^[:alnum:]_])EB([^[:alnum:]_]|$)|exchangeable|可交换|1320[0-9]{2}|1172[0-9]{2}|G三峡|江铜'
   local scan_paths=(
     README.md
     README.mbt.md
@@ -61,9 +83,110 @@ validate_no_builtin_domain_pack() {
       }
   )
 
-  if (cd "${root}" && rg -n --hidden --glob '!**/dist/**' --glob '!**/.moon/**' --glob '!**/.git/**' "${stale_example_pattern}" "${scan_paths[@]}"); then
-    echo "Stale market-specific example data found in Moondesk core." >&2
-    echo "Keep generated discovery examples in standalone app-tool packs, not in Moondesk." >&2
+}
+
+validate_no_local_machine_paths() {
+  local root="$1"
+  local pattern='[/]Users/[^[:space:]`"'"'"']+'
+  local scan_paths=(
+    README.md
+    README.mbt.md
+    docs
+    adapters
+    cmd
+    core
+    host
+    internal
+    mooncode
+    plugin
+    scripts
+  )
+
+  echo "+ validate no local-machine absolute paths in Moondesk core"
+  if (cd "${root}" && rg -n --hidden \
+    --glob '!**/dist/**' \
+    --glob '!**/_build/**' \
+    --glob '!**/.moon/**' \
+    --glob '!**/.mooncakes/**' \
+    --glob '!**/.git/**' \
+    "${pattern}" \
+    "${scan_paths[@]}"); then
+    echo "Local-machine absolute paths found in Moondesk core." >&2
+    echo "Use PATH, explicit environment variables, or neutral examples such as /path/to/..." >&2
+    exit 1
+  fi
+}
+
+validate_no_inline_production_tests() {
+  local root="$1"
+  echo "+ validate no inline tests in Moondesk production MoonBit files"
+  if (cd "${root}" && rg -n --hidden \
+    --glob '*.mbt' \
+    --glob '!**/*_test.mbt' \
+    --glob '!**/*_wbtest.mbt' \
+    --glob '!**/_build/**' \
+    --glob '!**/.moon/**' \
+    --glob '!**/.mooncakes/**' \
+    --glob '!**/.git/**' \
+    '^(async )?test "' \
+    internal mooncode); then
+    echo "Inline tests found in Moondesk production MoonBit files." >&2
+    echo "Move implementation-adjacent tests into *_wbtest.mbt files." >&2
+    exit 1
+  fi
+}
+
+validate_moondesk_root_layout() {
+  local root="$1"
+  local allowed='^(moon\.mod|moon\.pkg|pkg\.generated\.mbti|README\.mbt\.md|moondesk\.mbt|moondesk_test\.mbt|moondesk_wbtest\.mbt)$'
+
+  echo "+ validate Moondesk root stays a package facade"
+  while IFS= read -r candidate; do
+    [[ -n "${candidate}" ]] || continue
+    if [[ "${candidate}" != */* && ! "${candidate}" =~ ${allowed} ]]; then
+      echo "${candidate}" >&2
+      echo "Unexpected root-level MoonBit/package file found in Moondesk." >&2
+      echo "Keep implementation code in package folders such as cmd/, internal/, mooncode/, core/, host/, plugin/, or adapters/." >&2
+      exit 1
+    fi
+  done < <(
+    cd "${root}" &&
+      {
+        git ls-files '*.mbt' '*.mbti' 'moon.pkg' 'moon.mod'
+        git ls-files --others --exclude-standard '*.mbt' '*.mbti' 'moon.pkg' 'moon.mod'
+      }
+  )
+}
+
+validate_no_stale_market_example_data() {
+  local root="$1"
+  local label="$2"
+  shift 2
+  local stale_example_pattern='(^|[^[:alnum:]_])EB([^[:alnum:]_]|$)|exchangeable|可交换|(^|[^[:alnum:]_#])1320[0-9]{2}([^[:alnum:]_]|$)|(^|[^[:alnum:]_#])1172[0-9]{2}([^[:alnum:]_]|$)|G三峡|江铜'
+  local existing_paths=()
+
+  for path in "$@"; do
+    if [[ -e "${root}/${path}" ]]; then
+      existing_paths+=("${path}")
+    fi
+  done
+
+  if [[ "${#existing_paths[@]}" -eq 0 ]]; then
+    echo "skip: ${label} stale market example scan has no existing paths"
+    return
+  fi
+
+  echo "+ validate no stale market/example data in ${label}"
+  if (cd "${root}" && rg -n --hidden \
+    --glob '!**/dist/**' \
+    --glob '!**/_build/**' \
+    --glob '!**/.moon/**' \
+    --glob '!**/.mooncakes/**' \
+    --glob '!**/.git/**' \
+    "${stale_example_pattern}" \
+    "${existing_paths[@]}"); then
+    echo "Stale market-specific example data found in ${label}." >&2
+    echo "Keep generated discovery examples in standalone app-tool packs, not product runtime or core docs." >&2
     exit 1
   fi
 }
@@ -144,7 +267,7 @@ validate_moonclaw_code_boundary() {
 
 validate_moondesk_code_runtime_boundary() {
   local root="$1"
-  local forbidden='moonclaw_adapter|adapter_status|mooncode-moonclaw-adapter|native_gap|wire compatibility|/v1/mooncode|serve-scheduler|serve_scheduler|serve-jsonl|serve_command|MoonCode-style|runtime-dispatch|runtime_dispatch|RuntimeDispatch|mooncode\.runtime-dispatch|mooncode-runtime-dispatch|OpenSeek|openseek|runtime_dispatch_endpoint|dispatch_mode|mooncode_dispatch_mode|native_dispatch_mode|native_runtime_mode|task_runtime_receipt_mode|previous_dispatch_status|previous_dispatch_failed|previous_dispatch_receipt|failed_dispatch_count|dispatched_count|native-dispatched|not-dispatched|unsupported-dispatch-mode|runtime/serve|native MoonCode dispatch|mooncode_command_dispatch|command_dispatch|command-dispatch|dispatch_source|hunk_dispatch_scope|dispatch_or_replay_runtime_commands'
+  local forbidden='moonclaw_adapter|adapter_status|mooncode-moonclaw-adapter|native_gap|wire compatibility|/v1/mooncode|serve-scheduler|serve_scheduler|serve-jsonl|serve_command|MoonCode-style|runtime-dispatch|runtime_dispatch|RuntimeDispatch|mooncode\.runtime-dispatch|mooncode-runtime-dispatch|OpenSeek|openseek|runtime_dispatch_endpoint|dispatch_mode|mooncode_dispatch_mode|native_dispatch_mode|native_runtime_mode|task_runtime_receipt_mode|previous_dispatch_status|previous_dispatch_failed|previous_dispatch_receipt|failed_dispatch_count|dispatched_count|native-dispatched|not-dispatched|unsupported-dispatch-mode|runtime/serve|native MoonCode dispatch|mooncode_command_dispatch|command_dispatch|command-dispatch|dispatch_source|hunk_dispatch_scope|dispatch_or_replay_runtime_commands|native_runtime_session_stub'
   local scan_paths=(
     docs
     internal/mooncode
@@ -207,7 +330,7 @@ require_repo() {
   local name="$2"
   if [[ ! -f "${root}/moon.mod" && ! -f "${root}/moon.mod.json" ]]; then
     echo "${name} checkout not found at ${root}" >&2
-    echo "Set the corresponding *_ROOT variable to the checkout path or place it next to Moondesk." >&2
+    echo "Set the corresponding *_ROOT variable to the checkout path explicitly." >&2
     exit 2
   fi
 }
@@ -217,7 +340,18 @@ require_repo "${moonclaw_root}" "moonclaw"
 require_repo "${moonbook_root}" "moonbook"
 require_repo "${moontown_root}" "moontown"
 
+validate_no_local_machine_paths "${moondesk_root}"
+validate_no_inline_production_tests "${moondesk_root}"
+validate_moondesk_root_layout "${moondesk_root}"
 validate_no_builtin_domain_pack "${moondesk_root}"
+validate_no_stale_market_example_data "${moondesk_root}" "Moondesk" \
+  README.md README.mbt.md docs adapters cmd core host internal mooncode plugin ui/rabbita-desk/main
+validate_no_stale_market_example_data "${moonclaw_root}" "MoonClaw" \
+  README.md README.mbt.md docs agent cmd internal job mooncode skills
+validate_no_stale_market_example_data "${moonbook_root}" "MoonBook" \
+  README.md README.mbt.md docs cmd core internal wiki seed summary
+validate_no_stale_market_example_data "${moontown_root}" "Moontown" \
+  README.md README.mbt.md docs assets scripts src/app_tool_book src/daemon_runtime src/moonbook_contracts src/moonclaw_runtime src/pdf_archive src/pdf_evidence_watch src/policy src/town_runtime
 validate_moonbook_moonwiki_boundary "${moonbook_root}"
 validate_provider_runtime_boundary "${moonbook_root}" "${moontown_root}"
 validate_moonclaw_code_boundary "${moonclaw_root}"
@@ -225,7 +359,7 @@ validate_moondesk_code_runtime_boundary "${moondesk_root}"
 validate_mooncode_core_contract_neutral "${moondesk_root}"
 validate_mooncode_core_contract_neutral "${moonclaw_root}"
 validate_moontown_moonclaw_runtime_boundary "${moontown_root}"
-"${script_dir}/verify-mooncode-core-sync.sh"
+MOONCLAW_ROOT="${moonclaw_root}" "${script_dir}/verify-mooncode-core-sync.sh"
 
 run_if_package_exists "${moondesk_root}" "mooncode/core" test
 run_if_package_exists "${moondesk_root}" "internal/mooncode" test
