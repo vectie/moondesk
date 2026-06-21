@@ -3,7 +3,6 @@ struct Model {
   workspace_mode : WorkspaceMode
   activity : Activity
   command_open : Bool
-  drawer_tab : DrawerTab
   loading : Bool
   host_status : String
   workspaces : Array[@desk.DeskWorkspace]
@@ -239,7 +238,6 @@ enum Msg {
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)
   SelectActivity(Activity)
-  SelectDrawerTab(DrawerTab)
   SelectMoonCodeSession(String)
   NewMoonCodeSession
   SetMoonCodePrompt(String)

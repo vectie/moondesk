@@ -28,10 +28,6 @@ type DaemonLifecycleResult derive(@json.FromJson)
 
 type DeskEvent derive(@json.FromJson)
 
-type DrawerTab derive(Eq)
-
-type DrawerTabButton
-
 type InboxCreated derive(@json.FromJson)
 
 type InboxImportResult derive(@json.FromJson)

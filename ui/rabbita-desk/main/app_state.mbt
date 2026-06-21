@@ -32,8 +32,8 @@ fn activity_slug(activity : Activity) -> String {
 ///|
 fn workspace_mode_summary(mode : WorkspaceMode) -> String {
   match mode {
-    MoonWiki => "book/wiki workspace"
-    MoonCode => "coding/chat workspace"
+    MoonWiki => "read and organize AI-written books"
+    MoonCode => "chat with an agent to change book code"
   }
 }
 
@@ -48,10 +48,10 @@ fn workspace_mode_for_activity(activity : Activity) -> WorkspaceMode {
 ///|
 fn activities() -> Array[ActivityButton] {
   [
-    { key: Explorer, icon: "F", label: "Explorer" },
+    { key: Explorer, icon: "B", label: "Books" },
     { key: Search, icon: "S", label: "Search" },
-    { key: Inbox, icon: "I", label: "Inbox" },
-    { key: MoonCode, icon: "C", label: "MoonCode" },
+    { key: Inbox, icon: "N", label: "Notes" },
+    { key: MoonCode, icon: "C", label: "Code" },
     { key: Town, icon: "T", label: "Town" },
     { key: Runs, icon: "R", label: "Runs" },
     { key: Settings, icon: "G", label: "Settings" },
@@ -59,12 +59,3 @@ fn activities() -> Array[ActivityButton] {
 }
 
 ///|
-fn drawer_tabs() -> Array[DrawerTabButton] {
-  [
-    { key: DrawerRequests, label: "Requests" },
-    { key: DrawerMessages, label: "Town Messages" },
-    { key: DrawerRuns, label: "Runs" },
-    { key: DrawerMoonCode, label: "MoonCode" },
-    { key: DrawerRecent, label: "Recent" },
-  ]
-}

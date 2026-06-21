@@ -5,10 +5,13 @@ fn render_mooncode_inspector(
 ) -> @rabbita.Html {
   aside(class="inspector-pane", [
     div(class="pane-heading compact", [
-      div([p(class="eyebrow", "mooncode context"), h2("Session")]),
+      div([
+        p(class="eyebrow", "context"),
+        h2("What the agent can see"),
+      ]),
     ]),
     section(class="inspector-section", [
-      h3("Book Scope"),
+      h3("Selected Book"),
       info_row("Book", workspace_name(model)),
       info_row("Root", workspace_root(model)),
       info_row("Selected", model.selected_path),
@@ -19,12 +22,11 @@ fn render_mooncode_inspector(
       ),
     ]),
     section(class="inspector-section", [
-      h3("Runtime"),
+      h3("Chat Settings"),
       match selected_mooncode_session(model) {
         Some(session) =>
           div(class="daemon-state", [
             info_row("Session", session.id),
-            info_row("Runtime", empty_label(mooncode_session_runtime_id(session))),
             info_row("Status", session.status),
             info_row("Model", empty_label(session.model)),
             info_row(
@@ -37,7 +39,6 @@ fn render_mooncode_inspector(
             ),
             info_row("Web", if session.web_search { "on" } else { "off" }),
             info_row("Queued", session.queued_count.to_string()),
-            info_row("Updated", session.updated_at),
           ])
         None =>
           div(class="daemon-state", [
@@ -71,45 +72,37 @@ fn render_mooncode_inspector(
           on_click=dispatch(RunMoonCodeCommand("cancel")),
           "Cancel",
         ),
+      ]),
+    ]),
+    div(class="hidden-advanced", [
+      render_mooncode_readiness(model),
+      render_mooncode_capability_panel(model),
+    ]),
+    section(class="inspector-section", [
+      h3("Code Actions"),
+      div(class="button-stack", [
         button(
-          class="secondary-button",
+          class="secondary-button full",
           on_click=dispatch(RunMoonCodeCommand("run_tests")),
           "Run Tests",
         ),
         button(
-          class="secondary-button",
+          class="secondary-button full",
           on_click=dispatch(RunMoonCodeCommand("run_build")),
           "Run Build",
         ),
         button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("run_eval")),
-          "Run Eval",
-        ),
-        button(
-          class="secondary-button",
+          class="secondary-button full",
           on_click=dispatch(RunMoonCodeCommand("package")),
           "Package",
         ),
         button(
-          class="secondary-button",
+          class="secondary-button full",
           on_click=dispatch(RunMoonCodeCommand("commit")),
           "Commit",
         ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("accept")),
-          "Accept",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("reject")),
-          "Reject",
-        ),
       ]),
     ]),
-    render_mooncode_readiness(model),
-    render_mooncode_capability_panel(model),
     section(class="inspector-section", [
       h3("Available Models"),
       if model.moonclaw_models.length() == 0 {
@@ -144,26 +137,4 @@ fn mooncode_inspector_send_label(model : Model) -> String {
         "Send To MoonCode"
       }
   }
-}
-
-///|
-fn render_mooncode_drawer(
-  dispatch : Dispatch[Msg],
-  model : Model,
-) -> @rabbita.Html {
-  div(class="drawer-record", [
-    span(class="record-kind", "mooncode"),
-    div([
-      h3("\{model.mooncode_sessions.length()} MoonCode sessions"),
-      match selected_mooncode_session(model) {
-        Some(session) =>
-          button(
-            class="mini-link inline",
-            on_click=dispatch(SelectActivity(Activity::MoonCode)),
-            "\{session.title} / \{session.status}",
-          )
-        None => p("No MoonCode session selected.")
-      },
-    ]),
-  ])
 }

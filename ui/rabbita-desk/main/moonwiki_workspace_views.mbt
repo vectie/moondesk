@@ -2,7 +2,11 @@
 fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
-      div([p(class="eyebrow", "workspace"), h2("All Books")]),
+      div([
+        p(class="eyebrow", "wiki mode"),
+        h2("Books"),
+        p(class="pane-help", "Open a book, read AI-written pages, and save useful notes."),
+      ]),
       button(
         class="icon-button",
         title="Refresh",
@@ -19,7 +23,7 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           "section-pill"
         },
         on_click=dispatch(OpenDirectory("")),
-        "Root",
+        "Home",
       ),
       button(
         class=if model.current_directory == "wiki" {
@@ -28,7 +32,7 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           "section-pill"
         },
         on_click=dispatch(OpenDirectory("wiki")),
-        "Wiki",
+        "Documents",
       ),
       button(
         class=if model.current_directory == "inbox" {
@@ -37,7 +41,7 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           "section-pill"
         },
         on_click=dispatch(OpenDirectory("inbox")),
-        "Inbox",
+        "Notes",
       ),
       button(
         class=if model.current_directory == "book/site/generated" {
@@ -46,7 +50,7 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           "section-pill"
         },
         on_click=dispatch(OpenDirectory("book/site/generated")),
-        "Outputs",
+        "Generated",
       ),
     ]),
     render_tree(dispatch, model),

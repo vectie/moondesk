@@ -45,7 +45,6 @@ fn update_navigation_actions(
           command_open: false,
         },
       )
-    SelectDrawerTab(tab) => (@rabbita.none, { ..model, drawer_tab: tab })
     SelectWorkspace(workspace_id) =>
       (
         @rabbita.batch([

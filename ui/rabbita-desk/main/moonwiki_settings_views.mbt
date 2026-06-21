@@ -18,6 +18,7 @@ fn render_settings_pane(
       info_row("Requests", model.requests.length().to_string()),
       info_row("Runs", model.runs.length().to_string()),
       info_row("Messages", model.town_messages.length().to_string()),
+      info_row("Latest", latest_town_message_label(model)),
       info_row("Goals", model.standing_goals.length().to_string()),
       info_row("Favorites", model.favorites.length().to_string()),
       button(
@@ -286,6 +287,16 @@ fn daemon_snapshot_label(model : Model) -> String {
 }
 
 ///|
+fn latest_town_message_label(model : Model) -> String {
+  if model.town_messages.length() == 0 {
+    "none"
+  } else {
+    let message = model.town_messages[model.town_messages.length() - 1]
+    "\{message.kind} \{message.id}: \{message.title} (\{message.path})"
+  }
+}
+
+///|
 fn export_snapshot(model : Model) -> String {
   "Moondesk snapshot\n" +
   "workspace: \{workspace_name(model)}\n" +
@@ -293,6 +304,7 @@ fn export_snapshot(model : Model) -> String {
   "requests: \{model.requests.length()}\n" +
   "runs: \{model.runs.length()}\n" +
   "messages: \{model.town_messages.length()}\n" +
+  "latest message: \{latest_town_message_label(model)}\n" +
   "standing goals: \{model.standing_goals.length()}\n" +
   "daemon: \{daemon_snapshot_label(model)}\n" +
   "favorites: \{model.favorites.join(", ")}\n"

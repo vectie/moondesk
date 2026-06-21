@@ -2,7 +2,11 @@
 fn render_mooncode_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
-      div([p(class="eyebrow", "mooncode"), h2("MoonCode")]),
+      div([
+        p(class="eyebrow", "code mode"),
+        h2("Code Sessions"),
+        p(class="pane-help", "Chat with an agent to add tools, miniapps, tests, and executable book code."),
+      ]),
       div(class="toolbar-actions", [
         button(
           class="icon-button",
@@ -19,21 +23,24 @@ fn render_mooncode_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Htm
       ]),
     ]),
     section(class="side-section", [
-      h3("Daemon"),
-      render_moonclaw_daemon_state(model),
-      p(class="status-line", model.mooncode_composer_status),
-    ]),
-    section(class="side-section", [
-      h3("MoonCode Sessions"),
+      h3("Start Here"),
       button(
         class="primary-button full",
         on_click=dispatch(NewMoonCodeSession),
-        "New Session",
+        "New Code Chat",
       ),
+      p(class="status-line", model.mooncode_composer_status),
+    ]),
+    section(class="side-section quiet-section", [
+      h3("Agent"),
+      render_moonclaw_daemon_state(model),
+    ]),
+    section(class="side-section", [
+      h3("Recent Chats"),
       div(
         class="mooncode-session-list",
         if model.mooncode_sessions.length() == 0 {
-          [p(class="status-line", "no MoonCode sessions yet")]
+          [p(class="status-line", "No code chats yet.")]
         } else {
           model.mooncode_sessions.map(session => {
             let selected = selected_mooncode_session(model)
@@ -118,12 +125,15 @@ fn render_mooncode_center(
   let session = selected_mooncode_session(model)
   main_(class="preview-center mooncode-center", [
     div(class="preview-toolbar", [
-      span(class="path-pill", selected_mooncode_runtime_label(model)),
+      span(
+        class="path-pill",
+        "Code mode / \{selected_mooncode_runtime_label(model)} / \{model.selected_path}",
+      ),
       div(class="toolbar-actions", [
         button(
-          class="secondary-button",
+          class="primary-button",
           on_click=dispatch(NewMoonCodeSession),
-          "New",
+          "New Chat",
         ),
         button(
           class="secondary-button",
@@ -132,48 +142,13 @@ fn render_mooncode_center(
         ),
         button(
           class="secondary-button",
-          on_click=dispatch(RunMoonCodeRuntimeLoop),
-          "Run Native Loop",
-        ),
-        button(
-          class="secondary-button",
           on_click=dispatch(RunMoonCodeCommand("run_tests")),
           "Run Tests",
         ),
         button(
           class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("run_build")),
-          "Run Build",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("run_eval")),
-          "Run Eval",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("package")),
-          "Package",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("commit")),
-          "Commit",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("accept")),
-          "Accept",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("reject")),
-          "Reject",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeCommand("cancel")),
-          "Cancel",
+          on_click=dispatch(RunMoonCodeCommand("steer")),
+          "Steer",
         ),
       ]),
     ]),
@@ -181,33 +156,15 @@ fn render_mooncode_center(
       match session {
         Some(session) => div(class="mooncode-session-surface", [
           render_mooncode_session_header(dispatch, model, session),
-          render_mooncode_preflight_panel(dispatch, model),
           render_mooncode_transcript(model, session),
-          render_mooncode_command_queue_panel(dispatch, model),
-          render_mooncode_runtime_command_feed_panel(model),
-          render_mooncode_runtime_replay_panel(model),
-          render_mooncode_runtime_event_sink_panel(model),
-          render_mooncode_action_plan_panel(dispatch, model),
-          render_mooncode_runtime_evidence_panel(model),
-          render_mooncode_runtime_claim_panel(dispatch, model),
-          render_mooncode_runtime_receipt_panel(model),
-          render_mooncode_eval_report_panel(dispatch, model),
-          render_mooncode_runtime_handoff_panel(model),
-          render_mooncode_review_queue(dispatch, session),
-          render_mooncode_change_set_panel(model),
-          render_mooncode_test_runs_panel(dispatch, model),
-          render_mooncode_package_candidates_panel(dispatch, model),
-          render_mooncode_patch_set_panel(dispatch, model),
-          render_mooncode_tool_authorization_panel(dispatch, model),
-          render_mooncode_tool_approvals_panel(dispatch, model),
-          render_mooncode_event_lanes(model, session),
+          render_mooncode_advanced_panels(dispatch, model, session),
         ])
         None =>
           div(class="mooncode-empty", [
-            h1("MoonCode"),
+            h1("Start a Code Chat"),
             p(
               class="lead",
-              "Start a book-scoped MoonCode session backed by MoonClaw.",
+              "Ask the agent to inspect this MoonBook, edit executable code, run tests, or package a miniapp.",
             ),
           ])
       },
@@ -216,7 +173,7 @@ fn render_mooncode_center(
           class="mooncode-input",
           rows=7,
           value=model.mooncode_prompt,
-          placeholder="Ask MoonClaw to inspect, code, refactor, test, or explain this book/code workspace.",
+          placeholder="Ask for a code change, test, tool, miniapp, or explanation for this selected MoonBook.",
           on_input=fn(value) { dispatch(SetMoonCodePrompt(value)) },
           "",
         ),
@@ -245,6 +202,48 @@ fn render_mooncode_center(
         p(class="status-line", model.mooncode_composer_status),
       ]),
     ]),
+  ])
+}
+
+///|
+fn render_mooncode_advanced_panels(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session : MoonCodeSession,
+) -> @rabbita.Html {
+  div(class="hidden-advanced", [
+    render_mooncode_preflight_panel(dispatch, model),
+    render_mooncode_command_queue_panel(dispatch, model),
+    render_mooncode_runtime_command_feed_panel(model),
+    render_mooncode_runtime_replay_panel(model),
+    render_mooncode_runtime_event_sink_panel(model),
+    render_mooncode_action_plan_panel(dispatch, model),
+    render_mooncode_runtime_evidence_panel(model),
+    render_mooncode_runtime_claim_panel(dispatch, model),
+    render_mooncode_runtime_receipt_panel(model),
+    render_mooncode_eval_report_panel(dispatch, model),
+    render_mooncode_runtime_handoff_panel(model),
+    render_mooncode_review_queue(dispatch, session),
+    render_mooncode_change_set_panel(model),
+    render_mooncode_test_runs_panel(dispatch, model),
+    render_mooncode_package_candidates_panel(dispatch, model),
+    render_mooncode_patch_set_panel(dispatch, model),
+    render_mooncode_tool_authorization_panel(dispatch, model),
+    render_mooncode_tool_approvals_panel(dispatch, model),
+    render_mooncode_event_lanes(model, session),
+    render_mooncode_resume_lifecycle(session.mooncode_summary),
+    render_mooncode_steering_lifecycle(session.mooncode_summary),
+    render_mooncode_cancel_lifecycle(session.mooncode_summary),
+    render_mooncode_patch_lifecycle(session.mooncode_summary),
+    render_mooncode_package_lifecycle(session.mooncode_summary),
+    span(
+      class="hidden-inline",
+      mooncode_summary_pending_steer_label(session.mooncode_summary),
+    ),
+    span(
+      class="hidden-inline",
+      session.mooncode_summary.pending_cancel_count.to_string(),
+    ),
   ])
 }
 
@@ -278,32 +277,13 @@ fn render_mooncode_session_header(
   session : MoonCodeSession,
 ) -> @rabbita.Html {
   let summary = session.mooncode_summary
-  let action_state = match model.mooncode_action_plan {
-    Some(plan) => "\{plan.status} / \{plan.next_required_action}"
-    None => model.mooncode_action_plan_status
-  }
-  let receipt_state = match model.mooncode_runtime_receipt {
-    Some(receipt_state) =>
-      "\{receipt_state.runtime_receipt_count} receipt(s), \{receipt_state.runtime_receipt_pending_count} pending"
-    None => model.mooncode_runtime_receipt_status
-  }
-  let readiness_next_action = json_string_value(
-    summary.readiness,
-    "next_action",
-    default="inspect_readiness_check",
-  )
-  let readiness_next_owner = json_string_value(
-    summary.readiness,
-    "next_owner",
-    default="mooncode",
-  )
   div(class="mooncode-session-header", [
     div(class="mooncode-session-title", [
       div([
-        p(class="eyebrow", "mooncode session"),
+        p(class="eyebrow", "code chat"),
         h2(session.title),
         small(
-          "\{session.workspace_name} / \{mooncode_session_runtime_line(session)}",
+          "\{workspace_name(model)} / \{mooncode_session_runtime_line(session)}",
         ),
       ]),
       div(class="toolbar-actions", [
@@ -316,11 +296,6 @@ fn render_mooncode_session_header(
           class="secondary-button",
           on_click=dispatch(RunMoonCodeCommand("cancel")),
           "Cancel",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(RunMoonCodeRuntimeLoop),
-          "Run Native Loop",
         ),
         button(
           class="primary-button",
@@ -340,36 +315,10 @@ fn render_mooncode_session_header(
       ]),
     ]),
     div(class="mooncode-session-grid", [
-      info_chip("next action", action_state),
-      info_chip(
-        "readiness next",
-        "\{readiness_next_action} / \{readiness_next_owner}",
-      ),
-      info_chip("stream", "\{summary.stream_source} / \{summary.stream_mode}"),
-      info_chip("runtime", "\{summary.runtime_mode} / \{receipt_state}"),
-      info_chip("pending steers", mooncode_summary_pending_steer_label(summary)),
-      info_chip("pending cancels", summary.pending_cancel_count.to_string()),
+      info_chip("status", session.status),
       info_chip("events", summary.event_count.to_string()),
-      info_chip("diffs pending", summary.pending_diff_count.to_string()),
-      info_chip("tests verified", summary.verified_test_count.to_string()),
-      info_chip("tool approvals", summary.pending_tool_approval_count.to_string()),
-      info_chip("packages", summary.source_bound_package_count.to_string()),
+      info_chip("diffs", summary.pending_diff_count.to_string()),
+      info_chip("tests", summary.verified_test_count.to_string()),
     ]),
-    div(class="mooncode-session-evidence", [
-      info_row("Session", session.id),
-      info_row("Snapshot", empty_label(summary.session_snapshot_path)),
-      info_row("Command Log", empty_label(summary.command_log_path)),
-      info_row("Runtime Feed", empty_label(summary.runtime_command_log_path)),
-      info_row("Event Log", empty_label(summary.event_log_path)),
-      info_row(
-        "Eval",
-        "\{summary.eval_passed_check_count}/\{summary.eval_check_count} passed, \{summary.eval_missing_check_count} missing",
-      ),
-    ]),
-    render_mooncode_resume_lifecycle(summary),
-    render_mooncode_steering_lifecycle(summary),
-    render_mooncode_cancel_lifecycle(summary),
-    render_mooncode_patch_lifecycle(summary),
-    render_mooncode_package_lifecycle(summary),
   ])
 }

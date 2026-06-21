@@ -89,7 +89,6 @@ fn update(
     CompletedMoonCodeCommand(_) => update_mooncode_results(dispatch, msg, model)
     SelectWorkspaceMode(_) => update_navigation_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)
-    SelectDrawerTab(_) => update_navigation_actions(dispatch, msg, model)
     SelectWorkspace(_) => update_navigation_actions(dispatch, msg, model)
     SelectPath(_) => update_navigation_actions(dispatch, msg, model)
     OpenDirectory(_) => update_navigation_actions(dispatch, msg, model)

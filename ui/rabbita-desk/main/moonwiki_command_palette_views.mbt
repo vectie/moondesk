@@ -46,7 +46,7 @@ fn render_command_palette(
             dispatch,
             "Open MoonCode",
             "Open a book-scoped MoonCode coding session",
-            SelectActivity(Activity::MoonCode),
+            SelectActivity(MoonCode),
           ),
           palette_command(
             dispatch,
@@ -123,30 +123,30 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     model.host_status
   }
   header(class="title-bar", [
+    div(class="workspace-mode-toggle", [
+      button(
+        class=workspace_mode_button_class(model, MoonWiki),
+        title="Switch to Wiki mode",
+        on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+        "Wiki",
+      ),
+      button(
+        class=workspace_mode_button_class(model, MoonCode),
+        title="Switch to Code mode",
+        on_click=dispatch(SelectWorkspaceMode(MoonCode)),
+        "Code",
+      ),
+    ]),
     div(class="title-copy", [
       span(class="app-dot", ""),
       h1("Moondesk"),
       span(class="workspace-switcher", workspace_name(model)),
       span(class="mode-caption", workspace_mode_summary(model.workspace_mode)),
     ]),
-    div(class="workspace-mode-toggle", [
-      button(
-        class=workspace_mode_button_class(model, MoonWiki),
-        title="Switch to the MoonWiki book workspace",
-        on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-        "MoonWiki",
-      ),
-      button(
-        class=workspace_mode_button_class(model, MoonCode),
-        title="Switch to the MoonCode coding workspace",
-        on_click=dispatch(SelectWorkspaceMode(WorkspaceMode::MoonCode)),
-        "MoonCode",
-      ),
-    ]),
     button(
       class="command-button",
       on_click=dispatch(ToggleCommand),
-      "Command Palette",
+      "Commands",
     ),
     div(class="sync-status", [span(class="status-dot live", ""), span(status)]),
   ])

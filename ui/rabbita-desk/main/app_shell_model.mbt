@@ -23,24 +23,8 @@ struct ActivityButton {
 }
 
 ///|
-enum DrawerTab {
-  DrawerRequests
-  DrawerMessages
-  DrawerRuns
-  DrawerMoonCode
-  DrawerRecent
-} derive(Eq)
-
-///|
-struct DrawerTabButton {
-  key : DrawerTab
-  label : String
-}
-
-///|
 struct PreviewTab {
   title : String
   path : String
   renderer : @desk.PreviewRenderer
 }
-
