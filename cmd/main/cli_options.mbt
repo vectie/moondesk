@@ -17,7 +17,7 @@ priv struct BundleOptions {
   sign_identity : String
   version : String
   channel : String
-  shell_policy : String
+  lepusa_root : String
   archive : Bool
   skip_sign : Bool
 }
@@ -45,7 +45,7 @@ fn default_bundle_options() -> BundleOptions {
     sign_identity: "-",
     version: "0.1.0",
     channel: "local",
-    shell_policy: "native-window",
+    lepusa_root: "../lepusa",
     archive: true,
     skip_sign: false,
   }
@@ -176,14 +176,9 @@ fn parse_bundle_args(args : Array[String]) -> BundleOptions? {
         } else {
           return None
         }
-      "--shell" =>
+      "--lepusa" =>
         if index + 1 < args.length() {
-          let shell = args[index + 1]
-          let shell_policy = normalize_shell_policy(shell)
-          if shell_policy == "" {
-            return None
-          }
-          options = { ..options, shell_policy, }
+          options = { ..options, lepusa_root: args[index + 1] }
           index += 2
         } else {
           return None
@@ -215,14 +210,5 @@ fn absolute_path(path : String, base : String) -> String {
     @pathx.normalize(path)
   } else {
     @pathx.join(base, path)
-  }
-}
-
-///|
-fn normalize_shell_policy(shell : String) -> String {
-  match shell {
-    "native" | "native-window" | "webview" => "native-window"
-    "browser" | "browser-shell" => "browser-shell"
-    _ => ""
   }
 }

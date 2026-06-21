@@ -12,8 +12,9 @@ async fn main {
     ["uninstall-launch-agent", .. rest] =>
       run_uninstall_launch_agent(rest.to_owned())
     ["launch-agent-status", .. rest] => run_launch_agent_status(rest.to_owned())
+    ["lepusa", .. rest] => run_lepusa_integration(rest.to_owned())
     ["doctor", .. rest] => run_doctor(rest.to_owned())
-    [] => if !run_app_bundle(args) { print_usage() }
+    [] => print_usage()
     _ => print_usage()
   }
 }

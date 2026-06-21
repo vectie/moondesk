@@ -39,8 +39,16 @@ async fn run_release(args : Array[String]) -> Unit {
   run_bundle(bundle_args)
   let repo_root = @pathx.normalize(@env.current_dir().unwrap_or("."))
   let out_dir = absolute_path(parsed.out_dir, repo_root)
-  let app_root = @pathx.join(out_dir, "Moondesk.app")
-  let archive_path = @pathx.join(out_dir, "Moondesk.app.zip")
+  let parsed = {
+    ..parsed,
+    workspace_root: absolute_path(parsed.workspace_root, repo_root),
+    ui_dir: absolute_path(parsed.ui_dir, repo_root),
+    out_dir,
+    lepusa_root: absolute_path(parsed.lepusa_root, repo_root),
+  }
+  let app_root = bundle_app_root(parsed)
+  let archive_path = bundle_archive_path(parsed)
+  let runtime_manifest_path = bundle_runtime_manifest_path(parsed)
   let dmg_path = @pathx.join(out_dir, "Moondesk-\{parsed.version}.dmg")
   let update_manifest_path = @pathx.join(out_dir, "updates.json")
   if !@fsx.exists(app_root) {
@@ -88,6 +96,7 @@ async fn run_release(args : Array[String]) -> Unit {
     parsed,
     app_root,
     archive_path,
+    runtime_manifest_path,
     dmg_path,
     update_manifest_path,
     notary_profile,
@@ -107,6 +116,7 @@ async fn run_release(args : Array[String]) -> Unit {
     update_manifest_json(
       parsed,
       archive_path,
+      runtime_manifest_path,
       dmg_path,
       dmg_created~,
       notarized~,
@@ -118,7 +128,7 @@ async fn run_release(args : Array[String]) -> Unit {
       println("release warning: could not write update manifest: \{error}")
   }
   println(
-    "release complete: \{app_root} (\{parsed.shell_policy}, signed=\{signed}, notarized=\{notarized}, dmg=\{dmg_created})",
+    "release complete: \{app_root} (\{bundle_shell_policy()}, signed=\{signed}, notarized=\{notarized}, dmg=\{dmg_created})",
   )
 }
 
@@ -127,6 +137,7 @@ async fn release_manifest_json(
   options : BundleOptions,
   app_root : String,
   archive_path : String,
+  runtime_manifest_path : String,
   dmg_path : String,
   update_manifest_path : String,
   notary_profile : String,
@@ -136,21 +147,26 @@ async fn release_manifest_json(
 ) -> Json {
   {
     "app": app_root,
+    "app_name": bundle_path_leaf(app_root),
     "archive": archive_path,
     "archive_sha256": file_sha256(archive_path),
+    "runtime_manifest": runtime_manifest_path,
+    "runtime_manifest_sha256": file_sha256(runtime_manifest_path),
     "dmg": dmg_path,
     "dmg_created": dmg_created,
     "dmg_sha256": file_sha256(dmg_path),
     "update_manifest": update_manifest_path,
     "workspace_root": options.workspace_root,
     "ui_dir": options.ui_dir,
+    "lepusa_root": options.lepusa_root,
     "host": options.host,
     "port": options.port,
     "version": options.version,
     "channel": options.channel,
     "distribution_mode": "self-contained-local-app",
-    "shell_policy": options.shell_policy,
-    "native_window": false,
+    "shell_policy": bundle_shell_policy(),
+    "native_host": bundle_native_host_name(),
+    "native_window": bundle_has_native_window(),
     "sign_identity": options.sign_identity,
     "signed": signed,
     "notary_profile": notary_profile,
@@ -167,6 +183,7 @@ async fn release_manifest_json(
 async fn update_manifest_json(
   options : BundleOptions,
   archive_path : String,
+  runtime_manifest_path : String,
   dmg_path : String,
   dmg_created~ : Bool,
   notarized~ : Bool,
@@ -176,6 +193,11 @@ async fn update_manifest_json(
     "kind": "zip",
     "path": archive_path,
     "sha256": file_sha256(archive_path),
+  })
+  artifacts.push({
+    "kind": "runtime-manifest",
+    "path": runtime_manifest_path,
+    "sha256": file_sha256(runtime_manifest_path),
   })
   if dmg_created {
     artifacts.push({
@@ -188,12 +210,13 @@ async fn update_manifest_json(
     "name": "Moondesk",
     "version": options.version,
     "channel": options.channel,
-    "shell_policy": options.shell_policy,
-    "native_window": false,
+    "shell_policy": bundle_shell_policy(),
+    "native_host": bundle_native_host_name(),
+    "native_window": bundle_has_native_window(),
     "notarized": notarized,
     "artifacts": Json::array(artifacts),
     "install": {
-      "macos": "Open the DMG or unzip Moondesk.app, then drag the app to Applications.",
+      "macos": "Open the DMG or unzip the app bundle, then drag it to Applications.",
       "daemon": "Use the in-app daemon panel to install or remove the Moontown LaunchAgent.",
     },
   }

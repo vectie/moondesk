@@ -1,0 +1,28 @@
+{
+  "identifier": "app.vectie.moondesk.lepusa",
+  "productName": "Moondesk Lepusa",
+  "version": "0.1.0",
+  "runtime": {
+    "backend": "system-webview",
+    "assetProtocol": "lepusa",
+    "devtools": false
+  },
+  "window": {
+    "label": "main",
+    "title": "Moondesk",
+    "width": 1280,
+    "height": 820,
+    "resizable": true,
+    "source": { "packaged": "dist" }
+  },
+  "plugins": [
+    { "name": "opener" }
+  ],
+  "capabilities": [
+    {
+      "name": "main",
+      "windows": ["main"],
+      "permissions": ["opener"]
+    }
+  ]
+}

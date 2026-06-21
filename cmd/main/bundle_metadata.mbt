@@ -1,70 +1,44 @@
 ///|
-fn bundle_uses_native_window(options : BundleOptions) -> Bool {
-  options.shell_policy == "native-window"
+fn bundle_app_root(options : BundleOptions) -> String {
+  @pathx.join(options.out_dir, "moondesk-lepusa.app")
 }
 
 ///|
-fn bundle_config_json(options : BundleOptions) -> Json {
-  let native_window = bundle_uses_native_window(options)
-  {
-    "workspace_root": options.workspace_root,
-    "ui_dir": "../Resources/ui",
-    "host": options.host,
-    "port": options.port,
-    "open_browser": !native_window,
-    "version": options.version,
-    "channel": options.channel,
-    "shell_policy": options.shell_policy,
-    "native_window": native_window,
-  }
+fn bundle_archive_path(options : BundleOptions) -> String {
+  @pathx.join(options.out_dir, "moondesk-lepusa.app.zip")
 }
 
 ///|
-fn info_plist(version : String, native_window : Bool) -> String {
-  let shell_keys = if native_window {
-    (
-      #|  <key>NSPrincipalClass</key>
-      #|  <string>NSApplication</string>
-      #|  <key>NSHighResolutionCapable</key>
-      #|  <true/>
-      #|  <key>NSAppTransportSecurity</key>
-      #|  <dict>
-      #|    <key>NSAllowsLocalNetworking</key>
-      #|    <true/>
-      #|  </dict>
-    )
-  } else {
-    (
-      #|  <key>LSBackgroundOnly</key>
-      #|  <true/>
-    )
+fn bundle_runtime_manifest_path(options : BundleOptions) -> String {
+  @pathx.join(
+    bundle_app_root(options),
+    "Contents/Resources/lepusa/runtime.json",
+  )
+}
+
+///|
+fn bundle_shell_policy() -> String {
+  "lepusa"
+}
+
+///|
+fn bundle_native_host_name() -> String {
+  "lepusa"
+}
+
+///|
+fn bundle_has_native_window() -> Bool {
+  true
+}
+
+///|
+fn bundle_path_leaf(path : String) -> String {
+  let normalized = @pathx.normalize(path)
+  let mut start = 0
+  for index = 0; index < normalized.length(); index = index + 1 {
+    if normalized[index:index + 1] == "/" {
+      start = index + 1
+    }
   }
-  let template =
-    #|<?xml version="1.0" encoding="UTF-8"?>
-    #|<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    #|<plist version="1.0">
-    #|<dict>
-    #|  <key>CFBundleName</key>
-    #|  <string>Moondesk</string>
-    #|  <key>CFBundleDisplayName</key>
-    #|  <string>Moondesk</string>
-    #|  <key>CFBundleIdentifier</key>
-    #|  <string>app.vectie.moondesk</string>
-    #|  <key>CFBundleVersion</key>
-    #|  <string>MOONDESK_VERSION</string>
-    #|  <key>CFBundleShortVersionString</key>
-    #|  <string>MOONDESK_VERSION</string>
-    #|  <key>CFBundleExecutable</key>
-    #|  <string>moondesk</string>
-    #|  <key>CFBundlePackageType</key>
-    #|  <string>APPL</string>
-    #|MOONDESK_SHELL_KEYS
-    #|  <key>LSMultipleInstancesProhibited</key>
-    #|  <true/>
-    #|</dict>
-    #|</plist>
-  template
-  .replace_all(old="MOONDESK_VERSION", new=version)
-  .replace_all(old="MOONDESK_SHELL_KEYS", new=shell_keys)
-  .to_string()
+  normalized[start:].to_owned()
 }
