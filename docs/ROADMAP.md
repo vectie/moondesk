@@ -35,15 +35,17 @@ It is not:
 
 ### 1. Native Desktop Shell
 
-Goal: a self-contained macOS app that starts its own MoonBit host and opens the
-Rabbita desktop in a native WebKit window.
+Goal: a self-contained macOS app that uses Lepusa as the native host, starts the
+Moondesk MoonBit server as a supervised localhost sidecar, and opens the Rabbita
+desktop in the system WebView.
 
 Done:
 
 - local MoonBit host
 - scoped workspace APIs
-- AppKit/WebKit bundle generation
-- bundled UI assets
+- Lepusa bundle generation for the default native app
+- supervised localhost sidecar manifest for the existing Moondesk server
+- bundled Lepusa runtime
 - signing, DMG, update metadata, and LaunchAgent commands
 
 Still needed:

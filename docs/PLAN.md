@@ -88,7 +88,7 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 - run as a native window app
 - supervise the local Moondesk host and configured MoonClaw/Moontown daemons
 - expose LaunchAgent/install/status controls where appropriate
-- keep browser-shell behavior explicit as a development-only shell
+- keep browser development in `serve`/`desktop`; app packaging is Lepusa-only
 
 ## Data Contracts
 

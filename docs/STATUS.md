@@ -11,7 +11,7 @@ MoonClaw owns bounded execution.
 
 Moondesk is a usable local desktop shell for a single operator working against
 selected MoonBook workspaces and explicitly configured Moontown/MoonClaw
-services. It has a native-window macOS bundle path, a browser development path,
+services. It has a Lepusa-hosted macOS bundle path, a browser development path,
 a Rabbita desktop UI, scoped host APIs, MoonWiki book navigation, MoonCode
 book-scoped coding/chat surfaces, Moontown request/standing-goal surfaces,
 daemon controls, and reusable book/tool scaffolding.
@@ -35,8 +35,8 @@ configure, inspect, export, and launch through generic interfaces.
 | Domain-specific book packs | External by design | Moondesk no longer ships built-in domain packs. Financial, policy, patent, academic-paper, standards, or other watch books should be distributed as standalone book/tool packs. |
 | Portable app-tool export | Working | Exports app-tool books into `portable/app-tool/` with served entrypoint, manifest, copied assets, generated-site assets, discovered HTML/CSS/JS asset dependencies, skills, schemas, a portable offline API runtime where possible, and `serve.py` / `run-local.command` launchers. It also detects generated app books with `app/index.html` so experiments can be packaged standalone without domain-specific Moondesk code. Export rewrites local root-absolute asset links such as `/assets/...` to bundle-relative paths so the same generated app can run in Moondesk preview and in the standalone static host. Export success is separate from launch readiness: bundles with unsupported API calls are marked `auto_open_allowed: false` and are kept as inspection-only until the pack or generic runtime is fixed. Run the local static host or a native shell; raw `file://` opening is not a supported runtime for generated JavaScript modules. |
 | MoonCode workspace | Working | Provides book-scoped coding/chat sessions, runtime queues, tool approval/readiness surfaces, change review, tests, package/export views, and MoonClaw daemon/model inspection. MoonClaw owns the runtime event log and command queue; Moondesk keeps desktop projection records for UI state. |
-| Native app bundle | Working | `cmd/main bundle` creates `Moondesk.app` with an AppKit/WebKit launcher, internal MoonBit host, and bundled UI. Browser launch remains a development mode, not the production shell. |
-| Release distribution | Hardening needed | `cmd/main release` creates zip/DMG/update metadata and can submit notarization when credentials exist; real production still requires Developer ID credentials, hosted updates, clean-machine validation, and long-running reliability proof. |
+| Native app bundle | Working | `cmd/main bundle` creates a Lepusa-hosted `moondesk-lepusa.app` with a bundled Lepusa runtime and bundled `moondesk-sidecar` supervised as the Moondesk localhost service. The stale direct AppKit/WebKit launcher and browser-shell bundle paths have been removed; browser-based development uses `serve` or `desktop`. |
+| Release distribution | Hardening needed | `cmd/main release` creates zip/DMG/update metadata for the Lepusa app, including the generated `lepusa/runtime.json` path and hash, and can submit notarization when credentials exist; real production still requires Developer ID credentials, hosted updates, clean-machine validation, and long-running reliability proof. |
 
 ## Current Product Boundary
 

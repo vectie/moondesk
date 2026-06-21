@@ -174,14 +174,18 @@ Moondesk code.
 
 ## Native App
 
-`cmd/main bundle` creates `Moondesk.app` with:
+`cmd/main bundle` now defaults to the Lepusa-native host path. It creates
+`moondesk-lepusa.app` with:
 
-- AppKit/WebKit foreground launcher
-- internal `moondesk-host` MoonBit executable
-- bundled Rabbita UI resources
+- a bundled Lepusa runtime
+- a generated `lepusa/runtime.json`
+- a bundled `moondesk-sidecar` executable supervised as the localhost service
+- the existing Rabbita UI served by that sidecar
 - version/channel metadata
-- browser launch only when `--shell browser` is explicitly requested for
-  development
+
+The old direct AppKit/WebKit launcher and browser-shell app bundle paths have
+been removed from the active product path. Browser-based development uses
+`serve` or `desktop`; packaging goes through Lepusa.
 
 `cmd/main release` creates zip/DMG/update metadata and can invoke Apple
 notarization when a keychain profile is available. Production distribution still

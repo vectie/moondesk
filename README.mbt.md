@@ -23,8 +23,8 @@ Current milestone slice:
   book editing, MoonCode for book-scoped coding/chat sessions backed by
   MoonClaw runtime APIs
 - MoonBit-only `desktop`, `bundle`, `release`, and `launch-agent` commands; the
-  default app bundle uses a native AppKit/WebKit window plus an internal MoonBit
-  host, with no Tauri/Rust app shell
+  default app bundle uses Lepusa as the native WebView host and supervises the
+  Moondesk MoonBit server as a localhost sidecar, with no Tauri/Rust app shell
 
 Domain-specific examples are intentionally not Moondesk core. They should be
 packaged as standalone MoonBook/MoonClaw skill or app-tool packs that Moondesk
@@ -32,9 +32,9 @@ can create, configure, inspect, export, and launch through generic book/tool
 interfaces.
 
 See [`docs/STATUS.md`](docs/STATUS.md) for the current completeness assessment.
-Short version: it is a usable local single-user alpha with native window
-ownership in the generated macOS app bundle; production distribution still
-needs a credentialed release channel.
+Short version: it is a usable local single-user alpha with a Lepusa-hosted
+native macOS app bundle; production distribution still needs a credentialed
+release channel.
 
 Run locally:
 
@@ -43,7 +43,7 @@ npm --prefix ui/rabbita-desk run build
 moon run cmd/main -- serve <workspace-root> --ui ui/rabbita-desk/dist --port 4199
 ```
 
-Create the signed self-contained native-window macOS app bundle:
+Create the self-contained Lepusa native macOS app bundle:
 
 ```bash
 moon run cmd/main -- bundle <workspace-root> --ui ui/rabbita-desk/dist --out dist --port 4199

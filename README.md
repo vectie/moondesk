@@ -48,9 +48,9 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
   `pdf-watch`/`pdf-analysis` skills, schemas, generated site placeholders, and
   a Moontown standing-watch registration.
 - Portable app-tool export for books that carry generated miniapps/tools.
-- Native-window macOS bundle creation with an AppKit/WebKit launcher, internal
-  MoonBit host executable, bundled UI resources, release/update metadata, DMG
-  creation, and optional signing/notarization.
+- Lepusa-hosted macOS bundle creation with a bundled Lepusa runtime,
+  supervised Moondesk localhost sidecar, release/update metadata, DMG creation,
+  and optional signing/notarization.
 
 Domain-specific workflows are not part of Moondesk core. They should live as
 standalone MoonBook/MoonClaw skill or tool packs that Moondesk can create,
@@ -61,7 +61,7 @@ desktop shell. This keeps Moondesk from hardcoding stale markets, schemas,
 workbooks, or source lists.
 
 See [Current Status](docs/STATUS.md) for the honest completion picture.
-Moondesk is a usable local single-user native-window alpha. Production
+Moondesk is a usable local single-user Lepusa-hosted native-window alpha. Production
 distribution still needs credentialed signing/notarization, update hosting,
 clean-machine validation, and long-running reliability proof.
 
@@ -99,16 +99,10 @@ moon run cmd/main -- agent-status --service town
 moon run cmd/main -- uninstall-agent --service town
 ```
 
-Create a signed self-contained native-window macOS app bundle:
+Create a self-contained Lepusa native macOS app bundle:
 
 ```sh
 moon run cmd/main -- bundle <workspace-root> --ui ui/rabbita-desk/dist --out dist --port 4199 --version 0.1.0 --channel local
-```
-
-Use the browser fallback shell only when explicitly needed:
-
-```sh
-moon run cmd/main -- bundle <workspace-root> --ui ui/rabbita-desk/dist --out dist --port 4199 --shell browser
 ```
 
 Create release artifacts, update metadata, and optionally notarize with an
