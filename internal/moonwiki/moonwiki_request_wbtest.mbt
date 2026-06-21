@@ -78,6 +78,20 @@ test "request body helpers handle optional strings" {
 }
 
 ///|
+test "moondesk health payload exposes readiness contract" {
+  assert_eq(moondesk_health_path(), "/__moondesk_health")
+  let health = moondesk_health_json("ui/rabbita-desk/dist", "../books")
+  assert_true(json_bool(health, "ok", default=false))
+  assert_eq(json_string(health, "service", default=""), "moondesk")
+  assert_true(
+    json_string(health, "ui_root", default="").contains("ui/rabbita-desk/dist"),
+  )
+  assert_true(
+    json_string(health, "workspace_root", default="").contains("books"),
+  )
+}
+
+///|
 test "town request listing normalizes book-pattern handoff records" {
   let record : Json = {
     "id": "request-publish-research-policy-watch",

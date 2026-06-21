@@ -22,6 +22,21 @@ pub fn Server::close(self : Server) -> Unit {
 }
 
 ///|
+pub fn moondesk_health_path() -> String {
+  "/__moondesk_health"
+}
+
+///|
+fn moondesk_health_json(ui_root : String, workspace_root : String) -> Json {
+  {
+    "ok": true,
+    "service": "moondesk",
+    "ui_root": @pathx.normalize(ui_root),
+    "workspace_root": @pathx.normalize(workspace_root),
+  }
+}
+
+///|
 pub fn Server::new(
   host : String,
   port : Int,
@@ -72,11 +87,27 @@ async fn handle_desk_request(
   conn : @http.ServerConnection,
 ) -> Unit {
   let path = strip_query(request.path)
-  if path == "/api" || path.has_prefix("/api/") {
+  if path == moondesk_health_path() {
+    handle_health_request(ui_root, workspace_root, request.meth, conn)
+  } else if path == "/api" || path.has_prefix("/api/") {
     handle_api_request(workspace_root, request.meth, request.path, body, conn)
   } else {
     handle_file_request(ui_root, request.meth, path, conn)
   }
+}
+
+///|
+async fn handle_health_request(
+  ui_root : String,
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  guard method_ is Get || method_ is Head else {
+    send_status(conn, 405, "Method Not Allowed", "Method Not Allowed\n")
+    return
+  }
+  send_json(conn, method_, moondesk_health_json(ui_root, workspace_root))
 }
 
 ///|

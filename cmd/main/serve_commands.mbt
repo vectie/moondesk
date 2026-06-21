@@ -48,8 +48,8 @@ async fn print_moonstat_startup_status() -> Unit {
 ///|
 async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
   let server = @moonwiki.Server::new(options.host, options.port) catch {
-    _ => {
-      println("failed to bind \{options.host}:\{options.port}")
+    error => {
+      println("failed to bind \{options.host}:\{options.port}: \{error}")
       return
     }
   }
