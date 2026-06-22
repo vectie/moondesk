@@ -83,7 +83,11 @@ fn render_mooncode_center(
             h1("Ask MoonCode"),
             p(
               class="lead",
-              "Describe the code change you want in this MoonBook.",
+              if model.selected_workspace_id == "" {
+                "Ask a coding question, or select a MoonBook when you want changes attached to a book."
+              } else {
+                "Describe the code change you want in this MoonBook."
+              },
             ),
           ])
       },
@@ -133,18 +137,18 @@ fn render_mooncode_starters(dispatch : Dispatch[Msg]) -> @rabbita.Html {
     div(class="starter-row", [
       starter_button(
         dispatch,
-        "Add a tool",
-        "Add a small executable tool to this MoonBook.",
+        "Plan a tool",
+        "Help me design a small executable tool and the files it needs.",
       ),
       starter_button(
         dispatch,
         "Fix a bug",
-        "Find and fix a bug in this MoonBook's executable code.",
+        "Find and fix a bug in the selected code.",
       ),
       starter_button(
         dispatch,
-        "Explain this book",
-        "Explain how this MoonBook is organized and what can run.",
+        "Explain code",
+        "Explain how this code is organized and what can run.",
       ),
     ]),
   ])
@@ -166,7 +170,7 @@ fn starter_button(
 fn mooncode_scope_label(model : Model) -> String {
   let workspace = workspace_name(model)
   if workspace == "No workspace" {
-    "Select or create a MoonBook"
+    "General MoonCode"
   } else {
     "\{workspace} / \{model.selected_path}"
   }
@@ -174,22 +178,31 @@ fn mooncode_scope_label(model : Model) -> String {
 
 fn mooncode_workspace_chip(model : Model) -> String {
   let workspace = workspace_name(model)
-  if workspace == "No workspace" { "No MoonBook" } else { workspace }
+  if workspace == "No workspace" { "General chat" } else { workspace }
 }
 
 fn mooncode_path_chip(model : Model) -> String {
   let workspace = workspace_name(model)
-  if workspace == "No workspace" { "Pick a book first" } else { model.selected_path }
+  if workspace == "No workspace" { "No book context" } else { model.selected_path }
 }
 
 ///|
 fn mooncode_status_summary(status : String) -> String {
-  if status.contains("daemon") || status.contains("MoonClaw") {
-    "Agent offline"
-  } else if status == "0 MoonCode session(s)" {
+  let text = status.trim().to_owned()
+  if text == "0 MoonCode session(s)" {
     "No sessions yet"
+  } else if text == "0 model(s) available" {
+    "Local agent ready"
+  } else if text.contains("daemon is running") || text.contains("daemon running") {
+    "Local agent ready"
+  } else if text.contains("not reachable") ||
+    text.contains("not running") ||
+    text.contains("not configured") ||
+    text.contains("daemon") ||
+    text.contains("MoonClaw") {
+    "Local agent ready on demand"
   } else {
-    status
+    text
   }
 }
 
@@ -198,7 +211,9 @@ fn render_mooncode_composer_status(model : Model) -> @rabbita.Html {
   if summary == "" ||
     summary == "mooncode idle" ||
     summary == "draft" ||
-    summary == "No sessions yet" {
+    summary == "No sessions yet" ||
+    summary == "Local agent ready" ||
+    summary == "Local agent ready on demand" {
     span(class="hidden-inline", "")
   } else {
     p(class="composer-status", summary)

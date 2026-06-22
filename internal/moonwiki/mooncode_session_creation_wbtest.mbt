@@ -1,4 +1,55 @@
 ///|
+async test "mooncode session scope supports general chat without a moonbook" {
+  let root = "/tmp/moondesk-general-mooncode-scope"
+  let workspace = match resolve_mooncode_workspace_scope(root, "") {
+    Ok(workspace) => workspace
+    Err(message) => fail(message)
+  }
+  assert_eq(workspace.name, "General MoonCode")
+  assert_eq(workspace.root_path, @pathx.normalize(root))
+  assert_true(workspace.kind is TownRoot)
+}
+
+///|
+async test "mooncode session scope still rejects unknown explicit workspace" {
+  match resolve_mooncode_workspace_scope("/tmp/moondesk-general-mooncode-scope", "missing") {
+    Ok(_) => fail("unexpected workspace")
+    Err(message) => assert_eq(message, "Unknown workspace")
+  }
+}
+
+///|
+test "mooncode runtime unavailable stays queued instead of failed" {
+  let session : Json = {
+    "id": "mooncode-demo",
+    "workspace_id": "general",
+    "workspace_name": "General MoonCode",
+    "workspace_root": "/tmp/moondesk-general",
+    "mooncode_runtime_session_id": "mooncode-demo",
+  }
+  let packet : Json = {
+    "id": "cmd-1",
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.command",
+    "action": "prompt",
+  }
+  let queued = mooncode_runtime_waiting_session(
+    session,
+    "prompt",
+    "MoonClaw daemon service is not configured for this workspace",
+    "",
+    packet,
+  )
+  let events = json_array_items(queued, "mooncode_command_events")
+  assert_eq(json_string(events[0], "status", default=""), "queued")
+  assert_true(
+    json_string(events[0], "detail", default="").contains("saved"),
+  )
+  let transcript = json_array_items(queued, "transcript")
+  assert_eq(json_string(transcript[0], "status", default=""), "queued")
+}
+
+///|
 test "mooncode new session record starts with typed coding protocol" {
   let workspace = @desk.workspace(
     id="book-demo",

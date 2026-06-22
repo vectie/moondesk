@@ -43,7 +43,7 @@ async test "moonclaw service descriptor is explicit and workspace local" {
 }
 
 ///|
-async test "moonclaw daemon start refuses implicit sibling checkout fallback" {
+async test "moonclaw service descriptor can use sibling checkout fallback" {
   let parent = "/tmp/moondesk-moonclaw-service-missing-wbtest-" +
     @desk.stable_id("moonclaw-service-missing", @async.now().to_string())
   let root = @pathx.join(parent, "workspace")
@@ -64,13 +64,15 @@ async test "moonclaw daemon start refuses implicit sibling checkout fallback" {
     create=0o644,
   )
 
-  let result = ensure_moonclaw_daemon(root)
-  assert_false(json_bool(result, "ok", default=true))
-  assert_false(json_bool(result, "running", default=true))
-  assert_false(json_bool(result, "service_configured", default=true))
+  let result = moonclaw_service_descriptor(root, "daemon")
+  assert_true(json_bool(result, "configured", default=false))
+  assert_eq(
+    json_string(result, "source", default=""),
+    "sibling-checkout",
+  )
+  assert_eq(json_string(result, "cwd", default=""), sibling)
   assert_true(
-    json_string(result, "message", default="").contains(
-      "service is not configured",
-    ),
+    json_string_array_items(result, "args") ==
+    ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", "cmd/daemon"],
   )
 }

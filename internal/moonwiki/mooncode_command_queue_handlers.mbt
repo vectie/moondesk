@@ -23,6 +23,43 @@ async fn send_mooncode_command_to_runtime(
 }
 
 ///|
+fn mooncode_runtime_waiting_detail(detail : String) -> String {
+  let trimmed = detail.trim().to_owned()
+  if trimmed == "" {
+    "Local MoonClaw is not reachable yet. Your request is saved for the local agent."
+  } else if trimmed.contains("MoonClaw") || trimmed.contains("daemon") {
+    "Local agent is not reachable yet. Your request is saved and will continue when MoonClaw is available."
+  } else {
+    trimmed
+  }
+}
+
+///|
+fn mooncode_runtime_waiting_session(
+  session : Json,
+  action : String,
+  detail : String,
+  path : String,
+  command_packet : Json,
+) -> Json {
+  let message = mooncode_runtime_waiting_detail(detail)
+  append_mooncode_transcript_message(
+    @mooncode.append_projected_command_event(
+      session,
+      action~,
+      status="queued",
+      detail=message,
+      created_at=@async.now().to_string(),
+      path~,
+      command_packet~,
+    ),
+    role="status",
+    content=message,
+    status="queued",
+  )
+}
+
+///|
 async fn mooncode_native_runtime_ready(daemon : Json) -> Bool {
   match moonclaw_get_json(daemon, "/v1/code/capabilities") {
     Ok(capabilities) =>

@@ -117,11 +117,12 @@ fn palette_command(
 
 ///|
 fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  let status = if model.loading {
+  let raw_status = if model.loading {
     "loading workspace"
   } else {
     model.host_status
   }
+  let status = title_bar_status_label(raw_status)
   header(class="title-bar", [
     div(class="workspace-mode-toggle", [
       button(
@@ -143,8 +144,43 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       span(class="workspace-switcher", workspace_name(model)),
       span(class="mode-caption", workspace_mode_summary(model.workspace_mode)),
     ]),
-    div(class="sync-status", [span(class="status-dot live", ""), span(status)]),
+    div(class="sync-status", [
+      span(class=title_bar_status_dot_class(raw_status), ""),
+      span(status),
+    ]),
   ])
+}
+
+///|
+fn title_bar_status_label(status : String) -> String {
+  let text = status.trim().to_owned()
+  if text == "" {
+    "local preview connected"
+  } else if title_bar_status_is_transport_error(text) {
+    "local preview connected"
+  } else {
+    text
+  }
+}
+
+///|
+fn title_bar_status_dot_class(status : String) -> String {
+  let text = status.trim().to_owned()
+  if text == "" || title_bar_status_is_transport_error(text) {
+    "status-dot idle"
+  } else {
+    "status-dot live"
+  }
+}
+
+///|
+fn title_bar_status_is_transport_error(status : String) -> Bool {
+  status.contains("JSON") ||
+  status.contains("Json") ||
+  status.contains("parse") ||
+  status.contains("Invalid") ||
+  status.contains("Unexpected token") ||
+  status.contains("<!DOCTYPE")
 }
 
 ///|

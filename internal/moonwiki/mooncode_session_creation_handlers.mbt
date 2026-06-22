@@ -1,4 +1,26 @@
 ///|
+async fn resolve_mooncode_workspace_scope(
+  workspace_root : String,
+  workspace_id : String,
+) -> Result[@desk.DeskWorkspace, String] {
+  if workspace_id == "" {
+    let root = @pathx.normalize(workspace_root)
+    return Ok(
+      @desk.workspace(
+        id=@desk.stable_id("general-mooncode", root),
+        name="General MoonCode",
+        root_path=root,
+        kind=TownRoot,
+      ),
+    )
+  }
+  match find_workspace(workspace_root, workspace_id) {
+    Some(workspace) => Ok(workspace)
+    None => Err("Unknown workspace")
+  }
+}
+
+///|
 async fn handle_create_mooncode_session(
   workspace_root : String,
   body : &@io.Reader,
@@ -13,23 +35,13 @@ async fn handle_create_mooncode_session(
     }
   }
   let workspace_id = json_string(payload, "workspace_id", default="")
-  let workspace = match find_workspace(workspace_root, workspace_id) {
-    Some(workspace) => workspace
-    None => {
-      send_api_error(conn, method_, 404, "Not Found", "Unknown workspace")
+  let workspace = match
+    resolve_mooncode_workspace_scope(workspace_root, workspace_id) {
+    Ok(workspace) => workspace
+    Err(message) => {
+      send_api_error(conn, method_, 404, "Not Found", message)
       return
     }
-  }
-  let daemon = ensure_moonclaw_daemon(workspace_root)
-  if !json_bool(daemon, "running", default=false) {
-    send_api_error(
-      conn,
-      method_,
-      503,
-      "Service Unavailable",
-      json_string(daemon, "message", default="MoonClaw daemon is not running"),
-    )
-    return
   }
   let now = @async.now().to_string()
   let runtime : Json = {
@@ -41,7 +53,11 @@ async fn handle_create_mooncode_session(
   }
   let message = trimmed_text(
     json_string(payload, "message", default=""),
-    fallback="Create, inspect, test, or package executable code inside this MoonBook.",
+    fallback=if workspace_id == "" {
+      "Help me plan, write, test, or explain code."
+    } else {
+      "Create, inspect, test, or package executable code inside this MoonBook."
+    },
   )
   let title = trimmed_text(
     json_string(payload, "title", default="MoonCode - \{workspace.name}"),
@@ -105,14 +121,8 @@ async fn handle_create_mooncode_session(
     ) {
     Ok(session) => session
     Err(error) =>
-      @mooncode.append_projected_command_event(
-        queued,
-        action="prompt",
-        status="failed",
-        detail=error,
-        created_at=@async.now().to_string(),
-        path=context_path,
-        command_packet~,
+      mooncode_runtime_waiting_session(
+        queued, "prompt", error, context_path, command_packet,
       )
   }
   append_mooncode_runtime_receipt_log(

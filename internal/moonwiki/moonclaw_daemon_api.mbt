@@ -43,6 +43,7 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let info_path = moonclaw_daemon_info_path()
   let descriptor = moonclaw_service_descriptor(workspace_root, "daemon")
   let service_cwd = json_string(descriptor, "cwd", default=workspace_root)
+  let service_configured = json_bool(descriptor, "configured", default=false)
   if !@fsx.exists(info_path) {
     return {
       "ok": false,
@@ -51,7 +52,7 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
       "pid": 0,
       "info_path": info_path,
       "moonclaw_root": service_cwd,
-      "service_configured": json_bool(descriptor, "configured", default=false),
+      "service_configured": service_configured,
       "service_config_path": json_string(descriptor, "config_path", default=""),
       "service_command": json_string(descriptor, "display", default=""),
       "message": "MoonClaw daemon info was not found",
@@ -61,7 +62,8 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let port = json_int(info, "port", default=0)
   let pid = json_int(info, "pid", default=0)
   let alive = pid > 0 && process_is_alive(pid)
-  let reachable = alive && port > 0 && moonclaw_port_reachable(port)
+  let reachable = service_configured && alive && port > 0 &&
+    moonclaw_port_reachable(port)
   {
     "ok": reachable,
     "running": reachable,
@@ -69,11 +71,13 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
     "pid": pid,
     "info_path": info_path,
     "moonclaw_root": service_cwd,
-    "service_configured": json_bool(descriptor, "configured", default=false),
+    "service_configured": service_configured,
     "service_config_path": json_string(descriptor, "config_path", default=""),
     "service_command": json_string(descriptor, "display", default=""),
     "message": if reachable {
       "MoonClaw daemon is running"
+    } else if alive && port > 0 && !service_configured {
+      "MoonClaw daemon info exists but no service is configured for this workspace"
     } else if alive && port > 0 {
       "MoonClaw daemon info exists but the HTTP port is not reachable"
     } else {
@@ -152,15 +156,11 @@ async fn moonclaw_port_reachable(port : Int) -> Bool {
 
 ///|
 async fn wait_for_moonclaw_daemon(workspace_root : String, pid : Int) -> Json {
+  ignore(pid)
   for _ in 0..<60 {
     let status = moonclaw_daemon_status(workspace_root)
     if json_bool(status, "running", default=false) {
       return status
-    }
-    if pid > 0 && !process_is_alive(pid) {
-      return moonclaw_daemon_with_message(
-        status, "MoonClaw daemon process exited before writing a live daemon record",
-      )
     }
     @async.sleep(500)
   }

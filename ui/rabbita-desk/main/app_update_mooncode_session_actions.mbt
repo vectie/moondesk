@@ -79,18 +79,7 @@ fn mooncode_send_composer(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
-  if model.selected_workspace_id == "" {
-    (
-      sync_activity_cmd(MoonCode),
-      {
-        ..model,
-        workspace_mode: MoonCode,
-        activity: MoonCode,
-        command_open: false,
-        mooncode_composer_status: "select a book first",
-      },
-    )
-  } else if model.mooncode_prompt.trim().to_owned() == "" {
+  if model.mooncode_prompt.trim().to_owned() == "" {
     (
       sync_activity_cmd(MoonCode),
       {
@@ -134,7 +123,11 @@ fn mooncode_send_composer(
             workspace_mode: MoonCode,
             activity: MoonCode,
             command_open: false,
-            mooncode_composer_status: "starting MoonCode session",
+            mooncode_composer_status: if model.selected_workspace_id == "" {
+              "starting General MoonCode"
+            } else {
+              "starting MoonCode session"
+            },
           },
         )
     }

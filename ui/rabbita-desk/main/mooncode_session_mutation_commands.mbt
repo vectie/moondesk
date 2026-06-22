@@ -23,14 +23,14 @@ fn create_mooncode_session_cmd(
 ) -> @rabbita.Cmd {
   let body : Json = {
     "workspace_id": model.selected_workspace_id,
-    "title": "MoonCode - \{workspace_name(model)}",
+    "title": mooncode_new_session_title(model),
     "message": trimmed_or(
       model.mooncode_prompt,
-      "Create, inspect, test, or package executable code inside this MoonBook.",
+      mooncode_default_prompt(model),
     ),
     "model": model.mooncode_model,
     "web_search": model.mooncode_web_search,
-    "context_path": model.selected_path,
+    "context_path": mooncode_context_path(model),
   }
   @http.post(
     "/api/mooncode/sessions",
@@ -96,7 +96,7 @@ fn mooncode_session_command_cmd(
   force_preflight? : Bool = false,
 ) -> @rabbita.Cmd {
   let target_path = if context_path == "" {
-    model.selected_path
+    mooncode_context_path(model)
   } else {
     context_path
   }
@@ -119,6 +119,29 @@ fn mooncode_session_command_cmd(
       }
     }),
   )
+}
+
+///|
+fn mooncode_new_session_title(model : Model) -> String {
+  if model.selected_workspace_id == "" {
+    "MoonCode - General"
+  } else {
+    "MoonCode - \{workspace_name(model)}"
+  }
+}
+
+///|
+fn mooncode_default_prompt(model : Model) -> String {
+  if model.selected_workspace_id == "" {
+    "Help me plan, write, test, or explain code."
+  } else {
+    "Create, inspect, test, or package executable code inside this MoonBook."
+  }
+}
+
+///|
+fn mooncode_context_path(model : Model) -> String {
+  if model.selected_workspace_id == "" { "" } else { model.selected_path }
 }
 
 ///|

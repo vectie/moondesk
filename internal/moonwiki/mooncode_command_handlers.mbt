@@ -188,14 +188,8 @@ async fn handle_mooncode_session_command(
       ) {
       Ok(session) => session
       Err(error) =>
-        @mooncode.append_projected_command_event(
-          with_command,
-          action~,
-          status="failed",
-          detail=error,
-          created_at=@async.now().to_string(),
-          path=context_path,
-          command_packet~,
+        mooncode_runtime_waiting_session(
+          with_command, action, error, context_path, command_packet,
         )
     }
   }
