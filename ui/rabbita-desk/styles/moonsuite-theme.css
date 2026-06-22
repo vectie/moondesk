@@ -1,0 +1,38 @@
+/* MoonSuite visual tokens adapted from ../moonvis.
+   This file is the shared visual language only; workspace CSS decides how much
+   brand expression is appropriate for the task at hand. */
+:root {
+  --ms-font-ui: "Plus Jakarta Sans", Inter, "SF Pro Text", "Segoe UI", system-ui,
+    sans-serif;
+  --ms-font-display: Fraunces, Georgia, "Times New Roman", serif;
+  --ms-font-mono: "DM Mono", "SFMono-Regular", Consolas, monospace;
+
+  --ms-rice: #f7ead2;
+  --ms-cream: #f8e3b8;
+  --ms-paper: #fff8ea;
+  --ms-paper-soft: #fffdf8;
+  --ms-espresso: #21130d;
+  --ms-espresso-soft: #352416;
+  --ms-gold: #b66a18;
+  --ms-gold-soft: #d4ad63;
+  --ms-cinnabar: #a93a26;
+  --ms-jade: #3e6b5b;
+  --ms-jade-deep: #2f5648;
+  --ms-earth: #705a38;
+  --ms-earth-soft: #9b7a4b;
+  --ms-line: rgba(180, 130, 58, 0.34);
+  --ms-line-strong: rgba(180, 130, 58, 0.56);
+  --ms-focus: rgba(62, 107, 91, 0.18);
+
+  --ms-radius-sm: 6px;
+  --ms-radius-md: 10px;
+  --ms-radius-lg: 16px;
+  --ms-shadow-soft: 0 16px 42px rgba(33, 19, 13, 0.08);
+  --ms-shadow-tight: 0 8px 24px rgba(33, 19, 13, 0.07);
+  --ms-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ms-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  font-family: var(--ms-font-ui);
+}

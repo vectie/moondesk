@@ -1,4 +1,5 @@
 import '/styles.css'
+import '/styles/moonsuite-theme.css'
 import '/styles/product-shell.css'
 import '/styles/mooncode.css'
 
