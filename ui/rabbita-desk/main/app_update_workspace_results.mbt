@@ -65,8 +65,6 @@ fn update_workspace_results(
       (@rabbita.none, { ..model, saved_views, })
     LoadedSavedViews(Err(error)) =>
       (@rabbita.none, { ..model, host_status: error })
-    LoadedTags(Ok(tags)) => (@rabbita.none, { ..model, tags, })
-    LoadedTags(Err(error)) => (@rabbita.none, { ..model, host_status: error })
     LoadedSearch(Ok(search_hits)) =>
       (
         @rabbita.none,
@@ -84,17 +82,6 @@ fn update_workspace_results(
         { ..model, host_status: "saved view \{view.title}" },
       )
     SavedView(Err(error)) => (@rabbita.none, { ..model, host_status: error })
-    SavedTag(Ok(tag)) =>
-      (
-        fetch_tags_cmd(dispatch),
-        {
-          ..model,
-          tag_value: "",
-          reveal_status: "tagged \{tag.path} as \{tag.tag}",
-        },
-      )
-    SavedTag(Err(error)) => (@rabbita.none, { ..model, reveal_status: error })
     _ => (@rabbita.none, model)
   }
 }
-

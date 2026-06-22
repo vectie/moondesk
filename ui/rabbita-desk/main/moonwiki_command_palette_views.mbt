@@ -143,11 +143,6 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       span(class="workspace-switcher", workspace_name(model)),
       span(class="mode-caption", workspace_mode_summary(model.workspace_mode)),
     ]),
-    button(
-      class="command-button",
-      on_click=dispatch(ToggleCommand),
-      "Commands",
-    ),
     div(class="sync-status", [span(class="status-dot live", ""), span(status)]),
   ])
 }

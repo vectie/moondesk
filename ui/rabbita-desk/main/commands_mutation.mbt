@@ -105,26 +105,6 @@ fn save_view_cmd(
 }
 
 ///|
-fn save_tag_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
-  model : Model,
-) -> @rabbita.Cmd {
-  @http.post(
-    "/api/preferences/tags",
-    Json({
-      "workspace_id": model.selected_workspace_id,
-      "path": model.selected_path,
-      "tag": trimmed_or(model.tag_value, "review"),
-    }),
-    expect=Json(fn(result) { dispatch(SavedTag(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not save tag")
-      }
-    }),
-  )
-}
-
-///|
 fn submit_request_cmd(
   dispatch : (Msg) -> @rabbita.Cmd,
   model : Model,

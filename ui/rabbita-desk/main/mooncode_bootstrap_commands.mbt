@@ -21,18 +21,3 @@ fn fetch_moonclaw_models_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
     }),
   )
 }
-
-///|
-fn fetch_mooncode_capabilities_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd
-) -> @rabbita.Cmd {
-  @http.get(
-    "/api/mooncode/capabilities",
-    expect=Json(fn(result) { dispatch(LoadedMoonCodeCapabilities(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Invalid MoonCode capability contract")
-      }
-    }),
-  )
-}
-

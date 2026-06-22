@@ -34,11 +34,7 @@ fn update_town_results(
     LoadedReviewItems(Ok(review_items)) =>
       (@rabbita.none, { ..model, review_items, })
     LoadedReviewItems(Err(error)) =>
-      (@rabbita.none, { ..model, reveal_status: error })
-    LoadedReviewDiff(Ok(review_diff)) =>
-      (@rabbita.none, { ..model, review_diff: Some(review_diff) })
-    LoadedReviewDiff(Err(error)) =>
-      (@rabbita.none, { ..model, reveal_status: error })
+      (@rabbita.none, { ..model, host_status: error })
     SubmittedRequest(Ok(record)) =>
       (
         sync_activity_batch(
@@ -83,4 +79,3 @@ fn update_town_results(
     _ => (@rabbita.none, model)
   }
 }
-

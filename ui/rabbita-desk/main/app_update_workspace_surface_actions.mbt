@@ -16,9 +16,6 @@ fn update_workspace_surface_actions(
     SetViewTitle(title) => (@rabbita.none, { ..model, view_title: title })
     SaveCurrentView =>
       (save_view_cmd(dispatch, model), { ..model, host_status: "saving view" })
-    SetTagValue(tag) => (@rabbita.none, { ..model, tag_value: tag })
-    TagSelection =>
-      (save_tag_cmd(dispatch, model), { ..model, reveal_status: "saving tag" })
     NotifyDaily =>
       (
         notify_cmd(
@@ -73,15 +70,8 @@ fn refresh_all_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     fetch_moonclaw_daemon_cmd(dispatch),
     fetch_moonclaw_models_cmd(dispatch),
     fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
-    fetch_mooncode_capabilities_cmd(dispatch),
     fetch_review_items_cmd(dispatch, model.selected_workspace_id),
-    fetch_review_diff_cmd(
-      dispatch,
-      model.selected_workspace_id,
-      model.selected_path,
-    ),
     fetch_saved_views_cmd(dispatch),
-    fetch_tags_cmd(dispatch),
     fetch_book_patterns_cmd(dispatch),
   ])
 }

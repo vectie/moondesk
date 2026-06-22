@@ -66,7 +66,6 @@ fn main {
       fetch_moonclaw_daemon_cmd(dispatch),
       fetch_moonclaw_models_cmd(dispatch),
       fetch_mooncode_sessions_cmd(dispatch, ""),
-      fetch_mooncode_capabilities_cmd(dispatch),
       fetch_book_base_types_cmd(dispatch),
       fetch_book_patterns_cmd(dispatch),
       schedule_mooncode_poll(dispatch),

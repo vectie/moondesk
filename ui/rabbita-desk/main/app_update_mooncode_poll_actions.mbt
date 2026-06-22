@@ -14,18 +14,6 @@ fn update_mooncode_poll_actions(
           fetch_mooncode_runtime_event_sink_cmd(
             dispatch, model.selected_mooncode_session_id,
           ),
-          fetch_mooncode_change_set_cmd(
-            dispatch, model.selected_mooncode_session_id,
-          ),
-          fetch_mooncode_eval_report_cmd(
-            dispatch, model.selected_mooncode_session_id,
-          ),
-          fetch_mooncode_runtime_handoff_cmd(
-            dispatch, model.selected_mooncode_session_id,
-          ),
-          fetch_mooncode_patch_set_cmd(
-            dispatch, model.selected_mooncode_session_id,
-          ),
           schedule_mooncode_poll(dispatch),
         ]),
         model,
@@ -33,4 +21,3 @@ fn update_mooncode_poll_actions(
     _ => (@rabbita.none, model)
   }
 }
-

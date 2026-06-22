@@ -76,16 +76,13 @@ fn mooncode_session_accepts_steer(
   model : Model,
   session : MoonCodeSession
 ) -> Bool {
+  ignore(model)
   if session.status == "running" ||
     session.status == "queued" ||
     session.queued_count > 0 {
     return true
   }
-  match model.mooncode_action_plan {
-    Some(plan) if model.mooncode_action_plan_session_id == session.id =>
-      plan.running_count > 0 || plan.pending_runtime_count > 0
-    _ => false
-  }
+  false
 }
 
 ///|
@@ -128,4 +125,3 @@ fn mooncode_session_command_cmd(
 fn schedule_mooncode_poll(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
   @rabbita.delay(dispatch(PollMoonCodeSessions), 5000)
 }
-

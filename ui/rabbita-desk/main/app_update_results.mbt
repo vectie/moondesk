@@ -6,12 +6,12 @@ fn update_app_results(
 ) -> (@rabbita.Cmd, Model) {
   match msg {
     LoadedWorkspaces(_) | LoadedEntries(_) | LoadedPreview(_) | LoadedRuns(_)
-    | LoadedSavedViews(_) | LoadedTags(_) | LoadedSearch(_) | SavedView(_)
-    | SavedTag(_) => update_workspace_results(dispatch, msg, model)
+    | LoadedSavedViews(_) | LoadedSearch(_) | SavedView(_) =>
+      update_workspace_results(dispatch, msg, model)
     LoadedTownMessages(_) | LoadedRequests(_) | LoadedStandingGoals(_)
     | LoadedAnalytics(_) | LoadedTownProgress(_) | LoadedMoonclawProgress(_)
-    | LoadedEvents(_) | LoadedReviewItems(_) | LoadedReviewDiff(_)
-    | SubmittedRequest(_) | CreatedStandingGoal(_) =>
+    | LoadedEvents(_) | LoadedReviewItems(_) | SubmittedRequest(_)
+    | CreatedStandingGoal(_) =>
       update_town_results(dispatch, msg, model)
     LoadedBookBaseTypes(_) | LoadedBookPatterns(_)
     | CreatedBookFromPattern(_) | ExportedAppToolPortable(_)

@@ -119,6 +119,12 @@ fn render_preview_body(model : Model) -> @rabbita.Html {
             p(class="lead", "Directory listing"),
             pre(class="source-block", code(preview.body)),
           ])
+        Markdown => section(class="document-preview", render_markdown_document(preview))
+        Text =>
+          section(class="document-preview", [
+            h1(preview.title),
+            p(class="lead", preview.body),
+          ])
         _ =>
           div(class="markdown-preview", [
             h1(preview.title),
@@ -127,6 +133,36 @@ fn render_preview_body(model : Model) -> @rabbita.Html {
           ])
       }
   }
+}
+
+///|
+fn render_markdown_document(preview : @desk.DeskPreview) -> Array[@rabbita.Html] {
+  let nodes : Array[@rabbita.Html] = []
+  let mut saw_heading = false
+  for raw in preview.body.split("\n") {
+    let line = raw.trim().to_owned()
+    if line == "" {
+      continue
+    } else if line.has_prefix("# ") {
+      saw_heading = true
+      nodes.push(h1(line[2:].to_owned()))
+    } else if line.has_prefix("## ") {
+      nodes.push(h2(line[3:].to_owned()))
+    } else if line.has_prefix("### ") {
+      nodes.push(h3(line[4:].to_owned()))
+    } else if line.has_prefix("- ") {
+      nodes.push(p(class="doc-list-line", line[2:].to_owned()))
+    } else {
+      nodes.push(p(line))
+    }
+  }
+  if !saw_heading {
+    nodes.insert(0, h1(preview.title))
+  }
+  if preview.warnings.length() > 0 {
+    nodes.push(render_preview_warnings(preview))
+  }
+  nodes
 }
 
 ///|

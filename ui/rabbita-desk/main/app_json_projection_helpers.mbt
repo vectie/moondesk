@@ -11,22 +11,6 @@ fn json_field_string(json : Json, key : String, default~ : String) -> String {
 }
 
 ///|
-fn json_field_object_or_self(json : Json, key : String) -> Json {
-  match json {
-    Object(object) =>
-      match object.get(key) {
-        Some(value) =>
-          match value {
-            Object(_) => value
-            _ => json
-          }
-        _ => json
-      }
-    _ => json
-  }
-}
-
-///|
 fn json_field_bool_label(json : Json, key : String) -> String {
   match json {
     Object(object) =>

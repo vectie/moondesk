@@ -176,40 +176,12 @@ fn fetch_review_items_cmd(
 }
 
 ///|
-fn fetch_review_diff_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
-  workspace_id : String,
-  path : String,
-) -> @rabbita.Cmd {
-  @http.get(
-    "/api/workspaces/\{workspace_id}/review-diff?path=\{encode_component(path)}",
-    expect=Json(fn(result) { dispatch(LoadedReviewDiff(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Invalid review diff")
-      }
-    }),
-  )
-}
-
-///|
 fn fetch_saved_views_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
   @http.get(
     "/api/preferences/views",
     expect=Json(fn(result) { dispatch(LoadedSavedViews(result)) }, json => {
       Ok(@json.from_json(json)) catch {
         _ => Err("Invalid saved views")
-      }
-    }),
-  )
-}
-
-///|
-fn fetch_tags_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
-  @http.get(
-    "/api/preferences/tags",
-    expect=Json(fn(result) { dispatch(LoadedTags(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Invalid tags")
       }
     }),
   )

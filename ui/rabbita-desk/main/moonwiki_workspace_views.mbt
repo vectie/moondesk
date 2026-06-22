@@ -3,15 +3,14 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
       div([
-        p(class="eyebrow", "wiki mode"),
-        h2("Books"),
-        p(class="pane-help", "Open a book, read AI-written pages, and save useful notes."),
+        p(class="eyebrow", "MoonWiki"),
+        h2("MoonBooks"),
       ]),
       button(
-        class="icon-button",
+        class="secondary-button compact-button",
         title="Refresh",
         on_click=dispatch(RefreshAll),
-        "R",
+        "Refresh",
       ),
     ]),
     render_workspace_card(dispatch, model),
@@ -32,7 +31,7 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           "section-pill"
         },
         on_click=dispatch(OpenDirectory("wiki")),
-        "Documents",
+        "Wiki",
       ),
       button(
         class=if model.current_directory == "inbox" {
@@ -50,7 +49,7 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           "section-pill"
         },
         on_click=dispatch(OpenDirectory("book/site/generated")),
-        "Generated",
+        "Site",
       ),
     ]),
     render_tree(dispatch, model),
@@ -83,6 +82,41 @@ fn render_workspace_card(
         )
       }),
     ),
+  ])
+}
+
+///|
+fn render_wiki_bootstrap(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  main_(class="bootstrap-center", [
+    section(class="bootstrap-panel", [
+      p(class="eyebrow", "Moondesk"),
+      h1("Start with a MoonBook"),
+      p(
+        class="lead",
+        "Choose a book to read, create, or make executable.",
+      ),
+      div(class="bootstrap-choice-list", [
+        button(
+          class="bootstrap-choice primary",
+          on_click=dispatch(RefreshAll),
+          [strong("Open MoonBook"), span("Continue from an existing workspace")],
+        ),
+        button(
+          class="bootstrap-choice",
+          on_click=dispatch(SelectActivity(Town)),
+          [strong("Create MoonBook"), span("Start from a reusable book pattern")],
+        ),
+        button(
+          class="bootstrap-choice",
+          on_click=dispatch(SelectWorkspaceMode(MoonCode)),
+          [strong("Use MoonCode"), span("Build tools and miniapps inside a book")],
+        ),
+      ]),
+      p(class="status-line", model.host_status),
+    ]),
   ])
 }
 

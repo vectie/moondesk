@@ -17,9 +17,7 @@ fn update(
     LoadedMoonclawProgress(_) => update_app_results(dispatch, msg, model)
     LoadedEvents(_) => update_app_results(dispatch, msg, model)
     LoadedReviewItems(_) => update_app_results(dispatch, msg, model)
-    LoadedReviewDiff(_) => update_app_results(dispatch, msg, model)
     LoadedSavedViews(_) => update_app_results(dispatch, msg, model)
-    LoadedTags(_) => update_app_results(dispatch, msg, model)
     LoadedDaemonLifecycle(_) => update_app_results(dispatch, msg, model)
     LoadedSearch(_) => update_app_results(dispatch, msg, model)
     LoadedBookBaseTypes(_) => update_app_results(dispatch, msg, model)
@@ -27,7 +25,6 @@ fn update(
     SavedInbox(_) => update_app_results(dispatch, msg, model)
     ImportedInbox(_) => update_app_results(dispatch, msg, model)
     SavedView(_) => update_app_results(dispatch, msg, model)
-    SavedTag(_) => update_app_results(dispatch, msg, model)
     SubmittedRequest(_) => update_app_results(dispatch, msg, model)
     CreatedStandingGoal(_) => update_app_results(dispatch, msg, model)
     CreatedBookFromPattern(_) => update_app_results(dispatch, msg, model)
@@ -42,48 +39,9 @@ fn update(
     LoadedMoonClawDaemon(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonClawModels(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeSessions(_) => update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeCapabilities(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeStream(_, _) => update_mooncode_results(dispatch, msg, model)
     SavedMoonCodeStreamCheckpoint(_, _) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeRuntimeEventSink(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeChangeSet(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeEvalReport(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeRuntimeHandoff(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodePatchSet(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeToolApprovals(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeToolAuthorization(_, _, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeTestRuns(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodePackageCandidates(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeActionPlan(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeReadiness(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeRuntimeEvidence(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeCommandQueue(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeRuntimeCommandFeed(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeRuntimeReplay(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeCommandPreflight(_, _, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeRuntimeReceipt(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeRuntimeClaimState(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    ClaimedMoonCodeRuntime(_, _, _) =>
-      update_mooncode_results(dispatch, msg, model)
-    AckedMoonCodeRuntimeCommand(_, _, _, _) =>
       update_mooncode_results(dispatch, msg, model)
     CreatedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     CompletedMoonCodeCommand(_) => update_mooncode_results(dispatch, msg, model)
@@ -100,20 +58,8 @@ fn update(
     SelectMoonCodeSession(_) => update_mooncode_actions(dispatch, msg, model)
     NewMoonCodeSession => update_mooncode_actions(dispatch, msg, model)
     SetMoonCodePrompt(_) => update_mooncode_actions(dispatch, msg, model)
-    SetMoonClawModel(_) => update_mooncode_actions(dispatch, msg, model)
     ToggleMoonCodeWebSearch => update_mooncode_actions(dispatch, msg, model)
     SendMoonCodeMessage => update_mooncode_actions(dispatch, msg, model)
-    RunMoonCodeCommand(_) => update_mooncode_actions(dispatch, msg, model)
-    RunMoonCodeCommandForPath(_, _) => update_mooncode_actions(dispatch, msg, model)
-    RunMoonCodeCommandWithMessage(_, _, _, _) => update_mooncode_actions(dispatch, msg, model)
-    RunMoonCodeCommandOverride(_, _) => update_mooncode_actions(dispatch, msg, model)
-    RunMoonCodeRuntimeLoop => update_mooncode_actions(dispatch, msg, model)
-    RanMoonCodeRuntimeLoop(_, _) => update_mooncode_actions(dispatch, msg, model)
-    StartMoonCodeRuntimeService => update_mooncode_actions(dispatch, msg, model)
-    StartedMoonCodeRuntimeService(_, _) => update_mooncode_actions(dispatch, msg, model)
-    ProbeMoonCodeToolAuthorization(_) => update_mooncode_actions(dispatch, msg, model)
-    ClaimMoonCodeRuntime(_) => update_mooncode_actions(dispatch, msg, model)
-    AckMoonCodeRuntimeCommand(_, _) => update_mooncode_actions(dispatch, msg, model)
     PollMoonCodeSessions => update_mooncode_actions(dispatch, msg, model)
     SetGoalTitle(_) => update_book_builder_actions(dispatch, msg, model)
     SetGoalCadenceTicks(_) => update_book_builder_actions(dispatch, msg, model)
@@ -159,8 +105,6 @@ fn update(
     ToggleFavorite(_) => update_workspace_surface_actions(dispatch, msg, model)
     SetViewTitle(_) => update_workspace_surface_actions(dispatch, msg, model)
     SaveCurrentView => update_workspace_surface_actions(dispatch, msg, model)
-    SetTagValue(_) => update_workspace_surface_actions(dispatch, msg, model)
-    TagSelection => update_workspace_surface_actions(dispatch, msg, model)
     NotifyDaily => update_workspace_surface_actions(dispatch, msg, model)
     RefreshAll => update_workspace_surface_actions(dispatch, msg, model)
   }
@@ -182,21 +126,17 @@ test {
   ignore(fetch_town_events_cmd)
   ignore(fetch_events_cmd)
   ignore(fetch_review_items_cmd)
-  ignore(fetch_review_diff_cmd)
   ignore(fetch_saved_views_cmd)
-  ignore(fetch_tags_cmd)
   ignore(fetch_launch_agent_cmd)
   ignore(fetch_moonclaw_daemon_cmd)
   ignore(fetch_moonclaw_models_cmd)
   ignore(fetch_mooncode_sessions_cmd)
-  ignore(fetch_mooncode_capabilities_cmd)
   ignore(fetch_book_patterns_cmd)
   ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
   ignore(import_url_cmd)
   ignore(import_local_file_cmd)
   ignore(save_view_cmd)
-  ignore(save_tag_cmd)
   ignore(submit_request_cmd)
   ignore(create_standing_goal_cmd)
   ignore(dispatch_daemon_cmd)

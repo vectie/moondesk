@@ -13,12 +13,6 @@ fn update_navigation_actions(
       } else {
         model.activity
       }
-      let prompt = if mode == MoonCode &&
-        model.mooncode_prompt.trim().to_owned() == "" {
-        "Help me improve \{workspace_name(model)} by adding or changing executable code for the selected MoonBook."
-      } else {
-        model.mooncode_prompt
-      }
       (
         sync_activity_cmd(activity),
         {
@@ -26,7 +20,7 @@ fn update_navigation_actions(
           workspace_mode: mode,
           activity,
           command_open: false,
-          mooncode_prompt: prompt,
+          mooncode_prompt: if mode == MoonCode { "" } else { model.mooncode_prompt },
           mooncode_composer_status: if mode == MoonCode {
             "MoonCode workspace ready"
           } else {
@@ -69,11 +63,6 @@ fn update_navigation_actions(
         @rabbita.batch([
           fetch_entries_cmd(dispatch, model.selected_workspace_id, path),
           fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
-          match selected_mooncode_session(model) {
-            Some(session) =>
-              fetch_mooncode_preflight_matrix_cmd(dispatch, session.id, path)
-            None => @rabbita.none
-          },
         ]),
         {
           ..model,
@@ -82,35 +71,17 @@ fn update_navigation_actions(
           primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
           preview_status: "loading directory",
-          mooncode_preflight_status: if model.selected_mooncode_session_id == "" {
-            model.mooncode_preflight_status
-          } else {
-            "loading preflight gates"
-          },
         },
       )
     OpenQuickPath(path) =>
       (
-        @rabbita.batch([
-          fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
-          fetch_review_diff_cmd(dispatch, model.selected_workspace_id, path),
-          match selected_mooncode_session(model) {
-            Some(session) =>
-              fetch_mooncode_preflight_matrix_cmd(dispatch, session.id, path)
-            None => @rabbita.none
-          },
-        ]),
+        fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
         {
           ..model,
           selected_path: path,
           primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
           preview_status: "loading preview",
-          mooncode_preflight_status: if model.selected_mooncode_session_id == "" {
-            model.mooncode_preflight_status
-          } else {
-            "loading preflight gates"
-          },
         },
       )
     SelectSearchHit(workspace_id, path) =>
@@ -121,7 +92,6 @@ fn update_navigation_actions(
             fetch_entries_cmd(dispatch, workspace_id, ""),
             fetch_preview_cmd(dispatch, workspace_id, path),
             fetch_runs_cmd(dispatch, workspace_id),
-            fetch_review_diff_cmd(dispatch, workspace_id, path),
           ]),
         ),
         {
@@ -160,24 +130,12 @@ fn select_path_action(
     @rabbita.batch([
       fetch_entries_cmd(dispatch, model.selected_workspace_id, path),
       fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
-      fetch_review_diff_cmd(dispatch, model.selected_workspace_id, path),
     ])
   } else {
-    @rabbita.batch([
-      fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
-      fetch_review_diff_cmd(dispatch, model.selected_workspace_id, path),
-    ])
-  }
-  let cmd = match selected_mooncode_session(model) {
-    Some(session) =>
-      @rabbita.batch([
-        base_cmd,
-        fetch_mooncode_preflight_matrix_cmd(dispatch, session.id, path),
-      ])
-    None => base_cmd
+    fetch_preview_cmd(dispatch, model.selected_workspace_id, path)
   }
   (
-    cmd,
+    base_cmd,
     {
       ..model,
       selected_path: path,
@@ -185,11 +143,6 @@ fn select_path_action(
       current_directory: if is_directory { path } else { model.current_directory },
       preview: None,
       preview_status: "loading preview",
-      mooncode_preflight_status: if model.selected_mooncode_session_id == "" {
-        model.mooncode_preflight_status
-      } else {
-        "loading preflight gates"
-      },
       editing_inbox_path: if is_inbox_path(path) {
         path
       } else {

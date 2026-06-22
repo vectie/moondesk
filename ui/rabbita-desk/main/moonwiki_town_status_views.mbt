@@ -52,15 +52,6 @@ fn empty_label(value : String) -> String {
 }
 
 ///|
-fn string_list_label(values : Array[String]) -> String {
-  if values.length() == 0 {
-    "none"
-  } else {
-    values.join(", ")
-  }
-}
-
-///|
 fn latest_run_label(progress : TownProgress) -> String {
   if progress.latest_run == "" {
     "none"

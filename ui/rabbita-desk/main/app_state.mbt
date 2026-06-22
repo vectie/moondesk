@@ -32,8 +32,8 @@ fn activity_slug(activity : Activity) -> String {
 ///|
 fn workspace_mode_summary(mode : WorkspaceMode) -> String {
   match mode {
-    MoonWiki => "read and organize AI-written books"
-    MoonCode => "chat with an agent to change book code"
+    MoonWiki => "Wiki workspace"
+    MoonCode => "Code workspace"
   }
 }
 

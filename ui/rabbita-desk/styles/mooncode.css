@@ -1,0 +1,428 @@
+/* MoonCode product pass: focused warm workspace with compact, aligned input. */
+:root {
+  --mooncode-bg: #fbfaf7;
+  --mooncode-panel: #ffffff;
+  --mooncode-field: #fffdfa;
+  --mooncode-line: #e5ded3;
+  --mooncode-line-strong: #cfc5b6;
+  --mooncode-ink: #20201d;
+  --mooncode-muted: #6f685e;
+  --mooncode-subtle: #968d82;
+  --mooncode-accent: #315f52;
+  --mooncode-accent-hover: #254a41;
+  --mooncode-focus: rgba(49, 95, 82, 0.13);
+  --mooncode-radius: 8px;
+  --mooncode-shadow: 0 8px 22px rgba(32, 32, 29, 0.07);
+}
+
+.mooncode-center,
+.mooncode-chat-surface,
+.mooncode-session-surface,
+.mooncode-transcript,
+.mooncode-transcript-list {
+  background: var(--mooncode-bg);
+}
+
+.code-main {
+  grid-template-columns: 220px minmax(0, 1fr);
+  background: var(--mooncode-bg);
+}
+
+.code-shell {
+  background: var(--mooncode-bg);
+}
+
+.mooncode-rail {
+  background: #f5f1ea;
+  border-right: 1px solid var(--mooncode-line);
+}
+
+.mooncode-rail .pane-heading {
+  min-height: 74px;
+  padding: 16px 14px 10px;
+  border-bottom-color: var(--mooncode-line);
+}
+
+.mooncode-rail .pane-heading h2 {
+  font-size: 16px;
+  font-weight: 680;
+  line-height: 1.2;
+}
+
+.rail-count {
+  margin: 4px 0 0;
+  color: var(--mooncode-subtle);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.eyebrow,
+.record-kind {
+  margin-bottom: 3px;
+  color: var(--mooncode-accent-hover);
+  font-size: 10px;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+}
+
+.mooncode-new-session {
+  width: calc(100% - 20px);
+  min-height: 34px;
+  display: block;
+  margin: 10px;
+  border: 1px solid rgba(49, 95, 82, 0.24);
+  border-radius: 8px;
+  background: var(--mooncode-accent);
+  color: #fffdf8;
+  font-size: 13px;
+  font-weight: 680;
+  cursor: pointer;
+}
+
+.mooncode-new-session:hover {
+  background: var(--mooncode-accent-hover);
+}
+
+.mooncode-session-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 10px 14px;
+}
+
+.mooncode-session {
+  min-height: 52px;
+  padding: 9px 10px;
+  border-color: transparent;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mooncode-session:hover,
+.mooncode-session.active {
+  border-color: var(--mooncode-line);
+  background: var(--mooncode-panel);
+  box-shadow: 0 1px 0 rgba(32, 32, 29, 0.04);
+}
+
+.mooncode-session strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.mooncode-session small,
+.mooncode-topline .status-line {
+  color: var(--mooncode-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.mooncode-topline {
+  min-width: 0;
+  height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--mooncode-line);
+  background: var(--mooncode-bg);
+}
+
+.mooncode-topline .path-pill {
+  color: var(--mooncode-muted);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.mooncode-session-surface {
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.mooncode-session-header {
+  max-width: 760px;
+  width: calc(100% - 48px);
+  margin: 0 auto;
+  padding: 18px 0 10px;
+  border-bottom: 0;
+  background: var(--mooncode-bg);
+}
+
+.mooncode-session-title h2 {
+  font-size: 18px;
+  font-weight: 680;
+}
+
+.mooncode-session-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.mooncode-chat-surface.empty {
+  min-height: calc(100vh - 94px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px;
+}
+
+.mooncode-chat-surface.empty .mooncode-empty {
+  width: min(600px, 100%);
+  display: grid;
+  gap: 7px;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 0;
+  text-align: left;
+}
+
+.mooncode-empty h1 {
+  color: var(--mooncode-ink);
+  font-size: 23px;
+  font-weight: 680;
+  line-height: 1.17;
+}
+
+.mooncode-empty .lead {
+  color: var(--mooncode-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mooncode-composer {
+  width: min(600px, calc(100% - 48px));
+  max-width: 600px;
+  display: grid;
+  gap: 6px;
+  margin: 0 auto 18px;
+  padding: 9px 10px 10px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 10px;
+  background: var(--mooncode-panel);
+  box-shadow: var(--mooncode-shadow);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.mooncode-composer:focus-within {
+  border-color: rgba(49, 95, 82, 0.45);
+  box-shadow: 0 0 0 3px var(--mooncode-focus), var(--mooncode-shadow);
+}
+
+.composer-field {
+  position: relative;
+  min-width: 0;
+  display: block;
+}
+
+.composer-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mooncode-input {
+  width: 100%;
+  min-height: 36px;
+  max-height: 128px;
+  display: block;
+  margin: 0;
+  padding: 6px 2px 7px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--mooncode-ink);
+  font-size: 14px;
+  line-height: 21px;
+  outline: 0;
+  overflow-y: auto;
+  resize: none;
+  text-indent: 0;
+  tab-size: 2;
+}
+
+.mooncode-input::placeholder {
+  color: #9a9288;
+}
+
+.mooncode-input:focus {
+  box-shadow: none;
+}
+
+.composer-footer {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.composer-meta {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.option-chip,
+.web-toggle,
+.starter-chip {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 999px;
+  padding: 0 9px;
+  background: var(--mooncode-field);
+  color: var(--mooncode-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.option-chip {
+  max-width: 220px;
+}
+
+.option-chip.active,
+.web-toggle.active {
+  border-color: rgba(49, 95, 82, 0.3);
+  background: rgba(49, 95, 82, 0.08);
+  color: var(--mooncode-accent-hover);
+}
+
+.web-toggle:hover,
+.starter-chip:hover {
+  border-color: var(--mooncode-line-strong);
+  color: var(--mooncode-ink);
+}
+
+.composer-footer .primary-button {
+  min-width: 64px;
+  min-height: 32px;
+  padding: 0 13px;
+  border-radius: var(--mooncode-radius);
+  background: var(--mooncode-accent);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.composer-footer .primary-button:hover {
+  background: var(--mooncode-accent-hover);
+}
+
+.composer-status {
+  margin: 0;
+  color: var(--mooncode-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.mooncode-starters {
+  width: min(600px, 100%);
+  display: grid;
+  gap: 7px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.starter-label {
+  margin: 0;
+  color: var(--mooncode-subtle);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.starter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.mooncode-transcript-list {
+  max-width: 760px;
+  padding: 16px 24px 24px;
+}
+
+.mooncode-message {
+  gap: 7px;
+  padding: 13px 16px 14px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 8px;
+  background: var(--mooncode-panel);
+  box-shadow: none;
+}
+
+.mooncode-message-head {
+  gap: 8px;
+}
+
+.mooncode-message-body {
+  overflow: auto;
+  margin: 0;
+  padding: 0;
+  color: var(--mooncode-ink);
+  font-family: Inter, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 23px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  tab-size: 2;
+}
+
+.mooncode-message-body code {
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  white-space: inherit;
+}
+
+.mooncode-transcript-event .source-block,
+.source-block.compact {
+  margin: 0;
+  border-radius: 8px;
+}
+
+@media (max-width: 760px) {
+  .code-main {
+    grid-template-columns: 1fr;
+  }
+
+  .mooncode-rail {
+    display: none;
+  }
+
+  .mooncode-chat-surface.empty {
+    justify-content: flex-start;
+    min-height: calc(100vh - 94px);
+    padding: 42px 18px 18px;
+  }
+
+  .mooncode-composer {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+
+  .composer-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .composer-footer .primary-button {
+    width: 100%;
+  }
+}

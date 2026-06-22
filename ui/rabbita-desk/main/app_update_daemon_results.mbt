@@ -97,7 +97,7 @@ fn update_daemon_results(
         @rabbita.none,
         {
           ..model,
-          reveal_status: if result.ok {
+          host_status: if result.ok {
             "\{result.status}: \{result.path}"
           } else {
             "\{result.status} (\{result.exit_code}) \{result.absolute_path} [\{result.workspace_id}]"
@@ -105,8 +105,7 @@ fn update_daemon_results(
         },
       )
     RevealedSelection(Err(error)) =>
-      (@rabbita.none, { ..model, reveal_status: error })
+      (@rabbita.none, { ..model, host_status: error })
     _ => (@rabbita.none, model)
   }
 }
-

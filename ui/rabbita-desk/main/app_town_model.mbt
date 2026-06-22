@@ -104,16 +104,3 @@ struct ReviewItem {
   status : String
   detail : String
 } derive(FromJson)
-
-///|
-struct ReviewDiff {
-  ok : Bool
-  workspace_id : String
-  path : String
-  base_path : String
-  comparison_path : String
-  added : Int
-  removed : Int
-  changed : Bool
-  body : String
-} derive(FromJson)

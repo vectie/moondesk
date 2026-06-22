@@ -2,9 +2,6 @@
 struct MoonClawDaemonStatus {
   running : Bool
   port : Int
-  pid : Int
-  info_path : String
-  moonclaw_root : String
   message : String
 } derive(FromJson)
 

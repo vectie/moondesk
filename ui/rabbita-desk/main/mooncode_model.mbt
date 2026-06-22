@@ -31,8 +31,6 @@ struct MoonCodeSession {
   title : String
   model : String
   status : String
-  port : Int
-  web_search : Bool
   queued_count : Int
   updated_at : String
   transcript : Array[MoonCodeMessage]

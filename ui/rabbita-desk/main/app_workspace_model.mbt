@@ -10,15 +10,6 @@ struct SavedViewRecord {
 } derive(FromJson)
 
 ///|
-struct TagRecord {
-  id : String
-  workspace_id : String
-  path : String
-  tag : String
-  created_at : String
-} derive(FromJson)
-
-///|
 struct SearchHit {
   workspace_id : String
   workspace_name : String
@@ -28,4 +19,3 @@ struct SearchHit {
   source_layer : @desk.SourceLayer
   snippet : String
 } derive(FromJson)
-
