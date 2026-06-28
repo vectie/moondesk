@@ -161,7 +161,7 @@ pub async fn Client::get_text(
   path : String,
 ) -> Result[String, String] {
   let url = self.base_url + path
-  let client = @http.Client::new(url, headers={}) catch {
+  let client = @http.Client::Client(url, headers={}) catch {
     err => return Err("client error: \{err}")
   }
   defer client.close()
@@ -195,7 +195,7 @@ pub async fn Client::post(
   body : Json,
 ) -> Result[Json, String] {
   let url = self.base_url + path
-  let client = @http.Client::new(url, headers={
+  let client = @http.Client::Client(url, headers={
     "Content-Type": "application/json",
   }) catch {
     err => return Err("client error: \{err}")
