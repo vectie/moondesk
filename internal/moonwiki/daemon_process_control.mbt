@@ -45,7 +45,8 @@ async fn start_managed_daemon(
   let stdout_file = @process.redirect_to_file(
     @pathx.join(root, stdout_path),
     append=true,
-    create=0o644,
+    create_mode=OpenOrCreate,
+    permission=0o644,
   ) catch {
     _ =>
       return daemon_result(
@@ -59,7 +60,8 @@ async fn start_managed_daemon(
   let stderr_file = @process.redirect_to_file(
     @pathx.join(root, stderr_path),
     append=true,
-    create=0o644,
+    create_mode=OpenOrCreate,
+    permission=0o644,
   ) catch {
     _ =>
       return daemon_result(

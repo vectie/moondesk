@@ -62,7 +62,12 @@ async fn copy_moondesk_sidecar(
       return false
     }
   }
-  @fs.write_file(destination, data, create=0o755, truncate=true) catch {
+  @fs.write_file(
+    destination,
+    data,
+    create_mode=CreateOrTruncate,
+    permission=0o755,
+  ) catch {
     error => {
       println("lepusa failed: could not write Moondesk sidecar: \{error}")
       return false

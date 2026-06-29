@@ -107,7 +107,8 @@ async fn ensure_moonclaw_daemon(workspace_root : String) -> Json {
   let stdout_file = @process.redirect_to_file(
     @pathx.join(log_dir, "moondesk-daemon.out.log"),
     append=true,
-    create=0o644,
+    create_mode=OpenOrCreate,
+    permission=0o644,
   ) catch {
     error =>
       return moonclaw_daemon_with_message(
@@ -118,7 +119,8 @@ async fn ensure_moonclaw_daemon(workspace_root : String) -> Json {
   let stderr_file = @process.redirect_to_file(
     @pathx.join(log_dir, "moondesk-daemon.err.log"),
     append=true,
-    create=0o644,
+    create_mode=OpenOrCreate,
+    permission=0o644,
   ) catch {
     error =>
       return moonclaw_daemon_with_message(

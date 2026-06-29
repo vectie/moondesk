@@ -7,7 +7,7 @@ pub async fn write_to_file(
   @fs.write_file(
     path.to_owned(),
     @encoding/utf8.encode(content),
-    create~,
-    truncate=true,
+    create_mode=CreateOrTruncate,
+    permission=create,
   )
 }
