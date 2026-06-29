@@ -1,9 +1,8 @@
 ///|
 enum Activity {
-  Explorer
+  Files
   Search
   Inbox
-  MoonCode
   Town
   Runs
   Settings

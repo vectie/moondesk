@@ -76,10 +76,9 @@ fn render_explorer(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   match model.activity {
     Search => render_search_pane(dispatch, model)
     Inbox => render_inbox_pane(dispatch, model)
-    MoonCode => render_mooncode_pane(dispatch, model)
     Town => render_town_pane(dispatch, model)
     Runs => render_runs_pane(dispatch, model)
     Settings => render_settings_pane(dispatch, model)
-    Explorer => render_files_pane(dispatch, model)
+    Files => render_files_pane(dispatch, model)
   }
 }

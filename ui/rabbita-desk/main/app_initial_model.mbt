@@ -1,7 +1,7 @@
 ///|
 fn init_model() -> Model {
   {
-    workspace_mode: workspace_mode_for_activity(initial_activity()),
+    workspace_mode: initial_workspace_mode(),
     activity: initial_activity(),
     command_open: false,
     loading: true,

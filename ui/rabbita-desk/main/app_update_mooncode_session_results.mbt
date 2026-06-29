@@ -148,8 +148,9 @@ fn mooncode_session_mutation_succeeded(
   status : String,
 ) -> (@rabbita.Cmd, Model) {
   (
-    sync_activity_batch(
+    sync_shell_batch(
       MoonCode,
+      Files,
       @rabbita.batch([
         fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
         fetch_mooncode_stream_cmd(dispatch, session.id, 0),
@@ -160,7 +161,7 @@ fn mooncode_session_mutation_succeeded(
     {
       ..model,
       workspace_mode: MoonCode,
-      activity: MoonCode,
+      activity: Files,
       selected_mooncode_session_id: session.id,
       mooncode_prompt: "",
       mooncode_composer_status: status,

@@ -12,11 +12,11 @@ fn update_mooncode_session_actions(
       )
     NewMoonCodeSession =>
       (
-        sync_activity_cmd(MoonCode),
+        sync_shell_cmd(MoonCode, Files),
         {
           ..model,
           workspace_mode: MoonCode,
-          activity: MoonCode,
+          activity: Files,
           command_open: false,
           selected_mooncode_session_id: "",
           mooncode_prompt: "",
@@ -81,11 +81,11 @@ fn mooncode_send_composer(
 ) -> (@rabbita.Cmd, Model) {
   if model.mooncode_prompt.trim().to_owned() == "" {
     (
-      sync_activity_cmd(MoonCode),
+      sync_shell_cmd(MoonCode, Files),
       {
         ..model,
         workspace_mode: MoonCode,
-        activity: MoonCode,
+        activity: Files,
         command_open: false,
         mooncode_composer_status: "enter a message",
       },
@@ -95,14 +95,15 @@ fn mooncode_send_composer(
       Some(session) => {
         let action = mooncode_composer_action(model, session)
         (
-          sync_activity_batch(
+          sync_shell_batch(
             MoonCode,
+            Files,
             send_mooncode_composer_cmd(dispatch, model, session),
           ),
           {
             ..model,
             workspace_mode: MoonCode,
-            activity: MoonCode,
+            activity: Files,
             command_open: false,
             mooncode_composer_status: if action == "steer" {
               "steering MoonCode turn"
@@ -114,14 +115,15 @@ fn mooncode_send_composer(
       }
       None =>
         (
-          sync_activity_batch(
+          sync_shell_batch(
             MoonCode,
+            Files,
             create_mooncode_session_cmd(dispatch, model),
           ),
           {
             ..model,
             workspace_mode: MoonCode,
-            activity: MoonCode,
+            activity: Files,
             command_open: false,
             mooncode_composer_status: if model.selected_workspace_id == "" {
               "starting General MoonCode"

@@ -25,7 +25,7 @@ fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     MoonWiki =>
       div(class="desk-shell wiki-shell", [
         render_title_bar(dispatch, model),
-        if model.workspaces.length() == 0 && model.activity == Explorer {
+        if model.workspaces.length() == 0 && model.activity == Files {
           div(class="desk-main onboarding-main", [
             render_wiki_bootstrap(dispatch, model),
           ])

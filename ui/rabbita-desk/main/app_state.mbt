@@ -4,26 +4,34 @@ fn initial_activity() -> Activity {
 }
 
 ///|
+fn initial_workspace_mode() -> WorkspaceMode {
+  match browser_initial_activity() {
+    "mooncode" => MoonCode
+    "desk" | "" => Desk
+    _ => MoonWiki
+  }
+}
+
+///|
 fn activity_from_slug(slug : String) -> Activity {
   match slug {
-    "desk" => Explorer
+    "files" => Files
+    "desk" => Files
     "search" => Search
     "inbox" => Inbox
-    "mooncode" => MoonCode
     "town" => Town
     "runs" => Runs
     "settings" => Settings
-    _ => Explorer
+    _ => Files
   }
 }
 
 ///|
 fn activity_slug(activity : Activity) -> String {
   match activity {
-    Explorer => "desk"
+    Files => "files"
     Search => "search"
     Inbox => "inbox"
-    MoonCode => "mooncode"
     Town => "town"
     Runs => "runs"
     Settings => "settings"
@@ -41,20 +49,16 @@ fn workspace_mode_summary(mode : WorkspaceMode) -> String {
 
 ///|
 fn workspace_mode_for_activity(activity : Activity) -> WorkspaceMode {
-  match activity {
-    MoonCode => MoonCode
-    Explorer => Desk
-    _ => MoonWiki
-  }
+  ignore(activity)
+  MoonWiki
 }
 
 ///|
 fn activities() -> Array[ActivityButton] {
   [
-    { key: Explorer, icon: "D", label: "Desk" },
+    { key: Files, icon: "F", label: "Files" },
     { key: Search, icon: "S", label: "Search" },
     { key: Inbox, icon: "N", label: "Notes" },
-    { key: MoonCode, icon: "C", label: "Code" },
     { key: Town, icon: "T", label: "Town" },
     { key: Runs, icon: "R", label: "Runs" },
     { key: Settings, icon: "G", label: "Settings" },

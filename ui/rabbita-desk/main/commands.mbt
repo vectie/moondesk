@@ -7,8 +7,33 @@ fn sync_activity_cmd(activity : Activity) -> @rabbita.Cmd {
 }
 
 ///|
+fn sync_shell_cmd(mode : WorkspaceMode, activity : Activity) -> @rabbita.Cmd {
+  @cmd.raw_effect(
+    _ => {
+      browser_set_activity(
+        if mode == Desk {
+          "desk"
+        } else {
+          activity_slug(activity)
+        },
+      )
+    },
+    kind=@cmd.after_render,
+  )
+}
+
+///|
 fn sync_activity_batch(activity : Activity, cmd : @rabbita.Cmd) -> @rabbita.Cmd {
   @rabbita.batch([cmd, sync_activity_cmd(activity)])
+}
+
+///|
+fn sync_shell_batch(
+  mode : WorkspaceMode,
+  activity : Activity,
+  cmd : @rabbita.Cmd,
+) -> @rabbita.Cmd {
+  @rabbita.batch([cmd, sync_shell_cmd(mode, activity)])
 }
 
 ///|

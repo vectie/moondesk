@@ -51,7 +51,7 @@ fn render_command_palette(
             dispatch,
             "Open MoonCode",
             "Open a book-scoped MoonCode coding session",
-            SelectActivity(MoonCode),
+            SelectWorkspaceMode(MoonCode),
           ),
           palette_command(
             dispatch,
