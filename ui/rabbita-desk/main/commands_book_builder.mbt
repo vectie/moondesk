@@ -1,6 +1,6 @@
 ///|
 fn create_book_from_pattern_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Cmd {
   let cadence = clamp_int(
@@ -44,51 +44,43 @@ fn create_book_from_pattern_cmd(
       "notify_on": json_string_array(notify_on),
     },
   }
-  @http.post(
-    "/api/books/from-pattern",
-    Json(body),
-    expect=Json(fn(result) {
-      dispatch(CreatedBookFromPattern(result))
-    }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not publish book pattern")
-      }
-    }),
-  )
+  @http.post("/api/books/from-pattern")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      CreatedBookFromPattern(
+        http_result(result, "Could not publish book pattern"),
+      ),
+    )
+  })
 }
 
 ///|
 fn export_app_tool_portable_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Cmd {
   let body : Json = { "book_id": selected_book_id_for_portable_export(model) }
-  @http.post(
-    "/api/books/app-tool-portable",
-    Json(body),
-    expect=Json(fn(result) {
-      dispatch(ExportedAppToolPortable(result))
-    }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not export portable app-tool bundle")
-      }
-    }),
-  )
+  @http.post("/api/books/app-tool-portable")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      ExportedAppToolPortable(
+        http_result(result, "Could not export portable app-tool bundle"),
+      ),
+    )
+  })
 }
 
 ///|
-fn export_all_app_tool_portable_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
-) -> @rabbita.Cmd {
-  @http.post(
-    "/api/books/app-tool-portable/all",
-    Json(Json::object({})),
-    expect=Json(fn(result) {
-      dispatch(ExportedAllAppToolPortable(result))
-    }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not export all portable app-tool bundles")
-      }
-    }),
-  )
+fn export_all_app_tool_portable_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @http.post("/api/books/app-tool-portable/all")
+  .with_json(Json::object({}))
+  .expect_json(result => {
+    dispatch(
+      ExportedAllAppToolPortable(
+        http_result(result, "Could not export all portable app-tool bundles"),
+      ),
+    )
+  })
 }

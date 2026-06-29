@@ -24,7 +24,8 @@ fn update_mooncode_session_results(
         @rabbita.none,
         {
           ..model,
-          mooncode_model: if model.mooncode_model == "" && result.models.length() > 0 {
+          mooncode_model: if model.mooncode_model == "" &&
+            result.models.length() > 0 {
             result.models[0].name
           } else {
             model.mooncode_model
@@ -40,10 +41,16 @@ fn update_mooncode_session_results(
       (@rabbita.none, { ..model, mooncode_composer_status: error })
     LoadedMoonCodeSessions(Ok(mooncode_sessions)) => {
       let selected = if model.selected_mooncode_session_id != "" &&
-        mooncode_session_exists(mooncode_sessions, model.selected_mooncode_session_id) {
+        mooncode_session_exists(
+          mooncode_sessions,
+          model.selected_mooncode_session_id,
+        ) {
         model.selected_mooncode_session_id
       } else {
-        first_mooncode_session_id(mooncode_sessions, model.selected_workspace_id)
+        first_mooncode_session_id(
+          mooncode_sessions,
+          model.selected_workspace_id,
+        )
       }
       let keep_stream = selected == model.mooncode_stream_session_id
       let keep_sink = selected == model.mooncode_runtime_event_sink_session_id

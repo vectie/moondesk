@@ -62,7 +62,9 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let port = json_int(info, "port", default=0)
   let pid = json_int(info, "pid", default=0)
   let alive = pid > 0 && process_is_alive(pid)
-  let reachable = service_configured && alive && port > 0 &&
+  let reachable = service_configured &&
+    alive &&
+    port > 0 &&
     moonclaw_port_reachable(port)
   {
     "ok": reachable,

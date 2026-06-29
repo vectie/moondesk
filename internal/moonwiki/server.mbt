@@ -37,19 +37,19 @@ fn moondesk_health_json(ui_root : String, workspace_root : String) -> Json {
 }
 
 ///|
-pub fn Server::new(
+pub async fn Server::new(
   host : String,
   port : Int,
   dual_stack? : Bool = true,
   reuse_addr? : Bool = false,
-) -> Server raise {
+) -> Server {
   let host = if host == "localhost" { "127.0.0.1" } else { host }
-  let server = @http.Server::new(
+  let server = @http.Server::Server(
     @socket.Addr::parse("\{host}:\{port}"),
     dual_stack~,
     reuse_addr~,
   )
-  { server, port: server.addr().port() }
+  { server, port: server.addr.port() }
 }
 
 ///|

@@ -13,4 +13,3 @@ struct MoonCodeStreamState {
   latest_sequence : Int
   next_since : Int
 } derive(FromJson)
-

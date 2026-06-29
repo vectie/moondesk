@@ -16,7 +16,6 @@ fn render_search_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
         value=model.search_query,
         placeholder="Find markdown, json, html, logs...",
         on_input=fn(value) { dispatch(SetSearchQuery(value)) },
-        "",
       ),
       button(
         class="primary-button full",

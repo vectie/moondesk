@@ -1,6 +1,6 @@
 ///|
 fn fetch_mooncode_runtime_event_sink_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   session_id : String,
 ) -> @rabbita.Cmd {
   if session_id == "" {
@@ -8,12 +8,12 @@ fn fetch_mooncode_runtime_event_sink_cmd(
   }
   @http.get(
     "/api/mooncode/sessions/\{encode_component(session_id)}/runtime-events",
-    expect=Json(fn(result) {
-      dispatch(LoadedMoonCodeRuntimeEventSink(session_id, result))
-    }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Invalid MoonCode runtime event sink")
-      }
-    }),
-  )
+  ).expect_json(result => {
+    dispatch(
+      LoadedMoonCodeRuntimeEventSink(
+        session_id,
+        http_result(result, "Invalid MoonCode runtime event sink"),
+      ),
+    )
+  })
 }

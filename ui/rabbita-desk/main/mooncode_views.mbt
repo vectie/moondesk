@@ -1,5 +1,8 @@
 ///|
-fn render_mooncode_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+fn render_mooncode_pane(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
   aside(class="explorer-pane mooncode-rail", [
     div(class="pane-heading", [
       div([
@@ -45,21 +48,22 @@ fn render_mooncode_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Htm
 ///|
 fn mooncode_session_count_label(model : Model) -> String {
   let count = model.mooncode_sessions.length()
-  if count == 1 { "1 session" } else { "\{count} sessions" }
+  if count == 1 {
+    "1 session"
+  } else {
+    "\{count} sessions"
+  }
 }
 
 ///|
 fn mooncode_session_runtime_line(session : MoonCodeSession) -> String {
   let model = if session.model == "" { "default" } else { session.model }
   let runtime_id = mooncode_session_runtime_id(session)
-  let runtime = if runtime_id == "" {
-    "not attached"
-  } else {
-    runtime_id
-  }
+  let runtime = if runtime_id == "" { "not attached" } else { runtime_id }
   "\{model} / \{runtime} / queued \{session.queued_count}"
 }
 
+///|
 fn render_mooncode_center(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -72,61 +76,73 @@ fn render_mooncode_center(
       span(class="path-pill", scope_label),
       span(class="status-line", selected_mooncode_runtime_label(model)),
     ]),
-    section(class=if empty { "mooncode-chat-surface empty" } else { "mooncode-chat-surface" }, [
-      match session {
-        Some(session) => div(class="mooncode-session-surface", [
-          render_mooncode_session_header(session),
-          render_mooncode_transcript(model, session),
-        ])
-        None =>
-          div(class="mooncode-empty", [
-            h1("Ask MoonCode"),
-            p(
-              class="lead",
-              if model.selected_workspace_id == "" {
-                "Ask a coding question, or select a MoonBook when you want changes attached to a book."
-              } else {
-                "Describe the code change you want in this MoonBook."
-              },
-            ),
-          ])
+    section(
+      class=if empty {
+        "mooncode-chat-surface empty"
+      } else {
+        "mooncode-chat-surface"
       },
-      div(class="mooncode-composer", [
-        div(class="composer-field", [
-          p(class="composer-label", "Message"),
-          textarea(
-            class="mooncode-input",
-            rows=1,
-            value=model.mooncode_prompt,
-            placeholder="Ask MoonCode...",
-            on_input=fn(value) { dispatch(SetMoonCodePrompt(value)) },
-            "",
-          ),
-        ]),
-        div(class="composer-footer", [
-          div(class="composer-meta", [
-            span(class="option-chip active", mooncode_workspace_chip(model)),
-            span(class="option-chip", mooncode_path_chip(model)),
-            button(
-              class=if model.mooncode_web_search {
-                "web-toggle active"
-              } else {
-                "web-toggle"
-              },
-              on_click=dispatch(ToggleMoonCodeWebSearch),
-              "Web",
+      [
+        match session {
+          Some(session) =>
+            div(class="mooncode-session-surface", [
+              render_mooncode_session_header(session),
+              render_mooncode_transcript(model, session),
+            ])
+          None =>
+            div(class="mooncode-empty", [
+              h1("Ask MoonCode"),
+              p(
+                class="lead",
+                if model.selected_workspace_id == "" {
+                  "Ask a coding question, or select a MoonBook when you want changes attached to a book."
+                } else {
+                  "Describe the code change you want in this MoonBook."
+                },
+              ),
+            ])
+        },
+        div(class="mooncode-composer", [
+          div(class="composer-field", [
+            p(class="composer-label", "Message"),
+            textarea(
+              class="mooncode-input",
+              rows=1,
+              value=model.mooncode_prompt,
+              placeholder="Ask MoonCode...",
+              on_input=fn(value) { dispatch(SetMoonCodePrompt(value)) },
+              "",
             ),
           ]),
-          button(
-            class="primary-button",
-            on_click=dispatch(SendMoonCodeMessage),
-            mooncode_composer_button_label(model, session),
-          ),
+          div(class="composer-footer", [
+            div(class="composer-meta", [
+              span(class="option-chip active", mooncode_workspace_chip(model)),
+              span(class="option-chip", mooncode_path_chip(model)),
+              button(
+                class=if model.mooncode_web_search {
+                  "web-toggle active"
+                } else {
+                  "web-toggle"
+                },
+                on_click=dispatch(ToggleMoonCodeWebSearch),
+                "Web",
+              ),
+            ]),
+            button(
+              class="primary-button",
+              on_click=dispatch(SendMoonCodeMessage),
+              mooncode_composer_button_label(model, session),
+            ),
+          ]),
+          render_mooncode_composer_status(model),
         ]),
-        render_mooncode_composer_status(model),
-      ]),
-      if empty { render_mooncode_starters(dispatch) } else { span(class="hidden-inline", "") },
-    ]),
+        if empty {
+          render_mooncode_starters(dispatch)
+        } else {
+          span(class="hidden-inline", "")
+        },
+      ],
+    ),
   ])
 }
 
@@ -136,28 +152,23 @@ fn render_mooncode_starters(dispatch : Dispatch[Msg]) -> @rabbita.Html {
     p(class="starter-label", "Start with"),
     div(class="starter-row", [
       starter_button(
-        dispatch,
-        "Plan a tool",
-        "Help me design a small executable tool and the files it needs.",
+        dispatch, "Plan a tool", "Help me design a small executable tool and the files it needs.",
       ),
       starter_button(
-        dispatch,
-        "Fix a bug",
-        "Find and fix a bug in the selected code.",
+        dispatch, "Fix a bug", "Find and fix a bug in the selected code.",
       ),
       starter_button(
-        dispatch,
-        "Explain code",
-        "Explain how this code is organized and what can run.",
+        dispatch, "Explain code", "Explain how this code is organized and what can run.",
       ),
     ]),
   ])
 }
 
+///|
 fn starter_button(
   dispatch : Dispatch[Msg],
   label : String,
-  prompt : String
+  prompt : String,
 ) -> @rabbita.Html {
   button(
     class="starter-chip",
@@ -176,14 +187,24 @@ fn mooncode_scope_label(model : Model) -> String {
   }
 }
 
+///|
 fn mooncode_workspace_chip(model : Model) -> String {
   let workspace = workspace_name(model)
-  if workspace == "No workspace" { "General chat" } else { workspace }
+  if workspace == "No workspace" {
+    "General chat"
+  } else {
+    workspace
+  }
 }
 
+///|
 fn mooncode_path_chip(model : Model) -> String {
   let workspace = workspace_name(model)
-  if workspace == "No workspace" { "No book context" } else { model.selected_path }
+  if workspace == "No workspace" {
+    "No book context"
+  } else {
+    model.selected_path
+  }
 }
 
 ///|
@@ -193,7 +214,8 @@ fn mooncode_status_summary(status : String) -> String {
     "No sessions yet"
   } else if text == "0 model(s) available" {
     "Local agent ready"
-  } else if text.contains("daemon is running") || text.contains("daemon running") {
+  } else if text.contains("daemon is running") ||
+    text.contains("daemon running") {
     "Local agent ready"
   } else if text.contains("not reachable") ||
     text.contains("not running") ||
@@ -206,6 +228,7 @@ fn mooncode_status_summary(status : String) -> String {
   }
 }
 
+///|
 fn render_mooncode_composer_status(model : Model) -> @rabbita.Html {
   let summary = mooncode_status_summary(model.mooncode_composer_status)
   if summary == "" ||
@@ -220,9 +243,10 @@ fn render_mooncode_composer_status(model : Model) -> @rabbita.Html {
   }
 }
 
+///|
 fn mooncode_composer_button_label(
   model : Model,
-  session : MoonCodeSession?
+  session : MoonCodeSession?,
 ) -> String {
   match session {
     Some(active) if mooncode_session_accepts_steer(model, active) => "Steer"
@@ -232,9 +256,7 @@ fn mooncode_composer_button_label(
 }
 
 ///|
-fn render_mooncode_session_header(
-  session : MoonCodeSession,
-) -> @rabbita.Html {
+fn render_mooncode_session_header(session : MoonCodeSession) -> @rabbita.Html {
   let summary = session.mooncode_summary
   div(class="mooncode-session-header", [
     div(class="mooncode-session-title", [

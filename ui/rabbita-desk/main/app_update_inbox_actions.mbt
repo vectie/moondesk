@@ -101,7 +101,12 @@ fn stage_selected_link_action(
     "- Path: \{model.selected_path}\n" +
     "- Layer: \{selected_layer(model)}\n"
   (
-    save_inbox_cmd(dispatch, { ..model, editing_inbox_path: "" }, title, content),
+    save_inbox_cmd(
+      dispatch,
+      { ..model, editing_inbox_path: "" },
+      title,
+      content,
+    ),
     { ..model, inbox_status: "copying selection to inbox" },
   )
 }

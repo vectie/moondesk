@@ -37,27 +37,19 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     section(class="side-section", [
       h3("Book Pattern Builder"),
       render_book_pattern_wizard(model),
-      div(
-        class="pattern-picker",
-        book_base_type_buttons(dispatch, model),
-      ),
-      div(
-        class="pattern-picker",
-        book_pattern_buttons(dispatch, model),
-      ),
+      div(class="pattern-picker", book_base_type_buttons(dispatch, model)),
+      div(class="pattern-picker", book_pattern_buttons(dispatch, model)),
       input(
         class="line-input",
         value=model.book_pattern_book_id,
         placeholder="Book id, e.g. research-my-domain-pdf-watch",
         on_input=fn(value) { dispatch(SetBookPatternBookId(value)) },
-        "",
       ),
       input(
         class="line-input",
         value=model.book_pattern_topic,
         placeholder="Domain title/topic",
         on_input=fn(value) { dispatch(SetBookPatternTopic(value)) },
-        "",
       ),
       textarea(
         class="side-textarea compact-textarea",
@@ -81,14 +73,12 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           value=model.book_pattern_cadence_minutes,
           placeholder="Cadence minutes",
           on_input=fn(value) { dispatch(SetBookPatternCadenceMinutes(value)) },
-          "",
         ),
         input(
           class="line-input",
           value=model.book_pattern_source_policy,
           placeholder="Source policy",
           on_input=fn(value) { dispatch(SetBookPatternSourcePolicy(value)) },
-          "",
         ),
       ]),
       input(
@@ -96,7 +86,6 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         value=model.book_pattern_notify_rule,
         placeholder="Notification rule",
         on_input=fn(value) { dispatch(SetBookPatternNotifyRule(value)) },
-        "",
       ),
       textarea(
         class="side-textarea mini-textarea",
@@ -148,7 +137,6 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         value=model.goal_title,
         placeholder="Watch title",
         on_input=fn(value) { dispatch(SetGoalTitle(value)) },
-        "",
       ),
       div(class="field-grid compact-fields", [
         input(
@@ -156,14 +144,12 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           value=model.goal_cadence_ticks,
           placeholder="Cadence ticks",
           on_input=fn(value) { dispatch(SetGoalCadenceTicks(value)) },
-          "",
         ),
         input(
           class="line-input",
           value=model.goal_review_policy,
           placeholder="Review policy",
           on_input=fn(value) { dispatch(SetGoalReviewPolicy(value)) },
-          "",
         ),
       ]),
       input(
@@ -171,7 +157,6 @@ fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         value=model.goal_source_policy,
         placeholder="Source policy",
         on_input=fn(value) { dispatch(SetGoalSourcePolicy(value)) },
-        "",
       ),
       div(class="toolbar-actions stack-actions", [
         button(

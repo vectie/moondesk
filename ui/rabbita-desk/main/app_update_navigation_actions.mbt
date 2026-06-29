@@ -20,7 +20,11 @@ fn update_navigation_actions(
           workspace_mode: mode,
           activity,
           command_open: false,
-          mooncode_prompt: if mode == MoonCode { "" } else { model.mooncode_prompt },
+          mooncode_prompt: if mode == MoonCode {
+            ""
+          } else {
+            model.mooncode_prompt
+          },
           mooncode_composer_status: if mode == MoonCode {
             "MoonCode workspace ready"
           } else {
@@ -140,7 +144,11 @@ fn select_path_action(
       ..model,
       selected_path: path,
       primary_preview_path: remember_primary_preview_path(model, path),
-      current_directory: if is_directory { path } else { model.current_directory },
+      current_directory: if is_directory {
+        path
+      } else {
+        model.current_directory
+      },
       preview: None,
       preview_status: "loading preview",
       editing_inbox_path: if is_inbox_path(path) {

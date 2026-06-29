@@ -62,7 +62,6 @@ fn render_saved_views_panel(
       value=model.view_title,
       placeholder="View title",
       on_input=fn(value) { dispatch(SetViewTitle(value)) },
-      "",
     ),
     button(
       class="secondary-button full",

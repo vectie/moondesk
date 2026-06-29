@@ -16,7 +16,7 @@ test "lepusa integration args default to strict-free macos verify" {
   let options = parsed.unwrap()
   assert_eq(options.command, "verify")
   assert_eq(options.target, "macos")
-  assert_eq(options.lepusa_root, "../lepusa")
+  assert_eq(options.lepusa_root, ".mooncakes/vectie/lepusa")
   assert_eq(options.project, "desktop/lepusa/moondesk/lepusa.json")
   assert_eq(options.out_dir, "_build/lepusa/moondesk")
   assert_eq(options.manifest_path, "")

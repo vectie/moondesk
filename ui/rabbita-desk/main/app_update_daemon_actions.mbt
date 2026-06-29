@@ -87,7 +87,10 @@ fn update_daemon_actions(
       )
     UninstallLaunchAgent =>
       (
-        sync_activity_batch(Town, manage_launch_agent_cmd(dispatch, "uninstall")),
+        sync_activity_batch(
+          Town,
+          manage_launch_agent_cmd(dispatch, "uninstall"),
+        ),
         {
           ..model,
           activity: Town,

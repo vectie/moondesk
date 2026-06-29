@@ -67,7 +67,10 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
 }
 
 ///|
-async fn moonclaw_sibling_service_descriptor(root : String, action : String) -> Json {
+async fn moonclaw_sibling_service_descriptor(
+  root : String,
+  action : String,
+) -> Json {
   if action != "daemon" {
     return Json::object({})
   }

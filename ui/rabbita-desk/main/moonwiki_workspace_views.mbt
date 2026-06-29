@@ -2,10 +2,7 @@
 fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   aside(class="explorer-pane", [
     div(class="pane-heading", [
-      div([
-        p(class="eyebrow", "MoonWiki"),
-        h2("MoonBooks"),
-      ]),
+      div([p(class="eyebrow", "MoonWiki"), h2("MoonBooks")]),
       button(
         class="secondary-button compact-button",
         title="Refresh",
@@ -94,10 +91,7 @@ fn render_wiki_bootstrap(
     section(class="bootstrap-panel", [
       p(class="eyebrow", "Moondesk"),
       h1("Start with a MoonBook"),
-      p(
-        class="lead",
-        "Choose a book to read, create, or make executable.",
-      ),
+      p(class="lead", "Choose a book to read, create, or make executable."),
       div(class="bootstrap-choice-list", [
         button(
           class="bootstrap-choice primary",
@@ -107,12 +101,18 @@ fn render_wiki_bootstrap(
         button(
           class="bootstrap-choice",
           on_click=dispatch(SelectActivity(Town)),
-          [strong("Create MoonBook"), span("Start from a reusable book pattern")],
+          [
+            strong("Create MoonBook"),
+            span("Start from a reusable book pattern"),
+          ],
         ),
         button(
           class="bootstrap-choice",
           on_click=dispatch(SelectWorkspaceMode(MoonCode)),
-          [strong("Use MoonCode"), span("Build tools and miniapps inside a book")],
+          [
+            strong("Use MoonCode"),
+            span("Build tools and miniapps inside a book"),
+          ],
         ),
       ]),
       p(class="status-line", model.host_status),

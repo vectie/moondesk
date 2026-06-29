@@ -1,6 +1,6 @@
 ///|
 fn reload_workspace_cmds(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   workspace_id : String,
   selected_path : String,
 ) -> @rabbita.Cmd {

@@ -88,12 +88,8 @@ fn remember_primary_preview_path(model : Model, path : String) -> String {
 ///|
 fn is_textual_renderer(renderer : @desk.PreviewRenderer) -> Bool {
   match renderer {
-    Markdown
-    | Json
-    | Text
-    | ArtifactSummary
-    | DirectoryListing
-    | Unsupported => true
+    Markdown | Json | Text | ArtifactSummary | DirectoryListing | Unsupported =>
+      true
     _ => false
   }
 }

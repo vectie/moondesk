@@ -13,7 +13,6 @@ fn render_command_palette(
             class="palette-input",
             value="",
             placeholder="Open Book, Import Files, Search, Submit...",
-            "",
           ),
           button(
             class="icon-button palette-close",

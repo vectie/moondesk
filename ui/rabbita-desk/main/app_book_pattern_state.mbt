@@ -3,17 +3,20 @@ fn default_book_pattern_method() -> String {
   "# PDF Evidence Watch Method\n\nScreen PDFs for source quality, extract claims that change the current book baseline, and queue Bookkeeper review before accepted knowledge is published."
 }
 
+///|
 fn apply_selected_book_pattern(model : Model, pattern_id : String) -> Model {
   let selected_id = if pattern_id == "" {
-    first_pattern_for_base_type(model.book_patterns, model.selected_book_base_type)
+    first_pattern_for_base_type(
+      model.book_patterns,
+      model.selected_book_base_type,
+    )
   } else {
     pattern_id
   }
   match book_pattern_record_from_model(model, selected_id) {
     Some(pattern) if book_pattern_creation_backend_supported(
-      pattern.creation_backend,
-    ) =>
-    {
+        pattern.creation_backend,
+      ) => {
       let topic = if pattern.default_topic == "" {
         "my domain"
       } else {
@@ -33,8 +36,8 @@ fn apply_selected_book_pattern(model : Model, pattern_id : String) -> Model {
       } else {
         pattern.skills.join("\n")
       }
-    {
-      ..model,
+      {
+        ..model,
         selected_book_base_type: pattern.base_type,
         selected_book_pattern_id: pattern.id,
         book_pattern_book_id: book_id,
@@ -49,23 +52,23 @@ fn apply_selected_book_pattern(model : Model, pattern_id : String) -> Model {
           pattern.default_source_policy,
           "web-first",
         ),
-      book_pattern_notify_rule: "accepted_new_knowledge",
+        book_pattern_notify_rule: "accepted_new_knowledge",
         book_pattern_skill_pack: skills,
-      book_pattern_analysis_method: default_book_pattern_method(),
-      book_pattern_status: "ready to publish selected book pattern",
-    }
+        book_pattern_analysis_method: default_book_pattern_method(),
+        book_pattern_status: "ready to publish selected book pattern",
+      }
     }
     _ =>
-    {
-      ..model,
-      selected_book_base_type: book_pattern_base_type_from_model(
-        model,
+      {
+        ..model,
+        selected_book_base_type: book_pattern_base_type_from_model(
+          model,
           selected_id,
-        default=model.selected_book_base_type,
-      ),
+          default=model.selected_book_base_type,
+        ),
         selected_book_pattern_id: selected_id,
         book_pattern_status: "selected registry pattern `\{selected_id}`; this build can publish only patterns with a supported creation backend",
-    }
+      }
   }
 }
 
@@ -110,10 +113,10 @@ fn selected_book_id_for_portable_export(model : Model) -> String {
 fn apply_selected_book_base_type(model : Model, base_type : String) -> Model {
   let selected = if base_type == "" { "research-book" } else { base_type }
   let pattern_id = if pattern_matches_base_type(
-    model.selected_book_pattern_id,
-    selected,
-    model.book_patterns,
-  ) {
+      model.selected_book_pattern_id,
+      selected,
+      model.book_patterns,
+    ) {
     model.selected_book_pattern_id
   } else {
     first_pattern_for_base_type(model.book_patterns, selected)

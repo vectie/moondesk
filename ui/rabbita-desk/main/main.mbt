@@ -25,7 +25,10 @@ using @html {
 }
 
 ///|
-using @rabbita {type Dispatch}
+using @rabbita {type Emit}
+
+///|
+type Dispatch[A] = Emit[A]
 
 ///|
 #cfg(target="js")
@@ -51,16 +54,14 @@ extern "js" fn browser_set_activity(slug : String) =
   #|   globalThis.history.replaceState(null, "", url.toString());
   #| }
 
-
 ///|
 fn main {
-  let (dispatch, cell) = @rabbita.cell_with_dispatch(
-    model=init_model(),
-    update~,
-    view=(dispatch, model) => render_app(dispatch, model),
-  )
-  let app = @rabbita.new(cell)
-  app.with_startup(
+  let (dispatch, cell) = @rabbita.cell_with_emit(model=init_model(), update~, view=(
+    dispatch,
+    model,
+  ) => render_app(dispatch, model))
+  @rabbita.new(cell)
+  ..with_init(
     @rabbita.batch([
       fetch_workspaces_cmd(dispatch),
       fetch_moonclaw_daemon_cmd(dispatch),
@@ -72,5 +73,5 @@ fn main {
       schedule_import_drop_poll(dispatch),
     ]),
   )
-  app.mount("app")
+  .mount("app")
 }

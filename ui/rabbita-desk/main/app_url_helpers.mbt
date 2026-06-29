@@ -30,4 +30,3 @@ fn workspace_entries_url(workspace_id : String, path : String) -> String {
 fn workspace_preview_url(workspace_id : String, path : String) -> String {
   "/api/workspaces/\{workspace_id}/preview?path=\{encode_component(path)}"
 }
-

@@ -162,7 +162,7 @@ fn parse_browser_import_batch(
 }
 
 ///|
-fn pick_import_files_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+fn pick_import_files_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @rabbita.perform(fn(result) { dispatch(LocalFilesPicked(result)) }, async fn() noraise {
     let text : String = browser_pick_import_files().wait().cast() catch {
         error => return Err("Failed to read local files: \{error}")
@@ -172,13 +172,13 @@ fn pick_import_files_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
 }
 
 ///|
-fn take_dropped_imports_cmd(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+fn take_dropped_imports_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @rabbita.perform(fn(result) { dispatch(LocalFilesPicked(result)) }, fn() noraise {
     parse_browser_import_batch(browser_take_dropped_import_files())
   })
 }
 
 ///|
-fn schedule_import_drop_poll(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+fn schedule_import_drop_poll(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @rabbita.delay(dispatch(PollDroppedImports), 1200)
 }

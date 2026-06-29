@@ -1,7 +1,7 @@
 ///|
 test "bundle defaults to lepusa native shell" {
   let options = default_bundle_options()
-  assert_eq(options.lepusa_root, "../lepusa")
+  assert_eq(options.lepusa_root, ".mooncakes/vectie/lepusa")
   assert_eq(bundle_shell_policy(), "lepusa")
   assert_eq(bundle_app_root(options), "dist/moondesk-lepusa.app")
   assert_eq(bundle_archive_path(options), "dist/moondesk-lepusa.app.zip")

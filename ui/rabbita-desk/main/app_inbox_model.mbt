@@ -29,4 +29,3 @@ struct BrowserLocalImportBatch {
   files : Array[LocalImportFile]
   error : String?
 } derive(FromJson)
-

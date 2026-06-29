@@ -9,6 +9,8 @@ import {
   "vectie/moondesk/core" @desk,
 }
 
+supported_targets = "js"
+
 options(
   "is-main": true,
 )

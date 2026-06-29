@@ -17,7 +17,11 @@ fn json_field_bool_label(json : Json, key : String) -> String {
       match object.get(key) {
         Some(value) => {
           let parsed : Bool = @json.from_json(value) catch { _ => false }
-          if parsed { "true" } else { "false" }
+          if parsed {
+            "true"
+          } else {
+            "false"
+          }
         }
         _ => "false"
       }
@@ -53,7 +57,7 @@ fn json_field_int(json : Json, key : String, default~ : Int) -> Int {
 fn json_field_string_array_summary(
   json : Json,
   key : String,
-  limit~ : Int = 2,
+  limit? : Int = 2,
 ) -> String {
   let items : Array[String] = []
   match json {

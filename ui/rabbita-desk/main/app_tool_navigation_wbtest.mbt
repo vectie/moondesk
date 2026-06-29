@@ -70,10 +70,7 @@ test "book pattern builder keeps generic shell state" {
     default_websites: [],
     skills: [],
   }
-  let loaded = {
-    ..model,
-    book_patterns: [pdf_pattern, external_pattern],
-  }
+  let loaded = { ..model, book_patterns: [pdf_pattern, external_pattern] }
   let supported = apply_selected_book_pattern(loaded, "pdf-evidence-watch")
   assert_eq(supported.selected_book_pattern_id, "pdf-evidence-watch")
   assert_eq(supported.book_pattern_topic, "policy reports")

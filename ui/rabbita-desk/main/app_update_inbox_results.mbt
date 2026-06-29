@@ -93,4 +93,3 @@ fn update_inbox_results(
     _ => (@rabbita.none, model)
   }
 }
-

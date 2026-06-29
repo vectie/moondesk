@@ -53,9 +53,7 @@ fn book_pattern_buttons(
   model : Model,
 ) -> Array[@rabbita.Html] {
   if model.book_patterns.length() == 0 {
-    [
-      span(class="status-line", "Loading book-pattern registry"),
-    ]
+    [span(class="status-line", "Loading book-pattern registry")]
   } else {
     let buttons : Array[@rabbita.Html] = []
     for pattern in model.book_patterns {
@@ -99,6 +97,7 @@ fn book_pattern_button_class(model : Model, pattern_id : String) -> String {
   }
 }
 
+///|
 fn book_pattern_wizard_step_class(done : Bool) -> String {
   if done {
     "wizard-step done"
@@ -107,6 +106,7 @@ fn book_pattern_wizard_step_class(done : Bool) -> String {
   }
 }
 
+///|
 fn render_book_pattern_wizard(model : Model) -> @rabbita.Html {
   let websites = text_lines(model.book_pattern_websites)
   let skills = text_lines(model.book_pattern_skill_pack)
@@ -127,7 +127,9 @@ fn render_book_pattern_wizard(model : Model) -> @rabbita.Html {
         span(class="wizard-index", "1"),
         span(
           if book_ready {
-            "Choose " + model.selected_book_base_type + " + " +
+            "Choose " +
+            model.selected_book_base_type +
+            " + " +
             model.selected_book_pattern_id
           } else {
             "Select a pattern with a supported creation backend"
@@ -148,16 +150,22 @@ fn render_book_pattern_wizard(model : Model) -> @rabbita.Html {
       ]),
       li(class=book_pattern_wizard_step_class(watch_ready), [
         span(class="wizard-index", "5"),
-        span("Enable standing watch every " + model.book_pattern_cadence_minutes + " minutes"),
+        span(
+          "Enable standing watch every " +
+          model.book_pattern_cadence_minutes +
+          " minutes",
+        ),
       ]),
       li(class=book_pattern_wizard_step_class(notify_ready), [
         span(class="wizard-index", "6"),
         span("Notify on " + model.book_pattern_notify_rule),
       ]),
-      li(class=book_pattern_wizard_step_class(model.book_pattern_last_book_id != ""), [
-        span(class="wizard-index", "7"),
-        span("Publish book to Moontown"),
-      ]),
+      li(
+        class=book_pattern_wizard_step_class(
+          model.book_pattern_last_book_id != "",
+        ),
+        [span(class="wizard-index", "7"), span("Publish book to Moontown")],
+      ),
     ]),
     pre(
       class="source-block compact builder-config-preview",
@@ -170,16 +178,17 @@ fn render_book_pattern_wizard(model : Model) -> @rabbita.Html {
 fn book_pattern_config_preview(model : Model) -> String {
   let websites = text_lines(model.book_pattern_websites)
   let skills = text_lines(model.book_pattern_skill_pack)
-  let standing_watch = match book_pattern_record_from_model(
-    model,
-    model.selected_book_pattern_id,
-  ) {
+  let standing_watch = match
+    book_pattern_record_from_model(model, model.selected_book_pattern_id) {
     Some(pattern) => pattern.standing_watch
     None => false
   }
   (
     {
-      "id": trimmed_or(model.book_pattern_book_id, "research-my-domain-pdf-watch"),
+      "id": trimmed_or(
+        model.book_pattern_book_id,
+        "research-my-domain-pdf-watch",
+      ),
       "type": model.selected_book_base_type,
       "specialization": model.selected_book_pattern_id,
       "pattern_components": {
@@ -192,7 +201,10 @@ fn book_pattern_config_preview(model : Model) -> String {
         "cadence_minutes": @string.parse_int(model.book_pattern_cadence_minutes) catch {
           _ => 30
         },
-        "source_policy": trimmed_or(model.book_pattern_source_policy, "web-first"),
+        "source_policy": trimmed_or(
+          model.book_pattern_source_policy,
+          "web-first",
+        ),
         "websites": json_string_array(websites),
         "file_types": json_string_array(["pdf"]),
         "dedupe_by": json_string_array(["url", "title", "sha256"]),

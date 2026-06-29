@@ -116,7 +116,7 @@ enum Msg {
   SavedMoonCodeStreamCheckpoint(String, Result[MoonCodeStreamState, String])
   LoadedMoonCodeRuntimeEventSink(
     String,
-    Result[MoonCodeRuntimeEventSink, String],
+    Result[MoonCodeRuntimeEventSink, String]
   )
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])

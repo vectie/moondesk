@@ -21,11 +21,7 @@ fn preview_tabs(model : Model) -> Array[PreviewTab] {
   match first_run_report_path(model) {
     Some(path) =>
       if path != primary_path && path != "book/site/generated/index.html" {
-        tabs.push({
-          title: "run report",
-          path,
-          renderer: ArtifactSummary,
-        })
+        tabs.push({ title: "run report", path, renderer: ArtifactSummary })
       }
     None => ()
   }
@@ -110,16 +106,15 @@ fn render_preview_body(model : Model) -> @rabbita.Html {
             ),
           ])
         Image =>
-          div(class="image-preview", [
-            img(src=preview.body, alt=preview.title, ""),
-          ])
+          div(class="image-preview", [img(src=preview.body, alt=preview.title)])
         DirectoryListing =>
           div(class="markdown-preview", [
             h1(preview.title),
             p(class="lead", "Directory listing"),
             pre(class="source-block", code(preview.body)),
           ])
-        Markdown => section(class="document-preview", render_markdown_document(preview))
+        Markdown =>
+          section(class="document-preview", render_markdown_document(preview))
         Text =>
           section(class="document-preview", [
             h1(preview.title),
@@ -136,7 +131,9 @@ fn render_preview_body(model : Model) -> @rabbita.Html {
 }
 
 ///|
-fn render_markdown_document(preview : @desk.DeskPreview) -> Array[@rabbita.Html] {
+fn render_markdown_document(
+  preview : @desk.DeskPreview,
+) -> Array[@rabbita.Html] {
   let nodes : Array[@rabbita.Html] = []
   let mut saw_heading = false
   for raw in preview.body.split("\n") {

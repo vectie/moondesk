@@ -1,6 +1,6 @@
 ///|
 fn fetch_selected_mooncode_stream_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Cmd {
   match selected_mooncode_session(model) {
@@ -18,34 +18,31 @@ fn fetch_selected_mooncode_stream_cmd(
 
 ///|
 fn create_mooncode_session_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Cmd {
   let body : Json = {
     "workspace_id": model.selected_workspace_id,
     "title": mooncode_new_session_title(model),
-    "message": trimmed_or(
-      model.mooncode_prompt,
-      mooncode_default_prompt(model),
-    ),
+    "message": trimmed_or(model.mooncode_prompt, mooncode_default_prompt(model)),
     "model": model.mooncode_model,
     "web_search": model.mooncode_web_search,
     "context_path": mooncode_context_path(model),
   }
-  @http.post(
-    "/api/mooncode/sessions",
-    Json(body),
-    expect=Json(fn(result) { dispatch(CreatedMoonCodeSession(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not create MoonCode session")
-      }
-    }),
-  )
+  @http.post("/api/mooncode/sessions")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      CreatedMoonCodeSession(
+        http_result(result, "Could not create MoonCode session"),
+      ),
+    )
+  })
 }
 
 ///|
 fn send_mooncode_composer_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
   session : MoonCodeSession,
 ) -> @rabbita.Cmd {
@@ -60,10 +57,7 @@ fn send_mooncode_composer_cmd(
 }
 
 ///|
-fn mooncode_composer_action(
-  model : Model,
-  session : MoonCodeSession
-) -> String {
+fn mooncode_composer_action(model : Model, session : MoonCodeSession) -> String {
   if mooncode_session_accepts_steer(model, session) {
     "steer"
   } else {
@@ -74,7 +68,7 @@ fn mooncode_composer_action(
 ///|
 fn mooncode_session_accepts_steer(
   model : Model,
-  session : MoonCodeSession
+  session : MoonCodeSession,
 ) -> Bool {
   ignore(model)
   if session.status == "running" ||
@@ -87,7 +81,7 @@ fn mooncode_session_accepts_steer(
 
 ///|
 fn mooncode_session_command_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
   session : MoonCodeSession,
   action : String,
@@ -101,24 +95,23 @@ fn mooncode_session_command_cmd(
     context_path
   }
   let selected_model = trimmed_or(model.mooncode_model, session.model)
-  @http.post(
-    "/api/mooncode/sessions/\{session.id}/commands",
-    Json({
-      "action": action,
-      "message": message,
-      "model": selected_model,
-      "web_search": model.mooncode_web_search,
-      "context_path": target_path,
-      "force_preflight": force_preflight,
-    }),
-    expect=Json(fn(result) {
-      dispatch(CompletedMoonCodeCommand(result))
-    }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not run MoonCode command")
-      }
-    }),
-  )
+  let body : Json = {
+    "action": action,
+    "message": message,
+    "model": selected_model,
+    "web_search": model.mooncode_web_search,
+    "context_path": target_path,
+    "force_preflight": force_preflight,
+  }
+  @http.post("/api/mooncode/sessions/\{session.id}/commands")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      CompletedMoonCodeCommand(
+        http_result(result, "Could not run MoonCode command"),
+      ),
+    )
+  })
 }
 
 ///|
@@ -141,10 +134,14 @@ fn mooncode_default_prompt(model : Model) -> String {
 
 ///|
 fn mooncode_context_path(model : Model) -> String {
-  if model.selected_workspace_id == "" { "" } else { model.selected_path }
+  if model.selected_workspace_id == "" {
+    ""
+  } else {
+    model.selected_path
+  }
 }
 
 ///|
-fn schedule_mooncode_poll(dispatch : (Msg) -> @rabbita.Cmd) -> @rabbita.Cmd {
+fn schedule_mooncode_poll(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @rabbita.delay(dispatch(PollMoonCodeSessions), 5000)
 }

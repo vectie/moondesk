@@ -94,11 +94,7 @@ fn render_mooncode_transcript_event(event : MoonCodeEvent) -> @rabbita.Html {
 
 ///|
 fn mooncode_transcript_event_class(event : MoonCodeEvent) -> String {
-  let lane = if event.lane == "" {
-    "runtime"
-  } else {
-    event.lane
-  }
+  let lane = if event.lane == "" { "runtime" } else { event.lane }
   let state = if event.status == "failed" || event.status == "blocked" {
     "failed"
   } else {

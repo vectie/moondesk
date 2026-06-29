@@ -24,6 +24,11 @@ async test "app tool portable export copies a direct toolbook bundle" {
     exists_ok=true,
   )
   @fsx.make_directory(
+    @pathx.join(book_root, "raw/analysis-runs"),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.make_directory(
     @pathx.join(book_root, "assets"),
     recursive=true,
     exists_ok=true,
@@ -312,6 +317,11 @@ async test "app tool portable export supports research-book tool manifests and e
     recursive=true,
     exists_ok=true,
   )
+  @fsx.make_directory(
+    @pathx.join(book_root, "raw/analysis-runs"),
+    recursive=true,
+    exists_ok=true,
+  )
   @fsx.write_to_file(
     @pathx.join(book_root, "book.json"),
     (
@@ -591,7 +601,7 @@ async test "app tool portable export detects generated app books without metadat
   assert_true(
     @fs.exists(@pathx.join(book_root, "portable/app-tool/run-local.command")),
   )
-  assert_true(
+  assert_false(
     @fs.exists(
       @pathx.join(book_root, "portable/app-tool/raw/excel/generated.xlsx"),
     ),

@@ -54,4 +54,3 @@ struct RevealResult {
   path : String
   absolute_path : String
 } derive(FromJson)
-

@@ -1,6 +1,6 @@
 ///|
 fn save_inbox_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
   title : String,
   content : String,
@@ -10,105 +10,83 @@ fn save_inbox_cmd(
   } else {
     { "title": title, "content": content, "path": model.editing_inbox_path }
   }
-  @http.post(
-    "/api/workspaces/\{model.selected_workspace_id}/inbox",
-    Json(body),
-    expect=Json(fn(result) { dispatch(SavedInbox(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not save inbox note")
-      }
-    }),
-  )
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/inbox")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(SavedInbox(http_result(result, "Could not save inbox note")))
+  })
 }
 
 ///|
-fn import_url_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
-  model : Model,
-) -> @rabbita.Cmd {
+fn import_url_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   let url = model.import_url.trim().to_owned()
   let title = if url == "" { "Imported URL" } else { url }
-  @http.post(
-    "/api/workspaces/\{model.selected_workspace_id}/import",
-    Json({
-      "kind": "url",
-      "title": title,
-      "url": url,
-      "note": model.import_note,
-    }),
-    expect=Json(fn(result) { dispatch(ImportedInbox(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not import URL")
-      }
-    }),
-  )
+  let body : Json = {
+    "kind": "url",
+    "title": title,
+    "url": url,
+    "note": model.import_note,
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/import")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(ImportedInbox(http_result(result, "Could not import URL")))
+  })
 }
 
 ///|
 fn import_local_file_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
   file : LocalImportFile,
 ) -> @rabbita.Cmd {
   let is_data_url = file.content.has_prefix("data:")
-  @http.post(
-    "/api/workspaces/\{model.selected_workspace_id}/import",
-    Json({
-      "kind": if file.source == "paste" {
-        "paste"
-      } else {
-        "file"
-      },
-      "title": file.name,
-      "filename": file.name,
-      "browser_import_id": file.id,
-      "content_type": file.media_type,
-      "note": model.import_note,
-      "content": if is_data_url {
-        ""
-      } else {
-        file.content
-      },
-      "data_url": if is_data_url {
-        file.content
-      } else {
-        ""
-      },
-    }),
-    expect=Json(fn(result) { dispatch(ImportedInbox(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not import local file")
-      }
-    }),
-  )
+  let body : Json = {
+    "kind": if file.source == "paste" {
+      "paste"
+    } else {
+      "file"
+    },
+    "title": file.name,
+    "filename": file.name,
+    "browser_import_id": file.id,
+    "content_type": file.media_type,
+    "note": model.import_note,
+    "content": if is_data_url {
+      ""
+    } else {
+      file.content
+    },
+    "data_url": if is_data_url {
+      file.content
+    } else {
+      ""
+    },
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/import")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(ImportedInbox(http_result(result, "Could not import local file")))
+  })
 }
 
 ///|
-fn save_view_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
-  model : Model,
-) -> @rabbita.Cmd {
-  @http.post(
-    "/api/preferences/views",
-    Json({
-      "title": trimmed_or(model.view_title, "Current view"),
-      "query": model.search_query,
-      "workspace_id": model.selected_workspace_id,
-      "path": model.selected_path,
-    }),
-    expect=Json(fn(result) { dispatch(SavedView(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not save view")
-      }
-    }),
-  )
+fn save_view_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
+  let body : Json = {
+    "title": trimmed_or(model.view_title, "Current view"),
+    "query": model.search_query,
+    "workspace_id": model.selected_workspace_id,
+    "path": model.selected_path,
+  }
+  @http.post("/api/preferences/views")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(SavedView(http_result(result, "Could not save view")))
+  })
 }
 
 ///|
-fn submit_request_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
-  model : Model,
-) -> @rabbita.Cmd {
+fn submit_request_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   let title = "Moondesk request for \{workspace_name(model)}"
   let context_entries = if model.selected_path == "" {
     []
@@ -124,20 +102,16 @@ fn submit_request_cmd(
     "review_policy": "bookkeeper_review",
     "source_policy": "mixed",
   }
-  @http.post(
-    "/api/town/requests",
-    Json(body),
-    expect=Json(fn(result) { dispatch(SubmittedRequest(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not stage request")
-      }
-    }),
-  )
+  @http.post("/api/town/requests")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(SubmittedRequest(http_result(result, "Could not stage request")))
+  })
 }
 
 ///|
 fn create_standing_goal_cmd(
-  dispatch : (Msg) -> @rabbita.Cmd,
+  dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Cmd {
   let title = trimmed_or(model.goal_title, "Standing watch")
@@ -154,13 +128,13 @@ fn create_standing_goal_cmd(
     "review_policy": trimmed_or(model.goal_review_policy, "bookkeeper_review"),
     "enabled": true,
   }
-  @http.post(
-    "/api/town/standing-goals",
-    Json(body),
-    expect=Json(fn(result) { dispatch(CreatedStandingGoal(result)) }, json => {
-      Ok(@json.from_json(json)) catch {
-        _ => Err("Could not create standing watch")
-      }
-    }),
-  )
+  @http.post("/api/town/standing-goals")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      CreatedStandingGoal(
+        http_result(result, "Could not create standing watch"),
+      ),
+    )
+  })
 }

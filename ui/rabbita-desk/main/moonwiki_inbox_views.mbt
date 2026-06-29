@@ -16,7 +16,6 @@ fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         value=model.inbox_title,
         placeholder="Note title",
         on_input=fn(value) { dispatch(SetInboxTitle(value)) },
-        "",
       ),
       textarea(
         class="side-textarea",
@@ -52,7 +51,6 @@ fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         value=model.import_url,
         placeholder="https://...",
         on_input=fn(value) { dispatch(SetImportUrl(value)) },
-        "",
       ),
       textarea(
         class="side-textarea compact-textarea",

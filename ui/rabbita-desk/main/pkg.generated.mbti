@@ -1,0 +1,92 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk-rabbita/main"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Activity derive(Eq)
+
+type ActivityButton
+
+type BookBaseTypeRecord derive(@json.FromJson)
+
+type BookPatternCreationResult derive(@json.FromJson)
+
+type BookPatternRecord derive(@json.FromJson)
+
+type BrowserLocalImportBatch derive(@json.FromJson)
+
+type DaemonControlResult derive(@json.FromJson)
+
+type DaemonLifecycleResult derive(@json.FromJson)
+
+type DeskEvent derive(@json.FromJson)
+
+type InboxCreated derive(@json.FromJson)
+
+type InboxImportResult derive(@json.FromJson)
+
+type LaunchAgentResult derive(@json.FromJson)
+
+type LocalImportFile derive(@json.FromJson)
+
+type Model
+
+type MoonClawDaemonStatus derive(@json.FromJson)
+
+type MoonClawModel derive(@json.FromJson)
+
+type MoonClawModelsResult derive(@json.FromJson)
+
+type MoonCodeEvent derive(@json.FromJson)
+
+type MoonCodeMessage derive(@json.FromJson)
+
+type MoonCodeRuntimeEventSink derive(@json.FromJson)
+
+type MoonCodeRuntimeServiceState derive(@json.FromJson)
+
+type MoonCodeSession derive(@json.FromJson)
+
+type MoonCodeStreamPoll
+
+type MoonCodeStreamState derive(@json.FromJson)
+
+type MoonCodeSummary derive(@json.FromJson)
+
+type MoonclawProgress derive(@json.FromJson)
+
+type Msg
+
+type PreviewTab
+
+type RequestRecord derive(@json.FromJson)
+
+type RevealResult derive(@json.FromJson)
+
+type ReviewItem derive(@json.FromJson)
+
+type SavedViewRecord derive(@json.FromJson)
+
+type SearchHit derive(@json.FromJson)
+
+type StandingGoalRecord derive(@json.FromJson)
+
+type TownAnalytics derive(@json.FromJson)
+
+type TownMessage derive(@json.FromJson)
+
+type TownProgress derive(@json.FromJson)
+
+type WorkspaceMode derive(Eq)
+
+// Type aliases
+
+// Traits
+

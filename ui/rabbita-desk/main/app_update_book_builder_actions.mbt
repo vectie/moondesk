@@ -36,10 +36,7 @@ fn update_book_builder_actions(
       (@rabbita.none, apply_selected_book_pattern(model, pattern_id))
     CreateStandingGoal =>
       (
-        sync_activity_batch(
-          Town,
-          create_standing_goal_cmd(dispatch, model),
-        ),
+        sync_activity_batch(Town, create_standing_goal_cmd(dispatch, model)),
         {
           ..model,
           activity: Town,
@@ -95,10 +92,7 @@ fn update_book_builder_actions(
       }
     ExportAllAppToolPortable =>
       (
-        sync_activity_batch(
-          Town,
-          export_all_app_tool_portable_cmd(dispatch),
-        ),
+        sync_activity_batch(Town, export_all_app_tool_portable_cmd(dispatch)),
         {
           ..model,
           activity: Town,

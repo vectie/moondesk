@@ -40,7 +40,8 @@ fn update(
     LoadedMoonClawModels(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeSessions(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeStream(_, _) => update_mooncode_results(dispatch, msg, model)
-    SavedMoonCodeStreamCheckpoint(_, _) => update_mooncode_results(dispatch, msg, model)
+    SavedMoonCodeStreamCheckpoint(_, _) =>
+      update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeRuntimeEventSink(_, _) =>
       update_mooncode_results(dispatch, msg, model)
     CreatedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
@@ -67,19 +68,27 @@ fn update(
     SetGoalSourcePolicy(_) => update_book_builder_actions(dispatch, msg, model)
     SetBookPatternBookId(_) => update_book_builder_actions(dispatch, msg, model)
     SetBookPatternTopic(_) => update_book_builder_actions(dispatch, msg, model)
-    SetBookPatternPurpose(_) => update_book_builder_actions(dispatch, msg, model)
-    SetBookPatternWebsites(_) => update_book_builder_actions(dispatch, msg, model)
-    SetBookPatternCadenceMinutes(_) => update_book_builder_actions(dispatch, msg, model)
-    SetBookPatternSourcePolicy(_) => update_book_builder_actions(dispatch, msg, model)
-    SetBookPatternNotifyRule(_) => update_book_builder_actions(dispatch, msg, model)
-    SetBookPatternSkillPack(_) => update_book_builder_actions(dispatch, msg, model)
-    SetBookPatternAnalysisMethod(_) => update_book_builder_actions(dispatch, msg, model)
+    SetBookPatternPurpose(_) =>
+      update_book_builder_actions(dispatch, msg, model)
+    SetBookPatternWebsites(_) =>
+      update_book_builder_actions(dispatch, msg, model)
+    SetBookPatternCadenceMinutes(_) =>
+      update_book_builder_actions(dispatch, msg, model)
+    SetBookPatternSourcePolicy(_) =>
+      update_book_builder_actions(dispatch, msg, model)
+    SetBookPatternNotifyRule(_) =>
+      update_book_builder_actions(dispatch, msg, model)
+    SetBookPatternSkillPack(_) =>
+      update_book_builder_actions(dispatch, msg, model)
+    SetBookPatternAnalysisMethod(_) =>
+      update_book_builder_actions(dispatch, msg, model)
     SelectBookBaseType(_) => update_book_builder_actions(dispatch, msg, model)
     SelectBookPattern(_) => update_book_builder_actions(dispatch, msg, model)
     CreateStandingGoal => update_book_builder_actions(dispatch, msg, model)
     CreateBookFromPattern => update_book_builder_actions(dispatch, msg, model)
     ExportAppToolPortable => update_book_builder_actions(dispatch, msg, model)
-    ExportAllAppToolPortable => update_book_builder_actions(dispatch, msg, model)
+    ExportAllAppToolPortable =>
+      update_book_builder_actions(dispatch, msg, model)
     ControlDaemonTick => update_daemon_actions(dispatch, msg, model)
     FetchDaemonLifecycle => update_daemon_actions(dispatch, msg, model)
     StartDaemon => update_daemon_actions(dispatch, msg, model)

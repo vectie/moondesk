@@ -45,7 +45,7 @@ fn default_bundle_options() -> BundleOptions {
     sign_identity: "-",
     version: "0.1.0",
     channel: "local",
-    lepusa_root: "../lepusa",
+    lepusa_root: ".mooncakes/vectie/lepusa",
     archive: true,
     skip_sign: false,
   }

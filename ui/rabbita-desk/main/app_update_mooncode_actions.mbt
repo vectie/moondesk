@@ -9,7 +9,8 @@ fn update_mooncode_actions(
     | NewMoonCodeSession
     | SetMoonCodePrompt(_)
     | ToggleMoonCodeWebSearch
-    | SendMoonCodeMessage => update_mooncode_session_actions(dispatch, msg, model)
+    | SendMoonCodeMessage =>
+      update_mooncode_session_actions(dispatch, msg, model)
     PollMoonCodeSessions => update_mooncode_poll_actions(dispatch, msg, model)
     _ => (@rabbita.none, model)
   }

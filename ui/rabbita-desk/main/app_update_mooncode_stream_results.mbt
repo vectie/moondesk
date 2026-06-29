@@ -10,13 +10,18 @@ fn update_mooncode_stream_results(
         (@rabbita.none, model)
       } else {
         let stream_events = if session_id == model.mooncode_stream_session_id {
-          mooncode_merge_stream_events(model.mooncode_stream_events, stream.events)
+          mooncode_merge_stream_events(
+            model.mooncode_stream_events,
+            stream.events,
+          )
         } else {
           mooncode_merge_stream_events([], stream.events)
         }
         (
           save_mooncode_stream_checkpoint_cmd(
-            dispatch, session_id, stream.next_since,
+            dispatch,
+            session_id,
+            stream.next_since,
           ),
           {
             ..model,

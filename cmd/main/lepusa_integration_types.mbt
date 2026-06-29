@@ -34,7 +34,7 @@ fn default_lepusa_integration_options() -> LepusaIntegrationOptions {
   {
     command: "verify",
     target: "macos",
-    lepusa_root: "../lepusa",
+    lepusa_root: ".mooncakes/vectie/lepusa",
     project: "desktop/lepusa/moondesk/lepusa.json",
     out_dir: "_build/lepusa/moondesk",
     manifest_path: "",

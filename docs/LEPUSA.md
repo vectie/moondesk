@@ -53,8 +53,8 @@ moon run cmd/main --target native -- bundle .. --ui ui/rabbita-desk/dist --out d
 records `native_host: "lepusa"`, `native_window: true`, plus the generated
 `Contents/Resources/lepusa/runtime.json` path and hash.
 
-By default `bundle` expects Lepusa at `../lepusa`. Point it at another checkout
-with:
+By default `bundle` uses the published Lepusa dependency fetched under
+`.mooncakes/vectie/lepusa`. Point it at a local checkout with:
 
 ```bash
 moon run cmd/main --target native -- bundle --lepusa /path/to/lepusa
@@ -105,8 +105,8 @@ Override the workspace or UI used by the generated sidecar with:
 moon run cmd/main --target native -- lepusa live-build macos --workspace-root .. --ui ui/rabbita-desk/dist
 ```
 
-The wrapper defaults to a sibling Lepusa checkout at `../lepusa`. Override it
-with:
+The wrapper defaults to the published Lepusa dependency fetched under
+`.mooncakes/vectie/lepusa`. Override it with:
 
 ```bash
 moon run cmd/main --target native -- lepusa verify macos --lepusa /path/to/lepusa

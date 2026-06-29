@@ -66,10 +66,7 @@ async test "moonclaw service descriptor can use sibling checkout fallback" {
 
   let result = moonclaw_service_descriptor(root, "daemon")
   assert_true(json_bool(result, "configured", default=false))
-  assert_eq(
-    json_string(result, "source", default=""),
-    "sibling-checkout",
-  )
+  assert_eq(json_string(result, "source", default=""), "sibling-checkout")
   assert_eq(json_string(result, "cwd", default=""), sibling)
   assert_true(
     json_string_array_items(result, "args") ==

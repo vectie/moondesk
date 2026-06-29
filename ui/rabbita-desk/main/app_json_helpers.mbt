@@ -18,10 +18,7 @@ fn json_field(json : Json, key : String) -> Json? {
 ///|
 fn json_string_value(json : Json, key : String, default~ : String) -> String {
   match json_field(json, key) {
-    Some(value) =>
-      @json.from_json(value) catch {
-        _ => default
-      }
+    Some(value) => @json.from_json(value) catch { _ => default }
     None => default
   }
 }
@@ -29,10 +26,7 @@ fn json_string_value(json : Json, key : String, default~ : String) -> String {
 ///|
 fn json_int_value(json : Json, key : String, default~ : Int) -> Int {
   match json_field(json, key) {
-    Some(value) =>
-      @json.from_json(value) catch {
-        _ => default
-      }
+    Some(value) => @json.from_json(value) catch { _ => default }
     None => default
   }
 }

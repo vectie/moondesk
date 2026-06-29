@@ -12,7 +12,10 @@ async test "mooncode session scope supports general chat without a moonbook" {
 
 ///|
 async test "mooncode session scope still rejects unknown explicit workspace" {
-  match resolve_mooncode_workspace_scope("/tmp/moondesk-general-mooncode-scope", "missing") {
+  match
+    resolve_mooncode_workspace_scope(
+      "/tmp/moondesk-general-mooncode-scope", "missing",
+    ) {
     Ok(_) => fail("unexpected workspace")
     Err(message) => assert_eq(message, "Unknown workspace")
   }
@@ -34,17 +37,12 @@ test "mooncode runtime unavailable stays queued instead of failed" {
     "action": "prompt",
   }
   let queued = mooncode_runtime_waiting_session(
-    session,
-    "prompt",
-    "MoonClaw daemon service is not configured for this workspace",
-    "",
-    packet,
+    session, "prompt", "MoonClaw daemon service is not configured for this workspace",
+    "", packet,
   )
   let events = json_array_items(queued, "mooncode_command_events")
   assert_eq(json_string(events[0], "status", default=""), "queued")
-  assert_true(
-    json_string(events[0], "detail", default="").contains("saved"),
-  )
+  assert_true(json_string(events[0], "detail", default="").contains("saved"))
   let transcript = json_array_items(queued, "transcript")
   assert_eq(json_string(transcript[0], "status", default=""), "queued")
 }

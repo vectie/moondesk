@@ -6,20 +6,21 @@ fn update_book_runtime_results(
 ) -> (@rabbita.Cmd, Model) {
   match msg {
     LoadedBookBaseTypes(Ok(book_base_types)) =>
-      (@rabbita.none, { ..model, book_base_types })
+      (@rabbita.none, { ..model, book_base_types, })
     LoadedBookBaseTypes(Err(error)) =>
       (@rabbita.none, { ..model, book_pattern_status: error })
     LoadedBookPatterns(Ok(book_patterns)) => {
-      let with_patterns = { ..model, book_patterns }
+      let with_patterns = { ..model, book_patterns, }
       let pattern_id = if pattern_matches_base_type(
-        with_patterns.selected_book_pattern_id,
-        with_patterns.selected_book_base_type,
-        book_patterns,
-      ) {
+          with_patterns.selected_book_pattern_id,
+          with_patterns.selected_book_base_type,
+          book_patterns,
+        ) {
         with_patterns.selected_book_pattern_id
       } else {
         first_pattern_for_base_type(
-          book_patterns, with_patterns.selected_book_base_type,
+          book_patterns,
+          with_patterns.selected_book_base_type,
         )
       }
       (@rabbita.none, apply_selected_book_pattern(with_patterns, pattern_id))
@@ -128,9 +129,7 @@ fn update_exported_app_tool_portable(
     @rabbita.batch([
       fetch_workspaces_cmd(dispatch),
       reload_workspace_cmds(
-        dispatch,
-        workspace_id,
-        "portable/app-tool/index.html",
+        dispatch, workspace_id, "portable/app-tool/index.html",
       ),
     ])
   } else {
@@ -156,7 +155,11 @@ fn update_exported_app_tool_portable(
       } else {
         model.primary_preview_path
       },
-      preview: if standalone_ready { None } else { model.preview },
+      preview: if standalone_ready {
+        None
+      } else {
+        model.preview
+      },
       preview_status: if standalone_ready {
         "loading portable app-tool bundle"
       } else {
@@ -184,9 +187,7 @@ fn update_exported_all_app_tool_portable(
     @rabbita.batch([
       fetch_workspaces_cmd(dispatch),
       reload_workspace_cmds(
-        dispatch,
-        workspace_id,
-        "portable/app-tool/index.html",
+        dispatch, workspace_id, "portable/app-tool/index.html",
       ),
     ])
   } else {
@@ -208,7 +209,11 @@ fn update_exported_all_app_tool_portable(
       } else {
         model.primary_preview_path
       },
-      preview: if has_open_book { None } else { model.preview },
+      preview: if has_open_book {
+        None
+      } else {
+        model.preview
+      },
       preview_status: if has_open_book {
         "loading portable app-tool bundle"
       } else {
@@ -223,14 +228,14 @@ fn update_exported_all_app_tool_portable(
 fn first_standalone_app_tool_book_id(result : Json) -> String {
   for book in json_field_json_array_items(result, "books") {
     if json_field_bool(
-      book,
-      "auto_open_allowed",
-      default=json_field_bool(
         book,
-        "operatable_without_moondesk_api",
-        default=false,
-      ),
-    ) {
+        "auto_open_allowed",
+        default=json_field_bool(
+          book,
+          "operatable_without_moondesk_api",
+          default=false,
+        ),
+      ) {
       let book_id = json_field_string(book, "book_id", default="")
       if book_id != "" {
         return book_id
