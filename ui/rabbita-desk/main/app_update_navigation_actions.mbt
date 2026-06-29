@@ -5,32 +5,8 @@ fn update_navigation_actions(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    SelectWorkspaceMode(mode) => {
-      let activity = match mode {
-        Desk => Files
-        MoonCode => Files
-        MoonWiki => model.activity
-      }
-      (
-        sync_shell_cmd(mode, activity),
-        {
-          ..model,
-          workspace_mode: mode,
-          activity,
-          command_open: false,
-          mooncode_prompt: if mode == MoonCode {
-            ""
-          } else {
-            model.mooncode_prompt
-          },
-          mooncode_composer_status: if mode == MoonCode {
-            "MoonCode workspace ready"
-          } else {
-            model.mooncode_composer_status
-          },
-        },
-      )
-    }
+    SelectWorkspaceMode(mode) =>
+      select_workspace_mode_action(dispatch, mode, model)
     SelectActivity(activity) =>
       (
         sync_activity_cmd(activity),
@@ -119,6 +95,82 @@ fn update_navigation_actions(
     ToggleCommand =>
       (@rabbita.none, { ..model, command_open: !model.command_open })
     _ => (@rabbita.none, model)
+  }
+}
+
+///|
+fn select_workspace_mode_action(
+  dispatch : Dispatch[Msg],
+  mode : WorkspaceMode,
+  model : Model,
+) -> (@rabbita.Cmd, Model) {
+  let activity = match mode {
+    Desk => Files
+    MoonCode => Files
+    MoonWiki => model.activity
+  }
+  let desk_directory = desk_context_directory(model)
+  let base_cmd = if mode == Desk && model.selected_workspace_id != "" {
+    sync_shell_batch(
+      mode,
+      activity,
+      @rabbita.batch([
+        fetch_entries_cmd(dispatch, model.selected_workspace_id, desk_directory),
+        fetch_preview_cmd(
+          dispatch,
+          model.selected_workspace_id,
+          model.selected_path,
+        ),
+      ]),
+    )
+  } else {
+    sync_shell_cmd(mode, activity)
+  }
+  (
+    base_cmd,
+    {
+      ..model,
+      workspace_mode: mode,
+      activity,
+      command_open: false,
+      current_directory: if mode == Desk {
+        desk_directory
+      } else {
+        model.current_directory
+      },
+      preview: if mode == Desk {
+        None
+      } else {
+        model.preview
+      },
+      preview_status: if mode == Desk && model.selected_workspace_id != "" {
+        "loading desk context"
+      } else {
+        model.preview_status
+      },
+      mooncode_prompt: if mode == MoonCode {
+        ""
+      } else {
+        model.mooncode_prompt
+      },
+      mooncode_composer_status: if mode == MoonCode {
+        "MoonCode workspace ready"
+      } else {
+        model.mooncode_composer_status
+      },
+    },
+  )
+}
+
+///|
+fn desk_context_directory(model : Model) -> String {
+  if model.selected_path == "" {
+    ""
+  } else {
+    match find_entry(model, model.selected_path) {
+      Some(entry) if entry.kind is Directory => model.selected_path
+      _ => parent_path(model.selected_path)
+    }
   }
 }
 

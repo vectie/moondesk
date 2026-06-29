@@ -48,3 +48,54 @@ test "search hit focuses Desk on containing directory" {
   assert_eq(next.current_directory, "wiki/sources")
   assert_eq(next.preview_status, "loading search result")
 }
+
+///|
+test "switching to desk loads selected file context directory" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonWiki,
+    activity: Inbox,
+    selected_workspace_id: "book-demo",
+    selected_path: "wiki/sources/report.md",
+    current_directory: "raw",
+  }
+  let (_, next) = update_navigation_actions(
+    dispatch,
+    SelectWorkspaceMode(Desk),
+    model,
+  )
+  assert_true(next.workspace_mode is Desk)
+  assert_true(next.activity is Files)
+  assert_eq(next.selected_path, "wiki/sources/report.md")
+  assert_eq(next.current_directory, "wiki/sources")
+  assert_eq(next.preview_status, "loading desk context")
+}
+
+///|
+test "switching to desk keeps selected directory as context" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonWiki,
+    selected_workspace_id: "book-demo",
+    selected_path: "wiki/sources",
+    current_directory: "wiki",
+    entries: [
+      @desk.file_entry(
+        workspace_id="book-demo",
+        path="wiki/sources",
+        is_directory=true,
+      ),
+    ],
+  }
+  let (_, next) = update_navigation_actions(
+    dispatch,
+    SelectWorkspaceMode(Desk),
+    model,
+  )
+  assert_true(next.workspace_mode is Desk)
+  assert_eq(next.selected_path, "wiki/sources")
+  assert_eq(next.current_directory, "wiki/sources")
+  assert_eq(next.preview_status, "loading desk context")
+}
