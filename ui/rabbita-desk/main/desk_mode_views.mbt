@@ -139,11 +139,7 @@ fn render_desk_breadcrumb(
     desk_breadcrumbs(directory).map(crumb => {
       let (label, path, active) = crumb
       button(
-        class=if active {
-          "breadcrumb-chip active"
-        } else {
-          "breadcrumb-chip"
-        },
+        class=if active { "breadcrumb-chip active" } else { "breadcrumb-chip" },
         title=empty_root_path(path),
         on_click=dispatch(OpenDirectory(path)),
         label,
@@ -154,9 +150,7 @@ fn render_desk_breadcrumb(
 
 ///|
 fn desk_breadcrumbs(directory : String) -> Array[(String, String, Bool)] {
-  let crumbs : Array[(String, String, Bool)] = [
-    ("root", "", directory == ""),
-  ]
+  let crumbs : Array[(String, String, Bool)] = [("root", "", directory == "")]
   if directory == "" {
     return crumbs
   }

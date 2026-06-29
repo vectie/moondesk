@@ -22,88 +22,85 @@ fn render_command_palette(
             "X",
           ),
         ]),
-        div(class="palette-list", [
-          palette_command(
-            dispatch,
-            "Browse Desk",
-            "Open the virtual filesystem for MoonBooks",
-            SelectWorkspaceMode(Desk),
-          ),
-          palette_command(
-            dispatch,
-            "Search Books",
-            "Find files across MoonBooks",
-            SelectActivity(Search),
-          ),
-          palette_command(
-            dispatch,
-            "Create Inbox Note",
-            "Stage a safe draft in inbox",
-            SelectActivity(Inbox),
-          ),
-          palette_command(
-            dispatch,
-            "Import URL",
-            "Open the inbox importer",
-            SelectActivity(Inbox),
-          ),
-          palette_command(
-            dispatch,
-            "Open MoonCode",
-            "Open a book-scoped MoonCode coding session",
-            SelectWorkspaceMode(MoonCode),
-          ),
-          palette_command(
-            dispatch,
-            "Submit to Town",
-            "Send selected context to Moontown",
-            SubmitRequest,
-          ),
-          palette_command(
-            dispatch,
-            "New Book Pattern",
-            "Publish a research-book from a registered source, analysis, and standing-watch pattern",
-            SelectActivity(Town),
-          ),
-          palette_command(
-            dispatch,
-            "Run Daemon Tick",
-            "Control one Moontown scheduler tick",
-            ControlDaemonTick,
-          ),
-          palette_command(
-            dispatch,
-            "Start Daemon",
-            "Start the managed Moontown daemon loop",
-            StartDaemon,
-          ),
-          palette_command(
-            dispatch,
-            "Enable Supervision",
-            "Restart the daemon when the policy says it should run",
-            EnableDaemonSupervision,
-          ),
-          palette_command(
-            dispatch,
-            "Stop Daemon",
-            "Stop the managed Moontown daemon loop",
-            StopDaemon,
-          ),
-          palette_command(
-            dispatch,
-            "Show Run Artifacts",
-            "Open MoonClaw run projection",
-            SelectActivity(Runs),
-          ),
-          palette_command(
-            dispatch,
-            "Daily Surface",
-            "Open operating summary",
-            SelectActivity(Settings),
-          ),
-        ]),
+        div(
+          class="palette-list",
+          palette_commands_for_mode(model.workspace_mode).map(command => {
+            let (title, detail, msg) = command
+            palette_command(dispatch, title, detail, msg)
+          }),
+        ),
       ]),
     ])
+  }
+}
+
+///|
+fn palette_commands_for_mode(
+  mode : WorkspaceMode,
+) -> Array[(String, String, Msg)] {
+  match mode {
+    Desk =>
+      [
+        (
+          "Browse Desk",
+          "Open the virtual filesystem for MoonBooks",
+          SelectWorkspaceMode(Desk),
+        ),
+        (
+          "Open in Wiki",
+          "Use the selected book context in MoonWiki",
+          SelectWorkspaceMode(MoonWiki),
+        ),
+        (
+          "Open MoonCode",
+          "Use the selected book context in MoonCode",
+          SelectWorkspaceMode(MoonCode),
+        ),
+      ]
+    MoonWiki | MoonCode =>
+      [
+        (
+          "Browse Desk",
+          "Open the virtual filesystem for MoonBooks",
+          SelectWorkspaceMode(Desk),
+        ),
+        ("Search Books", "Find files across MoonBooks", SelectActivity(Search)),
+        (
+          "Create Inbox Note",
+          "Stage a safe draft in inbox",
+          SelectActivity(Inbox),
+        ),
+        ("Import URL", "Open the inbox importer", SelectActivity(Inbox)),
+        (
+          "Open MoonCode",
+          "Open a book-scoped MoonCode coding session",
+          SelectWorkspaceMode(MoonCode),
+        ),
+        ("Submit to Town", "Send selected context to Moontown", SubmitRequest),
+        (
+          "New Book Pattern",
+          "Publish a research-book from a registered source, analysis, and standing-watch pattern",
+          SelectActivity(Town),
+        ),
+        (
+          "Run Daemon Tick",
+          "Control one Moontown scheduler tick",
+          ControlDaemonTick,
+        ),
+        ("Start Daemon", "Start the managed Moontown daemon loop", StartDaemon),
+        (
+          "Enable Supervision",
+          "Restart the daemon when the policy says it should run",
+          EnableDaemonSupervision,
+        ),
+        ("Stop Daemon", "Stop the managed Moontown daemon loop", StopDaemon),
+        (
+          "Show Run Artifacts",
+          "Open MoonClaw run projection",
+          SelectActivity(Runs),
+        ),
+        ("Daily Surface", "Open operating summary", SelectActivity(Settings)),
+      ]
   }
 }
 
