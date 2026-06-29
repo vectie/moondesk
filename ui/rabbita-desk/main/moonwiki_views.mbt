@@ -32,7 +32,12 @@ fn layer_label(layer : @desk.SourceLayer) -> String {
   match layer {
     Wiki => "wiki"
     RawEvidence => "raw"
+    Skill => "skill"
+    Schema => "schema"
+    Tool => "tool"
+    App => "app"
     GeneratedSite => "site"
+    PortableAppTool => "portable"
     BookOutput => "book"
     Review => "review"
     History => "history"

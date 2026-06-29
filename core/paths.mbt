@@ -60,23 +60,62 @@ pub fn renderer_for_kind(kind : EntryKind) -> PreviewRenderer {
 ///|
 pub fn infer_source_layer(path : StringView) -> SourceLayer {
   let path = path.to_owned()
-  if path.has_prefix("wiki/history/") || path.contains("/wiki/history/") {
+  if path == "wiki/history" ||
+    path.has_prefix("wiki/history/") ||
+    path.contains("/wiki/history/") {
     History
-  } else if path.has_prefix("wiki/") || path.contains("/wiki/") {
-    Wiki
-  } else if path.has_prefix("raw/") || path.contains("/raw/") {
-    RawEvidence
-  } else if path.has_prefix("reviews/") || path.contains("/reviews/") {
+  } else if path == "wiki/reviews" ||
+    path.has_prefix("wiki/reviews/") ||
+    path.contains("/wiki/reviews/") {
     Review
-  } else if path.contains("site/generated/") {
+  } else if path == "wiki" ||
+    path.has_prefix("wiki/") ||
+    path.contains("/wiki/") {
+    Wiki
+  } else if path == "raw" || path.has_prefix("raw/") || path.contains("/raw/") {
+    RawEvidence
+  } else if path == "skills" ||
+    path.has_prefix("skills/") ||
+    path.contains("/skills/") {
+    Skill
+  } else if path == "schemas" ||
+    path.has_prefix("schemas/") ||
+    path.contains("/schemas/") {
+    Schema
+  } else if path == "tools" ||
+    path.has_prefix("tools/") ||
+    path.contains("/tools/") {
+    Tool
+  } else if path == "apps" ||
+    path.has_prefix("apps/") ||
+    path.contains("/apps/") ||
+    path == "app" ||
+    path.has_prefix("app/") ||
+    path.contains("/app/") {
+    App
+  } else if path == "reviews" ||
+    path.has_prefix("reviews/") ||
+    path.contains("/reviews/") {
+    Review
+  } else if path == "portable/app-tool" ||
+    path.has_prefix("portable/app-tool/") ||
+    path.contains("/portable/app-tool/") {
+    PortableAppTool
+  } else if path == "site/generated" ||
+    path == "book/site/generated" ||
+    path.has_prefix("site/generated/") ||
+    path.has_prefix("book/site/generated/") ||
+    path.contains("/site/generated/") {
     GeneratedSite
   } else if path.has_prefix("book/") || path.contains("/book/") {
     BookOutput
-  } else if path.has_prefix("inbox/") || path.contains("/inbox/") {
+  } else if path == "inbox" ||
+    path.has_prefix("inbox/") ||
+    path.contains("/inbox/") {
     Inbox
   } else if path.contains("moonclaw") || path.contains(".moonclaw") {
     RunArtifact
-  } else if path.has_prefix(".moontown/") {
+  } else if path == ".moontown" || path.has_prefix(".moontown/") {
     Config
   } else {
     Workspace

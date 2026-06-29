@@ -28,7 +28,12 @@ pub(all) enum EntryKind {
 pub(all) enum SourceLayer {
   Wiki
   RawEvidence
+  Skill
+  Schema
+  Tool
+  App
   GeneratedSite
+  PortableAppTool
   BookOutput
   Review
   History
