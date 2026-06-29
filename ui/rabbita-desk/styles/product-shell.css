@@ -66,7 +66,7 @@ body {
 }
 
 .workspace-mode-toggle {
-  grid-template-columns: repeat(2, 82px);
+  grid-template-columns: repeat(3, 76px);
   order: -1;
   background: rgba(248, 227, 184, 0.72);
   border-color: rgba(180, 130, 58, 0.38);
@@ -133,6 +133,220 @@ body {
 
 .wiki-main {
   grid-template-columns: 52px minmax(220px, 290px) minmax(0, 1fr) minmax(230px, 300px);
+}
+
+.file-desk-main {
+  grid-template-columns: minmax(230px, 300px) minmax(0, 1fr) minmax(230px, 310px);
+  gap: 0;
+}
+
+.desk-sidebar,
+.desk-browser,
+.desk-details {
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--line);
+  background: var(--bg-panel);
+  overflow: auto;
+}
+
+.desk-details {
+  border-right: 0;
+  border-left: 1px solid var(--line);
+}
+
+.desk-workspace-list,
+.desk-file-rows,
+.desk-detail-panel {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.desk-workspace-row {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fffdf8;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.desk-workspace-row:hover,
+.desk-workspace-row.active {
+  border-color: rgba(62, 107, 91, 0.32);
+  background: #fffdfa;
+  box-shadow: 0 8px 22px rgba(33, 19, 13, 0.08);
+}
+
+.desk-workspace-kind {
+  width: max-content;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.desk-workspace-row strong,
+.desk-workspace-row small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-workspace-row small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.desk-browser {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.desk-browser-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 68px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.desk-browser-head h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.desk-breadcrumb {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.breadcrumb-chip {
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #fffdf8;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.breadcrumb-chip.active {
+  background: var(--ms-gold);
+  color: var(--ms-paper);
+}
+
+.breadcrumb-current {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-file-table {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.desk-file-row {
+  width: 100%;
+  min-width: 720px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1.5fr) minmax(92px, 0.6fr) minmax(90px, 0.55fr) minmax(160px, 0.9fr) minmax(80px, 0.45fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+button.desk-file-row {
+  cursor: pointer;
+}
+
+button.desk-file-row:hover,
+.desk-file-row.selected {
+  background: #fffdfa;
+}
+
+.desk-file-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 34px;
+  background: var(--bg-panel-strong);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.desk-file-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-file-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.desk-empty {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  color: var(--muted);
+}
+
+.desk-detail-panel {
+  gap: 12px;
+}
+
+.desk-detail-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.desk-detail-title h3 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-detail-actions {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
 }
 
 .wiki-shell {
@@ -387,7 +601,7 @@ body {
 
   .workspace-mode-toggle {
     width: 100%;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .title-copy,
@@ -397,6 +611,10 @@ body {
   }
 
   .wiki-main {
+    grid-template-columns: 1fr;
+  }
+
+  .file-desk-main {
     grid-template-columns: 1fr;
   }
 

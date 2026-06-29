@@ -6,12 +6,15 @@ fn update_navigation_actions(
 ) -> (@rabbita.Cmd, Model) {
   match msg {
     SelectWorkspaceMode(mode) => {
-      let activity = if mode == MoonCode {
-        Activity::MoonCode
-      } else if model.activity == MoonCode {
-        Explorer
-      } else {
-        model.activity
+      let activity = match mode {
+        Desk => Explorer
+        MoonCode => Activity::MoonCode
+        MoonWiki =>
+          if model.activity == MoonCode {
+            Explorer
+          } else {
+            model.activity
+          }
       }
       (
         sync_activity_cmd(activity),
@@ -46,18 +49,18 @@ fn update_navigation_actions(
     SelectWorkspace(workspace_id) =>
       (
         @rabbita.batch([
-          reload_workspace_cmds(dispatch, workspace_id, "wiki/index.md"),
+          reload_workspace_cmds(dispatch, workspace_id, ""),
           fetch_mooncode_sessions_cmd(dispatch, workspace_id),
         ]),
         {
           ..model,
           selected_workspace_id: workspace_id,
           selected_mooncode_session_id: "",
-          selected_path: "wiki/index.md",
+          selected_path: "",
           primary_preview_path: "wiki/index.md",
           current_directory: "",
           preview: None,
-          preview_status: "loading preview",
+          preview_status: "loading workspace",
           entries: [],
         },
       )
@@ -100,6 +103,7 @@ fn update_navigation_actions(
         ),
         {
           ..model,
+          workspace_mode: Desk,
           activity: Explorer,
           command_open: false,
           selected_workspace_id: workspace_id,

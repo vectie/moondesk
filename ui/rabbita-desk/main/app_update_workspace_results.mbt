@@ -14,7 +14,9 @@ fn update_workspace_results(
       } else {
         first_workspace_id(workspaces)
       }
-      let selected_path = if model.selected_path == "" {
+      let selected_path = if model.workspace_mode == Desk {
+        ""
+      } else if model.selected_path == "" {
         "wiki/index.md"
       } else {
         model.selected_path

@@ -25,6 +25,12 @@ fn render_command_palette(
         div(class="palette-list", [
           palette_command(
             dispatch,
+            "Browse Desk",
+            "Open the virtual filesystem for MoonBooks",
+            SelectWorkspaceMode(Desk),
+          ),
+          palette_command(
+            dispatch,
             "Search Books",
             "Find files across MoonBooks",
             SelectActivity(Search),
@@ -124,6 +130,12 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   let status = title_bar_status_label(raw_status)
   header(class="title-bar", [
     div(class="workspace-mode-toggle", [
+      button(
+        class=workspace_mode_button_class(model, Desk),
+        title="Switch to Desk mode",
+        on_click=dispatch(SelectWorkspaceMode(Desk)),
+        "Desk",
+      ),
       button(
         class=workspace_mode_button_class(model, MoonWiki),
         title="Switch to Wiki mode",

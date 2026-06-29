@@ -11,6 +11,7 @@ enum Activity {
 
 ///|
 enum WorkspaceMode {
+  Desk
   MoonWiki
   MoonCode
 } derive(Eq)

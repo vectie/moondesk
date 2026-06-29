@@ -10,7 +10,7 @@ fn init_model() -> Model {
     selected_workspace_id: "",
     current_directory: "",
     entries: [],
-    selected_path: "wiki/index.md",
+    selected_path: "",
     primary_preview_path: "wiki/index.md",
     preview: None,
     preview_status: "waiting for workspace",
