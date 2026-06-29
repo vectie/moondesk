@@ -12,6 +12,10 @@ Moondesk should feel like a focused desktop workbench:
 It should not look like the Wenyu Valley game viewport. The town viewport is a
 linked visualization, while Moondesk is the practical human workspace.
 
+See [Desk Mode Design](DESK_MODE_DESIGN.md) for the current product decision:
+Moondesk's primary mode is a read-only virtual filesystem desk, with MoonWiki
+and MoonCode as activities on the selected book/path context.
+
 ## Shell Layout
 
 ```text
@@ -30,16 +34,21 @@ linked visualization, while Moondesk is the practical human workspace.
 
 ### Workspace Mode Switcher
 
-The title bar exposes two first-class modes for the selected book:
+The title bar exposes three first-class modes for the selected book:
 
+- `Desk` is the Finder/File Explorer style virtual filesystem browser for
+  MoonBook projects, directories, files, and metadata. It is read-only in the
+  first implementation.
 - `MoonWiki` keeps the existing book/wiki workspace for files, previews,
   inbox, publishing, town status, and review.
 - `MoonCode` switches the same book into a coding/chat workspace with the
   session list, transcript, composer, runtime status, and code-oriented review
   panels.
 
-The switch is a product boundary, not a visual shortcut. MoonCode can later be
-extracted as a standalone component while Moondesk remains the native host.
+The switch is a product boundary, not a visual shortcut. Desk owns navigation
+context. MoonWiki and MoonCode operate on that selected context. MoonCode can
+later be extracted as a standalone component while Moondesk remains the native
+host.
 
 ### Activity Rail
 

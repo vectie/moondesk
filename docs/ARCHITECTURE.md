@@ -1,9 +1,11 @@
 # Moondesk Architecture
 
 See [Executable Book Architecture](EXECUTABLE_BOOK_ARCHITECTURE.md) for the
-canonical product boundary: MoonBook is the executable book, MoonWiki and
-MoonCode are two editing modes for the same book, MoonClaw owns execution, and
-Moontown coordinates books.
+canonical product boundary: MoonBook is the executable book, Moondesk is the
+desktop shell, MoonClaw owns execution, and Moontown coordinates books. See
+[Desk Mode Design](DESK_MODE_DESIGN.md) for the current UI decision: Desk is
+the read-only virtual filesystem mode, while MoonWiki and MoonCode are
+activities on the selected book/path context.
 
 ## Boundary
 
@@ -27,9 +29,12 @@ MoonClaw
   agent runtime, workers, tools, bounded execution, artifacts, logs
 ```
 
-Moondesk treats the selected book as a two-sided workspace:
+Moondesk treats the selected book as a desk-centered workspace:
 
 ```text
+Desk
+  browse MoonBooks, directories, files, source layers, and metadata
+
 MoonWiki
   read/edit/preview/publish/review durable book knowledge
 
