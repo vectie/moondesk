@@ -1,14 +1,14 @@
 ///|
 fn sync_activity_cmd(activity : Activity) -> @rabbita.Cmd {
-  @cmd.raw_effect(
+  @cmd.custom_cmd(
     _ => browser_set_activity(activity_slug(activity)),
-    kind=@cmd.after_render,
+    kind=AfterRender,
   )
 }
 
 ///|
 fn sync_shell_cmd(mode : WorkspaceMode, activity : Activity) -> @rabbita.Cmd {
-  @cmd.raw_effect(
+  @cmd.custom_cmd(
     _ => {
       browser_set_activity(
         if mode == Desk {
@@ -18,7 +18,7 @@ fn sync_shell_cmd(mode : WorkspaceMode, activity : Activity) -> @rabbita.Cmd {
         },
       )
     },
-    kind=@cmd.after_render,
+    kind=AfterRender,
   )
 }
 
@@ -156,10 +156,7 @@ extern "js" fn browser_take_dropped_import_files() -> String =
 
 ///|
 fn notify_cmd(title : String, body : String) -> @rabbita.Cmd {
-  @cmd.raw_effect(
-    _ => send_browser_notification(title, body),
-    kind=@cmd.after_render,
-  )
+  @cmd.custom_cmd(_ => send_browser_notification(title, body), kind=AfterRender)
 }
 
 ///|
