@@ -70,6 +70,60 @@ async test "workspace discovery only exposes town roots and moonbooks" {
 }
 
 ///|
+async test "workspace entries expose virtual filesystem metadata" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-entry-metadata-wbtest-" + @async.now().to_string(),
+  )
+  let wiki_root = @pathx.join(root, "wiki")
+  @fsx.make_directory(wiki_root, recursive=true, exists_ok=true)
+  @fsx.write_to_file(@pathx.join(wiki_root, "index.md"), "hello desk\n")
+  @fsx.make_directory(@pathx.join(wiki_root, "sources"), recursive=true)
+  let workspace = @desk.workspace(
+    id="book-demo",
+    name="Demo",
+    root_path=root,
+    kind=MoonBook,
+  )
+  let entries = list_workspace_entries(workspace, "wiki", wiki_root)
+  let index = find_test_entry(entries, "wiki/index.md")
+  match index {
+    Some(entry) => {
+      assert_true(entry.size_bytes is Some(11))
+      match entry.modified_at {
+        Some(value) => assert_true(value.contains("T"))
+        None => fail("missing modified_at")
+      }
+      assert_true(entry.readable)
+      assert_false(entry.writable)
+    }
+    None => fail("missing index.md entry")
+  }
+  let sources = find_test_entry(entries, "wiki/sources")
+  match sources {
+    Some(entry) => {
+      assert_true(entry.kind is Directory)
+      assert_true(entry.size_bytes is None)
+      assert_true(entry.modified_at is Some(_))
+    }
+    None => fail("missing sources directory entry")
+  }
+}
+
+///|
+fn find_test_entry(
+  entries : Array[@desk.DeskFileEntry],
+  path : String,
+) -> @desk.DeskFileEntry? {
+  for entry in entries {
+    if entry.path == path {
+      return Some(entry)
+    }
+  }
+  None
+}
+
+///|
 test "request body helpers handle optional strings" {
   let payload : Json = { "title": "Draft", "path": "inbox/draft.md" }
   assert_eq(json_string(payload, "title", default="Fallback"), "Draft")

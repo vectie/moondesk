@@ -11,6 +11,8 @@ import {
   "moonbitlang/core/string",
   "moonbitlang/x/crypto",
   "moonbitlang/x/sys",
+  "moonbitlang/x/time",
+  "vectie/moonlib/fsx" @moonlib/fsx,
   "vectie/moondesk/core" @desk,
   "vectie/moondesk/internal/fsx",
   "vectie/moondesk/internal/moonfiles",

@@ -70,32 +70,3 @@ async fn run_artifacts(
   ignore(workspace)
   artifacts
 }
-
-///|
-async fn list_workspace_entries(
-  workspace : @desk.DeskWorkspace,
-  relative : String,
-  absolute : String,
-) -> Array[@desk.DeskFileEntry] {
-  let entries : Array[@desk.DeskFileEntry] = []
-  for name in read_directory_names(absolute, include_hidden=true) {
-    if should_hide_file_entry(name) {
-      continue
-    }
-    let child_relative = if relative == "" {
-      name
-    } else {
-      relative + "/" + name
-    }
-    let child_absolute = @pathx.join(workspace.root_path, child_relative)
-    entries.push(
-      @desk.file_entry(
-        workspace_id=workspace.id,
-        path=child_relative,
-        is_directory=is_directory(child_absolute),
-        writable=is_writable_entry(child_relative),
-      ),
-    )
-  }
-  entries
-}

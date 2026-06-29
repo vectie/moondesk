@@ -27,13 +27,7 @@ async fn handle_workspace_entries(
         send_json(
           conn,
           method_,
-          [
-            @desk.file_entry(
-              workspace_id=workspace.id,
-              path=clean_relative,
-              writable=is_writable_entry(clean_relative),
-            ),
-          ].to_json(),
+          [workspace_file_entry(workspace, clean_relative, absolute)].to_json(),
         )
       } else {
         send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
@@ -67,19 +61,10 @@ async fn handle_workspace_preview(
           workspace, clean_relative, absolute,
         )
         let body = entries.map(entry => entry.path).join("\n")
-        let entry = @desk.file_entry(
-          workspace_id=workspace.id,
-          path=clean_relative,
-          is_directory=true,
-          writable=is_writable_entry(clean_relative),
-        )
+        let entry = workspace_file_entry(workspace, clean_relative, absolute)
         send_json(conn, method_, @desk.preview(entry, body~).to_json())
       } else if @fs.exists(absolute) {
-        let entry = @desk.file_entry(
-          workspace_id=workspace.id,
-          path=clean_relative,
-          writable=is_writable_entry(clean_relative),
-        )
+        let entry = workspace_file_entry(workspace, clean_relative, absolute)
         let body = if is_binary_preview(entry.kind) {
           "/api/workspaces/\{workspace.id}/raw?path=\{clean_relative}"
         } else {
