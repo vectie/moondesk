@@ -134,22 +134,45 @@ fn render_desk_breadcrumb(
   dispatch : Dispatch[Msg],
   directory : String,
 ) -> @rabbita.Html {
-  div(class="desk-breadcrumb", [
-    button(
-      class=if directory == "" {
-        "breadcrumb-chip active"
-      } else {
-        "breadcrumb-chip"
-      },
-      on_click=dispatch(OpenDirectory("")),
-      "root",
-    ),
-    if directory == "" {
-      span(class="breadcrumb-current", "/")
+  div(
+    class="desk-breadcrumb",
+    desk_breadcrumbs(directory).map(crumb => {
+      let (label, path, active) = crumb
+      button(
+        class=if active {
+          "breadcrumb-chip active"
+        } else {
+          "breadcrumb-chip"
+        },
+        title=empty_root_path(path),
+        on_click=dispatch(OpenDirectory(path)),
+        label,
+      )
+    }),
+  )
+}
+
+///|
+fn desk_breadcrumbs(directory : String) -> Array[(String, String, Bool)] {
+  let crumbs : Array[(String, String, Bool)] = [
+    ("root", "", directory == ""),
+  ]
+  if directory == "" {
+    return crumbs
+  }
+  let mut current = ""
+  for part in directory.split("/") {
+    if part == "" {
+      continue
+    }
+    current = if current == "" {
+      part.to_owned()
     } else {
-      span(class="breadcrumb-current", directory)
-    },
-  ])
+      current + "/" + part.to_owned()
+    }
+    crumbs.push((part.to_owned(), current, current == directory))
+  }
+  crumbs
 }
 
 ///|

@@ -86,13 +86,14 @@ fn update_navigation_actions(
           preview_status: "loading preview",
         },
       )
-    SelectSearchHit(workspace_id, path) =>
+    SelectSearchHit(workspace_id, path) => {
+      let directory = parent_path(path)
       (
         sync_shell_batch(
           Desk,
           Files,
           @rabbita.batch([
-            fetch_entries_cmd(dispatch, workspace_id, ""),
+            fetch_entries_cmd(dispatch, workspace_id, directory),
             fetch_preview_cmd(dispatch, workspace_id, path),
             fetch_runs_cmd(dispatch, workspace_id),
           ]),
@@ -109,11 +110,12 @@ fn update_navigation_actions(
           } else {
             path
           },
-          current_directory: "",
+          current_directory: directory,
           preview: None,
           preview_status: "loading search result",
         },
       )
+    }
     ToggleCommand =>
       (@rabbita.none, { ..model, command_open: !model.command_open })
     _ => (@rabbita.none, model)
