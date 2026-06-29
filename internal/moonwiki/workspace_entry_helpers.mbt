@@ -70,12 +70,10 @@ async fn list_moonbook_root_entries(
   let covered_roots : Array[String] = []
   for section in @moonbook.canonical_sections() {
     let section_absolute = @pathx.join(workspace.root_path, section.path)
-    if @fs.exists(section_absolute) {
-      entries.push(moonbook_section_entry(workspace, section, section_absolute))
-      let root = root_path_segment(section.path)
-      if !covered_roots.contains(root) {
-        covered_roots.push(root)
-      }
+    entries.push(moonbook_section_entry(workspace, section, section_absolute))
+    let root = root_path_segment(section.path)
+    if !covered_roots.contains(root) {
+      covered_roots.push(root)
     }
   }
   for name in read_directory_names(absolute, include_hidden=true) {
@@ -89,6 +87,24 @@ async fn list_moonbook_root_entries(
 }
 
 ///|
+fn moonbook_section_for_path(path : String) -> @moonbook.MoonBookSection? {
+  for section in @moonbook.canonical_sections() {
+    if section.path == path {
+      return Some(section)
+    }
+  }
+  None
+}
+
+///|
+fn is_virtual_moonbook_section(
+  workspace : @desk.DeskWorkspace,
+  path : String,
+) -> Bool {
+  workspace.kind is MoonBook && moonbook_section_for_path(path) is Some(_)
+}
+
+///|
 async fn moonbook_section_entry(
   workspace : @desk.DeskWorkspace,
   section : @moonbook.MoonBookSection,
@@ -99,11 +115,7 @@ async fn moonbook_section_entry(
     workspace_id=workspace.id,
     path=section.path,
     display_name=section.label,
-    kind=if is_directory {
-      Directory
-    } else {
-      @desk.infer_entry_kind(section.path)
-    },
+    kind=Directory,
     source_layer=section.layer,
     readable=true,
     writable=section.writable,

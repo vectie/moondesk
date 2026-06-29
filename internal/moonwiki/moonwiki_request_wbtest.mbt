@@ -140,6 +140,42 @@ async test "moonbook root entries project canonical virtual sections" {
 }
 
 ///|
+async test "moonbook root projects missing canonical sections as virtual directories" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-missing-virtual-root-wbtest-" + @async.now().to_string(),
+  )
+  @fsx.make_directory(root, recursive=true, exists_ok=true)
+  @fsx.write_to_file(@pathx.join(root, "book.json"), "{\"name\":\"Demo\"}\n")
+  let workspace = @desk.workspace(
+    id="book-demo",
+    name="Demo",
+    root_path=root,
+    kind=MoonBook,
+  )
+  let entries = list_workspace_entries(workspace, "", root)
+  match find_test_entry(entries, "skills") {
+    Some(entry) => {
+      assert_eq(entry.display_name, "Skills")
+      assert_true(entry.kind is Directory)
+      assert_true(entry.source_layer is Skill)
+      assert_true(entry.readable)
+      assert_false(entry.writable)
+      assert_true(entry.size_bytes is None)
+      assert_true(entry.modified_at is None)
+    }
+    None => fail("missing virtual skills section")
+  }
+  assert_true(find_test_entry(entries, "tools") is Some(_))
+  assert_true(find_test_entry(entries, "portable/app-tool") is Some(_))
+  assert_eq(
+    list_workspace_entries(workspace, "skills", @pathx.join(root, "skills")).length(),
+    0,
+  )
+  assert_true(is_virtual_moonbook_section(workspace, "skills"))
+}
+
+///|
 fn find_test_entry(
   entries : Array[@desk.DeskFileEntry],
   path : String,

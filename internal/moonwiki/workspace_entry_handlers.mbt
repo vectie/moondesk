@@ -29,6 +29,8 @@ async fn handle_workspace_entries(
           method_,
           [workspace_file_entry(workspace, clean_relative, absolute)].to_json(),
         )
+      } else if is_virtual_moonbook_section(workspace, clean_relative) {
+        send_json(conn, method_, ([] : Array[@desk.DeskFileEntry]).to_json())
       } else {
         send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
       }
@@ -81,6 +83,16 @@ async fn handle_workspace_preview(
           conn,
           method_,
           @desk.preview(entry, body~, warnings~).to_json(),
+        )
+      } else if moonbook_section_for_path(clean_relative) is Some(section) &&
+        workspace.kind is MoonBook {
+        let entry = moonbook_section_entry(workspace, section, absolute)
+        send_json(
+          conn,
+          method_,
+          @desk.preview(entry, body="", warnings=[
+            "Virtual MoonBook section has no files yet.",
+          ]).to_json(),
         )
       } else {
         send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
