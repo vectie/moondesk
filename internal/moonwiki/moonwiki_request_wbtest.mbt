@@ -111,6 +111,35 @@ async test "workspace entries expose virtual filesystem metadata" {
 }
 
 ///|
+async test "moonbook root entries project canonical virtual sections" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-virtual-root-wbtest-" + @async.now().to_string(),
+  )
+  @fsx.make_directory(@pathx.join(root, "wiki/history"), recursive=true)
+  @fsx.make_directory(@pathx.join(root, "raw"), recursive=true)
+  @fsx.make_directory(@pathx.join(root, "book/site/generated"), recursive=true)
+  @fsx.write_to_file(@pathx.join(root, "book.json"), "{\"name\":\"Demo\"}\n")
+  let workspace = @desk.workspace(
+    id="book-demo",
+    name="Demo",
+    root_path=root,
+    kind=MoonBook,
+  )
+  let entries = list_workspace_entries(workspace, "", root)
+  assert_eq(entries[0].path, "wiki")
+  assert_eq(entries[0].display_name, "Wiki")
+  assert_true(entries[0].source_layer is Wiki)
+  assert_eq(entries[1].path, "raw")
+  assert_eq(entries[1].display_name, "Raw Evidence")
+  assert_true(entries[1].source_layer is RawEvidence)
+  assert_true(find_test_entry(entries, "wiki/history") is Some(_))
+  assert_true(find_test_entry(entries, "book/site/generated") is Some(_))
+  assert_true(find_test_entry(entries, "book.json") is Some(_))
+  assert_true(find_test_entry(entries, "book") is None)
+}
+
+///|
 fn find_test_entry(
   entries : Array[@desk.DeskFileEntry],
   path : String,

@@ -40,9 +40,10 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 
 ## Product Surfaces
 
-### Explorer
+### Desk
 
 - discover configured roots and `.moontown/books/*`
+- project MoonBook-owned virtual filesystem sections before raw host folders
 - show `wiki/`, `raw/`, `skills/`, `schemas/`, `tools/`, `apps/`,
   `site/generated/`, `book/site/generated/`, and review/output paths
 - keep file operations scoped to the selected workspace

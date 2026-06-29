@@ -55,7 +55,7 @@ MoonCode
   standalone from the desktop shell.
 - `cmd/main/`: CLI entrypoint for serving, desktop launch, bundle, release, and
   LaunchAgent actions.
-- `ui/rabbita-desk/main/`: Rabbita UI package for Explorer, Search, Inbox,
+- `ui/rabbita-desk/main/`: Rabbita UI package for Desk, Files, Search, Inbox,
   MoonWiki, MoonCode, Town, Runs, and Settings surfaces.
 
 MoonCode is intentionally standalone. Moondesk renders the native shell and

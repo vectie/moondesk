@@ -33,7 +33,7 @@ Start here:
 
 Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
 
-- Workspace explorer, cross-book search, favorites, saved views, tags, recent
+- Desk virtual filesystem, cross-book search, favorites, saved views, tags, recent
   context, markdown/html/json/image previews, raw links, scoped Finder reveal,
   and inbox note/import staging.
 - Moontown request ledger, standing-watch creation, town messages, live

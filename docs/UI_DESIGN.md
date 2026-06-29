@@ -22,7 +22,7 @@ and MoonCode as activities on the selected book/path context.
 ┌────────────────────────────────────────────────────────────────────┐
 │ title bar / command palette / active workspace / sync status        │
 ├────┬──────────────────────┬──────────────────────────────┬─────────┤
-│rail│ explorer             │ editor / preview tabs         │inspector│
+│rail│ files                │ editor / preview tabs         │inspector│
 │    │ books/files/inbox    │ markdown/html/json/images     │MoonCode │
 │    │                      │ generated outputs             │metadata │
 ├────┴──────────────────────┴──────────────────────────────┴─────────┤
@@ -52,15 +52,14 @@ host.
 
 ### Activity Rail
 
-- Explorer
+- Files
 - Search
 - Inbox
-- MoonCode
 - Town
 - Runs
 - Settings
 
-### Explorer
+### Desk Files
 
 Book-first navigation:
 
@@ -78,7 +77,6 @@ Each book expands into:
 - Reviews
 - Generated Site
 - Journal
-- Course
 - MoonClaw Runs
 
 ### Preview Tabs
