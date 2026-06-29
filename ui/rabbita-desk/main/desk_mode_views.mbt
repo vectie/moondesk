@@ -45,6 +45,35 @@ fn render_desk_workspace_sidebar(
         )
       }),
     ),
+    render_desk_folder_outline(dispatch, model),
+  ])
+}
+
+///|
+fn render_desk_folder_outline(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="desk-folder-outline", [
+    div(class="pane-heading compact-heading", [
+      div([p(class="eyebrow", "folders"), h2("Directory")]),
+    ]),
+    div(
+      class="desk-folder-list",
+      desk_folder_outline(model.current_directory, model.entries).map(item => {
+        let (label, path, active, depth) = item
+        button(
+          class=desk_folder_outline_row_class(active, depth),
+          title=empty_root_path(path),
+          on_click=dispatch(OpenDirectory(path)),
+          [
+            span(class="folder-indent", ""),
+            span(class="tree-icon", "D"),
+            span(class="folder-label", label),
+          ],
+        )
+      }),
+    ),
   ])
 }
 
@@ -167,6 +196,67 @@ fn desk_breadcrumbs(directory : String) -> Array[(String, String, Bool)] {
     crumbs.push((part.to_owned(), current, current == directory))
   }
   crumbs
+}
+
+///|
+fn desk_folder_outline(
+  directory : String,
+  entries : Array[@desk.DeskFileEntry],
+) -> Array[(String, String, Bool, Int)] {
+  let items : Array[(String, String, Bool, Int)] = [
+    ("root", "", directory == "", 0),
+  ]
+  if directory != "" {
+    let mut current = ""
+    let mut depth = 1
+    for part in directory.split("/") {
+      if part == "" {
+        continue
+      }
+      current = if current == "" {
+        part.to_owned()
+      } else {
+        current + "/" + part.to_owned()
+      }
+      items.push((part.to_owned(), current, current == directory, depth))
+      depth += 1
+    }
+  }
+  for entry in entries {
+    if !(entry.kind is Directory) || entry.path == directory {
+      continue
+    }
+    if parent_path(entry.path) == directory {
+      items.push(
+        (
+          entry.display_name,
+          entry.path,
+          false,
+          desk_outline_child_depth(directory),
+        ),
+      )
+    }
+  }
+  items
+}
+
+///|
+fn desk_outline_child_depth(directory : String) -> Int {
+  if directory == "" {
+    1
+  } else {
+    directory.split("/").filter(part => part != "").length() + 1
+  }
+}
+
+///|
+fn desk_folder_outline_row_class(active : Bool, depth : Int) -> String {
+  let capped_depth = if depth > 4 { 4 } else { depth }
+  if active {
+    "desk-folder-row active depth-\{capped_depth}"
+  } else {
+    "desk-folder-row depth-\{capped_depth}"
+  }
 }
 
 ///|

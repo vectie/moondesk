@@ -205,6 +205,71 @@ body {
   font-size: 11px;
 }
 
+.desk-folder-outline {
+  border-top: 1px solid var(--line);
+}
+
+.compact-heading {
+  min-height: 48px;
+  padding-block: 10px;
+}
+
+.desk-folder-list {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px 12px;
+}
+
+.desk-folder-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 0 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  border: 0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.desk-folder-row:hover,
+.desk-folder-row.active {
+  background: #fffdfa;
+}
+
+.desk-folder-row.active {
+  color: var(--accent-strong);
+  font-weight: 650;
+}
+
+.desk-folder-row.depth-1 {
+  grid-template-columns: 12px 18px minmax(0, 1fr);
+}
+
+.desk-folder-row.depth-2 {
+  grid-template-columns: 24px 18px minmax(0, 1fr);
+}
+
+.desk-folder-row.depth-3 {
+  grid-template-columns: 36px 18px minmax(0, 1fr);
+}
+
+.desk-folder-row.depth-4 {
+  grid-template-columns: 48px 18px minmax(0, 1fr);
+}
+
+.folder-label {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .desk-browser {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);

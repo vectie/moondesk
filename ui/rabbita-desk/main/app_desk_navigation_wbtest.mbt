@@ -34,6 +34,48 @@ test "desk path helpers find containing directories" {
 }
 
 ///|
+test "desk folder outline includes root and current child directories" {
+  let outline = desk_folder_outline("", [
+    @desk.file_entry(workspace_id="book-demo", path="wiki", is_directory=true),
+    @desk.file_entry(workspace_id="book-demo", path="raw", is_directory=true),
+    @desk.file_entry(workspace_id="book-demo", path="book.json"),
+  ])
+  assert_eq(outline.length(), 3)
+  assert_eq(outline[0].0, "root")
+  assert_eq(outline[0].1, "")
+  assert_true(outline[0].2)
+  assert_eq(outline[1].0, "wiki")
+  assert_eq(outline[1].1, "wiki")
+  assert_false(outline[1].2)
+  assert_eq(outline[1].3, 1)
+  assert_eq(outline[2].0, "raw")
+  assert_eq(outline[2].1, "raw")
+}
+
+///|
+test "desk folder outline keeps ancestor chain for nested directory" {
+  let outline = desk_folder_outline("book/site", [
+    @desk.file_entry(
+      workspace_id="book-demo",
+      path="book/site/generated",
+      is_directory=true,
+    ),
+    @desk.file_entry(workspace_id="book-demo", path="book/site/index.html"),
+  ])
+  assert_eq(outline.length(), 4)
+  assert_eq(outline[0].1, "")
+  assert_eq(outline[1].1, "book")
+  assert_eq(outline[1].3, 1)
+  assert_false(outline[1].2)
+  assert_eq(outline[2].1, "book/site")
+  assert_eq(outline[2].3, 2)
+  assert_true(outline[2].2)
+  assert_eq(outline[3].1, "book/site/generated")
+  assert_eq(outline[3].3, 3)
+  assert_false(outline[3].2)
+}
+
+///|
 test "search hit focuses Desk on containing directory" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let (_, next) = update_navigation_actions(
