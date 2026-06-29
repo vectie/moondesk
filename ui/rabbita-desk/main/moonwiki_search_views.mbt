@@ -1,6 +1,6 @@
 ///|
 fn render_search_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  aside(class="explorer-pane", [
+  aside(class="activity-pane", [
     div(class="pane-heading", [
       div([p(class="eyebrow", "cross-book"), h2("Search")]),
       button(

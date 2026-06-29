@@ -1,6 +1,6 @@
 ///|
 fn render_inbox_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  aside(class="explorer-pane", [
+  aside(class="activity-pane", [
     div(class="pane-heading", [
       div([p(class="eyebrow", "safe writes"), h2("Inbox")]),
       button(

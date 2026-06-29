@@ -1,6 +1,6 @@
 ///|
 fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  aside(class="explorer-pane", [
+  aside(class="activity-pane", [
     div(class="pane-heading", [
       div([p(class="eyebrow", "moontown"), h2("Requests")]),
       div(class="toolbar-actions", [

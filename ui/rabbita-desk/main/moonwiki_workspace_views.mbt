@@ -1,6 +1,6 @@
 ///|
 fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  aside(class="explorer-pane", [
+  aside(class="activity-pane", [
     div(class="pane-heading", [
       div([p(class="eyebrow", "MoonWiki"), h2("MoonBooks")]),
       button(
@@ -11,7 +11,7 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       ),
     ]),
     render_workspace_card(dispatch, model),
-    div(class="explorer-section-tabs", [
+    div(class="activity-section-tabs", [
       button(
         class=if model.current_directory == "" {
           "section-pill active"

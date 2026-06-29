@@ -3,7 +3,7 @@ fn render_mooncode_pane(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  aside(class="explorer-pane mooncode-rail", [
+  aside(class="activity-pane mooncode-rail", [
     div(class="pane-heading", [
       div([
         p(class="eyebrow", "MoonCode"),

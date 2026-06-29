@@ -517,7 +517,7 @@ button.desk-file-row:hover,
   padding-inline: 10px;
 }
 
-.wiki-main .explorer-section-tabs {
+.wiki-main .activity-section-tabs {
   gap: 6px;
   padding: 0 12px 12px;
 }
@@ -649,7 +649,7 @@ button.desk-file-row:hover,
     overflow-x: hidden;
   }
 
-  .explorer-pane,
+  .activity-pane,
   .inspector-pane,
   .preview-center {
     min-height: 320px;

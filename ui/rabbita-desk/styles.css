@@ -262,7 +262,7 @@ button {
   clip: rect(0, 0, 0, 0);
 }
 
-.explorer-pane,
+.activity-pane,
 .inspector-pane {
   min-width: 0;
   overflow: auto;
@@ -385,7 +385,7 @@ button {
   color: var(--ink);
 }
 
-.explorer-section-tabs {
+.activity-section-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -2237,7 +2237,7 @@ button {
     display: none;
   }
 
-  .explorer-pane,
+  .activity-pane,
   .inspector-pane,
   .preview-center {
     min-height: 360px;

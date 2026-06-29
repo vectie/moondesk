@@ -1,6 +1,6 @@
 ///|
 fn render_runs_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  aside(class="explorer-pane", [
+  aside(class="activity-pane", [
     div(class="pane-heading", [
       div([p(class="eyebrow", "moonclaw"), h2("Runs")]),
       button(

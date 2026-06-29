@@ -72,7 +72,10 @@ fn renderer_label(renderer : @desk.PreviewRenderer) -> String {
 }
 
 ///|
-fn render_explorer(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+fn render_activity_pane(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
   match model.activity {
     Search => render_search_pane(dispatch, model)
     Inbox => render_inbox_pane(dispatch, model)

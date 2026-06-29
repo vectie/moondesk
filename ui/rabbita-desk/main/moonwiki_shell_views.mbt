@@ -32,7 +32,7 @@ fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         } else {
           div(class="desk-main wiki-main", [
             render_activity_rail(dispatch, model),
-            render_explorer(dispatch, model),
+            render_activity_pane(dispatch, model),
             render_preview_center(dispatch, model),
           ])
         },
