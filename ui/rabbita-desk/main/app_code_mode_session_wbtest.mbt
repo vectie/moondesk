@@ -521,6 +521,59 @@ test "code mode activity rows hide raw runtime controls" {
 }
 
 ///|
+test "code mode activity rows hide raw runtime step updates" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Keep protocol out of the chat",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "runtime-step",
+        title="Runtime step",
+        lane="runtime",
+        kind="runtime_step",
+        status="running",
+        detail="{\"internal\":\"protocol\"}",
+      ),
+      code_mode_test_event(
+        "runtime-update",
+        title="Runtime update",
+        lane="runtime",
+        kind="runtime_update",
+        status="running",
+        detail="{\"queue\":\"poll\"}",
+      ),
+      code_mode_test_event(
+        "selected",
+        title="Runtime update",
+        lane="runtime",
+        kind="runtime_update",
+        status="running",
+        detail="model-tool-calls selected 1 tool call",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  let rows : Array[MoonCodeActivityRow] = []
+  for item in items {
+    match item.activity {
+      Some(row) => rows.push(row)
+      None => ()
+    }
+  }
+  assert_eq(rows.length(), 1)
+  assert_eq(rows[0].label, "Thinking")
+  assert_eq(rows[0].title, "Selected next action")
+  assert_eq(rows[0].detail, "Selected the next action.")
+}
+
+///|
 test "code mode transcript items keep messages and thinking in event order" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),

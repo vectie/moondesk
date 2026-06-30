@@ -195,6 +195,11 @@ fn mooncode_activity_is_control_bookkeeping(event : MoonCodeEvent) -> Bool {
   event.kind == "runtime.turn_finished" ||
   event.kind == "runtime.service_started" ||
   event.kind == "runtime.service_finished" ||
+  event.kind == "runtime_step" ||
+  (
+    event.kind == "runtime_update" &&
+    !mooncode_activity_is_reasoning(event)
+  ) ||
   event.kind == "runtime_loop" ||
   event.kind == "usage"
 }
