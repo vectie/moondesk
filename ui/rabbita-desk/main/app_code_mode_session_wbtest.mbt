@@ -2588,6 +2588,7 @@ test "code mode stream parser preserves package object tool results" {
       match items[3].activity {
         Some(row) => {
           assert_eq(row.label, "Completed")
+          assert_eq(row.title, "Reading file")
           assert_eq(row.detail, "Read 4 line(s) from src/main.mbt.")
         }
         None => fail("expected summarized tool result")
@@ -2673,9 +2674,13 @@ test "code mode activity rows summarize package structured tool results" {
     }
   }
   assert_eq(rows.length(), 4)
+  assert_eq(rows[0].title, "Reading file")
   assert_eq(rows[0].detail, "Read 12 line(s) from src/main.mbt.")
+  assert_eq(rows[1].title, "Editing file")
   assert_eq(rows[1].detail, "Updated src/main.mbt (+4 -2).")
+  assert_eq(rows[2].title, "Searching web")
   assert_eq(rows[2].detail, "Found 2 web result(s) for moonbit docs.")
+  assert_eq(rows[3].title, "Running command")
   assert_eq(rows[3].detail, "Total tests: 445, passed: 445, failed: 0.")
 }
 

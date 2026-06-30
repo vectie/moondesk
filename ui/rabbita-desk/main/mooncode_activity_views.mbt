@@ -687,6 +687,18 @@ fn mooncode_activity_tool_name(event : MoonCodeEvent) -> String {
   if tool != "" {
     return tool
   }
+  match event.tool_result {
+    Some(result) => {
+      let result_tool = mooncode_activity_first_json_string(
+        result,
+        ["tool", "tool_name", "name"],
+      )
+      if result_tool != "" {
+        return result_tool
+      }
+    }
+    None => ()
+  }
   match json_field(detail, "tool_call") {
     Some(Object(_)) => {
       let tool_call = mooncode_activity_json_object_field_or_empty(
