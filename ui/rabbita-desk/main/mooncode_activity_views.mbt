@@ -66,6 +66,15 @@ fn mooncode_activity_row_from_event(
       status=event.status,
     ))
   }
+  if mooncode_activity_is_runtime_proof(event) {
+    return Some(mooncode_activity_row(
+      tone=mooncode_activity_runtime_proof_tone(event),
+      label=mooncode_activity_runtime_proof_label(event),
+      title=mooncode_activity_runtime_proof_title(event),
+      detail=mooncode_activity_runtime_proof_detail(event),
+      status=event.status,
+    ))
+  }
   if mooncode_activity_is_edit(event) {
     return Some(mooncode_activity_row(
       tone="edit",
@@ -176,6 +185,15 @@ fn mooncode_activity_is_test(event : MoonCodeEvent) -> Bool {
   event.kind == "moon_cmd" ||
   event.title.contains("test") ||
   event.title.contains("check")
+}
+
+///|
+fn mooncode_activity_is_runtime_proof(event : MoonCodeEvent) -> Bool {
+  event.kind == "runtime.package_verified" ||
+  event.kind == "runtime.package_built" ||
+  event.kind == "runtime.commit_created" ||
+  event.kind == "runtime.patch_applied" ||
+  event.kind == "runtime.patch_reverted"
 }
 
 ///|
@@ -623,6 +641,56 @@ fn mooncode_activity_json_bool_value(
   match json_field(json, key) {
     Some(value) => @json.from_json(value) catch { _ => default }
     None => default
+  }
+}
+
+///|
+fn mooncode_activity_runtime_proof_tone(event : MoonCodeEvent) -> String {
+  if event.status == "failed" {
+    "failed"
+  } else if event.kind == "runtime.patch_applied" ||
+    event.kind == "runtime.patch_reverted" {
+    "edit"
+  } else {
+    "tool"
+  }
+}
+
+///|
+fn mooncode_activity_runtime_proof_label(event : MoonCodeEvent) -> String {
+  if event.status == "failed" {
+    "Failed"
+  } else {
+    match event.kind {
+      "runtime.package_verified" | "runtime.package_built" => "Packaged"
+      "runtime.commit_created" => "Committed"
+      "runtime.patch_applied" | "runtime.patch_reverted" => "Edited"
+      _ => "Completed"
+    }
+  }
+}
+
+///|
+fn mooncode_activity_runtime_proof_title(event : MoonCodeEvent) -> String {
+  match event.kind {
+    "runtime.package_verified" => "Package verified"
+    "runtime.package_built" => "Package built"
+    "runtime.commit_created" => "Commit created"
+    "runtime.patch_applied" => "Patch applied"
+    "runtime.patch_reverted" => "Patch reverted"
+    _ => mooncode_activity_title(event, "Completed step")
+  }
+}
+
+///|
+fn mooncode_activity_runtime_proof_detail(event : MoonCodeEvent) -> String {
+  let detail = event.detail.trim().to_owned()
+  if detail != "" && !detail.has_prefix("{") {
+    detail
+  } else if event.path != "" {
+    event.path
+  } else {
+    ""
   }
 }
 

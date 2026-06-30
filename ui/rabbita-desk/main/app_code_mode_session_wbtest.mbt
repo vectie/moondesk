@@ -574,6 +574,70 @@ test "code mode activity rows hide raw runtime step updates" {
 }
 
 ///|
+test "code mode activity rows render runtime proof events as friendly progress" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Package and commit the work",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "package",
+        title="Package verified by runtime",
+        lane="artifact",
+        kind="runtime.package_verified",
+        status="verified",
+        detail="{\"proof\":\"raw\"}",
+        path="portable/app-tool/mooncode/session-a/index.json",
+        command="package",
+      ),
+      code_mode_test_event(
+        "commit",
+        title="Commit created by runtime",
+        lane="review",
+        kind="runtime.commit_created",
+        status="done",
+        detail="abc1234",
+        command="commit",
+      ),
+      code_mode_test_event(
+        "patch",
+        title="Patch applied by runtime",
+        lane="review",
+        kind="runtime.patch_applied",
+        status="done",
+        detail="applied cleanly",
+        path="wiki/index.md",
+        command="apply_patch",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  let rows : Array[MoonCodeActivityRow] = []
+  for item in items {
+    match item.activity {
+      Some(row) => rows.push(row)
+      None => ()
+    }
+  }
+  assert_eq(rows.length(), 3)
+  assert_eq(rows[0].label, "Packaged")
+  assert_eq(rows[0].title, "Package verified")
+  assert_eq(rows[0].detail, "portable/app-tool/mooncode/session-a/index.json")
+  assert_eq(rows[1].label, "Committed")
+  assert_eq(rows[1].title, "Commit created")
+  assert_eq(rows[1].detail, "abc1234")
+  assert_eq(rows[2].label, "Edited")
+  assert_eq(rows[2].title, "Patch applied")
+  assert_eq(rows[2].detail, "applied cleanly")
+}
+
+///|
 test "code mode transcript items keep messages and thinking in event order" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),
