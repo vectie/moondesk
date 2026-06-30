@@ -56,22 +56,11 @@ extern "js" fn browser_set_activity(slug : String) =
 
 ///|
 fn main {
-  let (dispatch, cell) = @rabbita.cell_with_emit(model=init_model(), update~, view=(
-    dispatch,
-    model,
-  ) => render_app(dispatch, model))
-  @rabbita.new(cell)
-  ..with_init(
-    @rabbita.batch([
-      fetch_workspaces_cmd(dispatch),
-      fetch_moonclaw_daemon_cmd(dispatch),
-      fetch_moonclaw_models_cmd(dispatch),
-      fetch_mooncode_sessions_cmd(dispatch, ""),
-      fetch_book_base_types_cmd(dispatch),
-      fetch_book_patterns_cmd(dispatch),
-      schedule_mooncode_poll(dispatch),
-      schedule_import_drop_poll(dispatch),
-    ]),
+  let (_, cell) = @rabbita.cell_with_emit(
+    model=init_model(),
+    update~,
+    view=(dispatch, model) => render_app(dispatch, model),
+    subscriptions=app_subscriptions,
   )
-  .mount("app")
+  @rabbita.new(cell).mount("app")
 }

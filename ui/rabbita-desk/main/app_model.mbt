@@ -1,5 +1,6 @@
 ///|
 struct Model {
+  bootstrapped : Bool
   workspace_mode : WorkspaceMode
   activity : Activity
   command_open : Bool
@@ -80,6 +81,7 @@ struct Model {
 
 ///|
 enum Msg {
+  Bootstrap
   LoadedWorkspaces(Result[Array[@desk.DeskWorkspace], String])
   LoadedEntries(Result[Array[@desk.DeskFileEntry], String])
   LoadedPreview(Result[@desk.DeskPreview, String])

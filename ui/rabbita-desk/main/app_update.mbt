@@ -5,6 +5,7 @@ fn update(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
+    Bootstrap => bootstrap_action(dispatch, model)
     LoadedWorkspaces(_) => update_app_results(dispatch, msg, model)
     LoadedEntries(_) => update_app_results(dispatch, msg, model)
     LoadedPreview(_) => update_app_results(dispatch, msg, model)

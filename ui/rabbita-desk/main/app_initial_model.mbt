@@ -1,6 +1,7 @@
 ///|
 fn init_model() -> Model {
   {
+    bootstrapped: false,
     workspace_mode: initial_workspace_mode(),
     activity: initial_activity(),
     command_open: false,
