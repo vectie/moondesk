@@ -35,6 +35,10 @@ test "infer executable book source layers" {
     @core.infer_source_layer("portable/app-tool/demo/index.html")
     is PortableAppTool,
   )
+  assert_true(
+    @core.infer_source_layer("portable/app-tool/app/index.html")
+    is PortableAppTool,
+  )
   assert_true(@core.infer_source_layer("site/generated") is GeneratedSite)
   assert_true(@core.infer_source_layer("book/site/generated") is GeneratedSite)
 }

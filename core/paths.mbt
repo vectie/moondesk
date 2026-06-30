@@ -86,6 +86,10 @@ pub fn infer_source_layer(path : StringView) -> SourceLayer {
     path.has_prefix("tools/") ||
     path.contains("/tools/") {
     Tool
+  } else if path == "portable/app-tool" ||
+    path.has_prefix("portable/app-tool/") ||
+    path.contains("/portable/app-tool/") {
+    PortableAppTool
   } else if path == "apps" ||
     path.has_prefix("apps/") ||
     path.contains("/apps/") ||
@@ -97,10 +101,6 @@ pub fn infer_source_layer(path : StringView) -> SourceLayer {
     path.has_prefix("reviews/") ||
     path.contains("/reviews/") {
     Review
-  } else if path == "portable/app-tool" ||
-    path.has_prefix("portable/app-tool/") ||
-    path.contains("/portable/app-tool/") {
-    PortableAppTool
   } else if path == "site/generated" ||
     path == "book/site/generated" ||
     path.has_prefix("site/generated/") ||
