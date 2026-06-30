@@ -16,6 +16,38 @@ fn update_workspace_surface_actions(
     SetViewTitle(title) => (@rabbita.none, { ..model, view_title: title })
     SaveCurrentView =>
       (save_view_cmd(dispatch, model), { ..model, host_status: "saving view" })
+    StartMarkdownEdit => start_markdown_edit_action(model)
+    SetMarkdownEditorContent(content) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          markdown_editor_content: content,
+          markdown_editor_status: "editing \{model.markdown_editor_path}",
+        },
+      )
+    CancelMarkdownEdit =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          markdown_editor_path: "",
+          markdown_editor_content: "",
+          markdown_editor_status: "editor idle",
+        },
+      )
+    SaveMarkdownEdit =>
+      if model.markdown_editor_path == "" {
+        (
+          @rabbita.none,
+          { ..model, markdown_editor_status: "no markdown document selected" },
+        )
+      } else {
+        (
+          save_markdown_cmd(dispatch, model),
+          { ..model, markdown_editor_status: "saving markdown" },
+        )
+      }
     NotifyDaily =>
       (
         notify_cmd(
@@ -27,6 +59,33 @@ fn update_workspace_surface_actions(
     RefreshAll =>
       (refresh_all_cmd(dispatch, model), { ..model, host_status: "refreshing" })
     _ => (@rabbita.none, model)
+  }
+}
+
+///|
+fn start_markdown_edit_action(model : Model) -> (@rabbita.Cmd, Model) {
+  if !can_edit_markdown_selection(model) {
+    (
+      @rabbita.none,
+      {
+        ..model,
+        markdown_editor_status: "select a wiki or inbox markdown document",
+      },
+    )
+  } else {
+    let content = match model.preview {
+      Some(preview) if preview.renderer is Markdown => preview.body
+      _ => ""
+    }
+    (
+      @rabbita.none,
+      {
+        ..model,
+        markdown_editor_path: model.selected_path,
+        markdown_editor_content: content,
+        markdown_editor_status: "editing \{model.selected_path}",
+      },
+    )
   }
 }
 

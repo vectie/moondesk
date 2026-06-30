@@ -1152,6 +1152,34 @@ button {
   padding: 22px;
 }
 
+.markdown-edit-surface {
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+.markdown-editor {
+  width: 100%;
+  min-height: 520px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  background: var(--bg-panel);
+  color: var(--ink);
+  font-family: SF Mono, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  outline: 0;
+  resize: vertical;
+  tab-size: 2;
+}
+
+.markdown-editor:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(77, 182, 198, 0.16);
+}
+
 .mooncode-session-list {
   display: grid;
   gap: 8px;

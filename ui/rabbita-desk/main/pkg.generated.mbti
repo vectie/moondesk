@@ -36,6 +36,8 @@ type LaunchAgentResult derive(@json.FromJson)
 
 type LocalImportFile derive(@json.FromJson)
 
+type MarkdownEditResult derive(@json.FromJson)
+
 type Model
 
 type MoonClawDaemonStatus derive(@json.FromJson)

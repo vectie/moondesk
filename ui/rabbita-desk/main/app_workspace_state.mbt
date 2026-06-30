@@ -95,6 +95,29 @@ fn is_textual_renderer(renderer : @desk.PreviewRenderer) -> Bool {
 }
 
 ///|
+fn can_edit_markdown_selection(model : Model) -> Bool {
+  model.selected_workspace_id != "" &&
+  model.preview is Some({ renderer: Markdown, .. }) &&
+  is_editable_moonwiki_markdown_path(model.selected_path)
+}
+
+///|
+fn is_editable_moonwiki_markdown_path(path : String) -> Bool {
+  (path.has_prefix("wiki/") || path.has_prefix("inbox/")) &&
+  (
+    path.has_suffix(".md") ||
+    path.has_suffix(".markdown") ||
+    path.has_suffix(".mbt.md")
+  )
+}
+
+///|
+fn markdown_editor_active(model : Model) -> Bool {
+  model.markdown_editor_path != "" &&
+  model.markdown_editor_path == model.selected_path
+}
+
+///|
 fn remember_path(paths : Array[String], path : String) -> Array[String] {
   if path == "" {
     return paths

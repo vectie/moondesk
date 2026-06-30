@@ -84,6 +84,29 @@ fn update_workspace_results(
         { ..model, host_status: "saved view \{view.title}" },
       )
     SavedView(Err(error)) => (@rabbita.none, { ..model, host_status: error })
+    SavedMarkdownEdit(Ok(result)) =>
+      (
+        @rabbita.batch([
+          fetch_preview_cmd(dispatch, result.workspace_id, result.path),
+          fetch_entries_cmd(dispatch, result.workspace_id, parent_path(result.path)),
+        ]),
+        {
+          ..model,
+          selected_workspace_id: result.workspace_id,
+          selected_path: result.path,
+          current_directory: parent_path(result.path),
+          markdown_editor_path: "",
+          markdown_editor_content: "",
+          markdown_editor_status: "saved \{result.path}",
+          preview: None,
+          preview_status: "loading saved markdown",
+        },
+      )
+    SavedMarkdownEdit(Err(error)) =>
+      (
+        @rabbita.none,
+        { ..model, markdown_editor_status: error, preview_status: error },
+      )
     _ => (@rabbita.none, model)
   }
 }

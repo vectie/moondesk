@@ -18,6 +18,23 @@ fn save_inbox_cmd(
 }
 
 ///|
+fn save_markdown_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
+  let body : Json = {
+    "path": model.markdown_editor_path,
+    "content": model.markdown_editor_content,
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/markdown")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      SavedMarkdownEdit(
+        http_result(result, "Could not save markdown document"),
+      ),
+    )
+  })
+}
+
+///|
 fn import_url_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   let url = model.import_url.trim().to_owned()
   let title = if url == "" { "Imported URL" } else { url }

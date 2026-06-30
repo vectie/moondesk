@@ -64,12 +64,14 @@ Done:
 - MoonBook discovery under `.moontown/books`
 - file tree, search, previews, raw file serving
 - inbox notes and scoped imports
+- scoped Markdown editing for `wiki/` and `inbox/` files
 - review queues and diffs
 - generated site/app-tool preview links
 
 Still needed:
 
-- stronger markdown editing ergonomics
+- richer Markdown editing ergonomics for history, shortcuts, and side-by-side
+  review
 - richer review queue filters
 - cleaner generated-site publish receipts
 

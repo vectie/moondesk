@@ -268,6 +268,62 @@ test "request body helpers handle optional strings" {
 }
 
 ///|
+async test "workspace markdown edits stay scoped to wiki and inbox markdown" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-markdown-edit-wbtest-" + @async.now().to_string(),
+  )
+  @fsx.make_directory(@pathx.join(root, "wiki"), recursive=true)
+  let workspace = @desk.workspace(
+    id="book-demo",
+    name="Demo",
+    root_path=root,
+    kind=MoonBook,
+  )
+  match write_workspace_markdown(workspace, "wiki/index.md", "# Updated\n") {
+    Ok(path) => assert_eq(path, "wiki/index.md")
+    Err(message) => fail(message)
+  }
+  assert_eq(
+    @fs.read_file(@pathx.join(root, "wiki/index.md")).text(),
+    "# Updated\n",
+  )
+  match write_workspace_markdown(workspace, "inbox/draft.markdown", "Draft\n") {
+    Ok(path) => assert_eq(path, "inbox/draft.markdown")
+    Err(message) => fail(message)
+  }
+  assert_eq(
+    @fs.read_file(@pathx.join(root, "inbox/draft.markdown")).text(),
+    "Draft\n",
+  )
+}
+
+///|
+async test "workspace markdown edits reject raw and non markdown paths" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-markdown-edit-reject-wbtest-" + @async.now().to_string(),
+  )
+  @fsx.make_directory(@pathx.join(root, "raw"), recursive=true)
+  let workspace = @desk.workspace(
+    id="book-demo",
+    name="Demo",
+    root_path=root,
+    kind=MoonBook,
+  )
+  match write_workspace_markdown(workspace, "raw/source.md", "no\n") {
+    Ok(_) => fail("raw markdown should not be writable through MoonWiki edit")
+    Err(message) => assert_true(message.contains("wiki/*.md"))
+  }
+  match write_workspace_markdown(workspace, "wiki/config.json", "{}\n") {
+    Ok(_) => fail("json should not be writable through MoonWiki edit")
+    Err(message) => assert_true(message.contains("wiki/*.md"))
+  }
+  assert_false(@fs.exists(@pathx.join(root, "raw/source.md")))
+  assert_false(@fs.exists(@pathx.join(root, "wiki/config.json")))
+}
+
+///|
 test "moondesk health payload exposes readiness contract" {
   assert_eq(moondesk_health_path(), "/__moondesk_health")
   let health = moondesk_health_json("ui/rabbita-desk/dist", "../books")

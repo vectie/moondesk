@@ -14,6 +14,9 @@ struct Model {
   primary_preview_path : String
   preview : @desk.DeskPreview?
   preview_status : String
+  markdown_editor_path : String
+  markdown_editor_content : String
+  markdown_editor_status : String
   request_prompt : String
   request_status : String
   requests : Array[RequestRecord]
@@ -99,6 +102,7 @@ enum Msg {
   LoadedBookBaseTypes(Result[Array[BookBaseTypeRecord], String])
   LoadedBookPatterns(Result[Array[BookPatternRecord], String])
   SavedInbox(Result[InboxCreated, String])
+  SavedMarkdownEdit(Result[MarkdownEditResult, String])
   ImportedInbox(Result[InboxImportResult, String])
   SavedView(Result[SavedViewRecord, String])
   SubmittedRequest(Result[RequestRecord, String])
@@ -178,6 +182,10 @@ enum Msg {
   PollDroppedImports
   LoadSelectionIntoInbox
   SaveInboxNote
+  StartMarkdownEdit
+  SetMarkdownEditorContent(String)
+  CancelMarkdownEdit
+  SaveMarkdownEdit
   StageSelectedLink
   SetSearchQuery(String)
   SearchNow

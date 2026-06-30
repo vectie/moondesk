@@ -76,7 +76,13 @@ fn render_tabs(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 }
 
 ///|
-fn render_preview_body(model : Model) -> @rabbita.Html {
+fn render_preview_body(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  if markdown_editor_active(model) {
+    return render_markdown_editor(dispatch, model)
+  }
   match model.preview {
     None =>
       div(class="markdown-preview", [
@@ -128,6 +134,26 @@ fn render_preview_body(model : Model) -> @rabbita.Html {
           ])
       }
   }
+}
+
+///|
+fn render_markdown_editor(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(class="markdown-edit-surface", [
+    div(class="site-toolbar", [
+      span(model.markdown_editor_path),
+      span(class="record-kind", model.markdown_editor_status),
+    ]),
+    textarea(
+      class="markdown-editor",
+      rows=28,
+      value=model.markdown_editor_content,
+      on_input=fn(value) { dispatch(SetMarkdownEditorContent(value)) },
+      "",
+    ),
+  ])
 }
 
 ///|
@@ -197,6 +223,30 @@ fn render_preview_center(
           rel="noreferrer",
           "Open Raw",
         ),
+        if markdown_editor_active(model) {
+          button(
+            class="primary-button",
+            on_click=dispatch(SaveMarkdownEdit),
+            "Save",
+          )
+        } else if can_edit_markdown_selection(model) {
+          button(
+            class="secondary-button",
+            on_click=dispatch(StartMarkdownEdit),
+            "Edit",
+          )
+        } else {
+          @html.nothing
+        },
+        if markdown_editor_active(model) {
+          button(
+            class="secondary-button",
+            on_click=dispatch(CancelMarkdownEdit),
+            "Cancel",
+          )
+        } else {
+          @html.nothing
+        },
         button(
           class="secondary-button",
           on_click=dispatch(RevealSelection),
@@ -209,6 +259,6 @@ fn render_preview_center(
         ),
       ]),
     ]),
-    section(class="preview-surface", [render_preview_body(model)]),
+    section(class="preview-surface", [render_preview_body(dispatch, model)]),
   ])
 }

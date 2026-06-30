@@ -6,6 +6,12 @@ struct InboxCreated {
 } derive(FromJson)
 
 ///|
+struct MarkdownEditResult {
+  workspace_id : String
+  path : String
+} derive(FromJson)
+
+///|
 struct InboxImportResult {
   ok : Bool
   workspace_id : String

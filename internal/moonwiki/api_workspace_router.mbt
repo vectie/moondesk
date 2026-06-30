@@ -94,6 +94,16 @@ async fn route_workspace_api(
       }
       true
     }
+    ["api", "workspaces", workspace_id, "markdown"] => {
+      if method_ is Post {
+        handle_workspace_markdown(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_method_not_allowed(conn, method_)
+      }
+      true
+    }
     ["api", "workspaces", workspace_id, "import"] => {
       if method_ is Post {
         handle_workspace_import(
