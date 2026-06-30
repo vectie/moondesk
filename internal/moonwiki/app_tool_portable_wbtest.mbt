@@ -487,7 +487,7 @@ async test "app tool portable export keeps unsupported api routes as warnings" {
   )
   @fsx.write_to_file(
     @pathx.join(book_root, "app/index.html"),
-    "<!doctype html><meta charset=\"utf-8\"><script>fetch('/api/books/external-domain-state?book_id=external-example')</script>",
+    "<!doctype html><meta charset=\"utf-8\"><script>fetch('/api/generated-pack/state?book_id=tool-example')</script>",
     create=0o644,
   )
 
@@ -504,12 +504,12 @@ async test "app tool portable export keeps unsupported api routes as warnings" {
   )
   assert_true(
     json_string_array_items(result, "api_reference_routes").contains(
-      "/api/books/external-domain-state?book_id=external-example",
+      "/api/generated-pack/state?book_id=tool-example",
     ),
   )
   assert_true(
     json_string_array_items(result, "api_unsupported_routes").contains(
-      "/api/books/external-domain-state?book_id=external-example",
+      "/api/generated-pack/state?book_id=tool-example",
     ),
   )
   assert_true(
