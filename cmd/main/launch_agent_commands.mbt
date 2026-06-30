@@ -54,7 +54,10 @@ async fn run_launch_agent(args : Array[String]) -> Unit {
   }
   let repo_root = @pathx.normalize(@env.current_dir().unwrap_or("."))
   let absolute_out = absolute_path(out_path, repo_root)
-  let absolute_root = absolute_path(options.workspace_root, repo_root)
+  let absolute_root = resolve_user_workspace_root(
+    options.workspace_root,
+    repo_root,
+  )
   @fsx.make_directory(
     @pathx.dirname(absolute_out).to_owned(),
     recursive=true,
@@ -135,7 +138,10 @@ async fn run_install_launch_agent(args : Array[String]) -> Unit {
     }
   }
   let repo_root = @pathx.normalize(@env.current_dir().unwrap_or("."))
-  let absolute_root = absolute_path(options.workspace_root, repo_root)
+  let absolute_root = resolve_user_workspace_root(
+    options.workspace_root,
+    repo_root,
+  )
   let label = launch_agent_label(service)
   let plist_path = launch_agent_user_path(label)
   @fsx.make_directory(

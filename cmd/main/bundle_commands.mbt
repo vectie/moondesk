@@ -10,7 +10,10 @@ async fn run_bundle(args : Array[String]) -> Unit {
   let repo_root = @pathx.normalize(@env.current_dir().unwrap_or("."))
   let options = {
     ..options,
-    workspace_root: absolute_path(options.workspace_root, repo_root),
+    workspace_root: resolve_user_workspace_root(
+      options.workspace_root,
+      repo_root,
+    ),
     ui_dir: absolute_path(options.ui_dir, repo_root),
     out_dir: absolute_path(options.out_dir, repo_root),
     lepusa_root: absolute_path(options.lepusa_root, repo_root),

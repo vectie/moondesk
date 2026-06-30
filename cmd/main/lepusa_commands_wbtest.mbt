@@ -237,7 +237,7 @@ test "lepusa integration smoke runs verify bundle and runtime checks" {
 }
 
 ///|
-test "lepusa integration live project uses localhost sidecar service" {
+async test "lepusa integration live project uses localhost sidecar service" {
   let parsed = parse_lepusa_integration_args([
     "live-smoke", "macos", "--strict", "--serve-port", "4512",
   ])
@@ -258,7 +258,8 @@ test "lepusa integration live project uses localhost sidecar service" {
     ),
   )
   assert_false(manifest.contains("\"-C\""))
-  assert_true(manifest.contains("\"/repo/moondesk\""))
+  assert_true(manifest.contains(default_workspace_root()))
+  assert_false(manifest.contains("\"/repo/moondesk\",\"--ui\""))
   assert_true(manifest.contains("\"serve\""))
   assert_true(manifest.contains("\"/repo/moondesk/ui/rabbita-desk/dist\""))
   assert_true(manifest.contains("\"localhost\""))
@@ -266,7 +267,7 @@ test "lepusa integration live project uses localhost sidecar service" {
 }
 
 ///|
-test "lepusa integration live project honors custom workspace and ui paths" {
+async test "lepusa integration live project honors custom workspace and ui paths" {
   let parsed = parse_lepusa_integration_args([
     "live-build", "macos", "--workspace-root", "../books", "--ui", "dist/ui", "--serve-port",
     "4517",
@@ -282,6 +283,30 @@ test "lepusa integration live project honors custom workspace and ui paths" {
   assert_true(manifest.contains("\"/repo/books\""))
   assert_true(manifest.contains("\"/repo/moondesk/dist/ui\""))
   assert_false(manifest.contains("\"/repo/moondesk/ui/rabbita-desk/dist\""))
+}
+
+///|
+async test "lepusa integration live project redirects source checkout workspace" {
+  let repo_root = @pathx.join(
+    "/tmp",
+    "moondesk-lepusa-source-root-wbtest-" + @async.now().to_string(),
+  )
+  @fsx.make_directory(repo_root, recursive=true, exists_ok=true)
+  @fsx.write_to_file(@pathx.join(repo_root, "moon.mod"), "name = \"demo\"\n")
+  let parsed = parse_lepusa_integration_args([
+    "live-build", "macos", "--workspace-root", ".", "--ui", "dist/ui", "--serve-port",
+    "4517",
+  ])
+  assert_true(parsed is Some(_))
+  let options = lepusa_integration_resolve_live_paths(
+    parsed.unwrap(),
+    repo_root,
+  )
+  assert_true(options.workspace_root.has_suffix("/moondesk-workspace"))
+  assert_false(workspace_root_contains_path(repo_root, options.workspace_root))
+  let manifest = lepusa_integration_live_project_json(options, repo_root).stringify()
+  assert_true(manifest.contains(options.workspace_root))
+  assert_false(manifest.contains("serve\",\"" + repo_root + "\""))
 }
 
 ///|

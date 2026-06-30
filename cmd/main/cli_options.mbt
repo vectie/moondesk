@@ -25,12 +25,42 @@ priv struct BundleOptions {
 ///|
 fn default_serve_options() -> ServeOptions {
   {
-    workspace_root: "..",
+    workspace_root: default_workspace_root(),
     ui_dir: "ui/rabbita-desk/dist",
     host: "127.0.0.1",
     port: 4188,
     open_browser: false,
   }
+}
+
+///|
+fn default_workspace_root() -> String {
+  default_workspace_root_from_env(
+    @sys.get_env_var("MOONDESK_WORKSPACE_ROOT").unwrap_or(""),
+    @sys.get_env_var("HOME").unwrap_or(""),
+    @sys.get_env_var("USERPROFILE").unwrap_or(""),
+  )
+}
+
+///|
+fn default_workspace_root_from_env(
+  override_root : String,
+  home : String,
+  user_profile : String,
+) -> String {
+  let override_root = override_root.trim().to_owned()
+  if override_root != "" {
+    return @pathx.normalize(override_root)
+  }
+  let home = home.trim().to_owned()
+  if home != "" {
+    return @pathx.join(home, "moondesk-workspace")
+  }
+  let user_profile = user_profile.trim().to_owned()
+  if user_profile != "" {
+    return @pathx.join(user_profile, "moondesk-workspace")
+  }
+  "moondesk-workspace"
 }
 
 ///|

@@ -41,7 +41,10 @@ async fn run_release(args : Array[String]) -> Unit {
   let out_dir = absolute_path(parsed.out_dir, repo_root)
   let parsed = {
     ..parsed,
-    workspace_root: absolute_path(parsed.workspace_root, repo_root),
+    workspace_root: resolve_user_workspace_root(
+      parsed.workspace_root,
+      repo_root,
+    ),
     ui_dir: absolute_path(parsed.ui_dir, repo_root),
     out_dir,
     lepusa_root: absolute_path(parsed.lepusa_root, repo_root),
