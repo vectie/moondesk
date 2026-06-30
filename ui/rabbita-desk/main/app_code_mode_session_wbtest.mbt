@@ -928,6 +928,48 @@ test "code mode transcript orders prompt before runtime sink reply" {
 }
 
 ///|
+test "code mode transcript keeps final reply when sink emits finish before prompt" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "finish-a",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        created_at="200",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "Final answer from replay.",
+        }),
+      ),
+      code_mode_test_event(
+        "command-a",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Replay question",
+        command="prompt",
+        created_at="100",
+      ),
+    ],
+  }
+  let rows = mooncode_transcript_rows(
+    { ..init_model(), mooncode_model: "codex/gpt-5.4" },
+    session,
+  )
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].role, "user")
+  assert_eq(rows[0].content, "Replay question")
+  assert_eq(rows[1].role, "assistant")
+  assert_eq(rows[1].status, "done")
+  assert_eq(rows[1].content, "Final answer from replay.")
+}
+
+///|
 test "code mode transcript keeps duplicated prompt status out of chat" {
   let session = {
     ..code_mode_test_session("session-a", status="created"),
@@ -1774,6 +1816,56 @@ test "code mode runtime sink hydrates append only conversation rows" {
   assert_eq(next.mooncode_conversation_rows[0].content, "Sink question")
   assert_eq(next.mooncode_conversation_rows[1].role, "assistant")
   assert_eq(next.mooncode_conversation_rows[1].content, "Sink answer")
+}
+
+///|
+test "code mode runtime sink keeps final answer emitted before prompt record" {
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: "session-a",
+  }
+  let (_, next) = update_mooncode_stream_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeRuntimeEventSink(
+      "session-a",
+      Ok({
+        event_count: 2,
+        events: [
+          code_mode_test_event(
+            "finish-a",
+            title="MoonCode tool `finish` completed",
+            lane="review",
+            kind="finish",
+            status="done",
+            detail="finished",
+            created_at="1782827303151",
+            tool_result=Some({
+              "tool": "finish",
+              "ok": true,
+              "output": "Sink final answer.",
+            }),
+          ),
+          code_mode_test_event(
+            "durable-prompt",
+            title="Prompt: queued",
+            kind="command.prompt",
+            status="queued",
+            detail="Sink final question",
+            command="prompt",
+            created_at="1782827300809",
+          ),
+        ],
+        runtime_service: { status: "idle" },
+      }),
+    ),
+    model,
+  )
+  assert_eq(next.mooncode_conversation_rows.length(), 2)
+  assert_eq(next.mooncode_conversation_rows[0].role, "user")
+  assert_eq(next.mooncode_conversation_rows[0].content, "Sink final question")
+  assert_eq(next.mooncode_conversation_rows[1].role, "assistant")
+  assert_eq(next.mooncode_conversation_rows[1].status, "done")
+  assert_eq(next.mooncode_conversation_rows[1].content, "Sink final answer.")
 }
 
 ///|

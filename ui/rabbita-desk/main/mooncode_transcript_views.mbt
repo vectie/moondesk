@@ -98,6 +98,7 @@ fn mooncode_transcript_items_from_events_with_user(
 ) -> Array[MoonCodeTranscriptItem] {
   let items : Array[MoonCodeTranscriptItem] = []
   let pushed_activity : Array[String] = []
+  let pending_assistant_finals : Array[MoonCodeTranscriptRow] = []
   let mut running_assistant_index = -1
   let mut has_user = initial_has_user
   for event in events {
@@ -109,6 +110,10 @@ fn mooncode_transcript_items_from_events_with_user(
       })
       has_user = true
       running_assistant_index = -1
+      for row in pending_assistant_finals {
+        mooncode_push_transcript_message_item(items, row)
+      }
+      pending_assistant_finals.clear()
     } else if mooncode_event_is_assistant_delta(event) {
       let content = event.detail.trim().to_owned()
       if content != "" && has_user {
@@ -134,22 +139,27 @@ fn mooncode_transcript_items_from_events_with_user(
       }
     } else if mooncode_event_is_assistant_final(event) {
       let content = mooncode_event_assistant_content(event)
-      if content != "" && has_user {
-        if running_assistant_index >= 0 {
-          mooncode_replace_transcript_message_item(
-            items,
-            running_assistant_index,
-            "assistant",
-            content,
-            if event.status == "" { "done" } else { event.status },
-          )
-          running_assistant_index = -1
+      if content != "" {
+        let status = if event.status == "" { "done" } else { event.status }
+        if has_user {
+          if running_assistant_index >= 0 {
+            mooncode_replace_transcript_message_item(
+              items,
+              running_assistant_index,
+              "assistant",
+              content,
+              status,
+            )
+            running_assistant_index = -1
+          } else {
+            mooncode_push_transcript_message_item(items, {
+              role: "assistant",
+              content,
+              status,
+            })
+          }
         } else {
-          mooncode_push_transcript_message_item(items, {
-            role: "assistant",
-            content,
-            status: if event.status == "" { "done" } else { event.status },
-          })
+          pending_assistant_finals.push({ role: "assistant", content, status })
         }
       }
     } else {

@@ -55,6 +55,7 @@ fn mooncode_hydrate_conversation_from_events(
     mooncode_merge_stream_events(events, []),
   )
   let assistant_delta_parts : Array[String] = []
+  let pending_assistant_finals : Array[MoonCodeConversationRow] = []
   for event in ordered {
     if mooncode_event_is_user_prompt(event) {
       mooncode_push_conversation_row(
@@ -66,27 +67,49 @@ fn mooncode_hydrate_conversation_from_events(
         mooncode_event_conversation_key(event, "user"),
         dedupe_content=true,
       )
+      for row in pending_assistant_finals {
+        mooncode_push_conversation_row(
+          next,
+          row.session_id,
+          row.role,
+          row.content,
+          row.status,
+          row.key,
+          dedupe_content=true,
+        )
+      }
+      pending_assistant_finals.clear()
     } else if mooncode_event_is_assistant_final(event) {
       let content = mooncode_event_assistant_content(event)
-      if content != "" && mooncode_conversation_has_user(next, session_id) {
+      if content != "" {
         let status = if event.status == "" { "done" } else { event.status }
         let key = mooncode_event_conversation_key(event, "assistant")
-        if !mooncode_replace_running_assistant_row(
-          next,
-          session_id,
-          content,
-          status,
-          key,
-        ) {
-          mooncode_push_conversation_row(
+        if mooncode_conversation_has_user(next, session_id) {
+          if !mooncode_replace_running_assistant_row(
             next,
             session_id,
-            "assistant",
             content,
             status,
             key,
-            dedupe_content=true,
-          )
+          ) {
+            mooncode_push_conversation_row(
+              next,
+              session_id,
+              "assistant",
+              content,
+              status,
+              key,
+              dedupe_content=true,
+            )
+          }
+        } else {
+          pending_assistant_finals.push({
+            session_id,
+            role: "assistant",
+            content,
+            status,
+            key,
+          })
         }
         assistant_delta_parts.clear()
       }
