@@ -111,6 +111,35 @@ async test "workspace entries expose virtual filesystem metadata" {
 }
 
 ///|
+async test "workspace entries use explorer ordering and hide host noise" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-entry-order-wbtest-" + @async.now().to_string(),
+  )
+  let wiki_root = @pathx.join(root, "wiki")
+  @fsx.make_directory(@pathx.join(wiki_root, "sources"), recursive=true)
+  @fsx.make_directory(@pathx.join(wiki_root, "Reviews"), recursive=true)
+  @fsx.write_to_file(@pathx.join(wiki_root, "a-note.md"), "a\n")
+  @fsx.write_to_file(@pathx.join(wiki_root, "z-note.md"), "z\n")
+  @fsx.write_to_file(@pathx.join(wiki_root, ".DS_Store"), "noise\n")
+  let workspace = @desk.workspace(
+    id="book-demo",
+    name="Demo",
+    root_path=root,
+    kind=MoonBook,
+  )
+  let entries = list_workspace_entries(workspace, "wiki", wiki_root)
+  assert_eq(entries.length(), 4)
+  assert_eq(entries[0].path, "wiki/Reviews")
+  assert_true(entries[0].kind is Directory)
+  assert_eq(entries[1].path, "wiki/sources")
+  assert_true(entries[1].kind is Directory)
+  assert_eq(entries[2].path, "wiki/a-note.md")
+  assert_eq(entries[3].path, "wiki/z-note.md")
+  assert_true(find_test_entry(entries, "wiki/.DS_Store") is None)
+}
+
+///|
 async test "moonbook root entries project canonical virtual sections" {
   let root = @pathx.join(
     "/tmp",
@@ -137,6 +166,35 @@ async test "moonbook root entries project canonical virtual sections" {
   assert_true(find_test_entry(entries, "book/site/generated") is Some(_))
   assert_true(find_test_entry(entries, "book.json") is Some(_))
   assert_true(find_test_entry(entries, "book") is None)
+}
+
+///|
+async test "moonbook root keeps canonical sections before sorted host leftovers" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-root-leftover-order-wbtest-" + @async.now().to_string(),
+  )
+  @fsx.make_directory(@pathx.join(root, "zz-extra"), recursive=true)
+  @fsx.write_to_file(@pathx.join(root, "aa-note.txt"), "note\n")
+  @fsx.write_to_file(@pathx.join(root, ".DS_Store"), "noise\n")
+  let workspace = @desk.workspace(
+    id="book-demo",
+    name="Demo",
+    root_path=root,
+    kind=MoonBook,
+  )
+  let entries = list_workspace_entries(workspace, "", root)
+  assert_eq(entries[0].path, "wiki")
+  assert_eq(entries[1].path, "raw")
+  match find_test_entry_index(entries, "zz-extra") {
+    Some(extra_index) =>
+      match find_test_entry_index(entries, "aa-note.txt") {
+        Some(note_index) => assert_true(extra_index < note_index)
+        None => fail("missing leftover note")
+      }
+    None => fail("missing leftover directory")
+  }
+  assert_true(find_test_entry(entries, ".DS_Store") is None)
 }
 
 ///|
@@ -183,6 +241,19 @@ fn find_test_entry(
   for entry in entries {
     if entry.path == path {
       return Some(entry)
+    }
+  }
+  None
+}
+
+///|
+fn find_test_entry_index(
+  entries : Array[@desk.DeskFileEntry],
+  path : String,
+) -> Int? {
+  for index, entry in entries {
+    if entry.path == path {
+      return Some(index)
     }
   }
   None

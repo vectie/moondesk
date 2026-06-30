@@ -1,6 +1,7 @@
 ///|
 fn should_hide_file_entry(name : String) -> Bool {
   name == ".git" ||
+  name == ".DS_Store" ||
   name == "DS_Store" ||
   name == "node_modules" ||
   name == "_build" ||
@@ -58,6 +59,7 @@ async fn list_workspace_entries(
       workspace_file_entry(workspace, child_relative, child_absolute),
     )
   }
+  sort_workspace_entries(entries)
   entries
 }
 
@@ -67,6 +69,7 @@ async fn list_moonbook_root_entries(
   absolute : String,
 ) -> Array[@desk.DeskFileEntry] {
   let entries : Array[@desk.DeskFileEntry] = []
+  let child_entries : Array[@desk.DeskFileEntry] = []
   let covered_roots : Array[String] = []
   for section in @moonbook.canonical_sections() {
     let section_absolute = @pathx.join(workspace.root_path, section.path)
@@ -81,9 +84,40 @@ async fn list_moonbook_root_entries(
       continue
     }
     let child_absolute = @pathx.join(workspace.root_path, name)
-    entries.push(workspace_file_entry(workspace, name, child_absolute))
+    child_entries.push(workspace_file_entry(workspace, name, child_absolute))
+  }
+  sort_workspace_entries(child_entries)
+  for entry in child_entries {
+    entries.push(entry)
   }
   entries
+}
+
+///|
+fn sort_workspace_entries(entries : Array[@desk.DeskFileEntry]) -> Unit {
+  entries.sort_by(fn(left, right) { compare_workspace_entries(left, right) })
+}
+
+///|
+fn compare_workspace_entries(
+  left : @desk.DeskFileEntry,
+  right : @desk.DeskFileEntry,
+) -> Int {
+  let left_directory = left.kind is Directory
+  let right_directory = right.kind is Directory
+  if left_directory && !right_directory {
+    return -1
+  }
+  if !left_directory && right_directory {
+    return 1
+  }
+  let by_name = left.display_name
+    .to_lower()
+    .compare(right.display_name.to_lower())
+  if by_name != 0 {
+    return by_name
+  }
+  left.path.compare(right.path)
 }
 
 ///|
