@@ -1,6 +1,6 @@
 # Moondesk Status
 
-Last updated: 2026-06-20.
+Last updated: 2026-06-30.
 
 See [Executable Book Architecture](EXECUTABLE_BOOK_ARCHITECTURE.md) for the
 cross-repo product boundary: MoonBook owns executable books, Moondesk owns the
@@ -26,7 +26,7 @@ configure, inspect, export, and launch through generic interfaces.
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Workspace discovery and Desk | Working | Discovers MoonBooks under `.moontown/books`, exposes a Moontown root only when `.moontown/` exists, projects MoonBook virtual sections at the root, lists scoped entries with file metadata, and opens common book paths. Plain folders are not advertised as workspaces. |
+| Workspace discovery and Desk | Working | Discovers MoonBooks under `.moontown/books`, exposes a Moontown root only when `.moontown/` exists, projects MoonBook virtual sections at the root, lists scoped entries with file metadata, shows directory breadcrumbs, entry counts, selection/access state, and opens common book paths. Plain folders are not advertised as workspaces. |
 | Previews and raw files | Working | Markdown, HTML/site, JSON, image, text, and artifact previews are available through scoped routes. |
 | Inbox notes, imports, and Markdown edits | Working | Creates markdown inbox notes, edits scoped `inbox/*` paths, saves scoped MoonWiki Markdown under `wiki/*` with live preview, imports URL/data-url content, and stages local file picker/drop/paste imports. |
 | Search and context assembly | Working | Cross-book text search, favorites, recent paths, copy-to-inbox, saved views, path tags, review queues, and review diff summaries are present. |

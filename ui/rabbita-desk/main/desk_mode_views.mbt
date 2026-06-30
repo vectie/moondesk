@@ -104,6 +104,7 @@ fn render_desk_file_browser(
       ]),
     ]),
     render_desk_breadcrumb(dispatch, model.current_directory),
+    render_desk_location_bar(model),
     div(class="desk-file-table", [
       div(class="desk-file-row desk-file-header", [
         span("Name"),
@@ -125,6 +126,22 @@ fn render_desk_file_browser(
           }),
         )
       },
+    ]),
+  ])
+}
+
+///|
+fn render_desk_location_bar(model : Model) -> @rabbita.Html {
+  let counts = desk_entry_counts(model.entries)
+  div(class="desk-location-bar", [
+    div(class="desk-location-path", [
+      span(class="desk-location-label", "Location"),
+      code(empty_root_path(model.current_directory)),
+    ]),
+    div(class="desk-location-meta", [
+      span(desk_entry_count_label(counts)),
+      span(desk_selection_label(model)),
+      span(desk_access_label(selected_desk_entry(model))),
     ]),
   ])
 }
@@ -317,6 +334,46 @@ fn selected_desk_entry(model : Model) -> @desk.DeskFileEntry? {
 }
 
 ///|
+fn desk_entry_counts(
+  entries : Array[@desk.DeskFileEntry],
+) -> (Int, Int, Int) {
+  let mut directories = 0
+  let mut files = 0
+  for entry in entries {
+    if entry.kind is Directory {
+      directories += 1
+    } else {
+      files += 1
+    }
+  }
+  (entries.length(), directories, files)
+}
+
+///|
+fn desk_entry_count_label(counts : (Int, Int, Int)) -> String {
+  let (total, directories, files) = counts
+  "\{total} items, \{directories} folders, \{files} files"
+}
+
+///|
+fn desk_selection_label(model : Model) -> String {
+  if model.selected_path == "" {
+    "No selection"
+  } else {
+    "Selected " + empty_root_path(model.selected_path)
+  }
+}
+
+///|
+fn desk_access_label(entry : @desk.DeskFileEntry?) -> String {
+  match entry {
+    Some(entry) if entry.writable => "Writable"
+    Some(_) => "Read-only"
+    None => "Browse only"
+  }
+}
+
+///|
 fn desk_directory_title(path : String) -> String {
   if path == "" {
     "Project Root"
@@ -353,6 +410,9 @@ fn optional_text(value : String?, fallback : String) -> String {
 ///|
 fn size_label(value : Int?) -> String {
   match value {
+    Some(size) if size >= 1024 * 1024 =>
+      "\{size / (1024 * 1024)} MB"
+    Some(size) if size >= 1024 => "\{size / 1024} KB"
     Some(size) => "\{size} B"
     None => "-"
   }

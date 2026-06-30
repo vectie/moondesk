@@ -76,6 +76,56 @@ test "desk folder outline keeps ancestor chain for nested directory" {
 }
 
 ///|
+test "desk entry counts split folders and files" {
+  let counts = desk_entry_counts([
+    @desk.file_entry(workspace_id="book-demo", path="wiki", is_directory=true),
+    @desk.file_entry(workspace_id="book-demo", path="raw", is_directory=true),
+    @desk.file_entry(workspace_id="book-demo", path="book.json"),
+    @desk.file_entry(workspace_id="book-demo", path="wiki/index.md"),
+  ])
+  assert_eq(counts.0, 4)
+  assert_eq(counts.1, 2)
+  assert_eq(counts.2, 2)
+  assert_eq(desk_entry_count_label(counts), "4 items, 2 folders, 2 files")
+}
+
+///|
+test "desk selection label uses virtual root for empty path" {
+  assert_eq(desk_selection_label(init_model()), "No selection")
+  let model = { ..init_model(), selected_path: "wiki/index.md" }
+  assert_eq(desk_selection_label(model), "Selected wiki/index.md")
+}
+
+///|
+test "desk access labels distinguish browse and writable entries" {
+  assert_eq(desk_access_label(None), "Browse only")
+  assert_eq(
+    desk_access_label(Some(@desk.file_entry(workspace_id="book-demo", path="book.json"))),
+    "Read-only",
+  )
+  assert_eq(
+    desk_access_label(
+      Some(
+        @desk.file_entry(
+          workspace_id="book-demo",
+          path="wiki/index.md",
+          writable=true,
+        ),
+      ),
+    ),
+    "Writable",
+  )
+}
+
+///|
+test "desk size labels use compact units" {
+  assert_eq(size_label(None), "-")
+  assert_eq(size_label(Some(24)), "24 B")
+  assert_eq(size_label(Some(4096)), "4 KB")
+  assert_eq(size_label(Some(3 * 1024 * 1024)), "3 MB")
+}
+
+///|
 test "search hit focuses Desk on containing directory" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let (_, next) = update_navigation_actions(
