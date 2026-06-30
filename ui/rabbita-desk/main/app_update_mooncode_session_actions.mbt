@@ -103,7 +103,8 @@ fn mooncode_send_composer(
               model.mooncode_pending_prompts,
               session.id,
               prompt,
-              mooncode_transcript_rows(model, session).length(),
+              mooncode_transcript_items(model, session).length(),
+              mooncode_transcript_events(model, session).length(),
             ),
             mooncode_composer_status: if action == "steer" {
               "steering MoonCode turn"
@@ -142,11 +143,18 @@ fn mooncode_append_pending_prompt(
   session_id : String,
   content : String,
   after_row_count : Int,
+  after_event_count : Int,
 ) -> Array[MoonCodePendingPrompt] {
   let next : Array[MoonCodePendingPrompt] = []
   for prompt in prompts {
     next.push(prompt)
   }
-  next.push({ session_id, content, status: "queued", after_row_count })
+  next.push({
+    session_id,
+    content,
+    status: "queued",
+    after_row_count,
+    after_event_count,
+  })
   next
 }

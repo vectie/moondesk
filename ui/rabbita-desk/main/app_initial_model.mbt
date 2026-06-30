@@ -73,7 +73,7 @@ fn init_model() -> Model {
     mooncode_runtime_event_sink: None,
     mooncode_prompt: "",
     mooncode_model: "",
-    mooncode_web_search: false,
+    mooncode_web_search: true,
     mooncode_composer_status: "mooncode idle",
     mooncode_pending_prompts: [],
     mooncode_conversation_rows: [],

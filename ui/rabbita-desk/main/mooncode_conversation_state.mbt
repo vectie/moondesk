@@ -45,18 +45,6 @@ fn mooncode_conversation_rows_to_transcript(
 }
 
 ///|
-fn mooncode_hydrate_conversation_from_session(
-  rows : Array[MoonCodeConversationRow],
-  session : MoonCodeSession,
-) -> Array[MoonCodeConversationRow] {
-  mooncode_hydrate_conversation_from_events(
-    rows,
-    session.id,
-    session.mooncode_events,
-  )
-}
-
-///|
 fn mooncode_hydrate_conversation_from_events(
   rows : Array[MoonCodeConversationRow],
   session_id : String,
@@ -80,16 +68,26 @@ fn mooncode_hydrate_conversation_from_events(
       )
     } else if mooncode_event_is_assistant_final(event) {
       let content = mooncode_event_assistant_content(event)
-      if content != "" && mooncode_conversation_has_ui_user(next, session_id) {
-        mooncode_push_conversation_row(
+      if content != "" && mooncode_conversation_has_user(next, session_id) {
+        let status = if event.status == "" { "done" } else { event.status }
+        let key = mooncode_event_conversation_key(event, "assistant")
+        if !mooncode_replace_running_assistant_row(
           next,
           session_id,
-          "assistant",
           content,
-          if event.status == "" { "done" } else { event.status },
-          mooncode_event_conversation_key(event, "assistant"),
-          dedupe_content=true,
-        )
+          status,
+          key,
+        ) {
+          mooncode_push_conversation_row(
+            next,
+            session_id,
+            "assistant",
+            content,
+            status,
+            key,
+            dedupe_content=true,
+          )
+        }
         assistant_delta_parts.clear()
       }
     } else if mooncode_event_is_assistant_delta(event) {
@@ -99,7 +97,7 @@ fn mooncode_hydrate_conversation_from_events(
       }
     } else if mooncode_event_is_terminal_without_answer(event) {
       if assistant_delta_parts.length() > 0 &&
-        mooncode_conversation_has_ui_user(next, session_id) {
+        mooncode_conversation_has_user(next, session_id) {
         mooncode_push_conversation_row(
           next,
           session_id,
@@ -114,7 +112,7 @@ fn mooncode_hydrate_conversation_from_events(
     }
   }
   if assistant_delta_parts.length() > 0 &&
-    mooncode_conversation_has_ui_user(next, session_id) {
+    mooncode_conversation_has_user(next, session_id) {
     mooncode_push_conversation_row(
       next,
       session_id,
@@ -129,14 +127,42 @@ fn mooncode_hydrate_conversation_from_events(
 }
 
 ///|
-fn mooncode_conversation_has_ui_user(
+fn mooncode_conversation_has_user(
   rows : Array[MoonCodeConversationRow],
   session_id : String,
 ) -> Bool {
   for row in rows {
-    if row.session_id == session_id &&
-      row.role == "user" &&
-      row.key.has_prefix("ui-user:") {
+    if row.session_id == session_id && row.role == "user" {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn mooncode_replace_running_assistant_row(
+  rows : Array[MoonCodeConversationRow],
+  session_id : String,
+  content : String,
+  status : String,
+  key : String,
+) -> Bool {
+  let normalized = content.trim().to_owned()
+  if session_id == "" || normalized == "" {
+    return false
+  }
+  let mut index = rows.length()
+  while index > 0 {
+    index = index - 1
+    let row = rows[index]
+    if row.session_id != session_id {
+      continue
+    }
+    if row.role == "user" {
+      return false
+    }
+    if row.role == "assistant" && row.status == "running" {
+      rows[index] = { ..row, content: normalized, status, key }
       return true
     }
   }
@@ -191,10 +217,13 @@ fn mooncode_push_conversation_row(
     if row.session_id == session_id && row.key == key {
       return
     }
-    if dedupe_content &&
-      row.session_id == session_id &&
-      row.role == role &&
-      row.content == normalized {
+  }
+  if dedupe_content &&
+    rows.length() > 0 {
+    let last = rows[rows.length() - 1]
+    if last.session_id == session_id &&
+      last.role == role &&
+      last.content == normalized {
       return
     }
   }

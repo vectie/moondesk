@@ -11,6 +11,7 @@ struct MoonCodePendingPrompt {
   content : String
   status : String
   after_row_count : Int
+  after_event_count : Int
 }
 
 ///|

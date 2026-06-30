@@ -7,7 +7,7 @@ fn render_mooncode_pane(
     div(class="pane-heading", [
       div([
         p(class="eyebrow", "MoonCode"),
-        h2(workspace_name(model)),
+        h2(mooncode_workspace_label(model)),
         p(class="rail-count", mooncode_session_count_label(model)),
       ]),
     ]),
@@ -43,6 +43,15 @@ fn render_mooncode_pane(
       },
     ),
   ])
+}
+
+///|
+fn mooncode_workspace_label(model : Model) -> String {
+  if model.selected_workspace_id == "" {
+    "General chat"
+  } else {
+    workspace_name(model)
+  }
 }
 
 ///|
@@ -84,7 +93,7 @@ fn render_mooncode_center(
   main_(class="preview-center mooncode-center", [
     div(class="mooncode-context-bar", [
       div([
-        strong(workspace_name(model)),
+        strong(mooncode_workspace_label(model)),
         span(mooncode_context_path_label(model, session)),
       ]),
     ]),

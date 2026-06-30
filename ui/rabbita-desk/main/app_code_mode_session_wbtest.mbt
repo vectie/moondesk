@@ -121,6 +121,604 @@ test "code mode transcript shows clean user and assistant conversation" {
 }
 
 ///|
+test "code mode activity rows show runtime work but not chat bubbles" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Fix the parser bug",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "runtime-command-queued",
+        title="MoonCode command queued for native runtime turn",
+        lane="runtime",
+        kind="runtime.command_queued",
+        status="queued",
+        detail="Queued `prompt` for MoonClaw native runtime-turn execution without spawning a generic task.",
+      ),
+      code_mode_test_event(
+        "thinking",
+        title="MoonCode planner step 1",
+        lane="runtime",
+        kind="reasoning_delta",
+        status="running",
+        detail="Inspect the parser before editing.",
+      ),
+      code_mode_test_event(
+        "assistant",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="I will check it.",
+      ),
+      code_mode_test_event(
+        "tool",
+        title="Tool started: moon_check",
+        lane="test",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"moon_check\"}",
+      ),
+      code_mode_test_event(
+        "finish-tool-start",
+        title="Tool started: finish",
+        lane="review",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"finish\"}",
+      ),
+      code_mode_test_event(
+        "test",
+        title="moon check",
+        lane="test",
+        kind="tool_result",
+        status="done",
+        detail="Finished. moon: no work to do",
+      ),
+      code_mode_test_event(
+        "finish",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "Done.",
+        }),
+      ),
+      code_mode_test_event(
+        "runtime-done",
+        title="MoonCode native runtime turn completed",
+        lane="runtime",
+        kind="runtime.turn_finished",
+        status="done",
+        detail="MoonClaw native runtime turn executed 1 tool call(s).",
+      ),
+      code_mode_test_event(
+        "idle-loop-a",
+        title="Native runtime loop: idle",
+        lane="runtime",
+        kind="runtime_loop",
+        status="done",
+        detail="runtime-loop",
+      ),
+      code_mode_test_event(
+        "idle-loop-b",
+        title="Native runtime loop: idle",
+        lane="runtime",
+        kind="runtime_loop",
+        status="done",
+        detail="runtime-loop",
+      ),
+      code_mode_test_event(
+        "manifest",
+        title="MoonCode action plan",
+        lane="runtime",
+        kind="action_plan.manifest",
+        status="queued",
+        detail="MoonCode action plan recorded at wiki/reviews/action-plan.json",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  let rows : Array[MoonCodeActivityRow] = []
+  for item in items {
+    match item.activity {
+      Some(row) => rows.push(row)
+      None => ()
+    }
+  }
+  assert_eq(rows.length(), 3)
+  assert_eq(rows[0].label, "Thinking")
+  assert_eq(rows[0].detail, "Inspect the parser before editing.")
+  assert_eq(rows[1].label, "Checking project")
+  assert_eq(rows[1].title, "moon check")
+  assert_eq(rows[1].detail, "")
+  assert_eq(rows[2].label, "Checked")
+  assert_eq(rows[2].title, "moon check")
+}
+
+///|
+test "code mode activity rows use package-style friendly tool labels" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Find package behavior",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "turn-start",
+        title="MoonCode native runtime turn started",
+        lane="runtime",
+        kind="runtime.turn_started",
+        status="running",
+        detail="control",
+      ),
+      code_mode_test_event(
+        "web",
+        title="Tool started: WebSearch",
+        lane="tool",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"WebSearch\",\"query\":\"moonbit package docs\"}",
+      ),
+      code_mode_test_event(
+        "todo",
+        title="Tool started: TodoWrite",
+        lane="tool",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"TodoWrite\",\"description\":\"Track implementation steps\"}",
+      ),
+      code_mode_test_event(
+        "read",
+        title="Tool started: FileRead",
+        lane="tool",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"FileRead\",\"file_path\":\"src/app.mbt\"}",
+      ),
+      code_mode_test_event(
+        "bash",
+        title="Tool started: Bash",
+        lane="tool",
+        kind="tool_call",
+        status="running",
+        command="moon test ui/rabbita-desk",
+        detail="{\"tool\":\"Bash\",\"command\":\"moon test ui/rabbita-desk\"}",
+      ),
+      code_mode_test_event(
+        "turn-done",
+        title="MoonCode native runtime turn completed",
+        lane="runtime",
+        kind="runtime.turn_finished",
+        status="done",
+        detail="control",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  let rows : Array[MoonCodeActivityRow] = []
+  for item in items {
+    match item.activity {
+      Some(row) => rows.push(row)
+      None => ()
+    }
+  }
+  assert_eq(rows.length(), 4)
+  assert_eq(rows[0].label, "Searching web")
+  assert_eq(rows[0].title, "moonbit package docs")
+  assert_eq(rows[0].detail, "")
+  assert_eq(rows[1].label, "Updating plan")
+  assert_eq(rows[1].title, "Track implementation steps")
+  assert_eq(rows[2].label, "Reading file")
+  assert_eq(rows[2].title, "src/app.mbt")
+  assert_eq(rows[3].label, "Running tests")
+  assert_eq(rows[3].title, "moon test ui/rabbita-desk")
+}
+
+///|
+test "code mode activity rows parse decoded tool arguments" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Mirror package stream",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "shell",
+        title="Tool started: shell",
+        lane="tool",
+        kind="shell",
+        status="running",
+        detail="{\"tool_name\":\"shell\",\"arguments\":\"{\\\"cmd\\\":[\\\"npm\\\",\\\"run\\\",\\\"build\\\"],\\\"description\\\":\\\"Build frontend bundle\\\"}\"}",
+      ),
+      code_mode_test_event(
+        "read",
+        title="Tool started: read",
+        lane="tool",
+        kind="read",
+        status="running",
+        detail="{\"tool_name\":\"read\",\"arguments\":\"{\\\"file_path\\\":\\\"src/main.mbt\\\"}\"}",
+      ),
+      code_mode_test_event(
+        "edit",
+        title="Tool started: edit",
+        lane="tool",
+        kind="edit",
+        status="running",
+        detail="{\"tool_name\":\"edit\",\"arguments\":{\"file_path\":\"src/main.mbt\"}}",
+      ),
+      code_mode_test_event(
+        "todo",
+        title="Tool started: TodoWrite",
+        lane="tool",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"TodoWrite\",\"todos\":[{\"content\":\"Patch stream projection\",\"status\":\"in_progress\",\"activeForm\":\"Patching stream projection\"}]}",
+      ),
+      code_mode_test_event(
+        "web",
+        title="Tool started: WebSearch",
+        lane="tool",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool_call\":{\"function\":{\"name\":\"WebSearch\",\"arguments\":\"{\\\"query\\\":\\\"moonbit package docs\\\"}\"}}}",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  let rows : Array[MoonCodeActivityRow] = []
+  for item in items {
+    match item.activity {
+      Some(row) => rows.push(row)
+      None => ()
+    }
+  }
+  assert_eq(rows.length(), 5)
+  assert_eq(rows[0].label, "Running tests")
+  assert_eq(rows[0].title, "Build frontend bundle")
+  assert_eq(rows[1].label, "Reading file")
+  assert_eq(rows[1].title, "src/main.mbt")
+  assert_eq(rows[2].label, "Editing file")
+  assert_eq(rows[2].title, "src/main.mbt")
+  assert_eq(rows[3].label, "Updating plan")
+  assert_eq(rows[3].title, "Patching stream projection")
+  assert_eq(rows[4].label, "Searching web")
+  assert_eq(rows[4].title, "moonbit package docs")
+}
+
+///|
+test "code mode runtime planner updates render as friendly thinking" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Explain your work",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "choosing",
+        title="Runtime update",
+        lane="runtime",
+        kind="runtime_update",
+        status="running",
+        detail="asking model for next tool batch",
+      ),
+      code_mode_test_event(
+        "selected",
+        title="Runtime update",
+        lane="runtime",
+        kind="runtime_update",
+        status="running",
+        detail="model-tool-calls selected 1 tool call",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  let rows : Array[MoonCodeActivityRow] = []
+  for item in items {
+    match item.activity {
+      Some(row) => rows.push(row)
+      None => ()
+    }
+  }
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].label, "Thinking")
+  assert_eq(rows[0].title, "Choosing next action")
+  assert_eq(rows[0].detail, "Choosing the next action.")
+  assert_eq(rows[1].label, "Thinking")
+  assert_eq(rows[1].title, "Selected next action")
+  assert_eq(rows[1].detail, "Selected the next action.")
+}
+
+///|
+test "code mode activity rows hide raw runtime controls" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Keep transcript clean",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "queued",
+        title="MoonCode command queued for native runtime turn",
+        lane="runtime",
+        kind="runtime.command_queued",
+        status="queued",
+        detail="Queued `prompt` for MoonClaw native runtime-turn execution.",
+      ),
+      code_mode_test_event(
+        "started",
+        title="MoonCode native runtime turn started",
+        lane="runtime",
+        kind="runtime.turn_started",
+        status="running",
+        detail="Started.",
+      ),
+      code_mode_test_event(
+        "usage",
+        title="Token usage",
+        lane="runtime",
+        kind="usage",
+        status="done",
+        detail="{\"tokens\":123}",
+      ),
+      code_mode_test_event(
+        "loop",
+        title="Native runtime loop: idle",
+        lane="runtime",
+        kind="runtime_loop",
+        status="done",
+        detail="runtime-loop",
+      ),
+      code_mode_test_event(
+        "done",
+        title="MoonCode native runtime turn completed",
+        lane="runtime",
+        kind="runtime.turn_finished",
+        status="done",
+        detail="Finished.",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  let rows : Array[MoonCodeActivityRow] = []
+  for item in items {
+    match item.activity {
+      Some(row) => rows.push(row)
+      None => ()
+    }
+  }
+  assert_eq(rows.length(), 0)
+}
+
+///|
+test "code mode transcript items keep messages and thinking in event order" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "001-command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Fix the parser bug",
+        command="prompt",
+        created_at="001",
+      ),
+      code_mode_test_event(
+        "002-thinking",
+        title="MoonCode planner step 1",
+        lane="runtime",
+        kind="reasoning_delta",
+        status="running",
+        detail="Inspect the parser before editing.",
+        created_at="002",
+      ),
+      code_mode_test_event(
+        "003-tool",
+        title="Tool started: moon_check",
+        lane="test",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"moon_check\"}",
+        created_at="003",
+      ),
+      code_mode_test_event(
+        "004-result",
+        title="moon check",
+        lane="test",
+        kind="tool_result",
+        status="done",
+        detail="Finished. moon: no work to do",
+        created_at="004",
+      ),
+      code_mode_test_event(
+        "005-finish",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        created_at="005",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "Done.",
+        }),
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 5)
+  match items[0].message {
+    Some(row) => {
+      assert_eq(row.role, "user")
+      assert_eq(row.content, "Fix the parser bug")
+    }
+    None => fail("expected user message")
+  }
+  match items[1].activity {
+    Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.detail, "Inspect the parser before editing.")
+    }
+    None => fail("expected thinking activity")
+  }
+  match items[2].activity {
+    Some(row) => {
+      assert_eq(row.label, "Checking project")
+      assert_eq(row.title, "moon check")
+    }
+    None => fail("expected tool activity")
+  }
+  match items[3].activity {
+    Some(row) => {
+      assert_eq(row.label, "Checked")
+      assert_eq(row.title, "moon check")
+    }
+    None => fail("expected check activity")
+  }
+  match items[4].message {
+    Some(row) => {
+      assert_eq(row.role, "assistant")
+      assert_eq(row.content, "Done.")
+    }
+    None => fail("expected assistant message")
+  }
+}
+
+///|
+test "code mode transcript items prefer append order over skewed timestamps" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "prompt",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Why is order broken?",
+        command="prompt",
+        created_at="300",
+      ),
+      code_mode_test_event(
+        "thinking",
+        title="MoonCode planner step 1",
+        lane="runtime",
+        kind="reasoning_delta",
+        status="running",
+        detail="Inspecting event order.",
+        created_at="100",
+      ),
+      code_mode_test_event(
+        "assistant",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="Found it.",
+        created_at="200",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 3)
+  match items[0].message {
+    Some(row) => {
+      assert_eq(row.role, "user")
+      assert_eq(row.content, "Why is order broken?")
+    }
+    None => fail("expected user message first")
+  }
+  match items[1].activity {
+    Some(row) => assert_eq(row.label, "Thinking")
+    None => fail("expected thinking second")
+  }
+  match items[2].message {
+    Some(row) => {
+      assert_eq(row.role, "assistant")
+      assert_eq(row.content, "Found it.")
+    }
+    None => fail("expected assistant third")
+  }
+}
+
+///|
+test "code mode transcript drops leading orphan activity" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "thinking",
+        title="MoonCode planner step 1",
+        lane="runtime",
+        kind="reasoning_delta",
+        status="running",
+        detail="Thinking should not lead the transcript.",
+        created_at="100",
+      ),
+      code_mode_test_event(
+        "prompt-a",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Older prompt",
+        command="prompt",
+        created_at="200",
+      ),
+      code_mode_test_event(
+        "prompt-b",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Latest prompt",
+        command="prompt",
+        created_at="300",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 2)
+  match items[0].message {
+    Some(row) => assert_eq(row.content, "Older prompt")
+    None => fail("expected first prompt")
+  }
+  match items[1].message {
+    Some(row) => assert_eq(row.content, "Latest prompt")
+    None => fail("expected latest prompt")
+  }
+}
+
+///|
 test "code mode transcript uses finish tool output as assistant reply" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),
@@ -662,6 +1260,7 @@ test "code mode transcript shows pending prompt immediately" {
           content: "Run the tests now",
           status: "queued",
           after_row_count: 0,
+          after_event_count: 0,
         },
       ],
     },
@@ -699,6 +1298,7 @@ test "code mode transcript keeps pending prompt before early assistant event" {
           content: "Pending question",
           status: "queued",
           after_row_count: 0,
+          after_event_count: 0,
         },
       ],
     },
@@ -748,6 +1348,7 @@ test "code mode transcript ignores assistant-only raw transcript during live con
           content: "User prompt stays first",
           status: "queued",
           after_row_count: 0,
+          after_event_count: 0,
         },
       ],
     },
@@ -842,6 +1443,196 @@ test "code mode prompt action adds pending prompt before runtime reply" {
 }
 
 ///|
+test "code mode transcript items show pending prompt over existing events" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "old-prompt",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Old question",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "old-finish",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "Old answer",
+        }),
+      ),
+    ],
+  }
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: "session-a",
+    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+      [],
+      "session-a",
+      "New question",
+    ),
+    mooncode_pending_prompts: [
+      {
+        session_id: "session-a",
+        content: "New question",
+        status: "queued",
+        after_row_count: 2,
+        after_event_count: 2,
+      },
+    ],
+  }
+  let items = mooncode_transcript_items(model, session)
+  assert_eq(items.length(), 4)
+  match items[2].message {
+    Some(row) => {
+      assert_eq(row.role, "user")
+      assert_eq(row.content, "New question")
+    }
+    None => fail("expected pending user prompt")
+  }
+  match items[3].message {
+    Some(row) => {
+      assert_eq(row.role, "assistant")
+      assert_eq(row.content, "Working on it...")
+    }
+    None => fail("expected working placeholder")
+  }
+}
+
+///|
+test "code mode transcript puts early thinking under pending prompt" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "old-prompt",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Old question",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "old-finish",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "Old answer",
+        }),
+      ),
+      code_mode_test_event(
+        "early-thinking",
+        title="MoonCode planner step 1",
+        lane="runtime",
+        kind="reasoning_delta",
+        status="running",
+        detail="Inspecting now.",
+      ),
+    ],
+  }
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: "session-a",
+    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+      [],
+      "session-a",
+      "New question",
+    ),
+    mooncode_pending_prompts: [
+      {
+        session_id: "session-a",
+        content: "New question",
+        status: "queued",
+        after_row_count: 2,
+        after_event_count: 2,
+      },
+    ],
+  }
+  let items = mooncode_transcript_items(model, session)
+  assert_eq(items.length(), 4)
+  match items[2].message {
+    Some(row) => assert_eq(row.content, "New question")
+    None => fail("expected pending prompt before thinking")
+  }
+  match items[3].activity {
+    Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.detail, "Inspecting now.")
+    }
+    None => fail("expected thinking after pending prompt")
+  }
+}
+
+///|
+test "code mode transcript does not move old activity onto pending prompt" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "old-prompt",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Old question",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "old-thinking",
+        title="MoonCode planner step 1",
+        lane="runtime",
+        kind="reasoning_delta",
+        status="running",
+        detail="Old thinking.",
+      ),
+    ],
+  }
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: "session-a",
+    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+      [],
+      "session-a",
+      "New question",
+    ),
+    mooncode_pending_prompts: [
+      {
+        session_id: "session-a",
+        content: "New question",
+        status: "queued",
+        after_row_count: 2,
+        after_event_count: 2,
+      },
+    ],
+  }
+  let items = mooncode_transcript_items(model, session)
+  assert_eq(items.length(), 4)
+  match items[1].activity {
+    Some(row) => assert_eq(row.detail, "Old thinking.")
+    None => fail("expected old activity before pending prompt")
+  }
+  match items[2].message {
+    Some(row) => assert_eq(row.content, "New question")
+    None => fail("expected pending prompt after old activity")
+  }
+  match items[3].message {
+    Some(row) => assert_eq(row.content, "Working on it...")
+    None => fail("expected working placeholder")
+  }
+}
+
+///|
 test "code mode stream appends assistant after ui prompt row" {
   let prompt_row : MoonCodeConversationRow = {
     session_id: "session-a",
@@ -891,6 +1682,158 @@ test "code mode stream appends assistant after ui prompt row" {
 }
 
 ///|
+test "code mode transcript hydrates assistant after durable prompt row" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "native-assistant",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="Durable answer",
+        created_at="1782827303151",
+      ),
+      code_mode_test_event(
+        "native-turn-done",
+        title="MoonCode native runtime turn completed",
+        lane="runtime",
+        kind="runtime.turn_finished",
+        status="done",
+        detail="MoonClaw native runtime turn executed 1 tool call(s).",
+        created_at="1782827303152",
+      ),
+      code_mode_test_event(
+        "durable-prompt",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Durable question",
+        command="prompt",
+        created_at="1782827300809",
+      ),
+    ],
+  }
+  let rows = mooncode_transcript_rows(init_model(), session)
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].role, "user")
+  assert_eq(rows[0].content, "Durable question")
+  assert_eq(rows[1].role, "assistant")
+  assert_eq(rows[1].content, "Durable answer")
+}
+
+///|
+test "code mode runtime sink hydrates append only conversation rows" {
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: "session-a",
+  }
+  let (_, next) = update_mooncode_stream_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeRuntimeEventSink(
+      "session-a",
+      Ok({
+        event_count: 3,
+        events: [
+          code_mode_test_event(
+            "native-assistant",
+            title="MoonCode assistant update",
+            lane="transcript",
+            kind="assistant_delta",
+            status="running",
+            detail="Sink answer",
+            created_at="1782827303151",
+          ),
+          code_mode_test_event(
+            "native-turn-done",
+            title="MoonCode native runtime turn completed",
+            lane="runtime",
+            kind="runtime.turn_finished",
+            status="done",
+            detail="MoonClaw native runtime turn executed 1 tool call(s).",
+            created_at="1782827303152",
+          ),
+          code_mode_test_event(
+            "durable-prompt",
+            title="Prompt: queued",
+            kind="command.prompt",
+            status="queued",
+            detail="Sink question",
+            command="prompt",
+            created_at="1782827300809",
+          ),
+        ],
+        runtime_service: { status: "idle" },
+      }),
+    ),
+    model,
+  )
+  assert_eq(next.mooncode_conversation_rows.length(), 2)
+  assert_eq(next.mooncode_conversation_rows[0].role, "user")
+  assert_eq(next.mooncode_conversation_rows[0].content, "Sink question")
+  assert_eq(next.mooncode_conversation_rows[1].role, "assistant")
+  assert_eq(next.mooncode_conversation_rows[1].content, "Sink answer")
+}
+
+///|
+test "code mode final answer replaces running assistant delta row" {
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: "session-a",
+    mooncode_conversation_rows: [
+      {
+        session_id: "session-a",
+        role: "user",
+        content: "Question",
+        status: "queued",
+        key: "ui-user:session-a:0",
+      },
+      {
+        session_id: "session-a",
+        role: "assistant",
+        content: "Partial",
+        status: "running",
+        key: "assistant-delta:session-a:1",
+      },
+    ],
+  }
+  let (_, next) = update_mooncode_stream_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeStream(
+      "session-a",
+      Ok({
+        stream: "events",
+        stream_source: "moonclaw",
+        next_since: 3,
+        emitted_count: 1,
+        events: [
+          code_mode_test_event(
+            "finish",
+            title="MoonCode tool `finish` completed",
+            lane="review",
+            kind="finish",
+            status="done",
+            detail="finished",
+            tool_result=Some({
+              "tool": "finish",
+              "ok": true,
+              "output": "Partial final answer.",
+            }),
+          ),
+        ],
+      }),
+    ),
+    model,
+  )
+  assert_eq(next.mooncode_conversation_rows.length(), 2)
+  assert_eq(next.mooncode_conversation_rows[0].role, "user")
+  assert_eq(next.mooncode_conversation_rows[1].role, "assistant")
+  assert_eq(next.mooncode_conversation_rows[1].status, "done")
+  assert_eq(next.mooncode_conversation_rows[1].content, "Partial final answer.")
+}
+
+///|
 test "code mode command result keeps pending prompt until durable prompt event arrives" {
   let session = code_mode_test_session("session-a", status="running")
   let model = {
@@ -904,6 +1847,7 @@ test "code mode command result keeps pending prompt until durable prompt event a
         content: "Stable order please",
         status: "queued",
         after_row_count: 0,
+        after_event_count: 0,
       },
     ],
   }
@@ -928,6 +1872,7 @@ test "code mode runtime prompt event clears matching pending prompt" {
         content: "Stable order please",
         status: "queued",
         after_row_count: 0,
+        after_event_count: 0,
       },
     ],
   }
@@ -1086,6 +2031,17 @@ test "code mode daemon and model polling preserve new session draft" {
   assert_eq(models_next.mooncode_model, "deepseek-v4-flash")
   assert_eq(models_next.mooncode_composer_status, "new session draft")
   assert_true(selected_mooncode_session(models_next) is None)
+}
+
+///|
+test "code mode labels no-book state as general chat" {
+  let model = { ..init_model(), selected_workspace_id: "" }
+  assert_eq(mooncode_workspace_label(model), "General chat")
+}
+
+///|
+test "code mode enables web search by default" {
+  assert_true(init_model().mooncode_web_search)
 }
 
 ///|
@@ -1360,6 +2316,67 @@ test "code mode stream parser accepts numeric MoonClaw event timestamps" {
       assert_eq(stream.events[0].tool_result is Some(_), true)
     }
     Err(error) => fail("expected parsed stream, got \{error}")
+  }
+}
+
+///|
+test "code mode stream parser renders package assistant blocks inline" {
+  let text =
+    #|{"type":"assistant","id":"package-message","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Need inspect the repo first."},{"type":"tool_use","id":"tool-bash","name":"Bash","input":{"command":"moon test internal/mooncode","description":"Run MoonCode tests"}},{"type":"tool_result","tool_use_id":"tool-bash","name":"Bash","content":"Total tests: 256, passed: 256"},{"type":"text","text":"The tests pass."}]}}
+    #|{"type":"done","next_since":4,"emitted_count":4,"stream_source":"moonclaw"}
+  match parse_mooncode_stream_text(text) {
+    Ok(stream) => {
+      assert_eq(stream.events.length(), 4)
+      assert_eq(stream.events[0].kind, "reasoning_delta")
+      assert_eq(stream.events[0].detail, "Need inspect the repo first.")
+      assert_eq(stream.events[1].kind, "tool_call")
+      assert_eq(stream.events[1].lane, "test")
+      assert_eq(stream.events[1].command, "moon test internal/mooncode")
+      assert_eq(stream.events[2].kind, "tool_result")
+      assert_eq(stream.events[2].status, "done")
+      assert_eq(stream.events[3].kind, "assistant_delta")
+      assert_eq(stream.events[3].detail, "The tests pass.")
+      let session = {
+        ..code_mode_test_session("session-package", status="running"),
+        mooncode_events: [
+          code_mode_test_event(
+            "prompt",
+            title="Prompt: queued",
+            kind="command.prompt",
+            status="queued",
+            detail="Run package-style tests",
+            command="prompt",
+          ),
+          ..stream.events,
+        ],
+      }
+      let items = mooncode_transcript_items(init_model(), session)
+      assert_eq(items.length(), 5)
+      match items[0].message {
+        Some(row) => assert_eq(row.content, "Run package-style tests")
+        None => fail("expected prompt message")
+      }
+      match items[1].activity {
+        Some(row) => assert_eq(row.label, "Thinking")
+        None => fail("expected thinking activity")
+      }
+      match items[2].activity {
+        Some(row) => {
+          assert_eq(row.label, "Running tests")
+          assert_eq(row.title, "Run MoonCode tests")
+        }
+        None => fail("expected command activity")
+      }
+      match items[3].activity {
+        Some(row) => assert_eq(row.label, "Completed")
+        None => fail("expected result activity")
+      }
+      match items[4].message {
+        Some(row) => assert_eq(row.content, "The tests pass.")
+        None => fail("expected assistant message")
+      }
+    }
+    Err(error) => fail("expected parsed package stream, got \{error}")
   }
 }
 

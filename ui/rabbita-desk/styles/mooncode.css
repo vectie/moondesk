@@ -490,6 +490,122 @@
   line-height: 19px;
 }
 
+.mooncode-activity-row {
+  position: relative;
+  min-width: 0;
+  width: min(100%, 620px);
+  align-self: flex-start;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  padding: 3px 0 3px 2px;
+}
+
+.mooncode-activity-row::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 20px;
+  bottom: -8px;
+  width: 1px;
+  background: var(--mooncode-line);
+}
+
+.mooncode-activity-row:last-child::before {
+  display: none;
+}
+
+.mooncode-activity-dot {
+  width: 11px;
+  height: 11px;
+  margin-top: 4px;
+  border: 2px solid var(--mooncode-panel);
+  border-radius: 999px;
+  background: var(--mooncode-subtle);
+  box-shadow: 0 0 0 1px var(--mooncode-line);
+}
+
+.mooncode-activity-row.thinking .mooncode-activity-dot,
+.mooncode-activity-row.runtime .mooncode-activity-dot {
+  background: var(--mooncode-accent);
+}
+
+.mooncode-activity-row.tool .mooncode-activity-dot,
+.mooncode-activity-row.edit .mooncode-activity-dot {
+  background: #7c3aed;
+}
+
+.mooncode-activity-row.test .mooncode-activity-dot {
+  background: var(--mooncode-success);
+}
+
+.mooncode-activity-row.failed .mooncode-activity-dot {
+  background: #dc2626;
+}
+
+.mooncode-activity-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.mooncode-activity-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mooncode-activity-line strong,
+.mooncode-activity-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mooncode-activity-line strong {
+  color: var(--mooncode-ink);
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.mooncode-activity-line span {
+  flex: 0 0 auto;
+  color: var(--mooncode-subtle);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.mooncode-activity-title {
+  margin: 0;
+  color: var(--mooncode-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.mooncode-activity-detail {
+  max-height: 92px;
+  overflow: auto;
+  margin: 1px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--mooncode-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mooncode-activity-detail.empty {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mooncode-new-session,
   .mooncode-session,

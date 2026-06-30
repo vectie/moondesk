@@ -67,17 +67,11 @@ fn update_mooncode_session_results(
       }
       let keep_stream = selected == model.mooncode_stream_session_id
       let keep_sink = selected == model.mooncode_runtime_event_sink_session_id
-      let mooncode_conversation_rows = mooncode_hydrate_selected_conversation(
-        model.mooncode_conversation_rows,
-        mooncode_sessions,
-        selected,
-      )
       (
         mooncode_session_hydration_cmd(dispatch, selected, keep_stream, keep_sink),
         {
           ..model,
           mooncode_sessions,
-          mooncode_conversation_rows,
           selected_mooncode_session_id: selected,
           mooncode_stream_session_id: if keep_stream {
             model.mooncode_stream_session_id
@@ -183,23 +177,6 @@ fn mooncode_session_hydration_cmd(
 }
 
 ///|
-fn mooncode_hydrate_selected_conversation(
-  rows : Array[MoonCodeConversationRow],
-  sessions : Array[MoonCodeSession],
-  selected : String,
-) -> Array[MoonCodeConversationRow] {
-  if selected == "" {
-    return rows
-  }
-  for session in sessions {
-    if session.id == selected {
-      return mooncode_hydrate_conversation_from_session(rows, session)
-    }
-  }
-  rows
-}
-
-///|
 fn mooncode_default_runtime_model(result : MoonClawModelsResult) -> String {
   if result.models.length() > 0 {
     result.models[0].name
@@ -234,10 +211,6 @@ fn mooncode_session_mutation_succeeded(
       activity: Files,
       mooncode_sessions: mooncode_upsert_session(
         model.mooncode_sessions,
-        session,
-      ),
-      mooncode_conversation_rows: mooncode_hydrate_conversation_from_session(
-        model.mooncode_conversation_rows,
         session,
       ),
       selected_mooncode_session_id: session.id,
