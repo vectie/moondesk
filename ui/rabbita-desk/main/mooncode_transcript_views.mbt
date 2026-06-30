@@ -68,7 +68,9 @@ fn mooncode_transcript_items(
       }
     }
     if items.length() > 0 {
-      return mooncode_drop_leading_activity_items(items)
+      return mooncode_drop_resolved_thinking_items(
+        mooncode_drop_leading_activity_items(items),
+      )
     }
   }
   let items : Array[MoonCodeTranscriptItem] = []
@@ -551,6 +553,56 @@ fn mooncode_drop_leading_activity_items(
     return items
   }
   rest
+}
+
+///|
+fn mooncode_drop_resolved_thinking_items(
+  items : Array[MoonCodeTranscriptItem],
+) -> Array[MoonCodeTranscriptItem] {
+  let rest : Array[MoonCodeTranscriptItem] = []
+  for index in 0..<items.length() {
+    let item = items[index]
+    if mooncode_transcript_item_is_thinking_activity(item) &&
+      mooncode_transcript_has_assistant_after_before_user(items, index) {
+      ()
+    } else {
+      rest.push(item)
+    }
+  }
+  rest
+}
+
+///|
+fn mooncode_transcript_item_is_thinking_activity(
+  item : MoonCodeTranscriptItem,
+) -> Bool {
+  match item.activity {
+    Some(row) => row.tone == "thinking" || row.label == "Thinking"
+    None => false
+  }
+}
+
+///|
+fn mooncode_transcript_has_assistant_after_before_user(
+  items : Array[MoonCodeTranscriptItem],
+  index : Int,
+) -> Bool {
+  let mut cursor = index + 1
+  while cursor < items.length() {
+    match items[cursor].message {
+      Some(row) => {
+        if row.role == "assistant" {
+          return true
+        }
+        if row.role == "user" {
+          return false
+        }
+      }
+      None => ()
+    }
+    cursor = cursor + 1
+  }
+  false
 }
 
 ///|
