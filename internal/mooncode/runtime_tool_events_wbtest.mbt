@@ -72,6 +72,53 @@ test "mooncode normalizes mutating native tool calls into diff review" {
 }
 
 ///|
+test "mooncode normalizes package style file paths and planning tools" {
+  guard normalize_runtime_event(
+      {
+        "event": event_tool_started(),
+        "tool_call": {
+          "id": "call-read-package",
+          "function": {
+            "name": "FileRead",
+            "arguments": "{\"file_path\":\"src/main.mbt\"}",
+          },
+        },
+      },
+      fallback_id="runtime-read-package",
+      fallback_created_at="2026-06-15T00:00:00Z",
+    )
+    is Some(read_event) else {
+    fail("FileRead package tool was not normalized")
+  }
+  assert_eq(json_string(read_event, "lane", default=""), "tool")
+  assert_eq(json_string(read_event, "kind", default=""), "read")
+  assert_eq(json_string(read_event, "path", default=""), "src/main.mbt")
+  guard normalize_runtime_event(
+      {
+        "event": event_tool_started(),
+        "tool_call": {
+          "id": "call-todo-package",
+          "function": {
+            "name": "TodoWrite",
+            "arguments": "{\"todos\":[{\"content\":\"Patch projection\",\"status\":\"in_progress\",\"activeForm\":\"Patching projection\"}]}",
+          },
+        },
+      },
+      fallback_id="runtime-todo-package",
+      fallback_created_at="2026-06-15T00:00:00Z",
+    )
+    is Some(todo_event) else {
+    fail("TodoWrite package tool was not normalized")
+  }
+  assert_eq(json_string(todo_event, "lane", default=""), "runtime")
+  assert_eq(json_string(todo_event, "kind", default=""), "todo_write")
+  assert_eq(
+    json_string(todo_event, "tool_call_id", default=""),
+    "call-todo-package",
+  )
+}
+
+///|
 test "mooncode rejects unknown runtime tool calls during normalization" {
   guard normalize_runtime_event(
       {

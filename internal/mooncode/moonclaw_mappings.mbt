@@ -50,6 +50,19 @@ pub fn moonclaw_tool_mapping_rows() -> Array[Json] {
     moonclaw_tool_mapping_row("search_files", "read", "discovery"),
     moonclaw_tool_mapping_row("runtime_context", "read", "context"),
     moonclaw_tool_mapping_row("todo", "finish", "planning-only"),
+    moonclaw_tool_mapping_row("Bash", "shell", "package-style"),
+    moonclaw_tool_mapping_row("FileRead", "read", "package-style"),
+    moonclaw_tool_mapping_row("Read", "read", "package-style"),
+    moonclaw_tool_mapping_row("FileEdit", "edit", "package-style"),
+    moonclaw_tool_mapping_row("Edit", "edit", "package-style"),
+    moonclaw_tool_mapping_row("NotebookEdit", "edit", "package-style"),
+    moonclaw_tool_mapping_row("FileWrite", "write", "package-style"),
+    moonclaw_tool_mapping_row("Write", "write", "package-style"),
+    moonclaw_tool_mapping_row("Glob", "glob", "package-style"),
+    moonclaw_tool_mapping_row("Grep", "grep", "package-style"),
+    moonclaw_tool_mapping_row("TodoWrite", "todo_write", "package-style"),
+    moonclaw_tool_mapping_row("WebFetch", "web_fetch", "package-style"),
+    moonclaw_tool_mapping_row("WebSearch", "web_search", "package-style"),
   ]
 }
 
@@ -63,6 +76,15 @@ pub fn moonclaw_tool_to_mooncode_tool(tool_name : String) -> String {
     "execute_command" => "shell"
     "list_files" | "glob_files" | "search_files" | "runtime_context" => "read"
     "todo" => "finish"
+    "Bash" => "shell"
+    "FileRead" | "Read" => "read"
+    "FileEdit" | "Edit" | "NotebookEdit" => "edit"
+    "FileWrite" | "Write" => "write"
+    "Glob" => "glob"
+    "Grep" => "grep"
+    "TodoWrite" => "todo_write"
+    "WebFetch" => "web_fetch"
+    "WebSearch" => "web_search"
     _ => tool_name
   }
 }

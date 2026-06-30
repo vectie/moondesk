@@ -242,7 +242,11 @@ fn runtime_tool_event_path(event : Json) -> String {
     return direct
   }
   let args = runtime_tool_event_args_json(event)
-  runtime_first_string(args, ["path", "file", "target"], default="")
+  runtime_first_string(
+    args,
+    ["path", "file_path", "notebook_path", "file", "target"],
+    default="",
+  )
 }
 
 ///|

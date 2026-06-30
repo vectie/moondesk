@@ -90,3 +90,34 @@ test "mooncode tool contract aligns supported runtime tools with concrete entrie
   }
   assert_true(supported.contains("revert_patch"))
 }
+
+///|
+test "mooncode tool contract advertises package style aliases and read only tools" {
+  let contract = tool_contract_json()
+  let aliases : Array[String] = []
+  for alias_row in json_array_items(contract, "accepted_aliases") {
+    aliases.push(
+      json_string(alias_row, "alias", default="") +
+      "->" +
+      json_string(alias_row, "canonical", default=""),
+    )
+  }
+  assert_true(aliases.contains("Bash->shell"))
+  assert_true(aliases.contains("FileRead->read"))
+  assert_true(aliases.contains("TodoWrite->todo_write"))
+  assert_true(aliases.contains("WebSearch->web_search"))
+  let ids = tool_contract_tool_ids(contract)
+  assert_true(ids.contains("todo_write"))
+  assert_true(ids.contains("web_search"))
+  assert_true(ids.contains("web_fetch"))
+  for tool in json_array_items(contract, "tools") {
+    match json_string(tool, "id", default="") {
+      "todo_write" | "web_search" | "web_fetch" | "glob" | "grep" => {
+        assert_eq(json_string(tool, "approval", default=""), "auto")
+        assert_false(json_bool(tool, "mutates_files", default=true))
+        assert_false(json_bool(tool, "requires_review", default=true))
+      }
+      _ => ()
+    }
+  }
+}

@@ -202,7 +202,9 @@ pub fn tool_lane(
   text : String,
 ) -> String {
   let lower = "\{name}\n\{path}\n\{command}\n\{text}".to_lower()
-  if lower.contains("portable/") ||
+  if name == "todo_write" {
+    "runtime"
+  } else if lower.contains("portable/") ||
     lower.contains("site/generated") ||
     lower.contains("app-tool") ||
     lower.contains("package") {

@@ -9,7 +9,27 @@ priv enum CodeCommand {
 pub fn runtime_tool_names() -> Array[String] {
   [
     "shell", "read", "edit", "write", "moon_ide", "moon_cmd", "moon_check", "finish",
-    "apply_patch", "revert_patch", "package_app_tool",
+    "apply_patch", "revert_patch", "package_app_tool", "glob", "grep", "todo_write",
+    "web_fetch", "web_search",
+  ]
+}
+
+///|
+pub fn runtime_tool_alias_rows() -> Array[Json] {
+  [
+    tool_alias_row("Bash", "shell"),
+    tool_alias_row("FileRead", "read"),
+    tool_alias_row("Read", "read"),
+    tool_alias_row("FileEdit", "edit"),
+    tool_alias_row("Edit", "edit"),
+    tool_alias_row("NotebookEdit", "edit"),
+    tool_alias_row("FileWrite", "write"),
+    tool_alias_row("Write", "write"),
+    tool_alias_row("Glob", "glob"),
+    tool_alias_row("Grep", "grep"),
+    tool_alias_row("TodoWrite", "todo_write"),
+    tool_alias_row("WebFetch", "web_fetch"),
+    tool_alias_row("WebSearch", "web_search"),
   ]
 }
 
@@ -40,7 +60,8 @@ pub fn tool_call_contract_json() -> Json {
 pub fn decode_tool_call(json : Json) -> Result[Json, String] {
   let payload = tool_call_payload(json)
   let tool_call_id = tool_call_id(json, payload)
-  let tool_name = tool_call_name(json, payload)
+  let raw_tool_name = tool_call_name(json, payload)
+  let tool_name = runtime_tool_canonical_name(raw_tool_name)
   if tool_name == "" {
     return Err("expected tool_name or function.name")
   }
@@ -53,6 +74,7 @@ pub fn decode_tool_call(json : Json) -> Result[Json, String] {
     "protocol": protocol_version(),
     "tool_call_id": tool_call_id,
     "tool_name": tool_name,
+    "raw_tool_name": raw_tool_name,
     "arguments": arguments,
     "parsed_arguments": tool_call_arguments_json(arguments),
     "mutates_files": tool_call_mutates_files(tool_name),
@@ -74,6 +96,11 @@ pub fn tool_call_decode_report(json : Json) -> Json {
         "protocol": protocol_version(),
         "tool_call": decoded,
         "tool_name": protocol_json_string(decoded, "tool_name", default=""),
+        "raw_tool_name": protocol_json_string(
+          decoded,
+          "raw_tool_name",
+          default="",
+        ),
         "tool_call_id": protocol_json_string(
           decoded,
           "tool_call_id",
@@ -159,6 +186,21 @@ fn tool_call_name(json : Json, payload : Json) -> String {
   }
   let function = protocol_json_object_field_or_empty(payload, "function")
   protocol_json_string(function, "name", default="")
+}
+
+///|
+fn runtime_tool_canonical_name(tool_name : String) -> String {
+  let normalized = tool_name.replace(old="-", new="_").to_lower()
+  match normalized {
+    "bash" => "shell"
+    "fileread" | "file_read" => "read"
+    "fileedit" | "file_edit" | "notebookedit" | "notebook_edit" => "edit"
+    "filewrite" | "file_write" => "write"
+    "todowrite" | "todo_write" => "todo_write"
+    "webfetch" | "web_fetch" => "web_fetch"
+    "websearch" | "web_search" => "web_search"
+    _ => tool_name
+  }
 }
 
 ///|
@@ -256,4 +298,9 @@ fn protocol_json_string(json : Json, key : String, default~ : String) -> String 
 ///|
 fn protocol_string_array_json(items : Array[String]) -> Json {
   @mooncore.string_array_json(items)
+}
+
+///|
+fn tool_alias_row(alias_name : String, canonical : String) -> Json {
+  { "alias": alias_name, "canonical": canonical }
 }

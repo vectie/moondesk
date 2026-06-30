@@ -7,6 +7,10 @@ test "mooncode moonclaw runtime maps moonclaw tools to mooncode tools" {
   assert_eq(moonclaw_tool_to_mooncode_tool("read_file"), "read")
   assert_eq(moonclaw_tool_to_mooncode_tool("write_to_file"), "write")
   assert_eq(moonclaw_tool_to_mooncode_tool("replace_in_file"), "edit")
+  assert_eq(moonclaw_tool_to_mooncode_tool("Bash"), "shell")
+  assert_eq(moonclaw_tool_to_mooncode_tool("FileRead"), "read")
+  assert_eq(moonclaw_tool_to_mooncode_tool("TodoWrite"), "todo_write")
+  assert_eq(moonclaw_tool_to_mooncode_tool("WebSearch"), "web_search")
   assert_eq(moonclaw_tool_to_mooncode_tool("unknown_tool"), "unknown_tool")
   let contract = moonclaw_runtime_contract_json()
   assert_eq(

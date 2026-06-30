@@ -226,6 +226,80 @@ test "mooncode runtime event ingest report accepts canonical and mooncode events
 }
 
 ///|
+test "mooncode runtime event ingest expands package assistant content blocks" {
+  let report = runtime_event_ingest_report(
+    {
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          { "type": "thinking", "thinking": "Need inspect the repo first." },
+          {
+            "type": "tool_use",
+            "id": "tool-bash",
+            "name": "Bash",
+            "input": {
+              "command": "moon test internal/mooncode",
+              "description": "Run MoonCode tests",
+            },
+          },
+          {
+            "type": "tool_result",
+            "tool_use_id": "tool-bash",
+            "name": "Bash",
+            "content": "Total tests: 254, passed: 254",
+          },
+          { "type": "text", "text": "The tests pass." },
+        ],
+      },
+    },
+    session_id="session-package",
+    ingested_at="2026-06-30T00:00:00Z",
+  )
+  assert_eq(runtime_json_int(report, "submitted_count", default=0), 1)
+  assert_eq(runtime_json_int(report, "accepted_count", default=0), 4)
+  assert_eq(runtime_json_int(report, "rejected_count", default=0), 0)
+  let events = runtime_json_array_items(report, "events")
+  assert_eq(events.length(), 4)
+  assert_eq(json_string(events[0], "kind", default=""), "reasoning_delta")
+  assert_eq(
+    json_string(events[0], "detail", default=""),
+    "Need inspect the repo first.",
+  )
+  assert_eq(json_string(events[1], "kind", default=""), "shell")
+  assert_eq(json_string(events[1], "lane", default=""), "test")
+  assert_eq(
+    json_string(events[1], "command", default=""),
+    "moon test internal/mooncode",
+  )
+  assert_eq(json_string(events[2], "kind", default=""), "shell")
+  assert_eq(json_string(events[2], "status", default=""), "done")
+  assert_eq(json_string(events[3], "kind", default=""), "assistant_delta")
+  assert_eq(json_string(events[3], "detail", default=""), "The tests pass.")
+}
+
+///|
+test "mooncode runtime event ingest accepts package text-only assistant reply" {
+  let report = runtime_event_ingest_report(
+    {
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [{ "type": "text", "text": "Final answer." }],
+      },
+    },
+    session_id="session-package",
+    ingested_at="2026-06-30T00:00:00Z",
+  )
+  let events = runtime_json_array_items(report, "events")
+  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "lane", default=""), "transcript")
+  assert_eq(json_string(events[0], "kind", default=""), "assistant")
+  assert_eq(json_string(events[0], "status", default=""), "done")
+  assert_eq(json_string(events[0], "detail", default=""), "Final answer.")
+}
+
+///|
 test "mooncode native runtime event report normalizes mooncode events before merge" {
   let report = runtime_native_event_report(
     {

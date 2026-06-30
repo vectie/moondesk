@@ -197,6 +197,71 @@ test "mooncode tool call contract accepts patch apply and revert tools" {
 }
 
 ///|
+test "mooncode tool call contract accepts package style tool aliases" {
+  guard decode_tool_call({
+      "id": "call-bash",
+      "function": {
+        "name": "Bash",
+        "arguments": "{\"command\":\"npm run build\",\"description\":\"Build frontend bundle\"}",
+      },
+    })
+    is Ok(bash) else {
+    fail("Bash alias did not decode")
+  }
+  assert_eq(protocol_json_string(bash, "tool_name", default=""), "shell")
+  assert_eq(protocol_json_string(bash, "raw_tool_name", default=""), "Bash")
+  assert_true(protocol_json_bool(bash, "requires_review", default=false))
+  guard decode_tool_call({
+      "id": "call-read",
+      "function": {
+        "name": "FileRead",
+        "arguments": "{\"file_path\":\"src/main.mbt\"}",
+      },
+    })
+    is Ok(read) else {
+    fail("FileRead alias did not decode")
+  }
+  assert_eq(protocol_json_string(read, "tool_name", default=""), "read")
+  assert_false(protocol_json_bool(read, "mutates_files", default=true))
+  guard decode_tool_call({
+      "id": "call-edit",
+      "function": {
+        "name": "FileEdit",
+        "arguments": "{\"file_path\":\"src/main.mbt\",\"old_string\":\"a\",\"new_string\":\"b\"}",
+      },
+    })
+    is Ok(edit) else {
+    fail("FileEdit alias did not decode")
+  }
+  assert_eq(protocol_json_string(edit, "tool_name", default=""), "edit")
+  assert_true(protocol_json_bool(edit, "mutates_files", default=false))
+  guard decode_tool_call({
+      "id": "call-todo",
+      "function": {
+        "name": "TodoWrite",
+        "arguments": "{\"todos\":[{\"content\":\"Patch projection\",\"status\":\"in_progress\",\"activeForm\":\"Patching projection\"}]}",
+      },
+    })
+    is Ok(todo) else {
+    fail("TodoWrite alias did not decode")
+  }
+  assert_eq(protocol_json_string(todo, "tool_name", default=""), "todo_write")
+  assert_false(protocol_json_bool(todo, "requires_review", default=true))
+  guard decode_tool_call({
+      "id": "call-web",
+      "function": {
+        "name": "WebSearch",
+        "arguments": "{\"query\":\"moonbit docs\"}",
+      },
+    })
+    is Ok(web) else {
+    fail("WebSearch alias did not decode")
+  }
+  assert_eq(protocol_json_string(web, "tool_name", default=""), "web_search")
+  assert_false(protocol_json_bool(web, "requires_review", default=true))
+}
+
+///|
 fn protocol_json_bool(json : Json, key : String, default~ : Bool) -> Bool {
   match json {
     Object(object) =>
