@@ -11,6 +11,7 @@ pub fn command_packet(
   let workspace_id = json_string(session, "workspace_id", default="")
   let runtime_session_id = session_runtime_session_id(session)
   let model = command_model(session, payload)
+  let web_search = json_bool(payload, "web_search", default=false)
   {
     "protocol": protocol_version(),
     "kind": kind_command(),
@@ -32,10 +33,12 @@ pub fn command_packet(
     },
     "message": message,
     "model": model,
-    "web_search": json_bool(payload, "web_search", default=false),
+    "web_search": web_search,
     "force_preflight": json_bool(payload, "force_preflight", default=false),
     "expected_lanes": string_array_json(command_expected_lanes(action)),
-    "tool_hints": string_array_json(command_tool_hints(action)),
+    "tool_hints": string_array_json(
+      command_tool_hints_for_command(action, web_search),
+    ),
     "output_contract": {
       "owner": "moonbook",
       "roots": [
@@ -51,6 +54,26 @@ pub fn command_packet(
       "standalone_component": "mooncode",
     },
   }
+}
+
+///|
+fn command_tool_hints_for_command(
+  action : String,
+  web_search : Bool,
+) -> Array[String] {
+  let hints : Array[String] = []
+  for hint in command_tool_hints(action) {
+    hints.push(hint)
+  }
+  if web_search {
+    if !hints.contains("web_search") {
+      hints.push("web_search")
+    }
+    if !hints.contains("web_fetch") {
+      hints.push("web_fetch")
+    }
+  }
+  hints
 }
 
 ///|

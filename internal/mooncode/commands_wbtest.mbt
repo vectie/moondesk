@@ -224,6 +224,76 @@ test "mooncode projected command packet owns stable command ids" {
   assert_eq(json_string(first, "protocol", default=""), "mooncode.v1")
   assert_eq(json_string(first, "action", default=""), "prompt")
   assert_true(json_bool(first, "web_search", default=false))
+  assert_true(
+    command_json_string_array_items(first, "tool_hints").contains("web_search"),
+  )
+  assert_true(
+    command_json_string_array_items(first, "tool_hints").contains("web_fetch"),
+  )
+}
+
+///|
+test "mooncode web-enabled command advertises web tools to runtime" {
+  let session : Json = {
+    "id": "code-demo",
+    "workspace_id": "book-demo",
+    "workspace_root": "/tmp/demo-book",
+  }
+  let payload : Json = {
+    "context_path": "tools/demo/main.mbt",
+    "web_search": true,
+  }
+  let packet = projected_command_packet(
+    session, payload, "prompt", "Review vectie.com", "2026-06-17T00:00:00Z", "tools/demo/main.mbt",
+  )
+  let command = runtime_command_record(
+    session, payload, "Review vectie.com", packet,
+  )
+  let mooncode_command = command_json_object_field_or_empty(
+    command, "mooncode_command",
+  )
+  assert_true(json_bool(mooncode_command, "web_search", default=false))
+  assert_true(
+    command_json_string_array_items(mooncode_command, "allowed_tools").contains(
+      "web_search",
+    ),
+  )
+  assert_true(
+    command_json_string_array_items(mooncode_command, "allowed_tools").contains(
+      "web_fetch",
+    ),
+  )
+  assert_true(
+    json_string(mooncode_command, "capability_note", default="").contains(
+      "Web search is enabled",
+    ),
+  )
+  let native = command_json_object_field_or_empty(
+    command, "native_mooncode_body",
+  )
+  assert_true(json_bool(native, "web_search", default=false))
+  let plan = command_json_object_field_or_empty(native, "execution_plan")
+  assert_true(json_bool(plan, "web_search", default=false))
+  assert_true(
+    command_json_string_array_items(plan, "tool_sequence").contains(
+      "web_search",
+    ),
+  )
+  let tool_contract = command_json_object_field_or_empty(
+    native, "tool_contract",
+  )
+  assert_true(json_bool(tool_contract, "web_search", default=false))
+  assert_true(
+    command_json_string_array_items(tool_contract, "allowed_tools").contains(
+      "web_fetch",
+    ),
+  )
+  let summary = command_json_object_field_or_empty(command, "execution_summary")
+  assert_true(
+    command_json_string_array_items(summary, "allowed_tools").contains(
+      "web_search",
+    ),
+  )
 }
 
 ///|

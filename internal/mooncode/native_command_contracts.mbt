@@ -8,6 +8,7 @@ pub fn native_command_execution_plan(
   payload : Json,
   command_packet : Json,
 ) -> Json {
+  let web_search = json_bool(command_packet, "web_search", default=false)
   {
     "kind": "mooncode-native-command-execution-plan",
     "protocol": protocol_version(),
@@ -20,7 +21,10 @@ pub fn native_command_execution_plan(
       context_path
     },
     "context_path": context_path,
-    "tool_sequence": string_array_json(native_command_tool_sequence(action)),
+    "web_search": web_search,
+    "tool_sequence": string_array_json(
+      command_allowed_tool_sequence(action, web_search),
+    ),
     "tool_policies": Json::array(
       native_command_tool_policies(action, context_path),
     ),
@@ -47,9 +51,20 @@ pub fn native_command_execution_plan(
 
 ///|
 pub fn native_command_tool_contract(action : String) -> Json {
+  native_command_tool_contract_for_command(action, false)
+}
+
+///|
+fn native_command_tool_contract_for_command(
+  action : String,
+  web_search : Bool,
+) -> Json {
   {
     "kind": "mooncode-native-tool-contract",
-    "allowed_tools": string_array_json(native_command_tool_sequence(action)),
+    "web_search": web_search,
+    "allowed_tools": string_array_json(
+      command_allowed_tool_sequence(action, web_search),
+    ),
     "tool_policies": Json::array(native_command_tool_policies(action, "")),
     "mutating_tools_require_review": true,
     "shell_requires_bounded_timeout": true,

@@ -21,6 +21,7 @@ pub fn native_command_body(
   let tool_authorization = command_tool_authorization_snapshot(
     session, command_packet,
   )
+  let web_search = json_bool(command_packet, "web_search", default=false)
   {
     "protocol": protocol_version(),
     "command": action,
@@ -35,11 +36,14 @@ pub fn native_command_body(
     "context_path": context_path,
     "payload": payload,
     "packet": command_packet,
+    "web_search": web_search,
     "execution_plan": native_command_execution_plan(
       action, context_path, payload, command_packet,
     ),
     "tool_authorization": tool_authorization,
-    "tool_contract": native_command_tool_contract(action),
+    "tool_contract": native_command_tool_contract_for_command(
+      action, web_search,
+    ),
     "result_contract": native_command_result_contract(action),
     "owner": {
       "ui": "moondesk",

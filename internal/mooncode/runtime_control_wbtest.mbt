@@ -180,6 +180,46 @@ test "mooncode runtime control starts first pending turn and queues controls" {
 }
 
 ///|
+test "mooncode runtime control preserves web search capability for start turn" {
+  let commands : Array[Json] = [
+    {
+      "command_id": "cmd-web",
+      "action": "prompt",
+      "control": "prompt",
+      "message": "rate vectie.com",
+      "web_search": true,
+    },
+  ]
+  let lifecycle : Json = {
+    "commands": [
+      { "command_id": "cmd-web", "action": "prompt", "status": "pending" },
+    ],
+  }
+  let projection = runtime_control_projection("s1", commands, lifecycle)
+  let decisions = runtime_control_json_array_items(projection, "decisions")
+  assert_eq(decisions.length(), 1)
+  assert_eq(
+    runtime_control_json_string(decisions[0], "effect", default=""),
+    "start-turn",
+  )
+  let mooncode_command = command_json_object_field_or_empty(
+    decisions[0],
+    "mooncode_command",
+  )
+  assert_true(json_bool(mooncode_command, "web_search", default=false))
+  assert_true(
+    command_json_string_array_items(mooncode_command, "allowed_tools").contains(
+      "web_search",
+    ),
+  )
+  assert_true(
+    runtime_control_json_string(mooncode_command, "capability_note", default="").contains(
+      "Web search is enabled",
+    ),
+  )
+}
+
+///|
 test "mooncode runtime control queues steer to pending package turn" {
   let commands : Array[Json] = [
     {

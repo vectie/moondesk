@@ -244,15 +244,17 @@ fn runtime_control_mooncode_command(command : Json) -> Json {
   let action = runtime_control_command_action(command)
   match action {
     "steer" =>
-      {
-        "command": "steer",
-        "text": runtime_control_json_string(command, "message", default=""),
-      }
-    "cancel" => { "command": "cancel" }
+      mooncode_protocol_command(
+        "steer",
+        command_packet=command,
+        text=runtime_control_json_string(command, "message", default=""),
+      )
+    "cancel" => mooncode_protocol_command("cancel", command_packet=command)
     _ =>
-      {
-        "command": "prompt",
-        "text": runtime_control_json_string(command, "message", default=""),
-      }
+      mooncode_protocol_command(
+        "prompt",
+        command_packet=command,
+        text=runtime_control_json_string(command, "message", default=""),
+      )
   }
 }
