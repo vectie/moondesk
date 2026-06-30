@@ -80,7 +80,7 @@ fn mooncode_hydrate_conversation_from_events(
       )
     } else if mooncode_event_is_assistant_final(event) {
       let content = mooncode_event_assistant_content(event)
-      if content != "" && mooncode_conversation_has_user(next, session_id) {
+      if content != "" && mooncode_conversation_has_ui_user(next, session_id) {
         mooncode_push_conversation_row(
           next,
           session_id,
@@ -99,7 +99,7 @@ fn mooncode_hydrate_conversation_from_events(
       }
     } else if mooncode_event_is_terminal_without_answer(event) {
       if assistant_delta_parts.length() > 0 &&
-        mooncode_conversation_has_user(next, session_id) {
+        mooncode_conversation_has_ui_user(next, session_id) {
         mooncode_push_conversation_row(
           next,
           session_id,
@@ -114,7 +114,7 @@ fn mooncode_hydrate_conversation_from_events(
     }
   }
   if assistant_delta_parts.length() > 0 &&
-    mooncode_conversation_has_user(next, session_id) {
+    mooncode_conversation_has_ui_user(next, session_id) {
     mooncode_push_conversation_row(
       next,
       session_id,
@@ -129,12 +129,14 @@ fn mooncode_hydrate_conversation_from_events(
 }
 
 ///|
-fn mooncode_conversation_has_user(
+fn mooncode_conversation_has_ui_user(
   rows : Array[MoonCodeConversationRow],
   session_id : String,
 ) -> Bool {
   for row in rows {
-    if row.session_id == session_id && row.role == "user" {
+    if row.session_id == session_id &&
+      row.role == "user" &&
+      row.key.has_prefix("ui-user:") {
       return true
     }
   }
