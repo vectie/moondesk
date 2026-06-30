@@ -22,11 +22,33 @@ type BookPatternRecord derive(@json.FromJson)
 
 type BrowserLocalImportBatch derive(@json.FromJson)
 
+type CreatedWorkspace derive(@json.FromJson)
+
 type DaemonControlResult derive(@json.FromJson)
 
 type DaemonLifecycleResult derive(@json.FromJson)
 
+type DeskDensity derive(Eq)
+
+type DeskEntryCopied derive(@json.FromJson)
+
+type DeskEntryCreated derive(@json.FromJson)
+
+type DeskEntryMoved derive(@json.FromJson)
+
+type DeskEntryRenamed derive(@json.FromJson)
+
+type DeskEntryRestored derive(@json.FromJson)
+
+type DeskEntryTrashed derive(@json.FromJson)
+
 type DeskEvent derive(@json.FromJson)
+
+type DeskFilesImported derive(@json.FromJson)
+
+type DeskSortKey derive(Eq)
+
+type DeskTrashEntry derive(@json.FromJson)
 
 type InboxCreated derive(@json.FromJson)
 
@@ -62,6 +84,8 @@ type MoonCodeStreamState derive(@json.FromJson)
 
 type MoonCodeSummary derive(@json.FromJson)
 
+type MoonCodeTranscriptRow
+
 type MoonclawProgress derive(@json.FromJson)
 
 type Msg
@@ -71,6 +95,8 @@ type PreviewTab
 type RequestRecord derive(@json.FromJson)
 
 type RevealResult derive(@json.FromJson)
+
+type ReviewDecisionResult derive(@json.FromJson)
 
 type ReviewItem derive(@json.FromJson)
 

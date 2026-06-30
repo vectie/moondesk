@@ -22,6 +22,7 @@ fn bootstrap_action(
 ///|
 fn bootstrap_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @rabbita.batch([
+    fetch_workspace_metadata_cmd(dispatch),
     fetch_workspaces_cmd(dispatch),
     fetch_moonclaw_daemon_cmd(dispatch),
     fetch_moonclaw_models_cmd(dispatch),
@@ -30,5 +31,7 @@ fn bootstrap_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
     fetch_book_patterns_cmd(dispatch),
     schedule_mooncode_poll(dispatch),
     schedule_import_drop_poll(dispatch),
+    install_desk_location_enter_cmd(),
+    install_mooncode_enter_send_cmd(),
   ])
 }

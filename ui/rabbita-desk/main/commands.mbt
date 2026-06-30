@@ -13,6 +13,8 @@ fn sync_shell_cmd(mode : WorkspaceMode, activity : Activity) -> @rabbita.Cmd {
       browser_set_activity(
         if mode == Desk {
           "desk"
+        } else if mode == MoonCode {
+          "code"
         } else {
           activity_slug(activity)
         },
@@ -53,6 +55,86 @@ extern "js" fn send_browser_notification(title : String, body : String) =
 
 ///|
 #cfg(target="js")
+extern "js" fn browser_install_desk_location_enter() =
+  #| () => {
+  #|   if (window.__moondeskDeskLocationEnterInstalled) return;
+  #|   window.__moondeskDeskLocationEnterInstalled = true;
+  #|   document.addEventListener("keydown", (event) => {
+  #|     if (event.key !== "Enter") return;
+  #|     const target = event.target;
+  #|     if (!(target instanceof HTMLElement)) return;
+  #|     if (target.dataset?.testid !== "desk-location-input") return;
+  #|     event.preventDefault();
+  #|     event.stopPropagation();
+  #|     document.querySelector('[data-testid="desk-location-go"]')?.click();
+  #|   }, true);
+  #| }
+
+///|
+fn install_desk_location_enter_cmd() -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_install_desk_location_enter(), kind=AfterRender)
+}
+
+///|
+#cfg(target="js")
+extern "js" fn browser_install_mooncode_enter_send() =
+  #| () => {
+  #|   if (window.__moondeskMoonCodeEnterSendInstalled) return;
+  #|   window.__moondeskMoonCodeEnterSendInstalled = true;
+  #|   document.addEventListener("keydown", (event) => {
+  #|     if (event.key !== "Enter" || event.shiftKey) return;
+  #|     const target = event.target;
+  #|     if (!(target instanceof HTMLElement)) return;
+  #|     if (target.dataset?.testid !== "mooncode-input") return;
+  #|     event.preventDefault();
+  #|     event.stopPropagation();
+  #|     document.querySelector('[data-testid="mooncode-send"]')?.click();
+  #|   }, true);
+  #| }
+
+///|
+fn install_mooncode_enter_send_cmd() -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_install_mooncode_enter_send(), kind=AfterRender)
+}
+
+///|
+#cfg(target="js")
+extern "js" fn browser_copy_text_to_clipboard(text : String) =
+  #| (text) => {
+  #|   const fallback = () => {
+  #|     const area = document.createElement("textarea");
+  #|     area.value = text;
+  #|     area.setAttribute("readonly", "");
+  #|     area.style.position = "fixed";
+  #|     area.style.left = "-9999px";
+  #|     document.body.appendChild(area);
+  #|     area.select();
+  #|     try {
+  #|       document.execCommand("copy");
+  #|     } finally {
+  #|       area.remove();
+  #|     }
+  #|   };
+  #|   if (navigator.clipboard?.writeText) {
+  #|     navigator.clipboard.writeText(text).catch(fallback);
+  #|   } else {
+  #|     fallback();
+  #|   }
+  #| }
+
+///|
+#cfg(not(target="js"))
+fn browser_copy_text_to_clipboard(_text : String) -> Unit {
+  ()
+}
+
+///|
+fn copy_text_to_clipboard_cmd(text : String) -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_copy_text_to_clipboard(text), kind=AfterRender)
+}
+
+///|
+#cfg(target="js")
 extern "js" fn browser_pick_import_files() -> @js.Promise =
   #| async () => {
   #|   const readFile = async (file, source) => {
@@ -68,8 +150,9 @@ extern "js" fn browser_pick_import_files() -> @js.Promise =
   #|           reader.readAsDataURL(file);
   #|         });
   #|     return {
-  #|       id: `${source}:${file.name}:${file.size}:${file.lastModified}`,
+  #|       id: `${source}:${file.webkitRelativePath || file.name}:${file.size}:${file.lastModified}`,
   #|       name: file.name || "pasted-file",
+  #|       relative_path: file.webkitRelativePath || "",
   #|       media_type: file.type || "application/octet-stream",
   #|       content,
   #|       source,
@@ -84,7 +167,85 @@ extern "js" fn browser_pick_import_files() -> @js.Promise =
   #|       input.click();
   #|     });
   #|     const loaded = await Promise.all(files.map((file) => readFile(file, "picker")));
-  #|     return JSON.stringify({ ok: true, files: loaded, error: null });
+  #|     return JSON.stringify({ ok: true, files: loaded });
+  #|   } catch (error) {
+  #|     return JSON.stringify({ ok: false, files: [], error: String(error) });
+  #|   }
+  #| }
+
+///|
+#cfg(target="js")
+extern "js" fn browser_pick_import_folder() -> @js.Promise =
+  #| async () => {
+  #|   const readFile = async (file, source) => {
+  #|     const textLike =
+  #|       file.type.startsWith("text/") ||
+  #|       /\.(md|txt|json|mbt|js|ts|tsx|jsx|css|html|xml|yaml|yml|toml|csv)$/i.test(file.name);
+  #|     const content = textLike
+  #|       ? await file.text()
+  #|       : await new Promise((resolve, reject) => {
+  #|           const reader = new FileReader();
+  #|           reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+  #|           reader.onload = () => resolve(String(reader.result ?? ""));
+  #|           reader.readAsDataURL(file);
+  #|         });
+  #|     return {
+  #|       id: `${source}:${file.webkitRelativePath || file.name}:${file.size}:${file.lastModified}`,
+  #|       name: file.name || "pasted-file",
+  #|       relative_path: file.webkitRelativePath || "",
+  #|       media_type: file.type || "application/octet-stream",
+  #|       content,
+  #|       source,
+  #|     };
+  #|   };
+  #|   try {
+  #|     const input = document.createElement("input");
+  #|     input.type = "file";
+  #|     input.multiple = true;
+  #|     input.webkitdirectory = true;
+  #|     input.setAttribute("webkitdirectory", "");
+  #|     const files = await new Promise((resolve) => {
+  #|       input.onchange = () => resolve(Array.from(input.files || []));
+  #|       input.click();
+  #|     });
+  #|     const loaded = await Promise.all(files.map((file) => readFile(file, "folder-picker")));
+  #|     return JSON.stringify({ ok: true, files: loaded });
+  #|   } catch (error) {
+  #|     return JSON.stringify({ ok: false, files: [], error: String(error) });
+  #|   }
+  #| }
+
+///|
+#cfg(target="js")
+extern "js" fn browser_pick_moonbook_archive() -> @js.Promise =
+  #| async () => {
+  #|   const readFile = async (file) => {
+  #|     const content = await new Promise((resolve, reject) => {
+  #|       const reader = new FileReader();
+  #|       reader.onerror = () => reject(reader.error ?? new Error("Failed to read archive"));
+  #|       reader.onload = () => resolve(String(reader.result ?? ""));
+  #|       reader.readAsDataURL(file);
+  #|     });
+  #|     return {
+  #|       id: `moonbook-archive:${file.name}:${file.size}:${file.lastModified}`,
+  #|       name: file.name || "moonbook.zip",
+  #|       relative_path: "",
+  #|       media_type: file.type || "application/zip",
+  #|       content,
+  #|       source: "moonbook-archive-picker",
+  #|     };
+  #|   };
+  #|   try {
+  #|     const input = document.createElement("input");
+  #|     input.type = "file";
+  #|     input.accept = ".zip,application/zip,application/x-zip-compressed";
+  #|     const files = await new Promise((resolve) => {
+  #|       input.onchange = () => resolve(Array.from(input.files || []));
+  #|       input.click();
+  #|     });
+  #|     const file = files[0];
+  #|     const loaded = file ? [await readFile(file)] : [];
+  #|     return JSON.stringify({ ok: true, files: loaded });
   #|   } catch (error) {
   #|     return JSON.stringify({ ok: false, files: [], error: String(error) });
   #|   }
@@ -109,8 +270,9 @@ extern "js" fn browser_take_dropped_import_files() -> String =
   #|           reader.readAsDataURL(file);
   #|         });
   #|     return {
-  #|       id: `${source}:${file.name}:${file.size}:${file.lastModified}`,
+  #|       id: `${source}:${file.webkitRelativePath || file.name}:${file.size}:${file.lastModified}`,
   #|       name: file.name || `${source}-image-${Date.now()}.png`,
+  #|       relative_path: file.webkitRelativePath || "",
   #|       media_type: file.type || "application/octet-stream",
   #|       content,
   #|       source,
@@ -151,7 +313,7 @@ extern "js" fn browser_take_dropped_import_files() -> String =
   #|     state.installed = true;
   #|   }
   #|   const files = state.queue.splice(0, state.queue.length);
-  #|   return JSON.stringify({ ok: true, files, error: null });
+  #|   return JSON.stringify({ ok: true, files });
   #| }
 
 ///|
@@ -191,6 +353,47 @@ fn pick_import_files_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
       }
     parse_browser_import_batch(text)
   })
+}
+
+///|
+fn pick_import_folder_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @rabbita.perform(fn(result) { dispatch(LocalFilesPicked(result)) }, async fn() noraise {
+    let text : String = browser_pick_import_folder().wait().cast() catch {
+        error => return Err("Failed to read local folder: \{error}")
+      }
+    parse_browser_import_batch(text)
+  })
+}
+
+///|
+fn pick_moonbook_folder_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @rabbita.perform(fn(result) { dispatch(LocalMoonBookFolderPicked(result)) }, async fn() noraise {
+    let text : String = browser_pick_import_folder().wait().cast() catch {
+        error => return Err("Failed to read MoonBook folder: \{error}")
+      }
+    parse_browser_import_batch(text)
+  })
+}
+
+///|
+fn pick_moonbook_archive_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @rabbita.perform(
+    fn(result) { dispatch(LocalMoonBookArchivePicked(result)) },
+    async fn() noraise {
+      let text : String = browser_pick_moonbook_archive().wait().cast() catch {
+          error => return Err("Failed to read MoonBook archive: \{error}")
+        }
+      match parse_browser_import_batch(text) {
+        Ok(files) =>
+          if files.length() == 0 {
+            Err("No archive selected")
+          } else {
+            Ok(files[0])
+          }
+        Err(error) => Err(error)
+      }
+    },
+  )
 }
 
 ///|

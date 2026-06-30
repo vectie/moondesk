@@ -27,9 +27,219 @@ fn save_markdown_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   .with_json(body)
   .expect_json(result => {
     dispatch(
-      SavedMarkdownEdit(
-        http_result(result, "Could not save markdown document"),
-      ),
+      SavedMarkdownEdit(http_result(result, "Could not save markdown document")),
+    )
+  })
+}
+
+///|
+fn create_desk_entry_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  kind : String,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "kind": kind,
+    "directory": model.current_directory,
+    "name": model.desk_new_item_name,
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/entries")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      CreatedDeskEntry(http_result(result, "Could not create Desk item")),
+    )
+  })
+}
+
+///|
+fn rename_desk_entry_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "path": model.selected_path,
+    "name": model.desk_rename_name,
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/rename")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      RenamedDeskEntry(http_result(result, "Could not rename Desk item")),
+    )
+  })
+}
+
+///|
+fn move_desk_entry_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
+  let paths = if model.desk_selected_paths.length() == 0 {
+    if model.selected_path == "" {
+      []
+    } else {
+      [model.selected_path]
+    }
+  } else {
+    model.desk_selected_paths
+  }
+  let body : Json = {
+    "paths": string_array_json(paths),
+    "directory": model.desk_move_target_directory,
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/move")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(MovedDeskEntry(http_result(result, "Could not move Desk item")))
+  })
+}
+
+///|
+fn copy_desk_entry_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
+  let paths = if model.desk_selected_paths.length() == 0 {
+    if model.selected_path == "" {
+      []
+    } else {
+      [model.selected_path]
+    }
+  } else {
+    model.desk_selected_paths
+  }
+  let body : Json = { "paths": string_array_json(paths) }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/copy")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      CopiedDeskEntry(http_result(result, "Could not duplicate Desk item")),
+    )
+  })
+}
+
+///|
+fn paste_desk_clipboard_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "paths": string_array_json(model.desk_clipboard_paths),
+    "directory": model.current_directory,
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/copy")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(CopiedDeskEntry(http_result(result, "Could not paste Desk item")))
+  })
+}
+
+///|
+fn paste_desk_cut_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
+  let body : Json = {
+    "paths": string_array_json(model.desk_clipboard_paths),
+    "directory": model.current_directory,
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/move")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      MovedDeskEntry(http_result(result, "Could not move pasted Desk item")),
+    )
+  })
+}
+
+///|
+fn trash_desk_entry_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Cmd {
+  let paths = if model.desk_selected_paths.length() == 0 {
+    if model.selected_path == "" {
+      []
+    } else {
+      [model.selected_path]
+    }
+  } else {
+    model.desk_selected_paths
+  }
+  let body : Json = { "paths": string_array_json(paths) }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/trash")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      TrashedDeskEntry(http_result(result, "Could not move Desk item to trash")),
+    )
+  })
+}
+
+///|
+fn import_desk_local_files_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  files : Array[LocalImportFile],
+) -> @rabbita.Cmd {
+  let file_items : Array[Json] = []
+  for file in files {
+    let is_data_url = file.content.has_prefix("data:")
+    file_items.push({
+      "filename": file.name,
+      "relative_path": match file.relative_path {
+        Some(path) => path
+        None => ""
+      },
+      "browser_import_id": file.id,
+      "content_type": file.media_type,
+      "source": file.source,
+      "content": if is_data_url {
+        ""
+      } else {
+        file.content
+      },
+      "data_url": if is_data_url {
+        file.content
+      } else {
+        ""
+      },
+    })
+  }
+  let body : Json = {
+    "directory": model.current_directory,
+    "files": Json::array(file_items),
+  }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/entries/import")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      ImportedDeskFiles(http_result(result, "Could not import files into Desk")),
+    )
+  })
+}
+
+///|
+fn string_array_json(items : Array[String]) -> Json {
+  let values : Array[Json] = []
+  for item in items {
+    values.push(item.to_json())
+  }
+  Json::array(values)
+}
+
+///|
+fn restore_desk_entry_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Cmd {
+  restore_desk_trash_path_cmd(dispatch, model, model.desk_last_trash_path)
+}
+
+///|
+fn restore_desk_trash_path_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  trash_path : String,
+) -> @rabbita.Cmd {
+  let body : Json = { "trash_path": trash_path }
+  @http.post("/api/workspaces/\{model.selected_workspace_id}/restore")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      RestoredDeskEntry(http_result(result, "Could not restore Desk item")),
     )
   })
 }
@@ -99,6 +309,115 @@ fn save_view_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   .with_json(body)
   .expect_json(result => {
     dispatch(SavedView(http_result(result, "Could not save view")))
+  })
+}
+
+///|
+fn create_blank_moonbook_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "name": model.new_book_name,
+    "book_id": model.new_book_id,
+  }
+  @http.post("/api/workspaces")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      CreatedBlankMoonBook(http_result(result, "Could not create MoonBook")),
+    )
+  })
+}
+
+///|
+fn import_moonbook_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
+  let body : Json = { "source_path": model.import_book_path }
+  @http.post("/api/workspaces/import")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(ImportedMoonBook(http_result(result, "Could not import MoonBook")))
+  })
+}
+
+///|
+fn import_moonbook_archive_cmd(
+  dispatch : Dispatch[Msg],
+  file : LocalImportFile,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "filename": file.name,
+    "browser_import_id": file.id,
+    "content_type": file.media_type,
+    "data_url": file.content,
+  }
+  @http.post("/api/workspaces/import")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      ImportedMoonBook(http_result(result, "Could not import MoonBook archive")),
+    )
+  })
+}
+
+///|
+fn import_moonbook_folder_cmd(
+  dispatch : Dispatch[Msg],
+  files : Array[LocalImportFile],
+) -> @rabbita.Cmd {
+  let file_items : Array[Json] = []
+  for file in files {
+    let is_data_url = file.content.has_prefix("data:")
+    file_items.push({
+      "filename": file.name,
+      "relative_path": match file.relative_path {
+        Some(path) => path
+        None => ""
+      },
+      "browser_import_id": file.id,
+      "content_type": file.media_type,
+      "source": file.source,
+      "content": if is_data_url {
+        ""
+      } else {
+        file.content
+      },
+      "data_url": if is_data_url {
+        file.content
+      } else {
+        ""
+      },
+    })
+  }
+  let body : Json = { "files": Json::array(file_items) }
+  @http.post("/api/workspaces/import")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      ImportedMoonBook(http_result(result, "Could not import MoonBook folder")),
+    )
+  })
+}
+
+///|
+fn decide_review_item_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  item : ReviewItem,
+  decision : String,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "workspace_id": item.workspace_id,
+    "path": item.path,
+    "decision": decision,
+    "note": model.review_decision_note,
+  }
+  @http.post("/api/review/items/decision")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      DecidedReviewItem(http_result(result, "Could not record review decision")),
+    )
   })
 }
 

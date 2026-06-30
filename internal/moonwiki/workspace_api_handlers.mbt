@@ -33,19 +33,20 @@ async fn discover_workspaces(
     for name in read_directory_names(books_root, include_hidden=false) {
       let book_root = @pathx.join(books_root, name)
       if is_directory(book_root) {
+        let workspace_name = moonbook_workspace_display_name(book_root, name)
+        let workspace_status = moonbook_workspace_status(book_root)
         workspaces.push(
           @desk.workspace(
             id=@desk.stable_id("book", name),
-            name~,
+            name=workspace_name,
             root_path=book_root,
             kind=MoonBook,
+            status=workspace_status,
           ),
         )
       }
     }
-  }
-  if workspaces.length() > 0 {
-    return workspaces
+    return sorted_discovered_workspaces(workspaces)
   }
   if !is_directory(@pathx.join(root, ".moontown")) {
     return []
@@ -58,6 +59,116 @@ async fn discover_workspaces(
       kind=TownRoot,
     ),
   ]
+}
+
+///|
+async fn moonbook_workspace_status(book_root : String) -> @desk.WorkspaceStatus {
+  if @fs.exists(@pathx.join(book_root, "book.json")) {
+    Ready
+  } else {
+    NeedsAttention
+  }
+}
+
+///|
+async fn moonbook_workspace_display_name(
+  book_root : String,
+  fallback : String,
+) -> String {
+  let book_json_path = @pathx.join(book_root, "book.json")
+  if !@fs.exists(book_json_path) {
+    return fallback
+  }
+  let book_json = read_json_file_or_object(book_json_path)
+  let title = json_string(book_json, "title", default="").trim().to_owned()
+  if title != "" {
+    return title
+  }
+  let name = json_string(book_json, "name", default="").trim().to_owned()
+  if name != "" {
+    return name
+  }
+  fallback
+}
+
+///|
+fn workspace_library_metadata(workspace_root : String) -> Json {
+  let root = @pathx.normalize(workspace_root)
+  { "root_path": root, "library_path": @pathx.join(root, ".moontown/books") }
+}
+
+///|
+fn sorted_discovered_workspaces(
+  workspaces : Array[@desk.DeskWorkspace],
+) -> Array[@desk.DeskWorkspace] {
+  let sorted : Array[@desk.DeskWorkspace] = []
+  let added : Array[String] = []
+  while sorted.length() < workspaces.length() {
+    let mut best : @desk.DeskWorkspace? = None
+    for workspace in workspaces {
+      if added.contains(workspace.id) {
+        continue
+      }
+      match best {
+        Some(current) =>
+          if discovered_workspace_before(workspace, current) {
+            best = Some(workspace)
+          }
+        None => best = Some(workspace)
+      }
+    }
+    match best {
+      Some(workspace) => {
+        sorted.push(workspace)
+        added.push(workspace.id)
+      }
+      None => break
+    }
+  }
+  sorted
+}
+
+///|
+fn discovered_workspace_before(
+  left : @desk.DeskWorkspace,
+  right : @desk.DeskWorkspace,
+) -> Bool {
+  if left.name != right.name {
+    lexical_string_before(left.name, right.name)
+  } else {
+    lexical_string_before(left.root_path, right.root_path)
+  }
+}
+
+///|
+fn lexical_string_before(left : String, right : String) -> Bool {
+  let left_chars = string_chars(left.to_lower())
+  let right_chars = string_chars(right.to_lower())
+  let limit = if left_chars.length() < right_chars.length() {
+    left_chars.length()
+  } else {
+    right_chars.length()
+  }
+  for index in 0..<limit {
+    let left_code = left_chars[index].to_int()
+    let right_code = right_chars[index].to_int()
+    if left_code < right_code {
+      return true
+    }
+    if left_code > right_code {
+      return false
+    }
+  }
+  left_chars.length() < right_chars.length()
+}
+
+///|
+fn string_chars(value : String) -> Array[Char] {
+  let chars : Array[Char] = []
+  for ch in value {
+    chars.push(ch)
+  }
+  chars
 }
 
 ///|

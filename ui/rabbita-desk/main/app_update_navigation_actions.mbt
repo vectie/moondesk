@@ -9,12 +9,16 @@ fn update_navigation_actions(
       select_workspace_mode_action(dispatch, mode, model)
     SelectActivity(activity) =>
       (
-        sync_activity_cmd(activity),
+        sync_activity_batch(
+          activity,
+          activity_refresh_cmds(dispatch, activity, model),
+        ),
         clear_markdown_editor({
           ..model,
           workspace_mode: workspace_mode_for_activity(activity),
           activity,
           command_open: false,
+          command_query: "",
         }),
       )
     SelectWorkspace(workspace_id) =>
@@ -28,35 +32,69 @@ fn update_navigation_actions(
           selected_workspace_id: workspace_id,
           selected_mooncode_session_id: "",
           selected_path: "",
+          desk_selected_paths: [],
+          desk_selection_anchor: "",
+          desk_rename_editing_path: "",
+          desk_rename_name: "",
+          desk_move_target_directory: "",
+          desk_back_stack: [],
+          desk_forward_stack: [],
+          desk_trash_entries: [],
+          desk_last_trash_path: "",
           primary_preview_path: "wiki/index.md",
           current_directory: "",
+          desk_location_input: "",
+          desk_filter_query: "",
           preview: None,
           preview_status: "loading workspace",
           entries: [],
         }),
       )
     SelectPath(path) => select_path_action(dispatch, model, path)
-    OpenDirectory(path) =>
-      (
-        @rabbita.batch([
-          fetch_entries_cmd(dispatch, model.selected_workspace_id, path),
-          fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
-        ]),
-        clear_markdown_editor({
-          ..model,
-          current_directory: path,
-          selected_path: path,
-          primary_preview_path: remember_primary_preview_path(model, path),
-          preview: None,
-          preview_status: "loading directory",
-        }),
+    OpenDirectory(path) => open_directory_action(dispatch, model, path)
+    NavigateDeskBack => navigate_desk_back_action(dispatch, model)
+    NavigateDeskForward => navigate_desk_forward_action(dispatch, model)
+    SetDeskLocationInput(path) =>
+      (@rabbita.none, { ..model, desk_location_input: path })
+    OpenDeskLocation =>
+      open_directory_action(
+        dispatch,
+        model,
+        desk_location_path_from_input(model.desk_location_input),
       )
     OpenQuickPath(path) =>
       (
-        fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
+        @rabbita.batch([
+          fetch_entries_cmd(
+            dispatch,
+            model.selected_workspace_id,
+            parent_path(path),
+          ),
+          fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
+        ]),
         {
           ..clear_if_path_leaves_markdown_editor(model, path),
           selected_path: path,
+          current_directory: parent_path(path),
+          desk_location_input: parent_path(path),
+          desk_filter_query: "",
+          desk_selected_paths: if path == "" {
+            []
+          } else {
+            [path]
+          },
+          desk_selection_anchor: path,
+          desk_rename_editing_path: "",
+          desk_rename_name: if path == "" {
+            ""
+          } else {
+            @desk.display_name(path)
+          },
+          desk_move_target_directory: if path == "" {
+            ""
+          } else {
+            parent_path(path)
+          },
           primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
           preview_status: "loading preview",
@@ -79,22 +117,313 @@ fn update_navigation_actions(
           workspace_mode: Desk,
           activity: Files,
           command_open: false,
+          command_query: "",
           selected_workspace_id: workspace_id,
           selected_path: path,
+          desk_selected_paths: if path == "" {
+            []
+          } else {
+            [path]
+          },
+          desk_selection_anchor: path,
+          desk_rename_editing_path: "",
+          desk_rename_name: if path == "" {
+            ""
+          } else {
+            @desk.display_name(path)
+          },
+          desk_move_target_directory: if path == "" {
+            ""
+          } else {
+            parent_path(path)
+          },
           primary_preview_path: if is_generated_site_path(path) {
             "wiki/index.md"
           } else {
             path
           },
           current_directory: directory,
+          desk_location_input: directory,
+          desk_filter_query: "",
           preview: None,
           preview_status: "loading search result",
         }),
       )
     }
     ToggleCommand =>
-      (@rabbita.none, { ..model, command_open: !model.command_open })
+      (
+        @rabbita.none,
+        { ..model, command_open: !model.command_open, command_query: "" },
+      )
+    SetCommandQuery(query) => (@rabbita.none, { ..model, command_query: query })
     _ => (@rabbita.none, model)
+  }
+}
+
+///|
+fn open_directory_action(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  path : String,
+) -> (@rabbita.Cmd, Model) {
+  let back_stack = if path == model.current_directory {
+    model.desk_back_stack
+  } else {
+    desk_history_push(model.desk_back_stack, model.current_directory)
+  }
+  open_directory_with_history(
+    dispatch,
+    model,
+    path,
+    back_stack,
+    [],
+    "loading directory",
+  )
+}
+
+///|
+fn navigate_desk_back_action(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> (@rabbita.Cmd, Model) {
+  match desk_history_pop(model.desk_back_stack) {
+    Some((target, remaining_back)) =>
+      open_directory_with_history(
+        dispatch,
+        model,
+        target,
+        remaining_back,
+        desk_history_push(model.desk_forward_stack, model.current_directory),
+        "loading previous directory",
+      )
+    None =>
+      (@rabbita.none, { ..model, preview_status: "no previous directory" })
+  }
+}
+
+///|
+fn navigate_desk_forward_action(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> (@rabbita.Cmd, Model) {
+  match desk_history_pop(model.desk_forward_stack) {
+    Some((target, remaining_forward)) =>
+      open_directory_with_history(
+        dispatch,
+        model,
+        target,
+        desk_history_push(model.desk_back_stack, model.current_directory),
+        remaining_forward,
+        "loading next directory",
+      )
+    None => (@rabbita.none, { ..model, preview_status: "no next directory" })
+  }
+}
+
+///|
+fn open_directory_with_history(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  path : String,
+  back_stack : Array[String],
+  forward_stack : Array[String],
+  status : String,
+) -> (@rabbita.Cmd, Model) {
+  (
+    @rabbita.batch([
+      fetch_entries_cmd(dispatch, model.selected_workspace_id, path),
+      fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
+    ]),
+    clear_markdown_editor({
+      ..model,
+      current_directory: path,
+      desk_location_input: path,
+      desk_filter_query: "",
+      selected_path: path,
+      desk_selected_paths: if path == "" {
+        []
+      } else {
+        [path]
+      },
+      desk_selection_anchor: path,
+      desk_rename_editing_path: "",
+      desk_rename_name: if path == "" {
+        ""
+      } else {
+        @desk.display_name(path)
+      },
+      desk_move_target_directory: if path == "" {
+        ""
+      } else {
+        parent_path(path)
+      },
+      desk_back_stack: back_stack,
+      desk_forward_stack: forward_stack,
+      primary_preview_path: remember_primary_preview_path(model, path),
+      preview: None,
+      preview_status: status,
+    }),
+  )
+}
+
+///|
+fn desk_location_path_from_input(input : String) -> String {
+  let raw = input.trim().to_owned()
+  let lower = raw.to_lower()
+  if raw == "" ||
+    raw == "/" ||
+    raw == "\\" ||
+    lower == "root" ||
+    lower == "(root)" {
+    ""
+  } else {
+    normalize_desk_location_path(raw)
+  }
+}
+
+///|
+fn normalize_desk_location_path(raw : String) -> String {
+  let normalized = normalize_desk_location_separators(raw)
+    .trim(chars=['/', '\\'])
+    .to_owned()
+  let mut segments : Array[String] = []
+  for part in normalized.split("/") {
+    let segment = part.trim().to_owned()
+    if segment == "" || segment == "." {
+      continue
+    } else if segment == ".." {
+      if segments.length() == 0 {
+        return ""
+      }
+      segments = desk_location_without_last_segment(segments)
+    } else {
+      segments.push(segment)
+    }
+  }
+  segments.join("/")
+}
+
+///|
+fn normalize_desk_location_separators(raw : String) -> String {
+  let pieces : Array[String] = []
+  for ch in raw {
+    if ch == '\\' {
+      pieces.push("/")
+    } else {
+      pieces.push(String::from_array([ch]))
+    }
+  }
+  pieces.join("")
+}
+
+///|
+fn desk_location_without_last_segment(segments : Array[String]) -> Array[String] {
+  let next : Array[String] = []
+  if segments.length() == 0 {
+    return next
+  }
+  for index in 0..<(segments.length() - 1) {
+    next.push(segments[index])
+  }
+  next
+}
+
+///|
+fn desk_history_push(stack : Array[String], path : String) -> Array[String] {
+  if stack.length() > 0 && stack[stack.length() - 1] == path {
+    stack
+  } else {
+    let next : Array[String] = []
+    for item in stack {
+      next.push(item)
+    }
+    next.push(path)
+    if next.length() > 50 {
+      let trimmed : Array[String] = []
+      for index in 1..<next.length() {
+        trimmed.push(next[index])
+      }
+      trimmed
+    } else {
+      next
+    }
+  }
+}
+
+///|
+fn desk_history_pop(stack : Array[String]) -> (String, Array[String])? {
+  if stack.length() == 0 {
+    None
+  } else {
+    let next : Array[String] = []
+    for index in 0..<(stack.length() - 1) {
+      next.push(stack[index])
+    }
+    Some((stack[stack.length() - 1], next))
+  }
+}
+
+///|
+fn activity_refresh_cmds(
+  dispatch : Dispatch[Msg],
+  activity : Activity,
+  model : Model,
+) -> @rabbita.Cmd {
+  match activity {
+    Files =>
+      if model.selected_workspace_id == "" {
+        @rabbita.none
+      } else {
+        @rabbita.batch([
+          fetch_entries_cmd(
+            dispatch,
+            model.selected_workspace_id,
+            model.current_directory,
+          ),
+          fetch_preview_cmd(
+            dispatch,
+            model.selected_workspace_id,
+            model.selected_path,
+          ),
+          fetch_desk_trash_cmd(dispatch, model.selected_workspace_id),
+        ])
+      }
+    Town =>
+      @rabbita.batch([
+        fetch_requests_cmd(dispatch),
+        fetch_messages_cmd(dispatch),
+        fetch_standing_goals_cmd(dispatch),
+        fetch_analytics_cmd(dispatch),
+        fetch_town_progress_cmd(dispatch),
+        fetch_town_events_cmd(dispatch),
+        fetch_daemon_lifecycle_cmd(dispatch),
+        fetch_launch_agent_cmd(dispatch),
+      ])
+    Runs =>
+      if model.selected_workspace_id == "" {
+        @rabbita.none
+      } else {
+        @rabbita.batch([
+          fetch_runs_cmd(dispatch, model.selected_workspace_id),
+          fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          fetch_events_cmd(dispatch, model.selected_workspace_id),
+        ])
+      }
+    Settings =>
+      @rabbita.batch([
+        fetch_standing_goals_cmd(dispatch),
+        fetch_analytics_cmd(dispatch),
+        fetch_town_progress_cmd(dispatch),
+        fetch_saved_views_cmd(dispatch),
+        fetch_daemon_lifecycle_cmd(dispatch),
+        fetch_launch_agent_cmd(dispatch),
+        if model.selected_workspace_id == "" {
+          @rabbita.none
+        } else {
+          fetch_review_items_cmd(dispatch, model.selected_workspace_id)
+        },
+      ])
+    Search | Inbox => @rabbita.none
   }
 }
 
@@ -121,7 +450,14 @@ fn select_workspace_mode_action(
           model.selected_workspace_id,
           model.selected_path,
         ),
+        fetch_desk_trash_cmd(dispatch, model.selected_workspace_id),
       ]),
+    )
+  } else if mode == MoonCode {
+    sync_shell_batch(
+      mode,
+      activity,
+      fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
     )
   } else {
     sync_shell_cmd(mode, activity)
@@ -133,10 +469,21 @@ fn select_workspace_mode_action(
       workspace_mode: mode,
       activity,
       command_open: false,
+      command_query: "",
       current_directory: if mode == Desk {
         desk_directory
       } else {
         model.current_directory
+      },
+      desk_location_input: if mode == Desk {
+        desk_directory
+      } else {
+        model.desk_location_input
+      },
+      desk_filter_query: if mode == Desk {
+        ""
+      } else {
+        model.desk_filter_query
       },
       preview: if mode == Desk {
         None
@@ -197,11 +544,33 @@ fn select_path_action(
     {
       ..clear_if_path_leaves_markdown_editor(model, path),
       selected_path: path,
+      desk_selected_paths: if path == "" {
+        []
+      } else {
+        [path]
+      },
+      desk_selection_anchor: path,
+      desk_rename_editing_path: "",
+      desk_rename_name: if path == "" {
+        ""
+      } else {
+        @desk.display_name(path)
+      },
+      desk_move_target_directory: if path == "" {
+        ""
+      } else {
+        parent_path(path)
+      },
       primary_preview_path: remember_primary_preview_path(model, path),
       current_directory: if is_directory {
         path
       } else {
         model.current_directory
+      },
+      desk_location_input: if is_directory {
+        path
+      } else {
+        model.desk_location_input
       },
       preview: None,
       preview_status: "loading preview",

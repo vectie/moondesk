@@ -1,5 +1,6 @@
 ///|
 fn should_hide_file_entry(name : String) -> Bool {
+  name == ".moontown" ||
   name == ".git" ||
   name == ".DS_Store" ||
   name == "DS_Store" ||
@@ -10,7 +11,7 @@ fn should_hide_file_entry(name : String) -> Bool {
 
 ///|
 fn is_writable_entry(path : String) -> Bool {
-  path == "inbox" || path.has_prefix("inbox/")
+  is_desk_create_path_allowed(path)
 }
 
 ///|

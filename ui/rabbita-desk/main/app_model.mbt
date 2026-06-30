@@ -1,15 +1,63 @@
 ///|
+enum DeskSortKey {
+  SortByName
+  SortByKind
+  SortByLayer
+  SortByModified
+  SortBySize
+} derive(Eq)
+
+///|
+enum DeskDensity {
+  DeskDensityComfortable
+  DeskDensityCompact
+} derive(Eq)
+
+///|
 struct Model {
   bootstrapped : Bool
   workspace_mode : WorkspaceMode
   activity : Activity
   command_open : Bool
+  command_query : String
   loading : Bool
   host_status : String
+  workspace_root_path : String
+  workspace_library_path : String
   workspaces : Array[@desk.DeskWorkspace]
   selected_workspace_id : String
+  new_book_name : String
+  new_book_id : String
+  new_book_status : String
+  import_book_path : String
+  import_book_status : String
   current_directory : String
+  desk_location_input : String
+  desk_filter_query : String
+  desk_back_stack : Array[String]
+  desk_forward_stack : Array[String]
   entries : Array[@desk.DeskFileEntry]
+  desk_sort_key : DeskSortKey
+  desk_sort_desc : Bool
+  desk_density : DeskDensity
+  desk_selected_paths : Array[String]
+  desk_selection_anchor : String
+  desk_new_item_name : String
+  desk_new_item_status : String
+  desk_rename_editing_path : String
+  desk_rename_name : String
+  desk_rename_status : String
+  desk_move_target_directory : String
+  desk_move_status : String
+  desk_clipboard_paths : Array[String]
+  desk_clipboard_workspace_id : String
+  desk_clipboard_operation : String
+  desk_clipboard_status : String
+  desk_path_status : String
+  desk_copy_status : String
+  desk_trash_status : String
+  desk_last_trash_path : String
+  desk_trash_entries : Array[DeskTrashEntry]
   selected_path : String
   primary_preview_path : String
   preview : @desk.DeskPreview?
@@ -41,8 +89,12 @@ struct Model {
   mooncode_model : String
   mooncode_web_search : Bool
   mooncode_composer_status : String
+  mooncode_pending_prompts : Array[MoonCodePendingPrompt]
+  mooncode_conversation_rows : Array[MoonCodeConversationRow]
   events : Array[DeskEvent]
   review_items : Array[ReviewItem]
+  review_decision_note : String
+  review_decision_status : String
   town_messages : Array[TownMessage]
   runs : Array[@desk.DeskRunProjection]
   inbox_title : String
@@ -85,6 +137,7 @@ struct Model {
 ///|
 enum Msg {
   Bootstrap
+  LoadedWorkspaceMetadata(Result[WorkspaceMetadata, String])
   LoadedWorkspaces(Result[Array[@desk.DeskWorkspace], String])
   LoadedEntries(Result[Array[@desk.DeskFileEntry], String])
   LoadedPreview(Result[@desk.DeskPreview, String])
@@ -99,14 +152,27 @@ enum Msg {
   LoadedReviewItems(Result[Array[ReviewItem], String])
   LoadedSavedViews(Result[Array[SavedViewRecord], String])
   LoadedSearch(Result[Array[SearchHit], String])
+  LoadedDeskTrash(Result[Array[DeskTrashEntry], String])
   LoadedBookBaseTypes(Result[Array[BookBaseTypeRecord], String])
   LoadedBookPatterns(Result[Array[BookPatternRecord], String])
+  CreatedBlankMoonBook(Result[CreatedWorkspace, String])
+  ImportedMoonBook(Result[CreatedWorkspace, String])
+  LocalMoonBookFolderPicked(Result[Array[LocalImportFile], String])
+  LocalMoonBookArchivePicked(Result[LocalImportFile, String])
+  CreatedDeskEntry(Result[DeskEntryCreated, String])
+  RenamedDeskEntry(Result[DeskEntryRenamed, String])
+  MovedDeskEntry(Result[DeskEntryMoved, String])
+  CopiedDeskEntry(Result[DeskEntryCopied, String])
+  TrashedDeskEntry(Result[DeskEntryTrashed, String])
+  RestoredDeskEntry(Result[DeskEntryRestored, String])
+  ImportedDeskFiles(Result[DeskFilesImported, String])
   SavedInbox(Result[InboxCreated, String])
   SavedMarkdownEdit(Result[MarkdownEditResult, String])
   ImportedInbox(Result[InboxImportResult, String])
   SavedView(Result[SavedViewRecord, String])
   SubmittedRequest(Result[RequestRecord, String])
   CreatedStandingGoal(Result[StandingGoalRecord, String])
+  DecidedReviewItem(Result[ReviewDecisionResult, String])
   CreatedBookFromPattern(Result[BookPatternCreationResult, String])
   ExportedAppToolPortable(Result[Json, String])
   ExportedAllAppToolPortable(Result[Json, String])
@@ -133,15 +199,26 @@ enum Msg {
   SelectMoonCodeSession(String)
   NewMoonCodeSession
   SetMoonCodePrompt(String)
-  ToggleMoonCodeWebSearch
   SendMoonCodeMessage
   PollMoonCodeSessions
   SelectWorkspace(String)
   SelectPath(String)
   OpenDirectory(String)
+  NavigateDeskBack
+  NavigateDeskForward
+  SetDeskLocationInput(String)
+  OpenDeskLocation
   OpenQuickPath(String)
   SelectSearchHit(String, String)
+  SetNewBookName(String)
+  SetNewBookId(String)
+  CreateBlankMoonBook
+  SetImportBookPath(String)
+  ImportMoonBook
+  PickImportMoonBookFolder
+  PickImportMoonBookArchive
   ToggleCommand
+  SetCommandQuery(String)
   SetRequestPrompt(String)
   SubmitRequest
   SetGoalTitle(String)
@@ -189,9 +266,36 @@ enum Msg {
   StageSelectedLink
   SetSearchQuery(String)
   SearchNow
+  SetDeskSort(DeskSortKey)
+  SetDeskFilterQuery(String)
+  SetDeskDensity(DeskDensity)
+  DeskKeyDown(String, Bool, Bool)
+  DeskMouseDown(String, Bool, Bool)
+  ClearDeskSelection
+  SetDeskNewItemName(String)
+  CreateDeskFolder
+  CreateDeskMarkdown
+  ImportLocalFilesToDesk
+  ImportLocalFolderToDesk
+  StartDeskRename
+  CancelDeskRename
+  SetDeskRenameName(String)
+  RenameDeskSelection
+  SetDeskMoveTargetDirectory(String)
+  MoveDeskSelection
+  CopyDeskSelection
+  CutDeskSelection
+  PasteDeskClipboard
+  CopyDeskPath
+  DuplicateDeskSelection
+  TrashDeskSelection
+  RestoreLastTrashedDeskEntry
+  RestoreDeskTrashEntry(String)
   ToggleFavorite(String)
   SetViewTitle(String)
   SaveCurrentView
+  SetReviewDecisionNote(String)
+  DecideReviewItem(ReviewItem, String)
   NotifyDaily
   RefreshAll
 }

@@ -24,6 +24,7 @@ struct InboxImportResult {
 struct LocalImportFile {
   id : String
   name : String
+  relative_path : String?
   media_type : String
   content : String
   source : String

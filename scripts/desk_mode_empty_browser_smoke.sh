@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(mktemp -d "${TMPDIR:-/tmp}/moondesk-desk-empty-browser.XXXXXX")"
+PORT="${PORT:-$((5600 + RANDOM % 1000))}"
+CDP_PORT="${CDP_PORT:-$((9600 + RANDOM % 1000))}"
+HOST="127.0.0.1"
+BASE="http://${HOST}:${PORT}"
+LOG="${ROOT}/server.log"
+CHROME_LOG="${ROOT}/chrome.log"
+CHROME_PROFILE="${ROOT}/chrome-profile"
+CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
+PID=""
+CHROME_PID=""
+
+cleanup() {
+  if [[ -n "${CHROME_PID}" ]] && kill -0 "${CHROME_PID}" 2>/dev/null; then
+    kill "${CHROME_PID}" 2>/dev/null || true
+    wait "${CHROME_PID}" 2>/dev/null || true
+  fi
+  if [[ -n "${PID}" ]] && kill -0 "${PID}" 2>/dev/null; then
+    kill "${PID}" 2>/dev/null || true
+    wait "${PID}" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
+
+if [[ ! -x "${CHROME}" ]]; then
+  echo "Chrome executable not found: ${CHROME}" >&2
+  exit 1
+fi
+
+mkdir -p "${ROOT}/.moontown/books"
+
+moon run cmd/main -- serve "${ROOT}" --ui ui/rabbita-desk/dist --host "${HOST}" --port "${PORT}" >"${LOG}" 2>&1 &
+PID="$!"
+
+for _ in {1..200}; do
+  if curl -fsS "${BASE}/__moondesk_health" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.1
+done
+
+if ! curl -fsS "${BASE}/__moondesk_health" >/dev/null 2>&1; then
+  echo "server did not become healthy; log follows" >&2
+  cat "${LOG}" >&2
+  exit 1
+fi
+
+"${CHROME}" \
+  --headless=new \
+  --disable-gpu \
+  --no-first-run \
+  --no-default-browser-check \
+  --user-data-dir="${CHROME_PROFILE}" \
+  --remote-debugging-address="${HOST}" \
+  --remote-debugging-port="${CDP_PORT}" \
+  about:blank >"${CHROME_LOG}" 2>&1 &
+CHROME_PID="$!"
+
+for _ in {1..200}; do
+  if curl -fsS "http://${HOST}:${CDP_PORT}/json/version" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.1
+done
+
+if ! curl -fsS "http://${HOST}:${CDP_PORT}/json/version" >/dev/null 2>&1; then
+  echo "Chrome DevTools endpoint did not become healthy; log follows" >&2
+  cat "${CHROME_LOG}" >&2
+  exit 1
+fi
+
+node scripts/desk_mode_browser_smoke.mjs "${BASE}" "${CDP_PORT}" "${ROOT}" empty
+echo "Desk empty-library browser smoke passed on ${BASE}"

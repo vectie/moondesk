@@ -37,6 +37,48 @@ fn workspace_root(model : Model) -> String {
 }
 
 ///|
+fn workspace_library_root(model : Model) -> String {
+  let root = workspace_root(model)
+  if root == "not connected" && model.workspace_root_path != "" {
+    return model.workspace_root_path
+  }
+  match root.rev_split_once("/.moontown/books/") {
+    Some((base, _)) => base.to_owned()
+    None =>
+      if root.has_suffix("/.moontown/books") {
+        root[:root.length() - "/.moontown/books".length()].to_owned()
+      } else {
+        root
+      }
+  }
+}
+
+///|
+fn workspace_moonbook_library_path(model : Model) -> String {
+  let root = workspace_library_root(model)
+  if root == "not connected" && model.workspace_library_path != "" {
+    return model.workspace_library_path
+  }
+  if root == "not connected" {
+    root
+  } else if root.has_suffix("/.moontown/books") {
+    root
+  } else {
+    root + "/.moontown/books"
+  }
+}
+
+///|
+fn workspace_library_count_label(model : Model) -> String {
+  let count = model.workspaces.length()
+  if count == 1 {
+    "1 MoonBook"
+  } else {
+    "\{count} MoonBooks"
+  }
+}
+
+///|
 fn find_entry(model : Model, path : String) -> @desk.DeskFileEntry? {
   for entry in model.entries {
     if entry.path == path {
@@ -64,6 +106,31 @@ fn workspace_kind_label(kind : @desk.WorkspaceKind) -> String {
     MoonBook => "moonbook"
     TownRoot => "town"
   }
+}
+
+///|
+fn workspace_status_label(status : @desk.WorkspaceStatus) -> String {
+  match status {
+    Ready => "Ready"
+    Missing => "Missing"
+    NeedsAttention => "Needs setup"
+    Unknown => "Unknown"
+  }
+}
+
+///|
+fn workspace_status_key(status : @desk.WorkspaceStatus) -> String {
+  match status {
+    Ready => "ready"
+    Missing => "missing"
+    NeedsAttention => "needs-attention"
+    Unknown => "unknown"
+  }
+}
+
+///|
+fn workspace_status_class(status : @desk.WorkspaceStatus) -> String {
+  "status-" + workspace_status_key(status)
 }
 
 ///|

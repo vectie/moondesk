@@ -7,9 +7,15 @@ fn reload_workspace_cmds(
   if workspace_id == "" {
     @rabbita.none
   } else {
+    let entries_path = if selected_path == "" {
+      ""
+    } else {
+      parent_path(selected_path)
+    }
     @rabbita.batch([
-      fetch_entries_cmd(dispatch, workspace_id, ""),
+      fetch_entries_cmd(dispatch, workspace_id, entries_path),
       fetch_preview_cmd(dispatch, workspace_id, selected_path),
+      fetch_desk_trash_cmd(dispatch, workspace_id),
       fetch_runs_cmd(dispatch, workspace_id),
       fetch_moonclaw_progress_cmd(dispatch, workspace_id),
       fetch_messages_cmd(dispatch),

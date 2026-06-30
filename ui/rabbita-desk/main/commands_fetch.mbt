@@ -8,6 +8,17 @@ fn fetch_workspaces_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_workspace_metadata_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @http.get("/api/workspaces/metadata").expect_json(result => {
+    dispatch(
+      LoadedWorkspaceMetadata(
+        http_result(result, "Invalid workspace metadata")
+      ),
+    )
+  })
+}
+
+///|
 fn fetch_entries_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
@@ -26,6 +37,16 @@ fn fetch_preview_cmd(
 ) -> @rabbita.Cmd {
   @http.get(workspace_preview_url(workspace_id, path)).expect_json(result => {
     dispatch(LoadedPreview(http_result(result, "Preview is not available")))
+  })
+}
+
+///|
+fn fetch_desk_trash_cmd(
+  dispatch : Dispatch[Msg],
+  workspace_id : String,
+) -> @rabbita.Cmd {
+  @http.get("/api/workspaces/\{workspace_id}/trash").expect_json(result => {
+    dispatch(LoadedDeskTrash(http_result(result, "Invalid Desk trash listing")))
   })
 }
 

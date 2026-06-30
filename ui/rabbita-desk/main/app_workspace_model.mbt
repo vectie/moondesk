@@ -19,3 +19,80 @@ struct SearchHit {
   source_layer : @desk.SourceLayer
   snippet : String
 } derive(FromJson)
+
+///|
+struct CreatedWorkspace {
+  workspace_id : String
+  book_id : String
+  name : String
+  path : String
+} derive(FromJson)
+
+///|
+struct WorkspaceMetadata {
+  root_path : String
+  library_path : String
+} derive(FromJson)
+
+///|
+struct DeskEntryCreated {
+  workspace_id : String
+  path : String
+  directory : String
+} derive(FromJson)
+
+///|
+struct DeskEntryRenamed {
+  workspace_id : String
+  path : String
+  directory : String
+} derive(FromJson)
+
+///|
+struct DeskEntryMoved {
+  workspace_id : String
+  path : String
+  directory : String
+  moved_count : Int
+} derive(FromJson)
+
+///|
+struct DeskEntryCopied {
+  workspace_id : String
+  path : String
+  directory : String
+  copied_count : Int
+} derive(FromJson)
+
+///|
+struct DeskEntryTrashed {
+  workspace_id : String
+  path : String
+  directory : String
+  trash_path : String
+  trashed_count : Int
+} derive(FromJson)
+
+///|
+struct DeskTrashEntry {
+  workspace_id : String
+  original_path : String
+  trash_path : String
+  receipt_path : String
+  trashed_at : String
+} derive(FromJson)
+
+///|
+struct DeskEntryRestored {
+  workspace_id : String
+  path : String
+  directory : String
+} derive(FromJson)
+
+///|
+struct DeskFilesImported {
+  workspace_id : String
+  path : String
+  directory : String
+  imported_count : Int
+} derive(FromJson)
