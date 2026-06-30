@@ -1159,6 +1159,14 @@ button {
   gap: 12px;
 }
 
+.markdown-editor-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(320px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
 .markdown-editor {
   width: 100%;
   min-height: 520px;
@@ -1178,6 +1186,13 @@ button {
 .markdown-editor:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(77, 182, 198, 0.16);
+}
+
+.markdown-live-preview {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding-top: 4px;
 }
 
 .mooncode-session-list {
@@ -2237,6 +2252,10 @@ button {
 @media (max-width: 1120px) {
   .desk-main {
     grid-template-columns: 54px minmax(220px, 280px) minmax(0, 1fr);
+  }
+
+  .markdown-editor-grid {
+    grid-template-columns: 1fr;
   }
 
   .inspector-pane {

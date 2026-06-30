@@ -146,14 +146,31 @@ fn render_markdown_editor(
       span(model.markdown_editor_path),
       span(class="record-kind", model.markdown_editor_status),
     ]),
-    textarea(
-      class="markdown-editor",
-      rows=28,
-      value=model.markdown_editor_content,
-      on_input=fn(value) { dispatch(SetMarkdownEditorContent(value)) },
-      "",
-    ),
+    div(class="markdown-editor-grid", [
+      textarea(
+        class="markdown-editor",
+        rows=28,
+        value=model.markdown_editor_content,
+        on_input=fn(value) { dispatch(SetMarkdownEditorContent(value)) },
+        "",
+      ),
+      section(
+        class="document-preview markdown-live-preview",
+        render_markdown_document(markdown_editor_preview(model)),
+      ),
+    ]),
   ])
+}
+
+///|
+fn markdown_editor_preview(model : Model) -> @desk.DeskPreview {
+  @desk.preview(
+    @desk.file_entry(
+      workspace_id=model.selected_workspace_id,
+      path=model.markdown_editor_path,
+    ),
+    body=model.markdown_editor_content,
+  )
 }
 
 ///|

@@ -118,6 +118,16 @@ fn markdown_editor_active(model : Model) -> Bool {
 }
 
 ///|
+fn clear_markdown_editor(model : Model) -> Model {
+  {
+    ..model,
+    markdown_editor_path: "",
+    markdown_editor_content: "",
+    markdown_editor_status: "editor idle",
+  }
+}
+
+///|
 fn remember_path(paths : Array[String], path : String) -> Array[String] {
   if path == "" {
     return paths

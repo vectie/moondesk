@@ -10,12 +10,12 @@ fn update_navigation_actions(
     SelectActivity(activity) =>
       (
         sync_activity_cmd(activity),
-        {
+        clear_markdown_editor({
           ..model,
           workspace_mode: workspace_mode_for_activity(activity),
           activity,
           command_open: false,
-        },
+        }),
       )
     SelectWorkspace(workspace_id) =>
       (
@@ -23,7 +23,7 @@ fn update_navigation_actions(
           reload_workspace_cmds(dispatch, workspace_id, ""),
           fetch_mooncode_sessions_cmd(dispatch, workspace_id),
         ]),
-        {
+        clear_markdown_editor({
           ..model,
           selected_workspace_id: workspace_id,
           selected_mooncode_session_id: "",
@@ -33,7 +33,7 @@ fn update_navigation_actions(
           preview: None,
           preview_status: "loading workspace",
           entries: [],
-        },
+        }),
       )
     SelectPath(path) => select_path_action(dispatch, model, path)
     OpenDirectory(path) =>
@@ -42,20 +42,20 @@ fn update_navigation_actions(
           fetch_entries_cmd(dispatch, model.selected_workspace_id, path),
           fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
         ]),
-        {
+        clear_markdown_editor({
           ..model,
           current_directory: path,
           selected_path: path,
           primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
           preview_status: "loading directory",
-        },
+        }),
       )
     OpenQuickPath(path) =>
       (
         fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
         {
-          ..model,
+          ..clear_if_path_leaves_markdown_editor(model, path),
           selected_path: path,
           primary_preview_path: remember_primary_preview_path(model, path),
           preview: None,
@@ -74,7 +74,7 @@ fn update_navigation_actions(
             fetch_runs_cmd(dispatch, workspace_id),
           ]),
         ),
-        {
+        clear_markdown_editor({
           ..model,
           workspace_mode: Desk,
           activity: Files,
@@ -89,7 +89,7 @@ fn update_navigation_actions(
           current_directory: directory,
           preview: None,
           preview_status: "loading search result",
-        },
+        }),
       )
     }
     ToggleCommand =>
@@ -129,7 +129,7 @@ fn select_workspace_mode_action(
   (
     base_cmd,
     {
-      ..model,
+      ..clear_if_switching_out_of_markdown_editor(model, mode),
       workspace_mode: mode,
       activity,
       command_open: false,
@@ -195,7 +195,7 @@ fn select_path_action(
   (
     base_cmd,
     {
-      ..model,
+      ..clear_if_path_leaves_markdown_editor(model, path),
       selected_path: path,
       primary_preview_path: remember_primary_preview_path(model, path),
       current_directory: if is_directory {
@@ -212,4 +212,25 @@ fn select_path_action(
       },
     },
   )
+}
+
+///|
+fn clear_if_path_leaves_markdown_editor(model : Model, path : String) -> Model {
+  if model.markdown_editor_path == "" || model.markdown_editor_path == path {
+    model
+  } else {
+    clear_markdown_editor(model)
+  }
+}
+
+///|
+fn clear_if_switching_out_of_markdown_editor(
+  model : Model,
+  mode : WorkspaceMode,
+) -> Model {
+  if mode is MoonWiki {
+    model
+  } else {
+    clear_markdown_editor(model)
+  }
 }

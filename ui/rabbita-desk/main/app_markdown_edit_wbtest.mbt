@@ -67,3 +67,61 @@ test "saved markdown edit refreshes preview and exits editor" {
   assert_eq(next.markdown_editor_status, "saved wiki/index.md")
   assert_eq(next.preview_status, "loading saved markdown")
 }
+
+///|
+test "markdown editor preview follows draft content" {
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    selected_path: "wiki/index.md",
+    markdown_editor_path: "wiki/index.md",
+    markdown_editor_content: "# Draft\n\n- one\n",
+  }
+  let preview = markdown_editor_preview(model)
+  assert_true(preview.renderer is Markdown)
+  assert_eq(preview.title, "index.md")
+  assert_eq(preview.body, "# Draft\n\n- one\n")
+}
+
+///|
+test "navigating away clears markdown editor state" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    selected_path: "wiki/index.md",
+    markdown_editor_path: "wiki/index.md",
+    markdown_editor_content: "# Draft\n",
+    markdown_editor_status: "editing wiki/index.md",
+  }
+  let (_, next) = update_navigation_actions(
+    dispatch,
+    SelectPath("wiki/other.md"),
+    model,
+  )
+  assert_eq(next.selected_path, "wiki/other.md")
+  assert_eq(next.markdown_editor_path, "")
+  assert_eq(next.markdown_editor_content, "")
+  assert_eq(next.markdown_editor_status, "editor idle")
+}
+
+///|
+test "reloading same markdown path keeps editor state" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    selected_path: "wiki/index.md",
+    markdown_editor_path: "wiki/index.md",
+    markdown_editor_content: "# Draft\n",
+    markdown_editor_status: "editing wiki/index.md",
+  }
+  let (_, next) = update_navigation_actions(
+    dispatch,
+    OpenQuickPath("wiki/index.md"),
+    model,
+  )
+  assert_eq(next.selected_path, "wiki/index.md")
+  assert_eq(next.markdown_editor_path, "wiki/index.md")
+  assert_eq(next.markdown_editor_content, "# Draft\n")
+}
