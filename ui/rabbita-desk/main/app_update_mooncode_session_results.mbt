@@ -24,7 +24,16 @@ fn update_mooncode_session_results(
         },
       )
     LoadedMoonClawDaemon(Err(error)) =>
-      (@rabbita.none, { ..model, mooncode_composer_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_composer_status: mooncode_background_status_unless_draft(
+            model,
+            error,
+          ),
+        },
+      )
     LoadedMoonClawModels(Ok(result)) =>
       (
         @rabbita.none,
@@ -45,7 +54,16 @@ fn update_mooncode_session_results(
         },
       )
     LoadedMoonClawModels(Err(error)) =>
-      (@rabbita.none, { ..model, mooncode_composer_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_composer_status: mooncode_background_status_unless_draft(
+            model,
+            error,
+          ),
+        },
+      )
     LoadedMoonCodeSessions(Ok(mooncode_sessions)) => {
       let mooncode_sessions = mooncode_merge_session_listing(
         model.mooncode_sessions,
@@ -134,7 +152,16 @@ fn update_mooncode_session_results(
       )
     }
     LoadedMoonCodeSessions(Err(error)) =>
-      (@rabbita.none, { ..model, mooncode_composer_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_composer_status: mooncode_background_status_unless_draft(
+            model,
+            error,
+          ),
+        },
+      )
     CreatedMoonCodeSession(Ok(session)) =>
       mooncode_session_mutation_succeeded(
         dispatch, model, session, "MoonCode session started",

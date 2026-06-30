@@ -2409,6 +2409,73 @@ test "code mode session polling preserves new session draft" {
 }
 
 ///|
+test "code mode typed new session draft survives overwritten status" {
+  let session = code_mode_test_session("existing")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "book-demo",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [session],
+    mooncode_prompt: "h",
+    mooncode_composer_status: "daemon temporarily unavailable",
+  }
+  assert_true(mooncode_new_session_draft_active(model))
+  assert_true(selected_mooncode_session(model) is None)
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([session])),
+    model,
+  )
+  assert_eq(next.selected_mooncode_session_id, "")
+  assert_eq(next.mooncode_prompt, "h")
+  assert_true(selected_mooncode_session(next) is None)
+}
+
+///|
+test "code mode background errors do not kick typed draft into existing chat" {
+  let session = code_mode_test_session("existing")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "book-demo",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [session],
+    mooncode_prompt: "hello",
+    mooncode_composer_status: "draft",
+  }
+  let (_, daemon_error) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonClawDaemon(Err("daemon down")),
+    model,
+  )
+  assert_eq(daemon_error.mooncode_composer_status, "draft")
+  assert_true(selected_mooncode_session(daemon_error) is None)
+  let (_, model_error) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonClawModels(Err("models down")),
+    daemon_error,
+  )
+  assert_eq(model_error.mooncode_composer_status, "draft")
+  assert_true(selected_mooncode_session(model_error) is None)
+  let (_, sessions_error) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Err("sessions down")),
+    model_error,
+  )
+  assert_eq(sessions_error.mooncode_composer_status, "draft")
+  assert_true(selected_mooncode_session(sessions_error) is None)
+  let (_, refreshed) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([session])),
+    sessions_error,
+  )
+  assert_eq(refreshed.selected_mooncode_session_id, "")
+  assert_eq(refreshed.mooncode_prompt, "hello")
+  assert_true(selected_mooncode_session(refreshed) is None)
+}
+
+///|
 test "code mode session polling preserves hydrated conversation from compact listing" {
   let hydrated = {
     ..code_mode_test_session("session-a", status="running"),
