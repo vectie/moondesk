@@ -62,10 +62,12 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let port = json_int(info, "port", default=0)
   let pid = json_int(info, "pid", default=0)
   let alive = pid > 0 && process_is_alive(pid)
-  let reachable = service_configured &&
-    alive &&
-    port > 0 &&
-    moonclaw_port_reachable(port)
+  let port_reachable = port > 0 && moonclaw_port_reachable(port)
+  let existing_allowed = service_configured ||
+    moonclaw_allows_unconfigured_existing_daemon(workspace_root)
+  let reachable = moonclaw_existing_daemon_reachable(
+    alive, port, port_reachable, existing_allowed,
+  )
   {
     "ok": reachable,
     "running": reachable,
@@ -77,15 +79,40 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
     "service_config_path": json_string(descriptor, "config_path", default=""),
     "service_command": json_string(descriptor, "display", default=""),
     "message": if reachable {
-      "MoonClaw daemon is running"
-    } else if alive && port > 0 && !service_configured {
-      "MoonClaw daemon info exists but no service is configured for this workspace"
+      if service_configured {
+        "MoonClaw daemon is running"
+      } else {
+        "MoonClaw daemon is running without a workspace-local service config"
+      }
+    } else if alive && port > 0 && !existing_allowed {
+      "MoonClaw daemon info exists but this temporary workspace needs an explicit service config"
     } else if alive && port > 0 {
       "MoonClaw daemon info exists but the HTTP port is not reachable"
     } else {
       "MoonClaw daemon info exists but the process is not reachable"
     },
   }
+}
+
+///|
+fn moonclaw_existing_daemon_reachable(
+  alive : Bool,
+  port : Int,
+  port_reachable : Bool,
+  existing_allowed : Bool,
+) -> Bool {
+  existing_allowed && alive && port > 0 && port_reachable
+}
+
+///|
+fn moonclaw_allows_unconfigured_existing_daemon(
+  workspace_root : String,
+) -> Bool {
+  let root = @pathx.normalize(workspace_root)
+  !(root.has_prefix("/tmp/") ||
+  root.has_prefix("/private/tmp/") ||
+  root.has_prefix("/var/folders/") ||
+  root.has_prefix("/private/var/folders/"))
 }
 
 ///|

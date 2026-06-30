@@ -73,3 +73,27 @@ async test "moonclaw service descriptor can use sibling checkout fallback" {
     ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", "cmd/daemon"],
   )
 }
+
+///|
+test "moonclaw existing daemon reachability does not require workspace service config" {
+  assert_true(moonclaw_existing_daemon_reachable(true, 63907, true, true))
+  assert_false(moonclaw_existing_daemon_reachable(false, 63907, true, true))
+  assert_false(moonclaw_existing_daemon_reachable(true, 0, true, true))
+  assert_false(moonclaw_existing_daemon_reachable(true, 63907, false, true))
+  assert_false(moonclaw_existing_daemon_reachable(true, 63907, true, false))
+}
+
+///|
+test "moonclaw unconfigured daemon reuse skips temporary test roots" {
+  assert_true(
+    moonclaw_allows_unconfigured_existing_daemon("/Users/kq/moondesk-workspace"),
+  )
+  assert_false(
+    moonclaw_allows_unconfigured_existing_daemon("/tmp/moondesk-mooncode-test"),
+  )
+  assert_false(
+    moonclaw_allows_unconfigured_existing_daemon(
+      "/private/var/folders/demo/moondesk-test",
+    ),
+  )
+}
