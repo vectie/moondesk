@@ -339,6 +339,7 @@ fn runtime_package_message_events(
     default=ingested_at,
   )
   let events : Array[Json] = []
+  let tool_names = runtime_package_tool_name_map(content)
   for index, block in content {
     match
       runtime_package_content_event(
@@ -348,12 +349,34 @@ fn runtime_package_message_events(
         base_id~,
         created_at~,
         index~,
+        tool_names~,
       ) {
       Some(projected) => events.push(projected)
       None => ()
     }
   }
   events
+}
+
+///|
+fn runtime_package_tool_name_map(blocks : Array[Json]) -> Map[String, String] {
+  let names : Map[String, String] = {}
+  for block in blocks {
+    let block_type = runtime_json_string(block, "type", default="")
+    if block_type != "tool_use" && block_type != "server_tool_use" {
+      continue
+    }
+    let id = runtime_json_string(block, "id", default="")
+    let name = runtime_first_string(
+      block,
+      ["name", "tool", "tool_name"],
+      default="",
+    )
+    if id != "" && name != "" {
+      names[id] = name
+    }
+  }
+  names
 }
 
 ///|
@@ -398,6 +421,7 @@ fn runtime_package_content_event(
   base_id~ : String,
   created_at~ : String,
   index~ : Int,
+  tool_names~ : Map[String, String],
 ) -> Json? {
   let block_type = runtime_json_string(block, "type", default="")
   let block_id = runtime_first_string(
@@ -497,7 +521,7 @@ fn runtime_package_content_event(
       let tool_name = runtime_first_string(
         block,
         ["name", "tool", "tool_name"],
-        default="",
+        default=tool_names.get(tool_call_id).unwrap_or(""),
       )
       if tool_name != "" {
         normalize_runtime_event(

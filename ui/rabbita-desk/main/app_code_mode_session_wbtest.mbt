@@ -2322,7 +2322,7 @@ test "code mode stream parser accepts numeric MoonClaw event timestamps" {
 ///|
 test "code mode stream parser renders package assistant blocks inline" {
   let text =
-    #|{"type":"assistant","id":"package-message","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Need inspect the repo first."},{"type":"tool_use","id":"tool-bash","name":"Bash","input":{"command":"moon test internal/mooncode","description":"Run MoonCode tests"}},{"type":"tool_result","tool_use_id":"tool-bash","name":"Bash","content":"Total tests: 256, passed: 256"},{"type":"text","text":"The tests pass."}]}}
+    #|{"type":"assistant","id":"package-message","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Need inspect the repo first."},{"type":"tool_use","id":"tool-bash","name":"Bash","input":{"command":"moon test internal/mooncode","description":"Run MoonCode tests"}},{"type":"tool_result","tool_use_id":"tool-bash","content":"Total tests: 256, passed: 256"},{"type":"text","text":"The tests pass."}]}}
     #|{"type":"done","next_since":4,"emitted_count":4,"stream_source":"moonclaw"}
   match parse_mooncode_stream_text(text) {
     Ok(stream) => {
@@ -2334,6 +2334,10 @@ test "code mode stream parser renders package assistant blocks inline" {
       assert_eq(stream.events[1].command, "moon test internal/mooncode")
       assert_eq(stream.events[2].kind, "tool_result")
       assert_eq(stream.events[2].status, "done")
+      match stream.events[2].tool_result {
+        Some(result) => assert_eq(json_string_value(result, "tool", default=""), "Bash")
+        None => fail("expected tool result payload")
+      }
       assert_eq(stream.events[3].kind, "assistant_delta")
       assert_eq(stream.events[3].detail, "The tests pass.")
       let session = {

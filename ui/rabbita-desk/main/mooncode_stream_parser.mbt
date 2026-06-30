@@ -128,6 +128,7 @@ fn mooncode_stream_package_events_from_json(record : Json) -> Array[MoonCodeEven
   )
   let created_at = mooncode_stream_package_created_at(record)
   let events : Array[MoonCodeEvent] = []
+  let tool_names = mooncode_stream_package_tool_name_map(blocks)
   for index, block in blocks {
     match mooncode_stream_package_content_event(
       block,
@@ -136,12 +137,36 @@ fn mooncode_stream_package_events_from_json(record : Json) -> Array[MoonCodeEven
       base_id~,
       created_at~,
       index~,
+      tool_names~,
     ) {
       Some(event) => events.push(event)
       None => ()
     }
   }
   events
+}
+
+///|
+fn mooncode_stream_package_tool_name_map(
+  blocks : Array[Json],
+) -> Map[String, String] {
+  let names : Map[String, String] = {}
+  for block in blocks {
+    let block_type = json_string_value(block, "type", default="")
+    if block_type != "tool_use" && block_type != "server_tool_use" {
+      continue
+    }
+    let id = json_string_value(block, "id", default="")
+    let name = mooncode_stream_first_json_string(
+      block,
+      ["name", "tool", "tool_name"],
+      default="",
+    )
+    if id != "" && name != "" {
+      names[id] = name
+    }
+  }
+  names
 }
 
 ///|
@@ -186,6 +211,7 @@ fn mooncode_stream_package_content_event(
   base_id~ : String,
   created_at~ : String,
   index~ : Int,
+  tool_names~ : Map[String, String],
 ) -> MoonCodeEvent? {
   let block_type = json_string_value(block, "type", default="")
   let block_id = mooncode_stream_first_json_string(
@@ -265,10 +291,15 @@ fn mooncode_stream_package_content_event(
         default=base_id + "-block-" + index.to_string(),
       )
       let detail = mooncode_stream_package_block_text(block)
+      let tool_call_id = mooncode_stream_first_json_string(
+        block,
+        ["tool_use_id", "id"],
+        default="",
+      )
       let tool_name = mooncode_stream_first_json_string(
         block,
         ["name", "tool", "tool_name"],
-        default="",
+        default=tool_names.get(tool_call_id).unwrap_or(""),
       )
       Some(mooncode_stream_event(
         id=result_id,

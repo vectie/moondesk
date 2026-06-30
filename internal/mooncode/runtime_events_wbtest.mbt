@@ -246,7 +246,6 @@ test "mooncode runtime event ingest expands package assistant content blocks" {
           {
             "type": "tool_result",
             "tool_use_id": "tool-bash",
-            "name": "Bash",
             "content": "Total tests: 254, passed: 254",
           },
           { "type": "text", "text": "The tests pass." },
