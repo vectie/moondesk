@@ -673,6 +673,89 @@ test "code mode transcript items prefer append order over skewed timestamps" {
 }
 
 ///|
+test "code mode final reply appends after tool work" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "001-command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Fix the parser bug",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "002-assistant",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="I will inspect it.",
+      ),
+      code_mode_test_event(
+        "003-tool",
+        title="Tool started: Bash",
+        lane="test",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"Bash\",\"arguments\":{\"command\":\"moon test internal/mooncode\",\"description\":\"Run MoonCode tests\"}}",
+      ),
+      code_mode_test_event(
+        "004-result",
+        title="Tool finished",
+        lane="test",
+        kind="tool_result",
+        status="done",
+        detail="Total tests: 256, passed: 256",
+        tool_result=Some({
+          "tool": "Bash",
+          "output": "Total tests: 256, passed: 256",
+        }),
+      ),
+      code_mode_test_event(
+        "005-finish",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "The parser bug is fixed.",
+        }),
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 5)
+  match items[0].message {
+    Some(row) => assert_eq(row.content, "Fix the parser bug")
+    None => fail("expected user prompt")
+  }
+  match items[1].message {
+    Some(row) => {
+      assert_eq(row.content, "I will inspect it.")
+      assert_eq(row.status, "done")
+    }
+    None => fail("expected early assistant update")
+  }
+  match items[2].activity {
+    Some(row) => assert_eq(row.label, "Running tests")
+    None => fail("expected tool activity")
+  }
+  match items[3].activity {
+    Some(row) => assert_eq(row.label, "Checked")
+    None => fail("expected tool result")
+  }
+  match items[4].message {
+    Some(row) => assert_eq(row.content, "The parser bug is fixed.")
+    None => fail("expected final assistant reply at tail")
+  }
+}
+
+///|
 test "code mode transcript drops leading orphan activity" {
   let session = {
     ..code_mode_test_session("session-a", status="running"),

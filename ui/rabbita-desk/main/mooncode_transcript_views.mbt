@@ -117,7 +117,10 @@ fn mooncode_transcript_items_from_events_with_user(
     } else if mooncode_event_is_assistant_delta(event) {
       let content = event.detail.trim().to_owned()
       if content != "" && has_user {
-        if running_assistant_index >= 0 {
+        if mooncode_transcript_running_assistant_is_tail(
+          items,
+          running_assistant_index,
+        ) {
           mooncode_replace_transcript_message_item(
             items,
             running_assistant_index,
@@ -142,7 +145,10 @@ fn mooncode_transcript_items_from_events_with_user(
       if content != "" {
         let status = if event.status == "" { "done" } else { event.status }
         if has_user {
-          if running_assistant_index >= 0 {
+          if mooncode_transcript_running_assistant_is_tail(
+            items,
+            running_assistant_index,
+          ) {
             mooncode_replace_transcript_message_item(
               items,
               running_assistant_index,
@@ -167,6 +173,16 @@ fn mooncode_transcript_items_from_events_with_user(
         Some(row) => {
           let key = mooncode_activity_item_key(row)
           if !pushed_activity.contains(key) {
+            if mooncode_transcript_running_assistant_is_tail(
+              items,
+              running_assistant_index,
+            ) {
+              mooncode_mark_transcript_message_item_done(
+                items,
+                running_assistant_index,
+              )
+              running_assistant_index = -1
+            }
             pushed_activity.push(key)
             items.push(mooncode_transcript_activity_item(row))
           }
@@ -187,6 +203,14 @@ fn mooncode_transcript_items_from_events_with_user(
     return []
   }
   items
+}
+
+///|
+fn mooncode_transcript_running_assistant_is_tail(
+  items : Array[MoonCodeTranscriptItem],
+  index : Int,
+) -> Bool {
+  index >= 0 && index == items.length() - 1
 }
 
 ///|
