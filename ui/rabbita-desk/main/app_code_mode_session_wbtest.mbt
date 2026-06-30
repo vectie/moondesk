@@ -2560,6 +2560,48 @@ test "code mode stream parser renders package assistant blocks inline" {
 }
 
 ///|
+test "code mode stream parser preserves package object tool results" {
+  let text =
+    #|{"type":"assistant","id":"package-object-result","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Read the file before editing."},{"type":"tool_use","id":"tool-read","name":"Read","input":{"file_path":"src/main.mbt"}},{"type":"tool_result","tool_use_id":"tool-read","content":{"type":"text","file":{"filePath":"src/main.mbt","content":"raw file body should stay hidden","numLines":4,"startLine":1,"totalLines":20}}},{"type":"text","text":"I found the entry point."}]}}
+    #|{"type":"done","next_since":4,"emitted_count":4,"stream_source":"moonclaw"}
+  match parse_mooncode_stream_text(text) {
+    Ok(stream) => {
+      assert_eq(stream.events.length(), 4)
+      assert_eq(stream.events[2].kind, "tool_result")
+      assert_true(stream.events[2].detail.has_prefix("{"))
+      let session = {
+        ..code_mode_test_session("session-package-object", status="running"),
+        mooncode_events: [
+          code_mode_test_event(
+            "prompt",
+            title="Prompt: queued",
+            kind="command.prompt",
+            status="queued",
+            detail="Read src/main.mbt",
+            command="prompt",
+          ),
+          ..stream.events,
+        ],
+      }
+      let items = mooncode_transcript_items(init_model(), session)
+      assert_eq(items.length(), 5)
+      match items[3].activity {
+        Some(row) => {
+          assert_eq(row.label, "Completed")
+          assert_eq(row.detail, "Read 4 line(s) from src/main.mbt.")
+        }
+        None => fail("expected summarized tool result")
+      }
+      match items[4].message {
+        Some(row) => assert_eq(row.content, "I found the entry point.")
+        None => fail("expected assistant message")
+      }
+    }
+    Err(error) => fail("expected parsed package stream, got \{error}")
+  }
+}
+
+///|
 test "code mode activity rows summarize package structured tool results" {
   let session = {
     ..code_mode_test_session("session-package", status="running"),

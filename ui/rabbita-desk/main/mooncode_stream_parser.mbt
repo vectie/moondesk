@@ -404,12 +404,18 @@ fn mooncode_stream_tool_path(input : Json) -> String {
 
 ///|
 fn mooncode_stream_package_block_text(block : Json) -> String {
-  let direct = json_string_value(block, "content", default="")
-  if direct != "" {
-    return direct
+  match json_field(block, "content") {
+    Some(String(text)) if text != "" => return text
+    Some(content) =>
+      match content {
+        Object(_) => return content.stringify()
+        Array(items) => return mooncode_stream_package_block_array_text(items)
+        _ => ()
+      }
+    _ => ()
   }
   let values : Array[String] = []
-  for part in mooncode_stream_json_array_items(block, "content") {
+  for part in mooncode_stream_json_array_items(block, "structuredContent") {
     let text = mooncode_stream_first_json_string(
       part,
       ["text", "content"],
@@ -420,6 +426,35 @@ fn mooncode_stream_package_block_text(block : Json) -> String {
     }
   }
   values.join("\n")
+}
+
+///|
+fn mooncode_stream_package_block_array_text(items : Array[Json]) -> String {
+  let values : Array[String] = []
+  let structured : Array[String] = []
+  for part in items {
+    match part {
+      String(text) if text != "" => values.push(text)
+      Object(_) => {
+        let text = mooncode_stream_first_json_string(
+          part,
+          ["text", "content"],
+          default="",
+        )
+        if text != "" {
+          values.push(text)
+        } else {
+          structured.push(part.stringify())
+        }
+      }
+      _ => ()
+    }
+  }
+  if values.length() > 0 {
+    values.join("\n")
+  } else {
+    structured.join("\n")
+  }
 }
 
 ///|
