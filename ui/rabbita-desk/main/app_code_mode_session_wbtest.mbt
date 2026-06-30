@@ -2560,6 +2560,84 @@ test "code mode stream parser renders package assistant blocks inline" {
 }
 
 ///|
+test "code mode activity rows summarize package structured tool results" {
+  let session = {
+    ..code_mode_test_session("session-package", status="running"),
+    mooncode_events: [
+      code_mode_test_event(
+        "prompt",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Read and edit package-style files",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "file-read-result",
+        title="Tool finished",
+        lane="tool",
+        kind="tool_result",
+        status="done",
+        detail="",
+        tool_result=Some({
+          "tool": "Read",
+          "output": "{\"type\":\"text\",\"file\":{\"filePath\":\"src/main.mbt\",\"content\":\"raw file body should stay hidden\",\"numLines\":12,\"startLine\":1,\"totalLines\":80}}",
+        }),
+      ),
+      code_mode_test_event(
+        "file-edit-result",
+        title="Tool finished",
+        lane="tool",
+        kind="tool_result",
+        status="done",
+        detail="",
+        tool_result=Some({
+          "tool": "Edit",
+          "output": "{\"filePath\":\"src/main.mbt\",\"oldString\":\"before\",\"newString\":\"after\",\"originalFile\":\"raw original file should stay hidden\",\"structuredPatch\":[],\"userModified\":false,\"replaceAll\":false,\"gitDiff\":{\"filename\":\"src/main.mbt\",\"status\":\"modified\",\"additions\":4,\"deletions\":2,\"changes\":6,\"patch\":\"raw diff should stay hidden\"}}",
+        }),
+      ),
+      code_mode_test_event(
+        "web-search-result",
+        title="Tool finished",
+        lane="tool",
+        kind="tool_result",
+        status="done",
+        detail="",
+        tool_result=Some({
+          "tool": "WebSearch",
+          "output": "{\"query\":\"moonbit docs\",\"results\":[{\"tool_use_id\":\"web-1\",\"content\":[{\"title\":\"MoonBit\",\"url\":\"https://www.moonbitlang.com\"},{\"title\":\"Docs\",\"url\":\"https://docs.moonbitlang.com\"}]}],\"durationSeconds\":1}",
+        }),
+      ),
+      code_mode_test_event(
+        "bash-result",
+        title="Tool finished",
+        lane="test",
+        kind="tool_result",
+        status="done",
+        detail="",
+        tool_result=Some({
+          "tool": "Bash",
+          "output": "{\"stdout\":\"Total tests: 445, passed: 445, failed: 0.\",\"stderr\":\"\",\"interrupted\":false}",
+        }),
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  let rows : Array[MoonCodeActivityRow] = []
+  for item in items {
+    match item.activity {
+      Some(row) => rows.push(row)
+      None => ()
+    }
+  }
+  assert_eq(rows.length(), 4)
+  assert_eq(rows[0].detail, "Read 12 line(s) from src/main.mbt.")
+  assert_eq(rows[1].detail, "Updated src/main.mbt (+4 -2).")
+  assert_eq(rows[2].detail, "Found 2 web result(s) for moonbit docs.")
+  assert_eq(rows[3].detail, "Total tests: 445, passed: 445, failed: 0.")
+}
+
+///|
 test "code mode runtime event sink reports service status only when active" {
   let model = { ..init_model(), selected_mooncode_session_id: "session-a" }
   let (_, idle) = update_mooncode_results(

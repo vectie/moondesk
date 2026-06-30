@@ -393,7 +393,10 @@ fn mooncode_activity_result_detail(event : MoonCodeEvent) -> String {
         .trim()
         .to_owned()
       if output != "" {
-        return output
+        match mooncode_activity_package_result_summary(output) {
+          Some(summary) => return summary
+          None => return output
+        }
       }
       let message = json_string_value(result, "message", default="")
         .trim()
@@ -405,6 +408,217 @@ fn mooncode_activity_result_detail(event : MoonCodeEvent) -> String {
     None => ()
   }
   mooncode_activity_detail(event)
+}
+
+///|
+fn mooncode_activity_package_result_summary(output : String) -> String? {
+  let text = output.trim().to_owned()
+  if !text.has_prefix("{") {
+    return None
+  }
+  let parsed = @json.parse(text) catch { _ => Json::object({}) }
+  match parsed {
+    Object(_) => mooncode_activity_package_result_json_summary(parsed)
+    _ => None
+  }
+}
+
+///|
+fn mooncode_activity_package_result_json_summary(result : Json) -> String? {
+  match mooncode_activity_package_file_read_summary(result) {
+    Some(summary) => return Some(summary)
+    None => ()
+  }
+  match mooncode_activity_package_file_change_summary(result) {
+    Some(summary) => return Some(summary)
+    None => ()
+  }
+  match mooncode_activity_package_search_summary(result) {
+    Some(summary) => return Some(summary)
+    None => ()
+  }
+  match mooncode_activity_package_web_summary(result) {
+    Some(summary) => return Some(summary)
+    None => ()
+  }
+  match mooncode_activity_package_command_summary(result) {
+    Some(summary) => return Some(summary)
+    None => ()
+  }
+  match mooncode_activity_package_todo_summary(result) {
+    Some(summary) => return Some(summary)
+    None => ()
+  }
+  None
+}
+
+///|
+fn mooncode_activity_package_file_read_summary(result : Json) -> String? {
+  let file = mooncode_activity_json_object_field_or_empty(result, "file")
+  let path = mooncode_activity_first_json_string(
+    file,
+    ["filePath", "file_path", "path"],
+  )
+  if path == "" {
+    return None
+  }
+  let content = json_string_value(file, "content", default="")
+  let num_lines = json_int_value(file, "numLines", default=0)
+  let total_lines = json_int_value(file, "totalLines", default=0)
+  if content == "" && num_lines == 0 && total_lines == 0 {
+    return None
+  }
+  let lines = if num_lines > 0 {
+    num_lines
+  } else if total_lines > 0 {
+    total_lines
+  } else {
+    0
+  }
+  if lines > 0 {
+    Some("Read \{lines} line(s) from \{path}.")
+  } else {
+    Some("Read \{path}.")
+  }
+}
+
+///|
+fn mooncode_activity_package_file_change_summary(result : Json) -> String? {
+  let path = mooncode_activity_first_json_string(
+    result,
+    ["filePath", "file_path", "path"],
+  )
+  if path == "" {
+    return None
+  }
+  let change_type = json_string_value(result, "type", default="")
+  let git_diff = mooncode_activity_json_object_field_or_empty(result, "gitDiff")
+  let additions = json_int_value(git_diff, "additions", default=0)
+  let deletions = json_int_value(git_diff, "deletions", default=0)
+  if additions > 0 || deletions > 0 {
+    Some("Updated \{path} (+\{additions} -\{deletions}).")
+  } else if change_type == "create" {
+    Some("Created \{path}.")
+  } else if change_type == "update" {
+    Some("Updated \{path}.")
+  } else {
+    Some("Edited \{path}.")
+  }
+}
+
+///|
+fn mooncode_activity_package_search_summary(result : Json) -> String? {
+  let num_files = json_int_value(result, "numFiles", default=-1)
+  let num_matches = json_int_value(result, "numMatches", default=-1)
+  if num_files < 0 && num_matches < 0 {
+    return None
+  }
+  if num_matches >= 0 {
+    Some("Found \{num_matches} match(es) in \{num_files} file(s).")
+  } else {
+    Some("Found \{num_files} file(s).")
+  }
+}
+
+///|
+fn mooncode_activity_package_web_summary(result : Json) -> String? {
+  let query = json_string_value(result, "query", default="").trim().to_owned()
+  if query != "" {
+    let count = mooncode_activity_package_web_result_count(result)
+    if count > 0 {
+      return Some("Found \{count} web result(s) for \{query}.")
+    }
+    return Some("Searched the web for \{query}.")
+  }
+  let url = json_string_value(result, "url", default="").trim().to_owned()
+  if url != "" {
+    let code = json_int_value(result, "code", default=0)
+    if code > 0 {
+      Some("Read \{url} (HTTP \{code}).")
+    } else {
+      Some("Read \{url}.")
+    }
+  } else {
+    None
+  }
+}
+
+///|
+fn mooncode_activity_package_web_result_count(result : Json) -> Int {
+  let mut count = 0
+  match json_field(result, "results") {
+    Some(Array(items)) =>
+      for item in items {
+        match item {
+          Object(_) => {
+            match json_field(item, "content") {
+              Some(Array(hits)) => count += hits.length()
+              _ => ()
+            }
+          }
+          String(text) if text.trim() != "" => count += 1
+          _ => ()
+        }
+      }
+    _ => ()
+  }
+  count
+}
+
+///|
+fn mooncode_activity_package_command_summary(result : Json) -> String? {
+  let interrupted = mooncode_activity_json_bool_value(
+    result,
+    "interrupted",
+    default=false,
+  )
+  let backgrounded = mooncode_activity_json_bool_value(
+    result,
+    "backgroundedByUser",
+    default=false,
+  ) ||
+    mooncode_activity_json_bool_value(
+      result,
+      "assistantAutoBackgrounded",
+      default=false,
+    )
+  if interrupted {
+    return Some("Command was interrupted.")
+  }
+  if backgrounded {
+    return Some("Command is running in the background.")
+  }
+  let stdout = json_string_value(result, "stdout", default="").trim().to_owned()
+  let stderr = json_string_value(result, "stderr", default="").trim().to_owned()
+  if stdout != "" && stdout.length() <= 220 {
+    Some(stdout)
+  } else if stderr != "" && stderr.length() <= 220 {
+    Some(stderr)
+  } else if stdout != "" || stderr != "" {
+    Some("Command completed with output.")
+  } else {
+    None
+  }
+}
+
+///|
+fn mooncode_activity_package_todo_summary(result : Json) -> String? {
+  match json_field(result, "newTodos") {
+    Some(Array(todos)) => Some("Updated plan with \{todos.length()} item(s).")
+    _ => None
+  }
+}
+
+///|
+fn mooncode_activity_json_bool_value(
+  json : Json,
+  key : String,
+  default~ : Bool,
+) -> Bool {
+  match json_field(json, key) {
+    Some(value) => @json.from_json(value) catch { _ => default }
+    None => default
+  }
 }
 
 ///|
