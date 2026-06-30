@@ -141,7 +141,16 @@ fn mooncode_transcript_items_from_events_with_user(
         }
       }
     } else if mooncode_event_is_assistant_final(event) {
-      let content = mooncode_event_assistant_content(event)
+      let raw_content = mooncode_event_assistant_content(event)
+      let content = if has_user &&
+        !mooncode_transcript_running_assistant_is_tail(
+          items,
+          running_assistant_index,
+        ) {
+        mooncode_dedupe_assistant_final_content(items, raw_content)
+      } else {
+        raw_content
+      }
       if content != "" {
         let status = if event.status == "" { "done" } else { event.status }
         if has_user {
@@ -203,6 +212,39 @@ fn mooncode_transcript_items_from_events_with_user(
     return []
   }
   items
+}
+
+///|
+fn mooncode_dedupe_assistant_final_content(
+  items : Array[MoonCodeTranscriptItem],
+  content : String,
+) -> String {
+  let normalized = content.trim().to_owned()
+  if normalized == "" {
+    return ""
+  }
+  let mut index = items.length()
+  while index > 0 {
+    index = index - 1
+    match items[index].message {
+      Some(row) => {
+        if row.role == "user" {
+          return normalized
+        }
+        if row.role == "assistant" {
+          let prior = row.content.trim().to_owned()
+          if prior == normalized {
+            return ""
+          }
+          if prior != "" && normalized.has_prefix(prior) {
+            return normalized[prior.length():].trim().to_owned()
+          }
+        }
+      }
+      None => ()
+    }
+  }
+  normalized
 }
 
 ///|

@@ -734,6 +734,142 @@ test "code mode transcript items keep messages and thinking in event order" {
 }
 
 ///|
+test "code mode transcript items do not repeat final assistant text after progress" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "001-command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Check the build",
+        command="prompt",
+        created_at="001",
+      ),
+      code_mode_test_event(
+        "002-delta",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="I will run the build.",
+        created_at="002",
+      ),
+      code_mode_test_event(
+        "003-tool",
+        title="Tool started: moon_check",
+        lane="test",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"moon_check\"}",
+        created_at="003",
+      ),
+      code_mode_test_event(
+        "004-finish",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        created_at="004",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "I will run the build.",
+        }),
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 3)
+  match items[0].message {
+    Some(row) => assert_eq(row.role, "user")
+    None => fail("expected user message")
+  }
+  match items[1].message {
+    Some(row) => {
+      assert_eq(row.role, "assistant")
+      assert_eq(row.content, "I will run the build.")
+      assert_eq(row.status, "done")
+    }
+    None => fail("expected assistant stream message")
+  }
+  match items[2].activity {
+    Some(row) => assert_eq(row.label, "Checking project")
+    None => fail("expected progress row")
+  }
+}
+
+///|
+test "code mode transcript items append only final assistant suffix after progress" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "001-command",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Check the build",
+        command="prompt",
+        created_at="001",
+      ),
+      code_mode_test_event(
+        "002-delta",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="I will run the build.",
+        created_at="002",
+      ),
+      code_mode_test_event(
+        "003-tool",
+        title="Tool started: moon_check",
+        lane="test",
+        kind="tool_call",
+        status="running",
+        detail="{\"tool\":\"moon_check\"}",
+        created_at="003",
+      ),
+      code_mode_test_event(
+        "004-finish",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        created_at="004",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "I will run the build. It passes.",
+        }),
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 4)
+  match items[1].message {
+    Some(row) => assert_eq(row.content, "I will run the build.")
+    None => fail("expected assistant stream message")
+  }
+  match items[2].activity {
+    Some(row) => assert_eq(row.label, "Checking project")
+    None => fail("expected progress row")
+  }
+  match items[3].message {
+    Some(row) => {
+      assert_eq(row.role, "assistant")
+      assert_eq(row.content, "It passes.")
+      assert_eq(row.status, "done")
+    }
+    None => fail("expected assistant final suffix")
+  }
+}
+
+///|
 test "code mode transcript items prefer append order over skewed timestamps" {
   let session = {
     ..code_mode_test_session("session-a", status="running"),
