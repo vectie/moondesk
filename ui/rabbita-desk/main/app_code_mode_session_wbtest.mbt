@@ -236,12 +236,15 @@ test "code mode activity rows show runtime work but not chat bubbles" {
       None => ()
     }
   }
-  assert_eq(rows.length(), 2)
-  assert_eq(rows[0].label, "Checking project")
-  assert_eq(rows[0].title, "moon check")
-  assert_eq(rows[0].detail, "")
-  assert_eq(rows[1].label, "Checked")
+  assert_eq(rows.length(), 3)
+  assert_eq(rows[0].label, "Thinking")
+  assert_eq(rows[0].detail, "Inspect the parser before editing.")
+  assert_eq(rows[0].folded, true)
+  assert_eq(rows[1].label, "Checking project")
   assert_eq(rows[1].title, "moon check")
+  assert_eq(rows[1].detail, "")
+  assert_eq(rows[2].label, "Checked")
+  assert_eq(rows[2].title, "moon check")
 }
 
 ///|
@@ -693,7 +696,7 @@ test "code mode transcript items keep messages and progress in event order" {
     ],
   }
   let items = mooncode_transcript_items(init_model(), session)
-  assert_eq(items.length(), 4)
+  assert_eq(items.length(), 5)
   match items[0].message {
     Some(row) => {
       assert_eq(row.role, "user")
@@ -703,19 +706,27 @@ test "code mode transcript items keep messages and progress in event order" {
   }
   match items[1].activity {
     Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.detail, "Inspect the parser before editing.")
+      assert_eq(row.folded, true)
+    }
+    None => fail("expected folded thinking activity")
+  }
+  match items[2].activity {
+    Some(row) => {
       assert_eq(row.label, "Checking project")
       assert_eq(row.title, "moon check")
     }
     None => fail("expected tool activity")
   }
-  match items[2].activity {
+  match items[3].activity {
     Some(row) => {
       assert_eq(row.label, "Checked")
       assert_eq(row.title, "moon check")
     }
     None => fail("expected check activity")
   }
-  match items[3].message {
+  match items[4].message {
     Some(row) => {
       assert_eq(row.role, "assistant")
       assert_eq(row.content, "Done.")
@@ -895,7 +906,7 @@ test "code mode transcript items prefer append order over skewed timestamps" {
     ],
   }
   let items = mooncode_transcript_items(init_model(), session)
-  assert_eq(items.length(), 2)
+  assert_eq(items.length(), 3)
   match items[0].message {
     Some(row) => {
       assert_eq(row.role, "user")
@@ -903,12 +914,20 @@ test "code mode transcript items prefer append order over skewed timestamps" {
     }
     None => fail("expected user message first")
   }
-  match items[1].message {
+  match items[1].activity {
+    Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.detail, "Inspecting event order.")
+      assert_eq(row.folded, true)
+    }
+    None => fail("expected folded thinking second")
+  }
+  match items[2].message {
     Some(row) => {
       assert_eq(row.role, "assistant")
       assert_eq(row.content, "Found it.")
     }
-    None => fail("expected assistant second")
+    None => fail("expected assistant third")
   }
 }
 
@@ -1941,7 +1960,7 @@ test "code mode transcript puts early thinking under pending prompt" {
 }
 
 ///|
-test "code mode transcript removes first-turn thinking after answer arrives" {
+test "code mode transcript folds first-turn thinking after answer arrives" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),
     mooncode_events: [
@@ -1977,7 +1996,7 @@ test "code mode transcript removes first-turn thinking after answer arrives" {
     ],
   }
   let items = mooncode_transcript_items(init_model(), session)
-  assert_eq(items.length(), 2)
+  assert_eq(items.length(), 3)
   match items[0].message {
     Some(row) => {
       assert_eq(row.role, "user")
@@ -1985,7 +2004,15 @@ test "code mode transcript removes first-turn thinking after answer arrives" {
     }
     None => fail("expected user message")
   }
-  match items[1].message {
+  match items[1].activity {
+    Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.detail, "Inspecting before replying.")
+      assert_eq(row.folded, true)
+    }
+    None => fail("expected folded thinking")
+  }
+  match items[2].message {
     Some(row) => {
       assert_eq(row.role, "assistant")
       assert_eq(row.content, "First answer")
@@ -2891,23 +2918,31 @@ test "code mode stream parser renders package assistant blocks inline" {
         ],
       }
       let items = mooncode_transcript_items(init_model(), session)
-      assert_eq(items.length(), 4)
+      assert_eq(items.length(), 5)
       match items[0].message {
         Some(row) => assert_eq(row.content, "Run package-style tests")
         None => fail("expected prompt message")
       }
       match items[1].activity {
         Some(row) => {
+          assert_eq(row.label, "Thinking")
+          assert_eq(row.detail, "Need inspect the repo first.")
+          assert_eq(row.folded, true)
+        }
+        None => fail("expected folded thinking activity")
+      }
+      match items[2].activity {
+        Some(row) => {
           assert_eq(row.label, "Running tests")
           assert_eq(row.title, "Run MoonCode tests")
         }
         None => fail("expected command activity")
       }
-      match items[2].activity {
+      match items[3].activity {
         Some(row) => assert_eq(row.label, "Completed")
         None => fail("expected result activity")
       }
-      match items[3].message {
+      match items[4].message {
         Some(row) => assert_eq(row.content, "The tests pass.")
         None => fail("expected assistant message")
       }
@@ -2941,8 +2976,16 @@ test "code mode stream parser preserves package object tool results" {
         ],
       }
       let items = mooncode_transcript_items(init_model(), session)
-      assert_eq(items.length(), 4)
-      match items[2].activity {
+      assert_eq(items.length(), 5)
+      match items[1].activity {
+        Some(row) => {
+          assert_eq(row.label, "Thinking")
+          assert_eq(row.detail, "Read the file before editing.")
+          assert_eq(row.folded, true)
+        }
+        None => fail("expected folded thinking activity")
+      }
+      match items[3].activity {
         Some(row) => {
           assert_eq(row.label, "Completed")
           assert_eq(row.title, "Reading file")
@@ -2950,7 +2993,7 @@ test "code mode stream parser preserves package object tool results" {
         }
         None => fail("expected summarized tool result")
       }
-      match items[3].message {
+      match items[4].message {
         Some(row) => assert_eq(row.content, "I found the entry point.")
         None => fail("expected assistant message")
       }

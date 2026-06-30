@@ -68,7 +68,7 @@ fn mooncode_transcript_items(
       }
     }
     if items.length() > 0 {
-      return mooncode_drop_resolved_thinking_items(
+      return mooncode_fold_resolved_thinking_items(
         mooncode_drop_leading_activity_items(items),
       )
     }
@@ -556,7 +556,7 @@ fn mooncode_drop_leading_activity_items(
 }
 
 ///|
-fn mooncode_drop_resolved_thinking_items(
+fn mooncode_fold_resolved_thinking_items(
   items : Array[MoonCodeTranscriptItem],
 ) -> Array[MoonCodeTranscriptItem] {
   let rest : Array[MoonCodeTranscriptItem] = []
@@ -564,12 +564,24 @@ fn mooncode_drop_resolved_thinking_items(
     let item = items[index]
     if mooncode_transcript_item_is_thinking_activity(item) &&
       mooncode_transcript_has_assistant_after_before_user(items, index) {
-      ()
+      match item.activity {
+        Some(row) => rest.push(mooncode_transcript_activity_item(
+          mooncode_fold_resolved_thinking_row(row),
+        ))
+        None => rest.push(item)
+      }
     } else {
       rest.push(item)
     }
   }
   rest
+}
+
+///|
+fn mooncode_fold_resolved_thinking_row(
+  row : MoonCodeActivityRow,
+) -> MoonCodeActivityRow {
+  { ..row, folded: true, status: if row.status == "running" { "done" } else { row.status } }
 }
 
 ///|

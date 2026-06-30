@@ -530,6 +530,14 @@
   background: var(--mooncode-accent);
 }
 
+.mooncode-activity-row.folded {
+  opacity: 0.78;
+}
+
+.mooncode-activity-row.folded .mooncode-activity-dot {
+  background: var(--mooncode-subtle);
+}
+
 .mooncode-activity-row.tool .mooncode-activity-dot,
 .mooncode-activity-row.edit .mooncode-activity-dot {
   background: #7c3aed;
@@ -604,6 +612,12 @@
 
 .mooncode-activity-detail.empty {
   display: none;
+}
+
+.mooncode-activity-folded {
+  color: var(--mooncode-subtle);
+  font-size: 11px;
+  line-height: 16px;
 }
 
 @media (prefers-reduced-motion: reduce) {

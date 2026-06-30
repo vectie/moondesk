@@ -5,11 +5,15 @@ struct MoonCodeActivityRow {
   title : String
   detail : String
   status : String
+  folded : Bool
 }
 
 ///|
 fn render_mooncode_activity_row(row : MoonCodeActivityRow) -> @rabbita.Html {
-  div(class="mooncode-activity-row " + row.tone + " " + row.status, [
+  let folded_class = if row.folded { " folded" } else { "" }
+  let row_class = "mooncode-activity-row " + row.tone + " " + row.status +
+    folded_class
+  div(class=row_class, [
     div(class="mooncode-activity-dot", ""),
     div(class="mooncode-activity-copy", [
       div(class="mooncode-activity-line", [
@@ -19,6 +23,8 @@ fn render_mooncode_activity_row(row : MoonCodeActivityRow) -> @rabbita.Html {
       p(class="mooncode-activity-title", row.title),
       if row.detail == "" {
         span(class="mooncode-activity-detail empty", "")
+      } else if row.folded {
+        span(class="mooncode-activity-folded", "Collapsed")
       } else {
         pre(class="mooncode-activity-detail", row.detail)
       },
@@ -119,6 +125,7 @@ fn mooncode_activity_row(
     title: mooncode_activity_clamp(title, 96),
     detail: mooncode_activity_clamp(detail, 360),
     status: if status == "" { "active" } else { status },
+    folded: false,
   }
 }
 
