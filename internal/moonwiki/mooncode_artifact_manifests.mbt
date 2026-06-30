@@ -122,14 +122,15 @@ async fn write_mooncode_runtime_handoff_manifest(
     lease_now=@async.now().to_string(),
   )
   let recorded_at = @async.now().to_string()
+  let handoff_session = mooncode_runtime_handoff_compact_session(session)
   let manifest = @mooncode.runtime_handoff_manifest(
-    session,
+    handoff_session,
     summary,
     runtime_replay,
     runtime_claim,
-    commands,
-    runtime_commands,
-    runtime_receipts,
+    mooncode_runtime_handoff_recent_items(commands),
+    mooncode_runtime_handoff_recent_items(runtime_commands),
+    mooncode_runtime_handoff_recent_items(runtime_receipts),
     daemon,
     native_ready,
     recorded_at~,
@@ -153,6 +154,41 @@ async fn write_mooncode_runtime_handoff_manifest(
   )
   @fsx.write_to_file(absolute, manifest.stringify(indent=2) + "\n")
   manifest
+}
+
+///|
+fn mooncode_runtime_handoff_compact_session(session : Json) -> Json {
+  {
+    "id": json_string(session, "id", default=""),
+    "workspace_id": json_string(session, "workspace_id", default=""),
+    "workspace_name": json_string(session, "workspace_name", default=""),
+    "mooncode_runtime_session_id": json_string(
+      session,
+      "mooncode_runtime_session_id",
+      default="",
+    ),
+    "mooncode_runtime_mode": json_string(
+      session,
+      "mooncode_runtime_mode",
+      default="runtime-not-started",
+    ),
+    "mooncode_last_command_packet": json_object_field_or_empty(
+      session, "mooncode_last_command_packet",
+    ),
+  }
+}
+
+///|
+fn mooncode_runtime_handoff_recent_items(items : Array[Json]) -> Array[Json] {
+  let limit = 20
+  if items.length() <= limit {
+    return items
+  }
+  let recent : Array[Json] = []
+  for index in (items.length() - limit)..<items.length() {
+    recent.push(items[index])
+  }
+  recent
 }
 
 ///|

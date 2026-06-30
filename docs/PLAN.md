@@ -47,6 +47,8 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 - show `wiki/`, `raw/`, `skills/`, `schemas/`, `tools/`, `apps/`,
   `site/generated/`, `book/site/generated/`, and review/output paths
 - keep file operations scoped to the selected workspace
+- test Desk as the primary file explorer surface with the end-to-end strategy in
+  [Desk Mode Test Plan](DESK_MODE_TEST_PLAN.md)
 
 ### Preview
 
@@ -66,6 +68,8 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 - manage methods, sources, findings, reviews, and generated pages
 - create reusable book patterns such as PDF Evidence Watch without embedding a
   domain-specific pack
+- test Wiki as the forward/backward MoonBook knowledge workflow with the
+  end-to-end strategy in [Wiki Mode Test Plan](WIKI_MODE_TEST_PLAN.md)
 
 ### MoonCode
 
@@ -113,7 +117,8 @@ MoonCodeSessionProjection
 ```
 
 Detailed protocol contracts belong in [MoonCode Workspace](MOONCODE.md) and
-package-generated `.mbti` files.
+package-generated `.mbti` files. The code-mode end-to-end testing strategy is
+tracked in [Code Mode Test Plan](CODE_MODE_TEST_PLAN.md).
 
 ## Permission Model
 

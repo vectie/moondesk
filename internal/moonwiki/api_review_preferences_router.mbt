@@ -16,6 +16,14 @@ async fn route_review_preferences_api(
       }
       true
     }
+    ["api", "review", "items", "decision"] => {
+      if method_ is Post {
+        handle_review_item_decision(workspace_root, body, method_, conn)
+      } else {
+        send_method_not_allowed(conn, method_)
+      }
+      true
+    }
     ["api", "preferences", "views"] => {
       if is_read_method(method_) {
         handle_saved_views(workspace_root, method_, conn)

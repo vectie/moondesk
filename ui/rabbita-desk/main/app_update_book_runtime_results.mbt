@@ -89,8 +89,11 @@ fn update_created_book_from_pattern(
       command_open: false,
       selected_workspace_id: result.workspace_id,
       selected_path: "wiki/index.md",
+      desk_selected_paths: ["wiki/index.md"],
+      desk_selection_anchor: "wiki/index.md",
       primary_preview_path: "wiki/index.md",
       current_directory: "",
+      desk_location_input: "",
       preview: None,
       preview_status: "loading published book",
       book_pattern_last_book_id: result.book_id,
@@ -150,6 +153,16 @@ fn update_exported_app_tool_portable(
       } else {
         model.selected_path
       },
+      desk_selected_paths: if standalone_ready {
+        ["portable/app-tool/index.html"]
+      } else {
+        model.desk_selected_paths
+      },
+      desk_selection_anchor: if standalone_ready {
+        "portable/app-tool/index.html"
+      } else {
+        model.desk_selection_anchor
+      },
       primary_preview_path: if standalone_ready {
         "portable/app-tool/index.html"
       } else {
@@ -203,6 +216,16 @@ fn update_exported_all_app_tool_portable(
         "portable/app-tool/index.html"
       } else {
         model.selected_path
+      },
+      desk_selected_paths: if has_open_book {
+        ["portable/app-tool/index.html"]
+      } else {
+        model.desk_selected_paths
+      },
+      desk_selection_anchor: if has_open_book {
+        "portable/app-tool/index.html"
+      } else {
+        model.desk_selection_anchor
       },
       primary_preview_path: if has_open_book {
         "portable/app-tool/index.html"

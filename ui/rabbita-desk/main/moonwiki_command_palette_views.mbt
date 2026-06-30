@@ -11,8 +11,9 @@ fn render_command_palette(
         div(class="palette-head", [
           input(
             class="palette-input",
-            value="",
+            value=model.command_query,
             placeholder="Open Book, Import Files, Search, Submit...",
+            on_input=fn(value) { dispatch(SetCommandQuery(value)) },
           ),
           button(
             class="icon-button palette-close",
@@ -24,7 +25,10 @@ fn render_command_palette(
         ]),
         div(
           class="palette-list",
-          palette_commands_for_mode(model.workspace_mode).map(command => {
+          filtered_palette_commands_for_mode(
+            model.workspace_mode,
+            model.command_query,
+          ).map(command => {
             let (title, detail, msg) = command
             palette_command(dispatch, title, detail, msg)
           }),
@@ -32,6 +36,33 @@ fn render_command_palette(
       ]),
     ])
   }
+}
+
+///|
+fn filtered_palette_commands_for_mode(
+  mode : WorkspaceMode,
+  query : String,
+) -> Array[(String, String, Msg)] {
+  let trimmed = query.trim().to_owned()
+  if trimmed == "" {
+    palette_commands_for_mode(mode)
+  } else {
+    let needle = trimmed.to_lower()
+    palette_commands_for_mode(mode).filter(command => {
+      let (title, detail, _) = command
+      title.to_lower().contains(needle) ||
+      palette_detail_matches(detail, needle)
+    })
+  }
+}
+
+///|
+fn palette_detail_matches(detail : String, needle : String) -> Bool {
+  let text = detail.to_lower()
+  text.has_prefix(needle) ||
+  text.contains(" " + needle) ||
+  text.contains("-" + needle) ||
+  text.contains("/" + needle)
 }
 
 ///|

@@ -129,12 +129,47 @@ async fn write_mooncode_runtime_handoff_if_possible(
   let manifest = write_mooncode_runtime_handoff_manifest(
     workspace_root, session,
   )
+  let manifest_ref = mooncode_runtime_handoff_manifest_ref(manifest)
   @mooncode.session_with_manifest_event(
     session,
     "mooncode_last_runtime_handoff_manifest",
-    manifest,
-    @mooncode.runtime_handoff_manifest_projected_event(manifest),
+    manifest_ref,
+    @mooncode.runtime_handoff_manifest_projected_event(manifest_ref),
   )
+}
+
+///|
+fn mooncode_runtime_handoff_manifest_ref(manifest : Json) -> Json {
+  {
+    "kind": json_string(manifest, "kind", default="mooncode-runtime-handoff"),
+    "protocol": json_string(manifest, "protocol", default=""),
+    "status": json_string(manifest, "status", default=""),
+    "session_id": json_string(manifest, "session_id", default=""),
+    "recorded_at": json_string(manifest, "recorded_at", default=""),
+    "manifest_path": json_string(manifest, "manifest_path", default=""),
+    "absolute_manifest_path": json_string(
+      manifest,
+      "absolute_manifest_path",
+      default="",
+    ),
+    "command_count": json_int(manifest, "command_count", default=0),
+    "runtime_command_count": json_int(
+      manifest,
+      "runtime_command_count",
+      default=0,
+    ),
+    "runtime_receipt_count": json_int(
+      manifest,
+      "runtime_receipt_count",
+      default=0,
+    ),
+    "runtime_receipts": json_array(manifest, "runtime_receipts"),
+    "runtime_replay": json_object_field_or_empty(manifest, "runtime_replay"),
+    "runtime_claim": json_object_field_or_empty(manifest, "runtime_claim"),
+    "resume_contract": json_object_field_or_empty(manifest, "resume_contract"),
+    "runtime_consumer": json_object_field_or_empty(manifest, "runtime_consumer"),
+    "engine": json_object_field_or_empty(manifest, "engine"),
+  }
 }
 
 ///|

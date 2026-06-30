@@ -295,3 +295,6 @@ MoonCode is complete when a user can:
     or Moondesk.
 12. Prove every step in `mooncode-executable-book-lifecycle.v1` without relying
     on a specific desktop framework.
+
+The focused test strategy for this completion path lives in
+[Code Mode Test Plan](CODE_MODE_TEST_PLAN.md).

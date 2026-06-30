@@ -11,7 +11,7 @@ pub fn package_index_manifest(
 ) -> Json {
   let source_bound = count_package_candidate_status(packages, "source-bound")
   let missing_source = count_package_candidate_status(packages, "no-source-yet")
-  let events = json_array_items(session, "mooncode_command_events")
+  let events = package_session_events(session)
   let runtime_built = count_package_runtime_state(events, "built")
   let runtime_verified = count_package_runtime_state(events, "verified")
   {

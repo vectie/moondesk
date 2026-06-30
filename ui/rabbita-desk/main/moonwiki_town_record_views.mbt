@@ -23,10 +23,10 @@ fn render_standing_goal_list(model : Model) -> @rabbita.Html {
 
 ///|
 fn last_run_label(goal : StandingGoalRecord) -> String {
-  match goal.last_run_tick {
-    Some(tick) => tick.to_string()
-    None => "never"
+  let tick : Int = @json.from_json(goal.last_run_tick) catch {
+    _ => return "never"
   }
+  tick.to_string()
 }
 
 ///|

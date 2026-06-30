@@ -28,19 +28,6 @@ fn update_mooncode_session_actions(
         @rabbita.none,
         { ..model, mooncode_prompt: prompt, mooncode_composer_status: "draft" },
       )
-    ToggleMoonCodeWebSearch =>
-      (
-        @rabbita.none,
-        {
-          ..model,
-          mooncode_web_search: !model.mooncode_web_search,
-          mooncode_composer_status: if !model.mooncode_web_search {
-            "web search on"
-          } else {
-            "web search off"
-          },
-        },
-      )
     SendMoonCodeMessage => mooncode_send_composer(dispatch, model)
     _ => (@rabbita.none, model)
   }
@@ -94,6 +81,7 @@ fn mooncode_send_composer(
     match selected_mooncode_session(model) {
       Some(session) => {
         let action = mooncode_composer_action(model, session)
+        let prompt = model.mooncode_prompt.trim().to_owned()
         (
           sync_shell_batch(
             MoonCode,
@@ -105,6 +93,18 @@ fn mooncode_send_composer(
             workspace_mode: MoonCode,
             activity: Files,
             command_open: false,
+            mooncode_prompt: "",
+            mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+              model.mooncode_conversation_rows,
+              session.id,
+              prompt,
+            ),
+            mooncode_pending_prompts: mooncode_append_pending_prompt(
+              model.mooncode_pending_prompts,
+              session.id,
+              prompt,
+              mooncode_transcript_rows(model, session).length(),
+            ),
             mooncode_composer_status: if action == "steer" {
               "steering MoonCode turn"
             } else {
@@ -134,4 +134,19 @@ fn mooncode_send_composer(
         )
     }
   }
+}
+
+///|
+fn mooncode_append_pending_prompt(
+  prompts : Array[MoonCodePendingPrompt],
+  session_id : String,
+  content : String,
+  after_row_count : Int,
+) -> Array[MoonCodePendingPrompt] {
+  let next : Array[MoonCodePendingPrompt] = []
+  for prompt in prompts {
+    next.push(prompt)
+  }
+  next.push({ session_id, content, status: "queued", after_row_count })
+  next
 }

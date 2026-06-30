@@ -3,8 +3,24 @@ struct MoonCodeMessage {
   role : String
   content : String
   status : String
-  created_at : String
 } derive(FromJson)
+
+///|
+struct MoonCodePendingPrompt {
+  session_id : String
+  content : String
+  status : String
+  after_row_count : Int
+}
+
+///|
+struct MoonCodeConversationRow {
+  session_id : String
+  role : String
+  content : String
+  status : String
+  key : String
+}
 
 ///|
 struct MoonCodeEvent {
@@ -19,6 +35,7 @@ struct MoonCodeEvent {
   diff : String
   command : String
   exit_code : Int
+  tool_result : Json?
 } derive(FromJson)
 
 ///|

@@ -58,10 +58,75 @@ async fn write_mooncode_session_record(
   if json_string(session, "component", default="") != "mooncode" {
     fail("invalid MoonCode session record")
   }
+  let compact = mooncode_compact_session_record(session)
   @moonfiles.write_json_record_file(
     mooncode_session_record_path(workspace_root, session_id),
-    session,
+    compact,
   )
+}
+
+///|
+fn mooncode_compact_session_record(session : Json) -> Json {
+  match session {
+    Object(fields) => {
+      let next : Map[String, Json] = {}
+      for key, value in fields {
+        next[key] = if mooncode_session_field_needs_manifest_ref(key) {
+          mooncode_manifest_ref(value)
+        } else if key == "mooncode_session_snapshot" {
+          mooncode_manifest_ref(value)
+        } else {
+          value
+        }
+      }
+      Json::object(next)
+    }
+    _ => session
+  }
+}
+
+///|
+fn mooncode_session_field_needs_manifest_ref(key : String) -> Bool {
+  key == "mooncode_last_change_set_manifest" ||
+  key == "mooncode_last_patch_set_manifest" ||
+  key == "mooncode_last_tool_approvals_manifest" ||
+  key == "mooncode_last_test_runs_manifest" ||
+  key == "mooncode_last_action_plan_manifest" ||
+  key == "mooncode_last_runtime_evidence_manifest" ||
+  key == "mooncode_last_eval_report_manifest" ||
+  key == "mooncode_last_runtime_handoff_manifest" ||
+  key == "mooncode_last_package_manifest" ||
+  key == "mooncode_last_package_index_manifest"
+}
+
+///|
+fn mooncode_manifest_ref(manifest : Json) -> Json {
+  match manifest {
+    Object(_) => {
+      let reference : Map[String, Json] = {}
+      for
+        key in [
+          "kind", "protocol", "status", "session_id", "workspace_id", "workspace_name",
+          "recorded_at", "manifest_path", "absolute_manifest_path", "snapshot_path",
+          "receipt_path", "package_path", "index_path",
+        ] {
+        let value = json_string(manifest, key, default="")
+        if value != "" {
+          reference[key] = value.to_json()
+        }
+      }
+      match json_object_field(manifest, "resume_contract") {
+        Some(value) => reference["resume_contract"] = value
+        None => ()
+      }
+      match json_object_field(manifest, "runtime_consumer") {
+        Some(value) => reference["runtime_consumer"] = value
+        None => ()
+      }
+      Json::object(reference)
+    }
+    _ => manifest
+  }
 }
 
 ///|

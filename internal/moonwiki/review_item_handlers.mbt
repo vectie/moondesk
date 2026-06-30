@@ -14,6 +14,85 @@ async fn handle_review_items(
 }
 
 ///|
+async fn handle_review_item_decision(
+  workspace_root : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let payload = match read_json_body(body) {
+    Some(json) => json
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid JSON body")
+      return
+    }
+  }
+  match write_review_item_decision(workspace_root, payload) {
+    Ok(receipt) => send_json(conn, method_, receipt)
+    Err(message) => send_api_error(conn, method_, 400, "Bad Request", message)
+  }
+}
+
+///|
+async fn write_review_item_decision(
+  workspace_root : String,
+  payload : Json,
+) -> Result[Json, String] {
+  let workspace_id = json_string(payload, "workspace_id", default="")
+  let path = decode_query_value(json_string(payload, "path", default=""))
+  let decision = json_string(payload, "decision", default="").trim().to_owned()
+  let note = json_string(payload, "note", default="").trim().to_owned()
+  if decision != "accepted" && decision != "rejected" {
+    return Err("Review decision must be accepted or rejected")
+  }
+  let workspace = match find_workspace(workspace_root, workspace_id) {
+    Some(workspace) => workspace
+    None => return Err("Unknown workspace")
+  }
+  let (_, clean_source) = match
+    resolve_workspace_path(workspace.root_path, path) {
+    Some(pair) => pair
+    None => return Err("Invalid review item path")
+  }
+  if clean_source == "" {
+    return Err("Review item path is required")
+  }
+  let source_path = @pathx.join(workspace.root_path, clean_source)
+  if !@fs.exists(source_path) || is_directory(source_path) {
+    return Err("Review item must target an existing file")
+  }
+  let id = @desk.stable_id(
+    "review-decision",
+    workspace.id + ":" + clean_source + ":" + decision,
+  )
+  let receipt_relative = "wiki/reviews/decisions/\{id}.json"
+  let receipt_path = @pathx.join(workspace.root_path, receipt_relative)
+  let now = @async.now().to_string()
+  let receipt : Json = {
+    "id": id,
+    "kind": "wiki-review-decision",
+    "workspace_id": workspace.id,
+    "source_path": clean_source,
+    "decision": decision,
+    "status": decision,
+    "note": note,
+    "created_at": now,
+    "receipt_path": receipt_relative,
+  }
+  @fsx.make_directory(
+    @pathx.dirname(receipt_path),
+    recursive=true,
+    exists_ok=true,
+  ) catch {
+    _ => return Err("Could not create review decision directory")
+  }
+  @fsx.write_to_file(receipt_path, receipt.stringify(indent=2) + "\n") catch {
+    _ => return Err("Could not write review decision receipt")
+  }
+  Ok(receipt)
+}
+
+///|
 async fn count_review_items(root : String) -> Int {
   collect_review_items(root, None, 10000).length()
 }
@@ -30,7 +109,10 @@ async fn collect_review_items(
       Some(id) if id != workspace.id => continue
       _ => ()
     }
-    for review_root in ["reviews", "review", "book/reviews", "book/review"] {
+    for
+      review_root in [
+        "wiki/reviews", "wiki/review", "reviews", "review", "book/reviews", "book/review",
+      ] {
       collect_review_directory(workspace, review_root, items, limit)
       if items.length() >= limit {
         return items

@@ -5,13 +5,24 @@ fn update_app_results(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    LoadedWorkspaces(_)
+    LoadedWorkspaceMetadata(_)
+    | LoadedWorkspaces(_)
     | LoadedEntries(_)
     | LoadedPreview(_)
     | LoadedRuns(_)
     | LoadedSavedViews(_)
     | LoadedSearch(_)
+    | LoadedDeskTrash(_)
     | SavedView(_)
+    | CreatedBlankMoonBook(_)
+    | ImportedMoonBook(_)
+    | CreatedDeskEntry(_)
+    | RenamedDeskEntry(_)
+    | MovedDeskEntry(_)
+    | CopiedDeskEntry(_)
+    | TrashedDeskEntry(_)
+    | RestoredDeskEntry(_)
+    | ImportedDeskFiles(_)
     | SavedMarkdownEdit(_) => update_workspace_results(dispatch, msg, model)
     LoadedTownMessages(_)
     | LoadedRequests(_)
@@ -22,7 +33,8 @@ fn update_app_results(
     | LoadedEvents(_)
     | LoadedReviewItems(_)
     | SubmittedRequest(_)
-    | CreatedStandingGoal(_) => update_town_results(dispatch, msg, model)
+    | CreatedStandingGoal(_)
+    | DecidedReviewItem(_) => update_town_results(dispatch, msg, model)
     LoadedBookBaseTypes(_)
     | LoadedBookPatterns(_)
     | CreatedBookFromPattern(_)
@@ -35,7 +47,13 @@ fn update_app_results(
     | LoadedLaunchAgent(_)
     | ManagedLaunchAgent(_)
     | RevealedSelection(_) => update_daemon_results(dispatch, msg, model)
-    SavedInbox(_) | ImportedInbox(_) | LocalFilesPicked(_) =>
+    LocalFilesPicked(_) =>
+      if model.workspace_mode == Desk && model.activity == Files {
+        update_workspace_results(dispatch, msg, model)
+      } else {
+        update_inbox_results(dispatch, msg, model)
+      }
+    SavedInbox(_) | ImportedInbox(_) =>
       update_inbox_results(dispatch, msg, model)
     _ => (@rabbita.none, model)
   }

@@ -88,14 +88,13 @@ fn render_preview_body(
       div(class="markdown-preview", [
         h1("Preview"),
         p(class="lead", model.preview_status),
-        pre(class="source-block", code(model.selected_path)),
       ])
     Some(preview) =>
       match preview.renderer {
         Html =>
           div(class="site-preview", [
             div(class="site-toolbar", [
-              span(model.selected_path),
+              span(class="quiet-path", model.selected_path),
               a(
                 class="secondary-button link-button",
                 href=html_preview_url(model, model.selected_path),
@@ -116,8 +115,7 @@ fn render_preview_body(
         DirectoryListing =>
           div(class="markdown-preview", [
             h1(preview.title),
-            p(class="lead", "Directory listing"),
-            pre(class="source-block", code(preview.body)),
+            p(class="lead", "Choose an item from the left."),
           ])
         Markdown =>
           section(class="document-preview", render_markdown_document(preview))
@@ -143,7 +141,7 @@ fn render_markdown_editor(
 ) -> @rabbita.Html {
   section(class="markdown-edit-surface", [
     div(class="site-toolbar", [
-      span(model.markdown_editor_path),
+      span(class="quiet-path", model.markdown_editor_path),
       span(class="record-kind", model.markdown_editor_status),
     ]),
     div(class="markdown-editor-grid", [
@@ -222,7 +220,7 @@ fn render_preview_center(
   main_(class="preview-center", [
     render_tabs(dispatch, model),
     div(class="preview-toolbar", [
-      span(class="path-pill", model.selected_path),
+      span(class="path-pill quiet-path", model.selected_path),
       div(class="toolbar-actions", [
         button(
           class=if has_string(model.favorites, model.selected_path) {

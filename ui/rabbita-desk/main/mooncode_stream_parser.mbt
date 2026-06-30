@@ -32,10 +32,7 @@ fn parse_mooncode_stream_text(
     } else if record_type == "event" {
       match json_field(record, "event") {
         Some(event_json) => {
-          let event : MoonCodeEvent = @json.from_json(event_json) catch {
-            _ => return Err("Invalid MoonCode stream event")
-          }
-          events.push(event)
+          events.push(mooncode_stream_event_from_json(event_json))
         }
         None => return Err("MoonCode stream event missing payload")
       }
@@ -54,4 +51,47 @@ fn parse_mooncode_stream_text(
     }
   }
   Ok({ stream, stream_source, next_since, emitted_count, events })
+}
+
+///|
+fn mooncode_stream_event_from_json(event : Json) -> MoonCodeEvent {
+  {
+    id: json_string_value(event, "id", default=""),
+    lane: json_string_value(event, "lane", default=""),
+    kind: json_string_value(event, "kind", default=""),
+    title: json_string_value(event, "title", default=""),
+    status: json_string_value(event, "status", default=""),
+    created_at: mooncode_stream_event_created_at(event),
+    detail: mooncode_stream_event_detail(event),
+    path: json_string_value(event, "path", default=""),
+    diff: json_string_value(event, "diff", default=""),
+    command: json_string_value(event, "command", default=""),
+    exit_code: json_int_value(event, "exit_code", default=0),
+    tool_result: json_field(event, "tool_result"),
+  }
+}
+
+///|
+fn mooncode_stream_event_created_at(event : Json) -> String {
+  let value = json_string_value(event, "created_at", default="")
+  if value != "" {
+    value
+  } else {
+    let number = json_int_value(event, "created_at", default=0)
+    if number == 0 {
+      ""
+    } else {
+      number.to_string()
+    }
+  }
+}
+
+///|
+fn mooncode_stream_event_detail(event : Json) -> String {
+  let detail = json_string_value(event, "detail", default="")
+  if detail != "" {
+    detail
+  } else {
+    json_string_value(event, "content", default="")
+  }
 }

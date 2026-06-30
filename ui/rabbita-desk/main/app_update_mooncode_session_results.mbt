@@ -11,7 +11,13 @@ fn update_mooncode_session_results(
         {
           ..model,
           mooncode_composer_status: if status.running {
-            "MoonClaw daemon running on \{status.port}"
+            if mooncode_new_session_draft_active(model) {
+              model.mooncode_composer_status
+            } else {
+              "MoonClaw daemon running on \{status.port}"
+            }
+          } else if mooncode_new_session_draft_active(model) {
+            model.mooncode_composer_status
           } else {
             status.message
           },
@@ -24,13 +30,14 @@ fn update_mooncode_session_results(
         @rabbita.none,
         {
           ..model,
-          mooncode_model: if model.mooncode_model == "" &&
-            result.models.length() > 0 {
-            result.models[0].name
+          mooncode_model: if model.mooncode_model == "" {
+            mooncode_default_runtime_model(result)
           } else {
             model.mooncode_model
           },
-          mooncode_composer_status: if result.ok {
+          mooncode_composer_status: if mooncode_new_session_draft_active(model) {
+            model.mooncode_composer_status
+          } else if result.ok {
             "\{result.models.length()} model(s) available"
           } else {
             result.daemon.message
@@ -40,12 +47,18 @@ fn update_mooncode_session_results(
     LoadedMoonClawModels(Err(error)) =>
       (@rabbita.none, { ..model, mooncode_composer_status: error })
     LoadedMoonCodeSessions(Ok(mooncode_sessions)) => {
+      let mooncode_sessions = mooncode_merge_session_listing(
+        model.mooncode_sessions,
+        mooncode_sessions,
+      )
       let selected = if model.selected_mooncode_session_id != "" &&
         mooncode_session_exists(
           mooncode_sessions,
           model.selected_mooncode_session_id,
         ) {
         model.selected_mooncode_session_id
+      } else if mooncode_new_session_draft_active(model) {
+        ""
       } else {
         first_mooncode_session_id(
           mooncode_sessions,
@@ -54,17 +67,17 @@ fn update_mooncode_session_results(
       }
       let keep_stream = selected == model.mooncode_stream_session_id
       let keep_sink = selected == model.mooncode_runtime_event_sink_session_id
+      let mooncode_conversation_rows = mooncode_hydrate_selected_conversation(
+        model.mooncode_conversation_rows,
+        mooncode_sessions,
+        selected,
+      )
       (
-        if selected == "" {
-          @rabbita.none
-        } else {
-          @rabbita.batch([
-            fetch_mooncode_runtime_event_sink_cmd(dispatch, selected),
-          ])
-        },
+        mooncode_session_hydration_cmd(dispatch, selected, keep_stream, keep_sink),
         {
           ..model,
           mooncode_sessions,
+          mooncode_conversation_rows,
           selected_mooncode_session_id: selected,
           mooncode_stream_session_id: if keep_stream {
             model.mooncode_stream_session_id
@@ -118,7 +131,11 @@ fn update_mooncode_session_results(
           } else {
             "loading runtime events"
           },
-          mooncode_composer_status: "\{mooncode_sessions.length()} MoonCode session(s)",
+          mooncode_composer_status: if mooncode_new_session_draft_active(model) {
+            model.mooncode_composer_status
+          } else {
+            "\{mooncode_sessions.length()} MoonCode session(s)"
+          },
         },
       )
     }
@@ -137,6 +154,59 @@ fn update_mooncode_session_results(
     CompletedMoonCodeCommand(Err(error)) =>
       (@rabbita.none, { ..model, mooncode_composer_status: error })
     _ => (@rabbita.none, model)
+  }
+}
+
+///|
+fn mooncode_session_hydration_cmd(
+  dispatch : Dispatch[Msg],
+  selected : String,
+  keep_stream : Bool,
+  keep_sink : Bool,
+) -> @rabbita.Cmd {
+  if selected == "" || (keep_stream && keep_sink) {
+    @rabbita.none
+  } else {
+    @rabbita.batch([
+      if keep_stream {
+        @rabbita.none
+      } else {
+        fetch_mooncode_stream_cmd(dispatch, selected, 0)
+      },
+      if keep_sink {
+        @rabbita.none
+      } else {
+        fetch_mooncode_runtime_event_sink_cmd(dispatch, selected)
+      },
+    ])
+  }
+}
+
+///|
+fn mooncode_hydrate_selected_conversation(
+  rows : Array[MoonCodeConversationRow],
+  sessions : Array[MoonCodeSession],
+  selected : String,
+) -> Array[MoonCodeConversationRow] {
+  if selected == "" {
+    return rows
+  }
+  for session in sessions {
+    if session.id == selected {
+      return mooncode_hydrate_conversation_from_session(rows, session)
+    }
+  }
+  rows
+}
+
+///|
+fn mooncode_default_runtime_model(result : MoonClawModelsResult) -> String {
+  if result.models.length() > 0 {
+    result.models[0].name
+  } else if result.ok {
+    "codex/gpt-5.4"
+  } else {
+    ""
   }
 }
 
@@ -162,9 +232,48 @@ fn mooncode_session_mutation_succeeded(
       ..model,
       workspace_mode: MoonCode,
       activity: Files,
+      mooncode_sessions: mooncode_upsert_session(
+        model.mooncode_sessions,
+        session,
+      ),
+      mooncode_conversation_rows: mooncode_hydrate_conversation_from_session(
+        model.mooncode_conversation_rows,
+        session,
+      ),
       selected_mooncode_session_id: session.id,
       mooncode_prompt: "",
+      mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
+        model.mooncode_pending_prompts,
+        session.id,
+        session.mooncode_events,
+      ),
       mooncode_composer_status: status,
     },
   )
+}
+
+///|
+fn mooncode_upsert_session(
+  sessions : Array[MoonCodeSession],
+  session : MoonCodeSession,
+) -> Array[MoonCodeSession] {
+  let next : Array[MoonCodeSession] = []
+  let mut inserted = false
+  for existing in sessions {
+    if existing.id == session.id {
+      next.push(session)
+      inserted = true
+    } else {
+      next.push(existing)
+    }
+  }
+  if !inserted {
+    let with_session : Array[MoonCodeSession] = [session]
+    for existing in next {
+      with_session.push(existing)
+    }
+    with_session
+  } else {
+    next
+  }
 }

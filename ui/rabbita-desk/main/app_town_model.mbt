@@ -22,7 +22,7 @@ struct StandingGoalRecord {
   target_book_id : String
   cadence_ticks : Int
   next_due_tick : Int
-  last_run_tick : Int?
+  last_run_tick : Json
   enabled : Bool
   source_policy : String
   review_policy : String
@@ -103,4 +103,15 @@ struct ReviewItem {
   kind : String
   status : String
   detail : String
+} derive(FromJson)
+
+///|
+struct ReviewDecisionResult {
+  id : String
+  workspace_id : String
+  source_path : String
+  decision : String
+  status : String
+  note : String
+  receipt_path : String
 } derive(FromJson)

@@ -10,7 +10,7 @@ pub fn package_candidates_projection(
 ) -> Json {
   let source_bound = count_package_candidate_status(packages, "source-bound")
   let no_source = count_package_candidate_status(packages, "no-source-yet")
-  let events = json_array_items(session, "mooncode_command_events")
+  let events = package_session_events(session)
   let projection_packages = package_projection_entries(packages, events)
   let runtime_built = count_package_runtime_state(events, "built")
   let runtime_verified = count_package_runtime_state(events, "verified")
@@ -71,6 +71,15 @@ pub fn package_candidates_projection(
     "owner": package_artifact_owner(),
     "rule": "Package candidates are MoonBook-owned manifests. Moondesk only renders package readiness and sends operator commands; MoonClaw must assemble verified bundles and emit package_built or package_verified runtime proof events.",
   }
+}
+
+///|
+fn package_session_events(session : Json) -> Array[Json] {
+  merge_events(
+    [],
+    json_array_items(session, "mooncode_command_events"),
+    json_array_items(session, "mooncode_events"),
+  )
 }
 
 ///|

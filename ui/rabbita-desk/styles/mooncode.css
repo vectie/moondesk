@@ -1,21 +1,24 @@
-/* MoonCode product pass: focused warm workspace with compact, aligned input. */
+/* MoonCode product pass: focused neutral workspace with compact, aligned input. */
 :root {
-  --mooncode-bg: #fffdfa;
+  --mooncode-bg: #f6f8fb;
   --mooncode-panel: #ffffff;
-  --mooncode-field: #fffefc;
-  --mooncode-rail-bg: #f8f0df;
-  --mooncode-line: rgba(180, 130, 58, 0.22);
-  --mooncode-line-strong: rgba(180, 130, 58, 0.42);
-  --mooncode-ink: #21130d;
-  --mooncode-muted: #705a38;
-  --mooncode-subtle: #9b7a4b;
-  --mooncode-accent: var(--ms-jade);
-  --mooncode-accent-hover: var(--ms-jade-deep);
-  --mooncode-primary: var(--ms-gold);
-  --mooncode-primary-hover: #935314;
-  --mooncode-focus: var(--ms-focus);
-  --mooncode-radius: var(--ms-radius-md);
-  --mooncode-shadow: var(--ms-shadow-tight);
+  --mooncode-field: #f8fafc;
+  --mooncode-rail-bg: #ffffff;
+  --mooncode-line: rgba(15, 23, 42, 0.1);
+  --mooncode-line-strong: rgba(37, 99, 235, 0.24);
+  --mooncode-ink: #0f172a;
+  --mooncode-muted: #64748b;
+  --mooncode-subtle: #94a3b8;
+  --mooncode-accent: #2563eb;
+  --mooncode-accent-hover: #1d4ed8;
+  --mooncode-success: #059669;
+  --mooncode-primary: #2563eb;
+  --mooncode-primary-hover: #1d4ed8;
+  --mooncode-focus: rgba(37, 99, 235, 0.18);
+  --mooncode-radius: var(--radius-md);
+  --mooncode-chat-column: 760px;
+  --mooncode-shadow: 0 14px 35px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
+  --mooncode-shadow-tight: 0 8px 22px rgba(15, 23, 42, 0.08);
 }
 
 .mooncode-center,
@@ -27,7 +30,7 @@
 }
 
 .code-main {
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   background: var(--mooncode-bg);
 }
 
@@ -36,8 +39,11 @@
 }
 
 .mooncode-rail {
+  display: flex;
+  flex-direction: column;
   background: var(--mooncode-rail-bg);
   border-right: 1px solid var(--mooncode-line);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.72);
 }
 
 .mooncode-rail .pane-heading {
@@ -73,17 +79,34 @@
   min-height: 34px;
   display: block;
   margin: 10px;
-  border: 1px solid rgba(182, 106, 24, 0.24);
+  border: 1px solid rgba(37, 99, 235, 0.28);
   border-radius: 8px;
   background: var(--mooncode-primary);
-  color: #fffdf8;
+  color: #ffffff;
   font-size: 13px;
   font-weight: 680;
   cursor: pointer;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
+  transition: background 160ms ease, box-shadow 160ms ease, transform 120ms ease;
 }
 
 .mooncode-new-session:hover {
   background: var(--mooncode-primary-hover);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.23);
+  transform: translateY(-1px);
+}
+
+.mooncode-new-session:active {
+  transform: translateY(0);
+}
+
+.mooncode-new-session:focus-visible,
+.mooncode-session:focus-visible,
+.web-toggle:focus-visible,
+.starter-chip:focus-visible,
+.composer-footer .primary-button:focus-visible {
+  outline: 3px solid var(--mooncode-focus);
+  outline-offset: 2px;
 }
 
 .mooncode-session-list {
@@ -94,79 +117,101 @@
 }
 
 .mooncode-session {
-  min-height: 52px;
+  min-height: 54px;
   padding: 9px 10px;
+  border: 1px solid transparent;
   border-color: transparent;
   border-radius: 8px;
   background: transparent;
   box-shadow: none;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 120ms ease;
 }
 
 .mooncode-session:hover,
 .mooncode-session.active {
   border-color: var(--mooncode-line);
   background: var(--mooncode-panel);
-  box-shadow: 0 1px 0 rgba(32, 32, 29, 0.04);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.mooncode-session:hover {
+  transform: translateX(1px);
+}
+
+.mooncode-session.active {
+  border-color: rgba(37, 99, 235, 0.26);
+  box-shadow: inset 3px 0 0 var(--mooncode-primary), 0 1px 0 rgba(15, 23, 42, 0.04);
 }
 
 .mooncode-session strong {
+  display: block;
   font-size: 13px;
   font-weight: 650;
-}
-
-.mooncode-session small,
-.mooncode-topline .status-line {
-  color: var(--mooncode-muted);
-  font-size: 12px;
   line-height: 1.35;
 }
 
-.mooncode-topline {
-  min-width: 0;
-  height: 42px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  padding: 0 18px;
-  border-bottom: 1px solid var(--mooncode-line);
-  background: rgba(255, 253, 250, 0.96);
+.mooncode-session small {
+  display: block;
+  margin-top: 3px;
+  color: var(--mooncode-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.mooncode-topline .path-pill {
+.mooncode-context-bar {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--mooncode-line);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.mooncode-context-bar > div {
+  width: min(var(--mooncode-chat-column), 100%);
+  display: grid;
+  gap: 2px;
+  margin: 0 auto;
+}
+
+.mooncode-context-bar strong {
+  color: var(--mooncode-ink);
+  font-size: 14px;
+  font-weight: 680;
+  line-height: 1.25;
+}
+
+.mooncode-context-bar span {
+  min-width: 0;
   color: var(--mooncode-muted);
-  font-family: inherit;
   font-size: 12px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mooncode-session-surface {
-  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
   overflow: hidden;
 }
 
-.mooncode-session-header {
-  max-width: 760px;
-  width: calc(100% - 48px);
-  margin: 0 auto;
-  padding: 18px 0 10px;
-  border-bottom: 0;
-  background: var(--mooncode-bg);
-}
-
-.mooncode-session-title h2 {
-  font-size: 18px;
-  font-weight: 680;
-}
-
-.mooncode-session-grid {
+.mooncode-chat-surface:not(.empty) {
+  min-height: calc(100vh - 100px);
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding-top: 8px;
+  flex-direction: column;
+}
+
+.mooncode-chat-surface:not(.empty) .mooncode-session-surface {
+  flex: 1 1 auto;
 }
 
 .mooncode-chat-surface.empty {
-  min-height: calc(100vh - 94px);
+  min-height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -187,8 +232,8 @@
 
 .mooncode-empty h1 {
   color: var(--mooncode-ink);
-  font-size: 24px;
-  font-weight: 650;
+  font-size: 28px;
+  font-weight: 690;
   line-height: 1.17;
 }
 
@@ -199,22 +244,22 @@
 }
 
 .mooncode-composer {
-  width: min(600px, calc(100% - 48px));
-  max-width: 600px;
+  width: min(var(--mooncode-chat-column), calc(100% - 48px));
+  max-width: var(--mooncode-chat-column);
   display: grid;
-  gap: 6px;
-  margin: 0 auto 18px;
-  padding: 9px 10px 10px;
+  gap: 8px;
+  margin: 0 auto 20px;
+  padding: 10px 12px 12px;
   border: 1px solid var(--mooncode-line);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--mooncode-panel);
   box-shadow: var(--mooncode-shadow);
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .mooncode-composer:focus-within {
-  border-color: rgba(49, 95, 82, 0.45);
-  box-shadow: 0 0 0 3px var(--mooncode-focus), var(--mooncode-shadow);
+  border-color: rgba(37, 99, 235, 0.38);
+  box-shadow: 0 0 0 4px var(--mooncode-focus), var(--mooncode-shadow);
 }
 
 .composer-field {
@@ -234,17 +279,17 @@
 
 .mooncode-input {
   width: 100%;
-  min-height: 36px;
+  min-height: 40px;
   max-height: 128px;
   display: block;
   margin: 0;
-  padding: 6px 2px 7px;
+  padding: 8px 2px 7px;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: var(--mooncode-ink);
-  font-size: 14px;
-  line-height: 21px;
+  font-size: 15px;
+  line-height: 22px;
   outline: 0;
   overflow-y: auto;
   resize: none;
@@ -253,7 +298,7 @@
 }
 
 .mooncode-input::placeholder {
-  color: #9a9288;
+  color: #94a3b8;
 }
 
 .mooncode-input:focus {
@@ -262,8 +307,8 @@
 
 .composer-footer {
   min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
   padding-top: 2px;
@@ -286,13 +331,14 @@
   border: 1px solid var(--mooncode-line);
   border-radius: 999px;
   padding: 0 9px;
-  background: var(--mooncode-field);
+  background: #ffffff;
   color: var(--mooncode-muted);
   font-size: 11.5px;
   font-weight: 600;
   line-height: 1;
   text-transform: none;
   cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease, transform 120ms ease;
 }
 
 .option-chip {
@@ -301,30 +347,39 @@
 
 .option-chip.active,
 .web-toggle.active {
-  border-color: rgba(49, 95, 82, 0.3);
-  background: rgba(49, 95, 82, 0.08);
-  color: var(--mooncode-accent-hover);
+  border-color: rgba(5, 150, 105, 0.32);
+  background: rgba(5, 150, 105, 0.08);
+  color: var(--mooncode-success);
 }
 
 .web-toggle:hover,
 .starter-chip:hover {
   border-color: var(--mooncode-line-strong);
   color: var(--mooncode-ink);
+  transform: translateY(-1px);
 }
 
 .composer-footer .primary-button {
-  min-width: 64px;
-  min-height: 32px;
-  padding: 0 13px;
-  border-radius: var(--mooncode-radius);
+  min-width: 72px;
+  min-height: 34px;
+  padding: 0 15px;
+  border-radius: 9px;
   background: var(--mooncode-primary);
   color: #ffffff;
   font-size: 13px;
   font-weight: 650;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.16);
+  transition: background 160ms ease, box-shadow 160ms ease, transform 120ms ease;
 }
 
 .composer-footer .primary-button:hover {
   background: var(--mooncode-primary-hover);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+  transform: translateY(-1px);
+}
+
+.composer-footer .primary-button:active {
+  transform: translateY(0);
 }
 
 .composer-status {
@@ -335,7 +390,7 @@
 }
 
 .mooncode-starters {
-  width: min(600px, 100%);
+  width: min(680px, 100%);
   display: grid;
   gap: 7px;
   margin: 0 auto;
@@ -356,32 +411,51 @@
 }
 
 .mooncode-transcript-list {
-  max-width: 760px;
-  padding: 16px 24px 24px;
+  width: min(var(--mooncode-chat-column), 100%);
+  max-width: var(--mooncode-chat-column);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 auto;
+  padding: 18px 24px 132px;
+  scroll-padding-bottom: 132px;
 }
 
 .mooncode-message {
+  max-width: min(100%, 680px);
   gap: 7px;
-  padding: 13px 16px 14px;
+  padding: 14px 16px 15px;
   border: 1px solid var(--mooncode-line);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--mooncode-panel);
-  box-shadow: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .mooncode-message.user {
-  border-color: rgba(62, 107, 91, 0.28);
-  background: rgba(62, 107, 91, 0.045);
+  align-self: flex-end;
+  max-width: min(88%, 560px);
+  border-color: rgba(37, 99, 235, 0.2);
+  background: #eaf2ff;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.08);
 }
 
 .mooncode-message.assistant {
-  border-color: rgba(180, 130, 58, 0.26);
+  align-self: flex-start;
+  border-color: rgba(16, 24, 40, 0.12);
   background: #ffffff;
+  box-shadow: var(--mooncode-shadow-tight);
 }
 
-.mooncode-message.tool {
-  border-color: rgba(182, 106, 24, 0.24);
-  background: rgba(182, 106, 24, 0.045);
+.mooncode-message.activity {
+  max-width: min(100%, 620px);
+  align-self: flex-start;
+  gap: 4px;
+  padding: 5px 0 5px 12px;
+  border: 0;
+  border-left: 2px solid var(--mooncode-line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--mooncode-muted);
 }
 
 .mooncode-message.failed {
@@ -406,12 +480,42 @@
   tab-size: 2;
 }
 
+.mooncode-message.activity .mooncode-message-head {
+  display: none;
+}
+
+.mooncode-message.activity .mooncode-message-body {
+  color: var(--mooncode-muted);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mooncode-new-session,
+  .mooncode-session,
+  .mooncode-composer,
+  .option-chip,
+  .web-toggle,
+  .starter-chip,
+  .composer-footer .primary-button {
+    transition: none;
+  }
+
+  .mooncode-new-session:hover,
+  .mooncode-session:hover,
+  .web-toggle:hover,
+  .starter-chip:hover,
+  .composer-footer .primary-button:hover {
+    transform: none;
+  }
+}
+
 .mooncode-message-body code {
   display: block;
   margin: 0;
   padding: 0;
   color: inherit;
-  font-family: var(--ms-font-mono);
+  font-family: var(--font-mono);
   font-size: 14px;
   line-height: 22px;
   white-space: inherit;
@@ -426,10 +530,31 @@
 @media (max-width: 760px) {
   .code-main {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .mooncode-rail {
-    display: none;
+    display: flex;
+    min-height: 0;
+    max-height: 240px;
+    border-right: 0;
+    border-bottom: 1px solid var(--mooncode-line);
+    overflow: hidden;
+  }
+
+  .mooncode-rail .pane-heading {
+    min-height: auto;
+    padding: 12px 14px 8px;
+  }
+
+  .mooncode-new-session {
+    margin: 8px 10px;
+  }
+
+  .mooncode-session-list {
+    max-height: 118px;
+    padding: 2px 10px 10px;
+    overflow-y: auto;
   }
 
   .mooncode-chat-surface.empty {
@@ -441,6 +566,11 @@
   .mooncode-composer {
     width: 100%;
     margin-bottom: 12px;
+  }
+
+  .mooncode-transcript-list {
+    padding-bottom: 148px;
+    scroll-padding-bottom: 148px;
   }
 
   .composer-footer {

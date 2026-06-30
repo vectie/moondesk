@@ -17,6 +17,11 @@ fn update_mooncode_stream_results(
         } else {
           mooncode_merge_stream_events([], stream.events)
         }
+        let mooncode_conversation_rows = mooncode_hydrate_conversation_from_events(
+          model.mooncode_conversation_rows,
+          session_id,
+          stream_events,
+        )
         (
           save_mooncode_stream_checkpoint_cmd(
             dispatch,
@@ -28,6 +33,12 @@ fn update_mooncode_stream_results(
             mooncode_stream_session_id: session_id,
             mooncode_stream_cursor: stream.next_since,
             mooncode_stream_events: stream_events,
+            mooncode_conversation_rows,
+            mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
+              model.mooncode_pending_prompts,
+              session_id,
+              stream_events,
+            ),
             mooncode_stream_status: "live tail / \{stream.stream_source} / \{stream.stream} +\{stream.emitted_count} event(s), cursor \{stream.next_since}",
             mooncode_stream_checkpoint_session_id: session_id,
             mooncode_stream_checkpoint_status: if stream.next_since > 0 {
@@ -86,12 +97,23 @@ fn update_mooncode_stream_results(
         } else {
           " / service " + sink.runtime_service.status
         }
+        let mooncode_conversation_rows = mooncode_hydrate_conversation_from_events(
+          model.mooncode_conversation_rows,
+          session_id,
+          sink.events,
+        )
         (
           @rabbita.none,
           {
             ..model,
             mooncode_runtime_event_sink_session_id: session_id,
             mooncode_runtime_event_sink: Some(sink),
+            mooncode_conversation_rows,
+            mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
+              model.mooncode_pending_prompts,
+              session_id,
+              sink.events,
+            ),
             mooncode_runtime_event_sink_status: "\{sink.event_count} runtime event(s)\{service_status}",
           },
         )

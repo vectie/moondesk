@@ -4,13 +4,7 @@ fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     Desk =>
       div(class="desk-shell file-desk-shell", [
         render_title_bar(dispatch, model),
-        if model.workspaces.length() == 0 {
-          div(class="desk-main onboarding-main", [
-            render_wiki_bootstrap(dispatch, model),
-          ])
-        } else {
-          render_desk_mode(dispatch, model)
-        },
+        render_desk_mode(dispatch, model),
         render_command_palette(dispatch, model),
       ])
     MoonCode =>

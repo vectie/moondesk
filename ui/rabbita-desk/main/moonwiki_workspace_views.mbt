@@ -61,7 +61,10 @@ fn render_workspace_card(
   div(class="workspace-stack", [
     div(class="workspace-card", [
       span(class="status-dot live", ""),
-      div([h3(workspace_name(model)), p(workspace_root(model))]),
+      div([
+        h3(workspace_name(model)),
+        p(class="workspace-root-muted", workspace_root(model)),
+      ]),
     ]),
     div(
       class="workspace-list",

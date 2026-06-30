@@ -57,7 +57,7 @@ fn reveal_selection_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Cmd {
-  let body : Json = { "path": model.selected_path }
+  let body : Json = { "path": reveal_target_path(model) }
   @http.post("/api/workspaces/\{model.selected_workspace_id}/reveal")
   .with_json(body)
   .expect_json(result => {
@@ -65,4 +65,13 @@ fn reveal_selection_cmd(
       RevealedSelection(http_result(result, "Could not reveal selection")),
     )
   })
+}
+
+///|
+fn reveal_target_path(model : Model) -> String {
+  if model.selected_path != "" {
+    model.selected_path
+  } else {
+    model.current_directory
+  }
 }

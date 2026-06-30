@@ -11,7 +11,21 @@ pub fn session_listing_row(session : Json, updated_at_ms : Json) -> Json {
     "workspace_root": session_listing_workspace_root(session),
     "status": json_string(session, "status", default=""),
     "model": json_string(session, "model", default=""),
+    "queued_count": summary_json_int(session, "queued_count", default=0),
+    "cwd": session_listing_workspace_root(session),
+    "mooncode_runtime_session_id": json_string(
+      session,
+      "mooncode_runtime_session_id",
+      default="",
+    ),
     "last_message": json_string(session, "last_message", default=""),
+    "transcript": [],
+    "mooncode_events": [],
+    "mooncode_summary": {
+      "event_count": json_array_items(session, "mooncode_command_events").length(),
+      "verified_test_count": 0,
+      "pending_diff_count": 0,
+    },
     "session_url": "/api/mooncode/sessions/\{id}",
     "stream_url": "/api/mooncode/sessions/\{id}/stream?format=jsonl&since=<sequence>",
     "source": "mooncode-session-listing",
@@ -90,6 +104,51 @@ fn normalize_runtime_session_listing_row(row : Json) -> Json? {
       }
       if json_string(row, "component", default="") == "" {
         next["component"] = "mooncode".to_json()
+      }
+      if json_string(row, "workspace_name", default="") == "" {
+        next["workspace_name"] = "".to_json()
+      }
+      if json_string(row, "workspace_id", default="") == "" {
+        next["workspace_id"] = "".to_json()
+      }
+      if json_string(row, "workspace_root", default="") == "" {
+        next["workspace_root"] = session_listing_workspace_root(row).to_json()
+      }
+      if json_string(row, "status", default="") == "" {
+        next["status"] = "".to_json()
+      }
+      if json_string(row, "model", default="") == "" {
+        next["model"] = "".to_json()
+      }
+      if json_string(row, "updated_at", default="") == "" {
+        next["updated_at"] = "".to_json()
+      }
+      if json_string(row, "cwd", default="") == "" {
+        next["cwd"] = session_listing_workspace_root(row).to_json()
+      }
+      if json_string(row, "mooncode_runtime_session_id", default="") == "" {
+        next["mooncode_runtime_session_id"] = json_string(row, "id", default="").to_json()
+      }
+      match fields.get("queued_count") {
+        Some(_) => ()
+        None => next["queued_count"] = (0).to_json()
+      }
+      match fields.get("transcript") {
+        Some(_) => ()
+        None => next["transcript"] = Json::array([])
+      }
+      match fields.get("mooncode_events") {
+        Some(_) => ()
+        None => next["mooncode_events"] = Json::array([])
+      }
+      match fields.get("mooncode_summary") {
+        Some(_) => ()
+        None =>
+          next["mooncode_summary"] = {
+            "event_count": 0,
+            "verified_test_count": 0,
+            "pending_diff_count": 0,
+          }
       }
       match fields.get("updated_at_ms") {
         Some(_) => ()

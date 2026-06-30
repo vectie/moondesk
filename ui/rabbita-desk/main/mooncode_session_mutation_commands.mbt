@@ -25,7 +25,7 @@ fn create_mooncode_session_cmd(
     "workspace_id": model.selected_workspace_id,
     "title": mooncode_new_session_title(model),
     "message": trimmed_or(model.mooncode_prompt, mooncode_default_prompt(model)),
-    "model": model.mooncode_model,
+    "model": mooncode_selected_runtime_model(model, None),
     "web_search": model.mooncode_web_search,
     "context_path": mooncode_context_path(model),
   }
@@ -94,7 +94,7 @@ fn mooncode_session_command_cmd(
   } else {
     context_path
   }
-  let selected_model = trimmed_or(model.mooncode_model, session.model)
+  let selected_model = mooncode_selected_runtime_model(model, Some(session))
   let body : Json = {
     "action": action,
     "message": message,
@@ -112,6 +112,18 @@ fn mooncode_session_command_cmd(
       ),
     )
   })
+}
+
+///|
+fn mooncode_selected_runtime_model(
+  model : Model,
+  session : MoonCodeSession?,
+) -> String {
+  let session_model = match session {
+    Some(session) => session.model
+    None => ""
+  }
+  trimmed_or(trimmed_or(model.mooncode_model, session_model), "codex/gpt-5.4")
 }
 
 ///|

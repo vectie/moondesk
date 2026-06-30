@@ -76,6 +76,26 @@ fn update_town_results(
       )
     CreatedStandingGoal(Err(error)) =>
       (@rabbita.none, { ..model, dispatch_status: error })
+    DecidedReviewItem(Ok(result)) =>
+      (
+        @rabbita.batch([
+          fetch_review_items_cmd(dispatch, model.selected_workspace_id),
+          fetch_search_cmd(dispatch, result.id),
+        ]),
+        {
+          ..model,
+          host_status: "\{result.decision} review decision recorded for \{result.workspace_id}",
+          review_decision_note: "",
+          review_decision_status: "\{result.status} \{result.source_path} -> \{result.receipt_path}",
+          inbox_status: if result.note == "" {
+            model.inbox_status
+          } else {
+            "review note recorded"
+          },
+        },
+      )
+    DecidedReviewItem(Err(error)) =>
+      (@rabbita.none, { ..model, review_decision_status: error })
     _ => (@rabbita.none, model)
   }
 }

@@ -283,7 +283,9 @@ async fn handle_mooncode_session_command(
   send_json(
     conn,
     method_,
-    enrich_mooncode_session_for_response(workspace_root, with_runtime_handoff),
+    mooncode_compact_session_record(
+      enrich_mooncode_session_for_response(workspace_root, with_runtime_handoff),
+    ),
   )
 }
 

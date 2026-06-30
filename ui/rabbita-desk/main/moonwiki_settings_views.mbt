@@ -17,10 +17,7 @@ fn render_settings_pane(
       h3("Today"),
       info_row("Requests", model.requests.length().to_string()),
       info_row("Runs", model.runs.length().to_string()),
-      info_row("Messages", model.town_messages.length().to_string()),
-      info_row("Latest", latest_town_message_label(model)),
       info_row("Goals", model.standing_goals.length().to_string()),
-      info_row("Favorites", model.favorites.length().to_string()),
       button(
         class="primary-button full",
         on_click=dispatch(NotifyDaily),
@@ -30,7 +27,7 @@ fn render_settings_pane(
     ]),
     render_saved_views_panel(dispatch, model),
     render_review_queue_panel(dispatch, model),
-    section(class="side-section", [
+    section(class="side-section quiet-advanced", [
       h3("Calendar Export"),
       a(
         class="secondary-button link-button full",
@@ -43,7 +40,7 @@ fn render_settings_pane(
     render_cadence_panel(model),
     render_cadence_calendar(model),
     render_analytics_panel(model),
-    section(class="side-section", [
+    section(class="side-section quiet-advanced", [
       h3("Export Snapshot"),
       pre(class="source-block compact", code(export_snapshot(model))),
     ]),
@@ -101,23 +98,57 @@ fn render_review_queue_panel(
     if model.review_items.length() == 0 {
       p(class="status-line", "none")
     } else {
-      div(
-        class="mini-list",
-        model.review_items[:review_limit(model.review_items)].map(item => {
-          let msg = if item.workspace_id == "" {
-            SelectActivity(Town)
-          } else {
-            SelectSearchHit(item.workspace_id, item.path)
-          }
-          button(
-            class="mini-link",
-            title="\{item.id} / \{item.kind} / \{item.detail}",
-            on_click=dispatch(msg),
-            [span(item.title), small("\{item.status} / \{item.path}")],
-          )
-        }),
-      )
+      div([
+        textarea(
+          class="line-input",
+          value=model.review_decision_note,
+          placeholder="Review decision note",
+          on_input=fn(value) { dispatch(SetReviewDecisionNote(value)) },
+          "",
+        ),
+        p(class="status-line", model.review_decision_status),
+        div(
+          class="mini-list",
+          model.review_items[:review_limit(model.review_items)].map(item => {
+            render_review_queue_item(dispatch, item)
+          }),
+        ),
+      ])
     },
+  ])
+}
+
+///|
+fn render_review_queue_item(
+  dispatch : Dispatch[Msg],
+  item : ReviewItem,
+) -> @rabbita.Html {
+  let open_msg = if item.workspace_id == "" {
+    SelectActivity(Town)
+  } else {
+    SelectSearchHit(item.workspace_id, item.path)
+  }
+  div(class="mini-review-item", [
+    button(
+      class="mini-link",
+      title="\{item.id} / \{item.kind} / \{item.detail}",
+      on_click=dispatch(open_msg),
+      [span(item.title), small("\{item.status} / \{item.path}")],
+    ),
+    div(class="toolbar compact", [
+      button(
+        class="secondary-button",
+        title="Accept review item",
+        on_click=dispatch(DecideReviewItem(item, "accepted")),
+        "Accept",
+      ),
+      button(
+        class="secondary-button",
+        title="Reject review item",
+        on_click=dispatch(DecideReviewItem(item, "rejected")),
+        "Reject",
+      ),
+    ]),
   ])
 }
 
@@ -132,7 +163,7 @@ fn review_limit(items : Array[ReviewItem]) -> Int {
 
 ///|
 fn render_cadence_panel(model : Model) -> @rabbita.Html {
-  section(class="side-section", [
+  section(class="side-section quiet-advanced", [
     h3("Cadence"),
     div(
       class="cadence-list",
@@ -175,7 +206,7 @@ fn render_cadence_calendar(model : Model) -> @rabbita.Html {
       ])
     })
   }
-  section(class="side-section", [
+  section(class="side-section quiet-advanced", [
     h3("Calendar"),
     div(class="calendar-grid", cells),
   ])
@@ -215,7 +246,7 @@ fn render_analytics_panel(model : Model) -> @rabbita.Html {
         analytics.needs_review +
         analytics.failures +
         analytics.deferred
-      section(class="side-section", [
+      section(class="side-section quiet-advanced", [
         h3("Analytics"),
         info_row("Daemon", "tick \{analytics.daemon_tick}"),
         info_row("Goals", "\{analytics.standing_goal_count} total"),
@@ -248,7 +279,7 @@ fn render_analytics_panel(model : Model) -> @rabbita.Html {
       ])
     }
     None =>
-      section(class="side-section", [
+      section(class="side-section quiet-advanced", [
         h3("Analytics"),
         p(class="status-line", "waiting for town analytics"),
       ])
@@ -291,7 +322,7 @@ fn latest_town_message_label(model : Model) -> String {
     "none"
   } else {
     let message = model.town_messages[model.town_messages.length() - 1]
-    "\{message.kind} \{message.id}: \{message.title} (\{message.path})"
+    message.title
   }
 }
 
