@@ -252,6 +252,10 @@ Completed slices:
 - Moontown cookbook stable-state manifests now default to
   `.moonsuite/products/moontown/cookbook/stable-state.json`, with cookbook
   path coverage and operator docs updated to the product-home path.
+- Moontown PlanBook/editor operator copy now names
+  `.moonsuite/products/moontown` for live-autonomy, town-journal, PlanBook
+  autonomy/repair/validation, and editor-pipeline state; focused tests assert
+  the generated copy no longer emits the old product-runtime paths.
 - MoonClaw stores MoonCode durable session sidecars under
   `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
   native capability payload, and excludes `.moonsuite` sidecars from MoonCode
@@ -274,8 +278,8 @@ Completed slices:
 
 Remaining high-priority product slices:
 
-- Moontown: finish remaining operator-request queues, PlanBook/editor copy, and
-  any product-runtime copy that still names the old `.moontown` paths.
+- Moontown: finish remaining operator-request queues and any product-runtime
+  copy that still names the old `.moontown` paths.
 - MoonRobo: move MoonClaw routine artifacts and task bridge examples to
   `.moonsuite/products/moonclaw` / `.moonsuite/products/moonrobo` contracts.
 - Rabbita and future products: add explicit product-home contracts and smoke
