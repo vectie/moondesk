@@ -242,6 +242,9 @@ Completed slices:
   and book-result records from `.moonsuite/products/moontown`; generated
   MoonBook projection discovery remains on the existing book workspace root
   until the book-layout cutover.
+- Moontown final-integration installs write the Wenyu integration status file
+  under `.moonsuite/products/moontown/integration`, with usage docs and
+  white-box path coverage updated to the product-home location.
 - MoonClaw stores MoonCode durable session sidecars under
   `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
   native capability payload, and excludes `.moonsuite` sidecars from MoonCode
