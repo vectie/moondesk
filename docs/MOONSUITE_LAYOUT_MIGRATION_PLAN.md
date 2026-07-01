@@ -830,6 +830,16 @@ Completed slices:
   run-polling/PlanBook path tests seed fresh product-home fixtures instead of
   `.moonclaw/jobs`. Validation passed with Moontown `moon fmt`, clean
   `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
+- Moontown commit `0c4e6f33` aligns public operator/frontend documentation
+  with the already-migrated runtime product-home paths. `docs/USAGE.md` and
+  `docs/FRONTEND.md` now describe active town snapshots, daemon state/runtime
+  files, standing-goal inputs, watcher ledgers, book-quality review artifacts,
+  town synthesis, and the MoonClaw job-store archive under
+  `.moonsuite/products/moontown/...` or `.moonsuite/products/moonclaw/jobs/...`
+  instead of `.moontown/...` or `.moonclaw/jobs/...`. Validation passed with
+  Moontown `moon fmt`, clean `moon info` after reverting unrelated generated
+  `.mbti` EOF churn, `moon check`, `moon test` (926/926), and
+  `git diff --check`.
 - Rabbita commit `a6a69ad` adds the root package's explicit MoonSuite
   product-home contract. The public API now exposes `rabbita` product id,
   `.moonsuite/products/rabbita` state, service, runtime, cache, and
