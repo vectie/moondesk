@@ -31,6 +31,11 @@ Out of scope for this plan:
 
 Use four layers. Lower layers must be deterministic and run in ordinary
 `moon test`; live runtime/model tests are explicit manual or scheduled gates.
+Across all layers, MoonLib is the only shared MoonSuite filesystem contract
+provider. Code-mode tests may call Moondesk's local adapter when they are
+testing Moondesk behavior, but the adapter itself must be proven to wrap
+MoonLib. MoonStat may appear only as a validator or drift-report consumer, not
+as the source used to build code-mode paths.
 
 1. Contract tests
    - Package: `mooncode/core`, `internal/mooncode`
@@ -119,6 +124,9 @@ Fixtures must build MoonSuite paths through MoonLib `@moonsuite` helpers, or
 through a product-local adapter that is itself tested as a thin wrapper over
 MoonLib. Do not add new test fixtures that duplicate `.moonsuite`, `.tmp`,
 `books`, product-home, or product-registry string contracts.
+If a new fixture needs a reusable path class that MoonLib does not expose yet,
+the test plan is to add that constructor to MoonLib first, then consume it from
+MoonCode/Moondesk tests.
 
 ## End-to-End Scenarios
 
@@ -469,6 +477,8 @@ Code mode is sufficiently tested when:
 - contract-consumer tests prove the code-mode fixture, MoonCode session
   sidecars, MoonClaw runtime records, and Moontown handoff records derive
   canonical paths from MoonLib rather than local layout constants
+- contract-boundary tests prove MoonCode can consume MoonLib path contracts
+  without importing MoonStat or status/analytics packages
 - resume tests prove sessions survive process restart from disk records
 - live model/runtime tests exist as manual or scheduled checks, but deterministic
   tests remain the merge gate

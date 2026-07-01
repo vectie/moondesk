@@ -46,6 +46,11 @@ not define an independent suite root, product-home, temp, or product-registry
 contract. MoonStat validates drift against MoonLib instead of defining alternate
 Wiki paths.
 
+Contract boundary rule for Wiki tests: if Wiki needs a reusable path class for
+requests, reviews, generated pages, product records, or temp artifacts, the
+shared constructor belongs in MoonLib. Wiki tests can verify MoonStat drift
+reports as output, but they must not use MoonStat as the path-building layer.
+
 ## Non-Goals
 
 Wiki tests should not validate:

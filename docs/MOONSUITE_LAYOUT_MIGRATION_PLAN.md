@@ -76,6 +76,12 @@ Default products:
 
 ## Shared Contract Layer
 
+Decision: the shared MoonSuite contract layer belongs in MoonLib. MoonStat is
+not the right owner because its job is observation, validation, metrics, and
+drift reporting over live workspaces. Putting the contract in MoonStat would
+make every product depend on an analytics/status product just to construct
+paths, which is the wrong dependency direction.
+
 MoonSuite filesystem contracts should be defined in `moonlib`, not `moonstat`.
 `moonlib` is the shared source of truth for low-level suite layout contracts:
 suite root discovery, product registry schema, product state paths, suite temp
@@ -88,8 +94,8 @@ audit live workspaces, report drift, index metrics/snapshots, and surface health
 views. It can enforce that products follow the contract, but it should not own
 the contract itself.
 
-Phase 4.5 is now the active contract extraction track running alongside the
-remaining product-home migration:
+Phase 4.5 is now the active MoonLib-first contract extraction track running
+alongside the remaining product-home migration:
 
 1. Create the MoonSuite contract package in `moonlib`.
 2. Move shared product ids, registry schema, and path constructors into that
@@ -129,6 +135,9 @@ Migration rules from this point forward:
    over the MoonLib contract, but must not introduce a competing layout schema.
 4. Product migrations should include a local adapter test and at least one
    cross-product integration assertion from a fresh MoonSuite root.
+5. If a product needs a path that is reused by more than one product or test
+   fixture, add the typed constructor to MoonLib before adding product-local
+   wrappers.
 
 ## Phase 1: Layout Helper
 
@@ -251,6 +260,9 @@ Minimum test gates:
 10. MoonStat drift-report tests proving old `.moontown`, `.moonclaw`,
     repo-local runtime, and global temp paths are reported as drift rather than
     treated as alternate valid layouts.
+11. MoonLib contract-boundary tests proving products can import
+    `vectie/moonlib/moonsuite` without depending on MoonStat, Moondesk UI code,
+    MoonClaw runtime code, or daemon packages.
 
 ## Phase 9: Cutover
 
@@ -385,8 +397,9 @@ Remaining high-priority product slices:
 - MoonLib: expand `vectie/moonlib/moonsuite` only when a missing contract is
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies.
-- MoonStat: broaden drift reports beyond the first legacy product-home
-  candidates as more product migrations land.
+- MoonStat: keep consuming MoonLib contracts for workspace validation, health
+  projection, and drift reports; broaden drift coverage as product migrations
+  land, but do not add a parallel path schema there.
 - Moontown: finish civic/cookbook/book-projection copy that still names old
   `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
 - MoonRobo: continue auditing residual runtime writers so RoboBook-owned

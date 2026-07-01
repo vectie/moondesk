@@ -131,6 +131,12 @@ exist only as thin adapters over MoonLib. MoonStat should consume the same
 MoonLib contracts to audit workspace health and legacy-path drift; it should
 not define the contract.
 
+Contract ownership rule: any MoonSuite path, registry, manifest, artifact
+class, or book-root constructor that more than one product needs must be added
+to MoonLib first. MoonStat may validate that the constructor is being followed,
+report drift, and project health/status, but it must not become a required
+dependency for products that only need filesystem contracts.
+
 ## Permission Model
 
 - reads stay under configured roots
@@ -146,6 +152,7 @@ Moondesk is good when it is boring to operate:
 
 - boundaries are visible and hard to confuse
 - MoonSuite paths come from the shared MoonLib contract layer
+- MoonStat observes MoonLib contract compliance instead of owning path schemas
 - stale domain packs live outside the desktop core
 - generated app-tools can leave Moondesk as standalone artifacts
 - native app startup, preview, routing, and daemon controls are reliable

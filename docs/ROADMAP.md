@@ -137,6 +137,11 @@ Goal: make MoonLib the active shared filesystem contract layer while the
 remaining product-home migration continues, and make every product consume the
 same typed path and registry helpers.
 
+Ownership rule: shared MoonSuite contracts live in MoonLib. MoonStat consumes
+that layer for validation, drift reports, metrics, snapshots, and health
+projection; it must not define a competing contract package or become a path
+construction dependency for product repos.
+
 Done:
 
 - MoonSuite v2 plan identifies `moonlib` as contract owner and `moonstat` as
@@ -146,18 +151,22 @@ Done:
   home, suite manifest, and product registry helpers.
 - Moondesk consumes MoonLib `0.1.1`; its local MoonSuite layout helper is now a
   compatibility adapter over `@moonsuite`.
+- MoonStat consumes MoonLib `0.1.1` for its own suite state and MoonClaw
+  product-home candidates, and exposes MoonLib-derived drift reports.
 - Product-home migration has already moved major Moondesk, MoonClaw, Moontown,
   MoonFish, MoonMoon, Lepusa, and MoonRobo state paths toward
   `.moonsuite/products/<product>`.
 
 Still needed:
 
-- finish MoonStat as a MoonLib contract consumer and add drift reports over
-  MoonLib paths
+- broaden MoonStat drift coverage as more migrated products expose MoonLib
+  adapter tests and legacy-path candidates
 - replace remaining product-local string helpers with MoonLib contract calls or
   thin local adapters over MoonLib
 - make MoonStat validate live workspaces against MoonLib and report
   legacy-path drift without owning the contract
+- add contract-boundary tests proving product repos can consume MoonLib
+  filesystem contracts without depending on MoonStat
 - add cross-product integration tests from a fresh MoonSuite root
 
 ## Engineering Bar

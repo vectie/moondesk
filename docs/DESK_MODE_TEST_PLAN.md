@@ -41,6 +41,11 @@ and product-registry paths. Desk should not grow another source of truth for
 MoonSuite filesystem layout; MoonStat validates drift against MoonLib instead
 of defining alternate Desk paths.
 
+Contract boundary rule for Desk tests: when a Desk scenario needs a reusable
+suite path or registry field, add or consume the constructor in MoonLib first.
+MoonStat can be asserted as an observer of drift/status, but Desk fixtures must
+not import MoonStat or copy MoonStat-owned diagnostics to construct paths.
+
 ## Production Quality Bar
 
 Desk is a user-facing file manager, not a developer fixture browser. Production
