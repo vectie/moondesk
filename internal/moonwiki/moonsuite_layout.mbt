@@ -1,46 +1,46 @@
 ///|
 pub fn moonsuite_root(root : String) -> String {
-  @pathx.normalize(root)
+  @moonsuite.suite_root(root)
 }
 
 ///|
 pub fn moonsuite_state_dir(root : String) -> String {
-  @pathx.join(moonsuite_root(root), ".moonsuite")
+  @moonsuite.state_dir(root)
 }
 
 ///|
 pub fn moonsuite_books_root(root : String) -> String {
-  @pathx.join(moonsuite_root(root), "books")
+  @moonsuite.books_root(root)
 }
 
 ///|
 pub fn moonsuite_inbox_root(root : String) -> String {
-  @pathx.join(moonsuite_root(root), "inbox")
+  @moonsuite.inbox_root(root)
 }
 
 ///|
 pub fn moonsuite_exports_root(root : String) -> String {
-  @pathx.join(moonsuite_root(root), "exports")
+  @moonsuite.exports_root(root)
 }
 
 ///|
 pub fn moonsuite_tmp_root(root : String) -> String {
-  @pathx.join(moonsuite_root(root), ".tmp")
+  @moonsuite.tmp_root(root)
 }
 
 ///|
 pub fn moonsuite_products_root(root : String) -> String {
-  @pathx.join(moonsuite_state_dir(root), "products")
+  @moonsuite.products_root(root)
 }
 
 ///|
 pub fn moonsuite_product_dir(root : String, product_id : String) -> String {
-  @pathx.join(moonsuite_products_root(root), product_id)
+  @moonsuite.product_dir(root, product_id)
 }
 
 ///|
 pub fn moonsuite_services_root(root : String) -> String {
-  @pathx.join(moonsuite_state_dir(root), "services")
+  @moonsuite.services_root(root)
 }
 
 ///|
@@ -48,63 +48,27 @@ pub fn moonsuite_product_service_path(
   root : String,
   product_id : String,
 ) -> String {
-  @pathx.join(moonsuite_product_dir(root, product_id), "service.json")
+  @moonsuite.product_service_path(root, product_id)
 }
 
 ///|
 pub fn moonsuite_suite_json_path(root : String) -> String {
-  @pathx.join(moonsuite_state_dir(root), "suite.json")
+  @moonsuite.suite_manifest_path(root)
 }
 
 ///|
 pub fn moonsuite_product_registry_path(root : String) -> String {
-  @pathx.join(moonsuite_state_dir(root), "product-registry.json")
+  @moonsuite.product_registry_path(root)
 }
 
 ///|
 fn moonsuite_product_ids() -> Array[String] {
-  [
-    "moondesk", "moonbook", "moonwiki", "mooncode", "moonclaw", "moontown", "moonstat",
-    "moonfish", "moonmoon", "moonrobo", "bookkeeper", "lepusa", "rabbita",
-  ]
+  @moonsuite.default_product_ids()
 }
 
 ///|
 fn moonsuite_product_registry(root : String) -> Json {
-  let entries : Array[Json] = []
-  for product_id in moonsuite_product_ids() {
-    entries.push({
-      "id": product_id,
-      "name": moonsuite_product_display_name(product_id),
-      "kind": "moon-suite-product",
-      "state_path": moonsuite_product_dir(root, product_id),
-      "service_path": moonsuite_product_service_path(root, product_id),
-      "repo_path": "",
-      "status": "installed",
-      "capabilities": Json::array([]),
-    })
-  }
-  { "kind": "moonsuite-product-registry.v1", "products": Json::array(entries) }
-}
-
-///|
-fn moonsuite_product_display_name(product_id : String) -> String {
-  match product_id {
-    "moondesk" => "Moondesk"
-    "moonbook" => "MoonBook"
-    "moonwiki" => "MoonWiki"
-    "mooncode" => "MoonCode"
-    "moonclaw" => "MoonClaw"
-    "moontown" => "Moontown"
-    "moonstat" => "MoonStat"
-    "moonfish" => "MoonFish"
-    "moonmoon" => "MoonMoon"
-    "moonrobo" => "MoonRobo"
-    "bookkeeper" => "Bookkeeper"
-    "lepusa" => "Lepusa"
-    "rabbita" => "Rabbita"
-    _ => product_id
-  }
+  @moonsuite.product_registry(root)
 }
 
 ///|
@@ -118,7 +82,7 @@ pub async fn prepare_moonsuite_workspace_root(root : String) -> Bool {
       moonsuite_state_dir(root),
       moonsuite_products_root(root),
       moonsuite_services_root(root),
-      @pathx.join(moonsuite_state_dir(root), "cache"),
+      @moonsuite.cache_root(root),
     ] {
     @fsx.make_directory(path, recursive=true, exists_ok=true) catch {
       _ => return false
@@ -134,15 +98,9 @@ pub async fn prepare_moonsuite_workspace_root(root : String) -> Bool {
     }
   }
   if !@fsx.exists(moonsuite_suite_json_path(root)) {
-    let suite : Json = {
-      "kind": "moonsuite-root.v1",
-      "root_path": moonsuite_root(root),
-      "books_path": moonsuite_books_root(root),
-      "tmp_path": moonsuite_tmp_root(root),
-    }
     @fsx.write_to_file(
       moonsuite_suite_json_path(root),
-      suite.stringify(indent=2) + "\n",
+      @moonsuite.suite_manifest(root).stringify(indent=2) + "\n",
       create=0o644,
     ) catch {
       _ => return false

@@ -105,9 +105,12 @@ being migrated.
 Phase 4.5 started in MoonLib with `vectie/moonlib/moonsuite`, which defines
 artifact classes, suite root paths, book paths, product-home paths, suite temp
 paths, external-tool homes, suite manifest JSON, and product registry JSON. The
-next consumer migration should happen after this package is available through
-normal Moon dependency resolution; product-local helpers should then become thin
-wrappers over MoonLib instead of independent string contracts.
+package is available through MoonLib `0.1.1`. Moondesk now depends on that
+version and `internal/moonwiki/moonsuite_layout.mbt` is a thin compatibility
+adapter over `@moonsuite` for suite root, book root, product-home, manifest,
+registry, cache, and service paths. Remaining product-local helpers should
+follow the same wrapper pattern instead of carrying independent string
+contracts.
 
 ## Phase 1: Layout Helper
 
