@@ -1270,6 +1270,72 @@ test "code mode transcript orders prompt before runtime sink reply" {
 }
 
 ///|
+test "code mode transcript interleaves recovered native replies by command id" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "mooncode-command-first",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="First recovered prompt",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "mooncode-command-second",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Second recovered prompt",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "moonclaw-session-a-mooncode-command-first-assistant-step-1",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="First recovered reply.",
+      ),
+      code_mode_test_event(
+        "moonclaw-session-a-mooncode-command-first-runtime.turn_finished",
+        title="MoonCode native runtime turn completed",
+        lane="runtime",
+        kind="runtime.turn_finished",
+        status="done",
+        detail="MoonClaw native runtime turn executed 1 tool call(s).",
+      ),
+      code_mode_test_event(
+        "moonclaw-session-a-mooncode-command-second-assistant-step-1",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="Second recovered reply.",
+      ),
+      code_mode_test_event(
+        "moonclaw-session-a-mooncode-command-second-runtime.turn_finished",
+        title="MoonCode native runtime turn completed",
+        lane="runtime",
+        kind="runtime.turn_finished",
+        status="done",
+        detail="MoonClaw native runtime turn executed 1 tool call(s).",
+      ),
+    ],
+  }
+  let rows = mooncode_transcript_rows(
+    { ..init_model(), mooncode_model: "codex/gpt-5.4" },
+    session,
+  )
+  assert_eq(rows.length(), 4)
+  assert_eq(rows[0].content, "First recovered prompt")
+  assert_eq(rows[1].content, "First recovered reply.")
+  assert_eq(rows[2].content, "Second recovered prompt")
+  assert_eq(rows[3].content, "Second recovered reply.")
+}
+
+///|
 test "code mode transcript keeps final reply when sink emits finish before prompt" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),

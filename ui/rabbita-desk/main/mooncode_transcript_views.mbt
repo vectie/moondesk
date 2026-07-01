@@ -675,7 +675,98 @@ fn mooncode_transcript_events(
 fn mooncode_order_transcript_events(
   events : Array[MoonCodeEvent],
 ) -> Array[MoonCodeEvent] {
-  events
+  if !mooncode_events_have_command_links(events) {
+    return events
+  }
+  let ordered : Array[MoonCodeEvent] = []
+  let used_keys : Array[String] = []
+  for event in events {
+    if mooncode_event_is_user_prompt(event) {
+      mooncode_push_ordered_transcript_event(ordered, used_keys, event)
+      let command_id = mooncode_event_command_id(event)
+      if command_id != "" {
+        for linked in events {
+          if !mooncode_event_is_user_prompt(linked) &&
+            mooncode_event_command_id(linked) == command_id {
+            mooncode_push_ordered_transcript_event(
+              ordered, used_keys, linked,
+            )
+          }
+        }
+      }
+    }
+  }
+  for event in events {
+    mooncode_push_ordered_transcript_event(ordered, used_keys, event)
+  }
+  ordered
+}
+
+///|
+fn mooncode_events_have_command_links(events : Array[MoonCodeEvent]) -> Bool {
+  let prompt_command_ids : Array[String] = []
+  for event in events {
+    if mooncode_event_is_user_prompt(event) {
+      let command_id = mooncode_event_command_id(event)
+      if command_id != "" {
+        prompt_command_ids.push(command_id)
+      }
+    }
+  }
+  if prompt_command_ids.length() == 0 {
+    return false
+  }
+  for event in events {
+    if mooncode_event_is_user_prompt(event) {
+      continue
+    }
+    let command_id = mooncode_event_command_id(event)
+    if command_id != "" && prompt_command_ids.contains(command_id) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn mooncode_push_ordered_transcript_event(
+  ordered : Array[MoonCodeEvent],
+  used_keys : Array[String],
+  event : MoonCodeEvent,
+) -> Unit {
+  let key = mooncode_event_order_key(event)
+  if used_keys.contains(key) {
+    return
+  }
+  used_keys.push(key)
+  ordered.push(event)
+}
+
+///|
+fn mooncode_event_order_key(event : MoonCodeEvent) -> String {
+  if event.id != "" {
+    event.id
+  } else {
+    "\{event.kind}:\{event.created_at}:\{event.detail}"
+  }
+}
+
+///|
+fn mooncode_event_command_id(event : MoonCodeEvent) -> String {
+  if event.kind == "command.prompt" && event.id.contains("mooncode-command-") {
+    return event.id
+  }
+  let parts = event.id.split("mooncode-command-").to_array()
+  if parts.length() < 2 {
+    return ""
+  }
+  let suffix = parts[1]
+  let suffix_parts = suffix.split("-").to_array()
+  if suffix_parts.length() == 0 || suffix_parts[0] == "" {
+    ""
+  } else {
+    "mooncode-command-" + suffix_parts[0].to_owned()
+  }
 }
 
 ///|
@@ -683,29 +774,31 @@ fn mooncode_transcript_rows(
   model : Model,
   session : MoonCodeSession,
 ) -> Array[MoonCodeTranscriptRow] {
+  let events = mooncode_transcript_events(model, session)
+  if events.length() > 0 {
+    let seed_rows = if mooncode_events_have_user(events) {
+      []
+    } else {
+      mooncode_pending_conversation_seed_rows(model, session.id)
+    }
+    let event_conversation = mooncode_hydrate_conversation_from_events(
+      seed_rows,
+      session.id,
+      events,
+    )
+    let event_rows = mooncode_conversation_rows_to_transcript(
+      event_conversation,
+      session.id,
+    )
+    if event_rows.length() > 0 {
+      mooncode_append_session_transcript_tail(event_rows, session)
+      mooncode_complete_event_transcript_rows(event_rows, model, session, events)
+      return event_rows
+    }
+  }
   let conversation_rows = mooncode_conversation_transcript_rows(model, session)
   if conversation_rows.length() > 0 {
     return conversation_rows
-  }
-  let events = mooncode_transcript_events(model, session)
-  let seed_rows = if mooncode_events_have_user(events) {
-    []
-  } else {
-    mooncode_pending_conversation_seed_rows(model, session.id)
-  }
-  let event_conversation = mooncode_hydrate_conversation_from_events(
-    seed_rows,
-    session.id,
-    events,
-  )
-  let event_rows = mooncode_conversation_rows_to_transcript(
-    event_conversation,
-    session.id,
-  )
-  if event_rows.length() > 0 {
-    mooncode_append_session_transcript_tail(event_rows, session)
-    mooncode_complete_event_transcript_rows(event_rows, model, session, events)
-    return event_rows
   }
   let session_rows = mooncode_session_transcript_rows(session)
   if session_rows.length() > 0 {

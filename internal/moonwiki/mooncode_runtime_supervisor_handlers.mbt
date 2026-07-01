@@ -148,6 +148,98 @@ async fn handle_mooncode_session_runtime_supervisor_run(
 }
 
 ///|
+fn mooncode_runtime_receipt_delivered_for_command(
+  receipts : Array[Json],
+  command_id : String,
+) -> Bool {
+  for receipt in receipts {
+    if json_string(receipt, "command_id", default="") == command_id &&
+      @mooncode.runtime_receipt_status_delivered(
+        json_string(receipt, "status", default=""),
+      ) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn mooncode_native_runtime_accepted_session(
+  session : Json,
+  session_id : String,
+) -> Json {
+  {
+    "id": session_id,
+    "workspace_id": json_string(session, "workspace_id", default=""),
+    "workspace_name": json_string(session, "workspace_name", default=""),
+    "mooncode_runtime_session_id": json_string(
+      session,
+      "mooncode_runtime_session_id",
+      default=session_id,
+    ),
+    "mooncode_runtime_mode": "moonclaw-mooncode-runtime",
+  }
+}
+
+///|
+async fn replay_recorded_mooncode_commands_to_native_runtime(
+  workspace_root : String,
+  session_id : String,
+  session : Json,
+  daemon : Json,
+) -> Result[Int, String] {
+  let commands = read_mooncode_runtime_command_log(workspace_root, session_id)
+  let receipts = read_mooncode_runtime_receipt_log(workspace_root, session_id)
+  let accepted_session = mooncode_native_runtime_accepted_session(
+    session, session_id,
+  )
+  let mut replayed_count = 0
+  for command in commands {
+    let command_id = json_string(command, "command_id", default="")
+    if command_id != "" &&
+      !mooncode_runtime_receipt_delivered_for_command(receipts, command_id) {
+      let native_body = json_object_field_or_empty(
+        command, "native_mooncode_body",
+      )
+      if native_body.stringify() == "{}" {
+        continue
+      }
+      let response = match
+        moonclaw_post_json(
+          daemon,
+          @mooncode.moonclaw_native_command_endpoint(session_id),
+          native_body,
+        ) {
+        Ok(response) => response
+        Err(error) => return Err(error)
+      }
+      if !json_bool(response, "accepted", default=true) {
+        return Err(
+          json_string(
+            response,
+            "message",
+            default="MoonClaw rejected replayed MoonCode command",
+          ),
+        )
+      }
+      append_mooncode_runtime_receipt_log(
+        workspace_root,
+        session_id,
+        @mooncode.projected_runtime_receipt(
+          accepted_session,
+          command,
+          @async.now().to_string(),
+        ),
+      ) catch {
+        error => return Err(error.to_string())
+      }
+      replayed_count += 1
+    }
+  }
+  Ok(replayed_count)
+}
+
+///|
 async fn handle_mooncode_session_runtime_service_run(
   workspace_root : String,
   session_id : String,
@@ -177,6 +269,16 @@ async fn handle_mooncode_session_runtime_service_run(
       conn, method_, 409, "Conflict", "MoonClaw native MoonCode runtime is not available",
     )
     return
+  }
+  match
+    replay_recorded_mooncode_commands_to_native_runtime(
+      workspace_root, session_id, session, daemon,
+    ) {
+    Ok(_) => ()
+    Err(error) => {
+      send_api_error(conn, method_, 502, "Bad Gateway", error)
+      return
+    }
   }
   let service_body = @mooncode.moonclaw_runtime_loop_request(
     session_id,
