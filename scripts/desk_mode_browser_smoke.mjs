@@ -568,16 +568,16 @@ async function run() {
       "Manifest-less MoonBook folder should remain visible with Needs setup status",
     );
     assert(
-      workspaceRows.every(row => row.title.includes(`${path.sep}.moontown${path.sep}books${path.sep}`)),
-      "Workspace rows should point at the dedicated .moontown/books library",
+      workspaceRows.every(row => row.title.includes(`${path.sep}books${path.sep}`)),
+      "Workspace rows should point at the dedicated books library",
     );
     const libraryRootText = await session.evaluate(
       `document.querySelector('[data-testid="desk-library-root"]')?.textContent ?? ''`,
     );
     assert(
-      libraryRootText.includes(`${path.sep}.moontown${path.sep}books`) &&
+      libraryRootText.includes(`${path.sep}books`) &&
         libraryRootText.includes("4 MoonBooks"),
-      `Library root should show dedicated .moontown/books location and count: ${libraryRootText}`,
+      `Library root should show dedicated books location and count: ${libraryRootText}`,
     );
     const archivePickerText = await session.evaluate(
       `document.querySelector('[data-testid="desk-import-book-archive"]')?.textContent ?? ''`,
@@ -610,7 +610,7 @@ async function run() {
     await waitFor(
       session,
       `[...document.querySelectorAll('[data-testid="desk-workspace-row"]')]` +
-        `.some(row => row.dataset.workspaceId === 'book-browser-created-moonbook' && row.title.includes(${jsString(`${path.sep}.moontown${path.sep}books${path.sep}browser-created-moonbook`)}))`,
+        `.some(row => row.dataset.workspaceId === 'book-browser-created-moonbook' && row.title.includes(${jsString(`${path.sep}books${path.sep}browser-created-moonbook`)}))`,
       "browser-created MoonBook row in dedicated library",
     );
     await waitFor(
@@ -631,7 +631,7 @@ async function run() {
         `document.querySelector('.desk-new-book-panel')?.textContent.includes('created browser-created-moonbook')`,
       "MoonBook create form cleared after success",
     );
-    const createdBookRoot = path.join(fixtureRoot, ".moontown/books/browser-created-moonbook");
+    const createdBookRoot = path.join(fixtureRoot, "books/browser-created-moonbook");
     await waitForFile(path.join(createdBookRoot, "book.json"), "browser-created book.json");
     await waitForFile(path.join(createdBookRoot, "wiki/index.md"), "browser-created starter wiki");
     assert(
@@ -665,7 +665,7 @@ async function run() {
     await waitFor(
       session,
       `[...document.querySelectorAll('[data-testid="desk-workspace-row"]')]` +
-        `.some(row => row.dataset.workspaceId === 'book-sidebar-imported-moonbook' && row.title.includes(${jsString(`${path.sep}.moontown${path.sep}books${path.sep}sidebar-imported-moonbook`)}))`,
+        `.some(row => row.dataset.workspaceId === 'book-sidebar-imported-moonbook' && row.title.includes(${jsString(`${path.sep}books${path.sep}sidebar-imported-moonbook`)}))`,
       "sidebar-imported MoonBook row in dedicated library",
     );
     await waitFor(
@@ -682,7 +682,7 @@ async function run() {
         `${rowExistsExpression("wiki/index.md")}`,
       "sidebar import opens starter wiki and clears import path",
     );
-    const importedBookRoot = path.join(fixtureRoot, ".moontown/books/sidebar-imported-moonbook");
+    const importedBookRoot = path.join(fixtureRoot, "books/sidebar-imported-moonbook");
     await waitForFile(path.join(importedBookRoot, "book.json"), "sidebar-imported book.json");
     await waitForFile(path.join(importedBookRoot, "wiki/index.md"), "sidebar-imported starter wiki");
     await waitForFile(path.join(importedBookRoot, "raw/evidence.txt"), "sidebar-imported raw evidence");
@@ -843,7 +843,7 @@ async function run() {
       "Ctrl+Shift+N created a folder in the current directory",
     );
     await waitForFile(
-      path.join(fixtureRoot, ".moontown/books/research-alpha/wiki/Shortcut Folder"),
+      path.join(fixtureRoot, "books/research-alpha/wiki/Shortcut Folder"),
       "shortcut-created folder",
     );
     await setInputByTestId(session, "desk-filter-query", "notes");
@@ -880,7 +880,7 @@ async function run() {
     await clickTestId(session, "desk-new-folder");
     await waitFor(session, rowExistsExpression("wiki/browser-created"), "created folder row");
     assert(
-      fs.existsSync(path.join(fixtureRoot, ".moontown/books/research-alpha/wiki/browser-created")),
+      fs.existsSync(path.join(fixtureRoot, "books/research-alpha/wiki/browser-created")),
       "Browser-created folder was not written inside the MoonBook",
     );
 
@@ -905,13 +905,13 @@ async function run() {
     await waitFor(session, rowExistsExpression("wiki/browser-created/daily-browser.md"), "created note row");
     const notePath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/daily-browser.md",
+      "books/research-alpha/wiki/browser-created/daily-browser.md",
     );
     assert(fs.existsSync(notePath), "Browser-created note was not written inside the MoonBook");
 
     const refreshedPath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/external-refresh.md",
+      "books/research-alpha/wiki/browser-created/external-refresh.md",
     );
     fs.writeFileSync(refreshedPath, "# External Refresh\n\nCreated outside the UI.\n", "utf8");
     const externalVisibleBeforeRefresh = await session.evaluate(
@@ -927,7 +927,7 @@ async function run() {
     await dropTextFile(session, "desk-dropped.txt", "dropped into desk\n");
     const droppedPath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/desk-dropped.txt",
+      "books/research-alpha/wiki/browser-created/desk-dropped.txt",
     );
     await waitForFile(droppedPath, "dropped Desk import file", 15000);
     await waitFor(
@@ -944,7 +944,7 @@ async function run() {
     );
     const droppedFolderPath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/desk-folder/nested/folder-evidence.txt",
+      "books/research-alpha/wiki/browser-created/desk-folder/nested/folder-evidence.txt",
     );
     await waitForFile(droppedFolderPath, "dropped Desk folder import file", 15000);
     await waitFor(
@@ -959,11 +959,11 @@ async function run() {
     await waitFor(session, rowExistsExpression("wiki/browser-created/rename-browser.md"), "rename source note row");
     const renameSourcePath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/rename-browser.md",
+      "books/research-alpha/wiki/browser-created/rename-browser.md",
     );
     const renameTargetPath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/renamed-browser.md",
+      "books/research-alpha/wiki/browser-created/renamed-browser.md",
     );
     assert(fs.existsSync(renameSourcePath), "Inline rename source note was not created");
     await mouseDownPath(session, "wiki/browser-created/rename-browser.md");
@@ -983,7 +983,7 @@ async function run() {
     await mouseDownPath(session, "wiki/browser-created/daily-browser.md");
     const copiedNotePath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/daily-browser copy.md",
+      "books/research-alpha/wiki/browser-created/daily-browser copy.md",
     );
     await clickDetailsButton(session, "Duplicate");
     await waitForFile(copiedNotePath, "duplicated note file");
@@ -1024,7 +1024,7 @@ async function run() {
     await keyDownFileList(session, "v", { ctrlKey: true });
     const pastedNotePath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/browser-target/daily-browser.md",
+      "books/research-alpha/wiki/browser-created/browser-target/daily-browser.md",
     );
     await waitForFile(pastedNotePath, "pasted note file");
     await waitFor(
@@ -1042,11 +1042,11 @@ async function run() {
     await waitFor(session, rowExistsExpression("wiki/browser-created/browser-target/cut-source.md"), "cut source note row");
     const cutSourcePath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/browser-target/cut-source.md",
+      "books/research-alpha/wiki/browser-created/browser-target/cut-source.md",
     );
     const cutMovedPath = path.join(
       fixtureRoot,
-      ".moontown/books/research-alpha/wiki/browser-created/browser-target/cut-target/cut-source.md",
+      "books/research-alpha/wiki/browser-created/browser-target/cut-target/cut-source.md",
     );
     assert(fs.existsSync(cutSourcePath), "Cut source note was not created before moving");
     await mouseDownPath(session, "wiki/browser-created/browser-target/cut-source.md");
@@ -1080,7 +1080,7 @@ async function run() {
       "trashed note hidden from current directory",
     );
     assert(
-      fs.existsSync(path.join(fixtureRoot, ".moontown/books/research-alpha/.moontown/trash")),
+      fs.existsSync(path.join(fixtureRoot, "books/research-alpha/.moontown/trash")),
       "Desk trash directory was not created inside the MoonBook",
     );
     await waitFor(
@@ -1140,9 +1140,9 @@ async function runEmptyLibrary() {
       `document.querySelector('[data-testid="desk-library-root"]')?.textContent ?? ''`,
     );
     assert(
-      libraryRootText.includes(`${path.sep}.moontown${path.sep}books`) &&
+      libraryRootText.includes(`${path.sep}books`) &&
         libraryRootText.includes("0 MoonBooks"),
-      `Empty library root should show dedicated .moontown/books location and zero count: ${libraryRootText}`,
+      `Empty library root should show dedicated books location and zero count: ${libraryRootText}`,
     );
     await waitFor(
       session,
@@ -1181,7 +1181,7 @@ async function runEmptyLibrary() {
     await waitFor(
       session,
       `[...document.querySelectorAll('[data-testid="desk-workspace-row"]')]` +
-        `.some(row => row.dataset.workspaceId === 'book-empty-library-created' && row.title.includes(${jsString(`${path.sep}.moontown${path.sep}books${path.sep}empty-library-created`)}))`,
+        `.some(row => row.dataset.workspaceId === 'book-empty-library-created' && row.title.includes(${jsString(`${path.sep}books${path.sep}empty-library-created`)}))`,
       "created MoonBook row from empty library",
     );
     await waitFor(
@@ -1214,7 +1214,7 @@ async function runEmptyLibrary() {
       enabledCreatedActions.length === 0,
       `Created MoonBook should enable scoped file actions: ${enabledCreatedActions.join(", ")}`,
     );
-    const createdBookRoot = path.join(fixtureRoot, ".moontown/books/empty-library-created");
+    const createdBookRoot = path.join(fixtureRoot, "books/empty-library-created");
     await waitForFile(path.join(createdBookRoot, "book.json"), "empty-created book.json");
     await waitForFile(path.join(createdBookRoot, "wiki/index.md"), "empty-created starter wiki");
     assert(

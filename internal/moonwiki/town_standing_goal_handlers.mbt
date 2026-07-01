@@ -42,7 +42,7 @@ async fn handle_create_standing_goal(
     }
   }
   let root = @pathx.normalize(workspace_root)
-  let town_root = @pathx.join(root, ".moontown")
+  let town_root = moonsuite_product_dir(root, "moontown")
   @fsx.make_directory(town_root, recursive=true, exists_ok=true) catch {
     _ => {
       send_api_error(
@@ -82,7 +82,10 @@ async fn handle_town_dispatch(
 ) -> Unit {
   ignore(body)
   let root = @pathx.normalize(workspace_root)
-  let dispatch_root = @pathx.join(root, ".moontown/moondesk-dispatches")
+  let dispatch_root = @pathx.join(
+    moonsuite_product_dir(root, "moontown"),
+    "moondesk-dispatches",
+  )
   @fsx.make_directory(dispatch_root, recursive=true, exists_ok=true) catch {
     _ => {
       send_api_error(
@@ -92,7 +95,7 @@ async fn handle_town_dispatch(
     }
   }
   let id = @desk.stable_id("dispatch", @async.now().to_string())
-  let path = ".moontown/moondesk-dispatches/" + id + ".json"
+  let path = ".moonsuite/products/moontown/moondesk-dispatches/" + id + ".json"
   let absolute = @pathx.join(root, path)
   let preflight_repair = sync_all_book_pattern_standing_goals(root) catch {
     _ => Json::object({ "ok": false, "status": "repair_failed" })

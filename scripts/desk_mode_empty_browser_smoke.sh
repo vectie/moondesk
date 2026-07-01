@@ -30,7 +30,7 @@ if [[ ! -x "${CHROME}" ]]; then
   exit 1
 fi
 
-mkdir -p "${ROOT}/.moontown/books"
+mkdir -p "${ROOT}/books"
 
 moon run cmd/main -- serve "${ROOT}" --ui ui/rabbita-desk/dist --host "${HOST}" --port "${PORT}" >"${LOG}" 2>&1 &
 PID="$!"

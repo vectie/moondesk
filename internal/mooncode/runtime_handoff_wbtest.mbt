@@ -77,12 +77,12 @@ test "mooncode runtime handoff manifest advertises resume and review contracts" 
     manifest_path="wiki/reviews/mooncode/s1/runtime-handoff.json",
     absolute_manifest_path="/tmp/book/wiki/reviews/mooncode/s1/runtime-handoff.json",
     workspace_root="/tmp/book",
-    session_snapshot_path="/tmp/book/.moontown/mooncode-sessions/s1/session.json",
-    command_log_path="/tmp/book/.moontown/mooncode-sessions/s1/commands.jsonl",
-    runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/s1/runtime-commands.jsonl",
-    runtime_receipt_log_path="/tmp/book/.moontown/mooncode-sessions/s1/runtime-receipts.jsonl",
-    event_log_path="/tmp/book/.moontown/mooncode-sessions/s1/events.jsonl",
-    stream_checkpoint_path="/tmp/book/.moontown/mooncode-sessions/s1/stream-checkpoints/moondesk-ui.json",
+    session_snapshot_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/session.json",
+    command_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/commands.jsonl",
+    runtime_command_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/runtime-commands.jsonl",
+    runtime_receipt_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/runtime-receipts.jsonl",
+    event_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/events.jsonl",
+    stream_checkpoint_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/stream-checkpoints/moondesk-ui.json",
   )
   assert_eq(
     json_string(manifest, "kind", default=""),

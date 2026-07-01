@@ -121,12 +121,12 @@ async test "mooncode code mode durable session reload projects command runtime a
   assert_eq(json_int(summary, "runtime_receipt_count", default=0), 1)
   assert_true(
     json_string(summary, "event_log_path", default="").contains(
-      "/.moontown/mooncode-sessions/code-demo/events.jsonl",
+      "/.moonsuite/products/mooncode/sessions/code-demo/events.jsonl",
     ),
   )
   assert_true(
     json_string(summary, "runtime_command_log_path", default="").contains(
-      "/.moontown/mooncode-sessions/code-demo/runtime-commands.jsonl",
+      "/.moonsuite/products/mooncode/sessions/code-demo/runtime-commands.jsonl",
     ),
   )
 
@@ -264,7 +264,7 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
     "moondesk-code-mode-http-e2e-" + @async.now().to_string(),
   )
   let ui_root = @pathx.join(root, "ui")
-  let book_root = @pathx.join(root, ".moontown/books/research-code")
+  let book_root = @pathx.join(root, "books/research-code")
   @fsx.make_directory(ui_root, recursive=true, exists_ok=true)
   @fsx.make_directory(
     @pathx.join(book_root, "wiki"),
@@ -354,7 +354,7 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
       @fs.exists(
         @pathx.join(
           root,
-          ".moontown/mooncode-sessions/\{session_id}/session.json",
+          ".moonsuite/products/mooncode/sessions/\{session_id}/session.json",
         ),
       ),
     )
@@ -362,7 +362,7 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
       @fs.exists(
         @pathx.join(
           root,
-          ".moontown/mooncode-sessions/\{session_id}/commands.jsonl",
+          ".moonsuite/products/mooncode/sessions/\{session_id}/commands.jsonl",
         ),
       ),
     )
@@ -370,7 +370,7 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
       @fs.exists(
         @pathx.join(
           root,
-          ".moontown/mooncode-sessions/\{session_id}/runtime-commands.jsonl",
+          ".moonsuite/products/mooncode/sessions/\{session_id}/runtime-commands.jsonl",
         ),
       ),
     )

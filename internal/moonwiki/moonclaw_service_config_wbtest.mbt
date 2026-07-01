@@ -7,10 +7,14 @@ async test "moonclaw service descriptor is explicit and workspace local" {
   assert_eq(json_string(missing, "command", default="missing"), "")
   assert_eq(
     json_string(missing, "config_path", default=""),
-    @pathx.join(root, ".moontown/moondesk-daemon/moonclaw-service.json"),
+    @pathx.join(root, ".moonsuite/products/moonclaw/service.json"),
   )
 
-  @fsx.make_directory(moondesk_daemon_dir(root), recursive=true, exists_ok=true)
+  @fsx.make_directory(
+    moonsuite_product_dir(root, "moonclaw"),
+    recursive=true,
+    exists_ok=true,
+  )
   @fsx.write_to_file(
     moonclaw_service_config_path(root),
     (

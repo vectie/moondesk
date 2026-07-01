@@ -1,6 +1,6 @@
 ///|
 fn moonclaw_service_config_path(root : String) -> String {
-  @pathx.join(moondesk_daemon_dir(root), "moonclaw-service.json")
+  moonsuite_product_service_path(root, "moonclaw")
 }
 
 ///|

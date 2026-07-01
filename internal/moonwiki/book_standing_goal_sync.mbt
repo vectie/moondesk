@@ -18,7 +18,7 @@ async fn handle_book_sync_standing_goal(
     return
   }
   let root = @pathx.normalize(workspace_root)
-  let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  let book_root = @pathx.join(moonsuite_books_root(root), book_id)
   let book_json_path = @pathx.join(book_root, "book.json")
   if !@fs.exists(book_json_path) {
     send_api_error(conn, method_, 404, "Not Found", "Book not found")
@@ -128,7 +128,7 @@ async fn sync_book_standing_goal(
     daemon_tick~,
   )
   @fsx.make_directory(
-    @pathx.join(root, ".moontown"),
+    moonsuite_product_dir(root, "moontown"),
     recursive=true,
     exists_ok=true,
   )
@@ -169,7 +169,7 @@ async fn sync_book_standing_goal(
 
 ///|
 async fn sync_all_book_pattern_standing_goals(root : String) -> Json {
-  let books_root = @pathx.join(root, ".moontown/books")
+  let books_root = moonsuite_books_root(root)
   if !is_directory(books_root) {
     return {
       "ok": true,
@@ -234,7 +234,7 @@ async fn sync_all_book_pattern_standing_goals(root : String) -> Json {
   }
   if synced_count > 0 || already_synced_count > 0 {
     @fsx.make_directory(
-      @pathx.join(root, ".moontown"),
+      moonsuite_product_dir(root, "moontown"),
       recursive=true,
       exists_ok=true,
     )

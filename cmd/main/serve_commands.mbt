@@ -176,14 +176,7 @@ async fn workspace_root_source_checkout_warning(
 
 ///|
 async fn prepare_moondesk_workspace_root(workspace_root : String) -> Bool {
-  @fsx.make_directory(
-    @pathx.join(@pathx.normalize(workspace_root), ".moontown/books"),
-    recursive=true,
-    exists_ok=true,
-  ) catch {
-    _ => return false
-  }
-  true
+  @moonwiki.prepare_moonsuite_workspace_root(workspace_root)
 }
 
 ///|

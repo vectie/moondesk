@@ -2,7 +2,7 @@
 async test "app tool portable export copies a direct toolbook bundle" {
   let root = "/tmp/moondesk-app-tool-portable-direct-wbtest"
   let book_id = "tool-registry-portable"
-  let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
     @pathx.join(book_root, "book/site/generated"),
     recursive=true,
@@ -306,7 +306,7 @@ test "app tool portable default paths do not imply workbook output" {
 async test "app tool portable export supports research-book tool manifests and embeds portable api runtime" {
   let root = "/tmp/moondesk-app-tool-portable-research-wbtest"
   let book_id = "research-pdf-portable-tool"
-  let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
     @pathx.join(book_root, "book/site/generated"),
     recursive=true,
@@ -450,7 +450,7 @@ async test "app tool portable export supports research-book tool manifests and e
 async test "app tool portable export keeps unsupported api routes as warnings" {
   let root = "/tmp/moondesk-app-tool-portable-unsupported-api-wbtest"
   let book_id = "tool-unsupported-api-portable"
-  let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
     @pathx.join(book_root, "app"),
     recursive=true,
@@ -533,7 +533,7 @@ async test "app tool portable export keeps unsupported api routes as warnings" {
 async test "app tool portable export detects generated app books without metadata" {
   let root = "/tmp/moondesk-app-tool-portable-detected-app-wbtest"
   let book_id = "research-generated-tool-portable"
-  let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
     @pathx.join(book_root, "app"),
     recursive=true,
@@ -616,7 +616,7 @@ async test "app tool portable export detects generated app books without metadat
 async test "app tool portable export requires an html entrypoint" {
   let root = "/tmp/moondesk-app-tool-portable-non-html-wbtest"
   let book_id = "tool-non-html-portable"
-  let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
     @pathx.join(book_root, "app"),
     recursive=true,

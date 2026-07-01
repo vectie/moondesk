@@ -11,16 +11,16 @@ BASE="http://${HOST}:${PORT}"
 SOURCE_BASE="http://${HOST}:${SOURCE_PORT}"
 BOOK_ID="research-desk-smoke"
 WORKSPACE_ID="book-research-desk-smoke"
-BOOK_ROOT="${ROOT}/.moontown/books/${BOOK_ID}"
+BOOK_ROOT="${ROOT}/books/${BOOK_ID}"
 EMPTY_ID="research-empty-desk"
 EMPTY_WORKSPACE_ID="book-research-empty-desk"
-EMPTY_ROOT="${ROOT}/.moontown/books/${EMPTY_ID}"
+EMPTY_ROOT="${ROOT}/books/${EMPTY_ID}"
 LARGE_ID="research-large-desk"
 LARGE_WORKSPACE_ID="book-research-large-desk"
-LARGE_ROOT="${ROOT}/.moontown/books/${LARGE_ID}"
+LARGE_ROOT="${ROOT}/books/${LARGE_ID}"
 DEEP_ID="research-deep-desk"
 DEEP_WORKSPACE_ID="book-research-deep-desk"
-DEEP_ROOT="${ROOT}/.moontown/books/${DEEP_ID}"
+DEEP_ROOT="${ROOT}/books/${DEEP_ID}"
 PLAIN_ROOT="${ROOT}/plain-folder"
 IMPORT_SOURCE="${ROOT}/external-import-source"
 ARCHIVE_SOURCE="${ROOT}/external-archive-source"
@@ -155,7 +155,7 @@ if [[ "${source_log}" != *"source checkout"* || "${source_log}" != *"${NORMALIZE
   echo "${source_log}" >&2
   exit 1
 fi
-if [[ -e "${SOURCE_ROOT}/.moontown" ]]; then
+if [[ -e "${SOURCE_ROOT}/.moonsuite" ]]; then
   echo "source checkout root was prepared with user workspace directories" >&2
   exit 1
 fi
@@ -165,11 +165,11 @@ if [[ "${source_created_book}" != *'"book_id": "source-redirect-book"'* ]]; then
   echo "${source_created_book}" >&2
   exit 1
 fi
-if [[ ! -f "${DEDICATED_ROOT}/.moontown/books/source-redirect-book/wiki/index.md" ]]; then
+if [[ ! -f "${DEDICATED_ROOT}/books/source-redirect-book/wiki/index.md" ]]; then
   echo "source-root launch did not create MoonBook in dedicated workspace" >&2
   exit 1
 fi
-if [[ -e "${SOURCE_ROOT}/.moontown/books/source-redirect-book" ]]; then
+if [[ -e "${SOURCE_ROOT}/books/source-redirect-book" ]]; then
   echo "source-root launch wrote MoonBook into source checkout" >&2
   exit 1
 fi
@@ -205,7 +205,7 @@ if [[ "${bad_env_log}" != *"source checkout"* || "${bad_env_log}" != *"${NORMALI
   echo "${bad_env_log}" >&2
   exit 1
 fi
-if [[ -e "${BAD_ENV_SOURCE_ROOT}/.moontown" ]]; then
+if [[ -e "${BAD_ENV_SOURCE_ROOT}/.moonsuite" ]]; then
   echo "bad-env source checkout root was prepared with user workspace directories" >&2
   exit 1
 fi
@@ -215,11 +215,11 @@ if [[ "${bad_env_created_book}" != *'"book_id": "bad-env-redirect-book"'* ]]; th
   echo "${bad_env_created_book}" >&2
   exit 1
 fi
-if [[ ! -f "${BAD_ENV_EXPECTED_ROOT}/.moontown/books/bad-env-redirect-book/wiki/index.md" ]]; then
+if [[ ! -f "${BAD_ENV_EXPECTED_ROOT}/books/bad-env-redirect-book/wiki/index.md" ]]; then
   echo "bad-env source-root launch did not create MoonBook in home fallback workspace" >&2
   exit 1
 fi
-if [[ -e "${BAD_ENV_SOURCE_ROOT}/.moontown/books/bad-env-redirect-book" ]]; then
+if [[ -e "${BAD_ENV_SOURCE_ROOT}/books/bad-env-redirect-book" ]]; then
   echo "bad-env source-root launch wrote MoonBook into source checkout" >&2
   exit 1
 fi
@@ -312,14 +312,14 @@ assert_not_contains "${workspaces}" "plain-folder"
 
 workspace_metadata="$(request 200 "${BASE}/api/workspaces/metadata")"
 assert_contains "${workspace_metadata}" "\"root_path\": \"${NORMALIZED_ROOT}\""
-assert_contains "${workspace_metadata}" "\"library_path\": \"${NORMALIZED_ROOT}/.moontown/books\""
+assert_contains "${workspace_metadata}" "\"library_path\": \"${NORMALIZED_ROOT}/books\""
 assert_not_contains "${workspace_metadata}" "${SOURCE_ROOT}"
 
 created_book="$(post_json 200 "${BASE}/api/workspaces" '{"name":"Created Desk Smoke","book_id":"created-desk-smoke"}')"
 assert_contains "${created_book}" '"book_id": "created-desk-smoke"'
 assert_contains "${created_book}" '"path": "wiki/index.md"'
-if [[ ! -f "${ROOT}/.moontown/books/created-desk-smoke/wiki/index.md" ]]; then
-  echo "created MoonBook was not written inside .moontown/books" >&2
+if [[ ! -f "${ROOT}/books/created-desk-smoke/wiki/index.md" ]]; then
+  echo "created MoonBook was not written inside books" >&2
   exit 1
 fi
 if [[ -e "${ROOT}/created-desk-smoke" ]]; then
@@ -332,11 +332,11 @@ assert_contains "${workspaces_after_create}" "book-created-desk-smoke"
 imported_book="$(post_json 200 "${BASE}/api/workspaces/import" "{\"source_path\":\"${IMPORT_SOURCE}\"}")"
 assert_contains "${imported_book}" '"book_id": "imported-desk-smoke"'
 assert_contains "${imported_book}" '"path": "wiki/index.md"'
-if [[ ! -f "${ROOT}/.moontown/books/imported-desk-smoke/wiki/index.md" ]]; then
-  echo "imported MoonBook was not copied inside .moontown/books" >&2
+if [[ ! -f "${ROOT}/books/imported-desk-smoke/wiki/index.md" ]]; then
+  echo "imported MoonBook was not copied inside books" >&2
   exit 1
 fi
-if [[ -f "${ROOT}/.moontown/books/imported-desk-smoke/.git/config" ]]; then
+if [[ -f "${ROOT}/books/imported-desk-smoke/.git/config" ]]; then
   echo "imported MoonBook copied host VCS metadata" >&2
   exit 1
 fi
@@ -350,19 +350,19 @@ assert_contains "${workspaces_after_import}" "book-imported-desk-smoke"
 archived_book="$(post_json 200 "${BASE}/api/workspaces/import" "{\"source_path\":\"${ARCHIVE_PATH}\"}")"
 assert_contains "${archived_book}" '"book_id": "archived-desk-smoke"'
 assert_contains "${archived_book}" '"path": "wiki/index.md"'
-if [[ ! -f "${ROOT}/.moontown/books/archived-desk-smoke/wiki/index.md" ]]; then
-  echo "archived MoonBook was not extracted into .moontown/books" >&2
+if [[ ! -f "${ROOT}/books/archived-desk-smoke/wiki/index.md" ]]; then
+  echo "archived MoonBook was not extracted into books" >&2
   exit 1
 fi
-if [[ "$(cat "${ROOT}/.moontown/books/archived-desk-smoke/raw/evidence.txt")" != "archive evidence" ]]; then
+if [[ "$(cat "${ROOT}/books/archived-desk-smoke/raw/evidence.txt")" != "archive evidence" ]]; then
   echo "archived MoonBook did not preserve file content" >&2
   exit 1
 fi
-if [[ -f "${ROOT}/.moontown/books/archived-desk-smoke/node_modules/cache/file.txt" ]]; then
+if [[ -f "${ROOT}/books/archived-desk-smoke/node_modules/cache/file.txt" ]]; then
   echo "archived MoonBook copied dependency metadata" >&2
   exit 1
 fi
-if [[ -e "${ROOT}/.moontown/books/archived-desk-smoke/__MACOSX" ]]; then
+if [[ -e "${ROOT}/books/archived-desk-smoke/__MACOSX" ]]; then
   echo "archived MoonBook copied macOS archive metadata" >&2
   exit 1
 fi
@@ -380,7 +380,7 @@ print(json.dumps({
 uploaded_book="$(post_json 200 "${BASE}/api/workspaces/import" "${upload_archive_payload}")"
 assert_contains "${uploaded_book}" '"book_id": "uploaded-desk-smoke"'
 assert_contains "${uploaded_book}" '"path": "wiki/index.md"'
-if [[ "$(cat "${ROOT}/.moontown/books/uploaded-desk-smoke/raw/evidence.txt")" != "uploaded archive evidence" ]]; then
+if [[ "$(cat "${ROOT}/books/uploaded-desk-smoke/raw/evidence.txt")" != "uploaded archive evidence" ]]; then
   echo "uploaded archive MoonBook did not preserve file content" >&2
   exit 1
 fi
@@ -419,11 +419,11 @@ print(json.dumps({
 ')"
 uploaded_folder_book="$(post_json 200 "${BASE}/api/workspaces/import" "${uploaded_folder_payload}")"
 assert_contains "${uploaded_folder_book}" '"book_id": "uploaded-folder-desk"'
-if [[ "$(cat "${ROOT}/.moontown/books/uploaded-folder-desk/raw/evidence.txt")" != "uploaded folder evidence" ]]; then
+if [[ "$(cat "${ROOT}/books/uploaded-folder-desk/raw/evidence.txt")" != "uploaded folder evidence" ]]; then
   echo "uploaded folder MoonBook did not preserve file content" >&2
   exit 1
 fi
-if [[ -f "${ROOT}/.moontown/books/uploaded-folder-desk/.git/config" ]]; then
+if [[ -f "${ROOT}/books/uploaded-folder-desk/.git/config" ]]; then
   echo "uploaded folder MoonBook copied VCS metadata" >&2
   exit 1
 fi

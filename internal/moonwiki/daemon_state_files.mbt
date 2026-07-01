@@ -1,6 +1,6 @@
 ///|
 fn moondesk_daemon_dir(root : String) -> String {
-  @pathx.join(root, ".moontown/moondesk-daemon")
+  @pathx.join(moonsuite_product_dir(root, "moondesk"), "daemon")
 }
 
 ///|

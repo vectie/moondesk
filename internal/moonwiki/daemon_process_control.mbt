@@ -40,10 +40,10 @@ async fn start_managed_daemon(
       )
   }
   let id = @desk.stable_id("daemon", @async.now().to_string())
-  let stdout_path = ".moontown/moondesk-daemon/" + id + ".out.log"
-  let stderr_path = ".moontown/moondesk-daemon/" + id + ".err.log"
+  let stdout_path = @pathx.join(state_dir, id + ".out.log")
+  let stderr_path = @pathx.join(state_dir, id + ".err.log")
   let stdout_file = @process.redirect_to_file(
-    @pathx.join(root, stdout_path),
+    stdout_path,
     append=true,
     create_mode=OpenOrCreate,
     permission=0o644,
@@ -58,7 +58,7 @@ async fn start_managed_daemon(
       )
   }
   let stderr_file = @process.redirect_to_file(
-    @pathx.join(root, stderr_path),
+    stderr_path,
     append=true,
     create_mode=OpenOrCreate,
     permission=0o644,

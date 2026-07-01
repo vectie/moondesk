@@ -170,7 +170,7 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
   Accept/Reject/Apply/Revert commands before MoonClaw owns true patch execution
 - MoonCode command-queue visibility in the center pane and readiness/contract
   surfaces, sourced from
-  `.moontown/mooncode-sessions/<session-id>/commands.jsonl`, so operator
+  `.moonsuite/products/mooncode/sessions/<session-id>/commands.jsonl`, so operator
   intent is auditable as ordered `mooncode.v1` packets separately from rendered
   transcript and event progress, with latest packet rows and target-aware Test
   and Package controls
@@ -188,7 +188,7 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
   MoonClaw for `tool_harness` and `file_edit` native
   proof instead of executing harnesses inside Moondesk
 - MoonCode runtime-feed visibility in the center pane, sourced from
-  `.moontown/mooncode-sessions/<session-id>/runtime-commands.jsonl`, so the
+  `.moonsuite/products/mooncode/sessions/<session-id>/runtime-commands.jsonl`, so the
   MoonClaw-facing feed is visible even before runtime receipts or runtime
   leases exist, with compact execution summaries for planned tools, expected
   events, required outputs, and replay/event sinks
@@ -309,7 +309,7 @@ The composer should support:
 - review policy
 - source policy
 - submit to Moontown
-- create or update standing-watch records in `.moontown/standing-goals.json`
+- create or update standing-watch records in `.moonsuite/products/moontown/standing-goals.json`
 - run a single daemon tick through the scoped host action
 - start, stop, restart, supervise, and inspect the background daemon loop
 

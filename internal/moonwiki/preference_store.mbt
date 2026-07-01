@@ -1,9 +1,6 @@
 ///|
 fn preference_dir(workspace_root : String) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    ".moontown/moondesk-preferences",
-  )
+  @pathx.join(moonsuite_product_dir(workspace_root, "moondesk"), "preferences")
 }
 
 ///|

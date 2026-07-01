@@ -65,7 +65,7 @@ pub fn engine_status_projection_json(
         if checkout_ready {
           moonclaw_root
         } else {
-          "no MoonClaw service descriptor found; configure .moontown/moondesk-daemon/moonclaw-service.json"
+          "no MoonClaw service descriptor found; configure .moonsuite/products/moonclaw/service.json"
         },
       ),
       engine_check_json(

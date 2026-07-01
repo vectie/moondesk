@@ -42,7 +42,7 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 
 ### Desk
 
-- discover configured roots and `.moontown/books/*`
+- discover configured roots and `books/*`
 - project MoonBook-owned virtual filesystem sections before raw host folders
 - show `wiki/`, `raw/`, `skills/`, `schemas/`, `tools/`, `apps/`,
   `site/generated/`, `book/site/generated/`, and review/output paths

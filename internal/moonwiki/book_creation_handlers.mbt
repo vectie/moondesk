@@ -37,7 +37,7 @@ async fn create_pdf_evidence_watch_book_from_payload(
     topic~,
     pattern_id~,
   )
-  let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  let book_root = @pathx.join(moonsuite_books_root(root), book_id)
   let created_dirs = create_pdf_watch_book_dirs(book_root) catch { _ => false }
   if !created_dirs {
     send_api_error(
@@ -101,7 +101,7 @@ async fn create_pdf_evidence_watch_book_from_payload(
   )
   let goals_path = town_standing_goals_path(root)
   @fsx.make_directory(
-    @pathx.join(root, ".moontown"),
+    moonsuite_product_dir(root, "moontown"),
     recursive=true,
     exists_ok=true,
   ) catch {

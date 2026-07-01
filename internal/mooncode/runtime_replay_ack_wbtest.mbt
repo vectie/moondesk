@@ -118,8 +118,8 @@ test "mooncode runtime replay ack response owns accepted ack surface" {
     workspace_id="book-demo",
     workspace_name="Demo Book",
     runtime_session_id="runtime-demo",
-    runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-commands.jsonl",
-    runtime_receipt_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-receipts.jsonl",
+    runtime_command_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/session-demo/runtime-commands.jsonl",
+    runtime_receipt_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/session-demo/runtime-receipts.jsonl",
   )
   assert_eq(
     rq_json_string(response, "kind", default=""),
@@ -152,8 +152,8 @@ test "mooncode runtime replay ack response owns accepted ack surface" {
     events,
     { "kind": "mooncode-session-runtime-evidence" },
     session,
-    runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-commands.jsonl",
-    runtime_receipt_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/runtime-receipts.jsonl",
+    runtime_command_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/session-demo/runtime-commands.jsonl",
+    runtime_receipt_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/session-demo/runtime-receipts.jsonl",
   )
   assert_eq(
     rq_json_string(aggregate, "kind", default=""),

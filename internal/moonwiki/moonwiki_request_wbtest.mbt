@@ -61,41 +61,37 @@ async test "workspace discovery only exposes town roots and moonbooks" {
     "/tmp",
     "moondesk-town-root-wbtest-" + @async.now().to_string(),
   )
-  @fsx.make_directory(
-    @pathx.join(root, ".moontown"),
-    recursive=true,
-    exists_ok=true,
-  )
+  @fsx.make_directory(moonsuite_state_dir(root), recursive=true, exists_ok=true)
   let town_workspaces = discover_workspaces(root)
   assert_eq(town_workspaces.length(), 1)
   assert_true(town_workspaces[0].kind is TownRoot)
 
   @fsx.make_directory(
-    @pathx.join(root, ".moontown/books"),
+    @pathx.join(root, "books"),
     recursive=true,
     exists_ok=true,
   )
   let empty_book_library_workspaces = discover_workspaces(root)
   assert_eq(empty_book_library_workspaces.length(), 0)
 
-  let book_root = @pathx.join(root, ".moontown/books/research-demo")
+  let book_root = @pathx.join(root, "books/research-demo")
   @fsx.make_directory(book_root, recursive=true, exists_ok=true)
   @fsx.make_directory(
-    @pathx.join(root, ".moontown/books/research-alpha"),
+    @pathx.join(root, "books/research-alpha"),
     recursive=true,
     exists_ok=true,
   )
   @fsx.write_to_file(
-    @pathx.join(root, ".moontown/books/research-alpha/book.json"),
+    @pathx.join(root, "books/research-alpha/book.json"),
     "{\"name\":\"Alpha Field Notes\"}\n",
   )
   @fsx.make_directory(
-    @pathx.join(root, ".moontown/books/research-zeta"),
+    @pathx.join(root, "books/research-zeta"),
     recursive=true,
     exists_ok=true,
   )
   @fsx.write_to_file(
-    @pathx.join(root, ".moontown/books/research-zeta/book.json"),
+    @pathx.join(root, "books/research-zeta/book.json"),
     "{\"title\":\"Zeta Evidence Review\",\"name\":\"Ignored Name\"}\n",
   )
   let book_workspaces = discover_workspaces(root)
@@ -121,7 +117,7 @@ test "workspace metadata exposes dedicated MoonBook library path" {
   )
   assert_eq(
     json_string(metadata, "library_path", default=""),
-    "/tmp/moondesk-workspace/.moontown/books",
+    "/tmp/moondesk-workspace/books",
   )
 }
 
@@ -150,7 +146,7 @@ async test "blank moonbook creation writes into dedicated books root" {
     json_string(created, "workspace_id", default=""),
     @desk.stable_id("book", "research-desk-created"),
   )
-  let book_root = @pathx.join(root, ".moontown/books/research-desk-created")
+  let book_root = @pathx.join(root, "books/research-desk-created")
   assert_true(@fs.exists(@pathx.join(book_root, "book.json")))
   assert_true(@fs.exists(@pathx.join(book_root, "wiki/index.md")))
   assert_true(@fs.exists(@pathx.join(book_root, "raw")))
@@ -214,7 +210,7 @@ async test "moonbook import copies existing folder into dedicated books root" {
   }
   assert_eq(json_string(imported, "book_id", default=""), "field-notes")
   assert_eq(json_string(imported, "path", default=""), "wiki/index.md")
-  let book_root = @pathx.join(root, ".moontown/books/field-notes")
+  let book_root = @pathx.join(root, "books/field-notes")
   assert_true(@fs.exists(@pathx.join(book_root, "book.json")))
   assert_true(@fs.exists(@pathx.join(book_root, "wiki/index.md")))
   assert_true(@fs.exists(@pathx.join(book_root, "raw/evidence.txt")))
@@ -268,7 +264,7 @@ async test "moonbook import stages picked folder files into dedicated books root
     }
   }
   assert_eq(json_string(imported, "book_id", default=""), "picked-folder")
-  let book_root = @pathx.join(root, ".moontown/books/picked-folder")
+  let book_root = @pathx.join(root, "books/picked-folder")
   assert_true(@fs.exists(@pathx.join(book_root, "book.json")))
   assert_true(@fs.exists(@pathx.join(book_root, "wiki/index.md")))
   assert_eq(
@@ -357,7 +353,7 @@ async test "desk entry creation writes folders and markdown inside workspace" {
     "/tmp",
     "moondesk-create-entry-wbtest-" + @async.now().to_string(),
   )
-  let book_root = @pathx.join(root, ".moontown/books/research-entry")
+  let book_root = @pathx.join(root, "books/research-entry")
   @fsx.make_directory(
     @pathx.join(book_root, "wiki"),
     recursive=true,
@@ -799,7 +795,7 @@ async test "desk file import writes picked files into current directory" {
     "/tmp",
     "moondesk-import-files-wbtest-" + @async.now().to_string(),
   )
-  let book_root = @pathx.join(root, ".moontown/books/research-import-files")
+  let book_root = @pathx.join(root, "books/research-import-files")
   @fsx.make_directory(
     @pathx.join(book_root, "wiki/drop-target"),
     recursive=true,
@@ -1137,7 +1133,7 @@ async test "review item collection includes source files and decision receipts" 
     "/tmp",
     "moondesk-review-items-wbtest-" + @async.now().to_string(),
   )
-  let book_root = @pathx.join(root, ".moontown/books/research-review")
+  let book_root = @pathx.join(root, "books/research-review")
   @fsx.make_directory(@pathx.join(book_root, "wiki/reviews"), recursive=true)
   @fsx.write_to_file(
     @pathx.join(book_root, "book.json"),
@@ -1193,7 +1189,7 @@ async test "desk server routes work end to end and reject path escapes" {
     "moondesk-desk-server-wbtest-" + @async.now().to_string(),
   )
   let ui_root = @pathx.join(root, "ui")
-  let book_root = @pathx.join(root, ".moontown/books/research-desk")
+  let book_root = @pathx.join(root, "books/research-desk")
   let import_source = @pathx.join(root, "existing-import-source")
   @fsx.make_directory(ui_root, recursive=true, exists_ok=true)
   @fsx.make_directory(@pathx.join(book_root, "wiki/notes"), recursive=true)
@@ -1256,9 +1252,7 @@ async test "desk server routes work end to end and reject path escapes" {
       created_workspace_id,
     )
     assert_true(
-      @fs.exists(
-        @pathx.join(root, ".moontown/books/desk-http-book/wiki/index.md"),
-      ),
+      @fs.exists(@pathx.join(root, "books/desk-http-book/wiki/index.md")),
     )
     let refreshed_workspaces = test_http_get_json(base + "/api/workspaces", 200)
     assert_true(
@@ -1277,9 +1271,7 @@ async test "desk server routes work end to end and reject path escapes" {
       imported_workspace_id,
     )
     assert_true(
-      @fs.exists(
-        @pathx.join(root, ".moontown/books/desk-imported/wiki/index.md"),
-      ),
+      @fs.exists(@pathx.join(root, "books/desk-imported/wiki/index.md")),
     )
     let workspaces_after_import = test_http_get_json(
       base + "/api/workspaces",
@@ -1449,7 +1441,7 @@ async test "wiki server routes cover forward and backward book runs" {
     "moondesk-wiki-server-wbtest-" + @async.now().to_string(),
   )
   let ui_root = @pathx.join(root, "ui")
-  let book_root = @pathx.join(root, ".moontown/books/research-wiki")
+  let book_root = @pathx.join(root, "books/research-wiki")
   @fsx.make_directory(ui_root, recursive=true, exists_ok=true)
   @fsx.make_directory(@pathx.join(book_root, "wiki/findings"), recursive=true)
   @fsx.make_directory(@pathx.join(book_root, "wiki/reviews"), recursive=true)
@@ -1693,7 +1685,9 @@ async test "wiki server routes cover forward and backward book runs" {
     )
     assert_eq(json_string(town_request, "status", default=""), "staged")
     let request_path = json_string(town_request, "path", default="")
-    assert_true(request_path.has_prefix(".moontown/moondesk-requests/"))
+    assert_true(
+      request_path.has_prefix(".moonsuite/products/moontown/moondesk-requests/"),
+    )
     assert_true(@fs.exists(@pathx.join(root, request_path)))
 
     let requests = test_http_get_json(base + "/api/town/requests", 200)
@@ -1922,7 +1916,7 @@ test "town request listing normalizes book-pattern handoff records" {
   assert_eq(json_string(listing, "status", default=""), "ready-for-moontown")
   assert_eq(
     json_string(listing, "path", default=""),
-    ".moontown/moondesk-requests/research-policy-watch.json",
+    ".moonsuite/products/moontown/moondesk-requests/research-policy-watch.json",
   )
   let request = json_object_field_or_empty(listing, "request")
   assert_eq(
@@ -2161,7 +2155,7 @@ async test "sync repairs pdf watch standing goals for UI decoder" {
     "moondesk-standing-goal-repair-wbtest-" + @async.now().to_string(),
   )
   let book_id = "research-standing-goal-repair-pdf-watch"
-  let book_root = @pathx.join(root, ".moontown/books/" + book_id)
+  let book_root = @pathx.join(root, "books/" + book_id)
   let pattern_id = "pdf-evidence-watch"
   let topic = "Standing Goal Repair"
   let purpose = "Repair stale standing goals so the Wiki UI can decode them."
@@ -2209,7 +2203,7 @@ async test "sync repairs pdf watch standing goals for UI decoder" {
       goal=stale_goal,
     ),
   )
-  @fsx.make_directory(@pathx.join(root, ".moontown"), recursive=true)
+  @fsx.make_directory(moonsuite_product_dir(root, "moontown"), recursive=true)
   @fsx.write_to_file(
     town_standing_goals_path(root),
     Json::array([stale_goal]).stringify(indent=2) + "\n",

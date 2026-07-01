@@ -132,8 +132,8 @@ async fn handle_town_state(
   conn : @http.ServerConnection,
 ) -> Unit {
   let state_path = @pathx.join(
-    @pathx.normalize(workspace_root),
-    ".moontown/town.json",
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "town.json",
   )
   if @fs.exists(state_path) {
     send_json_text(conn, method_, @fs.read_file(state_path).text())

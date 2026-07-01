@@ -192,7 +192,7 @@ from the same field contract.
 MoonCode session state is book-scoped:
 
 ```text
-.moontown/books/<book-id>/
+books/<book-id>/
   .moonclaw/
     mooncode/
       sessions/<session-id>/

@@ -171,7 +171,7 @@ pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] 
       if session_snapshot_ready {
         json_string(snapshot, "snapshot_path", default="")
       } else {
-        "no .moontown/mooncode-sessions/<id>/session.json snapshot recorded yet"
+        "no .moonsuite/products/mooncode/sessions/<id>/session.json snapshot recorded yet"
       },
     ),
     eval_check(

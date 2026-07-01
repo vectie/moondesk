@@ -27,7 +27,7 @@ async fn discover_workspaces(
   workspace_root : String,
 ) -> Array[@desk.DeskWorkspace] {
   let root = @pathx.normalize(workspace_root)
-  let books_root = @pathx.join(root, ".moontown/books")
+  let books_root = moonsuite_books_root(root)
   let workspaces : Array[@desk.DeskWorkspace] = []
   if is_directory(books_root) {
     for name in read_directory_names(books_root, include_hidden=false) {
@@ -48,7 +48,7 @@ async fn discover_workspaces(
     }
     return sorted_discovered_workspaces(workspaces)
   }
-  if !is_directory(@pathx.join(root, ".moontown")) {
+  if !is_directory(moonsuite_state_dir(root)) {
     return []
   }
   [
@@ -94,7 +94,12 @@ async fn moonbook_workspace_display_name(
 ///|
 fn workspace_library_metadata(workspace_root : String) -> Json {
   let root = @pathx.normalize(workspace_root)
-  { "root_path": root, "library_path": @pathx.join(root, ".moontown/books") }
+  {
+    "root_path": root,
+    "library_path": moonsuite_books_root(root),
+    "suite_path": moonsuite_state_dir(root),
+    "product_registry_path": moonsuite_product_registry_path(root),
+  }
 }
 
 ///|

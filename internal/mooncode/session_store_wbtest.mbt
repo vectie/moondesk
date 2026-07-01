@@ -44,11 +44,11 @@ test "mooncode session snapshot records durable queue and event state" {
     runtime_commands,
     runtime_receipts,
     recorded_at="2026-06-15T00:01:00Z",
-    snapshot_path="/tmp/book/.moontown/mooncode-sessions/s1/session.json",
-    command_log_path="/tmp/book/.moontown/mooncode-sessions/s1/commands.jsonl",
-    runtime_command_log_path="/tmp/book/.moontown/mooncode-sessions/s1/runtime-commands.jsonl",
-    runtime_receipt_log_path="/tmp/book/.moontown/mooncode-sessions/s1/runtime-receipts.jsonl",
-    event_log_path="/tmp/book/.moontown/mooncode-sessions/s1/events.jsonl",
+    snapshot_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/session.json",
+    command_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/commands.jsonl",
+    runtime_command_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/runtime-commands.jsonl",
+    runtime_receipt_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/runtime-receipts.jsonl",
+    event_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/s1/events.jsonl",
   )
   assert_eq(
     json_string(snapshot, "kind", default=""),

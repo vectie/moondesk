@@ -22,13 +22,21 @@ test "default workspace root uses dedicated moondesk workspace" {
 }
 
 ///|
-async test "serve prepares moonbook library directories" {
+async test "serve prepares MoonSuite workspace directories" {
   let root = @pathx.join(
     "/tmp",
     "moondesk-default-workspace-wbtest-" + @async.now().to_string(),
   )
   assert_true(prepare_moondesk_workspace_root(root))
-  assert_true(@fs.exists(@pathx.join(root, ".moontown/books")))
+  assert_true(@fs.exists(@pathx.join(root, "books")))
+  assert_true(@fs.exists(@pathx.join(root, "inbox")))
+  assert_true(@fs.exists(@pathx.join(root, "exports")))
+  assert_true(@fs.exists(@pathx.join(root, ".tmp")))
+  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/suite.json")))
+  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/product-registry.json")))
+  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonrobo")))
+  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonmoon")))
+  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonfish")))
 }
 
 ///|
@@ -42,7 +50,7 @@ async test "serve warns when workspace root is a source checkout" {
   let effective_root = serve_workspace_root(root)
   assert_true(effective_root != @pathx.normalize(root))
   assert_true(effective_root.contains("moondesk-workspace"))
-  assert_false(@fs.exists(@pathx.join(root, ".moontown/books")))
+  assert_false(@fs.exists(@pathx.join(root, "books")))
   let warning = workspace_root_source_checkout_warning(root, effective_root~)
   assert_true(warning.contains("source checkout"))
   assert_true(warning.contains(effective_root))
@@ -91,7 +99,7 @@ async test "source checkout redirect avoids configured root inside checkout" {
   assert_false(
     workspace_root_contains_path(@pathx.normalize(root), sibling_effective),
   )
-  assert_false(@fs.exists(@pathx.join(root, ".moontown/books")))
+  assert_false(@fs.exists(@pathx.join(root, "books")))
 }
 
 ///|
@@ -125,5 +133,5 @@ async test "runtime entrypoint workspace resolver keeps user data out of checkou
   let effective = resolve_user_workspace_root(".", repo_root)
   assert_true(effective.has_suffix("/moondesk-workspace"))
   assert_false(workspace_root_contains_path(repo_root, effective))
-  assert_false(@fs.exists(@pathx.join(repo_root, ".moontown/books")))
+  assert_false(@fs.exists(@pathx.join(repo_root, "books")))
 }

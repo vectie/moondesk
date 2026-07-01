@@ -33,6 +33,6 @@ pub fn runtime_replay_consumer_contract_json(session_id : String) -> Json {
     "required_order": "one ordered queue; do not start a later prompt before earlier pending prompt/steer/cancel records are handled",
     "authorization_rule": "do not consume pending_commands whose tool_authorization snapshot has runtime_may_execute=false; resolve tool approvals first",
     "duplicate_guard": "skip command ids with runtime-accepted, runtime-acknowledged, runtime-completed, active runtime-claimed receipts, or blocked tool authorization; active earlier claims, invalid earlier commands, and tool-authorization-blocked earlier commands block later non-delivered rows; expired claims and failed runtime receipts are retryable",
-    "event_sink": ".moontown/mooncode-sessions/<session-id>/events.jsonl or /v1/code/sessions/<session-id>/stream",
+    "event_sink": ".moonsuite/products/mooncode/sessions/<session-id>/events.jsonl or /v1/code/sessions/<session-id>/stream",
   }
 }

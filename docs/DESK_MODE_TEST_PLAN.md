@@ -27,7 +27,7 @@ virtual filesystem:
 Desk must use a dedicated user-data workspace root by default. The default root
 is `MOONDESK_WORKSPACE_ROOT` when configured, otherwise a per-user
 `moondesk-workspace` directory. MoonBooks live under
-`<workspace-root>/.moontown/books/<book-id>`. The code checkout is never the
+`<workspace-root>/books/<book-id>`. The code checkout is never the
 default place for user MoonBooks, inbox notes, daemon state, MoonCode sessions,
 or MoonClaw artifacts.
 
@@ -42,21 +42,21 @@ quality requires:
 
 - Default storage is isolated from the source repository and explained as a
   MoonBook library.
-- Desk visibly shows the user data root, the `.moontown/books` library path,
+- Desk visibly shows the user data root, the `books` library path,
   and the current MoonBook count so users can tell where their files are stored.
 - Starting the host against a directory that looks like a source checkout
   redirects to the dedicated `MOONDESK_WORKSPACE_ROOT` or default
-  `moondesk-workspace` directory before preparing `.moontown/books`, and emits
+  `moondesk-workspace` directory before preparing `books`, and emits
   a warning that names the effective user-data root.
-- The sidebar lists every MoonBook under `.moontown/books`, with stable order,
+- The sidebar lists every MoonBook under `books`, with stable order,
   clear empty state, user-facing `book.json` `title`/`name` labels when
   present, a visible `Needs setup` status for folders that are missing
   `book.json`, and no implication that only one book is valid.
 - Desk can create a plain MoonBook directly into
-  `<workspace-root>/.moontown/books/<book-id>` and open its starter
+  `<workspace-root>/books/<book-id>` and open its starter
   `wiki/index.md` without writing into the source checkout.
 - Desk can import an existing MoonBook folder by copying it into
-  `<workspace-root>/.moontown/books/<book-id>`, preserving the source folder,
+  `<workspace-root>/books/<book-id>`, preserving the source folder,
   rejecting duplicates, and avoiding host build/VCS metadata such as `.git`,
   `node_modules`, `_build`, and `.DS_Store`.
 - Desk can import an existing MoonBook folder from the browser folder picker by
@@ -64,7 +64,7 @@ quality requires:
   `book.json`, and then copying only the MoonBook into the dedicated library.
 - Desk can import a zipped MoonBook archive by extracting it into temporary
   storage first, validating that it contains a `book.json`, copying it into
-  `<workspace-root>/.moontown/books/<book-id>`, and skipping archive/build
+  `<workspace-root>/books/<book-id>`, and skipping archive/build
   metadata such as `__MACOSX`, `.git`, `node_modules`, `_build`, and `.DS_Store`.
 - Desk can import a zipped MoonBook archive from the browser archive picker so
   users do not need to paste a server-local filesystem path for common archive
@@ -233,16 +233,16 @@ POST /api/workspaces/<workspace-id>/reveal
 Coverage:
 
 - Workspace metadata returns the effective user-data root and the
-  `<workspace-root>/.moontown/books` library path, even when no MoonBooks
+  `<workspace-root>/books` library path, even when no MoonBooks
   exist yet, so Desk can explain where create/import actions will write.
 - Workspace discovery returns stable IDs, normalized roots, names, kinds, and
   status, including `NeedsAttention` for recoverable MoonBook folders that are
-  present under `.moontown/books` but do not yet contain `book.json`.
+  present under `books` but do not yet contain `book.json`.
 - Creating a plain MoonBook writes `book.json`, starter `wiki/index.md`, and
-  canonical folders under `.moontown/books/<book-id>`, then returns a workspace
+  canonical folders under `books/<book-id>`, then returns a workspace
   ID that appears in the next discovery response.
 - Importing an existing MoonBook copies a folder or `.zip` archive with
-  `book.json` into `.moontown/books/<book-id>`, leaves the source folder or
+  `book.json` into `books/<book-id>`, leaves the source folder or
   archive in place, skips local build/VCS/archive metadata, rejects duplicate
   target IDs, and returns a workspace ID that appears in the next discovery
   response.
@@ -250,11 +250,11 @@ Coverage:
   `webkitRelativePath` values to `/api/workspaces/import`; the server stages
   those files in temporary storage, validates a single MoonBook root with
   `book.json`, rejects traversal/duplicate upload paths, and then copies the
-  MoonBook into `.moontown/books/<book-id>`.
+  MoonBook into `books/<book-id>`.
 - Importing a picked `.zip` archive sends browser-captured archive bytes to
   `/api/workspaces/import`; the server stages those bytes in temporary storage,
   validates and extracts the archive, copies only the MoonBook into
-  `.moontown/books/<book-id>`, and never writes the archive into the source
+  `books/<book-id>`, and never writes the archive into the source
   checkout.
 - Unknown workspace returns `404`.
 - Root entries prefer virtual MoonBook sections before raw host-only folders.
@@ -348,9 +348,9 @@ This harness uses a local Chrome DevTools Protocol session without adding a
 network-installed browser dependency. It seeds multiple MoonBooks, opens the
 built Desk UI in Chrome, verifies the MoonBook list and neutral large-surface
 colors, creates a MoonBook from the Desk library panel and proves it lands under
-`.moontown/books` without a root-level book directory, imports an existing
+`books` without a root-level book directory, imports an existing
 MoonBook folder from the Desk library panel and proves the source was copied
-into `.moontown/books` without VCS metadata, navigates folders by double-clicking
+into `books` without VCS metadata, navigates folders by double-clicking
 rows, previews Markdown in the Desk details pane, exercises Back/Forward
 directory history, creates a folder and notes, refreshes an out-of-band
 filesystem change into the current directory, imports a dropped file into the
@@ -358,7 +358,7 @@ current directory, renames a note with F2 inline rename, duplicates the selected
 note, switches the original note into the Desk clipboard, pastes it into another
 folder, moves a note to scoped MoonBook trash, restores it from the Trash panel,
 switches workspaces, and asserts the corresponding filesystem effects under
-`.moontown/books`. It also
+`books`. It also
 checks desktop, small-desktop, tablet, and narrow mobile viewports for
 horizontal document overflow, overlapping Desk panes, and large brown/chocolate
 surface fills. Before opening the browser it also statically checks the Desk
@@ -368,9 +368,9 @@ contained and readable inside the MoonBook library card, then writes validated
 PNG screenshots under the smoke fixture root for review.
 
 The empty-library browser smoke starts a real server with an empty dedicated
-`.moontown/books` library, verifies the zero-MoonBook empty state and dedicated
+`books` library, verifies the zero-MoonBook empty state and dedicated
 library path, creates a MoonBook through the Desk sidebar, and proves the new
-book appears under `.moontown/books` without a root-level book directory.
+book appears under `books` without a root-level book directory.
 
 Browser assertions should prefer stable text, roles, URLs, and data attributes
 when available. If the UI lacks stable selectors, add lightweight semantic test
@@ -479,10 +479,10 @@ Steps:
 
 Assert:
 
-- The new book is written under `.moontown/books/<book-id>`, not the source
+- The new book is written under `books/<book-id>`, not the source
   checkout or workspace root.
 - The Desk sidebar shows the corresponding user data root and
-  `.moontown/books` library path.
+  `books` library path.
 - `/api/workspaces` lists the new MoonBook after creation.
 - Desk selects the new workspace and opens `wiki/index.md`.
 - The create form clears after success so repeating the click does not
@@ -490,7 +490,7 @@ Assert:
   actions are disabled until their required inputs are present.
 - Path-based MoonBook import enables only when a source path is present, clears
   after success, preserves the source folder, skips VCS/build metadata, and
-  writes only under `.moontown/books/<book-id>`.
+  writes only under `books/<book-id>`.
 - Starter folders such as `wiki`, `raw`, `inbox`, and `book/site/generated`
   appear in the file browser.
 - Duplicate book ids produce a clear error and do not overwrite the existing

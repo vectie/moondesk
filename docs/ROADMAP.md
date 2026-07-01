@@ -61,7 +61,7 @@ without making Moondesk own the book.
 
 Done:
 
-- MoonBook discovery under `.moontown/books`
+- MoonBook discovery under `books`
 - file tree, search, previews, raw file serving
 - inbox notes and scoped imports
 - scoped Markdown editing for `wiki/` and `inbox/` files with live preview

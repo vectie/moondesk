@@ -7,10 +7,14 @@ async test "town service descriptor is explicit and workspace local" {
   assert_eq(json_string(daemon, "command", default="missing"), "")
   assert_eq(
     json_string(daemon, "config_path", default=""),
-    @pathx.join(root, ".moontown/moondesk-daemon/service.json"),
+    @pathx.join(root, ".moonsuite/products/moontown/service.json"),
   )
 
-  @fsx.make_directory(moondesk_daemon_dir(root), recursive=true, exists_ok=true)
+  @fsx.make_directory(
+    moonsuite_product_dir(root, "moontown"),
+    recursive=true,
+    exists_ok=true,
+  )
   @fsx.write_to_file(
     town_service_config_path(root),
     (

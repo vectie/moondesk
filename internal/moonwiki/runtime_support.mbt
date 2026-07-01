@@ -40,7 +40,10 @@ fn trimmed_text(value : String, fallback~ : String) -> String {
 ///|
 async fn read_watcher_records(root : String, limit : Int) -> Array[Json] {
   let records : Array[Json] = []
-  let watcher_root = @pathx.join(root, ".moontown/watchers")
+  let watcher_root = @pathx.join(
+    moonsuite_product_dir(root, "moontown"),
+    "watchers",
+  )
   for name in read_directory_names(watcher_root, include_hidden=false) {
     if !name.has_suffix(".jsonl") {
       continue

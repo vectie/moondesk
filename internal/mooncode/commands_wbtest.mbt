@@ -357,13 +357,13 @@ test "mooncode command queue response owns queue surface" {
     workspace_id="book-demo",
     workspace_name="Demo Book",
     runtime_session_id="runtime-demo",
-    command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/commands.jsonl",
+    command_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/session-demo/commands.jsonl",
   )
   assert_eq(json_string(response, "kind", default=""), "mooncode-command-queue")
   assert_eq(json_string(response, "session_id", default=""), "session-demo")
   assert_eq(
     json_string(response, "command_log_path", default=""),
-    "/tmp/book/.moontown/mooncode-sessions/session-demo/commands.jsonl",
+    "/tmp/book/.moonsuite/products/mooncode/sessions/session-demo/commands.jsonl",
   )
   assert_eq(command_json_int(response, "command_count", default=0), 1)
   assert_eq(json_array_items(response, "commands").length(), 1)
@@ -384,7 +384,7 @@ test "mooncode command queue response owns queue surface" {
       "workspace_name": "Demo Book",
       "mooncode_runtime_session_id": "runtime-demo",
     },
-    command_log_path="/tmp/book/.moontown/mooncode-sessions/session-demo/commands.jsonl",
+    command_log_path="/tmp/book/.moonsuite/products/mooncode/sessions/session-demo/commands.jsonl",
   )
   assert_eq(json_string(aggregate, "workspace_id", default=""), "book-demo")
   assert_eq(json_string(aggregate, "workspace_name", default=""), "Demo Book")

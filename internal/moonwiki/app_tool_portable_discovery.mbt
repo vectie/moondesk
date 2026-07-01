@@ -1,6 +1,6 @@
 ///|
 fn app_tool_books_root(root : String) -> String {
-  @pathx.join(root, ".moontown/books")
+  moonsuite_books_root(root)
 }
 
 ///|

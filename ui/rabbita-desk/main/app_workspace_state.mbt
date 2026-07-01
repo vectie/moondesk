@@ -42,11 +42,11 @@ fn workspace_library_root(model : Model) -> String {
   if root == "not connected" && model.workspace_root_path != "" {
     return model.workspace_root_path
   }
-  match root.rev_split_once("/.moontown/books/") {
+  match root.rev_split_once("/books/") {
     Some((base, _)) => base.to_owned()
     None =>
-      if root.has_suffix("/.moontown/books") {
-        root[:root.length() - "/.moontown/books".length()].to_owned()
+      if root.has_suffix("/books") {
+        root[:root.length() - "/books".length()].to_owned()
       } else {
         root
       }
@@ -61,10 +61,10 @@ fn workspace_moonbook_library_path(model : Model) -> String {
   }
   if root == "not connected" {
     root
-  } else if root.has_suffix("/.moontown/books") {
+  } else if root.has_suffix("/books") {
     root
   } else {
-    root + "/.moontown/books"
+    root + "/books"
   }
 }
 

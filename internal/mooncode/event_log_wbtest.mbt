@@ -202,38 +202,41 @@ test "mooncode session id validation stays storage-backend neutral" {
 
 ///|
 test "mooncode sidecar relative paths define durable session layout" {
-  assert_eq(sessions_relative_dir(), ".moontown/mooncode-sessions")
-  assert_eq(session_log_relative_dir("s1"), ".moontown/mooncode-sessions/s1")
+  assert_eq(sessions_relative_dir(), ".moonsuite/products/mooncode/sessions")
+  assert_eq(
+    session_log_relative_dir("s1"),
+    ".moonsuite/products/mooncode/sessions/s1",
+  )
   assert_eq(
     event_log_relative_path("s1"),
-    ".moontown/mooncode-sessions/s1/events.jsonl",
+    ".moonsuite/products/mooncode/sessions/s1/events.jsonl",
   )
   assert_eq(
     command_log_relative_path("s1"),
-    ".moontown/mooncode-sessions/s1/commands.jsonl",
+    ".moonsuite/products/mooncode/sessions/s1/commands.jsonl",
   )
   assert_eq(
     runtime_command_log_relative_path("s1"),
-    ".moontown/mooncode-sessions/s1/runtime-commands.jsonl",
+    ".moonsuite/products/mooncode/sessions/s1/runtime-commands.jsonl",
   )
   assert_eq(
     runtime_receipt_log_relative_path("s1"),
-    ".moontown/mooncode-sessions/s1/runtime-receipts.jsonl",
+    ".moonsuite/products/mooncode/sessions/s1/runtime-receipts.jsonl",
   )
   assert_eq(
     session_snapshot_relative_path("s1"),
-    ".moontown/mooncode-sessions/s1/session.json",
+    ".moonsuite/products/mooncode/sessions/s1/session.json",
   )
   assert_eq(
     stream_checkpoint_relative_dir("s1"),
-    ".moontown/mooncode-sessions/s1/stream-checkpoints",
+    ".moonsuite/products/mooncode/sessions/s1/stream-checkpoints",
   )
   assert_eq(
     stream_checkpoint_relative_path("s1", "moondesk-ui"),
-    ".moontown/mooncode-sessions/s1/stream-checkpoints/moondesk-ui.json",
+    ".moonsuite/products/mooncode/sessions/s1/stream-checkpoints/moondesk-ui.json",
   )
   assert_eq(
     stream_checkpoint_relative_path("s1", "moondesk/ui"),
-    ".moontown/mooncode-sessions/s1/stream-checkpoints/default.json",
+    ".moonsuite/products/mooncode/sessions/s1/stream-checkpoints/default.json",
   )
 }

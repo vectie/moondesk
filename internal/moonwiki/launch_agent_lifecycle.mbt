@@ -187,9 +187,9 @@ fn launch_agent_plist(root : String, descriptor : Json) -> String {
   "  <key>KeepAlive</key>\n" +
   "  <true/>\n" +
   "  <key>StandardOutPath</key>\n" +
-  "  <string>\{xml_escape(@pathx.join(root, ".moontown/moondesk-daemon/launch-agent.out.log"))}</string>\n" +
+  "  <string>\{xml_escape(@pathx.join(moondesk_daemon_dir(root), "launch-agent.out.log"))}</string>\n" +
   "  <key>StandardErrorPath</key>\n" +
-  "  <string>\{xml_escape(@pathx.join(root, ".moontown/moondesk-daemon/launch-agent.err.log"))}</string>\n" +
+  "  <string>\{xml_escape(@pathx.join(moondesk_daemon_dir(root), "launch-agent.err.log"))}</string>\n" +
   "</dict>\n" +
   "</plist>\n"
 }

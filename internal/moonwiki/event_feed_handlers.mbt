@@ -58,10 +58,12 @@ async fn collect_town_event_records(root : String, limit : Int) -> Array[Json] {
     }
   }
   collect_file_events(
-    root, ".moontown/moondesk-dispatches", "dispatch", "moontown", events, limit,
+    root, ".moonsuite/products/moontown/moondesk-dispatches", "dispatch", "moontown",
+    events, limit,
   )
   collect_file_events(
-    root, ".moontown/moondesk-requests", "request", "moontown", events, limit,
+    root, ".moonsuite/products/moontown/moondesk-requests", "request", "moontown",
+    events, limit,
   )
   events
 }

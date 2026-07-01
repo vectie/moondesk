@@ -15,7 +15,7 @@ async fn handle_book_contract_verify(
     return
   }
   let root = @pathx.normalize(workspace_root)
-  let book_root = @pathx.join(@pathx.join(root, ".moontown/books"), book_id)
+  let book_root = @pathx.join(moonsuite_books_root(root), book_id)
   let book_json_path = @pathx.join(book_root, "book.json")
   if !@fs.exists(book_json_path) {
     send_api_error(conn, method_, 404, "Not Found", "Book not found")

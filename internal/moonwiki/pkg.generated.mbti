@@ -8,6 +8,32 @@ import {
 // Values
 pub fn moondesk_health_path() -> String
 
+pub fn moonsuite_books_root(String) -> String
+
+pub fn moonsuite_exports_root(String) -> String
+
+pub fn moonsuite_inbox_root(String) -> String
+
+pub fn moonsuite_product_dir(String, String) -> String
+
+pub fn moonsuite_product_registry_path(String) -> String
+
+pub fn moonsuite_product_service_path(String, String) -> String
+
+pub fn moonsuite_products_root(String) -> String
+
+pub fn moonsuite_root(String) -> String
+
+pub fn moonsuite_services_root(String) -> String
+
+pub fn moonsuite_state_dir(String) -> String
+
+pub fn moonsuite_suite_json_path(String) -> String
+
+pub fn moonsuite_tmp_root(String) -> String
+
+pub async fn prepare_moonsuite_workspace_root(String) -> Bool
+
 pub fn town_service_config_path(String) -> String
 
 pub async fn town_service_descriptor(String, String) -> Json

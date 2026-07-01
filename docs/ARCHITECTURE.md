@@ -105,7 +105,7 @@ portable app-tool surfaces.
 The created book owns:
 
 ```text
-.moontown/books/research-<topic>/
+books/research-<topic>/
   book.json
   raw/
     inbox/

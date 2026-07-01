@@ -99,7 +99,7 @@ async fn create_blank_moonbook_workspace(
   }
   let title = if name == "" { book_id } else { name }
   let root = @pathx.normalize(workspace_root)
-  let books_root = @pathx.join(root, ".moontown/books")
+  let books_root = moonsuite_books_root(root)
   let book_root = @pathx.join(books_root, book_id)
   let expected_prefix = books_root + "/"
   if !book_root.has_prefix(expected_prefix) {
@@ -384,7 +384,7 @@ async fn import_moonbook_from_source_dir(
   }
   let title = import_moonbook_title(payload, manifest, book_id)
   let root = @pathx.normalize(workspace_root)
-  let books_root = @pathx.join(root, ".moontown/books")
+  let books_root = moonsuite_books_root(root)
   let book_root = @pathx.join(books_root, book_id)
   let expected_prefix = books_root + "/"
   if !book_root.has_prefix(expected_prefix) {

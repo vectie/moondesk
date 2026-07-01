@@ -1,6 +1,6 @@
 ///|
 pub fn sessions_relative_dir() -> String {
-  ".moontown/mooncode-sessions"
+  ".moonsuite/products/mooncode/sessions"
 }
 
 ///|

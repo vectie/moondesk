@@ -127,7 +127,7 @@ Moontown
 A MoonBook should be able to carry both prose and executable behavior:
 
 ```text
-.moontown/books/<book-id>/
+books/<book-id>/
   book.json
   raw/
     inbox/

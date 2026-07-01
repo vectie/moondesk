@@ -1,45 +1,54 @@
 ///|
 fn town_daemon_path(workspace_root : String) -> String {
-  @pathx.join(@pathx.normalize(workspace_root), ".moontown/daemon.json")
+  @pathx.join(moonsuite_product_dir(workspace_root, "moontown"), "daemon.json")
 }
 
 ///|
 fn town_standing_goals_path(workspace_root : String) -> String {
-  @pathx.join(@pathx.normalize(workspace_root), ".moontown/standing-goals.json")
+  @pathx.join(
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "standing-goals.json",
+  )
 }
 
 ///|
 fn town_moonbooks_path(workspace_root : String) -> String {
-  @pathx.join(@pathx.normalize(workspace_root), ".moontown/moonbooks.json")
+  @pathx.join(
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "moonbooks.json",
+  )
 }
 
 ///|
 fn town_book_template_config_root(workspace_root : String) -> String {
   @pathx.join(
-    @pathx.normalize(workspace_root),
-    ".moontown/book-template-configs",
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "book-template-configs",
   )
 }
 
 ///|
 fn town_book_template_request_path(workspace_root : String) -> String {
   @pathx.join(
-    @pathx.normalize(workspace_root),
-    ".moontown/book-template-requests.json",
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "book-template-requests.json",
   )
 }
 
 ///|
 fn town_book_template_event_path(workspace_root : String) -> String {
   @pathx.join(
-    @pathx.normalize(workspace_root),
-    ".moontown/book-template-request-events.jsonl",
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "book-template-request-events.jsonl",
   )
 }
 
 ///|
 fn town_moondesk_requests_root(workspace_root : String) -> String {
-  @pathx.join(@pathx.normalize(workspace_root), ".moontown/moondesk-requests")
+  @pathx.join(
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "moondesk-requests",
+  )
 }
 
 ///|

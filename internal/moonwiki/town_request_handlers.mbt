@@ -5,8 +5,8 @@ async fn handle_town_messages(
   conn : @http.ServerConnection,
 ) -> Unit {
   let results_root = @pathx.join(
-    @pathx.normalize(workspace_root),
-    ".moontown/book-results",
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "book-results",
   )
   let messages : Array[Json] = []
   let names = read_directory_names(results_root, include_hidden=false)
@@ -35,8 +35,8 @@ async fn handle_town_requests(
   conn : @http.ServerConnection,
 ) -> Unit {
   let requests_root = @pathx.join(
-    @pathx.normalize(workspace_root),
-    ".moontown/moondesk-requests",
+    moonsuite_product_dir(workspace_root, "moontown"),
+    "moondesk-requests",
   )
   let requests : Array[Json] = []
   let names = read_directory_names(requests_root, include_hidden=false)
@@ -54,7 +54,7 @@ async fn handle_town_requests(
         let fallback : Json = {
           "id": @desk.stable_id("request", name),
           "status": "unreadable",
-          "path": ".moontown/moondesk-requests/" + name,
+          "path": ".moonsuite/products/moontown/moondesk-requests/" + name,
           "request": { "title": name },
         }
         fallback
@@ -70,7 +70,7 @@ fn town_request_listing_record(record : Json, name : String) -> Json {
   let path = json_string(
     record,
     "path",
-    default=".moontown/moondesk-requests/" + name,
+    default=".moonsuite/products/moontown/moondesk-requests/" + name,
   )
   let request = match record {
     Object(object) =>
@@ -169,7 +169,10 @@ async fn handle_town_request(
     }
   }
   let root = @pathx.normalize(workspace_root)
-  let requests_root = @pathx.join(root, ".moontown/moondesk-requests")
+  let requests_root = @pathx.join(
+    moonsuite_product_dir(root, "moontown"),
+    "moondesk-requests",
+  )
   @fsx.make_directory(requests_root, recursive=true, exists_ok=true) catch {
     _ => {
       send_api_error(
@@ -180,7 +183,9 @@ async fn handle_town_request(
   }
   let title = json_string(payload, "title", default="Moondesk request")
   let id = @desk.stable_id("request", title + "-" + @async.now().to_string())
-  let relative = ".moontown/moondesk-requests/" + id + ".json"
+  let relative = ".moonsuite/products/moontown/moondesk-requests/" +
+    id +
+    ".json"
   let absolute = @pathx.join(root, relative)
   let record : Json = {
     "id": id,

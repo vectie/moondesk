@@ -31,26 +31,26 @@ if [[ ! -x "${CHROME}" ]]; then
 fi
 
 mkdir -p \
-  "${ROOT}/.moontown/books/research-alpha/wiki/notes" \
-  "${ROOT}/.moontown/books/research-alpha/raw" \
-  "${ROOT}/.moontown/books/research-alpha/.git" \
-  "${ROOT}/.moontown/books/research-beta/wiki" \
-  "${ROOT}/.moontown/books/research-beta/raw" \
-  "${ROOT}/.moontown/books/research-gamma/wiki" \
-  "${ROOT}/.moontown/books/research-gamma/raw" \
-  "${ROOT}/.moontown/books/research-recovered/wiki"
+  "${ROOT}/books/research-alpha/wiki/notes" \
+  "${ROOT}/books/research-alpha/raw" \
+  "${ROOT}/books/research-alpha/.git" \
+  "${ROOT}/books/research-beta/wiki" \
+  "${ROOT}/books/research-beta/raw" \
+  "${ROOT}/books/research-gamma/wiki" \
+  "${ROOT}/books/research-gamma/raw" \
+  "${ROOT}/books/research-recovered/wiki"
 
-printf '{"id":"research-alpha","name":"Research Alpha"}\n' >"${ROOT}/.moontown/books/research-alpha/book.json"
-printf '{"id":"research-beta","name":"Research Beta"}\n' >"${ROOT}/.moontown/books/research-beta/book.json"
-printf '{"id":"research-gamma","name":"Research Gamma"}\n' >"${ROOT}/.moontown/books/research-gamma/book.json"
-printf '# Alpha Desk\n\nBrowser smoke fixture.\n' >"${ROOT}/.moontown/books/research-alpha/wiki/index.md"
-printf 'alpha note\n' >"${ROOT}/.moontown/books/research-alpha/wiki/notes/alpha.md"
-printf 'raw evidence\n' >"${ROOT}/.moontown/books/research-alpha/raw/evidence.txt"
-printf 'hidden config\n' >"${ROOT}/.moontown/books/research-alpha/.git/config"
-printf 'mac noise\n' >"${ROOT}/.moontown/books/research-alpha/.DS_Store"
-printf '# Beta Desk\n' >"${ROOT}/.moontown/books/research-beta/wiki/index.md"
-printf '# Gamma Desk\n' >"${ROOT}/.moontown/books/research-gamma/wiki/index.md"
-printf '# Recovered Desk\n' >"${ROOT}/.moontown/books/research-recovered/wiki/index.md"
+printf '{"id":"research-alpha","name":"Research Alpha"}\n' >"${ROOT}/books/research-alpha/book.json"
+printf '{"id":"research-beta","name":"Research Beta"}\n' >"${ROOT}/books/research-beta/book.json"
+printf '{"id":"research-gamma","name":"Research Gamma"}\n' >"${ROOT}/books/research-gamma/book.json"
+printf '# Alpha Desk\n\nBrowser smoke fixture.\n' >"${ROOT}/books/research-alpha/wiki/index.md"
+printf 'alpha note\n' >"${ROOT}/books/research-alpha/wiki/notes/alpha.md"
+printf 'raw evidence\n' >"${ROOT}/books/research-alpha/raw/evidence.txt"
+printf 'hidden config\n' >"${ROOT}/books/research-alpha/.git/config"
+printf 'mac noise\n' >"${ROOT}/books/research-alpha/.DS_Store"
+printf '# Beta Desk\n' >"${ROOT}/books/research-beta/wiki/index.md"
+printf '# Gamma Desk\n' >"${ROOT}/books/research-gamma/wiki/index.md"
+printf '# Recovered Desk\n' >"${ROOT}/books/research-recovered/wiki/index.md"
 
 moon run cmd/main -- serve "${ROOT}" --ui ui/rabbita-desk/dist --host "${HOST}" --port "${PORT}" >"${LOG}" 2>&1 &
 PID="$!"

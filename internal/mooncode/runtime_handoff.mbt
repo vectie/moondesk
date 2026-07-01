@@ -12,7 +12,7 @@ pub fn runtime_event_ingest_contract(session_id : String) -> Json {
     "tool_call_contract": tool_call_contract_json(),
     "tool_call_validation": "Tool-call and tool-result events should satisfy tool_call_contract before MoonClaw executes or reports a tool; invalid tools should be reported as tool_call_decode_error.",
     "command_scope_rule": "Events intended to satisfy command runtime proof must include `command_packet` or compact `command_id` plus matching `action`; unscoped events render in transcript but do not prove execution.",
-    "normalization": "Events are normalized into MoonCode lanes and appended to .moontown/mooncode-sessions/<session-id>/events.jsonl.",
+    "normalization": "Events are normalized into MoonCode lanes and appended to .moonsuite/products/mooncode/sessions/<session-id>/events.jsonl.",
     "refreshes": [
       "action-plan", "runtime-evidence", "eval-report", "session-snapshot", "runtime-handoff",
     ],
