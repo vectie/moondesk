@@ -772,6 +772,14 @@ Completed slices:
   `moon check`, root-package `moon test .` (4/4), native `moon test --target
   native` (24/24), and `git diff --check`; the full JS `moon test` still hits
   pre-existing DOM README examples that require browser `document`.
+- MoonClaw commit `579085c7` aligns MoonCode's executable-book lifecycle
+  contract and daemon capabilities payload with the already-migrated durable
+  session store. The emitted contract now advertises
+  `.moonsuite/products/moonclaw/mooncode/sessions/<id>/session.json` in the
+  owning MoonClaw product home derived from the selected book root, and
+  white-box coverage rejects the old `.moonclaw/mooncode/sessions` contract
+  string. Validation passed with MoonClaw `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` (997/997), and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -808,7 +816,9 @@ Remaining high-priority product slices:
   gateway, onboarding config, workspace defaults, ACP state, OAuth credentials,
   starter attachments, provider-task artifacts, worktree scratch, MoonCode
   sessions and watchers, skills, rules, daemon lock, robot routine ledgers, and
-  todo session state are now MoonLib-backed product-home or suite-temp based.
+  todo session state are now MoonLib-backed product-home or suite-temp based;
+  MoonCode's public lifecycle/capability contracts now advertise the same
+  product-home session store.
 - Rabbita and future products: Rabbita now has an explicit root product-home
   contract and white-box coverage. Remaining work is broader browser-backed
   smoke integration for Rabbita and future products rather than local
