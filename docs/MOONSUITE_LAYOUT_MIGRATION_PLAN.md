@@ -689,6 +689,14 @@ Completed slices:
   no longer advertises the stale `.moonclaw/robot-routine-runs` ledger.
   Validation passed in MoonRobo with `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (453/453), and `git diff --check`.
+- MoonRobo commit `0c2297f0` removes stale product-runtime path claims from
+  MoonRobo docs. Runtime supervisor, runtime health, runtime validation,
+  runtime calibration, bridge dispatch, and bridge contract documentation now
+  point at `.moonsuite/products/moonrobo/...`; SDK E1 bridge examples now use
+  the MoonLib-derived suite temp lane under `.tmp/products/moonrobo/sdk-e1`
+  instead of global `/tmp/moonrobo-sdk-e1*` files. Validation passed in
+  MoonRobo with `moon fmt`, clean `moon info`, `moon check`, `moon test`
+  (453/453), and `git diff --check`.
 - Moontown daemon runtime policy now defaults health/log summaries to
   `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
   evidence points at
