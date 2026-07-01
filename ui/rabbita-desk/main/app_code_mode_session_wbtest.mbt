@@ -1336,6 +1336,89 @@ test "code mode transcript interleaves recovered native replies by command id" {
 }
 
 ///|
+test "code mode transcript keeps thinking between each native prompt and reply" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "mooncode-command-first",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="First turn",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "mooncode-command-second",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Second turn",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "moonclaw-session-a-mooncode-command-first-assistant-step-1",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="First answer.",
+      ),
+      code_mode_test_event(
+        "moonclaw-session-a-mooncode-command-first-planner-step-1",
+        title="MoonCode planner step 1",
+        lane="runtime",
+        kind="reasoning_delta",
+        status="running",
+        detail="Planning next step.",
+      ),
+      code_mode_test_event(
+        "moonclaw-session-a-mooncode-command-second-assistant-step-1",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="Second answer.",
+      ),
+      code_mode_test_event(
+        "moonclaw-session-a-mooncode-command-second-planner-step-1",
+        title="MoonCode planner step 1",
+        lane="runtime",
+        kind="reasoning_delta",
+        status="running",
+        detail="Planning next step.",
+      ),
+    ],
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 6)
+  match items[0].message {
+    Some(row) => assert_eq(row.content, "First turn")
+    None => fail("expected first user message")
+  }
+  match items[1].activity {
+    Some(row) => assert_eq(row.label, "Thinking")
+    None => fail("expected first thinking row before assistant")
+  }
+  match items[2].message {
+    Some(row) => assert_eq(row.content, "First answer.")
+    None => fail("expected first assistant reply")
+  }
+  match items[3].message {
+    Some(row) => assert_eq(row.content, "Second turn")
+    None => fail("expected second user message")
+  }
+  match items[4].activity {
+    Some(row) => assert_eq(row.label, "Thinking")
+    None => fail("expected second thinking row before assistant")
+  }
+  match items[5].message {
+    Some(row) => assert_eq(row.content, "Second answer.")
+    None => fail("expected second assistant reply")
+  }
+}
+
+///|
 test "code mode transcript keeps final reply when sink emits finish before prompt" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),

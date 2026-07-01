@@ -44,7 +44,9 @@ fn mooncode_transcript_items(
   model : Model,
   session : MoonCodeSession,
 ) -> Array[MoonCodeTranscriptItem] {
-  let events = mooncode_transcript_events(model, session)
+  let events = mooncode_order_transcript_item_events(
+    mooncode_transcript_events(model, session),
+  )
   if events.length() > 0 {
     let items = match mooncode_first_pending_prompt_for_session(
       model,
@@ -182,7 +184,7 @@ fn mooncode_transcript_items_from_events_with_user(
     } else {
       match mooncode_activity_row_from_event(event) {
         Some(row) => {
-          let key = mooncode_activity_item_key(row)
+          let key = mooncode_activity_item_key(event, row)
           if !pushed_activity.contains(key) {
             if mooncode_transcript_running_assistant_is_tail(
               items,
@@ -382,8 +384,11 @@ fn mooncode_transcript_item_message_content(
 }
 
 ///|
-fn mooncode_activity_item_key(row : MoonCodeActivityRow) -> String {
-  "\{row.label}\n\{row.title}\n\{row.detail}\n\{row.status}"
+fn mooncode_activity_item_key(
+  event : MoonCodeEvent,
+  row : MoonCodeActivityRow,
+) -> String {
+  "\{mooncode_event_order_key(event)}\n\{row.label}\n\{row.title}\n\{row.detail}\n\{row.status}"
 }
 
 ///|
@@ -700,6 +705,53 @@ fn mooncode_order_transcript_events(
     mooncode_push_ordered_transcript_event(ordered, used_keys, event)
   }
   ordered
+}
+
+///|
+fn mooncode_order_transcript_item_events(
+  events : Array[MoonCodeEvent],
+) -> Array[MoonCodeEvent] {
+  if !mooncode_events_have_command_links(events) {
+    return events
+  }
+  let ordered : Array[MoonCodeEvent] = []
+  let used_keys : Array[String] = []
+  for event in events {
+    if mooncode_event_is_user_prompt(event) {
+      mooncode_push_ordered_transcript_event(ordered, used_keys, event)
+      let command_id = mooncode_event_command_id(event)
+      if command_id != "" {
+        for linked in events {
+          if !mooncode_event_is_user_prompt(linked) &&
+            !mooncode_event_is_assistant_message(linked) &&
+            mooncode_event_command_id(linked) == command_id {
+            mooncode_push_ordered_transcript_event(
+              ordered, used_keys, linked,
+            )
+          }
+        }
+        for linked in events {
+          if !mooncode_event_is_user_prompt(linked) &&
+            mooncode_event_is_assistant_message(linked) &&
+            mooncode_event_command_id(linked) == command_id {
+            mooncode_push_ordered_transcript_event(
+              ordered, used_keys, linked,
+            )
+          }
+        }
+      }
+    }
+  }
+  for event in events {
+    mooncode_push_ordered_transcript_event(ordered, used_keys, event)
+  }
+  ordered
+}
+
+///|
+fn mooncode_event_is_assistant_message(event : MoonCodeEvent) -> Bool {
+  mooncode_event_is_assistant_delta(event) ||
+  mooncode_event_is_assistant_final(event)
 }
 
 ///|
