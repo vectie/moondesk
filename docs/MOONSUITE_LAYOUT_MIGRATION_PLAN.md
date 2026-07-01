@@ -623,6 +623,14 @@ Completed slices:
   approvals are documented under `.moonsuite/products/moonrobo`. Validation
   passed in MoonRobo with `moon fmt`, `moon info`, `moon check`, `moon test`
   (453/453), and `git diff --check`.
+- MoonRobo commit `bdb26b04` refreshes Rabbita cockpit UI/parser smoke
+  fixtures for product-owned MoonRobo artifact paths. Gateway commands, Robo
+  loops, proof sessions, live exercises, runtime health, runtime validation,
+  runtime calibration, and prove-loop records now appear in the cockpit
+  fixtures under `.moonsuite/products/moonrobo/...`; book-owned task
+  executions, telemetry, and RoboBook evidence remain under book `runs/...`.
+  Validation passed in MoonRobo with `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` (453/453), and `git diff --check`.
 - Moontown daemon runtime policy now defaults health/log summaries to
   `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
   evidence points at
@@ -783,7 +791,8 @@ Remaining high-priority product slices:
   validation, calibration, bridge dispatches, bridge contracts, gateway
   commands, dry-run evidence, approval records, Robo loops, Robo turns,
   prove-loop records, proof sessions, live exercises, and SDK IPC state are now
-  product-home or suite-temp based.
+  product-home or suite-temp based, and Rabbita cockpit UI/parser fixtures now
+  advertise those product-home paths for the migrated artifact classes.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
   explicit project-local override policy coverage, and any newly discovered
   readers from deeper smoke runs. New runtime writes for conversations, jobs,
