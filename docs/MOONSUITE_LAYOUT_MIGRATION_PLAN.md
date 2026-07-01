@@ -517,10 +517,11 @@ Completed slices:
   suite-temp defaults are thin adapters over `@moonsuite`. The slice keeps
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root, while product-owned gateway commands,
-  Robo loops, Robo turns, proof sessions, live exercises, and SDK IPC state
-  derive from the MoonLib MoonSuite contract. Validation passed in MoonRobo
-  with `moon update`, `moon fetch vectie/moonlib@0.1.1`, `moon check`,
-  `moon test` (453/453), `moon fmt`, `moon info`, and a final `moon check`.
+  Robo loops, Robo turns, prove-loop records, proof sessions, live exercises,
+  and SDK IPC state derive from the MoonLib MoonSuite contract. Validation
+  passed in MoonRobo with `moon update`, `moon fetch vectie/moonlib@0.1.1`,
+  `moon check`, `moon test` (453/453), `moon fmt`, `moon info`, and a final
+  `moon check`.
 - MoonRobo commit `dea4141b` moves runtime supervisor launch receipts/logs,
   runtime-health records, runtime-validation reports/sessions, and
   runtime-calibration plans/resolutions under
@@ -556,6 +557,14 @@ Completed slices:
   directory for this product-owned state. Validation passed in MoonRobo with
   `moon fmt`, `moon info`, `moon check`, `moon test` (453/453), and
   `git diff --check`.
+- MoonRobo commit `ff34fcec` moves bounded prove-loop records from
+  `runs/prove-loop` into `.moonsuite/products/moonrobo/prove-loop`. The runtime
+  package now exposes the MoonLib-backed `moonrobo_prove_loop_dir(...)` adapter,
+  direct prove-loop and repeated proof-session attempts persist/read the
+  product-home proof ledger, and resident/routine/MoonBook memory fixtures no
+  longer normalize the old book-root prove-loop path. Validation passed in
+  MoonRobo with `moon fmt`, `moon info`, `moon check`, `moon test` (453/453),
+  and `git diff --check`.
 - Moontown daemon runtime policy now defaults health/log summaries to
   `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
   evidence points at
@@ -694,8 +703,8 @@ Remaining high-priority product slices:
   and model edits under the book root while any remaining product orchestration
   path must remain a MoonLib-backed adapter. Runtime supervisor, health,
   validation, calibration, bridge dispatches, bridge contracts, gateway
-  commands, Robo loops, Robo turns, proof sessions, live exercises, and SDK IPC
-  state are now product-home or suite-temp based.
+  commands, Robo loops, Robo turns, prove-loop records, proof sessions, live
+  exercises, and SDK IPC state are now product-home or suite-temp based.
 - MoonClaw: remaining residuals are mostly historical compatibility docs and
   project-local config fallback readers outside the model loader. New runtime
   writes for conversations, jobs, gateway, onboarding config, workspace
