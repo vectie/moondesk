@@ -217,6 +217,14 @@ pattern instead of carrying independent string contracts.
   metadata. Validation for this slice: MoonClaw `moon fmt`, clean `moon info`,
   `moon check`, `moon test` with `1001/1001` tests passing, and
   `git diff --check`.
+- MoonRobo commit `43621e82` removes the remaining empty-root MoonSuite path
+  constructors from product status and SDK E1 bridge sidecar defaults. Product
+  status now reports MoonRobo and MoonClaw product homes through explicit
+  workspace-root adapters derived from the selected robot book root, and SDK E1
+  snapshot/command defaults expose workspace-root helpers that map book roots to
+  the suite-level `.tmp/products/moonrobo` temp lane. Validation for this slice:
+  MoonRobo `moon fmt`, clean `moon info`, `moon check`, `moon test` with
+  `453/453` tests passing, and `git diff --check`.
 
 Migration rules from this point forward:
 
@@ -942,6 +950,13 @@ Completed slices:
   `.moonsuite`. Validation passed with MoonRobo `moon update`, `moon fmt`,
   clean `moon info`, `moon check`, `moon test` (453/453), and
   `git diff --check`.
+- MoonRobo commit `43621e82` removes the remaining empty-root product-status
+  and SDK E1 sidecar default path constructors. Product status now projects
+  MoonRobo and cross-product MoonClaw homes from an explicit workspace/book
+  root, and SDK E1 snapshot/command defaults derive the suite temp lane from
+  that same root instead of `product_tmp_dir("", "moonrobo")`. Validation
+  passed with MoonRobo `moon fmt`, clean `moon info`, `moon check`,
+  `moon test` (453/453), and `git diff --check`.
 - Rabbita commit `20d38ef` turns the root product-home contract from local
   string concatenation into a MoonLib adapter. The existing public
   `RabbitaMoonSuiteProductHome` surface stays stable, but state, service,
