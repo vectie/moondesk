@@ -224,14 +224,17 @@ Completed slices:
 - Lepusa exposes a root product-home contract for
   `.moonsuite/products/lepusa`, including native runtime and update metadata
   paths.
+- Moontown stores default town snapshots, standing goals, watcher ledgers,
+  daemon runtime files, live/autonomy projections, book-result bridges, book
+  template requests, civic schedules, book-quality runtime files, and town
+  synthesis under `.moonsuite/products/moontown`.
 
 Remaining high-priority product slices:
 
 - MoonClaw: move daemon home, MoonCode session store, robot routine ledgers,
   skills, rules, and job indexes to `.moonsuite/products/moonclaw`.
-- Moontown: move town snapshots, standing goals, watcher ledgers,
-  operator-request queues, and book-result bridges to
-  `.moonsuite/products/moontown`.
+- Moontown: finish remaining operator-request queues, civic protocol stores,
+  and UI/runtime copy that still names the old `.moontown` paths.
 - MoonRobo: move MoonClaw routine artifacts and task bridge examples to
   `.moonsuite/products/moonclaw` / `.moonsuite/products/moonrobo` contracts.
 - Rabbita and future products: add explicit product-home contracts and smoke
