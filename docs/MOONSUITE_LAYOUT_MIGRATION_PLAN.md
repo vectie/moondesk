@@ -574,6 +574,16 @@ Completed slices:
   (999/999), and `git diff --check`. The UI `npm run check` gate now runs
   after installing dependencies, but remains blocked by pre-existing unrelated
   package errors in `events-display.tsx` and `task-utils.tsx`.
+- MoonClaw commit `c675b993` aligns the public MoonCode sidecar and watcher
+  documentation with the product-home implementation. The top-level README and
+  daemon API guide now describe durable MoonCode sessions, event streams,
+  runtime-event replay, eval evidence, and `moon_check` watcher state under
+  `.moonsuite/products/moonclaw/mooncode/...` derived from the selected
+  MoonBook root, and the commit-proof copy now names the fresh `.moonsuite`
+  and `.tmp` internal lanes instead of legacy `.moonclaw`, `.moontown`, or
+  `moonclaw-jobs` exclusions. Validation passed with MoonClaw `moon fmt`,
+  clean `moon info`, `moon check`, `moon test` (999/999), and
+  `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
