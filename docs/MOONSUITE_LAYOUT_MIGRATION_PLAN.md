@@ -279,12 +279,17 @@ Completed slices:
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
   MoonClaw routine ledgers at the MoonSuite product-home path.
+- MoonRobo SDK E1 runtime IPC defaults now use the suite temp lane under
+  `.tmp/products/moonrobo/sdk-e1` instead of global `/tmp` files; the supervisor
+  script creates nested parent directories before starting collector/writer
+  processes, and bridge/host API tests assert the new contract.
 
 Remaining high-priority product slices:
 
 - Moontown: finish remaining operator-request queues and any product-runtime
   copy that still names the old `.moontown` paths.
-- MoonRobo: migrate remaining product-owned runtime writers to the new
-  product-home contracts where they are not RoboBook-owned accepted evidence.
+- MoonRobo: migrate any remaining non-SDK product-owned runtime writers to the
+  new product-home contracts where they are not RoboBook-owned accepted
+  evidence.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests.
