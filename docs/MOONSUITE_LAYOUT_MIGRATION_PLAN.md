@@ -921,6 +921,13 @@ Completed slices:
   `moon test --target native` (24/24), and `git diff --check`; full JS
   `moon test` still hits the pre-existing DOM README examples that require a
   browser `document`.
+- MoonStat commit `2d9b732` upgrades the observer to MoonLib `0.1.3` and
+  derives book-local MoonClaw provider/session drift targets through
+  `@moonsuite.product_artifact_for_workspace_root(...)`. The suite drift report
+  now proves the current workspace-root contract for suite-hosted MoonBooks
+  while keeping MoonStat a validator/reporter instead of a path-schema owner.
+  Validation passed with MoonStat `moon update`, `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` (774/774), and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -934,8 +941,9 @@ Remaining high-priority product slices:
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
   future drift additions, but do not add a parallel path schema there. The
-  book-local MoonCode sidecar drift target now reports the MoonClaw product
-  home, matching MoonClaw's current durable session contract.
+  book-local MoonClaw provider and MoonCode sidecar drift targets now derive
+  from the MoonLib workspace-root product-artifact helper, matching MoonClaw's
+  current durable product-home contract.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
