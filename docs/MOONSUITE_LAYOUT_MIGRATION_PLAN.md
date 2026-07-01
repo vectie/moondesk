@@ -373,6 +373,13 @@ Completed slices:
 - Moonstat advertises and writes MoonClaw provider manifests through
   `.moonsuite/products/moonclaw/providers.json`, and advertises MoonClaw model
   and config candidates under `.moonsuite/products/moonclaw`.
+- MoonStat commit `0428848` splits the active suite-status and product-state
+  defaults: suite discovery now writes `.moonsuite/suite-status.json`, while
+  MoonStat-owned usage request logs, session sync offsets, and editable model
+  pricing now default under `.moonsuite/products/moonstat`. Help text, README
+  copy, and white-box coverage assert the fresh suite-root/product-home
+  boundary. Validation passed in MoonStat with `moon fmt`, `moon info`,
+  `moon check`, `moon test` (774/774), and `git diff --check`.
 - MoonBook installs the MoonClaw extension provider manifest into the
   MoonSuite-level MoonClaw product home when a book lives under
   `books/<book-id>`, while standalone book roots use their own
