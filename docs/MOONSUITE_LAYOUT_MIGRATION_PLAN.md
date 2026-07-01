@@ -196,6 +196,17 @@ pattern instead of carrying independent string contracts.
   `home/security/state.json`. Validation for this slice: MoonClaw `moon fmt`,
   clean `moon info`, `moon check`, `moon test` with `995/995` tests passing,
   and `git diff --check`.
+- MoonClaw commit `f7f2415e` routes the core job, ACP session, conversation,
+  and daemon-lock product homes through MoonLib workspace-root helpers.
+  MoonClaw homes and CWDs under `books/<book-id>` now resolve jobs,
+  `acp_sessions.json`, conversations, and `daemon.json` into the suite-level
+  `.moonsuite/products/moonclaw` home instead of a nested book-local
+  `.moonsuite`. Provider task resolution now separates manifest discovery from
+  workspace affinity, so suite-level job run paths can still select the
+  workspace-affine provider target when the originating book root is carried in
+  metadata. Validation for this slice: MoonClaw `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` with `1001/1001` tests passing, and
+  `git diff --check`.
 
 Migration rules from this point forward:
 
