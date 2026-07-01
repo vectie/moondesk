@@ -865,6 +865,18 @@ Completed slices:
   white-box coverage rejects the old `.moonclaw/mooncode/sessions` contract
   string. Validation passed with MoonClaw `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (997/997), and `git diff --check`.
+- MoonClaw commit `b84c293b` aligns ACP configuration discovery with the
+  workspace-first project-local override policy already used by the gateway
+  command. `acp add codex` now reads and writes the workspace-derived
+  `.moonsuite/products/moonclaw/moonclaw.json` when that project-local product
+  config exists, falling back to the home product config only when no workspace
+  config is present. White-box coverage proves the workspace product config
+  overrides the home product config without mutating the home target, and
+  provider-task docs now advertise
+  `.moonsuite/products/moonclaw/providers.json` instead of legacy
+  `.moonclaw/providers.json`. Validation passed with MoonClaw `moon fmt`,
+  clean `moon info`, `moon check`, `moon test` (1000/1000), and
+  `git diff --check`.
 - MoonStat commit `e776bef` updates the suite drift report to match that
   MoonCode ownership boundary. Book-local
   `books/<book-id>/.moonclaw/mooncode/sessions` drift now reports the canonical
