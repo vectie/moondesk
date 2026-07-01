@@ -261,6 +261,10 @@ Completed slices:
   book-template request/config/event files, Moondesk bridge records, and
   book-result bridges at `.moonsuite/products/moontown`; cookbook tests assert
   the generated book-template flow no longer emits the legacy inbox path.
+- Moontown's MoonBook catalog default now writes
+  `.moonsuite/products/moontown/moonbooks.json`, matching Moondesk's bridge
+  path; adapter tests assert the default and book-quality status tests no
+  longer depend on a repo-local legacy catalog fixture.
 - MoonClaw stores MoonCode durable session sidecars under
   `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
   native capability payload, and excludes `.moonsuite` sidecars from MoonCode
@@ -295,8 +299,9 @@ Completed slices:
 
 Remaining high-priority product slices:
 
-- Moontown: finish any residual product-runtime copy that still names old
-  `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
+- Moontown: finish remaining civic, daemon, and synthesis runtime copy that
+  still names old `.moontown` paths, while keeping book-layout paths for the
+  Phase 5 cutover.
 - MoonRobo: audit residual runtime writers and keep only RoboBook-owned
   accepted evidence under the book root.
 - Rabbita and future products: add explicit product-home contracts and smoke
