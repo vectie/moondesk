@@ -374,6 +374,11 @@ Completed slices:
   and the default external MoonClaw checkout root is
   `.moonsuite/products/moontown/external/moonclaw`; civic and MoonClaw adapter
   tests assert the old `.moontown` paths are not emitted.
+- Moontown now depends on MoonLib `0.1.1`; its storage product-home, service,
+  temp, snapshot, standing-goal, watcher, and mayor town-synthesis paths are
+  thin adapters over `@moonsuite`, and town synthesis execution records register
+  the mayor workspace root as `.moonsuite/products/moontown` instead of
+  `.moontown`.
 
 Remaining high-priority product slices:
 
@@ -382,7 +387,7 @@ Remaining high-priority product slices:
   analytics, and UI dependencies.
 - MoonStat: broaden drift reports beyond the first legacy product-home
   candidates as more product migrations land.
-- Moontown: finish remaining synthesis/runtime copy that still names old
+- Moontown: finish civic/cookbook/book-projection copy that still names old
   `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
 - MoonRobo: continue auditing residual runtime writers so RoboBook-owned
   receipts, telemetry, task executions, reviews, observations, and model edits
