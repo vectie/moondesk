@@ -228,13 +228,17 @@ Completed slices:
   daemon runtime files, live/autonomy projections, book-result bridges, book
   template requests, civic schedules, book-quality runtime files, and town
   synthesis under `.moonsuite/products/moontown`.
+- Moontown stores civic protocol registries, status projections, protocol
+  ledgers, civic service status, and civic service result bridges under
+  `.moonsuite/products/moontown`, and Rabbita/cookbook operator copy now points
+  at the MoonSuite product-home paths.
 
 Remaining high-priority product slices:
 
 - MoonClaw: move daemon home, MoonCode session store, robot routine ledgers,
   skills, rules, and job indexes to `.moonsuite/products/moonclaw`.
-- Moontown: finish remaining operator-request queues, civic protocol stores,
-  and UI/runtime copy that still names the old `.moontown` paths.
+- Moontown: finish remaining operator-request queues and any product-runtime
+  copy that still names the old `.moontown` paths.
 - MoonRobo: move MoonClaw routine artifacts and task bridge examples to
   `.moonsuite/products/moonclaw` / `.moonsuite/products/moonrobo` contracts.
 - Rabbita and future products: add explicit product-home contracts and smoke
