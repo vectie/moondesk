@@ -131,7 +131,8 @@ pattern instead of carrying independent string contracts.
   contract rather than the source of path definitions. Validation for the latest
   MoonStat slice: `moon fmt`, `moon info`, `moon check`, and `moon test` with
   `774/774` tests passing.
-- Moontown now depends on MoonLib `0.1.2` for book-root-derived MoonSuite paths.
+- Moontown now depends on MoonLib `0.1.3` for book-root-derived and
+  workspace-root-derived MoonSuite paths.
   PlanBook repair job indexes and proposal ledgers now resolve to
   `.moonsuite/products/moonclaw/jobs/...` through `@moonsuite`, MoonClaw store
   maintenance compacts that product-home job store, and PlanBook's MoonClaw run
@@ -736,6 +737,16 @@ Completed slices:
   `.moontown/mooncode-book-results` and `.moontown/moonbook` write targets.
   Validation passed with Moontown `moon fmt`, `moon info`, `moon check`, and
   `moon test` (925/925).
+- Moontown commit `4eb1f047` upgrades to MoonLib `0.1.3` and routes the
+  remaining active MoonClaw home/config writers in the MoonClaw command
+  adapter, book-quality review dispatch/reconcile flow, and Wenyu build
+  preseed through MoonLib-derived MoonClaw product homes. Book-quality review
+  config now writes
+  `.moonsuite/products/moontown/book-quality/.moonsuite/products/moonclaw/moonclaw.json`,
+  direct review polling reads jobs from that matching product home, and Wenyu
+  preseed no longer creates root-local `moonclaw.json` or `.moonclaw` config
+  files. Validation passed with Moontown `moon update`, `moon fmt`, clean
+  `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -754,7 +765,9 @@ Remaining high-priority product slices:
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
   launchd product-home script path are now covered. The MoonCode sidecar
   processed-result ledger and MoonBook fallback checkout path are now
-  product-home based.
+  product-home based, and the active MoonClaw command/book-quality/preseed
+  home writers now use MoonLib-backed MoonClaw product homes instead of
+  `.moonclaw`.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
