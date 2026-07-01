@@ -78,7 +78,10 @@ test "source layer inference covers desk explorer roots" {
   assert_true(@core.infer_source_layer("app/index.html") is App)
   assert_true(@core.infer_source_layer("book/outputs/report.pdf") is BookOutput)
   assert_true(
-    @core.infer_source_layer(".moontown/books/demo/book.json") is Config,
+    @core.infer_source_layer(".moonsuite/products/moontown/town.json") is Config,
+  )
+  assert_true(
+    @core.infer_source_layer(".tmp/products/mooncode/scratch") is Config,
   )
   assert_true(
     @core.infer_source_layer(".moonclaw/runs/run-1/log.jsonl") is RunArtifact,
