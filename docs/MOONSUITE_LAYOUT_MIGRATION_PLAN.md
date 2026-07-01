@@ -215,6 +215,15 @@ Completed slices:
   MoonSuite-level MoonClaw product home when a book lives under
   `books/<book-id>`, while standalone book roots use their own
   `.moonsuite/products/moonclaw` product home.
+- MoonFish exposes a root product-home contract for
+  `.moonsuite/products/moonfish`, `.tmp/products/moonfish`, and accepted
+  MoonBook outputs under `books/<book-id>/outputs/moonfish`.
+- MoonMoon exposes a root product-home contract for
+  `.moonsuite/products/moonmoon`, `.tmp/products/moonmoon`, and accepted
+  MoonBook outputs under `books/<book-id>/outputs/moonmoon`.
+- Lepusa exposes a root product-home contract for
+  `.moonsuite/products/lepusa`, including native runtime and update metadata
+  paths.
 
 Remaining high-priority product slices:
 
@@ -225,5 +234,5 @@ Remaining high-priority product slices:
   `.moonsuite/products/moontown`.
 - MoonRobo: move MoonClaw routine artifacts and task bridge examples to
   `.moonsuite/products/moonclaw` / `.moonsuite/products/moonrobo` contracts.
-- MoonFish, MoonMoon, Lepusa, Rabbita, and future products: add explicit
-  product-home contracts and smoke tests.
+- Rabbita and future products: add explicit product-home contracts and smoke
+  tests.
