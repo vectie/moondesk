@@ -41,6 +41,15 @@ moon run cmd/main --target native -- lepusa launch-session macos
 moon run cmd/main --target native -- lepusa launch macos
 ```
 
+The fresh MoonSuite layout smoke seeds a temporary workspace with a MoonBook
+under `books/`, including `book/moonbook-ui-state.json` and
+`book/site/generated/index.html`, then runs Lepusa `live-smoke` against that
+root:
+
+```bash
+scripts/lepusa_fresh_books_smoke.sh
+```
+
 `bundle` is Lepusa-only. It builds `moondesk-lepusa.app` under the selected
 `--out` directory, starts from the generated localhost manifest, and forwards
 the bundle workspace/UI choices into that manifest:
