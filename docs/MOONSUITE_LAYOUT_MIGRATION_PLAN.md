@@ -523,6 +523,15 @@ Completed slices:
   suite MoonClaw product-home ledger without creating the legacy `.moonclaw`
   todo file. Validation passed with MoonClaw `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (996/996), and `git diff --check`.
+- MoonClaw commit `620127d6` replaces the remaining hand-built MoonClaw
+  product-home helpers for MoonCode durable session storage, skills, rules,
+  daemon lock files, and robot routine run ledgers with MoonLib `@moonsuite`
+  constructors. MoonCode durable sessions use the workspace-root constructor so
+  standalone roots keep local `.moonsuite/products/moonclaw/mooncode/sessions`
+  storage while suite-hosted `books/<book-id>` roots resolve to the owning
+  suite's MoonClaw product home. Validation passed with MoonClaw `moon fmt`,
+  clean `moon info`, `moon check`, `moon test` (997/997), and
+  `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -754,13 +763,13 @@ Remaining high-priority product slices:
   commands, dry-run evidence, approval records, Robo loops, Robo turns,
   prove-loop records, proof sessions, live exercises, and SDK IPC state are now
   product-home or suite-temp based.
-- MoonClaw: remaining residuals are mostly historical compatibility docs and
-  project-local config fallback readers outside the model loader. New runtime
-  writes for conversations, jobs, gateway, onboarding config, workspace
-  defaults, ACP state, OAuth credentials, starter attachments, provider-task
-  artifacts, worktree scratch, MoonCode sessions and watchers, skills, rules,
-  daemon lock, robot routine ledgers, and todo session state are now
-  product-home or suite-temp based.
+- MoonClaw: remaining residuals are mostly historical compatibility docs,
+  explicit project-local override policy coverage, and any newly discovered
+  readers from deeper smoke runs. New runtime writes for conversations, jobs,
+  gateway, onboarding config, workspace defaults, ACP state, OAuth credentials,
+  starter attachments, provider-task artifacts, worktree scratch, MoonCode
+  sessions and watchers, skills, rules, daemon lock, robot routine ledgers, and
+  todo session state are now MoonLib-backed product-home or suite-temp based.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests. MoonFish and MoonMoon have root product-home contracts and now consume
   MoonLib for those paths; remaining work there is broader smoke integration
