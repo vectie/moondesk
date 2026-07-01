@@ -429,8 +429,8 @@ Completed slices:
   longer depend on a repo-local legacy catalog fixture.
 - MoonClaw stores MoonCode durable session sidecars under
   `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
-  native capability payload, and excludes `.moonsuite` sidecars from MoonCode
-  commit-proof git status/staging.
+  native capability payload, and excludes fresh internal `.moonsuite` and
+  `.tmp` lanes from MoonCode commit-proof git status/staging.
 - MoonClaw loads global and local rule files from
   `.moonsuite/products/moonclaw/rules`, and its rules prompt copy names the
   MoonSuite product-home directory.
@@ -485,6 +485,15 @@ Completed slices:
   configs are ignored where retained as fixtures. Validation passed with
   MoonClaw `moon fmt`, clean `moon info`, `moon check`, `moon test` (995/995),
   and `git diff --check`.
+- MoonClaw commit `6a23ea1a` narrows MoonCode commit-proof git status/staging
+  exclusions to the fresh internal `.moonsuite` and `.tmp` lanes. Legacy
+  `.moonclaw`, `.moontown`, and `moonclaw-jobs` directories are no longer
+  protected as runtime internals by the commit proof path; white-box coverage
+  proves those legacy paths are committed when present while suite internal
+  state remains unstaged. The daemon model test fixture also stopped creating
+  an unused `.moonclaw` directory. Validation passed with MoonClaw `moon fmt`,
+  clean `moon info`, `moon check`, `moon test` (995/995), and
+  `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -660,13 +669,13 @@ Remaining high-priority product slices:
   path must remain a MoonLib-backed adapter. Runtime supervisor, health,
   validation, calibration, gateway commands, Robo loops, proof sessions, live
   exercises, and SDK IPC state are now product-home or suite-temp based.
-- MoonClaw: remaining residuals are mostly historical compatibility docs,
-  project-local config fallback readers outside the model loader, and legacy
-  daemon git-exclude guards. New runtime writes for conversations, jobs,
-  gateway, onboarding config, workspace defaults, ACP state, OAuth credentials, starter
-  attachments, provider-task artifacts, worktree scratch, MoonCode sessions and
-  watchers, skills, rules, daemon lock, and robot routine ledgers are now
-  product-home or suite-temp based.
+- MoonClaw: remaining residuals are mostly historical compatibility docs and
+  project-local config fallback readers outside the model loader. New runtime
+  writes for conversations, jobs, gateway, onboarding config, workspace
+  defaults, ACP state, OAuth credentials, starter attachments, provider-task
+  artifacts, worktree scratch, MoonCode sessions and watchers, skills, rules,
+  daemon lock, and robot routine ledgers are now product-home or suite-temp
+  based.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests. MoonFish and MoonMoon have root product-home contracts and now consume
   MoonLib for those paths; remaining work there is broader smoke integration
