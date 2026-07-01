@@ -366,6 +366,13 @@ Completed slices:
   root-local and nested config reads as fallback inputs. Validation passed with
   MoonClaw `moon update`, `moon check`, `moon test` (985/985), `moon fmt`,
   `moon info`, and final `moon check`.
+- MoonClaw commit `0d3cace0` moves the remaining active conversation store,
+  default MoonClaw/Agent logs, ACP session state, and ACP/plugin/job/gateway/
+  provider config discovery onto `.moonsuite/products/moonclaw`, with product
+  config preferred over legacy home-level config while project-local config can
+  still override it. Validation passed with MoonClaw `moon check`, `moon test`
+  (991/991), `moon fmt`, `moon info`, final `moon check`, and
+  `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -517,10 +524,12 @@ Remaining high-priority product slices:
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration
   path must remain a MoonLib-backed adapter.
-- MoonClaw: continue residual audits for historical compatibility readers such
-  as conversation/config fallbacks and daemon git-exclude guards; new runtime
-  writes for jobs, gateway, onboarding config, workspace defaults, skills,
-  rules, daemon lock, MoonCode sessions, and robot routine ledgers are now
-  product-home based.
+- MoonClaw: remaining residuals are OAuth credential stores, worktree scratch
+  directories, attachment materialization, provider-task artifacts, MoonCode
+  watcher state, and legacy daemon git-exclude guards. These need explicit
+  suite-root or book-vs-product placement decisions before removing the old
+  `.moonclaw` paths. New runtime writes for conversations, jobs, gateway,
+  onboarding config, workspace defaults, ACP state, skills, rules, daemon lock,
+  MoonCode sessions, and robot routine ledgers are now product-home based.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests.
