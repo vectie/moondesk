@@ -302,12 +302,18 @@ Completed slices:
   assert proof sessions no longer write to `runs/proof-sessions`, product
   status exposes the product-home paths, and resident/memory context reads the
   new proof-session ledger.
+- Moontown daemon runtime policy now defaults health/log summaries to
+  `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
+  evidence points at
+  `.moonsuite/products/moontown/civic/protocols/<building-id>/*.jsonl`; targeted
+  daemon/editor tests and the full Moontown test suite assert the product-home
+  contract.
 
 Remaining high-priority product slices:
 
-- Moontown: finish remaining civic, daemon, and synthesis runtime copy that
-  still names old `.moontown` paths, while keeping book-layout paths for the
-  Phase 5 cutover.
+- Moontown: finish remaining civic and synthesis runtime copy that still names
+  old `.moontown` paths, while keeping book-layout paths for the Phase 5
+  cutover.
 - MoonRobo: continue auditing residual runtime writers so RoboBook-owned
   receipts, telemetry, task executions, reviews, observations, and model edits
   remain under the book root while any remaining product orchestration ledgers
