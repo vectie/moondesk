@@ -1127,7 +1127,7 @@ test "desk trash action clears selection and restore opens item" {
         workspace_id: "book-demo",
         path: "wiki/old.md",
         directory: "wiki",
-        trash_path: ".moontown/trash/files/trash-demo/old.md",
+        trash_path: ".moonsuite/products/moondesk/trash/files/trash-demo/old.md",
         trashed_count: 1,
       }),
     ),
@@ -1137,7 +1137,7 @@ test "desk trash action clears selection and restore opens item" {
   assert_true(trashed.desk_selected_paths == [])
   assert_eq(
     trashed.desk_last_trash_path,
-    ".moontown/trash/files/trash-demo/old.md",
+    ".moonsuite/products/moondesk/trash/files/trash-demo/old.md",
   )
   assert_eq(trashed.desk_trash_status, "moved to trash wiki/old.md")
   let (_, restoring) = update_workspace_surface_actions(
@@ -1169,8 +1169,8 @@ test "desk trash listing loads entries and restores selected trash item" {
         {
           workspace_id: "book-demo",
           original_path: "wiki/old.md",
-          trash_path: ".moontown/trash/files/trash-demo/old.md",
-          receipt_path: ".moontown/trash/receipts/trash-demo.json",
+          trash_path: ".moonsuite/products/moondesk/trash/files/trash-demo/old.md",
+          receipt_path: ".moonsuite/products/moondesk/trash/receipts/trash-demo.json",
           trashed_at: "2026-06-30T10:00:00Z",
         },
       ]),
@@ -1182,7 +1182,9 @@ test "desk trash listing loads entries and restores selected trash item" {
   assert_eq(loaded.desk_trash_status, "1 item(s) in trash")
   let (_, restoring) = update_workspace_surface_actions(
     dispatch,
-    RestoreDeskTrashEntry(".moontown/trash/files/trash-demo/old.md"),
+    RestoreDeskTrashEntry(
+      ".moonsuite/products/moondesk/trash/files/trash-demo/old.md",
+    ),
     loaded,
   )
   assert_eq(restoring.desk_trash_status, "restoring trash item")
@@ -1274,7 +1276,7 @@ test "desk trash action accepts multi selection and blocks empty restore" {
         workspace_id: "book-demo",
         path: "wiki/alpha.md",
         directory: "wiki",
-        trash_path: ".moontown/trash/files/trash-beta/beta.md",
+        trash_path: ".moonsuite/products/moondesk/trash/files/trash-beta/beta.md",
         trashed_count: 2,
       }),
     ),

@@ -59,7 +59,8 @@ Optional external services:
 
 Moondesk can browse and edit a workspace without sibling source checkouts.
 Starting or ticking the Moontown daemon is optional and requires an explicit
-workspace-local descriptor at `.moontown/moondesk-daemon/service.json`:
+MoonSuite product-home descriptor at
+`.moonsuite/products/moontown/service.json`:
 
 ```json
 {
@@ -79,8 +80,8 @@ workspace-local descriptor at `.moontown/moondesk-daemon/service.json`:
 Without that file, daemon start/tick and town LaunchAgent creation return
 `not-configured` instead of assuming the workspace is a Moontown source tree.
 
-MoonCode can also launch MoonClaw from an explicit workspace-local descriptor at
-`.moontown/moondesk-daemon/moonclaw-service.json`:
+MoonCode can also launch MoonClaw from an explicit MoonSuite product-home
+descriptor at `.moonsuite/products/moonclaw/service.json`:
 
 ```json
 {

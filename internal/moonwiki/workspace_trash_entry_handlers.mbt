@@ -102,10 +102,7 @@ async fn list_workspace_trash_entries(
   workspace : @desk.DeskWorkspace,
 ) -> Array[Json] {
   let entries : Array[Json] = []
-  let receipts_dir = @pathx.join(
-    workspace.root_path,
-    ".moontown/trash/receipts",
-  )
+  let receipts_dir = desk_trash_receipts_root(workspace.root_path)
   for name in read_directory_names(receipts_dir, include_hidden=false) {
     if !name.has_suffix(".json") {
       continue
@@ -118,8 +115,8 @@ async fn list_workspace_trash_entries(
       continue
     }
     let trash_path = json_string(receipt, "trash_path", default="")
-    let trash = match resolve_workspace_path(workspace.root_path, trash_path) {
-      Some((absolute, clean_relative)) => (absolute, clean_relative)
+    let trash = match resolve_desk_trash_path(workspace.root_path, trash_path) {
+      Some(absolute) => (absolute, @pathx.normalize(trash_path))
       None => continue
     }
     let (trash_absolute, trash_relative) = trash
@@ -181,9 +178,21 @@ async fn trash_workspace_entry(
       Err(error) => return Err(error)
     }
     let trash_id = unique_trash_id(source_relative)
-    let trash_relative = ".moontown/trash/files/\{trash_id}/\{@desk.display_name(source_relative)}"
-    let receipt_relative = ".moontown/trash/receipts/\{trash_id}.json"
-    let trash_absolute = @pathx.join(workspace.root_path, trash_relative)
+    let trash_relative = desk_trash_file_relative_path(
+      trash_id,
+      @desk.display_name(source_relative),
+    )
+    let receipt_relative = desk_trash_receipt_relative_path(trash_id)
+    let trash_absolute = match
+      resolve_desk_trash_path(workspace.root_path, trash_relative) {
+      Some(path) => path
+      None =>
+        return Err(
+          workspace_entry_create_error(
+            500, "Internal Server Error", "Invalid trash target",
+          ),
+        )
+    }
     if @fs.exists(trash_absolute) {
       return Err(
         workspace_entry_create_error(
@@ -261,8 +270,24 @@ async fn trash_planned_workspace_entry(
   trash_relative : String,
   receipt_relative : String,
 ) -> Result[Json, Json] {
-  let trash_absolute = @pathx.join(workspace.root_path, trash_relative)
-  let receipt_absolute = @pathx.join(workspace.root_path, receipt_relative)
+  let trash_absolute = match
+    resolve_desk_trash_path(workspace.root_path, trash_relative) {
+    Some(path) => path
+    None =>
+      return Err(
+        workspace_entry_create_error(400, "Bad Request", "Invalid trash path"),
+      )
+  }
+  let receipt_absolute = match
+    resolve_desk_trash_receipt_path(workspace.root_path, receipt_relative) {
+    Some(path) => path
+    None =>
+      return Err(
+        workspace_entry_create_error(
+          400, "Bad Request", "Invalid trash receipt path",
+        ),
+      )
+  }
   @fsx.make_directory(
     @pathx.dirname(trash_absolute).to_owned(),
     recursive=true,
@@ -353,8 +378,8 @@ async fn restore_workspace_entry(
   let trash_path = decode_query_value(
     json_string(payload, "trash_path", default=""),
   )
-  let trash = match resolve_workspace_path(workspace.root_path, trash_path) {
-    Some((absolute, clean_relative)) => (absolute, clean_relative)
+  let trash = match resolve_desk_trash_path(workspace.root_path, trash_path) {
+    Some(absolute) => (absolute, @pathx.normalize(trash_path))
     None =>
       return Err(
         workspace_entry_create_error(400, "Bad Request", "Invalid trash path"),
@@ -442,12 +467,12 @@ fn unique_trash_id(path : String) -> String {
 
 ///|
 fn is_desk_trash_path(path : String) -> Bool {
-  path.has_prefix(".moontown/trash/files/") && !path.contains("/../")
+  path.has_prefix(desk_trash_files_relative_prefix()) && !path.contains("/../")
 }
 
 ///|
 async fn read_trash_receipt(root : String, trash_relative : String) -> Json? {
-  let prefix = ".moontown/trash/files/"
+  let prefix = desk_trash_files_relative_prefix()
   if !trash_relative.has_prefix(prefix) {
     return None
   }
@@ -457,8 +482,8 @@ async fn read_trash_receipt(root : String, trash_relative : String) -> Json? {
     None => return None
   }
   let receipt_absolute = @pathx.join(
-    root,
-    ".moontown/trash/receipts/\{id}.json",
+    desk_trash_receipts_root(root),
+    id + ".json",
   )
   if !@fs.exists(receipt_absolute) {
     return None
@@ -479,5 +504,80 @@ fn trash_workspace_entry_response(
     "path": path,
     "directory": parent_path_for_created_entry(path),
     "trash_path": trash_path,
+  }
+}
+
+///|
+fn desk_trash_files_relative_root() -> String {
+  ".moonsuite/products/moondesk/trash/files"
+}
+
+///|
+fn desk_trash_files_relative_prefix() -> String {
+  desk_trash_files_relative_root() + "/"
+}
+
+///|
+fn desk_trash_receipts_relative_root() -> String {
+  ".moonsuite/products/moondesk/trash/receipts"
+}
+
+///|
+fn desk_trash_files_root(workspace_root : String) -> String {
+  moonsuite_product_artifact_for_workspace_root(
+    workspace_root, "moondesk", "trash/files",
+  )
+}
+
+///|
+fn desk_trash_receipts_root(workspace_root : String) -> String {
+  moonsuite_product_artifact_for_workspace_root(
+    workspace_root, "moondesk", "trash/receipts",
+  )
+}
+
+///|
+fn desk_trash_file_relative_path(trash_id : String, name : String) -> String {
+  @pathx.join(@pathx.join(desk_trash_files_relative_root(), trash_id), name)
+}
+
+///|
+fn desk_trash_receipt_relative_path(trash_id : String) -> String {
+  @pathx.join(desk_trash_receipts_relative_root(), trash_id + ".json")
+}
+
+///|
+fn resolve_desk_trash_path(
+  workspace_root : String,
+  trash_relative : String,
+) -> String? {
+  let clean = @pathx.normalize(trash_relative)
+  let prefix = desk_trash_files_relative_prefix()
+  if !clean.has_prefix(prefix) || clean.contains("/../") {
+    return None
+  }
+  let rest = clean[prefix.length():].to_owned()
+  if rest == "" {
+    None
+  } else {
+    Some(@pathx.join(desk_trash_files_root(workspace_root), rest))
+  }
+}
+
+///|
+fn resolve_desk_trash_receipt_path(
+  workspace_root : String,
+  receipt_relative : String,
+) -> String? {
+  let clean = @pathx.normalize(receipt_relative)
+  let prefix = desk_trash_receipts_relative_root() + "/"
+  if !clean.has_prefix(prefix) || clean.contains("/../") {
+    return None
+  }
+  let rest = clean[prefix.length():].to_owned()
+  if rest == "" {
+    None
+  } else {
+    Some(@pathx.join(desk_trash_receipts_root(workspace_root), rest))
   }
 }

@@ -44,8 +44,8 @@ pub fn executable_book_lifecycle_contract_json() -> Json {
         "moonclaw",
         "Create or resume a durable MoonCode session under the selected MoonBook and expose commands/events by session id.",
         [
-          ".moonclaw/mooncode/sessions/<id>/session.json", "commands.jsonl", "events.jsonl",
-          "runtime-receipts.jsonl",
+          ".moonsuite/products/moonclaw/mooncode/sessions/<id>/session.json", "commands.jsonl",
+          "events.jsonl", "runtime-receipts.jsonl",
         ],
       ),
       executable_book_lifecycle_step(

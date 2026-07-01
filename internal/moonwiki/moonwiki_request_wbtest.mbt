@@ -773,9 +773,16 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   }
   let trash_path = json_string(trashed_note_json, "trash_path", default="")
   assert_eq(json_string(trashed_note_json, "path", default=""), "wiki/beta.md")
-  assert_true(@fs.exists(@pathx.join(book_root, trash_path)))
+  assert_true(
+    trash_path.has_prefix(".moonsuite/products/moondesk/trash/files/"),
+  )
+  assert_true(@fs.exists(@pathx.join(root, trash_path)))
   assert_false(@fs.exists(@pathx.join(book_root, "wiki/beta.md")))
-  assert_true(@fs.exists(@pathx.join(book_root, ".moontown/trash/receipts")))
+  assert_true(
+    @fs.exists(@pathx.join(root, ".moonsuite/products/moondesk/trash/receipts")),
+  )
+  assert_false(@fs.exists(@pathx.join(book_root, ".moontown/trash")))
+  assert_false(@fs.exists(@pathx.join(book_root, ".moonsuite")))
   let trash_entries = list_workspace_trash_entries(workspace)
   assert_eq(trash_entries.length(), 1)
   assert_eq(
@@ -799,7 +806,7 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   }
   assert_eq(json_string(restored_note_json, "path", default=""), "wiki/beta.md")
   assert_true(@fs.exists(@pathx.join(book_root, "wiki/beta.md")))
-  assert_false(@fs.exists(@pathx.join(book_root, trash_path)))
+  assert_false(@fs.exists(@pathx.join(root, trash_path)))
   assert_eq(list_workspace_trash_entries(workspace).length(), 0)
   match trash_workspace_entry(workspace, { "path": "wiki" }) {
     Ok(_) => fail("expected section trash rejection")
@@ -1425,7 +1432,10 @@ async test "desk server routes work end to end and reject path escapes" {
       200,
     )
     let trash_path = json_string(trashed_note, "trash_path", default="")
-    assert_true(@fs.exists(@pathx.join(book_root, trash_path)))
+    assert_true(
+      trash_path.has_prefix(".moonsuite/products/moondesk/trash/files/"),
+    )
+    assert_true(@fs.exists(@pathx.join(root, trash_path)))
     assert_false(
       @fs.exists(@pathx.join(book_root, "wiki/http-archive/renamed-daily.md")),
     )
@@ -1441,7 +1451,7 @@ async test "desk server routes work end to end and reject path escapes" {
     assert_true(
       @fs.exists(@pathx.join(book_root, "wiki/http-archive/renamed-daily.md")),
     )
-    assert_false(@fs.exists(@pathx.join(book_root, trash_path)))
+    assert_false(@fs.exists(@pathx.join(root, trash_path)))
 
     let preview = test_http_get_json(
       base + "/api/workspaces/\{workspace_id}/preview?path=wiki%2Findex.md",

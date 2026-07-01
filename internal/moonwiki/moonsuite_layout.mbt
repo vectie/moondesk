@@ -39,6 +39,15 @@ pub fn moonsuite_product_dir(root : String, product_id : String) -> String {
 }
 
 ///|
+pub fn moonsuite_product_artifact_for_workspace_root(
+  root : String,
+  product_id : String,
+  relative : String,
+) -> String {
+  @moonsuite.product_artifact_for_workspace_root(root, product_id, relative)
+}
+
+///|
 pub fn moonsuite_services_root(root : String) -> String {
   @moonsuite.services_root(root)
 }

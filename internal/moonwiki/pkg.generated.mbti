@@ -14,6 +14,8 @@ pub fn moonsuite_exports_root(String) -> String
 
 pub fn moonsuite_inbox_root(String) -> String
 
+pub fn moonsuite_product_artifact_for_workspace_root(String, String, String) -> String
+
 pub fn moonsuite_product_dir(String, String) -> String
 
 pub fn moonsuite_product_registry_path(String) -> String

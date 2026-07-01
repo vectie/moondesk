@@ -115,11 +115,11 @@ package is available through MoonLib `0.1.3`; that version adds both
 book-root-derived and workspace-root-derived suite/product path constructors so
 products can receive either `books/<book-id>` workspaces or standalone book
 roots and still derive the correct owning suite product home. Moondesk depends
-on MoonLib and `internal/moonwiki/moonsuite_layout.mbt` is a thin compatibility
-adapter over `@moonsuite` for suite root, book root, product-home, manifest,
-registry, cache, and service paths. Remaining product-local helpers should
-follow the same wrapper pattern instead of carrying independent string
-contracts.
+on MoonLib `0.1.3` and `internal/moonwiki/moonsuite_layout.mbt` is a thin
+compatibility adapter over `@moonsuite` for suite root, book root, product-home,
+workspace-root-derived product artifacts, manifest, registry, cache, and
+service paths. Remaining product-local helpers should follow the same wrapper
+pattern instead of carrying independent string contracts.
 - MoonStat now depends on MoonLib `0.1.2` and consumes `@moonsuite` for its
   home `.moonsuite` state directory plus MoonClaw product-home provider, model,
   and config manifest paths. MoonStat also exposes `moonstat suite drift` and
@@ -332,6 +332,16 @@ Completed slices:
   writes product service state under `.moonsuite/products/*`, hides
   `.moonsuite` and `.tmp` in the normal VFS, and stores MoonCode sessions under
   `.moonsuite/products/mooncode/sessions`.
+- Moondesk now depends on MoonLib `0.1.3` and uses
+  `@moonsuite.product_artifact_for_workspace_root` through its MoonWiki adapter
+  for scoped Desk trash state. Workspace trash files and receipts now live under
+  `.moonsuite/products/moondesk/trash`, even when the selected workspace is a
+  suite-hosted `books/<book-id>` MoonBook; restore/listing resolve only that
+  Moondesk product-home prefix instead of treating old `.moontown/trash` paths
+  as valid workspace paths. MoonCode capability copy and README service
+  descriptor copy now name the current product-home paths. Validation for this
+  slice: Moondesk `moon update`, `moon fmt`, `moon info`, `moon check`, and
+  `moon test` with `448/448` tests passing.
 - Moonstat advertises and writes MoonClaw provider manifests through
   `.moonsuite/products/moonclaw/providers.json`, and advertises MoonClaw model
   and config candidates under `.moonsuite/products/moonclaw`.
