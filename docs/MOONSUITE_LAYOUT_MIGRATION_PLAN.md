@@ -380,6 +380,14 @@ Completed slices:
 - MoonFish exposes a root product-home contract for
   `.moonsuite/products/moonfish`, `.tmp/products/moonfish`, and accepted
   MoonBook outputs under `books/<book-id>/outputs/moonfish`.
+- MoonFish commit `0518831` moves suite-status references off the old
+  home-global `~/.moonsuite/suite-status.json` default and derives them through
+  the MoonLib-backed `@model.moonsuite_suite_status_path(...)` helper. App-tool
+  bindings, suite-settings defaults, product fixtures, planning/evaluation/
+  acceptance/parity/workspace tests, and app-smoke state-path validation now use
+  the suite-local `.moonsuite/suite-status.json` contract. Validation passed in
+  MoonFish with `moon fmt`, `moon info`, `moon check`, `moon test` (144/144),
+  and `git diff --check`.
 - MoonMoon exposes a root product-home contract for
   `.moonsuite/products/moonmoon`, `.tmp/products/moonmoon`, and accepted
   MoonBook outputs under `books/<book-id>/outputs/moonmoon`.
