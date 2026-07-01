@@ -109,6 +109,65 @@ async test "workspace discovery only exposes town roots and moonbooks" {
 }
 
 ///|
+async test "fresh suite exposes rabbita moonbook projections through desk workspace discovery" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-rabbita-projection-wbtest-" + @async.now().to_string(),
+  )
+  assert_true(prepare_moonsuite_workspace_root(root))
+  let book_id = "wenyu-social-square"
+  let book_root = @pathx.join(moonsuite_books_root(root), book_id)
+  @fsx.make_directory(
+    @pathx.join(book_root, "book/site/generated"),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.make_directory(
+    @pathx.join(book_root, "wiki"),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.write_to_file(
+    @pathx.join(book_root, "book.json"),
+    "{\"id\":\"wenyu-social-square\",\"name\":\"Wenyu Social Square\"}\n",
+  )
+  @fsx.write_to_file(@pathx.join(book_root, "wiki/index.md"), "# Social\n")
+  @fsx.write_to_file(
+    @pathx.join(book_root, "book/moonbook-ui-state.json"),
+    "{\"title\":\"Wenyu Social Square\",\"projection_scope\":\"public\"}\n",
+  )
+  @fsx.write_to_file(
+    @pathx.join(book_root, "book/site/generated/index.html"),
+    "<main>Wenyu Social Square</main>",
+  )
+
+  let workspaces = discover_workspaces(root)
+  assert_eq(workspaces.length(), 1)
+  let workspace = workspaces[0]
+  assert_eq(workspace.id, @desk.stable_id("book", book_id))
+  assert_eq(workspace.name, "Wenyu Social Square")
+  assert_eq(workspace.root_path, book_root)
+  assert_true(workspace.kind is MoonBook)
+  assert_true(workspace.status is Ready)
+
+  let root_entries = list_workspace_entries(workspace, "", book_root)
+  assert_true(find_test_entry(root_entries, "wiki") is Some(_))
+  assert_true(find_test_entry(root_entries, "book/site/generated") is Some(_))
+  assert_true(find_test_entry(root_entries, "book") is None)
+  match resolve_workspace_path(book_root, "book/moonbook-ui-state.json") {
+    Some((absolute, clean_relative)) => {
+      assert_eq(clean_relative, "book/moonbook-ui-state.json")
+      assert_eq(
+        @fs.read_file(absolute).text(),
+        "{\"title\":\"Wenyu Social Square\",\"projection_scope\":\"public\"}\n",
+      )
+    }
+    None => fail("expected Rabbita projection path to resolve under book root")
+  }
+  assert_false(@fs.exists(@pathx.join(root, ".moontown/books/\{book_id}")))
+}
+
+///|
 test "workspace metadata exposes dedicated MoonBook library path" {
   let metadata = workspace_library_metadata("/tmp/moondesk-workspace")
   assert_eq(
