@@ -911,6 +911,16 @@ Completed slices:
   constructors instead of a partial local schema. Validation passed with
   MoonRobo `moon fmt`, `moon info`, `moon check`, `moon test` (453/453), and
   `git diff --check`.
+- Rabbita commit `20d38ef` turns the root product-home contract from local
+  string concatenation into a MoonLib adapter. The existing public
+  `RabbitaMoonSuiteProductHome` surface stays stable, but state, service,
+  runtime, cache, and temp paths now derive from `vectie/moonlib@0.1.3`
+  `@moonsuite` constructors, matching the Phase 4.5 dependency direction.
+  Validation passed with Rabbita `moon update`, `moon fmt`, clean `moon info`,
+  `moon check`, root-package `moon test .` (4/4), native
+  `moon test --target native` (24/24), and `git diff --check`; full JS
+  `moon test` still hits the pre-existing DOM README examples that require a
+  browser `document`.
 
 Remaining high-priority product slices:
 
