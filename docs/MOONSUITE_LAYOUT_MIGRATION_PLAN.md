@@ -565,6 +565,15 @@ Completed slices:
   path and absence of the old marker filename. Validation passed with MoonClaw
   `moon fmt`, clean `moon info`, `moon check`, `moon test` (999/999), and
   `git diff --check`.
+- MoonClaw commit `b8a1094c` aligns the Node UI daemon discovery helper and
+  daemon command docs with the MoonSuite product-home lock file. The UI now
+  reads `~/.moonsuite/products/moonclaw/daemon.json`, matching the backend
+  `@moonsuite.product_artifact(home, "moonclaw", "daemon.json")` lock path,
+  instead of probing the obsolete `~/.moonclaw/daemon.json`. Validation passed
+  with MoonClaw `moon fmt`, clean `moon info`, `moon check`, `moon test`
+  (999/999), and `git diff --check`. The UI `npm run check` gate now runs
+  after installing dependencies, but remains blocked by pre-existing unrelated
+  package errors in `events-display.tsx` and `task-utils.tsx`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -864,6 +873,8 @@ Remaining high-priority product slices:
   MoonLib constructor and no longer generate `.moonclaw-provider-*` filenames.
   System-skill installation now uses a clean `system-skills.marker` idempotency
   marker under `.moonsuite/products/moonclaw/skills/.system`.
+  Node UI daemon discovery now reads the backend product-home daemon lock at
+  `.moonsuite/products/moonclaw/daemon.json` instead of `$HOME/.moonclaw`.
   MoonCode's public lifecycle/capability contracts and job-analysis preferred
   skill loading now advertise and consume the same product-home session/skill
   stores.
