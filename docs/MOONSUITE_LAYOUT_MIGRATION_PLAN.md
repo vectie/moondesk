@@ -74,6 +74,29 @@ Default products:
 - `lepusa`
 - `rabbita`
 
+## Shared Contract Layer
+
+MoonSuite filesystem contracts should be defined in `moonlib`, not `moonstat`.
+`moonlib` is the shared source of truth for low-level suite layout contracts:
+suite root discovery, product registry schema, product state paths, suite temp
+paths, book paths, artifact classes, and typed path constructors. It must stay
+dependency-light and deterministic so every Moon product can use it without
+pulling in status, analytics, or daemon behavior.
+
+`moonstat` should consume the `moonlib` contract layer. Its responsibility is to
+audit live workspaces, report drift, index metrics/snapshots, and surface health
+views. It can enforce that products follow the contract, but it should not own
+the contract itself.
+
+After Phase 4 product-home migration stabilizes, add a contract extraction phase:
+
+1. Create the MoonSuite contract package in `moonlib`.
+2. Move shared product ids, registry schema, and path constructors into that
+   package.
+3. Replace product-local string helpers with `moonlib` contract calls.
+4. Make `moonstat` validate workspaces against `moonlib` contracts and report
+   legacy-path drift.
+
 ## Phase 1: Layout Helper
 
 Add one MoonSuite layout helper and route all server paths through it.
@@ -308,12 +331,15 @@ Completed slices:
   `.moonsuite/products/moontown/civic/protocols/<building-id>/*.jsonl`; targeted
   daemon/editor tests and the full Moontown test suite assert the product-home
   contract.
+- Moontown civic service history now derives the product-home book-result path,
+  and the default external MoonClaw checkout root is
+  `.moonsuite/products/moontown/external/moonclaw`; civic and MoonClaw adapter
+  tests assert the old `.moontown` paths are not emitted.
 
 Remaining high-priority product slices:
 
-- Moontown: finish remaining civic and synthesis runtime copy that still names
-  old `.moontown` paths, while keeping book-layout paths for the Phase 5
-  cutover.
+- Moontown: finish remaining synthesis/runtime copy that still names old
+  `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
 - MoonRobo: continue auditing residual runtime writers so RoboBook-owned
   receipts, telemetry, task executions, reviews, observations, and model edits
   remain under the book root while any remaining product orchestration ledgers
