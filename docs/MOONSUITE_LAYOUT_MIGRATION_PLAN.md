@@ -848,6 +848,16 @@ Completed slices:
   Moontown `moon fmt`, clean `moon info` after reverting unrelated generated
   `.mbti` EOF churn, `moon check`, `moon test` (926/926), and
   `git diff --check`.
+- Moontown commit `03217510` removes the next stale live-autonomy and Moondesk
+  handoff fixture paths from operator-facing surfaces. Live-autonomy markdown
+  and Rabbita viewport fixtures now advertise
+  `.moonsuite/products/moontown/...` product paths and PlanBook wiki history
+  paths, the Moondesk handoff tilemap module now stages agent profiles and
+  operator requests under the Moontown product home, and README copy points the
+  MoonClaw hot-store archive at `.moonsuite/products/moonclaw/jobs/archive`.
+  Validation passed with Moontown `moon fmt`, clean `moon info` after reverting
+  unrelated generated `.mbti` EOF churn, `moon check`, `moon test` (926/926),
+  and `git diff --check`.
 - Rabbita commit `a6a69ad` adds the root package's explicit MoonSuite
   product-home contract. The public API now exposes `rabbita` product id,
   `.moonsuite/products/rabbita` state, service, runtime, cache, and
