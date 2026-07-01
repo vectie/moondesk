@@ -376,6 +376,15 @@ Completed slices:
   assert proof sessions no longer write to `runs/proof-sessions`, product
   status exposes the product-home paths, and resident/memory context reads the
   new proof-session ledger.
+- MoonRobo now depends on MoonLib `0.1.1`; product status helpers, runtime
+  product-home helpers, product orchestration directory setup, and SDK E1
+  suite-temp defaults are thin adapters over `@moonsuite`. The slice keeps
+  RoboBook-owned receipts, telemetry, task executions, reviews, observations,
+  and model edits under the book root, while product-owned gateway commands,
+  Robo loops, proof sessions, live exercises, and SDK IPC state derive from the
+  MoonLib MoonSuite contract. Validation passed in MoonRobo with `moon update`,
+  `moon fetch vectie/moonlib@0.1.1`, `moon check`, `moon test` (453/453),
+  `moon fmt`, `moon info`, and a final `moon check`.
 - Moontown daemon runtime policy now defaults health/log summaries to
   `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
   evidence points at
@@ -402,9 +411,9 @@ Remaining high-priority product slices:
   land, but do not add a parallel path schema there.
 - Moontown: finish civic/cookbook/book-projection copy that still names old
   `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
-- MoonRobo: continue auditing residual runtime writers so RoboBook-owned
-  receipts, telemetry, task executions, reviews, observations, and model edits
-  remain under the book root while any remaining product orchestration ledgers
-  move under `.moonsuite/products/moonrobo`.
+- MoonRobo: continue residual audits for any newly discovered writers, keeping
+  RoboBook-owned receipts, telemetry, task executions, reviews, observations,
+  and model edits under the book root while any shared product orchestration
+  path must remain a MoonLib-backed adapter.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests.
