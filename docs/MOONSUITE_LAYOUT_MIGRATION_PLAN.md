@@ -146,6 +146,16 @@ pattern instead of carrying independent string contracts.
   book-local `.moonclaw` writer/reader pair. Validation for this slice:
   `moon fmt`, `moon info`, `moon check`, and `moon test` in Moontown with
   `926/926` tests passing.
+- Moontown commit `ad205ae8` replaces the central storage helper's empty-root
+  MoonSuite calls with MoonLib workspace-root adapters. The no-arg
+  `moontown_product_*` helpers now derive from the active working directory,
+  and new explicit `*_for_workspace_root` helpers prove that a
+  `books/<book-id>` root resolves to the suite-level
+  `.moonsuite/products/moontown` home rather than a nested book-local
+  `.moonsuite`. Default runtime path tests now compare against storage-derived
+  product artifacts instead of stale relative `.moonsuite/...` literals.
+  Validation for this slice: Moontown `moon fmt`, `moon info`, `moon check`,
+  `moon test` with `926/926` tests passing, and `git diff --check`.
 - MoonBook now depends on MoonLib `0.1.3` and uses
   `@moonsuite.product_artifact_for_workspace_root` for MoonClaw extension
   provider manifests. This removes MoonBook's local standalone-vs-suite-root
