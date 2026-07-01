@@ -126,9 +126,10 @@ tracked in [Code Mode Test Plan](CODE_MODE_TEST_PLAN.md).
 
 MoonSuite filesystem contracts belong in MoonLib. Moondesk should use MoonLib
 for suite root discovery, product registry records, product-home paths, suite
-temp paths, and book path construction after the contract extraction phase.
-MoonStat should consume the same MoonLib contracts to audit workspace health and
-legacy-path drift; it should not define the contract.
+temp paths, and book path construction. During migration, local helpers may
+exist only as thin adapters over MoonLib. MoonStat should consume the same
+MoonLib contracts to audit workspace health and legacy-path drift; it should
+not define the contract.
 
 ## Permission Model
 

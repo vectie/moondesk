@@ -38,6 +38,14 @@ The strongest coverage should be end-to-end: a seeded MoonBook, the native
 Moondesk host, the built Rabbita UI, browser interaction, route assertions, and
 filesystem assertions all running together.
 
+Wiki fixtures and route tests must derive MoonSuite paths from MoonLib
+`@moonsuite` helpers, or from Moondesk's tested thin adapter over those helpers.
+Wiki may assert that `.moonsuite/products/moontown` and
+`.moonsuite/products/moonclaw` records are displayed correctly, but it should
+not define an independent suite root, product-home, temp, or product-registry
+contract. MoonStat validates drift against MoonLib instead of defining alternate
+Wiki paths.
+
 ## Non-Goals
 
 Wiki tests should not validate:
@@ -264,6 +272,10 @@ Edge fixtures:
   characters, and long names.
 - Security fixture with sibling `outside.md` next to the book root to test
   traversal rejection.
+- Contract fixture generated through MoonLib helpers that proves Wiki request,
+  review, event, and run projections read MoonClaw/Moontown product-home records
+  without recreating old `.moontown`, `.moonclaw`, repo-local runtime, or global
+  temp paths.
 
 ## End-to-End Journeys
 

@@ -133,23 +133,29 @@ Still needed:
 
 ### 6. MoonSuite Contract Extraction
 
-Goal: after the product-home migration stabilizes, move the shared filesystem
-contract into MoonLib and make every product consume the same typed path and
-registry helpers.
+Goal: make MoonLib the active shared filesystem contract layer while the
+remaining product-home migration continues, and make every product consume the
+same typed path and registry helpers.
 
 Done:
 
 - MoonSuite v2 plan identifies `moonlib` as contract owner and `moonstat` as
   validator/reporter.
+- MoonLib publishes `vectie/moonlib/moonsuite` in MoonLib `0.1.1` with suite
+  root, book root, artifact class, product-home, suite temp, external-tool
+  home, suite manifest, and product registry helpers.
+- Moondesk consumes MoonLib `0.1.1`; its local MoonSuite layout helper is now a
+  compatibility adapter over `@moonsuite`.
 - Product-home migration has already moved major Moondesk, MoonClaw, Moontown,
   MoonFish, MoonMoon, Lepusa, and MoonRobo state paths toward
   `.moonsuite/products/<product>`.
 
 Still needed:
 
-- add a MoonLib package for suite root, product registry, product ids,
-  product-home paths, suite temp paths, and book path constructors
-- replace product-local string helpers with MoonLib contract calls
+- finish MoonStat as a MoonLib contract consumer and add drift reports over
+  MoonLib paths
+- replace remaining product-local string helpers with MoonLib contract calls or
+  thin local adapters over MoonLib
 - make MoonStat validate live workspaces against MoonLib and report
   legacy-path drift without owning the contract
 - add cross-product integration tests from a fresh MoonSuite root

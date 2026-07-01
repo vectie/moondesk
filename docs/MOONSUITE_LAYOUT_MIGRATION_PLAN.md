@@ -88,8 +88,8 @@ audit live workspaces, report drift, index metrics/snapshots, and surface health
 views. It can enforce that products follow the contract, but it should not own
 the contract itself.
 
-After Phase 4 product-home migration stabilizes, add Phase 4.5 for contract
-extraction:
+Phase 4.5 is now the active contract extraction track running alongside the
+remaining product-home migration:
 
 1. Create the MoonSuite contract package in `moonlib`.
 2. Move shared product ids, registry schema, and path constructors into that
@@ -111,6 +111,21 @@ adapter over `@moonsuite` for suite root, book root, product-home, manifest,
 registry, cache, and service paths. Remaining product-local helpers should
 follow the same wrapper pattern instead of carrying independent string
 contracts.
+- MoonStat now depends on MoonLib `0.1.1` and consumes `@moonsuite` for its
+  home `.moonsuite` state directory plus MoonClaw product-home provider, model,
+  and config manifest paths. MoonStat remains an observer/reporter over the
+  shared contract rather than the source of path definitions.
+
+Migration rules from this point forward:
+
+1. New MoonSuite path helpers belong in MoonLib first.
+2. Moondesk, MoonClaw, Moontown, MoonBook, MoonFish, MoonMoon, MoonRobo,
+   Lepusa, Rabbita, and Bookkeeper may keep local helpers only as adapters over
+   MoonLib.
+3. MoonStat may add diagnostics, reports, drift indexes, and health projections
+   over the MoonLib contract, but must not introduce a competing layout schema.
+4. Product migrations should include a local adapter test and at least one
+   cross-product integration assertion from a fresh MoonSuite root.
 
 ## Phase 1: Layout Helper
 
@@ -227,6 +242,12 @@ Minimum test gates:
 7. Desk browser smoke tests for first-run root, VFS, workspace list, and clean
    conversation UI.
 8. Lepusa smoke test from a fresh MoonSuite root.
+9. MoonLib contract-consumer tests proving Moondesk, MoonStat, and each
+   migrated product derive `.moonsuite`, `.tmp`, `books`, product-home, and
+   product-registry paths from `@moonsuite`.
+10. MoonStat drift-report tests proving old `.moontown`, `.moonclaw`,
+    repo-local runtime, and global temp paths are reported as drift rather than
+    treated as alternate valid layouts.
 
 ## Phase 9: Cutover
 
@@ -353,6 +374,11 @@ Completed slices:
 
 Remaining high-priority product slices:
 
+- MoonLib: expand `vectie/moonlib/moonsuite` only when a missing contract is
+  shared by more than one product; keep it deterministic and free of daemon,
+  analytics, and UI dependencies.
+- MoonStat: finish the consumer migration and add drift reports over MoonLib
+  contracts instead of defining new path constants.
 - Moontown: finish remaining synthesis/runtime copy that still names old
   `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
 - MoonRobo: continue auditing residual runtime writers so RoboBook-owned

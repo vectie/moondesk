@@ -35,6 +35,12 @@ The most important coverage is end-to-end: a seeded workspace, the MoonBit host
 server, the built Rabbita UI, browser interaction, and filesystem assertions all
 running together.
 
+Desk layout tests must use MoonLib `@moonsuite` contracts, or Moondesk's thin
+adapter over those contracts, for suite roots, `books`, `.tmp`, product homes,
+and product-registry paths. Desk should not grow another source of truth for
+MoonSuite filesystem layout; MoonStat validates drift against MoonLib instead
+of defining alternate Desk paths.
+
 ## Production Quality Bar
 
 Desk is a user-facing file manager, not a developer fixture browser. Production
@@ -1056,11 +1062,17 @@ a warning naming the dedicated root and `MOONDESK_WORKSPACE_ROOT`, and created
 MoonBooks land under the dedicated workspace. It then repeats the launch with
 `MOONDESK_WORKSPACE_ROOT` also pointed at the fake source checkout and asserts
 the server falls back to a home-based `moondesk-workspace` outside the checkout
-before creating any MoonBooks. The main fixture seeds multiple workspaces so one run covers the
-canonical MoonBook, empty workspace, large directory, deep directory,
-encoded-name paths, workspace isolation, hidden-file filtering, generated-site
-assets, binary preview routing, and traversal rejection. It should be suitable
-for CI and local debugging.
+before creating any MoonBooks. The main fixture seeds multiple workspaces so
+one run covers the canonical MoonBook, empty workspace, large directory, deep
+directory, encoded-name paths, workspace isolation, hidden-file filtering,
+generated-site assets, binary preview routing, and traversal rejection. It
+should be suitable for CI and local debugging.
+
+The fixture should also assert that Desk bootstrap and trash paths match
+MoonLib-derived `books`, `.tmp`, product-registry, and
+`.moonsuite/products/moondesk` paths. Any old `.moontown`, `.moonclaw`,
+repo-local runtime, or global temp path created during Desk startup is a
+contract failure, not a tolerated compatibility route.
 
 ## Browser Visual Checks
 

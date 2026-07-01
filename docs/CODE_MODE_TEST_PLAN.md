@@ -115,8 +115,10 @@ The fixture builder should support:
 
 Keep fixture paths temporary and generated at test runtime. Do not depend on
 the developer's `.moontown`, `.moonclaw`, `.moonsuite`, or `wiki` directories.
-When the MoonLib contract package exists, fixtures should build these paths via
-MoonLib helpers rather than duplicating string literals.
+Fixtures must build MoonSuite paths through MoonLib `@moonsuite` helpers, or
+through a product-local adapter that is itself tested as a thin wrapper over
+MoonLib. Do not add new test fixtures that duplicate `.moonsuite`, `.tmp`,
+`books`, product-home, or product-registry string contracts.
 
 ## End-to-End Scenarios
 
@@ -464,6 +466,9 @@ Code mode is sufficiently tested when:
 - integration tests prove MoonCode/MoonClaw/Moontown records use the MoonLib
   MoonSuite contract paths and do not recreate legacy `.moontown` or
   `.moonclaw` roots
+- contract-consumer tests prove the code-mode fixture, MoonCode session
+  sidecars, MoonClaw runtime records, and Moontown handoff records derive
+  canonical paths from MoonLib rather than local layout constants
 - resume tests prove sessions survive process restart from disk records
 - live model/runtime tests exist as manual or scheduled checks, but deterministic
   tests remain the merge gate

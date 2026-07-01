@@ -69,9 +69,10 @@ MoonCode
 - `ui/rabbita-desk/main/`: Rabbita UI package for Desk, Files, Search, Inbox,
   MoonWiki, MoonCode, Town, Runs, and Settings surfaces.
 
-After MoonLib contract extraction, Moondesk path construction should call the
-MoonLib MoonSuite contract package instead of carrying product-local string
-helpers for `.moonsuite`, `.tmp`, `books`, or product registry paths.
+Moondesk path construction should call the MoonLib MoonSuite contract package
+instead of carrying product-local string helpers for `.moonsuite`, `.tmp`,
+`books`, or product registry paths. During migration, local helpers may remain
+only as thin compatibility adapters over MoonLib.
 
 MoonCode is intentionally standalone. Moondesk renders the native shell and
 review surfaces, MoonClaw owns the agent loop and tool execution, and MoonBook
