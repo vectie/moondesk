@@ -763,6 +763,15 @@ Completed slices:
   workspace root as MoonClaw `--home` so MoonClaw derives the product home
   itself. Validation passed with Moontown `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (926/926), and `git diff --check`.
+- Rabbita commit `a6a69ad` adds the root package's explicit MoonSuite
+  product-home contract. The public API now exposes `rabbita` product id,
+  `.moonsuite/products/rabbita` state, service, runtime, cache, and
+  `.tmp/products/rabbita` temp paths through a typed
+  `RabbitaMoonSuiteProductHome`, with white-box coverage for the fresh default
+  values. Validation passed with Rabbita `moon fmt`, clean `moon info`,
+  `moon check`, root-package `moon test .` (4/4), native `moon test --target
+  native` (24/24), and `git diff --check`; the full JS `moon test` still hits
+  pre-existing DOM README examples that require browser `document`.
 
 Remaining high-priority product slices:
 
@@ -800,7 +809,8 @@ Remaining high-priority product slices:
   starter attachments, provider-task artifacts, worktree scratch, MoonCode
   sessions and watchers, skills, rules, daemon lock, robot routine ledgers, and
   todo session state are now MoonLib-backed product-home or suite-temp based.
-- Rabbita and future products: add explicit product-home contracts and smoke
-  tests. MoonFish and MoonMoon have root product-home contracts and now consume
-  MoonLib for those paths; remaining work there is broader smoke integration
-  rather than local string-contract extraction.
+- Rabbita and future products: Rabbita now has an explicit root product-home
+  contract and white-box coverage. Remaining work is broader browser-backed
+  smoke integration for Rabbita and future products rather than local
+  string-contract extraction. MoonFish and MoonMoon have root product-home
+  contracts and now consume MoonLib for those paths.
