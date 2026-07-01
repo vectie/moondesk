@@ -119,14 +119,17 @@ adapter over `@moonsuite` for suite root, book root, product-home, manifest,
 registry, cache, and service paths. Remaining product-local helpers should
 follow the same wrapper pattern instead of carrying independent string
 contracts.
-- MoonStat now depends on MoonLib `0.1.1` and consumes `@moonsuite` for its
+- MoonStat now depends on MoonLib `0.1.2` and consumes `@moonsuite` for its
   home `.moonsuite` state directory plus MoonClaw product-home provider, model,
   and config manifest paths. MoonStat also exposes `moonstat suite drift` and
   `/suite/drift` as a MoonLib-derived drift report over legacy `.moontown`,
   `.moonclaw`, repo-local runtime, old MoonStat state paths, MoonRobo product
-  runtime paths, and old global SDK E1 temp files. MoonStat remains an
-  observer/reporter over the shared contract rather than the source of path
-  definitions.
+  runtime paths, old global SDK E1 temp files, and book-local
+  `.moonclaw/providers.json` / `.moonclaw/mooncode/sessions` drift under
+  `books/<book-id>`. MoonStat remains an observer/reporter over the shared
+  contract rather than the source of path definitions. Validation for the latest
+  MoonStat slice: `moon fmt`, `moon info`, `moon check`, and `moon test` with
+  `774/774` tests passing.
 - Moontown now depends on MoonLib `0.1.2` for book-root-derived MoonSuite paths.
   PlanBook repair job indexes and proposal ledgers now resolve to
   `.moonsuite/products/moonclaw/jobs/...` through `@moonsuite`, MoonClaw store
