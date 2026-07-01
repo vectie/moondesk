@@ -533,6 +533,14 @@ Completed slices:
   suite's MoonClaw product home. Validation passed with MoonClaw `moon fmt`,
   clean `moon info`, `moon check`, `moon test` (997/997), and
   `git diff --check`.
+- MoonClaw commit `5f22fd04` moves job-analysis preferred skill loading to
+  MoonLib workspace-root product-home constructors. Analysis prompts still
+  accept explicit project-local `skills/<name>/SKILL.md` overrides, but
+  MoonClaw product skills now come from
+  `.moonsuite/products/moonclaw/skills`, and white-box coverage rejects legacy
+  `.moonclaw/skills` as a fresh-default source. Validation passed with
+  MoonClaw `moon fmt`, clean `moon info`, `moon check`, `moon test` (998/998),
+  and `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -825,9 +833,10 @@ Remaining high-priority product slices:
   gateway, onboarding config, workspace defaults, ACP state, OAuth credentials,
   starter attachments, provider-task artifacts, worktree scratch, MoonCode
   sessions and watchers, skills, rules, daemon lock, robot routine ledgers, and
-  todo session state are now MoonLib-backed product-home or suite-temp based;
-  MoonCode's public lifecycle/capability contracts now advertise the same
-  product-home session store.
+  todo session state are now MoonLib-backed product-home or suite-temp based.
+  MoonCode's public lifecycle/capability contracts and job-analysis preferred
+  skill loading now advertise and consume the same product-home session/skill
+  stores.
 - Rabbita and future products: Rabbita now has an explicit root product-home
   contract and white-box coverage. Remaining work is broader browser-backed
   smoke integration for Rabbita and future products rather than local
