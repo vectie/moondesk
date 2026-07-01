@@ -780,6 +780,13 @@ Completed slices:
   white-box coverage rejects the old `.moonclaw/mooncode/sessions` contract
   string. Validation passed with MoonClaw `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (997/997), and `git diff --check`.
+- MoonStat commit `e776bef` updates the suite drift report to match that
+  MoonCode ownership boundary. Book-local
+  `books/<book-id>/.moonclaw/mooncode/sessions` drift now reports the canonical
+  target as `.moonsuite/products/moonclaw/mooncode/sessions` and product owner
+  `moonclaw`, not `.moonsuite/products/mooncode/sessions`. Validation passed
+  with MoonStat `moon fmt`, clean `moon info`, `moon check`, `moon test`
+  (774/774), and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -792,7 +799,9 @@ Remaining high-priority product slices:
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
-  future drift additions, but do not add a parallel path schema there.
+  future drift additions, but do not add a parallel path schema there. The
+  book-local MoonCode sidecar drift target now reports the MoonClaw product
+  home, matching MoonClaw's current durable session contract.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
