@@ -541,6 +541,14 @@ Completed slices:
   `.moonclaw/skills` as a fresh-default source. Validation passed with
   MoonClaw `moon fmt`, clean `moon info`, `moon check`, `moon test` (998/998),
   and `git diff --check`.
+- MoonClaw commit `c31ff22a` moves job-analysis tool journals out of
+  workspace-root `.moonclaw-tool-journal-*` files and into the MoonSuite temp
+  lane at `.tmp/products/moonclaw/tool-journals`. The journal path now derives
+  the owning suite from the analysis workspace root, so suite-hosted
+  `books/<book-id>` workspaces write disposable tool trace state to the suite
+  temp area instead of the book root. Validation passed with MoonClaw
+  `moon fmt`, clean `moon info`, `moon check`, `moon test` (998/998), and
+  `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -834,6 +842,8 @@ Remaining high-priority product slices:
   starter attachments, provider-task artifacts, worktree scratch, MoonCode
   sessions and watchers, skills, rules, daemon lock, robot routine ledgers, and
   todo session state are now MoonLib-backed product-home or suite-temp based.
+  Job-analysis tool journals now use the MoonClaw suite temp lane instead of
+  root-level hidden `.moonclaw-tool-journal-*` files.
   MoonCode's public lifecycle/capability contracts and job-analysis preferred
   skill loading now advertise and consume the same product-home session/skill
   stores.
