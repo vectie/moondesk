@@ -400,6 +400,17 @@ Completed slices:
   thin adapters over `@moonsuite`, and town synthesis execution records register
   the mayor workspace root as `.moonsuite/products/moontown` instead of
   `.moontown`.
+- Moontown commit `8ae8672c` adds a storage-level
+  `moontown_product_artifact(...)` adapter over MoonLib
+  `@moonsuite.product_artifact(...)`, then routes default civic protocol/status
+  artifacts, communication schedules/runs, visual projection, book-result
+  bridges, cookbook manifests, MoonBook catalog state, MoonClaw packet exports,
+  daemon logs, and final-integration status through that adapter. Moontown docs
+  and operator copy no longer name `.moontown/civic`,
+  `.moontown/book-results`, `.moontown/book-projection-policy`, or
+  `.moontown/visual-projection` for product-owned state. Validation passed with
+  `moon check`, `moon test` (922/922), `moon fmt`, `moon info`, and a final
+  `moon check`.
 
 Remaining high-priority product slices:
 
@@ -409,8 +420,10 @@ Remaining high-priority product slices:
 - MoonStat: keep consuming MoonLib contracts for workspace validation, health
   projection, and drift reports; broaden drift coverage as product migrations
   land, but do not add a parallel path schema there.
-- Moontown: finish civic/cookbook/book-projection copy that still names old
-  `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
+- Moontown: remaining `.moontown/books/...` references are book workspace
+  layout references. Defer those to Phase 5, where the durable book root moves
+  to `books/<book-id>` and product-owned state remains under
+  `.moonsuite/products/moontown`.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration
