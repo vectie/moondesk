@@ -164,6 +164,16 @@ contracts.
   `moon update`, `moon fmt`, `moon info`, `moon check`, and `moon test` with
   `144/144` tests passing; MoonMoon `moon update`, `moon fmt`, `moon info`,
   `moon check`, and `moon test` with `143/143` tests passing.
+- MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
+  workspace-root path derivation. Model and provider config loading now reads
+  `models/models.json` and `moonclaw.json` from
+  `.moonsuite/products/moonclaw` through
+  `@moonsuite.product_artifact_for_workspace_root`, including suite-hosted book
+  roots under `books/<book-id>`. The loader no longer treats nested
+  `.moonclaw/models/models.json` as a fresh-default source, and server/model
+  fixtures now seed the MoonSuite product home. Validation for this slice:
+  MoonClaw `moon update`, `moon fmt`, `moon info`, `moon check`, and
+  `moon test` with `994/994` tests passing.
 
 Migration rules from this point forward:
 
@@ -596,9 +606,9 @@ Remaining high-priority product slices:
   validation, calibration, gateway commands, Robo loops, proof sessions, live
   exercises, and SDK IPC state are now product-home or suite-temp based.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
-  project-local config/model fallback readers, and legacy daemon git-exclude
-  guards. New runtime writes for conversations, jobs, gateway, onboarding
-  config, workspace defaults, ACP state, OAuth credentials, starter
+  project-local config fallback readers outside the model loader, and legacy
+  daemon git-exclude guards. New runtime writes for conversations, jobs,
+  gateway, onboarding config, workspace defaults, ACP state, OAuth credentials, starter
   attachments, provider-task artifacts, worktree scratch, MoonCode sessions and
   watchers, skills, rules, daemon lock, and robot routine ledgers are now
   product-home or suite-temp based.
