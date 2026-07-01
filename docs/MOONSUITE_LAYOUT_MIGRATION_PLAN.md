@@ -199,3 +199,31 @@ Cutover steps:
 3. Update tests, docs, and smoke fixtures to `books/`.
 4. Make MoonSuite v2 the fresh default.
 5. Launch a fresh Lepusa/Moondesk app for visual verification.
+
+## Cross-Product Migration Log
+
+Completed slices:
+
+- Moondesk initializes fresh MoonSuite roots, discovers MoonBooks from `books/`,
+  writes product service state under `.moonsuite/products/*`, hides
+  `.moonsuite` and `.tmp` in the normal VFS, and stores MoonCode sessions under
+  `.moonsuite/products/mooncode/sessions`.
+- Moonstat advertises and writes MoonClaw provider manifests through
+  `.moonsuite/products/moonclaw/providers.json`, and advertises MoonClaw model
+  and config candidates under `.moonsuite/products/moonclaw`.
+- MoonBook installs the MoonClaw extension provider manifest into the
+  MoonSuite-level MoonClaw product home when a book lives under
+  `books/<book-id>`, while standalone book roots use their own
+  `.moonsuite/products/moonclaw` product home.
+
+Remaining high-priority product slices:
+
+- MoonClaw: move daemon home, MoonCode session store, robot routine ledgers,
+  skills, rules, and job indexes to `.moonsuite/products/moonclaw`.
+- Moontown: move town snapshots, standing goals, watcher ledgers,
+  operator-request queues, and book-result bridges to
+  `.moonsuite/products/moontown`.
+- MoonRobo: move MoonClaw routine artifacts and task bridge examples to
+  `.moonsuite/products/moonclaw` / `.moonsuite/products/moonrobo` contracts.
+- MoonFish, MoonMoon, Lepusa, Rabbita, and future products: add explicit
+  product-home contracts and smoke tests.
