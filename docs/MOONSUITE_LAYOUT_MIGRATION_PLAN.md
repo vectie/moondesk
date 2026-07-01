@@ -380,6 +380,12 @@ Completed slices:
   copy, and white-box coverage assert the fresh suite-root/product-home
   boundary. Validation passed in MoonStat with `moon fmt`, `moon info`,
   `moon check`, `moon test` (774/774), and `git diff --check`.
+- MoonStat commit `62d9ebb` moves the app config default from suite state into
+  `.moonsuite/products/moonstat/config.json`. Config backups and skill
+  state/backups/install directories follow MoonStat's product-home config root,
+  with README copy and white-box coverage asserting the new path. Validation
+  passed in MoonStat with `moon fmt`, `moon info`, `moon check`, `moon test`
+  (774/774), and `git diff --check`.
 - MoonBook installs the MoonClaw extension provider manifest into the
   MoonSuite-level MoonClaw product home when a book lives under
   `books/<book-id>`, while standalone book roots use their own
