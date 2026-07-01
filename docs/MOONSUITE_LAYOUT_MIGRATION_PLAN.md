@@ -256,6 +256,11 @@ Completed slices:
   `.moonsuite/products/moontown` for live-autonomy, town-journal, PlanBook
   autonomy/repair/validation, and editor-pipeline state; focused tests assert
   the generated copy no longer emits the old product-runtime paths.
+- Moontown README, frontend, usage, doc-structure, and generated cookbook copy
+  now point standing-goal/watch ledgers, operator request queues,
+  book-template request/config/event files, Moondesk bridge records, and
+  book-result bridges at `.moonsuite/products/moontown`; cookbook tests assert
+  the generated book-template flow no longer emits the legacy inbox path.
 - MoonClaw stores MoonCode durable session sidecars under
   `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
   native capability payload, and excludes `.moonsuite` sidecars from MoonCode
@@ -286,8 +291,8 @@ Completed slices:
 
 Remaining high-priority product slices:
 
-- Moontown: finish remaining operator-request queues and any product-runtime
-  copy that still names the old `.moontown` paths.
+- Moontown: finish any residual product-runtime copy that still names old
+  `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
 - MoonRobo: migrate any remaining non-SDK product-owned runtime writers to the
   new product-home contracts where they are not RoboBook-owned accepted
   evidence.
