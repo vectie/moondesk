@@ -111,8 +111,10 @@ being migrated.
 Phase 4.5 started in MoonLib with `vectie/moonlib/moonsuite`, which defines
 artifact classes, suite root paths, book paths, product-home paths, suite temp
 paths, external-tool homes, suite manifest JSON, and product registry JSON. The
-package is available through MoonLib `0.1.1`. Moondesk now depends on that
-version and `internal/moonwiki/moonsuite_layout.mbt` is a thin compatibility
+package is available through MoonLib `0.1.2`; that version also adds
+book-root-derived suite/product path constructors so products can receive a book
+workspace and still derive the owning suite product home. Moondesk depends on
+MoonLib and `internal/moonwiki/moonsuite_layout.mbt` is a thin compatibility
 adapter over `@moonsuite` for suite root, book root, product-home, manifest,
 registry, cache, and service paths. Remaining product-local helpers should
 follow the same wrapper pattern instead of carrying independent string
@@ -125,6 +127,14 @@ contracts.
   runtime paths, and old global SDK E1 temp files. MoonStat remains an
   observer/reporter over the shared contract rather than the source of path
   definitions.
+- Moontown now depends on MoonLib `0.1.2` for book-root-derived MoonSuite paths.
+  PlanBook repair job indexes and proposal ledgers now resolve to
+  `.moonsuite/products/moonclaw/jobs/...` through `@moonsuite`, MoonClaw store
+  maintenance compacts that product-home job store, and PlanBook's MoonClaw run
+  result reader passes the derived MoonClaw product home into the MoonClaw
+  runtime instead of falling back to `cwd/.moonclaw`. Validation for this slice:
+  `moon fmt`, `moon info`, `moon check`, and `moon test` in Moontown with
+  `925/925` tests passing.
 
 Migration rules from this point forward:
 
