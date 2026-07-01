@@ -411,6 +411,15 @@ Completed slices:
   `.moontown/visual-projection` for product-owned state. Validation passed with
   `moon check`, `moon test` (922/922), `moon fmt`, `moon info`, and a final
   `moon check`.
+- Moontown commit `d4b79996` starts the Phase 5 book-layout cutover by moving
+  default MoonBook workspace roots from `.moontown/books/<book-id>` to
+  MoonLib-backed `books/<book-id>` paths. The slice updates catalog defaults,
+  editor/planbook source-root helpers, backlog target paths, civic result
+  routing, Rabbita missing-projection copy, cookbook generated copy, and
+  operator docs. The checked source/docs set no longer contains the old
+  `.moontown/books` or `.moontown/moonbooks.json` contracts. Validation passed
+  with `moon check`, `moon test` (923/923), `moon fmt`, `moon info`, and a final
+  `moon check`.
 
 Remaining high-priority product slices:
 
@@ -420,10 +429,9 @@ Remaining high-priority product slices:
 - MoonStat: keep consuming MoonLib contracts for workspace validation, health
   projection, and drift reports; broaden drift coverage as product migrations
   land, but do not add a parallel path schema there.
-- Moontown: remaining `.moontown/books/...` references are book workspace
-  layout references. Defer those to Phase 5, where the durable book root moves
-  to `books/<book-id>` and product-owned state remains under
-  `.moonsuite/products/moontown`.
+- Moontown: follow-up Phase 5 work should focus on cross-product smoke coverage
+  with Moondesk/MoonBook/Rabbita against a fresh suite root, plus residual audits
+  for any external product repo that still assumes `.moontown/books`.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration
