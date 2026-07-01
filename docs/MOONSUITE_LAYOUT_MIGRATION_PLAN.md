@@ -575,6 +575,15 @@ Completed slices:
   evidence paths are not written. Validation passed in MoonRobo with
   `moon fmt`, `moon info`, `moon check`, `moon test` (453/453), and
   `git diff --check`.
+- MoonRobo commit `8cda56d3` completes the current residual audit for migrated
+  product-owned runtime classes by removing stale legacy product-path fixtures
+  from product-status and routine-context tests, and by documenting the boundary
+  that replay annotations and MoonData references remain book-owned RoboBook
+  evidence under `runs/annotations` and `runs/data-refs`. Runtime health,
+  validation, calibration, supervisor logs, bridge contracts, dry runs, and
+  approvals are documented under `.moonsuite/products/moonrobo`. Validation
+  passed in MoonRobo with `moon fmt`, `moon info`, `moon check`, `moon test`
+  (453/453), and `git diff --check`.
 - Moontown daemon runtime policy now defaults health/log summaries to
   `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
   evidence points at
