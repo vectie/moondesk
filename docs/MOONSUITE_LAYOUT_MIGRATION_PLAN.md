@@ -154,6 +154,16 @@ contracts.
   `35/35` tests passing and `moon publish`; MoonBook `moon update`,
   `moon fmt`, `moon info`, `moon check`, and `moon test` with `198/198` tests
   passing.
+- MoonFish and MoonMoon now depend on MoonLib `0.1.3` for their root
+  MoonSuite product-home facades. Their public product status contracts still
+  expose product id, state, service, cache, temp, and accepted book-output paths,
+  but those values now come from `@moonsuite.product_dir`,
+  `@moonsuite.product_service_path`, `@moonsuite.product_artifact`,
+  `@moonsuite.product_tmp_dir`, and `@moonsuite.book_artifact` instead of
+  product-local string concatenation. Validation for this slice: MoonFish
+  `moon update`, `moon fmt`, `moon info`, `moon check`, and `moon test` with
+  `144/144` tests passing; MoonMoon `moon update`, `moon fmt`, `moon info`,
+  `moon check`, and `moon test` with `143/143` tests passing.
 
 Migration rules from this point forward:
 
@@ -567,7 +577,8 @@ Remaining high-priority product slices:
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies. Current published contract version is
   `vectie/moonlib@0.1.3`, including workspace-root-derived product artifact
-  helpers for standalone and suite-hosted MoonBooks.
+  helpers for standalone and suite-hosted MoonBooks plus product-home and
+  book-output constructors now consumed by MoonFish and MoonMoon.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
@@ -592,4 +603,6 @@ Remaining high-priority product slices:
   watchers, skills, rules, daemon lock, and robot routine ledgers are now
   product-home or suite-temp based.
 - Rabbita and future products: add explicit product-home contracts and smoke
-  tests.
+  tests. MoonFish and MoonMoon have root product-home contracts and now consume
+  MoonLib for those paths; remaining work there is broader smoke integration
+  rather than local string-contract extraction.
