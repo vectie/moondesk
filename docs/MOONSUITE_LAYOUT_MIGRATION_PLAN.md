@@ -460,6 +460,16 @@ Completed slices:
   without creating `.moontown/books/...`. Validation passed with
   `scripts/desk_mode_browser_smoke.sh`, `moon check`, `moon test` (446/446),
   `moon fmt`, `moon info`, and final `moon check`.
+- Moondesk commit `801b23b0` adds the Lepusa-native fresh-books smoke gate. The
+  new `scripts/lepusa_fresh_books_smoke.sh` seeds a temporary fresh MoonSuite
+  root with `.moonsuite`, `.tmp`, and `books/research-alpha` containing
+  `book/moonbook-ui-state.json` plus `book/site/generated/index.html`; runs
+  `lepusa live-smoke macos --strict` against that root and the Rabbita Desk UI;
+  then parses the generated live project and runtime manifest to assert the
+  bundled `moondesk-sidecar serve <fresh-root>` command, readiness URL, and
+  absence of legacy `.moontown/books`. Validation passed with
+  `scripts/lepusa_fresh_books_smoke.sh`, `moon check`, `moon test` (446/446),
+  `moon fmt`, `moon info`, and final `moon check`.
 
 Remaining high-priority product slices:
 
@@ -469,9 +479,10 @@ Remaining high-priority product slices:
 - MoonStat: keep consuming MoonLib contracts for workspace validation, health
   projection, and drift reports; broaden drift coverage as product migrations
   land, but do not add a parallel path schema there.
-- Moontown: remaining Phase 5 work should focus on Lepusa-native launch smoke
-  for the fresh `books/` projection path after the programmatic
-  Rabbita/Moondesk contract and full Desk browser smoke above.
+- Moontown: remaining Phase 5 work should focus on any product-owned residual
+  writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
+  contract, full Desk browser smoke, and Lepusa-native fresh-books smoke are now
+  covered.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration
