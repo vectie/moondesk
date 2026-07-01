@@ -747,6 +747,14 @@ Completed slices:
   preseed no longer creates root-local `moonclaw.json` or `.moonclaw` config
   files. Validation passed with Moontown `moon update`, `moon fmt`, clean
   `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
+- Moontown commit `8f56f390` removes the next active `.moonclaw` home targets
+  from PlanBook repair ACP config and editor feature-selection MoonClaw
+  dispatch. PlanBook repair now writes Codex ACP target config through
+  `@moonsuite.product_artifact_for_workspace_root(workspace_root, "moonclaw",
+  "moonclaw.json")`, and editor feature-selection imports/runs pass the
+  workspace root as MoonClaw `--home` so MoonClaw derives the product home
+  itself. Validation passed with Moontown `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` (926/926), and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -766,8 +774,8 @@ Remaining high-priority product slices:
   launchd product-home script path are now covered. The MoonCode sidecar
   processed-result ledger and MoonBook fallback checkout path are now
   product-home based, and the active MoonClaw command/book-quality/preseed
-  home writers now use MoonLib-backed MoonClaw product homes instead of
-  `.moonclaw`.
+  plus PlanBook repair/editor feature-selection MoonClaw home writers now use
+  MoonLib-backed MoonClaw product homes instead of `.moonclaw`.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
