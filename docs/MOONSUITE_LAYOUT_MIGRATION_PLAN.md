@@ -523,6 +523,14 @@ Completed slices:
   logs under `.moonsuite/products/moontown/launchd` and
   `.moonsuite/products/moontown`, not `.moontown/launchd`; usage docs now point
   operators at the product-home launchd paths.
+- Moontown MoonBook adapter residuals now route the MoonCode book-result
+  processed ledger through
+  `.moonsuite/products/moontown/mooncode-book-results/<book-id>/processed.jsonl`
+  and default the local MoonBook checkout fallback to
+  `.moonsuite/products/moontown/external/moonbook`, eliminating the active
+  `.moontown/mooncode-book-results` and `.moontown/moonbook` write targets.
+  Validation passed with Moontown `moon fmt`, `moon info`, `moon check`, and
+  `moon test` (925/925).
 
 Remaining high-priority product slices:
 
@@ -536,7 +544,9 @@ Remaining high-priority product slices:
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
-  launchd product-home script path are now covered.
+  launchd product-home script path are now covered. The MoonCode sidecar
+  processed-result ledger and MoonBook fallback checkout path are now
+  product-home based.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
