@@ -420,6 +420,18 @@ Completed slices:
   `.moontown/books` or `.moontown/moonbooks.json` contracts. Validation passed
   with `moon check`, `moon test` (923/923), `moon fmt`, `moon info`, and a final
   `moon check`.
+- Cross-repo residual cleanup landed in Moontown commit `a9088181` and Moondesk
+  commit `49589f69`. Moontown's handoff asset and README now name
+  `books/<book-id>` for book workspace packs and output bundles. Moondesk source
+  layer inference now classifies `.moonsuite/...` and `.tmp/...` as internal
+  config surfaces, and its explorer test no longer uses `.moontown/books` as the
+  config example. A broad scan across Moondesk, MoonBook, MoonClaw, MoonStat,
+  MoonRobo, MoonFish, MoonMoon, Moontown, and MoonLib found no active
+  `.moontown/books`, `.moontown/moonbooks.json`, or `.moontown/books.json`
+  contracts outside this historical migration log. Validation passed with
+  Moondesk `moon check`, `moon test` (445/445), `moon fmt`, `moon info`, final
+  `moon check`, plus Moontown `moon check`, `moon test` (923/923), `moon fmt`,
+  `moon info`, and final `moon check`.
 
 Remaining high-priority product slices:
 
@@ -430,8 +442,7 @@ Remaining high-priority product slices:
   projection, and drift reports; broaden drift coverage as product migrations
   land, but do not add a parallel path schema there.
 - Moontown: follow-up Phase 5 work should focus on cross-product smoke coverage
-  with Moondesk/MoonBook/Rabbita against a fresh suite root, plus residual audits
-  for any external product repo that still assumes `.moontown/books`.
+  with Moondesk/MoonBook/Rabbita against a fresh suite root.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration
