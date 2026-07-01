@@ -804,6 +804,15 @@ Completed slices:
   workspace root as MoonClaw `--home` so MoonClaw derives the product home
   itself. Validation passed with Moontown `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (926/926), and `git diff --check`.
+- Moontown commit `1eaff85d` moves the MoonClaw run polling adapter onto the
+  MoonLib product-home job store. The adapter now derives
+  `.moonsuite/products/moonclaw/jobs` through `@moonsuite` for suite-root
+  callers while still accepting already-derived MoonClaw product homes from
+  book-quality and PlanBook flows. Wenyu build review prompts now tell workers
+  to read run-workspace `run.json` instead of stale `.moonclaw/run.json`, and
+  run-polling/PlanBook path tests seed fresh product-home fixtures instead of
+  `.moonclaw/jobs`. Validation passed with Moontown `moon fmt`, clean
+  `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
 - Rabbita commit `a6a69ad` adds the root package's explicit MoonSuite
   product-home contract. The public API now exposes `rabbita` product id,
   `.moonsuite/products/rabbita` state, service, runtime, cache, and
@@ -848,9 +857,9 @@ Remaining high-priority product slices:
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
   launchd product-home script path are now covered. The MoonCode sidecar
   processed-result ledger and MoonBook fallback checkout path are now
-  product-home based, and the active MoonClaw command/book-quality/preseed
-  plus PlanBook repair/editor feature-selection MoonClaw home writers now use
-  MoonLib-backed MoonClaw product homes instead of `.moonclaw`.
+  product-home based, and the active MoonClaw command/book-quality/preseed,
+  run polling, plus PlanBook repair/editor feature-selection MoonClaw home
+  flows now use MoonLib-backed MoonClaw product homes instead of `.moonclaw`.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
