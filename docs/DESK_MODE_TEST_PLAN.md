@@ -130,9 +130,10 @@ quality requires:
   removing the original paths, refreshing the target listing, selecting the
   first moved item, and clearing the clipboard after a successful move.
 - Desk can move one or more selected scoped files or folders to MoonBook trash
-  under `.moontown/trash`, preserve receipts, hide trash internals from normal
-  browsing, list restorable trash entries, and restore a selected trashed item
-  back to its original path when the path is still free.
+  under the Moondesk product home at
+  `.moonsuite/products/moondesk/trash/<book-id>`, preserve receipts, hide trash
+  internals from normal browsing, list restorable trash entries, and restore a
+  selected trashed item back to its original path when the path is still free.
 - Unsupported write operations are not implied. Desk remains explicit about the
   currently supported create/import/rename/move/trash/restore/edit surfaces.
 - Desk can reveal the selected item, focused item in a multi-selection, or the
@@ -190,8 +191,8 @@ Coverage:
   PDFs, unknown extensions, `.mbt.md`, and generated site files.
 - Source layer inference for `wiki`, `raw`, `inbox`, `skills`, `schemas`,
   `tools`, `apps`, `app`, `site/generated`, `book/site/generated`,
-  `wiki/reviews`, `reviews`, `portable/app-tool`, `.moontown`, and MoonClaw
-  artifact paths.
+  `wiki/reviews`, `reviews`, `portable/app-tool`, `.moonsuite`, `.tmp`, and
+  MoonClaw artifact paths.
 - Stable IDs and display names for mixed case, spaces, duplicate separators,
   punctuation, root paths, and trailing slashes.
 - Breadcrumbs for root, one-level, deeply nested, generated-site, and path names
@@ -290,10 +291,11 @@ Coverage:
   conflicts, and overlapping batch sources, and refuses canonical MoonBook
   sections and generated/system paths.
 - Trashing through `POST /trash` accepts either `path` or `paths`, moves every
-  selected existing file or folder into scoped MoonBook trash, records receipts,
-  returns `trashed_count` and the latest `trash_path`, hides `.moontown` from
-  normal root listings, rejects duplicates/traversal, and refuses canonical
-  MoonBook sections and generated/system paths.
+  selected existing file or folder into scoped MoonBook trash under
+  `.moonsuite/products/moondesk/trash/<book-id>`, records receipts, returns
+  `trashed_count` and the latest `trash_path`, hides `.moonsuite` from normal
+  root listings, rejects duplicates/traversal, and refuses canonical MoonBook
+  sections and generated/system paths.
 - Listing through `GET /trash` returns restorable scoped receipts with
   `original_path`, `trash_path`, `receipt_path`, and `trashed_at`, excludes
   restored or missing trash files, and never exposes another MoonBook's trash.
@@ -301,7 +303,8 @@ Coverage:
   validates the receipt, restores the item to its original path, and rejects
   restore when the original path now exists.
 - Hidden/system entries are excluded or included according to the virtual
-  filesystem contract; `.git` and `.DS_Store` must not pollute normal browsing.
+  filesystem contract; `.moonsuite`, `.tmp`, `.git`, and `.DS_Store` must not
+  pollute normal browsing.
 - Directory entries include expected `workspace_id`, `path`, `display_name`,
   `kind`, `source_layer`, `readable`, `writable`, `size_bytes`, and
   `modified_at` fields.
@@ -785,9 +788,9 @@ Assert:
 - MoonBook section roots, generated/system paths, and names containing path
   traversal or separators are rejected.
 - Moving a folder into itself is rejected.
-- Trash moves the item under `.moontown/trash`, removes it from the visible file
-  list, appears in the Trash panel, and keeps `.moontown` hidden from root
-  browsing.
+- Trash moves the item under `.moonsuite/products/moondesk/trash/<book-id>`,
+  removes it from the visible file list, appears in the Trash panel, and keeps
+  `.moonsuite` hidden from root browsing.
 - Batch trash removes all selected files from the visible file list and reports
   the number of trashed items.
 - Restore from a Trash panel row returns the item to the original path, removes
@@ -1047,10 +1050,10 @@ Required checks:
 Assert response status, JSON shape, selected field values, and absence of
 outside-file content. Before the main fixture, the script also launches the
 server against a fake source checkout and asserts that the effective health
-workspace root is the dedicated user workspace, no `.moontown` directory is
-created in the source checkout, the process log prints a warning naming the
-dedicated root and `MOONDESK_WORKSPACE_ROOT`, and created MoonBooks land under
-the dedicated workspace. It then repeats the launch with
+workspace root is the dedicated user workspace, no `.moontown`, `.moonclaw`, or
+`.moonsuite` directory is created in the source checkout, the process log prints
+a warning naming the dedicated root and `MOONDESK_WORKSPACE_ROOT`, and created
+MoonBooks land under the dedicated workspace. It then repeats the launch with
 `MOONDESK_WORKSPACE_ROOT` also pointed at the fake source checkout and asserts
 the server falls back to a home-based `moondesk-workspace` outside the checkout
 before creating any MoonBooks. The main fixture seeds multiple workspaces so one run covers the

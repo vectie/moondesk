@@ -3,7 +3,8 @@
 Moondesk is the native desktop shell for executable books. It should stay small
 enough to reason about: discover books, edit/read them through MoonWiki, code on
 them through MoonCode, hand scheduled work to Moontown, hand bounded execution
-to MoonClaw, and package generated app-tools.
+to MoonClaw, consume shared MoonSuite filesystem contracts from MoonLib, and
+package generated app-tools.
 
 See [Status](STATUS.md) for the current implementation state and
 [Architecture](ARCHITECTURE.md) for the cross-project boundary.
@@ -130,6 +131,29 @@ Still needed:
 - improve template discovery/install UX
 - package app-tools with clearer static-host/native-shell guidance
 
+### 6. MoonSuite Contract Extraction
+
+Goal: after the product-home migration stabilizes, move the shared filesystem
+contract into MoonLib and make every product consume the same typed path and
+registry helpers.
+
+Done:
+
+- MoonSuite v2 plan identifies `moonlib` as contract owner and `moonstat` as
+  validator/reporter.
+- Product-home migration has already moved major Moondesk, MoonClaw, Moontown,
+  MoonFish, MoonMoon, Lepusa, and MoonRobo state paths toward
+  `.moonsuite/products/<product>`.
+
+Still needed:
+
+- add a MoonLib package for suite root, product registry, product ids,
+  product-home paths, suite temp paths, and book path constructors
+- replace product-local string helpers with MoonLib contract calls
+- make MoonStat validate live workspaces against MoonLib and report
+  legacy-path drift without owning the contract
+- add cross-product integration tests from a fresh MoonSuite root
+
 ## Engineering Bar
 
 Every track should converge toward:
@@ -137,6 +161,7 @@ Every track should converge toward:
 - no obsolete routes or stale product stories
 - no domain-specific source lists in Moondesk
 - no hidden dependency on a browser-only shell for production use
+- no product-local reinvention of MoonSuite filesystem path contracts
 - warning-clean MoonBit checks
 - focused tests around changed behavior
 - generated interfaces updated with `moon info`

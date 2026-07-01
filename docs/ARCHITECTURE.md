@@ -7,6 +7,10 @@ desktop shell, MoonClaw owns execution, and Moontown coordinates books. See
 the read-only virtual filesystem mode, while MoonWiki and MoonCode are
 activities on the selected book/path context.
 
+MoonSuite filesystem contracts are a shared foundation owned by MoonLib.
+MoonStat consumes those contracts to validate/report workspace health and
+legacy-path drift; it does not define product-home or book-layout paths.
+
 ## Boundary
 
 Moondesk is a desktop shell over existing Moon workspaces. It should not absorb
@@ -27,6 +31,13 @@ Moontown
 
 MoonClaw
   agent runtime, workers, tools, bounded execution, artifacts, logs
+
+MoonLib
+  shared suite root, product registry, product-home, temp, and book path
+  contracts
+
+MoonStat
+  health reporting, metrics, snapshots, analytics, and contract-drift audits
 ```
 
 Moondesk treats the selected book as a desk-centered workspace:
@@ -57,6 +68,10 @@ MoonCode
   LaunchAgent actions.
 - `ui/rabbita-desk/main/`: Rabbita UI package for Desk, Files, Search, Inbox,
   MoonWiki, MoonCode, Town, Runs, and Settings surfaces.
+
+After MoonLib contract extraction, Moondesk path construction should call the
+MoonLib MoonSuite contract package instead of carrying product-local string
+helpers for `.moonsuite`, `.tmp`, `books`, or product registry paths.
 
 MoonCode is intentionally standalone. Moondesk renders the native shell and
 review surfaces, MoonClaw owns the agent loop and tool execution, and MoonBook

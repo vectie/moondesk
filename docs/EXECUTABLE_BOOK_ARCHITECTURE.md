@@ -4,7 +4,11 @@ Last validated against explicit local checkouts: 2026-06-20.
 
 ## Standalone Project Rule
 
-Each Moon project must build and run from its own checkout. Moondesk may discover or configure MoonBook, Moontown, and MoonClaw locations, but it should not assume sibling source directories. Cross-project work should go through explicit configuration, published package contracts, local service APIs, or durable book files.
+Each Moon project must build and run from its own checkout. Moondesk may
+discover or configure MoonBook, Moontown, MoonClaw, MoonLib, and MoonStat
+locations, but it should not assume sibling source directories. Cross-project
+work should go through explicit configuration, published package contracts,
+local service APIs, or durable book files.
 
 ## Product Thesis
 
@@ -46,6 +50,8 @@ encounter them through Book, Wiki, Code, Run, Review, and Publish.
 | MoonCode | MoonClaw/Moondesk | Interactive code-language editing of executable book logic, surfaced by Moondesk and executed by MoonClaw. |
 | MoonClaw | MoonClaw | Agent/runtime engine for bounded execution, tools, model loops, events, tests, packages, and run artifacts. |
 | Moontown | Moontown | Coordination layer for MoonBooks: scheduling, cross-book communication, town events, idea discovery, notifications, and routing. |
+| MoonLib | MoonLib | Shared MoonSuite filesystem contract layer: suite root, product registry, product-home paths, temp paths, book paths, and typed path constructors. |
+| MoonStat | MoonStat | Workspace health, metrics, snapshots, analytics, and drift reporting against MoonLib contracts. |
 | Bookkeeper | MoonBook/Bookkeeper layer | Acceptance gate for knowledge/code/results before they become durable book truth. |
 | Agent | MoonClaw | Model/tool actor. |
 | Runtime | MoonClaw | Execution substrate: event stream, tool execution, cancellation, durable loop, process/service lifecycle. |
@@ -79,6 +85,14 @@ creation, streams, cancellation, and bounded background work.
 Moontown owns town coordination: standing goals, schedules, cross-book messages,
 idea discovery, town memory, notifications, and routing work to the appropriate
 book/runtime.
+
+MoonLib owns shared MoonSuite filesystem contracts. Product-specific helpers may
+wrap MoonLib during migration, but they should not redefine suite roots,
+product registries, product-home paths, temp paths, or book paths.
+
+MoonStat owns observation, reporting, metrics, snapshots, analytics, and
+contract-drift detection. It consumes MoonLib contracts and must not become the
+source of truth for layout decisions.
 
 Bookkeeper owns acceptance decisions. A run can produce proposals; accepted
 knowledge/code/results must be reviewed before they become durable book truth.

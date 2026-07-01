@@ -227,18 +227,25 @@ wiki-fixture/
         findings.html
         assets/
           site.css
-  .moontown/
-    requests/
-      request-forward-001.json
-    standing-goals/
-      goal-weekly-review.json
-    town.json
-  moonclaw-jobs/
-    run-forward-001/
-      result.json
-      events.jsonl
-      artifacts/
-        generated-summary.md
+  .moonsuite/
+    product-registry.json
+    products/
+      moontown/
+        requests/
+          request-forward-001.json
+        standing-goals/
+          goal-weekly-review.json
+        town.json
+      moonclaw/
+        jobs/
+          run-forward-001/
+            result.json
+            events.jsonl
+            artifacts/
+              generated-summary.md
+  .tmp/
+    products/
+      moontown/
   skills/
     wiki-method/
       SKILL.md

@@ -88,7 +88,8 @@ audit live workspaces, report drift, index metrics/snapshots, and surface health
 views. It can enforce that products follow the contract, but it should not own
 the contract itself.
 
-After Phase 4 product-home migration stabilizes, add a contract extraction phase:
+After Phase 4 product-home migration stabilizes, add Phase 4.5 for contract
+extraction:
 
 1. Create the MoonSuite contract package in `moonlib`.
 2. Move shared product ids, registry schema, and path constructors into that
@@ -96,6 +97,10 @@ After Phase 4 product-home migration stabilizes, add a contract extraction phase
 3. Replace product-local string helpers with `moonlib` contract calls.
 4. Make `moonstat` validate workspaces against `moonlib` contracts and report
    legacy-path drift.
+
+This extraction is a migration requirement, not an optional cleanup. Product
+repos may keep local helpers only as thin adapters around MoonLib while they are
+being migrated.
 
 ## Phase 1: Layout Helper
 

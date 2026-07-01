@@ -10,6 +10,8 @@ MoonWiki = edit what the book says
 MoonCode = edit what the book can do
 Moontown = coordinate books and scheduled work
 MoonClaw = execute bounded runs and code sessions
+MoonLib = define shared MoonSuite filesystem contracts
+MoonStat = validate/report workspace health and contract drift
 Bookkeeper = accept or reject proposed truth
 ```
 
@@ -34,6 +36,8 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 - Do not hardcode domain-specific research workflows into Moondesk.
 - Do not make Moondesk own the MoonClaw runtime or model loop.
 - Do not hide MoonBook, Moontown, MoonClaw, and Bookkeeper ownership.
+- Do not make MoonStat the source of truth for filesystem contracts; shared
+  MoonSuite layout contracts belong in MoonLib.
 - Do not keep obsolete routes after the current contract replaces them.
 - Do not expose platform concepts as the primary navigation when Book, Wiki,
   Code, Run, Review, and Publish are clearer.
@@ -120,6 +124,12 @@ Detailed protocol contracts belong in [MoonCode Workspace](MOONCODE.md) and
 package-generated `.mbti` files. The code-mode end-to-end testing strategy is
 tracked in [Code Mode Test Plan](CODE_MODE_TEST_PLAN.md).
 
+MoonSuite filesystem contracts belong in MoonLib. Moondesk should use MoonLib
+for suite root discovery, product registry records, product-home paths, suite
+temp paths, and book path construction after the contract extraction phase.
+MoonStat should consume the same MoonLib contracts to audit workspace health and
+legacy-path drift; it should not define the contract.
+
 ## Permission Model
 
 - reads stay under configured roots
@@ -134,6 +144,7 @@ tracked in [Code Mode Test Plan](CODE_MODE_TEST_PLAN.md).
 Moondesk is good when it is boring to operate:
 
 - boundaries are visible and hard to confuse
+- MoonSuite paths come from the shared MoonLib contract layer
 - stale domain packs live outside the desktop core
 - generated app-tools can leave Moondesk as standalone artifacts
 - native app startup, preview, routing, and daemon controls are reliable

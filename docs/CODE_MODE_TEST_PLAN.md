@@ -81,19 +81,27 @@ Create a reusable test fixture builder for code mode integration tests:
 ```text
 tmp/
   workspace/
-    .moontown/
-      books/
-        demo-book/
-          raw/
-          tools/
-          apps/
-          schemas/
-          wiki/
-            reviews/
-              mooncode/
-          .moonclaw/
+    books/
+      demo-book/
+        raw/
+        tools/
+        apps/
+        schemas/
+        wiki/
+          reviews/
             mooncode/
-              sessions/
+    .moonsuite/
+      product-registry.json
+      products/
+        mooncode/
+          sessions/
+        moonclaw/
+          jobs/
+        moontown/
+          requests/
+    .tmp/
+      products/
+        mooncode/
 ```
 
 The fixture builder should support:
@@ -106,7 +114,9 @@ The fixture builder should support:
 - malformed sidecar records for negative tests
 
 Keep fixture paths temporary and generated at test runtime. Do not depend on
-the developer's `.moontown`, `.moonclaw`, or `wiki` directories.
+the developer's `.moontown`, `.moonclaw`, `.moonsuite`, or `wiki` directories.
+When the MoonLib contract package exists, fixtures should build these paths via
+MoonLib helpers rather than duplicating string literals.
 
 ## End-to-End Scenarios
 
@@ -451,6 +461,9 @@ Code mode is sufficiently tested when:
   explicit method/validation test
 - negative tests prove path traversal and malformed runtime records cannot
   create durable side effects
+- integration tests prove MoonCode/MoonClaw/Moontown records use the MoonLib
+  MoonSuite contract paths and do not recreate legacy `.moontown` or
+  `.moonclaw` roots
 - resume tests prove sessions survive process restart from disk records
 - live model/runtime tests exist as manual or scheduled checks, but deterministic
   tests remain the merge gate
