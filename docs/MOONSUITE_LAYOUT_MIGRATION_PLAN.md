@@ -232,11 +232,15 @@ Completed slices:
   ledgers, civic service status, and civic service result bridges under
   `.moonsuite/products/moontown`, and Rabbita/cookbook operator copy now points
   at the MoonSuite product-home paths.
+- MoonClaw stores MoonCode durable session sidecars under
+  `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
+  native capability payload, and excludes `.moonsuite` sidecars from MoonCode
+  commit-proof git status/staging.
 
 Remaining high-priority product slices:
 
-- MoonClaw: move daemon home, MoonCode session store, robot routine ledgers,
-  skills, rules, and job indexes to `.moonsuite/products/moonclaw`.
+- MoonClaw: move daemon home, robot routine ledgers, skills, rules, and job
+  indexes to `.moonsuite/products/moonclaw`.
 - Moontown: finish remaining operator-request queues and any product-runtime
   copy that still names the old `.moontown` paths.
 - MoonRobo: move MoonClaw routine artifacts and task bridge examples to
