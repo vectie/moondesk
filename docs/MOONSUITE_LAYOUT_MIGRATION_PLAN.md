@@ -121,9 +121,10 @@ contracts.
   home `.moonsuite` state directory plus MoonClaw product-home provider, model,
   and config manifest paths. MoonStat also exposes `moonstat suite drift` and
   `/suite/drift` as a MoonLib-derived drift report over legacy `.moontown`,
-  `.moonclaw`, repo-local runtime, and old MoonStat state paths. MoonStat
-  remains an observer/reporter over the shared contract rather than the source
-  of path definitions.
+  `.moonclaw`, repo-local runtime, old MoonStat state paths, MoonRobo product
+  runtime paths, and old global SDK E1 temp files. MoonStat remains an
+  observer/reporter over the shared contract rather than the source of path
+  definitions.
 
 Migration rules from this point forward:
 
@@ -259,7 +260,7 @@ Minimum test gates:
    product-registry paths from `@moonsuite`.
 10. MoonStat drift-report tests proving old `.moontown`, `.moonclaw`,
     repo-local runtime, and global temp paths are reported as drift rather than
-    treated as alternate valid layouts.
+    treated as alternate valid layouts. Covered by MoonStat commit `cf7fd62`.
 11. MoonLib contract-boundary tests proving products can import
     `vectie/moonlib/moonsuite` without depending on MoonStat, Moondesk UI code,
     MoonClaw runtime code, or daemon packages.
@@ -470,15 +471,26 @@ Completed slices:
   absence of legacy `.moontown/books`. Validation passed with
   `scripts/lepusa_fresh_books_smoke.sh`, `moon check`, `moon test` (446/446),
   `moon fmt`, `moon info`, and final `moon check`.
+- MoonStat commit `cf7fd62` closes the current Phase 8 drift-report slice. The
+  report now carries explicit probe paths and scopes, exposes MoonRobo
+  canonical product-home and suite-temp paths, and treats legacy `.moontown`,
+  `.moonclaw`, `.moontown/moondesk-daemon`, `moonclaw-jobs`, root-local
+  `moonstat`, MoonRobo `runs/gateway-commands`, `runs/robo-loops`,
+  `runs/proof-sessions`, and old global SDK E1 bridge temp files as drift
+  candidates. Tests use an injectable `global_tmp_root` so production can still
+  inspect `/tmp` while the suite stays deterministic. Validation passed with
+  MoonStat `moon check`, `moon test` (773/773), `moon fmt`, `moon info`, and a
+  final `moon check`.
 
 Remaining high-priority product slices:
 
 - MoonLib: expand `vectie/moonlib/moonsuite` only when a missing contract is
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies.
-- MoonStat: keep consuming MoonLib contracts for workspace validation, health
-  projection, and drift reports; broaden drift coverage as product migrations
-  land, but do not add a parallel path schema there.
+- MoonStat: Phase 8 drift coverage for the known legacy product homes,
+  repo-local runtimes, and MoonRobo global temp files is now covered. Keep
+  consuming MoonLib contracts for workspace validation, health projection, and
+  future drift additions, but do not add a parallel path schema there.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, and Lepusa-native fresh-books smoke are now
