@@ -239,10 +239,13 @@ Completed slices:
 - MoonClaw loads global and local rule files from
   `.moonsuite/products/moonclaw/rules`, and its rules prompt copy names the
   MoonSuite product-home directory.
+- MoonClaw installs and loads system, global, and local skills from
+  `.moonsuite/products/moonclaw/skills`, and skill resource listing/reading
+  tests cover the product-home path.
 
 Remaining high-priority product slices:
 
-- MoonClaw: move daemon home, robot routine ledgers, skills, and job indexes to
+- MoonClaw: move daemon home, robot routine ledgers, and job indexes to
   `.moonsuite/products/moonclaw`.
 - Moontown: finish remaining operator-request queues and any product-runtime
   copy that still names the old `.moontown` paths.
