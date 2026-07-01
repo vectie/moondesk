@@ -184,6 +184,17 @@ pattern instead of carrying independent string contracts.
   `moonclaw.json` fixtures remain only as negative/legacy-ignore test inputs.
   Validation for this slice: MoonClaw `moon fmt`, `moon info`, `moon check`,
   `moon test` with `995/995` tests passing, and `git diff --check`.
+- MoonClaw commit `83d8ecae` removes the next active config-discovery fallbacks
+  from ACP runtime, channel bootstrap, channel model resolution, plugin runtime,
+  workspace runtime, security runtime, and onboarding runtime. These runtimes
+  now derive `moonclaw.json` from the MoonLib workspace-root product-home
+  constructor instead of accepting bare `moonclaw.json` or nested
+  `.moonclaw/moonclaw.json` as fresh-default inputs. Security pairing and
+  approval state now persists under
+  `.moonsuite/products/moonclaw/security/state.json` instead of
+  `home/security/state.json`. Validation for this slice: MoonClaw `moon fmt`,
+  clean `moon info`, `moon check`, `moon test` with `995/995` tests passing,
+  and `git diff --check`.
 
 Migration rules from this point forward:
 
@@ -465,6 +476,15 @@ Completed slices:
   book roots covered by white-box tests. Validation passed with MoonClaw
   `moon fmt`, `moon info`, `moon check`, `moon test` (995/995), and
   `git diff --check`.
+- MoonClaw commit `83d8ecae` continues that runtime cutover through ACP
+  runtime loading, channel bootstrap and model resolution, plugin/workspace/
+  security/onboarding runtime config loading, and security pairing/approval
+  persistence. Root-local `moonclaw.json`, nested `.moonclaw/moonclaw.json`,
+  and `home/security/state.json` are no longer active runtime defaults for
+  these surfaces; tests seed the MoonSuite product home and assert legacy root
+  configs are ignored where retained as fixtures. Validation passed with
+  MoonClaw `moon fmt`, clean `moon info`, `moon check`, `moon test` (995/995),
+  and `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
