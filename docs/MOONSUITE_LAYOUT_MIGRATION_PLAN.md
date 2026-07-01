@@ -432,6 +432,23 @@ Completed slices:
   Moondesk `moon check`, `moon test` (445/445), `moon fmt`, `moon info`, final
   `moon check`, plus Moontown `moon check`, `moon test` (923/923), `moon fmt`,
   `moon info`, and final `moon check`.
+- Phase 5 fresh-root projection coverage landed in Moontown commit `19dfada1`
+  and Moondesk commit `a6cac733`, proving the Rabbita/Moondesk book path
+  contract from both sides. The Moontown Rabbita Vite bridge defaults
+  `booksRootPath` to the fresh suite `books` root, keeps product-owned bridge
+  files under `.moonsuite/products/moontown`, and exposes
+  `MOONTOWN_SUITE_ROOT`, `MOONTOWN_BOOKS_ROOT`, and
+  `MOONTOWN_PRODUCT_STATE_ROOT` overrides for smoke runs. `npm run
+  smoke:book-projections` creates a temporary fresh suite root and asserts that
+  `books/wenyu-social-square/book/moonbook-ui-state.json` flows into
+  `loadModuleProjectionIndex()` with the generated-site link intact. Moondesk's
+  `internal/moonwiki` white-box coverage builds the matching fresh suite root
+  and asserts Desk workspace discovery exposes the MoonBook, canonical virtual
+  entries, and projection file resolution without creating
+  `.moontown/books/<book-id>`. Validation passed with Rabbita `npm run
+  smoke:book-projections`, Moontown `moon check`, `moon test` (923/923),
+  `moon fmt`, `moon info`, final `moon check`, plus Moondesk `moon check`,
+  `moon test` (446/446), `moon fmt`, `moon info`, and final `moon check`.
 
 Remaining high-priority product slices:
 
@@ -441,8 +458,9 @@ Remaining high-priority product slices:
 - MoonStat: keep consuming MoonLib contracts for workspace validation, health
   projection, and drift reports; broaden drift coverage as product migrations
   land, but do not add a parallel path schema there.
-- Moontown: follow-up Phase 5 work should focus on cross-product smoke coverage
-  with Moondesk/MoonBook/Rabbita against a fresh suite root.
+- Moontown: remaining Phase 5 work should focus on full browser/Lepusa smoke for
+  the fresh `books/` projection path after the programmatic Rabbita/Moondesk
+  smoke contract above.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration
