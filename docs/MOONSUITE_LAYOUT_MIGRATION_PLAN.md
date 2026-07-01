@@ -549,6 +549,14 @@ Completed slices:
   temp area instead of the book root. Validation passed with MoonClaw
   `moon fmt`, clean `moon info`, `moon check`, `moon test` (998/998), and
   `git diff --check`.
+- MoonClaw commit `56250730` cleans provider-task runtime artifact paths. The
+  artifact directory now uses the MoonLib workspace-root product-home
+  constructor, so suite-hosted book roots resolve provider-task artifacts to
+  the owning suite's `.moonsuite/products/moonclaw/provider-task` directory.
+  Generated result/failure filenames dropped the legacy hidden
+  `.moonclaw-provider-*` prefix in favor of `provider-<kind>-...json`.
+  Validation passed with MoonClaw `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` (999/999), and `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -844,6 +852,8 @@ Remaining high-priority product slices:
   todo session state are now MoonLib-backed product-home or suite-temp based.
   Job-analysis tool journals now use the MoonClaw suite temp lane instead of
   root-level hidden `.moonclaw-tool-journal-*` files.
+  Provider-task artifacts now derive product homes through the workspace-root
+  MoonLib constructor and no longer generate `.moonclaw-provider-*` filenames.
   MoonCode's public lifecycle/capability contracts and job-analysis preferred
   skill loading now advertise and consume the same product-home session/skill
   stores.
