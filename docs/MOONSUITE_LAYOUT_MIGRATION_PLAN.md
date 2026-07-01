@@ -174,6 +174,16 @@ pattern instead of carrying independent string contracts.
   fixtures now seed the MoonSuite product home. Validation for this slice:
   MoonClaw `moon update`, `moon fmt`, `moon info`, `moon check`, and
   `moon test` with `994/994` tests passing.
+- MoonClaw commit `b1af34b0` extends the MoonLib-backed product-home contract
+  from model loading into provider manifests, job config discovery, ACP config
+  discovery, gateway config discovery, provider tasks, external proposal
+  packets, provider resource listing, and provider resource reading. Fresh
+  default readers now derive `providers.json` and `moonclaw.json` through
+  `@moonsuite.product_artifact_for_workspace_root`; legacy
+  `.moonclaw/providers.json`, `.moonclaw/moonclaw.json`, and bare
+  `moonclaw.json` fixtures remain only as negative/legacy-ignore test inputs.
+  Validation for this slice: MoonClaw `moon fmt`, `moon info`, `moon check`,
+  `moon test` with `995/995` tests passing, and `git diff --check`.
 
 Migration rules from this point forward:
 
@@ -447,6 +457,14 @@ Completed slices:
   `.moonclaw-worktrees` write locations. Validation passed with MoonClaw
   `moon check`, `moon test` (992/992), `moon fmt`, `moon info`, final
   `moon check`, and `git diff --check`.
+- MoonClaw commit `b1af34b0` removes the remaining active provider manifest
+  and `moonclaw.json` config readers from legacy root-local and `.moonclaw`
+  locations in the provider registry, job analysis config, ACP CLI, gateway
+  CLI, provider resource tools, and provider task fixtures. These now resolve
+  through MoonLib workspace-root product-home constructors, with suite-hosted
+  book roots covered by white-box tests. Validation passed with MoonClaw
+  `moon fmt`, `moon info`, `moon check`, `moon test` (995/995), and
+  `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
