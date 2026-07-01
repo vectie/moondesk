@@ -515,6 +515,14 @@ Completed slices:
   an unused `.moonclaw` directory. Validation passed with MoonClaw `moon fmt`,
   clean `moon info`, `moon check`, `moon test` (995/995), and
   `git diff --check`.
+- MoonClaw commit `5d63360e` moves the todo tool's active session ledger from
+  `.moonclaw/todos/current_session.json` into
+  `.moonsuite/products/moonclaw/todos/current_session.json` through the MoonLib
+  workspace-root product-home constructor. Tool docs now advertise the fresh
+  storage path, and black-box coverage proves suite-hosted books write the
+  suite MoonClaw product-home ledger without creating the legacy `.moonclaw`
+  todo file. Validation passed with MoonClaw `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` (996/996), and `git diff --check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -751,8 +759,8 @@ Remaining high-priority product slices:
   writes for conversations, jobs, gateway, onboarding config, workspace
   defaults, ACP state, OAuth credentials, starter attachments, provider-task
   artifacts, worktree scratch, MoonCode sessions and watchers, skills, rules,
-  daemon lock, and robot routine ledgers are now product-home or suite-temp
-  based.
+  daemon lock, robot routine ledgers, and todo session state are now
+  product-home or suite-temp based.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests. MoonFish and MoonMoon have root product-home contracts and now consume
   MoonLib for those paths; remaining work there is broader smoke integration
