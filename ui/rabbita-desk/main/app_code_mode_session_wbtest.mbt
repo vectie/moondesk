@@ -43,6 +43,7 @@ fn code_mode_test_session(
 ///|
 fn code_mode_test_event(
   id : String,
+  command_id? : String = "",
   title? : String = "runtime event",
   lane? : String = "runtime",
   kind? : String = "mooncode.runtime-event",
@@ -53,10 +54,12 @@ fn code_mode_test_event(
   command? : String = "",
   created_at? : String = "2026-06-30T00:00:00Z",
   exit_code? : Int = 0,
+  command_packet? : Json? = None,
   tool_result? : Json? = None,
 ) -> MoonCodeEvent {
   {
     id,
+    command_id: if command_id == "" { None } else { Some(command_id) },
     lane,
     kind,
     title,
@@ -67,6 +70,7 @@ fn code_mode_test_event(
     diff,
     command,
     exit_code,
+    command_packet,
     tool_result,
   }
 }
@@ -1333,6 +1337,60 @@ test "code mode transcript interleaves recovered native replies by command id" {
   assert_eq(rows[1].content, "First recovered reply.")
   assert_eq(rows[2].content, "Second recovered prompt")
   assert_eq(rows[3].content, "Second recovered reply.")
+}
+
+///|
+test "code mode transcript links native replies by explicit command id" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "assistant-random-first",
+        command_id="cmd-first",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="First explicit reply.",
+      ),
+      code_mode_test_event(
+        "prompt-random-first",
+        command_id="cmd-first",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="First explicit prompt",
+        command="prompt",
+      ),
+      code_mode_test_event(
+        "assistant-random-second",
+        command_id="cmd-second",
+        title="MoonCode assistant update",
+        lane="transcript",
+        kind="assistant_delta",
+        status="running",
+        detail="Second explicit reply.",
+      ),
+      code_mode_test_event(
+        "prompt-random-second",
+        command_packet=Some({ "command_id": "cmd-second" }),
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Second explicit prompt",
+        command="prompt",
+      ),
+    ],
+  }
+  let rows = mooncode_transcript_rows(
+    { ..init_model(), mooncode_model: "codex/gpt-5.4" },
+    session,
+  )
+  assert_eq(rows.length(), 4)
+  assert_eq(rows[0].content, "First explicit prompt")
+  assert_eq(rows[1].content, "First explicit reply.")
+  assert_eq(rows[2].content, "Second explicit prompt")
+  assert_eq(rows[3].content, "Second explicit reply.")
 }
 
 ///|
@@ -3000,6 +3058,7 @@ test "code mode stream parser accepts numeric MoonClaw event timestamps" {
   #|  "type": "event",
   #|  "event": {
   #|    "id": "finish-1",
+  #|    "command_id": "cmd-flat",
   #|    "lane": "review",
   #|    "kind": "finish",
   #|    "title": "MoonCode tool `finish` completed",
@@ -3025,7 +3084,40 @@ test "code mode stream parser accepts numeric MoonClaw event timestamps" {
       assert_eq(stream.events.length(), 1)
       assert_eq(stream.events[0].id, "finish-1")
       assert_eq(stream.events[0].created_at, "1782824149398")
+      assert_eq(stream.events[0].command_id, Some("cmd-flat"))
       assert_eq(stream.events[0].tool_result is Some(_), true)
+    }
+    Err(error) => fail("expected parsed stream, got \{error}")
+  }
+}
+
+///|
+test "code mode stream parser preserves nested command packet id" {
+  let text = #|{
+  #|  "type": "event",
+  #|  "event": {
+  #|    "id": "tool-1",
+  #|    "lane": "tool",
+  #|    "kind": "tool_result",
+  #|    "title": "Tool finished",
+  #|    "status": "done",
+  #|    "detail": "ok",
+  #|    "created_at": "2026-06-30T00:00:00Z",
+  #|    "command_packet": {
+  #|      "command_id": "cmd-nested",
+  #|      "action": "prompt"
+  #|    }
+  #|  }
+  #|}
+  match parse_mooncode_stream_text(text) {
+    Ok(stream) => {
+      assert_eq(stream.events.length(), 1)
+      assert_eq(stream.events[0].command_id, Some("cmd-nested"))
+      match stream.events[0].command_packet {
+        Some(packet) =>
+          assert_eq(json_string_value(packet, "command_id", default=""), "cmd-nested")
+        None => fail("expected command packet")
+      }
     }
     Err(error) => fail("expected parsed stream, got \{error}")
   }

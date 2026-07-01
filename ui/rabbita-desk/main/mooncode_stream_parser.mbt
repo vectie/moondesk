@@ -71,6 +71,7 @@ fn parse_mooncode_stream_text(
 fn mooncode_stream_event_from_json(event : Json) -> MoonCodeEvent {
   {
     id: json_string_value(event, "id", default=""),
+    command_id: mooncode_stream_event_command_id(event),
     lane: json_string_value(event, "lane", default=""),
     kind: json_string_value(event, "kind", default=""),
     title: json_string_value(event, "title", default=""),
@@ -81,7 +82,27 @@ fn mooncode_stream_event_from_json(event : Json) -> MoonCodeEvent {
     diff: json_string_value(event, "diff", default=""),
     command: json_string_value(event, "command", default=""),
     exit_code: json_int_value(event, "exit_code", default=0),
+    command_packet: json_field(event, "command_packet"),
     tool_result: json_field(event, "tool_result"),
+  }
+}
+
+///|
+fn mooncode_stream_event_command_id(event : Json) -> String? {
+  let direct = json_string_value(event, "command_id", default="")
+  if direct != "" {
+    return Some(direct)
+  }
+  match json_field(event, "command_packet") {
+    Some(packet) => {
+      let command_id = json_string_value(packet, "command_id", default="")
+      if command_id == "" {
+        None
+      } else {
+        Some(command_id)
+      }
+    }
+    None => None
   }
 }
 
@@ -330,6 +351,7 @@ fn mooncode_stream_package_content_event(
 ///|
 fn mooncode_stream_event(
   id~ : String,
+  command_id? : String = "",
   lane~ : String,
   kind~ : String,
   title~ : String,
@@ -338,10 +360,12 @@ fn mooncode_stream_event(
   detail~ : String,
   path? : String = "",
   command? : String = "",
+  command_packet? : Json? = None,
   tool_result? : Json? = None,
 ) -> MoonCodeEvent {
   {
     id,
+    command_id: if command_id == "" { None } else { Some(command_id) },
     lane,
     kind,
     title,
@@ -352,6 +376,7 @@ fn mooncode_stream_event(
     diff: "",
     command,
     exit_code: 0,
+    command_packet,
     tool_result,
   }
 }

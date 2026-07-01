@@ -805,6 +805,19 @@ fn mooncode_event_order_key(event : MoonCodeEvent) -> String {
 
 ///|
 fn mooncode_event_command_id(event : MoonCodeEvent) -> String {
+  match event.command_id {
+    Some(command_id) if command_id != "" => return command_id
+    _ => ()
+  }
+  match event.command_packet {
+    Some(packet) => {
+      let command_id = json_string_value(packet, "command_id", default="")
+      if command_id != "" {
+        return command_id
+      }
+    }
+    None => ()
+  }
   if event.kind == "command.prompt" && event.id.contains("mooncode-command-") {
     return event.id
   }

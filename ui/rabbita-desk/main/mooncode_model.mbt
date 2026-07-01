@@ -26,6 +26,7 @@ struct MoonCodeConversationRow {
 ///|
 struct MoonCodeEvent {
   id : String
+  command_id : String?
   lane : String
   kind : String
   title : String
@@ -36,6 +37,7 @@ struct MoonCodeEvent {
   diff : String
   command : String
   exit_code : Int
+  command_packet : Json?
   tool_result : Json?
 } derive(FromJson)
 
