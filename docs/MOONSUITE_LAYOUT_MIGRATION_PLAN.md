@@ -449,6 +449,17 @@ Completed slices:
   smoke:book-projections`, Moontown `moon check`, `moon test` (923/923),
   `moon fmt`, `moon info`, final `moon check`, plus Moondesk `moon check`,
   `moon test` (446/446), `moon fmt`, `moon info`, and final `moon check`.
+- Moondesk commit `76ba4069` extends the full Desk browser smoke to cover the
+  fresh generated-site projection path in the real UI. The smoke fixture now
+  seeds `books/research-alpha/book/moonbook-ui-state.json` and
+  `books/research-alpha/book/site/generated/index.html`, then drives Chrome
+  through the Desk UI to prove the root virtual file list exposes
+  `book/site/generated`, keeps raw `book` folded away, opens
+  `book/site/generated/index.html`, and renders the Desk preview link through
+  `/api/workspaces/book-research-alpha/file/book/site/generated/index.html`
+  without creating `.moontown/books/...`. Validation passed with
+  `scripts/desk_mode_browser_smoke.sh`, `moon check`, `moon test` (446/446),
+  `moon fmt`, `moon info`, and final `moon check`.
 
 Remaining high-priority product slices:
 
@@ -458,9 +469,9 @@ Remaining high-priority product slices:
 - MoonStat: keep consuming MoonLib contracts for workspace validation, health
   projection, and drift reports; broaden drift coverage as product migrations
   land, but do not add a parallel path schema there.
-- Moontown: remaining Phase 5 work should focus on full browser/Lepusa smoke for
-  the fresh `books/` projection path after the programmatic Rabbita/Moondesk
-  smoke contract above.
+- Moontown: remaining Phase 5 work should focus on Lepusa-native launch smoke
+  for the fresh `books/` projection path after the programmatic
+  Rabbita/Moondesk contract and full Desk browser smoke above.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration
