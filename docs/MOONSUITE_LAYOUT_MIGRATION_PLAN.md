@@ -248,10 +248,12 @@ Completed slices:
 - MoonClaw stores robot routine run ledgers under
   `.moonsuite/products/moonclaw/robot-routine-runs`, and gateway white-box tests
   assert that the legacy `.moonclaw/robot-routine-runs` path is not created.
+- MoonClaw stores workflow job runtime state under
+  `.moonsuite/products/moonclaw/jobs`; gateway startup, proposal CLI commands,
+  and detached proposal inputs share the same product-home helper.
 
 Remaining high-priority product slices:
 
-- MoonClaw: move remaining job indexes to `.moonsuite/products/moonclaw`.
 - Moontown: finish remaining operator-request queues and any product-runtime
   copy that still names the old `.moontown` paths.
 - MoonRobo: move MoonClaw routine artifacts and task bridge examples to
