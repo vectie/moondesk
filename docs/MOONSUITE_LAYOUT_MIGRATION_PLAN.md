@@ -245,6 +245,10 @@ Completed slices:
 - Moontown final-integration installs write the Wenyu integration status file
   under `.moonsuite/products/moontown/integration`, with usage docs and
   white-box path coverage updated to the product-home location.
+- Moontown exported keeper/MoonClaw packet files now default to
+  `.moonsuite/products/moontown/packets`, with modeled execution records,
+  Rabbita demo records, operational docs, and adapter white-box coverage updated
+  to the product-home path.
 - MoonClaw stores MoonCode durable session sidecars under
   `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
   native capability payload, and excludes `.moonsuite` sidecars from MoonCode
