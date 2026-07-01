@@ -1,0 +1,201 @@
+# MoonSuite Layout Migration Plan
+
+This plan makes MoonSuite v2 the fresh default filesystem contract. There is no
+legacy compatibility target for new writes: Moondesk should initialize and use a
+MoonSuite root directly.
+
+## Target Layout
+
+```text
+MoonSuiteRoot/
+  books/
+  inbox/
+  exports/
+  .tmp/
+  .moonsuite/
+    suite.json
+    product-registry.json
+    products/
+      moondesk/
+      moonbook/
+      moonwiki/
+      mooncode/
+      moonclaw/
+      moontown/
+      moonstat/
+      moonfish/
+      moonmoon/
+      moonrobo/
+      bookkeeper/
+      lepusa/
+      rabbita/
+      <future-product>/
+    services/
+    cache/
+```
+
+Durable user truth belongs outside `.moonsuite`. Internal product state belongs
+inside `.moonsuite/products/<product>`. Disposable state belongs inside `.tmp`.
+
+## Product Registry
+
+`.moonsuite/product-registry.json` is the source of truth for installed Moon
+products. Moondesk should discover products from this registry instead of
+hardcoding a short product list in the UI or backend.
+
+Each product entry uses this shape:
+
+```json
+{
+  "id": "moonrobo",
+  "name": "MoonRobo",
+  "kind": "moon-suite-product",
+  "state_path": ".moonsuite/products/moonrobo",
+  "service_path": ".moonsuite/products/moonrobo/service.json",
+  "repo_path": "",
+  "status": "installed",
+  "capabilities": []
+}
+```
+
+Default products:
+
+- `moondesk`
+- `moonbook`
+- `moonwiki`
+- `mooncode`
+- `moonclaw`
+- `moontown`
+- `moonstat`
+- `moonfish`
+- `moonmoon`
+- `moonrobo`
+- `bookkeeper`
+- `lepusa`
+- `rabbita`
+
+## Phase 1: Layout Helper
+
+Add one MoonSuite layout helper and route all server paths through it.
+
+- `books/` replaces the old hidden MoonBook library.
+- `.moonsuite/products/moonclaw/service.json` replaces
+  `.moontown/moondesk-daemon/moonclaw-service.json`.
+- `.moonsuite/products/moontown/service.json` replaces
+  `.moontown/moondesk-daemon/service.json`.
+- `.moonsuite/products/moondesk/daemon` replaces
+  `.moontown/moondesk-daemon`.
+
+## Phase 2: Fresh Startup
+
+Desk startup should initialize a chosen MoonSuite root:
+
+1. Create `books`, `inbox`, `exports`, `.tmp`, and `.moonsuite`.
+2. Create every default product folder.
+3. Write `suite.json`.
+4. Write `product-registry.json`.
+5. Show the active MoonSuite root before Code/Wiki interaction begins.
+
+Random temporary roots should not be the normal user workspace.
+
+## Phase 3: VFS Default
+
+The normal Desk VFS exposes:
+
+- `books`
+- `inbox`
+- `exports`
+
+The normal Desk VFS hides:
+
+- `.moonsuite`
+- `.tmp`
+
+Advanced/debug mode may reveal `.moonsuite/products/*`.
+
+## Phase 4: Product State Homes
+
+Product state should be isolated by owner:
+
+- `moondesk`: window state, preferences, recent suite roots.
+- `moonbook`: book catalog, templates, book-level indexes.
+- `moonwiki`: wiki search and link indexes.
+- `mooncode`: sessions, command queues, handoff, evals.
+- `moonclaw`: daemon config, runtime jobs, logs, sandboxes, tool state.
+- `moontown`: standing goals, town messages, events, routing, scheduler state.
+- `moonstat`: metrics DB, snapshots, analytics, embeddings and indexes.
+- `moonfish`: workflows, market-data cache, chart state, reports, planning runs.
+- `moonmoon`: terrain, scenes, simulations, generated clips, evidence.
+- `moonrobo`: robot profiles, URDF indexes, mesh refs, gait, telemetry, sim runs.
+- `bookkeeper`: review queue, acceptance decisions, policies.
+- `lepusa`: native shell runtime and update metadata.
+- `rabbita`: UI runtime and build metadata.
+
+Accepted product output belongs in the owning book under `books/<book-id>`.
+
+## Phase 5: Book Layout
+
+Each book uses this durable layout:
+
+```text
+books/<book-id>/
+  book.json
+  wiki/
+  code/
+  raw/
+  reviews/
+  outputs/
+  apps/
+```
+
+## Phase 6: API Rewrite
+
+Rewrite these surfaces to use MoonSuite layout helpers:
+
+- `/api/workspaces`
+- `/api/workspaces/metadata`
+- `/api/workspaces/*`
+- `/api/mooncode/*`
+- `/api/moonclaw/*`
+- `/api/town/*`
+- `/api/books/*`
+
+MoonClaw and Moontown errors must be explicit. They should not silently queue
+forever when a required service is missing.
+
+## Phase 7: UI Update
+
+Desk should show:
+
+- Active MoonSuite root.
+- Book list from `books/`.
+- Selected book.
+- Product/service status.
+- Clean Code conversation stream.
+
+Normal UI should avoid exposing hidden internal paths.
+
+## Phase 8: Test Gates
+
+Minimum test gates:
+
+1. Layout unit tests for every canonical path.
+2. Bootstrap tests for complete fresh MoonSuite creation.
+3. Workspace API tests for book discovery from `books/`.
+4. Product registry tests covering MoonFish, MoonMoon, and MoonRobo.
+5. Service config tests for MoonClaw and Moontown product-local configs.
+6. MoonCode end-to-end tests for prompt append, runtime events, and ordered AI
+   reply append.
+7. Desk browser smoke tests for first-run root, VFS, workspace list, and clean
+   conversation UI.
+8. Lepusa smoke test from a fresh MoonSuite root.
+
+## Phase 9: Cutover
+
+Cutover steps:
+
+1. Stop writing the old hidden MoonBook library.
+2. Stop writing `.moontown/moondesk-daemon`.
+3. Update tests, docs, and smoke fixtures to `books/`.
+4. Make MoonSuite v2 the fresh default.
+5. Launch a fresh Lepusa/Moondesk app for visual verification.
