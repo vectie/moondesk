@@ -296,13 +296,21 @@ Completed slices:
   feed loop-proof aggregation from `.moonsuite/products/moonrobo`, with host API
   integration tests asserting the old `runs/gateway-commands` and
   `runs/robo-loops` paths stay empty for those product-owned artifacts.
+- MoonRobo proof-session and live-exercise product ledgers now use
+  `.moonsuite/products/moonrobo/proof-sessions` and
+  `.moonsuite/products/moonrobo/live-exercises`; host API integration tests
+  assert proof sessions no longer write to `runs/proof-sessions`, product
+  status exposes the product-home paths, and resident/memory context reads the
+  new proof-session ledger.
 
 Remaining high-priority product slices:
 
 - Moontown: finish remaining civic, daemon, and synthesis runtime copy that
   still names old `.moontown` paths, while keeping book-layout paths for the
   Phase 5 cutover.
-- MoonRobo: audit residual runtime writers and keep only RoboBook-owned
-  accepted evidence under the book root.
+- MoonRobo: continue auditing residual runtime writers so RoboBook-owned
+  receipts, telemetry, task executions, reviews, observations, and model edits
+  remain under the book root while any remaining product orchestration ledgers
+  move under `.moonsuite/products/moonrobo`.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests.
