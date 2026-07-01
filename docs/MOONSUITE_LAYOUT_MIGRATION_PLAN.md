@@ -135,6 +135,12 @@ contracts.
   runtime instead of falling back to `cwd/.moonclaw`. Validation for this slice:
   `moon fmt`, `moon info`, `moon check`, and `moon test` in Moontown with
   `925/925` tests passing.
+- The Moontown MoonBook adapter now derives MoonClaw provider manifests from the
+  MoonClaw product home and MoonCode sidecar sessions from the MoonCode product
+  home through `@moonsuite.product_artifact_for_book_root`, removing another
+  book-local `.moonclaw` writer/reader pair. Validation for this slice:
+  `moon fmt`, `moon info`, `moon check`, and `moon test` in Moontown with
+  `926/926` tests passing.
 
 Migration rules from this point forward:
 
