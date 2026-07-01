@@ -887,6 +887,13 @@ Completed slices:
   `.moonclaw/providers.json`. Validation passed with MoonClaw `moon fmt`,
   clean `moon info`, `moon check`, `moon test` (1000/1000), and
   `git diff --check`.
+- MoonClaw commit `81ab4287` cleans current public CLI documentation so
+  operators pass the MoonSuite root with `--home ~` instead of using
+  `~/.moonclaw` as the home. README and command docs now point isolated
+  workspaces, command examples, gateway startup, onboarding, ACP setup, and
+  product config paths at `.moonsuite/products/moonclaw/...`, matching the
+  MoonLib-backed runtime. Validation passed with MoonClaw `moon fmt`, clean
+  `moon info`, `moon check`, `moon test` (1000/1000), and `git diff --check`.
 - MoonStat commit `e776bef` updates the suite drift report to match that
   MoonCode ownership boundary. Book-local
   `books/<book-id>/.moonclaw/mooncode/sessions` drift now reports the canonical
