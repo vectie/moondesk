@@ -901,6 +901,16 @@ Completed slices:
   `moonclaw`, not `.moonsuite/products/mooncode/sessions`. Validation passed
   with MoonStat `moon fmt`, clean `moon info`, `moon check`, `moon test`
   (774/774), and `git diff --check`.
+- MoonRobo commit `c69cc9ea` expands the public product-status MoonSuite
+  contract so Rabbita, Moondesk, and status consumers can see every migrated
+  MoonRobo product-home lane from one MoonLib-derived payload. The
+  `MoonroboProductHomes` status now advertises dry-run evidence, approvals,
+  bridge dispatches/contracts, robo turns, prove-loop records, runtime
+  supervisor, runtime validation, runtime calibration, runtime health, and the
+  cross-product MoonClaw robot-routine ledger through `@moonsuite` path
+  constructors instead of a partial local schema. Validation passed with
+  MoonRobo `moon fmt`, `moon info`, `moon check`, `moon test` (453/453), and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
