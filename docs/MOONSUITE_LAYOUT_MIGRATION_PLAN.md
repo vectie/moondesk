@@ -245,11 +245,13 @@ Completed slices:
 - MoonClaw stores the daemon lock/info file at
   `.moonsuite/products/moonclaw/daemon.json`, and daemon white-box tests assert
   that the legacy `.moonclaw/daemon.json` path is not created.
+- MoonClaw stores robot routine run ledgers under
+  `.moonsuite/products/moonclaw/robot-routine-runs`, and gateway white-box tests
+  assert that the legacy `.moonclaw/robot-routine-runs` path is not created.
 
 Remaining high-priority product slices:
 
-- MoonClaw: move robot routine ledgers and job indexes to
-  `.moonsuite/products/moonclaw`.
+- MoonClaw: move remaining job indexes to `.moonsuite/products/moonclaw`.
 - Moontown: finish remaining operator-request queues and any product-runtime
   copy that still names the old `.moontown` paths.
 - MoonRobo: move MoonClaw routine artifacts and task bridge examples to
