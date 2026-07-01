@@ -33,6 +33,7 @@ fi
 mkdir -p \
   "${ROOT}/books/research-alpha/wiki/notes" \
   "${ROOT}/books/research-alpha/raw" \
+  "${ROOT}/books/research-alpha/book/site/generated/assets" \
   "${ROOT}/books/research-alpha/.git" \
   "${ROOT}/books/research-beta/wiki" \
   "${ROOT}/books/research-beta/raw" \
@@ -46,6 +47,9 @@ printf '{"id":"research-gamma","name":"Research Gamma"}\n' >"${ROOT}/books/resea
 printf '# Alpha Desk\n\nBrowser smoke fixture.\n' >"${ROOT}/books/research-alpha/wiki/index.md"
 printf 'alpha note\n' >"${ROOT}/books/research-alpha/wiki/notes/alpha.md"
 printf 'raw evidence\n' >"${ROOT}/books/research-alpha/raw/evidence.txt"
+printf '{"title":"Research Alpha","projection_scope":"public"}\n' >"${ROOT}/books/research-alpha/book/moonbook-ui-state.json"
+printf '<!doctype html><title>Research Alpha Site</title><main>Research Alpha generated site</main>\n' >"${ROOT}/books/research-alpha/book/site/generated/index.html"
+printf 'main { color: #123456; }\n' >"${ROOT}/books/research-alpha/book/site/generated/assets/site.css"
 printf 'hidden config\n' >"${ROOT}/books/research-alpha/.git/config"
 printf 'mac noise\n' >"${ROOT}/books/research-alpha/.DS_Store"
 printf '# Beta Desk\n' >"${ROOT}/books/research-beta/wiki/index.md"

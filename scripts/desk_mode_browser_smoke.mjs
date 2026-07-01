@@ -717,8 +717,45 @@ async function run() {
     await clickWorkspace(session, "book-research-alpha");
     await waitFor(session, rowExistsExpression("wiki"), "alpha root wiki row");
     await waitFor(session, rowExistsExpression("raw"), "alpha root raw row");
+    await waitFor(
+      session,
+      rowExistsExpression("book/site/generated"),
+      "alpha root generated-site virtual row",
+    );
+    await waitFor(
+      session,
+      `!${rowExistsExpression("book")}`,
+      "alpha root hides raw book directory while exposing generated site",
+    );
     const rootRows = await session.evaluate(visibleRowsExpression());
     assert(!rootRows.some(item => item.includes(".git") || item.includes(".DS_Store")), "Hidden host noise is visible in Desk");
+    assert(
+      fs.existsSync(path.join(fixtureRoot, "books/research-alpha/book/moonbook-ui-state.json")),
+      "Rabbita projection state was not placed under the fresh books root",
+    );
+    assert(
+      !fs.existsSync(path.join(fixtureRoot, ".moontown/books/research-alpha/book/moonbook-ui-state.json")),
+      "Browser smoke fixture should not create legacy .moontown book projections",
+    );
+    await doubleClickPath(session, "book/site/generated");
+    await waitFor(
+      session,
+      rowExistsExpression("book/site/generated/index.html"),
+      "generated-site index row",
+    );
+    await mouseDownPath(session, "book/site/generated/index.html");
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="desk-preview"]')?.textContent.includes('index.html')`,
+      "generated-site inline preview title",
+    );
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="desk-preview"] a')?.href.includes('/api/workspaces/book-research-alpha/file/book/site/generated/index.html')`,
+      "generated-site preview link uses fresh MoonBook file route",
+    );
+    await clickTestId(session, "desk-root");
+    await waitFor(session, rowExistsExpression("wiki"), "generated-site smoke returned to root");
     await waitFor(
       session,
       `document.querySelector('.desk-file-table')?.classList.contains('density-comfortable')`,
