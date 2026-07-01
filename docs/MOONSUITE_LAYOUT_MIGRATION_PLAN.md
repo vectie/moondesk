@@ -228,6 +228,10 @@ Completed slices:
   daemon runtime files, live/autonomy projections, book-result bridges, book
   template requests, civic schedules, book-quality runtime files, and town
   synthesis under `.moonsuite/products/moontown`.
+- Moontown stores book-quality audits, AI review packets/results, review run
+  ledgers, and repair bridge defaults under
+  `.moonsuite/products/moontown/book-quality`, with README copy and daemon
+  scheduled-job tests updated to the product-home paths.
 - Moontown stores civic protocol registries, status projections, protocol
   ledgers, civic service status, and civic service result bridges under
   `.moonsuite/products/moontown`, and Rabbita/cookbook operator copy now points
