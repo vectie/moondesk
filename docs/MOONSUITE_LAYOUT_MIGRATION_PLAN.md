@@ -408,6 +408,15 @@ Completed slices:
   MoonLib MoonSuite contract. Validation passed in MoonRobo with `moon update`,
   `moon fetch vectie/moonlib@0.1.1`, `moon check`, `moon test` (453/453),
   `moon fmt`, `moon info`, and a final `moon check`.
+- MoonRobo commit `dea4141b` moves runtime supervisor launch receipts/logs,
+  runtime-health records, runtime-validation reports/sessions, and
+  runtime-calibration plans/resolutions under
+  `.moonsuite/products/moonrobo`. The runtime package now exposes MoonLib-backed
+  helpers for those product orchestration directories, launcher code uses the
+  product-home supervisor path, and tests assert the new paths no longer use
+  `runs/runtime-*`. Validation passed in MoonRobo with `moon check`,
+  `moon test` (453/453), `moon fmt`, `moon info`, final `moon check`, and
+  `git diff --check`.
 - Moontown daemon runtime policy now defaults health/log summaries to
   `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
   evidence points at
@@ -530,8 +539,10 @@ Remaining high-priority product slices:
   launchd product-home script path are now covered.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
-  and model edits under the book root while any shared product orchestration
-  path must remain a MoonLib-backed adapter.
+  and model edits under the book root while any remaining product orchestration
+  path must remain a MoonLib-backed adapter. Runtime supervisor, health,
+  validation, calibration, gateway commands, Robo loops, proof sessions, live
+  exercises, and SDK IPC state are now product-home or suite-temp based.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
   project-local config/model fallback readers, and legacy daemon git-exclude
   guards. New runtime writes for conversations, jobs, gateway, onboarding
