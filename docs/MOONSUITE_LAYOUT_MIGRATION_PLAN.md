@@ -672,6 +672,13 @@ Completed slices:
   executions, telemetry, and RoboBook evidence remain under book `runs/...`.
   Validation passed in MoonRobo with `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (453/453), and `git diff --check`.
+- MoonRobo commit `a24ac57b` aligns the Rabbita cockpit MoonClaw routine
+  evidence fixtures with the MoonClaw product-home ledger. Cockpit parser and
+  lifecycle tests now show persisted routine records under
+  `.moonsuite/products/moonclaw/robot-routine-runs`, and README operator copy
+  no longer advertises the stale `.moonclaw/robot-routine-runs` ledger.
+  Validation passed in MoonRobo with `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` (453/453), and `git diff --check`.
 - Moontown daemon runtime policy now defaults health/log summaries to
   `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
   evidence points at
