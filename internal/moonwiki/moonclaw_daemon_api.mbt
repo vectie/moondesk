@@ -40,7 +40,7 @@ async fn handle_moonclaw_models(
 
 ///|
 async fn moonclaw_daemon_status(workspace_root : String) -> Json {
-  let info_path = moonclaw_daemon_info_path()
+  let info_path = moonclaw_daemon_info_path(workspace_root)
   let descriptor = moonclaw_service_descriptor(workspace_root, "daemon")
   let service_cwd = json_string(descriptor, "cwd", default=workspace_root)
   let service_configured = json_bool(descriptor, "configured", default=false)
@@ -82,7 +82,7 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
       if service_configured {
         "MoonClaw daemon is running"
       } else {
-        "MoonClaw daemon is running without a workspace-local service config"
+        "MoonClaw daemon is running without a MoonSuite service config"
       }
     } else if alive && port > 0 && !existing_allowed {
       "MoonClaw daemon info exists but this temporary workspace needs an explicit service config"
@@ -127,7 +127,7 @@ async fn ensure_moonclaw_daemon(workspace_root : String) -> Json {
       status, "MoonClaw daemon service is not configured for this workspace",
     )
   }
-  let log_dir = moonclaw_log_dir()
+  let log_dir = moonclaw_log_dir(workspace_root)
   @fsx.make_directory(log_dir, recursive=true, exists_ok=true) catch {
     _ => ()
   }
@@ -202,13 +202,17 @@ async fn wait_for_moonclaw_daemon(workspace_root : String, pid : Int) -> Json {
 }
 
 ///|
-fn moonclaw_daemon_info_path() -> String {
-  @pathx.join(@sys.get_env_var("HOME").unwrap_or("."), ".moonclaw/daemon.json")
+fn moonclaw_daemon_info_path(workspace_root : String) -> String {
+  moonsuite_product_artifact_for_workspace_root(
+    workspace_root, "moonclaw", "daemon.json",
+  )
 }
 
 ///|
-fn moonclaw_log_dir() -> String {
-  @pathx.join(@sys.get_env_var("HOME").unwrap_or("."), ".moonclaw")
+fn moonclaw_log_dir(workspace_root : String) -> String {
+  moonsuite_product_artifact_for_workspace_root(
+    workspace_root, "moonclaw", "logs",
+  )
 }
 
 ///|

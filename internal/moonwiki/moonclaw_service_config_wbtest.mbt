@@ -101,3 +101,29 @@ test "moonclaw unconfigured daemon reuse skips temporary test roots" {
     ),
   )
 }
+
+///|
+async test "moonclaw daemon probe uses MoonSuite product home" {
+  let suite_root = "/tmp/moondesk-moonclaw-daemon-product-home-wbtest"
+  let book_root = @pathx.join(suite_root, "books/research-book")
+  assert_eq(
+    moonclaw_daemon_info_path(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moonclaw/daemon.json"),
+  )
+  assert_eq(
+    moonclaw_log_dir(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moonclaw/logs"),
+  )
+  assert_eq(
+    moonclaw_daemon_info_path("/tmp/standalone-book"),
+    "/tmp/standalone-book/.moonsuite/products/moonclaw/daemon.json",
+  )
+  let status = moonclaw_daemon_status(book_root)
+  assert_eq(
+    json_string(status, "info_path", default=""),
+    @pathx.join(suite_root, ".moonsuite/products/moonclaw/daemon.json"),
+  )
+  assert_false(
+    json_string(status, "info_path", default="").contains(".moonclaw"),
+  )
+}

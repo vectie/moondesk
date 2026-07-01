@@ -342,6 +342,13 @@ Completed slices:
   descriptor copy now name the current product-home paths. Validation for this
   slice: Moondesk `moon update`, `moon fmt`, `moon info`, `moon check`, and
   `moon test` with `448/448` tests passing.
+- Moondesk MoonClaw daemon probing now reads `daemon.json` from
+  `.moonsuite/products/moonclaw` through
+  `@moonsuite.product_artifact_for_workspace_root`, and Moondesk-launched
+  MoonClaw daemon stdout/stderr logs now go under
+  `.moonsuite/products/moonclaw/logs`. The fallback no longer probes or writes
+  `$HOME/.moonclaw`, and white-box coverage asserts suite-hosted
+  `books/<book-id>` workspaces derive the owning suite's MoonClaw product home.
 - Moonstat advertises and writes MoonClaw provider manifests through
   `.moonsuite/products/moonclaw/providers.json`, and advertises MoonClaw model
   and config candidates under `.moonsuite/products/moonclaw`.
