@@ -288,13 +288,16 @@ Completed slices:
   `.tmp/products/moonrobo/sdk-e1` instead of global `/tmp` files; the supervisor
   script creates nested parent directories before starting collector/writer
   processes, and bridge/host API tests assert the new contract.
+- MoonRobo gateway-command and Robo-loop artifacts now write, list, read, and
+  feed loop-proof aggregation from `.moonsuite/products/moonrobo`, with host API
+  integration tests asserting the old `runs/gateway-commands` and
+  `runs/robo-loops` paths stay empty for those product-owned artifacts.
 
 Remaining high-priority product slices:
 
 - Moontown: finish any residual product-runtime copy that still names old
   `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
-- MoonRobo: migrate any remaining non-SDK product-owned runtime writers to the
-  new product-home contracts where they are not RoboBook-owned accepted
-  evidence.
+- MoonRobo: audit residual runtime writers and keep only RoboBook-owned
+  accepted evidence under the book root.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests.
