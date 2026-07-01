@@ -1510,7 +1510,9 @@ async test "wiki server routes cover forward and backward book runs" {
     recursive=true,
   )
   @fsx.make_directory(
-    @pathx.join(book_root, "moonclaw-jobs/run-forward-001/artifacts"),
+    @pathx.join(
+      book_root, ".moonsuite/products/moonclaw/jobs/run-forward-001/artifacts",
+    ),
     recursive=true,
   )
   @fsx.write_to_file(@pathx.join(ui_root, "index.html"), "<main>wiki ui</main>")
@@ -1551,16 +1553,20 @@ async test "wiki server routes cover forward and backward book runs" {
     "main { color: black; }\n",
   )
   @fsx.write_to_file(
-    @pathx.join(book_root, "moonclaw-jobs/run-forward-001/events.jsonl"),
+    @pathx.join(
+      book_root, ".moonsuite/products/moonclaw/jobs/run-forward-001/events.jsonl",
+    ),
     "{\"type\":\"review\",\"title\":\"Forward review\",\"message\":\"complete review ready\"}\n",
   )
   @fsx.write_to_file(
-    @pathx.join(book_root, "moonclaw-jobs/run-forward-001/result.json"),
+    @pathx.join(
+      book_root, ".moonsuite/products/moonclaw/jobs/run-forward-001/result.json",
+    ),
     "{\"status\":\"complete\",\"summary\":\"forward run complete\"}\n",
   )
   @fsx.write_to_file(
     @pathx.join(
-      book_root, "moonclaw-jobs/run-forward-001/artifacts/generated-summary.md",
+      book_root, ".moonsuite/products/moonclaw/jobs/run-forward-001/artifacts/generated-summary.md",
     ),
     "# Generated Summary\n\nnew line\n",
   )
@@ -1775,7 +1781,7 @@ async test "wiki server routes cover forward and backward book runs" {
     assert_eq(raw_body, "primary evidence\n")
     let (_, artifact_body) = test_http_get(
       base +
-      "/api/workspaces/\{workspace_id}/raw?path=moonclaw-jobs%2Frun-forward-001%2Fartifacts%2Fgenerated-summary.md",
+      "/api/workspaces/\{workspace_id}/raw?path=.moonsuite%2Fproducts%2Fmoonclaw%2Fjobs%2Frun-forward-001%2Fartifacts%2Fgenerated-summary.md",
       200,
     )
     assert_true(artifact_body.contains("Generated Summary"))

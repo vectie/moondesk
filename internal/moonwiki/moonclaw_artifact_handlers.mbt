@@ -26,7 +26,7 @@ async fn handle_moonclaw_artifacts(
 ///|
 async fn find_run(workspace_root : String, run_id : String) -> RunRef? {
   for workspace in discover_workspaces(workspace_root) {
-    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    let run_root = moonclaw_jobs_root(workspace.root_path)
     let candidate = @pathx.join(run_root, run_id)
     if is_directory(candidate) {
       return Some({ workspace_id: workspace.id, run_id, run_root: candidate })
@@ -45,7 +45,7 @@ async fn run_artifacts(
   for artifact_name in ["report.md", "result.json"] {
     let absolute = @pathx.join(run_root, artifact_name)
     if @fs.exists(absolute) {
-      let path = "moonclaw-jobs/" + run_id + "/" + artifact_name
+      let path = moonclaw_run_relative_path(run_id, artifact_name)
       artifacts.push(
         @desk.run_artifact(id=@desk.stable_id(run_id, path), path~),
       )
@@ -61,7 +61,10 @@ async fn run_artifacts(
     }
     let absolute = @pathx.join(outputs_root, name)
     if @fs.exists(absolute) && !is_directory(absolute) {
-      let path = "moonclaw-jobs/" + run_id + "/outputs/" + name
+      let path = moonclaw_run_relative_path(
+        run_id,
+        @pathx.join("outputs", name),
+      )
       artifacts.push(
         @desk.run_artifact(id=@desk.stable_id(run_id, path), path~),
       )

@@ -139,7 +139,7 @@ async fn latest_matching_name(root : String, suffix : String) -> String {
 async fn count_run_workspaces(workspace_root : String) -> Int {
   let mut count = 0
   for workspace in discover_workspaces(workspace_root) {
-    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    let run_root = moonclaw_jobs_root(workspace.root_path)
     for name in read_directory_names(run_root, include_hidden=false) {
       if name.has_prefix("run-") && is_directory(@pathx.join(run_root, name)) {
         count += 1
@@ -159,7 +159,7 @@ async fn latest_run_info(workspace_root : String) -> Json {
     "artifact_count": 0,
   }
   for workspace in discover_workspaces(root) {
-    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    let run_root = moonclaw_jobs_root(workspace.root_path)
     let names = read_directory_names(run_root, include_hidden=false)
     let mut index = names.length()
     while index > 0 {
@@ -200,7 +200,7 @@ async fn moonclaw_progress_summary(
       Some(id) if id != workspace.id => continue
       _ => ()
     }
-    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    let run_root = moonclaw_jobs_root(workspace.root_path)
     let names = read_directory_names(run_root, include_hidden=false)
     for name in names {
       if !name.has_prefix("run-") {

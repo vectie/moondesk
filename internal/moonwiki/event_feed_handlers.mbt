@@ -80,7 +80,7 @@ async fn collect_moonclaw_event_records(
       Some(id) if id != workspace.id => continue
       _ => ()
     }
-    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    let run_root = moonclaw_jobs_root(workspace.root_path)
     for run_name in read_directory_names(run_root, include_hidden=false) {
       if events.length() >= limit {
         return events
@@ -105,7 +105,7 @@ async fn collect_moonclaw_event_records(
             severity=severity_for_text(kind + " " + record.stringify()),
             title=json_string(record, "title", default=kind),
             detail=json_string(record, "message", default=record.stringify()),
-            path="moonclaw-jobs/" + run_name + "/events.jsonl",
+            path=moonclaw_run_relative_path(run_name, "events.jsonl"),
             run_id=run_name,
             tick=0,
             created_at=json_string(record, "created_at", default=""),
@@ -126,7 +126,7 @@ async fn collect_moonclaw_event_records(
             severity=severity_for_text(result.stringify()),
             title=run_name,
             detail=trim_for_record(result.stringify()),
-            path="moonclaw-jobs/" + run_name + "/result.json",
+            path=moonclaw_run_relative_path(run_name, "result.json"),
             run_id=run_name,
             tick=0,
             created_at="",

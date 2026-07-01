@@ -24,7 +24,7 @@ async fn handle_moonclaw_runs(
       Some(id) if id != workspace.id => continue
       _ => ()
     }
-    let run_root = @pathx.join(workspace.root_path, "moonclaw-jobs")
+    let run_root = moonclaw_jobs_root(workspace.root_path)
     let names = read_directory_names(run_root, include_hidden=false)
     let start = if names.length() > 80 { names.length() - 80 } else { 0 }
     let mut index = start

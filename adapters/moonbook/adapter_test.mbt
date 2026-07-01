@@ -12,6 +12,8 @@ test "canonical sections expose executable book roots" {
   assert_true(paths.contains("site/generated"))
   assert_true(paths.contains("portable/app-tool"))
   assert_true(paths.contains("wiki/reviews"))
+  assert_true(paths.contains(".moonsuite/products/moonclaw/jobs"))
+  assert_false(paths.contains("moonclaw-jobs"))
 }
 
 ///|

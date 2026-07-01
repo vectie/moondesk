@@ -1,6 +1,6 @@
 ///|
 pub fn known_run_roots(book_root : String) -> Array[String] {
-  [book_root + "/.moonclaw/jobs/runs", book_root + "/moonclaw-jobs"]
+  [@moonsuite.product_artifact(book_root, "moonclaw", "jobs")]
 }
 
 ///|

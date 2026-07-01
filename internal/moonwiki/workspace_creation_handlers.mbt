@@ -122,7 +122,7 @@ async fn create_blank_moonbook_workspace(
   }
   for
     path in [
-      "", "wiki", "raw", "inbox", "book/site/generated", "reviews", "moonclaw-jobs",
+      "", "wiki", "raw", "inbox", "book/site/generated", "reviews", ".moonsuite/products/moonclaw/jobs",
     ] {
     @fsx.make_directory(
       @pathx.join(book_root, path),

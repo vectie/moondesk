@@ -58,7 +58,7 @@ pub fn canonical_sections() -> Array[MoonBookSection] {
     { label: "Journal", path: "wiki/history", layer: History, writable: false },
     {
       label: "MoonClaw Runs",
-      path: "moonclaw-jobs",
+      path: ".moonsuite/products/moonclaw/jobs",
       layer: RunArtifact,
       writable: false,
     },

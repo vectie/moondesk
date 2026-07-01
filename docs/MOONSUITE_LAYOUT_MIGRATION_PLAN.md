@@ -481,6 +481,17 @@ Completed slices:
   inspect `/tmp` while the suite stays deterministic. Validation passed with
   MoonStat `moon check`, `moon test` (773/773), `moon fmt`, `moon info`, and a
   final `moon check`.
+- Moondesk adapters and MoonWiki run readers now expose MoonClaw run artifacts
+  through `.moonsuite/products/moonclaw/jobs` instead of `moonclaw-jobs` or
+  `.moonclaw/jobs/runs`, while the Moontown adapter derives town snapshots,
+  daemon state, standing goals, and watcher roots from MoonLib
+  `@moonsuite.product_artifact`. The matching MoonWiki fixture seeds forwarded
+  run artifacts under the MoonSuite product home, and adapter tests assert the
+  old `moonclaw-jobs` section is gone.
+- Moontown launchd install/uninstall scripts now write plist and stdout/stderr
+  logs under `.moonsuite/products/moontown/launchd` and
+  `.moonsuite/products/moontown`, not `.moontown/launchd`; usage docs now point
+  operators at the product-home launchd paths.
 
 Remaining high-priority product slices:
 
@@ -493,8 +504,8 @@ Remaining high-priority product slices:
   future drift additions, but do not add a parallel path schema there.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
-  contract, full Desk browser smoke, and Lepusa-native fresh-books smoke are now
-  covered.
+  contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
+  launchd product-home script path are now covered.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration

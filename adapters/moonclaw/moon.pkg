@@ -1,3 +1,4 @@
 import {
   "vectie/moondesk/core" @moondesk_core,
+  "vectie/moonlib/moonsuite",
 }

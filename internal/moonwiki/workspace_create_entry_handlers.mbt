@@ -1253,7 +1253,7 @@ fn is_desk_create_path_allowed(path : String) -> Bool {
   path != "book" &&
   !path.has_prefix("site/generated") &&
   !path.has_prefix("portable") &&
-  !path.has_prefix("moonclaw-jobs") &&
+  !path.has_prefix(".moonsuite/products/moonclaw/jobs") &&
   !path.contains("/../")
 }
 
