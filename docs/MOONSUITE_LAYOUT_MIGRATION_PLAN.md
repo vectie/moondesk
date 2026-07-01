@@ -236,11 +236,14 @@ Completed slices:
   `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
   native capability payload, and excludes `.moonsuite` sidecars from MoonCode
   commit-proof git status/staging.
+- MoonClaw loads global and local rule files from
+  `.moonsuite/products/moonclaw/rules`, and its rules prompt copy names the
+  MoonSuite product-home directory.
 
 Remaining high-priority product slices:
 
-- MoonClaw: move daemon home, robot routine ledgers, skills, rules, and job
-  indexes to `.moonsuite/products/moonclaw`.
+- MoonClaw: move daemon home, robot routine ledgers, skills, and job indexes to
+  `.moonsuite/products/moonclaw`.
 - Moontown: finish remaining operator-request queues and any product-runtime
   copy that still names the old `.moontown` paths.
 - MoonRobo: move MoonClaw routine artifacts and task bridge examples to
