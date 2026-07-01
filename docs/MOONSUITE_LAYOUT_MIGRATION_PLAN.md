@@ -356,9 +356,16 @@ Completed slices:
 - MoonClaw stores robot routine run ledgers under
   `.moonsuite/products/moonclaw/robot-routine-runs`, and gateway white-box tests
   assert that the legacy `.moonclaw/robot-routine-runs` path is not created.
-- MoonClaw stores workflow job runtime state under
-  `.moonsuite/products/moonclaw/jobs`; gateway startup, proposal CLI commands,
-  and detached proposal inputs share the same product-home helper.
+- MoonClaw commit `30740fb2` stores workflow job runtime state and process
+  stdout/stderr under `.moonsuite/products/moonclaw/jobs`, keeps run metadata
+  inside each run workspace instead of a nested `.moonclaw` directory, moves
+  gateway sessions/channel/token state under `.moonsuite/products/moonclaw`,
+  and makes proposal/gateway/onboard/ACP default `--home` mean the MoonSuite
+  root. Onboarding and workspace config discovery now prefer
+  `.moonsuite/products/moonclaw/moonclaw.json`, while tests keep legacy
+  root-local and nested config reads as fallback inputs. Validation passed with
+  MoonClaw `moon update`, `moon check`, `moon test` (985/985), `moon fmt`,
+  `moon info`, and final `moon check`.
 - MoonRobo exposes product-home contracts in its product status projection for
   `.moonsuite/products/moonrobo` task bridge artifacts and
   `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
@@ -510,5 +517,10 @@ Remaining high-priority product slices:
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any shared product orchestration
   path must remain a MoonLib-backed adapter.
+- MoonClaw: continue residual audits for historical compatibility readers such
+  as conversation/config fallbacks and daemon git-exclude guards; new runtime
+  writes for jobs, gateway, onboarding config, workspace defaults, skills,
+  rules, daemon lock, MoonCode sessions, and robot routine ledgers are now
+  product-home based.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests.
