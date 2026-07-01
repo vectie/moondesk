@@ -236,6 +236,12 @@ Completed slices:
   ledgers, civic service status, and civic service result bridges under
   `.moonsuite/products/moontown`, and Rabbita/cookbook operator copy now points
   at the MoonSuite product-home paths.
+- The Rabbita/Moontown Vite bridge serves town snapshots, live autonomy,
+  standing goals, watcher ledgers, operator-request queues, book-template
+  queues/configs, civic status, editor pipeline state, Moondesk bridge records,
+  and book-result records from `.moonsuite/products/moontown`; generated
+  MoonBook projection discovery remains on the existing book workspace root
+  until the book-layout cutover.
 - MoonClaw stores MoonCode durable session sidecars under
   `.moonsuite/products/moonclaw/mooncode/sessions`, advertises that path in its
   native capability payload, and excludes `.moonsuite` sidecars from MoonCode
