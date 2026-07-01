@@ -113,8 +113,11 @@ follow the same wrapper pattern instead of carrying independent string
 contracts.
 - MoonStat now depends on MoonLib `0.1.1` and consumes `@moonsuite` for its
   home `.moonsuite` state directory plus MoonClaw product-home provider, model,
-  and config manifest paths. MoonStat remains an observer/reporter over the
-  shared contract rather than the source of path definitions.
+  and config manifest paths. MoonStat also exposes `moonstat suite drift` and
+  `/suite/drift` as a MoonLib-derived drift report over legacy `.moontown`,
+  `.moonclaw`, repo-local runtime, and old MoonStat state paths. MoonStat
+  remains an observer/reporter over the shared contract rather than the source
+  of path definitions.
 
 Migration rules from this point forward:
 
@@ -377,8 +380,8 @@ Remaining high-priority product slices:
 - MoonLib: expand `vectie/moonlib/moonsuite` only when a missing contract is
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies.
-- MoonStat: finish the consumer migration and add drift reports over MoonLib
-  contracts instead of defining new path constants.
+- MoonStat: broaden drift reports beyond the first legacy product-home
+  candidates as more product migrations land.
 - Moontown: finish remaining synthesis/runtime copy that still names old
   `.moontown` paths, while keeping book-layout paths for the Phase 5 cutover.
 - MoonRobo: continue auditing residual runtime writers so RoboBook-owned
