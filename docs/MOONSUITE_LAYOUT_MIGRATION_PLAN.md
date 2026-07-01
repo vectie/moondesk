@@ -275,12 +275,16 @@ Completed slices:
 - MoonClaw stores workflow job runtime state under
   `.moonsuite/products/moonclaw/jobs`; gateway startup, proposal CLI commands,
   and detached proposal inputs share the same product-home helper.
+- MoonRobo exposes product-home contracts in its product status projection for
+  `.moonsuite/products/moonrobo` task bridge artifacts and
+  `.moonsuite/products/moonclaw/robot-routine-runs`; MoonRobo docs now point
+  MoonClaw routine ledgers at the MoonSuite product-home path.
 
 Remaining high-priority product slices:
 
 - Moontown: finish remaining operator-request queues and any product-runtime
   copy that still names the old `.moontown` paths.
-- MoonRobo: move MoonClaw routine artifacts and task bridge examples to
-  `.moonsuite/products/moonclaw` / `.moonsuite/products/moonrobo` contracts.
+- MoonRobo: migrate remaining product-owned runtime writers to the new
+  product-home contracts where they are not RoboBook-owned accepted evidence.
 - Rabbita and future products: add explicit product-home contracts and smoke
   tests.
