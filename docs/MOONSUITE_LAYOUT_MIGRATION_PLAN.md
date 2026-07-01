@@ -911,6 +911,16 @@ Completed slices:
   constructors instead of a partial local schema. Validation passed with
   MoonRobo `moon fmt`, `moon info`, `moon check`, `moon test` (453/453), and
   `git diff --check`.
+- MoonRobo commit `3fb56af0` upgrades the runtime adapter to MoonLib `0.1.3`
+  and routes every MoonRobo product orchestration directory through the
+  workspace-root MoonLib constructor. A RoboBook mounted under
+  `books/<book-id>` now creates gateway commands, dry runs, approvals,
+  Robo loops/turns, prove-loop/proof-session records, bridge records, and
+  runtime supervisor/validation/calibration/health state in the suite-level
+  `.moonsuite/products/moonrobo` home rather than a nested book-local
+  `.moonsuite`. Validation passed with MoonRobo `moon update`, `moon fmt`,
+  clean `moon info`, `moon check`, `moon test` (453/453), and
+  `git diff --check`.
 - Rabbita commit `20d38ef` turns the root product-home contract from local
   string concatenation into a MoonLib adapter. The existing public
   `RabbitaMoonSuiteProductHome` surface stays stable, but state, service,
@@ -959,8 +969,10 @@ Remaining high-priority product slices:
   validation, calibration, bridge dispatches, bridge contracts, gateway
   commands, dry-run evidence, approval records, Robo loops, Robo turns,
   prove-loop records, proof sessions, live exercises, and SDK IPC state are now
-  product-home or suite-temp based, and Rabbita cockpit UI/parser fixtures now
-  advertise those product-home paths for the migrated artifact classes.
+  product-home or suite-temp based; the runtime adapter now resolves those
+  product-home paths from either a suite root or a `books/<book-id>` workspace
+  root. Rabbita cockpit UI/parser fixtures now advertise those product-home
+  paths for the migrated artifact classes.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
   explicit project-local override policy coverage, and any newly discovered
   readers from deeper smoke runs. New runtime writes for conversations, jobs,
