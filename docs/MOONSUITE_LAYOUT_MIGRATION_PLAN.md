@@ -630,6 +630,89 @@ large pile of shallow tests; it is to prove that every product derives the fresh
 layout from the shared MoonLib contract and that Moondesk, MoonCode, Lepusa, and
 service daemons behave correctly from a brand-new suite root.
 
+### Phase 8 Execution Plan
+
+Phase 8 is a test-hardening phase, not a product-behavior migration phase. The
+implementation rule is: if a Phase 6 or Phase 7 behavior is important enough to
+keep, Phase 8 must give it a repeatable gate. The gates should catch regressions
+at the lowest useful layer first, then prove the user-visible path with browser
+and packaged-app smoke tests.
+
+Execution order:
+
+1. Contract floor: make MoonLib layout tests the first source of truth for
+   `.moonsuite`, `.tmp`, `books`, product homes, service homes, registries,
+   and selected-book-to-owning-suite resolution.
+2. Moondesk bootstrap/API floor: prove a blank selected folder becomes a valid
+   suite root, prove `books/` is the only active MoonBook library, and prove
+   API metadata exposes the Phase 6 contract.
+3. Product registry floor: cover every suite product in one deterministic
+   registry test surface so missing Moon-branded products fail loudly.
+4. Service floor: prove MoonClaw and Moontown derive config, logs, status, and
+   provider/runtime state from `.moonsuite/products/*`, with explicit
+   missing/running/unreachable statuses.
+5. MoonCode conversation floor: prove append-only transcript behavior from
+   prompt submission through intermediate thinking/progress and final answer.
+6. Browser floor: prove the production Rabbita bundle renders fresh suite,
+   empty library, populated library, selected book, VFS navigation, product
+   status, service status, and clean Code conversation flows without console or
+   runtime errors.
+7. Lepusa packaged floor: prove the packaged sidecar and UI bootstrap both
+   empty and populated suite roots without old hidden product roots.
+8. Cross-product floor: prove every migrated product consumes MoonLib layout
+   contracts directly and does not recreate private path logic.
+9. Residual scan floor: fail on stale layout strings in active fresh-path code,
+   while allowing migration docs, drift detectors, negative tests, and explicit
+   error copy.
+10. Release wall: wire the fast and full command walls so Phase 9 can reuse
+    Phase 8 as a hard dependency.
+
+Phase 8 work packages:
+
+| Work package | Primary proof | Done signal |
+| --- | --- | --- |
+| 8.1 Contract tests | MoonLib package tests | Canonical suite/book/product paths covered, including negative legacy roots |
+| 8.2 Fresh bootstrap | Moondesk native tests and API smoke | Empty folder creates `.moonsuite`, `.tmp`, and `books` idempotently |
+| 8.3 Workspace APIs | `/api/workspaces*` and `/api/books*` tests | Metadata and discovery use only the fresh suite contract |
+| 8.4 Product registry | Registry tests and UI fixtures | Moondesk, MoonBook, MoonWiki, MoonCode, MoonClaw, Moontown, MoonStat, MoonFish, MoonMoon, MoonRobo, Bookkeeper, Lepusa, Rabbita, and later suite products are visible |
+| 8.5 Services | MoonClaw/Moontown service tests | Status/config/log paths live under `.moonsuite/products/*` |
+| 8.6 MoonCode E2E | Browser or state-machine transcript tests | User prompt, folded thinking, progress, and final reply keep append-only order |
+| 8.7 Desk browser smoke | Production Rabbita browser smoke | No loading deadlocks, console errors, raw path leaks, or broken Desk/Code flows |
+| 8.8 Lepusa smoke | Packaged fresh-suite smoke | Packaged sidecar creates and serves fresh roots in empty and populated cases |
+| 8.9 Product consumers | Cross-repo contract tests | Products import MoonLib layout contracts rather than Moondesk or MoonStat internals |
+| 8.10 Residual scans | Fresh-suite residual validator | Old layout strings are classified or fail the gate |
+| 8.11 CI/release wall | `phase8_migration_gates.sh` | Fast and full gates are repeatable, documented, and usable by Phase 9 |
+
+Current Phase 8 status:
+
+- The Phase 8 wall exists as `scripts/phase8_migration_gates.sh` with `fast`
+  and `full` modes.
+- The full wall already includes native Moondesk checks/tests, Rabbita JS
+  check/test/build, MoonLib consumer pins, residual scan, core-boundary
+  validation, API smoke, Desk browser smoke, and fresh-suite product smoke.
+- Desk browser smoke has been hardened for populated and empty library
+  scenarios, console/runtime problem capture, and MoonCode ordering checks.
+- Lepusa fresh-suite smoke covers both populated and empty roots through
+  `scripts/lepusa_fresh_books_smoke.sh`.
+- The remaining Phase 8 risk is coverage completeness, not gate existence:
+  every product and user-visible flow must stay connected to these gates as the
+  migration continues.
+
+Phase 8 operating rules:
+
+- Add low-level tests before high-level browser smoke when the bug is a path or
+  contract bug.
+- Add browser smoke when the bug is ordering, visibility, loading, or UI
+  interaction.
+- Add packaged Lepusa smoke when the bug could differ between local `moon run`
+  and the packaged sidecar.
+- Add residual-scan rules only for stale behavior that should never return in
+  active fresh-path code.
+- Do not keep compatibility tests for old hidden roots as successful behavior;
+  keep them only as negative tests or drift-detection tests.
+- Every new Phase 8 slice must record the exact commands that passed in this
+  section before the slice is treated as closed.
+
 ### Phase 8.1: Canonical Layout Contract Tests
 
 Scope:
@@ -961,13 +1044,15 @@ Phase 9 gates:
 - `bash scripts/validate_phase9_cutover.sh` can be run alone to scan active
   source in MoonLib, Moondesk, MoonRobo, Moontown, MoonClaw, MoonStat,
   MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and Lepusa for unapproved
-  Phase 9 legacy cutover paths.
+  Phase 9 legacy cutover paths and retired source-checkout redirect helpers.
 
 Phase 9 completion criteria:
 
 - Active source no longer contains unapproved `.moontown/books`,
   `.moontown/moondesk-daemon`, book-local `.moontown/trash`, `.moonbook`,
   `moonclaw-jobs`, `.moonclaw-worktrees`, or `.moonclaw-tool-journal` paths.
+- Active source no longer contains source-checkout redirect compatibility
+  helpers or warning copy such as the old dedicated-workspace fallback.
 - Any remaining legacy strings are explicitly scoped to drift detection or
   negative smoke assertions.
 - Phase 9 full gate passes and the fresh app is shown from a MoonSuite v2 root.
@@ -987,6 +1072,10 @@ Phase 9 cutover evidence:
   The API smoke now proves a source-checkout-shaped selected folder is
   bootstrapped as the MoonSuite root instead of silently switching to
   `moondesk-workspace`.
+- This Phase 9 gate-hardening slice extends the cutover validator to reject the
+  retired source-checkout redirection helpers and warnings, including the old
+  dedicated-user-workspace fallback copy. The only allowed Moondesk script
+  reference is the API smoke assertion proving that the warning is absent.
 
 ## Cross-Product Migration Log
 

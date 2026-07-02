@@ -7,7 +7,7 @@ source "${ROOT}/scripts/moonsuite_phase8_inventory.sh"
 
 repos=("${MOONSUITE_PHASE8_SOURCE_REPOS[@]}")
 
-legacy_cutover_pattern='(\.moontown/books|/\.moontown/trash|\.moontown/moondesk-daemon|\.moonbook(/|"|$)|moonclaw-jobs(/|"|$)|\.moonclaw-worktrees(/|"|$)|\.moonclaw-tool-journal(/|"|$))'
+legacy_cutover_pattern='(\.moontown/books|/\.moontown/trash|\.moontown/moondesk-daemon|\.moonbook(/|"|$)|moonclaw-jobs(/|"|$)|\.moonclaw-worktrees(/|"|$)|\.moonclaw-tool-journal(/|"|$)|source_checkout_safe_workspace_root|workspace_root_source_checkout_warning|workspace_root_contains_path|Using dedicated user workspace root|source checkout redirect|outside source checkouts|home fallback workspace)'
 
 is_allowed_hit() {
   local hit="$1"
@@ -15,6 +15,10 @@ is_allowed_hit() {
   case "${hit}" in
     moondesk:./scripts/desk_mode_browser_smoke.mjs:*)
       # Browser smoke asserts legacy MoonBook projection/trash paths are absent.
+      return 0
+      ;;
+    moondesk:./scripts/desk_mode_api_smoke.sh:*)
+      # API smoke asserts retired source-checkout redirect warnings are absent.
       return 0
       ;;
     moondesk:./scripts/lepusa_fresh_books_smoke.sh:*)
