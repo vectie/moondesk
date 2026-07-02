@@ -52,10 +52,7 @@ fn moonsuite_product_dir_for_workspace_root(
   root : String,
   product_id : String,
 ) -> String {
-  @moonsuite.product_dir(
-    @moonsuite.suite_root_for_workspace_root(root),
-    product_id,
-  )
+  @moonsuite.product_home_for_workspace_root(root, product_id).state_path
 }
 
 ///|
@@ -68,10 +65,7 @@ pub fn moonsuite_product_service_path(
   root : String,
   product_id : String,
 ) -> String {
-  @moonsuite.product_service_path(
-    @moonsuite.suite_root_for_workspace_root(root),
-    product_id,
-  )
+  @moonsuite.product_home_for_workspace_root(root, product_id).service_path
 }
 
 ///|

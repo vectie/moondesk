@@ -1543,6 +1543,13 @@ Completed slices:
   update`, `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
   product-status `product_dir` scan, generated-interface churn restore, and
   `git diff --check`.
+- Moondesk now consumes MoonLib `0.1.4` in its internal MoonWiki MoonSuite
+  facade. Workspace-derived product home and service paths resolve through
+  `@moonsuite.product_home_for_workspace_root`, while the direct suite-root
+  product-directory wrapper remains only for preparing product directories in
+  an already-selected suite root. Validation for this slice: Moondesk `moon
+  update`, `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
+  facade primitive-formula scan, and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -1563,7 +1570,9 @@ Remaining high-priority product slices:
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
   the owning suite instead of nested book-local `.moonsuite` directories. Trash
   file and receipt coverage now proves the same suite-root behavior for direct
-  Desk and HTTP flows. The current Moondesk MoonBit scan has zero quoted
+  Desk and HTTP flows. The internal MoonWiki layout facade now consumes
+  MoonLib `ProductHome` for workspace-derived product home and service paths.
+  The current Moondesk MoonBit scan has zero quoted
   `.moontown`/`.moonclaw` literals and zero active old-path file-operation hits.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
