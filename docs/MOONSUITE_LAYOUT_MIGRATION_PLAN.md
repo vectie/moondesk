@@ -1744,7 +1744,10 @@ Remaining high-priority product slices:
   The current Moondesk MoonBit scan has zero quoted
   `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
   and zero active `.moonsuite/products` literals outside generated interfaces
-  and tests.
+  and tests. The new `scripts/fresh_suite_product_smoke.sh` gate runs the
+  Moontown, MoonClaw, MoonBook, and Lepusa fresh-suite smoke scripts from one
+  Moondesk command, giving the migration a single cross-product integration
+  check for the main writer surfaces already cut over to product homes.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
   Moondesk old-writer cleanup.
