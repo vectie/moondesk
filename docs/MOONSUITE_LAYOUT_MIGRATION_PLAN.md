@@ -1514,6 +1514,13 @@ Completed slices:
   active MoonRobo `product_tmp_dir(...)/sdk-e1/...` string-concatenation path.
   Validation for this slice: focused MoonRobo SDK E1 product-tmp scan, `moon
   fmt`, `moon info`, `moon check`, `moon test`, and `git diff --check`.
+- MoonRobo's host API Robo loop and Robo turn response paths now compose the
+  MoonLib-backed product-home directories with `@pathx.join` instead of
+  slash-appending persisted response filenames. This keeps the remaining
+  product orchestration response paths on the same structured path contract as
+  the migrated runtime adapters. Validation for this slice: focused MoonRobo
+  Robo loop/turn concat scan, `moon fmt`, `moon info`, `moon check`, `moon
+  test`, and `git diff --check`.
 
 Remaining high-priority product slices:
 
