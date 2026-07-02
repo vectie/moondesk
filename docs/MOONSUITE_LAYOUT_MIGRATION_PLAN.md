@@ -184,6 +184,18 @@ pattern instead of carrying independent string contracts.
   `moon update`, `moon fmt`, `moon info`, `moon check`, and `moon test` with
   `144/144` tests passing; MoonMoon `moon update`, `moon fmt`, `moon info`,
   `moon check`, and `moon test` with `143/143` tests passing.
+- MoonFish commit `31dab53` and MoonMoon commit `b7027a9b` remove the active
+  empty-root MoonSuite constructors from their root product-home facades. Both
+  products now expose explicit `*_for_workspace_root` helpers for product state,
+  service, cache, temp, accepted MoonBook output, and the aggregate product-home
+  payload; suite-hosted book roots under `books/<book-id>` are tested to resolve
+  to suite-level `.moonsuite/products/...` and `.tmp/products/...` paths while
+  preserving standalone relative defaults. Validation for this slice: MoonFish
+  `moon fmt`, clean `moon info`, `moon check`, `moon test` with `144/144` tests
+  passing, and `git diff --check`; MoonMoon `moon fmt`, `moon info`,
+  `moon check`, `moon test` with `143/143` tests passing, and
+  `git diff --check` (`moon info`/`moon check` still report the pre-existing
+  unused warnings in generated Noetix suite-preview evidence).
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
@@ -443,6 +455,16 @@ Completed slices:
 - MoonMoon exposes a root product-home contract for
   `.moonsuite/products/moonmoon`, `.tmp/products/moonmoon`, and accepted
   MoonBook outputs under `books/<book-id>/outputs/moonmoon`.
+- MoonFish commit `31dab53` and MoonMoon commit `b7027a9b` add explicit
+  workspace-root variants for every root product-home facade path and remove the
+  active `@moonsuite.*("", ...)` constructors. Their tests now prove that a
+  suite-hosted book root maps product-owned state/cache/service/temp paths to
+  the owning suite root, while accepted output remains in
+  `books/<book-id>/outputs/<product>`. Validation passed with MoonFish
+  `moon fmt`, clean `moon info`, `moon check`, `moon test` (144/144), and
+  `git diff --check`; MoonMoon `moon fmt`, `moon info`, `moon check`,
+  `moon test` (143/143), and `git diff --check` with only the pre-existing
+  unused warnings from generated Noetix suite-preview evidence.
 - Lepusa exposes a root product-home contract for
   `.moonsuite/products/lepusa`, including native runtime and update metadata
   paths.
