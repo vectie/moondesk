@@ -1836,7 +1836,10 @@ Remaining high-priority product slices:
   MoonClaw product home, and `scripts/fresh-suite-extension-smoke.sh` now runs
   native `wiki init` plus `wiki enable moonclaw` against a fresh
   `books/<book-id>` root to prove both product-home writes and absence of
-  legacy `.moonclaw`, root `moonclaw.json`, and `moonclaw-jobs` paths.
+  legacy `.moonclaw`, root `moonclaw.json`, and `moonclaw-jobs` paths. The
+  skill hub now derives its ignored `.moonsuite` and `.tmp` directory names
+  from MoonLib state/temp constructors instead of carrying separate local
+  literals in debug metadata and recursive scan filtering.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
