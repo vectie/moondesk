@@ -128,7 +128,7 @@ async fn sync_book_standing_goal(
     daemon_tick~,
   )
   @fsx.make_directory(
-    moonsuite_product_dir(root, "moontown"),
+    moontown_product_root(root),
     recursive=true,
     exists_ok=true,
   )
@@ -234,7 +234,7 @@ async fn sync_all_book_pattern_standing_goals(root : String) -> Json {
   }
   if synced_count > 0 || already_synced_count > 0 {
     @fsx.make_directory(
-      moonsuite_product_dir(root, "moontown"),
+      moontown_product_root(root),
       recursive=true,
       exists_ok=true,
     )

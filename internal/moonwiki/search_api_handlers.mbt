@@ -132,7 +132,7 @@ async fn handle_town_state(
   conn : @http.ServerConnection,
 ) -> Unit {
   let state_path = @pathx.join(
-    moonsuite_product_dir(workspace_root, "moontown"),
+    moontown_product_root(workspace_root),
     "town.json",
   )
   if @fs.exists(state_path) {

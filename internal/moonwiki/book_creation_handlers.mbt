@@ -101,7 +101,7 @@ async fn create_pdf_evidence_watch_book_from_payload(
   )
   let goals_path = town_standing_goals_path(root)
   @fsx.make_directory(
-    moonsuite_product_dir(root, "moontown"),
+    moontown_product_root(root),
     recursive=true,
     exists_ok=true,
   ) catch {

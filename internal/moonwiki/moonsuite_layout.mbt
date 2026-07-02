@@ -48,6 +48,17 @@ pub fn moonsuite_product_artifact_for_workspace_root(
 }
 
 ///|
+fn moonsuite_product_dir_for_workspace_root(
+  root : String,
+  product_id : String,
+) -> String {
+  @moonsuite.product_dir(
+    @moonsuite.suite_root_for_workspace_root(root),
+    product_id,
+  )
+}
+
+///|
 pub fn moonsuite_services_root(root : String) -> String {
   @moonsuite.services_root(root)
 }
@@ -57,7 +68,10 @@ pub fn moonsuite_product_service_path(
   root : String,
   product_id : String,
 ) -> String {
-  @moonsuite.product_service_path(root, product_id)
+  @moonsuite.product_service_path(
+    @moonsuite.suite_root_for_workspace_root(root),
+    product_id,
+  )
 }
 
 ///|

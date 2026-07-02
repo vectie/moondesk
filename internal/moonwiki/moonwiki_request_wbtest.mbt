@@ -1763,7 +1763,15 @@ async test "wiki server routes cover forward and backward book runs" {
     assert_true(
       request_path.has_prefix(".moonsuite/products/moontown/moondesk-requests/"),
     )
-    assert_true(@fs.exists(@pathx.join(root, request_path)))
+    let request_path_parts = request_path.split("/").to_array()
+    assert_true(
+      @fs.exists(
+        town_moondesk_request_path(
+          root,
+          request_path_parts[request_path_parts.length() - 1].to_owned(),
+        ),
+      ),
+    )
 
     let requests = test_http_get_json(base + "/api/town/requests", 200)
     assert_true(requests.stringify().contains("Forward Wiki run"))
@@ -2291,6 +2299,96 @@ async test "sync repairs pdf watch standing goals for UI decoder" {
     json_string(repaired, "prompt", default="").contains("Bookkeeper"),
   )
   assert_eq(json_string(repaired, "target_book_id", default=""), book_id)
+}
+
+///|
+async test "moontown bridge paths use owning suite for book workspaces" {
+  let suite_root = @pathx.join(
+    "/tmp",
+    "moondesk-moontown-bridge-paths-wbtest-" +
+    @desk.stable_id("moontown-bridge-paths", @async.now().to_string()),
+  )
+  let book_root = @pathx.join(suite_root, "books/research-bridge")
+  assert_eq(
+    moontown_product_root(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moontown"),
+  )
+  assert_eq(
+    town_moondesk_requests_root(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moontown/moondesk-requests"),
+  )
+  assert_eq(
+    town_moondesk_dispatches_root(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moontown/moondesk-dispatches"),
+  )
+  assert_eq(
+    town_daemon_path(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moontown/daemon.json"),
+  )
+  assert_false(
+    town_moondesk_requests_root(book_root).contains(
+      "/books/research-bridge/.moonsuite/",
+    ),
+  )
+}
+
+///|
+async test "town events read bridge ledgers from owning suite for book workspaces" {
+  let suite_root = @pathx.join(
+    "/tmp",
+    "moondesk-moontown-bridge-events-wbtest-" +
+    @desk.stable_id("moontown-bridge-events", @async.now().to_string()),
+  )
+  let book_root = @pathx.join(suite_root, "books/research-bridge")
+  let request_file = town_moondesk_request_path(book_root, "request-one.json")
+  @fsx.make_directory(
+    @pathx.dirname(request_file),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.write_to_file(
+    request_file,
+    (
+      {
+        "id": "request-one",
+        "ok": true,
+        "title": "Book-root bridge request",
+        "path": town_moondesk_request_relative_path("request-one.json"),
+      } : Json).stringify(indent=2) +
+    "\n",
+    create=0o644,
+  )
+  let dispatch_file = town_moondesk_dispatch_path(
+    book_root, "dispatch-one.json",
+  )
+  @fsx.make_directory(
+    @pathx.dirname(dispatch_file),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.write_to_file(
+    dispatch_file,
+    (
+      {
+        "id": "dispatch-one",
+        "ok": false,
+        "title": "Book-root bridge dispatch",
+        "path": town_moondesk_dispatch_relative_path("dispatch-one.json"),
+      } : Json).stringify(indent=2) +
+    "\n",
+    create=0o644,
+  )
+  let events = collect_town_event_records(book_root, 10)
+  let text = Json::array(events).stringify()
+  assert_true(text.contains("Book-root bridge request"))
+  assert_true(text.contains("Book-root bridge dispatch"))
+  assert_false(
+    @fs.exists(
+      @pathx.join(
+        book_root, ".moonsuite/products/moontown/moondesk-requests/request-one.json",
+      ),
+    ),
+  )
 }
 
 ///|

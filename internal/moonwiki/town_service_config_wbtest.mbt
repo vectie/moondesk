@@ -11,7 +11,7 @@ async test "town service descriptor is explicit and workspace local" {
   )
 
   @fsx.make_directory(
-    moonsuite_product_dir(root, "moontown"),
+    @pathx.dirname(town_service_config_path(root)),
     recursive=true,
     exists_ok=true,
   )

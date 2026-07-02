@@ -58,12 +58,20 @@ async fn collect_town_event_records(root : String, limit : Int) -> Array[Json] {
     }
   }
   collect_file_events(
-    root, ".moonsuite/products/moontown/moondesk-dispatches", "dispatch", "moontown",
-    events, limit,
+    town_moondesk_dispatches_root(root),
+    town_moondesk_dispatches_relative_root(),
+    "dispatch",
+    "moontown",
+    events,
+    limit,
   )
   collect_file_events(
-    root, ".moonsuite/products/moontown/moondesk-requests", "request", "moontown",
-    events, limit,
+    town_moondesk_requests_root(root),
+    town_moondesk_requests_relative_root(),
+    "request",
+    "moontown",
+    events,
+    limit,
   )
   events
 }
@@ -140,14 +148,13 @@ async fn collect_moonclaw_event_records(
 
 ///|
 async fn collect_file_events(
-  root : String,
+  dir : String,
   relative_root : String,
   kind : String,
   source : String,
   events : Array[Json],
   limit : Int,
 ) -> Unit {
-  let dir = @pathx.join(root, relative_root)
   let names = read_directory_names(dir, include_hidden=false)
   let mut index = names.length()
   while index > 0 && events.length() < limit {

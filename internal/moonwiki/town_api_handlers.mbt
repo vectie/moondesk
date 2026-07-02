@@ -14,11 +14,11 @@ async fn handle_town_analytics(
   let watcher_records = read_watcher_records(root, 400)
   let events = collect_town_event_records(root, 160)
   let request_count = count_matching_files(
-    @pathx.join(moonsuite_product_dir(root, "moontown"), "moondesk-requests"),
+    town_moondesk_requests_root(root),
     ".json",
   )
   let message_count = count_matching_files(
-    @pathx.join(moonsuite_product_dir(root, "moontown"), "book-results"),
+    @pathx.join(moontown_product_root(root), "book-results"),
     ".json",
   )
   let run_count = count_run_workspaces(root)
@@ -61,18 +61,9 @@ async fn handle_town_progress(
   let lifecycle = daemon_status_record(root, "progress")
   let goals = read_json_array_file(town_standing_goals_path(root))
   let daemon_tick = json_int(daemon, "tick_sequence", default=0)
-  let dispatch_root = @pathx.join(
-    moonsuite_product_dir(root, "moontown"),
-    "moondesk-dispatches",
-  )
-  let request_root = @pathx.join(
-    moonsuite_product_dir(root, "moontown"),
-    "moondesk-requests",
-  )
-  let message_root = @pathx.join(
-    moonsuite_product_dir(root, "moontown"),
-    "book-results",
-  )
+  let dispatch_root = town_moondesk_dispatches_root(root)
+  let request_root = town_moondesk_requests_root(root)
+  let message_root = @pathx.join(moontown_product_root(root), "book-results")
   let latest_run = latest_run_info(root)
   send_json(conn, method_, {
     "daemon_tick": daemon_tick,
