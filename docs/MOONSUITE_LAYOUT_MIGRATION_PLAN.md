@@ -1488,6 +1488,14 @@ Completed slices:
   legacy-reader fixtures. Validation for this slice: focused MoonClaw
   todo/operator-output stale-path scan, `moon fmt`, `moon info`, `moon check`,
   `moon test`, and `git diff --check`.
+- MoonStat's suite integration JSON no longer advertises home-global
+  `~/.moonsuite/products/moonclaw/...` candidates for MoonClaw model and config
+  files. The MoonClaw integration now exposes only the active workspace-root
+  product-home paths derived through MoonLib, and coverage rejects the old
+  home-global candidates. Validation for this slice: focused MoonStat
+  `~/.moonsuite/products/moonclaw` scan, `moon fmt`, `moon info`, `moon check`,
+  `moon test`, cleanup of test-created untracked `.moonsuite` output, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
