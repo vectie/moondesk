@@ -255,6 +255,16 @@ pattern instead of carrying independent string contracts.
   slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with
   `456/456` tests passing, targeted active Moondesk old-join scan clean, and
   `git diff --check`.
+- Moondesk commit `d4293c77` strengthens the trash-path coverage for
+  suite-hosted book workspaces. Direct Desk and HTTP trash/restore flows now
+  assert that `.moonsuite/products/moondesk/trash/files/...` UI paths resolve
+  through the owning suite's Moondesk product home, that receipts use the same
+  suite-level product home, and that trashing entries does not create a nested
+  `books/<book-id>/.moonsuite` directory. Validation for this slice: Moondesk
+  `moon fmt`, `moon info`, `moon check`, `moon test` with `456/456` tests
+  passing, active one-line old-path file-operation scan with zero hits,
+  narrowed active legacy literal scan with only filters/service identifiers, and
+  `git diff --check`.
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
@@ -1119,10 +1129,14 @@ Remaining high-priority product slices:
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
-  the owning suite instead of nested book-local `.moonsuite` directories.
-  Remaining work should focus on active Moondesk writers still discovered by
-  scans, especially trash receipts and any remaining product-home
-  allowlist/display surfaces.
+  the owning suite instead of nested book-local `.moonsuite` directories. Trash
+  file and receipt coverage now proves the same suite-root behavior for direct
+  Desk and HTTP flows. The current active Moondesk scan has zero obvious direct
+  old-path file-operation hits, nine narrowed legacy literals limited to hidden
+  path filters and LaunchAgent service identifiers, and seventeen
+  `.moonsuite/products` literals to classify as central helpers or display text.
+  Remaining Phase 4 work should be a hard classification pass plus any
+  multi-line path-builder fixes the regex scan cannot prove.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
