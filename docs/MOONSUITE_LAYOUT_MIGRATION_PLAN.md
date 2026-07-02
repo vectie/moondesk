@@ -1445,6 +1445,16 @@ Completed slices:
   `moon info` with unrelated whitespace-only `.mbti` churn restored,
   `moon check`, `moon test` with `928/928` tests passing; focused plugin
   stale-path scans; and `git diff --check` in both repos.
+- MoonBook's optional MoonStat plugin now uses the same MoonLib-derived
+  suite-status discovery path as Moondesk, MoonClaw, and Moontown. The plugin
+  reads the active workspace's `.moonsuite/suite-status.json` instead of
+  deriving `$HOME/.moonsuite/suite-status.json`, with white-box coverage for
+  suite-hosted book workspaces and a focused stale-path scan limited to the
+  canonical test expectation. Validation for this slice: MoonBook `moon fmt`,
+  `moon info` with no generated `.mbti` changes, `moon check`, `moon test`
+  with `200/200` tests passing, and `git diff --check`. The MoonBook push also
+  reconciled Gitee's older divergent `main` without keeping legacy
+  `moon.mod.json` or the stale singular `plugin/moonstat` directory.
 
 Remaining high-priority product slices:
 
