@@ -7,7 +7,7 @@ fn moonclaw_jobs_root(workspace_root : String) -> String {
 
 ///|
 fn moonclaw_jobs_relative_root() -> String {
-  ".moonsuite/products/moonclaw/jobs"
+  moonsuite_product_display_artifact("moonclaw", "jobs")
 }
 
 ///|

@@ -41,12 +41,12 @@ fn town_book_template_event_path(workspace_root : String) -> String {
 
 ///|
 fn town_moondesk_requests_relative_root() -> String {
-  ".moonsuite/products/moontown/moondesk-requests"
+  moonsuite_product_display_artifact("moontown", "moondesk-requests")
 }
 
 ///|
 fn town_moondesk_dispatches_relative_root() -> String {
-  ".moonsuite/products/moontown/moondesk-dispatches"
+  moonsuite_product_display_artifact("moontown", "moondesk-dispatches")
 }
 
 ///|

@@ -1655,16 +1655,33 @@ Completed slices:
   `git diff --check`, and an active non-test MoonBit source scan proving the
   only remaining `.moonsuite/products/moonrobo` literal is the product-status
   display helper's single source of truth.
+- MoonLib `0.1.5` now owns the shared root-independent product display-path
+  contract: `product_display_dir`, `product_display_artifact`, and
+  `product_display_absolute_artifact`. The helper separates user-facing
+  relative contract strings from root-sensitive runtime `ProductHome` paths.
+  Moondesk now consumes the shared helper through `core` and routes MoonClaw
+  job paths, Moontown bridge paths, Moondesk trash paths, PDF watch Moontown
+  publish metadata, and MoonCode contract text through it. MoonRobo's
+  product-status display helper now delegates to the MoonLib contract instead
+  of owning the formula locally. Validation for this slice: MoonLib clean
+  worktree `moon fmt`, `moon info`, `moon check`, full `moon test` (`37/37`),
+  `moon publish` for `vectie/moonlib@0.1.5`, Moondesk `moon fmt`, `moon info`,
+  `moon check`, full `moon test` (`459/459`), MoonRobo `moon fmt`,
+  `moon info`, `moon check`, full `moon test` (`453/453`), generated-interface
+  diff review/churn restore, `git diff --check`, and focused active-source
+  scans proving Moondesk has zero `.moonsuite/products` literals while MoonRobo
+  has zero `.moonsuite/products/moonrobo` literals and no MoonLib `0.1.4` pin.
 
 Remaining high-priority product slices:
 
 - MoonLib: expand `vectie/moonlib/moonsuite` only when a missing contract is
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies. Current published contract version is
-  `vectie/moonlib@0.1.4`; its generic `ProductHome` contract is now the shared
-  source for the MoonFish, MoonMoon, MoonRobo, Moondesk, Moontown, MoonClaw,
-  MoonStat, Lepusa, and Rabbita product-home facades. Current product-repo scan
-  has no remaining `vectie/moonlib@0.1.3` pins.
+  `vectie/moonlib@0.1.5`; its generic `ProductHome` contract is now the shared
+  source for runtime product paths, and its product display-path contract is the
+  shared source for root-independent user-facing product artifact strings.
+  Current product-repo scan has no remaining `vectie/moonlib@0.1.3` or
+  `vectie/moonlib@0.1.4` pins in the touched Moondesk/MoonRobo surfaces.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
@@ -1682,9 +1699,13 @@ Remaining high-priority product slices:
   file and receipt coverage now proves the same suite-root behavior for direct
   Desk and HTTP flows. The internal MoonWiki layout facade now consumes
   MoonLib `ProductHome` for suite-root and workspace-derived product home and
-  service paths.
+  service paths. Moondesk `core` now exposes MoonLib-backed product display
+  helpers, and active MoonWiki/MoonCode/MoonBook adapter product-home display
+  strings route through that shared contract.
   The current Moondesk MoonBit scan has zero quoted
-  `.moontown`/`.moonclaw` literals and zero active old-path file-operation hits.
+  `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
+  and zero active `.moonsuite/products` literals outside generated interfaces
+  and tests.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
   Moondesk old-writer cleanup.
@@ -1717,8 +1738,8 @@ Remaining high-priority product slices:
   resolve product state/temp paths through MoonLib `ProductHome` fields from
   either a suite root or a `books/<book-id>` workspace root. Rabbita cockpit
   UI/parser fixtures and active MoonBook/readiness projections now advertise
-  those product-home paths through product-status display helpers for the
-  migrated artifact classes.
+  those product-home paths through product-status display helpers backed by the
+  shared MoonLib display contract for the migrated artifact classes.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
   explicit project-local override policy coverage, and any newly discovered
   readers from deeper smoke runs. New runtime writes for conversations, jobs,

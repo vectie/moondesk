@@ -56,6 +56,14 @@ fn moonsuite_product_dir_for_workspace_root(
 }
 
 ///|
+fn moonsuite_product_display_artifact(
+  product_id : String,
+  relative : String,
+) -> String {
+  @desk.moonsuite_product_display_artifact(product_id, relative)
+}
+
+///|
 pub fn moonsuite_services_root(root : String) -> String {
   @moonsuite.services_root(root)
 }

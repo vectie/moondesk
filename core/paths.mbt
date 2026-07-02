@@ -58,6 +58,27 @@ pub fn renderer_for_kind(kind : EntryKind) -> PreviewRenderer {
 }
 
 ///|
+pub fn moonsuite_product_display_dir(product_id : String) -> String {
+  @moonsuite.product_display_dir(product_id)
+}
+
+///|
+pub fn moonsuite_product_display_artifact(
+  product_id : String,
+  relative : String,
+) -> String {
+  @moonsuite.product_display_artifact(product_id, relative)
+}
+
+///|
+pub fn moonsuite_product_display_absolute_artifact(
+  product_id : String,
+  relative : String,
+) -> String {
+  @moonsuite.product_display_absolute_artifact(product_id, relative)
+}
+
+///|
 pub fn infer_source_layer(path : StringView) -> SourceLayer {
   let path = path.to_owned()
   if path == "wiki/history" ||
@@ -113,8 +134,8 @@ pub fn infer_source_layer(path : StringView) -> SourceLayer {
     path.has_prefix("inbox/") ||
     path.contains("/inbox/") {
     Inbox
-  } else if path == ".moonsuite/products/moonclaw" ||
-    path.has_prefix(".moonsuite/products/moonclaw/") {
+  } else if path == moonsuite_product_display_dir("moonclaw") ||
+    path.has_prefix(moonsuite_product_display_dir("moonclaw") + "/") {
     RunArtifact
   } else if path == ".moonsuite" ||
     path.has_prefix(".moonsuite/") ||

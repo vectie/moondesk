@@ -509,7 +509,7 @@ fn trash_workspace_entry_response(
 
 ///|
 fn desk_trash_files_relative_root() -> String {
-  ".moonsuite/products/moondesk/trash/files"
+  moonsuite_product_display_artifact("moondesk", "trash/files")
 }
 
 ///|
@@ -519,7 +519,7 @@ fn desk_trash_files_relative_prefix() -> String {
 
 ///|
 fn desk_trash_receipts_relative_root() -> String {
-  ".moonsuite/products/moondesk/trash/receipts"
+  moonsuite_product_display_artifact("moondesk", "trash/receipts")
 }
 
 ///|

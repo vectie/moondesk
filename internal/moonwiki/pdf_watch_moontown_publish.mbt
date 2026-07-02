@@ -22,10 +22,13 @@ async fn write_moontown_standing_goal_registration(
     "next_due_tick": json_int(goal, "next_due_tick", default=0),
     "source_policy": json_string(goal, "source_policy", default=""),
     "standing_goal_path": town_standing_goals_path(root),
-    "watcher_ledger_path": ".moonsuite/products/moontown/watchers/" +
-    goal_id +
-    ".jsonl",
-    "book_result_path_template": ".moonsuite/products/moontown/book-results/<run_id>.json",
+    "watcher_ledger_path": moonsuite_product_display_artifact(
+      "moontown",
+      "watchers/\{goal_id}.jsonl",
+    ),
+    "book_result_path_template": moonsuite_product_display_artifact(
+      "moontown", "book-results/<run_id>.json",
+    ),
     "daemon_job": "standing-goal-dispatch",
     "output_contract": pdf_watch_output_contract_handoff(pattern_id),
     "decision_field": "standing_goal_decision",
