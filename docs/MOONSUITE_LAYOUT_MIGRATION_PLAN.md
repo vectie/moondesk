@@ -1535,6 +1535,14 @@ Completed slices:
   path formulas from both products. Validation for this slice: MoonFish and
   MoonMoon `moon update`, `moon fmt`, `moon info`, `moon check`, full `moon
   test`, focused facade primitive-formula scans, and `git diff --check`.
+- MoonRobo now consumes MoonLib `0.1.4` for product-home projection in
+  `src/product_status`. The public MoonRobo/MoonClaw product-home helpers keep
+  their existing string-returning API, but derive the home paths from the shared
+  `@moonsuite.product_home_for_workspace_root` contract instead of locally
+  reconstructing `product_dir(...)`. Validation for this slice: MoonRobo `moon
+  update`, `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
+  product-status `product_dir` scan, generated-interface churn restore, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -1575,7 +1583,8 @@ Remaining high-priority product slices:
   validation, calibration, bridge dispatches, bridge contracts, gateway
   commands, dry-run evidence, approval records, Robo loops, Robo turns,
   prove-loop records, proof sessions, live exercises, and SDK IPC state are now
-  product-home or suite-temp based; the runtime adapter now resolves those
+  product-home or suite-temp based; product-status product homes now derive
+  from MoonLib `ProductHome`; the runtime adapter now resolves those
   product-home paths from either a suite root or a `books/<book-id>` workspace
   root. Rabbita cockpit UI/parser fixtures now advertise those product-home
   paths for the migrated artifact classes.
