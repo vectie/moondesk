@@ -1760,6 +1760,15 @@ Remaining high-priority product slices:
   `scripts/validate_moonlib_consumer_pins.sh` now makes this product-repo pin
   audit repeatable from Moondesk and fails if any touched consumer drifts away
   from the expected MoonLib version.
+- MoonStat commit `7edaf0d` removes the remaining cwd-local Warp temporary
+  launch script pattern. Warp resume scripts now derive their directory from
+  MoonLib's workspace-root MoonStat product home and are written under
+  `.tmp/products/moonstat/warp`, including when the selected cwd is
+  `books/<book-id>`. Validation passed with MoonStat `moon fmt`, `moon info`,
+  `moon check --target native --diagnostic-limit 80`, full
+  `moon test --target native` (`780/780`), `git diff --check`, the Moondesk
+  residual guard, the MoonLib consumer-pin guard, and the full cross-product
+  `scripts/fresh_suite_product_smoke.sh` gate.
 - MoonClaw: commit `3a6aeaa3` moves the daemon/UI discovery path onto the
   served workspace root instead of OS home. Detached daemon startup now waits
   on the MoonLib-derived product-home `daemon.json` for the selected
