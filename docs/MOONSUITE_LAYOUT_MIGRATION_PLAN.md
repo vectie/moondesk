@@ -625,27 +625,266 @@ Phase 7 Moondesk UI update slice:
 
 ## Phase 8: Test Gates
 
-Minimum test gates:
+Phase 8 turns the migration into enforceable gates. The goal is not to add a
+large pile of shallow tests; it is to prove that every product derives the fresh
+layout from the shared MoonLib contract and that Moondesk, MoonCode, Lepusa, and
+service daemons behave correctly from a brand-new suite root.
 
-1. Layout unit tests for every canonical path.
-2. Bootstrap tests for complete fresh MoonSuite creation.
-3. Workspace API tests for book discovery from `books/`.
-4. Product registry tests covering MoonFish, MoonMoon, and MoonRobo.
-5. Service config tests for MoonClaw and Moontown product-local configs.
-6. MoonCode end-to-end tests for prompt append, runtime events, and ordered AI
-   reply append.
-7. Desk browser smoke tests for first-run root, VFS, workspace list, and clean
-   conversation UI.
-8. Lepusa smoke test from a fresh MoonSuite root.
-9. MoonLib contract-consumer tests proving Moondesk, MoonStat, and each
-   migrated product derive `.moonsuite`, `.tmp`, `books`, product-home, and
-   product-registry paths from `@moonsuite`.
-10. MoonStat drift-report tests proving old `.moontown`, `.moonclaw`,
-    repo-local runtime, and global temp paths are reported as drift rather than
-    treated as alternate valid layouts. Covered by MoonStat commit `cf7fd62`.
-11. MoonLib contract-boundary tests proving products can import
-    `vectie/moonlib/moonsuite` without depending on MoonStat, Moondesk UI code,
-    MoonClaw runtime code, or daemon packages.
+### Phase 8.1: Canonical Layout Contract Tests
+
+Scope:
+
+- Add or extend MoonLib `@moonsuite` tests for every canonical path:
+  `.moonsuite`, `.tmp`, `books`, product-home, product artifacts, service
+  config, service logs, registry files, and per-book workspace roots.
+- Cover both suite-root input and `books/<book-id>` input. A suite-hosted
+  MoonBook must resolve back to the owning suite for product-home paths.
+- Add negative cases proving old roots such as `.moontown`, `.moonclaw`,
+  repo-local runtime folders, and global temp folders are not accepted as
+  alternate valid layouts.
+
+Acceptance:
+
+- MoonLib tests become the source of truth for path semantics.
+- Products can import `vectie/moonlib/moonsuite` without importing MoonStat,
+  Moondesk UI packages, MoonClaw runtime packages, or daemon packages.
+- `moon test` in MoonLib passes with no snapshot drift.
+
+### Phase 8.2: Fresh Bootstrap Tests
+
+Scope:
+
+- Add fresh-root bootstrap tests for Moondesk `serve` and CLI bootstrap paths.
+- Start from an empty user-selected folder and assert the resulting structure:
+  `.moonsuite/`, `.moonsuite/products/`, `.moonsuite/suite-status.json`,
+  `.tmp/`, and `books/`.
+- Assert product directories are created lazily or explicitly according to the
+  product registry contract, not by stale hidden-folder fallbacks.
+- Assert bootstrapping a folder that already contains `books/` is idempotent.
+
+Acceptance:
+
+- A clean folder becomes a valid MoonSuite root in one run.
+- Running bootstrap twice does not duplicate state or switch back to old layout.
+- No test fixture writes `.moontown`, `.moonclaw`, or old hidden MoonBook
+  library paths as valid fresh output.
+
+### Phase 8.3: Workspace API Integration Tests
+
+Scope:
+
+- Extend `/api/workspaces`, `/api/workspaces/metadata`, `/api/workspaces/*`,
+  and `/api/books/*` tests.
+- Assert MoonBooks are discovered only from `books/`.
+- Assert metadata returns active suite root, requested root, books root, product
+  registry, workspace count, workspace records, and product records.
+- Assert normal VFS listings hide `.moonsuite` and `.tmp` while internal API
+  logic can still use them.
+- Assert suite root and selected MoonBook behavior both preserve the same owning
+  suite context.
+
+Acceptance:
+
+- API tests fail if book discovery falls back to old hidden MoonBook paths.
+- API tests fail if response metadata omits Phase 6 contract fields.
+- API tests fail if normal user-facing listings expose `.moonsuite` or `.tmp`.
+
+### Phase 8.4: Product Registry Coverage
+
+Scope:
+
+- Add registry tests covering all current MoonSuite products:
+  Moondesk, MoonBook, MoonWiki, MoonCode, MoonClaw, Moontown, MoonStat,
+  MoonFish, MoonMoon, MoonRobo, Bookkeeper, Lepusa, and Rabbita.
+- Assert each product has a stable id, display name, status, product-home path,
+  and expected service/artifact locations when applicable.
+- Add explicit coverage for previously missed products: MoonRobo, MoonMoon,
+  MoonFish, and other Moon-branded suite products.
+
+Acceptance:
+
+- Product registry output is deterministic.
+- Missing product metadata is reported as a test failure, not silently hidden in
+  UI or API defaults.
+- Moondesk UI service/product panels have fixture coverage for the complete
+  registry list.
+
+### Phase 8.5: Service Config And Daemon Tests
+
+Scope:
+
+- Add MoonClaw tests proving daemon config, provider manifests, stdout/stderr
+  logs, runtime status, and next-action messages resolve under
+  `.moonsuite/products/moonclaw`.
+- Add Moontown tests proving daemon state, progress state, and service status
+  resolve under `.moonsuite/products/moontown`.
+- Assert missing daemon/config cases return explicit status objects rather than
+  vague queueing or "local agent unavailable" copy.
+- Assert both suite root and selected `books/<book-id>` roots resolve service
+  config to the owning suite product home.
+
+Acceptance:
+
+- MoonClaw and Moontown tests fail if `$HOME/.moonclaw`, `.moontown`, or
+  book-local product homes are used as fresh defaults.
+- API responses include actionable missing/running/unreachable statuses.
+- UI fixtures can render service status without raw internal paths.
+
+### Phase 8.6: MoonCode End-To-End Tests
+
+Scope:
+
+- Add tests for the complete prompt lifecycle:
+  immediate user-message append, command packet persistence, runtime-command
+  persistence, event log append, thinking/progress placement, final assistant
+  append, and ordered transcript hydration.
+- Cover new chat, existing chat, refresh during stream, daemon unavailable,
+  daemon available, and stale session-list polling.
+- Assert AI events are appended to the correct active conversation and are not
+  reordered above the user's prompt.
+- Assert folded thinking/progress remains between user prompt and final answer
+  after completion.
+
+Acceptance:
+
+- Tests fail if the UI waits for MoonClaw before showing the user's prompt.
+- Tests fail if final assistant text is prepended, merged into the user message,
+  duplicated, or attached to the wrong session.
+- Tests fail if hidden tool payloads or raw command blobs appear in normal chat
+  display.
+
+### Phase 8.7: Desk Browser Smoke Tests
+
+Scope:
+
+- Extend browser smoke coverage for first-run root, empty `books/`, populated
+  `books/`, selected MoonBook, VFS navigation, product status, service status,
+  and clean Code conversation UI.
+- Run against the production `ui/rabbita-desk/dist` bundle, not only dev mode.
+- Verify the browser has no console errors and does not show loading forever.
+- Verify visible copy uses display labels such as `MoonSuite: <name>` and
+  `books/<book-id>`, not raw absolute paths in normal UI.
+
+Acceptance:
+
+- Browser smoke fails on JavaScript runtime errors, stale bundle crashes, raw
+  internal path leaks, missing MoonCode input, or loading-screen deadlocks.
+- The smoke script leaves the app opened for visual inspection after completion.
+
+### Phase 8.8: Lepusa Fresh-Suite Smoke
+
+Scope:
+
+- Build or launch Lepusa with a brand-new MoonSuite root.
+- Assert the packaged app points its sidecar at the fresh root, serves the
+  production Rabbita bundle, and reaches the same health/readiness endpoints.
+- Verify Desk and Code modes render from the packaged runtime, not only the
+  local `moon run cmd/main -- serve` path.
+
+Acceptance:
+
+- Lepusa smoke fails if the sidecar uses old workspace defaults.
+- Lepusa smoke fails if the app cannot create/read `books/` or product homes.
+- The final smoke URL/app window is shown for inspection.
+
+### Phase 8.9: Cross-Product Contract Consumers
+
+Scope:
+
+- For each migrated product, add or update tests proving it derives paths from
+  MoonLib:
+  Moondesk, MoonStat, MoonClaw, Moontown, MoonFish, MoonMoon, MoonRobo,
+  Bookkeeper, Lepusa, Rabbita, MoonBook, MoonWiki, and MoonCode.
+- Keep consumer tests focused on integration boundaries: given suite root or
+  book root, product derives the same canonical product home and artifact
+  locations as MoonLib.
+- Add a small "contract fixture" shared by products where practical, but avoid
+  coupling product tests to Moondesk implementation details.
+
+Acceptance:
+
+- Product tests fail if a product recreates path logic locally and diverges from
+  MoonLib.
+- Product tests fail if a product depends on MoonStat or Moondesk UI for core
+  layout derivation.
+
+### Phase 8.10: Drift And Residual Scans
+
+Scope:
+
+- Keep MoonStat drift-report tests for old `.moontown`, `.moonclaw`,
+  repo-local runtime, and global temp paths. MoonStat commit `cf7fd62` already
+  covers the first drift-report slice.
+- Add Moondesk residual scans for old layout strings outside documentation,
+  migration notes, and explicit drift/error messages.
+- Classify every remaining old-layout string as one of:
+  test fixture, migration doc, drift detector, user-facing error, or bug.
+
+Acceptance:
+
+- Residual scans fail on old-layout strings in active fresh-path code.
+- Old-layout references are allowed only where they explain migration, test
+  drift detection, or report invalid legacy state.
+
+### Phase 8.11: CI And Release Gate Wiring
+
+Scope:
+
+- Wire the Phase 8 gates into repeatable commands:
+  `moon check`, `moon test`, targeted Moondesk API smoke, browser smoke,
+  Lepusa smoke, boundary validation, and residual scan.
+- Keep fast unit/white-box tests separate from slower browser/Lepusa tests so
+  local iteration remains practical.
+- Document the exact command order and expected pass criteria.
+
+Required gate order:
+
+1. `moon fmt`
+2. `moon info`
+3. `moon check --target native`
+4. `moon test --target native`
+5. Rabbita `moon check --target js`
+6. Rabbita `moon test --target js`
+7. Rabbita `npm run build`
+8. Moondesk API smoke
+9. Desk browser smoke
+10. Lepusa fresh-suite smoke
+11. Core-boundary validation
+12. Residual old-layout scan
+
+Moondesk gate commands:
+
+- `bash scripts/phase8_migration_gates.sh fast` runs the repeatable local
+  Phase 8 wall: Moondesk native format/info/check/test, Rabbita JS
+  check/test/build, MoonLib consumer pins, fresh-suite residual scans, and
+  cross-repo boundary validation.
+- `bash scripts/phase8_migration_gates.sh full` runs the fast wall plus API
+  smoke, Desk browser smoke, and cross-product fresh-suite smoke.
+- `bash scripts/fresh_suite_product_smoke.sh` can be run alone when validating
+  product-home behavior across Moontown, MoonClaw, MoonBook, MoonRobo,
+  MoonFish, MoonMoon, MoonChat, MoonVis, MoonStat, and Lepusa.
+
+Acceptance:
+
+- Phase 8 is complete only when every required gate has an explicit command,
+  documented owner/product scope, and a passing run recorded in this migration
+  log.
+- Failures must point to a product or contract boundary, not require manual
+  interpretation of raw logs.
+
+### Phase 8 Completion Criteria
+
+Phase 8 can close when:
+
+- Fresh MoonSuite bootstrap is proven from an empty folder.
+- All active products derive canonical paths from MoonLib.
+- Moondesk APIs and UI expose the Phase 6/7 contract without raw internal path
+  leaks in normal views.
+- MoonCode prompt/event/final-answer ordering is covered by end-to-end tests.
+- MoonClaw and Moontown missing/running/unreachable states are explicit and
+  tested.
+- Browser and Lepusa smoke tests pass on production bundles.
+- Residual old-layout scans leave only approved migration/drift references.
 
 ## Phase 9: Cutover
 

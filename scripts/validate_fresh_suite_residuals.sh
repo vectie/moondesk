@@ -3,20 +3,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORKSPACE_ROOT="$(cd "${ROOT}/.." && pwd)"
+source "${ROOT}/scripts/moonsuite_phase8_inventory.sh"
 
-repos=(
-  "moondesk"
-  "moonrobo"
-  "moontown"
-  "moonclaw"
-  "moonstat"
-  "moonbook"
-  "moonfish"
-  "moonmoon"
-  "moonchat"
-  "moonvis"
-  "lepusa"
-)
+repos=("${MOONSUITE_PHASE8_SOURCE_REPOS[@]}")
 
 legacy_hidden_home_pattern='"\.(moontown|moonclaw|moondesk|moonbook|moonwiki|mooncode|moonfish|moonmoon|moonchat|moonvis|lepusa|rabbita|bookkeeper)(/|"|$)'
 
@@ -45,9 +34,8 @@ is_allowed_hit() {
 failures=0
 
 for repo in "${repos[@]}"; do
-  repo_root="${WORKSPACE_ROOT}/${repo}"
-  if [[ ! -d "${repo_root}" ]]; then
-    echo "missing repo: ${repo_root}" >&2
+  repo_root="$(moonsuite_phase8_repo_root "${WORKSPACE_ROOT}" "${repo}")"
+  if ! moonsuite_phase8_require_repo "${WORKSPACE_ROOT}" "${repo}"; then
     failures=$((failures + 1))
     continue
   fi

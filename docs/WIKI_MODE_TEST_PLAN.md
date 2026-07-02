@@ -501,7 +501,7 @@ moon test core --target native --warn-list +unnecessary_annotation --diagnostic-
 moon test adapters/moonbook --target native --warn-list +unnecessary_annotation --diagnostic-limit 1000
 moon test ui/rabbita-desk/main --target js --warn-list +unnecessary_annotation --diagnostic-limit 1000
 npm --prefix ui/rabbita-desk run build
-moon run cmd/main --target native -- lepusa live-smoke macos --strict --serve-port <free-port> --workspace-root /Users/kq/Workspace/moondesk --ui ui/rabbita-desk/dist --out _build/lepusa/<run-id>
+moon run cmd/main --target native -- lepusa live-smoke macos --strict --serve-port <free-port> --workspace-root /path/to/moondesk-workspace --ui ui/rabbita-desk/dist --out _build/lepusa/<run-id>
 moon info --target native
 moon info --target js
 moon fmt

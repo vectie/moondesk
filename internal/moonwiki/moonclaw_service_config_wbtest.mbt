@@ -91,7 +91,7 @@ test "moonclaw existing daemon reachability does not require workspace service c
 test "moonclaw unconfigured daemon reuse skips temporary test roots" {
   assert_true(
     moonclaw_allows_unconfigured_existing_daemon(
-      workspace_context("/Users/kq/moondesk-workspace"),
+      workspace_context("/home/example/moondesk-workspace"),
     ),
   )
   assert_false(

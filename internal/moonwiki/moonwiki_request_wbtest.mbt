@@ -604,7 +604,7 @@ async test "moonbook archive helpers find root folder and default id name" {
   assert_false(import_is_zip_archive("/tmp/Desk Book.tar"))
   assert_eq(import_archive_default_name("/tmp/Desk Book.zip"), "Desk Book")
   assert_eq(
-    import_archive_upload_filename("/Users/demo/Desk Book.zip"),
+    import_archive_upload_filename("/home/demo/Desk Book.zip"),
     "Desk Book.zip",
   )
   assert_eq(import_archive_upload_filename("Desk Book"), "Desk Book.zip")

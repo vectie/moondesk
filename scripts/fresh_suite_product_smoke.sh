@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORKSPACE_ROOT="$(cd "${ROOT}/.." && pwd)"
-MOON_BIN="${MOON_BIN:-/Users/kq/.moon/bin/moon}"
+MOON_BIN="${MOON_BIN:-${MOON:-moon}}"
 
 run_gate() {
   local label="$1"
@@ -58,14 +58,33 @@ run_local_gate() {
   )
 }
 
+run_moon_test_gate() {
+  local label="$1"
+  local repo="$2"
+  shift 2
+  local repo_root="${WORKSPACE_ROOT}/${repo}"
+
+  if [[ ! -d "${repo_root}" ]]; then
+    echo "missing repo for ${label}: ${repo_root}" >&2
+    exit 1
+  fi
+
+  echo "==> ${label}"
+  (
+    cd "${repo_root}"
+    "${MOON_BIN}" test "$@"
+  )
+}
+
 run_gate "Moontown fresh-suite writers" "moontown" "scripts/fresh-suite-writers-smoke.sh"
 run_gate "MoonClaw fresh-suite product home" "moonclaw" "scripts/fresh-suite-product-home-smoke.sh"
 run_gate "MoonBook fresh-suite extension" "moonbook" "scripts/fresh-suite-extension-smoke.sh"
 run_zsh_gate "MoonRobo fresh-suite product home" "moonrobo" "scripts/fresh-suite-product-home-smoke.sh"
 run_zsh_gate "MoonFish fresh-suite product home" "moonfish" "scripts/fresh-suite-product-home-smoke.sh"
-run_zsh_gate "MoonMoon fresh-suite product home" "moonmoon" "scripts/fresh-suite-product-home-smoke.sh"
+run_moon_test_gate "MoonMoon fresh-suite product home" "moonmoon" "moonmoon_test.mbt"
 run_zsh_gate "MoonChat fresh-suite product home" "moonchat" "scripts/fresh-suite-product-home-smoke.sh"
 run_zsh_gate "MoonVis fresh-suite product home" "moonvis" "scripts/fresh-suite-product-home-smoke.sh"
+run_moon_test_gate "MoonStat MoonSuite drift contract" "moonstat" "suite_wbtest.mbt"
 run_local_gate "Lepusa fresh-books" "scripts/lepusa_fresh_books_smoke.sh"
 
 echo "Fresh MoonSuite product smoke passed"

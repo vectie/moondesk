@@ -3,30 +3,19 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORKSPACE_ROOT="$(cd "${ROOT}/.." && pwd)"
+source "${ROOT}/scripts/moonsuite_phase8_inventory.sh"
 EXPECTED_VERSION="${MOONLIB_VERSION:-0.1.7}"
 EXPECTED_IMPORT="vectie/moonlib@${EXPECTED_VERSION}"
 
-repos=(
-  "moondesk"
-  "moonrobo"
-  "moontown"
-  "moonclaw"
-  "moonstat"
-  "moonbook"
-  "moonfish"
-  "moonmoon"
-  "moonchat"
-  "lepusa"
-)
+repos=("${MOONSUITE_PHASE8_MOONLIB_CONSUMER_REPOS[@]}")
 
 failures=0
 
 for repo in "${repos[@]}"; do
-  repo_root="${WORKSPACE_ROOT}/${repo}"
+  repo_root="$(moonsuite_phase8_repo_root "${WORKSPACE_ROOT}" "${repo}")"
   mod_file="${repo_root}/moon.mod"
 
-  if [[ ! -d "${repo_root}" ]]; then
-    echo "missing repo: ${repo_root}" >&2
+  if ! moonsuite_phase8_require_repo "${WORKSPACE_ROOT}" "${repo}"; then
     failures=$((failures + 1))
     continue
   fi
