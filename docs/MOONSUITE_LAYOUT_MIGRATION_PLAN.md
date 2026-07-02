@@ -1336,6 +1336,17 @@ Completed slices:
   `moon check`, `moon test` with `1002/1002` tests passing, focused active
   setup/model/routine stale-path scan, cleanup of untracked test-created
   `.moonsuite` runtime output, and `git diff --check`.
+- Moontown central operator and architecture docs now describe executable-book
+  events, MoonCode sidecars, processed sidecar ledgers, daemon state, watcher
+  ledgers, book-template inboxes, book-quality artifacts, PlanBook autonomy,
+  live digests, and town synthesis outputs under `.moonsuite/products/...`
+  product homes instead of retired book-local or repo-local `.moonbook`,
+  `.moonclaw`, and `.moontown` roots. Validation for this slice: Moontown
+  `moon fmt`, `moon info`, `moon check`, `moon test` with `927/927` tests
+  passing, focused central-doc stale-path scan with only the
+  `com.vectie.moontown` launchd identifier false positive, restored
+  whitespace-only generated `.mbti` churn from `moon info`, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
