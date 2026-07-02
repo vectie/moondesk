@@ -1496,6 +1496,17 @@ Completed slices:
   `~/.moonsuite/products/moonclaw` scan, `moon fmt`, `moon info`, `moon check`,
   `moon test`, cleanup of test-created untracked `.moonsuite` output, and
   `git diff --check`.
+- MoonClaw OAuth credential storage now has explicit workspace-root APIs for
+  Codex and Copilot credentials. The onboarding CLI and daemon auth endpoints
+  use the selected MoonSuite root instead of silently storing MoonClaw-owned
+  credentials under the process OS home; the remaining no-argument credential
+  helpers are only the compatibility/default surface for subprocesses whose
+  `HOME` is already set to the suite root. New coverage proves explicit-root
+  Codex and Copilot saves land under the suite MoonClaw product home and do not
+  create OS-home product credentials. Validation for this slice: focused
+  MoonClaw OAuth home-global scan, `moon fmt`, `moon info`, `moon check`,
+  `moon test`, cleanup of test-created untracked `.moonsuite` output, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
