@@ -1785,7 +1785,15 @@ Remaining high-priority product slices:
   After the MoonLib `0.1.6` rollout, this full cross-product smoke gate passed
   end-to-end: each product-specific fresh-suite gate reported success and the
   Lepusa fresh-books/live bundle check completed with `Fresh MoonSuite product
-  smoke passed`.
+  smoke passed`. The new `scripts/validate_fresh_suite_residuals.sh` Phase 8
+  guard now makes the active-source residual scan repeatable across Moondesk,
+  MoonRobo, Moontown, MoonClaw, MoonStat, MoonBook, MoonFish, MoonMoon,
+  MoonChat, MoonVis, and Lepusa. It fails on unapproved quoted legacy hidden
+  product-home strings in production source while allowing MoonStat's drift
+  probes and the current negative regression assertions. The first run passed
+  for all 11 scanned repositories, so the remaining residual work should be
+  driven by deeper behavioral smoke coverage rather than broad hidden-home
+  string cleanup.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
   Moondesk old-writer cleanup.
