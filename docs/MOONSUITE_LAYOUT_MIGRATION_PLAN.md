@@ -1455,6 +1455,16 @@ Completed slices:
   with `200/200` tests passing, and `git diff --check`. The MoonBook push also
   reconciled Gitee's older divergent `main` without keeping legacy
   `moon.mod.json` or the stale singular `plugin/moonstat` directory.
+- MoonFish suite-status references now use structured path construction for
+  the active MoonSuite state file. The model helper derives
+  `.moonsuite/suite-status.json` with MoonLib `state_dir` plus `pathx.join`
+  instead of hand-concatenating path text, tests cover both standalone and
+  suite-hosted roots, and the PA Agent migration plan now names
+  `<MoonSuiteRoot>/.moonsuite/suite-status.json` instead of the retired
+  home-global status file. Validation for this slice: focused MoonFish stale
+  status-path scan, `moon fmt`, `moon info` with unrelated whitespace-only
+  `.mbti` churn restored, `moon check`, `moon test` with `145/145` tests
+  passing, and `git diff --check`.
 
 Remaining high-priority product slices:
 
