@@ -1746,7 +1746,14 @@ Remaining high-priority product slices:
   MoonLib `0.1.6`, and Moondesk now consumes that version so its fresh
   workspace serve-prep test asserts explicit MoonChat and MoonVis registry
   entries instead of count-only coverage. Remaining consumer-refresh work should
-  happen per sibling product batch.
+  happen per sibling product batch. The first clean sibling consumer batch now
+  also consumes MoonLib `0.1.6`: Moontown `main` commit `30701910`, MoonRobo
+  `moondata` commit `e072f398`, MoonBook `main` commit `0a7458a`, MoonFish
+  `main` commit `8c91614`, MoonMoon `main` commit `eafebca5`, and Lepusa
+  `main` commit `c402ad2` were pushed. MoonChat `main` commit `fcc229b`
+  carries the same pin locally, but that checkout has no configured remote and
+  `git ls-remote git@github.com:vectie/moonchat.git` reports the repository is
+  unavailable, so it still needs a publish destination before it can be pushed.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
