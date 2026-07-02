@@ -1643,6 +1643,18 @@ Completed slices:
   active non-test MoonBit source scan proving the only remaining
   `.moonsuite/products/moontown` literal is the UI helper's single source of
   truth.
+- MoonRobo active MoonBook/readiness projections now route the remaining
+  product-home display literals through a product-status display helper instead
+  of hand-written `.moonsuite/products/moonrobo/...` strings. The helper keeps
+  user-facing contract strings separate from root-sensitive runtime
+  `ProductHome` paths while MoonBook task evidence, MoonBook memory cards, and
+  readiness runtime-health checks all consume the same display contract.
+  Validation for this slice: MoonRobo `moon fmt`, `moon info`, `moon check`,
+  full `moon test` (`453/453`), generated-interface diff review for the
+  intentional product-status API addition, generated-interface churn restore,
+  `git diff --check`, and an active non-test MoonBit source scan proving the
+  only remaining `.moonsuite/products/moonrobo` literal is the product-status
+  display helper's single source of truth.
 
 Remaining high-priority product slices:
 
@@ -1704,8 +1716,9 @@ Remaining high-priority product slices:
   from MoonLib `ProductHome`; the runtime adapter and SDK E1 bridge sidecar now
   resolve product state/temp paths through MoonLib `ProductHome` fields from
   either a suite root or a `books/<book-id>` workspace root. Rabbita cockpit
-  UI/parser fixtures now advertise those product-home paths for the migrated
-  artifact classes.
+  UI/parser fixtures and active MoonBook/readiness projections now advertise
+  those product-home paths through product-status display helpers for the
+  migrated artifact classes.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
   explicit project-local override policy coverage, and any newly discovered
   readers from deeper smoke runs. New runtime writes for conversations, jobs,
