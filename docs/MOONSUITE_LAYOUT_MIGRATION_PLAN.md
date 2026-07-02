@@ -321,6 +321,14 @@ pattern instead of carrying independent string contracts.
   `moon test` with `457/457` tests passing, `npm run build`, `git diff --check`,
   and visible app verification at
   `http://127.0.0.1:4535/?activity=files` showing `chipCount: 13`.
+- Moondesk Code mode transcript no longer fabricates a `Working on it...`
+  assistant reply for pending prompts or runtime progress without an assistant
+  answer. Pending prompts stay visible immediately as user messages, and the
+  rendered transcript shows a folded `Thinking` activity row for the queued
+  prompt until MoonClaw streams real runtime events or an assistant reply.
+  Validation for this slice: Moondesk `moon fmt`, `moon info`, `moon check`,
+  `moon test` with `457/457` tests passing, `npm run build`, and
+  `git diff --check`.
 - MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
   Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
   `/tmp/moonclaw-root` suite root and assert the current

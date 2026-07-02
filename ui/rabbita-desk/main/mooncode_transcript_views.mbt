@@ -79,6 +79,10 @@ fn mooncode_transcript_items(
   for row in mooncode_transcript_rows(model, session) {
     items.push(mooncode_transcript_message_item(row))
   }
+  if mooncode_session_has_pending_prompt(model, session.id) &&
+    !mooncode_transcript_items_have_assistant_after_last_user(items) {
+    mooncode_push_pending_activity_item(items)
+  }
   items
 }
 
@@ -458,14 +462,46 @@ fn mooncode_insert_pending_prompt_item(
   if insertion >= items.length() {
     items.push(item)
     if !has_following_work {
-      mooncode_push_transcript_message_item(items, {
-        role: "assistant",
-        content: "Working on it...",
-        status: "running",
-      })
+      mooncode_push_pending_activity_item(items)
     }
   } else {
     items.insert(insertion, item)
+  }
+}
+
+///|
+fn mooncode_push_pending_activity_item(
+  items : Array[MoonCodeTranscriptItem],
+) -> Unit {
+  if mooncode_transcript_last_activity_item_matches(
+    items,
+    "Thinking",
+    "Prompt queued",
+  ) {
+    return
+  }
+  items.push(mooncode_transcript_activity_item({
+    tone: "thinking",
+    label: "Thinking",
+    title: "Prompt queued",
+    detail: "Waiting for MoonClaw to stream runtime events.",
+    status: "running",
+    folded: true,
+  }))
+}
+
+///|
+fn mooncode_transcript_last_activity_item_matches(
+  items : Array[MoonCodeTranscriptItem],
+  label : String,
+  title : String,
+) -> Bool {
+  if items.length() == 0 {
+    return false
+  }
+  match items[items.length() - 1].activity {
+    Some(row) => row.label == label && row.title == title
+    None => false
   }
 }
 
@@ -647,6 +683,28 @@ fn mooncode_transcript_items_have_user(
     }
   }
   false
+}
+
+///|
+fn mooncode_transcript_items_have_assistant_after_last_user(
+  items : Array[MoonCodeTranscriptItem],
+) -> Bool {
+  let mut seen_user = false
+  let mut seen_assistant = false
+  for item in items {
+    match item.message {
+      Some(row) => {
+        if row.role == "user" {
+          seen_user = true
+          seen_assistant = false
+        } else if row.role == "assistant" && seen_user {
+          seen_assistant = true
+        }
+      }
+      None => ()
+    }
+  }
+  seen_assistant
 }
 
 ///|
@@ -879,14 +937,6 @@ fn mooncode_transcript_rows(
     session.id,
     pending_inserted,
   )
-  if pending_rows.length() > 0 &&
-    !mooncode_transcript_last_row_is_assistant(pending_rows) {
-    pending_rows.push({
-      role: "assistant",
-      content: "Working on it...",
-      status: "running",
-    })
-  }
   return pending_rows
 }
 
@@ -929,6 +979,7 @@ fn mooncode_complete_event_transcript_rows(
   session : MoonCodeSession,
   events : Array[MoonCodeEvent],
 ) -> Unit {
+  ignore(session)
   if rows.length() == 0 || mooncode_transcript_last_row_is_assistant(rows) {
     return
   }
@@ -951,12 +1002,6 @@ fn mooncode_complete_event_transcript_rows(
         status: "failed",
       })
     }
-  } else if mooncode_session_is_active(session) {
-    mooncode_push_transcript_row(rows, [], {
-      role: "assistant",
-      content: "Working on it...",
-      status: "running",
-    })
   }
 }
 

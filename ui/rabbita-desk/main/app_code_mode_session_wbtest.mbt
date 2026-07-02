@@ -1552,11 +1552,9 @@ test "code mode transcript keeps duplicated prompt status out of chat" {
     { ..init_model(), mooncode_model: "codex/gpt-5.4" },
     session,
   )
-  assert_eq(rows.length(), 2)
+  assert_eq(rows.length(), 1)
   assert_eq(rows[0].role, "user")
   assert_eq(rows[0].content, "hey hows going?")
-  assert_eq(rows[1].role, "assistant")
-  assert_eq(rows[1].content, "Working on it...")
 }
 
 ///|
@@ -1810,7 +1808,7 @@ test "code mode transcript shows terminal failure as assistant response" {
 }
 
 ///|
-test "code mode transcript uses one working reply instead of runtime event dump" {
+test "code mode transcript keeps runtime progress out of assistant reply rows" {
   let session = {
     ..code_mode_test_session("session-a", status="running"),
     mooncode_events: [
@@ -1832,36 +1830,44 @@ test "code mode transcript uses one working reply instead of runtime event dump"
     ],
   }
   let rows = mooncode_transcript_rows(init_model(), session)
-  assert_eq(rows.length(), 2)
+  assert_eq(rows.length(), 1)
   assert_eq(rows[0].role, "user")
   assert_eq(rows[0].content, "Add tests")
-  assert_eq(rows[1].role, "assistant")
-  assert_eq(rows[1].content, "Working on it...")
 }
 
 ///|
 test "code mode transcript shows pending prompt immediately" {
   let session = code_mode_test_session("session-a", status="running")
-  let rows = mooncode_transcript_rows(
-    {
-      ..init_model(),
-      mooncode_pending_prompts: [
-        {
-          session_id: "session-a",
-          content: "Run the tests now",
-          status: "queued",
-          after_row_count: 0,
-          after_event_count: 0,
-        },
-      ],
-    },
-    session,
-  )
-  assert_eq(rows.length(), 2)
+  let model = {
+    ..init_model(),
+    mooncode_pending_prompts: [
+      {
+        session_id: "session-a",
+        content: "Run the tests now",
+        status: "queued",
+        after_row_count: 0,
+        after_event_count: 0,
+      },
+    ],
+  }
+  let rows = mooncode_transcript_rows(model, session)
+  assert_eq(rows.length(), 1)
   assert_eq(rows[0].role, "user")
   assert_eq(rows[0].content, "Run the tests now")
-  assert_eq(rows[1].role, "assistant")
-  assert_eq(rows[1].content, "Working on it...")
+  let items = mooncode_transcript_items(model, session)
+  assert_eq(items.length(), 2)
+  match items[0].message {
+    Some(row) => assert_eq(row.content, "Run the tests now")
+    None => fail("expected pending user prompt")
+  }
+  match items[1].activity {
+    Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.title, "Prompt queued")
+      assert_eq(row.folded, true)
+    }
+    None => fail("expected pending prompt activity")
+  }
 }
 
 ///|
@@ -2028,9 +2034,8 @@ test "code mode prompt action adds pending prompt before runtime reply" {
   assert_eq(next.mooncode_conversation_rows[0].role, "user")
   assert_eq(next.mooncode_conversation_rows[0].content, "Explain the latest error")
   let rows = mooncode_transcript_rows(next, session)
-  assert_eq(rows.length(), 2)
+  assert_eq(rows.length(), 1)
   assert_eq(rows[0].content, "Explain the latest error")
-  assert_eq(rows[1].content, "Working on it...")
 }
 
 ///|
@@ -2088,12 +2093,13 @@ test "code mode transcript items show pending prompt over existing events" {
     }
     None => fail("expected pending user prompt")
   }
-  match items[3].message {
+  match items[3].activity {
     Some(row) => {
-      assert_eq(row.role, "assistant")
-      assert_eq(row.content, "Working on it...")
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.title, "Prompt queued")
+      assert_eq(row.folded, true)
     }
-    None => fail("expected working placeholder")
+    None => fail("expected pending prompt activity")
   }
 }
 
@@ -2279,9 +2285,13 @@ test "code mode transcript does not move old activity onto pending prompt" {
     Some(row) => assert_eq(row.content, "New question")
     None => fail("expected pending prompt after old activity")
   }
-  match items[3].message {
-    Some(row) => assert_eq(row.content, "Working on it...")
-    None => fail("expected working placeholder")
+  match items[3].activity {
+    Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.title, "Prompt queued")
+      assert_eq(row.folded, true)
+    }
+    None => fail("expected pending prompt activity")
   }
 }
 
