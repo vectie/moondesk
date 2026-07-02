@@ -10,7 +10,7 @@ async fn resolve_mooncode_workspace_scope(
         id=@desk.stable_id("general-mooncode", root),
         name="General MoonCode",
         root_path=root,
-        kind=TownRoot,
+        kind=SuiteRoot,
       ),
     )
   }

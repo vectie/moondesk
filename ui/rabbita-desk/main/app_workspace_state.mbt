@@ -144,7 +144,7 @@ fn selected_layer(model : Model) -> String {
 fn workspace_kind_label(kind : @desk.WorkspaceKind) -> String {
   match kind {
     MoonBook => "moonbook"
-    TownRoot => "town"
+    SuiteRoot => "suite"
   }
 }
 

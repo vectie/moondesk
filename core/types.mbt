@@ -1,7 +1,7 @@
 ///|
 pub(all) enum WorkspaceKind {
   MoonBook
-  TownRoot
+  SuiteRoot
 } derive(Debug, Eq, ToJson, FromJson)
 
 ///|

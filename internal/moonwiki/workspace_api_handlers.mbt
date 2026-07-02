@@ -56,7 +56,7 @@ async fn discover_workspaces(
       id=@desk.stable_id("root", root),
       name=@desk.display_name(root),
       root_path=root,
-      kind=TownRoot,
+      kind=SuiteRoot,
     ),
   ]
 }

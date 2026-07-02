@@ -7,7 +7,7 @@ async test "mooncode session scope supports general chat without a moonbook" {
   }
   assert_eq(workspace.name, "General MoonCode")
   assert_eq(workspace.root_path, @pathx.normalize(root))
-  assert_true(workspace.kind is TownRoot)
+  assert_true(workspace.kind is SuiteRoot)
 }
 
 ///|

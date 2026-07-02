@@ -154,7 +154,7 @@ pub(all) enum SubmissionCadence {
 
 pub(all) enum WorkspaceKind {
   MoonBook
-  TownRoot
+  SuiteRoot
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum WorkspaceStatus {

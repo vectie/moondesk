@@ -335,6 +335,15 @@ pattern instead of carrying independent string contracts.
   `git diff --check`, and visible app verification at
   `http://127.0.0.1:4535/?activity=code` showing no `Working on it...` or
   saved-local-agent message.
+- Moondesk workspace kind naming now treats the root workspace as a MoonSuite
+  root rather than a Moontown root. The shared `WorkspaceKind` variant is
+  `SuiteRoot`, general MoonCode and empty-library discovery use that variant,
+  the Rabbita workspace label renders `suite`, and `docs/STATUS.md` describes
+  the active MoonSuite root instead of a `.moontown`-gated root. Validation for
+  this slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `458/458` tests passing, `npm run build`, `git diff --check`, and visible app
+  verification at `http://127.0.0.1:4535/?activity=files` showing MoonSuite UI
+  with no town-root wording.
 - MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
   Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
   `/tmp/moonclaw-root` suite root and assert the current

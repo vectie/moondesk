@@ -145,15 +145,15 @@ async test "workspace discovery ignores plain folders" {
 }
 
 ///|
-async test "workspace discovery only exposes town roots and moonbooks" {
+async test "workspace discovery only exposes suite roots and moonbooks" {
   let root = @pathx.join(
     "/tmp",
-    "moondesk-town-root-wbtest-" + @async.now().to_string(),
+    "moondesk-suite-root-wbtest-" + @async.now().to_string(),
   )
   @fsx.make_directory(moonsuite_state_dir(root), recursive=true, exists_ok=true)
-  let town_workspaces = discover_workspaces(root)
-  assert_eq(town_workspaces.length(), 1)
-  assert_true(town_workspaces[0].kind is TownRoot)
+  let suite_workspaces = discover_workspaces(root)
+  assert_eq(suite_workspaces.length(), 1)
+  assert_true(suite_workspaces[0].kind is SuiteRoot)
 
   @fsx.make_directory(
     @pathx.join(root, "books"),
