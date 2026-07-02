@@ -235,6 +235,17 @@ pattern instead of carrying independent string contracts.
   Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with `453/453`
   tests passing, targeted active old-join scan clean except the intentional
   centralized relative display prefixes, and `git diff --check`.
+- Moondesk commit `abb10fc2` routes MoonClaw job roots through MoonLib
+  workspace-root helpers and stops creating nested
+  `books/<book-id>/.moonsuite/products/moonclaw/jobs` directories for new
+  MoonBooks. The generic workspace path resolver now redirects the intentional
+  `.moonsuite/products/moonclaw/jobs/...` UI path to the owning suite's
+  MoonClaw product home, rejects arbitrary `.moonsuite` and `.tmp` fallbacks,
+  and keeps MoonClaw run raw-artifact reads working through that explicit
+  product-path branch. Validation for this slice: Moondesk `moon fmt`,
+  `moon info`, `moon check`, `moon test` with `454/454` tests passing,
+  targeted active old-join scan clean except intentional centralized display
+  prefixes, and `git diff --check`.
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
@@ -1097,10 +1108,11 @@ Remaining high-priority product slices:
   from the MoonLib workspace-root product-artifact helper, matching MoonClaw's
   current durable product-home contract.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
-  request/dispatch ledgers now derive from MoonLib workspace-root helpers.
-  Remaining work should focus on active Moondesk writers still discovered by
-  scans, especially other product-home owners such as MoonClaw jobs, launch
-  agent logs, trash receipts, and workspace creation allowlists.
+  request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
+  MoonClaw job roots now resolve through the owning suite instead of nested
+  book-local `.moonsuite` directories. Remaining work should focus on active
+  Moondesk writers still discovered by scans, especially launch-agent logs,
+  trash receipts, and any remaining product-home allowlist/display surfaces.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
