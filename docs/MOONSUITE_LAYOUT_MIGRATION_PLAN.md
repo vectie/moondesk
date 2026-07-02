@@ -246,6 +246,15 @@ pattern instead of carrying independent string contracts.
   `moon info`, `moon check`, `moon test` with `454/454` tests passing,
   targeted active old-join scan clean except intentional centralized display
   prefixes, and `git diff --check`.
+- Moondesk commit `103f86ac` moves Moondesk-owned daemon state, daemon policy,
+  preference records, and town LaunchAgent log paths onto MoonLib
+  workspace-root product artifacts. Suite-hosted book roots now resolve
+  Moondesk daemon and preference state to the owning suite's
+  `.moonsuite/products/moondesk` lane, and generated town LaunchAgent plists no
+  longer write logs under `books/<book-id>/.moonsuite`. Validation for this
+  slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `456/456` tests passing, targeted active Moondesk old-join scan clean, and
+  `git diff --check`.
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
@@ -1109,10 +1118,11 @@ Remaining high-priority product slices:
   current durable product-home contract.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
-  MoonClaw job roots now resolve through the owning suite instead of nested
-  book-local `.moonsuite` directories. Remaining work should focus on active
-  Moondesk writers still discovered by scans, especially launch-agent logs,
-  trash receipts, and any remaining product-home allowlist/display surfaces.
+  MoonClaw job roots plus Moondesk daemon/preference state now resolve through
+  the owning suite instead of nested book-local `.moonsuite` directories.
+  Remaining work should focus on active Moondesk writers still discovered by
+  scans, especially trash receipts and any remaining product-home
+  allowlist/display surfaces.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
