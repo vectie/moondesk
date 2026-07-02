@@ -204,6 +204,15 @@ pattern instead of carrying independent string contracts.
   of nested book-local state. Validation for this slice: Lepusa `moon update`,
   `moon fmt`, `moon info`, `moon check`, `moon test` with `374/374` tests
   passing, active empty-root constructor scan clean, and `git diff --check`.
+- Rabbita commit `0c45c31` removes active empty-root MoonSuite constructors
+  from its root product-home facade. Rabbita now exposes explicit
+  workspace-root helpers for state, service, runtime, cache, temp, and the
+  aggregate product-home payload, with suite-hosted book-root coverage proving
+  those paths resolve to the owning suite's product home. Validation for this
+  slice: Rabbita `moon fmt`, `moon info`, `moon check`, root-package
+  `moon test .` with `5/5` tests passing, native `moon test --target native`
+  with `25/25` tests passing, active empty-root constructor scan clean, and
+  `git diff --check`.
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
@@ -1016,6 +1025,16 @@ Completed slices:
   `moon test --target native` (24/24), and `git diff --check`; full JS
   `moon test` still hits the pre-existing DOM README examples that require a
   browser `document`.
+- Rabbita commit `0c45c31` removes the empty-root MoonLib calls left in that
+  adapter and adds explicit workspace-root variants for every public
+  product-home path. Suite-hosted book roots now map Rabbita product state and
+  temp paths to the suite-level `.moonsuite/products/rabbita` and
+  `.tmp/products/rabbita` lanes instead of a nested book-local suite. Validation
+  passed with Rabbita `moon fmt`, `moon info`, `moon check`, root-package
+  `moon test .` (5/5), native `moon test --target native` (25/25), active
+  empty-root constructor scan clean, and `git diff --check`; full JS
+  `moon test` remains outside this gate because the documented pre-existing DOM
+  README examples require a browser `document`.
 - MoonStat commit `2d9b732` upgrades the observer to MoonLib `0.1.3` and
   derives book-local MoonClaw provider/session drift targets through
   `@moonsuite.product_artifact_for_workspace_root(...)`. The suite drift report
