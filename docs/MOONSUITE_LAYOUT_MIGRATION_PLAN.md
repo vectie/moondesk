@@ -1293,6 +1293,13 @@ Completed slices:
   with `1002/1002` tests passing, refined active provider-prompt `.moonclaw`
   scan with only the negative prompt assertion left, cleanup of untracked
   test-created `.moonsuite` runtime output, and `git diff --check`.
+- MoonClaw job package documentation now describes process output under
+  `.moonsuite/products/moonclaw/jobs/processes/<id>` and workflow run
+  workspaces under `.moonsuite/products/moonclaw/jobs/<run-id>` instead of
+  retired `.moonclaw/jobs` or `moonclaw-jobs` roots. Validation for this slice:
+  MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test` with `1002/1002`
+  tests passing, refined job README stale-path scan, cleanup of untracked
+  test-created `.moonsuite` runtime output, and `git diff --check`.
 
 Remaining high-priority product slices:
 
