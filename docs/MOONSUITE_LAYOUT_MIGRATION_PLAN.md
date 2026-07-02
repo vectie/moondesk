@@ -608,6 +608,21 @@ Desk should show:
 
 Normal UI should avoid exposing hidden internal paths.
 
+Phase 7 Moondesk UI update slice:
+
+- Rabbita Desk now carries the Phase 6 metadata contract through the UI model:
+  active suite root, requested root, books root, product count, and registry
+  products.
+- Desk renders the active MoonSuite by display name, shows the canonical
+  `books/` library lane, and lists MoonBooks as `books/<book-id>` labels instead
+  of raw absolute paths.
+- Desk adds a compact service status band for MoonSuite, MoonBooks, product
+  registry, MoonClaw, and Moontown, backed by the existing daemon/progress
+  fetches.
+- Code mode session rows and accessibility titles now avoid raw `cwd` paths in
+  normal UI, keeping the rail focused on the selected book/general chat and the
+  clean conversation stream.
+
 ## Phase 8: Test Gates
 
 Minimum test gates:

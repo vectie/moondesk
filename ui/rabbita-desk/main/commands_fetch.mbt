@@ -11,9 +11,7 @@ fn fetch_workspaces_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 fn fetch_workspace_metadata_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @http.get("/api/workspaces/metadata").expect_json(result => {
     dispatch(
-      LoadedWorkspaceMetadata(
-        http_result(result, "Invalid workspace metadata")
-      ),
+      LoadedWorkspaceMetadata(http_result(result, "Invalid workspace metadata")),
     )
   })
 }

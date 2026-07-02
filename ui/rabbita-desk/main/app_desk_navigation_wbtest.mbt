@@ -547,9 +547,10 @@ test "desk create item actions validate name and open created entry" {
 ///|
 test "desk new folder shortcut uses current directory" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let (_, blocked) = desk_keydown_action(
-    dispatch, "N", true, true, { ..init_model(), workspace_mode: Desk },
-  )
+  let (_, blocked) = desk_keydown_action(dispatch, "N", true, true, {
+    ..init_model(),
+    workspace_mode: Desk,
+  })
   assert_eq(blocked.desk_new_item_status, "select a MoonBook first")
   let (_, creating) = desk_keydown_action(dispatch, "N", true, true, {
     ..init_model(),
@@ -1398,23 +1399,14 @@ test "workspace metadata result records empty library location" {
     LoadedWorkspaceMetadata(
       Ok({
         root_path: "/Users/example/moondesk-workspace",
+        suite_root: "/Users/example/moondesk-workspace",
+        active_suite_root: "/Users/example/moondesk-workspace",
         library_path: "/Users/example/moondesk-workspace/books",
+        books_root: "/Users/example/moondesk-workspace/books",
         products: [
-          {
-            id: "moondesk",
-            name: "Moondesk",
-            status: "installed",
-          },
-          {
-            id: "moonclaw",
-            name: "MoonClaw",
-            status: "installed",
-          },
-          {
-            id: "moonrobo",
-            name: "MoonRobo",
-            status: "installed",
-          },
+          { id: "moondesk", name: "Moondesk", status: "installed" },
+          { id: "moonclaw", name: "MoonClaw", status: "installed" },
+          { id: "moonrobo", name: "MoonRobo", status: "installed" },
         ],
       }),
     ),
@@ -1769,7 +1761,10 @@ test "desk location bar opens typed directory paths" {
   assert_eq(desk_location_path_from_input("wiki/./notes"), "wiki/notes")
   assert_eq(desk_location_path_from_input("wiki//notes"), "wiki/notes")
   assert_eq(desk_location_path_from_input("wiki/../raw"), "raw")
-  assert_eq(desk_location_path_from_input("wiki\\notes\\..\\index.md"), "wiki/index.md")
+  assert_eq(
+    desk_location_path_from_input("wiki\\notes\\..\\index.md"),
+    "wiki/index.md",
+  )
   assert_eq(desk_location_path_from_input("../outside"), "")
   assert_eq(desk_location_path_from_input("wiki/../../outside"), "")
   assert_eq(desk_location_path_from_input("root"), "")

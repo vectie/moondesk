@@ -27,6 +27,7 @@ fn render_desk_workspace_sidebar(
       ),
     ]),
     render_desk_library_location(model),
+    render_desk_service_status(model),
     render_new_moonbook_panel(dispatch, model),
     div(
       class="desk-workspace-list",
@@ -41,7 +42,8 @@ fn render_desk_workspace_sidebar(
       } else {
         model.workspaces.map(workspace => {
           let class_name = if workspace.id == model.selected_workspace_id {
-            "desk-workspace-row active " + workspace_status_class(workspace.status)
+            "desk-workspace-row active " +
+            workspace_status_class(workspace.status)
           } else {
             "desk-workspace-row " + workspace_status_class(workspace.status)
           }
@@ -61,7 +63,9 @@ fn render_desk_workspace_sidebar(
           }
           button(
             class=class_name,
-            title=workspace.root_path,
+            title=workspace.name +
+              " / " +
+              workspace_display_book_location(model, workspace),
             attrs=@html.Attrs::build()
               .data_set("testid", "desk-workspace-row")
               .data_set("workspace-id", workspace.id)
@@ -70,7 +74,7 @@ fn render_desk_workspace_sidebar(
             [
               div(class="desk-workspace-meta", meta_children),
               strong(workspace.name),
-              small(workspace.root_path),
+              small(workspace_display_book_location(model, workspace)),
             ],
           )
         })
@@ -172,14 +176,54 @@ fn render_desk_library_location(model : Model) -> @rabbita.Html {
     attrs=@html.Attrs::build().data_set("testid", "desk-library-root"),
     [
       div([
-        p(class="eyebrow", "user data root"),
-        strong(workspace_library_root(model)),
+        p(class="eyebrow", "active moonsuite"),
+        strong(workspace_suite_display_name(model)),
       ]),
       small(workspace_library_count_label(model)),
-      code(workspace_moonbook_library_path(model)),
+      code(workspace_books_display_label(model)),
       render_desk_product_summary(model),
     ],
   )
+}
+
+///|
+fn render_desk_service_status(model : Model) -> @rabbita.Html {
+  section(
+    class="desk-service-status",
+    attrs=@html.Attrs::build().data_set("testid", "desk-service-status"),
+    [
+      div(class="pane-heading compact-heading", [
+        div([p(class="eyebrow", "services"), h2("Status")]),
+      ]),
+      div(
+        class="desk-service-list",
+        workspace_service_status_items(model).map(item => {
+          let (name, status, detail) = item
+          div(
+            class="desk-service-row status-" + status,
+            attrs=@html.Attrs::build()
+              .data_set("testid", "desk-service-row")
+              .data_set("service", name)
+              .data_set("status", status),
+            [
+              span(class="status-dot " + service_status_dot_class(status), ""),
+              strong(name),
+              small(detail),
+            ],
+          )
+        }),
+      ),
+    ],
+  )
+}
+
+///|
+fn service_status_dot_class(status : String) -> String {
+  match status {
+    "ready" => "live"
+    "missing" => "idle"
+    _ => "idle"
+  }
 }
 
 ///|

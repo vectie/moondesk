@@ -38,7 +38,10 @@ struct MoonSuiteProduct {
 ///|
 struct WorkspaceMetadata {
   root_path : String
+  suite_root : String
+  active_suite_root : String
   library_path : String
+  books_root : String
   products : Array[MoonSuiteProduct]
 } derive(FromJson)
 

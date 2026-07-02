@@ -317,7 +317,9 @@ fn normalize_desk_location_separators(raw : String) -> String {
 }
 
 ///|
-fn desk_location_without_last_segment(segments : Array[String]) -> Array[String] {
+fn desk_location_without_last_segment(
+  segments : Array[String],
+) -> Array[String] {
   let next : Array[String] = []
   if segments.length() == 0 {
     return next

@@ -10,6 +10,7 @@ fn update_mooncode_session_results(
         @rabbita.none,
         {
           ..model,
+          moonclaw_daemon: Some(status),
           mooncode_composer_status: if status.running {
             if mooncode_new_session_draft_active(model) {
               model.mooncode_composer_status

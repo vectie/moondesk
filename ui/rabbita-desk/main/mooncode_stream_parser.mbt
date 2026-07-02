@@ -18,9 +18,7 @@ fn parse_mooncode_stream_text(
     } else {
       buffer + "\n" + trimmed.to_owned()
     }
-    let record = @json.parse(buffer) catch {
-      _ => continue
-    }
+    let record = @json.parse(buffer) catch { _ => continue }
     buffer = ""
     let record_type = json_string_value(record, "type", default="")
     if record_type == "meta" {
@@ -38,9 +36,8 @@ fn parse_mooncode_stream_text(
       )
     } else if record_type == "event" {
       match json_field(record, "event") {
-        Some(event_json) => {
+        Some(event_json) =>
           events.push(mooncode_stream_event_from_json(event_json))
-        }
         None => return Err("MoonCode stream event missing payload")
       }
     } else if record_type == "done" {
@@ -131,7 +128,9 @@ fn mooncode_stream_event_detail(event : Json) -> String {
 }
 
 ///|
-fn mooncode_stream_package_events_from_json(record : Json) -> Array[MoonCodeEvent] {
+fn mooncode_stream_package_events_from_json(
+  record : Json,
+) -> Array[MoonCodeEvent] {
   let message = mooncode_stream_json_object_field_or_empty(record, "message")
   let role = mooncode_stream_package_role(record, message)
   if role != "assistant" && role != "user" {
@@ -151,15 +150,16 @@ fn mooncode_stream_package_events_from_json(record : Json) -> Array[MoonCodeEven
   let events : Array[MoonCodeEvent] = []
   let tool_names = mooncode_stream_package_tool_name_map(blocks)
   for index, block in blocks {
-    match mooncode_stream_package_content_event(
-      block,
-      role~,
-      has_tool_use~,
-      base_id~,
-      created_at~,
-      index~,
-      tool_names~,
-    ) {
+    match
+      mooncode_stream_package_content_event(
+        block,
+        role~,
+        has_tool_use~,
+        base_id~,
+        created_at~,
+        index~,
+        tool_names~,
+      ) {
       Some(event) => events.push(event)
       None => ()
     }
@@ -205,7 +205,10 @@ fn mooncode_stream_package_role(record : Json, message : Json) -> String {
 }
 
 ///|
-fn mooncode_stream_package_content_blocks(record : Json, message : Json) -> Array[Json] {
+fn mooncode_stream_package_content_blocks(
+  record : Json,
+  message : Json,
+) -> Array[Json] {
   let direct = mooncode_stream_json_array_items(record, "content")
   if direct.length() > 0 {
     return direct
@@ -246,39 +249,49 @@ fn mooncode_stream_package_content_event(
       if text == "" || role != "assistant" {
         None
       } else {
-        Some(mooncode_stream_event(
-          id=block_id,
-          lane="transcript",
-          kind=if has_tool_use { "assistant_delta" } else { "assistant" },
-          title=if has_tool_use {
-            "Assistant streaming"
-          } else {
-            "Assistant response"
-          },
-          status=if has_tool_use { "running" } else { "done" },
-          created_at~,
-          detail=text,
-        ))
+        Some(
+          mooncode_stream_event(
+            id=block_id,
+            lane="transcript",
+            kind=if has_tool_use { "assistant_delta" } else { "assistant" },
+            title=if has_tool_use {
+              "Assistant streaming"
+            } else {
+              "Assistant response"
+            },
+            status=if has_tool_use { "running" } else { "done" },
+            created_at~,
+            detail=text,
+          ),
+        )
       }
     }
     "thinking" => {
       let thinking = mooncode_stream_first_json_string(
-        block,
-        ["thinking", "text"],
-        default="",
-      ).trim().to_owned()
+          block,
+          ["thinking", "text"],
+          default="",
+        )
+        .trim()
+        .to_owned()
       if thinking == "" {
         None
       } else {
-        Some(mooncode_stream_event(
-          id=block_id,
-          lane="runtime",
-          kind=if has_tool_use { "reasoning_delta" } else { "reasoning_message" },
-          title="Reasoning",
-          status=if has_tool_use { "running" } else { "done" },
-          created_at~,
-          detail=thinking,
-        ))
+        Some(
+          mooncode_stream_event(
+            id=block_id,
+            lane="runtime",
+            kind=if has_tool_use {
+              "reasoning_delta"
+            } else {
+              "reasoning_message"
+            },
+            title="Reasoning",
+            status=if has_tool_use { "running" } else { "done" },
+            created_at~,
+            detail=thinking,
+          ),
+        )
       }
     }
     "tool_use" | "server_tool_use" => {
@@ -292,17 +305,23 @@ fn mooncode_stream_package_content_event(
       } else {
         let input = mooncode_stream_json_object_field_or_empty(block, "input")
         let command = mooncode_stream_tool_command(input)
-        Some(mooncode_stream_event(
-          id=block_id,
-          lane=mooncode_stream_tool_lane(tool_name, command),
-          kind="tool_call",
-          title="Tool started: " + tool_name,
-          status="running",
-          created_at~,
-          detail="{\"tool\":\"" + tool_name + "\",\"arguments\":" + input.stringify() + "}",
-          path=mooncode_stream_tool_path(input),
-          command~,
-        ))
+        Some(
+          mooncode_stream_event(
+            id=block_id,
+            lane=mooncode_stream_tool_lane(tool_name, command),
+            kind="tool_call",
+            title="Tool started: " + tool_name,
+            status="running",
+            created_at~,
+            detail="{\"tool\":\"" +
+              tool_name +
+              "\",\"arguments\":" +
+              input.stringify() +
+              "}",
+            path=mooncode_stream_tool_path(input),
+            command~,
+          ),
+        )
       }
     }
     "tool_result" => {
@@ -322,27 +341,26 @@ fn mooncode_stream_package_content_event(
         ["name", "tool", "tool_name"],
         default=tool_names.get(tool_call_id).unwrap_or(""),
       )
-      Some(mooncode_stream_event(
-        id=result_id,
-        lane="tool",
-        kind="tool_result",
-        title="Tool finished",
-        status=if mooncode_stream_json_bool_value(
-          block,
-          "is_error",
-          default=false,
-        ) {
-          "failed"
-        } else {
-          "done"
-        },
-        created_at~,
-        detail~,
-        tool_result=Some({
-          "tool": tool_name,
-          "output": detail,
-        }),
-      ))
+      Some(
+        mooncode_stream_event(
+          id=result_id,
+          lane="tool",
+          kind="tool_result",
+          title="Tool finished",
+          status=if mooncode_stream_json_bool_value(
+              block,
+              "is_error",
+              default=false,
+            ) {
+            "failed"
+          } else {
+            "done"
+          },
+          created_at~,
+          detail~,
+          tool_result=Some({ "tool": tool_name, "output": detail }),
+        ),
+      )
     }
     _ => None
   }
@@ -365,7 +383,11 @@ fn mooncode_stream_event(
 ) -> MoonCodeEvent {
   {
     id,
-    command_id: if command_id == "" { None } else { Some(command_id) },
+    command_id: if command_id == "" {
+      None
+    } else {
+      Some(command_id)
+    },
     lane,
     kind,
     title,
@@ -512,7 +534,10 @@ fn mooncode_stream_first_json_string(
 }
 
 ///|
-fn mooncode_stream_json_object_field_or_empty(json : Json, key : String) -> Json {
+fn mooncode_stream_json_object_field_or_empty(
+  json : Json,
+  key : String,
+) -> Json {
   match json_field(json, key) {
     Some(value) =>
       match value {

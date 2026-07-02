@@ -23,7 +23,9 @@ struct Model {
   loading : Bool
   host_status : String
   workspace_root_path : String
+  workspace_suite_root_path : String
   workspace_library_path : String
+  workspace_books_root_path : String
   moonsuite_products : Array[MoonSuiteProduct]
   workspaces : Array[@desk.DeskWorkspace]
   selected_workspace_id : String
@@ -75,6 +77,7 @@ struct Model {
   moonclaw_progress : MoonclawProgress?
   daemon_lifecycle : DaemonLifecycleResult?
   launch_agent : LaunchAgentResult?
+  moonclaw_daemon : MoonClawDaemonStatus?
   mooncode_sessions : Array[MoonCodeSession]
   selected_mooncode_session_id : String
   mooncode_stream_session_id : String

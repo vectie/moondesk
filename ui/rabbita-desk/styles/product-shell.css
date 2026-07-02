@@ -287,6 +287,58 @@ body {
   text-transform: uppercase;
 }
 
+.desk-service-status {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.desk-service-list {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px 10px;
+}
+
+.desk-service-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 10px minmax(72px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 4px 7px;
+  border-radius: 7px;
+  color: var(--muted);
+}
+
+.desk-service-row.status-ready {
+  background: rgba(22, 131, 95, 0.07);
+}
+
+.desk-service-row.status-missing {
+  background: rgba(194, 65, 59, 0.06);
+}
+
+.desk-service-row strong,
+.desk-service-row small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-service-row strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.desk-service-row small {
+  font-size: 11px;
+}
+
 .desk-library-action {
   display: grid;
   gap: 8px;

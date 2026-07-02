@@ -63,7 +63,7 @@ fn render_workspace_card(
       span(class="status-dot live", ""),
       div([
         h3(workspace_name(model)),
-        p(class="workspace-root-muted", workspace_root(model)),
+        p(class="workspace-root-muted", workspace_visible_location_label(model)),
       ]),
     ]),
     div(
@@ -76,9 +76,14 @@ fn render_workspace_card(
         }
         button(
           class=class_name,
-          title=workspace.root_path,
+          title=workspace.name +
+            " / " +
+            workspace_display_book_location(model, workspace),
           on_click=dispatch(SelectWorkspace(workspace.id)),
-          [span(workspace.name), small(workspace_kind_label(workspace.kind))],
+          [
+            span(workspace.name),
+            small(workspace_display_book_location(model, workspace)),
+          ],
         )
       }),
     ),
@@ -131,11 +136,11 @@ fn render_wiki_bootstrap_suite_summary(model : Model) -> @rabbita.Html {
     attrs=@html.Attrs::build().data_set("testid", "bootstrap-suite-root"),
     [
       div([
-        p(class="eyebrow", "user data root"),
-        strong(workspace_library_root(model)),
+        p(class="eyebrow", "active moonsuite"),
+        strong(workspace_suite_display_name(model)),
       ]),
       small(workspace_library_count_label(model)),
-      code(workspace_moonbook_library_path(model)),
+      code(workspace_books_display_label(model)),
       render_desk_product_summary(model),
     ],
   )

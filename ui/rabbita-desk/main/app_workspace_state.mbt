@@ -46,15 +46,18 @@ fn workspace_root(model : Model) -> String {
 
 ///|
 fn workspace_library_root(model : Model) -> String {
-  let root = workspace_root(model)
-  if root == "not connected" && model.workspace_root_path != "" {
-    return model.workspace_root_path
+  if model.workspace_suite_root_path != "" {
+    return model.workspace_suite_root_path
   }
+  let root = workspace_root(model)
   @desk.moonsuite_root_for_workspace_root(root)
 }
 
 ///|
 fn workspace_moonbook_library_path(model : Model) -> String {
+  if model.workspace_books_root_path != "" {
+    return model.workspace_books_root_path
+  }
   let root = workspace_library_root(model)
   if root == "not connected" && model.workspace_library_path != "" {
     return model.workspace_library_path
@@ -89,6 +92,94 @@ fn workspace_product_count_label(model : Model) -> String {
 ///|
 fn workspace_display_products(model : Model) -> Array[MoonSuiteProduct] {
   model.moonsuite_products
+}
+
+///|
+fn workspace_suite_display_name(model : Model) -> String {
+  let root = workspace_library_root(model)
+  if root == "" || root == "not connected" {
+    "MoonSuite"
+  } else {
+    @desk.display_name(root)
+  }
+}
+
+///|
+fn workspace_books_display_label(model : Model) -> String {
+  ignore(model)
+  "books/"
+}
+
+///|
+fn workspace_visible_location_label(model : Model) -> String {
+  "MoonSuite: " + workspace_suite_display_name(model)
+}
+
+///|
+fn workspace_display_book_location(
+  model : Model,
+  workspace : @desk.DeskWorkspace,
+) -> String {
+  match workspace.kind {
+    SuiteRoot => "MoonSuite root"
+    MoonBook => {
+      let books_root = workspace_moonbook_library_path(model)
+      if books_root != "" && workspace.root_path.has_prefix(books_root + "/") {
+        "books/" + workspace.root_path[books_root.length() + 1:].to_owned()
+      } else {
+        "books/" + @desk.display_name(workspace.root_path)
+      }
+    }
+  }
+}
+
+///|
+fn workspace_service_status_items(
+  model : Model,
+) -> Array[(String, String, String)] {
+  let items : Array[(String, String, String)] = []
+  items.push(("MoonSuite", "ready", workspace_suite_display_name(model)))
+  items.push(("MoonBooks", "ready", workspace_library_count_label(model)))
+  items.push(("Products", "ready", workspace_product_count_label(model)))
+  match model.moonclaw_daemon {
+    Some(daemon) =>
+      items.push(
+        (
+          "MoonClaw",
+          if daemon.running {
+            "ready"
+          } else {
+            "missing"
+          },
+          if daemon.running {
+            "running"
+          } else {
+            "not running"
+          },
+        ),
+      )
+    None => items.push(("MoonClaw", "unknown", "checking"))
+  }
+  match model.town_progress {
+    Some(progress) =>
+      items.push(
+        (
+          "Moontown",
+          if progress.daemon_running {
+            "ready"
+          } else {
+            "missing"
+          },
+          if progress.daemon_running {
+            progress.daemon_status
+          } else {
+            "not running"
+          },
+        ),
+      )
+    None => items.push(("Moontown", "unknown", "checking"))
+  }
+  items
 }
 
 ///|
