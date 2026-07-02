@@ -1275,6 +1275,15 @@ Completed slices:
   EOF churn, `moon check`, `moon test` with `927/927` tests passing, refined
   active `moonclaw-jobs` scan with only the negative regression fixture left,
   and `git diff --check`.
+- MoonBook serve live-reload runtime state now uses the visible book-output
+  state lane `state/moonbook-livereload.token` instead of the retired hidden
+  `.moonbook-livereload` file in the generated output root. The serve/watch
+  writer creates the state directory before updating the token, and MoonWiki
+  server coverage locks the token path away from hidden `.moonbook*` names.
+  Validation for this slice: MoonBook `moon fmt`, `moon info`, `moon check`,
+  `moon test` with `199/199` tests passing, refined active `.moonbook` scan
+  with only the negative assertion and product-name strings left, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
