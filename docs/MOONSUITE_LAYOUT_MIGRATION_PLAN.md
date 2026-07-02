@@ -1093,6 +1093,12 @@ Phase 9 cutover evidence:
   explicitly set, and Phase 9 validation now rejects machine-local absolute
   paths such as macOS user-home paths, Windows user-home paths, or CI host
   paths in active MoonBit source across the 12 migrated repos.
+- Phase 9 full cutover evidence is current as of this slice:
+  `bash scripts/phase9_cutover_gates.sh full` passed the Phase 8 full wall,
+  including Moondesk native tests (`466/466`), Rabbita JS tests (`451/451`),
+  production build, API smoke, Desk browser full and empty-library smokes,
+  cross-product fresh-suite smokes, Lepusa populated and empty fresh-books
+  packaged runtime smokes, and the Phase 9 12-repo cutover validator.
 
 ## Cross-Product Migration Log
 
