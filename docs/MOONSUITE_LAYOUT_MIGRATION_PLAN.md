@@ -276,6 +276,14 @@ pattern instead of carrying independent string contracts.
   `456/456` tests passing, zero quoted `.moontown`/`.moonclaw` literals in
   Moondesk MoonBit source, zero active old-path file-operation hits, and
   `git diff --check`.
+- MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
+  Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
+  `/tmp/moonclaw-root` suite root and assert the current
+  `.moonsuite/products/moonclaw/robot-routine-runs` product-home path directly
+  instead of carrying negative `.moonclaw/robot-routine-runs` checks. Validation
+  for this slice: MoonRobo `moon fmt`, `moon info`, `moon check`, `moon test`
+  with `453/453` tests passing, direct old-home file-operation scan with zero
+  hits, and `git diff --check`.
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
