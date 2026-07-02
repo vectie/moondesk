@@ -1326,6 +1326,16 @@ Completed slices:
   slice: MoonBook `moon fmt`, `moon info`, `moon check`, `moon test` with
   `199/199` tests passing, refined active-doc `.moonbook` stale-path scan, and
   `git diff --check`.
+- MoonClaw active model/setup/routine docs now describe credentials, model
+  manifests, gateway config, provider manifests, run metadata, and job
+  workspaces under `.moonsuite/products/moonclaw/...` with visible run
+  workspaces at `.moonsuite/products/moonclaw/jobs/<run-id>`. They no longer
+  present `~/.moonclaw`, `<workspace>/.moonclaw`, `moonclaw-jobs`, or
+  `.moonclaw-tool-journal` as the fresh default for active setup and routine
+  operation. Validation for this slice: MoonClaw `moon fmt`, `moon info`,
+  `moon check`, `moon test` with `1002/1002` tests passing, focused active
+  setup/model/routine stale-path scan, cleanup of untracked test-created
+  `.moonsuite` runtime output, and `git diff --check`.
 
 Remaining high-priority product slices:
 
