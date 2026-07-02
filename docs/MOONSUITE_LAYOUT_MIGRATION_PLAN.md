@@ -174,6 +174,17 @@ pattern instead of carrying independent string contracts.
   `35/35` tests passing and `moon publish`; MoonBook `moon update`,
   `moon fmt`, `moon info`, `moon check`, and `moon test` with `198/198` tests
   passing.
+- MoonBook commit `ce5224d` removes the remaining active hidden `.moonbook`
+  write paths from wiki state, executable event persistence, extension
+  manifests, skill-hub state, and the default external MoonClaw checkout.
+  Book-owned state now lands in visible fresh-layout paths such as `state/`,
+  `events/`, and `extensions/`, while MoonBook-owned internal skill-hub and
+  external-tool state uses the MoonLib-derived
+  `.moonsuite/products/moonbook/...` product home. Validation for this slice:
+  MoonBook `moon fmt`, `moon info`, `moon check`, `moon test` with `198/198`
+  tests passing, `git diff --check`, a direct active `.moonbook` scan with zero
+  hits in MoonBook wiki/CLI source, and a broader active legacy scan leaving
+  only the intentional negative `.moonclaw/providers.json` assertion.
 - MoonFish and MoonMoon now depend on MoonLib `0.1.3` for their root
   MoonSuite product-home facades. Their public product status contracts still
   expose product id, state, service, cache, temp, and accepted book-output paths,
