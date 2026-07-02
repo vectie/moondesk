@@ -1757,6 +1757,9 @@ Remaining high-priority product slices:
   pin locally, but that checkout has no configured remote and
   `git ls-remote git@github.com:vectie/moonchat.git` reports the repository is
   unavailable, so it still needs a publish destination before it can be pushed.
+  `scripts/validate_moonlib_consumer_pins.sh` now makes this product-repo pin
+  audit repeatable from Moondesk and fails if any touched consumer drifts away
+  from the expected MoonLib version.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
