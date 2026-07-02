@@ -1379,6 +1379,15 @@ Completed slices:
   focused `docs/WIKI_MODE_TEST_PLAN.md` stale-path scan and `git diff --check`;
   broader residual scans still show intentional drift/regression fixtures in
   MoonStat, MoonClaw, MoonBook, Moontown, and Moondesk tests.
+- MoonClaw active ACP, onboarding, gateway, proposal, model-selection, channel,
+  and example-job docs now present `/path/to/MoonSuiteRoot` as the explicit
+  suite root and place product runtime files under
+  `/path/to/MoonSuiteRoot/.moonsuite/products/moonclaw/...` instead of using
+  the operator's home directory as the example root. Validation for this slice:
+  focused MoonClaw active-doc scan for `--home ~`, `~/.moonsuite`, and
+  `~/Workspace/review-scratch`; MoonClaw `moon fmt`, `moon info`,
+  `moon check`, `moon test` with `1002/1002` tests passing; cleanup of
+  test-created untracked `.moonsuite` runtime output; and `git diff --check`.
 
 Remaining high-priority product slices:
 
