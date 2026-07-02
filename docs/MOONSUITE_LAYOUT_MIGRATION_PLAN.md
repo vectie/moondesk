@@ -1106,6 +1106,11 @@ Phase 9 cutover evidence:
   bundle step copies Rabbita `dist` assets there. `scripts/lepusa_fresh_books_smoke.sh`
   now asserts the manifest no longer points sidecar launches at the source
   checkout UI directory.
+- Full-gate evidence for the bundled-UI slice: `bash
+  scripts/phase9_cutover_gates.sh full` passed after the change, including
+  populated and empty Lepusa fresh-books packaged runtime smokes whose generated
+  local-service commands used the bundled `Contents/Resources/lepusa/assets/main`
+  UI directory.
 
 ## Cross-Product Migration Log
 
