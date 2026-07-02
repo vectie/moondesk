@@ -196,6 +196,14 @@ pattern instead of carrying independent string contracts.
   `moon check`, `moon test` with `143/143` tests passing, and
   `git diff --check` (`moon info`/`moon check` still report the pre-existing
   unused warnings in generated Noetix suite-preview evidence).
+- Lepusa commit `32b21b7` upgrades the root product-home facade to the MoonLib
+  `0.1.3` contract. Lepusa now derives state, service, native runtime, update
+  metadata, temp, and aggregate product-home paths through `@moonsuite`
+  workspace-root helpers, and suite-hosted book roots resolve to the owning
+  suite's `.moonsuite/products/lepusa` and `.tmp/products/lepusa` lanes instead
+  of nested book-local state. Validation for this slice: Lepusa `moon update`,
+  `moon fmt`, `moon info`, `moon check`, `moon test` with `374/374` tests
+  passing, active empty-root constructor scan clean, and `git diff --check`.
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
@@ -468,6 +476,16 @@ Completed slices:
 - Lepusa exposes a root product-home contract for
   `.moonsuite/products/lepusa`, including native runtime and update metadata
   paths.
+- Lepusa commit `32b21b7` turns that root contract from local string
+  concatenation into a MoonLib adapter. The public API now exposes explicit
+  workspace-root variants for state, service, runtime, update metadata, temp,
+  and the aggregate `LepusaMoonSuiteProductHome`; coverage proves a
+  suite-hosted book root maps those product-owned paths to the suite root. The
+  slice also stabilizes the native auto-launch status test so unsupported host
+  platforms assert the explicit unavailable error instead of expecting a native
+  payload. Validation passed with Lepusa `moon update`, `moon fmt`,
+  `moon info`, `moon check`, `moon test` (374/374), active empty-root
+  constructor scan clean, and `git diff --check`.
 - Moontown stores default town snapshots, standing goals, watcher ledgers,
   daemon runtime files, live/autonomy projections, book-result bridges, book
   template requests, civic schedules, book-quality runtime files, and town
