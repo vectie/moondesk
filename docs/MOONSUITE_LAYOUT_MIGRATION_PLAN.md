@@ -1414,6 +1414,17 @@ Completed slices:
   location. Validation for this slice: focused MoonStat OpenClaw workspace
   stale-path scan, `moon fmt`, `moon info`, `moon check`, `moon test` with
   `775/775` tests passing, and `git diff --check`.
+- MoonStat-owned auth and gateway token stores now live under MoonStat's
+  product home. Codex OAuth credentials, Copilot credentials, and the Claude
+  Desktop gateway token derive
+  `.moonsuite/products/moonstat/auth/...` through MoonLib workspace-root
+  product-artifact constructors instead of using top-level `~/.moonsuite`
+  files; the external Codex CLI source credential at `.codex/auth.json`
+  remains an external source-of-truth reader. Validation for this slice:
+  focused MoonStat auth/token stale-path scan, no generated `.mbti` changes,
+  `moon fmt`, `moon info`, `moon check`, `moon test` with `779/779` tests
+  passing, cleanup of test-created untracked `.moonsuite` runtime output, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
