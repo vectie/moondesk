@@ -413,6 +413,21 @@ pattern instead of carrying independent string contracts.
   metadata. Validation for this slice: MoonClaw `moon fmt`, clean `moon info`,
   `moon check`, `moon test` with `1001/1001` tests passing, and
   `git diff --check`.
+- MoonClaw commit `56531ec9` removes the last active lifecycle-contract wording
+  that described executable-book status as durable book-local sidecars. The
+  daemon lifecycle report now names MoonSuite product-home session state as the
+  source for MoonClaw status, while Bookkeeper/MoonBook acceptance evidence
+  remains the requirement for `accept_result`. Validation for this slice:
+  MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test` with `1001/1001`
+  tests passing, `git diff --check`, and an active-code stale-layout scan with
+  zero MoonClaw hits.
+- Moontown commit `44b1e5f7` propagates MoonBook's fresh executable-event path
+  contract into the Moontown MoonBook adapter. The decoded
+  `moonbook.book_state.v1` fixture now expects `events/latest.json` instead of
+  the retired `.moonbook/events/latest.json` path. Validation for this slice:
+  Moontown `moon fmt`, `moon info`, `moon check`, `moon test` with `926/926`
+  tests passing, `git diff --check`, and an active-code stale-layout scan with
+  zero Moontown hits.
 - MoonRobo commit `43621e82` removes the remaining empty-root MoonSuite path
   constructors from product status and SDK E1 bridge sidecar defaults. Product
   status now reports MoonRobo and MoonClaw product homes through explicit
