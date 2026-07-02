@@ -1507,6 +1507,13 @@ Completed slices:
   MoonClaw OAuth home-global scan, `moon fmt`, `moon info`, `moon check`,
   `moon test`, cleanup of test-created untracked `.moonsuite` output, and
   `git diff --check`.
+- MoonRobo's SDK E1 sidecar default snapshot and command paths now compose the
+  MoonLib-derived product tmp directory with structured path joins instead of
+  interpolating slash-suffixed strings. This keeps the active bridge sidecar
+  defaults aligned with the shared MoonSuite tmp contract and removes the last
+  active MoonRobo `product_tmp_dir(...)/sdk-e1/...` string-concatenation path.
+  Validation for this slice: focused MoonRobo SDK E1 product-tmp scan, `moon
+  fmt`, `moon info`, `moon check`, `moon test`, and `git diff --check`.
 
 Remaining high-priority product slices:
 
