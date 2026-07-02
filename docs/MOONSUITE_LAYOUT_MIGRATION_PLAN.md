@@ -1671,6 +1671,32 @@ Completed slices:
   diff review/churn restore, `git diff --check`, and focused active-source
   scans proving Moondesk has zero `.moonsuite/products` literals while MoonRobo
   has zero `.moonsuite/products/moonrobo` literals and no MoonLib `0.1.4` pin.
+- The remaining clean product repos now consume MoonLib `0.1.5` for this
+  display-contract slice. Moontown storage and Rabbita-town display helpers
+  delegate to `product_display_dir` / `product_display_artifact`, and the
+  MoonClaw run/evidence bridge uses MoonLib display helpers for MoonClaw job
+  paths. MoonClaw MoonCode session display text, ACP help text, daemon/job
+  capability text, rules output, and skills/daemon comments now route through
+  the shared display contract or avoid hand-written product-home paths.
+  MoonStat command help derives the MoonClaw providers path through MoonLib.
+  MoonBook extension tests now assert expected MoonClaw product paths through
+  MoonLib constructors. MoonFish, MoonMoon, and Lepusa were upgraded to the
+  same dependency version so the clean suite-wide consumers are aligned on the
+  published contract. Validation for this slice: Moontown `moon fmt`,
+  `moon info`, `moon check`, full `moon test` (`928/928`), MoonClaw
+  `moon fmt`, `moon info`, `moon check`, full `moon test` (`1005/1005`),
+  MoonStat
+  `moon fmt`, `moon info`, `moon check`, full `moon test` (`779/779`),
+  MoonBook `moon fmt`, `moon info`, `moon check`, full `moon test`
+  (`200/200`), MoonFish `moon fmt`, `moon info`, `moon check`, full
+  `moon test` (`145/145`), MoonMoon `moon fmt`, `moon info`, `moon check`,
+  full `moon test` (`143/143`) with the existing two unused-value warnings,
+  Lepusa `moon fmt`, `moon info`, `moon check`, full `moon test` (`374/374`),
+  generated-interface churn review/restore, MoonClaw/MoonStat test-output
+  cleanup, `git diff --check`, a clean touched-repo stale-pin scan for
+  `vectie/moonlib@0.1.4` and older, and active-source scans proving Moontown
+  and MoonClaw have no raw `.moonsuite/products` literals outside tests and
+  generated interfaces.
 
 Remaining high-priority product slices:
 
@@ -1681,7 +1707,10 @@ Remaining high-priority product slices:
   source for runtime product paths, and its product display-path contract is the
   shared source for root-independent user-facing product artifact strings.
   Current product-repo scan has no remaining `vectie/moonlib@0.1.3` or
-  `vectie/moonlib@0.1.4` pins in the touched Moondesk/MoonRobo surfaces.
+  `vectie/moonlib@0.1.4` pins in the touched clean product repos: Moondesk,
+  MoonRobo, Moontown, MoonClaw, MoonStat, MoonBook, MoonFish, MoonMoon, and
+  Lepusa. MoonVis and MoonChat remain outside this committed slice because
+  their worktrees contain unrelated dirty or scaffold state.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
@@ -1723,7 +1752,8 @@ Remaining high-priority product slices:
   fields. PlanBook runtime operator/display strings now use the storage-owned
   product display helper for Moontown product artifacts. Native cookbook,
   civic, book-quality, PlanBook/editor template, and Rabbita-town UI display
-  strings also route through storage-owned or package-local display helpers.
+  strings also route through MoonLib-backed storage-owned or package-local
+  display helpers.
   Remaining Moontown work should focus on new writer smoke coverage and
   product-owned residuals, not local product-home display formula cleanup.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
