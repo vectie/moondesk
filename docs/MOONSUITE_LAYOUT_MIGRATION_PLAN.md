@@ -1739,7 +1739,14 @@ Remaining high-priority product slices:
   from the MoonLib workspace-root product-artifact helper, matching MoonClaw's
   current durable product-home contract. Suite status canonical paths and
   legacy-drift canonical targets now consume MoonLib `ProductHome` fields
-  directly. MoonFish's legacy `.moonfish`, MoonMoon's legacy `.moonmoon`,
+  directly. The next MoonStat cleanup slice makes drift-report suite roots
+  workspace-root aware as well: passing `books/<book-id>` now normalizes back to
+  the owning suite root before canonical paths and product artifacts are
+  reported, while the global temp root remains a plain trimmed temp root.
+  MoonFish's suite-status helper now follows the same workspace-root rule, so
+  a book-root caller resolves the owning suite `.moonsuite/suite-status.json`
+  instead of a nested book-local status file. MoonFish's legacy `.moonfish`,
+  MoonMoon's legacy `.moonmoon`,
   MoonChat's legacy `.moonchat`, and MoonVis's legacy `.moonvis` suite-root
   homes, plus stale `.moondesk`, `.moonbook`, `.moonwiki`, `.mooncode`,
   `.bookkeeper`, `.lepusa`, and `.rabbita` suite-root homes, are now reported
