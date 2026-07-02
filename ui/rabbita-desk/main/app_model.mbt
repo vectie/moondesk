@@ -24,6 +24,7 @@ struct Model {
   host_status : String
   workspace_root_path : String
   workspace_library_path : String
+  moonsuite_products : Array[MoonSuiteProduct]
   workspaces : Array[@desk.DeskWorkspace]
   selected_workspace_id : String
   new_book_name : String

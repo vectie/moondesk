@@ -10,6 +10,7 @@ fn init_model() -> Model {
     host_status: "connecting to local host",
     workspace_root_path: "",
     workspace_library_path: "",
+    moonsuite_products: [],
     workspaces: [],
     selected_workspace_id: "",
     new_book_name: "Untitled MoonBook",

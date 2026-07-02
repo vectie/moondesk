@@ -236,6 +236,49 @@ body {
   font-size: 11px;
 }
 
+.bootstrap-suite-location {
+  margin: 0;
+  padding: 10px 0 12px;
+  border: 0;
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  border-radius: 0;
+  background: transparent;
+}
+
+.desk-product-summary {
+  display: grid;
+  gap: 6px;
+}
+
+.desk-product-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.desk-product-chip {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 4px 7px;
+  border: 1px solid var(--line-soft);
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.desk-product-chip span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .desk-library-action {
   display: grid;
   gap: 8px;

@@ -177,8 +177,34 @@ fn render_desk_library_location(model : Model) -> @rabbita.Html {
       ]),
       small(workspace_library_count_label(model)),
       code(workspace_moonbook_library_path(model)),
+      render_desk_product_summary(model),
     ],
   )
+}
+
+///|
+fn render_desk_product_summary(model : Model) -> @rabbita.Html {
+  let products = workspace_core_products(model)
+  if products.length() == 0 {
+    p(class="status-line", "Product registry pending")
+  } else {
+    div(class="desk-product-summary", [
+      small(workspace_product_count_label(model)),
+      div(
+        class="desk-product-strip",
+        products.map(product => {
+          span(
+            class="desk-product-chip status-" + product.status,
+            title=product.state_path + "\n" + product.service_path,
+            [
+              span(class="status-dot live", ""),
+              span(product.name),
+            ],
+          )
+        }),
+      ),
+    ])
+  }
 }
 
 ///|

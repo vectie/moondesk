@@ -12,6 +12,7 @@ fn update_workspace_results(
           ..model,
           workspace_root_path: metadata.root_path,
           workspace_library_path: metadata.library_path,
+          moonsuite_products: metadata.products,
         },
       )
     LoadedWorkspaceMetadata(Err(error)) => (@rabbita.none, { ..model, host_status: error })

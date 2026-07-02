@@ -79,6 +79,33 @@ fn workspace_library_count_label(model : Model) -> String {
 }
 
 ///|
+fn workspace_product_count_label(model : Model) -> String {
+  let count = model.moonsuite_products.length()
+  if count == 1 {
+    "1 product installed"
+  } else {
+    "\{count} products installed"
+  }
+}
+
+///|
+fn workspace_core_products(model : Model) -> Array[MoonSuiteProduct] {
+  let visible : Array[MoonSuiteProduct] = []
+  for product in model.moonsuite_products {
+    if [
+      "moondesk", "moonbook", "moonwiki", "mooncode", "moonclaw", "moontown",
+    ].contains(product.id) {
+      visible.push(product)
+    }
+  }
+  if visible.length() > 0 {
+    visible
+  } else {
+    model.moonsuite_products
+  }
+}
+
+///|
 fn find_entry(model : Model, path : String) -> @desk.DeskFileEntry? {
   for entry in model.entries {
     if entry.path == path {

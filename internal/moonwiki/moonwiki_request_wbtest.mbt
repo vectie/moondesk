@@ -257,7 +257,7 @@ async test "fresh suite exposes rabbita moonbook projections through desk worksp
 }
 
 ///|
-test "workspace metadata exposes dedicated MoonBook library path" {
+async test "workspace metadata exposes dedicated MoonBook library path" {
   let metadata = workspace_library_metadata("/tmp/moondesk-workspace")
   assert_eq(
     json_string(metadata, "root_path", default=""),
@@ -267,6 +267,31 @@ test "workspace metadata exposes dedicated MoonBook library path" {
     json_string(metadata, "library_path", default=""),
     "/tmp/moondesk-workspace/books",
   )
+  let products = json_array_items(metadata, "products")
+  assert_true(products.length() >= 13)
+  assert_eq(json_string(products[0], "id", default=""), "moondesk")
+  assert_eq(json_string(products[0], "status", default=""), "installed")
+}
+
+///|
+async test "workspace metadata reads installed products from registry file" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-product-registry-metadata-wbtest-" + @async.now().to_string(),
+  )
+  assert_true(prepare_moonsuite_workspace_root(root))
+  let registry =
+    #|{"kind":"moonsuite-product-registry.v1","products":[{"id":"moonrobo","name":"MoonRobo","kind":"moon-suite-product","state_path":".moonsuite/products/moonrobo","service_path":".moonsuite/products/moonrobo/service.json","repo_path":"","status":"installed","capabilities":[]}]}
+  @fsx.write_to_file(
+    moonsuite_product_registry_path(root),
+    registry + "\n",
+    create=0o644,
+  )
+  let metadata = workspace_library_metadata(root)
+  let products = json_array_items(metadata, "products")
+  assert_eq(products.length(), 1)
+  assert_eq(json_string(products[0], "id", default=""), "moonrobo")
+  assert_eq(json_int(metadata, "product_count", default=0), 1)
 }
 
 ///|

@@ -95,6 +95,7 @@ fn render_wiki_bootstrap(
       p(class="eyebrow", "Moondesk"),
       h1("Start with a MoonBook"),
       p(class="lead", "Choose a book to read, create, or make executable."),
+      render_wiki_bootstrap_suite_summary(model),
       div(class="bootstrap-choice-list", [
         button(
           class="bootstrap-choice primary",
@@ -121,6 +122,23 @@ fn render_wiki_bootstrap(
       p(class="status-line", model.host_status),
     ]),
   ])
+}
+
+///|
+fn render_wiki_bootstrap_suite_summary(model : Model) -> @rabbita.Html {
+  section(
+    class="desk-library-location bootstrap-suite-location",
+    attrs=@html.Attrs::build().data_set("testid", "bootstrap-suite-root"),
+    [
+      div([
+        p(class="eyebrow", "user data root"),
+        strong(workspace_library_root(model)),
+      ]),
+      small(workspace_library_count_label(model)),
+      code(workspace_moonbook_library_path(model)),
+      render_desk_product_summary(model),
+    ],
+  )
 }
 
 ///|

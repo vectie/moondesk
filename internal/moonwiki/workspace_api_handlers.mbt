@@ -92,13 +92,36 @@ async fn moonbook_workspace_display_name(
 }
 
 ///|
-fn workspace_library_metadata(workspace_root : String) -> Json {
+async fn workspace_library_metadata(workspace_root : String) -> Json {
   let root = @pathx.normalize(workspace_root)
+  let products = workspace_product_registry_products(root)
   {
     "root_path": root,
     "library_path": moonsuite_books_root(root),
     "suite_path": moonsuite_state_dir(root),
     "product_registry_path": moonsuite_product_registry_path(root),
+    "product_count": products.length(),
+    "products": Json::array(products),
+  }
+}
+
+///|
+async fn workspace_product_registry(root : String) -> Json {
+  let path = moonsuite_product_registry_path(root)
+  if @fsx.exists(path) {
+    read_json_file_or_object(path)
+  } else {
+    moonsuite_product_registry(root)
+  }
+}
+
+///|
+async fn workspace_product_registry_products(root : String) -> Array[Json] {
+  let products = json_array_items(workspace_product_registry(root), "products")
+  if products.length() > 0 {
+    products
+  } else {
+    json_array_items(moonsuite_product_registry(root), "products")
   }
 }
 

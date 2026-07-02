@@ -29,9 +29,19 @@ struct CreatedWorkspace {
 } derive(FromJson)
 
 ///|
+struct MoonSuiteProduct {
+  id : String
+  name : String
+  status : String
+  state_path : String
+  service_path : String
+} derive(FromJson)
+
+///|
 struct WorkspaceMetadata {
   root_path : String
   library_path : String
+  products : Array[MoonSuiteProduct]
 } derive(FromJson)
 
 ///|

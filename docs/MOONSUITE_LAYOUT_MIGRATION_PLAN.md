@@ -276,6 +276,16 @@ pattern instead of carrying independent string contracts.
   `456/456` tests passing, zero quoted `.moontown`/`.moonclaw` literals in
   Moondesk MoonBit source, zero active old-path file-operation hits, and
   `git diff --check`.
+- Moondesk metadata now treats `.moonsuite/product-registry.json` as a live UI
+  source instead of only a bootstrap artifact. `/api/workspaces/metadata`
+  returns the registry products, the Desk sidebar renders a compact
+  registry-backed product summary, and the first-run/no-book screen now shows
+  the active MoonSuite root, `books/` library path, MoonBook count, and installed
+  core products before Code/Wiki interaction begins. Validation for this slice:
+  Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with `457/457`
+  tests passing, `npm run build` for the Rabbita desk bundle, `git diff --check`,
+  API verification showing `product_count: 13`, and visible app verification at
+  `http://127.0.0.1:4535/?activity=files`.
 - MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
   Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
   `/tmp/moonclaw-root` suite root and assert the current
