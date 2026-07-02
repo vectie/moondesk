@@ -1779,6 +1779,10 @@ Remaining high-priority product slices:
   MoonVis, and Lepusa fresh-suite smoke scripts from one Moondesk command,
   giving the migration a single cross-product integration check for the main
   writer surfaces and product-home contracts already cut over to product homes.
+  After the MoonLib `0.1.6` rollout, this full cross-product smoke gate passed
+  end-to-end: each product-specific fresh-suite gate reported success and the
+  Lepusa fresh-books/live bundle check completed with `Fresh MoonSuite product
+  smoke passed`.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
   Moondesk old-writer cleanup.
