@@ -1317,6 +1317,15 @@ Completed slices:
   passing, refined active-copy stale-path scan with only product helper names
   left, restored whitespace-only generated `.mbti` churn from `moon info`, and
   `git diff --check`.
+- MoonBook active README and operator docs now match the fresh visible and
+  product-home storage paths already used by implementation: `wiki state`
+  writes `state/state.json`, executable events live under `events/`, extension
+  manifests live under `extensions/`, and the skill hub advertises
+  `.moonsuite/products/moonbook/skill-hub/...` instead of retired
+  `.moonbook/...` or `.moonbook-skill-hub` locations. Validation for this
+  slice: MoonBook `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `199/199` tests passing, refined active-doc `.moonbook` stale-path scan, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
