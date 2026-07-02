@@ -22,6 +22,10 @@ is_allowed_hit() {
       # Browser smoke asserts the old projection path is not created.
       return 0
       ;;
+    moondesk:./scripts/lepusa_fresh_books_smoke.sh:*)
+      # Lepusa smoke asserts legacy product roots are not created.
+      return 0
+      ;;
     moonbook:./internal/moonwiki/server.mbt:*'assert_false(live_reload_token_file.has_prefix(".moonbook"))'*)
       # MoonBook keeps a package-local test in the implementation file.
       return 0

@@ -778,6 +778,9 @@ Scope:
 - Build or launch Lepusa with a brand-new MoonSuite root.
 - Assert the packaged app points its sidecar at the fresh root, serves the
   production Rabbita bundle, and reaches the same health/readiness endpoints.
+- Run both a populated MoonBook projection scenario and an empty selected-folder
+  scenario; the empty case must prove the packaged sidecar creates the
+  MoonSuite layout itself.
 - Verify Desk and Code modes render from the packaged runtime, not only the
   local `moon run cmd/main -- serve` path.
 
@@ -785,6 +788,9 @@ Acceptance:
 
 - Lepusa smoke fails if the sidecar uses old workspace defaults.
 - Lepusa smoke fails if the app cannot create/read `books/` or product homes.
+- Lepusa smoke fails if a blank user-selected folder does not bootstrap
+  `.moonsuite`, `.tmp`, `books/`, inbox/export roots, and default product
+  homes without legacy hidden roots.
 - The final smoke URL/app window is shown for inspection.
 
 ### Phase 8.9: Cross-Product Contract Consumers
@@ -866,6 +872,9 @@ Moondesk gate commands:
 - `bash scripts/fresh_suite_product_smoke.sh` can be run alone when validating
   product-home behavior across Moontown, MoonClaw, MoonBook, MoonRobo,
   MoonFish, MoonMoon, MoonChat, MoonVis, MoonStat, and Lepusa.
+- `bash scripts/lepusa_fresh_books_smoke.sh` can be run alone to validate the
+  Lepusa packaged runtime against both populated and empty fresh-suite roots;
+  pass `populated` or `empty` to isolate one scenario.
 
 Acceptance:
 
@@ -917,6 +926,15 @@ Phase 8 gate-hardening evidence:
   `ui/rabbita-desk/index.html`. Validation passed with `npm run build`,
   `bash scripts/desk_mode_browser_smoke.sh`, and
   `bash scripts/phase8_migration_gates.sh full`.
+- The next Phase 8 Lepusa slice splits `scripts/lepusa_fresh_books_smoke.sh`
+  into `populated` and `empty` scenarios. The populated scenario keeps proving
+  an existing `books/research-alpha` projection is packaged with the correct
+  sidecar command, while the empty scenario starts from a blank selected folder,
+  launches the bundled `moondesk-sidecar`, waits for `__moondesk_health`, and
+  asserts `books/`, `.tmp`, inbox/export roots, `.moonsuite` manifests, and
+  default product homes are created without legacy `.moontown` or `.moonclaw`
+  roots. Validation passed with `bash scripts/lepusa_fresh_books_smoke.sh empty`
+  and `bash scripts/lepusa_fresh_books_smoke.sh`.
 
 ## Phase 9: Cutover
 
