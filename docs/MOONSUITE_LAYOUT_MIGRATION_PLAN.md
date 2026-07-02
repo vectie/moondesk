@@ -938,6 +938,11 @@ Phase 8 gate-hardening evidence:
 
 ## Phase 9: Cutover
 
+Phase 9 removes migration-mode ambiguity. Fresh MoonSuite v2 is the standalone
+default, old hidden roots are drift signals only, and every remaining legacy
+path reference must be either documentation, a drift detector, or a negative
+test assertion.
+
 Cutover steps:
 
 1. Stop writing the old hidden MoonBook library.
@@ -945,6 +950,36 @@ Cutover steps:
 3. Update tests, docs, and smoke fixtures to `books/`.
 4. Make MoonSuite v2 the fresh default.
 5. Launch a fresh Lepusa/Moondesk app for visual verification.
+
+Phase 9 gates:
+
+- `bash scripts/phase9_cutover_gates.sh fast` runs the Phase 8 fast wall and
+  the Phase 9 cutover validator.
+- `bash scripts/phase9_cutover_gates.sh full` runs the Phase 8 full wall and
+  the Phase 9 cutover validator, covering API smoke, Desk browser smoke,
+  cross-product fresh-suite smoke, and Lepusa packaged runtime smoke.
+- `bash scripts/validate_phase9_cutover.sh` can be run alone to scan active
+  source in MoonLib, Moondesk, MoonRobo, Moontown, MoonClaw, MoonStat,
+  MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and Lepusa for unapproved
+  Phase 9 legacy cutover paths.
+
+Phase 9 completion criteria:
+
+- Active source no longer contains unapproved `.moontown/books`,
+  `.moontown/moondesk-daemon`, book-local `.moontown/trash`, `.moonbook`,
+  `moonclaw-jobs`, `.moonclaw-worktrees`, or `.moonclaw-tool-journal` paths.
+- Any remaining legacy strings are explicitly scoped to drift detection or
+  negative smoke assertions.
+- Phase 9 full gate passes and the fresh app is shown from a MoonSuite v2 root.
+
+Phase 9 cutover evidence:
+
+- This Phase 9 slice adds the cutover validator and gate wrapper. The validator
+  scans all 12 active source repos for unapproved old hidden MoonBook library,
+  Moondesk daemon, MoonClaw jobs, and legacy worktree paths. Validation passed
+  with `bash scripts/validate_phase9_cutover.sh`,
+  `bash scripts/phase9_cutover_gates.sh fast`, and
+  `bash scripts/phase9_cutover_gates.sh full`.
 
 ## Cross-Product Migration Log
 
