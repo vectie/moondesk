@@ -1713,7 +1713,7 @@ Remaining high-priority product slices:
 - MoonLib: expand `vectie/moonlib/moonsuite` only when a missing contract is
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies. Current published contract version is
-  `vectie/moonlib@0.1.5`; its generic `ProductHome` contract is now the shared
+  `vectie/moonlib@0.1.6`; its generic `ProductHome` contract is now the shared
   source for runtime product paths, and its product display-path contract is the
   shared source for root-independent user-facing product artifact strings.
   Current product-repo scan has no remaining `vectie/moonlib@0.1.3` or
@@ -1742,10 +1742,11 @@ Remaining high-priority product slices:
   every product against one contract report. MoonLib's default product registry
   now also includes MoonChat and MoonVis, closing the gap where those products
   had fresh product-home smoke gates and MoonStat drift reporting but were not
-  present in the shared registry list. Remaining contract-distribution work:
-  publish the registry update as the next MoonLib package version and refresh
-  product consumers so Moondesk can turn its local generated-registry tests
-  from count-based coverage into explicit MoonChat/MoonVis assertions.
+  present in the shared registry list. The registry update is published in
+  MoonLib `0.1.6`, and Moondesk now consumes that version so its fresh
+  workspace serve-prep test asserts explicit MoonChat and MoonVis registry
+  entries instead of count-only coverage. Remaining consumer-refresh work should
+  happen per sibling product batch.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
@@ -1760,7 +1761,8 @@ Remaining high-priority product slices:
   `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
   and zero active `.moonsuite/products` literals outside generated interfaces
   and tests. Moondesk serve-prep coverage now also asserts a fresh workspace
-  does not recreate stale suite-root product homes such as `.moondesk`,
+  creates the full first-party MoonLib registry, including MoonChat and MoonVis,
+  and does not recreate stale suite-root product homes such as `.moondesk`,
   `.moonbook`, `.mooncode`, `.moonchat`, `.moonvis`, `.lepusa`, or `.rabbita`.
   The new `scripts/fresh_suite_product_smoke.sh` gate runs the
   Moontown, MoonClaw, MoonBook, MoonRobo, MoonFish, MoonMoon, MoonChat,

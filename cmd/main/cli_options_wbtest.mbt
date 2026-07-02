@@ -33,10 +33,24 @@ async test "serve prepares MoonSuite workspace directories" {
   assert_true(@fs.exists(@pathx.join(root, "exports")))
   assert_true(@fs.exists(@pathx.join(root, ".tmp")))
   assert_true(@fs.exists(@pathx.join(root, ".moonsuite/suite.json")))
-  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/product-registry.json")))
-  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonrobo")))
-  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonmoon")))
-  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonfish")))
+  let registry_path = @pathx.join(root, ".moonsuite/product-registry.json")
+  assert_true(@fs.exists(registry_path))
+  let registry = @json.parse(@fs.read_file(registry_path).text())
+  let registry_products = @mooncore.json_array_items(registry, "products")
+  let registry_product_ids = registry_products.map(product => {
+    @mooncore.json_string(product, "id", default="")
+  })
+  for
+    product_id in [
+      "moondesk", "moonbook", "moonwiki", "mooncode", "moonclaw", "moontown", "moonstat",
+      "moonfish", "moonmoon", "moonchat", "moonvis", "moonrobo", "bookkeeper", "lepusa",
+      "rabbita",
+    ] {
+    assert_true(
+      @fs.exists(@pathx.join(root, ".moonsuite/products/\{product_id}")),
+    )
+    assert_true(registry_product_ids.contains(product_id))
+  }
   for
     legacy_home in [
       ".moondesk", ".moonbook", ".moonwiki", ".mooncode", ".moonclaw", ".moontown",
