@@ -1697,6 +1697,16 @@ Completed slices:
   `vectie/moonlib@0.1.4` and older, and active-source scans proving Moontown
   and MoonClaw have no raw `.moonsuite/products` literals outside tests and
   generated interfaces.
+- Moontown now has an explicit `MOONTOWN_SUITE_ROOT` fresh-suite override for
+  CLI product writers, and its default MoonBook workspace roots derive from the
+  same active suite root. This aligns command-line writer behavior with the
+  folder-selected VFS model instead of relying on the process cwd. The new
+  `scripts/fresh-suite-writers-smoke.sh` gate runs PlanBook, Wenyu course,
+  cookbook, book-quality, and live-autonomy writers against a temporary fresh
+  suite root, then asserts durable product state lands under
+  `.moonsuite/products/moontown`, generated MoonBooks land under `books/`, the
+  repo cwd is not polluted with generated books, and retired `.moontown`,
+  `.moonclaw`, and `moonclaw-jobs` paths are not recreated.
 
 Remaining high-priority product slices:
 
@@ -1754,8 +1764,12 @@ Remaining high-priority product slices:
   civic, book-quality, PlanBook/editor template, and Rabbita-town UI display
   strings also route through MoonLib-backed storage-owned or package-local
   display helpers.
-  Remaining Moontown work should focus on new writer smoke coverage and
-  product-owned residuals, not local product-home display formula cleanup.
+  Moontown CLI writers now honor `MOONTOWN_SUITE_ROOT`, default MoonBook roots
+  derive from that active suite root, and a fresh-suite writer smoke gate covers
+  representative product-owned PlanBook, course, cookbook, book-quality, and
+  live-autonomy outputs. Remaining Moontown work should focus on newly
+  discovered product-owned residuals from deeper smoke coverage, not local
+  product-home display formula cleanup.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
