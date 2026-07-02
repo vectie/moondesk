@@ -1356,6 +1356,14 @@ Completed slices:
   `1002/1002` tests passing, focused stale-path scan across the patched docs
   with zero hits, cleanup of test-created untracked `.moonsuite` runtime
   output, and `git diff --check`.
+- MoonBook keeper call-chain and system architecture docs now point observed
+  MoonClaw run metadata, event logs, step files, and output artifacts at
+  `.moonsuite/products/moonclaw/jobs/...`, and use the fresh visible
+  `extensions/` plus `state/` book contracts instead of retired `.moonclaw`,
+  `moonclaw-jobs`, or `.moonbook` paths. Validation for this slice: MoonBook
+  `moon fmt`, `moon info`, `moon check`, `moon test` with `199/199` tests
+  passing, focused MoonBook docs stale-path scan with zero hits, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
