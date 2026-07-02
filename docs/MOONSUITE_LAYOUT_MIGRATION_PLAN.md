@@ -1745,10 +1745,10 @@ Remaining high-priority product slices:
   `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
   and zero active `.moonsuite/products` literals outside generated interfaces
   and tests. The new `scripts/fresh_suite_product_smoke.sh` gate runs the
-  Moontown, MoonClaw, MoonBook, MoonRobo, MoonFish, and Lepusa fresh-suite
-  smoke scripts from one Moondesk command, giving the migration a single
-  cross-product integration check for the main writer surfaces and product-home
-  contracts already cut over to product homes.
+  Moontown, MoonClaw, MoonBook, MoonRobo, MoonFish, MoonMoon, and Lepusa
+  fresh-suite smoke scripts from one Moondesk command, giving the migration a
+  single cross-product integration check for the main writer surfaces and
+  product-home contracts already cut over to product homes.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
   Moondesk old-writer cleanup.
@@ -1840,11 +1840,11 @@ Remaining high-priority product slices:
   work is broader browser-backed smoke integration for Rabbita and future
   products rather than local string-contract extraction. MoonFish and MoonMoon
   have root product-home contracts and now consume MoonLib for those paths.
-  MoonFish also has a native CLI `layout` command plus
-  `scripts/fresh-suite-product-home-smoke.sh`, which resolves a temporary
-  `books/<book-id>` workspace root through the shared MoonLib contract and
-  asserts MoonFish state/service/cache paths land under
-  `.moonsuite/products/moonfish`, temp paths land under `.tmp/products/moonfish`,
-  accepted outputs stay under `books/<book-id>/outputs/moonfish`, and stale
-  `.moonfish` or book-local `.moonsuite/products/moonfish` paths are not
-  advertised.
+  MoonFish and MoonMoon also have native CLI `layout` commands plus
+  `scripts/fresh-suite-product-home-smoke.sh` gates, which resolve temporary
+  `books/<book-id>` workspace roots through the shared MoonLib contract and
+  assert product state/service/cache paths land under
+  `.moonsuite/products/<product>`, temp paths land under
+  `.tmp/products/<product>`, accepted outputs stay under
+  `books/<book-id>/outputs/<product>`, and stale hidden product homes or
+  book-local `.moonsuite/products/<product>` paths are not advertised.
