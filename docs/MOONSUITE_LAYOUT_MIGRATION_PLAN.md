@@ -1364,6 +1364,14 @@ Completed slices:
   `moon fmt`, `moon info`, `moon check`, `moon test` with `199/199` tests
   passing, focused MoonBook docs stale-path scan with zero hits, and
   `git diff --check`.
+- Moontown Wenyu building/status/valley docs now describe protocol ledgers,
+  watcher ledgers, daemon state, town-runtime projection, and backup scope
+  under `.moonsuite/products/moontown/...` instead of the retired
+  repo-local `.moontown` root. Validation for this slice: Moontown `moon fmt`,
+  `moon info`, `moon check`, `moon test` with `927/927` tests passing, focused
+  Moontown docs stale-path scan with only the `com.vectie.moontown` launchd
+  identifier false positive, restored whitespace-only generated `.mbti` churn
+  from `moon info`, and `git diff --check`.
 
 Remaining high-priority product slices:
 
