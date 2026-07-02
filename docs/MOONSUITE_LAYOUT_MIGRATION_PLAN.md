@@ -1405,6 +1405,15 @@ Completed slices:
   `--home ~`, `home directory`, `user's home`, and `system's home`; MoonClaw
   `moon fmt`, `moon info`, `moon check`, `moon test`; cleanup of test-created
   untracked `.moonsuite` runtime output; and `git diff --check`.
+- MoonStat OpenClaw standalone workspace state now belongs to MoonStat's
+  product home. The `/workspace/files...` and `/workspace/memory...` helpers
+  derive `.moonsuite/products/moonstat/openclaw/workspace` through MoonLib's
+  workspace-root product-artifact constructor instead of writing directly to
+  `~/.moonsuite/openclaw/workspace`; white-box coverage now asserts the
+  product-owned workspace and memory paths and rejects the old standalone
+  location. Validation for this slice: focused MoonStat OpenClaw workspace
+  stale-path scan, `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `775/775` tests passing, and `git diff --check`.
 
 Remaining high-priority product slices:
 
