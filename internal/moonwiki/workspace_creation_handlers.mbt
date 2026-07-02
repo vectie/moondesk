@@ -120,10 +120,7 @@ async fn create_blank_moonbook_workspace(
         ),
       )
   }
-  for
-    path in [
-      "", "wiki", "raw", "inbox", "book/site/generated", "reviews", ".moonsuite/products/moonclaw/jobs",
-    ] {
+  for path in ["", "wiki", "raw", "inbox", "book/site/generated", "reviews"] {
     @fsx.make_directory(
       @pathx.join(book_root, path),
       recursive=true,
@@ -136,6 +133,18 @@ async fn create_blank_moonbook_workspace(
           ),
         )
     }
+  }
+  @fsx.make_directory(
+    moonclaw_jobs_root(book_root),
+    recursive=true,
+    exists_ok=true,
+  ) catch {
+    _ =>
+      return Err(
+        workspace_create_error(
+          500, "Internal Server Error", "Could not prepare MoonClaw product ledger",
+        ),
+      )
   }
   let book_json : Json = {
     "id": book_id,

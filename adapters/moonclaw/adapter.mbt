@@ -1,6 +1,10 @@
 ///|
 pub fn known_run_roots(book_root : String) -> Array[String] {
-  [@moonsuite.product_artifact(book_root, "moonclaw", "jobs")]
+  [
+    @moonsuite.product_artifact_for_workspace_root(
+      book_root, "moonclaw", "jobs",
+    ),
+  ]
 }
 
 ///|

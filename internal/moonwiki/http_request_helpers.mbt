@@ -8,9 +8,30 @@ fn resolve_workspace_path(
     Some(path) => path
     None => return None
   }
-  let absolute = if clean == "" { root } else { @pathx.join(root, clean) }
+  let absolute = if clean == "" {
+    root
+  } else if clean == moonclaw_jobs_relative_root() {
+    moonclaw_jobs_root(root)
+  } else if clean.has_prefix(moonclaw_jobs_relative_prefix()) {
+    @pathx.join(
+      moonclaw_jobs_root(root),
+      clean[moonclaw_jobs_relative_prefix().length():].to_owned(),
+    )
+  } else if clean == ".moonsuite" ||
+    clean.has_prefix(".moonsuite/") ||
+    clean == ".tmp" ||
+    clean.has_prefix(".tmp/") {
+    return None
+  } else {
+    @pathx.join(root, clean)
+  }
   let expected_prefix = root + "/"
-  if absolute == root || absolute.has_prefix(expected_prefix) {
+  let moonclaw_root = moonclaw_jobs_root(root)
+  let moonclaw_prefix = moonclaw_root + "/"
+  if absolute == root ||
+    absolute.has_prefix(expected_prefix) ||
+    absolute == moonclaw_root ||
+    absolute.has_prefix(moonclaw_prefix) {
     Some((absolute, clean))
   } else {
     None

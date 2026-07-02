@@ -1,11 +1,18 @@
 ///|
 fn moonclaw_jobs_root(workspace_root : String) -> String {
-  @pathx.join(moonsuite_product_dir(workspace_root, "moonclaw"), "jobs")
+  moonsuite_product_artifact_for_workspace_root(
+    workspace_root, "moonclaw", "jobs",
+  )
 }
 
 ///|
 fn moonclaw_jobs_relative_root() -> String {
   ".moonsuite/products/moonclaw/jobs"
+}
+
+///|
+fn moonclaw_jobs_relative_prefix() -> String {
+  moonclaw_jobs_relative_root() + "/"
 }
 
 ///|

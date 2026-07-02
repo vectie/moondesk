@@ -45,6 +45,41 @@ test "api path helpers handle queries and traversal" {
 }
 
 ///|
+test "workspace path resolver maps MoonClaw job paths to owning suite" {
+  let suite_root = "/tmp/moondesk-resolve-suite"
+  let book_root = @pathx.join(suite_root, "books/research-resolve")
+  match
+    resolve_workspace_path(
+      book_root, ".moonsuite/products/moonclaw/jobs/run-001/result.json",
+    ) {
+    Some((absolute, clean)) => {
+      assert_eq(
+        absolute,
+        @pathx.join(
+          suite_root, ".moonsuite/products/moonclaw/jobs/run-001/result.json",
+        ),
+      )
+      assert_eq(clean, ".moonsuite/products/moonclaw/jobs/run-001/result.json")
+    }
+    None => fail("expected product-home MoonClaw run artifact path")
+  }
+  match resolve_workspace_path(book_root, ".moonsuite/products/moonclaw/jobs") {
+    Some((absolute, clean)) => {
+      assert_eq(
+        absolute,
+        @pathx.join(suite_root, ".moonsuite/products/moonclaw/jobs"),
+      )
+      assert_eq(clean, ".moonsuite/products/moonclaw/jobs")
+    }
+    None => fail("expected product-home MoonClaw jobs path")
+  }
+  assert_true(
+    resolve_workspace_path(book_root, ".moonsuite/products/moonclaw/../secret")
+    is None,
+  )
+}
+
+///|
 async test "workspace discovery ignores plain folders" {
   let root = @pathx.join(
     "/tmp",
@@ -209,6 +244,8 @@ async test "blank moonbook creation writes into dedicated books root" {
   assert_true(@fs.exists(@pathx.join(book_root, "book.json")))
   assert_true(@fs.exists(@pathx.join(book_root, "wiki/index.md")))
   assert_true(@fs.exists(@pathx.join(book_root, "raw")))
+  assert_false(@fs.exists(@pathx.join(book_root, ".moonsuite")))
+  assert_true(@fs.exists(moonclaw_jobs_root(book_root)))
   assert_false(@fs.exists(@pathx.join(root, "research-desk-created")))
   let workspaces = discover_workspaces(root)
   assert_eq(workspaces.length(), 1)
@@ -1520,9 +1557,7 @@ async test "wiki server routes cover forward and backward book runs" {
     recursive=true,
   )
   @fsx.make_directory(
-    @pathx.join(
-      book_root, ".moonsuite/products/moonclaw/jobs/run-forward-001/artifacts",
-    ),
+    @pathx.join(moonclaw_jobs_root(book_root), "run-forward-001/artifacts"),
     recursive=true,
   )
   @fsx.write_to_file(@pathx.join(ui_root, "index.html"), "<main>wiki ui</main>")
@@ -1563,23 +1598,21 @@ async test "wiki server routes cover forward and backward book runs" {
     "main { color: black; }\n",
   )
   @fsx.write_to_file(
-    @pathx.join(
-      book_root, ".moonsuite/products/moonclaw/jobs/run-forward-001/events.jsonl",
-    ),
+    @pathx.join(moonclaw_jobs_root(book_root), "run-forward-001/events.jsonl"),
     "{\"type\":\"review\",\"title\":\"Forward review\",\"message\":\"complete review ready\"}\n",
   )
   @fsx.write_to_file(
-    @pathx.join(
-      book_root, ".moonsuite/products/moonclaw/jobs/run-forward-001/result.json",
-    ),
+    @pathx.join(moonclaw_jobs_root(book_root), "run-forward-001/result.json"),
     "{\"status\":\"complete\",\"summary\":\"forward run complete\"}\n",
   )
   @fsx.write_to_file(
     @pathx.join(
-      book_root, ".moonsuite/products/moonclaw/jobs/run-forward-001/artifacts/generated-summary.md",
+      moonclaw_jobs_root(book_root),
+      "run-forward-001/artifacts/generated-summary.md",
     ),
     "# Generated Summary\n\nnew line\n",
   )
+  assert_false(@fs.exists(@pathx.join(book_root, ".moonsuite")))
   @fsx.write_to_file(@pathx.join(root, "outside.md"), "outside\n")
 
   let server = Server::new("127.0.0.1", 0, reuse_addr=true)
