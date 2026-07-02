@@ -1632,6 +1632,17 @@ Completed slices:
   MoonBit source, and a broader remaining-source scan showing the remaining
   active display literals are isolated to PlanBook/editor template text and the
   Rabbita-town JS UI package.
+- Moontown PlanBook/editor template packages and the Rabbita-town JS UI package
+  now clear the remaining active Moontown product-home display literals.
+  PlanBook/editor native template text uses the storage-owned display helper;
+  `editor_pipeline` and `planbook_policy` declare native targets after the
+  storage dependency. The JS UI package keeps a local pure-string display helper
+  because the browser target cannot depend on native storage. Validation for
+  this slice: Moontown `moon fmt`, `moon info`, `moon check`, full `moon test`
+  (`928/928`), generated-interface churn restore, `git diff --check`, and an
+  active non-test MoonBit source scan proving the only remaining
+  `.moonsuite/products/moontown` literal is the UI helper's single source of
+  truth.
 
 Remaining high-priority product slices:
 
@@ -1678,10 +1689,10 @@ Remaining high-priority product slices:
   book-quality MoonClaw homes now also derive through MoonLib `ProductHome`
   fields. PlanBook runtime operator/display strings now use the storage-owned
   product display helper for Moontown product artifacts. Native cookbook,
-  civic, and book-quality display strings also use storage-owned display
-  helpers. Remaining display-string cleanup should focus on the PlanBook/editor
-  template packages and the Rabbita-town JS UI package rather than local
-  product-home formula cleanup.
+  civic, book-quality, PlanBook/editor template, and Rabbita-town UI display
+  strings also route through storage-owned or package-local display helpers.
+  Remaining Moontown work should focus on new writer smoke coverage and
+  product-owned residuals, not local product-home display formula cleanup.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
