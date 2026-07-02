@@ -1592,6 +1592,19 @@ Completed slices:
   MoonRobo `moon fmt`, `moon info`, `moon check`, full `moon test` (`453/453`),
   focused primitive-constructor scan, generated-interface churn restore, and
   `git diff --check`.
+- Moontown runtime, storage, and book-quality residuals now consume MoonLib
+  `ProductHome` fields directly. The PlanBook MoonClaw runtime adapter,
+  Moontown temp-dir assertion, and book-quality MoonClaw home helpers no longer
+  rebuild product state/temp homes through primitive constructors or empty
+  artifact paths. The remaining Moondesk MoonWiki suite-root facade also now
+  returns `ProductHome.state_path` instead of delegating to the primitive
+  product-dir constructor. Validation for this slice: Moontown `moon fmt`,
+  `moon info`, `moon check`, full `moon test` (`928/928`), Moondesk `moon fmt`,
+  `moon info`, `moon check`, full `moon test` (`459/459`), generated-interface
+  churn restore, `git diff --check`, and a cross-product `.mbt` scan proving
+  zero remaining direct calls to `@moonsuite.product_dir`,
+  `@moonsuite.product_tmp_dir`, or `@moonsuite.product_service_path` in the
+  scanned product repos.
 
 Remaining high-priority product slices:
 
@@ -1618,7 +1631,8 @@ Remaining high-priority product slices:
   the owning suite instead of nested book-local `.moonsuite` directories. Trash
   file and receipt coverage now proves the same suite-root behavior for direct
   Desk and HTTP flows. The internal MoonWiki layout facade now consumes
-  MoonLib `ProductHome` for workspace-derived product home and service paths.
+  MoonLib `ProductHome` for suite-root and workspace-derived product home and
+  service paths.
   The current Moondesk MoonBit scan has zero quoted
   `.moontown`/`.moonclaw` literals and zero active old-path file-operation hits.
   Remaining Phase 4 work should focus on cross-product residuals and any
@@ -1633,8 +1647,10 @@ Remaining high-priority product slices:
   run polling, plus PlanBook repair/editor feature-selection MoonClaw home
   flows now use MoonLib-backed MoonClaw product homes instead of `.moonclaw`.
   The storage facade now derives Moontown product state, service, and temp
-  paths from MoonLib `ProductHome`; remaining work should avoid rebuilding
-  those formulas locally.
+  paths from MoonLib `ProductHome`; the PlanBook runtime adapter and
+  book-quality MoonClaw homes now also derive through MoonLib `ProductHome`
+  fields. Remaining work should focus on newly discovered product-owned writers
+  rather than local product-home formula cleanup.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration

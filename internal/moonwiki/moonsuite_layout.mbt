@@ -35,7 +35,7 @@ pub fn moonsuite_products_root(root : String) -> String {
 
 ///|
 pub fn moonsuite_product_dir(root : String, product_id : String) -> String {
-  @moonsuite.product_dir(root, product_id)
+  @moonsuite.product_home(root, product_id).state_path
 }
 
 ///|
