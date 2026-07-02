@@ -33,8 +33,6 @@ struct MoonSuiteProduct {
   id : String
   name : String
   status : String
-  state_path : String
-  service_path : String
 } derive(FromJson)
 
 ///|

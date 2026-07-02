@@ -114,6 +114,23 @@ fn workspace_core_products(model : Model) -> Array[MoonSuiteProduct] {
 }
 
 ///|
+fn workspace_product_status_label(product : MoonSuiteProduct) -> String {
+  match product.status {
+    "installed" => "Installed"
+    "enabled" => "Enabled"
+    "disabled" => "Disabled"
+    "missing" => "Missing"
+    "" => "Unknown"
+    other => other
+  }
+}
+
+///|
+fn workspace_product_chip_title(product : MoonSuiteProduct) -> String {
+  product.name + ": " + workspace_product_status_label(product)
+}
+
+///|
 fn find_entry(model : Model, path : String) -> @desk.DeskFileEntry? {
   for entry in model.entries {
     if entry.path == path {

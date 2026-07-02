@@ -1404,15 +1404,11 @@ test "workspace metadata result records empty library location" {
             id: "moondesk",
             name: "Moondesk",
             status: "installed",
-            state_path: ".moonsuite/products/moondesk",
-            service_path: ".moonsuite/products/moondesk/service.json",
           },
           {
             id: "moonclaw",
             name: "MoonClaw",
             status: "installed",
-            state_path: ".moonsuite/products/moonclaw",
-            service_path: ".moonsuite/products/moonclaw/service.json",
           },
         ],
       }),
@@ -1427,6 +1423,10 @@ test "workspace metadata result records empty library location" {
   assert_eq(model.moonsuite_products.length(), 2)
   assert_eq(workspace_product_count_label(model), "2 products installed")
   assert_eq(workspace_core_products(model).length(), 2)
+  assert_eq(
+    workspace_product_chip_title(model.moonsuite_products[0]),
+    "Moondesk: Installed",
+  )
 }
 
 ///|

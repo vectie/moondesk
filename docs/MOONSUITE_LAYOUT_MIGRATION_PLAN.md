@@ -294,6 +294,15 @@ pattern instead of carrying independent string contracts.
   with `457/457` tests passing, `npm run build`, `git diff --check`, and
   visible app verification at `http://127.0.0.1:4535/?activity=files` showing
   `MoonSuite: moondesk-phase4-cleanup-run`.
+- Moondesk product chips now honor the Phase 7 rule that normal UI avoids
+  hidden internal paths. The Rabbita UI model ignores registry `state_path` and
+  `service_path`, renders product status as human text such as `INSTALLED`, and
+  keeps chip titles to `Product: Status` instead of exposing
+  `.moonsuite/products/...` internals. Validation for this slice: Moondesk
+  `moon fmt`, `moon info`, `moon check`, `moon test` with `457/457` tests
+  passing, `npm run build`, `git diff --check`, and visible app verification at
+  `http://127.0.0.1:4535/?activity=files` showing no `.moonsuite/products`
+  text or chip titles.
 - MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
   Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
   `/tmp/moonclaw-root` suite root and assert the current

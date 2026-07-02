@@ -195,10 +195,11 @@ fn render_desk_product_summary(model : Model) -> @rabbita.Html {
         products.map(product => {
           span(
             class="desk-product-chip status-" + product.status,
-            title=product.state_path + "\n" + product.service_path,
+            title=workspace_product_chip_title(product),
             [
               span(class="status-dot live", ""),
               span(product.name),
+              small(workspace_product_status_label(product)),
             ],
           )
         }),

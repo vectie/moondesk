@@ -272,11 +272,19 @@ body {
   font-weight: 680;
 }
 
-.desk-product-chip span:last-child {
+.desk-product-chip span:nth-child(2),
+.desk-product-chip small {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.desk-product-chip small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .desk-library-action {
