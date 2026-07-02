@@ -344,6 +344,14 @@ pattern instead of carrying independent string contracts.
   `458/458` tests passing, `npm run build`, `git diff --check`, and visible app
   verification at `http://127.0.0.1:4535/?activity=files` showing MoonSuite UI
   with no town-root wording.
+- Moondesk MoonCode capability contracts now describe MoonClaw durable session
+  sidecars as product-home state instead of book-local state. The
+  `runtime_claim_state` and MoonClaw runtime gap contract strings point to
+  commands, receipts, events, and cold sidecar list/show endpoints in the
+  MoonClaw product home. Validation for this slice: Moondesk `moon fmt`,
+  `moon info`, `moon check`, `moon test` with `458/458` tests passing,
+  `npm run build`, `git diff --check`, and visible app verification at
+  `http://127.0.0.1:4535/?activity=code` showing no book-local sidecar wording.
 - MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
   Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
   `/tmp/moonclaw-root` suite root and assert the current
