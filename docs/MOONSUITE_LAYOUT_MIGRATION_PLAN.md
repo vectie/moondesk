@@ -438,6 +438,15 @@ pattern instead of carrying independent string contracts.
   Moontown `moon fmt`, `moon info`, `moon check`, `moon test` with `926/926`
   tests passing, `git diff --check`, and an active-code stale-layout scan with
   zero Moontown hits.
+- Moontown commit `bc3bb5ea` removes stale path fixtures that kept asserting
+  retired `.moontown`, `.moonclaw`, and `.moonclaw-worktrees` strings after the
+  product-home migration. Remaining MoonClaw adapter fixtures now name
+  `.moonsuite/products/moonclaw/...`, cookbook readiness fixtures use the
+  Moontown product home, and the source-layout audit no longer allows root
+  `.moontown` or `.moonclaw` directories. Validation for this slice: Moontown
+  `moon fmt`, `moon info`, `moon check`, `moon test` with `926/926` tests
+  passing, `git diff --check`, `scripts/audit-source-layout.sh`, and a refined
+  stale-layout scan with zero Moontown hits.
 - MoonRobo commit `43621e82` removes the remaining empty-root MoonSuite path
   constructors from product status and SDK E1 bridge sidecar defaults. Product
   status now reports MoonRobo and MoonClaw product homes through explicit
