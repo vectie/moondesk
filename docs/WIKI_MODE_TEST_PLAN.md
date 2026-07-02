@@ -374,8 +374,8 @@ Steps:
 1. Open `book/site/generated/findings.html` in Wiki preview.
 2. Navigate from generated output context back to the source Wiki finding.
 3. Open the linked raw evidence under `raw/sources`.
-4. Open the matching run artifact under `raw/analysis-runs` or
-   `moonclaw-jobs`.
+4. Open the matching run artifact under `raw/analysis-runs` or the MoonClaw
+   product-home jobs lane at `.moonsuite/products/moonclaw/jobs`.
 5. Open review diff between the accepted finding and pending finding.
 
 Assert:

@@ -1372,6 +1372,13 @@ Completed slices:
   Moontown docs stale-path scan with only the `com.vectie.moontown` launchd
   identifier false positive, restored whitespace-only generated `.mbti` churn
   from `moon info`, and `git diff --check`.
+- Moondesk Wiki-mode E2E test planning now routes backward-run MoonClaw
+  artifacts to `raw/analysis-runs` or the product-home jobs lane at
+  `.moonsuite/products/moonclaw/jobs` instead of presenting retired
+  `moonclaw-jobs` as an active inspection location. Validation for this slice:
+  focused `docs/WIKI_MODE_TEST_PLAN.md` stale-path scan and `git diff --check`;
+  broader residual scans still show intentional drift/regression fixtures in
+  MoonStat, MoonClaw, MoonBook, Moontown, and Moondesk tests.
 
 Remaining high-priority product slices:
 
