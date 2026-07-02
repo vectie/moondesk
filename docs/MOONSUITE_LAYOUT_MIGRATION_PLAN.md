@@ -1550,6 +1550,13 @@ Completed slices:
   an already-selected suite root. Validation for this slice: Moondesk `moon
   update`, `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
   facade primitive-formula scan, and `git diff --check`.
+- Moontown now consumes MoonLib `0.1.4` in its storage facade. Product state,
+  service, and temp path helpers derive from
+  `@moonsuite.product_home_for_workspace_root`, while arbitrary product
+  artifacts stay on the existing MoonLib artifact constructor. Validation for
+  this slice: Moontown `moon update`, `moon fmt`, `moon info`, `moon check`,
+  full `moon test`, focused storage primitive-formula scan,
+  generated-interface churn restore, and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -1557,7 +1564,8 @@ Remaining high-priority product slices:
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies. Current published contract version is
   `vectie/moonlib@0.1.4`; its generic `ProductHome` contract is now the shared
-  source for the MoonFish and MoonMoon product-home facades.
+  source for the MoonFish, MoonMoon, MoonRobo, Moondesk, and Moontown
+  product-home facades.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
@@ -1585,6 +1593,9 @@ Remaining high-priority product slices:
   product-home based, and the active MoonClaw command/book-quality/preseed,
   run polling, plus PlanBook repair/editor feature-selection MoonClaw home
   flows now use MoonLib-backed MoonClaw product homes instead of `.moonclaw`.
+  The storage facade now derives Moontown product state, service, and temp
+  paths from MoonLib `ProductHome`; remaining work should avoid rebuilding
+  those formulas locally.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
