@@ -1574,6 +1574,16 @@ Completed slices:
   `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
   primitive-constructor scan, generated-interface diff review,
   test-output cleanup, and `git diff --check`.
+- The remaining MoonLib `0.1.3` consumers have been cleared. MoonBook now
+  depends on MoonLib `0.1.4`; Lepusa and Rabbita both consume MoonLib `0.1.4`
+  and route their product-home facades through shared `ProductHome` fields for
+  state, service, cache where applicable, and temp paths. Validation for this
+  slice: MoonBook, Lepusa, and Rabbita `moon update`, `moon fmt`, `moon info`,
+  `moon check`; MoonBook full `moon test` (`200/200`), Lepusa full `moon test`
+  (`374/374`), Rabbita focused native/root and MoonSuite layout tests after the
+  full Rabbita suite hit the pre-existing JS DOM-doc `document is not defined`
+  environment failure; focused old-pin and primitive-constructor scans, Lepusa
+  generated-interface churn restore, and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -1582,7 +1592,8 @@ Remaining high-priority product slices:
   analytics, and UI dependencies. Current published contract version is
   `vectie/moonlib@0.1.4`; its generic `ProductHome` contract is now the shared
   source for the MoonFish, MoonMoon, MoonRobo, Moondesk, Moontown, MoonClaw,
-  and MoonStat product-home facades.
+  MoonStat, Lepusa, and Rabbita product-home facades. Current product-repo scan
+  has no remaining `vectie/moonlib@0.1.3` pins.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
@@ -1650,7 +1661,9 @@ Remaining high-priority product slices:
   skill loading now advertise and consume the same product-home session/skill
   stores.
 - Rabbita and future products: Rabbita now has an explicit root product-home
-  contract and white-box coverage. Remaining work is broader browser-backed
-  smoke integration for Rabbita and future products rather than local
-  string-contract extraction. MoonFish and MoonMoon have root product-home
+  contract and white-box coverage, and its facade consumes MoonLib `ProductHome`
+  fields instead of local product state/service/cache/temp formulas. Remaining
+  work is broader browser-backed smoke integration for Rabbita and future
+  products rather than local string-contract extraction. MoonFish and MoonMoon
+  have root product-home
   contracts and now consume MoonLib for those paths.
