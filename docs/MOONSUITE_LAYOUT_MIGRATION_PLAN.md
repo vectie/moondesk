@@ -1084,6 +1084,9 @@ Phase 9 cutover evidence:
   `bundle`, `release`, launch-agent generation/install, and Lepusa live-project
   commands now require a selected/configured workspace root, while
   `MOONDESK_WORKSPACE_ROOT` remains an explicit environment override.
+- This Phase 9 explicit-root gate slice extends the cutover validator so the
+  retired `USERPROFILE`/home-derived `moondesk-workspace` fallback and old
+  multi-input default-root helper shape cannot return in active source.
 
 ## Cross-Product Migration Log
 
