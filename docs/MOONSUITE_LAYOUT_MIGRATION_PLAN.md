@@ -1739,7 +1739,10 @@ Remaining high-priority product slices:
   Moondesk, MoonBook, MoonWiki, MoonCode, MoonStat, MoonClaw, Moontown,
   MoonRobo, MoonFish, MoonMoon, MoonChat, MoonVis, Bookkeeper, Lepusa, and
   Rabbita through MoonLib-derived paths, so downstream validators can compare
-  every product against one contract report.
+  every product against one contract report. MoonLib's default product registry
+  now also includes MoonChat and MoonVis, closing the gap where those products
+  had fresh product-home smoke gates and MoonStat drift reporting but were not
+  present in the shared registry list.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
