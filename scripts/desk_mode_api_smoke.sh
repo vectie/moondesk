@@ -3,7 +3,6 @@ set -euo pipefail
 
 ROOT="$(mktemp -d "${TMPDIR:-/tmp}/moondesk-desk-smoke.XXXXXX")"
 NORMALIZED_ROOT="$(python3 -c 'import os, sys; print(os.path.normpath(sys.argv[1]))' "${ROOT}")"
-ORIGINAL_MOON_HOME="${MOON_HOME:-${HOME:-}/.moon}"
 PORT="${PORT:-$((4300 + RANDOM % 1000))}"
 SOURCE_PORT="${SOURCE_PORT:-$((6500 + RANDOM % 1000))}"
 HOST="127.0.0.1"
@@ -29,14 +28,9 @@ UPLOAD_ARCHIVE_SOURCE="${ROOT}/external-upload-archive-source"
 UPLOAD_ARCHIVE_PATH="${ROOT}/external-upload-archive-source.zip"
 SOURCE_ROOT="${ROOT}/source-checkout"
 DEDICATED_ROOT="${ROOT}/dedicated-workspace"
-NORMALIZED_DEDICATED_ROOT="$(python3 -c 'import os, sys; print(os.path.normpath(sys.argv[1]))' "${DEDICATED_ROOT}")"
-BAD_ENV_SOURCE_ROOT="${ROOT}/source-checkout-bad-env"
-BAD_ENV_HOME="${ROOT}/bad-env-home"
-BAD_ENV_EXPECTED_ROOT="${BAD_ENV_HOME}/moondesk-workspace"
-NORMALIZED_BAD_ENV_EXPECTED_ROOT="$(python3 -c 'import os, sys; print(os.path.normpath(sys.argv[1]))' "${BAD_ENV_EXPECTED_ROOT}")"
+NORMALIZED_SOURCE_ROOT="$(python3 -c 'import os, sys; print(os.path.normpath(sys.argv[1]))' "${SOURCE_ROOT}")"
 LOG="${ROOT}/server.log"
 SOURCE_LOG="${ROOT}/source-root-server.log"
-BAD_ENV_SOURCE_LOG="${ROOT}/source-root-bad-env-server.log"
 PID=""
 SOURCE_PID=""
 
@@ -73,8 +67,7 @@ mkdir -p \
   "${ARCHIVE_SOURCE}/__MACOSX" \
   "${UPLOAD_ARCHIVE_SOURCE}/wiki" \
   "${UPLOAD_ARCHIVE_SOURCE}/raw" \
-  "${SOURCE_ROOT}" \
-  "${BAD_ENV_SOURCE_ROOT}"
+  "${SOURCE_ROOT}"
 
 printf '<main>Moondesk smoke UI</main>\n' >"${ROOT}/index.html"
 printf '{"name":"Desk Smoke"}\n' >"${BOOK_ROOT}/book.json"
@@ -121,7 +114,6 @@ printf 'mac noise\n' >"${BOOK_ROOT}/.DS_Store"
 printf 'outside secret\n' >"${ROOT}/outside.txt"
 printf 'deep final\n' >"${DEEP_ROOT}/raw/level-01/level-02/level-03/level-04/level-05/level-06/level-07/level-08/level-09/level-10/final.txt"
 printf 'name = "source/checkout"\n' >"${SOURCE_ROOT}/moon.mod"
-printf 'name = "source/checkout/bad-env"\n' >"${BAD_ENV_SOURCE_ROOT}/moon.mod"
 
 for index in $(seq -w 1 300); do
   printf 'large %s\n' "${index}" >"${LARGE_ROOT}/raw/large/item-${index}.txt"
@@ -144,83 +136,29 @@ if ! curl -fsS "${SOURCE_BASE}/__moondesk_health" >/dev/null 2>&1; then
 fi
 
 source_health="$(curl -fsS "${SOURCE_BASE}/__moondesk_health")"
-if [[ "${source_health}" != *"dedicated-workspace"* || "${source_health}" == *"${SOURCE_ROOT}"* ]]; then
-  echo "source-root launch did not report dedicated workspace root" >&2
+if [[ "${source_health}" != *"${NORMALIZED_SOURCE_ROOT}"* || "${source_health}" == *"${DEDICATED_ROOT}"* ]]; then
+  echo "source-root launch did not report selected source checkout workspace root" >&2
   echo "${source_health}" >&2
   exit 1
 fi
 source_log="$(cat "${SOURCE_LOG}")"
-if [[ "${source_log}" != *"source checkout"* || "${source_log}" != *"${NORMALIZED_DEDICATED_ROOT}"* || "${source_log}" != *"MOONDESK_WORKSPACE_ROOT"* ]]; then
-  echo "source-root launch did not print the dedicated workspace warning" >&2
+if [[ "${source_log}" == *"source checkout"* || "${source_log}" == *"Using dedicated user workspace root instead"* ]]; then
+  echo "source-root launch printed stale redirect warning" >&2
   echo "${source_log}" >&2
   exit 1
 fi
-if [[ -e "${SOURCE_ROOT}/.moonsuite" ]]; then
-  echo "source checkout root was prepared with user workspace directories" >&2
+if [[ ! -e "${SOURCE_ROOT}/.moonsuite" || ! -e "${SOURCE_ROOT}/books" ]]; then
+  echo "source checkout root was not prepared as the selected MoonSuite root" >&2
   exit 1
 fi
-source_created_book="$(curl -fsS -H 'content-type: application/json' --data '{"name":"Source Redirect Book","book_id":"source-redirect-book"}' "${SOURCE_BASE}/api/workspaces")"
-if [[ "${source_created_book}" != *'"book_id": "source-redirect-book"'* ]]; then
-  echo "source-root launch did not create redirected MoonBook" >&2
+source_created_book="$(curl -fsS -H 'content-type: application/json' --data '{"name":"Source Selected Book","book_id":"source-selected-book"}' "${SOURCE_BASE}/api/workspaces")"
+if [[ "${source_created_book}" != *'"book_id": "source-selected-book"'* ]]; then
+  echo "source-root launch did not create selected-root MoonBook" >&2
   echo "${source_created_book}" >&2
   exit 1
 fi
-if [[ ! -f "${DEDICATED_ROOT}/books/source-redirect-book/wiki/index.md" ]]; then
-  echo "source-root launch did not create MoonBook in dedicated workspace" >&2
-  exit 1
-fi
-if [[ -e "${SOURCE_ROOT}/books/source-redirect-book" ]]; then
-  echo "source-root launch wrote MoonBook into source checkout" >&2
-  exit 1
-fi
-kill "${SOURCE_PID}" 2>/dev/null || true
-wait "${SOURCE_PID}" 2>/dev/null || true
-SOURCE_PID=""
-
-HOME="${BAD_ENV_HOME}" MOON_HOME="${ORIGINAL_MOON_HOME}" MOONDESK_WORKSPACE_ROOT="${BAD_ENV_SOURCE_ROOT}" moon run cmd/main -- serve "${BAD_ENV_SOURCE_ROOT}" --ui ui/rabbita-desk/dist --host "${HOST}" --port "${SOURCE_PORT}" >"${BAD_ENV_SOURCE_LOG}" 2>&1 &
-SOURCE_PID="$!"
-
-for _ in {1..200}; do
-  if curl -fsS "${SOURCE_BASE}/__moondesk_health" >/dev/null 2>&1; then
-    break
-  fi
-  sleep 0.1
-done
-
-if ! curl -fsS "${SOURCE_BASE}/__moondesk_health" >/dev/null 2>&1; then
-  echo "bad-env source-root server did not become healthy; log follows" >&2
-  cat "${BAD_ENV_SOURCE_LOG}" >&2
-  exit 1
-fi
-
-bad_env_health="$(curl -fsS "${SOURCE_BASE}/__moondesk_health")"
-if [[ "${bad_env_health}" != *"${NORMALIZED_BAD_ENV_EXPECTED_ROOT}"* || "${bad_env_health}" == *"${BAD_ENV_SOURCE_ROOT}"* ]]; then
-  echo "bad-env source-root launch did not report home fallback workspace root" >&2
-  echo "${bad_env_health}" >&2
-  exit 1
-fi
-bad_env_log="$(cat "${BAD_ENV_SOURCE_LOG}")"
-if [[ "${bad_env_log}" != *"source checkout"* || "${bad_env_log}" != *"${NORMALIZED_BAD_ENV_EXPECTED_ROOT}"* || "${bad_env_log}" != *"outside source checkouts"* ]]; then
-  echo "bad-env source-root launch did not print the outside-checkout warning" >&2
-  echo "${bad_env_log}" >&2
-  exit 1
-fi
-if [[ -e "${BAD_ENV_SOURCE_ROOT}/.moonsuite" ]]; then
-  echo "bad-env source checkout root was prepared with user workspace directories" >&2
-  exit 1
-fi
-bad_env_created_book="$(curl -fsS -H 'content-type: application/json' --data '{"name":"Bad Env Redirect Book","book_id":"bad-env-redirect-book"}' "${SOURCE_BASE}/api/workspaces")"
-if [[ "${bad_env_created_book}" != *'"book_id": "bad-env-redirect-book"'* ]]; then
-  echo "bad-env source-root launch did not create redirected MoonBook" >&2
-  echo "${bad_env_created_book}" >&2
-  exit 1
-fi
-if [[ ! -f "${BAD_ENV_EXPECTED_ROOT}/books/bad-env-redirect-book/wiki/index.md" ]]; then
-  echo "bad-env source-root launch did not create MoonBook in home fallback workspace" >&2
-  exit 1
-fi
-if [[ -e "${BAD_ENV_SOURCE_ROOT}/books/bad-env-redirect-book" ]]; then
-  echo "bad-env source-root launch wrote MoonBook into source checkout" >&2
+if [[ ! -f "${SOURCE_ROOT}/books/source-selected-book/wiki/index.md" ]]; then
+  echo "source-root launch did not create MoonBook in selected source checkout workspace" >&2
   exit 1
 fi
 kill "${SOURCE_PID}" 2>/dev/null || true

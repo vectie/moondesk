@@ -1,5 +1,5 @@
 ///|
-async fn lepusa_integration_resolve_live_paths(
+fn lepusa_integration_resolve_live_paths(
   options : LepusaIntegrationOptions,
   repo_root : String,
 ) -> LepusaIntegrationOptions {

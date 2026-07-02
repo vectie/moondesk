@@ -980,6 +980,13 @@ Phase 9 cutover evidence:
   with `bash scripts/validate_phase9_cutover.sh`,
   `bash scripts/phase9_cutover_gates.sh fast`, and
   `bash scripts/phase9_cutover_gates.sh full`.
+- This Phase 9 root-selection slice removes the source-checkout redirect
+  compatibility layer. `serve`, bundle/release root resolution, launch-agent
+  setup, and Lepusa live-project generation now normalize and honor the
+  selected workspace root directly, even when the folder contains `moon.mod`.
+  The API smoke now proves a source-checkout-shaped selected folder is
+  bootstrapped as the MoonSuite root instead of silently switching to
+  `moondesk-workspace`.
 
 ## Cross-Product Migration Log
 

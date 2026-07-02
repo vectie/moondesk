@@ -286,7 +286,7 @@ async test "lepusa integration live project honors custom workspace and ui paths
 }
 
 ///|
-async test "lepusa integration live project redirects source checkout workspace" {
+async test "lepusa integration live project honors source checkout workspace" {
   let repo_root = @pathx.join(
     "/tmp",
     "moondesk-lepusa-source-root-wbtest-" + @async.now().to_string(),
@@ -302,11 +302,10 @@ async test "lepusa integration live project redirects source checkout workspace"
     parsed.unwrap(),
     repo_root,
   )
-  assert_true(options.workspace_root.has_suffix("/moondesk-workspace"))
-  assert_false(workspace_root_contains_path(repo_root, options.workspace_root))
+  assert_eq(options.workspace_root, repo_root)
   let manifest = lepusa_integration_live_project_json(options, repo_root).stringify()
   assert_true(manifest.contains(options.workspace_root))
-  assert_false(manifest.contains("serve\",\"" + repo_root + "\""))
+  assert_true(manifest.contains("\"serve\",\"" + repo_root + "\""))
 }
 
 ///|
