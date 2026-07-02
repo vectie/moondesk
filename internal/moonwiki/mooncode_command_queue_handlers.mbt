@@ -43,6 +43,14 @@ fn mooncode_runtime_waiting_session(
   command_packet : Json,
 ) -> Json {
   let message = mooncode_runtime_waiting_detail(detail)
+  if mooncode_session_has_command_event(session, command_packet) {
+    return append_mooncode_transcript_message(
+      session,
+      role="status",
+      content=message,
+      status="queued",
+    )
+  }
   append_mooncode_transcript_message(
     @mooncode.append_projected_command_event(
       session,
@@ -57,6 +65,23 @@ fn mooncode_runtime_waiting_session(
     content=message,
     status="queued",
   )
+}
+
+///|
+fn mooncode_session_has_command_event(
+  session : Json,
+  command_packet : Json,
+) -> Bool {
+  let command_id = json_string(command_packet, "command_id", default="")
+  if command_id == "" {
+    return false
+  }
+  for event in json_array_items(session, "mooncode_command_events") {
+    if json_string(event, "id", default="") == command_id {
+      return true
+    }
+  }
+  false
 }
 
 ///|

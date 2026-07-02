@@ -1279,11 +1279,3 @@ fn mooncode_event_finish_content_is_status(content : String) -> Bool {
   content.contains("MoonClaw native MoonCode runtime") ||
   content.contains("Native MoonCode runtime recorded this prompt")
 }
-
-///|
-fn mooncode_session_is_active(session : MoonCodeSession) -> Bool {
-  session.status == "running" ||
-  session.status == "queued" ||
-  session.status == "created" ||
-  session.queued_count > 0
-}

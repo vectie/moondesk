@@ -325,10 +325,16 @@ pattern instead of carrying independent string contracts.
   assistant reply for pending prompts or runtime progress without an assistant
   answer. Pending prompts stay visible immediately as user messages, and the
   rendered transcript shows a folded `Thinking` activity row for the queued
-  prompt until MoonClaw streams real runtime events or an assistant reply.
+  prompt until MoonClaw streams real runtime events or an assistant reply. The
+  local-unavailable MoonClaw fallback also stops appending a second prompt-shaped
+  command event with `Local agent is not reachable yet...` as its detail when
+  the original prompt command has already been recorded; that text remains
+  status metadata instead of conversation content.
   Validation for this slice: Moondesk `moon fmt`, `moon info`, `moon check`,
-  `moon test` with `457/457` tests passing, `npm run build`, and
-  `git diff --check`.
+  `moon test` with `458/458` tests passing, `npm run build`,
+  `git diff --check`, and visible app verification at
+  `http://127.0.0.1:4535/?activity=code` showing no `Working on it...` or
+  saved-local-agent message.
 - MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
   Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
   `/tmp/moonclaw-root` suite root and assert the current

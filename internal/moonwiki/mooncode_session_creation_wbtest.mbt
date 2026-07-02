@@ -48,6 +48,43 @@ test "mooncode runtime unavailable stays queued instead of failed" {
 }
 
 ///|
+test "mooncode runtime unavailable does not duplicate prompt command detail" {
+  let session : Json = {
+    "id": "mooncode-demo",
+    "workspace_id": "general",
+    "workspace_name": "General MoonCode",
+    "workspace_root": "/tmp/moondesk-general",
+    "mooncode_runtime_session_id": "mooncode-demo",
+  }
+  let packet : Json = {
+    "command_id": "cmd-1",
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.command",
+    "action": "prompt",
+  }
+  let with_command = @mooncode.append_projected_command_event(
+    session,
+    action="prompt",
+    status="queued",
+    detail="hello mooncode",
+    created_at="2026-06-15T00:00:00Z",
+    command_packet=packet,
+  )
+  let queued = mooncode_runtime_waiting_session(
+    with_command, "prompt", "MoonClaw daemon service is not configured for this workspace",
+    "", packet,
+  )
+  let events = json_array_items(queued, "mooncode_command_events")
+  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "detail", default=""), "hello mooncode")
+  let transcript = json_array_items(queued, "transcript")
+  assert_eq(transcript.length(), 1)
+  assert_true(
+    json_string(transcript[0], "content", default="").contains("saved"),
+  )
+}
+
+///|
 test "mooncode new session record starts with typed coding protocol" {
   let workspace = @desk.workspace(
     id="book-demo",

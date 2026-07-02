@@ -13,16 +13,6 @@ fn mooncode_conversation_transcript_rows(
       })
     }
   }
-  if rows.length() > 0 &&
-    (mooncode_session_is_active(session) ||
-      mooncode_session_has_pending_prompt(model, session.id)) &&
-    !mooncode_transcript_last_row_is_assistant(rows) {
-    rows.push({
-      role: "assistant",
-      content: "Working on it...",
-      status: "running",
-    })
-  }
   rows
 }
 
