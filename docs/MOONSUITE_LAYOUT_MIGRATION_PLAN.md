@@ -1250,6 +1250,13 @@ Completed slices:
   to suite-level `.moonsuite` paths rather than nested `books/<book-id>` state.
   Validation passed with MoonStat `moon fmt`, clean `moon info`, `moon check`,
   `moon test` (774/774), and `git diff --check`.
+- Moontown now removes the remaining runtime-test fixtures that explicitly
+  exercised `root/moonbooks.json` as the catalog location for cookbook and
+  book-quality bootstraps. Those tests now use
+  `@storage.moontown_product_artifact_for_workspace_root(root,
+  "moonbooks.json")`, proving the fresh suite product-home catalog contract in
+  the same flows. Validation passed with Moontown `moon fmt`, clean
+  `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
 
 Remaining high-priority product slices:
 
