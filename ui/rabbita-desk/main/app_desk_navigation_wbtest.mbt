@@ -1404,9 +1404,9 @@ test "workspace metadata result records empty library location" {
         library_path: "/Users/example/moondesk-workspace/books",
         books_root: "/Users/example/moondesk-workspace/books",
         products: [
-          { id: "moondesk", name: "Moondesk", status: "installed" },
-          { id: "moonclaw", name: "MoonClaw", status: "installed" },
-          { id: "moonrobo", name: "MoonRobo", status: "installed" },
+          { name: "Moondesk", status: "installed" },
+          { name: "MoonClaw", status: "installed" },
+          { name: "MoonRobo", status: "installed" },
         ],
       }),
     ),

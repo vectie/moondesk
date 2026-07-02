@@ -34,7 +34,6 @@ struct MoonCodeEvent {
   created_at : String
   detail : String
   path : String
-  diff : String
   command : String
   exit_code : Int
   command_packet : Json?
@@ -52,7 +51,6 @@ struct MoonCodeSession {
   model : String
   status : String
   queued_count : Int
-  updated_at : String
   transcript : Array[MoonCodeMessage]
   mooncode_events : Array[MoonCodeEvent]
   mooncode_summary : MoonCodeSummary

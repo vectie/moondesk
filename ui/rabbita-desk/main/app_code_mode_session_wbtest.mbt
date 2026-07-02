@@ -33,7 +33,6 @@ fn code_mode_test_session(
     model: "deepseek-v4-flash",
     status,
     queued_count,
-    updated_at: "2026-06-30T00:00:00Z",
     transcript: [],
     mooncode_events: [],
     mooncode_summary: code_mode_test_summary(),
@@ -50,7 +49,6 @@ fn code_mode_test_event(
   status? : String = "ok",
   detail? : String = "",
   path? : String = "",
-  diff? : String = "",
   command? : String = "",
   created_at? : String = "2026-06-30T00:00:00Z",
   exit_code? : Int = 0,
@@ -71,7 +69,6 @@ fn code_mode_test_event(
     created_at,
     detail,
     path,
-    diff,
     command,
     exit_code,
     command_packet,
@@ -3290,7 +3287,7 @@ test "code mode stream parser accepts numeric MoonClaw event timestamps" {
       assert_eq(stream.events.length(), 1)
       assert_eq(stream.events[0].id, "finish-1")
       assert_eq(stream.events[0].created_at, "1782824149398")
-      assert_eq(stream.events[0].command_id, Some("cmd-flat"))
+      assert_true(stream.events[0].command_id is Some("cmd-flat"))
       assert_eq(stream.events[0].tool_result is Some(_), true)
     }
     Err(error) => fail("expected parsed stream, got \{error}")
@@ -3319,7 +3316,7 @@ test "code mode stream parser preserves nested command packet id" {
   match parse_mooncode_stream_text(text) {
     Ok(stream) => {
       assert_eq(stream.events.length(), 1)
-      assert_eq(stream.events[0].command_id, Some("cmd-nested"))
+      assert_true(stream.events[0].command_id is Some("cmd-nested"))
       match stream.events[0].command_packet {
         Some(packet) =>
           assert_eq(

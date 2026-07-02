@@ -61,7 +61,6 @@ fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
     model: mooncode_selected_runtime_model(model, None),
     status: "queued",
     queued_count: 1,
-    updated_at: "",
     transcript: [],
     mooncode_events: [],
     mooncode_summary: {

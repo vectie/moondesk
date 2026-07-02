@@ -1,9 +1,6 @@
 ///|
 struct TownMessage {
-  id : String
-  path : String
   title : String
-  kind : String
 } derive(FromJson)
 
 ///|

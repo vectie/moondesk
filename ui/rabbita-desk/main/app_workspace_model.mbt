@@ -30,7 +30,6 @@ struct CreatedWorkspace {
 
 ///|
 struct MoonSuiteProduct {
-  id : String
   name : String
   status : String
 } derive(FromJson)
