@@ -1584,6 +1584,14 @@ Completed slices:
   full Rabbita suite hit the pre-existing JS DOM-doc `document is not defined`
   environment failure; focused old-pin and primitive-constructor scans, Lepusa
   generated-interface churn restore, and `git diff --check`.
+- MoonRobo runtime and bridge sidecar residuals now consume MoonLib
+  `ProductHome` fields directly. The RoboBook runtime product-home helper and
+  SDK E1 sidecar snapshot/command temp paths no longer rebuild
+  `product_dir`/`product_tmp_dir` formulas locally, and their tests now assert
+  through the shared `ProductHome` contract. Validation for this slice:
+  MoonRobo `moon fmt`, `moon info`, `moon check`, full `moon test` (`453/453`),
+  focused primitive-constructor scan, generated-interface churn restore, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -1635,10 +1643,11 @@ Remaining high-priority product slices:
   commands, dry-run evidence, approval records, Robo loops, Robo turns,
   prove-loop records, proof sessions, live exercises, and SDK IPC state are now
   product-home or suite-temp based; product-status product homes now derive
-  from MoonLib `ProductHome`; the runtime adapter now resolves those
-  product-home paths from either a suite root or a `books/<book-id>` workspace
-  root. Rabbita cockpit UI/parser fixtures now advertise those product-home
-  paths for the migrated artifact classes.
+  from MoonLib `ProductHome`; the runtime adapter and SDK E1 bridge sidecar now
+  resolve product state/temp paths through MoonLib `ProductHome` fields from
+  either a suite root or a `books/<book-id>` workspace root. Rabbita cockpit
+  UI/parser fixtures now advertise those product-home paths for the migrated
+  artifact classes.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
   explicit project-local override policy coverage, and any newly discovered
   readers from deeper smoke runs. New runtime writes for conversations, jobs,
