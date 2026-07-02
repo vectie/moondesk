@@ -62,6 +62,7 @@ run_gate "Moontown fresh-suite writers" "moontown" "scripts/fresh-suite-writers-
 run_gate "MoonClaw fresh-suite product home" "moonclaw" "scripts/fresh-suite-product-home-smoke.sh"
 run_gate "MoonBook fresh-suite extension" "moonbook" "scripts/fresh-suite-extension-smoke.sh"
 run_zsh_gate "MoonRobo fresh-suite product home" "moonrobo" "scripts/fresh-suite-product-home-smoke.sh"
+run_zsh_gate "MoonFish fresh-suite product home" "moonfish" "scripts/fresh-suite-product-home-smoke.sh"
 run_local_gate "Lepusa fresh-books" "scripts/lepusa_fresh_books_smoke.sh"
 
 echo "Fresh MoonSuite product smoke passed"
