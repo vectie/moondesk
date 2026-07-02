@@ -107,6 +107,27 @@ test "Moondesk product paths use owning suite for book workspaces" {
       suite_root, ".moonsuite/products/moondesk/preferences/tags.json",
     ),
   )
+  assert_eq(
+    desk_trash_files_root(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moondesk/trash/files"),
+  )
+  assert_eq(
+    desk_trash_receipts_root(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moondesk/trash/receipts"),
+  )
+  match
+    resolve_desk_trash_path(
+      book_root, ".moonsuite/products/moondesk/trash/files/trash-1/note.md",
+    ) {
+    Some(absolute) =>
+      assert_eq(
+        absolute,
+        @pathx.join(
+          suite_root, ".moonsuite/products/moondesk/trash/files/trash-1/note.md",
+        ),
+      )
+    None => fail("expected suite-level trash file path")
+  }
   assert_false(
     moondesk_daemon_dir(book_root).contains("/books/research-desk/.moonsuite/"),
   )
@@ -846,11 +867,16 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   assert_true(
     trash_path.has_prefix(".moonsuite/products/moondesk/trash/files/"),
   )
-  assert_true(@fs.exists(@pathx.join(root, trash_path)))
+  let trash_absolute = match resolve_desk_trash_path(book_root, trash_path) {
+    Some(path) => path
+    None => {
+      fail("expected suite-level trash path")
+      ""
+    }
+  }
+  assert_true(@fs.exists(trash_absolute))
   assert_false(@fs.exists(@pathx.join(book_root, "wiki/beta.md")))
-  assert_true(
-    @fs.exists(@pathx.join(root, ".moonsuite/products/moondesk/trash/receipts")),
-  )
+  assert_true(@fs.exists(desk_trash_receipts_root(book_root)))
   assert_false(@fs.exists(@pathx.join(book_root, ".moontown/trash")))
   assert_false(@fs.exists(@pathx.join(book_root, ".moonsuite")))
   let trash_entries = list_workspace_trash_entries(workspace)
@@ -876,7 +902,7 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   }
   assert_eq(json_string(restored_note_json, "path", default=""), "wiki/beta.md")
   assert_true(@fs.exists(@pathx.join(book_root, "wiki/beta.md")))
-  assert_false(@fs.exists(@pathx.join(root, trash_path)))
+  assert_false(@fs.exists(trash_absolute))
   assert_eq(list_workspace_trash_entries(workspace).length(), 0)
   match trash_workspace_entry(workspace, { "path": "wiki" }) {
     Ok(_) => fail("expected section trash rejection")
@@ -905,6 +931,7 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   assert_false(@fs.exists(@pathx.join(book_root, "wiki/batch-a.md")))
   assert_false(@fs.exists(@pathx.join(book_root, "wiki/batch-b.md")))
   assert_eq(list_workspace_trash_entries(workspace).length(), 2)
+  assert_false(@fs.exists(@pathx.join(book_root, ".moonsuite")))
   match
     create_workspace_entry(workspace, {
       "kind": "folder",
@@ -1505,7 +1532,15 @@ async test "desk server routes work end to end and reject path escapes" {
     assert_true(
       trash_path.has_prefix(".moonsuite/products/moondesk/trash/files/"),
     )
-    assert_true(@fs.exists(@pathx.join(root, trash_path)))
+    let trash_absolute = match resolve_desk_trash_path(book_root, trash_path) {
+      Some(path) => path
+      None => {
+        fail("expected suite-level trash path")
+        ""
+      }
+    }
+    assert_true(@fs.exists(trash_absolute))
+    assert_false(@fs.exists(@pathx.join(book_root, ".moonsuite")))
     assert_false(
       @fs.exists(@pathx.join(book_root, "wiki/http-archive/renamed-daily.md")),
     )
@@ -1521,7 +1556,7 @@ async test "desk server routes work end to end and reject path escapes" {
     assert_true(
       @fs.exists(@pathx.join(book_root, "wiki/http-archive/renamed-daily.md")),
     )
-    assert_false(@fs.exists(@pathx.join(root, trash_path)))
+    assert_false(@fs.exists(trash_absolute))
 
     let preview = test_http_get_json(
       base + "/api/workspaces/\{workspace_id}/preview?path=wiki%2Findex.md",
