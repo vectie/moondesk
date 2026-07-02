@@ -1605,6 +1605,18 @@ Completed slices:
   zero remaining direct calls to `@moonsuite.product_dir`,
   `@moonsuite.product_tmp_dir`, or `@moonsuite.product_service_path` in the
   scanned product repos.
+- Moontown PlanBook runtime display text now routes product-home examples
+  through a storage-owned display helper instead of hand-written
+  `.moonsuite/products/moontown/...` literals. `storage` now exposes
+  `moontown_product_display_artifact` for relative documentation/operator
+  strings, and PlanBook autonomy digest, repair-plan, UI-spine, and validation
+  next-action text use that helper. Validation for this slice: Moontown
+  `moon fmt`, `moon info`, `moon check`, full `moon test` (`928/928`),
+  generated-interface diff review for the intentional storage API addition,
+  generated-interface churn restore, `git diff --check`, and a focused
+  PlanBook/runtime storage scan proving zero remaining hard-coded
+  `.moonsuite/products/moontown` strings in non-test MoonBit source for those
+  packages.
 
 Remaining high-priority product slices:
 
@@ -1649,8 +1661,10 @@ Remaining high-priority product slices:
   The storage facade now derives Moontown product state, service, and temp
   paths from MoonLib `ProductHome`; the PlanBook runtime adapter and
   book-quality MoonClaw homes now also derive through MoonLib `ProductHome`
-  fields. Remaining work should focus on newly discovered product-owned writers
-  rather than local product-home formula cleanup.
+  fields. PlanBook runtime operator/display strings now use the storage-owned
+  product display helper for Moontown product artifacts. Remaining work should
+  focus on newly discovered product-owned writers and broader UI/cookbook
+  display strings rather than local product-home formula cleanup.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
