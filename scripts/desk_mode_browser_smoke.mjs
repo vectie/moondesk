@@ -22,9 +22,11 @@ class CdpSession {
     this.ws = ws;
     this.nextId = 1;
     this.pending = new Map();
+    this.pageProblems = [];
     ws.addEventListener("message", event => {
       const message = JSON.parse(event.data);
       if (!message.id || !this.pending.has(message.id)) {
+        this.recordPageProblem(message);
         return;
       }
       const { resolve, reject } = this.pending.get(message.id);
@@ -35,6 +37,52 @@ class CdpSession {
         resolve(message.result ?? {});
       }
     });
+  }
+
+  recordPageProblem(message) {
+    if (message.method === "Runtime.exceptionThrown") {
+      const details = message.params?.exceptionDetails ?? {};
+      this.pageProblems.push({
+        kind: "exception",
+        text: details.text || details.exception?.description || "runtime exception",
+        url: details.url || "",
+        line: details.lineNumber ?? 0,
+        column: details.columnNumber ?? 0,
+      });
+    } else if (message.method === "Runtime.consoleAPICalled") {
+      const params = message.params ?? {};
+      if (params.type === "error" || params.type === "assert") {
+        this.pageProblems.push({
+          kind: `console.${params.type}`,
+          text: (params.args ?? []).map(arg => remoteObjectText(arg)).join(" "),
+          url: params.stackTrace?.callFrames?.[0]?.url || "",
+          line: params.stackTrace?.callFrames?.[0]?.lineNumber ?? 0,
+          column: params.stackTrace?.callFrames?.[0]?.columnNumber ?? 0,
+        });
+      }
+    } else if (message.method === "Log.entryAdded") {
+      const entry = message.params?.entry ?? {};
+      if (entry.level === "error") {
+        this.pageProblems.push({
+          kind: "log.error",
+          text: entry.text || "",
+          url: entry.url || "",
+          line: entry.lineNumber ?? 0,
+          column: 0,
+        });
+      }
+    }
+  }
+
+  clearPageProblems() {
+    this.pageProblems = [];
+  }
+
+  assertNoPageProblems(label) {
+    assert(
+      this.pageProblems.length === 0,
+      `${label} browser console/runtime errors: ${JSON.stringify(this.pageProblems)}`,
+    );
   }
 
   send(method, params = {}) {
@@ -67,6 +115,19 @@ class CdpSession {
   }
 }
 
+function remoteObjectText(value) {
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+  if (value.unserializableValue != null) {
+    return String(value.unserializableValue);
+  }
+  if (value.value != null) {
+    return typeof value.value === "string" ? value.value : JSON.stringify(value.value);
+  }
+  return value.description || value.className || value.type || "";
+}
+
 async function connect(cdpPort) {
   const targets = await fetch(`http://127.0.0.1:${cdpPort}/json/list`).then(r => r.json());
   const target = targets.find(item => item.type === "page") ?? targets[0];
@@ -77,6 +138,12 @@ async function connect(cdpPort) {
     ws.addEventListener("error", reject, { once: true });
   });
   return new CdpSession(ws);
+}
+
+async function enablePageProblemCapture(session) {
+  await session.send("Runtime.enable");
+  await session.send("Log.enable");
+  session.clearPageProblems();
 }
 
 async function waitFor(session, expression, label, timeoutMs = 12000) {
@@ -632,7 +699,7 @@ async function run() {
   const screenshots = [];
   try {
     await session.send("Page.enable");
-    await session.send("Runtime.enable");
+    await enablePageProblemCapture(session);
     await setViewport(session, 1440, 900);
     await runMoonCodePromptSmoke(session);
     await session.send("Page.navigate", { url: baseUrl });
@@ -1274,6 +1341,7 @@ async function run() {
     );
     screenshots.push(await captureDeskViewport(session, "mobile", 390, 844));
     console.log(`Desk screenshots: ${screenshots.join(", ")}`);
+    session.assertNoPageProblems("Desk full smoke");
   } finally {
     session.close();
   }
@@ -1284,7 +1352,7 @@ async function runEmptyLibrary() {
   const screenshots = [];
   try {
     await session.send("Page.enable");
-    await session.send("Runtime.enable");
+    await enablePageProblemCapture(session);
     await setViewport(session, 1440, 900);
     await session.send("Page.navigate", { url: baseUrl });
     await waitFor(
@@ -1384,6 +1452,7 @@ async function runEmptyLibrary() {
     );
     screenshots.push(await captureDeskViewport(session, "empty-created", 1440, 900));
     console.log(`Desk empty-library screenshots: ${screenshots.join(", ")}`);
+    session.assertNoPageProblems("Desk empty-library smoke");
   } finally {
     session.close();
   }

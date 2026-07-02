@@ -909,6 +909,14 @@ Phase 8 gate-hardening evidence:
   Moondesk native tests (`465/465`), Rabbita JS tests (`451/451`), API smoke,
   MoonLib consumer pins, residual scans, core-boundary validation,
   cross-product fresh-suite smoke, and Lepusa fresh-books smoke.
+- The next Phase 8 browser-quality slice adds CDP console/runtime problem
+  capture to the Desk browser smoke. The smoke now fails on page runtime
+  exceptions, `console.error` / failed assertions, or Chrome log errors after
+  driving the production Rabbita bundle. This exposed a real `/favicon.ico`
+  404 in the shell, fixed by adding an inline SVG favicon declaration to
+  `ui/rabbita-desk/index.html`. Validation passed with `npm run build`,
+  `bash scripts/desk_mode_browser_smoke.sh`, and
+  `bash scripts/phase8_migration_gates.sh full`.
 
 ## Phase 9: Cutover
 
