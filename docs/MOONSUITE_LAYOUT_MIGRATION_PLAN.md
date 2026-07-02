@@ -1815,7 +1815,10 @@ Remaining high-priority product slices:
   product display helper for Moontown product artifacts. Native cookbook,
   civic, book-quality, PlanBook/editor template, and Rabbita-town UI display
   strings also route through MoonLib-backed storage-owned or package-local
-  display helpers.
+  display helpers. Civic service result routing now delegates suite-hosted
+  MoonBook detection to a storage helper backed by MoonLib workspace-root
+  normalization instead of matching raw `books/` substrings inside the civic
+  package.
   Moontown CLI writers now honor `MOONTOWN_SUITE_ROOT`, default MoonBook roots
   derive from that active suite root, and a fresh-suite writer smoke gate covers
   representative product-owned PlanBook, course, cookbook, book-quality, and
