@@ -1,24 +1,16 @@
 ///|
-test "default workspace root uses dedicated moondesk workspace" {
+test "default workspace root only uses explicit environment override" {
+  assert_eq(default_workspace_root_from_env(""), "")
   assert_eq(
-    default_workspace_root_from_env("", "/home/example", ""),
-    "/home/example/moondesk-workspace",
-  )
-  assert_eq(
-    default_workspace_root_from_env("", "", "C:/home/example"),
-    "C:/home/example/moondesk-workspace",
-  )
-  assert_eq(
-    default_workspace_root_from_env(
-      "/Volumes/Data/Moondesk", "/home/example", "",
-    ),
+    default_workspace_root_from_env("/Volumes/Data/Moondesk"),
     "/Volumes/Data/Moondesk",
   )
   assert_eq(
-    default_workspace_root_from_env("  /tmp/moondesk-library  ", "", ""),
+    default_workspace_root_from_env("  /tmp/moondesk-library  "),
     "/tmp/moondesk-library",
   )
-  assert_eq(default_workspace_root_from_env("", "", ""), "moondesk-workspace")
+  assert_true(parse_serve_args([]) is None)
+  assert_true(parse_bundle_args([]) is None)
 }
 
 ///|

@@ -52,6 +52,10 @@ async fn run_launch_agent(args : Array[String]) -> Unit {
         }
     }
   }
+  if options.workspace_root.trim() == "" {
+    print_usage()
+    return
+  }
   let repo_root = @pathx.normalize(@env.current_dir().unwrap_or("."))
   let absolute_out = absolute_path(out_path, repo_root)
   let absolute_root = resolve_user_workspace_root(
@@ -136,6 +140,10 @@ async fn run_install_launch_agent(args : Array[String]) -> Unit {
           return
         }
     }
+  }
+  if options.workspace_root.trim() == "" {
+    print_usage()
+    return
   }
   let repo_root = @pathx.normalize(@env.current_dir().unwrap_or("."))
   let absolute_root = resolve_user_workspace_root(

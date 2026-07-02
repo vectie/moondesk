@@ -3,11 +3,10 @@ fn lepusa_integration_resolve_live_paths(
   options : LepusaIntegrationOptions,
   repo_root : String,
 ) -> LepusaIntegrationOptions {
-  let workspace_root = if options.workspace_root == "" {
-    resolve_user_workspace_root(default_workspace_root(), repo_root)
-  } else {
-    resolve_user_workspace_root(options.workspace_root, repo_root)
-  }
+  let workspace_root = resolve_user_workspace_root(
+    options.workspace_root,
+    repo_root,
+  )
   let ui_dir = if options.ui_dir == "" {
     @pathx.join(repo_root, "ui/rabbita-desk/dist")
   } else {

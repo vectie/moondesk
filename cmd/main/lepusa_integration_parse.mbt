@@ -98,7 +98,12 @@ fn parse_lepusa_integration_args(
         }
     }
   }
-  Some(options)
+  if lepusa_integration_command_uses_live_project(options.command) &&
+    options.workspace_root.trim() == "" {
+    None
+  } else {
+    Some(options)
+  }
 }
 
 ///|

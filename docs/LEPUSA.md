@@ -21,13 +21,13 @@ desktop/lepusa/moondesk/dist/
 Run from the Moondesk repository:
 
 ```bash
-moon run cmd/main --target native -- bundle --skip-sign --no-archive
+moon run cmd/main --target native -- bundle /path/to/moonsuite --skip-sign --no-archive
 moon run cmd/main --target native -- lepusa smoke macos --strict
-moon run cmd/main --target native -- lepusa live-smoke macos --strict
-moon run cmd/main --target native -- lepusa live-build macos --strict
-moon run cmd/main --target native -- lepusa live-session macos --strict
-moon run cmd/main --target native -- lepusa live-launch macos --strict
-moon run cmd/main --target native -- lepusa live-bundle-check macos
+moon run cmd/main --target native -- lepusa live-smoke macos --strict --workspace-root /path/to/moonsuite
+moon run cmd/main --target native -- lepusa live-build macos --strict --workspace-root /path/to/moonsuite
+moon run cmd/main --target native -- lepusa live-session macos --strict --workspace-root /path/to/moonsuite
+moon run cmd/main --target native -- lepusa live-launch macos --strict --workspace-root /path/to/moonsuite
+moon run cmd/main --target native -- lepusa live-bundle-check macos --workspace-root /path/to/moonsuite
 moon run cmd/main --target native -- lepusa bundle-check macos
 moon run cmd/main --target native -- lepusa verify macos --strict
 moon run cmd/main --target native -- lepusa run macos
@@ -66,7 +66,7 @@ By default `bundle` uses the published Lepusa dependency fetched under
 `.mooncakes/vectie/lepusa`. Point it at a local checkout with:
 
 ```bash
-moon run cmd/main --target native -- bundle --lepusa /path/to/lepusa
+moon run cmd/main --target native -- bundle /path/to/moonsuite --lepusa /path/to/lepusa
 ```
 
 The old direct AppKit/WebKit native launcher and browser-shell bundle paths are
@@ -96,11 +96,12 @@ bundle after Lepusa writes the bundle. This proves Lepusa can carry Moondesk as 
 supervised localhost sidecar without requiring `moon run` at app launch time. Use
 `live-smoke` for a repeatable non-window test, `live-build` to write the
 standalone bundle, `live-session` to inspect the generated launch session, and
-`live-launch` to open the generated native-hosted Moondesk app. Override the
-development sidecar port with:
+`live-launch` to open the generated native-hosted Moondesk app. These live
+commands require `--workspace-root`; Moondesk does not infer a home-derived
+workspace for live sidecars. Override the development sidecar port with:
 
 ```bash
-moon run cmd/main --target native -- lepusa live-build macos --serve-port 4512
+moon run cmd/main --target native -- lepusa live-build macos --workspace-root /path/to/moonsuite --serve-port 4512
 ```
 
 The generated live manifest uses `/__moondesk_health` as the sidecar readiness
@@ -125,7 +126,7 @@ moon run cmd/main --target native -- lepusa verify macos --lepusa /path/to/lepus
 `_build/lepusa/moondesk`, which stays out of source control. Override it with:
 
 ```bash
-moon run cmd/main --target native -- lepusa live-build macos --out /tmp/moondesk-lepusa
+moon run cmd/main --target native -- lepusa live-build macos --workspace-root /path/to/moonsuite --out /tmp/moondesk-lepusa
 ```
 
 `asset` resolves the packaged integration entrypoint by default:

@@ -239,7 +239,8 @@ test "lepusa integration smoke runs verify bundle and runtime checks" {
 ///|
 async test "lepusa integration live project uses localhost sidecar service" {
   let parsed = parse_lepusa_integration_args([
-    "live-smoke", "macos", "--strict", "--serve-port", "4512",
+    "live-smoke", "macos", "--strict", "--workspace-root", "/tmp/moondesk-suite",
+    "--serve-port", "4512",
   ])
   assert_true(parsed is Some(_))
   let options = parsed.unwrap()
@@ -258,12 +259,29 @@ async test "lepusa integration live project uses localhost sidecar service" {
     ),
   )
   assert_false(manifest.contains("\"-C\""))
-  assert_true(manifest.contains(default_workspace_root()))
+  assert_true(manifest.contains("\"/tmp/moondesk-suite\""))
   assert_false(manifest.contains("\"/repo/moondesk\",\"--ui\""))
   assert_true(manifest.contains("\"serve\""))
   assert_true(manifest.contains("\"/repo/moondesk/ui/rabbita-desk/dist\""))
   assert_true(manifest.contains("\"localhost\""))
   assert_true(manifest.contains("\"serviceDiscovery\""))
+}
+
+///|
+test "lepusa integration live project requires selected workspace root" {
+  assert_true(
+    parse_lepusa_integration_args([
+      "live-smoke", "macos", "--serve-port", "4512",
+    ])
+    is None,
+  )
+  assert_true(
+    parse_lepusa_integration_args([
+      "live-build", "macos", "--serve-port", "4512",
+    ])
+    is None,
+  )
+  assert_true(parse_lepusa_integration_args(["live-session", "macos"]) is None)
 }
 
 ///|
@@ -311,7 +329,8 @@ async test "lepusa integration live project honors source checkout workspace" {
 ///|
 test "lepusa integration live smoke runs generated manifest checks" {
   let parsed = parse_lepusa_integration_args([
-    "live-smoke", "linux", "--serve-port", "4513",
+    "live-smoke", "linux", "--workspace-root", "/tmp/moondesk-suite", "--serve-port",
+    "4513",
   ])
   assert_true(parsed is Some(_))
   let options = parsed.unwrap()
@@ -339,7 +358,8 @@ test "lepusa integration live smoke runs generated manifest checks" {
 ///|
 test "lepusa integration live build writes generated localhost bundle" {
   let parsed = parse_lepusa_integration_args([
-    "live-build", "macos", "--serve-port", "4514", "--out", "/tmp/out",
+    "live-build", "macos", "--workspace-root", "/tmp/moondesk-suite", "--serve-port",
+    "4514", "--out", "/tmp/out",
   ])
   assert_true(parsed is Some(_))
   let options = parsed.unwrap()
@@ -365,7 +385,8 @@ test "lepusa integration live build writes generated localhost bundle" {
 ///|
 test "lepusa integration live session and launch use generated runtime manifest" {
   let session = parse_lepusa_integration_args([
-    "live-session", "linux", "--out", "/tmp/out",
+    "live-session", "linux", "--workspace-root", "/tmp/moondesk-suite", "--out",
+    "/tmp/out",
   ]).unwrap()
   let session_steps = lepusa_integration_live_runtime_steps(
     session, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk-lepusa/lepusa/runtime.json",
@@ -377,7 +398,7 @@ test "lepusa integration live session and launch use generated runtime manifest"
     "/tmp/out/moondesk-lepusa/lepusa/runtime.json",
   ])
   let launch = parse_lepusa_integration_args([
-    "live-launch", "macos", "--out", "/tmp/out",
+    "live-launch", "macos", "--workspace-root", "/tmp/moondesk-suite", "--out", "/tmp/out",
   ]).unwrap()
   let launch_steps = lepusa_integration_live_runtime_steps(
     launch, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",

@@ -1053,6 +1053,9 @@ Phase 9 completion criteria:
   `moonclaw-jobs`, `.moonclaw-worktrees`, or `.moonclaw-tool-journal` paths.
 - Active source no longer contains source-checkout redirect compatibility
   helpers or warning copy such as the old dedicated-workspace fallback.
+- Moondesk command surfaces that create or package live app roots require an
+  explicit root argument or `MOONDESK_WORKSPACE_ROOT`; they do not infer
+  `$HOME/moondesk-workspace` or `USERPROFILE/moondesk-workspace`.
 - Any remaining legacy strings are explicitly scoped to drift detection or
   negative smoke assertions.
 - Phase 9 full gate passes and the fresh app is shown from a MoonSuite v2 root.
@@ -1076,6 +1079,11 @@ Phase 9 cutover evidence:
   retired source-checkout redirection helpers and warnings, including the old
   dedicated-user-workspace fallback copy. The only allowed Moondesk script
   reference is the API smoke assertion proving that the warning is absent.
+- This Phase 9 explicit-root slice removes the Moondesk CLI fallback from
+  `$HOME` or `USERPROFILE` to `moondesk-workspace`. `serve`, `desktop`,
+  `bundle`, `release`, launch-agent generation/install, and Lepusa live-project
+  commands now require a selected/configured workspace root, while
+  `MOONDESK_WORKSPACE_ROOT` remains an explicit environment override.
 
 ## Cross-Product Migration Log
 

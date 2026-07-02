@@ -43,10 +43,11 @@ test "bundle path leaf extracts app bundle name" {
 ///|
 test "bundle parser accepts custom lepusa checkout" {
   let parsed = parse_bundle_args([
-    "--lepusa", "/tmp/lepusa", "--out", "/tmp/out", "--port", "4520",
+    "/tmp/suite", "--lepusa", "/tmp/lepusa", "--out", "/tmp/out", "--port", "4520",
   ])
   assert_true(parsed is Some(_))
   let options = parsed.unwrap()
+  assert_eq(options.workspace_root, "/tmp/suite")
   assert_eq(options.lepusa_root, "/tmp/lepusa")
   assert_eq(options.out_dir, "/tmp/out")
   assert_eq(options.port, 4520)

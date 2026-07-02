@@ -37,30 +37,16 @@ fn default_serve_options() -> ServeOptions {
 fn default_workspace_root() -> String {
   default_workspace_root_from_env(
     @sys.get_env_var("MOONDESK_WORKSPACE_ROOT").unwrap_or(""),
-    @sys.get_env_var("HOME").unwrap_or(""),
-    @sys.get_env_var("USERPROFILE").unwrap_or(""),
   )
 }
 
 ///|
-fn default_workspace_root_from_env(
-  override_root : String,
-  home : String,
-  user_profile : String,
-) -> String {
+fn default_workspace_root_from_env(override_root : String) -> String {
   let override_root = override_root.trim().to_owned()
   if override_root != "" {
     return @pathx.normalize(override_root)
   }
-  let home = home.trim().to_owned()
-  if home != "" {
-    return @pathx.join(home, "moondesk-workspace")
-  }
-  let user_profile = user_profile.trim().to_owned()
-  if user_profile != "" {
-    return @pathx.join(user_profile, "moondesk-workspace")
-  }
-  "moondesk-workspace"
+  ""
 }
 
 ///|
@@ -137,7 +123,11 @@ fn parse_serve_args(args : Array[String]) -> ServeOptions? {
         }
     }
   }
-  Some(options)
+  if options.workspace_root.trim() == "" {
+    None
+  } else {
+    Some(options)
+  }
 }
 
 ///|
@@ -231,7 +221,11 @@ fn parse_bundle_args(args : Array[String]) -> BundleOptions? {
         }
     }
   }
-  Some(options)
+  if options.workspace_root.trim() == "" {
+    None
+  } else {
+    Some(options)
+  }
 }
 
 ///|
