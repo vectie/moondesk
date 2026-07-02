@@ -1300,6 +1300,14 @@ Completed slices:
   MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test` with `1002/1002`
   tests passing, refined job README stale-path scan, cleanup of untracked
   test-created `.moonsuite` runtime output, and `git diff --check`.
+- MoonClaw operator-facing setup docs now use the fresh MoonSuite product home
+  for gateway examples, example workspaces, UI serving notes, and expected
+  behavior contracts. Active guides no longer instruct users to start under
+  `~/.moonclaw`, inspect `<workspace>/moonclaw-jobs/<run-id>`, or treat
+  `.moonclaw` hidden run metadata as the fresh default. Validation for this
+  slice: MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `1002/1002` tests passing, refined operator-doc stale-path scan, cleanup of
+  untracked test-created `.moonsuite` runtime output, and `git diff --check`.
 
 Remaining high-priority product slices:
 
