@@ -74,12 +74,15 @@ run_lepusa_smoke() {
   fi
 
   probe_bundled_sidecar "${label}" "${sidecar}" "${suite_root}" "$(random_port)"
-  node - "${live_project}" "${manifest}" "${suite_root}" "${sidecar}" "${port}" <<'NODE'
+  node - "${live_project}" "${manifest}" "${suite_root}" "${sidecar}" "${port}" "${UI_DIST}" <<'NODE'
 const fs = require('node:fs')
 const path = require('node:path')
-const [liveProjectPath, manifestPath, root, sidecar, port] = process.argv.slice(2)
+const [liveProjectPath, manifestPath, root, sidecar, port, uiDist] = process.argv.slice(2)
 const expectedRoot = path.resolve(root)
 const expectedSidecar = path.resolve(sidecar)
+const sourceUi = path.resolve(uiDist)
+const appRoot = path.dirname(path.dirname(path.dirname(expectedSidecar)))
+const expectedBundledUi = path.join(appRoot, 'Contents', 'Resources', 'lepusa', 'assets', 'main')
 
 function fail(message) {
   console.error(message)
@@ -96,6 +99,9 @@ const liveCommand = normalizeCommand(liveProject?.window?.source?.localhost?.com
 if (!liveCommand.includes(expectedSidecar) || !liveCommand.includes('serve') || !liveCommand.includes(expectedRoot)) {
   fail(`live project does not launch bundled sidecar against fresh root: ${JSON.stringify(liveCommand)}`)
 }
+if (!liveCommand.includes(expectedBundledUi) || liveCommand.includes(sourceUi)) {
+  fail(`live project does not launch sidecar with bundled UI: ${JSON.stringify(liveCommand)}`)
+}
 
 const services = manifest?.runtime?.localServices ?? []
 const service = services.find(item => item.name === 'main')
@@ -105,6 +111,12 @@ if (!service) {
 const serviceCommand = normalizeCommand(service.command ?? [])
 if (!serviceCommand.includes(expectedSidecar) || !serviceCommand.includes('serve') || !serviceCommand.includes(expectedRoot)) {
   fail(`runtime service does not launch bundled sidecar against fresh root: ${JSON.stringify(serviceCommand)}`)
+}
+if (!serviceCommand.includes(expectedBundledUi) || serviceCommand.includes(sourceUi)) {
+  fail(`runtime service does not launch sidecar with bundled UI: ${JSON.stringify(serviceCommand)}`)
+}
+if (!fs.existsSync(path.join(expectedBundledUi, 'index.html'))) {
+  fail(`bundled UI entrypoint missing: ${path.join(expectedBundledUi, 'index.html')}`)
 }
 const expectedReadiness = `http://127.0.0.1:${port}/__moondesk_health`
 if (service.readinessUrl !== expectedReadiness) {

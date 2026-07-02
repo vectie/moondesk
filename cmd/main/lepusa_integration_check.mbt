@@ -43,6 +43,11 @@ async fn lepusa_integration_live_bundle_problems(
     problems,
   )
   lepusa_integration_require_file(paths.manifest, "runtime manifest", problems)
+  lepusa_integration_require_file(
+    paths.entrypoint,
+    "bundled Rabbita entrypoint",
+    problems,
+  )
   if @pathx.normalize(manifest_path) != @pathx.normalize(paths.manifest) {
     problems.push(
       "manifest path mismatch: expected \{paths.manifest}, got \{manifest_path}",
@@ -66,6 +71,18 @@ async fn lepusa_integration_live_bundle_problems(
       problems.push(
         "runtime manifest does not include bundled Moondesk sidecar serve command",
       )
+    }
+    let bundled_ui_dir = lepusa_integration_bundled_ui_dir(
+      options.target,
+      out_dir,
+    )
+    if !manifest.contains(bundled_ui_dir) {
+      problems.push("runtime manifest does not point sidecar at bundled UI")
+    }
+    if options.ui_dir != "" &&
+      options.ui_dir != bundled_ui_dir &&
+      manifest.contains(options.ui_dir) {
+      problems.push("runtime manifest still points sidecar at source UI dir")
     }
   }
   let launcher = @fs.read_file(paths.launcher).text() catch { _ => "" }

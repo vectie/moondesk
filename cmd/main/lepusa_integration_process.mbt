@@ -85,6 +85,109 @@ async fn copy_moondesk_sidecar(
 }
 
 ///|
+async fn copy_moondesk_ui_bundle(
+  ui_dir : String,
+  target : String,
+  out_dir : String,
+) -> Bool {
+  let destination = lepusa_integration_bundled_ui_dir(target, out_dir)
+  if !path_is_directory(ui_dir) {
+    println("lepusa failed: UI dist is not a directory: \{ui_dir}")
+    return false
+  }
+  if @fs.exists(destination) {
+    @fs.rmdir(destination, recursive=true) catch {
+      error => {
+        println("lepusa failed: could not replace bundled UI dir: \{error}")
+        return false
+      }
+    }
+  }
+  if copy_directory_tree(ui_dir, destination) {
+    true
+  } else {
+    println("lepusa failed: could not copy UI dist to bundled resources")
+    false
+  }
+}
+
+///|
+async fn copy_directory_tree(source : String, destination : String) -> Bool {
+  @fsx.make_directory(destination, recursive=true, exists_ok=true) catch {
+    _ => return false
+  }
+  for name in directory_names(source, include_hidden=true) {
+    let child_source = @pathx.join(source, name)
+    let child_destination = @pathx.join(destination, name)
+    if path_is_directory(child_source) {
+      if !copy_directory_tree(child_source, child_destination) {
+        return false
+      }
+    } else if !copy_file_bytes(child_source, child_destination) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+async fn copy_file_bytes(source : String, destination : String) -> Bool {
+  let data = @fs.read_file(source) catch { _ => return false }
+  @fsx.make_directory(
+    @pathx.dirname(destination).to_owned(),
+    recursive=true,
+    exists_ok=true,
+  ) catch {
+    _ => return false
+  }
+  @fs.write_file(
+    destination,
+    data,
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  ) catch {
+    _ => return false
+  }
+  true
+}
+
+///|
+async fn directory_names(
+  path : String,
+  include_hidden~ : Bool,
+) -> Array[String] {
+  let dir = @fs.opendir(path) catch { _ => return [] }
+  defer dir.close()
+  let names = dir.read_all(include_hidden~) catch { _ => return [] }
+  names.sort()
+  names
+}
+
+///|
+async fn path_is_directory(path : String) -> Bool {
+  let kind = @fs.kind(path) catch { _ => return false }
+  kind is Directory
+}
+
+///|
+fn lepusa_integration_bundled_ui_dir(
+  target : String,
+  out_dir : String,
+) -> String {
+  @pathx.dirname(lepusa_integration_bundle_paths(target, out_dir).entrypoint).to_owned()
+}
+
+///|
+async fn copy_moondesk_live_bundle_files(
+  repo_root : String,
+  options : LepusaIntegrationOptions,
+  out_dir : String,
+) -> Bool {
+  copy_moondesk_sidecar(repo_root, options.target, out_dir) &&
+  copy_moondesk_ui_bundle(options.ui_dir, options.target, out_dir)
+}
+
+///|
 fn moondesk_sidecar_build_output(repo_root : String) -> String {
   @pathx.join(repo_root, "_build/native/debug/build/cmd/main/main.exe")
 }
@@ -148,7 +251,7 @@ async fn run_lepusa_integration_live_smoke(
       return
     }
     if step.name == "bundle-write" &&
-      !copy_moondesk_sidecar(repo_root, options.target, out_dir) {
+      !copy_moondesk_live_bundle_files(repo_root, options, out_dir) {
       return
     }
   }
@@ -177,7 +280,7 @@ async fn run_lepusa_integration_live_build(
       return
     }
     if step.name == "bundle-write" &&
-      !copy_moondesk_sidecar(repo_root, options.target, out_dir) {
+      !copy_moondesk_live_bundle_files(repo_root, options, out_dir) {
       return
     }
   }
@@ -208,7 +311,7 @@ async fn run_lepusa_integration_live_runtime(
       return
     }
     if step.name == "bundle-write" &&
-      !copy_moondesk_sidecar(repo_root, options.target, out_dir) {
+      !copy_moondesk_live_bundle_files(repo_root, options, out_dir) {
       return
     }
   }

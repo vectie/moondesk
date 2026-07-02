@@ -262,7 +262,12 @@ async test "lepusa integration live project uses localhost sidecar service" {
   assert_true(manifest.contains("\"/tmp/moondesk-suite\""))
   assert_false(manifest.contains("\"/repo/moondesk\",\"--ui\""))
   assert_true(manifest.contains("\"serve\""))
-  assert_true(manifest.contains("\"/repo/moondesk/ui/rabbita-desk/dist\""))
+  assert_true(
+    manifest.contains(
+      "\"/repo/moondesk/_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/assets/main\"",
+    ),
+  )
+  assert_false(manifest.contains("\"/repo/moondesk/ui/rabbita-desk/dist\""))
   assert_true(manifest.contains("\"localhost\""))
   assert_true(manifest.contains("\"serviceDiscovery\""))
 }
@@ -299,7 +304,12 @@ async test "lepusa integration live project honors custom workspace and ui paths
   assert_eq(options.ui_dir, "/repo/moondesk/dist/ui")
   let manifest = lepusa_integration_live_project_json(options, "/repo/moondesk").stringify()
   assert_true(manifest.contains("\"/repo/books\""))
-  assert_true(manifest.contains("\"/repo/moondesk/dist/ui\""))
+  assert_false(manifest.contains("\"/repo/moondesk/dist/ui\""))
+  assert_true(
+    manifest.contains(
+      "\"/repo/moondesk/_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/assets/main\"",
+    ),
+  )
   assert_false(manifest.contains("\"/repo/moondesk/ui/rabbita-desk/dist\""))
 }
 

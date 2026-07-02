@@ -53,6 +53,10 @@ fn lepusa_integration_live_project_json(
   let host = "127.0.0.1"
   let out_dir = absolute_path(options.out_dir, repo_root)
   let sidecar = lepusa_integration_sidecar_path(options.target, out_dir)
+  let bundled_ui_dir = lepusa_integration_bundled_ui_dir(
+    options.target,
+    out_dir,
+  )
   {
     "identifier": "app.vectie.moondesk.lepusa.live",
     "productName": "Moondesk Lepusa",
@@ -79,7 +83,7 @@ fn lepusa_integration_live_project_json(
             "serve",
             options.workspace_root,
             "--ui",
-            options.ui_dir,
+            bundled_ui_dir,
             "--host",
             host,
             "--port",

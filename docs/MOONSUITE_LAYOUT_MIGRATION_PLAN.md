@@ -1099,6 +1099,13 @@ Phase 9 cutover evidence:
   production build, API smoke, Desk browser full and empty-library smokes,
   cross-product fresh-suite smokes, Lepusa populated and empty fresh-books
   packaged runtime smokes, and the Phase 9 12-repo cutover validator.
+- The next Lepusa standalone packaging slice makes live Moondesk bundles
+  self-contained: generated localhost runtime manifests now launch the bundled
+  `moondesk-sidecar` with `--ui` pointing at
+  `Contents/Resources/lepusa/assets/main` inside the app bundle, and the
+  bundle step copies Rabbita `dist` assets there. `scripts/lepusa_fresh_books_smoke.sh`
+  now asserts the manifest no longer points sidecar launches at the source
+  checkout UI directory.
 
 ## Cross-Product Migration Log
 
