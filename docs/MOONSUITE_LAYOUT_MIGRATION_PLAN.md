@@ -1425,6 +1425,15 @@ Completed slices:
   `moon fmt`, `moon info`, `moon check`, `moon test` with `779/779` tests
   passing, cleanup of test-created untracked `.moonsuite` runtime output, and
   `git diff --check`.
+- Moondesk's optional MoonStat plugin now discovers MoonStat through the active
+  workspace's suite-status contract instead of concatenating the operator home
+  directory with `/.moonsuite/suite-status.json`. The plugin derives
+  `.moonsuite/suite-status.json` from MoonLib's workspace-root suite
+  constructor, keeps rejecting legacy shortcut status shapes, and has
+  white-box coverage for suite-hosted book workspaces. Validation for this
+  slice: focused Moondesk MoonStat plugin stale-path scan, no generated
+  `.mbti` changes, `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `459/459` tests passing, and `git diff --check`.
 
 Remaining high-priority product slices:
 
