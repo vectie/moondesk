@@ -1565,6 +1565,15 @@ Completed slices:
   MoonClaw `moon update`, `moon fmt`, `moon info`, `moon check`, full
   `moon test`, focused primitive-constructor scan, generated-interface diff
   review, test-output cleanup, and `git diff --check`.
+- MoonStat now consumes MoonLib `0.1.4` for suite status and drift canonical
+  product paths. Suite canonical product homes, MoonRobo suite-temp SDK paths,
+  and legacy drift canonical targets now derive from MoonLib `ProductHome`
+  fields instead of direct `product_dir`/`product_tmp_dir` formulas, and the
+  workspace-root MoonStat product-home helper uses the workspace-root
+  `ProductHome` constructor. Validation for this slice: MoonStat `moon update`,
+  `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
+  primitive-constructor scan, generated-interface diff review,
+  test-output cleanup, and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -1572,15 +1581,18 @@ Remaining high-priority product slices:
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies. Current published contract version is
   `vectie/moonlib@0.1.4`; its generic `ProductHome` contract is now the shared
-  source for the MoonFish, MoonMoon, MoonRobo, Moondesk, Moontown, and MoonClaw
-  product-home facades.
+  source for the MoonFish, MoonMoon, MoonRobo, Moondesk, Moontown, MoonClaw,
+  and MoonStat product-home facades.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
   future drift additions, but do not add a parallel path schema there. The
   book-local MoonClaw provider and MoonCode sidecar drift targets now derive
   from the MoonLib workspace-root product-artifact helper, matching MoonClaw's
-  current durable product-home contract.
+  current durable product-home contract. Suite status canonical paths and
+  legacy-drift canonical targets now consume MoonLib `ProductHome` fields
+  directly; remaining work should focus on new drift coverage rather than
+  local product-home formula cleanup.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
