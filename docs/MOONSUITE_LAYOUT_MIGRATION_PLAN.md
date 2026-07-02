@@ -213,6 +213,17 @@ pattern instead of carrying independent string contracts.
   `moon test .` with `5/5` tests passing, native `moon test --target native`
   with `25/25` tests passing, active empty-root constructor scan clean, and
   `git diff --check`.
+- Moondesk commit `e54c4400` moves MoonCode desktop session/event sidecar path
+  derivation onto MoonLib workspace-root helpers. `internal/mooncode` now
+  exposes explicit workspace-root constructors for session directories,
+  command logs, runtime command/receipt logs, snapshots, event logs, and stream
+  checkpoints, while `internal/moonwiki` consumes those constructors instead of
+  joining a relative `.moonsuite/products/mooncode/sessions` path onto the
+  selected workspace root. Suite-hosted book roots now resolve MoonCode
+  sidecars to the owning suite's `.moonsuite/products/mooncode` lane instead of
+  nested `books/<book-id>/.moonsuite` state. Validation for this slice:
+  Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with `451/451`
+  tests passing, targeted old-join scan clean, and `git diff --check`.
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
@@ -438,6 +449,14 @@ Completed slices:
   `.moonsuite/products/moonclaw/logs`. The fallback no longer probes or writes
   `$HOME/.moonclaw`, and white-box coverage asserts suite-hosted
   `books/<book-id>` workspaces derive the owning suite's MoonClaw product home.
+- Moondesk commit `e54c4400` routes MoonCode desktop session/event sidecar
+  paths through MoonLib workspace-root constructors. The internal MoonCode
+  package now exposes workspace-root APIs for all session sidecar paths, and
+  MoonWiki read/write handlers use them so suite-hosted `books/<book-id>` roots
+  write to suite-level `.moonsuite/products/mooncode/sessions` rather than a
+  nested book-local product home. Validation passed with Moondesk `moon fmt`,
+  `moon info`, `moon check`, `moon test` (451/451), targeted old-join scan
+  clean, and `git diff --check`.
 - Moonstat advertises and writes MoonClaw provider manifests through
   `.moonsuite/products/moonclaw/providers.json`, and advertises MoonClaw model
   and config candidates under `.moonsuite/products/moonclaw`.
