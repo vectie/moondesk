@@ -2,13 +2,11 @@
 fn should_hide_file_entry(name : String) -> Bool {
   name == ".moonsuite" ||
   name == ".tmp" ||
-  name == ".moontown" ||
   name == ".git" ||
   name == ".DS_Store" ||
   name == "DS_Store" ||
   name == "node_modules" ||
-  name == "_build" ||
-  name == ".moonclaw-worktrees"
+  name == "_build"
 }
 
 ///|

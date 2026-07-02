@@ -253,7 +253,7 @@ async test "fresh suite exposes rabbita moonbook projections through desk worksp
     }
     None => fail("expected Rabbita projection path to resolve under book root")
   }
-  assert_false(@fs.exists(@pathx.join(root, ".moontown/books/\{book_id}")))
+  assert_false(@fs.exists(@pathx.join(book_root, ".moonsuite")))
 }
 
 ///|
@@ -877,7 +877,6 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   assert_true(@fs.exists(trash_absolute))
   assert_false(@fs.exists(@pathx.join(book_root, "wiki/beta.md")))
   assert_true(@fs.exists(desk_trash_receipts_root(book_root)))
-  assert_false(@fs.exists(@pathx.join(book_root, ".moontown/trash")))
   assert_false(@fs.exists(@pathx.join(book_root, ".moonsuite")))
   let trash_entries = list_workspace_trash_entries(workspace)
   assert_eq(trash_entries.length(), 1)
@@ -889,7 +888,7 @@ async test "desk entry creation writes folders and markdown inside workspace" {
   let root_entries_after_trash = list_workspace_entries(
     workspace, "", book_root,
   )
-  assert_true(find_test_entry(root_entries_after_trash, ".moontown") is None)
+  assert_true(find_test_entry(root_entries_after_trash, ".moonsuite") is None)
   let restored_note = restore_workspace_entry(workspace, {
     "trash_path": trash_path,
   })

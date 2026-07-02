@@ -153,7 +153,7 @@ async fn launch_agent_loaded_status(installed : Bool, label : String) -> Bool {
 
 ///|
 fn launch_agent_label() -> String {
-  "app.vectie.moondesk.moontown"
+  "app.vectie.moonsuite.town"
 }
 
 ///|

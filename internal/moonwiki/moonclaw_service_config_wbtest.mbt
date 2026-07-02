@@ -123,7 +123,4 @@ async test "moonclaw daemon probe uses MoonSuite product home" {
     json_string(status, "info_path", default=""),
     @pathx.join(suite_root, ".moonsuite/products/moonclaw/daemon.json"),
   )
-  assert_false(
-    json_string(status, "info_path", default="").contains(".moonclaw"),
-  )
 }

@@ -258,7 +258,7 @@ test "review decision rejects non book-scoped item before http" {
   let item : ReviewItem = {
     id: "town-review",
     workspace_id: "",
-    path: ".moontown/events/review.json",
+    path: ".moonsuite/products/moontown/events/review.json",
     title: "Town review",
     kind: "event",
     status: "review",

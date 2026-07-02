@@ -84,7 +84,10 @@ test "source layer inference covers desk explorer roots" {
     @core.infer_source_layer(".tmp/products/mooncode/scratch") is Config,
   )
   assert_true(
-    @core.infer_source_layer(".moonclaw/runs/run-1/log.jsonl") is RunArtifact,
+    @core.infer_source_layer(
+      ".moonsuite/products/moonclaw/jobs/run-1/log.jsonl",
+    )
+    is RunArtifact,
   )
   assert_true(@core.infer_source_layer("notes/local.txt") is Workspace)
 }

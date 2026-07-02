@@ -275,7 +275,7 @@ async fn town_daemon_launch_agent_plist(workspace_root : String) -> String? {
     "<plist version=\"1.0\">\n" +
     "<dict>\n" +
     "  <key>Label</key>\n" +
-    "  <string>app.vectie.moondesk.moontown</string>\n" +
+    "  <string>app.vectie.moonsuite.town</string>\n" +
     "  <key>WorkingDirectory</key>\n" +
     "  <string>\{xml_escape(cmd_json_string(descriptor, "cwd", default=workspace_root))}</string>\n" +
     "  <key>ProgramArguments</key>\n" +
@@ -325,7 +325,7 @@ fn town_service_program_arguments_xml(descriptor : Json) -> String {
 ///|
 fn launch_agent_label(service : String) -> String {
   if service == "town" {
-    "app.vectie.moondesk.moontown"
+    "app.vectie.moonsuite.town"
   } else {
     "app.vectie.moondesk"
   }

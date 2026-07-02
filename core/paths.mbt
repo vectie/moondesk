@@ -113,14 +113,16 @@ pub fn infer_source_layer(path : StringView) -> SourceLayer {
     path.has_prefix("inbox/") ||
     path.contains("/inbox/") {
     Inbox
-  } else if path.contains("moonclaw") || path.contains(".moonclaw") {
+  } else if path == ".moonsuite/products/moonclaw" ||
+    path.has_prefix(".moonsuite/products/moonclaw/") ||
+    path == "moonclaw-jobs" ||
+    path.has_prefix("moonclaw-jobs/") ||
+    path.contains("/moonclaw-jobs/") {
     RunArtifact
   } else if path == ".moonsuite" ||
     path.has_prefix(".moonsuite/") ||
     path == ".tmp" ||
-    path.has_prefix(".tmp/") ||
-    path == ".moontown" ||
-    path.has_prefix(".moontown/") {
+    path.has_prefix(".tmp/") {
     Config
   } else {
     Workspace
