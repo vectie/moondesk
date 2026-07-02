@@ -1,41 +1,137 @@
 ///|
+pub fn mooncode_product_id() -> String {
+  "mooncode"
+}
+
+///|
+fn active_workspace_root() -> String {
+  "."
+}
+
+///|
+pub fn sessions_dir_for_workspace_root(root : String) -> String {
+  @moonsuite.product_artifact_for_workspace_root(
+    root,
+    mooncode_product_id(),
+    "sessions",
+  )
+}
+
+///|
 pub fn sessions_relative_dir() -> String {
-  ".moonsuite/products/mooncode/sessions"
+  sessions_dir_for_workspace_root(active_workspace_root())
+}
+
+///|
+pub fn session_log_dir_for_workspace_root(
+  root : String,
+  session_id : String,
+) -> String {
+  sessions_dir_for_workspace_root(root) + "/" + session_id
 }
 
 ///|
 pub fn session_log_relative_dir(session_id : String) -> String {
-  sessions_relative_dir() + "/" + session_id
+  session_log_dir_for_workspace_root(active_workspace_root(), session_id)
+}
+
+///|
+pub fn event_log_path_for_workspace_root(
+  root : String,
+  session_id : String,
+) -> String {
+  session_log_dir_for_workspace_root(root, session_id) + "/events.jsonl"
 }
 
 ///|
 pub fn event_log_relative_path(session_id : String) -> String {
-  session_log_relative_dir(session_id) + "/events.jsonl"
+  event_log_path_for_workspace_root(active_workspace_root(), session_id)
+}
+
+///|
+pub fn command_log_path_for_workspace_root(
+  root : String,
+  session_id : String,
+) -> String {
+  session_log_dir_for_workspace_root(root, session_id) + "/commands.jsonl"
 }
 
 ///|
 pub fn command_log_relative_path(session_id : String) -> String {
-  session_log_relative_dir(session_id) + "/commands.jsonl"
+  command_log_path_for_workspace_root(active_workspace_root(), session_id)
+}
+
+///|
+pub fn runtime_command_log_path_for_workspace_root(
+  root : String,
+  session_id : String,
+) -> String {
+  session_log_dir_for_workspace_root(root, session_id) +
+  "/runtime-commands.jsonl"
 }
 
 ///|
 pub fn runtime_command_log_relative_path(session_id : String) -> String {
-  session_log_relative_dir(session_id) + "/runtime-commands.jsonl"
+  runtime_command_log_path_for_workspace_root(
+    active_workspace_root(),
+    session_id,
+  )
+}
+
+///|
+pub fn runtime_receipt_log_path_for_workspace_root(
+  root : String,
+  session_id : String,
+) -> String {
+  session_log_dir_for_workspace_root(root, session_id) +
+  "/runtime-receipts.jsonl"
 }
 
 ///|
 pub fn runtime_receipt_log_relative_path(session_id : String) -> String {
-  session_log_relative_dir(session_id) + "/runtime-receipts.jsonl"
+  runtime_receipt_log_path_for_workspace_root(
+    active_workspace_root(),
+    session_id,
+  )
+}
+
+///|
+pub fn session_snapshot_path_for_workspace_root(
+  root : String,
+  session_id : String,
+) -> String {
+  session_log_dir_for_workspace_root(root, session_id) + "/session.json"
 }
 
 ///|
 pub fn session_snapshot_relative_path(session_id : String) -> String {
-  session_log_relative_dir(session_id) + "/session.json"
+  session_snapshot_path_for_workspace_root(active_workspace_root(), session_id)
+}
+
+///|
+pub fn stream_checkpoint_dir_for_workspace_root(
+  root : String,
+  session_id : String,
+) -> String {
+  session_log_dir_for_workspace_root(root, session_id) + "/stream-checkpoints"
 }
 
 ///|
 pub fn stream_checkpoint_relative_dir(session_id : String) -> String {
-  session_log_relative_dir(session_id) + "/stream-checkpoints"
+  stream_checkpoint_dir_for_workspace_root(active_workspace_root(), session_id)
+}
+
+///|
+pub fn stream_checkpoint_path_for_workspace_root(
+  root : String,
+  session_id : String,
+  consumer_id : String,
+) -> String {
+  let safe_consumer = artifact_safe_id(consumer_id, fallback="default")
+  stream_checkpoint_dir_for_workspace_root(root, session_id) +
+  "/" +
+  safe_consumer +
+  ".json"
 }
 
 ///|
@@ -43,8 +139,11 @@ pub fn stream_checkpoint_relative_path(
   session_id : String,
   consumer_id : String,
 ) -> String {
-  let safe_consumer = artifact_safe_id(consumer_id, fallback="default")
-  stream_checkpoint_relative_dir(session_id) + "/" + safe_consumer + ".json"
+  stream_checkpoint_path_for_workspace_root(
+    active_workspace_root(),
+    session_id,
+    consumer_id,
+  )
 }
 
 ///|

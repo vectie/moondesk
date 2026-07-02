@@ -240,3 +240,45 @@ test "mooncode sidecar relative paths define durable session layout" {
     ".moonsuite/products/mooncode/sessions/s1/stream-checkpoints/default.json",
   )
 }
+
+///|
+test "mooncode sidecar paths resolve from suite hosted book root" {
+  let suite_root = "/tmp/moondesk-mooncode-suite"
+  let book_root = suite_root + "/books/code-lab"
+  assert_eq(
+    sessions_dir_for_workspace_root(book_root),
+    suite_root + "/.moonsuite/products/mooncode/sessions",
+  )
+  assert_eq(
+    event_log_path_for_workspace_root(book_root, "s1"),
+    suite_root + "/.moonsuite/products/mooncode/sessions/s1/events.jsonl",
+  )
+  assert_eq(
+    command_log_path_for_workspace_root(book_root, "s1"),
+    suite_root + "/.moonsuite/products/mooncode/sessions/s1/commands.jsonl",
+  )
+  assert_eq(
+    runtime_command_log_path_for_workspace_root(book_root, "s1"),
+    suite_root +
+    "/.moonsuite/products/mooncode/sessions/s1/runtime-commands.jsonl",
+  )
+  assert_eq(
+    runtime_receipt_log_path_for_workspace_root(book_root, "s1"),
+    suite_root +
+    "/.moonsuite/products/mooncode/sessions/s1/runtime-receipts.jsonl",
+  )
+  assert_eq(
+    session_snapshot_path_for_workspace_root(book_root, "s1"),
+    suite_root + "/.moonsuite/products/mooncode/sessions/s1/session.json",
+  )
+  assert_eq(
+    stream_checkpoint_path_for_workspace_root(book_root, "s1", "moondesk-ui"),
+    suite_root +
+    "/.moonsuite/products/mooncode/sessions/s1/stream-checkpoints/moondesk-ui.json",
+  )
+  assert_true(
+    !event_log_path_for_workspace_root(book_root, "s1").contains(
+      "/books/code-lab/.moonsuite",
+    ),
+  )
+}

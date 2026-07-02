@@ -65,6 +65,40 @@ async test "mooncode appends and replays durable session event log" {
 }
 
 ///|
+async test "mooncode durable logs use suite product home for hosted book roots" {
+  let suite_root = "/tmp/moondesk-mooncode-suite-log-wbtest-" +
+    @async.now().to_string()
+  let book_root = suite_root + "/books/code-lab"
+  let session_id = "session-suite"
+  let event = @mooncode.event_record(
+    id="event-suite",
+    lane="runtime",
+    kind="command.note",
+    title="Note",
+    status="queued",
+    created_at="1",
+    detail="hello",
+  )
+  append_mooncode_event_log(book_root, session_id, event)
+  let event_path = mooncode_event_log_path(book_root, session_id)
+  assert_eq(
+    event_path,
+    suite_root +
+    "/.moonsuite/products/mooncode/sessions/session-suite/events.jsonl",
+  )
+  assert_true(@fs.exists(event_path))
+  assert_false(
+    @fs.exists(
+      book_root +
+      "/.moonsuite/products/mooncode/sessions/session-suite/events.jsonl",
+    ),
+  )
+  let events = read_mooncode_event_log(book_root, session_id)
+  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "id", default=""), "event-suite")
+}
+
+///|
 test "mooncode parses command log and requires typed packets" {
   let command : Json = {
     "protocol": @mooncode.protocol_version(),

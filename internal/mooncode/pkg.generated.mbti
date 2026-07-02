@@ -102,6 +102,8 @@ pub fn command_is_supported(String) -> Bool
 
 pub fn command_lane(String) -> String
 
+pub fn command_log_path_for_workspace_root(String, String) -> String
+
 pub fn command_log_relative_path(String) -> String
 
 pub fn command_message(String, Json) -> String
@@ -304,6 +306,8 @@ pub fn event_cancel_dropped() -> String
 
 pub fn event_label(String) -> String
 
+pub fn event_log_path_for_workspace_root(String, String) -> String
+
 pub fn event_log_relative_path(String) -> String
 
 pub fn event_package_built() -> String
@@ -411,6 +415,8 @@ pub fn moonclaw_tool_mapping_rows() -> Array[Json]
 pub fn moonclaw_tool_to_mooncode_tool(String) -> String
 
 pub fn mooncode_code_command(String, Json) -> Json
+
+pub fn mooncode_product_id() -> String
 
 pub fn moondesk_live_stream_endpoint(String, String, Int, timeout_ms? : Int) -> String
 
@@ -632,6 +638,8 @@ pub fn runtime_command_jsonl(Array[Json], Array[Json], scope~ : String, lease_no
 
 pub fn runtime_command_lifecycle(String, Array[Json], Array[Json], Array[Json], lease_now? : String) -> Json
 
+pub fn runtime_command_log_path_for_workspace_root(String, String) -> String
+
 pub fn runtime_command_log_relative_path(String) -> String
 
 pub fn runtime_command_record(Json, Json, String, Json) -> Json
@@ -732,6 +740,8 @@ pub fn runtime_receipt_detail(String, String) -> String
 
 pub fn runtime_receipt_for_response(Json, fallback_receipt_id~ : String) -> Json
 
+pub fn runtime_receipt_log_path_for_workspace_root(String, String) -> String
+
 pub fn runtime_receipt_log_relative_path(String) -> String
 
 pub fn runtime_receipt_pending_count(Array[Json], Array[Json], lease_now? : String) -> Int
@@ -800,6 +810,8 @@ pub fn session_listing_row(Json, Json) -> Json
 
 pub fn session_listing_title(Json) -> String
 
+pub fn session_log_dir_for_workspace_root(String, String) -> String
+
 pub fn session_log_relative_dir(String) -> String
 
 pub fn session_package_lifecycle(Json, Array[Json]) -> Json
@@ -828,6 +840,8 @@ pub fn session_runtime_evidence_response_with_native(Json, String, String, Strin
 
 pub fn session_snapshot(Json, Array[Json], Array[Json], Array[Json], Array[Json], recorded_at~ : String, snapshot_path~ : String, command_log_path~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, event_log_path~ : String) -> Json
 
+pub fn session_snapshot_path_for_workspace_root(String, String) -> String
+
 pub fn session_snapshot_relative_path(String) -> String
 
 pub fn session_snapshot_valid(Json) -> Bool
@@ -852,11 +866,17 @@ pub fn session_with_saved_eval_manifest(Json, Json) -> Json
 
 pub fn session_without_eval_report_projection(Json) -> Json
 
+pub fn sessions_dir_for_workspace_root(String) -> String
+
 pub fn sessions_relative_dir() -> String
 
 pub fn standalone_boundary_json() -> Json
 
 pub fn stream_checkpoint_consumer_id(Json, String) -> String
+
+pub fn stream_checkpoint_dir_for_workspace_root(String, String) -> String
+
+pub fn stream_checkpoint_path_for_workspace_root(String, String, String) -> String
 
 pub fn stream_checkpoint_record(Json, String, Int, Int, String, String, String, String, String, String) -> Json
 

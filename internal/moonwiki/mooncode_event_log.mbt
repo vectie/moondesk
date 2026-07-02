@@ -1,9 +1,6 @@
 ///|
 fn mooncode_sessions_dir(workspace_root : String) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    @mooncode.sessions_relative_dir(),
-  )
+  @mooncode.sessions_dir_for_workspace_root(workspace_root)
 }
 
 ///|
@@ -11,7 +8,7 @@ fn mooncode_session_log_dir(
   workspace_root : String,
   session_id : String,
 ) -> String {
-  @pathx.join(mooncode_sessions_dir(workspace_root), session_id)
+  @mooncode.session_log_dir_for_workspace_root(workspace_root, session_id)
 }
 
 ///|
@@ -19,10 +16,7 @@ fn mooncode_event_log_path(
   workspace_root : String,
   session_id : String,
 ) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    @mooncode.event_log_relative_path(session_id),
-  )
+  @mooncode.event_log_path_for_workspace_root(workspace_root, session_id)
 }
 
 ///|
@@ -30,10 +24,7 @@ fn mooncode_command_log_path(
   workspace_root : String,
   session_id : String,
 ) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    @mooncode.command_log_relative_path(session_id),
-  )
+  @mooncode.command_log_path_for_workspace_root(workspace_root, session_id)
 }
 
 ///|
@@ -41,9 +32,8 @@ fn mooncode_runtime_command_log_path(
   workspace_root : String,
   session_id : String,
 ) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    @mooncode.runtime_command_log_relative_path(session_id),
+  @mooncode.runtime_command_log_path_for_workspace_root(
+    workspace_root, session_id,
   )
 }
 
@@ -52,9 +42,8 @@ fn mooncode_runtime_receipt_log_path(
   workspace_root : String,
   session_id : String,
 ) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    @mooncode.runtime_receipt_log_relative_path(session_id),
+  @mooncode.runtime_receipt_log_path_for_workspace_root(
+    workspace_root, session_id,
   )
 }
 
@@ -63,10 +52,7 @@ fn mooncode_session_snapshot_path(
   workspace_root : String,
   session_id : String,
 ) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    @mooncode.session_snapshot_relative_path(session_id),
-  )
+  @mooncode.session_snapshot_path_for_workspace_root(workspace_root, session_id)
 }
 
 ///|
@@ -74,10 +60,7 @@ fn mooncode_stream_checkpoint_dir(
   workspace_root : String,
   session_id : String,
 ) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    @mooncode.stream_checkpoint_relative_dir(session_id),
-  )
+  @mooncode.stream_checkpoint_dir_for_workspace_root(workspace_root, session_id)
 }
 
 ///|
@@ -86,9 +69,8 @@ fn mooncode_stream_checkpoint_path(
   session_id : String,
   consumer_id : String,
 ) -> String {
-  @pathx.join(
-    @pathx.normalize(workspace_root),
-    @mooncode.stream_checkpoint_relative_path(session_id, consumer_id),
+  @mooncode.stream_checkpoint_path_for_workspace_root(
+    workspace_root, session_id, consumer_id,
   )
 }
 
