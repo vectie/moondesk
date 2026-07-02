@@ -14,8 +14,8 @@ async fn handle_book_contract_verify(
     send_api_error(conn, method_, 400, "Bad Request", "book_id is required")
     return
   }
-  let root = @pathx.normalize(workspace_root)
-  let book_root = @pathx.join(moonsuite_books_root(root), book_id)
+  let context = workspace_context(workspace_root)
+  let book_root = context.book_root(book_id)
   let book_json_path = @pathx.join(book_root, "book.json")
   if !@fs.exists(book_json_path) {
     send_api_error(conn, method_, 404, "Not Found", "Book not found")
@@ -26,6 +26,11 @@ async fn handle_book_contract_verify(
   send_json(
     conn,
     method_,
-    book_contract_verification(root, book_root, book_id, pattern_id),
+    book_contract_verification(
+      context.suite_root,
+      book_root,
+      book_id,
+      pattern_id,
+    ),
   )
 }

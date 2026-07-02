@@ -576,7 +576,8 @@ async test "app tool portable export detects generated app books without metadat
     create=0o644,
   )
 
-  let discovered = app_tool_book_ids_for_workspace(root)
+  let context = workspace_context(book_root)
+  let discovered = app_tool_book_ids_for_context(context)
   assert_true(discovered.contains(book_id))
   let status_before = app_tool_portable_status(root, book_root, book_id)
   assert_true(
@@ -607,7 +608,8 @@ async test "app tool portable export detects generated app books without metadat
     ),
   )
 
-  let all_status = app_tool_portable_all_status(root)
+  let all_status = app_tool_portable_all_status_for_context(context)
+  assert_eq(json_string(all_status, "workspace_root", default=""), root)
   assert_eq(json_int(all_status, "app_tool_book_count", default=0), 1)
   assert_eq(json_int(all_status, "portable_ready_count", default=0), 1)
 }
@@ -669,7 +671,9 @@ async test "app tool portable export requires an html entrypoint" {
   assert_eq(json_string(status, "status", default=""), "unsupported_entrypoint")
   assert_eq(json_string_array_items(status, "html_entrypoints").length(), 0)
   assert_true(!json_bool(status, "ok", default=true))
-  let all_status = app_tool_portable_all_status(root)
+  let all_status = app_tool_portable_all_status_for_context(
+    workspace_context(root),
+  )
   assert_eq(
     json_string(all_status, "status", default=""),
     "unsupported_entrypoint",
@@ -692,9 +696,10 @@ async test "app tool portable export all discovers every app-tool book only" {
   let direct_id = "tool-direct-all-portable"
   let research_id = "research-tool-all-portable"
   let plain_id = "plain-research-not-app-tool-portable"
-  let direct_root = app_tool_book_root_for_id(root, direct_id)
-  let research_root = app_tool_book_root_for_id(root, research_id)
-  let plain_root = app_tool_book_root_for_id(root, plain_id)
+  let context = workspace_context(root)
+  let direct_root = app_tool_book_root_for_context(context, direct_id)
+  let research_root = app_tool_book_root_for_context(context, research_id)
+  let plain_root = app_tool_book_root_for_context(context, plain_id)
   @fsx.make_directory(
     @pathx.join(direct_root, "book/site/generated"),
     recursive=true,
@@ -787,7 +792,7 @@ async test "app tool portable export all discovers every app-tool book only" {
     create=0o644,
   )
 
-  let result = export_all_app_tool_portable_bundles(root)
+  let result = export_all_app_tool_portable_bundles_for_context(context)
   assert_true(json_bool(result, "ok", default=false))
   assert_eq(json_string(result, "status", default=""), "portable_ready")
   assert_eq(json_int(result, "app_tool_book_count", default=0), 2)
@@ -816,7 +821,7 @@ async test "app tool portable export all discovers every app-tool book only" {
     !@fs.exists(@pathx.join(plain_root, "portable/app-tool/index.html")),
   )
 
-  let status = app_tool_portable_all_status(root)
+  let status = app_tool_portable_all_status_for_context(context)
   assert_eq(json_string(status, "status", default=""), "portable_ready")
   assert_eq(json_int(status, "app_tool_book_count", default=0), 2)
   assert_eq(json_int(status, "portable_ready_count", default=0), 2)

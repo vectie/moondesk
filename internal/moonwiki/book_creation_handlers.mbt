@@ -31,13 +31,14 @@ async fn create_pdf_evidence_watch_book_from_payload(
     )
     return
   }
-  let root = @pathx.normalize(workspace_root)
+  let context = workspace_context(workspace_root)
+  let root = context.suite_root
   let book_id = normalize_pdf_watch_book_id(
     json_string(payload, "book_id", default=""),
     topic~,
     pattern_id~,
   )
-  let book_root = @pathx.join(moonsuite_books_root(root), book_id)
+  let book_root = context.book_root(book_id)
   let created_dirs = create_pdf_watch_book_dirs(book_root) catch { _ => false }
   if !created_dirs {
     send_api_error(

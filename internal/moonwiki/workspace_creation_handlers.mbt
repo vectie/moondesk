@@ -98,11 +98,9 @@ async fn create_blank_moonbook_workspace(
     )
   }
   let title = if name == "" { book_id } else { name }
-  let root = @pathx.normalize(workspace_root)
-  let books_root = moonsuite_books_root(root)
-  let book_root = @pathx.join(books_root, book_id)
-  let expected_prefix = books_root + "/"
-  if !book_root.has_prefix(expected_prefix) {
+  let context = workspace_context(workspace_root)
+  let book_root = context.book_root(book_id)
+  if !context.book_root_allowed(book_root) {
     return Err(
       workspace_create_error(400, "Bad Request", "MoonBook path is not allowed"),
     )
@@ -112,7 +110,7 @@ async fn create_blank_moonbook_workspace(
       workspace_create_error(409, "Conflict", "MoonBook already exists"),
     )
   }
-  @fsx.make_directory(books_root, recursive=true, exists_ok=true) catch {
+  @fsx.make_directory(context.books_root, recursive=true, exists_ok=true) catch {
     _ =>
       return Err(
         workspace_create_error(
@@ -392,11 +390,9 @@ async fn import_moonbook_from_source_dir(
     )
   }
   let title = import_moonbook_title(payload, manifest, book_id)
-  let root = @pathx.normalize(workspace_root)
-  let books_root = moonsuite_books_root(root)
-  let book_root = @pathx.join(books_root, book_id)
-  let expected_prefix = books_root + "/"
-  if !book_root.has_prefix(expected_prefix) {
+  let context = workspace_context(workspace_root)
+  let book_root = context.book_root(book_id)
+  if !context.book_root_allowed(book_root) {
     return Err(
       workspace_create_error(400, "Bad Request", "MoonBook path is not allowed"),
     )
@@ -409,7 +405,7 @@ async fn import_moonbook_from_source_dir(
       workspace_create_error(409, "Conflict", "MoonBook already exists"),
     )
   }
-  @fsx.make_directory(books_root, recursive=true, exists_ok=true) catch {
+  @fsx.make_directory(context.books_root, recursive=true, exists_ok=true) catch {
     _ =>
       return Err(
         workspace_create_error(

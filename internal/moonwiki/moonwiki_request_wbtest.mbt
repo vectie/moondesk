@@ -423,6 +423,37 @@ async test "blank moonbook creation writes into dedicated books root" {
 }
 
 ///|
+async test "blank moonbook creation maps selected book roots to owning suite" {
+  let suite_root = @pathx.join(
+    "/tmp",
+    "moondesk-create-book-from-selected-root-wbtest-" + @async.now().to_string(),
+  )
+  let selected_book_root = @pathx.join(suite_root, "books/research-selected")
+  let result = create_blank_moonbook_workspace(selected_book_root, {
+    "name": "Created From Selected Book",
+    "book_id": "created-from-selected",
+  })
+  let created = match result {
+    Ok(json) => json
+    Err(error) => {
+      fail(error.stringify())
+      Json::object({})
+    }
+  }
+  let created_root = @pathx.join(suite_root, "books/created-from-selected")
+  assert_eq(json_string(created, "root_path", default=""), created_root)
+  assert_true(@fs.exists(@pathx.join(created_root, "book.json")))
+  assert_false(
+    @fs.exists(
+      @pathx.join(
+        selected_book_root, ".moonsuite/products/moondesk/books/created-from-selected",
+      ),
+    ),
+  )
+  assert_false(@fs.exists(@pathx.join(selected_book_root, "books")))
+}
+
+///|
 async test "moonbook import copies existing folder into dedicated books root" {
   let root = @pathx.join(
     "/tmp",
@@ -2514,7 +2545,7 @@ async test "sync repairs pdf watch standing goals for UI decoder" {
     Json::array([stale_goal]).stringify(indent=2) + "\n",
     create=0o644,
   )
-  let result = sync_all_book_pattern_standing_goals(root)
+  let result = sync_all_book_pattern_standing_goals(book_root)
   assert_true(json_bool(result, "ok", default=false))
   let repaired = read_json_array_file(town_standing_goals_path(root))[0]
   assert_true(

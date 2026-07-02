@@ -17,14 +17,14 @@ async fn handle_book_sync_standing_goal(
     send_api_error(conn, method_, 400, "Bad Request", "book_id is required")
     return
   }
-  let root = @pathx.normalize(workspace_root)
-  let book_root = @pathx.join(moonsuite_books_root(root), book_id)
+  let context = workspace_context(workspace_root)
+  let book_root = context.book_root(book_id)
   let book_json_path = @pathx.join(book_root, "book.json")
   if !@fs.exists(book_json_path) {
     send_api_error(conn, method_, 404, "Not Found", "Book not found")
     return
   }
-  let result = sync_book_standing_goal(root, book_root, book_id) catch {
+  let result = sync_book_standing_goal(context.suite_root, book_root, book_id) catch {
     error => {
       send_api_error(
         conn,
@@ -169,7 +169,9 @@ async fn sync_book_standing_goal(
 
 ///|
 async fn sync_all_book_pattern_standing_goals(root : String) -> Json {
-  let books_root = moonsuite_books_root(root)
+  let context = workspace_context(root)
+  let root = context.suite_root
+  let books_root = context.books_root
   if !is_directory(books_root) {
     return {
       "ok": true,
@@ -188,7 +190,7 @@ async fn sync_all_book_pattern_standing_goals(root : String) -> Json {
   let mut synced_count = 0
   let mut already_synced_count = 0
   for book_id in read_directory_names(books_root, include_hidden=false) {
-    let book_root = @pathx.join(books_root, book_id)
+    let book_root = context.book_root(book_id)
     let book_json_path = @pathx.join(book_root, "book.json")
     if !is_directory(book_root) || !@fs.exists(book_json_path) {
       continue

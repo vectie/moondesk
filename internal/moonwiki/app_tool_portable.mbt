@@ -50,13 +50,17 @@ async fn handle_app_tool_portable_status(
       return
     }
   }
-  let root = @pathx.normalize(workspace_root)
-  let book_root = app_tool_book_root_for_id(root, book_id)
+  let context = workspace_context(workspace_root)
+  let book_root = app_tool_book_root_for_context(context, book_id)
   if !@fs.exists(@pathx.join(book_root, "book.json")) {
     send_api_error(conn, method_, 404, "Not Found", "Book not found")
     return
   }
-  send_json(conn, method_, app_tool_portable_status(root, book_root, book_id))
+  send_json(
+    conn,
+    method_,
+    app_tool_portable_status(context.suite_root, book_root, book_id),
+  )
 }
 
 ///|
@@ -65,8 +69,8 @@ async fn handle_app_tool_portable_all_status(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
-  send_json(conn, method_, app_tool_portable_all_status(root))
+  let context = workspace_context(workspace_root)
+  send_json(conn, method_, app_tool_portable_all_status_for_context(context))
 }
 
 ///|
@@ -75,8 +79,12 @@ async fn handle_app_tool_portable_all_export(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
-  send_json(conn, method_, export_all_app_tool_portable_bundles(root))
+  let context = workspace_context(workspace_root)
+  send_json(
+    conn,
+    method_,
+    export_all_app_tool_portable_bundles_for_context(context),
+  )
 }
 
 ///|
@@ -103,13 +111,17 @@ async fn handle_app_tool_portable_export(
       return
     }
   }
-  let root = @pathx.normalize(workspace_root)
-  let book_root = app_tool_book_root_for_id(root, book_id)
+  let context = workspace_context(workspace_root)
+  let book_root = app_tool_book_root_for_context(context, book_id)
   if !@fs.exists(@pathx.join(book_root, "book.json")) {
     send_api_error(conn, method_, 404, "Not Found", "Book not found")
     return
   }
-  let result = export_app_tool_portable_bundle(root, book_root, book_id) catch {
+  let result = export_app_tool_portable_bundle(
+    context.suite_root,
+    book_root,
+    book_id,
+  ) catch {
     error => {
       send_api_error(
         conn,

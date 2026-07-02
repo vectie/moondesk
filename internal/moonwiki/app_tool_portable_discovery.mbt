@@ -1,11 +1,9 @@
 ///|
-fn app_tool_books_root(root : String) -> String {
-  moonsuite_books_root(root)
-}
-
-///|
-fn app_tool_book_root_for_id(root : String, book_id : String) -> String {
-  @pathx.join(app_tool_books_root(root), book_id)
+fn app_tool_book_root_for_context(
+  context : WorkspaceContext,
+  book_id : String,
+) -> String {
+  context.book_root(book_id)
 }
 
 ///|
@@ -26,9 +24,11 @@ fn app_tool_clean_book_id(book_id : String) -> String? {
 }
 
 ///|
-async fn app_tool_book_ids_for_workspace(root : String) -> Array[String] {
+async fn app_tool_book_ids_for_context(
+  context : WorkspaceContext,
+) -> Array[String] {
   let book_ids : Array[String] = []
-  let books_root = app_tool_books_root(root)
+  let books_root = context.books_root
   if !is_directory(books_root) {
     return book_ids
   }
@@ -37,7 +37,7 @@ async fn app_tool_book_ids_for_workspace(root : String) -> Array[String] {
       Some(book_id) => book_id
       None => continue
     }
-    let book_root = app_tool_book_root_for_id(root, book_id)
+    let book_root = app_tool_book_root_for_context(context, book_id)
     if !is_directory(book_root) ||
       !@fs.exists(@pathx.join(book_root, "book.json")) {
       continue

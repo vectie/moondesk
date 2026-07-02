@@ -1863,6 +1863,12 @@ Remaining high-priority product slices:
   requested root, suite root, books root, state dir, tmp root, and product
   registry path once before presenting them to Phase 6 API and Phase 7 UI
   callers.
+  Follow-on Phase 6/7 propagation moved MoonBook creation/import, book contract
+  verification, app-tool portable discovery/export, and book standing-goal sync
+  onto that context-owned book-root contract. These routes now accept either a
+  suite root or selected `books/<book-id>` root and write/read sibling books and
+  Moontown state through the owning suite instead of recomputing local
+  `books/` paths per handler.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and

@@ -33,3 +33,21 @@ fn workspace_context_json(context : WorkspaceContext) -> Json {
     "product_registry_path": context.product_registry_path,
   }
 }
+
+///|
+fn WorkspaceContext::book_root(
+  self : WorkspaceContext,
+  book_id : String,
+) -> String {
+  @pathx.join(self.books_root, book_id)
+}
+
+///|
+fn WorkspaceContext::book_root_allowed(
+  self : WorkspaceContext,
+  book_root : String,
+) -> Bool {
+  let normalized = @pathx.normalize(book_root)
+  let expected_prefix = self.books_root + "/"
+  normalized.has_prefix(expected_prefix)
+}

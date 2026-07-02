@@ -1,6 +1,9 @@
 ///|
-async fn app_tool_portable_all_status(root : String) -> Json {
-  let book_ids = app_tool_book_ids_for_workspace(root)
+async fn app_tool_portable_all_status_for_context(
+  context : WorkspaceContext,
+) -> Json {
+  let root = context.suite_root
+  let book_ids = app_tool_book_ids_for_context(context)
   let books : Array[Json] = []
   let mut portable_ready_count = 0
   let mut api_warning_count = 0
@@ -10,7 +13,7 @@ async fn app_tool_portable_all_status(root : String) -> Json {
   for book_id in book_ids {
     let status = app_tool_portable_status(
       root,
-      app_tool_book_root_for_id(root, book_id),
+      app_tool_book_root_for_context(context, book_id),
       book_id,
     )
     books.push(status)
@@ -63,14 +66,17 @@ async fn app_tool_portable_all_status(root : String) -> Json {
 }
 
 ///|
-async fn export_all_app_tool_portable_bundles(root : String) -> Json {
-  let book_ids = app_tool_book_ids_for_workspace(root)
+async fn export_all_app_tool_portable_bundles_for_context(
+  context : WorkspaceContext,
+) -> Json {
+  let root = context.suite_root
+  let book_ids = app_tool_book_ids_for_context(context)
   let results : Array[Json] = []
   let mut exported_count = 0
   let mut failure_count = 0
   let mut api_warning_count = 0
   for book_id in book_ids {
-    let book_root = app_tool_book_root_for_id(root, book_id)
+    let book_root = app_tool_book_root_for_context(context, book_id)
     let result = export_app_tool_portable_bundle(root, book_root, book_id) catch {
       error => {
         failure_count += 1
