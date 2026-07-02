@@ -131,6 +131,15 @@ pattern instead of carrying independent string contracts.
   contract rather than the source of path definitions. Validation for the latest
   MoonStat slice: `moon fmt`, `moon info`, `moon check`, and `moon test` with
   `774/774` tests passing.
+- MoonStat commit `26531ce` removes the remaining empty-root MoonSuite
+  constructors from active suite/config defaults. MoonStat app config, suite
+  status, MoonClaw provider/model/config manifest candidates, and suite
+  integration commands now derive from the active workspace root or explicit
+  workspace-root helpers, while `books/<book-id>` roots are tested to resolve to
+  suite-level `.moonsuite/products/...` paths instead of nested book-local
+  state. Validation for this slice: MoonStat `moon fmt`, clean `moon info`,
+  `moon check`, `moon test` with `774/774` tests passing, and
+  `git diff --check`.
 - Moontown now depends on MoonLib `0.1.3` for book-root-derived and
   workspace-root-derived MoonSuite paths.
   PlanBook repair job indexes and proposal ledgers now resolve to
@@ -974,6 +983,14 @@ Completed slices:
   while keeping MoonStat a validator/reporter instead of a path-schema owner.
   Validation passed with MoonStat `moon update`, `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (774/774), and `git diff --check`.
+- MoonStat commit `26531ce` removes the remaining active empty-root MoonSuite
+  calls from app config, suite status, MoonClaw provider/model/config manifest
+  defaults, and suite integration command output. Public workspace-root helpers
+  now expose MoonStat product home, suite status, and MoonClaw provider manifest
+  paths for suite-hosted book roots, and white-box tests prove those roots map
+  to suite-level `.moonsuite` paths rather than nested `books/<book-id>` state.
+  Validation passed with MoonStat `moon fmt`, clean `moon info`, `moon check`,
+  `moon test` (774/774), and `git diff --check`.
 
 Remaining high-priority product slices:
 
