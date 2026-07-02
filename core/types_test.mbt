@@ -110,3 +110,11 @@ test "moonsuite internal relative path helper covers state and temp roots" {
   assert_false(@core.moonsuite_internal_relative_path("wiki/.tmp-note.md"))
   assert_false(@core.moonsuite_internal_relative_path("notes/local.txt"))
 }
+
+///|
+test "moonsuite books root derives from owning suite for book workspace roots" {
+  assert_eq(
+    @core.moonsuite_books_root("/tmp/moondesk-suite/books/research-alpha"),
+    "/tmp/moondesk-suite/books",
+  )
+}

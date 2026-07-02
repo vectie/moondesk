@@ -274,6 +274,69 @@ async test "workspace metadata exposes dedicated MoonBook library path" {
 }
 
 ///|
+async test "moonsuite layout facade normalizes suite-hosted book roots" {
+  let suite_root = @pathx.join(
+    "/tmp",
+    "moondesk-layout-facade-book-root-wbtest-" + @async.now().to_string(),
+  )
+  let book_root = @pathx.join(suite_root, "books/research-facade")
+  assert_eq(moonsuite_root(book_root), suite_root)
+  assert_eq(moonsuite_books_root(book_root), @pathx.join(suite_root, "books"))
+  assert_eq(
+    moonsuite_state_dir(book_root),
+    @pathx.join(suite_root, ".moonsuite"),
+  )
+  assert_eq(moonsuite_tmp_root(book_root), @pathx.join(suite_root, ".tmp"))
+  assert_eq(
+    moonsuite_products_root(book_root),
+    @pathx.join(suite_root, ".moonsuite/products"),
+  )
+  assert_eq(
+    moonsuite_product_dir(book_root, "moondesk"),
+    @pathx.join(suite_root, ".moonsuite/products/moondesk"),
+  )
+  assert_eq(
+    moonsuite_product_registry_path(book_root),
+    @pathx.join(suite_root, ".moonsuite/product-registry.json"),
+  )
+  assert_false(
+    moonsuite_product_dir(book_root, "moondesk").contains(
+      "books/research-facade/.moonsuite",
+    ),
+  )
+}
+
+///|
+async test "workspace metadata maps book roots back to owning suite" {
+  let suite_root = @pathx.join(
+    "/tmp",
+    "moondesk-workspace-metadata-book-root-wbtest-" + @async.now().to_string(),
+  )
+  assert_true(prepare_moonsuite_workspace_root(suite_root))
+  let book_root = @pathx.join(suite_root, "books/research-metadata")
+  @fsx.make_directory(book_root, recursive=true, exists_ok=true)
+  let metadata = workspace_library_metadata(book_root)
+  assert_eq(json_string(metadata, "root_path", default=""), book_root)
+  assert_eq(
+    json_string(metadata, "library_path", default=""),
+    @pathx.join(suite_root, "books"),
+  )
+  assert_eq(
+    json_string(metadata, "suite_path", default=""),
+    @pathx.join(suite_root, ".moonsuite"),
+  )
+  assert_eq(
+    json_string(metadata, "product_registry_path", default=""),
+    @pathx.join(suite_root, ".moonsuite/product-registry.json"),
+  )
+  assert_false(
+    json_string(metadata, "suite_path", default="").contains(
+      "books/research-metadata/.moonsuite",
+    ),
+  )
+}
+
+///|
 async test "workspace metadata reads installed products from registry file" {
   let root = @pathx.join(
     "/tmp",

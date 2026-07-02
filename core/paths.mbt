@@ -85,7 +85,7 @@ pub fn moonsuite_root_for_workspace_root(workspace_root : String) -> String {
 
 ///|
 pub fn moonsuite_books_root(root : String) -> String {
-  @moonsuite.books_root(root)
+  @moonsuite.books_root(moonsuite_root_for_workspace_root(root))
 }
 
 ///|

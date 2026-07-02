@@ -1851,6 +1851,13 @@ Remaining high-priority product slices:
   `books/<book-id>` root now resolves town snapshots, daemon state, standing
   goals, and watcher directories through the owning suite product home instead
   of a nested book-local `.moonsuite/products/moontown`.
+  The Moondesk MoonWiki layout facade now also treats its suite-level helpers as
+  workspace-root aware: `moonsuite_root`, state, books, tmp, products,
+  services, product registry, product directories, and suite manifest helpers
+  normalize `books/<book-id>` roots through MoonLib before constructing paths.
+  Workspace metadata and the shared core `moonsuite_books_root` wrapper now
+  report the owning suite's `books/` and `.moonsuite/` paths for a selected
+  book root instead of nested book-local suite state.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and

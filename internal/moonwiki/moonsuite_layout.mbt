@@ -1,41 +1,41 @@
 ///|
 pub fn moonsuite_root(root : String) -> String {
-  @moonsuite.suite_root(root)
+  @moonsuite.suite_root_for_workspace_root(root)
 }
 
 ///|
 pub fn moonsuite_state_dir(root : String) -> String {
-  @moonsuite.state_dir(root)
+  @moonsuite.state_dir(moonsuite_root(root))
 }
 
 ///|
 pub fn moonsuite_books_root(root : String) -> String {
-  @moonsuite.books_root(root)
+  @moonsuite.books_root(moonsuite_root(root))
 }
 
 ///|
 pub fn moonsuite_inbox_root(root : String) -> String {
-  @moonsuite.inbox_root(root)
+  @moonsuite.inbox_root(moonsuite_root(root))
 }
 
 ///|
 pub fn moonsuite_exports_root(root : String) -> String {
-  @moonsuite.exports_root(root)
+  @moonsuite.exports_root(moonsuite_root(root))
 }
 
 ///|
 pub fn moonsuite_tmp_root(root : String) -> String {
-  @moonsuite.tmp_root(root)
+  @moonsuite.tmp_root(moonsuite_root(root))
 }
 
 ///|
 pub fn moonsuite_products_root(root : String) -> String {
-  @moonsuite.products_root(root)
+  @moonsuite.products_root(moonsuite_root(root))
 }
 
 ///|
 pub fn moonsuite_product_dir(root : String, product_id : String) -> String {
-  @moonsuite.product_home(root, product_id).state_path
+  @moonsuite.product_home_for_workspace_root(root, product_id).state_path
 }
 
 ///|
@@ -65,7 +65,7 @@ fn moonsuite_product_display_artifact(
 
 ///|
 pub fn moonsuite_services_root(root : String) -> String {
-  @moonsuite.services_root(root)
+  @moonsuite.services_root(moonsuite_root(root))
 }
 
 ///|
@@ -78,12 +78,12 @@ pub fn moonsuite_product_service_path(
 
 ///|
 pub fn moonsuite_suite_json_path(root : String) -> String {
-  @moonsuite.suite_manifest_path(root)
+  @moonsuite.suite_manifest_path(moonsuite_root(root))
 }
 
 ///|
 pub fn moonsuite_product_registry_path(root : String) -> String {
-  @moonsuite.product_registry_path(root)
+  @moonsuite.product_registry_path(moonsuite_root(root))
 }
 
 ///|
@@ -93,7 +93,7 @@ fn moonsuite_product_ids() -> Array[String] {
 
 ///|
 fn moonsuite_product_registry(root : String) -> Json {
-  @moonsuite.product_registry(root)
+  @moonsuite.product_registry(moonsuite_root(root))
 }
 
 ///|
@@ -107,7 +107,7 @@ pub async fn prepare_moonsuite_workspace_root(root : String) -> Bool {
       moonsuite_state_dir(root),
       moonsuite_products_root(root),
       moonsuite_services_root(root),
-      @moonsuite.cache_root(root),
+      @moonsuite.cache_root(moonsuite_root(root)),
     ] {
     @fsx.make_directory(path, recursive=true, exists_ok=true) catch {
       _ => return false
@@ -125,7 +125,7 @@ pub async fn prepare_moonsuite_workspace_root(root : String) -> Bool {
   if !@fsx.exists(moonsuite_suite_json_path(root)) {
     @fsx.write_to_file(
       moonsuite_suite_json_path(root),
-      @moonsuite.suite_manifest(root).stringify(indent=2) + "\n",
+      @moonsuite.suite_manifest(moonsuite_root(root)).stringify(indent=2) + "\n",
       create=0o644,
     ) catch {
       _ => return false
