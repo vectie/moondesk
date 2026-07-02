@@ -1521,15 +1521,22 @@ Completed slices:
   the migrated runtime adapters. Validation for this slice: focused MoonRobo
   Robo loop/turn concat scan, `moon fmt`, `moon info`, `moon check`, `moon
   test`, and `git diff --check`.
+- MoonLib's MoonSuite contract now has a source-level `0.1.4` shared
+  `ProductHome` surface with product state, service, cache, temp, and accepted
+  book-output paths plus workspace-root constructors. This is the shared layer
+  needed to remove the remaining duplicated MoonFish/MoonMoon product-home
+  facade formulas after the MoonLib publish/consume slice. Validation for this
+  slice: MoonLib `moon fmt`, `moon info`, `moon check`, focused `moon test
+  moonsuite`, and `git diff --check` on the touched MoonLib files.
 
 Remaining high-priority product slices:
 
 - MoonLib: expand `vectie/moonlib/moonsuite` only when a missing contract is
   shared by more than one product; keep it deterministic and free of daemon,
-  analytics, and UI dependencies. Current published contract version is
-  `vectie/moonlib@0.1.3`, including workspace-root-derived product artifact
-  helpers for standalone and suite-hosted MoonBooks plus product-home and
-  book-output constructors now consumed by MoonFish and MoonMoon.
+  analytics, and UI dependencies. Current published contract version is still
+  `vectie/moonlib@0.1.3`; source `0.1.4` now includes a generic
+  `ProductHome` contract and should be published before MoonFish and MoonMoon
+  switch their product-specific facades to wrap the shared struct.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
