@@ -1717,10 +1717,9 @@ Remaining high-priority product slices:
   source for runtime product paths, and its product display-path contract is the
   shared source for root-independent user-facing product artifact strings.
   Current product-repo scan has no remaining `vectie/moonlib@0.1.3` or
-  `vectie/moonlib@0.1.4` pins in the touched clean product repos: Moondesk,
+  `vectie/moonlib@0.1.4` pins in the touched product repos: Moondesk,
   MoonRobo, Moontown, MoonClaw, MoonStat, MoonBook, MoonFish, MoonMoon,
-  MoonChat, and Lepusa. MoonVis remains outside this committed slice because
-  its worktree contains unrelated asset/UI state.
+  MoonChat, MoonVis, and Lepusa.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
@@ -1746,10 +1745,10 @@ Remaining high-priority product slices:
   `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
   and zero active `.moonsuite/products` literals outside generated interfaces
   and tests. The new `scripts/fresh_suite_product_smoke.sh` gate runs the
-  Moontown, MoonClaw, MoonBook, MoonRobo, MoonFish, MoonMoon, MoonChat, and
-  Lepusa fresh-suite smoke scripts from one Moondesk command, giving the
-  migration a single cross-product integration check for the main writer
-  surfaces and product-home contracts already cut over to product homes.
+  Moontown, MoonClaw, MoonBook, MoonRobo, MoonFish, MoonMoon, MoonChat,
+  MoonVis, and Lepusa fresh-suite smoke scripts from one Moondesk command,
+  giving the migration a single cross-product integration check for the main
+  writer surfaces and product-home contracts already cut over to product homes.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
   Moondesk old-writer cleanup.
@@ -1840,9 +1839,12 @@ Remaining high-priority product slices:
   fields instead of local product state/service/cache/temp formulas. Remaining
   work is broader browser-backed smoke integration for Rabbita and future
   products rather than local string-contract extraction. MoonFish, MoonMoon,
-  and MoonChat have root product-home contracts and now consume MoonLib for
-  those paths. MoonFish, MoonMoon, and MoonChat also have native CLI `layout`
-  commands plus
+  MoonChat, and MoonVis have root product-home contracts. MoonFish, MoonMoon,
+  and MoonChat consume MoonLib directly; MoonVis is a frontend-only Vite
+  product, so its local contract mirrors the MoonLib `ProductHome` fields and
+  is covered by the same cross-product smoke gate. MoonFish, MoonMoon, and
+  MoonChat also have native CLI `layout` commands, and MoonVis has a Node
+  `scripts/moonsuite-layout.mjs` command, plus
   `scripts/fresh-suite-product-home-smoke.sh` gates, which resolve temporary
   `books/<book-id>` workspace roots through the shared MoonLib contract and
   assert product state/service/cache paths land under
