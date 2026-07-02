@@ -64,6 +64,7 @@ run_gate "MoonBook fresh-suite extension" "moonbook" "scripts/fresh-suite-extens
 run_zsh_gate "MoonRobo fresh-suite product home" "moonrobo" "scripts/fresh-suite-product-home-smoke.sh"
 run_zsh_gate "MoonFish fresh-suite product home" "moonfish" "scripts/fresh-suite-product-home-smoke.sh"
 run_zsh_gate "MoonMoon fresh-suite product home" "moonmoon" "scripts/fresh-suite-product-home-smoke.sh"
+run_zsh_gate "MoonChat fresh-suite product home" "moonchat" "scripts/fresh-suite-product-home-smoke.sh"
 run_local_gate "Lepusa fresh-books" "scripts/lepusa_fresh_books_smoke.sh"
 
 echo "Fresh MoonSuite product smoke passed"
