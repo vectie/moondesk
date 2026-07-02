@@ -421,6 +421,16 @@ pattern instead of carrying independent string contracts.
   MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test` with `1001/1001`
   tests passing, `git diff --check`, and an active-code stale-layout scan with
   zero MoonClaw hits.
+- MoonClaw commit `06ee7020` removes routine stale-path negative assertions and
+  legacy runtime-commit fixtures from MoonClaw tests. The native MoonCode commit
+  proof now commits normal book files while leaving `.moonsuite` and `.tmp`
+  uncommitted, and product-home tests rely on positive MoonSuite assertions
+  instead of repeating retired `.moonclaw`, `.moontown`, or
+  `.moonclaw-worktrees` names. Validation for this slice: MoonClaw `moon fmt`,
+  `moon info`, `moon check`, `moon test` with `1001/1001` tests passing,
+  `git diff --check`, and the refined MoonClaw stale-layout scan reduced from
+  `34` to `8`, with the remaining hits limited to explicit legacy-ignore
+  fixtures for old manifests and old skill/model directories.
 - Moontown commit `44b1e5f7` propagates MoonBook's fresh executable-event path
   contract into the Moontown MoonBook adapter. The decoded
   `moonbook.book_state.v1` fixture now expects `events/latest.json` instead of
