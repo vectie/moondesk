@@ -4,7 +4,7 @@ async fn handle_town_events(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   send_json(conn, method_, Json::array(collect_town_event_records(root, 120)))
 }
 
@@ -16,12 +16,11 @@ async fn handle_moonclaw_events(
   conn : @http.ServerConnection,
 ) -> Unit {
   let requested_workspace = query_value(request_path, "workspace")
+  let root = workspace_context(workspace_root).suite_root
   send_json(
     conn,
     method_,
-    Json::array(
-      collect_moonclaw_event_records(workspace_root, requested_workspace, 120),
-    ),
+    Json::array(collect_moonclaw_event_records(root, requested_workspace, 120)),
   )
 }
 

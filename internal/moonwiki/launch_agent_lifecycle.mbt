@@ -5,7 +5,7 @@ async fn handle_launch_agent(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let result = if method_ is Get || method_ is Head {
     launch_agent_record(root, action="status", exit_code=0, message="")
   } else {

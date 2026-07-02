@@ -148,7 +148,7 @@ async fn count_run_workspaces(workspace_root : String) -> Int {
 
 ///|
 async fn latest_run_info(workspace_root : String) -> Json {
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let mut latest : Json = {
     "workspace_id": "",
     "run_id": "",

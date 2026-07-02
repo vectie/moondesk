@@ -40,9 +40,11 @@ async fn handle_moonclaw_models(
 
 ///|
 async fn moonclaw_daemon_status(workspace_root : String) -> Json {
-  let info_path = moonclaw_daemon_info_path(workspace_root)
-  let descriptor = moonclaw_service_descriptor(workspace_root, "daemon")
-  let service_cwd = json_string(descriptor, "cwd", default=workspace_root)
+  let context = workspace_context(workspace_root)
+  let root = context.suite_root
+  let info_path = moonclaw_daemon_info_path(root)
+  let descriptor = moonclaw_service_descriptor(root, "daemon")
+  let service_cwd = json_string(descriptor, "cwd", default=root)
   let service_configured = json_bool(descriptor, "configured", default=false)
   if !@fsx.exists(info_path) {
     return {
@@ -64,7 +66,7 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let alive = pid > 0 && process_is_alive(pid)
   let port_reachable = port > 0 && moonclaw_port_reachable(port)
   let existing_allowed = service_configured ||
-    moonclaw_allows_unconfigured_existing_daemon(workspace_root)
+    moonclaw_allows_unconfigured_existing_daemon(context)
   let reachable = moonclaw_existing_daemon_reachable(
     alive, port, port_reachable, existing_allowed,
   )
@@ -106,9 +108,9 @@ fn moonclaw_existing_daemon_reachable(
 
 ///|
 fn moonclaw_allows_unconfigured_existing_daemon(
-  workspace_root : String,
+  context : WorkspaceContext,
 ) -> Bool {
-  let root = @pathx.normalize(workspace_root)
+  let root = context.suite_root
   !(root.has_prefix("/tmp/") ||
   root.has_prefix("/private/tmp/") ||
   root.has_prefix("/var/folders/") ||
@@ -117,17 +119,19 @@ fn moonclaw_allows_unconfigured_existing_daemon(
 
 ///|
 async fn ensure_moonclaw_daemon(workspace_root : String) -> Json {
-  let status = moonclaw_daemon_status(workspace_root)
+  let context = workspace_context(workspace_root)
+  let root = context.suite_root
+  let status = moonclaw_daemon_status(root)
   if json_bool(status, "running", default=false) {
     return status
   }
-  let descriptor = moonclaw_service_descriptor(workspace_root, "daemon")
+  let descriptor = moonclaw_service_descriptor(root, "daemon")
   if !json_bool(descriptor, "configured", default=false) {
     return moonclaw_daemon_with_message(
       status, "MoonClaw daemon service is not configured for this workspace",
     )
   }
-  let log_dir = moonclaw_log_dir(workspace_root)
+  let log_dir = moonclaw_log_dir(root)
   @fsx.make_directory(log_dir, recursive=true, exists_ok=true) catch {
     _ => ()
   }
@@ -158,7 +162,7 @@ async fn ensure_moonclaw_daemon(workspace_root : String) -> Json {
   let pid = @process.spawn_orphan(
     json_string(descriptor, "command", default=""),
     json_string_array_items(descriptor, "args"),
-    cwd=json_string(descriptor, "cwd", default=workspace_root),
+    cwd=json_string(descriptor, "cwd", default=root),
     stdout=stdout_file,
     stderr=stderr_file,
   ) catch {
@@ -168,7 +172,7 @@ async fn ensure_moonclaw_daemon(workspace_root : String) -> Json {
         "Could not start MoonClaw daemon: \{error}",
       )
   }
-  wait_for_moonclaw_daemon(workspace_root, pid)
+  wait_for_moonclaw_daemon(root, pid)
 }
 
 ///|

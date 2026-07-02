@@ -30,7 +30,9 @@ async fn book_pattern_records_from_template_registry(
 
 ///|
 async fn book_template_registry_status(workspace_root : String) -> Json {
-  let sources = book_template_registry_sources(workspace_root)
+  let context = workspace_context(workspace_root)
+  let root = context.suite_root
+  let sources = book_template_registry_sources(root)
   let templates : Array[Json] = []
   let missing_paths : Array[String] = []
   let mut selected_path = ""
@@ -68,7 +70,7 @@ async fn book_template_registry_status(workspace_root : String) -> Json {
     "templates": Json::array(templates),
     "base_types": Json::array(
       book_base_type_records_from_patterns(
-        book_pattern_records_for_workspace(workspace_root),
+        book_pattern_records_for_workspace(root),
       ),
     ),
   }
@@ -77,7 +79,7 @@ async fn book_template_registry_status(workspace_root : String) -> Json {
 ///|
 async fn book_template_registry_sources(workspace_root : String) -> Array[Json] {
   let sources : Array[Json] = []
-  let roots = [@pathx.normalize(workspace_root)]
+  let roots = [workspace_context(workspace_root).suite_root]
   let seen : Array[String] = []
   for root in roots {
     if root == "" || seen.contains(root) {

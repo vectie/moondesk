@@ -1869,6 +1869,13 @@ Remaining high-priority product slices:
   suite root or selected `books/<book-id>` root and write/read sibling books and
   Moontown state through the owning suite instead of recomputing local
   `books/` paths per handler.
+  The broad replacement sweep then moved the remaining Moondesk MoonCode,
+  MoonClaw daemon, Moontown analytics/events/requests, daemon lifecycle,
+  LaunchAgent, template-registry, runtime-support, review fallback, server, and
+  HTTP file-resolution edges away from local `workspace_root` normalization.
+  Route handlers now either derive the owning suite through `WorkspaceContext`
+  or deliberately use the requested workspace root for file operations scoped
+  to the selected workspace.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and

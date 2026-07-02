@@ -120,7 +120,10 @@ async fn collect_review_items(
     }
   }
   for
-    event in collect_town_event_records(@pathx.normalize(workspace_root), limit) {
+    event in collect_town_event_records(
+      workspace_context(workspace_root).suite_root,
+      limit,
+    ) {
     if items.length() >= limit {
       break
     }

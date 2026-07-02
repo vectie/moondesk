@@ -75,7 +75,7 @@ pub async fn Server::serve_desk(
   workspace_root : String,
 ) -> Unit {
   let ui_root = @pathx.normalize(ui_root)
-  let workspace_root = @pathx.normalize(workspace_root)
+  let workspace_root = workspace_context(workspace_root).requested_root
   self.server.run_forever(
     (request, body, conn) => {
       handle_desk_request(ui_root, workspace_root, request, body, conn)

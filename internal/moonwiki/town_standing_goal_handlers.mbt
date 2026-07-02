@@ -4,7 +4,8 @@ async fn handle_town_daemon(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let daemon = read_json_file_or_object(town_daemon_path(workspace_root))
+  let root = workspace_context(workspace_root).suite_root
+  let daemon = read_json_file_or_object(town_daemon_path(root))
   send_json(conn, method_, daemon)
 }
 
@@ -14,7 +15,7 @@ async fn handle_town_standing_goals(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   ignore(
     sync_all_book_pattern_standing_goals(root) catch {
       _ => Json::object({})
@@ -41,7 +42,7 @@ async fn handle_create_standing_goal(
       return
     }
   }
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let town_root = moontown_product_root(root)
   @fsx.make_directory(town_root, recursive=true, exists_ok=true) catch {
     _ => {
@@ -81,7 +82,7 @@ async fn handle_town_dispatch(
   conn : @http.ServerConnection,
 ) -> Unit {
   ignore(body)
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let dispatch_root = town_moondesk_dispatches_root(root)
   @fsx.make_directory(dispatch_root, recursive=true, exists_ok=true) catch {
     _ => {

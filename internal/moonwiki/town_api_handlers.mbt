@@ -4,7 +4,7 @@ async fn handle_town_analytics(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let repair = sync_all_book_pattern_standing_goals(root) catch {
     _ => Json::object({})
   }
@@ -53,7 +53,7 @@ async fn handle_town_progress(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let repair = sync_all_book_pattern_standing_goals(root) catch {
     _ => Json::object({})
   }
@@ -96,7 +96,7 @@ async fn handle_town_calendar(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   ignore(
     sync_all_book_pattern_standing_goals(root) catch {
       _ => Json::object({})

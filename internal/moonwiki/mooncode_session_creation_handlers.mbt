@@ -3,13 +3,13 @@ async fn resolve_mooncode_workspace_scope(
   workspace_root : String,
   workspace_id : String,
 ) -> Result[@desk.DeskWorkspace, String] {
+  let context = workspace_context(workspace_root)
   if workspace_id == "" {
-    let root = @pathx.normalize(workspace_root)
     return Ok(
       @desk.workspace(
-        id=@desk.stable_id("general-mooncode", root),
+        id=@desk.stable_id("general-mooncode", context.suite_root),
         name="General MoonCode",
-        root_path=root,
+        root_path=context.suite_root,
         kind=SuiteRoot,
       ),
     )
@@ -35,8 +35,9 @@ async fn handle_create_mooncode_session(
     }
   }
   let workspace_id = json_string(payload, "workspace_id", default="")
-  let workspace = match
-    resolve_mooncode_workspace_scope(workspace_root, workspace_id) {
+  let context = workspace_context(workspace_root)
+  let root = context.suite_root
+  let workspace = match resolve_mooncode_workspace_scope(root, workspace_id) {
     Ok(workspace) => workspace
     Err(message) => {
       send_api_error(conn, method_, 404, "Not Found", message)
@@ -83,7 +84,7 @@ async fn handle_create_mooncode_session(
     base, payload, message, command_packet,
   )
   append_mooncode_command_log(
-    workspace_root,
+    root,
     json_string(base, "id", default=""),
     command_packet,
   ) catch {
@@ -95,7 +96,7 @@ async fn handle_create_mooncode_session(
     }
   }
   append_mooncode_runtime_command_log(
-    workspace_root,
+    root,
     json_string(base, "id", default=""),
     runtime_command,
   ) catch {
@@ -117,7 +118,7 @@ async fn handle_create_mooncode_session(
   )
   let runtime_session = match
     send_mooncode_command_to_runtime(
-      workspace_root, queued, payload, message, command_packet,
+      root, queued, payload, message, command_packet,
     ) {
     Ok(session) => session
     Err(error) =>
@@ -126,7 +127,7 @@ async fn handle_create_mooncode_session(
       )
   }
   append_mooncode_runtime_receipt_log(
-    workspace_root,
+    root,
     json_string(base, "id", default=""),
     @mooncode.projected_runtime_receipt(
       runtime_session,
@@ -136,18 +137,16 @@ async fn handle_create_mooncode_session(
   ) catch {
     _ => ()
   }
-  let with_native_eval = sync_mooncode_native_eval_report(
-    workspace_root, runtime_session,
-  ) catch {
+  let with_native_eval = sync_mooncode_native_eval_report(root, runtime_session) catch {
     _ => runtime_session
   }
   let with_action_plan = write_mooncode_action_plan_if_possible(
-    workspace_root, with_native_eval,
+    root, with_native_eval,
   ) catch {
     _ => with_native_eval
   }
   let with_runtime_evidence = write_mooncode_runtime_evidence_if_possible(
-    workspace_root, with_action_plan,
+    root, with_action_plan,
   ) catch {
     _ => with_action_plan
   }
@@ -157,16 +156,16 @@ async fn handle_create_mooncode_session(
     _ => with_runtime_evidence
   }
   let with_session_snapshot = write_mooncode_session_snapshot_if_possible(
-    workspace_root, with_eval_report,
+    root, with_eval_report,
   ) catch {
     _ => with_eval_report
   }
   let with_runtime_handoff = write_mooncode_runtime_handoff_if_possible(
-    workspace_root, with_session_snapshot,
+    root, with_session_snapshot,
   ) catch {
     _ => with_session_snapshot
   }
-  write_mooncode_session_record(workspace_root, with_runtime_handoff) catch {
+  write_mooncode_session_record(root, with_runtime_handoff) catch {
     _ => {
       send_api_error(
         conn, method_, 500, "Internal Server Error", "Could not save MoonCode session",
@@ -174,7 +173,7 @@ async fn handle_create_mooncode_session(
       return
     }
   }
-  append_new_mooncode_command_events(workspace_root, base, with_runtime_handoff) catch {
+  append_new_mooncode_command_events(root, base, with_runtime_handoff) catch {
     _ => {
       send_api_error(
         conn, method_, 500, "Internal Server Error", "Could not append MoonCode event log",
@@ -185,6 +184,6 @@ async fn handle_create_mooncode_session(
   send_json(
     conn,
     method_,
-    enrich_mooncode_session_for_response(workspace_root, with_runtime_handoff),
+    enrich_mooncode_session_for_response(root, with_runtime_handoff),
   )
 }

@@ -4,10 +4,8 @@ async fn handle_town_messages(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let results_root = @pathx.join(
-    moontown_product_root(workspace_root),
-    "book-results",
-  )
+  let root = workspace_context(workspace_root).suite_root
+  let results_root = @pathx.join(moontown_product_root(root), "book-results")
   let messages : Array[Json] = []
   let names = read_directory_names(results_root, include_hidden=false)
   let start = if names.length() > 40 { names.length() - 40 } else { 0 }
@@ -34,7 +32,8 @@ async fn handle_town_requests(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let requests_root = town_moondesk_requests_root(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
+  let requests_root = town_moondesk_requests_root(root)
   let requests : Array[Json] = []
   let names = read_directory_names(requests_root, include_hidden=false)
   let start = if names.length() > 80 { names.length() - 80 } else { 0 }
@@ -165,7 +164,7 @@ async fn handle_town_request(
       return
     }
   }
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let requests_root = town_moondesk_requests_root(root)
   @fsx.make_directory(requests_root, recursive=true, exists_ok=true) catch {
     _ => {

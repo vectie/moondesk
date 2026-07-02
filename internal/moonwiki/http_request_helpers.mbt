@@ -3,7 +3,8 @@ fn resolve_workspace_path(
   workspace_root : String,
   relative : String,
 ) -> (String, String)? {
-  let root = @pathx.normalize(workspace_root)
+  let context = workspace_context(workspace_root)
+  let root = context.requested_root
   let clean = match clean_relative_path(relative) {
     Some(path) => path
     None => return None

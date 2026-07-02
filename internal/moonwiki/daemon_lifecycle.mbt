@@ -7,7 +7,7 @@ async fn handle_daemon_lifecycle(
   conn : @http.ServerConnection,
 ) -> Unit {
   ignore(body)
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let result = match action {
     "status" => supervised_daemon_status(root, action)
     "start" => {
@@ -40,7 +40,7 @@ async fn handle_daemon_supervision(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = @pathx.normalize(workspace_root)
+  let root = workspace_context(workspace_root).suite_root
   let result = if method_ is Get || method_ is Head {
     daemon_policy_record(root, action="status")
   } else {
