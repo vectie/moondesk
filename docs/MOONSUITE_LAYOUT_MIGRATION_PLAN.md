@@ -1928,7 +1928,12 @@ Remaining high-priority product slices:
   are not recreated. MoonRobo native HTTP wrappers were also refreshed to the
   current `moonbitlang/async/http` `Client` and `Server` APIs so the native CLI
   and smoke gate compile on the fresh dependency set instead of relying on stale
-  compatibility.
+  compatibility. The latest MoonRobo executable contract cleanup removes the
+  remaining suite-root-only `product_home`/`product_artifact` examples from
+  bridge sidecar, RoboBook runtime, and product-status tests; those assertions
+  now feed the selected `books/<book-id>` root into MoonLib workspace-root
+  constructors and prove the same suite-level product homes are derived from
+  that book root.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
   explicit project-local override policy coverage, and any newly discovered
   readers from deeper smoke runs. New runtime writes for conversations, jobs,
