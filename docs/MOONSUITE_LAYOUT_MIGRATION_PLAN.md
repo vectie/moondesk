@@ -1927,6 +1927,12 @@ Remaining high-priority product slices:
   land under `.moonsuite/products/moonclaw` and legacy `.moonclaw`,
   root-level `moonclaw.json`, `moonclaw-jobs`, and `.moonclaw-worktrees` paths
   are not recreated.
+  The latest MoonClaw residual slice also routes starter attachment storage,
+  ACP default workspace selection, MoonCode `moon_check` watcher state, system
+  skill installation, and rules discovery through MoonLib workspace-root
+  constructors, with explicit `books/<book-id>` coverage proving those surfaces
+  resolve to the suite product home instead of recreating book-local
+  `.moonsuite/products/moonclaw` paths.
 - Rabbita and future products: Rabbita now has an explicit root product-home
   contract and white-box coverage, and its facade consumes MoonLib `ProductHome`
   fields instead of local product state/service/cache/temp formulas. Remaining
