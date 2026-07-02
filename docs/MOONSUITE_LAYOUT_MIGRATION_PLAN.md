@@ -1804,7 +1804,12 @@ Remaining high-priority product slices:
   `.moonsuite/products/moonclaw/daemon.json` instead of `$HOME/.moonclaw`.
   MoonCode's public lifecycle/capability contracts and job-analysis preferred
   skill loading now advertise and consume the same product-home session/skill
-  stores.
+  stores. The new `scripts/fresh-suite-product-home-smoke.sh` gate drives the
+  native `onboard init` and `acp add codex` CLI surfaces against a temporary
+  fresh suite root, then asserts `moonclaw.json` plus managed workspace files
+  land under `.moonsuite/products/moonclaw` and legacy `.moonclaw`,
+  root-level `moonclaw.json`, `moonclaw-jobs`, and `.moonclaw-worktrees` paths
+  are not recreated.
 - Rabbita and future products: Rabbita now has an explicit root product-home
   contract and white-box coverage, and its facade consumes MoonLib `ProductHome`
   fields instead of local product state/service/cache/temp formulas. Remaining
