@@ -1933,6 +1933,11 @@ Remaining high-priority product slices:
   constructors, with explicit `books/<book-id>` coverage proving those surfaces
   resolve to the suite product home instead of recreating book-local
   `.moonsuite/products/moonclaw` paths.
+  A follow-up active-runtime scan now leaves only helpers that already receive
+  a normalized suite root before calling suite-root MoonLib APIs; onboarding
+  default workspace creation, default MoonClaw/agent log paths, and gateway
+  robot-routine ledgers have moved to workspace-root constructors, with
+  `books/<book-id>` tests covering onboarding and robot-routine ledger writes.
 - Rabbita and future products: Rabbita now has an explicit root product-home
   contract and white-box coverage, and its facade consumes MoonLib `ProductHome`
   fields instead of local product state/service/cache/temp formulas. Remaining
