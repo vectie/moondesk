@@ -1370,6 +1370,8 @@ test "desk empty library uses workspace metadata path" {
     workspace_root_path: "/Users/example/moondesk-workspace",
     workspace_library_path: "/Users/example/moondesk-workspace/books",
   }
+  assert_eq(workspace_name(model), "MoonSuite: moondesk-workspace")
+  assert_eq(workspace_root(model), "/Users/example/moondesk-workspace")
   assert_eq(workspace_library_root(model), "/Users/example/moondesk-workspace")
   assert_eq(
     workspace_moonbook_library_path(model),

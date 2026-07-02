@@ -23,7 +23,11 @@ fn workspace_name(model : Model) -> String {
       return workspace.name
     }
   }
-  "No workspace"
+  if model.workspace_root_path != "" {
+    "MoonSuite: " + @desk.display_name(model.workspace_root_path)
+  } else {
+    "No workspace"
+  }
 }
 
 ///|
@@ -33,7 +37,11 @@ fn workspace_root(model : Model) -> String {
       return workspace.root_path
     }
   }
-  "not connected"
+  if model.workspace_root_path != "" {
+    model.workspace_root_path
+  } else {
+    "not connected"
+  }
 }
 
 ///|

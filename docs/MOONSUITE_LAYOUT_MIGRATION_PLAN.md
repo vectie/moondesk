@@ -286,6 +286,14 @@ pattern instead of carrying independent string contracts.
   tests passing, `npm run build` for the Rabbita desk bundle, `git diff --check`,
   API verification showing `product_count: 13`, and visible app verification at
   `http://127.0.0.1:4535/?activity=files`.
+- Moondesk title/root helpers now use the loaded MoonSuite workspace metadata
+  when no MoonBook is selected. The global title bar shows
+  `MoonSuite: <root-name>` instead of `No workspace`, and `workspace_root(...)`
+  resolves to the active suite root during first-run/no-book flows. Validation
+  for this slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test`
+  with `457/457` tests passing, `npm run build`, `git diff --check`, and
+  visible app verification at `http://127.0.0.1:4535/?activity=files` showing
+  `MoonSuite: moondesk-phase4-cleanup-run`.
 - MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
   Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
   `/tmp/moonclaw-root` suite root and assert the current
