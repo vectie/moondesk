@@ -26,7 +26,8 @@ MoonClaw owns execution:
 - model loop and tool execution
 - prompt, steer, cancel, runtime loop, and runtime service behavior
 - file edits, tests, builds, package generation, and event streaming
-- durable runtime sidecars under the selected book
+- durable runtime sidecars under the selected MoonSuite root's MoonClaw product
+  home
 
 MoonClaw must remain a standalone agent runtime. Moondesk should be able to
 start, probe, and render it, but the runtime must also be useful to a CLI,
@@ -189,18 +190,23 @@ from the same field contract.
 
 ## Durable Layout
 
-MoonCode session state is book-scoped:
+MoonCode native session state is product-home scoped under the selected
+MoonSuite root:
 
 ```text
+<MoonSuiteRoot>/
+  .moonsuite/
+    products/
+      moonclaw/
+        mooncode/
+          sessions/<session-id>/
+            session.json
+            events.jsonl
+            commands.jsonl
+            runtime-commands.jsonl
+            runtime-receipts.jsonl
+            package-results.jsonl
 books/<book-id>/
-  .moonclaw/
-    mooncode/
-      sessions/<session-id>/
-        session.json
-        events.jsonl
-        commands.jsonl
-        runtime-commands.jsonl
-        runtime-receipts.jsonl
   wiki/
     reviews/
       mooncode/<session-id>/

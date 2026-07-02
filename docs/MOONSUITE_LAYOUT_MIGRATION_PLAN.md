@@ -1465,6 +1465,15 @@ Completed slices:
   status-path scan, `moon fmt`, `moon info` with unrelated whitespace-only
   `.mbti` churn restored, `moon check`, `moon test` with `145/145` tests
   passing, and `git diff --check`.
+- Moondesk's MoonCode and executable-book architecture docs no longer show
+  book-local `.moonclaw/mooncode/sessions` as the durable layout. The current
+  docs describe native MoonCode session sidecars under the selected
+  MoonSuite root's MoonClaw product home at
+  `.moonsuite/products/moonclaw/mooncode/sessions/...`, keeping the public
+  architecture guidance aligned with the runtime contract used by MoonClaw and
+  Moondesk projections. Validation for this slice: focused stale-layout doc
+  scan, Moondesk `moon test` with `459/459` tests passing, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 

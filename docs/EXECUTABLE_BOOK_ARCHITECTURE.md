@@ -166,8 +166,17 @@ books/<book-id>/
   portable/
     app-tool/
   site/generated/
-  .moonclaw/
-    mooncode/sessions/
+```
+
+Executable-code runtime sidecars are outside the book tree:
+
+```text
+<MoonSuiteRoot>/
+  .moonsuite/
+    products/
+      moonclaw/
+        mooncode/
+          sessions/
 ```
 
 The exact subdirectories can vary by book type, but the ownership rule should
