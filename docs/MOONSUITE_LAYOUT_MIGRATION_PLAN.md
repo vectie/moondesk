@@ -1347,6 +1347,15 @@ Completed slices:
   `com.vectie.moontown` launchd identifier false positive, restored
   whitespace-only generated `.mbti` churn from `moon info`, and
   `git diff --check`.
+- MoonClaw remaining active job/agent documentation now describes job indexes,
+  run artifacts, runtime skills, AI-orchestration skill contracts, gateway
+  agent sessions, credentials, conversations, logs, and model config under the
+  MoonClaw product home at `.moonsuite/products/moonclaw/...` instead of
+  `~/.moonclaw` or project-local `.moonclaw` roots. Validation for this slice:
+  MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `1002/1002` tests passing, focused stale-path scan across the patched docs
+  with zero hits, cleanup of test-created untracked `.moonsuite` runtime
+  output, and `git diff --check`.
 
 Remaining high-priority product slices:
 
