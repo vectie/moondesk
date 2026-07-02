@@ -1760,6 +1760,22 @@ Remaining high-priority product slices:
   `scripts/validate_moonlib_consumer_pins.sh` now makes this product-repo pin
   audit repeatable from Moondesk and fails if any touched consumer drifts away
   from the expected MoonLib version.
+- MoonClaw: commit `3a6aeaa3` moves the daemon/UI discovery path onto the
+  served workspace root instead of OS home. Detached daemon startup now waits
+  on the MoonLib-derived product-home `daemon.json` for the selected
+  `--serve` root, foreground daemon startup passes the same root as `home`,
+  model loading uses that root, and the native/VSC UI bootstrap passes its
+  active workspace root to daemon startup, API discovery, and shutdown. This
+  closes the active UI/runtime mismatch where MoonClaw wrote fresh product-home
+  daemon state but the UI still looked under the user-home product directory.
+  Validation passed with MoonClaw `moon fmt`, `moon info`,
+  `moon check --target native --diagnostic-limit 80`, full
+  `moon test --target native` (`1006/1006`), `git diff --check`, and
+  `scripts/fresh-suite-product-home-smoke.sh`. The current UI TypeScript
+  checks still stop on existing package alias/type-root issues unrelated to
+  this slice: stale `@maria/core` imports in the core/native renderer packages,
+  missing `node` type roots in native, and unresolved `@moonclaw/core`
+  workspace package aliases in native/VSC package-local `tsc` runs.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
