@@ -1557,6 +1557,14 @@ Completed slices:
   this slice: Moontown `moon update`, `moon fmt`, `moon info`, `moon check`,
   full `moon test`, focused storage primitive-formula scan,
   generated-interface churn restore, and `git diff --check`.
+- MoonClaw now consumes MoonLib `0.1.4` for its active product-home facade and
+  temp/state lanes. The job product-home helper, ACP state parent, analysis
+  tool-journal temp directory, and worktree scratch root now derive from
+  MoonLib `ProductHome` fields, and ACP fixtures no longer create product
+  homes through primitive `product_dir` calls. Validation for this slice:
+  MoonClaw `moon update`, `moon fmt`, `moon info`, `moon check`, full
+  `moon test`, focused primitive-constructor scan, generated-interface diff
+  review, test-output cleanup, and `git diff --check`.
 
 Remaining high-priority product slices:
 
@@ -1564,7 +1572,7 @@ Remaining high-priority product slices:
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies. Current published contract version is
   `vectie/moonlib@0.1.4`; its generic `ProductHome` contract is now the shared
-  source for the MoonFish, MoonMoon, MoonRobo, Moondesk, and Moontown
+  source for the MoonFish, MoonMoon, MoonRobo, Moondesk, Moontown, and MoonClaw
   product-home facades.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
@@ -1615,6 +1623,9 @@ Remaining high-priority product slices:
   starter attachments, provider-task artifacts, worktree scratch, MoonCode
   sessions and watchers, skills, rules, daemon lock, robot routine ledgers, and
   todo session state are now MoonLib-backed product-home or suite-temp based.
+  The active MoonClaw product-home facade, ACP state parent, job-analysis tool
+  journals, and worktree scratch roots now consume MoonLib `ProductHome`
+  fields directly instead of rebuilding product state or temp formulas locally.
   Job-analysis tool journals now use the MoonClaw suite temp lane instead of
   root-level hidden `.moonclaw-tool-journal-*` files.
   Provider-task artifacts now derive product homes through the workspace-root
