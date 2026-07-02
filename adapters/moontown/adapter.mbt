@@ -20,16 +20,18 @@ pub struct OperatorRequestDraft {
 ///|
 pub fn snapshot_paths(root_path : String) -> TownSnapshotRef {
   {
-    town_json_path: @moonsuite.product_artifact(
+    town_json_path: @moonsuite.product_artifact_for_workspace_root(
       root_path, "moontown", "town.json",
     ),
-    daemon_json_path: @moonsuite.product_artifact(
+    daemon_json_path: @moonsuite.product_artifact_for_workspace_root(
       root_path, "moontown", "daemon.json",
     ),
-    standing_goals_path: @moonsuite.product_artifact(
+    standing_goals_path: @moonsuite.product_artifact_for_workspace_root(
       root_path, "moontown", "standing-goals.json",
     ),
-    watcher_dir: @moonsuite.product_artifact(root_path, "moontown", "watchers"),
+    watcher_dir: @moonsuite.product_artifact_for_workspace_root(
+      root_path, "moontown", "watchers",
+    ),
   }
 }
 

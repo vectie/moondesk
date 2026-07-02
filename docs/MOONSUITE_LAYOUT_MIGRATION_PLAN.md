@@ -1839,6 +1839,11 @@ Remaining high-priority product slices:
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
   Moondesk old-writer cleanup.
+  A later active-source scan moved the Moondesk Moontown snapshot adapter to
+  MoonLib workspace-root product-artifact helpers as well, so selecting a
+  `books/<book-id>` root now resolves town snapshots, daemon state, standing
+  goals, and watcher directories through the owning suite product home instead
+  of a nested book-local `.moonsuite/products/moontown`.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
@@ -1864,6 +1869,11 @@ Remaining high-priority product slices:
   live-autonomy outputs. Remaining Moontown work should focus on newly
   discovered product-owned residuals from deeper smoke coverage, not local
   product-home display formula cleanup.
+  The MoonClaw run polling store now uses the MoonLib workspace-root
+  product-artifact helper for the `jobs` store, while preserving direct
+  handling of an already-selected MoonClaw product home. White-box coverage now
+  writes and polls a run using a `books/<book-id>` home and asserts no
+  book-local `.moonsuite/products/moonclaw` path is created.
 - MoonBook: the MoonClaw wiki extension now keeps its workspace-owned
   `moonclaw.jobs.json` beside the book, but writes the MoonClaw runtime config
   to the suite product home at `.moonsuite/products/moonclaw/moonclaw.json`
