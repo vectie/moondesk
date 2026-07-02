@@ -1730,10 +1730,12 @@ Remaining high-priority product slices:
   legacy-drift canonical targets now consume MoonLib `ProductHome` fields
   directly. MoonFish's legacy `.moonfish`, MoonMoon's legacy `.moonmoon`,
   MoonChat's legacy `.moonchat`, and MoonVis's legacy `.moonvis` suite-root
-  homes are now reported as drift against their matching
-  `.moonsuite/products/<product>` homes; remaining work should focus on new
-  drift coverage rather than local product-home formula cleanup. The canonical
-  drift payload now also exposes the full first-party product-home set for
+  homes, plus stale `.moondesk`, `.moonbook`, `.moonwiki`, `.mooncode`,
+  `.bookkeeper`, `.lepusa`, and `.rabbita` suite-root homes, are now reported
+  as drift against their matching `.moonsuite/products/<product>` homes;
+  remaining work should focus on new drift coverage rather than local
+  product-home formula cleanup. The canonical drift payload now also exposes
+  the full first-party product-home set for
   Moondesk, MoonBook, MoonWiki, MoonCode, MoonStat, MoonClaw, Moontown,
   MoonRobo, MoonFish, MoonMoon, MoonChat, MoonVis, Bookkeeper, Lepusa, and
   Rabbita through MoonLib-derived paths, so downstream validators can compare
