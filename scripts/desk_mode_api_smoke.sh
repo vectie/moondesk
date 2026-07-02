@@ -542,8 +542,18 @@ assert_contains "${generated_import_error}" "Desk cannot import into generated o
 trashed_note_entry="$(post_json 200 "${BASE}/api/workspaces/${WORKSPACE_ID}/trash" '{"path":"wiki/smoke-archive/renamed-daily.md"}')"
 assert_contains "${trashed_note_entry}" '"path": "wiki/smoke-archive/renamed-daily.md"'
 trash_path="$(printf '%s' "${trashed_note_entry}" | python3 -c 'import json,sys; print(json.load(sys.stdin)["trash_path"])')"
-if [[ ! -e "${BOOK_ROOT}/${trash_path}" ]]; then
-  echo "trashed Desk note was not moved into scoped trash" >&2
+trash_absolute="${ROOT}/${trash_path}"
+nested_book_trash_absolute="${BOOK_ROOT}/${trash_path}"
+if [[ ! "${trash_path}" == .moonsuite/products/moondesk/trash/files/* ]]; then
+  echo "trashed Desk note did not use Moondesk product-home trash" >&2
+  exit 1
+fi
+if [[ ! -e "${trash_absolute}" ]]; then
+  echo "trashed Desk note was not moved into suite product-home trash" >&2
+  exit 1
+fi
+if [[ -e "${nested_book_trash_absolute}" ]]; then
+  echo "trashed Desk note created nested book-local product-home trash" >&2
   exit 1
 fi
 if [[ -f "${BOOK_ROOT}/wiki/smoke-archive/renamed-daily.md" ]]; then
@@ -559,8 +569,8 @@ if [[ ! -f "${BOOK_ROOT}/wiki/smoke-archive/renamed-daily.md" ]]; then
   echo "restored Desk note was not returned to the original path" >&2
   exit 1
 fi
-if [[ -e "${BOOK_ROOT}/${trash_path}" ]]; then
-  echo "restored Desk note was left in scoped trash" >&2
+if [[ -e "${trash_absolute}" ]]; then
+  echo "restored Desk note was left in suite product-home trash" >&2
   exit 1
 fi
 trash_listing_after_restore="$(request 200 "${BASE}/api/workspaces/${WORKSPACE_ID}/trash")"

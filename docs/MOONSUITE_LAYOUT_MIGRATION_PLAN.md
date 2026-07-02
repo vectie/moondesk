@@ -265,6 +265,15 @@ pattern instead of carrying independent string contracts.
   passing, active one-line old-path file-operation scan with zero hits,
   narrowed active legacy literal scan with only filters/service identifiers, and
   `git diff --check`.
+- Moondesk Desk smoke gates now enforce the same trash contract end to end. The
+  API smoke resolves returned `.moonsuite/products/moondesk/trash/files/...`
+  paths against the owning suite root instead of the selected book root, and the
+  browser smoke asserts the Moondesk product-home trash directory exists while
+  legacy `books/<book-id>/.moontown/trash` and nested
+  `books/<book-id>/.moonsuite/products/moondesk/trash` directories do not.
+  Validation for this slice: `bash -n scripts/desk_mode_api_smoke.sh`,
+  `node --check scripts/desk_mode_browser_smoke.mjs`,
+  `scripts/desk_mode_api_smoke.sh`, and `scripts/desk_mode_browser_smoke.sh`.
 - Moondesk commit `c13ab594` removes the remaining fresh-default compatibility
   treatment for stale `.moontown`, `.moonclaw`, and `.moonclaw-worktrees`
   surfaces. Desk VFS hiding and creation guards now protect only the current

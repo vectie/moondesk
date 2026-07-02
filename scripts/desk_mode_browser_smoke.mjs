@@ -1117,8 +1117,16 @@ async function run() {
       "trashed note hidden from current directory",
     );
     assert(
-      fs.existsSync(path.join(fixtureRoot, "books/research-alpha/.moontown/trash")),
-      "Desk trash directory was not created inside the MoonBook",
+      fs.existsSync(path.join(fixtureRoot, ".moonsuite/products/moondesk/trash/files")),
+      "Desk trash directory was not created in the Moondesk product home",
+    );
+    assert(
+      !fs.existsSync(path.join(fixtureRoot, "books/research-alpha/.moontown/trash")),
+      "Desk trash should not recreate legacy book-local .moontown trash",
+    );
+    assert(
+      !fs.existsSync(path.join(fixtureRoot, "books/research-alpha/.moonsuite/products/moondesk/trash")),
+      "Desk trash should not create nested book-local Moondesk product trash",
     );
     await waitFor(
       session,
