@@ -1899,7 +1899,11 @@ Remaining high-priority product slices:
   legacy `.moonclaw`, root `moonclaw.json`, and `moonclaw-jobs` paths. The
   skill hub now derives its ignored `.moonsuite` and `.tmp` directory names
   from MoonLib state/temp constructors instead of carrying separate local
-  literals in debug metadata and recursive scan filtering.
+  literals in debug metadata and recursive scan filtering. The MoonClaw
+  extension runtime helper now uses MoonLib `product_home_for_workspace_root`
+  directly for the product state directory, and embedded extension tests now
+  assert config/provider paths with workspace-root artifact constructors rather
+  than suite-root-only `product_home` or `product_artifact` examples.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
