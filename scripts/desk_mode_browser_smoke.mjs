@@ -92,6 +92,19 @@ async function waitFor(session, expression, label, timeoutMs = 12000) {
   throw new Error(`Timed out waiting for ${label}; last value: ${JSON.stringify(lastValue)}`);
 }
 
+async function waitForStatePass(session, expression, label, timeoutMs = 12000) {
+  const deadline = Date.now() + timeoutMs;
+  let lastValue;
+  while (Date.now() < deadline) {
+    lastValue = await session.evaluate(expression);
+    if (lastValue === true || lastValue?.pass === true) {
+      return lastValue;
+    }
+    await sleep(100);
+  }
+  throw new Error(`Timed out waiting for ${label}; last value: ${JSON.stringify(lastValue)}`);
+}
+
 async function waitForFile(filePath, label, timeoutMs = 12000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -435,13 +448,21 @@ async function runMoonCodePromptSmoke(session) {
     "MoonCode prompt typed",
   );
   await keyDownInputByTestId(session, "mooncode-input", "Enter");
-  await waitFor(
+  await waitForStatePass(
     session,
     `(() => {
       const items = ${mooncodeTranscriptItemsExpression()};
       const bodyText = document.body.textContent || "";
       const input = document.querySelector('[data-testid="mooncode-input"]');
-      return input?.value === "" &&
+      const state = {
+        inputValue: input?.value ?? "",
+        itemCount: items.length,
+        items,
+        hasLocalAgentCopy: bodyText.includes("Local agent is not reachable yet"),
+        hasNativeRecordedCopy: bodyText.includes("Native MoonCode runtime recorded this prompt"),
+        centerText: document.querySelector('[data-testid="mooncode-center"]')?.textContent.trim().slice(0, 600) || ""
+      };
+      state.pass = input?.value === "" &&
         items.length >= 2 &&
         items[0].kind === "message" &&
         items[0].role === "user" &&
@@ -449,8 +470,9 @@ async function runMoonCodePromptSmoke(session) {
         items[1].kind === "activity" &&
         items[1].text.includes("Prompt queued") &&
         items[1].folded === "true" &&
-        !bodyText.includes("Local agent is not reachable yet") &&
-        !bodyText.includes("Native MoonCode runtime recorded this prompt");
+        !state.hasLocalAgentCopy &&
+        !state.hasNativeRecordedCopy;
+      return state.pass ? true : state;
     })()`,
     "MoonCode immediate append before backend reply",
     1000,
@@ -657,14 +679,19 @@ async function run() {
       "Manifest-less MoonBook folder should remain visible with Needs setup status",
     );
     assert(
-      workspaceRows.every(row => row.title.includes(`${path.sep}books${path.sep}`)),
-      "Workspace rows should point at the dedicated books library",
+      workspaceRows.every(
+        row =>
+          row.title.includes("books/") &&
+          row.text.includes("books/") &&
+          !row.title.includes(fixtureRoot),
+      ),
+      `Workspace rows should show clean dedicated books labels: ${JSON.stringify(workspaceRows)}`,
     );
     const libraryRootText = await session.evaluate(
       `document.querySelector('[data-testid="desk-library-root"]')?.textContent ?? ''`,
     );
     assert(
-      libraryRootText.includes(`${path.sep}books`) &&
+      libraryRootText.includes("books/") &&
         libraryRootText.includes("4 MoonBooks"),
       `Library root should show dedicated books location and count: ${libraryRootText}`,
     );
@@ -699,7 +726,7 @@ async function run() {
     await waitFor(
       session,
       `[...document.querySelectorAll('[data-testid="desk-workspace-row"]')]` +
-        `.some(row => row.dataset.workspaceId === 'book-browser-created-moonbook' && row.title.includes(${jsString(`${path.sep}books${path.sep}browser-created-moonbook`)}))`,
+        `.some(row => row.dataset.workspaceId === 'book-browser-created-moonbook' && row.title.includes('books/browser-created-moonbook'))`,
       "browser-created MoonBook row in dedicated library",
     );
     await waitFor(
@@ -754,7 +781,7 @@ async function run() {
     await waitFor(
       session,
       `[...document.querySelectorAll('[data-testid="desk-workspace-row"]')]` +
-        `.some(row => row.dataset.workspaceId === 'book-sidebar-imported-moonbook' && row.title.includes(${jsString(`${path.sep}books${path.sep}sidebar-imported-moonbook`)}))`,
+        `.some(row => row.dataset.workspaceId === 'book-sidebar-imported-moonbook' && row.title.includes('books/sidebar-imported-moonbook'))`,
       "sidebar-imported MoonBook row in dedicated library",
     );
     await waitFor(
@@ -1274,7 +1301,7 @@ async function runEmptyLibrary() {
       `document.querySelector('[data-testid="desk-library-root"]')?.textContent ?? ''`,
     );
     assert(
-      libraryRootText.includes(`${path.sep}books`) &&
+      libraryRootText.includes("books/") &&
         libraryRootText.includes("0 MoonBooks"),
       `Empty library root should show dedicated books location and zero count: ${libraryRootText}`,
     );
@@ -1315,7 +1342,7 @@ async function runEmptyLibrary() {
     await waitFor(
       session,
       `[...document.querySelectorAll('[data-testid="desk-workspace-row"]')]` +
-        `.some(row => row.dataset.workspaceId === 'book-empty-library-created' && row.title.includes(${jsString(`${path.sep}books${path.sep}empty-library-created`)}))`,
+        `.some(row => row.dataset.workspaceId === 'book-empty-library-created' && row.title.includes('books/empty-library-created'))`,
       "created MoonBook row from empty library",
     );
     await waitFor(

@@ -55,12 +55,7 @@ fn mooncode_transcript_items(
         )
       None => {
         let items = mooncode_transcript_items_from_events(session.id, events)
-        mooncode_merge_local_transcript_items(
-          items,
-          model,
-          session,
-          has_following_work=false,
-        )
+        mooncode_merge_local_transcript_items(items, model, session)
         items
       }
     }
@@ -266,19 +261,14 @@ fn mooncode_transcript_items_with_pending_prompt(
     }
   }
   let items = mooncode_transcript_items_from_events(session.id, before)
-  mooncode_merge_local_transcript_items(
-    items,
-    model,
-    session,
-    has_following_work=after.length() > 0,
-  )
+  mooncode_merge_local_transcript_items(items, model, session)
   let tail = mooncode_transcript_items_from_events_with_user(
     session.id,
     after,
     initial_has_user=true,
   )
   for item in mooncode_drop_leading_activity_items(tail) {
-    items.push(item)
+    mooncode_push_event_tail_transcript_item(items, item)
   }
   items
 }
@@ -384,7 +374,6 @@ fn mooncode_merge_local_transcript_items(
   items : Array[MoonCodeTranscriptItem],
   model : Model,
   session : MoonCodeSession,
-  has_following_work~ : Bool,
 ) -> Unit {
   for row in model.mooncode_conversation_rows {
     if row.session_id != session.id {
@@ -403,7 +392,6 @@ fn mooncode_merge_local_transcript_items(
         { role, content, status: row.status },
         model,
         session.id,
-        has_following_work~,
       )
     } else {
       mooncode_push_transcript_message_item(items, {
@@ -423,7 +411,6 @@ fn mooncode_merge_local_transcript_items(
       { role: "user", content: prompt.content, status: prompt.status },
       model,
       session.id,
-      has_following_work~,
     )
   }
 }
@@ -434,7 +421,6 @@ fn mooncode_insert_pending_prompt_item(
   row : MoonCodeTranscriptRow,
   model : Model,
   session_id : String,
-  has_following_work~ : Bool,
 ) -> Unit {
   let insertion = mooncode_pending_prompt_item_index(
     model,
@@ -449,11 +435,24 @@ fn mooncode_insert_pending_prompt_item(
   })
   if insertion >= items.length() {
     items.push(item)
-    if !has_following_work {
-      mooncode_push_pending_activity_item(items)
-    }
+    mooncode_push_pending_activity_item(items)
   } else {
     items.insert(insertion, item)
+    items.insert(insertion + 1, mooncode_pending_activity_item())
+  }
+}
+
+///|
+fn mooncode_push_event_tail_transcript_item(
+  items : Array[MoonCodeTranscriptItem],
+  item : MoonCodeTranscriptItem,
+) -> Unit {
+  match item.message {
+    Some(row) =>
+      if !mooncode_transcript_items_have_message(items, row.role, row.content) {
+        items.push(item)
+      }
+    None => items.push(item)
   }
 }
 
@@ -466,16 +465,19 @@ fn mooncode_push_pending_activity_item(
     ) {
     return
   }
-  items.push(
-    mooncode_transcript_activity_item({
-      tone: "thinking",
-      label: "Thinking",
-      title: "Prompt queued",
-      detail: "Waiting for MoonClaw to stream runtime events.",
-      status: "running",
-      folded: true,
-    }),
-  )
+  items.push(mooncode_pending_activity_item())
+}
+
+///|
+fn mooncode_pending_activity_item() -> MoonCodeTranscriptItem {
+  mooncode_transcript_activity_item({
+    tone: "thinking",
+    label: "Thinking",
+    title: "Prompt queued",
+    detail: "Waiting for MoonClaw to stream runtime events.",
+    status: "running",
+    folded: true,
+  })
 }
 
 ///|

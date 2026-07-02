@@ -7,12 +7,14 @@ fn selected_mooncode_session(model : Model) -> MoonCodeSession? {
       }
     }
   }
-  if mooncode_new_session_draft_active(model) {
+  if model.selected_mooncode_session_id == "" {
     match mooncode_draft_session(model) {
       Some(session) => return Some(session)
       None => ()
     }
-    return None
+    if mooncode_new_session_draft_active(model) {
+      return None
+    }
   }
   for session in model.mooncode_sessions {
     if session.workspace_id == model.selected_workspace_id {

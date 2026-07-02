@@ -1905,6 +1905,82 @@ test "code mode transcript keeps pending prompt before early assistant event" {
 }
 
 ///|
+test "code mode transcript keeps folded pending activity before fast answer" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_events: [
+      code_mode_test_event(
+        "prompt-event",
+        command_id="cmd-1",
+        title="Prompt: queued",
+        kind="command.prompt",
+        status="queued",
+        detail="Browser smoke prompt append order",
+        command="prompt",
+        created_at="100",
+      ),
+      code_mode_test_event(
+        "fast-answer",
+        command_id="cmd-1",
+        title="MoonCode tool `finish` completed",
+        lane="review",
+        kind="finish",
+        status="done",
+        detail="finished",
+        created_at="101",
+        tool_result=Some({
+          "tool": "finish",
+          "ok": true,
+          "output": "Fast answer",
+        }),
+      ),
+    ],
+  }
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: "session-a",
+    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+      [],
+      "session-a",
+      "Browser smoke prompt append order",
+    ),
+    mooncode_pending_prompts: [
+      {
+        session_id: "session-a",
+        content: "Browser smoke prompt append order",
+        status: "queued",
+        after_row_count: 0,
+        after_event_count: 0,
+      },
+    ],
+  }
+  let items = mooncode_transcript_items(model, session)
+  assert_eq(items.length(), 3)
+  match items[0].message {
+    Some(row) => {
+      assert_eq(row.role, "user")
+      assert_eq(row.content, "Browser smoke prompt append order")
+    }
+    None => fail("expected user prompt first")
+  }
+  match items[1].activity {
+    Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.title, "Prompt queued")
+      assert_eq(row.folded, true)
+    }
+    None => fail("expected folded pending activity second")
+  }
+  match items[2].message {
+    Some(row) => {
+      assert_eq(row.role, "assistant")
+      assert_eq(row.content, "Fast answer")
+    }
+    None => fail("expected assistant answer third")
+  }
+}
+
+///|
 test "code mode transcript ignores assistant-only raw transcript during live conversation" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),
@@ -2081,6 +2157,43 @@ test "code mode new chat send appends local prompt immediately" {
 }
 
 ///|
+test "code mode draft transcript survives background status refresh" {
+  let base = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "book-demo",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [],
+    mooncode_prompt: "Keep this visible",
+    mooncode_composer_status: "draft",
+  }
+  let (_, pending) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage,
+    base,
+  )
+  let refreshed = {
+    ..pending,
+    mooncode_composer_status: "loaded MoonCode sessions",
+  }
+  let session = selected_mooncode_session(refreshed).unwrap()
+  assert_eq(session.id, mooncode_draft_session_id(refreshed))
+  let items = mooncode_transcript_items(refreshed, session)
+  assert_eq(items.length(), 2)
+  match items[0].message {
+    Some(row) => assert_eq(row.content, "Keep this visible")
+    None => fail("expected draft prompt after background refresh")
+  }
+  match items[1].activity {
+    Some(row) => {
+      assert_eq(row.title, "Prompt queued")
+      assert_eq(row.folded, true)
+    }
+    None => fail("expected folded queued activity after background refresh")
+  }
+}
+
+///|
 test "code mode created session adopts draft prompt rows" {
   let draft_model = {
     ..init_model(),
@@ -2238,12 +2351,20 @@ test "code mode transcript puts early thinking under pending prompt" {
     ],
   }
   let items = mooncode_transcript_items(model, session)
-  assert_eq(items.length(), 4)
+  assert_eq(items.length(), 5)
   match items[2].message {
     Some(row) => assert_eq(row.content, "New question")
     None => fail("expected pending prompt before thinking")
   }
   match items[3].activity {
+    Some(row) => {
+      assert_eq(row.label, "Thinking")
+      assert_eq(row.title, "Prompt queued")
+      assert_eq(row.folded, true)
+    }
+    None => fail("expected folded pending activity")
+  }
+  match items[4].activity {
     Some(row) => {
       assert_eq(row.label, "Thinking")
       assert_eq(row.detail, "Inspecting now.")
