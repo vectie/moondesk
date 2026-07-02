@@ -1434,6 +1434,17 @@ Completed slices:
   slice: focused Moondesk MoonStat plugin stale-path scan, no generated
   `.mbti` changes, `moon fmt`, `moon info`, `moon check`, `moon test` with
   `459/459` tests passing, and `git diff --check`.
+- MoonClaw and Moontown now apply the same MoonStat plugin suite-status
+  discovery contract. Their optional MoonStat clients derive the active
+  workspace's `.moonsuite/suite-status.json` path through MoonLib instead of
+  reading `$HOME/.moonsuite/suite-status.json`, with white-box coverage for
+  suite-hosted book workspaces and stale-path scans limited to canonical test
+  expectations. Validation for this slice: MoonClaw `moon fmt`, `moon info`,
+  `moon check`, `moon test` with `1003/1003` tests passing and cleanup of
+  test-created untracked `.moonsuite` runtime output; Moontown `moon fmt`,
+  `moon info` with unrelated whitespace-only `.mbti` churn restored,
+  `moon check`, `moon test` with `928/928` tests passing; focused plugin
+  stale-path scans; and `git diff --check` in both repos.
 
 Remaining high-priority product slices:
 
