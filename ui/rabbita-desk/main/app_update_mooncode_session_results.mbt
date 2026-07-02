@@ -29,8 +29,7 @@ fn update_mooncode_session_results(
         {
           ..model,
           mooncode_composer_status: mooncode_background_status_unless_draft(
-            model,
-            error,
+            model, error,
           ),
         },
       )
@@ -59,8 +58,7 @@ fn update_mooncode_session_results(
         {
           ..model,
           mooncode_composer_status: mooncode_background_status_unless_draft(
-            model,
-            error,
+            model, error,
           ),
         },
       )
@@ -86,7 +84,9 @@ fn update_mooncode_session_results(
       let keep_stream = selected == model.mooncode_stream_session_id
       let keep_sink = selected == model.mooncode_runtime_event_sink_session_id
       (
-        mooncode_session_hydration_cmd(dispatch, selected, keep_stream, keep_sink),
+        mooncode_session_hydration_cmd(
+          dispatch, selected, keep_stream, keep_sink,
+        ),
         {
           ..model,
           mooncode_sessions,
@@ -157,8 +157,7 @@ fn update_mooncode_session_results(
         {
           ..model,
           mooncode_composer_status: mooncode_background_status_unless_draft(
-            model,
-            error,
+            model, error,
           ),
         },
       )
@@ -221,6 +220,17 @@ fn mooncode_session_mutation_succeeded(
   session : MoonCodeSession,
   status : String,
 ) -> (@rabbita.Cmd, Model) {
+  let draft_session_id = mooncode_draft_session_id(model)
+  let conversation_rows = mooncode_reassign_conversation_session(
+    model.mooncode_conversation_rows,
+    draft_session_id,
+    session.id,
+  )
+  let pending_prompts = mooncode_reassign_pending_prompts(
+    model.mooncode_pending_prompts,
+    draft_session_id,
+    session.id,
+  )
   (
     sync_shell_batch(
       MoonCode,
@@ -243,10 +253,11 @@ fn mooncode_session_mutation_succeeded(
       selected_mooncode_session_id: session.id,
       mooncode_prompt: "",
       mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
-        model.mooncode_pending_prompts,
+        pending_prompts,
         session.id,
         session.mooncode_events,
       ),
+      mooncode_conversation_rows: conversation_rows,
       mooncode_composer_status: status,
     },
   )

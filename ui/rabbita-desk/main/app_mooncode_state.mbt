@@ -8,6 +8,10 @@ fn selected_mooncode_session(model : Model) -> MoonCodeSession? {
     }
   }
   if mooncode_new_session_draft_active(model) {
+    match mooncode_draft_session(model) {
+      Some(session) => return Some(session)
+      None => ()
+    }
     return None
   }
   for session in model.mooncode_sessions {
@@ -16,6 +20,54 @@ fn selected_mooncode_session(model : Model) -> MoonCodeSession? {
     }
   }
   None
+}
+
+///|
+fn mooncode_draft_session_id(model : Model) -> String {
+  if model.selected_workspace_id == "" {
+    "mooncode-draft-general"
+  } else {
+    "mooncode-draft-" + model.selected_workspace_id
+  }
+}
+
+///|
+fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
+  let session_id = mooncode_draft_session_id(model)
+  if !mooncode_session_has_pending_prompt(model, session_id) &&
+    !mooncode_conversation_has_session(
+      model.mooncode_conversation_rows,
+      session_id,
+    ) {
+    return None
+  }
+  Some({
+    id: session_id,
+    workspace_id: model.selected_workspace_id,
+    workspace_name: if model.selected_workspace_id == "" {
+      "General"
+    } else {
+      workspace_name(model)
+    },
+    cwd: if model.selected_workspace_id == "" {
+      ""
+    } else {
+      model.workspace_root_path
+    },
+    mooncode_runtime_session_id: None,
+    title: mooncode_new_session_title(model),
+    model: mooncode_selected_runtime_model(model, None),
+    status: "queued",
+    queued_count: 1,
+    updated_at: "",
+    transcript: [],
+    mooncode_events: [],
+    mooncode_summary: {
+      event_count: 0,
+      verified_test_count: 0,
+      pending_diff_count: 0,
+    },
+  })
 }
 
 ///|
@@ -79,9 +131,8 @@ fn mooncode_merge_session_listing(
   let merged : Array[MoonCodeSession] = []
   for session in incoming {
     match mooncode_find_session(existing, session.id) {
-      Some(previous) => merged.push(
-        mooncode_preserve_hydrated_session(previous, session),
-      )
+      Some(previous) =>
+        merged.push(mooncode_preserve_hydrated_session(previous, session))
       None => merged.push(session)
     }
   }
@@ -108,10 +159,7 @@ fn mooncode_preserve_hydrated_session(
 ) -> MoonCodeSession {
   if incoming.transcript.length() == 0 &&
     incoming.mooncode_events.length() == 0 &&
-    (
-      previous.transcript.length() > 0 ||
-      previous.mooncode_events.length() > 0
-    ) {
+    (previous.transcript.length() > 0 || previous.mooncode_events.length() > 0) {
     {
       ..incoming,
       transcript: previous.transcript,

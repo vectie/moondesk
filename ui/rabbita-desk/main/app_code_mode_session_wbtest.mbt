@@ -59,7 +59,11 @@ fn code_mode_test_event(
 ) -> MoonCodeEvent {
   {
     id,
-    command_id: if command_id == "" { None } else { Some(command_id) },
+    command_id: if command_id == "" {
+      None
+    } else {
+      Some(command_id)
+    },
     lane,
     kind,
     title,
@@ -192,11 +196,7 @@ test "code mode activity rows show runtime work but not chat bubbles" {
         kind="finish",
         status="done",
         detail="finished",
-        tool_result=Some({
-          "tool": "finish",
-          "ok": true,
-          "output": "Done.",
-        }),
+        tool_result=Some({ "tool": "finish", "ok": true, "output": "Done." }),
       ),
       code_mode_test_event(
         "runtime-done",
@@ -691,11 +691,7 @@ test "code mode transcript items keep messages and progress in event order" {
         status="done",
         detail="finished",
         created_at="005",
-        tool_result=Some({
-          "tool": "finish",
-          "ok": true,
-          "output": "Done.",
-        }),
+        tool_result=Some({ "tool": "finish", "ok": true, "output": "Done." }),
       ),
     ],
   }
@@ -1913,7 +1909,11 @@ test "code mode transcript ignores assistant-only raw transcript during live con
   let session = {
     ..code_mode_test_session("session-a", status="done"),
     transcript: [
-      { role: "assistant", content: "Raw assistant should not jump first", status: "done" },
+      {
+        role: "assistant",
+        content: "Raw assistant should not jump first",
+        status: "done",
+      },
     ],
     mooncode_events: [
       code_mode_test_event(
@@ -2029,13 +2029,93 @@ test "code mode prompt action adds pending prompt before runtime reply" {
   assert_eq(next.mooncode_prompt, "")
   assert_eq(next.mooncode_pending_prompts.length(), 1)
   assert_eq(next.mooncode_pending_prompts[0].session_id, "session-a")
-  assert_eq(next.mooncode_pending_prompts[0].content, "Explain the latest error")
+  assert_eq(
+    next.mooncode_pending_prompts[0].content,
+    "Explain the latest error",
+  )
   assert_eq(next.mooncode_conversation_rows.length(), 1)
   assert_eq(next.mooncode_conversation_rows[0].role, "user")
-  assert_eq(next.mooncode_conversation_rows[0].content, "Explain the latest error")
+  assert_eq(
+    next.mooncode_conversation_rows[0].content,
+    "Explain the latest error",
+  )
   let rows = mooncode_transcript_rows(next, session)
   assert_eq(rows.length(), 1)
   assert_eq(rows[0].content, "Explain the latest error")
+}
+
+///|
+test "code mode new chat send appends local prompt immediately" {
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [],
+    mooncode_prompt: "Sketch the migration plan",
+    mooncode_composer_status: "draft",
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage,
+    model,
+  )
+  let draft_id = mooncode_draft_session_id(model)
+  assert_eq(next.selected_mooncode_session_id, "")
+  assert_eq(next.mooncode_prompt, "")
+  assert_eq(next.mooncode_conversation_rows.length(), 1)
+  assert_eq(next.mooncode_conversation_rows[0].session_id, draft_id)
+  assert_eq(next.mooncode_conversation_rows[0].role, "user")
+  assert_eq(
+    next.mooncode_conversation_rows[0].content,
+    "Sketch the migration plan",
+  )
+  assert_eq(next.mooncode_pending_prompts.length(), 1)
+  assert_eq(next.mooncode_pending_prompts[0].session_id, draft_id)
+  let session = selected_mooncode_session(next).unwrap()
+  assert_eq(session.id, draft_id)
+  let rows = mooncode_transcript_rows(next, session)
+  assert_eq(rows.length(), 1)
+  assert_eq(rows[0].role, "user")
+  assert_eq(rows[0].content, "Sketch the migration plan")
+}
+
+///|
+test "code mode created session adopts draft prompt rows" {
+  let draft_model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [],
+    mooncode_prompt: "Keep the first prompt visible",
+    mooncode_composer_status: "draft",
+  }
+  let (_, pending) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage,
+    draft_model,
+  )
+  let real_session = code_mode_test_session("session-created", workspace_id="")
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    CreatedMoonCodeSession(Ok(real_session)),
+    pending,
+  )
+  assert_eq(next.selected_mooncode_session_id, "session-created")
+  assert_eq(next.mooncode_conversation_rows.length(), 1)
+  assert_eq(next.mooncode_conversation_rows[0].session_id, "session-created")
+  assert_eq(
+    next.mooncode_conversation_rows[0].content,
+    "Keep the first prompt visible",
+  )
+  assert_eq(next.mooncode_pending_prompts.length(), 1)
+  assert_eq(next.mooncode_pending_prompts[0].session_id, "session-created")
+  let session = selected_mooncode_session(next).unwrap()
+  let rows = mooncode_transcript_rows(next, session)
+  assert_eq(rows.length(), 1)
+  assert_eq(rows[0].role, "user")
+  assert_eq(rows[0].content, "Keep the first prompt visible")
 }
 
 ///|
@@ -2388,10 +2468,7 @@ test "code mode transcript hydrates assistant after durable prompt row" {
 
 ///|
 test "code mode runtime sink hydrates append only conversation rows" {
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: "session-a",
-  }
+  let model = { ..init_model(), selected_mooncode_session_id: "session-a" }
   let (_, next) = update_mooncode_stream_results(
     code_mode_test_dispatch,
     LoadedMoonCodeRuntimeEventSink(
@@ -2441,10 +2518,7 @@ test "code mode runtime sink hydrates append only conversation rows" {
 
 ///|
 test "code mode runtime sink keeps final answer emitted before prompt record" {
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: "session-a",
-  }
+  let model = { ..init_model(), selected_mooncode_session_id: "session-a" }
   let (_, next) = update_mooncode_stream_results(
     code_mode_test_dispatch,
     LoadedMoonCodeRuntimeEventSink(
@@ -3064,30 +3138,31 @@ test "code mode stream poll ignores stale sessions and merges selected events" {
 
 ///|
 test "code mode stream parser accepts numeric MoonClaw event timestamps" {
-  let text = #|{
-  #|  "type": "event",
-  #|  "event": {
-  #|    "id": "finish-1",
-  #|    "command_id": "cmd-flat",
-  #|    "lane": "review",
-  #|    "kind": "finish",
-  #|    "title": "MoonCode tool `finish` completed",
-  #|    "status": "done",
-  #|    "detail": "finished",
-  #|    "created_at": 1782824149398,
-  #|    "tool_result": {
-  #|      "tool": "finish",
-  #|      "ok": true,
-  #|      "output": "Final answer"
-  #|    }
-  #|  }
-  #|}
-  #|{
-  #|  "type": "done",
-  #|  "next_since": 9,
-  #|  "emitted_count": 1,
-  #|  "stream_source": "moonclaw"
-  #|}
+  let text =
+    #|{
+    #|  "type": "event",
+    #|  "event": {
+    #|    "id": "finish-1",
+    #|    "command_id": "cmd-flat",
+    #|    "lane": "review",
+    #|    "kind": "finish",
+    #|    "title": "MoonCode tool `finish` completed",
+    #|    "status": "done",
+    #|    "detail": "finished",
+    #|    "created_at": 1782824149398,
+    #|    "tool_result": {
+    #|      "tool": "finish",
+    #|      "ok": true,
+    #|      "output": "Final answer"
+    #|    }
+    #|  }
+    #|}
+    #|{
+    #|  "type": "done",
+    #|  "next_since": 9,
+    #|  "emitted_count": 1,
+    #|  "stream_source": "moonclaw"
+    #|}
   match parse_mooncode_stream_text(text) {
     Ok(stream) => {
       assert_eq(stream.next_since, 9)
@@ -3103,29 +3178,33 @@ test "code mode stream parser accepts numeric MoonClaw event timestamps" {
 
 ///|
 test "code mode stream parser preserves nested command packet id" {
-  let text = #|{
-  #|  "type": "event",
-  #|  "event": {
-  #|    "id": "tool-1",
-  #|    "lane": "tool",
-  #|    "kind": "tool_result",
-  #|    "title": "Tool finished",
-  #|    "status": "done",
-  #|    "detail": "ok",
-  #|    "created_at": "2026-06-30T00:00:00Z",
-  #|    "command_packet": {
-  #|      "command_id": "cmd-nested",
-  #|      "action": "prompt"
-  #|    }
-  #|  }
-  #|}
+  let text =
+    #|{
+    #|  "type": "event",
+    #|  "event": {
+    #|    "id": "tool-1",
+    #|    "lane": "tool",
+    #|    "kind": "tool_result",
+    #|    "title": "Tool finished",
+    #|    "status": "done",
+    #|    "detail": "ok",
+    #|    "created_at": "2026-06-30T00:00:00Z",
+    #|    "command_packet": {
+    #|      "command_id": "cmd-nested",
+    #|      "action": "prompt"
+    #|    }
+    #|  }
+    #|}
   match parse_mooncode_stream_text(text) {
     Ok(stream) => {
       assert_eq(stream.events.length(), 1)
       assert_eq(stream.events[0].command_id, Some("cmd-nested"))
       match stream.events[0].command_packet {
         Some(packet) =>
-          assert_eq(json_string_value(packet, "command_id", default=""), "cmd-nested")
+          assert_eq(
+            json_string_value(packet, "command_id", default=""),
+            "cmd-nested",
+          )
         None => fail("expected command packet")
       }
     }
@@ -3149,7 +3228,8 @@ test "code mode stream parser renders package assistant blocks inline" {
       assert_eq(stream.events[2].kind, "tool_result")
       assert_eq(stream.events[2].status, "done")
       match stream.events[2].tool_result {
-        Some(result) => assert_eq(json_string_value(result, "tool", default=""), "Bash")
+        Some(result) =>
+          assert_eq(json_string_value(result, "tool", default=""), "Bash")
         None => fail("expected tool result payload")
       }
       assert_eq(stream.events[3].kind, "assistant_delta")

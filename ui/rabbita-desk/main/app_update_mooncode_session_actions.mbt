@@ -114,7 +114,12 @@ fn mooncode_send_composer(
           },
         )
       }
-      None =>
+      None => {
+        let prompt = model.mooncode_prompt.trim().to_owned()
+        let draft_session_id = mooncode_draft_session_id(model)
+        let draft_session = mooncode_draft_session(model).unwrap_or(
+          mooncode_local_draft_session_for_prompt(model, draft_session_id),
+        )
         (
           sync_shell_batch(
             MoonCode,
@@ -126,6 +131,19 @@ fn mooncode_send_composer(
             workspace_mode: MoonCode,
             activity: Files,
             command_open: false,
+            mooncode_prompt: "",
+            mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+              model.mooncode_conversation_rows,
+              draft_session_id,
+              prompt,
+            ),
+            mooncode_pending_prompts: mooncode_append_pending_prompt(
+              model.mooncode_pending_prompts,
+              draft_session_id,
+              prompt,
+              mooncode_transcript_items(model, draft_session).length(),
+              mooncode_transcript_events(model, draft_session).length(),
+            ),
             mooncode_composer_status: if model.selected_workspace_id == "" {
               "starting General MoonCode"
             } else {
@@ -133,7 +151,42 @@ fn mooncode_send_composer(
             },
           },
         )
+      }
     }
+  }
+}
+
+///|
+fn mooncode_local_draft_session_for_prompt(
+  model : Model,
+  draft_session_id : String,
+) -> MoonCodeSession {
+  {
+    id: draft_session_id,
+    workspace_id: model.selected_workspace_id,
+    workspace_name: if model.selected_workspace_id == "" {
+      "General"
+    } else {
+      workspace_name(model)
+    },
+    cwd: if model.selected_workspace_id == "" {
+      ""
+    } else {
+      model.workspace_root_path
+    },
+    mooncode_runtime_session_id: None,
+    title: mooncode_new_session_title(model),
+    model: mooncode_selected_runtime_model(model, None),
+    status: "queued",
+    queued_count: 1,
+    updated_at: "",
+    transcript: [],
+    mooncode_events: [],
+    mooncode_summary: {
+      event_count: 0,
+      verified_test_count: 0,
+      pending_diff_count: 0,
+    },
   }
 }
 

@@ -48,6 +48,19 @@ fn mooncode_hydrate_conversation_from_events(
   let pending_assistant_finals : Array[MoonCodeConversationRow] = []
   for event in ordered {
     if mooncode_event_is_user_prompt(event) {
+      if assistant_delta_parts.length() > 0 &&
+        mooncode_conversation_has_user(next, session_id) {
+        mooncode_push_conversation_row(
+          next,
+          session_id,
+          "assistant",
+          assistant_delta_parts.join(""),
+          "done",
+          mooncode_event_conversation_key(event, "assistant-delta-before-user"),
+          dedupe_content=true,
+        )
+        assistant_delta_parts.clear()
+      }
       mooncode_push_conversation_row(
         next,
         session_id,
@@ -76,12 +89,8 @@ fn mooncode_hydrate_conversation_from_events(
         let key = mooncode_event_conversation_key(event, "assistant")
         if mooncode_conversation_has_user(next, session_id) {
           if !mooncode_replace_running_assistant_row(
-            next,
-            session_id,
-            content,
-            status,
-            key,
-          ) {
+              next, session_id, content, status, key,
+            ) {
             mooncode_push_conversation_row(
               next,
               session_id,
@@ -153,6 +162,22 @@ fn mooncode_conversation_has_user(
 }
 
 ///|
+fn mooncode_conversation_has_session(
+  rows : Array[MoonCodeConversationRow],
+  session_id : String,
+) -> Bool {
+  if session_id == "" {
+    return false
+  }
+  for row in rows {
+    if row.session_id == session_id {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn mooncode_replace_running_assistant_row(
   rows : Array[MoonCodeConversationRow],
   session_id : String,
@@ -202,6 +227,62 @@ fn mooncode_append_conversation_user_prompt(
 }
 
 ///|
+fn mooncode_reassign_conversation_session(
+  rows : Array[MoonCodeConversationRow],
+  from_session_id : String,
+  to_session_id : String,
+) -> Array[MoonCodeConversationRow] {
+  let next : Array[MoonCodeConversationRow] = []
+  for row in rows {
+    if row.session_id == from_session_id {
+      next.push({
+        ..row,
+        session_id: to_session_id,
+        key: mooncode_rewrite_local_row_key(
+          row.key,
+          from_session_id,
+          to_session_id,
+        ),
+      })
+    } else {
+      next.push(row)
+    }
+  }
+  next
+}
+
+///|
+fn mooncode_rewrite_local_row_key(
+  key : String,
+  from_session_id : String,
+  to_session_id : String,
+) -> String {
+  let from_prefix = "ui-user:\{from_session_id}:"
+  if key.has_prefix(from_prefix) {
+    "ui-user:\{to_session_id}:" + key[from_prefix.length():].to_owned()
+  } else {
+    key
+  }
+}
+
+///|
+fn mooncode_reassign_pending_prompts(
+  prompts : Array[MoonCodePendingPrompt],
+  from_session_id : String,
+  to_session_id : String,
+) -> Array[MoonCodePendingPrompt] {
+  let next : Array[MoonCodePendingPrompt] = []
+  for prompt in prompts {
+    if prompt.session_id == from_session_id {
+      next.push({ ..prompt, session_id: to_session_id })
+    } else {
+      next.push(prompt)
+    }
+  }
+  next
+}
+
+///|
 fn mooncode_copy_conversation_rows(
   rows : Array[MoonCodeConversationRow],
 ) -> Array[MoonCodeConversationRow] {
@@ -231,8 +312,7 @@ fn mooncode_push_conversation_row(
       return
     }
   }
-  if dedupe_content &&
-    rows.length() > 0 {
+  if dedupe_content && rows.length() > 0 {
     let last = rows[rows.length() - 1]
     if last.session_id == session_id &&
       last.role == role &&
@@ -240,17 +320,14 @@ fn mooncode_push_conversation_row(
       return
     }
   }
-  rows.push({
-    session_id,
-    role,
-    content: normalized,
-    status,
-    key,
-  })
+  rows.push({ session_id, role, content: normalized, status, key })
 }
 
 ///|
-fn mooncode_event_conversation_key(event : MoonCodeEvent, prefix : String) -> String {
+fn mooncode_event_conversation_key(
+  event : MoonCodeEvent,
+  prefix : String,
+) -> String {
   if event.id != "" {
     "\{prefix}:event:\{event.id}"
   } else {
