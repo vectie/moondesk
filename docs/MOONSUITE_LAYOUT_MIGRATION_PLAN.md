@@ -1396,6 +1396,15 @@ Completed slices:
   this slice: focused MoonClaw daemon/docs scan for `~/.moonsuite`, `--home ~`,
   and `home directory`, plus MoonClaw `moon fmt`, `moon info`, `moon check`,
   `moon test`, and `git diff --check`.
+- MoonClaw gateway, model loader, agent, and skills package docs/comments now
+  treat the `home` argument as the explicit MoonSuite root and describe skill,
+  model, and agent state under
+  `/path/to/MoonSuiteRoot/.moonsuite/products/moonclaw/...` instead of teaching
+  `~` or the user's OS home directory as the fresh contract. Validation for
+  this slice: focused MoonClaw docs/comment scan for `~/.moonsuite`,
+  `--home ~`, `home directory`, `user's home`, and `system's home`; MoonClaw
+  `moon fmt`, `moon info`, `moon check`, `moon test`; cleanup of test-created
+  untracked `.moonsuite` runtime output; and `git diff --check`.
 
 Remaining high-priority product slices:
 
