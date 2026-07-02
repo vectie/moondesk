@@ -17,10 +17,7 @@ fn resolve_workspace_path(
       moonclaw_jobs_root(root),
       clean[moonclaw_jobs_relative_prefix().length():].to_owned(),
     )
-  } else if clean == ".moonsuite" ||
-    clean.has_prefix(".moonsuite/") ||
-    clean == ".tmp" ||
-    clean.has_prefix(".tmp/") {
+  } else if @desk.moonsuite_internal_relative_path(clean) {
     return None
   } else {
     @pathx.join(root, clean)

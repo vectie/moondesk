@@ -1246,8 +1246,7 @@ fn clean_new_entry_name(name : String, kind : String) -> Result[String, String] 
 ///|
 fn is_desk_create_path_allowed(path : String) -> Bool {
   path != "" &&
-  !path.has_prefix(".moonsuite") &&
-  !path.has_prefix(".tmp") &&
+  !@desk.moonsuite_internal_relative_path(path) &&
   !path.has_prefix("book/") &&
   path != "book" &&
   !path.has_prefix("site/generated") &&

@@ -94,3 +94,19 @@ test "source layer inference covers desk explorer roots" {
   )
   assert_true(@core.infer_source_layer("notes/local.txt") is Workspace)
 }
+
+///|
+test "moonsuite internal relative path helper covers state and temp roots" {
+  assert_eq(@core.moonsuite_state_display_dir(), ".moonsuite")
+  assert_eq(@core.moonsuite_tmp_display_dir(), ".tmp")
+  assert_true(@core.moonsuite_internal_relative_path(".moonsuite"))
+  assert_true(
+    @core.moonsuite_internal_relative_path(
+      ".moonsuite/products/moondesk/preferences/views.json",
+    ),
+  )
+  assert_true(@core.moonsuite_internal_relative_path(".tmp/products/mooncode"))
+  assert_true(@core.moonsuite_internal_relative_path("/.tmp/products/mooncode"))
+  assert_false(@core.moonsuite_internal_relative_path("wiki/.tmp-note.md"))
+  assert_false(@core.moonsuite_internal_relative_path("notes/local.txt"))
+}

@@ -1,7 +1,6 @@
 ///|
 fn should_hide_file_entry(name : String) -> Bool {
-  name == ".moonsuite" ||
-  name == ".tmp" ||
+  @desk.moonsuite_internal_relative_path(name) ||
   name == ".git" ||
   name == ".DS_Store" ||
   name == "DS_Store" ||

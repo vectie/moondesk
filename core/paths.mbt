@@ -89,6 +89,27 @@ pub fn moonsuite_books_root(root : String) -> String {
 }
 
 ///|
+pub fn moonsuite_state_display_dir() -> String {
+  @moonsuite.state_dir(".")
+}
+
+///|
+pub fn moonsuite_tmp_display_dir() -> String {
+  @moonsuite.tmp_root(".")
+}
+
+///|
+pub fn moonsuite_internal_relative_path(path : StringView) -> Bool {
+  let clean = path.to_owned().trim(chars=['/']).to_owned()
+  let state_dir = moonsuite_state_display_dir()
+  let tmp_dir = moonsuite_tmp_display_dir()
+  clean == state_dir ||
+  clean.has_prefix(state_dir + "/") ||
+  clean == tmp_dir ||
+  clean.has_prefix(tmp_dir + "/")
+}
+
+///|
 pub fn infer_source_layer(path : StringView) -> SourceLayer {
   let path = path.to_owned()
   if path == "wiki/history" ||
@@ -147,10 +168,7 @@ pub fn infer_source_layer(path : StringView) -> SourceLayer {
   } else if path == moonsuite_product_display_dir("moonclaw") ||
     path.has_prefix(moonsuite_product_display_dir("moonclaw") + "/") {
     RunArtifact
-  } else if path == ".moonsuite" ||
-    path.has_prefix(".moonsuite/") ||
-    path == ".tmp" ||
-    path.has_prefix(".tmp/") {
+  } else if moonsuite_internal_relative_path(path) {
     Config
   } else {
     Workspace

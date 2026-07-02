@@ -1770,7 +1770,10 @@ Remaining high-priority product slices:
   service paths. Moondesk `core` now exposes MoonLib-backed product display
   helpers plus suite-root and books-root helpers, and active
   MoonWiki/MoonCode/MoonBook adapter product-home display strings route
-  through that shared contract. The Rabbita Desk UI now derives the visible
+  through that shared contract. Moondesk `core` now also centralizes the
+  MoonLib-derived `.moonsuite` and `.tmp` internal relative-path policy used by
+  source-layer inference, HTTP path resolution, Desk listing hides, and Desk
+  create-route protection. The Rabbita Desk UI now derives the visible
   MoonSuite root and MoonBook library path through those core/MoonLib helpers
   instead of parsing or appending `/books` inside the frontend state layer.
   The current Moondesk MoonBit scan has zero quoted
