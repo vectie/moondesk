@@ -1770,6 +1770,15 @@ Remaining high-priority product slices:
   live-autonomy outputs. Remaining Moontown work should focus on newly
   discovered product-owned residuals from deeper smoke coverage, not local
   product-home display formula cleanup.
+- MoonBook: the MoonClaw wiki extension now keeps its workspace-owned
+  `moonclaw.jobs.json` beside the book, but writes the MoonClaw runtime config
+  to the suite product home at `.moonsuite/products/moonclaw/moonclaw.json`
+  instead of recreating a book-root `moonclaw.json`. The extension manifest
+  advertises the product-home config entry, provider manifests remain under the
+  MoonClaw product home, and `scripts/fresh-suite-extension-smoke.sh` now runs
+  native `wiki init` plus `wiki enable moonclaw` against a fresh
+  `books/<book-id>` root to prove both product-home writes and absence of
+  legacy `.moonclaw`, root `moonclaw.json`, and `moonclaw-jobs` paths.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
