@@ -80,6 +80,39 @@ test "workspace path resolver maps MoonClaw job paths to owning suite" {
 }
 
 ///|
+test "Moondesk product paths use owning suite for book workspaces" {
+  let suite_root = "/tmp/moondesk-product-paths-suite"
+  let book_root = @pathx.join(suite_root, "books/research-desk")
+  assert_eq(
+    moondesk_daemon_dir(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moondesk/daemon"),
+  )
+  assert_eq(
+    daemon_lifecycle_state_path(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moondesk/daemon/state.json"),
+  )
+  assert_eq(
+    daemon_policy_path(book_root),
+    @pathx.join(suite_root, ".moonsuite/products/moondesk/daemon/policy.json"),
+  )
+  assert_eq(
+    saved_views_path(book_root),
+    @pathx.join(
+      suite_root, ".moonsuite/products/moondesk/preferences/views.json",
+    ),
+  )
+  assert_eq(
+    tags_path(book_root),
+    @pathx.join(
+      suite_root, ".moonsuite/products/moondesk/preferences/tags.json",
+    ),
+  )
+  assert_false(
+    moondesk_daemon_dir(book_root).contains("/books/research-desk/.moonsuite/"),
+  )
+}
+
+///|
 async test "workspace discovery ignores plain folders" {
   let root = @pathx.join(
     "/tmp",

@@ -1,6 +1,6 @@
 ///|
-fn moondesk_daemon_dir(root : String) -> String {
-  @pathx.join(moonsuite_product_dir(root, "moondesk"), "daemon")
+pub fn moondesk_daemon_dir(root : String) -> String {
+  moonsuite_product_artifact_for_workspace_root(root, "moondesk", "daemon")
 }
 
 ///|

@@ -287,9 +287,9 @@ async fn town_daemon_launch_agent_plist(workspace_root : String) -> String? {
     "  <key>KeepAlive</key>\n" +
     "  <true/>\n" +
     "  <key>StandardOutPath</key>\n" +
-    "  <string>\{xml_escape(@pathx.join(workspace_root, ".moonsuite/products/moondesk/daemon/launch-agent.out.log"))}</string>\n" +
+    "  <string>\{xml_escape(@pathx.join(@moonwiki.moondesk_daemon_dir(workspace_root), "launch-agent.out.log"))}</string>\n" +
     "  <key>StandardErrorPath</key>\n" +
-    "  <string>\{xml_escape(@pathx.join(workspace_root, ".moonsuite/products/moondesk/daemon/launch-agent.err.log"))}</string>\n" +
+    "  <string>\{xml_escape(@pathx.join(@moonwiki.moondesk_daemon_dir(workspace_root), "launch-agent.err.log"))}</string>\n" +
     "</dict>\n" +
     "</plist>\n",
   )

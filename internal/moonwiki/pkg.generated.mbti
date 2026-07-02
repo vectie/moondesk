@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn moondesk_daemon_dir(String) -> String
+
 pub fn moondesk_health_path() -> String
 
 pub fn moonsuite_books_root(String) -> String
