@@ -1742,7 +1742,10 @@ Remaining high-priority product slices:
   every product against one contract report. MoonLib's default product registry
   now also includes MoonChat and MoonVis, closing the gap where those products
   had fresh product-home smoke gates and MoonStat drift reporting but were not
-  present in the shared registry list.
+  present in the shared registry list. Remaining contract-distribution work:
+  publish the registry update as the next MoonLib package version and refresh
+  product consumers so Moondesk can turn its local generated-registry tests
+  from count-based coverage into explicit MoonChat/MoonVis assertions.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
