@@ -28,11 +28,17 @@ pub fn moondesk_health_path() -> String {
 
 ///|
 fn moondesk_health_json(ui_root : String, workspace_root : String) -> Json {
+  let context = workspace_context(workspace_root)
   {
     "ok": true,
     "service": "moondesk",
     "ui_root": @pathx.normalize(ui_root),
-    "workspace_root": @pathx.normalize(workspace_root),
+    "workspace_root": context.requested_root,
+    "suite_root": context.suite_root,
+    "books_root": context.books_root,
+    "suite_path": context.state_dir,
+    "tmp_path": context.tmp_root,
+    "workspace_context": workspace_context_json(context),
   }
 }
 

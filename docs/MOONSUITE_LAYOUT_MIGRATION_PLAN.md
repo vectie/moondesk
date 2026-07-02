@@ -1858,6 +1858,11 @@ Remaining high-priority product slices:
   Workspace metadata and the shared core `moonsuite_books_root` wrapper now
   report the owning suite's `books/` and `.moonsuite/` paths for a selected
   book root instead of nested book-local suite state.
+  The next Moondesk boundary slice introduces an explicit MoonWiki
+  `WorkspaceContext` so root workspace API metadata and health responses derive
+  requested root, suite root, books root, state dir, tmp root, and product
+  registry path once before presenting them to Phase 6 API and Phase 7 UI
+  callers.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and

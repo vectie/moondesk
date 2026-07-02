@@ -26,8 +26,8 @@ fn resolve_request_path(root : String, request_path : StringView) -> String? {
 async fn discover_workspaces(
   workspace_root : String,
 ) -> Array[@desk.DeskWorkspace] {
-  let root = @pathx.normalize(workspace_root)
-  let books_root = moonsuite_books_root(root)
+  let context = workspace_context(workspace_root)
+  let books_root = context.books_root
   let workspaces : Array[@desk.DeskWorkspace] = []
   if is_directory(books_root) {
     for name in read_directory_names(books_root, include_hidden=false) {
@@ -48,14 +48,14 @@ async fn discover_workspaces(
     }
     return sorted_discovered_workspaces(workspaces)
   }
-  if !is_directory(moonsuite_state_dir(root)) {
+  if !is_directory(context.state_dir) {
     return []
   }
   [
     @desk.workspace(
-      id=@desk.stable_id("root", root),
-      name=@desk.display_name(root),
-      root_path=root,
+      id=@desk.stable_id("root", context.suite_root),
+      name=@desk.display_name(context.suite_root),
+      root_path=context.suite_root,
       kind=SuiteRoot,
     ),
   ]
@@ -93,13 +93,16 @@ async fn moonbook_workspace_display_name(
 
 ///|
 async fn workspace_library_metadata(workspace_root : String) -> Json {
-  let root = @pathx.normalize(workspace_root)
-  let products = workspace_product_registry_products(root)
+  let context = workspace_context(workspace_root)
+  let products = workspace_product_registry_products(context.suite_root)
   {
-    "root_path": root,
-    "library_path": moonsuite_books_root(root),
-    "suite_path": moonsuite_state_dir(root),
-    "product_registry_path": moonsuite_product_registry_path(root),
+    "root_path": context.requested_root,
+    "suite_root": context.suite_root,
+    "library_path": context.books_root,
+    "suite_path": context.state_dir,
+    "tmp_path": context.tmp_root,
+    "product_registry_path": context.product_registry_path,
+    "workspace_context": workspace_context_json(context),
     "product_count": products.length(),
     "products": Json::array(products),
   }

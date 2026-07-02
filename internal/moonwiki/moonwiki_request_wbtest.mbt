@@ -267,6 +267,10 @@ async test "workspace metadata exposes dedicated MoonBook library path" {
     json_string(metadata, "library_path", default=""),
     "/tmp/moondesk-workspace/books",
   )
+  assert_eq(
+    json_string(metadata, "suite_root", default=""),
+    "/tmp/moondesk-workspace",
+  )
   let products = json_array_items(metadata, "products")
   assert_true(products.length() >= 13)
   assert_eq(json_string(products[0], "id", default=""), "moondesk")
@@ -317,6 +321,7 @@ async test "workspace metadata maps book roots back to owning suite" {
   @fsx.make_directory(book_root, recursive=true, exists_ok=true)
   let metadata = workspace_library_metadata(book_root)
   assert_eq(json_string(metadata, "root_path", default=""), book_root)
+  assert_eq(json_string(metadata, "suite_root", default=""), suite_root)
   assert_eq(
     json_string(metadata, "library_path", default=""),
     @pathx.join(suite_root, "books"),
@@ -328,6 +333,21 @@ async test "workspace metadata maps book roots back to owning suite" {
   assert_eq(
     json_string(metadata, "product_registry_path", default=""),
     @pathx.join(suite_root, ".moonsuite/product-registry.json"),
+  )
+  assert_eq(
+    json_string(metadata, "tmp_path", default=""),
+    @pathx.join(suite_root, ".tmp"),
+  )
+  guard metadata is Object(metadata_obj) else {
+    fail("expected metadata object")
+  }
+  guard metadata_obj["workspace_context"] is Object(context) else {
+    fail("expected workspace context object")
+  }
+  assert_true(context["requested_root"] == Json::string(book_root))
+  assert_true(context["suite_root"] == Json::string(suite_root))
+  assert_true(
+    context["books_root"] == Json::string(@pathx.join(suite_root, "books")),
   )
   assert_false(
     json_string(metadata, "suite_path", default="").contains(
@@ -2155,14 +2175,28 @@ async test "workspace markdown edits reject raw and non markdown paths" {
 ///|
 test "moondesk health payload exposes readiness contract" {
   assert_eq(moondesk_health_path(), "/__moondesk_health")
-  let health = moondesk_health_json("ui/rabbita-desk/dist", "../books")
+  let suite_root = "/tmp/moondesk-health-suite"
+  let book_root = @pathx.join(suite_root, "books/research-health")
+  let health = moondesk_health_json("ui/rabbita-desk/dist", book_root)
   assert_true(json_bool(health, "ok", default=false))
   assert_eq(json_string(health, "service", default=""), "moondesk")
   assert_true(
     json_string(health, "ui_root", default="").contains("ui/rabbita-desk/dist"),
   )
+  assert_eq(json_string(health, "workspace_root", default=""), book_root)
+  assert_eq(json_string(health, "suite_root", default=""), suite_root)
+  assert_eq(
+    json_string(health, "books_root", default=""),
+    @pathx.join(suite_root, "books"),
+  )
+  assert_eq(
+    json_string(health, "suite_path", default=""),
+    @pathx.join(suite_root, ".moonsuite"),
+  )
   assert_true(
-    json_string(health, "workspace_root", default="").contains("books"),
+    !json_string(health, "suite_path", default="").contains(
+      "books/research-health/.moonsuite",
+    ),
   )
 }
 

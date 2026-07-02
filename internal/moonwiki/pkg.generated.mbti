@@ -3,6 +3,7 @@ package "vectie/moondesk/internal/moonwiki"
 
 import {
   "moonbitlang/async/http",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -54,6 +55,8 @@ pub async fn Server::new(String, Int, dual_stack? : Bool, reuse_addr? : Bool) ->
 pub fn Server::port(Self) -> Int
 pub async fn Server::serve_desk(Self, String, String) -> Unit
 pub async fn Server::serve_directory(Self, String) -> Unit
+
+type WorkspaceContext derive(Eq, @debug.Debug)
 
 // Type aliases
 
