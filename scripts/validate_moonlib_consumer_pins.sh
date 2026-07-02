@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORKSPACE_ROOT="$(cd "${ROOT}/.." && pwd)"
-EXPECTED_VERSION="${MOONLIB_VERSION:-0.1.6}"
+EXPECTED_VERSION="${MOONLIB_VERSION:-0.1.7}"
 EXPECTED_IMPORT="vectie/moonlib@${EXPECTED_VERSION}"
 
 repos=(
