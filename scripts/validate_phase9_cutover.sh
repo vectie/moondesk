@@ -8,6 +8,7 @@ source "${ROOT}/scripts/moonsuite_phase8_inventory.sh"
 repos=("${MOONSUITE_PHASE8_SOURCE_REPOS[@]}")
 
 legacy_cutover_pattern='(\.moontown/books|/\.moontown/trash|\.moontown/moondesk-daemon|\.moonbook(/|"|$)|moonclaw-jobs(/|"|$)|\.moonclaw-worktrees(/|"|$)|\.moonclaw-tool-journal(/|"|$)|source_checkout_safe_workspace_root|workspace_root_source_checkout_warning|workspace_root_contains_path|Using dedicated user workspace root|source checkout redirect|outside source checkouts|home fallback workspace|USERPROFILE|HOME/moondesk-workspace|USERPROFILE/moondesk-workspace|default_workspace_root_from_env\([^)]*,)'
+machine_local_source_pattern='([/]Users/[^[:space:]`"]+|C:\\Users|[/]home/(user|ci[[:alnum:]]*)/[^[:space:]`"]+)'
 
 is_allowed_hit() {
   local hit="$1"
@@ -96,6 +97,28 @@ for repo in "${repos[@]}"; do
 
   if [[ "${repo_failures}" -eq 0 ]]; then
     echo "ok ${repo}: no unapproved Phase 9 legacy cutover paths"
+  fi
+
+  repo_machine_failures=0
+  while IFS= read -r line; do
+    hit="${repo}:${line}"
+    echo "machine-local absolute path in active source: ${hit}" >&2
+    failures=$((failures + 1))
+    repo_machine_failures=$((repo_machine_failures + 1))
+  done < <(
+    cd "${repo_root}"
+    rg -n "${machine_local_source_pattern}" . \
+      --glob '*.mbt' \
+      --glob '!**/*_test.mbt' \
+      --glob '!**/*_wbtest.mbt' \
+      --glob '!**/docs/**' \
+      --glob '!**/_build/**' \
+      --glob '!**/.mooncakes/**' \
+      --glob '!**/.repos/**' || true
+  )
+
+  if [[ "${repo_machine_failures}" -eq 0 ]]; then
+    echo "ok ${repo}: no machine-local absolute paths in active MoonBit source"
   fi
 done
 

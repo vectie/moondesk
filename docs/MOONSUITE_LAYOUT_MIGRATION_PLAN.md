@@ -1087,6 +1087,12 @@ Phase 9 cutover evidence:
 - This Phase 9 explicit-root gate slice extends the cutover validator so the
   retired `USERPROFILE`/home-derived `moondesk-workspace` fallback and old
   multi-input default-root helper shape cannot return in active source.
+- This Phase 9 standalone-source slice removes Moontown's machine-local Codex
+  adapter defaults and validation command text from active source. The Codex
+  ACP target now defaults to the portable `codex` command unless `CODEX_BIN` is
+  explicitly set, and Phase 9 validation now rejects machine-local absolute
+  paths such as macOS user-home paths, Windows user-home paths, or CI host
+  paths in active MoonBit source across the 12 migrated repos.
 
 ## Cross-Product Migration Log
 
