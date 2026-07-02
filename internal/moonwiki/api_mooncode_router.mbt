@@ -8,6 +8,14 @@ async fn route_mooncode_api(
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
+    ["api", "mooncode", "status"] => {
+      if is_read_method(method_) {
+        handle_mooncode_status(workspace_root, method_, conn)
+      } else {
+        send_method_not_allowed(conn, method_)
+      }
+      true
+    }
     ["api", "mooncode", "capabilities"] => {
       if is_read_method(method_) {
         handle_mooncode_capabilities(workspace_root, method_, conn)

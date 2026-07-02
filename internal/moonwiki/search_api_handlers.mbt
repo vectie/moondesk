@@ -131,13 +131,42 @@ async fn handle_town_state(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let state_path = @pathx.join(
-    moontown_product_root(workspace_root),
-    "town.json",
-  )
+  let root = workspace_context(workspace_root).suite_root
+  let state_path = @pathx.join(moontown_product_root(root), "town.json")
   if @fs.exists(state_path) {
-    send_json_text(conn, method_, @fs.read_file(state_path).text())
+    let state = read_json_file_or_object(state_path)
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        state,
+        ok=true,
+        status="ready",
+        message="Moontown state is available",
+      ),
+    )
   } else {
-    send_json(conn, method_, Json::object({}))
+    let descriptor = town_service_descriptor(root, "daemon")
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        api_service_fields(
+          { "state_path": state_path, "state": Json::object({}) },
+          service_configured=json_bool(descriptor, "configured", default=false),
+          service_config_path=json_string(descriptor, "config_path", default=""),
+          service_command=json_string(descriptor, "display", default=""),
+          service_path=moontown_product_root(root),
+        ),
+        ok=false,
+        status="state_missing",
+        message="Moontown state has not been created yet",
+        next_action=if json_bool(descriptor, "configured", default=false) {
+          "start_moontown_daemon"
+        } else {
+          "configure_moontown_service"
+        },
+      ),
+    )
   }
 }

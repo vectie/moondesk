@@ -22,33 +22,7 @@ async test "mooncode session scope still rejects unknown explicit workspace" {
 }
 
 ///|
-test "mooncode runtime unavailable stays queued instead of failed" {
-  let session : Json = {
-    "id": "mooncode-demo",
-    "workspace_id": "general",
-    "workspace_name": "General MoonCode",
-    "workspace_root": "/tmp/moondesk-general",
-    "mooncode_runtime_session_id": "mooncode-demo",
-  }
-  let packet : Json = {
-    "id": "cmd-1",
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
-    "action": "prompt",
-  }
-  let queued = mooncode_runtime_waiting_session(
-    session, "prompt", "MoonClaw daemon service is not configured for this workspace",
-    "", packet,
-  )
-  let events = json_array_items(queued, "mooncode_command_events")
-  assert_eq(json_string(events[0], "status", default=""), "queued")
-  assert_true(json_string(events[0], "detail", default="").contains("saved"))
-  let transcript = json_array_items(queued, "transcript")
-  assert_eq(json_string(transcript[0], "status", default=""), "queued")
-}
-
-///|
-test "mooncode runtime unavailable does not duplicate prompt command detail" {
+test "mooncode immediate queued session appends user prompt" {
   let session : Json = {
     "id": "mooncode-demo",
     "workspace_id": "general",
@@ -62,26 +36,63 @@ test "mooncode runtime unavailable does not duplicate prompt command detail" {
     "kind": "mooncode.command",
     "action": "prompt",
   }
-  let with_command = @mooncode.append_projected_command_event(
+  let queued = mooncode_immediate_queued_session(
     session,
     action="prompt",
-    status="queued",
-    detail="hello mooncode",
-    created_at="2026-06-15T00:00:00Z",
+    message="hello mooncode",
+    context_path="",
     command_packet=packet,
-  )
-  let queued = mooncode_runtime_waiting_session(
-    with_command, "prompt", "MoonClaw daemon service is not configured for this workspace",
-    "", packet,
+    created_at="2026-06-15T00:00:00Z",
   )
   let events = json_array_items(queued, "mooncode_command_events")
-  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "status", default=""), "queued")
   assert_eq(json_string(events[0], "detail", default=""), "hello mooncode")
   let transcript = json_array_items(queued, "transcript")
-  assert_eq(transcript.length(), 1)
-  assert_true(
-    json_string(transcript[0], "content", default="").contains("saved"),
+  assert_eq(json_string(transcript[0], "role", default=""), "user")
+  assert_eq(json_string(transcript[0], "content", default=""), "hello mooncode")
+  assert_eq(json_string(transcript[0], "status", default=""), "queued")
+  assert_eq(json_string(queued, "status", default=""), "queued")
+  assert_eq(json_string(queued, "last_message", default=""), "hello mooncode")
+}
+
+///|
+test "mooncode immediate command response exposes clean phase6 envelope" {
+  let session : Json = {
+    "id": "mooncode-demo",
+    "workspace_id": "general",
+    "workspace_name": "General MoonCode",
+    "workspace_root": "/tmp/moondesk-general",
+    "mooncode_runtime_session_id": "mooncode-demo",
+  }
+  let packet : Json = {
+    "command_id": "cmd-1",
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.command",
+    "action": "prompt",
+  }
+  let queued = mooncode_immediate_queued_session(
+    session,
+    action="prompt",
+    message="hello mooncode",
+    context_path="",
+    command_packet=packet,
+    created_at="2026-06-15T00:00:00Z",
   )
+  let response = mooncode_immediate_command_response(
+    "/tmp/moondesk-general", queued, packet,
+  )
+  assert_true(json_bool(response, "accepted", default=false))
+  assert_eq(json_string(response, "command_id", default=""), "cmd-1")
+  assert_eq(
+    json_string(response, "api_contract", default=""),
+    "moonsuite.phase6.v1",
+  )
+  assert_eq(
+    json_string(response, "next_action", default=""),
+    "poll_mooncode_stream",
+  )
+  assert_false(response.stringify().contains("mooncode_summary"))
+  assert_false(response.stringify().contains("readiness"))
 }
 
 ///|

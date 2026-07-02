@@ -88,7 +88,13 @@ async fn send_api_error(
     conn.end_response()
     return
   }
-  let body : Json = { "error": message }
+  let body = api_contract_response(
+    { "error": message },
+    ok=false,
+    status="error",
+    message~,
+    next_action="inspect_request",
+  )
   conn.write(body.stringify(indent=2) + "\n")
   conn.end_response()
 }

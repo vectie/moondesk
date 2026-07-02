@@ -95,17 +95,28 @@ async fn moonbook_workspace_display_name(
 async fn workspace_library_metadata(workspace_root : String) -> Json {
   let context = workspace_context(workspace_root)
   let products = workspace_product_registry_products(context.suite_root)
-  {
-    "root_path": context.requested_root,
-    "suite_root": context.suite_root,
-    "library_path": context.books_root,
-    "suite_path": context.state_dir,
-    "tmp_path": context.tmp_root,
-    "product_registry_path": context.product_registry_path,
-    "workspace_context": workspace_context_json(context),
-    "product_count": products.length(),
-    "products": Json::array(products),
-  }
+  let workspaces = discover_workspaces(workspace_root)
+  api_contract_response(
+    {
+      "root_path": context.requested_root,
+      "suite_root": context.suite_root,
+      "active_suite_root": context.suite_root,
+      "requested_root": context.requested_root,
+      "library_path": context.books_root,
+      "books_root": context.books_root,
+      "suite_path": context.state_dir,
+      "tmp_path": context.tmp_root,
+      "product_registry_path": context.product_registry_path,
+      "workspace_context": workspace_context_json(context),
+      "workspace_count": workspaces.length(),
+      "workspaces": workspaces.to_json(),
+      "product_count": products.length(),
+      "products": Json::array(products),
+    },
+    ok=true,
+    status="ready",
+    message="MoonSuite workspace metadata is ready",
+  )
 }
 
 ///|

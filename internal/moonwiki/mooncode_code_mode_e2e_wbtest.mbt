@@ -184,13 +184,28 @@ async test "mooncode code mode package result promotes package candidates to ver
       session, runtime_command, "2026-06-30T01:00:10Z",
     ),
   )
-  let with_package = match
-    write_mooncode_review_receipt_if_needed(
-      session, "package", packet, "tools/parser/main.mbt", message, "2026-06-30T01:00:00Z",
-    ) {
-    Some(next) => next
-    None => fail("package command should create MoonBook package manifest")
-  }
+  let receipt = write_mooncode_review_receipt(
+    session, "package", packet, "tools/parser/main.mbt", message, "2026-06-30T01:00:00Z",
+  )
+  let recorded_at = json_string(receipt, "recorded_at", default="")
+  let with_receipt = @mooncode.session_with_review_receipt_event(
+    session,
+    receipt,
+    @mooncode.review_receipt_projected_event(
+      "package",
+      json_string(receipt, "receipt_path", default=""),
+      "tools/parser/main.mbt",
+      recorded_at,
+      packet,
+    ),
+  )
+  let with_package = mooncode_session_with_field(
+    write_mooncode_package_manifest_for_receipt(
+      with_receipt, receipt, packet, "tools/parser/main.mbt", message, "2026-06-30T01:00:00Z",
+    ),
+    "updated_at",
+    recorded_at.to_json(),
+  )
   write_mooncode_session_record(root, with_package)
   let initial_candidates = mooncode_package_candidates_projection(
     with_package, "code-demo",
@@ -350,11 +365,28 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
       json_string(created, "mooncode_initial_context_path", default=""),
       "tools/parser/main.mbt",
     )
+    assert_eq(
+      json_string(created, "api_contract", default=""),
+      "moonsuite.phase6.v1",
+    )
+    assert_true(json_bool(created, "accepted", default=false))
+    assert_eq(json_string(created, "status", default=""), "queued")
+    assert_eq(
+      json_string(created, "next_action", default=""),
+      "poll_mooncode_stream",
+    )
+    let created_transcript = json_array_items(created, "transcript")
+    assert_eq(created_transcript.length(), 1)
+    assert_eq(json_string(created_transcript[0], "role", default=""), "user")
+    assert_eq(
+      json_string(created_transcript[0], "content", default=""),
+      "Create parser tests",
+    )
     assert_true(
       @fs.exists(
         @pathx.join(
           root,
-          ".moonsuite/products/mooncode/sessions/\{session_id}/session.json",
+          ".moonsuite/products/mooncode/sessions/\{session_id}/record.json",
         ),
       ),
     )
@@ -371,14 +403,6 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
         @pathx.join(
           root,
           ".moonsuite/products/mooncode/sessions/\{session_id}/runtime-commands.jsonl",
-        ),
-      ),
-    )
-    assert_true(
-      wait_for_test_file(
-        @pathx.join(
-          book_root,
-          "wiki/reviews/mooncode/\{session_id}/action-plan.json",
         ),
       ),
     )
@@ -570,15 +594,4 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
       ),
     )
   })
-}
-
-///|
-async fn wait_for_test_file(path : String) -> Bool {
-  for _ in 0..<20 {
-    if @fs.exists(path) {
-      return true
-    }
-    @async.sleep(10)
-  }
-  @fs.exists(path)
 }

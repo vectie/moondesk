@@ -1,43 +1,4 @@
 ///|
-async fn write_mooncode_review_receipt_if_needed(
-  session : Json,
-  action : String,
-  command_packet : Json,
-  context_path : String,
-  detail : String,
-  command_created_at : String,
-) -> Json? {
-  if !@mooncode.command_writes_review_receipt(action) {
-    return None
-  }
-  let receipt = write_mooncode_review_receipt(
-    session, action, command_packet, context_path, detail, command_created_at,
-  )
-  let receipt_path = json_string(receipt, "receipt_path", default="")
-  let recorded_at = json_string(receipt, "recorded_at", default="")
-  let event = @mooncode.review_receipt_projected_event(
-    action, receipt_path, context_path, recorded_at, command_packet,
-  )
-  let with_receipt = @mooncode.session_with_review_receipt_event(
-    session, receipt, event,
-  )
-  let with_package = if action == "package" {
-    write_mooncode_package_manifest_for_receipt(
-      with_receipt, receipt, command_packet, context_path, detail, command_created_at,
-    )
-  } else {
-    with_receipt
-  }
-  Some(
-    mooncode_session_with_field(
-      with_package,
-      "updated_at",
-      recorded_at.to_json(),
-    ),
-  )
-}
-
-///|
 async fn write_mooncode_change_set_if_possible(session : Json) -> Json {
   let manifest = write_mooncode_change_set_manifest(session)
   @mooncode.session_with_manifest_event(

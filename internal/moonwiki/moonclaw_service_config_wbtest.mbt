@@ -115,10 +115,6 @@ async test "moonclaw daemon probe uses MoonSuite product home" {
     @pathx.join(suite_root, ".moonsuite/products/moonclaw/daemon.json"),
   )
   assert_eq(
-    moonclaw_log_dir(book_root),
-    @pathx.join(suite_root, ".moonsuite/products/moonclaw/logs"),
-  )
-  assert_eq(
     moonclaw_daemon_info_path("/tmp/standalone-book"),
     "/tmp/standalone-book/.moonsuite/products/moonclaw/daemon.json",
   )

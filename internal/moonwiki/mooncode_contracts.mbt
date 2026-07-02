@@ -8,6 +8,38 @@ async fn handle_mooncode_capabilities(
 }
 
 ///|
+async fn handle_mooncode_status(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let engine = mooncode_engine_status_json(workspace_root)
+  let ready = json_bool(engine, "runtime_contract_ready", default=false)
+  send_json(
+    conn,
+    method_,
+    api_contract_response(
+      {
+        "engine_status": engine,
+        "session_count": read_mooncode_session_records(workspace_root).length(),
+      },
+      ok=ready,
+      status=if ready { "ready" } else { "runtime_unavailable" },
+      message=if ready {
+        "MoonCode runtime is ready"
+      } else {
+        "MoonCode runtime is not available"
+      },
+      next_action=if ready {
+        "send_mooncode_prompt"
+      } else {
+        "inspect_moonclaw_status"
+      },
+    ),
+  )
+}
+
+///|
 async fn handle_mooncode_eval_harness_contract(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,

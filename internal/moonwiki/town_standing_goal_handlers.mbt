@@ -6,7 +6,28 @@ async fn handle_town_daemon(
 ) -> Unit {
   let root = workspace_context(workspace_root).suite_root
   let daemon = read_json_file_or_object(town_daemon_path(root))
-  send_json(conn, method_, daemon)
+  let status = daemon_status_record(root, "daemon")
+  send_json(
+    conn,
+    method_,
+    api_contract_response(
+      @mooncore.session_with_field(status, "state", daemon),
+      ok=json_bool(status, "ok", default=false),
+      status=json_string(status, "status", default="unknown"),
+      message=json_string(
+        status,
+        "message",
+        default="Moontown daemon status is unknown",
+      ),
+      next_action=if json_bool(status, "running", default=false) {
+        "use_moontown"
+      } else if json_bool(status, "service_configured", default=false) {
+        "start_moontown_daemon"
+      } else {
+        "configure_moontown_service"
+      },
+    ),
+  )
 }
 
 ///|

@@ -9,7 +9,6 @@ import {
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
   "moonbitlang/core/json",
   "moonbitlang/core/string",
-  "moonbitlang/x/crypto",
   "moonbitlang/x/sys",
   "moonbitlang/x/time",
   "vectie/moonlib/fsx" @moonlib/fsx,

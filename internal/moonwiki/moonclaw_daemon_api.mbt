@@ -15,26 +15,54 @@ async fn handle_moonclaw_models(
 ) -> Unit {
   let daemon = moonclaw_daemon_status(workspace_root)
   if !json_bool(daemon, "running", default=false) {
-    send_json(conn, method_, {
-      "ok": false,
-      "daemon": daemon,
-      "models": Json::array([]),
-    })
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        { "daemon": daemon, "models": Json::array([]) },
+        ok=false,
+        status="moonclaw_unreachable",
+        message=json_string(
+          daemon,
+          "message",
+          default="MoonClaw daemon is not running",
+        ),
+        next_action=json_string(
+          daemon,
+          "next_action",
+          default="configure_or_start_moonclaw",
+        ),
+      ),
+    )
     return
   }
   match moonclaw_get_json(daemon, "/v1/models") {
     Ok(payload) =>
-      send_json(conn, method_, {
-        "ok": true,
-        "daemon": daemon,
-        "models": json_array(payload, "models"),
-      })
+      send_json(
+        conn,
+        method_,
+        api_contract_response(
+          { "daemon": daemon, "models": json_array(payload, "models") },
+          ok=true,
+          status="ready",
+          message="MoonClaw models are available",
+        ),
+      )
     Err(message) =>
-      send_json(conn, method_, {
-        "ok": false,
-        "daemon": moonclaw_daemon_with_message(daemon, message),
-        "models": Json::array([]),
-      })
+      send_json(
+        conn,
+        method_,
+        api_contract_response(
+          {
+            "daemon": moonclaw_daemon_with_message(daemon, message),
+            "models": Json::array([]),
+          },
+          ok=false,
+          status="moonclaw_models_unavailable",
+          message~,
+          next_action="inspect_moonclaw_daemon",
+        ),
+      )
   }
 }
 
@@ -47,18 +75,34 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let service_cwd = json_string(descriptor, "cwd", default=root)
   let service_configured = json_bool(descriptor, "configured", default=false)
   if !@fsx.exists(info_path) {
-    return {
-      "ok": false,
-      "running": false,
-      "port": 0,
-      "pid": 0,
-      "info_path": info_path,
-      "moonclaw_root": service_cwd,
-      "service_configured": service_configured,
-      "service_config_path": json_string(descriptor, "config_path", default=""),
-      "service_command": json_string(descriptor, "display", default=""),
-      "message": "MoonClaw daemon info was not found",
-    }
+    return api_contract_response(
+      {
+        "ok": false,
+        "running": false,
+        "port": 0,
+        "pid": 0,
+        "info_path": info_path,
+        "moonclaw_root": service_cwd,
+        "service_configured": service_configured,
+        "service_config_path": json_string(
+          descriptor,
+          "config_path",
+          default="",
+        ),
+        "service_command": json_string(descriptor, "display", default=""),
+        "service_path": moonsuite_product_artifact_for_workspace_root(
+          root, "moonclaw", "",
+        ),
+      },
+      ok=false,
+      status="daemon_info_missing",
+      message="MoonClaw daemon info was not found",
+      next_action=if service_configured {
+        "start_moonclaw"
+      } else {
+        "configure_moonclaw_service"
+      },
+    )
   }
   let info = read_json_file_or_object(info_path)
   let port = json_int(info, "port", default=0)
@@ -70,30 +114,57 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let reachable = moonclaw_existing_daemon_reachable(
     alive, port, port_reachable, existing_allowed,
   )
-  {
-    "ok": reachable,
-    "running": reachable,
-    "port": port,
-    "pid": pid,
-    "info_path": info_path,
-    "moonclaw_root": service_cwd,
-    "service_configured": service_configured,
-    "service_config_path": json_string(descriptor, "config_path", default=""),
-    "service_command": json_string(descriptor, "display", default=""),
-    "message": if reachable {
-      if service_configured {
-        "MoonClaw daemon is running"
+  api_contract_response(
+    {
+      "ok": reachable,
+      "running": reachable,
+      "port": port,
+      "pid": pid,
+      "info_path": info_path,
+      "moonclaw_root": service_cwd,
+      "service_configured": service_configured,
+      "service_config_path": json_string(descriptor, "config_path", default=""),
+      "service_command": json_string(descriptor, "display", default=""),
+      "service_path": moonsuite_product_artifact_for_workspace_root(
+        root, "moonclaw", "",
+      ),
+      "message": if reachable {
+        if service_configured {
+          "MoonClaw daemon is running"
+        } else {
+          "MoonClaw daemon is running without a MoonSuite service config"
+        }
+      } else if alive && port > 0 && !existing_allowed {
+        "MoonClaw daemon info exists but this temporary workspace needs an explicit service config"
+      } else if alive && port > 0 {
+        "MoonClaw daemon info exists but the HTTP port is not reachable"
       } else {
-        "MoonClaw daemon is running without a MoonSuite service config"
-      }
-    } else if alive && port > 0 && !existing_allowed {
-      "MoonClaw daemon info exists but this temporary workspace needs an explicit service config"
-    } else if alive && port > 0 {
-      "MoonClaw daemon info exists but the HTTP port is not reachable"
-    } else {
-      "MoonClaw daemon info exists but the process is not reachable"
+        "MoonClaw daemon info exists but the process is not reachable"
+      },
     },
-  }
+    ok=reachable,
+    status=if reachable {
+      "running"
+    } else if alive && port > 0 && !existing_allowed {
+      "service_config_required"
+    } else if alive && port > 0 {
+      "port_unreachable"
+    } else {
+      "process_unreachable"
+    },
+    message=if reachable {
+      "MoonClaw daemon is running"
+    } else {
+      "MoonClaw daemon is not reachable"
+    },
+    next_action=if reachable {
+      "use_moonclaw"
+    } else if service_configured {
+      "restart_moonclaw"
+    } else {
+      "configure_moonclaw_service"
+    },
+  )
 }
 
 ///|
@@ -118,64 +189,6 @@ fn moonclaw_allows_unconfigured_existing_daemon(
 }
 
 ///|
-async fn ensure_moonclaw_daemon(workspace_root : String) -> Json {
-  let context = workspace_context(workspace_root)
-  let root = context.suite_root
-  let status = moonclaw_daemon_status(root)
-  if json_bool(status, "running", default=false) {
-    return status
-  }
-  let descriptor = moonclaw_service_descriptor(root, "daemon")
-  if !json_bool(descriptor, "configured", default=false) {
-    return moonclaw_daemon_with_message(
-      status, "MoonClaw daemon service is not configured for this workspace",
-    )
-  }
-  let log_dir = moonclaw_log_dir(root)
-  @fsx.make_directory(log_dir, recursive=true, exists_ok=true) catch {
-    _ => ()
-  }
-  let stdout_file = @process.redirect_to_file(
-    @pathx.join(log_dir, "moondesk-daemon.out.log"),
-    append=true,
-    create_mode=OpenOrCreate,
-    permission=0o644,
-  ) catch {
-    error =>
-      return moonclaw_daemon_with_message(
-        status,
-        "Could not open MoonClaw daemon stdout log: \{error}",
-      )
-  }
-  let stderr_file = @process.redirect_to_file(
-    @pathx.join(log_dir, "moondesk-daemon.err.log"),
-    append=true,
-    create_mode=OpenOrCreate,
-    permission=0o644,
-  ) catch {
-    error =>
-      return moonclaw_daemon_with_message(
-        status,
-        "Could not open MoonClaw daemon stderr log: \{error}",
-      )
-  }
-  let pid = @process.spawn_orphan(
-    json_string(descriptor, "command", default=""),
-    json_string_array_items(descriptor, "args"),
-    cwd=json_string(descriptor, "cwd", default=root),
-    stdout=stdout_file,
-    stderr=stderr_file,
-  ) catch {
-    error =>
-      return moonclaw_daemon_with_message(
-        status,
-        "Could not start MoonClaw daemon: \{error}",
-      )
-  }
-  wait_for_moonclaw_daemon(root, pid)
-}
-
-///|
 async fn process_is_alive(pid : Int) -> Bool {
   let code = run_process_quiet("kill", ["-0", pid.to_string()])
   code == 0
@@ -190,32 +203,9 @@ async fn moonclaw_port_reachable(port : Int) -> Bool {
 }
 
 ///|
-async fn wait_for_moonclaw_daemon(workspace_root : String, pid : Int) -> Json {
-  ignore(pid)
-  for _ in 0..<60 {
-    let status = moonclaw_daemon_status(workspace_root)
-    if json_bool(status, "running", default=false) {
-      return status
-    }
-    @async.sleep(500)
-  }
-  moonclaw_daemon_with_message(
-    moonclaw_daemon_status(workspace_root),
-    "Timed out waiting for MoonClaw daemon to start",
-  )
-}
-
-///|
 fn moonclaw_daemon_info_path(workspace_root : String) -> String {
   moonsuite_product_artifact_for_workspace_root(
     workspace_root, "moonclaw", "daemon.json",
-  )
-}
-
-///|
-fn moonclaw_log_dir(workspace_root : String) -> String {
-  moonsuite_product_artifact_for_workspace_root(
-    workspace_root, "moonclaw", "logs",
   )
 }
 

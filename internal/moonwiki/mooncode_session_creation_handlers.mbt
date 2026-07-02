@@ -107,65 +107,16 @@ async fn handle_create_mooncode_session(
       return
     }
   }
-  let queued = @mooncode.append_projected_command_event(
+  let queued = mooncode_immediate_queued_session(
     base,
     action="prompt",
-    status="queued",
-    detail=message,
-    created_at=now,
-    path=context_path,
+    message~,
+    context_path~,
     command_packet~,
+    created_at=now,
   )
-  let runtime_session = match
-    send_mooncode_command_to_runtime(
-      root, queued, payload, message, command_packet,
-    ) {
-    Ok(session) => session
-    Err(error) =>
-      mooncode_runtime_waiting_session(
-        queued, "prompt", error, context_path, command_packet,
-      )
-  }
-  append_mooncode_runtime_receipt_log(
-    root,
-    json_string(base, "id", default=""),
-    @mooncode.projected_runtime_receipt(
-      runtime_session,
-      runtime_command,
-      @async.now().to_string(),
-    ),
-  ) catch {
-    _ => ()
-  }
-  let with_native_eval = sync_mooncode_native_eval_report(root, runtime_session) catch {
-    _ => runtime_session
-  }
-  let with_action_plan = write_mooncode_action_plan_if_possible(
-    root, with_native_eval,
-  ) catch {
-    _ => with_native_eval
-  }
-  let with_runtime_evidence = write_mooncode_runtime_evidence_if_possible(
-    root, with_action_plan,
-  ) catch {
-    _ => with_action_plan
-  }
-  let with_eval_report = write_mooncode_eval_report_if_possible(
-    with_runtime_evidence,
-  ) catch {
-    _ => with_runtime_evidence
-  }
-  let with_session_snapshot = write_mooncode_session_snapshot_if_possible(
-    root, with_eval_report,
-  ) catch {
-    _ => with_eval_report
-  }
-  let with_runtime_handoff = write_mooncode_runtime_handoff_if_possible(
-    root, with_session_snapshot,
-  ) catch {
-    _ => with_session_snapshot
-  }
-  write_mooncode_session_record(root, with_runtime_handoff) catch {
+  ignore(runtime_command)
+  write_mooncode_session_record(root, queued) catch {
     _ => {
       send_api_error(
         conn, method_, 500, "Internal Server Error", "Could not save MoonCode session",
@@ -173,7 +124,7 @@ async fn handle_create_mooncode_session(
       return
     }
   }
-  append_new_mooncode_command_events(root, base, with_runtime_handoff) catch {
+  append_new_mooncode_command_events(root, base, queued) catch {
     _ => {
       send_api_error(
         conn, method_, 500, "Internal Server Error", "Could not append MoonCode event log",
@@ -184,6 +135,6 @@ async fn handle_create_mooncode_session(
   send_json(
     conn,
     method_,
-    enrich_mooncode_session_for_response(root, with_runtime_handoff),
+    mooncode_immediate_command_response(root, queued, command_packet),
   )
 }

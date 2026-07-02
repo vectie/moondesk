@@ -577,6 +577,25 @@ Rewrite these surfaces to use MoonSuite layout helpers:
 MoonClaw and Moontown errors must be explicit. They should not silently queue
 forever when a required service is missing.
 
+Phase 6 Moondesk API rewrite slice:
+
+- Added a shared `moonsuite.phase6.v1` response envelope for API success/error
+  payloads with `ok`, `status`, `message`, and `next_action`.
+- `/api/workspaces/metadata` now exposes active suite root, requested root,
+  books root, product registry, workspace count, workspace records, and
+  product records from the MoonSuite context.
+- `/api/mooncode/status` exposes runtime readiness separately from prompt
+  submission.
+- MoonCode session creation and command submission now persist the user message,
+  command packet, command queue, runtime-command queue, transcript line, and
+  event log before returning. They no longer wait for MoonClaw runtime dispatch
+  before the UI can append the prompt.
+- MoonClaw daemon/model responses now return explicit
+  configured/running/unreachable status, service path/config fields, and next
+  actions instead of vague local-agent queueing.
+- Moontown state/daemon responses now resolve through the owning suite context
+  and return explicit missing-state/service-configuration status.
+
 ## Phase 7: UI Update
 
 Desk should show:
