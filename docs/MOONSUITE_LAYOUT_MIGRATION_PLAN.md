@@ -1480,6 +1480,14 @@ Completed slices:
   helpers by pointing communication-pattern state at
   `.moonsuite/products/moontown/civic/...`. Validation for this slice: focused
   README stale-path scan and `git diff --check` in Moontown and Moondesk.
+- MoonClaw's todo tool coverage no longer renders `.moonclaw/repos/...` as an
+  example repository inspection target in user-visible todo output. The fixture
+  now uses the MoonClaw product home at
+  `.moonsuite/products/moonclaw/repos/...`, while the remaining MoonClaw
+  `.moonclaw` scan hits are negative regression assertions or deliberate
+  legacy-reader fixtures. Validation for this slice: focused MoonClaw
+  todo/operator-output stale-path scan, `moon fmt`, `moon info`, `moon check`,
+  `moon test`, and `git diff --check`.
 
 Remaining high-priority product slices:
 
