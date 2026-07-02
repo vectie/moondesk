@@ -1759,7 +1759,10 @@ Remaining high-priority product slices:
   The current Moondesk MoonBit scan has zero quoted
   `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
   and zero active `.moonsuite/products` literals outside generated interfaces
-  and tests. The new `scripts/fresh_suite_product_smoke.sh` gate runs the
+  and tests. Moondesk serve-prep coverage now also asserts a fresh workspace
+  does not recreate stale suite-root product homes such as `.moondesk`,
+  `.moonbook`, `.mooncode`, `.moonchat`, `.moonvis`, `.lepusa`, or `.rabbita`.
+  The new `scripts/fresh_suite_product_smoke.sh` gate runs the
   Moontown, MoonClaw, MoonBook, MoonRobo, MoonFish, MoonMoon, MoonChat,
   MoonVis, and Lepusa fresh-suite smoke scripts from one Moondesk command,
   giving the migration a single cross-product integration check for the main

@@ -37,6 +37,14 @@ async test "serve prepares MoonSuite workspace directories" {
   assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonrobo")))
   assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonmoon")))
   assert_true(@fs.exists(@pathx.join(root, ".moonsuite/products/moonfish")))
+  for
+    legacy_home in [
+      ".moondesk", ".moonbook", ".moonwiki", ".mooncode", ".moonclaw", ".moontown",
+      ".moonstat", ".moonfish", ".moonmoon", ".moonchat", ".moonvis", ".bookkeeper",
+      ".lepusa", ".rabbita",
+    ] {
+    assert_false(@fs.exists(@pathx.join(root, legacy_home)))
+  }
 }
 
 ///|
