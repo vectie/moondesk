@@ -1745,9 +1745,10 @@ Remaining high-priority product slices:
   `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
   and zero active `.moonsuite/products` literals outside generated interfaces
   and tests. The new `scripts/fresh_suite_product_smoke.sh` gate runs the
-  Moontown, MoonClaw, MoonBook, and Lepusa fresh-suite smoke scripts from one
-  Moondesk command, giving the migration a single cross-product integration
-  check for the main writer surfaces already cut over to product homes.
+  Moontown, MoonClaw, MoonBook, MoonRobo, and Lepusa fresh-suite smoke scripts
+  from one Moondesk command, giving the migration a single cross-product
+  integration check for the main writer surfaces already cut over to product
+  homes.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
   Moondesk old-writer cleanup.
@@ -1795,7 +1796,18 @@ Remaining high-priority product slices:
   either a suite root or a `books/<book-id>` workspace root. Rabbita cockpit
   UI/parser fixtures and active MoonBook/readiness projections now advertise
   those product-home paths through product-status display helpers backed by the
-  shared MoonLib display contract for the migrated artifact classes.
+  shared MoonLib display contract for the migrated artifact classes. The new
+  `scripts/fresh-suite-product-home-smoke.sh` gate drives native bootstrap,
+  gateway-command, prove-loop, proof-session, Robo turn, and Robo loop CLI
+  surfaces against a temporary `books/<book-id>` root, then asserts product
+  orchestration artifacts land under `.moonsuite/products/moonrobo`, RoboBook
+  memory/task artifacts stay under the book root, and legacy `.moonrobo`,
+  root-level `runs/gateway-commands`, `runs/robo-loops`,
+  `runs/proof-sessions`, plus book-local `.moonsuite/products/moonrobo` paths
+  are not recreated. MoonRobo native HTTP wrappers were also refreshed to the
+  current `moonbitlang/async/http` `Client` and `Server` APIs so the native CLI
+  and smoke gate compile on the fresh dependency set instead of relying on stale
+  compatibility.
 - MoonClaw: remaining residuals are mostly historical compatibility docs,
   explicit project-local override policy coverage, and any newly discovered
   readers from deeper smoke runs. New runtime writes for conversations, jobs,
