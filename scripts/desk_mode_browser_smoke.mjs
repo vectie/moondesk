@@ -402,6 +402,94 @@ function visibleRowsExpression() {
     `.map(row => row.dataset.path)`;
 }
 
+function mooncodeTranscriptItemsExpression() {
+  return `(() => [...document.querySelectorAll('[data-testid="mooncode-message"], [data-testid="mooncode-activity"]')]
+    .map((row, index) => ({
+      index,
+      kind: row.dataset.testid === "mooncode-message" ? "message" : "activity",
+      role: row.dataset.role || "",
+      status: row.dataset.status || "",
+      folded: row.dataset.folded || "",
+      text: row.textContent.trim()
+    })))()`;
+}
+
+async function runMoonCodePromptSmoke(session) {
+  const prompt = "Browser smoke prompt append order";
+  await setViewport(session, 1440, 900);
+  await session.send("Page.navigate", { url: `${baseUrl}/?activity=code` });
+  await waitFor(
+    session,
+    `document.readyState === 'complete' && !!document.querySelector('[data-testid="mooncode-center"]')`,
+    "MoonCode mode",
+  );
+  await waitFor(
+    session,
+    `document.querySelector('[data-testid="mooncode-chat-surface"]')?.textContent.includes('Ask MoonCode')`,
+    "empty MoonCode first-chat surface",
+  );
+  await setInputByTestId(session, "mooncode-input", prompt);
+  await waitFor(
+    session,
+    `document.querySelector('[data-testid="mooncode-input"]')?.value === ${jsString(prompt)}`,
+    "MoonCode prompt typed",
+  );
+  await keyDownInputByTestId(session, "mooncode-input", "Enter");
+  await waitFor(
+    session,
+    `(() => {
+      const items = ${mooncodeTranscriptItemsExpression()};
+      const bodyText = document.body.textContent || "";
+      const input = document.querySelector('[data-testid="mooncode-input"]');
+      return input?.value === "" &&
+        items.length >= 2 &&
+        items[0].kind === "message" &&
+        items[0].role === "user" &&
+        items[0].text === ${jsString(prompt)} &&
+        items[1].kind === "activity" &&
+        items[1].text.includes("Prompt queued") &&
+        items[1].folded === "true" &&
+        !bodyText.includes("Local agent is not reachable yet") &&
+        !bodyText.includes("Native MoonCode runtime recorded this prompt");
+    })()`,
+    "MoonCode immediate append before backend reply",
+    1000,
+  );
+  await sleep(1200);
+  const items = await session.evaluate(mooncodeTranscriptItemsExpression());
+  const messageItems = items.filter(item => item.kind === "message");
+  assert(messageItems.length >= 1, `MoonCode transcript lost message rows: ${JSON.stringify(items)}`);
+  assert(
+    messageItems[0].role === "user" && messageItems[0].text === prompt,
+    `MoonCode first transcript message must stay as the user prompt: ${JSON.stringify(items)}`,
+  );
+  const userIndex = items.findIndex(item => item.kind === "message" && item.role === "user" && item.text === prompt);
+  const firstAssistantIndex = items.findIndex(item => item.kind === "message" && item.role === "assistant");
+  const firstActivityIndex = items.findIndex(item => item.kind === "activity");
+  assert(userIndex === 0, `MoonCode user prompt should remain at the top of the new chat: ${JSON.stringify(items)}`);
+  if (firstActivityIndex >= 0) {
+    assert(
+      firstActivityIndex > userIndex && (firstAssistantIndex < 0 || firstActivityIndex < firstAssistantIndex),
+      `MoonCode activity should sit between the user prompt and assistant reply: ${JSON.stringify(items)}`,
+    );
+  }
+  if (firstAssistantIndex >= 0) {
+    assert(
+      firstAssistantIndex > userIndex,
+      `MoonCode assistant reply should append after the user prompt: ${JSON.stringify(items)}`,
+    );
+  }
+  const bodyText = await session.evaluate(`document.body.textContent || ""`);
+  assert(
+    !bodyText.includes("Local agent is not reachable yet"),
+    "MoonCode chat leaked the old local-agent fallback text",
+  );
+  assert(
+    !bodyText.includes("Native MoonCode runtime recorded this prompt"),
+    "MoonCode chat leaked native runtime bookkeeping as assistant copy",
+  );
+}
+
 function isLargeBrown(rgb) {
   const match = /^rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb);
   if (!match) {
@@ -524,6 +612,7 @@ async function run() {
     await session.send("Page.enable");
     await session.send("Runtime.enable");
     await setViewport(session, 1440, 900);
+    await runMoonCodePromptSmoke(session);
     await session.send("Page.navigate", { url: baseUrl });
     await waitFor(
       session,

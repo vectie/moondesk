@@ -68,9 +68,15 @@ type MoonClawModel derive(@json.FromJson)
 
 type MoonClawModelsResult derive(@json.FromJson)
 
+type MoonCodeActivityRow
+
+type MoonCodeConversationRow
+
 type MoonCodeEvent derive(@json.FromJson)
 
 type MoonCodeMessage derive(@json.FromJson)
+
+type MoonCodePendingPrompt
 
 type MoonCodeRuntimeEventSink derive(@json.FromJson)
 
@@ -84,7 +90,11 @@ type MoonCodeStreamState derive(@json.FromJson)
 
 type MoonCodeSummary derive(@json.FromJson)
 
+type MoonCodeTranscriptItem
+
 type MoonCodeTranscriptRow
+
+type MoonSuiteProduct derive(@json.FromJson)
 
 type MoonclawProgress derive(@json.FromJson)
 
@@ -111,6 +121,8 @@ type TownAnalytics derive(@json.FromJson)
 type TownMessage derive(@json.FromJson)
 
 type TownProgress derive(@json.FromJson)
+
+type WorkspaceMetadata derive(@json.FromJson)
 
 type WorkspaceMode derive(Eq)
 

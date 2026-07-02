@@ -27,12 +27,11 @@ fn render_mooncode_transcript(
     for item in items {
       match item.message {
         Some(row) => children.push(render_mooncode_transcript_row(row))
-        None => {
+        None =>
           match item.activity {
             Some(row) => children.push(render_mooncode_activity_row(row))
             None => ()
           }
-        }
       }
     }
     div(class="mooncode-transcript-list mooncode-transcript", children)
@@ -48,16 +47,12 @@ fn mooncode_transcript_items(
     mooncode_transcript_events(model, session),
   )
   if events.length() > 0 {
-    let items = match mooncode_first_pending_prompt_for_session(
-      model,
-      session.id,
-    ) {
-      Some(prompt) => mooncode_transcript_items_with_pending_prompt(
-        model,
-        session,
-        events,
-        prompt,
-      )
+    let items = match
+      mooncode_first_pending_prompt_for_session(model, session.id) {
+      Some(prompt) =>
+        mooncode_transcript_items_with_pending_prompt(
+          model, session, events, prompt,
+        )
       None => {
         let items = mooncode_transcript_items_from_events(session.id, events)
         mooncode_merge_local_transcript_items(
@@ -126,17 +121,16 @@ fn mooncode_transcript_items_from_events_with_user(
       let content = event.detail.trim().to_owned()
       if content != "" && has_user {
         if mooncode_transcript_running_assistant_is_tail(
-          items,
-          running_assistant_index,
-        ) {
+            items, running_assistant_index,
+          ) {
           mooncode_replace_transcript_message_item(
             items,
             running_assistant_index,
             "assistant",
             mooncode_transcript_item_message_content(
-              items,
-              running_assistant_index,
-            ) + content,
+              items, running_assistant_index,
+            ) +
+            content,
             "running",
           )
         } else {
@@ -152,8 +146,7 @@ fn mooncode_transcript_items_from_events_with_user(
       let raw_content = mooncode_event_assistant_content(event)
       let content = if has_user &&
         !mooncode_transcript_running_assistant_is_tail(
-          items,
-          running_assistant_index,
+          items, running_assistant_index,
         ) {
         mooncode_dedupe_assistant_final_content(items, raw_content)
       } else {
@@ -163,15 +156,10 @@ fn mooncode_transcript_items_from_events_with_user(
         let status = if event.status == "" { "done" } else { event.status }
         if has_user {
           if mooncode_transcript_running_assistant_is_tail(
-            items,
-            running_assistant_index,
-          ) {
+              items, running_assistant_index,
+            ) {
             mooncode_replace_transcript_message_item(
-              items,
-              running_assistant_index,
-              "assistant",
-              content,
-              status,
+              items, running_assistant_index, "assistant", content, status,
             )
             running_assistant_index = -1
           } else {
@@ -191,12 +179,10 @@ fn mooncode_transcript_items_from_events_with_user(
           let key = mooncode_activity_item_key(event, row)
           if !pushed_activity.contains(key) {
             if mooncode_transcript_running_assistant_is_tail(
-              items,
-              running_assistant_index,
-            ) {
+                items, running_assistant_index,
+              ) {
               mooncode_mark_transcript_message_item_done(
-                items,
-                running_assistant_index,
+                items, running_assistant_index,
               )
               running_assistant_index = -1
             }
@@ -209,8 +195,7 @@ fn mooncode_transcript_items_from_events_with_user(
       if mooncode_event_is_terminal_without_answer(event) &&
         running_assistant_index >= 0 {
         mooncode_mark_transcript_message_item_done(
-          items,
-          running_assistant_index,
+          items, running_assistant_index,
         )
         running_assistant_index = -1
       }
@@ -366,9 +351,8 @@ fn mooncode_mark_transcript_message_item_done(
     return
   }
   match items[index].message {
-    Some(row) => {
+    Some(row) =>
       items[index] = mooncode_transcript_message_item({ ..row, status: "done" })
-    }
     None => ()
   }
 }
@@ -414,11 +398,13 @@ fn mooncode_merge_local_transcript_items(
     }
     if role == "user" &&
       mooncode_local_row_is_pending_prompt(model, session.id, content) {
-      mooncode_insert_pending_prompt_item(items, {
-        role,
-        content,
-        status: row.status,
-      }, model, session.id, has_following_work=has_following_work)
+      mooncode_insert_pending_prompt_item(
+        items,
+        { role, content, status: row.status },
+        model,
+        session.id,
+        has_following_work~,
+      )
     } else {
       mooncode_push_transcript_message_item(items, {
         role,
@@ -432,11 +418,13 @@ fn mooncode_merge_local_transcript_items(
       mooncode_transcript_items_have_message(items, "user", prompt.content) {
       continue
     }
-    mooncode_insert_pending_prompt_item(items, {
-      role: "user",
-      content: prompt.content,
-      status: prompt.status,
-    }, model, session.id, has_following_work=has_following_work)
+    mooncode_insert_pending_prompt_item(
+      items,
+      { role: "user", content: prompt.content, status: prompt.status },
+      model,
+      session.id,
+      has_following_work~,
+    )
   }
 }
 
@@ -474,20 +462,20 @@ fn mooncode_push_pending_activity_item(
   items : Array[MoonCodeTranscriptItem],
 ) -> Unit {
   if mooncode_transcript_last_activity_item_matches(
-    items,
-    "Thinking",
-    "Prompt queued",
-  ) {
+      items, "Thinking", "Prompt queued",
+    ) {
     return
   }
-  items.push(mooncode_transcript_activity_item({
-    tone: "thinking",
-    label: "Thinking",
-    title: "Prompt queued",
-    detail: "Waiting for MoonClaw to stream runtime events.",
-    status: "running",
-    folded: true,
-  }))
+  items.push(
+    mooncode_transcript_activity_item({
+      tone: "thinking",
+      label: "Thinking",
+      title: "Prompt queued",
+      detail: "Waiting for MoonClaw to stream runtime events.",
+      status: "running",
+      folded: true,
+    }),
+  )
 }
 
 ///|
@@ -590,7 +578,8 @@ fn mooncode_drop_leading_activity_items(
     }
     index = index + 1
   }
-  if rest.length() == items.length() || !mooncode_transcript_items_have_user(rest) {
+  if rest.length() == items.length() ||
+    !mooncode_transcript_items_have_user(rest) {
     return items
   }
   rest
@@ -606,9 +595,12 @@ fn mooncode_fold_resolved_thinking_items(
     if mooncode_transcript_item_is_thinking_activity(item) &&
       mooncode_transcript_has_assistant_after_before_user(items, index) {
       match item.activity {
-        Some(row) => rest.push(mooncode_transcript_activity_item(
-          mooncode_fold_resolved_thinking_row(row),
-        ))
+        Some(row) =>
+          rest.push(
+            mooncode_transcript_activity_item(
+              mooncode_fold_resolved_thinking_row(row),
+            ),
+          )
         None => rest.push(item)
       }
     } else {
@@ -622,7 +614,15 @@ fn mooncode_fold_resolved_thinking_items(
 fn mooncode_fold_resolved_thinking_row(
   row : MoonCodeActivityRow,
 ) -> MoonCodeActivityRow {
-  { ..row, folded: true, status: if row.status == "running" { "done" } else { row.status } }
+  {
+    ..row,
+    folded: true,
+    status: if row.status == "running" {
+      "done"
+    } else {
+      row.status
+    },
+  }
 }
 
 ///|
@@ -693,14 +693,13 @@ fn mooncode_transcript_items_have_assistant_after_last_user(
   let mut seen_assistant = false
   for item in items {
     match item.message {
-      Some(row) => {
+      Some(row) =>
         if row.role == "user" {
           seen_user = true
           seen_assistant = false
         } else if row.role == "assistant" && seen_user {
           seen_assistant = true
         }
-      }
       None => ()
     }
   }
@@ -709,9 +708,14 @@ fn mooncode_transcript_items_have_assistant_after_last_user(
 
 ///|
 fn render_mooncode_transcript_row(row : MoonCodeTranscriptRow) -> @rabbita.Html {
-  div(class="mooncode-message " + row.role + " " + row.status, [
-    pre(class="mooncode-message-body", row.content),
-  ])
+  div(
+    class="mooncode-message " + row.role + " " + row.status,
+    attrs=@html.Attrs::build()
+      .data_set("testid", "mooncode-message")
+      .data_set("role", row.role)
+      .data_set("status", row.status),
+    [pre(class="mooncode-message-body", row.content)],
+  )
 }
 
 ///|
@@ -751,9 +755,7 @@ fn mooncode_order_transcript_events(
         for linked in events {
           if !mooncode_event_is_user_prompt(linked) &&
             mooncode_event_command_id(linked) == command_id {
-            mooncode_push_ordered_transcript_event(
-              ordered, used_keys, linked,
-            )
+            mooncode_push_ordered_transcript_event(ordered, used_keys, linked)
           }
         }
       }
@@ -783,18 +785,14 @@ fn mooncode_order_transcript_item_events(
           if !mooncode_event_is_user_prompt(linked) &&
             !mooncode_event_is_assistant_message(linked) &&
             mooncode_event_command_id(linked) == command_id {
-            mooncode_push_ordered_transcript_event(
-              ordered, used_keys, linked,
-            )
+            mooncode_push_ordered_transcript_event(ordered, used_keys, linked)
           }
         }
         for linked in events {
           if !mooncode_event_is_user_prompt(linked) &&
             mooncode_event_is_assistant_message(linked) &&
             mooncode_event_command_id(linked) == command_id {
-            mooncode_push_ordered_transcript_event(
-              ordered, used_keys, linked,
-            )
+            mooncode_push_ordered_transcript_event(ordered, used_keys, linked)
           }
         }
       }
@@ -915,7 +913,9 @@ fn mooncode_transcript_rows(
     )
     if event_rows.length() > 0 {
       mooncode_append_session_transcript_tail(event_rows, session)
-      mooncode_complete_event_transcript_rows(event_rows, model, session, events)
+      mooncode_complete_event_transcript_rows(
+        event_rows, model, session, events,
+      )
       return event_rows
     }
   }
@@ -1130,7 +1130,10 @@ fn mooncode_transcript_rows_have_message(
 }
 
 ///|
-fn mooncode_session_has_pending_prompt(model : Model, session_id : String) -> Bool {
+fn mooncode_session_has_pending_prompt(
+  model : Model,
+  session_id : String,
+) -> Bool {
   for prompt in model.mooncode_pending_prompts {
     if prompt.session_id == session_id {
       return true
@@ -1169,6 +1172,7 @@ fn mooncode_pending_prompt_key(prompt : MoonCodePendingPrompt) -> String {
   "\{prompt.session_id}\n\{prompt.after_row_count}\n\{prompt.content}"
 }
 
+///|
 fn mooncode_push_transcript_row(
   rows : Array[MoonCodeTranscriptRow],
   keys : Array[String],

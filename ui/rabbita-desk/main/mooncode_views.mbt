@@ -3,7 +3,10 @@ fn render_mooncode_pane(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  aside(class="activity-pane mooncode-rail", [
+  aside(
+    class="activity-pane mooncode-rail",
+    attrs=@html.Attrs::build().data_set("testid", "mooncode-rail"),
+    [
     div(class="pane-heading", [
       div([
         p(class="eyebrow", "MoonCode"),
@@ -13,11 +16,13 @@ fn render_mooncode_pane(
     ]),
     button(
       class="mooncode-new-session",
+      attrs=@html.Attrs::build().data_set("testid", "mooncode-new-session"),
       on_click=dispatch(NewMoonCodeSession),
       "New chat",
     ),
     div(
       class="mooncode-session-list",
+      attrs=@html.Attrs::build().data_set("testid", "mooncode-session-list"),
       if model.mooncode_sessions.length() == 0 {
         [p(class="status-line empty-list", "No chats")]
       } else {
@@ -32,6 +37,11 @@ fn render_mooncode_pane(
             } else {
               "mooncode-session"
             },
+            attrs=@html.Attrs::build()
+              .data_set("testid", "mooncode-session")
+              .data_set("session-id", session.id)
+              .data_set("workspace-id", session.workspace_id)
+              .data_set("status", session.status),
             title=mooncode_session_accessibility_title(session),
             on_click=dispatch(SelectMoonCodeSession(session.id)),
             [
@@ -90,7 +100,10 @@ fn render_mooncode_center(
 ) -> @rabbita.Html {
   let session = selected_mooncode_session(model)
   let empty = session is None
-  main_(class="preview-center mooncode-center", [
+  main_(
+    class="preview-center mooncode-center",
+    attrs=@html.Attrs::build().data_set("testid", "mooncode-center"),
+    [
     div(class="mooncode-context-bar", [
       div([
         strong(mooncode_workspace_label(model)),
@@ -103,6 +116,7 @@ fn render_mooncode_center(
       } else {
         "mooncode-chat-surface"
       },
+      attrs=@html.Attrs::build().data_set("testid", "mooncode-chat-surface"),
       [
         match session {
           Some(session) =>

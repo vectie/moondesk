@@ -11,25 +11,36 @@ struct MoonCodeActivityRow {
 ///|
 fn render_mooncode_activity_row(row : MoonCodeActivityRow) -> @rabbita.Html {
   let folded_class = if row.folded { " folded" } else { "" }
-  let row_class = "mooncode-activity-row " + row.tone + " " + row.status +
+  let row_class = "mooncode-activity-row " +
+    row.tone +
+    " " +
+    row.status +
     folded_class
-  div(class=row_class, [
-    div(class="mooncode-activity-dot", ""),
-    div(class="mooncode-activity-copy", [
-      div(class="mooncode-activity-line", [
-        strong(row.label),
-        span(row.status),
+  div(
+    class=row_class,
+    attrs=@html.Attrs::build()
+      .data_set("testid", "mooncode-activity")
+      .data_set("label", row.label)
+      .data_set("status", row.status)
+      .data_set("folded", if row.folded { "true" } else { "false" }),
+    [
+      div(class="mooncode-activity-dot", ""),
+      div(class="mooncode-activity-copy", [
+        div(class="mooncode-activity-line", [
+          strong(row.label),
+          span(row.status),
+        ]),
+        p(class="mooncode-activity-title", row.title),
+        if row.detail == "" {
+          span(class="mooncode-activity-detail empty", "")
+        } else if row.folded {
+          span(class="mooncode-activity-folded", "Collapsed")
+        } else {
+          pre(class="mooncode-activity-detail", row.detail)
+        },
       ]),
-      p(class="mooncode-activity-title", row.title),
-      if row.detail == "" {
-        span(class="mooncode-activity-detail empty", "")
-      } else if row.folded {
-        span(class="mooncode-activity-folded", "Collapsed")
-      } else {
-        pre(class="mooncode-activity-detail", row.detail)
-      },
-    ]),
-  ])
+    ],
+  )
 }
 
 ///|
@@ -46,67 +57,81 @@ fn mooncode_activity_row_from_event(
     return None
   }
   if mooncode_activity_is_reasoning(event) {
-    return Some(mooncode_activity_row(
-      tone="thinking",
-      label="Thinking",
-      title=mooncode_activity_title(event, "Model reasoning"),
-      detail=mooncode_activity_detail(event),
-      status=event.status,
-    ))
+    return Some(
+      mooncode_activity_row(
+        tone="thinking",
+        label="Thinking",
+        title=mooncode_activity_title(event, "Model reasoning"),
+        detail=mooncode_activity_detail(event),
+        status=event.status,
+      ),
+    )
   }
   if mooncode_activity_is_tool_start(event) {
-    return Some(mooncode_activity_row(
-      tone=mooncode_activity_tool_tone(event),
-      label=mooncode_activity_tool_label_for_event(event),
-      title=mooncode_activity_tool_title(event),
-      detail=mooncode_activity_tool_detail(event),
-      status=event.status,
-    ))
+    return Some(
+      mooncode_activity_row(
+        tone=mooncode_activity_tool_tone(event),
+        label=mooncode_activity_tool_label_for_event(event),
+        title=mooncode_activity_tool_title(event),
+        detail=mooncode_activity_tool_detail(event),
+        status=event.status,
+      ),
+    )
   }
   if mooncode_activity_is_tool_result(event) {
-    return Some(mooncode_activity_row(
-      tone=mooncode_activity_result_tone(event),
-      label=mooncode_activity_result_label(event),
-      title=mooncode_activity_result_title(event),
-      detail=mooncode_activity_result_detail(event),
-      status=event.status,
-    ))
+    return Some(
+      mooncode_activity_row(
+        tone=mooncode_activity_result_tone(event),
+        label=mooncode_activity_result_label(event),
+        title=mooncode_activity_result_title(event),
+        detail=mooncode_activity_result_detail(event),
+        status=event.status,
+      ),
+    )
   }
   if mooncode_activity_is_runtime_proof(event) {
-    return Some(mooncode_activity_row(
-      tone=mooncode_activity_runtime_proof_tone(event),
-      label=mooncode_activity_runtime_proof_label(event),
-      title=mooncode_activity_runtime_proof_title(event),
-      detail=mooncode_activity_runtime_proof_detail(event),
-      status=event.status,
-    ))
+    return Some(
+      mooncode_activity_row(
+        tone=mooncode_activity_runtime_proof_tone(event),
+        label=mooncode_activity_runtime_proof_label(event),
+        title=mooncode_activity_runtime_proof_title(event),
+        detail=mooncode_activity_runtime_proof_detail(event),
+        status=event.status,
+      ),
+    )
   }
   if mooncode_activity_is_edit(event) {
-    return Some(mooncode_activity_row(
-      tone="edit",
-      label="Edited",
-      title=mooncode_activity_title(event, "File change"),
-      detail=mooncode_activity_detail(event),
-      status=event.status,
-    ))
+    return Some(
+      mooncode_activity_row(
+        tone="edit",
+        label="Edited",
+        title=mooncode_activity_title(event, "File change"),
+        detail=mooncode_activity_detail(event),
+        status=event.status,
+      ),
+    )
   }
   if mooncode_activity_is_test(event) {
-    return Some(mooncode_activity_row(
-      tone="test",
-      label="Checked",
-      title=mooncode_activity_title(event, "Validation"),
-      detail=mooncode_activity_result_detail(event),
-      status=event.status,
-    ))
+    return Some(
+      mooncode_activity_row(
+        tone="test",
+        label="Checked",
+        title=mooncode_activity_title(event, "Validation"),
+        detail=mooncode_activity_result_detail(event),
+        status=event.status,
+      ),
+    )
   }
   if mooncode_activity_is_runtime(event) {
-    return Some(mooncode_activity_row(
-      tone=if event.status == "failed" { "failed" } else { "runtime" },
-      label=mooncode_activity_runtime_label(event),
-      title=mooncode_activity_title(event, "Runtime"),
-      detail=mooncode_activity_runtime_detail(event),
-      status=event.status,
-    ))
+    return Some(
+      mooncode_activity_row(
+        tone=if event.status == "failed" { "failed" } else { "runtime" },
+        label=mooncode_activity_runtime_label(event),
+        title=mooncode_activity_title(event, "Runtime"),
+        detail=mooncode_activity_runtime_detail(event),
+        status=event.status,
+      ),
+    )
   }
   None
 }
@@ -124,7 +149,11 @@ fn mooncode_activity_row(
     label,
     title: mooncode_activity_clamp(title, 96),
     detail: mooncode_activity_clamp(detail, 360),
-    status: if status == "" { "active" } else { status },
+    status: if status == "" {
+      "active"
+    } else {
+      status
+    },
     folded: false,
   }
 }
@@ -140,10 +169,7 @@ fn mooncode_activity_is_reasoning(event : MoonCodeEvent) -> Bool {
     (
       event.detail.contains("asking model") ||
       event.detail.contains("model-tool-calls") ||
-      (
-        event.detail.contains("selected") &&
-        event.detail.contains("tool call")
-      )
+      (event.detail.contains("selected") && event.detail.contains("tool call"))
     )
   ) ||
   event.title.contains("planner") ||
@@ -221,10 +247,7 @@ fn mooncode_activity_is_control_bookkeeping(event : MoonCodeEvent) -> Bool {
   event.kind == "runtime.service_started" ||
   event.kind == "runtime.service_finished" ||
   event.kind == "runtime_step" ||
-  (
-    event.kind == "runtime_update" &&
-    !mooncode_activity_is_reasoning(event)
-  ) ||
+  (event.kind == "runtime_update" && !mooncode_activity_is_reasoning(event)) ||
   event.kind == "runtime_loop" ||
   event.kind == "usage"
 }
@@ -275,7 +298,9 @@ fn mooncode_activity_tool_title(event : MoonCodeEvent) -> String {
   if tool_name != "" {
     return mooncode_activity_tool_default_title(event)
   }
-  if event.command != "" && event.command != "prompt" && event.command != "steer" {
+  if event.command != "" &&
+    event.command != "prompt" &&
+    event.command != "steer" {
     "Command: " + event.command
   } else if event.kind != "" {
     "Tool"
@@ -310,9 +335,9 @@ fn mooncode_activity_tool_tone(event : MoonCodeEvent) -> String {
   if mooncode_activity_tool_is_edit(tool_name) {
     "edit"
   } else if mooncode_activity_tool_is_test(
-    tool_name,
-    mooncode_activity_tool_command(event),
-  ) {
+      tool_name,
+      mooncode_activity_tool_command(event),
+    ) {
     "test"
   } else {
     "tool"
@@ -485,10 +510,9 @@ fn mooncode_activity_package_result_json_summary(result : Json) -> String? {
 ///|
 fn mooncode_activity_package_file_read_summary(result : Json) -> String? {
   let file = mooncode_activity_json_object_field_or_empty(result, "file")
-  let path = mooncode_activity_first_json_string(
-    file,
-    ["filePath", "file_path", "path"],
-  )
+  let path = mooncode_activity_first_json_string(file, [
+    "filePath", "file_path", "path",
+  ])
   if path == "" {
     return None
   }
@@ -514,10 +538,9 @@ fn mooncode_activity_package_file_read_summary(result : Json) -> String? {
 
 ///|
 fn mooncode_activity_package_file_change_summary(result : Json) -> String? {
-  let path = mooncode_activity_first_json_string(
-    result,
-    ["filePath", "file_path", "path"],
-  )
+  let path = mooncode_activity_first_json_string(result, [
+    "filePath", "file_path", "path",
+  ])
   if path == "" {
     return None
   }
@@ -580,12 +603,11 @@ fn mooncode_activity_package_web_result_count(result : Json) -> Int {
     Some(Array(items)) =>
       for item in items {
         match item {
-          Object(_) => {
+          Object(_) =>
             match json_field(item, "content") {
               Some(Array(hits)) => count += hits.length()
               _ => ()
             }
-          }
           String(text) if text.trim() != "" => count += 1
           _ => ()
         }
@@ -603,10 +625,10 @@ fn mooncode_activity_package_command_summary(result : Json) -> String? {
     default=false,
   )
   let backgrounded = mooncode_activity_json_bool_value(
-    result,
-    "backgroundedByUser",
-    default=false,
-  ) ||
+      result,
+      "backgroundedByUser",
+      default=false,
+    ) ||
     mooncode_activity_json_bool_value(
       result,
       "assistantAutoBackgrounded",
@@ -735,9 +757,8 @@ fn mooncode_activity_clean_title(event : MoonCodeEvent) -> String? {
     "runtime.turn_started" => Some("Started working")
     "runtime.turn_finished" => Some("Finished step")
     "reasoning_delta" | "reasoning_message" => Some("Thinking")
-    _ => {
-      if event.kind == "runtime_update" &&
-        event.detail.contains("asking model") {
+    _ =>
+      if event.kind == "runtime_update" && event.detail.contains("asking model") {
         Some("Choosing next action")
       } else if event.kind == "runtime_update" &&
         (
@@ -748,31 +769,29 @@ fn mooncode_activity_clean_title(event : MoonCodeEvent) -> String? {
           )
         ) {
         Some("Selected next action")
-      } else if event.title.contains("planner") || event.title.contains("Planner") {
+      } else if event.title.contains("planner") ||
+        event.title.contains("Planner") {
         Some("Thinking")
       } else {
         None
       }
-    }
   }
 }
 
 ///|
 fn mooncode_activity_tool_name(event : MoonCodeEvent) -> String {
   let detail = mooncode_activity_detail_json(event)
-  let tool = mooncode_activity_first_json_string(
-    detail,
-    ["tool", "tool_name", "name"],
-  )
+  let tool = mooncode_activity_first_json_string(detail, [
+    "tool", "tool_name", "name",
+  ])
   if tool != "" {
     return tool
   }
   match event.tool_result {
     Some(result) => {
-      let result_tool = mooncode_activity_first_json_string(
-        result,
-        ["tool", "tool_name", "name"],
-      )
+      let result_tool = mooncode_activity_first_json_string(result, [
+        "tool", "tool_name", "name",
+      ])
       if result_tool != "" {
         return result_tool
       }
@@ -782,12 +801,10 @@ fn mooncode_activity_tool_name(event : MoonCodeEvent) -> String {
   match json_field(detail, "tool_call") {
     Some(Object(_)) => {
       let tool_call = mooncode_activity_json_object_field_or_empty(
-        detail,
-        "tool_call",
+        detail, "tool_call",
       )
       let function = mooncode_activity_json_object_field_or_empty(
-        tool_call,
-        "function",
+        tool_call, "function",
       )
       let name = json_string_value(function, "name", default="")
       if name != "" {
@@ -815,25 +832,22 @@ fn mooncode_activity_normalized_tool_name(event : MoonCodeEvent) -> String {
 fn mooncode_activity_tool_args(event : MoonCodeEvent) -> Json {
   let detail = mooncode_activity_detail_json(event)
   match json_field(detail, "parsed_arguments") {
-    Some(Object(_)) => return mooncode_activity_json_object_field_or_empty(
-      detail,
-      "parsed_arguments",
-    )
+    Some(Object(_)) =>
+      return mooncode_activity_json_object_field_or_empty(
+        detail, "parsed_arguments",
+      )
     _ => ()
   }
-  match mooncode_activity_first_json_argument(detail, [
-    "arguments", "args", "input",
-  ]) {
+  match
+    mooncode_activity_first_json_argument(detail, ["arguments", "args", "input"]) {
     Some(args) => return args
     None => ()
   }
   let tool_call = mooncode_activity_json_object_field_or_empty(
-    detail,
-    "tool_call",
+    detail, "tool_call",
   )
   let function = mooncode_activity_json_object_field_or_empty(
-    tool_call,
-    "function",
+    tool_call, "function",
   )
   match mooncode_activity_first_json_argument(function, ["arguments"]) {
     Some(args) => args
@@ -847,13 +861,10 @@ fn mooncode_activity_tool_subject(event : MoonCodeEvent) -> String? {
     return Some(event.path)
   }
   let args = mooncode_activity_tool_args(event)
-  let subject = mooncode_activity_first_json_string(
-    args,
-    [
-      "description", "query", "url", "file_path", "path", "pattern", "command",
-      "notebook_path", "filePath", "file", "target", "cwd",
-    ],
-  )
+  let subject = mooncode_activity_first_json_string(args, [
+    "description", "query", "url", "file_path", "path", "pattern", "command", "notebook_path",
+    "filePath", "file", "target", "cwd",
+  ])
   if subject != "" {
     return Some(subject)
   }
@@ -883,7 +894,9 @@ fn mooncode_activity_first_json_string(
 fn mooncode_activity_detail_json(event : MoonCodeEvent) -> Json {
   let detail = event.detail.trim().to_owned()
   if detail.has_prefix("{") {
-    @json.parse(detail) catch { _ => Json::object({}) }
+    @json.parse(detail) catch {
+      _ => Json::object({})
+    }
   } else {
     Json::object({})
   }
@@ -900,7 +913,7 @@ fn mooncode_activity_json_object_field_or_empty(
         Object(_) => value
         _ => Json::object({})
       }
-    _ => Json::object({ })
+    _ => Json::object({})
   }
 }
 
@@ -933,14 +946,13 @@ fn mooncode_activity_first_json_argument(
 
 ///|
 fn mooncode_activity_tool_command(event : MoonCodeEvent) -> String {
-  if event.command != "" && event.command != "prompt" && event.command != "steer" {
+  if event.command != "" &&
+    event.command != "prompt" &&
+    event.command != "steer" {
     return event.command
   }
   let args = mooncode_activity_tool_args(event)
-  let command = mooncode_activity_first_json_string(
-    args,
-    ["command", "cmd"],
-  )
+  let command = mooncode_activity_first_json_string(args, ["command", "cmd"])
   if command != "" {
     return command
   }
@@ -966,20 +978,18 @@ fn mooncode_activity_todo_subject(args : Json) -> String? {
       for todo in todos {
         let status = json_string_value(todo, "status", default="")
         if status == "in_progress" {
-          let text = mooncode_activity_first_json_string(
-            todo,
-            ["activeForm", "content"],
-          )
+          let text = mooncode_activity_first_json_string(todo, [
+            "activeForm", "content",
+          ])
           if text != "" {
             return Some(text)
           }
         }
       }
       for todo in todos {
-        let text = mooncode_activity_first_json_string(
-          todo,
-          ["activeForm", "content"],
-        )
+        let text = mooncode_activity_first_json_string(todo, [
+          "activeForm", "content",
+        ])
         if text != "" {
           return Some(text)
         }
@@ -1022,11 +1032,11 @@ fn mooncode_activity_command_is_test(command : String) -> Bool {
 ///|
 fn mooncode_activity_clean_detail(event : MoonCodeEvent) -> String? {
   match event.kind {
-    "runtime.planner_started" |
-    "runtime.planner_selected" |
-    "runtime.turn_started" |
-    "runtime.turn_finished" => Some("")
-    _ => {
+    "runtime.planner_started"
+    | "runtime.planner_selected"
+    | "runtime.turn_started"
+    | "runtime.turn_finished" => Some("")
+    _ =>
       if event.detail.contains("Queued `prompt`") {
         Some("")
       } else if event.detail.contains("model-tool-calls") ||
@@ -1041,7 +1051,6 @@ fn mooncode_activity_clean_detail(event : MoonCodeEvent) -> String? {
       } else {
         None
       }
-    }
   }
 }
 
@@ -1051,7 +1060,9 @@ fn mooncode_activity_detail(event : MoonCodeEvent) -> String {
     Some(detail) => return detail
     None => ()
   }
-  if event.command != "" && event.command != "prompt" && event.command != "steer" {
+  if event.command != "" &&
+    event.command != "prompt" &&
+    event.command != "steer" {
     return event.command
   }
   if event.path != "" && event.detail == "" {
