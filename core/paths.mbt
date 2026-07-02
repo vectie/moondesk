@@ -114,10 +114,7 @@ pub fn infer_source_layer(path : StringView) -> SourceLayer {
     path.contains("/inbox/") {
     Inbox
   } else if path == ".moonsuite/products/moonclaw" ||
-    path.has_prefix(".moonsuite/products/moonclaw/") ||
-    path == "moonclaw-jobs" ||
-    path.has_prefix("moonclaw-jobs/") ||
-    path.contains("/moonclaw-jobs/") {
+    path.has_prefix(".moonsuite/products/moonclaw/") {
     RunArtifact
   } else if path == ".moonsuite" ||
     path.has_prefix(".moonsuite/") ||

@@ -89,5 +89,8 @@ test "source layer inference covers desk explorer roots" {
     )
     is RunArtifact,
   )
+  assert_true(
+    @core.infer_source_layer("moonclaw-jobs/run-1/log.jsonl") is Workspace,
+  )
   assert_true(@core.infer_source_layer("notes/local.txt") is Workspace)
 }

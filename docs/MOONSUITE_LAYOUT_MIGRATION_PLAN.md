@@ -455,6 +455,14 @@ pattern instead of carrying independent string contracts.
   the suite-level `.tmp/products/moonrobo` temp lane. Validation for this slice:
   MoonRobo `moon fmt`, clean `moon info`, `moon check`, `moon test` with
   `453/453` tests passing, and `git diff --check`.
+- Moondesk removes the remaining active `moonclaw-jobs` source-layer
+  compatibility alias. Fresh Desk source classification now treats only the
+  MoonSuite product-home job path `.moonsuite/products/moonclaw/jobs/...` as a
+  run artifact, while retired `moonclaw-jobs/...` paths fall back to ordinary
+  workspace files. Validation for this slice: Moondesk `moon fmt`, `moon info`,
+  `moon check`, `moon test` with `458/458` tests passing, Rabbita desk
+  `npm run build`, a refined active `moonclaw-jobs` scan with only regression
+  test hits, and `git diff --check`.
 
 Migration rules from this point forward:
 
