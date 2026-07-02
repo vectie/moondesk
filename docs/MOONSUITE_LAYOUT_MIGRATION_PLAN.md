@@ -455,6 +455,16 @@ pattern instead of carrying independent string contracts.
   the suite-level `.tmp/products/moonrobo` temp lane. Validation for this slice:
   MoonRobo `moon fmt`, clean `moon info`, `moon check`, `moon test` with
   `453/453` tests passing, and `git diff --check`.
+- MoonVis commit `6e86154` teaches its suite-layout helper to infer
+  `books/<book-id>` workspace roots without requiring the caller to pass a
+  duplicate book id. MoonVis state remains under
+  `.moonsuite/products/moonvis`, temporary files remain under
+  `.tmp/products/moonvis`, and accepted output resolves to
+  `books/<book-id>/outputs/moonvis` for both explicit and inferred flows.
+  Validation for this slice: `node --check` for the MoonVis layout helper and
+  CLI wrapper, MoonVis fresh-suite product-home smoke, Moondesk residual guard,
+  MoonLib consumer-pin guard, full cross-product fresh-suite smoke, and
+  MoonVis `git diff --check`.
 - Moondesk removes the remaining active `moonclaw-jobs` source-layer
   compatibility alias. Fresh Desk source classification now treats only the
   MoonSuite product-home job path `.moonsuite/products/moonclaw/jobs/...` as a
