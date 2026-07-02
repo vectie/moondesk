@@ -1474,6 +1474,12 @@ Completed slices:
   Moondesk projections. Validation for this slice: focused stale-layout doc
   scan, Moondesk `moon test` with `459/459` tests passing, and
   `git diff --check`.
+- Moontown's top-level README no longer advertises retired
+  `.moontown/civic/...` schedule, scenario, or pattern-run paths. The operator
+  quickstart now matches the rest of the Moontown civic docs and runtime
+  helpers by pointing communication-pattern state at
+  `.moonsuite/products/moontown/civic/...`. Validation for this slice: focused
+  README stale-path scan and `git diff --check` in Moontown and Moondesk.
 
 Remaining high-priority product slices:
 
