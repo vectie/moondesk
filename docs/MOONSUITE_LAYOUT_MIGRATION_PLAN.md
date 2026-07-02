@@ -303,6 +303,15 @@ pattern instead of carrying independent string contracts.
   passing, `npm run build`, `git diff --check`, and visible app verification at
   `http://127.0.0.1:4535/?activity=files` showing no `.moonsuite/products`
   text or chip titles.
+- Moondesk product summary now renders every product from the registry instead
+  of a hardcoded core subset. The first-run/no-book Desk UI shows all 13
+  installed products in registry order, including MoonStat, MoonFish, MoonMoon,
+  MoonRobo, Bookkeeper, Lepusa, and Rabbita, while still keeping hidden
+  `.moonsuite/products/...` paths out of normal text and chip titles.
+  Validation for this slice: Moondesk `moon fmt`, `moon info`, `moon check`,
+  `moon test` with `457/457` tests passing, `npm run build`, `git diff --check`,
+  and visible app verification at
+  `http://127.0.0.1:4535/?activity=files` showing `chipCount: 13`.
 - MoonRobo commit `6d706483` removes stale `.moonclaw` home examples from the
   Rabbita cockpit MoonClaw routine fixtures. The fixtures now use a neutral
   `/tmp/moonclaw-root` suite root and assert the current

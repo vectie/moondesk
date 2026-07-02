@@ -97,20 +97,8 @@ fn workspace_product_count_label(model : Model) -> String {
 }
 
 ///|
-fn workspace_core_products(model : Model) -> Array[MoonSuiteProduct] {
-  let visible : Array[MoonSuiteProduct] = []
-  for product in model.moonsuite_products {
-    if [
-      "moondesk", "moonbook", "moonwiki", "mooncode", "moonclaw", "moontown",
-    ].contains(product.id) {
-      visible.push(product)
-    }
-  }
-  if visible.length() > 0 {
-    visible
-  } else {
-    model.moonsuite_products
-  }
+fn workspace_display_products(model : Model) -> Array[MoonSuiteProduct] {
+  model.moonsuite_products
 }
 
 ///|

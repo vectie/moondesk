@@ -1410,6 +1410,11 @@ test "workspace metadata result records empty library location" {
             name: "MoonClaw",
             status: "installed",
           },
+          {
+            id: "moonrobo",
+            name: "MoonRobo",
+            status: "installed",
+          },
         ],
       }),
     ),
@@ -1420,12 +1425,16 @@ test "workspace metadata result records empty library location" {
     model.workspace_library_path,
     "/Users/example/moondesk-workspace/books",
   )
-  assert_eq(model.moonsuite_products.length(), 2)
-  assert_eq(workspace_product_count_label(model), "2 products installed")
-  assert_eq(workspace_core_products(model).length(), 2)
+  assert_eq(model.moonsuite_products.length(), 3)
+  assert_eq(workspace_product_count_label(model), "3 products installed")
+  assert_eq(workspace_display_products(model).length(), 3)
   assert_eq(
     workspace_product_chip_title(model.moonsuite_products[0]),
     "Moondesk: Installed",
+  )
+  assert_eq(
+    workspace_product_chip_title(model.moonsuite_products[2]),
+    "MoonRobo: Installed",
   )
 }
 

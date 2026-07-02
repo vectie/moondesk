@@ -184,7 +184,7 @@ fn render_desk_library_location(model : Model) -> @rabbita.Html {
 
 ///|
 fn render_desk_product_summary(model : Model) -> @rabbita.Html {
-  let products = workspace_core_products(model)
+  let products = workspace_display_products(model)
   if products.length() == 0 {
     p(class="status-line", "Product registry pending")
   } else {
