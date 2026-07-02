@@ -265,6 +265,17 @@ pattern instead of carrying independent string contracts.
   passing, active one-line old-path file-operation scan with zero hits,
   narrowed active legacy literal scan with only filters/service identifiers, and
   `git diff --check`.
+- Moondesk commit `c13ab594` removes the remaining fresh-default compatibility
+  treatment for stale `.moontown`, `.moonclaw`, and `.moonclaw-worktrees`
+  surfaces. Desk VFS hiding and creation guards now protect only the current
+  internal roots such as `.moonsuite` and `.tmp`, source-layer inference
+  classifies MoonClaw artifacts through the current MoonSuite product home or
+  explicit MoonClaw job UI path instead of the old `.moonclaw` home, and the
+  town LaunchAgent label is now `app.vectie.moonsuite.town`. Validation for this
+  slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `456/456` tests passing, zero quoted `.moontown`/`.moonclaw` literals in
+  Moondesk MoonBit source, zero active old-path file-operation hits, and
+  `git diff --check`.
 - MoonClaw now depends on MoonLib `0.1.3` for the model loader's MoonSuite
   workspace-root path derivation. Model and provider config loading now reads
   `models/models.json` and `moonclaw.json` from
@@ -1131,12 +1142,11 @@ Remaining high-priority product slices:
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
   the owning suite instead of nested book-local `.moonsuite` directories. Trash
   file and receipt coverage now proves the same suite-root behavior for direct
-  Desk and HTTP flows. The current active Moondesk scan has zero obvious direct
-  old-path file-operation hits, nine narrowed legacy literals limited to hidden
-  path filters and LaunchAgent service identifiers, and seventeen
-  `.moonsuite/products` literals to classify as central helpers or display text.
-  Remaining Phase 4 work should be a hard classification pass plus any
-  multi-line path-builder fixes the regex scan cannot prove.
+  Desk and HTTP flows. The current Moondesk MoonBit scan has zero quoted
+  `.moontown`/`.moonclaw` literals and zero active old-path file-operation hits.
+  Remaining Phase 4 work should focus on cross-product residuals and any
+  product-home display/API text that belongs in Phase 6 or Phase 7 rather than
+  Moondesk old-writer cleanup.
 - Moontown: remaining Phase 5 work should focus on any product-owned residual
   writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
