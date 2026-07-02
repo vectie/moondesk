@@ -1732,7 +1732,12 @@ Remaining high-priority product slices:
   MoonChat's legacy `.moonchat`, and MoonVis's legacy `.moonvis` suite-root
   homes are now reported as drift against their matching
   `.moonsuite/products/<product>` homes; remaining work should focus on new
-  drift coverage rather than local product-home formula cleanup.
+  drift coverage rather than local product-home formula cleanup. The canonical
+  drift payload now also exposes the full first-party product-home set for
+  Moondesk, MoonBook, MoonWiki, MoonCode, MoonStat, MoonClaw, Moontown,
+  MoonRobo, MoonFish, MoonMoon, MoonChat, MoonVis, Bookkeeper, Lepusa, and
+  Rabbita through MoonLib-derived paths, so downstream validators can compare
+  every product against one contract report.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
