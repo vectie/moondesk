@@ -1729,8 +1729,9 @@ Remaining high-priority product slices:
   from the MoonLib workspace-root product-artifact helper, matching MoonClaw's
   current durable product-home contract. Suite status canonical paths and
   legacy-drift canonical targets now consume MoonLib `ProductHome` fields
-  directly; remaining work should focus on new drift coverage rather than
-  local product-home formula cleanup.
+  directly. MoonChat's legacy `.moonchat` suite-root home is now reported as
+  drift against `.moonsuite/products/moonchat`; remaining work should focus on
+  new drift coverage rather than local product-home formula cleanup.
 - Moondesk: MoonCode session/event sidecars and the Moontown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
   MoonClaw job roots plus Moondesk daemon/preference state now resolve through
