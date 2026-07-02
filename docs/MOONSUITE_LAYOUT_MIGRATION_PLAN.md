@@ -1265,6 +1265,16 @@ Completed slices:
   "moonbooks.json")`, proving the fresh suite product-home catalog contract in
   the same flows. Validation passed with Moontown `moon fmt`, clean
   `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
+- Moontown MoonBook evidence accounting now recognizes operational MoonClaw
+  run evidence only when the completed workflow path is under the MoonSuite
+  product-home job store
+  `.moonsuite/products/moonclaw/jobs/run-...`. The retired
+  `moonclaw-jobs/run-...` root is covered as ordinary domain evidence rather
+  than an active operational marker. Validation for this slice: Moontown
+  `moon fmt`, clean `moon info` after reverting unrelated generated `.mbti`
+  EOF churn, `moon check`, `moon test` with `927/927` tests passing, refined
+  active `moonclaw-jobs` scan with only the negative regression fixture left,
+  and `git diff --check`.
 
 Remaining high-priority product slices:
 
