@@ -1284,6 +1284,15 @@ Completed slices:
   `moon test` with `199/199` tests passing, refined active `.moonbook` scan
   with only the negative assertion and product-name strings left, and
   `git diff --check`.
+- MoonClaw provider-task prompts now describe the current internal lanes
+  `.moonsuite` and `.tmp` as generated/runtime trees and no longer tell worker
+  agents to treat retired `.moonclaw` homes as a fresh-default internal path.
+  White-box prompt coverage asserts the provider-task system prompt contains
+  the fresh lanes and excludes the retired `.moonclaw` instruction. Validation
+  for this slice: MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test`
+  with `1002/1002` tests passing, refined active provider-prompt `.moonclaw`
+  scan with only the negative prompt assertion left, cleanup of untracked
+  test-created `.moonsuite` runtime output, and `git diff --check`.
 
 Remaining high-priority product slices:
 
