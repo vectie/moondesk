@@ -1308,6 +1308,15 @@ Completed slices:
   slice: MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test` with
   `1002/1002` tests passing, refined operator-doc stale-path scan, cleanup of
   untracked test-created `.moonsuite` runtime output, and `git diff --check`.
+- Moontown active skill/template/cookbook copy now advertises watcher ledgers,
+  standing-goal registration, generated cookbook state, and MoonClaw execution
+  workspaces under `.moonsuite/products/moontown/...` and
+  `.moonsuite/products/moonclaw/jobs/...` instead of retired `.moontown` or
+  book-local `.moonclaw/jobs` paths. Validation for this slice: Moontown
+  `moon fmt`, `moon info`, `moon check`, `moon test` with `927/927` tests
+  passing, refined active-copy stale-path scan with only product helper names
+  left, restored whitespace-only generated `.mbti` churn from `moon info`, and
+  `git diff --check`.
 
 Remaining high-priority product slices:
 
