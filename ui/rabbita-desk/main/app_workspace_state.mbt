@@ -50,15 +50,7 @@ fn workspace_library_root(model : Model) -> String {
   if root == "not connected" && model.workspace_root_path != "" {
     return model.workspace_root_path
   }
-  match root.rev_split_once("/books/") {
-    Some((base, _)) => base.to_owned()
-    None =>
-      if root.has_suffix("/books") {
-        root[:root.length() - "/books".length()].to_owned()
-      } else {
-        root
-      }
-  }
+  @desk.moonsuite_root_for_workspace_root(root)
 }
 
 ///|
@@ -69,10 +61,8 @@ fn workspace_moonbook_library_path(model : Model) -> String {
   }
   if root == "not connected" {
     root
-  } else if root.has_suffix("/books") {
-    root
   } else {
-    root + "/books"
+    @desk.moonsuite_books_root(root)
   }
 }
 

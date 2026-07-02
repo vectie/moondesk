@@ -79,6 +79,16 @@ pub fn moonsuite_product_display_absolute_artifact(
 }
 
 ///|
+pub fn moonsuite_root_for_workspace_root(workspace_root : String) -> String {
+  @moonsuite.suite_root_for_workspace_root(workspace_root)
+}
+
+///|
+pub fn moonsuite_books_root(root : String) -> String {
+  @moonsuite.books_root(root)
+}
+
+///|
 pub fn infer_source_layer(path : StringView) -> SourceLayer {
   let path = path.to_owned()
   if path == "wiki/history" ||

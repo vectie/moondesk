@@ -21,11 +21,15 @@ pub fn infer_entry_kind(StringView, is_directory? : Bool) -> EntryKind
 
 pub fn infer_source_layer(StringView) -> SourceLayer
 
+pub fn moonsuite_books_root(String) -> String
+
 pub fn moonsuite_product_display_absolute_artifact(String, String) -> String
 
 pub fn moonsuite_product_display_artifact(String, String) -> String
 
 pub fn moonsuite_product_display_dir(String) -> String
+
+pub fn moonsuite_root_for_workspace_root(String) -> String
 
 pub fn normalize_review_policy(String) -> String
 

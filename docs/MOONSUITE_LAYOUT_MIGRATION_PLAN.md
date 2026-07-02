@@ -1768,8 +1768,11 @@ Remaining high-priority product slices:
   Desk and HTTP flows. The internal MoonWiki layout facade now consumes
   MoonLib `ProductHome` for suite-root and workspace-derived product home and
   service paths. Moondesk `core` now exposes MoonLib-backed product display
-  helpers, and active MoonWiki/MoonCode/MoonBook adapter product-home display
-  strings route through that shared contract.
+  helpers plus suite-root and books-root helpers, and active
+  MoonWiki/MoonCode/MoonBook adapter product-home display strings route
+  through that shared contract. The Rabbita Desk UI now derives the visible
+  MoonSuite root and MoonBook library path through those core/MoonLib helpers
+  instead of parsing or appending `/books` inside the frontend state layer.
   The current Moondesk MoonBit scan has zero quoted
   `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
   and zero active `.moonsuite/products` literals outside generated interfaces
