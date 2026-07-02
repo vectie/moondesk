@@ -1388,6 +1388,14 @@ Completed slices:
   `~/Workspace/review-scratch`; MoonClaw `moon fmt`, `moon info`,
   `moon check`, `moon test` with `1002/1002` tests passing; cleanup of
   test-created untracked `.moonsuite` runtime output; and `git diff --check`.
+- MoonClaw daemon package docs and public doc comments now describe the daemon
+  lock as
+  `/path/to/MoonSuiteRoot/.moonsuite/products/moonclaw/daemon.json` rather than
+  `~/.moonsuite/products/moonclaw/daemon.json`, keeping daemon operator
+  instructions aligned with the explicit suite-root examples. Validation for
+  this slice: focused MoonClaw daemon/docs scan for `~/.moonsuite`, `--home ~`,
+  and `home directory`, plus MoonClaw `moon fmt`, `moon info`, `moon check`,
+  `moon test`, and `git diff --check`.
 
 Remaining high-priority product slices:
 
