@@ -859,7 +859,10 @@ Moondesk gate commands:
   check/test/build, MoonLib consumer pins, fresh-suite residual scans, and
   cross-repo boundary validation.
 - `bash scripts/phase8_migration_gates.sh full` runs the fast wall plus API
-  smoke, Desk browser smoke, and cross-product fresh-suite smoke.
+  smoke, Desk browser smoke, and cross-product fresh-suite smoke. The Desk
+  browser smoke wrapper defaults to `all`, which runs both the populated
+  MoonBook library scenario and the empty-library first-run scenario against
+  the production Rabbita bundle.
 - `bash scripts/fresh_suite_product_smoke.sh` can be run alone when validating
   product-home behavior across Moontown, MoonClaw, MoonBook, MoonRobo,
   MoonFish, MoonMoon, MoonChat, MoonVis, MoonStat, and Lepusa.
@@ -885,6 +888,27 @@ Phase 8 can close when:
   tested.
 - Browser and Lepusa smoke tests pass on production bundles.
 - Residual old-layout scans leave only approved migration/drift references.
+
+Phase 8 gate-hardening evidence:
+
+- Moondesk commit `8feb13de` stabilizes MoonCode browser-smoke ordering. New
+  chat draft transcripts now stay selected from local pending prompt state
+  rather than incidental composer status text, pending prompts always render a
+  folded `Prompt queued` thinking row before fast backend answers, and browser
+  smoke diagnostics report transcript state on ordering failures. Validation
+  passed with Rabbita JS tests (`451/451`), production bundle build,
+  `scripts/desk_mode_browser_smoke.sh`, and
+  `bash scripts/phase8_migration_gates.sh full`.
+- The next Phase 8 browser-gate slice wires the existing empty-library
+  first-run scenario into the default Desk browser smoke wrapper. `bash
+  scripts/desk_mode_browser_smoke.sh` now runs both `full` and `empty`
+  scenarios against separate fresh MoonSuite roots, proving populated-library
+  navigation plus empty `books/` bootstrap/create behavior in the production
+  bundle. Validation passed with `bash scripts/desk_mode_browser_smoke.sh` and
+  `bash scripts/phase8_migration_gates.sh full`; the full gate also passed
+  Moondesk native tests (`465/465`), Rabbita JS tests (`451/451`), API smoke,
+  MoonLib consumer pins, residual scans, core-boundary validation,
+  cross-product fresh-suite smoke, and Lepusa fresh-books smoke.
 
 ## Phase 9: Cutover
 
