@@ -1617,6 +1617,21 @@ Completed slices:
   PlanBook/runtime storage scan proving zero remaining hard-coded
   `.moonsuite/products/moontown` strings in non-test MoonBit source for those
   packages.
+- Moontown native cookbook, civic, and book-quality display text now also
+  routes product-home examples through storage-owned display helpers.
+  `storage` exposes `moontown_product_display_state_dir` for product-home root
+  references, the cookbook package has local formatting helpers backed by
+  storage, and cookbook stable-state manifests/pages, civic protocol ledger
+  text, and book-quality packet readme text no longer hand-write
+  `.moonsuite/products/moontown/...` literals. Validation for this slice:
+  Moontown `moon fmt`, `moon info`, `moon check`, full `moon test` (`928/928`),
+  generated-interface diff review for the intentional storage API addition,
+  generated-interface churn restore, `git diff --check`, a focused native
+  package scan proving zero remaining hard-coded `.moonsuite/products/moontown`
+  strings in non-test `src/cookbook`, `src/civic`, and `src/book_quality`
+  MoonBit source, and a broader remaining-source scan showing the remaining
+  active display literals are isolated to PlanBook/editor template text and the
+  Rabbita-town JS UI package.
 
 Remaining high-priority product slices:
 
@@ -1662,9 +1677,11 @@ Remaining high-priority product slices:
   paths from MoonLib `ProductHome`; the PlanBook runtime adapter and
   book-quality MoonClaw homes now also derive through MoonLib `ProductHome`
   fields. PlanBook runtime operator/display strings now use the storage-owned
-  product display helper for Moontown product artifacts. Remaining work should
-  focus on newly discovered product-owned writers and broader UI/cookbook
-  display strings rather than local product-home formula cleanup.
+  product display helper for Moontown product artifacts. Native cookbook,
+  civic, and book-quality display strings also use storage-owned display
+  helpers. Remaining display-string cleanup should focus on the PlanBook/editor
+  template packages and the Rabbita-town JS UI package rather than local
+  product-home formula cleanup.
 - MoonRobo: continue residual audits for any newly discovered writers, keeping
   RoboBook-owned receipts, telemetry, task executions, reviews, observations,
   and model edits under the book root while any remaining product orchestration
