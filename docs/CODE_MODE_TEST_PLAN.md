@@ -236,6 +236,9 @@ Assertions:
 - sidecar evidence is deduped into Moondesk's append log before projection.
 - first, second, and third assistant replies appear under the matching user
   turns and stay stable across replay.
+- the browser smoke writes deterministic native sidecar replies after three
+  visible prompt sends and waits for the chat surface to render those replies in
+  turn order.
 - a stale runtime-unavailable event can be recovered by a later command-scoped
   `done` assistant final, but a real failed final remains failed.
 - the main chat never renders direct sidecar rows, fake working rows, or

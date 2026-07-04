@@ -461,10 +461,34 @@ Current coverage:
   canonical assistant messages through session listing, events, and stream
   reads
 
+## Phase 14 - Browser Native Reply Smoke
+
+Status: complete for the automated browser smoke path.
+
+Work:
+
+- Drive the real MoonCode composer in a headless browser for first, second, and
+  third prompts.
+- Use the backend session projection to discover canonical command ids.
+- Append raw MoonClaw sidecar `assistant_message` events for each command id.
+- Wait for backend canonical session refresh to import those replies.
+- Wait for the visible chat surface to render the replies under the matching
+  user turns, without stale runtime-unavailable failure copy or internal
+  runtime bookkeeping.
+- Hard refresh and verify the same native reply order replays from durable
+  state.
+
+Current coverage:
+
+- `scripts/desk_mode_browser_smoke.mjs` now turns the native sidecar reply
+  import into a user-visible browser gate.
+- The smoke proves visible prompt order, backend native reply import, UI native
+  reply rendering, and hard-refresh replay.
+
 ## Current Direction
 
-Phase 13 closes the deterministic backend gap for native first/second/third
-assistant replies. The remaining work is live UI/browser verification against a
-fresh app root: the browser should show optimistic user append immediately, then
-show only event-backed progress/reply rows after backend ingestion, with no
-fake working state, direct sidecar transcript, stale failed turn, or reordering.
+Phase 14 closes the automated browser proof for deterministic native
+first/second/third replies. The remaining risk is live MoonClaw runtime behavior
+outside deterministic sidecar injection: verify that real runtime events emit
+the same command-owned shapes, and remove or simplify any UI diagnostics that
+still imply a second chat owner when real MoonClaw is slow or unavailable.

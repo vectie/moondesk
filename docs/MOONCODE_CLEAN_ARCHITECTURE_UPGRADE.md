@@ -501,6 +501,43 @@ Exit tests:
 - no UI timer, fake working row, or direct MoonClaw sidecar transcript owns chat
   output
 
+## Phase 14 - Browser Native Reply Smoke
+
+Status: complete for the automated browser smoke path.
+
+Work:
+
+- Extend the real browser smoke so it does not stop at queued user turns.
+- Send first, second, and third prompts through the visible MoonCode composer.
+- Discover the canonical command ids from the backend session projection.
+- Append raw MoonClaw sidecar `assistant_message` events for each command.
+- Require the backend to import those replies through the canonical session
+  refresh path.
+- Require the visible chat surface to replace stale runtime-unavailable copy
+  with the command-owned native replies, in turn order.
+- Hard refresh and prove the same user/reply order replays from durable state.
+
+Implemented:
+
+- `scripts/desk_mode_browser_smoke.mjs` now writes native sidecar assistant
+  replies after the three-prompt UI flow.
+- The smoke waits for backend canonical replies and then for the visible
+  `mooncode-chat-surface` to render exactly those assistant rows under their
+  matching user turns.
+- The smoke rejects leaked local-agent text, native bookkeeping text, stale
+  `MoonClaw daemon` failure copy, and internal runtime status copy from the
+  chat surface after native replies arrive.
+- The hard-refresh portion now checks native reply replay, not just user prompt
+  persistence.
+
+Exit tests:
+
+- first, second, and third prompts are still appended immediately through the UI
+- native sidecar assistant replies import into backend canonical state
+- browser-visible assistant rows match native replies in the same turn order
+- stale runtime-unavailable failure copy does not remain as final chat output
+- hard refresh preserves native reply order
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
