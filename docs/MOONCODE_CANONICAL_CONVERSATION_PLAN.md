@@ -639,3 +639,10 @@ The next scheduled phases are now explicit:
   disable only UI runtime auto-start and then injects event-backed native
   replies through public APIs; ordinary MoonCode sessions keep automatic
   MoonClaw runtime startup.
+- Phase 30: no frontend conversation repair. Normal
+  `/api/mooncode/sessions` responses are authoritative for any session they
+  include. The browser may keep local optimistic rows and may preserve an
+  absent selected in-flight session during a real list race, but it must not
+  copy an older cached `mooncode_conversation` over a present backend response
+  with fewer turns or source events. Backend regressions should be caught by
+  gates, not hidden by browser state.

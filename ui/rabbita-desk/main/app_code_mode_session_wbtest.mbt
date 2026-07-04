@@ -1131,7 +1131,7 @@ test "code mode session polling does not copy stale conversation over backend re
 }
 
 ///|
-test "code mode session polling does not regress selected conversation turns" {
+test "code mode session polling accepts backend conversation order without frontend repair" {
   let current = {
     ..code_mode_test_session("session-a", status="running"),
     mooncode_conversation: Some(
@@ -1164,10 +1164,9 @@ test "code mode session polling does not regress selected conversation turns" {
   )
   let session = selected_mooncode_session(next).unwrap()
   let rows = code_mode_test_transcript_rows(next, session)
-  assert_eq(rows.length(), 3)
+  assert_eq(rows.length(), 2)
   assert_eq(rows[0].content, "First prompt")
   assert_eq(rows[1].content, "Second prompt")
-  assert_eq(rows[2].content, "Third prompt")
 }
 
 ///|

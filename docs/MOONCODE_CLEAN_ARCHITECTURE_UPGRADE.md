@@ -1150,11 +1150,57 @@ Exit tests:
 - JS package check passes for `ui/rabbita-desk/main`
   (`moon check ui/rabbita-desk/main --target js`)
 
+## Phase 30 - No Frontend Conversation Repair
+
+Status: implemented as the browser session-list ownership cleanup.
+
+Problem:
+
+- The frontend still had one stale repair branch: when a normal
+  `/api/mooncode/sessions` response contained the selected session but with
+  fewer canonical turns or source events than the browser's previous snapshot,
+  the reducer replaced the backend response with the old local session.
+- That made the browser a second conversation owner. It could hide backend
+  regressions, mask compact/listing route mistakes, and make disappearance or
+  reordering bugs harder to trace because the displayed transcript was not
+  always the newest backend projection.
+- A first-time clean implementation should make the backend append log and
+  canonical projection the only durable conversation source. The UI may keep
+  local optimistic user rows and may preserve an absent selected in-flight
+  session during a real list race, but it must not repair a present backend
+  session by copying old conversation state over it.
+
+Work:
+
+- Remove the selected-session "fresher conversation" replacement branch from
+  `mooncode_preserve_selected_inflight_session`.
+- Delete the frontend helpers that compare conversation turn counts or source
+  event counts and replace an incoming session with a cached local one.
+- Keep the valid in-flight guard only for the case where the selected session is
+  absent from a stale list response and the UI has a real optimistic row,
+  queued status, or running status for that selected session.
+- Update reducer coverage so a regressed normal backend response is accepted by
+  the UI. That test exists to expose backend contract failures rather than hide
+  them.
+
+Exit tests:
+
+- normal `/api/mooncode/sessions` responses remain the source of truth for any
+  session they contain
+- a response with fewer canonical turns is not patched with an older local
+  `mooncode_conversation`
+- selected in-flight sessions are preserved only when missing from the incoming
+  list and backed by real in-flight state
+- immediate optimistic user rows still render until acknowledged by
+  `client_turn_id`
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
 - Matching old content-based prompt acknowledgement.
 - Using runtime service state as a fake "working" signal.
 - Letting compact session listings replace an active new-chat draft.
+- Repairing backend conversation regressions in the browser with cached local
+  `mooncode_conversation` state.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

@@ -174,16 +174,6 @@ fn mooncode_preserve_selected_inflight_session(
   if selected == "" {
     return incoming
   }
-  match mooncode_find_session(model.mooncode_sessions, selected) {
-    Some(session) =>
-      if mooncode_session_matches_selected_workspace(model, session) &&
-        mooncode_selected_session_has_fresher_conversation(
-          incoming, session,
-        ) {
-        return mooncode_replace_session(incoming, session)
-      }
-    None => ()
-  }
   if mooncode_session_exists(incoming, selected) {
     return incoming
   }
@@ -203,48 +193,6 @@ fn mooncode_preserve_selected_inflight_session(
       }
     None => incoming
   }
-}
-
-///|
-fn mooncode_selected_session_has_fresher_conversation(
-  incoming : Array[MoonCodeSession],
-  selected : MoonCodeSession,
-) -> Bool {
-  match mooncode_find_session(incoming, selected.id) {
-    Some(listed) => mooncode_session_conversation_regressed(selected, listed)
-    None => false
-  }
-}
-
-///|
-fn mooncode_session_conversation_regressed(
-  current : MoonCodeSession,
-  incoming : MoonCodeSession,
-) -> Bool {
-  match (current.mooncode_conversation, incoming.mooncode_conversation) {
-    (Some(current_conversation), Some(incoming_conversation)) =>
-      incoming_conversation.turns.length() <
-      current_conversation.turns.length() ||
-      incoming_conversation.source_event_count <
-      current_conversation.source_event_count
-    _ => false
-  }
-}
-
-///|
-fn mooncode_replace_session(
-  sessions : Array[MoonCodeSession],
-  replacement : MoonCodeSession,
-) -> Array[MoonCodeSession] {
-  let next : Array[MoonCodeSession] = []
-  for session in sessions {
-    if session.id == replacement.id {
-      next.push(replacement)
-    } else {
-      next.push(session)
-    }
-  }
-  next
 }
 
 ///|

@@ -635,13 +635,13 @@ moon check ui/rabbita-desk/main --target js --warn-list +unnecessary_annotation 
 moon test internal/moonwiki --filter "mooncode code mode HTTP routes preserve three prompt conversation order" --target native
 ```
 
-These gates keep the normal session list contract clean: the backend must send
-full canonical conversation state, and the browser must not hide a missing
-conversation by copying an older local transcript over a newer response. The
-UI reducer assertion lives in the Rabbita desk wbtest source; the current Moon
-package selector does not expose that JS-only main package as a runnable
-`moon test` target by path, so use the JS package check plus the backend HTTP
-E2E as the executable gate.
+These Phase 30 gates keep the normal session-list contract clean: the backend
+must send full canonical conversation state, and the browser must not hide a
+missing or regressed conversation by copying an older local transcript over a
+newer response. The UI reducer assertion lives in the Rabbita desk wbtest
+source; the current Moon package selector does not expose that JS-only main
+package as a runnable `moon test` target by path, so use the JS package check
+plus the backend HTTP E2E as the executable gate.
 
 ## Done Criteria
 
@@ -677,6 +677,9 @@ Code mode is sufficiently tested when:
   prompts append immediately in the visible UI, owner-tagged progress stays
   between the owning user and assistant, completed progress is folded, and hard
   reload preserves the transcript
+- a frontend/backend ownership gate proves normal session-list responses are
+  authoritative and the UI does not repair backend conversation regressions with
+  cached local conversation state
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state
