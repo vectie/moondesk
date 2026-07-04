@@ -260,42 +260,99 @@ pub fn desktop_session_runtime_commands_endpoint() -> String {
 }
 
 ///|
-pub fn desktop_projection_required_endpoints() -> Array[String] {
+fn desktop_route_contract(path : String, methods : Array[String]) -> Json {
+  { "path": path, "methods": string_array_json(methods) }
+}
+
+///|
+pub fn desktop_projection_route_contracts() -> Array[Json] {
   [
-    desktop_status_endpoint(),
-    desktop_capabilities_endpoint(),
-    desktop_eval_harness_endpoint(),
-    desktop_standalone_boundary_endpoint(),
-    desktop_readiness_contract_endpoint(),
-    desktop_sessions_endpoint(),
-    desktop_session_events_endpoint(),
-    desktop_session_change_set_endpoint(),
-    desktop_session_patch_set_endpoint(),
-    desktop_session_stream_endpoint(),
-    desktop_session_stream_state_endpoint(),
-    desktop_session_commands_endpoint(),
-    desktop_session_tool_approvals_endpoint(),
-    desktop_session_tool_authorization_endpoint(),
-    desktop_session_test_runs_endpoint(),
-    desktop_session_package_candidates_endpoint(),
-    desktop_session_action_plan_endpoint(),
-    desktop_session_readiness_endpoint(),
-    desktop_session_eval_report_endpoint(),
-    desktop_session_package_result_endpoint(),
-    desktop_session_runtime_handoff_endpoint(),
-    desktop_session_store_endpoint(),
-    desktop_session_runtime_commands_endpoint(),
-    desktop_session_command_jsonl_endpoint(),
-    desktop_session_runtime_events_endpoint(),
-    desktop_session_runtime_claim_endpoint(),
-    desktop_session_runtime_execution_plan_endpoint(),
-    desktop_session_runtime_supervisor_endpoint(),
-    desktop_session_runtime_service_endpoint(),
-    desktop_session_runtime_control_endpoint(),
-    desktop_session_runtime_replay_endpoint(),
-    desktop_session_runtime_evidence_endpoint(),
-    desktop_session_preflight_endpoint(),
+    desktop_route_contract(desktop_status_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_capabilities_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_eval_harness_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_standalone_boundary_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_readiness_contract_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_sessions_endpoint(), ["GET", "HEAD", "POST"]),
+    desktop_route_contract(desktop_session_events_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_session_change_set_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_patch_set_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_session_stream_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_session_stream_state_endpoint(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_route_contract(desktop_session_commands_endpoint(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_route_contract(desktop_session_tool_approvals_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_tool_authorization_endpoint(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_route_contract(desktop_session_test_runs_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_session_package_candidates_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_action_plan_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_readiness_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_session_eval_report_endpoint(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_route_contract(desktop_session_package_result_endpoint(), ["POST"]),
+    desktop_route_contract(desktop_session_runtime_handoff_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_store_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_session_runtime_commands_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_command_jsonl_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_runtime_events_endpoint(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_route_contract(desktop_session_runtime_claim_endpoint(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_route_contract(desktop_session_runtime_execution_plan_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_runtime_supervisor_endpoint(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_route_contract(desktop_session_runtime_service_endpoint(), ["POST"]),
+    desktop_route_contract(desktop_session_runtime_control_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_runtime_replay_endpoint(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_route_contract(desktop_session_runtime_evidence_endpoint(), [
+      "GET", "HEAD",
+    ]),
+    desktop_route_contract(desktop_session_preflight_endpoint(), ["GET", "HEAD"]),
   ]
+}
+
+///|
+pub fn desktop_projection_required_endpoints() -> Array[String] {
+  let endpoints : Array[String] = []
+  for contract in desktop_projection_route_contracts() {
+    let path = json_string(contract, "path", default="")
+    if path != "" {
+      endpoints.push(path)
+    }
+  }
+  endpoints
 }
 
 ///|

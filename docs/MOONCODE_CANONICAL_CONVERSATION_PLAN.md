@@ -663,3 +663,9 @@ The next scheduled phases are now explicit:
   route parity test compares the router surface against
   `@mooncode.desktop_projection_required_endpoints`, and the Phase 8 wall runs
   that gate.
+- Phase 34: backend route method contract ownership. The MoonCode desktop
+  projection contract now owns route methods through
+  `@mooncode.desktop_projection_route_contracts`, derives the legacy path list
+  from that structured surface, and compares backend router path plus method
+  fingerprints in the MoonWiki gate. Read routes explicitly include `HEAD`
+  because the desktop router accepts `HEAD` wherever it accepts `GET`.

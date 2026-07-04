@@ -1,10 +1,40 @@
 ///|
+fn route_contract_methods(contract : Json) -> Array[String] {
+  let methods : Array[String] = []
+  for item in json_array_items(contract, "methods") {
+    match item {
+      String(raw_method) => {
+        let method_name = raw_method.trim().to_owned()
+        if method_name != "" {
+          methods.push(method_name)
+        }
+      }
+      _ => ()
+    }
+  }
+  methods
+}
+
+///|
+fn assert_route_methods(
+  methods : Array[String],
+  expected : Array[String],
+) -> Unit raise {
+  assert_eq(methods.length(), expected.length())
+  for i, expected_method in expected {
+    assert_true(methods[i] == expected_method)
+  }
+}
+
+///|
 test "desktop projection endpoint contract covers runtime and review controls" {
   let endpoints = desktop_projection_required_endpoints()
+  let route_contracts = desktop_projection_route_contracts()
   let old_route_namespace = ["/v1/", "mooncode"].join("")
   let old_scheduler = ["serve", "scheduler"].join("-")
   let old_runtime_receipt = ["runtime", "dispatch"].join("-")
   assert_false(endpoints.length() == 0)
+  assert_eq(endpoints.length(), route_contracts.length())
   assert_true(endpoints.contains(desktop_status_endpoint()))
   assert_true(endpoints.contains(desktop_capabilities_endpoint()))
   assert_true(endpoints.contains(desktop_sessions_endpoint()))
@@ -29,6 +59,50 @@ test "desktop projection endpoint contract covers runtime and review controls" {
       if endpoint == endpoints[j] {
         fail("duplicate desktop endpoint: \{endpoint}")
       }
+    }
+  }
+  for contract in route_contracts {
+    let path = json_string(contract, "path", default="")
+    let methods = route_contract_methods(contract)
+    assert_true(endpoints.contains(path))
+    assert_false(methods.length() == 0)
+    for method_name in methods {
+      assert_true(
+        method_name == "GET" || method_name == "HEAD" || method_name == "POST",
+      )
+      if method_name == "HEAD" {
+        assert_true(methods.contains("GET"))
+      }
+    }
+  }
+  for endpoint in endpoints {
+    let matches : Array[String] = []
+    for contract in route_contracts {
+      let path = json_string(contract, "path", default="")
+      if path == endpoint {
+        matches.push(path)
+      }
+    }
+    assert_eq(matches.length(), 1)
+  }
+  for contract in route_contracts {
+    let path = json_string(contract, "path", default="")
+    let methods = route_contract_methods(contract)
+    if path == desktop_session_runtime_service_endpoint() ||
+      path == desktop_session_package_result_endpoint() {
+      assert_route_methods(methods, ["POST"])
+    } else if path == desktop_sessions_endpoint() ||
+      path == desktop_session_stream_state_endpoint() ||
+      path == desktop_session_commands_endpoint() ||
+      path == desktop_session_tool_authorization_endpoint() ||
+      path == desktop_session_eval_report_endpoint() ||
+      path == desktop_session_runtime_events_endpoint() ||
+      path == desktop_session_runtime_claim_endpoint() ||
+      path == desktop_session_runtime_supervisor_endpoint() ||
+      path == desktop_session_runtime_replay_endpoint() {
+      assert_route_methods(methods, ["GET", "HEAD", "POST"])
+    } else {
+      assert_route_methods(methods, ["GET", "HEAD"])
     }
   }
 }

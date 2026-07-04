@@ -236,6 +236,8 @@ pub fn desktop_eval_harness_endpoint() -> String
 
 pub fn desktop_projection_required_endpoints() -> Array[String]
 
+pub fn desktop_projection_route_contracts() -> Array[Json]
+
 pub fn desktop_readiness_contract_endpoint() -> String
 
 pub fn desktop_session_action_plan_endpoint() -> String

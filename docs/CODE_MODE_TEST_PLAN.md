@@ -680,6 +680,20 @@ with the published MoonCode route contract. It fails if the router serves a
 desktop endpoint that is absent from `desktop_projection_required_endpoints`, or
 if the contract advertises a path the router no longer serves.
 
+Backend route method contract ownership gate:
+
+```bash
+moon test internal/moonwiki --target native --filter "mooncode backend route contract*"
+moon test internal/mooncode --target native --filter "desktop projection endpoint contract*"
+```
+
+This Phase 34 gate extends the backend route contract from path ownership to
+path plus method ownership. It fails if a router endpoint changes between
+read-only, command-ingest, mixed GET/POST, or POST-only behavior without the
+published `desktop_projection_route_contracts` surface changing with it. The
+contract explicitly counts `HEAD` for read routes because the desktop router
+accepts `HEAD` anywhere it accepts `GET`.
+
 ## Done Criteria
 
 Code mode is sufficiently tested when:
@@ -724,6 +738,9 @@ Code mode is sufficiently tested when:
   shell-sync followups
 - a backend route contract ownership gate proves the MoonCode server router and
   `desktop_projection_required_endpoints` describe the same desktop API surface
+- a backend route method ownership gate proves the MoonCode server router and
+  `desktop_projection_route_contracts` describe the same path and method
+  surface, including `HEAD` support for read routes
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

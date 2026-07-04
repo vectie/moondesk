@@ -95,7 +95,9 @@ such as `internal/mooncode/capabilities.mbt`.
 ## Desktop API
 
 Moondesk exposes MoonCode through `/api/mooncode`. This namespace is a desktop
-projection shell, not the runtime engine.
+projection shell, not the runtime engine. Read routes accept both `GET` and
+`HEAD`; the route contract in `internal/mooncode/route_contracts.mbt` owns the
+full path and method surface.
 
 Top-level:
 

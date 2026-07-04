@@ -1316,6 +1316,44 @@ Exit tests:
   contract and engine-supported endpoint report
 - the Phase 8 migration wall runs the backend route parity test
 
+## Phase 34 - Backend Route Method Contract Ownership
+
+Status: implemented as the MoonCode route method contract parity gate.
+
+Problem:
+
+- Phase 33 made backend-routed desktop paths visible through the MoonCode
+  contract, but allowed HTTP methods were still implicit in
+  `api_mooncode_router.mbt`.
+- That left a stale split: the public contract could say a route exists without
+  telling downstream tests, docs, or products whether it is read-only,
+  read/write, or POST-only.
+- A first-time clean implementation should make route method behavior part of
+  the same contract surface as route paths. Reading router source should not be
+  required to know which endpoints accept `GET`, `HEAD`, or `POST`.
+
+Work:
+
+- Add `desktop_projection_route_contracts` as the structured MoonCode desktop
+  route contract owner.
+- Derive `desktop_projection_required_endpoints` from that structured contract
+  so the path list is not a second manually maintained source.
+- Include `HEAD` in read-route contracts because the desktop router accepts
+  `HEAD` anywhere it accepts `GET`.
+- Extend the MoonWiki backend route contract gate to compare router path plus
+  method fingerprints against the published MoonCode contract.
+- Update the MoonCode API docs and code-mode test plan to treat method parity
+  as part of the backend contract.
+
+Exit tests:
+
+- every desktop route contract has one path and a non-empty method list
+- read-only routes advertise `GET` and `HEAD`
+- mixed command routes advertise `GET`, `HEAD`, and `POST`
+- package-result and runtime-service remain POST-only
+- the backend router method surface matches
+  `desktop_projection_route_contracts`
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1330,5 +1368,7 @@ Exit tests:
   batches.
 - Letting the backend serve MoonCode desktop API routes that are absent from
   the published route contract.
+- Letting backend route methods live only inside router branches instead of the
+  published MoonCode route contract.
 - Automatically steering from ordinary chat input because a runtime service is
   running.
