@@ -519,9 +519,9 @@ fn conversation_progress_title(event : Json) -> String {
   let lane = json_string(event, "lane", default="")
   let title = json_string(event, "title", default="")
   let tool = conversation_event_tool_name(event)
-  if kind == "runtime.turn_started" {
+  if kind == event_runtime_turn_started() {
     "Starting request"
-  } else if kind == "reasoning_delta" || kind == "reasoning_message" {
+  } else if kind == event_reasoning_delta() || kind == event_reasoning_message() {
     "Thinking"
   } else if event_name == event_tool_call() || kind == event_tool_call() {
     conversation_tool_progress_title(lane, tool, started=true)
@@ -549,9 +549,9 @@ fn conversation_progress_detail(event : Json) -> String {
   let lane = json_string(event, "lane", default="")
   let tool = conversation_event_tool_name(event)
   let detail = json_string(event, "detail", default="").trim().to_owned()
-  if kind == "runtime.turn_started" {
+  if kind == event_runtime_turn_started() {
     "Started working on the request."
-  } else if kind == "reasoning_delta" || kind == "reasoning_message" {
+  } else if kind == event_reasoning_delta() || kind == event_reasoning_message() {
     conversation_reasoning_progress_detail(detail)
   } else if event_name == event_tool_call() || kind == event_tool_call() {
     conversation_tool_progress_detail(event, lane, tool, started=true)
@@ -738,7 +738,7 @@ fn conversation_progress_text_looks_internal(text : String) -> Bool {
   text.contains("turn_id") ||
   text.contains("model-tool-calls") ||
   text.contains("tool call") ||
-  text.contains("assistant_delta") ||
+  text.contains(event_assistant_delta()) ||
   text.contains("command.prompt") ||
   text.contains("stdout") ||
   text.contains("stderr") ||
@@ -753,9 +753,9 @@ fn conversation_event_is_visible_progress(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
   let lane = json_string(event, "lane", default="")
   let event_name = json_string(event, "event", default="")
-  kind == "runtime.turn_started" ||
-  kind == "reasoning_delta" ||
-  kind == "reasoning_message" ||
+  kind == event_runtime_turn_started() ||
+  kind == event_reasoning_delta() ||
+  kind == event_reasoning_message() ||
   kind == event_tool_call() ||
   event_name == event_tool_call() ||
   event_name == event_tool_result() ||
@@ -928,7 +928,7 @@ fn conversation_event_is_user_prompt(event : Json) -> Bool {
 ///|
 fn conversation_event_is_assistant_delta(event : Json) -> Bool {
   json_string(event, "lane", default="") == event_lane_transcript() &&
-  json_string(event, "kind", default="") == "assistant_delta"
+  json_string(event, "kind", default="") == event_assistant_delta()
 }
 
 ///|
@@ -964,7 +964,7 @@ fn conversation_event_assistant_content(event : Json) -> String {
 
 ///|
 fn conversation_event_finish_tool_call_answer(event : Json) -> String {
-  if json_string(event, "kind", default="") != "tool_call" {
+  if json_string(event, "kind", default="") != event_tool_call() {
     return ""
   }
   let title = json_string(event, "title", default="").to_lower().to_string()
@@ -982,9 +982,9 @@ fn conversation_event_is_terminal_without_answer(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
   (
     kind == "finish" ||
-    kind == "runtime.turn_finished" ||
-    kind == "runtime_loop" ||
-    kind == "runtime.service_finished"
+    kind == event_runtime_turn_finished() ||
+    kind == event_runtime_loop() ||
+    kind == event_runtime_service_finished()
   ) &&
   (
     json_string(event, "status", default="") == "done" ||
@@ -1007,11 +1007,7 @@ fn conversation_event_is_failure_shape(event : Json) -> Bool {
 ///|
 fn conversation_event_failure_kind(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
-  kind == "command_error" ||
-  kind == "turn_failed" ||
-  kind == "max_steps_exhausted" ||
-  kind == "runtime.planner_failed" ||
-  kind == "runtime_unavailable"
+  runtime_failure_event_name_is_supported(kind)
 }
 
 ///|
@@ -1024,7 +1020,7 @@ fn conversation_event_is_abort_reply(event : Json) -> Bool {
 
 ///|
 fn conversation_event_is_abort_shape(event : Json) -> Bool {
-  json_string(event, "kind", default="") == "runtime_aborted"
+  json_string(event, "kind", default="") == event_runtime_aborted()
 }
 
 ///|
@@ -1040,9 +1036,9 @@ fn conversation_event_requires_owner_for_visibility(event : Json) -> Bool {
 ///|
 fn conversation_event_is_runtime_service_lifecycle(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
-  kind == "runtime.service_started" ||
-  kind == "runtime.service_finished" ||
-  kind == "runtime.service_failed"
+  kind == event_runtime_service_started() ||
+  kind == event_runtime_service_finished() ||
+  kind == event_runtime_service_failed()
 }
 
 ///|

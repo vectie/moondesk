@@ -76,6 +76,12 @@ rendered from canonical conversation turns; event lanes feed progress,
 diagnostics, readiness, review, and package evidence after they are normalized
 through the core contract.
 
+`mooncode/core` also owns the runtime event-name vocabulary accepted from
+MoonClaw. The accepted event list and command-output event list are published
+through `runtime_event_name_contract_json()` and embedded in the native
+capability surface. Internal MoonCode may normalize concrete records, but it
+must not publish its own second accepted-event or output-event list.
+
 ## Shared Runtime, Separate Lanes
 
 MoonCode, MoonWiki, and generic automation can share MoonClaw's runtime

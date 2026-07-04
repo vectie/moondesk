@@ -33,32 +33,70 @@ pub fn native_command_tool_sequence(action : String) -> Array[String] {
 pub fn native_command_expected_events(action : String) -> Array[String] {
   match action {
     "run_tests" | "run_build" =>
-      ["tool_call", "tool_result", "test_result", "runtime_finished"]
+      [
+        event_tool_call(),
+        event_tool_result(),
+        event_test_result(),
+        event_runtime_finished(),
+      ]
     "run_eval" =>
       [
-        "tool_call", "tool_result", "test_result", "eval_report.manifest", "runtime_finished",
+        event_tool_call(),
+        event_tool_result(),
+        event_test_result(),
+        "eval_report.manifest",
+        event_runtime_finished(),
       ]
     "package" =>
       [
-        "tool_call", "tool_result", "artifact", "package.manifest", "package.index",
-        "package_verified", "runtime_finished",
+        event_tool_call(),
+        event_tool_result(),
+        event_artifact(),
+        "package.manifest",
+        "package.index",
+        event_package_verified(),
+        event_runtime_finished(),
       ]
     "commit" =>
-      ["tool_call", "tool_result", "commit_created", "runtime_finished"]
+      [
+        event_tool_call(),
+        event_tool_result(),
+        event_commit_created(),
+        event_runtime_finished(),
+      ]
     "apply_patch" =>
-      ["tool_call", "diff", "patch_applied", "test_result", "runtime_finished"]
+      [
+        event_tool_call(),
+        event_diff(),
+        event_patch_applied(),
+        event_test_result(),
+        event_runtime_finished(),
+      ]
     "revert_patch" =>
-      ["tool_call", "diff", "patch_reverted", "test_result", "runtime_finished"]
-    "accept" | "reject" => ["review.receipt", "artifact", "runtime_finished"]
+      [
+        event_tool_call(),
+        event_diff(),
+        event_patch_reverted(),
+        event_test_result(),
+        event_runtime_finished(),
+      ]
+    "accept" | "reject" =>
+      ["review.receipt", event_artifact(), event_runtime_finished()]
     "approve_tool" | "reject_tool" =>
-      ["tool_authorization", "review.receipt", "runtime_finished"]
+      ["tool_authorization", "review.receipt", event_runtime_finished()]
     "prompt" | "steer" =>
       [
-        "assistant_delta", "reasoning_delta", "tool_call", "tool_result", "diff",
-        "test_result", "artifact", "runtime_finished",
+        event_assistant_delta(),
+        event_reasoning_delta(),
+        event_tool_call(),
+        event_tool_result(),
+        event_diff(),
+        event_test_result(),
+        event_artifact(),
+        event_runtime_finished(),
       ]
-    "cancel" => ["runtime_aborted", "runtime_finished"]
-    _ => ["runtime_update", "runtime_finished"]
+    "cancel" => [event_runtime_aborted(), event_runtime_finished()]
+    _ => [event_runtime_update(), event_runtime_finished()]
   }
 }
 

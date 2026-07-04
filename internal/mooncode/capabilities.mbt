@@ -74,11 +74,9 @@ pub fn capabilities_json() -> Json {
       "tool_authorization_snapshot": "Every native MoonCode command body and runtime-command row includes a mooncode-tool-authorization-snapshot with manifest path, approval counts, current approval rows, enforcement_state, and runtime_may_execute. MoonClaw must enforce this snapshot and recheck /tool-authorization before gated tool execution. Commands with runtime_may_execute=false are excluded from pending replay/claim and block later non-delivered rows until approval state is resolved.",
       "command_preflight": "GET /preflight returns the same gate projection without mutation; POST /commands rejects blocked accept/package/commit/apply/revert commands before command log append when tests fail, approvals are pending, file changes lack verified tests, reviewed changes are missing for commit, or no selected patch target exists; rejected attempts are recorded as preflight.blocked events and projected into the Action Plan without entering the runtime command queue. Payloads with force_preflight=true append preflight.override audit events, then enter the normal command/runtime command queue as operator overrides that still require runtime evidence before output is trusted",
       "commands": command_advertised_actions(),
-      "events": [
-        "assistant_delta", "reasoning_delta", "tool_call", "tool_result", "file_change",
-        "diff", "test_result", "artifact", "review", "terminal",
-      ],
+      "events": runtime_command_output_event_names(),
       "event_lanes": event_lanes(),
+      "runtime_event_name_contract": runtime_event_name_contract_json(),
       "durability": "append-only commands.jsonl plus events.jsonl owned by MoonClaw behind the MoonCode runtime contract; Moondesk supports ordered command replay, checkpointed cursor state, pollable incremental event replay with stable sequence numbers, and a session-level runtime evidence proof projection. MoonClaw also exposes cold product-home sidecar list/show endpoints, native runtime-claim receipts, runtime-turn execution receipts with planner reasoning/tool-call events, runtime-loop queue supervision, daemon runtime-service lifecycle events, and native runtime settlement receipts for \{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions")} so sessions can be discovered, leased, executed, and advanced after daemon restart.",
     },
     "runtime_protocol": runtime_protocol_contract_json(),

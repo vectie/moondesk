@@ -149,6 +149,81 @@ pub fn event_lane_contract_json() -> Json {
 }
 
 ///|
+pub fn runtime_event_name_contract_id() -> String {
+  @mooncode_core.runtime_event_name_contract_id()
+}
+
+///|
+pub fn runtime_event_names() -> Array[String] {
+  @mooncode_core.runtime_event_names()
+}
+
+///|
+pub fn runtime_command_output_event_names() -> Array[String] {
+  @mooncode_core.runtime_command_output_event_names()
+}
+
+///|
+pub fn runtime_failure_event_names() -> Array[String] {
+  @mooncode_core.runtime_failure_event_names()
+}
+
+///|
+pub fn runtime_diagnostic_event_names() -> Array[String] {
+  @mooncode_core.runtime_diagnostic_event_names()
+}
+
+///|
+pub fn runtime_event_name_is_supported(name : String) -> Bool {
+  @mooncode_core.runtime_event_name_is_supported(name)
+}
+
+///|
+pub fn runtime_failure_event_name_is_supported(name : String) -> Bool {
+  @mooncode_core.runtime_failure_event_name_is_supported(name)
+}
+
+///|
+pub fn runtime_diagnostic_event_name_is_supported(name : String) -> Bool {
+  @mooncode_core.runtime_diagnostic_event_name_is_supported(name)
+}
+
+///|
+pub fn runtime_event_name_contract_json() -> Json {
+  @mooncode_core.runtime_event_name_contract_json()
+}
+
+///|
+pub fn event_runtime_step() -> String {
+  @mooncode_core.runtime_event_runtime_step()
+}
+
+///|
+pub fn event_assistant_delta() -> String {
+  @mooncode_core.runtime_event_assistant_delta()
+}
+
+///|
+pub fn event_reasoning_delta() -> String {
+  @mooncode_core.runtime_event_reasoning_delta()
+}
+
+///|
+pub fn event_reasoning_message() -> String {
+  @mooncode_core.runtime_event_reasoning_message()
+}
+
+///|
+pub fn event_assistant_message() -> String {
+  @mooncode_core.runtime_event_assistant_message()
+}
+
+///|
+pub fn event_runtime_update() -> String {
+  @mooncode_core.runtime_event_runtime_update()
+}
+
+///|
 pub fn kind_command() -> String {
   "mooncode.command"
 }
@@ -185,55 +260,180 @@ pub fn kind_tool_call() -> String {
 
 ///|
 pub fn event_tool_call() -> String {
-  "tool_call"
+  @mooncode_core.runtime_event_tool_call()
 }
 
 ///|
 pub fn event_tool_started() -> String {
-  "tool_started"
+  @mooncode_core.runtime_event_tool_started()
 }
 
 ///|
 pub fn event_tool_result() -> String {
-  "tool_result"
+  @mooncode_core.runtime_event_tool_result()
 }
 
 ///|
 pub fn event_tool_call_decode_error() -> String {
-  "tool_call_decode_error"
+  @mooncode_core.runtime_event_tool_call_decode_error()
+}
+
+///|
+pub fn event_file_change() -> String {
+  @mooncode_core.runtime_event_file_change()
+}
+
+///|
+pub fn event_diff() -> String {
+  @mooncode_core.runtime_event_diff()
+}
+
+///|
+pub fn event_patch_applied() -> String {
+  @mooncode_core.runtime_event_patch_applied()
+}
+
+///|
+pub fn event_patch_reverted() -> String {
+  @mooncode_core.runtime_event_patch_reverted()
 }
 
 ///|
 pub fn event_test_result() -> String {
-  "test_result"
+  @mooncode_core.runtime_event_test_result()
+}
+
+///|
+pub fn event_package_manifest() -> String {
+  @mooncode_core.runtime_event_package_manifest()
+}
+
+///|
+pub fn event_package_index() -> String {
+  @mooncode_core.runtime_event_package_index()
 }
 
 ///|
 pub fn event_package_built() -> String {
-  "package_built"
+  @mooncode_core.runtime_event_package_built()
 }
 
 ///|
 pub fn event_package_verified() -> String {
-  "package_verified"
+  @mooncode_core.runtime_event_package_verified()
+}
+
+///|
+pub fn event_review_receipt() -> String {
+  @mooncode_core.runtime_event_review_receipt()
+}
+
+///|
+pub fn event_receipt_accept() -> String {
+  @mooncode_core.runtime_event_receipt_accept()
+}
+
+///|
+pub fn event_receipt_reject() -> String {
+  @mooncode_core.runtime_event_receipt_reject()
+}
+
+///|
+pub fn event_commit_created() -> String {
+  @mooncode_core.runtime_event_commit_created()
+}
+
+///|
+pub fn event_artifact() -> String {
+  @mooncode_core.runtime_event_artifact()
+}
+
+///|
+pub fn event_runtime_finished() -> String {
+  @mooncode_core.runtime_event_runtime_finished()
+}
+
+///|
+pub fn event_runtime_aborted() -> String {
+  @mooncode_core.runtime_event_runtime_aborted()
+}
+
+///|
+pub fn event_max_steps_exhausted() -> String {
+  @mooncode_core.runtime_event_max_steps_exhausted()
+}
+
+///|
+pub fn event_command_error() -> String {
+  @mooncode_core.runtime_event_command_error()
+}
+
+///|
+pub fn event_turn_failed() -> String {
+  @mooncode_core.runtime_event_turn_failed()
 }
 
 ///|
 pub fn event_steer_applied() -> String {
-  "steer_applied"
+  @mooncode_core.runtime_event_steer_applied()
 }
 
 ///|
 pub fn event_steer_dropped() -> String {
-  "steer_dropped"
+  @mooncode_core.runtime_event_steer_dropped()
 }
 
 ///|
 pub fn event_steer_deferred() -> String {
-  "steer_deferred"
+  @mooncode_core.runtime_event_steer_deferred()
 }
 
 ///|
 pub fn event_cancel_dropped() -> String {
-  "cancel_dropped"
+  @mooncode_core.runtime_event_cancel_dropped()
+}
+
+///|
+pub fn event_usage() -> String {
+  @mooncode_core.runtime_event_usage()
+}
+
+///|
+pub fn event_runtime_loop() -> String {
+  @mooncode_core.runtime_event_runtime_loop()
+}
+
+///|
+pub fn event_runtime_turn_started() -> String {
+  @mooncode_core.runtime_event_turn_started()
+}
+
+///|
+pub fn event_runtime_turn_finished() -> String {
+  @mooncode_core.runtime_event_turn_finished()
+}
+
+///|
+pub fn event_runtime_unavailable() -> String {
+  @mooncode_core.runtime_event_runtime_unavailable()
+}
+
+///|
+pub fn event_planner_failed() -> String {
+  @mooncode_core.runtime_event_planner_failed()
+}
+
+///|
+pub fn event_runtime_service_started() -> String {
+  @mooncode_core.runtime_event_service_started()
+}
+
+///|
+pub fn event_runtime_service_finished() -> String {
+  @mooncode_core.runtime_event_service_finished()
+}
+
+///|
+pub fn event_runtime_service_failed() -> String {
+  @mooncode_core.runtime_event_service_failed()
 }

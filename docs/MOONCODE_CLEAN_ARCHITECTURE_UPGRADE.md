@@ -2007,6 +2007,52 @@ Exit tests:
 - the migration wall rejects duplicated lane lists, raw lane-count ownership,
   and prose-only lane normalization returning to implementation files.
 
+## Phase 51 - Core-Owned Runtime Event Name Contract
+
+Status: implemented by moving the accepted MoonClaw-to-MoonCode runtime event
+vocabulary into `mooncode/core` and making internal MoonCode publish and
+validate against that contract.
+
+Problem:
+
+- Phase 50 made lanes core-owned, but runtime event names were still copied in
+  accepted-event lists, command output-event lists, native command expected
+  events, native runtime safety checks, and conversation projection branches.
+- That left the product with a clean lane contract but a stale event-name
+  architecture: the same event stream could be accepted by one contract,
+  ignored by another, or rendered differently by chat projection.
+- For a standalone MoonCode product, MoonClaw and Moondesk need one shared
+  vocabulary for event names before a runtime event can become progress,
+  assistant output, failure evidence, test proof, package proof, or review
+  state.
+
+Work:
+
+- Add `mooncode/core/event_names.mbt` with accepted runtime event names,
+  command output event names, failure event names, diagnostic event names,
+  helper predicates, and a JSON contract.
+- Embed the runtime event-name contract in the native capability surface
+  fingerprint and capability JSON.
+- Replace internal accepted-event and output-event arrays with
+  `runtime_event_names()` and `runtime_command_output_event_names()`.
+- Replace native command expected-event literals for prompt/test/package/patch/
+  commit/cancel paths with core-owned helper functions.
+- Move native runtime projection safety and visible conversation progress/failure
+  checks onto the core-owned event helper functions.
+- Add `scripts/validate_mooncode_event_name_contract.sh` and run it from the
+  Phase 8 migration wall.
+
+Exit tests:
+
+- `mooncode/core` proves the event-name contract id, accepted events, command
+  output events, diagnostic events, failure events, and helper predicates.
+- native capability JSON includes the runtime event-name contract.
+- runtime protocol publishes accepted events from `runtime_event_names()`.
+- capabilities and runtime contracts publish output events from
+  `runtime_command_output_event_names()`.
+- the migration wall rejects duplicated production accepted-event/output-event
+  lists returning outside `mooncode/core`.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

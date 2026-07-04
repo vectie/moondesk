@@ -237,6 +237,34 @@ Assertions:
 - fixtures may still use concrete lane values, but implementation ownership
   must stay in `mooncode/core`.
 
+### Runtime Event Name Contract
+
+Prove runtime event names are owned once before MoonClaw evidence becomes
+MoonCode chat/progress/test/package/review state.
+
+Flow:
+
+```text
+mooncode/core exposes runtime_event_name_contract_json
+-> native capability surface embeds the event-name contract
+-> runtime protocol publishes accepted_events from runtime_event_names
+-> capability output_events come from runtime_command_output_event_names
+-> native command expected events use core event helpers
+-> migration gate scans implementation files for duplicated event-name lists
+```
+
+Assertions:
+
+- accepted runtime events include assistant, reasoning, tool, diff, test,
+  package, review, steering, usage, and terminal failure names.
+- command output events are a documented subset of accepted runtime events.
+- failure event names are shared by native runtime safety and conversation
+  projection.
+- diagnostic lifecycle events stay visible as diagnostics and do not become a
+  separate chat owner.
+- tests may still use concrete event fixture strings, but production contracts
+  must publish event names from `mooncode/core`.
+
 ### Native Sidecar Reply Ingestion
 
 Exercise raw MoonClaw sidecar evidence as input, not as a second transcript.

@@ -68,11 +68,7 @@ pub fn runtime_contract_json() -> Json {
           "purpose": "Cancel the active turn or withdraw the next queued prompt while keeping the session process alive.",
         },
       ],
-      "output_events": [
-        "assistant_delta", "reasoning_delta", "assistant_message", "tool_call", "tool_result",
-        "runtime_update", "file_change", "diff", "test_result", "artifact", "runtime_finished",
-        "runtime_aborted", "command_error", "steer_applied", "steer_deferred", "steer_dropped",
-      ],
+      "output_events": runtime_command_output_event_names(),
       "ordering_rule": "one ordered command queue per session; prompts, steer, cancel, turn-done, and shutdown are serialized; idle steer is persisted as deferred steering context for the next eligible turn",
     },
     "session_store": {

@@ -11,8 +11,8 @@ pub fn canonical_event_record(
     json_string(event, "lane", default=event_lane_default()),
   )
   let kind = runtime_trimmed_text(
-    json_string(event, "kind", default="runtime_update"),
-    fallback="runtime_update",
+    json_string(event, "kind", default=event_runtime_update()),
+    fallback=event_runtime_update(),
   )
   let created_at = runtime_first_string(
     event,
@@ -190,15 +190,22 @@ pub fn normalize_event_lane(lane : String) -> String {
 
 ///|
 pub fn runtime_event_title(name : String) -> String {
-  match name {
-    "max_steps_exhausted" => "Max steps exhausted"
-    "turn_failed" => "Turn failed"
-    "command_error" => "Command error"
-    "steer_applied" => "Steering applied"
-    "steer_deferred" => "Steering deferred"
-    "steer_dropped" => "Steering dropped"
-    "cancel_dropped" => "Cancel dropped"
-    _ => name
+  if name == event_max_steps_exhausted() {
+    "Max steps exhausted"
+  } else if name == event_turn_failed() {
+    "Turn failed"
+  } else if name == event_command_error() {
+    "Command error"
+  } else if name == event_steer_applied() {
+    "Steering applied"
+  } else if name == event_steer_deferred() {
+    "Steering deferred"
+  } else if name == event_steer_dropped() {
+    "Steering dropped"
+  } else if name == event_cancel_dropped() {
+    "Cancel dropped"
+  } else {
+    name
   }
 }
 

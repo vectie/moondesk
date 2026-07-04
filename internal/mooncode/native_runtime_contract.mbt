@@ -106,11 +106,11 @@ fn native_runtime_event_is_diagnostic_only(event : Json) -> Bool {
   let kind = runtime_first_string(event, ["kind", "event"], default="")
   let source = runtime_json_string(event, "source", default="")
   let title = runtime_json_string(event, "title", default="")
-  kind == "runtime.service_started" ||
-  kind == "runtime.service_finished" ||
-  kind == "runtime.service_failed" ||
-  kind == "runtime_loop" ||
-  kind == "usage" ||
+  kind == event_runtime_service_started() ||
+  kind == event_runtime_service_finished() ||
+  kind == event_runtime_service_failed() ||
+  kind == event_runtime_loop() ||
+  kind == event_usage() ||
   source == "moonclaw-native-moon-check-watcher" ||
   title == "MoonCode moon_check update"
 }
@@ -125,15 +125,12 @@ fn native_runtime_event_requires_command_scope(event : Json) -> Bool {
   lane == event_lane_test() ||
   lane == event_lane_artifact() ||
   lane == event_lane_review() ||
-  kind == "reasoning_delta" ||
-  kind == "reasoning_message" ||
-  kind == "runtime_update" ||
-  kind == "assistant_delta" ||
+  kind == event_reasoning_delta() ||
+  kind == event_reasoning_message() ||
+  kind == event_runtime_update() ||
+  kind == event_assistant_delta() ||
   kind == "assistant" ||
-  kind == "command_error" ||
-  kind == "turn_failed" ||
-  kind == "max_steps_exhausted" ||
-  kind == "runtime_unavailable"
+  runtime_failure_event_name_is_supported(kind)
 }
 
 ///|

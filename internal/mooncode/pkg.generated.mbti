@@ -322,7 +322,21 @@ pub fn eval_report_manifest_response_for_session(Json, Array[Json], recorded_at~
 
 pub fn eval_report_projection(Json) -> Json
 
+pub fn event_artifact() -> String
+
+pub fn event_assistant_delta() -> String
+
+pub fn event_assistant_message() -> String
+
 pub fn event_cancel_dropped() -> String
+
+pub fn event_command_error() -> String
+
+pub fn event_commit_created() -> String
+
+pub fn event_diff() -> String
+
+pub fn event_file_change() -> String
 
 pub fn event_label(String) -> String
 
@@ -358,13 +372,57 @@ pub fn event_log_path_for_workspace_root(String, String) -> String
 
 pub fn event_log_relative_path(String) -> String
 
+pub fn event_max_steps_exhausted() -> String
+
 pub fn event_package_built() -> String
+
+pub fn event_package_index() -> String
+
+pub fn event_package_manifest() -> String
 
 pub fn event_package_verified() -> String
 
+pub fn event_patch_applied() -> String
+
+pub fn event_patch_reverted() -> String
+
+pub fn event_planner_failed() -> String
+
 pub fn event_progress_lanes() -> Array[String]
 
+pub fn event_reasoning_delta() -> String
+
+pub fn event_reasoning_message() -> String
+
+pub fn event_receipt_accept() -> String
+
+pub fn event_receipt_reject() -> String
+
 pub fn event_record(id~ : String, lane~ : String, kind~ : String, title~ : String, status~ : String, created_at~ : String, detail~ : String, path? : String, diff? : String, command? : String, exit_code? : Int, command_packet? : Json) -> Json
+
+pub fn event_review_receipt() -> String
+
+pub fn event_runtime_aborted() -> String
+
+pub fn event_runtime_finished() -> String
+
+pub fn event_runtime_loop() -> String
+
+pub fn event_runtime_service_failed() -> String
+
+pub fn event_runtime_service_finished() -> String
+
+pub fn event_runtime_service_started() -> String
+
+pub fn event_runtime_step() -> String
+
+pub fn event_runtime_turn_finished() -> String
+
+pub fn event_runtime_turn_started() -> String
+
+pub fn event_runtime_unavailable() -> String
+
+pub fn event_runtime_update() -> String
 
 pub fn event_steer_applied() -> String
 
@@ -381,6 +439,10 @@ pub fn event_tool_call_decode_error() -> String
 pub fn event_tool_result() -> String
 
 pub fn event_tool_started() -> String
+
+pub fn event_turn_failed() -> String
+
+pub fn event_usage() -> String
 
 pub fn executable_book_lifecycle_contract_id() -> String
 
@@ -704,6 +766,8 @@ pub fn runtime_command_log_path_for_workspace_root(String, String) -> String
 
 pub fn runtime_command_log_relative_path(String) -> String
 
+pub fn runtime_command_output_event_names() -> Array[String]
+
 pub fn runtime_command_record(Json, Json, String, Json) -> Json
 
 pub fn runtime_command_record_valid(Json) -> Bool
@@ -744,6 +808,10 @@ pub fn runtime_control_projection(String, Array[Json], Json) -> Json
 
 pub fn runtime_control_response(String, Array[Json], Array[Json], Array[Json], Array[Json], lease_now~ : String) -> Json
 
+pub fn runtime_diagnostic_event_name_is_supported(String) -> Bool
+
+pub fn runtime_diagnostic_event_names() -> Array[String]
+
 pub fn runtime_event_command_progress(Array[Json]) -> Json
 
 pub fn runtime_event_command_rows(Array[Json], source~ : String) -> Array[Json]
@@ -755,6 +823,14 @@ pub fn runtime_event_ingest_contract(String) -> Json
 pub fn runtime_event_ingest_report(Json, session_id~ : String, ingested_at~ : String) -> Json
 
 pub fn runtime_event_ingest_result_response(String, Array[Json], Array[Json], Json, Json, Json, event_log_path~ : String) -> Json
+
+pub fn runtime_event_name_contract_id() -> String
+
+pub fn runtime_event_name_contract_json() -> Json
+
+pub fn runtime_event_name_is_supported(String) -> Bool
+
+pub fn runtime_event_names() -> Array[String]
 
 pub fn runtime_event_sink_response(String, Array[Json], event_log_path~ : String, workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String) -> Json
 
@@ -775,6 +851,10 @@ pub fn runtime_evidence_manifest_relative_path(String) -> String
 pub fn runtime_execution_plan_response(String, Array[Json], Array[Json], Array[Json], workspace_id~ : String, workspace_name~ : String, runtime_session_id~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
 
 pub fn runtime_execution_plan_response_for_session(Json, Array[Json], Array[Json], Array[Json], runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, workspace_root~ : String, moonclaw_root~ : String, host_base_url~ : String, native_ready~ : Bool, lease_now~ : String) -> Json
+
+pub fn runtime_failure_event_name_is_supported(String) -> Bool
+
+pub fn runtime_failure_event_names() -> Array[String]
 
 pub fn runtime_handoff_manifest(Json, Json, Json, Json, Array[Json], Array[Json], Array[Json], Json, Bool, recorded_at~ : String, manifest_path~ : String, absolute_manifest_path~ : String, workspace_root~ : String, session_snapshot_path~ : String, command_log_path~ : String, runtime_command_log_path~ : String, runtime_receipt_log_path~ : String, event_log_path~ : String, stream_checkpoint_path~ : String) -> Json
 
