@@ -696,3 +696,9 @@ The next scheduled phases are now explicit:
   MoonClaw, review, search, town, preferences, and book routes; the Phase 8
   wall rejects raw active frontend `/api/` desktop literals and stale
   frontend-local route encoder externs.
+- Phase 41: desktop API method contract ownership. Generic non-MoonCode
+  desktop API method policy now lives in `vectie/moondesk/core` route
+  contracts, and workspace, town, MoonClaw, review/preferences, and book routers
+  use a shared backend helper for method checks and `405 Allow` responses. The
+  stale `/api/town/control` branch is removed; the active route is
+  `/api/town/dispatch`.

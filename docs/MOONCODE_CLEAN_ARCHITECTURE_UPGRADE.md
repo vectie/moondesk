@@ -1582,6 +1582,49 @@ Exit tests:
   product route encoding
 - the Phase 8 wall rejects reintroduced active frontend desktop API literals
 
+## Phase 41 - Desktop API Method Contract Ownership
+
+Status: implemented as a public core-owned method contract for generic desktop
+API routes and backend router dispatch through that contract.
+
+Problem:
+
+- Phase 40 gave active Rabbita command code one shared route formatter, but
+  non-MoonCode backend routers still owned method policy branch-by-branch with
+  inline `GET`, `HEAD`, and `POST` checks.
+- That left the same stale shape MoonCode had before Phases 34 and 35: route
+  clients and backend routes could agree on paths while silently disagreeing on
+  method behavior and `405 Allow` responses.
+- Inspection also found the active UI route `/api/town/dispatch` did not have a
+  matching backend route because the router still exposed the stale
+  `/api/town/control` branch.
+
+Work:
+
+- Add `DesktopApiRouteContract` and `desktop_api_route_contracts` to
+  `vectie/moondesk/core` for workspace, town, MoonClaw, review, preferences,
+  search, and book desktop API families.
+- Add public route-pattern helpers for route contracts, including placeholders
+  for workspace ids, file/site paths, and MoonClaw run ids.
+- Add a MoonWiki backend helper that converts `@http.RequestMethod` into the
+  public core method contract and emits contract-backed `405 Allow` responses.
+- Switch generic desktop API routers to call the contract helper instead of
+  carrying inline method policy.
+- Retire the stale `/api/town/control` router branch and serve the active
+  `/api/town/dispatch` route directly.
+- Add a source validator, wired into the Phase 8 wall, that rejects inline
+  method policy returning to generic desktop API routers.
+
+Exit tests:
+
+- `core` tests prove generic desktop route contracts publish expected method
+  sets and exclude retired `/api/town/control`
+- MoonWiki tests prove backend method checks read the shared core desktop route
+  contract
+- generic desktop API routers contain no inline method checks or generic
+  method-not-allowed calls
+- the Phase 8 wall rejects reintroduced router-local method policy
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1607,5 +1650,7 @@ Exit tests:
 - Letting the Rabbita frontend keep a second MoonCode desktop route formatter.
 - Letting active Rabbita command handlers own generic desktop API route
   formatting.
+- Letting non-MoonCode desktop API routers own method policy separately from
+  the public core route contract.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

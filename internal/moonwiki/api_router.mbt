@@ -37,14 +37,6 @@ async fn handle_api_request(
 }
 
 ///|
-async fn send_method_not_allowed(
-  conn : @http.ServerConnection,
-  method_ : @http.RequestMethod,
-) -> Unit {
-  send_api_error(conn, method_, 405, "Method Not Allowed", "Method Not Allowed")
-}
-
-///|
 async fn send_method_not_allowed_with_methods(
   conn : @http.ServerConnection,
   method_ : @http.RequestMethod,

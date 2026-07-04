@@ -51,6 +51,10 @@ test "workspace desktop routes live in core boundary" {
 test "product and system desktop routes live in core boundary" {
   assert_eq(@core.moonclaw_endpoint_url("daemon"), "/api/moonclaw/daemon")
   assert_eq(
+    @core.moonclaw_run_artifacts_route(),
+    "/api/moonclaw/runs/<run-id>/artifacts",
+  )
+  assert_eq(
     @core.moonclaw_workspace_url("runs", "book demo/#one"),
     "/api/moonclaw/runs?workspace=book%20demo%2F%23one",
   )
@@ -66,5 +70,47 @@ test "product and system desktop routes live in core boundary" {
   assert_eq(
     @core.books_endpoint_url("app-tool-portable/all"),
     "/api/books/app-tool-portable/all",
+  )
+}
+
+///|
+test "desktop api route contracts own active backend method policy" {
+  let endpoints = @core.desktop_api_required_endpoints()
+  assert_true(endpoints.length() > 40)
+  assert_eq(endpoints.length(), @core.desktop_api_route_contracts().length())
+  assert_true(endpoints.contains(@core.workspace_action_route("entries")))
+  assert_true(endpoints.contains(@core.workspace_file_route()))
+  assert_true(endpoints.contains(@core.town_route("dispatch")))
+  assert_false(endpoints.contains(@core.town_route("control")))
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(@core.workspaces_route()).join(", "),
+    "GET, HEAD, POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.workspace_action_route("trash"),
+    ).join(", "),
+    "GET, HEAD, POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(@core.town_route("dispatch")).join(
+      ", ",
+    ),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(@core.books_route("from-pattern")).join(
+      ", ",
+    ),
+    "POST",
+  )
+  assert_true(
+    @core.desktop_api_route_accepts_method(
+      @core.preferences_views_route(),
+      "HEAD",
+    ),
+  )
+  assert_false(
+    @core.desktop_api_route_accepts_method(@core.town_route("control"), "POST"),
   )
 }

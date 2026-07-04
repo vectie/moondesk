@@ -676,6 +676,20 @@ Rabbita command and settings code. It fails if production UI code reintroduces
 raw `/api/` route literals or frontend-local `encode_component` /
 `encode_path` route encoders instead of consuming the shared `@desk` helpers.
 
+Desktop API method contract ownership gate:
+
+```bash
+moon test core --target native --filter "desktop api route contracts*"
+moon test internal/moonwiki --target native --filter "desktop api route contract drives*"
+scripts/validate_desktop_api_backend_method_contract.sh
+```
+
+This Phase 41 gate gives generic non-MoonCode desktop API families the same
+method-contract shape as MoonCode. It fails if workspace, town, MoonClaw,
+review/preferences, or book routers reintroduce branch-local `GET` / `POST`
+method policy, if contract-backed `405 Allow` responses drift, or if the stale
+`/api/town/control` route comes back instead of `/api/town/dispatch`.
+
 Frontend session effect ownership gate:
 
 ```bash
@@ -811,6 +825,9 @@ Code mode is sufficiently tested when:
 - a shared desktop route formatting gate proves active Rabbita command and
   settings code consumes public core route helpers for all desktop API
   families, not raw `/api/` strings or frontend-local encoders
+- a desktop API method contract gate proves generic non-MoonCode routers use
+  the public core route method contract and no longer own independent
+  branch-local method policy
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

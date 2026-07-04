@@ -11,9 +11,19 @@ pub fn artifact_entry(workspace_id~ : String, path~ : String) -> DeskFileEntry
 
 pub fn books_endpoint_url(String) -> String
 
+pub fn books_route(String) -> String
+
 pub fn desktop_api_path(Array[String]) -> String
 
 pub fn desktop_api_query(Array[(String, String)]) -> String
+
+pub fn desktop_api_required_endpoints() -> Array[String]
+
+pub fn desktop_api_route_accepts_method(String, String) -> Bool
+
+pub fn desktop_api_route_allowed_methods(String) -> Array[String]
+
+pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract]
 
 pub fn desktop_api_url(Array[String], query? : Array[(String, String)]) -> String
 
@@ -30,6 +40,10 @@ pub fn infer_entry_kind(StringView, is_directory? : Bool) -> EntryKind
 pub fn infer_source_layer(StringView) -> SourceLayer
 
 pub fn moonclaw_endpoint_url(String) -> String
+
+pub fn moonclaw_route(String) -> String
+
+pub fn moonclaw_run_artifacts_route() -> String
 
 pub fn moonclaw_workspace_url(String, String) -> String
 
@@ -63,19 +77,29 @@ pub fn moonsuite_tmp_display_dir() -> String
 
 pub fn normalize_review_policy(String) -> String
 
+pub fn preferences_tags_route() -> String
+
+pub fn preferences_views_route() -> String
+
 pub fn preferences_views_url() -> String
 
 pub fn preview(DeskFileEntry, body~ : String, warnings? : Array[String]) -> DeskPreview
 
 pub fn renderer_for_kind(EntryKind) -> PreviewRenderer
 
+pub fn review_decision_route() -> String
+
 pub fn review_decision_url() -> String
+
+pub fn review_items_route() -> String
 
 pub fn review_items_url(String) -> String
 
 pub fn run_artifact(id~ : String, path~ : String, title? : String, kind? : EntryKind) -> DeskRunArtifact
 
 pub fn run_projection(run_id~ : String, book_id~ : String, status~ : String, phase~ : String, summary~ : String, artifacts~ : Array[DeskRunArtifact], goal_id? : String?, started_at? : String?, updated_at? : String?) -> DeskRunProjection
+
+pub fn search_route() -> String
 
 pub fn search_url(String) -> String
 
@@ -85,25 +109,39 @@ pub fn town_calendar_url() -> String
 
 pub fn town_endpoint_url(String) -> String
 
+pub fn town_route(String) -> String
+
 pub fn url_component(String) -> String
 
 pub fn url_path(String) -> String
 
 pub fn workspace(id~ : String, name~ : String, root_path~ : String, kind~ : WorkspaceKind, status? : WorkspaceStatus, last_seen_at? : String?) -> DeskWorkspace
 
+pub fn workspace_action_route(String) -> String
+
 pub fn workspace_endpoint_url(String, String) -> String
 
 pub fn workspace_entries_url(String, String) -> String
 
+pub fn workspace_file_route() -> String
+
 pub fn workspace_file_url(String, String) -> String
 
+pub fn workspace_import_route() -> String
+
 pub fn workspace_import_url() -> String
+
+pub fn workspace_metadata_route() -> String
 
 pub fn workspace_metadata_url() -> String
 
 pub fn workspace_preview_url(String, String) -> String
 
 pub fn workspace_raw_url(String, String) -> String
+
+pub fn workspace_site_route() -> String
+
+pub fn workspaces_route() -> String
 
 pub fn workspaces_url() -> String
 
@@ -170,6 +208,11 @@ pub struct DeskWorkspace {
   kind : WorkspaceKind
   status : WorkspaceStatus
   last_seen_at : String?
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct DesktopApiRouteContract {
+  path : String
+  methods : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum EntryKind {
