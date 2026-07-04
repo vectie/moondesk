@@ -30,7 +30,7 @@ fn mooncode_immediate_queued_session(
 }
 
 ///|
-fn mooncode_immediate_command_response(
+async fn mooncode_immediate_command_response(
   workspace_root : String,
   session : Json,
   command_packet : Json,
@@ -41,22 +41,39 @@ fn mooncode_immediate_command_response(
     json_string(command_packet, "client_turn_id", default=""),
     fallback=command_id,
   )
-  let command_events = json_array_items(session, "mooncode_command_events")
+  let durable_events = read_mooncode_event_log(workspace_root, session_id)
+  let projection_session = if durable_events.length() > 0 {
+    mooncode_session_storage_record(session)
+  } else {
+    session
+  }
+  let command_events = project_mooncode_events(
+    projection_session,
+    [],
+    durable_events,
+  )
+  let command_log_count = read_mooncode_command_log(workspace_root, session_id).length()
+  let runtime_command_log_count = read_mooncode_runtime_command_log(
+    workspace_root, session_id,
+  ).length()
+  let runtime_receipt_log_count = read_mooncode_runtime_receipt_log(
+    workspace_root, session_id,
+  ).length()
   let projected = @mooncode.session_projection_response(
     session,
     command_events,
     event_log_path=mooncode_event_log_path(workspace_root, session_id),
-    append_log_count=command_events.length(),
+    append_log_count=durable_events.length(),
     command_log_path=mooncode_command_log_path(workspace_root, session_id),
-    command_log_count=command_events.length(),
+    command_log_count~,
     runtime_command_log_path=mooncode_runtime_command_log_path(
       workspace_root, session_id,
     ),
-    runtime_command_log_count=0,
+    runtime_command_log_count~,
     runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
       workspace_root, session_id,
     ),
-    runtime_receipt_log_count=0,
+    runtime_receipt_log_count~,
   )
   let conversation = json_object_field_or_empty(
     projected, "mooncode_conversation",

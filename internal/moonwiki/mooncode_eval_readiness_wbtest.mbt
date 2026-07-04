@@ -737,9 +737,11 @@ async test "mooncode native eval report ingress persists moonbook proof" {
         ),
         relative,
       )
+      assert_true(json_object_field(saved, "mooncode_summary") is None)
+      let saved_projection = attach_mooncode_session_projection(root, saved)
       assert_true(
         json_bool(
-          json_object_field_or_empty(saved, "mooncode_summary"),
+          json_object_field_or_empty(saved_projection, "mooncode_summary"),
           "session_snapshot_ready",
           default=false,
         ),

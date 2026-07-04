@@ -13,7 +13,14 @@ async fn handle_mooncode_sessions(
       json_string(record, "workspace_id", default="") != workspace_filter {
       continue
     }
-    sessions.push(attach_mooncode_session_projection(workspace_root, record))
+    let synced = sync_mooncode_moonclaw_sidecar_events(
+      workspace_root,
+      json_string(record, "id", default=""),
+      record,
+    ) catch {
+      _ => record
+    }
+    sessions.push(attach_mooncode_session_projection(workspace_root, synced))
   }
   sessions.sort_by(fn(left, right) {
     json_string(right, "updated_at", default="").compare(
@@ -65,6 +72,16 @@ async fn handle_mooncode_session_events(
 ) -> Unit {
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
+      let session = sync_mooncode_moonclaw_sidecar_events(
+        workspace_root, session_id, session,
+      ) catch {
+        _ => {
+          send_api_error(
+            conn, method_, 500, "Internal Server Error", "Could not sync MoonCode native runtime events",
+          )
+          return
+        }
+      }
       let projected = attach_mooncode_session_projection(
         workspace_root, session,
       )

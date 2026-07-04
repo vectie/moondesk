@@ -7,7 +7,16 @@ async fn handle_mooncode_session_runtime_events(
 ) -> Unit {
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
-      let local_events = read_mooncode_event_log(workspace_root, session_id)
+      let session = sync_mooncode_moonclaw_sidecar_events(
+        workspace_root, session_id, session,
+      ) catch {
+        _ => {
+          send_api_error(
+            conn, method_, 500, "Internal Server Error", "Could not sync MoonCode native runtime events",
+          )
+          return
+        }
+      }
       let native = mooncode_native_runtime_events_state(
         workspace_root, session_id,
       )
@@ -19,6 +28,17 @@ async fn handle_mooncode_session_runtime_events(
       let native_events = @mooncode.native_runtime_events_for_projection(
         native_report,
       )
+      let session = sync_mooncode_observed_runtime_events(
+        workspace_root, session_id, session, native_events,
+      ) catch {
+        _ => {
+          send_api_error(
+            conn, method_, 500, "Internal Server Error", "Could not save MoonCode native runtime events",
+          )
+          return
+        }
+      }
+      let local_events = read_mooncode_event_log(workspace_root, session_id)
       let events = @mooncode.merge_events([], native_events, local_events)
       send_json(
         conn,
@@ -71,6 +91,89 @@ async fn handle_mooncode_session_runtime_events(
       )
     }
   }
+}
+
+///|
+async fn sync_mooncode_moonclaw_sidecar_events(
+  workspace_root : String,
+  session_id : String,
+  session : Json,
+) -> Json {
+  let sidecar_events = read_moonclaw_mooncode_event_log(
+    workspace_root, session_id,
+  )
+  if sidecar_events.length() == 0 {
+    return session
+  }
+  let report = @mooncode.runtime_event_ingest_report(
+    { "events": Json::array(sidecar_events) },
+    session_id~,
+    ingested_at=@async.now().to_string(),
+  )
+  sync_mooncode_observed_runtime_events(
+    workspace_root,
+    session_id,
+    session,
+    json_array_items(report, "events"),
+  )
+}
+
+///|
+async fn sync_mooncode_observed_runtime_events(
+  workspace_root : String,
+  session_id : String,
+  session : Json,
+  observed_events : Array[Json],
+) -> Json {
+  if observed_events.length() == 0 {
+    return session
+  }
+  let local_events = read_mooncode_event_log(workspace_root, session_id)
+  let new_events = mooncode_unpersisted_runtime_events(
+    local_events, observed_events,
+  )
+  if new_events.length() == 0 {
+    return session
+  }
+  let persisted = persist_mooncode_runtime_events_and_projection(
+    workspace_root, session_id, session, new_events,
+  )
+  match read_mooncode_session_record(workspace_root, session_id) {
+    Some(record) => record
+    None => persisted
+  }
+}
+
+///|
+fn mooncode_unpersisted_runtime_events(
+  local_events : Array[Json],
+  observed_events : Array[Json],
+) -> Array[Json] {
+  let new_events : Array[Json] = []
+  let merged = @mooncode.merge_events([], observed_events, local_events)
+  for event in merged {
+    if !mooncode_event_already_persisted(local_events, event) {
+      new_events.push(event)
+    }
+  }
+  new_events
+}
+
+///|
+fn mooncode_event_already_persisted(
+  local_events : Array[Json],
+  event : Json,
+) -> Bool {
+  let event_id = json_string(event, "id", default="")
+  for persisted in local_events {
+    if event_id != "" && json_string(persisted, "id", default="") == event_id {
+      return true
+    }
+    if event_id == "" && persisted.stringify() == event.stringify() {
+      return true
+    }
+  }
+  false
 }
 
 ///|

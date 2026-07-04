@@ -13,6 +13,16 @@ async fn handle_mooncode_session_stream(
   let content_type = @mooncode.stream_content_type(format)
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
+      let session = sync_mooncode_moonclaw_sidecar_events(
+        workspace_root, session_id, session,
+      ) catch {
+        _ => {
+          send_api_error(
+            conn, method_, 500, "Internal Server Error", "Could not sync MoonCode native runtime events",
+          )
+          return
+        }
+      }
       let live = @mooncode.stream_live_enabled_value(
         query_value(request_path, "live").unwrap_or(""),
       )
@@ -22,41 +32,28 @@ async fn handle_mooncode_session_stream(
       let live_poll_ms = @mooncode.stream_live_poll_ms_value(
         query_value(request_path, "poll_ms").unwrap_or(""),
       )
-      match
-        mooncode_native_stream_text(
-          workspace_root,
-          session_id,
-          format,
-          since,
-          wait_ms=if live { live_timeout_ms } else { 0 },
-          poll_ms=live_poll_ms,
-        ) {
-        Ok(text) => send_text(conn, method_, content_type, text)
-        Err(_) => {
-          let projected = if live {
-            mooncode_live_stream_projection(
-              workspace_root, session_id, session, since, live_timeout_ms, live_poll_ms,
-            )
-          } else {
-            attach_mooncode_session_projection(workspace_root, session)
-          }
-          let events = json_array_items(projected, "mooncode_events")
-          if format == "sse" {
-            send_text(
-              conn,
-              method_,
-              content_type,
-              @mooncode.stream_sse_text(projected, events, since~),
-            )
-          } else {
-            send_text(
-              conn,
-              method_,
-              content_type,
-              @mooncode.stream_jsonl_text(projected, events, since~),
-            )
-          }
-        }
+      let projected = if live {
+        mooncode_live_stream_projection(
+          workspace_root, session_id, session, since, live_timeout_ms, live_poll_ms,
+        )
+      } else {
+        attach_mooncode_session_projection(workspace_root, session)
+      }
+      let events = json_array_items(projected, "mooncode_events")
+      if format == "sse" {
+        send_text(
+          conn,
+          method_,
+          content_type,
+          @mooncode.stream_sse_text(projected, events, since~),
+        )
+      } else {
+        send_text(
+          conn,
+          method_,
+          content_type,
+          @mooncode.stream_jsonl_text(projected, events, since~),
+        )
       }
     }
     None =>
@@ -92,6 +89,16 @@ async fn handle_mooncode_session_stream_state(
     None => {
       send_api_error(
         conn, method_, 404, "Not Found", "Unknown MoonCode session",
+      )
+      return
+    }
+  }
+  let session = sync_mooncode_moonclaw_sidecar_events(
+    workspace_root, session_id, session,
+  ) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "Could not sync MoonCode native runtime events",
       )
       return
     }
@@ -178,6 +185,11 @@ async fn mooncode_live_stream_projection(
     @async.sleep(poll_ms)
     match read_mooncode_session_record(workspace_root, session_id) {
       Some(session) => {
+        let session = sync_mooncode_moonclaw_sidecar_events(
+          workspace_root, session_id, session,
+        ) catch {
+          _ => session
+        }
         let projected = attach_mooncode_session_projection(
           workspace_root, session,
         )

@@ -401,7 +401,13 @@ Exit tests:
 
 ## Current Direction
 
-The next implementation step is to test live MoonClaw event-stream fidelity:
-first/second/third turns should emit command-scoped progress and final replies
-without relying on UI timers, fake working rows, or runtime-service status as a
-chat owner.
+Phase 12 moves live MoonClaw evidence behind the canonical Moondesk append log:
+native sidecar/runtime events are imported once, session projection reads only
+Moondesk's durable log, and stored session records no longer cache response DTOs
+such as `mooncode_events`, `mooncode_summary`, or `mooncode_conversation`.
+
+The next implementation step is a fresh UI/browser verification of real native
+first/second/third-turn replies: progress and final assistant output should
+arrive through canonical session refresh/stream polling after backend ingestion,
+without UI timers, fake working rows, direct sidecar projection, or
+runtime-service status acting as chat ownership.

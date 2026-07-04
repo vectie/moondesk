@@ -58,11 +58,46 @@ async fn write_mooncode_session_record(
   if json_string(session, "component", default="") != "mooncode" {
     fail("invalid MoonCode session record")
   }
-  let compact = mooncode_compact_session_record(session)
+  let compact = mooncode_compact_session_record(
+    mooncode_session_storage_record(session),
+  )
   @moonfiles.write_json_record_file(
     mooncode_session_record_path(workspace_root, session_id),
     compact,
   )
+}
+
+///|
+fn mooncode_session_storage_record(session : Json) -> Json {
+  match session {
+    Object(fields) => {
+      let next : Map[String, Json] = {}
+      for key, value in fields {
+        if !mooncode_session_response_only_field(key) {
+          next[key] = value
+        }
+      }
+      Json::object(next)
+    }
+    _ => session
+  }
+}
+
+///|
+fn mooncode_session_response_only_field(key : String) -> Bool {
+  key == "mooncode_events" ||
+  key == "mooncode_summary" ||
+  key == "mooncode_conversation" ||
+  key == "mooncode_command_events" ||
+  key == "mooncode_event_log_path" ||
+  key == "mooncode_append_log_count" ||
+  key == "mooncode_command_log_path" ||
+  key == "mooncode_command_log_count" ||
+  key == "mooncode_runtime_command_log_path" ||
+  key == "mooncode_runtime_command_log_count" ||
+  key == "mooncode_runtime_receipt_log_path" ||
+  key == "mooncode_runtime_receipt_log_count" ||
+  key == "transcript"
 }
 
 ///|

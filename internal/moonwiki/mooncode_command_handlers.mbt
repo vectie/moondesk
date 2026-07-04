@@ -48,6 +48,11 @@ async fn handle_mooncode_session_preflight(
   }
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
+      let session = sync_mooncode_moonclaw_sidecar_events(
+        workspace_root, session_id, session,
+      ) catch {
+        _ => session
+      }
       let projected = attach_mooncode_session_projection(
         workspace_root, session,
       )
@@ -98,6 +103,11 @@ async fn handle_mooncode_session_command(
       "Unsupported MoonCode command: \{action}",
     )
     return
+  }
+  let session = sync_mooncode_moonclaw_sidecar_events(
+    workspace_root, session_id, session,
+  ) catch {
+    _ => session
   }
   let projected = attach_mooncode_session_projection(workspace_root, session)
   let preflight = mooncode_command_preflight(projected, payload, action)

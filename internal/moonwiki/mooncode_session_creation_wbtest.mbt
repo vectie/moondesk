@@ -54,7 +54,7 @@ test "mooncode immediate queued session appends canonical user event only" {
 }
 
 ///|
-test "mooncode immediate command response exposes clean phase6 envelope" {
+async test "mooncode immediate command response exposes clean phase6 envelope" {
   let session : Json = {
     "id": "mooncode-demo",
     "workspace_id": "general",
@@ -108,7 +108,7 @@ test "mooncode immediate command response exposes clean phase6 envelope" {
   )
   let summary = json_object_field_or_empty(response, "mooncode_summary")
   assert_eq(json_int(summary, "event_count", default=0), 1)
-  assert_eq(json_int(summary, "command_log_count", default=0), 1)
+  assert_eq(json_int(summary, "command_log_count", default=0), 0)
 }
 
 ///|

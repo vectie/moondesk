@@ -417,6 +417,48 @@ Exit tests:
   turn
 - command ordering stays append-only after runtime start/failure handling
 
+## Phase 12 - Canonical Native Event Ingestion
+
+Status: complete for the Moondesk backend projection path.
+
+Work:
+
+- Treat MoonClaw native sidecar/runtime events as input evidence, not as a
+  second conversation owner.
+- Import observed native runtime events into Moondesk's append log before
+  projection.
+- Make session listing, session events, stream, stream-state, preflight, and
+  command send paths sync native evidence before reading canonical state.
+- Stop projecting directly from MoonClaw sidecar `events.jsonl`.
+- Strip response-only projection DTOs from persisted session records so storage
+  records do not cache `mooncode_events`, `mooncode_summary`,
+  `mooncode_conversation`, or inline `mooncode_command_events`.
+- Make immediate command responses project from the durable append log order,
+  using inline events only when no append log exists.
+
+Implemented:
+
+- Added a deduped native-event sync helper that imports sidecar events and
+  daemon-observed runtime events into Moondesk's event log once.
+- `GET /api/mooncode/sessions`, session event reads, stream reads, stream-state,
+  command preflight, and command send all use the sync-first canonical path.
+- Known Moondesk sessions no longer bypass the backend by returning native
+  MoonClaw stream text directly.
+- `attach_mooncode_session_projection` now projects from Moondesk's durable
+  event log only.
+- `write_mooncode_session_record` removes response/projection fields before
+  writing the session record.
+- Regression coverage proves sidecar events do not affect projection until they
+  are imported, and repeated sync does not duplicate events.
+
+Exit tests:
+
+- native assistant/progress events are imported once into Moondesk's append log
+- session refresh and stream polling project from one canonical log
+- sidecar timing cannot reorder the chat independently of Moondesk storage
+- persisted session records contain durable state, not cached response DTOs
+- first, second, and third immediate command responses preserve append-log order
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

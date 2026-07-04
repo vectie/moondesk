@@ -99,7 +99,7 @@ async test "mooncode durable logs use suite product home for hosted book roots" 
 }
 
 ///|
-async test "mooncode projection cold-loads moonclaw durable runtime events" {
+async test "mooncode sync imports moonclaw durable runtime events before projection" {
   let root = "/tmp/moondesk-mooncode-moonclaw-projection-wbtest-" +
     @async.now().to_string()
   let session_id = "session-native"
@@ -139,14 +139,30 @@ async test "mooncode projection cold-loads moonclaw durable runtime events" {
   )
   append_mooncode_jsonl_file(native_path, event)
 
-  let projected = attach_mooncode_session_projection(root, session)
+  let cold_projected = attach_mooncode_session_projection(root, session)
+  assert_eq(json_array_items(cold_projected, "mooncode_events").length(), 0)
+  assert_eq(
+    json_int(
+      json_object_field_or_empty(cold_projected, "mooncode_summary"),
+      "append_log_count",
+      default=0,
+    ),
+    0,
+  )
+
+  let synced = sync_mooncode_moonclaw_sidecar_events(root, session_id, session)
+  let projected = attach_mooncode_session_projection(root, synced)
   let events = json_array_items(projected, "mooncode_events")
   let summary = json_object_field_or_empty(projected, "mooncode_summary")
   assert_eq(events.length(), 1)
   assert_eq(json_string(events[0], "id", default=""), "native-assistant")
   assert_eq(json_string(events[0], "detail", default=""), "Hello!")
   assert_eq(json_int(summary, "event_count", default=0), 1)
-  assert_eq(json_int(summary, "append_log_count", default=0), 0)
+  assert_eq(json_int(summary, "append_log_count", default=0), 1)
+  let durable_events = read_mooncode_event_log(root, session_id)
+  assert_eq(durable_events.length(), 1)
+  ignore(sync_mooncode_moonclaw_sidecar_events(root, session_id, synced))
+  assert_eq(read_mooncode_event_log(root, session_id).length(), 1)
 }
 
 ///|
