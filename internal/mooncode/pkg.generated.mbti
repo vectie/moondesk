@@ -158,6 +158,8 @@ pub fn command_tool_hints(String) -> Array[String]
 
 pub fn command_writes_review_receipt(String) -> Bool
 
+pub fn conversation_projection(Json, Array[Json]) -> Json
+
 pub fn count_cancel_dropped(Array[Json]) -> Int
 
 pub fn count_change_set_manifests(Array[Json]) -> Int

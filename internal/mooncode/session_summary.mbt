@@ -284,7 +284,9 @@ pub fn session_projection_response(
       runtime_receipt_log_count.to_json(),
     )
   let summary = session_summary(summary_session, events)
+  let conversation = conversation_projection(summary_session, events)
   session
   |> runtime_with_field("mooncode_events", Json::array(events))
   |> runtime_with_field("mooncode_summary", summary)
+  |> runtime_with_field("mooncode_conversation", conversation)
 }
