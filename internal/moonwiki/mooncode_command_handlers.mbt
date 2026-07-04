@@ -192,14 +192,24 @@ async fn handle_mooncode_session_command(
       return
     }
   }
-  ignore(payload)
-  send_json(
-    conn,
-    method_,
-    mooncode_immediate_command_response(
-      workspace_root, with_command, command_packet,
-    ),
-  )
+  match
+    mooncode_command_response_after_enqueue(
+      workspace_root, with_command, command_packet, payload,
+    ) {
+    Ok(response) => send_json(conn, method_, response)
+    Err(error) =>
+      send_api_error(
+        conn,
+        method_,
+        json_int(error, "code", default=500),
+        json_string(error, "reason", default="Internal Server Error"),
+        json_string(
+          error,
+          "message",
+          default="Could not start MoonCode runtime",
+        ),
+      )
+  }
 }
 
 ///|

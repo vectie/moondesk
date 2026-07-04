@@ -158,7 +158,7 @@ Exit tests:
 
 ## Phase 4 - Runtime Ownership
 
-Status: active, browser-side runtime startup removed from the primary path.
+Status: complete for backend-owned command enqueue.
 
 Work:
 
@@ -169,6 +169,19 @@ Work:
 - The frontend no longer has a command producer for
   `/api/mooncode/sessions/:id/runtime-service`.
 - Runtime sink snapshots update factual event/service status only.
+
+Implemented:
+
+- `POST /api/mooncode/sessions` and
+  `POST /api/mooncode/sessions/:id/commands` both call the same backend
+  post-enqueue runtime-start helper.
+- The helper uses the server-side runtime-service lease, so duplicate starts are
+  fenced by command count.
+- If MoonClaw or its native MoonCode runtime is unavailable, Moondesk persists a
+  `runtime_unavailable` event scoped by the command packet and returns the
+  canonical failed turn in the same command response.
+- Runtime-service startup remains available as a backend/internal route, but it
+  is no longer the browser's normal command producer.
 
 Exit tests:
 
@@ -388,6 +401,7 @@ Exit tests:
 
 ## Current Direction
 
-The next implementation step is to keep future chat surfaces behind the
-MoonLib conversation contract and add product-specific tests only when a product
-adds a real chat composer or explicit steering control.
+The next implementation step is to test live MoonClaw event-stream fidelity:
+first/second/third turns should emit command-scoped progress and final replies
+without relying on UI timers, fake working rows, or runtime-service status as a
+chat owner.

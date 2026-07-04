@@ -105,12 +105,151 @@ fn mooncode_immediate_command_response(
     payload,
     ok=true,
     status=response_status,
-    message=if response_status == "queued" {
+    message=if response_status == "failed" {
+      "MoonCode command was saved but the runtime is unavailable"
+    } else if response_status == "queued" {
       "MoonCode command was saved and queued"
     } else {
       "MoonCode command was saved and runtime started"
     },
     next_action="poll_mooncode_stream",
+  )
+}
+
+///|
+async fn mooncode_command_response_after_enqueue(
+  workspace_root : String,
+  queued : Json,
+  command_packet : Json,
+  payload : Json,
+) -> Result[Json, Json] {
+  let session_id = json_string(queued, "id", default="")
+  if session_id == "" {
+    return Ok(
+      mooncode_immediate_command_response(
+        workspace_root, queued, command_packet,
+      ),
+    )
+  }
+  if !try_acquire_mooncode_runtime_service_lease(workspace_root, session_id) {
+    return Ok(
+      mooncode_immediate_command_response(
+        workspace_root, queued, command_packet,
+      ),
+    )
+  }
+  match
+    run_mooncode_runtime_service_for_session(
+      workspace_root, session_id, queued, payload,
+    ) {
+    Ok(started) =>
+      Ok(
+        mooncode_immediate_command_response(
+          workspace_root, started, command_packet,
+        ),
+      )
+    Err(error) => {
+      let now = @async.now().to_string()
+      let event = mooncode_runtime_unavailable_event(
+        queued,
+        command_packet,
+        error,
+        created_at=now,
+      )
+      let failed = mooncode_session_with_runtime_unavailable_event(
+        queued,
+        event,
+        created_at=now,
+      )
+      write_mooncode_session_record(workspace_root, failed) catch {
+        _ =>
+          return Err(
+            mooncode_runtime_service_error(
+              500, "Internal Server Error", "Could not save MoonCode runtime failure",
+            ),
+          )
+      }
+      append_mooncode_event_log_if_missing(workspace_root, session_id, event) catch {
+        _ =>
+          return Err(
+            mooncode_runtime_service_error(
+              500, "Internal Server Error", "Could not append MoonCode runtime failure event",
+            ),
+          )
+      }
+      Ok(
+        mooncode_immediate_command_response(
+          workspace_root, failed, command_packet,
+        ),
+      )
+    }
+  }
+}
+
+///|
+fn mooncode_session_with_runtime_unavailable_event(
+  session : Json,
+  event : Json,
+  created_at~ : String,
+) -> Json {
+  let events = json_array_items(session, "mooncode_command_events")
+  events.push(event)
+  let with_events = mooncode_session_with_field(
+    session,
+    "mooncode_command_events",
+    Json::array(events),
+  )
+  let with_status = mooncode_session_with_field(
+    with_events,
+    "status",
+    "failed".to_json(),
+  )
+  mooncode_session_with_field(with_status, "updated_at", created_at.to_json())
+}
+
+///|
+async fn append_mooncode_event_log_if_missing(
+  workspace_root : String,
+  session_id : String,
+  event : Json,
+) -> Unit {
+  let event_id = json_string(event, "id", default="")
+  if event_id != "" {
+    for existing in read_mooncode_event_log(workspace_root, session_id) {
+      if json_string(existing, "id", default="") == event_id {
+        return
+      }
+    }
+  }
+  append_mooncode_event_log(workspace_root, session_id, event)
+}
+
+///|
+fn mooncode_runtime_unavailable_event(
+  session : Json,
+  command_packet : Json,
+  error : Json,
+  created_at~ : String,
+) -> Json {
+  let command_id = json_string(command_packet, "command_id", default="")
+  let session_id = json_string(session, "id", default="")
+  let message = json_string(
+    error,
+    "message",
+    default="MoonCode runtime is not reachable.",
+  )
+  @mooncode.event_record(
+    id=@desk.stable_id(
+      "mooncode-runtime-unavailable",
+      session_id + ":" + command_id,
+    ),
+    lane="runtime",
+    kind="runtime_unavailable",
+    title="MoonCode runtime unavailable",
+    status="failed",
+    created_at~,
+    detail=message,
+    command_packet~,
   )
 }
 

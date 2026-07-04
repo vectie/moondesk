@@ -112,6 +112,75 @@ test "mooncode immediate command response exposes clean phase6 envelope" {
 }
 
 ///|
+async test "mooncode post enqueue response records runtime unavailable failure" {
+  let root = "/tmp/moondesk-mooncode-runtime-unavailable-" +
+    @desk.stable_id("runtime-unavailable", @async.now().to_string())
+  @fsx.make_directory(root, recursive=true, exists_ok=true)
+  let session : Json = @mooncode.projected_session_record(
+    workspace_id="general",
+    workspace_name="General MoonCode",
+    workspace_root=root,
+    runtime={
+      "id": "",
+      "status": "created",
+      "model": "deepseek-v4-flash",
+      "web_search": false,
+      "queued_messages": [],
+    },
+    title="MoonCode - General",
+    created_at="2026-06-15T00:00:00Z",
+    updated_at="2026-06-15T00:00:00Z",
+    last_message="hello mooncode",
+    initial_context_path="",
+  )
+  let packet : Json = {
+    "command_id": "cmd-runtime-unavailable",
+    "client_turn_id": "client-turn-runtime-unavailable",
+    "protocol": "mooncode.v1",
+    "kind": "mooncode.command",
+    "action": "prompt",
+  }
+  let queued = mooncode_immediate_queued_session(
+    session,
+    action="prompt",
+    message="hello mooncode",
+    context_path="",
+    command_packet=packet,
+    created_at="2026-06-15T00:00:00Z",
+  )
+  write_mooncode_session_record(root, queued)
+  append_new_mooncode_command_events(root, session, queued)
+  let response = match
+    mooncode_command_response_after_enqueue(root, queued, packet, {
+      "max_turns": 1,
+      "live_wait_ms": 1,
+      "poll_ms": 1,
+    }) {
+    Ok(response) => response
+    Err(error) => fail(error.stringify())
+  }
+  assert_eq(json_string(response, "status", default=""), "failed")
+  assert_true(
+    json_string(response, "message", default="").contains(
+      "runtime is unavailable",
+    ),
+  )
+  let turn = json_object_field_or_empty(response, "mooncode_turn")
+  assert_eq(json_string(turn, "status", default=""), "failed")
+  let assistant = json_object_field_or_empty(turn, "assistant")
+  assert_eq(json_string(assistant, "status", default=""), "failed")
+  assert_true(
+    json_string(assistant, "content", default="").contains("MoonClaw daemon"),
+  )
+  let events = read_mooncode_event_log(
+    root,
+    json_string(queued, "id", default=""),
+  )
+  assert_eq(events.length(), 2)
+  assert_eq(json_string(events[1], "kind", default=""), "runtime_unavailable")
+}
+
+///|
 test "mooncode new session record starts with typed coding protocol" {
   let workspace = @desk.workspace(
     id="book-demo",

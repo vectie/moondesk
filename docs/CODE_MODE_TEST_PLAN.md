@@ -175,7 +175,7 @@ Suggested test files:
 - `internal/moonwiki/mooncode_session_e2e_wbtest.mbt`
 - `ui/rabbita-desk/main/app_code_mode_session_wbtest.mbt`
 
-### Prompt, Steer, And Cancel
+### Prompt, Explicit Steering, And Cancel
 
 Exercise command routing after a session exists.
 
@@ -185,8 +185,11 @@ Flow:
 existing idle session
 -> send composer
 -> POST /commands action=prompt
--> mark session running or queued
+-> backend starts or resumes runtime-service
+-> runtime unavailable is projected as a failed assistant turn, not a fake row
 -> send composer again
+-> POST /commands action=prompt
+-> use explicit steering control/API
 -> POST /commands action=steer
 -> cancel command
 -> runtime-control/readiness reflects cancellation
@@ -194,8 +197,13 @@ existing idle session
 
 Assertions:
 
-- `mooncode_composer_action` chooses `steer` for running, queued, or non-empty
-  queued count.
+- ordinary composer text always posts `prompt`, including second and third
+  messages in a running or failed session.
+- backend command enqueue attempts runtime start/resume once per queued command.
+- runtime unavailable is durably attached to the active command turn as a failed
+  assistant message.
+- explicit steering remains covered through the command API/control surface, not
+  through ordinary chat input.
 - prompt text is trimmed and empty prompts are rejected in UI state before HTTP.
 - command ordering is append-only.
 - cancel does not delete prior evidence.
@@ -409,7 +417,8 @@ internal/moonwiki
 ui/rabbita-desk/main
   MoonCode mode selection
   new session draft state
-  composer prompt/steer behavior
+  ordinary composer prompt behavior
+  explicit steering controls
   session selection reload commands
   stream merge and trim helpers
   runtime event sink projection
@@ -465,8 +474,9 @@ Code mode is sufficiently tested when:
 
 - a deterministic end-to-end test proves create session -> command -> runtime
   claim -> event ingest -> receipt -> readiness -> package projection
-- UI reducer tests prove the user can enter MoonCode, start a session, send a
-  prompt, steer a running session, and reload stream/runtime state
+- UI reducer tests prove the user can enter MoonCode, start a session, send
+  first/second/third ordinary prompts, use explicit steering controls, and reload
+  stream/runtime state
 - host API tests cover every `/api/mooncode` route with at least one success or
   explicit method/validation test
 - negative tests prove path traversal and malformed runtime records cannot

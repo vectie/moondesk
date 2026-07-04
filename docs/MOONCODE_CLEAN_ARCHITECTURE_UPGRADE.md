@@ -381,6 +381,42 @@ Exit tests:
 - browser smoke still proves immediate append, canonical acknowledgement, and
   refresh-stable order
 
+## Phase 11 - Backend-Owned Runtime Start
+
+Status: complete for the command enqueue path.
+
+Work:
+
+- Treat command enqueue as the only normal place that starts or resumes
+  MoonClaw runtime work.
+- Use the existing backend runtime-service lease to fence duplicate starts.
+- Return a real canonical failed turn when MoonClaw is unavailable instead of a
+  queued prompt that can sit forever.
+- Keep `/api/mooncode/sessions/:id/runtime-service` as a backend/internal
+  runtime route, not as the visible chat producer.
+- Keep runtime sink snapshots diagnostic; they never decide chat ownership or
+  composer action.
+
+Implemented:
+
+- New-session creation and existing-session command send now both call the same
+  backend post-enqueue helper.
+- The helper attempts runtime-service start/resume after the prompt command and
+  command event are durably appended.
+- Runtime start failures append a command-scoped `runtime_unavailable` event and
+  return a failed assistant message for that exact turn.
+- The HTTP E2E test now expects runtime-unavailable to appear as a canonical
+  failed turn when a test workspace has no MoonClaw daemon.
+
+Exit tests:
+
+- first, second, and third ordinary sends all enter the same backend enqueue
+  lifecycle
+- no browser-side fake working row is needed to show progress or failure
+- runtime unavailable is visible as a failed assistant message for the active
+  turn
+- command ordering stays append-only after runtime start/failure handling
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
