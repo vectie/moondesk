@@ -67,14 +67,27 @@ fn conversation_turns_from_events(
   events : Array[Json],
 ) -> Array[ConversationTurnDraft] {
   let turns : Array[ConversationTurnDraft] = []
+  let pending_scoped_events : Array[Json] = []
   for event in events {
     if conversation_event_is_runtime_service_lifecycle(event) {
       continue
     }
     if conversation_event_is_user_prompt(event) {
-      conversation_apply_user_event(turns, event)
+      let turn_index = conversation_apply_user_event(turns, event)
+      conversation_apply_pending_scoped_events(
+        turns,
+        pending_scoped_events,
+        turn_index,
+        conversation_event_command_id(event),
+      )
     } else {
-      conversation_apply_runtime_event(turns, event)
+      let command_id = conversation_event_command_id(event)
+      if command_id != "" &&
+        conversation_turn_index_for_command(turns, command_id) < 0 {
+        pending_scoped_events.push(event)
+      } else {
+        conversation_apply_runtime_event(turns, event)
+      }
     }
   }
   turns
@@ -84,7 +97,7 @@ fn conversation_turns_from_events(
 fn conversation_apply_user_event(
   turns : Array[ConversationTurnDraft],
   event : Json,
-) -> Unit {
+) -> Int {
   let command_id = conversation_event_command_id(event)
   let client_turn_id = conversation_event_client_turn_id(event)
   let created_at = json_string(event, "created_at", default="")
@@ -125,6 +138,31 @@ fn conversation_apply_user_event(
   }
   turn.updated_at = conversation_latest_timestamp(turn.updated_at, created_at)
   turns[target] = turn
+  target
+}
+
+///|
+fn conversation_apply_pending_scoped_events(
+  turns : Array[ConversationTurnDraft],
+  pending_scoped_events : Array[Json],
+  turn_index : Int,
+  command_id : String,
+) -> Unit {
+  if turn_index < 0 || command_id == "" {
+    return
+  }
+  let keep : Array[Json] = []
+  for event in pending_scoped_events {
+    if conversation_event_command_id(event) == command_id {
+      conversation_apply_runtime_event_to_turn(turns, turn_index, event)
+    } else {
+      keep.push(event)
+    }
+  }
+  pending_scoped_events.clear()
+  for event in keep {
+    pending_scoped_events.push(event)
+  }
 }
 
 ///|
@@ -135,6 +173,18 @@ fn conversation_apply_runtime_event(
   let command_id = conversation_event_command_id(event)
   let index = conversation_target_turn_index(turns, command_id)
   if index < 0 {
+    return
+  }
+  conversation_apply_runtime_event_to_turn(turns, index, event)
+}
+
+///|
+fn conversation_apply_runtime_event_to_turn(
+  turns : Array[ConversationTurnDraft],
+  index : Int,
+  event : Json,
+) -> Unit {
+  if index < 0 || index >= turns.length() {
     return
   }
   let turn = turns[index]
@@ -168,6 +218,13 @@ fn conversation_apply_runtime_event(
       turn.status,
       json_string(event, "status", default="done"),
     )
+  } else if conversation_event_is_failure_reply(event) {
+    let content = json_string(event, "detail", default="").trim().to_owned()
+    if content != "" {
+      turn.assistant = conversation_assistant_message(event, content)
+      turn.assistant_delta = ""
+    }
+    turn.status = "failed"
   } else {
     let progress = conversation_progress_item(event)
     if conversation_message_content(progress) != "" ||
@@ -456,6 +513,19 @@ fn conversation_event_is_terminal_without_answer(event : Json) -> Bool {
     json_string(event, "status", default="") == "done" ||
     json_string(event, "status", default="") == "failed"
   )
+}
+
+///|
+fn conversation_event_is_failure_reply(event : Json) -> Bool {
+  if json_string(event, "status", default="") != "failed" {
+    return false
+  }
+  let kind = json_string(event, "kind", default="")
+  kind == "command_error" ||
+  kind == "turn_failed" ||
+  kind == "max_steps_exhausted" ||
+  kind == "runtime.planner_failed" ||
+  kind == "runtime_unavailable"
 }
 
 ///|

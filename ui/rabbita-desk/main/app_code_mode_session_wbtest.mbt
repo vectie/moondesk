@@ -157,7 +157,6 @@ fn code_mode_test_transcript_rows(
   rows
 }
 
-
 ///|
 test "code mode transcript uses backend canonical conversation before raw events" {
   let session = {
@@ -231,7 +230,50 @@ test "code mode transcript uses backend canonical conversation before raw events
 }
 
 ///|
-test "code mode transcript appends local optimistic turn after backend conversation" {
+test "code mode canonical progress stays folded between user and assistant" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "command-first",
+          "First prompt",
+          assistant="First answer",
+          progress=[
+            {
+              "role": "progress",
+              "title": "Reading workspace",
+              "detail": "Read the workspace.",
+              "status": "done",
+            },
+          ],
+        ),
+      ]),
+    ),
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 3)
+  match items[0].message {
+    Some(row) => assert_eq(row.content, "First prompt")
+    None => fail("expected user message")
+  }
+  match items[1].activity {
+    Some(row) => {
+      assert_true(row.folded)
+      assert_eq(row.label, "Progress")
+      assert_eq(row.title, "Prepared the response")
+      assert_eq(row.detail, "Read the workspace.")
+    }
+    None => fail("expected progress activity")
+  }
+  match items[2].message {
+    Some(row) => assert_eq(row.content, "First answer")
+    None => fail("expected assistant message")
+  }
+}
+
+///|
+test "code mode transcript appends local optimistic turn after three backend turns" {
   let session = {
     ..code_mode_test_session("session-a", status="running"),
     mooncode_conversation: Some(
@@ -246,6 +288,11 @@ test "code mode transcript appends local optimistic turn after backend conversat
           "Second prompt",
           assistant="Second answer",
         ),
+        code_mode_test_turn(
+          "command-third",
+          "Third prompt",
+          assistant="Third answer",
+        ),
       ]),
     ),
   }
@@ -256,9 +303,9 @@ test "code mode transcript appends local optimistic turn after backend conversat
       {
         session_id: "session-a",
         role: "user",
-        content: "Third prompt",
+        content: "Fourth prompt",
         status: "queued",
-        key: "ui-user:session-a:third",
+        key: "ui-user:session-a:fourth",
       },
     ],
     mooncode_stream_session_id: "session-a",
@@ -281,12 +328,14 @@ test "code mode transcript appends local optimistic turn after backend conversat
       None => ()
     }
   }
-  assert_eq(messages.length(), 5)
+  assert_eq(messages.length(), 7)
   assert_eq(messages[0], "user:First prompt")
   assert_eq(messages[1], "assistant:First answer")
   assert_eq(messages[2], "user:Second prompt")
   assert_eq(messages[3], "assistant:Second answer")
   assert_eq(messages[4], "user:Third prompt")
+  assert_eq(messages[5], "assistant:Third answer")
+  assert_eq(messages[6], "user:Fourth prompt")
 }
 
 ///|
@@ -335,7 +384,6 @@ test "code mode transcript drops acknowledged optimistic turn by client turn id"
   assert_eq(messages[0], "user:Same text")
   assert_eq(messages[1], "user:Same text")
 }
-
 
 ///|
 test "code mode transcript uses local rows instead of runtime wait state" {

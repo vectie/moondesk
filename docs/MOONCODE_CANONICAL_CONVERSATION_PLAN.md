@@ -175,6 +175,8 @@ Exit tests:
 
 ## Phase 5 - Event Identity Contract
 
+Status: active, backend projection buffering implemented.
+
 Work:
 
 - MoonClaw must echo `turn_id` or `command_id` on every user-facing event.
@@ -225,7 +227,7 @@ Validation in this slice:
 
 ## Phase 7 - End-To-End Chat Tests
 
-Status: next.
+Status: active.
 
 Backend:
 
@@ -237,6 +239,15 @@ Backend:
 - runtime unavailable error attached to active turn
 - refresh/replay reproduces the same turn order
 
+Current backend coverage:
+
+- three sequential turns preserve append order and replay deterministically
+- scoped progress emitted before the prompt is buffered under the matching turn
+- unscoped progress before any prompt is hidden from chat
+- assistant delta collapses into the final assistant reply
+- failed runtime/command events attach a failed assistant message to the active
+  turn
+
 UI:
 
 - new chat shows the prompt immediately
@@ -244,6 +255,12 @@ UI:
 - second and third prompts append at the bottom
 - old turns never disappear during poll/stream/sink refresh
 - collapsed progress remains attached to its turn
+
+Current UI coverage:
+
+- canonical progress remains folded between the user message and assistant reply
+- three backend turns render in order before a fourth local optimistic prompt
+- same-content prompts with different `client_turn_id` values stay distinct
 
 Browser smoke:
 
@@ -269,14 +286,14 @@ Exit tests:
 - product-specific diagnostics stay outside the chat contract
 - schema tests reject missing turn identity for user-facing events
 
-## Current Cleanup Direction
+## Current Direction
 
-The next implementation step is to finish deleting the remaining compatibility
-renderer paths:
+The next implementation step is to finish Phase 7 as an end-to-end browser/API
+gate: run a fresh app, send first/second/third messages, hard refresh, and prove
+the same three canonical turns remain in order without fake working states or
+raw diagnostic rows leaking into chat.
 
-- remove pending prompt event-count insertion from the main chat path
-- remove content-based user/assistant ownership checks from the canonical path
-- keep raw stream/runtime sink rendering only in diagnostics
-- require `client_turn_id` or `command_id` on all user-facing runtime events
+Remaining Phase 7 work:
+
 - add browser smoke coverage for first, second, and third turns after hard
   refresh
