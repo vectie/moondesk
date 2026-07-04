@@ -1,6 +1,14 @@
 ///|
+async fn reset_app_tool_portable_test_root(root : String) -> Unit {
+  @fs.rmdir(root, recursive=true) catch {
+    _ => ()
+  }
+}
+
+///|
 async test "app tool portable export copies a direct toolbook bundle" {
   let root = "/tmp/moondesk-app-tool-portable-direct-wbtest"
+  reset_app_tool_portable_test_root(root)
   let book_id = "tool-registry-portable"
   let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
@@ -224,6 +232,16 @@ async test "app tool portable export copies a direct toolbook bundle" {
     ),
   )
   assert_true(
+    json_string_array_items(result, "api_supported_route_patterns").contains(
+      @desk.workspace_action_route("raw"),
+    ),
+  )
+  assert_true(
+    json_string_array_items(result, "api_supported_route_patterns").contains(
+      @desk.workspace_file_route(),
+    ),
+  )
+  assert_true(
     json_string_array_items(result, "copied_paths").contains(
       "assets/root-module.js",
     ),
@@ -261,6 +279,11 @@ async test "app tool portable export copies a direct toolbook bundle" {
   let status = app_tool_portable_status(root, book_root, book_id)
   assert_eq(json_string(status, "status", default=""), "portable_ready")
   assert_eq(json_string(status, "entrypoint", default=""), "app/index.html")
+  assert_true(
+    json_string_array_items(status, "api_supported_route_patterns").contains(
+      @desk.workspace_action_route("raw"),
+    ),
+  )
   assert_eq(
     json_string(status, "standalone_runtime", default=""),
     "served-static-bundle",
@@ -305,6 +328,7 @@ test "app tool portable default paths do not imply workbook output" {
 ///|
 async test "app tool portable export supports research-book tool manifests and embeds portable api runtime" {
   let root = "/tmp/moondesk-app-tool-portable-research-wbtest"
+  reset_app_tool_portable_test_root(root)
   let book_id = "research-pdf-portable-tool"
   let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
@@ -400,7 +424,12 @@ async test "app tool portable export supports research-book tool manifests and e
   )
   assert_true(
     json_string_array_items(result, "api_snapshot_routes").contains(
-      "/api/books/patterns",
+      @desk.books_route("patterns"),
+    ),
+  )
+  assert_true(
+    json_string_array_items(result, "api_supported_route_patterns").contains(
+      @desk.books_route("patterns"),
     ),
   )
   assert_true(
@@ -439,6 +468,8 @@ async test "app tool portable export supports research-book tool manifests and e
     @pathx.join(book_root, "portable/app-tool/portable-api-snapshot.json"),
   ).text()
   assert_true(snapshot.contains("\"/api/books/patterns\""))
+  assert_true(snapshot.contains("\"route_contract_endpoint\""))
+  assert_true(snapshot.contains("\"supported_route_patterns\""))
   let status = app_tool_portable_status(root, book_root, book_id)
   assert_eq(json_string(status, "status", default=""), "portable_ready")
   assert_true(
@@ -449,6 +480,7 @@ async test "app tool portable export supports research-book tool manifests and e
 ///|
 async test "app tool portable export keeps unsupported api routes as warnings" {
   let root = "/tmp/moondesk-app-tool-portable-unsupported-api-wbtest"
+  reset_app_tool_portable_test_root(root)
   let book_id = "tool-unsupported-api-portable"
   let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
@@ -530,8 +562,34 @@ async test "app tool portable export keeps unsupported api routes as warnings" {
 }
 
 ///|
+test "app tool portable api support delegates to core desktop route contract" {
+  assert_true(app_tool_api_route_is_supported(@desk.books_route("patterns")))
+  assert_true(app_tool_api_route_is_supported(@desk.workspaces_route() + "/"))
+  assert_true(
+    app_tool_api_route_is_supported(
+      @desk.books_route("base-types") + "?refresh=1",
+    ),
+  )
+  assert_true(
+    app_tool_api_route_is_supported(
+      "/api/workspaces/book-demo/preview?path=book/site/generated/index.html",
+    ),
+  )
+  assert_true(
+    app_tool_api_route_is_supported(
+      "/api/workspaces/book-demo/file/raw/excel/results.xlsx",
+    ),
+  )
+  assert_false(app_tool_api_route_is_supported(@desk.town_route("progress")))
+  assert_false(
+    app_tool_api_route_is_supported("/api/workspaces/book-demo/markdown"),
+  )
+}
+
+///|
 async test "app tool portable export detects generated app books without metadata" {
   let root = "/tmp/moondesk-app-tool-portable-detected-app-wbtest"
+  reset_app_tool_portable_test_root(root)
   let book_id = "research-generated-tool-portable"
   let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
@@ -617,6 +675,7 @@ async test "app tool portable export detects generated app books without metadat
 ///|
 async test "app tool portable export requires an html entrypoint" {
   let root = "/tmp/moondesk-app-tool-portable-non-html-wbtest"
+  reset_app_tool_portable_test_root(root)
   let book_id = "tool-non-html-portable"
   let book_root = @pathx.join(@pathx.join(root, "books"), book_id)
   @fsx.make_directory(
@@ -693,6 +752,7 @@ async test "app tool portable export requires an html entrypoint" {
 ///|
 async test "app tool portable export all discovers every app-tool book only" {
   let root = "/tmp/moondesk-app-tool-portable-all-wbtest"
+  reset_app_tool_portable_test_root(root)
   let direct_id = "tool-direct-all-portable"
   let research_id = "research-tool-all-portable"
   let plain_id = "plain-research-not-app-tool-portable"

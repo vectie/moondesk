@@ -122,3 +122,62 @@ test "desktop api route contracts own active backend method policy" {
     @core.desktop_api_route_accepts_method(@core.town_route("control"), "POST"),
   )
 }
+
+///|
+test "desktop portable api support derives from core desktop routes" {
+  let snapshot_routes = @core.desktop_portable_api_snapshot_routes()
+  assert_eq(snapshot_routes.length(), 4)
+  assert_true(snapshot_routes.contains(@core.workspaces_route()))
+  assert_true(snapshot_routes.contains(@core.books_route("patterns")))
+  assert_true(snapshot_routes.contains(@core.books_route("base-types")))
+  assert_true(snapshot_routes.contains(@core.books_route("template-registry")))
+  assert_false(snapshot_routes.contains(@core.town_route("dispatch")))
+
+  let content_routes = @core.desktop_portable_api_workspace_content_routes()
+  assert_eq(content_routes.length(), 5)
+  assert_true(content_routes.contains(@core.workspace_action_route("entries")))
+  assert_true(content_routes.contains(@core.workspace_action_route("preview")))
+  assert_true(content_routes.contains(@core.workspace_action_route("raw")))
+  assert_true(content_routes.contains(@core.workspace_file_route()))
+  assert_true(content_routes.contains(@core.workspace_site_route()))
+
+  let supported = @core.desktop_portable_api_supported_route_patterns()
+  assert_eq(
+    supported.length(),
+    snapshot_routes.length() + content_routes.length(),
+  )
+  assert_true(@core.desktop_portable_api_route_supported("/api/books/patterns"))
+  assert_true(@core.desktop_portable_api_route_supported("/api/workspaces/"))
+  assert_true(
+    @core.desktop_portable_api_route_supported("/api/books/base-types?fresh=1"),
+  )
+  assert_true(
+    @core.desktop_portable_api_route_supported("/api/books/patterns/?fresh=1"),
+  )
+  assert_true(
+    @core.desktop_portable_api_route_supported(
+      "/api/workspaces/book-demo/raw?path=book/outputs/report.txt",
+    ),
+  )
+  assert_true(
+    @core.desktop_portable_api_route_supported(
+      "/api/workspaces/book-demo/preview?path=book/site/generated/index.html",
+    ),
+  )
+  assert_true(
+    @core.desktop_portable_api_route_supported(
+      "/api/workspaces/book-demo/file/raw/excel/results.xlsx",
+    ),
+  )
+  assert_true(
+    @core.desktop_portable_api_route_supported(
+      "/api/workspaces/book-demo/site/assets/site.css",
+    ),
+  )
+  assert_false(@core.desktop_portable_api_route_supported("/api/town/progress"))
+  assert_false(
+    @core.desktop_portable_api_route_supported(
+      "/api/workspaces/book-demo/markdown",
+    ),
+  )
+}

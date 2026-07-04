@@ -69,6 +69,9 @@ async fn app_tool_portable_status(
   let api_snapshot_routes = json_string_array_items(
     portable_manifest, "api_snapshot_routes",
   )
+  let api_supported_route_patterns = json_string_array_items(
+    portable_manifest, "api_supported_route_patterns",
+  )
   let api_reference_routes = json_string_array_items(
     portable_manifest, "api_reference_routes",
   )
@@ -137,6 +140,9 @@ async fn app_tool_portable_status(
     "api_dependency_paths": json_from_string_array(api_dependency_paths),
     "api_offline_paths": json_from_string_array(api_offline_paths),
     "api_snapshot_routes": json_from_string_array(api_snapshot_routes),
+    "api_supported_route_patterns": json_from_string_array(
+      api_supported_route_patterns,
+    ),
     "api_reference_routes": json_from_string_array(api_reference_routes),
     "api_unsupported_routes": json_from_string_array(api_unsupported_routes),
     "api_dependency_warnings": json_from_string_array(api_warnings),

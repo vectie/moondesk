@@ -86,9 +86,10 @@ async fn export_app_tool_portable_bundle(
   )
   let api_offline_paths : Array[String] = []
   let api_dependency_warnings : Array[String] = []
-  let api_snapshot_routes = app_tool_portable_api_snapshot_routes()
+  let api_snapshot_routes = @desk.desktop_portable_api_snapshot_routes()
+  let api_supported_route_patterns = @desk.desktop_portable_api_supported_route_patterns()
   let api_unsupported_routes = app_tool_portable_api_unsupported_routes(
-    api_reference_routes, api_snapshot_routes,
+    api_reference_routes,
   )
   let api_snapshot = app_tool_portable_api_snapshot(root, book_id)
   app_tool_write_offline_api_snapshot(
@@ -151,6 +152,9 @@ async fn export_app_tool_portable_bundle(
     "api_dependency_paths": json_from_string_array(api_dependency_paths),
     "api_offline_paths": json_from_string_array(api_offline_paths),
     "api_snapshot_routes": json_from_string_array(api_snapshot_routes),
+    "api_supported_route_patterns": json_from_string_array(
+      api_supported_route_patterns,
+    ),
     "api_reference_routes": json_from_string_array(api_reference_routes),
     "api_unsupported_routes": json_from_string_array(api_unsupported_routes),
     "api_dependency_warnings": json_from_string_array(api_dependency_warnings),

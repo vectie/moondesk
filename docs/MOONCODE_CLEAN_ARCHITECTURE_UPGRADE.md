@@ -1672,6 +1672,57 @@ Exit tests:
 - the Phase 8 wall rejects a route added to source without host-visible method
   evidence.
 
+## Phase 43 - Portable API Route Contract Ownership
+
+Status: implemented by moving the app-tool portable offline API route subset
+into the public desktop route contract layer and making MoonWiki app-tool
+export consume that subset.
+
+Problem:
+
+- Phase 42 made the generic desktop API surface host-visible, but app-tool
+  portable still had a MoonWiki-local `app_tool_portable_api_snapshot_routes`
+  list for the offline snapshot runtime.
+- That local list described a different concept than the full desktop API: only
+  routes the portable bundle can answer without a running Moondesk host. Keeping
+  it local made future drift likely because route names, capability publication,
+  unsupported-route detection, and portable export warnings could evolve
+  independently.
+- Treating Moondesk as a clean first-time project means the portable supported
+  API subset is a contract owned beside the desktop routes, not another helper
+  buried in app-tool export code.
+
+Work:
+
+- Add core-owned portable desktop API helpers:
+  `desktop_portable_api_snapshot_routes`,
+  `desktop_portable_api_workspace_content_routes`,
+  `desktop_portable_api_supported_route_patterns`, and
+  `desktop_portable_api_route_supported`.
+- Keep the portable snapshot subset explicit: static JSON snapshot routes are
+  `/api/workspaces` and the read-only book registry routes; dynamic workspace
+  content routes cover entries, preview, raw, file, and site reads that the
+  portable runtime can answer from copied bundle assets.
+- Remove the MoonWiki-local snapshot route list and make app-tool portable
+  snapshot creation, export manifests, status payloads, and unsupported-route
+  detection consume the core portable route contract.
+- Add `api_supported_route_patterns` to portable manifests/status payloads so
+  generated bundles expose both the static snapshot routes and the dynamic
+  workspace content patterns they support.
+- Add a migration gate that rejects reintroducing a MoonWiki-local portable API
+  route list or unsupported-route detector.
+
+Exit tests:
+
+- `core` tests prove the portable snapshot subset and dynamic workspace content
+  patterns are derived from public desktop route helpers.
+- app-tool portable tests prove export and status payloads publish
+  `api_supported_route_patterns` and unsupported-route detection delegates to
+  the core contract.
+- the Phase 8 wall runs the portable API route contract gate after live desktop
+  API contract coverage, so the portable offline subset cannot silently drift
+  back into a product-local mirror.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

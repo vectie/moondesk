@@ -85,11 +85,10 @@ fn app_tool_take_api_reference_route(text : String) -> String {
 ///|
 fn app_tool_portable_api_unsupported_routes(
   api_reference_routes : Array[String],
-  api_snapshot_routes : Array[String],
 ) -> Array[String] {
   let unsupported : Array[String] = []
   for route in api_reference_routes {
-    if !app_tool_api_route_is_supported(route, api_snapshot_routes) {
+    if !app_tool_api_route_is_supported(route) {
       app_tool_push_unique(unsupported, route)
     }
   }
@@ -97,33 +96,8 @@ fn app_tool_portable_api_unsupported_routes(
 }
 
 ///|
-fn app_tool_api_route_is_supported(
-  route : String,
-  api_snapshot_routes : Array[String],
-) -> Bool {
-  for supported in api_snapshot_routes {
-    if route == supported ||
-      route.has_prefix(supported + "?") ||
-      route.has_prefix(supported + "#") {
-      return true
-    }
-  }
-  if app_tool_workspace_file_api_route_is_supported(route) {
-    return true
-  }
-  false
-}
-
-///|
-fn app_tool_workspace_file_api_route_is_supported(route : String) -> Bool {
-  if !route.has_prefix("/api/workspaces/") {
-    return false
-  }
-  route.contains("/raw?path=") ||
-  route.contains("/preview?path=") ||
-  route.contains("/entries?path=") ||
-  route.contains("/file/") ||
-  route.contains("/site/")
+fn app_tool_api_route_is_supported(route : String) -> Bool {
+  @desk.desktop_portable_api_route_supported(route)
 }
 
 ///|

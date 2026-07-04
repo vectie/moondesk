@@ -707,3 +707,8 @@ The next scheduled phases are now explicit:
   contract, publishes generic `desktop_route_contracts` and
   `required_endpoints`, and the migration wall runs a live HTTP smoke that
   derives one unsupported-method check from every advertised route.
+- Phase 43: portable API route contract ownership. App-tool portable now reads
+  its offline snapshot route subset and dynamic workspace content support from
+  `vectie/moondesk/core`, publishes `api_supported_route_patterns` in portable
+  manifests/status payloads, and the migration wall rejects a MoonWiki-local
+  portable API route list returning.

@@ -832,6 +832,9 @@ Code mode is sufficiently tested when:
   desktop API route contract at `/api/desktop/capabilities`, derives every
   generic route method check from that payload, and keeps retired
   `/api/town/control` out of the live surface
+- a portable API route contract gate proves app-tool portable consumes the core
+  desktop portable API subset for offline snapshot routes, dynamic workspace
+  content support, manifest/status publication, and unsupported-route warnings
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

@@ -254,6 +254,81 @@ pub fn books_route(endpoint : String) -> String {
 }
 
 ///|
+pub fn desktop_portable_api_snapshot_routes() -> Array[String] {
+  [
+    workspaces_route(),
+    books_route("patterns"),
+    books_route("base-types"),
+    books_route("template-registry"),
+  ]
+}
+
+///|
+pub fn desktop_portable_api_workspace_content_routes() -> Array[String] {
+  [
+    workspace_action_route("entries"),
+    workspace_action_route("preview"),
+    workspace_action_route("raw"),
+    workspace_file_route(),
+    workspace_site_route(),
+  ]
+}
+
+///|
+pub fn desktop_portable_api_supported_route_patterns() -> Array[String] {
+  let routes : Array[String] = []
+  for route in desktop_portable_api_snapshot_routes() {
+    routes.push(route)
+  }
+  for route in desktop_portable_api_workspace_content_routes() {
+    routes.push(route)
+  }
+  routes
+}
+
+///|
+pub fn desktop_portable_api_route_supported(route : String) -> Bool {
+  desktop_portable_api_static_route_supported(route) ||
+  desktop_portable_api_workspace_content_route_supported(route)
+}
+
+///|
+fn desktop_portable_api_static_route_supported(route : String) -> Bool {
+  for supported in desktop_portable_api_snapshot_routes() {
+    if route == supported ||
+      route == supported + "/" ||
+      route.has_prefix(supported + "?") ||
+      route.has_prefix(supported + "/?") ||
+      route.has_prefix(supported + "#") {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn desktop_portable_api_workspace_content_route_supported(
+  route : String,
+) -> Bool {
+  let workspace_prefix = workspaces_route() + "/"
+  if !route.has_prefix(workspace_prefix) {
+    return false
+  }
+  let tail = route[workspace_prefix.length():].to_owned()
+  match tail.find("/") {
+    Some(index) if index + 1 < tail.length() => {
+      let action_tail = tail[index + 1:].to_owned()
+      action_tail.has_prefix("entries?path=") ||
+      action_tail.has_prefix("preview?path=") ||
+      action_tail.has_prefix("raw?path=") ||
+      action_tail.has_prefix("file/") ||
+      action_tail.has_prefix("site/")
+    }
+    _ => false
+  }
+}
+
+///|
 pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
   [
     desktop_api_route_contract(desktop_capabilities_route(), ["GET", "HEAD"]),

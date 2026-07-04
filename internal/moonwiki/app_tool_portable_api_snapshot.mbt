@@ -1,24 +1,18 @@
 ///|
-fn app_tool_portable_api_snapshot_routes() -> Array[String] {
-  [
-    "/api/workspaces", "/api/books/patterns", "/api/books/base-types", "/api/books/template-registry",
-  ]
-}
-
-///|
 async fn app_tool_portable_api_snapshot(
   root : String,
   book_id : String,
 ) -> Json {
+  let routes = @desk.desktop_portable_api_snapshot_routes()
   let responses : Map[String, Json] = {}
-  responses["/api/workspaces"] = discover_workspaces(root).to_json()
-  responses["/api/books/patterns"] = Json::array(
+  responses[@desk.workspaces_route()] = discover_workspaces(root).to_json()
+  responses[@desk.books_route("patterns")] = Json::array(
     book_pattern_records_for_workspace(root),
   )
-  responses["/api/books/base-types"] = Json::array(
+  responses[@desk.books_route("base-types")] = Json::array(
     book_base_type_records_for_workspace(root),
   )
-  responses["/api/books/template-registry"] = book_template_registry_status(
+  responses[@desk.books_route("template-registry")] = book_template_registry_status(
     root,
   )
   {
@@ -27,7 +21,11 @@ async fn app_tool_portable_api_snapshot(
     "book_id": book_id,
     "generated_at": @async.now().to_string(),
     "method": "GET",
-    "routes": json_from_string_array(app_tool_portable_api_snapshot_routes()),
+    "route_contract_endpoint": @desk.desktop_capabilities_route(),
+    "routes": json_from_string_array(routes),
+    "supported_route_patterns": json_from_string_array(
+      @desk.desktop_portable_api_supported_route_patterns(),
+    ),
     "responses": Json::object(responses),
   }
 }

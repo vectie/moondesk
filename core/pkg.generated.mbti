@@ -31,6 +31,14 @@ pub fn desktop_capabilities_route() -> String
 
 pub fn desktop_capabilities_url() -> String
 
+pub fn desktop_portable_api_route_supported(String) -> Bool
+
+pub fn desktop_portable_api_snapshot_routes() -> Array[String]
+
+pub fn desktop_portable_api_supported_route_patterns() -> Array[String]
+
+pub fn desktop_portable_api_workspace_content_routes() -> Array[String]
+
 pub fn display_name(StringView) -> String
 
 pub fn extension(StringView) -> String
