@@ -18,13 +18,9 @@ pub fn runtime_turn_packet(
     "effect",
     default="none",
   )
-  let runtime_control_allows_turn = runtime_control_effect == "start-turn" ||
-    runtime_control_effect == "active-turn" ||
-    runtime_control_effect == "deliver-steer" ||
-    runtime_control_effect == "queue-steer" ||
-    runtime_control_effect == "cancel-active" ||
-    runtime_control_effect == "withdraw-pending" ||
-    runtime_control_effect == "queue-turn"
+  let runtime_control_allows_turn = @mooncode_core.runtime_control_effect_allows_turn(
+    runtime_control_effect,
+  )
   {
     "kind": kind_runtime_turn_packet(),
     "protocol": protocol_version(),

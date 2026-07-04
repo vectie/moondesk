@@ -22,45 +22,44 @@ pub fn runtime_control_decisions(
       command_id,
       default="unknown",
     )
-    let decision = match action {
-      "steer" =>
-        runtime_control_command_decision(
-          index,
-          command,
-          action,
-          status,
-          active_turn_id,
-          pending_turn_ids,
-          active_effect="deliver-steer",
-          pending_effect="queue-steer",
-          idle_effect="defer-steer",
-        )
-      "cancel" =>
-        runtime_control_command_decision(
-          index,
-          command,
-          action,
-          status,
-          active_turn_id,
-          pending_turn_ids,
-          active_effect="cancel-active",
-          pending_effect="withdraw-pending",
-          idle_effect="drop-cancel",
-        )
-      "note" =>
-        runtime_control_decision(
-          index,
-          command,
-          status,
-          effect="record-note",
-          target_command_id="",
-          target_state="recorded",
-          detail="Note is recorded in the session and does not start an agent turn.",
-        )
-      _ =>
-        runtime_control_turn_decision(
-          index, command, status, active_turn_id, pending_turn_ids,
-        )
+    let decision = if action == @mooncode_core.command_steer() {
+      runtime_control_command_decision(
+        index,
+        command,
+        action,
+        status,
+        active_turn_id,
+        pending_turn_ids,
+        active_effect=@mooncode_core.runtime_control_effect_deliver_steer(),
+        pending_effect=@mooncode_core.runtime_control_effect_queue_steer(),
+        idle_effect=@mooncode_core.runtime_control_effect_defer_steer(),
+      )
+    } else if action == @mooncode_core.command_cancel() {
+      runtime_control_command_decision(
+        index,
+        command,
+        action,
+        status,
+        active_turn_id,
+        pending_turn_ids,
+        active_effect=@mooncode_core.runtime_control_effect_cancel_active(),
+        pending_effect=@mooncode_core.runtime_control_effect_withdraw_pending(),
+        idle_effect=@mooncode_core.runtime_control_effect_drop_cancel(),
+      )
+    } else if action == @mooncode_core.command_note() {
+      runtime_control_decision(
+        index,
+        command,
+        status,
+        effect=@mooncode_core.runtime_control_effect_record_note(),
+        target_command_id="",
+        target_state=@mooncode_core.runtime_control_target_state_recorded(),
+        detail="Note is recorded in the session and does not start an agent turn.",
+      )
+    } else {
+      runtime_control_turn_decision(
+        index, command, status, active_turn_id, pending_turn_ids,
+      )
     }
     decisions.push(decision)
   }
@@ -80,36 +79,36 @@ fn runtime_control_turn_decision(
     "command_id",
     default="",
   )
-  if status == "completed" {
+  if status == @mooncode_core.runtime_control_status_completed() {
     return runtime_control_decision(
       index,
       command,
       status,
-      effect="already-completed",
+      effect=@mooncode_core.runtime_control_effect_already_completed(),
       target_command_id=command_id,
-      target_state="terminal",
+      target_state=@mooncode_core.runtime_control_target_state_terminal(),
       detail="Turn already completed; no runtime-control action is required.",
     )
   }
-  if status == "failed" {
+  if status == @mooncode_core.runtime_control_status_failed() {
     return runtime_control_decision(
       index,
       command,
       status,
-      effect="failed",
+      effect=@mooncode_core.runtime_control_effect_failed(),
       target_command_id=command_id,
-      target_state="terminal",
+      target_state=@mooncode_core.runtime_control_target_state_terminal(),
       detail="Turn failed; retry or operator review is required before later queued work should proceed.",
     )
   }
-  if runtime_control_status_blocked(status) {
+  if @mooncode_core.runtime_control_status_is_blocked(status) {
     return runtime_control_decision(
       index,
       command,
       status,
-      effect="blocked",
+      effect=@mooncode_core.runtime_control_effect_blocked(),
       target_command_id=command_id,
-      target_state="blocked",
+      target_state=@mooncode_core.runtime_control_target_state_blocked(),
       detail="Turn is blocked by decode, authorization, or missing proof state.",
     )
   }
@@ -118,9 +117,9 @@ fn runtime_control_turn_decision(
       index,
       command,
       status,
-      effect="active-turn",
+      effect=@mooncode_core.runtime_control_effect_active_turn(),
       target_command_id=command_id,
-      target_state="active",
+      target_state=@mooncode_core.runtime_control_target_state_active(),
       detail="This turn owns the active MoonCode runtime slot.",
     )
   }
@@ -129,9 +128,9 @@ fn runtime_control_turn_decision(
       index,
       command,
       status,
-      effect="queue-turn",
+      effect=@mooncode_core.runtime_control_effect_queue_turn(),
       target_command_id=active_turn_id,
-      target_state="active",
+      target_state=@mooncode_core.runtime_control_target_state_active(),
       detail="A prior turn is active; this turn must wait in command-log order.",
     )
   }
@@ -140,9 +139,9 @@ fn runtime_control_turn_decision(
       index,
       command,
       status,
-      effect="start-turn",
+      effect=@mooncode_core.runtime_control_effect_start_turn(),
       target_command_id=command_id,
-      target_state="pending",
+      target_state=@mooncode_core.runtime_control_target_state_pending(),
       detail="No turn is active; this is the next pending turn to start.",
     )
   } else {
@@ -150,13 +149,13 @@ fn runtime_control_turn_decision(
       index,
       command,
       status,
-      effect="queue-turn",
+      effect=@mooncode_core.runtime_control_effect_queue_turn(),
       target_command_id=if pending_turn_ids.length() > 0 {
         pending_turn_ids[0]
       } else {
         ""
       },
-      target_state="pending",
+      target_state=@mooncode_core.runtime_control_target_state_pending(),
       detail="A prior pending turn must be consumed before this command.",
     )
   }
@@ -181,7 +180,7 @@ fn runtime_control_command_decision(
       status,
       effect=active_effect,
       target_command_id=active_turn_id,
-      target_state="active",
+      target_state=@mooncode_core.runtime_control_target_state_active(),
       detail="\{action} targets the active MoonCode turn.",
     )
   }
@@ -192,7 +191,7 @@ fn runtime_control_command_decision(
       status,
       effect=pending_effect,
       target_command_id=pending_turn_ids[0],
-      target_state="pending",
+      target_state=@mooncode_core.runtime_control_target_state_pending(),
       detail="\{action} targets the next pending MoonCode turn.",
     )
   }
@@ -202,7 +201,7 @@ fn runtime_control_command_decision(
     status,
     effect=idle_effect,
     target_command_id="",
-    target_state="idle",
+    target_state=@mooncode_core.runtime_control_target_state_idle(),
     detail="\{action} arrived with no active or pending MoonCode turn.",
   )
 }
@@ -240,12 +239,15 @@ fn runtime_control_decision(
     "target_owner": runtime_control_target_owner(
       target_command_id, target_state,
     ),
-    "settlement_required": runtime_control_settlement_required(action, effect),
+    "settlement_required": @mooncode_core.runtime_control_settlement_required(
+      action, effect,
+    ),
     "settlement_events": Json::array(
       [
-        for event in runtime_control_settlement_events(action, effect) => {
-          Json::string(event)
-        }
+        for
+          event in @mooncode_core.runtime_control_settlement_events(
+            action, effect,
+          ) => Json::string(event)
       ],
     ),
     "text": runtime_control_json_string(command, "message", default=""),
@@ -289,54 +291,24 @@ fn runtime_control_target_owner(
 }
 
 ///|
-fn runtime_control_settlement_required(
-  action : String,
-  effect : String,
-) -> Bool {
-  (action == "steer" || action == "cancel") &&
-  effect != "already-completed" &&
-  effect != "failed" &&
-  effect != "blocked"
-}
-
-///|
-fn runtime_control_settlement_events(
-  action : String,
-  effect : String,
-) -> Array[String] {
-  if action == "steer" {
-    if effect == "defer-steer" {
-      [event_steer_deferred()]
-    } else {
-      [event_steer_applied(), event_steer_dropped()]
-    }
-  } else if action == "cancel" {
-    if effect == "drop-cancel" {
-      [event_cancel_dropped()]
-    } else {
-      ["runtime_aborted", event_cancel_dropped()]
-    }
-  } else {
-    []
-  }
-}
-
-///|
 fn runtime_control_mooncode_command(command : Json) -> Json {
   let action = runtime_control_command_action(command)
-  match action {
-    "steer" =>
-      mooncode_protocol_command(
-        "steer",
-        command_packet=command,
-        text=runtime_control_json_string(command, "message", default=""),
-      )
-    "cancel" => mooncode_protocol_command("cancel", command_packet=command)
-    _ =>
-      mooncode_protocol_command(
-        "prompt",
-        command_packet=command,
-        text=runtime_control_json_string(command, "message", default=""),
-      )
+  if action == @mooncode_core.command_steer() {
+    mooncode_protocol_command(
+      @mooncode_core.command_steer(),
+      command_packet=command,
+      text=runtime_control_json_string(command, "message", default=""),
+    )
+  } else if action == @mooncode_core.command_cancel() {
+    mooncode_protocol_command(
+      @mooncode_core.command_cancel(),
+      command_packet=command,
+    )
+  } else {
+    mooncode_protocol_command(
+      @mooncode_core.command_prompt(),
+      command_packet=command,
+      text=runtime_control_json_string(command, "message", default=""),
+    )
   }
 }

@@ -1,34 +1,6 @@
 ///|
 pub fn runtime_control_contract_json() -> Json {
-  {
-    "kind": "mooncode-runtime-control-contract",
-    "protocol": protocol_version(),
-    "owner": "mooncode",
-    "runtime_owner": "moonclaw",
-    "reference": "mooncode/runtime-control",
-    "rule": "A MoonCode runtime consumes one ordered command queue. Prompt and command actions start turns, steer targets the active turn, next pending turn, or defers into the next future turn, and cancel targets the active turn or withdraws the next pending turn.",
-    "turn_starting_actions": "all supported actions except steer, cancel, and note",
-    "active_statuses": ["running", "runtime-started"],
-    "terminal_statuses": ["completed", "failed"],
-    "blocked_statuses": [
-      "blocked-invalid", "blocked-tool-authorization", "blocked-missing-proof",
-    ],
-    "protocol_effects": [
-      "start-turn", "queue-turn", "deliver-steer", "queue-steer", "defer-steer",
-      "cancel-active", "withdraw-pending", "drop-cancel", "record-note", "wait-for-proof",
-      "blocked",
-    ],
-    "boundary": {
-      "ui": "Moondesk records commands and renders decisions.",
-      "runtime": "MoonClaw enforces runtime control before executing tools.",
-      "store": "commands.jsonl, runtime-commands.jsonl, runtime-receipts.jsonl, and events.jsonl remain append-only.",
-    },
-    "settlement_boundary": {
-      "unit": "native-runtime-scheduler-boundary",
-      "rule": "Steer and cancel commands are durable control evidence. They do not fabricate chat rows or pretend to interrupt a running tool; MoonClaw settles them when the native runtime reaches a scheduler boundary or emits a real abort event.",
-    },
-    "turn_ownership": conversation_ownership_contract_json(),
-  }
+  @mooncode_core.runtime_control_contract_json()
 }
 
 ///|
@@ -44,7 +16,7 @@ pub fn runtime_control_projection(
     command_log, lifecycle_items, active_turn_id, pending_turn_ids,
   )
   {
-    "kind": "mooncode-runtime-control-state",
+    "kind": @mooncode_core.runtime_control_state_kind(),
     "protocol": protocol_version(),
     "session_id": session_id,
     "command_count": command_log.length(),
@@ -90,8 +62,8 @@ fn runtime_control_active_turn_id(lifecycle_items : Array[Json]) -> String {
   for item in lifecycle_items {
     let action = runtime_control_command_action(item)
     let status = runtime_control_json_string(item, "status", default="")
-    if runtime_control_turn_starting_action(action) &&
-      (status == "running" || status == "runtime-started") {
+    if @mooncode_core.runtime_control_action_starts_turn(action) &&
+      @mooncode_core.runtime_control_status_is_active(status) {
       return runtime_control_json_string(item, "command_id", default="")
     }
   }
@@ -108,24 +80,12 @@ fn runtime_control_pending_turn_ids(
     let status = runtime_control_json_string(item, "status", default="")
     let command_id = runtime_control_json_string(item, "command_id", default="")
     if command_id != "" &&
-      runtime_control_turn_starting_action(action) &&
-      status == "pending" {
+      @mooncode_core.runtime_control_action_starts_turn(action) &&
+      @mooncode_core.runtime_control_status_is_pending(status) {
       ids.push(command_id)
     }
   }
   ids
-}
-
-///|
-fn runtime_control_turn_starting_action(action : String) -> Bool {
-  action != "steer" && action != "cancel" && action != "note"
-}
-
-///|
-fn runtime_control_status_blocked(status : String) -> Bool {
-  status == "blocked-invalid" ||
-  status == "blocked-tool-authorization" ||
-  status == "blocked-missing-proof"
 }
 
 ///|

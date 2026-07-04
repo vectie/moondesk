@@ -2253,6 +2253,60 @@ Exit tests:
 - the migration wall rejects duplicated production model-planner evidence
   vocabulary returning outside `mooncode/core`.
 
+## Phase 56 - Core-Owned Runtime-Control Contract
+
+Status: implemented by moving conversation-ownership and runtime-control
+vocabulary, effect policy, and settlement rules into `mooncode/core`.
+
+Problem:
+
+- Phase 27 made turn ownership and abort handling deterministic, but the
+  runtime-control contract still lived in `internal/mooncode`.
+- The published internal contract listed some protocol effects but omitted
+  effects the decision engine actually emits, including `active-turn`,
+  `already-completed`, and `failed`.
+- The runtime supervisor also carried its own local list of effects that allow
+  native execution, so MoonClaw-facing runtime packets could drift from the
+  contract surface that clients inspect.
+- A standalone MoonCode product needs MoonClaw, Moondesk, and future hosts to
+  share one runtime-control contract before steer/cancel, scheduler-boundary
+  aborts, and queued turns can be trusted.
+
+Work:
+
+- Add `mooncode/core/conversation_ownership.mbt` with the conversation
+  ownership contract id/kind and the visible-row ownership, unowned-event,
+  control, and abort rules.
+- Add `mooncode/core/runtime_control.mbt` with runtime-control contract id/kind,
+  state kind, active/terminal/blocked statuses, decision effects, target states,
+  turn-start predicates, execution-allow predicate, settlement predicate, and
+  settlement-event mapping.
+- Embed the runtime-control and conversation-ownership contracts in the native
+  capability surface and capability fingerprint.
+- Make internal conversation projection and runtime-control contract responses
+  delegate their public contract JSON to `mooncode/core`.
+- Make runtime-control decision assembly and runtime-supervisor execution
+  gating consume the core effect/status/settlement predicates instead of local
+  string lists.
+- Add a migration gate that rejects duplicated production runtime-control
+  vocabulary or private conversation-ownership policy returning under
+  `internal/mooncode`.
+
+Exit tests:
+
+- `mooncode/core` proves the conversation-ownership contract, runtime-control
+  contract id/kind/state kind, status sets, effect set, target states,
+  turn-start predicate, execution-allow predicate, settlement predicate,
+  settlement events, contract JSON, and native capability embedding.
+- internal runtime-control tests still prove active steer/cancel routing,
+  lifecycle-owned response assembly, pending-turn start, queued steer,
+  withdraw-pending cancel, web-search preservation, package-turn steering, and
+  idle steer deferral.
+- runtime supervisor packets derive `runtime_control_allows_turn` from the core
+  predicate.
+- the migration wall rejects duplicated production runtime-control state/effect
+  strings or conversation-ownership rule strings outside `mooncode/core`.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

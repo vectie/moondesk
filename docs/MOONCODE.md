@@ -50,8 +50,8 @@ IO. The Rabbita UI renders the result.
 ```text
 mooncode/core
   shared protocol constants, command-action contract, event-lane contract,
-  runtime event-name contract, runtime-tool registry contract, and capability
-  surface
+  runtime event-name contract, runtime-control contract, runtime-tool registry
+  contract, and capability surface
 
 internal/mooncode
   command, stream, runtime, readiness, review, package, and session contracts
@@ -128,6 +128,14 @@ queued command is not active work until MoonClaw emits command-scoped planner,
 runtime, assistant, or failure evidence. Internal MoonCode may aggregate
 concrete events into reports, but it must not publish a second planner-evidence
 policy.
+
+`mooncode/core` also owns the conversation-ownership and runtime-control
+contracts. The runtime-control contract defines active/terminal/blocked
+statuses, decision effects, target states, turn-start predicates, settlement
+events, and the scheduler-boundary rule for steer/cancel. Internal MoonCode may
+assemble per-session control projections from command logs and lifecycle
+evidence, but it must not publish a second effect list or locally decide which
+effects allow native runtime execution.
 
 ## Shared Runtime, Separate Lanes
 

@@ -750,6 +750,7 @@ Turn ownership and abort gate:
 ```bash
 moon test internal/mooncode --filter "mooncode conversation projection*" --target native
 moon test internal/mooncode --filter "mooncode runtime control*" --target native
+scripts/validate_mooncode_runtime_control_contract.sh
 ```
 
 This deterministic Phase 27 gate protects append-only turn ownership. It fails
@@ -758,6 +759,11 @@ runtime failures attach to the latest active turn, if prompt-scoped
 `runtime_aborted` does not close the owning turn as cancelled, if cancel-scoped
 abort evidence leaks into chat, or if steer/cancel runtime-control decisions do
 not advertise their required MoonClaw settlement events.
+
+Phase 56 moves the reusable conversation-ownership and runtime-control
+vocabulary into `mooncode/core`. The validator fails if production internal
+MoonCode files reintroduce local runtime-control state/effect strings,
+settlement-event policy, or a private conversation-ownership contract copy.
 
 Package/review model-flow gate:
 
