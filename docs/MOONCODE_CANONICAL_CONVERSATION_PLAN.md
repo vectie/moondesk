@@ -681,3 +681,8 @@ The next scheduled phases are now explicit:
   capabilities now publish `desktop_route_contracts`, and the HTTP smoke uses
   that live contract to verify rejected-method behavior for every advertised
   desktop route.
+- Phase 38: no static backend route mirrors. The MoonWiki backend route
+  contract test no longer carries a copied list of MoonCode paths; a source
+  validator compares router endpoint helper calls to
+  `desktop_projection_route_contracts` and rejects reintroduced static route
+  mirrors.

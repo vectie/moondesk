@@ -672,6 +672,7 @@ Backend route contract ownership gate:
 
 ```bash
 moon test internal/moonwiki --target native --filter "mooncode backend route contract*"
+node scripts/validate_mooncode_backend_route_ownership.mjs
 moon test internal/mooncode --target native --filter "desktop projection endpoint contract*"
 ```
 
@@ -680,10 +681,17 @@ with the published MoonCode route contract. It fails if the router serves a
 desktop endpoint that is absent from `desktop_projection_required_endpoints`, or
 if the contract advertises a path the router no longer serves.
 
+Phase 38 removes the old copied MoonWiki route list from this gate. The backend
+route source validator now compares endpoint helper calls in
+`api_mooncode_router.mbt` with the helper calls used by
+`desktop_projection_route_contracts`, and rejects reintroduced static
+`/api/mooncode` route mirrors in the backend route test.
+
 Backend route method contract ownership gate:
 
 ```bash
 moon test internal/moonwiki --target native --filter "mooncode backend route contract*"
+node scripts/validate_mooncode_backend_route_ownership.mjs
 moon test internal/mooncode --target native --filter "desktop projection endpoint contract*"
 ```
 
@@ -774,6 +782,9 @@ Code mode is sufficiently tested when:
 - the HTTP method-contract smoke derives its coverage from
   `/api/mooncode/capabilities.desktop_route_contracts`, so every advertised
   desktop route gets host-visible method coverage
+- a backend route source ownership gate proves MoonWiki tests do not maintain a
+  static route mirror and the backend router references the same endpoint helper
+  set as `desktop_projection_route_contracts`
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

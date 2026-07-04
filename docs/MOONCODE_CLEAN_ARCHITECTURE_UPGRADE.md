@@ -1471,6 +1471,44 @@ Exit tests:
 - adding a new desktop route without observable HTTP method behavior now fails
   the Phase 8 migration wall
 
+## Phase 38 - No Static Backend Route Mirrors
+
+Status: implemented as source-owned backend route validation without a copied
+route list.
+
+Problem:
+
+- Phase 33 and Phase 34 used a MoonWiki white-box test with a hand-written
+  mirror of every MoonCode backend route and method.
+- After Phase 37, the real HTTP gate is driven by the live capability route
+  contract, so the old 33-route MoonWiki mirror became stale implementation
+  debt: adding or renaming a route required editing the contract, router, and
+  a duplicated test list.
+- A clean standalone project should let the MoonCode contract own route shape,
+  while backend validation proves the router references the same endpoint
+  helper set.
+
+Work:
+
+- Delete the static `mooncode_backend_router_route_contracts` mirror from the
+  MoonWiki route contract test.
+- Keep the MoonWiki white-box test focused on route method helper behavior.
+- Add a source validator that compares endpoint helper calls in
+  `api_mooncode_router.mbt` against helper calls in
+  `desktop_projection_route_contracts`.
+- Make the validator reject reintroduced static `/api/mooncode` route mirrors
+  in the backend route contract test.
+- Wire the validator into the Phase 8 fast wall before the HTTP route coverage
+  smoke.
+
+Exit tests:
+
+- MoonWiki tests no longer contain a copied list of MoonCode route paths
+- every route helper in `desktop_projection_route_contracts` is referenced by
+  the backend router exactly once, and vice versa
+- the Phase 8 wall rejects route additions that update only the router or only
+  the contract
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1491,5 +1529,7 @@ Exit tests:
   consumers.
 - Letting internal route-contract tests stand in for host-visible HTTP contract
   behavior.
+- Letting MoonWiki route tests maintain a second static copy of the MoonCode
+  desktop API route list.
 - Automatically steering from ordinary chat input because a runtime service is
   running.
