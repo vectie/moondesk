@@ -1927,6 +1927,41 @@ Exit tests:
 - the Phase 8 wall rejects raw transcript-lane chat proof returning to
   readiness/lifecycle code
 
+## Phase 49 - Canonical Conversation Eval and Resume Telemetry
+
+Status: implemented by removing raw transcript-count chat proof from MoonCode
+eval checks, session summary telemetry, and resume lifecycle telemetry.
+
+Problem:
+
+- Phase 48 moved readiness and executable lifecycle off raw transcript-lane
+  counts, but `session_eval_checks` still treated any transcript-lane event as
+  the conversation proof.
+- `session_summary` still published `transcript_count`, and
+  `session_resume_lifecycle` still returned a dead `transcript_count` read from
+  fresh snapshots that no longer write it.
+- This kept two concepts visible in high-level telemetry: the canonical
+  conversation that the UI renders, and raw transcript-lane diagnostics.
+
+Work:
+
+- Replace the eval check id `transcript` with `canonical_conversation`.
+- Derive eval, summary, and resume conversation telemetry from
+  `conversation_projection(...).turn_count`.
+- Remove user-facing `transcript_count` from session summary and resume
+  lifecycle payloads.
+- Extend the Phase 8 conversation-proof gate to reject raw transcript counts or
+  transcript eval checks returning to eval/summary/resume telemetry.
+
+Exit tests:
+
+- eval readiness is not satisfied by assistant-only transcript evidence
+- eval checks expose `canonical_conversation`, not `transcript`
+- session summary and resume lifecycle expose canonical conversation turn count
+  and readiness, not `transcript_count`
+- the Phase 8 wall rejects raw transcript-count chat proof returning to
+  eval/summary/resume telemetry
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

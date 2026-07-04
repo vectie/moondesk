@@ -220,7 +220,6 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "rejected_review_count": rejected_count,
     "review_state": review_state(diff_count, accepted_count, rejected_count),
     "runtime_count": count_lane(events, "runtime"),
-    "transcript_count": count_lane(events, "transcript"),
     "canonical_conversation_turn_count": summary_json_int(
       conversation,
       "turn_count",

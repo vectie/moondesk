@@ -39,6 +39,12 @@ test "mooncode summary exposes eval readiness gates" {
       "manifest_path": "wiki/reviews/mooncode/s1/runtime-handoff.json",
     },
   }
+  let prompt_packet : Json = {
+    "protocol": @mooncode.protocol_version(),
+    "command_id": "cmd-prompt",
+    "action": "prompt",
+    "message": "Please edit this book tool.",
+  }
   let command_packet = @mooncode.projected_command_packet(
     base_session,
     { "context_path": "tools/demo/main.mbt" },
@@ -49,13 +55,15 @@ test "mooncode summary exposes eval readiness gates" {
   )
   let events = [
     @mooncode.event_record(
-      id="transcript",
+      id="prompt",
       lane="transcript",
-      kind="message.user",
-      title="User",
+      kind="user",
+      title="User prompt",
       status="recorded",
       created_at="1",
       detail="Please edit this book tool.",
+      command="prompt",
+      command_packet=prompt_packet,
     ),
     @mooncode.event_record(
       id="tool",
@@ -271,7 +279,7 @@ test "mooncode summary exposes eval readiness gates" {
   )
   assert_true(json_bool(summary, "command_log_ready", default=false))
   assert_eq(json_int(summary, "command_log_count", default=0), 1)
-  assert_eq(json_int(summary, "command_packet_count", default=0), 1)
+  assert_eq(json_int(summary, "command_packet_count", default=0), 2)
   assert_eq(json_int(summary, "moonbook_review_receipt_count", default=0), 1)
   assert_eq(json_int(summary, "moonbook_package_manifest_count", default=0), 1)
   assert_eq(
@@ -317,11 +325,27 @@ test "mooncode summary exposes eval readiness gates" {
   assert_eq(json_int(summary, "eval_passed_check_count", default=0), 24)
   assert_eq(json_int(summary, "eval_check_count", default=0), 28)
   assert_eq(json_int(summary, "eval_missing_check_count", default=0), 4)
+  assert_eq(
+    json_int(summary, "canonical_conversation_turn_count", default=0),
+    1,
+  )
+  assert_true(json_bool(summary, "canonical_conversation_ready", default=false))
+  assert_true(json_object_field(summary, "transcript_count") is None)
   assert_eq(json_int(summary, "pending_diff_count", default=0), 1)
   assert_eq(json_int(summary, "accepted_review_count", default=0), 0)
   assert_eq(json_string(summary, "review_state", default=""), "pending")
   let checks = json_array_items(summary, "eval_checks")
   assert_eq(checks.length(), 28)
+  assert_true(
+    checks
+    .map(check => json_string(check, "id", default=""))
+    .contains("canonical_conversation"),
+  )
+  assert_false(
+    checks
+    .map(check => json_string(check, "id", default=""))
+    .contains("transcript"),
+  )
   let eval_report = @mooncode.eval_report_projection(
     mooncode_session_with_field(base_session, "mooncode_summary", summary),
   )

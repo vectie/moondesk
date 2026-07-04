@@ -850,6 +850,9 @@ Code mode is sufficiently tested when:
 - a readiness contract ownership gate proves MoonCode readiness and the
   executable-book lifecycle use backend canonical conversation turns as chat
   proof, not raw transcript-lane event counts
+- an eval/resume conversation-proof gate proves MoonCode eval checks, session
+  summaries, and resume lifecycle payloads expose canonical conversation turn
+  telemetry instead of raw `transcript_count`
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

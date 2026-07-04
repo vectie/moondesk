@@ -262,6 +262,8 @@ Moondesk supplies the responsible artifact.
 Chat readiness is proven by the backend canonical conversation projection, not
 by raw transcript-lane events. The `canonical_conversation` check passes only
 after the append-only projection contains at least one turn.
+The same canonical conversation proof is used by eval checks, session summary
+telemetry, and resume lifecycle telemetry.
 
 ## Executable-Book Lifecycle
 

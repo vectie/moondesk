@@ -383,6 +383,7 @@ test "mooncode session summary reports readiness coding flow" {
     1,
   )
   assert_true(json_bool(summary, "canonical_conversation_ready", default=false))
+  assert_true(summary_json_object_field(summary, "transcript_count") is None)
   let readiness = summary_json_object_field_or_empty(summary, "readiness")
   assert_eq(json_string(readiness, "kind", default=""), "mooncode-readiness")
   assert_true(json_bool(readiness, "ready", default=false))
@@ -808,6 +809,14 @@ test "mooncode session summary exposes resume lifecycle" {
   assert_true(json_bool(lifecycle, "snapshot_ready", default=false))
   assert_eq(summary_json_int(lifecycle, "runtime_command_count", default=0), 1)
   assert_eq(summary_json_int(lifecycle, "pending_count", default=0), 1)
+  assert_eq(
+    summary_json_int(lifecycle, "canonical_conversation_turn_count", default=-1),
+    0,
+  )
+  assert_false(
+    json_bool(lifecycle, "canonical_conversation_ready", default=true),
+  )
+  assert_true(summary_json_object_field(lifecycle, "transcript_count") is None)
   assert_eq(json_string(lifecycle, "next_command_id", default=""), "cmd-resume")
   let rows = json_array_items(lifecycle, "rows")
   assert_eq(rows.length(), 1)

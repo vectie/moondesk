@@ -31,6 +31,14 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
   } else {
     events
   }
+  let canonical_conversation = conversation_projection(
+    session, lifecycle_events,
+  )
+  let canonical_turn_count = summary_json_int(
+    canonical_conversation,
+    "turn_count",
+    default=0,
+  )
   let runtime_lifecycle = runtime_command_lifecycle(
     session_id,
     runtime_commands,
@@ -66,11 +74,8 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
       default="",
     ),
     "event_log_path": json_string(snapshot, "event_log_path", default=""),
-    "transcript_count": summary_json_int(
-      snapshot,
-      "transcript_count",
-      default=0,
-    ),
+    "canonical_conversation_turn_count": canonical_turn_count,
+    "canonical_conversation_ready": canonical_turn_count > 0,
     "command_count": summary_json_int(snapshot, "command_count", default=0),
     "runtime_command_count": summary_json_int(
       runtime_lifecycle,

@@ -6,7 +6,12 @@ pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] 
     default=json_string(session, "id", default=""),
   )
   let workspace_id = json_string(session, "workspace_id", default="")
-  let transcript_count = count_lane(events, "transcript")
+  let canonical_conversation = conversation_projection(session, events)
+  let canonical_turn_count = summary_json_int(
+    canonical_conversation,
+    "turn_count",
+    default=0,
+  )
   let tool_count = count_lane(events, "tool")
   let diff_count = count_lane(events, "diff")
   let test_count = count_lane(events, "test")
@@ -77,10 +82,10 @@ pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] 
       },
     ),
     eval_check(
-      "transcript",
-      "Conversation transcript",
-      transcript_count > 0,
-      "\{transcript_count} transcript event(s)",
+      "canonical_conversation",
+      "Canonical conversation",
+      canonical_turn_count > 0,
+      "\{canonical_turn_count} canonical turn(s)",
     ),
     eval_check(
       "tool_events",
