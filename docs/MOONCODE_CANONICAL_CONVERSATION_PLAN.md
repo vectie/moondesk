@@ -302,6 +302,9 @@ Browser smoke:
 
 ## Phase 8 - Shared Product Contract
 
+Status: active; Moondesk now exposes the local public conversation contract
+surface that should move upstream to MoonLib.
+
 Work:
 
 - Move stable conversation DTOs into MoonLib.

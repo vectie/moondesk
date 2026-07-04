@@ -24,6 +24,26 @@ pub fn executable_book_lifecycle_contract_json() -> Json {
 }
 
 ///|
+pub fn conversation_contract_id() -> String {
+  @mooncode_core.conversation_contract_id()
+}
+
+///|
+pub fn conversation_kind() -> String {
+  @mooncode_core.conversation_kind()
+}
+
+///|
+pub fn conversation_turn_kind() -> String {
+  @mooncode_core.conversation_turn_kind()
+}
+
+///|
+pub fn conversation_contract_json() -> Json {
+  @mooncode_core.conversation_contract_json()
+}
+
+///|
 pub fn native_capability_required_endpoints() -> Array[String] {
   @mooncode_core.native_capability_required_endpoints()
 }

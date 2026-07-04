@@ -46,7 +46,7 @@ pub fn conversation_projection(session : Json, events : Array[Json]) -> Json {
     turn_json.push(conversation_turn_json(turn))
   }
   {
-    "kind": "mooncode-conversation",
+    "kind": conversation_kind(),
     "protocol": protocol_version(),
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
@@ -264,7 +264,7 @@ fn conversation_turn_json(turn : ConversationTurnDraft) -> Json {
     items.push(assistant)
   }
   {
-    "kind": "mooncode-conversation-turn",
+    "kind": conversation_turn_kind(),
     "turn_id": turn.turn_id,
     "client_turn_id": turn.client_turn_id,
     "command_id": turn.command_id,

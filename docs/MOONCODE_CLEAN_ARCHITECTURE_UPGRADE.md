@@ -254,6 +254,8 @@ Exit tests:
 
 ## Phase 7 - Shared Contract Layer
 
+Status: active; local MoonCode contract surface in progress.
+
 Work:
 
 - Move stable conversation DTOs into MoonLib.
@@ -261,6 +263,15 @@ Work:
 - Keep MoonStat focused on analytics/health, not chat ownership.
 - Publish the contract for MoonClaw, MoonCode, Moondesk, MoonRobo, MoonMoon,
   MoonFish, MoonTown, and future MoonSuite products.
+
+Implemented in Moondesk:
+
+- Added a public `mooncode/core` conversation contract JSON surface for the
+  stable turn/message/progress DTO.
+- `internal/mooncode` now consumes public contract names for conversation and
+  turn kinds instead of owning those string literals privately.
+- The contract declares MoonLib as the target shared owner while this repo
+  remains pinned to the currently published `vectie/moonlib` package.
 
 Exit tests:
 
