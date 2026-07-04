@@ -139,8 +139,8 @@ fn mooncode_send_composer(
             command_open: false,
             mooncode_new_chat_active: false,
             mooncode_prompt: "",
-            mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
-              model.mooncode_conversation_rows,
+            mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
+              model.mooncode_optimistic_rows,
               session.id,
               prompt,
               client_turn_id~,
@@ -174,8 +174,8 @@ fn mooncode_send_composer(
             command_open: false,
             mooncode_new_chat_active: true,
             mooncode_prompt: "",
-            mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
-              model.mooncode_conversation_rows,
+            mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
+              model.mooncode_optimistic_rows,
               draft_session_id,
               prompt,
               client_turn_id~,

@@ -74,11 +74,11 @@ type MoonCodeCanonicalTurn
 
 type MoonCodeConversation derive(@json.FromJson)
 
-type MoonCodeConversationRow
-
 type MoonCodeConversationTurn derive(@json.FromJson)
 
 type MoonCodeEvent derive(@json.FromJson)
+
+type MoonCodeOptimisticRow
 
 type MoonCodeRuntimeEventSink derive(@json.FromJson)
 

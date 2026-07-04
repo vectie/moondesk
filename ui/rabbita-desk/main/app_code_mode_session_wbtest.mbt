@@ -274,7 +274,7 @@ test "code mode transcript appends local optimistic turn after three backend tur
   let model = {
     ..init_model(),
     selected_mooncode_session_id: "session-a",
-    mooncode_conversation_rows: [
+    mooncode_optimistic_rows: [
       {
         session_id: "session-a",
         role: "user",
@@ -330,7 +330,7 @@ test "code mode transcript drops acknowledged optimistic turn by client turn id"
   let model = {
     ..init_model(),
     selected_mooncode_session_id: "session-a",
-    mooncode_conversation_rows: [
+    mooncode_optimistic_rows: [
       {
         session_id: "session-a",
         role: "user",
@@ -380,7 +380,7 @@ test "code mode transcript uses local rows instead of runtime wait state" {
     mooncode_runtime_event_sink_session_id: "",
     mooncode_runtime_event_sink: None,
     mooncode_runtime_event_sink_status: "loading runtime events",
-    mooncode_conversation_rows: [
+    mooncode_optimistic_rows: [
       {
         session_id: "session-a",
         role: "user",
@@ -391,7 +391,7 @@ test "code mode transcript uses local rows instead of runtime wait state" {
     ],
   }
   assert_eq(code_mode_test_transcript_rows(model, session).length(), 1)
-  let no_local_conversation = { ..model, mooncode_conversation_rows: [] }
+  let no_local_conversation = { ..model, mooncode_optimistic_rows: [] }
   assert_eq(code_mode_test_transcript_rows(no_local_conversation, session).length(), 0)
   let with_sink = {
     ..model,
@@ -486,10 +486,10 @@ test "code mode prompt action adds optimistic prompt before runtime reply" {
   )
   assert_eq(next.mooncode_prompt, "")
   assert_eq(next.mooncode_next_client_turn_index, 1)
-  assert_eq(next.mooncode_conversation_rows.length(), 1)
-  assert_eq(next.mooncode_conversation_rows[0].role, "user")
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows[0].role, "user")
   assert_eq(
-    next.mooncode_conversation_rows[0].content,
+    next.mooncode_optimistic_rows[0].content,
     "Explain the latest error",
   )
   let rows = code_mode_test_transcript_rows(next, session)
@@ -517,11 +517,11 @@ test "code mode new chat send appends local prompt immediately" {
   assert_eq(next.selected_mooncode_session_id, "")
   assert_true(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_prompt, "")
-  assert_eq(next.mooncode_conversation_rows.length(), 1)
-  assert_eq(next.mooncode_conversation_rows[0].session_id, draft_id)
-  assert_eq(next.mooncode_conversation_rows[0].role, "user")
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows[0].session_id, draft_id)
+  assert_eq(next.mooncode_optimistic_rows[0].role, "user")
   assert_eq(
-    next.mooncode_conversation_rows[0].content,
+    next.mooncode_optimistic_rows[0].content,
     "Sketch the migration plan",
   )
   assert_eq(next.mooncode_next_client_turn_index, 1)
@@ -587,10 +587,10 @@ test "code mode created session adopts draft prompt rows" {
   )
   assert_eq(next.selected_mooncode_session_id, "session-created")
   assert_false(next.mooncode_new_chat_active)
-  assert_eq(next.mooncode_conversation_rows.length(), 1)
-  assert_eq(next.mooncode_conversation_rows[0].session_id, "session-created")
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows[0].session_id, "session-created")
   assert_eq(
-    next.mooncode_conversation_rows[0].content,
+    next.mooncode_optimistic_rows[0].content,
     "Keep the first prompt visible",
   )
   let session = selected_mooncode_session(next).unwrap()
@@ -610,7 +610,7 @@ test "code mode stale session listing preserves selected in-flight session" {
     selected_workspace_id: "",
     selected_mooncode_session_id: "session-created",
     mooncode_sessions: [active],
-    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-created",
       "Keep the new chat selected",
@@ -636,7 +636,7 @@ test "code mode create response is idempotent after listing adoption" {
     mooncode_sessions: [session],
     mooncode_runtime_event_sink_session_id: "session-created",
     mooncode_runtime_event_sink_status: "waiting for backend runtime events",
-    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-created",
       "Already adopted",
@@ -654,7 +654,7 @@ test "code mode create response is idempotent after listing adoption" {
     next.mooncode_runtime_event_sink_status,
     "waiting for backend runtime events",
   )
-  assert_eq(next.mooncode_conversation_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
 }
 
 ///|
@@ -704,7 +704,7 @@ test "code mode session listing adopts acknowledged new chat draft" {
     SendMoonCodeMessage,
     draft_model,
   )
-  let client_turn_id = pending.mooncode_conversation_rows[0].key
+  let client_turn_id = pending.mooncode_optimistic_rows[0].key
   let created = {
     ..code_mode_test_session(
       "session-created",
@@ -732,7 +732,7 @@ test "code mode session listing adopts acknowledged new chat draft" {
   assert_false(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_sessions.length(), 1)
   assert_eq(next.mooncode_sessions[0].id, "session-created")
-  assert_eq(next.mooncode_conversation_rows.length(), 0)
+  assert_eq(next.mooncode_optimistic_rows.length(), 0)
   assert_eq(next.mooncode_composer_status, "MoonCode session started")
   let session = selected_mooncode_session(next).unwrap()
   let rows = code_mode_test_transcript_rows(next, session)
@@ -774,9 +774,9 @@ test "code mode compact session listing does not adopt draft by prompt title" {
   )
   assert_eq(next.selected_mooncode_session_id, "")
   assert_true(next.mooncode_new_chat_active)
-  assert_eq(next.mooncode_conversation_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
   assert_eq(
-    next.mooncode_conversation_rows[0].session_id,
+    next.mooncode_optimistic_rows[0].session_id,
     mooncode_draft_session_id(next),
   )
   assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
@@ -797,7 +797,7 @@ test "code mode command result keeps optimistic prompt until canonical turn arri
     workspace_mode: MoonCode,
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
-    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-a",
       "Stable order please",
@@ -809,8 +809,8 @@ test "code mode command result keeps optimistic prompt until canonical turn arri
     CompletedMoonCodeCommand(Ok(session)),
     model,
   )
-  assert_eq(next.mooncode_conversation_rows.length(), 1)
-  assert_eq(next.mooncode_conversation_rows[0].content, "Stable order please")
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows[0].content, "Stable order please")
 }
 
 ///|
@@ -819,7 +819,7 @@ test "code mode runtime prompt event does not acknowledge optimistic prompt" {
     ..init_model(),
     workspace_mode: MoonCode,
     selected_mooncode_session_id: "session-a",
-    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-a",
       "Stable order please",
@@ -846,7 +846,7 @@ test "code mode runtime prompt event does not acknowledge optimistic prompt" {
     ),
     model,
   )
-  assert_eq(next.mooncode_conversation_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
 }
 
 ///|
@@ -855,7 +855,7 @@ test "code mode runtime prompt event cannot acknowledge by client turn id" {
     ..init_model(),
     workspace_mode: MoonCode,
     selected_mooncode_session_id: "session-a",
-    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-a",
       "Same text",
@@ -883,7 +883,7 @@ test "code mode runtime prompt event cannot acknowledge by client turn id" {
     ),
     model,
   )
-  assert_eq(after_first_event.mooncode_conversation_rows.length(), 1)
+  assert_eq(after_first_event.mooncode_optimistic_rows.length(), 1)
   let second_prompt_event = code_mode_test_event(
     "prompt-event-2",
     title="Prompt: queued",
@@ -905,7 +905,7 @@ test "code mode runtime prompt event cannot acknowledge by client turn id" {
     ),
     after_first_event,
   )
-  assert_eq(after_second_event.mooncode_conversation_rows.length(), 1)
+  assert_eq(after_second_event.mooncode_optimistic_rows.length(), 1)
 }
 
 ///|
@@ -1648,7 +1648,7 @@ test "code mode idle runtime sink reports local unanswered prompt" {
   let model = {
     ..init_model(),
     selected_mooncode_session_id: "session-a",
-    mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [
         {
           session_id: "session-a",
@@ -1686,7 +1686,7 @@ test "code mode idle runtime sink does not start service for answered local turn
   let model = {
     ..init_model(),
     selected_mooncode_session_id: "session-a",
-    mooncode_conversation_rows: [
+    mooncode_optimistic_rows: [
       {
         session_id: "session-a",
         role: "user",

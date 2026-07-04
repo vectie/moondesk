@@ -131,8 +131,8 @@ fn mooncode_stream_should_fast_poll(
   if session_id != model.selected_mooncode_session_id {
     return false
   }
-  mooncode_conversation_has_session(
-    model.mooncode_conversation_rows,
+  mooncode_optimistic_rows_have_session(
+    model.mooncode_optimistic_rows,
     session_id,
   ) ||
   stream.emitted_count > 0 ||

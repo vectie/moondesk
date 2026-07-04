@@ -1,5 +1,5 @@
 ///|
-struct MoonCodeConversationRow {
+struct MoonCodeOptimisticRow {
   session_id : String
   role : String
   content : String

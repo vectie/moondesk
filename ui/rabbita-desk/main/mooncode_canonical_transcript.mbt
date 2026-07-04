@@ -19,7 +19,7 @@ fn mooncode_canonical_conversation_items(
   session : MoonCodeSession,
 ) -> Array[MoonCodeTranscriptItem] {
   let turns = mooncode_canonical_turns_from_backend_conversation(session)
-  mooncode_canonical_append_local_conversation_rows(turns, model, session.id)
+  mooncode_canonical_append_optimistic_rows(turns, model, session.id)
   if turns.length() == 0 {
     return []
   }
@@ -163,12 +163,12 @@ fn mooncode_canonical_empty_turn() -> MoonCodeCanonicalTurn {
 }
 
 ///|
-fn mooncode_canonical_append_local_conversation_rows(
+fn mooncode_canonical_append_optimistic_rows(
   turns : Array[MoonCodeCanonicalTurn],
   model : Model,
   session_id : String,
 ) -> Unit {
-  for row in model.mooncode_conversation_rows {
+  for row in model.mooncode_optimistic_rows {
     if row.session_id != session_id {
       continue
     }

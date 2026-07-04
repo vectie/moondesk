@@ -36,8 +36,8 @@ fn mooncode_draft_session_id(model : Model) -> String {
 ///|
 fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
   let session_id = mooncode_draft_session_id(model)
-  if !mooncode_conversation_has_session(
-    model.mooncode_conversation_rows,
+  if !mooncode_optimistic_rows_have_session(
+    model.mooncode_optimistic_rows,
     session_id,
   ) {
     return None
@@ -78,8 +78,8 @@ fn mooncode_find_acknowledged_draft_session(
     return None
   }
   let draft_session_id = mooncode_draft_session_id(model)
-  let draft_rows = mooncode_conversation_rows_for_session(
-    model.mooncode_conversation_rows,
+  let draft_rows = mooncode_optimistic_rows_for_session(
+    model.mooncode_optimistic_rows,
     draft_session_id,
   )
   if draft_rows.length() == 0 {
@@ -90,7 +90,7 @@ fn mooncode_find_acknowledged_draft_session(
       continue
     }
     for row in draft_rows {
-      if mooncode_session_acknowledges_conversation_row(session, row) {
+      if mooncode_session_acknowledges_optimistic_row(session, row) {
         return Some(session)
       }
     }
@@ -121,8 +121,8 @@ fn mooncode_new_session_draft_active(model : Model) -> Bool {
     return true
   }
   model.mooncode_new_chat_active ||
-  mooncode_conversation_has_session(
-    model.mooncode_conversation_rows,
+  mooncode_optimistic_rows_have_session(
+    model.mooncode_optimistic_rows,
     mooncode_draft_session_id(model),
   )
 }
@@ -213,8 +213,8 @@ fn mooncode_selected_session_has_inflight_state(
   model : Model,
   session_id : String,
 ) -> Bool {
-  mooncode_conversation_has_session(
-    model.mooncode_conversation_rows,
+  mooncode_optimistic_rows_have_session(
+    model.mooncode_optimistic_rows,
     session_id,
   ) || mooncode_session_is_active(model, session_id)
 }

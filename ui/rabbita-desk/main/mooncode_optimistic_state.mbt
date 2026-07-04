@@ -1,17 +1,17 @@
 ///|
-fn mooncode_append_conversation_user_prompt(
-  rows : Array[MoonCodeConversationRow],
+fn mooncode_append_optimistic_user_prompt(
+  rows : Array[MoonCodeOptimisticRow],
   session_id : String,
   content : String,
   client_turn_id? : String = "",
-) -> Array[MoonCodeConversationRow] {
-  let next = mooncode_copy_conversation_rows(rows)
+) -> Array[MoonCodeOptimisticRow] {
+  let next = mooncode_copy_optimistic_rows(rows)
   let row_key = if client_turn_id == "" {
     "ui-user:\{session_id}:\{next.length()}"
   } else {
     client_turn_id
   }
-  mooncode_push_conversation_row(
+  mooncode_push_optimistic_row(
     next,
     session_id,
     "user",
@@ -23,8 +23,8 @@ fn mooncode_append_conversation_user_prompt(
 }
 
 ///|
-fn mooncode_conversation_has_session(
-  rows : Array[MoonCodeConversationRow],
+fn mooncode_optimistic_rows_have_session(
+  rows : Array[MoonCodeOptimisticRow],
   session_id : String,
 ) -> Bool {
   if session_id == "" {
@@ -39,11 +39,11 @@ fn mooncode_conversation_has_session(
 }
 
 ///|
-fn mooncode_conversation_rows_for_session(
-  rows : Array[MoonCodeConversationRow],
+fn mooncode_optimistic_rows_for_session(
+  rows : Array[MoonCodeOptimisticRow],
   session_id : String,
-) -> Array[MoonCodeConversationRow] {
-  let next : Array[MoonCodeConversationRow] = []
+) -> Array[MoonCodeOptimisticRow] {
+  let next : Array[MoonCodeOptimisticRow] = []
   if session_id == "" {
     return next
   }
@@ -56,12 +56,12 @@ fn mooncode_conversation_rows_for_session(
 }
 
 ///|
-fn mooncode_reassign_conversation_session(
-  rows : Array[MoonCodeConversationRow],
+fn mooncode_reassign_optimistic_session(
+  rows : Array[MoonCodeOptimisticRow],
   from_session_id : String,
   to_session_id : String,
-) -> Array[MoonCodeConversationRow] {
-  let next : Array[MoonCodeConversationRow] = []
+) -> Array[MoonCodeOptimisticRow] {
+  let next : Array[MoonCodeOptimisticRow] = []
   for row in rows {
     if row.session_id == from_session_id {
       next.push({
@@ -95,10 +95,10 @@ fn mooncode_rewrite_local_row_key(
 }
 
 ///|
-fn mooncode_copy_conversation_rows(
-  rows : Array[MoonCodeConversationRow],
-) -> Array[MoonCodeConversationRow] {
-  let next : Array[MoonCodeConversationRow] = []
+fn mooncode_copy_optimistic_rows(
+  rows : Array[MoonCodeOptimisticRow],
+) -> Array[MoonCodeOptimisticRow] {
+  let next : Array[MoonCodeOptimisticRow] = []
   for row in rows {
     next.push(row)
   }
@@ -106,8 +106,8 @@ fn mooncode_copy_conversation_rows(
 }
 
 ///|
-fn mooncode_push_conversation_row(
-  rows : Array[MoonCodeConversationRow],
+fn mooncode_push_optimistic_row(
+  rows : Array[MoonCodeOptimisticRow],
   session_id : String,
   role : String,
   content : String,
@@ -127,14 +127,14 @@ fn mooncode_push_conversation_row(
 }
 
 ///|
-fn mooncode_drop_acknowledged_conversation_rows(
-  rows : Array[MoonCodeConversationRow],
+fn mooncode_drop_acknowledged_optimistic_rows(
+  rows : Array[MoonCodeOptimisticRow],
   session : MoonCodeSession,
-) -> Array[MoonCodeConversationRow] {
-  let next : Array[MoonCodeConversationRow] = []
+) -> Array[MoonCodeOptimisticRow] {
+  let next : Array[MoonCodeOptimisticRow] = []
   for row in rows {
     if row.session_id == session.id &&
-      mooncode_session_acknowledges_conversation_row(session, row) {
+      mooncode_session_acknowledges_optimistic_row(session, row) {
       continue
     }
     next.push(row)
@@ -143,21 +143,21 @@ fn mooncode_drop_acknowledged_conversation_rows(
 }
 
 ///|
-fn mooncode_drop_acknowledged_conversation_rows_for_sessions(
-  rows : Array[MoonCodeConversationRow],
+fn mooncode_drop_acknowledged_optimistic_rows_for_sessions(
+  rows : Array[MoonCodeOptimisticRow],
   sessions : Array[MoonCodeSession],
-) -> Array[MoonCodeConversationRow] {
+) -> Array[MoonCodeOptimisticRow] {
   let mut next = rows
   for session in sessions {
-    next = mooncode_drop_acknowledged_conversation_rows(next, session)
+    next = mooncode_drop_acknowledged_optimistic_rows(next, session)
   }
   next
 }
 
 ///|
-fn mooncode_session_acknowledges_conversation_row(
+fn mooncode_session_acknowledges_optimistic_row(
   session : MoonCodeSession,
-  row : MoonCodeConversationRow,
+  row : MoonCodeOptimisticRow,
 ) -> Bool {
   if row.role != "user" || row.key == "" {
     return false

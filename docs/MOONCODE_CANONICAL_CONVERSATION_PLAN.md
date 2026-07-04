@@ -217,6 +217,9 @@ Work:
   fields from the frontend session model.
 - Added explicit new-chat draft route state, so display status text no longer
   decides session selection.
+- Renamed UI-owned in-flight rows to `MoonCodeOptimisticRow` /
+  `mooncode_optimistic_rows`, leaving `mooncode_conversation` as the only
+  durable backend conversation name in the frontend model.
 - Compact session polling preserves `mooncode_conversation`, so old replies do
   not disappear when a lightweight session listing arrives.
 - Runtime stream and sink events remain in the model as diagnostics/status

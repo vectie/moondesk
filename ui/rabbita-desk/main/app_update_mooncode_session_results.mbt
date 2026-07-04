@@ -71,14 +71,14 @@ fn update_mooncode_session_results(
           mooncode_sessions,
         ),
       )
-      let conversation_rows = mooncode_drop_acknowledged_conversation_rows_for_sessions(
-        model.mooncode_conversation_rows,
+      let optimistic_rows = mooncode_drop_acknowledged_optimistic_rows_for_sessions(
+        model.mooncode_optimistic_rows,
         mooncode_sessions,
       )
       let session_model = {
         ..model,
         mooncode_sessions,
-        mooncode_conversation_rows: conversation_rows,
+        mooncode_optimistic_rows: optimistic_rows,
       }
       let draft_active = mooncode_new_session_draft_active(session_model)
       match mooncode_find_acknowledged_draft_session(
@@ -117,7 +117,7 @@ fn update_mooncode_session_results(
         {
           ..model,
           mooncode_sessions,
-          mooncode_conversation_rows: conversation_rows,
+          mooncode_optimistic_rows: optimistic_rows,
           selected_mooncode_session_id: selected,
           mooncode_new_chat_active: selected == "" && draft_active,
           mooncode_stream_session_id: if keep_stream {
@@ -211,8 +211,8 @@ fn mooncode_created_session_succeeded(
   session : MoonCodeSession,
 ) -> (@rabbita.Cmd, Model) {
   if model.selected_mooncode_session_id == session.id {
-    let conversation_rows = mooncode_drop_acknowledged_conversation_rows(
-      model.mooncode_conversation_rows,
+    let optimistic_rows = mooncode_drop_acknowledged_optimistic_rows(
+      model.mooncode_optimistic_rows,
       session,
     )
     (
@@ -224,7 +224,7 @@ fn mooncode_created_session_succeeded(
           session,
         ),
         mooncode_new_chat_active: false,
-        mooncode_conversation_rows: conversation_rows,
+        mooncode_optimistic_rows: optimistic_rows,
         mooncode_composer_status: "MoonCode session started",
       },
     )
@@ -279,13 +279,13 @@ fn mooncode_session_mutation_succeeded(
   status : String,
 ) -> (@rabbita.Cmd, Model) {
   let draft_session_id = mooncode_draft_session_id(model)
-  let conversation_rows = mooncode_reassign_conversation_session(
-    model.mooncode_conversation_rows,
+  let optimistic_rows = mooncode_reassign_optimistic_session(
+    model.mooncode_optimistic_rows,
     draft_session_id,
     session.id,
   )
-  let conversation_rows = mooncode_drop_acknowledged_conversation_rows(
-    conversation_rows,
+  let optimistic_rows = mooncode_drop_acknowledged_optimistic_rows(
+    optimistic_rows,
     session,
   )
   (
@@ -310,7 +310,7 @@ fn mooncode_session_mutation_succeeded(
       mooncode_runtime_event_sink: None,
       mooncode_runtime_event_sink_status: "waiting for backend runtime events",
       mooncode_prompt: "",
-      mooncode_conversation_rows: conversation_rows,
+      mooncode_optimistic_rows: optimistic_rows,
       mooncode_composer_status: status,
     },
   )

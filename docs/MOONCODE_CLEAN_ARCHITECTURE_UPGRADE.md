@@ -130,6 +130,8 @@ Exit tests:
 
 ## Phase 3 - Backend Conversation as the Only Read Path
 
+Status: complete.
+
 Work:
 
 - `mooncode_transcript_items` consumes backend canonical turns plus local
@@ -139,6 +141,17 @@ Work:
 - Session polling may preserve hydrated `mooncode_conversation`, but not legacy
   transcript or raw event payloads for the chat.
 - Delete content-based dedupe and repair helpers from the main path.
+
+Implemented:
+
+- The main transcript renderer still enters through
+  `mooncode_canonical_transcript_items`.
+- UI-owned in-flight rows are now named `MoonCodeOptimisticRow` and stored as
+  `mooncode_optimistic_rows`, separating them from backend-owned
+  `mooncode_conversation`.
+- The optimistic-row state moved into `mooncode_optimistic_state.mbt`.
+- Runtime stream and sink state remain diagnostics/status inputs and do not feed
+  the transcript read path.
 
 Exit tests:
 

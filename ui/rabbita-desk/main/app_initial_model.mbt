@@ -81,7 +81,7 @@ fn init_model() -> Model {
     mooncode_web_search: true,
     mooncode_composer_status: "mooncode idle",
     mooncode_next_client_turn_index: 0,
-    mooncode_conversation_rows: [],
+    mooncode_optimistic_rows: [],
     events: [],
     review_items: [],
     review_decision_note: "",
