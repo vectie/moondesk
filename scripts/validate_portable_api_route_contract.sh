@@ -21,8 +21,8 @@ if ! rg -n '@desk\.desktop_portable_api_snapshot_routes' "${ROOT}/internal/moonw
   exit 1
 fi
 
-if ! rg -n '@desk\.desktop_portable_api_supported_route_patterns' "${ROOT}/internal/moonwiki/desktop_api_capabilities.mbt" >/dev/null; then
-  echo "Desktop API capabilities must publish the core portable API route contract" >&2
+if ! rg -n 'portable_api_supported_route_patterns: desktop_portable_api_supported_route_patterns\(\)' "${ROOT}/core/desktop_routes.mbt" >/dev/null; then
+  echo "Core desktop API capabilities must publish the portable API route contract" >&2
   exit 1
 fi
 

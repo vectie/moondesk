@@ -13,6 +13,8 @@ pub fn books_endpoint_url(String) -> String
 
 pub fn books_route(String) -> String
 
+pub fn desktop_api_capability_contract() -> DesktopApiCapabilities
+
 pub fn desktop_api_path(Array[String]) -> String
 
 pub fn desktop_api_query(Array[(String, String)]) -> String
@@ -220,6 +222,18 @@ pub struct DeskWorkspace {
   kind : WorkspaceKind
   status : WorkspaceStatus
   last_seen_at : String?
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct DesktopApiCapabilities {
+  component : String
+  kind : String
+  version : Int
+  route_contract_endpoint : String
+  required_endpoints : Array[String]
+  desktop_route_contracts : Array[DesktopApiRouteContract]
+  portable_api_snapshot_routes : Array[String]
+  portable_api_workspace_content_routes : Array[String]
+  portable_api_supported_route_patterns : Array[String]
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct DesktopApiRouteContract {

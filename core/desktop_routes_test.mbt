@@ -181,3 +181,49 @@ test "desktop portable api support derives from core desktop routes" {
     ),
   )
 }
+
+///|
+test "desktop api capability schema lives in core boundary" {
+  let capability = @core.desktop_api_capability_contract()
+  assert_eq(capability.component, "moondesk-desktop-api")
+  assert_eq(capability.kind, "moondesk-desktop-api-capabilities.v1")
+  assert_eq(capability.version, 1)
+  assert_eq(
+    capability.route_contract_endpoint,
+    @core.desktop_capabilities_route(),
+  )
+  assert_eq(
+    capability.required_endpoints.length(),
+    @core.desktop_api_required_endpoints().length(),
+  )
+  assert_eq(
+    capability.desktop_route_contracts.length(),
+    @core.desktop_api_route_contracts().length(),
+  )
+  assert_true(
+    capability.desktop_route_contracts.contains({
+      path: @core.desktop_capabilities_route(),
+      methods: ["GET", "HEAD"],
+    }),
+  )
+  assert_true(
+    capability.portable_api_snapshot_routes.contains(
+      @core.books_route("patterns"),
+    ),
+  )
+  assert_true(
+    capability.portable_api_workspace_content_routes.contains(
+      @core.workspace_action_route("raw"),
+    ),
+  )
+  assert_eq(
+    capability.portable_api_supported_route_patterns.length(),
+    capability.portable_api_snapshot_routes.length() +
+    capability.portable_api_workspace_content_routes.length(),
+  )
+  assert_false(
+    capability.portable_api_supported_route_patterns.contains(
+      @core.town_route("dispatch"),
+    ),
+  )
+}

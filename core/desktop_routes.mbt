@@ -46,6 +46,19 @@ pub(all) struct DesktopApiRouteContract {
 } derive(Debug, Eq, ToJson, FromJson)
 
 ///|
+pub(all) struct DesktopApiCapabilities {
+  component : String
+  kind : String
+  version : Int
+  route_contract_endpoint : String
+  required_endpoints : Array[String]
+  desktop_route_contracts : Array[DesktopApiRouteContract]
+  portable_api_snapshot_routes : Array[String]
+  portable_api_workspace_content_routes : Array[String]
+  portable_api_supported_route_patterns : Array[String]
+} derive(Debug, Eq, ToJson, FromJson)
+
+///|
 fn desktop_api_route_contract(
   path : String,
   methods : Array[String],
@@ -420,6 +433,21 @@ pub fn desktop_api_required_endpoints() -> Array[String] {
     }
   }
   endpoints
+}
+
+///|
+pub fn desktop_api_capability_contract() -> DesktopApiCapabilities {
+  {
+    component: "moondesk-desktop-api",
+    kind: "moondesk-desktop-api-capabilities.v1",
+    version: 1,
+    route_contract_endpoint: desktop_capabilities_route(),
+    required_endpoints: desktop_api_required_endpoints(),
+    desktop_route_contracts: desktop_api_route_contracts(),
+    portable_api_snapshot_routes: desktop_portable_api_snapshot_routes(),
+    portable_api_workspace_content_routes: desktop_portable_api_workspace_content_routes(),
+    portable_api_supported_route_patterns: desktop_portable_api_supported_route_patterns(),
+  }
 }
 
 ///|

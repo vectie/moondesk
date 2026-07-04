@@ -838,6 +838,9 @@ Code mode is sufficiently tested when:
 - a host-visible portable API contract smoke proves `/api/desktop/capabilities`
   publishes the portable snapshot route list, dynamic workspace content
   patterns, and combined offline supported route set from the same core contract
+- a desktop capability schema ownership gate proves MoonWiki serves the
+  core-owned `DesktopApiCapabilities` object instead of rebuilding capability
+  fields locally
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

@@ -18,17 +18,18 @@ fn assert_capability_string_array(
 ///|
 test "desktop api capabilities publish core route contracts" {
   let capability = desktop_api_capabilities_json()
+  let expected_capability = @desk.desktop_api_capability_contract()
   assert_eq(
     json_string(capability, "component", default=""),
-    "moondesk-desktop-api",
+    expected_capability.component,
   )
   assert_eq(
     json_string(capability, "kind", default=""),
-    "moondesk-desktop-api-capabilities.v1",
+    expected_capability.kind,
   )
   assert_eq(
     json_string(capability, "route_contract_endpoint", default=""),
-    @desk.desktop_capabilities_route(),
+    expected_capability.route_contract_endpoint,
   )
   assert_eq(
     json_string(capability, "api_contract", default=""),
@@ -40,7 +41,7 @@ test "desktop api capabilities publish core route contracts" {
   )
 
   let published = json_array_items(capability, "desktop_route_contracts")
-  let expected = @desk.desktop_api_route_contracts()
+  let expected = expected_capability.desktop_route_contracts
   assert_eq(published.length(), expected.length())
   for contract in expected {
     let matches : Array[Json] = []
@@ -60,9 +61,10 @@ test "desktop api capabilities publish core route contracts" {
 ///|
 test "desktop api capabilities publish portable route contract" {
   let capability = desktop_api_capabilities_json()
-  let snapshot_routes = @desk.desktop_portable_api_snapshot_routes()
-  let workspace_content_routes = @desk.desktop_portable_api_workspace_content_routes()
-  let supported_patterns = @desk.desktop_portable_api_supported_route_patterns()
+  let expected_capability = @desk.desktop_api_capability_contract()
+  let snapshot_routes = expected_capability.portable_api_snapshot_routes
+  let workspace_content_routes = expected_capability.portable_api_workspace_content_routes
+  let supported_patterns = expected_capability.portable_api_supported_route_patterns
 
   assert_capability_string_array(
     capability, "portable_api_snapshot_routes", snapshot_routes,
@@ -90,9 +92,10 @@ test "desktop api capabilities publish portable route contract" {
 ///|
 test "desktop api capabilities exclude retired town control route" {
   let capability = desktop_api_capabilities_json()
+  let expected_capability = @desk.desktop_api_capability_contract()
   let endpoints = json_string_array_items(capability, "required_endpoints")
   assert_true(endpoints.contains(@desk.desktop_capabilities_route()))
   assert_true(endpoints.contains(@desk.town_route("dispatch")))
   assert_false(endpoints.contains(@desk.town_route("control")))
-  assert_eq(endpoints.length(), @desk.desktop_api_required_endpoints().length())
+  assert_eq(endpoints.length(), expected_capability.required_endpoints.length())
 }

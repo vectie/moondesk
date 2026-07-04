@@ -1765,6 +1765,46 @@ Exit tests:
 - the Phase 8 wall keeps the portable route contract source-owned,
   host-visible, and covered by live integration evidence.
 
+## Phase 45 - Core-Owned Desktop Capability Schema
+
+Status: implemented by moving the desktop capability payload shape into
+`vectie/moondesk/core` and reducing MoonWiki to an HTTP envelope around that
+contract.
+
+Problem:
+
+- Phase 42 and Phase 44 made route contracts host-visible, but
+  `internal/moonwiki/desktop_api_capabilities.mbt` still owned the capability
+  schema by hand: component, kind, version, route endpoint, required endpoints,
+  full route contracts, and portable route fields were local JSON literals.
+- That meant the route table was shared but the published capability document
+  was not. Any future product could drift by adding fields to core routes,
+  app-tool portable exports, or live smokes while forgetting the actual host
+  capability payload.
+- Treating Moondesk as a clean standalone project means the host capability
+  object is a first-class core contract, not a backend formatting detail.
+
+Work:
+
+- Add `DesktopApiCapabilities` and
+  `desktop_api_capability_contract()` to `vectie/moondesk/core`.
+- Derive the capability object from the existing desktop route contracts,
+  required endpoints, and portable API route helpers.
+- Replace MoonWiki's hand-built capability JSON with
+  `@desk.desktop_api_capability_contract().to_json()` wrapped by the shared
+  API response envelope.
+- Add a migration gate that rejects returning schema fields to the MoonWiki
+  capability handler.
+
+Exit tests:
+
+- `core` tests prove the capability object owns component/kind/version,
+  required endpoints, full desktop route contracts, and portable route fields.
+- MoonWiki tests prove `/api/desktop/capabilities` mirrors the core capability
+  object and only adds the response envelope fields.
+- the Phase 8 wall runs the capability-contract ownership gate before the live
+  HTTP route-method smoke.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

@@ -717,3 +717,8 @@ The next scheduled phases are now explicit:
   content route patterns, and the combined portable supported route set from
   `vectie/moondesk/core`; the live HTTP smoke and Phase 8 wall assert those
   fields before method-contract coverage runs.
+- Phase 45: core-owned desktop capability schema. The generic desktop
+  capability object now lives in `vectie/moondesk/core` as
+  `DesktopApiCapabilities`, MoonWiki serves that object through the API
+  envelope, and the Phase 8 wall rejects backend-local capability schema
+  literals returning.
