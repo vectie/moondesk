@@ -14,9 +14,9 @@ This is a fresh-default architecture. We do not preserve stale transcript
 behavior, raw-event rendering, content-matching repair, or compatibility
 fallbacks as product behavior.
 
-## Reference Behavior
+## Conversation Rule
 
-OpenSeek stays stable because it has one append path:
+MoonCode stays stable when it has one append path:
 
 - queued input is drained through one update choke point
 - the UI appends the user item before starting agent work
@@ -24,9 +24,8 @@ OpenSeek stays stable because it has one append path:
 - progress and final output append as semantic transcript items
 - raw logs remain evidence, not the conversation owner
 
-MoonCode should follow the same shape, with Moondesk rendering a canonical
-conversation projection owned by the backend and a very small optimistic buffer
-owned by the UI.
+Moondesk renders a canonical conversation projection owned by the backend and a
+very small optimistic buffer owned by the UI.
 
 ## Target Model
 
@@ -316,7 +315,8 @@ Exit tests:
 
 ## Phase 9 - MoonLib Upstream Extraction
 
-Status: active; MoonLib contract package published and Moondesk wrapper wired.
+Status: active; MoonLib contract package published, Moondesk wrapper wired, and
+source-level rollout gate added.
 
 Work:
 
@@ -334,6 +334,9 @@ Implemented:
   fields, ordering, identity fields, and contract JSON to MoonLib.
 - MoonCode still owns product-specific protocol and owner names:
   `mooncode.v1`, `mooncode`, `moonclaw`, and `moondesk`.
+- `scripts/validate_conversation_contract_rollout.sh` now rejects retired local
+  conversation contract ids and unapproved product-local wrappers across all
+  active MoonSuite source repos.
 
 Exit tests:
 

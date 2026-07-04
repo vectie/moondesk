@@ -21,7 +21,7 @@ The phase-by-phase clean rebuild plan is tracked in
 
 ## Target Shape
 
-OpenSeek's stable behavior comes from one append path:
+MoonCode's stable behavior comes from one append path:
 
 - the UI appends the user input immediately
 - the agent/run appends progress and final output through one callback
@@ -29,8 +29,7 @@ OpenSeek's stable behavior comes from one append path:
 - the renderer appends semantic transcript items instead of rebuilding order
   from multiple logs
 
-MoonCode will use the same shape, with the backend owning durable canonical
-turns and Moondesk rendering those turns.
+The backend owns durable canonical turns and Moondesk renders those turns.
 
 ```json
 {
@@ -325,7 +324,8 @@ Current coverage:
 
 ## Phase 9 - Shared Product Contract
 
-Status: active; MoonLib contract package published and Moondesk wrapper wired.
+Status: active; MoonLib contract package published, Moondesk wrapper wired, and
+source-level rollout gate added.
 
 Work:
 
@@ -343,6 +343,9 @@ Current coverage:
 - Moondesk imports MoonLib `0.1.8`.
 - `mooncode/core` delegates shared conversation contract data to MoonLib while
   keeping MoonCode-specific protocol/owner names local.
+- `scripts/validate_conversation_contract_rollout.sh` now guards the source
+  boundary across MoonLib, Moondesk, MoonRobo, MoonTown, MoonClaw, MoonStat,
+  MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and Lepusa.
 
 Exit tests:
 
@@ -352,6 +355,6 @@ Exit tests:
 
 ## Current Direction
 
-The next implementation step is Phase 9 rollout: replace product-local
-conversation contract mirrors in MoonClaw, MoonRobo, MoonMoon, MoonFish,
-MoonTown, and future MoonSuite products with `vectie/moonlib/conversation`.
+The next implementation step is Phase 9 rollout hardening: keep new product chat
+adapters behind `vectie/moonlib/conversation` and extend product-specific
+runtime tests only where a product adds an actual chat surface.

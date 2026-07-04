@@ -1045,6 +1045,10 @@ Phase 9 gates:
   source in MoonLib, Moondesk, MoonRobo, Moontown, MoonClaw, MoonStat,
   MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and Lepusa for unapproved
   Phase 9 legacy cutover paths and retired source-checkout redirect helpers.
+- `bash scripts/validate_conversation_contract_rollout.sh` can be run alone to
+  prove the shared conversation contract is source-owned by MoonLib, consumed
+  by Moondesk's MoonCode adapter, and not mirrored by product-local old
+  conversation contract ids or wrappers.
 
 Phase 9 completion criteria:
 
@@ -1099,6 +1103,14 @@ Phase 9 cutover evidence:
   production build, API smoke, Desk browser full and empty-library smokes,
   cross-product fresh-suite smokes, Lepusa populated and empty fresh-books
   packaged runtime smokes, and the Phase 9 12-repo cutover validator.
+- The shared conversation-contract rollout is now part of the Phase 9 gate.
+  `scripts/validate_conversation_contract_rollout.sh` checks MoonLib source
+  version `0.1.8`, the `vectie/moonlib/conversation` package and interface,
+  Moondesk's MoonCode delegation imports, the synchronized MoonClaw
+  `mooncode/core` mirror, all MoonLib consumer pins, and all 12 active source
+  repos for retired `mooncode-conversation.v1`,
+  `mooncode-conversation-contract`, `moonlib_target`, or unapproved
+  product-local conversation wrappers.
 - The next Lepusa standalone packaging slice makes live Moondesk bundles
   self-contained: generated localhost runtime manifests now launch the bundled
   `moondesk-sidecar` with `--ui` pointing at
@@ -2217,6 +2229,9 @@ Remaining high-priority product slices:
   book-id inference when a workspace root is already `books/<book-id>`.
   MoonLib `0.1.8` also owns the shared `vectie/moonlib/conversation` contract
   used by MoonCode to project append-only user, progress, and assistant turns.
+  The local MoonLib source checkout now carries that published package, and the
+  Phase 9 conversation rollout validator keeps source, registry pins, and
+  product adapters aligned.
   MoonFish, MoonMoon, and MoonChat now cover both explicit and inferred
   book-root layouts in unit tests and fresh-suite smokes. Current product-repo
   pin gates expect all MoonLib consumers to use `vectie/moonlib@0.1.8`:
