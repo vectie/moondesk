@@ -4,6 +4,11 @@ pub fn desktop_capabilities_endpoint() -> String {
 }
 
 ///|
+pub fn desktop_status_endpoint() -> String {
+  "/api/mooncode/status"
+}
+
+///|
 fn native_code_capabilities_endpoint() -> String {
   "/v1/code/capabilities"
 }
@@ -117,6 +122,21 @@ pub fn desktop_readiness_contract_endpoint() -> String {
 ///|
 pub fn desktop_sessions_endpoint() -> String {
   "/api/mooncode/sessions"
+}
+
+///|
+pub fn desktop_session_events_endpoint() -> String {
+  "/api/mooncode/sessions/<session-id>/events"
+}
+
+///|
+pub fn desktop_session_change_set_endpoint() -> String {
+  "/api/mooncode/sessions/<session-id>/change-set"
+}
+
+///|
+pub fn desktop_session_patch_set_endpoint() -> String {
+  "/api/mooncode/sessions/<session-id>/patch-set"
 }
 
 ///|
@@ -242,11 +262,15 @@ pub fn desktop_session_runtime_commands_endpoint() -> String {
 ///|
 pub fn desktop_projection_required_endpoints() -> Array[String] {
   [
+    desktop_status_endpoint(),
     desktop_capabilities_endpoint(),
     desktop_eval_harness_endpoint(),
     desktop_standalone_boundary_endpoint(),
     desktop_readiness_contract_endpoint(),
     desktop_sessions_endpoint(),
+    desktop_session_events_endpoint(),
+    desktop_session_change_set_endpoint(),
+    desktop_session_patch_set_endpoint(),
     desktop_session_stream_endpoint(),
     desktop_session_stream_state_endpoint(),
     desktop_session_commands_endpoint(),

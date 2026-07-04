@@ -240,15 +240,21 @@ pub fn desktop_readiness_contract_endpoint() -> String
 
 pub fn desktop_session_action_plan_endpoint() -> String
 
+pub fn desktop_session_change_set_endpoint() -> String
+
 pub fn desktop_session_command_jsonl_endpoint() -> String
 
 pub fn desktop_session_commands_endpoint() -> String
 
 pub fn desktop_session_eval_report_endpoint() -> String
 
+pub fn desktop_session_events_endpoint() -> String
+
 pub fn desktop_session_package_candidates_endpoint() -> String
 
 pub fn desktop_session_package_result_endpoint() -> String
+
+pub fn desktop_session_patch_set_endpoint() -> String
 
 pub fn desktop_session_preflight_endpoint() -> String
 
@@ -289,6 +295,8 @@ pub fn desktop_session_tool_authorization_endpoint() -> String
 pub fn desktop_sessions_endpoint() -> String
 
 pub fn desktop_standalone_boundary_endpoint() -> String
+
+pub fn desktop_status_endpoint() -> String
 
 pub fn engine_check_json(String, String, String, String) -> Json
 

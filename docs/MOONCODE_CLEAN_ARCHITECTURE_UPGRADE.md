@@ -1277,6 +1277,45 @@ Exit tests:
   poll without pretending active work
 - polling has one canonical effect plan
 
+## Phase 33 - Backend Route Contract Ownership
+
+Status: implemented as the MoonCode backend route contract parity gate.
+
+Problem:
+
+- The backend MoonCode router served routes that the public desktop projection
+  contract did not advertise. In particular, `/api/mooncode/status`,
+  session `events`, `change-set`, and `patch-set` were routed separately from
+  `desktop_projection_required_endpoints`.
+- That split lets docs, capabilities, runtime readiness reports, browser code,
+  and server routing disagree about what the clean desktop MoonCode API is.
+  A first-time standalone project should not require reading the router source
+  to discover supported endpoints.
+- Missing route contracts also weaken test planning: a route can exist without
+  being counted by contract coverage, migration gates, or downstream product
+  boundary checks.
+
+Work:
+
+- Add public MoonCode route-contract helpers for status, session events,
+  session change-set, and session patch-set endpoints.
+- Include those endpoints in `desktop_projection_required_endpoints` and,
+  through that, `engine_supported_endpoints`.
+- Add a MoonWiki backend route contract white-box test that normalizes query
+  strings and compares the router surface against
+  `@mooncode.desktop_projection_required_endpoints`.
+- Document `/api/mooncode/status` in the MoonCode API route list.
+- Wire the backend route contract gate into the Phase 8 migration wall.
+
+Exit tests:
+
+- `desktop_projection_required_endpoints` contains every routed desktop
+  MoonCode API path
+- the backend router surface has no unadvertised MoonCode desktop endpoint
+- status, events, change-set, and patch-set endpoints are counted by the
+  contract and engine-supported endpoint report
+- the Phase 8 migration wall runs the backend route parity test
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1289,5 +1328,7 @@ Exit tests:
   routes directly.
 - Letting reducer branches hand-assemble MoonCode session HTTP/timer follow-up
   batches.
+- Letting the backend serve MoonCode desktop API routes that are absent from
+  the published route contract.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

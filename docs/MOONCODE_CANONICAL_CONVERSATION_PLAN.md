@@ -657,3 +657,9 @@ The next scheduled phases are now explicit:
   reloads through one typed effect owner. Reducer branches no longer
   hand-assemble the timing-sensitive mix of runtime-service start,
   session/stream refresh, poll scheduling, and shell sync.
+- Phase 33: backend route contract ownership. The MoonCode desktop projection
+  contract now advertises every backend-routed MoonCode desktop endpoint,
+  including status, session events, change-set, and patch-set. A MoonWiki
+  route parity test compares the router surface against
+  `@mooncode.desktop_projection_required_endpoints`, and the Phase 8 wall runs
+  that gate.

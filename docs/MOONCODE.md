@@ -100,6 +100,7 @@ projection shell, not the runtime engine.
 Top-level:
 
 ```text
+GET /api/mooncode/status
 GET /api/mooncode/capabilities
 GET /api/mooncode/eval-harness
 GET /api/mooncode/standalone-boundary

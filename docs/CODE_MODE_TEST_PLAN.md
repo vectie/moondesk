@@ -668,6 +668,18 @@ refreshing canonical sessions/streams, if manual mode accidentally starts the
 runtime service, if runtime-service success/failure settlements drift, or if
 polling no longer uses one canonical effect plan.
 
+Backend route contract ownership gate:
+
+```bash
+moon test internal/moonwiki --target native --filter "mooncode backend route contract*"
+moon test internal/mooncode --target native --filter "desktop projection endpoint contract*"
+```
+
+This Phase 33 gate keeps backend-routed MoonCode desktop API paths synchronized
+with the published MoonCode route contract. It fails if the router serves a
+desktop endpoint that is absent from `desktop_projection_required_endpoints`, or
+if the contract advertises a path the router no longer serves.
+
 ## Done Criteria
 
 Code mode is sufficiently tested when:
@@ -710,6 +722,8 @@ Code mode is sufficiently tested when:
 - a frontend session effect ownership gate proves reducer branches invoke one
   typed plan for MoonCode runtime-service, session/stream refresh, polling, and
   shell-sync followups
+- a backend route contract ownership gate proves the MoonCode server router and
+  `desktop_projection_required_endpoints` describe the same desktop API surface
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state
