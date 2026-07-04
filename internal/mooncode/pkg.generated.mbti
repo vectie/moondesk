@@ -488,6 +488,8 @@ pub fn native_package_result_unavailable_report(String, Int, String) -> Json
 
 pub fn native_response_event_items(Json, loop_fallback_id~ : String, loop_fallback_created_at~ : String) -> Array[Json]
 
+pub fn native_runtime_event_contract_report(Json, session_id~ : String, observed_at~ : String) -> Json
+
 pub fn native_runtime_events_available_state(Json, String) -> Json
 
 pub fn native_runtime_events_for_projection(Json) -> Array[Json]

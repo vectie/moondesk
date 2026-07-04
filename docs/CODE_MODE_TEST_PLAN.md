@@ -233,6 +233,10 @@ Assertions:
 - native `assistant_delta`, `assistant_message`, reasoning, runtime update, and
   terminal error events preserve `command_id` as normalized `command_packet`
   ownership.
+- native runtime contract reports mark command-scoped chat/progress events as
+  projection-safe and flag unscoped assistant/chat evidence as unsafe.
+- unscoped watcher, service lifecycle, usage, and runtime-loop events remain
+  diagnostic-only and do not become chat turns.
 - sidecar evidence is deduped into Moondesk's append log before projection.
 - first, second, and third assistant replies appear under the matching user
   turns and stay stable across replay.

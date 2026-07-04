@@ -575,6 +575,39 @@ Exit tests:
 - ordinary composer text cannot become steering because of runtime status
 - generated UI interfaces no longer expose the runtime sink DTO
 
+## Phase 16 - Native Runtime Contract Report
+
+Status: complete for the backend normalization boundary.
+
+Work:
+
+- Treat the existing native runtime-events response as the diagnostic surface
+  for live MoonClaw event shape.
+- Classify accepted native events after Moondesk normalization.
+- Require every chat/progress eligible native event to carry a direct
+  `command_id` or normalized `command_packet.command_id`.
+- Keep unscoped service lifecycle, watcher, usage, and runtime-loop records as
+  diagnostics only.
+- Surface contract status and unsafe unscoped projection counts in the runtime
+  events response without adding a browser-side chat owner.
+
+Implemented:
+
+- Added `mooncode-native-runtime-contract-report` in `internal/mooncode`.
+- `runtime_event_sink_result_response_with_native` now includes the full
+  contract plus scalar status/projection-safe fields.
+- Tests prove command-scoped native chat evidence is projection-safe, watcher
+  updates remain diagnostic-only, and unscoped assistant answers are flagged
+  unsafe.
+
+Exit tests:
+
+- command-scoped reasoning and assistant native events are projection-safe
+- unscoped watcher updates do not become chat evidence
+- unscoped assistant/native chat events produce an unsafe contract report
+- runtime-events diagnostics expose contract status without reintroducing a
+  frontend runtime sink
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

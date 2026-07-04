@@ -506,10 +506,32 @@ Current coverage:
   not fetch runtime-event sink snapshots.
 - Stream diagnostics remain separate from chat ownership.
 
+## Phase 16 - Native Runtime Contract Report
+
+Status: complete for the backend normalization boundary.
+
+Work:
+
+- Classify accepted MoonClaw native runtime events after Moondesk normalization.
+- Require chat/progress eligible native events to be command-scoped before they
+  can be considered projection-safe.
+- Keep service lifecycle, watcher, usage, and runtime-loop records diagnostic.
+- Expose the contract on the existing runtime-events diagnostic response,
+  without adding another browser transcript owner.
+
+Current coverage:
+
+- `mooncode-native-runtime-contract-report` marks command-scoped reasoning and
+  assistant events projection-safe.
+- Unscoped watcher updates are diagnostic-only.
+- Unscoped assistant answers are flagged unsafe before they can masquerade as
+  canonical chat evidence.
+- Runtime-events responses expose contract status and unsafe unscoped counts.
+
 ## Current Direction
 
-Phase 15 removes the browser-side runtime sink as a second live event owner.
-The remaining risk is live MoonClaw runtime behavior outside deterministic
-sidecar injection: verify real runtime events emit command-owned shapes through
-the backend ingest/sync path, then promote only canonical conversation/progress
-DTOs to the visible chat.
+Phase 16 adds a backend contract report for native MoonClaw event shape. The
+remaining risk is a true live daemon smoke, not synthetic sidecar injection:
+drive MoonClaw through its native runtime loop, assert the contract stays
+projection-safe, and keep the visible chat sourced only from canonical
+conversation/progress DTOs.

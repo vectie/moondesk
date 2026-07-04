@@ -157,6 +157,11 @@ pub fn runtime_event_sink_result_response_with_native(
   native_state~ : Json,
   native_report~ : Json,
 ) -> Json {
+  let native_contract = native_runtime_event_contract_report(
+    native_report,
+    session_id~,
+    observed_at=runtime_json_string(native_report, "ingested_at", default=""),
+  )
   runtime_event_sink_result_response(
     session_id,
     events,
@@ -193,6 +198,23 @@ pub fn runtime_event_sink_result_response_with_native(
     runtime_json_int(native_report, "rejected_count", default=0).to_json(),
   )
   |> runtime_with_field("native_runtime_events_report", native_report)
+  |> runtime_with_field("native_runtime_contract", native_contract)
+  |> runtime_with_field(
+    "native_runtime_contract_status",
+    runtime_json_string(native_contract, "status", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "native_runtime_contract_projection_safe",
+    json_bool(native_contract, "projection_safe", default=false).to_json(),
+  )
+  |> runtime_with_field(
+    "native_runtime_contract_unscoped_projection_event_count",
+    runtime_json_int(
+      native_contract,
+      "unscoped_projection_event_count",
+      default=0,
+    ).to_json(),
+  )
 }
 
 ///|
