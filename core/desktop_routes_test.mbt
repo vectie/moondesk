@@ -49,6 +49,7 @@ test "workspace desktop routes live in core boundary" {
 
 ///|
 test "product and system desktop routes live in core boundary" {
+  assert_eq(@core.desktop_capabilities_url(), "/api/desktop/capabilities")
   assert_eq(@core.moonclaw_endpoint_url("daemon"), "/api/moonclaw/daemon")
   assert_eq(
     @core.moonclaw_run_artifacts_route(),
@@ -78,6 +79,7 @@ test "desktop api route contracts own active backend method policy" {
   let endpoints = @core.desktop_api_required_endpoints()
   assert_true(endpoints.length() > 40)
   assert_eq(endpoints.length(), @core.desktop_api_route_contracts().length())
+  assert_true(endpoints.contains(@core.desktop_capabilities_route()))
   assert_true(endpoints.contains(@core.workspace_action_route("entries")))
   assert_true(endpoints.contains(@core.workspace_file_route()))
   assert_true(endpoints.contains(@core.town_route("dispatch")))
@@ -85,6 +87,12 @@ test "desktop api route contracts own active backend method policy" {
   assert_eq(
     @core.desktop_api_route_allowed_methods(@core.workspaces_route()).join(", "),
     "GET, HEAD, POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(@core.desktop_capabilities_route()).join(
+      ", ",
+    ),
+    "GET, HEAD",
   )
   assert_eq(
     @core.desktop_api_route_allowed_methods(

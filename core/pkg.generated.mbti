@@ -27,6 +27,10 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract]
 
 pub fn desktop_api_url(Array[String], query? : Array[(String, String)]) -> String
 
+pub fn desktop_capabilities_route() -> String
+
+pub fn desktop_capabilities_url() -> String
+
 pub fn display_name(StringView) -> String
 
 pub fn extension(StringView) -> String

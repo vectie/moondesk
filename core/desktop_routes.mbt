@@ -64,6 +64,16 @@ fn desktop_api_contract_path(endpoint : String) -> String {
 }
 
 ///|
+pub fn desktop_capabilities_url() -> String {
+  desktop_api_url(["api", "desktop", "capabilities"])
+}
+
+///|
+pub fn desktop_capabilities_route() -> String {
+  desktop_api_path(["api", "desktop", "capabilities"])
+}
+
+///|
 pub fn workspaces_url() -> String {
   desktop_api_url(["api", "workspaces"])
 }
@@ -246,6 +256,7 @@ pub fn books_route(endpoint : String) -> String {
 ///|
 pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
   [
+    desktop_api_route_contract(desktop_capabilities_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(workspaces_route(), ["GET", "HEAD", "POST"]),
     desktop_api_route_contract(workspace_metadata_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(workspace_import_route(), ["POST"]),

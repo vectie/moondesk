@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ROUTERS=(
+  "${ROOT}/internal/moonwiki/api_desktop_router.mbt"
   "${ROOT}/internal/moonwiki/api_workspace_router.mbt"
   "${ROOT}/internal/moonwiki/api_town_router.mbt"
   "${ROOT}/internal/moonwiki/api_moonclaw_router.mbt"

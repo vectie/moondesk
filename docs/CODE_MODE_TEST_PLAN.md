@@ -828,6 +828,10 @@ Code mode is sufficiently tested when:
 - a desktop API method contract gate proves generic non-MoonCode routers use
   the public core route method contract and no longer own independent
   branch-local method policy
+- a desktop API capability smoke proves the running host publishes the generic
+  desktop API route contract at `/api/desktop/capabilities`, derives every
+  generic route method check from that payload, and keeps retired
+  `/api/town/control` out of the live surface
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

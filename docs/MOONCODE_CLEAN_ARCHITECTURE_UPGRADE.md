@@ -1625,6 +1625,53 @@ Exit tests:
   method-not-allowed calls
 - the Phase 8 wall rejects reintroduced router-local method policy
 
+## Phase 42 - Host-Visible Desktop API Contract Publication
+
+Status: implemented as a live Moondesk capability endpoint and HTTP method
+contract smoke derived from the published route contract.
+
+Problem:
+
+- Phase 41 moved generic desktop API path and method policy into
+  `vectie/moondesk/core`, but that contract was still only visible to source
+  code and package tests.
+- A clean first-time architecture needs the running host to advertise its
+  generic desktop API surface the same way MoonCode advertises
+  `/api/mooncode/capabilities.desktop_route_contracts`.
+- Without a host-visible contract, browser code, portable app tooling, and
+  downstream product shells can drift back toward probing routes or keeping
+  stale route mirrors.
+
+Work:
+
+- Add public core helpers for `/api/desktop/capabilities` and include that
+  endpoint in `desktop_api_route_contracts`.
+- Add a MoonWiki desktop capability payload that publishes
+  `desktop_route_contracts`, `required_endpoints`, and the shared
+  `moonsuite.phase6.v1` API envelope.
+- Add a small desktop API router branch for `GET/HEAD
+  /api/desktop/capabilities`; it uses the same core-backed method helper and
+  `405 Allow` response path as the rest of the generic desktop API.
+- Add a live HTTP smoke that starts Moondesk, reads
+  `/api/desktop/capabilities`, probes one unsupported method for every
+  advertised route, verifies the `405 Allow`/API-envelope body, and confirms
+  retired `/api/town/control` stays absent.
+- Wire the live smoke into the Phase 8 migration wall so published contract
+  drift is caught by default.
+
+Exit tests:
+
+- `core` tests prove the desktop capability route is part of the public route
+  contract.
+- MoonWiki tests prove the capability payload mirrors
+  `@desk.desktop_api_route_contracts`, includes `/api/town/dispatch`, and
+  excludes retired `/api/town/control`.
+- the live HTTP smoke derives coverage from
+  `/api/desktop/capabilities.desktop_route_contracts` and checks every
+  advertised generic desktop API route for contract-backed `405` behavior.
+- the Phase 8 wall rejects a route added to source without host-visible method
+  evidence.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

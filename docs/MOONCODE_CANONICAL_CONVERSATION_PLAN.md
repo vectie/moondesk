@@ -702,3 +702,8 @@ The next scheduled phases are now explicit:
   use a shared backend helper for method checks and `405 Allow` responses. The
   stale `/api/town/control` branch is removed; the active route is
   `/api/town/dispatch`.
+- Phase 42: host-visible desktop API contract publication. Moondesk now serves
+  `GET/HEAD /api/desktop/capabilities` from the public core desktop API route
+  contract, publishes generic `desktop_route_contracts` and
+  `required_endpoints`, and the migration wall runs a live HTTP smoke that
+  derives one unsupported-method check from every advertised route.
