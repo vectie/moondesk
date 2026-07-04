@@ -1099,7 +1099,7 @@ Phase 9 cutover evidence:
   paths in active MoonBit source across the 12 migrated repos.
 - Phase 9 full cutover evidence is current as of this slice:
   `bash scripts/phase9_cutover_gates.sh full` passed the Phase 8 full wall,
-  including Moondesk native tests (`466/466`), Rabbita JS tests (`451/451`),
+  including Moondesk native tests (`476/476`), Rabbita JS tests (`432/432`),
   production build, API smoke, Desk browser full and empty-library smokes,
   cross-product fresh-suite smokes, Lepusa populated and empty fresh-books
   packaged runtime smokes, and the Phase 9 12-repo cutover validator.
@@ -1111,6 +1111,11 @@ Phase 9 cutover evidence:
   repos for retired `mooncode-conversation.v1`,
   `mooncode-conversation-contract`, `moonlib_target`, or unapproved
   product-local conversation wrappers.
+- MoonRobo's fresh-suite product-home smoke now sanitizes copied example
+  fixtures by removing any generated `.moonsuite`, `.tmp`, or `.moonrobo`
+  directories from the copied book root before bootstrap. This keeps the smoke
+  faithful to a first-time project and prevents dirty local example state from
+  recreating stale book-local product homes.
 - The next Lepusa standalone packaging slice makes live Moondesk bundles
   self-contained: generated localhost runtime manifests now launch the bundled
   `moondesk-sidecar` with `--ui` pointing at

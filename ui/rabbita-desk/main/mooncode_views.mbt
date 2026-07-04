@@ -190,8 +190,8 @@ fn mooncode_composer_button_label(
   model : Model,
   session : MoonCodeSession?,
 ) -> String {
+  ignore(model)
   match session {
-    Some(active) if mooncode_session_accepts_steer(model, active) => "Steer"
     Some(_) => "Prompt"
     None => "Start"
   }

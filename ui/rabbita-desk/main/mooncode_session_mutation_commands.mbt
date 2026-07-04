@@ -51,53 +51,13 @@ fn send_mooncode_composer_cmd(
   model : Model,
   session : MoonCodeSession,
 ) -> @rabbita.Cmd {
-  let action = mooncode_composer_action(model, session)
   mooncode_session_command_cmd(
     dispatch,
     model,
     session,
-    action,
+    "prompt",
     message=model.mooncode_prompt.trim().to_owned(),
   )
-}
-
-///|
-fn mooncode_composer_action(model : Model, session : MoonCodeSession) -> String {
-  if mooncode_session_accepts_steer(model, session) {
-    "steer"
-  } else {
-    "prompt"
-  }
-}
-
-///|
-fn mooncode_session_accepts_steer(
-  model : Model,
-  session : MoonCodeSession,
-) -> Bool {
-  if !mooncode_runtime_service_running_for_session(model, session.id) {
-    return false
-  }
-  if session.status == "running" ||
-    session.status == "queued" ||
-    session.queued_count > 0 {
-    return true
-  }
-  false
-}
-
-///|
-fn mooncode_runtime_service_running_for_session(
-  model : Model,
-  session_id : String,
-) -> Bool {
-  if model.mooncode_runtime_event_sink_session_id != session_id {
-    return false
-  }
-  match model.mooncode_runtime_event_sink {
-    Some(sink) => sink.runtime_service.status == "running"
-    None => false
-  }
 }
 
 ///|

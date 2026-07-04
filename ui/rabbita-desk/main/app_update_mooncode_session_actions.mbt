@@ -123,7 +123,6 @@ fn mooncode_send_composer(
   } else {
     match selected_mooncode_session(model) {
       Some(session) => {
-        let action = mooncode_composer_action(model, session)
         let prompt = model.mooncode_prompt.trim().to_owned()
         let client_turn_id = mooncode_client_turn_id(model, session.id, prompt)
         (
@@ -147,11 +146,7 @@ fn mooncode_send_composer(
             ),
             mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
               1,
-            mooncode_composer_status: if action == "steer" {
-              "message queued for current turn"
-            } else {
-              "message queued for MoonCode"
-            },
+            mooncode_composer_status: "message queued for MoonCode",
           },
         )
       }

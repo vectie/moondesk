@@ -1234,33 +1234,8 @@ test "code mode empty composer is rejected before creating a session" {
 }
 
 ///|
-test "code mode composer chooses steer only for running runtime service" {
+test "code mode composer always queues a prompt from the chat input" {
   let model = { ..init_model(), mooncode_prompt: "continue" }
-  assert_eq(
-    mooncode_composer_action(model, code_mode_test_session("idle")),
-    "prompt",
-  )
-  assert_eq(
-    mooncode_composer_action(
-      model,
-      code_mode_test_session("running", status="running"),
-    ),
-    "prompt",
-  )
-  assert_eq(
-    mooncode_composer_action(
-      model,
-      code_mode_test_session("queued", status="queued"),
-    ),
-    "prompt",
-  )
-  assert_eq(
-    mooncode_composer_action(
-      model,
-      code_mode_test_session("queued-count", queued_count=2),
-    ),
-    "prompt",
-  )
   let running_service = {
     ..model,
     mooncode_runtime_event_sink_session_id: "running",
@@ -1271,12 +1246,17 @@ test "code mode composer chooses steer only for running runtime service" {
     }),
   }
   assert_eq(
-    mooncode_composer_action(
+    mooncode_composer_button_label(
       running_service,
-      code_mode_test_session("running", status="running"),
+      Some(code_mode_test_session("running", status="running")),
     ),
-    "steer",
+    "Prompt",
   )
+  assert_eq(
+    mooncode_composer_button_label(model, Some(code_mode_test_session("idle"))),
+    "Prompt",
+  )
+  assert_eq(mooncode_composer_button_label(model, None), "Start")
 }
 
 ///|

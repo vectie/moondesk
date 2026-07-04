@@ -33,6 +33,7 @@ The backend owns durable canonical turns and Moondesk renders those turns.
 
 ```json
 {
+  "contract_id": "moonsuite-conversation.v1",
   "kind": "mooncode-conversation",
   "protocol": "mooncode.v1",
   "session_id": "mooncode-...",
@@ -324,8 +325,7 @@ Current coverage:
 
 ## Phase 9 - Shared Product Contract
 
-Status: active; MoonLib contract package published, Moondesk wrapper wired, and
-source-level rollout gate added.
+Status: complete for the shared contract rollout.
 
 Work:
 
@@ -346,6 +346,9 @@ Current coverage:
 - `scripts/validate_conversation_contract_rollout.sh` now guards the source
   boundary across MoonLib, Moondesk, MoonRobo, MoonTown, MoonClaw, MoonStat,
   MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and Lepusa.
+- `scripts/phase9_cutover_gates.sh full` now runs the shared-contract guard
+  after the full migration wall, API smoke, browser smoke, and cross-product
+  fresh-suite product smoke.
 
 Exit tests:
 
@@ -353,8 +356,38 @@ Exit tests:
 - product-specific diagnostics stay outside the chat contract
 - schema tests reject missing turn identity for user-facing events
 
+## Phase 10 - Ordinary Chat Composer Cutover
+
+Status: complete for the ordinary chat composer path.
+
+Work:
+
+- Ordinary chat input always creates a new `prompt` turn.
+- Runtime-service status does not decide whether the next visible chat message
+  is a `steer`.
+- Explicit steering remains available through runtime/API controls where the
+  caller intentionally asks for steering.
+
+Current coverage:
+
+- The composer command path posts `prompt` for ordinary text.
+- The composer button remains `Prompt` for existing sessions and `Start` for a
+  new session.
+- A running runtime event sink no longer changes the user's chat message into a
+  steering command.
+- Validation passed with Rabbita main tests (`147/147`), MoonCode core tests
+  (`4/4`), internal MoonCode tests (`265/265`), internal MoonWiki tests
+  (`144/144`), `npm run build`, and the full Desk browser smoke.
+
+Exit tests:
+
+- first, second, and third visible composer sends all append as prompt turns
+- stale runtime status cannot rewrite a chat turn into steering
+- explicit steering API/runtime tests still cover steer behavior outside the
+  ordinary chat composer
+
 ## Current Direction
 
-The next implementation step is Phase 9 rollout hardening: keep new product chat
-adapters behind `vectie/moonlib/conversation` and extend product-specific
-runtime tests only where a product adds an actual chat surface.
+The next implementation step is to keep future chat surfaces behind the
+MoonLib conversation contract and add product-specific tests only when a product
+adds a real chat composer or explicit steering control.

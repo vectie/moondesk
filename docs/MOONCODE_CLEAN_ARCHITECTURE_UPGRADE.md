@@ -315,8 +315,7 @@ Exit tests:
 
 ## Phase 9 - MoonLib Upstream Extraction
 
-Status: active; MoonLib contract package published, Moondesk wrapper wired, and
-source-level rollout gate added.
+Status: complete for the shared contract rollout.
 
 Work:
 
@@ -337,6 +336,9 @@ Implemented:
 - `scripts/validate_conversation_contract_rollout.sh` now rejects retired local
   conversation contract ids and unapproved product-local wrappers across all
   active MoonSuite source repos.
+- `scripts/phase9_cutover_gates.sh full` now includes the conversation contract
+  rollout validator after the Phase 8 full wall, API smoke, browser smoke, and
+  cross-product fresh-suite product smoke.
 
 Exit tests:
 
@@ -345,9 +347,45 @@ Exit tests:
 - contract tests reject missing turn identity for user-facing events
 - product-specific diagnostics stay outside the shared chat contract
 
+## Phase 10 - Ordinary Chat Composer Cutover
+
+Status: complete for the ordinary chat composer path.
+
+Work:
+
+- Treat the visible chat composer as a new-turn prompt producer only.
+- Remove browser-side `prompt` versus `steer` inference from runtime-service
+  status.
+- Keep explicit steering as a runtime/API capability, not as the default action
+  for a normal chat message.
+- Keep the optimistic append path identical for first, second, and later turns.
+
+Implemented:
+
+- `send_mooncode_composer_cmd` now posts ordinary composer text as `prompt`.
+- The composer button no longer changes to `Steer` because a runtime service
+  reports `running`.
+- The main UI no longer depends on runtime event sink state to decide the
+  semantic meaning of the user's chat input.
+- Validation passed with Rabbita main tests (`147/147`), MoonCode core tests
+  (`4/4`), internal MoonCode tests (`265/265`), internal MoonWiki tests
+  (`144/144`), `npm run build`, and the full Desk browser smoke.
+
+Exit tests:
+
+- first, second, and third messages all enqueue `prompt` commands from the chat
+  composer
+- a stale `running` runtime-event sink cannot turn the next chat message into a
+  steer command
+- backend/API steering tests remain available for explicit steering behavior
+- browser smoke still proves immediate append, canonical acknowledgement, and
+  refresh-stable order
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
 - Matching old content-based prompt acknowledgement.
 - Using runtime service state as a fake "working" signal.
 - Letting compact session listings replace an active new-chat draft.
+- Automatically steering from ordinary chat input because a runtime service is
+  running.
