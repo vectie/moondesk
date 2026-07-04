@@ -200,7 +200,7 @@ fn conversation_apply_runtime_event_to_turn(
     if content != "" {
       turn.assistant = conversation_assistant_message(event, content)
       turn.assistant_delta = ""
-      turn.status = conversation_merge_status(
+      turn.status = conversation_assistant_final_status(
         turn.status,
         json_string(event, "status", default="done"),
       )
@@ -283,11 +283,11 @@ fn conversation_final_turn_status(
   turn : ConversationTurnDraft,
   assistant : Json,
 ) -> String {
-  if turn.status == "failed" {
-    "failed"
-  } else if conversation_message_content(assistant) != "" &&
+  if conversation_message_content(assistant) != "" &&
     json_string(assistant, "status", default="") == "done" {
     "done"
+  } else if turn.status == "failed" {
+    "failed"
   } else {
     turn.status
   }
@@ -576,6 +576,24 @@ fn conversation_merge_status(current : String, incoming : String) -> String {
   } else if incoming == "running" {
     "running"
   } else if current == "running" && incoming != "done" {
+    "running"
+  } else if incoming == "done" {
+    "done"
+  } else if current == "" {
+    incoming
+  } else {
+    current
+  }
+}
+
+///|
+fn conversation_assistant_final_status(
+  current : String,
+  incoming : String,
+) -> String {
+  if incoming == "failed" {
+    "failed"
+  } else if incoming == "running" {
     "running"
   } else if incoming == "done" {
     "done"

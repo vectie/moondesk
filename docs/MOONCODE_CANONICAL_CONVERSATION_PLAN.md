@@ -399,15 +399,72 @@ Exit tests:
 - explicit steering API/runtime tests still cover steer behavior outside the
   ordinary chat composer
 
+## Phase 11 - Backend-Owned Runtime Start
+
+Status: complete for the command enqueue path.
+
+Work:
+
+- New-session and existing-session prompt sends enqueue the command, persist the
+  canonical command event, and then ask the backend to start/resume MoonClaw.
+- Runtime-service status is diagnostic state, not a chat producer and not a
+  composer action switch.
+- Runtime-unavailable failures are persisted as command-owned events and appear
+  as a real failed assistant turn instead of a fake working row.
+
+Current coverage:
+
+- first, second, and third ordinary sends share the same backend enqueue path
+- runtime unavailable attaches to the active command turn
+- duplicate runtime starts are fenced by the backend lease
+
+## Phase 12 - Canonical Native Event Ingestion
+
+Status: complete for the Moondesk backend projection path.
+
+Work:
+
+- Import MoonClaw native sidecar/runtime evidence into Moondesk's append log
+  before projection.
+- Read session listing, event, stream, stream-state, preflight, and command
+  responses from Moondesk's canonical log.
+- Strip response-only projection DTOs from persisted session records.
+- Remove direct sidecar-as-transcript projection.
+
+Current coverage:
+
+- sidecar events do not affect chat before import
+- repeated sync does not duplicate imported events
+- projection reads from the durable Moondesk event log
+- persisted records do not cache `mooncode_events`, `mooncode_summary`, or
+  `mooncode_conversation`
+
+## Phase 13 - Native Reply Ownership Gate
+
+Status: complete for deterministic backend/API coverage.
+
+Work:
+
+- Preserve native `command_id` as a normalized `command_packet` for transcript,
+  reasoning, runtime-update, and terminal error events.
+- Let a command-scoped final assistant answer complete its turn even when an
+  earlier infrastructure failure was recorded before native evidence arrived.
+- Prove first, second, and third raw native sidecar assistant replies import
+  through the canonical append log and replay in order.
+
+Current coverage:
+
+- native transcript events keep command ownership during normalization
+- final native answers recover stale runtime-unavailable failures on the same
+  command turn
+- the three-turn HTTP E2E test imports raw sidecar replies and verifies ordered
+  canonical assistant messages through session listing, events, and stream
+  reads
+
 ## Current Direction
 
-Phase 12 moves live MoonClaw evidence behind the canonical Moondesk append log:
-native sidecar/runtime events are imported once, session projection reads only
-Moondesk's durable log, and stored session records no longer cache response DTOs
-such as `mooncode_events`, `mooncode_summary`, or `mooncode_conversation`.
-
-The next implementation step is a fresh UI/browser verification of real native
-first/second/third-turn replies: progress and final assistant output should
-arrive through canonical session refresh/stream polling after backend ingestion,
-without UI timers, fake working rows, direct sidecar projection, or
-runtime-service status acting as chat ownership.
+Phase 13 closes the deterministic backend gap for native first/second/third
+assistant replies. The remaining work is live UI/browser verification against a
+fresh app root: the browser should show optimistic user append immediately, then
+show only event-backed progress/reply rows after backend ingestion, with no
+fake working state, direct sidecar transcript, stale failed turn, or reordering.

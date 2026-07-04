@@ -140,6 +140,25 @@ fn test_assistant_delta_event(
 }
 
 ///|
+fn test_assistant_final_event(
+  id : String,
+  command_id : String,
+  content : String,
+  created_at : String,
+) -> Json {
+  event_record(
+    id~,
+    lane="transcript",
+    kind="assistant",
+    title="Assistant response",
+    status="done",
+    created_at~,
+    detail=content,
+    command_packet=test_command_packet(command_id, ""),
+  )
+}
+
+///|
 fn test_finish_event(
   id : String,
   command_id : String,
@@ -395,4 +414,36 @@ test "mooncode conversation projection attaches runtime failure to active turn" 
     json_string(assistant, "content", default=""),
     "MoonCode runtime is not reachable.",
   )
+}
+
+///|
+test "mooncode conversation projection lets native final answer recover stale runtime failure" {
+  let events : Array[Json] = [
+    test_prompt_event("cmd-recovered", "client-recovered", "hello", "001"),
+    event_record(
+      id="runtime-unavailable",
+      lane="runtime",
+      kind="runtime_unavailable",
+      title="MoonCode runtime unavailable",
+      status="failed",
+      created_at="002",
+      detail="MoonCode runtime is not reachable.",
+    ),
+    test_assistant_final_event(
+      "native-answer", "cmd-recovered", "Real native answer.", "003",
+    ),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 1)
+  assert_eq(json_string(turns[0], "status", default=""), "done")
+  let assistant = runtime_json_object_field_or_empty(turns[0], "assistant")
+  assert_eq(json_string(assistant, "status", default=""), "done")
+  assert_eq(
+    json_string(assistant, "content", default=""),
+    "Real native answer.",
+  )
+  let items = json_array_items(turns[0], "items")
+  assert_eq(items.length(), 2)
+  assert_eq(json_string(items[0], "role", default=""), "user")
+  assert_eq(json_string(items[1], "role", default=""), "assistant")
 }

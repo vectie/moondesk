@@ -37,6 +37,14 @@ pub fn normalize_runtime_event(
           status="running",
           created_at~,
           detail=json_string(event, "content", default=""),
+          command_packet=runtime_event_command_packet(
+            event,
+            runtime_first_string(
+              event,
+              ["action", "code_command"],
+              default="prompt",
+            ),
+          ),
         ),
       )
     "assistant_message" =>
@@ -49,6 +57,14 @@ pub fn normalize_runtime_event(
           status="done",
           created_at~,
           detail=json_string(event, "content", default=""),
+          command_packet=runtime_event_command_packet(
+            event,
+            runtime_first_string(
+              event,
+              ["action", "code_command"],
+              default="prompt",
+            ),
+          ),
         ),
       )
     "reasoning_delta" | "reasoning_message" =>
@@ -61,6 +77,14 @@ pub fn normalize_runtime_event(
           status=if name == "reasoning_message" { "done" } else { "running" },
           created_at~,
           detail=json_string(event, "content", default=""),
+          command_packet=runtime_event_command_packet(
+            event,
+            runtime_first_string(
+              event,
+              ["action", "code_command"],
+              default="prompt",
+            ),
+          ),
         ),
       )
     "runtime_update" =>
@@ -73,6 +97,14 @@ pub fn normalize_runtime_event(
           status="running",
           created_at~,
           detail=json_string(event, "content", default=""),
+          command_packet=runtime_event_command_packet(
+            event,
+            runtime_first_string(
+              event,
+              ["action", "code_command"],
+              default="prompt",
+            ),
+          ),
         ),
       )
     "tool_call" | "tool_started" =>
@@ -297,6 +329,14 @@ pub fn normalize_runtime_event(
             event,
             ["error", "content"],
             default=event.stringify(),
+          ),
+          command_packet=runtime_event_command_packet(
+            event,
+            runtime_first_string(
+              event,
+              ["action", "code_command"],
+              default="prompt",
+            ),
           ),
         ),
       )

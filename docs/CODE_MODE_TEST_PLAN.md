@@ -202,11 +202,44 @@ Assertions:
 - backend command enqueue attempts runtime start/resume once per queued command.
 - runtime unavailable is durably attached to the active command turn as a failed
   assistant message.
+- if native MoonClaw later emits a command-scoped final assistant answer, that
+  answer becomes the canonical completion for the same turn instead of leaving
+  the stale infrastructure failure visible as the final chat state.
 - explicit steering remains covered through the command API/control surface, not
   through ordinary chat input.
 - prompt text is trimmed and empty prompts are rejected in UI state before HTTP.
 - command ordering is append-only.
 - cancel does not delete prior evidence.
+
+### Native Sidecar Reply Ingestion
+
+Exercise raw MoonClaw sidecar evidence as input, not as a second transcript.
+
+Flow:
+
+```text
+fresh code session
+-> send first prompt
+-> send second prompt
+-> send third prompt
+-> append raw MoonClaw assistant_message events with command_id for each command
+-> GET /api/mooncode/sessions imports sidecar events into Moondesk append log
+-> GET /api/mooncode/sessions/:id/events returns imported canonical events
+-> GET /api/mooncode/sessions/:id/stream returns the same ordered replies
+```
+
+Assertions:
+
+- native `assistant_delta`, `assistant_message`, reasoning, runtime update, and
+  terminal error events preserve `command_id` as normalized `command_packet`
+  ownership.
+- sidecar evidence is deduped into Moondesk's append log before projection.
+- first, second, and third assistant replies appear under the matching user
+  turns and stay stable across replay.
+- a stale runtime-unavailable event can be recovered by a later command-scoped
+  `done` assistant final, but a real failed final remains failed.
+- the main chat never renders direct sidecar rows, fake working rows, or
+  runtime-service lifecycle messages as conversation items.
 
 ### Runtime Claim And Replay
 

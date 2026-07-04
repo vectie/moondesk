@@ -459,6 +459,48 @@ Exit tests:
 - persisted session records contain durable state, not cached response DTOs
 - first, second, and third immediate command responses preserve append-log order
 
+## Phase 13 - Native Reply Ownership Gate
+
+Status: complete for deterministic backend/API coverage.
+
+Work:
+
+- Preserve `command_id` ownership when raw native MoonClaw transcript and
+  progress events are normalized into MoonCode events.
+- Treat a later command-scoped final assistant answer as the canonical
+  completion for that turn, even if an earlier transport/runtime-unavailable
+  failure was recorded before MoonClaw evidence arrived.
+- Keep true failed final answers failed; only a `done` assistant final can
+  recover a stale infrastructure failure on the same command turn.
+- Extend the three-prompt HTTP E2E gate so raw native sidecar answers are
+  imported through the sync-first canonical path.
+- Verify session listing, event reads, and stream reads all show the same
+  ordered replies without direct sidecar projection.
+
+Implemented:
+
+- Raw native `assistant_delta`, `assistant_message`, `reasoning_*`,
+  `runtime_update`, and terminal error events now carry a normalized
+  `command_packet` when MoonClaw provides `command_id`.
+- Conversation projection now lets a command-scoped final assistant message
+  replace a stale runtime-unavailable failure for that same turn.
+- Unit coverage proves native transcript events keep command ownership and a
+  real final answer recovers a stale infrastructure failure.
+- The existing three-turn HTTP E2E test now appends three raw native sidecar
+  assistant answers, triggers session refresh import, and verifies ordered
+  canonical replies through session list, event, and stream endpoints.
+
+Exit tests:
+
+- native transcript events without `command_packet` but with `command_id` attach
+  to the intended prompt turn
+- a stale runtime-unavailable event cannot keep a turn failed after the real
+  command-scoped assistant final arrives
+- first, second, and third native replies append under the matching user turns
+- replay/listing and stream output agree after native sidecar import
+- no UI timer, fake working row, or direct MoonClaw sidecar transcript owns chat
+  output
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

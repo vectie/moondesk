@@ -299,6 +299,42 @@ test "mooncode runtime event ingest accepts package text-only assistant reply" {
 }
 
 ///|
+test "mooncode runtime event ingest preserves command ownership for native transcript events" {
+  let events = runtime_ingest_events(
+    {
+      "events": [
+        {
+          "event": "assistant_delta",
+          "id": "native-delta",
+          "created_at": "2026-06-30T00:00:01Z",
+          "content": "Working",
+          "command_id": "cmd-native-chat",
+          "action": "prompt",
+        },
+        {
+          "event": "assistant_message",
+          "id": "native-answer",
+          "created_at": "2026-06-30T00:00:02Z",
+          "content": "Done",
+          "command_id": "cmd-native-chat",
+          "action": "prompt",
+        },
+      ],
+    },
+    ingested_at="2026-06-30T00:00:00Z",
+  )
+  assert_eq(events.length(), 2)
+  assert_eq(json_string(events[0], "kind", default=""), "assistant_delta")
+  assert_eq(json_string(events[1], "kind", default=""), "assistant")
+  for event in events {
+    let packet = runtime_json_object_field_or_empty(event, "command_packet")
+    assert_eq(json_string(packet, "command_id", default=""), "cmd-native-chat")
+    assert_eq(json_string(packet, "action", default=""), "prompt")
+    assert_true(json_bool(packet, "runtime_proof", default=false))
+  }
+}
+
+///|
 test "mooncode native runtime event report normalizes mooncode events before merge" {
   let report = runtime_native_event_report(
     {

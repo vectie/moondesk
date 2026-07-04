@@ -307,6 +307,65 @@ fn assert_mooncode_http_conversation_turns(
 }
 
 ///|
+fn assert_mooncode_http_assistant_replies(
+  payload : Json,
+  prompts : Array[String],
+  client_turn_ids : Array[String],
+  replies : Array[String],
+) -> Unit raise {
+  assert_mooncode_http_conversation_turns(payload, prompts, client_turn_ids)
+  assert_eq(replies.length(), prompts.length())
+  let conversation = json_object_field_or_empty(
+    payload, "mooncode_conversation",
+  )
+  let turns = json_array_items(conversation, "turns")
+  for index in 0..<replies.length() {
+    let turn = turns[index]
+    assert_eq(json_string(turn, "status", default=""), "done")
+    let assistant = json_object_field_or_empty(turn, "assistant")
+    assert_eq(json_string(assistant, "role", default=""), "assistant")
+    assert_eq(json_string(assistant, "status", default=""), "done")
+    assert_eq(json_string(assistant, "content", default=""), replies[index])
+    let items = json_array_items(turn, "items")
+    assert_true(items.length() >= 2)
+    assert_eq(json_string(items[0], "role", default=""), "user")
+    assert_eq(
+      json_string(items[items.length() - 1], "role", default=""),
+      "assistant",
+    )
+  }
+}
+
+///|
+async fn append_mooncode_http_native_replies(
+  root : String,
+  session_id : String,
+  command_items : Array[Json],
+  replies : Array[String],
+) -> Unit {
+  assert_eq(command_items.length(), replies.length())
+  let native_path = moonclaw_mooncode_event_log_path(root, session_id)
+  @fsx.make_directory(
+    @pathx.dirname(native_path),
+    recursive=true,
+    exists_ok=true,
+  )
+  for index in 0..<replies.length() {
+    let command_id = json_string(command_items[index], "command_id", default="")
+    assert_true(command_id.has_prefix("mooncode-command-"))
+    append_mooncode_jsonl_file(native_path, {
+      "event": "assistant_message",
+      "id": "native-assistant-\{index + 1}",
+      "created_at": "2026-06-30T03:0\{index}:00Z",
+      "content": replies[index],
+      "command_id": command_id,
+      "action": "prompt",
+      "session_id": session_id,
+    })
+  }
+}
+
+///|
 fn assert_mooncode_http_current_turn(
   payload : Json,
   prompt : String,
@@ -462,6 +521,55 @@ async test "mooncode code mode HTTP routes preserve three prompt conversation or
         prompts[index],
       )
     }
+
+    let replies = [
+      "Parser test plan is ready.", "Parser fixtures are added.", "Parser flow is explained.",
+    ]
+    append_mooncode_http_native_replies(
+      root, session_id, command_items, replies,
+    )
+    let listed_after_native = test_http_get_json(
+      base + "/api/mooncode/sessions?workspace=\{workspace_id}",
+      200,
+    )
+    match listed_after_native {
+      Array(items) => {
+        assert_eq(items.length(), 1)
+        assert_eq(json_string(items[0], "id", default=""), session_id)
+        assert_mooncode_http_assistant_replies(
+          items[0],
+          prompts,
+          client_turn_ids,
+          replies,
+        )
+      }
+      _ => fail("expected native-replied MoonCode session")
+    }
+
+    let events_after_native = test_http_get_json(
+      base + "/api/mooncode/sessions/\{session_id}/events",
+      200,
+    )
+    match events_after_native {
+      Array(items) => {
+        assert_true(items.length() >= 6)
+        let serialized = events_after_native.stringify()
+        assert_true(serialized.contains("native-assistant-1"))
+        assert_true(serialized.contains("native-assistant-2"))
+        assert_true(serialized.contains("native-assistant-3"))
+      }
+      _ => fail("expected MoonCode event array after native sync")
+    }
+
+    let (_, stream_body) = test_http_get(
+      base +
+      "/api/mooncode/sessions/\{session_id}/stream?format=jsonl&since=0&live=false",
+      200,
+    )
+    assert_true(stream_body.contains("native-assistant-1"))
+    assert_true(stream_body.contains("native-assistant-2"))
+    assert_true(stream_body.contains("native-assistant-3"))
+    assert_true(stream_body.contains("Parser flow is explained."))
 
     let runtime_feed = test_http_get_json(
       base + "/api/mooncode/sessions/\{session_id}/runtime-commands",
