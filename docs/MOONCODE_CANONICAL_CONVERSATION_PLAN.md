@@ -608,11 +608,17 @@ just because they have a title/detail. The backend projection normalizes
 allowed progress into human wording before the UI folds it between the owning
 user prompt and assistant reply.
 
+Phase 26 adds the model-planner evidence contract. Model-planned prompt, steer,
+and package commands are now recognized as commands with a selected model and
+no explicit `runtime_tool_calls`. The backend reports whether each command is
+pending, service-started, running with planner evidence, planner-failed,
+satisfied, or contract-failed. The key clean-architecture rule is now explicit:
+queued commands are not working, and a started native turn without planner
+evidence is a MoonClaw/runtime contract failure rather than a browser thinking
+state.
+
 The next scheduled phases are now explicit:
 
-- Phase 26: model planner evidence contract. A model-planned turn must show real
-  MoonClaw planner evidence or a durable command-scoped planner failure; local
-  UI state must not pretend work is happening.
 - Phase 27: turn ownership and abort contract. Steer/cancel/abort events stay
   command-scoped and settle only through MoonClaw scheduler or abort evidence.
 - Phase 28: package and review model flow gate. Package/review decisions get a

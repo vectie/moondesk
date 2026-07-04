@@ -228,6 +228,7 @@ pub fn runtime_event_ingest_report(
     "events": Json::array(events),
     "rejected": Json::array(rejected),
     "command_progress": runtime_event_command_progress(events),
+    "model_planner_evidence": model_planner_evidence_report(session_id, events),
     "status": if events.length() > 0 {
       "accepted"
     } else {

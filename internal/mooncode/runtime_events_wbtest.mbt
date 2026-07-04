@@ -19,6 +19,38 @@ fn runtime_json_string_array_items(json : Json, key : String) -> Array[String] {
 }
 
 ///|
+fn model_planner_test_packet(command_id : String) -> Json {
+  {
+    "command_id": command_id,
+    "action": "prompt",
+    "model": "mooncode-model",
+    "runtime_tool_calls": [],
+  }
+}
+
+///|
+fn model_planner_test_event(
+  id~ : String,
+  kind~ : String,
+  title~ : String,
+  status~ : String,
+  created_at~ : String,
+  detail~ : String,
+  command_packet~ : Json,
+) -> Json {
+  event_record(
+    id~,
+    lane="runtime",
+    kind~,
+    title~,
+    status~,
+    created_at~,
+    detail~,
+    command_packet~,
+  )
+}
+
+///|
 test "mooncode normalizes MoonCode runtime events into lanes" {
   let fallback_a = runtime_event_fallback_id({
     "event": "assistant_delta",
@@ -616,6 +648,253 @@ test "mooncode runtime event ingest rejects descriptor tool events" {
 }
 
 ///|
+test "mooncode model planner evidence keeps queued commands pending" {
+  let packet = model_planner_test_packet("cmd-model-pending")
+  let command = model_planner_test_event(
+    id="command-pending",
+    kind="command.prompt",
+    title="Prompt queued",
+    status="queued",
+    created_at="2026-07-04T00:00:00Z",
+    detail="hello",
+    command_packet=packet,
+  )
+  let report = model_planner_evidence_report("session-model", [command])
+  assert_eq(json_string(report, "status", default=""), "pending")
+  assert_true(json_bool(report, "contract_satisfied", default=false))
+  assert_eq(
+    runtime_json_int(report, "model_planned_command_count", default=0),
+    1,
+  )
+  assert_eq(
+    runtime_json_int(report, "working_evidence_command_count", default=-1),
+    0,
+  )
+  assert_eq(runtime_json_int(report, "problem_count", default=-1), 0)
+  let commands = runtime_json_array_items(report, "commands")
+  assert_eq(commands.length(), 1)
+  assert_eq(json_string(commands[0], "status", default=""), "pending")
+  assert_false(json_bool(commands[0], "working_evidence", default=true))
+}
+
+///|
+test "mooncode model planner evidence fails started turns without planner proof" {
+  let packet = model_planner_test_packet("cmd-model-missing")
+  let command = model_planner_test_event(
+    id="command-missing",
+    kind="command.prompt",
+    title="Prompt queued",
+    status="queued",
+    created_at="2026-07-04T00:00:00Z",
+    detail="hello",
+    command_packet=packet,
+  )
+  let turn_started = model_planner_test_event(
+    id="turn-started-missing",
+    kind="runtime.turn_started",
+    title="Runtime turn started",
+    status="running",
+    created_at="2026-07-04T00:00:01Z",
+    detail="starting",
+    command_packet=packet,
+  )
+  let report = model_planner_evidence_report("session-model", [
+    command, turn_started,
+  ])
+  assert_eq(json_string(report, "status", default=""), "contract-failed")
+  assert_false(json_bool(report, "contract_satisfied", default=true))
+  assert_eq(
+    runtime_json_int(report, "contract_failed_command_count", default=0),
+    1,
+  )
+  assert_eq(runtime_json_int(report, "problem_count", default=0), 1)
+  let commands = runtime_json_array_items(report, "commands")
+  assert_eq(json_string(commands[0], "status", default=""), "contract-failed")
+  assert_true(json_bool(commands[0], "working_evidence", default=false))
+  let problems = runtime_json_array_items(report, "problems")
+  assert_eq(
+    json_string(problems[0], "reason", default=""),
+    "missing-model-planner-evidence-after-turn-start",
+  )
+}
+
+///|
+test "mooncode model planner evidence accepts command-scoped planner failure" {
+  let packet = model_planner_test_packet("cmd-model-failed")
+  let command = model_planner_test_event(
+    id="command-failed",
+    kind="command.prompt",
+    title="Prompt queued",
+    status="queued",
+    created_at="2026-07-04T00:00:00Z",
+    detail="hello",
+    command_packet=packet,
+  )
+  let turn_started = model_planner_test_event(
+    id="turn-started-failed",
+    kind="runtime.turn_started",
+    title="Runtime turn started",
+    status="running",
+    created_at="2026-07-04T00:00:01Z",
+    detail="starting",
+    command_packet=packet,
+  )
+  let planner_failed = model_planner_test_event(
+    id="planner-failed",
+    kind="runtime.planner_failed",
+    title="Planner failed",
+    status="failed",
+    created_at="2026-07-04T00:00:02Z",
+    detail="model unavailable",
+    command_packet=packet,
+  )
+  let report = model_planner_evidence_report("session-model", [
+    command, turn_started, planner_failed,
+  ])
+  assert_eq(json_string(report, "status", default=""), "planner-failed")
+  assert_true(json_bool(report, "contract_satisfied", default=false))
+  assert_eq(
+    runtime_json_int(report, "planner_failed_command_count", default=0),
+    1,
+  )
+  assert_eq(runtime_json_int(report, "problem_count", default=-1), 0)
+  let commands = runtime_json_array_items(report, "commands")
+  assert_eq(json_string(commands[0], "status", default=""), "planner-failed")
+  assert_eq(runtime_json_int(commands[0], "planner_failed_count", default=0), 1)
+}
+
+///|
+test "mooncode model planner evidence accepts planner to assistant sequence" {
+  let packet = model_planner_test_packet("cmd-model-satisfied")
+  let command = model_planner_test_event(
+    id="command-satisfied",
+    kind="command.prompt",
+    title="Prompt queued",
+    status="queued",
+    created_at="2026-07-04T00:00:00Z",
+    detail="hello",
+    command_packet=packet,
+  )
+  let service_started : Json = {
+    "id": "service-started",
+    "kind": "runtime.service_started",
+    "session_id": "session-model",
+    "service_id": "svc-model",
+    "status": "running",
+    "created_at": "2026-07-04T00:00:01Z",
+    "detail": "service running",
+  }
+  let turn_started = model_planner_test_event(
+    id="turn-started-satisfied",
+    kind="runtime.turn_started",
+    title="Runtime turn started",
+    status="running",
+    created_at="2026-07-04T00:00:02Z",
+    detail="starting",
+    command_packet=packet,
+  )
+  let planner_started = model_planner_test_event(
+    id="planner-started",
+    kind="runtime.planner_started",
+    title="Planner started",
+    status="running",
+    created_at="2026-07-04T00:00:03Z",
+    detail="planning",
+    command_packet=packet,
+  )
+  let planner_selected = model_planner_test_event(
+    id="planner-selected",
+    kind="runtime.planner_selected",
+    title="Planner selected tool calls",
+    status="done",
+    created_at="2026-07-04T00:00:04Z",
+    detail="selected",
+    command_packet=packet,
+  )
+  let reasoning = model_planner_test_event(
+      id="reasoning",
+      kind="reasoning_delta",
+      title="Thinking",
+      status="running",
+      created_at="2026-07-04T00:00:05Z",
+      detail="looking at files",
+      command_packet=packet,
+    )
+    |> runtime_with_field("planner_mode", "model-tool-calls".to_json())
+  let tool_call = model_planner_test_event(
+      id="tool-call",
+      kind=event_tool_call(),
+      title="Read file",
+      status="running",
+      created_at="2026-07-04T00:00:06Z",
+      detail="read package",
+      command_packet=packet,
+    )
+    |> runtime_with_field("event", event_tool_call().to_json())
+    |> runtime_with_field("planner_mode", "model-tool-calls".to_json())
+    |> runtime_with_field("tool_call_id", "call-read".to_json())
+  let tool_result = model_planner_test_event(
+      id="tool-result",
+      kind=event_tool_result(),
+      title="Read complete",
+      status="done",
+      created_at="2026-07-04T00:00:07Z",
+      detail="file contents",
+      command_packet=packet,
+    )
+    |> runtime_with_field("event", event_tool_result().to_json())
+    |> runtime_with_field("tool_call_id", "call-read".to_json())
+  let assistant = event_record(
+    id="assistant",
+    lane="transcript",
+    kind="assistant",
+    title="Assistant response",
+    status="done",
+    created_at="2026-07-04T00:00:08Z",
+    detail="done",
+    command_packet=packet,
+  )
+  let report = model_planner_evidence_report("session-model", [
+    command, service_started, turn_started, planner_started, planner_selected, reasoning,
+    tool_call, tool_result, assistant,
+  ])
+  assert_eq(json_string(report, "status", default=""), "satisfied")
+  assert_true(json_bool(report, "contract_satisfied", default=false))
+  assert_eq(runtime_json_int(report, "satisfied_command_count", default=0), 1)
+  assert_eq(
+    runtime_json_int(report, "working_evidence_command_count", default=0),
+    1,
+  )
+  assert_eq(
+    runtime_json_int(report, "runtime_service_started_count", default=0),
+    1,
+  )
+  let commands = runtime_json_array_items(report, "commands")
+  assert_eq(json_string(commands[0], "status", default=""), "satisfied")
+  assert_eq(
+    runtime_json_int(commands[0], "planner_started_count", default=0),
+    1,
+  )
+  assert_eq(
+    runtime_json_int(commands[0], "planner_selected_count", default=0),
+    1,
+  )
+  assert_eq(
+    runtime_json_int(commands[0], "planner_reasoning_count", default=0),
+    1,
+  )
+  assert_eq(
+    runtime_json_int(commands[0], "model_tool_call_count", default=0),
+    1,
+  )
+  assert_eq(runtime_json_int(commands[0], "tool_result_count", default=0), 1)
+  assert_eq(
+    runtime_json_int(commands[0], "assistant_event_count", default=0),
+    1,
+  )
+}
+
+///|
 test "mooncode normalizes native runtime loop responses" {
   guard normalize_runtime_loop_response_event(
       {
@@ -1097,6 +1376,14 @@ test "mooncode runtime event sink response owns event surface" {
     ),
     "idle",
   )
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(response, "model_planner_evidence"),
+      "status",
+      default="",
+    ),
+    "no-model-planned-commands",
+  )
   let aggregate = runtime_event_sink_result_response(
     "session-demo",
     [event],
@@ -1425,5 +1712,9 @@ test "mooncode runtime event ingest result response owns manifest surface" {
       default="",
     ),
     "session-demo",
+  )
+  assert_true(
+    runtime_json_object_field(response, "model_planner_evidence")
+    is Some(Object(_)),
   )
 }

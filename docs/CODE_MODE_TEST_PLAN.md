@@ -554,6 +554,19 @@ allowed MoonClaw turn-start/reasoning/tool evidence stops appearing between the
 owning user prompt and assistant reply, or if visible progress exposes
 MoonClaw/runtime bookkeeping, `model-tool-calls`, command ids, or raw tool JSON.
 
+Model planner evidence gate:
+
+```bash
+moon test internal/mooncode --filter "mooncode model planner evidence*" --target native
+```
+
+This deterministic Phase 26 gate protects the first-time clean runtime
+contract for model-backed turns. It fails if a queued model command is treated
+as active work, if a started turn without planner evidence remains in a vague
+thinking state, if `runtime.planner_failed` is not accepted as durable
+command-scoped failure evidence, or if a planner-to-assistant sequence cannot
+prove one append-only command owner.
+
 Runtime-service failure gate:
 
 ```bash
@@ -604,6 +617,9 @@ Code mode is sufficiently tested when:
 - a visible-progress projection gate proves arbitrary runtime events stay out of
   chat while command-scoped MoonClaw progress evidence is rendered with
   user-facing wording
+- a model-planner evidence gate proves local UI state cannot pretend active
+  work; MoonClaw must emit command-scoped planner evidence, assistant/failure
+  evidence, or a clear runtime contract failure
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

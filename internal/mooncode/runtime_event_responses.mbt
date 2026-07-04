@@ -23,6 +23,7 @@ pub fn runtime_event_sink_response(
     "command_progress": runtime_event_command_progress(events),
     "unscoped_progress": runtime_event_unscoped_progress(events),
     "runtime_service": runtime_service_state(session_id, events),
+    "model_planner_evidence": model_planner_evidence_report(session_id, events),
     "post_contract": runtime_event_ingest_contract(session_id),
     "runtime_protocol": runtime_protocol_contract_json(),
     "owner": runtime_owner_record(),
@@ -259,6 +260,9 @@ pub fn runtime_event_ingest_result_response(
     "ingest_report": ingest_report,
     "event_log_path": event_log_path,
     "command_progress": runtime_event_command_progress(all_events),
+    "model_planner_evidence": model_planner_evidence_report(
+      session_id, all_events,
+    ),
     "action_plan": runtime_json_object_field_or_empty(
       final_session, "mooncode_last_action_plan_manifest",
     ),

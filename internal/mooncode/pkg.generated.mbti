@@ -368,6 +368,10 @@ pub fn merge_events(Array[Json], Array[Json], Array[Json]) -> Array[Json]
 
 pub fn merge_session_listing_rows(Array[Json], Array[Json]) -> Array[Json]
 
+pub fn model_planner_evidence_contract_json() -> Json
+
+pub fn model_planner_evidence_report(String, Array[Json]) -> Json
+
 pub fn moonclaw_event_mapping_json() -> Json
 
 pub fn moonclaw_native_capabilities_readiness(Json) -> Json

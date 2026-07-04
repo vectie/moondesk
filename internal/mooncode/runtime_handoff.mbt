@@ -10,8 +10,10 @@ pub fn runtime_event_ingest_contract(session_id : String) -> Json {
       "{\"events\":[...]} batch payload",
     ],
     "tool_call_contract": tool_call_contract_json(),
+    "model_planner_evidence_contract": model_planner_evidence_contract_json(),
     "tool_call_validation": "Tool-call and tool-result events should satisfy tool_call_contract before MoonClaw executes or reports a tool; invalid tools should be reported as tool_call_decode_error.",
     "command_scope_rule": "Events intended to satisfy command runtime proof must include `command_packet` or compact `command_id` plus matching `action`; unscoped events render in transcript but do not prove execution.",
+    "model_planner_rule": "Model-planned prompt, steer, and package commands must emit command-scoped planner evidence or runtime.planner_failed after runtime.turn_started; queued commands without MoonClaw evidence are pending, not working.",
     "normalization": "Events are normalized into MoonCode lanes and appended to \{@moonsuite.product_display_artifact("mooncode", "sessions/<session-id>/events.jsonl")}.",
     "refreshes": [
       "action-plan", "runtime-evidence", "eval-report", "session-snapshot", "runtime-handoff",
@@ -145,6 +147,7 @@ pub fn runtime_handoff_manifest(
     "runtime_turn_packet": turn_packet,
     "runtime_supervisor": supervisor,
     "runtime_event_sink": runtime_event_ingest_contract(session_id),
+    "model_planner_evidence_contract": model_planner_evidence_contract_json(),
     "last_command_packet": summary_json_object_field_or_empty(
       session, "mooncode_last_command_packet",
     ),

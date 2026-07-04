@@ -956,7 +956,7 @@ Exit tests:
 
 ## Phase 26 - Model Planner Evidence Contract
 
-Status: planned.
+Status: implemented as the model-planner evidence contract gate.
 
 Problem:
 
@@ -965,18 +965,47 @@ Problem:
   or a durable command-scoped planner failure.
 - The UI must not show "working" from local state when no MoonClaw start,
   reasoning, tool-call, assistant, or failure event exists.
+- Queued commands and started runtime turns were previously too easy to merge
+  into one vague "thinking" state. A clean implementation needs a typed
+  distinction: queued, service-started, running with planner evidence,
+  planner-failed, satisfied, or contract-failed.
 
 Work:
 
 - Define the required event sequence for model-planned prompt turns:
   command prompt -> runtime service start -> runtime turn start -> planner
   evidence or planner failure -> tool/result evidence -> assistant/failure.
-- Add a deterministic fixture gate for model planner output without requiring
-  live external model credentials.
-- Add a live/manual model gate that records model name, tool schema, selected
-  tools, tool results, final answer, and failure mode.
-- Treat missing planner evidence as a backend/runtime contract failure, not UI
-  "thinking".
+- Add `mooncode-model-planner-evidence-contract` as a backend contract exposed
+  through the runtime protocol, runtime-event ingest contract, runtime-event
+  sink response, and ingest-result response.
+- Classify a model-planned command as a prompt, steer, or package command with
+  a selected model and no explicit `runtime_tool_calls`.
+- Keep a queued command with no MoonClaw evidence as `pending`; this state is
+  not active work and must not create a fake working row.
+- Treat `runtime.turn_started` without planner evidence as `contract-failed`.
+- Treat command-scoped `runtime.planner_failed` as durable runtime failure
+  evidence, not as a missing-evidence UI loop.
+- Accept a complete planner sequence only when the same command id owns planner
+  start/selection/reasoning or model tool-call evidence and then assistant or
+  terminal evidence.
+- Add deterministic fixture gates for pending, missing-evidence failure,
+  planner failure, and successful planner-to-assistant completion without
+  requiring live model credentials.
+
+Exit tests:
+
+- model-planned command with only the prompt record reports `pending`, zero
+  working evidence, and no problems
+- model-planned command with `runtime.turn_started` but no planner evidence
+  reports `contract-failed` with
+  `missing-model-planner-evidence-after-turn-start`
+- command-scoped `runtime.planner_failed` reports `planner-failed` without
+  creating a missing-evidence problem
+- planner start/selection/reasoning/tool/result plus assistant evidence reports
+  `satisfied`
+- runtime-event sink and ingest-result responses expose
+  `model_planner_evidence`
+- no UI or projection path needs to infer active work from local state alone
 
 ## Phase 27 - Turn Ownership and Abort Contract
 
