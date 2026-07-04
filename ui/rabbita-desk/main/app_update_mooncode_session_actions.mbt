@@ -113,6 +113,7 @@ fn mooncode_send_composer(
       Some(session) => {
         let action = mooncode_composer_action(model, session)
         let prompt = model.mooncode_prompt.trim().to_owned()
+        let client_turn_id = mooncode_client_turn_id(model, session.id, prompt)
         (
           @rabbita.batch([
             send_mooncode_composer_cmd(dispatch, model, session),
@@ -129,10 +130,12 @@ fn mooncode_send_composer(
               model.mooncode_conversation_rows,
               session.id,
               prompt,
+              client_turn_id~,
             ),
             mooncode_pending_prompts: mooncode_append_pending_prompt(
               model.mooncode_pending_prompts,
               session.id,
+              client_turn_id,
               prompt,
               mooncode_transcript_items(model, session).length(),
               mooncode_transcript_events(model, session).length(),
@@ -148,6 +151,9 @@ fn mooncode_send_composer(
       None => {
         let prompt = model.mooncode_prompt.trim().to_owned()
         let draft_session_id = mooncode_draft_session_id(model)
+        let client_turn_id = mooncode_client_turn_id(
+          model, draft_session_id, prompt,
+        )
         let draft_session = mooncode_draft_session(model).unwrap_or(
           mooncode_local_draft_session_for_prompt(model, draft_session_id),
         )
@@ -167,10 +173,12 @@ fn mooncode_send_composer(
               model.mooncode_conversation_rows,
               draft_session_id,
               prompt,
+              client_turn_id~,
             ),
             mooncode_pending_prompts: mooncode_append_pending_prompt(
               model.mooncode_pending_prompts,
               draft_session_id,
+              client_turn_id,
               prompt,
               mooncode_transcript_items(model, draft_session).length(),
               mooncode_transcript_events(model, draft_session).length(),
@@ -221,6 +229,7 @@ fn mooncode_local_draft_session_for_prompt(
 fn mooncode_append_pending_prompt(
   prompts : Array[MoonCodePendingPrompt],
   session_id : String,
+  client_turn_id : String,
   content : String,
   after_row_count : Int,
   after_event_count : Int,
@@ -231,6 +240,7 @@ fn mooncode_append_pending_prompt(
   }
   next.push({
     session_id,
+    client_turn_id,
     content,
     status: "queued",
     after_row_count,

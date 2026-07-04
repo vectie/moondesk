@@ -313,10 +313,26 @@ fn mooncode_events_acknowledge_pending_prompt(
   prompt : MoonCodePendingPrompt,
 ) -> Bool {
   for event in events {
-    if mooncode_event_is_user_prompt(event) &&
-      event.detail.trim().to_owned() == prompt.content {
+    if !mooncode_event_is_user_prompt(event) {
+      continue
+    }
+    let event_client_turn_id = mooncode_event_client_turn_id(event)
+    if prompt.client_turn_id != "" || event_client_turn_id != "" {
+      if prompt.client_turn_id != "" &&
+        prompt.client_turn_id == event_client_turn_id {
+        return true
+      }
+    } else if event.detail.trim().to_owned() == prompt.content {
       return true
     }
   }
   false
+}
+
+///|
+fn mooncode_event_client_turn_id(event : MoonCodeEvent) -> String {
+  match event.command_packet {
+    Some(packet) => json_field_string(packet, "client_turn_id", default="")
+    None => ""
+  }
 }

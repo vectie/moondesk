@@ -38,6 +38,7 @@ turns and Moondesk rendering those turns.
     {
       "kind": "mooncode-conversation-turn",
       "turn_id": "turn-...",
+      "client_turn_id": "client-turn-...",
       "command_id": "command-...",
       "status": "queued|running|done|failed",
       "user": {
@@ -87,7 +88,7 @@ turns and Moondesk rendering those turns.
 
 ## Phase 1 - Canonical Backend Projection
 
-Status: implemented as foundation, still needs stricter adoption.
+Status: complete.
 
 Work:
 
@@ -107,7 +108,7 @@ Exit tests:
 
 ## Phase 2 - UI Canonical Read Path
 
-Status: current active phase.
+Status: complete for the primary read path.
 
 Work:
 
@@ -127,12 +128,22 @@ Exit tests:
 
 ## Phase 3 - Send API Turn Creation
 
+Status: active, core contract implemented.
+
 Work:
 
 - Every send creates a `client_turn_id` before network work starts.
-- Backend returns an acknowledged `turn_id` and canonical queued turn.
-- UI replaces the local optimistic turn by `client_turn_id` or `turn_id`.
-- Remove event-count based pending prompt positioning from the send path.
+- Create-session send and existing-session send both post `client_turn_id`.
+- Backend returns `client_turn_id`, `turn_id`, `mooncode_turn`, and
+  `mooncode_conversation` in the immediate command response.
+- UI stores the same id on the optimistic row and pending prompt.
+- UI drops acknowledged optimistic rows by `client_turn_id` before using any
+  content fallback.
+- Pending prompt acknowledgement prefers `command_packet.client_turn_id`, so
+  identical second/third prompts are not cleared by an older event with the
+  same text.
+- Remaining cleanup: delete the old event-count pending insertion path after
+  all primary render tests use backend canonical turns.
 
 Exit tests:
 
@@ -143,12 +154,17 @@ Exit tests:
 
 ## Phase 4 - Runtime Ownership
 
+Status: active, browser-side runtime startup removed from the primary path.
+
 Work:
 
 - Backend command enqueue starts or resumes MoonClaw runtime server-side.
 - UI no longer decides runtime startup from pending prompts or sink snapshots.
 - "Working" appears only from canonical turn status or attached progress.
 - Duplicate runtime-service starts are rejected/fenced server-side.
+- The frontend no longer has a command producer for
+  `/api/mooncode/sessions/:id/runtime-service`.
+- Runtime sink snapshots update factual event/service status only.
 
 Exit tests:
 
@@ -175,6 +191,8 @@ Exit tests:
 
 ## Phase 6 - Delete Stale Frontend Implementation
 
+Status: partially complete.
+
 Work:
 
 - Delete grouped user prefix repair.
@@ -184,6 +202,10 @@ Work:
 - Delete transcript rendering from `session.transcript` except as import
   fallback for historical data.
 - Move raw log visualization to a diagnostics/details surface.
+- Completed in this pass: deleted UI runtime-start sink heuristic, deleted
+  browser runtime-service command producer, deleted stale runtime-service
+  message handling, and replaced pending prompt acknowledgement with
+  `client_turn_id`.
 
 Exit tests:
 
@@ -238,9 +260,12 @@ Exit tests:
 
 ## Current Cleanup Direction
 
-The next implementation step is to make Moondesk read
-`session.mooncode_conversation` as the primary transcript and demote
-`mooncode_stream_events`, `mooncode_runtime_event_sink`,
-`mooncode_pending_prompts`, and `mooncode_conversation_rows` to temporary
-compatibility state. After Phase 3, those compatibility fields should be
-deleted from the main chat path rather than patched again.
+The next implementation step is to finish deleting the remaining compatibility
+renderer paths:
+
+- remove pending prompt event-count insertion from the main chat path
+- remove content-based user/assistant ownership checks from the canonical path
+- keep raw stream/runtime sink rendering only in diagnostics
+- require `client_turn_id` or `command_id` on all user-facing runtime events
+- add browser smoke coverage for first, second, and third turns after hard
+  refresh

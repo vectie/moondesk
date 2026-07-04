@@ -240,26 +240,6 @@ fn mooncode_conversation_has_session(
 }
 
 ///|
-fn mooncode_conversation_has_open_user_turn(
-  rows : Array[MoonCodeConversationRow],
-  session_id : String,
-) -> Bool {
-  let mut open = false
-  for row in rows {
-    if row.session_id != session_id {
-      continue
-    }
-    let role = mooncode_transcript_message_role(row.role)
-    if role == "user" {
-      open = true
-    } else if role == "assistant" {
-      open = false
-    }
-  }
-  open
-}
-
-///|
 fn mooncode_replace_running_assistant_row(
   rows : Array[MoonCodeConversationRow],
   session_id : String,
@@ -294,42 +274,26 @@ fn mooncode_append_conversation_user_prompt(
   rows : Array[MoonCodeConversationRow],
   session_id : String,
   content : String,
+  client_turn_id? : String = "",
 ) -> Array[MoonCodeConversationRow] {
   let next = mooncode_copy_conversation_rows(rows)
+  let row_key = if client_turn_id == "" {
+    "ui-user:\{session_id}:\{next.length()}"
+  } else {
+    client_turn_id
+  }
   mooncode_push_conversation_row(
     next,
     session_id,
     "user",
     content,
     "queued",
-    "ui-user:\{session_id}:\{next.length()}",
+    row_key,
     dedupe_content=false,
   )
   next
 }
 
-///|
-fn mooncode_append_conversation_assistant_status(
-  rows : Array[MoonCodeConversationRow],
-  session_id : String,
-  content : String,
-  status : String,
-  key : String,
-) -> Array[MoonCodeConversationRow] {
-  let next = mooncode_copy_conversation_rows(rows)
-  mooncode_push_conversation_row(
-    next,
-    session_id,
-    "assistant",
-    content,
-    status,
-    key,
-    dedupe_content=true,
-  )
-  next
-}
-
-///|
 fn mooncode_reassign_conversation_session(
   rows : Array[MoonCodeConversationRow],
   from_session_id : String,

@@ -1648,7 +1648,11 @@ fn mooncode_insert_due_pending_prompts(
 
 ///|
 fn mooncode_pending_prompt_key(prompt : MoonCodePendingPrompt) -> String {
-  "\{prompt.session_id}\n\{prompt.after_row_count}\n\{prompt.content}"
+  if prompt.client_turn_id != "" {
+    prompt.client_turn_id
+  } else {
+    "\{prompt.session_id}\n\{prompt.after_row_count}\n\{prompt.content}"
+  }
 }
 
 ///|

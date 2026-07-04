@@ -21,10 +21,15 @@ fn create_mooncode_session_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Cmd {
+  let prompt = trimmed_or(model.mooncode_prompt, mooncode_default_prompt(model))
+  let client_turn_id = mooncode_client_turn_id(
+    model, mooncode_draft_session_id(model), prompt,
+  )
   let body : Json = {
     "workspace_id": model.selected_workspace_id,
     "title": mooncode_new_session_title(model),
-    "message": trimmed_or(model.mooncode_prompt, mooncode_default_prompt(model)),
+    "message": prompt,
+    "client_turn_id": client_turn_id,
     "model": mooncode_selected_runtime_model(model, None),
     "web_search": model.mooncode_web_search,
     "context_path": mooncode_context_path(model),
@@ -111,9 +116,11 @@ fn mooncode_session_command_cmd(
     context_path
   }
   let selected_model = mooncode_selected_runtime_model(model, Some(session))
+  let client_turn_id = mooncode_client_turn_id(model, session.id, message)
   let body : Json = {
     "action": action,
     "message": message,
+    "client_turn_id": client_turn_id,
     "model": selected_model,
     "web_search": model.mooncode_web_search,
     "context_path": target_path,
@@ -128,6 +135,19 @@ fn mooncode_session_command_cmd(
       ),
     )
   })
+}
+
+///|
+fn mooncode_client_turn_id(
+  model : Model,
+  session_id : String,
+  content : String,
+) -> String {
+  let seed = session_id +
+    ":" + content.trim().to_owned() +
+    ":" + model.mooncode_conversation_rows.length().to_string() +
+    ":" + model.mooncode_pending_prompts.length().to_string()
+  @desk.stable_id("mooncode-client-turn", seed)
 }
 
 ///|

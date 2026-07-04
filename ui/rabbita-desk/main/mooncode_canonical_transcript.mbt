@@ -1,6 +1,7 @@
 ///|
 struct MoonCodeCanonicalTurn {
   mut command_id : String
+  mut client_turn_id : String
   mut user : MoonCodeTranscriptRow?
   body_items : Array[MoonCodeTranscriptItem]
   activity_keys : Array[String]
@@ -78,6 +79,7 @@ fn mooncode_canonical_turns_from_backend_conversation(
       for backend_turn in conversation.turns {
         mooncode_canonical_note_turn_metadata(backend_turn)
         let turn = mooncode_canonical_empty_turn(backend_turn.command_id)
+        turn.client_turn_id = backend_turn.client_turn_id
         match mooncode_canonical_message_row_from_json(backend_turn.user) {
           Some(row) => turn.user = Some(row)
           None => ()
@@ -125,6 +127,7 @@ fn mooncode_canonical_note_turn_metadata(
 ) -> Unit {
   ignore(turn.kind)
   ignore(turn.turn_id)
+  ignore(turn.client_turn_id)
   ignore(turn.started_at)
   ignore(turn.updated_at)
   ignore(turn.items)
@@ -257,6 +260,7 @@ fn mooncode_canonical_turns_from_events(
 fn mooncode_canonical_empty_turn(command_id : String) -> MoonCodeCanonicalTurn {
   {
     command_id,
+    client_turn_id: "",
     user: None,
     body_items: [],
     activity_keys: [],
@@ -320,6 +324,10 @@ fn mooncode_canonical_append_local_conversation_rows(
       continue
     }
     if role == "user" {
+      if row.key != "" &&
+        mooncode_canonical_turns_have_client_turn_id(turns, row.key) {
+        continue
+      }
       let ordinal = mooncode_canonical_next_seen_ordinal(user_seen, content)
       if mooncode_canonical_user_occurrence_count(turns, content) >= ordinal {
         continue
@@ -354,6 +362,22 @@ fn mooncode_canonical_append_local_conversation_rows(
       }
     }
   }
+}
+
+///|
+fn mooncode_canonical_turns_have_client_turn_id(
+  turns : Array[MoonCodeCanonicalTurn],
+  client_turn_id : String,
+) -> Bool {
+  if client_turn_id == "" {
+    return false
+  }
+  for turn in turns {
+    if turn.client_turn_id == client_turn_id {
+      return true
+    }
+  }
+  false
 }
 
 ///|

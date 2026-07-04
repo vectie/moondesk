@@ -16,6 +16,10 @@ pub fn command_packet(
     "protocol": protocol_version(),
     "kind": kind_command(),
     "command_id": command_id,
+    "client_turn_id": trimmed_or(
+      json_string(payload, "client_turn_id", default=""),
+      fallback=command_id,
+    ),
     "action": action,
     "control": command_control(action),
     "approval": command_approval(action),

@@ -43,6 +43,16 @@ fn mooncode_immediate_command_response(
   command_packet : Json,
 ) -> Json {
   let command_id = json_string(command_packet, "command_id", default="")
+  let client_turn_id = mooncode_response_text_or(
+    json_string(command_packet, "client_turn_id", default=""),
+    fallback=command_id,
+  )
+  let conversation = mooncode_command_response_conversation(session)
+  let turn = mooncode_conversation_turn_for_command(conversation, command_id)
+  let turn_id = mooncode_response_text_or(
+    json_string(turn, "turn_id", default=""),
+    fallback=command_id,
+  )
   let payload = mooncode_session_with_field(
     mooncode_session_with_field(
       mooncode_session_with_field(session, "accepted", true.to_json()),
@@ -51,6 +61,23 @@ fn mooncode_immediate_command_response(
     ),
     "command_packet",
     command_packet,
+  )
+  let payload = mooncode_session_with_field(
+    mooncode_session_with_field(
+      mooncode_session_with_field(
+        mooncode_session_with_field(
+          payload,
+          "client_turn_id",
+          client_turn_id.to_json(),
+        ),
+        "turn_id",
+        turn_id.to_json(),
+      ),
+      "mooncode_turn",
+      turn,
+    ),
+    "mooncode_conversation",
+    conversation,
   )
   let payload = mooncode_session_with_field(
     payload,
@@ -72,6 +99,40 @@ fn mooncode_immediate_command_response(
     },
     next_action="poll_mooncode_stream",
   )
+}
+
+///|
+fn mooncode_command_response_conversation(session : Json) -> Json {
+  @mooncode.conversation_projection(
+    session,
+    json_array_items(session, "mooncode_command_events"),
+  )
+}
+
+///|
+fn mooncode_conversation_turn_for_command(
+  conversation : Json,
+  command_id : String,
+) -> Json {
+  if command_id == "" {
+    return Json::object({})
+  }
+  for turn in json_array_items(conversation, "turns") {
+    if json_string(turn, "command_id", default="") == command_id {
+      return turn
+    }
+  }
+  Json::object({})
+}
+
+///|
+fn mooncode_response_text_or(text : String, fallback~ : String) -> String {
+  let normalized = text.trim().to_owned()
+  if normalized == "" {
+    fallback
+  } else {
+    normalized
+  }
 }
 
 ///|

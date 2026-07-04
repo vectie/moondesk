@@ -8,6 +8,7 @@ struct MoonCodeMessage {
 ///|
 struct MoonCodePendingPrompt {
   session_id : String
+  client_turn_id : String
   content : String
   status : String
   after_row_count : Int
@@ -46,6 +47,7 @@ struct MoonCodeEvent {
 struct MoonCodeConversationTurn {
   kind : String
   turn_id : String
+  client_turn_id : String
   command_id : String
   status : String
   started_at : String

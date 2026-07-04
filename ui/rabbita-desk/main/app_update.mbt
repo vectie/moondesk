@@ -62,8 +62,6 @@ fn update(
       update_mooncode_results(dispatch, msg, model)
     CreatedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     CompletedMoonCodeCommand(_) => update_mooncode_results(dispatch, msg, model)
-    StartedMoonCodeRuntimeService(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
     SelectWorkspaceMode(_) => update_navigation_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)
     SelectWorkspace(_) => update_navigation_actions(dispatch, msg, model)

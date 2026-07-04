@@ -1,6 +1,7 @@
 ///|
 priv struct ConversationTurnDraft {
   mut turn_id : String
+  mut client_turn_id : String
   mut command_id : String
   mut user : Json
   progress : Array[Json]
@@ -19,11 +20,13 @@ fn conversation_empty_message() -> Json {
 ///|
 fn conversation_turn_draft(
   turn_id~ : String,
+  client_turn_id~ : String,
   command_id~ : String,
   created_at~ : String,
 ) -> ConversationTurnDraft {
   {
     turn_id,
+    client_turn_id,
     command_id,
     user: conversation_empty_message(),
     progress: [],
@@ -83,17 +86,30 @@ fn conversation_apply_user_event(
   event : Json,
 ) -> Unit {
   let command_id = conversation_event_command_id(event)
+  let client_turn_id = conversation_event_client_turn_id(event)
   let created_at = json_string(event, "created_at", default="")
   let turn_id = conversation_turn_id_for_event(event, command_id)
   let index = conversation_turn_index_for_command(turns, command_id)
   let target = if index >= 0 {
     index
   } else {
-    turns.push(conversation_turn_draft(turn_id~, command_id~, created_at~))
+    turns.push(
+      conversation_turn_draft(
+        turn_id~,
+        client_turn_id~,
+        command_id~,
+        created_at~,
+      ),
+    )
     turns.length() - 1
   }
   let turn = turns[target]
   turn.turn_id = if turn.turn_id == "" { turn_id } else { turn.turn_id }
+  turn.client_turn_id = if turn.client_turn_id == "" {
+    client_turn_id
+  } else {
+    turn.client_turn_id
+  }
   turn.command_id = if turn.command_id == "" {
     command_id
   } else {
@@ -193,6 +209,7 @@ fn conversation_turn_json(turn : ConversationTurnDraft) -> Json {
   {
     "kind": "mooncode-conversation-turn",
     "turn_id": turn.turn_id,
+    "client_turn_id": turn.client_turn_id,
     "command_id": turn.command_id,
     "status": conversation_final_turn_status(turn, assistant),
     "started_at": turn.started_at,
@@ -319,6 +336,16 @@ fn conversation_event_command_id(event : Json) -> String {
     return event_id
   }
   ""
+}
+
+///|
+fn conversation_event_client_turn_id(event : Json) -> String {
+  let explicit = json_string(event, "client_turn_id", default="")
+  if explicit != "" {
+    return explicit
+  }
+  let packet = runtime_json_object_field_or_empty(event, "command_packet")
+  json_string(packet, "client_turn_id", default="")
 }
 
 ///|

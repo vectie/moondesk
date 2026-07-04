@@ -32,6 +32,7 @@ test "mooncode immediate queued session appends user prompt" {
   }
   let packet : Json = {
     "command_id": "cmd-1",
+    "client_turn_id": "client-turn-1",
     "protocol": "mooncode.v1",
     "kind": "mooncode.command",
     "action": "prompt",
@@ -66,6 +67,7 @@ test "mooncode immediate command response exposes clean phase6 envelope" {
   }
   let packet : Json = {
     "command_id": "cmd-1",
+    "client_turn_id": "client-turn-1",
     "protocol": "mooncode.v1",
     "kind": "mooncode.command",
     "action": "prompt",
@@ -83,6 +85,22 @@ test "mooncode immediate command response exposes clean phase6 envelope" {
   )
   assert_true(json_bool(response, "accepted", default=false))
   assert_eq(json_string(response, "command_id", default=""), "cmd-1")
+  assert_eq(
+    json_string(response, "client_turn_id", default=""),
+    "client-turn-1",
+  )
+  assert_eq(json_string(response, "turn_id", default=""), "cmd-1")
+  let turn = json_object_field_or_empty(response, "mooncode_turn")
+  assert_eq(json_string(turn, "kind", default=""), "mooncode-conversation-turn")
+  assert_eq(json_string(turn, "command_id", default=""), "cmd-1")
+  assert_eq(json_string(turn, "client_turn_id", default=""), "client-turn-1")
+  let user = json_object_field_or_empty(turn, "user")
+  assert_eq(json_string(user, "content", default=""), "hello mooncode")
+  let conversation = json_object_field_or_empty(
+    response, "mooncode_conversation",
+  )
+  assert_eq(json_int(conversation, "turn_count", default=0), 1)
+  assert_eq(json_array_items(conversation, "turns").length(), 1)
   assert_eq(
     json_string(response, "api_contract", default=""),
     "moonsuite.phase6.v1",
@@ -152,6 +170,7 @@ test "mooncode prompt command packet seeds durable session creation" {
   }
   let payload : Json = {
     "context_path": "tools/demo/main.mbt",
+    "client_turn_id": "client-turn-2",
     "web_search": false,
   }
   let packet = @mooncode.projected_command_packet(
@@ -159,6 +178,7 @@ test "mooncode prompt command packet seeds durable session creation" {
   )
   assert_eq(json_string(packet, "protocol", default=""), "mooncode.v1")
   assert_eq(json_string(packet, "action", default=""), "prompt")
+  assert_eq(json_string(packet, "client_turn_id", default=""), "client-turn-2")
   assert_eq(json_string(packet, "control", default=""), "prompt")
   assert_eq(json_string(packet, "approval", default=""), "user")
   assert_eq(
