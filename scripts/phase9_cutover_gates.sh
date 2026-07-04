@@ -19,6 +19,9 @@ bash "${ROOT}/scripts/phase8_migration_gates.sh" "${MODE}"
 echo "==> Phase 9 cutover validation"
 bash "${ROOT}/scripts/validate_phase9_cutover.sh"
 
+echo "==> Phase 9 MoonSuite filesystem contract rollout validation"
+bash "${ROOT}/scripts/validate_moonsuite_contract_rollout.sh"
+
 echo "==> Phase 9 conversation contract rollout validation"
 bash "${ROOT}/scripts/validate_conversation_contract_rollout.sh"
 

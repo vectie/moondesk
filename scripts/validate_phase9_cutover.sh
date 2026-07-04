@@ -26,6 +26,15 @@ is_allowed_hit() {
       # Lepusa smoke asserts legacy product roots are not created.
       return 0
       ;;
+    moondesk:./scripts/mooncode_runtime_control_smoke.mjs:*|\
+    moondesk:./scripts/mooncode_live_runtime_control_boundary_smoke.mjs:*|\
+    moondesk:./scripts/mooncode_runtime_service_failure_smoke.mjs:*|\
+    moondesk:./scripts/mooncode_live_runtime_loop_smoke.mjs:*|\
+    moondesk:./scripts/mooncode_live_runtime_contract_smoke.mjs:*|\
+    moondesk:./scripts/mooncode_live_runtime_multiturn_smoke.mjs:*)
+      # MoonCode runtime smokes assert legacy MoonClaw roots are not created.
+      return 0
+      ;;
     moondesk:./scripts/validate_fresh_suite_residuals.sh:*)
       # Phase 8 residual scan has its own legacy-string detector and allowlist.
       return 0

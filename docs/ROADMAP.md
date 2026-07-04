@@ -168,6 +168,9 @@ Still needed:
 - add contract-boundary tests proving product repos can consume MoonLib
   filesystem contracts without depending on MoonStat
 - add cross-product integration tests from a fresh MoonSuite root
+- keep `scripts/validate_moonsuite_contract_rollout.sh` passing so MoonLib
+  remains the single owner of MoonSuite filesystem contracts and active product
+  source does not reintroduce hard-coded product-home formulas.
 
 ## Engineering Bar
 

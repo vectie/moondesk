@@ -48,6 +48,7 @@ run_repo_step "Rabbita JS tests" "${ROOT}/ui/rabbita-desk" "${MOON_BIN}" test --
 run_repo_step "Rabbita production build" "${ROOT}/ui/rabbita-desk" npm run build
 
 run_step "MoonLib consumer pins" bash "${ROOT}/scripts/validate_moonlib_consumer_pins.sh"
+run_step "MoonSuite contract rollout" bash "${ROOT}/scripts/validate_moonsuite_contract_rollout.sh"
 run_step "Fresh-suite residual scan" bash "${ROOT}/scripts/validate_fresh_suite_residuals.sh"
 run_step "Core boundary validation" bash "${ROOT}/scripts/validate-core-boundaries.sh"
 

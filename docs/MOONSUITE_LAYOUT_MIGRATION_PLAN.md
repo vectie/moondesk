@@ -945,8 +945,9 @@ Moondesk gate commands:
 
 - `bash scripts/phase8_migration_gates.sh fast` runs the repeatable local
   Phase 8 wall: Moondesk native format/info/check/test, Rabbita JS
-  check/test/build, MoonLib consumer pins, fresh-suite residual scans, and
-  cross-repo boundary validation.
+  check/test/build, MoonLib consumer pins, MoonSuite filesystem contract
+  rollout validation, fresh-suite residual scans, and cross-repo boundary
+  validation.
 - `bash scripts/phase8_migration_gates.sh full` runs the fast wall plus API
   smoke, Desk browser smoke, and cross-product fresh-suite smoke. The Desk
   browser smoke wrapper defaults to `all`, which runs both the populated
@@ -1049,6 +1050,10 @@ Phase 9 gates:
   prove the shared conversation contract is source-owned by MoonLib, consumed
   by Moondesk's MoonCode adapter, and not mirrored by product-local old
   conversation contract ids or wrappers.
+- `bash scripts/validate_moonsuite_contract_rollout.sh` can be run alone to
+  prove the shared filesystem contract is source-owned by MoonLib, consumed by
+  Moondesk's MoonWiki/core adapters, and not replaced by hard-coded product-home
+  formulas in active product source.
 
 Phase 9 completion criteria:
 
@@ -1083,6 +1088,18 @@ Phase 9 cutover evidence:
   retired source-checkout redirection helpers and warnings, including the old
   dedicated-user-workspace fallback copy. The only allowed Moondesk script
   reference is the API smoke assertion proving that the warning is absent.
+- This Phase 9 contract-hardening slice adds
+  `scripts/validate_moonsuite_contract_rollout.sh` and wires it into the Phase
+  8 and Phase 9 gates. The validator checks MoonLib `0.1.8` as the single
+  owner of `ProductHome`, workspace-root suite normalization, product artifact
+  constructors, accepted-output paths, and the default product registry;
+  verifies Moondesk consumes those contracts through the MoonWiki layout facade
+  and `core/paths.mbt`; and scans MoonLib, Moondesk, MoonRobo, Moontown,
+  MoonClaw, MoonStat, MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and
+  Lepusa active source for unapproved direct `.moonsuite/products` or
+  `.tmp/products` product-home formulas. The only active-source mirror allowed
+  is MoonVis's frontend-only layout module; concrete smoke scripts may still
+  assert filesystem effects and absence of stale homes.
 - This Phase 9 explicit-root slice removes the Moondesk CLI fallback from
   `$HOME` or `USERPROFILE` to `moondesk-workspace`. `serve`, `desktop`,
   `bundle`, `release`, launch-agent generation/install, and Lepusa live-project
