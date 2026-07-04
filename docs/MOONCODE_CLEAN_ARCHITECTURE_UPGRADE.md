@@ -1396,6 +1396,45 @@ Exit tests:
   list
 - the Phase 8 migration wall rejects raw MoonCode router method checks
 
+## Phase 36 - Host-Visible Method Contract
+
+Status: implemented as a real HTTP boundary smoke for MoonCode method policy.
+
+Problem:
+
+- Phase 35 made router method dispatch contract-backed in code, but the
+  migration wall still did not prove the observable host API response.
+- The UI and desktop host never call `mooncode_route_accepts_*` directly. They
+  see HTTP status codes, `Allow` headers, and JSON API contracts.
+- Without an HTTP-level gate, a future response helper, router wrapper, or
+  server boundary change could preserve the internal test while breaking the
+  actual MoonCode client contract.
+
+Work:
+
+- Add a focused MoonCode HTTP smoke that launches Moondesk against a fresh
+  suite root and creates one real MoonCode session.
+- Probe a read-only route, a POST-only route, and a mixed GET/HEAD/POST route
+  with methods the contract rejects.
+- Assert each rejected request returns `405 Method Not Allowed`, the expected
+  `Allow` header, and JSON `allowed_methods`.
+- Assert the 405 body still carries the shared API contract fields:
+  `ok=false`, `status=error`, `api_contract=moonsuite.phase6.v1`, and
+  `next_action=inspect_request`.
+- Keep the smoke in the Phase 8 fast wall so contract drift fails before larger
+  runtime smokes.
+
+Exit tests:
+
+- `HEAD /api/mooncode/status` is accepted wherever `GET` is accepted
+- `POST /api/mooncode/status` exposes `GET, HEAD` as the allowed contract
+- `GET /api/mooncode/sessions/:id/runtime-service` exposes `POST` as the
+  allowed contract
+- `PUT /api/mooncode/sessions/:id/commands` exposes `GET, HEAD, POST` as the
+  allowed contract
+- method policy is proven through the same HTTP boundary used by the frontend
+  and desktop host
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1414,5 +1453,7 @@ Exit tests:
   published MoonCode route contract.
 - Letting MoonCode 405 responses hide the allowed-method contract from API
   consumers.
+- Letting internal route-contract tests stand in for host-visible HTTP contract
+  behavior.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

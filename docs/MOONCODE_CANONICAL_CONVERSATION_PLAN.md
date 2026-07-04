@@ -673,3 +673,7 @@ The next scheduled phases are now explicit:
   the published route contract whether a method is accepted, instead of keeping
   raw method policy in every branch. Contract-backed 405 responses expose the
   same allowed-method list through `Allow` and JSON `allowed_methods`.
+- Phase 36: host-visible method contract. A fresh Moondesk HTTP smoke now
+  creates a real MoonCode session and verifies accepted `HEAD` behavior plus
+  rejected read-only, POST-only, and mixed-route methods through the actual
+  `405` response boundary.

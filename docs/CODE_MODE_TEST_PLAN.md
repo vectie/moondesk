@@ -699,6 +699,7 @@ Contract-backed MoonCode method dispatch gate:
 ```bash
 moon test internal/moonwiki --target native --filter "mooncode backend route contract*"
 bash scripts/validate_mooncode_backend_method_dispatch.sh
+node scripts/mooncode_http_method_contract_smoke.mjs
 ```
 
 This Phase 35 gate removes raw MoonCode method policy from the router branches.
@@ -708,6 +709,13 @@ same contract drives `405 Method Not Allowed` responses, including the `Allow`
 header and JSON `allowed_methods` payload field. The source validator prevents
 raw `is_read_method`, `method_ is Post`, or generic 405 calls from returning to
 `api_mooncode_router.mbt`.
+
+Phase 36 extends the same gate to the host-visible HTTP boundary. The smoke
+starts a fresh Moondesk server, creates a real MoonCode session, accepts
+`HEAD /api/mooncode/status`, and verifies rejected methods on read-only,
+POST-only, and mixed command routes expose the correct `Allow` header,
+`allowed_methods`, and shared API contract fields. This catches response-helper
+or server-boundary drift that source-level method ownership cannot see.
 
 ## Done Criteria
 
@@ -759,6 +767,8 @@ Code mode is sufficiently tested when:
 - a contract-backed method dispatch gate proves MoonCode router branches use
   the published route contract for GET/HEAD/POST acceptance and 405
   allowed-method reporting
+- an HTTP method-contract smoke proves MoonCode route method policy is visible
+  through the real host API response, not only through internal router tests
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state
