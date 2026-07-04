@@ -555,7 +555,12 @@ assistant reply appears. The canonical conversation projection also treats a
 command-scoped native `finish` tool call with an `answer` as the assistant
 reply, then uses the generic finish result only to close the turn.
 
-Remaining risk after Phase 18 is broader model-backed runtime behavior:
+Phase 19 adds the live multiturn service gate. It runs first, second, and third
+prompt turns through one Moondesk session and one real MoonClaw service path,
+then proves the canonical conversation remains append-only with distinct
+command ids and stable replies after each turn.
+
+Remaining risk after Phase 19 is broader model-backed runtime behavior:
 model-generated tool-call planning, long-running service recovery,
 cancel/steer races, and package/review flows under a real model should be
 scheduled separately from the deterministic merge gate.

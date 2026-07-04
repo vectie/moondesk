@@ -690,6 +690,41 @@ Exit tests:
   result
 - no legacy `.moonclaw` sidecar root is created
 
+## Phase 19 - Native Runtime Multiturn Service Gate
+
+Status: implemented as the live append-only conversation gate.
+
+Problem:
+
+- Single-turn native loop validation does not prove that the same session can
+  accept immediate second and third prompts through the backend command route.
+- The user-visible failure mode is specifically multi-turn: first reply works,
+  then later prompts can appear to stall, reorder, duplicate, or disappear if
+  the runtime-service lease, command replay, or projection identity contracts
+  are wrong.
+
+Work:
+
+- Add a live MoonClaw/Moondesk smoke that creates one MoonCode session and
+  executes first, second, and third prompt turns through the real backend
+  command route.
+- Use explicit native `finish` tool calls for each turn so the gate tests the
+  native service and conversation identity contract without depending on model
+  quality.
+- Assert append-only ordering after every turn: distinct command ids, matching
+  user messages, matching assistant replies, done statuses, and exact turn
+  count.
+- Keep all evidence in the MoonSuite product layout and fail if a legacy
+  `.moonclaw` root appears.
+
+Exit tests:
+
+- first, second, and third native runtime turns all settle in the same session
+- command ids remain distinct and stable
+- assistant replies append under their originating user turns
+- no old turns disappear, duplicate, or reorder after later replies
+- no legacy `.moonclaw` sidecar root is created
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

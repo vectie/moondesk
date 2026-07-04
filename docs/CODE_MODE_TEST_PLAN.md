@@ -513,6 +513,8 @@ Current live contract gate:
 
 ```bash
 scripts/mooncode_live_runtime_contract_smoke.sh
+scripts/mooncode_live_runtime_loop_smoke.sh
+scripts/mooncode_live_runtime_multiturn_smoke.sh
 ```
 
 This gate starts a temporary MoonSuite root, launches a real MoonClaw daemon,
@@ -522,6 +524,11 @@ Moondesk to import the native state. It fails if the native contract is not
 projection-safe, if unsafe unscoped projection events are present, if the final
 assistant reply is not the canonical conversation output, or if a legacy
 `.moonclaw` root appears.
+
+The loop and multiturn gates additionally prove native command replay and
+runtime-service execution. The multiturn gate is the regression check for
+first/second/third prompt order: it fails if later replies duplicate, reorder,
+or erase earlier conversation turns.
 
 ## Done Criteria
 
