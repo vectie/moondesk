@@ -646,3 +646,8 @@ The next scheduled phases are now explicit:
   copy an older cached `mooncode_conversation` over a present backend response
   with fewer turns or source events. Backend regressions should be caught by
   gates, not hidden by browser state.
+- Phase 31: frontend route ownership. The Rabbita MoonCode command path now
+  uses a single route helper for desktop `/api/mooncode` URLs. Session listing,
+  command submit, stream polling, stream checkpoint, and runtime-service calls
+  no longer build inline paths, and the migration wall rejects raw MoonCode API
+  route strings outside that helper in active frontend code.

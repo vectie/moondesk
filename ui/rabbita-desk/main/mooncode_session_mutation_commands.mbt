@@ -36,7 +36,7 @@ fn create_mooncode_session_cmd(
     "web_search": model.mooncode_web_search,
     "context_path": mooncode_context_path(model),
   }
-  @http.post("/api/mooncode/sessions")
+  @http.post(mooncode_sessions_url(""))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -88,7 +88,7 @@ fn mooncode_session_command_cmd(
     "context_path": target_path,
     "force_preflight": force_preflight,
   }
-  @http.post("/api/mooncode/sessions/\{session.id}/commands")
+  @http.post(mooncode_session_commands_url(session.id))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -110,7 +110,7 @@ fn start_mooncode_runtime_service_cmd(
     "live_wait_ms": 5000,
     "poll_ms": 250,
   }
-  @http.post("/api/mooncode/sessions/\{session_id}/runtime-service")
+  @http.post(mooncode_session_runtime_service_url(session_id))
   .with_json(body)
   .expect_json(result => {
     dispatch(

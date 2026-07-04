@@ -1194,6 +1194,41 @@ Exit tests:
 - immediate optimistic user rows still render until acknowledged by
   `client_turn_id`
 
+## Phase 31 - Frontend Route Ownership
+
+Status: implemented as the MoonCode desktop route helper and gate.
+
+Problem:
+
+- The frontend still built normal MoonCode desktop API routes inline in command
+  files. That kept route construction spread across the browser update path,
+  backend route contracts, tests, and smoke scripts.
+- Inline route strings are a stale implementation shape: they make it easy for
+  one path to miss encoding, keep an old endpoint spelling, or bypass the clean
+  `/api/mooncode` desktop boundary when new controls are added.
+- A first-time clean implementation should have one frontend route layer for
+  browser-owned HTTP calls. Product behavior can then change at that boundary
+  instead of inside individual command handlers.
+
+Work:
+
+- Add `mooncode_route_helpers.mbt` in the Rabbita main package.
+- Move session listing, command submit, stream polling, stream checkpoint, and
+  runtime-service URLs behind those helpers.
+- Encode session ids and workspace ids at the helper boundary.
+- Add route-helper white-box coverage for workspace query encoding and
+  session-id path encoding.
+- Add `scripts/validate_mooncode_frontend_routes.sh`, wired into the Phase 8
+  migration wall, so active frontend MoonCode code cannot reintroduce raw
+  `/api/mooncode` strings outside the helper.
+
+Exit tests:
+
+- frontend command files contain no raw `/api/mooncode` strings
+- route helpers generate the same current endpoints with correct encoding
+- the Rabbita JS package check and tests pass
+- the Phase 8 migration wall runs the route ownership validator
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1202,5 +1237,7 @@ Exit tests:
 - Letting compact session listings replace an active new-chat draft.
 - Repairing backend conversation regressions in the browser with cached local
   `mooncode_conversation` state.
+- Letting individual frontend command handlers construct MoonCode desktop API
+  routes directly.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

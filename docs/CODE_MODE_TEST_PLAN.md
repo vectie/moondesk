@@ -643,6 +643,19 @@ source; the current Moon package selector does not expose that JS-only main
 package as a runnable `moon test` target by path, so use the JS package check
 plus the backend HTTP E2E as the executable gate.
 
+Frontend route ownership gate:
+
+```bash
+scripts/validate_mooncode_frontend_routes.sh
+(cd ui/rabbita-desk && moon test main --target js --filter "mooncode route helpers*")
+```
+
+This Phase 31 gate keeps desktop MoonCode route construction out of individual
+frontend command handlers. It fails if active Rabbita MoonCode code contains raw
+`/api/mooncode` strings outside `mooncode_route_helpers.mbt`, or if session
+listing, command submit, stream polling, stream checkpoint, and
+runtime-service route helpers stop encoding workspace/session ids correctly.
+
 ## Done Criteria
 
 Code mode is sufficiently tested when:
@@ -680,6 +693,8 @@ Code mode is sufficiently tested when:
 - a frontend/backend ownership gate proves normal session-list responses are
   authoritative and the UI does not repair backend conversation regressions with
   cached local conversation state
+- a frontend route ownership gate proves browser command handlers call the
+  MoonCode desktop route helper instead of hard-coding `/api/mooncode` paths
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state
