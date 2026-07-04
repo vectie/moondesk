@@ -871,6 +871,45 @@ Exit tests:
 - the live runtime-loop smoke can start a second idle service immediately after
   importing the first service's native finish event
 
+## Phase 24 - Runtime Control Boundary Cleanup
+
+Status: implemented as the control-not-chat projection gate.
+
+Problem:
+
+- The canonical conversation projection still treated `steer` command events as
+  user chat turns.
+- That kept a stale implementation path where explicit runtime controls could
+  leak into the same transcript surface as ordinary user prompts and assistant
+  replies.
+- MoonClaw settles steer/cancel at native scheduler boundaries; Moondesk should
+  not pretend control commands are chat messages or mid-tool interruption.
+
+Work:
+
+- Restrict user-facing conversation turn creation to prompt/user events.
+- Keep `steer`, `cancel`, `steer_deferred`, `steer_applied`, and
+  `cancel_dropped` as control/runtime evidence owned by the runtime-control and
+  steering lifecycle projections.
+- Publish the runtime-control settlement boundary in the contract:
+  controls settle at native runtime scheduler boundaries or through real abort
+  evidence, not fabricated chat rows.
+- Add a deterministic projection regression for prompt -> steer -> prompt ->
+  cancel ordering.
+- Add a live MoonClaw/Moondesk control-boundary smoke that drives prompt,
+  deferred steer, prompt, and dropped cancel through real runtime-service calls
+  while requiring the visible conversation to contain only the two prompt turns.
+
+Exit tests:
+
+- explicit steer/cancel commands do not create canonical conversation turns
+- deferred/applied steering remains visible through steering lifecycle summary
+  evidence
+- prompt turns still render append-only with their assistant replies
+- the live control-boundary smoke rejects leaked steer/cancel text in
+  `mooncode_conversation`
+- no legacy `.moonclaw` sidecar root is created
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

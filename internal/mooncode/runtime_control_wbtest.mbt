@@ -1,5 +1,18 @@
 ///|
 test "mooncode runtime control routes steer and cancel to active turn" {
+  let contract = runtime_control_contract_json()
+  let boundary = runtime_json_object_field_or_empty(
+    contract, "settlement_boundary",
+  )
+  assert_eq(
+    runtime_control_json_string(boundary, "unit", default=""),
+    "native-runtime-scheduler-boundary",
+  )
+  assert_true(
+    runtime_control_json_string(boundary, "rule", default="").contains(
+      "do not fabricate chat rows",
+    ),
+  )
   let commands : Array[Json] = [
     {
       "command_id": "cmd-active",

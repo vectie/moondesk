@@ -589,7 +589,16 @@ native sync or runtime-event ingest releases it when MoonClaw writes
 smoke now proves a same-command-count service restart can happen immediately
 after the native finish event is imported.
 
-Remaining risk after Phase 23 is broader model-backed runtime behavior:
-model-generated tool-call planning, active-turn cancel/steer behavior while
-tools are running, and package/review flows under a real model should be
+Phase 24 removes control commands from the user/assistant transcript. Ordinary
+chat turns are now prompt-owned only; explicit `steer` and `cancel` remain
+durable control evidence surfaced by runtime-control and steering lifecycle
+projections. The runtime-control contract now names the native scheduler
+boundary: controls settle when MoonClaw reaches a runtime boundary or emits real
+abort evidence, not when Moondesk fabricates a chat row. The live
+control-boundary smoke proves prompt -> deferred steer -> prompt -> dropped
+cancel leaves only the two prompt turns in `mooncode_conversation`.
+
+Remaining risk after Phase 24 is broader model-backed runtime behavior:
+model-generated tool-call planning, true mid-tool abort behavior when MoonClaw
+adds interruptible tools, and package/review flows under a real model should be
 scheduled separately from the deterministic merge gate.

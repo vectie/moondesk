@@ -503,9 +503,7 @@ fn conversation_event_is_user_prompt(event : Json) -> Bool {
   let title = json_string(event, "title", default="")
   (lane == "transcript" && kind == "user") ||
   command == "prompt" ||
-  command == "steer" ||
   kind == "command.prompt" ||
-  kind == "command.steer" ||
   title == "User prompt"
 }
 

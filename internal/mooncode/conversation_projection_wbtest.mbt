@@ -310,6 +310,111 @@ test "mooncode conversation projection uses native finish tool call answer" {
 }
 
 ///|
+test "mooncode conversation projection keeps control commands out of chat" {
+  let events : Array[Json] = [
+    test_prompt_event("cmd-1", "client-1", "first prompt", "001"),
+    test_finish_event("finish-1", "cmd-1", "first reply", "002"),
+    event_record(
+      id="cmd-steer",
+      lane="runtime",
+      kind="command.steer",
+      title="Steer: queued",
+      status="queued",
+      created_at="003",
+      detail="keep the next turn focused",
+      command="steer",
+      command_packet={
+        "command_id": "cmd-steer",
+        "client_turn_id": "client-steer",
+        "action": "steer",
+      },
+    ),
+    event_record(
+      id="steer-deferred",
+      lane="runtime",
+      kind=event_steer_deferred(),
+      title="Steering deferred",
+      status="queued",
+      created_at="004",
+      detail="keep the next turn focused",
+      command_packet={
+        "command_id": "cmd-steer",
+        "client_turn_id": "client-steer",
+        "action": "steer",
+      },
+    ),
+    test_prompt_event("cmd-2", "client-2", "second prompt", "005"),
+    event_record(
+      id="steer-applied",
+      lane="runtime",
+      kind=event_steer_applied(),
+      title="Steering applied",
+      status="done",
+      created_at="006",
+      detail="keep the next turn focused",
+      command_packet={
+        "command_id": "cmd-steer",
+        "client_turn_id": "client-steer",
+        "action": "steer",
+      },
+    ),
+    test_finish_event("finish-2", "cmd-2", "second reply", "007"),
+    event_record(
+      id="cmd-cancel",
+      lane="runtime",
+      kind="command.cancel",
+      title="Cancel session: queued",
+      status="queued",
+      created_at="008",
+      detail="cancel after work is done",
+      command="cancel",
+      command_packet={
+        "command_id": "cmd-cancel",
+        "client_turn_id": "client-cancel",
+        "action": "cancel",
+      },
+    ),
+    event_record(
+      id="cancel-dropped",
+      lane="runtime",
+      kind=event_cancel_dropped(),
+      title="Cancel dropped",
+      status="done",
+      created_at="009",
+      detail="no active work",
+      command_packet={
+        "command_id": "cmd-cancel",
+        "client_turn_id": "client-cancel",
+        "action": "cancel",
+      },
+    ),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 2)
+  assert_eq(json_string(turns[0], "command_id", default=""), "cmd-1")
+  assert_eq(json_string(turns[1], "command_id", default=""), "cmd-2")
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(turns[0], "user"),
+      "content",
+      default="",
+    ),
+    "first prompt",
+  )
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(turns[1], "user"),
+      "content",
+      default="",
+    ),
+    "second prompt",
+  )
+  let rendered = Json::array(turns).stringify()
+  assert_false(rendered.contains("keep the next turn focused"))
+  assert_false(rendered.contains("cancel after work is done"))
+}
+
+///|
 test "mooncode conversation projection buffers scoped progress before prompt" {
   let events : Array[Json] = [
     test_progress_event(

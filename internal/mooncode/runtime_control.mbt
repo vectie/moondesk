@@ -23,6 +23,10 @@ pub fn runtime_control_contract_json() -> Json {
       "runtime": "MoonClaw enforces runtime control before executing tools.",
       "store": "commands.jsonl, runtime-commands.jsonl, runtime-receipts.jsonl, and events.jsonl remain append-only.",
     },
+    "settlement_boundary": {
+      "unit": "native-runtime-scheduler-boundary",
+      "rule": "Steer and cancel commands are durable control evidence. They do not fabricate chat rows or pretend to interrupt a running tool; MoonClaw settles them when the native runtime reaches a scheduler boundary or emits a real abort event.",
+    },
   }
 }
 

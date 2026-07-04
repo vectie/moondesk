@@ -515,6 +515,7 @@ Current live contract gate:
 scripts/mooncode_live_runtime_contract_smoke.sh
 scripts/mooncode_live_runtime_loop_smoke.sh
 scripts/mooncode_live_runtime_multiturn_smoke.sh
+scripts/mooncode_live_runtime_control_boundary_smoke.sh
 ```
 
 This gate starts a temporary MoonSuite root, launches a real MoonClaw daemon,
@@ -534,6 +535,12 @@ The loop gate also checks event-backed runtime-service recovery: after importing
 MoonClaw's native `runtime.service_finished` event, Moondesk must release its
 local runtime-service lease and allow an immediate same-command-count service
 restart.
+
+The control-boundary gate drives prompt -> steer -> prompt -> cancel through the
+real Moondesk runtime-service boundary. It fails if steer/cancel text leaks into
+the canonical chat transcript, if deferred steering is not later applied through
+MoonClaw evidence, if dropped cancel is missing, or if a legacy `.moonclaw` root
+appears.
 
 Runtime-service failure gate:
 
@@ -580,6 +587,8 @@ Code mode is sufficiently tested when:
   state or composer-only error
 - a runtime-loop smoke proves terminal native service lifecycle events release
   Moondesk's runtime-service lease without waiting for a timeout
+- a control-boundary smoke proves explicit steer/cancel commands stay out of the
+  user/assistant transcript and settle only through runtime evidence
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state
