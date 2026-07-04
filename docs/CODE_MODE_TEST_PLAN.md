@@ -293,6 +293,38 @@ Assertions:
 - concrete tests may still use command fixture strings, but production command
   lists and grouped action ownership must stay in `mooncode/core`.
 
+### Runtime Tool Registry Contract
+
+Prove runtime tools are owned once before command actions, MoonClaw sidecar
+evidence, operator review, and capability payloads can disagree about the same
+work.
+
+Flow:
+
+```text
+mooncode/core exposes runtime_tool_contract_json
+-> native capability surface embeds the runtime-tool and tool-call contracts
+-> runtime protocol decodes tool calls through core canonicalization
+-> internal capabilities publish core tool names/specs
+-> native command metadata and web-search hints use core tool constants
+-> MoonClaw tool-name mappings delegate to mooncode/core
+-> migration gate scans implementation files for duplicated tool ownership
+```
+
+Assertions:
+
+- supported runtime tools, capability tools, native-required tools, aliases, and
+  MoonClaw mapping rows are published by `mooncode/core`.
+- tool-call decode policy uses core canonicalization, support checks,
+  mutation/review predicates, and unknown-tool policy.
+- command action tool hints, native command tool sequences, web-search hints,
+  and tool authorization snapshot policy consume core tool constants.
+- native capability JSON exposes `runtime_tool_contract_json()` and
+  `runtime_tool_call_contract_json()`.
+- concrete tests may still use tool fixture strings, but production tool lists,
+  alias rows, capability specs, and detailed tool-contract builders must stay in
+  `mooncode/core`.
+
 ### Native Sidecar Reply Ingestion
 
 Exercise raw MoonClaw sidecar evidence as input, not as a second transcript.

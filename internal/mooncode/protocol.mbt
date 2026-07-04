@@ -330,7 +330,7 @@ pub fn kind_runtime_turn_packet() -> String {
 
 ///|
 pub fn kind_tool_call_contract() -> String {
-  "mooncode-tool-call-contract"
+  @mooncode_core.runtime_tool_call_contract_kind()
 }
 
 ///|

@@ -109,151 +109,12 @@ pub fn capabilities_json() -> Json {
 
 ///|
 fn capability_tool_names() -> Array[String] {
-  let tools = runtime_tool_names()
-  tools.push("eval_harness")
-  tools
+  @mooncode_core.runtime_tool_capability_names()
 }
 
 ///|
 fn capability_tool_specs() -> Array[Json] {
-  [
-    tool_spec(
-      id="read",
-      owner="moonclaw",
-      lane="tool",
-      approval="auto",
-      purpose="Read bounded files inside the selected MoonBook context.",
-      outputs=["tool_result"],
-    ),
-    tool_spec(
-      id="edit",
-      owner="moonclaw",
-      lane="diff",
-      approval="review",
-      purpose="Apply focused edits that remain inside the selected MoonBook workspace.",
-      outputs=["file_change", "diff"],
-    ),
-    tool_spec(
-      id="write",
-      owner="moonclaw",
-      lane="diff",
-      approval="review",
-      purpose="Create generated source files, scripts, tools, miniapps, or app-tool assets.",
-      outputs=["file_change", "diff"],
-    ),
-    tool_spec(
-      id="shell",
-      owner="moonclaw",
-      lane="tool",
-      approval="policy",
-      purpose="Run bounded build, inspect, and packaging commands under the book workspace.",
-      outputs=["terminal", "tool_result"],
-    ),
-    tool_spec(
-      id="moon_ide",
-      owner="moonclaw",
-      lane="tool",
-      approval="auto",
-      purpose="Run read-only MoonBit semantic navigation before editing generated book code.",
-      outputs=["tool_result", "runtime_update"],
-    ),
-    tool_spec(
-      id="glob",
-      owner="moonclaw",
-      lane="tool",
-      approval="auto",
-      purpose="Discover workspace files using a read-only glob pattern.",
-      outputs=["tool_result", "runtime_update"],
-    ),
-    tool_spec(
-      id="grep",
-      owner="moonclaw",
-      lane="tool",
-      approval="auto",
-      purpose="Search workspace text using a read-only pattern.",
-      outputs=["tool_result", "runtime_update"],
-    ),
-    tool_spec(
-      id="todo_write",
-      owner="moonclaw",
-      lane="runtime",
-      approval="auto",
-      purpose="Publish assistant plan updates as inline progress.",
-      outputs=["runtime_update", "tool_result"],
-    ),
-    tool_spec(
-      id="web_fetch",
-      owner="moonclaw",
-      lane="tool",
-      approval="auto",
-      purpose="Read a web page as context when web search is enabled for the turn.",
-      outputs=["tool_result", "runtime_update"],
-    ),
-    tool_spec(
-      id="web_search",
-      owner="moonclaw",
-      lane="tool",
-      approval="auto",
-      purpose="Search the web as read-only context when web search is enabled for the turn.",
-      outputs=["tool_result", "runtime_update"],
-    ),
-    tool_spec(
-      id="moon_cmd",
-      owner="moonclaw",
-      lane="test",
-      approval="policy",
-      purpose="Run structured MoonBit check, test, build, run, info, or fmt commands with bounded output and mutation-aware proof.",
-      outputs=["test_result", "tool_result", "runtime_update", "diff"],
-    ),
-    tool_spec(
-      id="moon_check",
-      owner="moonclaw",
-      lane="test",
-      approval="auto",
-      purpose="Run MoonBit checks, tests, builds, and package validation for generated code.",
-      outputs=["test_result"],
-    ),
-    tool_spec(
-      id="apply_patch",
-      owner="moonclaw",
-      lane="diff",
-      approval="review",
-      purpose="Apply reviewed unified patches inside the selected MoonBook workspace.",
-      outputs=["file_change", "diff", "patch_applied"],
-    ),
-    tool_spec(
-      id="revert_patch",
-      owner="moonclaw",
-      lane="diff",
-      approval="review",
-      purpose="Reverse reviewed or previously applied patches inside the selected MoonBook workspace.",
-      outputs=["file_change", "diff", "patch_reverted"],
-    ),
-    tool_spec(
-      id="package_app_tool",
-      owner="moonbook",
-      lane="artifact",
-      approval="review",
-      purpose="Package accepted executable output as a MoonBook tool, miniapp, generated site, or app-tool bundle.",
-      outputs=["artifact", "review"],
-    ),
-    tool_spec(
-      id="eval_harness",
-      owner="moonclaw",
-      lane="test",
-      approval="auto",
-      purpose="Run MoonCode tool_harness and file_edit evals, then publish native eval proof for this MoonCode session.",
-      outputs=["test_result", "eval_report.manifest"],
-    ),
-    tool_spec(
-      id="finish",
-      owner="moonclaw",
-      lane="review",
-      approval="operator",
-      purpose="Summarize final changes, tests, residual risks, and accept/reject/package readiness.",
-      outputs=["review"],
-    ),
-  ]
+  @mooncode_core.runtime_tool_capability_specs()
 }
 
 ///|
@@ -265,23 +126,4 @@ fn command_specs_json() -> Array[Json] {
     "expected_lanes": string_array_json(command_expected_lanes(action)),
     "tool_hints": string_array_json(command_tool_hints(action)),
   })
-}
-
-///|
-fn tool_spec(
-  id~ : String,
-  owner~ : String,
-  lane~ : String,
-  approval~ : String,
-  purpose~ : String,
-  outputs~ : Array[String],
-) -> Json {
-  {
-    "id": id,
-    "owner": owner,
-    "lane": lane,
-    "approval": approval,
-    "purpose": purpose,
-    "outputs": string_array_json(outputs),
-  }
 }

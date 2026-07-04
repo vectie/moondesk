@@ -1,17 +1,4 @@
 ///|
-fn moonclaw_tool_mapping_row(
-  moonclaw_tool : String,
-  mooncode_tool : String,
-  mapping_status : String,
-) -> Json {
-  {
-    "moonclaw_tool": moonclaw_tool,
-    "mooncode_tool": mooncode_tool,
-    "mapping_status": mapping_status,
-  }
-}
-
-///|
 fn moonclaw_json_string(json : Json, key : String, default~ : String) -> String {
   match json {
     Object(object) =>

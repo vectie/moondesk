@@ -48,16 +48,3 @@ fn command_json_array_length(json : Json, key : String) -> Int {
 fn command_json_int(json : Json, key : String, default~ : Int) -> Int {
   @mooncore.json_int(json, key, default~)
 }
-
-///|
-fn command_string_array_contains(
-  items : Array[String],
-  needle : String,
-) -> Bool {
-  for item in items {
-    if item == needle {
-      return true
-    }
-  }
-  false
-}

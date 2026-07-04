@@ -78,11 +78,11 @@ fn command_allowed_tool_sequence(
     tools.push(tool)
   }
   if web_search {
-    if !tools.contains("web_search") {
-      tools.push("web_search")
+    if !tools.contains(@mooncode_core.runtime_tool_web_search()) {
+      tools.push(@mooncode_core.runtime_tool_web_search())
     }
-    if !tools.contains("web_fetch") {
-      tools.push("web_fetch")
+    if !tools.contains(@mooncode_core.runtime_tool_web_fetch()) {
+      tools.push(@mooncode_core.runtime_tool_web_fetch())
     }
   }
   tools

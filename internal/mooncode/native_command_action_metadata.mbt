@@ -6,26 +6,64 @@ pub fn native_command_tool_sequence(action : String) -> Array[String] {
   if @mooncode_core.command_action_is_test(action) ||
     @mooncode_core.command_action_is_eval(action) ||
     action == command_commit() {
-    ["read", "moon_ide", "moon_cmd", "moon_check", "shell", "finish"]
+    [
+      @mooncode_core.runtime_tool_read(),
+      @mooncode_core.runtime_tool_moon_ide(),
+      @mooncode_core.runtime_tool_moon_cmd(),
+      @mooncode_core.runtime_tool_moon_check(),
+      @mooncode_core.runtime_tool_shell(),
+      @mooncode_core.runtime_tool_finish(),
+    ]
   } else if action == command_package() {
     [
-      "read", "moon_ide", "moon_cmd", "moon_check", "shell", "package_app_tool",
-      "finish",
+      @mooncode_core.runtime_tool_read(),
+      @mooncode_core.runtime_tool_moon_ide(),
+      @mooncode_core.runtime_tool_moon_cmd(),
+      @mooncode_core.runtime_tool_moon_check(),
+      @mooncode_core.runtime_tool_shell(),
+      @mooncode_core.runtime_tool_package_app_tool(),
+      @mooncode_core.runtime_tool_finish(),
     ]
   } else if action == command_accept() {
-    ["read", "package_app_tool", "finish"]
+    [
+      @mooncode_core.runtime_tool_read(),
+      @mooncode_core.runtime_tool_package_app_tool(),
+      @mooncode_core.runtime_tool_finish(),
+    ]
   } else if action == command_reject() {
-    ["read", "finish"]
+    [@mooncode_core.runtime_tool_read(), @mooncode_core.runtime_tool_finish()]
   } else if action == command_apply_patch() {
-    ["read", "moon_ide", "apply_patch", "moon_cmd", "moon_check", "finish"]
+    [
+      @mooncode_core.runtime_tool_read(),
+      @mooncode_core.runtime_tool_moon_ide(),
+      @mooncode_core.runtime_tool_apply_patch(),
+      @mooncode_core.runtime_tool_moon_cmd(),
+      @mooncode_core.runtime_tool_moon_check(),
+      @mooncode_core.runtime_tool_finish(),
+    ]
   } else if action == command_revert_patch() {
-    ["read", "moon_ide", "revert_patch", "moon_cmd", "moon_check", "finish"]
+    [
+      @mooncode_core.runtime_tool_read(),
+      @mooncode_core.runtime_tool_moon_ide(),
+      @mooncode_core.runtime_tool_revert_patch(),
+      @mooncode_core.runtime_tool_moon_cmd(),
+      @mooncode_core.runtime_tool_moon_check(),
+      @mooncode_core.runtime_tool_finish(),
+    ]
   } else if @mooncode_core.command_action_is_tool_approval(action) {
-    ["finish"]
+    [@mooncode_core.runtime_tool_finish()]
   } else if @mooncode_core.command_action_is_prompt_or_steer(action) {
-    ["moon_ide", "read", "edit", "write", "moon_cmd", "moon_check", "finish"]
+    [
+      @mooncode_core.runtime_tool_moon_ide(),
+      @mooncode_core.runtime_tool_read(),
+      @mooncode_core.runtime_tool_edit(),
+      @mooncode_core.runtime_tool_write(),
+      @mooncode_core.runtime_tool_moon_cmd(),
+      @mooncode_core.runtime_tool_moon_check(),
+      @mooncode_core.runtime_tool_finish(),
+    ]
   } else {
-    ["finish"]
+    [@mooncode_core.runtime_tool_finish()]
   }
 }
 

@@ -2103,6 +2103,65 @@ Exit tests:
 - the migration wall rejects duplicated production command-action lists or
   grouped command action ownership returning outside `mooncode/core`.
 
+## Phase 53 - Core-Owned Runtime Tool Registry Contract
+
+Status: implemented by moving MoonCode runtime tool vocabulary, aliases,
+capability tool specs, native-required tools, tool-call contract, detailed tool
+contract, and MoonClaw-to-MoonCode tool mappings into `mooncode/core`.
+
+Problem:
+
+- Phase 52 moved command actions into core, but command actions still pointed at
+  tool names while `internal/mooncode` owned the runtime tool list, package-style
+  aliases, native-required tool subset, tool-call decode policy, mutation/review
+  predicates, detailed tool contract, capability tool specs, and MoonClaw tool
+  mapping rows.
+- That left command execution with a clean command vocabulary but a stale tool
+  architecture: one subsystem could advertise a tool, another could reject it,
+  and another could require review or authorization from a separate local list.
+- A standalone MoonCode product needs one tool registry contract before
+  MoonClaw, Moondesk, MoonBook packaging, and future standalone clients can
+  agree on allowed tools, aliases, proof events, and review policy.
+
+Work:
+
+- Add `mooncode/core/runtime_tools.mbt` with tool-name functions, runtime tool
+  lists, capability tool lists, native-required tools, accepted aliases,
+  MoonClaw mapping rows, canonicalization, supported-tool checks,
+  mutation/review predicates, authorization-snapshot predicate, tool-call
+  contract JSON, detailed tool contract JSON, and capability tool specs.
+- Make `native_capability_required_tools()` and the native capability surface
+  consume and publish the core runtime tool contract.
+- Make command action tool hints use core runtime tool constants.
+- Replace internal `runtime_tool_names()`, `runtime_tool_alias_rows()`,
+  `tool_call_contract_json()`, tool-call decoding policy, `tool_contract_json()`,
+  capability tool names/specs, native command tool sequences, web-search tool
+  hints, authorization snapshot policy, and MoonClaw tool mappings with core
+  consumers.
+- Remove stale local tool contract record builders.
+- Add `scripts/validate_mooncode_runtime_tool_contract.sh` and run it from the
+  Phase 8 migration wall.
+
+Exit tests:
+
+- `mooncode/core` proves the runtime tool contract id, tool names, capability
+  tool names, native-required tools, aliases, MoonClaw mapping rows,
+  canonicalization, mutation/review predicates, authorization-snapshot
+  predicate, tool-call contract JSON, detailed tool contract JSON, and
+  capability tool specs.
+- native capability JSON includes `runtime_tool_contract_json()` and
+  `runtime_tool_call_contract_json()`.
+- internal protocol commands delegate runtime tool names, aliases,
+  canonicalization, support checks, mutation/review policy, and tool-call
+  contract publication to `mooncode/core`.
+- internal capability JSON consumes core capability tool names/specs.
+- native command tool sequences and web-search tool hints use core tool
+  constants.
+- MoonClaw tool mapping rows and normalization delegate to `mooncode/core`.
+- the migration wall rejects duplicated production tool lists, alias rows,
+  local tool contract builders, and MoonClaw tool mapping ownership returning
+  outside `mooncode/core`.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

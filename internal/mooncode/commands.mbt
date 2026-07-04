@@ -72,11 +72,11 @@ fn command_tool_hints_for_command(
     hints.push(hint)
   }
   if web_search {
-    if !hints.contains("web_search") {
-      hints.push("web_search")
+    if !hints.contains(@mooncode_core.runtime_tool_web_search()) {
+      hints.push(@mooncode_core.runtime_tool_web_search())
     }
-    if !hints.contains("web_fetch") {
-      hints.push("web_fetch")
+    if !hints.contains(@mooncode_core.runtime_tool_web_fetch()) {
+      hints.push(@mooncode_core.runtime_tool_web_fetch())
     }
   }
   hints

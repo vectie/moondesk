@@ -50,7 +50,8 @@ IO. The Rabbita UI renders the result.
 ```text
 mooncode/core
   shared protocol constants, command-action contract, event-lane contract,
-  runtime event-name contract, and capability surface
+  runtime event-name contract, runtime-tool registry contract, and capability
+  surface
 
 internal/mooncode
   command, stream, runtime, readiness, review, package, and session contracts
@@ -95,6 +96,22 @@ command. The command-action contract owns turn-control actions, approval policy,
 lane policy, proof predicates, review-receipt policy, and tool hints. Internal
 MoonCode may execute action-specific behavior, but it must not publish its own
 second command list or grouped action ownership.
+
+`mooncode/core` also owns the runtime tool vocabulary accepted from MoonClaw and
+advertised through MoonCode capabilities:
+
+```text
+shell, read, edit, write, moon_ide, moon_cmd, moon_check, finish, apply_patch,
+revert_patch, package_app_tool, glob, grep, todo_write, web_fetch, web_search
+```
+
+The runtime-tool registry contract owns supported tools, capability-only tools
+such as `eval_harness`, native-required tools, accepted package-style aliases,
+MoonClaw-to-MoonCode tool mappings, tool-call decode policy, mutation/review
+predicates, authorization-snapshot policy, detailed tool-contract JSON, and
+capability tool specs. Internal MoonCode may execute and project tool evidence,
+but it must not publish its own second tool list, alias table, capability spec
+list, or MoonClaw mapping table.
 
 ## Shared Runtime, Separate Lanes
 

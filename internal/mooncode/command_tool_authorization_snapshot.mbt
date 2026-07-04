@@ -68,11 +68,10 @@ pub fn command_tool_authorization_snapshot(
 ///|
 fn command_uses_authorized_tools(action : String) -> Bool {
   let tools = native_command_tool_sequence(action)
-  command_string_array_contains(tools, "edit") ||
-  command_string_array_contains(tools, "write") ||
-  command_string_array_contains(tools, "shell") ||
-  command_string_array_contains(tools, "moon_check") ||
-  command_string_array_contains(tools, "apply_patch") ||
-  command_string_array_contains(tools, "revert_patch") ||
-  command_string_array_contains(tools, "package_app_tool")
+  for tool in tools {
+    if @mooncode_core.runtime_tool_requires_authorization_snapshot(tool) {
+      return true
+    }
+  }
+  false
 }

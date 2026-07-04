@@ -7,30 +7,12 @@ priv enum CodeCommand {
 
 ///|
 pub fn runtime_tool_names() -> Array[String] {
-  [
-    "shell", "read", "edit", "write", "moon_ide", "moon_cmd", "moon_check", "finish",
-    "apply_patch", "revert_patch", "package_app_tool", "glob", "grep", "todo_write",
-    "web_fetch", "web_search",
-  ]
+  @mooncode_core.runtime_tool_names()
 }
 
 ///|
 pub fn runtime_tool_alias_rows() -> Array[Json] {
-  [
-    tool_alias_row("Bash", "shell"),
-    tool_alias_row("FileRead", "read"),
-    tool_alias_row("Read", "read"),
-    tool_alias_row("FileEdit", "edit"),
-    tool_alias_row("Edit", "edit"),
-    tool_alias_row("NotebookEdit", "edit"),
-    tool_alias_row("FileWrite", "write"),
-    tool_alias_row("Write", "write"),
-    tool_alias_row("Glob", "glob"),
-    tool_alias_row("Grep", "grep"),
-    tool_alias_row("TodoWrite", "todo_write"),
-    tool_alias_row("WebFetch", "web_fetch"),
-    tool_alias_row("WebSearch", "web_search"),
-  ]
+  @mooncode_core.runtime_tool_alias_rows()
 }
 
 ///|
@@ -40,20 +22,7 @@ pub fn code_command_names() -> Array[String] {
 
 ///|
 pub fn tool_call_contract_json() -> Json {
-  {
-    "kind": kind_tool_call_contract(),
-    "protocol": protocol_version(),
-    "owner": "mooncode",
-    "runtime_owner": "moonclaw",
-    "reference": "mooncode/runtime/tool-call-contract",
-    "accepted_shapes": [
-      "native function tool call: {id,type,function:{name,arguments}}", "runtime event wrapper: {event:'tool_call'|'tool_started'|'tool_result',tool_call:{id,function:{name,arguments}}}",
-      "flattened runtime event: {tool_call_id,tool_name,arguments}",
-    ],
-    "supported_tools": protocol_string_array_json(runtime_tool_names()),
-    "argument_rule": "function.arguments is kept as the raw JSON string and also exposed as parsed_arguments when it is valid JSON; MoonClaw owns final tool-specific validation before execution.",
-    "unknown_tool_policy": "unknown tool names fail this decoder and should be emitted as tool_call_decode_error runtime events, not silently executed",
-  }
+  @mooncode_core.runtime_tool_call_contract_json()
 }
 
 ///|
@@ -61,11 +30,11 @@ pub fn decode_tool_call(json : Json) -> Result[Json, String] {
   let payload = tool_call_payload(json)
   let tool_call_id = tool_call_id(json, payload)
   let raw_tool_name = tool_call_name(json, payload)
-  let tool_name = runtime_tool_canonical_name(raw_tool_name)
+  let tool_name = @mooncode_core.runtime_tool_canonical_name(raw_tool_name)
   if tool_name == "" {
     return Err("expected tool_name or function.name")
   }
-  if !runtime_tool_names().contains(tool_name) {
+  if !@mooncode_core.runtime_tool_is_supported(tool_name) {
     return Err("unknown tool: \{tool_name}")
   }
   let arguments = tool_call_arguments(json, payload)
@@ -77,8 +46,8 @@ pub fn decode_tool_call(json : Json) -> Result[Json, String] {
     "raw_tool_name": raw_tool_name,
     "arguments": arguments,
     "parsed_arguments": tool_call_arguments_json(arguments),
-    "mutates_files": tool_call_mutates_files(tool_name),
-    "requires_review": tool_call_requires_review(tool_name),
+    "mutates_files": @mooncode_core.runtime_tool_mutates_files(tool_name),
+    "requires_review": @mooncode_core.runtime_tool_requires_review(tool_name),
   })
 }
 
@@ -201,21 +170,6 @@ fn tool_call_name(json : Json, payload : Json) -> String {
 }
 
 ///|
-fn runtime_tool_canonical_name(tool_name : String) -> String {
-  let normalized = tool_name.replace(old="-", new="_").to_lower()
-  match normalized {
-    "bash" => "shell"
-    "fileread" | "file_read" => "read"
-    "fileedit" | "file_edit" | "notebookedit" | "notebook_edit" => "edit"
-    "filewrite" | "file_write" => "write"
-    "todowrite" | "todo_write" => "todo_write"
-    "webfetch" | "web_fetch" => "web_fetch"
-    "websearch" | "web_search" => "web_search"
-    _ => tool_name
-  }
-}
-
-///|
 fn tool_call_arguments(json : Json, payload : Json) -> String {
   let direct = protocol_first_json(json, ["arguments", "args", "input"])
   match direct {
@@ -235,23 +189,6 @@ fn tool_call_arguments_json(arguments : String) -> Json {
   @json.parse(arguments) catch {
     _ => Json::object({})
   }
-}
-
-///|
-fn tool_call_mutates_files(tool_name : String) -> Bool {
-  tool_name == "edit" ||
-  tool_name == "write" ||
-  tool_name == "moon_cmd" ||
-  tool_name == "apply_patch" ||
-  tool_name == "revert_patch" ||
-  tool_name == "package_app_tool"
-}
-
-///|
-fn tool_call_requires_review(tool_name : String) -> Bool {
-  tool_call_mutates_files(tool_name) ||
-  tool_name == "shell" ||
-  tool_name == "finish"
 }
 
 ///|
@@ -305,14 +242,4 @@ fn protocol_json_object_field(json : Json, key : String) -> Json? {
 ///|
 fn protocol_json_string(json : Json, key : String, default~ : String) -> String {
   @mooncore.json_string(json, key, default~)
-}
-
-///|
-fn protocol_string_array_json(items : Array[String]) -> Json {
-  @mooncore.string_array_json(items)
-}
-
-///|
-fn tool_alias_row(alias_name : String, canonical : String) -> Json {
-  { "alias": alias_name, "canonical": canonical }
 }
