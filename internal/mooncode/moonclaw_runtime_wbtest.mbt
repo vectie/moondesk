@@ -531,6 +531,8 @@ test "mooncode runtime session patch apply preserves absent fields" {
     },
   )
   assert_eq(json_string(session, "last_message", default=""), "previous")
+  assert_eq(json_string(session, "status", default=""), "")
+  assert_eq(json_string(session, "mooncode_runtime_detail", default=""), "")
   assert_eq(
     json_string(session, "mooncode_runtime_mode", default=""),
     "moonclaw-mooncode-runtime-loop",
@@ -538,6 +540,19 @@ test "mooncode runtime session patch apply preserves absent fields" {
   assert_eq(
     json_string(session, "updated_at", default=""),
     "2026-06-17T00:01:00Z",
+  )
+  let running = apply_moonclaw_runtime_session_patch(
+    { "id": "code-demo", "status": "queued" },
+    {
+      "kind": "mooncode-runtime-supervisor-run-session-patch",
+      "status": "running",
+      "detail": "runtime service started",
+    },
+  )
+  assert_eq(json_string(running, "status", default=""), "running")
+  assert_eq(
+    json_string(running, "mooncode_runtime_detail", default=""),
+    "runtime service started",
   )
 }
 

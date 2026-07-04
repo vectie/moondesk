@@ -63,7 +63,10 @@ async fn handle_mooncode_session_runtime_supervisor_run(
       return
     }
   }
-  let daemon = moonclaw_daemon_status(workspace_root)
+  let daemon = ensure_moonclaw_daemon_running(
+    workspace_root,
+    action="runtime-supervisor-run",
+  )
   if !json_bool(daemon, "running", default=false) {
     send_api_error(
       conn, method_, 409, "Conflict", "MoonClaw daemon is not running",
@@ -240,45 +243,141 @@ async fn replay_recorded_mooncode_commands_to_native_runtime(
 }
 
 ///|
-async fn handle_mooncode_session_runtime_service_run(
+fn mooncode_runtime_service_error(
+  code : Int,
+  reason : String,
+  message : String,
+) -> Json {
+  { "code": code, "reason": reason, "message": message }
+}
+
+///|
+fn mooncode_runtime_service_lease_path(
   workspace_root : String,
   session_id : String,
-  body : &@io.Reader,
-  method_ : @http.RequestMethod,
-  conn : @http.ServerConnection,
-) -> Unit {
-  let payload = read_json_body(body).unwrap_or(Json::object({}))
-  let session = match read_mooncode_session_record(workspace_root, session_id) {
-    Some(session) => session
-    None => {
-      send_api_error(
-        conn, method_, 404, "Not Found", "Unknown MoonCode session",
-      )
-      return
+) -> String {
+  @pathx.join(
+    mooncode_session_log_dir(workspace_root, session_id),
+    "runtime-service.lease.json",
+  )
+}
+
+///|
+async fn mooncode_runtime_service_lease_active(
+  workspace_root : String,
+  session_id : String,
+  command_count : Int,
+  now_ms : Int,
+) -> Bool {
+  let lease = read_json_file_or_object(
+    mooncode_runtime_service_lease_path(workspace_root, session_id),
+  )
+  if json_string(lease, "kind", default="") != "mooncode-runtime-service-lease" {
+    return false
+  }
+  if json_int(lease, "command_count", default=-1) != command_count {
+    return false
+  }
+  let started_at_ms = json_int(lease, "started_at_ms", default=0)
+  started_at_ms > 0 && now_ms - started_at_ms < 15000
+}
+
+///|
+async fn try_acquire_mooncode_runtime_service_lease(
+  workspace_root : String,
+  session_id : String,
+) -> Bool {
+  if !mooncode_valid_session_id(session_id) {
+    return false
+  }
+  let command_count = read_mooncode_runtime_command_log(
+    workspace_root, session_id,
+  ).length()
+  let now_ms = @async.now().to_int()
+  let lease_path = mooncode_runtime_service_lease_path(
+    workspace_root, session_id,
+  )
+  if mooncode_runtime_service_lease_active(
+      workspace_root, session_id, command_count, now_ms,
+    ) {
+    return false
+  }
+  @fs.remove(lease_path) catch {
+    _ => ()
+  }
+  @fsx.make_directory(
+    mooncode_session_log_dir(workspace_root, session_id),
+    recursive=true,
+    exists_ok=true,
+  ) catch {
+    _ => return false
+  }
+  let lease : Json = {
+    "kind": "mooncode-runtime-service-lease",
+    "protocol": "mooncode.v1",
+    "session_id": session_id,
+    "command_count": command_count,
+    "started_at_ms": now_ms,
+  }
+  @fs.write_file(
+    lease_path,
+    lease.stringify(indent=2) + "\n",
+    create_mode=CreateNew,
+    permission=0o644,
+  ) catch {
+    _ => return false
+  }
+  true
+}
+
+///|
+async fn wait_for_mooncode_native_runtime_ready(daemon : Json) -> Bool {
+  if mooncode_native_runtime_ready(daemon) {
+    return true
+  }
+  let mut checks = 0
+  while checks < 12 {
+    @async.sleep(250)
+    if mooncode_native_runtime_ready(daemon) {
+      return true
     }
+    checks += 1
   }
-  let daemon = moonclaw_daemon_status(workspace_root)
+  false
+}
+
+///|
+async fn run_mooncode_runtime_service_for_session(
+  workspace_root : String,
+  session_id : String,
+  session : Json,
+  payload : Json,
+) -> Result[Json, Json] {
+  let daemon = ensure_moonclaw_daemon_running(
+    workspace_root,
+    action="runtime-service",
+  )
   if !json_bool(daemon, "running", default=false) {
-    send_api_error(
-      conn, method_, 409, "Conflict", "MoonClaw daemon is not running",
+    return Err(
+      mooncode_runtime_service_error(
+        409, "Conflict", "MoonClaw daemon is not running",
+      ),
     )
-    return
   }
-  if !mooncode_native_runtime_ready(daemon) {
-    send_api_error(
-      conn, method_, 409, "Conflict", "MoonClaw native MoonCode runtime is not available",
+  if !wait_for_mooncode_native_runtime_ready(daemon) {
+    return Err(
+      mooncode_runtime_service_error(
+        409, "Conflict", "MoonClaw native MoonCode runtime is not available",
+      ),
     )
-    return
   }
   match
     replay_recorded_mooncode_commands_to_native_runtime(
       workspace_root, session_id, session, daemon,
     ) {
     Ok(_) => ()
-    Err(error) => {
-      send_api_error(conn, method_, 502, "Bad Gateway", error)
-      return
-    }
+    Err(error) =>
+      return Err(mooncode_runtime_service_error(502, "Bad Gateway", error))
   }
   let service_body = @mooncode.moonclaw_runtime_loop_request(
     session_id,
@@ -286,7 +385,7 @@ async fn handle_mooncode_session_runtime_service_run(
     consumer_id=json_string(
       payload,
       "consumer_id",
-      default="moondesk-ui-runtime-service",
+      default="moondesk-backend-runtime-service",
     ),
     max_turns=json_int(payload, "max_turns", default=8),
     live_wait_ms=json_int(payload, "live_wait_ms", default=5000),
@@ -301,10 +400,8 @@ async fn handle_mooncode_session_runtime_service_run(
       service_body,
     ) {
     Ok(response) => response
-    Err(error) => {
-      send_api_error(conn, method_, 502, "Bad Gateway", error)
-      return
-    }
+    Err(error) =>
+      return Err(mooncode_runtime_service_error(502, "Bad Gateway", error))
   }
   let updated_at = @async.now().to_string()
   let session_patch = @mooncode.moonclaw_runtime_supervisor_run_session_patch(
@@ -328,24 +425,66 @@ async fn handle_mooncode_session_runtime_service_run(
     with_response, session_patch,
   )
   write_mooncode_session_record(workspace_root, with_updated) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not save MoonCode session after native runtime service start",
+    _ =>
+      return Err(
+        mooncode_runtime_service_error(
+          500, "Internal Server Error", "Could not save MoonCode session after native runtime service start",
+        ),
       )
-      return
-    }
   }
   append_new_mooncode_command_events(workspace_root, session, with_updated) catch {
-    _ => {
+    _ =>
+      return Err(
+        mooncode_runtime_service_error(
+          500, "Internal Server Error", "Could not append MoonCode event log after native runtime service start",
+        ),
+      )
+  }
+  Ok(enrich_mooncode_session_for_response(workspace_root, with_updated))
+}
+
+///|
+async fn handle_mooncode_session_runtime_service_run(
+  workspace_root : String,
+  session_id : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let payload = read_json_body(body).unwrap_or(Json::object({}))
+  let session = match read_mooncode_session_record(workspace_root, session_id) {
+    Some(session) => session
+    None => {
       send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not append MoonCode event log after native runtime service start",
+        conn, method_, 404, "Not Found", "Unknown MoonCode session",
       )
       return
     }
   }
-  send_json(
-    conn,
-    method_,
-    enrich_mooncode_session_for_response(workspace_root, with_updated),
-  )
+  if !try_acquire_mooncode_runtime_service_lease(workspace_root, session_id) {
+    send_json(
+      conn,
+      method_,
+      enrich_mooncode_session_for_response(workspace_root, session),
+    )
+    return
+  }
+  match
+    run_mooncode_runtime_service_for_session(
+      workspace_root, session_id, session, payload,
+    ) {
+    Ok(started) => send_json(conn, method_, started)
+    Err(error) =>
+      send_api_error(
+        conn,
+        method_,
+        json_int(error, "code", default=500),
+        json_string(error, "reason", default="Internal Server Error"),
+        json_string(
+          error,
+          "message",
+          default="Could not start MoonCode runtime service",
+        ),
+      )
+  }
 }

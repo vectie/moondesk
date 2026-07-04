@@ -9,6 +9,9 @@ async fn attach_mooncode_session_projection(
   let raw_events : Array[Json] = []
   let session_id = json_string(session, "id", default="")
   let durable_events = read_mooncode_event_log(workspace_root, session_id)
+  let moonclaw_events = read_moonclaw_mooncode_event_log(
+    workspace_root, session_id,
+  )
   let durable_commands = read_mooncode_command_log(workspace_root, session_id)
   let durable_runtime_commands = read_mooncode_runtime_command_log(
     workspace_root, session_id,
@@ -16,7 +19,11 @@ async fn attach_mooncode_session_projection(
   let durable_runtime_receipts = read_mooncode_runtime_receipt_log(
     workspace_root, session_id,
   )
-  let events = project_mooncode_events(session, raw_events, durable_events)
+  let events = project_mooncode_events(
+    session,
+    raw_events,
+    @mooncode.merge_events([], moonclaw_events, durable_events),
+  )
   let log_path = if session_id == "" {
     ""
   } else {

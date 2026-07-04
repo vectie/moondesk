@@ -74,7 +74,7 @@ async test "moonclaw service descriptor can use sibling checkout fallback" {
   assert_eq(json_string(result, "cwd", default=""), sibling)
   assert_true(
     json_string_array_items(result, "args") ==
-    ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", "cmd/daemon"],
+    ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", root],
   )
 }
 

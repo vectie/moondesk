@@ -132,6 +132,9 @@ async fn handle_create_mooncode_session(
       return
     }
   }
+  let session_id = json_string(queued, "id", default="")
+  ignore(session_id)
+  ignore(payload)
   send_json(
     conn,
     method_,

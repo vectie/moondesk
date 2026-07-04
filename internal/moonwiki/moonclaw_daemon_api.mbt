@@ -168,6 +168,176 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
 }
 
 ///|
+async fn ensure_moonclaw_daemon_running(
+  workspace_root : String,
+  action? : String = "start",
+) -> Json {
+  let status = moonclaw_daemon_status(workspace_root)
+  if json_bool(status, "running", default=false) {
+    return status
+  }
+  if !json_bool(status, "service_configured", default=false) {
+    return status
+  }
+  let root = workspace_context(workspace_root).suite_root
+  let start = start_moonclaw_daemon(root, action~)
+  if !json_bool(start, "ok", default=false) {
+    return start
+  }
+  moonclaw_daemon_status(workspace_root)
+}
+
+///|
+async fn start_moonclaw_daemon(
+  root : String,
+  action? : String = "start",
+) -> Json {
+  let descriptor = moonclaw_service_descriptor(root, "daemon")
+  if !json_bool(descriptor, "configured", default=false) {
+    return moonclaw_daemon_lifecycle_result(
+      root,
+      action~,
+      ok=false,
+      status="not-configured",
+      message="MoonClaw daemon service is not configured for this workspace",
+    )
+  }
+  let state_dir = moonsuite_product_artifact_for_workspace_root(
+    root, "moonclaw", "moondesk-daemon-lifecycle",
+  )
+  @fsx.make_directory(state_dir, recursive=true, exists_ok=true) catch {
+    _ =>
+      return moonclaw_daemon_lifecycle_result(
+        root,
+        action~,
+        ok=false,
+        status="failed",
+        message="Could not create MoonClaw daemon lifecycle directory",
+      )
+  }
+  let id = @desk.stable_id("moonclaw-daemon", @async.now().to_string())
+  let stdout_path = @pathx.join(state_dir, id + ".out.log")
+  let stderr_path = @pathx.join(state_dir, id + ".err.log")
+  let stdout_file = @process.redirect_to_file(
+    stdout_path,
+    append=true,
+    create_mode=OpenOrCreate,
+    permission=0o644,
+  ) catch {
+    _ =>
+      return moonclaw_daemon_lifecycle_result(
+        root,
+        action~,
+        ok=false,
+        status="failed",
+        message="Could not open MoonClaw daemon stdout log",
+      )
+  }
+  let stderr_file = @process.redirect_to_file(
+    stderr_path,
+    append=true,
+    create_mode=OpenOrCreate,
+    permission=0o644,
+  ) catch {
+    _ =>
+      return moonclaw_daemon_lifecycle_result(
+        root,
+        action~,
+        ok=false,
+        status="failed",
+        message="Could not open MoonClaw daemon stderr log",
+      )
+  }
+  let executable = json_string(descriptor, "command", default="")
+  let args = json_string_array_items(descriptor, "args")
+  let cwd = json_string(descriptor, "cwd", default=root)
+  let command = json_string(descriptor, "display", default="")
+  let pid = @process.spawn_orphan(
+    executable,
+    args,
+    cwd~,
+    stdout=stdout_file,
+    stderr=stderr_file,
+  ) catch {
+    error =>
+      return moonclaw_daemon_lifecycle_result(
+        root,
+        action~,
+        ok=false,
+        status="failed",
+        message="Could not start MoonClaw daemon: \{error}",
+        command~,
+        stdout_path~,
+        stderr_path~,
+      )
+  }
+  let info_path = moonclaw_daemon_info_path(root)
+  let mut reachable = false
+  let mut checks = 0
+  while checks < 30 {
+    @async.sleep(200)
+    let status = moonclaw_daemon_status(root)
+    if json_bool(status, "running", default=false) {
+      reachable = true
+      break
+    }
+    checks += 1
+  }
+  moonclaw_daemon_lifecycle_result(
+    root,
+    action~,
+    ok=reachable,
+    status=if reachable { "running" } else { "starting" },
+    running=reachable,
+    message=if reachable {
+      "MoonClaw daemon started"
+    } else {
+      "MoonClaw daemon was spawned but is not reachable yet"
+    },
+    pid~,
+    command~,
+    info_path~,
+    stdout_path~,
+    stderr_path~,
+  )
+}
+
+///|
+fn moonclaw_daemon_lifecycle_result(
+  root : String,
+  action~ : String,
+  ok~ : Bool,
+  status~ : String,
+  message~ : String,
+  running? : Bool = false,
+  pid? : Int = 0,
+  command? : String = "",
+  info_path? : String = "",
+  stdout_path? : String = "",
+  stderr_path? : String = "",
+) -> Json {
+  api_contract_response(
+    {
+      "action": action,
+      "running": running,
+      "pid": pid,
+      "command": command,
+      "info_path": if info_path == "" {
+        moonclaw_daemon_info_path(root)
+      } else {
+        info_path
+      },
+      "stdout_path": stdout_path,
+      "stderr_path": stderr_path,
+    },
+    ok~,
+    status~,
+    message~,
+    next_action=if ok { "use_moonclaw" } else { "inspect_moonclaw_daemon" },
+  )
+}
+
+///|
 fn moonclaw_existing_daemon_reachable(
   alive : Bool,
   port : Int,

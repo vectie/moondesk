@@ -48,6 +48,18 @@ fn mooncode_runtime_receipt_log_path(
 }
 
 ///|
+fn moonclaw_mooncode_event_log_path(
+  workspace_root : String,
+  session_id : String,
+) -> String {
+  moonsuite_product_artifact_for_workspace_root(
+    workspace_root,
+    "moonclaw",
+    "mooncode/sessions/\{session_id}/events.jsonl",
+  )
+}
+
+///|
 fn mooncode_session_snapshot_path(
   workspace_root : String,
   session_id : String,
@@ -88,6 +100,19 @@ async fn read_mooncode_event_log(
     return []
   }
   let path = mooncode_event_log_path(workspace_root, session_id)
+  let text = @fs.read_file(path).text() catch { _ => return [] }
+  parse_mooncode_event_log_text(text)
+}
+
+///|
+async fn read_moonclaw_mooncode_event_log(
+  workspace_root : String,
+  session_id : String,
+) -> Array[Json] {
+  if !mooncode_valid_session_id(session_id) {
+    return []
+  }
+  let path = moonclaw_mooncode_event_log_path(workspace_root, session_id)
   let text = @fs.read_file(path).text() catch { _ => return [] }
   parse_mooncode_event_log_text(text)
 }

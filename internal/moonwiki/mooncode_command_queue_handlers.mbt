@@ -60,11 +60,16 @@ fn mooncode_immediate_command_response(
       json_string(session, "id", default=""),
     ).to_json(),
   )
+  let response_status = json_string(session, "status", default="queued")
   api_contract_response(
     payload,
     ok=true,
-    status="queued",
-    message="MoonCode command was saved and queued",
+    status=response_status,
+    message=if response_status == "queued" {
+      "MoonCode command was saved and queued"
+    } else {
+      "MoonCode command was saved and runtime started"
+    },
     next_action="poll_mooncode_stream",
   )
 }

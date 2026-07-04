@@ -192,6 +192,7 @@ async fn handle_mooncode_session_command(
       return
     }
   }
+  ignore(payload)
   send_json(
     conn,
     method_,

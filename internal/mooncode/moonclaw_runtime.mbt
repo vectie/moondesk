@@ -172,6 +172,15 @@ pub fn apply_moonclaw_runtime_session_patch(
   patch : Json,
 ) -> Json {
   let mut next = session
+  match moonclaw_patch_field(patch, "status") {
+    Some(value) => next = session_with_field(next, "status", value)
+    None => ()
+  }
+  match moonclaw_patch_field(patch, "detail") {
+    Some(value) =>
+      next = session_with_field(next, "mooncode_runtime_detail", value)
+    None => ()
+  }
   match moonclaw_patch_field(patch, "last_message") {
     Some(value) => next = session_with_field(next, "last_message", value)
     None => ()

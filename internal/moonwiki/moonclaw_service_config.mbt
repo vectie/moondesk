@@ -81,7 +81,7 @@ async fn moonclaw_sibling_service_descriptor(
   {
     "command": moonclaw_default_moon_command(),
     "args": json_from_string_array([
-      "run", "cmd/main", "--", "daemon", "--port", "0", "--serve", "cmd/daemon",
+      "run", "cmd/main", "--", "daemon", "--port", "0", "--serve", root,
     ]),
     "cwd": sibling,
     "source": "sibling-checkout",
