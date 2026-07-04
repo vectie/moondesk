@@ -1,5 +1,6 @@
 ///|
 pub fn capabilities_json() -> Json {
+  let native_endpoints = @mooncode_core.native_capability_endpoints()
   {
     "ok": true,
     "component": "mooncode",
@@ -40,16 +41,16 @@ pub fn capabilities_json() -> Json {
       "readiness_contract_endpoint": desktop_readiness_contract_endpoint(),
       "runtime_event_ingest_endpoint": desktop_session_runtime_events_endpoint(),
       "package_result_ingest_endpoint": desktop_session_package_result_endpoint(),
-      "native_session_list_endpoint": native_code_session_list_endpoint(),
-      "native_session_listing_endpoint": native_code_session_listing_endpoint(),
-      "native_session_show_endpoint": native_code_session_show_endpoint(),
-      "native_package_result_endpoint": native_code_session_package_result_endpoint(),
-      "native_runtime_control_endpoint": native_code_session_runtime_control_endpoint(),
-      "native_eval_report_endpoint": native_code_session_eval_report_endpoint(),
-      "native_runtime_claim_endpoint": native_code_session_runtime_claim_endpoint(),
-      "native_runtime_turn_endpoint": native_code_session_runtime_turn_endpoint(),
-      "native_runtime_loop_endpoint": native_code_session_runtime_loop_endpoint(),
-      "native_runtime_service_endpoint": native_code_session_runtime_service_endpoint(),
+      "native_session_list_endpoint": native_endpoints.session_list,
+      "native_session_listing_endpoint": native_endpoints.session_listing,
+      "native_session_show_endpoint": native_endpoints.session_show,
+      "native_package_result_endpoint": native_endpoints.package_result,
+      "native_runtime_control_endpoint": native_endpoints.runtime_control,
+      "native_eval_report_endpoint": native_endpoints.eval_report,
+      "native_runtime_claim_endpoint": native_endpoints.runtime_claim,
+      "native_runtime_turn_endpoint": native_endpoints.runtime_turn,
+      "native_runtime_loop_endpoint": native_endpoints.runtime_loop,
+      "native_runtime_service_endpoint": native_endpoints.runtime_service,
       "native_runtime_loop_options": native_capability_runtime_loop_options(),
       "native_durable_session_store": "\{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions/<session-id>/session.json")}, commands.jsonl, runtime-receipts.jsonl, events.jsonl, and package-results.jsonl under the selected MoonSuite root",
       "native_capabilities_readiness": "Moondesk treats MoonClaw as native-runtime-ready only when /v1/code/capabilities passes the MoonCode-owned component/protocol, endpoint, and tool-set native contract check.",

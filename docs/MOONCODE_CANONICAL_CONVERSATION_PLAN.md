@@ -722,3 +722,8 @@ The next scheduled phases are now explicit:
   `DesktopApiCapabilities`, MoonWiki serves that object through the API
   envelope, and the Phase 8 wall rejects backend-local capability schema
   literals returning.
+- Phase 46: MoonCode native endpoint contract ownership. The native
+  `/v1/code/*` endpoint set now lives in `mooncode/core` as
+  `NativeCapabilityEndpoints`; internal MoonCode derives its native projection
+  list and named capability fields from that object, and the Phase 8 wall
+  rejects internal `/v1/code` endpoint mirrors returning.

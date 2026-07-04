@@ -57,6 +57,7 @@ run_repo_step "MoonCode frontend session effect ownership" "${ROOT}/ui/rabbita-d
 run_repo_step "MoonCode backend route contract ownership" "${ROOT}" "${MOON_BIN}" test internal/moonwiki --target native --filter "mooncode backend route contract*"
 run_step "MoonCode backend route source ownership" node "${ROOT}/scripts/validate_mooncode_backend_route_ownership.mjs"
 run_repo_step "MoonCode route method contract ownership" "${ROOT}" "${MOON_BIN}" test internal/mooncode --target native --filter "desktop projection endpoint contract*"
+run_step "MoonCode native endpoint contract ownership" bash "${ROOT}/scripts/validate_mooncode_native_endpoint_contract.sh"
 run_step "MoonCode backend method dispatch ownership" bash "${ROOT}/scripts/validate_mooncode_backend_method_dispatch.sh"
 run_step "MoonCode HTTP route method contract coverage" node "${ROOT}/scripts/mooncode_http_method_contract_smoke.mjs"
 run_step "MoonLib consumer pins" bash "${ROOT}/scripts/validate_moonlib_consumer_pins.sh"

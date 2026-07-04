@@ -1805,6 +1805,48 @@ Exit tests:
 - the Phase 8 wall runs the capability-contract ownership gate before the live
   HTTP route-method smoke.
 
+## Phase 46 - MoonCode Native Endpoint Contract Ownership
+
+Status: implemented by moving the named native `/v1/code/*` endpoint set into
+`mooncode/core` and making the MoonCode projection derive its native endpoint
+surface from that core contract.
+
+Problem:
+
+- `mooncode/core` already owned the native capability surface and
+  `native_capability_required_endpoints`, but `internal/mooncode/route_contracts.mbt`
+  still carried private helper functions with copied `/v1/code/*` endpoint
+  strings.
+- That left the native runtime surface split across two packages: core owned
+  the published capability list while the projection owned named endpoint
+  helpers used by `/api/mooncode/capabilities`.
+- A clean standalone MoonCode architecture needs native runtime endpoint names
+  to be part of the public core contract, with host/projection packages only
+  consuming them.
+
+Work:
+
+- Add `NativeCapabilityEndpoints` and `native_capability_endpoints()` to
+  `mooncode/core`.
+- Derive `native_capability_required_endpoints()` from the typed endpoint
+  object so the existing public array API remains stable.
+- Replace internal MoonCode native endpoint helper string literals with reads
+  from `@mooncode_core.native_capability_endpoints()`.
+- Derive `native_projection_required_endpoints()` directly from
+  `native_capability_required_endpoints()`.
+- Add a Phase 8 gate rejecting raw `/v1/code/*` endpoint literals returning to
+  `internal/mooncode/route_contracts.mbt`.
+
+Exit tests:
+
+- `mooncode/core` tests prove the typed endpoint object matches the published
+  required endpoint list and contains the native capability/runtime-service
+  endpoints.
+- internal MoonCode route-contract tests prove the projection still mirrors the
+  core native surface without duplicates.
+- the Phase 8 wall runs the native endpoint ownership validator before backend
+  method dispatch and live MoonCode HTTP route coverage.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

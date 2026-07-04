@@ -62,10 +62,11 @@ test "mooncode capability contract names the split packages" {
   assert_true(payload.contains("\"kind\":\"mooncode-readiness-contract\""))
   assert_true(payload.contains("\"native_eval_report\""))
   assert_true(payload.contains("\"native_session_listing_endpoint\""))
-  assert_true(payload.contains(native_code_session_listing_endpoint()))
-  assert_true(payload.contains(native_code_session_runtime_control_endpoint()))
-  assert_true(payload.contains(native_code_session_runtime_service_endpoint()))
-  assert_true(payload.contains(native_code_session_eval_report_endpoint()))
+  let native_endpoints = @mooncode_core.native_capability_endpoints()
+  assert_true(payload.contains(native_endpoints.session_listing))
+  assert_true(payload.contains(native_endpoints.runtime_control))
+  assert_true(payload.contains(native_endpoints.runtime_service))
+  assert_true(payload.contains(native_endpoints.eval_report))
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/action-plan"),
   )
@@ -76,7 +77,7 @@ test "mooncode capability contract names the split packages" {
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/package-result"),
   )
-  assert_true(payload.contains(native_code_session_package_result_endpoint()))
+  assert_true(payload.contains(native_endpoints.package_result))
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/command-jsonl"),
   )
@@ -125,17 +126,18 @@ test "mooncode capability native endpoints mirror the core surface" {
     "native_runtime_claim_endpoint", "native_runtime_turn_endpoint", "native_runtime_loop_endpoint",
     "native_runtime_service_endpoint",
   ]
+  let native_endpoints = @mooncode_core.native_capability_endpoints()
   let endpoints = [
-    native_code_session_list_endpoint(),
-    native_code_session_listing_endpoint(),
-    native_code_session_show_endpoint(),
-    native_code_session_package_result_endpoint(),
-    native_code_session_runtime_control_endpoint(),
-    native_code_session_eval_report_endpoint(),
-    native_code_session_runtime_claim_endpoint(),
-    native_code_session_runtime_turn_endpoint(),
-    native_code_session_runtime_loop_endpoint(),
-    native_code_session_runtime_service_endpoint(),
+    native_endpoints.session_list,
+    native_endpoints.session_listing,
+    native_endpoints.session_show,
+    native_endpoints.package_result,
+    native_endpoints.runtime_control,
+    native_endpoints.eval_report,
+    native_endpoints.runtime_claim,
+    native_endpoints.runtime_turn,
+    native_endpoints.runtime_loop,
+    native_endpoints.runtime_service,
   ]
   assert_eq(fields.length(), endpoints.length())
   for i, field in fields {

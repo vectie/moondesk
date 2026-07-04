@@ -841,6 +841,9 @@ Code mode is sufficiently tested when:
 - a desktop capability schema ownership gate proves MoonWiki serves the
   core-owned `DesktopApiCapabilities` object instead of rebuilding capability
   fields locally
+- a MoonCode native endpoint ownership gate proves internal projection code
+  consumes the typed `mooncode/core` native endpoint contract instead of
+  carrying mirrored `/v1/code/*` literals
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state
