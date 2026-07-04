@@ -44,7 +44,7 @@ fn create_book_from_pattern_cmd(
       "notify_on": json_string_array(notify_on),
     },
   }
-  @http.post("/api/books/from-pattern")
+  @http.post(@desk.books_endpoint_url("from-pattern"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -61,7 +61,7 @@ fn export_app_tool_portable_cmd(
   model : Model,
 ) -> @rabbita.Cmd {
   let body : Json = { "book_id": selected_book_id_for_portable_export(model) }
-  @http.post("/api/books/app-tool-portable")
+  @http.post(@desk.books_endpoint_url("app-tool-portable"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -74,7 +74,7 @@ fn export_app_tool_portable_cmd(
 
 ///|
 fn export_all_app_tool_portable_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
-  @http.post("/api/books/app-tool-portable/all")
+  @http.post(@desk.books_endpoint_url("app-tool-portable/all"))
   .with_json(Json::object({}))
   .expect_json(result => {
     dispatch(

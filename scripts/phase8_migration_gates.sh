@@ -48,6 +48,7 @@ run_repo_step "Rabbita JS tests" "${ROOT}/ui/rabbita-desk" "${MOON_BIN}" test --
 run_repo_step "Rabbita production build" "${ROOT}/ui/rabbita-desk" npm run build
 
 run_step "MoonCode frontend route ownership" bash "${ROOT}/scripts/validate_mooncode_frontend_routes.sh"
+run_step "Rabbita desktop route ownership" bash "${ROOT}/scripts/validate_rabbita_desktop_routes.sh"
 run_repo_step "MoonCode frontend session effect ownership" "${ROOT}/ui/rabbita-desk" "${MOON_BIN}" test main --target js --filter "mooncode session effects*"
 run_repo_step "MoonCode backend route contract ownership" "${ROOT}" "${MOON_BIN}" test internal/moonwiki --target native --filter "mooncode backend route contract*"
 run_step "MoonCode backend route source ownership" node "${ROOT}/scripts/validate_mooncode_backend_route_ownership.mjs"

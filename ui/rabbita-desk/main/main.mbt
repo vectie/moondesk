@@ -32,15 +32,6 @@ type Dispatch[A] = Emit[A]
 
 ///|
 #cfg(target="js")
-extern "js" fn encode_component(text : String) -> String = "(text)=>encodeURIComponent(text)"
-
-///|
-#cfg(target="js")
-extern "js" fn encode_path(text : String) -> String =
-  #| (text) => String(text).split("/").map(encodeURIComponent).join("/")
-
-///|
-#cfg(target="js")
 extern "js" fn browser_initial_activity() -> String =
   #| () => new URLSearchParams(globalThis.location?.search || "").get("activity") || ""
 

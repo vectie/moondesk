@@ -1,6 +1,6 @@
 ///|
 fn dispatch_daemon_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
-  @http.post("/api/town/dispatch")
+  @http.post(@desk.town_endpoint_url("dispatch"))
   .with_json(Json::object({}))
   .expect_json(result => {
     dispatch(
@@ -11,7 +11,7 @@ fn dispatch_daemon_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 
 ///|
 fn manage_daemon_cmd(dispatch : Dispatch[Msg], action : String) -> @rabbita.Cmd {
-  @http.post("/api/town/daemon/\{action}")
+  @http.post(@desk.town_endpoint_url("daemon/" + action))
   .with_json(Json::object({}))
   .expect_json(result => {
     dispatch(
@@ -26,7 +26,7 @@ fn set_daemon_supervision_cmd(
   enabled : Bool,
 ) -> @rabbita.Cmd {
   let body : Json = { "enabled": enabled }
-  @http.post("/api/town/daemon/supervision")
+  @http.post(@desk.town_endpoint_url("daemon/supervision"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -41,7 +41,7 @@ fn manage_launch_agent_cmd(
   action : String,
 ) -> @rabbita.Cmd {
   let body : Json = { "action": action }
-  @http.post("/api/town/daemon/launch-agent")
+  @http.post(@desk.town_endpoint_url("daemon/launch-agent"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -58,7 +58,7 @@ fn reveal_selection_cmd(
   model : Model,
 ) -> @rabbita.Cmd {
   let body : Json = { "path": reveal_target_path(model) }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/reveal")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "reveal"))
   .with_json(body)
   .expect_json(result => {
     dispatch(

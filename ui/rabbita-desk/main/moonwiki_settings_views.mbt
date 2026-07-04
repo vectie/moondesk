@@ -31,7 +31,7 @@ fn render_settings_pane(
       h3("Calendar Export"),
       a(
         class="secondary-button link-button full",
-        href="/api/town/calendar.ics",
+        href=@desk.town_calendar_url(),
         target=Blank,
         rel="noreferrer",
         "Open ICS",

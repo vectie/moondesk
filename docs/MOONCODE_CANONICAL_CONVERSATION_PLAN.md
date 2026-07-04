@@ -691,3 +691,8 @@ The next scheduled phases are now explicit:
   public `vectie/moondesk/core` route formatter through `@desk`, while the
   migration wall rejects raw active frontend `/api/mooncode` strings and the old
   helper file.
+- Phase 40: shared desktop API route formatting. Active Rabbita command and
+  settings code now call public `vectie/moondesk/core` helpers for workspace,
+  MoonClaw, review, search, town, preferences, and book routes; the Phase 8
+  wall rejects raw active frontend `/api/` desktop literals and stale
+  frontend-local route encoder externs.

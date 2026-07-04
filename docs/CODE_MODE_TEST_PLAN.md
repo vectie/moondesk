@@ -661,6 +661,21 @@ Phase 39 removes the old Rabbita-local helper entirely. MoonCode desktop URL
 formatting now lives in `vectie/moondesk/core`, and the validator rejects
 reintroducing `ui/rabbita-desk/main/mooncode_route_helpers.mbt`.
 
+Shared desktop route ownership gate:
+
+```bash
+scripts/validate_rabbita_desktop_routes.sh
+moon test core --target native --filter "desktop api route builder*"
+moon test core --target native --filter "workspace desktop routes*"
+moon test core --target native --filter "product and system desktop routes*"
+(cd ui/rabbita-desk && moon check main --target js --warn-list +73 --diagnostic-limit 80)
+```
+
+This Phase 40 gate keeps generic desktop API URL construction out of active
+Rabbita command and settings code. It fails if production UI code reintroduces
+raw `/api/` route literals or frontend-local `encode_component` /
+`encode_path` route encoders instead of consuming the shared `@desk` helpers.
+
 Frontend session effect ownership gate:
 
 ```bash
@@ -793,6 +808,9 @@ Code mode is sufficiently tested when:
   set as `desktop_projection_route_contracts`
 - a shared frontend route formatting gate proves Rabbita no longer maintains a
   second MoonCode route formatter and consumes the public core helpers instead
+- a shared desktop route formatting gate proves active Rabbita command and
+  settings code consumes public core route helpers for all desktop API
+  families, not raw `/api/` strings or frontend-local encoders
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

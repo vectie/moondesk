@@ -1544,6 +1544,44 @@ Exit tests:
 - MoonCode desktop URL formatting is covered in the public `core` package
 - adding a frontend-only MoonCode route formatter now fails the migration wall
 
+## Phase 40 - Shared Desktop API Route Formatting
+
+Status: implemented as public core-owned desktop API URL formatting for active
+Rabbita routes.
+
+Problem:
+
+- Phase 39 removed the MoonCode-specific frontend formatter, but the active
+  Rabbita command surface still built normal desktop API routes inline for
+  workspaces, MoonClaw, review, search, town, preferences, and books.
+- The UI also kept JS-only route encoders, which made URL construction
+  browser-package behavior instead of a shared Moondesk contract.
+- A first-time clean project should let the shared public package own
+  browser-safe desktop API formatting, while product UI code asks for named
+  routes.
+
+Work:
+
+- Add generic `desktop_api_url`, `desktop_api_path`, `desktop_api_query`, and
+  `url_path` helpers to `vectie/moondesk/core`.
+- Add public workspace, MoonClaw, review, search, town, preferences, and books
+  route wrappers around the generic helper.
+- Switch active Rabbita fetch, mutation, daemon, bootstrap, settings, file, and
+  book-builder code to call the shared `@desk` route helpers.
+- Remove stale JS-only URL encoder externs from the Rabbita main package.
+- Add a Rabbita desktop route ownership validator and wire it into the Phase 8
+  migration wall.
+
+Exit tests:
+
+- active Rabbita production `.mbt` code contains no raw `/api/` desktop route
+  strings
+- active Rabbita production `.mbt` code contains no frontend-local route
+  encoder externs
+- `core` tests cover desktop path, query, path-preserving file, and named
+  product route encoding
+- the Phase 8 wall rejects reintroduced active frontend desktop API literals
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1567,5 +1605,7 @@ Exit tests:
 - Letting MoonWiki route tests maintain a second static copy of the MoonCode
   desktop API route list.
 - Letting the Rabbita frontend keep a second MoonCode desktop route formatter.
+- Letting active Rabbita command handlers own generic desktop API route
+  formatting.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

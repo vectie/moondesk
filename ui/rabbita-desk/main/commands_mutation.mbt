@@ -10,7 +10,7 @@ fn save_inbox_cmd(
   } else {
     { "title": title, "content": content, "path": model.editing_inbox_path }
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/inbox")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "inbox"))
   .with_json(body)
   .expect_json(result => {
     dispatch(SavedInbox(http_result(result, "Could not save inbox note")))
@@ -23,7 +23,7 @@ fn save_markdown_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     "path": model.markdown_editor_path,
     "content": model.markdown_editor_content,
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/markdown")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "markdown"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -43,7 +43,7 @@ fn create_desk_entry_cmd(
     "directory": model.current_directory,
     "name": model.desk_new_item_name,
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/entries")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "entries"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -61,7 +61,7 @@ fn rename_desk_entry_cmd(
     "path": model.selected_path,
     "name": model.desk_rename_name,
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/rename")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "rename"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -85,7 +85,7 @@ fn move_desk_entry_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd 
     "paths": string_array_json(paths),
     "directory": model.desk_move_target_directory,
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/move")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "move"))
   .with_json(body)
   .expect_json(result => {
     dispatch(MovedDeskEntry(http_result(result, "Could not move Desk item")))
@@ -104,7 +104,7 @@ fn copy_desk_entry_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd 
     model.desk_selected_paths
   }
   let body : Json = { "paths": string_array_json(paths) }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/copy")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "copy"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -122,7 +122,7 @@ fn paste_desk_clipboard_cmd(
     "paths": string_array_json(model.desk_clipboard_paths),
     "directory": model.current_directory,
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/copy")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "copy"))
   .with_json(body)
   .expect_json(result => {
     dispatch(CopiedDeskEntry(http_result(result, "Could not paste Desk item")))
@@ -135,7 +135,7 @@ fn paste_desk_cut_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     "paths": string_array_json(model.desk_clipboard_paths),
     "directory": model.current_directory,
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/move")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "move"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -159,7 +159,7 @@ fn trash_desk_entry_cmd(
     model.desk_selected_paths
   }
   let body : Json = { "paths": string_array_json(paths) }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/trash")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "trash"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -202,7 +202,9 @@ fn import_desk_local_files_cmd(
     "directory": model.current_directory,
     "files": Json::array(file_items),
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/entries/import")
+  @http.post(
+    @desk.workspace_endpoint_url(model.selected_workspace_id, "entries/import"),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -235,7 +237,7 @@ fn restore_desk_trash_path_cmd(
   trash_path : String,
 ) -> @rabbita.Cmd {
   let body : Json = { "trash_path": trash_path }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/restore")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "restore"))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -254,7 +256,7 @@ fn import_url_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     "url": url,
     "note": model.import_note,
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/import")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "import"))
   .with_json(body)
   .expect_json(result => {
     dispatch(ImportedInbox(http_result(result, "Could not import URL")))
@@ -290,7 +292,7 @@ fn import_local_file_cmd(
       ""
     },
   }
-  @http.post("/api/workspaces/\{model.selected_workspace_id}/import")
+  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "import"))
   .with_json(body)
   .expect_json(result => {
     dispatch(ImportedInbox(http_result(result, "Could not import local file")))
@@ -305,7 +307,7 @@ fn save_view_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     "workspace_id": model.selected_workspace_id,
     "path": model.selected_path,
   }
-  @http.post("/api/preferences/views")
+  @http.post(@desk.preferences_views_url())
   .with_json(body)
   .expect_json(result => {
     dispatch(SavedView(http_result(result, "Could not save view")))
@@ -321,7 +323,7 @@ fn create_blank_moonbook_cmd(
     "name": model.new_book_name,
     "book_id": model.new_book_id,
   }
-  @http.post("/api/workspaces")
+  @http.post(@desk.workspaces_url())
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -333,7 +335,7 @@ fn create_blank_moonbook_cmd(
 ///|
 fn import_moonbook_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   let body : Json = { "source_path": model.import_book_path }
-  @http.post("/api/workspaces/import")
+  @http.post(@desk.workspace_import_url())
   .with_json(body)
   .expect_json(result => {
     dispatch(ImportedMoonBook(http_result(result, "Could not import MoonBook")))
@@ -351,7 +353,7 @@ fn import_moonbook_archive_cmd(
     "content_type": file.media_type,
     "data_url": file.content,
   }
-  @http.post("/api/workspaces/import")
+  @http.post(@desk.workspace_import_url())
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -390,7 +392,7 @@ fn import_moonbook_folder_cmd(
     })
   }
   let body : Json = { "files": Json::array(file_items) }
-  @http.post("/api/workspaces/import")
+  @http.post(@desk.workspace_import_url())
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -412,7 +414,7 @@ fn decide_review_item_cmd(
     "decision": decision,
     "note": model.review_decision_note,
   }
-  @http.post("/api/review/items/decision")
+  @http.post(@desk.review_decision_url())
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -438,7 +440,7 @@ fn submit_request_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     "review_policy": "bookkeeper_review",
     "source_policy": "mixed",
   }
-  @http.post("/api/town/requests")
+  @http.post(@desk.town_endpoint_url("requests"))
   .with_json(body)
   .expect_json(result => {
     dispatch(SubmittedRequest(http_result(result, "Could not stage request")))
@@ -464,7 +466,7 @@ fn create_standing_goal_cmd(
     "review_policy": trimmed_or(model.goal_review_policy, "bookkeeper_review"),
     "enabled": true,
   }
-  @http.post("/api/town/standing-goals")
+  @http.post(@desk.town_endpoint_url("standing-goals"))
   .with_json(body)
   .expect_json(result => {
     dispatch(

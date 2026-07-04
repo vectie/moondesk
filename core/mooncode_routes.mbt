@@ -1,15 +1,17 @@
 ///|
 pub fn mooncode_sessions_url(workspace_id : String) -> String {
   if workspace_id == "" {
-    "/api/mooncode/sessions"
+    desktop_api_url(["api", "mooncode", "sessions"])
   } else {
-    "/api/mooncode/sessions?workspace=\{url_component(workspace_id)}"
+    desktop_api_url(["api", "mooncode", "sessions"], query=[
+      ("workspace", workspace_id),
+    ])
   }
 }
 
 ///|
 pub fn mooncode_session_url(session_id : String) -> String {
-  "/api/mooncode/sessions/\{url_component(session_id)}"
+  desktop_api_url(["api", "mooncode", "sessions", session_id])
 }
 
 ///|
