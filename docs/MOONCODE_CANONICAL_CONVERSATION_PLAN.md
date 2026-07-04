@@ -120,7 +120,7 @@ Work:
 - Render backend canonical turns first.
 - Merge local optimistic user rows only when the backend has not yet
   acknowledged them.
-- Stop using raw stream events and runtime sink events as primary chat input.
+- Stop using raw stream and runtime diagnostic events as primary chat input.
 - Remove the old raw-event renderer instead of keeping a compatibility fallback.
 
 Exit tests:
@@ -128,7 +128,7 @@ Exit tests:
 - backend canonical turns win over local repair logic
 - local first prompt appears immediately when backend has not returned a turn
 - stream refresh cannot move a second prompt above the first turn
-- runtime sink refresh cannot duplicate a backend conversation turn
+- diagnostic refresh cannot duplicate a backend conversation turn
 
 ## Phase 3 - Send API Turn Creation
 
@@ -243,13 +243,12 @@ Work:
   durable backend conversation name in the frontend model.
 - Compact session polling preserves `mooncode_conversation`, so old replies do
   not disappear when a lightweight session listing arrives.
-- Runtime stream and sink events remain in the model as diagnostics/status
-  payloads only.
+- Runtime stream diagnostics remain in the model as status payloads only.
 
 Exit tests:
 
 - `mooncode_transcript_items` is a small projection from canonical turns
-- no main chat code reads raw runtime sink events
+- no main chat code reads raw runtime diagnostic events
 - no main chat code reads stream events
 - no main chat code compares message content to determine ownership
 - same-content prompts with different `client_turn_id` values remain distinct
@@ -290,7 +289,7 @@ UI:
 - new chat shows the prompt immediately
 - first progress appears between user and assistant
 - second and third prompts append at the bottom
-- old turns never disappear during poll/stream/sink refresh
+- old turns never disappear during poll, stream, or diagnostic refresh
 - collapsed progress remains attached to its turn
 
 Current UI coverage:
@@ -386,7 +385,7 @@ Current coverage:
 - The composer command path posts `prompt` for ordinary text.
 - The composer button remains `Prompt` for existing sessions and `Start` for a
   new session.
-- A running runtime event sink no longer changes the user's chat message into a
+- Stale runtime status no longer changes the user's chat message into a
   steering command.
 - Validation passed with Rabbita main tests (`147/147`), MoonCode core tests
   (`4/4`), internal MoonCode tests (`265/265`), internal MoonWiki tests
@@ -485,10 +484,32 @@ Current coverage:
 - The smoke proves visible prompt order, backend native reply import, UI native
   reply rendering, and hard-refresh replay.
 
+## Phase 15 - Frontend Runtime Sink Removal
+
+Status: complete for the MoonCode browser model.
+
+Work:
+
+- Delete browser-side runtime-event sink polling and state.
+- Keep the backend runtime-events endpoint as an explicit diagnostic/ingest
+  surface, not a hidden frontend conversation source.
+- Keep stream polling for cursors/checkpoints and canonical session refresh for
+  chat ownership.
+- Preserve tests proving raw stream events cannot acknowledge optimistic rows.
+
+Current coverage:
+
+- The frontend no longer has `LoadedMoonCodeRuntimeEventSink`,
+  `MoonCodeRuntimeEventSink`, legacy runtime-sink model fields, or a
+  runtime-sink fetch command.
+- `PollMoonCodeSessions`, session selection, and session mutation success do
+  not fetch runtime-event sink snapshots.
+- Stream diagnostics remain separate from chat ownership.
+
 ## Current Direction
 
-Phase 14 closes the automated browser proof for deterministic native
-first/second/third replies. The remaining risk is live MoonClaw runtime behavior
-outside deterministic sidecar injection: verify that real runtime events emit
-the same command-owned shapes, and remove or simplify any UI diagnostics that
-still imply a second chat owner when real MoonClaw is slow or unavailable.
+Phase 15 removes the browser-side runtime sink as a second live event owner.
+The remaining risk is live MoonClaw runtime behavior outside deterministic
+sidecar injection: verify real runtime events emit command-owned shapes through
+the backend ingest/sync path, then promote only canonical conversation/progress
+DTOs to the visible chat.

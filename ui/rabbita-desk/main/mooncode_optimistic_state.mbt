@@ -12,12 +12,7 @@ fn mooncode_append_optimistic_user_prompt(
     client_turn_id
   }
   mooncode_push_optimistic_row(
-    next,
-    session_id,
-    "user",
-    content,
-    "queued",
-    row_key,
+    next, session_id, "user", content, "queued", row_key,
   )
   next
 }

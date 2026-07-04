@@ -23,7 +23,9 @@ fn create_mooncode_session_cmd(
 ) -> @rabbita.Cmd {
   let prompt = trimmed_or(model.mooncode_prompt, mooncode_default_prompt(model))
   let client_turn_id = mooncode_client_turn_id(
-    model, mooncode_draft_session_id(model), prompt,
+    model,
+    mooncode_draft_session_id(model),
+    prompt,
   )
   let body : Json = {
     "workspace_id": model.selected_workspace_id,
@@ -104,8 +106,10 @@ fn mooncode_client_turn_id(
   content : String,
 ) -> String {
   let seed = session_id +
-    ":" + content.trim().to_owned() +
-    ":" + model.mooncode_next_client_turn_index.to_string()
+    ":" +
+    content.trim().to_owned() +
+    ":" +
+    model.mooncode_next_client_turn_index.to_string()
   @desk.stable_id("mooncode-client-turn", seed)
 }
 

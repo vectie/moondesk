@@ -56,36 +56,25 @@ fn render_mooncode_activity_body(row : MoonCodeActivityRow) -> @rabbita.Html {
 fn render_mooncode_activity_disclosure(
   row : MoonCodeActivityRow,
 ) -> @rabbita.Html {
-  let disclosure_suffix = if row.detail == "" {
-    " empty-detail"
-  } else {
-    ""
-  }
+  let disclosure_suffix = if row.detail == "" { " empty-detail" } else { "" }
   let disclosure_class = "mooncode-activity-disclosure" + disclosure_suffix
-  @html.node(
-    "details",
-    @html.Attrs::build().class(disclosure_class),
-    [
-      @html.node(
-        "summary",
-        @html.Attrs::build().class("mooncode-activity-summary"),
-        [
-          span(class="mooncode-activity-summary-text", row.title),
-          span(
-            class="mooncode-activity-summary-action when-closed",
-            "Show details",
-          ),
-          span(
-            class="mooncode-activity-summary-action when-open",
-            "Hide details",
-          ),
-        ],
-      ),
-      if row.detail == "" {
-        span(class="mooncode-activity-detail empty", "")
-      } else {
-        pre(class="mooncode-activity-detail", row.detail)
-      },
-    ],
-  )
+  @html.node("details", @html.Attrs::build().class(disclosure_class), [
+    @html.node(
+      "summary",
+      @html.Attrs::build().class("mooncode-activity-summary"),
+      [
+        span(class="mooncode-activity-summary-text", row.title),
+        span(
+          class="mooncode-activity-summary-action when-closed",
+          "Show details",
+        ),
+        span(class="mooncode-activity-summary-action when-open", "Hide details"),
+      ],
+    ),
+    if row.detail == "" {
+      span(class="mooncode-activity-detail empty", "")
+    } else {
+      pre(class="mooncode-activity-detail", row.detail)
+    },
+  ])
 }

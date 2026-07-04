@@ -268,7 +268,7 @@ Assertions:
 - invalid earlier commands block later commands in order
 - delivered commands are not replayed
 - runtime evidence requires command-scoped proof
-- runtime event sink and session stream agree on event ids
+- runtime event ingest and session stream projections agree on event ids
 
 Suggested test files:
 
@@ -358,7 +358,7 @@ GET /stream?since=0
 -> append more events
 -> GET /stream?since=<cursor>
 -> restart host or reconstruct model from disk
--> GET /sessions and /runtime-events
+-> GET /sessions and stream-state from durable logs
 ```
 
 Assertions:
@@ -366,7 +366,8 @@ Assertions:
 - incremental stream returns only newer events.
 - stream-state clamps invalid cursors.
 - duplicate event ids are deduped in UI merge helpers.
-- selected session reload fetches both stream and runtime events.
+- selected session reload fetches canonical session data and stream updates,
+  not browser-owned runtime diagnostic snapshots.
 - durable session summary matches the latest disk state.
 
 ### Negative And Security Cases
@@ -457,7 +458,7 @@ ui/rabbita-desk/main
   explicit steering controls
   session selection reload commands
   stream merge and trim helpers
-  runtime event sink projection
+  canonical conversation projection
   command palette entries for code mode
 
 cmd/main

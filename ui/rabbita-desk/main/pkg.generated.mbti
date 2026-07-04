@@ -80,10 +80,6 @@ type MoonCodeEvent derive(@json.FromJson)
 
 type MoonCodeOptimisticRow
 
-type MoonCodeRuntimeEventSink derive(@json.FromJson)
-
-type MoonCodeRuntimeServiceState derive(@json.FromJson)
-
 type MoonCodeSession derive(@json.FromJson)
 
 type MoonCodeStreamPoll

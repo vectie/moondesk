@@ -55,9 +55,8 @@ fn mooncode_canonical_turns_from_backend_conversation(
           }
         }
         match mooncode_canonical_message_row_from_json(backend_turn.assistant) {
-          Some(row) => {
+          Some(row) =>
             turn.body_items.push(mooncode_transcript_message_item(row))
-          }
           None => ()
         }
         if turn.user is Some(_) || turn.body_items.length() > 0 {
@@ -101,7 +100,9 @@ fn mooncode_canonical_note_turn_metadata(
 fn mooncode_canonical_message_row_from_json(
   value : Json,
 ) -> MoonCodeTranscriptRow? {
-  let content = json_field_string(value, "content", default="").trim().to_owned()
+  let content = json_field_string(value, "content", default="")
+    .trim()
+    .to_owned()
   if content == "" {
     return None
   }
@@ -118,10 +119,9 @@ fn mooncode_canonical_message_row_from_json(
 fn mooncode_canonical_progress_item_from_json(
   value : Json,
 ) -> MoonCodeTranscriptItem? {
-  let title = mooncode_canonical_first_json_text(
-    value,
-    ["title", "summary", "content", "detail"],
-  )
+  let title = mooncode_canonical_first_json_text(value, [
+    "title", "summary", "content", "detail",
+  ])
   let detail = mooncode_canonical_first_json_text(value, ["detail", "content"])
   if title == "" && detail == "" {
     return None
@@ -129,9 +129,17 @@ fn mooncode_canonical_progress_item_from_json(
   let status = json_field_string(value, "status", default="running")
   Some(
     mooncode_transcript_activity_item({
-      tone: if status == "failed" { "failed" } else { "thinking" },
+      tone: if status == "failed" {
+        "failed"
+      } else {
+        "thinking"
+      },
       label: "Progress",
-      title: if title == "" { "Working on it" } else { title },
+      title: if title == "" {
+        "Working on it"
+      } else {
+        title
+      },
       detail,
       status,
       folded: status != "running",
@@ -155,11 +163,7 @@ fn mooncode_canonical_first_json_text(
 
 ///|
 fn mooncode_canonical_empty_turn() -> MoonCodeCanonicalTurn {
-  {
-    client_turn_id: "",
-    user: None,
-    body_items: [],
-  }
+  { client_turn_id: "", user: None, body_items: [] }
 }
 
 ///|

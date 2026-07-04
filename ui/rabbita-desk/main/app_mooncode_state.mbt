@@ -37,9 +37,9 @@ fn mooncode_draft_session_id(model : Model) -> String {
 fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
   let session_id = mooncode_draft_session_id(model)
   if !mooncode_optimistic_rows_have_session(
-    model.mooncode_optimistic_rows,
-    session_id,
-  ) {
+      model.mooncode_optimistic_rows,
+      session_id,
+    ) {
     return None
   }
   Some({
@@ -216,7 +216,8 @@ fn mooncode_selected_session_has_inflight_state(
   mooncode_optimistic_rows_have_session(
     model.mooncode_optimistic_rows,
     session_id,
-  ) || mooncode_session_is_active(model, session_id)
+  ) ||
+  mooncode_session_is_active(model, session_id)
 }
 
 ///|

@@ -81,16 +81,13 @@ fn update_mooncode_session_results(
         mooncode_optimistic_rows: optimistic_rows,
       }
       let draft_active = mooncode_new_session_draft_active(session_model)
-      match mooncode_find_acknowledged_draft_session(
-        session_model,
-        mooncode_sessions,
-      ) {
+      match
+        mooncode_find_acknowledged_draft_session(
+          session_model, mooncode_sessions,
+        ) {
         Some(session) =>
           return mooncode_session_mutation_succeeded(
-            dispatch,
-            session_model,
-            session,
-            "MoonCode session started",
+            dispatch, session_model, session, "MoonCode session started",
           )
         None => ()
       }
@@ -109,11 +106,8 @@ fn update_mooncode_session_results(
         )
       }
       let keep_stream = selected == model.mooncode_stream_session_id
-      let keep_sink = selected == model.mooncode_runtime_event_sink_session_id
       (
-        mooncode_session_hydration_cmd(
-          dispatch, selected, keep_stream, keep_sink,
-        ),
+        mooncode_session_hydration_cmd(dispatch, selected, keep_stream),
         {
           ..model,
           mooncode_sessions,
@@ -154,23 +148,6 @@ fn update_mooncode_session_results(
             model.mooncode_stream_checkpoint_status
           } else {
             "checkpoint idle"
-          },
-          mooncode_runtime_event_sink_session_id: if keep_sink {
-            model.mooncode_runtime_event_sink_session_id
-          } else {
-            ""
-          },
-          mooncode_runtime_event_sink: if keep_sink {
-            model.mooncode_runtime_event_sink
-          } else {
-            None
-          },
-          mooncode_runtime_event_sink_status: if selected == "" {
-            "runtime events idle"
-          } else if keep_sink {
-            model.mooncode_runtime_event_sink_status
-          } else {
-            "loading runtime events"
           },
           mooncode_composer_status: if draft_active {
             model.mooncode_composer_status
@@ -240,23 +217,11 @@ fn mooncode_session_hydration_cmd(
   dispatch : Dispatch[Msg],
   selected : String,
   keep_stream : Bool,
-  keep_sink : Bool,
 ) -> @rabbita.Cmd {
-  if selected == "" || (keep_stream && keep_sink) {
+  if selected == "" || keep_stream {
     @rabbita.none
   } else {
-    @rabbita.batch([
-      if keep_stream {
-        @rabbita.none
-      } else {
-        fetch_mooncode_stream_cmd(dispatch, selected, 0)
-      },
-      if keep_sink {
-        @rabbita.none
-      } else {
-        fetch_mooncode_runtime_event_sink_cmd(dispatch, selected)
-      },
-    ])
+    fetch_mooncode_stream_cmd(dispatch, selected, 0)
   }
 }
 
@@ -285,14 +250,12 @@ fn mooncode_session_mutation_succeeded(
     session.id,
   )
   let optimistic_rows = mooncode_drop_acknowledged_optimistic_rows(
-    optimistic_rows,
-    session,
+    optimistic_rows, session,
   )
   (
     @rabbita.batch([
       fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
       fetch_mooncode_stream_cmd(dispatch, session.id, 0),
-      fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
       schedule_mooncode_fast_poll(dispatch),
       schedule_mooncode_poll(dispatch),
       sync_shell_cmd(MoonCode, model.activity),
@@ -306,9 +269,6 @@ fn mooncode_session_mutation_succeeded(
       ),
       selected_mooncode_session_id: session.id,
       mooncode_new_chat_active: false,
-      mooncode_runtime_event_sink_session_id: session.id,
-      mooncode_runtime_event_sink: None,
-      mooncode_runtime_event_sink_status: "waiting for backend runtime events",
       mooncode_prompt: "",
       mooncode_optimistic_rows: optimistic_rows,
       mooncode_composer_status: status,
@@ -316,6 +276,7 @@ fn mooncode_session_mutation_succeeded(
   )
 }
 
+///|
 fn mooncode_upsert_session(
   sessions : Array[MoonCodeSession],
   session : MoonCodeSession,

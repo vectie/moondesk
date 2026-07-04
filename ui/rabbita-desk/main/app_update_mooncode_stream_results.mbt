@@ -84,40 +84,6 @@ fn update_mooncode_stream_results(
           },
         )
       }
-    LoadedMoonCodeRuntimeEventSink(session_id, Ok(sink)) =>
-      if session_id != model.selected_mooncode_session_id {
-        (@rabbita.none, model)
-      } else {
-        mooncode_note_diagnostic_events(sink.events)
-        let service_status = if sink.runtime_service.status == "idle" {
-          ""
-        } else {
-          " / service " + sink.runtime_service.status
-        }
-        (
-          @rabbita.none,
-          {
-            ..model,
-            mooncode_runtime_event_sink_session_id: session_id,
-            mooncode_runtime_event_sink: Some(sink),
-            mooncode_runtime_event_sink_status: "\{sink.event_count} runtime event(s)\{service_status}",
-          },
-        )
-      }
-    LoadedMoonCodeRuntimeEventSink(session_id, Err(error)) =>
-      if session_id != model.selected_mooncode_session_id {
-        (@rabbita.none, model)
-      } else {
-        (
-          @rabbita.none,
-          {
-            ..model,
-            mooncode_runtime_event_sink_session_id: session_id,
-            mooncode_runtime_event_sink: None,
-            mooncode_runtime_event_sink_status: error,
-          },
-        )
-      }
     _ => (@rabbita.none, model)
   }
 }

@@ -58,8 +58,6 @@ fn update(
     LoadedMoonCodeStream(_, _) => update_mooncode_results(dispatch, msg, model)
     SavedMoonCodeStreamCheckpoint(_, _) =>
       update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeRuntimeEventSink(_, _) =>
-      update_mooncode_results(dispatch, msg, model)
     CreatedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     CompletedMoonCodeCommand(_) => update_mooncode_results(dispatch, msg, model)
     SelectWorkspaceMode(_) => update_navigation_actions(dispatch, msg, model)

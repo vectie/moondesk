@@ -121,20 +121,12 @@ fn code_mode_test_turn(
     status,
     started_at: "2026-06-30T00:00:00Z",
     updated_at: "2026-06-30T00:00:01Z",
-    user: {
-      "role": "user",
-      "content": user,
-      "status": "done",
-    },
+    user: { "role": "user", "content": user, "status": "done" },
     progress,
     assistant: if assistant == "" {
       Json::object({})
     } else {
-      {
-        "role": "assistant",
-        "content": assistant,
-        "status": status,
-      }
+      { "role": "assistant", "content": assistant, "status": status }
     },
     items: [],
   }
@@ -424,9 +416,6 @@ test "code mode transcript uses local rows instead of runtime wait state" {
         command="prompt",
       ),
     ],
-    mooncode_runtime_event_sink_session_id: "",
-    mooncode_runtime_event_sink: None,
-    mooncode_runtime_event_sink_status: "loading runtime events",
     mooncode_optimistic_rows: [
       {
         session_id: "session-a",
@@ -439,18 +428,10 @@ test "code mode transcript uses local rows instead of runtime wait state" {
   }
   assert_eq(code_mode_test_transcript_rows(model, session).length(), 1)
   let no_local_conversation = { ..model, mooncode_optimistic_rows: [] }
-  assert_eq(code_mode_test_transcript_rows(no_local_conversation, session).length(), 0)
-  let with_sink = {
-    ..model,
-    mooncode_runtime_event_sink_session_id: "session-a",
-    mooncode_runtime_event_sink: Some({
-      event_count: 1,
-      events: [code_mode_test_event("runtime-a")],
-      runtime_service: { status: "idle" },
-    }),
-    mooncode_runtime_event_sink_status: "1 runtime event(s)",
-  }
-  assert_eq(code_mode_test_transcript_rows(with_sink, session).length(), 1)
+  assert_eq(
+    code_mode_test_transcript_rows(no_local_conversation, session).length(),
+    0,
+  )
 }
 
 ///|
@@ -483,13 +464,8 @@ test "code mode new session action opens MoonCode draft without losing book cont
 }
 
 ///|
-test "code mode selecting loaded session keeps runtime sink to avoid repaint" {
+test "code mode selecting loaded session keeps matching stream state" {
   let session = code_mode_test_session("session-a")
-  let sink = {
-    event_count: 1,
-    events: [code_mode_test_event("runtime-a")],
-    runtime_service: { status: "idle" },
-  }
   let model = {
     ..init_model(),
     selected_mooncode_session_id: "session-a",
@@ -498,9 +474,6 @@ test "code mode selecting loaded session keeps runtime sink to avoid repaint" {
     mooncode_stream_cursor: 4,
     mooncode_stream_events: [code_mode_test_event("stream-a")],
     mooncode_stream_status: "live tail",
-    mooncode_runtime_event_sink_session_id: "session-a",
-    mooncode_runtime_event_sink: Some(sink),
-    mooncode_runtime_event_sink_status: "1 runtime event(s)",
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
@@ -511,9 +484,6 @@ test "code mode selecting loaded session keeps runtime sink to avoid repaint" {
   assert_eq(next.mooncode_stream_session_id, "session-a")
   assert_eq(next.mooncode_stream_cursor, 4)
   assert_eq(next.mooncode_stream_events.length(), 1)
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_true(next.mooncode_runtime_event_sink is Some(_))
-  assert_eq(next.mooncode_runtime_event_sink_status, "1 runtime event(s)")
 }
 
 ///|
@@ -681,8 +651,6 @@ test "code mode create response is idempotent after listing adoption" {
     selected_workspace_id: "",
     selected_mooncode_session_id: "session-created",
     mooncode_sessions: [session],
-    mooncode_runtime_event_sink_session_id: "session-created",
-    mooncode_runtime_event_sink_status: "waiting for backend runtime events",
     mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-created",
@@ -696,11 +664,6 @@ test "code mode create response is idempotent after listing adoption" {
   )
   assert_eq(next.selected_mooncode_session_id, "session-created")
   assert_false(next.mooncode_new_chat_active)
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-created")
-  assert_eq(
-    next.mooncode_runtime_event_sink_status,
-    "waiting for backend runtime events",
-  )
   assert_eq(next.mooncode_optimistic_rows.length(), 1)
 }
 
@@ -835,7 +798,6 @@ test "code mode compact session listing does not adopt draft by prompt title" {
   assert_eq(items.length(), 1)
 }
 
-
 ///|
 test "code mode command result keeps optimistic prompt until canonical turn arrives" {
   let session = code_mode_test_session("session-a", status="running")
@@ -883,12 +845,14 @@ test "code mode runtime prompt event does not acknowledge optimistic prompt" {
   )
   let (_, next) = update_mooncode_stream_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
+    LoadedMoonCodeStream(
       "session-a",
       Ok({
-        event_count: 1,
+        stream: "events",
+        stream_source: "disk",
+        next_since: 1,
+        emitted_count: 1,
         events: [prompt_event],
-        runtime_service: { status: "running" },
       }),
     ),
     model,
@@ -920,12 +884,14 @@ test "code mode runtime prompt event cannot acknowledge by client turn id" {
   )
   let (_, after_first_event) = update_mooncode_stream_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
+    LoadedMoonCodeStream(
       "session-a",
       Ok({
-        event_count: 1,
+        stream: "events",
+        stream_source: "disk",
+        next_since: 1,
+        emitted_count: 1,
         events: [first_prompt_event],
-        runtime_service: { status: "running" },
       }),
     ),
     model,
@@ -942,12 +908,14 @@ test "code mode runtime prompt event cannot acknowledge by client turn id" {
   )
   let (_, after_second_event) = update_mooncode_stream_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
+    LoadedMoonCodeStream(
       "session-a",
       Ok({
-        event_count: 2,
+        stream: "events",
+        stream_source: "disk",
+        next_since: 2,
+        emitted_count: 2,
         events: [first_prompt_event, second_prompt_event],
-        runtime_service: { status: "running" },
       }),
     ),
     after_first_event,
@@ -1236,18 +1204,9 @@ test "code mode empty composer is rejected before creating a session" {
 ///|
 test "code mode composer always queues a prompt from the chat input" {
   let model = { ..init_model(), mooncode_prompt: "continue" }
-  let running_service = {
-    ..model,
-    mooncode_runtime_event_sink_session_id: "running",
-    mooncode_runtime_event_sink: Some({
-      event_count: 1,
-      events: [code_mode_test_event("runtime-service-started")],
-      runtime_service: { status: "running" },
-    }),
-  }
   assert_eq(
     mooncode_composer_button_label(
-      running_service,
+      model,
       Some(code_mode_test_session("running", status="running")),
     ),
     "Prompt",
@@ -1285,11 +1244,6 @@ test "code mode created session selects session clears prompt and reloads stream
 ///|
 test "code mode session listing prefers selected session and preserves matching stream state" {
   let session = code_mode_test_session("session-a")
-  let sink = {
-    event_count: 1,
-    events: [code_mode_test_event("event-a")],
-    runtime_service: { status: "idle" },
-  }
   let model = {
     ..init_model(),
     selected_workspace_id: "book-demo",
@@ -1300,9 +1254,6 @@ test "code mode session listing prefers selected session and preserves matching 
     mooncode_stream_status: "live tail / disk / events +1 event(s), cursor 7",
     mooncode_stream_checkpoint_session_id: "session-a",
     mooncode_stream_checkpoint_status: "ui checkpoint 7 / latest 7",
-    mooncode_runtime_event_sink_session_id: "session-a",
-    mooncode_runtime_event_sink: Some(sink),
-    mooncode_runtime_event_sink_status: "1 runtime event(s)",
   }
   let (_, next) = update_mooncode_results(
     code_mode_test_dispatch,
@@ -1314,8 +1265,6 @@ test "code mode session listing prefers selected session and preserves matching 
   assert_eq(next.mooncode_stream_cursor, 7)
   assert_eq(next.mooncode_stream_events.length(), 1)
   assert_eq(next.mooncode_stream_checkpoint_session_id, "session-a")
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_true(next.mooncode_runtime_event_sink is Some(_))
   assert_eq(next.mooncode_composer_status, "1 MoonCode session(s)")
 }
 
@@ -1332,13 +1281,6 @@ test "code mode session listing resets stale stream state when selection changes
     mooncode_stream_status: "stale stream",
     mooncode_stream_checkpoint_session_id: "missing-session",
     mooncode_stream_checkpoint_status: "stale checkpoint",
-    mooncode_runtime_event_sink_session_id: "missing-session",
-    mooncode_runtime_event_sink: Some({
-      event_count: 1,
-      events: [code_mode_test_event("stale-runtime")],
-      runtime_service: { status: "running" },
-    }),
-    mooncode_runtime_event_sink_status: "stale runtime events",
   }
   let (_, next) = update_mooncode_results(
     code_mode_test_dispatch,
@@ -1352,9 +1294,6 @@ test "code mode session listing resets stale stream state when selection changes
   assert_eq(next.mooncode_stream_status, "stream cursor reset")
   assert_eq(next.mooncode_stream_checkpoint_session_id, "")
   assert_eq(next.mooncode_stream_checkpoint_status, "checkpoint idle")
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "")
-  assert_true(next.mooncode_runtime_event_sink is None)
-  assert_eq(next.mooncode_runtime_event_sink_status, "loading runtime events")
 }
 
 ///|
@@ -1532,343 +1471,3 @@ test "code mode stream parser preserves package object tool results" {
 }
 
 ///|
-test "code mode runtime event sink reports service status only when active" {
-  let model = { ..init_model(), selected_mooncode_session_id: "session-a" }
-  let (_, idle) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
-      "session-a",
-      Ok({
-        event_count: 2,
-        events: [
-          code_mode_test_event("event-a"),
-          code_mode_test_event("event-b"),
-        ],
-        runtime_service: { status: "idle" },
-      }),
-    ),
-    model,
-  )
-  assert_eq(idle.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_eq(idle.mooncode_runtime_event_sink_status, "2 runtime event(s)")
-
-  let (_, running) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
-      "session-a",
-      Ok({
-        event_count: 3,
-        events: [
-          code_mode_test_event("event-a"),
-          code_mode_test_event("event-b"),
-          code_mode_test_event("event-c"),
-        ],
-        runtime_service: { status: "running" },
-      }),
-    ),
-    model,
-  )
-  assert_eq(
-    running.mooncode_runtime_event_sink_status,
-    "3 runtime event(s) / service running",
-  )
-}
-
-///|
-test "code mode idle runtime sink reports unanswered prompt without browser start" {
-  let model = { ..init_model(), selected_mooncode_session_id: "session-a" }
-  let (_, next) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
-      "session-a",
-      Ok({
-        event_count: 1,
-        events: [
-          code_mode_test_event(
-            "prompt-a",
-            title="Prompt: queued",
-            kind="command.prompt",
-            status="queued",
-            detail="Start service for this prompt",
-            command="prompt",
-          ),
-        ],
-        runtime_service: { status: "idle" },
-      }),
-    ),
-    model,
-  )
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_eq(next.mooncode_runtime_event_sink_status, "1 runtime event(s)")
-}
-
-///|
-test "code mode idle runtime sink reports later prompt after prior turn finished" {
-  let previous_sink : MoonCodeRuntimeEventSink = {
-    event_count: 3,
-    events: [
-      code_mode_test_event(
-        "first-prompt",
-        command_id="cmd-first",
-        title="Prompt: queued",
-        kind="command.prompt",
-        status="queued",
-        detail="first",
-        command="prompt",
-      ),
-      code_mode_test_event(
-        "first-answer",
-        command_id="cmd-first",
-        title="MoonCode assistant update",
-        lane="transcript",
-        kind="assistant_delta",
-        status="running",
-        detail="first answer",
-      ),
-      code_mode_test_event(
-        "first-done",
-        command_id="cmd-first",
-        title="MoonCode native runtime turn completed",
-        kind="runtime.turn_finished",
-        status="done",
-        detail="MoonClaw native runtime turn executed 1 tool call(s).",
-      ),
-    ],
-    runtime_service: { status: "idle" },
-  }
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: "session-a",
-    mooncode_runtime_event_sink_session_id: "session-a",
-    mooncode_runtime_event_sink: Some(previous_sink),
-    mooncode_runtime_event_sink_status: "waiting for backend runtime events",
-  }
-  let (_, next) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
-      "session-a",
-      Ok({
-        event_count: 4,
-        events: previous_sink.events +
-        [
-          code_mode_test_event(
-            "second-prompt",
-            command_id="cmd-second",
-            title="Prompt: queued",
-            kind="command.prompt",
-            status="queued",
-            detail="second",
-            command="prompt",
-          ),
-        ],
-        runtime_service: { status: "idle" },
-      }),
-    ),
-    model,
-  )
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_eq(next.mooncode_runtime_event_sink_status, "4 runtime event(s)")
-}
-
-///|
-test "code mode idle runtime sink reports local unanswered prompt" {
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: "session-a",
-    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
-      [
-        {
-          session_id: "session-a",
-          role: "user",
-          content: "First question",
-          status: "queued",
-          key: "ui-user:session-a:0",
-        },
-        {
-          session_id: "session-a",
-          role: "assistant",
-          content: "First answer",
-          status: "done",
-          key: "assistant:event:first",
-        },
-      ],
-      "session-a",
-      "Third question",
-    ),
-  }
-  let (_, next) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
-      "session-a",
-      Ok({ event_count: 0, events: [], runtime_service: { status: "idle" } }),
-    ),
-    model,
-  )
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_eq(next.mooncode_runtime_event_sink_status, "0 runtime event(s)")
-}
-
-///|
-test "code mode idle runtime sink does not start service for answered local turn" {
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: "session-a",
-    mooncode_optimistic_rows: [
-      {
-        session_id: "session-a",
-        role: "user",
-        content: "Question",
-        status: "queued",
-        key: "ui-user:session-a:0",
-      },
-      {
-        session_id: "session-a",
-        role: "assistant",
-        content: "Answer",
-        status: "done",
-        key: "assistant:event:answer",
-      },
-    ],
-  }
-  let (_, next) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
-      "session-a",
-      Ok({ event_count: 0, events: [], runtime_service: { status: "idle" } }),
-    ),
-    model,
-  )
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_eq(next.mooncode_runtime_event_sink_status, "0 runtime event(s)")
-}
-
-///|
-test "code mode running runtime sink does not restart the first active prompt" {
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: "session-a",
-    mooncode_runtime_event_sink_session_id: "session-a",
-    mooncode_runtime_event_sink_status: "waiting for backend runtime events",
-  }
-  let (_, next) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
-      "session-a",
-      Ok({
-        event_count: 2,
-        events: [
-          code_mode_test_event(
-            "first-prompt",
-            command_id="cmd-first",
-            title="Prompt: queued",
-            kind="command.prompt",
-            status="queued",
-            detail="first",
-            command="prompt",
-            created_at="1000",
-          ),
-          code_mode_test_event(
-            "service-start",
-            command_id="service-session-a",
-            title="Runtime service started",
-            kind="runtime.service_started",
-            status="running",
-            detail="MoonClaw native runtime service is supervising queued MoonCode commands.",
-            created_at="1500",
-          ),
-        ],
-        runtime_service: { status: "running" },
-      }),
-    ),
-    model,
-  )
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_eq(
-    next.mooncode_runtime_event_sink_status,
-    "2 runtime event(s) / service running",
-  )
-}
-
-///|
-test "code mode stale running runtime sink reports later unstarted prompt" {
-  let previous_sink : MoonCodeRuntimeEventSink = {
-    event_count: 4,
-    events: [
-      code_mode_test_event(
-        "first-prompt",
-        command_id="cmd-first",
-        title="Prompt: queued",
-        kind="command.prompt",
-        status="queued",
-        detail="first",
-        command="prompt",
-        created_at="1000",
-      ),
-      code_mode_test_event(
-        "service-start",
-        command_id="service-session-a",
-        title="Runtime service started",
-        kind="runtime.service_started",
-        status="running",
-        detail="MoonClaw native runtime service is supervising queued MoonCode commands.",
-        created_at="1500",
-      ),
-      code_mode_test_event(
-        "first-answer",
-        command_id="cmd-first",
-        title="MoonCode assistant update",
-        lane="transcript",
-        kind="assistant_delta",
-        status="running",
-        detail="first answer",
-        created_at="2000",
-      ),
-      code_mode_test_event(
-        "first-done",
-        command_id="cmd-first",
-        title="MoonCode native runtime turn completed",
-        kind="runtime.turn_finished",
-        status="done",
-        detail="MoonClaw native runtime turn executed 1 tool call(s).",
-        created_at="2500",
-      ),
-    ],
-    runtime_service: { status: "running" },
-  }
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: "session-a",
-    mooncode_runtime_event_sink_session_id: "session-a",
-    mooncode_runtime_event_sink: Some(previous_sink),
-    mooncode_runtime_event_sink_status: "4 runtime event(s) / service running",
-  }
-  let (_, next) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeRuntimeEventSink(
-      "session-a",
-      Ok({
-        event_count: 5,
-        events: previous_sink.events +
-        [
-          code_mode_test_event(
-            "second-prompt",
-            command_id="cmd-second",
-            title="Prompt: queued",
-            kind="command.prompt",
-            status="queued",
-            detail="second",
-            command="prompt",
-            created_at="3000",
-          ),
-        ],
-        runtime_service: { status: "running" },
-      }),
-    ),
-    model,
-  )
-  assert_eq(next.mooncode_runtime_event_sink_session_id, "session-a")
-  assert_eq(
-    next.mooncode_runtime_event_sink_status,
-    "5 runtime event(s) / service running",
-  )
-}

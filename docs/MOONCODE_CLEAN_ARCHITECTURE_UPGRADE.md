@@ -55,15 +55,15 @@ The UI does not own:
 
 - pending prompt state machines
 - raw stream transcript order
-- runtime sink transcript order
+- browser-owned diagnostic snapshot transcript order
 - content-based prompt acknowledgement
 - fake "working" rows before a backend turn or runtime event exists
 
 ### Diagnostics
 
-Raw MoonClaw events, runtime sink snapshots, command queue receipts, stream
-checkpoints, and service lifecycle records remain available for diagnostics.
-They update status/details surfaces, not the main chat transcript.
+Raw MoonClaw events, backend runtime-event snapshots, command queue receipts,
+stream checkpoints, and service lifecycle records remain available for
+diagnostics. They update status/details surfaces, not the main chat transcript.
 
 ## Phase 1 - Single Optimistic Turn Buffer
 
@@ -85,7 +85,7 @@ Implemented:
 - `client_turn_id` comes from one monotonic submit counter.
 - `MoonCodeSession` no longer decodes legacy `transcript` or
   `mooncode_events` as frontend chat state.
-- Runtime stream and sink events remain diagnostics only.
+- Raw runtime and stream events remain diagnostics only.
 
 Exit tests:
 
@@ -107,7 +107,7 @@ Work:
   draft exists.
 - Session list refresh may preserve a selected in-flight session only because
   canonical or optimistic turn state says it is in flight.
-- Runtime stream and sink state must not decide session selection.
+- Runtime and stream diagnostic state must not decide session selection.
 
 Implemented:
 
@@ -149,14 +149,14 @@ Implemented:
   `mooncode_optimistic_rows`, separating them from backend-owned
   `mooncode_conversation`.
 - The optimistic-row state moved into `mooncode_optimistic_state.mbt`.
-- Runtime stream and sink state remain diagnostics/status inputs and do not feed
+- Runtime and stream diagnostics remain status inputs and do not feed
   the transcript read path.
 
 Exit tests:
 
 - old replies do not disappear on compact poll responses
 - raw stream refresh cannot create chat rows
-- runtime sink refresh cannot duplicate chat rows
+- diagnostic refresh cannot duplicate chat rows
 - same-content turns remain distinct by id
 
 ## Phase 4 - Event Identity Contract
@@ -365,7 +365,7 @@ Implemented:
 - `send_mooncode_composer_cmd` now posts ordinary composer text as `prompt`.
 - The composer button no longer changes to `Steer` because a runtime service
   reports `running`.
-- The main UI no longer depends on runtime event sink state to decide the
+- The main UI no longer depends on runtime diagnostic state to decide the
   semantic meaning of the user's chat input.
 - Validation passed with Rabbita main tests (`147/147`), MoonCode core tests
   (`4/4`), internal MoonCode tests (`265/265`), internal MoonWiki tests
@@ -375,7 +375,7 @@ Exit tests:
 
 - first, second, and third messages all enqueue `prompt` commands from the chat
   composer
-- a stale `running` runtime-event sink cannot turn the next chat message into a
+- stale `running` runtime status cannot turn the next chat message into a
   steer command
 - backend/API steering tests remain available for explicit steering behavior
 - browser smoke still proves immediate append, canonical acknowledgement, and
@@ -394,7 +394,7 @@ Work:
   queued prompt that can sit forever.
 - Keep `/api/mooncode/sessions/:id/runtime-service` as a backend/internal
   runtime route, not as the visible chat producer.
-- Keep runtime sink snapshots diagnostic; they never decide chat ownership or
+- Keep runtime-event snapshots diagnostic; they never decide chat ownership or
   composer action.
 
 Implemented:
@@ -537,6 +537,43 @@ Exit tests:
 - browser-visible assistant rows match native replies in the same turn order
 - stale runtime-unavailable failure copy does not remain as final chat output
 - hard refresh preserves native reply order
+
+## Phase 15 - Frontend Runtime Sink Removal
+
+Status: complete for the MoonCode browser model.
+
+Work:
+
+- Remove browser-side polling of `/api/mooncode/sessions/:id/runtime-events`.
+- Remove the runtime-event sink DTO, message, model fields, and reducer branch
+  from `ui/rabbita-desk/main`.
+- Keep session stream polling for cursors/checkpoints and canonical session
+  refresh for chat ownership.
+- Keep backend runtime-event endpoints available as explicit diagnostics and
+  ingestion surfaces, not as a hidden frontend transcript owner.
+- Delete stale UI tests that asserted sink retention, service-status copy, or
+  sink-driven behavior.
+
+Implemented:
+
+- `PollMoonCodeSessions`, session selection, and mutation success no longer
+  fetch runtime-event sink snapshots.
+- The browser model no longer stores `mooncode_runtime_event_sink`,
+  `mooncode_runtime_event_sink_session_id`, or
+  `mooncode_runtime_event_sink_status`.
+- `LoadedMoonCodeRuntimeEventSink`, `MoonCodeRuntimeEventSink`, and the
+  frontend fetch command were deleted.
+- Stream-event tests remain where they prove raw diagnostic events cannot
+  acknowledge optimistic user turns.
+
+Exit tests:
+
+- the visible chat has only canonical backend turns plus unacknowledged
+  optimistic rows as owners
+- session reload still preserves matching stream cursor/event state
+- raw stream prompt events cannot acknowledge optimistic rows
+- ordinary composer text cannot become steering because of runtime status
+- generated UI interfaces no longer expose the runtime sink DTO
 
 ## Non-Goals
 

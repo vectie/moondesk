@@ -47,19 +47,13 @@ fn mooncode_selected_session_reload_cmd(
   dispatch : Dispatch[Msg],
   session_id : String,
 ) -> @rabbita.Cmd {
-  @rabbita.batch([
-    fetch_mooncode_stream_cmd(dispatch, session_id, 0),
-    fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
-  ])
+  fetch_mooncode_stream_cmd(dispatch, session_id, 0)
 }
 
 ///|
 fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
   let keep_stream = session_id != "" &&
     session_id == model.mooncode_stream_session_id
-  let keep_sink = session_id != "" &&
-    session_id == model.mooncode_runtime_event_sink_session_id &&
-    model.mooncode_runtime_event_sink is Some(_)
   {
     ..model,
     selected_mooncode_session_id: session_id,
@@ -86,21 +80,6 @@ fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
     },
     mooncode_stream_checkpoint_session_id: "",
     mooncode_stream_checkpoint_status: "checkpoint idle",
-    mooncode_runtime_event_sink_session_id: if keep_sink {
-      model.mooncode_runtime_event_sink_session_id
-    } else {
-      ""
-    },
-    mooncode_runtime_event_sink_status: if keep_sink {
-      model.mooncode_runtime_event_sink_status
-    } else {
-      "loading runtime events"
-    },
-    mooncode_runtime_event_sink: if keep_sink {
-      model.mooncode_runtime_event_sink
-    } else {
-      None
-    },
   }
 }
 
@@ -145,7 +124,7 @@ fn mooncode_send_composer(
               client_turn_id~,
             ),
             mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
-              1,
+            1,
             mooncode_composer_status: "message queued for MoonCode",
           },
         )
@@ -176,7 +155,7 @@ fn mooncode_send_composer(
               client_turn_id~,
             ),
             mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
-              1,
+            1,
             mooncode_composer_status: "message queued for MoonCode",
           },
         )

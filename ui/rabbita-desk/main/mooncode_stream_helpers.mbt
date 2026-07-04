@@ -21,13 +21,6 @@ fn mooncode_merge_stream_events(
 }
 
 ///|
-fn mooncode_note_diagnostic_events(events : Array[MoonCodeEvent]) -> Unit {
-  for event in events {
-    mooncode_note_diagnostic_event_fields(event)
-  }
-}
-
-///|
 fn mooncode_note_diagnostic_event_fields(event : MoonCodeEvent) -> Unit {
   ignore(event.command_id)
   ignore(event.lane)

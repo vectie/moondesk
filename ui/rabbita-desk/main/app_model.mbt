@@ -87,9 +87,6 @@ struct Model {
   mooncode_stream_checkpoint_session_id : String
   mooncode_stream_checkpoint_status : String
   mooncode_stream_events : Array[MoonCodeEvent]
-  mooncode_runtime_event_sink_session_id : String
-  mooncode_runtime_event_sink_status : String
-  mooncode_runtime_event_sink : MoonCodeRuntimeEventSink?
   mooncode_prompt : String
   mooncode_model : String
   mooncode_web_search : Bool
@@ -191,10 +188,6 @@ enum Msg {
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
   LoadedMoonCodeStream(String, Result[MoonCodeStreamPoll, String])
   SavedMoonCodeStreamCheckpoint(String, Result[MoonCodeStreamState, String])
-  LoadedMoonCodeRuntimeEventSink(
-    String,
-    Result[MoonCodeRuntimeEventSink, String]
-  )
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
   RevealedSelection(Result[RevealResult, String])
