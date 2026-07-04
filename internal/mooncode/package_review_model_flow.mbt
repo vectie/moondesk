@@ -399,7 +399,7 @@ fn package_review_event_is_package_manifest(event : Json) -> Bool {
 fn package_review_event_is_diff_review(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
   let lane = json_string(event, "lane", default="")
-  lane == "diff" ||
+  lane == event_lane_diff() ||
   kind == "diff" ||
   kind == "file_change" ||
   kind == "patch_set.manifest" ||
@@ -433,7 +433,7 @@ fn package_review_event_is_package_readiness(event : Json) -> Bool {
 fn package_review_event_is_assistant_summary(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
   let lane = json_string(event, "lane", default="")
-  kind == "assistant" || (kind == "finish" && lane == "review")
+  kind == "assistant" || (kind == "finish" && lane == event_lane_review())
 }
 
 ///|

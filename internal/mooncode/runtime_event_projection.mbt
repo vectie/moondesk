@@ -7,7 +7,9 @@ pub fn canonical_event_record(
   fallback_id~ : String,
   fallback_created_at~ : String,
 ) -> Json {
-  let lane = normalize_event_lane(json_string(event, "lane", default="runtime"))
+  let lane = normalize_event_lane(
+    json_string(event, "lane", default=event_lane_default()),
+  )
   let kind = runtime_trimmed_text(
     json_string(event, "kind", default="runtime_update"),
     fallback="runtime_update",
@@ -183,16 +185,7 @@ pub fn tool_authorization_preview_projected_event(
 
 ///|
 pub fn normalize_event_lane(lane : String) -> String {
-  match lane {
-    "transcript"
-    | "runtime"
-    | "tool"
-    | "diff"
-    | "test"
-    | "artifact"
-    | "review" => lane
-    _ => "runtime"
-  }
+  event_lane_normalize(lane)
 }
 
 ///|
@@ -219,26 +212,26 @@ pub fn tool_lane(
 ) -> String {
   let lower = "\{name}\n\{path}\n\{command}\n\{text}".to_lower()
   if name == "todo_write" {
-    "runtime"
+    event_lane_runtime()
   } else if lower.contains("portable/") ||
     lower.contains("site/generated") ||
     lower.contains("app-tool") ||
     lower.contains("package") {
-    "artifact"
+    event_lane_artifact()
   } else if lower.contains("moon test") ||
     lower.contains("moon check") ||
     lower.contains("moon build") ||
     lower.contains("total tests") ||
     lower.contains("test_result") {
-    "test"
+    event_lane_test()
   } else if diff != "" ||
     lower.contains("write") ||
     lower.contains("edit") ||
     lower.contains("apply_patch") ||
     lower.contains("meta_write_to_file") {
-    "diff"
+    event_lane_diff()
   } else {
-    "tool"
+    event_lane_tool()
   }
 }
 

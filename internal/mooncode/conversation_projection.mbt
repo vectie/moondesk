@@ -531,9 +531,9 @@ fn conversation_progress_title(event : Json) -> String {
     "Checked the result"
   } else if kind == event_package_built() {
     "Prepared output"
-  } else if lane == "diff" {
+  } else if lane == event_lane_diff() {
     "Edited files"
-  } else if lane == "artifact" {
+  } else if lane == event_lane_artifact() {
     "Prepared output"
   } else if title != "" {
     title
@@ -561,9 +561,9 @@ fn conversation_progress_detail(event : Json) -> String {
     "Finished checking the result."
   } else if kind == event_package_built() {
     "Prepared the requested output."
-  } else if lane == "diff" {
+  } else if lane == event_lane_diff() {
     "Updated the relevant files."
-  } else if lane == "artifact" {
+  } else if lane == event_lane_artifact() {
     "Prepared the requested output."
   } else if detail == "" {
     ""
@@ -594,25 +594,42 @@ fn conversation_tool_progress_title(
   tool : String,
   started~ : Bool,
 ) -> String {
-  match lane {
-    "diff" => if started { "Editing files" } else { "Updated files" }
-    "test" => if started { "Checking result" } else { "Checked result" }
-    "artifact" => if started { "Preparing output" } else { "Prepared output" }
-    "review" => if started { "Preparing answer" } else { "Prepared answer" }
-    _ =>
-      if conversation_tool_is_context_lookup(tool) {
-        "Checking context"
-      } else if tool == "shell" || tool == "moon_cmd" || tool == "moon_check" {
-        if started {
-          "Running command"
-        } else {
-          "Finished command"
-        }
-      } else if started {
-        "Choosing next action"
-      } else {
-        "Finished action"
-      }
+  if lane == event_lane_diff() {
+    if started {
+      "Editing files"
+    } else {
+      "Updated files"
+    }
+  } else if lane == event_lane_test() {
+    if started {
+      "Checking result"
+    } else {
+      "Checked result"
+    }
+  } else if lane == event_lane_artifact() {
+    if started {
+      "Preparing output"
+    } else {
+      "Prepared output"
+    }
+  } else if lane == event_lane_review() {
+    if started {
+      "Preparing answer"
+    } else {
+      "Prepared answer"
+    }
+  } else if conversation_tool_is_context_lookup(tool) {
+    "Checking context"
+  } else if tool == "shell" || tool == "moon_cmd" || tool == "moon_check" {
+    if started {
+      "Running command"
+    } else {
+      "Finished command"
+    }
+  } else if started {
+    "Choosing next action"
+  } else {
+    "Finished action"
   }
 }
 
@@ -628,51 +645,48 @@ fn conversation_tool_progress_detail(
     return "A step failed before the assistant finished."
   }
   let path = json_string(event, "path", default="").trim().to_owned()
-  match lane {
-    "diff" =>
-      if started {
-        if path == "" {
-          "Preparing file changes."
-        } else {
-          "Preparing changes to `\{path}`."
-        }
-      } else if path == "" {
-        "Updated the relevant files."
+  if lane == event_lane_diff() {
+    if started {
+      if path == "" {
+        "Preparing file changes."
       } else {
-        "Updated `\{path}`."
+        "Preparing changes to `\{path}`."
       }
-    "test" =>
-      if started {
-        "Running the requested check."
-      } else {
-        "Finished checking the result."
-      }
-    "artifact" =>
-      if started {
-        "Preparing the requested output."
-      } else {
-        "Prepared the requested output."
-      }
-    "review" =>
-      if started {
-        "Preparing the answer."
-      } else {
-        "Prepared the answer."
-      }
-    _ =>
-      if conversation_tool_is_context_lookup(tool) {
-        "Checking relevant project context."
-      } else if tool == "shell" || tool == "moon_cmd" || tool == "moon_check" {
-        if started {
-          "Running a command."
-        } else {
-          "Finished the command."
-        }
-      } else if started {
-        "Chose what to do next."
-      } else {
-        "Finished a work step."
-      }
+    } else if path == "" {
+      "Updated the relevant files."
+    } else {
+      "Updated `\{path}`."
+    }
+  } else if lane == event_lane_test() {
+    if started {
+      "Running the requested check."
+    } else {
+      "Finished checking the result."
+    }
+  } else if lane == event_lane_artifact() {
+    if started {
+      "Preparing the requested output."
+    } else {
+      "Prepared the requested output."
+    }
+  } else if lane == event_lane_review() {
+    if started {
+      "Preparing the answer."
+    } else {
+      "Prepared the answer."
+    }
+  } else if conversation_tool_is_context_lookup(tool) {
+    "Checking relevant project context."
+  } else if tool == "shell" || tool == "moon_cmd" || tool == "moon_check" {
+    if started {
+      "Running a command."
+    } else {
+      "Finished the command."
+    }
+  } else if started {
+    "Chose what to do next."
+  } else {
+    "Finished a work step."
   }
 }
 
@@ -747,8 +761,8 @@ fn conversation_event_is_visible_progress(event : Json) -> Bool {
   event_name == event_tool_result() ||
   kind == event_test_result() ||
   kind == event_package_built() ||
-  lane == "diff" ||
-  lane == "artifact"
+  lane == event_lane_diff() ||
+  lane == event_lane_artifact()
 }
 
 ///|
@@ -905,7 +919,7 @@ fn conversation_event_is_user_prompt(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
   let command = json_string(event, "command", default="")
   let title = json_string(event, "title", default="")
-  (lane == "transcript" && kind == "user") ||
+  (lane == event_lane_transcript() && kind == "user") ||
   command == "prompt" ||
   kind == "command.prompt" ||
   title == "User prompt"
@@ -913,14 +927,14 @@ fn conversation_event_is_user_prompt(event : Json) -> Bool {
 
 ///|
 fn conversation_event_is_assistant_delta(event : Json) -> Bool {
-  json_string(event, "lane", default="") == "transcript" &&
+  json_string(event, "lane", default="") == event_lane_transcript() &&
   json_string(event, "kind", default="") == "assistant_delta"
 }
 
 ///|
 fn conversation_event_is_assistant_final(event : Json) -> Bool {
   (
-    json_string(event, "lane", default="") == "transcript" &&
+    json_string(event, "lane", default="") == event_lane_transcript() &&
     json_string(event, "kind", default="") == "assistant"
   ) ||
   conversation_event_finish_tool_call_answer(event) != "" ||

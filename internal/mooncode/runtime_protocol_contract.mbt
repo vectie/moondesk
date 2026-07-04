@@ -25,6 +25,7 @@ pub fn runtime_protocol_contract_json() -> Json {
     },
     "event_stream": {
       "reference": "mooncode/runtime/events",
+      "event_lane_contract": event_lane_contract_json(),
       "accepted_events": [
         "runtime_step", "assistant_delta", "reasoning_delta", "reasoning_message",
         "assistant_message", "runtime_update", "tool_call", "tool_started", "tool_result",
@@ -34,7 +35,7 @@ pub fn runtime_protocol_contract_json() -> Json {
         "package_manifest", "package_index", "package_built", "package_verified",
         "review_receipt", "receipt.accept", "receipt.reject", "commit_created", "artifact",
       ],
-      "normalization": "MoonClaw/MoonCode JSONL events are normalized into MoonCode lanes: transcript, runtime, tool, diff, test, artifact, and review.",
+      "normalization": "MoonClaw/MoonCode JSONL events are normalized through the mooncode/core event lane contract before they can affect projections.",
       "model_planner_evidence_contract": model_planner_evidence_contract_json(),
       "conversation_ownership_contract": conversation_ownership_contract_json(),
       "package_review_model_flow_contract": package_review_model_flow_contract_json(),

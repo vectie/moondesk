@@ -79,7 +79,7 @@ pub fn runtime_contract_json() -> Json {
       "owner": "moonclaw-or-mooncode",
       "shape": "session header plus append-only commands.jsonl and events.jsonl",
       "resume_modes": ["list", "show", "continue", "session-id"],
-      "moondesk_projection": "MoonCode session list, transcript lanes, review queue, live tail, and readiness evidence",
+      "moondesk_projection": "MoonCode session list, canonical conversation, event-lane evidence, review queue, live tail, and readiness evidence",
     },
     "tool_contract": tool_contract_json(),
     "eval_contract": {

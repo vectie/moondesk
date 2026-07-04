@@ -249,13 +249,15 @@ fn model_planner_apply_event(
     ) {
     command.tool_result_count += 1
   }
-  if lane == "transcript" || kind == "assistant" || kind == "assistant_delta" {
+  if lane == event_lane_transcript() ||
+    kind == "assistant" ||
+    kind == "assistant_delta" {
     command.assistant_event_count += 1
   }
   if kind == "runtime.turn_finished" ||
     kind == "finish" ||
     event_name == "runtime_finished" ||
-    (lane == "transcript" && status == "done") {
+    (lane == event_lane_transcript() && status == "done") {
     command.terminal_event_count += 1
   }
   if status == "failed" ||

@@ -1962,6 +1962,51 @@ Exit tests:
 - the Phase 8 wall rejects raw transcript-count chat proof returning to
   eval/summary/resume telemetry
 
+## Phase 50 - Core-Owned Event Lane Contract
+
+Status: implemented by moving the supported MoonCode event-lane vocabulary into
+`mooncode/core` and making internal MoonCode consume that public contract.
+
+Problem:
+
+- The stale implementation still had private copies of the lane vocabulary in
+  command metadata, runtime-event normalization, native event safety checks,
+  readiness/eval counters, conversation progress projection, and capability
+  prose.
+- That meant "transcript", "runtime", "tool", "diff", "test", "artifact", and
+  "review" could drift independently depending on which subsystem was rendering
+  the current frame.
+- For the user-visible chat bugs, this is exactly the wrong shape: the UI needs
+  one canonical conversation path, while raw runtime evidence needs one shared
+  lane contract before it can be counted or projected.
+
+Work:
+
+- Add `mooncode/core/event_lanes.mbt` with lane-name functions, ordered
+  supported lanes, progress lanes, default-lane normalization, and a JSON
+  contract.
+- Embed the event-lane contract in the native capability surface fingerprint
+  and capability JSON so MoonClaw-facing contracts see the same vocabulary.
+- Replace private lane-list ownership in command metadata, runtime event
+  projection, native runtime contract checks, readiness/eval/summary counts,
+  conversation progress projection, runtime progress telemetry, tool approvals,
+  and package-review flow.
+- Keep concrete event records and tests free to use lane values, but stop
+  implementation files from owning the supported lane list or raw lane-count
+  policy.
+- Add `scripts/validate_mooncode_event_lane_contract.sh` and run it from the
+  Phase 8 migration wall.
+
+Exit tests:
+
+- `mooncode/core` proves the event-lane contract id, default lane, ordered
+  lanes, progress lanes, supported-lane predicate, and normalization behavior.
+- native capability JSON includes the event-lane contract.
+- internal MoonCode prompt/steer expected lanes come from `event_lanes()`.
+- runtime protocol and capabilities expose `event_lane_contract_json()`.
+- the migration wall rejects duplicated lane lists, raw lane-count ownership,
+  and prose-only lane normalization returning to implementation files.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

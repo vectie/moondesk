@@ -117,14 +117,14 @@ fn native_runtime_event_is_diagnostic_only(event : Json) -> Bool {
 
 ///|
 fn native_runtime_event_requires_command_scope(event : Json) -> Bool {
-  let lane = runtime_json_string(event, "lane", default="runtime")
+  let lane = runtime_json_string(event, "lane", default=event_lane_default())
   let kind = runtime_first_string(event, ["kind", "event"], default="")
-  lane == "transcript" ||
-  lane == "tool" ||
-  lane == "diff" ||
-  lane == "test" ||
-  lane == "artifact" ||
-  lane == "review" ||
+  lane == event_lane_transcript() ||
+  lane == event_lane_tool() ||
+  lane == event_lane_diff() ||
+  lane == event_lane_test() ||
+  lane == event_lane_artifact() ||
+  lane == event_lane_review() ||
   kind == "reasoning_delta" ||
   kind == "reasoning_message" ||
   kind == "runtime_update" ||
@@ -138,18 +138,13 @@ fn native_runtime_event_requires_command_scope(event : Json) -> Bool {
 
 ///|
 fn native_runtime_event_is_transcript(event : Json) -> Bool {
-  runtime_json_string(event, "lane", default="") == "transcript"
+  runtime_json_string(event, "lane", default="") == event_lane_transcript()
 }
 
 ///|
 fn native_runtime_event_is_progress(event : Json) -> Bool {
   let lane = runtime_json_string(event, "lane", default="")
-  lane == "runtime" ||
-  lane == "tool" ||
-  lane == "diff" ||
-  lane == "test" ||
-  lane == "artifact" ||
-  lane == "review"
+  event_lane_is_progress(lane)
 }
 
 ///|
@@ -160,7 +155,7 @@ fn native_runtime_event_contract_problem(
   {
     "reason": reason,
     "id": runtime_json_string(event, "id", default=""),
-    "lane": runtime_json_string(event, "lane", default="runtime"),
+    "lane": runtime_json_string(event, "lane", default=event_lane_default()),
     "kind": runtime_first_string(event, ["kind", "event"], default=""),
     "title": runtime_json_string(event, "title", default=""),
     "status": runtime_json_string(event, "status", default=""),

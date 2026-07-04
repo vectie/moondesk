@@ -15,8 +15,8 @@ Code mode is responsible for book-scoped coding sessions:
 - sending prompt, steer, cancel, test, build, eval, package, accept, and reject
   commands
 - projecting MoonClaw runtime state without owning the runtime loop
-- rendering transcript, stream events, tool calls, diffs, tests, packages,
-  readiness, and review controls
+- rendering canonical conversation, event-lane evidence, tool calls, diffs,
+  tests, packages, readiness, and review controls
 - proving that durable MoonBook artifacts can survive reloads and process
   restarts
 
@@ -40,8 +40,8 @@ as the source used to build code-mode paths.
 1. Contract tests
    - Package: `mooncode/core`, `internal/mooncode`
    - Purpose: prove stable JSON shapes, command envelopes, readiness contracts,
-     tool policies, runtime claim/replay, evidence projection, and package
-     manifests.
+     event-lane contracts, tool policies, runtime claim/replay, evidence
+     projection, and package manifests.
 
 2. Host API integration tests
    - Package: `internal/moonwiki`
@@ -210,6 +210,32 @@ Assertions:
 - prompt text is trimmed and empty prompts are rejected in UI state before HTTP.
 - command ordering is append-only.
 - cancel does not delete prior evidence.
+
+### Event Lane Contract
+
+Prove event-lane vocabulary is owned once and consumed everywhere.
+
+Flow:
+
+```text
+mooncode/core exposes event_lane_contract_json
+-> MoonCode capability surface embeds the contract
+-> command metadata uses event_lanes for prompt/steer
+-> runtime/native/conversation projections normalize through the same helpers
+-> migration gate scans implementation files for duplicated lane ownership
+```
+
+Assertions:
+
+- `event_lanes` stays ordered as transcript, runtime, tool, diff, test,
+  artifact, review.
+- unknown lanes normalize to runtime before projection.
+- progress-lane checks do not treat transcript as thinking/progress.
+- canonical chat readiness never uses raw transcript-lane counts.
+- capability and runtime protocol JSON expose the lane contract, not a copied
+  prose list.
+- fixtures may still use concrete lane values, but implementation ownership
+  must stay in `mooncode/core`.
 
 ### Native Sidecar Reply Ingestion
 

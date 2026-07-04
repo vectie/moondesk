@@ -64,7 +64,7 @@ pub fn runtime_event_unscoped_progress(events : Array[Json]) -> Json {
     if runtime_event_has_command_scope(event) {
       continue
     }
-    let lane = json_string(event, "lane", default="runtime")
+    let lane = json_string(event, "lane", default=event_lane_default())
     if !runtime_event_string_array_contains(lanes, lane) {
       lanes.push(lane)
     }
@@ -77,10 +77,11 @@ pub fn runtime_event_unscoped_progress(events : Array[Json]) -> Json {
       "failed" => failed_count += 1
       _ => done_count += 1
     }
-    if lane == "tool" || json_string(event, "tool_call_id", default="") != "" {
+    if lane == event_lane_tool() ||
+      json_string(event, "tool_call_id", default="") != "" {
       tool_event_count += 1
     }
-    if lane == "transcript" {
+    if lane == event_lane_transcript() {
       transcript_event_count += 1
     }
     latest_event_id = json_string(event, "id", default="")
@@ -197,7 +198,7 @@ fn runtime_event_command_progress_item(
       continue
     }
     event_count += 1
-    let lane = json_string(event, "lane", default="runtime")
+    let lane = json_string(event, "lane", default=event_lane_default())
     if !runtime_event_string_array_contains(lanes, lane) {
       lanes.push(lane)
     }

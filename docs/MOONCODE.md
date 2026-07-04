@@ -49,7 +49,7 @@ IO. The Rabbita UI renders the result.
 
 ```text
 mooncode/core
-  shared protocol constants and capability surface
+  shared protocol constants, event-lane contract, and capability surface
 
 internal/mooncode
   command, stream, runtime, readiness, review, package, and session contracts
@@ -64,6 +64,17 @@ ui/rabbita-desk/main
 This split is the standalone path. A standalone `mooncode` project should be
 able to reuse the protocol/runtime contracts without taking MoonWiki, Rabbita,
 or Moondesk desktop packaging.
+
+`mooncode/core` owns the stable event-lane vocabulary:
+
+```text
+transcript, runtime, tool, diff, test, artifact, review
+```
+
+Those lanes classify runtime evidence. They do not own chat rendering. Chat is
+rendered from canonical conversation turns; event lanes feed progress,
+diagnostics, readiness, review, and package evidence after they are normalized
+through the core contract.
 
 ## Shared Runtime, Separate Lanes
 

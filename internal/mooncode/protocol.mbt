@@ -74,6 +74,81 @@ pub fn standalone_boundary_json() -> Json {
 }
 
 ///|
+pub fn event_lane_contract_id() -> String {
+  @mooncode_core.event_lane_contract_id()
+}
+
+///|
+pub fn event_lane_transcript() -> String {
+  @mooncode_core.event_lane_transcript()
+}
+
+///|
+pub fn event_lane_runtime() -> String {
+  @mooncode_core.event_lane_runtime()
+}
+
+///|
+pub fn event_lane_tool() -> String {
+  @mooncode_core.event_lane_tool()
+}
+
+///|
+pub fn event_lane_diff() -> String {
+  @mooncode_core.event_lane_diff()
+}
+
+///|
+pub fn event_lane_test() -> String {
+  @mooncode_core.event_lane_test()
+}
+
+///|
+pub fn event_lane_artifact() -> String {
+  @mooncode_core.event_lane_artifact()
+}
+
+///|
+pub fn event_lane_review() -> String {
+  @mooncode_core.event_lane_review()
+}
+
+///|
+pub fn event_lane_default() -> String {
+  @mooncode_core.event_lane_default()
+}
+
+///|
+pub fn event_lanes() -> Array[String] {
+  @mooncode_core.event_lanes()
+}
+
+///|
+pub fn event_progress_lanes() -> Array[String] {
+  @mooncode_core.event_progress_lanes()
+}
+
+///|
+pub fn event_lane_is_supported(lane : String) -> Bool {
+  @mooncode_core.event_lane_is_supported(lane)
+}
+
+///|
+pub fn event_lane_is_progress(lane : String) -> Bool {
+  @mooncode_core.event_lane_is_progress(lane)
+}
+
+///|
+pub fn event_lane_normalize(lane : String) -> String {
+  @mooncode_core.event_lane_normalize(lane)
+}
+
+///|
+pub fn event_lane_contract_json() -> Json {
+  @mooncode_core.event_lane_contract_json()
+}
+
+///|
 pub fn kind_command() -> String {
   "mooncode.command"
 }

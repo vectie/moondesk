@@ -12,11 +12,11 @@ pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] 
     "turn_count",
     default=0,
   )
-  let tool_count = count_lane(events, "tool")
-  let diff_count = count_lane(events, "diff")
-  let test_count = count_lane(events, "test")
-  let artifact_count = count_lane(events, "artifact")
-  let review_count = count_lane(events, "review")
+  let tool_count = count_lane(events, event_lane_tool())
+  let diff_count = count_lane(events, event_lane_diff())
+  let test_count = count_lane(events, event_lane_test())
+  let artifact_count = count_lane(events, event_lane_artifact())
+  let review_count = count_lane(events, event_lane_review())
   let command_packet_count = count_command_packets(events)
   let review_receipt_count = count_review_receipts(events)
   let package_manifest_count = count_package_manifests(events)

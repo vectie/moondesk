@@ -71,7 +71,9 @@ fn tool_approval_entry(
 ///|
 pub fn tool_event_approval(event : Json) -> String {
   let lane = json_string(event, "lane", default="")
-  if lane == "review" || lane == "runtime" || lane == "transcript" {
+  if lane == event_lane_review() ||
+    lane == event_lane_runtime() ||
+    lane == event_lane_transcript() {
     return ""
   }
   let lower = [
@@ -86,11 +88,13 @@ pub fn tool_event_approval(event : Json) -> String {
     lower.contains("_set.manifest") ||
     lower.contains("package.index") {
     ""
-  } else if lane == "diff" || lower.contains("write") || lower.contains("edit") {
-    "review"
-  } else if lane == "artifact" || lower.contains("package_app_tool") {
-    "review"
-  } else if lane == "tool" &&
+  } else if lane == event_lane_diff() ||
+    lower.contains("write") ||
+    lower.contains("edit") {
+    event_lane_review()
+  } else if lane == event_lane_artifact() || lower.contains("package_app_tool") {
+    event_lane_review()
+  } else if lane == event_lane_tool() &&
     (
       lower.contains("shell") ||
       lower.contains("execute_command") ||
@@ -183,7 +187,7 @@ fn tool_approval_review_count(
 ) -> Int {
   let mut count = 0
   for event in events {
-    if json_string(event, "lane", default="") != "review" ||
+    if json_string(event, "lane", default="") != event_lane_review() ||
       json_string(event, "command", default="") != command ||
       json_string(event, "status", default="") == "failed" {
       continue

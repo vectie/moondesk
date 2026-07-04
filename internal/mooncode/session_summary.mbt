@@ -52,10 +52,10 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let executable_book_lifecycle = executable_book_lifecycle_report_from_checks(
     readiness_checks,
   )
-  let diff_count = count_lane(events, "diff")
-  let test_count = count_lane(events, "test")
-  let artifact_count = count_lane(events, "artifact")
-  let review_count = count_lane(events, "review")
+  let diff_count = count_lane(events, event_lane_diff())
+  let test_count = count_lane(events, event_lane_test())
+  let artifact_count = count_lane(events, event_lane_artifact())
+  let review_count = count_lane(events, event_lane_review())
   let command_packet_count = count_command_packets(events)
   let review_receipt_count = count_review_receipts(events)
   let package_manifest_count = count_package_manifests(events)
@@ -192,7 +192,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     ),
     "pending_tool_approval_count": pending_tool_approval_count,
     "event_count": events.length(),
-    "tool_count": count_lane(events, "tool"),
+    "tool_count": count_lane(events, event_lane_tool()),
     "diff_count": diff_count,
     "test_count": test_count,
     "verified_test_count": verified_test_count,
@@ -219,7 +219,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "accepted_review_count": accepted_count,
     "rejected_review_count": rejected_count,
     "review_state": review_state(diff_count, accepted_count, rejected_count),
-    "runtime_count": count_lane(events, "runtime"),
+    "runtime_count": count_lane(events, event_lane_runtime()),
     "canonical_conversation_turn_count": summary_json_int(
       conversation,
       "turn_count",

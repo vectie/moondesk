@@ -196,7 +196,7 @@ pub fn normalize_event_record(event : Json) -> Json {
       }
     _ => ()
   }
-  let lane = json_string(event, "lane", default="runtime")
+  let lane = json_string(event, "lane", default=event_lane_default())
   let kind = json_string(event, "kind", default="runtime_update")
   let title = json_string(event, "title", default=kind)
   let detail = json_string(event, "detail", default="")

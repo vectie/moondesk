@@ -70,34 +70,36 @@ pub fn command_tool_hints(action : String) -> Array[String] {
 ///|
 pub fn command_expected_lanes(action : String) -> Array[String] {
   match action {
-    "run_tests" | "run_build" => ["test", "tool", "runtime"]
-    "run_eval" => ["runtime", "test", "review"]
-    "package" => ["artifact", "test", "review"]
-    "commit" => ["review", "runtime", "tool"]
-    "accept" | "reject" => ["review", "artifact"]
-    "approve_tool" | "reject_tool" => ["tool", "runtime", "review"]
-    "apply_patch" | "revert_patch" => ["diff", "test", "review"]
-    "prompt" | "steer" =>
-      ["transcript", "runtime", "tool", "diff", "test", "artifact", "review"]
-    "cancel" => ["runtime"]
-    _ => ["runtime"]
+    "run_tests" | "run_build" =>
+      [event_lane_test(), event_lane_tool(), event_lane_runtime()]
+    "run_eval" => [event_lane_runtime(), event_lane_test(), event_lane_review()]
+    "package" => [event_lane_artifact(), event_lane_test(), event_lane_review()]
+    "commit" => [event_lane_review(), event_lane_runtime(), event_lane_tool()]
+    "accept" | "reject" => [event_lane_review(), event_lane_artifact()]
+    "approve_tool" | "reject_tool" =>
+      [event_lane_tool(), event_lane_runtime(), event_lane_review()]
+    "apply_patch" | "revert_patch" =>
+      [event_lane_diff(), event_lane_test(), event_lane_review()]
+    "prompt" | "steer" => event_lanes()
+    "cancel" => [event_lane_runtime()]
+    _ => [event_lane_runtime()]
   }
 }
 
 ///|
 pub fn command_lane(action : String) -> String {
   match action {
-    "run_tests" | "run_build" | "run_eval" => "test"
-    "package" => "artifact"
-    "commit" => "review"
+    "run_tests" | "run_build" | "run_eval" => event_lane_test()
+    "package" => event_lane_artifact()
+    "commit" => event_lane_review()
     "accept"
     | "reject"
     | "approve_tool"
     | "reject_tool"
     | "apply_patch"
-    | "revert_patch" => "review"
-    "prompt" | "steer" | "cancel" => "runtime"
-    _ => "runtime"
+    | "revert_patch" => event_lane_review()
+    "prompt" | "steer" | "cancel" => event_lane_runtime()
+    _ => event_lane_runtime()
   }
 }
 

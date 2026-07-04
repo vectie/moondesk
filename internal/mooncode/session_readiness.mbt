@@ -28,12 +28,12 @@ pub fn session_readiness_checks(
     "turn_count",
     default=0,
   )
-  let runtime_count = count_lane(events, "runtime")
-  let tool_count = count_lane(events, "tool")
-  let diff_count = count_lane(events, "diff")
-  let test_count = count_lane(events, "test")
-  let artifact_count = count_lane(events, "artifact")
-  let review_count = count_lane(events, "review")
+  let runtime_count = count_lane(events, event_lane_runtime())
+  let tool_count = count_lane(events, event_lane_tool())
+  let diff_count = count_lane(events, event_lane_diff())
+  let test_count = count_lane(events, event_lane_test())
+  let artifact_count = count_lane(events, event_lane_artifact())
+  let review_count = count_lane(events, event_lane_review())
   let verified_test_count = count_verified_tests(events)
   let failed_test_count = count_failed_tests(events)
   let command_packet_count = count_command_packets(events)
