@@ -25,7 +25,7 @@ fn runtime_receipt_statuses(receipts : Array[Json]) -> Map[String, String] {
       statuses[command_id] = rq_json_string(
         receipt,
         "status",
-        default="recorded",
+        default=@mooncode_core.runtime_receipt_status_recorded(),
       )
     }
   }

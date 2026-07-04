@@ -140,7 +140,7 @@ fn runtime_claim_item(
       "lease_expires_at",
       default="",
     ),
-    "ack_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-replay",
+    "ack_endpoint": @mooncode_core.runtime_replay_endpoint(session_id),
     "runtime_command": command,
     "latest_receipt": latest_receipt,
     "decode_report": report,

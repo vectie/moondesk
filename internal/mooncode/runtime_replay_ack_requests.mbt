@@ -1,32 +1,14 @@
 ///|
 pub fn runtime_replay_ack_status(ack : Json) -> String {
-  let status = rq_json_string(ack, "status", default="")
-  match status {
-    "runtime-acknowledged"
-    | "runtime-completed"
-    | "proof-missing"
-    | "runtime-accepted"
-    | "failed"
-    | "skipped" => status
-    _ =>
-      if rq_json_bool(ack, "ok", default=true) {
-        "runtime-acknowledged"
-      } else {
-        "failed"
-      }
-  }
+  @mooncode_core.runtime_replay_ack_status(
+    rq_json_string(ack, "status", default=""),
+    ok=rq_json_bool(ack, "ok", default=true),
+  )
 }
 
 ///|
 pub fn runtime_replay_ack_detail(status : String) -> String {
-  match status {
-    "runtime-completed" => "Runtime replay consumer completed the command."
-    "proof-missing" =>
-      "Runtime replay consumer requested completion, but required command-scoped proof events are missing or failed."
-    "failed" => "Runtime replay consumer reported command failure."
-    "skipped" => "Runtime replay consumer skipped the command."
-    _ => "Runtime replay consumer acknowledged the command."
-  }
+  @mooncode_core.runtime_replay_ack_detail(status)
 }
 
 ///|
@@ -44,7 +26,7 @@ fn runtime_replay_ack_requests(payload : Json) -> Array[Json] {
           "status": rq_json_string(
             payload,
             "status",
-            default="runtime-acknowledged",
+            default=@mooncode_core.runtime_receipt_status_acknowledged(),
           ),
           "detail": rq_json_string(
             payload,

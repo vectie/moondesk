@@ -50,8 +50,9 @@ IO. The Rabbita UI renders the result.
 ```text
 mooncode/core
   shared protocol constants, command-action contract, event-lane contract,
-  runtime event-name contract, runtime-control contract, package/review flow
-  contract, runtime-tool registry contract, and capability surface
+  runtime event-name contract, runtime-control contract, runtime-consumer
+  contract, package/review flow contract, runtime-tool registry contract, and
+  capability surface
 
 internal/mooncode
   command, stream, runtime, readiness, review, package, and session contracts
@@ -136,6 +137,13 @@ events, and the scheduler-boundary rule for steer/cancel. Internal MoonCode may
 assemble per-session control projections from command logs and lifecycle
 evidence, but it must not publish a second effect list or locally decide which
 effects allow native runtime execution.
+
+`mooncode/core` also owns the runtime-consumer contract used by MoonClaw claim
+and replay loops. The contract defines runtime receipt statuses, claim statuses,
+replay statuses, replay acknowledgement statuses, ordering rules, duplicate
+guards, lease policy, and claim/replay endpoint formatting. Internal MoonCode
+may aggregate command queues and receipt logs into claim/replay projections, but
+it must not publish a second consumer policy.
 
 `mooncode/core` also owns the package/review model-flow contract for
 model-backed package turns. The contract defines package/review statuses, stale

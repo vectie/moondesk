@@ -75,14 +75,15 @@ fn runtime_replay_ack_receipt(
   let previous_receipt_status = rq_json_string(
     previous_runtime_receipt,
     "status",
-    default="missing",
+    default=@mooncode_core.runtime_receipt_status_missing(),
   )
   let previous_consumer_id = rq_json_string(
     previous_runtime_receipt,
     "consumer_id",
     default="",
   )
-  let claimed_by_same_consumer = previous_receipt_status == "runtime-claimed" &&
+  let claimed_by_same_consumer = previous_receipt_status ==
+    @mooncode_core.runtime_receipt_status_claimed() &&
     previous_consumer_id == consumer_id
   let runtime_event_summary = runtime_replay_ack_event_summary(
     ack, runtime_command, acknowledged_at,
@@ -104,7 +105,7 @@ fn runtime_replay_ack_receipt(
     "control": rq_json_string(runtime_command, "control", default="prompt"),
     "status": status,
     "requested_status": requested_status,
-    "runtime_mode": "mooncode-runtime-replay",
+    "runtime_mode": @mooncode_core.runtime_replay_mode(),
     "consumer_id": consumer_id,
     "created_at": acknowledged_at,
     "mooncode_command_valid": rq_json_bool(
@@ -117,7 +118,9 @@ fn runtime_replay_ack_receipt(
       "native_mooncode_endpoint",
       default="",
     ),
-    "replay_ack_endpoint": "/api/mooncode/sessions/\{rq_json_string(runtime_command, "session_id", default="")}/runtime-replay",
+    "replay_ack_endpoint": @mooncode_core.runtime_replay_endpoint(
+      rq_json_string(runtime_command, "session_id", default=""),
+    ),
     "previous_receipt_status": previous_receipt_status,
     "previous_receipt_id": rq_json_string(
       previous_runtime_receipt,

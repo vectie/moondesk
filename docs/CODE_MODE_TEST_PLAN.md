@@ -453,6 +453,20 @@ Suggested test files:
 - extend `internal/mooncode/runtime_replay_ack_wbtest.mbt`
 - `internal/moonwiki/mooncode_runtime_e2e_wbtest.mbt`
 
+Contract ownership gate:
+
+```bash
+moon test internal/mooncode --filter "mooncode runtime claim*" --target native
+moon test internal/mooncode --filter "mooncode runtime replay*" --target native
+moon test internal/mooncode --filter "mooncode command runtime evidence*" --target native
+scripts/validate_mooncode_runtime_consumer_contract.sh
+```
+
+Phase 58 moves the reusable runtime-consumer vocabulary into `mooncode/core`.
+The validator fails if runtime claim/replay projection files reintroduce local
+runtime receipt statuses, claim statuses, replay statuses, ack-order statuses,
+endpoint strings, or a private consumer contract copy.
+
 ### Tool Authorization
 
 Prove mutating tools are blocked until approved and safe previews remain cheap.

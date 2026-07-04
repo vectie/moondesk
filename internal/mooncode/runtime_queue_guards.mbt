@@ -3,14 +3,12 @@
 
 ///|
 pub fn runtime_receipt_status_delivered(status : String) -> Bool {
-  status == "runtime-accepted" ||
-  status == "runtime-acknowledged" ||
-  status == "runtime-completed"
+  @mooncode_core.runtime_receipt_status_is_delivered(status)
 }
 
 ///|
 pub fn runtime_receipt_status_claimed(status : String) -> Bool {
-  status == "runtime-claimed"
+  @mooncode_core.runtime_receipt_status_is_claimed(status)
 }
 
 ///|

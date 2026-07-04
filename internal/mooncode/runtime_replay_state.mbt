@@ -39,7 +39,9 @@ pub fn runtime_replay_state(
         first_invalid_command_id = command_id
       }
     }
-    let receipt_status = receipt_statuses.get(command_id).unwrap_or("missing")
+    let receipt_status = receipt_statuses
+      .get(command_id)
+      .unwrap_or(@mooncode_core.runtime_receipt_status_missing())
     let latest_receipt = latest_receipts
       .get(command_id)
       .unwrap_or(Json::object({}))
@@ -50,7 +52,7 @@ pub fn runtime_replay_state(
       command, valid, receipt_status, expired_claim,
     )
     let order_blocked = replay_blocker_id != "" &&
-      base_replay_status != "delivered"
+      base_replay_status != @mooncode_core.runtime_replay_status_delivered()
     let replay_status = runtime_replay_status_with_order_blocker(
       base_replay_status, replay_blocker_id,
     )
@@ -58,7 +60,7 @@ pub fn runtime_replay_state(
       delivered_count += 1
     } else if runtime_receipt_status_claimed(receipt_status) && !expired_claim {
       claimed_count += 1
-    } else if receipt_status == "failed" {
+    } else if receipt_status == @mooncode_core.runtime_receipt_status_failed() {
       failed_count += 1
     }
     let protocol_command = rq_json_object_field_or_empty(
@@ -85,7 +87,7 @@ pub fn runtime_replay_state(
   }
   {
     "protocol": protocol_version(),
-    "kind": "mooncode-runtime-replay",
+    "kind": @mooncode_core.runtime_replay_state_kind(),
     "session_id": session_id,
     "workspace_id": workspace_id,
     "workspace_name": workspace_name,
@@ -102,8 +104,8 @@ pub fn runtime_replay_state(
     "first_pending_index": first_pending_index,
     "first_invalid_command_id": first_invalid_command_id,
     "replay_ready": invalid_count == 0 && pending_items.length() > 0,
-    "replay_policy": "consume pending MoonCode code commands in runtime-commands.jsonl order; skip delivered command ids and active leases; expired runtime-claimed leases are retryable pending work",
-    "ordering_rule": "prompt, steer, and cancel records remain serialized in append order, matching the MoonCode command protocol's single ordered consumer",
+    "replay_policy": @mooncode_core.runtime_replay_policy(),
+    "ordering_rule": @mooncode_core.runtime_replay_ordering_rule(),
     "consumer_contract": runtime_replay_consumer_contract_json(session_id),
     "decode_reports": Json::array(decode_reports),
     "replay_items": Json::array(replay_items),

@@ -28,14 +28,18 @@ pub fn runtime_claim_state(
     let command_id = rq_json_string(command, "command_id", default="")
     let report = runtime_command_decode_report(command)
     let valid = rq_json_bool(report, "ok", default=false)
-    let receipt_status = receipt_statuses.get(command_id).unwrap_or("missing")
+    let receipt_status = receipt_statuses
+      .get(command_id)
+      .unwrap_or(@mooncode_core.runtime_receipt_status_missing())
     let latest_receipt = latest_receipts
       .get(command_id)
       .unwrap_or(Json::object({}))
     let expired_claim = runtime_receipt_status_claimed(receipt_status) &&
       runtime_receipt_claim_expired(latest_receipt, lease_now)
-    let previous_receipt_failed = receipt_status == "failed"
-    let previous_completion_missing_proof = receipt_status == "proof-missing"
+    let previous_receipt_failed = receipt_status ==
+      @mooncode_core.runtime_receipt_status_failed()
+    let previous_completion_missing_proof = receipt_status ==
+      @mooncode_core.runtime_receipt_status_proof_missing()
     let tool_authorization_blocked = runtime_command_tool_authorization_blocks(
       command,
     )
@@ -43,7 +47,7 @@ pub fn runtime_claim_state(
       valid, receipt_status, expired_claim, tool_authorization_blocked,
     )
     let order_blocked = order_blocker_id != "" &&
-      base_claim_status != "delivered"
+      base_claim_status != @mooncode_core.runtime_claim_status_delivered()
     let claim_status = runtime_claim_status_with_order_blocker(
       base_claim_status, order_blocker_id,
     )
@@ -62,14 +66,20 @@ pub fn runtime_claim_state(
     if previous_completion_missing_proof {
       failed_items.push(item)
     }
-    match claim_status {
-      "claimable" => claimable_items.push(item)
-      "claimed" => claimed_items.push(item)
-      "delivered" => delivered_items.push(item)
-      "blocked-by-prior-command" => order_blocked_items.push(item)
-      "blocked-tool-authorization" =>
-        tool_authorization_blocked_items.push(item)
-      _ => invalid_items.push(item)
+    if claim_status == @mooncode_core.runtime_claim_status_claimable() {
+      claimable_items.push(item)
+    } else if claim_status == @mooncode_core.runtime_claim_status_claimed() {
+      claimed_items.push(item)
+    } else if claim_status == @mooncode_core.runtime_claim_status_delivered() {
+      delivered_items.push(item)
+    } else if claim_status ==
+      @mooncode_core.runtime_claim_status_blocked_by_prior_command() {
+      order_blocked_items.push(item)
+    } else if claim_status ==
+      @mooncode_core.runtime_claim_status_blocked_tool_authorization() {
+      tool_authorization_blocked_items.push(item)
+    } else {
+      invalid_items.push(item)
     }
     if order_blocker_id == "" &&
       runtime_claim_status_blocks_following(base_claim_status) {
@@ -79,7 +89,7 @@ pub fn runtime_claim_state(
   }
   {
     "protocol": protocol_version(),
-    "kind": "mooncode-runtime-claim-state",
+    "kind": @mooncode_core.runtime_claim_state_kind(),
     "session_id": session_id,
     "workspace_id": workspace_id,
     "workspace_name": workspace_name,
@@ -97,10 +107,10 @@ pub fn runtime_claim_state(
     "order_blocked_command_count": order_blocked_items.length(),
     "tool_authorization_blocked_command_count": tool_authorization_blocked_items.length(),
     "claim_ready": claimable_items.length() > 0,
-    "claim_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-claim",
-    "ack_endpoint": "/api/mooncode/sessions/\{session_id}/runtime-replay",
-    "ordering_rule": "MoonClaw claims valid commands in runtime-commands.jsonl order before executing them; active earlier claims and invalid earlier commands block later non-delivered rows until they are acknowledged, failed, expired, forced, or repaired.",
-    "lease_policy": "runtime-claimed receipts hide commands from other consumers until lease_expires_at passes; expired claims and failed runtime receipts become claimable retry work without force, while delivered receipts remain protected.",
+    "claim_endpoint": @mooncode_core.runtime_claim_endpoint(session_id),
+    "ack_endpoint": @mooncode_core.runtime_replay_endpoint(session_id),
+    "ordering_rule": @mooncode_core.runtime_claim_ordering_rule(),
+    "lease_policy": @mooncode_core.runtime_claim_lease_policy(),
     "claim_items": Json::array(claim_items),
     "claimable_commands": Json::array(claimable_items),
     "claimed_commands": Json::array(claimed_items),

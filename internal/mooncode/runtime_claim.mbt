@@ -78,7 +78,7 @@ pub fn runtime_claim_response(
 ) -> Json {
   {
     "protocol": protocol_version(),
-    "kind": "mooncode-runtime-claim",
+    "kind": @mooncode_core.runtime_claim_response_kind(),
     "session_id": session_id,
     "claimed_count": claim_receipts.length(),
     "claim_receipts": Json::array(claim_receipts),
@@ -175,8 +175,8 @@ fn runtime_claim_receipt(
     "runtime_session_id": session_runtime_session_id(session),
     "action": rq_json_string(runtime_command, "action", default="prompt"),
     "control": rq_json_string(runtime_command, "control", default="prompt"),
-    "status": "runtime-claimed",
-    "runtime_mode": "mooncode-runtime-claim",
+    "status": @mooncode_core.runtime_receipt_status_claimed(),
+    "runtime_mode": @mooncode_core.runtime_claim_mode(),
     "consumer_id": consumer_id,
     "created_at": claimed_at,
     "claimed_at": claimed_at,
@@ -202,8 +202,12 @@ fn runtime_claim_receipt(
       "native_mooncode_endpoint",
       default="",
     ),
-    "runtime_claim_endpoint": "/api/mooncode/sessions/\{rq_json_string(runtime_command, "session_id", default="")}/runtime-claim",
-    "runtime_replay_ack_endpoint": "/api/mooncode/sessions/\{rq_json_string(runtime_command, "session_id", default="")}/runtime-replay",
+    "runtime_claim_endpoint": @mooncode_core.runtime_claim_endpoint(
+      rq_json_string(runtime_command, "session_id", default=""),
+    ),
+    "runtime_replay_ack_endpoint": @mooncode_core.runtime_replay_endpoint(
+      rq_json_string(runtime_command, "session_id", default=""),
+    ),
     "detail": "Runtime consumer claimed command for ordered execution; completion must be reported through runtime-replay acknowledgement.",
     "runtime_command": runtime_command,
     "consumer_request": payload,

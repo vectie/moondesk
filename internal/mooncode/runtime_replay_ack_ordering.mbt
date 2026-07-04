@@ -14,20 +14,25 @@ fn runtime_replay_ack_order_blocker(
     if !rq_json_bool(report, "ok", default=false) {
       return runtime_replay_ack_order_blocker_record(
         current_id,
-        status="invalid",
+        status=@mooncode_core.runtime_claim_status_invalid(),
         detail="Earlier runtime command cannot be decoded.",
       )
     }
     if runtime_command_tool_authorization_blocks(command) {
       return runtime_replay_ack_order_blocker_record(
         current_id,
-        status="blocked-tool-authorization",
+        status=@mooncode_core.runtime_claim_status_blocked_tool_authorization(),
         detail=runtime_command_tool_authorization_block_reason(command),
       )
     }
     let latest = latest_receipts.get(current_id).unwrap_or(Json::object({}))
-    let status = rq_json_string(latest, "status", default="missing")
-    if runtime_receipt_status_delivered(status) || status == "failed" {
+    let status = rq_json_string(
+      latest,
+      "status",
+      default=@mooncode_core.runtime_receipt_status_missing(),
+    )
+    if runtime_receipt_status_delivered(status) ||
+      status == @mooncode_core.runtime_receipt_status_failed() {
       continue
     }
     if runtime_receipt_status_claimed(status) &&
@@ -59,18 +64,20 @@ fn runtime_replay_ack_order_status(
   claimed_by_same_consumer : Bool,
 ) -> String {
   if rq_json_string(order_blocker, "command_id", default="") != "" {
-    "blocked-by-prior-command"
-  } else if previous_receipt_status == "runtime-claimed" {
+    @mooncode_core.runtime_claim_status_blocked_by_prior_command()
+  } else if previous_receipt_status ==
+    @mooncode_core.runtime_receipt_status_claimed() {
     if claimed_by_same_consumer {
-      "matching-claim"
+      @mooncode_core.runtime_replay_ack_order_status_matching_claim()
     } else {
-      "consumer-mismatch"
+      @mooncode_core.runtime_replay_ack_order_status_consumer_mismatch()
     }
   } else if runtime_receipt_status_delivered(previous_receipt_status) {
-    "already-delivered"
-  } else if previous_receipt_status == "failed" {
-    "retry-after-failed-receipt"
+    @mooncode_core.runtime_replay_ack_order_status_already_delivered()
+  } else if previous_receipt_status ==
+    @mooncode_core.runtime_receipt_status_failed() {
+    @mooncode_core.runtime_replay_ack_order_status_retry_after_failed_receipt()
   } else {
-    "unclaimed-ack"
+    @mooncode_core.runtime_replay_ack_order_status_unclaimed_ack()
   }
 }

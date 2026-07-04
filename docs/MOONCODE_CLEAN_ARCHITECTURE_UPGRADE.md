@@ -2355,6 +2355,54 @@ Exit tests:
 - the migration wall rejects duplicated production package/review contract,
   status, reason, missing-step, and event-kind strings outside `mooncode/core`.
 
+## Phase 58 - Core-Owned Runtime Consumer Contract
+
+Status: implemented by moving runtime claim/replay consumer vocabulary,
+receipt status policy, claim status policy, replay status policy, replay ack
+status policy, endpoint formatting, and published claim/replay rules into
+`mooncode/core`.
+
+Problem:
+
+- Runtime claim/replay is the boundary where MoonClaw proves that work is real,
+  ordered, replayable, and command-scoped, but the consumer contract still lived
+  in `internal/mooncode`.
+- The projection owned the public claim/replay contract JSON, receipt statuses,
+  claim statuses, replay statuses, ack-order statuses, endpoint strings,
+  ordering rules, duplicate guards, and lease policy.
+- That left standalone MoonCode and MoonClaw consumers depending on Moondesk
+  internals for the rules that decide whether a command is claimable, delivered,
+  retryable, blocked, or acknowledged.
+
+Work:
+
+- Add `mooncode/core/runtime_consumer.mbt` with runtime-consumer contract
+  id/kind, claim/replay kinds, receipt statuses, claim statuses, replay
+  statuses, ack statuses, ack-order statuses, endpoint builders, ordering
+  rules, duplicate guards, lease policy, and contract JSON.
+- Embed the runtime-consumer contract in the native capability surface and
+  capability fingerprint.
+- Make `internal/mooncode/runtime_consumer_contracts.mbt` delegate public
+  claim/replay contract JSON to `mooncode/core`.
+- Make runtime queue, claim, replay, and ack projection files consume core
+  status predicates, status transition helpers, endpoint builders, and rule
+  strings while keeping command/receipt aggregation internal.
+- Add a migration gate that rejects duplicated production runtime-consumer
+  vocabulary returning under runtime claim/replay projection files.
+
+Exit tests:
+
+- `mooncode/core` proves the runtime-consumer contract id/kind, claim/replay
+  kinds, receipt statuses, claim statuses, replay statuses, ack statuses,
+  endpoint builders, rules, contract JSON, and native capability embedding.
+- internal runtime claim/replay tests still prove claim leasing, expired-lease
+  retry, delivery skipping, ack proof gates, and command-scoped runtime
+  evidence.
+- runtime claim/replay projection responses continue to expose the same public
+  consumer contracts through the internal facade.
+- the migration wall rejects duplicated production runtime-consumer status,
+  endpoint, rule, and contract strings outside `mooncode/core`.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
