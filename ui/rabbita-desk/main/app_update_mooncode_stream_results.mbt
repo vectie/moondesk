@@ -17,11 +17,6 @@ fn update_mooncode_stream_results(
         } else {
           mooncode_merge_stream_events([], stream.events)
         }
-        let mooncode_conversation_rows = mooncode_hydrate_conversation_from_events(
-          model.mooncode_conversation_rows,
-          session_id,
-          stream.events,
-        )
         (
           @rabbita.batch([
             save_mooncode_stream_checkpoint_cmd(
@@ -40,7 +35,6 @@ fn update_mooncode_stream_results(
             mooncode_stream_session_id: session_id,
             mooncode_stream_cursor: stream.next_since,
             mooncode_stream_events: stream_events,
-            mooncode_conversation_rows,
             mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
               model.mooncode_pending_prompts,
               session_id,
@@ -104,18 +98,12 @@ fn update_mooncode_stream_results(
         } else {
           " / service " + sink.runtime_service.status
         }
-        let mooncode_conversation_rows = mooncode_hydrate_conversation_from_events(
-          model.mooncode_conversation_rows,
-          session_id,
-          sink.events,
-        )
         (
           @rabbita.none,
           {
             ..model,
             mooncode_runtime_event_sink_session_id: session_id,
             mooncode_runtime_event_sink: Some(sink),
-            mooncode_conversation_rows,
             mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
               model.mooncode_pending_prompts,
               session_id,

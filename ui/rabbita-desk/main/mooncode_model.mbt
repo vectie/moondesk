@@ -10,9 +10,6 @@ struct MoonCodePendingPrompt {
   session_id : String
   client_turn_id : String
   content : String
-  status : String
-  after_row_count : Int
-  after_event_count : Int
 }
 
 ///|

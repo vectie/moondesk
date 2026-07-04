@@ -137,8 +137,6 @@ fn mooncode_send_composer(
               session.id,
               client_turn_id,
               prompt,
-              mooncode_transcript_items(model, session).length(),
-              mooncode_transcript_events(model, session).length(),
             ),
             mooncode_composer_status: if action == "steer" {
               "message queued for current turn"
@@ -153,9 +151,6 @@ fn mooncode_send_composer(
         let draft_session_id = mooncode_draft_session_id(model)
         let client_turn_id = mooncode_client_turn_id(
           model, draft_session_id, prompt,
-        )
-        let draft_session = mooncode_draft_session(model).unwrap_or(
-          mooncode_local_draft_session_for_prompt(model, draft_session_id),
         )
         (
           @rabbita.batch([
@@ -180,8 +175,6 @@ fn mooncode_send_composer(
               draft_session_id,
               client_turn_id,
               prompt,
-              mooncode_transcript_items(model, draft_session).length(),
-              mooncode_transcript_events(model, draft_session).length(),
             ),
             mooncode_composer_status: "message queued for MoonCode",
           },
@@ -192,47 +185,11 @@ fn mooncode_send_composer(
 }
 
 ///|
-fn mooncode_local_draft_session_for_prompt(
-  model : Model,
-  draft_session_id : String,
-) -> MoonCodeSession {
-  {
-    id: draft_session_id,
-    workspace_id: model.selected_workspace_id,
-    workspace_name: if model.selected_workspace_id == "" {
-      "General"
-    } else {
-      workspace_name(model)
-    },
-    cwd: if model.selected_workspace_id == "" {
-      ""
-    } else {
-      model.workspace_root_path
-    },
-    mooncode_runtime_session_id: None,
-    title: mooncode_new_session_title(model),
-    model: mooncode_selected_runtime_model(model, None),
-    status: "queued",
-    queued_count: 1,
-    transcript: [],
-    mooncode_events: [],
-    mooncode_conversation: None,
-    mooncode_summary: {
-      event_count: 0,
-      verified_test_count: 0,
-      pending_diff_count: 0,
-    },
-  }
-}
-
-///|
 fn mooncode_append_pending_prompt(
   prompts : Array[MoonCodePendingPrompt],
   session_id : String,
   client_turn_id : String,
   content : String,
-  after_row_count : Int,
-  after_event_count : Int,
 ) -> Array[MoonCodePendingPrompt] {
   let next : Array[MoonCodePendingPrompt] = []
   for prompt in prompts {
@@ -242,9 +199,6 @@ fn mooncode_append_pending_prompt(
     session_id,
     client_turn_id,
     content,
-    status: "queued",
-    after_row_count,
-    after_event_count,
   })
   next
 }

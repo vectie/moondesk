@@ -34,6 +34,19 @@ fn mooncode_draft_session_id(model : Model) -> String {
 }
 
 ///|
+fn mooncode_session_has_pending_prompt(
+  model : Model,
+  session_id : String,
+) -> Bool {
+  for prompt in model.mooncode_pending_prompts {
+    if prompt.session_id == session_id {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
   let session_id = mooncode_draft_session_id(model)
   if !mooncode_session_has_pending_prompt(model, session_id) &&
@@ -124,6 +137,7 @@ fn mooncode_session_acknowledges_prompt(
     return true
   }
   for message in session.transcript {
+    ignore(message.status)
     if message.role == "user" &&
       message.content.trim().to_owned() == prompt.content {
       return true
@@ -276,14 +290,34 @@ fn mooncode_preserve_hydrated_session(
   previous : MoonCodeSession,
   incoming : MoonCodeSession,
 ) -> MoonCodeSession {
-  if incoming.transcript.length() == 0 &&
+  let missing_legacy_payload = incoming.transcript.length() == 0 &&
     incoming.mooncode_events.length() == 0 &&
-    (previous.transcript.length() > 0 || previous.mooncode_events.length() > 0) {
+    (previous.transcript.length() > 0 || previous.mooncode_events.length() > 0)
+  let missing_conversation = incoming.mooncode_conversation is None &&
+    previous.mooncode_conversation is Some(_)
+  if missing_legacy_payload || missing_conversation {
     {
       ..incoming,
-      transcript: previous.transcript,
-      mooncode_events: previous.mooncode_events,
-      mooncode_summary: previous.mooncode_summary,
+      transcript: if missing_legacy_payload {
+        previous.transcript
+      } else {
+        incoming.transcript
+      },
+      mooncode_events: if missing_legacy_payload {
+        previous.mooncode_events
+      } else {
+        incoming.mooncode_events
+      },
+      mooncode_conversation: if missing_conversation {
+        previous.mooncode_conversation
+      } else {
+        incoming.mooncode_conversation
+      },
+      mooncode_summary: if missing_legacy_payload || missing_conversation {
+        previous.mooncode_summary
+      } else {
+        incoming.mooncode_summary
+      },
     }
   } else {
     incoming

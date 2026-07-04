@@ -108,7 +108,7 @@ Exit tests:
 
 ## Phase 2 - UI Canonical Read Path
 
-Status: complete for the primary read path.
+Status: complete.
 
 Work:
 
@@ -117,7 +117,7 @@ Work:
 - Merge local optimistic user rows only when the backend has not yet
   acknowledged them.
 - Stop using raw stream events and runtime sink events as primary chat input.
-- Keep old raw-event renderer behind a clearly named temporary fallback.
+- Remove the old raw-event renderer instead of keeping a compatibility fallback.
 
 Exit tests:
 
@@ -128,7 +128,7 @@ Exit tests:
 
 ## Phase 3 - Send API Turn Creation
 
-Status: active, core contract implemented.
+Status: complete for the frontend contract.
 
 Work:
 
@@ -142,8 +142,8 @@ Work:
 - Pending prompt acknowledgement prefers `command_packet.client_turn_id`, so
   identical second/third prompts are not cleared by an older event with the
   same text.
-- Remaining cleanup: delete the old event-count pending insertion path after
-  all primary render tests use backend canonical turns.
+- Pending prompt state is identity-only; it no longer stores event or row counts
+  for later insertion.
 
 Exit tests:
 
@@ -191,7 +191,7 @@ Exit tests:
 
 ## Phase 6 - Delete Stale Frontend Implementation
 
-Status: partially complete.
+Status: complete for the main Moondesk MoonCode frontend path.
 
 Work:
 
@@ -199,13 +199,15 @@ Work:
 - Delete recovered failed assistant cleanup from the main chat path.
 - Delete pending prompt event splitting from the main chat path.
 - Delete content-based assistant/user dedupe from the main chat path.
-- Delete transcript rendering from `session.transcript` except as import
-  fallback for historical data.
+- Delete transcript rendering from `session.transcript` in the main chat path.
 - Move raw log visualization to a diagnostics/details surface.
-- Completed in this pass: deleted UI runtime-start sink heuristic, deleted
-  browser runtime-service command producer, deleted stale runtime-service
-  message handling, and replaced pending prompt acknowledgement with
-  `client_turn_id`.
+- Deleted the browser-side raw-event transcript renderer, raw event activity
+  converter, grouped user repair, recovered assistant cleanup, pending prompt
+  event splitting, and content-based duplicate suppression.
+- Compact session polling preserves `mooncode_conversation`, so old replies do
+  not disappear when a lightweight session listing arrives.
+- Runtime stream and sink events remain in the model as diagnostics/status
+  payloads only.
 
 Exit tests:
 
@@ -213,8 +215,17 @@ Exit tests:
 - no main chat code reads raw runtime sink events
 - no main chat code reads stream events
 - no main chat code compares message content to determine ownership
+- same-content prompts with different `client_turn_id` values remain distinct
+  turns
+
+Validation in this slice:
+
+- `moon check --target js`
+- `moon test --target js`
 
 ## Phase 7 - End-To-End Chat Tests
+
+Status: next.
 
 Backend:
 
