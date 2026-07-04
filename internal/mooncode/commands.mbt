@@ -12,6 +12,7 @@ pub fn command_packet(
   let runtime_session_id = session_runtime_session_id(session)
   let model = command_model(session, payload)
   let web_search = json_bool(payload, "web_search", default=false)
+  let runtime_tool_calls = json_array_items(payload, "runtime_tool_calls")
   {
     "protocol": protocol_version(),
     "kind": kind_command(),
@@ -38,6 +39,7 @@ pub fn command_packet(
     "message": message,
     "model": model,
     "web_search": web_search,
+    "runtime_tool_calls": Json::array(runtime_tool_calls),
     "force_preflight": json_bool(payload, "force_preflight", default=false),
     "expected_lanes": string_array_json(command_expected_lanes(action)),
     "tool_hints": string_array_json(

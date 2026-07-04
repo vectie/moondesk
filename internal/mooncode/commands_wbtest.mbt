@@ -323,6 +323,45 @@ test "mooncode command model reaches runtime and native body" {
 }
 
 ///|
+test "mooncode command packet forwards explicit runtime tool calls" {
+  let session : Json = {
+    "id": "code-demo",
+    "workspace_id": "book-demo",
+    "workspace_root": "/tmp/demo-book",
+  }
+  let payload : Json = {
+    "context_path": "tools/demo/main.mbt",
+    "runtime_tool_calls": [
+      {
+        "tool": "write",
+        "arguments": {
+          "path": "tools/demo/proof.txt",
+          "content": "runtime proof",
+        },
+      },
+      { "tool": "finish", "arguments": { "answer": "runtime finished" } },
+    ],
+  }
+  let packet = projected_command_packet(
+    session, payload, "prompt", "Create proof", "2026-06-17T00:00:00Z", "tools/demo/main.mbt",
+  )
+  let packet_calls = json_array_items(packet, "runtime_tool_calls")
+  assert_eq(packet_calls.length(), 2)
+  assert_eq(json_string(packet_calls[0], "tool", default=""), "write")
+  assert_eq(json_string(packet_calls[1], "tool", default=""), "finish")
+  let runtime = runtime_command_record(session, payload, "Create proof", packet)
+  let native = command_json_object_field_or_empty(
+    runtime, "native_mooncode_body",
+  )
+  let native_calls = json_array_items(native, "runtime_tool_calls")
+  assert_eq(native_calls.length(), 2)
+  assert_eq(json_string(native_calls[0], "tool", default=""), "write")
+  assert_eq(json_string(native_calls[1], "tool", default=""), "finish")
+  let native_packet = command_json_object_field_or_empty(native, "packet")
+  assert_eq(json_array_items(native_packet, "runtime_tool_calls").length(), 2)
+}
+
+///|
 test "mooncode command model falls back to session model" {
   let session : Json = {
     "id": "code-demo",

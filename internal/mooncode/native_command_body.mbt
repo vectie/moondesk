@@ -22,6 +22,9 @@ pub fn native_command_body(
     session, command_packet,
   )
   let web_search = json_bool(command_packet, "web_search", default=false)
+  let runtime_tool_calls = native_command_runtime_tool_calls(
+    payload, command_packet,
+  )
   {
     "protocol": protocol_version(),
     "command": action,
@@ -37,6 +40,7 @@ pub fn native_command_body(
     "payload": payload,
     "packet": command_packet,
     "web_search": web_search,
+    "runtime_tool_calls": Json::array(runtime_tool_calls),
     "execution_plan": native_command_execution_plan(
       action, context_path, payload, command_packet,
     ),
@@ -51,5 +55,18 @@ pub fn native_command_body(
       "artifact": "moonbook",
       "standalone_component": "mooncode",
     },
+  }
+}
+
+///|
+fn native_command_runtime_tool_calls(
+  payload : Json,
+  command_packet : Json,
+) -> Array[Json] {
+  let from_payload = json_array_items(payload, "runtime_tool_calls")
+  if from_payload.length() > 0 {
+    from_payload
+  } else {
+    json_array_items(command_packet, "runtime_tool_calls")
   }
 }

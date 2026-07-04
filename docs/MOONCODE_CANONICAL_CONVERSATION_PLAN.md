@@ -547,7 +547,15 @@ Current coverage:
 - the live smoke starts MoonClaw, posts native runtime evidence through
   MoonClaw's endpoint, and verifies the Moondesk projection contract
 
-Remaining risk after Phase 17 is broader model-backed runtime behavior:
-tool-call planning, long-running service recovery, cancel/steer races, and
-package/review flows under a real model should be scheduled separately from the
-deterministic merge gate.
+Phase 18 turns explicit tool-call execution into a deterministic native runtime
+gate. `runtime_tool_calls` now belongs to the durable command packet and the
+native MoonClaw command body, so Moondesk can ask MoonClaw to execute concrete
+work without relying on fallback prompt interpretation before the first
+assistant reply appears. The canonical conversation projection also treats a
+command-scoped native `finish` tool call with an `answer` as the assistant
+reply, then uses the generic finish result only to close the turn.
+
+Remaining risk after Phase 18 is broader model-backed runtime behavior:
+model-generated tool-call planning, long-running service recovery,
+cancel/steer races, and package/review flows under a real model should be
+scheduled separately from the deterministic merge gate.

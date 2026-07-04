@@ -650,6 +650,46 @@ Exit tests:
 - live MoonClaw smoke proves owner=`moonclaw`, projection-safe contract status,
   zero unsafe unscoped projection events, and final assistant reply projection
 
+## Phase 18 - Native Runtime Loop Contract Gate
+
+Status: implemented as the clean command-producer boundary.
+
+Problem:
+
+- MoonClaw already accepts `runtime_tool_calls` in native command bodies and
+  packets, but Moondesk was not forwarding explicit tool-call plans from the
+  session/command payload into either durable producer surface.
+- That made simple deterministic work depend on fallback prompt planning or
+  model/service behavior, which is too slow and ambiguous for first-message and
+  multi-turn UI correctness.
+
+Work:
+
+- Treat `runtime_tool_calls` as a first-class MoonCode command field.
+- Persist explicit runtime tool calls in the canonical command packet.
+- Replay the same tool-call plan in the native MoonClaw command body.
+- Keep Moondesk as the command producer only; MoonClaw remains the runtime
+  owner that executes tools and emits command-scoped evidence.
+- Treat a command-scoped native `finish` tool call containing an `answer` as the
+  assistant final reply, and let the following generic `finish` result close
+  the turn without replacing the answer with `finished`.
+- Add a live native runtime-loop gate that creates a Moondesk session, asks
+  MoonClaw to execute explicit `write` and `finish` tool calls, verifies the
+  file-system side effect under the selected MoonSuite root, and verifies the
+  final assistant answer imports through the native runtime-events API into the
+  canonical conversation.
+
+Exit tests:
+
+- command packet contains explicit `runtime_tool_calls`
+- native command body contains the same explicit `runtime_tool_calls`
+- live MoonClaw runtime loop executes the tool calls instead of falling back to
+  generic thinking
+- Moondesk imports the daemon-owned `finish` tool-call answer as the assistant
+  reply for the originating command and closes the turn on the generic finish
+  result
+- no legacy `.moonclaw` sidecar root is created
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

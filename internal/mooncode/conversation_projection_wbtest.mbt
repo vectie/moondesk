@@ -279,6 +279,37 @@ test "mooncode conversation projection keeps three sequential replies stable" {
 }
 
 ///|
+test "mooncode conversation projection uses native finish tool call answer" {
+  let events : Array[Json] = [
+    test_prompt_event("cmd-loop", "client-loop", "create proof", "001"),
+    test_progress_event(
+      "think-loop", "cmd-loop", "MoonCode planner step 1", "Planner step 1 used explicit-tool-calls.",
+      "002",
+    ),
+    event_record(
+      id="finish-call",
+      lane="review",
+      kind="tool_call",
+      title="Tool started: finish",
+      status="running",
+      created_at="003",
+      detail="{\"answer\":\"Live MoonClaw runtime loop completed.\"}",
+      command_packet=test_command_packet("cmd-loop", ""),
+    ),
+    test_finish_event("finish-result", "cmd-loop", "finished", "004"),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 1)
+  assert_eq(json_string(turns[0], "status", default=""), "done")
+  let assistant = runtime_json_object_field_or_empty(turns[0], "assistant")
+  assert_eq(
+    json_string(assistant, "content", default=""),
+    "Live MoonClaw runtime loop completed.",
+  )
+  assert_eq(json_string(assistant, "status", default=""), "done")
+}
+
+///|
 test "mooncode conversation projection buffers scoped progress before prompt" {
   let events : Array[Json] = [
     test_progress_event(

@@ -204,6 +204,12 @@ fn conversation_apply_runtime_event_to_turn(
         turn.status,
         json_string(event, "status", default="done"),
       )
+    } else if conversation_event_is_terminal_without_answer(event) {
+      turn.status = conversation_merge_status(
+        turn.status,
+        json_string(event, "status", default="done"),
+      )
+      conversation_mark_assistant_terminal_status(turn, event)
     }
   } else if conversation_event_is_terminal_without_answer(event) {
     if conversation_message_content(turn.assistant) == "" &&
@@ -218,6 +224,7 @@ fn conversation_apply_runtime_event_to_turn(
       turn.status,
       json_string(event, "status", default="done"),
     )
+    conversation_mark_assistant_terminal_status(turn, event)
   } else if conversation_event_is_failure_reply(event) {
     let content = json_string(event, "detail", default="").trim().to_owned()
     if content != "" {
@@ -332,6 +339,22 @@ fn conversation_assistant_delta_message(event : Json, content : String) -> Json 
     "status": json_string(event, "status", default="running"),
     "event_id": json_string(event, "id", default=""),
     "created_at": json_string(event, "created_at", default=""),
+  }
+}
+
+///|
+fn conversation_mark_assistant_terminal_status(
+  turn : ConversationTurnDraft,
+  event : Json,
+) -> Unit {
+  let status = json_string(event, "status", default="done")
+  if conversation_message_content(turn.assistant) != "" &&
+    (status == "done" || status == "failed") {
+    turn.assistant = runtime_with_field(
+      turn.assistant,
+      "status",
+      status.to_json(),
+    )
   }
 }
 
@@ -498,12 +521,17 @@ fn conversation_event_is_assistant_final(event : Json) -> Bool {
     json_string(event, "lane", default="") == "transcript" &&
     json_string(event, "kind", default="") == "assistant"
   ) ||
+  conversation_event_finish_tool_call_answer(event) != "" ||
   json_string(event, "kind", default="") == "finish" ||
   json_string(event, "title", default="") == "Assistant response"
 }
 
 ///|
 fn conversation_event_assistant_content(event : Json) -> String {
+  let finish_answer = conversation_event_finish_tool_call_answer(event)
+  if finish_answer != "" {
+    return finish_answer
+  }
   let result = runtime_json_object_field_or_empty(event, "tool_result")
   let output = json_string(result, "output", default="").trim().to_owned()
   if output != "" && !conversation_finish_content_is_status(output) {
@@ -516,6 +544,21 @@ fn conversation_event_assistant_content(event : Json) -> String {
   } else {
     content
   }
+}
+
+///|
+fn conversation_event_finish_tool_call_answer(event : Json) -> String {
+  if json_string(event, "kind", default="") != "tool_call" {
+    return ""
+  }
+  let title = json_string(event, "title", default="").to_lower().to_string()
+  let tool_name = json_string(event, "tool_name", default="")
+  if tool_name != "finish" && !title.contains("finish") {
+    return ""
+  }
+  let detail = json_string(event, "detail", default="")
+  let parsed = @json.parse(detail) catch { _ => Json::object({}) }
+  json_string(parsed, "answer", default="").trim().to_owned()
 }
 
 ///|
