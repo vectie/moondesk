@@ -567,6 +567,20 @@ thinking state, if `runtime.planner_failed` is not accepted as durable
 command-scoped failure evidence, or if a planner-to-assistant sequence cannot
 prove one append-only command owner.
 
+Turn ownership and abort gate:
+
+```bash
+moon test internal/mooncode --filter "mooncode conversation projection*" --target native
+moon test internal/mooncode --filter "mooncode runtime control*" --target native
+```
+
+This deterministic Phase 27 gate protects append-only turn ownership. It fails
+if visible conversation rows lack command/turn/run owner fields, if unscoped
+runtime failures attach to the latest active turn, if prompt-scoped
+`runtime_aborted` does not close the owning turn as cancelled, if cancel-scoped
+abort evidence leaks into chat, or if steer/cancel runtime-control decisions do
+not advertise their required MoonClaw settlement events.
+
 Runtime-service failure gate:
 
 ```bash
@@ -620,6 +634,8 @@ Code mode is sufficiently tested when:
 - a model-planner evidence gate proves local UI state cannot pretend active
   work; MoonClaw must emit command-scoped planner evidence, assistant/failure
   evidence, or a clear runtime contract failure
+- a turn ownership and abort gate proves every visible row carries its owner
+  tuple and unscoped runtime diagnostics cannot move or rewrite chat turns
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

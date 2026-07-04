@@ -59,12 +59,30 @@ test "mooncode conversation projection groups a clean turn" {
   assert_eq(items.length(), 3)
   assert_eq(json_string(items[0], "role", default=""), "user")
   assert_eq(json_string(items[0], "content", default=""), "Fix the UI ordering")
+  assert_eq(json_string(items[0], "command_id", default=""), "cmd-1")
+  assert_eq(json_string(items[0], "turn_id", default=""), "cmd-1")
+  assert_true(runtime_json_object_field(items[0], "owner") is Some(Object(_)))
   assert_eq(json_string(items[1], "role", default=""), "progress")
   assert_eq(json_string(items[1], "title", default=""), "Thinking")
+  assert_eq(json_string(items[1], "command_id", default=""), "cmd-1")
   assert_eq(json_string(items[2], "role", default=""), "assistant")
+  assert_eq(json_string(items[2], "command_id", default=""), "cmd-1")
   assert_eq(
     json_string(items[2], "content", default=""),
     "The UI ordering is fixed.",
+  )
+  let ownership = runtime_json_object_field_or_empty(projection, "ownership")
+  assert_eq(
+    json_string(ownership, "kind", default=""),
+    "mooncode-conversation-ownership-report",
+  )
+  assert_eq(
+    summary_json_int(
+      ownership,
+      "ignored_unowned_visible_event_count",
+      default=-1,
+    ),
+    0,
   )
 }
 
@@ -599,7 +617,7 @@ test "mooncode conversation projection uses final answer over assistant delta" {
 }
 
 ///|
-test "mooncode conversation projection attaches unscoped runtime failure to active turn" {
+test "mooncode conversation projection ignores unowned runtime failure" {
   let events : Array[Json] = [
     test_prompt_event("cmd-failed", "client-failed", "hello", "001"),
     event_record(
@@ -612,14 +630,29 @@ test "mooncode conversation projection attaches unscoped runtime failure to acti
       detail="MoonCode runtime is not reachable.",
     ),
   ]
-  let turns = test_projection_turns(events)
+  let projection = conversation_projection(
+    {
+      "id": "session-phase7",
+      "workspace_id": "book-a",
+      "workspace_name": "Book A",
+    },
+    events,
+  )
+  let turns = json_array_items(projection, "turns")
   assert_eq(turns.length(), 1)
-  assert_eq(json_string(turns[0], "status", default=""), "failed")
+  assert_eq(json_string(turns[0], "status", default=""), "queued")
   let assistant = runtime_json_object_field_or_empty(turns[0], "assistant")
-  assert_eq(json_string(assistant, "status", default=""), "failed")
+  assert_eq(json_string(assistant, "content", default=""), "")
+  let items = json_array_items(turns[0], "items")
+  assert_eq(items.length(), 1)
+  let ownership = runtime_json_object_field_or_empty(projection, "ownership")
   assert_eq(
-    json_string(assistant, "content", default=""),
-    "MoonCode runtime is not reachable.",
+    summary_json_int(
+      ownership,
+      "ignored_unowned_visible_event_count",
+      default=0,
+    ),
+    1,
   )
 }
 
@@ -672,4 +705,80 @@ test "mooncode conversation projection lets native final answer recover stale ru
   assert_eq(items.length(), 2)
   assert_eq(json_string(items[0], "role", default=""), "user")
   assert_eq(json_string(items[1], "role", default=""), "assistant")
+}
+
+///|
+test "mooncode conversation projection closes owning prompt on runtime abort" {
+  let events : Array[Json] = [
+    test_prompt_event("cmd-cancelled", "client-cancelled", "stop this", "001"),
+    event_record(
+      id="abort-prompt",
+      lane="runtime",
+      kind="runtime_aborted",
+      title="Runtime interrupted",
+      status="cancelled",
+      created_at="002",
+      detail="MoonClaw aborted command cmd-cancelled at scheduler boundary.",
+      command_packet=test_command_packet("cmd-cancelled", "client-cancelled"),
+    ),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 1)
+  assert_eq(json_string(turns[0], "status", default=""), "cancelled")
+  let assistant = runtime_json_object_field_or_empty(turns[0], "assistant")
+  assert_eq(json_string(assistant, "status", default=""), "cancelled")
+  assert_eq(json_string(assistant, "content", default=""), "Request cancelled.")
+  assert_eq(json_string(assistant, "command_id", default=""), "cmd-cancelled")
+  assert_eq(
+    json_string(
+      runtime_json_object_field_or_empty(assistant, "owner"),
+      "client_turn_id",
+      default="",
+    ),
+    "client-cancelled",
+  )
+}
+
+///|
+test "mooncode conversation projection keeps cancel settlement out of chat" {
+  let events : Array[Json] = [
+    test_prompt_event("cmd-1", "client-1", "first prompt", "001"),
+    test_finish_event("finish-1", "cmd-1", "first reply", "002"),
+    event_record(
+      id="cmd-cancel",
+      lane="runtime",
+      kind="command.cancel",
+      title="Cancel session: queued",
+      status="queued",
+      created_at="003",
+      detail="cancel active work",
+      command="cancel",
+      command_packet={
+        "command_id": "cmd-cancel",
+        "client_turn_id": "client-cancel",
+        "action": "cancel",
+      },
+    ),
+    event_record(
+      id="abort-cancel-control",
+      lane="runtime",
+      kind="runtime_aborted",
+      title="Runtime interrupted",
+      status="cancelled",
+      created_at="004",
+      detail="active work cancelled",
+      command_packet={
+        "command_id": "cmd-cancel",
+        "client_turn_id": "client-cancel",
+        "action": "cancel",
+      },
+    ),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 1)
+  assert_eq(json_string(turns[0], "command_id", default=""), "cmd-1")
+  assert_eq(json_string(turns[0], "status", default=""), "done")
+  let rendered = Json::array(turns).stringify()
+  assert_false(rendered.contains("cancel active work"))
+  assert_false(rendered.contains("active work cancelled"))
 }

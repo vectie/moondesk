@@ -162,6 +162,22 @@ fn runtime_event_command_packet(event : Json, action : String) -> Json {
       "runtime_proof": true,
       "session_id": json_string(event, "session_id", default=""),
       "runtime_session_id": json_string(event, "runtime_session_id", default=""),
+      "run_id": runtime_first_string(
+        event,
+        ["run_id", "runId", "runtime_run_id", "service_id"],
+        default="",
+      ),
+      "client_turn_id": runtime_first_string(
+        event,
+        ["client_turn_id", "clientTurnId"],
+        default="",
+      ),
+      "target_command_id": json_string(event, "target_command_id", default=""),
+      "applied_to_command_id": json_string(
+        event,
+        "applied_to_command_id",
+        default="",
+      ),
     }
   }
 }

@@ -1009,22 +1009,53 @@ Exit tests:
 
 ## Phase 27 - Turn Ownership and Abort Contract
 
-Status: planned.
+Status: implemented as the conversation ownership and abort/control gate.
 
 Problem:
 
 - Steer/cancel are now kept out of chat, but true interrupt behavior depends on
   MoonClaw emitting explicit abort or scheduler-boundary evidence.
 - UI rows should never move because a late control event lacks turn ownership.
+- The previous projection still had a stale fallback that could attach an
+  unscoped runtime failure to the latest active turn. That is convenient in
+  demos but wrong for a first-time clean architecture: it lets late runtime
+  diagnostics rewrite the visible transcript without command ownership.
 
 Work:
 
 - Add command/run ownership ids to every visible progress, assistant, failure,
   abort, and recovery record.
-- Add tests for queued prompt withdrawal, active-turn cancel, dropped cancel,
-  deferred steer, applied steer, and future interruptible-tool abort evidence.
+- Add `mooncode-conversation-ownership-contract` and expose it from the
+  conversation projection, runtime-control contract, and runtime protocol
+  event-stream contract.
+- Add an ownership report to the conversation projection. Unscoped
+  progress/assistant/failure/abort-shaped events are counted as ignored
+  diagnostics instead of being attached to the latest turn.
+- Preserve `run_id`, `runtime_session_id`, `client_turn_id`,
+  `target_command_id`, and `applied_to_command_id` when raw native runtime
+  events are normalized into command refs.
+- Add source/target owner tuples and required settlement events to
+  runtime-control decisions so steer/cancel decisions name the MoonClaw evidence
+  required to settle them.
+- Project command-scoped `runtime_aborted` as a cancelled assistant row only
+  when it belongs to a non-control prompt/command turn.
 - Keep control history folded outside the user/assistant transcript unless
   MoonClaw emits command-scoped user-visible failure/abort evidence.
+
+Exit tests:
+
+- every visible user/progress/assistant row carries `turn_id`,
+  `client_turn_id`, `command_id`, `run_id`, `runtime_session_id`, `action`, and
+  `owner`
+- unscoped runtime failure evidence is ignored by the visible transcript and
+  counted in the ownership report
+- command-scoped runtime failure still closes the owning turn
+- command-scoped `runtime_aborted` on a prompt turn closes that turn as
+  `cancelled`
+- cancel-scoped `runtime_aborted` remains folded control lifecycle evidence and
+  does not create a chat row
+- runtime-control decisions expose source owner, target owner, and required
+  settlement events for steer/cancel
 
 ## Phase 28 - Package and Review Model Flow Gate
 

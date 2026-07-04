@@ -27,6 +27,7 @@ pub fn runtime_control_contract_json() -> Json {
       "unit": "native-runtime-scheduler-boundary",
       "rule": "Steer and cancel commands are durable control evidence. They do not fabricate chat rows or pretend to interrupt a running tool; MoonClaw settles them when the native runtime reaches a scheduler boundary or emits a real abort event.",
     },
+    "turn_ownership": conversation_ownership_contract_json(),
   }
 }
 

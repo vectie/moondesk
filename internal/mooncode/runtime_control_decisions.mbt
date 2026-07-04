@@ -218,9 +218,14 @@ fn runtime_control_decision(
   detail~ : String,
 ) -> Json {
   let action = runtime_control_command_action(command)
+  let source_command_id = runtime_control_json_string(
+    command,
+    "command_id",
+    default="",
+  )
   {
     "index": index,
-    "command_id": runtime_control_json_string(command, "command_id", default=""),
+    "command_id": source_command_id,
     "action": action,
     "control": runtime_control_json_string(
       command,
@@ -231,11 +236,88 @@ fn runtime_control_decision(
     "effect": effect,
     "target_command_id": target_command_id,
     "target_state": target_state,
+    "source_owner": runtime_control_owner(command, source_command_id),
+    "target_owner": runtime_control_target_owner(
+      target_command_id, target_state,
+    ),
+    "settlement_required": runtime_control_settlement_required(action, effect),
+    "settlement_events": Json::array(
+      [
+        for event in runtime_control_settlement_events(action, effect) => {
+          Json::string(event)
+        }
+      ],
+    ),
     "text": runtime_control_json_string(command, "message", default=""),
     "created_at": runtime_control_json_string(command, "created_at", default=""),
     "mooncode_command": runtime_control_mooncode_command(command),
     "detail": detail,
     "owner": { "runtime_control": "mooncode", "runtime": "moonclaw" },
+  }
+}
+
+///|
+fn runtime_control_owner(command : Json, command_id : String) -> Json {
+  {
+    "command_id": command_id,
+    "turn_id": command_id,
+    "client_turn_id": runtime_control_json_string(
+      command,
+      "client_turn_id",
+      default=command_id,
+    ),
+    "runtime_session_id": runtime_control_json_string(
+      command,
+      "runtime_session_id",
+      default="",
+    ),
+    "run_id": runtime_control_json_string(command, "run_id", default=""),
+    "action": runtime_control_command_action(command),
+  }
+}
+
+///|
+fn runtime_control_target_owner(
+  target_command_id : String,
+  target_state : String,
+) -> Json {
+  {
+    "command_id": target_command_id,
+    "turn_id": target_command_id,
+    "target_state": target_state,
+  }
+}
+
+///|
+fn runtime_control_settlement_required(
+  action : String,
+  effect : String,
+) -> Bool {
+  (action == "steer" || action == "cancel") &&
+  effect != "already-completed" &&
+  effect != "failed" &&
+  effect != "blocked"
+}
+
+///|
+fn runtime_control_settlement_events(
+  action : String,
+  effect : String,
+) -> Array[String] {
+  if action == "steer" {
+    if effect == "defer-steer" {
+      [event_steer_deferred()]
+    } else {
+      [event_steer_applied(), event_steer_dropped()]
+    }
+  } else if action == "cancel" {
+    if effect == "drop-cancel" {
+      [event_cancel_dropped()]
+    } else {
+      ["runtime_aborted", event_cancel_dropped()]
+    }
+  } else {
+    []
   }
 }
 

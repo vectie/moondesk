@@ -50,9 +50,28 @@ test "mooncode runtime control routes steer and cancel to active turn" {
     runtime_control_json_string(decisions[1], "target_command_id", default=""),
     "cmd-active",
   )
+  assert_true(json_bool(decisions[1], "settlement_required", default=false))
+  assert_true(
+    command_json_string_array_items(decisions[1], "settlement_events").contains(
+      event_steer_applied(),
+    ),
+  )
+  assert_eq(
+    runtime_control_json_string(
+      runtime_json_object_field_or_empty(decisions[1], "target_owner"),
+      "command_id",
+      default="",
+    ),
+    "cmd-active",
+  )
   assert_eq(
     runtime_control_json_string(decisions[2], "effect", default=""),
     "cancel-active",
+  )
+  assert_true(
+    command_json_string_array_items(decisions[2], "settlement_events").contains(
+      "runtime_aborted",
+    ),
   )
 }
 
@@ -173,6 +192,10 @@ test "mooncode runtime control starts first pending turn and queues controls" {
     ],
   }
   let projection = runtime_control_projection("s1", commands, lifecycle)
+  let contract = runtime_json_object_field_or_empty(projection, "contract")
+  assert_true(
+    runtime_json_object_field(contract, "turn_ownership") is Some(Object(_)),
+  )
   let decisions = runtime_control_json_array_items(projection, "decisions")
   assert_eq(
     runtime_control_json_string(decisions[0], "effect", default=""),

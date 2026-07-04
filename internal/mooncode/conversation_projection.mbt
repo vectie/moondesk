@@ -18,6 +18,23 @@ fn conversation_empty_message() -> Json {
 }
 
 ///|
+pub fn conversation_ownership_contract_json() -> Json {
+  {
+    "kind": "mooncode-conversation-ownership-contract",
+    "protocol": protocol_version(),
+    "owner": {
+      "projection": "mooncode",
+      "ui": "moondesk",
+      "runtime": "moonclaw",
+    },
+    "visible_owner_rule": "Every visible progress, assistant, failure, abort, and recovery row must carry command_id, turn_id, client_turn_id, runtime_session_id, run_id, action, and event_id ownership fields.",
+    "unowned_event_rule": "Unscoped runtime/progress/assistant/failure events are durable diagnostics only and must not attach to the latest active turn.",
+    "control_rule": "Steer and cancel command evidence stays in folded control lifecycle projections unless MoonClaw emits command-scoped user-visible failure or abort evidence for the affected prompt turn.",
+    "abort_rule": "runtime_aborted closes a visible chat turn only when it is scoped to a non-control command; cancel-scoped runtime_aborted settles the cancel lifecycle instead.",
+  }
+}
+
+///|
 fn conversation_turn_draft(
   turn_id~ : String,
   client_turn_id~ : String,
@@ -45,6 +62,7 @@ pub fn conversation_projection(session : Json, events : Array[Json]) -> Json {
   for turn in turns {
     turn_json.push(conversation_turn_json(turn))
   }
+  let ownership = conversation_ownership_report(events)
   {
     "kind": conversation_kind(),
     "protocol": protocol_version(),
@@ -54,11 +72,40 @@ pub fn conversation_projection(session : Json, events : Array[Json]) -> Json {
     "turn_count": turn_json.length(),
     "source_event_count": events.length(),
     "turns": Json::array(turn_json),
+    "ownership": ownership,
+    "ownership_contract": conversation_ownership_contract_json(),
     "owner": {
       "projection": "mooncode",
       "ui": "moondesk",
       "runtime": "moonclaw",
     },
+  }
+}
+
+///|
+fn conversation_ownership_report(events : Array[Json]) -> Json {
+  let ignored_ids : Array[Json] = []
+  let mut owned_visible_count = 0
+  let mut ignored_unowned_count = 0
+  for event in events {
+    if !conversation_event_requires_owner_for_visibility(event) {
+      continue
+    }
+    if conversation_event_command_id(event) == "" {
+      ignored_unowned_count += 1
+      ignored_ids.push(json_string(event, "id", default="").to_json())
+    } else {
+      owned_visible_count += 1
+    }
+  }
+  {
+    "kind": "mooncode-conversation-ownership-report",
+    "protocol": protocol_version(),
+    "owned_visible_event_count": owned_visible_count,
+    "ignored_unowned_visible_event_count": ignored_unowned_count,
+    "ignored_unowned_visible_event_ids": Json::array(ignored_ids),
+    "contract_satisfied": ignored_unowned_count == 0,
+    "rule": "Visible rows are projected only from events with explicit command ownership; ignored unowned events remain diagnostic runtime evidence.",
   }
 }
 
@@ -225,6 +272,10 @@ fn conversation_apply_runtime_event_to_turn(
       json_string(event, "status", default="done"),
     )
     conversation_mark_assistant_terminal_status(turn, event)
+  } else if conversation_event_is_abort_reply(event) {
+    turn.assistant = conversation_abort_message(event)
+    turn.assistant_delta = ""
+    turn.status = "cancelled"
   } else if conversation_event_is_failure_reply(event) {
     let content = json_string(event, "detail", default="").trim().to_owned()
     if content != "" {
@@ -275,6 +326,11 @@ fn conversation_turn_json(turn : ConversationTurnDraft) -> Json {
     "turn_id": turn.turn_id,
     "client_turn_id": turn.client_turn_id,
     "command_id": turn.command_id,
+    "owner": {
+      "turn_id": turn.turn_id,
+      "client_turn_id": turn.client_turn_id,
+      "command_id": turn.command_id,
+    },
     "status": conversation_final_turn_status(turn, assistant),
     "started_at": turn.started_at,
     "updated_at": turn.updated_at,
@@ -295,6 +351,8 @@ fn conversation_final_turn_status(
     "done"
   } else if turn.status == "failed" {
     "failed"
+  } else if turn.status == "cancelled" {
+    "cancelled"
   } else {
     turn.status
   }
@@ -311,34 +369,67 @@ fn conversation_user_message(event : Json) -> Json {
     ),
     fallback=json_string(packet, "message", default=""),
   )
-  {
-    "role": "user",
-    "content": content,
-    "status": json_string(event, "status", default="queued"),
-    "event_id": json_string(event, "id", default=""),
-    "created_at": json_string(event, "created_at", default=""),
-  }
+  conversation_with_owner(
+    {
+      "role": "user",
+      "content": content,
+      "status": json_string(event, "status", default="queued"),
+      "event_id": json_string(event, "id", default=""),
+      "created_at": json_string(event, "created_at", default=""),
+    },
+    event,
+  )
 }
 
 ///|
 fn conversation_assistant_message(event : Json, content : String) -> Json {
-  {
-    "role": "assistant",
-    "content": content,
-    "status": json_string(event, "status", default="done"),
-    "event_id": json_string(event, "id", default=""),
-    "created_at": json_string(event, "created_at", default=""),
-  }
+  conversation_with_owner(
+    {
+      "role": "assistant",
+      "content": content,
+      "status": json_string(event, "status", default="done"),
+      "event_id": json_string(event, "id", default=""),
+      "created_at": json_string(event, "created_at", default=""),
+    },
+    event,
+  )
 }
 
 ///|
 fn conversation_assistant_delta_message(event : Json, content : String) -> Json {
-  {
-    "role": "assistant",
-    "content": content.trim().to_owned(),
-    "status": json_string(event, "status", default="running"),
-    "event_id": json_string(event, "id", default=""),
-    "created_at": json_string(event, "created_at", default=""),
+  conversation_with_owner(
+    {
+      "role": "assistant",
+      "content": content.trim().to_owned(),
+      "status": json_string(event, "status", default="running"),
+      "event_id": json_string(event, "id", default=""),
+      "created_at": json_string(event, "created_at", default=""),
+    },
+    event,
+  )
+}
+
+///|
+fn conversation_abort_message(event : Json) -> Json {
+  conversation_with_owner(
+    {
+      "role": "assistant",
+      "content": conversation_abort_content(event),
+      "status": "cancelled",
+      "event_id": json_string(event, "id", default=""),
+      "created_at": json_string(event, "created_at", default=""),
+    },
+    event,
+  )
+}
+
+///|
+fn conversation_abort_content(event : Json) -> String {
+  let detail = json_string(event, "detail", default="").trim().to_owned()
+  if detail == "" || conversation_progress_text_looks_internal(detail) {
+    "Request cancelled."
+  } else {
+    detail
   }
 }
 
@@ -360,15 +451,64 @@ fn conversation_mark_assistant_terminal_status(
 
 ///|
 fn conversation_progress_item(event : Json) -> Json {
+  conversation_with_owner(
+    {
+      "role": "progress",
+      "event_id": json_string(event, "id", default=""),
+      "lane": json_string(event, "lane", default="runtime"),
+      "kind": json_string(event, "kind", default="runtime_update"),
+      "title": conversation_progress_title(event),
+      "detail": conversation_progress_detail(event),
+      "status": json_string(event, "status", default="running"),
+      "created_at": json_string(event, "created_at", default=""),
+    },
+    event,
+  )
+}
+
+///|
+fn conversation_with_owner(message : Json, event : Json) -> Json {
+  let owner = conversation_owner(event)
+  message
+  |> runtime_with_field(
+    "turn_id",
+    json_string(owner, "turn_id", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "client_turn_id",
+    json_string(owner, "client_turn_id", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "command_id",
+    json_string(owner, "command_id", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "run_id",
+    json_string(owner, "run_id", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "runtime_session_id",
+    json_string(owner, "runtime_session_id", default="").to_json(),
+  )
+  |> runtime_with_field(
+    "action",
+    json_string(owner, "action", default="").to_json(),
+  )
+  |> runtime_with_field("owner", owner)
+}
+
+///|
+fn conversation_owner(event : Json) -> Json {
+  let command_id = conversation_event_command_id(event)
   {
-    "role": "progress",
+    "turn_id": conversation_turn_id_for_event(event, command_id),
+    "client_turn_id": conversation_event_client_turn_id(event),
+    "command_id": command_id,
+    "run_id": conversation_event_run_id(event),
+    "runtime_session_id": conversation_event_runtime_session_id(event),
+    "action": conversation_event_action(event),
     "event_id": json_string(event, "id", default=""),
-    "lane": json_string(event, "lane", default="runtime"),
-    "kind": json_string(event, "kind", default="runtime_update"),
-    "title": conversation_progress_title(event),
-    "detail": conversation_progress_detail(event),
-    "status": json_string(event, "status", default="running"),
-    "created_at": json_string(event, "created_at", default=""),
+    "event_kind": json_string(event, "kind", default=""),
   }
 }
 
@@ -641,6 +781,57 @@ fn conversation_event_client_turn_id(event : Json) -> String {
 }
 
 ///|
+fn conversation_event_action(event : Json) -> String {
+  let packet = runtime_json_object_field_or_empty(event, "command_packet")
+  let action = json_string(packet, "action", default="")
+  if action != "" {
+    return action
+  }
+  let command = json_string(event, "command", default="")
+  if command != "" {
+    return command
+  }
+  let kind = json_string(event, "kind", default="")
+  if kind.has_prefix("command.") {
+    kind["command.".length():].to_owned()
+  } else {
+    "prompt"
+  }
+}
+
+///|
+fn conversation_event_run_id(event : Json) -> String {
+  let packet = runtime_json_object_field_or_empty(event, "command_packet")
+  let packet_run = runtime_first_string(
+    packet,
+    ["run_id", "runtime_run_id", "service_id"],
+    default="",
+  )
+  if packet_run != "" {
+    return packet_run
+  }
+  runtime_first_string(
+    event,
+    ["run_id", "runId", "runtime_run_id", "service_id"],
+    default="",
+  )
+}
+
+///|
+fn conversation_event_runtime_session_id(event : Json) -> String {
+  let packet = runtime_json_object_field_or_empty(event, "command_packet")
+  let packet_runtime_session_id = json_string(
+    packet,
+    "runtime_session_id",
+    default="",
+  )
+  if packet_runtime_session_id != "" {
+    return packet_runtime_session_id
+  }
+  json_string(event, "runtime_session_id", default="")
+}
+
+///|
 fn conversation_turn_id_for_event(event : Json, command_id : String) -> String {
   if command_id != "" {
     command_id
@@ -692,7 +883,8 @@ fn conversation_target_turn_index(
 
 ///|
 fn conversation_event_can_attach_to_active_turn(event : Json) -> Bool {
-  conversation_event_is_failure_reply(event)
+  let _ = event
+  false
 }
 
 ///|
@@ -788,15 +980,47 @@ fn conversation_event_is_terminal_without_answer(event : Json) -> Bool {
 
 ///|
 fn conversation_event_is_failure_reply(event : Json) -> Bool {
-  if json_string(event, "status", default="") != "failed" {
-    return false
-  }
+  conversation_event_command_id(event) != "" &&
+  conversation_event_is_failure_shape(event)
+}
+
+///|
+fn conversation_event_is_failure_shape(event : Json) -> Bool {
+  json_string(event, "status", default="") == "failed" &&
+  conversation_event_failure_kind(event)
+}
+
+///|
+fn conversation_event_failure_kind(event : Json) -> Bool {
   let kind = json_string(event, "kind", default="")
   kind == "command_error" ||
   kind == "turn_failed" ||
   kind == "max_steps_exhausted" ||
   kind == "runtime.planner_failed" ||
   kind == "runtime_unavailable"
+}
+
+///|
+fn conversation_event_is_abort_reply(event : Json) -> Bool {
+  conversation_event_is_abort_shape(event) &&
+  conversation_event_command_id(event) != "" &&
+  conversation_event_action(event) != "cancel" &&
+  conversation_event_action(event) != "steer"
+}
+
+///|
+fn conversation_event_is_abort_shape(event : Json) -> Bool {
+  json_string(event, "kind", default="") == "runtime_aborted"
+}
+
+///|
+fn conversation_event_requires_owner_for_visibility(event : Json) -> Bool {
+  conversation_event_is_assistant_delta(event) ||
+  conversation_event_is_assistant_final(event) ||
+  conversation_event_is_terminal_without_answer(event) ||
+  conversation_event_is_failure_shape(event) ||
+  conversation_event_is_abort_shape(event) ||
+  conversation_event_is_visible_progress(event)
 }
 
 ///|
@@ -826,6 +1050,8 @@ fn conversation_message_content(message : Json) -> String {
 fn conversation_merge_status(current : String, incoming : String) -> String {
   if current == "failed" || incoming == "failed" {
     "failed"
+  } else if current == "cancelled" || incoming == "cancelled" {
+    "cancelled"
   } else if incoming == "running" {
     "running"
   } else if current == "running" && incoming != "done" {

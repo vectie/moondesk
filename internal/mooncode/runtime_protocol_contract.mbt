@@ -36,6 +36,7 @@ pub fn runtime_protocol_contract_json() -> Json {
       ],
       "normalization": "MoonClaw/MoonCode JSONL events are normalized into MoonCode lanes: transcript, runtime, tool, diff, test, artifact, and review.",
       "model_planner_evidence_contract": model_planner_evidence_contract_json(),
+      "conversation_ownership_contract": conversation_ownership_contract_json(),
     },
     "tool_authorization": {
       "snapshot": "Every mooncode.runtime-command and native MoonCode command body carries mooncode-tool-authorization-snapshot with approval manifest path, approval counts, approval rows, enforcement_state, and runtime_may_execute.",

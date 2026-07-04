@@ -617,10 +617,17 @@ queued commands are not working, and a started native turn without planner
 evidence is a MoonClaw/runtime contract failure rather than a browser thinking
 state.
 
+Phase 27 adds explicit turn ownership and abort settlement. Visible
+conversation rows now carry the owning command/turn/client/runtime/run ids, and
+the conversation projection publishes an ownership report. Unscoped
+progress/assistant/failure/abort-shaped runtime events stay diagnostic and can
+no longer attach themselves to the latest active turn. A command-scoped
+`runtime_aborted` can close its owning prompt turn as cancelled, while
+cancel-scoped abort evidence remains folded in cancel lifecycle state instead
+of becoming chat.
+
 The next scheduled phases are now explicit:
 
-- Phase 27: turn ownership and abort contract. Steer/cancel/abort events stay
-  command-scoped and settle only through MoonClaw scheduler or abort evidence.
 - Phase 28: package and review model flow gate. Package/review decisions get a
   command-scoped model fixture gate plus separate live model coverage.
 - Phase 29: browser conversation stability gate. First/second/third turns must

@@ -162,6 +162,8 @@ pub fn conversation_contract_json() -> Json
 
 pub fn conversation_kind() -> String
 
+pub fn conversation_ownership_contract_json() -> Json
+
 pub fn conversation_projection(Json, Array[Json]) -> Json
 
 pub fn conversation_turn_kind() -> String
