@@ -12,7 +12,7 @@ import {
   "moonbitlang/async@0.16.6",
   "moonbitlang/x@0.4.40",
   "vectie/lepusa@0.1.0",
-  "vectie/moonlib@0.1.7",
+  "vectie/moonlib@0.1.8",
 }
 
 name = "vectie/moondesk"

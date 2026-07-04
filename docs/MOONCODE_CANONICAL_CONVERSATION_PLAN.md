@@ -325,7 +325,7 @@ Current coverage:
 
 ## Phase 9 - Shared Product Contract
 
-Status: active in Moondesk; pending upstream MoonLib extraction.
+Status: active; MoonLib contract package published and Moondesk wrapper wired.
 
 Work:
 
@@ -335,6 +335,15 @@ Work:
 - Publish the contract for MoonClaw, MoonCode, Moondesk, MoonRobo, MoonMoon,
   MoonFish, MoonTown, and future MoonSuite products.
 
+Current coverage:
+
+- MoonLib `0.1.8` exposes `vectie/moonlib/conversation`.
+- The shared contract owns role order, required turn fields, identity fields,
+  diagnostics rules, and the contract JSON envelope.
+- Moondesk imports MoonLib `0.1.8`.
+- `mooncode/core` delegates shared conversation contract data to MoonLib while
+  keeping MoonCode-specific protocol/owner names local.
+
 Exit tests:
 
 - all products consume the same turn/message/progress schema
@@ -343,7 +352,6 @@ Exit tests:
 
 ## Current Direction
 
-The next implementation step is Phase 9: move the stable conversation DTOs from
-Moondesk's local `mooncode/core` surface into MoonLib so MoonClaw, MoonCode,
-Moondesk, MoonRobo, MoonMoon, MoonFish, MoonTown, and future MoonSuite products
-share one turn/message/progress contract.
+The next implementation step is Phase 9 rollout: replace product-local
+conversation contract mirrors in MoonClaw, MoonRobo, MoonMoon, MoonFish,
+MoonTown, and future MoonSuite products with `vectie/moonlib/conversation`.

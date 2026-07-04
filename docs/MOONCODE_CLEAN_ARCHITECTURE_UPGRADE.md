@@ -254,7 +254,8 @@ Exit tests:
 
 ## Phase 7 - Shared Contract Layer
 
-Status: active; local MoonCode contract surface complete in Moondesk.
+Status: complete as the interim Moondesk adapter; Phase 9 owns the shared
+MoonLib extraction.
 
 Work:
 
@@ -267,11 +268,12 @@ Work:
 Implemented in Moondesk:
 
 - Added a public `mooncode/core` conversation contract JSON surface for the
-  stable turn/message/progress DTO.
+  stable turn/message/progress DTO while MoonLib extraction was not available.
 - `internal/mooncode` now consumes public contract names for conversation and
   turn kinds instead of owning those string literals privately.
-- The contract declares MoonLib as the target shared owner while this repo
-  remains pinned to the currently published `vectie/moonlib` package.
+- Phase 9 replaces the local stable schema mirror with
+  `vectie/moonlib/conversation`; MoonCode keeps only product identity and
+  runtime normalization.
 
 Exit tests:
 
@@ -314,7 +316,7 @@ Exit tests:
 
 ## Phase 9 - MoonLib Upstream Extraction
 
-Status: pending external MoonLib write.
+Status: active; MoonLib contract package published and Moondesk wrapper wired.
 
 Work:
 
@@ -322,6 +324,16 @@ Work:
 - Update Moondesk to import the MoonLib conversation contract directly.
 - Keep MoonCode-specific command/runtime normalization in MoonCode.
 - Publish or pin the MoonLib version that contains the contract.
+
+Implemented:
+
+- Added `vectie/moonlib/conversation` in MoonLib `0.1.8`.
+- Published MoonLib `0.1.8` after package verification.
+- Updated Moondesk to depend on `vectie/moonlib@0.1.8`.
+- `mooncode/core` now delegates stable conversation schema constants, turn
+  fields, ordering, identity fields, and contract JSON to MoonLib.
+- MoonCode still owns product-specific protocol and owner names:
+  `mooncode.v1`, `mooncode`, `moonclaw`, and `moondesk`.
 
 Exit tests:
 

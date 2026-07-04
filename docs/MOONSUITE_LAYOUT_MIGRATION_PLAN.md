@@ -2212,14 +2212,16 @@ Remaining high-priority product slices:
 - MoonLib: expand `vectie/moonlib/moonsuite` only when a missing contract is
   shared by more than one product; keep it deterministic and free of daemon,
   analytics, and UI dependencies. Current published contract version is
-  `vectie/moonlib@0.1.7`; its generic `ProductHome` contract is now the shared
+  `vectie/moonlib@0.1.8`. Its generic `ProductHome` contract remains the shared
   source for runtime product paths, product display paths, and accepted-output
   book-id inference when a workspace root is already `books/<book-id>`.
+  MoonLib `0.1.8` also owns the shared `vectie/moonlib/conversation` contract
+  used by MoonCode to project append-only user, progress, and assistant turns.
   MoonFish, MoonMoon, and MoonChat now cover both explicit and inferred
   book-root layouts in unit tests and fresh-suite smokes. Current product-repo
-  scan has all MoonLib consumers pinned to `vectie/moonlib@0.1.7`: Moondesk,
-  MoonRobo, Moontown, MoonClaw, MoonStat, MoonBook, MoonFish, MoonMoon,
-  MoonChat, and Lepusa.
+  pin gates expect all MoonLib consumers to use `vectie/moonlib@0.1.8`:
+  Moondesk, MoonRobo, Moontown, MoonClaw, MoonStat, MoonBook, MoonFish,
+  MoonMoon, MoonChat, and Lepusa.
 - MoonStat: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and

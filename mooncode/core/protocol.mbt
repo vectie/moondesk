@@ -4,55 +4,44 @@ pub fn protocol_version() -> String {
 }
 
 ///|
+fn product_id() -> String {
+  "mooncode"
+}
+
+///|
 pub fn conversation_contract_id() -> String {
-  "mooncode-conversation.v1"
+  @conversation.contract_id()
 }
 
 ///|
 pub fn conversation_kind() -> String {
-  "mooncode-conversation"
+  @conversation.conversation_kind(product_id=product_id())
 }
 
 ///|
 pub fn conversation_turn_kind() -> String {
-  "mooncode-conversation-turn"
+  @conversation.turn_kind(product_id=product_id())
 }
 
 ///|
 pub fn conversation_message_roles() -> Array[String] {
-  ["user", "progress", "assistant"]
+  @conversation.message_roles()
 }
 
 ///|
 pub fn conversation_turn_required_fields() -> Array[String] {
-  [
-    "kind", "turn_id", "client_turn_id", "command_id", "status", "user", "progress",
-    "assistant", "items",
-  ]
+  @conversation.turn_required_fields()
 }
 
 ///|
 pub fn conversation_contract_json() -> Json {
-  {
-    "kind": "mooncode-conversation-contract",
-    "protocol": protocol_version(),
-    "contract_id": conversation_contract_id(),
-    "conversation_kind": conversation_kind(),
-    "turn_kind": conversation_turn_kind(),
-    "message_roles": conversation_message_roles(),
-    "turn_required_fields": conversation_turn_required_fields(),
-    "turn_order": ["user", "progress", "assistant"],
-    "identity_fields": ["turn_id", "client_turn_id", "command_id"],
-    "ownership": {
-      "durable_owner": "mooncode",
-      "runtime_owner": "moonclaw",
-      "ui_owner": "moondesk",
-      "shared_contract_owner": "moonlib",
-    },
-    "event_identity_rule": "Every user-facing runtime event must carry turn_id or command_id before it can update a conversation turn.",
-    "diagnostics_rule": "Raw runtime, service, stream, and queue records are diagnostic evidence; they are not transcript rows unless projected through this contract.",
-    "moonlib_target": "vectie/moonlib/conversation",
-  }
+  @conversation.contract_json(
+    product_id=product_id(),
+    protocol=protocol_version(),
+    durable_owner="mooncode",
+    runtime_owner="moonclaw",
+    ui_owner="moondesk",
+  )
 }
 
 ///|

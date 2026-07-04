@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORKSPACE_ROOT="$(cd "${ROOT}/.." && pwd)"
 source "${ROOT}/scripts/moonsuite_phase8_inventory.sh"
-EXPECTED_VERSION="${MOONLIB_VERSION:-0.1.7}"
+EXPECTED_VERSION="${MOONLIB_VERSION:-0.1.8}"
 EXPECTED_IMPORT="vectie/moonlib@${EXPECTED_VERSION}"
 
 repos=("${MOONSUITE_PHASE8_MOONLIB_CONSUMER_REPOS[@]}")

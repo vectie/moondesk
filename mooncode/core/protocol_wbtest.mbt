@@ -1,7 +1,7 @@
 ///|
 test "mooncode core protocol surface is stable" {
   assert_eq(protocol_version(), "mooncode.v1")
-  assert_eq(conversation_contract_id(), "mooncode-conversation.v1")
+  assert_eq(conversation_contract_id(), "moonsuite-conversation.v1")
   assert_eq(conversation_kind(), "mooncode-conversation")
   assert_eq(conversation_turn_kind(), "mooncode-conversation-turn")
   assert_true(conversation_message_roles().contains("progress"))
@@ -39,10 +39,11 @@ test "mooncode core protocol surface is stable" {
 }
 
 ///|
-test "mooncode core defines conversation contract for moonlib extraction" {
+test "mooncode core delegates conversation contract to moonlib" {
   let payload = conversation_contract_json().stringify()
-  assert_true(payload.contains("\"kind\":\"mooncode-conversation-contract\""))
-  assert_true(payload.contains("\"contract_id\":\"mooncode-conversation.v1\""))
+  assert_true(payload.contains("\"kind\":\"moonsuite-conversation-contract\""))
+  assert_true(payload.contains("\"contract_id\":\"moonsuite-conversation.v1\""))
+  assert_true(payload.contains("\"product_id\":\"mooncode\""))
   assert_true(
     payload.contains("\"conversation_kind\":\"mooncode-conversation\""),
   )
@@ -53,9 +54,6 @@ test "mooncode core defines conversation contract for moonlib extraction" {
     payload.contains("\"turn_order\":[\"user\",\"progress\",\"assistant\"]"),
   )
   assert_true(payload.contains("\"shared_contract_owner\":\"moonlib\""))
-  assert_true(
-    payload.contains("\"moonlib_target\":\"vectie/moonlib/conversation\""),
-  )
   assert_false(payload.contains("internal/mooncode"))
   assert_false(payload.contains("internal/moonwiki"))
   assert_false(payload.contains("Rabbita"))
