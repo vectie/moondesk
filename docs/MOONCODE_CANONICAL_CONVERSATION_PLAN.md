@@ -646,11 +646,11 @@ The next scheduled phases are now explicit:
   copy an older cached `mooncode_conversation` over a present backend response
   with fewer turns or source events. Backend regressions should be caught by
   gates, not hidden by browser state.
-- Phase 31: frontend route ownership. The Rabbita MoonCode command path now
-  uses a single route helper for desktop `/api/mooncode` URLs. Session listing,
-  command submit, stream polling, stream checkpoint, and runtime-service calls
-  no longer build inline paths, and the migration wall rejects raw MoonCode API
-  route strings outside that helper in active frontend code.
+- Phase 31: frontend route ownership. The Rabbita MoonCode command path first
+  moved desktop `/api/mooncode` URL construction out of individual command
+  handlers. Phase 39 supersedes the Rabbita-local helper with public
+  `vectie/moondesk/core` route formatting while keeping the migration wall
+  rejection for raw active frontend MoonCode API route strings.
 - Phase 32: frontend session effect ownership. The Rabbita MoonCode reducer
   path now routes prompt-submit followups, mutation acknowledgement followups,
   runtime-service settlement, session polling, and selected-session stream
@@ -686,3 +686,8 @@ The next scheduled phases are now explicit:
   validator compares router endpoint helper calls to
   `desktop_projection_route_contracts` and rejects reintroduced static route
   mirrors.
+- Phase 39: shared frontend route formatting. Rabbita no longer owns a
+  MoonCode-specific route helper file; active frontend command code calls the
+  public `vectie/moondesk/core` route formatter through `@desk`, while the
+  migration wall rejects raw active frontend `/api/mooncode` strings and the old
+  helper file.

@@ -647,14 +647,19 @@ Frontend route ownership gate:
 
 ```bash
 scripts/validate_mooncode_frontend_routes.sh
-(cd ui/rabbita-desk && moon test main --target js --filter "mooncode route helpers*")
+moon test core --target native --filter "mooncode desktop routes*"
+(cd ui/rabbita-desk && moon check main --target js --warn-list +73 --diagnostic-limit 80)
 ```
 
 This Phase 31 gate keeps desktop MoonCode route construction out of individual
 frontend command handlers. It fails if active Rabbita MoonCode code contains raw
-`/api/mooncode` strings outside `mooncode_route_helpers.mbt`, or if session
-listing, command submit, stream polling, stream checkpoint, and
-runtime-service route helpers stop encoding workspace/session ids correctly.
+`/api/mooncode` strings outside the shared core boundary, or if session
+listing, command submit, stream polling, stream checkpoint, and runtime-service
+route helpers stop encoding workspace/session ids correctly.
+
+Phase 39 removes the old Rabbita-local helper entirely. MoonCode desktop URL
+formatting now lives in `vectie/moondesk/core`, and the validator rejects
+reintroducing `ui/rabbita-desk/main/mooncode_route_helpers.mbt`.
 
 Frontend session effect ownership gate:
 
@@ -765,7 +770,8 @@ Code mode is sufficiently tested when:
   authoritative and the UI does not repair backend conversation regressions with
   cached local conversation state
 - a frontend route ownership gate proves browser command handlers call the
-  MoonCode desktop route helper instead of hard-coding `/api/mooncode` paths
+  shared core MoonCode desktop route formatter instead of hard-coding
+  `/api/mooncode` paths
 - a frontend session effect ownership gate proves reducer branches invoke one
   typed plan for MoonCode runtime-service, session/stream refresh, polling, and
   shell-sync followups
@@ -785,6 +791,8 @@ Code mode is sufficiently tested when:
 - a backend route source ownership gate proves MoonWiki tests do not maintain a
   static route mirror and the backend router references the same endpoint helper
   set as `desktop_projection_route_contracts`
+- a shared frontend route formatting gate proves Rabbita no longer maintains a
+  second MoonCode route formatter and consumes the public core helpers instead
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

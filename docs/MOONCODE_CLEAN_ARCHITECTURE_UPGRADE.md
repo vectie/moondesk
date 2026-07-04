@@ -1196,7 +1196,9 @@ Exit tests:
 
 ## Phase 31 - Frontend Route Ownership
 
-Status: implemented as the MoonCode desktop route helper and gate.
+Status: implemented as the initial MoonCode desktop route helper and gate;
+frontend-local helper ownership was superseded by Phase 39's public core route
+formatter.
 
 Problem:
 
@@ -1206,21 +1208,22 @@ Problem:
 - Inline route strings are a stale implementation shape: they make it easy for
   one path to miss encoding, keep an old endpoint spelling, or bypass the clean
   `/api/mooncode` desktop boundary when new controls are added.
-- A first-time clean implementation should have one frontend route layer for
-  browser-owned HTTP calls. Product behavior can then change at that boundary
-  instead of inside individual command handlers.
+- A first-time clean implementation should have one browser-facing route layer
+  for HTTP calls. Product behavior can then change at that boundary instead of
+  inside individual command handlers.
 
 Work:
 
-- Add `mooncode_route_helpers.mbt` in the Rabbita main package.
+- Add the initial `mooncode_route_helpers.mbt` in the Rabbita main package
+  before Phase 39 moved that responsibility to `vectie/moondesk/core`.
 - Move session listing, command submit, stream polling, stream checkpoint, and
   runtime-service URLs behind those helpers.
 - Encode session ids and workspace ids at the helper boundary.
-- Add route-helper white-box coverage for workspace query encoding and
-  session-id path encoding.
+- Add route-helper coverage for workspace query encoding and session-id path
+  encoding.
 - Add `scripts/validate_mooncode_frontend_routes.sh`, wired into the Phase 8
   migration wall, so active frontend MoonCode code cannot reintroduce raw
-  `/api/mooncode` strings outside the helper.
+  `/api/mooncode` strings outside the shared route boundary.
 
 Exit tests:
 
@@ -1509,6 +1512,38 @@ Exit tests:
 - the Phase 8 wall rejects route additions that update only the router or only
   the contract
 
+## Phase 39 - Shared Frontend Route Formatting
+
+Status: implemented as public core-owned MoonCode desktop URL formatting.
+
+Problem:
+
+- Phase 31 moved Rabbita MoonCode URLs into one frontend helper file, but that
+  file was still a second implementation of desktop MoonCode route shape.
+- Backend route shape is owned by the MoonCode contract and published through
+  capabilities; the UI should not keep its own `/api/mooncode` path formatter
+  when a shared Moondesk public package can own browser-safe URL construction.
+- A clean standalone project should have the browser command path import a
+  stable public route formatter instead of hand-building MoonCode API paths in
+  the UI module.
+
+Work:
+
+- Add public MoonCode desktop URL helpers to `vectie/moondesk/core`, including a
+  target-neutral URL component encoder.
+- Switch Rabbita MoonCode session list, command submit, stream polling,
+  stream checkpoint, and runtime-service calls to the shared `@desk` helpers.
+- Delete the old Rabbita-local `mooncode_route_helpers.mbt` implementation and
+  its duplicate route tests.
+- Extend the frontend route validator so reintroducing the old helper file or
+  raw active frontend `/api/mooncode` strings fails the Phase 8 wall.
+
+Exit tests:
+
+- Rabbita active command code contains no raw `/api/mooncode` path strings
+- MoonCode desktop URL formatting is covered in the public `core` package
+- adding a frontend-only MoonCode route formatter now fails the migration wall
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1531,5 +1566,6 @@ Exit tests:
   behavior.
 - Letting MoonWiki route tests maintain a second static copy of the MoonCode
   desktop API route list.
+- Letting the Rabbita frontend keep a second MoonCode desktop route formatter.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

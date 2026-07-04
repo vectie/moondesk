@@ -3,7 +3,7 @@ fn fetch_mooncode_sessions_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
 ) -> @rabbita.Cmd {
-  @http.get(mooncode_sessions_url(workspace_id)).expect_json(result => {
+  @http.get(@desk.mooncode_sessions_url(workspace_id)).expect_json(result => {
     dispatch(
       LoadedMoonCodeSessions(
         http_result(result, "Invalid MoonCode session listing"),
@@ -21,7 +21,7 @@ fn fetch_mooncode_stream_cmd(
   if session_id == "" {
     return @rabbita.none
   }
-  @http.get(mooncode_session_stream_url(session_id, since)).expect_text(result => {
+  @http.get(@desk.mooncode_session_stream_url(session_id, since)).expect_text(result => {
     let decoded : Result[MoonCodeStreamPoll, String] = match result {
       Ok(text) => parse_mooncode_stream_text(text)
       Err(_) => Err("Could not load MoonCode stream")
@@ -43,7 +43,7 @@ fn save_mooncode_stream_checkpoint_cmd(
     "consumer_id": "moondesk-ui",
     "last_seen_sequence": next_since,
   }
-  @http.post(mooncode_session_stream_state_url(session_id))
+  @http.post(@desk.mooncode_session_stream_state_url(session_id))
   .with_json(body)
   .expect_json(result => {
     dispatch(

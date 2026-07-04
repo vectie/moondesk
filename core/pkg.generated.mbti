@@ -21,6 +21,18 @@ pub fn infer_entry_kind(StringView, is_directory? : Bool) -> EntryKind
 
 pub fn infer_source_layer(StringView) -> SourceLayer
 
+pub fn mooncode_session_commands_url(String) -> String
+
+pub fn mooncode_session_runtime_service_url(String) -> String
+
+pub fn mooncode_session_stream_state_url(String) -> String
+
+pub fn mooncode_session_stream_url(String, Int) -> String
+
+pub fn mooncode_session_url(String) -> String
+
+pub fn mooncode_sessions_url(String) -> String
+
 pub fn moonsuite_books_root(String) -> String
 
 pub fn moonsuite_internal_relative_path(StringView) -> Bool
@@ -48,6 +60,8 @@ pub fn run_artifact(id~ : String, path~ : String, title? : String, kind? : Entry
 pub fn run_projection(run_id~ : String, book_id~ : String, status~ : String, phase~ : String, summary~ : String, artifacts~ : Array[DeskRunArtifact], goal_id? : String?, started_at? : String?, updated_at? : String?) -> DeskRunProjection
 
 pub fn stable_id(String, String) -> String
+
+pub fn url_component(String) -> String
 
 pub fn workspace(id~ : String, name~ : String, root_path~ : String, kind~ : WorkspaceKind, status? : WorkspaceStatus, last_seen_at? : String?) -> DeskWorkspace
 
