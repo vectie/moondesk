@@ -61,6 +61,7 @@ run_step "MoonCode native endpoint contract ownership" bash "${ROOT}/scripts/val
 run_step "MoonCode readiness contract ownership" bash "${ROOT}/scripts/validate_mooncode_readiness_contract.sh"
 run_step "MoonCode event lane contract ownership" bash "${ROOT}/scripts/validate_mooncode_event_lane_contract.sh"
 run_step "MoonCode runtime event-name contract ownership" bash "${ROOT}/scripts/validate_mooncode_event_name_contract.sh"
+run_step "MoonCode native event projection contract ownership" bash "${ROOT}/scripts/validate_mooncode_native_event_projection_contract.sh"
 run_step "MoonCode command action contract ownership" bash "${ROOT}/scripts/validate_mooncode_command_action_contract.sh"
 run_step "MoonCode runtime tool contract ownership" bash "${ROOT}/scripts/validate_mooncode_runtime_tool_contract.sh"
 run_step "MoonCode backend method dispatch ownership" bash "${ROOT}/scripts/validate_mooncode_backend_method_dispatch.sh"

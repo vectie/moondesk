@@ -2162,6 +2162,54 @@ Exit tests:
   local tool contract builders, and MoonClaw tool mapping ownership returning
   outside `mooncode/core`.
 
+## Phase 54 - Core-Owned Native Event Projection Contract
+
+Status: implemented by moving MoonClaw event mapping and native event projection
+policy into `mooncode/core`.
+
+Problem:
+
+- Phase 51 made runtime event names core-owned, but `internal/mooncode` still
+  owned the MoonClaw event mapping and the policy for whether native events are
+  command-scoped, diagnostic-only, unsafe for projection, transcript evidence,
+  or progress evidence.
+- That left the product with a clean event vocabulary but a stale projection
+  architecture: one subsystem could accept an event name while another decided
+  locally whether the same event could affect chat or progress.
+- A standalone MoonCode product needs one projection-safety contract before
+  Moondesk, MoonClaw, and future clients can reliably distinguish real
+  command-owned work from service lifecycle noise or unsafe unscoped replies.
+
+Work:
+
+- Add `mooncode/core/native_event_projection.mbt` with the native event
+  projection contract id/kind, MoonClaw event mapping JSON, command-scope keys,
+  diagnostic source/title allowlists, projection predicates, unsafe-event
+  problem records, native projection report generation, projection filtering,
+  and contract JSON.
+- Embed the native event projection contract in the native capability surface
+  and capability fingerprint.
+- Replace internal native runtime contract policy with thin delegates to
+  `mooncode/core`.
+- Make the MoonClaw runtime contract publish its event mapping from
+  `mooncode/core`.
+- Add `scripts/validate_mooncode_native_event_projection_contract.sh` and run
+  it from the Phase 8 migration wall.
+
+Exit tests:
+
+- `mooncode/core` proves the native event projection contract id/kind, report
+  kind, MoonClaw event mapping, command-scope keys, diagnostic allowlists,
+  command-scope predicate, diagnostic predicate, scope-required predicate,
+  transcript/progress predicates, unsafe-event reporting, projection filtering,
+  and contract JSON.
+- native capability JSON includes `native_event_projection_contract_json()`.
+- internal native runtime contract report and canonical-projection event filter
+  delegate to `mooncode/core`.
+- MoonClaw runtime contract event mapping delegates to `mooncode/core`.
+- the migration wall rejects duplicated production MoonClaw event mappings or
+  native projection policy returning outside `mooncode/core`.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

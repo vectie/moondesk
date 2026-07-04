@@ -1,37 +1,6 @@
 ///|
 pub fn moonclaw_event_mapping_json() -> Json {
-  {
-    "AssistantMessageDelta": {
-      "event": "assistant_delta",
-      "lane": "transcript",
-      "status": "running",
-    },
-    "AssistantMessage": {
-      "event": "assistant_message",
-      "lane": "transcript",
-      "status": "done",
-    },
-    "PreToolCall": {
-      "event": event_tool_call(),
-      "lane": "tool",
-      "status": "running",
-    },
-    "PostToolCall": {
-      "event": event_tool_result(),
-      "lane": "tool",
-      "status": "done-or-failed",
-    },
-    "Cancelled": {
-      "event": "runtime_aborted",
-      "lane": "review",
-      "status": "failed",
-    },
-    "Failed": {
-      "event": "runtime_aborted",
-      "lane": "review",
-      "status": "failed",
-    },
-  }
+  @mooncode_core.moonclaw_event_mapping_json()
 }
 
 ///|

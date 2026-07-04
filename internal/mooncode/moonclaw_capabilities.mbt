@@ -9,7 +9,7 @@ pub fn moonclaw_runtime_contract_json() -> Json {
     "daemon": {
       "native_target": @mooncode_core.native_capability_target_description(),
     },
-    "event_mapping": moonclaw_event_mapping_json(),
+    "event_mapping": @mooncode_core.moonclaw_event_mapping_json(),
     "tool_mapping": Json::array(moonclaw_tool_mapping_rows()),
     "runtime_gap": "Current MoonClaw daemon routes now expose native MoonCode capabilities, cold product-home sidecar list/show, native runtime-control projection, native runtime-claim receipts, native runtime-turn execution receipts for explicit, deterministic, or bounded model-planned tool calls with tool-result feedback plus planner reasoning/assistant/tool-call events, native runtime-loop queue supervision, a daemon runtime-service supervisor, native runtime-events evidence ingress, native read/edit/write/apply_patch/revert_patch/shell/moon_ide/moon_cmd/moon_check/finish tool execution, command ingestion, session stream snapshots, native tool_harness/file_edit/patch_review/command_execution/package_output eval-report evidence, prompt/steer/cancel controls, package-result acknowledgement, and MoonSuite product-home durable MoonCode sidecars. Remaining native gap is readiness long-running service lifecycle UX, diff-aware review polish, richer resume/cancel orchestration, and broader model-backed coding eval cases.",
     "boundary": {

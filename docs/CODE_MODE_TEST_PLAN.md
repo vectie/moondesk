@@ -265,6 +265,36 @@ Assertions:
 - tests may still use concrete event fixture strings, but production contracts
   must publish event names from `mooncode/core`.
 
+### Native Event Projection Contract
+
+Prove native MoonClaw events are projected by one reusable policy before they
+can become chat turns, visible progress, runtime diagnostics, or unsafe
+projection failures.
+
+Flow:
+
+```text
+mooncode/core exposes native_event_projection_contract_json
+-> native capability surface embeds the projection contract
+-> MoonClaw event mapping is published from mooncode/core
+-> native runtime contract report delegates projection-safety checks to core
+-> canonical projection event filter delegates command-scope/diagnostic policy to core
+-> migration gate scans implementation files for duplicated event mapping/policy
+```
+
+Assertions:
+
+- MoonClaw event mapping rows for assistant deltas, assistant finals, tool
+  start/result, cancel, and failure are published by `mooncode/core`.
+- command-scoped native events may feed conversation/progress projection.
+- diagnostic service, usage, runtime-loop, and watcher events remain
+  diagnostic-only and do not settle chat turns.
+- unscoped user-visible native events are reported as unsafe projection
+  problems.
+- native capability JSON exposes `native_event_projection_contract_json()`.
+- concrete tests may still use native event fixture strings, but production
+  event mapping and projection-safety policy must stay in `mooncode/core`.
+
 ### Command Action Contract
 
 Prove command actions are owned once before user input, operator review, native

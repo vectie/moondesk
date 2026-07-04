@@ -84,6 +84,14 @@ through `runtime_event_name_contract_json()` and embedded in the native
 capability surface. Internal MoonCode may normalize concrete records, but it
 must not publish its own second accepted-event or output-event list.
 
+`mooncode/core` also owns the native event projection policy for MoonClaw
+evidence. The native event projection contract publishes the MoonClaw event
+mapping, accepted command-scope keys, diagnostic-only source/title allowlists,
+projection-safety predicates, unsafe-event report shape, and canonical
+projection filter. Internal MoonCode may parse concrete payloads, but it must
+not publish its own second event mapping or decide locally which native events
+may affect chat/progress.
+
 `mooncode/core` also owns the MoonCode command-action vocabulary:
 
 ```text
