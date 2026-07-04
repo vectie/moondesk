@@ -727,3 +727,9 @@ The next scheduled phases are now explicit:
   `NativeCapabilityEndpoints`; internal MoonCode derives its native projection
   list and named capability fields from that object, and the Phase 8 wall
   rejects internal `/v1/code` endpoint mirrors returning.
+- Phase 47: core-owned native runtime endpoint builders. Concrete
+  MoonClaw `/v1/code` URL formatting and the runtime contract native-target
+  description now live in `mooncode/core`; internal MoonCode keeps wrapper
+  names for host code but delegates every native runtime URL to the core
+  builder, and the Phase 8 wall rejects raw concrete native endpoint builders
+  returning.

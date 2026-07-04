@@ -844,6 +844,9 @@ Code mode is sufficiently tested when:
 - a MoonCode native endpoint ownership gate proves internal projection code
   consumes the typed `mooncode/core` native endpoint contract instead of
   carrying mirrored `/v1/code/*` literals
+- a native runtime endpoint builder gate proves concrete MoonClaw
+  `/v1/code` URLs and the runtime contract native-target description are
+  formatted by `mooncode/core`, not by internal projection string builders
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

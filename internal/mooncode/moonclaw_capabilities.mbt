@@ -7,7 +7,7 @@ pub fn moonclaw_runtime_contract_json() -> Json {
     "runtime_owner": "moonclaw",
     "reference": "moonclaw:/v1/code",
     "daemon": {
-      "native_target": "/v1/code/capabilities plus /v1/code/sessions?book_root=<path>, /v1/code/sessions?book_root=<path>&format=json, /v1/code/sessions/<id>?book_root=<path>, /v1/code/sessions/<id>/runtime-control?book_root=<path>, /v1/code/sessions/<id>/runtime-claim?book_root=<path>, /v1/code/sessions/<id>/runtime-turn?book_root=<path>, /v1/code/sessions/<id>/runtime-loop?book_root=<path>, /v1/code/sessions/<id>/runtime-service?book_root=<path>, /v1/code/sessions/<id>/runtime-events?book_root=<path>, /v1/code/sessions/<id>/tool-exec?book_root=<path>, /v1/code/sessions/<id>/commands, /v1/code/sessions/<id>/eval-report?book_root=<path>, and /v1/code/sessions/<id>/package-result?book_root=<path>",
+      "native_target": @mooncode_core.native_capability_target_description(),
     },
     "event_mapping": moonclaw_event_mapping_json(),
     "tool_mapping": Json::array(moonclaw_tool_mapping_rows()),

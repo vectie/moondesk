@@ -1847,6 +1847,49 @@ Exit tests:
 - the Phase 8 wall runs the native endpoint ownership validator before backend
   method dispatch and live MoonCode HTTP route coverage.
 
+## Phase 47 - Core-Owned Native Runtime Endpoint Builders
+
+Status: implemented by moving concrete MoonClaw `/v1/code` URL formatting into
+`mooncode/core` and making the internal MoonCode projection wrappers delegate
+to that core formatter.
+
+Problem:
+
+- Phase 46 made the named native endpoint templates core-owned, but
+  `internal/mooncode/moonclaw_endpoints.mbt` still built concrete runtime
+  URLs from raw `/v1/code/sessions/...` strings and owned its own query encoder.
+- `internal/mooncode/moonclaw_capabilities.mbt` also described the native
+  daemon target with a hand-copied endpoint sentence, so a route addition could
+  update the typed endpoint object while leaving runtime contract copy stale.
+- A standalone MoonCode package needs both endpoint templates and concrete
+  endpoint formatting in the reusable core boundary; desktop projection code
+  should only preserve host-facing wrapper names for current callers.
+
+Work:
+
+- Add `mooncode/core/native_endpoints.mbt` with the typed endpoint object,
+  strict native URL component encoding, concrete builders for native
+  session/list/show/command/runtime/stream/tool/eval/package endpoints, and a
+  derived native target description.
+- Keep `native_capability_required_endpoints()` derived from the typed endpoint
+  object.
+- Replace internal MoonCode's concrete MoonClaw endpoint string builders with
+  delegations to `@mooncode_core.native_*_endpoint`.
+- Replace the MoonClaw runtime contract's copied native target sentence with
+  `@mooncode_core.native_capability_target_description()`.
+- Extend the Phase 8 native endpoint ownership gate to reject raw concrete
+  `/v1/code` builder strings or target descriptions returning to internal
+  MoonCode.
+
+Exit tests:
+
+- `mooncode/core` tests prove concrete native endpoint builders encode session,
+  book root, stream, and strict query characters correctly.
+- internal MoonCode runtime tests prove existing host-facing wrapper functions
+  still produce the same concrete native URLs.
+- the Phase 8 wall rejects raw concrete `/v1/code` endpoint builders or target
+  descriptions returning to internal MoonCode.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
