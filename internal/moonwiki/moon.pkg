@@ -81,6 +81,7 @@ options(
     "mooncode_runtime_queue_handlers.mbt": [ "native" ],
     "mooncode_runtime_state_handlers.mbt": [ "native" ],
     "mooncode_runtime_supervisor_handlers.mbt": [ "native" ],
+    "mooncode_route_method_contract.mbt": [ "native" ],
     "mooncode_sessions.mbt": [ "native" ],
     "mooncode_streams.mbt": [ "native" ],
     "mooncode_tool_contracts.mbt": [ "native" ],

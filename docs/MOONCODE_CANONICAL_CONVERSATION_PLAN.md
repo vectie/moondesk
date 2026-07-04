@@ -669,3 +669,7 @@ The next scheduled phases are now explicit:
   from that structured surface, and compares backend router path plus method
   fingerprints in the MoonWiki gate. Read routes explicitly include `HEAD`
   because the desktop router accepts `HEAD` wherever it accepts `GET`.
+- Phase 35: contract-backed method dispatch. MoonCode router branches now ask
+  the published route contract whether a method is accepted, instead of keeping
+  raw method policy in every branch. Contract-backed 405 responses expose the
+  same allowed-method list through `Allow` and JSON `allowed_methods`.

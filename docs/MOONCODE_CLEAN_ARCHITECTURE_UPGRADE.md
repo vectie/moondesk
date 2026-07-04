@@ -1354,6 +1354,48 @@ Exit tests:
 - the backend router method surface matches
   `desktop_projection_route_contracts`
 
+## Phase 35 - Contract-Backed Method Dispatch
+
+Status: implemented as MoonCode router method dispatch through the published
+route contract.
+
+Problem:
+
+- Phase 34 made route methods visible in the public MoonCode contract, but the
+  backend router branches still contained their own method policy with raw
+  `is_read_method` and `Post` checks.
+- That made the route contract an audited mirror instead of the actual method
+  authority. A router branch could still drift from the contract and only be
+  caught after the fact.
+- `405 Method Not Allowed` responses also did not report the allowed method
+  list, so API consumers and host tests could not observe the contract boundary
+  from the HTTP behavior itself.
+
+Work:
+
+- Add a MoonWiki MoonCode route-method helper that reads
+  `@mooncode.desktop_projection_route_contracts`.
+- Replace MoonCode router branch method checks with
+  `mooncode_route_accepts_read` and `mooncode_route_accepts_post`.
+- Add a MoonCode-specific 405 sender that reports the contract's allowed
+  methods through the `Allow` header and JSON `allowed_methods`.
+- Keep non-MoonCode routers on the existing generic method-not-allowed path.
+- Extend the MoonWiki backend route contract test to prove GET/HEAD/POST
+  acceptance is contract-backed for read-only, mixed, and POST-only routes.
+- Add a migration-wall source validator that rejects raw method checks or
+  generic 405 calls inside the MoonCode router.
+
+Exit tests:
+
+- raw method policy for MoonCode routes is isolated in the route-method helper
+- status accepts GET/HEAD and rejects POST/DELETE through the contract
+- commands accepts GET/HEAD/POST and rejects unrelated methods through the
+  contract
+- runtime-service remains POST-only through the contract
+- MoonCode 405 responses are prepared from the route contract's allowed method
+  list
+- the Phase 8 migration wall rejects raw MoonCode router method checks
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1370,5 +1412,7 @@ Exit tests:
   the published route contract.
 - Letting backend route methods live only inside router branches instead of the
   published MoonCode route contract.
+- Letting MoonCode 405 responses hide the allowed-method contract from API
+  consumers.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

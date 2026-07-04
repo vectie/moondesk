@@ -97,7 +97,9 @@ such as `internal/mooncode/capabilities.mbt`.
 Moondesk exposes MoonCode through `/api/mooncode`. This namespace is a desktop
 projection shell, not the runtime engine. Read routes accept both `GET` and
 `HEAD`; the route contract in `internal/mooncode/route_contracts.mbt` owns the
-full path and method surface.
+full path and method surface. MoonCode router dispatch and `405 Method Not
+Allowed` responses consume that contract, and contract-backed 405s return an
+`Allow` header plus `allowed_methods` in the JSON error payload.
 
 Top-level:
 

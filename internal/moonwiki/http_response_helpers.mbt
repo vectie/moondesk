@@ -107,9 +107,23 @@ async fn send_api_json_error(
   reason : String,
   payload : Json,
 ) -> Unit {
-  conn.send_response(code, reason, extra_headers={
-    "content-type": "application/json; charset=utf-8",
-  })
+  send_api_json_error_with_headers(conn, method_, code, reason, payload, {})
+}
+
+///|
+async fn send_api_json_error_with_headers(
+  conn : @http.ServerConnection,
+  method_ : @http.RequestMethod,
+  code : Int,
+  reason : String,
+  payload : Json,
+  extra_headers : Map[String, String],
+) -> Unit {
+  let headers = { "content-type": "application/json; charset=utf-8" }
+  for key, value in extra_headers {
+    headers[key] = value
+  }
+  conn.send_response(code, reason, extra_headers=headers)
   if method_ is Head {
     conn.end_response()
     return

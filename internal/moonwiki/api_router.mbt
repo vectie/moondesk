@@ -43,3 +43,29 @@ async fn send_method_not_allowed(
 ) -> Unit {
   send_api_error(conn, method_, 405, "Method Not Allowed", "Method Not Allowed")
 }
+
+///|
+async fn send_method_not_allowed_with_methods(
+  conn : @http.ServerConnection,
+  method_ : @http.RequestMethod,
+  allowed_methods : Array[String],
+) -> Unit {
+  let payload = api_contract_response(
+    {
+      "error": "Method Not Allowed",
+      "allowed_methods": json_from_string_array(allowed_methods),
+    },
+    ok=false,
+    status="error",
+    message="Method Not Allowed",
+    next_action="inspect_request",
+  )
+  send_api_json_error_with_headers(
+    conn,
+    method_,
+    405,
+    "Method Not Allowed",
+    payload,
+    { "Allow": allowed_methods.join(", ") },
+  )
+}

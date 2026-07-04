@@ -694,6 +694,21 @@ published `desktop_projection_route_contracts` surface changing with it. The
 contract explicitly counts `HEAD` for read routes because the desktop router
 accepts `HEAD` anywhere it accepts `GET`.
 
+Contract-backed MoonCode method dispatch gate:
+
+```bash
+moon test internal/moonwiki --target native --filter "mooncode backend route contract*"
+bash scripts/validate_mooncode_backend_method_dispatch.sh
+```
+
+This Phase 35 gate removes raw MoonCode method policy from the router branches.
+MoonCode route branches still own path segmentation, but method acceptance now
+flows through the published `desktop_projection_route_contracts` surface. The
+same contract drives `405 Method Not Allowed` responses, including the `Allow`
+header and JSON `allowed_methods` payload field. The source validator prevents
+raw `is_read_method`, `method_ is Post`, or generic 405 calls from returning to
+`api_mooncode_router.mbt`.
+
 ## Done Criteria
 
 Code mode is sufficiently tested when:
@@ -741,6 +756,9 @@ Code mode is sufficiently tested when:
 - a backend route method ownership gate proves the MoonCode server router and
   `desktop_projection_route_contracts` describe the same path and method
   surface, including `HEAD` support for read routes
+- a contract-backed method dispatch gate proves MoonCode router branches use
+  the published route contract for GET/HEAD/POST acceptance and 405
+  allowed-method reporting
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state
