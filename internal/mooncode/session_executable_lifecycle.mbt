@@ -74,7 +74,7 @@ fn lifecycle_step_required_checks(step_id : String) -> Array[String] {
       [
         "runtime_session_attached", "durable_session", "runtime_supervisor_ready",
       ]
-    "propose_change" => ["chat_transcript", "typed_command_queue"]
+    "propose_change" => ["canonical_conversation", "typed_command_queue"]
     "edit_code" => ["tool_execution", "diff_review"]
     "verify_code" => ["test_build_execution", "native_eval_ready"]
     "review_diff" => ["review_receipts", "action_plan_current"]

@@ -847,6 +847,9 @@ Code mode is sufficiently tested when:
 - a native runtime endpoint builder gate proves concrete MoonClaw
   `/v1/code` URLs and the runtime contract native-target description are
   formatted by `mooncode/core`, not by internal projection string builders
+- a readiness contract ownership gate proves MoonCode readiness and the
+  executable-book lifecycle use backend canonical conversation turns as chat
+  proof, not raw transcript-lane event counts
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

@@ -38,7 +38,7 @@ pub fn readiness_contract_json() -> Json {
       "native_eval_ready", "Native eval ready", "MoonBook eval-report manifest carries complete MoonClaw native harness proof",
     ),
     readiness_contract_check(
-      "chat_transcript", "Chat transcript", "assistant/transcript lane has durable chat evidence",
+      "canonical_conversation", "Canonical conversation", "backend canonical conversation projection contains at least one turn",
     ),
     readiness_contract_check(
       "typed_command_queue", "Typed command queue", "mooncode.v1 command packet and runtime command queue are present",

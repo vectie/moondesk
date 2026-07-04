@@ -17,6 +17,8 @@ test "mooncode readiness contract is standalone telemetry" {
   assert_true(ids.contains("moonbook_selected"))
   assert_true(ids.contains("runtime_supervisor_ready"))
   assert_true(ids.contains("native_eval_ready"))
+  assert_true(ids.contains("canonical_conversation"))
+  assert_false(ids.contains("chat_transcript"))
   assert_true(ids.contains("typed_command_queue"))
   assert_true(ids.contains("test_build_execution"))
   assert_true(ids.contains("package_lifecycle"))

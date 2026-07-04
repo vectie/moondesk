@@ -154,12 +154,23 @@ test "mooncode session summary reports readiness coding flow" {
   }
   let events : Array[Json] = [
     event_record(
+      id="prompt-1",
+      lane="transcript",
+      kind="user",
+      title="User prompt",
+      status="done",
+      created_at="1",
+      detail="Build the tool.",
+      command="prompt",
+      command_packet~,
+    ),
+    event_record(
       id="transcript-1",
       lane="transcript",
       kind="assistant",
       title="Assistant",
       status="done",
-      created_at="1",
+      created_at="2",
       detail="I will edit the tool.",
       command_packet~,
     ),
@@ -169,7 +180,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="runtime_update",
       title="Runtime update",
       status="running",
-      created_at="2",
+      created_at="3",
       detail="running",
       command_packet~,
     ),
@@ -179,7 +190,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="tool.read",
       title="Read",
       status="done",
-      created_at="3",
+      created_at="4",
       detail="read source",
       command_packet~,
     ),
@@ -189,7 +200,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="tool.write",
       title="Write file",
       status="done",
-      created_at="4",
+      created_at="5",
       detail="updated tool",
       path="tools/demo/main.mbt",
       diff="+fn main { println(\"ok\") }",
@@ -201,7 +212,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="tool.moon_check",
       title="Moon check",
       status="passed",
-      created_at="5",
+      created_at="6",
       detail="passed",
       command="moon check",
       command_packet~,
@@ -212,7 +223,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="artifact",
       title="Tool artifact",
       status="done",
-      created_at="6",
+      created_at="7",
       detail="artifact ready",
       path="portable/app-tool/mooncode/s1/index.json",
       command_packet~,
@@ -223,7 +234,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="receipt.accept",
       title="Accepted",
       status="done",
-      created_at="7",
+      created_at="8",
       detail="accepted",
       path="tools/demo/main.mbt",
       command="accept",
@@ -235,7 +246,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="package.manifest",
       title="Package manifest",
       status="source-bound",
-      created_at="8",
+      created_at="9",
       detail="manifest",
       path="portable/app-tool/mooncode/s1/package.json",
       command_packet~,
@@ -246,7 +257,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="package.index",
       title="Package index",
       status="source-bound",
-      created_at="9",
+      created_at="10",
       detail="index",
       path="portable/app-tool/mooncode/s1/index.json",
       command_packet~,
@@ -257,7 +268,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="change_set.manifest",
       title="Change set",
       status="done",
-      created_at="10",
+      created_at="11",
       detail="change set",
       path="wiki/reviews/mooncode/s1/change-set.json",
       command_packet~,
@@ -268,7 +279,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="patch_set.manifest",
       title="Patch set",
       status="done",
-      created_at="11",
+      created_at="12",
       detail="patch set",
       path="wiki/reviews/mooncode/s1/patch-set.json",
       command_packet~,
@@ -279,7 +290,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="test_runs.manifest",
       title="Test runs",
       status="passed",
-      created_at="12",
+      created_at="13",
       detail="test runs",
       path="wiki/reviews/mooncode/s1/test-runs.json",
       command_packet~,
@@ -290,7 +301,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="runtime.package_verified",
       title="Package verified",
       status="verified",
-      created_at="13",
+      created_at="14",
       detail="verified",
       path="portable/app-tool/mooncode/s1/index.json",
       command="package",
@@ -302,7 +313,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="runtime.handoff",
       title="Runtime handoff",
       status="ready",
-      created_at="14",
+      created_at="15",
       detail="handoff",
       path="wiki/reviews/mooncode/s1/runtime-handoff.json",
       command_packet~,
@@ -313,7 +324,7 @@ test "mooncode session summary reports readiness coding flow" {
       kind="eval_report.manifest",
       title="Eval report",
       status="accepted",
-      created_at="15",
+      created_at="16",
       detail="native eval report",
       path="wiki/reviews/mooncode/s1/eval-report.json",
       command_packet~,
@@ -367,6 +378,11 @@ test "mooncode session summary reports readiness coding flow" {
   )
   assert_eq(summary_json_int(summary, "readiness_check_count", default=0), 18)
   assert_eq(summary_json_int(summary, "readiness_blocked_count", default=9), 0)
+  assert_eq(
+    summary_json_int(summary, "canonical_conversation_turn_count", default=0),
+    1,
+  )
+  assert_true(json_bool(summary, "canonical_conversation_ready", default=false))
   let readiness = summary_json_object_field_or_empty(summary, "readiness")
   assert_eq(json_string(readiness, "kind", default=""), "mooncode-readiness")
   assert_true(json_bool(readiness, "ready", default=false))
@@ -377,6 +393,7 @@ test "mooncode session summary reports readiness coding flow" {
   assert_eq(json_string(checks[0], "id", default=""), "moonbook_selected")
   let mut found_resume_lifecycle = false
   let mut found_runtime_supervisor = false
+  let mut found_canonical_conversation = false
   let mut found_native_eval = false
   let mut found_package_lifecycle = false
   for check in checks {
@@ -387,6 +404,14 @@ test "mooncode session summary reports readiness coding flow" {
     if json_string(check, "id", default="") == "runtime_supervisor_ready" {
       found_runtime_supervisor = true
       assert_true(json_bool(check, "ok", default=false))
+    }
+    if json_string(check, "id", default="") == "canonical_conversation" {
+      found_canonical_conversation = true
+      assert_true(json_bool(check, "ok", default=false))
+      assert_eq(
+        json_string(check, "evidence", default=""),
+        "1 canonical turn(s)",
+      )
     }
     if json_string(check, "id", default="") == "native_eval_ready" {
       found_native_eval = true
@@ -399,6 +424,7 @@ test "mooncode session summary reports readiness coding flow" {
   }
   assert_true(found_resume_lifecycle)
   assert_true(found_runtime_supervisor)
+  assert_true(found_canonical_conversation)
   assert_true(found_native_eval)
   assert_true(found_package_lifecycle)
   assert_eq(

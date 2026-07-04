@@ -46,6 +46,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let session_snapshot_ready = json_string(snapshot, "kind", default="") ==
     "mooncode-session-snapshot"
   let eval_checks = session_eval_checks(session, events)
+  let conversation = conversation_projection(session, events)
   let readiness_checks = session_readiness_checks(session, events)
   let readiness = readiness_summary(readiness_checks)
   let executable_book_lifecycle = executable_book_lifecycle_report_from_checks(
@@ -220,6 +221,17 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
     "review_state": review_state(diff_count, accepted_count, rejected_count),
     "runtime_count": count_lane(events, "runtime"),
     "transcript_count": count_lane(events, "transcript"),
+    "canonical_conversation_turn_count": summary_json_int(
+      conversation,
+      "turn_count",
+      default=0,
+    ),
+    "canonical_conversation_ready": summary_json_int(
+      conversation,
+      "turn_count",
+      default=0,
+    ) >
+    0,
     "has_packaging_candidate": artifact_count > 0,
     "standalone_component": "mooncode",
     "eval_passed_check_count": eval_check_passed_count(eval_checks),

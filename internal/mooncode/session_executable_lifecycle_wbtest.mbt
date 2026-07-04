@@ -37,7 +37,9 @@ test "mooncode executable book lifecycle completes from readiness evidence" {
     readiness_check(
       "runtime_supervisor_ready", "Runtime supervisor", true, "ready",
     ),
-    readiness_check("chat_transcript", "Chat transcript", true, "assistant"),
+    readiness_check(
+      "canonical_conversation", "Canonical conversation", true, "turn",
+    ),
     readiness_check(
       "typed_command_queue", "Typed command queue", true, "command",
     ),

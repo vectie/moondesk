@@ -1890,6 +1890,43 @@ Exit tests:
 - the Phase 8 wall rejects raw concrete `/v1/code` endpoint builders or target
   descriptions returning to internal MoonCode.
 
+## Phase 48 - Canonical Conversation Readiness Proof
+
+Status: implemented by making readiness and executable-book lifecycle depend on
+the backend canonical conversation projection instead of raw transcript-lane
+event counts.
+
+Problem:
+
+- Readiness still had a stale `chat_transcript` check that passed when any
+  durable event used the `transcript` lane, even if no canonical user turn
+  existed.
+- The executable-book lifecycle inherited that stale proof for
+  `propose_change`, so lifecycle readiness could be satisfied by raw assistant
+  evidence rather than the append-only conversation the UI actually renders.
+- A clean first-time MoonCode architecture should use one chat proof
+  everywhere: `conversation_projection(session, events).turn_count`.
+
+Work:
+
+- Replace `chat_transcript` with `canonical_conversation` in the readiness
+  contract, policy, and executable-book lifecycle requirement map.
+- Derive the check from `conversation_projection(session, events)` instead of
+  `count_lane(events, "transcript")`.
+- Expose canonical conversation readiness telemetry in `session_summary`.
+- Add a Phase 8 source gate that rejects the old `chat_transcript` readiness
+  contract or raw transcript-lane counts returning to readiness.
+
+Exit tests:
+
+- readiness does not pass from an assistant transcript event without a
+  canonical prompt turn
+- executable-book `propose_change` requires canonical conversation plus typed
+  command queue evidence
+- session summary reports canonical conversation turn count/readiness
+- the Phase 8 wall rejects raw transcript-lane chat proof returning to
+  readiness/lifecycle code
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

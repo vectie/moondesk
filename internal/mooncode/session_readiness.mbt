@@ -22,7 +22,12 @@ pub fn session_readiness_checks(
     "mooncode_runtime_session_id",
     default=json_string(session, "id", default=""),
   )
-  let transcript_count = count_lane(events, "transcript")
+  let canonical_conversation = conversation_projection(session, events)
+  let canonical_turn_count = summary_json_int(
+    canonical_conversation,
+    "turn_count",
+    default=0,
+  )
   let runtime_count = count_lane(events, "runtime")
   let tool_count = count_lane(events, "tool")
   let diff_count = count_lane(events, "diff")
@@ -226,10 +231,10 @@ pub fn session_readiness_checks(
       "status \{empty_readiness_label(json_string(native_eval_report, "status", default=""))}, manifest \{eval_report_manifest_count}, harnesses \{native_eval_passed_harness_count}/\{required_native_eval_harness_ids().length()} passed, missing required \{native_eval_missing_count}, total \{native_eval_harness_count}",
     ),
     readiness_check(
-      "chat_transcript",
-      "Chat transcript",
-      transcript_count > 0,
-      "\{transcript_count} transcript event(s)",
+      "canonical_conversation",
+      "Canonical conversation",
+      canonical_turn_count > 0,
+      "\{canonical_turn_count} canonical turn(s)",
     ),
     readiness_check(
       "typed_command_queue",

@@ -259,6 +259,10 @@ The response lists checks, evidence, first blocker, next action, and next
 owner. Missing evidence keeps a session blocked until MoonClaw, MoonBook, or
 Moondesk supplies the responsible artifact.
 
+Chat readiness is proven by the backend canonical conversation projection, not
+by raw transcript-lane events. The `canonical_conversation` check passes only
+after the append-only projection contains at least one turn.
+
 ## Executable-Book Lifecycle
 
 The portable lifecycle contract lives in `mooncode/core` as
