@@ -66,10 +66,7 @@ fn update_mooncode_session_results(
     LoadedMoonCodeSessions(Ok(mooncode_sessions)) => {
       let mooncode_sessions = mooncode_preserve_selected_inflight_session(
         model,
-        mooncode_merge_session_listing(
-          model.mooncode_sessions,
-          mooncode_sessions,
-        ),
+        mooncode_sessions,
       )
       let optimistic_rows = mooncode_drop_acknowledged_optimistic_rows_for_sessions(
         model.mooncode_optimistic_rows,

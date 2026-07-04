@@ -560,7 +560,13 @@ prompt turns through one Moondesk session and one real MoonClaw service path,
 then proves the canonical conversation remains append-only with distinct
 command ids and stable replies after each turn.
 
-Remaining risk after Phase 19 is broader model-backed runtime behavior:
+Phase 20 removes the frontend copy-forward fallback for compact session rows.
+Normal `/api/mooncode/sessions` now owns full canonical session state, while
+compact rows remain an explicit `format=listing` API shape. The browser no
+longer patches a newer backend response with stale local
+`mooncode_conversation` data.
+
+Remaining risk after Phase 20 is broader model-backed runtime behavior:
 model-generated tool-call planning, long-running service recovery,
 cancel/steer races, and package/review flows under a real model should be
 scheduled separately from the deterministic merge gate.

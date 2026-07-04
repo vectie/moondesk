@@ -166,22 +166,6 @@ fn mooncode_session_exists(
 }
 
 ///|
-fn mooncode_merge_session_listing(
-  existing : Array[MoonCodeSession],
-  incoming : Array[MoonCodeSession],
-) -> Array[MoonCodeSession] {
-  let merged : Array[MoonCodeSession] = []
-  for session in incoming {
-    match mooncode_find_session(existing, session.id) {
-      Some(previous) =>
-        merged.push(mooncode_preserve_hydrated_session(previous, session))
-      None => merged.push(session)
-    }
-  }
-  merged
-}
-
-///|
 fn mooncode_preserve_selected_inflight_session(
   model : Model,
   incoming : Array[MoonCodeSession],
@@ -252,22 +236,4 @@ fn mooncode_find_session(
     }
   }
   None
-}
-
-///|
-fn mooncode_preserve_hydrated_session(
-  previous : MoonCodeSession,
-  incoming : MoonCodeSession,
-) -> MoonCodeSession {
-  let missing_conversation = incoming.mooncode_conversation is None &&
-    previous.mooncode_conversation is Some(_)
-  if missing_conversation {
-    {
-      ..incoming,
-      mooncode_conversation: previous.mooncode_conversation,
-      mooncode_summary: previous.mooncode_summary,
-    }
-  } else {
-    incoming
-  }
 }

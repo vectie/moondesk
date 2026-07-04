@@ -725,6 +725,39 @@ Exit tests:
 - no old turns disappear, duplicate, or reorder after later replies
 - no legacy `.moonclaw` sidecar root is created
 
+## Phase 20 - Full Session List Contract
+
+Status: implemented as the normal session-list ownership cleanup.
+
+Problem:
+
+- The MoonCode frontend still preserved old hydrated conversations when a later
+  session-list response omitted `mooncode_conversation`.
+- That compatibility layer made the browser capable of hiding backend contract
+  regressions and reintroduced a second conversation owner: a previous frontend
+  snapshot could silently override the newest backend response.
+
+Work:
+
+- Treat normal `/api/mooncode/sessions` responses as full canonical session
+  state.
+- Keep compact/listing rows behind the explicit `format=listing` API shape,
+  not as an accepted normal browser state.
+- Remove frontend copy-forward of stale `mooncode_conversation` and
+  `mooncode_summary` from older local state.
+- Preserve only the separate in-flight selected-session guard used for real
+  asynchronous list races where the selected running session is absent from a
+  stale response.
+
+Exit tests:
+
+- the existing HTTP code-mode E2E proves normal session lists include canonical
+  first/second/third turns and native replies
+- the UI reducer test proves a backend response missing
+  `mooncode_conversation` is not patched with old frontend conversation data
+- immediate optimistic user rows still render while the backend has not
+  acknowledged the turn
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

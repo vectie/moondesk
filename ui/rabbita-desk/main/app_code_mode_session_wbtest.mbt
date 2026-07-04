@@ -1054,7 +1054,7 @@ test "code mode background errors do not kick typed draft into existing chat" {
 }
 
 ///|
-test "code mode session polling preserves canonical conversation from compact listing" {
+test "code mode session polling does not copy stale conversation over backend response" {
   let hydrated = {
     ..code_mode_test_session("session-a", status="running"),
     mooncode_conversation: Some(
@@ -1083,11 +1083,9 @@ test "code mode session polling preserves canonical conversation from compact li
     model,
   )
   let session = selected_mooncode_session(next).unwrap()
-  assert_true(session.mooncode_conversation is Some(_))
+  assert_true(session.mooncode_conversation is None)
   let rows = code_mode_test_transcript_rows(next, session)
-  assert_eq(rows.length(), 2)
-  assert_eq(rows[0].content, "Keep this prompt")
-  assert_eq(rows[1].content, "Keep this answer")
+  assert_eq(rows.length(), 0)
 }
 
 ///|

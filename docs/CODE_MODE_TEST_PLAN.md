@@ -487,7 +487,7 @@ Targeted gates while developing:
 ```bash
 moon test internal/mooncode
 moon test internal/moonwiki --filter "mooncode"
-moon test ui/rabbita-desk/main --filter "MoonCode"
+moon check ui/rabbita-desk/main --target js --warn-list +unnecessary_annotation --diagnostic-limit 1000
 moon test cmd/main --filter "mooncode"
 ```
 
@@ -529,6 +529,21 @@ The loop and multiturn gates additionally prove native command replay and
 runtime-service execution. The multiturn gate is the regression check for
 first/second/third prompt order: it fails if later replies duplicate, reorder,
 or erase earlier conversation turns.
+
+Frontend/backend ownership gate:
+
+```bash
+moon check ui/rabbita-desk/main --target js --warn-list +unnecessary_annotation --diagnostic-limit 1000
+moon test internal/moonwiki --filter "mooncode code mode HTTP routes preserve three prompt conversation order" --target native
+```
+
+These gates keep the normal session list contract clean: the backend must send
+full canonical conversation state, and the browser must not hide a missing
+conversation by copying an older local transcript over a newer response. The
+UI reducer assertion lives in the Rabbita desk wbtest source; the current Moon
+package selector does not expose that JS-only main package as a runnable
+`moon test` target by path, so use the JS package check plus the backend HTTP
+E2E as the executable gate.
 
 ## Done Criteria
 
