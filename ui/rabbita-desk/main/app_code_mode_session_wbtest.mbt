@@ -113,20 +113,37 @@ fn code_mode_test_turn(
   progress? : Array[Json] = [],
   status? : String = "done",
 ) -> MoonCodeConversationTurn {
+  let turn_client_id = if client_turn_id == "" {
+    id
+  } else {
+    client_turn_id
+  }
   {
     kind: "mooncode-conversation-turn",
     turn_id: id,
-    client_turn_id,
+    client_turn_id: turn_client_id,
     command_id: id,
     status,
     started_at: "2026-06-30T00:00:00Z",
     updated_at: "2026-06-30T00:00:01Z",
-    user: { "role": "user", "content": user, "status": "done" },
+    user: {
+      "role": "user",
+      "content": user,
+      "status": "done",
+      "command_id": id,
+      "client_turn_id": turn_client_id,
+    },
     progress,
     assistant: if assistant == "" {
       Json::object({})
     } else {
-      { "role": "assistant", "content": assistant, "status": status }
+      {
+        "role": "assistant",
+        "content": assistant,
+        "status": status,
+        "command_id": id,
+        "client_turn_id": turn_client_id,
+      }
     },
     items: [],
   }
@@ -192,6 +209,27 @@ test "code mode transcript uses backend canonical conversation" {
   assert_eq(messages[1], "assistant:First answer")
   assert_eq(messages[2], "user:Second prompt")
   assert_eq(messages[3], "assistant:Second answer")
+  match items[0].message {
+    Some(row) => {
+      assert_eq(row.command_id, "command-first")
+      assert_eq(row.client_turn_id, "command-first")
+    }
+    None => fail("expected owned user message")
+  }
+  match items[1].activity {
+    Some(row) => {
+      assert_eq(row.command_id, "")
+      assert_eq(row.client_turn_id, "")
+    }
+    None => fail("expected progress activity")
+  }
+  match items[2].message {
+    Some(row) => {
+      assert_eq(row.command_id, "command-first")
+      assert_eq(row.client_turn_id, "command-first")
+    }
+    None => fail("expected owned assistant message")
+  }
   assert_eq(activities.length(), 1)
   assert_eq(activities[0], "Prepared the response:Prepared the first answer.")
 }
@@ -212,6 +250,8 @@ test "code mode canonical progress stays folded between user and assistant" {
               "title": "Reading workspace",
               "detail": "Read the workspace.",
               "status": "done",
+              "command_id": "command-first",
+              "client_turn_id": "command-first",
             },
           ],
         ),
@@ -230,6 +270,8 @@ test "code mode canonical progress stays folded between user and assistant" {
       assert_eq(row.label, "Progress")
       assert_eq(row.title, "Prepared the response")
       assert_eq(row.detail, "Read the workspace.")
+      assert_eq(row.command_id, "command-first")
+      assert_eq(row.client_turn_id, "command-first")
     }
     None => fail("expected progress activity")
   }
@@ -1086,6 +1128,46 @@ test "code mode session polling does not copy stale conversation over backend re
   assert_true(session.mooncode_conversation is None)
   let rows = code_mode_test_transcript_rows(next, session)
   assert_eq(rows.length(), 0)
+}
+
+///|
+test "code mode session polling does not regress selected conversation turns" {
+  let current = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn("turn-a", "First prompt", status="queued"),
+        code_mode_test_turn("turn-b", "Second prompt", status="queued"),
+        code_mode_test_turn("turn-c", "Third prompt", status="queued"),
+      ]),
+    ),
+  }
+  let stale = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn("turn-a", "First prompt", status="queued"),
+        code_mode_test_turn("turn-b", "Second prompt", status="queued"),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [current],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([stale])),
+    model,
+  )
+  let session = selected_mooncode_session(next).unwrap()
+  let rows = code_mode_test_transcript_rows(next, session)
+  assert_eq(rows.length(), 3)
+  assert_eq(rows[0].content, "First prompt")
+  assert_eq(rows[1].content, "Second prompt")
+  assert_eq(rows[2].content, "Third prompt")
 }
 
 ///|

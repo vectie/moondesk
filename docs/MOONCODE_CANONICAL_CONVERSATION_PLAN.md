@@ -633,5 +633,9 @@ The next scheduled phases are now explicit:
   failed, and stale runs; live model coverage remains a scheduled gate layered
   above that contract.
 - Phase 29: browser conversation stability gate. First/second/third turns must
-  append immediately, preserve old turns, keep progress under the owning turn,
-  and survive reload without flashes or reordering.
+  append immediately, preserve old turns, keep owner-tagged progress under the
+  owning turn, fold completed progress, and survive reload without flashes or
+  reordering. The deterministic browser gate uses `mooncodeRuntime=manual` to
+  disable only UI runtime auto-start and then injects event-backed native
+  replies through public APIs; ordinary MoonCode sessions keep automatic
+  MoonClaw runtime startup.

@@ -3,6 +3,8 @@ struct MoonCodeTranscriptRow {
   role : String
   content : String
   status : String
+  command_id : String
+  client_turn_id : String
 }
 
 ///|
@@ -145,6 +147,10 @@ fn mooncode_compact_thinking_rows(
     detail: mooncode_compact_thinking_detail(rows),
     status: mooncode_compact_thinking_status(rows),
     folded: true,
+    command_id: if rows.length() == 0 { "" } else { rows[0].command_id },
+    client_turn_id: if rows.length() == 0 { "" } else {
+      rows[0].client_turn_id
+    },
   }
 }
 
@@ -353,7 +359,9 @@ fn render_mooncode_transcript_row(row : MoonCodeTranscriptRow) -> @rabbita.Html 
     attrs=@html.Attrs::build()
       .data_set("testid", "mooncode-message")
       .data_set("role", row.role)
-      .data_set("status", row.status),
+      .data_set("status", row.status)
+      .data_set("command-id", row.command_id)
+      .data_set("client-turn-id", row.client_turn_id),
     [pre(class="mooncode-message-body", row.content)],
   )
 }

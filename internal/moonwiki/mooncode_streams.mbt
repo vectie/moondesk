@@ -87,8 +87,8 @@ async fn handle_mooncode_session_stream_state(
   let session = match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => session
     None => {
-      send_api_error(
-        conn, method_, 404, "Not Found", "Unknown MoonCode session",
+      handle_mooncode_native_session_stream_state(
+        workspace_root, session_id, request_path, body, method_, conn,
       )
       return
     }
@@ -162,6 +162,84 @@ async fn handle_mooncode_session_stream_state(
       ),
     )
   }
+}
+
+///|
+async fn handle_mooncode_native_session_stream_state(
+  workspace_root : String,
+  session_id : String,
+  request_path : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let since = @mooncode.stream_since_value(
+    query_value(request_path, "since").unwrap_or(""),
+  )
+  let payload = if method_ is Post {
+    match read_json_body(body) {
+      Some(json) => json
+      None => {
+        send_api_error(conn, method_, 400, "Bad Request", "Invalid JSON body")
+        return
+      }
+    }
+  } else {
+    Json::object({})
+  }
+  let consumer_id = @mooncode.stream_checkpoint_consumer_id(
+    payload,
+    query_value(request_path, "consumer").unwrap_or(""),
+  )
+  let text = match
+    mooncode_native_stream_text(
+      workspace_root,
+      session_id,
+      "jsonl",
+      0,
+      wait_ms=0,
+      poll_ms=100,
+    ) {
+    Ok(text) => text
+    Err(_) => {
+      send_api_error(
+        conn, method_, 404, "Not Found", "Unknown MoonCode session",
+      )
+      return
+    }
+  }
+  let session = mooncode_native_stream_session_record(
+    workspace_root, session_id,
+  )
+  let checkpoint = if method_ is Post {
+    let latest_sequence = mooncode_native_stream_latest_sequence(text)
+    let requested_sequence = @mooncode.stream_checkpoint_sequence(
+      payload, since, latest_sequence,
+    )
+    let checkpoint = mooncode_stream_checkpoint_record(
+      workspace_root, session, consumer_id, requested_sequence, latest_sequence,
+    )
+    write_mooncode_stream_checkpoint(
+      workspace_root, session_id, consumer_id, checkpoint,
+    ) catch {
+      _ => {
+        send_api_error(
+          conn, method_, 500, "Internal Server Error", "Could not save MoonCode stream checkpoint",
+        )
+        return
+      }
+    }
+    checkpoint
+  } else {
+    read_mooncode_stream_checkpoint(workspace_root, session_id, consumer_id)
+  }
+  send_json(
+    conn,
+    method_,
+    mooncode_native_stream_state_projection_from_text(
+      workspace_root, session_id, text, since, consumer_id, checkpoint,
+    ),
+  )
 }
 
 ///|
@@ -255,6 +333,139 @@ async fn mooncode_stream_state_projection(
       session_id, workspace_root, "sse", since,
     ),
   )
+}
+
+///|
+fn mooncode_native_stream_state_projection_from_text(
+  workspace_root : String,
+  session_id : String,
+  text : String,
+  since : Int,
+  consumer_id : String,
+  checkpoint : Json,
+) -> Json {
+  let session = mooncode_native_stream_session_record(
+    workspace_root, session_id,
+  )
+  let tail_events = mooncode_native_stream_tail_records(text, since)
+  let latest_sequence = mooncode_native_stream_latest_sequence(text)
+  let checkpoint_ready = json_string(checkpoint, "kind", default="") ==
+    "mooncode-stream-checkpoint"
+  @mooncode.moondesk_stream_state_record(
+    session,
+    consumer_id,
+    since,
+    latest_sequence,
+    mooncode_native_stream_emitted_count(text, since, latest_sequence),
+    mooncode_event_log_path(workspace_root, session_id),
+    checkpoint_ready,
+    mooncode_stream_checkpoint_path(workspace_root, session_id, consumer_id),
+    checkpoint,
+    tail_events,
+    @mooncode.moonclaw_native_stream_endpoint(
+      session_id, workspace_root, "sse", since,
+    ),
+  )
+}
+
+///|
+fn mooncode_native_stream_session_record(
+  workspace_root : String,
+  session_id : String,
+) -> Json {
+  {
+    "id": session_id,
+    "workspace_id": "",
+    "workspace_name": "MoonClaw native session",
+    "workspace_root": workspace_root,
+    "mooncode_runtime_session_id": session_id,
+  }
+}
+
+///|
+fn mooncode_native_stream_tail_records(
+  text : String,
+  since : Int,
+) -> Array[Json] {
+  let tail : Array[Json] = []
+  for line in text.split("\n") {
+    let record = mooncode_native_stream_parse_jsonl_record(line)
+    if json_string(record, "type", default="") == "event" &&
+      json_int(record, "sequence", default=0) > since {
+      tail.push(record)
+    }
+  }
+  tail
+}
+
+///|
+fn mooncode_native_stream_event_payloads(text : String) -> Array[Json] {
+  let events : Array[Json] = []
+  for line in text.split("\n") {
+    let record = mooncode_native_stream_parse_jsonl_record(line)
+    if json_string(record, "type", default="") == "event" {
+      events.push(json_object_field_or_empty(record, "event"))
+    }
+  }
+  events
+}
+
+///|
+fn mooncode_native_stream_latest_sequence(text : String) -> Int {
+  let mut latest = 0
+  for line in text.split("\n") {
+    let record = mooncode_native_stream_parse_jsonl_record(line)
+    let type_ = json_string(record, "type", default="")
+    if type_ == "meta" {
+      latest = mooncode_max_int(
+        latest,
+        json_int(record, "next_since", default=0),
+      )
+    } else if type_ == "event" || type_ == "done" {
+      latest = mooncode_max_int(latest, json_int(record, "sequence", default=0))
+    }
+  }
+  latest
+}
+
+///|
+fn mooncode_native_stream_emitted_count(
+  text : String,
+  since : Int,
+  latest_sequence : Int,
+) -> Int {
+  ignore(text)
+  mooncode_positive_delta(latest_sequence, since)
+}
+
+///|
+fn mooncode_native_stream_parse_jsonl_record(line : StringView) -> Json {
+  let trimmed = line.trim().to_owned()
+  if trimmed == "" {
+    Json::object({})
+  } else {
+    @json.parse(trimmed) catch {
+      _ => Json::object({})
+    }
+  }
+}
+
+///|
+fn mooncode_positive_delta(latest_sequence : Int, since : Int) -> Int {
+  if latest_sequence > since {
+    latest_sequence - since
+  } else {
+    0
+  }
+}
+
+///|
+fn mooncode_max_int(left : Int, right : Int) -> Int {
+  if left > right {
+    left
+  } else {
+    right
+  }
 }
 
 ///|

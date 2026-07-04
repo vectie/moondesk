@@ -13,6 +13,15 @@ fn initial_workspace_mode() -> WorkspaceMode {
 }
 
 ///|
+fn initial_mooncode_runtime_mode() -> String {
+  match browser_initial_mooncode_runtime_mode() {
+    "manual" => "manual"
+    "off" => "manual"
+    _ => "auto"
+  }
+}
+
+///|
 fn activity_from_slug(slug : String) -> Activity {
   match slug {
     "files" => Files

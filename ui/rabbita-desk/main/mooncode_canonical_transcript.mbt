@@ -112,6 +112,8 @@ fn mooncode_canonical_message_row_from_json(
     ),
     content,
     status: json_field_string(value, "status", default="done"),
+    command_id: json_field_string(value, "command_id", default=""),
+    client_turn_id: json_field_string(value, "client_turn_id", default=""),
   })
 }
 
@@ -143,6 +145,8 @@ fn mooncode_canonical_progress_item_from_json(
       detail,
       status,
       folded: status != "running",
+      command_id: json_field_string(value, "command_id", default=""),
+      client_turn_id: json_field_string(value, "client_turn_id", default=""),
     }),
   )
 }
@@ -188,7 +192,13 @@ fn mooncode_canonical_append_optimistic_rows(
       }
       let turn = mooncode_canonical_empty_turn()
       turn.client_turn_id = row.key
-      turn.user = Some({ role: "user", content, status: row.status })
+      turn.user = Some({
+        role: "user",
+        content,
+        status: row.status,
+        command_id: "",
+        client_turn_id: row.key,
+      })
       turns.push(turn)
     }
   }

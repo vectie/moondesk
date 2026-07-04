@@ -490,6 +490,8 @@ function mooncodeTranscriptItemsExpression() {
       role: row.dataset.role || "",
       status: row.dataset.status || "",
       folded: row.dataset.folded || "",
+      commandId: row.dataset.commandId || "",
+      clientTurnId: row.dataset.clientTurnId || "",
       text: row.textContent.trim()
     })))()`;
 }
@@ -599,6 +601,163 @@ function mooncodeTranscriptReplyStateExpression(expectedPrompts, expectedReplies
       !state.hasInternalRuntimeCopy;
     return state.pass ? true : state;
   })()`;
+}
+
+function mooncodeStableTranscriptStateExpression(expectedPrompts, expectedReplies = []) {
+  return `(() => {
+    const expectedPrompts = ${jsString(expectedPrompts)};
+    const expectedReplies = ${jsString(expectedReplies)};
+    const center = document.querySelector('[data-testid="mooncode-center"]');
+    const chat = document.querySelector('[data-testid="mooncode-chat-surface"]');
+    const items = ${mooncodeTranscriptItemsExpression()};
+    const bodyText = document.body.textContent || "";
+    const userRows = items.filter(item => item.kind === "message" && item.role === "user");
+    const assistantRows = items.filter(item => item.kind === "message" && item.role === "assistant");
+    const userTexts = userRows.map(item => item.text);
+    const assistantTexts = assistantRows.map(item => item.text);
+    const duplicateUserTexts = userTexts.filter((text, index) => userTexts.indexOf(text) !== index);
+    const missingPromptRows = expectedPrompts.filter(prompt => !userRows.some(row => row.text === prompt));
+    const missingReplyRows = expectedReplies.filter(reply => !assistantRows.some(row => row.text === reply));
+    const badPromptOrder =
+      userTexts.length !== expectedPrompts.length ||
+      !expectedPrompts.every((prompt, index) => userTexts[index] === prompt);
+    const badReplyOrder = expectedReplies.length > 0 &&
+      (
+        assistantTexts.length !== expectedReplies.length ||
+        !expectedReplies.every((reply, index) => assistantTexts[index] === reply)
+      );
+    const promptOwnerChecks = expectedPrompts.map((prompt, index) => {
+      const userIndex = items.findIndex(item =>
+        item.kind === "message" &&
+        item.role === "user" &&
+        item.text === prompt
+      );
+      const user = userIndex >= 0 ? items[userIndex] : {};
+      const reply = expectedReplies[index] || "";
+      const assistantIndex = reply === "" ? -1 : items.findIndex(item =>
+        item.kind === "message" &&
+        item.role === "assistant" &&
+        item.text === reply
+      );
+      const nextUserIndex = index + 1 < expectedPrompts.length
+        ? items.findIndex(item =>
+            item.kind === "message" &&
+            item.role === "user" &&
+            item.text === expectedPrompts[index + 1]
+          )
+        : items.length;
+      const ownedActivities = items
+        .map((item, itemIndex) => ({ ...item, itemIndex }))
+        .filter(item =>
+          item.kind === "activity" &&
+          (
+            (user.commandId && item.commandId === user.commandId) ||
+            (user.clientTurnId && item.clientTurnId === user.clientTurnId)
+          )
+        );
+      const ownedActivityIndexes = ownedActivities.map(item => item.itemIndex);
+      const activityPlacementOk = ownedActivityIndexes.every(itemIndex =>
+        itemIndex > userIndex &&
+        (
+          assistantIndex < 0 ||
+          itemIndex < assistantIndex
+        ) &&
+        itemIndex < nextUserIndex
+      );
+      return {
+        prompt,
+        userIndex,
+        assistantIndex,
+        nextUserIndex,
+        commandId: user.commandId || "",
+        clientTurnId: user.clientTurnId || "",
+        ownedActivityIndexes,
+        hasOwner: !!(user.commandId || user.clientTurnId),
+        activityPlacementOk,
+      };
+    });
+    const frontPageFlash = expectedPrompts.length > 0 &&
+      (!center || !chat || items.length === 0 || userRows.length === 0);
+    const activityBeforeFirstUser = items.some((item, index) =>
+      item.kind === "activity" &&
+      index < items.findIndex(other => other.kind === "message" && other.role === "user")
+    );
+    const misplacedOwners = promptOwnerChecks.filter(check =>
+      !check.hasOwner || !check.activityPlacementOk
+    );
+    const unfoldedCompletedActivity = expectedReplies.length > 0
+      ? items.filter(item =>
+          item.kind === "activity" &&
+          item.status !== "running" &&
+          item.folded !== "true"
+        )
+      : [];
+    const internalLeaks = [
+      "Local agent is not reachable yet",
+      "Native MoonCode runtime recorded this prompt",
+      "MoonClaw native runtime turn executed",
+      "command_id",
+      "client_turn_id",
+      "model-tool-calls",
+      "assistant_delta"
+    ].filter(text => bodyText.includes(text));
+    const state = {
+      itemCount: items.length,
+      userTexts,
+      assistantTexts,
+      duplicateUserTexts,
+      missingPromptRows,
+      missingReplyRows,
+      badPromptOrder,
+      badReplyOrder,
+      frontPageFlash,
+      activityBeforeFirstUser,
+      misplacedOwners,
+      unfoldedCompletedActivity,
+      internalLeaks,
+      centerText: center?.textContent?.trim().slice(0, 500) || "",
+      items,
+    };
+    state.pass =
+      !frontPageFlash &&
+      !badPromptOrder &&
+      !badReplyOrder &&
+      duplicateUserTexts.length === 0 &&
+      missingPromptRows.length === 0 &&
+      missingReplyRows.length === 0 &&
+      !activityBeforeFirstUser &&
+      misplacedOwners.length === 0 &&
+      unfoldedCompletedActivity.length === 0 &&
+      internalLeaks.length === 0;
+    return state.pass ? true : state;
+  })()`;
+}
+
+async function sampleMoonCodeStableTranscript(
+  session,
+  expectedPrompts,
+  label,
+  expectedReplies = [],
+  durationMs = 900,
+) {
+  const deadline = Date.now() + durationMs;
+  const failures = [];
+  let samples = 0;
+  while (Date.now() < deadline) {
+    const state = await session.evaluate(
+      mooncodeStableTranscriptStateExpression(expectedPrompts, expectedReplies),
+    );
+    samples += 1;
+    if (state !== true && state?.pass !== true) {
+      failures.push(state);
+    }
+    await sleep(50);
+  }
+  assert(
+    failures.length === 0,
+    `${label} saw unstable MoonCode transcript state: ${JSON.stringify(failures.slice(0, 5))}`,
+  );
+  return samples;
 }
 
 function mooncodeBackendTurnsStateExpression(expectedPrompts, expectedReplies = [], returnState = false) {
@@ -752,6 +911,11 @@ async function sendMoonCodePromptAndAssert(session, prompt, expectedPrompts) {
     `MoonCode UI session acknowledged for ${prompt}`,
     12000,
   );
+  await sampleMoonCodeStableTranscript(
+    session,
+    expectedPrompts,
+    `MoonCode stable append for ${prompt}`,
+  );
 }
 
 async function runMoonCodePromptSmoke(session) {
@@ -761,7 +925,7 @@ async function runMoonCodePromptSmoke(session) {
     "Browser smoke third prompt persistence",
   ];
   await setViewport(session, 1440, 900);
-  await session.send("Page.navigate", { url: `${baseUrl}/?activity=code` });
+  await session.send("Page.navigate", { url: `${baseUrl}/?activity=code&mooncodeRuntime=manual` });
   await waitFor(
     session,
     `document.readyState === 'complete' && !!document.querySelector('[data-testid="mooncode-center"]')`,
@@ -818,6 +982,13 @@ async function runMoonCodePromptSmoke(session) {
     "MoonCode UI renders event-backed native replies",
     16000,
   );
+  await sampleMoonCodeStableTranscript(
+    session,
+    prompts,
+    "MoonCode stable native reply order",
+    nativeReplies,
+    1200,
+  );
   await session.send("Page.reload", { ignoreCache: true });
   await waitFor(
     session,
@@ -835,6 +1006,13 @@ async function runMoonCodePromptSmoke(session) {
     mooncodeBackendTurnsStateExpression(prompts, nativeReplies),
     "MoonCode hard refresh preserves backend native reply order",
     12000,
+  );
+  await sampleMoonCodeStableTranscript(
+    session,
+    prompts,
+    "MoonCode stable hard-refresh reply order",
+    nativeReplies,
+    1200,
   );
   const bodyText = await session.evaluate(`document.body.textContent || ""`);
   assert(

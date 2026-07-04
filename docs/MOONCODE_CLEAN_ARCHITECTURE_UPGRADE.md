@@ -1108,7 +1108,7 @@ Exit tests:
 
 ## Phase 29 - Browser Conversation Stability Gate
 
-Status: planned.
+Status: implemented as the browser transcript stability smoke gate.
 
 Problem:
 
@@ -1119,12 +1119,36 @@ Problem:
 
 Work:
 
-- Extend the browser smoke to assert first/second/third prompt behavior with
-  real runtime-service starts.
+- Extend the browser smoke to assert first/second/third prompt behavior against
+  canonical backend events without racing the live model runtime.
 - Fail on front-page flashes after new chat submit, duplicate messages,
   reordering, disappearing old turns, or non-collapsed completed progress.
 - Keep the visible transcript contract simple: user row, folded progress for
   that command, assistant row, repeated append-only.
+
+Implemented gate:
+
+- MoonCode transcript message and activity DOM rows now carry
+  `data-command-id` and `data-client-turn-id` from the backend canonical
+  conversation.
+- Normal MoonCode sessions still auto-start MoonClaw runtime service. The
+  browser stability smoke opens MoonCode with `mooncodeRuntime=manual`, which
+  disables only runtime auto-start so the test can inject event-backed native
+  replies through public APIs and measure UI ordering deterministically.
+- The browser smoke samples the transcript after each of the first, second, and
+  third prompt submits so transient front-page flashes, duplicate user rows,
+  reorder windows, disappearing turns, and activity-before-user placement fail
+  the test instead of being hidden by eventual convergence.
+- After event-backed native replies and after a hard reload, the smoke asserts
+  user/reply order, owner placement, absence of internal runtime copy, and
+  folded completed progress rows.
+
+Exit tests:
+
+- `scripts/desk_mode_browser_smoke.sh full` passes with the Phase 29 MoonCode
+  transcript stability sampler enabled
+- JS package check passes for `ui/rabbita-desk/main`
+  (`moon check ui/rabbita-desk/main --target js`)
 
 ## Non-Goals
 

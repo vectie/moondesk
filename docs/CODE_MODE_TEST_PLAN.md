@@ -595,6 +595,26 @@ assistant summary from the same command owner; if reject receipts do not close a
 rejected run; if command-scoped failures are not terminal; or if old-command
 package/review evidence can settle the current package command.
 
+Browser conversation stability gate:
+
+```bash
+scripts/desk_mode_browser_smoke.sh full
+moon check ui/rabbita-desk/main --target js --warn-list +unnecessary_annotation --diagnostic-limit 1000
+```
+
+This Phase 29 gate protects the actual browser surface. It submits first,
+second, and third MoonCode prompts, samples the transcript for transient
+front-page flashes and reorder windows, fails duplicate or disappearing user
+messages, checks that activity rows stay under their owning command, imports
+event-backed native assistant replies, verifies completed progress is folded,
+and then reloads to prove the old conversation persists.
+
+The browser gate opens MoonCode with `mooncodeRuntime=manual`. That disables
+only UI runtime auto-start for the smoke run; normal product sessions still
+start MoonClaw automatically. This keeps the ordering/reload test deterministic
+while still requiring real canonical backend events before the UI can show
+assistant replies.
+
 Runtime-service failure gate:
 
 ```bash
@@ -653,6 +673,10 @@ Code mode is sufficiently tested when:
 - a package/review model-flow gate proves package decisions are accepted,
   rejected, failed, or stale only from command-owned manifest, review, test,
   readiness, and assistant-summary evidence
+- a browser conversation stability gate proves first/second/third MoonCode
+  prompts append immediately in the visible UI, owner-tagged progress stays
+  between the owning user and assistant, completed progress is folded, and hard
+  reload preserves the transcript
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

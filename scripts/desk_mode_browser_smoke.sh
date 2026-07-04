@@ -4,6 +4,8 @@ set -euo pipefail
 HOST="127.0.0.1"
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 MOON_BIN="${MOON:-moon}"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MOONCLAW_ROOT="${MOONCLAW_ROOT:-$(cd "${REPO_ROOT}/.." && pwd)/moonclaw}"
 ROOT="$(mktemp -d "${TMPDIR:-/tmp}/moondesk-desk-browser.XXXXXX")"
 SCENARIO="${1:-all}"
 PIDS=()
@@ -66,6 +68,81 @@ random_port() {
   printf '%s\n' "$((base + RANDOM % 1000))"
 }
 
+start_moonclaw_for_fixture() {
+  local fixture_root="$1"
+  local moonclaw_log="${fixture_root}/moonclaw.log"
+  local product_dir="${fixture_root}/.moonsuite/products/moonclaw"
+  local service_path="${product_dir}/service.json"
+  local daemon_path="${product_dir}/daemon.json"
+
+  if [[ ! -f "${MOONCLAW_ROOT}/moon.mod" ]]; then
+    echo "MoonClaw checkout not found: ${MOONCLAW_ROOT}" >&2
+    exit 1
+  fi
+
+  mkdir -p "${product_dir}"
+  node -e '
+const fs = require("node:fs");
+const [servicePath, moonBin, moonclawRoot, fixtureRoot] = process.argv.slice(1);
+fs.writeFileSync(servicePath, `${JSON.stringify({
+  kind: "moondesk-moonclaw-service.v1",
+  cwd: moonclawRoot,
+  daemon: {
+    command: moonBin,
+    args: ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", fixtureRoot],
+  },
+}, null, 2)}\n`);
+' "${service_path}" "${MOON_BIN}" "${MOONCLAW_ROOT}" "${fixture_root}"
+
+  (cd "${MOONCLAW_ROOT}" && "${MOON_BIN}" run cmd/main -- daemon --port 0 --serve "${fixture_root}") >"${moonclaw_log}" 2>&1 &
+  local moonclaw_pid="$!"
+  PIDS+=("${moonclaw_pid}")
+
+  for _ in {1..400}; do
+    if node -e '
+const fs = require("node:fs");
+const path = process.argv[1];
+try {
+  const info = JSON.parse(fs.readFileSync(path, "utf8"));
+  process.exit(info.port > 0 && info.pid > 0 ? 0 : 1);
+} catch {
+  process.exit(1);
+}
+' "${daemon_path}" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 0.1
+  done
+
+  if ! node -e '
+const fs = require("node:fs");
+const path = process.argv[1];
+try {
+  const info = JSON.parse(fs.readFileSync(path, "utf8"));
+  process.exit(info.port > 0 && info.pid > 0 ? 0 : 1);
+} catch {
+  process.exit(1);
+}
+' "${daemon_path}" >/dev/null 2>&1; then
+    echo "MoonClaw daemon did not become healthy; log follows" >&2
+    cat "${moonclaw_log}" >&2
+    exit 1
+  fi
+
+  local moonclaw_port
+  moonclaw_port="$(node -e 'const fs = require("node:fs"); console.log(JSON.parse(fs.readFileSync(process.argv[1], "utf8")).port)' "${daemon_path}")"
+  for _ in {1..600}; do
+    if curl -fsS "http://localhost:${moonclaw_port}/v1/code/capabilities" >/dev/null 2>&1; then
+      return
+    fi
+    sleep 0.1
+  done
+
+  echo "MoonClaw native capabilities did not become healthy; log follows" >&2
+  cat "${moonclaw_log}" >&2
+  exit 1
+}
+
 run_browser_scenario() {
   local scenario="$1"
   local fixture_root="$2"
@@ -84,6 +161,10 @@ run_browser_scenario() {
   local chrome_profile="${fixture_root}/chrome-profile"
   local pid=""
   local chrome_pid=""
+
+  if [[ "${scenario}" == "full" ]]; then
+    start_moonclaw_for_fixture "${fixture_root}"
+  fi
 
   "${MOON_BIN}" run cmd/main -- serve "${fixture_root}" --ui ui/rabbita-desk/dist --host "${HOST}" --port "${port}" >"${log}" 2>&1 &
   pid="$!"

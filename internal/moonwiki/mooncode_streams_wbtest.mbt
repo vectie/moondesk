@@ -188,6 +188,58 @@ async test "mooncode stream state records resumable checkpoint" {
 }
 
 ///|
+test "mooncode native stream state projection reads jsonl cursor state" {
+  let root = "/tmp/moondesk-native-stream-state"
+  let session : Json = { "id": "native-demo", "mooncode_events": [] }
+  let events : Array[Json] = [
+    @mooncode.event_record(
+      id="event-1",
+      lane="runtime",
+      kind="assistant_delta",
+      title="Assistant delta",
+      status="running",
+      created_at="1",
+      detail="first",
+    ),
+    @mooncode.event_record(
+      id="event-2",
+      lane="test",
+      kind="test_result",
+      title="Tests passed",
+      status="passed",
+      created_at="2",
+      detail="second",
+    ),
+  ]
+  let text = @mooncode.stream_jsonl_text(session, events)
+  let state = mooncode_native_stream_state_projection_from_text(
+    root,
+    "native-demo",
+    text,
+    1,
+    "moondesk-ui",
+    Json::object({}),
+  )
+  assert_eq(json_string(state, "kind", default=""), "mooncode-stream-state")
+  assert_eq(json_string(state, "session_id", default=""), "native-demo")
+  assert_eq(json_int(state, "latest_sequence", default=0), 2)
+  assert_eq(json_int(state, "emitted_count", default=0), 1)
+  assert_eq(json_int(state, "next_since", default=0), 2)
+  let tail = json_array_items(state, "tail_events")
+  assert_eq(tail.length(), 1)
+  assert_eq(json_int(tail[0], "sequence", default=0), 2)
+  assert_true(
+    json_string(
+      json_object_field_or_empty(state, "live_tail_boundary"),
+      "native_blocking_tail",
+      default="",
+    ).contains(
+      @mooncode.moonclaw_native_stream_endpoint("native-demo", root, "sse", 1),
+    ),
+  )
+}
+
+///|
 test "mooncode native stream path targets typed runtime endpoint" {
   assert_eq(
     @mooncode.moonclaw_native_stream_endpoint(

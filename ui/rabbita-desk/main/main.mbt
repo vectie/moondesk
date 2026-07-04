@@ -46,6 +46,14 @@ extern "js" fn browser_initial_activity() -> String =
 
 ///|
 #cfg(target="js")
+extern "js" fn browser_initial_mooncode_runtime_mode() -> String =
+  #| () => {
+  #|   const params = new URLSearchParams(globalThis.location?.search || "");
+  #|   return params.get("mooncodeRuntime") || params.get("mooncode_runtime") || "";
+  #| }
+
+///|
+#cfg(target="js")
 extern "js" fn browser_set_activity(slug : String) =
   #| (slug) => {
   #|   if (!globalThis.location || !globalThis.history) return;

@@ -90,6 +90,7 @@ struct Model {
   mooncode_prompt : String
   mooncode_model : String
   mooncode_web_search : Bool
+  mooncode_runtime_mode : String
   mooncode_composer_status : String
   mooncode_next_client_turn_index : Int
   mooncode_optimistic_rows : Array[MoonCodeOptimisticRow]

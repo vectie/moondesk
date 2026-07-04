@@ -6,6 +6,8 @@ struct MoonCodeActivityRow {
   detail : String
   status : String
   folded : Bool
+  command_id : String
+  client_turn_id : String
 }
 
 ///|
@@ -22,7 +24,9 @@ fn render_mooncode_activity_row(row : MoonCodeActivityRow) -> @rabbita.Html {
       .data_set("testid", "mooncode-activity")
       .data_set("label", row.label)
       .data_set("status", row.status)
-      .data_set("folded", if row.folded { "true" } else { "false" }),
+      .data_set("folded", if row.folded { "true" } else { "false" })
+      .data_set("command-id", row.command_id)
+      .data_set("client-turn-id", row.client_turn_id),
     [
       div(class="mooncode-activity-dot", ""),
       div(class="mooncode-activity-copy", [

@@ -269,6 +269,19 @@ fn mooncode_default_runtime_model(result : MoonClawModelsResult) -> String {
 }
 
 ///|
+fn mooncode_runtime_service_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session_id : String,
+) -> @rabbita.Cmd {
+  if model.mooncode_runtime_mode == "manual" {
+    @rabbita.none
+  } else {
+    start_mooncode_runtime_service_cmd(dispatch, session_id)
+  }
+}
+
+///|
 fn mooncode_session_mutation_succeeded(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -286,7 +299,7 @@ fn mooncode_session_mutation_succeeded(
   )
   (
     @rabbita.batch([
-      start_mooncode_runtime_service_cmd(dispatch, session.id),
+      mooncode_runtime_service_cmd(dispatch, model, session.id),
       fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
       fetch_mooncode_stream_cmd(dispatch, session.id, 0),
       schedule_mooncode_fast_poll(dispatch),
