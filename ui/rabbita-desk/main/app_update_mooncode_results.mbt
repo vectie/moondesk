@@ -13,7 +13,9 @@ fn update_mooncode_results(
     | SavedMoonCodeStreamCheckpoint(_, _)
     | LoadedMoonCodeRuntimeEventSink(_, _) =>
       update_mooncode_stream_results(dispatch, msg, model)
-    CreatedMoonCodeSession(_) | CompletedMoonCodeCommand(_) =>
+    CreatedMoonCodeSession(_)
+    | CompletedMoonCodeCommand(_)
+    | StartedMoonCodeRuntimeService(_, _) =>
       update_mooncode_session_results(dispatch, msg, model)
     _ => (@rabbita.none, model)
   }

@@ -12,11 +12,10 @@ fn update_mooncode_session_actions(
       )
     NewMoonCodeSession =>
       (
-        sync_shell_cmd(MoonCode, Files),
+        sync_shell_cmd(MoonCode, model.activity),
         {
           ..model,
           workspace_mode: MoonCode,
-          activity: Files,
           command_open: false,
           selected_mooncode_session_id: "",
           mooncode_prompt: "",
@@ -46,18 +45,51 @@ fn mooncode_selected_session_reload_cmd(
 
 ///|
 fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
+  let keep_stream = session_id != "" &&
+    session_id == model.mooncode_stream_session_id
+  let keep_sink = session_id != "" &&
+    session_id == model.mooncode_runtime_event_sink_session_id &&
+    model.mooncode_runtime_event_sink is Some(_)
   {
     ..model,
     selected_mooncode_session_id: session_id,
-    mooncode_stream_session_id: "",
-    mooncode_stream_cursor: 0,
-    mooncode_stream_events: [],
-    mooncode_stream_status: "stream cursor reset",
+    mooncode_stream_session_id: if keep_stream {
+      model.mooncode_stream_session_id
+    } else {
+      ""
+    },
+    mooncode_stream_cursor: if keep_stream {
+      model.mooncode_stream_cursor
+    } else {
+      0
+    },
+    mooncode_stream_events: if keep_stream {
+      model.mooncode_stream_events
+    } else {
+      []
+    },
+    mooncode_stream_status: if keep_stream {
+      model.mooncode_stream_status
+    } else {
+      "stream cursor reset"
+    },
     mooncode_stream_checkpoint_session_id: "",
     mooncode_stream_checkpoint_status: "checkpoint idle",
-    mooncode_runtime_event_sink_session_id: "",
-    mooncode_runtime_event_sink_status: "loading runtime events",
-    mooncode_runtime_event_sink: None,
+    mooncode_runtime_event_sink_session_id: if keep_sink {
+      model.mooncode_runtime_event_sink_session_id
+    } else {
+      ""
+    },
+    mooncode_runtime_event_sink_status: if keep_sink {
+      model.mooncode_runtime_event_sink_status
+    } else {
+      "loading runtime events"
+    },
+    mooncode_runtime_event_sink: if keep_sink {
+      model.mooncode_runtime_event_sink
+    } else {
+      None
+    },
   }
 }
 
@@ -68,11 +100,10 @@ fn mooncode_send_composer(
 ) -> (@rabbita.Cmd, Model) {
   if model.mooncode_prompt.trim().to_owned() == "" {
     (
-      sync_shell_cmd(MoonCode, Files),
+      sync_shell_cmd(MoonCode, model.activity),
       {
         ..model,
         workspace_mode: MoonCode,
-        activity: Files,
         command_open: false,
         mooncode_composer_status: "enter a message",
       },
@@ -83,15 +114,15 @@ fn mooncode_send_composer(
         let action = mooncode_composer_action(model, session)
         let prompt = model.mooncode_prompt.trim().to_owned()
         (
-          sync_shell_batch(
-            MoonCode,
-            Files,
+          @rabbita.batch([
             send_mooncode_composer_cmd(dispatch, model, session),
-          ),
+            schedule_mooncode_fast_poll(dispatch),
+            schedule_mooncode_poll(dispatch),
+            sync_shell_cmd(MoonCode, model.activity),
+          ]),
           {
             ..model,
             workspace_mode: MoonCode,
-            activity: Files,
             command_open: false,
             mooncode_prompt: "",
             mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
@@ -107,9 +138,9 @@ fn mooncode_send_composer(
               mooncode_transcript_events(model, session).length(),
             ),
             mooncode_composer_status: if action == "steer" {
-              "steering MoonCode turn"
+              "message queued for current turn"
             } else {
-              "prompting MoonCode runtime"
+              "message queued for MoonCode"
             },
           },
         )
@@ -121,15 +152,15 @@ fn mooncode_send_composer(
           mooncode_local_draft_session_for_prompt(model, draft_session_id),
         )
         (
-          sync_shell_batch(
-            MoonCode,
-            Files,
+          @rabbita.batch([
             create_mooncode_session_cmd(dispatch, model),
-          ),
+            schedule_mooncode_fast_poll(dispatch),
+            schedule_mooncode_poll(dispatch),
+            sync_shell_cmd(MoonCode, model.activity),
+          ]),
           {
             ..model,
             workspace_mode: MoonCode,
-            activity: Files,
             command_open: false,
             mooncode_prompt: "",
             mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
@@ -144,11 +175,7 @@ fn mooncode_send_composer(
               mooncode_transcript_items(model, draft_session).length(),
               mooncode_transcript_events(model, draft_session).length(),
             ),
-            mooncode_composer_status: if model.selected_workspace_id == "" {
-              "starting General MoonCode"
-            } else {
-              "starting MoonCode session"
-            },
+            mooncode_composer_status: "message queued for MoonCode",
           },
         )
       }
@@ -181,6 +208,7 @@ fn mooncode_local_draft_session_for_prompt(
     queued_count: 1,
     transcript: [],
     mooncode_events: [],
+    mooncode_conversation: None,
     mooncode_summary: {
       event_count: 0,
       verified_test_count: 0,

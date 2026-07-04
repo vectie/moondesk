@@ -594,6 +594,99 @@
   line-height: 1.35;
 }
 
+.mooncode-activity-body {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mooncode-activity-disclosure {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mooncode-activity-summary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mooncode-muted);
+  cursor: pointer;
+  list-style: none;
+  outline: none;
+}
+
+.mooncode-activity-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mooncode-activity-summary::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--mooncode-subtle);
+  border-bottom: 1.5px solid var(--mooncode-subtle);
+  transform: rotate(-45deg);
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+
+.mooncode-activity-disclosure[open] .mooncode-activity-summary::before {
+  transform: rotate(45deg);
+  border-color: var(--mooncode-accent);
+}
+
+.mooncode-activity-summary:focus-visible {
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.mooncode-activity-summary-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.mooncode-activity-summary-action {
+  flex: 0 0 auto;
+  color: var(--mooncode-subtle);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.mooncode-activity-summary-action.when-open {
+  display: none;
+}
+
+.mooncode-activity-disclosure[open] .mooncode-activity-summary-action.when-closed {
+  display: none;
+}
+
+.mooncode-activity-disclosure[open] .mooncode-activity-summary-action.when-open {
+  display: inline;
+  color: var(--mooncode-accent);
+}
+
+.mooncode-activity-disclosure[open] .mooncode-activity-detail {
+  animation: mooncode-disclosure-open 160ms ease-out;
+}
+
+@keyframes mooncode-disclosure-open {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .mooncode-activity-detail {
   max-height: 92px;
   overflow: auto;
@@ -614,12 +707,6 @@
   display: none;
 }
 
-.mooncode-activity-folded {
-  color: var(--mooncode-subtle);
-  font-size: 11px;
-  line-height: 16px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .mooncode-new-session,
   .mooncode-session,
@@ -629,6 +716,10 @@
   .starter-chip,
   .composer-footer .primary-button {
     transition: none;
+  }
+
+  .mooncode-activity-disclosure[open] .mooncode-activity-detail {
+    animation: none;
   }
 
   .mooncode-new-session:hover,

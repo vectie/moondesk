@@ -36,8 +36,36 @@ struct MoonCodeEvent {
   path : String
   command : String
   exit_code : Int
+  tool : String?
+  tool_name : String?
   command_packet : Json?
   tool_result : Json?
+} derive(FromJson)
+
+///|
+struct MoonCodeConversationTurn {
+  kind : String
+  turn_id : String
+  command_id : String
+  status : String
+  started_at : String
+  updated_at : String
+  user : Json
+  progress : Array[Json]
+  assistant : Json
+  items : Array[Json]
+} derive(FromJson)
+
+///|
+struct MoonCodeConversation {
+  kind : String
+  protocol : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  turn_count : Int
+  source_event_count : Int
+  turns : Array[MoonCodeConversationTurn]
 } derive(FromJson)
 
 ///|
@@ -53,5 +81,6 @@ struct MoonCodeSession {
   queued_count : Int
   transcript : Array[MoonCodeMessage]
   mooncode_events : Array[MoonCodeEvent]
+  mooncode_conversation : MoonCodeConversation?
   mooncode_summary : MoonCodeSummary
 } derive(FromJson)

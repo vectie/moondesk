@@ -70,13 +70,29 @@ fn mooncode_session_accepts_steer(
   model : Model,
   session : MoonCodeSession,
 ) -> Bool {
-  ignore(model)
+  if !mooncode_runtime_service_running_for_session(model, session.id) {
+    return false
+  }
   if session.status == "running" ||
     session.status == "queued" ||
     session.queued_count > 0 {
     return true
   }
   false
+}
+
+///|
+fn mooncode_runtime_service_running_for_session(
+  model : Model,
+  session_id : String,
+) -> Bool {
+  if model.mooncode_runtime_event_sink_session_id != session_id {
+    return false
+  }
+  match model.mooncode_runtime_event_sink {
+    Some(sink) => sink.runtime_service.status == "running"
+    None => false
+  }
 }
 
 ///|
@@ -156,4 +172,9 @@ fn mooncode_context_path(model : Model) -> String {
 ///|
 fn schedule_mooncode_poll(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @rabbita.delay(dispatch(PollMoonCodeSessions), 5000)
+}
+
+///|
+fn schedule_mooncode_fast_poll(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @rabbita.delay(dispatch(PollMoonCodeSessions), 750)
 }

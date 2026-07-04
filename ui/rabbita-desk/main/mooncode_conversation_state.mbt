@@ -40,7 +40,22 @@ fn mooncode_hydrate_conversation_from_events(
   session_id : String,
   events : Array[MoonCodeEvent],
 ) -> Array[MoonCodeConversationRow] {
-  let next = mooncode_copy_conversation_rows(rows)
+  if events.length() == 0 {
+    return mooncode_copy_conversation_rows(rows)
+  }
+  let rebuild_acknowledged_session = mooncode_events_have_user(events)
+  let next : Array[MoonCodeConversationRow] = []
+  if rebuild_acknowledged_session {
+    for row in rows {
+      if row.session_id != session_id {
+        next.push(row)
+      }
+    }
+  } else {
+    for row in rows {
+      next.push(row)
+    }
+  }
   let ordered = mooncode_order_transcript_events(
     mooncode_merge_stream_events(events, []),
   )
@@ -145,7 +160,54 @@ fn mooncode_hydrate_conversation_from_events(
       dedupe_content=true,
     )
   }
+  if rebuild_acknowledged_session {
+    for row in rows {
+      if row.session_id != session_id {
+        continue
+      }
+      let role = mooncode_transcript_message_role(row.role)
+      let content = row.content.trim().to_owned()
+      if content == "" ||
+        mooncode_conversation_rows_have_message(next, session_id, role, content) ||
+        (
+          role == "user" &&
+          mooncode_transcript_events_have_acknowledged_message(
+            events, role, content,
+          )
+        ) {
+        continue
+      }
+      mooncode_push_conversation_row(
+        next,
+        session_id,
+        role,
+        content,
+        row.status,
+        row.key,
+        dedupe_content=true,
+      )
+    }
+  }
   next
+}
+
+///|
+fn mooncode_conversation_rows_have_message(
+  rows : Array[MoonCodeConversationRow],
+  session_id : String,
+  role : String,
+  content : String,
+) -> Bool {
+  let normalized_role = mooncode_transcript_message_role(role)
+  let normalized_content = content.trim().to_owned()
+  for row in rows {
+    if row.session_id == session_id &&
+      mooncode_transcript_message_role(row.role) == normalized_role &&
+      row.content.trim().to_owned() == normalized_content {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -175,6 +237,26 @@ fn mooncode_conversation_has_session(
     }
   }
   false
+}
+
+///|
+fn mooncode_conversation_has_open_user_turn(
+  rows : Array[MoonCodeConversationRow],
+  session_id : String,
+) -> Bool {
+  let mut open = false
+  for row in rows {
+    if row.session_id != session_id {
+      continue
+    }
+    let role = mooncode_transcript_message_role(row.role)
+    if role == "user" {
+      open = true
+    } else if role == "assistant" {
+      open = false
+    }
+  }
+  open
 }
 
 ///|
@@ -222,6 +304,27 @@ fn mooncode_append_conversation_user_prompt(
     "queued",
     "ui-user:\{session_id}:\{next.length()}",
     dedupe_content=false,
+  )
+  next
+}
+
+///|
+fn mooncode_append_conversation_assistant_status(
+  rows : Array[MoonCodeConversationRow],
+  session_id : String,
+  content : String,
+  status : String,
+  key : String,
+) -> Array[MoonCodeConversationRow] {
+  let next = mooncode_copy_conversation_rows(rows)
+  mooncode_push_conversation_row(
+    next,
+    session_id,
+    "assistant",
+    content,
+    status,
+    key,
+    dedupe_content=true,
   )
   next
 }
@@ -312,6 +415,12 @@ fn mooncode_push_conversation_row(
       return
     }
   }
+  if dedupe_content &&
+    mooncode_replace_optimistic_conversation_row(
+      rows, session_id, role, normalized, status, key,
+    ) {
+    return
+  }
   if dedupe_content && rows.length() > 0 {
     let last = rows[rows.length() - 1]
     if last.session_id == session_id &&
@@ -321,6 +430,29 @@ fn mooncode_push_conversation_row(
     }
   }
   rows.push({ session_id, role, content: normalized, status, key })
+}
+
+///|
+fn mooncode_replace_optimistic_conversation_row(
+  rows : Array[MoonCodeConversationRow],
+  session_id : String,
+  role : String,
+  content : String,
+  status : String,
+  key : String,
+) -> Bool {
+  let local_prefix = "ui-user:\{session_id}:"
+  for index in 0..<rows.length() {
+    let row = rows[index]
+    if row.session_id == session_id &&
+      row.role == role &&
+      row.content == content &&
+      row.key.has_prefix(local_prefix) {
+      rows[index] = { ..row, status, key }
+      return true
+    }
+  }
+  false
 }
 
 ///|

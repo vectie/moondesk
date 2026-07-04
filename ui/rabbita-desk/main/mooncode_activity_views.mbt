@@ -30,15 +30,52 @@ fn render_mooncode_activity_row(row : MoonCodeActivityRow) -> @rabbita.Html {
           strong(row.label),
           span(row.status),
         ]),
-        p(class="mooncode-activity-title", row.title),
-        if row.detail == "" {
-          span(class="mooncode-activity-detail empty", "")
-        } else if row.folded {
-          span(class="mooncode-activity-folded", "Collapsed")
-        } else {
-          pre(class="mooncode-activity-detail", row.detail)
-        },
+        render_mooncode_activity_body(row),
       ]),
+    ],
+  )
+}
+
+///|
+fn render_mooncode_activity_body(row : MoonCodeActivityRow) -> @rabbita.Html {
+  if row.folded && row.detail != "" {
+    render_mooncode_activity_disclosure(row)
+  } else {
+    div(class="mooncode-activity-body", [
+      p(class="mooncode-activity-title", row.title),
+      if row.detail == "" {
+        span(class="mooncode-activity-detail empty", "")
+      } else {
+        pre(class="mooncode-activity-detail", row.detail)
+      },
+    ])
+  }
+}
+
+///|
+fn render_mooncode_activity_disclosure(
+  row : MoonCodeActivityRow,
+) -> @rabbita.Html {
+  @html.node(
+    "details",
+    @html.Attrs::build().class("mooncode-activity-disclosure"),
+    [
+      @html.node(
+        "summary",
+        @html.Attrs::build().class("mooncode-activity-summary"),
+        [
+          span(class="mooncode-activity-summary-text", row.title),
+          span(
+            class="mooncode-activity-summary-action when-closed",
+            "Show details",
+          ),
+          span(
+            class="mooncode-activity-summary-action when-open",
+            "Hide details",
+          ),
+        ],
+      ),
+      pre(class="mooncode-activity-detail", row.detail),
     ],
   )
 }
@@ -60,10 +97,10 @@ fn mooncode_activity_row_from_event(
     return Some(
       mooncode_activity_row(
         tone="thinking",
-        label="Thinking",
+        label="Working",
         title=mooncode_activity_title(event, "Model reasoning"),
-        detail=mooncode_activity_detail(event),
-        status=event.status,
+        detail=mooncode_activity_reasoning_detail(event),
+        status=mooncode_activity_reasoning_status(event),
       ),
     )
   }
@@ -177,6 +214,29 @@ fn mooncode_activity_is_reasoning(event : MoonCodeEvent) -> Bool {
 }
 
 ///|
+fn mooncode_activity_reasoning_detail(event : MoonCodeEvent) -> String {
+  if mooncode_activity_is_planner_no_tool_call(event) {
+    "Trying another approach."
+  } else {
+    mooncode_activity_detail(event)
+  }
+}
+
+///|
+fn mooncode_activity_reasoning_status(event : MoonCodeEvent) -> String {
+  if mooncode_activity_is_planner_no_tool_call(event) {
+    "running"
+  } else {
+    event.status
+  }
+}
+
+///|
+fn mooncode_activity_is_planner_no_tool_call(event : MoonCodeEvent) -> Bool {
+  event.detail.contains("no usable MoonCode tool calls")
+}
+
+///|
 fn mooncode_activity_is_tool_start(event : MoonCodeEvent) -> Bool {
   event.kind == "tool_call" ||
   event.kind == "tool_started" ||
@@ -242,6 +302,7 @@ fn mooncode_activity_is_runtime(event : MoonCodeEvent) -> Bool {
 ///|
 fn mooncode_activity_is_control_bookkeeping(event : MoonCodeEvent) -> Bool {
   event.kind == "runtime.command_queued" ||
+  (event.kind == "status" && event.title == "Runtime status") ||
   event.kind == "runtime.turn_started" ||
   event.kind == "runtime.turn_finished" ||
   event.kind == "runtime.service_started" ||
@@ -752,14 +813,15 @@ fn mooncode_activity_runtime_detail(event : MoonCodeEvent) -> String {
 fn mooncode_activity_clean_title(event : MoonCodeEvent) -> String? {
   match event.kind {
     "runtime.command_queued" => Some("Queued")
-    "runtime.planner_started" => Some("Planning next step")
-    "runtime.planner_selected" => Some("Selected next action")
+    "runtime.planner_started" => Some("Reviewing the request")
+    "runtime.planner_selected" => Some("Choosing what to do next")
     "runtime.turn_started" => Some("Started working")
     "runtime.turn_finished" => Some("Finished step")
-    "reasoning_delta" | "reasoning_message" => Some("Thinking")
+    "reasoning_delta" | "reasoning_message" =>
+      Some("Working through the request")
     _ =>
       if event.kind == "runtime_update" && event.detail.contains("asking model") {
-        Some("Choosing next action")
+        Some("Reviewing the request")
       } else if event.kind == "runtime_update" &&
         (
           event.detail.contains("model-tool-calls") ||
@@ -768,10 +830,10 @@ fn mooncode_activity_clean_title(event : MoonCodeEvent) -> String? {
             event.detail.contains("tool call")
           )
         ) {
-        Some("Selected next action")
+        Some("Choosing what to do next")
       } else if event.title.contains("planner") ||
         event.title.contains("Planner") {
-        Some("Thinking")
+        Some("Working through the request")
       } else {
         None
       }
@@ -780,6 +842,14 @@ fn mooncode_activity_clean_title(event : MoonCodeEvent) -> String? {
 
 ///|
 fn mooncode_activity_tool_name(event : MoonCodeEvent) -> String {
+  match event.tool {
+    Some(tool) if tool != "" => return tool
+    _ => ()
+  }
+  match event.tool_name {
+    Some(tool_name) if tool_name != "" => return tool_name
+    _ => ()
+  }
   let detail = mooncode_activity_detail_json(event)
   let tool = mooncode_activity_first_json_string(detail, [
     "tool", "tool_name", "name",
@@ -1044,10 +1114,10 @@ fn mooncode_activity_clean_detail(event : MoonCodeEvent) -> String? {
           event.detail.contains("selected") &&
           event.detail.contains("tool call")
         ) {
-        Some("Selected the next action.")
+        Some("Chose what to do next.")
       } else if event.detail.contains("asking model") &&
         event.detail.contains("tool batch") {
-        Some("Choosing the next action.")
+        Some("Reviewed the request.")
       } else {
         None
       }

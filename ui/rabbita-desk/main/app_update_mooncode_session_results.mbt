@@ -64,17 +64,31 @@ fn update_mooncode_session_results(
         },
       )
     LoadedMoonCodeSessions(Ok(mooncode_sessions)) => {
-      let mooncode_sessions = mooncode_merge_session_listing(
-        model.mooncode_sessions,
-        mooncode_sessions,
+      let mooncode_sessions = mooncode_preserve_selected_inflight_session(
+        model,
+        mooncode_merge_session_listing(
+          model.mooncode_sessions,
+          mooncode_sessions,
+        ),
       )
+      match mooncode_find_acknowledged_draft_session(model, mooncode_sessions) {
+        Some(session) =>
+          return mooncode_session_mutation_succeeded(
+            dispatch,
+            { ..model, mooncode_sessions, },
+            session,
+            "MoonCode session started",
+          )
+        None => ()
+      }
       let selected = if model.selected_mooncode_session_id != "" &&
         mooncode_session_exists(
           mooncode_sessions,
           model.selected_mooncode_session_id,
         ) {
         model.selected_mooncode_session_id
-      } else if mooncode_new_session_draft_active(model) {
+      } else if mooncode_new_session_draft_active(model) ||
+        mooncode_draft_session(model) is Some(_) {
         ""
       } else {
         first_mooncode_session_id(
@@ -163,9 +177,7 @@ fn update_mooncode_session_results(
         },
       )
     CreatedMoonCodeSession(Ok(session)) =>
-      mooncode_session_mutation_succeeded(
-        dispatch, model, session, "MoonCode session started",
-      )
+      mooncode_created_session_succeeded(dispatch, model, session)
     CreatedMoonCodeSession(Err(error)) =>
       (@rabbita.none, { ..model, mooncode_composer_status: error })
     CompletedMoonCodeCommand(Ok(session)) =>
@@ -174,7 +186,53 @@ fn update_mooncode_session_results(
       )
     CompletedMoonCodeCommand(Err(error)) =>
       (@rabbita.none, { ..model, mooncode_composer_status: error })
+    StartedMoonCodeRuntimeService(session_id, Ok(session)) =>
+      mooncode_runtime_service_succeeded(dispatch, model, session_id, session)
+    StartedMoonCodeRuntimeService(session_id, Err(error)) =>
+      if session_id != model.selected_mooncode_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          schedule_mooncode_fast_poll(dispatch),
+          {
+            ..model,
+            mooncode_conversation_rows: mooncode_append_conversation_assistant_status(
+              model.mooncode_conversation_rows,
+              session_id,
+              error,
+              "failed",
+              "runtime-service-error:\{session_id}",
+            ),
+            mooncode_composer_status: error,
+          },
+        )
+      }
     _ => (@rabbita.none, model)
+  }
+}
+
+///|
+fn mooncode_created_session_succeeded(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session : MoonCodeSession,
+) -> (@rabbita.Cmd, Model) {
+  if model.selected_mooncode_session_id == session.id {
+    (
+      @rabbita.none,
+      {
+        ..model,
+        mooncode_sessions: mooncode_upsert_session(
+          model.mooncode_sessions,
+          session,
+        ),
+        mooncode_composer_status: "MoonCode session started",
+      },
+    )
+  } else {
+    mooncode_session_mutation_succeeded(
+      dispatch, model, session, "MoonCode session started",
+    )
   }
 }
 
@@ -233,25 +291,26 @@ fn mooncode_session_mutation_succeeded(
     session.id,
   )
   (
-    sync_shell_batch(
-      MoonCode,
-      Files,
-      @rabbita.batch([
-        fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
-        fetch_mooncode_stream_cmd(dispatch, session.id, 0),
-        fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
-        schedule_mooncode_poll(dispatch),
-      ]),
-    ),
+    @rabbita.batch([
+      fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
+      fetch_mooncode_stream_cmd(dispatch, session.id, 0),
+      fetch_mooncode_runtime_event_sink_cmd(dispatch, session.id),
+      start_mooncode_runtime_service_cmd(dispatch, session.id),
+      schedule_mooncode_fast_poll(dispatch),
+      schedule_mooncode_poll(dispatch),
+      sync_shell_cmd(MoonCode, model.activity),
+    ]),
     {
       ..model,
       workspace_mode: MoonCode,
-      activity: Files,
       mooncode_sessions: mooncode_upsert_session(
         model.mooncode_sessions,
         session,
       ),
       selected_mooncode_session_id: session.id,
+      mooncode_runtime_event_sink_session_id: session.id,
+      mooncode_runtime_event_sink: None,
+      mooncode_runtime_event_sink_status: "starting runtime service",
       mooncode_prompt: "",
       mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
         pending_prompts,
@@ -262,6 +321,48 @@ fn mooncode_session_mutation_succeeded(
       mooncode_composer_status: status,
     },
   )
+}
+
+///|
+fn mooncode_runtime_service_succeeded(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session_id : String,
+  session : MoonCodeSession,
+) -> (@rabbita.Cmd, Model) {
+  if session_id != model.selected_mooncode_session_id {
+    (
+      @rabbita.none,
+      {
+        ..model,
+        mooncode_sessions: mooncode_upsert_session(
+          model.mooncode_sessions,
+          session,
+        ),
+      },
+    )
+  } else {
+    (
+      @rabbita.batch([
+        fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
+        fetch_mooncode_stream_cmd(
+          dispatch,
+          session_id,
+          model.mooncode_stream_cursor,
+        ),
+        fetch_mooncode_runtime_event_sink_cmd(dispatch, session_id),
+        schedule_mooncode_fast_poll(dispatch),
+      ]),
+      {
+        ..model,
+        mooncode_sessions: mooncode_upsert_session(
+          model.mooncode_sessions,
+          session,
+        ),
+        mooncode_composer_status: "MoonCode runtime updated",
+      },
+    )
+  }
 }
 
 ///|

@@ -63,12 +63,73 @@ fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
     queued_count: 1,
     transcript: [],
     mooncode_events: [],
+    mooncode_conversation: None,
     mooncode_summary: {
       event_count: 0,
       verified_test_count: 0,
       pending_diff_count: 0,
     },
   })
+}
+
+///|
+fn mooncode_find_acknowledged_draft_session(
+  model : Model,
+  sessions : Array[MoonCodeSession],
+) -> MoonCodeSession? {
+  if model.selected_mooncode_session_id != "" {
+    return None
+  }
+  let draft_session_id = mooncode_draft_session_id(model)
+  if !mooncode_session_has_pending_prompt(model, draft_session_id) {
+    return None
+  }
+  for session in sessions {
+    if !mooncode_session_matches_draft_workspace(model, session) {
+      continue
+    }
+    for prompt in model.mooncode_pending_prompts {
+      if prompt.session_id == draft_session_id &&
+        mooncode_session_acknowledges_prompt(session, prompt) {
+        return Some(session)
+      }
+    }
+  }
+  None
+}
+
+///|
+fn mooncode_session_matches_draft_workspace(
+  model : Model,
+  session : MoonCodeSession,
+) -> Bool {
+  if model.selected_workspace_id == "" {
+    session.workspace_id.contains("general-mooncode") ||
+    session.workspace_name == "General MoonCode" ||
+    session.workspace_name == "General"
+  } else {
+    session.workspace_id == model.selected_workspace_id
+  }
+}
+
+///|
+fn mooncode_session_acknowledges_prompt(
+  session : MoonCodeSession,
+  prompt : MoonCodePendingPrompt,
+) -> Bool {
+  if session.title.trim().to_owned() == prompt.content {
+    return true
+  }
+  if mooncode_events_acknowledge_pending_prompt(session.mooncode_events, prompt) {
+    return true
+  }
+  for message in session.transcript {
+    if message.role == "user" &&
+      message.content.trim().to_owned() == prompt.content {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -82,6 +143,7 @@ fn mooncode_new_session_draft_active(model : Model) -> Bool {
   model.mooncode_composer_status == "new session draft" ||
   model.mooncode_composer_status == "draft" ||
   model.mooncode_composer_status == "enter a message" ||
+  model.mooncode_composer_status == "message queued for MoonCode" ||
   model.mooncode_composer_status == "starting MoonCode session" ||
   model.mooncode_composer_status == "starting General MoonCode"
 }
@@ -138,6 +200,62 @@ fn mooncode_merge_session_listing(
     }
   }
   merged
+}
+
+///|
+fn mooncode_preserve_selected_inflight_session(
+  model : Model,
+  incoming : Array[MoonCodeSession],
+) -> Array[MoonCodeSession] {
+  let selected = model.selected_mooncode_session_id
+  if selected == "" || mooncode_session_exists(incoming, selected) {
+    return incoming
+  }
+  if !mooncode_selected_session_has_inflight_state(model, selected) {
+    return incoming
+  }
+  match mooncode_find_session(model.mooncode_sessions, selected) {
+    Some(session) =>
+      if mooncode_session_matches_selected_workspace(model, session) {
+        let next : Array[MoonCodeSession] = [session]
+        for listed in incoming {
+          next.push(listed)
+        }
+        next
+      } else {
+        incoming
+      }
+    None => incoming
+  }
+}
+
+///|
+fn mooncode_selected_session_has_inflight_state(
+  model : Model,
+  session_id : String,
+) -> Bool {
+  mooncode_session_has_pending_prompt(model, session_id) ||
+  mooncode_conversation_has_session(
+    model.mooncode_conversation_rows,
+    session_id,
+  ) ||
+  (
+    model.mooncode_stream_session_id == session_id &&
+    model.mooncode_stream_events.length() > 0
+  ) ||
+  (
+    model.mooncode_runtime_event_sink_session_id == session_id &&
+    model.mooncode_runtime_event_sink is Some(_)
+  )
+}
+
+///|
+fn mooncode_session_matches_selected_workspace(
+  model : Model,
+  session : MoonCodeSession,
+) -> Bool {
+  model.selected_workspace_id == "" ||
+  session.workspace_id == model.selected_workspace_id
 }
 
 ///|

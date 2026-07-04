@@ -78,8 +78,20 @@ fn mooncode_stream_event_from_json(event : Json) -> MoonCodeEvent {
     path: json_string_value(event, "path", default=""),
     command: json_string_value(event, "command", default=""),
     exit_code: json_int_value(event, "exit_code", default=0),
+    tool: mooncode_stream_optional_string(event, "tool"),
+    tool_name: mooncode_stream_optional_string(event, "tool_name"),
     command_packet: json_field(event, "command_packet"),
     tool_result: json_field(event, "tool_result"),
+  }
+}
+
+///|
+fn mooncode_stream_optional_string(event : Json, key : String) -> String? {
+  let value = json_string_value(event, key, default="")
+  if value == "" {
+    None
+  } else {
+    Some(value)
   }
 }
 
@@ -377,6 +389,8 @@ fn mooncode_stream_event(
   detail~ : String,
   path? : String = "",
   command? : String = "",
+  tool? : String = "",
+  tool_name? : String = "",
   command_packet? : Json? = None,
   tool_result? : Json? = None,
 ) -> MoonCodeEvent {
@@ -396,6 +410,16 @@ fn mooncode_stream_event(
     path,
     command,
     exit_code: 0,
+    tool: if tool == "" {
+      None
+    } else {
+      Some(tool)
+    },
+    tool_name: if tool_name == "" {
+      None
+    } else {
+      Some(tool_name)
+    },
     command_packet,
     tool_result,
   }
