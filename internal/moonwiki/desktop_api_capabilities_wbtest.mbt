@@ -4,6 +4,18 @@ fn desktop_capability_route_methods(contract : Json) -> Array[String] {
 }
 
 ///|
+fn assert_capability_string_array(
+  capability : Json,
+  field : String,
+  expected : Array[String],
+) -> Unit raise {
+  assert_eq(
+    json_string_array_items(capability, field).join("\n"),
+    expected.join("\n"),
+  )
+}
+
+///|
 test "desktop api capabilities publish core route contracts" {
   let capability = desktop_api_capabilities_json()
   assert_eq(
@@ -43,6 +55,36 @@ test "desktop api capabilities publish core route contracts" {
       contract.methods.join(", "),
     )
   }
+}
+
+///|
+test "desktop api capabilities publish portable route contract" {
+  let capability = desktop_api_capabilities_json()
+  let snapshot_routes = @desk.desktop_portable_api_snapshot_routes()
+  let workspace_content_routes = @desk.desktop_portable_api_workspace_content_routes()
+  let supported_patterns = @desk.desktop_portable_api_supported_route_patterns()
+
+  assert_capability_string_array(
+    capability, "portable_api_snapshot_routes", snapshot_routes,
+  )
+  assert_capability_string_array(
+    capability, "portable_api_workspace_content_routes", workspace_content_routes,
+  )
+  assert_capability_string_array(
+    capability, "portable_api_supported_route_patterns", supported_patterns,
+  )
+
+  assert_true(snapshot_routes.contains(@desk.workspaces_route()))
+  assert_true(snapshot_routes.contains(@desk.books_route("patterns")))
+  assert_true(snapshot_routes.contains(@desk.books_route("base-types")))
+  assert_true(snapshot_routes.contains(@desk.books_route("template-registry")))
+  assert_true(
+    workspace_content_routes.contains(@desk.workspace_action_route("raw")),
+  )
+  assert_true(workspace_content_routes.contains(@desk.workspace_file_route()))
+  assert_true(supported_patterns.contains(@desk.workspace_site_route()))
+  assert_false(supported_patterns.contains(@desk.town_route("progress")))
+  assert_false(supported_patterns.contains(@desk.town_route("dispatch")))
 }
 
 ///|

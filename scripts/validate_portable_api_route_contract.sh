@@ -21,4 +21,14 @@ if ! rg -n '@desk\.desktop_portable_api_snapshot_routes' "${ROOT}/internal/moonw
   exit 1
 fi
 
+if ! rg -n '@desk\.desktop_portable_api_supported_route_patterns' "${ROOT}/internal/moonwiki/desktop_api_capabilities.mbt" >/dev/null; then
+  echo "Desktop API capabilities must publish the core portable API route contract" >&2
+  exit 1
+fi
+
+if ! rg -n 'portable_api_supported_route_patterns' "${ROOT}/scripts/desktop_api_http_method_contract_smoke.mjs" >/dev/null; then
+  echo "Live desktop API contract smoke must assert portable API route publication" >&2
+  exit 1
+fi
+
 echo "Portable API route contract validation passed"

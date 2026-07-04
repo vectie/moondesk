@@ -712,3 +712,8 @@ The next scheduled phases are now explicit:
   `vectie/moondesk/core`, publishes `api_supported_route_patterns` in portable
   manifests/status payloads, and the migration wall rejects a MoonWiki-local
   portable API route list returning.
+- Phase 44: host-visible portable API contract publication. The desktop
+  capabilities endpoint now publishes portable snapshot routes, workspace
+  content route patterns, and the combined portable supported route set from
+  `vectie/moondesk/core`; the live HTTP smoke and Phase 8 wall assert those
+  fields before method-contract coverage runs.

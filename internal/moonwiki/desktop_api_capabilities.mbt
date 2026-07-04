@@ -18,6 +18,15 @@ fn desktop_api_capabilities_json() -> Json {
         @desk.desktop_api_required_endpoints(),
       ),
       "desktop_route_contracts": Json::array(desktop_api_route_contract_jsons()),
+      "portable_api_snapshot_routes": json_from_string_array(
+        @desk.desktop_portable_api_snapshot_routes(),
+      ),
+      "portable_api_workspace_content_routes": json_from_string_array(
+        @desk.desktop_portable_api_workspace_content_routes(),
+      ),
+      "portable_api_supported_route_patterns": json_from_string_array(
+        @desk.desktop_portable_api_supported_route_patterns(),
+      ),
     },
     ok=true,
     status="ready",

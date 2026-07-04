@@ -1723,6 +1723,48 @@ Exit tests:
   API contract coverage, so the portable offline subset cannot silently drift
   back into a product-local mirror.
 
+## Phase 44 - Host-Visible Portable API Contract Publication
+
+Status: implemented by making the portable offline API subset visible through
+the same desktop capability endpoint that publishes the generic host route
+contract.
+
+Problem:
+
+- Phase 43 moved the portable API subset into `vectie/moondesk/core`, but live
+  hosts still published only `desktop_route_contracts` at
+  `/api/desktop/capabilities`.
+- A clean first-time architecture should not require app-tool export code,
+  portable manifests, or external consumers to infer the offline supported
+  subset from generated bundle files.
+- The portable subset is not the full desktop API. It must be explicit and
+  host-visible as snapshot routes plus dynamic workspace content route
+  patterns, while town/MoonClaw/control routes remain outside the offline
+  contract.
+
+Work:
+
+- Extend `/api/desktop/capabilities` with
+  `portable_api_snapshot_routes`,
+  `portable_api_workspace_content_routes`, and
+  `portable_api_supported_route_patterns`, all derived directly from the
+  public core portable route helpers.
+- Keep `desktop_route_contracts` as the full host route/method contract and
+  treat the new portable fields as the offline app-tool support contract.
+- Extend the live HTTP route-method smoke so the running host proves the
+  portable contract is published before it checks route method behavior.
+- Extend the portable route ownership gate so deleting the capability
+  publication or live smoke assertion fails the Phase 8 wall.
+
+Exit tests:
+
+- MoonWiki capability tests prove the portable fields mirror
+  `@desk.desktop_portable_api_*` exactly and exclude online-only town routes.
+- the live HTTP smoke proves a real host publishes snapshot routes, workspace
+  content route patterns, and the combined supported portable route set.
+- the Phase 8 wall keeps the portable route contract source-owned,
+  host-visible, and covered by live integration evidence.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

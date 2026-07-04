@@ -47,6 +47,24 @@ function unsupportedMethod(methods) {
   return "PUT";
 }
 
+function capabilityStringArray(capabilities, field) {
+  const value = capabilities[field];
+  assert(
+    Array.isArray(value),
+    `Desktop capabilities did not publish ${field}: ${JSON.stringify(capabilities)}`,
+  );
+  return value.map(item => String(item));
+}
+
+function assertIncludesAll(haystack, needles, label) {
+  for (const needle of needles) {
+    assert(
+      haystack.includes(needle),
+      `${label} is missing ${needle}: ${JSON.stringify(haystack)}`,
+    );
+  }
+}
+
 async function requestMethodContract405(url, method, expectedMethods) {
   const response = await fetch(url, { method });
   const text = await response.text();
@@ -111,6 +129,43 @@ async function runSmoke() {
     "Retired town control route must not be published",
   );
 
+  const portableSnapshotRoutes = capabilityStringArray(
+    capabilities,
+    "portable_api_snapshot_routes",
+  );
+  const portableWorkspaceContentRoutes = capabilityStringArray(
+    capabilities,
+    "portable_api_workspace_content_routes",
+  );
+  const portableSupportedPatterns = capabilityStringArray(
+    capabilities,
+    "portable_api_supported_route_patterns",
+  );
+  assertIncludesAll(portableSnapshotRoutes, [
+    "/api/workspaces",
+    "/api/books/patterns",
+    "/api/books/base-types",
+    "/api/books/template-registry",
+  ], "portable_api_snapshot_routes");
+  assertIncludesAll(portableWorkspaceContentRoutes, [
+    "/api/workspaces/<workspace-id>/entries",
+    "/api/workspaces/<workspace-id>/preview",
+    "/api/workspaces/<workspace-id>/raw",
+    "/api/workspaces/<workspace-id>/file/<path>",
+    "/api/workspaces/<workspace-id>/site/<path>",
+  ], "portable_api_workspace_content_routes");
+  assertIncludesAll(portableSupportedPatterns, [
+    ...portableSnapshotRoutes,
+    ...portableWorkspaceContentRoutes,
+  ], "portable_api_supported_route_patterns");
+  assert(
+    !portableSupportedPatterns.includes("/api/town/progress") &&
+      !portableSupportedPatterns.includes("/api/town/dispatch"),
+    `portable_api_supported_route_patterns must stay offline-only: ${
+      JSON.stringify(portableSupportedPatterns)
+    }`,
+  );
+
   const headCapabilities = await fetch(
     `${moondesk.base}/api/desktop/capabilities`,
     { method: "HEAD" },
@@ -149,6 +204,7 @@ async function runSmoke() {
     checked_route_count: checkedRoutes.length,
     checked: [
       "HEAD /api/desktop/capabilities",
+      "portable API route contract publication",
       "POST /api/town/control -> 404",
       ...checkedRoutes,
     ],
