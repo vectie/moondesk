@@ -910,6 +910,132 @@ Exit tests:
   `mooncode_conversation`
 - no legacy `.moonclaw` sidecar root is created
 
+## Phase 25 - Explicit Visible Progress Contract
+
+Status: implemented as the progress-projection allowlist gate.
+
+Problem:
+
+- The append-only conversation projection had one remaining stale shape:
+  after user, assistant, failure, and lifecycle records were handled, any other
+  command-scoped runtime event with a title/detail could become visible chat
+  progress.
+- That made the UI depend on defensive string cleanup. Internal records such as
+  generic `runtime_update`, runtime bookkeeping, debug text, or model/tool JSON
+  could still appear between a user prompt and the assistant answer.
+- A first-time clean implementation should have a contract boundary: durable
+  runtime evidence is kept for diagnostics, but only explicit user-visible
+  progress events can enter `mooncode_conversation`.
+
+Work:
+
+- Remove the catch-all runtime-to-progress projection branch.
+- Add an explicit visible-progress allowlist for command-scoped
+  `runtime.turn_started`, reasoning, tool call/result, test, diff, and artifact
+  evidence.
+- Normalize visible progress copy at the backend projection boundary before it
+  reaches the UI:
+  - runtime start becomes "Starting request"
+  - planner/model reasoning becomes "Thinking" with user-facing detail
+  - context lookup, file edits, commands, checks, package/artifact work, and
+    answer preparation each get stable human copy
+- Keep arbitrary runtime records durable in event logs and diagnostic reports,
+  but out of the chat transcript.
+- Add projection regressions proving arbitrary scoped `runtime_update` records
+  do not become progress and allowed event-backed progress is shown with clean
+  wording.
+
+Exit tests:
+
+- a command-scoped generic runtime update cannot create a progress row
+- MoonClaw turn-start, reasoning, and tool-call evidence still create progress
+  rows between the user prompt and assistant reply
+- visible progress rows do not contain MoonClaw/runtime bookkeeping,
+  `model-tool-calls`, command ids, or raw tool JSON
+- final assistant replies still complete the same command turn in append order
+
+## Phase 26 - Model Planner Evidence Contract
+
+Status: planned.
+
+Problem:
+
+- Deterministic `runtime_tool_calls` paths are covered, but model-planned turns
+  still need a hard contract proving that MoonClaw emitted real planner evidence
+  or a durable command-scoped planner failure.
+- The UI must not show "working" from local state when no MoonClaw start,
+  reasoning, tool-call, assistant, or failure event exists.
+
+Work:
+
+- Define the required event sequence for model-planned prompt turns:
+  command prompt -> runtime service start -> runtime turn start -> planner
+  evidence or planner failure -> tool/result evidence -> assistant/failure.
+- Add a deterministic fixture gate for model planner output without requiring
+  live external model credentials.
+- Add a live/manual model gate that records model name, tool schema, selected
+  tools, tool results, final answer, and failure mode.
+- Treat missing planner evidence as a backend/runtime contract failure, not UI
+  "thinking".
+
+## Phase 27 - Turn Ownership and Abort Contract
+
+Status: planned.
+
+Problem:
+
+- Steer/cancel are now kept out of chat, but true interrupt behavior depends on
+  MoonClaw emitting explicit abort or scheduler-boundary evidence.
+- UI rows should never move because a late control event lacks turn ownership.
+
+Work:
+
+- Add command/run ownership ids to every visible progress, assistant, failure,
+  abort, and recovery record.
+- Add tests for queued prompt withdrawal, active-turn cancel, dropped cancel,
+  deferred steer, applied steer, and future interruptible-tool abort evidence.
+- Keep control history folded outside the user/assistant transcript unless
+  MoonClaw emits command-scoped user-visible failure/abort evidence.
+
+## Phase 28 - Package and Review Model Flow Gate
+
+Status: planned.
+
+Problem:
+
+- Package/review flows are currently covered by deterministic tool and artifact
+  gates, but model-backed review decisions can still become broad and
+  nondeterministic.
+
+Work:
+
+- Define a command-scoped package/review event sequence with package manifest,
+  diff review, test evidence, final readiness, and assistant summary.
+- Add fixture tests for accepted, rejected, failed, and stale package/review
+  runs.
+- Add a scheduled/live gate for one real model package/review turn, separate
+  from deterministic merge tests.
+
+## Phase 29 - Browser Conversation Stability Gate
+
+Status: planned.
+
+Problem:
+
+- Backend projection fixes must be protected in the actual browser surface:
+  first, second, and third user turns must append immediately, progress must
+  stay between the owning user and assistant, and reload/polling must not erase
+  old turns.
+
+Work:
+
+- Extend the browser smoke to assert first/second/third prompt behavior with
+  real runtime-service starts.
+- Fail on front-page flashes after new chat submit, duplicate messages,
+  reordering, disappearing old turns, or non-collapsed completed progress.
+- Keep the visible transcript contract simple: user row, folded progress for
+  that command, assistant row, repeated append-only.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

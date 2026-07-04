@@ -232,7 +232,7 @@ fn conversation_apply_runtime_event_to_turn(
       turn.assistant_delta = ""
     }
     turn.status = "failed"
-  } else {
+  } else if conversation_event_is_visible_progress(event) {
     let progress = conversation_progress_item(event)
     if conversation_message_content(progress) != "" ||
       json_string(progress, "title", default="") != "" {
@@ -375,28 +375,240 @@ fn conversation_progress_item(event : Json) -> Json {
 ///|
 fn conversation_progress_title(event : Json) -> String {
   let kind = json_string(event, "kind", default="")
+  let event_name = json_string(event, "event", default="")
+  let lane = json_string(event, "lane", default="")
   let title = json_string(event, "title", default="")
-  if kind == "reasoning_delta" || kind == "reasoning_message" {
+  let tool = conversation_event_tool_name(event)
+  if kind == "runtime.turn_started" {
+    "Starting request"
+  } else if kind == "reasoning_delta" || kind == "reasoning_message" {
     "Thinking"
+  } else if event_name == event_tool_call() || kind == event_tool_call() {
+    conversation_tool_progress_title(lane, tool, started=true)
+  } else if event_name == event_tool_result() {
+    conversation_tool_progress_title(lane, tool, started=false)
+  } else if kind == event_test_result() {
+    "Checked the result"
+  } else if kind == event_package_built() {
+    "Prepared output"
+  } else if lane == "diff" {
+    "Edited files"
+  } else if lane == "artifact" {
+    "Prepared output"
   } else if title != "" {
     title
+  } else {
+    "Working on request"
+  }
+}
+
+///|
+fn conversation_progress_detail(event : Json) -> String {
+  let kind = json_string(event, "kind", default="")
+  let event_name = json_string(event, "event", default="")
+  let lane = json_string(event, "lane", default="")
+  let tool = conversation_event_tool_name(event)
+  let detail = json_string(event, "detail", default="").trim().to_owned()
+  if kind == "runtime.turn_started" {
+    "Started working on the request."
+  } else if kind == "reasoning_delta" || kind == "reasoning_message" {
+    conversation_reasoning_progress_detail(detail)
+  } else if event_name == event_tool_call() || kind == event_tool_call() {
+    conversation_tool_progress_detail(event, lane, tool, started=true)
+  } else if event_name == event_tool_result() {
+    conversation_tool_progress_detail(event, lane, tool, started=false)
+  } else if kind == event_test_result() {
+    "Finished checking the result."
+  } else if kind == event_package_built() {
+    "Prepared the requested output."
+  } else if lane == "diff" {
+    "Updated the relevant files."
+  } else if lane == "artifact" {
+    "Prepared the requested output."
+  } else if detail == "" {
+    ""
+  } else {
+    conversation_sanitize_progress_detail(detail)
+  }
+}
+
+///|
+fn conversation_reasoning_progress_detail(detail : String) -> String {
+  if detail.contains("model-tool-calls") ||
+    (detail.contains("selected") && detail.contains("tool call")) {
+    "Chose what to do next."
+  } else if detail.contains("asking model") {
+    "Reviewed the request."
+  } else if conversation_progress_text_looks_internal(detail) {
+    "Thought through the request."
+  } else if detail == "" {
+    "Reviewed the request."
+  } else {
+    detail
+  }
+}
+
+///|
+fn conversation_tool_progress_title(
+  lane : String,
+  tool : String,
+  started~ : Bool,
+) -> String {
+  match lane {
+    "diff" => if started { "Editing files" } else { "Updated files" }
+    "test" => if started { "Checking result" } else { "Checked result" }
+    "artifact" => if started { "Preparing output" } else { "Prepared output" }
+    "review" => if started { "Preparing answer" } else { "Prepared answer" }
+    _ =>
+      if conversation_tool_is_context_lookup(tool) {
+        "Checking context"
+      } else if tool == "shell" || tool == "moon_cmd" || tool == "moon_check" {
+        if started {
+          "Running command"
+        } else {
+          "Finished command"
+        }
+      } else if started {
+        "Choosing next action"
+      } else {
+        "Finished action"
+      }
+  }
+}
+
+///|
+fn conversation_tool_progress_detail(
+  event : Json,
+  lane : String,
+  tool : String,
+  started~ : Bool,
+) -> String {
+  let status = json_string(event, "status", default="")
+  if status == "failed" {
+    return "A step failed before the assistant finished."
+  }
+  let path = json_string(event, "path", default="").trim().to_owned()
+  match lane {
+    "diff" =>
+      if started {
+        if path == "" {
+          "Preparing file changes."
+        } else {
+          "Preparing changes to `\{path}`."
+        }
+      } else if path == "" {
+        "Updated the relevant files."
+      } else {
+        "Updated `\{path}`."
+      }
+    "test" =>
+      if started {
+        "Running the requested check."
+      } else {
+        "Finished checking the result."
+      }
+    "artifact" =>
+      if started {
+        "Preparing the requested output."
+      } else {
+        "Prepared the requested output."
+      }
+    "review" =>
+      if started {
+        "Preparing the answer."
+      } else {
+        "Prepared the answer."
+      }
+    _ =>
+      if conversation_tool_is_context_lookup(tool) {
+        "Checking relevant project context."
+      } else if tool == "shell" || tool == "moon_cmd" || tool == "moon_check" {
+        if started {
+          "Running a command."
+        } else {
+          "Finished the command."
+        }
+      } else if started {
+        "Chose what to do next."
+      } else {
+        "Finished a work step."
+      }
+  }
+}
+
+///|
+fn conversation_tool_is_context_lookup(tool : String) -> Bool {
+  tool == "read" ||
+  tool == "grep" ||
+  tool == "glob" ||
+  tool == "web_search" ||
+  tool == "web_fetch"
+}
+
+///|
+fn conversation_event_tool_name(event : Json) -> String {
+  let tool_name = json_string(event, "tool_name", default="")
+  if tool_name != "" {
+    return tool_name
+  }
+  let tool = json_string(event, "tool", default="")
+  if tool != "" {
+    return tool
+  }
+  let kind = json_string(event, "kind", default="")
+  if kind == event_tool_call() {
+    ""
   } else {
     kind
   }
 }
 
 ///|
-fn conversation_progress_detail(event : Json) -> String {
-  let detail = json_string(event, "detail", default="").trim().to_owned()
-  if detail == "" {
-    ""
-  } else if detail.contains("model-tool-calls") {
-    "Chose what to do next."
-  } else if detail.contains("asking model") {
-    "Reviewed the request."
+fn conversation_sanitize_progress_detail(detail : String) -> String {
+  if conversation_progress_text_looks_internal(detail) {
+    "Prepared the response."
   } else {
     detail
   }
+}
+
+///|
+fn conversation_progress_text_looks_internal(text : String) -> Bool {
+  text.contains("MoonClaw") ||
+  text.contains("moonclaw") ||
+  text.contains("MoonCode native") ||
+  text.contains("runtime") ||
+  text.contains("Runtime") ||
+  text.contains("command_id") ||
+  text.contains("client_turn_id") ||
+  text.contains("turn_id") ||
+  text.contains("model-tool-calls") ||
+  text.contains("tool call") ||
+  text.contains("assistant_delta") ||
+  text.contains("command.prompt") ||
+  text.contains("stdout") ||
+  text.contains("stderr") ||
+  text.contains("debug") ||
+  text.contains("trace") ||
+  text.contains("\"role\"") ||
+  text.contains("\"kind\"")
+}
+
+///|
+fn conversation_event_is_visible_progress(event : Json) -> Bool {
+  let kind = json_string(event, "kind", default="")
+  let lane = json_string(event, "lane", default="")
+  let event_name = json_string(event, "event", default="")
+  kind == "runtime.turn_started" ||
+  kind == "reasoning_delta" ||
+  kind == "reasoning_message" ||
+  kind == event_tool_call() ||
+  event_name == event_tool_call() ||
+  event_name == event_tool_result() ||
+  kind == event_test_result() ||
+  kind == event_package_built() ||
+  lane == "diff" ||
+  lane == "artifact"
 }
 
 ///|

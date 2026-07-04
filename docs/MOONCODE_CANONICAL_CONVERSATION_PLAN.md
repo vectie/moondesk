@@ -598,7 +598,25 @@ abort evidence, not when Moondesk fabricates a chat row. The live
 control-boundary smoke proves prompt -> deferred steer -> prompt -> dropped
 cancel leaves only the two prompt turns in `mooncode_conversation`.
 
-Remaining risk after Phase 24 is broader model-backed runtime behavior:
-model-generated tool-call planning, true mid-tool abort behavior when MoonClaw
-adds interruptible tools, and package/review flows under a real model should be
-scheduled separately from the deterministic merge gate.
+Phase 25 removes the remaining catch-all progress projection. Durable runtime
+events are still stored and available through diagnostics, but
+`mooncode_conversation` now accepts only an explicit user-visible progress
+allowlist: turn start, reasoning, tool call/result, test, diff, and artifact
+evidence that is command-scoped. Generic runtime updates, runtime bookkeeping,
+debug detail, raw tool JSON, and model planner internals no longer enter chat
+just because they have a title/detail. The backend projection normalizes
+allowed progress into human wording before the UI folds it between the owning
+user prompt and assistant reply.
+
+The next scheduled phases are now explicit:
+
+- Phase 26: model planner evidence contract. A model-planned turn must show real
+  MoonClaw planner evidence or a durable command-scoped planner failure; local
+  UI state must not pretend work is happening.
+- Phase 27: turn ownership and abort contract. Steer/cancel/abort events stay
+  command-scoped and settle only through MoonClaw scheduler or abort evidence.
+- Phase 28: package and review model flow gate. Package/review decisions get a
+  command-scoped model fixture gate plus separate live model coverage.
+- Phase 29: browser conversation stability gate. First/second/third turns must
+  append immediately, preserve old turns, keep progress under the owning turn,
+  and survive reload without flashes or reordering.

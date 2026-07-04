@@ -542,6 +542,18 @@ the canonical chat transcript, if deferred steering is not later applied through
 MoonClaw evidence, if dropped cancel is missing, or if a legacy `.moonclaw` root
 appears.
 
+Visible progress projection gate:
+
+```bash
+moon test internal/mooncode --filter "mooncode conversation projection *progress*" --target native
+```
+
+This deterministic gate protects the Phase 25 transcript boundary. It fails if
+a generic command-scoped `runtime_update` becomes a chat progress row, if
+allowed MoonClaw turn-start/reasoning/tool evidence stops appearing between the
+owning user prompt and assistant reply, or if visible progress exposes
+MoonClaw/runtime bookkeeping, `model-tool-calls`, command ids, or raw tool JSON.
+
 Runtime-service failure gate:
 
 ```bash
@@ -589,6 +601,9 @@ Code mode is sufficiently tested when:
   Moondesk's runtime-service lease without waiting for a timeout
 - a control-boundary smoke proves explicit steer/cancel commands stay out of the
   user/assistant transcript and settle only through runtime evidence
+- a visible-progress projection gate proves arbitrary runtime events stay out of
+  chat while command-scoped MoonClaw progress evidence is rendered with
+  user-facing wording
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

@@ -493,6 +493,96 @@ test "mooncode conversation projection ignores unscoped work after user" {
 }
 
 ///|
+test "mooncode conversation projection ignores arbitrary scoped runtime updates" {
+  let events : Array[Json] = [
+    test_prompt_event("cmd-1", "client-1", "hello", "001"),
+    event_record(
+      id="catch-all-runtime-update",
+      lane="runtime",
+      kind="runtime_update",
+      title="Runtime update",
+      status="running",
+      created_at="002",
+      detail="MoonClaw native runtime bookkeeping should not become chat progress.",
+      command_packet=test_command_packet("cmd-1", ""),
+    ),
+    test_finish_event("finish-1", "cmd-1", "reply", "003"),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 1)
+  assert_eq(json_array_items(turns[0], "progress").length(), 0)
+  let items = json_array_items(turns[0], "items")
+  assert_eq(items.length(), 2)
+  assert_eq(json_string(items[0], "role", default=""), "user")
+  assert_eq(json_string(items[1], "role", default=""), "assistant")
+}
+
+///|
+test "mooncode conversation projection exposes friendly event-backed progress only" {
+  let tool_event = event_record(
+      id="tool-read",
+      lane="tool",
+      kind=event_tool_call(),
+      title="Tool started: read",
+      status="running",
+      created_at="004",
+      detail="{\"path\":\"src/main.mbt\"}",
+      path="src/main.mbt",
+      command_packet=test_command_packet("cmd-1", ""),
+    )
+    |> runtime_with_field("event", event_tool_call().to_json())
+    |> runtime_with_field("tool_name", "read".to_json())
+  let events : Array[Json] = [
+    test_prompt_event("cmd-1", "client-1", "hello", "001"),
+    event_record(
+      id="turn-started",
+      lane="runtime",
+      kind="runtime.turn_started",
+      title="MoonCode native runtime turn started",
+      status="running",
+      created_at="002",
+      detail="MoonClaw claimed command cmd-1 for book-local native tool execution.",
+      command_packet=test_command_packet("cmd-1", ""),
+    ),
+    event_record(
+      id="planner",
+      lane="runtime",
+      kind="reasoning_delta",
+      title="MoonCode planner step 1",
+      status="running",
+      created_at="003",
+      detail="Planner step 1 used model-tool-calls and selected 1 tool call(s).",
+      command_packet=test_command_packet("cmd-1", ""),
+    ),
+    tool_event,
+    test_finish_event("finish-1", "cmd-1", "reply", "005"),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 1)
+  let progress = json_array_items(turns[0], "progress")
+  assert_eq(progress.length(), 3)
+  assert_eq(json_string(progress[0], "title", default=""), "Starting request")
+  assert_eq(
+    json_string(progress[0], "detail", default=""),
+    "Started working on the request.",
+  )
+  assert_eq(json_string(progress[1], "title", default=""), "Thinking")
+  assert_eq(
+    json_string(progress[1], "detail", default=""),
+    "Chose what to do next.",
+  )
+  assert_eq(json_string(progress[2], "title", default=""), "Checking context")
+  assert_eq(
+    json_string(progress[2], "detail", default=""),
+    "Checking relevant project context.",
+  )
+  let serialized = turns[0].stringify()
+  assert_false(serialized.contains("MoonClaw"))
+  assert_false(serialized.contains("model-tool-calls"))
+  assert_false(serialized.contains("{\"path\""))
+}
+
+///|
 test "mooncode conversation projection uses final answer over assistant delta" {
   let events : Array[Json] = [
     test_prompt_event("cmd-final", "client-final", "question", "001"),
