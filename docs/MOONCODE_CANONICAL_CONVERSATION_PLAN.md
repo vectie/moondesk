@@ -570,8 +570,18 @@ after acknowledgement. A live runtime-control smoke proves prompt, steer, and
 cancel stay in append-only command order and project to `start-turn`,
 `queue-steer`, and `withdraw-pending` before runtime starts.
 
-Remaining risk after Phase 21 is broader model-backed runtime behavior:
-model-generated tool-call planning, long-running service recovery under real
-daemon failures, active-turn cancel/steer behavior while tools are running, and
+Phase 22 removes the remaining stale runtime-start failure shape. If the
+explicit `/runtime-service` boundary cannot reach MoonClaw, the backend now
+records one command-scoped `runtime_unavailable` event in `events.jsonl` and
+marks the session failed for ordering/status. The HTTP request still fails, but
+the chat transcript no longer depends on composer-only error text; the failed
+assistant reply is projected from the same append-only event log as native
+MoonClaw replies. A live failure smoke proves the first prompt remains queued on
+submit, the runtime-service call returns an error, and the next session fetch
+shows the same command id as a failed turn.
+
+Remaining risk after Phase 22 is broader model-backed runtime behavior:
+model-generated tool-call planning, long-running service recovery after partial
+native progress, active-turn cancel/steer behavior while tools are running, and
 package/review flows under a real model should be scheduled separately from the
 deterministic merge gate.

@@ -530,6 +530,19 @@ explicit runtime-service execution. The multiturn gate is the regression check
 for first/second/third prompt order: it fails if later replies duplicate,
 reorder, or erase earlier conversation turns.
 
+Runtime-service failure gate:
+
+```bash
+scripts/mooncode_runtime_service_failure_smoke.sh
+```
+
+This gate starts a temporary MoonSuite root without a MoonClaw service, submits
+the first MoonCode prompt, calls the explicit `/runtime-service` endpoint, and
+then fetches canonical sessions again. It fails if submit fabricates an
+assistant reply, if runtime-service failure does not return an API error, if the
+turn stays queued/thinking, if the failed assistant reply is attached to a
+different command id, or if a legacy `.moonclaw` root appears.
+
 Frontend/backend ownership gate:
 
 ```bash
@@ -557,6 +570,9 @@ Code mode is sufficiently tested when:
 - a runtime-control integration smoke proves prompt, steer, and cancel stay in
   append-only command/runtime-command order and project to the expected
   `start-turn`, `queue-steer`, and `withdraw-pending` effects
+- a runtime-service failure smoke proves MoonClaw startup failure becomes one
+  durable command-scoped failed assistant turn instead of an endless thinking
+  state or composer-only error
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

@@ -426,6 +426,127 @@ async fn run_mooncode_runtime_service_for_session(
 }
 
 ///|
+async fn record_mooncode_runtime_service_failure(
+  workspace_root : String,
+  session_id : String,
+  session : Json,
+  error : Json,
+) -> Json {
+  let commands = read_mooncode_command_log(workspace_root, session_id)
+  let runtime_commands = read_mooncode_runtime_command_log(
+    workspace_root, session_id,
+  )
+  let receipts = read_mooncode_runtime_receipt_log(workspace_root, session_id)
+  let events = read_mooncode_event_log(workspace_root, session_id)
+  let control = @mooncode.runtime_control_response(
+    session_id,
+    commands,
+    runtime_commands,
+    receipts,
+    events,
+    lease_now=@async.now().to_string(),
+  )
+  let command_packet = mooncode_runtime_service_failure_target_command(
+    session, commands, control,
+  )
+  let command_id = json_string(command_packet, "command_id", default="")
+  if command_id == "" {
+    return enrich_mooncode_session_for_response(workspace_root, session)
+  }
+  let message = json_string(
+    error,
+    "message",
+    default="Could not start MoonCode runtime service",
+  )
+  let created_at = @async.now().to_string()
+  let with_failed = mooncode_session_with_field(
+    mooncode_session_with_field(
+      mooncode_session_with_field(session, "status", "failed".to_json()),
+      "mooncode_runtime_detail",
+      message.to_json(),
+    ),
+    "updated_at",
+    created_at.to_json(),
+  )
+  if !mooncode_runtime_service_failure_event_exists(events, command_id) {
+    let event = @mooncode.event_record(
+      id=@desk.stable_id(
+        "mooncode-runtime-service-unavailable",
+        session_id + ":" + command_id,
+      ),
+      lane="runtime",
+      kind="runtime_unavailable",
+      title="MoonCode runtime unavailable",
+      status="failed",
+      created_at~,
+      detail=message,
+      command_packet~,
+    )
+    append_mooncode_event_log(workspace_root, session_id, event)
+  }
+  write_mooncode_session_record(workspace_root, with_failed)
+  enrich_mooncode_session_for_response(workspace_root, with_failed)
+}
+
+///|
+fn mooncode_runtime_service_failure_event_exists(
+  events : Array[Json],
+  command_id : String,
+) -> Bool {
+  for event in events {
+    let command_packet = json_object_field_or_empty(event, "command_packet")
+    if json_string(event, "kind", default="") == "runtime_unavailable" &&
+      json_string(command_packet, "command_id", default="") == command_id {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn mooncode_runtime_service_failure_target_command(
+  session : Json,
+  commands : Array[Json],
+  control : Json,
+) -> Json {
+  let target_id = mooncode_runtime_service_failure_target_command_id(control)
+  if target_id != "" {
+    for command in commands {
+      if json_string(command, "command_id", default="") == target_id {
+        return command
+      }
+    }
+  }
+  let mut fallback = json_object_field_or_empty(
+    session, "mooncode_last_command_packet",
+  )
+  for command in commands {
+    if mooncode_runtime_service_turn_starting_action(
+        json_string(command, "action", default="prompt"),
+      ) {
+      fallback = command
+    }
+  }
+  fallback
+}
+
+///|
+fn mooncode_runtime_service_failure_target_command_id(control : Json) -> String {
+  for decision in json_array_items(control, "decisions") {
+    let effect = json_string(decision, "effect", default="")
+    if effect == "active-turn" || effect == "start-turn" {
+      return json_string(decision, "command_id", default="")
+    }
+  }
+  ""
+}
+
+///|
+fn mooncode_runtime_service_turn_starting_action(action : String) -> Bool {
+  action != "steer" && action != "cancel" && action != "note"
+}
+
+///|
 async fn handle_mooncode_session_runtime_service_run(
   workspace_root : String,
   session_id : String,
@@ -456,7 +577,14 @@ async fn handle_mooncode_session_runtime_service_run(
       workspace_root, session_id, session, payload,
     ) {
     Ok(started) => send_json(conn, method_, started)
-    Err(error) =>
+    Err(error) => {
+      ignore(
+        record_mooncode_runtime_service_failure(
+          workspace_root, session_id, session, error,
+        ),
+      ) catch {
+        _ => ()
+      }
       send_api_error(
         conn,
         method_,
@@ -468,5 +596,6 @@ async fn handle_mooncode_session_runtime_service_run(
           default="Could not start MoonCode runtime service",
         ),
       )
+    }
   }
 }

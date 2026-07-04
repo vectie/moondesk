@@ -177,6 +177,101 @@ async test "mooncode post enqueue response stays enqueue-only" {
 }
 
 ///|
+async test "runtime service failure appends command-scoped durable event once" {
+  let root = "/tmp/moondesk-mooncode-runtime-service-failure-" +
+    @desk.stable_id("runtime-service-failure", @async.now().to_string())
+  @fsx.make_directory(root, recursive=true, exists_ok=true)
+  let session : Json = @mooncode.projected_session_record(
+    workspace_id="general",
+    workspace_name="General MoonCode",
+    workspace_root=root,
+    runtime={
+      "id": "",
+      "status": "created",
+      "model": "deepseek-v4-flash",
+      "web_search": false,
+      "queued_messages": [],
+    },
+    title="MoonCode - General",
+    created_at="2026-06-15T00:00:00Z",
+    updated_at="2026-06-15T00:00:00Z",
+    last_message="hello mooncode",
+    initial_context_path="",
+  )
+  let payload : Json = {
+    "message": "hello mooncode",
+    "client_turn_id": "client-turn-runtime-service-failure",
+    "model": "deepseek-v4-flash",
+    "web_search": false,
+  }
+  let action = "prompt"
+  let message = "hello mooncode"
+  let now = "2026-06-15T00:00:00Z"
+  let command_packet = @mooncode.projected_command_packet(
+    session, payload, action, message, now, "",
+  )
+  let session_id = json_string(session, "id", default="")
+  let queued = mooncode_immediate_queued_session(
+    session,
+    action~,
+    message~,
+    context_path="",
+    command_packet~,
+    created_at=now,
+  )
+  append_mooncode_command_log(root, session_id, command_packet)
+  write_mooncode_session_record(root, queued)
+  append_new_mooncode_command_events(root, session, queued)
+  let error = mooncode_runtime_service_error(
+    409, "Conflict", "MoonClaw daemon is not running",
+  )
+  let projected = record_mooncode_runtime_service_failure(
+    root, session_id, queued, error,
+  )
+  let durable_events = read_mooncode_event_log(root, session_id)
+  assert_eq(durable_events.length(), 2)
+  assert_eq(
+    json_string(durable_events[0], "kind", default=""),
+    "command.prompt",
+  )
+  assert_eq(
+    json_string(durable_events[1], "kind", default=""),
+    "runtime_unavailable",
+  )
+  assert_eq(json_string(durable_events[1], "status", default=""), "failed")
+  assert_eq(
+    json_string(
+      json_object_field_or_empty(durable_events[1], "command_packet"),
+      "command_id",
+      default="",
+    ),
+    json_string(command_packet, "command_id", default=""),
+  )
+  let conversation = json_object_field_or_empty(
+    projected, "mooncode_conversation",
+  )
+  let turns = json_array_items(conversation, "turns")
+  assert_eq(turns.length(), 1)
+  assert_eq(json_string(turns[0], "status", default=""), "failed")
+  let assistant = json_object_field_or_empty(turns[0], "assistant")
+  assert_eq(json_string(assistant, "status", default=""), "failed")
+  assert_true(
+    json_string(assistant, "content", default="").contains(
+      "MoonClaw daemon is not running",
+    ),
+  )
+  match read_mooncode_session_record(root, session_id) {
+    Some(stored) =>
+      assert_eq(json_string(stored, "status", default=""), "failed")
+    None => fail("missing stored MoonCode session")
+  }
+  ignore(
+    record_mooncode_runtime_service_failure(root, session_id, queued, error),
+  )
+  assert_eq(read_mooncode_event_log(root, session_id).length(), 2)
+}
+
+///|
 test "mooncode new session record starts with typed coding protocol" {
   let workspace = @desk.workspace(
     id="book-demo",

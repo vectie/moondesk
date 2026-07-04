@@ -796,6 +796,46 @@ Exit tests:
   explicit runtime-service calls
 - no legacy `.moonclaw` sidecar root is created
 
+## Phase 22 - Durable Runtime-Service Failure Evidence
+
+Status: implemented as the runtime-service failure evidence gate.
+
+Problem:
+
+- Phase 21 made submit append-only, but a runtime-service startup failure could
+  still remain mostly an HTTP/composer error.
+- That left the canonical conversation turn queued or apparently thinking when
+  MoonClaw never accepted the work.
+- The stale implementation shape was still too split: submit owned durable user
+  intent, runtime-service owned process startup, but only successful runtime
+  responses reliably entered the append-only event log.
+
+Work:
+
+- Keep command submit clean: it still only appends the user command and returns
+  a queued canonical turn.
+- On `/api/mooncode/sessions/:id/runtime-service` failure, target the pending or
+  active command through the MoonCode runtime-control decision engine.
+- Append one command-scoped `runtime_unavailable` event to `events.jsonl` from
+  the runtime-service boundary.
+- Mark the stored session failed for list ordering/status, while the visible
+  reply comes from the durable event projection.
+- Make the failure append idempotent so retries do not duplicate assistant
+  failure messages.
+- Add a live smoke that starts Moondesk without MoonClaw, submits the first
+  prompt, calls `/runtime-service`, then verifies the same turn renders a failed
+  assistant reply from the append-only event log.
+
+Exit tests:
+
+- first prompt submit still returns immediately with only the queued user turn
+- runtime-service failure still returns an HTTP error
+- the next canonical session fetch contains the prompt plus one
+  `runtime_unavailable` event
+- the failed assistant reply is attached to the same command id
+- repeating the failure recorder does not duplicate the event
+- no legacy `.moonclaw` sidecar root is created
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
