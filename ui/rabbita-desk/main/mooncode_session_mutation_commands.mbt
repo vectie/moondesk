@@ -145,8 +145,7 @@ fn mooncode_client_turn_id(
 ) -> String {
   let seed = session_id +
     ":" + content.trim().to_owned() +
-    ":" + model.mooncode_conversation_rows.length().to_string() +
-    ":" + model.mooncode_pending_prompts.length().to_string()
+    ":" + model.mooncode_next_client_turn_index.to_string()
   @desk.stable_id("mooncode-client-turn", seed)
 }
 

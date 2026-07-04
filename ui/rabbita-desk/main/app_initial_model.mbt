@@ -79,7 +79,7 @@ fn init_model() -> Model {
     mooncode_model: "",
     mooncode_web_search: true,
     mooncode_composer_status: "mooncode idle",
-    mooncode_pending_prompts: [],
+    mooncode_next_client_turn_index: 0,
     mooncode_conversation_rows: [],
     events: [],
     review_items: [],

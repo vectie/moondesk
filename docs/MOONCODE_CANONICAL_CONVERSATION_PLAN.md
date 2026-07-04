@@ -16,6 +16,9 @@ must not be rendered as the chat transcript.
 This is a fresh-default design. We do not preserve old transcript behavior as a
 compatibility target.
 
+The phase-by-phase clean rebuild plan is tracked in
+[`MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md`](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md).
+
 ## Target Shape
 
 OpenSeek's stable behavior comes from one append path:
@@ -73,13 +76,14 @@ turns and Moondesk rendering those turns.
   behind a `turn_id` or `command_id` before it reaches the chat list.
 - Runtime service lifecycle events update service state only.
 - Stream and runtime-event endpoints remain available for diagnostics only.
-- The chat renderer consumes `ConversationTurn[]`; it never merges raw events,
-  pending prompts, local rows, and session transcript rows at the same time.
+- The chat renderer consumes `ConversationTurn[]` plus unacknowledged local
+  optimistic turns. It never merges raw events, pending prompt state machines,
+  local rows, and session transcript rows at the same time.
 
 ## Anti-Patterns To Delete
 
 - content-based ownership checks for user/assistant pairing
-- pending prompt splitting around arbitrary event counts
+- pending prompt state machines or splitting around arbitrary event counts
 - grouped-prefix repair for misplaced user messages
 - recovered failed-assistant cleanup in the main chat path
 - rendering unscoped runtime/service events as normal chat rows
@@ -136,14 +140,13 @@ Work:
 - Create-session send and existing-session send both post `client_turn_id`.
 - Backend returns `client_turn_id`, `turn_id`, `mooncode_turn`, and
   `mooncode_conversation` in the immediate command response.
-- UI stores the same id on the optimistic row and pending prompt.
-- UI drops acknowledged optimistic rows by `client_turn_id` before using any
-  content fallback.
-- Pending prompt acknowledgement prefers `command_packet.client_turn_id`, so
-  identical second/third prompts are not cleared by an older event with the
-  same text.
-- Pending prompt state is identity-only; it no longer stores event or row counts
-  for later insertion.
+- UI stores the same id on the single optimistic row for that submit.
+- UI drops acknowledged optimistic rows only when the backend canonical
+  conversation contains the same `client_turn_id`.
+- `client_turn_id` generation uses a single monotonic submit counter, not
+  parallel array lengths.
+- Raw runtime or stream events never acknowledge, clear, or reorder local
+  optimistic turns.
 
 Exit tests:
 
@@ -151,6 +154,7 @@ Exit tests:
 - create-session send and existing-session send share the same turn contract
 - retries do not duplicate the user row
 - acknowledged backend turn replaces, not reorders, local optimistic turn
+- same-content prompts get distinct `client_turn_id` values
 
 ## Phase 4 - Runtime Ownership
 
@@ -193,7 +197,8 @@ Exit tests:
 
 ## Phase 6 - Delete Stale Frontend Implementation
 
-Status: complete for the main Moondesk MoonCode frontend path.
+Status: complete for the main Moondesk MoonCode frontend path; expanded by the
+clean rebuild phase to remove the old pending-prompt model entirely.
 
 Work:
 
@@ -206,6 +211,10 @@ Work:
 - Deleted the browser-side raw-event transcript renderer, raw event activity
   converter, grouped user repair, recovered assistant cleanup, pending prompt
   event splitting, and content-based duplicate suppression.
+- Deleted `mooncode_pending_prompts`; local optimistic turns are now the only
+  frontend-owned in-flight chat state.
+- Deleted decoded legacy `session.transcript` and `session.mooncode_events`
+  fields from the frontend session model.
 - Compact session polling preserves `mooncode_conversation`, so old replies do
   not disappear when a lightweight session listing arrives.
 - Runtime stream and sink events remain in the model as diagnostics/status
@@ -219,6 +228,8 @@ Exit tests:
 - no main chat code compares message content to determine ownership
 - same-content prompts with different `client_turn_id` values remain distinct
   turns
+- compact listings without canonical conversation cannot steal a new-chat draft
+- raw runtime prompt events cannot acknowledge an optimistic turn
 
 Validation in this slice:
 

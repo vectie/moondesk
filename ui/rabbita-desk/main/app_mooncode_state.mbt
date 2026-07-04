@@ -34,26 +34,12 @@ fn mooncode_draft_session_id(model : Model) -> String {
 }
 
 ///|
-fn mooncode_session_has_pending_prompt(
-  model : Model,
-  session_id : String,
-) -> Bool {
-  for prompt in model.mooncode_pending_prompts {
-    if prompt.session_id == session_id {
-      return true
-    }
-  }
-  false
-}
-
-///|
 fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
   let session_id = mooncode_draft_session_id(model)
-  if !mooncode_session_has_pending_prompt(model, session_id) &&
-    !mooncode_conversation_has_session(
-      model.mooncode_conversation_rows,
-      session_id,
-    ) {
+  if !mooncode_conversation_has_session(
+    model.mooncode_conversation_rows,
+    session_id,
+  ) {
     return None
   }
   Some({
@@ -74,8 +60,6 @@ fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
     model: mooncode_selected_runtime_model(model, None),
     status: "queued",
     queued_count: 1,
-    transcript: [],
-    mooncode_events: [],
     mooncode_conversation: None,
     mooncode_summary: {
       event_count: 0,
@@ -94,16 +78,19 @@ fn mooncode_find_acknowledged_draft_session(
     return None
   }
   let draft_session_id = mooncode_draft_session_id(model)
-  if !mooncode_session_has_pending_prompt(model, draft_session_id) {
+  let draft_rows = mooncode_conversation_rows_for_session(
+    model.mooncode_conversation_rows,
+    draft_session_id,
+  )
+  if draft_rows.length() == 0 {
     return None
   }
   for session in sessions {
     if !mooncode_session_matches_draft_workspace(model, session) {
       continue
     }
-    for prompt in model.mooncode_pending_prompts {
-      if prompt.session_id == draft_session_id &&
-        mooncode_session_acknowledges_prompt(session, prompt) {
+    for row in draft_rows {
+      if mooncode_session_acknowledges_conversation_row(session, row) {
         return Some(session)
       }
     }
@@ -123,27 +110,6 @@ fn mooncode_session_matches_draft_workspace(
   } else {
     session.workspace_id == model.selected_workspace_id
   }
-}
-
-///|
-fn mooncode_session_acknowledges_prompt(
-  session : MoonCodeSession,
-  prompt : MoonCodePendingPrompt,
-) -> Bool {
-  if session.title.trim().to_owned() == prompt.content {
-    return true
-  }
-  if mooncode_events_acknowledge_pending_prompt(session.mooncode_events, prompt) {
-    return true
-  }
-  for message in session.transcript {
-    ignore(message.status)
-    if message.role == "user" &&
-      message.content.trim().to_owned() == prompt.content {
-      return true
-    }
-  }
-  false
 }
 
 ///|
@@ -248,19 +214,22 @@ fn mooncode_selected_session_has_inflight_state(
   model : Model,
   session_id : String,
 ) -> Bool {
-  mooncode_session_has_pending_prompt(model, session_id) ||
   mooncode_conversation_has_session(
     model.mooncode_conversation_rows,
     session_id,
-  ) ||
-  (
-    model.mooncode_stream_session_id == session_id &&
-    model.mooncode_stream_events.length() > 0
-  ) ||
-  (
-    model.mooncode_runtime_event_sink_session_id == session_id &&
-    model.mooncode_runtime_event_sink is Some(_)
-  )
+  ) || mooncode_session_is_active(model, session_id)
+}
+
+///|
+fn mooncode_session_is_active(model : Model, session_id : String) -> Bool {
+  for session in model.mooncode_sessions {
+    if session.id == session_id {
+      return session.status == "queued" ||
+        session.status == "running" ||
+        session.queued_count > 0
+    }
+  }
+  false
 }
 
 ///|
@@ -290,83 +259,15 @@ fn mooncode_preserve_hydrated_session(
   previous : MoonCodeSession,
   incoming : MoonCodeSession,
 ) -> MoonCodeSession {
-  let missing_legacy_payload = incoming.transcript.length() == 0 &&
-    incoming.mooncode_events.length() == 0 &&
-    (previous.transcript.length() > 0 || previous.mooncode_events.length() > 0)
   let missing_conversation = incoming.mooncode_conversation is None &&
     previous.mooncode_conversation is Some(_)
-  if missing_legacy_payload || missing_conversation {
+  if missing_conversation {
     {
       ..incoming,
-      transcript: if missing_legacy_payload {
-        previous.transcript
-      } else {
-        incoming.transcript
-      },
-      mooncode_events: if missing_legacy_payload {
-        previous.mooncode_events
-      } else {
-        incoming.mooncode_events
-      },
-      mooncode_conversation: if missing_conversation {
-        previous.mooncode_conversation
-      } else {
-        incoming.mooncode_conversation
-      },
-      mooncode_summary: if missing_legacy_payload || missing_conversation {
-        previous.mooncode_summary
-      } else {
-        incoming.mooncode_summary
-      },
+      mooncode_conversation: previous.mooncode_conversation,
+      mooncode_summary: previous.mooncode_summary,
     }
   } else {
     incoming
-  }
-}
-
-///|
-fn mooncode_clear_acknowledged_pending_prompts(
-  prompts : Array[MoonCodePendingPrompt],
-  session_id : String,
-  events : Array[MoonCodeEvent],
-) -> Array[MoonCodePendingPrompt] {
-  let next : Array[MoonCodePendingPrompt] = []
-  for prompt in prompts {
-    if prompt.session_id == session_id &&
-      mooncode_events_acknowledge_pending_prompt(events, prompt) {
-      continue
-    }
-    next.push(prompt)
-  }
-  next
-}
-
-///|
-fn mooncode_events_acknowledge_pending_prompt(
-  events : Array[MoonCodeEvent],
-  prompt : MoonCodePendingPrompt,
-) -> Bool {
-  for event in events {
-    if !mooncode_event_is_user_prompt(event) {
-      continue
-    }
-    let event_client_turn_id = mooncode_event_client_turn_id(event)
-    if prompt.client_turn_id != "" || event_client_turn_id != "" {
-      if prompt.client_turn_id != "" &&
-        prompt.client_turn_id == event_client_turn_id {
-        return true
-      }
-    } else if event.detail.trim().to_owned() == prompt.content {
-      return true
-    }
-  }
-  false
-}
-
-///|
-fn mooncode_event_client_turn_id(event : MoonCodeEvent) -> String {
-  match event.command_packet {
-    Some(packet) => json_field_string(packet, "client_turn_id", default="")
-    None => ""
   }
 }

@@ -290,26 +290,3 @@ fn mooncode_transcript_message_role(role : String) -> String {
     _ => "activity"
   }
 }
-
-///|
-fn mooncode_event_is_user_prompt(event : MoonCodeEvent) -> Bool {
-  mooncode_note_diagnostic_event_fields(event)
-  (event.lane == "transcript" && event.kind == "user") ||
-  event.command == "prompt" ||
-  event.command == "steer" ||
-  event.kind == "command.prompt" ||
-  event.kind == "command.steer" ||
-  event.title == "User prompt"
-}
-
-///|
-fn mooncode_note_diagnostic_event_fields(event : MoonCodeEvent) -> Unit {
-  ignore(event.command_id)
-  ignore(event.status)
-  ignore(event.created_at)
-  ignore(event.path)
-  ignore(event.exit_code)
-  ignore(event.tool)
-  ignore(event.tool_name)
-  ignore(event.tool_result)
-}

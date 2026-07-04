@@ -93,7 +93,7 @@ struct Model {
   mooncode_model : String
   mooncode_web_search : Bool
   mooncode_composer_status : String
-  mooncode_pending_prompts : Array[MoonCodePendingPrompt]
+  mooncode_next_client_turn_index : Int
   mooncode_conversation_rows : Array[MoonCodeConversationRow]
   events : Array[DeskEvent]
   review_items : Array[ReviewItem]

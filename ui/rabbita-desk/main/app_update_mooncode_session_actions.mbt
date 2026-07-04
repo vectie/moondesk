@@ -132,12 +132,8 @@ fn mooncode_send_composer(
               prompt,
               client_turn_id~,
             ),
-            mooncode_pending_prompts: mooncode_append_pending_prompt(
-              model.mooncode_pending_prompts,
-              session.id,
-              client_turn_id,
-              prompt,
-            ),
+            mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
+              1,
             mooncode_composer_status: if action == "steer" {
               "message queued for current turn"
             } else {
@@ -170,35 +166,12 @@ fn mooncode_send_composer(
               prompt,
               client_turn_id~,
             ),
-            mooncode_pending_prompts: mooncode_append_pending_prompt(
-              model.mooncode_pending_prompts,
-              draft_session_id,
-              client_turn_id,
-              prompt,
-            ),
+            mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
+              1,
             mooncode_composer_status: "message queued for MoonCode",
           },
         )
       }
     }
   }
-}
-
-///|
-fn mooncode_append_pending_prompt(
-  prompts : Array[MoonCodePendingPrompt],
-  session_id : String,
-  client_turn_id : String,
-  content : String,
-) -> Array[MoonCodePendingPrompt] {
-  let next : Array[MoonCodePendingPrompt] = []
-  for prompt in prompts {
-    next.push(prompt)
-  }
-  next.push({
-    session_id,
-    client_turn_id,
-    content,
-  })
-  next
 }

@@ -1,18 +1,4 @@
 ///|
-struct MoonCodeMessage {
-  role : String
-  content : String
-  status : String
-} derive(FromJson)
-
-///|
-struct MoonCodePendingPrompt {
-  session_id : String
-  client_turn_id : String
-  content : String
-}
-
-///|
 struct MoonCodeConversationRow {
   session_id : String
   role : String
@@ -78,8 +64,6 @@ struct MoonCodeSession {
   model : String
   status : String
   queued_count : Int
-  transcript : Array[MoonCodeMessage]
-  mooncode_events : Array[MoonCodeEvent]
   mooncode_conversation : MoonCodeConversation?
   mooncode_summary : MoonCodeSummary
 } derive(FromJson)

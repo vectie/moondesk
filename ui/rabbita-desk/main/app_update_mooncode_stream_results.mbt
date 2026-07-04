@@ -35,11 +35,6 @@ fn update_mooncode_stream_results(
             mooncode_stream_session_id: session_id,
             mooncode_stream_cursor: stream.next_since,
             mooncode_stream_events: stream_events,
-            mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
-              model.mooncode_pending_prompts,
-              session_id,
-              stream_events,
-            ),
             mooncode_stream_status: "live tail / \{stream.stream_source} / \{stream.stream} +\{stream.emitted_count} event(s), cursor \{stream.next_since}",
             mooncode_stream_checkpoint_session_id: session_id,
             mooncode_stream_checkpoint_status: if stream.next_since > 0 {
@@ -93,6 +88,7 @@ fn update_mooncode_stream_results(
       if session_id != model.selected_mooncode_session_id {
         (@rabbita.none, model)
       } else {
+        mooncode_note_diagnostic_events(sink.events)
         let service_status = if sink.runtime_service.status == "idle" {
           ""
         } else {
@@ -104,11 +100,6 @@ fn update_mooncode_stream_results(
             ..model,
             mooncode_runtime_event_sink_session_id: session_id,
             mooncode_runtime_event_sink: Some(sink),
-            mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
-              model.mooncode_pending_prompts,
-              session_id,
-              sink.events,
-            ),
             mooncode_runtime_event_sink_status: "\{sink.event_count} runtime event(s)\{service_status}",
           },
         )
@@ -140,7 +131,10 @@ fn mooncode_stream_should_fast_poll(
   if session_id != model.selected_mooncode_session_id {
     return false
   }
-  mooncode_session_has_pending_prompt(model, session_id) ||
+  mooncode_conversation_has_session(
+    model.mooncode_conversation_rows,
+    session_id,
+  ) ||
   stream.emitted_count > 0 ||
   mooncode_selected_session_is_active(model, session_id)
 }

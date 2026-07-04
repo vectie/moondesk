@@ -70,13 +70,15 @@ type MoonClawModelsResult derive(@json.FromJson)
 
 type MoonCodeActivityRow
 
+type MoonCodeCanonicalTurn
+
+type MoonCodeConversation derive(@json.FromJson)
+
 type MoonCodeConversationRow
 
+type MoonCodeConversationTurn derive(@json.FromJson)
+
 type MoonCodeEvent derive(@json.FromJson)
-
-type MoonCodeMessage derive(@json.FromJson)
-
-type MoonCodePendingPrompt
 
 type MoonCodeRuntimeEventSink derive(@json.FromJson)
 

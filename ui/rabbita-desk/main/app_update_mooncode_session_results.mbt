@@ -71,11 +71,23 @@ fn update_mooncode_session_results(
           mooncode_sessions,
         ),
       )
-      match mooncode_find_acknowledged_draft_session(model, mooncode_sessions) {
+      let conversation_rows = mooncode_drop_acknowledged_conversation_rows_for_sessions(
+        model.mooncode_conversation_rows,
+        mooncode_sessions,
+      )
+      let session_model = {
+        ..model,
+        mooncode_sessions,
+        mooncode_conversation_rows: conversation_rows,
+      }
+      match mooncode_find_acknowledged_draft_session(
+        session_model,
+        mooncode_sessions,
+      ) {
         Some(session) =>
           return mooncode_session_mutation_succeeded(
             dispatch,
-            { ..model, mooncode_sessions, },
+            session_model,
             session,
             "MoonCode session started",
           )
@@ -105,6 +117,7 @@ fn update_mooncode_session_results(
         {
           ..model,
           mooncode_sessions,
+          mooncode_conversation_rows: conversation_rows,
           selected_mooncode_session_id: selected,
           mooncode_stream_session_id: if keep_stream {
             model.mooncode_stream_session_id
@@ -197,6 +210,10 @@ fn mooncode_created_session_succeeded(
   session : MoonCodeSession,
 ) -> (@rabbita.Cmd, Model) {
   if model.selected_mooncode_session_id == session.id {
+    let conversation_rows = mooncode_drop_acknowledged_conversation_rows(
+      model.mooncode_conversation_rows,
+      session,
+    )
     (
       @rabbita.none,
       {
@@ -205,6 +222,7 @@ fn mooncode_created_session_succeeded(
           model.mooncode_sessions,
           session,
         ),
+        mooncode_conversation_rows: conversation_rows,
         mooncode_composer_status: "MoonCode session started",
       },
     )
@@ -264,10 +282,9 @@ fn mooncode_session_mutation_succeeded(
     draft_session_id,
     session.id,
   )
-  let pending_prompts = mooncode_reassign_pending_prompts(
-    model.mooncode_pending_prompts,
-    draft_session_id,
-    session.id,
+  let conversation_rows = mooncode_drop_acknowledged_conversation_rows(
+    conversation_rows,
+    session,
   )
   (
     @rabbita.batch([
@@ -290,11 +307,6 @@ fn mooncode_session_mutation_succeeded(
       mooncode_runtime_event_sink: None,
       mooncode_runtime_event_sink_status: "waiting for backend runtime events",
       mooncode_prompt: "",
-      mooncode_pending_prompts: mooncode_clear_acknowledged_pending_prompts(
-        pending_prompts,
-        session.id,
-        session.mooncode_events,
-      ),
       mooncode_conversation_rows: conversation_rows,
       mooncode_composer_status: status,
     },
