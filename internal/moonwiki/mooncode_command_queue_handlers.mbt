@@ -42,12 +42,32 @@ fn mooncode_immediate_command_response(
   session : Json,
   command_packet : Json,
 ) -> Json {
+  let session_id = json_string(session, "id", default="")
   let command_id = json_string(command_packet, "command_id", default="")
   let client_turn_id = mooncode_response_text_or(
     json_string(command_packet, "client_turn_id", default=""),
     fallback=command_id,
   )
-  let conversation = mooncode_command_response_conversation(session)
+  let command_events = json_array_items(session, "mooncode_command_events")
+  let projected = @mooncode.session_projection_response(
+    session,
+    command_events,
+    event_log_path=mooncode_event_log_path(workspace_root, session_id),
+    append_log_count=command_events.length(),
+    command_log_path=mooncode_command_log_path(workspace_root, session_id),
+    command_log_count=command_events.length(),
+    runtime_command_log_path=mooncode_runtime_command_log_path(
+      workspace_root, session_id,
+    ),
+    runtime_command_log_count=0,
+    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
+      workspace_root, session_id,
+    ),
+    runtime_receipt_log_count=0,
+  )
+  let conversation = json_object_field_or_empty(
+    projected, "mooncode_conversation",
+  )
   let turn = mooncode_conversation_turn_for_command(conversation, command_id)
   let turn_id = mooncode_response_text_or(
     json_string(turn, "turn_id", default=""),
@@ -55,7 +75,7 @@ fn mooncode_immediate_command_response(
   )
   let payload = mooncode_session_with_field(
     mooncode_session_with_field(
-      mooncode_session_with_field(session, "accepted", true.to_json()),
+      mooncode_session_with_field(projected, "accepted", true.to_json()),
       "command_id",
       command_id.to_json(),
     ),
@@ -98,14 +118,6 @@ fn mooncode_immediate_command_response(
       "MoonCode command was saved and runtime started"
     },
     next_action="poll_mooncode_stream",
-  )
-}
-
-///|
-fn mooncode_command_response_conversation(session : Json) -> Json {
-  @mooncode.conversation_projection(
-    session,
-    json_array_items(session, "mooncode_command_events"),
   )
 }
 

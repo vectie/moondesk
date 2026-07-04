@@ -109,8 +109,9 @@ test "mooncode immediate command response exposes clean phase6 envelope" {
     json_string(response, "next_action", default=""),
     "poll_mooncode_stream",
   )
-  assert_false(response.stringify().contains("mooncode_summary"))
-  assert_false(response.stringify().contains("readiness"))
+  let summary = json_object_field_or_empty(response, "mooncode_summary")
+  assert_eq(json_int(summary, "event_count", default=0), 1)
+  assert_eq(json_int(summary, "command_log_count", default=0), 1)
 }
 
 ///|

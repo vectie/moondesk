@@ -494,8 +494,145 @@ function mooncodeTranscriptItemsExpression() {
     })))()`;
 }
 
+function mooncodeTranscriptStateExpression(expectedPrompts, requireInputCleared = true) {
+  return `(() => {
+    const expected = ${jsString(expectedPrompts)};
+    const items = ${mooncodeTranscriptItemsExpression()};
+    const input = document.querySelector('[data-testid="mooncode-input"]');
+    const userTexts = items
+      .filter(item => item.kind === "message" && item.role === "user")
+      .map(item => item.text);
+    const firstUserIndex = items.findIndex(item => item.kind === "message" && item.role === "user");
+    const firstActivityIndex = items.findIndex(item => item.kind === "activity");
+    const bodyText = document.body.textContent || "";
+    const state = {
+      inputValue: input?.value ?? "",
+      itemCount: items.length,
+      items,
+      userTexts,
+      hasLocalAgentCopy: bodyText.includes("Local agent is not reachable yet"),
+      hasNativeRecordedCopy: bodyText.includes("Native MoonCode runtime recorded this prompt"),
+      hasInternalRuntimeCopy: bodyText.includes("MoonClaw native runtime turn executed"),
+      hasPromptOrder:
+        userTexts.length === expected.length &&
+        expected.every((prompt, index) => userTexts[index] === prompt),
+      firstUserIndex,
+      firstActivityIndex,
+      centerText: document.querySelector('[data-testid="mooncode-center"]')?.textContent.trim().slice(0, 600) || ""
+    };
+    state.pass =
+      state.hasPromptOrder &&
+      (!${requireInputCleared ? "true" : "false"} || state.inputValue === "") &&
+      firstUserIndex >= 0 &&
+      (firstActivityIndex < 0 || firstActivityIndex > firstUserIndex) &&
+      !state.hasLocalAgentCopy &&
+      !state.hasNativeRecordedCopy &&
+      !state.hasInternalRuntimeCopy;
+    return state.pass ? true : state;
+  })()`;
+}
+
+function mooncodeBackendTurnsStateExpression(expectedPrompts) {
+  return `(async () => {
+    const expected = ${jsString(expectedPrompts)};
+    let sessions;
+    try {
+      const response = await fetch("/api/mooncode/sessions");
+      sessions = await response.json();
+    } catch (error) {
+      return { pass: false, error: String(error) };
+    }
+    if (!Array.isArray(sessions)) {
+      return { pass: false, sessions };
+    }
+    const summaries = sessions.map(session => {
+      const conversation = session?.mooncode_conversation || {};
+      const turns = Array.isArray(conversation.turns) ? conversation.turns : [];
+      const userTexts = turns.map(turn => turn?.user?.content || "").filter(Boolean);
+      const commandIds = turns.map(turn => turn?.command_id || "");
+      const clientTurnIds = turns.map(turn => turn?.client_turn_id || "");
+      return {
+        id: session?.id || "",
+        status: session?.status || "",
+        turnCount: turns.length,
+        userTexts,
+        commandIds,
+        clientTurnIds,
+        raw: JSON.stringify(conversation)
+      };
+    });
+    const matching = summaries.filter(summary =>
+      summary.userTexts.length === expected.length &&
+      expected.every((prompt, index) => summary.userTexts[index] === prompt) &&
+      summary.commandIds.every(id => id !== "") &&
+      summary.clientTurnIds.every(id => id !== "")
+    );
+    const rawLeak = summaries.some(summary =>
+      summary.raw.includes("Local agent is not reachable yet") ||
+      summary.raw.includes("Native MoonCode runtime recorded this prompt")
+    );
+    const state = { sessionCount: sessions.length, summaries, rawLeak };
+    state.pass = sessions.length === 1 && matching.length === 1 && !rawLeak;
+    return state.pass ? true : state;
+  })()`;
+}
+
+function mooncodeUiSessionReadyStateExpression(expectedPrompts) {
+  return `(() => {
+    const transcriptState = ${mooncodeTranscriptStateExpression(expectedPrompts, false)};
+    if (transcriptState !== true) {
+      return transcriptState;
+    }
+    const rows = [...document.querySelectorAll('[data-testid="mooncode-session"]')];
+    const activeRows = rows.filter(row => row.classList.contains("active"));
+    const state = {
+      sessionCount: rows.length,
+      activeSessionCount: activeRows.length,
+      rows: rows.map(row => ({
+        id: row.dataset.sessionId || "",
+        status: row.dataset.status || "",
+        text: row.textContent.trim()
+      }))
+    };
+    state.pass = rows.length === 1 && activeRows.length === 1;
+    return state.pass ? true : state;
+  })()`;
+}
+
+async function sendMoonCodePromptAndAssert(session, prompt, expectedPrompts) {
+  await setInputByTestId(session, "mooncode-input", prompt);
+  await waitFor(
+    session,
+    `document.querySelector('[data-testid="mooncode-input"]')?.value === ${jsString(prompt)}`,
+    "MoonCode prompt typed",
+  );
+  await keyDownInputByTestId(session, "mooncode-input", "Enter");
+  await waitForStatePass(
+    session,
+    mooncodeTranscriptStateExpression(expectedPrompts, false),
+    `MoonCode immediate append for ${prompt}`,
+    1600,
+  );
+  await waitForStatePass(
+    session,
+    mooncodeBackendTurnsStateExpression(expectedPrompts),
+    `MoonCode backend canonical turns for ${prompt}`,
+    12000,
+  );
+  await waitForStatePass(
+    session,
+    mooncodeUiSessionReadyStateExpression(expectedPrompts),
+    `MoonCode UI session acknowledged for ${prompt}`,
+    12000,
+  );
+}
+
 async function runMoonCodePromptSmoke(session) {
-  const prompt = "Browser smoke prompt append order";
+  const prompts = [
+    "Browser smoke prompt append order",
+    "Browser smoke second prompt order",
+    "Browser smoke third prompt persistence",
+  ];
   await setViewport(session, 1440, 900);
   await session.send("Page.navigate", { url: `${baseUrl}/?activity=code` });
   await waitFor(
@@ -508,51 +645,18 @@ async function runMoonCodePromptSmoke(session) {
     `document.querySelector('[data-testid="mooncode-chat-surface"]')?.textContent.includes('Ask MoonCode')`,
     "empty MoonCode first-chat surface",
   );
-  await setInputByTestId(session, "mooncode-input", prompt);
-  await waitFor(
-    session,
-    `document.querySelector('[data-testid="mooncode-input"]')?.value === ${jsString(prompt)}`,
-    "MoonCode prompt typed",
-  );
-  await keyDownInputByTestId(session, "mooncode-input", "Enter");
-  await waitForStatePass(
-    session,
-    `(() => {
-      const items = ${mooncodeTranscriptItemsExpression()};
-      const bodyText = document.body.textContent || "";
-      const input = document.querySelector('[data-testid="mooncode-input"]');
-      const state = {
-        inputValue: input?.value ?? "",
-        itemCount: items.length,
-        items,
-        hasLocalAgentCopy: bodyText.includes("Local agent is not reachable yet"),
-        hasNativeRecordedCopy: bodyText.includes("Native MoonCode runtime recorded this prompt"),
-        centerText: document.querySelector('[data-testid="mooncode-center"]')?.textContent.trim().slice(0, 600) || ""
-      };
-      state.pass = input?.value === "" &&
-        items.length >= 2 &&
-        items[0].kind === "message" &&
-        items[0].role === "user" &&
-        items[0].text === ${jsString(prompt)} &&
-        items[1].kind === "activity" &&
-        items[1].text.includes("Prompt queued") &&
-        items[1].folded === "true" &&
-        !state.hasLocalAgentCopy &&
-        !state.hasNativeRecordedCopy;
-      return state.pass ? true : state;
-    })()`,
-    "MoonCode immediate append before backend reply",
-    1000,
-  );
+  for (let index = 0; index < prompts.length; index += 1) {
+    await sendMoonCodePromptAndAssert(session, prompts[index], prompts.slice(0, index + 1));
+  }
   await sleep(1200);
   const items = await session.evaluate(mooncodeTranscriptItemsExpression());
   const messageItems = items.filter(item => item.kind === "message");
-  assert(messageItems.length >= 1, `MoonCode transcript lost message rows: ${JSON.stringify(items)}`);
+  const userTexts = messageItems.filter(item => item.role === "user").map(item => item.text);
   assert(
-    messageItems[0].role === "user" && messageItems[0].text === prompt,
-    `MoonCode first transcript message must stay as the user prompt: ${JSON.stringify(items)}`,
+    userTexts.length === prompts.length && prompts.every((prompt, index) => userTexts[index] === prompt),
+    `MoonCode user messages should stay append-only after three sends: ${JSON.stringify(items)}`,
   );
-  const userIndex = items.findIndex(item => item.kind === "message" && item.role === "user" && item.text === prompt);
+  const userIndex = items.findIndex(item => item.kind === "message" && item.role === "user" && item.text === prompts[0]);
   const firstAssistantIndex = items.findIndex(item => item.kind === "message" && item.role === "assistant");
   const firstActivityIndex = items.findIndex(item => item.kind === "activity");
   assert(userIndex === 0, `MoonCode user prompt should remain at the top of the new chat: ${JSON.stringify(items)}`);
@@ -568,6 +672,24 @@ async function runMoonCodePromptSmoke(session) {
       `MoonCode assistant reply should append after the user prompt: ${JSON.stringify(items)}`,
     );
   }
+  await session.send("Page.reload", { ignoreCache: true });
+  await waitFor(
+    session,
+    `document.readyState === 'complete' && !!document.querySelector('[data-testid="mooncode-center"]')`,
+    "MoonCode mode after hard refresh",
+  );
+  await waitForStatePass(
+    session,
+    mooncodeTranscriptStateExpression(prompts, false),
+    "MoonCode hard refresh preserves three prompt order",
+    12000,
+  );
+  await waitForStatePass(
+    session,
+    mooncodeBackendTurnsStateExpression(prompts),
+    "MoonCode hard refresh preserves backend turn order",
+    12000,
+  );
   const bodyText = await session.evaluate(`document.body.textContent || ""`);
   assert(
     !bodyText.includes("Local agent is not reachable yet"),

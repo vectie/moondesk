@@ -133,6 +133,9 @@ pub fn project_session_events_for_session(
   projected_created_at? : String = "",
 ) -> Array[Json] {
   let projected : Array[Json] = []
+  let command_events = session_json_array_items(
+    session, "mooncode_command_events",
+  )
   for event in session_json_array_items(session, "mooncode_events") {
     projected.push(event)
   }
@@ -158,16 +161,14 @@ pub fn project_session_events_for_session(
         }
       }
     }
-  } else {
+  } else if projected.length() == 0 &&
+    command_events.length() == 0 &&
+    durable_events.length() == 0 {
     for message in session_json_array_items(session, "transcript") {
       projected.push(transcript_message_projected_event(message))
     }
   }
-  project_session_events(
-    projected,
-    session_json_array_items(session, "mooncode_command_events"),
-    durable_events,
-  )
+  project_session_events(projected, command_events, durable_events)
 }
 
 ///|

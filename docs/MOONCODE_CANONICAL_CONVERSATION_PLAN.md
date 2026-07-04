@@ -251,7 +251,7 @@ Validation in this slice:
 
 ## Phase 7 - End-To-End Chat Tests
 
-Status: active.
+Status: complete for the MoonCode API/browser gate.
 
 Backend:
 
@@ -286,14 +286,19 @@ Current UI coverage:
 - three backend turns render in order before a fourth local optimistic prompt
 - same-content prompts with different `client_turn_id` values stay distinct
 - folded progress summaries hide internal MoonClaw/runtime/tool-call wording
+- browser smoke sends first, second, and third prompts, verifies API canonical
+  order after each send, hard refreshes, and verifies the same order again
+- immediate command responses and session polling both return frontend-decodable
+  canonical conversation DTOs
 
 Browser smoke:
 
-- fresh app, new chat, send `hello`
+- fresh app, new chat, send first prompt
 - send second message
 - send third message
+- API check: exactly one MoonCode session owns the same three canonical turns
 - hard refresh
-- verify the same three turns remain in order
+- verify the same three turns remain in UI and API order
 
 ## Phase 8 - Shared Product Contract
 
@@ -313,12 +318,7 @@ Exit tests:
 
 ## Current Direction
 
-The next implementation step is to finish Phase 7 as an end-to-end browser/API
-gate: run a fresh app, send first/second/third messages, hard refresh, and prove
-the same three canonical turns remain in order without fake working states or
-raw diagnostic rows leaking into chat.
-
-Remaining Phase 7 work:
-
-- add browser smoke coverage for first, second, and third turns after hard
-  refresh
+The next implementation step is Phase 8: move stable conversation DTOs into
+MoonLib so MoonClaw, MoonCode, Moondesk, MoonRobo, MoonMoon, MoonFish,
+MoonTown, and future MoonSuite products share one turn/message/progress
+contract.

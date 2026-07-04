@@ -219,6 +219,8 @@ Exit tests:
 
 ## Phase 6 - End-To-End Gate
 
+Status: complete.
+
 Work:
 
 - Add a deterministic browser/API smoke path for a fresh app.
@@ -227,6 +229,21 @@ Work:
 - Verify backend canonical acknowledgement preserves order.
 - Hard refresh and verify the same three turns remain.
 - Assert no fake working rows and no raw diagnostics leak into chat.
+
+Implemented:
+
+- Extended the browser smoke to send three prompts, verify immediate append
+  after each send, query the API for matching canonical turns, and hard refresh
+  before checking the same order again.
+- Added an HTTP E2E gate that creates a fresh session, sends second and third
+  prompts, replays the session list, and verifies the same ordered
+  `client_turn_id` / user-message sequence.
+- Immediate command responses now include the projected `mooncode_summary` and
+  `mooncode_conversation` DTOs required by the frontend session decoder.
+- Moondesk MoonCode polling now fetches full canonical sessions, not compact
+  listing rows, so hard refresh keeps the selected conversation hydrated.
+- Removed the stale legacy transcript fallback from structured MoonCode session
+  projection so `session.transcript` cannot duplicate canonical command events.
 
 Exit tests:
 

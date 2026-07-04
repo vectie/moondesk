@@ -273,6 +273,199 @@ async test "mooncode code mode package result promotes package candidates to ver
 }
 
 ///|
+fn assert_mooncode_http_conversation_turns(
+  payload : Json,
+  prompts : Array[String],
+  client_turn_ids : Array[String],
+) -> Unit raise {
+  let conversation = json_object_field_or_empty(
+    payload, "mooncode_conversation",
+  )
+  assert_eq(
+    json_string(conversation, "kind", default=""),
+    "mooncode-conversation",
+  )
+  let turns = json_array_items(conversation, "turns")
+  assert_eq(turns.length(), prompts.length())
+  assert_eq(client_turn_ids.length(), prompts.length())
+  for index in 0..<prompts.length() {
+    let turn = turns[index]
+    assert_eq(
+      json_string(turn, "client_turn_id", default=""),
+      client_turn_ids[index],
+    )
+    assert_true(json_string(turn, "turn_id", default="") != "")
+    assert_true(json_string(turn, "command_id", default="") != "")
+    let user = json_object_field_or_empty(turn, "user")
+    assert_eq(json_string(user, "role", default=""), "user")
+    assert_eq(json_string(user, "content", default=""), prompts[index])
+  }
+  let serialized = conversation.stringify()
+  assert_false(serialized.contains("Local agent is not reachable yet"))
+  assert_false(
+    serialized.contains("Native MoonCode runtime recorded this prompt"),
+  )
+}
+
+///|
+fn assert_mooncode_http_current_turn(
+  payload : Json,
+  prompt : String,
+  client_turn_id : String,
+) -> Unit raise {
+  assert_eq(json_string(payload, "client_turn_id", default=""), client_turn_id)
+  assert_true(json_string(payload, "turn_id", default="") != "")
+  let summary = json_object_field_or_empty(payload, "mooncode_summary")
+  assert_true(json_int(summary, "event_count", default=0) >= 1)
+  let turn = json_object_field_or_empty(payload, "mooncode_turn")
+  assert_eq(json_string(turn, "client_turn_id", default=""), client_turn_id)
+  let user = json_object_field_or_empty(turn, "user")
+  assert_eq(json_string(user, "content", default=""), prompt)
+}
+
+///|
+async test "mooncode code mode HTTP routes preserve three prompt conversation order" {
+  let root = @pathx.join(
+    "/tmp",
+    "moondesk-code-mode-http-order-e2e-" + @async.now().to_string(),
+  )
+  let ui_root = @pathx.join(root, "ui")
+  let book_root = @pathx.join(root, "books/research-code")
+  @fsx.make_directory(ui_root, recursive=true, exists_ok=true)
+  @fsx.make_directory(
+    @pathx.join(book_root, "wiki"),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.write_to_file(@pathx.join(ui_root, "index.html"), "<main>code ui</main>")
+  @fsx.write_to_file(
+    @pathx.join(book_root, "book.json"),
+    "{\"name\":\"Research Code\"}\n",
+  )
+  @fsx.write_to_file(
+    @pathx.join(book_root, "wiki/index.md"),
+    "# Research Code\n\nThree-turn chat fixture.\n",
+  )
+
+  let server = Server::new("127.0.0.1", 0, reuse_addr=true)
+  defer server.close()
+  @async.with_task_group(group => {
+    group.spawn_bg(
+      () => server.serve_desk(ui_root, root),
+      no_wait=true,
+      allow_failure=true,
+    )
+    @async.sleep(20)
+    let base = "http://127.0.0.1:\{server.port()}"
+    let workspace_id = @desk.stable_id("book", "research-code")
+    let prompts = [
+      "Plan parser tests", "Add parser fixtures", "Explain the parser flow",
+    ]
+    let client_turn_ids = [
+      "client-turn-api-1", "client-turn-api-2", "client-turn-api-3",
+    ]
+
+    let created = test_http_post_json(
+      base + "/api/mooncode/sessions",
+      {
+        "workspace_id": workspace_id,
+        "title": "MoonCode - Research Code",
+        "message": prompts[0],
+        "client_turn_id": client_turn_ids[0],
+        "model": "deepseek-v4-flash",
+        "web_search": false,
+        "context_path": "wiki/index.md",
+      },
+      200,
+    )
+    let session_id = json_string(created, "id", default="")
+    assert_true(session_id.has_prefix("mooncode-"))
+    assert_mooncode_http_current_turn(created, prompts[0], client_turn_ids[0])
+    assert_mooncode_http_conversation_turns(created, [prompts[0]], [
+      client_turn_ids[0],
+    ])
+
+    let second = test_http_post_json(
+      base + "/api/mooncode/sessions/\{session_id}/commands",
+      {
+        "action": "prompt",
+        "message": prompts[1],
+        "client_turn_id": client_turn_ids[1],
+        "model": "deepseek-v4-flash",
+        "web_search": false,
+        "context_path": "wiki/index.md",
+      },
+      200,
+    )
+    assert_mooncode_http_current_turn(second, prompts[1], client_turn_ids[1])
+    assert_mooncode_http_conversation_turns(second, [prompts[0], prompts[1]], [
+      client_turn_ids[0],
+      client_turn_ids[1],
+    ])
+
+    let third = test_http_post_json(
+      base + "/api/mooncode/sessions/\{session_id}/commands",
+      {
+        "action": "prompt",
+        "message": prompts[2],
+        "client_turn_id": client_turn_ids[2],
+        "model": "deepseek-v4-flash",
+        "web_search": false,
+        "context_path": "wiki/index.md",
+      },
+      200,
+    )
+    assert_mooncode_http_current_turn(third, prompts[2], client_turn_ids[2])
+    assert_mooncode_http_conversation_turns(third, prompts, client_turn_ids)
+
+    let listed = test_http_get_json(
+      base + "/api/mooncode/sessions?workspace=\{workspace_id}",
+      200,
+    )
+    match listed {
+      Array(items) => {
+        assert_eq(items.length(), 1)
+        assert_eq(json_string(items[0], "id", default=""), session_id)
+        assert_mooncode_http_conversation_turns(
+          items[0],
+          prompts,
+          client_turn_ids,
+        )
+      }
+      _ => fail("expected one replayed MoonCode session")
+    }
+
+    let commands = test_http_get_json(
+      base + "/api/mooncode/sessions/\{session_id}/commands",
+      200,
+    )
+    assert_eq(json_int(commands, "command_count", default=0), 3)
+    let command_items = json_array_items(commands, "commands")
+    assert_eq(command_items.length(), 3)
+    for index in 0..<prompts.length() {
+      assert_eq(
+        json_string(command_items[index], "client_turn_id", default=""),
+        client_turn_ids[index],
+      )
+      assert_eq(
+        json_string(command_items[index], "message", default=""),
+        prompts[index],
+      )
+    }
+
+    let runtime_feed = test_http_get_json(
+      base + "/api/mooncode/sessions/\{session_id}/runtime-commands",
+      200,
+    )
+    assert_eq(json_int(runtime_feed, "runtime_command_count", default=0), 3)
+    assert_eq(
+      json_int(runtime_feed, "runtime_receipt_pending_count", default=0),
+      3,
+    )
+  })
+}
+
+///|
 async test "mooncode code mode HTTP routes create replay and checkpoint a session end to end" {
   let root = @pathx.join(
     "/tmp",

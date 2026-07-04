@@ -4,9 +4,9 @@ fn fetch_mooncode_sessions_cmd(
   workspace_id : String,
 ) -> @rabbita.Cmd {
   let query = if workspace_id == "" {
-    "?format=listing"
+    ""
   } else {
-    "?workspace=\{encode_component(workspace_id)}&format=listing"
+    "?workspace=\{encode_component(workspace_id)}"
   }
   @http.get("/api/mooncode/sessions\{query}").expect_json(result => {
     dispatch(

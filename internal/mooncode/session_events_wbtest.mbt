@@ -242,7 +242,7 @@ test "mooncode owns stable transcript message projection ids" {
 }
 
 ///|
-test "mooncode projects session transcript commands and durable events together" {
+test "mooncode skips legacy transcript when structured events exist" {
   let command = append_projected_command_event(
     {
       "id": "s1",
@@ -261,11 +261,30 @@ test "mooncode projects session transcript commands and durable events together"
   let events = project_session_events_for_session(command, [], [
     { "id": "durable", "lane": "artifact", "kind": "durable" },
   ])
-  assert_eq(events.length(), 4)
+  assert_eq(events.length(), 3)
   assert_eq(json_string(events[0], "id", default=""), "seed")
-  assert_eq(json_string(events[1], "id", default=""), "message-1")
-  assert_eq(json_string(events[2], "command", default=""), "run_tests")
-  assert_eq(json_string(events[3], "id", default=""), "durable")
+  assert_eq(json_string(events[1], "command", default=""), "run_tests")
+  assert_eq(json_string(events[2], "id", default=""), "durable")
+  for event in events {
+    assert_false(json_string(event, "id", default="") == "message-1")
+  }
+}
+
+///|
+test "mooncode uses legacy transcript only without structured event sources" {
+  let events = project_session_events_for_session(
+    {
+      "id": "s1",
+      "transcript": [
+        { "role": "user", "id": "message-1", "content": "Create a tool" },
+      ],
+    },
+    [],
+    [],
+  )
+  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "id", default=""), "message-1")
+  assert_eq(json_string(events[0], "kind", default=""), "user")
 }
 
 ///|
