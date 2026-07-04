@@ -121,6 +121,14 @@ capability tool specs. Internal MoonCode may execute and project tool evidence,
 but it must not publish its own second tool list, alias table, capability spec
 list, or MoonClaw mapping table.
 
+`mooncode/core` also owns the model-planner evidence contract for model-backed
+turns. The contract defines model-planned actions, planner event kinds,
+model-tool-call mode, statuses, missing-evidence reasons, and the rule that a
+queued command is not active work until MoonClaw emits command-scoped planner,
+runtime, assistant, or failure evidence. Internal MoonCode may aggregate
+concrete events into reports, but it must not publish a second planner-evidence
+policy.
+
 ## Shared Runtime, Separate Lanes
 
 MoonCode, MoonWiki, and generic automation can share MoonClaw's runtime

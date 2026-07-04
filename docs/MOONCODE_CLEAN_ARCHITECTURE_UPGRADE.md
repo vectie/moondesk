@@ -2210,6 +2210,49 @@ Exit tests:
 - the migration wall rejects duplicated production MoonClaw event mappings or
   native projection policy returning outside `mooncode/core`.
 
+## Phase 55 - Core-Owned Model Planner Evidence Contract
+
+Status: implemented by moving the model-planner evidence vocabulary and policy
+contract into `mooncode/core`.
+
+Problem:
+
+- Phase 26 made model-planned turns event-backed, but the contract still lived
+  in `internal/mooncode`.
+- That left the working-state boundary too host-local: Moondesk projection knew
+  when queued commands must stay pending, when `runtime.turn_started` without
+  planner proof becomes a contract failure, and which planner statuses/reasons
+  are valid.
+- A standalone MoonCode product needs MoonClaw, Moondesk, and future clients to
+  share one planner-evidence contract before any UI can show active work.
+
+Work:
+
+- Add `mooncode/core/model_planner_evidence.mbt` with the planner evidence
+  contract id/kind, report kind, model-planned actions, command event kinds,
+  planner event kinds, terminal event kinds, model-tool-call mode, statuses,
+  problem reasons, status predicates, and user-facing rule copy.
+- Embed the model-planner evidence contract in the native capability surface and
+  capability fingerprint.
+- Make `internal/mooncode/model_planner_evidence.mbt` delegate its public
+  contract JSON and reusable policy decisions to `mooncode/core`, while keeping
+  event aggregation/report generation in the projection package.
+- Add a migration gate that rejects duplicated production planner status/event
+  policy returning outside `mooncode/core`.
+
+Exit tests:
+
+- `mooncode/core` proves the planner contract id/kind, report kind,
+  model-planned action set, command-event predicate, planner-event predicate,
+  status predicates, missing-evidence reason, contract JSON, and native
+  capability embedding.
+- internal model-planner reports still prove pending, contract-failed,
+  planner-failed, and satisfied states from deterministic event fixtures.
+- runtime protocol and runtime handoff continue to expose the same
+  model-planner evidence contract through the internal projection facade.
+- the migration wall rejects duplicated production model-planner evidence
+  vocabulary returning outside `mooncode/core`.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

@@ -295,6 +295,35 @@ Assertions:
 - concrete tests may still use native event fixture strings, but production
   event mapping and projection-safety policy must stay in `mooncode/core`.
 
+### Model Planner Evidence Contract
+
+Prove model-backed MoonCode turns can show active work only from one shared
+planner-evidence contract.
+
+Flow:
+
+```text
+mooncode/core exposes model_planner_evidence_contract_json
+-> native capability surface embeds the model-planner evidence contract
+-> runtime protocol and runtime handoff publish the same contract
+-> internal model-planner reports delegate action, status, event, mode, and
+   problem-reason vocabulary to mooncode/core
+-> migration gate scans production files for duplicated planner evidence policy
+```
+
+Assertions:
+
+- prompt, steer, and package are the model-planned command actions.
+- `runtime.turn_started` without planner evidence is a contract failure, not a
+  vague thinking state.
+- queued commands without MoonClaw evidence stay pending and do not create
+  active-work UI.
+- planner failure is durable command-scoped runtime evidence.
+- model-tool-call planner mode, planner event kinds, report statuses, and
+  missing-evidence reasons are published from `mooncode/core`.
+- concrete tests may still use event fixture strings, but production planner
+  policy must stay in `mooncode/core`.
+
 ### Command Action Contract
 
 Prove command actions are owned once before user input, operator review, native
@@ -702,6 +731,7 @@ Model planner evidence gate:
 
 ```bash
 moon test internal/mooncode --filter "mooncode model planner evidence*" --target native
+scripts/validate_mooncode_model_planner_evidence_contract.sh
 ```
 
 This deterministic Phase 26 gate protects the first-time clean runtime
@@ -710,6 +740,10 @@ as active work, if a started turn without planner evidence remains in a vague
 thinking state, if `runtime.planner_failed` is not accepted as durable
 command-scoped failure evidence, or if a planner-to-assistant sequence cannot
 prove one append-only command owner.
+
+Phase 55 moves the reusable planner-evidence vocabulary into `mooncode/core`.
+The validator fails if production model-planner status/action/event/mode
+ownership returns to `internal/mooncode`.
 
 Turn ownership and abort gate:
 

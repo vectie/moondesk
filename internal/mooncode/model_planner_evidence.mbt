@@ -29,24 +29,7 @@ priv struct ModelPlannerCommandEvidence {
 
 ///|
 pub fn model_planner_evidence_contract_json() -> Json {
-  {
-    "kind": "mooncode-model-planner-evidence-contract",
-    "protocol": protocol_version(),
-    "owner": {
-      "runtime": "moonclaw",
-      "projection": "mooncode",
-      "ui": "moondesk",
-    },
-    "model_planned_command_rule": "A prompt, steer, or package command with a selected model and no explicit runtime_tool_calls is model-planned.",
-    "working_signal_rule": "Moondesk may show active work only after command-scoped MoonClaw evidence exists: runtime.turn_started, runtime.planner_started, planner reasoning, planner-selected tool calls, assistant output, or command-scoped failure.",
-    "required_sequence": [
-      "command.prompt/command.steer/command.package", "runtime.service_started",
-      "runtime.turn_started", "runtime.planner_started or runtime.planner_failed",
-      "runtime.planner_selected plus planner reasoning/tool calls, or runtime.planner_failed",
-      "tool result evidence when tools run", "assistant response, runtime.turn_finished, or command-scoped failure",
-    ],
-    "contract_failure_rule": "Once a model-planned turn has runtime.turn_started, missing planner evidence is a runtime contract failure instead of a UI thinking state.",
-  }
+  @mooncode_core.model_planner_evidence_contract_json()
 }
 
 ///|
@@ -72,10 +55,10 @@ pub fn model_planner_evidence_report(
       None => ()
     }
     let kind = model_planner_event_kind(event)
-    if kind == "runtime.service_started" {
+    if kind == @mooncode_core.runtime_event_service_started() {
       service_started_count += 1
-    } else if kind == "runtime.service_finished" ||
-      kind == "runtime.service_failed" {
+    } else if kind == @mooncode_core.runtime_event_service_finished() ||
+      kind == @mooncode_core.runtime_event_service_failed() {
       service_finished_count += 1
     }
   }
@@ -88,7 +71,7 @@ pub fn model_planner_evidence_report(
       problems.push(
         model_planner_problem(
           event,
-          reason="planner-evidence-without-model-command",
+          reason=@mooncode_core.model_planner_stray_evidence_reason(),
           command_id~,
         ),
       )
@@ -108,11 +91,15 @@ pub fn model_planner_evidence_report(
       working_evidence_count += 1
     }
     match status {
-      "pending" => pending_count += 1
-      "running" | "service-started" => running_count += 1
-      "satisfied" => satisfied_count += 1
-      "planner-failed" => planner_failed_count += 1
-      "contract-failed" => {
+      status if status == @mooncode_core.model_planner_status_pending() =>
+        pending_count += 1
+      status if @mooncode_core.model_planner_status_is_running(status) =>
+        running_count += 1
+      status if status == @mooncode_core.model_planner_status_satisfied() =>
+        satisfied_count += 1
+      status if status == @mooncode_core.model_planner_status_planner_failed() =>
+        planner_failed_count += 1
+      status if @mooncode_core.model_planner_status_is_contract_failure(status) => {
         contract_failed_count += 1
         problems.push(model_planner_missing_evidence_problem(command))
       }
@@ -122,25 +109,26 @@ pub fn model_planner_evidence_report(
   }
   let status = if contract_failed_count > 0 ||
     problems.length() > contract_failed_count {
-    "contract-failed"
+    @mooncode_core.model_planner_status_contract_failed()
   } else if commands.length() == 0 {
-    "no-model-planned-commands"
+    @mooncode_core.model_planner_status_no_model_planned_commands()
   } else if planner_failed_count > 0 {
-    "planner-failed"
+    @mooncode_core.model_planner_status_planner_failed()
   } else if running_count > 0 {
-    "running"
+    @mooncode_core.model_planner_status_running()
   } else if pending_count > 0 {
-    "pending"
+    @mooncode_core.model_planner_status_pending()
   } else {
-    "satisfied"
+    @mooncode_core.model_planner_status_satisfied()
   }
   {
-    "kind": "mooncode-model-planner-evidence-report",
+    "kind": @mooncode_core.model_planner_evidence_report_kind(),
     "protocol": protocol_version(),
     "session_id": session_id,
     "observed_at": observed_at,
     "status": status,
-    "contract_satisfied": status != "contract-failed",
+    "contract_satisfied": status !=
+    @mooncode_core.model_planner_status_contract_failed(),
     "model_planned_command_count": commands.length(),
     "pending_command_count": pending_count,
     "running_command_count": running_count,
@@ -224,22 +212,27 @@ fn model_planner_apply_event(
   let event_name = json_string(event, "event", default="")
   let lane = json_string(event, "lane", default="")
   let status = json_string(event, "status", default="")
-  if kind == "runtime.turn_started" {
+  if kind == @mooncode_core.runtime_event_turn_started() {
     command.runtime_turn_started_count += 1
   }
-  if kind == "runtime.planner_started" {
+  if kind == @mooncode_core.runtime_event_planner_started() {
     command.planner_started_count += 1
-  } else if kind == "runtime.planner_selected" {
+  } else if kind == @mooncode_core.runtime_event_planner_selected() {
     command.planner_selected_count += 1
-  } else if kind == "runtime.planner_failed" {
+  } else if kind == @mooncode_core.runtime_event_planner_failed() {
     command.planner_failed_count += 1
   }
-  if (kind == "reasoning_delta" || kind == "reasoning_message") &&
-    json_string(event, "planner_mode", default="") == "model-tool-calls" {
+  if (
+      kind == @mooncode_core.runtime_event_reasoning_delta() ||
+      kind == @mooncode_core.runtime_event_reasoning_message()
+    ) &&
+    json_string(event, "planner_mode", default="") ==
+    @mooncode_core.model_planner_mode_model_tool_calls() {
     command.planner_reasoning_count += 1
   }
   if (kind == event_tool_call() || event_name == event_tool_call()) &&
-    json_string(event, "planner_mode", default="") == "model-tool-calls" {
+    json_string(event, "planner_mode", default="") ==
+    @mooncode_core.model_planner_mode_model_tool_calls() {
     command.model_tool_call_count += 1
   }
   if event_name == event_tool_result() ||
@@ -254,17 +247,17 @@ fn model_planner_apply_event(
     kind == "assistant_delta" {
     command.assistant_event_count += 1
   }
-  if kind == "runtime.turn_finished" ||
+  if kind == @mooncode_core.runtime_event_turn_finished() ||
     kind == "finish" ||
-    event_name == "runtime_finished" ||
+    event_name == @mooncode_core.runtime_event_runtime_finished() ||
     (lane == event_lane_transcript() && status == "done") {
     command.terminal_event_count += 1
   }
   if status == "failed" ||
-    kind == "command_error" ||
-    kind == "turn_failed" ||
-    kind == "max_steps_exhausted" ||
-    kind == "runtime_unavailable" {
+    kind == @mooncode_core.runtime_event_command_error() ||
+    kind == @mooncode_core.runtime_event_turn_failed() ||
+    kind == @mooncode_core.runtime_event_max_steps_exhausted() ||
+    kind == @mooncode_core.runtime_event_runtime_unavailable() {
     command.failure_event_count += 1
   }
   let created_at = json_string(event, "created_at", default="")
@@ -316,35 +309,36 @@ fn model_planner_command_status(
 ) -> String {
   if command.runtime_turn_started_count > 0 &&
     !model_planner_command_has_planner_evidence(command) {
-    return "contract-failed"
+    return @mooncode_core.model_planner_status_contract_failed()
   }
   if command.planner_failed_count > 0 {
-    return "planner-failed"
+    return @mooncode_core.model_planner_status_planner_failed()
   }
   if model_planner_command_has_planner_evidence(command) &&
     (command.terminal_event_count > 0 || command.assistant_event_count > 0) {
-    return "satisfied"
+    return @mooncode_core.model_planner_status_satisfied()
   }
   if model_planner_command_has_planner_evidence(command) {
-    return "running"
+    return @mooncode_core.model_planner_status_running()
   }
   if command.runtime_turn_started_count > 0 {
-    return "running"
+    return @mooncode_core.model_planner_status_running()
   }
   if command.runtime_service_started_count > 0 {
-    return "service-started"
+    return @mooncode_core.model_planner_status_service_started()
   }
-  "pending"
+  @mooncode_core.model_planner_status_pending()
 }
 
 ///|
 fn model_planner_command_rule(command : ModelPlannerCommandEvidence) -> String {
-  if model_planner_command_status(command) == "contract-failed" {
-    "MoonClaw started the model-planned turn but did not emit runtime.planner_started, runtime.planner_selected, model planner reasoning, model-planned tool calls, or runtime.planner_failed."
+  if model_planner_command_status(command) ==
+    @mooncode_core.model_planner_status_contract_failed() {
+    @mooncode_core.model_planner_contract_failure_rule()
   } else if !model_planner_command_has_working_evidence(command) {
-    "The command is queued. The UI must not show a working state until MoonClaw emits command-scoped runtime evidence."
+    @mooncode_core.model_planner_queued_rule()
   } else {
-    "The visible working state is backed by command-scoped MoonClaw planner/runtime evidence."
+    @mooncode_core.model_planner_working_evidence_rule()
   }
 }
 
@@ -353,7 +347,7 @@ fn model_planner_missing_evidence_problem(
   command : ModelPlannerCommandEvidence,
 ) -> Json {
   {
-    "reason": "missing-model-planner-evidence-after-turn-start",
+    "reason": @mooncode_core.model_planner_missing_evidence_reason(),
     "command_id": command.command_id,
     "action": command.action,
     "model": command.model,
@@ -410,19 +404,17 @@ fn model_planner_command_has_planner_evidence(
 
 ///|
 fn model_planner_event_is_command_record(event : Json) -> Bool {
-  let kind = model_planner_event_kind(event)
-  kind == "command.prompt" ||
-  kind == "command.steer" ||
-  kind == "command.package"
+  @mooncode_core.model_planner_command_event_kind_is_supported(
+    model_planner_event_kind(event),
+  )
 }
 
 ///|
 fn model_planner_event_is_planner_evidence(event : Json) -> Bool {
-  let kind = model_planner_event_kind(event)
-  kind == "runtime.planner_started" ||
-  kind == "runtime.planner_selected" ||
-  kind == "runtime.planner_failed" ||
-  json_string(event, "planner_mode", default="") == "model-tool-calls"
+  @mooncode_core.model_planner_event_is_planner_evidence(
+    model_planner_event_kind(event),
+    json_string(event, "planner_mode", default=""),
+  )
 }
 
 ///|
@@ -458,7 +450,7 @@ fn model_planner_command_action(event : Json, packet : Json) -> String {
   if kind.has_prefix("command.") {
     kind["command.".length():].to_owned()
   } else {
-    "prompt"
+    @mooncode_core.command_prompt()
   }
 }
 
@@ -474,7 +466,7 @@ fn model_planner_command_model(event : Json, packet : Json) -> String {
 
 ///|
 fn model_planner_action_allowed(action : String) -> Bool {
-  action == "prompt" || action == "steer" || action == "package"
+  @mooncode_core.model_planner_command_action_is_supported(action)
 }
 
 ///|
