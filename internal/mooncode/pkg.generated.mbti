@@ -84,6 +84,10 @@ pub fn command_acceptance_gates(Json) -> Json
 
 pub fn command_action(Json) -> String
 
+pub fn command_action_contract_id() -> String
+
+pub fn command_action_contract_json() -> Json
+
 pub fn command_advertised_actions() -> Array[String]
 
 pub fn command_approval(String) -> String

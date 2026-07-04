@@ -69,6 +69,86 @@ pub fn native_capability_surface_json() -> Json {
 }
 
 ///|
+pub fn command_action_contract_id() -> String {
+  @mooncode_core.command_action_contract_id()
+}
+
+///|
+fn command_prompt() -> String {
+  @mooncode_core.command_prompt()
+}
+
+///|
+fn command_steer() -> String {
+  @mooncode_core.command_steer()
+}
+
+///|
+fn command_run_tests() -> String {
+  @mooncode_core.command_run_tests()
+}
+
+///|
+fn command_run_build() -> String {
+  @mooncode_core.command_run_build()
+}
+
+///|
+fn command_run_eval() -> String {
+  @mooncode_core.command_run_eval()
+}
+
+///|
+fn command_package() -> String {
+  @mooncode_core.command_package()
+}
+
+///|
+fn command_commit() -> String {
+  @mooncode_core.command_commit()
+}
+
+///|
+fn command_accept() -> String {
+  @mooncode_core.command_accept()
+}
+
+///|
+fn command_reject() -> String {
+  @mooncode_core.command_reject()
+}
+
+///|
+fn command_approve_tool() -> String {
+  @mooncode_core.command_approve_tool()
+}
+
+///|
+fn command_reject_tool() -> String {
+  @mooncode_core.command_reject_tool()
+}
+
+///|
+fn command_apply_patch() -> String {
+  @mooncode_core.command_apply_patch()
+}
+
+///|
+fn command_revert_patch() -> String {
+  @mooncode_core.command_revert_patch()
+}
+
+///|
+fn command_cancel() -> String {
+  @mooncode_core.command_cancel()
+}
+
+///|
+pub fn command_action_contract_json() -> Json {
+  @mooncode_core.command_action_contract_json()
+}
+
+///|
 pub fn standalone_boundary_json() -> Json {
   @mooncode_core.standalone_boundary_json()
 }

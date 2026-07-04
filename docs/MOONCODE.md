@@ -49,7 +49,8 @@ IO. The Rabbita UI renders the result.
 
 ```text
 mooncode/core
-  shared protocol constants, event-lane contract, and capability surface
+  shared protocol constants, command-action contract, event-lane contract,
+  runtime event-name contract, and capability surface
 
 internal/mooncode
   command, stream, runtime, readiness, review, package, and session contracts
@@ -81,6 +82,19 @@ MoonClaw. The accepted event list and command-output event list are published
 through `runtime_event_name_contract_json()` and embedded in the native
 capability surface. Internal MoonCode may normalize concrete records, but it
 must not publish its own second accepted-event or output-event list.
+
+`mooncode/core` also owns the MoonCode command-action vocabulary:
+
+```text
+prompt, steer, run_tests, run_build, run_eval, package, commit, accept, reject,
+approve_tool, reject_tool, apply_patch, revert_patch, cancel
+```
+
+`note` is supported for internal records but is not advertised as an operator
+command. The command-action contract owns turn-control actions, approval policy,
+lane policy, proof predicates, review-receipt policy, and tool hints. Internal
+MoonCode may execute action-specific behavior, but it must not publish its own
+second command list or grouped action ownership.
 
 ## Shared Runtime, Separate Lanes
 

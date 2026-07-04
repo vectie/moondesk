@@ -35,7 +35,7 @@ pub fn runtime_tool_alias_rows() -> Array[Json] {
 
 ///|
 pub fn code_command_names() -> Array[String] {
-  ["prompt", "steer", "cancel"]
+  @mooncode_core.command_turn_actions()
 }
 
 ///|
@@ -133,12 +133,24 @@ pub fn protocol_command_valid(json : Json) -> Bool {
 ///|
 fn decode_code_command_enum(json : Json) -> Result[CodeCommand, String] {
   match json {
-    { "command": "prompt", "text": String(text), .. } => Ok(Prompt(text))
-    { "command": "steer", "text": String(text), .. } => Ok(Steer(text))
-    { "command": "prompt", .. } | { "command": "steer", .. } =>
-      Err("expected a string \"text\" field")
-    { "command": "cancel", .. } => Ok(Cancel)
-    { "command": String(other), .. } => Err("unknown command: \{other}")
+    { "command": String(command), "text": String(text), .. } =>
+      if command == command_prompt() {
+        Ok(Prompt(text))
+      } else if command == command_steer() {
+        Ok(Steer(text))
+      } else if command == command_cancel() {
+        Ok(Cancel)
+      } else {
+        Err("unknown command: \{command}")
+      }
+    { "command": String(command), .. } =>
+      if command == command_prompt() || command == command_steer() {
+        Err("expected a string \"text\" field")
+      } else if command == command_cancel() {
+        Ok(Cancel)
+      } else {
+        Err("unknown command: \{command}")
+      }
     _ => Err("expected a {\"command\": ...} object")
   }
 }
@@ -146,9 +158,9 @@ fn decode_code_command_enum(json : Json) -> Result[CodeCommand, String] {
 ///|
 fn code_command_to_json(command : CodeCommand) -> Json {
   match command {
-    Prompt(text) => { "command": "prompt", "text": text }
-    Steer(text) => { "command": "steer", "text": text }
-    Cancel => { "command": "cancel" }
+    Prompt(text) => { "command": command_prompt(), "text": text }
+    Steer(text) => { "command": command_steer(), "text": text }
+    Cancel => { "command": command_cancel() }
   }
 }
 

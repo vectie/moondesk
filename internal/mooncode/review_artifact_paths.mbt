@@ -54,29 +54,29 @@ pub fn review_receipt_relative_path(
 ) -> String {
   let safe_session = artifact_safe_id(session_id, fallback="session")
   let safe_command = artifact_safe_id(command_id, fallback="command")
-  let safe_action = match action {
-    "accept" => "accept"
-    "reject" => "reject"
-    "approve_tool" => "approve-tool"
-    "reject_tool" => "reject-tool"
-    "package" => "package"
-    "apply_patch" => "apply-patch"
-    "revert_patch" => "revert-patch"
-    _ => "command"
+  let safe_action = if action == command_accept() {
+    "accept"
+  } else if action == command_reject() {
+    "reject"
+  } else if action == command_approve_tool() {
+    "approve-tool"
+  } else if action == command_reject_tool() {
+    "reject-tool"
+  } else if action == command_package() {
+    "package"
+  } else if action == command_apply_patch() {
+    "apply-patch"
+  } else if action == command_revert_patch() {
+    "revert-patch"
+  } else {
+    "command"
   }
   "wiki/reviews/mooncode/\{safe_session}/\{safe_action}-\{safe_command}.json"
 }
 
 ///|
 pub fn command_writes_review_receipt(action : String) -> Bool {
-  action == "accept" ||
-  action == "reject" ||
-  action == "package" ||
-  action == "commit" ||
-  action == "approve_tool" ||
-  action == "reject_tool" ||
-  action == "apply_patch" ||
-  action == "revert_patch"
+  @mooncode_core.command_action_writes_review_receipt(action)
 }
 
 ///|

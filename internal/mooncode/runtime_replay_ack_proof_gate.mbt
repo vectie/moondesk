@@ -115,17 +115,5 @@ fn runtime_replay_ack_proof_gate(
 
 ///|
 fn runtime_completion_requires_proof(action : String) -> Bool {
-  match action {
-    "run_tests"
-    | "run_eval"
-    | "package"
-    | "commit"
-    | "accept"
-    | "reject"
-    | "apply_patch"
-    | "revert_patch"
-    | "approve_tool"
-    | "reject_tool" => true
-    _ => false
-  }
+  @mooncode_core.command_action_requires_runtime_completion_proof(action)
 }

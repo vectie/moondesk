@@ -54,8 +54,9 @@ if rg -n \
 fi
 rm -f "${stale_file}"
 
-if ! rg -n 'event_lanes\(\)' "${ROOT}/internal/mooncode/command_metadata.mbt" >/dev/null; then
-  echo "command metadata must use the mooncode/core event_lanes() contract for prompt/steer coverage." >&2
+if ! rg -n 'event_lanes\(\)' "${ROOT}/internal/mooncode/command_metadata.mbt" >/dev/null &&
+  ! rg -n '@mooncode_core\.command_action_expected_lanes\(' "${ROOT}/internal/mooncode/command_metadata.mbt" >/dev/null; then
+  echo "command metadata must use the mooncode/core event_lanes() contract directly or through command_action_expected_lanes()." >&2
   exit 1
 fi
 

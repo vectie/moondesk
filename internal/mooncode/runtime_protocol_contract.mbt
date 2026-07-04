@@ -8,6 +8,7 @@ pub fn runtime_protocol_contract_json() -> Json {
         for command in code_command_names() => Json::string(command)
       ],
     ),
+    "command_action_contract": command_action_contract_json(),
     "tool_registry": {
       "reference": "mooncode/runtime/tools",
       "required_tools": Json::array(

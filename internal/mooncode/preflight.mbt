@@ -86,47 +86,47 @@ pub fn command_preflight_blocking_reason(
     "verified_test_count",
     default=0,
   )
-  match action {
-    "accept" | "package" | "commit" => {
-      if failed_tests > 0 {
-        return "fix failing test/build results before \{action}"
-      }
-      if pending_approvals > 0 {
-        return "resolve pending tool approvals before \{action}"
-      }
-      if pending_diffs > 0 && verified_tests == 0 {
-        return "run tests/builds before \{action} for pending file changes"
-      }
-      if action == "commit" && diff_count > 0 && accepted_reviews == 0 {
-        return "accept reviewed file changes before commit"
-      }
-      let patch_reason = command_preflight_selected_patch_blocking_reason(
-        action, context_path, patch_entries,
-      )
-      if patch_reason != "" {
-        return patch_reason
-      }
-      ""
+  if action == command_accept() ||
+    action == command_package() ||
+    action == command_commit() {
+    if failed_tests > 0 {
+      return "fix failing test/build results before \{action}"
     }
-    "apply_patch" | "revert_patch" => {
-      if context_path == "" {
-        return "select a patch path before \{action}"
-      }
-      if !command_preflight_has_patch_target(patch_entries, context_path) {
-        return "no MoonCode patch candidate exists for \{context_path}"
-      }
-      let patch_state = command_preflight_patch_target_state(
-        patch_entries, context_path,
-      )
-      if action == "apply_patch" && patch_state != "accepted" {
-        return "accept patch target before apply_patch: \{context_path} is \{patch_state}"
-      }
-      if action == "revert_patch" && patch_state != "applied" {
-        return "apply patch target before revert_patch: \{context_path} is \{patch_state}"
-      }
-      ""
+    if pending_approvals > 0 {
+      return "resolve pending tool approvals before \{action}"
     }
-    _ => ""
+    if pending_diffs > 0 && verified_tests == 0 {
+      return "run tests/builds before \{action} for pending file changes"
+    }
+    if action == command_commit() && diff_count > 0 && accepted_reviews == 0 {
+      return "accept reviewed file changes before commit"
+    }
+    let patch_reason = command_preflight_selected_patch_blocking_reason(
+      action, context_path, patch_entries,
+    )
+    if patch_reason != "" {
+      return patch_reason
+    }
+    ""
+  } else if @mooncode_core.command_action_is_patch(action) {
+    if context_path == "" {
+      return "select a patch path before \{action}"
+    }
+    if !command_preflight_has_patch_target(patch_entries, context_path) {
+      return "no MoonCode patch candidate exists for \{context_path}"
+    }
+    let patch_state = command_preflight_patch_target_state(
+      patch_entries, context_path,
+    )
+    if action == command_apply_patch() && patch_state != "accepted" {
+      return "accept patch target before apply_patch: \{context_path} is \{patch_state}"
+    }
+    if action == command_revert_patch() && patch_state != "applied" {
+      return "apply patch target before revert_patch: \{context_path} is \{patch_state}"
+    }
+    ""
+  } else {
+    ""
   }
 }
 
@@ -278,31 +278,31 @@ pub fn command_preflight_override_projected_event(
 
 ///|
 pub fn action_required_gates(action : String) -> Array[String] {
-  match action {
-    "run_tests" | "run_build" =>
-      ["runtime-receipt", "moon_check-or-shell-tool", "test_result-event"]
-    "run_eval" =>
-      ["runtime-receipt", "tool_harness", "file_edit", "native-eval-report"]
-    "package" =>
-      [
-        "runtime-receipt", "source-inventory", "package-index", "operator-review",
-      ]
-    "commit" =>
-      [
-        "operator-review", "no-failing-tests", "accepted-file-changes", "git-commit-proof",
-      ]
-    "accept" =>
-      [
-        "operator-review", "no-failing-tests", "review-receipt", "moonbook-owned-output",
-      ]
-    "reject" => ["operator-review", "review-receipt"]
-    "approve_tool" | "reject_tool" =>
-      ["operator-review", "tool-approval-manifest"]
-    "apply_patch" | "revert_patch" =>
-      ["operator-review", "patch-set", "post-change-test-result"]
-    "cancel" => ["runtime-receipt", "terminal-event"]
-    "prompt" | "steer" =>
-      ["runtime-receipt", "stream-event", "tool-or-transcript-progress"]
-    _ => ["runtime-receipt"]
+  if @mooncode_core.command_action_is_test(action) {
+    ["runtime-receipt", "moon_check-or-shell-tool", "test_result-event"]
+  } else if action == command_run_eval() {
+    ["runtime-receipt", "tool_harness", "file_edit", "native-eval-report"]
+  } else if action == command_package() {
+    ["runtime-receipt", "source-inventory", "package-index", "operator-review"]
+  } else if action == command_commit() {
+    [
+      "operator-review", "no-failing-tests", "accepted-file-changes", "git-commit-proof",
+    ]
+  } else if action == command_accept() {
+    [
+      "operator-review", "no-failing-tests", "review-receipt", "moonbook-owned-output",
+    ]
+  } else if action == command_reject() {
+    ["operator-review", "review-receipt"]
+  } else if @mooncode_core.command_action_is_tool_approval(action) {
+    ["operator-review", "tool-approval-manifest"]
+  } else if @mooncode_core.command_action_is_patch(action) {
+    ["operator-review", "patch-set", "post-change-test-result"]
+  } else if action == command_cancel() {
+    ["runtime-receipt", "terminal-event"]
+  } else if @mooncode_core.command_action_is_prompt_or_steer(action) {
+    ["runtime-receipt", "stream-event", "tool-or-transcript-progress"]
+  } else {
+    ["runtime-receipt"]
   }
 }

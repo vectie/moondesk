@@ -24,6 +24,7 @@ pub fn runtime_contract_json() -> Json {
     ],
     "status": "contract-specified",
     "runtime_protocol": runtime_protocol_contract_json(),
+    "command_action_contract": command_action_contract_json(),
     "components": [
       runtime_component(
         "mooncode_runtime", "mooncode/runtime", "Loop-scoped runtime state, workspace root, bounded event queue, command scope, and steering input shared by tools.",
@@ -53,17 +54,17 @@ pub fn runtime_contract_json() -> Json {
       "transport": "jsonl-or-sse",
       "input_commands": [
         {
-          "command": "prompt",
+          "command": command_prompt(),
           "required_fields": ["command", "text", "session_id", "book_root"],
           "purpose": "Start or queue a coding turn for the selected MoonBook.",
         },
         {
-          "command": "steer",
+          "command": command_steer(),
           "required_fields": ["command", "text", "session_id"],
           "purpose": "Inject operator guidance into the active or queued turn without starting an implicit new command.",
         },
         {
-          "command": "cancel",
+          "command": command_cancel(),
           "required_fields": ["command", "session_id"],
           "purpose": "Cancel the active turn or withdraw the next queued prompt while keeping the session process alive.",
         },

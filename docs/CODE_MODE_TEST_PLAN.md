@@ -265,6 +265,34 @@ Assertions:
 - tests may still use concrete event fixture strings, but production contracts
   must publish event names from `mooncode/core`.
 
+### Command Action Contract
+
+Prove command actions are owned once before user input, operator review, native
+runtime work, and MoonBook artifacts can affect the same session.
+
+Flow:
+
+```text
+mooncode/core exposes command_action_contract_json
+-> native capability surface embeds the command-action contract
+-> runtime protocol publishes code commands from command_turn_actions
+-> command metadata delegates advertised/supported actions to mooncode/core
+-> preflight, proof gates, native metadata, and review receipts use core action predicates
+-> migration gate scans implementation files for duplicated action ownership
+```
+
+Assertions:
+
+- prompt, steer, and cancel are the only turn-control commands.
+- advertised actions include test/build/eval/package/commit/review/tool/patch
+  actions, while note stays supported but not advertised.
+- approval, lane, tool-hint, proof, and review-receipt policies are derived from
+  the command-action contract.
+- runtime protocol, runtime capability, and MoonCode capability payloads expose
+  `command_action_contract_json()`.
+- concrete tests may still use command fixture strings, but production command
+  lists and grouped action ownership must stay in `mooncode/core`.
+
 ### Native Sidecar Reply Ingestion
 
 Exercise raw MoonClaw sidecar evidence as input, not as a second transcript.

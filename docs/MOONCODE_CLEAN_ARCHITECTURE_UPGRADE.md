@@ -2053,6 +2053,56 @@ Exit tests:
 - the migration wall rejects duplicated production accepted-event/output-event
   lists returning outside `mooncode/core`.
 
+## Phase 52 - Core-Owned Command Action Contract
+
+Status: implemented by moving MoonCode command/action vocabulary and command
+metadata into `mooncode/core`, then making internal MoonCode consume that
+contract instead of carrying local lists.
+
+Problem:
+
+- Phase 50/51 made event lanes and runtime event names core-owned, but command
+  actions were still split across command metadata, protocol decoding, native
+  command metadata, preflight, action-plan proof gates, runtime completion
+  proof gates, review-receipt routing, and capability payloads.
+- That shape lets chat/runtime ordering drift: one subsystem can think
+  `prompt`, `steer`, and `cancel` are the turn commands while another treats
+  package, patch, or review commands as a separate ad hoc vocabulary.
+- For a clean standalone MoonCode product, the command vocabulary must be a
+  contract beside the lane and event-name contracts, not implementation glue in
+  `internal/mooncode`.
+
+Work:
+
+- Add `mooncode/core/command_actions.mbt` with action-name functions,
+  turn-control actions, advertised and supported actions, command categories,
+  approval policy, lane policy, tool hints, proof predicates, review-receipt
+  predicates, titles, and a JSON command-action contract.
+- Embed the command-action contract in the native capability surface fingerprint
+  and capability JSON.
+- Convert internal command metadata to a thin facade over `mooncode/core`.
+- Make `code_command_names()`, command decoding, runtime protocol JSON,
+  runtime capability JSON, native action metadata, preflight, action-plan proof
+  policy, runtime completion proof policy, and review-receipt policy consume the
+  core-owned action contract.
+- Add `scripts/validate_mooncode_command_action_contract.sh` and run it from
+  the Phase 8 migration wall.
+
+Exit tests:
+
+- `mooncode/core` proves the command-action contract id, prompt/steer/cancel
+  turn actions, advertised/supported action lists, category predicates, approval
+  policy, lane policy, proof predicates, tool hints, and contract JSON.
+- native capability JSON includes the command-action contract.
+- runtime protocol and MoonCode capability JSON expose
+  `command_action_contract_json()`.
+- internal command metadata delegates advertised/supported actions and metadata
+  to `mooncode/core`.
+- preflight, action-plan proof gates, runtime completion proof gates, review
+  receipt policy, and native command metadata consume core command predicates.
+- the migration wall rejects duplicated production command-action lists or
+  grouped command action ownership returning outside `mooncode/core`.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
