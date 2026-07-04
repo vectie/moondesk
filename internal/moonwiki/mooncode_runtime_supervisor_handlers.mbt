@@ -107,19 +107,10 @@ async fn handle_mooncode_session_runtime_supervisor_run(
   let session_patch = @mooncode.moonclaw_runtime_supervisor_run_session_patch(
     response, updated_at,
   )
-  let status_message = json_object_field_or_empty(
-    session_patch, "status_message",
-  )
-  let with_response = append_mooncode_transcript_message(
-    @mooncode.append_projected_native_response_events(
-      session,
-      response,
-      loop_fallback_created_at=updated_at,
-    ),
-    role="status",
-    content=json_string(status_message, "content", default=""),
-    status=json_string(status_message, "status", default="failed"),
-    created_at=json_string(status_message, "created_at", default=updated_at),
+  let with_response = @mooncode.append_projected_native_response_events(
+    session,
+    response,
+    loop_fallback_created_at=updated_at,
   )
   let with_updated = @mooncode.apply_moonclaw_runtime_session_patch(
     with_response, session_patch,
@@ -407,19 +398,10 @@ async fn run_mooncode_runtime_service_for_session(
   let session_patch = @mooncode.moonclaw_runtime_supervisor_run_session_patch(
     response, updated_at,
   )
-  let status_message = json_object_field_or_empty(
-    session_patch, "status_message",
-  )
-  let with_response = append_mooncode_transcript_message(
-    @mooncode.append_projected_native_response_events(
-      session,
-      response,
-      loop_fallback_created_at=updated_at,
-    ),
-    role="status",
-    content=json_string(status_message, "content", default=""),
-    status=json_string(status_message, "status", default="running"),
-    created_at=json_string(status_message, "created_at", default=updated_at),
+  let with_response = @mooncode.append_projected_native_response_events(
+    session,
+    response,
+    loop_fallback_created_at=updated_at,
   )
   let with_updated = @mooncode.apply_moonclaw_runtime_session_patch(
     with_response, session_patch,

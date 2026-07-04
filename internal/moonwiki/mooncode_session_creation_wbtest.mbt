@@ -22,7 +22,7 @@ async test "mooncode session scope still rejects unknown explicit workspace" {
 }
 
 ///|
-test "mooncode immediate queued session appends user prompt" {
+test "mooncode immediate queued session appends canonical user event only" {
   let session : Json = {
     "id": "mooncode-demo",
     "workspace_id": "general",
@@ -48,10 +48,7 @@ test "mooncode immediate queued session appends user prompt" {
   let events = json_array_items(queued, "mooncode_command_events")
   assert_eq(json_string(events[0], "status", default=""), "queued")
   assert_eq(json_string(events[0], "detail", default=""), "hello mooncode")
-  let transcript = json_array_items(queued, "transcript")
-  assert_eq(json_string(transcript[0], "role", default=""), "user")
-  assert_eq(json_string(transcript[0], "content", default=""), "hello mooncode")
-  assert_eq(json_string(transcript[0], "status", default=""), "queued")
+  assert_true(json_object_field(queued, "transcript") is None)
   assert_eq(json_string(queued, "status", default=""), "queued")
   assert_eq(json_string(queued, "last_message", default=""), "hello mooncode")
 }
@@ -137,7 +134,6 @@ test "mooncode new session record starts with typed coding protocol" {
     created_at="2026-06-15T00:00:00Z",
     updated_at="2026-06-15T00:00:00Z",
     last_message="Build a demo tool",
-    transcript=[],
     initial_context_path="tools/demo/main.mbt",
   )
   assert_true(json_string(session, "id", default="").has_prefix("mooncode-"))
@@ -157,7 +153,7 @@ test "mooncode new session record starts with typed coding protocol" {
     json_string(session, "mooncode_runtime_session_id", default=""),
     json_string(session, "id", default=""),
   )
-  assert_eq(json_array_items(session, "transcript").length(), 0)
+  assert_true(json_object_field(session, "transcript") is None)
 }
 
 ///|

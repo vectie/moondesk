@@ -254,7 +254,7 @@ Exit tests:
 
 ## Phase 7 - Shared Contract Layer
 
-Status: active; local MoonCode contract surface in progress.
+Status: active; local MoonCode contract surface complete in Moondesk.
 
 Work:
 
@@ -278,6 +278,57 @@ Exit tests:
 - all products consume the same turn/message/progress schema
 - product-specific diagnostics stay outside the chat contract
 - schema tests reject missing turn identity for user-facing events
+
+## Phase 8 - Legacy Durable Transcript Deletion
+
+Status: complete.
+
+Work:
+
+- Stop writing prompt/status messages into `session.transcript`.
+- Remove MoonCode's public `append_transcript_message` wrapper.
+- Remove the backend fallback that projected `session.transcript` into
+  `mooncode_events`.
+- Keep `transcript` only as an event lane name for runtime/user/assistant event
+  records.
+- Keep generic MoonCore transcript helpers available for other products, but do
+  not expose or default them through MoonCode.
+
+Implemented:
+
+- New MoonCode session records no longer include a `transcript` field.
+- Immediate queued prompt responses are projected from command events only.
+- Runtime supervisor responses append projected runtime events only.
+- Session listings no longer emit empty `transcript` / `mooncode_events`
+  compatibility arrays or derive titles from transcript messages.
+- Session snapshots describe command/runtime/event logs as the durable store,
+  without a transcript array or transcript count.
+
+Exit tests:
+
+- new prompt creation returns a canonical `mooncode_conversation` turn without
+  writing a transcript row
+- legacy transcript-only sessions produce no chat events
+- session listing title comes from first prompt, last message, title, or id
+- response defaults do not add `transcript: []`
+
+## Phase 9 - MoonLib Upstream Extraction
+
+Status: pending external MoonLib write.
+
+Work:
+
+- Move the stable conversation contract from `mooncode/core` into MoonLib.
+- Update Moondesk to import the MoonLib conversation contract directly.
+- Keep MoonCode-specific command/runtime normalization in MoonCode.
+- Publish or pin the MoonLib version that contains the contract.
+
+Exit tests:
+
+- Moondesk, MoonCode, MoonClaw, MoonRobo, MoonMoon, MoonFish, MoonTown, and
+  future MoonSuite products compile against the same MoonLib contract
+- contract tests reject missing turn identity for user-facing events
+- product-specific diagnostics stay outside the shared chat contract
 
 ## Non-Goals
 

@@ -20,7 +20,6 @@ async test "mooncode code mode durable session reload projects command runtime a
     updated_at="2026-06-30T00:00:00Z",
     last_message="Run the parser tests",
     initial_context_path="tools/parser/main.mbt",
-    transcript=[],
   )
   write_mooncode_session_record(root, session)
 
@@ -568,13 +567,7 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
       json_string(created, "next_action", default=""),
       "poll_mooncode_stream",
     )
-    let created_transcript = json_array_items(created, "transcript")
-    assert_eq(created_transcript.length(), 1)
-    assert_eq(json_string(created_transcript[0], "role", default=""), "user")
-    assert_eq(
-      json_string(created_transcript[0], "content", default=""),
-      "Create parser tests",
-    )
+    assert_true(json_object_field(created, "transcript") is None)
     assert_true(
       @fs.exists(
         @pathx.join(

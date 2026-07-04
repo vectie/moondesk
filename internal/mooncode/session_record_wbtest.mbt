@@ -18,7 +18,6 @@ test "mooncode session record starts with typed coding protocol" {
     updated_at="2026-06-15T00:00:00Z",
     last_message="Build a demo tool",
     initial_context_path="tools/demo/main.mbt",
-    transcript=[],
   )
   assert_eq(json_string(session, "id", default=""), "mooncode-demo")
   assert_eq(json_string(session, "component", default=""), "mooncode")
@@ -35,7 +34,7 @@ test "mooncode session record starts with typed coding protocol" {
   )
   assert_eq(session_runtime_session_id(session), "mooncode-demo")
   assert_eq(summary_json_int(session, "queued_count", default=0), 1)
-  assert_eq(json_array_items(session, "transcript").length(), 0)
+  assert_true(summary_json_object_field(session, "transcript") is None)
 }
 
 ///|
@@ -55,7 +54,6 @@ test "mooncode projected session record owns stable session id policy" {
     updated_at="2026-06-17T00:00:00Z",
     last_message="Build a demo tool",
     initial_context_path="tools/demo/main.mbt",
-    transcript=[],
   )
   let second = projected_session_record(
     workspace_id="book-demo",
@@ -67,7 +65,6 @@ test "mooncode projected session record owns stable session id policy" {
     updated_at="2026-06-17T00:00:00Z",
     last_message="Build a demo tool",
     initial_context_path="tools/demo/main.mbt",
-    transcript=[],
   )
   let first_id = json_string(first, "id", default="")
   assert_eq(first_id, json_string(second, "id", default=""))
@@ -114,7 +111,7 @@ test "mooncode owns native runtime session projection shape" {
 }
 
 ///|
-test "mooncode owns session response defaults and transcript messages" {
+test "mooncode owns session response defaults and field updates" {
   let session : Json = {
     "id": "session-defaults",
     "component": "mooncode",
@@ -123,7 +120,7 @@ test "mooncode owns session response defaults and transcript messages" {
   let with_defaults = session_response_defaults(session)
   assert_eq(json_string(with_defaults, "title", default=""), "MoonCode Session")
   assert_eq(json_string(with_defaults, "cwd", default=""), "/tmp/book-root")
-  assert_eq(json_array_items(with_defaults, "transcript").length(), 0)
+  assert_true(summary_json_object_field(with_defaults, "transcript") is None)
 
   let with_field = session_with_field(
     with_defaults,
@@ -134,19 +131,4 @@ test "mooncode owns session response defaults and transcript messages" {
     json_string(with_field, "mooncode_runtime_mode", default=""),
     "native",
   )
-
-  let with_message = append_transcript_message(
-    with_field,
-    role="assistant",
-    content="ready",
-    status="completed",
-    created_at="2026-06-19T00:00:00Z",
-  )
-  let transcript = json_array_items(with_message, "transcript")
-  assert_eq(transcript.length(), 1)
-  let first = transcript[0]
-  assert_eq(json_string(first, "role", default=""), "assistant")
-  assert_eq(json_string(first, "content", default=""), "ready")
-  assert_eq(json_string(first, "status", default=""), "completed")
-  assert_true(json_string(first, "id", default="").has_prefix("mooncode-msg-"))
 }

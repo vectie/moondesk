@@ -37,5 +37,5 @@ async test "mooncode response enrichment uses MoonCode defaults only" {
   let enriched = enrich_mooncode_session_for_response(root, session)
   assert_eq(json_string(enriched, "title", default=""), "MoonCode Session")
   assert_eq(json_string(enriched, "cwd", default=""), root)
-  assert_eq(json_array_items(enriched, "transcript").length(), 0)
+  assert_true(json_object_field(enriched, "transcript") is None)
 }

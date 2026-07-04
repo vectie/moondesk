@@ -19,8 +19,6 @@ pub fn session_listing_row(session : Json, updated_at_ms : Json) -> Json {
       default="",
     ),
     "last_message": json_string(session, "last_message", default=""),
-    "transcript": [],
-    "mooncode_events": [],
     "mooncode_summary": {
       "event_count": json_array_items(session, "mooncode_command_events").length(),
       "verified_test_count": 0,
@@ -133,14 +131,6 @@ fn normalize_runtime_session_listing_row(row : Json) -> Json? {
         Some(_) => ()
         None => next["queued_count"] = (0).to_json()
       }
-      match fields.get("transcript") {
-        Some(_) => ()
-        None => next["transcript"] = Json::array([])
-      }
-      match fields.get("mooncode_events") {
-        Some(_) => ()
-        None => next["mooncode_events"] = Json::array([])
-      }
       match fields.get("mooncode_summary") {
         Some(_) => ()
         None =>
@@ -218,10 +208,6 @@ pub fn session_listing_title(session : Json) -> String {
   if explicit_first_prompt != "" {
     return explicit_first_prompt
   }
-  let first_user = first_user_transcript_line(session)
-  if first_user != "" {
-    return first_user
-  }
   let last_message = compact_listing_line(
     json_string(session, "last_message", default=""),
   )
@@ -263,21 +249,6 @@ fn session_listing_object_field_or_empty(json : Json, key : String) -> Json {
       }
     _ => {}
   }
-}
-
-///|
-fn first_user_transcript_line(session : Json) -> String {
-  for message in json_array_items(session, "transcript") {
-    if json_string(message, "role", default="") == "user" {
-      let line = compact_listing_line(
-        json_string(message, "content", default=""),
-      )
-      if line != "" {
-        return line
-      }
-    }
-  }
-  ""
 }
 
 ///|

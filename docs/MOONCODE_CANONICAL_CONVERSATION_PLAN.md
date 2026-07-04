@@ -300,10 +300,32 @@ Browser smoke:
 - hard refresh
 - verify the same three turns remain in UI and API order
 
-## Phase 8 - Shared Product Contract
+## Phase 8 - Legacy Durable Transcript Deletion
 
-Status: active; Moondesk now exposes the local public conversation contract
-surface that should move upstream to MoonLib.
+Status: complete.
+
+Work:
+
+- Delete the MoonCode-specific `append_transcript_message` wrapper.
+- Stop new prompt creation from writing a parallel `session.transcript` row.
+- Stop runtime supervisor responses from writing status transcript rows.
+- Remove the backend fallback that projected `session.transcript` into
+  `mooncode_events`.
+- Remove compact-listing `transcript` / `mooncode_events` compatibility arrays.
+- Remove transcript arrays and transcript counts from MoonCode session
+  snapshots.
+
+Current coverage:
+
+- prompt creation returns a canonical conversation turn without a legacy
+  transcript row
+- legacy transcript-only session records produce no projected chat events
+- response defaults do not inject `transcript: []`
+- session listings choose titles from first prompt, last message, title, or id
+
+## Phase 9 - Shared Product Contract
+
+Status: active in Moondesk; pending upstream MoonLib extraction.
 
 Work:
 
@@ -321,7 +343,7 @@ Exit tests:
 
 ## Current Direction
 
-The next implementation step is Phase 8: move stable conversation DTOs into
-MoonLib so MoonClaw, MoonCode, Moondesk, MoonRobo, MoonMoon, MoonFish,
-MoonTown, and future MoonSuite products share one turn/message/progress
-contract.
+The next implementation step is Phase 9: move the stable conversation DTOs from
+Moondesk's local `mooncode/core` surface into MoonLib so MoonClaw, MoonCode,
+Moondesk, MoonRobo, MoonMoon, MoonFish, MoonTown, and future MoonSuite products
+share one turn/message/progress contract.

@@ -144,23 +144,6 @@ fn mooncode_session_response_defaults(session : Json) -> Json {
 }
 
 ///|
-fn append_mooncode_transcript_message(
-  session : Json,
-  role~ : String,
-  content~ : String,
-  status~ : String,
-  created_at? : String = @async.now().to_string(),
-) -> Json {
-  @mooncode.append_transcript_message(
-    session,
-    role~,
-    content~,
-    status~,
-    created_at~,
-  )
-}
-
-///|
 async fn enrich_mooncode_session_for_response(
   workspace_root : String,
   session : Json,

@@ -7,10 +7,6 @@ test "mooncode session snapshot records durable queue and event state" {
     "workspace_root": "/tmp/book",
     "mooncode_runtime_session_id": "runtime",
     "title": "Build tool",
-    "transcript": [
-      { "role": "user", "content": "create a tool" },
-      { "role": "assistant", "content": "working" },
-    ],
     "mooncode_last_command_packet": {
       "command_id": "cmd-1",
       "action": "prompt",
@@ -54,7 +50,8 @@ test "mooncode session snapshot records durable queue and event state" {
     json_string(snapshot, "kind", default=""),
     "mooncode-session-snapshot",
   )
-  assert_eq(summary_json_int(snapshot, "transcript_count", default=0), 2)
+  assert_true(summary_json_object_field(snapshot, "transcript") is None)
+  assert_true(summary_json_object_field(snapshot, "transcript_count") is None)
   assert_eq(summary_json_int(snapshot, "command_count", default=0), 1)
   assert_eq(summary_json_int(snapshot, "runtime_command_count", default=0), 1)
   assert_eq(summary_json_int(snapshot, "runtime_receipt_count", default=0), 1)

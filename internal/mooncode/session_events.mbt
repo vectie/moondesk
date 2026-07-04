@@ -161,51 +161,8 @@ pub fn project_session_events_for_session(
         }
       }
     }
-  } else if projected.length() == 0 &&
-    command_events.length() == 0 &&
-    durable_events.length() == 0 {
-    for message in session_json_array_items(session, "transcript") {
-      projected.push(transcript_message_projected_event(message))
-    }
   }
   project_session_events(projected, command_events, durable_events)
-}
-
-///|
-pub fn transcript_message_event(message : Json, fallback_id~ : String) -> Json {
-  let role = json_string(message, "role", default="status")
-  let lane = match role {
-    "assistant" | "user" => "transcript"
-    "tool" => "tool"
-    _ => "runtime"
-  }
-  event_record(
-    id=json_string(message, "id", default=fallback_id),
-    lane~,
-    kind=role,
-    title=transcript_role_title(role),
-    status=json_string(message, "status", default="done"),
-    created_at=json_string(message, "created_at", default=""),
-    detail=json_string(message, "content", default=""),
-  )
-}
-
-///|
-pub fn transcript_message_projected_event(message : Json) -> Json {
-  transcript_message_event(
-    message,
-    fallback_id=stable_event_id("mooncode-message:" + message.stringify()),
-  )
-}
-
-///|
-fn transcript_role_title(role : String) -> String {
-  match role {
-    "user" => "User prompt"
-    "assistant" => "Assistant response"
-    "tool" => "Tool result"
-    _ => "Runtime status"
-  }
 }
 
 ///|

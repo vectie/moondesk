@@ -9,11 +9,7 @@ test "mooncode session listing row follows machine session picker shape" {
     "updated_at": "2026-06-16T10:00:00Z",
     "status": "running",
     "model": "deepseek-v4-pro",
-    "last_message": "fallback message",
-    "transcript": [
-      { "role": "assistant", "content": "hello" },
-      { "role": "user", "content": "  build a miniapp\nwith tests" },
-    ],
+    "last_message": "  build a miniapp\nwith tests",
   }
   let row = session_listing_row(session, Json::number(1781580000000.0))
   assert_eq(json_string(row, "id", default=""), "s1")
@@ -22,8 +18,8 @@ test "mooncode session listing row follows machine session picker shape" {
   assert_eq(json_string(row, "cwd", default=""), "/tmp/book-a")
   assert_eq(json_string(row, "status", default=""), "running")
   assert_eq(json_string(row, "protocol", default=""), "mooncode.v1")
-  assert_eq(json_array_items(row, "transcript").length(), 0)
-  assert_eq(json_array_items(row, "mooncode_events").length(), 0)
+  assert_true(summary_json_object_field(row, "transcript") is None)
+  assert_true(summary_json_object_field(row, "mooncode_events") is None)
   let summary = summary_json_object_field_or_empty(row, "mooncode_summary")
   assert_eq(summary_json_int(summary, "event_count", default=-1), 0)
   assert_true(row.stringify().contains("\"updated_at_ms\":1781580000000"))
@@ -35,19 +31,17 @@ test "mooncode session listing row follows machine session picker shape" {
 }
 
 ///|
-test "mooncode session listing title falls back without user transcript" {
+test "mooncode session listing title falls back without first prompt" {
   let session : Json = {
     "id": "s2",
     "title": "Fallback title",
     "last_message": "  last message\twith spaces\nextra",
-    "transcript": [],
   }
   assert_eq(session_listing_title(session), "last message with spaces")
   let title_only : Json = {
     "id": "s3",
     "title": "Title only",
     "last_message": "",
-    "transcript": [],
   }
   assert_eq(session_listing_title(title_only), "Title only")
 }
@@ -58,7 +52,6 @@ test "mooncode session listing title prefers stored first prompt fields" {
     "id": "s4",
     "first_user_prompt": "  create a tiny tool\nwith tests",
     "last_message": "later follow-up",
-    "transcript": [{ "role": "user", "content": "older transcript title" }],
   }
   assert_eq(session_listing_title(direct), "create a tiny tool")
   let from_snapshot : Json = {
@@ -169,8 +162,8 @@ test "mooncode runtime session listing accepts mooncode array and moonclaw envel
   assert_eq(json_string(raw[0], "model", default="<missing>"), "")
   assert_eq(json_string(raw[0], "updated_at", default="<missing>"), "")
   assert_eq(summary_json_int(raw[0], "queued_count", default=-1), 0)
-  assert_eq(json_array_items(raw[0], "transcript").length(), 0)
-  assert_eq(json_array_items(raw[0], "mooncode_events").length(), 0)
+  assert_true(summary_json_object_field(raw[0], "transcript") is None)
+  assert_true(summary_json_object_field(raw[0], "mooncode_events") is None)
   let enveloped = runtime_session_listing_rows({ "sessions": [row_b] })
   assert_eq(enveloped.length(), 1)
   assert_eq(json_string(enveloped[0], "id", default=""), "b")

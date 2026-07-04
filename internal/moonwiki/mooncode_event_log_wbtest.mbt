@@ -120,7 +120,6 @@ async test "mooncode projection cold-loads moonclaw durable runtime events" {
     updated_at="1",
     last_message="hello",
     initial_context_path="",
-    transcript=[],
   )
   write_mooncode_session_record(root, session)
   let event = @mooncode.event_record(

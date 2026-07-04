@@ -36,8 +36,6 @@ pub fn session_snapshot(
     "runtime_command_log_path": runtime_command_log_path,
     "runtime_receipt_log_path": runtime_receipt_log_path,
     "event_log_path": event_log_path,
-    "transcript": Json::array(json_array_items(session, "transcript")),
-    "transcript_count": json_array_items(session, "transcript").length(),
     "commands": Json::array(commands),
     "command_count": commands.length(),
     "runtime_commands": Json::array(runtime_commands),
@@ -71,7 +69,7 @@ pub fn session_snapshot(
       "readiness": "/api/mooncode/sessions/\{session_id}/readiness",
     },
     "store_contract": {
-      "shape": "typed session header plus transcript, commands.jsonl, runtime-commands.jsonl, runtime-receipts.jsonl, events.jsonl, and projected MoonCode events",
+      "shape": "typed session header plus commands.jsonl, runtime-commands.jsonl, runtime-receipts.jsonl, events.jsonl, and projected MoonCode events",
       "append_only_inputs": [
         "commands.jsonl", "runtime-commands.jsonl", "runtime-receipts.jsonl", "events.jsonl",
       ],

@@ -16,15 +16,8 @@ fn mooncode_immediate_queued_session(
     path=context_path,
     command_packet~,
   )
-  let with_user = append_mooncode_transcript_message(
-    with_event,
-    role="user",
-    content=message,
-    status="queued",
-    created_at~,
-  )
   let with_message = mooncode_session_with_field(
-    with_user,
+    with_event,
     "last_message",
     message.to_json(),
   )

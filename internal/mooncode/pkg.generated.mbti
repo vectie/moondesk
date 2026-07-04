@@ -58,8 +58,6 @@ pub fn append_projected_command_event(Json, action~ : String, status~ : String, 
 
 pub fn append_projected_native_response_events(Json, Json, loop_fallback_created_at~ : String) -> Json
 
-pub fn append_transcript_message(Json, role~ : String, content~ : String, status~ : String, created_at~ : String) -> Json
-
 pub fn apply_moonclaw_runtime_session_patch(Json, Json) -> Json
 
 pub fn artifact_safe_id(String, fallback~ : String) -> String
@@ -598,7 +596,7 @@ pub fn projected_runtime_receipt(Json, Json, String) -> Json
 
 pub fn projected_session_id(String, String, String) -> String
 
-pub fn projected_session_record(workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, runtime~ : Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String, transcript~ : Array[Json]) -> Json
+pub fn projected_session_record(workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, runtime~ : Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String) -> Json
 
 pub fn protocol_command_valid(Json) -> Bool
 
@@ -834,7 +832,7 @@ pub fn session_readiness_checks(Json, Array[Json]) -> Array[Json]
 
 pub fn session_readiness_response(Json) -> Json
 
-pub fn session_record(session_id~ : String, workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, runtime~ : Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String, transcript~ : Array[Json]) -> Json
+pub fn session_record(session_id~ : String, workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, runtime~ : Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String) -> Json
 
 pub fn session_response_defaults(Json) -> Json
 
@@ -985,10 +983,6 @@ pub fn tool_harness_evidence(Json, Json, Array[Json]) -> Json
 pub fn tool_id_from_event(Json) -> String
 
 pub fn tool_lane(String, String, String, String, String) -> String
-
-pub fn transcript_message_event(Json, fallback_id~ : String) -> Json
-
-pub fn transcript_message_projected_event(Json) -> Json
 
 // Errors
 

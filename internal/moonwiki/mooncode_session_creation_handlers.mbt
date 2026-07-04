@@ -74,7 +74,6 @@ async fn handle_create_mooncode_session(
     created_at=now,
     updated_at=now,
     last_message=message,
-    transcript=[],
     initial_context_path=context_path,
   )
   let command_packet = @mooncode.projected_command_packet(

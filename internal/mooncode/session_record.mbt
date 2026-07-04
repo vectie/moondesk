@@ -10,7 +10,6 @@ pub fn session_record(
   updated_at~ : String,
   last_message~ : String,
   initial_context_path~ : String,
-  transcript~ : Array[Json],
 ) -> Json {
   {
     "id": session_id,
@@ -28,7 +27,6 @@ pub fn session_record(
     "created_at": created_at,
     "updated_at": updated_at,
     "last_message": last_message,
-    "transcript": Json::array(transcript),
     "component": "mooncode",
     "protocol": protocol_version(),
     "mooncode_session_kind": "coding",
@@ -47,7 +45,6 @@ pub fn projected_session_record(
   updated_at~ : String,
   last_message~ : String,
   initial_context_path~ : String,
-  transcript~ : Array[Json],
 ) -> Json {
   session_record(
     session_id=projected_session_id(workspace_id, title, created_at),
@@ -60,7 +57,6 @@ pub fn projected_session_record(
     updated_at~,
     last_message~,
     initial_context_path~,
-    transcript~,
   )
 }
 
@@ -95,23 +91,27 @@ pub fn native_runtime_session_projection(
 
 ///|
 pub fn session_response_defaults(session : Json) -> Json {
-  @mooncore.session_response_defaults(session, default_title="MoonCode Session")
+  session_without_field(
+    @mooncore.session_response_defaults(
+      session,
+      default_title="MoonCode Session",
+    ),
+    "transcript",
+  )
 }
 
 ///|
-pub fn append_transcript_message(
-  session : Json,
-  role~ : String,
-  content~ : String,
-  status~ : String,
-  created_at~ : String,
-) -> Json {
-  @mooncore.append_transcript_message(
-    session,
-    id_prefix="mooncode-msg",
-    role~,
-    content~,
-    status~,
-    created_at~,
-  )
+fn session_without_field(session : Json, key : String) -> Json {
+  match session {
+    Object(fields) => {
+      let next : Map[String, Json] = {}
+      for existing_key, value in fields {
+        if existing_key != key {
+          next[existing_key] = value
+        }
+      }
+      Json::object(next)
+    }
+    _ => session
+  }
 }
