@@ -580,8 +580,16 @@ MoonClaw replies. A live failure smoke proves the first prompt remains queued on
 submit, the runtime-service call returns an error, and the next session fetch
 shows the same command id as a failed turn.
 
-Remaining risk after Phase 22 is broader model-backed runtime behavior:
-model-generated tool-call planning, long-running service recovery after partial
-native progress, active-turn cancel/steer behavior while tools are running, and
-package/review flows under a real model should be scheduled separately from the
-deterministic merge gate.
+Phase 23 makes runtime-service recovery event-backed. Moondesk still uses a
+local `runtime-service.lease.json` file to single-flight duplicate starts, but
+that lease is now released by terminal runtime evidence instead of only by a
+timeout. Startup failures release it when `runtime_unavailable` is recorded, and
+native sync or runtime-event ingest releases it when MoonClaw writes
+`runtime.service_finished` or `runtime.service_failed`. The live runtime-loop
+smoke now proves a same-command-count service restart can happen immediately
+after the native finish event is imported.
+
+Remaining risk after Phase 23 is broader model-backed runtime behavior:
+model-generated tool-call planning, active-turn cancel/steer behavior while
+tools are running, and package/review flows under a real model should be
+scheduled separately from the deterministic merge gate.

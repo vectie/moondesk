@@ -88,6 +88,26 @@ async function runSmoke() {
     !fs.existsSync(path.join(suiteRoot, ".moonclaw")),
     "Live runtime loop smoke created legacy .moonclaw root",
   );
+  const restarted = await requestJson(
+    `${moondesk.base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-service`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        consumer_id: "mooncode-live-runtime-loop-smoke-restart",
+        max_turns: 1,
+        live_wait_ms: 0,
+        poll_ms: 25,
+      }),
+    },
+  );
+  const restartEvent = (restarted.mooncode_events || []).find(
+    item => item.kind === "runtime.service_started" &&
+      item.consumer_id === "mooncode-live-runtime-loop-smoke-restart",
+  );
+  assert(
+    restartEvent?.status === "running",
+    `Terminal native service events should release the Moondesk runtime-service lease: ${JSON.stringify(restarted)}`,
+  );
   console.log(JSON.stringify({
     ok: true,
     suite_root: suiteRoot,
@@ -96,6 +116,7 @@ async function runSmoke() {
     command_id: commandId,
     status: finalState.turn.status,
     proof_path: proofFile,
+    restart_service_id: restartEvent.service_id,
   }, null, 2));
 }
 

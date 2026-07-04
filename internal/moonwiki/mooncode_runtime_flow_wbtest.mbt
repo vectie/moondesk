@@ -63,6 +63,30 @@ async test "mooncode runtime service lease single-flights same command count" {
 }
 
 ///|
+async test "mooncode runtime service lease releases on terminal runtime event" {
+  let root = "/tmp/moondesk-mooncode-runtime-service-lease-terminal-wbtest-" +
+    @async.now().to_string()
+  let session_id = "mooncode-lease-terminal-demo"
+  @fsx.make_directory(root, recursive=true, exists_ok=true)
+  assert_true(try_acquire_mooncode_runtime_service_lease(root, session_id))
+  assert_false(try_acquire_mooncode_runtime_service_lease(root, session_id))
+  assert_true(
+    reconcile_mooncode_runtime_service_lease_from_events(root, session_id, [
+      @mooncode.event_record(
+        id="service-finished",
+        lane="runtime",
+        kind="runtime.service_finished",
+        title="Runtime service finished",
+        status="done",
+        created_at="2026-06-16T00:00:00Z",
+        detail="service finished",
+      ),
+    ]),
+  )
+  assert_true(try_acquire_mooncode_runtime_service_lease(root, session_id))
+}
+
+///|
 test "mooncode native command body uses typed runtime protocol" {
   let session : Json = { "id": "code-demo", "workspace_root": "/tmp/demo-book" }
   let packet : Json = {

@@ -530,6 +530,11 @@ explicit runtime-service execution. The multiturn gate is the regression check
 for first/second/third prompt order: it fails if later replies duplicate,
 reorder, or erase earlier conversation turns.
 
+The loop gate also checks event-backed runtime-service recovery: after importing
+MoonClaw's native `runtime.service_finished` event, Moondesk must release its
+local runtime-service lease and allow an immediate same-command-count service
+restart.
+
 Runtime-service failure gate:
 
 ```bash
@@ -573,6 +578,8 @@ Code mode is sufficiently tested when:
 - a runtime-service failure smoke proves MoonClaw startup failure becomes one
   durable command-scoped failed assistant turn instead of an endless thinking
   state or composer-only error
+- a runtime-loop smoke proves terminal native service lifecycle events release
+  Moondesk's runtime-service lease without waiting for a timeout
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

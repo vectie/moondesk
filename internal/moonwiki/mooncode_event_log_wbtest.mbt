@@ -65,6 +65,48 @@ async test "mooncode appends and replays durable session event log" {
 }
 
 ///|
+async test "mooncode runtime event persistence releases terminal service lease" {
+  let root = "/tmp/moondesk-mooncode-service-lease-persist-wbtest-" +
+    @async.now().to_string()
+  let session_id = "session-service-lease"
+  let session = @mooncode.session_record(
+    session_id~,
+    workspace_id="book-demo",
+    workspace_name="Demo Book",
+    workspace_root=root,
+    runtime={
+      "id": session_id,
+      "status": "created",
+      "model": "codex/gpt-5.4",
+      "web_search": false,
+      "queued_messages": [],
+    },
+    title="MoonCode - service lease",
+    created_at="1",
+    updated_at="1",
+    last_message="hello",
+    initial_context_path="",
+  )
+  write_mooncode_session_record(root, session)
+  assert_true(try_acquire_mooncode_runtime_service_lease(root, session_id))
+  assert_false(try_acquire_mooncode_runtime_service_lease(root, session_id))
+  ignore(
+    persist_mooncode_runtime_events_and_projection(root, session_id, session, [
+      @mooncode.event_record(
+        id="service-finished",
+        lane="runtime",
+        kind="runtime.service_finished",
+        title="Runtime service finished",
+        status="done",
+        created_at="2",
+        detail="service finished",
+      ),
+    ]),
+  )
+  assert_true(try_acquire_mooncode_runtime_service_lease(root, session_id))
+}
+
+///|
 async test "mooncode durable logs use suite product home for hosted book roots" {
   let suite_root = "/tmp/moondesk-mooncode-suite-log-wbtest-" +
     @async.now().to_string()

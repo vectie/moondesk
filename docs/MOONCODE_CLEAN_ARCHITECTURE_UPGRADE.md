@@ -836,6 +836,41 @@ Exit tests:
 - repeating the failure recorder does not duplicate the event
 - no legacy `.moonclaw` sidecar root is created
 
+## Phase 23 - Event-Backed Runtime-Service Lease Recovery
+
+Status: implemented as the runtime-service lease reconciliation gate.
+
+Problem:
+
+- Moondesk used a local 15-second `runtime-service.lease.json` file to fence
+  duplicate runtime-service starts.
+- MoonClaw's native runtime-service is event-backed and backgrounded: it writes
+  `runtime.service_started`, then later `runtime.service_finished` or
+  `runtime.service_failed`.
+- Keeping the Moondesk lease timeout-only after terminal native evidence makes
+  service ownership stale and can delay legitimate recovery/restart attempts.
+
+Work:
+
+- Move runtime-service lease ownership into a focused MoonWiki module instead of
+  leaving it embedded in the supervisor handler.
+- Add explicit release/reconcile helpers for runtime-service leases.
+- Release the lease when the runtime-service boundary records a
+  `runtime_unavailable` startup failure.
+- Reconcile/release the lease when native or ingested runtime events include
+  `runtime.service_finished` or `runtime.service_failed`.
+- Strengthen the live runtime-loop smoke so a terminal native service event must
+  allow an immediate same-command-count runtime-service restart.
+
+Exit tests:
+
+- same-command-count service starts still single-flight while no terminal event
+  exists
+- terminal runtime-service events release the local lease immediately
+- persisted runtime events release the lease through the normal projection path
+- the live runtime-loop smoke can start a second idle service immediately after
+  importing the first service's native finish event
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

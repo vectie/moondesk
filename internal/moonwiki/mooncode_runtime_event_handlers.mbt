@@ -129,6 +129,13 @@ async fn sync_mooncode_observed_runtime_events(
     return session
   }
   let local_events = read_mooncode_event_log(workspace_root, session_id)
+  ignore(
+    reconcile_mooncode_runtime_service_lease_from_events(
+      workspace_root,
+      session_id,
+      @mooncode.merge_events([], observed_events, local_events),
+    ),
+  )
   let new_events = mooncode_unpersisted_runtime_events(
     local_events, observed_events,
   )
@@ -274,6 +281,11 @@ async fn persist_mooncode_runtime_events_and_projection(
   for event in events {
     append_mooncode_event_log(workspace_root, session_id, event)
   }
+  ignore(
+    reconcile_mooncode_runtime_service_lease_from_events(
+      workspace_root, session_id, events,
+    ),
+  )
   let updated = mooncode_session_with_field(
     session,
     "updated_at",
