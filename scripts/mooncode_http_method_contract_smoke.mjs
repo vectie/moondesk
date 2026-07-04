@@ -22,6 +22,28 @@ function findAllowedMethods(value) {
   return null;
 }
 
+function routeMethods(contract) {
+  assert(
+    Array.isArray(contract.methods) && contract.methods.length > 0,
+    `Route contract has no methods: ${JSON.stringify(contract)}`,
+  );
+  return contract.methods.map(method => String(method).trim()).filter(Boolean);
+}
+
+function instantiateRoutePath(path, sessionId) {
+  return path.replaceAll("<session-id>", encodeURIComponent(sessionId));
+}
+
+function unsupportedMethod(methods) {
+  if (!methods.includes("GET")) {
+    return "GET";
+  }
+  if (!methods.includes("POST")) {
+    return "POST";
+  }
+  return "PUT";
+}
+
 async function requestMethodContract405(url, method, expectedMethods) {
   const response = await fetch(url, { method });
   const text = await response.text();
@@ -58,6 +80,14 @@ async function requestMethodContract405(url, method, expectedMethods) {
 
 async function runSmoke() {
   const moondesk = await startMoondesk();
+  const capabilities = await requestJson(
+    `${moondesk.base}/api/mooncode/capabilities`,
+  );
+  const routeContracts = capabilities.desktop_route_contracts;
+  assert(
+    Array.isArray(routeContracts) && routeContracts.length > 20,
+    `Capabilities did not publish desktop route contracts: ${JSON.stringify(capabilities)}`,
+  );
   const created = await requestJson(
     `${moondesk.base}/api/mooncode/sessions`,
     {
@@ -82,33 +112,30 @@ async function runSmoke() {
     `HEAD /api/mooncode/status should be accepted, got ${headStatus.status}`,
   );
 
-  await requestMethodContract405(
-    `${moondesk.base}/api/mooncode/status`,
-    "POST",
-    ["GET", "HEAD"],
-  );
-  await requestMethodContract405(
-    `${moondesk.base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-service`,
-    "GET",
-    ["POST"],
-  );
-  await requestMethodContract405(
-    `${moondesk.base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/commands`,
-    "PUT",
-    ["GET", "HEAD", "POST"],
-  );
+  const checkedRoutes = [];
+  for (const contract of routeContracts) {
+    const path = String(contract.path || "");
+    assert(
+      path.startsWith("/api/mooncode/"),
+      `Unexpected desktop route path: ${JSON.stringify(contract)}`,
+    );
+    const methods = routeMethods(contract);
+    const method = unsupportedMethod(methods);
+    await requestMethodContract405(
+      `${moondesk.base}${instantiateRoutePath(path, sessionId)}`,
+      method,
+      methods,
+    );
+    checkedRoutes.push(`${method} ${path} -> 405`);
+  }
 
   console.log(JSON.stringify({
     ok: true,
     suite_root: suiteRoot,
     moondesk: moondesk.base,
     session_id: sessionId,
-    checked: [
-      "HEAD /api/mooncode/status",
-      "POST /api/mooncode/status -> 405",
-      "GET /api/mooncode/sessions/:id/runtime-service -> 405",
-      "PUT /api/mooncode/sessions/:id/commands -> 405",
-    ],
+    checked_route_count: checkedRoutes.length,
+    checked: ["HEAD /api/mooncode/status", ...checkedRoutes],
   }, null, 2));
 }
 

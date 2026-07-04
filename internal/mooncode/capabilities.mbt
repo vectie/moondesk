@@ -82,6 +82,7 @@ pub fn capabilities_json() -> Json {
     "runtime_contract": runtime_contract_json(),
     "runtime_control_contract": runtime_control_contract_json(),
     "moonclaw_runtime_contract": moonclaw_runtime_contract_json(),
+    "desktop_route_contracts": Json::array(desktop_projection_route_contracts()),
     "standalone_boundary": standalone_boundary_json(),
     "executable_book_lifecycle": executable_book_lifecycle_contract_json(),
     "readiness_contract": readiness_contract_json(),

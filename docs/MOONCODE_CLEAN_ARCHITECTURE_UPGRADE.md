@@ -1435,6 +1435,42 @@ Exit tests:
 - method policy is proven through the same HTTP boundary used by the frontend
   and desktop host
 
+## Phase 37 - Capability-Published Route Contract Coverage
+
+Status: implemented as capability-published desktop route contracts plus
+contract-driven HTTP route coverage.
+
+Problem:
+
+- Phase 36 proved the HTTP method contract only for representative route
+  classes: read-only, POST-only, and mixed routes.
+- The broader done criterion is stronger: every `/api/mooncode` desktop route
+  needs at least one host-visible success, method, or validation check.
+- `/api/mooncode/capabilities` still exposed route information partly through
+  prose and individual fields, while the structured
+  `desktop_projection_route_contracts` surface stayed available only to
+  MoonBit callers.
+
+Work:
+
+- Publish `desktop_route_contracts` directly in `@mooncode.capabilities_json`.
+- Add capability tests proving the published route contracts mirror
+  `desktop_projection_route_contracts` path and method data.
+- Extend the real HTTP smoke to read `/api/mooncode/capabilities`, create one
+  session, substitute the live session id into each `<session-id>` route, and
+  probe every advertised desktop route with a method rejected by that route.
+- Keep the smoke asserting `405`, `Allow`, JSON `allowed_methods`, and shared
+  API contract fields for every advertised route.
+
+Exit tests:
+
+- desktop route contracts are a client-visible capability, not only an internal
+  MoonBit helper
+- every advertised MoonCode desktop route has host-visible method-contract
+  coverage
+- adding a new desktop route without observable HTTP method behavior now fails
+  the Phase 8 migration wall
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

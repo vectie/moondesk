@@ -710,12 +710,14 @@ header and JSON `allowed_methods` payload field. The source validator prevents
 raw `is_read_method`, `method_ is Post`, or generic 405 calls from returning to
 `api_mooncode_router.mbt`.
 
-Phase 36 extends the same gate to the host-visible HTTP boundary. The smoke
-starts a fresh Moondesk server, creates a real MoonCode session, accepts
-`HEAD /api/mooncode/status`, and verifies rejected methods on read-only,
-POST-only, and mixed command routes expose the correct `Allow` header,
-`allowed_methods`, and shared API contract fields. This catches response-helper
-or server-boundary drift that source-level method ownership cannot see.
+Phase 36 extends the same gate to the host-visible HTTP boundary. Phase 37
+publishes `desktop_route_contracts` through `/api/mooncode/capabilities` and
+makes the smoke consume that live capability surface. It starts a fresh Moondesk
+server, creates a real MoonCode session, accepts `HEAD /api/mooncode/status`,
+then probes every advertised desktop route with a rejected method and verifies
+the correct `Allow` header, `allowed_methods`, and shared API contract fields.
+This catches response-helper, route addition, or server-boundary drift that
+source-level method ownership cannot see.
 
 ## Done Criteria
 
@@ -769,6 +771,9 @@ Code mode is sufficiently tested when:
   allowed-method reporting
 - an HTTP method-contract smoke proves MoonCode route method policy is visible
   through the real host API response, not only through internal router tests
+- the HTTP method-contract smoke derives its coverage from
+  `/api/mooncode/capabilities.desktop_route_contracts`, so every advertised
+  desktop route gets host-visible method coverage
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

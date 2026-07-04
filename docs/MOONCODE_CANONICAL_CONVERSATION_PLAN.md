@@ -677,3 +677,7 @@ The next scheduled phases are now explicit:
   creates a real MoonCode session and verifies accepted `HEAD` behavior plus
   rejected read-only, POST-only, and mixed-route methods through the actual
   `405` response boundary.
+- Phase 37: capability-published route contract coverage. MoonCode
+  capabilities now publish `desktop_route_contracts`, and the HTTP smoke uses
+  that live contract to verify rejected-method behavior for every advertised
+  desktop route.

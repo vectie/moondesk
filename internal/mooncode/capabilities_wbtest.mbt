@@ -147,6 +147,28 @@ test "mooncode capability native endpoints mirror the core surface" {
 }
 
 ///|
+test "mooncode capability publishes desktop route contracts" {
+  let capability = capabilities_json()
+  let published = json_array_items(capability, "desktop_route_contracts")
+  let expected = desktop_projection_route_contracts()
+  assert_eq(published.length(), expected.length())
+  for contract in expected {
+    let path = json_string(contract, "path", default="")
+    let matches : Array[Json] = []
+    for item in published {
+      if json_string(item, "path", default="") == path {
+        matches.push(item)
+      }
+    }
+    assert_eq(matches.length(), 1)
+    assert_route_methods(
+      route_contract_methods(matches[0]),
+      route_contract_methods(contract),
+    )
+  }
+}
+
+///|
 test "mooncode capability commands derive from advertised command contract" {
   let capability = capabilities_json()
   let protocol = summary_json_object_field_or_empty(

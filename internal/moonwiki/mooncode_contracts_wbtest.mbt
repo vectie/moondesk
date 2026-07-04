@@ -8,6 +8,7 @@ test "mooncode http contract delegates static capability shape to mooncode packa
   assert_true(payload.contains("/api/mooncode/eval-harness"))
   assert_true(payload.contains("/api/mooncode/standalone-boundary"))
   assert_true(payload.contains("/api/mooncode/readiness-contract"))
+  assert_true(payload.contains("\"desktop_route_contracts\""))
   assert_true(payload.contains("\"readiness_contract\""))
   assert_true(
     payload.contains("/api/mooncode/sessions/<session-id>/runtime-evidence"),
