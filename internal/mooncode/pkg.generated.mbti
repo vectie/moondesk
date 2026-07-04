@@ -492,6 +492,8 @@ pub fn native_runtime_event_contract_report(Json, session_id~ : String, observed
 
 pub fn native_runtime_events_available_state(Json, String) -> Json
 
+pub fn native_runtime_events_for_canonical_projection(Json) -> Array[Json]
+
 pub fn native_runtime_events_for_projection(Json) -> Array[Json]
 
 pub fn native_runtime_events_unavailable_state(String, String) -> Json

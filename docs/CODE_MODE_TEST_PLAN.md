@@ -509,6 +509,20 @@ Live MoonClaw/model gates should be separate from ordinary CI and clearly
 marked as nondeterministic. They should record the model, runtime version,
 prompt, commands, events, package artifacts, and final readiness state.
 
+Current live contract gate:
+
+```bash
+scripts/mooncode_live_runtime_contract_smoke.sh
+```
+
+This gate starts a temporary MoonSuite root, launches a real MoonClaw daemon,
+posts a command-scoped assistant event through MoonClaw's native
+`/v1/code/sessions/<id>/runtime-events?book_root=<path>` endpoint, then asks
+Moondesk to import the native state. It fails if the native contract is not
+projection-safe, if unsafe unscoped projection events are present, if the final
+assistant reply is not the canonical conversation output, or if a legacy
+`.moonclaw` root appears.
+
 ## Done Criteria
 
 Code mode is sufficiently tested when:

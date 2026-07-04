@@ -608,6 +608,48 @@ Exit tests:
 - runtime-events diagnostics expose contract status without reintroducing a
   frontend runtime sink
 
+## Phase 17 - Native Runtime Sync Cutover
+
+Status: implemented as the clean producer boundary.
+
+Work:
+
+- Remove regular Moondesk API synchronization from direct MoonClaw
+  product-home `events.jsonl` reads.
+- Treat MoonClaw's `/v1/code/sessions/<id>/runtime-events?book_root=<path>`
+  response as the native runtime producer contract.
+- Persist only command-scoped or diagnostic-only native events into Moondesk's
+  canonical append log.
+- Keep unsafe unscoped transcript/progress records visible only through the
+  diagnostic runtime-events contract report.
+- Convert deterministic browser and HTTP gates to inject runtime evidence
+  through public API routes instead of writing MoonClaw sidecar files.
+- Add a live smoke that starts a real MoonClaw daemon for a temporary
+  MoonSuite root, posts a command-scoped event through MoonClaw's native
+  runtime-events endpoint, and verifies Moondesk imports it as canonical
+  conversation output.
+
+Implemented:
+
+- `sync_mooncode_native_runtime_events` is the only normal backend sync path.
+- `native_runtime_events_for_canonical_projection` filters accepted native
+  events before persistence.
+- The direct `read_moonclaw_mooncode_event_log` and
+  `moonclaw_mooncode_event_log_path` helpers were removed from Moondesk.
+- `scripts/desk_mode_browser_smoke.mjs` now posts deterministic runtime replies
+  to `/api/mooncode/sessions/:id/runtime-events`.
+- `scripts/mooncode_live_runtime_contract_smoke.sh` is the manual/scheduled
+  live gate for the daemon-owned path.
+
+Exit tests:
+
+- command-scoped native events import into the canonical append log
+- unscoped native transcript events do not persist into canonical chat
+- browser smoke still proves first/second/third prompt append order and reply
+  rendering without filesystem sidecar injection
+- live MoonClaw smoke proves owner=`moonclaw`, projection-safe contract status,
+  zero unsafe unscoped projection events, and final assistant reply projection
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.

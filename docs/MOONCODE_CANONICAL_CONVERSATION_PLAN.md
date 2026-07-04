@@ -530,8 +530,24 @@ Current coverage:
 
 ## Current Direction
 
-Phase 16 adds a backend contract report for native MoonClaw event shape. The
-remaining risk is a true live daemon smoke, not synthetic sidecar injection:
-drive MoonClaw through its native runtime loop, assert the contract stays
-projection-safe, and keep the visible chat sourced only from canonical
-conversation/progress DTOs.
+Phase 17 cuts normal Moondesk synchronization over to the native MoonClaw
+runtime-events API. Direct product-home JSONL reads are no longer part of the
+regular app path; they are replaced by a daemon-owned `/v1/code/*` contract.
+
+Current coverage:
+
+- normal session/list/event/stream/command handlers sync through
+  `sync_mooncode_native_runtime_events`
+- only command-scoped or diagnostic-only native events are persisted into the
+  canonical append log
+- unsafe unscoped transcript/progress records stay in the diagnostic
+  runtime-events report and cannot become durable chat
+- deterministic browser testing posts runtime evidence through Moondesk's public
+  runtime-events route
+- the live smoke starts MoonClaw, posts native runtime evidence through
+  MoonClaw's endpoint, and verifies the Moondesk projection contract
+
+Remaining risk after Phase 17 is broader model-backed runtime behavior:
+tool-call planning, long-running service recovery, cancel/steer races, and
+package/review flows under a real model should be scheduled separately from the
+deterministic merge gate.

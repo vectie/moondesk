@@ -76,6 +76,21 @@ pub fn native_runtime_event_contract_report(
 }
 
 ///|
+pub fn native_runtime_events_for_canonical_projection(
+  native_report : Json,
+) -> Array[Json] {
+  let events = runtime_json_array_items(native_report, "events")
+  let projected : Array[Json] = []
+  for event in events {
+    if native_runtime_event_has_command_scope(event) ||
+      native_runtime_event_is_diagnostic_only(event) {
+      projected.push(event)
+    }
+  }
+  projected
+}
+
+///|
 fn native_runtime_event_has_command_scope(event : Json) -> Bool {
   runtime_event_has_command_scope(event) ||
   runtime_first_string(

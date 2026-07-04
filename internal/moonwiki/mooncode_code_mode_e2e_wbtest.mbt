@@ -338,30 +338,33 @@ fn assert_mooncode_http_assistant_replies(
 
 ///|
 async fn append_mooncode_http_native_replies(
-  root : String,
+  base : String,
   session_id : String,
   command_items : Array[Json],
   replies : Array[String],
 ) -> Unit {
   assert_eq(command_items.length(), replies.length())
-  let native_path = moonclaw_mooncode_event_log_path(root, session_id)
-  @fsx.make_directory(
-    @pathx.dirname(native_path),
-    recursive=true,
-    exists_ok=true,
-  )
   for index in 0..<replies.length() {
     let command_id = json_string(command_items[index], "command_id", default="")
     assert_true(command_id.has_prefix("mooncode-command-"))
-    append_mooncode_jsonl_file(native_path, {
-      "event": "assistant_message",
-      "id": "native-assistant-\{index + 1}",
-      "created_at": "2026-06-30T03:0\{index}:00Z",
-      "content": replies[index],
-      "command_id": command_id,
-      "action": "prompt",
-      "session_id": session_id,
-    })
+    let result = test_http_post_json(
+      base + "/api/mooncode/sessions/\{session_id}/runtime-events",
+      {
+        "events": [
+          {
+            "event": "assistant_message",
+            "id": "native-assistant-\{index + 1}",
+            "created_at": "2026-06-30T03:0\{index}:00Z",
+            "content": replies[index],
+            "command_id": command_id,
+            "action": "prompt",
+            "session_id": session_id,
+          },
+        ],
+      },
+      200,
+    )
+    assert_eq(json_int(result, "accepted_event_count", default=0), 1)
   }
 }
 
@@ -526,7 +529,7 @@ async test "mooncode code mode HTTP routes preserve three prompt conversation or
       "Parser test plan is ready.", "Parser fixtures are added.", "Parser flow is explained.",
     ]
     append_mooncode_http_native_replies(
-      root, session_id, command_items, replies,
+      base, session_id, command_items, replies,
     )
     let listed_after_native = test_http_get_json(
       base + "/api/mooncode/sessions?workspace=\{workspace_id}",

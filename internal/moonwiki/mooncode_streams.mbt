@@ -13,7 +13,7 @@ async fn handle_mooncode_session_stream(
   let content_type = @mooncode.stream_content_type(format)
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
-      let session = sync_mooncode_moonclaw_sidecar_events(
+      let session = sync_mooncode_native_runtime_events(
         workspace_root, session_id, session,
       ) catch {
         _ => {
@@ -93,7 +93,7 @@ async fn handle_mooncode_session_stream_state(
       return
     }
   }
-  let session = sync_mooncode_moonclaw_sidecar_events(
+  let session = sync_mooncode_native_runtime_events(
     workspace_root, session_id, session,
   ) catch {
     _ => {
@@ -185,7 +185,7 @@ async fn mooncode_live_stream_projection(
     @async.sleep(poll_ms)
     match read_mooncode_session_record(workspace_root, session_id) {
       Some(session) => {
-        let session = sync_mooncode_moonclaw_sidecar_events(
+        let session = sync_mooncode_native_runtime_events(
           workspace_root, session_id, session,
         ) catch {
           _ => session

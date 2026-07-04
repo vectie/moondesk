@@ -335,6 +335,40 @@ test "mooncode runtime event ingest preserves command ownership for native trans
 }
 
 ///|
+test "mooncode runtime event ingest canonicalizes native assistant message records" {
+  let report = runtime_event_ingest_report(
+    {
+      "events": [
+        {
+          "id": "native-wrapped-answer",
+          "lane": "transcript",
+          "kind": "assistant_message",
+          "title": "MoonCode runtime event `assistant_message`",
+          "status": "done",
+          "created_at": "2026-07-04T00:00:00Z",
+          "detail": "Done from the native endpoint.",
+          "command_id": "cmd-native-wrapped",
+          "source": "moonclaw-native-runtime-events",
+        },
+      ],
+    },
+    session_id="session-native-wrapped",
+    ingested_at="2026-07-04T00:00:01Z",
+  )
+  let events = runtime_json_array_items(report, "events")
+  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "lane", default=""), "transcript")
+  assert_eq(json_string(events[0], "kind", default=""), "assistant")
+  assert_eq(json_string(events[0], "title", default=""), "Assistant response")
+  assert_eq(
+    json_string(events[0], "detail", default=""),
+    "Done from the native endpoint.",
+  )
+  let packet = runtime_json_object_field_or_empty(events[0], "command_packet")
+  assert_eq(json_string(packet, "command_id", default=""), "cmd-native-wrapped")
+}
+
+///|
 test "mooncode native runtime event report normalizes mooncode events before merge" {
   let report = runtime_native_event_report(
     {

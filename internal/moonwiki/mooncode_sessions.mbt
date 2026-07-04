@@ -13,7 +13,7 @@ async fn handle_mooncode_sessions(
       json_string(record, "workspace_id", default="") != workspace_filter {
       continue
     }
-    let synced = sync_mooncode_moonclaw_sidecar_events(
+    let synced = sync_mooncode_native_runtime_events(
       workspace_root,
       json_string(record, "id", default=""),
       record,
@@ -72,7 +72,7 @@ async fn handle_mooncode_session_events(
 ) -> Unit {
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
-      let session = sync_mooncode_moonclaw_sidecar_events(
+      let session = sync_mooncode_native_runtime_events(
         workspace_root, session_id, session,
       ) catch {
         _ => {

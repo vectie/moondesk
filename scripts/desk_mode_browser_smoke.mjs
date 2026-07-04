@@ -667,7 +667,7 @@ async function mooncodeBackendSessionForPrompts(session, expectedPrompts) {
   const state = await waitForStatePass(
     session,
     mooncodeBackendTurnsStateExpression(expectedPrompts, [], true),
-    "MoonCode backend session for native sidecar injection",
+    "MoonCode backend session for runtime event injection",
     12000,
   );
   const matching = state.summaries.filter(summary =>
@@ -678,20 +678,9 @@ async function mooncodeBackendSessionForPrompts(session, expectedPrompts) {
   return matching[0];
 }
 
-function appendMoonCodeNativeReplyEvents(sessionSummary, replies) {
+async function postMoonCodeRuntimeReplyEvents(session, sessionSummary, replies) {
   assert(sessionSummary.commandIds.length === replies.length, "Native reply count must match command count");
-  const nativePath = path.join(
-    fixtureRoot,
-    ".moonsuite",
-    "products",
-    "moonclaw",
-    "mooncode",
-    "sessions",
-    sessionSummary.id,
-    "events.jsonl",
-  );
-  fs.mkdirSync(path.dirname(nativePath), { recursive: true });
-  const lines = replies.map((reply, index) => JSON.stringify({
+  const events = replies.map((reply, index) => ({
     event: "assistant_message",
     id: `browser-native-assistant-${index + 1}`,
     created_at: `2026-06-30T04:0${index}:00Z`,
@@ -700,8 +689,19 @@ function appendMoonCodeNativeReplyEvents(sessionSummary, replies) {
     action: "prompt",
     session_id: sessionSummary.id,
   }));
-  fs.appendFileSync(nativePath, `${lines.join("\n")}\n`, "utf8");
-  return nativePath;
+  const response = await session.evaluate(`(async () => {
+    const response = await fetch("/api/mooncode/sessions/${sessionSummary.id}/runtime-events", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: ${jsString(JSON.stringify({ events }))},
+    });
+    const body = await response.json();
+    return { ok: response.ok, status: response.status, body };
+  })()`);
+  assert(
+    response?.ok && response.body?.accepted_event_count === replies.length,
+    `MoonCode runtime-event ingest failed: ${JSON.stringify(response)}`,
+  );
 }
 
 function mooncodeUiSessionReadyStateExpression(expectedPrompts) {
@@ -805,8 +805,7 @@ async function runMoonCodePromptSmoke(session) {
     "Browser native reply for third prompt persistence.",
   ];
   const sessionSummary = await mooncodeBackendSessionForPrompts(session, prompts);
-  const nativePath = appendMoonCodeNativeReplyEvents(sessionSummary, nativeReplies);
-  await waitForFile(nativePath, "MoonCode native sidecar reply log");
+  await postMoonCodeRuntimeReplyEvents(session, sessionSummary, nativeReplies);
   await waitForStatePass(
     session,
     mooncodeBackendTurnsStateExpression(prompts, nativeReplies),

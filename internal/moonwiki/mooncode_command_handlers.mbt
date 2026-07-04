@@ -48,7 +48,7 @@ async fn handle_mooncode_session_preflight(
   }
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
-      let session = sync_mooncode_moonclaw_sidecar_events(
+      let session = sync_mooncode_native_runtime_events(
         workspace_root, session_id, session,
       ) catch {
         _ => session
@@ -104,7 +104,7 @@ async fn handle_mooncode_session_command(
     )
     return
   }
-  let session = sync_mooncode_moonclaw_sidecar_events(
+  let session = sync_mooncode_native_runtime_events(
     workspace_root, session_id, session,
   ) catch {
     _ => session

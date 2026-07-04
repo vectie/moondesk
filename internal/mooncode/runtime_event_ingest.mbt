@@ -295,6 +295,7 @@ fn runtime_ingest_event_items(
 fn runtime_ingest_event(event : Json, ingested_at : String) -> Json? {
   if json_string(event, "lane", default="") != "" &&
     json_string(event, "kind", default="") != "" {
+    let event = canonical_runtime_ingest_event(event)
     return Some(
       canonical_event_record(
         event,
@@ -310,6 +311,18 @@ fn runtime_ingest_event(event : Json, ingested_at : String) -> Json? {
     ) {
     Some(normalized) => Some(normalized)
     None => None
+  }
+}
+
+///|
+fn canonical_runtime_ingest_event(event : Json) -> Json {
+  if json_string(event, "lane", default="") == "transcript" &&
+    json_string(event, "kind", default="") == "assistant_message" {
+    event
+    |> runtime_with_field("kind", "assistant".to_json())
+    |> runtime_with_field("title", "Assistant response".to_json())
+  } else {
+    event
   }
 }
 

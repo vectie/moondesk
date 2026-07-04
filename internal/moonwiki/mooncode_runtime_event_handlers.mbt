@@ -7,16 +7,6 @@ async fn handle_mooncode_session_runtime_events(
 ) -> Unit {
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) => {
-      let session = sync_mooncode_moonclaw_sidecar_events(
-        workspace_root, session_id, session,
-      ) catch {
-        _ => {
-          send_api_error(
-            conn, method_, 500, "Internal Server Error", "Could not sync MoonCode native runtime events",
-          )
-          return
-        }
-      }
       let native = mooncode_native_runtime_events_state(
         workspace_root, session_id,
       )
@@ -28,8 +18,8 @@ async fn handle_mooncode_session_runtime_events(
       let native_events = @mooncode.native_runtime_events_for_projection(
         native_report,
       )
-      let session = sync_mooncode_observed_runtime_events(
-        workspace_root, session_id, session, native_events,
+      let session = sync_mooncode_native_runtime_events_from_report(
+        workspace_root, session_id, session, native_report,
       ) catch {
         _ => {
           send_api_error(
@@ -94,27 +84,37 @@ async fn handle_mooncode_session_runtime_events(
 }
 
 ///|
-async fn sync_mooncode_moonclaw_sidecar_events(
+async fn sync_mooncode_native_runtime_events(
   workspace_root : String,
   session_id : String,
   session : Json,
 ) -> Json {
-  let sidecar_events = read_moonclaw_mooncode_event_log(
-    workspace_root, session_id,
+  let native = mooncode_native_runtime_events_state(workspace_root, session_id)
+  let native_report = @mooncode.runtime_native_event_report(
+    native,
+    session_id~,
+    observed_at=@async.now().to_string(),
   )
-  if sidecar_events.length() == 0 {
+  sync_mooncode_native_runtime_events_from_report(
+    workspace_root, session_id, session, native_report,
+  )
+}
+
+///|
+async fn sync_mooncode_native_runtime_events_from_report(
+  workspace_root : String,
+  session_id : String,
+  session : Json,
+  native_report : Json,
+) -> Json {
+  let events = @mooncode.native_runtime_events_for_canonical_projection(
+    native_report,
+  )
+  if events.length() == 0 {
     return session
   }
-  let report = @mooncode.runtime_event_ingest_report(
-    { "events": Json::array(sidecar_events) },
-    session_id~,
-    ingested_at=@async.now().to_string(),
-  )
   sync_mooncode_observed_runtime_events(
-    workspace_root,
-    session_id,
-    session,
-    json_array_items(report, "events"),
+    workspace_root, session_id, session, events,
   )
 }
 

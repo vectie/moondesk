@@ -99,7 +99,7 @@ async test "mooncode durable logs use suite product home for hosted book roots" 
 }
 
 ///|
-async test "mooncode sync imports moonclaw durable runtime events before projection" {
+async test "mooncode sync imports command-scoped native runtime events before projection" {
   let root = "/tmp/moondesk-mooncode-moonclaw-projection-wbtest-" +
     @async.now().to_string()
   let session_id = "session-native"
@@ -130,14 +130,13 @@ async test "mooncode sync imports moonclaw durable runtime events before project
     status="running",
     created_at="2",
     detail="Hello!",
+    command_packet={
+      "protocol": @mooncode.protocol_version(),
+      "kind": @mooncode.kind_command(),
+      "command_id": "cmd-native",
+      "action": "prompt",
+    },
   )
-  let native_path = moonclaw_mooncode_event_log_path(root, session_id)
-  @fsx.make_directory(
-    @pathx.dirname(native_path),
-    recursive=true,
-    exists_ok=true,
-  )
-  append_mooncode_jsonl_file(native_path, event)
 
   let cold_projected = attach_mooncode_session_projection(root, session)
   assert_eq(json_array_items(cold_projected, "mooncode_events").length(), 0)
@@ -150,7 +149,14 @@ async test "mooncode sync imports moonclaw durable runtime events before project
     0,
   )
 
-  let synced = sync_mooncode_moonclaw_sidecar_events(root, session_id, session)
+  let native_report = @mooncode.runtime_native_event_report(
+    { "events": [event] },
+    session_id~,
+    observed_at="3",
+  )
+  let synced = sync_mooncode_native_runtime_events_from_report(
+    root, session_id, session, native_report,
+  )
   let projected = attach_mooncode_session_projection(root, synced)
   let events = json_array_items(projected, "mooncode_events")
   let summary = json_object_field_or_empty(projected, "mooncode_summary")
@@ -161,8 +167,51 @@ async test "mooncode sync imports moonclaw durable runtime events before project
   assert_eq(json_int(summary, "append_log_count", default=0), 1)
   let durable_events = read_mooncode_event_log(root, session_id)
   assert_eq(durable_events.length(), 1)
-  ignore(sync_mooncode_moonclaw_sidecar_events(root, session_id, synced))
+  ignore(
+    sync_mooncode_native_runtime_events_from_report(
+      root, session_id, synced, native_report,
+    ),
+  )
   assert_eq(read_mooncode_event_log(root, session_id).length(), 1)
+}
+
+///|
+async test "mooncode sync rejects unscoped native transcript events" {
+  let root = "/tmp/moondesk-mooncode-native-contract-reject-wbtest-" +
+    @async.now().to_string()
+  let session_id = "session-native-unsafe"
+  let session = @mooncode.session_record(
+    session_id~,
+    workspace_id="book-demo",
+    workspace_name="Demo Book",
+    workspace_root=root,
+    runtime={ "id": session_id, "status": "created" },
+    title="MoonCode - native unsafe event",
+    created_at="1",
+    updated_at="1",
+    last_message="hello",
+    initial_context_path="",
+  )
+  write_mooncode_session_record(root, session)
+  let event = @mooncode.event_record(
+    id="native-unscoped-assistant",
+    lane="transcript",
+    kind="assistant_delta",
+    title="MoonCode assistant update",
+    status="running",
+    created_at="2",
+    detail="This must not project.",
+  )
+  let native_report = @mooncode.runtime_native_event_report(
+    { "events": [event] },
+    session_id~,
+    observed_at="3",
+  )
+  let synced = sync_mooncode_native_runtime_events_from_report(
+    root, session_id, session, native_report,
+  )
+  ignore(synced)
+  assert_eq(read_mooncode_event_log(root, session_id).length(), 0)
 }
 
 ///|
