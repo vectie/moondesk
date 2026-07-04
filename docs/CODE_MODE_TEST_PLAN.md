@@ -185,8 +185,9 @@ Flow:
 existing idle session
 -> send composer
 -> POST /commands action=prompt
--> backend starts or resumes runtime-service
--> runtime unavailable is projected as a failed assistant turn, not a fake row
+-> command response acknowledges queued canonical turn
+-> UI/backend calls /runtime-service explicitly
+-> runtime-service failure is surfaced as runtime-service failure, not submit failure
 -> send composer again
 -> POST /commands action=prompt
 -> use explicit steering control/API
@@ -199,12 +200,11 @@ Assertions:
 
 - ordinary composer text always posts `prompt`, including second and third
   messages in a running or failed session.
-- backend command enqueue attempts runtime start/resume once per queued command.
-- runtime unavailable is durably attached to the active command turn as a failed
-  assistant message.
+- backend command enqueue does not start runtime or synthesize runtime progress.
+- runtime-service starts are explicit and fenced once per queued command count.
 - if native MoonClaw later emits a command-scoped final assistant answer, that
   answer becomes the canonical completion for the same turn instead of leaving
-  the stale infrastructure failure visible as the final chat state.
+  stale infrastructure state visible as the final chat state.
 - explicit steering remains covered through the command API/control surface, not
   through ordinary chat input.
 - prompt text is trimmed and empty prompts are rejected in UI state before HTTP.
@@ -526,9 +526,9 @@ assistant reply is not the canonical conversation output, or if a legacy
 `.moonclaw` root appears.
 
 The loop and multiturn gates additionally prove native command replay and
-runtime-service execution. The multiturn gate is the regression check for
-first/second/third prompt order: it fails if later replies duplicate, reorder,
-or erase earlier conversation turns.
+explicit runtime-service execution. The multiturn gate is the regression check
+for first/second/third prompt order: it fails if later replies duplicate,
+reorder, or erase earlier conversation turns.
 
 Frontend/backend ownership gate:
 
@@ -551,6 +551,12 @@ Code mode is sufficiently tested when:
 
 - a deterministic end-to-end test proves create session -> command -> runtime
   claim -> event ingest -> receipt -> readiness -> package projection
+- an explicit runtime-service test proves submit acknowledgement is enqueue-only
+  and native work starts through `/runtime-service`, not hidden command-response
+  side effects
+- a runtime-control integration smoke proves prompt, steer, and cancel stay in
+  append-only command/runtime-command order and project to the expected
+  `start-turn`, `queue-steer`, and `withdraw-pending` effects
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

@@ -48,6 +48,21 @@ function assertAppendOnlyTurns(session, expected) {
   }
 }
 
+async function runRuntimeService(base, sessionId) {
+  await requestJson(
+    `${base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-service`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        consumer_id: "mooncode-live-runtime-multiturn-smoke",
+        max_turns: 2,
+        live_wait_ms: 0,
+        poll_ms: 25,
+      }),
+    },
+  );
+}
+
 async function postPrompt(base, sessionId, message, answer, clientTurnId) {
   const result = await requestJson(
     `${base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/commands`,
@@ -104,6 +119,7 @@ async function runSmoke() {
   const firstCommandId = created.command_id;
   assert(sessionId && firstCommandId, `Created session did not return ids: ${JSON.stringify(created)}`);
   expected.push({ ...first, commandId: firstCommandId });
+  await runRuntimeService(moondesk.base, sessionId);
   let state = await waitForReply(moondesk.base, sessionId, firstCommandId, first.answer);
   assertAppendOnlyTurns(state.session, expected);
 
@@ -119,6 +135,7 @@ async function runSmoke() {
     "live-runtime-multiturn-client-turn-2",
   );
   expected.push({ ...second, commandId: secondCommandId });
+  await runRuntimeService(moondesk.base, sessionId);
   state = await waitForReply(moondesk.base, sessionId, secondCommandId, second.answer);
   assertAppendOnlyTurns(state.session, expected);
 
@@ -134,6 +151,7 @@ async function runSmoke() {
     "live-runtime-multiturn-client-turn-3",
   );
   expected.push({ ...third, commandId: thirdCommandId });
+  await runRuntimeService(moondesk.base, sessionId);
   state = await waitForReply(moondesk.base, sessionId, thirdCommandId, third.answer);
   assertAppendOnlyTurns(state.session, expected);
 

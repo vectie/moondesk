@@ -158,36 +158,32 @@ Exit tests:
 
 ## Phase 4 - Runtime Ownership
 
-Status: complete for backend-owned command enqueue.
+Status: superseded by Phase 21's explicit runtime-service boundary.
 
 Work:
 
-- Backend command enqueue starts or resumes MoonClaw runtime server-side.
+- Earlier work made backend command enqueue start or resume MoonClaw runtime
+  server-side.
 - UI no longer decides runtime startup from pending prompts or sink snapshots.
 - "Working" appears only from canonical turn status or attached progress.
 - Duplicate runtime-service starts are rejected/fenced server-side.
-- The frontend no longer has a command producer for
+- Runtime startup has an explicit command producer for
   `/api/mooncode/sessions/:id/runtime-service`.
 - Runtime sink snapshots update factual event/service status only.
 
 Implemented:
 
-- `POST /api/mooncode/sessions` and
-  `POST /api/mooncode/sessions/:id/commands` both call the same backend
-  post-enqueue runtime-start helper.
-- The helper uses the server-side runtime-service lease, so duplicate starts are
-  fenced by command count.
-- If MoonClaw or its native MoonCode runtime is unavailable, Moondesk persists a
-  `runtime_unavailable` event scoped by the command packet and returns the
-  canonical failed turn in the same command response.
-- Runtime-service startup remains available as a backend/internal route, but it
-  is no longer the browser's normal command producer.
+- Phase 21 removes the old post-enqueue runtime-start helper from command
+  submit responses.
+- Submit routes append commands and return canonical acknowledgement.
+- The UI explicitly calls `/runtime-service` after acknowledgement; failures
+  from that call are runtime-service failures, not submit failures.
 
 Exit tests:
 
-- a queued turn starts runtime once
+- a queued turn is acknowledged once
 - no fake progress appears when runtime is unreachable
-- runtime unavailable attaches an error to the active turn
+- runtime-service failure is surfaced from the runtime-service request
 - second turn does not reuse stale runtime state from the first turn
 
 ## Phase 5 - Event Identity Contract
@@ -272,7 +268,7 @@ Backend:
 - third sequential reply
 - assistant delta then final answer
 - progress before answer
-- runtime unavailable error attached to active turn
+- runtime unavailable error attached only from runtime/event ingestion
 - refresh/replay reproduces the same turn order
 
 Current backend coverage:
@@ -406,16 +402,17 @@ Work:
 
 - New-session and existing-session prompt sends enqueue the command, persist the
   canonical command event, and then ask the backend to start/resume MoonClaw.
-- Runtime-service status is diagnostic state, not a chat producer and not a
-  composer action switch.
-- Runtime-unavailable failures are persisted as command-owned events and appear
-  as a real failed assistant turn instead of a fake working row.
+- Runtime-service status is diagnostic state, not a composer action switch.
+- Runtime startup is explicit through `/runtime-service`, not hidden inside
+  submit acknowledgement.
+- Runtime-unavailable failures are persisted only when runtime/event ingestion
+  produces real command-owned failure evidence.
 
 Current coverage:
 
 - first, second, and third ordinary sends share the same backend enqueue path
-- runtime unavailable attaches to the active command turn
-- duplicate runtime starts are fenced by the backend lease
+- submit acknowledgement stays queued until runtime/event evidence advances it
+- duplicate runtime-service starts are fenced by the backend lease
 
 ## Phase 12 - Canonical Native Event Ingestion
 
@@ -566,7 +563,15 @@ compact rows remain an explicit `format=listing` API shape. The browser no
 longer patches a newer backend response with stale local
 `mooncode_conversation` data.
 
-Remaining risk after Phase 20 is broader model-backed runtime behavior:
-model-generated tool-call planning, long-running service recovery,
-cancel/steer races, and package/review flows under a real model should be
-scheduled separately from the deterministic merge gate.
+Phase 21 removes the post-enqueue runtime-start helper from submit responses.
+Create/send routes now append and acknowledge canonical command state only; the
+MoonCode UI starts MoonClaw through the explicit `/runtime-service` endpoint
+after acknowledgement. A live runtime-control smoke proves prompt, steer, and
+cancel stay in append-only command order and project to `start-turn`,
+`queue-steer`, and `withdraw-pending` before runtime starts.
+
+Remaining risk after Phase 21 is broader model-backed runtime behavior:
+model-generated tool-call planning, long-running service recovery under real
+daemon failures, active-turn cancel/steer behavior while tools are running, and
+package/review flows under a real model should be scheduled separately from the
+deterministic merge gate.

@@ -190,6 +190,7 @@ enum Msg {
   SavedMoonCodeStreamCheckpoint(String, Result[MoonCodeStreamState, String])
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
+  StartedMoonCodeRuntime(String, Result[Json, String])
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)

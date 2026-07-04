@@ -100,6 +100,29 @@ fn mooncode_session_command_cmd(
 }
 
 ///|
+fn start_mooncode_runtime_service_cmd(
+  dispatch : Dispatch[Msg],
+  session_id : String,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "consumer_id": "moondesk-ui-runtime-service",
+    "max_turns": 8,
+    "live_wait_ms": 5000,
+    "poll_ms": 250,
+  }
+  @http.post("/api/mooncode/sessions/\{session_id}/runtime-service")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      StartedMoonCodeRuntime(
+        session_id,
+        http_result(result, "Could not start MoonCode runtime service"),
+      ),
+    )
+  })
+}
+
+///|
 fn mooncode_client_turn_id(
   model : Model,
   session_id : String,

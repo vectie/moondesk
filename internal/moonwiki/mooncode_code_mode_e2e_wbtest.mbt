@@ -385,17 +385,6 @@ fn assert_mooncode_http_current_turn(
 }
 
 ///|
-fn assert_mooncode_http_runtime_unavailable_turn(payload : Json) -> Unit raise {
-  let turn = json_object_field_or_empty(payload, "mooncode_turn")
-  assert_eq(json_string(turn, "status", default=""), "failed")
-  let assistant = json_object_field_or_empty(turn, "assistant")
-  assert_eq(json_string(assistant, "status", default=""), "failed")
-  assert_true(
-    json_string(assistant, "content", default="").contains("MoonClaw daemon"),
-  )
-}
-
-///|
 async test "mooncode code mode HTTP routes preserve three prompt conversation order" {
   let root = @pathx.join(
     "/tmp",
@@ -684,8 +673,12 @@ async test "mooncode code mode HTTP routes create replay and checkpoint a sessio
       "moonsuite.phase6.v1",
     )
     assert_true(json_bool(created, "accepted", default=false))
-    assert_eq(json_string(created, "status", default=""), "failed")
-    assert_mooncode_http_runtime_unavailable_turn(created)
+    assert_eq(json_string(created, "status", default=""), "queued")
+    assert_mooncode_http_current_turn(
+      created,
+      "Create parser tests",
+      json_string(created, "client_turn_id", default=""),
+    )
     assert_eq(
       json_string(created, "next_action", default=""),
       "poll_mooncode_stream",

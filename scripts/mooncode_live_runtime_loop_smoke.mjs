@@ -55,6 +55,18 @@ async function runSmoke() {
     (created.command_packet?.runtime_tool_calls || []).length === 2,
     `Created command packet did not expose runtime_tool_calls: ${JSON.stringify(created.command_packet)}`,
   );
+  await requestJson(
+    `${moondesk.base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-service`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        consumer_id: "mooncode-live-runtime-loop-smoke",
+        max_turns: 2,
+        live_wait_ms: 0,
+        poll_ms: 25,
+      }),
+    },
+  );
 
   const proofFile = path.join(suiteRoot, proofPath);
   const finalState = await waitFor("MoonClaw loop proof and canonical reply", async () => {

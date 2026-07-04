@@ -112,7 +112,7 @@ async test "mooncode immediate command response exposes clean phase6 envelope" {
 }
 
 ///|
-async test "mooncode post enqueue response records runtime unavailable failure" {
+async test "mooncode post enqueue response stays enqueue-only" {
   let root = "/tmp/moondesk-mooncode-runtime-unavailable-" +
     @desk.stable_id("runtime-unavailable", @async.now().to_string())
   @fsx.make_directory(root, recursive=true, exists_ok=true)
@@ -159,25 +159,21 @@ async test "mooncode post enqueue response records runtime unavailable failure" 
     Ok(response) => response
     Err(error) => fail(error.stringify())
   }
-  assert_eq(json_string(response, "status", default=""), "failed")
+  assert_eq(json_string(response, "status", default=""), "queued")
   assert_true(
-    json_string(response, "message", default="").contains(
-      "runtime is unavailable",
-    ),
+    json_string(response, "message", default="").contains("saved and queued"),
   )
   let turn = json_object_field_or_empty(response, "mooncode_turn")
-  assert_eq(json_string(turn, "status", default=""), "failed")
+  assert_eq(json_string(turn, "status", default=""), "queued")
   let assistant = json_object_field_or_empty(turn, "assistant")
-  assert_eq(json_string(assistant, "status", default=""), "failed")
-  assert_true(
-    json_string(assistant, "content", default="").contains("MoonClaw daemon"),
-  )
+  assert_eq(json_string(assistant, "status", default=""), "")
+  assert_eq(json_string(assistant, "content", default=""), "")
   let events = read_mooncode_event_log(
     root,
     json_string(queued, "id", default=""),
   )
-  assert_eq(events.length(), 2)
-  assert_eq(json_string(events[1], "kind", default=""), "runtime_unavailable")
+  assert_eq(events.length(), 1)
+  assert_eq(json_string(events[0], "kind", default=""), "command.prompt")
 }
 
 ///|

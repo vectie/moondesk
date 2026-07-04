@@ -186,7 +186,8 @@ Exit tests:
 - unscoped progress before the first user is hidden from chat
 - unscoped progress/assistant after a user is hidden from chat
 - stale events from a previous selected session cannot mutate visible chat
-- runtime unavailable becomes a failed assistant response for that turn
+- runtime/event evidence for runtime unavailable becomes a failed assistant
+  response for that turn
 
 ## Phase 5 - Progress Rendering
 
@@ -383,39 +384,33 @@ Exit tests:
 
 ## Phase 11 - Backend-Owned Runtime Start
 
-Status: complete for the command enqueue path.
+Status: superseded by Phase 21.
 
 Work:
 
-- Treat command enqueue as the only normal place that starts or resumes
+- Originally treated command enqueue as the normal place that starts or resumes
   MoonClaw runtime work.
 - Use the existing backend runtime-service lease to fence duplicate starts.
-- Return a real canonical failed turn when MoonClaw is unavailable instead of a
-  queued prompt that can sit forever.
+- Return a real canonical failed turn when MoonClaw is unavailable.
 - Keep `/api/mooncode/sessions/:id/runtime-service` as a backend/internal
-  runtime route, not as the visible chat producer.
+  runtime route.
 - Keep runtime-event snapshots diagnostic; they never decide chat ownership or
   composer action.
 
 Implemented:
 
-- New-session creation and existing-session command send now both call the same
-  backend post-enqueue helper.
-- The helper attempts runtime-service start/resume after the prompt command and
-  command event are durably appended.
-- Runtime start failures append a command-scoped `runtime_unavailable` event and
-  return a failed assistant message for that exact turn.
-- The HTTP E2E test now expects runtime-unavailable to appear as a canonical
-  failed turn when a test workspace has no MoonClaw daemon.
+- This phase exposed the hidden coupling: command acknowledgement, runtime
+  startup, and runtime failure projection were one response path.
+- Phase 21 removes that stale coupling. Command submit now only appends and
+  acknowledges durable command state; explicit `/runtime-service` calls own
+  MoonClaw startup and runtime failures.
 
 Exit tests:
 
 - first, second, and third ordinary sends all enter the same backend enqueue
   lifecycle
-- no browser-side fake working row is needed to show progress or failure
-- runtime unavailable is visible as a failed assistant message for the active
-  turn
-- command ordering stays append-only after runtime start/failure handling
+- no browser-side fake working row is needed to show progress
+- command ordering stays append-only after runtime start handling
 
 ## Phase 12 - Canonical Native Event Ingestion
 
@@ -757,6 +752,49 @@ Exit tests:
   `mooncode_conversation` is not patched with old frontend conversation data
 - immediate optimistic user rows still render while the backend has not
   acknowledged the turn
+
+## Phase 21 - Explicit Runtime-Service Boundary
+
+Status: implemented as the submit/runtime split and runtime-control gate.
+
+Problem:
+
+- Command submit still tried to start MoonClaw before returning the browser's
+  submit response.
+- That made one HTTP path responsible for three different jobs: durable command
+  append, runtime startup, and runtime failure projection.
+- The browser could see slow or jumpy behavior because an ordinary chat submit
+  was waiting on runtime-service work instead of returning the acknowledged
+  conversation turn.
+
+Work:
+
+- Make `POST /api/mooncode/sessions` and
+  `POST /api/mooncode/sessions/:id/commands` enqueue-only submit routes.
+- Keep `/api/mooncode/sessions/:id/runtime-service` as the explicit runtime
+  starter for MoonClaw work.
+- Update the MoonCode UI so successful create/send acknowledgement triggers a
+  separate runtime-service request.
+- Keep "working" and failure copy event-backed: command submit alone may show
+  the user turn, but it must not fabricate runtime progress.
+- Add a live HTTP control smoke proving prompt, steer, and cancel remain one
+  append-only command/runtime-control stream before MoonClaw starts.
+- Update deterministic live runtime smokes to start runtime through the explicit
+  service endpoint.
+
+Exit tests:
+
+- first prompt submit returns a queued canonical turn without starting runtime
+  in the command response
+- UI starts runtime through `/runtime-service` only after create/send
+  acknowledgement
+- prompt, steer, and cancel appear in `commands.jsonl` and
+  `runtime-commands.jsonl` in append order
+- runtime-control returns `start-turn`, `queue-steer`, and `withdraw-pending`
+  for a pending prompt/control/cancel sequence
+- deterministic native runtime loop and multiturn smokes still finish through
+  explicit runtime-service calls
+- no legacy `.moonclaw` sidecar root is created
 
 ## Non-Goals
 
