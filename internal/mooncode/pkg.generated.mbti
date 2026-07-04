@@ -546,6 +546,10 @@ pub fn package_result_ingest_report(Json, session_id~ : String, ingested_at~ : S
 
 pub fn package_result_ingest_result_response(String, Array[Json], Array[Json], Json, Json, Json, event_log_path~ : String, native_state~ : Json) -> Json
 
+pub fn package_review_model_flow_contract_json() -> Json
+
+pub fn package_review_model_flow_report(String, Array[Json]) -> Json
+
 pub fn package_session_root_relative_path(String) -> String
 
 pub fn package_source_directory_record(String) -> Json

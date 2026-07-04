@@ -581,6 +581,20 @@ runtime failures attach to the latest active turn, if prompt-scoped
 abort evidence leaks into chat, or if steer/cancel runtime-control decisions do
 not advertise their required MoonClaw settlement events.
 
+Package/review model-flow gate:
+
+```bash
+moon test internal/mooncode --filter "mooncode package review model flow*" --target native
+moon test internal/mooncode --filter "mooncode runtime receipt*" --target native
+```
+
+This deterministic Phase 28 gate protects package/review model decisions from
+stale or broad evidence. It fails if accepted package runs lack package
+manifest, review accept receipt, passing tests, verified package readiness, and
+assistant summary from the same command owner; if reject receipts do not close a
+rejected run; if command-scoped failures are not terminal; or if old-command
+package/review evidence can settle the current package command.
+
 Runtime-service failure gate:
 
 ```bash
@@ -636,6 +650,9 @@ Code mode is sufficiently tested when:
   evidence, or a clear runtime contract failure
 - a turn ownership and abort gate proves every visible row carries its owner
   tuple and unscoped runtime diagnostics cannot move or rewrite chat turns
+- a package/review model-flow gate proves package decisions are accepted,
+  rejected, failed, or stale only from command-owned manifest, review, test,
+  readiness, and assistant-summary evidence
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

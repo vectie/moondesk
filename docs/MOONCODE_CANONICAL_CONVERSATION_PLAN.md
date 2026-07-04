@@ -628,8 +628,10 @@ of becoming chat.
 
 The next scheduled phases are now explicit:
 
-- Phase 28: package and review model flow gate. Package/review decisions get a
-  command-scoped model fixture gate plus separate live model coverage.
+- Phase 28: package and review model flow gate. Package/review decisions now
+  have a command-scoped deterministic fixture gate for accepted, rejected,
+  failed, and stale runs; live model coverage remains a scheduled gate layered
+  above that contract.
 - Phase 29: browser conversation stability gate. First/second/third turns must
   append immediately, preserve old turns, keep progress under the owning turn,
   and survive reload without flashes or reordering.

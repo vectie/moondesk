@@ -1059,7 +1059,8 @@ Exit tests:
 
 ## Phase 28 - Package and Review Model Flow Gate
 
-Status: planned.
+Status: implemented for the deterministic package/review model-flow gate; the
+separate scheduled live model package/review run remains follow-up work.
 
 Problem:
 
@@ -1075,6 +1076,35 @@ Work:
   runs.
 - Add a scheduled/live gate for one real model package/review turn, separate
   from deterministic merge tests.
+
+Implemented gate:
+
+- `package_review_model_flow_contract_json` defines the clean event contract for
+  model-backed package/review turns.
+- `package_review_model_flow_report` groups evidence by package command owner
+  and refuses to merge stale evidence from another command into the active
+  package/review run.
+- Accepted runs require one command owner to provide `command.package`,
+  `package.manifest`, `receipt.accept`, passing `test_result`,
+  `runtime.package_verified`, and final assistant summary.
+- Rejected runs require owned `receipt.reject` plus final assistant summary.
+- Failed runs are terminal when command-scoped tests, package proof, planner, or
+  command execution evidence fails.
+- Stale runs are reported when package/review evidence has no matching package
+  command owner, instead of completing the nearest visible turn.
+
+Exit tests:
+
+- accepted package/review fixture satisfies the full owned sequence
+- rejected package/review fixture closes through an owned reject receipt and
+  assistant summary
+- failed package/review fixture closes through command-scoped failed test
+  evidence
+- stale package/review fixture proves old-command evidence cannot settle a new
+  package command
+- runtime protocol contract advertises the package/review model-flow contract
+- scheduled live gate still needs one real model-backed package/review run
+  against MoonClaw/Moondesk, not a deterministic tool-call simulation
 
 ## Phase 29 - Browser Conversation Stability Gate
 
