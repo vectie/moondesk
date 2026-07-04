@@ -176,12 +176,7 @@ fn update_mooncode_session_results(
       (@rabbita.none, { ..model, mooncode_composer_status: error })
     StartedMoonCodeRuntime(session_id, Ok(_)) =>
       (
-        @rabbita.batch([
-          fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
-          fetch_mooncode_stream_cmd(dispatch, session_id, 0),
-          schedule_mooncode_fast_poll(dispatch),
-          schedule_mooncode_poll(dispatch),
-        ]),
+        mooncode_after_runtime_started_cmd(dispatch, model, session_id),
         {
           ..model,
           mooncode_composer_status: if model.selected_mooncode_session_id ==
@@ -194,11 +189,7 @@ fn update_mooncode_session_results(
       )
     StartedMoonCodeRuntime(session_id, Err(error)) =>
       (
-        @rabbita.batch([
-          fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
-          fetch_mooncode_stream_cmd(dispatch, session_id, 0),
-          schedule_mooncode_poll(dispatch),
-        ]),
+        mooncode_after_runtime_failed_cmd(dispatch, model, session_id),
         {
           ..model,
           mooncode_composer_status: if model.selected_mooncode_session_id ==
@@ -269,19 +260,6 @@ fn mooncode_default_runtime_model(result : MoonClawModelsResult) -> String {
 }
 
 ///|
-fn mooncode_runtime_service_cmd(
-  dispatch : Dispatch[Msg],
-  model : Model,
-  session_id : String,
-) -> @rabbita.Cmd {
-  if model.mooncode_runtime_mode == "manual" {
-    @rabbita.none
-  } else {
-    start_mooncode_runtime_service_cmd(dispatch, session_id)
-  }
-}
-
-///|
 fn mooncode_session_mutation_succeeded(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -298,14 +276,7 @@ fn mooncode_session_mutation_succeeded(
     optimistic_rows, session,
   )
   (
-    @rabbita.batch([
-      mooncode_runtime_service_cmd(dispatch, model, session.id),
-      fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
-      fetch_mooncode_stream_cmd(dispatch, session.id, 0),
-      schedule_mooncode_fast_poll(dispatch),
-      schedule_mooncode_poll(dispatch),
-      sync_shell_cmd(MoonCode, model.activity),
-    ]),
+    mooncode_after_session_mutation_cmd(dispatch, model, session.id),
     {
       ..model,
       workspace_mode: MoonCode,

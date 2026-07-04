@@ -1229,6 +1229,54 @@ Exit tests:
 - the Rabbita JS package check and tests pass
 - the Phase 8 migration wall runs the route ownership validator
 
+## Phase 32 - Frontend Session Effect Ownership
+
+Status: implemented as the MoonCode session effect owner and gate.
+
+Problem:
+
+- The frontend still assembled MoonCode session follow-up commands inside
+  separate action/result reducer branches. Prompt submit, create-session
+  acknowledgement, runtime-service success/failure, session selection, and
+  polling each repeated parts of the same batch: fetch sessions, fetch stream,
+  start runtime-service, schedule fast/normal polling, and sync the shell route.
+- That shape is a stale implementation risk because the reducer branch that
+  changes model state can silently drift from the branch that schedules the
+  side effects. It makes first/second/third turn behavior harder to reason
+  about, and it spreads timing-sensitive chat behavior across unrelated files.
+- A first-time clean implementation should have one frontend owner for
+  session-side effects. Reducers should choose model state and invoke a named
+  effect plan; they should not hand-assemble HTTP/timer batches.
+
+Work:
+
+- Add `mooncode_session_effects.mbt` in the Rabbita main package.
+- Define typed MoonCode session effects for daemon refresh, session refresh,
+  selected stream refresh, explicit stream refresh, runtime-service start,
+  fast/normal poll scheduling, and shell sync.
+- Move prompt-submit followups, session-mutation acknowledgement followups,
+  runtime-service settlement followups, polling followups, and selected-session
+  stream reloads behind that owner.
+- Keep runtime-service auto-start gated only by `mooncode_runtime_mode` at the
+  effect-plan boundary; manual browser smokes still suppress runtime start
+  without changing reducer logic.
+- Add white-box coverage for the effect plans, including manual-mode runtime
+  suppression and runtime success/failure settlement plans.
+- Wire the effect-plan gate into the Phase 8 migration wall.
+
+Exit tests:
+
+- submit acknowledgement effect plans include runtime-service start only in
+  automatic mode, then session refresh, stream refresh, fast poll, normal poll,
+  and shell sync
+- manual mode suppresses runtime-service start without suppressing canonical
+  session/stream refresh
+- runtime-service success schedules session refresh, stream refresh, fast poll,
+  and normal poll
+- runtime-service failure schedules session refresh, stream refresh, and normal
+  poll without pretending active work
+- polling has one canonical effect plan
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
@@ -1239,5 +1287,7 @@ Exit tests:
   `mooncode_conversation` state.
 - Letting individual frontend command handlers construct MoonCode desktop API
   routes directly.
+- Letting reducer branches hand-assemble MoonCode session HTTP/timer follow-up
+  batches.
 - Automatically steering from ordinary chat input because a runtime service is
   running.

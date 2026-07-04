@@ -7,7 +7,7 @@ fn update_mooncode_session_actions(
   match msg {
     SelectMoonCodeSession(session_id) =>
       (
-        mooncode_selected_session_reload_cmd(dispatch, session_id),
+        mooncode_selected_session_cmd(dispatch, model, session_id),
         mooncode_select_session_model(model, session_id),
       )
     NewMoonCodeSession =>
@@ -40,14 +40,6 @@ fn update_mooncode_session_actions(
     SendMoonCodeMessage => mooncode_send_composer(dispatch, model)
     _ => (@rabbita.none, model)
   }
-}
-
-///|
-fn mooncode_selected_session_reload_cmd(
-  dispatch : Dispatch[Msg],
-  session_id : String,
-) -> @rabbita.Cmd {
-  fetch_mooncode_stream_cmd(dispatch, session_id, 0)
 }
 
 ///|
@@ -105,12 +97,11 @@ fn mooncode_send_composer(
         let prompt = model.mooncode_prompt.trim().to_owned()
         let client_turn_id = mooncode_client_turn_id(model, session.id, prompt)
         (
-          @rabbita.batch([
+          mooncode_after_user_submit_cmd(
+            dispatch,
+            model,
             send_mooncode_composer_cmd(dispatch, model, session),
-            schedule_mooncode_fast_poll(dispatch),
-            schedule_mooncode_poll(dispatch),
-            sync_shell_cmd(MoonCode, model.activity),
-          ]),
+          ),
           {
             ..model,
             workspace_mode: MoonCode,
@@ -136,12 +127,11 @@ fn mooncode_send_composer(
           model, draft_session_id, prompt,
         )
         (
-          @rabbita.batch([
+          mooncode_after_user_submit_cmd(
+            dispatch,
+            model,
             create_mooncode_session_cmd(dispatch, model),
-            schedule_mooncode_fast_poll(dispatch),
-            schedule_mooncode_poll(dispatch),
-            sync_shell_cmd(MoonCode, model.activity),
-          ]),
+          ),
           {
             ..model,
             workspace_mode: MoonCode,

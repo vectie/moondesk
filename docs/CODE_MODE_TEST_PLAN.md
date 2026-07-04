@@ -656,6 +656,18 @@ frontend command handlers. It fails if active Rabbita MoonCode code contains raw
 listing, command submit, stream polling, stream checkpoint, and
 runtime-service route helpers stop encoding workspace/session ids correctly.
 
+Frontend session effect ownership gate:
+
+```bash
+(cd ui/rabbita-desk && moon test main --target js --filter "mooncode session effects*")
+```
+
+This Phase 32 gate keeps timing-sensitive MoonCode follow-up effects out of
+individual reducer branches. It fails if submit acknowledgement stops
+refreshing canonical sessions/streams, if manual mode accidentally starts the
+runtime service, if runtime-service success/failure settlements drift, or if
+polling no longer uses one canonical effect plan.
+
 ## Done Criteria
 
 Code mode is sufficiently tested when:
@@ -695,6 +707,9 @@ Code mode is sufficiently tested when:
   cached local conversation state
 - a frontend route ownership gate proves browser command handlers call the
   MoonCode desktop route helper instead of hard-coding `/api/mooncode` paths
+- a frontend session effect ownership gate proves reducer branches invoke one
+  typed plan for MoonCode runtime-service, session/stream refresh, polling, and
+  shell-sync followups
 - UI reducer tests prove the user can enter MoonCode, start a session, send
   first/second/third ordinary prompts, use explicit steering controls, and reload
   stream/runtime state

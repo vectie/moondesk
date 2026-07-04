@@ -651,3 +651,9 @@ The next scheduled phases are now explicit:
   command submit, stream polling, stream checkpoint, and runtime-service calls
   no longer build inline paths, and the migration wall rejects raw MoonCode API
   route strings outside that helper in active frontend code.
+- Phase 32: frontend session effect ownership. The Rabbita MoonCode reducer
+  path now routes prompt-submit followups, mutation acknowledgement followups,
+  runtime-service settlement, session polling, and selected-session stream
+  reloads through one typed effect owner. Reducer branches no longer
+  hand-assemble the timing-sensitive mix of runtime-service start,
+  session/stream refresh, poll scheduling, and shell sync.
