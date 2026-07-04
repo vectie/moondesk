@@ -430,6 +430,7 @@ test "code mode new session action opens MoonCode draft without losing book cont
   assert_eq(next.selected_workspace_id, "book-demo")
   assert_eq(next.selected_path, "tools/parser.mbt")
   assert_eq(next.selected_mooncode_session_id, "")
+  assert_true(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_prompt, "")
   assert_eq(next.mooncode_composer_status, "new session draft")
 }
@@ -514,6 +515,7 @@ test "code mode new chat send appends local prompt immediately" {
   )
   let draft_id = mooncode_draft_session_id(model)
   assert_eq(next.selected_mooncode_session_id, "")
+  assert_true(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_prompt, "")
   assert_eq(next.mooncode_conversation_rows.length(), 1)
   assert_eq(next.mooncode_conversation_rows[0].session_id, draft_id)
@@ -584,6 +586,7 @@ test "code mode created session adopts draft prompt rows" {
     pending,
   )
   assert_eq(next.selected_mooncode_session_id, "session-created")
+  assert_false(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_conversation_rows.length(), 1)
   assert_eq(next.mooncode_conversation_rows[0].session_id, "session-created")
   assert_eq(
@@ -645,6 +648,7 @@ test "code mode create response is idempotent after listing adoption" {
     model,
   )
   assert_eq(next.selected_mooncode_session_id, "session-created")
+  assert_false(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_runtime_event_sink_session_id, "session-created")
   assert_eq(
     next.mooncode_runtime_event_sink_status,
@@ -676,6 +680,7 @@ test "code mode stale session listing keeps new chat draft selected" {
     pending,
   )
   assert_eq(next.selected_mooncode_session_id, "")
+  assert_true(next.mooncode_new_chat_active)
   assert_true(mooncode_draft_session(next) is Some(_))
   let session = selected_mooncode_session(next).unwrap()
   let rows = code_mode_test_transcript_rows(next, session)
@@ -724,6 +729,7 @@ test "code mode session listing adopts acknowledged new chat draft" {
     pending,
   )
   assert_eq(next.selected_mooncode_session_id, "session-created")
+  assert_false(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_sessions.length(), 1)
   assert_eq(next.mooncode_sessions[0].id, "session-created")
   assert_eq(next.mooncode_conversation_rows.length(), 0)
@@ -767,6 +773,7 @@ test "code mode compact session listing does not adopt draft by prompt title" {
     pending,
   )
   assert_eq(next.selected_mooncode_session_id, "")
+  assert_true(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_conversation_rows.length(), 1)
   assert_eq(
     next.mooncode_conversation_rows[0].session_id,
@@ -902,7 +909,27 @@ test "code mode runtime prompt event cannot acknowledge by client turn id" {
 }
 
 ///|
-test "code mode new session draft is not replaced by existing sessions" {
+test "code mode explicit new session draft is not replaced by existing sessions" {
+  let session = code_mode_test_session("existing")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "book-demo",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [session],
+    mooncode_new_chat_active: true,
+    mooncode_composer_status: "new session draft",
+  }
+  assert_true(selected_mooncode_session(model) is None)
+  let with_status_refresh = {
+    ..model,
+    mooncode_composer_status: "daemon temporarily unavailable",
+  }
+  assert_true(selected_mooncode_session(with_status_refresh) is None)
+}
+
+///|
+test "code mode status copy alone does not force new chat routing" {
   let session = code_mode_test_session("existing")
   let model = {
     ..init_model(),
@@ -912,11 +939,14 @@ test "code mode new session draft is not replaced by existing sessions" {
     mooncode_sessions: [session],
     mooncode_composer_status: "new session draft",
   }
-  assert_true(selected_mooncode_session(model) is None)
-  let with_prompt = { ..model, mooncode_composer_status: "draft" }
-  assert_true(selected_mooncode_session(with_prompt) is None)
-  let with_validation = { ..model, mooncode_composer_status: "enter a message" }
-  assert_true(selected_mooncode_session(with_validation) is None)
+  let selected = selected_mooncode_session(model).unwrap()
+  assert_eq(selected.id, "existing")
+  let with_validation_copy = {
+    ..model,
+    mooncode_composer_status: "enter a message",
+  }
+  let selected_after_copy = selected_mooncode_session(with_validation_copy).unwrap()
+  assert_eq(selected_after_copy.id, "existing")
 }
 
 ///|
@@ -1054,6 +1084,7 @@ test "code mode daemon and model polling preserve new session draft" {
     selected_workspace_id: "book-demo",
     selected_mooncode_session_id: "",
     mooncode_sessions: [session],
+    mooncode_new_chat_active: true,
     mooncode_composer_status: "new session draft",
   }
   let (_, daemon_next) = update_mooncode_session_results(
@@ -1064,6 +1095,7 @@ test "code mode daemon and model polling preserve new session draft" {
     model,
   )
   assert_eq(daemon_next.selected_mooncode_session_id, "")
+  assert_true(daemon_next.mooncode_new_chat_active)
   assert_eq(daemon_next.mooncode_composer_status, "new session draft")
   assert_true(selected_mooncode_session(daemon_next) is None)
 
@@ -1079,6 +1111,7 @@ test "code mode daemon and model polling preserve new session draft" {
     model,
   )
   assert_eq(models_next.selected_mooncode_session_id, "")
+  assert_true(models_next.mooncode_new_chat_active)
   assert_eq(models_next.mooncode_model, "deepseek-v4-flash")
   assert_eq(models_next.mooncode_composer_status, "new session draft")
   assert_true(selected_mooncode_session(models_next) is None)

@@ -80,6 +80,7 @@ fn update_mooncode_session_results(
         mooncode_sessions,
         mooncode_conversation_rows: conversation_rows,
       }
+      let draft_active = mooncode_new_session_draft_active(session_model)
       match mooncode_find_acknowledged_draft_session(
         session_model,
         mooncode_sessions,
@@ -99,8 +100,7 @@ fn update_mooncode_session_results(
           model.selected_mooncode_session_id,
         ) {
         model.selected_mooncode_session_id
-      } else if mooncode_new_session_draft_active(model) ||
-        mooncode_draft_session(model) is Some(_) {
+      } else if draft_active {
         ""
       } else {
         first_mooncode_session_id(
@@ -119,6 +119,7 @@ fn update_mooncode_session_results(
           mooncode_sessions,
           mooncode_conversation_rows: conversation_rows,
           selected_mooncode_session_id: selected,
+          mooncode_new_chat_active: selected == "" && draft_active,
           mooncode_stream_session_id: if keep_stream {
             model.mooncode_stream_session_id
           } else {
@@ -171,7 +172,7 @@ fn update_mooncode_session_results(
           } else {
             "loading runtime events"
           },
-          mooncode_composer_status: if mooncode_new_session_draft_active(model) {
+          mooncode_composer_status: if draft_active {
             model.mooncode_composer_status
           } else {
             "\{mooncode_sessions.length()} MoonCode session(s)"
@@ -222,6 +223,7 @@ fn mooncode_created_session_succeeded(
           model.mooncode_sessions,
           session,
         ),
+        mooncode_new_chat_active: false,
         mooncode_conversation_rows: conversation_rows,
         mooncode_composer_status: "MoonCode session started",
       },
@@ -303,6 +305,7 @@ fn mooncode_session_mutation_succeeded(
         session,
       ),
       selected_mooncode_session_id: session.id,
+      mooncode_new_chat_active: false,
       mooncode_runtime_event_sink_session_id: session.id,
       mooncode_runtime_event_sink: None,
       mooncode_runtime_event_sink_status: "waiting for backend runtime events",

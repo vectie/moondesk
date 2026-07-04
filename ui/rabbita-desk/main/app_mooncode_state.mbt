@@ -120,12 +120,11 @@ fn mooncode_new_session_draft_active(model : Model) -> Bool {
   if model.mooncode_prompt.trim().to_owned() != "" {
     return true
   }
-  model.mooncode_composer_status == "new session draft" ||
-  model.mooncode_composer_status == "draft" ||
-  model.mooncode_composer_status == "enter a message" ||
-  model.mooncode_composer_status == "message queued for MoonCode" ||
-  model.mooncode_composer_status == "starting MoonCode session" ||
-  model.mooncode_composer_status == "starting General MoonCode"
+  model.mooncode_new_chat_active ||
+  mooncode_conversation_has_session(
+    model.mooncode_conversation_rows,
+    mooncode_draft_session_id(model),
+  )
 }
 
 ///|

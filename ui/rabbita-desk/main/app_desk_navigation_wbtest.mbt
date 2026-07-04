@@ -2074,6 +2074,9 @@ test "workspace switch resets stale desk directory and preview state" {
     ),
     markdown_editor_path: "wiki/old/page.md",
     markdown_editor_content: "draft",
+    selected_mooncode_session_id: "",
+    mooncode_new_chat_active: true,
+    mooncode_prompt: "stale code draft",
   }
   let (_, next) = update_navigation_actions(
     dispatch,
@@ -2089,6 +2092,8 @@ test "workspace switch resets stale desk directory and preview state" {
   assert_eq(next.preview_status, "loading workspace")
   assert_eq(next.markdown_editor_path, "")
   assert_eq(next.markdown_editor_content, "")
+  assert_false(next.mooncode_new_chat_active)
+  assert_eq(next.mooncode_prompt, "")
 }
 
 ///|
@@ -2124,6 +2129,7 @@ test "mode switches preserve selected desk context without starting code" {
     selected_workspace_id: "book-demo",
     selected_path: "tools/demo/main.mbt",
     current_directory: "tools/demo",
+    mooncode_new_chat_active: true,
     mooncode_prompt: "stale prompt",
     mooncode_composer_status: "idle",
   }
@@ -2148,6 +2154,7 @@ test "mode switches preserve selected desk context without starting code" {
   assert_eq(code.selected_path, "tools/demo/main.mbt")
   assert_eq(code.current_directory, "tools/demo")
   assert_eq(code.mooncode_prompt, "")
+  assert_false(code.mooncode_new_chat_active)
   assert_eq(code.mooncode_composer_status, "MoonCode workspace ready")
 
   let (_, back_to_desk) = update_navigation_actions(

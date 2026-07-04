@@ -66,6 +66,7 @@ fn init_model() -> Model {
     moonclaw_daemon: None,
     mooncode_sessions: [],
     selected_mooncode_session_id: "",
+    mooncode_new_chat_active: false,
     mooncode_stream_session_id: "",
     mooncode_stream_cursor: 0,
     mooncode_stream_status: "stream idle",

@@ -31,6 +31,8 @@ fn update_navigation_actions(
           ..model,
           selected_workspace_id: workspace_id,
           selected_mooncode_session_id: "",
+          mooncode_new_chat_active: false,
+          mooncode_prompt: "",
           selected_path: "",
           desk_selected_paths: [],
           desk_selection_anchor: "",
@@ -501,6 +503,11 @@ fn select_workspace_mode_action(
         ""
       } else {
         model.mooncode_prompt
+      },
+      mooncode_new_chat_active: if mode == MoonCode {
+        false
+      } else {
+        model.mooncode_new_chat_active
       },
       mooncode_composer_status: if mode == MoonCode {
         "MoonCode workspace ready"

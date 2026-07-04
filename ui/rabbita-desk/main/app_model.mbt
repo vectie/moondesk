@@ -80,6 +80,7 @@ struct Model {
   moonclaw_daemon : MoonClawDaemonStatus?
   mooncode_sessions : Array[MoonCodeSession]
   selected_mooncode_session_id : String
+  mooncode_new_chat_active : Bool
   mooncode_stream_session_id : String
   mooncode_stream_cursor : Int
   mooncode_stream_status : String

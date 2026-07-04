@@ -98,6 +98,8 @@ Exit tests:
 
 ## Phase 2 - Selection and Draft Ownership
 
+Status: complete.
+
 Work:
 
 - Treat "new chat" as an explicit draft route until a canonical session
@@ -108,12 +110,23 @@ Work:
   canonical or optimistic turn state says it is in flight.
 - Runtime stream and sink state must not decide session selection.
 
+Implemented:
+
+- Added explicit `mooncode_new_chat_active` model state for the new-chat route.
+- Removed draft routing decisions from `mooncode_composer_status` text.
+- Session polling now computes draft ownership from the post-refresh model.
+- Workspace and mode switches clear stale draft-route flags instead of relying
+  on status copy.
+- Regression tests now prove stale status strings alone cannot keep the UI on a
+  draft route.
+
 Exit tests:
 
 - new chat does not flash to an existing session
 - stale listing does not remove a selected in-flight session
 - acknowledged draft moves once to the created session
 - unacknowledged compact listing keeps the draft visible
+- status copy alone cannot decide draft routing
 
 ## Phase 3 - Backend Conversation as the Only Read Path
 

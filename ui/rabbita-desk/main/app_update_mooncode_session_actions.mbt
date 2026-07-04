@@ -18,6 +18,7 @@ fn update_mooncode_session_actions(
           workspace_mode: MoonCode,
           command_open: false,
           selected_mooncode_session_id: "",
+          mooncode_new_chat_active: true,
           mooncode_prompt: "",
           mooncode_composer_status: "new session draft",
         },
@@ -25,7 +26,16 @@ fn update_mooncode_session_actions(
     SetMoonCodePrompt(prompt) =>
       (
         @rabbita.none,
-        { ..model, mooncode_prompt: prompt, mooncode_composer_status: "draft" },
+        {
+          ..model,
+          mooncode_prompt: prompt,
+          mooncode_new_chat_active: if model.selected_mooncode_session_id == "" {
+            true
+          } else {
+            model.mooncode_new_chat_active
+          },
+          mooncode_composer_status: "draft",
+        },
       )
     SendMoonCodeMessage => mooncode_send_composer(dispatch, model)
     _ => (@rabbita.none, model)
@@ -53,6 +63,7 @@ fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
   {
     ..model,
     selected_mooncode_session_id: session_id,
+    mooncode_new_chat_active: session_id == "",
     mooncode_stream_session_id: if keep_stream {
       model.mooncode_stream_session_id
     } else {
@@ -105,6 +116,7 @@ fn mooncode_send_composer(
         ..model,
         workspace_mode: MoonCode,
         command_open: false,
+        mooncode_new_chat_active: model.selected_mooncode_session_id == "",
         mooncode_composer_status: "enter a message",
       },
     )
@@ -125,6 +137,7 @@ fn mooncode_send_composer(
             ..model,
             workspace_mode: MoonCode,
             command_open: false,
+            mooncode_new_chat_active: false,
             mooncode_prompt: "",
             mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
               model.mooncode_conversation_rows,
@@ -159,6 +172,7 @@ fn mooncode_send_composer(
             ..model,
             workspace_mode: MoonCode,
             command_open: false,
+            mooncode_new_chat_active: true,
             mooncode_prompt: "",
             mooncode_conversation_rows: mooncode_append_conversation_user_prompt(
               model.mooncode_conversation_rows,
