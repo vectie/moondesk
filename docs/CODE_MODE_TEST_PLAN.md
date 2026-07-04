@@ -770,6 +770,7 @@ Package/review model-flow gate:
 ```bash
 moon test internal/mooncode --filter "mooncode package review model flow*" --target native
 moon test internal/mooncode --filter "mooncode runtime receipt*" --target native
+scripts/validate_mooncode_package_review_flow_contract.sh
 ```
 
 This deterministic Phase 28 gate protects package/review model decisions from
@@ -778,6 +779,11 @@ manifest, review accept receipt, passing tests, verified package readiness, and
 assistant summary from the same command owner; if reject receipts do not close a
 rejected run; if command-scoped failures are not terminal; or if old-command
 package/review evidence can settle the current package command.
+
+Phase 57 moves the reusable package/review model-flow vocabulary into
+`mooncode/core`. The validator fails if production internal MoonCode
+reintroduces local package/review statuses, stale reasons, missing-step strings,
+event predicates, or a private package/review contract copy.
 
 Browser conversation stability gate:
 

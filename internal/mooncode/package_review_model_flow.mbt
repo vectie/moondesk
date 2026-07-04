@@ -34,28 +34,7 @@ priv struct PackageReviewModelFlow {
 
 ///|
 pub fn package_review_model_flow_contract_json() -> Json {
-  {
-    "kind": "mooncode-package-review-model-flow-contract",
-    "protocol": protocol_version(),
-    "owner": {
-      "runtime": "moonclaw",
-      "projection": "mooncode",
-      "ui": "moondesk",
-      "artifact": "moonbook",
-    },
-    "command_scope_rule": "Package/review readiness must be proven by events that carry the same package command_id. Evidence from another command or without a command owner is stale diagnostics.",
-    "accepted_sequence": [
-      "command.package", "package.manifest", "receipt.accept", "test_result with exit_code 0",
-      "runtime.package_verified", "assistant summary",
-    ],
-    "rejected_sequence": [
-      "command.package", "receipt.reject", "assistant summary",
-    ],
-    "failed_sequence": [
-      "command.package", "command-scoped failed test_result, package proof, planner failure, command_error, turn_failed, or max_steps_exhausted",
-    ],
-    "stale_rule": "A package manifest, review receipt, test result, package proof, or assistant summary cannot settle a package/review command unless it names an existing package command owner.",
-  }
+  @mooncode_core.package_review_flow_contract_json()
 }
 
 ///|
@@ -84,7 +63,10 @@ pub fn package_review_model_flow_report(
       let command_id = package_review_event_command_id(event)
       if command_id == "" {
         stale_evidence.push(
-          package_review_stale_evidence(event, "missing-command-owner"),
+          package_review_stale_evidence(
+            event,
+            @mooncode_core.package_review_flow_reason_missing_command_owner(),
+          ),
         )
       } else {
         let index = package_review_flow_index(flows, command_id)
@@ -93,7 +75,8 @@ pub fn package_review_model_flow_report(
         } else {
           stale_evidence.push(
             package_review_stale_evidence(
-              event, "evidence-without-package-command",
+              event,
+              @mooncode_core.package_review_flow_reason_evidence_without_package_command(),
             ),
           )
         }
@@ -107,29 +90,32 @@ pub fn package_review_model_flow_report(
   let mut incomplete_count = 0
   for flow in flows {
     let status = package_review_flow_status(flow)
-    match status {
-      "accepted" => accepted_count += 1
-      "rejected" => rejected_count += 1
-      "failed" => failed_count += 1
-      _ => incomplete_count += 1
+    if status == @mooncode_core.package_review_flow_status_accepted() {
+      accepted_count += 1
+    } else if status == @mooncode_core.package_review_flow_status_rejected() {
+      rejected_count += 1
+    } else if status == @mooncode_core.package_review_flow_status_failed() {
+      failed_count += 1
+    } else {
+      incomplete_count += 1
     }
     flow_items.push(package_review_flow_json(flow, status))
   }
   let status = if stale_evidence.length() > 0 {
-    "stale"
+    @mooncode_core.package_review_flow_status_stale()
   } else if failed_count > 0 {
-    "failed"
+    @mooncode_core.package_review_flow_status_failed()
   } else if incomplete_count > 0 {
-    "running"
+    @mooncode_core.package_review_flow_status_running()
   } else if rejected_count > 0 && accepted_count == 0 {
-    "rejected"
+    @mooncode_core.package_review_flow_status_rejected()
   } else if accepted_count > 0 {
-    "accepted"
+    @mooncode_core.package_review_flow_status_accepted()
   } else {
-    "empty"
+    @mooncode_core.package_review_flow_status_empty()
   }
   {
-    "kind": "mooncode-package-review-model-flow-report",
+    "kind": @mooncode_core.package_review_flow_report_kind(),
     "protocol": protocol_version(),
     "session_id": session_id,
     "observed_at": observed_at,
@@ -153,8 +139,7 @@ pub fn package_review_model_flow_report(
 fn package_review_command_candidate(event : Json) -> PackageReviewModelFlow? {
   let kind = json_string(event, "kind", default="")
   let action = package_review_event_action(event)
-  if kind != "command.package" &&
-    !(kind == kind_command() && action == "package") {
+  if !@mooncode_core.package_review_flow_event_is_package_command(event) {
     return None
   }
   let command_id = package_review_event_command_id(event)
@@ -206,7 +191,6 @@ fn package_review_apply_event(
   flow : PackageReviewModelFlow,
   event : Json,
 ) -> Unit {
-  let kind = json_string(event, "kind", default="")
   let status = json_string(event, "status", default="")
   if package_review_event_is_package_manifest(event) {
     flow.package_manifest_count += 1
@@ -227,15 +211,15 @@ fn package_review_apply_event(
       flow.test_pass_count += 1
     }
   }
-  if kind == "runtime.package_built" {
-    if status == "failed" {
+  if @mooncode_core.package_review_flow_event_is_package_built(event) {
+    if status == @mooncode_core.package_review_flow_status_failed() {
       flow.readiness_failed_count += 1
     } else {
       flow.package_built_count += 1
     }
   }
-  if kind == "runtime.package_verified" {
-    if status == "failed" {
+  if @mooncode_core.package_review_flow_event_is_package_verified(event) {
+    if status == @mooncode_core.package_review_flow_status_failed() {
       flow.readiness_failed_count += 1
     } else {
       flow.package_verified_count += 1
@@ -255,25 +239,25 @@ fn package_review_flow_status(flow : PackageReviewModelFlow) -> String {
   if flow.failure_event_count > 0 ||
     flow.test_fail_count > 0 ||
     flow.readiness_failed_count > 0 {
-    "failed"
+    @mooncode_core.package_review_flow_status_failed()
   } else if flow.review_reject_count > 0 {
     if flow.assistant_summary_count > 0 {
-      "rejected"
+      @mooncode_core.package_review_flow_status_rejected()
     } else {
-      "waiting-for-assistant"
+      @mooncode_core.package_review_flow_status_waiting_for_assistant()
     }
   } else if flow.package_manifest_count == 0 {
-    "waiting-for-manifest"
+    @mooncode_core.package_review_flow_status_waiting_for_manifest()
   } else if flow.review_accept_count == 0 {
-    "waiting-for-review"
+    @mooncode_core.package_review_flow_status_waiting_for_review()
   } else if flow.test_pass_count == 0 {
-    "waiting-for-tests"
+    @mooncode_core.package_review_flow_status_waiting_for_tests()
   } else if flow.package_verified_count == 0 {
-    "waiting-for-readiness"
+    @mooncode_core.package_review_flow_status_waiting_for_readiness()
   } else if flow.assistant_summary_count == 0 {
-    "waiting-for-assistant"
+    @mooncode_core.package_review_flow_status_waiting_for_assistant()
   } else {
-    "accepted"
+    @mooncode_core.package_review_flow_status_accepted()
   }
 }
 
@@ -292,9 +276,9 @@ fn package_review_flow_json(
     "command_seen_at": flow.command_seen_at,
     "status": status,
     "terminal": package_review_flow_terminal(status),
-    "accepted": status == "accepted",
-    "rejected": status == "rejected",
-    "failed": status == "failed",
+    "accepted": status == @mooncode_core.package_review_flow_status_accepted(),
+    "rejected": status == @mooncode_core.package_review_flow_status_rejected(),
+    "failed": status == @mooncode_core.package_review_flow_status_failed(),
     "package_manifest_count": flow.package_manifest_count,
     "diff_review_count": flow.diff_review_count,
     "review_accept_count": flow.review_accept_count,
@@ -329,36 +313,48 @@ fn package_review_missing_steps(
   status : String,
 ) -> Array[String] {
   let missing : Array[String] = []
-  if status == "failed" || status == "accepted" || status == "rejected" {
+  if @mooncode_core.package_review_flow_status_is_terminal(status) {
     return missing
   }
   if flow.review_reject_count > 0 {
     if flow.assistant_summary_count == 0 {
-      missing.push("assistant_summary")
+      missing.push(
+        @mooncode_core.package_review_flow_missing_step_assistant_summary(),
+      )
     }
     return missing
   }
   if flow.package_manifest_count == 0 {
-    missing.push("package_manifest")
+    missing.push(
+      @mooncode_core.package_review_flow_missing_step_package_manifest(),
+    )
   }
   if flow.review_accept_count == 0 {
-    missing.push("review_accept_receipt")
+    missing.push(
+      @mooncode_core.package_review_flow_missing_step_review_accept_receipt(),
+    )
   }
   if flow.test_pass_count == 0 {
-    missing.push("test_evidence")
+    missing.push(
+      @mooncode_core.package_review_flow_missing_step_test_evidence(),
+    )
   }
   if flow.package_verified_count == 0 {
-    missing.push("package_verified")
+    missing.push(
+      @mooncode_core.package_review_flow_missing_step_package_verified(),
+    )
   }
   if flow.assistant_summary_count == 0 {
-    missing.push("assistant_summary")
+    missing.push(
+      @mooncode_core.package_review_flow_missing_step_assistant_summary(),
+    )
   }
   missing
 }
 
 ///|
 fn package_review_flow_terminal(status : String) -> Bool {
-  status == "accepted" || status == "rejected" || status == "failed"
+  @mooncode_core.package_review_flow_status_is_terminal(status)
 }
 
 ///|
@@ -378,87 +374,47 @@ fn package_review_note_latest(
 
 ///|
 fn package_review_event_is_flow_evidence(event : Json) -> Bool {
-  package_review_event_is_package_manifest(event) ||
-  package_review_event_is_diff_review(event) ||
-  package_review_event_is_test_result(event) ||
-  package_review_event_is_package_readiness(event) ||
-  package_review_event_is_assistant_summary(event) ||
-  package_review_event_is_failure(event)
+  @mooncode_core.package_review_flow_event_is_evidence(event)
 }
 
 ///|
 fn package_review_event_is_package_manifest(event : Json) -> Bool {
-  let kind = json_string(event, "kind", default="")
-  kind == "package.manifest" ||
-  kind == "package.index" ||
-  kind == "mooncode-package-manifest" ||
-  kind == "mooncode-package-index"
+  @mooncode_core.package_review_flow_event_is_package_manifest(event)
 }
 
 ///|
 fn package_review_event_is_diff_review(event : Json) -> Bool {
-  let kind = json_string(event, "kind", default="")
-  let lane = json_string(event, "lane", default="")
-  lane == event_lane_diff() ||
-  kind == "diff" ||
-  kind == "file_change" ||
-  kind == "patch_set.manifest" ||
-  kind == "change_set.manifest" ||
-  package_review_event_is_accept(event) ||
-  package_review_event_is_reject(event)
+  @mooncode_core.package_review_flow_event_is_diff_review(event)
 }
 
 ///|
 fn package_review_event_is_accept(event : Json) -> Bool {
-  json_string(event, "kind", default="") == "receipt.accept"
+  @mooncode_core.package_review_flow_event_is_accept(event)
 }
 
 ///|
 fn package_review_event_is_reject(event : Json) -> Bool {
-  json_string(event, "kind", default="") == "receipt.reject"
+  @mooncode_core.package_review_flow_event_is_reject(event)
 }
 
 ///|
 fn package_review_event_is_test_result(event : Json) -> Bool {
-  json_string(event, "kind", default="") == event_test_result()
-}
-
-///|
-fn package_review_event_is_package_readiness(event : Json) -> Bool {
-  let kind = json_string(event, "kind", default="")
-  kind == "runtime.package_built" || kind == "runtime.package_verified"
+  @mooncode_core.package_review_flow_event_is_test_result(event)
 }
 
 ///|
 fn package_review_event_is_assistant_summary(event : Json) -> Bool {
-  let kind = json_string(event, "kind", default="")
-  let lane = json_string(event, "lane", default="")
-  kind == "assistant" || (kind == "finish" && lane == event_lane_review())
+  @mooncode_core.package_review_flow_event_is_assistant_summary(event)
 }
 
 ///|
 fn package_review_event_is_failure(event : Json) -> Bool {
-  let kind = json_string(event, "kind", default="")
-  kind == "command_error" ||
-  kind == "turn_failed" ||
-  kind == "max_steps_exhausted" ||
-  kind == "runtime.planner_failed" ||
-  (
-    package_review_event_is_flow_evidence_without_failure(event) &&
-    package_review_event_failed(event)
-  )
-}
-
-///|
-fn package_review_event_is_flow_evidence_without_failure(event : Json) -> Bool {
-  package_review_event_is_test_result(event) ||
-  package_review_event_is_package_readiness(event)
+  @mooncode_core.package_review_flow_event_is_failure(event)
 }
 
 ///|
 fn package_review_event_failed(event : Json) -> Bool {
-  json_string(event, "status", default="") == "failed" ||
-  runtime_json_int(event, "exit_code", default=0) != 0
+  @mooncode_core.package_review_flow_event_failed(event)
 }
 
 ///|

@@ -2307,6 +2307,54 @@ Exit tests:
 - the migration wall rejects duplicated production runtime-control state/effect
   strings or conversation-ownership rule strings outside `mooncode/core`.
 
+## Phase 57 - Core-Owned Package/Review Flow Contract
+
+Status: implemented by moving package/review model-flow vocabulary, status
+policy, stale evidence reasons, event predicates, missing-step names, and the
+advertised package/review contract into `mooncode/core`.
+
+Problem:
+
+- Phase 28 made package/review decisions deterministic, but the clean
+  package/review event policy still lived in `internal/mooncode`.
+- The internal projection owned the public contract JSON, terminal statuses,
+  stale evidence reasons, missing-step strings, event-kind predicates, and
+  readiness proof names.
+- That left MoonClaw, Moondesk, and future standalone MoonCode hosts with no
+  shared source of truth for package/review flow evidence.
+- A first-time clean MoonCode product needs package/review policy in the shared
+  contract layer, with internal MoonCode limited to aggregating concrete event
+  records.
+
+Work:
+
+- Add `mooncode/core/package_review_flow.mbt` with package/review contract
+  id/kind, report kind, statuses, terminal status predicate, stale reasons,
+  missing-step names, accepted/rejected/failed sequences, package command
+  predicate, evidence predicates, failure predicate, and contract JSON.
+- Embed the package/review flow contract in the native capability surface and
+  capability fingerprint.
+- Make `internal/mooncode/package_review_model_flow.mbt` delegate public
+  contract JSON, status policy, stale evidence reasons, missing-step names, and
+  event classification to `mooncode/core`.
+- Keep internal MoonCode responsible only for command-owner extraction, event
+  grouping, counter aggregation, latest-event tracking, and report projection.
+- Add a migration gate that rejects duplicated production package/review flow
+  vocabulary returning under `internal/mooncode`.
+
+Exit tests:
+
+- `mooncode/core` proves the package/review contract id/kind/report kind,
+  statuses, terminal predicate, stale reasons, missing-step names, event
+  predicates, accepted/rejected/failed sequences, contract JSON, and native
+  capability embedding.
+- internal package/review model-flow tests still prove accepted, rejected,
+  failed, and stale command-owned package runs.
+- runtime protocol contract continues to expose the package/review model-flow
+  contract through the internal projection facade.
+- the migration wall rejects duplicated production package/review contract,
+  status, reason, missing-step, and event-kind strings outside `mooncode/core`.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
