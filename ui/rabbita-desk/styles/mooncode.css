@@ -672,6 +672,10 @@
   color: var(--mooncode-accent);
 }
 
+.mooncode-activity-disclosure.empty-detail .mooncode-activity-summary-action {
+  display: none;
+}
+
 .mooncode-activity-disclosure[open] .mooncode-activity-detail {
   animation: mooncode-disclosure-open 160ms ease-out;
 }

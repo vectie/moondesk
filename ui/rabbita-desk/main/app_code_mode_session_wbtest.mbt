@@ -248,6 +248,53 @@ test "code mode canonical progress stays folded between user and assistant" {
 }
 
 ///|
+test "code mode folded progress hides implementation wording" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "command-first",
+          "First prompt",
+          assistant="First answer",
+          progress=[
+            {
+              "role": "progress",
+              "title": "Thinking",
+              "detail": "MoonClaw native runtime turn executed 1 tool call(s).",
+              "status": "done",
+            },
+            {
+              "role": "progress",
+              "title": "Selected next action",
+              "detail": "model-tool-calls selected shell tool call",
+              "status": "done",
+            },
+          ],
+        ),
+      ]),
+    ),
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 3)
+  match items[1].activity {
+    Some(row) => {
+      assert_true(row.folded)
+      assert_eq(row.title, "Prepared the response")
+      assert_eq(
+        row.detail,
+        "Thought through the request.\nChose what to do next.",
+      )
+      assert_false(row.detail.contains("MoonClaw"))
+      assert_false(row.detail.contains("runtime"))
+      assert_false(row.detail.contains("model-tool-calls"))
+      assert_false(row.detail.contains("tool call"))
+    }
+    None => fail("expected folded progress activity")
+  }
+}
+
+///|
 test "code mode transcript appends local optimistic turn after three backend turns" {
   let session = {
     ..code_mode_test_session("session-a", status="running"),

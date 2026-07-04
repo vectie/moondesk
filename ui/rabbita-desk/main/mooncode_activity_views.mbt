@@ -38,7 +38,7 @@ fn render_mooncode_activity_row(row : MoonCodeActivityRow) -> @rabbita.Html {
 
 ///|
 fn render_mooncode_activity_body(row : MoonCodeActivityRow) -> @rabbita.Html {
-  if row.folded && row.detail != "" {
+  if row.folded {
     render_mooncode_activity_disclosure(row)
   } else {
     div(class="mooncode-activity-body", [
@@ -56,9 +56,15 @@ fn render_mooncode_activity_body(row : MoonCodeActivityRow) -> @rabbita.Html {
 fn render_mooncode_activity_disclosure(
   row : MoonCodeActivityRow,
 ) -> @rabbita.Html {
+  let disclosure_suffix = if row.detail == "" {
+    " empty-detail"
+  } else {
+    ""
+  }
+  let disclosure_class = "mooncode-activity-disclosure" + disclosure_suffix
   @html.node(
     "details",
-    @html.Attrs::build().class("mooncode-activity-disclosure"),
+    @html.Attrs::build().class(disclosure_class),
     [
       @html.node(
         "summary",
@@ -75,7 +81,11 @@ fn render_mooncode_activity_disclosure(
           ),
         ],
       ),
-      pre(class="mooncode-activity-detail", row.detail),
+      if row.detail == "" {
+        span(class="mooncode-activity-detail empty", "")
+      } else {
+        pre(class="mooncode-activity-detail", row.detail)
+      },
     ],
   )
 }

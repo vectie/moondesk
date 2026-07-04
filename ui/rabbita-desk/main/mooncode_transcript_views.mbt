@@ -182,6 +182,9 @@ fn mooncode_compact_thinking_detail(
 fn mooncode_user_facing_thinking_detail(row : MoonCodeActivityRow) -> String {
   let title = row.title.trim().to_owned()
   let detail = row.detail.trim().to_owned()
+  if row.status == "failed" {
+    return mooncode_user_facing_failed_thinking_detail(title, detail)
+  }
   if title == "Prompt queued" || title == "Starting request" {
     return "Started the request."
   }
@@ -196,7 +199,7 @@ fn mooncode_user_facing_thinking_detail(row : MoonCodeActivityRow) -> String {
   if title == "Thinking" ||
     title == "Model reasoning" ||
     title == "Working through the request" {
-    if detail == "" {
+    if detail == "" || mooncode_progress_text_looks_internal(detail) {
       return "Thought through the request."
     }
     return detail
@@ -209,12 +212,86 @@ fn mooncode_user_facing_thinking_detail(row : MoonCodeActivityRow) -> String {
     return "Chose what to do next."
   }
   if detail != "" {
-    detail
+    mooncode_user_facing_progress_detail(title, detail)
   } else if title != "" {
-    title
+    mooncode_user_facing_progress_title(title)
   } else {
     "Prepared the response."
   }
+}
+
+///|
+fn mooncode_user_facing_failed_thinking_detail(
+  title : String,
+  detail : String,
+) -> String {
+  if detail != "" && !mooncode_progress_text_looks_internal(detail) {
+    detail
+  } else if title != "" && !mooncode_progress_text_looks_internal(title) {
+    title
+  } else {
+    "Work stopped before the assistant finished."
+  }
+}
+
+///|
+fn mooncode_user_facing_progress_detail(
+  title : String,
+  detail : String,
+) -> String {
+  if mooncode_progress_text_looks_internal(detail) {
+    mooncode_user_facing_progress_title(title)
+  } else {
+    detail
+  }
+}
+
+///|
+fn mooncode_user_facing_progress_title(title : String) -> String {
+  if title == "" || mooncode_progress_text_looks_internal(title) {
+    return "Prepared the response."
+  }
+  if title.contains("Reading") ||
+    title.contains("Read") ||
+    title.contains("workspace") ||
+    title.contains("Workspace") ||
+    title.contains("Inspecting") ||
+    title.contains("Searching") {
+    return "Checked the relevant context."
+  }
+  if title.contains("Editing") ||
+    title.contains("Applied") ||
+    title.contains("Patch") {
+    return "Applied the requested changes."
+  }
+  if title.contains("Testing") ||
+    title.contains("Verified") ||
+    title.contains("Build") {
+    return "Checked the result."
+  }
+  title
+}
+
+///|
+fn mooncode_progress_text_looks_internal(text : String) -> Bool {
+  text.contains("MoonClaw") ||
+  text.contains("moonclaw") ||
+  text.contains("MoonCode native") ||
+  text.contains("runtime") ||
+  text.contains("Runtime") ||
+  text.contains("command_id") ||
+  text.contains("client_turn_id") ||
+  text.contains("turn_id") ||
+  text.contains("model-tool-calls") ||
+  text.contains("tool call") ||
+  text.contains("assistant_delta") ||
+  text.contains("command.prompt") ||
+  text.contains("stdout") ||
+  text.contains("stderr") ||
+  text.contains("debug") ||
+  text.contains("trace") ||
+  text.contains("\"role\"") ||
+  text.contains("\"kind\"")
 }
 
 ///|

@@ -191,6 +191,8 @@ Exit tests:
 
 ## Phase 5 - Progress Rendering
 
+Status: complete.
+
 Work:
 
 - Render progress between the user message and assistant reply.
@@ -198,6 +200,15 @@ Work:
 - Show running progress only when it comes from canonical progress/runtime
   evidence.
 - Do not show backend/debug wording in the collapsed summary.
+
+Implemented:
+
+- Folded progress always renders through the same disclosure component instead
+  of falling back to the expanded activity body.
+- Compacted progress summaries now sanitize internal MoonClaw/runtime/tool-call
+  wording before it reaches the chat transcript.
+- Generic thinking rows produce stable product-facing summaries unless the
+  detail text is already clean user-facing progress.
 
 Exit tests:
 

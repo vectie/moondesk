@@ -285,6 +285,7 @@ Current UI coverage:
 - canonical progress remains folded between the user message and assistant reply
 - three backend turns render in order before a fourth local optimistic prompt
 - same-content prompts with different `client_turn_id` values stay distinct
+- folded progress summaries hide internal MoonClaw/runtime/tool-call wording
 
 Browser smoke:
 
