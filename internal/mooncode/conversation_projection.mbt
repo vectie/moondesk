@@ -171,7 +171,7 @@ fn conversation_apply_runtime_event(
   event : Json,
 ) -> Unit {
   let command_id = conversation_event_command_id(event)
-  let index = conversation_target_turn_index(turns, command_id)
+  let index = conversation_target_turn_index(turns, event, command_id)
   if index < 0 {
     return
   }
@@ -438,6 +438,7 @@ fn conversation_turn_index_for_command(
 ///|
 fn conversation_target_turn_index(
   turns : Array[ConversationTurnDraft],
+  event : Json,
   command_id : String,
 ) -> Int {
   let command_index = conversation_turn_index_for_command(turns, command_id)
@@ -447,11 +448,28 @@ fn conversation_target_turn_index(
   if command_id != "" {
     return -1
   }
-  if turns.length() == 0 {
-    -1
+  if conversation_event_can_attach_to_active_turn(event) {
+    conversation_active_turn_index(turns)
   } else {
-    turns.length() - 1
+    -1
   }
+}
+
+///|
+fn conversation_event_can_attach_to_active_turn(event : Json) -> Bool {
+  conversation_event_is_failure_reply(event)
+}
+
+///|
+fn conversation_active_turn_index(turns : Array[ConversationTurnDraft]) -> Int {
+  for offset in 0..<turns.length() {
+    let index = turns.length() - 1 - offset
+    let status = turns[index].status
+    if status == "queued" || status == "running" {
+      return index
+    }
+  }
+  -1
 }
 
 ///|

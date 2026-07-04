@@ -303,6 +303,41 @@ test "mooncode conversation projection ignores unscoped work before first user" 
 }
 
 ///|
+test "mooncode conversation projection ignores unscoped work after user" {
+  let events : Array[Json] = [
+    test_prompt_event("cmd-1", "client-1", "hello", "001"),
+    event_record(
+      id="unscoped-progress",
+      lane="runtime",
+      kind="reasoning_delta",
+      title="Thinking",
+      status="running",
+      created_at="002",
+      detail="This event has no command owner.",
+    ),
+    event_record(
+      id="unscoped-assistant",
+      lane="transcript",
+      kind="assistant",
+      title="Assistant response",
+      status="done",
+      created_at="003",
+      detail="This answer has no command owner.",
+    ),
+    test_finish_event("finish-1", "cmd-1", "reply", "004"),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 1)
+  assert_eq(json_array_items(turns[0], "progress").length(), 0)
+  let assistant = runtime_json_object_field_or_empty(turns[0], "assistant")
+  assert_eq(json_string(assistant, "content", default=""), "reply")
+  let items = json_array_items(turns[0], "items")
+  assert_eq(items.length(), 2)
+  assert_eq(json_string(items[0], "role", default=""), "user")
+  assert_eq(json_string(items[1], "role", default=""), "assistant")
+}
+
+///|
 test "mooncode conversation projection uses final answer over assistant delta" {
   let events : Array[Json] = [
     test_prompt_event("cmd-final", "client-final", "question", "001"),
@@ -316,6 +351,31 @@ test "mooncode conversation projection uses final answer over assistant delta" {
   let assistant = runtime_json_object_field_or_empty(turns[0], "assistant")
   assert_eq(json_string(assistant, "content", default=""), "final answer")
   assert_eq(json_string(assistant, "status", default=""), "done")
+}
+
+///|
+test "mooncode conversation projection attaches unscoped runtime failure to active turn" {
+  let events : Array[Json] = [
+    test_prompt_event("cmd-failed", "client-failed", "hello", "001"),
+    event_record(
+      id="runtime-unavailable",
+      lane="runtime",
+      kind="runtime_unavailable",
+      title="MoonCode runtime unavailable",
+      status="failed",
+      created_at="002",
+      detail="MoonCode runtime is not reachable.",
+    ),
+  ]
+  let turns = test_projection_turns(events)
+  assert_eq(turns.length(), 1)
+  assert_eq(json_string(turns[0], "status", default=""), "failed")
+  let assistant = runtime_json_object_field_or_empty(turns[0], "assistant")
+  assert_eq(json_string(assistant, "status", default=""), "failed")
+  assert_eq(
+    json_string(assistant, "content", default=""),
+    "MoonCode runtime is not reachable.",
+  )
 }
 
 ///|

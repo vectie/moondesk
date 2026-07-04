@@ -179,7 +179,7 @@ Exit tests:
 
 ## Phase 5 - Event Identity Contract
 
-Status: active, backend projection buffering implemented.
+Status: complete for backend conversation projection.
 
 Work:
 
@@ -188,10 +188,18 @@ Work:
 - Unscoped events before any turn are diagnostics only.
 - UI ignores stale session/run updates by identity, not by content equality.
 
+Implemented:
+
+- Scoped events are buffered until the matching user turn exists.
+- Unscoped progress and assistant events do not attach to the latest turn.
+- Unscoped terminal runtime failures can still fail the active queued/running
+  turn.
+
 Exit tests:
 
 - scoped progress emitted before user acknowledgment still lands under that user
 - unscoped progress before any user is hidden from chat
+- unscoped progress/assistant after a user is hidden from chat
 - stale events from a previous selected session cannot mutate visible chat
 - same-content prompts are represented as distinct turns
 

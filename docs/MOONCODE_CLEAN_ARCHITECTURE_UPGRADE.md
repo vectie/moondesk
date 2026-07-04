@@ -162,6 +162,8 @@ Exit tests:
 
 ## Phase 4 - Event Identity Contract
 
+Status: complete.
+
 Work:
 
 - MoonClaw echoes `turn_id` or `command_id` on every user-facing event.
@@ -169,10 +171,21 @@ Work:
 - Unscoped events before any turn are diagnostics only.
 - Terminal failures attach to the active canonical turn.
 
+Implemented:
+
+- Scoped progress emitted before the user event is buffered until the matching
+  command-owned turn exists.
+- Unscoped progress and assistant events no longer attach to the latest visible
+  turn as a fallback.
+- Unscoped terminal runtime failures may attach to the active queued/running
+  turn, so runtime-unavailable states are visible without letting normal work
+  events guess their owner.
+
 Exit tests:
 
 - progress emitted before user acknowledgement lands under the correct user
 - unscoped progress before the first user is hidden from chat
+- unscoped progress/assistant after a user is hidden from chat
 - stale events from a previous selected session cannot mutate visible chat
 - runtime unavailable becomes a failed assistant response for that turn
 
