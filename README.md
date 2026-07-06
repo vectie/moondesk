@@ -21,6 +21,7 @@ The implementation should stay pure MoonBit:
 
 Start here:
 
+- [Documentation Guide](docs/README.md)
 - [Product Plan](docs/PLAN.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [UI Design](docs/UI_DESIGN.md)
