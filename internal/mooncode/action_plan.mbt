@@ -68,7 +68,7 @@ pub fn action_plan_preflight_item(index : Int, event : Json) -> Json {
       action_required_gates(action),
     ),
     "runtime_evidence": {
-      "kind": "mooncode-command-runtime-evidence",
+      "kind": @mooncode_core.command_runtime_evidence_kind(),
       "protocol": protocol_version(),
       "command_id": json_string(event, "id", default=""),
       "action": action,
@@ -155,7 +155,7 @@ pub fn action_plan_item(
     "runtime_evidence_status": json_string(
       runtime_evidence,
       "status",
-      default="missing-evidence",
+      default=@mooncode_core.runtime_evidence_status_missing(),
     ),
     "required_event_count": runtime_json_int(
       runtime_evidence,
@@ -176,7 +176,7 @@ pub fn action_plan_item(
     "tool_harness_status": json_string(
       runtime_evidence,
       "tool_harness_status",
-      default="no-tools",
+      default=@mooncode_core.tool_harness_status_no_tools(),
     ),
     "tool_harness_expected_tool_count": runtime_json_int(
       runtime_evidence,

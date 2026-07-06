@@ -496,6 +496,7 @@ moon test internal/mooncode --filter "mooncode runtime claim*" --target native
 moon test internal/mooncode --filter "mooncode runtime replay*" --target native
 moon test internal/mooncode --filter "mooncode command runtime evidence*" --target native
 scripts/validate_mooncode_runtime_consumer_contract.sh
+scripts/validate_mooncode_runtime_evidence_contract.sh
 ```
 
 Phase 58 moves the reusable runtime-consumer vocabulary into `mooncode/core`.
@@ -503,10 +504,15 @@ The validator fails if runtime claim/replay projection files reintroduce local
 runtime receipt statuses, claim statuses, replay statuses, ack-order statuses,
 endpoint strings, or a private consumer contract copy.
 
+The runtime evidence validator fails if command evidence, tool-harness proof,
+runtime completion proof-gate, or action-plan proof state policy returns to
+`internal/mooncode` instead of delegating to `mooncode/core`.
+
 Final architecture closure gate:
 
 ```bash
 scripts/validate_mooncode_native_command_execution_contract.sh
+scripts/validate_mooncode_runtime_evidence_contract.sh
 scripts/validate_mooncode_final_closure.sh
 ```
 

@@ -181,7 +181,7 @@ fn runtime_command_lifecycle_status(
     receipt_status == "failed" {
     return "failed"
   }
-  if receipt_status == "proof-missing" {
+  if receipt_status == @mooncode_core.runtime_receipt_status_proof_missing() {
     return "blocked-missing-proof"
   }
   if receipt_status == "runtime-completed" {

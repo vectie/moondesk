@@ -2455,6 +2455,12 @@ Finite closure checklist:
 
 2. Runtime proof/evidence contract
 
+   Status: implemented. `mooncode/core/runtime_evidence.mbt` now owns the
+   shared runtime proof/evidence vocabulary, required-event policy,
+   tool-harness statuses, action-plan proof states, and runtime replay
+   completion proof gate. `scripts/validate_mooncode_runtime_evidence_contract.sh`
+   rejects duplicated internal proof policy tables.
+
    Move reusable runtime proof vocabulary and policy from `internal/mooncode`
    into `mooncode/core`: command runtime evidence report kind, evidence
    statuses, missing/failed/proven rules, tool-harness proof statuses, required

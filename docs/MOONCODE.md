@@ -160,7 +160,7 @@ Final closure rule:
 - The native command execution/result contract now lives in `mooncode/core`
   because MoonClaw consumes that policy to execute commands without importing
   Moondesk.
-- Move the runtime proof/evidence contract into `mooncode/core` because
+- The runtime proof/evidence contract now lives in `mooncode/core` because
   MoonClaw, runtime replay, action plans, and standalone MoonCode all need the
   same proof vocabulary.
 - Keep stream/checkpoint responses, readiness/action-plan/session summaries,

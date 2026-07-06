@@ -14,14 +14,21 @@ pub fn tool_harness_evidence(
   for tool in tools {
     let proof = tool_harness_case_evidence(tool, command_id, action, events)
     cases.push(proof)
-    match json_string(proof, "status", default="missing") {
-      "proven" => proven_count += 1
-      "failed" => failed_count += 1
-      _ => missing_count += 1
+    let status = json_string(
+      proof,
+      "status",
+      default=@mooncode_core.runtime_required_event_status_missing(),
+    )
+    if status == @mooncode_core.runtime_evidence_status_proven() {
+      proven_count += 1
+    } else if status == @mooncode_core.runtime_evidence_status_failed() {
+      failed_count += 1
+    } else {
+      missing_count += 1
     }
   }
   {
-    "kind": "mooncode-tool-harness-evidence",
+    "kind": @mooncode_core.tool_harness_evidence_kind(),
     "protocol": protocol_version(),
     "reference": "mooncode/eval/tool_harness",
     "command_id": command_id,
@@ -32,17 +39,17 @@ pub fn tool_harness_evidence(
     "missing_tool_count": missing_count,
     "expected_tools": string_array_json(tools),
     "cases": Json::array(cases),
-    "status": if tools.length() == 0 {
-      "no-tools"
-    } else if failed_count > 0 {
-      "failed"
-    } else if missing_count > 0 {
-      "missing-evidence"
-    } else {
-      "proven"
-    },
-    "proven": tools.length() > 0 && failed_count == 0 && missing_count == 0,
-    "rule": "MoonClaw must run each expected tool through the typed tool boundary and emit command-scoped tool_call/tool_result proof. Moondesk records and renders the verdict; it does not execute tools.",
+    "status": @mooncode_core.tool_harness_status_for_counts(
+      tools.length(),
+      failed_count,
+      missing_count,
+    ),
+    "proven": @mooncode_core.tool_harness_is_proven(
+      tools.length(),
+      failed_count,
+      missing_count,
+    ),
+    "rule": @mooncode_core.tool_harness_evidence_rule(),
   }
 }
 
@@ -57,11 +64,7 @@ fn tool_harness_expected_tools(
   let from_summary = tool_harness_json_string_array_items(
     summary, "tool_sequence",
   )
-  if from_summary.length() > 0 {
-    tool_harness_dedup_strings(from_summary)
-  } else {
-    tool_harness_dedup_strings(native_command_tool_sequence(action))
-  }
+  @mooncode_core.tool_harness_expected_tools(action, from_summary)
 }
 
 ///|
@@ -79,14 +82,15 @@ fn tool_harness_case_evidence(
       !tool_harness_event_matches_tool(event, tool) {
       continue
     }
-    if json_string(event, "status", default="") == "failed" ||
+    if json_string(event, "status", default="") ==
+      @mooncode_core.runtime_evidence_status_failed() ||
       json_string(event, "kind", default="") == "tool_call_decode_error" {
       if json_string(failed, "id", default="") == "" {
         failed = event
       }
       continue
     }
-    if tool == "finish" {
+    if tool == @mooncode_core.runtime_tool_finish() {
       result = event
       continue
     }
@@ -100,20 +104,16 @@ fn tool_harness_case_evidence(
   }
   let call_id = json_string(call, "tool_call_id", default="")
   let result_id = json_string(result, "tool_call_id", default="")
-  let call_seen = tool == "finish" || call_id != ""
-  let result_seen = if tool == "finish" {
+  let call_seen = tool == @mooncode_core.runtime_tool_finish() || call_id != ""
+  let result_seen = if tool == @mooncode_core.runtime_tool_finish() {
     json_string(result, "id", default="") != ""
   } else {
     result_id != "" && (call_id == "" || call_id == result_id)
   }
   let failed_seen = json_string(failed, "id", default="") != ""
-  let status = if failed_seen {
-    "failed"
-  } else if call_seen && result_seen {
-    "proven"
-  } else {
-    "missing"
-  }
+  let status = @mooncode_core.tool_harness_case_status(
+    failed_seen, call_seen, result_seen,
+  )
   {
     "tool": tool,
     "status": status,
@@ -171,7 +171,7 @@ fn tool_harness_event_action(event : Json, packet : Json) -> String {
 
 ///|
 fn tool_harness_event_matches_tool(event : Json, tool : String) -> Bool {
-  if tool == "finish" {
+  if tool == @mooncode_core.runtime_tool_finish() {
     let kind = json_string(event, "kind", default="")
     return kind == "finish" || kind == "runtime_finished"
   }
@@ -192,17 +192,6 @@ fn tool_harness_is_tool_call(event : Json) -> Bool {
 fn tool_harness_is_tool_result(event : Json) -> Bool {
   json_string(event, "tool_call_id", default="") != "" &&
   json_string(event, "status", default="") != "running"
-}
-
-///|
-fn tool_harness_dedup_strings(items : Array[String]) -> Array[String] {
-  let result : Array[String] = []
-  for item in items {
-    if item != "" && !result.contains(item) {
-      result.push(item)
-    }
-  }
-  result
 }
 
 ///|

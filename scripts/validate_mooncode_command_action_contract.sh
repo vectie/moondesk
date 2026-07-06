@@ -103,8 +103,8 @@ if ! rg -n '@mooncode_core\.command_action_requires_tool_harness\(' "${ROOT}/int
   exit 1
 fi
 
-if ! rg -n '@mooncode_core\.command_action_requires_runtime_completion_proof\(' "${ROOT}/internal/mooncode/runtime_replay_ack_proof_gate.mbt" >/dev/null; then
-  echo "runtime completion proof policy must delegate to mooncode/core." >&2
+if ! rg -n '@mooncode_core\.runtime_completion_proof_gate\(' "${ROOT}/internal/mooncode/runtime_replay_ack_proof_gate.mbt" >/dev/null; then
+  echo "runtime completion proof policy must delegate to the core-owned runtime evidence contract." >&2
   exit 1
 fi
 

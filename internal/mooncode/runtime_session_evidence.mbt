@@ -28,10 +28,14 @@ pub fn session_runtime_evidence(
     let evidence = command_runtime_evidence(
       command, runtime_command, proof_events,
     )
-    let status = json_string(evidence, "status", default="missing-evidence")
-    if status == "proven" {
+    let status = json_string(
+      evidence,
+      "status",
+      default=@mooncode_core.runtime_evidence_status_missing(),
+    )
+    if status == @mooncode_core.runtime_evidence_status_proven() {
       proven_count += 1
-    } else if status == "failed" {
+    } else if status == @mooncode_core.runtime_evidence_status_failed() {
       failed_count += 1
     } else {
       missing_count += 1
@@ -111,7 +115,7 @@ pub fn session_runtime_evidence(
       "tool_harness_status": json_string(
         evidence,
         "tool_harness_status",
-        default="missing-evidence",
+        default=@mooncode_core.runtime_evidence_status_missing(),
       ),
       "tool_harness_proven_tool_count": runtime_json_int(
         evidence,
@@ -128,7 +132,7 @@ pub fn session_runtime_evidence(
     index += 1
   }
   {
-    "kind": "mooncode-session-runtime-evidence",
+    "kind": @mooncode_core.session_runtime_evidence_kind(),
     "protocol": protocol_version(),
     "session_id": json_string(session, "id", default=""),
     "workspace_id": json_string(session, "workspace_id", default=""),
@@ -150,33 +154,24 @@ pub fn session_runtime_evidence(
     "tool_harness_proven_tool_count": tool_harness_proven_tool_count,
     "tool_harness_missing_tool_count": tool_harness_missing_tool_count,
     "tool_harness_failed_tool_count": tool_harness_failed_tool_count,
-    "tool_harness_status": if tool_harness_expected_tool_count == 0 {
-      "no-tools"
-    } else if tool_harness_failed_tool_count > 0 {
-      "failed"
-    } else if tool_harness_missing_tool_count > 0 {
-      "missing-evidence"
-    } else {
-      "proven"
-    },
-    "status": if commands.length() == 0 {
-      "no-commands"
-    } else if failed_count > 0 || failed_required_event_count > 0 {
-      "failed"
-    } else if missing_count > 0 ||
-      missing_runtime_command_count > 0 ||
-      missing_required_event_count > 0 {
-      "missing-evidence"
-    } else {
-      "proven"
-    },
+    "tool_harness_status": @mooncode_core.tool_harness_status_for_counts(
+      tool_harness_expected_tool_count, tool_harness_failed_tool_count, tool_harness_missing_tool_count,
+    ),
+    "status": @mooncode_core.session_runtime_evidence_status_for_counts(
+      commands.length(),
+      failed_count,
+      failed_required_event_count,
+      missing_count,
+      missing_runtime_command_count,
+      missing_required_event_count,
+    ),
     "items": Json::array(items),
     "owner": {
       "ui": "moondesk",
       "runtime": "moonclaw",
       "standalone_component": "mooncode",
     },
-    "rule": "This projection is the session-level proof contract. Moondesk records and displays it, while MoonClaw must satisfy it with command-scoped runtime events.",
+    "rule": @mooncode_core.session_runtime_evidence_rule(),
   }
 }
 

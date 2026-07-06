@@ -19,20 +19,26 @@ pub fn command_runtime_evidence(
       required, command_id, action, events,
     )
     event_results.push(proof)
-    match json_string(proof, "status", default="missing") {
-      "proven" => proven_count += 1
-      "failed" => failed_count += 1
-      _ => missing_count += 1
+    let status = json_string(
+      proof,
+      "status",
+      default=@mooncode_core.runtime_required_event_status_missing(),
+    )
+    if status == @mooncode_core.runtime_required_event_status_proven() {
+      proven_count += 1
+    } else if status == @mooncode_core.runtime_required_event_status_failed() {
+      failed_count += 1
+    } else {
+      missing_count += 1
     }
   }
-  let required_outputs = if json_string(summary, "kind", default="") == "" {
-    native_command_required_outputs(action)
-  } else {
-    evidence_json_string_array_items(summary, "required_outputs")
-  }
+  let required_outputs = @mooncode_core.runtime_evidence_required_outputs(
+    action,
+    evidence_json_string_array_items(summary, "required_outputs"),
+  )
   let tool_harness = tool_harness_evidence(command, runtime_command, events)
   {
-    "kind": "mooncode-command-runtime-evidence",
+    "kind": @mooncode_core.command_runtime_evidence_kind(),
     "protocol": protocol_version(),
     "command_id": command_id,
     "action": action,
@@ -58,7 +64,7 @@ pub fn command_runtime_evidence(
     "tool_harness_status": json_string(
       tool_harness,
       "status",
-      default="missing-evidence",
+      default=@mooncode_core.runtime_evidence_status_missing(),
     ),
     "tool_harness_proven": json_bool(tool_harness, "proven", default=false),
     "tool_harness_expected_tool_count": runtime_json_int(
@@ -82,30 +88,26 @@ pub fn command_runtime_evidence(
       default=0,
     ),
     "events": Json::array(event_results),
-    "proven": required_events.length() > 0 &&
-    missing_count == 0 &&
-    failed_count == 0,
-    "status": if required_events.length() == 0 {
-      "no-required-events"
-    } else if failed_count > 0 {
-      "failed"
-    } else if missing_count > 0 {
-      "missing-evidence"
-    } else {
-      "proven"
-    },
-    "rule": "Required runtime events are proven only by command-scoped MoonCode events. Unscoped events may still render in the transcript, but they do not satisfy this command-level proof.",
+    "proven": @mooncode_core.runtime_evidence_is_proven(
+      required_events.length(),
+      missing_count,
+      failed_count,
+    ),
+    "status": @mooncode_core.runtime_evidence_status_for_required_events(
+      required_events.length(),
+      missing_count,
+      failed_count,
+    ),
+    "rule": @mooncode_core.runtime_evidence_command_rule(),
   }
 }
 
 ///|
 fn evidence_required_events(action : String, summary : Json) -> Array[String] {
-  let required = evidence_json_string_array_items(summary, "required_events")
-  if required.length() == 0 {
-    native_command_expected_events(action)
-  } else {
-    required
-  }
+  @mooncode_core.runtime_evidence_required_events(
+    action,
+    evidence_json_string_array_items(summary, "required_events"),
+  )
 }
 
 ///|

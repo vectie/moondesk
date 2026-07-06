@@ -10,21 +10,10 @@ pub fn action_plan_status(
   completed_count : Int,
   action_count : Int,
 ) -> String {
-  if blocked_count > 0 {
-    "blocked"
-  } else if running_count > 0 {
-    "running"
-  } else if pending_runtime_count > 0 {
-    "queued"
-  } else if ready_for_review_count > 0 {
-    "review-ready"
-  } else if action_count > 0 && completed_count == action_count {
-    "complete"
-  } else if action_count > 0 {
-    "waiting-for-proof"
-  } else {
-    "empty"
-  }
+  @mooncode_core.action_plan_status_for_counts(
+    pending_runtime_count, running_count, blocked_count, ready_for_review_count,
+    completed_count, action_count,
+  )
 }
 
 ///|
@@ -82,14 +71,26 @@ pub fn action_plan_next_required_action(
     "runtime_needed_count",
     default=0,
   )
-  if action_plan_state_count(actions, "queued-for-runtime") > 0 {
-    return "run_or_replay_runtime_commands"
+  if action_plan_state_count(
+      actions,
+      @mooncode_core.action_plan_state_queued_for_runtime(),
+    ) >
+    0 {
+    return @mooncode_core.action_plan_next_run_or_replay_runtime_commands()
   }
-  if action_plan_state_count(actions, "runtime-retry") > 0 {
-    return "retry_failed_runtime_receipt"
+  if action_plan_state_count(
+      actions,
+      @mooncode_core.action_plan_state_runtime_retry(),
+    ) >
+    0 {
+    return @mooncode_core.action_plan_next_retry_failed_runtime_receipt()
   }
-  if action_plan_state_count(actions, "awaiting-proof") > 0 {
-    return "await_runtime_proof"
+  if action_plan_state_count(
+      actions,
+      @mooncode_core.action_plan_state_awaiting_proof(),
+    ) >
+    0 {
+    return @mooncode_core.action_plan_next_await_runtime_proof()
   }
   if runtime_json_int(summary, "deferred_steer_count", default=0) > 0 &&
     runtime_json_int(summary, "pending_steer_count", default=0) > 0 {
@@ -105,7 +106,7 @@ pub fn action_plan_next_required_action(
     return "accept_or_reject_changes"
   }
   if patch_runtime_needed_count > 0 {
-    return "await_runtime_proof"
+    return @mooncode_core.action_plan_next_await_runtime_proof()
   }
   if runtime_json_int(summary, "pending_diff_count", default=0) > 0 &&
     runtime_json_int(summary, "verified_test_count", default=0) == 0 {
@@ -120,12 +121,12 @@ pub fn action_plan_next_required_action(
   }
   if action_plan_command_count(actions, "commit") > 0 &&
     runtime_json_int(summary, "runtime_commit_proof_count", default=0) == 0 {
-    return "await_commit_proof"
+    return @mooncode_core.action_plan_next_await_commit_proof()
   }
   if actions.length() == 0 {
-    "start_or_resume_session"
+    @mooncode_core.action_plan_next_start_or_resume_session()
   } else {
-    "ready_for_book_review"
+    @mooncode_core.action_plan_next_ready_for_book_review()
   }
 }
 
@@ -142,15 +143,29 @@ pub fn action_plan_response(
   runtime_receipt_log_path~ : String,
 ) -> Json {
   let pending_runtime_count = action_plan_state_count(
-      actions, "queued-for-runtime",
+      actions,
+      @mooncode_core.action_plan_state_queued_for_runtime(),
     ) +
-    action_plan_state_count(actions, "runtime-retry")
-  let running_count = action_plan_state_count(actions, "running")
-  let blocked_count = action_plan_state_count(actions, "blocked")
-  let ready_for_review_count = action_plan_state_count(
-    actions, "ready-for-review",
+    action_plan_state_count(
+      actions,
+      @mooncode_core.action_plan_state_runtime_retry(),
+    )
+  let running_count = action_plan_state_count(
+    actions,
+    @mooncode_core.action_plan_state_running(),
   )
-  let completed_count = action_plan_state_count(actions, "completed")
+  let blocked_count = action_plan_state_count(
+    actions,
+    @mooncode_core.action_plan_state_blocked(),
+  )
+  let ready_for_review_count = action_plan_state_count(
+    actions,
+    @mooncode_core.action_plan_state_ready_for_review(),
+  )
+  let completed_count = action_plan_state_count(
+    actions,
+    @mooncode_core.action_plan_state_completed(),
+  )
   let base_next_required_action = action_plan_next_required_action(
     summary, actions,
   )
