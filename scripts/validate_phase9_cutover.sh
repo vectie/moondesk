@@ -7,7 +7,7 @@ source "${ROOT}/scripts/moonsuite_phase8_inventory.sh"
 
 repos=("${MOONSUITE_PHASE8_SOURCE_REPOS[@]}")
 
-legacy_cutover_pattern='(\.moontown/books|/\.moontown/trash|\.moontown/moondesk-daemon|\.moonbook(/|"|$)|moonclaw-jobs(/|"|$)|\.moonclaw-worktrees(/|"|$)|\.moonclaw-tool-journal(/|"|$)|source_checkout_safe_workspace_root|workspace_root_source_checkout_warning|workspace_root_contains_path|Using dedicated user workspace root|source checkout redirect|outside source checkouts|home fallback workspace|USERPROFILE|HOME/moondesk-workspace|USERPROFILE/moondesk-workspace|default_workspace_root_from_env\([^)]*,)'
+legacy_cutover_pattern='(\.moontown/books|/\.moontown/trash|\.moontown/moondesk-daemon|\.moonbook(/|"|$)|moonclaw-jobs(/|"|$)|\.moonclaw-worktrees(/|"|$)|\.moonclaw-tool-journal(/|"|$)|source_checkout_safe_workspace_root|workspace_root_source_checkout_warning|workspace_root_contains_path|Using dedicated user workspace root|source checkout redirect|outside source checkouts|home fallback workspace|USERPROFILE|HOME/moondesk[-]workspace|USERPROFILE/moondesk[-]workspace|default_workspace_root_from_env\([^)]*,)'
 machine_local_source_pattern='([/]Users/[^[:space:]`"]+|C:\\Users|[/]home/(user|ci[[:alnum:]]*)/[^[:space:]`"]+)'
 
 is_allowed_hit() {

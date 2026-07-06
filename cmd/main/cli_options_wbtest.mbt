@@ -1,16 +1,41 @@
 ///|
-test "default workspace root only uses explicit environment override" {
-  assert_eq(default_workspace_root_from_env(""), "")
+test "default workspace root uses explicit override before home moonsuite" {
   assert_eq(
-    default_workspace_root_from_env("/Volumes/Data/Moondesk"),
+    default_workspace_root_from_env_and_home("", "/Users/alice"),
+    "/Users/alice/moonsuite",
+  )
+  assert_eq(
+    default_workspace_root_from_env_and_home(
+      "/Volumes/Data/Moondesk", "/Users/alice",
+    ),
     "/Volumes/Data/Moondesk",
   )
   assert_eq(
-    default_workspace_root_from_env("  /tmp/moondesk-library  "),
+    default_workspace_root_from_env_and_home(
+      "  /tmp/moondesk-library  ", "/Users/alice",
+    ),
     "/tmp/moondesk-library",
   )
-  assert_true(parse_serve_args([]) is None)
-  assert_true(parse_bundle_args([]) is None)
+  assert_eq(default_moonsuite_workspace_root_from_home(""), "moonsuite")
+  assert_true(parse_serve_args([]) is Some(_))
+  assert_true(parse_bundle_args([]) is Some(_))
+}
+
+///|
+async test "first initialization creates default MoonSuite root" {
+  let home = @pathx.join(
+    "/tmp",
+    "moondesk-default-home-wbtest-" + @async.now().to_string(),
+  )
+  let root = default_workspace_root_from_env_and_home("", home)
+  assert_eq(root, @pathx.join(home, "moonsuite"))
+  assert_false(@fs.exists(root))
+  assert_true(prepare_moondesk_workspace_root(root))
+  assert_true(@fs.exists(root))
+  assert_true(@fs.exists(@pathx.join(root, "books")))
+  assert_true(@fs.exists(@pathx.join(root, ".tmp")))
+  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/suite.json")))
+  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/product-registry.json")))
 }
 
 ///|
@@ -54,55 +79,78 @@ async test "serve prepares MoonSuite workspace directories" {
 }
 
 ///|
-async test "serve honors source checkout root as explicit MoonSuite root" {
+async test "workspace resolver redirects source checkout root to fallback" {
   let root = @pathx.join(
     "/tmp",
     "moondesk-source-root-wbtest-" + @async.now().to_string(),
   )
+  let fallback = @pathx.join(root, "../dedicated-workspace")
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   @fsx.write_to_file(@pathx.join(root, "moon.mod"), "name = \"demo\"\n")
-  let effective_root = serve_workspace_root(root)
-  assert_eq(effective_root, @pathx.normalize(root))
-  assert_true(prepare_moondesk_workspace_root(effective_root))
-  assert_true(@fs.exists(@pathx.join(root, ".moonsuite/suite.json")))
-  assert_true(@fs.exists(@pathx.join(root, "books")))
+  let resolution = resolve_user_workspace_root_with_default(
+    root,
+    @pathx.dirname(root).to_owned(),
+    fallback,
+    "/Users/alice",
+  )
+  assert_true(resolution.redirected)
+  assert_eq(resolution.requested_root, @pathx.normalize(root))
+  assert_eq(resolution.workspace_root, @pathx.normalize(fallback))
+  assert_true(prepare_moondesk_workspace_root(resolution.workspace_root))
+  assert_false(@fs.exists(@pathx.join(root, ".moonsuite/suite.json")))
+  assert_false(@fs.exists(@pathx.join(root, "books")))
+  assert_true(@fs.exists(@pathx.join(fallback, ".moonsuite/suite.json")))
+  assert_true(@fs.exists(@pathx.join(fallback, "books")))
 }
 
 ///|
-async test "workspace resolver honors configured root inside checkout" {
+async test "workspace resolver uses home moonsuite if fallback is source checkout" {
   let root = @pathx.join(
     "/tmp",
     "moondesk-source-root-env-wbtest-" + @async.now().to_string(),
   )
+  let home = @pathx.join(root, "../home")
   @fsx.make_directory(root, recursive=true, exists_ok=true)
   @fsx.write_to_file(@pathx.join(root, "moon.mod"), "name = \"demo\"\n")
-  let cwd = @pathx.dirname(root).to_owned()
-  let nested = @pathx.join(root, "moondesk-workspace")
-  assert_eq(resolve_user_workspace_root(root, cwd), root)
+  let resolution = resolve_user_workspace_root_with_default(
+    root,
+    @pathx.dirname(root).to_owned(),
+    root,
+    home,
+  )
+  assert_true(resolution.redirected)
+  assert_eq(resolution.workspace_root, @pathx.join(home, "moonsuite"))
+}
+
+///|
+async test "workspace resolver keeps non-source roots inside checkout" {
+  let cwd = @pathx.join(
+    "/tmp",
+    "moondesk-source-root-nested-wbtest-" + @async.now().to_string(),
+  )
+  let root = @pathx.join(cwd, "checkout")
+  let nested = @pathx.join(root, "nested-suite")
+  @fsx.make_directory(root, recursive=true, exists_ok=true)
+  @fsx.write_to_file(@pathx.join(root, "moon.mod"), "name = \"demo\"\n")
   assert_eq(resolve_user_workspace_root(nested, cwd), nested)
 }
 
 ///|
-async test "workspace resolver normalizes relative roots without redirect" {
-  let cwd = @pathx.join(
-    "/tmp",
-    "moondesk-source-root-relative-wbtest-" + @async.now().to_string(),
-  )
-  let root = @pathx.join(cwd, "checkout")
-  @fsx.make_directory(root, recursive=true, exists_ok=true)
-  @fsx.write_to_file(@pathx.join(root, "moon.mod"), "name = \"demo\"\n")
-  let effective = resolve_user_workspace_root("checkout", cwd)
-  assert_eq(effective, root)
-}
-
-///|
-async test "runtime entrypoint workspace resolver uses selected checkout root" {
+async test "runtime entrypoint workspace resolver protects checkout root" {
   let repo_root = @pathx.join(
     "/tmp",
     "moondesk-entrypoint-source-root-wbtest-" + @async.now().to_string(),
   )
+  let fallback = @pathx.join(repo_root, "../runtime-workspace")
   @fsx.make_directory(repo_root, recursive=true, exists_ok=true)
   @fsx.write_to_file(@pathx.join(repo_root, "moon.mod"), "name = \"demo\"\n")
-  let effective = resolve_user_workspace_root(".", repo_root)
-  assert_eq(effective, repo_root)
+  let resolution = resolve_user_workspace_root_with_default(
+    ".", repo_root, fallback, "/Users/alice",
+  )
+  assert_true(resolution.redirected)
+  assert_eq(resolution.requested_root, repo_root)
+  assert_eq(resolution.workspace_root, @pathx.normalize(fallback))
+  assert_true(
+    workspace_root_guard_message(resolution).contains("MOONDESK_WORKSPACE_ROOT"),
+  )
 }

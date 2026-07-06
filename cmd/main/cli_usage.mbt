@@ -19,9 +19,9 @@ fn print_usage() -> Unit {
       #|
       #|Usage:
       #|  moon run cmd/main -- doctor [root]
-      #|  moon run cmd/main -- serve <root> [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188] [--open]
-      #|  moon run cmd/main -- desktop <root> [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188]
-      #|  moon run cmd/main -- bundle <root> [--ui ui/rabbita-desk/dist] [--out dist] [--host 127.0.0.1] [--port 4199] [--lepusa .mooncakes/vectie/lepusa] [--sign-identity -] [--skip-sign] [--no-archive]
+      #|  moon run cmd/main -- serve [root] [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188] [--open]
+      #|  moon run cmd/main -- desktop [root] [--ui ui/rabbita-desk/dist] [--host 127.0.0.1] [--port 4188]
+      #|  moon run cmd/main -- bundle [root] [--ui ui/rabbita-desk/dist] [--out dist] [--host 127.0.0.1] [--port 4199] [--lepusa .mooncakes/vectie/lepusa] [--sign-identity -] [--skip-sign] [--no-archive]
       #|  moon run cmd/main -- release <root> [bundle options] [--notary-profile keychain-profile] [--no-staple] [--no-dmg]
       #|  moon run cmd/main -- launch-agent <root> [--service desk|town] [--out dist/app.vectie.moondesk.plist] [--port 4188]
       #|  moon run cmd/main -- install-launch-agent <root> [--service desk|town] [--port 4188]

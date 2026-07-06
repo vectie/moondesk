@@ -39,7 +39,7 @@ fn default_lepusa_integration_options() -> LepusaIntegrationOptions {
     out_dir: "_build/lepusa/moondesk",
     manifest_path: "",
     asset_url: "lepusa://packaged/main/index.html",
-    workspace_root: "",
+    workspace_root: default_workspace_root(),
     ui_dir: "",
     serve_port: 4398,
     strict: false,

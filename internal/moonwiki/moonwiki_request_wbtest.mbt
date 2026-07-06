@@ -258,19 +258,13 @@ async test "fresh suite exposes rabbita moonbook projections through desk worksp
 
 ///|
 async test "workspace metadata exposes dedicated MoonBook library path" {
-  let metadata = workspace_library_metadata("/tmp/moondesk-workspace")
-  assert_eq(
-    json_string(metadata, "root_path", default=""),
-    "/tmp/moondesk-workspace",
-  )
+  let metadata = workspace_library_metadata("/tmp/moonsuite")
+  assert_eq(json_string(metadata, "root_path", default=""), "/tmp/moonsuite")
   assert_eq(
     json_string(metadata, "library_path", default=""),
-    "/tmp/moondesk-workspace/books",
+    "/tmp/moonsuite/books",
   )
-  assert_eq(
-    json_string(metadata, "suite_root", default=""),
-    "/tmp/moondesk-workspace",
-  )
+  assert_eq(json_string(metadata, "suite_root", default=""), "/tmp/moonsuite")
   let products = json_array_items(metadata, "products")
   assert_true(products.length() >= 13)
   assert_eq(json_string(products[0], "id", default=""), "moondesk")
@@ -314,7 +308,7 @@ async test "moonsuite layout facade normalizes suite-hosted book roots" {
 async test "workspace metadata maps book roots back to owning suite" {
   let suite_root = @pathx.join(
     "/tmp",
-    "moondesk-workspace-metadata-book-root-wbtest-" + @async.now().to_string(),
+    "moonsuite-metadata-book-root-wbtest-" + @async.now().to_string(),
   )
   assert_true(prepare_moonsuite_workspace_root(suite_root))
   let book_root = @pathx.join(suite_root, "books/research-metadata")

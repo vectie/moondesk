@@ -1062,9 +1062,10 @@ Phase 9 completion criteria:
   `moonclaw-jobs`, `.moonclaw-worktrees`, or `.moonclaw-tool-journal` paths.
 - Active source no longer contains source-checkout redirect compatibility
   helpers or warning copy such as the old dedicated-workspace fallback.
-- Moondesk command surfaces that create or package live app roots require an
-  explicit root argument or `MOONDESK_WORKSPACE_ROOT`; they do not infer
-  `$HOME/moondesk-workspace` or `USERPROFILE/moondesk-workspace`.
+- Moondesk command surfaces that create or package live app roots use a
+  selected/configured MoonSuite root, `MOONDESK_WORKSPACE_ROOT`, or the fresh
+  default `~/moonsuite`; they do not infer the retired home-derived workspace
+  name.
 - Any remaining legacy strings are explicitly scoped to drift detection or
   negative smoke assertions.
 - Phase 9 full gate passes and the fresh app is shown from a MoonSuite v2 root.
@@ -1082,8 +1083,8 @@ Phase 9 cutover evidence:
   setup, and Lepusa live-project generation now normalize and honor the
   selected workspace root directly, even when the folder contains `moon.mod`.
   The API smoke now proves a source-checkout-shaped selected folder is
-  bootstrapped as the MoonSuite root instead of silently switching to
-  `moondesk-workspace`.
+  bootstrapped as the MoonSuite root instead of silently switching to a retired
+  workspace folder name.
 - This Phase 9 gate-hardening slice extends the cutover validator to reject the
   retired source-checkout redirection helpers and warnings, including the old
   dedicated-user-workspace fallback copy. The only allowed Moondesk script
@@ -1100,13 +1101,14 @@ Phase 9 cutover evidence:
   `.tmp/products` product-home formulas. The only active-source mirror allowed
   is MoonVis's frontend-only layout module; concrete smoke scripts may still
   assert filesystem effects and absence of stale homes.
-- This Phase 9 explicit-root slice removes the Moondesk CLI fallback from
-  `$HOME` or `USERPROFILE` to `moondesk-workspace`. `serve`, `desktop`,
-  `bundle`, `release`, launch-agent generation/install, and Lepusa live-project
-  commands now require a selected/configured workspace root, while
-  `MOONDESK_WORKSPACE_ROOT` remains an explicit environment override.
+- This Phase 9 default-root cleanup removes the retired Moondesk CLI fallback
+  from `$HOME` or `USERPROFILE` to the old workspace folder name. `serve`,
+  `desktop`, `bundle`, `release`, launch-agent generation/install, and Lepusa
+  live-project commands now use a selected/configured workspace root, while
+  `MOONDESK_WORKSPACE_ROOT` remains an explicit environment override and
+  `~/moonsuite` is the fresh first-initialization default.
 - This Phase 9 explicit-root gate slice extends the cutover validator so the
-  retired `USERPROFILE`/home-derived `moondesk-workspace` fallback and old
+  retired `USERPROFILE`/home-derived legacy workspace fallback and old
   multi-input default-root helper shape cannot return in active source.
 - This Phase 9 standalone-source slice removes Moontown's machine-local Codex
   adapter defaults and validation command text from active source. The Codex

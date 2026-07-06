@@ -21,7 +21,7 @@ test "lepusa integration args default to strict-free macos verify" {
   assert_eq(options.out_dir, "_build/lepusa/moondesk")
   assert_eq(options.manifest_path, "")
   assert_eq(options.asset_url, "lepusa://packaged/main/index.html")
-  assert_eq(options.workspace_root, "")
+  assert_eq(options.workspace_root, default_workspace_root())
   assert_eq(options.ui_dir, "")
   assert_eq(options.serve_port, 4398)
   assert_eq(options.strict, false)
@@ -273,20 +273,20 @@ async test "lepusa integration live project uses localhost sidecar service" {
 }
 
 ///|
-test "lepusa integration live project requires selected workspace root" {
-  assert_true(
-    parse_lepusa_integration_args([
-      "live-smoke", "macos", "--serve-port", "4512",
-    ])
-    is None,
-  )
-  assert_true(
-    parse_lepusa_integration_args([
-      "live-build", "macos", "--serve-port", "4512",
-    ])
-    is None,
-  )
-  assert_true(parse_lepusa_integration_args(["live-session", "macos"]) is None)
+test "lepusa integration live project defaults to MoonSuite workspace root" {
+  let live_smoke = parse_lepusa_integration_args([
+    "live-smoke", "macos", "--serve-port", "4512",
+  ])
+  assert_true(live_smoke is Some(_))
+  assert_eq(live_smoke.unwrap().workspace_root, default_workspace_root())
+  let live_build = parse_lepusa_integration_args([
+    "live-build", "macos", "--serve-port", "4512",
+  ])
+  assert_true(live_build is Some(_))
+  assert_eq(live_build.unwrap().workspace_root, default_workspace_root())
+  let live_session = parse_lepusa_integration_args(["live-session", "macos"])
+  assert_true(live_session is Some(_))
+  assert_eq(live_session.unwrap().workspace_root, default_workspace_root())
 }
 
 ///|
@@ -314,7 +314,7 @@ async test "lepusa integration live project honors custom workspace and ui paths
 }
 
 ///|
-async test "lepusa integration live project honors source checkout workspace" {
+async test "lepusa integration live project protects source checkout workspace" {
   let repo_root = @pathx.join(
     "/tmp",
     "moondesk-lepusa-source-root-wbtest-" + @async.now().to_string(),
@@ -330,10 +330,10 @@ async test "lepusa integration live project honors source checkout workspace" {
     parsed.unwrap(),
     repo_root,
   )
-  assert_eq(options.workspace_root, repo_root)
+  assert_eq(options.workspace_root, default_workspace_root())
   let manifest = lepusa_integration_live_project_json(options, repo_root).stringify()
   assert_true(manifest.contains(options.workspace_root))
-  assert_true(manifest.contains("\"serve\",\"" + repo_root + "\""))
+  assert_false(manifest.contains("\"serve\",\"" + repo_root + "\""))
 }
 
 ///|

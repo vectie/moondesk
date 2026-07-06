@@ -26,7 +26,7 @@ virtual filesystem:
 
 Desk must use a dedicated user-data workspace root by default. The default root
 is `MOONDESK_WORKSPACE_ROOT` when configured, otherwise a per-user
-`moondesk-workspace` directory. MoonBooks live under
+`~/moonsuite` directory. MoonBooks live under
 `<workspace-root>/books/<book-id>`. The code checkout is never the
 default place for user MoonBooks, inbox notes, daemon state, MoonCode sessions,
 or MoonClaw artifacts.
@@ -57,7 +57,7 @@ quality requires:
   and the current MoonBook count so users can tell where their files are stored.
 - Starting the host against a directory that looks like a source checkout
   redirects to the dedicated `MOONDESK_WORKSPACE_ROOT` or default
-  `moondesk-workspace` directory before preparing `books`, and emits
+  `~/moonsuite` directory before preparing `books`, and emits
   a warning that names the effective user-data root.
 - The sidebar lists every MoonBook under `books`, with stable order,
   clear empty state, user-facing `book.json` `title`/`name` labels when
@@ -1066,7 +1066,7 @@ workspace root is the dedicated user workspace, no `.moontown`, `.moonclaw`, or
 a warning naming the dedicated root and `MOONDESK_WORKSPACE_ROOT`, and created
 MoonBooks land under the dedicated workspace. It then repeats the launch with
 `MOONDESK_WORKSPACE_ROOT` also pointed at the fake source checkout and asserts
-the server falls back to a home-based `moondesk-workspace` outside the checkout
+the server falls back to a home-based `~/moonsuite` outside the checkout
 before creating any MoonBooks. The main fixture seeds multiple workspaces so
 one run covers the canonical MoonBook, empty workspace, large directory, deep
 directory, encoded-name paths, workspace isolation, hidden-file filtering,

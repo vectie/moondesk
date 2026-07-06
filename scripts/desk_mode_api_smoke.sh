@@ -29,6 +29,7 @@ UPLOAD_ARCHIVE_PATH="${ROOT}/external-upload-archive-source.zip"
 SOURCE_ROOT="${ROOT}/source-checkout"
 DEDICATED_ROOT="${ROOT}/dedicated-workspace"
 NORMALIZED_SOURCE_ROOT="$(python3 -c 'import os, sys; print(os.path.normpath(sys.argv[1]))' "${SOURCE_ROOT}")"
+NORMALIZED_DEDICATED_ROOT="$(python3 -c 'import os, sys; print(os.path.normpath(sys.argv[1]))' "${DEDICATED_ROOT}")"
 LOG="${ROOT}/server.log"
 SOURCE_LOG="${ROOT}/source-root-server.log"
 PID=""
@@ -136,19 +137,17 @@ if ! curl -fsS "${SOURCE_BASE}/__moondesk_health" >/dev/null 2>&1; then
 fi
 
 source_health="$(curl -fsS "${SOURCE_BASE}/__moondesk_health")"
-if [[ "${source_health}" != *"${NORMALIZED_SOURCE_ROOT}"* || "${source_health}" == *"${DEDICATED_ROOT}"* ]]; then
-  echo "source-root launch did not report selected source checkout workspace root" >&2
+if [[ "${source_health}" != *"${NORMALIZED_DEDICATED_ROOT}"* || "${source_health}" == *"${NORMALIZED_SOURCE_ROOT}"* ]]; then
+  echo "source-root launch did not report guarded MoonSuite workspace root" >&2
   echo "${source_health}" >&2
   exit 1
 fi
-source_log="$(cat "${SOURCE_LOG}")"
-if [[ "${source_log}" == *"source checkout"* || "${source_log}" == *"Using dedicated user workspace root instead"* ]]; then
-  echo "source-root launch printed stale redirect warning" >&2
-  echo "${source_log}" >&2
+if [[ -e "${SOURCE_ROOT}/.moonsuite" || -e "${SOURCE_ROOT}/books" ]]; then
+  echo "source checkout root was polluted by MoonSuite state" >&2
   exit 1
 fi
-if [[ ! -e "${SOURCE_ROOT}/.moonsuite" || ! -e "${SOURCE_ROOT}/books" ]]; then
-  echo "source checkout root was not prepared as the selected MoonSuite root" >&2
+if [[ ! -e "${DEDICATED_ROOT}/.moonsuite" || ! -e "${DEDICATED_ROOT}/books" ]]; then
+  echo "dedicated MoonSuite root was not prepared" >&2
   exit 1
 fi
 source_created_book="$(curl -fsS -H 'content-type: application/json' --data '{"name":"Source Selected Book","book_id":"source-selected-book"}' "${SOURCE_BASE}/api/workspaces")"
@@ -157,8 +156,12 @@ if [[ "${source_created_book}" != *'"book_id": "source-selected-book"'* ]]; then
   echo "${source_created_book}" >&2
   exit 1
 fi
-if [[ ! -f "${SOURCE_ROOT}/books/source-selected-book/wiki/index.md" ]]; then
-  echo "source-root launch did not create MoonBook in selected source checkout workspace" >&2
+if [[ ! -f "${DEDICATED_ROOT}/books/source-selected-book/wiki/index.md" ]]; then
+  echo "source-root launch did not create MoonBook in guarded MoonSuite workspace" >&2
+  exit 1
+fi
+if [[ -e "${SOURCE_ROOT}/books/source-selected-book/wiki/index.md" ]]; then
+  echo "source-root launch wrote MoonBook into source checkout" >&2
   exit 1
 fi
 kill "${SOURCE_PID}" 2>/dev/null || true

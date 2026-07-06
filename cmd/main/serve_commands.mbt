@@ -47,7 +47,11 @@ async fn print_moonstat_startup_status() -> Unit {
 
 ///|
 async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
-  let workspace_root = serve_workspace_root(options.workspace_root)
+  let resolution = serve_workspace_root_resolution(options.workspace_root)
+  let workspace_root = resolution.workspace_root
+  if resolution.redirected {
+    println(workspace_root_guard_message(resolution))
+  }
   if !prepare_moondesk_workspace_root(workspace_root) {
     println("failed to prepare workspace root: \{workspace_root}")
     return
@@ -70,16 +74,93 @@ async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
 }
 
 ///|
-fn serve_workspace_root(workspace_root : String) -> String {
-  resolve_user_workspace_root(workspace_root, current_workspace_directory())
+async fn serve_workspace_root_resolution(
+  workspace_root : String,
+) -> WorkspaceRootResolution {
+  resolve_user_workspace_root_resolution(
+    workspace_root,
+    current_workspace_directory(),
+  )
 }
 
 ///|
-fn resolve_user_workspace_root(
+struct WorkspaceRootResolution {
+  requested_root : String
+  workspace_root : String
+  redirected : Bool
+}
+
+///|
+async fn resolve_user_workspace_root(
   workspace_root : String,
   repo_root : String,
 ) -> String {
-  absolute_path(workspace_root, repo_root)
+  resolve_user_workspace_root_resolution(workspace_root, repo_root).workspace_root
+}
+
+///|
+async fn resolve_user_workspace_root_resolution(
+  workspace_root : String,
+  repo_root : String,
+) -> WorkspaceRootResolution {
+  resolve_user_workspace_root_with_default(
+    workspace_root,
+    repo_root,
+    default_workspace_root(),
+    @sys.get_env_var("HOME").unwrap_or(""),
+  )
+}
+
+///|
+async fn resolve_user_workspace_root_with_default(
+  workspace_root : String,
+  repo_root : String,
+  fallback_root : String,
+  home_root : String,
+) -> WorkspaceRootResolution {
+  let requested_root = absolute_path(workspace_root, repo_root)
+  if workspace_root_looks_like_source_checkout(requested_root) {
+    let workspace_root = source_checkout_fallback_workspace_root(
+      fallback_root, repo_root, home_root,
+    )
+    return { requested_root, workspace_root, redirected: true }
+  }
+  { requested_root, workspace_root: requested_root, redirected: false }
+}
+
+///|
+async fn workspace_root_looks_like_source_checkout(root : String) -> Bool {
+  @fs.exists(@pathx.join(root, "moon.mod")) ||
+  @fs.exists(@pathx.join(root, "moon.mod.json")) ||
+  @fs.exists(@pathx.join(root, ".git"))
+}
+
+///|
+async fn source_checkout_fallback_workspace_root(
+  fallback_root : String,
+  repo_root : String,
+  home_root : String,
+) -> String {
+  let fallback_root = if fallback_root.trim() == "" {
+    default_moonsuite_workspace_root_from_home(home_root)
+  } else {
+    fallback_root
+  }
+  let fallback_root = absolute_path(fallback_root, repo_root)
+  if workspace_root_looks_like_source_checkout(fallback_root) {
+    return absolute_path(
+      default_moonsuite_workspace_root_from_home(home_root),
+      repo_root,
+    )
+  }
+  fallback_root
+}
+
+///|
+fn workspace_root_guard_message(resolution : WorkspaceRootResolution) -> String {
+  "Moondesk workspace guard: requested root \{resolution.requested_root} " +
+  "looks like a source checkout; using \{resolution.workspace_root} from " +
+  "MOONDESK_WORKSPACE_ROOT or ~/moonsuite."
 }
 
 ///|

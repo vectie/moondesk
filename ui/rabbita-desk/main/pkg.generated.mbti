@@ -82,6 +82,8 @@ type MoonCodeOptimisticRow
 
 type MoonCodeSession derive(@json.FromJson)
 
+type MoonCodeSessionEffect
+
 type MoonCodeStreamPoll
 
 type MoonCodeStreamState derive(@json.FromJson)

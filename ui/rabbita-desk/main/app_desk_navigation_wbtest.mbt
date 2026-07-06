@@ -1325,7 +1325,7 @@ test "desk workspace refresh preserves selected path for known workspace" {
         @desk.workspace(
           id="book-demo",
           name="Demo",
-          root_path="/tmp/moondesk-workspace/books/demo",
+          root_path="/tmp/moonsuite/books/demo",
           kind=MoonBook,
         ),
       ]),
@@ -1345,21 +1345,21 @@ test "desk library root derives dedicated user data directory" {
       @desk.workspace(
         id="book-demo",
         name="Demo",
-        root_path="/Users/example/moondesk-workspace/books/demo",
+        root_path="/Users/example/moonsuite/books/demo",
         kind=MoonBook,
       ),
       @desk.workspace(
         id="book-lab",
         name="Lab",
-        root_path="/Users/example/moondesk-workspace/books/lab",
+        root_path="/Users/example/moonsuite/books/lab",
         kind=MoonBook,
       ),
     ],
   }
-  assert_eq(workspace_library_root(model), "/Users/example/moondesk-workspace")
+  assert_eq(workspace_library_root(model), "/Users/example/moonsuite")
   assert_eq(
     workspace_moonbook_library_path(model),
-    "/Users/example/moondesk-workspace/books",
+    "/Users/example/moonsuite/books",
   )
   assert_eq(workspace_library_count_label(model), "2 MoonBooks")
 }
@@ -1368,15 +1368,15 @@ test "desk library root derives dedicated user data directory" {
 test "desk empty library uses workspace metadata path" {
   let model = {
     ..init_model(),
-    workspace_root_path: "/Users/example/moondesk-workspace",
-    workspace_library_path: "/Users/example/moondesk-workspace/books",
+    workspace_root_path: "/Users/example/moonsuite",
+    workspace_library_path: "/Users/example/moonsuite/books",
   }
-  assert_eq(workspace_name(model), "MoonSuite: moondesk-workspace")
-  assert_eq(workspace_root(model), "/Users/example/moondesk-workspace")
-  assert_eq(workspace_library_root(model), "/Users/example/moondesk-workspace")
+  assert_eq(workspace_name(model), "MoonSuite: moonsuite")
+  assert_eq(workspace_root(model), "/Users/example/moonsuite")
+  assert_eq(workspace_library_root(model), "/Users/example/moonsuite")
   assert_eq(
     workspace_moonbook_library_path(model),
-    "/Users/example/moondesk-workspace/books",
+    "/Users/example/moonsuite/books",
   )
   assert_eq(workspace_library_count_label(model), "0 MoonBooks")
 }
@@ -1398,11 +1398,11 @@ test "workspace metadata result records empty library location" {
     dispatch,
     LoadedWorkspaceMetadata(
       Ok({
-        root_path: "/Users/example/moondesk-workspace",
-        suite_root: "/Users/example/moondesk-workspace",
-        active_suite_root: "/Users/example/moondesk-workspace",
-        library_path: "/Users/example/moondesk-workspace/books",
-        books_root: "/Users/example/moondesk-workspace/books",
+        root_path: "/Users/example/moonsuite",
+        suite_root: "/Users/example/moonsuite",
+        active_suite_root: "/Users/example/moonsuite",
+        library_path: "/Users/example/moonsuite/books",
+        books_root: "/Users/example/moonsuite/books",
         products: [
           { name: "Moondesk", status: "installed" },
           { name: "MoonClaw", status: "installed" },
@@ -1412,10 +1412,10 @@ test "workspace metadata result records empty library location" {
     ),
     init_model(),
   )
-  assert_eq(model.workspace_root_path, "/Users/example/moondesk-workspace")
+  assert_eq(model.workspace_root_path, "/Users/example/moonsuite")
   assert_eq(
     model.workspace_library_path,
-    "/Users/example/moondesk-workspace/books",
+    "/Users/example/moonsuite/books",
   )
   assert_eq(model.moonsuite_products.length(), 3)
   assert_eq(workspace_product_count_label(model), "3 products installed")

@@ -8,6 +8,8 @@ package "vectie/moondesk/cmd/main"
 // Types and methods
 type ServeOptions
 
+type WorkspaceRootResolution
+
 // Type aliases
 
 // Traits
