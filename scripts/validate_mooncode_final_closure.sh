@@ -42,7 +42,9 @@ require_text "${MOONCODE_DOC}" 'runtime proof/evidence contract' "MoonCode runti
 
 require_text "${TEST_PLAN}" 'Final architecture closure gate' "code-mode final closure gate"
 require_text "${TEST_PLAN}" 'validate_mooncode_final_closure.sh' "code-mode closure validator command"
+require_text "${TEST_PLAN}" 'validate_mooncode_native_command_execution_contract.sh' "code-mode native command closure validator command"
 
 require_text "${GATE}" 'validate_mooncode_final_closure.sh' "migration-wall final closure validator"
+require_text "${GATE}" 'validate_mooncode_native_command_execution_contract.sh' "migration-wall native command closure validator"
 
 echo "MoonCode final architecture closure validation passed"

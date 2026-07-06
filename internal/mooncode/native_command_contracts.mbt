@@ -9,49 +9,24 @@ pub fn native_command_execution_plan(
   command_packet : Json,
 ) -> Json {
   let web_search = json_bool(command_packet, "web_search", default=false)
-  {
-    "kind": "mooncode-native-command-execution-plan",
-    "protocol": protocol_version(),
-    "action": action,
-    "control": json_string(command_packet, "control", default="command"),
-    "approval": json_string(command_packet, "approval", default="none"),
-    "target": if context_path == "" {
-      "moonbook"
-    } else {
-      context_path
-    },
-    "context_path": context_path,
-    "web_search": web_search,
-    "tool_sequence": string_array_json(
-      command_allowed_tool_sequence(action, web_search),
-    ),
-    "tool_policies": Json::array(
-      native_command_tool_policies(action, context_path),
-    ),
-    "expected_events": string_array_json(native_command_expected_events(action)),
-    "required_outputs": string_array_json(
-      native_command_required_outputs(action),
-    ),
-    "recommended_commands": string_array_json(
-      native_command_recommended_commands(action, context_path),
-    ),
-    "package_kind": trimmed_or(
+  let approval = json_string(command_packet, "approval", default="none")
+  @mooncode_core.native_command_execution_plan(
+    action,
+    context_path,
+    trimmed_or(
       json_string(payload, "package_kind", default=""),
-      fallback=native_command_default_package_kind(action),
+      fallback=@mooncode_core.native_command_default_package_kind(action),
     ),
-    "review_required": json_string(command_packet, "approval", default="none") ==
-    "operator",
-    "path_policy": {
-      "book_root": json_string(command_packet, "workspace_root", default=""),
-      "context_path": context_path,
-      "rule": "All reads, edits, shell commands, tests, and generated artifacts must stay inside the selected MoonBook unless an operator approves a broader workspace explicitly.",
-    },
-  }
+    json_string(command_packet, "workspace_root", default=""),
+    json_string(command_packet, "control", default="command"),
+    approval,
+    web_search,
+  )
 }
 
 ///|
 pub fn native_command_tool_contract(action : String) -> Json {
-  native_command_tool_contract_for_command(action, false)
+  @mooncode_core.native_command_tool_contract(action)
 }
 
 ///|
@@ -59,16 +34,5 @@ fn native_command_tool_contract_for_command(
   action : String,
   web_search : Bool,
 ) -> Json {
-  {
-    "kind": "mooncode-native-tool-contract",
-    "web_search": web_search,
-    "allowed_tools": string_array_json(
-      command_allowed_tool_sequence(action, web_search),
-    ),
-    "tool_policies": Json::array(native_command_tool_policies(action, "")),
-    "mutating_tools_require_review": true,
-    "shell_requires_bounded_timeout": true,
-    "moon_check_required_for_code_changes": true,
-    "approval_boundary": "Moondesk records approvals; MoonClaw must enforce them before read/edit/write/shell/moon_check/package tools execute.",
-  }
+  @mooncode_core.native_command_tool_contract_for_command(action, web_search)
 }

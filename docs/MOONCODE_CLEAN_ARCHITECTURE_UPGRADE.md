@@ -2424,6 +2424,12 @@ Finite closure checklist:
 
 1. Native command execution/result contract
 
+   Status: implemented. `mooncode/core/native_command_execution.mbt` now owns
+   the shared native command execution/result policy, the native capability
+   surface embeds `native_command_execution_contract_json()`, and
+   `scripts/validate_mooncode_native_command_execution_contract.sh` rejects
+   duplicated internal policy tables.
+
    Move MoonClaw-facing native command execution policy from
    `internal/mooncode` into `mooncode/core`: action-to-tool sequence,
    expected-event policy, required-output policy, recommended command hints,

@@ -118,8 +118,8 @@ if ! rg -n '@mooncode_core\.command_action_is_patch\(' "${ROOT}/internal/mooncod
   exit 1
 fi
 
-if ! rg -n '@mooncode_core\.command_action_is_test\(' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
-  echo "native action metadata must consume mooncode/core action predicates." >&2
+if ! rg -n '@mooncode_core\.native_command_expected_events\(' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
+  echo "native action metadata must delegate native command action policy to mooncode/core." >&2
   exit 1
 fi
 

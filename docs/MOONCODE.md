@@ -157,8 +157,9 @@ Final closure rule:
 
 - The remaining shared-boundary extraction list is finite, not an open-ended
   numbered phase loop.
-- Move the native command execution/result contract into `mooncode/core` because
-  MoonClaw consumes that policy to execute commands without importing Moondesk.
+- The native command execution/result contract now lives in `mooncode/core`
+  because MoonClaw consumes that policy to execute commands without importing
+  Moondesk.
 - Move the runtime proof/evidence contract into `mooncode/core` because
   MoonClaw, runtime replay, action plans, and standalone MoonCode all need the
   same proof vocabulary.

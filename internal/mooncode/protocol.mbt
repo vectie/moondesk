@@ -89,11 +89,6 @@ fn command_run_tests() -> String {
 }
 
 ///|
-fn command_run_build() -> String {
-  @mooncode_core.command_run_build()
-}
-
-///|
 fn command_run_eval() -> String {
   @mooncode_core.command_run_eval()
 }

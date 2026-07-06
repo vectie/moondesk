@@ -121,8 +121,8 @@ if ! rg -n '@mooncode_core\.runtime_tool_requires_authorization_snapshot\(' "${R
   exit 1
 fi
 
-if ! rg -n '@mooncode_core\.runtime_tool_read\(\)' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
-  echo "native command tool sequences must use mooncode/core runtime tool constants." >&2
+if ! rg -n '@mooncode_core\.native_command_tool_sequence\(' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
+  echo "native command tool sequences must delegate to the core-owned native command contract." >&2
   exit 1
 fi
 

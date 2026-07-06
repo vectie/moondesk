@@ -73,17 +73,5 @@ fn command_allowed_tool_sequence(
   action : String,
   web_search : Bool,
 ) -> Array[String] {
-  let tools : Array[String] = []
-  for tool in native_command_tool_sequence(action) {
-    tools.push(tool)
-  }
-  if web_search {
-    if !tools.contains(@mooncode_core.runtime_tool_web_search()) {
-      tools.push(@mooncode_core.runtime_tool_web_search())
-    }
-    if !tools.contains(@mooncode_core.runtime_tool_web_fetch()) {
-      tools.push(@mooncode_core.runtime_tool_web_fetch())
-    }
-  }
-  tools
+  @mooncode_core.native_command_allowed_tool_sequence(action, web_search)
 }

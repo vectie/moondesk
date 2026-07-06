@@ -365,7 +365,7 @@ mooncode/core exposes runtime_tool_contract_json
 -> native capability surface embeds the runtime-tool and tool-call contracts
 -> runtime protocol decodes tool calls through core canonicalization
 -> internal capabilities publish core tool names/specs
--> native command metadata and web-search hints use core tool constants
+-> native command execution contract owns tool sequences and web-search expansion
 -> MoonClaw tool-name mappings delegate to mooncode/core
 -> migration gate scans implementation files for duplicated tool ownership
 ```
@@ -377,12 +377,48 @@ Assertions:
 - tool-call decode policy uses core canonicalization, support checks,
   mutation/review predicates, and unknown-tool policy.
 - command action tool hints, native command tool sequences, web-search hints,
-  and tool authorization snapshot policy consume core tool constants.
+  and tool authorization snapshot policy consume core-owned contracts.
 - native capability JSON exposes `runtime_tool_contract_json()` and
   `runtime_tool_call_contract_json()`.
 - concrete tests may still use tool fixture strings, but production tool lists,
   alias rows, capability specs, and detailed tool-contract builders must stay in
   `mooncode/core`.
+
+### Native Command Execution Contract
+
+Prove MoonClaw-facing command execution policy is owned once before runtime
+handoff, progress rendering, result proof, and packaging gates can disagree
+about the same command.
+
+Flow:
+
+```text
+mooncode/core exposes native_command_execution_contract_json
+-> native capability surface embeds the native command execution contract
+-> internal command body parses session/path JSON only
+-> internal native metadata, execution plan, result contract, and tool policies delegate to core
+-> command protocol asks core for web-search tool expansion
+-> migration gate scans internal files for duplicated command policy tables
+```
+
+Assertions:
+
+- core proves native command contract ids, action-to-tool sequences, expected
+  events, required outputs, recommended command hints, result checklist, and
+  per-tool guardrails.
+- internal native command body/execution-plan tests still produce the same
+  MoonClaw handoff JSON by delegating to core.
+- source validation rejects duplicated execution-plan kind strings, result
+  contract strings, checklist text, per-tool guardrail rows, and native command
+  event/output tables returning to `internal/mooncode`.
+
+Contract ownership gate:
+
+```bash
+moon test mooncode/core --filter "mooncode core owns native command execution contract" --target native
+moon test internal/mooncode --filter "mooncode native command tool policies*" --target native
+scripts/validate_mooncode_native_command_execution_contract.sh
+```
 
 ### Native Sidecar Reply Ingestion
 
@@ -470,6 +506,7 @@ endpoint strings, or a private consumer contract copy.
 Final architecture closure gate:
 
 ```bash
+scripts/validate_mooncode_native_command_execution_contract.sh
 scripts/validate_mooncode_final_closure.sh
 ```
 

@@ -72,8 +72,8 @@ if ! rg -n '"runtime_event_name_contract": runtime_event_name_contract_json\(\)'
   exit 1
 fi
 
-if ! rg -n 'event_assistant_delta\(\)' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
-  echo "native command expected events must consume core-owned event helpers." >&2
+if ! rg -n '@mooncode_core\.native_command_expected_events\(' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
+  echo "native command expected events must delegate to the core-owned native command contract." >&2
   exit 1
 fi
 
