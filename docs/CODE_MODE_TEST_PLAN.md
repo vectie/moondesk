@@ -467,6 +467,20 @@ The validator fails if runtime claim/replay projection files reintroduce local
 runtime receipt statuses, claim statuses, replay statuses, ack-order statuses,
 endpoint strings, or a private consumer contract copy.
 
+Final architecture closure gate:
+
+```bash
+scripts/validate_mooncode_final_closure.sh
+```
+
+This gate prevents the code-mode migration from drifting into Phase 59 by
+search result. It fixes the remaining shared-boundary work to two extractable
+contracts: native command execution/result policy, and runtime proof/evidence
+policy. Stream/checkpoint surfaces, readiness/action-plan/session summaries,
+tool-authorization previews, host capability packets, and conversation
+projection copy stay internal because they aggregate host or MoonBook state
+around existing core contracts.
+
 ### Tool Authorization
 
 Prove mutating tools are blocked until approved and safe previews remain cheap.
@@ -624,6 +638,8 @@ mooncode/core
   protocol field stability
   executable-book lifecycle contract
   native command body compatibility
+  native command execution/result contract
+  runtime proof/evidence contract
 
 internal/mooncode
   command decode and lifecycle

@@ -153,6 +153,23 @@ same package command owner. Internal MoonCode may aggregate concrete package,
 review, test, readiness, and assistant events into reports, but it must not
 publish a second package/review policy.
 
+Final closure rule:
+
+- The remaining shared-boundary extraction list is finite, not an open-ended
+  numbered phase loop.
+- Move the native command execution/result contract into `mooncode/core` because
+  MoonClaw consumes that policy to execute commands without importing Moondesk.
+- Move the runtime proof/evidence contract into `mooncode/core` because
+  MoonClaw, runtime replay, action plans, and standalone MoonCode all need the
+  same proof vocabulary.
+- Keep stream/checkpoint responses, readiness/action-plan/session summaries,
+  tool-authorization previews, engine status, runtime handoff packets, and
+  conversation projection internals in `internal/mooncode`; they aggregate
+  Moondesk/MoonBook state or host-specific copy around core contracts.
+- Do not add Phase 59 by default. Future shared-boundary work must first edit
+  the final closure checklist in
+  `docs/MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md`.
+
 ## Shared Runtime, Separate Lanes
 
 MoonCode, MoonWiki, and generic automation can share MoonClaw's runtime

@@ -2403,6 +2403,111 @@ Exit tests:
 - the migration wall rejects duplicated production runtime-consumer status,
   endpoint, rule, and contract strings outside `mooncode/core`.
 
+## Final Architecture Closure Gate
+
+Status: active. This is not Phase 59. It is the finite closure audit that
+prevents the architecture plan from becoming an open-ended string-replacement
+loop.
+
+Audit result:
+
+- Already core-owned: conversation ownership, command actions, event lanes,
+  runtime event names, native endpoints, native event projection,
+  model-planner evidence, runtime control, runtime consumer, runtime tools, and
+  package/review flow.
+- Shared-contract work still left: exactly the candidates listed below.
+- Everything else that only aggregates Moondesk/MoonBook state, host routes,
+  UI copy, or diagnostic reports stays internal unless a real external consumer
+  needs a data-only protocol contract.
+
+Finite closure checklist:
+
+1. Native command execution/result contract
+
+   Move MoonClaw-facing native command execution policy from
+   `internal/mooncode` into `mooncode/core`: action-to-tool sequence,
+   expected-event policy, required-output policy, recommended command hints,
+   result contract, execution checklist, and per-tool guardrails. Internal
+   files should become thin adapters that pass session/path payload details into
+   the core contract.
+
+   Candidate files:
+
+   - `internal/mooncode/native_command_action_metadata.mbt`
+   - `internal/mooncode/native_command_contracts.mbt`
+   - `internal/mooncode/native_command_result_contracts.mbt`
+   - `internal/mooncode/native_command_tool_policies.mbt`
+
+   Exit tests:
+
+   - `mooncode/core` proves native command contract ids, tool sequences,
+     expected events, required outputs, result checklist, and guardrail rows.
+   - Internal native command body/execution-plan tests still produce the same
+     MoonClaw handoff JSON by delegating to core.
+   - A source validator rejects duplicated native command policy returning to
+     `internal/mooncode`.
+
+2. Runtime proof/evidence contract
+
+   Move reusable runtime proof vocabulary and policy from `internal/mooncode`
+   into `mooncode/core`: command runtime evidence report kind, evidence
+   statuses, missing/failed/proven rules, tool-harness proof statuses, required
+   event proof policy, and runtime-replay proof-gate policy. Internal files
+   should keep only concrete log/event aggregation.
+
+   Candidate files:
+
+   - `internal/mooncode/runtime_evidence.mbt`
+   - `internal/mooncode/tool_harness_evidence.mbt`
+   - `internal/mooncode/runtime_replay_ack_proof_gate.mbt`
+   - `internal/mooncode/action_plan_state.mbt`
+   - `internal/mooncode/action_plan_response.mbt`
+
+   Exit tests:
+
+   - `mooncode/core` proves the evidence status vocabulary, proof predicates,
+     tool-harness status policy, and contract JSON.
+   - Internal runtime evidence, action-plan, and replay-ack tests still prove
+     command-scoped proof, failed evidence, missing evidence, and tool-harness
+     blocking by delegating to core.
+   - A source validator rejects duplicated runtime proof status/policy strings
+     returning to production `internal/mooncode`.
+
+3. Closure wall
+
+   Add a final closure validator to the migration wall. It must reject new
+   numbered architecture phases after Phase 58 and require this finite checklist
+   to stay explicit. Any future shared-boundary item must be added by editing
+   this checklist with a named owner, candidate files, and exit tests before
+   implementation starts.
+
+Do-not-migrate classification:
+
+- `internal/mooncode/stream_*`: Moondesk host stream/checkpoint projection, not
+  the shared runtime contract.
+- `internal/mooncode/session_readiness*`, `action_plan*`,
+  `session_resume_lifecycle.mbt`, `session_summary*`,
+  `session_executable_lifecycle.mbt`: MoonBook/Moondesk aggregation and status
+  reporting over core evidence.
+- `internal/mooncode/session_tool_authorization*` and
+  `session_tool_approvals.mbt`: host/operator approval projection; reusable
+  tool policy already belongs to the core runtime-tool contract.
+- `internal/mooncode/capabilities*.mbt`, `engine_status.mbt`,
+  `runtime_handoff.mbt`, and `runtime_supervisor*.mbt`: host capability and
+  launch packets that publish or embed core contracts, not independent owners
+  of core vocabulary.
+- `internal/mooncode/conversation_projection.mbt`: backend projection logic and
+  user-facing copy. It consumes core event/action/tool/ownership contracts but
+  should not move wholesale into `mooncode/core`.
+
+Closure rule:
+
+- No Phase 59 by default.
+- No regex-only cleanup as architecture work.
+- No migration just because an internal report contains display strings.
+- Migrate only data-only policy that MoonClaw, standalone MoonCode, or another
+  MoonSuite product must consume without importing Moondesk internals.
+
 ## Non-Goals
 
 - Preserving legacy raw transcript UI behavior.
