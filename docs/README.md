@@ -27,12 +27,16 @@ contracts come from MoonLib.
 2. [ARCHITECTURE.md](ARCHITECTURE.md): package ownership, HTTP surface, and
    cross-product boundaries.
 3. [DESK_MODE_DESIGN.md](DESK_MODE_DESIGN.md): file/workspace mode behavior.
-4. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
-5. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
+4. [WIKI_MODE_UX_PLAN.md](WIKI_MODE_UX_PLAN.md): normal-user Wiki information
+   hierarchy, progressive disclosure, implementation phases, and UX E2E gates.
+5. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
+   journeys, rationale, expected behavior, methodology, and acceptance evidence.
+6. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
+7. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
    canonical conversation/runtime upgrade plan.
-6. [STATUS.md](STATUS.md): current implementation state and known gaps.
-7. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
-8. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
+8. [STATUS.md](STATUS.md): current implementation state and known gaps.
+9. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
+10. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
    historical migration plan and validation record.
 
 ## Implementation Map
@@ -65,6 +69,11 @@ For workspace and Desk behavior, use the API smoke scripts under `scripts/`
 against a fresh MoonSuite root. For Code mode, verify that user messages append
 immediately, MoonClaw-backed progress appears only from runtime evidence, final
 assistant text appends in order, and old turns persist after reload.
+For Wiki mode, use [WIKI_MODE_TEST_PLAN.md](WIKI_MODE_TEST_PLAN.md) for forward
+and backward behavior and [WIKI_MODE_UX_PLAN.md](WIKI_MODE_UX_PLAN.md) for the
+normal-user information hierarchy. Use
+[WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md) for user-centered
+journeys, methodology, and release acceptance evidence.
 
 ## Worth Noticing
 
