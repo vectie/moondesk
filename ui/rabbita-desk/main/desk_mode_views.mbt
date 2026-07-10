@@ -424,7 +424,14 @@ fn render_desk_file_browser(
   section(class="desk-browser", [
     div(class="desk-browser-head", [
       div(class="desk-browser-title", [
-        h2(desk_directory_title(model.current_directory)),
+        div(class="desk-browser-location", [
+          if model.selected_workspace_id == "" {
+            span(class="desk-browser-workspace-empty", "")
+          } else {
+            small(class="desk-browser-workspace", workspace_name(model))
+          },
+          h2(desk_directory_title(model.current_directory)),
+        ]),
         button(
           class="secondary-button compact-button",
           attrs=@html.Attrs::build().data_set("testid", "desk-refresh"),
@@ -637,7 +644,11 @@ fn render_desk_operation_status(
   if status == "" || status.has_prefix("ready to ") {
     span(class="desk-status-empty", "")
   } else {
-    p(class=class_name, status)
+    p(
+      class=class_name,
+      attrs=@html.Attrs::build().role("status").aria_live("polite"),
+      status,
+    )
   }
 }
 
