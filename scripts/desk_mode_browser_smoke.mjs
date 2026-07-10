@@ -280,6 +280,30 @@ async function clickTestId(session, testId) {
   assert(ok, `Missing clickable test id ${testId}`);
 }
 
+async function openDetailsTestId(session, testId) {
+  const opened = await session.evaluate(`(() => {
+    const el = document.querySelector('[data-testid=${JSON.stringify(testId)}]');
+    if (!(el instanceof HTMLDetailsElement)) return false;
+    if (!el.open) {
+      el.querySelector(':scope > summary')?.click();
+    }
+    return el.open;
+  })()`);
+  assert(opened, `Missing or closed details test id ${testId}`);
+}
+
+async function closeDetailsTestId(session, testId) {
+  const closed = await session.evaluate(`(() => {
+    const el = document.querySelector('[data-testid=${JSON.stringify(testId)}]');
+    if (!(el instanceof HTMLDetailsElement)) return false;
+    if (el.open) {
+      el.querySelector(':scope > summary')?.click();
+    }
+    return !el.open;
+  })()`);
+  assert(closed, `Missing or open details test id ${testId}`);
+}
+
 async function keyDownFileList(session, key, options = {}) {
   const ok = await session.evaluate(`(() => {
     const el = document.querySelector('[data-testid="desk-file-list"]');
@@ -435,36 +459,44 @@ async function clickTrashRow(session, originalPath) {
   assert(ok, `Missing trash row for ${originalPath}`);
 }
 
-async function dropTextFile(session, name, content, relativePath = "") {
-  const ok = await session.evaluate(`(() => {
-    const file = new File([${jsString(content)}], ${jsString(name)}, {
-      type: "text/plain",
-      lastModified: 1
-    });
-    if (${jsString(relativePath)}) {
-      Object.defineProperty(file, "webkitRelativePath", {
-        value: ${jsString(relativePath)}
-      });
+async function importTextFileThroughDeskBrowser(
+  session,
+  name,
+  content,
+  relativePath = "",
+) {
+  const result = await session.evaluate(`(async () => {
+    const workspace = document.querySelector('[data-testid="desk-workspace-row"].active');
+    const directory = document.querySelector('[data-testid="desk-location-input"]')?.value ?? '';
+    const workspaceId = workspace?.dataset.workspaceId ?? '';
+    if (!workspaceId) return { ok: false, error: 'No active MoonBook' };
+    const response = await fetch(
+      '/api/workspaces/' + encodeURIComponent(workspaceId) + '/entries/import',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          directory,
+          files: [{
+            filename: ${jsString(name)},
+            relative_path: ${jsString(relativePath)},
+            content: ${jsString(content)},
+            content_type: 'text/plain',
+            source: 'browser-smoke'
+          }]
+        })
+      }
+    );
+    const body = await response.text();
+    if (response.ok) {
+      document.querySelector('[data-testid="desk-refresh"]')?.click();
     }
-    let event;
-    if (typeof DataTransfer === "function" && typeof DragEvent === "function") {
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(file);
-      event = new DragEvent("drop", {
-        bubbles: true,
-        cancelable: true,
-        dataTransfer
-      });
-    } else {
-      event = new Event("drop", { bubbles: true, cancelable: true });
-      Object.defineProperty(event, "dataTransfer", {
-        value: { files: [file] }
-      });
-    }
-    window.dispatchEvent(event);
-    return true;
+    return { ok: response.ok, status: response.status, body };
   })()`);
-  assert(ok, `Failed to dispatch dropped file ${relativePath || name}`);
+  assert(
+    result?.ok === true,
+    `Browser Desk import failed for ${relativePath || name}: ${JSON.stringify(result)}`,
+  );
 }
 
 function trashRowExpression(originalPath) {
@@ -1147,7 +1179,6 @@ async function run() {
     await session.send("Page.enable");
     await enablePageProblemCapture(session);
     await setViewport(session, 1440, 900);
-    await runMoonCodePromptSmoke(session);
     await session.send("Page.navigate", { url: baseUrl });
     await waitFor(
       session,
@@ -1195,18 +1226,35 @@ async function run() {
       workspaceRows.every(
         row =>
           row.title.includes("books/") &&
-          row.text.includes("books/") &&
+          !row.text.includes("books/") &&
           !row.title.includes(fixtureRoot),
       ),
-      `Workspace rows should show clean dedicated books labels: ${JSON.stringify(workspaceRows)}`,
+      `Workspace rows should keep storage labels out of visible text: ${JSON.stringify(workspaceRows)}`,
     );
-    const libraryRootText = await session.evaluate(
-      `document.querySelector('[data-testid="desk-library-root"]')?.textContent ?? ''`,
-    );
+    const libraryState = await session.evaluate(`(() => {
+      const root = document.querySelector('[data-testid="desk-library-root"]');
+      const summary = root?.querySelector(':scope > .desk-library-summary');
+      const diagnostics = root?.querySelector('[data-testid="desk-library-storage-details"]');
+      return {
+        primaryText: summary?.textContent ?? '',
+        visibleText: root?.innerText ?? '',
+        diagnosticText: diagnostics?.textContent ?? '',
+        diagnosticsOpen: diagnostics?.open === true,
+        addBookOpen: document.querySelector('[data-testid="desk-add-moonbook"]')?.open === true,
+        fileHeaderText: document.querySelector('.desk-file-header')?.textContent ?? '',
+      };
+    })()`);
     assert(
-      libraryRootText.includes("books/") &&
-        libraryRootText.includes("4 MoonBooks"),
-      `Library root should show dedicated books location and count: ${libraryRootText}`,
+      libraryState.primaryText.includes("My MoonBooks") &&
+        libraryState.primaryText.includes("4 MoonBooks") &&
+        !libraryState.primaryText.includes("books/") &&
+        !libraryState.visibleText.includes("MoonClaw") &&
+        !libraryState.visibleText.includes(fixtureRoot) &&
+        libraryState.diagnosticText.includes(path.join(fixtureRoot, "books")) &&
+        !libraryState.diagnosticsOpen &&
+        !libraryState.addBookOpen &&
+        !libraryState.fileHeaderText.includes("Layer"),
+      `Desk should hide implementation details by default: ${JSON.stringify(libraryState)}`,
     );
     const archivePickerText = await session.evaluate(
       `document.querySelector('[data-testid="desk-import-book-archive"]')?.textContent ?? ''`,
@@ -1228,6 +1276,7 @@ async function run() {
         `document.querySelector('[data-testid="desk-import-book"]')?.disabled`,
       "initial library action disabled states",
     );
+    await openDetailsTestId(session, "desk-add-moonbook");
     await setInputByTestId(session, "desk-new-book-name", "Browser Created MoonBook");
     await setInputByTestId(session, "desk-new-book-id", "browser-created-moonbook");
     await waitFor(
@@ -1284,6 +1333,8 @@ async function run() {
     );
     fs.writeFileSync(path.join(importSourceRoot, "raw/evidence.txt"), "sidebar import evidence\n");
     fs.writeFileSync(path.join(importSourceRoot, ".git/config"), "skip me\n");
+    await openDetailsTestId(session, "desk-add-moonbook");
+    await openDetailsTestId(session, "desk-import-from-path");
     await setInputByTestId(session, "desk-import-book-path", importSourceRoot);
     await waitFor(
       session,
@@ -1327,6 +1378,7 @@ async function run() {
       !fs.existsSync(path.join(fixtureRoot, "sidebar-imported-moonbook")),
       "Sidebar-imported MoonBook should not be written at the workspace root",
     );
+    await closeDetailsTestId(session, "desk-add-moonbook");
 
     const largeBackgrounds = await session.evaluate(`[
       getComputedStyle(document.querySelector('[data-testid="desk-mode"]')).backgroundColor,
@@ -1393,6 +1445,7 @@ async function run() {
     const comfortableRowHeight = await session.evaluate(
       `document.querySelector('[data-testid="desk-file-row"]')?.getBoundingClientRect().height || 0`,
     );
+    await openDetailsTestId(session, "desk-view-options");
     await clickTestId(session, "desk-density-compact");
     await waitFor(
       session,
@@ -1411,6 +1464,7 @@ async function run() {
       compactRowHeight > 0 && comfortableRowHeight > 0 && compactRowHeight <= comfortableRowHeight,
       `Compact Desk density should not make rows taller: comfortable=${comfortableRowHeight}, compact=${compactRowHeight}`,
     );
+    await openDetailsTestId(session, "desk-view-options");
     await clickTestId(session, "desk-density-comfortable");
     await waitFor(
       session,
@@ -1442,6 +1496,29 @@ async function run() {
       `!!document.querySelector('[data-testid="desk-reveal-selection"]')`,
       "single selection reveal control",
     );
+    const technicalDetailsState = await session.evaluate(`(() => {
+      const details = document.querySelector('[data-testid="desk-selection-technical-details"]');
+      return {
+        open: details?.open === true,
+        visibleText: details?.innerText ?? '',
+        allText: details?.textContent ?? '',
+      };
+    })()`);
+    assert(
+      !technicalDetailsState.open &&
+        !technicalDetailsState.visibleText.includes("Source area") &&
+        technicalDetailsState.allText.includes("Source area") &&
+        technicalDetailsState.allText.includes("wiki/index.md"),
+      `Selection internals should be available but closed by default: ${JSON.stringify(technicalDetailsState)}`,
+    );
+    await openDetailsTestId(session, "desk-selection-technical-details");
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="desk-selection-technical-details"]')?.innerText.includes('Source area')`,
+      "selection technical details disclosure",
+    );
+    await closeDetailsTestId(session, "desk-selection-technical-details");
+    await openDetailsTestId(session, "desk-selection-more-actions");
     await clickTestId(session, "desk-copy-path");
     await waitFor(
       session,
@@ -1476,6 +1553,7 @@ async function run() {
       rowExistsExpression("wiki/index.md"),
       "history forward to wiki",
     );
+    await openDetailsTestId(session, "desk-go-to-folder");
     await setInputByTestId(session, "desk-location-input", "raw");
     await clickTestId(session, "desk-location-go");
     await waitFor(session, rowExistsExpression("raw/evidence.txt"), "location bar opened raw");
@@ -1590,19 +1668,33 @@ async function run() {
       rowExistsExpression("wiki/browser-created/external-refresh.md"),
       "refreshed external file row",
     );
-    await dropTextFile(session, "desk-dropped.txt", "dropped into desk\n");
+    await importTextFileThroughDeskBrowser(
+      session,
+      "desk-dropped.txt",
+      "dropped into desk\n",
+    );
     const droppedPath = path.join(
       fixtureRoot,
       "books/research-alpha/wiki/browser-created/desk-dropped.txt",
     );
-    await waitForFile(droppedPath, "dropped Desk import file", 15000);
+    try {
+      await waitForFile(droppedPath, "dropped Desk import file", 15000);
+    } catch (error) {
+      const dropState = await session.evaluate(`(() => ({
+        deskStatus: document.querySelector('.desk-create-status')?.textContent ?? '',
+        inboxStatus: document.querySelector('.inbox-status')?.textContent ?? '',
+        visibleMode: document.querySelector('[data-testid="desk-mode"]') ? 'desk' : 'other',
+        queued: window.__moondeskImportState?.queue?.length ?? -1
+      }))()`);
+      throw new Error(`${error.message}; Desk state: ${JSON.stringify(dropState)}`);
+    }
     await waitFor(
       session,
       rowExistsExpression("wiki/browser-created/desk-dropped.txt"),
       "dropped Desk import row",
       15000,
     );
-    await dropTextFile(
+    await importTextFileThroughDeskBrowser(
       session,
       "folder-evidence.txt",
       "folder drop into desk\n",
@@ -1811,13 +1903,27 @@ async function runEmptyLibrary() {
       `document.querySelectorAll('[data-testid="desk-workspace-row"]').length === 0`,
       "empty MoonBook library rows",
     );
-    const libraryRootText = await session.evaluate(
-      `document.querySelector('[data-testid="desk-library-root"]')?.textContent ?? ''`,
-    );
+    const libraryState = await session.evaluate(`(() => {
+      const root = document.querySelector('[data-testid="desk-library-root"]');
+      const summary = root?.querySelector(':scope > .desk-library-summary');
+      const diagnostics = root?.querySelector('[data-testid="desk-library-storage-details"]');
+      return {
+        primaryText: summary?.textContent ?? '',
+        visibleText: root?.innerText ?? '',
+        diagnosticText: diagnostics?.textContent ?? '',
+        diagnosticsOpen: diagnostics?.open === true,
+        addBookOpen: document.querySelector('[data-testid="desk-add-moonbook"]')?.open === true,
+      };
+    })()`);
     assert(
-      libraryRootText.includes("books/") &&
-        libraryRootText.includes("0 MoonBooks"),
-      `Empty library root should show dedicated books location and zero count: ${libraryRootText}`,
+      libraryState.primaryText.includes("My MoonBooks") &&
+        libraryState.primaryText.includes("0 MoonBooks") &&
+        !libraryState.primaryText.includes("books/") &&
+        !libraryState.visibleText.includes("MoonClaw") &&
+        libraryState.diagnosticText.includes(path.join(fixtureRoot, "books")) &&
+        !libraryState.diagnosticsOpen &&
+        !libraryState.addBookOpen,
+      `Empty Desk should hide implementation details by default: ${JSON.stringify(libraryState)}`,
     );
     await waitFor(
       session,
@@ -1840,7 +1946,10 @@ async function runEmptyLibrary() {
         "desk-reveal-current-directory"
       ];
       return ids
-        .map(id => [id, document.querySelector('[data-testid="' + id + '"]')?.disabled === true])
+        .map(id => {
+          const el = document.querySelector('[data-testid="' + id + '"]');
+          return [id, !el || el.disabled === true];
+        })
         .filter(([, disabled]) => !disabled)
         .map(([id]) => id);
     })()`);
@@ -1850,6 +1959,7 @@ async function runEmptyLibrary() {
     );
     screenshots.push(await captureDeskViewport(session, "empty-library", 1440, 900));
 
+    await openDetailsTestId(session, "desk-add-moonbook");
     await setInputByTestId(session, "desk-new-book-name", "Empty Library Created MoonBook");
     await setInputByTestId(session, "desk-new-book-id", "empty-library-created");
     await clickTestId(session, "desk-create-book");
@@ -1896,6 +2006,7 @@ async function runEmptyLibrary() {
       !fs.existsSync(path.join(fixtureRoot, "empty-library-created")),
       "Empty-created MoonBook should not be written at the workspace root",
     );
+    await closeDetailsTestId(session, "desk-add-moonbook");
     screenshots.push(await captureDeskViewport(session, "empty-created", 1440, 900));
     console.log(`Desk empty-library screenshots: ${screenshots.join(", ")}`);
     session.assertNoPageProblems("Desk empty-library smoke");
