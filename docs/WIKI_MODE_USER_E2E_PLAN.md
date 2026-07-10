@@ -471,16 +471,16 @@ Executed 2026-07-10 against the production build and the disposable fixture at
 
 - Wiki UX tests: `19/19`.
 - Request material projection tests: `2/2`.
-- Full Rabbita frontend tests: `184/184`.
-- Root JavaScript tests: `320/320`.
-- Root native tests: `530/530`.
+- Full Rabbita frontend tests: `165/165`.
+- Root JavaScript tests: `327/327`.
+- Root native tests: `533/533`.
 - Review queue regression: `1/1` focused native test.
 - Production `npm run build`: passed.
 - Browser console warnings/errors: none.
 - Security route checks: all expected `400` responses with no out-of-scope write.
 
-The full native root suite finished `530/530`. The two MoonCode HTTP failures
-seen during the initial run no longer reproduce against the final worktree.
+The isolated committed tree finished all three suites without failures. The two
+MoonCode HTTP failures seen during the initial run no longer reproduce.
 
 ### Residual Risk
 
