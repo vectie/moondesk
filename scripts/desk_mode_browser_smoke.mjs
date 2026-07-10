@@ -1143,7 +1143,18 @@ async function verifyDeskVisualLayout(session, label) {
       warmThemeToken: getComputedStyle(document.documentElement).getPropertyValue('--ms-espresso').trim(),
       surfaces,
       overlaps,
-      libraryOverflow
+      libraryOverflow,
+      sidebar: visibleRect('.desk-sidebar'),
+      browser: visibleRect('.desk-browser'),
+      details: visibleRect('[data-testid="desk-details"]'),
+      fileTableOverflow: (() => {
+        const table = document.querySelector('.desk-file-table');
+        if (!table) return null;
+        return {
+          clientWidth: table.clientWidth,
+          scrollWidth: table.scrollWidth
+        };
+      })()
     };
   })()`);
   assert(
@@ -1162,6 +1173,28 @@ async function verifyDeskVisualLayout(session, label) {
     layout.libraryOverflow.length === 0,
     `${label} Desk library root path overflows its card: ${JSON.stringify(layout.libraryOverflow)}`,
   );
+  if (layout.viewportWidth <= 760) {
+    assert(
+      layout.browser &&
+        layout.details &&
+        layout.sidebar &&
+        layout.browser.top < layout.viewportHeight &&
+        layout.browser.top < layout.details.top &&
+        layout.details.top < layout.sidebar.top &&
+        layout.fileTableOverflow &&
+        layout.fileTableOverflow.scrollWidth <= layout.fileTableOverflow.clientWidth + 1,
+      `${label} Desk should order browser, details, then library on phones: ${JSON.stringify(layout)}`,
+    );
+  } else if (layout.viewportWidth <= 1120) {
+    assert(
+      layout.browser &&
+        layout.details &&
+        layout.sidebar &&
+        layout.browser.left === layout.details.left &&
+        layout.browser.bottom <= layout.details.top + 1,
+      `${label} Desk should retain selection details below the browser on tablets: ${JSON.stringify(layout)}`,
+    );
+  }
   const largeBrown = layout.surfaces
     .map(surface => `${surface.selector}=${surface.background}`)
     .filter(item => isLargeBrown(item.split("=").pop()));
@@ -1471,6 +1504,7 @@ async function run() {
       `document.querySelector('.desk-file-table')?.classList.contains('density-comfortable')`,
       "comfortable Desk density restored",
     );
+    await closeDetailsTestId(session, "desk-view-options");
     await keyDownFileList(session, "a", { ctrlKey: true });
     await waitFor(
       session,
@@ -1579,6 +1613,7 @@ async function run() {
     await setInputByTestId(session, "desk-location-input", "/wiki/");
     await keyDownInputByTestId(session, "desk-location-input", "Enter");
     await waitFor(session, rowExistsExpression("wiki/index.md"), "location bar Enter reopened wiki after Up");
+    await closeDetailsTestId(session, "desk-go-to-folder");
     await setInputByTestId(session, "desk-new-item-name", "Shortcut Folder");
     await keyDownFileList(session, "N", { ctrlKey: true, shiftKey: true });
     await waitFor(
@@ -1589,6 +1624,17 @@ async function run() {
     await waitForFile(
       path.join(fixtureRoot, "books/research-alpha/wiki/Shortcut Folder"),
       "shortcut-created folder",
+    );
+    const deskStatusSemantics = await session.evaluate(`(() => {
+      const status = document.querySelector('.desk-create-status');
+      return {
+        role: status?.getAttribute('role') ?? '',
+        live: status?.getAttribute('aria-live') ?? ''
+      };
+    })()`);
+    assert(
+      deskStatusSemantics.role === "status" && deskStatusSemantics.live === "polite",
+      `Desk operation feedback should be announced: ${JSON.stringify(deskStatusSemantics)}`,
     );
     await setInputByTestId(session, "desk-filter-query", "notes");
     await waitFor(session, rowExistsExpression("wiki/notes"), "filter shows notes directory");
