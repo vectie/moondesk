@@ -4,7 +4,7 @@ fn render_activity_rail(
   model : Model,
 ) -> @rabbita.Html {
   aside(class="activity-rail", [
-    div(class="rail-mark", "MD"),
+    div(class="rail-mark", "Wiki"),
     div(
       class="rail-buttons",
       activities().map(item => {
@@ -18,13 +18,25 @@ fn render_activity_rail(
           title=item.label,
           on_click=dispatch(SelectActivity(item.key)),
           [
-            span(class="rail-icon", item.icon),
-            span(class="sr-only", item.label),
+            span(class="rail-label", item.label),
+            render_activity_attention(model, item.key),
           ],
         )
       }),
     ),
   ])
+}
+
+///|
+fn render_activity_attention(
+  model : Model,
+  activity : Activity,
+) -> @rabbita.Html {
+  if activity == Runs && model.review_items.length() > 0 {
+    span(class="rail-badge", model.review_items.length().to_string())
+  } else {
+    @html.nothing
+  }
 }
 
 ///|
@@ -85,7 +97,7 @@ fn render_activity_pane(
     Search => render_search_pane(dispatch, model)
     Inbox => render_inbox_pane(dispatch, model)
     Town => render_town_pane(dispatch, model)
-    Runs => render_runs_pane(dispatch, model)
+    Runs => render_review_pane(dispatch, model)
     Settings => render_settings_pane(dispatch, model)
     Files => render_files_pane(dispatch, model)
   }

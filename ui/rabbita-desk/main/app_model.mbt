@@ -68,6 +68,7 @@ struct Model {
   markdown_editor_path : String
   markdown_editor_content : String
   markdown_editor_status : String
+  pending_markdown_navigation : PendingMarkdownNavigation
   request_prompt : String
   request_status : String
   requests : Array[RequestRecord]
@@ -210,6 +211,8 @@ enum Msg {
   OpenDeskLocation
   OpenQuickPath(String)
   SelectSearchHit(String, String)
+  ConfirmDiscardMarkdownNavigation
+  CancelDiscardMarkdownNavigation
   SetNewBookName(String)
   SetNewBookId(String)
   CreateBlankMoonBook

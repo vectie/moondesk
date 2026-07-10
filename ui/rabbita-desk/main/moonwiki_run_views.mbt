@@ -1,69 +1,105 @@
 ///|
-fn render_runs_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  aside(class="activity-pane", [
+fn render_review_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+  aside(class="activity-pane user-pane review-pane", [
     div(class="pane-heading", [
-      div([p(class="eyebrow", "moonclaw"), h2("Runs")]),
+      div([p(class="eyebrow", "Decisions"), h2("Review")]),
       button(
-        class="icon-button",
-        title="Refresh Runs",
+        class="secondary-button compact-button",
+        title="Refresh review",
         on_click=dispatch(SelectWorkspace(model.selected_workspace_id)),
-        "R",
+        "Refresh",
       ),
     ]),
-    render_moonclaw_progress_panel(model),
-    div(
-      class="side-records",
-      model.runs.map(run => {
-        div(class="run-record", [
-          div([
-            span(class="record-kind", run.status),
-            strong(run.run_id),
-            small(run.summary),
-          ]),
-          div(
-            class="artifact-list",
-            run.artifacts.map(artifact => {
-              button(
-                class="artifact-link",
-                title=artifact.path,
-                on_click=dispatch(OpenQuickPath(artifact.path)),
-                [
-                  span(class="artifact-icon", icon_for_kind(artifact.kind)),
-                  span(artifact.title),
-                ],
-              )
-            }),
+    if model.review_items.length() == 0 {
+      div(class="quiet-empty-state review-empty", [
+        strong("Nothing needs review"),
+        p(
+          "Proposed knowledge changes will appear here before they become part of the book.",
+        ),
+        if wiki_review_feedback_visible(model.review_decision_status) {
+          p(
+            class="status-line decision-confirmation",
+            wiki_review_feedback(model.review_decision_status),
+          )
+        } else {
+          @html.nothing
+        },
+        button(
+          class="secondary-button full",
+          on_click=dispatch(SelectActivity(Town)),
+          "View activity",
+        ),
+      ])
+    } else {
+      div([
+        section(class="side-section review-note", [
+          h3("Decision note"),
+          textarea(
+            class="side-textarea compact-textarea",
+            rows=3,
+            value=model.review_decision_note,
+            placeholder="Optional context for this decision",
+            on_input=fn(value) { dispatch(SetReviewDecisionNote(value)) },
+            "",
           ),
-        ])
-      }),
-    ),
+          p(
+            class="status-line",
+            wiki_review_feedback(model.review_decision_status),
+          ),
+        ]),
+        div(
+          class="review-list",
+          model.review_items[:review_limit(model.review_items)].map(item => {
+            render_user_review_item(dispatch, item)
+          }),
+        ),
+      ])
+    },
   ])
 }
 
 ///|
-fn render_moonclaw_progress_panel(model : Model) -> @rabbita.Html {
-  match model.moonclaw_progress {
-    Some(progress) =>
-      section(class="side-section", [
-        h3("Progress"),
-        info_row(
-          "Runs",
-          "\{progress.ready_count} ready / \{progress.run_count} total",
-        ),
-        info_row("Artifacts", progress.artifact_count.to_string()),
-        info_row(
-          "Latest",
-          if progress.latest_run == "" {
-            "none"
-          } else {
-            "\{progress.latest_run} / \{progress.latest_status}"
-          },
-        ),
-      ])
-    None =>
-      section(class="side-section", [
-        h3("Progress"),
-        p(class="status-line", "waiting for run progress"),
-      ])
+fn render_user_review_item(
+  dispatch : Dispatch[Msg],
+  item : ReviewItem,
+) -> @rabbita.Html {
+  div(class="review-item", [
+    div(class="review-item-heading", [
+      strong(item.title),
+      span(class="user-state review", wiki_review_status_label(item.status)),
+    ]),
+    p(wiki_review_detail(item)),
+    button(
+      class="secondary-button full",
+      on_click=dispatch(SelectSearchHit(item.workspace_id, item.path)),
+      "Open proposal",
+    ),
+    div(class="review-actions", [
+      button(
+        class="primary-button",
+        title="Accept this proposed change",
+        on_click=dispatch(DecideReviewItem(item, "accepted")),
+        "Accept",
+      ),
+      button(
+        class="secondary-button danger-button",
+        title="Reject this proposed change",
+        on_click=dispatch(DecideReviewItem(item, "rejected")),
+        "Reject",
+      ),
+    ]),
+    details(class="technical-details", [
+      summary("Technical details"),
+      code("\{item.kind} | \{item.id} | \{item.path}"),
+    ]),
+  ])
+}
+
+///|
+fn review_limit(items : Array[ReviewItem]) -> Int {
+  if items.length() > 12 {
+    12
+  } else {
+    items.length()
   }
 }

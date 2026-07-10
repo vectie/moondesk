@@ -82,7 +82,7 @@ test "markdown editor preview follows draft content" {
 }
 
 ///|
-test "navigating away clears markdown editor state" {
+test "navigating away protects markdown editor state until confirmed" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {
     ..init_model(),
@@ -92,15 +92,58 @@ test "navigating away clears markdown editor state" {
     markdown_editor_content: "# Draft\n",
     markdown_editor_status: "editing wiki/index.md",
   }
-  let (_, next) = update_navigation_actions(
+  let (_, pending) = update_navigation_actions(
     dispatch,
     SelectPath("wiki/other.md"),
     model,
+  )
+  assert_eq(pending.selected_path, "wiki/index.md")
+  assert_eq(pending.markdown_editor_path, "wiki/index.md")
+  assert_eq(pending.markdown_editor_content, "# Draft\n")
+  assert_true(
+    pending.pending_markdown_navigation is PendingPath("wiki/other.md"),
+  )
+  let (_, next) = update_navigation_actions(
+    dispatch,
+    ConfirmDiscardMarkdownNavigation,
+    pending,
   )
   assert_eq(next.selected_path, "wiki/other.md")
   assert_eq(next.markdown_editor_path, "")
   assert_eq(next.markdown_editor_content, "")
   assert_eq(next.markdown_editor_status, "editor idle")
+  assert_true(next.pending_markdown_navigation is NoPendingMarkdownNavigation)
+}
+
+///|
+test "keeping an unsaved wiki edit cancels deferred navigation" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonWiki,
+    activity: Files,
+    selected_workspace_id: "book-demo",
+    selected_path: "wiki/index.md",
+    markdown_editor_path: "wiki/index.md",
+    markdown_editor_content: "# Draft\n",
+    markdown_editor_status: "editing wiki/index.md",
+  }
+  let (_, pending) = update_navigation_actions(
+    dispatch,
+    SelectActivity(Search),
+    model,
+  )
+  assert_true(pending.activity is Files)
+  assert_true(pending.pending_markdown_navigation is PendingActivity(Search))
+  let (_, next) = update_navigation_actions(
+    dispatch,
+    CancelDiscardMarkdownNavigation,
+    pending,
+  )
+  assert_true(next.activity is Files)
+  assert_eq(next.selected_path, "wiki/index.md")
+  assert_eq(next.markdown_editor_content, "# Draft\n")
+  assert_true(next.pending_markdown_navigation is NoPendingMarkdownNavigation)
 }
 
 ///|

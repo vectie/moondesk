@@ -13,13 +13,18 @@ test "desk command palette stays navigation only" {
 }
 
 ///|
-test "wiki command palette keeps operating commands" {
+test "wiki command palette exposes user jobs without runtime controls" {
   let titles = palette_commands_for_mode(MoonWiki).map(command => command.0)
-  assert_true(titles.contains("Browse Desk"))
+  assert_eq(titles.length(), 7)
+  assert_true(titles.contains("Open Library"))
   assert_true(titles.contains("Search Books"))
-  assert_true(titles.contains("Create Inbox Note"))
-  assert_true(titles.contains("Submit to Town"))
-  assert_true(titles.contains("Start Daemon"))
+  assert_true(titles.contains("New Inbox Note"))
+  assert_true(titles.contains("Open Activity"))
+  assert_true(titles.contains("Open Review"))
+  assert_true(titles.contains("More"))
+  assert_false(titles.contains("Submit to Town"))
+  assert_false(titles.contains("Run Daemon Tick"))
+  assert_false(titles.contains("Start Daemon"))
 }
 
 ///|
@@ -34,11 +39,15 @@ test "command palette filters titles and details" {
       command.0
     },
   )
-  assert_true(daemon_titles.contains("Run Daemon Tick"))
-  assert_true(daemon_titles.contains("Start Daemon"))
-  assert_true(daemon_titles.contains("Enable Supervision"))
-  assert_true(daemon_titles.contains("Stop Daemon"))
-  assert_false(daemon_titles.contains("Search Books"))
+  assert_eq(daemon_titles.length(), 0)
+  let code_daemon_titles = filtered_palette_commands_for_mode(
+    MoonCode,
+    "DAEMON",
+  ).map(command => command.0)
+  assert_true(code_daemon_titles.contains("Run Daemon Tick"))
+  assert_true(code_daemon_titles.contains("Start Daemon"))
+  assert_true(code_daemon_titles.contains("Enable Supervision"))
+  assert_true(code_daemon_titles.contains("Stop Daemon"))
   let code_titles = filtered_palette_commands_for_mode(Desk, "mooncode").map(command => {
     command.0
   })

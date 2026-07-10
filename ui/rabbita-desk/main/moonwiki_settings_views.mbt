@@ -3,47 +3,59 @@ fn render_settings_pane(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  aside(class="activity-pane", [
+  aside(class="activity-pane user-pane more-pane", [
     div(class="pane-heading", [
-      div([p(class="eyebrow", "daily"), h2("Operating Surface")]),
-      button(
-        class="icon-button",
-        title="Notify",
-        on_click=dispatch(NotifyDaily),
-        "N",
-      ),
+      div([p(class="eyebrow", "Book tools"), h2("More")]),
     ]),
-    section(class="side-section", [
-      h3("Today"),
-      info_row("Requests", model.requests.length().to_string()),
-      info_row("Runs", model.runs.length().to_string()),
-      info_row("Goals", model.standing_goals.length().to_string()),
-      button(
-        class="primary-button full",
-        on_click=dispatch(NotifyDaily),
-        "Notify Summary",
-      ),
-      p(class="status-line", model.notification_status),
+    section(class="side-section attention-summary", [
+      h3("Needs your attention"),
+      div(class="attention-counts", [
+        div([
+          strong(model.review_items.length().to_string()),
+          span("Waiting for review"),
+        ]),
+        div([strong(model.runs.length().to_string()), span("Recent results")]),
+        div([
+          strong(model.standing_goals.length().to_string()),
+          span("Automations"),
+        ]),
+      ]),
+      div(class="toolbar-actions stack-actions", [
+        button(
+          class="secondary-button",
+          on_click=dispatch(SelectActivity(Runs)),
+          "Open review",
+        ),
+        button(
+          class="secondary-button",
+          on_click=dispatch(SelectActivity(Town)),
+          "Open activity",
+        ),
+      ]),
     ]),
     render_saved_views_panel(dispatch, model),
-    render_review_queue_panel(dispatch, model),
-    section(class="side-section quiet-advanced", [
-      h3("Calendar Export"),
-      a(
-        class="secondary-button link-button full",
-        href=@desk.town_calendar_url(),
-        target=Blank,
-        rel="noreferrer",
-        "Open ICS",
-      ),
+    details(class="wiki-disclosure", [
+      summary(class="wiki-disclosure-summary", "Calendar and notifications"),
+      div(class="wiki-disclosure-body", [
+        button(
+          class="secondary-button full",
+          on_click=dispatch(NotifyDaily),
+          "Send activity summary",
+        ),
+        p(
+          class="status-line",
+          wiki_notification_status(model.notification_status),
+        ),
+        a(
+          class="secondary-button link-button full",
+          href=@desk.town_calendar_url(),
+          target=Blank,
+          rel="noreferrer",
+          "Open calendar export",
+        ),
+      ]),
     ]),
-    render_cadence_panel(model),
-    render_cadence_calendar(model),
-    render_analytics_panel(model),
-    section(class="side-section quiet-advanced", [
-      h3("Export Snapshot"),
-      pre(class="source-block compact", code(export_snapshot(model))),
-    ]),
+    render_diagnostics_disclosure(dispatch, model),
   ])
 }
 
@@ -53,289 +65,52 @@ fn render_saved_views_panel(
   model : Model,
 ) -> @rabbita.Html {
   section(class="side-section", [
-    h3("Saved Views"),
-    input(
-      class="line-input",
-      value=model.view_title,
-      placeholder="View title",
-      on_input=fn(value) { dispatch(SetViewTitle(value)) },
-    ),
+    h3("Saved views"),
+    input(class="line-input", value=model.view_title, placeholder="View name", on_input=fn(
+      value,
+    ) {
+      dispatch(SetViewTitle(value))
+    }),
     button(
       class="secondary-button full",
       on_click=dispatch(SaveCurrentView),
-      "Save Current View",
+      "Save current view",
     ),
-    div(
-      class="mini-list",
-      model.saved_views.map(view => {
-        button(
-          class="mini-link",
-          title="\{view.id} / \{view.updated_at}",
-          on_click=dispatch(SelectSearchHit(view.workspace_id, view.path)),
-          [
-            span(view.title),
-            small(
-              if view.query == "" {
-                "\{view.path} / \{view.created_at}"
-              } else {
-                "\{view.query} / \{view.path}"
-              },
-            ),
-          ],
-        )
-      }),
-    ),
-  ])
-}
-
-///|
-fn render_review_queue_panel(
-  dispatch : Dispatch[Msg],
-  model : Model,
-) -> @rabbita.Html {
-  section(class="side-section", [
-    h3("Review Queue"),
-    if model.review_items.length() == 0 {
-      p(class="status-line", "none")
+    if model.saved_views.length() == 0 {
+      p(class="status-line", "No saved views yet.")
     } else {
-      div([
-        textarea(
-          class="line-input",
-          value=model.review_decision_note,
-          placeholder="Review decision note",
-          on_input=fn(value) { dispatch(SetReviewDecisionNote(value)) },
-          "",
-        ),
-        p(class="status-line", model.review_decision_status),
-        div(
-          class="mini-list",
-          model.review_items[:review_limit(model.review_items)].map(item => {
-            render_review_queue_item(dispatch, item)
-          }),
-        ),
-      ])
+      div(
+        class="saved-view-list",
+        model.saved_views.map(view => {
+          button(
+            class="saved-view-row",
+            title="\{view.id} | \{view.created_at} | \{view.updated_at}",
+            on_click=dispatch(SelectSearchHit(view.workspace_id, view.path)),
+            [
+              strong(view.title),
+              small(
+                if view.query == "" {
+                  "Saved page"
+                } else {
+                  "Saved search"
+                },
+              ),
+            ],
+          )
+        }),
+      )
     },
   ])
 }
 
 ///|
-fn render_review_queue_item(
-  dispatch : Dispatch[Msg],
-  item : ReviewItem,
-) -> @rabbita.Html {
-  let open_msg = if item.workspace_id == "" {
-    SelectActivity(Town)
+fn wiki_notification_status(status : String) -> String {
+  let value = status.trim().to_lower()
+  if value.contains("requested") {
+    "Summary requested."
+  } else if value.contains("idle") || value == "" {
+    ""
   } else {
-    SelectSearchHit(item.workspace_id, item.path)
+    status
   }
-  div(class="mini-review-item", [
-    button(
-      class="mini-link",
-      title="\{item.id} / \{item.kind} / \{item.detail}",
-      on_click=dispatch(open_msg),
-      [span(item.title), small("\{item.status} / \{item.path}")],
-    ),
-    div(class="toolbar compact", [
-      button(
-        class="secondary-button",
-        title="Accept review item",
-        on_click=dispatch(DecideReviewItem(item, "accepted")),
-        "Accept",
-      ),
-      button(
-        class="secondary-button",
-        title="Reject review item",
-        on_click=dispatch(DecideReviewItem(item, "rejected")),
-        "Reject",
-      ),
-    ]),
-  ])
-}
-
-///|
-fn review_limit(items : Array[ReviewItem]) -> Int {
-  if items.length() > 8 {
-    8
-  } else {
-    items.length()
-  }
-}
-
-///|
-fn render_cadence_panel(model : Model) -> @rabbita.Html {
-  section(class="side-section quiet-advanced", [
-    h3("Cadence"),
-    div(
-      class="cadence-list",
-      model.standing_goals.map(goal => {
-        let due_label = match model.analytics {
-          Some(analytics) if analytics.daemon_tick >= goal.next_due_tick =>
-            "due"
-          Some(analytics) =>
-            "\{goal.next_due_tick - analytics.daemon_tick} ticks"
-          None => "next \{goal.next_due_tick}"
-        }
-        div(class="cadence-row", [
-          span(class="record-kind", due_label),
-          div([
-            strong(goal.title),
-            small("\{goal.source_policy} / every \{goal.cadence_ticks}"),
-          ]),
-        ])
-      }),
-    ),
-  ])
-}
-
-///|
-fn render_cadence_calendar(model : Model) -> @rabbita.Html {
-  let tick = match model.analytics {
-    Some(analytics) => analytics.daemon_tick
-    None => 0
-  }
-  let cells = if model.standing_goals.length() == 0 {
-    [p(class="status-line", "no standing watches")]
-  } else {
-    model.standing_goals.map(goal => {
-      let class_name = "calendar-cell " + cadence_state(tick, goal)
-      div(class=class_name, [
-        span(class="record-kind", cadence_due_label(tick, goal.next_due_tick)),
-        strong(goal.title),
-        small("tick \{goal.next_due_tick}"),
-        small("every \{goal.cadence_ticks} ticks"),
-      ])
-    })
-  }
-  section(class="side-section quiet-advanced", [
-    h3("Calendar"),
-    div(class="calendar-grid", cells),
-  ])
-}
-
-///|
-fn cadence_state(tick : Int, goal : StandingGoalRecord) -> String {
-  if tick > 0 && tick >= goal.next_due_tick {
-    "due"
-  } else if tick > 0 && goal.next_due_tick - tick <= 12 {
-    "soon"
-  } else {
-    "scheduled"
-  }
-}
-
-///|
-fn cadence_due_label(tick : Int, next_due_tick : Int) -> String {
-  if tick > 0 {
-    let delta = next_due_tick - tick
-    if delta <= 0 {
-      "due"
-    } else {
-      "+\{delta}"
-    }
-  } else {
-    "tick"
-  }
-}
-
-///|
-fn render_analytics_panel(model : Model) -> @rabbita.Html {
-  match model.analytics {
-    Some(analytics) => {
-      let outcomes = analytics.no_changes +
-        analytics.updates +
-        analytics.needs_review +
-        analytics.failures +
-        analytics.deferred
-      section(class="side-section quiet-advanced", [
-        h3("Analytics"),
-        info_row("Daemon", "tick \{analytics.daemon_tick}"),
-        info_row("Goals", "\{analytics.standing_goal_count} total"),
-        info_row(
-          "Due",
-          "\{analytics.due_goal_count} / active \{analytics.active_goal_count}",
-        ),
-        info_row("Next Due", analytics.next_due_tick.to_string()),
-        info_row("Requests", analytics.request_count.to_string()),
-        info_row("Messages", analytics.message_count.to_string()),
-        info_row("Runs", analytics.run_count.to_string()),
-        info_row("Watcher", "\{analytics.watcher_run_count} runs"),
-        info_row("No-change", analytics.no_changes.to_string()),
-        info_row("Updates", analytics.updates.to_string()),
-        info_row("Review", analytics.needs_review.to_string()),
-        info_row("Failures", analytics.failures.to_string()),
-        info_row("Deferred", analytics.deferred.to_string()),
-        info_row("Events", analytics.event_count.to_string()),
-        info_row("Failure Events", analytics.failure_event_count.to_string()),
-        info_row("Review Events", analytics.review_event_count.to_string()),
-        info_row("Review Queue", analytics.review_item_count.to_string()),
-        info_row("Last Failure", empty_label(analytics.last_failure)),
-        div(class="outcome-mix", [
-          outcome_row("updates", analytics.updates, outcomes, "updates"),
-          outcome_row("no-change", analytics.no_changes, outcomes, "quiet"),
-          outcome_row("review", analytics.needs_review, outcomes, "review"),
-          outcome_row("failures", analytics.failures, outcomes, "failure"),
-          outcome_row("deferred", analytics.deferred, outcomes, "deferred"),
-        ]),
-      ])
-    }
-    None =>
-      section(class="side-section quiet-advanced", [
-        h3("Analytics"),
-        p(class="status-line", "waiting for town analytics"),
-      ])
-  }
-}
-
-///|
-fn outcome_row(
-  label : String,
-  value : Int,
-  total : Int,
-  tone : String,
-) -> @rabbita.Html {
-  div(class="outcome-row " + tone, [
-    span(label),
-    code("\{value} / \{percent_text(value, total)}"),
-  ])
-}
-
-///|
-fn percent_text(value : Int, total : Int) -> String {
-  if total <= 0 {
-    "0%"
-  } else {
-    "\{value * 100 / total}%"
-  }
-}
-
-///|
-fn daemon_snapshot_label(model : Model) -> String {
-  match model.analytics {
-    Some(analytics) => "tick \{analytics.daemon_tick}"
-    None => "unknown"
-  }
-}
-
-///|
-fn latest_town_message_label(model : Model) -> String {
-  if model.town_messages.length() == 0 {
-    "none"
-  } else {
-    let message = model.town_messages[model.town_messages.length() - 1]
-    message.title
-  }
-}
-
-///|
-fn export_snapshot(model : Model) -> String {
-  "Moondesk snapshot\n" +
-  "workspace: \{workspace_name(model)}\n" +
-  "selected: \{model.selected_path}\n" +
-  "requests: \{model.requests.length()}\n" +
-  "runs: \{model.runs.length()}\n" +
-  "messages: \{model.town_messages.length()}\n" +
-  "latest message: \{latest_town_message_label(model)}\n" +
-  "standing goals: \{model.standing_goals.length()}\n" +
-  "daemon: \{daemon_snapshot_label(model)}\n" +
-  "favorites: \{model.favorites.join(", ")}\n"
 }

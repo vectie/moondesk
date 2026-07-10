@@ -24,13 +24,13 @@ fn initial_mooncode_runtime_mode() -> String {
 ///|
 fn activity_from_slug(slug : String) -> Activity {
   match slug {
-    "files" => Files
+    "library" | "files" => Files
     "desk" => Files
     "search" => Search
     "inbox" => Inbox
-    "town" => Town
-    "runs" => Runs
-    "settings" => Settings
+    "activity" | "town" => Town
+    "review" | "runs" => Runs
+    "more" | "settings" => Settings
     _ => Files
   }
 }
@@ -38,12 +38,12 @@ fn activity_from_slug(slug : String) -> Activity {
 ///|
 fn activity_slug(activity : Activity) -> String {
   match activity {
-    Files => "files"
+    Files => "library"
     Search => "search"
     Inbox => "inbox"
-    Town => "town"
-    Runs => "runs"
-    Settings => "settings"
+    Town => "activity"
+    Runs => "review"
+    Settings => "more"
   }
 }
 
@@ -65,12 +65,12 @@ fn workspace_mode_for_activity(activity : Activity) -> WorkspaceMode {
 ///|
 fn activities() -> Array[ActivityButton] {
   [
-    { key: Files, icon: "F", label: "Files" },
-    { key: Search, icon: "S", label: "Search" },
-    { key: Inbox, icon: "N", label: "Notes" },
-    { key: Town, icon: "T", label: "Town" },
-    { key: Runs, icon: "R", label: "Runs" },
-    { key: Settings, icon: "G", label: "Settings" },
+    { key: Files, label: "Library" },
+    { key: Search, label: "Search" },
+    { key: Inbox, label: "Inbox" },
+    { key: Town, label: "Activity" },
+    { key: Runs, label: "Review" },
+    { key: Settings, label: "More" },
   ]
 }
 

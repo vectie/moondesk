@@ -1435,10 +1435,7 @@ test "workspace metadata result records empty library location" {
     init_model(),
   )
   assert_eq(model.workspace_root_path, "/Users/example/moonsuite")
-  assert_eq(
-    model.workspace_library_path,
-    "/Users/example/moonsuite/books",
-  )
+  assert_eq(model.workspace_library_path, "/Users/example/moonsuite/books")
   assert_eq(model.moonsuite_products.length(), 3)
   assert_eq(workspace_product_count_label(model), "3 products installed")
   assert_eq(workspace_display_products(model).length(), 3)
@@ -2106,7 +2103,7 @@ test "selecting a desk file keeps containing directory context" {
 }
 
 ///|
-test "workspace switch resets stale desk directory and preview state" {
+test "workspace switch confirms draft then resets stale desk context" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {
     ..init_model(),
@@ -2137,10 +2134,18 @@ test "workspace switch resets stale desk directory and preview state" {
     mooncode_new_chat_active: true,
     mooncode_prompt: "stale code draft",
   }
-  let (_, next) = update_navigation_actions(
+  let (_, pending) = update_navigation_actions(
     dispatch,
     SelectWorkspace("book-b"),
     model,
+  )
+  assert_eq(pending.selected_workspace_id, "book-a")
+  assert_eq(pending.markdown_editor_content, "draft")
+  assert_true(pending.pending_markdown_navigation is PendingWorkspace("book-b"))
+  let (_, next) = update_navigation_actions(
+    dispatch,
+    ConfirmDiscardMarkdownNavigation,
+    pending,
   )
   assert_eq(next.selected_workspace_id, "book-b")
   assert_eq(next.selected_path, "")
@@ -2163,6 +2168,7 @@ test "workspace switch resets stale desk directory and preview state" {
   assert_eq(next.desk_path_status, "ready to copy path")
   assert_eq(next.desk_copy_status, "ready to duplicate selection")
   assert_eq(next.desk_trash_status, "ready to trash selection")
+  assert_true(next.pending_markdown_navigation is NoPendingMarkdownNavigation)
 }
 
 ///|

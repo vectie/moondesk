@@ -73,6 +73,10 @@ fn update(
     OpenDeskLocation => update_navigation_actions(dispatch, msg, model)
     OpenQuickPath(_) => update_navigation_actions(dispatch, msg, model)
     SelectSearchHit(_, _) => update_navigation_actions(dispatch, msg, model)
+    ConfirmDiscardMarkdownNavigation =>
+      update_navigation_actions(dispatch, msg, model)
+    CancelDiscardMarkdownNavigation =>
+      update_navigation_actions(dispatch, msg, model)
     SetNewBookName(_) => update_workspace_surface_actions(dispatch, msg, model)
     SetNewBookId(_) => update_workspace_surface_actions(dispatch, msg, model)
     CreateBlankMoonBook =>

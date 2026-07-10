@@ -15,7 +15,9 @@ fn render_standing_goal_list(model : Model) -> @rabbita.Html {
         strong(goal.title),
         small("\{goal.target_book_id} / every \{goal.cadence_ticks} ticks"),
         small("next \{goal.next_due_tick} / last \{last_run_label(goal)}"),
-        small("review \{goal.review_policy} / \{goal.prompt}"),
+        small(
+          "source \{goal.source_policy} / review \{goal.review_policy} / \{goal.prompt}",
+        ),
       ])
     }),
   )

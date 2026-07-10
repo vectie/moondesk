@@ -1423,7 +1423,7 @@ async test "workspace preview handles text image virtual and missing entries" {
 }
 
 ///|
-async test "review item collection includes source files and decision receipts" {
+async test "review item collection keeps only undecided proposals" {
   let root = @pathx.join(
     "/tmp",
     "moondesk-review-items-wbtest-" + @async.now().to_string(),
@@ -1439,10 +1439,18 @@ async test "review item collection includes source files and decision receipts" 
     "# Pending\n",
   )
   @fsx.write_to_file(
-    @pathx.join(book_root, "wiki/reviews/rejected.md"),
-    "# Rejected\n",
+    @pathx.join(book_root, "wiki/reviews/second-pending.md"),
+    "# Second pending\n",
+  )
+  @fsx.write_to_file(
+    @pathx.join(book_root, "wiki/reviews/approved.md"),
+    "# Approved\n",
   )
   let workspace_id = @desk.stable_id("book", "research-review")
+  let before = Json::array(collect_review_items(root, Some(workspace_id), 120)).stringify()
+  assert_true(before.contains("wiki/reviews/pending.md"))
+  assert_true(before.contains("wiki/reviews/second-pending.md"))
+  assert_false(before.contains("wiki/reviews/approved.md"))
   let accepted = write_review_item_decision(root, {
     "workspace_id": workspace_id,
     "path": "wiki/reviews/pending.md",
@@ -1451,7 +1459,7 @@ async test "review item collection includes source files and decision receipts" 
   })
   let rejected = write_review_item_decision(root, {
     "workspace_id": workspace_id,
-    "path": "wiki/reviews/rejected.md",
+    "path": "wiki/reviews/second-pending.md",
     "decision": "rejected",
     "note": "rejected",
   })
@@ -1471,10 +1479,10 @@ async test "review item collection includes source files and decision receipts" 
   }
   let items = collect_review_items(root, Some(workspace_id), 120)
   let text = Json::array(items).stringify()
-  assert_true(text.contains("wiki/reviews/pending.md"))
-  assert_true(text.contains("wiki/reviews/rejected.md"))
-  assert_true(text.contains(accepted_path))
-  assert_true(text.contains(rejected_path))
+  assert_false(text.contains("wiki/reviews/pending.md"))
+  assert_false(text.contains("wiki/reviews/second-pending.md"))
+  assert_false(text.contains(accepted_path))
+  assert_false(text.contains(rejected_path))
 }
 
 ///|
@@ -1965,9 +1973,10 @@ async test "wiki server routes cover forward and backward book runs" {
       200,
     )
     let review_text = review_items.stringify()
-    assert_true(review_text.contains("wiki/reviews/pending.md"))
-    assert_true(review_text.contains(accepted_receipt_path))
-    assert_true(review_text.contains(rejected_receipt_path))
+    assert_false(review_text.contains("wiki/reviews/pending.md"))
+    assert_false(review_text.contains("wiki/reviews/rejected.md"))
+    assert_false(review_text.contains(accepted_receipt_path))
+    assert_false(review_text.contains(rejected_receipt_path))
 
     ignore(
       test_http_post_json(

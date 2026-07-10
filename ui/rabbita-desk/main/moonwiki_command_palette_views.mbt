@@ -88,7 +88,41 @@ fn palette_commands_for_mode(
           SelectWorkspaceMode(MoonCode),
         ),
       ]
-    MoonWiki | MoonCode =>
+    MoonWiki =>
+      [
+        (
+          "Open Library",
+          "Read pages in the current book",
+          SelectActivity(Files),
+        ),
+        (
+          "Search Books",
+          "Find pages, notes, and sources",
+          SelectActivity(Search),
+        ),
+        (
+          "New Inbox Note",
+          "Capture a note in the current book",
+          SelectActivity(Inbox),
+        ),
+        ("Open Activity", "See tasks and their results", SelectActivity(Town)),
+        (
+          "Open Review",
+          "Review proposed knowledge changes",
+          SelectActivity(Runs),
+        ),
+        (
+          "More",
+          "Open automations, saved views, and diagnostics",
+          SelectActivity(Settings),
+        ),
+        (
+          "Open MoonCode",
+          "Open a book-scoped coding session",
+          SelectWorkspaceMode(MoonCode),
+        ),
+      ]
+    MoonCode =>
       [
         (
           "Browse Desk",
@@ -150,12 +184,6 @@ fn palette_command(
 
 ///|
 fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  let raw_status = if model.loading {
-    "loading workspace"
-  } else {
-    model.host_status
-  }
-  let status = title_bar_status_label(raw_status)
   header(class="title-bar", [
     div(class="workspace-mode-toggle", [
       button(
@@ -183,43 +211,13 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       span(class="workspace-switcher", workspace_name(model)),
       span(class="mode-caption", workspace_mode_summary(model.workspace_mode)),
     ]),
-    div(class="sync-status", [
-      span(class=title_bar_status_dot_class(raw_status), ""),
-      span(status),
-    ]),
+    button(
+      class="command-button",
+      title=if model.loading { "Workspace is loading" } else { "Open commands" },
+      on_click=dispatch(ToggleCommand),
+      "Commands",
+    ),
   ])
-}
-
-///|
-fn title_bar_status_label(status : String) -> String {
-  let text = status.trim().to_owned()
-  if text == "" {
-    "local preview connected"
-  } else if title_bar_status_is_transport_error(text) {
-    "local preview connected"
-  } else {
-    text
-  }
-}
-
-///|
-fn title_bar_status_dot_class(status : String) -> String {
-  let text = status.trim().to_owned()
-  if text == "" || title_bar_status_is_transport_error(text) {
-    "status-dot idle"
-  } else {
-    "status-dot live"
-  }
-}
-
-///|
-fn title_bar_status_is_transport_error(status : String) -> Bool {
-  status.contains("JSON") ||
-  status.contains("Json") ||
-  status.contains("parse") ||
-  status.contains("Invalid") ||
-  status.contains("Unexpected token") ||
-  status.contains("<!DOCTYPE")
 }
 
 ///|

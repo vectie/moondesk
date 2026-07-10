@@ -1,4 +1,78 @@
 ///|
+fn render_diagnostics_disclosure(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  details(class="wiki-disclosure diagnostics-disclosure", [
+    summary(class="wiki-disclosure-summary", "Diagnostics"),
+    div(class="wiki-disclosure-body diagnostics-body", [
+      p(
+        class="diagnostics-intro",
+        "Technical service information for troubleshooting. Normal Wiki work should not require these controls.",
+      ),
+      render_town_progress_panel(model),
+      render_event_panel(model),
+      render_runtime_diagnostics(model),
+      render_standing_goal_list(model),
+      render_request_list(model),
+      render_daemon_lifecycle_panel(dispatch, model),
+    ]),
+  ])
+}
+
+///|
+fn render_runtime_diagnostics(model : Model) -> @rabbita.Html {
+  section(class="side-section", [
+    h3("Runtime summary"),
+    match model.analytics {
+      Some(analytics) =>
+        div([
+          info_row("Tick", analytics.daemon_tick.to_string()),
+          info_row("Goals", analytics.standing_goal_count.to_string()),
+          info_row("Due", analytics.due_goal_count.to_string()),
+          info_row("Active", analytics.active_goal_count.to_string()),
+          info_row("Requests", analytics.request_count.to_string()),
+          info_row("Messages", analytics.message_count.to_string()),
+          info_row("Runs", analytics.run_count.to_string()),
+          info_row("Watcher Runs", analytics.watcher_run_count.to_string()),
+          info_row("Updates", analytics.updates.to_string()),
+          info_row("No Change", analytics.no_changes.to_string()),
+          info_row("Needs Review", analytics.needs_review.to_string()),
+          info_row("Failures", analytics.failures.to_string()),
+          info_row("Deferred", analytics.deferred.to_string()),
+          info_row("Events", analytics.event_count.to_string()),
+          info_row("Failure Events", analytics.failure_event_count.to_string()),
+          info_row("Review Events", analytics.review_event_count.to_string()),
+          info_row("Review Items", analytics.review_item_count.to_string()),
+          info_row("Next Due", analytics.next_due_tick.to_string()),
+          info_row("Last Failure", empty_label(analytics.last_failure)),
+        ])
+      None => p(class="status-line", "analytics unavailable")
+    },
+    match model.moonclaw_progress {
+      Some(progress) =>
+        div([
+          info_row("Worker Runs", progress.run_count.to_string()),
+          info_row("Ready", progress.ready_count.to_string()),
+          info_row("Artifacts", progress.artifact_count.to_string()),
+          info_row("Latest Run", empty_label(progress.latest_run)),
+          info_row("Latest Status", empty_label(progress.latest_status)),
+        ])
+      None => p(class="status-line", "worker progress unavailable")
+    },
+    info_row("Messages Loaded", model.town_messages.length().to_string()),
+    if model.town_messages.length() == 0 {
+      @html.nothing
+    } else {
+      info_row(
+        "Latest Message",
+        model.town_messages[model.town_messages.length() - 1].title,
+      )
+    },
+  ])
+}
+
+///|
 fn render_daemon_lifecycle_panel(
   dispatch : Dispatch[Msg],
   model : Model,

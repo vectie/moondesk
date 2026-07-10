@@ -109,11 +109,14 @@ async fn collect_review_items(
       Some(id) if id != workspace.id => continue
       _ => ()
     }
+    let decided_paths = review_decided_source_paths(workspace.root_path)
     for
       review_root in [
         "wiki/reviews", "wiki/review", "reviews", "review", "book/reviews", "book/review",
       ] {
-      collect_review_directory(workspace, review_root, items, limit)
+      collect_review_directory(
+        workspace, review_root, decided_paths, items, limit,
+      )
       if items.length() >= limit {
         return items
       }
@@ -151,6 +154,7 @@ async fn collect_review_items(
 async fn collect_review_directory(
   workspace : @desk.DeskWorkspace,
   relative : String,
+  decided_paths : Array[String],
   items : Array[Json],
   limit : Int,
 ) -> Unit {
@@ -168,7 +172,11 @@ async fn collect_review_directory(
     let path = relative + "/" + name
     let absolute = @pathx.join(workspace.root_path, path)
     if is_directory(absolute) {
-      collect_review_directory(workspace, path, items, limit)
+      if !review_path_is_completed(path) {
+        collect_review_directory(workspace, path, decided_paths, items, limit)
+      }
+    } else if review_path_is_completed(path) || decided_paths.contains(path) {
+      continue
     } else {
       items.push({
         "id": @desk.stable_id("review", workspace.id + ":" + path),
@@ -189,4 +197,37 @@ async fn collect_review_directory(
       })
     }
   }
+}
+
+///|
+async fn review_decided_source_paths(book_root : String) -> Array[String] {
+  let paths : Array[String] = []
+  let root = @pathx.join(book_root, "wiki/reviews/decisions")
+  if !is_directory(root) {
+    return paths
+  }
+  for name in read_directory_names(root, include_hidden=false) {
+    let absolute = @pathx.join(root, name)
+    if is_directory(absolute) {
+      continue
+    }
+    let source_path = json_string(
+      read_json_file_or_object(absolute),
+      "source_path",
+      default="",
+    )
+    if source_path != "" && !paths.contains(source_path) {
+      paths.push(source_path)
+    }
+  }
+  paths
+}
+
+///|
+fn review_path_is_completed(path : String) -> Bool {
+  let value = path.to_lower()
+  value.contains("/decisions/") ||
+  value.contains("approved") ||
+  value.contains("accepted") ||
+  value.contains("rejected")
 }

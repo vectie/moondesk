@@ -121,8 +121,7 @@ fn update_workspace_results(
           preview: Some(preview),
           preview_status: "preview ready",
           recent_paths: remember_path(model.recent_paths, model.selected_path),
-          inbox_content: if model.editing_inbox_path == model.selected_path &&
-            is_textual_renderer(preview.renderer) {
+          inbox_content: if should_load_preview_into_inbox(model, preview) {
             preview.body
           } else {
             model.inbox_content
@@ -600,6 +599,16 @@ fn update_workspace_results(
       )
     _ => (@rabbita.none, model)
   }
+}
+
+///|
+fn should_load_preview_into_inbox(
+  model : Model,
+  preview : @desk.DeskPreview,
+) -> Bool {
+  model.editing_inbox_path != "" &&
+  model.editing_inbox_path == model.selected_path &&
+  is_textual_renderer(preview.renderer)
 }
 
 ///|

@@ -30,6 +30,26 @@ fn sync_activity_batch(activity : Activity, cmd : @rabbita.Cmd) -> @rabbita.Cmd 
 }
 
 ///|
+fn sync_workspace_context_cmd(
+  workspace_id : String,
+  path : String,
+) -> @rabbita.Cmd {
+  @cmd.custom_cmd(
+    _ => browser_set_workspace_context(workspace_id, path),
+    kind=AfterRender,
+  )
+}
+
+///|
+fn sync_workspace_context_batch(
+  workspace_id : String,
+  path : String,
+  cmd : @rabbita.Cmd,
+) -> @rabbita.Cmd {
+  @rabbita.batch([cmd, sync_workspace_context_cmd(workspace_id, path)])
+}
+
+///|
 fn sync_shell_batch(
   mode : WorkspaceMode,
   activity : Activity,

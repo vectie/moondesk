@@ -13,7 +13,7 @@ fn preview_tabs(model : Model) -> Array[PreviewTab] {
   })
   if primary_path != "book/site/generated/index.html" {
     tabs.push({
-      title: "generated site",
+      title: "Published",
       path: "book/site/generated/index.html",
       renderer: Html,
     })
@@ -21,7 +21,7 @@ fn preview_tabs(model : Model) -> Array[PreviewTab] {
   match first_run_report_path(model) {
     Some(path) =>
       if path != primary_path && path != "book/site/generated/index.html" {
-        tabs.push({ title: "run report", path, renderer: ArtifactSummary })
+        tabs.push({ title: "Latest result", path, renderer: ArtifactSummary })
       }
     None => ()
   }
@@ -85,10 +85,38 @@ fn render_preview_body(
   }
   match model.preview {
     None =>
-      div(class="markdown-preview", [
-        h1("Preview"),
-        p(class="lead", model.preview_status),
-      ])
+      if wiki_book_is_empty(model) {
+        section(class="wiki-empty-book", [
+          h1("Start this book"),
+          p(
+            class="lead",
+            "Capture your first note or ask Wiki to turn a question into useful book content.",
+          ),
+          div(class="wiki-empty-book-actions", [
+            button(
+              class="primary-button",
+              on_click=dispatch(SelectActivity(Inbox)),
+              "Create a note",
+            ),
+            button(
+              class="secondary-button",
+              on_click=dispatch(SelectActivity(Town)),
+              "Ask this book",
+            ),
+          ]),
+        ])
+      } else if model.preview_status.to_lower().contains("loading") ||
+        model.preview_status.to_lower().contains("waiting") {
+        div(class="markdown-preview", [
+          h1("Opening page"),
+          p(class="lead", "Please wait."),
+        ])
+      } else {
+        div(class="markdown-preview", [
+          h1("Choose a page"),
+          p(class="lead", "Select a page from the library to read it here."),
+        ])
+      }
     Some(preview) =>
       match preview.renderer {
         Html =>
@@ -142,11 +170,12 @@ fn render_markdown_editor(
   section(class="markdown-edit-surface", [
     div(class="site-toolbar", [
       span(class="quiet-path", model.markdown_editor_path),
-      span(class="record-kind", model.markdown_editor_status),
+      span(class="editor-save-state", wiki_editor_status_label(model)),
     ]),
     div(class="markdown-editor-grid", [
       textarea(
         class="markdown-editor",
+        attrs=@html.Attrs::build().aria_label("Edit page Markdown"),
         rows=28,
         value=model.markdown_editor_content,
         on_input=fn(value) { dispatch(SetMarkdownEditorContent(value)) },
@@ -222,22 +251,12 @@ fn render_preview_center(
     div(class="preview-toolbar", [
       span(class="path-pill quiet-path", model.selected_path),
       div(class="toolbar-actions", [
-        button(
-          class=if has_string(model.favorites, model.selected_path) {
-            "secondary-button active"
-          } else {
-            "secondary-button"
-          },
-          on_click=dispatch(ToggleFavorite(model.selected_path)),
-          "Favorite",
-        ),
-        a(
-          class="secondary-button link-button",
-          href=raw_url(model, model.selected_path),
-          target=Blank,
-          rel="noreferrer",
-          "Open Raw",
-        ),
+        if !markdown_editor_active(model) &&
+          model.markdown_editor_status.to_lower().contains("saved") {
+          span(class="editor-save-state saved", "Saved")
+        } else {
+          @html.nothing
+        },
         if markdown_editor_active(model) {
           button(
             class="primary-button",
@@ -246,7 +265,7 @@ fn render_preview_center(
           )
         } else if can_edit_markdown_selection(model) {
           button(
-            class="secondary-button",
+            class="primary-button",
             on_click=dispatch(StartMarkdownEdit),
             "Edit",
           )
@@ -262,18 +281,129 @@ fn render_preview_center(
         } else {
           @html.nothing
         },
-        button(
-          class="secondary-button",
-          on_click=dispatch(RevealSelection),
-          "Reveal",
-        ),
-        button(
-          class="primary-button",
-          on_click=dispatch(ToggleCommand),
-          "Command",
-        ),
+        if markdown_editor_active(model) {
+          @html.nothing
+        } else {
+          render_sources_history_menu(dispatch, model)
+        },
+        if markdown_editor_active(model) {
+          @html.nothing
+        } else {
+          render_document_more_menu(dispatch, model)
+        },
       ]),
     ]),
     section(class="preview-surface", [render_preview_body(dispatch, model)]),
+  ])
+}
+
+///|
+fn render_unsaved_markdown_navigation(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  if model.pending_markdown_navigation is NoPendingMarkdownNavigation {
+    @html.nothing
+  } else {
+    div(class="unsaved-navigation-backdrop", [
+      section(
+        class="unsaved-navigation-dialog",
+        attrs=@html.Attrs::build()
+          .role("dialog")
+          .aria_label("Discard unsaved changes?"),
+        [
+          h2("Discard unsaved changes?"),
+          p(wiki_unsaved_navigation_message(model)),
+          div(class="unsaved-navigation-actions", [
+            button(
+              class="primary-button",
+              on_click=dispatch(CancelDiscardMarkdownNavigation),
+              "Keep editing",
+            ),
+            button(
+              class="secondary-button danger-button",
+              on_click=dispatch(ConfirmDiscardMarkdownNavigation),
+              "Discard changes",
+            ),
+          ]),
+        ],
+      ),
+    ])
+  }
+}
+
+///|
+fn wiki_unsaved_navigation_message(model : Model) -> String {
+  "Your changes to " +
+  @desk.display_name(model.markdown_editor_path) +
+  " have not been saved."
+}
+
+///|
+fn render_sources_history_menu(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  details(class="toolbar-disclosure", [
+    summary(class="secondary-button disclosure-button", "Sources and history"),
+    div(class="disclosure-panel", [
+      strong("Trace this book's knowledge"),
+      p(
+        "Review proposed changes, completed work, and original material without leaving Wiki.",
+      ),
+      div(class="button-stack", [
+        button(
+          class="secondary-button full",
+          on_click=dispatch(SelectActivity(Runs)),
+          "Open review",
+        ),
+        button(
+          class="secondary-button full",
+          on_click=dispatch(SelectActivity(Town)),
+          "Open activity",
+        ),
+      ]),
+      details(class="technical-details", [
+        summary("Technical location"),
+        code(model.selected_path),
+      ]),
+    ]),
+  ])
+}
+
+///|
+fn render_document_more_menu(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  details(class="toolbar-disclosure", [
+    summary(class="secondary-button disclosure-button", "More"),
+    div(class="disclosure-panel compact-menu", [
+      button(
+        class=if has_string(model.favorites, model.selected_path) {
+          "secondary-button active full"
+        } else {
+          "secondary-button full"
+        },
+        on_click=dispatch(ToggleFavorite(model.selected_path)),
+        if has_string(model.favorites, model.selected_path) {
+          "Remove favorite"
+        } else {
+          "Add favorite"
+        },
+      ),
+      a(
+        class="secondary-button link-button full",
+        href=raw_url(model, model.selected_path),
+        target=Blank,
+        rel="noreferrer",
+        "Open original",
+      ),
+      button(
+        class="secondary-button full",
+        on_click=dispatch(RevealSelection),
+        "Reveal in files",
+      ),
+    ]),
   ])
 }

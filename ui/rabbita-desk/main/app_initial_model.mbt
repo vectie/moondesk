@@ -1,5 +1,6 @@
 ///|
 fn init_model() -> Model {
+  let initial_path = browser_initial_path()
   {
     bootstrapped: false,
     workspace_mode: initial_workspace_mode(),
@@ -14,13 +15,13 @@ fn init_model() -> Model {
     workspace_books_root_path: "",
     moonsuite_products: [],
     workspaces: [],
-    selected_workspace_id: "",
+    selected_workspace_id: browser_initial_workspace(),
     new_book_name: "Untitled MoonBook",
     new_book_id: "research-untitled-moonbook",
     new_book_status: "ready to create MoonBook",
     import_book_path: "",
     import_book_status: "ready to import existing MoonBook",
-    current_directory: "",
+    current_directory: parent_path(initial_path),
     desk_location_input: "",
     desk_filter_query: "",
     desk_back_stack: [],
@@ -47,14 +48,19 @@ fn init_model() -> Model {
     desk_trash_status: "ready to trash selection",
     desk_last_trash_path: "",
     desk_trash_entries: [],
-    selected_path: "",
-    primary_preview_path: "wiki/index.md",
+    selected_path: initial_path,
+    primary_preview_path: if initial_path == "" {
+      "wiki/index.md"
+    } else {
+      initial_path
+    },
     preview: None,
     preview_status: "waiting for workspace",
     markdown_editor_path: "",
     markdown_editor_content: "",
     markdown_editor_status: "editor idle",
-    request_prompt: "Summarize what matters in the selected document and suggest the next useful book update.",
+    pending_markdown_navigation: NoPendingMarkdownNavigation,
+    request_prompt: "",
     request_status: "draft",
     requests: [],
     standing_goals: [],
@@ -86,7 +92,7 @@ fn init_model() -> Model {
     review_decision_status: "review decisions idle",
     town_messages: [],
     runs: [],
-    inbox_title: "Operator note",
+    inbox_title: "Untitled note",
     inbox_content: "",
     import_url: "",
     import_note: "",

@@ -31,6 +31,7 @@ fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           ])
         },
         render_command_palette(dispatch, model),
+        render_unsaved_markdown_navigation(dispatch, model),
       ])
   }
 }
