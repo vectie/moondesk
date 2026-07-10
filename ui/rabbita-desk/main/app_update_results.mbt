@@ -48,7 +48,7 @@ fn update_app_results(
     | ManagedLaunchAgent(_)
     | RevealedSelection(_) => update_daemon_results(dispatch, msg, model)
     LocalFilesPicked(_) =>
-      if model.workspace_mode == Desk && model.activity == Files {
+      if model.workspace_mode == Desk {
         update_workspace_results(dispatch, msg, model)
       } else {
         update_inbox_results(dispatch, msg, model)

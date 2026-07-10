@@ -1235,6 +1235,28 @@ test "desk local file import stays in current directory" {
   )
   assert_true(importing.activity is Files)
   assert_eq(importing.desk_new_item_status, "importing 1 local file(s)")
+  let (_, stale_activity_importing) = update_app_results(
+    dispatch,
+    LocalFilesPicked(
+      Ok([
+        {
+          id: "drop:stale.txt:5:1",
+          name: "stale.txt",
+          relative_path: None,
+          media_type: "text/plain",
+          content: "stale",
+          source: "drop",
+        },
+      ]),
+    ),
+    { ..model, activity: Inbox },
+  )
+  assert_true(stale_activity_importing.workspace_mode is Desk)
+  assert_true(stale_activity_importing.activity is Inbox)
+  assert_eq(
+    stale_activity_importing.desk_new_item_status,
+    "importing 1 local file(s)",
+  )
   let (_, imported) = update_workspace_results(
     dispatch,
     ImportedDeskFiles(
