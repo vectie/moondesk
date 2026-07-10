@@ -13,6 +13,13 @@ Desk tests must not become Wiki or Code workflow tests.
 The user-facing information hierarchy and progressive-disclosure rules are
 defined in [DESK_MODE_UX_PLAN.md](DESK_MODE_UX_PLAN.md).
 
+The executable user-journey methodology, expected visible experience, and
+achievability rubric are defined in
+[DESK_MODE_USER_JOURNEY_E2E.md](DESK_MODE_USER_JOURNEY_E2E.md).
+
+The latest completed execution is recorded in
+[DESK_MODE_USER_JOURNEY_E2E_REPORT_2026-07-10.md](DESK_MODE_USER_JOURNEY_E2E_REPORT_2026-07-10.md).
+
 ## Goal
 
 Prove that Desk behaves like a scoped Finder/File Explorer over Moondesk's
