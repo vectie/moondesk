@@ -18,7 +18,7 @@ fn render_desk_workspace_sidebar(
 ) -> @rabbita.Html {
   aside(class="desk-sidebar", [
     div(class="pane-heading", [
-      div([p(class="eyebrow", "library"), h2("MoonBooks")]),
+      div([h2("MoonBooks")]),
       button(
         class="secondary-button compact-button",
         title="Refresh",
@@ -27,7 +27,6 @@ fn render_desk_workspace_sidebar(
       ),
     ]),
     render_desk_library_location(model),
-    render_desk_service_status(model),
     render_new_moonbook_panel(dispatch, model),
     div(
       class="desk-workspace-list",
@@ -47,14 +46,9 @@ fn render_desk_workspace_sidebar(
           } else {
             "desk-workspace-row " + workspace_status_class(workspace.status)
           }
-          let meta_children : Array[@rabbita.Html] = [
-            span(
-              class="desk-workspace-kind",
-              workspace_kind_label(workspace.kind),
-            ),
-          ]
+          let row_children : Array[@rabbita.Html] = [strong(workspace.name)]
           if workspace.status != Ready {
-            meta_children.push(
+            row_children.push(
               span(
                 class="desk-workspace-status",
                 workspace_status_label(workspace.status),
@@ -71,16 +65,16 @@ fn render_desk_workspace_sidebar(
               .data_set("workspace-id", workspace.id)
               .data_set("status", workspace_status_key(workspace.status)),
             on_click=dispatch(SelectWorkspace(workspace.id)),
-            [
-              div(class="desk-workspace-meta", meta_children),
-              strong(workspace.name),
-              small(workspace_display_book_location(model, workspace)),
-            ],
+            row_children,
           )
         })
       },
     ),
-    render_desk_quick_access(dispatch, model),
+    if model.favorites.length() > 0 || model.recent_paths.length() > 0 {
+      render_desk_quick_access(dispatch, model)
+    } else {
+      div(class="desk-quick-access-empty", [@html.nothing])
+    },
     render_desk_folder_outline(dispatch, model),
   ])
 }
@@ -90,13 +84,12 @@ fn render_desk_quick_access(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  section(
-    class="desk-quick-access",
-    attrs=@html.Attrs::build().data_set("testid", "desk-quick-access"),
-    [
-      div(class="pane-heading compact-heading", [
-        div([p(class="eyebrow", "quick access"), h2("Favorites")]),
-      ]),
+  let groups : Array[@rabbita.Html] = []
+  let recent_paths = model.recent_paths.filter(path => {
+    !model.favorites.contains(path)
+  })
+  if model.favorites.length() > 0 {
+    groups.push(
       render_desk_quick_path_group(
         dispatch,
         model,
@@ -104,13 +97,21 @@ fn render_desk_quick_access(
         "desk-favorite-row",
         model.favorites,
       ),
+    )
+  }
+  if recent_paths.length() > 0 {
+    groups.push(
       render_desk_quick_path_group(
-        dispatch,
-        model,
-        "Recent",
-        "desk-recent-row",
-        model.recent_paths,
+        dispatch, model, "Recent", "desk-recent-row", recent_paths,
       ),
+    )
+  }
+  section(
+    class="desk-quick-access",
+    attrs=@html.Attrs::build().data_set("testid", "desk-quick-access"),
+    [
+      div(class="pane-heading compact-heading", [div([h2("Quick Access")])]),
+      div(class="desk-quick-groups", groups),
     ],
   )
 }
@@ -125,30 +126,23 @@ fn render_desk_quick_path_group(
 ) -> @rabbita.Html {
   div(class="desk-quick-group", [
     strong(label),
-    if paths.length() == 0 {
-      p(class="status-line", "No " + label.to_lower())
-    } else {
-      div(
-        class="desk-quick-list",
-        paths.map(path => {
-          button(
-            class=desk_quick_path_row_class(model, path),
-            title=path,
-            attrs=@html.Attrs::build()
-              .data_set("testid", testid)
-              .data_set("path", path),
-            on_click=dispatch(OpenQuickPath(path)),
-            [
-              span(
-                class="tree-icon",
-                icon_for_kind(quick_path_kind(model, path)),
-              ),
-              span(class="folder-label", empty_root_path(path)),
-            ],
-          )
-        }),
-      )
-    },
+    div(
+      class="desk-quick-list",
+      paths.map(path => {
+        button(
+          class=desk_quick_path_row_class(model, path),
+          title=path,
+          attrs=@html.Attrs::build()
+            .data_set("testid", testid)
+            .data_set("path", path),
+          on_click=dispatch(OpenQuickPath(path)),
+          [
+            span(class="tree-icon", icon_for_kind(quick_path_kind(model, path))),
+            span(class="folder-label", empty_root_path(path)),
+          ],
+        )
+      }),
+    ),
   ])
 }
 
@@ -175,13 +169,49 @@ fn render_desk_library_location(model : Model) -> @rabbita.Html {
     class="desk-library-location",
     attrs=@html.Attrs::build().data_set("testid", "desk-library-root"),
     [
-      div([
-        p(class="eyebrow", "active moonsuite"),
-        strong(workspace_suite_display_name(model)),
+      div(class="desk-library-summary", [
+        div([p(class="eyebrow", "Library"), strong("My MoonBooks")]),
+        span(class="desk-library-count", workspace_library_count_label(model)),
       ]),
-      small(workspace_library_count_label(model)),
-      code(workspace_books_display_label(model)),
+      render_desk_library_diagnostics(model),
+    ],
+  )
+}
+
+///|
+fn render_desk_library_diagnostics(model : Model) -> @rabbita.Html {
+  desk_disclosure(
+    "desk-library-diagnostics",
+    "desk-library-storage-details",
+    "Storage & services",
+    [
+      div(class="desk-technical-list", [
+        info_row("Library", workspace_moonbook_library_path(model)),
+        info_row("Suite", workspace_library_root(model)),
+      ]),
+      render_desk_service_status(model),
       render_desk_product_summary(model),
+    ],
+  )
+}
+
+///|
+fn desk_disclosure(
+  class_name : String,
+  testid : String,
+  label : String,
+  children : Array[@rabbita.Html],
+) -> @rabbita.Html {
+  @html.node(
+    "details",
+    @html.Attrs::build().class(class_name).data_set("testid", testid),
+    [
+      @html.node(
+        "summary",
+        @html.Attrs::build().class("desk-disclosure-summary"),
+        [span(label)],
+      ),
+      div(class="desk-disclosure-body", children),
     ],
   )
 }
@@ -192,9 +222,7 @@ fn render_desk_service_status(model : Model) -> @rabbita.Html {
     class="desk-service-status",
     attrs=@html.Attrs::build().data_set("testid", "desk-service-status"),
     [
-      div(class="pane-heading compact-heading", [
-        div([p(class="eyebrow", "services"), h2("Status")]),
-      ]),
+      strong(class="desk-technical-heading", "Services"),
       div(
         class="desk-service-list",
         workspace_service_status_items(model).map(item => {
@@ -257,69 +285,89 @@ fn render_new_moonbook_panel(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  section(class="desk-new-book-panel", [
-    div(class="desk-library-action", [
-      strong("Create MoonBook"),
-      input(
-        class="line-input",
-        attrs=@html.Attrs::build().data_set("testid", "desk-new-book-name"),
-        value=model.new_book_name,
-        placeholder="MoonBook name",
-        on_input=fn(value) { dispatch(SetNewBookName(value)) },
-      ),
-      input(
-        class="line-input",
-        attrs=@html.Attrs::build().data_set("testid", "desk-new-book-id"),
-        value=model.new_book_id,
-        placeholder="book id",
-        on_input=fn(value) { dispatch(SetNewBookId(value)) },
-      ),
-      button(
-        class="primary-button full",
-        attrs=@html.Attrs::build().data_set("testid", "desk-create-book"),
-        title="Create MoonBook in the Moondesk workspace library",
-        disabled=desk_create_book_disabled(model),
-        on_click=dispatch(CreateBlankMoonBook),
-        "Create MoonBook",
-      ),
-      p(class="status-line", model.new_book_status),
-    ]),
-    div(class="desk-library-action", [
-      strong("Import Folder"),
-      input(
-        class="line-input",
-        attrs=@html.Attrs::build().data_set("testid", "desk-import-book-path"),
-        value=model.import_book_path,
-        placeholder="/path/to/existing/moonbook",
-        on_input=fn(value) { dispatch(SetImportBookPath(value)) },
-      ),
-      button(
-        class="secondary-button full",
-        attrs=@html.Attrs::build().data_set("testid", "desk-import-book"),
-        title="Copy an existing MoonBook folder into the Moondesk workspace library",
-        disabled=desk_import_book_disabled(model),
-        on_click=dispatch(ImportMoonBook),
-        "Import MoonBook",
-      ),
-      button(
-        class="secondary-button full",
-        attrs=@html.Attrs::build().data_set("testid", "desk-import-book-folder"),
-        title="Choose a MoonBook folder to import into the Moondesk workspace library",
-        on_click=dispatch(PickImportMoonBookFolder),
-        "Choose Folder",
-      ),
-      button(
-        class="secondary-button full",
-        attrs=@html.Attrs::build().data_set(
-          "testid", "desk-import-book-archive",
-        ),
-        title="Choose a zipped MoonBook archive to import into the Moondesk workspace library",
-        on_click=dispatch(PickImportMoonBookArchive),
-        "Choose Archive",
-      ),
-      p(class="status-line", model.import_book_status),
-    ]),
-  ])
+  desk_disclosure(
+    "desk-add-book-disclosure",
+    "desk-add-moonbook",
+    "Add MoonBook",
+    [
+      section(class="desk-new-book-panel", [
+        div(class="desk-library-action", [
+          strong("Create new"),
+          input(
+            class="line-input",
+            attrs=@html.Attrs::build().data_set("testid", "desk-new-book-name"),
+            value=model.new_book_name,
+            placeholder="MoonBook name",
+            on_input=fn(value) { dispatch(SetNewBookName(value)) },
+          ),
+          input(
+            class="line-input",
+            attrs=@html.Attrs::build().data_set("testid", "desk-new-book-id"),
+            value=model.new_book_id,
+            placeholder="Optional folder name",
+            on_input=fn(value) { dispatch(SetNewBookId(value)) },
+          ),
+          button(
+            class="primary-button full",
+            attrs=@html.Attrs::build().data_set("testid", "desk-create-book"),
+            title="Create MoonBook",
+            disabled=desk_create_book_disabled(model),
+            on_click=dispatch(CreateBlankMoonBook),
+            "Create MoonBook",
+          ),
+          render_desk_operation_status("status-line", model.new_book_status),
+        ]),
+        div(class="desk-library-action", [
+          strong("Import existing"),
+          button(
+            class="secondary-button full",
+            attrs=@html.Attrs::build().data_set(
+              "testid", "desk-import-book-folder",
+            ),
+            title="Choose a MoonBook folder",
+            on_click=dispatch(PickImportMoonBookFolder),
+            "Choose Folder",
+          ),
+          button(
+            class="secondary-button full",
+            attrs=@html.Attrs::build().data_set(
+              "testid", "desk-import-book-archive",
+            ),
+            title="Choose a zipped MoonBook archive",
+            on_click=dispatch(PickImportMoonBookArchive),
+            "Choose Archive",
+          ),
+          desk_disclosure(
+            "desk-advanced-import",
+            "desk-import-from-path",
+            "Import from path",
+            [
+              input(
+                class="line-input",
+                attrs=@html.Attrs::build().data_set(
+                  "testid", "desk-import-book-path",
+                ),
+                value=model.import_book_path,
+                placeholder="Folder path",
+                on_input=fn(value) { dispatch(SetImportBookPath(value)) },
+              ),
+              button(
+                class="secondary-button full",
+                attrs=@html.Attrs::build().data_set(
+                  "testid", "desk-import-book",
+                ),
+                title="Import a MoonBook from a folder path",
+                disabled=desk_import_book_disabled(model),
+                on_click=dispatch(ImportMoonBook),
+                "Import Path",
+              ),
+            ],
+          ),
+          render_desk_operation_status("status-line", model.import_book_status),
+        ]),
+      ]),
+    ],
+  )
 }
 
 ///|
@@ -375,124 +423,106 @@ fn render_desk_file_browser(
   let visible_entries = sorted_desk_entries(model)
   section(class="desk-browser", [
     div(class="desk-browser-head", [
-      div([
-        p(class="eyebrow", "desk"),
+      div(class="desk-browser-title", [
         h2(desk_directory_title(model.current_directory)),
+        button(
+          class="secondary-button compact-button",
+          attrs=@html.Attrs::build().data_set("testid", "desk-refresh"),
+          title="Refresh this folder",
+          on_click=dispatch(RefreshAll),
+          "Refresh",
+        ),
       ]),
       div(class="toolbar-actions", [
-        input(
-          class="line-input compact-input",
-          attrs=@html.Attrs::build()
-            .data_set("testid", "desk-new-item-name")
-            .disabled(desk_workspace_action_disabled(model)),
-          value=model.desk_new_item_name,
-          placeholder="New item name",
-          on_input=fn(value) { dispatch(SetDeskNewItemName(value)) },
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-new-folder"),
-          title="Create folder in the current directory",
-          disabled=desk_workspace_action_disabled(model),
-          on_click=dispatch(CreateDeskFolder),
-          "New Folder",
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-new-note"),
-          title="Create Markdown note in the current directory",
-          disabled=desk_workspace_action_disabled(model),
-          on_click=dispatch(CreateDeskMarkdown),
-          "New Note",
-        ),
+        div(class="desk-navigation-actions", [
+          button(
+            class="secondary-button compact-button",
+            attrs=@html.Attrs::build().data_set("testid", "desk-back"),
+            title="Back",
+            disabled=desk_workspace_action_disabled(model) ||
+              model.desk_back_stack.length() == 0,
+            on_click=dispatch(NavigateDeskBack),
+            "Back",
+          ),
+          button(
+            class="secondary-button compact-button",
+            attrs=@html.Attrs::build().data_set("testid", "desk-forward"),
+            title="Forward",
+            disabled=desk_workspace_action_disabled(model) ||
+              model.desk_forward_stack.length() == 0,
+            on_click=dispatch(NavigateDeskForward),
+            "Forward",
+          ),
+          button(
+            class="secondary-button compact-button",
+            attrs=@html.Attrs::build().data_set("testid", "desk-up"),
+            title="Open parent folder",
+            disabled=desk_workspace_action_disabled(model) ||
+              model.current_directory == "",
+            on_click=dispatch(
+              OpenDirectory(parent_path(model.current_directory)),
+            ),
+            "Up",
+          ),
+          button(
+            class="secondary-button compact-button",
+            attrs=@html.Attrs::build().data_set("testid", "desk-root"),
+            title="Open MoonBook home",
+            disabled=desk_workspace_action_disabled(model) ||
+              model.current_directory == "",
+            on_click=dispatch(OpenDirectory("")),
+            "Home",
+          ),
+        ]),
         input(
           class="line-input compact-input desk-filter-input",
           attrs=@html.Attrs::build()
             .data_set("testid", "desk-filter-query")
             .disabled(desk_workspace_action_disabled(model)),
           value=model.desk_filter_query,
-          placeholder="Filter current folder",
+          placeholder="Search this folder",
           on_input=fn(value) { dispatch(SetDeskFilterQuery(value)) },
         ),
         button(
           class="secondary-button compact-button",
           attrs=@html.Attrs::build().data_set("testid", "desk-clear-filter"),
-          title="Clear current folder filter",
+          title="Clear folder search",
           disabled=desk_workspace_action_disabled(model) ||
             model.desk_filter_query.trim().to_owned() == "",
           on_click=dispatch(SetDeskFilterQuery("")),
-          "Clear Filter",
+          "Clear",
         ),
-        render_desk_density_control(dispatch, model),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-import-files"),
-          title="Import local files into the current directory",
-          disabled=desk_workspace_action_disabled(model),
-          on_click=dispatch(ImportLocalFilesToDesk),
-          "Import Files",
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-import-folder"),
-          title="Import a local folder into the current directory",
-          disabled=desk_workspace_action_disabled(model),
-          on_click=dispatch(ImportLocalFolderToDesk),
-          "Import Folder",
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-refresh"),
-          title="Refresh current MoonBook directory",
-          on_click=dispatch(RefreshAll),
-          "Refresh",
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-back"),
-          title="Go to previous directory",
-          disabled=desk_workspace_action_disabled(model) ||
-            model.desk_back_stack.length() == 0,
-          on_click=dispatch(NavigateDeskBack),
-          "Back",
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-forward"),
-          title="Go to next directory",
-          disabled=desk_workspace_action_disabled(model) ||
-            model.desk_forward_stack.length() == 0,
-          on_click=dispatch(NavigateDeskForward),
-          "Forward",
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-up"),
-          title="Open parent directory",
-          disabled=desk_workspace_action_disabled(model) ||
-            model.current_directory == "",
-          on_click=dispatch(OpenDirectory(parent_path(model.current_directory))),
-          "Up",
-        ),
-        button(
-          class="secondary-button compact-button",
-          attrs=@html.Attrs::build().data_set("testid", "desk-root"),
-          title="Open root directory",
-          disabled=desk_workspace_action_disabled(model) ||
-            model.current_directory == "",
-          on_click=dispatch(OpenDirectory("")),
-          "Root",
+        render_desk_new_item_disclosure(dispatch, model),
+        render_desk_import_disclosure(dispatch, model),
+        desk_disclosure(
+          "desk-toolbar-disclosure desk-view-disclosure",
+          "desk-view-options",
+          "View",
+          [
+            render_desk_density_control(dispatch, model),
+            button(
+              class="secondary-button compact-button",
+              attrs=@html.Attrs::build().data_set(
+                "testid", "desk-sort-source-area",
+              ),
+              title="Sort by source area",
+              on_click=dispatch(SetDeskSort(SortByLayer)),
+              "Sort by source area",
+            ),
+          ],
         ),
       ]),
     ]),
     render_desk_breadcrumb(dispatch, model.current_directory),
     render_desk_location_bar(dispatch, model),
-    p(class="desk-create-status", model.desk_new_item_status),
+    render_desk_operation_status(
+      "desk-create-status",
+      model.desk_new_item_status,
+    ),
     div(class=desk_file_table_class(model), [
       div(class="desk-file-row desk-file-header", [
         desk_sort_header_button(dispatch, model, SortByName, "Name"),
-        desk_sort_header_button(dispatch, model, SortByKind, "Kind"),
-        desk_sort_header_button(dispatch, model, SortByLayer, "Layer"),
+        desk_sort_header_button(dispatch, model, SortByKind, "Type"),
         desk_sort_header_button(dispatch, model, SortByModified, "Modified"),
         desk_sort_header_button(dispatch, model, SortBySize, "Size"),
       ]),
@@ -525,6 +555,67 @@ fn render_desk_file_browser(
 }
 
 ///|
+fn render_desk_new_item_disclosure(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  desk_disclosure("desk-toolbar-disclosure", "desk-new-menu", "New", [
+    input(
+      class="line-input compact-input",
+      attrs=@html.Attrs::build()
+        .data_set("testid", "desk-new-item-name")
+        .disabled(desk_workspace_action_disabled(model)),
+      value=model.desk_new_item_name,
+      placeholder="Name",
+      on_input=fn(value) { dispatch(SetDeskNewItemName(value)) },
+    ),
+    div(class="desk-disclosure-actions", [
+      button(
+        class="secondary-button compact-button",
+        attrs=@html.Attrs::build().data_set("testid", "desk-new-folder"),
+        title="Create folder here",
+        disabled=desk_workspace_action_disabled(model),
+        on_click=dispatch(CreateDeskFolder),
+        "Folder",
+      ),
+      button(
+        class="secondary-button compact-button",
+        attrs=@html.Attrs::build().data_set("testid", "desk-new-note"),
+        title="Create Markdown note here",
+        disabled=desk_workspace_action_disabled(model),
+        on_click=dispatch(CreateDeskMarkdown),
+        "Note",
+      ),
+    ]),
+  ])
+}
+
+///|
+fn render_desk_import_disclosure(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  desk_disclosure("desk-toolbar-disclosure", "desk-import-menu", "Import", [
+    button(
+      class="secondary-button compact-button",
+      attrs=@html.Attrs::build().data_set("testid", "desk-import-files"),
+      title="Import files here",
+      disabled=desk_workspace_action_disabled(model),
+      on_click=dispatch(ImportLocalFilesToDesk),
+      "Files",
+    ),
+    button(
+      class="secondary-button compact-button",
+      attrs=@html.Attrs::build().data_set("testid", "desk-import-folder"),
+      title="Import a folder here",
+      disabled=desk_workspace_action_disabled(model),
+      on_click=dispatch(ImportLocalFolderToDesk),
+      "Folder",
+    ),
+  ])
+}
+
+///|
 fn render_desk_empty_folder_state(model : Model) -> Array[@rabbita.Html] {
   [
     div(
@@ -536,6 +627,18 @@ fn render_desk_empty_folder_state(model : Model) -> Array[@rabbita.Html] {
       ],
     ),
   ]
+}
+
+///|
+fn render_desk_operation_status(
+  class_name : String,
+  status : String,
+) -> @rabbita.Html {
+  if status == "" || status.has_prefix("ready to ") {
+    span(class="desk-status-empty", "")
+  } else {
+    p(class=class_name, status)
+  }
 }
 
 ///|
@@ -819,26 +922,6 @@ fn render_desk_location_bar(
   let visible_entries = filtered_desk_entries(model)
   let counts = desk_entry_counts(visible_entries)
   div(class="desk-location-bar", [
-    div(class="desk-location-path", [
-      span(class="desk-location-label", "Location"),
-      input(
-        class="line-input desk-location-input",
-        attrs=@html.Attrs::build()
-          .data_set("testid", "desk-location-input")
-          .disabled(desk_workspace_action_disabled(model)),
-        value=model.desk_location_input,
-        placeholder=empty_root_path(model.current_directory),
-        on_input=fn(value) { dispatch(SetDeskLocationInput(value)) },
-      ),
-      button(
-        class="secondary-button compact-button",
-        attrs=@html.Attrs::build().data_set("testid", "desk-location-go"),
-        title="Open the typed Desk location",
-        disabled=desk_workspace_action_disabled(model),
-        on_click=dispatch(OpenDeskLocation),
-        "Go",
-      ),
-    ]),
     div(class="desk-location-meta", [
       span(
         desk_entry_count_label_for_model(
@@ -850,6 +933,32 @@ fn render_desk_location_bar(
       span(desk_selection_label(model)),
       span(desk_access_label(selected_desk_entry(model))),
     ]),
+    desk_disclosure(
+      "desk-location-disclosure",
+      "desk-go-to-folder",
+      "Go to folder",
+      [
+        div(class="desk-location-path", [
+          input(
+            class="line-input desk-location-input",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "desk-location-input")
+              .disabled(desk_workspace_action_disabled(model)),
+            value=model.desk_location_input,
+            placeholder="Folder path",
+            on_input=fn(value) { dispatch(SetDeskLocationInput(value)) },
+          ),
+          button(
+            class="secondary-button compact-button",
+            attrs=@html.Attrs::build().data_set("testid", "desk-location-go"),
+            title="Open folder",
+            disabled=desk_workspace_action_disabled(model),
+            on_click=dispatch(OpenDeskLocation),
+            "Go",
+          ),
+        ]),
+      ],
+    ),
   ])
 }
 
@@ -892,7 +1001,6 @@ fn render_desk_file_row(
         },
       ]),
       span(kind_label(entry.kind)),
-      span(layer_label(entry.source_layer)),
       span(optional_text(entry.modified_at, "unknown")),
       span(size_label(entry.size_bytes)),
     ],
@@ -1061,13 +1169,24 @@ fn render_desk_details(
                 span(class="tree-icon", icon_for_kind(entry.kind)),
                 h3(entry.display_name),
               ]),
-              info_row("Virtual Path", empty_root_path(entry.path)),
-              info_row("Kind", kind_label(entry.kind)),
-              info_row("Layer", layer_label(entry.source_layer)),
-              info_row("Modified", optional_text(entry.modified_at, "unknown")),
+              info_row("Type", kind_label(entry.kind)),
+              info_row(
+                "Modified",
+                optional_text(entry.modified_at, "Not available"),
+              ),
               info_row("Size", size_label(entry.size_bytes)),
-              info_row("Readable", yes_no(entry.readable)),
-              info_row("Writable", yes_no(entry.writable)),
+              info_row("Access", desk_access_label(Some(entry))),
+              desk_disclosure(
+                "desk-technical-details",
+                "desk-selection-technical-details",
+                "Technical details",
+                [
+                  info_row("Path", empty_root_path(entry.path)),
+                  info_row("Source area", layer_label(entry.source_layer)),
+                  info_row("Readable", yes_no(entry.readable)),
+                  info_row("Writable", yes_no(entry.writable)),
+                ],
+              ),
               render_desk_inline_preview(model),
               div(class="desk-detail-actions", [
                 input(
@@ -1082,91 +1201,10 @@ fn render_desk_details(
                   on_click=dispatch(RenameDeskSelection),
                   "Rename",
                 ),
-                p(class="status-line", model.desk_rename_status),
-                input(
-                  class="line-input",
-                  value=model.desk_move_target_directory,
-                  placeholder="Target directory",
-                  on_input=fn(value) {
-                    dispatch(SetDeskMoveTargetDirectory(value))
-                  },
+                render_desk_operation_status(
+                  "status-line",
+                  model.desk_rename_status,
                 ),
-                button(
-                  class="secondary-button full",
-                  title="Move selected item to target directory",
-                  on_click=dispatch(MoveDeskSelection),
-                  "Move",
-                ),
-                p(class="status-line", model.desk_move_status),
-                button(
-                  class="secondary-button full",
-                  title="Duplicate selected item in its current directory",
-                  on_click=dispatch(DuplicateDeskSelection),
-                  "Duplicate",
-                ),
-                p(class="status-line", model.desk_copy_status),
-                button(
-                  class="secondary-button full",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "desk-copy-selection",
-                  ),
-                  title="Copy selected item to the Desk clipboard",
-                  on_click=dispatch(CopyDeskSelection),
-                  "Copy",
-                ),
-                button(
-                  class="secondary-button full",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "desk-cut-selection",
-                  ),
-                  title="Cut selected item to move it with Paste Here",
-                  on_click=dispatch(CutDeskSelection),
-                  "Cut",
-                ),
-                button(
-                  class="secondary-button full",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "desk-paste-clipboard",
-                  ),
-                  title="Paste copied items into the current directory",
-                  disabled=desk_workspace_action_disabled(model),
-                  on_click=dispatch(PasteDeskClipboard),
-                  "Paste Here",
-                ),
-                p(class="status-line", model.desk_clipboard_status),
-                button(
-                  class=desk_favorite_button_class(model, entry.path),
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "desk-toggle-favorite",
-                  ),
-                  title="Add or remove selected path from Desk favorites",
-                  on_click=dispatch(ToggleFavorite(entry.path)),
-                  desk_favorite_button_label(model, entry.path),
-                ),
-                button(
-                  class="secondary-button full",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "desk-copy-path",
-                  ),
-                  title="Copy selected virtual path",
-                  on_click=dispatch(CopyDeskPath),
-                  "Copy Path",
-                ),
-                p(class="status-line", model.desk_path_status),
-                button(
-                  class="secondary-button full",
-                  title="Move selected item to scoped MoonBook trash",
-                  on_click=dispatch(TrashDeskSelection),
-                  "Move to Trash",
-                ),
-                button(
-                  class="secondary-button full",
-                  title="Restore the most recently trashed item",
-                  on_click=dispatch(RestoreLastTrashedDeskEntry),
-                  "Restore Last",
-                ),
-                p(class="status-line", model.desk_trash_status),
-                render_desk_trash_panel(dispatch, model),
                 button(
                   class="secondary-button full",
                   attrs=@html.Attrs::build().data_set(
@@ -1181,75 +1219,189 @@ fn render_desk_details(
                   on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
                   "Open in Wiki",
                 ),
-                button(
-                  class="secondary-button full",
-                  on_click=dispatch(SelectWorkspaceMode(MoonCode)),
-                  "Ask Code",
-                ),
-                button(
-                  class="secondary-button full",
-                  on_click=dispatch(ClearDeskSelection),
-                  "Clear Selection",
+                render_desk_single_selection_more_actions(
+                  dispatch, model, entry,
                 ),
               ]),
             ])
           None =>
-            section(class="desk-detail-panel", [
-              div(class="desk-detail-title", [
-                span(class="tree-icon", "D"),
-                h3(workspace_name(model)),
-              ]),
-              info_row("Workspace", workspace_name(model)),
-              info_row("Root", workspace_root(model)),
-              info_row("Directory", empty_root_path(model.current_directory)),
-              info_row("Entries", model.entries.length().to_string()),
-              info_row("Mode", "scoped file manager"),
-              div(class="desk-detail-actions", [
-                button(
-                  class="secondary-button full",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "desk-paste-clipboard",
+            if desk_workspace_action_disabled(model) {
+              section(class="desk-detail-panel desk-detail-panel-empty", [
+                div(class="desk-detail-title", [
+                  span(class="tree-icon", "D"),
+                  h3("No MoonBook selected"),
+                ]),
+              ])
+            } else {
+              section(class="desk-detail-panel", [
+                div(class="desk-detail-title", [
+                  span(class="tree-icon", "D"),
+                  h3(workspace_name(model)),
+                ]),
+                info_row("Folder", empty_root_path(model.current_directory)),
+                info_row("Items", model.entries.length().to_string()),
+                desk_disclosure(
+                  "desk-technical-details",
+                  "desk-folder-technical-details",
+                  "Technical details",
+                  [
+                    info_row("MoonBook", workspace_name(model)),
+                    info_row("Storage path", workspace_root(model)),
+                  ],
+                ),
+                div(class="desk-detail-actions", [
+                  button(
+                    class="secondary-button full",
+                    attrs=@html.Attrs::build().data_set(
+                      "testid", "desk-reveal-current-directory",
+                    ),
+                    title="Reveal current folder in the system file manager",
+                    on_click=dispatch(RevealSelection),
+                    "Reveal Folder",
                   ),
-                  title="Paste copied items into the current directory",
-                  disabled=desk_workspace_action_disabled(model),
-                  on_click=dispatch(PasteDeskClipboard),
-                  "Paste Here",
-                ),
-                p(class="status-line", model.desk_clipboard_status),
-                button(
-                  class="secondary-button full",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "desk-copy-path",
-                  ),
-                  title="Copy current directory virtual path",
-                  disabled=desk_workspace_action_disabled(model),
-                  on_click=dispatch(CopyDeskPath),
-                  "Copy Folder Path",
-                ),
-                p(class="status-line", model.desk_path_status),
-                button(
-                  class="secondary-button full",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "desk-reveal-current-directory",
-                  ),
-                  title="Reveal current folder in the system file manager",
-                  disabled=desk_workspace_action_disabled(model),
-                  on_click=dispatch(RevealSelection),
-                  "Reveal Folder",
-                ),
-                button(
-                  class="secondary-button full",
-                  title="Restore the most recently trashed item",
-                  disabled=desk_workspace_action_disabled(model),
-                  on_click=dispatch(RestoreLastTrashedDeskEntry),
-                  "Restore Last",
-                ),
-                p(class="status-line", model.desk_trash_status),
-                render_desk_trash_panel(dispatch, model),
-              ]),
-            ])
+                  render_desk_folder_more_actions(dispatch, model),
+                ]),
+              ])
+            }
         }
       },
+    ],
+  )
+}
+
+///|
+fn render_desk_folder_more_actions(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  desk_disclosure(
+    "desk-more-actions",
+    "desk-folder-more-actions",
+    "More actions",
+    [
+      button(
+        class="secondary-button full",
+        attrs=@html.Attrs::build().data_set("testid", "desk-paste-clipboard"),
+        title="Paste copied items here",
+        on_click=dispatch(PasteDeskClipboard),
+        "Paste Here",
+      ),
+      p(class="status-line", model.desk_clipboard_status),
+      button(
+        class="secondary-button full",
+        attrs=@html.Attrs::build().data_set("testid", "desk-copy-path"),
+        title="Copy folder path",
+        on_click=dispatch(CopyDeskPath),
+        "Copy Folder Path",
+      ),
+      p(class="status-line", model.desk_path_status),
+      button(
+        class="secondary-button full",
+        title="Restore the most recently trashed item",
+        on_click=dispatch(RestoreLastTrashedDeskEntry),
+        "Restore Last",
+      ),
+      p(class="status-line", model.desk_trash_status),
+      render_desk_trash_panel(dispatch, model),
+    ],
+  )
+}
+
+///|
+fn render_desk_single_selection_more_actions(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  entry : @desk.DeskFileEntry,
+) -> @rabbita.Html {
+  desk_disclosure(
+    "desk-more-actions",
+    "desk-selection-more-actions",
+    "More actions",
+    [
+      input(
+        class="line-input",
+        value=model.desk_move_target_directory,
+        placeholder="Move to folder",
+        on_input=fn(value) { dispatch(SetDeskMoveTargetDirectory(value)) },
+      ),
+      button(
+        class="secondary-button full",
+        title="Move selected item",
+        on_click=dispatch(MoveDeskSelection),
+        "Move",
+      ),
+      p(class="status-line", model.desk_move_status),
+      button(
+        class="secondary-button full",
+        title="Duplicate selected item",
+        on_click=dispatch(DuplicateDeskSelection),
+        "Duplicate",
+      ),
+      p(class="status-line", model.desk_copy_status),
+      div(class="desk-disclosure-actions", [
+        button(
+          class="secondary-button compact-button",
+          attrs=@html.Attrs::build().data_set("testid", "desk-copy-selection"),
+          title="Copy selected item",
+          on_click=dispatch(CopyDeskSelection),
+          "Copy",
+        ),
+        button(
+          class="secondary-button compact-button",
+          attrs=@html.Attrs::build().data_set("testid", "desk-cut-selection"),
+          title="Cut selected item",
+          on_click=dispatch(CutDeskSelection),
+          "Cut",
+        ),
+        button(
+          class="secondary-button compact-button",
+          attrs=@html.Attrs::build().data_set("testid", "desk-paste-clipboard"),
+          title="Paste into this folder",
+          disabled=desk_workspace_action_disabled(model),
+          on_click=dispatch(PasteDeskClipboard),
+          "Paste",
+        ),
+      ]),
+      p(class="status-line", model.desk_clipboard_status),
+      button(
+        class=desk_favorite_button_class(model, entry.path),
+        attrs=@html.Attrs::build().data_set("testid", "desk-toggle-favorite"),
+        title="Add or remove from Quick Access",
+        on_click=dispatch(ToggleFavorite(entry.path)),
+        desk_favorite_button_label(model, entry.path),
+      ),
+      button(
+        class="secondary-button full",
+        attrs=@html.Attrs::build().data_set("testid", "desk-copy-path"),
+        title="Copy path",
+        on_click=dispatch(CopyDeskPath),
+        "Copy Path",
+      ),
+      p(class="status-line", model.desk_path_status),
+      button(
+        class="secondary-button full",
+        title="Move selected item to Trash",
+        on_click=dispatch(TrashDeskSelection),
+        "Move to Trash",
+      ),
+      button(
+        class="secondary-button full",
+        title="Restore the most recently trashed item",
+        on_click=dispatch(RestoreLastTrashedDeskEntry),
+        "Restore Last",
+      ),
+      p(class="status-line", model.desk_trash_status),
+      render_desk_trash_panel(dispatch, model),
+      button(
+        class="secondary-button full",
+        on_click=dispatch(SelectWorkspaceMode(MoonCode)),
+        "Ask Code",
+      ),
+      button(
+        class="secondary-button full",
+        on_click=dispatch(ClearDeskSelection),
+        "Clear Selection",
+      ),
     ],
   )
 }
@@ -1300,11 +1452,18 @@ fn render_desk_multi_selection_details(
       span(class="tree-icon", "*"),
       h3("\{model.desk_selected_paths.length()} items selected"),
     ]),
-    info_row("Focused", empty_root_path(model.selected_path)),
-    info_row("Directory", empty_root_path(model.current_directory)),
     info_row("Selection", desk_multi_selection_count_label(model)),
     info_row("Total Size", desk_multi_selection_size_label(model)),
-    info_row("Items", desk_selected_paths_summary(model)),
+    desk_disclosure(
+      "desk-technical-details",
+      "desk-multi-selection-technical-details",
+      "Selection details",
+      [
+        info_row("Focused", empty_root_path(model.selected_path)),
+        info_row("Folder", empty_root_path(model.current_directory)),
+        info_row("Items", desk_selected_paths_summary(model)),
+      ],
+    ),
     div(class="desk-detail-actions", [
       input(
         class="line-input",

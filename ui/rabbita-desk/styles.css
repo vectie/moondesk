@@ -329,7 +329,7 @@ button {
   width: 100%;
   min-height: 38px;
   display: grid;
-  grid-template-columns: minmax(180px, 1.5fr) minmax(82px, 0.55fr) minmax(112px, 0.65fr) minmax(146px, 0.7fr) minmax(70px, 0.4fr);
+  grid-template-columns: minmax(180px, 1.6fr) minmax(82px, 0.55fr) minmax(146px, 0.7fr) minmax(70px, 0.4fr);
   align-items: center;
   gap: 10px;
   padding: 0 14px;

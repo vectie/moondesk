@@ -222,14 +222,6 @@ fn selected_layer(model : Model) -> String {
 }
 
 ///|
-fn workspace_kind_label(kind : @desk.WorkspaceKind) -> String {
-  match kind {
-    MoonBook => "moonbook"
-    SuiteRoot => "suite"
-  }
-}
-
-///|
 fn workspace_status_label(status : @desk.WorkspaceStatus) -> String {
   match status {
     Ready => "Ready"
