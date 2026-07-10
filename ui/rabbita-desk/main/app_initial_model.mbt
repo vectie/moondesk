@@ -62,6 +62,8 @@ fn init_model() -> Model {
     pending_markdown_navigation: NoPendingMarkdownNavigation,
     request_prompt: "",
     request_status: "draft",
+    request_material_paths: [],
+    request_material_status: "",
     requests: [],
     standing_goals: [],
     analytics: None,

@@ -127,6 +127,12 @@ fn town_request_payload_from_existing_request(
       "pattern_id",
       default=json_string(record, "pattern_id", default=""),
     ),
+    "target_book_id": json_string(
+      request,
+      "target_book_id",
+      default=json_string(record, "target_book_id", default=""),
+    ),
+    "context_entries": town_request_context_entries(request, record),
   }
 }
 
@@ -147,7 +153,24 @@ fn town_request_payload_from_record(record : Json, name : String) -> Json {
     "kind": json_string(record, "kind", default="moondesk-request"),
     "book_id": json_string(record, "book_id", default=""),
     "pattern_id": json_string(record, "pattern_id", default=""),
+    "target_book_id": json_string(record, "target_book_id", default=""),
+    "context_entries": town_request_context_entries(record, record),
   }
+}
+
+///|
+fn town_request_context_entries(primary : Json, fallback : Json) -> Json {
+  let paths = json_string_array_items(primary, "context_entries")
+  let source = if paths.length() == 0 {
+    json_string_array_items(fallback, "context_entries")
+  } else {
+    paths
+  }
+  let values : Array[Json] = []
+  for path in source {
+    values.push(path.to_json())
+  }
+  Json::array(values)
 }
 
 ///|

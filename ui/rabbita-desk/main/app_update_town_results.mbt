@@ -51,6 +51,11 @@ fn update_town_results(
           ..model,
           activity: Town,
           request_status: "staged \{record.id}",
+          request_prompt: "",
+          request_material_paths: [],
+          request_material_status: "",
+          import_url: "",
+          import_note: "",
           command_open: false,
         },
       )

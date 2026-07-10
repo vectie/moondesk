@@ -183,6 +183,8 @@ fn select_workspace_action(
       selected_mooncode_session_id: "",
       mooncode_new_chat_active: false,
       mooncode_prompt: "",
+      request_material_paths: [],
+      request_material_status: "",
       selected_path: "",
       desk_selected_paths: [],
       desk_selection_anchor: "",

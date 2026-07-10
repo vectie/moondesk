@@ -91,6 +91,7 @@ fn update(
     ToggleCommand => update_navigation_actions(dispatch, msg, model)
     SetCommandQuery(_) => update_navigation_actions(dispatch, msg, model)
     SetRequestPrompt(_) => update_town_actions(dispatch, msg, model)
+    RemoveRequestMaterial(_) => update_town_actions(dispatch, msg, model)
     SubmitRequest => update_town_actions(dispatch, msg, model)
     SelectMoonCodeSession(_) => update_mooncode_actions(dispatch, msg, model)
     NewMoonCodeSession => update_mooncode_actions(dispatch, msg, model)

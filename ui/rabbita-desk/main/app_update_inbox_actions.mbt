@@ -14,32 +14,93 @@ fn update_inbox_actions(
     SetImportUrl(url) =>
       (
         @rabbita.none,
-        { ..model, import_url: url, inbox_status: "import draft" },
+        if task_material_capture_active(model) {
+          {
+            ..model,
+            import_url: url,
+            request_material_status: "material draft",
+          }
+        } else {
+          { ..model, import_url: url, inbox_status: "import draft" }
+        },
       )
     SetImportNote(note) =>
       (
         @rabbita.none,
-        { ..model, import_note: note, inbox_status: "import draft" },
+        if task_material_capture_active(model) {
+          {
+            ..model,
+            import_note: note,
+            request_material_status: "material draft",
+          }
+        } else {
+          { ..model, import_note: note, inbox_status: "import draft" }
+        },
       )
     ImportUrlToInbox =>
       if model.import_url.trim().to_owned() == "" {
-        (@rabbita.none, { ..model, inbox_status: "enter a URL to import" })
+        if task_material_capture_active(model) {
+          (
+            @rabbita.none,
+            { ..model, request_material_status: "enter a link to add" },
+          )
+        } else {
+          (@rabbita.none, { ..model, inbox_status: "enter a URL to import" })
+        }
+      } else if model.selected_workspace_id == "" {
+        if task_material_capture_active(model) {
+          (
+            @rabbita.none,
+            { ..model, request_material_status: "select a book first" },
+          )
+        } else {
+          (@rabbita.none, { ..model, inbox_status: "select a book first" })
+        }
       } else {
         (
           import_url_cmd(dispatch, model),
-          { ..model, inbox_status: "importing URL" },
+          if task_material_capture_active(model) {
+            { ..model, request_material_status: "adding link" }
+          } else {
+            { ..model, inbox_status: "importing URL" }
+          },
         )
       }
     ImportLocalFiles =>
-      (
-        sync_activity_batch(Inbox, pick_import_files_cmd(dispatch)),
-        {
-          ..model,
-          activity: Inbox,
-          command_open: false,
-          inbox_status: "opening file picker",
-        },
-      )
+      if model.selected_workspace_id == "" {
+        if task_material_capture_active(model) {
+          (
+            @rabbita.none,
+            { ..model, request_material_status: "select a book first" },
+          )
+        } else {
+          (@rabbita.none, { ..model, inbox_status: "select a book first" })
+        }
+      } else {
+        let target = if task_material_capture_active(model) {
+          Town
+        } else {
+          Inbox
+        }
+        (
+          sync_activity_batch(target, pick_import_files_cmd(dispatch)),
+          if target is Town {
+            {
+              ..model,
+              activity: Town,
+              command_open: false,
+              request_material_status: "opening file picker",
+            }
+          } else {
+            {
+              ..model,
+              activity: Inbox,
+              command_open: false,
+              inbox_status: "opening file picker",
+            }
+          },
+        )
+      }
     PollDroppedImports =>
       (
         @rabbita.batch([
@@ -60,6 +121,11 @@ fn update_inbox_actions(
     StageSelectedLink => stage_selected_link_action(dispatch, model)
     _ => (@rabbita.none, model)
   }
+}
+
+///|
+fn task_material_capture_active(model : Model) -> Bool {
+  model.workspace_mode == MoonWiki && model.activity == Town
 }
 
 ///|

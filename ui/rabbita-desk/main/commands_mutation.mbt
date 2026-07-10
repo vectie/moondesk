@@ -425,26 +425,30 @@ fn decide_review_item_cmd(
 
 ///|
 fn submit_request_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
-  let title = "Moondesk request for \{workspace_name(model)}"
-  let context_entries = if model.selected_path == "" {
-    []
+  @http.post(@desk.town_endpoint_url("requests"))
+  .with_json(request_submission_body(model))
+  .expect_json(result => {
+    dispatch(SubmittedRequest(http_result(result, "Could not stage request")))
+  })
+}
+
+///|
+fn request_submission_body(model : Model) -> Json {
+  let lines = text_lines(model.request_prompt)
+  let title = if lines.length() == 0 {
+    "Book task for \{workspace_name(model)}"
   } else {
-    [model.selected_path]
+    lines[0]
   }
-  let body : Json = {
+  {
     "title": title,
-    "prompt": trimmed_or(model.request_prompt, "Review the selected context."),
+    "prompt": model.request_prompt.trim().to_owned(),
     "target_book_id": model.selected_workspace_id,
-    "context_entries": json_string_array(context_entries),
+    "context_entries": json_string_array(request_context_entries(model)),
     "cadence": "one-shot",
     "review_policy": "bookkeeper_review",
     "source_policy": "mixed",
   }
-  @http.post(@desk.town_endpoint_url("requests"))
-  .with_json(body)
-  .expect_json(result => {
-    dispatch(SubmittedRequest(http_result(result, "Could not stage request")))
-  })
 }
 
 ///|

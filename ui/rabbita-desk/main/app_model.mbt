@@ -71,6 +71,8 @@ struct Model {
   pending_markdown_navigation : PendingMarkdownNavigation
   request_prompt : String
   request_status : String
+  request_material_paths : Array[String]
+  request_material_status : String
   requests : Array[RequestRecord]
   standing_goals : Array[StandingGoalRecord]
   analytics : TownAnalytics?
@@ -223,6 +225,7 @@ enum Msg {
   ToggleCommand
   SetCommandQuery(String)
   SetRequestPrompt(String)
+  RemoveRequestMaterial(String)
   SubmitRequest
   SetGoalTitle(String)
   SetGoalCadenceTicks(String)
