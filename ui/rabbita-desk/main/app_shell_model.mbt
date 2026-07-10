@@ -16,9 +16,20 @@ enum WorkspaceMode {
 } derive(Eq)
 
 ///|
+enum PendingMarkdownNavigation {
+  NoPendingMarkdownNavigation
+  PendingWorkspaceMode(WorkspaceMode)
+  PendingActivity(Activity)
+  PendingWorkspace(String)
+  PendingPath(String)
+  PendingDirectory(String)
+  PendingQuickPath(String)
+  PendingSearchHit(String, String)
+} derive(Eq)
+
+///|
 struct ActivityButton {
   key : Activity
-  icon : String
   label : String
 }
 
