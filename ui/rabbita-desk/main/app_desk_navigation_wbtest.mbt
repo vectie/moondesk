@@ -1860,6 +1860,33 @@ test "desk directory history resets when switching MoonBooks" {
 }
 
 ///|
+test "desk folder refresh reports recoverable connection feedback" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let (_, refreshing) = update_workspace_surface_actions(
+    dispatch,
+    RefreshAll,
+    init_model(),
+  )
+  assert_eq(refreshing.desk_new_item_status, "Refreshing folder...")
+  let (_, failed) = update_workspace_results(
+    dispatch,
+    LoadedEntries(Err("Invalid Desk entries response")),
+    refreshing,
+  )
+  assert_eq(
+    failed.desk_new_item_status,
+    "Couldn't refresh this folder. Check the connection and try Refresh again.",
+  )
+  let (_, recovered) = update_workspace_results(
+    dispatch,
+    LoadedEntries(Ok([])),
+    failed,
+  )
+  assert_eq(recovered.desk_new_item_status, "")
+  assert_eq(recovered.host_status, "workspace indexed")
+}
+
+///|
 test "desk keyboard shortcuts copy cut paste and trash selection" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {
@@ -2096,6 +2123,16 @@ test "workspace switch resets stale desk directory and preview state" {
     ),
     markdown_editor_path: "wiki/old/page.md",
     markdown_editor_content: "draft",
+    desk_new_item_status: "created wiki/old/stale.md",
+    desk_rename_status: "renamed wiki/old/stale.md",
+    desk_move_status: "moved wiki/old/stale.md",
+    desk_clipboard_paths: ["wiki/old/stale.md"],
+    desk_clipboard_workspace_id: "book-a",
+    desk_clipboard_operation: "copy",
+    desk_clipboard_status: "copied wiki/old/stale.md",
+    desk_path_status: "copied path wiki/old/stale.md",
+    desk_copy_status: "duplicated wiki/old/stale copy.md",
+    desk_trash_status: "moved to trash wiki/old/stale.md",
     selected_mooncode_session_id: "",
     mooncode_new_chat_active: true,
     mooncode_prompt: "stale code draft",
@@ -2116,6 +2153,16 @@ test "workspace switch resets stale desk directory and preview state" {
   assert_eq(next.markdown_editor_content, "")
   assert_false(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_prompt, "")
+  assert_eq(next.desk_new_item_status, "ready to create item")
+  assert_eq(next.desk_rename_status, "ready to rename selection")
+  assert_eq(next.desk_move_status, "ready to move selection")
+  assert_true(next.desk_clipboard_paths == [])
+  assert_eq(next.desk_clipboard_workspace_id, "")
+  assert_eq(next.desk_clipboard_operation, "")
+  assert_eq(next.desk_clipboard_status, "clipboard empty")
+  assert_eq(next.desk_path_status, "ready to copy path")
+  assert_eq(next.desk_copy_status, "ready to duplicate selection")
+  assert_eq(next.desk_trash_status, "ready to trash selection")
 }
 
 ///|

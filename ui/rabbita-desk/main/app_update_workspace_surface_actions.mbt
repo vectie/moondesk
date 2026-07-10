@@ -168,7 +168,14 @@ fn update_workspace_surface_actions(
         { ..model, notification_status: "notification requested" },
       )
     RefreshAll =>
-      (refresh_all_cmd(dispatch, model), { ..model, host_status: "refreshing" })
+      (
+        refresh_all_cmd(dispatch, model),
+        {
+          ..model,
+          host_status: "refreshing",
+          desk_new_item_status: "Refreshing folder...",
+        },
+      )
     _ => (@rabbita.none, model)
   }
 }

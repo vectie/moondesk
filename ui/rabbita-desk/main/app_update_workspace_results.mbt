@@ -69,9 +69,31 @@ fn update_workspace_results(
         { ..model, loading: false, host_status: error, preview_status: error },
       )
     LoadedEntries(Ok(entries)) =>
-      (@rabbita.none, { ..model, entries, host_status: "workspace indexed" })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          entries,
+          host_status: "workspace indexed",
+          desk_new_item_status: if model.desk_new_item_status ==
+            "Refreshing folder..." ||
+            model.desk_new_item_status ==
+            "Couldn't refresh this folder. Check the connection and try Refresh again." {
+            ""
+          } else {
+            model.desk_new_item_status
+          },
+        },
+      )
     LoadedEntries(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          host_status: error,
+          desk_new_item_status: "Couldn't refresh this folder. Check the connection and try Refresh again.",
+        },
+      )
     LoadedDeskTrash(Ok(entries)) =>
       (
         @rabbita.none,
