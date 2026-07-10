@@ -39,14 +39,6 @@ extern "js" fn browser_initial_activity() -> String =
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_initial_mooncode_runtime_mode() -> String =
-  #| () => {
-  #|   const params = new URLSearchParams(globalThis.location?.search || "");
-  #|   return params.get("mooncodeRuntime") || params.get("mooncode_runtime") || "";
-  #| }
-
-///|
-#cfg(target="js")
 extern "js" fn browser_initial_workspace() -> String =
   #| () => new URLSearchParams(globalThis.location?.search || "").get("workspace") || ""
 
@@ -57,11 +49,32 @@ extern "js" fn browser_initial_path() -> String =
 
 ///|
 #cfg(target="js")
+extern "js" fn browser_initial_mooncode_session() -> String =
+  #| () => new URLSearchParams(globalThis.location?.search || "").get("session") || ""
+
+///|
+#cfg(target="js")
 extern "js" fn browser_set_activity(slug : String) =
   #| (slug) => {
   #|   if (!globalThis.location || !globalThis.history) return;
   #|   const url = new URL(globalThis.location.href);
   #|   url.searchParams.set("activity", slug);
+  #|   globalThis.history.replaceState(null, "", url.toString());
+  #| }
+
+///|
+#cfg(target="js")
+extern "js" fn browser_set_mooncode_context(
+  workspace_id : String,
+  session_id : String,
+) =
+  #| (workspaceId, sessionId) => {
+  #|   if (!globalThis.location || !globalThis.history) return;
+  #|   const url = new URL(globalThis.location.href);
+  #|   if (workspaceId) url.searchParams.set("workspace", workspaceId);
+  #|   else url.searchParams.delete("workspace");
+  #|   if (sessionId) url.searchParams.set("session", sessionId);
+  #|   else url.searchParams.delete("session");
   #|   globalThis.history.replaceState(null, "", url.toString());
   #| }
 

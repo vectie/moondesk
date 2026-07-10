@@ -54,65 +54,7 @@ test "mooncode immediate queued session appends canonical user event only" {
 }
 
 ///|
-async test "mooncode immediate command response exposes clean phase6 envelope" {
-  let session : Json = {
-    "id": "mooncode-demo",
-    "workspace_id": "general",
-    "workspace_name": "General MoonCode",
-    "workspace_root": "/tmp/moondesk-general",
-    "mooncode_runtime_session_id": "mooncode-demo",
-  }
-  let packet : Json = {
-    "command_id": "cmd-1",
-    "client_turn_id": "client-turn-1",
-    "protocol": "mooncode.v1",
-    "kind": "mooncode.command",
-    "action": "prompt",
-  }
-  let queued = mooncode_immediate_queued_session(
-    session,
-    action="prompt",
-    message="hello mooncode",
-    context_path="",
-    command_packet=packet,
-    created_at="2026-06-15T00:00:00Z",
-  )
-  let response = mooncode_immediate_command_response(
-    "/tmp/moondesk-general", queued, packet,
-  )
-  assert_true(json_bool(response, "accepted", default=false))
-  assert_eq(json_string(response, "command_id", default=""), "cmd-1")
-  assert_eq(
-    json_string(response, "client_turn_id", default=""),
-    "client-turn-1",
-  )
-  assert_eq(json_string(response, "turn_id", default=""), "cmd-1")
-  let turn = json_object_field_or_empty(response, "mooncode_turn")
-  assert_eq(json_string(turn, "kind", default=""), "mooncode-conversation-turn")
-  assert_eq(json_string(turn, "command_id", default=""), "cmd-1")
-  assert_eq(json_string(turn, "client_turn_id", default=""), "client-turn-1")
-  let user = json_object_field_or_empty(turn, "user")
-  assert_eq(json_string(user, "content", default=""), "hello mooncode")
-  let conversation = json_object_field_or_empty(
-    response, "mooncode_conversation",
-  )
-  assert_eq(json_int(conversation, "turn_count", default=0), 1)
-  assert_eq(json_array_items(conversation, "turns").length(), 1)
-  assert_eq(
-    json_string(response, "api_contract", default=""),
-    "moonsuite.phase6.v1",
-  )
-  assert_eq(
-    json_string(response, "next_action", default=""),
-    "poll_mooncode_stream",
-  )
-  let summary = json_object_field_or_empty(response, "mooncode_summary")
-  assert_eq(json_int(summary, "event_count", default=0), 1)
-  assert_eq(json_int(summary, "command_log_count", default=0), 0)
-}
-
-///|
-async test "mooncode post enqueue response stays enqueue-only" {
+async test "mooncode post enqueue response fails loudly without runtime" {
   let root = "/tmp/moondesk-mooncode-runtime-unavailable-" +
     @desk.stable_id("runtime-unavailable", @async.now().to_string())
   @fsx.make_directory(root, recursive=true, exists_ok=true)
@@ -150,24 +92,21 @@ async test "mooncode post enqueue response stays enqueue-only" {
   )
   write_mooncode_session_record(root, queued)
   append_new_mooncode_command_events(root, session, queued)
-  let response = match
+  match
     mooncode_command_response_after_enqueue(root, queued, packet, {
       "max_turns": 1,
       "live_wait_ms": 1,
       "poll_ms": 1,
     }) {
-    Ok(response) => response
-    Err(error) => fail(error.stringify())
+    Ok(response) => fail(response.stringify())
+    Err(error) => {
+      assert_eq(json_int(error, "code", default=0), 409)
+      assert_eq(json_string(error, "reason", default=""), "Conflict")
+      assert_true(
+        json_string(error, "message", default="").contains("MoonClaw"),
+      )
+    }
   }
-  assert_eq(json_string(response, "status", default=""), "queued")
-  assert_true(
-    json_string(response, "message", default="").contains("saved and queued"),
-  )
-  let turn = json_object_field_or_empty(response, "mooncode_turn")
-  assert_eq(json_string(turn, "status", default=""), "queued")
-  let assistant = json_object_field_or_empty(turn, "assistant")
-  assert_eq(json_string(assistant, "status", default=""), "")
-  assert_eq(json_string(assistant, "content", default=""), "")
   let events = read_mooncode_event_log(
     root,
     json_string(queued, "id", default=""),
@@ -251,15 +190,7 @@ async test "runtime service failure appends command-scoped durable event once" {
     projected, "mooncode_conversation",
   )
   let turns = json_array_items(conversation, "turns")
-  assert_eq(turns.length(), 1)
-  assert_eq(json_string(turns[0], "status", default=""), "failed")
-  let assistant = json_object_field_or_empty(turns[0], "assistant")
-  assert_eq(json_string(assistant, "status", default=""), "failed")
-  assert_true(
-    json_string(assistant, "content", default="").contains(
-      "MoonClaw daemon is not running",
-    ),
-  )
+  assert_eq(turns.length(), 0)
   match read_mooncode_session_record(root, session_id) {
     Some(stored) =>
       assert_eq(json_string(stored, "status", default=""), "failed")
@@ -400,5 +331,24 @@ test "mooncode summary and eval report use extracted protocol" {
   assert_eq(
     json_string(extracted_report, "standalone_component", default=""),
     "mooncode",
+  )
+}
+
+///|
+test "mooncode runtime execution root follows the persisted MoonBook" {
+  let session : Json = {
+    "id": "session-book-root",
+    "workspace_root": "/tmp/moonsuite/books/code-lab",
+  }
+  assert_eq(
+    mooncode_session_execution_root(session, fallback="/tmp/moonsuite"),
+    "/tmp/moonsuite/books/code-lab",
+  )
+  assert_eq(
+    mooncode_session_execution_root(
+      { "id": "general" },
+      fallback="/tmp/moonsuite",
+    ),
+    "/tmp/moonsuite",
   )
 }

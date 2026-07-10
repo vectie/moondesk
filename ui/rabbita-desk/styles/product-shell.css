@@ -1196,7 +1196,7 @@ details[open] > .desk-disclosure-summary::after {
 }
 
 .wiki-main {
-  grid-template-columns: 52px minmax(240px, 300px) minmax(0, 1fr);
+  grid-template-columns: 104px minmax(250px, 310px) minmax(0, 1fr);
 }
 
 .wiki-main .pane-heading {
@@ -1236,7 +1236,7 @@ details[open] > .desk-disclosure-summary::after {
 
 .wiki-main .tree-row {
   min-height: 32px;
-  grid-template-columns: 0 18px minmax(0, 1fr) auto;
+  grid-template-columns: 0 minmax(0, 1fr);
   padding-inline: 8px;
   border-radius: 7px;
 }
@@ -1290,7 +1290,7 @@ details[open] > .desk-disclosure-summary::after {
 
 @media (max-width: 1120px) {
   .wiki-main {
-    grid-template-columns: 52px minmax(220px, 280px) minmax(0, 1fr);
+    grid-template-columns: 92px minmax(230px, 280px) minmax(0, 1fr);
   }
 
   .file-desk-main {
@@ -1318,15 +1318,27 @@ details[open] > .desk-disclosure-summary::after {
 }
 
 @media (max-width: 760px) {
+  .desk-shell {
+    height: 100dvh;
+    min-height: 0;
+    grid-template-rows: 56px minmax(0, 1fr);
+    overflow: hidden;
+  }
+
   .title-bar {
     grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 12px;
+    gap: 0;
+    padding: 6px 12px;
   }
 
   .workspace-mode-toggle {
     width: 100%;
     grid-template-columns: repeat(3, 1fr);
+    padding: 0;
+  }
+
+  .mode-button {
+    height: 44px;
   }
 
   .title-copy,
@@ -1404,12 +1416,12 @@ details[open] > .desk-disclosure-summary::after {
   }
 
   body {
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
   .activity-pane,
   .inspector-pane,
   .preview-center {
-    min-height: 320px;
+    min-height: 0;
   }
 }

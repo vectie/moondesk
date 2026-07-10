@@ -38,6 +38,16 @@ test "mooncode summary exposes eval readiness gates" {
       "kind": "mooncode-runtime-handoff",
       "manifest_path": "wiki/reviews/mooncode/s1/runtime-handoff.json",
     },
+    "mooncode_conversation": {
+      "kind": @mooncode.conversation_kind(),
+      "protocol": @mooncode.protocol_version(),
+      "contract_id": @mooncode.conversation_contract_id(),
+      "session_id": "s1",
+      "revision": 1,
+      "last_sequence": 1,
+      "turn_count": 1,
+      "turns": [{ "turn_id": "cmd-prompt" }],
+    },
   }
   let prompt_packet : Json = {
     "protocol": @mooncode.protocol_version(),

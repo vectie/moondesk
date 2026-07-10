@@ -60,6 +60,14 @@ pub fn moonclaw_native_session_listing_endpoint(book_root : String) -> String {
 }
 
 ///|
+pub fn moonclaw_native_session_show_endpoint(
+  session_id : String,
+  book_root : String,
+) -> String {
+  @mooncode_core.native_session_show_endpoint(session_id, book_root)
+}
+
+///|
 pub fn moonclaw_native_stream_endpoint(
   session_id : String,
   book_root : String,

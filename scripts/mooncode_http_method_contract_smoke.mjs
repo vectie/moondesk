@@ -2,6 +2,7 @@ import {
   assert,
   cleanupProcesses,
   requestJson,
+  startMoonClaw,
   startMoondesk,
   suiteRoot,
 } from "./mooncode_live_runtime_smoke_lib.mjs";
@@ -79,6 +80,7 @@ async function requestMethodContract405(url, method, expectedMethods) {
 }
 
 async function runSmoke() {
+  await startMoonClaw();
   const moondesk = await startMoondesk();
   const capabilities = await requestJson(
     `${moondesk.base}/api/mooncode/capabilities`,
@@ -98,6 +100,12 @@ async function runSmoke() {
         client_turn_id: "http-method-contract-client-turn-1",
         model: "codex/gpt-5.4",
         web_search: false,
+        runtime_tool_calls: [
+          {
+            tool: "finish",
+            arguments: { answer: "HTTP method contract session ready." },
+          },
+        ],
       }),
     },
   );

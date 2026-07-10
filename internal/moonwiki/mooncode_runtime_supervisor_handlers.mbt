@@ -63,6 +63,10 @@ async fn handle_mooncode_session_runtime_supervisor_run(
       return
     }
   }
+  let execution_root = mooncode_session_execution_root(
+    session,
+    fallback=workspace_root,
+  )
   let daemon = ensure_moonclaw_daemon_running(
     workspace_root,
     action="runtime-supervisor-run",
@@ -81,7 +85,7 @@ async fn handle_mooncode_session_runtime_supervisor_run(
   }
   let loop_body = @mooncode.moonclaw_runtime_loop_request(
     session_id,
-    workspace_root,
+    execution_root,
     consumer_id=json_string(
       payload,
       "consumer_id",
@@ -93,7 +97,7 @@ async fn handle_mooncode_session_runtime_supervisor_run(
   )
   let runtime_response = moonclaw_post_json(
     daemon,
-    @mooncode.moonclaw_native_runtime_loop_endpoint(session_id, workspace_root),
+    @mooncode.moonclaw_native_runtime_loop_endpoint(session_id, execution_root),
     loop_body,
   )
   let response = match runtime_response {
@@ -291,9 +295,13 @@ async fn run_mooncode_runtime_service_for_session(
     Err(error) =>
       return Err(mooncode_runtime_service_error(502, "Bad Gateway", error))
   }
+  let execution_root = mooncode_session_execution_root(
+    session,
+    fallback=workspace_root,
+  )
   let service_body = @mooncode.moonclaw_runtime_loop_request(
     session_id,
-    workspace_root,
+    execution_root,
     consumer_id=json_string(
       payload,
       "consumer_id",
@@ -307,7 +315,7 @@ async fn run_mooncode_runtime_service_for_session(
     moonclaw_post_json(
       daemon,
       @mooncode.moonclaw_native_runtime_service_endpoint(
-        session_id, workspace_root,
+        session_id, execution_root,
       ),
       service_body,
     ) {
@@ -327,7 +335,12 @@ async fn run_mooncode_runtime_service_for_session(
   let with_updated = @mooncode.apply_moonclaw_runtime_session_patch(
     with_response, session_patch,
   )
-  write_mooncode_session_record(workspace_root, with_updated) catch {
+  let with_canonical = sync_mooncode_native_canonical_conversation(
+    workspace_root, session_id, with_updated,
+  ) catch {
+    _ => with_updated
+  }
+  write_mooncode_session_record(workspace_root, with_canonical) catch {
     _ =>
       return Err(
         mooncode_runtime_service_error(
@@ -335,7 +348,7 @@ async fn run_mooncode_runtime_service_for_session(
         ),
       )
   }
-  append_new_mooncode_command_events(workspace_root, session, with_updated) catch {
+  append_new_mooncode_command_events(workspace_root, session, with_canonical) catch {
     _ =>
       return Err(
         mooncode_runtime_service_error(
@@ -343,7 +356,7 @@ async fn run_mooncode_runtime_service_for_session(
         ),
       )
   }
-  Ok(enrich_mooncode_session_for_response(workspace_root, with_updated))
+  Ok(enrich_mooncode_session_for_response(workspace_root, with_canonical))
 }
 
 ///|

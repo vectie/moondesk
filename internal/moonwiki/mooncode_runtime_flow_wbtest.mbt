@@ -149,6 +149,20 @@ test "mooncode native command body uses typed runtime protocol" {
       "test_result",
     ),
   )
+  let planner_guidance = json_object_field_or_empty(
+    json_object_field_or_empty(body, "payload"),
+    "planner_guidance",
+  )
+  assert_true(
+    json_string(planner_guidance, "no_match_policy", default="").contains(
+      "return exit 0",
+    ),
+  )
+  assert_true(
+    json_string(planner_guidance, "finish_policy", default="").contains(
+      "call finish",
+    ),
+  )
   let checklist = json_array_items(result_contract, "execution_checklist")
   assert_true(checklist.length() > 0)
   assert_eq(json_string(checklist[0], "id", default=""), "claim-command")

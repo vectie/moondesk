@@ -28,7 +28,7 @@ fn reload_workspace_cmds(
       fetch_launch_agent_cmd(dispatch),
       fetch_moonclaw_daemon_cmd(dispatch),
       fetch_moonclaw_models_cmd(dispatch),
-      fetch_mooncode_sessions_cmd(dispatch, workspace_id),
+      fetch_mooncode_sessions_cmd(dispatch, ""),
       fetch_review_items_cmd(dispatch, workspace_id),
       fetch_saved_views_cmd(dispatch),
       fetch_book_base_types_cmd(dispatch),

@@ -34,6 +34,11 @@ pub fn desktop_sessions_endpoint() -> String {
 }
 
 ///|
+pub fn desktop_session_endpoint() -> String {
+  "/api/mooncode/sessions/<session-id>"
+}
+
+///|
 pub fn desktop_session_events_endpoint() -> String {
   "/api/mooncode/sessions/<session-id>/events"
 }
@@ -186,6 +191,7 @@ pub fn desktop_projection_route_contracts() -> Array[Json] {
       "GET", "HEAD",
     ]),
     desktop_route_contract(desktop_sessions_endpoint(), ["GET", "HEAD", "POST"]),
+    desktop_route_contract(desktop_session_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_events_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_change_set_endpoint(), [
       "GET", "HEAD",

@@ -2,11 +2,10 @@
 enum MoonCodeSessionEffect {
   MoonCodeFetchDaemon
   MoonCodeFetchSessions(String)
-  MoonCodeFetchSelectedStream
-  MoonCodeFetchStream(String, Int)
-  MoonCodeStartRuntimeService(String)
-  MoonCodeScheduleFastPoll
-  MoonCodeSchedulePoll
+  MoonCodeFetchSelectedSession
+  MoonCodeFetchSession(String)
+  MoonCodeScheduleFastPoll(Int)
+  MoonCodeSchedulePoll(Int)
   MoonCodeSyncShell
 }
 
@@ -47,21 +46,32 @@ fn mooncode_session_effect_cmd(
     MoonCodeFetchDaemon => fetch_moonclaw_daemon_cmd(dispatch)
     MoonCodeFetchSessions(workspace_id) =>
       fetch_mooncode_sessions_cmd(dispatch, workspace_id)
-    MoonCodeFetchSelectedStream =>
-      fetch_selected_mooncode_stream_cmd(dispatch, model)
-    MoonCodeFetchStream(session_id, since) =>
-      fetch_mooncode_stream_cmd(dispatch, session_id, since)
-    MoonCodeStartRuntimeService(session_id) =>
-      start_mooncode_runtime_service_cmd(dispatch, session_id)
-    MoonCodeScheduleFastPoll => schedule_mooncode_fast_poll(dispatch)
-    MoonCodeSchedulePoll => schedule_mooncode_poll(dispatch)
+    MoonCodeFetchSelectedSession =>
+      fetch_selected_mooncode_session_cmd(dispatch, model)
+    MoonCodeFetchSession(session_id) =>
+      fetch_mooncode_session_cmd(dispatch, session_id)
+    MoonCodeScheduleFastPoll(generation) =>
+      schedule_mooncode_fast_poll(dispatch, generation)
+    MoonCodeSchedulePoll(generation) =>
+      schedule_mooncode_poll(dispatch, generation)
     MoonCodeSyncShell => sync_shell_cmd(MoonCode, model.activity)
   }
 }
 
 ///|
-fn mooncode_user_submit_effects() -> Array[MoonCodeSessionEffect] {
-  [MoonCodeScheduleFastPoll, MoonCodeSchedulePoll, MoonCodeSyncShell]
+fn mooncode_user_submit_effects(
+  model : Model,
+  generation : Int,
+) -> Array[MoonCodeSessionEffect] {
+  let effects : Array[MoonCodeSessionEffect] = []
+  if model.selected_mooncode_session_id == "" {
+    effects.push(MoonCodeFetchSessions(""))
+  } else {
+    effects.push(MoonCodeFetchSelectedSession)
+  }
+  effects.push(MoonCodeScheduleFastPoll(generation))
+  effects.push(MoonCodeSyncShell)
+  effects
 }
 
 ///|
@@ -69,25 +79,25 @@ fn mooncode_after_user_submit_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
   primary : @rabbita.Cmd,
+  generation : Int,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_with_primary_cmd(
-    dispatch, model, primary, mooncode_user_submit_effects(),
+    dispatch,
+    model,
+    @rabbita.batch([primary, clear_mooncode_composer_cmd()]),
+    mooncode_user_submit_effects(model, generation),
   )
 }
 
 ///|
 fn mooncode_session_mutation_effects(
-  model : Model,
+  _model : Model,
   session_id : String,
 ) -> Array[MoonCodeSessionEffect] {
   let effects : Array[MoonCodeSessionEffect] = []
-  if model.mooncode_runtime_mode != "manual" {
-    effects.push(MoonCodeStartRuntimeService(session_id))
+  if session_id != "" {
+    effects.push(MoonCodeFetchSession(session_id))
   }
-  effects.push(MoonCodeFetchSessions(model.selected_workspace_id))
-  effects.push(MoonCodeFetchStream(session_id, 0))
-  effects.push(MoonCodeScheduleFastPoll)
-  effects.push(MoonCodeSchedulePoll)
   effects.push(MoonCodeSyncShell)
   effects
 }
@@ -98,78 +108,71 @@ fn mooncode_after_session_mutation_cmd(
   model : Model,
   session_id : String,
 ) -> @rabbita.Cmd {
-  mooncode_session_effects_cmd(
-    dispatch, model, mooncode_session_mutation_effects(model, session_id),
-  )
+  @rabbita.batch([
+    mooncode_session_effects_cmd(
+      dispatch,
+      model,
+      mooncode_session_mutation_effects(model, session_id),
+    ),
+    sync_mooncode_context_cmd(model.selected_workspace_id, session_id),
+    clear_mooncode_composer_cmd(),
+  ])
 }
 
 ///|
-fn mooncode_runtime_started_effects(
+fn mooncode_poll_effects(
   model : Model,
-  session_id : String,
+  generation : Int,
 ) -> Array[MoonCodeSessionEffect] {
-  [
-    MoonCodeFetchSessions(model.selected_workspace_id),
-    MoonCodeFetchStream(session_id, 0),
-    MoonCodeScheduleFastPoll,
-    MoonCodeSchedulePoll,
-  ]
+  let effects : Array[MoonCodeSessionEffect] = []
+  if mooncode_should_fast_poll(model) {
+    if model.selected_mooncode_session_id == "" {
+      effects.push(MoonCodeFetchSessions(""))
+    } else {
+      effects.push(MoonCodeFetchSelectedSession)
+    }
+    effects.push(MoonCodeScheduleFastPoll(generation))
+  } else {
+    effects.push(MoonCodeFetchDaemon)
+    effects.push(MoonCodeFetchSessions(""))
+    effects.push(MoonCodeFetchSelectedSession)
+    effects.push(MoonCodeSchedulePoll(generation))
+  }
+  effects
 }
 
 ///|
-fn mooncode_after_runtime_started_cmd(
+fn mooncode_poll_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
-  session_id : String,
+  generation : Int,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_cmd(
-    dispatch, model, mooncode_runtime_started_effects(model, session_id),
+    dispatch,
+    model,
+    mooncode_poll_effects(model, generation),
   )
 }
 
 ///|
-fn mooncode_runtime_failed_effects(
-  model : Model,
-  session_id : String,
-) -> Array[MoonCodeSessionEffect] {
-  [
-    MoonCodeFetchSessions(model.selected_workspace_id),
-    MoonCodeFetchStream(session_id, 0),
-    MoonCodeSchedulePoll,
-  ]
-}
-
-///|
-fn mooncode_after_runtime_failed_cmd(
-  dispatch : Dispatch[Msg],
-  model : Model,
-  session_id : String,
-) -> @rabbita.Cmd {
-  mooncode_session_effects_cmd(
-    dispatch, model, mooncode_runtime_failed_effects(model, session_id),
+fn mooncode_should_fast_poll(model : Model) -> Bool {
+  if model.selected_mooncode_session_id == "" {
+    return mooncode_optimistic_rows_have_session(
+      model.mooncode_optimistic_rows,
+      mooncode_draft_session_id(model),
+    )
+  }
+  mooncode_selected_session_has_inflight_state(
+    model,
+    model.selected_mooncode_session_id,
   )
-}
-
-///|
-fn mooncode_poll_effects(model : Model) -> Array[MoonCodeSessionEffect] {
-  [
-    MoonCodeFetchDaemon,
-    MoonCodeFetchSessions(model.selected_workspace_id),
-    MoonCodeFetchSelectedStream,
-    MoonCodeSchedulePoll,
-  ]
-}
-
-///|
-fn mooncode_poll_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
-  mooncode_session_effects_cmd(dispatch, model, mooncode_poll_effects(model))
 }
 
 ///|
 fn mooncode_selected_session_effects(
   session_id : String,
 ) -> Array[MoonCodeSessionEffect] {
-  [MoonCodeFetchStream(session_id, 0)]
+  [MoonCodeFetchSession(session_id)]
 }
 
 ///|
@@ -179,6 +182,8 @@ fn mooncode_selected_session_cmd(
   session_id : String,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_cmd(
-    dispatch, model, mooncode_selected_session_effects(session_id),
+    dispatch,
+    model,
+    mooncode_selected_session_effects(session_id),
   )
 }

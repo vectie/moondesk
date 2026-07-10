@@ -1,17 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
+  acceptedCommandId,
   assert,
   cleanupProcesses,
+  fetchCanonicalSession,
   requestJson,
   startMoondesk,
   suiteRoot,
   waitFor,
 } from "./mooncode_live_runtime_smoke_lib.mjs";
-
-function sessionById(sessions, sessionId) {
-  return (sessions || []).find(item => item.id === sessionId);
-}
 
 function turnByCommand(session, commandId) {
   return (session?.mooncode_conversation?.turns || []).find(
@@ -35,7 +33,7 @@ async function runSmoke() {
     },
   );
   const sessionId = created.id;
-  const commandId = created.command_id;
+  const commandId = acceptedCommandId(created);
   assert(sessionId && commandId, `Created session did not return ids: ${JSON.stringify(created)}`);
   assert(created.status === "queued", `Create response should stay queued: ${JSON.stringify(created)}`);
   const initialTurn = turnByCommand(created, commandId);
@@ -58,8 +56,7 @@ async function runSmoke() {
   assert(runtimeFailure.ok === false, `Runtime-service failure should be an API error: ${JSON.stringify(runtimeFailure)}`);
 
   const projected = await waitFor("durable runtime failure projection", async () => {
-    const sessions = await requestJson(`${moondesk.base}/api/mooncode/sessions`);
-    const session = sessionById(sessions, sessionId);
+    const session = await fetchCanonicalSession(moondesk.base, sessionId);
     const turn = turnByCommand(session, commandId);
     return turn?.status === "failed" && turn?.assistant?.status === "failed"
       ? { session, turn }

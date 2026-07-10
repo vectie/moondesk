@@ -23,7 +23,9 @@ fn save_markdown_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     "path": model.markdown_editor_path,
     "content": model.markdown_editor_content,
   }
-  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "markdown"))
+  @http.post(
+    @desk.workspace_endpoint_url(model.selected_workspace_id, "markdown"),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -43,7 +45,9 @@ fn create_desk_entry_cmd(
     "directory": model.current_directory,
     "name": model.desk_new_item_name,
   }
-  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "entries"))
+  @http.post(
+    @desk.workspace_endpoint_url(model.selected_workspace_id, "entries"),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -61,7 +65,9 @@ fn rename_desk_entry_cmd(
     "path": model.selected_path,
     "name": model.desk_rename_name,
   }
-  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "rename"))
+  @http.post(
+    @desk.workspace_endpoint_url(model.selected_workspace_id, "rename"),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -237,7 +243,9 @@ fn restore_desk_trash_path_cmd(
   trash_path : String,
 ) -> @rabbita.Cmd {
   let body : Json = { "trash_path": trash_path }
-  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "restore"))
+  @http.post(
+    @desk.workspace_endpoint_url(model.selected_workspace_id, "restore"),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -256,7 +264,9 @@ fn import_url_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     "url": url,
     "note": model.import_note,
   }
-  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "import"))
+  @http.post(
+    @desk.workspace_endpoint_url(model.selected_workspace_id, "import"),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(ImportedInbox(http_result(result, "Could not import URL")))
@@ -292,7 +302,9 @@ fn import_local_file_cmd(
       ""
     },
   }
-  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "import"))
+  @http.post(
+    @desk.workspace_endpoint_url(model.selected_workspace_id, "import"),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(ImportedInbox(http_result(result, "Could not import local file")))

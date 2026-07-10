@@ -1,22 +1,4 @@
 ///|
-fn fetch_selected_mooncode_stream_cmd(
-  dispatch : Dispatch[Msg],
-  model : Model,
-) -> @rabbita.Cmd {
-  match selected_mooncode_session(model) {
-    Some(session) => {
-      let since = if model.mooncode_stream_session_id == session.id {
-        model.mooncode_stream_cursor
-      } else {
-        0
-      }
-      fetch_mooncode_stream_cmd(dispatch, session.id, since)
-    }
-    None => @rabbita.none
-  }
-}
-
-///|
 fn create_mooncode_session_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -100,29 +82,6 @@ fn mooncode_session_command_cmd(
 }
 
 ///|
-fn start_mooncode_runtime_service_cmd(
-  dispatch : Dispatch[Msg],
-  session_id : String,
-) -> @rabbita.Cmd {
-  let body : Json = {
-    "consumer_id": "moondesk-ui-runtime-service",
-    "max_turns": 8,
-    "live_wait_ms": 5000,
-    "poll_ms": 250,
-  }
-  @http.post(@desk.mooncode_session_runtime_service_url(session_id))
-  .with_json(body)
-  .expect_json(result => {
-    dispatch(
-      StartedMoonCodeRuntime(
-        session_id,
-        http_result(result, "Could not start MoonCode runtime service"),
-      ),
-    )
-  })
-}
-
-///|
 fn mooncode_client_turn_id(
   model : Model,
   session_id : String,
@@ -176,11 +135,17 @@ fn mooncode_context_path(model : Model) -> String {
 }
 
 ///|
-fn schedule_mooncode_poll(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
-  @rabbita.delay(dispatch(PollMoonCodeSessions), 5000)
+fn schedule_mooncode_poll(
+  dispatch : Dispatch[Msg],
+  generation : Int,
+) -> @rabbita.Cmd {
+  @rabbita.delay(dispatch(PollMoonCodeSessions(generation)), 5000)
 }
 
 ///|
-fn schedule_mooncode_fast_poll(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
-  @rabbita.delay(dispatch(PollMoonCodeSessions), 750)
+fn schedule_mooncode_fast_poll(
+  dispatch : Dispatch[Msg],
+  generation : Int,
+) -> @rabbita.Cmd {
+  @rabbita.delay(dispatch(PollMoonCodeSessions(generation)), 500)
 }

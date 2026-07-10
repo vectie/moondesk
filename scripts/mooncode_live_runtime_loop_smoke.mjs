@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
+  acceptedCommandId,
   assert,
   cleanupProcesses,
+  fetchCanonicalSession,
   requestJson,
   startMoonClaw,
   startMoondesk,
@@ -49,12 +51,8 @@ async function runSmoke() {
     },
   );
   const sessionId = created.id;
-  const commandId = created.command_id;
+  const commandId = acceptedCommandId(created);
   assert(sessionId && commandId, `Created session did not return ids: ${JSON.stringify(created)}`);
-  assert(
-    (created.command_packet?.runtime_tool_calls || []).length === 2,
-    `Created command packet did not expose runtime_tool_calls: ${JSON.stringify(created.command_packet)}`,
-  );
   await requestJson(
     `${moondesk.base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-service`,
     {
@@ -73,8 +71,7 @@ async function runSmoke() {
     await requestJson(
       `${moondesk.base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-events`,
     );
-    const sessions = await requestJson(`${moondesk.base}/api/mooncode/sessions`);
-    const session = sessions.find(item => item.id === sessionId);
+    const session = await fetchCanonicalSession(moondesk.base, sessionId);
     const turns = session?.mooncode_conversation?.turns || [];
     const turn = turns.find(item => item.command_id === commandId);
     const proofReady = fs.existsSync(proofFile) &&

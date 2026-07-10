@@ -188,18 +188,39 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     div(class="workspace-mode-toggle", [
       button(
         class=workspace_mode_button_class(model, Desk),
+        attrs=@html.Attrs::build().aria_pressed(
+          if model.workspace_mode == Desk {
+            "true"
+          } else {
+            "false"
+          },
+        ),
         title="Switch to Desk mode",
         on_click=dispatch(SelectWorkspaceMode(Desk)),
         "Desk",
       ),
       button(
         class=workspace_mode_button_class(model, MoonWiki),
+        attrs=@html.Attrs::build().aria_pressed(
+          if model.workspace_mode == MoonWiki {
+            "true"
+          } else {
+            "false"
+          },
+        ),
         title="Switch to Wiki mode",
         on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
         "Wiki",
       ),
       button(
         class=workspace_mode_button_class(model, MoonCode),
+        attrs=@html.Attrs::build().aria_pressed(
+          if model.workspace_mode == MoonCode {
+            "true"
+          } else {
+            "false"
+          },
+        ),
         title="Switch to Code mode",
         on_click=dispatch(SelectWorkspaceMode(MoonCode)),
         "Code",

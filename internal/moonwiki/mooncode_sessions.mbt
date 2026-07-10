@@ -7,20 +7,22 @@ async fn handle_mooncode_sessions(
 ) -> Unit {
   let workspace_filter = query_value(request_path, "workspace").unwrap_or("")
   let list_format = query_value(request_path, "format").unwrap_or("full")
+  if list_format == "listing" {
+    let local_rows = mooncode_local_session_listing_rows(
+      workspace_root, workspace_filter,
+    )
+    let runtime_rows = moonclaw_runtime_session_listing_rows(workspace_root)
+    let rows = @mooncode.merge_session_listing_rows(runtime_rows, local_rows)
+    send_json(conn, method_, Json::array(rows))
+    return
+  }
   let sessions : Array[Json] = []
   for record in read_mooncode_session_records(workspace_root) {
     if workspace_filter != "" &&
       json_string(record, "workspace_id", default="") != workspace_filter {
       continue
     }
-    let synced = sync_mooncode_native_runtime_events(
-      workspace_root,
-      json_string(record, "id", default=""),
-      record,
-    ) catch {
-      _ => record
-    }
-    sessions.push(attach_mooncode_session_projection(workspace_root, synced))
+    sessions.push(attach_mooncode_session_projection(workspace_root, record))
   }
   for
     native in moonclaw_runtime_full_sessions(
@@ -33,11 +35,71 @@ async fn handle_mooncode_sessions(
       json_string(left, "updated_at", default=""),
     )
   })
-  if list_format == "listing" {
-    let rows = mooncode_session_listing_rows(workspace_root, sessions)
-    send_json(conn, method_, Json::array(rows))
-  } else {
-    send_json(conn, method_, Json::array(sessions))
+  send_json(conn, method_, Json::array(sessions))
+}
+
+///|
+async fn handle_mooncode_session(
+  workspace_root : String,
+  session_id : String,
+  request_path : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let response_format = query_value(request_path, "format").unwrap_or("full")
+  match read_mooncode_session_record(workspace_root, session_id) {
+    Some(session) =>
+      if response_format == "chat" || response_format == "compact" {
+        let session = sync_mooncode_native_canonical_conversation(
+          workspace_root, session_id, session,
+        )
+        send_json(
+          conn,
+          method_,
+          compact_mooncode_session_command_response(
+            workspace_root,
+            session,
+            Json::object({}),
+          ),
+        )
+      } else {
+        let session = sync_mooncode_native_runtime_events(
+          workspace_root, session_id, session,
+        ) catch {
+          _ => {
+            send_api_error(
+              conn, method_, 500, "Internal Server Error", "Could not sync MoonCode native runtime events",
+            )
+            return
+          }
+        }
+        let projected = attach_mooncode_session_projection(
+          workspace_root, session,
+        )
+        send_json(conn, method_, projected)
+      }
+    None => {
+      let native = moonclaw_runtime_session_by_id(workspace_root, session_id)
+      if json_string(native, "id", default="") == session_id {
+        if response_format == "chat" || response_format == "compact" {
+          send_json(
+            conn,
+            method_,
+            compact_mooncode_session_command_response(
+              workspace_root,
+              native,
+              Json::object({}),
+            ),
+          )
+        } else {
+          send_json(conn, method_, native)
+        }
+      } else {
+        send_api_error(
+          conn, method_, 404, "Not Found", "Unknown MoonCode session",
+        )
+      }
+    }
   }
 }
 
@@ -71,12 +133,118 @@ async fn moonclaw_runtime_full_sessions(
 }
 
 ///|
+async fn moonclaw_runtime_session_by_id(
+  workspace_root : String,
+  session_id : String,
+) -> Json {
+  for row in moonclaw_runtime_session_listing_rows(workspace_root) {
+    if json_string(row, "id", default="") == session_id {
+      return moonclaw_runtime_full_session(workspace_root, row)
+    }
+  }
+  Json::object({})
+}
+
+///|
 async fn moonclaw_runtime_full_session(
   workspace_root : String,
   row : Json,
 ) -> Json {
   let id = json_string(row, "id", default="")
-  let base = @mooncode.native_runtime_session_projection(workspace_root, id)
+  let book_root = json_string(row, "workspace_root", default=workspace_root)
+  let native_record = moonclaw_runtime_session_record(
+    workspace_root, id, book_root,
+  )
+  let native_conversation = moonclaw_runtime_record_conversation_for_session(
+    native_record, id,
+  )
+  let session = moonclaw_runtime_full_session_base(
+    workspace_root, row, native_record,
+  )
+  let events = if json_string(native_conversation, "kind", default="") ==
+    @mooncode.conversation_kind() {
+    []
+  } else {
+    let text = match
+      mooncode_native_stream_text(
+        book_root,
+        id,
+        "jsonl",
+        0,
+        wait_ms=0,
+        poll_ms=100,
+      ) {
+      Ok(text) => text
+      Err(_) => ""
+    }
+    mooncode_native_stream_event_payloads(text)
+  }
+  @mooncode.session_projection_response(
+    mooncode_session_response_defaults(session),
+    events,
+    event_log_path=moonclaw_runtime_record_storage_path(
+      native_record,
+      "events_jsonl",
+      mooncode_event_log_path(book_root, id),
+    ),
+    append_log_count=json_int(native_record, "event_log_count", default=0),
+    command_log_path=moonclaw_runtime_record_storage_path(
+      native_record,
+      "commands_jsonl",
+      mooncode_command_log_path(book_root, id),
+    ),
+    command_log_count=json_int(native_record, "command_log_count", default=0),
+    runtime_command_log_path=moonclaw_runtime_record_storage_path(
+      native_record,
+      "commands_jsonl",
+      mooncode_runtime_command_log_path(book_root, id),
+    ),
+    runtime_command_log_count=json_int(
+      native_record,
+      "command_log_count",
+      default=0,
+    ),
+    runtime_receipt_log_path=moonclaw_runtime_record_storage_path(
+      native_record,
+      "runtime_receipts_jsonl",
+      mooncode_runtime_receipt_log_path(book_root, id),
+    ),
+    runtime_receipt_log_count=json_int(
+      native_record,
+      "runtime_receipt_log_count",
+      default=0,
+    ),
+  )
+}
+
+///|
+async fn moonclaw_runtime_session_record(
+  workspace_root : String,
+  session_id : String,
+  book_root : String,
+) -> Json {
+  let daemon = moonclaw_daemon_status(workspace_root)
+  if !json_bool(daemon, "running", default=false) {
+    return Json::object({})
+  }
+  let endpoint = @mooncode.moonclaw_native_session_show_endpoint(
+    session_id, book_root,
+  )
+  match moonclaw_get_json(daemon, endpoint) {
+    Ok(text) => text
+    Err(_) => Json::object({})
+  }
+}
+
+///|
+fn moonclaw_runtime_full_session_base(
+  workspace_root : String,
+  row : Json,
+  native_record : Json,
+) -> Json {
+  let id = json_string(row, "id", default="")
+  let book_root = json_string(row, "workspace_root", default=workspace_root)
+  let base = @mooncode.native_runtime_session_projection(book_root, id)
   let session = mooncode_session_with_field(
     mooncode_session_with_field(
       mooncode_session_with_field(
@@ -90,13 +258,13 @@ async fn moonclaw_runtime_full_session(
                   json_string(row, "title", default=id).to_json(),
                 ),
                 "workspace_id",
-                json_string(row, "workspace_id", default=id).to_json(),
+                json_string(row, "workspace_id", default=book_root).to_json(),
               ),
               "workspace_name",
-              json_string(row, "workspace_name", default=id).to_json(),
+              json_string(row, "workspace_name", default=book_root).to_json(),
             ),
             "cwd",
-            json_string(row, "cwd", default=workspace_root).to_json(),
+            json_string(row, "cwd", default=book_root).to_json(),
           ),
           "status",
           json_string(row, "status", default="").to_json(),
@@ -110,45 +278,77 @@ async fn moonclaw_runtime_full_session(
     "updated_at",
     json_string(row, "updated_at", default="").to_json(),
   )
-  let text = match
-    mooncode_native_stream_text(
-      workspace_root,
-      id,
-      "jsonl",
-      0,
-      wait_ms=0,
-      poll_ms=100,
+  let native_conversation = moonclaw_runtime_record_conversation(native_record)
+  if moonclaw_runtime_record_conversation_belongs_to_session(
+      native_conversation, id,
     ) {
-    Ok(text) => text
-    Err(_) => ""
+    mooncode_session_with_field(
+      session, "mooncode_conversation", native_conversation,
+    )
+  } else {
+    session
   }
-  @mooncode.session_projection_response(
-    mooncode_session_response_defaults(session),
-    mooncode_native_stream_event_payloads(text),
-    event_log_path=mooncode_event_log_path(workspace_root, id),
-    append_log_count=0,
-    command_log_path=mooncode_command_log_path(workspace_root, id),
-    command_log_count=0,
-    runtime_command_log_path=mooncode_runtime_command_log_path(
-      workspace_root, id,
-    ),
-    runtime_command_log_count=0,
-    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
-      workspace_root, id,
-    ),
-    runtime_receipt_log_count=0,
-  )
 }
 
 ///|
-async fn mooncode_session_listing_rows(
+fn moonclaw_runtime_record_conversation(native_record : Json) -> Json {
+  json_object_field_or_empty(native_record, "mooncode_conversation")
+}
+
+///|
+fn moonclaw_runtime_record_conversation_for_session(
+  native_record : Json,
+  session_id : String,
+) -> Json {
+  let conversation = moonclaw_runtime_record_conversation(native_record)
+  if moonclaw_runtime_record_conversation_belongs_to_session(
+      conversation, session_id,
+    ) {
+    conversation
+  } else {
+    Json::object({})
+  }
+}
+
+///|
+fn moonclaw_runtime_record_conversation_belongs_to_session(
+  conversation : Json,
+  session_id : String,
+) -> Bool {
+  json_string(conversation, "kind", default="") == @mooncode.conversation_kind() &&
+  session_id != "" &&
+  json_string(conversation, "session_id", default="") == session_id
+}
+
+///|
+fn moonclaw_runtime_record_storage_path(
+  native_record : Json,
+  key : String,
+  fallback : String,
+) -> String {
+  let storage = json_object_field_or_empty(native_record, "storage")
+  let path = json_string(storage, key, default="")
+  if path == "" {
+    fallback
+  } else {
+    path
+  }
+}
+
+///|
+async fn mooncode_local_session_listing_rows(
   workspace_root : String,
-  sessions : Array[Json],
+  workspace_filter : String,
 ) -> Array[Json] {
-  @mooncode.merge_session_listing_rows(
-    moonclaw_runtime_session_listing_rows(workspace_root),
-    sessions,
-  )
+  let sessions : Array[Json] = []
+  for record in read_mooncode_session_records(workspace_root) {
+    if workspace_filter != "" &&
+      json_string(record, "workspace_id", default="") != workspace_filter {
+      continue
+    }
+    sessions.push(mooncode_session_response_defaults(record))
+  }
+  @mooncode.merge_session_listing_rows([], sessions)
 }
 
 ///|

@@ -46,7 +46,7 @@ pub fn session_summary(session : Json, events : Array[Json]) -> Json {
   let session_snapshot_ready = json_string(snapshot, "kind", default="") ==
     "mooncode-session-snapshot"
   let eval_checks = session_eval_checks(session, events)
-  let conversation = conversation_projection(session, events)
+  let conversation = session_canonical_conversation(session)
   let readiness_checks = session_readiness_checks(session, events)
   let readiness = readiness_summary(readiness_checks)
   let executable_book_lifecycle = executable_book_lifecycle_report_from_checks(
@@ -295,9 +295,20 @@ pub fn session_projection_response(
       runtime_receipt_log_count.to_json(),
     )
   let summary = session_summary(summary_session, events)
-  let conversation = conversation_projection(summary_session, events)
+  let conversation = session_projection_canonical_conversation(
+    summary_session, events,
+  )
   session
   |> runtime_with_field("mooncode_events", Json::array(events))
   |> runtime_with_field("mooncode_summary", summary)
   |> runtime_with_field("mooncode_conversation", conversation)
+}
+
+///|
+fn session_projection_canonical_conversation(
+  session : Json,
+  events : Array[Json],
+) -> Json {
+  ignore(events)
+  session_canonical_conversation(session)
 }

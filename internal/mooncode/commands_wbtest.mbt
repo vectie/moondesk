@@ -318,8 +318,73 @@ test "mooncode command model reaches runtime and native body" {
     runtime, "native_mooncode_body",
   )
   assert_eq(json_string(native, "model", default=""), "payload-model")
+  let native_payload = command_json_object_field_or_empty(native, "payload")
+  assert_eq(command_json_int(native_payload, "planner_max_steps", default=0), 8)
   let native_packet = command_json_object_field_or_empty(native, "packet")
   assert_eq(json_string(native_packet, "model", default=""), "payload-model")
+}
+
+///|
+test "mooncode native command body preserves explicit planner step limit" {
+  let session : Json = {
+    "id": "code-demo",
+    "workspace_id": "book-demo",
+    "workspace_root": "/tmp/demo-book",
+  }
+  let payload : Json = {
+    "context_path": "tools/demo/main.mbt",
+    "planner_max_steps": 4,
+  }
+  let packet = projected_command_packet(
+    session, payload, "prompt", "Build a tool", "2026-06-17T00:00:00Z", "tools/demo/main.mbt",
+  )
+  let runtime = runtime_command_record(session, payload, "Build a tool", packet)
+  let native = command_json_object_field_or_empty(
+    runtime, "native_mooncode_body",
+  )
+  let native_payload = command_json_object_field_or_empty(native, "payload")
+  assert_eq(command_json_int(native_payload, "planner_max_steps", default=0), 4)
+  let planner_guidance = command_json_object_field_or_empty(
+    native_payload, "planner_guidance",
+  )
+  assert_true(
+    json_string(planner_guidance, "finish_policy", default="").contains(
+      "call finish",
+    ),
+  )
+}
+
+///|
+test "mooncode native command body only uses moonclaw supported top level fields" {
+  let session : Json = {
+    "id": "code-demo",
+    "workspace_id": "book-demo",
+    "workspace_root": "/tmp/demo-book",
+  }
+  let payload : Json = { "context_path": "tools/demo/main.mbt" }
+  let packet = projected_command_packet(
+    session, payload, "prompt", "Build a tool", "2026-06-17T00:00:00Z", "tools/demo/main.mbt",
+  )
+  let runtime = runtime_command_record(session, payload, "Build a tool", packet)
+  let native = command_json_object_field_or_empty(
+    runtime, "native_mooncode_body",
+  )
+  match native {
+    Object(fields) =>
+      for name, _ in fields.iter2() {
+        assert_true(@mooncode_core.native_command_body_field_is_supported(name))
+      }
+    _ => fail("expected native MoonCode body object")
+  }
+  let native_payload = command_json_object_field_or_empty(native, "payload")
+  let planner_guidance = command_json_object_field_or_empty(
+    native_payload, "planner_guidance",
+  )
+  assert_true(
+    json_string(planner_guidance, "no_match_policy", default="").contains(
+      "return exit 0",
+    ),
+  )
 }
 
 ///|

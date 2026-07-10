@@ -46,6 +46,8 @@ pub async fn town_service_descriptor(String, String) -> Json
 // Errors
 
 // Types and methods
+type MoonClawCheckoutCandidate derive(Eq, @debug.Debug)
+
 pub struct Server {
   server : @http.Server
   port : Int

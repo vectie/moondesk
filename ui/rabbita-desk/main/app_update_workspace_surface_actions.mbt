@@ -877,7 +877,7 @@ fn refresh_all_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     fetch_launch_agent_cmd(dispatch),
     fetch_moonclaw_daemon_cmd(dispatch),
     fetch_moonclaw_models_cmd(dispatch),
-    fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
+    fetch_mooncode_sessions_cmd(dispatch, ""),
     fetch_review_items_cmd(dispatch, model.selected_workspace_id),
     fetch_saved_views_cmd(dispatch),
     fetch_book_patterns_cmd(dispatch),

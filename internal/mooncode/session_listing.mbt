@@ -38,26 +38,69 @@ pub fn merge_session_listing_rows(
   sessions : Array[Json],
 ) -> Array[Json] {
   let rows : Array[Json] = []
-  let seen : Map[String, Bool] = {}
+  let runtime_by_id : Map[String, Json] = {}
   for row in runtime_rows {
     let id = json_string(row, "id", default="")
     if id != "" {
-      seen[id] = true
-      rows.push(row)
+      runtime_by_id[id] = row
     }
   }
   for session in sessions {
-    let row = session_listing_row(session, Json::null())
+    let local_row = session_listing_row(session, Json::null())
+    let id = json_string(local_row, "id", default="")
+    let row = match runtime_by_id.get(id) {
+      Some(runtime) =>
+        merge_runtime_freshness_into_local_listing(local_row, runtime)
+      None => local_row
+    }
     let id = json_string(row, "id", default="")
-    if id == "" || !seen.contains(id) {
+    if id != "" {
       rows.push(row)
-      if id != "" {
-        seen[id] = true
-      }
+      runtime_by_id.remove(id)
+    }
+  }
+  for row in runtime_rows {
+    let id = json_string(row, "id", default="")
+    if id != "" && runtime_by_id.contains(id) {
+      rows.push(row)
+      runtime_by_id.remove(id)
     }
   }
   rows.sort_by(fn(left, right) { compare_session_listing_rows(left, right) })
   rows
+}
+
+///|
+fn merge_runtime_freshness_into_local_listing(
+  local_row : Json,
+  runtime : Json,
+) -> Json {
+  match local_row {
+    Object(fields) => {
+      let next : Map[String, Json] = {}
+      for item in fields {
+        next[item.0] = item.1
+      }
+      match runtime {
+        Object(runtime_fields) =>
+          for key in ["updated_at", "updated_at_ms"] {
+            match runtime_fields.get(key) {
+              Some(value) => next[key] = value
+              None => ()
+            }
+          }
+        _ => ()
+      }
+      next["source"] = "mooncode-session-listing".to_json()
+      next["runtime_source"] = json_string(
+        runtime,
+        "source",
+        default="moonclaw",
+      ).to_json()
+      Json::object(next)
+    }
+    _ => local_row
+  }
 }
 
 ///|
@@ -94,9 +137,8 @@ fn normalize_runtime_session_listing_row(row : Json) -> Json? {
       for item in fields {
         next[item.0] = item.1
       }
-      if json_string(row, "source", default="") == "" {
-        next["source"] = "mooncode-runtime-session-listing".to_json()
-      }
+      next["runtime_source"] = json_string(row, "source", default="moonclaw").to_json()
+      next["source"] = "mooncode-runtime-session-listing".to_json()
       if json_string(row, "protocol", default="") == "" {
         next["protocol"] = protocol_version().to_json()
       }

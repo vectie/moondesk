@@ -50,6 +50,30 @@ fn sync_workspace_context_batch(
 }
 
 ///|
+fn sync_mooncode_context_cmd(
+  workspace_id : String,
+  session_id : String,
+) -> @rabbita.Cmd {
+  @cmd.custom_cmd(
+    _ => browser_set_mooncode_context(workspace_id, session_id),
+    kind=AfterRender,
+  )
+}
+
+///|
+#cfg(target="js")
+extern "js" fn browser_clear_mooncode_composer() =
+  #| () => {
+  #|   const input = document.querySelector('[data-testid="mooncode-input"]');
+  #|   if (input instanceof HTMLTextAreaElement) input.value = "";
+  #| }
+
+///|
+fn clear_mooncode_composer_cmd() -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_clear_mooncode_composer(), kind=AfterRender)
+}
+
+///|
 fn sync_shell_batch(
   mode : WorkspaceMode,
   activity : Activity,
@@ -115,6 +139,51 @@ extern "js" fn browser_install_mooncode_enter_send() =
 ///|
 fn install_mooncode_enter_send_cmd() -> @rabbita.Cmd {
   @cmd.custom_cmd(_ => browser_install_mooncode_enter_send(), kind=AfterRender)
+}
+
+///|
+#cfg(target="js")
+extern "js" fn browser_install_mooncode_disclosures() =
+  #| () => {
+  #|   if (window.__moondeskMoonCodeDisclosuresInstalled) return;
+  #|   window.__moondeskMoonCodeDisclosuresInstalled = true;
+  #|   const sync = (summary) => {
+  #|     if (!(summary instanceof HTMLElement)) return;
+  #|     const details = summary.closest("details");
+  #|     if (!(details instanceof HTMLDetailsElement)) return;
+  #|     summary.setAttribute("aria-expanded", details.open ? "true" : "false");
+  #|   };
+  #|   const syncAll = () => {
+  #|     document.querySelectorAll(".mooncode-activity-summary").forEach(sync);
+  #|   };
+  #|   document.addEventListener("keydown", (event) => {
+  #|     if (event.key !== "Enter" && event.key !== " ") return;
+  #|     const summary = event.target instanceof Element
+  #|       ? event.target.closest(".mooncode-activity-summary")
+  #|       : null;
+  #|     if (!(summary instanceof HTMLElement)) return;
+  #|     const details = summary.closest("details");
+  #|     if (!(details instanceof HTMLDetailsElement)) return;
+  #|     event.preventDefault();
+  #|     details.open = !details.open;
+  #|     sync(summary);
+  #|   }, true);
+  #|   document.addEventListener("click", (event) => {
+  #|     const summary = event.target instanceof Element
+  #|       ? event.target.closest(".mooncode-activity-summary")
+  #|       : null;
+  #|     if (summary) queueMicrotask(() => sync(summary));
+  #|   }, true);
+  #|   new MutationObserver(syncAll).observe(document.body, {
+  #|     childList: true,
+  #|     subtree: true,
+  #|   });
+  #|   syncAll();
+  #| }
+
+///|
+fn install_mooncode_disclosures_cmd() -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_install_mooncode_disclosures(), kind=AfterRender)
 }
 
 ///|

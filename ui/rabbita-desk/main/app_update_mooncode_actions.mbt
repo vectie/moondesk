@@ -10,7 +10,8 @@ fn update_mooncode_actions(
     | SetMoonCodePrompt(_)
     | SendMoonCodeMessage =>
       update_mooncode_session_actions(dispatch, msg, model)
-    PollMoonCodeSessions => update_mooncode_poll_actions(dispatch, msg, model)
+    PollMoonCodeSessions(_) =>
+      update_mooncode_poll_actions(dispatch, msg, model)
     _ => (@rabbita.none, model)
   }
 }

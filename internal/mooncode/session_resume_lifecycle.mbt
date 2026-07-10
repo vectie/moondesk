@@ -31,9 +31,7 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
   } else {
     events
   }
-  let canonical_conversation = conversation_projection(
-    session, lifecycle_events,
-  )
+  let canonical_conversation = session_canonical_conversation(session)
   let canonical_turn_count = summary_json_int(
     canonical_conversation,
     "turn_count",

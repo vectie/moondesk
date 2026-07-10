@@ -17,7 +17,10 @@ fn selected_mooncode_session(model : Model) -> MoonCodeSession? {
     }
   }
   for session in model.mooncode_sessions {
-    if session.workspace_id == model.selected_workspace_id {
+    if mooncode_session_matches_workspace_id(
+        session,
+        model.selected_workspace_id,
+      ) {
       return Some(session)
     }
   }
@@ -55,6 +58,7 @@ fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
     } else {
       model.workspace_root_path
     },
+    source: Some("mooncode-draft"),
     mooncode_runtime_session_id: None,
     title: mooncode_new_session_title(model),
     model: mooncode_selected_runtime_model(model, None),
@@ -103,13 +107,7 @@ fn mooncode_session_matches_draft_workspace(
   model : Model,
   session : MoonCodeSession,
 ) -> Bool {
-  if model.selected_workspace_id == "" {
-    session.workspace_id.contains("general-mooncode") ||
-    session.workspace_name == "General MoonCode" ||
-    session.workspace_name == "General"
-  } else {
-    session.workspace_id == model.selected_workspace_id
-  }
+  mooncode_session_matches_workspace_id(session, model.selected_workspace_id)
 }
 
 ///|
@@ -145,7 +143,7 @@ fn first_mooncode_session_id(
   workspace_id : String,
 ) -> String {
   for session in sessions {
-    if workspace_id == "" || session.workspace_id == workspace_id {
+    if mooncode_session_matches_workspace_id(session, workspace_id) {
       return session.id
     }
   }
@@ -174,10 +172,19 @@ fn mooncode_preserve_selected_inflight_session(
   if selected == "" {
     return incoming
   }
+  let incoming = mooncode_preserve_selected_listing_conversation(
+    model, incoming,
+  )
+  let selected_inflight = mooncode_selected_session_has_inflight_state(
+    model, selected,
+  )
+  if selected_inflight && mooncode_session_exists(incoming, selected) {
+    return mooncode_promote_session(incoming, selected)
+  }
   if mooncode_session_exists(incoming, selected) {
     return incoming
   }
-  if !mooncode_selected_session_has_inflight_state(model, selected) {
+  if !selected_inflight {
     return incoming
   }
   match mooncode_find_session(model.mooncode_sessions, selected) {
@@ -196,6 +203,107 @@ fn mooncode_preserve_selected_inflight_session(
 }
 
 ///|
+fn mooncode_preserve_selected_listing_conversation(
+  model : Model,
+  incoming : Array[MoonCodeSession],
+) -> Array[MoonCodeSession] {
+  let selected = model.selected_mooncode_session_id
+  match mooncode_find_session(model.mooncode_sessions, selected) {
+    Some(existing) => {
+      let next : Array[MoonCodeSession] = []
+      let mut preserved = false
+      for listed in incoming {
+        if listed.id == selected &&
+          mooncode_should_preserve_selected_conversation(existing, listed) {
+          next.push(mooncode_merge_selected_listing_session(existing, listed))
+          preserved = true
+        } else {
+          next.push(listed)
+        }
+      }
+      if preserved {
+        return next
+      }
+      incoming
+    }
+    None => incoming
+  }
+}
+
+///|
+fn mooncode_promote_session(
+  sessions : Array[MoonCodeSession],
+  session_id : String,
+) -> Array[MoonCodeSession] {
+  match mooncode_find_session(sessions, session_id) {
+    Some(session) => {
+      let next : Array[MoonCodeSession] = [session]
+      for existing in sessions {
+        if existing.id != session_id {
+          next.push(existing)
+        }
+      }
+      next
+    }
+    None => sessions
+  }
+}
+
+///|
+fn mooncode_should_preserve_selected_conversation(
+  existing : MoonCodeSession,
+  listed : MoonCodeSession,
+) -> Bool {
+  mooncode_session_has_conversation(existing) &&
+  !mooncode_session_has_conversation(listed)
+}
+
+///|
+fn mooncode_session_has_conversation(session : MoonCodeSession) -> Bool {
+  match session.mooncode_conversation {
+    Some(conversation) => conversation.turns.length() > 0
+    None => false
+  }
+}
+
+///|
+fn mooncode_merge_selected_listing_session(
+  existing : MoonCodeSession,
+  listed : MoonCodeSession,
+) -> MoonCodeSession {
+  {
+    ..existing,
+    workspace_id: existing.workspace_id,
+    workspace_name: existing.workspace_name,
+    cwd: existing.cwd,
+    source: listed.source,
+    mooncode_runtime_session_id: if listed.mooncode_runtime_session_id
+      is Some(_) {
+      listed.mooncode_runtime_session_id
+    } else {
+      existing.mooncode_runtime_session_id
+    },
+    title: if listed.title == "" {
+      existing.title
+    } else {
+      listed.title
+    },
+    model: if listed.model == "" {
+      existing.model
+    } else {
+      listed.model
+    },
+    status: if listed.status == "" {
+      existing.status
+    } else {
+      listed.status
+    },
+    queued_count: listed.queued_count,
+    mooncode_summary: listed.mooncode_summary,
+  }
+}
+
+///|
 fn mooncode_selected_session_has_inflight_state(
   model : Model,
   session_id : String,
@@ -204,19 +312,49 @@ fn mooncode_selected_session_has_inflight_state(
     model.mooncode_optimistic_rows,
     session_id,
   ) ||
-  mooncode_session_is_active(model, session_id)
+  mooncode_session_has_unfinished_turn(model, session_id)
 }
 
 ///|
-fn mooncode_session_is_active(model : Model, session_id : String) -> Bool {
+fn mooncode_session_has_unfinished_turn(
+  model : Model,
+  session_id : String,
+) -> Bool {
   for session in model.mooncode_sessions {
     if session.id == session_id {
-      return session.status == "queued" ||
-        session.status == "running" ||
-        session.queued_count > 0
+      return mooncode_conversation_has_unfinished_turn(session)
     }
   }
   false
+}
+
+///|
+fn mooncode_conversation_has_unfinished_turn(session : MoonCodeSession) -> Bool {
+  match session.mooncode_conversation {
+    Some(conversation) => {
+      for turn in conversation.turns {
+        if mooncode_turn_is_unfinished(turn) {
+          return true
+        }
+      }
+      false
+    }
+    None => false
+  }
+}
+
+///|
+fn mooncode_turn_is_unfinished(turn : MoonCodeConversationTurn) -> Bool {
+  let status = turn.status
+  if status != "queued" && status != "running" {
+    return false
+  }
+  let assistant_status = json_field_string(turn.assistant, "status", default="")
+  if assistant_status == "queued" || assistant_status == "running" {
+    return true
+  }
+  json_field_string(turn.assistant, "content", default="").trim().to_owned() ==
+  ""
 }
 
 ///|
@@ -224,8 +362,27 @@ fn mooncode_session_matches_selected_workspace(
   model : Model,
   session : MoonCodeSession,
 ) -> Bool {
-  model.selected_workspace_id == "" ||
-  session.workspace_id == model.selected_workspace_id
+  mooncode_session_matches_workspace_id(session, model.selected_workspace_id)
+}
+
+///|
+fn mooncode_session_matches_workspace_id(
+  session : MoonCodeSession,
+  workspace_id : String,
+) -> Bool {
+  if workspace_id == "" {
+    mooncode_session_is_general(session)
+  } else {
+    session.workspace_id == workspace_id
+  }
+}
+
+///|
+fn mooncode_session_is_general(session : MoonCodeSession) -> Bool {
+  session.workspace_id == "" ||
+  session.workspace_id.contains("general-mooncode") ||
+  session.workspace_name == "General MoonCode" ||
+  session.workspace_name == "General"
 }
 
 ///|

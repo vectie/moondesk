@@ -30,145 +30,37 @@ fn mooncode_immediate_queued_session(
 }
 
 ///|
-async fn mooncode_immediate_command_response(
-  workspace_root : String,
-  session : Json,
-  command_packet : Json,
-) -> Json {
-  let session_id = json_string(session, "id", default="")
-  let command_id = json_string(command_packet, "command_id", default="")
-  let client_turn_id = mooncode_response_text_or(
-    json_string(command_packet, "client_turn_id", default=""),
-    fallback=command_id,
-  )
-  let durable_events = read_mooncode_event_log(workspace_root, session_id)
-  let projection_session = if durable_events.length() > 0 {
-    mooncode_session_storage_record(session)
-  } else {
-    session
-  }
-  let command_events = project_mooncode_events(
-    projection_session,
-    [],
-    durable_events,
-  )
-  let command_log_count = read_mooncode_command_log(workspace_root, session_id).length()
-  let runtime_command_log_count = read_mooncode_runtime_command_log(
-    workspace_root, session_id,
-  ).length()
-  let runtime_receipt_log_count = read_mooncode_runtime_receipt_log(
-    workspace_root, session_id,
-  ).length()
-  let projected = @mooncode.session_projection_response(
-    session,
-    command_events,
-    event_log_path=mooncode_event_log_path(workspace_root, session_id),
-    append_log_count=durable_events.length(),
-    command_log_path=mooncode_command_log_path(workspace_root, session_id),
-    command_log_count~,
-    runtime_command_log_path=mooncode_runtime_command_log_path(
-      workspace_root, session_id,
-    ),
-    runtime_command_log_count~,
-    runtime_receipt_log_path=mooncode_runtime_receipt_log_path(
-      workspace_root, session_id,
-    ),
-    runtime_receipt_log_count~,
-  )
-  let conversation = json_object_field_or_empty(
-    projected, "mooncode_conversation",
-  )
-  let turn = mooncode_conversation_turn_for_command(conversation, command_id)
-  let turn_id = mooncode_response_text_or(
-    json_string(turn, "turn_id", default=""),
-    fallback=command_id,
-  )
-  let payload = mooncode_session_with_field(
-    mooncode_session_with_field(
-      mooncode_session_with_field(projected, "accepted", true.to_json()),
-      "command_id",
-      command_id.to_json(),
-    ),
-    "command_packet",
-    command_packet,
-  )
-  let payload = mooncode_session_with_field(
-    mooncode_session_with_field(
-      mooncode_session_with_field(
-        mooncode_session_with_field(
-          payload,
-          "client_turn_id",
-          client_turn_id.to_json(),
-        ),
-        "turn_id",
-        turn_id.to_json(),
-      ),
-      "mooncode_turn",
-      turn,
-    ),
-    "mooncode_conversation",
-    conversation,
-  )
-  let payload = mooncode_session_with_field(
-    payload,
-    "event_log_path",
-    mooncode_event_log_path(
-      workspace_root,
-      json_string(session, "id", default=""),
-    ).to_json(),
-  )
-  let response_status = json_string(session, "status", default="queued")
-  api_contract_response(
-    payload,
-    ok=true,
-    status=response_status,
-    message=if response_status == "failed" {
-      "MoonCode command was saved but the runtime is unavailable"
-    } else if response_status == "queued" {
-      "MoonCode command was saved and queued"
-    } else {
-      "MoonCode command was saved and runtime started"
-    },
-    next_action="poll_mooncode_stream",
-  )
-}
-
-///|
 async fn mooncode_command_response_after_enqueue(
   workspace_root : String,
   queued : Json,
   command_packet : Json,
   payload : Json,
 ) -> Result[Json, Json] {
-  ignore(payload)
-  Ok(
-    mooncode_immediate_command_response(workspace_root, queued, command_packet),
-  )
+  let session_id = json_string(queued, "id", default="")
+  match
+    run_mooncode_runtime_service_for_session(
+      workspace_root, session_id, queued, payload,
+    ) {
+    Ok(started) =>
+      Ok(
+        compact_mooncode_session_command_response(
+          workspace_root, started, command_packet,
+        ),
+      )
+    Err(error) => Err(error)
+  }
 }
 
 ///|
-fn mooncode_conversation_turn_for_command(
-  conversation : Json,
-  command_id : String,
-) -> Json {
-  if command_id == "" {
-    return Json::object({})
-  }
-  for turn in json_array_items(conversation, "turns") {
-    if json_string(turn, "command_id", default="") == command_id {
-      return turn
-    }
-  }
-  Json::object({})
-}
-
-///|
-fn mooncode_response_text_or(text : String, fallback~ : String) -> String {
-  let normalized = text.trim().to_owned()
-  if normalized == "" {
+fn mooncode_session_execution_root(
+  session : Json,
+  fallback~ : String,
+) -> String {
+  let root = json_string(session, "workspace_root", default="").trim()
+  if root == "" {
     fallback
   } else {
-    normalized
+    root.to_owned()
   }
 }
 

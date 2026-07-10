@@ -110,12 +110,39 @@ async fn sync_mooncode_native_runtime_events_from_report(
   let events = @mooncode.native_runtime_events_for_canonical_projection(
     native_report,
   )
-  if events.length() == 0 {
-    return session
+  let synced = if events.length() == 0 {
+    session
+  } else {
+    sync_mooncode_observed_runtime_events(
+      workspace_root, session_id, session, events,
+    )
   }
-  sync_mooncode_observed_runtime_events(
-    workspace_root, session_id, session, events,
+  sync_mooncode_native_canonical_conversation(
+    workspace_root, session_id, synced,
   )
+}
+
+///|
+async fn sync_mooncode_native_canonical_conversation(
+  workspace_root : String,
+  session_id : String,
+  session : Json,
+) -> Json {
+  let book_root = json_string(session, "workspace_root", default=workspace_root)
+  let native_record = moonclaw_runtime_session_record(
+    workspace_root, session_id, book_root,
+  )
+  let native_conversation = moonclaw_runtime_record_conversation_for_session(
+    native_record, session_id,
+  )
+  if json_string(native_conversation, "kind", default="") ==
+    @mooncode.conversation_kind() {
+    mooncode_session_with_field(
+      session, "mooncode_conversation", native_conversation,
+    )
+  } else {
+    session
+  }
 }
 
 ///|

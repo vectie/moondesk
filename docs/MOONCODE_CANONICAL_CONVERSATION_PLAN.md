@@ -13,6 +13,15 @@ Raw MoonClaw events, command queues, receipts, runtime service lifecycle
 records, proof manifests, and stream checkpoints are diagnostic evidence. They
 must not be rendered as the chat transcript.
 
+The Rabbita/Moondesk browser path does not fetch, parse, checkpoint, or merge
+stream data into chat. It renders only the backend canonical session
+conversation plus unacknowledged local optimistic user turns.
+
+Live thinking/progress must use the same rule: refresh the selected canonical
+session and update the progress array inside the owning turn. The browser must
+not add a separate live event row that can move ahead of the user message or
+assistant reply.
+
 This is a fresh-default design. We do not preserve old transcript behavior as a
 compatibility target.
 
@@ -72,6 +81,10 @@ The backend owns durable canonical turns and Moondesk renders those turns.
 
 - Backend owns durable conversation turns.
 - UI owns only local optimistic turns that have not been acknowledged yet.
+- The visible chat renderer consumes only `mooncode_conversation.turns` plus
+  unacknowledged local optimistic rows. It must not rebuild visible rows from
+  `mooncode_events`, stream events, runtime-event snapshots, command logs,
+  receipts, or `merge_events` output.
 - MoonClaw emits runtime events, but every user-facing event must be normalized
   behind a `turn_id` or `command_id` before it reaches the chat list.
 - Runtime service lifecycle events update service state only.
@@ -490,15 +503,18 @@ Work:
 - Delete browser-side runtime-event sink polling and state.
 - Keep the backend runtime-events endpoint as an explicit diagnostic/ingest
   surface, not a hidden frontend conversation source.
-- Keep stream polling for cursors/checkpoints and canonical session refresh for
-  chat ownership.
-- Preserve tests proving raw stream events cannot acknowledge optimistic rows.
+- Delete stream polling, stream cursors/checkpoints, stream parser state, and
+  stream reducer branches from the browser chat path.
+- Preserve tests proving only canonical backend turns can acknowledge
+  optimistic rows.
 
 Current coverage:
 
 - The frontend no longer has `LoadedMoonCodeRuntimeEventSink`,
   `MoonCodeRuntimeEventSink`, legacy runtime-sink model fields, or a
   runtime-sink fetch command.
+- The frontend no longer has browser stream fields, `LoadedMoonCodeStream`,
+  stream parser state, or stream checkpoint commands in the chat path.
 - `PollMoonCodeSessions`, session selection, and session mutation success do
   not fetch runtime-event sink snapshots.
 - Stream diagnostics remain separate from chat ownership.
@@ -635,10 +651,11 @@ The next scheduled phases are now explicit:
 - Phase 29: browser conversation stability gate. First/second/third turns must
   append immediately, preserve old turns, keep owner-tagged progress under the
   owning turn, fold completed progress, and survive reload without flashes or
-  reordering. The deterministic browser gate uses `mooncodeRuntime=manual` to
-  disable only UI runtime auto-start and then injects event-backed native
-  replies through public APIs; ordinary MoonCode sessions keep automatic
-  MoonClaw runtime startup.
+  reordering. The browser gate must exercise the normal submit path: the
+  browser shows the optimistic user row immediately, while the command API runs
+  the MoonClaw canonical runtime loop and returns the authoritative
+  conversation response. Deterministic fixtures should be installed through
+  backend/public APIs, not by disabling runtime behavior in the browser.
 - Phase 30: no frontend conversation repair. Normal
   `/api/mooncode/sessions` responses are authoritative for any session they
   include. The browser may keep local optimistic rows and may preserve an

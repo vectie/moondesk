@@ -84,19 +84,13 @@ struct Model {
   mooncode_sessions : Array[MoonCodeSession]
   selected_mooncode_session_id : String
   mooncode_new_chat_active : Bool
-  mooncode_stream_session_id : String
-  mooncode_stream_cursor : Int
-  mooncode_stream_status : String
-  mooncode_stream_checkpoint_session_id : String
-  mooncode_stream_checkpoint_status : String
-  mooncode_stream_events : Array[MoonCodeEvent]
   mooncode_prompt : String
   mooncode_model : String
   mooncode_web_search : Bool
-  mooncode_runtime_mode : String
   mooncode_composer_status : String
   mooncode_next_client_turn_index : Int
   mooncode_optimistic_rows : Array[MoonCodeOptimisticRow]
+  mooncode_poll_generation : Int
   events : Array[DeskEvent]
   review_items : Array[ReviewItem]
   review_decision_note : String
@@ -190,11 +184,9 @@ enum Msg {
   LoadedMoonClawDaemon(Result[MoonClawDaemonStatus, String])
   LoadedMoonClawModels(Result[MoonClawModelsResult, String])
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
-  LoadedMoonCodeStream(String, Result[MoonCodeStreamPoll, String])
-  SavedMoonCodeStreamCheckpoint(String, Result[MoonCodeStreamState, String])
+  LoadedMoonCodeSession(String, Result[MoonCodeSession, String])
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
-  StartedMoonCodeRuntime(String, Result[Json, String])
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)
@@ -203,7 +195,7 @@ enum Msg {
   NewMoonCodeSession
   SetMoonCodePrompt(String)
   SendMoonCodeMessage
-  PollMoonCodeSessions
+  PollMoonCodeSessions(Int)
   SelectWorkspace(String)
   SelectPath(String)
   OpenDirectory(String)

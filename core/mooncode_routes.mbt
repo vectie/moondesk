@@ -10,6 +10,20 @@ pub fn mooncode_sessions_url(workspace_id : String) -> String {
 }
 
 ///|
+pub fn mooncode_session_listing_url(workspace_id : String) -> String {
+  if workspace_id == "" {
+    desktop_api_url(["api", "mooncode", "sessions"], query=[
+      ("format", "listing"),
+    ])
+  } else {
+    desktop_api_url(["api", "mooncode", "sessions"], query=[
+      ("workspace", workspace_id),
+      ("format", "listing"),
+    ])
+  }
+}
+
+///|
 pub fn mooncode_session_url(session_id : String) -> String {
   desktop_api_url(["api", "mooncode", "sessions", session_id])
 }

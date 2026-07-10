@@ -67,13 +67,16 @@ test "mooncode session listing title prefers stored first prompt fields" {
 }
 
 ///|
-test "mooncode session listing merge prefers runtime rows and keeps local rows" {
+test "mooncode session listing merge keeps local identity and runtime freshness" {
   let runtime_rows : Array[Json] = [
     {
       "id": "session-a",
       "title": "Native session A",
       "source": "moonclaw",
       "status": "durable",
+      "workspace_id": "wrong-runtime-id",
+      "workspace_name": "Wrong runtime name",
+      "updated_at_ms": Json::number(42.0, repr="42"),
     },
     { "title": "Diagnostic row without id", "source": "moonclaw" },
   ]
@@ -94,8 +97,15 @@ test "mooncode session listing merge prefers runtime rows and keeps local rows" 
   let rows = merge_session_listing_rows(runtime_rows, local_sessions)
   assert_eq(rows.length(), 2)
   assert_eq(json_string(rows[0], "id", default=""), "session-a")
-  assert_eq(json_string(rows[0], "title", default=""), "Native session A")
-  assert_eq(json_string(rows[0], "source", default=""), "moonclaw")
+  assert_eq(json_string(rows[0], "title", default=""), "Local duplicate A")
+  assert_eq(json_string(rows[0], "workspace_id", default=""), "book")
+  assert_eq(json_string(rows[0], "workspace_root", default=""), "/tmp/book")
+  assert_eq(
+    json_string(rows[0], "source", default=""),
+    "mooncode-session-listing",
+  )
+  assert_eq(json_string(rows[0], "runtime_source", default=""), "moonclaw")
+  assert_true(rows[0].stringify().contains("\"updated_at_ms\":42"))
   assert_eq(json_string(rows[1], "id", default=""), "session-b")
   assert_eq(json_string(rows[1], "title", default=""), "Local session B")
   assert_eq(
@@ -180,7 +190,7 @@ test "mooncode runtime session listing accepts mooncode array and moonclaw envel
 }
 
 ///|
-test "mooncode runtime session listing preserves rich moonclaw row metadata" {
+test "mooncode runtime session listing normalizes source and preserves provenance" {
   let rows = runtime_session_listing_rows({
     "sessions": [
       {
@@ -194,7 +204,11 @@ test "mooncode runtime session listing preserves rich moonclaw row metadata" {
     ],
   })
   assert_eq(rows.length(), 1)
-  assert_eq(json_string(rows[0], "source", default=""), "moonclaw")
+  assert_eq(
+    json_string(rows[0], "source", default=""),
+    "mooncode-runtime-session-listing",
+  )
+  assert_eq(json_string(rows[0], "runtime_source", default=""), "moonclaw")
   assert_eq(json_string(rows[0], "status", default=""), "durable")
   assert_true(rows[0].stringify().contains("\"updated_at_ms\":null"))
 }

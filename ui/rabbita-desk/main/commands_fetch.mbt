@@ -54,9 +54,8 @@ fn fetch_runs_cmd(
   workspace_id : String,
 ) -> @rabbita.Cmd {
   @http.get(@desk.moonclaw_workspace_url("runs", workspace_id)).expect_json(result => {
-      dispatch(LoadedRuns(http_result(result, "Invalid MoonClaw run listing")))
-    },
-  )
+    dispatch(LoadedRuns(http_result(result, "Invalid MoonClaw run listing")))
+  })
 }
 
 ///|
@@ -104,10 +103,11 @@ fn fetch_moonclaw_progress_cmd(
   workspace_id : String,
 ) -> @rabbita.Cmd {
   @http.get(@desk.moonclaw_workspace_url("progress", workspace_id)).expect_json(result => {
-    dispatch(
-      LoadedMoonclawProgress(http_result(result, "Invalid MoonClaw progress")),
-    )
-  })
+      dispatch(
+        LoadedMoonclawProgress(http_result(result, "Invalid MoonClaw progress")),
+      )
+    },
+  )
 }
 
 ///|
@@ -116,9 +116,8 @@ fn fetch_events_cmd(
   workspace_id : String,
 ) -> @rabbita.Cmd {
   @http.get(@desk.moonclaw_workspace_url("events", workspace_id)).expect_json(result => {
-      dispatch(LoadedEvents(http_result(result, "Invalid event stream")))
-    },
-  )
+    dispatch(LoadedEvents(http_result(result, "Invalid event stream")))
+  })
 }
 
 ///|
@@ -134,9 +133,8 @@ fn fetch_review_items_cmd(
   workspace_id : String,
 ) -> @rabbita.Cmd {
   @http.get(@desk.review_items_url(workspace_id)).expect_json(result => {
-      dispatch(LoadedReviewItems(http_result(result, "Invalid review queue")))
-    },
-  )
+    dispatch(LoadedReviewItems(http_result(result, "Invalid review queue")))
+  })
 }
 
 ///|

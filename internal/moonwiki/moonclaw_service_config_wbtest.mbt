@@ -47,7 +47,7 @@ async test "moonclaw service descriptor is explicit and workspace local" {
 }
 
 ///|
-async test "moonclaw service descriptor can use sibling checkout fallback" {
+async test "moonclaw service descriptor ignores implicit checkout fallback" {
   let parent = "/tmp/moondesk-moonclaw-service-missing-wbtest-" +
     @desk.stable_id("moonclaw-service-missing", @async.now().to_string())
   let root = @pathx.join(parent, "workspace")
@@ -69,13 +69,25 @@ async test "moonclaw service descriptor can use sibling checkout fallback" {
   )
 
   let result = moonclaw_service_descriptor(root, "daemon")
-  assert_true(json_bool(result, "configured", default=false))
-  assert_eq(json_string(result, "source", default=""), "sibling-checkout")
-  assert_eq(json_string(result, "cwd", default=""), sibling)
-  assert_true(
-    json_string_array_items(result, "args") ==
-    ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", root],
-  )
+  assert_false(json_bool(result, "configured", default=true))
+  assert_eq(json_string(result, "command", default="missing"), "")
+  assert_eq(json_string(result, "source", default=""), "missing")
+}
+
+///|
+test "moonclaw checkout candidates exclude stale home compatibility paths" {
+  let candidates = moonclaw_checkout_candidates("")
+  assert_eq(candidates.length(), 0)
+}
+
+///|
+test "moonclaw checkout candidates prefer explicit environment root" {
+  let candidates = moonclaw_checkout_candidates("/opt/moonclaw-runtime")
+  guard candidates.get(0) is Some(first) else {
+    fail("expected at least one MoonClaw candidate")
+  }
+  assert_eq(first.path, "/opt/moonclaw-runtime")
+  assert_eq(first.source, "env-moonclaw-root")
 }
 
 ///|

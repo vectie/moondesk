@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
+  acceptedCommandId,
   assert,
   cleanupProcesses,
+  fetchCanonicalSession,
   requestJson,
   startMoonClaw,
   startMoondesk,
@@ -34,16 +36,16 @@ async function postCommand(base, sessionId, body) {
     `${base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/commands`,
     { method: "POST", body: JSON.stringify(body) },
   );
-  assert(result.command_id, `Command response missing command_id: ${JSON.stringify(result)}`);
-  return result;
+  const commandId = acceptedCommandId(result);
+  assert(commandId, `Command response missing canonical command identity: ${JSON.stringify(result)}`);
+  return { ...result, command_id: commandId };
 }
 
 async function fetchSession(base, sessionId) {
   await requestJson(
     `${base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-events`,
   );
-  const sessions = await requestJson(`${base}/api/mooncode/sessions`);
-  return sessions.find(item => item.id === sessionId);
+  return await fetchCanonicalSession(base, sessionId);
 }
 
 function sessionTurn(session, commandId) {
@@ -121,7 +123,7 @@ async function runSmoke() {
     },
   );
   const sessionId = created.id;
-  const firstCommandId = created.command_id;
+  const firstCommandId = acceptedCommandId(created);
   assert(sessionId && firstCommandId, `Created session missing ids: ${JSON.stringify(created)}`);
   await startService(moondesk.base, sessionId, "mooncode-control-boundary-first");
   let state = await waitForReply(moondesk.base, sessionId, firstCommandId, first.answer);

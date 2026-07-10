@@ -64,8 +64,6 @@ uses the host `/api/moonclaw/*` routes.
 - `main/app_update_mooncode_results.mbt`: MoonCode result reducer routing table.
 - `main/app_update_mooncode_session_results.mbt`: MoonClaw daemon/model,
   capability, and MoonCode session-list result handling.
-- `main/app_update_mooncode_stream_results.mbt`: MoonCode stream checkpoint and
-  runtime event-sink result handling.
 - `main/app_update_mooncode_artifact_results.mbt`: MoonCode review artifact,
   readiness, evidence, queue, replay, and preflight snapshot result handling.
 - `main/app_update_mooncode_runtime_results.mbt`: MoonCode runtime control,
@@ -85,8 +83,9 @@ uses the host `/api/moonclaw/*` routes.
 - `main/commands_reload.mbt`: workspace reload command batch composition.
 - `main/mooncode_bootstrap_commands.mbt`: MoonClaw daemon/model probes and
   MoonCode capability fetches.
-- `main/mooncode_session_fetch_commands.mbt`: MoonCode session lists, streams,
-  stream checkpoints, change/review/test/package/readiness fetches.
+- `main/mooncode_session_fetch_commands.mbt`: MoonCode session lists,
+  canonical selected-session fetches, change/review/test/package/readiness
+  fetches.
 - `main/mooncode_session_mutation_commands.mbt`: session creation, composer
   dispatch, command posting, steer/prompt selection, and MoonCode polling.
 - `main/mooncode_runtime_commands.mbt`: runtime event, handoff, evidence,
@@ -119,7 +118,8 @@ uses the host `/api/moonclaw/*` routes.
 - `main/moonwiki_command_palette_views.mbt`: command palette, title bar, and
   workspace-mode switch.
 - `main/moonwiki_shell_views.mbt`: final app-shell composition only.
-- `main/mooncode_model.mbt`: core MoonCode session, message, and event DTOs.
+- `main/mooncode_model.mbt`: core MoonCode session, message, and canonical
+  conversation DTOs.
 - `main/mooncode_daemon_model.mbt`: MoonClaw daemon/model availability DTOs.
 - `main/mooncode_summary_model.mbt`: MoonCode summary, readiness, and eval
   report DTOs.
@@ -131,12 +131,11 @@ uses the host `/api/moonclaw/*` routes.
   package-candidate, stream, and authorization DTOs.
 - `main/mooncode_action_model.mbt`: action-plan, command preflight, and runtime
   evidence DTOs.
-- `main/mooncode_stream_parser.mbt`: MoonCode incremental stream parser.
 - `main/mooncode_views.mbt`: MoonCode shell, session picker, center surface,
   and composer.
 - `main/mooncode_lifecycle_views.mbt`: resume, steering, cancel, patch, and
   package lifecycle panels.
-- `main/mooncode_transcript_views.mbt`: transcript, stream event transcript,
+- `main/mooncode_transcript_views.mbt`: canonical transcript, folded progress,
   and preflight rendering.
 - `main/mooncode_command_views.mbt`: command queue and queued-command controls.
 - `main/mooncode_runtime_feed_views.mbt`: runtime command feed, lifecycle, and
@@ -153,8 +152,8 @@ uses the host `/api/moonclaw/*` routes.
   gates, and receipt-state classification.
 - `main/mooncode_runtime_execution_views.mbt`: shared execution summaries,
   tool policies, and runtime execution checklists.
-- `main/mooncode_event_views.mbt`: event lanes, live tail, shared info chips,
-  and lane rows.
+- `main/mooncode_event_views.mbt`: diagnostic event lanes, shared info chips,
+  and lane rows outside the chat transcript.
 - `main/mooncode_eval_report_views.mbt`: MoonCode eval-report evidence panel.
 - `main/mooncode_runtime_handoff_views.mbt`: runtime handoff summary and
   resume-contract panel.

@@ -872,11 +872,11 @@ messages, checks that activity rows stay under their owning command, imports
 event-backed native assistant replies, verifies completed progress is folded,
 and then reloads to prove the old conversation persists.
 
-The browser gate opens MoonCode with `mooncodeRuntime=manual`. That disables
-only UI runtime auto-start for the smoke run; normal product sessions still
-start MoonClaw automatically. This keeps the ordering/reload test deterministic
-while still requiring real canonical backend events before the UI can show
-assistant replies.
+The browser gate must use the normal MoonCode submit path. The UI shows the
+optimistic user row immediately, while the backend command API owns MoonClaw
+runtime execution, canonical conversation sync, and the returned assistant
+response. Deterministic smoke data should be injected through backend/public
+APIs, not by switching the browser into a separate runtime mode.
 
 Runtime-service failure gate:
 

@@ -273,24 +273,44 @@ async fn start_moonclaw_daemon(
   }
   let info_path = moonclaw_daemon_info_path(root)
   let mut reachable = false
+  let mut exited = false
   let mut checks = 0
-  while checks < 30 {
-    @async.sleep(200)
+  while checks < 120 {
+    @async.sleep(500)
     let status = moonclaw_daemon_status(root)
     if json_bool(status, "running", default=false) {
       reachable = true
       break
     }
+    if pid > 0 && !process_is_alive(pid) {
+      exited = true
+      break
+    }
     checks += 1
+  }
+  let failure_detail = if exited {
+    moonclaw_startup_failure_detail(stderr_path, stdout_path)
+  } else {
+    ""
   }
   moonclaw_daemon_lifecycle_result(
     root,
     action~,
     ok=reachable,
-    status=if reachable { "running" } else { "starting" },
+    status=if reachable {
+      "running"
+    } else if exited {
+      "exited"
+    } else {
+      "starting"
+    },
     running=reachable,
     message=if reachable {
       "MoonClaw daemon started"
+    } else if exited && failure_detail != "" {
+      failure_detail
+    } else if exited {
+      "MoonClaw daemon exited before it became reachable"
     } else {
       "MoonClaw daemon was spawned but is not reachable yet"
     },
@@ -300,6 +320,24 @@ async fn start_moonclaw_daemon(
     stdout_path~,
     stderr_path~,
   )
+}
+
+///|
+async fn moonclaw_startup_failure_detail(
+  stderr_path : String,
+  stdout_path : String,
+) -> String {
+  let stderr_text = @fs.read_file(stderr_path).text() catch { _ => "" }
+  let stderr_text = stderr_text.trim().to_owned()
+  if stderr_text != "" {
+    return "MoonClaw daemon exited: " + stderr_text
+  }
+  let stdout_text = @fs.read_file(stdout_path).text() catch { _ => "" }
+  let stdout_text = stdout_text.trim().to_owned()
+  if stdout_text != "" {
+    return "MoonClaw daemon exited: " + stdout_text
+  }
+  ""
 }
 
 ///|

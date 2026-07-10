@@ -7,12 +7,10 @@ fn update_mooncode_results(
   match msg {
     LoadedMoonClawDaemon(_)
     | LoadedMoonClawModels(_)
-    | LoadedMoonCodeSessions(_) =>
+    | LoadedMoonCodeSessions(_)
+    | LoadedMoonCodeSession(_, _) =>
       update_mooncode_session_results(dispatch, msg, model)
-    LoadedMoonCodeStream(_, _) | SavedMoonCodeStreamCheckpoint(_, _) =>
-      update_mooncode_stream_results(dispatch, msg, model)
-    CreatedMoonCodeSession(_) | CompletedMoonCodeCommand(_)
-    | StartedMoonCodeRuntime(_, _) =>
+    CreatedMoonCodeSession(_) | CompletedMoonCodeCommand(_) =>
       update_mooncode_session_results(dispatch, msg, model)
     _ => (@rabbita.none, model)
   }

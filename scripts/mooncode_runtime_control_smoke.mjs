@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
+  acceptedCommandId,
   assert,
   cleanupProcesses,
   requestJson,
@@ -26,8 +27,9 @@ async function postCommand(base, sessionId, action, message, clientTurnId) {
       }),
     },
   );
-  assert(result.command_id, `Command response missing command_id: ${JSON.stringify(result)}`);
-  return result.command_id;
+  const commandId = acceptedCommandId(result);
+  assert(commandId, `Command response missing canonical command identity: ${JSON.stringify(result)}`);
+  return commandId;
 }
 
 async function runSmoke() {
@@ -46,7 +48,7 @@ async function runSmoke() {
     },
   );
   const sessionId = created.id;
-  const promptCommandId = created.command_id;
+  const promptCommandId = acceptedCommandId(created);
   assert(sessionId && promptCommandId, `Created session did not return ids: ${JSON.stringify(created)}`);
   assert(created.status === "queued", `Create response should stay queued before explicit runtime start: ${JSON.stringify(created)}`);
 

@@ -22,7 +22,7 @@ pub fn session_readiness_checks(
     "mooncode_runtime_session_id",
     default=json_string(session, "id", default=""),
   )
-  let canonical_conversation = conversation_projection(session, events)
+  let canonical_conversation = session_canonical_conversation(session)
   let canonical_turn_count = summary_json_int(
     canonical_conversation,
     "turn_count",

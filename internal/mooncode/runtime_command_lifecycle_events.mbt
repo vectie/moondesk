@@ -10,6 +10,7 @@ fn runtime_command_lifecycle_event_counts(
   let mut done_event_count = 0
   let mut failed_event_count = 0
   let mut proof_event_count = 0
+  let mut terminal_event_count = 0
   let mut latest_event_id = ""
   let mut latest_event_title = ""
   let mut latest_event_status = ""
@@ -24,6 +25,9 @@ fn runtime_command_lifecycle_event_counts(
     }
     if runtime_lane_is_proof(lane) {
       proof_event_count += 1
+    }
+    if runtime_command_lifecycle_event_is_terminal(event) {
+      terminal_event_count += 1
     }
     match rq_json_string(event, "status", default="") {
       "running" => running_event_count += 1
@@ -40,6 +44,7 @@ fn runtime_command_lifecycle_event_counts(
     "done_event_count": done_event_count,
     "failed_event_count": failed_event_count,
     "proof_event_count": proof_event_count,
+    "terminal_event_count": terminal_event_count,
     "lanes": Json::array([ for lane in lanes => Json::string(lane) ]),
     "latest_event_id": latest_event_id,
     "latest_event_title": latest_event_title,
@@ -56,10 +61,21 @@ fn runtime_event_matches_command(
   if command_id == "" {
     return false
   }
+  if rq_json_string(event, "command_id", default="") == command_id {
+    return true
+  }
   let packet = rq_json_object_field_or_empty(event, "command_packet")
   rq_json_string(packet, "command_id", default="") == command_id &&
   (
     rq_json_string(packet, "action", default="") == "" ||
     rq_json_string(packet, "action", default="") == action
   )
+}
+
+///|
+fn runtime_command_lifecycle_event_is_terminal(event : Json) -> Bool {
+  let kind = rq_json_string(event, "kind", default="")
+  kind == event_runtime_turn_finished() ||
+  kind == event_runtime_finished() ||
+  kind == event_runtime_aborted()
 }

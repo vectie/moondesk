@@ -29,7 +29,7 @@ require_core_symbol "runtime_control_status_is_active"
 require_core_symbol "runtime_control_status_is_blocked"
 
 if ! rg -n '@mooncode_core\.conversation_ownership_contract_json\(\)' \
-  "${ROOT}/internal/mooncode/conversation_projection.mbt" >/dev/null; then
+  "${ROOT}/internal/mooncode/canonical_conversation.mbt" >/dev/null; then
   fail "internal conversation ownership contract must delegate to mooncode/core"
 fi
 
@@ -65,9 +65,9 @@ fi
 
 if rg -n \
   '"mooncode-conversation-ownership-contract"|"visible_owner_rule"|"unowned_event_rule"|"control_rule"|"abort_rule"' \
-  "${ROOT}/internal/mooncode/conversation_projection.mbt" \
+  "${ROOT}/internal/mooncode/canonical_conversation.mbt" \
   >"${tmp_hits}"; then
-  echo "Conversation ownership vocabulary must be owned by mooncode/core, not internal projection files:" >&2
+  echo "Conversation ownership vocabulary must be owned by mooncode/core, not internal canonical-consumer files:" >&2
   cat "${tmp_hits}" >&2
   exit 1
 fi

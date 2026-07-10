@@ -28,6 +28,7 @@ fn code_mode_test_session(
     } else {
       "/tmp/demo-book"
     },
+    source: None,
     mooncode_runtime_session_id: Some("runtime-" + id),
     title: "MoonCode - " + id,
     model: "deepseek-v4-flash",
@@ -39,55 +40,6 @@ fn code_mode_test_session(
 }
 
 ///|
-fn code_mode_test_event(
-  id : String,
-  command_id? : String = "",
-  title? : String = "runtime event",
-  lane? : String = "runtime",
-  kind? : String = "mooncode.runtime-event",
-  status? : String = "ok",
-  detail? : String = "",
-  path? : String = "",
-  command? : String = "",
-  created_at? : String = "2026-06-30T00:00:00Z",
-  exit_code? : Int = 0,
-  tool? : String = "",
-  tool_name? : String = "",
-  command_packet? : Json? = None,
-  tool_result? : Json? = None,
-) -> MoonCodeEvent {
-  {
-    id,
-    command_id: if command_id == "" {
-      None
-    } else {
-      Some(command_id)
-    },
-    lane,
-    kind,
-    title,
-    status,
-    created_at,
-    detail,
-    path,
-    command,
-    exit_code,
-    tool: if tool == "" {
-      None
-    } else {
-      Some(tool)
-    },
-    tool_name: if tool_name == "" {
-      None
-    } else {
-      Some(tool_name)
-    },
-    command_packet,
-    tool_result,
-  }
-}
-
-///|
 fn code_mode_test_conversation(
   session_id : String,
   turns : Array[MoonCodeConversationTurn],
@@ -95,10 +47,13 @@ fn code_mode_test_conversation(
   {
     kind: "mooncode-conversation",
     protocol: "mooncode.v1",
+    contract_id: "moonsuite-conversation.v2",
     session_id,
     workspace_id: "book-demo",
     workspace_name: "Demo Book",
     turn_count: turns.length(),
+    revision: turns.length() * 2,
+    last_sequence: turns.length() * 2,
     source_event_count: turns.length() * 2,
     turns,
   }
@@ -110,19 +65,16 @@ fn code_mode_test_turn(
   user : String,
   client_turn_id? : String = "",
   assistant? : String = "",
-  progress? : Array[Json] = [],
+  steps? : Array[Json] = [],
   status? : String = "done",
 ) -> MoonCodeConversationTurn {
-  let turn_client_id = if client_turn_id == "" {
-    id
-  } else {
-    client_turn_id
-  }
+  let turn_client_id = if client_turn_id == "" { id } else { client_turn_id }
   {
     kind: "mooncode-conversation-turn",
     turn_id: id,
     client_turn_id: turn_client_id,
     command_id: id,
+    ordinal: 0,
     status,
     started_at: "2026-06-30T00:00:00Z",
     updated_at: "2026-06-30T00:00:01Z",
@@ -133,7 +85,21 @@ fn code_mode_test_turn(
       "command_id": id,
       "client_turn_id": turn_client_id,
     },
-    progress,
+    work: {
+      "item_id": "turn:\{id}:work",
+      "status": status,
+      "summary": if steps.length() > 0 {
+        json_field_string(
+          steps[steps.length() - 1],
+          "title",
+          default="Completed work",
+        )
+      } else {
+        "Completed work"
+      },
+      "steps": Json::array(steps),
+      "live": {},
+    },
     assistant: if assistant == "" {
       Json::object({})
     } else {
@@ -145,7 +111,6 @@ fn code_mode_test_turn(
         "client_turn_id": turn_client_id,
       }
     },
-    items: [],
   }
 }
 
@@ -174,11 +139,10 @@ test "code mode transcript uses backend canonical conversation" {
           "command-first",
           "First prompt",
           assistant="First answer",
-          progress=[
+          steps=[
             {
-              "role": "progress",
               "title": "Thinking",
-              "detail": "Prepared the first answer.",
+              "summary": "Prepared the first answer.",
               "status": "done",
             },
           ],
@@ -218,8 +182,8 @@ test "code mode transcript uses backend canonical conversation" {
   }
   match items[1].activity {
     Some(row) => {
-      assert_eq(row.command_id, "")
-      assert_eq(row.client_turn_id, "")
+      assert_eq(row.command_id, "command-first")
+      assert_eq(row.client_turn_id, "command-first")
     }
     None => fail("expected progress activity")
   }
@@ -230,12 +194,101 @@ test "code mode transcript uses backend canonical conversation" {
     }
     None => fail("expected owned assistant message")
   }
-  assert_eq(activities.length(), 1)
-  assert_eq(activities[0], "Prepared the response:Prepared the first answer.")
+  assert_eq(activities.length(), 2)
+  assert_eq(activities[0], "Thinking:Prepared the first answer.")
+  assert_eq(activities[1], "Completed work:")
 }
 
 ///|
-test "code mode canonical progress stays folded between user and assistant" {
+test "code mode transcript ignores backend conversation from another session" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-b", [
+        code_mode_test_turn(
+          "command-wrong",
+          "Wrong prompt",
+          assistant="Wrong answer",
+        ),
+      ]),
+    ),
+  }
+  let rows = code_mode_test_transcript_rows(init_model(), session)
+  assert_eq(rows.length(), 0)
+}
+
+///|
+test "code mode transcript uses canonical conversation for visible chat rows" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "command-first",
+          "Canonical prompt",
+          assistant="Canonical answer",
+        ),
+      ]),
+    ),
+  }
+  let model = { ..init_model(), selected_mooncode_session_id: "session-a" }
+  let messages : Array[String] = []
+  for item in mooncode_transcript_items(model, session) {
+    match item.message {
+      Some(row) => messages.push(row.role + ":" + row.content)
+      None => ()
+    }
+  }
+  assert_eq(messages.length(), 2)
+  assert_eq(messages[0], "user:Canonical prompt")
+  assert_eq(messages[1], "assistant:Canonical answer")
+}
+
+///|
+test "code mode transcript keeps canonical progress with existing command" {
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "command-first",
+          "Canonical prompt",
+          assistant="Canonical answer",
+          steps=[
+            {
+              "title": "Thinking",
+              "summary": "Canonical progress.",
+              "status": "done",
+              "command_id": "command-first",
+              "client_turn_id": "command-first",
+            },
+          ],
+        ),
+      ]),
+    ),
+  }
+  let model = { ..init_model(), selected_mooncode_session_id: "session-a" }
+  let messages : Array[String] = []
+  let activities : Array[String] = []
+  for item in mooncode_transcript_items(model, session) {
+    match item.message {
+      Some(row) => messages.push(row.role + ":" + row.content)
+      None =>
+        match item.activity {
+          Some(row) => activities.push(row.title + ":" + row.detail)
+          None => ()
+        }
+    }
+  }
+  assert_eq(messages.length(), 2)
+  assert_eq(messages[0], "user:Canonical prompt")
+  assert_eq(messages[1], "assistant:Canonical answer")
+  assert_eq(activities.length(), 1)
+  assert_eq(activities[0], "Thinking:Canonical progress.")
+}
+
+///|
+test "code mode canonical work stays folded between user and assistant" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),
     mooncode_conversation: Some(
@@ -244,11 +297,10 @@ test "code mode canonical progress stays folded between user and assistant" {
           "command-first",
           "First prompt",
           assistant="First answer",
-          progress=[
+          steps=[
             {
-              "role": "progress",
               "title": "Reading workspace",
-              "detail": "Read the workspace.",
+              "summary": "Read the workspace.",
               "status": "done",
               "command_id": "command-first",
               "client_turn_id": "command-first",
@@ -267,8 +319,8 @@ test "code mode canonical progress stays folded between user and assistant" {
   match items[1].activity {
     Some(row) => {
       assert_true(row.folded)
-      assert_eq(row.label, "Progress")
-      assert_eq(row.title, "Prepared the response")
+      assert_eq(row.label, "Work")
+      assert_eq(row.title, "Reading workspace")
       assert_eq(row.detail, "Read the workspace.")
       assert_eq(row.command_id, "command-first")
       assert_eq(row.client_turn_id, "command-first")
@@ -282,7 +334,7 @@ test "code mode canonical progress stays folded between user and assistant" {
 }
 
 ///|
-test "code mode folded progress hides implementation wording" {
+test "code mode folded work renders producer-owned user-facing wording" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),
     mooncode_conversation: Some(
@@ -291,17 +343,10 @@ test "code mode folded progress hides implementation wording" {
           "command-first",
           "First prompt",
           assistant="First answer",
-          progress=[
+          steps=[
             {
-              "role": "progress",
-              "title": "Thinking",
-              "detail": "MoonClaw native runtime turn executed 1 tool call(s).",
-              "status": "done",
-            },
-            {
-              "role": "progress",
-              "title": "Selected next action",
-              "detail": "model-tool-calls selected shell tool call",
+              "title": "Reviewed request",
+              "summary": "Thought through the request.",
               "status": "done",
             },
           ],
@@ -314,15 +359,10 @@ test "code mode folded progress hides implementation wording" {
   match items[1].activity {
     Some(row) => {
       assert_true(row.folded)
-      assert_eq(row.title, "Prepared the response")
-      assert_eq(
-        row.detail,
-        "Thought through the request.\nChose what to do next.",
-      )
+      assert_eq(row.title, "Reviewed request")
+      assert_eq(row.detail, "Thought through the request.")
       assert_false(row.detail.contains("MoonClaw"))
       assert_false(row.detail.contains("runtime"))
-      assert_false(row.detail.contains("model-tool-calls"))
-      assert_false(row.detail.contains("tool call"))
     }
     None => fail("expected folded progress activity")
   }
@@ -363,17 +403,6 @@ test "code mode transcript appends local optimistic turn after three backend tur
         status: "queued",
         key: "ui-user:session-a:fourth",
       },
-    ],
-    mooncode_stream_session_id: "session-a",
-    mooncode_stream_events: [
-      code_mode_test_event(
-        "raw-old",
-        title="Raw old event",
-        lane="runtime",
-        kind="runtime_step",
-        status="running",
-        detail="This raw event must not reorder the chat.",
-      ),
     ],
   }
   let items = mooncode_transcript_items(model, session)
@@ -442,22 +471,11 @@ test "code mode transcript drops acknowledged optimistic turn by client turn id"
 }
 
 ///|
-test "code mode transcript uses local rows instead of runtime wait state" {
+test "code mode transcript uses local rows without backend conversation" {
   let session = code_mode_test_session("session-a", status="running")
   let model = {
     ..init_model(),
     selected_mooncode_session_id: "session-a",
-    mooncode_stream_session_id: "session-a",
-    mooncode_stream_events: [
-      code_mode_test_event(
-        "prompt-only",
-        title="Prompt: queued",
-        kind="command.prompt",
-        status="queued",
-        detail="Prompt from fast stream",
-        command="prompt",
-      ),
-    ],
     mooncode_optimistic_rows: [
       {
         session_id: "session-a",
@@ -506,16 +524,12 @@ test "code mode new session action opens MoonCode draft without losing book cont
 }
 
 ///|
-test "code mode selecting loaded session keeps matching stream state" {
+test "code mode selecting loaded session keeps selection" {
   let session = code_mode_test_session("session-a")
   let model = {
     ..init_model(),
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
-    mooncode_stream_session_id: "session-a",
-    mooncode_stream_cursor: 4,
-    mooncode_stream_events: [code_mode_test_event("stream-a")],
-    mooncode_stream_status: "live tail",
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
@@ -523,9 +537,93 @@ test "code mode selecting loaded session keeps matching stream state" {
     model,
   )
   assert_eq(next.selected_mooncode_session_id, "session-a")
-  assert_eq(next.mooncode_stream_session_id, "session-a")
-  assert_eq(next.mooncode_stream_cursor, 4)
-  assert_eq(next.mooncode_stream_events.length(), 1)
+  assert_false(next.mooncode_new_chat_active)
+}
+
+///|
+test "code mode selecting moonbook session updates active scope" {
+  let general = code_mode_test_session("general-a", workspace_id="")
+  let book = code_mode_test_session("book-a", workspace_id="book-a")
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "",
+    mooncode_sessions: [general, book],
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SelectMoonCodeSession("book-a"),
+    model,
+  )
+  assert_eq(next.selected_mooncode_session_id, "book-a")
+  assert_eq(next.selected_workspace_id, "book-a")
+}
+
+///|
+test "code mode selecting general session clears moonbook scope" {
+  let general = code_mode_test_session("general-a", workspace_id="")
+  let book = code_mode_test_session("book-a", workspace_id="book-a")
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-a",
+    mooncode_sessions: [general, book],
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SelectMoonCodeSession("general-a"),
+    model,
+  )
+  assert_eq(next.selected_mooncode_session_id, "general-a")
+  assert_eq(next.selected_workspace_id, "")
+}
+
+///|
+test "code mode general scope auto-selects only general sessions" {
+  let book = code_mode_test_session("book-a", workspace_id="book-a")
+  let general = code_mode_test_session("general-a", workspace_id="")
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "",
+    selected_mooncode_session_id: "",
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([book, general])),
+    model,
+  )
+  assert_eq(next.selected_mooncode_session_id, "general-a")
+}
+
+///|
+test "code mode general scope stays empty without general sessions" {
+  let book = code_mode_test_session("book-a", workspace_id="book-a")
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "",
+    selected_mooncode_session_id: "",
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([book])),
+    model,
+  )
+  assert_eq(next.selected_mooncode_session_id, "")
+  assert_true(selected_mooncode_session(next) is None)
+}
+
+///|
+test "code mode session rail groups general separately from moonbooks" {
+  let general = code_mode_test_session("general-a", workspace_id="")
+  let book = code_mode_test_session("book-a", workspace_id="book-a")
+  let model = { ..init_model(), mooncode_sessions: [book, general] }
+  let groups = mooncode_session_groups(model)
+  assert_eq(groups.length(), 2)
+  assert_eq(groups[0].id, "general")
+  assert_eq(groups[0].workspace_id, "")
+  assert_eq(groups[0].sessions.length(), 1)
+  assert_eq(groups[0].sessions[0].id, "general-a")
+  assert_eq(groups[1].workspace_id, "book-a")
+  assert_eq(groups[1].sessions.length(), 1)
+  assert_eq(groups[1].sessions[0].id, "book-a")
 }
 
 ///|
@@ -554,6 +652,114 @@ test "code mode prompt action adds optimistic prompt before runtime reply" {
   let rows = code_mode_test_transcript_rows(next, session)
   assert_eq(rows.length(), 1)
   assert_eq(rows[0].content, "Explain the latest error")
+}
+
+///|
+test "code mode prompt action waits while selected turn is pending" {
+  let session = code_mode_test_session("session-a", status="running")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [session],
+    mooncode_prompt: "Do not lose this prompt",
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
+      [],
+      "session-a",
+      "Previous pending prompt",
+      client_turn_id="client-turn-pending",
+    ),
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage,
+    model,
+  )
+  assert_eq(next.mooncode_prompt, "Do not lose this prompt")
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(
+    next.mooncode_composer_status,
+    "waiting for previous MoonCode reply",
+  )
+}
+
+///|
+test "code mode prompt action waits while canonical session is running" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "command-first",
+          "Previous prompt",
+          status="running",
+          steps=[
+            {
+              "title": "Thinking",
+              "summary": "Still working.",
+              "status": "running",
+              "command_id": "command-first",
+              "client_turn_id": "command-first",
+            },
+          ],
+        ),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [session],
+    mooncode_prompt: "Do not race ahead",
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage,
+    model,
+  )
+  assert_eq(next.mooncode_prompt, "Do not race ahead")
+  assert_eq(next.mooncode_optimistic_rows.length(), 0)
+  assert_eq(
+    next.mooncode_composer_status,
+    "waiting for previous MoonCode reply",
+  )
+}
+
+///|
+test "code mode prompt action accepts stale running session after completed turn" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running", queued_count=1),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "command-first",
+          "Previous prompt",
+          assistant="Previous answer",
+          status="done",
+        ),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [session],
+    mooncode_prompt: "Third prompt should insert",
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage,
+    model,
+  )
+  assert_eq(next.mooncode_prompt, "")
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(
+    next.mooncode_optimistic_rows[0].content,
+    "Third prompt should insert",
+  )
+  assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
 }
 
 ///|
@@ -590,6 +796,41 @@ test "code mode new chat send appends local prompt immediately" {
   assert_eq(rows.length(), 1)
   assert_eq(rows[0].role, "user")
   assert_eq(rows[0].content, "Sketch the migration plan")
+}
+
+///|
+test "code mode new chat keeps prompt while draft turn is pending" {
+  let base = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [],
+    mooncode_prompt: "Second draft prompt",
+    mooncode_composer_status: "draft",
+  }
+  let draft_id = mooncode_draft_session_id(base)
+  let model = {
+    ..base,
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
+      [],
+      draft_id,
+      "First draft prompt",
+      client_turn_id="draft-client-turn-pending",
+    ),
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage,
+    model,
+  )
+  assert_eq(next.mooncode_prompt, "Second draft prompt")
+  assert_true(next.mooncode_new_chat_active)
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(
+    next.mooncode_composer_status,
+    "waiting for previous MoonCode reply",
+  )
 }
 
 ///|
@@ -865,104 +1106,105 @@ test "code mode command result keeps optimistic prompt until canonical turn arri
 }
 
 ///|
-test "code mode runtime prompt event does not acknowledge optimistic prompt" {
+test "code mode command result promotes touched session in rail" {
+  let older = code_mode_test_session("older", status="done")
+  let session = code_mode_test_session("session-a", status="running")
   let model = {
     ..init_model(),
     workspace_mode: MoonCode,
     selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [older, session],
     mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-a",
-      "Stable order please",
+      "Bring this chat to the top",
       client_turn_id="client-turn-local",
     ),
   }
-  let prompt_event = code_mode_test_event(
-    "prompt-event",
-    title="Prompt: queued",
-    kind="command.prompt",
-    status="queued",
-    detail="Stable order please",
-    command="prompt",
-  )
-  let (_, next) = update_mooncode_stream_results(
+  let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeStream(
-      "session-a",
-      Ok({
-        stream: "events",
-        stream_source: "disk",
-        next_since: 1,
-        emitted_count: 1,
-        events: [prompt_event],
-      }),
-    ),
+    CompletedMoonCodeCommand(Ok(session)),
     model,
   )
+  assert_eq(next.mooncode_sessions.length(), 2)
+  assert_eq(next.mooncode_sessions[0].id, "session-a")
+  assert_eq(next.mooncode_sessions[1].id, "older")
+}
+
+///|
+test "code mode stale listing cannot demote pending selected session" {
+  let selected = code_mode_test_session("session-a", status="running")
+  let older = code_mode_test_session("older", status="done")
+  let selected_listing = {
+    ..code_mode_test_session("session-a", status="queued"),
+    source: Some("mooncode-session-listing"),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [selected, older],
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
+      [],
+      "session-a",
+      "Keep this chat pinned while pending",
+      client_turn_id="client-turn-local",
+    ),
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([older, selected_listing])),
+    model,
+  )
+  assert_eq(next.mooncode_sessions.length(), 2)
+  assert_eq(next.mooncode_sessions[0].id, "session-a")
+  assert_eq(next.mooncode_sessions[1].id, "older")
   assert_eq(next.mooncode_optimistic_rows.length(), 1)
 }
 
 ///|
-test "code mode runtime prompt event cannot acknowledge by client turn id" {
+test "code mode command error shows failed assistant row and unblocks composer" {
+  let session = code_mode_test_session("session-a", status="done")
   let model = {
     ..init_model(),
     workspace_mode: MoonCode,
     selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [session],
     mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-a",
-      "Same text",
-      client_turn_id="client-turn-2",
+      "Message that failed to send",
+      client_turn_id="client-turn-local",
     ),
+    mooncode_prompt: "Retry after failure",
   }
-  let first_prompt_event = code_mode_test_event(
-    "prompt-event-1",
-    title="Prompt: queued",
-    kind="command.prompt",
-    status="queued",
-    detail="Same text",
-    command="prompt",
-    command_packet=Some({ "client_turn_id": "client-turn-1" }),
-  )
-  let (_, after_first_event) = update_mooncode_stream_results(
+  let (_, failed) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeStream(
-      "session-a",
-      Ok({
-        stream: "events",
-        stream_source: "disk",
-        next_since: 1,
-        emitted_count: 1,
-        events: [first_prompt_event],
-      }),
-    ),
+    CompletedMoonCodeCommand(Err("network down")),
     model,
   )
-  assert_eq(after_first_event.mooncode_optimistic_rows.length(), 1)
-  let second_prompt_event = code_mode_test_event(
-    "prompt-event-2",
-    title="Prompt: queued",
-    kind="command.prompt",
-    status="queued",
-    detail="Same text",
-    command="prompt",
-    command_packet=Some({ "client_turn_id": "client-turn-2" }),
+  assert_eq(failed.mooncode_optimistic_rows.length(), 2)
+  assert_eq(failed.mooncode_optimistic_rows[0].status, "failed")
+  assert_eq(failed.mooncode_optimistic_rows[1].role, "assistant")
+  let rows = code_mode_test_transcript_rows(failed, session)
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].role, "user")
+  assert_eq(rows[0].content, "Message that failed to send")
+  assert_eq(rows[0].status, "failed")
+  assert_eq(rows[1].role, "assistant")
+  assert_eq(
+    rows[1].content,
+    "MoonCode could not send this message: network down",
   )
-  let (_, after_second_event) = update_mooncode_stream_results(
+  let (_, retried) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    LoadedMoonCodeStream(
-      "session-a",
-      Ok({
-        stream: "events",
-        stream_source: "disk",
-        next_since: 2,
-        emitted_count: 2,
-        events: [first_prompt_event, second_prompt_event],
-      }),
-    ),
-    after_first_event,
+    SendMoonCodeMessage,
+    failed,
   )
-  assert_eq(after_second_event.mooncode_optimistic_rows.length(), 1)
+  assert_eq(retried.mooncode_composer_status, "message queued for MoonCode")
+  assert_eq(retried.mooncode_prompt, "")
+  assert_eq(retried.mooncode_optimistic_rows.length(), 3)
+  assert_eq(retried.mooncode_optimistic_rows[2].content, "Retry after failure")
 }
 
 ///|
@@ -1096,7 +1338,7 @@ test "code mode background errors do not kick typed draft into existing chat" {
 }
 
 ///|
-test "code mode session polling does not copy stale conversation over backend response" {
+test "code mode compact polling cannot erase a hydrated conversation" {
   let hydrated = {
     ..code_mode_test_session("session-a", status="running"),
     mooncode_conversation: Some(
@@ -1125,9 +1367,231 @@ test "code mode session polling does not copy stale conversation over backend re
     model,
   )
   let session = selected_mooncode_session(next).unwrap()
-  assert_true(session.mooncode_conversation is None)
+  assert_true(session.mooncode_conversation is Some(_))
   let rows = code_mode_test_transcript_rows(next, session)
-  assert_eq(rows.length(), 0)
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].content, "Keep this prompt")
+  assert_eq(rows[1].content, "Keep this answer")
+}
+
+///|
+test "code mode listing refresh preserves selected hydrated conversation" {
+  let hydrated = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "turn-a",
+          "Keep this prompt",
+          assistant="Keep this answer",
+        ),
+      ]),
+    ),
+  }
+  let listing = {
+    ..code_mode_test_session("session-a", status="idle"),
+    source: Some("mooncode-session-listing"),
+    title: "MoonCode - session-a listed",
+    mooncode_conversation: None,
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [hydrated],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([listing])),
+    model,
+  )
+  let session = selected_mooncode_session(next).unwrap()
+  assert_eq(session.title, "MoonCode - session-a listed")
+  assert_true(session.mooncode_conversation is Some(_))
+  let rows = code_mode_test_transcript_rows(next, session)
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].content, "Keep this prompt")
+  assert_eq(rows[1].content, "Keep this answer")
+}
+
+///|
+test "code mode native listing refresh preserves selected hydrated conversation" {
+  let hydrated = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "turn-a",
+          "Keep native prompt",
+          assistant="Keep native answer",
+        ),
+      ]),
+    ),
+  }
+  let listing = {
+    ..code_mode_test_session("session-a", status="done"),
+    source: Some("mooncode-runtime-session-listing"),
+    title: "Native session title",
+    workspace_id: "",
+    workspace_name: "",
+    cwd: "",
+    mooncode_conversation: None,
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [hydrated],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([listing])),
+    model,
+  )
+  let session = selected_mooncode_session(next).unwrap()
+  assert_eq(session.title, "Native session title")
+  assert_eq(session.workspace_id, hydrated.workspace_id)
+  assert_eq(session.workspace_name, hydrated.workspace_name)
+  assert_eq(session.cwd, hydrated.cwd)
+  assert_true(session.mooncode_conversation is Some(_))
+  let rows = code_mode_test_transcript_rows(next, session)
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].content, "Keep native prompt")
+  assert_eq(rows[1].content, "Keep native answer")
+}
+
+///|
+test "code mode selected full session hydrates listing row" {
+  let listing = {
+    ..code_mode_test_session("session-a", status="done"),
+    source: Some("mooncode-session-listing"),
+    mooncode_conversation: None,
+  }
+  let hydrated = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn(
+          "turn-a",
+          "Loaded prompt",
+          assistant="Loaded answer",
+        ),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [listing],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSession("session-a", Ok(hydrated)),
+    model,
+  )
+  let session = selected_mooncode_session(next).unwrap()
+  assert_true(session.mooncode_conversation is Some(_))
+  let rows = code_mode_test_transcript_rows(next, session)
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].content, "Loaded prompt")
+  assert_eq(rows[1].content, "Loaded answer")
+}
+
+///|
+test "code mode selected full session hydration keeps rail order" {
+  let newer = code_mode_test_session("newer", status="done")
+  let listing = {
+    ..code_mode_test_session("session-a", status="done"),
+    source: Some("mooncode-session-listing"),
+    mooncode_conversation: None,
+  }
+  let hydrated = {
+    ..code_mode_test_session("session-a", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn("turn-a", "Loaded prompt"),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [newer, listing],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSession("session-a", Ok(hydrated)),
+    model,
+  )
+  assert_eq(next.mooncode_sessions.length(), 2)
+  assert_eq(next.mooncode_sessions[0].id, "newer")
+  assert_eq(next.mooncode_sessions[1].id, "session-a")
+  assert_true(next.mooncode_sessions[1].mooncode_conversation is Some(_))
+}
+
+///|
+test "code mode ignores unchanged canonical conversation revisions" {
+  let turn = code_mode_test_turn("command-first", "Prompt", assistant="Answer")
+  let existing = {
+    ..code_mode_test_session("session-a", status="done"),
+    title: "Stable title",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [turn]),
+      revision: 4,
+    }),
+  }
+  let unchanged = {
+    ..existing,
+    title: "Polling replacement",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [turn]),
+      revision: 4,
+    }),
+  }
+  let preserved = mooncode_upsert_session_if_revision_changed(
+    [existing],
+    unchanged,
+  )
+  assert_eq(preserved[0].title, "Stable title")
+  let advanced = {
+    ..unchanged,
+    title: "Advanced title",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [turn]),
+      revision: 5,
+    }),
+  }
+  let updated = mooncode_upsert_session_if_revision_changed(preserved, advanced)
+  assert_eq(updated[0].title, "Advanced title")
+}
+
+///|
+test "code mode stale full session response is ignored" {
+  let selected = code_mode_test_session("session-a", status="done")
+  let stale = {
+    ..code_mode_test_session("session-b", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-b", [
+        code_mode_test_turn("turn-b", "Wrong prompt"),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [selected],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSession("session-b", Ok(stale)),
+    model,
+  )
+  let session = selected_mooncode_session(next).unwrap()
+  assert_eq(session.id, "session-a")
+  assert_true(session.mooncode_conversation is None)
 }
 
 ///|
@@ -1298,7 +1762,7 @@ test "code mode composer always queues a prompt from the chat input" {
 }
 
 ///|
-test "code mode created session selects session clears prompt and reloads streams" {
+test "code mode created session selects session and clears prompt" {
   let session = code_mode_test_session("session-a")
   let model = {
     ..init_model(),
@@ -1321,18 +1785,12 @@ test "code mode created session selects session clears prompt and reloads stream
 }
 
 ///|
-test "code mode session listing prefers selected session and preserves matching stream state" {
+test "code mode session listing prefers selected session" {
   let session = code_mode_test_session("session-a")
   let model = {
     ..init_model(),
     selected_workspace_id: "book-demo",
     selected_mooncode_session_id: "session-a",
-    mooncode_stream_session_id: "session-a",
-    mooncode_stream_cursor: 7,
-    mooncode_stream_events: [code_mode_test_event("stream-a")],
-    mooncode_stream_status: "live tail / disk / events +1 event(s), cursor 7",
-    mooncode_stream_checkpoint_session_id: "session-a",
-    mooncode_stream_checkpoint_status: "ui checkpoint 7 / latest 7",
   }
   let (_, next) = update_mooncode_results(
     code_mode_test_dispatch,
@@ -1340,26 +1798,16 @@ test "code mode session listing prefers selected session and preserves matching 
     model,
   )
   assert_eq(next.selected_mooncode_session_id, "session-a")
-  assert_eq(next.mooncode_stream_session_id, "session-a")
-  assert_eq(next.mooncode_stream_cursor, 7)
-  assert_eq(next.mooncode_stream_events.length(), 1)
-  assert_eq(next.mooncode_stream_checkpoint_session_id, "session-a")
   assert_eq(next.mooncode_composer_status, "1 MoonCode session(s)")
 }
 
 ///|
-test "code mode session listing resets stale stream state when selection changes" {
+test "code mode session listing selects first session when selected is missing" {
   let session = code_mode_test_session("session-b")
   let model = {
     ..init_model(),
     selected_workspace_id: "book-demo",
     selected_mooncode_session_id: "missing-session",
-    mooncode_stream_session_id: "missing-session",
-    mooncode_stream_cursor: 12,
-    mooncode_stream_events: [code_mode_test_event("stale")],
-    mooncode_stream_status: "stale stream",
-    mooncode_stream_checkpoint_session_id: "missing-session",
-    mooncode_stream_checkpoint_status: "stale checkpoint",
   }
   let (_, next) = update_mooncode_results(
     code_mode_test_dispatch,
@@ -1367,186 +1815,55 @@ test "code mode session listing resets stale stream state when selection changes
     model,
   )
   assert_eq(next.selected_mooncode_session_id, "session-b")
-  assert_eq(next.mooncode_stream_session_id, "")
-  assert_eq(next.mooncode_stream_cursor, 0)
-  assert_eq(next.mooncode_stream_events.length(), 0)
-  assert_eq(next.mooncode_stream_status, "stream cursor reset")
-  assert_eq(next.mooncode_stream_checkpoint_session_id, "")
-  assert_eq(next.mooncode_stream_checkpoint_status, "checkpoint idle")
 }
 
 ///|
-test "code mode stream poll ignores stale sessions and merges selected events" {
+
+///|
+test "code mode keeps every MoonBook group visible without sessions" {
   let model = {
     ..init_model(),
-    selected_mooncode_session_id: "session-a",
-    mooncode_stream_session_id: "session-a",
-    mooncode_stream_cursor: 1,
-    mooncode_stream_events: [code_mode_test_event("event-a")],
+    selected_workspace_id: "book-a",
+    workspaces: [
+      @desk.workspace(
+        id="book-a",
+        name="Book A",
+        root_path="/tmp/moonsuite/books/book-a",
+        kind=MoonBook,
+      ),
+      @desk.workspace(
+        id="book-b",
+        name="Book B",
+        root_path="/tmp/moonsuite/books/book-b",
+        kind=MoonBook,
+      ),
+    ],
+    mooncode_sessions: [],
   }
-  let (_, stale) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeStream(
-      "session-b",
-      Ok({
-        stream: "events",
-        stream_source: "disk",
-        next_since: 2,
-        emitted_count: 1,
-        events: [code_mode_test_event("event-b")],
-      }),
-    ),
-    model,
-  )
-  assert_eq(stale.mooncode_stream_cursor, 1)
-  assert_eq(stale.mooncode_stream_events.length(), 1)
-
-  let (_, next) = update_mooncode_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeStream(
-      "session-a",
-      Ok({
-        stream: "events",
-        stream_source: "disk",
-        next_since: 3,
-        emitted_count: 2,
-        events: [
-          code_mode_test_event("event-a", title="duplicate"),
-          code_mode_test_event("event-c"),
-        ],
-      }),
-    ),
-    model,
-  )
-  assert_eq(next.mooncode_stream_session_id, "session-a")
-  assert_eq(next.mooncode_stream_cursor, 3)
-  assert_eq(next.mooncode_stream_events.length(), 2)
-  assert_eq(next.mooncode_stream_events[0].id, "event-a")
-  assert_eq(next.mooncode_stream_events[1].id, "event-c")
-  assert_eq(next.mooncode_stream_checkpoint_session_id, "session-a")
-  assert_eq(next.mooncode_stream_checkpoint_status, "saving checkpoint 3")
+  let groups = mooncode_session_groups(model)
+  assert_eq(groups.length(), 3)
+  assert_eq(groups[0].label, "General")
+  assert_eq(groups[1].label, "Book A")
+  assert_eq(groups[2].label, "Book B")
 }
 
 ///|
-test "code mode stream parser accepts numeric MoonClaw event timestamps" {
-  let text =
-    #|{
-    #|  "type": "event",
-    #|  "event": {
-    #|    "id": "finish-1",
-    #|    "command_id": "cmd-flat",
-    #|    "lane": "review",
-    #|    "kind": "finish",
-    #|    "title": "MoonCode tool `finish` completed",
-    #|    "status": "done",
-    #|    "detail": "finished",
-    #|    "created_at": 1782824149398,
-    #|    "tool": "finish",
-    #|    "tool_name": "finish",
-    #|    "tool_result": {
-    #|      "tool": "finish",
-    #|      "ok": true,
-    #|      "output": "Final answer"
-    #|    }
-    #|  }
-    #|}
-    #|{
-    #|  "type": "done",
-    #|  "next_since": 9,
-    #|  "emitted_count": 1,
-    #|  "stream_source": "moonclaw"
-    #|}
-  match parse_mooncode_stream_text(text) {
-    Ok(stream) => {
-      assert_eq(stream.next_since, 9)
-      assert_eq(stream.events.length(), 1)
-      assert_eq(stream.events[0].id, "finish-1")
-      assert_eq(stream.events[0].created_at, "1782824149398")
-      assert_true(stream.events[0].command_id is Some("cmd-flat"))
-      assert_true(stream.events[0].tool is Some("finish"))
-      assert_true(stream.events[0].tool_name is Some("finish"))
-      assert_eq(stream.events[0].tool_result is Some(_), true)
-    }
-    Err(error) => fail("expected parsed stream, got \{error}")
+test "code mode polling cannot regroup an existing session" {
+  let existing = {
+    ..code_mode_test_session("session-stable", workspace_id="book-demo"),
+    workspace_name: "Demo Book",
+    cwd: "/tmp/moonsuite/books/book-demo",
   }
-}
-
-///|
-test "code mode stream parser preserves nested command packet id" {
-  let text =
-    #|{
-    #|  "type": "event",
-    #|  "event": {
-    #|    "id": "tool-1",
-    #|    "lane": "tool",
-    #|    "kind": "tool_result",
-    #|    "title": "Tool finished",
-    #|    "status": "done",
-    #|    "detail": "ok",
-    #|    "created_at": "2026-06-30T00:00:00Z",
-    #|    "command_packet": {
-    #|      "command_id": "cmd-nested",
-    #|      "action": "prompt"
-    #|    }
-    #|  }
-    #|}
-  match parse_mooncode_stream_text(text) {
-    Ok(stream) => {
-      assert_eq(stream.events.length(), 1)
-      assert_true(stream.events[0].command_id is Some("cmd-nested"))
-      match stream.events[0].command_packet {
-        Some(packet) =>
-          assert_eq(
-            json_string_value(packet, "command_id", default=""),
-            "cmd-nested",
-          )
-        None => fail("expected command packet")
-      }
-    }
-    Err(error) => fail("expected parsed stream, got \{error}")
+  let incoming = {
+    ..existing,
+    workspace_id: "wrong-runtime-id",
+    workspace_name: "Wrong runtime name",
+    cwd: "/tmp/moonsuite",
+    status: "done",
   }
+  let sessions = mooncode_upsert_session([existing], incoming)
+  assert_eq(sessions[0].workspace_id, "book-demo")
+  assert_eq(sessions[0].workspace_name, "Demo Book")
+  assert_eq(sessions[0].cwd, "/tmp/moonsuite/books/book-demo")
+  assert_eq(sessions[0].status, "done")
 }
-
-///|
-test "code mode stream parser parses package assistant blocks as diagnostic events" {
-  let text =
-    #|{"type":"assistant","id":"package-message","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Need inspect the repo first."},{"type":"tool_use","id":"tool-bash","name":"Bash","input":{"command":"moon test internal/mooncode","description":"Run MoonCode tests"}},{"type":"tool_result","tool_use_id":"tool-bash","content":"Total tests: 256, passed: 256"},{"type":"text","text":"The tests pass."}]}}
-    #|{"type":"done","next_since":4,"emitted_count":4,"stream_source":"moonclaw"}
-  match parse_mooncode_stream_text(text) {
-    Ok(stream) => {
-      assert_eq(stream.events.length(), 4)
-      assert_eq(stream.events[0].kind, "reasoning_delta")
-      assert_eq(stream.events[0].detail, "Need inspect the repo first.")
-      assert_eq(stream.events[1].kind, "tool_call")
-      assert_eq(stream.events[1].lane, "test")
-      assert_eq(stream.events[1].command, "moon test internal/mooncode")
-      assert_eq(stream.events[2].kind, "tool_result")
-      assert_eq(stream.events[2].status, "done")
-      match stream.events[2].tool_result {
-        Some(result) =>
-          assert_eq(json_string_value(result, "tool", default=""), "Bash")
-        None => fail("expected tool result payload")
-      }
-      assert_eq(stream.events[3].kind, "assistant_delta")
-      assert_eq(stream.events[3].detail, "The tests pass.")
-    }
-    Err(error) => fail("expected parsed package stream, got \{error}")
-  }
-}
-
-///|
-test "code mode stream parser preserves package object tool results" {
-  let text =
-    #|{"type":"assistant","id":"package-object-result","message":{"role":"assistant","content":[{"type":"thinking","thinking":"Read the file before editing."},{"type":"tool_use","id":"tool-read","name":"Read","input":{"file_path":"src/main.mbt"}},{"type":"tool_result","tool_use_id":"tool-read","content":{"type":"text","file":{"filePath":"src/main.mbt","content":"raw file body should stay hidden","numLines":4,"startLine":1,"totalLines":20}}},{"type":"text","text":"I found the entry point."}]}}
-    #|{"type":"done","next_since":4,"emitted_count":4,"stream_source":"moonclaw"}
-  match parse_mooncode_stream_text(text) {
-    Ok(stream) => {
-      assert_eq(stream.events.length(), 4)
-      assert_eq(stream.events[2].kind, "tool_result")
-      assert_true(stream.events[2].detail.has_prefix("{"))
-    }
-    Err(error) => fail("expected parsed package stream, got \{error}")
-  }
-}
-
-///|

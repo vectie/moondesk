@@ -6,6 +6,14 @@ test "mooncode desktop routes live in core boundary" {
     "/api/mooncode/sessions?workspace=book%20demo%2F%23one",
   )
   assert_eq(
+    @core.mooncode_session_listing_url(""),
+    "/api/mooncode/sessions?format=listing",
+  )
+  assert_eq(
+    @core.mooncode_session_listing_url("book demo/#one"),
+    "/api/mooncode/sessions?workspace=book%20demo%2F%23one&format=listing",
+  )
+  assert_eq(
     @core.mooncode_session_commands_url("session one/#2"),
     "/api/mooncode/sessions/session%20one%2F%232/commands",
   )

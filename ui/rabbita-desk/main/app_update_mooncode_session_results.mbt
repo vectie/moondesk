@@ -65,8 +65,7 @@ fn update_mooncode_session_results(
       )
     LoadedMoonCodeSessions(Ok(mooncode_sessions)) => {
       let mooncode_sessions = mooncode_preserve_selected_inflight_session(
-        model,
-        mooncode_sessions,
+        model, mooncode_sessions,
       )
       let optimistic_rows = mooncode_drop_acknowledged_optimistic_rows_for_sessions(
         model.mooncode_optimistic_rows,
@@ -102,50 +101,20 @@ fn update_mooncode_session_results(
           model.selected_workspace_id,
         )
       }
-      let keep_stream = selected == model.mooncode_stream_session_id
+      let selected_workspace_id = if selected == "" {
+        model.selected_workspace_id
+      } else {
+        mooncode_workspace_id_for_selected_session(session_model, selected)
+      }
       (
-        mooncode_session_hydration_cmd(dispatch, selected, keep_stream),
+        mooncode_listing_hydration_cmd(dispatch, model, selected),
         {
           ..model,
           mooncode_sessions,
           mooncode_optimistic_rows: optimistic_rows,
+          selected_workspace_id,
           selected_mooncode_session_id: selected,
           mooncode_new_chat_active: selected == "" && draft_active,
-          mooncode_stream_session_id: if keep_stream {
-            model.mooncode_stream_session_id
-          } else {
-            ""
-          },
-          mooncode_stream_cursor: if keep_stream {
-            model.mooncode_stream_cursor
-          } else {
-            0
-          },
-          mooncode_stream_events: if keep_stream {
-            model.mooncode_stream_events
-          } else {
-            []
-          },
-          mooncode_stream_status: if selected == "" {
-            "stream idle"
-          } else if keep_stream {
-            model.mooncode_stream_status
-          } else {
-            "stream cursor reset"
-          },
-          mooncode_stream_checkpoint_session_id: if selected ==
-            model.mooncode_stream_checkpoint_session_id {
-            model.mooncode_stream_checkpoint_session_id
-          } else {
-            ""
-          },
-          mooncode_stream_checkpoint_status: if selected == "" {
-            "checkpoint idle"
-          } else if selected == model.mooncode_stream_checkpoint_session_id {
-            model.mooncode_stream_checkpoint_status
-          } else {
-            "checkpoint idle"
-          },
           mooncode_composer_status: if draft_active {
             model.mooncode_composer_status
           } else {
@@ -164,6 +133,42 @@ fn update_mooncode_session_results(
           ),
         },
       )
+    LoadedMoonCodeSession(session_id, Ok(session)) =>
+      if session_id != model.selected_mooncode_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_sessions: mooncode_upsert_session_if_revision_changed(
+              model.mooncode_sessions,
+              session,
+            ),
+            mooncode_composer_status: if mooncode_new_session_draft_active(
+                model,
+              ) {
+              model.mooncode_composer_status
+            } else {
+              "MoonCode session loaded"
+            },
+          },
+        )
+      }
+    LoadedMoonCodeSession(session_id, Err(error)) =>
+      if session_id != model.selected_mooncode_session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_composer_status: mooncode_background_status_unless_draft(
+              model, error,
+            ),
+          },
+        )
+      }
     CreatedMoonCodeSession(Ok(session)) =>
       mooncode_created_session_succeeded(dispatch, model, session)
     CreatedMoonCodeSession(Err(error)) =>
@@ -173,34 +178,28 @@ fn update_mooncode_session_results(
         dispatch, model, session, "MoonCode message sent",
       )
     CompletedMoonCodeCommand(Err(error)) =>
-      (@rabbita.none, { ..model, mooncode_composer_status: error })
-    StartedMoonCodeRuntime(session_id, Ok(_)) =>
       (
-        mooncode_after_runtime_started_cmd(dispatch, model, session_id),
+        @rabbita.none,
         {
           ..model,
-          mooncode_composer_status: if model.selected_mooncode_session_id ==
-            session_id {
-            "MoonCode runtime started"
-          } else {
-            model.mooncode_composer_status
-          },
-        },
-      )
-    StartedMoonCodeRuntime(session_id, Err(error)) =>
-      (
-        mooncode_after_runtime_failed_cmd(dispatch, model, session_id),
-        {
-          ..model,
-          mooncode_composer_status: if model.selected_mooncode_session_id ==
-            session_id {
-            error
-          } else {
-            model.mooncode_composer_status
-          },
+          mooncode_optimistic_rows: mooncode_fail_pending_optimistic_rows_for_session(
+            model.mooncode_optimistic_rows,
+            mooncode_current_composer_session_id(model),
+            "MoonCode could not send this message: \{error}",
+          ),
+          mooncode_composer_status: error,
         },
       )
     _ => (@rabbita.none, model)
+  }
+}
+
+///|
+fn mooncode_current_composer_session_id(model : Model) -> String {
+  if model.selected_mooncode_session_id != "" {
+    model.selected_mooncode_session_id
+  } else {
+    mooncode_draft_session_id(model)
   }
 }
 
@@ -219,7 +218,7 @@ fn mooncode_created_session_succeeded(
       @rabbita.none,
       {
         ..model,
-        mooncode_sessions: mooncode_upsert_session(
+        mooncode_sessions: mooncode_upsert_session_at_top(
           model.mooncode_sessions,
           session,
         ),
@@ -236,16 +235,25 @@ fn mooncode_created_session_succeeded(
 }
 
 ///|
-fn mooncode_session_hydration_cmd(
+fn mooncode_listing_hydration_cmd(
   dispatch : Dispatch[Msg],
+  model : Model,
   selected : String,
-  keep_stream : Bool,
 ) -> @rabbita.Cmd {
-  if selected == "" || keep_stream {
-    @rabbita.none
-  } else {
-    fetch_mooncode_stream_cmd(dispatch, selected, 0)
+  if selected == "" {
+    return @rabbita.none
   }
+  if selected == model.selected_mooncode_session_id {
+    match mooncode_find_session(model.mooncode_sessions, selected) {
+      Some(session) =>
+        match session.mooncode_conversation {
+          Some(_) => return @rabbita.none
+          None => ()
+        }
+      None => ()
+    }
+  }
+  fetch_mooncode_session_cmd(dispatch, selected)
 }
 
 ///|
@@ -280,7 +288,7 @@ fn mooncode_session_mutation_succeeded(
     {
       ..model,
       workspace_mode: MoonCode,
-      mooncode_sessions: mooncode_upsert_session(
+      mooncode_sessions: mooncode_upsert_session_at_top(
         model.mooncode_sessions,
         session,
       ),
@@ -302,7 +310,7 @@ fn mooncode_upsert_session(
   let mut inserted = false
   for existing in sessions {
     if existing.id == session.id {
-      next.push(session)
+      next.push(mooncode_session_with_stable_identity(existing, session))
       inserted = true
     } else {
       next.push(existing)
@@ -317,4 +325,71 @@ fn mooncode_upsert_session(
   } else {
     next
   }
+}
+
+///|
+fn mooncode_session_with_stable_identity(
+  existing : MoonCodeSession,
+  incoming : MoonCodeSession,
+) -> MoonCodeSession {
+  {
+    ..incoming,
+    workspace_id: if existing.workspace_id == "" {
+      incoming.workspace_id
+    } else {
+      existing.workspace_id
+    },
+    workspace_name: if existing.workspace_name == "" {
+      incoming.workspace_name
+    } else {
+      existing.workspace_name
+    },
+    cwd: if existing.cwd == "" {
+      incoming.cwd
+    } else {
+      existing.cwd
+    },
+  }
+}
+
+///|
+fn mooncode_upsert_session_if_revision_changed(
+  sessions : Array[MoonCodeSession],
+  session : MoonCodeSession,
+) -> Array[MoonCodeSession] {
+  for existing in sessions {
+    if existing.id == session.id &&
+      mooncode_session_conversation_revision(existing) ==
+      mooncode_session_conversation_revision(session) &&
+      mooncode_session_conversation_revision(session) > 0 {
+      return sessions
+    }
+  }
+  mooncode_upsert_session(sessions, session)
+}
+
+///|
+fn mooncode_session_conversation_revision(session : MoonCodeSession) -> Int {
+  match session.mooncode_conversation {
+    Some(conversation) => conversation.revision
+    None => 0
+  }
+}
+
+///|
+fn mooncode_upsert_session_at_top(
+  sessions : Array[MoonCodeSession],
+  session : MoonCodeSession,
+) -> Array[MoonCodeSession] {
+  let stable = match mooncode_find_session(sessions, session.id) {
+    Some(existing) => mooncode_session_with_stable_identity(existing, session)
+    None => session
+  }
+  let next : Array[MoonCodeSession] = [stable]
+  for existing in sessions {
+    if existing.id != session.id {
+      next.push(existing)
+    }
+  }
+  next
 }

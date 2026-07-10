@@ -76,17 +76,13 @@ type MoonCodeConversation derive(@json.FromJson)
 
 type MoonCodeConversationTurn derive(@json.FromJson)
 
-type MoonCodeEvent derive(@json.FromJson)
-
 type MoonCodeOptimisticRow
 
 type MoonCodeSession derive(@json.FromJson)
 
 type MoonCodeSessionEffect
 
-type MoonCodeStreamPoll
-
-type MoonCodeStreamState derive(@json.FromJson)
+type MoonCodeSessionGroup
 
 type MoonCodeSummary derive(@json.FromJson)
 

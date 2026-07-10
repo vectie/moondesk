@@ -65,6 +65,61 @@ async test "mooncode appends and replays durable session event log" {
 }
 
 ///|
+async test "mooncode host does not rebuild prompt turns from durable command log" {
+  let root = "/tmp/moondesk-mooncode-command-log-projection-wbtest-" +
+    @async.now().to_string()
+  let session_id = "session-command-log"
+  let session = @mooncode.session_record(
+    session_id~,
+    workspace_id="book-demo",
+    workspace_name="Demo Book",
+    workspace_root=root,
+    runtime={
+      "id": session_id,
+      "status": "done",
+      "model": "codex/gpt-5.4",
+      "web_search": false,
+      "queued_messages": [],
+    },
+    title="MoonCode - command log",
+    created_at="1",
+    updated_at="3",
+    last_message="third prompt",
+    initial_context_path="",
+  )
+  write_mooncode_session_record(root, session)
+  for index in 0..<3 {
+    let command_id = "cmd-\{index + 1}"
+    let prompt = match index {
+      0 => "first prompt"
+      1 => "second prompt"
+      _ => "third prompt"
+    }
+    append_mooncode_command_log(root, session_id, {
+      "protocol": @mooncode.protocol_version(),
+      "kind": "mooncode.command",
+      "command_id": command_id,
+      "client_turn_id": "client-\{index + 1}",
+      "action": "prompt",
+      "control": "prompt",
+      "created_at": "\{index + 1}",
+      "session_id": session_id,
+      "runtime_session_id": session_id,
+      "message": prompt,
+    })
+  }
+  let projected = attach_mooncode_session_projection(root, session)
+  let conversation = json_object_field_or_empty(
+    projected, "mooncode_conversation",
+  )
+  assert_eq(json_string(conversation, "session_id", default=""), session_id)
+  let turns = json_array_items(conversation, "turns")
+  assert_eq(turns.length(), 0)
+  let summary = json_object_field_or_empty(projected, "mooncode_summary")
+  assert_eq(json_int(summary, "command_log_count", default=0), 3)
+}
+
+///|
 async test "mooncode runtime event persistence releases terminal service lease" {
   let root = "/tmp/moondesk-mooncode-service-lease-persist-wbtest-" +
     @async.now().to_string()

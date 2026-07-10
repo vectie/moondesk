@@ -58,7 +58,9 @@ fn reveal_selection_cmd(
   model : Model,
 ) -> @rabbita.Cmd {
   let body : Json = { "path": reveal_target_path(model) }
-  @http.post(@desk.workspace_endpoint_url(model.selected_workspace_id, "reveal"))
+  @http.post(
+    @desk.workspace_endpoint_url(model.selected_workspace_id, "reveal"),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(

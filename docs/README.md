@@ -34,9 +34,11 @@ contracts come from MoonLib.
 6. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
 7. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
    canonical conversation/runtime upgrade plan.
-8. [STATUS.md](STATUS.md): current implementation state and known gaps.
-9. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
-10. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
+8. [MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md):
+   finite single-owner conversation, thinking, and live-update correction.
+9. [STATUS.md](STATUS.md): current implementation state and known gaps.
+10. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
+11. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
    historical migration plan and validation record.
 
 ## Implementation Map
@@ -89,7 +91,9 @@ journeys, methodology, and release acceptance evidence.
 
 ## Future Plan
 
-- Harden MoonCode multi-turn persistence and runtime-stream attribution.
+- Execute the finite MoonCode/OpenSeek alignment plan: one MoonClaw-owned
+  ordered conversation, one stable work disclosure per turn, and a thin
+  Moondesk renderer.
 - Add longer fresh-root and reload UI smokes for Desk, Wiki, and Code.
 - Keep extracting path/layout helpers to MoonLib instead of growing local string
   utilities.

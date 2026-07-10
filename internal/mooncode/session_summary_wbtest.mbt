@@ -369,6 +369,16 @@ test "mooncode session summary reports readiness coding flow" {
         "runtime_supervisor": complete_runtime_supervisor_fixture(),
       },
       "mooncode_native_eval_report": complete_native_eval_report_fixture(),
+      "mooncode_conversation": {
+        "kind": conversation_kind(),
+        "protocol": protocol_version(),
+        "contract_id": conversation_contract_id(),
+        "session_id": "s1",
+        "revision": 1,
+        "last_sequence": 1,
+        "turn_count": 1,
+        "turns": [{ "turn_id": "cmd-1" }],
+      },
     },
     events,
   )
@@ -578,6 +588,269 @@ test "mooncode session projection response attaches events and summary without l
   assert_eq(summary_json_int(summary, "command_log_count", default=0), 3)
   assert_eq(summary_json_int(summary, "runtime_command_count", default=0), 4)
   assert_eq(summary_json_int(summary, "runtime_receipt_count", default=0), 5)
+}
+
+///|
+test "mooncode session projection response preserves supplied canonical conversation" {
+  let supplied : Json = {
+    "kind": "mooncode-conversation",
+    "protocol": protocol_version(),
+    "contract_id": conversation_contract_id(),
+    "session_id": "native-session",
+    "workspace_id": "book",
+    "workspace_name": "Book",
+    "turn_count": 1,
+    "revision": 1,
+    "last_sequence": 1,
+    "source_event_count": 0,
+    "owner": { "projection": "moonclaw", "ui": "moondesk" },
+    "turns": [
+      {
+        "kind": "mooncode-conversation-turn",
+        "turn_id": "turn-native",
+        "client_turn_id": "client-native",
+        "command_id": "command-native",
+        "status": "done",
+        "started_at": "1",
+        "updated_at": "2",
+        "user": {
+          "role": "user",
+          "content": "MoonClaw prompt",
+          "status": "queued",
+          "command_id": "command-native",
+          "client_turn_id": "client-native",
+        },
+        "ordinal": 0,
+        "work": {
+          "item_id": "turn:command-native:work",
+          "status": "done",
+          "summary": "Completed work",
+          "steps": [],
+          "live": {},
+        },
+        "assistant": {
+          "role": "assistant",
+          "content": "MoonClaw answer",
+          "status": "done",
+          "command_id": "command-native",
+          "client_turn_id": "client-native",
+        },
+      },
+    ],
+  }
+  let projected = session_projection_response(
+    {
+      "id": "native-session",
+      "workspace_id": "book",
+      "mooncode_conversation": supplied,
+    },
+    [],
+    event_log_path="/tmp/mooncode/events.jsonl",
+    append_log_count=0,
+    command_log_path="/tmp/mooncode/commands.jsonl",
+    command_log_count=0,
+    runtime_command_log_path="/tmp/mooncode/runtime-commands.jsonl",
+    runtime_command_log_count=0,
+    runtime_receipt_log_path="/tmp/mooncode/runtime-receipt.jsonl",
+    runtime_receipt_log_count=0,
+  )
+  let conversation = summary_json_object_field_or_empty(
+    projected, "mooncode_conversation",
+  )
+  let turns = json_array_items(conversation, "turns")
+  assert_eq(
+    json_string(conversation, "session_id", default=""),
+    "native-session",
+  )
+  assert_eq(turns.length(), 1)
+  assert_eq(
+    json_string(
+      summary_json_object_field_or_empty(turns[0], "user"),
+      "content",
+      default="",
+    ),
+    "MoonClaw prompt",
+  )
+}
+
+///|
+test "mooncode session projection response never lets host events override supplied conversation" {
+  let supplied : Json = {
+    "kind": "mooncode-conversation",
+    "protocol": protocol_version(),
+    "contract_id": conversation_contract_id(),
+    "session_id": "native-session",
+    "workspace_id": "book",
+    "workspace_name": "Book",
+    "turn_count": 1,
+    "revision": 2,
+    "last_sequence": 2,
+    "source_event_count": 2,
+    "turns": [
+      {
+        "kind": "mooncode-conversation-turn",
+        "turn_id": "command-local",
+        "client_turn_id": "client-local",
+        "command_id": "command-local",
+        "status": "running",
+        "started_at": "1",
+        "updated_at": "2",
+        "user": {
+          "role": "user",
+          "content": "Local prompt",
+          "status": "queued",
+          "command_id": "command-local",
+          "client_turn_id": "client-local",
+        },
+        "ordinal": 0,
+        "work": {
+          "item_id": "turn:command-local:work",
+          "status": "running",
+          "summary": "Working on request",
+          "steps": [],
+          "live": {},
+        },
+        "assistant": {},
+      },
+    ],
+  }
+  let packet : Json = {
+    "protocol": protocol_version(),
+    "kind": "mooncode.command",
+    "command_id": "command-local",
+    "client_turn_id": "client-local",
+    "action": "prompt",
+    "session_id": "native-session",
+    "runtime_session_id": "native-session",
+    "message": "Local prompt",
+  }
+  let projected = session_projection_response(
+    {
+      "id": "native-session",
+      "workspace_id": "book",
+      "mooncode_conversation": supplied,
+    },
+    [
+      command_event(
+        action="prompt",
+        status="queued",
+        detail="Local prompt",
+        created_at="1",
+        path="",
+        command_packet=packet,
+        event_id="command-local",
+      ),
+      {
+        "id": "done-local",
+        "lane": "runtime",
+        "kind": "runtime.turn_finished",
+        "title": "Turn finished",
+        "status": "done",
+        "created_at": "2",
+        "detail": "runtime completed without final answer",
+        "command_id": "command-local",
+      },
+    ],
+    event_log_path="/tmp/mooncode/events.jsonl",
+    append_log_count=2,
+    command_log_path="/tmp/mooncode/commands.jsonl",
+    command_log_count=1,
+    runtime_command_log_path="/tmp/mooncode/runtime-commands.jsonl",
+    runtime_command_log_count=1,
+    runtime_receipt_log_path="/tmp/mooncode/runtime-receipt.jsonl",
+    runtime_receipt_log_count=1,
+  )
+  let conversation = summary_json_object_field_or_empty(
+    projected, "mooncode_conversation",
+  )
+  let turns = json_array_items(conversation, "turns")
+  assert_eq(turns.length(), 1)
+  assert_eq(json_string(turns[0], "status", default=""), "running")
+  let assistant = summary_json_object_field_or_empty(turns[0], "assistant")
+  assert_eq(json_string(assistant, "content", default=""), "")
+}
+
+///|
+test "mooncode session projection response rejects cross-session supplied conversation" {
+  let supplied : Json = {
+    "kind": "mooncode-conversation",
+    "protocol": protocol_version(),
+    "session_id": "stale-native-session",
+    "workspace_id": "book",
+    "workspace_name": "Book",
+    "turn_count": 1,
+    "source_event_count": 0,
+    "turns": [
+      {
+        "kind": "mooncode-conversation-turn",
+        "turn_id": "turn-stale",
+        "client_turn_id": "client-stale",
+        "command_id": "command-stale",
+        "status": "done",
+        "started_at": "1",
+        "updated_at": "2",
+        "user": {
+          "role": "user",
+          "content": "Stale prompt",
+          "status": "queued",
+          "command_id": "command-stale",
+          "client_turn_id": "client-stale",
+        },
+        "work": {
+          "item_id": "turn:command-stale:work",
+          "status": "done",
+          "summary": "Completed work",
+          "steps": [],
+          "live": {},
+        },
+        "assistant": {
+          "role": "assistant",
+          "content": "Stale answer",
+          "status": "done",
+          "command_id": "command-stale",
+          "client_turn_id": "client-stale",
+        },
+      },
+    ],
+  }
+  let local_packet : Json = {
+    "protocol": protocol_version(),
+    "kind": "mooncode.command",
+    "command_id": "command-local",
+    "client_turn_id": "client-local",
+    "action": "prompt",
+    "session_id": "s1",
+    "runtime_session_id": "s1",
+    "message": "Local prompt",
+  }
+  let projected = session_projection_response(
+    { "id": "s1", "workspace_id": "book", "mooncode_conversation": supplied },
+    [
+      command_event(
+        action="prompt",
+        status="queued",
+        detail="Local prompt",
+        created_at="1",
+        path="",
+        command_packet=local_packet,
+        event_id="command-local",
+      ),
+    ],
+    event_log_path="/tmp/mooncode/events.jsonl",
+    append_log_count=1,
+    command_log_path="/tmp/mooncode/commands.jsonl",
+    command_log_count=1,
+    runtime_command_log_path="/tmp/mooncode/runtime-commands.jsonl",
+    runtime_command_log_count=0,
+    runtime_receipt_log_path="/tmp/mooncode/runtime-receipt.jsonl",
+    runtime_receipt_log_count=0,
+  )
+  let conversation = summary_json_object_field_or_empty(
+    projected, "mooncode_conversation",
+  )
+  assert_eq(json_string(conversation, "session_id", default=""), "s1")
+  let turns = json_array_items(conversation, "turns")
+  assert_eq(turns.length(), 0)
 }
 
 ///|

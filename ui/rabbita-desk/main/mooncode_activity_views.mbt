@@ -1,5 +1,6 @@
 ///|
 struct MoonCodeActivityRow {
+  item_id : String
   tone : String
   label : String
   title : String
@@ -22,6 +23,7 @@ fn render_mooncode_activity_row(row : MoonCodeActivityRow) -> @rabbita.Html {
     class=row_class,
     attrs=@html.Attrs::build()
       .data_set("testid", "mooncode-activity")
+      .data_set("item-id", row.item_id)
       .data_set("label", row.label)
       .data_set("status", row.status)
       .data_set("folded", if row.folded { "true" } else { "false" })
@@ -65,7 +67,11 @@ fn render_mooncode_activity_disclosure(
   @html.node("details", @html.Attrs::build().class(disclosure_class), [
     @html.node(
       "summary",
-      @html.Attrs::build().class("mooncode-activity-summary"),
+      @html.Attrs::build()
+      .class("mooncode-activity-summary")
+      .role("button")
+      .tabindex(0)
+      .aria_expanded("false"),
       [
         span(class="mooncode-activity-summary-text", row.title),
         span(

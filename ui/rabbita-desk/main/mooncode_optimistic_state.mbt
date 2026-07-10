@@ -26,7 +26,9 @@ fn mooncode_optimistic_rows_have_session(
     return false
   }
   for row in rows {
-    if row.session_id == session_id {
+    if row.session_id == session_id &&
+      row.role == "user" &&
+      (row.status == "queued" || row.status == "running") {
       return true
     }
   }
@@ -114,11 +116,39 @@ fn mooncode_push_optimistic_row(
     return
   }
   for row in rows {
-    if row.session_id == session_id && row.key == key {
+    if row.session_id == session_id && row.role == role && row.key == key {
       return
     }
   }
   rows.push({ session_id, role, content: normalized, status, key })
+}
+
+///|
+fn mooncode_fail_pending_optimistic_rows_for_session(
+  rows : Array[MoonCodeOptimisticRow],
+  session_id : String,
+  message : String,
+) -> Array[MoonCodeOptimisticRow] {
+  let next : Array[MoonCodeOptimisticRow] = []
+  let failed_keys : Array[String] = []
+  for row in rows {
+    if row.session_id == session_id &&
+      row.role == "user" &&
+      (row.status == "queued" || row.status == "running") {
+      next.push({ ..row, status: "failed" })
+      if row.key != "" {
+        failed_keys.push(row.key)
+      }
+    } else {
+      next.push(row)
+    }
+  }
+  for key in failed_keys {
+    mooncode_push_optimistic_row(
+      next, session_id, "assistant", message, "failed", key,
+    )
+  }
+  next
 }
 
 ///|

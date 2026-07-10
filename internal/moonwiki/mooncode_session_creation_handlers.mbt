@@ -136,7 +136,17 @@ async fn handle_create_mooncode_session(
       root, queued, command_packet, payload,
     ) {
     Ok(response) => send_json(conn, method_, response)
-    Err(error) =>
+    Err(error) => {
+      ignore(
+        record_mooncode_runtime_service_failure(
+          root,
+          json_string(queued, "id", default=""),
+          queued,
+          error,
+        ),
+      ) catch {
+        _ => ()
+      }
       send_api_error(
         conn,
         method_,
@@ -148,5 +158,6 @@ async fn handle_create_mooncode_session(
           default="Could not start MoonCode runtime",
         ),
       )
+    }
   }
 }

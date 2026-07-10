@@ -6,7 +6,7 @@ pub fn session_eval_checks(session : Json, events : Array[Json]) -> Array[Json] 
     default=json_string(session, "id", default=""),
   )
   let workspace_id = json_string(session, "workspace_id", default="")
-  let canonical_conversation = conversation_projection(session, events)
+  let canonical_conversation = session_canonical_conversation(session)
   let canonical_turn_count = summary_json_int(
     canonical_conversation,
     "turn_count",

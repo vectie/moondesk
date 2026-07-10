@@ -27,6 +27,20 @@ MoonCode stays stable when it has one append path:
 Moondesk renders a canonical conversation projection owned by the backend and a
 very small optimistic buffer owned by the UI.
 
+Hard gate:
+
+- visible chat rendering is allowed to read only `mooncode_conversation.turns`
+  and unacknowledged `mooncode_optimistic_rows`
+- `mooncode_events`, stream events, runtime-event snapshots, command logs,
+  receipts, and `merge_events` output are diagnostic/backend-normalization
+  inputs only
+- live progress is allowed only when it arrives by refreshing the selected
+  canonical session and updating the progress array inside the owning turn
+- late MoonClaw events may update the owning canonical turn by `command_id`,
+  but they must never rebuild or resequence visible chat rows
+- any implementation that replaces the visible transcript from a rebuilt event
+  projection is wrong, even if it appears to fix one timing case
+
 ## Target Model
 
 ### Durable Backend State
@@ -62,8 +76,11 @@ The UI does not own:
 ### Diagnostics
 
 Raw MoonClaw events, backend runtime-event snapshots, command queue receipts,
-stream checkpoints, and service lifecycle records remain available for
-diagnostics. They update status/details surfaces, not the main chat transcript.
+stream checkpoints, and service lifecycle records remain available for explicit
+diagnostics. Rabbita/Moondesk does not fetch, parse, merge, or checkpoint stream
+data for chat rendering; the main chat transcript refreshes only from the
+backend canonical session conversation plus unacknowledged local optimistic
+turns.
 
 ## Phase 1 - Single Optimistic Turn Buffer
 
@@ -449,7 +466,7 @@ Implemented:
 Exit tests:
 
 - native assistant/progress events are imported once into Moondesk's append log
-- session refresh and stream polling project from one canonical log
+- session refresh projects from one canonical log
 - sidecar timing cannot reorder the chat independently of Moondesk storage
 - persisted session records contain durable state, not cached response DTOs
 - first, second, and third immediate command responses preserve append-log order
@@ -542,8 +559,10 @@ Work:
 - Remove browser-side polling of `/api/mooncode/sessions/:id/runtime-events`.
 - Remove the runtime-event sink DTO, message, model fields, and reducer branch
   from `ui/rabbita-desk/main`.
-- Keep session stream polling for cursors/checkpoints and canonical session
-  refresh for chat ownership.
+- Remove session stream polling, stream cursors, stream checkpoints, parser
+  state, and stream reducer branches from the browser chat path.
+- Keep canonical selected-session refresh as the only browser chat ownership
+  input after local optimistic turns.
 - Keep backend runtime-event endpoints available as explicit diagnostics and
   ingestion surfaces, not as a hidden frontend transcript owner.
 - Delete stale UI tests that asserted sink retention, service-status copy, or
@@ -558,15 +577,17 @@ Implemented:
   `mooncode_runtime_event_sink_status`.
 - `LoadedMoonCodeRuntimeEventSink`, `MoonCodeRuntimeEventSink`, and the
   frontend fetch command were deleted.
-- Stream-event tests remain where they prove raw diagnostic events cannot
-  acknowledge optimistic user turns.
+- Stream-event tests were deleted with the browser stream model. Optimistic
+  acknowledgement is now tested only against backend canonical conversation
+  turns.
 
 Exit tests:
 
 - the visible chat has only canonical backend turns plus unacknowledged
   optimistic rows as owners
-- session reload still preserves matching stream cursor/event state
-- raw stream prompt events cannot acknowledge optimistic rows
+- session reload still preserves the selected canonical session
+- raw diagnostic events cannot acknowledge optimistic rows because the browser
+  no longer consumes them as transcript input
 - ordinary composer text cannot become steering because of runtime status
 - generated UI interfaces no longer expose the runtime sink DTO
 
@@ -1131,10 +1152,11 @@ Implemented gate:
 - MoonCode transcript message and activity DOM rows now carry
   `data-command-id` and `data-client-turn-id` from the backend canonical
   conversation.
-- Normal MoonCode sessions still auto-start MoonClaw runtime service. The
-  browser stability smoke opens MoonCode with `mooncodeRuntime=manual`, which
-  disables only runtime auto-start so the test can inject event-backed native
-  replies through public APIs and measure UI ordering deterministically.
+- Normal MoonCode submits now run through the backend command API, which
+  replays the local command into MoonClaw, runs the native canonical runtime
+  loop, syncs `mooncode_conversation`, and returns that session response. The
+  browser stability smoke must not depend on a browser-side runtime disable
+  switch; deterministic fixtures belong behind backend/public APIs.
 - The browser smoke samples the transcript after each of the first, second, and
   third prompt submits so transient front-page flashes, duplicate user rows,
   reorder windows, disappearing turns, and activity-before-user placement fail
@@ -1216,7 +1238,7 @@ Work:
 
 - Add the initial `mooncode_route_helpers.mbt` in the Rabbita main package
   before Phase 39 moved that responsibility to `vectie/moondesk/core`.
-- Move session listing, command submit, stream polling, stream checkpoint, and
+- Move session listing, command submit, selected-session refresh, and
   runtime-service URLs behind those helpers.
 - Encode session ids and workspace ids at the helper boundary.
 - Add route-helper coverage for workspace query encoding and session-id path
@@ -1255,16 +1277,14 @@ Work:
 
 - Add `mooncode_session_effects.mbt` in the Rabbita main package.
 - Define typed MoonCode session effects for daemon refresh, session refresh,
-  selected stream refresh, explicit stream refresh, runtime-service start,
-  fast/normal poll scheduling, and shell sync.
+  selected stream refresh, explicit stream refresh, fast/normal poll
+  scheduling, and shell sync.
 - Move prompt-submit followups, session-mutation acknowledgement followups,
-  runtime-service settlement followups, polling followups, and selected-session
-  stream reloads behind that owner.
-- Keep runtime-service auto-start gated only by `mooncode_runtime_mode` at the
-  effect-plan boundary; manual browser smokes still suppress runtime start
-  without changing reducer logic.
-- Add white-box coverage for the effect plans, including manual-mode runtime
-  suppression and runtime success/failure settlement plans.
+  polling followups, and selected-session stream reloads behind that owner.
+- Keep runtime execution owned by the backend command API; the browser must not
+  auto-start a separate runtime service after submit or poll.
+- Add white-box coverage for the effect plans, including the absence of
+  browser-owned runtime-service startup.
 - Wire the effect-plan gate into the Phase 8 migration wall.
 
 Exit tests:
@@ -1531,8 +1551,8 @@ Work:
 
 - Add public MoonCode desktop URL helpers to `vectie/moondesk/core`, including a
   target-neutral URL component encoder.
-- Switch Rabbita MoonCode session list, command submit, stream polling,
-  stream checkpoint, and runtime-service calls to the shared `@desk` helpers.
+- Switch Rabbita MoonCode session list, command submit, selected-session
+  refresh, and runtime-service calls to the shared `@desk` helpers.
 - Delete the old Rabbita-local `mooncode_route_helpers.mbt` implementation and
   its duplicate route tests.
 - Extend the frontend route validator so reintroducing the old helper file or

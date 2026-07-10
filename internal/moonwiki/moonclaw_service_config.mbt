@@ -26,7 +26,7 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
     json_string(config, "cwd", default=""),
   ])
   let fallback = if configured_command == "" {
-    moonclaw_sibling_service_descriptor(root, action)
+    moonclaw_explicit_checkout_service_descriptor(root, action)
   } else {
     Json::object({})
   }
@@ -67,24 +67,77 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
 }
 
 ///|
-async fn moonclaw_sibling_service_descriptor(
+struct MoonClawCheckoutCandidate {
+  path : String
+  source : String
+} derive(Debug, Eq)
+
+///|
+async fn moonclaw_explicit_checkout_service_descriptor(
   root : String,
   action : String,
 ) -> Json {
   if action != "daemon" {
     return Json::object({})
   }
-  let sibling = @pathx.normalize(@pathx.join(root, "../moonclaw"))
-  if !is_directory(sibling) || !@fsx.exists(@pathx.join(sibling, "moon.mod")) {
-    return Json::object({})
+  let candidates = moonclaw_checkout_candidates(
+    @sys.get_env_var("MOONCLAW_ROOT").unwrap_or(""),
+  )
+  for candidate in candidates {
+    if is_directory(candidate.path) &&
+      @fsx.exists(@pathx.join(candidate.path, "moon.mod")) {
+      return moonclaw_checkout_service_descriptor(
+        root,
+        candidate.path,
+        candidate.source,
+      )
+    }
   }
+  Json::object({})
+}
+
+///|
+fn moonclaw_checkout_candidates(
+  configured_root : String,
+) -> Array[MoonClawCheckoutCandidate] {
+  let candidates : Array[MoonClawCheckoutCandidate] = []
+  push_moonclaw_checkout_candidate(
+    candidates, configured_root, "env-moonclaw-root",
+  )
+  candidates
+}
+
+///|
+fn push_moonclaw_checkout_candidate(
+  candidates : Array[MoonClawCheckoutCandidate],
+  path : String,
+  source : String,
+) -> Unit {
+  if path == "" {
+    return
+  }
+  let normalized = @pathx.normalize(path)
+  for candidate in candidates {
+    if candidate.path == normalized {
+      return
+    }
+  }
+  candidates.push({ path: normalized, source })
+}
+
+///|
+async fn moonclaw_checkout_service_descriptor(
+  root : String,
+  checkout : String,
+  source : String,
+) -> Json {
   {
     "command": moonclaw_default_moon_command(),
     "args": json_from_string_array([
       "run", "cmd/main", "--", "daemon", "--port", "0", "--serve", root,
     ]),
-    "cwd": sibling,
-    "source": "sibling-checkout",
+    "cwd": checkout,
+    "source": source,
   }
 }
 

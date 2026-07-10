@@ -797,3 +797,62 @@ test "mooncode runtime command lifecycle summarizes queue state" {
     rq_json_string(rows[2], "blocking_reason", default="").contains("pending"),
   )
 }
+
+///|
+test "mooncode runtime command lifecycle completes native terminal events" {
+  let commands : Array[Json] = [
+    {
+      "protocol": protocol_version(),
+      "kind": "mooncode.runtime-command",
+      "command_id": "cmd-native",
+      "session_id": "session-demo",
+      "action": "prompt",
+      "control": "prompt",
+      "code_command": "prompt",
+      "mooncode_command": { "command": "prompt", "text": "say ok" },
+      "tool_authorization": {
+        "enforcement_state": "approved",
+        "runtime_may_execute": true,
+      },
+    },
+  ]
+  let receipts : Array[Json] = [
+    {
+      "kind": kind_runtime_receipt(),
+      "command_id": "cmd-native",
+      "status": "runtime-accepted",
+    },
+  ]
+  let events : Array[Json] = [
+    {
+      "id": "native-started",
+      "lane": "runtime",
+      "kind": event_runtime_turn_started(),
+      "title": "Native runtime turn started",
+      "status": "running",
+      "command_id": "cmd-native",
+    },
+    {
+      "id": "native-finished",
+      "lane": "runtime",
+      "kind": event_runtime_turn_finished(),
+      "title": "Native runtime turn completed",
+      "status": "done",
+      "command_id": "cmd-native",
+    },
+  ]
+  let lifecycle = runtime_command_lifecycle(
+    "session-demo",
+    commands,
+    receipts,
+    events,
+    lease_now="2026-06-15T00:30:00Z",
+  )
+  assert_eq(rq_json_int(lifecycle, "completed_count", default=0), 1)
+  assert_eq(rq_json_int(lifecycle, "runtime_started_count", default=0), 0)
+  assert_eq(rq_json_string(lifecycle, "next_command_id", default=""), "")
+  let rows = rq_json_array_items(lifecycle, "commands")
+  assert_eq(rq_json_string(rows[0], "status", default=""), "completed")
+  assert_eq(rq_json_int(rows[0], "terminal_event_count", default=0), 1)
+  assert_eq(rq_json_int(rows[0], "scoped_event_count", default=0), 2)
+}

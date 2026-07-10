@@ -19,6 +19,17 @@ export function assert(condition, message) {
   }
 }
 
+export function acceptedCommandId(payload) {
+  if (!payload || typeof payload !== "object") {
+    return "";
+  }
+  return payload.command_id ||
+    payload.mooncode_turn?.command_id ||
+    payload.turn_id ||
+    payload.mooncode_conversation?.turns?.at(-1)?.command_id ||
+    "";
+}
+
 export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -83,6 +94,12 @@ export async function requestJson(url, options = {}, expected = [200]) {
     `HTTP ${response.status} for ${url}: ${text}`,
   );
   return body;
+}
+
+export async function fetchCanonicalSession(base, sessionId) {
+  return await requestJson(
+    `${base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}?format=chat`,
+  );
 }
 
 function readJsonFile(file) {

@@ -174,8 +174,9 @@ fn select_workspace_action(
   (
     @rabbita.batch([
       reload_workspace_cmds(dispatch, workspace_id, ""),
-      fetch_mooncode_sessions_cmd(dispatch, workspace_id),
+      fetch_mooncode_sessions_cmd(dispatch, ""),
       sync_workspace_context_cmd(workspace_id, ""),
+      sync_mooncode_context_cmd(workspace_id, ""),
     ]),
     clear_markdown_editor({
       ..model,
@@ -623,11 +624,7 @@ fn select_workspace_mode_action(
       ]),
     )
   } else if mode == MoonCode {
-    sync_shell_batch(
-      mode,
-      activity,
-      fetch_mooncode_sessions_cmd(dispatch, model.selected_workspace_id),
-    )
+    sync_shell_batch(mode, activity, fetch_mooncode_sessions_cmd(dispatch, ""))
   } else {
     sync_shell_cmd(mode, activity)
   }

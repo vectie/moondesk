@@ -140,6 +140,11 @@ fn runtime_command_lifecycle_item(
       "proof_event_count",
       default=0,
     ),
+    "terminal_event_count": rq_json_int(
+      event_counts,
+      "terminal_event_count",
+      default=0,
+    ),
     "lanes": rq_json_object_field_or_empty(event_counts, "lanes"),
     "latest_event_id": rq_json_string(
       event_counts,
@@ -185,6 +190,9 @@ fn runtime_command_lifecycle_status(
     return "blocked-missing-proof"
   }
   if receipt_status == "runtime-completed" {
+    return "completed"
+  }
+  if rq_json_int(event_counts, "terminal_event_count", default=0) > 0 {
     return "completed"
   }
   if rq_json_int(event_counts, "proof_event_count", default=0) > 0 &&

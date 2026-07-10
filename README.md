@@ -145,7 +145,8 @@ Without that file, daemon start/tick and town LaunchAgent creation return
 `not-configured` instead of assuming the workspace is a Moontown source tree.
 
 MoonCode can also launch MoonClaw from an explicit MoonSuite product-home
-descriptor at `.moonsuite/products/moonclaw/service.json`:
+descriptor at `.moonsuite/products/moonclaw/service.json`, or from an explicit
+`MOONCLAW_ROOT` development override:
 
 ```json
 {
@@ -158,9 +159,9 @@ descriptor at `.moonsuite/products/moonclaw/service.json`:
 }
 ```
 
-Without that file, Moondesk can still report an already-running MoonClaw daemon
-from its daemon-info file, but it will not discover, build, or launch a sibling
-MoonClaw source checkout.
+Without that file or env override, Moondesk can still report an already-running
+MoonClaw daemon from its daemon-info file, but it will not discover, build, or
+launch a sibling or home-directory MoonClaw source checkout.
 
 Useful checks:
 

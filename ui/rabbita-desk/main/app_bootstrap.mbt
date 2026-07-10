@@ -15,12 +15,18 @@ fn bootstrap_action(
   if model.bootstrapped {
     (@rabbita.none, model)
   } else {
-    (bootstrap_cmd(dispatch), { ..model, bootstrapped: true })
+    (
+      bootstrap_cmd(dispatch, model.mooncode_poll_generation),
+      { ..model, bootstrapped: true },
+    )
   }
 }
 
 ///|
-fn bootstrap_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+fn bootstrap_cmd(
+  dispatch : Dispatch[Msg],
+  mooncode_poll_generation : Int,
+) -> @rabbita.Cmd {
   @rabbita.batch([
     fetch_workspace_metadata_cmd(dispatch),
     fetch_workspaces_cmd(dispatch),
@@ -29,9 +35,10 @@ fn bootstrap_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
     fetch_mooncode_sessions_cmd(dispatch, ""),
     fetch_book_base_types_cmd(dispatch),
     fetch_book_patterns_cmd(dispatch),
-    schedule_mooncode_poll(dispatch),
+    schedule_mooncode_poll(dispatch, mooncode_poll_generation),
     schedule_import_drop_poll(dispatch),
     install_desk_location_enter_cmd(),
     install_mooncode_enter_send_cmd(),
+    install_mooncode_disclosures_cmd(),
   ])
 }

@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
+  acceptedCommandId,
   assert,
   cleanupProcesses,
+  fetchCanonicalSession,
   requestJson,
   startMoonClaw,
   startMoondesk,
@@ -24,8 +26,7 @@ async function waitForReply(base, sessionId, commandId, answer) {
     await requestJson(
       `${base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-events`,
     );
-    const sessions = await requestJson(`${base}/api/mooncode/sessions`);
-    const session = sessions.find(item => item.id === sessionId);
+    const session = await fetchCanonicalSession(base, sessionId);
     const turn = sessionTurn(session, commandId);
     return turn?.assistant?.content === answer && turn?.status === "done"
       ? { session, turn }
@@ -81,12 +82,9 @@ async function postPrompt(base, sessionId, message, answer, clientTurnId) {
       }),
     },
   );
-  assert(result.command_id, `Command response did not include command_id: ${JSON.stringify(result)}`);
-  assert(
-    (result.command_packet?.runtime_tool_calls || []).length === 1,
-    `Command packet did not expose runtime_tool_calls: ${JSON.stringify(result.command_packet)}`,
-  );
-  return result.command_id;
+  const commandId = acceptedCommandId(result);
+  assert(commandId, `Command response did not include canonical command identity: ${JSON.stringify(result)}`);
+  return commandId;
 }
 
 async function runSmoke() {
@@ -116,7 +114,7 @@ async function runSmoke() {
     },
   );
   const sessionId = created.id;
-  const firstCommandId = created.command_id;
+  const firstCommandId = acceptedCommandId(created);
   assert(sessionId && firstCommandId, `Created session did not return ids: ${JSON.stringify(created)}`);
   expected.push({ ...first, commandId: firstCommandId });
   await runRuntimeService(moondesk.base, sessionId);
