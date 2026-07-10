@@ -10,6 +10,9 @@ This plan focuses on `Desk`. `Wiki` and `Code` appear only as boundary checks:
 Desk must preserve selected workspace/path when the user switches modes, but
 Desk tests must not become Wiki or Code workflow tests.
 
+The user-facing information hierarchy and progressive-disclosure rules are
+defined in [DESK_MODE_UX_PLAN.md](DESK_MODE_UX_PLAN.md).
+
 ## Goal
 
 Prove that Desk behaves like a scoped Finder/File Explorer over Moondesk's
@@ -53,8 +56,10 @@ quality requires:
 
 - Default storage is isolated from the source repository and explained as a
   MoonBook library.
-- Desk visibly shows the user data root, the `books` library path,
-  and the current MoonBook count so users can tell where their files are stored.
+- Desk visibly shows a friendly library label and current MoonBook count. The
+  exact user-data root, `books` path, product registry, and service health are
+  available under a closed `Storage & services` disclosure instead of competing
+  with normal browsing.
 - Starting the host against a directory that looks like a source checkout
   redirects to the dedicated `MOONDESK_WORKSPACE_ROOT` or default
   `~/moonsuite` directory before preparing `books`, and emits
@@ -85,8 +90,10 @@ quality requires:
   location/address bar, sortable-looking details table, selection details,
   refresh, back/forward history, up/root navigation, reveal-in-file-manager
   actions, and clear current directory.
-- Details-table columns sort by Name, Kind, Layer, Modified, and Size, with a
-  visible direction indicator and folders kept before files.
+- User-facing details-table columns sort by Name, Type, Modified, and Size, with
+  a visible direction indicator and folders kept before files. Source-layer data
+  remains available under `Technical details` and in contract tests, not as a
+  default column.
 - Desk offers comfortable and compact details-list density so users can switch
   between readable rows and large-folder scanning without changing location,
   selection, preview, sort, or filter state.
@@ -160,6 +167,10 @@ quality requires:
   and still keep the file-list surface focusable for paste/keyboard commands;
   Desk must not show developer loading text for a successfully loaded empty
   directory.
+- The first viewport does not expose absolute storage paths, `books/` layout,
+  source-layer terminology, service/daemon names, product-registry state, or
+  scoped-file-manager wording. Native disclosures keep these details reachable
+  for support and diagnosis and remain closed by default.
 
 Open production gaps to close after the current baseline:
 
@@ -368,7 +379,8 @@ into `books` without VCS metadata, navigates folders by double-clicking
 rows, previews Markdown in the Desk details pane, exercises Back/Forward
 directory history, creates a folder and notes, refreshes an out-of-band
 filesystem change into the current directory, imports a dropped file into the
-current directory, renames a note with F2 inline rename, duplicates the selected
+current directory through a browser-originated scoped import request, renames a
+note with F2 inline rename, duplicates the selected
 note, switches the original note into the Desk clipboard, pastes it into another
 folder, moves a note to scoped MoonBook trash, restores it from the Trash panel,
 switches workspaces, and asserts the corresponding filesystem effects under
@@ -378,8 +390,11 @@ horizontal document overflow, overlapping Desk panes, and large brown/chocolate
 surface fills. Before opening the browser it also statically checks the Desk
 runtime entrypoints and CSS files for accidental MoonSuite warm-theme imports or
 `--ms-*` token use. It also verifies that the long user-data root path stays
-contained and readable inside the MoonBook library card, then writes validated
-PNG screenshots under the smoke fixture root for review.
+contained inside the closed storage disclosure, while the primary library card
+does not expose it, then writes validated PNG screenshots under the smoke
+fixture root for review. Browser adapter parsing and drop-queue projection stay
+covered by focused MoonBit tests; the browser smoke owns the scoped HTTP import,
+filesystem effect, Refresh interaction, and rendered-row assertions.
 
 The empty-library browser smoke starts a real server with an empty dedicated
 `books` library, verifies the zero-MoonBook empty state and dedicated
@@ -487,7 +502,7 @@ Assert:
 Steps:
 
 1. Start server against an empty dedicated workspace root.
-2. Enter a MoonBook name and optional book id in the Desk library panel.
+2. Open `Add MoonBook` and enter a MoonBook name and optional folder name.
 3. Click `Create MoonBook`.
 4. Wait for the library and file browser to refresh.
 
@@ -495,7 +510,9 @@ Assert:
 
 - The new book is written under `books/<book-id>`, not the source
   checkout or workspace root.
-- The Desk sidebar shows the corresponding user data root and
+- The Desk sidebar shows the updated friendly library count without exposing the
+  user-data root or `books` path in the default view.
+- Opening `Storage & services` shows the corresponding user-data root and
   `books` library path.
 - `/api/workspaces` lists the new MoonBook after creation.
 - Desk selects the new workspace and opens `wiki/index.md`.
@@ -520,15 +537,15 @@ Steps:
 4. Click Forward.
 5. Click breadcrumb `wiki`.
 6. Click root breadcrumb.
-7. Use toolbar `Up` from a child directory and toolbar `Root` from a non-root
+7. Use toolbar `Up` from a child directory and toolbar `Home` from a non-root
    directory.
 
 Assert:
 
 - Current directory updates after each click.
 - Back and Forward traverse previous directories without changing MoonBooks.
-- Up and Root are disabled at root and enabled in child directories.
-- Up opens the parent directory; Root opens the MoonBook root.
+- Up and Home are disabled at root and enabled in child directories.
+- Up opens the parent directory; Home opens the MoonBook root.
 - Breadcrumb active segment matches the selected directory.
 - File list contents match the selected directory.
 - Folder outline keeps ancestor chain.
@@ -549,8 +566,9 @@ Assert:
 - Current directory remains the containing directory.
 - Preview title/body matches file content.
 - Renderer labels are correct.
-- Details panel shows kind, layer, size, modified time when available, and
-  access state.
+- Details panel shows type, size, modified time when available, and access state.
+- `Technical details` is closed by default and reveals the scoped path, source
+  area, and raw readable/writable flags when opened.
 - Details panel exposes a reveal action for the selected item without changing
   directory, selection, or preview state.
 - Re-selecting a file does not reload the directory unnecessarily.
@@ -559,9 +577,9 @@ Assert:
 
 Steps:
 
-1. Open a directory containing at least two files with different names, layers,
+1. Open a directory containing at least two files with different names, types,
    modified timestamps, and sizes.
-2. Click each sortable header: Name, Kind, Layer, Modified, and Size.
+2. Click each sortable header: Name, Type, Modified, and Size.
 3. Click the same header again to reverse the active direction.
 4. Repeat from a directory containing both folders and files.
 
