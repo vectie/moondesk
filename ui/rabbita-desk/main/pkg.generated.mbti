@@ -90,6 +90,10 @@ type MoonCodeTranscriptItem
 
 type MoonCodeTranscriptRow
 
+type MoonFlowItemProjection derive(@json.FromJson)
+
+type MoonFlowRunProjection derive(@json.FromJson)
+
 type MoonSuiteProduct derive(@json.FromJson)
 
 type MoonclawProgress derive(@json.FromJson)
@@ -127,3 +131,4 @@ type WorkspaceMode derive(Eq)
 // Type aliases
 
 // Traits
+

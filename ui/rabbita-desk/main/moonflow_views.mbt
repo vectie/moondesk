@@ -18,7 +18,7 @@ fn moonflow_item_by_id(
 
 ///|
 fn moonflow_run_state(run : MoonFlowRunProjection) -> String {
-  if run.outcome != "" {
+  if run.outcome == "accepted" {
     "complete"
   } else if moonflow_count_status(run, "blocked") > 0 {
     "blocked"
@@ -26,6 +26,24 @@ fn moonflow_run_state(run : MoonFlowRunProjection) -> String {
     "ready"
   } else {
     "in-progress"
+  }
+}
+
+///|
+fn moonflow_next_action_label(run : MoonFlowRunProjection) -> String {
+  if run.outcome == "accepted" {
+    "Run accepted. Review learned outcomes in the MoonBook."
+  } else if moonflow_count_status(run, "review") > 0 {
+    "Review returned evidence against every declared acceptance criterion."
+  } else if moonflow_count_status(run, "active") > 0 {
+    "An adapter attempt is active. Reconcile its durable external job after restart."
+  } else if moonflow_count_status(run, "blocked") > 0 ||
+    moonflow_count_status(run, "failed") > 0 {
+    "Resolve the recorded blocker without weakening the declaration."
+  } else if !run.runnable_item_ids.is_empty() {
+    "Submit the ready item through its governed product adapter."
+  } else {
+    "Waiting for dependencies or an explicit decision."
   }
 }
 
@@ -81,7 +99,9 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
       div([
         p(class="eyebrow", "Run · sequence \{run.last_sequence}"),
         h2(run.run_id),
-        small(run.protocol),
+        small(
+          "MoonBook " + run.book_id + " · revision " + run.declaration_revision,
+        ),
       ]),
       span(
         class="flow-state " + moonflow_run_state(run),
@@ -92,13 +112,21 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
       div([strong("\{run.runnable_item_ids.length()}"), span("ready now")]),
       div([strong("\{accepted}"), span("accepted")]),
       div([strong("\{blocked}"), span("blocked")]),
+      div([
+        strong("\{moonflow_count_status(run, "review")}"),
+        span("needs review"),
+      ]),
       div([strong("\{run.items.length()}"), span("total")]),
     ]),
     if run.outcome == "" {
       p(class="flow-outcome pending", "Outcome pending")
     } else {
-      p(class="flow-outcome", run.outcome)
+      p(class="flow-outcome " + run.outcome, run.outcome)
     },
+    div(class="flow-source", [
+      strong("Declared source"),
+      small(run.protocol + " · " + run.source_digest),
+    ]),
     render_moonflow_next_actions(run),
     render_moonflow_blockers(run),
     div(
@@ -112,16 +140,9 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
 fn render_moonflow_next_actions(run : MoonFlowRunProjection) -> @rabbita.Html {
   section(class="flow-section", [
     h3("Next actions"),
-    if run.outcome != "" {
-      p(
-        class="flow-quiet",
-        "Run complete. Every work item reached accepted state.",
-      )
-    } else if run.runnable_item_ids.is_empty() {
-      p(
-        class="flow-quiet",
-        "No item is ready. Review blockers or wait for acceptance.",
-      )
+    p(class="flow-quiet", moonflow_next_action_label(run)),
+    if run.outcome == "accepted" || run.runnable_item_ids.is_empty() {
+      @html.nothing
     } else {
       div(
         class="flow-action-list",
@@ -142,7 +163,9 @@ fn render_moonflow_next_actions(run : MoonFlowRunProjection) -> @rabbita.Html {
 
 ///|
 fn render_moonflow_blockers(run : MoonFlowRunProjection) -> @rabbita.Html {
-  let blockers = run.items.filter(item => item.status == "blocked")
+  let blockers = run.items.filter(item => {
+    item.status == "blocked" || item.status == "failed"
+  })
   if blockers.is_empty() {
     @html.nothing
   } else {
@@ -179,24 +202,77 @@ fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
   } else {
     "\{item.approvals.length()} approval(s)"
   }
+  let attempt_summary = if item.active_attempt_id.is_empty() {
+    "not submitted"
+  } else if item.external_job_id.is_empty() {
+    item.attempt_status + " · " + item.active_attempt_id
+  } else {
+    item.attempt_status + " · external " + item.external_job_id
+  }
   div(class="flow-item", [
-    div([
-      strong(item.work_item_id),
-      small(
-        item.product_id +
-        " · " +
-        relationship +
-        " · attempt \{item.attempt_count} · " +
-        validation,
-      ),
+    div(class="flow-item-head", [
+      div([
+        strong(item.declaration_id),
+        small(
+          item.product_id +
+          " · authority " +
+          item.requested_authority +
+          " · " +
+          relationship,
+        ),
+        small(
+          "Attempt \{item.attempt_count}: " +
+          attempt_summary +
+          " · " +
+          validation,
+        ),
+      ]),
+      span(class="flow-item-status " + item.status, item.status),
     ]),
-    span(class="flow-item-status " + item.status, item.status),
-    small(
-      if item.artifacts.is_empty() {
-        "No evidence attached"
+    div(class="flow-item-evidence", [
+      small(
+        if item.artifacts.is_empty() {
+          "No evidence attached"
+        } else {
+          "\{item.artifacts.length()} evidence artifact(s)"
+        },
+      ),
+      if item.output_digest.is_empty() {
+        @html.nothing
       } else {
-        "\{item.artifacts.length()} evidence artifact(s)"
+        small("Output " + item.output_digest)
       },
-    ),
+    ]),
+    if item.request_id.is_empty() {
+      @html.nothing
+    } else {
+      div(class="flow-attempt-meta", [
+        small("Request " + item.request_id),
+        if item.result_id.is_empty() {
+          small("Result pending")
+        } else {
+          small("Result " + item.result_id)
+        },
+        small("Input " + item.input_digest),
+        small("Retry identity " + item.idempotency_key),
+        small(if item.compensable { "Compensable" } else { "Not compensable" }),
+        if item.error_kind.is_empty() {
+          @html.nothing
+        } else {
+          small("Error " + item.error_kind)
+        },
+      ])
+    },
+    if item.acceptance_criteria.is_empty() {
+      @html.nothing
+    } else {
+      div(class="flow-criteria", [
+        small("Acceptance criteria"),
+        ul(
+          class="warning-list",
+          item.acceptance_criteria.map(criterion => li(criterion)),
+        ),
+      ])
+    },
   ])
 }
