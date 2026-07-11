@@ -180,12 +180,11 @@ pub async fn Client::get_text(
   self : Client,
   path : String,
 ) -> Result[String, String] {
-  let url = self.base_url + path
-  let client = @http.Client::Client(url, headers={}) catch {
+  let client = @http.Client::Client(self.base_url, headers={}) catch {
     err => return Err("client error: \{err}")
   }
   defer client.close()
-  let response = client.get("") catch {
+  let response = client.get(path) catch {
     err => return Err("request error: \{err}")
   }
   if response.code == 200 {
@@ -214,14 +213,13 @@ pub async fn Client::post(
   path : String,
   body : Json,
 ) -> Result[Json, String] {
-  let url = self.base_url + path
-  let client = @http.Client::Client(url, headers={
+  let client = @http.Client::Client(self.base_url, headers={
     "Content-Type": "application/json",
   }) catch {
     err => return Err("client error: \{err}")
   }
   defer client.close()
-  let response = client.post("", body.stringify()) catch {
+  let response = client.post(path, body.stringify()) catch {
     err => return Err("request error: \{err}")
   }
   if response.code == 200 {

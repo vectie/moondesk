@@ -183,15 +183,26 @@ async test "workspace discovery only exposes suite roots and moonbooks" {
     @pathx.join(root, "books/research-zeta/book.json"),
     "{\"title\":\"Zeta Evidence Review\",\"name\":\"Ignored Name\"}\n",
   )
+  @fsx.make_directory(
+    @pathx.join(root, "books/research-moonwiki"),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.write_to_file(
+    @pathx.join(root, "books/research-moonwiki/book.toml"),
+    "[book]\ntitle = \"MoonWiki Research\"\nsrc = \"wiki\"\n",
+  )
   let book_workspaces = discover_workspaces(root)
-  assert_eq(book_workspaces.length(), 3)
+  assert_eq(book_workspaces.length(), 4)
   let names = book_workspaces.map(workspace => workspace.name)
   assert_eq(names[0], "Alpha Field Notes")
   assert_eq(names[1], "research-demo")
-  assert_eq(names[2], "Zeta Evidence Review")
+  assert_eq(names[2], "research-moonwiki")
+  assert_eq(names[3], "Zeta Evidence Review")
   assert_true(book_workspaces[0].status is Ready)
   assert_true(book_workspaces[1].status is NeedsAttention)
   assert_true(book_workspaces[2].status is Ready)
+  assert_true(book_workspaces[3].status is Ready)
   for workspace in book_workspaces {
     assert_true(workspace.kind is MoonBook)
   }

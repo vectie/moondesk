@@ -63,7 +63,8 @@ async fn discover_workspaces(
 
 ///|
 async fn moonbook_workspace_status(book_root : String) -> @desk.WorkspaceStatus {
-  if @fs.exists(@pathx.join(book_root, "book.json")) {
+  if @fs.exists(@pathx.join(book_root, "book.json")) ||
+    @fs.exists(@pathx.join(book_root, "book.toml")) {
     Ready
   } else {
     NeedsAttention
