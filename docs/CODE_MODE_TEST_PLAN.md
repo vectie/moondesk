@@ -1,6 +1,6 @@
 # Code Mode Test Plan
 
-Moondesk currently has three workspace modes in `ui/rabbita-desk/main`:
+MoonDesk currently has three workspace modes in `ui/rabbita-desk/main`:
 `Desk`, `MoonWiki`, and `MoonCode`. This plan focuses only on `MoonCode`, the
 code mode. The goal is to prove that coding functionality works end to end with
 typed tool boundaries, deterministic harnesses,
@@ -23,7 +23,7 @@ Code mode is responsible for book-scoped coding sessions:
 Out of scope for this plan:
 
 - generic MoonWiki prose editing
-- Moontown scheduling behavior except where it appears as context
+- MoonTown scheduling behavior except where it appears as context
 - live model quality evaluation as a required unit-test gate
 - Lepusa packaging except for smoke tests that ensure code mode still opens
 
@@ -32,9 +32,9 @@ Out of scope for this plan:
 Use four layers. Lower layers must be deterministic and run in ordinary
 `moon test`; live runtime/model tests are explicit manual or scheduled gates.
 Across all layers, MoonLib is the only shared MoonSuite filesystem contract
-provider. Code-mode tests may call Moondesk's local adapter when they are
-testing Moondesk behavior, but the adapter itself must be proven to wrap
-MoonLib. MoonStat may appear only as a validator or drift-report consumer, not
+provider. Code-mode tests may call MoonDesk's local adapter when they are
+testing MoonDesk behavior, but the adapter itself must be proven to wrap
+MoonLib. MoonGate may appear only as a validator or drift-report consumer, not
 as the source used to build code-mode paths.
 
 1. Contract tests
@@ -126,7 +126,7 @@ MoonLib. Do not add new test fixtures that duplicate `.moonsuite`, `.tmp`,
 `books`, product-home, or product-registry string contracts.
 If a new fixture needs a reusable path class that MoonLib does not expose yet,
 the test plan is to add that constructor to MoonLib first, then consume it from
-MoonCode/Moondesk tests.
+MoonCode/MoonDesk tests.
 
 ## End-to-End Scenarios
 
@@ -432,7 +432,7 @@ fresh code session
 -> send second prompt
 -> send third prompt
 -> append raw MoonClaw assistant_message events with command_id for each command
--> GET /api/mooncode/sessions imports sidecar events into Moondesk append log
+-> GET /api/mooncode/sessions imports sidecar events into MoonDesk append log
 -> GET /api/mooncode/sessions/:id/events returns imported canonical events
 -> GET /api/mooncode/sessions/:id/stream returns the same ordered replies
 ```
@@ -446,7 +446,7 @@ Assertions:
   projection-safe and flag unscoped assistant/chat evidence as unsafe.
 - unscoped watcher, service lifecycle, usage, and runtime-loop events remain
   diagnostic-only and do not become chat turns.
-- sidecar evidence is deduped into Moondesk's append log before projection.
+- sidecar evidence is deduped into MoonDesk's append log before projection.
 - first, second, and third assistant replies appear under the matching user
   turns and stay stable across replay.
 - the browser smoke writes deterministic native sidecar replies after three
@@ -767,7 +767,7 @@ scripts/mooncode_live_runtime_control_boundary_smoke.sh
 This gate starts a temporary MoonSuite root, launches a real MoonClaw daemon,
 posts a command-scoped assistant event through MoonClaw's native
 `/v1/code/sessions/<id>/runtime-events?book_root=<path>` endpoint, then asks
-Moondesk to import the native state. It fails if the native contract is not
+MoonDesk to import the native state. It fails if the native contract is not
 projection-safe, if unsafe unscoped projection events are present, if the final
 assistant reply is not the canonical conversation output, or if a legacy
 `.moonclaw` root appears.
@@ -778,12 +778,12 @@ for first/second/third prompt order: it fails if later replies duplicate,
 reorder, or erase earlier conversation turns.
 
 The loop gate also checks event-backed runtime-service recovery: after importing
-MoonClaw's native `runtime.service_finished` event, Moondesk must release its
+MoonClaw's native `runtime.service_finished` event, MoonDesk must release its
 local runtime-service lease and allow an immediate same-command-count service
 restart.
 
 The control-boundary gate drives prompt -> steer -> prompt -> cancel through the
-real Moondesk runtime-service boundary. It fails if steer/cancel text leaks into
+real MoonDesk runtime-service boundary. It fails if steer/cancel text leaks into
 the canonical chat transcript, if deferred steering is not later applied through
 MoonClaw evidence, if dropped cancel is missing, or if a legacy `.moonclaw` root
 appears.
@@ -1017,7 +1017,7 @@ raw `is_read_method`, `method_ is Post`, or generic 405 calls from returning to
 
 Phase 36 extends the same gate to the host-visible HTTP boundary. Phase 37
 publishes `desktop_route_contracts` through `/api/mooncode/capabilities` and
-makes the smoke consume that live capability surface. It starts a fresh Moondesk
+makes the smoke consume that live capability surface. It starts a fresh MoonDesk
 server, creates a real MoonCode session, accepts `HEAD /api/mooncode/status`,
 then probes every advertised desktop route with a rejected method and verifies
 the correct `Allow` header, `allowed_methods`, and shared API contract fields.
@@ -1040,7 +1040,7 @@ Code mode is sufficiently tested when:
   durable command-scoped failed assistant turn instead of an endless thinking
   state or composer-only error
 - a runtime-loop smoke proves terminal native service lifecycle events release
-  Moondesk's runtime-service lease without waiting for a timeout
+  MoonDesk's runtime-service lease without waiting for a timeout
 - a control-boundary smoke proves explicit steer/cancel commands stay out of the
   user/assistant transcript and settle only through runtime evidence
 - a visible-progress projection gate proves arbitrary runtime events stay out of
@@ -1123,14 +1123,14 @@ Code mode is sufficiently tested when:
   explicit method/validation test
 - negative tests prove path traversal and malformed runtime records cannot
   create durable side effects
-- integration tests prove MoonCode/MoonClaw/Moontown records use the MoonLib
+- integration tests prove MoonCode/MoonClaw/MoonTown records use the MoonLib
   MoonSuite contract paths and do not recreate legacy `.moontown` or
   `.moonclaw` roots
 - contract-consumer tests prove the code-mode fixture, MoonCode session
-  sidecars, MoonClaw runtime records, and Moontown handoff records derive
+  sidecars, MoonClaw runtime records, and MoonTown handoff records derive
   canonical paths from MoonLib rather than local layout constants
 - contract-boundary tests prove MoonCode can consume MoonLib path contracts
-  without importing MoonStat or status/analytics packages
+  without importing MoonGate or status/analytics packages
 - resume tests prove sessions survive process restart from disk records
 - live model/runtime tests exist as manual or scheduled checks, but deterministic
   tests remain the merge gate

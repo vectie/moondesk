@@ -85,7 +85,7 @@ pub fn session_package_lifecycle(session : Json, events : Array[Json]) -> Json {
       package_count, source_bound, missing_source, runtime_built, runtime_verified,
     ),
     "owner": package_artifact_owner(),
-    "rule": "Moondesk renders package readiness and operator commands. MoonClaw must assemble and verify bundles. MoonBook owns the package manifests, source inventory, and package index.",
+    "rule": "MoonDesk renders package readiness and operator commands. MoonClaw must assemble and verify bundles. MoonBook owns the package manifests, source inventory, and package index.",
   }
 }
 

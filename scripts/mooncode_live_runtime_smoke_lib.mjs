@@ -167,9 +167,9 @@ export async function startMoondesk() {
     repoRoot,
   );
   const base = `http://${host}:${port}`;
-  await waitFor("Moondesk health", async () => {
+  await waitFor("MoonDesk health", async () => {
     if (!processStillRunning(child)) {
-      throw new Error(`Moondesk exited early; see ${logPath("moondesk.err")}`);
+      throw new Error(`MoonDesk exited early; see ${logPath("moondesk.err")}`);
     }
     try {
       const response = await fetch(`${base}/__moondesk_health`);

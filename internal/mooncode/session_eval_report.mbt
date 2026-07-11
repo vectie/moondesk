@@ -96,7 +96,7 @@ pub fn eval_report_projection(session : Json) -> Json {
     "current_gap": if native_ready {
       "MoonClaw reported native eval evidence; remaining runtime gaps are reflected in the checks array."
     } else {
-      "Local evidence is visible, but MoonClaw still needs MoonCode tool_harness, file_edit, patch_review, command_execution, and package_output eval results before Moondesk can claim ready coding-agent behavior."
+      "Local evidence is visible, but MoonClaw still needs MoonCode tool_harness, file_edit, patch_review, command_execution, and package_output eval results before MoonDesk can claim ready coding-agent behavior."
     },
     "summary": summary,
   }

@@ -1,8 +1,8 @@
-# Moondesk Desk Mode Design
+# MoonDesk Desk Mode Design
 
 ## Decision
 
-Moondesk should have a first-class `Desk` mode. This mode is the real desktop
+MoonDesk should have a first-class `Desk` mode. This mode is the real desktop
 surface: a Finder/File Explorer style view over MoonBook projects and their
 virtual filesystem.
 
@@ -11,7 +11,7 @@ advance workflows, mutate books, or execute background tasks. It only lets the
 operator navigate MoonBook projects and inspect file/directory metadata.
 
 ```text
-Moondesk
+MoonDesk
   Desk mode  = browse MoonBooks and virtual files
   Wiki mode  = read/write durable book knowledge
   Code mode  = run MoonCode sessions for selected book/path
@@ -20,7 +20,7 @@ Moondesk
 ## Why
 
 The current product has two strong activity lanes: Wiki and Code. That makes
-Moondesk feel like a switch between two specialized tools, but not yet like the
+MoonDesk feel like a switch between two specialized tools, but not yet like the
 operator's desk.
 
 The missing neutral layer is a filesystem-style browser:
@@ -31,7 +31,7 @@ The missing neutral layer is a filesystem-style browser:
 - choose a file or directory as context
 - then open Wiki or Code activity for that same selected context
 
-This makes Moondesk the shell, not merely a Wiki/Code toggle.
+This makes MoonDesk the shell, not merely a Wiki/Code toggle.
 
 ## Product Boundary
 
@@ -56,7 +56,7 @@ It must not:
 - edit file contents
 - create, rename, move, or delete files
 - dispatch MoonClaw work
-- submit Moontown requests
+- submit MoonTown requests
 - start MoonCode sessions automatically
 - imply that the virtual filesystem is the host filesystem
 
@@ -69,7 +69,7 @@ Those actions belong to other activities:
 
 ## Virtual Filesystem Model
 
-Desk mode is a view over Moondesk's virtual filesystem, not a raw host file
+Desk mode is a view over MoonDesk's virtual filesystem, not a raw host file
 explorer.
 
 The virtual filesystem can project multiple layers into one navigable tree:
@@ -82,7 +82,7 @@ The virtual filesystem can project multiple layers into one navigable tree:
 - MoonClaw run artifacts
 - review artifacts
 - durable MoonCode receipts
-- Moontown sidecar state when exposed as project context
+- MoonTown sidecar state when exposed as project context
 
 The UI should make this feel like ordinary folder navigation while preserving
 the underlying source layer in metadata.
@@ -99,7 +99,7 @@ Recommended first screen for `Desk`:
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│ Desk | Wiki | Code       Moondesk / Selected MoonBook         │
+│ Desk | Wiki | Code       MoonDesk / Selected MoonBook         │
 ├───────────────┬──────────────────────────────┬───────────────┤
 │ MoonBooks     │ Name       Kind   Modified   │ Details       │
 │ Favorites     │ wiki/      dir    ...        │ selected path │
@@ -142,7 +142,7 @@ clear context.
 
 ## Implementation Notes
 
-Use the existing Moondesk API first:
+Use the existing MoonDesk API first:
 
 - `GET /api/workspaces`
 - `GET /api/workspaces/:id/entries?path=...`
@@ -166,10 +166,10 @@ Desk mode is successful when a user can:
 - select a path as context
 - intentionally move from that context into Wiki or Code
 
-At that point Moondesk has a clear hierarchy:
+At that point MoonDesk has a clear hierarchy:
 
 ```text
-Moondesk is the desk.
+MoonDesk is the desk.
 MoonWiki and MoonCode are activities on the selected desk context.
-MoonClaw, Moontown, and Lepusa are supporting execution/coordination/runtime layers.
+MoonClaw, MoonTown, and Lepusa are supporting execution/coordination/runtime layers.
 ```

@@ -132,6 +132,21 @@ fn update_workspace_results(
       (@rabbita.none, { ..model, preview: None, preview_status: error })
     LoadedRuns(Ok(runs)) => (@rabbita.none, { ..model, runs, })
     LoadedRuns(Err(error)) => (@rabbita.none, { ..model, host_status: error })
+    LoadedMoonFlowRuns(Ok(runs)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_runs: runs,
+          moonflow_status: if runs.is_empty() {
+            "No MoonFlow runs yet"
+          } else {
+            "\{runs.length()} MoonFlow run(s)"
+          },
+        },
+      )
+    LoadedMoonFlowRuns(Err(error)) =>
+      (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
     LoadedSavedViews(Ok(saved_views)) =>
       (@rabbita.none, { ..model, saved_views, })
     LoadedSavedViews(Err(error)) =>

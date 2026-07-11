@@ -71,7 +71,7 @@ pub fn runtime_command_lifecycle(
     "next_action": next_action,
     "next_status": next_status,
     "commands": Json::array(items),
-    "rule": "Lifecycle is computed from runtime-commands.jsonl, runtime-receipts.jsonl, command-scoped runtime events, decode validity, tool authorization, and lease expiry. It is a read-only protocol projection for Moondesk, MoonClaw, and future shared MoonCode protocol consumers.",
+    "rule": "Lifecycle is computed from runtime-commands.jsonl, runtime-receipts.jsonl, command-scoped runtime events, decode validity, tool authorization, and lease expiry. It is a read-only protocol projection for MoonDesk, MoonClaw, and future shared MoonCode protocol consumers.",
   }
 }
 

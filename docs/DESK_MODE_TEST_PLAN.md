@@ -1,6 +1,6 @@
 # Desk Mode Test Plan
 
-Moondesk currently exposes three workspace modes:
+MoonDesk currently exposes three workspace modes:
 
 - `Desk`: file explorer and directory browser.
 - `Wiki`: book/wiki editing and knowledge workflows.
@@ -22,7 +22,7 @@ The latest completed execution is recorded in
 
 ## Goal
 
-Prove that Desk behaves like a scoped Finder/File Explorer over Moondesk's
+Prove that Desk behaves like a scoped Finder/File Explorer over MoonDesk's
 virtual filesystem:
 
 - discover workspaces
@@ -45,16 +45,16 @@ The most important coverage is end-to-end: a seeded workspace, the MoonBit host
 server, the built Rabbita UI, browser interaction, and filesystem assertions all
 running together.
 
-Desk layout tests must use MoonLib `@moonsuite` contracts, or Moondesk's thin
+Desk layout tests must use MoonLib `@moonsuite` contracts, or MoonDesk's thin
 adapter over those contracts, for suite roots, `books`, `.tmp`, product homes,
 and product-registry paths. Desk should not grow another source of truth for
-MoonSuite filesystem layout; MoonStat validates drift against MoonLib instead
+MoonSuite filesystem layout; MoonGate validates drift against MoonLib instead
 of defining alternate Desk paths.
 
 Contract boundary rule for Desk tests: when a Desk scenario needs a reusable
 suite path or registry field, add or consume the constructor in MoonLib first.
-MoonStat can be asserted as an observer of drift/status, but Desk fixtures must
-not import MoonStat or copy MoonStat-owned diagnostics to construct paths.
+MoonGate can be asserted as an observer of drift/status, but Desk fixtures must
+not import MoonGate or copy MoonGate-owned diagnostics to construct paths.
 
 ## Production Quality Bar
 
@@ -155,7 +155,7 @@ quality requires:
   removing the original paths, refreshing the target listing, selecting the
   first moved item, and clearing the clipboard after a successful move.
 - Desk can move one or more selected scoped files or folders to MoonBook trash
-  under the Moondesk product home at
+  under the MoonDesk product home at
   `.moonsuite/products/moondesk/trash/<book-id>`, preserve receipts, hide trash
   internals from normal browsing, list restorable trash entries, and restore a
   selected trashed item back to its original path when the path is still free.
@@ -196,7 +196,7 @@ Desk tests should not validate:
 - Markdown authoring semantics beyond read-only preview and explicit Desk
   context handoff.
 - MoonCode command execution, patch review, test runs, or package approval.
-- Moontown daemon scheduling, town messages, or standing-goal execution.
+- MoonTown daemon scheduling, town messages, or standing-goal execution.
 - Permanent destructive delete unless Desk gains that feature deliberately.
 
 ## Test Layers

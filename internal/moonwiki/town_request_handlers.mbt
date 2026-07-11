@@ -197,7 +197,7 @@ async fn handle_town_request(
       return
     }
   }
-  let title = json_string(payload, "title", default="Moondesk request")
+  let title = json_string(payload, "title", default="MoonDesk request")
   let id = @desk.stable_id("request", title + "-" + @async.now().to_string())
   let file_name = id + ".json"
   let relative = town_moondesk_request_relative_path(file_name)

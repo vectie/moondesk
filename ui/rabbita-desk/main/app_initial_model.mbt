@@ -88,6 +88,8 @@ fn init_model() -> Model {
     review_decision_status: "review decisions idle",
     town_messages: [],
     runs: [],
+    moonflow_runs: [],
+    moonflow_status: "waiting for MoonFlow",
     inbox_title: "Untitled note",
     inbox_content: "",
     import_url: "",

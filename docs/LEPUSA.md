@@ -1,6 +1,6 @@
 # Lepusa Integration
 
-Moondesk keeps the current desktop shell intact while Lepusa becomes the native
+MoonDesk keeps the current desktop shell intact while Lepusa becomes the native
 host boundary. The integration is intentionally isolated under
 `desktop/lepusa/moondesk/` and exposed through `cmd/main lepusa`.
 
@@ -18,7 +18,7 @@ desktop/lepusa/moondesk/dist/
 
 ## Commands
 
-Run from the Moondesk repository:
+Run from the MoonDesk repository:
 
 ```bash
 moon run cmd/main --target native -- bundle /path/to/moonsuite --skip-sign --no-archive
@@ -77,7 +77,7 @@ browser-based development.
 verifies the integration `lepusa.json`, writes the native bundle, checks the
 generated runtime launch session, and resolves the packaged asset from the
 generated runtime manifest. It then runs `bundle-check` to prove the generated
-app carries the launcher, bundled runtime, bundled Moondesk sidecar, runtime
+app carries the launcher, bundled runtime, bundled MoonDesk sidecar, runtime
 manifest, platform metadata, and packaged entrypoint it needs to start without
 resolving a global `lepusa-runtime`. It does not open a long-running window, so
 it is suitable for repeatable local validation.
@@ -85,19 +85,19 @@ it is suitable for repeatable local validation.
 `live-smoke`, `live-build`, `live-session`, `live-launch`, and
 `live-bundle-check` generate a temporary `lepusa.json` under the selected build
 directory and use a `localhost` source instead of packaged static assets. The
-generated manifest launches the bundled Moondesk sidecar with:
+generated manifest launches the bundled MoonDesk sidecar with:
 
 ```text
 <app>/Contents/MacOS/moondesk-sidecar serve <workspace-root> --ui <ui-dir> --host 127.0.0.1 --port <serve-port>
 ```
 
 The wrapper builds `cmd/main` as the sidecar and copies it into the generated app
-bundle after Lepusa writes the bundle. This proves Lepusa can carry Moondesk as a
+bundle after Lepusa writes the bundle. This proves Lepusa can carry MoonDesk as a
 supervised localhost sidecar without requiring `moon run` at app launch time. Use
 `live-smoke` for a repeatable non-window test, `live-build` to write the
 standalone bundle, `live-session` to inspect the generated launch session, and
-`live-launch` to open the generated native-hosted Moondesk app. These live
-commands require `--workspace-root`; Moondesk does not infer a home-derived
+`live-launch` to open the generated native-hosted MoonDesk app. These live
+commands require `--workspace-root`; MoonDesk does not infer a home-derived
 workspace for live sidecars. Override the development sidecar port with:
 
 ```bash
@@ -152,8 +152,8 @@ _build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.jso
 Override it with `--manifest` when checking another built bundle.
 
 `build` first builds Lepusa's `cmd/runtime` binary, then writes the packaged
-static Moondesk Lepusa app. `live-build` builds the same native bundle shape but
-uses the generated localhost manifest so the app opens the current Moondesk
+static MoonDesk Lepusa app. `live-build` builds the same native bundle shape but
+uses the generated localhost manifest so the app opens the current MoonDesk
 workspace server. On macOS the generated `.app` includes
 `Contents/MacOS/lepusa-runtime`, so the launcher no longer depends on a globally
 installed runtime. The launcher still falls back to `PATH` for older or
@@ -176,8 +176,8 @@ moon run cmd/main --target native -- lepusa live-launch macos
 
 This is a standalone adapter, not a UI migration:
 
-- Moondesk owns the product workflow and existing server/runtime.
+- MoonDesk owns the product workflow and existing server/runtime.
 - Lepusa owns native WebView planning, launch readiness, and bundle contracts.
-- The Moondesk Lepusa app is app-neutral and contains no MoonBook or domain-specific
+- The MoonDesk Lepusa app is app-neutral and contains no MoonBook or domain-specific
   logic.
 - The existing Rabbita UI package is not modified by this integration.

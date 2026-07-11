@@ -81,7 +81,7 @@ async fn sync_book_standing_goal(
       "status": "missing_registration_receipt",
       "book_id": book_id,
       "pattern_id": pattern_id,
-      "message": "Book-local Moontown standing-goal registration receipt is missing or invalid.",
+      "message": "Book-local MoonTown standing-goal registration receipt is missing or invalid.",
       "standing_goal_registration_path": pdf_watch_moontown_standing_goal_receipt_relative_path(),
     }
   }

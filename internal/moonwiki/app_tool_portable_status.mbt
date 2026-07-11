@@ -184,7 +184,7 @@ fn app_tool_portable_status_message(status : String) -> String {
     "unsupported_entrypoint" =>
       "Book declares app-tool metadata and has existing entrypoints, but none are HTML files suitable for the portable iframe shell."
     "portable_ready" =>
-      "Portable app-tool bundle is ready and has no detected Moondesk API dependency."
+      "Portable app-tool bundle is ready and has no detected MoonDesk API dependency."
     "portable_with_api_warnings" =>
       "Portable app-tool bundle was generated, but it still calls APIs outside the generic read-only snapshot. Treat it as an external app pack that needs its own runtime adapter before launch."
     "export_required" =>

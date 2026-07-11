@@ -1,23 +1,23 @@
-# Moondesk Architecture
+# MoonDesk Architecture
 
 See [Executable Book Architecture](EXECUTABLE_BOOK_ARCHITECTURE.md) for the
-canonical product boundary: MoonBook is the executable book, Moondesk is the
-desktop shell, MoonClaw owns execution, and Moontown coordinates books. See
+canonical product boundary: MoonBook is the executable book, MoonDesk is the
+desktop shell, MoonClaw owns execution, and MoonTown coordinates books. See
 [Desk Mode Design](DESK_MODE_DESIGN.md) for the current UI decision: Desk is
 the read-only virtual filesystem mode, while MoonWiki and MoonCode are
 activities on the selected book/path context.
 
 MoonSuite filesystem contracts are a shared foundation owned by MoonLib.
-MoonStat consumes those contracts to validate/report workspace health and
+MoonGate consumes those contracts to validate/report workspace health and
 legacy-path drift; it does not define product-home or book-layout paths.
 
 ## Boundary
 
-Moondesk is a desktop shell over existing Moon workspaces. It should not absorb
+MoonDesk is a desktop shell over existing Moon workspaces. It should not absorb
 the responsibilities of the other projects.
 
 ```text
-Moondesk
+MoonDesk
   human desktop, MoonWiki workspace, MoonCode workspace, file browsing,
   preview, editing, inbox, submissions, app-tool export
 
@@ -25,7 +25,7 @@ MoonBook
   durable executable book, wiki, source files, generated site, code,
   history, review queue, accepted knowledge
 
-Moontown
+MoonTown
   Mayor, daemon, standing goals, scheduling, coordination, notifications,
   book-to-book communication, town state
 
@@ -36,11 +36,11 @@ MoonLib
   shared suite root, product registry, product-home, temp, and book path
   contracts
 
-MoonStat
+MoonGate
   health reporting, metrics, snapshots, analytics, and contract-drift audits
 ```
 
-Moondesk treats the selected book as a desk-centered workspace:
+MoonDesk treats the selected book as a desk-centered workspace:
 
 ```text
 Desk
@@ -69,12 +69,12 @@ MoonCode
 - `ui/rabbita-desk/main/`: Rabbita UI package for Desk, Files, Search, Inbox,
   MoonWiki, MoonCode, Town, Runs, and Settings surfaces.
 
-Moondesk path construction should call the MoonLib MoonSuite contract package
+MoonDesk path construction should call the MoonLib MoonSuite contract package
 instead of carrying product-local string helpers for `.moonsuite`, `.tmp`,
 `books`, or product registry paths. During migration, local helpers may remain
 only as thin compatibility adapters over MoonLib.
 
-MoonCode is intentionally standalone. Moondesk renders the native shell and
+MoonCode is intentionally standalone. MoonDesk renders the native shell and
 review surfaces, MoonClaw owns the agent loop and tool execution, and MoonBook
 owns generated code/artifacts. See [MoonCode Workspace](MOONCODE.md) for the
 contract.
@@ -85,7 +85,7 @@ The host exposes scoped local routes. Important families:
 
 - `/api/workspaces`, `/api/workspaces/:id/*`: workspace discovery, file lists,
   previews, raw files, edits, search, tags, saved views, and imports.
-- `/api/town/*`: Moontown requests, standing goals, progress, events, review
+- `/api/town/*`: MoonTown requests, standing goals, progress, events, review
   queue, analytics, and daemon coordination.
 - `/api/books/*`: base-type/pattern registry, PDF Evidence Watch creation,
   standing-goal sync, template registry reads, and portable app-tool export.
@@ -93,15 +93,15 @@ The host exposes scoped local routes. Important families:
   queues, tool approval/readiness, changes, tests, package/readiness reports,
   and MoonClaw handoff records.
 - `/api/moonclaw/*`: MoonClaw daemon/model status needed by the MoonCode UI.
-- `/api/daemon/*`: local Moondesk daemon and LaunchAgent lifecycle controls.
+- `/api/daemon/*`: local MoonDesk daemon and LaunchAgent lifecycle controls.
 
 Domain-specific workflows should not add permanent first-class route families
-inside Moondesk. They should be exposed through book-local tools, MoonClaw
+inside MoonDesk. They should be exposed through book-local tools, MoonClaw
 skills, app-tool manifests, or generic MoonCode/MoonWiki operations.
 
 ## Reusable Book Pattern
 
-Moondesk currently ships a generic PDF Evidence Watch creator:
+MoonDesk currently ships a generic PDF Evidence Watch creator:
 
 ```text
 research-book
@@ -141,15 +141,15 @@ books/research-<topic>/
   site/generated/
 ```
 
-Moondesk writes the operator-facing config, method document, skills, schemas,
-layout metadata, publish receipts, and standing-goal registration. Moontown
+MoonDesk writes the operator-facing config, method document, skills, schemas,
+layout metadata, publish receipts, and standing-goal registration. MoonTown
 schedules the recurring watch. MoonClaw performs bounded fetch/extract/analyze
 work. MoonBook owns accepted durable knowledge and generated outputs.
 
 ## Domain Packs
 
 Domain-specific discovery workflows are experiments for testing information
-discovery and app-tool generation. They are no longer built into Moondesk.
+discovery and app-tool generation. They are no longer built into MoonDesk.
 
 The correct shape for any domain workflow is a standalone pack:
 
@@ -165,33 +165,33 @@ MoonBook/MoonClaw domain pack
   optional portable app-tool output
 ```
 
-Moondesk can manage such a pack through generic book creation, file editing,
+MoonDesk can manage such a pack through generic book creation, file editing,
 MoonCode sessions, MoonClaw execution, review surfaces, and portable export.
-Moondesk should not hardcode the pack's source list, target universe, workbook
+MoonDesk should not hardcode the pack's source list, target universe, workbook
 schema, or validation rules.
 
 Portable export has one generic detection rule: explicit `toolbook` /
 `app-tool-book` manifests are preferred, and any book with a real
 `app/index.html` can also be packaged as a standalone app-tool. This lets
-generated tools leave Moondesk cleanly without adding domain-specific product
+generated tools leave MoonDesk cleanly without adding domain-specific product
 code. Exported app-tools include `serve.py` and `run-local.command` so the
 generated JavaScript runs from a served local origin instead of a fragile raw
 `file://` open. The exporter discovers local assets referenced by generated
 HTML, CSS, and JavaScript, including root-absolute `/assets/...` links,
 side-effect imports, and `new URL(..., import.meta.url)` asset references, so
-book-local tools do not need Moondesk code changes just to ship their UI. The
+book-local tools do not need MoonDesk code changes just to ship their UI. The
 portable runtime also handles generic read-only workspace file APIs such as
 `/api/workspaces/<id>/raw?path=...`, `/file/...`, `/site/...`, and preview
 requests by serving copied book files from the static bundle. Runtime file
 resolution is relative to the injected portable runtime script, so the same
-bundle works in Moondesk's nested workspace-file iframe preview and under the
+bundle works in MoonDesk's nested workspace-file iframe preview and under the
 standalone static host. That keeps generated JavaScript tools usable after
-export without adding domain-specific Moondesk endpoints.
-Generated app-tools that still call unsupported Moondesk APIs are exported for
+export without adding domain-specific MoonDesk endpoints.
+Generated app-tools that still call unsupported MoonDesk APIs are exported for
 inspection, but they are not treated as launchable standalone apps. Their
 portable manifest sets `auto_open_allowed: false`; the fix belongs either in
 the generated pack or in the portable runtime, not in domain-specific
-Moondesk code.
+MoonDesk code.
 
 ## Native App
 

@@ -12,7 +12,7 @@ Environment:
 - MoonBit `0.1.20260629`
 - Node.js `22.22.1`
 - built Rabbita production UI
-- real Moondesk native host and temporary MoonSuite roots
+- real MoonDesk native host and temporary MoonSuite roots
 - headless Chrome CDP plus the Codex in-app browser for restart observation
 - native Lepusa/WKWebView bundle verification
 

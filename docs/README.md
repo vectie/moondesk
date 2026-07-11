@@ -1,24 +1,24 @@
-# Moondesk Documentation Guide
+# MoonDesk Documentation Guide
 
-Moondesk is the human desktop shell for MoonSuite. It should make books,
+MoonDesk is the human desktop shell for MoonSuite. It should make books,
 files, Wiki work, Code work, town requests, runtime evidence, and app-tool
 packaging visible to an operator without taking ownership of the runtimes or
 domain workflows it displays.
 
 ## Scope And Boundary
 
-Moondesk owns the local desktop experience:
+MoonDesk owns the local desktop experience:
 
 - workspace and book discovery
 - scoped file browsing, preview, search, edit, import, and export
 - MoonWiki and MoonCode presentation for the selected book
-- Moontown request and daemon controls
+- MoonTown request and daemon controls
 - MoonClaw status, stream, package, and review projections
 - Lepusa bundle/release integration for the native shell
 
-Moondesk does not own durable book truth, agent execution, town scheduling,
+MoonDesk does not own durable book truth, agent execution, town scheduling,
 suite metrics, or domain-specific workflow logic. Those boundaries belong to
-MoonBook, MoonClaw, Moontown, MoonStat, and product packs. Shared filesystem
+MoonBook, MoonClaw, MoonTown, MoonGate, and product packs. Shared filesystem
 contracts come from MoonLib.
 
 ## Reading Order
@@ -54,7 +54,7 @@ contracts come from MoonLib.
   Settings.
 
 New code should land in the narrowest owning package. Do not put product-pack
-logic in Moondesk because a UI needs to display it.
+logic in MoonDesk because a UI needs to display it.
 
 ## Testing Guidance
 
@@ -93,7 +93,7 @@ journeys, methodology, and release acceptance evidence.
 
 - Execute the finite MoonCode/OpenSeek alignment plan: one MoonClaw-owned
   ordered conversation, one stable work disclosure per turn, and a thin
-  Moondesk renderer.
+  MoonDesk renderer.
 - Add longer fresh-root and reload UI smokes for Desk, Wiki, and Code.
 - Keep extracting path/layout helpers to MoonLib instead of growing local string
   utilities.

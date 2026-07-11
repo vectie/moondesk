@@ -20,7 +20,7 @@ async fn handle_workspace_inbox(
       return
     }
   }
-  let title = json_string(payload, "title", default="Moondesk inbox note")
+  let title = json_string(payload, "title", default="MoonDesk inbox note")
   let content = json_string(
     payload,
     "content",
@@ -125,7 +125,7 @@ async fn handle_workspace_import(
     }
   }
   let kind = json_string(payload, "kind", default="note")
-  let title = json_string(payload, "title", default="Moondesk import")
+  let title = json_string(payload, "title", default="MoonDesk import")
   let inbox_root = @pathx.join(workspace.root_path, "inbox/imports")
   @fsx.make_directory(inbox_root, recursive=true, exists_ok=true) catch {
     _ => {

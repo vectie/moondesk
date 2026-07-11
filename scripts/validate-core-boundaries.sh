@@ -29,7 +29,7 @@ required_repo_root() {
 
 moonclaw_root="$(required_repo_root MOONCLAW_ROOT MoonClaw)"
 moonbook_root="$(required_repo_root MOONBOOK_ROOT MoonBook)"
-moontown_root="$(required_repo_root MOONTOWN_ROOT Moontown)"
+moontown_root="$(required_repo_root MOONTOWN_ROOT MoonTown)"
 
 run_moon() {
   local root="$1"
@@ -71,7 +71,7 @@ validate_no_builtin_domain_pack() {
     [[ -n "${candidate}" ]] || continue
     if [[ "${candidate}" =~ ${pattern} ]]; then
       echo "${candidate}" >&2
-      echo "Domain experiment residue found in Moondesk core." >&2
+      echo "Domain experiment residue found in MoonDesk core." >&2
       echo "Move domain-specific workflows into standalone MoonBook/MoonClaw packs." >&2
       exit 1
     fi
@@ -102,7 +102,7 @@ validate_no_local_machine_paths() {
     scripts
   )
 
-  echo "+ validate no local-machine absolute paths in Moondesk core"
+  echo "+ validate no local-machine absolute paths in MoonDesk core"
   if (cd "${root}" && rg -n --hidden \
     --glob '!**/dist/**' \
     --glob '!**/_build/**' \
@@ -111,7 +111,7 @@ validate_no_local_machine_paths() {
     --glob '!**/.git/**' \
     "${pattern}" \
     "${scan_paths[@]}"); then
-    echo "Local-machine absolute paths found in Moondesk core." >&2
+    echo "Local-machine absolute paths found in MoonDesk core." >&2
     echo "Use PATH, explicit environment variables, or neutral examples such as /path/to/..." >&2
     exit 1
   fi
@@ -119,7 +119,7 @@ validate_no_local_machine_paths() {
 
 validate_no_inline_production_tests() {
   local root="$1"
-  echo "+ validate no inline tests in Moondesk production MoonBit files"
+  echo "+ validate no inline tests in MoonDesk production MoonBit files"
   if (cd "${root}" && rg -n --hidden \
     --glob '*.mbt' \
     --glob '!**/*_test.mbt' \
@@ -130,7 +130,7 @@ validate_no_inline_production_tests() {
     --glob '!**/.git/**' \
     '^(async )?test "' \
     internal mooncode); then
-    echo "Inline tests found in Moondesk production MoonBit files." >&2
+    echo "Inline tests found in MoonDesk production MoonBit files." >&2
     echo "Move implementation-adjacent tests into *_wbtest.mbt files." >&2
     exit 1
   fi
@@ -140,12 +140,12 @@ validate_moondesk_root_layout() {
   local root="$1"
   local allowed='^(moon\.mod|moon\.pkg|pkg\.generated\.mbti|README\.mbt\.md|moondesk\.mbt|moondesk_test\.mbt|moondesk_wbtest\.mbt)$'
 
-  echo "+ validate Moondesk root stays a package facade"
+  echo "+ validate MoonDesk root stays a package facade"
   while IFS= read -r candidate; do
     [[ -n "${candidate}" ]] || continue
     if [[ "${candidate}" != */* && ! "${candidate}" =~ ${allowed} ]]; then
       echo "${candidate}" >&2
-      echo "Unexpected root-level MoonBit/package file found in Moondesk." >&2
+      echo "Unexpected root-level MoonBit/package file found in MoonDesk." >&2
       echo "Keep implementation code in package folders such as cmd/, internal/, mooncode/, core/, host/, plugin/, or adapters/." >&2
       exit 1
     fi
@@ -224,7 +224,7 @@ validate_provider_runtime_boundary() {
     "${moonbook}/wiki" \
     "${moonbook}/seed/wiki/skills" \
     "${moontown}/src/adapters/moonbook"; then
-    echo "MoonBook/Moontown provider boundary still uses provider-task bridge wording." >&2
+    echo "MoonBook/MoonTown provider boundary still uses provider-task bridge wording." >&2
     echo "Use provider runtime wording outside MoonClaw's internal provider-task engine." >&2
     exit 1
   fi
@@ -276,18 +276,18 @@ validate_moondesk_code_runtime_boundary() {
     ui/rabbita-desk/main
   )
 
-  echo "+ validate Moondesk MoonCode runtime wording"
+  echo "+ validate MoonDesk MoonCode runtime wording"
   if (cd "${root}" && rg -n --hidden --glob '!**/dist/**' --glob '!**/_build/**' --glob '!**/.git/**' "${forbidden}" "${scan_paths[@]}"); then
-    echo "Moondesk still exposes compatibility or adapter-era MoonCode vocabulary." >&2
+    echo "MoonDesk still exposes compatibility or adapter-era MoonCode vocabulary." >&2
     echo "Use native MoonClaw runtime wording and the /v1/code/* route family." >&2
     exit 1
   fi
   if ! rg -q 'Shared Runtime, Separate Lanes' "${root}/docs/MOONCODE.md"; then
-    echo "Moondesk MoonCode docs must describe the shared runtime and separate lane boundary." >&2
+    echo "MoonDesk MoonCode docs must describe the shared runtime and separate lane boundary." >&2
     exit 1
   fi
   if ! rg -q 'MoonClaw must remain a standalone agent runtime' "${root}/docs/MOONCODE.md"; then
-    echo "Moondesk MoonCode docs must keep MoonClaw standalone, not desktop-private." >&2
+    echo "MoonDesk MoonCode docs must keep MoonClaw standalone, not desktop-private." >&2
     exit 1
   fi
 }
@@ -317,9 +317,9 @@ validate_moontown_moonclaw_runtime_boundary() {
     docs
   )
 
-  echo "+ validate Moontown MoonClaw runtime wording"
+  echo "+ validate MoonTown MoonClaw runtime wording"
   if (cd "${root}" && rg -n --hidden --glob '!**/_build/**' --glob '!**/.git/**' "${forbidden}" "${scan_paths[@]}"); then
-    echo "Moontown still exposes MoonClaw adapter-era helper names." >&2
+    echo "MoonTown still exposes MoonClaw adapter-era helper names." >&2
     echo "Use MoonClaw runtime wording for scheduler/execution integration." >&2
     exit 1
   fi
@@ -344,13 +344,13 @@ validate_no_local_machine_paths "${moondesk_root}"
 validate_no_inline_production_tests "${moondesk_root}"
 validate_moondesk_root_layout "${moondesk_root}"
 validate_no_builtin_domain_pack "${moondesk_root}"
-validate_no_stale_market_example_data "${moondesk_root}" "Moondesk" \
+validate_no_stale_market_example_data "${moondesk_root}" "MoonDesk" \
   README.md README.mbt.md docs adapters cmd core host internal mooncode plugin ui/rabbita-desk/main
 validate_no_stale_market_example_data "${moonclaw_root}" "MoonClaw" \
   README.md README.mbt.md docs agent cmd internal job mooncode skills
 validate_no_stale_market_example_data "${moonbook_root}" "MoonBook" \
   README.md README.mbt.md docs cmd core internal wiki seed summary
-validate_no_stale_market_example_data "${moontown_root}" "Moontown" \
+validate_no_stale_market_example_data "${moontown_root}" "MoonTown" \
   README.md README.mbt.md docs assets scripts src/app_tool_book src/daemon_runtime src/moonbook_contracts src/moonclaw_runtime src/pdf_archive src/pdf_evidence_watch src/policy src/town_runtime
 validate_moonbook_moonwiki_boundary "${moonbook_root}"
 validate_provider_runtime_boundary "${moonbook_root}" "${moontown_root}"

@@ -24,7 +24,7 @@ MoonCode stays stable when it has one append path:
 - progress and final output append as semantic transcript items
 - raw logs remain evidence, not the conversation owner
 
-Moondesk renders a canonical conversation projection owned by the backend and a
+MoonDesk renders a canonical conversation projection owned by the backend and a
 very small optimistic buffer owned by the UI.
 
 Hard gate:
@@ -77,7 +77,7 @@ The UI does not own:
 
 Raw MoonClaw events, backend runtime-event snapshots, command queue receipts,
 stream checkpoints, and service lifecycle records remain available for explicit
-diagnostics. Rabbita/Moondesk does not fetch, parse, merge, or checkpoint stream
+diagnostics. Rabbita/MoonDesk does not fetch, parse, merge, or checkpoint stream
 data for chat rendering; the main chat transcript refreshes only from the
 backend canonical session conversation plus unacknowledged local optimistic
 turns.
@@ -257,7 +257,7 @@ Implemented:
   `client_turn_id` / user-message sequence.
 - Immediate command responses now include the projected `mooncode_summary` and
   `mooncode_conversation` DTOs required by the frontend session decoder.
-- Moondesk MoonCode polling now fetches full canonical sessions, not compact
+- MoonDesk MoonCode polling now fetches full canonical sessions, not compact
   listing rows, so hard refresh keeps the selected conversation hydrated.
 - Removed the stale legacy transcript fallback from structured MoonCode session
   projection so `session.transcript` cannot duplicate canonical command events.
@@ -271,18 +271,18 @@ Exit tests:
 
 ## Phase 7 - Shared Contract Layer
 
-Status: complete as the interim Moondesk adapter; Phase 9 owns the shared
+Status: complete as the interim MoonDesk adapter; Phase 9 owns the shared
 MoonLib extraction.
 
 Work:
 
 - Move stable conversation DTOs into MoonLib.
 - Keep MoonCode-specific MoonClaw normalization in MoonCode.
-- Keep MoonStat focused on analytics/health, not chat ownership.
-- Publish the contract for MoonClaw, MoonCode, Moondesk, MoonRobo, MoonMoon,
+- Keep MoonGate focused on analytics/health, not chat ownership.
+- Publish the contract for MoonClaw, MoonCode, MoonDesk, MoonRobo, MoonMoon,
   MoonFish, MoonTown, and future MoonSuite products.
 
-Implemented in Moondesk:
+Implemented in MoonDesk:
 
 - Added a public `mooncode/core` conversation contract JSON surface for the
   stable turn/message/progress DTO while MoonLib extraction was not available.
@@ -338,7 +338,7 @@ Status: complete for the shared contract rollout.
 Work:
 
 - Move the stable conversation contract from `mooncode/core` into MoonLib.
-- Update Moondesk to import the MoonLib conversation contract directly.
+- Update MoonDesk to import the MoonLib conversation contract directly.
 - Keep MoonCode-specific command/runtime normalization in MoonCode.
 - Publish or pin the MoonLib version that contains the contract.
 
@@ -346,7 +346,7 @@ Implemented:
 
 - Added `vectie/moonlib/conversation` in MoonLib `0.1.8`.
 - Published MoonLib `0.1.8` after package verification.
-- Updated Moondesk to depend on `vectie/moonlib@0.1.8`.
+- Updated MoonDesk to depend on `vectie/moonlib@0.1.8`.
 - `mooncode/core` now delegates stable conversation schema constants, turn
   fields, ordering, identity fields, and contract JSON to MoonLib.
 - MoonCode still owns product-specific protocol and owner names:
@@ -360,7 +360,7 @@ Implemented:
 
 Exit tests:
 
-- Moondesk, MoonCode, MoonClaw, MoonRobo, MoonMoon, MoonFish, MoonTown, and
+- MoonDesk, MoonCode, MoonClaw, MoonRobo, MoonMoon, MoonFish, MoonTown, and
   future MoonSuite products compile against the same MoonLib contract
 - contract tests reject missing turn identity for user-facing events
 - product-specific diagnostics stay outside the shared chat contract
@@ -431,13 +431,13 @@ Exit tests:
 
 ## Phase 12 - Canonical Native Event Ingestion
 
-Status: complete for the Moondesk backend projection path.
+Status: complete for the MoonDesk backend projection path.
 
 Work:
 
 - Treat MoonClaw native sidecar/runtime events as input evidence, not as a
   second conversation owner.
-- Import observed native runtime events into Moondesk's append log before
+- Import observed native runtime events into MoonDesk's append log before
   projection.
 - Make session listing, session events, stream, stream-state, preflight, and
   command send paths sync native evidence before reading canonical state.
@@ -451,12 +451,12 @@ Work:
 Implemented:
 
 - Added a deduped native-event sync helper that imports sidecar events and
-  daemon-observed runtime events into Moondesk's event log once.
+  daemon-observed runtime events into MoonDesk's event log once.
 - `GET /api/mooncode/sessions`, session event reads, stream reads, stream-state,
   command preflight, and command send all use the sync-first canonical path.
-- Known Moondesk sessions no longer bypass the backend by returning native
+- Known MoonDesk sessions no longer bypass the backend by returning native
   MoonClaw stream text directly.
-- `attach_mooncode_session_projection` now projects from Moondesk's durable
+- `attach_mooncode_session_projection` now projects from MoonDesk's durable
   event log only.
 - `write_mooncode_session_record` removes response/projection fields before
   writing the session record.
@@ -465,9 +465,9 @@ Implemented:
 
 Exit tests:
 
-- native assistant/progress events are imported once into Moondesk's append log
+- native assistant/progress events are imported once into MoonDesk's append log
 - session refresh projects from one canonical log
-- sidecar timing cannot reorder the chat independently of Moondesk storage
+- sidecar timing cannot reorder the chat independently of MoonDesk storage
 - persisted session records contain durable state, not cached response DTOs
 - first, second, and third immediate command responses preserve append-log order
 
@@ -599,7 +599,7 @@ Work:
 
 - Treat the existing native runtime-events response as the diagnostic surface
   for live MoonClaw event shape.
-- Classify accepted native events after Moondesk normalization.
+- Classify accepted native events after MoonDesk normalization.
 - Require every chat/progress eligible native event to carry a direct
   `command_id` or normalized `command_packet.command_id`.
 - Keep unscoped service lifecycle, watcher, usage, and runtime-loop records as
@@ -630,11 +630,11 @@ Status: implemented as the clean producer boundary.
 
 Work:
 
-- Remove regular Moondesk API synchronization from direct MoonClaw
+- Remove regular MoonDesk API synchronization from direct MoonClaw
   product-home `events.jsonl` reads.
 - Treat MoonClaw's `/v1/code/sessions/<id>/runtime-events?book_root=<path>`
   response as the native runtime producer contract.
-- Persist only command-scoped or diagnostic-only native events into Moondesk's
+- Persist only command-scoped or diagnostic-only native events into MoonDesk's
   canonical append log.
 - Keep unsafe unscoped transcript/progress records visible only through the
   diagnostic runtime-events contract report.
@@ -642,7 +642,7 @@ Work:
   through public API routes instead of writing MoonClaw sidecar files.
 - Add a live smoke that starts a real MoonClaw daemon for a temporary
   MoonSuite root, posts a command-scoped event through MoonClaw's native
-  runtime-events endpoint, and verifies Moondesk imports it as canonical
+  runtime-events endpoint, and verifies MoonDesk imports it as canonical
   conversation output.
 
 Implemented:
@@ -651,7 +651,7 @@ Implemented:
 - `native_runtime_events_for_canonical_projection` filters accepted native
   events before persistence.
 - The direct `read_moonclaw_mooncode_event_log` and
-  `moonclaw_mooncode_event_log_path` helpers were removed from Moondesk.
+  `moonclaw_mooncode_event_log_path` helpers were removed from MoonDesk.
 - `scripts/desk_mode_browser_smoke.mjs` now posts deterministic runtime replies
   to `/api/mooncode/sessions/:id/runtime-events`.
 - `scripts/mooncode_live_runtime_contract_smoke.sh` is the manual/scheduled
@@ -673,7 +673,7 @@ Status: implemented as the clean command-producer boundary.
 Problem:
 
 - MoonClaw already accepts `runtime_tool_calls` in native command bodies and
-  packets, but Moondesk was not forwarding explicit tool-call plans from the
+  packets, but MoonDesk was not forwarding explicit tool-call plans from the
   session/command payload into either durable producer surface.
 - That made simple deterministic work depend on fallback prompt planning or
   model/service behavior, which is too slow and ambiguous for first-message and
@@ -684,12 +684,12 @@ Work:
 - Treat `runtime_tool_calls` as a first-class MoonCode command field.
 - Persist explicit runtime tool calls in the canonical command packet.
 - Replay the same tool-call plan in the native MoonClaw command body.
-- Keep Moondesk as the command producer only; MoonClaw remains the runtime
+- Keep MoonDesk as the command producer only; MoonClaw remains the runtime
   owner that executes tools and emits command-scoped evidence.
 - Treat a command-scoped native `finish` tool call containing an `answer` as the
   assistant final reply, and let the following generic `finish` result close
   the turn without replacing the answer with `finished`.
-- Add a live native runtime-loop gate that creates a Moondesk session, asks
+- Add a live native runtime-loop gate that creates a MoonDesk session, asks
   MoonClaw to execute explicit `write` and `finish` tool calls, verifies the
   file-system side effect under the selected MoonSuite root, and verifies the
   final assistant answer imports through the native runtime-events API into the
@@ -701,7 +701,7 @@ Exit tests:
 - native command body contains the same explicit `runtime_tool_calls`
 - live MoonClaw runtime loop executes the tool calls instead of falling back to
   generic thinking
-- Moondesk imports the daemon-owned `finish` tool-call answer as the assistant
+- MoonDesk imports the daemon-owned `finish` tool-call answer as the assistant
   reply for the originating command and closes the turn on the generic finish
   result
 - no legacy `.moonclaw` sidecar root is created
@@ -721,7 +721,7 @@ Problem:
 
 Work:
 
-- Add a live MoonClaw/Moondesk smoke that creates one MoonCode session and
+- Add a live MoonClaw/MoonDesk smoke that creates one MoonCode session and
   executes first, second, and third prompt turns through the real backend
   command route.
 - Use explicit native `finish` tool calls for each turn so the gate tests the
@@ -843,7 +843,7 @@ Work:
   reply comes from the durable event projection.
 - Make the failure append idempotent so retries do not duplicate assistant
   failure messages.
-- Add a live smoke that starts Moondesk without MoonClaw, submits the first
+- Add a live smoke that starts MoonDesk without MoonClaw, submits the first
   prompt, calls `/runtime-service`, then verifies the same turn renders a failed
   assistant reply from the append-only event log.
 
@@ -863,12 +863,12 @@ Status: implemented as the runtime-service lease reconciliation gate.
 
 Problem:
 
-- Moondesk used a local 15-second `runtime-service.lease.json` file to fence
+- MoonDesk used a local 15-second `runtime-service.lease.json` file to fence
   duplicate runtime-service starts.
 - MoonClaw's native runtime-service is event-backed and backgrounded: it writes
   `runtime.service_started`, then later `runtime.service_finished` or
   `runtime.service_failed`.
-- Keeping the Moondesk lease timeout-only after terminal native evidence makes
+- Keeping the MoonDesk lease timeout-only after terminal native evidence makes
   service ownership stale and can delay legitimate recovery/restart attempts.
 
 Work:
@@ -903,7 +903,7 @@ Problem:
 - That kept a stale implementation path where explicit runtime controls could
   leak into the same transcript surface as ordinary user prompts and assistant
   replies.
-- MoonClaw settles steer/cancel at native scheduler boundaries; Moondesk should
+- MoonClaw settles steer/cancel at native scheduler boundaries; MoonDesk should
   not pretend control commands are chat messages or mid-tool interruption.
 
 Work:
@@ -917,7 +917,7 @@ Work:
   evidence, not fabricated chat rows.
 - Add a deterministic projection regression for prompt -> steer -> prompt ->
   cancel ordering.
-- Add a live MoonClaw/Moondesk control-boundary smoke that drives prompt,
+- Add a live MoonClaw/MoonDesk control-boundary smoke that drives prompt,
   deferred steer, prompt, and dropped cancel through real runtime-service calls
   while requiring the visible conversation to contain only the two prompt turns.
 
@@ -1125,7 +1125,7 @@ Exit tests:
   package command
 - runtime protocol contract advertises the package/review model-flow contract
 - scheduled live gate still needs one real model-backed package/review run
-  against MoonClaw/Moondesk, not a deterministic tool-call simulation
+  against MoonClaw/MoonDesk, not a deterministic tool-call simulation
 
 ## Phase 29 - Browser Conversation Stability Gate
 
@@ -1435,7 +1435,7 @@ Problem:
 
 Work:
 
-- Add a focused MoonCode HTTP smoke that launches Moondesk against a fresh
+- Add a focused MoonCode HTTP smoke that launches MoonDesk against a fresh
   suite root and creates one real MoonCode session.
 - Probe a read-only route, a POST-only route, and a mixed GET/HEAD/POST route
   with methods the contract rejects.
@@ -1542,7 +1542,7 @@ Problem:
   file was still a second implementation of desktop MoonCode route shape.
 - Backend route shape is owned by the MoonCode contract and published through
   capabilities; the UI should not keep its own `/api/mooncode` path formatter
-  when a shared Moondesk public package can own browser-safe URL construction.
+  when a shared MoonDesk public package can own browser-safe URL construction.
 - A clean standalone project should have the browser command path import a
   stable public route formatter instead of hand-building MoonCode API paths in
   the UI module.
@@ -1575,7 +1575,7 @@ Problem:
   Rabbita command surface still built normal desktop API routes inline for
   workspaces, MoonClaw, review, search, town, preferences, and books.
 - The UI also kept JS-only route encoders, which made URL construction
-  browser-package behavior instead of a shared Moondesk contract.
+  browser-package behavior instead of a shared MoonDesk contract.
 - A first-time clean project should let the shared public package own
   browser-safe desktop API formatting, while product UI code asks for named
   routes.
@@ -1647,7 +1647,7 @@ Exit tests:
 
 ## Phase 42 - Host-Visible Desktop API Contract Publication
 
-Status: implemented as a live Moondesk capability endpoint and HTTP method
+Status: implemented as a live MoonDesk capability endpoint and HTTP method
 contract smoke derived from the published route contract.
 
 Problem:
@@ -1672,7 +1672,7 @@ Work:
 - Add a small desktop API router branch for `GET/HEAD
   /api/desktop/capabilities`; it uses the same core-backed method helper and
   `405 Allow` response path as the rest of the generic desktop API.
-- Add a live HTTP smoke that starts Moondesk, reads
+- Add a live HTTP smoke that starts MoonDesk, reads
   `/api/desktop/capabilities`, probes one unsupported method for every
   advertised route, verifies the `405 Allow`/API-envelope body, and confirms
   retired `/api/town/control` stays absent.
@@ -1704,11 +1704,11 @@ Problem:
   portable still had a MoonWiki-local `app_tool_portable_api_snapshot_routes`
   list for the offline snapshot runtime.
 - That local list described a different concept than the full desktop API: only
-  routes the portable bundle can answer without a running Moondesk host. Keeping
+  routes the portable bundle can answer without a running MoonDesk host. Keeping
   it local made future drift likely because route names, capability publication,
   unsupported-route detection, and portable export warnings could evolve
   independently.
-- Treating Moondesk as a clean first-time project means the portable supported
+- Treating MoonDesk as a clean first-time project means the portable supported
   API subset is a contract owned beside the desktop routes, not another helper
   buried in app-tool export code.
 
@@ -1801,7 +1801,7 @@ Problem:
   was not. Any future product could drift by adding fields to core routes,
   app-tool portable exports, or live smokes while forgetting the actual host
   capability payload.
-- Treating Moondesk as a clean standalone project means the host capability
+- Treating MoonDesk as a clean standalone project means the host capability
   object is a first-class core contract, not a backend formatting detail.
 
 Work:
@@ -2041,7 +2041,7 @@ Problem:
 - That left the product with a clean lane contract but a stale event-name
   architecture: the same event stream could be accepted by one contract,
   ignored by another, or rendered differently by chat projection.
-- For a standalone MoonCode product, MoonClaw and Moondesk need one shared
+- For a standalone MoonCode product, MoonClaw and MoonDesk need one shared
   vocabulary for event names before a runtime event can become progress,
   assistant output, failure evidence, test proof, package proof, or review
   state.
@@ -2140,7 +2140,7 @@ Problem:
   architecture: one subsystem could advertise a tool, another could reject it,
   and another could require review or authorization from a separate local list.
 - A standalone MoonCode product needs one tool registry contract before
-  MoonClaw, Moondesk, MoonBook packaging, and future standalone clients can
+  MoonClaw, MoonDesk, MoonBook packaging, and future standalone clients can
   agree on allowed tools, aliases, proof events, and review policy.
 
 Work:
@@ -2197,7 +2197,7 @@ Problem:
   architecture: one subsystem could accept an event name while another decided
   locally whether the same event could affect chat or progress.
 - A standalone MoonCode product needs one projection-safety contract before
-  Moondesk, MoonClaw, and future clients can reliably distinguish real
+  MoonDesk, MoonClaw, and future clients can reliably distinguish real
   command-owned work from service lifecycle noise or unsafe unscoped replies.
 
 Work:
@@ -2239,11 +2239,11 @@ Problem:
 
 - Phase 26 made model-planned turns event-backed, but the contract still lived
   in `internal/mooncode`.
-- That left the working-state boundary too host-local: Moondesk projection knew
+- That left the working-state boundary too host-local: MoonDesk projection knew
   when queued commands must stay pending, when `runtime.turn_started` without
   planner proof becomes a contract failure, and which planner statuses/reasons
   are valid.
-- A standalone MoonCode product needs MoonClaw, Moondesk, and future clients to
+- A standalone MoonCode product needs MoonClaw, MoonDesk, and future clients to
   share one planner-evidence contract before any UI can show active work.
 
 Work:
@@ -2288,7 +2288,7 @@ Problem:
 - The runtime supervisor also carried its own local list of effects that allow
   native execution, so MoonClaw-facing runtime packets could drift from the
   contract surface that clients inspect.
-- A standalone MoonCode product needs MoonClaw, Moondesk, and future hosts to
+- A standalone MoonCode product needs MoonClaw, MoonDesk, and future hosts to
   share one runtime-control contract before steer/cancel, scheduler-boundary
   aborts, and queued turns can be trusted.
 
@@ -2340,7 +2340,7 @@ Problem:
 - The internal projection owned the public contract JSON, terminal statuses,
   stale evidence reasons, missing-step strings, event-kind predicates, and
   readiness proof names.
-- That left MoonClaw, Moondesk, and future standalone MoonCode hosts with no
+- That left MoonClaw, MoonDesk, and future standalone MoonCode hosts with no
   shared source of truth for package/review flow evidence.
 - A first-time clean MoonCode product needs package/review policy in the shared
   contract layer, with internal MoonCode limited to aggregating concrete event
@@ -2390,7 +2390,7 @@ Problem:
 - The projection owned the public claim/replay contract JSON, receipt statuses,
   claim statuses, replay statuses, ack-order statuses, endpoint strings,
   ordering rules, duplicate guards, and lease policy.
-- That left standalone MoonCode and MoonClaw consumers depending on Moondesk
+- That left standalone MoonCode and MoonClaw consumers depending on MoonDesk
   internals for the rules that decide whether a command is claimable, delivered,
   retryable, blocked, or acknowledged.
 
@@ -2436,7 +2436,7 @@ Audit result:
   model-planner evidence, runtime control, runtime consumer, runtime tools, and
   package/review flow.
 - Shared-contract work still left: exactly the candidates listed below.
-- Everything else that only aggregates Moondesk/MoonBook state, host routes,
+- Everything else that only aggregates MoonDesk/MoonBook state, host routes,
   UI copy, or diagnostic reports stays internal unless a real external consumer
   needs a data-only protocol contract.
 
@@ -2515,11 +2515,11 @@ Finite closure checklist:
 
 Do-not-migrate classification:
 
-- `internal/mooncode/stream_*`: Moondesk host stream/checkpoint projection, not
+- `internal/mooncode/stream_*`: MoonDesk host stream/checkpoint projection, not
   the shared runtime contract.
 - `internal/mooncode/session_readiness*`, `action_plan*`,
   `session_resume_lifecycle.mbt`, `session_summary*`,
-  `session_executable_lifecycle.mbt`: MoonBook/Moondesk aggregation and status
+  `session_executable_lifecycle.mbt`: MoonBook/MoonDesk aggregation and status
   reporting over core evidence.
 - `internal/mooncode/session_tool_authorization*` and
   `session_tool_approvals.mbt`: host/operator approval projection; reusable
@@ -2538,7 +2538,7 @@ Closure rule:
 - No regex-only cleanup as architecture work.
 - No migration just because an internal report contains display strings.
 - Migrate only data-only policy that MoonClaw, standalone MoonCode, or another
-  MoonSuite product must consume without importing Moondesk internals.
+  MoonSuite product must consume without importing MoonDesk internals.
 
 ## Non-Goals
 

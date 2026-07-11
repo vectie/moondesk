@@ -52,7 +52,7 @@ async fn run_release(args : Array[String]) -> Unit {
   let app_root = bundle_app_root(parsed)
   let archive_path = bundle_archive_path(parsed)
   let runtime_manifest_path = bundle_runtime_manifest_path(parsed)
-  let dmg_path = @pathx.join(out_dir, "Moondesk-\{parsed.version}.dmg")
+  let dmg_path = @pathx.join(out_dir, "MoonDesk-\{parsed.version}.dmg")
   let update_manifest_path = @pathx.join(out_dir, "updates.json")
   if !@fsx.exists(app_root) {
     println("release failed: app bundle was not created")
@@ -210,7 +210,7 @@ async fn update_manifest_json(
     })
   }
   {
-    "name": "Moondesk",
+    "name": "MoonDesk",
     "version": options.version,
     "channel": options.channel,
     "shell_policy": bundle_shell_policy(),
@@ -220,7 +220,7 @@ async fn update_manifest_json(
     "artifacts": Json::array(artifacts),
     "install": {
       "macos": "Open the DMG or unzip the app bundle, then drag it to Applications.",
-      "daemon": "Use the in-app daemon panel to install or remove the Moontown LaunchAgent.",
+      "daemon": "Use the in-app daemon panel to install or remove the MoonTown LaunchAgent.",
     },
   }
 }
@@ -239,7 +239,7 @@ async fn create_release_dmg(app_root : String, dmg_path : String) -> Bool {
     _ => ()
   }
   let code = @process.run("hdiutil", [
-    "create", "-volname", "Moondesk", "-srcfolder", app_root, "-ov", "-format", "UDZO",
+    "create", "-volname", "MoonDesk", "-srcfolder", app_root, "-ov", "-format", "UDZO",
     dmg_path,
   ]) catch {
     _ => -1

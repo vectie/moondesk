@@ -14,7 +14,7 @@ async test "release manifest describes lepusa runtime artifact" {
     "/tmp/release/moondesk-lepusa.app",
     "/tmp/release/moondesk-lepusa.app.zip",
     "/tmp/release/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
-    "/tmp/release/Moondesk-1.2.3.dmg",
+    "/tmp/release/MoonDesk-1.2.3.dmg",
     "/tmp/release/updates.json",
     "",
     signed=false,
@@ -41,7 +41,7 @@ async test "update manifest includes runtime manifest artifact" {
     options,
     "/tmp/release/moondesk-lepusa.app.zip",
     "/tmp/release/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
-    "/tmp/release/Moondesk-1.2.3.dmg",
+    "/tmp/release/MoonDesk-1.2.3.dmg",
     dmg_created=false,
     notarized=false,
   )

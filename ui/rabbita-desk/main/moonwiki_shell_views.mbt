@@ -16,6 +16,12 @@ fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         ]),
         render_command_palette(dispatch, model),
       ])
+    MoonFlow =>
+      div(class="desk-shell flow-shell", [
+        render_title_bar(dispatch, model),
+        render_moonflow_workspace(dispatch, model),
+        render_command_palette(dispatch, model),
+      ])
     MoonWiki =>
       div(class="desk-shell wiki-shell", [
         render_title_bar(dispatch, model),

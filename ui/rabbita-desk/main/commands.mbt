@@ -15,6 +15,8 @@ fn sync_shell_cmd(mode : WorkspaceMode, activity : Activity) -> @rabbita.Cmd {
           "desk"
         } else if mode == MoonCode {
           "code"
+        } else if mode == MoonFlow {
+          "flow"
         } else {
           activity_slug(activity)
         },

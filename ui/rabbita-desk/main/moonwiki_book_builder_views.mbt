@@ -164,7 +164,7 @@ fn render_book_pattern_wizard(model : Model) -> @rabbita.Html {
         class=book_pattern_wizard_step_class(
           model.book_pattern_last_book_id != "",
         ),
-        [span(class="wizard-index", "7"), span("Publish book to Moontown")],
+        [span(class="wizard-index", "7"), span("Publish book to MoonTown")],
       ),
     ]),
     pre(

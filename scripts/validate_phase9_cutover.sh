@@ -39,12 +39,12 @@ is_allowed_hit() {
       # Phase 8 residual scan has its own legacy-string detector and allowlist.
       return 0
       ;;
-    moonstat:./suite.mbt:*)
-      # MoonStat is the drift detector for legacy product-home candidates.
+    moongate:./suite.mbt:*)
+      # MoonGate is the drift detector for legacy product-home candidates.
       return 0
       ;;
     moontown:./scripts/fresh-suite-writers-smoke.sh:*)
-      # Moontown fresh-suite smoke asserts old roots are absent after writes.
+      # MoonTown fresh-suite smoke asserts old roots are absent after writes.
       return 0
       ;;
     moonclaw:./scripts/fresh-suite-product-home-smoke.sh:*)

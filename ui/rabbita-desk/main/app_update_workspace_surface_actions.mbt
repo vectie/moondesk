@@ -162,7 +162,7 @@ fn update_workspace_surface_actions(
     NotifyDaily =>
       (
         notify_cmd(
-          "Moondesk daily surface",
+          "MoonDesk daily surface",
           "\{model.requests.length()} requests, \{model.runs.length()} runs, \{model.standing_goals.length()} standing goals",
         ),
         { ..model, notification_status: "notification requested" },

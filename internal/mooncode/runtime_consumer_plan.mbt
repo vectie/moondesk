@@ -89,7 +89,7 @@ pub fn runtime_consumer_handoff(
       "POST runtime-replay with runtime-acknowledged or runtime-completed receipt",
       "POST eval-report when native tool/file-edit/patch-review/command-execution/package-output harness evidence is available",
     ],
-    "safety_boundary": "Moondesk records queue, review, and display state; MoonClaw must enforce path, tool, shell, approval, test, and package policy before execution.",
+    "safety_boundary": "MoonDesk records queue, review, and display state; MoonClaw must enforce path, tool, shell, approval, test, and package policy before execution.",
   }
 }
 

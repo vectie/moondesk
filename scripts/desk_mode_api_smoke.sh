@@ -70,7 +70,7 @@ mkdir -p \
   "${UPLOAD_ARCHIVE_SOURCE}/raw" \
   "${SOURCE_ROOT}"
 
-printf '<main>Moondesk smoke UI</main>\n' >"${ROOT}/index.html"
+printf '<main>MoonDesk smoke UI</main>\n' >"${ROOT}/index.html"
 printf '{"name":"Desk Smoke"}\n' >"${BOOK_ROOT}/book.json"
 printf '{"name":"Empty Desk"}\n' >"${EMPTY_ROOT}/book.json"
 printf '{"name":"Large Desk"}\n' >"${LARGE_ROOT}/book.json"
@@ -486,7 +486,7 @@ trash_path="$(printf '%s' "${trashed_note_entry}" | python3 -c 'import json,sys;
 trash_absolute="${ROOT}/${trash_path}"
 nested_book_trash_absolute="${BOOK_ROOT}/${trash_path}"
 if [[ ! "${trash_path}" == .moonsuite/products/moondesk/trash/files/* ]]; then
-  echo "trashed Desk note did not use Moondesk product-home trash" >&2
+  echo "trashed Desk note did not use MoonDesk product-home trash" >&2
   exit 1
 fi
 if [[ ! -e "${trash_absolute}" ]]; then

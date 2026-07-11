@@ -1,8 +1,8 @@
-# Moondesk Roadmap
+# MoonDesk Roadmap
 
-Moondesk is the native desktop shell for executable books. It should stay small
+MoonDesk is the native desktop shell for executable books. It should stay small
 enough to reason about: discover books, edit/read them through MoonWiki, code on
-them through MoonCode, hand scheduled work to Moontown, hand bounded execution
+them through MoonCode, hand scheduled work to MoonTown, hand bounded execution
 to MoonClaw, consume shared MoonSuite filesystem contracts from MoonLib, and
 package generated app-tools.
 
@@ -14,12 +14,12 @@ See [Status](STATUS.md) for the current implementation state and
 The target product is:
 
 ```text
-Moondesk
+MoonDesk
   native shell
   scoped file/workspace API
   MoonWiki workspace
   MoonCode workspace
-  Moontown controls
+  MoonTown controls
   MoonClaw controls
   portable app-tool export
 ```
@@ -30,14 +30,14 @@ It is not:
 - a source-discovery engine
 - an agent runtime
 - a durable knowledge store
-- a second implementation of MoonBook, Moontown, or MoonClaw
+- a second implementation of MoonBook, MoonTown, or MoonClaw
 
 ## Current Tracks
 
 ### 1. Native Desktop Shell
 
 Goal: a self-contained macOS app that uses Lepusa as the native host, starts the
-Moondesk MoonBit server as a supervised localhost sidecar, and opens the Rabbita
+MoonDesk MoonBit server as a supervised localhost sidecar, and opens the Rabbita
 desktop in the system WebView.
 
 Done:
@@ -45,7 +45,7 @@ Done:
 - local MoonBit host
 - scoped workspace APIs
 - Lepusa bundle generation for the default native app
-- supervised localhost sidecar manifest for the existing Moondesk server
+- supervised localhost sidecar manifest for the existing MoonDesk server
 - bundled Lepusa runtime
 - signing, DMG, update metadata, and LaunchAgent commands
 
@@ -58,7 +58,7 @@ Still needed:
 ### 2. MoonWiki Workspace
 
 Goal: make durable book knowledge easy to browse, edit, review, and publish
-without making Moondesk own the book.
+without making MoonDesk own the book.
 
 Done:
 
@@ -95,9 +95,9 @@ Still needed:
 - model-backed eval coverage for real coding tasks
 - longer resume/cancel reliability testing
 
-### 4. Moontown Control Surface
+### 4. MoonTown Control Surface
 
-Goal: let humans create requests and standing watches while Moontown owns
+Goal: let humans create requests and standing watches while MoonTown owns
 scheduling, coordination, notifications, and book-to-book communication.
 
 Done:
@@ -116,7 +116,7 @@ Still needed:
 ### 5. Reusable Book Patterns
 
 Goal: make workflows reusable as book patterns and domain packs, not permanent
-Moondesk features.
+MoonDesk features.
 
 Done:
 
@@ -137,36 +137,36 @@ Goal: make MoonLib the active shared filesystem contract layer while the
 remaining product-home migration continues, and make every product consume the
 same typed path and registry helpers.
 
-Ownership rule: shared MoonSuite contracts live in MoonLib. MoonStat consumes
+Ownership rule: shared MoonSuite contracts live in MoonLib. MoonGate consumes
 that layer for validation, drift reports, metrics, snapshots, and health
 projection; it must not define a competing contract package or become a path
 construction dependency for product repos.
 
 Done:
 
-- MoonSuite v2 plan identifies `moonlib` as contract owner and `moonstat` as
+- MoonSuite v2 plan identifies `moonlib` as contract owner and `moongate` as
   validator/reporter.
 - MoonLib publishes `vectie/moonlib/moonsuite` in MoonLib `0.1.1` with suite
   root, book root, artifact class, product-home, suite temp, external-tool
   home, suite manifest, and product registry helpers.
-- Moondesk consumes MoonLib `0.1.1`; its local MoonSuite layout helper is now a
+- MoonDesk consumes MoonLib `0.1.1`; its local MoonSuite layout helper is now a
   compatibility adapter over `@moonsuite`.
-- MoonStat consumes MoonLib `0.1.1` for its own suite state and MoonClaw
+- MoonGate consumes MoonLib `0.1.1` for its own suite state and MoonClaw
   product-home candidates, and exposes MoonLib-derived drift reports.
-- Product-home migration has already moved major Moondesk, MoonClaw, Moontown,
+- Product-home migration has already moved major MoonDesk, MoonClaw, MoonTown,
   MoonFish, MoonMoon, Lepusa, and MoonRobo state paths toward
   `.moonsuite/products/<product>`.
 
 Still needed:
 
-- broaden MoonStat drift coverage as more migrated products expose MoonLib
+- broaden MoonGate drift coverage as more migrated products expose MoonLib
   adapter tests and legacy-path candidates
 - replace remaining product-local string helpers with MoonLib contract calls or
   thin local adapters over MoonLib
-- make MoonStat validate live workspaces against MoonLib and report
+- make MoonGate validate live workspaces against MoonLib and report
   legacy-path drift without owning the contract
 - add contract-boundary tests proving product repos can consume MoonLib
-  filesystem contracts without depending on MoonStat
+  filesystem contracts without depending on MoonGate
 - add cross-product integration tests from a fresh MoonSuite root
 - keep `scripts/validate_moonsuite_contract_rollout.sh` passing so MoonLib
   remains the single owner of MoonSuite filesystem contracts and active product
@@ -177,7 +177,7 @@ Still needed:
 Every track should converge toward:
 
 - no obsolete routes or stale product stories
-- no domain-specific source lists in Moondesk
+- no domain-specific source lists in MoonDesk
 - no hidden dependency on a browser-only shell for production use
 - no product-local reinvention of MoonSuite filesystem path contracts
 - warning-clean MoonBit checks

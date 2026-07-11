@@ -160,7 +160,7 @@ async fn create_pdf_evidence_watch_book_from_payload(
       {
         "ok": false,
         "status": "failed",
-        "message": "Could not write Moontown standing goal registration receipt",
+        "message": "Could not write MoonTown standing goal registration receipt",
       }
   }
   let handoff = pdf_watch_handoff_record(
@@ -202,7 +202,7 @@ async fn create_pdf_evidence_watch_book_from_payload(
       {
         "ok": false,
         "status": "failed",
-        "message": "Could not write Moontown book template request",
+        "message": "Could not write MoonTown book template request",
       }
   }
   let readiness = pdf_watch_readiness(

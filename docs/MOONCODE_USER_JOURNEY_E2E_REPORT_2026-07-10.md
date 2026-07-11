@@ -61,8 +61,8 @@ Automated rerun:
 
 | Gate | Result |
 |---|---|
-| Moondesk complete suite | PASS, 531/531 |
-| Moondesk backend package | PASS, 163/163 |
+| MoonDesk complete suite | PASS, 531/531 |
+| MoonDesk backend package | PASS, 163/163 |
 | Rabbita UI | PASS, 186/186 |
 | MoonClaw complete suite | PASS, 1041/1041 |
 | MoonClaw daemon package | PASS, 102/102 |
@@ -118,10 +118,10 @@ release-blocking under the test plan. This run found all three.
 
 | Item | Value |
 |---|---|
-| Moondesk URL | `http://127.0.0.1:4643/?activity=code&smoke=mooncode-user-journey-e2e` |
+| MoonDesk URL | `http://127.0.0.1:4643/?activity=code&smoke=mooncode-user-journey-e2e` |
 | Isolated root | `_build/e2e/mooncode-user-journey-20260710-1827` |
 | MoonBook | `books/code-lab` (`book-code-lab`, `Code Lab`) |
-| Moondesk | one server on port `4643` |
+| MoonDesk | one server on port `4643` |
 | MoonClaw | one daemon, restarted once against the same isolated root |
 | Interaction | in-app browser, real pointer clicks and keyboard typing/Enter |
 | Viewports | 1440x900, 1024x768, 390x844, 320x568, 844x390 |
@@ -137,8 +137,8 @@ reads were used only after visible UI actions to verify ownership and storage.
 | MoonLib conversation contract | PASS, 3/3 |
 | MoonClaw core | PASS, 15/15 |
 | MoonClaw daemon | PASS, 93/93 |
-| Moondesk `internal/mooncode` | PASS, 281/281 |
-| Moondesk `internal/moonwiki` | PASS, 162/162 |
+| MoonDesk `internal/mooncode` | PASS, 281/281 |
+| MoonDesk `internal/moonwiki` | PASS, 162/162 |
 | Rabbita UI JavaScript target | PASS, 184/184 |
 | Production UI build | PASS |
 | Final architecture, route ownership, dispatch, native endpoint, runtime-control, native projection, and runtime tool validators | PASS |
@@ -207,7 +207,7 @@ Reproduction:
 
 Observed:
 
-- Moondesk canonical session metadata contained:
+- MoonDesk canonical session metadata contained:
   `workspace_id=book-code-lab` and
   `cwd=.../books/code-lab`.
 - The requested file did not exist at
@@ -276,7 +276,7 @@ User impact: the app accepts a request but gives neither an answer nor a usable
 recovery path.
 
 Required correction: make one component own durable command acceptance. Either
-MoonClaw accepts and idempotently drains the queue after reconnect, or Moondesk
+MoonClaw accepts and idempotently drains the queue after reconnect, or MoonDesk
 rejects submission immediately with a visible retry action. Do not persist a
 queue that no runtime owns.
 
@@ -308,7 +308,7 @@ failure/recovery message or actionable failed-turn control.
 
 The visible problems share three ownership failures.
 
-1. **Workspace identity is not immutable end to end.** Moondesk creates the
+1. **Workspace identity is not immutable end to end.** MoonDesk creates the
    command with Code Lab metadata, but MoonClaw stores and executes the native
    session using the suite daemon root. UI correctness cannot compensate for a
    runtime session that has already lost its selected root.
@@ -316,7 +316,7 @@ The visible problems share three ownership failures.
    first renders listing/summary data. Full-session hydration later supplies a
    different workspace and status, and the UI derives grouping again. That is
    a rebuild, so moving rows and mismatched headers are expected outcomes.
-3. **Queue ownership is split.** Moondesk can persist a queued request while
+3. **Queue ownership is split.** MoonDesk can persist a queued request while
    MoonClaw is absent, but a restarted MoonClaw does not drain that host queue.
    The UI therefore has durable intent without a durable executor.
 
@@ -355,7 +355,7 @@ an inconsistent fixed-layer capture; DOM bounds and the viewport capture agree.
 
 ## Exit State
 
-One Moondesk server remains available on port `4643` and one MoonClaw daemon
+One MoonDesk server remains available on port `4643` and one MoonClaw daemon
 remains attached to the isolated fixture. The app is left in Code mode with the
 failed Code Lab session selected so the release-blocking behavior is directly
 inspectable.

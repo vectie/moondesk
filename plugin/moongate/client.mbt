@@ -1,7 +1,7 @@
 ///|
-/// Optional moonstat client plugin for moondesk.
+/// Optional moongate client plugin for moondesk.
 ///
-/// Provides usage stats and provider management via moonstat.
+/// Provides usage stats and provider management via moongate.
 pub const DEFAULT_PORT : Int = 15721
 
 ///|
@@ -17,7 +17,7 @@ const SUITE_STATUS_CONTRACT : String = "moon.suite.status.v2"
 const SUITE_MANIFEST_CONTRACT : String = "moon.suite.service.v1"
 
 ///|
-const SUITE_SERVICE_NAME : String = "moonstat"
+const SUITE_SERVICE_NAME : String = "moongate"
 
 ///|
 const SUITE_STATUS_FILE : String = "suite-status.json"
@@ -28,14 +28,14 @@ pub struct Client {
 }
 
 ///|
-pub struct MoonstatModel {
+pub struct MoonGateModel {
   id : String
   owner : String?
   context_window : Int?
 }
 
 ///|
-pub struct MoonstatUsageSummary {
+pub struct MoonGateUsageSummary {
   total_requests : Int
   total_cost : String
   total_input_tokens : Int64
@@ -49,13 +49,13 @@ pub struct MoonstatUsageSummary {
 
 ///|
 pub async fn discover() -> Client {
-  let status_path = moonstat_suite_status_path_for_workspace_root(
-    moonstat_active_workspace_root(),
+  let status_path = moongate_suite_status_path_for_workspace_root(
+    moongate_active_workspace_root(),
   )
   let content = @fsx.read_file(status_path) catch { _ => "" }
   if !content.is_empty() {
     let parsed = @json.parse(content) catch { _ => Json::null() }
-    if moonstat_base_url_from_status(parsed) is Some(base_url) {
+    if moongate_base_url_from_status(parsed) is Some(base_url) {
       return { base_url, }
     }
   }
@@ -64,15 +64,15 @@ pub async fn discover() -> Client {
 
 ///|
 pub async fn discover_from_suite_status() -> Client? {
-  let status_path = moonstat_suite_status_path_for_workspace_root(
-    moonstat_active_workspace_root(),
+  let status_path = moongate_suite_status_path_for_workspace_root(
+    moongate_active_workspace_root(),
   )
   let content = @fsx.read_file(status_path) catch { _ => "" }
   if content.is_empty() {
     return None
   }
   let parsed = @json.parse(content) catch { _ => Json::null() }
-  moonstat_base_url_from_status(parsed).map(fn(base_url) { { base_url, } })
+  moongate_base_url_from_status(parsed).map(fn(base_url) { { base_url, } })
 }
 
 ///|
@@ -81,14 +81,14 @@ pub fn Client::base_url(self : Client) -> String {
 }
 
 ///|
-fn moonstat_active_workspace_root() -> String {
+fn moongate_active_workspace_root() -> String {
   @os.cwd() catch {
     _ => "."
   }
 }
 
 ///|
-fn moonstat_suite_status_path_for_workspace_root(root : String) -> String {
+fn moongate_suite_status_path_for_workspace_root(root : String) -> String {
   @pathx.join(
     @moonsuite.state_dir(@moonsuite.suite_root_for_workspace_root(root)),
     SUITE_STATUS_FILE,
@@ -123,9 +123,9 @@ pub async fn Client::models(self : Client) -> Result[Json, String] {
 ///|
 pub async fn Client::model_catalog(
   self : Client,
-) -> Result[Array[MoonstatModel], String] {
+) -> Result[Array[MoonGateModel], String] {
   match self.models() {
-    Ok(json) => moonstat_models_from_json(json)
+    Ok(json) => moongate_models_from_json(json)
     Err(err) => Err(err)
   }
 }
@@ -138,9 +138,9 @@ pub async fn Client::usage_summary(self : Client) -> Result[Json, String] {
 ///|
 pub async fn Client::usage_summary_typed(
   self : Client,
-) -> Result[MoonstatUsageSummary, String] {
+) -> Result[MoonGateUsageSummary, String] {
   match self.usage_summary() {
-    Ok(json) => MoonstatUsageSummary::from_json(json)
+    Ok(json) => MoonGateUsageSummary::from_json(json)
     Err(err) => Err(err)
   }
 }
@@ -242,28 +242,28 @@ pub async fn Client::route_openclaw_chat(
 }
 
 ///|
-pub fn moonstat_models_from_json(
+pub fn moongate_models_from_json(
   json : Json,
-) -> Result[Array[MoonstatModel], String] {
+) -> Result[Array[MoonGateModel], String] {
   let rows = match json {
     Object(obj) =>
       match obj.get("models") {
         Some(Array(models)) => models
         Some(Object(models)) => models.values().to_array()
-        Some(_) => return Err("moonstat models field is not an array or object")
+        Some(_) => return Err("moongate models field is not an array or object")
         None =>
           match obj.get("data") {
             Some(Array(models)) => models
-            Some(_) => return Err("moonstat data field is not an array")
-            None => return Err("moonstat models response has no models")
+            Some(_) => return Err("moongate data field is not an array")
+            None => return Err("moongate models response has no models")
           }
       }
     Array(models) => models
-    _ => return Err("moonstat models response is not an object or array")
+    _ => return Err("moongate models response is not an object or array")
   }
-  let parsed : Array[MoonstatModel] = []
+  let parsed : Array[MoonGateModel] = []
   for row in rows {
-    match MoonstatModel::from_json(row) {
+    match MoonGateModel::from_json(row) {
       Ok(model) => parsed.push(model)
       Err(err) => return Err(err)
     }
@@ -272,65 +272,65 @@ pub fn moonstat_models_from_json(
 }
 
 ///|
-pub fn MoonstatModel::from_json(json : Json) -> Result[MoonstatModel, String] {
+pub fn MoonGateModel::from_json(json : Json) -> Result[MoonGateModel, String] {
   let obj = match json {
     Object(obj) => obj
-    _ => return Err("moonstat model entry is not an object")
+    _ => return Err("moongate model entry is not an object")
   }
-  let id = match moonstat_json_string_field(obj, "id") {
+  let id = match moongate_json_string_field(obj, "id") {
     Some(value) => value
     None =>
-      match moonstat_json_string_field(obj, "slug") {
+      match moongate_json_string_field(obj, "slug") {
         Some(value) => value
         None =>
-          match moonstat_json_string_field(obj, "name") {
+          match moongate_json_string_field(obj, "name") {
             Some(value) => value
-            None => return Err("moonstat model entry has no id")
+            None => return Err("moongate model entry has no id")
           }
       }
   }
   Ok({
     id,
-    owner: moonstat_json_string_field(obj, "owned_by"),
-    context_window: moonstat_json_int_field(obj, "context_window"),
+    owner: moongate_json_string_field(obj, "owned_by"),
+    context_window: moongate_json_int_field(obj, "context_window"),
   })
 }
 
 ///|
-pub fn MoonstatUsageSummary::from_json(
+pub fn MoonGateUsageSummary::from_json(
   json : Json,
-) -> Result[MoonstatUsageSummary, String] {
+) -> Result[MoonGateUsageSummary, String] {
   let obj = match json {
     Object(obj) => obj
-    _ => return Err("moonstat usage summary is not an object")
+    _ => return Err("moongate usage summary is not an object")
   }
   Ok({
-    total_requests: moonstat_json_int_field(obj, "totalRequests").unwrap_or(0),
-    total_cost: moonstat_json_string_field(obj, "totalCost").unwrap_or("0"),
-    total_input_tokens: moonstat_json_int64_field(obj, "totalInputTokens").unwrap_or(
+    total_requests: moongate_json_int_field(obj, "totalRequests").unwrap_or(0),
+    total_cost: moongate_json_string_field(obj, "totalCost").unwrap_or("0"),
+    total_input_tokens: moongate_json_int64_field(obj, "totalInputTokens").unwrap_or(
       0L,
     ),
-    total_output_tokens: moonstat_json_int64_field(obj, "totalOutputTokens").unwrap_or(
+    total_output_tokens: moongate_json_int64_field(obj, "totalOutputTokens").unwrap_or(
       0L,
     ),
-    total_cache_creation_tokens: moonstat_json_int64_field(
+    total_cache_creation_tokens: moongate_json_int64_field(
       obj, "totalCacheCreationTokens",
     ).unwrap_or(0L),
-    total_cache_read_tokens: moonstat_json_int64_field(
+    total_cache_read_tokens: moongate_json_int64_field(
       obj, "totalCacheReadTokens",
     ).unwrap_or(0L),
-    real_total_tokens: moonstat_json_int64_field(obj, "realTotalTokens").unwrap_or(
+    real_total_tokens: moongate_json_int64_field(obj, "realTotalTokens").unwrap_or(
       0L,
     ),
-    success_rate: moonstat_json_double_field(obj, "successRate").unwrap_or(0.0),
-    cache_hit_rate: moonstat_json_double_field(obj, "cacheHitRate").unwrap_or(
+    success_rate: moongate_json_double_field(obj, "successRate").unwrap_or(0.0),
+    cache_hit_rate: moongate_json_double_field(obj, "cacheHitRate").unwrap_or(
       0.0,
     ),
   })
 }
 
 ///|
-fn moonstat_json_string_field(obj : Map[String, Json], key : String) -> String? {
+fn moongate_json_string_field(obj : Map[String, Json], key : String) -> String? {
   match obj.get(key) {
     Some(String(value)) if !value.trim().is_empty() => Some(value)
     _ => None
@@ -338,7 +338,7 @@ fn moonstat_json_string_field(obj : Map[String, Json], key : String) -> String? 
 }
 
 ///|
-fn moonstat_json_double_field(obj : Map[String, Json], key : String) -> Double? {
+fn moongate_json_double_field(obj : Map[String, Json], key : String) -> Double? {
   match obj.get(key) {
     Some(Number(value, ..)) => Some(value)
     _ => None
@@ -346,27 +346,27 @@ fn moonstat_json_double_field(obj : Map[String, Json], key : String) -> Double? 
 }
 
 ///|
-fn moonstat_json_int_field(obj : Map[String, Json], key : String) -> Int? {
-  match moonstat_json_double_field(obj, key) {
+fn moongate_json_int_field(obj : Map[String, Json], key : String) -> Int? {
+  match moongate_json_double_field(obj, key) {
     Some(value) => Some(value.trunc().to_int())
     None => None
   }
 }
 
 ///|
-fn moonstat_json_int64_field(obj : Map[String, Json], key : String) -> Int64? {
-  match moonstat_json_double_field(obj, key) {
+fn moongate_json_int64_field(obj : Map[String, Json], key : String) -> Int64? {
+  match moongate_json_double_field(obj, key) {
     Some(value) => Some(value.trunc().to_int64())
     None => None
   }
 }
 
 ///|
-fn moonstat_base_url_from_status(status : Json) -> String? {
+fn moongate_base_url_from_status(status : Json) -> String? {
   match status {
-    Object(obj) if moonstat_status_contract_valid(obj) =>
+    Object(obj) if moongate_status_contract_valid(obj) =>
       match obj.get("manifest") {
-        Some(Object(manifest)) if moonstat_manifest_contract_valid(manifest) =>
+        Some(Object(manifest)) if moongate_manifest_contract_valid(manifest) =>
           match manifest.get("baseUrl") {
             Some(String(url)) if !url.trim().is_empty() => Some(url)
             _ => None
@@ -378,13 +378,13 @@ fn moonstat_base_url_from_status(status : Json) -> String? {
 }
 
 ///|
-fn moonstat_status_contract_valid(obj : Map[String, Json]) -> Bool {
-  moonstat_json_string_field(obj, "contract") == Some(SUITE_STATUS_CONTRACT) &&
-  moonstat_json_string_field(obj, "service") == Some(SUITE_SERVICE_NAME)
+fn moongate_status_contract_valid(obj : Map[String, Json]) -> Bool {
+  moongate_json_string_field(obj, "contract") == Some(SUITE_STATUS_CONTRACT) &&
+  moongate_json_string_field(obj, "service") == Some(SUITE_SERVICE_NAME)
 }
 
 ///|
-fn moonstat_manifest_contract_valid(obj : Map[String, Json]) -> Bool {
-  moonstat_json_string_field(obj, "contract") == Some(SUITE_MANIFEST_CONTRACT) &&
-  moonstat_json_string_field(obj, "service") == Some(SUITE_SERVICE_NAME)
+fn moongate_manifest_contract_valid(obj : Map[String, Json]) -> Bool {
+  moongate_json_string_field(obj, "contract") == Some(SUITE_MANIFEST_CONTRACT) &&
+  moongate_json_string_field(obj, "service") == Some(SUITE_SERVICE_NAME)
 }

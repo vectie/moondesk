@@ -36,7 +36,7 @@ async fn install_launch_agent(root : String) -> Json {
       root,
       action="install",
       exit_code=-1,
-      message="Moontown daemon service is not configured for this workspace",
+      message="MoonTown daemon service is not configured for this workspace",
     )
   }
   @fsx.make_directory(moondesk_daemon_dir(root), recursive=true, exists_ok=true) catch {
@@ -76,7 +76,7 @@ async fn install_launch_agent(root : String) -> Json {
     action="install",
     exit_code=code,
     message=if code == 0 {
-      "Moontown daemon LaunchAgent installed and loaded"
+      "MoonTown daemon LaunchAgent installed and loaded"
     } else {
       "LaunchAgent plist written; launchctl bootstrap failed"
     },
@@ -94,7 +94,7 @@ async fn uninstall_launch_agent(root : String) -> Json {
     root,
     action="uninstall",
     exit_code=code,
-    message="Moontown daemon LaunchAgent removed",
+    message="MoonTown daemon LaunchAgent removed",
   )
 }
 

@@ -11,6 +11,7 @@ fn update(
     LoadedEntries(_) => update_app_results(dispatch, msg, model)
     LoadedPreview(_) => update_app_results(dispatch, msg, model)
     LoadedRuns(_) => update_app_results(dispatch, msg, model)
+    LoadedMoonFlowRuns(_) => update_app_results(dispatch, msg, model)
     LoadedTownMessages(_) => update_app_results(dispatch, msg, model)
     LoadedRequests(_) => update_app_results(dispatch, msg, model)
     LoadedStandingGoals(_) => update_app_results(dispatch, msg, model)

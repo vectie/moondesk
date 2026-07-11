@@ -10,6 +10,7 @@ fn update_app_results(
     | LoadedEntries(_)
     | LoadedPreview(_)
     | LoadedRuns(_)
+    | LoadedMoonFlowRuns(_)
     | LoadedSavedViews(_)
     | LoadedSearch(_)
     | LoadedDeskTrash(_)

@@ -17,6 +17,7 @@ fn reload_workspace_cmds(
       fetch_preview_cmd(dispatch, workspace_id, selected_path),
       fetch_desk_trash_cmd(dispatch, workspace_id),
       fetch_runs_cmd(dispatch, workspace_id),
+      fetch_moonflow_runs_cmd(dispatch),
       fetch_moonclaw_progress_cmd(dispatch, workspace_id),
       fetch_messages_cmd(dispatch),
       fetch_requests_cmd(dispatch),

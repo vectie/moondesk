@@ -22,7 +22,7 @@ and information-hiding boundary all agree.
 Primary persona: a researcher, writer, or project owner who understands pages,
 notes, sources, search, and review decisions. They may know Markdown, but they
 must not need to understand daemon lifecycle, process IDs, queue records,
-MoonClaw runs, Moontown requests, source layers, or filesystem layout.
+MoonClaw runs, MoonTown requests, source layers, or filesystem layout.
 
 Primary jobs:
 
@@ -59,8 +59,8 @@ Every journey is checked at all applicable levels:
   `/private/tmp/moondesk-wiki-e2e/`.
 - Add known pages, search phrases, inbox content, pending reviews, generated
   output, and a sibling traversal sentinel.
-- Start the real Moondesk server on a unique loopback port.
-- Disable reliance on external network and live Moontown/MoonClaw services.
+- Start the real MoonDesk server on a unique loopback port.
+- Disable reliance on external network and live MoonTown/MoonClaw services.
 - Record a pre-run file inventory and compare it with the post-run inventory.
 - Stop the server and retain only the written execution report or screenshots
   needed as evidence.
@@ -393,7 +393,7 @@ Release acceptance requires:
 - Desktop and phone have zero horizontal document overflow and no hidden primary
   action.
 - Refresh preserves every completed durable action.
-- Wiki remains useful with Moontown and MoonClaw unavailable.
+- Wiki remains useful with MoonTown and MoonClaw unavailable.
 - Browser console has no uncaught errors.
 - Focused Wiki tests, full frontend tests, root tests, and production build pass.
 

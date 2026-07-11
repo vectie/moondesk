@@ -290,7 +290,7 @@ pub fn action_plan_response(
       "artifact": "moonbook",
       "standalone_component": "mooncode",
     },
-    "rule": "This plan is Moondesk's compact execution/review contract. MoonClaw consumes the command queue, emits proof events, then Moondesk updates this plan without executing tools itself.",
+    "rule": "This plan is MoonDesk's compact execution/review contract. MoonClaw consumes the command queue, emits proof events, then MoonDesk updates this plan without executing tools itself.",
   }
 }
 

@@ -17,7 +17,7 @@ async fn handle_town_daemon(
       message=json_string(
         status,
         "message",
-        default="Moontown daemon status is unknown",
+        default="MoonTown daemon status is unknown",
       ),
       next_action=if json_bool(status, "running", default=false) {
         "use_moontown"
@@ -134,7 +134,7 @@ async fn handle_town_dispatch(
       ),
     ) catch {
       error => {
-        stderr = "Could not run Moontown daemon tick: \{error}"
+        stderr = "Could not run MoonTown daemon tick: \{error}"
         None
       }
     }
@@ -147,7 +147,7 @@ async fn handle_town_dispatch(
       None => ()
     }
   } else {
-    stderr = "Moontown daemon tick service is not configured for this workspace"
+    stderr = "MoonTown daemon tick service is not configured for this workspace"
   }
   let postflight_repair = sync_all_book_pattern_standing_goals(root) catch {
     _ => Json::object({ "ok": false, "status": "repair_failed" })

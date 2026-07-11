@@ -12,8 +12,8 @@ async fn write_moontown_standing_goal_registration(
     "ok": true,
     "status": "registered",
     "kind": "moontown-standing-goal-registration",
-    "registered_by": "Moondesk",
-    "owner": "Moontown",
+    "registered_by": "MoonDesk",
+    "owner": "MoonTown",
     "goal_id": goal_id,
     "target_book_id": target_book_id,
     "pattern_id": pattern_id,
@@ -124,11 +124,11 @@ async fn write_moontown_book_template_publish(
     "book_ownership_contract": "research-book + source adapter + extractor + analysis skill + standing watch",
     "base_type_provenance": pdf_watch_base_type_provenance_json(),
     "template_request_lifecycle": "already-installed-by-moondesk",
-    "moontown_processor_contract": "installed requests are reconciled into lifecycle events; pending requests are reserved for Moontown template-installer ownership",
+    "moontown_processor_contract": "installed requests are reconciled into lifecycle events; pending requests are reserved for MoonTown template-installer ownership",
     "standing_goal_id": goal_id,
     "target_book_id": book_id,
     "operator_config_path": pdf_watch_operator_config_relative_path(),
-    "operator_config_shape": "nested watch/analysis config; editable without touching Moontown JSON",
+    "operator_config_shape": "nested watch/analysis config; editable without touching MoonTown JSON",
     "base_type_selection_path": pdf_watch_base_type_selection_relative_path(),
     "output_contract": pdf_watch_output_contract_handoff(pattern_id),
     "config_path": config_path,
@@ -201,7 +201,7 @@ fn pdf_watch_output_contract_handoff(pattern_id : String) -> Json {
     "accepted_output_paths": json_from_string_array([
       "wiki/findings/", "wiki/evidence-matrix.md", "site/generated/",
     ]),
-    "publish_rule": "Bookkeeper must accept source-backed new knowledge before Moondesk/MoonBook update durable findings or notify.",
+    "publish_rule": "Bookkeeper must accept source-backed new knowledge before MoonDesk/MoonBook update durable findings or notify.",
     "validation_gate": "GET /api/books/verify checks the reusable research-book + source adapter + extractor + analysis skill + standing watch handoff.",
   }
 }
@@ -258,7 +258,7 @@ fn pdf_watch_moontown_publish_mode(pattern_id : String) -> String {
 ///|
 fn pdf_watch_moontown_publish_reason(pattern_id : String) -> String {
   ignore(pattern_id)
-  "Moondesk created the reusable research-book pattern workspace, wrote the flat PdfEvidenceWatchInstallSpec for Moontown visibility, and registered the standing watch directly. Moontown's current generic `pdf-evidence-watch` installer should not re-run over this book because it still rewrites `book.json` into the narrower template-installer schema instead of preserving the research-book base type."
+  "MoonDesk created the reusable research-book pattern workspace, wrote the flat PdfEvidenceWatchInstallSpec for MoonTown visibility, and registered the standing watch directly. MoonTown's current generic `pdf-evidence-watch` installer should not re-run over this book because it still rewrites `book.json` into the narrower template-installer schema instead of preserving the research-book base type."
 }
 
 ///|
@@ -270,7 +270,7 @@ fn pdf_watch_moontown_template_request_summary(
   status : String,
 ) -> String {
   ignore(status)
-  "Moondesk installed `\{book_id}` from pattern `\{pattern_id}` for \{topic}; standing goal `\{goal_id}` targets this book. Moontown should schedule the standing goal and should not re-run the generic `pdf-evidence-watch` installer over this already-built research-book workspace."
+  "MoonDesk installed `\{book_id}` from pattern `\{pattern_id}` for \{topic}; standing goal `\{goal_id}` targets this book. MoonTown should schedule the standing goal and should not re-run the generic `pdf-evidence-watch` installer over this already-built research-book workspace."
 }
 
 ///|

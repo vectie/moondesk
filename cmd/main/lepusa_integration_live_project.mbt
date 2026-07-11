@@ -59,7 +59,7 @@ fn lepusa_integration_live_project_json(
   )
   {
     "identifier": "app.vectie.moondesk.lepusa.live",
-    "productName": "Moondesk Lepusa",
+    "productName": "MoonDesk Lepusa",
     "version": "0.1.0",
     "runtime": {
       "backend": "system-webview",
@@ -68,7 +68,7 @@ fn lepusa_integration_live_project_json(
     },
     "window": {
       "label": "main",
-      "title": "Moondesk",
+      "title": "MoonDesk",
       "width": 1280,
       "height": 820,
       "resizable": true,

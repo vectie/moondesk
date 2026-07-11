@@ -89,9 +89,9 @@ fn book_base_type_description(base_type : String) -> String {
     "research-book" =>
       "Durable MoonBook base for source-backed research, wiki memory, source evidence, review queues, generated sites, and standing-watch workflows."
     "toolbook" =>
-      "Durable MoonBook base for a generated web tool, analysis reports, review artifacts, app assets, and Moontown-exposed tool surfaces."
+      "Durable MoonBook base for a generated web tool, analysis reports, review artifacts, app assets, and MoonTown-exposed tool surfaces."
     _ =>
-      "Durable MoonBook base discovered from the current Moontown template registry."
+      "Durable MoonBook base discovered from the current MoonTown template registry."
   }
 }
 

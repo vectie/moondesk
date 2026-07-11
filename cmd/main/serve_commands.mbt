@@ -23,25 +23,25 @@ async fn run_desktop(args : Array[String]) -> Unit {
 }
 
 ///|
-fn moonstat_startup_ready_message(base_url : String) -> String {
-  "Moonstat available at \{base_url}; usage/statistics panels enabled"
+fn moongate_startup_ready_message(base_url : String) -> String {
+  "MoonGate available at \{base_url}; usage/statistics panels enabled"
 }
 
 ///|
-fn moonstat_startup_unavailable_message(
+fn moongate_startup_unavailable_message(
   base_url : String,
   error : String,
 ) -> String {
-  "Moonstat unavailable at \{base_url}; continuing as standalone Moondesk: \{error}"
+  "MoonGate unavailable at \{base_url}; continuing as standalone MoonDesk: \{error}"
 }
 
 ///|
-async fn print_moonstat_startup_status() -> Unit {
-  let client = @moonstat.discover()
+async fn print_moongate_startup_status() -> Unit {
+  let client = @moongate.discover()
   match client.health() {
-    Ok(_) => println(moonstat_startup_ready_message(client.base_url()))
+    Ok(_) => println(moongate_startup_ready_message(client.base_url()))
     Err(error) =>
-      println(moonstat_startup_unavailable_message(client.base_url(), error))
+      println(moongate_startup_unavailable_message(client.base_url(), error))
   }
 }
 
@@ -62,14 +62,14 @@ async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
       return
     }
   }
-  println("Moondesk \{label} \{options.ui_dir}")
+  println("MoonDesk \{label} \{options.ui_dir}")
   println("Workspace root: \{workspace_root}")
   let url = "http://\{options.host}:\{server.port()}/"
   println("Open \{url}")
   if options.open_browser {
     open_browser_url(url)
   }
-  print_moonstat_startup_status()
+  print_moongate_startup_status()
   server.serve_desk(options.ui_dir, workspace_root)
 }
 
@@ -158,7 +158,7 @@ async fn source_checkout_fallback_workspace_root(
 
 ///|
 fn workspace_root_guard_message(resolution : WorkspaceRootResolution) -> String {
-  "Moondesk workspace guard: requested root \{resolution.requested_root} " +
+  "MoonDesk workspace guard: requested root \{resolution.requested_root} " +
   "looks like a source checkout; using \{resolution.workspace_root} from " +
   "MOONDESK_WORKSPACE_ROOT or ~/moonsuite."
 }

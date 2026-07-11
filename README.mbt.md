@@ -1,20 +1,20 @@
-# Moondesk
+# MoonDesk
 
-Moondesk is a pure MoonBit desktop host and Rabbita UI for browsing MoonBook
-workspaces, staging inbox notes, submitting selected context to Moontown, and
+MoonDesk is a pure MoonBit desktop host and Rabbita UI for browsing MoonBook
+workspaces, staging inbox notes, submitting selected context to MoonTown, and
 inspecting MoonClaw run artifacts.
 
 Current milestone slice:
 
 - workspace explorer, previews, raw links, search, favorites, and inbox
   writes/imports
-- Moontown request ledger, standing-watch creation, town messages, live
+- MoonTown request ledger, standing-watch creation, town messages, live
   progress/events/review summaries, daemon lifecycle controls, and one-shot
   daemon tick dispatch
 - reusable PDF Evidence Watch publishing: a 7-step wizard creates a
   `research-book` with source websites, cadence, notification rule, method
   document, `pdf-watch`/`pdf-analysis` skills, schemas, generated site
-  placeholders, a book-local config, Moontown publish receipts, and a standing
+  placeholders, a book-local config, MoonTown publish receipts, and a standing
   watch registration
 - portable app-tool export for books that carry generated miniapps/tools
 - saved views, selected-path tags, daily cadence calendar, ICS export, and
@@ -24,10 +24,10 @@ Current milestone slice:
   MoonClaw runtime APIs
 - MoonBit-only `desktop`, `bundle`, `release`, and `launch-agent` commands; the
   default app bundle uses Lepusa as the native WebView host and supervises the
-  Moondesk MoonBit server as a localhost sidecar, with no Tauri/Rust app shell
+  MoonDesk MoonBit server as a localhost sidecar, with no Tauri/Rust app shell
 
-Domain-specific examples are intentionally not Moondesk core. They should be
-packaged as standalone MoonBook/MoonClaw skill or app-tool packs that Moondesk
+Domain-specific examples are intentionally not MoonDesk core. They should be
+packaged as standalone MoonBook/MoonClaw skill or app-tool packs that MoonDesk
 can create, configure, inspect, export, and launch through generic book/tool
 interfaces.
 
@@ -57,8 +57,8 @@ moon run cmd/main -- release <workspace-root> --ui ui/rabbita-desk/dist --out di
 
 Optional external services:
 
-Moondesk can browse and edit a workspace without sibling source checkouts.
-Starting or ticking the Moontown daemon is optional and requires an explicit
+MoonDesk can browse and edit a workspace without sibling source checkouts.
+Starting or ticking the MoonTown daemon is optional and requires an explicit
 MoonSuite product-home descriptor at
 `.moonsuite/products/moontown/service.json`:
 
@@ -78,7 +78,7 @@ MoonSuite product-home descriptor at
 ```
 
 Without that file, daemon start/tick and town LaunchAgent creation return
-`not-configured` instead of assuming the workspace is a Moontown source tree.
+`not-configured` instead of assuming the workspace is a MoonTown source tree.
 
 MoonCode can also launch MoonClaw from an explicit MoonSuite product-home
 descriptor at `.moonsuite/products/moonclaw/service.json`:
@@ -94,7 +94,7 @@ descriptor at `.moonsuite/products/moonclaw/service.json`:
 }
 ```
 
-Without that file, Moondesk can still report an already-running MoonClaw daemon
+Without that file, MoonDesk can still report an already-running MoonClaw daemon
 from its daemon-info file, but it will not discover, build, or launch a sibling
 MoonClaw source checkout.
 

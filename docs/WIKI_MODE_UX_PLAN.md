@@ -4,7 +4,7 @@
 
 Wiki mode should feel like a calm knowledge workspace for a person who wants to
 read, capture, organize, improve, and publish a MoonBook. It must not require the
-user to understand Moontown, MoonClaw, daemon lifecycle, ticks, run identifiers,
+user to understand MoonTown, MoonClaw, daemon lifecycle, ticks, run identifiers,
 filesystem layout, queue internals, or transport status.
 
 The screen's primary question is:
@@ -144,7 +144,7 @@ or developer tooltips, not in the main workflow.
 
 | Internal term | User-facing term |
 | --- | --- |
-| Moontown request | Task |
+| MoonTown request | Task |
 | MoonClaw run | Activity |
 | artifact | Result or file |
 | standing goal | Automation or watch |
@@ -513,7 +513,7 @@ Assert:
 
 ### UX E2E 7: Background Service Unavailable
 
-Run Wiki with Moontown and MoonClaw unavailable.
+Run Wiki with MoonTown and MoonClaw unavailable.
 
 Assert:
 
@@ -597,10 +597,10 @@ Use these as release gates rather than aesthetic aspirations:
 
 ## Non-Goals
 
-- Replacing MoonBook, Moontown, or MoonClaw ownership contracts.
+- Replacing MoonBook, MoonTown, or MoonClaw ownership contracts.
 - Removing operator diagnostics or audit evidence.
 - Redesigning Desk or Code mode beyond shared title-bar consistency.
-- Adding domain-specific research workflows to Moondesk core.
+- Adding domain-specific research workflows to MoonDesk core.
 - Changing durable record formats solely to make labels easier to render.
 - Treating visual polish as a substitute for forward/backward workflow proof.
 

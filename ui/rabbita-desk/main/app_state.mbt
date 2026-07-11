@@ -7,6 +7,7 @@ fn initial_activity() -> Activity {
 fn initial_workspace_mode() -> WorkspaceMode {
   match browser_initial_activity() {
     "code" | "mooncode" => MoonCode
+    "flow" | "moonflow" => MoonFlow
     "desk" | "" => Desk
     _ => MoonWiki
   }
@@ -44,6 +45,7 @@ fn workspace_mode_summary(mode : WorkspaceMode) -> String {
     Desk => "Desk workspace"
     MoonWiki => "Wiki workspace"
     MoonCode => "Code workspace"
+    MoonFlow => "MoonFlow workspace"
   }
 }
 

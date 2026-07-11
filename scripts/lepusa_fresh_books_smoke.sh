@@ -69,7 +69,7 @@ run_lepusa_smoke() {
   done
 
   if [[ ! -x "${sidecar}" ]]; then
-    echo "Moondesk sidecar is not executable: ${sidecar}" >&2
+    echo "MoonDesk sidecar is not executable: ${sidecar}" >&2
     exit 1
   fi
 

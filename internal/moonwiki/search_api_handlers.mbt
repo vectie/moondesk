@@ -142,7 +142,7 @@ async fn handle_town_state(
         state,
         ok=true,
         status="ready",
-        message="Moontown state is available",
+        message="MoonTown state is available",
       ),
     )
   } else {
@@ -160,7 +160,7 @@ async fn handle_town_state(
         ),
         ok=false,
         status="state_missing",
-        message="Moontown state has not been created yet",
+        message="MoonTown state has not been created yet",
         next_action=if json_bool(descriptor, "configured", default=false) {
           "start_moontown_daemon"
         } else {

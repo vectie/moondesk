@@ -1,7 +1,7 @@
 # MoonSuite Layout Migration Plan
 
 This plan makes MoonSuite v2 the fresh default filesystem contract. There is no
-legacy compatibility target for new writes: Moondesk should initialize and use a
+legacy compatibility target for new writes: MoonDesk should initialize and use a
 MoonSuite root directly.
 
 ## Target Layout
@@ -22,7 +22,7 @@ MoonSuiteRoot/
       mooncode/
       moonclaw/
       moontown/
-      moonstat/
+      moongate/
       moonfish/
       moonmoon/
       moonrobo/
@@ -40,7 +40,7 @@ inside `.moonsuite/products/<product>`. Disposable state belongs inside `.tmp`.
 ## Product Registry
 
 `.moonsuite/product-registry.json` is the source of truth for installed Moon
-products. Moondesk should discover products from this registry instead of
+products. MoonDesk should discover products from this registry instead of
 hardcoding a short product list in the UI or backend.
 
 Each product entry uses this shape:
@@ -66,7 +66,7 @@ Default products:
 - `mooncode`
 - `moonclaw`
 - `moontown`
-- `moonstat`
+- `moongate`
 - `moonfish`
 - `moonmoon`
 - `moonrobo`
@@ -76,20 +76,20 @@ Default products:
 
 ## Shared Contract Layer
 
-Decision: the shared MoonSuite contract layer belongs in MoonLib. MoonStat is
+Decision: the shared MoonSuite contract layer belongs in MoonLib. MoonGate is
 not the right owner because its job is observation, validation, metrics, and
-drift reporting over live workspaces. Putting the contract in MoonStat would
+drift reporting over live workspaces. Putting the contract in MoonGate would
 make every product depend on an analytics/status product just to construct
 paths, which is the wrong dependency direction.
 
-MoonSuite filesystem contracts should be defined in `moonlib`, not `moonstat`.
+MoonSuite filesystem contracts should be defined in `moonlib`, not `moongate`.
 `moonlib` is the shared source of truth for low-level suite layout contracts:
 suite root discovery, product registry schema, product state paths, suite temp
 paths, book paths, artifact classes, and typed path constructors. It must stay
 dependency-light and deterministic so every Moon product can use it without
 pulling in status, analytics, or daemon behavior.
 
-`moonstat` should consume the `moonlib` contract layer. Its responsibility is to
+`moongate` should consume the `moonlib` contract layer. Its responsibility is to
 audit live workspaces, report drift, index metrics/snapshots, and surface health
 views. It can enforce that products follow the contract, but it should not own
 the contract itself.
@@ -101,7 +101,7 @@ alongside the remaining product-home migration:
 2. Move shared product ids, registry schema, and path constructors into that
    package.
 3. Replace product-local string helpers with `moonlib` contract calls.
-4. Make `moonstat` validate workspaces against `moonlib` contracts and report
+4. Make `moongate` validate workspaces against `moonlib` contracts and report
    legacy-path drift.
 
 This extraction is a migration requirement, not an optional cleanup. Product
@@ -114,48 +114,48 @@ paths, external-tool homes, suite manifest JSON, and product registry JSON. The
 package is available through MoonLib `0.1.3`; that version adds both
 book-root-derived and workspace-root-derived suite/product path constructors so
 products can receive either `books/<book-id>` workspaces or standalone book
-roots and still derive the correct owning suite product home. Moondesk depends
+roots and still derive the correct owning suite product home. MoonDesk depends
 on MoonLib `0.1.3` and `internal/moonwiki/moonsuite_layout.mbt` is a thin
 compatibility adapter over `@moonsuite` for suite root, book root, product-home,
 workspace-root-derived product artifacts, manifest, registry, cache, and
 service paths. Remaining product-local helpers should follow the same wrapper
 pattern instead of carrying independent string contracts.
-- MoonStat now depends on MoonLib `0.1.2` and consumes `@moonsuite` for its
+- MoonGate now depends on MoonLib `0.1.2` and consumes `@moonsuite` for its
   home `.moonsuite` state directory plus MoonClaw product-home provider, model,
-  and config manifest paths. MoonStat also exposes `moonstat suite drift` and
+  and config manifest paths. MoonGate also exposes `moongate suite drift` and
   `/suite/drift` as a MoonLib-derived drift report over legacy `.moontown`,
-  `.moonclaw`, repo-local runtime, old MoonStat state paths, MoonRobo product
+  `.moonclaw`, repo-local runtime, old MoonGate state paths, MoonRobo product
   runtime paths, old global SDK E1 temp files, and book-local
   `.moonclaw/providers.json` / `.moonclaw/mooncode/sessions` drift under
-  `books/<book-id>`. MoonStat remains an observer/reporter over the shared
+  `books/<book-id>`. MoonGate remains an observer/reporter over the shared
   contract rather than the source of path definitions. Validation for the latest
-  MoonStat slice: `moon fmt`, `moon info`, `moon check`, and `moon test` with
+  MoonGate slice: `moon fmt`, `moon info`, `moon check`, and `moon test` with
   `774/774` tests passing.
-- MoonStat commit `26531ce` removes the remaining empty-root MoonSuite
-  constructors from active suite/config defaults. MoonStat app config, suite
+- MoonGate commit `26531ce` removes the remaining empty-root MoonSuite
+  constructors from active suite/config defaults. MoonGate app config, suite
   status, MoonClaw provider/model/config manifest candidates, and suite
   integration commands now derive from the active workspace root or explicit
   workspace-root helpers, while `books/<book-id>` roots are tested to resolve to
   suite-level `.moonsuite/products/...` paths instead of nested book-local
-  state. Validation for this slice: MoonStat `moon fmt`, clean `moon info`,
+  state. Validation for this slice: MoonGate `moon fmt`, clean `moon info`,
   `moon check`, `moon test` with `774/774` tests passing, and
   `git diff --check`.
-- Moontown now depends on MoonLib `0.1.3` for book-root-derived and
+- MoonTown now depends on MoonLib `0.1.3` for book-root-derived and
   workspace-root-derived MoonSuite paths.
   PlanBook repair job indexes and proposal ledgers now resolve to
   `.moonsuite/products/moonclaw/jobs/...` through `@moonsuite`, MoonClaw store
   maintenance compacts that product-home job store, and PlanBook's MoonClaw run
   result reader passes the derived MoonClaw product home into the MoonClaw
   runtime instead of falling back to `cwd/.moonclaw`. Validation for this slice:
-  `moon fmt`, `moon info`, `moon check`, and `moon test` in Moontown with
+  `moon fmt`, `moon info`, `moon check`, and `moon test` in MoonTown with
   `925/925` tests passing.
-- The Moontown MoonBook adapter now derives MoonClaw provider manifests from the
+- The MoonTown MoonBook adapter now derives MoonClaw provider manifests from the
   MoonClaw product home and MoonCode sidecar sessions from the MoonCode product
   home through `@moonsuite.product_artifact_for_book_root`, removing another
   book-local `.moonclaw` writer/reader pair. Validation for this slice:
-  `moon fmt`, `moon info`, `moon check`, and `moon test` in Moontown with
+  `moon fmt`, `moon info`, `moon check`, and `moon test` in MoonTown with
   `926/926` tests passing.
-- Moontown commit `ad205ae8` replaces the central storage helper's empty-root
+- MoonTown commit `ad205ae8` replaces the central storage helper's empty-root
   MoonSuite calls with MoonLib workspace-root adapters. The no-arg
   `moontown_product_*` helpers now derive from the active working directory,
   and new explicit `*_for_workspace_root` helpers prove that a
@@ -163,7 +163,7 @@ pattern instead of carrying independent string contracts.
   `.moonsuite/products/moontown` home rather than a nested book-local
   `.moonsuite`. Default runtime path tests now compare against storage-derived
   product artifacts instead of stale relative `.moonsuite/...` literals.
-  Validation for this slice: Moontown `moon fmt`, `moon info`, `moon check`,
+  Validation for this slice: MoonTown `moon fmt`, `moon info`, `moon check`,
   `moon test` with `926/926` tests passing, and `git diff --check`.
 - MoonBook now depends on MoonLib `0.1.3` and uses
   `@moonsuite.product_artifact_for_workspace_root` for MoonClaw extension
@@ -224,7 +224,7 @@ pattern instead of carrying independent string contracts.
   `moon test .` with `5/5` tests passing, native `moon test --target native`
   with `25/25` tests passing, active empty-root constructor scan clean, and
   `git diff --check`.
-- Moondesk commit `e54c4400` moves MoonCode desktop session/event sidecar path
+- MoonDesk commit `e54c4400` moves MoonCode desktop session/event sidecar path
   derivation onto MoonLib workspace-root helpers. `internal/mooncode` now
   exposes explicit workspace-root constructors for session directories,
   command logs, runtime command/receipt logs, snapshots, event logs, and stream
@@ -233,106 +233,106 @@ pattern instead of carrying independent string contracts.
   selected workspace root. Suite-hosted book roots now resolve MoonCode
   sidecars to the owning suite's `.moonsuite/products/mooncode` lane instead of
   nested `books/<book-id>/.moonsuite` state. Validation for this slice:
-  Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with `451/451`
+  MoonDesk `moon fmt`, `moon info`, `moon check`, `moon test` with `451/451`
   tests passing, targeted old-join scan clean, and `git diff --check`.
-- Moondesk commit `52dd6de9` moves the Moontown bridge request/dispatch path
+- MoonDesk commit `52dd6de9` moves the MoonTown bridge request/dispatch path
   contract onto MoonLib workspace-root helpers. `internal/moonwiki` now derives
-  Moontown product homes, request ledgers, dispatch ledgers, daemon state,
+  MoonTown product homes, request ledgers, dispatch ledgers, daemon state,
   standing-goal state, book-result summaries, watcher records, and town service
   paths from the owning suite when the selected workspace is a
   `books/<book-id>` root. UI-facing relative bridge paths remain centralized as
   display strings, while filesystem reads/writes use absolute
   workspace-root-derived product artifacts. Validation for this slice:
-  Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with `453/453`
+  MoonDesk `moon fmt`, `moon info`, `moon check`, `moon test` with `453/453`
   tests passing, targeted active old-join scan clean except the intentional
   centralized relative display prefixes, and `git diff --check`.
-- Moondesk commit `abb10fc2` routes MoonClaw job roots through MoonLib
+- MoonDesk commit `abb10fc2` routes MoonClaw job roots through MoonLib
   workspace-root helpers and stops creating nested
   `books/<book-id>/.moonsuite/products/moonclaw/jobs` directories for new
   MoonBooks. The generic workspace path resolver now redirects the intentional
   `.moonsuite/products/moonclaw/jobs/...` UI path to the owning suite's
   MoonClaw product home, rejects arbitrary `.moonsuite` and `.tmp` fallbacks,
   and keeps MoonClaw run raw-artifact reads working through that explicit
-  product-path branch. Validation for this slice: Moondesk `moon fmt`,
+  product-path branch. Validation for this slice: MoonDesk `moon fmt`,
   `moon info`, `moon check`, `moon test` with `454/454` tests passing,
   targeted active old-join scan clean except intentional centralized display
   prefixes, and `git diff --check`.
-- Moondesk commit `103f86ac` moves Moondesk-owned daemon state, daemon policy,
+- MoonDesk commit `103f86ac` moves MoonDesk-owned daemon state, daemon policy,
   preference records, and town LaunchAgent log paths onto MoonLib
   workspace-root product artifacts. Suite-hosted book roots now resolve
-  Moondesk daemon and preference state to the owning suite's
+  MoonDesk daemon and preference state to the owning suite's
   `.moonsuite/products/moondesk` lane, and generated town LaunchAgent plists no
   longer write logs under `books/<book-id>/.moonsuite`. Validation for this
-  slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with
-  `456/456` tests passing, targeted active Moondesk old-join scan clean, and
+  slice: MoonDesk `moon fmt`, `moon info`, `moon check`, `moon test` with
+  `456/456` tests passing, targeted active MoonDesk old-join scan clean, and
   `git diff --check`.
-- Moondesk commit `d4293c77` strengthens the trash-path coverage for
+- MoonDesk commit `d4293c77` strengthens the trash-path coverage for
   suite-hosted book workspaces. Direct Desk and HTTP trash/restore flows now
   assert that `.moonsuite/products/moondesk/trash/files/...` UI paths resolve
-  through the owning suite's Moondesk product home, that receipts use the same
+  through the owning suite's MoonDesk product home, that receipts use the same
   suite-level product home, and that trashing entries does not create a nested
-  `books/<book-id>/.moonsuite` directory. Validation for this slice: Moondesk
+  `books/<book-id>/.moonsuite` directory. Validation for this slice: MoonDesk
   `moon fmt`, `moon info`, `moon check`, `moon test` with `456/456` tests
   passing, active one-line old-path file-operation scan with zero hits,
   narrowed active legacy literal scan with only filters/service identifiers, and
   `git diff --check`.
-- Moondesk Desk smoke gates now enforce the same trash contract end to end. The
+- MoonDesk Desk smoke gates now enforce the same trash contract end to end. The
   API smoke resolves returned `.moonsuite/products/moondesk/trash/files/...`
   paths against the owning suite root instead of the selected book root, and the
-  browser smoke asserts the Moondesk product-home trash directory exists while
+  browser smoke asserts the MoonDesk product-home trash directory exists while
   legacy `books/<book-id>/.moontown/trash` and nested
   `books/<book-id>/.moonsuite/products/moondesk/trash` directories do not.
   Validation for this slice: `bash -n scripts/desk_mode_api_smoke.sh`,
   `node --check scripts/desk_mode_browser_smoke.mjs`,
   `scripts/desk_mode_api_smoke.sh`, and `scripts/desk_mode_browser_smoke.sh`.
-- Moondesk commit `c13ab594` removes the remaining fresh-default compatibility
+- MoonDesk commit `c13ab594` removes the remaining fresh-default compatibility
   treatment for stale `.moontown`, `.moonclaw`, and `.moonclaw-worktrees`
   surfaces. Desk VFS hiding and creation guards now protect only the current
   internal roots such as `.moonsuite` and `.tmp`, source-layer inference
   classifies MoonClaw artifacts through the current MoonSuite product home or
   explicit MoonClaw job UI path instead of the old `.moonclaw` home, and the
   town LaunchAgent label is now `app.vectie.moonsuite.town`. Validation for this
-  slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with
+  slice: MoonDesk `moon fmt`, `moon info`, `moon check`, `moon test` with
   `456/456` tests passing, zero quoted `.moontown`/`.moonclaw` literals in
-  Moondesk MoonBit source, zero active old-path file-operation hits, and
+  MoonDesk MoonBit source, zero active old-path file-operation hits, and
   `git diff --check`.
-- Moondesk metadata now treats `.moonsuite/product-registry.json` as a live UI
+- MoonDesk metadata now treats `.moonsuite/product-registry.json` as a live UI
   source instead of only a bootstrap artifact. `/api/workspaces/metadata`
   returns the registry products, the Desk sidebar renders a compact
   registry-backed product summary, and the first-run/no-book screen now shows
   the active MoonSuite root, `books/` library path, MoonBook count, and installed
   core products before Code/Wiki interaction begins. Validation for this slice:
-  Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with `457/457`
+  MoonDesk `moon fmt`, `moon info`, `moon check`, `moon test` with `457/457`
   tests passing, `npm run build` for the Rabbita desk bundle, `git diff --check`,
   API verification showing `product_count: 13`, and visible app verification at
   `http://127.0.0.1:4535/?activity=files`.
-- Moondesk title/root helpers now use the loaded MoonSuite workspace metadata
+- MoonDesk title/root helpers now use the loaded MoonSuite workspace metadata
   when no MoonBook is selected. The global title bar shows
   `MoonSuite: <root-name>` instead of `No workspace`, and `workspace_root(...)`
   resolves to the active suite root during first-run/no-book flows. Validation
-  for this slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test`
+  for this slice: MoonDesk `moon fmt`, `moon info`, `moon check`, `moon test`
   with `457/457` tests passing, `npm run build`, `git diff --check`, and
   visible app verification at `http://127.0.0.1:4535/?activity=files` showing
   `MoonSuite: moondesk-phase4-cleanup-run`.
-- Moondesk product chips now honor the Phase 7 rule that normal UI avoids
+- MoonDesk product chips now honor the Phase 7 rule that normal UI avoids
   hidden internal paths. The Rabbita UI model ignores registry `state_path` and
   `service_path`, renders product status as human text such as `INSTALLED`, and
   keeps chip titles to `Product: Status` instead of exposing
-  `.moonsuite/products/...` internals. Validation for this slice: Moondesk
+  `.moonsuite/products/...` internals. Validation for this slice: MoonDesk
   `moon fmt`, `moon info`, `moon check`, `moon test` with `457/457` tests
   passing, `npm run build`, `git diff --check`, and visible app verification at
   `http://127.0.0.1:4535/?activity=files` showing no `.moonsuite/products`
   text or chip titles.
-- Moondesk product summary now renders every product from the registry instead
+- MoonDesk product summary now renders every product from the registry instead
   of a hardcoded core subset. The first-run/no-book Desk UI shows all 13
-  installed products in registry order, including MoonStat, MoonFish, MoonMoon,
+  installed products in registry order, including MoonGate, MoonFish, MoonMoon,
   MoonRobo, Bookkeeper, Lepusa, and Rabbita, while still keeping hidden
   `.moonsuite/products/...` paths out of normal text and chip titles.
-  Validation for this slice: Moondesk `moon fmt`, `moon info`, `moon check`,
+  Validation for this slice: MoonDesk `moon fmt`, `moon info`, `moon check`,
   `moon test` with `457/457` tests passing, `npm run build`, `git diff --check`,
   and visible app verification at
   `http://127.0.0.1:4535/?activity=files` showing `chipCount: 13`.
-- Moondesk Code mode transcript no longer fabricates a `Working on it...`
+- MoonDesk Code mode transcript no longer fabricates a `Working on it...`
   assistant reply for pending prompts or runtime progress without an assistant
   answer. Pending prompts stay visible immediately as user messages, and the
   rendered transcript shows a folded `Thinking` activity row for the queued
@@ -341,25 +341,25 @@ pattern instead of carrying independent string contracts.
   command event with `Local agent is not reachable yet...` as its detail when
   the original prompt command has already been recorded; that text remains
   status metadata instead of conversation content.
-  Validation for this slice: Moondesk `moon fmt`, `moon info`, `moon check`,
+  Validation for this slice: MoonDesk `moon fmt`, `moon info`, `moon check`,
   `moon test` with `458/458` tests passing, `npm run build`,
   `git diff --check`, and visible app verification at
   `http://127.0.0.1:4535/?activity=code` showing no `Working on it...` or
   saved-local-agent message.
-- Moondesk workspace kind naming now treats the root workspace as a MoonSuite
-  root rather than a Moontown root. The shared `WorkspaceKind` variant is
+- MoonDesk workspace kind naming now treats the root workspace as a MoonSuite
+  root rather than a MoonTown root. The shared `WorkspaceKind` variant is
   `SuiteRoot`, general MoonCode and empty-library discovery use that variant,
   the Rabbita workspace label renders `suite`, and `docs/STATUS.md` describes
   the active MoonSuite root instead of a `.moontown`-gated root. Validation for
-  this slice: Moondesk `moon fmt`, `moon info`, `moon check`, `moon test` with
+  this slice: MoonDesk `moon fmt`, `moon info`, `moon check`, `moon test` with
   `458/458` tests passing, `npm run build`, `git diff --check`, and visible app
   verification at `http://127.0.0.1:4535/?activity=files` showing MoonSuite UI
   with no town-root wording.
-- Moondesk MoonCode capability contracts now describe MoonClaw durable session
+- MoonDesk MoonCode capability contracts now describe MoonClaw durable session
   sidecars as product-home state instead of book-local state. The
   `runtime_claim_state` and MoonClaw runtime gap contract strings point to
   commands, receipts, events, and cold sidecar list/show endpoints in the
-  MoonClaw product home. Validation for this slice: Moondesk `moon fmt`,
+  MoonClaw product home. Validation for this slice: MoonDesk `moon fmt`,
   `moon info`, `moon check`, `moon test` with `458/458` tests passing,
   `npm run build`, `git diff --check`, and visible app verification at
   `http://127.0.0.1:4535/?activity=code` showing no book-local sidecar wording.
@@ -431,22 +431,22 @@ pattern instead of carrying independent string contracts.
   `git diff --check`, and the refined MoonClaw stale-layout scan reduced from
   `34` to `8`, with the remaining hits limited to explicit legacy-ignore
   fixtures for old manifests and old skill/model directories.
-- Moontown commit `44b1e5f7` propagates MoonBook's fresh executable-event path
-  contract into the Moontown MoonBook adapter. The decoded
+- MoonTown commit `44b1e5f7` propagates MoonBook's fresh executable-event path
+  contract into the MoonTown MoonBook adapter. The decoded
   `moonbook.book_state.v1` fixture now expects `events/latest.json` instead of
   the retired `.moonbook/events/latest.json` path. Validation for this slice:
-  Moontown `moon fmt`, `moon info`, `moon check`, `moon test` with `926/926`
+  MoonTown `moon fmt`, `moon info`, `moon check`, `moon test` with `926/926`
   tests passing, `git diff --check`, and an active-code stale-layout scan with
-  zero Moontown hits.
-- Moontown commit `bc3bb5ea` removes stale path fixtures that kept asserting
+  zero MoonTown hits.
+- MoonTown commit `bc3bb5ea` removes stale path fixtures that kept asserting
   retired `.moontown`, `.moonclaw`, and `.moonclaw-worktrees` strings after the
   product-home migration. Remaining MoonClaw adapter fixtures now name
   `.moonsuite/products/moonclaw/...`, cookbook readiness fixtures use the
-  Moontown product home, and the source-layout audit no longer allows root
-  `.moontown` or `.moonclaw` directories. Validation for this slice: Moontown
+  MoonTown product home, and the source-layout audit no longer allows root
+  `.moontown` or `.moonclaw` directories. Validation for this slice: MoonTown
   `moon fmt`, `moon info`, `moon check`, `moon test` with `926/926` tests
   passing, `git diff --check`, `scripts/audit-source-layout.sh`, and a refined
-  stale-layout scan with zero Moontown hits.
+  stale-layout scan with zero MoonTown hits.
 - MoonRobo commit `43621e82` removes the remaining empty-root MoonSuite path
   constructors from product status and SDK E1 bridge sidecar defaults. Product
   status now reports MoonRobo and MoonClaw product homes through explicit
@@ -462,14 +462,14 @@ pattern instead of carrying independent string contracts.
   `.tmp/products/moonvis`, and accepted output resolves to
   `books/<book-id>/outputs/moonvis` for both explicit and inferred flows.
   Validation for this slice: `node --check` for the MoonVis layout helper and
-  CLI wrapper, MoonVis fresh-suite product-home smoke, Moondesk residual guard,
+  CLI wrapper, MoonVis fresh-suite product-home smoke, MoonDesk residual guard,
   MoonLib consumer-pin guard, full cross-product fresh-suite smoke, and
   MoonVis `git diff --check`.
-- Moondesk removes the remaining active `moonclaw-jobs` source-layer
+- MoonDesk removes the remaining active `moonclaw-jobs` source-layer
   compatibility alias. Fresh Desk source classification now treats only the
   MoonSuite product-home job path `.moonsuite/products/moonclaw/jobs/...` as a
   run artifact, while retired `moonclaw-jobs/...` paths fall back to ordinary
-  workspace files. Validation for this slice: Moondesk `moon fmt`, `moon info`,
+  workspace files. Validation for this slice: MoonDesk `moon fmt`, `moon info`,
   `moon check`, `moon test` with `458/458` tests passing, Rabbita desk
   `npm run build`, a refined active `moonclaw-jobs` scan with only regression
   test hits, and `git diff --check`.
@@ -477,10 +477,10 @@ pattern instead of carrying independent string contracts.
 Migration rules from this point forward:
 
 1. New MoonSuite path helpers belong in MoonLib first.
-2. Moondesk, MoonClaw, Moontown, MoonBook, MoonFish, MoonMoon, MoonRobo,
+2. MoonDesk, MoonClaw, MoonTown, MoonBook, MoonFish, MoonMoon, MoonRobo,
    Lepusa, Rabbita, and Bookkeeper may keep local helpers only as adapters over
    MoonLib.
-3. MoonStat may add diagnostics, reports, drift indexes, and health projections
+3. MoonGate may add diagnostics, reports, drift indexes, and health projections
    over the MoonLib contract, but must not introduce a competing layout schema.
 4. Product migrations should include a local adapter test and at least one
    cross-product integration assertion from a fresh MoonSuite root.
@@ -537,7 +537,7 @@ Product state should be isolated by owner:
 - `mooncode`: sessions, command queues, handoff, evals.
 - `moonclaw`: daemon config, runtime jobs, logs, sandboxes, tool state.
 - `moontown`: standing goals, town messages, events, routing, scheduler state.
-- `moonstat`: metrics DB, snapshots, analytics, embeddings and indexes.
+- `moongate`: metrics DB, snapshots, analytics, embeddings and indexes.
 - `moonfish`: workflows, market-data cache, chart state, reports, planning runs.
 - `moonmoon`: terrain, scenes, simulations, generated clips, evidence.
 - `moonrobo`: robot profiles, URDF indexes, mesh refs, gait, telemetry, sim runs.
@@ -574,10 +574,10 @@ Rewrite these surfaces to use MoonSuite layout helpers:
 - `/api/town/*`
 - `/api/books/*`
 
-MoonClaw and Moontown errors must be explicit. They should not silently queue
+MoonClaw and MoonTown errors must be explicit. They should not silently queue
 forever when a required service is missing.
 
-Phase 6 Moondesk API rewrite slice:
+Phase 6 MoonDesk API rewrite slice:
 
 - Added a shared `moonsuite.phase6.v1` response envelope for API success/error
   payloads with `ok`, `status`, `message`, and `next_action`.
@@ -593,7 +593,7 @@ Phase 6 Moondesk API rewrite slice:
 - MoonClaw daemon/model responses now return explicit
   configured/running/unreachable status, service path/config fields, and next
   actions instead of vague local-agent queueing.
-- Moontown state/daemon responses now resolve through the owning suite context
+- MoonTown state/daemon responses now resolve through the owning suite context
   and return explicit missing-state/service-configuration status.
 
 ## Phase 7: UI Update
@@ -608,7 +608,7 @@ Desk should show:
 
 Normal UI should avoid exposing hidden internal paths.
 
-Phase 7 Moondesk UI update slice:
+Phase 7 MoonDesk UI update slice:
 
 - Rabbita Desk now carries the Phase 6 metadata contract through the UI model:
   active suite root, requested root, books root, product count, and registry
@@ -617,7 +617,7 @@ Phase 7 Moondesk UI update slice:
   `books/` library lane, and lists MoonBooks as `books/<book-id>` labels instead
   of raw absolute paths.
 - Desk adds a compact service status band for MoonSuite, MoonBooks, product
-  registry, MoonClaw, and Moontown, backed by the existing daemon/progress
+  registry, MoonClaw, and MoonTown, backed by the existing daemon/progress
   fetches.
 - Code mode session rows and accessibility titles now avoid raw `cwd` paths in
   normal UI, keeping the rail focused on the selected book/general chat and the
@@ -627,7 +627,7 @@ Phase 7 Moondesk UI update slice:
 
 Phase 8 turns the migration into enforceable gates. The goal is not to add a
 large pile of shallow tests; it is to prove that every product derives the fresh
-layout from the shared MoonLib contract and that Moondesk, MoonCode, Lepusa, and
+layout from the shared MoonLib contract and that MoonDesk, MoonCode, Lepusa, and
 service daemons behave correctly from a brand-new suite root.
 
 ### Phase 8 Execution Plan
@@ -643,12 +643,12 @@ Execution order:
 1. Contract floor: make MoonLib layout tests the first source of truth for
    `.moonsuite`, `.tmp`, `books`, product homes, service homes, registries,
    and selected-book-to-owning-suite resolution.
-2. Moondesk bootstrap/API floor: prove a blank selected folder becomes a valid
+2. MoonDesk bootstrap/API floor: prove a blank selected folder becomes a valid
    suite root, prove `books/` is the only active MoonBook library, and prove
    API metadata exposes the Phase 6 contract.
 3. Product registry floor: cover every suite product in one deterministic
    registry test surface so missing Moon-branded products fail loudly.
-4. Service floor: prove MoonClaw and Moontown derive config, logs, status, and
+4. Service floor: prove MoonClaw and MoonTown derive config, logs, status, and
    provider/runtime state from `.moonsuite/products/*`, with explicit
    missing/running/unreachable statuses.
 5. MoonCode conversation floor: prove append-only transcript behavior from
@@ -672,14 +672,14 @@ Phase 8 work packages:
 | Work package | Primary proof | Done signal |
 | --- | --- | --- |
 | 8.1 Contract tests | MoonLib package tests | Canonical suite/book/product paths covered, including negative legacy roots |
-| 8.2 Fresh bootstrap | Moondesk native tests and API smoke | Empty folder creates `.moonsuite`, `.tmp`, and `books` idempotently |
+| 8.2 Fresh bootstrap | MoonDesk native tests and API smoke | Empty folder creates `.moonsuite`, `.tmp`, and `books` idempotently |
 | 8.3 Workspace APIs | `/api/workspaces*` and `/api/books*` tests | Metadata and discovery use only the fresh suite contract |
-| 8.4 Product registry | Registry tests and UI fixtures | Moondesk, MoonBook, MoonWiki, MoonCode, MoonClaw, Moontown, MoonStat, MoonFish, MoonMoon, MoonRobo, Bookkeeper, Lepusa, Rabbita, and later suite products are visible |
-| 8.5 Services | MoonClaw/Moontown service tests | Status/config/log paths live under `.moonsuite/products/*` |
+| 8.4 Product registry | Registry tests and UI fixtures | MoonDesk, MoonBook, MoonWiki, MoonCode, MoonClaw, MoonTown, MoonGate, MoonFish, MoonMoon, MoonRobo, Bookkeeper, Lepusa, Rabbita, and later suite products are visible |
+| 8.5 Services | MoonClaw/MoonTown service tests | Status/config/log paths live under `.moonsuite/products/*` |
 | 8.6 MoonCode E2E | Browser or state-machine transcript tests | User prompt, folded thinking, progress, and final reply keep append-only order |
 | 8.7 Desk browser smoke | Production Rabbita browser smoke | No loading deadlocks, console errors, raw path leaks, or broken Desk/Code flows |
 | 8.8 Lepusa smoke | Packaged fresh-suite smoke | Packaged sidecar creates and serves fresh roots in empty and populated cases |
-| 8.9 Product consumers | Cross-repo contract tests | Products import MoonLib layout contracts rather than Moondesk or MoonStat internals |
+| 8.9 Product consumers | Cross-repo contract tests | Products import MoonLib layout contracts rather than MoonDesk or MoonGate internals |
 | 8.10 Residual scans | Fresh-suite residual validator | Old layout strings are classified or fail the gate |
 | 8.11 CI/release wall | `phase8_migration_gates.sh` | Fast and full gates are repeatable, documented, and usable by Phase 9 |
 
@@ -687,7 +687,7 @@ Current Phase 8 status:
 
 - The Phase 8 wall exists as `scripts/phase8_migration_gates.sh` with `fast`
   and `full` modes.
-- The full wall already includes native Moondesk checks/tests, Rabbita JS
+- The full wall already includes native MoonDesk checks/tests, Rabbita JS
   check/test/build, MoonLib consumer pins, residual scan, core-boundary
   validation, API smoke, Desk browser smoke, and fresh-suite product smoke.
 - Desk browser smoke has been hardened for populated and empty library
@@ -729,15 +729,15 @@ Scope:
 Acceptance:
 
 - MoonLib tests become the source of truth for path semantics.
-- Products can import `vectie/moonlib/moonsuite` without importing MoonStat,
-  Moondesk UI packages, MoonClaw runtime packages, or daemon packages.
+- Products can import `vectie/moonlib/moonsuite` without importing MoonGate,
+  MoonDesk UI packages, MoonClaw runtime packages, or daemon packages.
 - `moon test` in MoonLib passes with no snapshot drift.
 
 ### Phase 8.2: Fresh Bootstrap Tests
 
 Scope:
 
-- Add fresh-root bootstrap tests for Moondesk `serve` and CLI bootstrap paths.
+- Add fresh-root bootstrap tests for MoonDesk `serve` and CLI bootstrap paths.
 - Start from an empty user-selected folder and assert the resulting structure:
   `.moonsuite/`, `.moonsuite/products/`, `.moonsuite/suite-status.json`,
   `.tmp/`, and `books/`.
@@ -777,7 +777,7 @@ Acceptance:
 Scope:
 
 - Add registry tests covering all current MoonSuite products:
-  Moondesk, MoonBook, MoonWiki, MoonCode, MoonClaw, Moontown, MoonStat,
+  MoonDesk, MoonBook, MoonWiki, MoonCode, MoonClaw, MoonTown, MoonGate,
   MoonFish, MoonMoon, MoonRobo, Bookkeeper, Lepusa, and Rabbita.
 - Assert each product has a stable id, display name, status, product-home path,
   and expected service/artifact locations when applicable.
@@ -789,7 +789,7 @@ Acceptance:
 - Product registry output is deterministic.
 - Missing product metadata is reported as a test failure, not silently hidden in
   UI or API defaults.
-- Moondesk UI service/product panels have fixture coverage for the complete
+- MoonDesk UI service/product panels have fixture coverage for the complete
   registry list.
 
 ### Phase 8.5: Service Config And Daemon Tests
@@ -799,7 +799,7 @@ Scope:
 - Add MoonClaw tests proving daemon config, provider manifests, stdout/stderr
   logs, runtime status, and next-action messages resolve under
   `.moonsuite/products/moonclaw`.
-- Add Moontown tests proving daemon state, progress state, and service status
+- Add MoonTown tests proving daemon state, progress state, and service status
   resolve under `.moonsuite/products/moontown`.
 - Assert missing daemon/config cases return explicit status objects rather than
   vague queueing or "local agent unavailable" copy.
@@ -808,7 +808,7 @@ Scope:
 
 Acceptance:
 
-- MoonClaw and Moontown tests fail if `$HOME/.moonclaw`, `.moontown`, or
+- MoonClaw and MoonTown tests fail if `$HOME/.moonclaw`, `.moontown`, or
   book-local product homes are used as fresh defaults.
 - API responses include actionable missing/running/unreachable statuses.
 - UI fixtures can render service status without raw internal paths.
@@ -882,29 +882,29 @@ Scope:
 
 - For each migrated product, add or update tests proving it derives paths from
   MoonLib:
-  Moondesk, MoonStat, MoonClaw, Moontown, MoonFish, MoonMoon, MoonRobo,
+  MoonDesk, MoonGate, MoonClaw, MoonTown, MoonFish, MoonMoon, MoonRobo,
   Bookkeeper, Lepusa, Rabbita, MoonBook, MoonWiki, and MoonCode.
 - Keep consumer tests focused on integration boundaries: given suite root or
   book root, product derives the same canonical product home and artifact
   locations as MoonLib.
 - Add a small "contract fixture" shared by products where practical, but avoid
-  coupling product tests to Moondesk implementation details.
+  coupling product tests to MoonDesk implementation details.
 
 Acceptance:
 
 - Product tests fail if a product recreates path logic locally and diverges from
   MoonLib.
-- Product tests fail if a product depends on MoonStat or Moondesk UI for core
+- Product tests fail if a product depends on MoonGate or MoonDesk UI for core
   layout derivation.
 
 ### Phase 8.10: Drift And Residual Scans
 
 Scope:
 
-- Keep MoonStat drift-report tests for old `.moontown`, `.moonclaw`,
-  repo-local runtime, and global temp paths. MoonStat commit `cf7fd62` already
+- Keep MoonGate drift-report tests for old `.moontown`, `.moonclaw`,
+  repo-local runtime, and global temp paths. MoonGate commit `cf7fd62` already
   covers the first drift-report slice.
-- Add Moondesk residual scans for old layout strings outside documentation,
+- Add MoonDesk residual scans for old layout strings outside documentation,
   migration notes, and explicit drift/error messages.
 - Classify every remaining old-layout string as one of:
   test fixture, migration doc, drift detector, user-facing error, or bug.
@@ -920,7 +920,7 @@ Acceptance:
 Scope:
 
 - Wire the Phase 8 gates into repeatable commands:
-  `moon check`, `moon test`, targeted Moondesk API smoke, browser smoke,
+  `moon check`, `moon test`, targeted MoonDesk API smoke, browser smoke,
   Lepusa smoke, boundary validation, and residual scan.
 - Keep fast unit/white-box tests separate from slower browser/Lepusa tests so
   local iteration remains practical.
@@ -935,16 +935,16 @@ Required gate order:
 5. Rabbita `moon check --target js`
 6. Rabbita `moon test --target js`
 7. Rabbita `npm run build`
-8. Moondesk API smoke
+8. MoonDesk API smoke
 9. Desk browser smoke
 10. Lepusa fresh-suite smoke
 11. Core-boundary validation
 12. Residual old-layout scan
 
-Moondesk gate commands:
+MoonDesk gate commands:
 
 - `bash scripts/phase8_migration_gates.sh fast` runs the repeatable local
-  Phase 8 wall: Moondesk native format/info/check/test, Rabbita JS
+  Phase 8 wall: MoonDesk native format/info/check/test, Rabbita JS
   check/test/build, MoonLib consumer pins, MoonSuite filesystem contract
   rollout validation, fresh-suite residual scans, and cross-repo boundary
   validation.
@@ -954,8 +954,8 @@ Moondesk gate commands:
   MoonBook library scenario and the empty-library first-run scenario against
   the production Rabbita bundle.
 - `bash scripts/fresh_suite_product_smoke.sh` can be run alone when validating
-  product-home behavior across Moontown, MoonClaw, MoonBook, MoonRobo,
-  MoonFish, MoonMoon, MoonChat, MoonVis, MoonStat, and Lepusa.
+  product-home behavior across MoonTown, MoonClaw, MoonBook, MoonRobo,
+  MoonFish, MoonMoon, MoonChat, MoonVis, MoonGate, and Lepusa.
 - `bash scripts/lepusa_fresh_books_smoke.sh` can be run alone to validate the
   Lepusa packaged runtime against both populated and empty fresh-suite roots;
   pass `populated` or `empty` to isolate one scenario.
@@ -974,17 +974,17 @@ Phase 8 can close when:
 
 - Fresh MoonSuite bootstrap is proven from an empty folder.
 - All active products derive canonical paths from MoonLib.
-- Moondesk APIs and UI expose the Phase 6/7 contract without raw internal path
+- MoonDesk APIs and UI expose the Phase 6/7 contract without raw internal path
   leaks in normal views.
 - MoonCode prompt/event/final-answer ordering is covered by end-to-end tests.
-- MoonClaw and Moontown missing/running/unreachable states are explicit and
+- MoonClaw and MoonTown missing/running/unreachable states are explicit and
   tested.
 - Browser and Lepusa smoke tests pass on production bundles.
 - Residual old-layout scans leave only approved migration/drift references.
 
 Phase 8 gate-hardening evidence:
 
-- Moondesk commit `8feb13de` stabilizes MoonCode browser-smoke ordering. New
+- MoonDesk commit `8feb13de` stabilizes MoonCode browser-smoke ordering. New
   chat draft transcripts now stay selected from local pending prompt state
   rather than incidental composer status text, pending prompts always render a
   folded `Prompt queued` thinking row before fast backend answers, and browser
@@ -999,7 +999,7 @@ Phase 8 gate-hardening evidence:
   navigation plus empty `books/` bootstrap/create behavior in the production
   bundle. Validation passed with `bash scripts/desk_mode_browser_smoke.sh` and
   `bash scripts/phase8_migration_gates.sh full`; the full gate also passed
-  Moondesk native tests (`465/465`), Rabbita JS tests (`451/451`), API smoke,
+  MoonDesk native tests (`465/465`), Rabbita JS tests (`451/451`), API smoke,
   MoonLib consumer pins, residual scans, core-boundary validation,
   cross-product fresh-suite smoke, and Lepusa fresh-books smoke.
 - The next Phase 8 browser-quality slice adds CDP console/runtime problem
@@ -1033,7 +1033,7 @@ Cutover steps:
 2. Stop writing `.moontown/moondesk-daemon`.
 3. Update tests, docs, and smoke fixtures to `books/`.
 4. Make MoonSuite v2 the fresh default.
-5. Launch a fresh Lepusa/Moondesk app for visual verification.
+5. Launch a fresh Lepusa/MoonDesk app for visual verification.
 
 Phase 9 gates:
 
@@ -1043,16 +1043,16 @@ Phase 9 gates:
   the Phase 9 cutover validator, covering API smoke, Desk browser smoke,
   cross-product fresh-suite smoke, and Lepusa packaged runtime smoke.
 - `bash scripts/validate_phase9_cutover.sh` can be run alone to scan active
-  source in MoonLib, Moondesk, MoonRobo, Moontown, MoonClaw, MoonStat,
+  source in MoonLib, MoonDesk, MoonRobo, MoonTown, MoonClaw, MoonGate,
   MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and Lepusa for unapproved
   Phase 9 legacy cutover paths and retired source-checkout redirect helpers.
 - `bash scripts/validate_conversation_contract_rollout.sh` can be run alone to
   prove the shared conversation contract is source-owned by MoonLib, consumed
-  by Moondesk's MoonCode adapter, and not mirrored by product-local old
+  by MoonDesk's MoonCode adapter, and not mirrored by product-local old
   conversation contract ids or wrappers.
 - `bash scripts/validate_moonsuite_contract_rollout.sh` can be run alone to
   prove the shared filesystem contract is source-owned by MoonLib, consumed by
-  Moondesk's MoonWiki/core adapters, and not replaced by hard-coded product-home
+  MoonDesk's MoonWiki/core adapters, and not replaced by hard-coded product-home
   formulas in active product source.
 
 Phase 9 completion criteria:
@@ -1062,7 +1062,7 @@ Phase 9 completion criteria:
   `moonclaw-jobs`, `.moonclaw-worktrees`, or `.moonclaw-tool-journal` paths.
 - Active source no longer contains source-checkout redirect compatibility
   helpers or warning copy such as the old dedicated-workspace fallback.
-- Moondesk command surfaces that create or package live app roots use a
+- MoonDesk command surfaces that create or package live app roots use a
   selected/configured MoonSuite root, `MOONDESK_WORKSPACE_ROOT`, or the fresh
   default `~/moonsuite`; they do not infer the retired home-derived workspace
   name.
@@ -1074,7 +1074,7 @@ Phase 9 cutover evidence:
 
 - This Phase 9 slice adds the cutover validator and gate wrapper. The validator
   scans all 12 active source repos for unapproved old hidden MoonBook library,
-  Moondesk daemon, MoonClaw jobs, and legacy worktree paths. Validation passed
+  MoonDesk daemon, MoonClaw jobs, and legacy worktree paths. Validation passed
   with `bash scripts/validate_phase9_cutover.sh`,
   `bash scripts/phase9_cutover_gates.sh fast`, and
   `bash scripts/phase9_cutover_gates.sh full`.
@@ -1087,21 +1087,21 @@ Phase 9 cutover evidence:
   workspace folder name.
 - This Phase 9 gate-hardening slice extends the cutover validator to reject the
   retired source-checkout redirection helpers and warnings, including the old
-  dedicated-user-workspace fallback copy. The only allowed Moondesk script
+  dedicated-user-workspace fallback copy. The only allowed MoonDesk script
   reference is the API smoke assertion proving that the warning is absent.
 - This Phase 9 contract-hardening slice adds
   `scripts/validate_moonsuite_contract_rollout.sh` and wires it into the Phase
   8 and Phase 9 gates. The validator checks MoonLib `0.1.8` as the single
   owner of `ProductHome`, workspace-root suite normalization, product artifact
   constructors, accepted-output paths, and the default product registry;
-  verifies Moondesk consumes those contracts through the MoonWiki layout facade
-  and `core/paths.mbt`; and scans MoonLib, Moondesk, MoonRobo, Moontown,
-  MoonClaw, MoonStat, MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and
+  verifies MoonDesk consumes those contracts through the MoonWiki layout facade
+  and `core/paths.mbt`; and scans MoonLib, MoonDesk, MoonRobo, MoonTown,
+  MoonClaw, MoonGate, MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and
   Lepusa active source for unapproved direct `.moonsuite/products` or
   `.tmp/products` product-home formulas. The only active-source mirror allowed
   is MoonVis's frontend-only layout module; concrete smoke scripts may still
   assert filesystem effects and absence of stale homes.
-- This Phase 9 default-root cleanup removes the retired Moondesk CLI fallback
+- This Phase 9 default-root cleanup removes the retired MoonDesk CLI fallback
   from `$HOME` or `USERPROFILE` to the old workspace folder name. `serve`,
   `desktop`, `bundle`, `release`, launch-agent generation/install, and Lepusa
   live-project commands now use a selected/configured workspace root, while
@@ -1110,7 +1110,7 @@ Phase 9 cutover evidence:
 - This Phase 9 explicit-root gate slice extends the cutover validator so the
   retired `USERPROFILE`/home-derived legacy workspace fallback and old
   multi-input default-root helper shape cannot return in active source.
-- This Phase 9 standalone-source slice removes Moontown's machine-local Codex
+- This Phase 9 standalone-source slice removes MoonTown's machine-local Codex
   adapter defaults and validation command text from active source. The Codex
   ACP target now defaults to the portable `codex` command unless `CODEX_BIN` is
   explicitly set, and Phase 9 validation now rejects machine-local absolute
@@ -1118,14 +1118,14 @@ Phase 9 cutover evidence:
   paths in active MoonBit source across the 12 migrated repos.
 - Phase 9 full cutover evidence is current as of this slice:
   `bash scripts/phase9_cutover_gates.sh full` passed the Phase 8 full wall,
-  including Moondesk native tests (`476/476`), Rabbita JS tests (`432/432`),
+  including MoonDesk native tests (`476/476`), Rabbita JS tests (`432/432`),
   production build, API smoke, Desk browser full and empty-library smokes,
   cross-product fresh-suite smokes, Lepusa populated and empty fresh-books
   packaged runtime smokes, and the Phase 9 12-repo cutover validator.
 - The shared conversation-contract rollout is now part of the Phase 9 gate.
   `scripts/validate_conversation_contract_rollout.sh` checks MoonLib source
   version `0.1.8`, the `vectie/moonlib/conversation` package and interface,
-  Moondesk's MoonCode delegation imports, the synchronized MoonClaw
+  MoonDesk's MoonCode delegation imports, the synchronized MoonClaw
   `mooncode/core` mirror, all MoonLib consumer pins, and all 12 active source
   repos for retired `mooncode-conversation.v1`,
   `mooncode-conversation-contract`, `moonlib_target`, or unapproved
@@ -1135,7 +1135,7 @@ Phase 9 cutover evidence:
   directories from the copied book root before bootstrap. This keeps the smoke
   faithful to a first-time project and prevents dirty local example state from
   recreating stale book-local product homes.
-- The next Lepusa standalone packaging slice makes live Moondesk bundles
+- The next Lepusa standalone packaging slice makes live MoonDesk bundles
   self-contained: generated localhost runtime manifests now launch the bundled
   `moondesk-sidecar` with `--ui` pointing at
   `Contents/Resources/lepusa/assets/main` inside the app bundle, and the
@@ -1152,50 +1152,50 @@ Phase 9 cutover evidence:
 
 Completed slices:
 
-- Moondesk initializes fresh MoonSuite roots, discovers MoonBooks from `books/`,
+- MoonDesk initializes fresh MoonSuite roots, discovers MoonBooks from `books/`,
   writes product service state under `.moonsuite/products/*`, hides
   `.moonsuite` and `.tmp` in the normal VFS, and stores MoonCode sessions under
   `.moonsuite/products/mooncode/sessions`.
-- Moondesk now depends on MoonLib `0.1.3` and uses
+- MoonDesk now depends on MoonLib `0.1.3` and uses
   `@moonsuite.product_artifact_for_workspace_root` through its MoonWiki adapter
   for scoped Desk trash state. Workspace trash files and receipts now live under
   `.moonsuite/products/moondesk/trash`, even when the selected workspace is a
   suite-hosted `books/<book-id>` MoonBook; restore/listing resolve only that
-  Moondesk product-home prefix instead of treating old `.moontown/trash` paths
+  MoonDesk product-home prefix instead of treating old `.moontown/trash` paths
   as valid workspace paths. MoonCode capability copy and README service
   descriptor copy now name the current product-home paths. Validation for this
-  slice: Moondesk `moon update`, `moon fmt`, `moon info`, `moon check`, and
+  slice: MoonDesk `moon update`, `moon fmt`, `moon info`, `moon check`, and
   `moon test` with `448/448` tests passing.
-- Moondesk MoonClaw daemon probing now reads `daemon.json` from
+- MoonDesk MoonClaw daemon probing now reads `daemon.json` from
   `.moonsuite/products/moonclaw` through
-  `@moonsuite.product_artifact_for_workspace_root`, and Moondesk-launched
+  `@moonsuite.product_artifact_for_workspace_root`, and MoonDesk-launched
   MoonClaw daemon stdout/stderr logs now go under
   `.moonsuite/products/moonclaw/logs`. The fallback no longer probes or writes
   `$HOME/.moonclaw`, and white-box coverage asserts suite-hosted
   `books/<book-id>` workspaces derive the owning suite's MoonClaw product home.
-- Moondesk commit `e54c4400` routes MoonCode desktop session/event sidecar
+- MoonDesk commit `e54c4400` routes MoonCode desktop session/event sidecar
   paths through MoonLib workspace-root constructors. The internal MoonCode
   package now exposes workspace-root APIs for all session sidecar paths, and
   MoonWiki read/write handlers use them so suite-hosted `books/<book-id>` roots
   write to suite-level `.moonsuite/products/mooncode/sessions` rather than a
-  nested book-local product home. Validation passed with Moondesk `moon fmt`,
+  nested book-local product home. Validation passed with MoonDesk `moon fmt`,
   `moon info`, `moon check`, `moon test` (451/451), targeted old-join scan
   clean, and `git diff --check`.
-- Moonstat advertises and writes MoonClaw provider manifests through
+- MoonGate advertises and writes MoonClaw provider manifests through
   `.moonsuite/products/moonclaw/providers.json`, and advertises MoonClaw model
   and config candidates under `.moonsuite/products/moonclaw`.
-- MoonStat commit `0428848` splits the active suite-status and product-state
+- MoonGate commit `0428848` splits the active suite-status and product-state
   defaults: suite discovery now writes `.moonsuite/suite-status.json`, while
-  MoonStat-owned usage request logs, session sync offsets, and editable model
-  pricing now default under `.moonsuite/products/moonstat`. Help text, README
+  MoonGate-owned usage request logs, session sync offsets, and editable model
+  pricing now default under `.moonsuite/products/moongate`. Help text, README
   copy, and white-box coverage assert the fresh suite-root/product-home
-  boundary. Validation passed in MoonStat with `moon fmt`, `moon info`,
+  boundary. Validation passed in MoonGate with `moon fmt`, `moon info`,
   `moon check`, `moon test` (774/774), and `git diff --check`.
-- MoonStat commit `62d9ebb` moves the app config default from suite state into
-  `.moonsuite/products/moonstat/config.json`. Config backups and skill
-  state/backups/install directories follow MoonStat's product-home config root,
+- MoonGate commit `62d9ebb` moves the app config default from suite state into
+  `.moonsuite/products/moongate/config.json`. Config backups and skill
+  state/backups/install directories follow MoonGate's product-home config root,
   with README copy and white-box coverage asserting the new path. Validation
-  passed in MoonStat with `moon fmt`, `moon info`, `moon check`, `moon test`
+  passed in MoonGate with `moon fmt`, `moon info`, `moon check`, `moon test`
   (774/774), and `git diff --check`.
 - MoonBook installs the MoonClaw extension provider manifest into the
   MoonSuite-level MoonClaw product home when a book lives under
@@ -1238,45 +1238,45 @@ Completed slices:
   payload. Validation passed with Lepusa `moon update`, `moon fmt`,
   `moon info`, `moon check`, `moon test` (374/374), active empty-root
   constructor scan clean, and `git diff --check`.
-- Moontown stores default town snapshots, standing goals, watcher ledgers,
+- MoonTown stores default town snapshots, standing goals, watcher ledgers,
   daemon runtime files, live/autonomy projections, book-result bridges, book
   template requests, civic schedules, book-quality runtime files, and town
   synthesis under `.moonsuite/products/moontown`.
-- Moontown stores book-quality audits, AI review packets/results, review run
+- MoonTown stores book-quality audits, AI review packets/results, review run
   ledgers, and repair bridge defaults under
   `.moonsuite/products/moontown/book-quality`, with README copy and daemon
   scheduled-job tests updated to the product-home paths.
-- Moontown stores civic protocol registries, status projections, protocol
+- MoonTown stores civic protocol registries, status projections, protocol
   ledgers, civic service status, and civic service result bridges under
   `.moonsuite/products/moontown`, and Rabbita/cookbook operator copy now points
   at the MoonSuite product-home paths.
-- The Rabbita/Moontown Vite bridge serves town snapshots, live autonomy,
+- The Rabbita/MoonTown Vite bridge serves town snapshots, live autonomy,
   standing goals, watcher ledgers, operator-request queues, book-template
-  queues/configs, civic status, editor pipeline state, Moondesk bridge records,
+  queues/configs, civic status, editor pipeline state, MoonDesk bridge records,
   and book-result records from `.moonsuite/products/moontown`; generated
   MoonBook projection discovery remains on the existing book workspace root
   until the book-layout cutover.
-- Moontown final-integration installs write the Wenyu integration status file
+- MoonTown final-integration installs write the Wenyu integration status file
   under `.moonsuite/products/moontown/integration`, with usage docs and
   white-box path coverage updated to the product-home location.
-- Moontown exported keeper/MoonClaw packet files now default to
+- MoonTown exported keeper/MoonClaw packet files now default to
   `.moonsuite/products/moontown/packets`, with modeled execution records,
   Rabbita demo records, operational docs, and adapter white-box coverage updated
   to the product-home path.
-- Moontown cookbook stable-state manifests now default to
+- MoonTown cookbook stable-state manifests now default to
   `.moonsuite/products/moontown/cookbook/stable-state.json`, with cookbook
   path coverage and operator docs updated to the product-home path.
-- Moontown PlanBook/editor operator copy now names
+- MoonTown PlanBook/editor operator copy now names
   `.moonsuite/products/moontown` for live-autonomy, town-journal, PlanBook
   autonomy/repair/validation, and editor-pipeline state; focused tests assert
   the generated copy no longer emits the old product-runtime paths.
-- Moontown README, frontend, usage, doc-structure, and generated cookbook copy
+- MoonTown README, frontend, usage, doc-structure, and generated cookbook copy
   now point standing-goal/watch ledgers, operator request queues,
-  book-template request/config/event files, Moondesk bridge records, and
+  book-template request/config/event files, MoonDesk bridge records, and
   book-result bridges at `.moonsuite/products/moontown`; cookbook tests assert
   the generated book-template flow no longer emits the legacy inbox path.
-- Moontown's MoonBook catalog default now writes
-  `.moonsuite/products/moontown/moonbooks.json`, matching Moondesk's bridge
+- MoonTown's MoonBook catalog default now writes
+  `.moonsuite/products/moontown/moonbooks.json`, matching MoonDesk's bridge
   path; adapter tests assert the default and book-quality status tests no
   longer depend on a repo-local legacy catalog fixture.
 - MoonClaw stores MoonCode durable session sidecars under
@@ -1527,33 +1527,33 @@ Completed slices:
   instead of global `/tmp/moonrobo-sdk-e1*` files. Validation passed in
   MoonRobo with `moon fmt`, clean `moon info`, `moon check`, `moon test`
   (453/453), and `git diff --check`.
-- Moontown daemon runtime policy now defaults health/log summaries to
+- MoonTown daemon runtime policy now defaults health/log summaries to
   `.moonsuite/products/moontown/daemon.log`, and editor-pipeline civic protocol
   evidence points at
   `.moonsuite/products/moontown/civic/protocols/<building-id>/*.jsonl`; targeted
-  daemon/editor tests and the full Moontown test suite assert the product-home
+  daemon/editor tests and the full MoonTown test suite assert the product-home
   contract.
-- Moontown civic service history now derives the product-home book-result path,
+- MoonTown civic service history now derives the product-home book-result path,
   and the default external MoonClaw checkout root is
   `.moonsuite/products/moontown/external/moonclaw`; civic and MoonClaw adapter
   tests assert the old `.moontown` paths are not emitted.
-- Moontown now depends on MoonLib `0.1.1`; its storage product-home, service,
+- MoonTown now depends on MoonLib `0.1.1`; its storage product-home, service,
   temp, snapshot, standing-goal, watcher, and mayor town-synthesis paths are
   thin adapters over `@moonsuite`, and town synthesis execution records register
   the mayor workspace root as `.moonsuite/products/moontown` instead of
   `.moontown`.
-- Moontown commit `8ae8672c` adds a storage-level
+- MoonTown commit `8ae8672c` adds a storage-level
   `moontown_product_artifact(...)` adapter over MoonLib
   `@moonsuite.product_artifact(...)`, then routes default civic protocol/status
   artifacts, communication schedules/runs, visual projection, book-result
   bridges, cookbook manifests, MoonBook catalog state, MoonClaw packet exports,
-  daemon logs, and final-integration status through that adapter. Moontown docs
+  daemon logs, and final-integration status through that adapter. MoonTown docs
   and operator copy no longer name `.moontown/civic`,
   `.moontown/book-results`, `.moontown/book-projection-policy`, or
   `.moontown/visual-projection` for product-owned state. Validation passed with
   `moon check`, `moon test` (922/922), `moon fmt`, `moon info`, and a final
   `moon check`.
-- Moontown commit `d4b79996` starts the Phase 5 book-layout cutover by moving
+- MoonTown commit `d4b79996` starts the Phase 5 book-layout cutover by moving
   default MoonBook workspace roots from `.moontown/books/<book-id>` to
   MoonLib-backed `books/<book-id>` paths. The slice updates catalog defaults,
   editor/planbook source-root helpers, backlog target paths, civic result
@@ -1562,36 +1562,36 @@ Completed slices:
   `.moontown/books` or `.moontown/moonbooks.json` contracts. Validation passed
   with `moon check`, `moon test` (923/923), `moon fmt`, `moon info`, and a final
   `moon check`.
-- Cross-repo residual cleanup landed in Moontown commit `a9088181` and Moondesk
-  commit `49589f69`. Moontown's handoff asset and README now name
-  `books/<book-id>` for book workspace packs and output bundles. Moondesk source
+- Cross-repo residual cleanup landed in MoonTown commit `a9088181` and MoonDesk
+  commit `49589f69`. MoonTown's handoff asset and README now name
+  `books/<book-id>` for book workspace packs and output bundles. MoonDesk source
   layer inference now classifies `.moonsuite/...` and `.tmp/...` as internal
   config surfaces, and its explorer test no longer uses `.moontown/books` as the
-  config example. A broad scan across Moondesk, MoonBook, MoonClaw, MoonStat,
-  MoonRobo, MoonFish, MoonMoon, Moontown, and MoonLib found no active
+  config example. A broad scan across MoonDesk, MoonBook, MoonClaw, MoonGate,
+  MoonRobo, MoonFish, MoonMoon, MoonTown, and MoonLib found no active
   `.moontown/books`, `.moontown/moonbooks.json`, or `.moontown/books.json`
   contracts outside this historical migration log. Validation passed with
-  Moondesk `moon check`, `moon test` (445/445), `moon fmt`, `moon info`, final
-  `moon check`, plus Moontown `moon check`, `moon test` (923/923), `moon fmt`,
+  MoonDesk `moon check`, `moon test` (445/445), `moon fmt`, `moon info`, final
+  `moon check`, plus MoonTown `moon check`, `moon test` (923/923), `moon fmt`,
   `moon info`, and final `moon check`.
-- Phase 5 fresh-root projection coverage landed in Moontown commit `19dfada1`
-  and Moondesk commit `a6cac733`, proving the Rabbita/Moondesk book path
-  contract from both sides. The Moontown Rabbita Vite bridge defaults
+- Phase 5 fresh-root projection coverage landed in MoonTown commit `19dfada1`
+  and MoonDesk commit `a6cac733`, proving the Rabbita/MoonDesk book path
+  contract from both sides. The MoonTown Rabbita Vite bridge defaults
   `booksRootPath` to the fresh suite `books` root, keeps product-owned bridge
   files under `.moonsuite/products/moontown`, and exposes
   `MOONTOWN_SUITE_ROOT`, `MOONTOWN_BOOKS_ROOT`, and
   `MOONTOWN_PRODUCT_STATE_ROOT` overrides for smoke runs. `npm run
   smoke:book-projections` creates a temporary fresh suite root and asserts that
   `books/wenyu-social-square/book/moonbook-ui-state.json` flows into
-  `loadModuleProjectionIndex()` with the generated-site link intact. Moondesk's
+  `loadModuleProjectionIndex()` with the generated-site link intact. MoonDesk's
   `internal/moonwiki` white-box coverage builds the matching fresh suite root
   and asserts Desk workspace discovery exposes the MoonBook, canonical virtual
   entries, and projection file resolution without creating
   `.moontown/books/<book-id>`. Validation passed with Rabbita `npm run
-  smoke:book-projections`, Moontown `moon check`, `moon test` (923/923),
-  `moon fmt`, `moon info`, final `moon check`, plus Moondesk `moon check`,
+  smoke:book-projections`, MoonTown `moon check`, `moon test` (923/923),
+  `moon fmt`, `moon info`, final `moon check`, plus MoonDesk `moon check`,
   `moon test` (446/446), `moon fmt`, `moon info`, and final `moon check`.
-- Moondesk commit `76ba4069` extends the full Desk browser smoke to cover the
+- MoonDesk commit `76ba4069` extends the full Desk browser smoke to cover the
   fresh generated-site projection path in the real UI. The smoke fixture now
   seeds `books/research-alpha/book/moonbook-ui-state.json` and
   `books/research-alpha/book/site/generated/index.html`, then drives Chrome
@@ -1602,7 +1602,7 @@ Completed slices:
   without creating `.moontown/books/...`. Validation passed with
   `scripts/desk_mode_browser_smoke.sh`, `moon check`, `moon test` (446/446),
   `moon fmt`, `moon info`, and final `moon check`.
-- Moondesk commit `801b23b0` adds the Lepusa-native fresh-books smoke gate. The
+- MoonDesk commit `801b23b0` adds the Lepusa-native fresh-books smoke gate. The
   new `scripts/lepusa_fresh_books_smoke.sh` seeds a temporary fresh MoonSuite
   root with `.moonsuite`, `.tmp`, and `books/research-alpha` containing
   `book/moonbook-ui-state.json` plus `book/site/generated/index.html`; runs
@@ -1612,36 +1612,36 @@ Completed slices:
   absence of legacy `.moontown/books`. Validation passed with
   `scripts/lepusa_fresh_books_smoke.sh`, `moon check`, `moon test` (446/446),
   `moon fmt`, `moon info`, and final `moon check`.
-- MoonStat commit `cf7fd62` closes the current Phase 8 drift-report slice. The
+- MoonGate commit `cf7fd62` closes the current Phase 8 drift-report slice. The
   report now carries explicit probe paths and scopes, exposes MoonRobo
   canonical product-home and suite-temp paths, and treats legacy `.moontown`,
   `.moonclaw`, `.moontown/moondesk-daemon`, `moonclaw-jobs`, root-local
-  `moonstat`, MoonRobo `runs/gateway-commands`, `runs/robo-loops`,
+  `moongate`, MoonRobo `runs/gateway-commands`, `runs/robo-loops`,
   `runs/proof-sessions`, and old global SDK E1 bridge temp files as drift
   candidates. Tests use an injectable `global_tmp_root` so production can still
   inspect `/tmp` while the suite stays deterministic. Validation passed with
-  MoonStat `moon check`, `moon test` (773/773), `moon fmt`, `moon info`, and a
+  MoonGate `moon check`, `moon test` (773/773), `moon fmt`, `moon info`, and a
   final `moon check`.
-- Moondesk adapters and MoonWiki run readers now expose MoonClaw run artifacts
+- MoonDesk adapters and MoonWiki run readers now expose MoonClaw run artifacts
   through `.moonsuite/products/moonclaw/jobs` instead of `moonclaw-jobs` or
-  `.moonclaw/jobs/runs`, while the Moontown adapter derives town snapshots,
+  `.moonclaw/jobs/runs`, while the MoonTown adapter derives town snapshots,
   daemon state, standing goals, and watcher roots from MoonLib
   `@moonsuite.product_artifact`. The matching MoonWiki fixture seeds forwarded
   run artifacts under the MoonSuite product home, and adapter tests assert the
   old `moonclaw-jobs` section is gone.
-- Moontown launchd install/uninstall scripts now write plist and stdout/stderr
+- MoonTown launchd install/uninstall scripts now write plist and stdout/stderr
   logs under `.moonsuite/products/moontown/launchd` and
   `.moonsuite/products/moontown`, not `.moontown/launchd`; usage docs now point
   operators at the product-home launchd paths.
-- Moontown MoonBook adapter residuals now route the MoonCode book-result
+- MoonTown MoonBook adapter residuals now route the MoonCode book-result
   processed ledger through
   `.moonsuite/products/moontown/mooncode-book-results/<book-id>/processed.jsonl`
   and default the local MoonBook checkout fallback to
   `.moonsuite/products/moontown/external/moonbook`, eliminating the active
   `.moontown/mooncode-book-results` and `.moontown/moonbook` write targets.
-  Validation passed with Moontown `moon fmt`, `moon info`, `moon check`, and
+  Validation passed with MoonTown `moon fmt`, `moon info`, `moon check`, and
   `moon test` (925/925).
-- Moontown commit `4eb1f047` upgrades to MoonLib `0.1.3` and routes the
+- MoonTown commit `4eb1f047` upgrades to MoonLib `0.1.3` and routes the
   remaining active MoonClaw home/config writers in the MoonClaw command
   adapter, book-quality review dispatch/reconcile flow, and Wenyu build
   preseed through MoonLib-derived MoonClaw product homes. Book-quality review
@@ -1649,43 +1649,43 @@ Completed slices:
   `.moonsuite/products/moontown/book-quality/.moonsuite/products/moonclaw/moonclaw.json`,
   direct review polling reads jobs from that matching product home, and Wenyu
   preseed no longer creates root-local `moonclaw.json` or `.moonclaw` config
-  files. Validation passed with Moontown `moon update`, `moon fmt`, clean
+  files. Validation passed with MoonTown `moon update`, `moon fmt`, clean
   `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
-- Moontown commit `8f56f390` removes the next active `.moonclaw` home targets
+- MoonTown commit `8f56f390` removes the next active `.moonclaw` home targets
   from PlanBook repair ACP config and editor feature-selection MoonClaw
   dispatch. PlanBook repair now writes Codex ACP target config through
   `@moonsuite.product_artifact_for_workspace_root(workspace_root, "moonclaw",
   "moonclaw.json")`, and editor feature-selection imports/runs pass the
   workspace root as MoonClaw `--home` so MoonClaw derives the product home
-  itself. Validation passed with Moontown `moon fmt`, clean `moon info`,
+  itself. Validation passed with MoonTown `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (926/926), and `git diff --check`.
-- Moontown commit `1eaff85d` moves the MoonClaw run polling adapter onto the
+- MoonTown commit `1eaff85d` moves the MoonClaw run polling adapter onto the
   MoonLib product-home job store. The adapter now derives
   `.moonsuite/products/moonclaw/jobs` through `@moonsuite` for suite-root
   callers while still accepting already-derived MoonClaw product homes from
   book-quality and PlanBook flows. Wenyu build review prompts now tell workers
   to read run-workspace `run.json` instead of stale `.moonclaw/run.json`, and
   run-polling/PlanBook path tests seed fresh product-home fixtures instead of
-  `.moonclaw/jobs`. Validation passed with Moontown `moon fmt`, clean
+  `.moonclaw/jobs`. Validation passed with MoonTown `moon fmt`, clean
   `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
-- Moontown commit `0c4e6f33` aligns public operator/frontend documentation
+- MoonTown commit `0c4e6f33` aligns public operator/frontend documentation
   with the already-migrated runtime product-home paths. `docs/USAGE.md` and
   `docs/FRONTEND.md` now describe active town snapshots, daemon state/runtime
   files, standing-goal inputs, watcher ledgers, book-quality review artifacts,
   town synthesis, and the MoonClaw job-store archive under
   `.moonsuite/products/moontown/...` or `.moonsuite/products/moonclaw/jobs/...`
   instead of `.moontown/...` or `.moonclaw/jobs/...`. Validation passed with
-  Moontown `moon fmt`, clean `moon info` after reverting unrelated generated
+  MoonTown `moon fmt`, clean `moon info` after reverting unrelated generated
   `.mbti` EOF churn, `moon check`, `moon test` (926/926), and
   `git diff --check`.
-- Moontown commit `03217510` removes the next stale live-autonomy and Moondesk
+- MoonTown commit `03217510` removes the next stale live-autonomy and MoonDesk
   handoff fixture paths from operator-facing surfaces. Live-autonomy markdown
   and Rabbita viewport fixtures now advertise
   `.moonsuite/products/moontown/...` product paths and PlanBook wiki history
-  paths, the Moondesk handoff tilemap module now stages agent profiles and
-  operator requests under the Moontown product home, and README copy points the
+  paths, the MoonDesk handoff tilemap module now stages agent profiles and
+  operator requests under the MoonTown product home, and README copy points the
   MoonClaw hot-store archive at `.moonsuite/products/moonclaw/jobs/archive`.
-  Validation passed with Moontown `moon fmt`, clean `moon info` after reverting
+  Validation passed with MoonTown `moon fmt`, clean `moon info` after reverting
   unrelated generated `.mbti` EOF churn, `moon check`, `moon test` (926/926),
   and `git diff --check`.
 - Rabbita commit `a6a69ad` adds the root package's explicit MoonSuite
@@ -1724,15 +1724,15 @@ Completed slices:
   product config paths at `.moonsuite/products/moonclaw/...`, matching the
   MoonLib-backed runtime. Validation passed with MoonClaw `moon fmt`, clean
   `moon info`, `moon check`, `moon test` (1000/1000), and `git diff --check`.
-- MoonStat commit `e776bef` updates the suite drift report to match that
+- MoonGate commit `e776bef` updates the suite drift report to match that
   MoonCode ownership boundary. Book-local
   `books/<book-id>/.moonclaw/mooncode/sessions` drift now reports the canonical
   target as `.moonsuite/products/moonclaw/mooncode/sessions` and product owner
   `moonclaw`, not `.moonsuite/products/mooncode/sessions`. Validation passed
-  with MoonStat `moon fmt`, clean `moon info`, `moon check`, `moon test`
+  with MoonGate `moon fmt`, clean `moon info`, `moon check`, `moon test`
   (774/774), and `git diff --check`.
 - MoonRobo commit `c69cc9ea` expands the public product-status MoonSuite
-  contract so Rabbita, Moondesk, and status consumers can see every migrated
+  contract so Rabbita, MoonDesk, and status consumers can see every migrated
   MoonRobo product-home lane from one MoonLib-derived payload. The
   `MoonroboProductHomes` status now advertises dry-run evidence, approvals,
   bridge dispatches/contracts, robo turns, prove-loop records, runtime
@@ -1778,34 +1778,34 @@ Completed slices:
   empty-root constructor scan clean, and `git diff --check`; full JS
   `moon test` remains outside this gate because the documented pre-existing DOM
   README examples require a browser `document`.
-- MoonStat commit `2d9b732` upgrades the observer to MoonLib `0.1.3` and
+- MoonGate commit `2d9b732` upgrades the observer to MoonLib `0.1.3` and
   derives book-local MoonClaw provider/session drift targets through
   `@moonsuite.product_artifact_for_workspace_root(...)`. The suite drift report
   now proves the current workspace-root contract for suite-hosted MoonBooks
-  while keeping MoonStat a validator/reporter instead of a path-schema owner.
-  Validation passed with MoonStat `moon update`, `moon fmt`, clean `moon info`,
+  while keeping MoonGate a validator/reporter instead of a path-schema owner.
+  Validation passed with MoonGate `moon update`, `moon fmt`, clean `moon info`,
   `moon check`, `moon test` (774/774), and `git diff --check`.
-- MoonStat commit `26531ce` removes the remaining active empty-root MoonSuite
+- MoonGate commit `26531ce` removes the remaining active empty-root MoonSuite
   calls from app config, suite status, MoonClaw provider/model/config manifest
   defaults, and suite integration command output. Public workspace-root helpers
-  now expose MoonStat product home, suite status, and MoonClaw provider manifest
+  now expose MoonGate product home, suite status, and MoonClaw provider manifest
   paths for suite-hosted book roots, and white-box tests prove those roots map
   to suite-level `.moonsuite` paths rather than nested `books/<book-id>` state.
-  Validation passed with MoonStat `moon fmt`, clean `moon info`, `moon check`,
+  Validation passed with MoonGate `moon fmt`, clean `moon info`, `moon check`,
   `moon test` (774/774), and `git diff --check`.
-- Moontown now removes the remaining runtime-test fixtures that explicitly
+- MoonTown now removes the remaining runtime-test fixtures that explicitly
   exercised `root/moonbooks.json` as the catalog location for cookbook and
   book-quality bootstraps. Those tests now use
   `@storage.moontown_product_artifact_for_workspace_root(root,
   "moonbooks.json")`, proving the fresh suite product-home catalog contract in
-  the same flows. Validation passed with Moontown `moon fmt`, clean
+  the same flows. Validation passed with MoonTown `moon fmt`, clean
   `moon info`, `moon check`, `moon test` (926/926), and `git diff --check`.
-- Moontown MoonBook evidence accounting now recognizes operational MoonClaw
+- MoonTown MoonBook evidence accounting now recognizes operational MoonClaw
   run evidence only when the completed workflow path is under the MoonSuite
   product-home job store
   `.moonsuite/products/moonclaw/jobs/run-...`. The retired
   `moonclaw-jobs/run-...` root is covered as ordinary domain evidence rather
-  than an active operational marker. Validation for this slice: Moontown
+  than an active operational marker. Validation for this slice: MoonTown
   `moon fmt`, clean `moon info` after reverting unrelated generated `.mbti`
   EOF churn, `moon check`, `moon test` with `927/927` tests passing, refined
   active `moonclaw-jobs` scan with only the negative regression fixture left,
@@ -1843,11 +1843,11 @@ Completed slices:
   slice: MoonClaw `moon fmt`, `moon info`, `moon check`, `moon test` with
   `1002/1002` tests passing, refined operator-doc stale-path scan, cleanup of
   untracked test-created `.moonsuite` runtime output, and `git diff --check`.
-- Moontown active skill/template/cookbook copy now advertises watcher ledgers,
+- MoonTown active skill/template/cookbook copy now advertises watcher ledgers,
   standing-goal registration, generated cookbook state, and MoonClaw execution
   workspaces under `.moonsuite/products/moontown/...` and
   `.moonsuite/products/moonclaw/jobs/...` instead of retired `.moontown` or
-  book-local `.moonclaw/jobs` paths. Validation for this slice: Moontown
+  book-local `.moonclaw/jobs` paths. Validation for this slice: MoonTown
   `moon fmt`, `moon info`, `moon check`, `moon test` with `927/927` tests
   passing, refined active-copy stale-path scan with only product helper names
   left, restored whitespace-only generated `.mbti` churn from `moon info`, and
@@ -1871,12 +1871,12 @@ Completed slices:
   `moon check`, `moon test` with `1002/1002` tests passing, focused active
   setup/model/routine stale-path scan, cleanup of untracked test-created
   `.moonsuite` runtime output, and `git diff --check`.
-- Moontown central operator and architecture docs now describe executable-book
+- MoonTown central operator and architecture docs now describe executable-book
   events, MoonCode sidecars, processed sidecar ledgers, daemon state, watcher
   ledgers, book-template inboxes, book-quality artifacts, PlanBook autonomy,
   live digests, and town synthesis outputs under `.moonsuite/products/...`
   product homes instead of retired book-local or repo-local `.moonbook`,
-  `.moonclaw`, and `.moontown` roots. Validation for this slice: Moontown
+  `.moonclaw`, and `.moontown` roots. Validation for this slice: MoonTown
   `moon fmt`, `moon info`, `moon check`, `moon test` with `927/927` tests
   passing, focused central-doc stale-path scan with only the
   `com.vectie.moontown` launchd identifier false positive, restored
@@ -1899,21 +1899,21 @@ Completed slices:
   `moon fmt`, `moon info`, `moon check`, `moon test` with `199/199` tests
   passing, focused MoonBook docs stale-path scan with zero hits, and
   `git diff --check`.
-- Moontown Wenyu building/status/valley docs now describe protocol ledgers,
+- MoonTown Wenyu building/status/valley docs now describe protocol ledgers,
   watcher ledgers, daemon state, town-runtime projection, and backup scope
   under `.moonsuite/products/moontown/...` instead of the retired
-  repo-local `.moontown` root. Validation for this slice: Moontown `moon fmt`,
+  repo-local `.moontown` root. Validation for this slice: MoonTown `moon fmt`,
   `moon info`, `moon check`, `moon test` with `927/927` tests passing, focused
-  Moontown docs stale-path scan with only the `com.vectie.moontown` launchd
+  MoonTown docs stale-path scan with only the `com.vectie.moontown` launchd
   identifier false positive, restored whitespace-only generated `.mbti` churn
   from `moon info`, and `git diff --check`.
-- Moondesk Wiki-mode E2E test planning now routes backward-run MoonClaw
+- MoonDesk Wiki-mode E2E test planning now routes backward-run MoonClaw
   artifacts to `raw/analysis-runs` or the product-home jobs lane at
   `.moonsuite/products/moonclaw/jobs` instead of presenting retired
   `moonclaw-jobs` as an active inspection location. Validation for this slice:
   focused `docs/WIKI_MODE_TEST_PLAN.md` stale-path scan and `git diff --check`;
   broader residual scans still show intentional drift/regression fixtures in
-  MoonStat, MoonClaw, MoonBook, Moontown, and Moondesk tests.
+  MoonGate, MoonClaw, MoonBook, MoonTown, and MoonDesk tests.
 - MoonClaw active ACP, onboarding, gateway, proposal, model-selection, channel,
   and example-job docs now present `/path/to/MoonSuiteRoot` as the explicit
   suite root and place product runtime files under
@@ -1940,48 +1940,48 @@ Completed slices:
   `--home ~`, `home directory`, `user's home`, and `system's home`; MoonClaw
   `moon fmt`, `moon info`, `moon check`, `moon test`; cleanup of test-created
   untracked `.moonsuite` runtime output; and `git diff --check`.
-- MoonStat OpenClaw standalone workspace state now belongs to MoonStat's
+- MoonGate OpenClaw standalone workspace state now belongs to MoonGate's
   product home. The `/workspace/files...` and `/workspace/memory...` helpers
-  derive `.moonsuite/products/moonstat/openclaw/workspace` through MoonLib's
+  derive `.moonsuite/products/moongate/openclaw/workspace` through MoonLib's
   workspace-root product-artifact constructor instead of writing directly to
   `~/.moonsuite/openclaw/workspace`; white-box coverage now asserts the
   product-owned workspace and memory paths and rejects the old standalone
-  location. Validation for this slice: focused MoonStat OpenClaw workspace
+  location. Validation for this slice: focused MoonGate OpenClaw workspace
   stale-path scan, `moon fmt`, `moon info`, `moon check`, `moon test` with
   `775/775` tests passing, and `git diff --check`.
-- MoonStat-owned auth and gateway token stores now live under MoonStat's
+- MoonGate-owned auth and gateway token stores now live under MoonGate's
   product home. Codex OAuth credentials, Copilot credentials, and the Claude
   Desktop gateway token derive
-  `.moonsuite/products/moonstat/auth/...` through MoonLib workspace-root
+  `.moonsuite/products/moongate/auth/...` through MoonLib workspace-root
   product-artifact constructors instead of using top-level `~/.moonsuite`
   files; the external Codex CLI source credential at `.codex/auth.json`
   remains an external source-of-truth reader. Validation for this slice:
-  focused MoonStat auth/token stale-path scan, no generated `.mbti` changes,
+  focused MoonGate auth/token stale-path scan, no generated `.mbti` changes,
   `moon fmt`, `moon info`, `moon check`, `moon test` with `779/779` tests
   passing, cleanup of test-created untracked `.moonsuite` runtime output, and
   `git diff --check`.
-- Moondesk's optional MoonStat plugin now discovers MoonStat through the active
+- MoonDesk's optional MoonGate plugin now discovers MoonGate through the active
   workspace's suite-status contract instead of concatenating the operator home
   directory with `/.moonsuite/suite-status.json`. The plugin derives
   `.moonsuite/suite-status.json` from MoonLib's workspace-root suite
   constructor, keeps rejecting legacy shortcut status shapes, and has
   white-box coverage for suite-hosted book workspaces. Validation for this
-  slice: focused Moondesk MoonStat plugin stale-path scan, no generated
+  slice: focused MoonDesk MoonGate plugin stale-path scan, no generated
   `.mbti` changes, `moon fmt`, `moon info`, `moon check`, `moon test` with
   `459/459` tests passing, and `git diff --check`.
-- MoonClaw and Moontown now apply the same MoonStat plugin suite-status
-  discovery contract. Their optional MoonStat clients derive the active
+- MoonClaw and MoonTown now apply the same MoonGate plugin suite-status
+  discovery contract. Their optional MoonGate clients derive the active
   workspace's `.moonsuite/suite-status.json` path through MoonLib instead of
   reading `$HOME/.moonsuite/suite-status.json`, with white-box coverage for
   suite-hosted book workspaces and stale-path scans limited to canonical test
   expectations. Validation for this slice: MoonClaw `moon fmt`, `moon info`,
   `moon check`, `moon test` with `1003/1003` tests passing and cleanup of
-  test-created untracked `.moonsuite` runtime output; Moontown `moon fmt`,
+  test-created untracked `.moonsuite` runtime output; MoonTown `moon fmt`,
   `moon info` with unrelated whitespace-only `.mbti` churn restored,
   `moon check`, `moon test` with `928/928` tests passing; focused plugin
   stale-path scans; and `git diff --check` in both repos.
-- MoonBook's optional MoonStat plugin now uses the same MoonLib-derived
-  suite-status discovery path as Moondesk, MoonClaw, and Moontown. The plugin
+- MoonBook's optional MoonGate plugin now uses the same MoonLib-derived
+  suite-status discovery path as MoonDesk, MoonClaw, and MoonTown. The plugin
   reads the active workspace's `.moonsuite/suite-status.json` instead of
   deriving `$HOME/.moonsuite/suite-status.json`, with white-box coverage for
   suite-hosted book workspaces and a focused stale-path scan limited to the
@@ -1989,7 +1989,7 @@ Completed slices:
   `moon info` with no generated `.mbti` changes, `moon check`, `moon test`
   with `200/200` tests passing, and `git diff --check`. The MoonBook push also
   reconciled Gitee's older divergent `main` without keeping legacy
-  `moon.mod.json` or the stale singular `plugin/moonstat` directory.
+  `moon.mod.json` or the stale singular `plugin/moongate` directory.
 - MoonFish suite-status references now use structured path construction for
   the active MoonSuite state file. The model helper derives
   `.moonsuite/suite-status.json` with MoonLib `state_dir` plus `pathx.join`
@@ -2000,21 +2000,21 @@ Completed slices:
   status-path scan, `moon fmt`, `moon info` with unrelated whitespace-only
   `.mbti` churn restored, `moon check`, `moon test` with `145/145` tests
   passing, and `git diff --check`.
-- Moondesk's MoonCode and executable-book architecture docs no longer show
+- MoonDesk's MoonCode and executable-book architecture docs no longer show
   book-local `.moonclaw/mooncode/sessions` as the durable layout. The current
   docs describe native MoonCode session sidecars under the selected
   MoonSuite root's MoonClaw product home at
   `.moonsuite/products/moonclaw/mooncode/sessions/...`, keeping the public
   architecture guidance aligned with the runtime contract used by MoonClaw and
-  Moondesk projections. Validation for this slice: focused stale-layout doc
-  scan, Moondesk `moon test` with `459/459` tests passing, and
+  MoonDesk projections. Validation for this slice: focused stale-layout doc
+  scan, MoonDesk `moon test` with `459/459` tests passing, and
   `git diff --check`.
-- Moontown's top-level README no longer advertises retired
+- MoonTown's top-level README no longer advertises retired
   `.moontown/civic/...` schedule, scenario, or pattern-run paths. The operator
-  quickstart now matches the rest of the Moontown civic docs and runtime
+  quickstart now matches the rest of the MoonTown civic docs and runtime
   helpers by pointing communication-pattern state at
   `.moonsuite/products/moontown/civic/...`. Validation for this slice: focused
-  README stale-path scan and `git diff --check` in Moontown and Moondesk.
+  README stale-path scan and `git diff --check` in MoonTown and MoonDesk.
 - MoonClaw's todo tool coverage no longer renders `.moonclaw/repos/...` as an
   example repository inspection target in user-visible todo output. The fixture
   now uses the MoonClaw product home at
@@ -2023,11 +2023,11 @@ Completed slices:
   legacy-reader fixtures. Validation for this slice: focused MoonClaw
   todo/operator-output stale-path scan, `moon fmt`, `moon info`, `moon check`,
   `moon test`, and `git diff --check`.
-- MoonStat's suite integration JSON no longer advertises home-global
+- MoonGate's suite integration JSON no longer advertises home-global
   `~/.moonsuite/products/moonclaw/...` candidates for MoonClaw model and config
   files. The MoonClaw integration now exposes only the active workspace-root
   product-home paths derived through MoonLib, and coverage rejects the old
-  home-global candidates. Validation for this slice: focused MoonStat
+  home-global candidates. Validation for this slice: focused MoonGate
   `~/.moonsuite/products/moonclaw` scan, `moon fmt`, `moon info`, `moon check`,
   `moon test`, cleanup of test-created untracked `.moonsuite` output, and
   `git diff --check`.
@@ -2078,18 +2078,18 @@ Completed slices:
   update`, `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
   product-status `product_dir` scan, generated-interface churn restore, and
   `git diff --check`.
-- Moondesk now consumes MoonLib `0.1.4` in its internal MoonWiki MoonSuite
+- MoonDesk now consumes MoonLib `0.1.4` in its internal MoonWiki MoonSuite
   facade. Workspace-derived product home and service paths resolve through
   `@moonsuite.product_home_for_workspace_root`, while the direct suite-root
   product-directory wrapper remains only for preparing product directories in
-  an already-selected suite root. Validation for this slice: Moondesk `moon
+  an already-selected suite root. Validation for this slice: MoonDesk `moon
   update`, `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
   facade primitive-formula scan, and `git diff --check`.
-- Moontown now consumes MoonLib `0.1.4` in its storage facade. Product state,
+- MoonTown now consumes MoonLib `0.1.4` in its storage facade. Product state,
   service, and temp path helpers derive from
   `@moonsuite.product_home_for_workspace_root`, while arbitrary product
   artifacts stay on the existing MoonLib artifact constructor. Validation for
-  this slice: Moontown `moon update`, `moon fmt`, `moon info`, `moon check`,
+  this slice: MoonTown `moon update`, `moon fmt`, `moon info`, `moon check`,
   full `moon test`, focused storage primitive-formula scan,
   generated-interface churn restore, and `git diff --check`.
 - MoonClaw now consumes MoonLib `0.1.4` for its active product-home facade and
@@ -2100,12 +2100,12 @@ Completed slices:
   MoonClaw `moon update`, `moon fmt`, `moon info`, `moon check`, full
   `moon test`, focused primitive-constructor scan, generated-interface diff
   review, test-output cleanup, and `git diff --check`.
-- MoonStat now consumes MoonLib `0.1.4` for suite status and drift canonical
+- MoonGate now consumes MoonLib `0.1.4` for suite status and drift canonical
   product paths. Suite canonical product homes, MoonRobo suite-temp SDK paths,
   and legacy drift canonical targets now derive from MoonLib `ProductHome`
   fields instead of direct `product_dir`/`product_tmp_dir` formulas, and the
-  workspace-root MoonStat product-home helper uses the workspace-root
-  `ProductHome` constructor. Validation for this slice: MoonStat `moon update`,
+  workspace-root MoonGate product-home helper uses the workspace-root
+  `ProductHome` constructor. Validation for this slice: MoonGate `moon update`,
   `moon fmt`, `moon info`, `moon check`, full `moon test`, focused
   primitive-constructor scan, generated-interface diff review,
   test-output cleanup, and `git diff --check`.
@@ -2127,39 +2127,39 @@ Completed slices:
   MoonRobo `moon fmt`, `moon info`, `moon check`, full `moon test` (`453/453`),
   focused primitive-constructor scan, generated-interface churn restore, and
   `git diff --check`.
-- Moontown runtime, storage, and book-quality residuals now consume MoonLib
+- MoonTown runtime, storage, and book-quality residuals now consume MoonLib
   `ProductHome` fields directly. The PlanBook MoonClaw runtime adapter,
-  Moontown temp-dir assertion, and book-quality MoonClaw home helpers no longer
+  MoonTown temp-dir assertion, and book-quality MoonClaw home helpers no longer
   rebuild product state/temp homes through primitive constructors or empty
-  artifact paths. The remaining Moondesk MoonWiki suite-root facade also now
+  artifact paths. The remaining MoonDesk MoonWiki suite-root facade also now
   returns `ProductHome.state_path` instead of delegating to the primitive
-  product-dir constructor. Validation for this slice: Moontown `moon fmt`,
-  `moon info`, `moon check`, full `moon test` (`928/928`), Moondesk `moon fmt`,
+  product-dir constructor. Validation for this slice: MoonTown `moon fmt`,
+  `moon info`, `moon check`, full `moon test` (`928/928`), MoonDesk `moon fmt`,
   `moon info`, `moon check`, full `moon test` (`459/459`), generated-interface
   churn restore, `git diff --check`, and a cross-product `.mbt` scan proving
   zero remaining direct calls to `@moonsuite.product_dir`,
   `@moonsuite.product_tmp_dir`, or `@moonsuite.product_service_path` in the
   scanned product repos.
-- Moontown PlanBook runtime display text now routes product-home examples
+- MoonTown PlanBook runtime display text now routes product-home examples
   through a storage-owned display helper instead of hand-written
   `.moonsuite/products/moontown/...` literals. `storage` now exposes
   `moontown_product_display_artifact` for relative documentation/operator
   strings, and PlanBook autonomy digest, repair-plan, UI-spine, and validation
-  next-action text use that helper. Validation for this slice: Moontown
+  next-action text use that helper. Validation for this slice: MoonTown
   `moon fmt`, `moon info`, `moon check`, full `moon test` (`928/928`),
   generated-interface diff review for the intentional storage API addition,
   generated-interface churn restore, `git diff --check`, and a focused
   PlanBook/runtime storage scan proving zero remaining hard-coded
   `.moonsuite/products/moontown` strings in non-test MoonBit source for those
   packages.
-- Moontown native cookbook, civic, and book-quality display text now also
+- MoonTown native cookbook, civic, and book-quality display text now also
   routes product-home examples through storage-owned display helpers.
   `storage` exposes `moontown_product_display_state_dir` for product-home root
   references, the cookbook package has local formatting helpers backed by
   storage, and cookbook stable-state manifests/pages, civic protocol ledger
   text, and book-quality packet readme text no longer hand-write
   `.moonsuite/products/moontown/...` literals. Validation for this slice:
-  Moontown `moon fmt`, `moon info`, `moon check`, full `moon test` (`928/928`),
+  MoonTown `moon fmt`, `moon info`, `moon check`, full `moon test` (`928/928`),
   generated-interface diff review for the intentional storage API addition,
   generated-interface churn restore, `git diff --check`, a focused native
   package scan proving zero remaining hard-coded `.moonsuite/products/moontown`
@@ -2167,13 +2167,13 @@ Completed slices:
   MoonBit source, and a broader remaining-source scan showing the remaining
   active display literals are isolated to PlanBook/editor template text and the
   Rabbita-town JS UI package.
-- Moontown PlanBook/editor template packages and the Rabbita-town JS UI package
-  now clear the remaining active Moontown product-home display literals.
+- MoonTown PlanBook/editor template packages and the Rabbita-town JS UI package
+  now clear the remaining active MoonTown product-home display literals.
   PlanBook/editor native template text uses the storage-owned display helper;
   `editor_pipeline` and `planbook_policy` declare native targets after the
   storage dependency. The JS UI package keeps a local pure-string display helper
   because the browser target cannot depend on native storage. Validation for
-  this slice: Moontown `moon fmt`, `moon info`, `moon check`, full `moon test`
+  this slice: MoonTown `moon fmt`, `moon info`, `moon check`, full `moon test`
   (`928/928`), generated-interface churn restore, `git diff --check`, and an
   active non-test MoonBit source scan proving the only remaining
   `.moonsuite/products/moontown` literal is the UI helper's single source of
@@ -2194,45 +2194,45 @@ Completed slices:
   contract: `product_display_dir`, `product_display_artifact`, and
   `product_display_absolute_artifact`. The helper separates user-facing
   relative contract strings from root-sensitive runtime `ProductHome` paths.
-  Moondesk now consumes the shared helper through `core` and routes MoonClaw
-  job paths, Moontown bridge paths, Moondesk trash paths, PDF watch Moontown
+  MoonDesk now consumes the shared helper through `core` and routes MoonClaw
+  job paths, MoonTown bridge paths, MoonDesk trash paths, PDF watch MoonTown
   publish metadata, and MoonCode contract text through it. MoonRobo's
   product-status display helper now delegates to the MoonLib contract instead
   of owning the formula locally. Validation for this slice: MoonLib clean
   worktree `moon fmt`, `moon info`, `moon check`, full `moon test` (`37/37`),
-  `moon publish` for `vectie/moonlib@0.1.5`, Moondesk `moon fmt`, `moon info`,
+  `moon publish` for `vectie/moonlib@0.1.5`, MoonDesk `moon fmt`, `moon info`,
   `moon check`, full `moon test` (`459/459`), MoonRobo `moon fmt`,
   `moon info`, `moon check`, full `moon test` (`453/453`), generated-interface
   diff review/churn restore, `git diff --check`, and focused active-source
-  scans proving Moondesk has zero `.moonsuite/products` literals while MoonRobo
+  scans proving MoonDesk has zero `.moonsuite/products` literals while MoonRobo
   has zero `.moonsuite/products/moonrobo` literals and no MoonLib `0.1.4` pin.
 - The remaining clean product repos now consume MoonLib `0.1.5` for this
-  display-contract slice. Moontown storage and Rabbita-town display helpers
+  display-contract slice. MoonTown storage and Rabbita-town display helpers
   delegate to `product_display_dir` / `product_display_artifact`, and the
   MoonClaw run/evidence bridge uses MoonLib display helpers for MoonClaw job
   paths. MoonClaw MoonCode session display text, ACP help text, daemon/job
   capability text, rules output, and skills/daemon comments now route through
   the shared display contract or avoid hand-written product-home paths.
-  MoonStat command help derives the MoonClaw providers path through MoonLib.
+  MoonGate command help derives the MoonClaw providers path through MoonLib.
   MoonBook extension tests now assert expected MoonClaw product paths through
   MoonLib constructors. MoonFish, MoonMoon, and Lepusa were upgraded to the
   same dependency version so the clean suite-wide consumers are aligned on the
-  published contract. Validation for this slice: Moontown `moon fmt`,
+  published contract. Validation for this slice: MoonTown `moon fmt`,
   `moon info`, `moon check`, full `moon test` (`928/928`), MoonClaw
   `moon fmt`, `moon info`, `moon check`, full `moon test` (`1005/1005`),
-  MoonStat
+  MoonGate
   `moon fmt`, `moon info`, `moon check`, full `moon test` (`779/779`),
   MoonBook `moon fmt`, `moon info`, `moon check`, full `moon test`
   (`200/200`), MoonFish `moon fmt`, `moon info`, `moon check`, full
   `moon test` (`145/145`), MoonMoon `moon fmt`, `moon info`, `moon check`,
   full `moon test` (`143/143`) with the existing two unused-value warnings,
   Lepusa `moon fmt`, `moon info`, `moon check`, full `moon test` (`374/374`),
-  generated-interface churn review/restore, MoonClaw/MoonStat test-output
+  generated-interface churn review/restore, MoonClaw/MoonGate test-output
   cleanup, `git diff --check`, a clean touched-repo stale-pin scan for
-  `vectie/moonlib@0.1.4` and older, and active-source scans proving Moontown
+  `vectie/moonlib@0.1.4` and older, and active-source scans proving MoonTown
   and MoonClaw have no raw `.moonsuite/products` literals outside tests and
   generated interfaces.
-- Moontown now has an explicit `MOONTOWN_SUITE_ROOT` fresh-suite override for
+- MoonTown now has an explicit `MOONTOWN_SUITE_ROOT` fresh-suite override for
   CLI product writers, and its default MoonBook workspace roots derive from the
   same active suite root. This aligns command-line writer behavior with the
   folder-selected VFS model instead of relying on the process cwd. The new
@@ -2259,9 +2259,9 @@ Remaining high-priority product slices:
   MoonFish, MoonMoon, and MoonChat now cover both explicit and inferred
   book-root layouts in unit tests and fresh-suite smokes. Current product-repo
   pin gates expect all MoonLib consumers to use `vectie/moonlib@0.1.8`:
-  Moondesk, MoonRobo, Moontown, MoonClaw, MoonStat, MoonBook, MoonFish,
+  MoonDesk, MoonRobo, MoonTown, MoonClaw, MoonGate, MoonBook, MoonFish,
   MoonMoon, MoonChat, and Lepusa.
-- MoonStat: Phase 8 drift coverage for the known legacy product homes,
+- MoonGate: Phase 8 drift coverage for the known legacy product homes,
   repo-local runtimes, and MoonRobo global temp files is now covered. Keep
   consuming MoonLib contracts for workspace validation, health projection, and
   future drift additions, but do not add a parallel path schema there. The
@@ -2269,7 +2269,7 @@ Remaining high-priority product slices:
   from the MoonLib workspace-root product-artifact helper, matching MoonClaw's
   current durable product-home contract. Suite status canonical paths and
   legacy-drift canonical targets now consume MoonLib `ProductHome` fields
-  directly. The next MoonStat cleanup slice makes drift-report suite roots
+  directly. The next MoonGate cleanup slice makes drift-report suite roots
   workspace-root aware as well: passing `books/<book-id>` now normalizes back to
   the owning suite root before canonical paths and product artifacts are
   reported, while the global temp root remains a plain trimmed temp root.
@@ -2284,37 +2284,37 @@ Remaining high-priority product slices:
   remaining work should focus on new drift coverage rather than local
   product-home formula cleanup. The canonical drift payload now also exposes
   the full first-party product-home set for
-  Moondesk, MoonBook, MoonWiki, MoonCode, MoonStat, MoonClaw, Moontown,
+  MoonDesk, MoonBook, MoonWiki, MoonCode, MoonGate, MoonClaw, MoonTown,
   MoonRobo, MoonFish, MoonMoon, MoonChat, MoonVis, Bookkeeper, Lepusa, and
   Rabbita through MoonLib-derived paths, so downstream validators can compare
   every product against one contract report. MoonLib's default product registry
   now also includes MoonChat and MoonVis, closing the gap where those products
-  had fresh product-home smoke gates and MoonStat drift reporting but were not
+  had fresh product-home smoke gates and MoonGate drift reporting but were not
   present in the shared registry list. The registry update is published in
-  MoonLib `0.1.6`, and Moondesk now consumes that version so its fresh
+  MoonLib `0.1.6`, and MoonDesk now consumes that version so its fresh
   workspace serve-prep test asserts explicit MoonChat and MoonVis registry
   entries instead of count-only coverage. The touched product-repo pin scan now
-  reports only MoonLib `0.1.6` across Moondesk, MoonRobo, Moontown, MoonClaw,
-  MoonStat, MoonBook, MoonFish, MoonMoon, MoonChat, and Lepusa. The first clean
-  sibling consumer batch pushed Moontown `main` commit `30701910`, MoonRobo
+  reports only MoonLib `0.1.6` across MoonDesk, MoonRobo, MoonTown, MoonClaw,
+  MoonGate, MoonBook, MoonFish, MoonMoon, MoonChat, and Lepusa. The first clean
+  sibling consumer batch pushed MoonTown `main` commit `30701910`, MoonRobo
   `moondata` commit `e072f398`, MoonBook `main` commit `0a7458a`, MoonFish
   `main` commit `8c91614`, MoonMoon `main` commit `eafebca5`, and Lepusa
-  `main` commit `c402ad2`. The final stale-pin batch pushed MoonStat `main`
+  `main` commit `c402ad2`. The final stale-pin batch pushed MoonGate `main`
   commit `65286de` and MoonClaw `main` commit `cb88edc1` to both their tracking
   origins and GitHub mirrors. MoonChat `main` commit `fcc229b` carries the same
   pin locally, but that checkout has no configured remote and
   `git ls-remote git@github.com:vectie/moonchat.git` reports the repository is
   unavailable, so it still needs a publish destination before it can be pushed.
   `scripts/validate_moonlib_consumer_pins.sh` now makes this product-repo pin
-  audit repeatable from Moondesk and fails if any touched consumer drifts away
+  audit repeatable from MoonDesk and fails if any touched consumer drifts away
   from the expected MoonLib version.
-- MoonStat commit `7edaf0d` removes the remaining cwd-local Warp temporary
+- MoonGate commit `7edaf0d` removes the remaining cwd-local Warp temporary
   launch script pattern. Warp resume scripts now derive their directory from
-  MoonLib's workspace-root MoonStat product home and are written under
-  `.tmp/products/moonstat/warp`, including when the selected cwd is
-  `books/<book-id>`. Validation passed with MoonStat `moon fmt`, `moon info`,
+  MoonLib's workspace-root MoonGate product home and are written under
+  `.tmp/products/moongate/warp`, including when the selected cwd is
+  `books/<book-id>`. Validation passed with MoonGate `moon fmt`, `moon info`,
   `moon check --target native --diagnostic-limit 80`, full
-  `moon test --target native` (`780/780`), `git diff --check`, the Moondesk
+  `moon test --target native` (`780/780`), `git diff --check`, the MoonDesk
   residual guard, the MoonLib consumer-pin guard, and the full cross-product
   `scripts/fresh_suite_product_smoke.sh` gate.
 - MoonClaw: commit `3a6aeaa3` moves the daemon/UI discovery path onto the
@@ -2333,62 +2333,62 @@ Remaining high-priority product slices:
   this slice: stale `@maria/core` imports in the core/native renderer packages,
   missing `node` type roots in native, and unresolved `@moonclaw/core`
   workspace package aliases in native/VSC package-local `tsc` runs.
-- Moondesk: MoonCode session/event sidecars and the Moontown bridge
+- MoonDesk: MoonCode session/event sidecars and the MoonTown bridge
   request/dispatch ledgers now derive from MoonLib workspace-root helpers, and
-  MoonClaw job roots plus Moondesk daemon/preference state now resolve through
+  MoonClaw job roots plus MoonDesk daemon/preference state now resolve through
   the owning suite instead of nested book-local `.moonsuite` directories. Trash
   file and receipt coverage now proves the same suite-root behavior for direct
   Desk and HTTP flows. The internal MoonWiki layout facade now consumes
   MoonLib `ProductHome` for suite-root and workspace-derived product home and
-  service paths. Moondesk `core` now exposes MoonLib-backed product display
+  service paths. MoonDesk `core` now exposes MoonLib-backed product display
   helpers plus suite-root and books-root helpers, and active
   MoonWiki/MoonCode/MoonBook adapter product-home display strings route
-  through that shared contract. Moondesk `core` now also centralizes the
+  through that shared contract. MoonDesk `core` now also centralizes the
   MoonLib-derived `.moonsuite` and `.tmp` internal relative-path policy used by
   source-layer inference, HTTP path resolution, Desk listing hides, and Desk
   create-route protection. The Rabbita Desk UI now derives the visible
   MoonSuite root and MoonBook library path through those core/MoonLib helpers
   instead of parsing or appending `/books` inside the frontend state layer.
-  The current Moondesk MoonBit scan has zero quoted
+  The current MoonDesk MoonBit scan has zero quoted
   `.moontown`/`.moonclaw` literals, zero active old-path file-operation hits,
   and zero active `.moonsuite/products` literals outside generated interfaces
-  and tests. Moondesk serve-prep coverage now also asserts a fresh workspace
+  and tests. MoonDesk serve-prep coverage now also asserts a fresh workspace
   creates the full first-party MoonLib registry, including MoonChat and MoonVis,
   and does not recreate stale suite-root product homes such as `.moondesk`,
   `.moonbook`, `.mooncode`, `.moonchat`, `.moonvis`, `.lepusa`, or `.rabbita`.
   The new `scripts/fresh_suite_product_smoke.sh` gate runs the
-  Moontown, MoonClaw, MoonBook, MoonRobo, MoonFish, MoonMoon, MoonChat,
-  MoonVis, and Lepusa fresh-suite smoke scripts from one Moondesk command,
+  MoonTown, MoonClaw, MoonBook, MoonRobo, MoonFish, MoonMoon, MoonChat,
+  MoonVis, and Lepusa fresh-suite smoke scripts from one MoonDesk command,
   giving the migration a single cross-product integration check for the main
   writer surfaces and product-home contracts already cut over to product homes.
   After the MoonLib `0.1.6` rollout, this full cross-product smoke gate passed
   end-to-end: each product-specific fresh-suite gate reported success and the
   Lepusa fresh-books/live bundle check completed with `Fresh MoonSuite product
   smoke passed`. The new `scripts/validate_fresh_suite_residuals.sh` Phase 8
-  guard now makes the active-source residual scan repeatable across Moondesk,
-  MoonRobo, Moontown, MoonClaw, MoonStat, MoonBook, MoonFish, MoonMoon,
+  guard now makes the active-source residual scan repeatable across MoonDesk,
+  MoonRobo, MoonTown, MoonClaw, MoonGate, MoonBook, MoonFish, MoonMoon,
   MoonChat, MoonVis, and Lepusa. It fails on unapproved quoted legacy hidden
-  product-home strings in production source while allowing MoonStat's drift
+  product-home strings in production source while allowing MoonGate's drift
   probes and the current negative regression assertions. The first run passed
   for all 11 scanned repositories, so the remaining residual work should be
   driven by deeper behavioral smoke coverage rather than broad hidden-home
   string cleanup.
   Remaining Phase 4 work should focus on cross-product residuals and any
   product-home display/API text that belongs in Phase 6 or Phase 7 rather than
-  Moondesk old-writer cleanup.
-  A later active-source scan moved the Moondesk Moontown snapshot adapter to
+  MoonDesk old-writer cleanup.
+  A later active-source scan moved the MoonDesk MoonTown snapshot adapter to
   MoonLib workspace-root product-artifact helpers as well, so selecting a
   `books/<book-id>` root now resolves town snapshots, daemon state, standing
   goals, and watcher directories through the owning suite product home instead
   of a nested book-local `.moonsuite/products/moontown`.
-  The Moondesk MoonWiki layout facade now also treats its suite-level helpers as
+  The MoonDesk MoonWiki layout facade now also treats its suite-level helpers as
   workspace-root aware: `moonsuite_root`, state, books, tmp, products,
   services, product registry, product directories, and suite manifest helpers
   normalize `books/<book-id>` roots through MoonLib before constructing paths.
   Workspace metadata and the shared core `moonsuite_books_root` wrapper now
   report the owning suite's `books/` and `.moonsuite/` paths for a selected
   book root instead of nested book-local suite state.
-  The next Moondesk boundary slice introduces an explicit MoonWiki
+  The next MoonDesk boundary slice introduces an explicit MoonWiki
   `WorkspaceContext` so root workspace API metadata and health responses derive
   requested root, suite root, books root, state dir, tmp root, and product
   registry path once before presenting them to Phase 6 API and Phase 7 UI
@@ -2397,38 +2397,38 @@ Remaining high-priority product slices:
   verification, app-tool portable discovery/export, and book standing-goal sync
   onto that context-owned book-root contract. These routes now accept either a
   suite root or selected `books/<book-id>` root and write/read sibling books and
-  Moontown state through the owning suite instead of recomputing local
+  MoonTown state through the owning suite instead of recomputing local
   `books/` paths per handler.
-  The broad replacement sweep then moved the remaining Moondesk MoonCode,
-  MoonClaw daemon, Moontown analytics/events/requests, daemon lifecycle,
+  The broad replacement sweep then moved the remaining MoonDesk MoonCode,
+  MoonClaw daemon, MoonTown analytics/events/requests, daemon lifecycle,
   LaunchAgent, template-registry, runtime-support, review fallback, server, and
   HTTP file-resolution edges away from local `workspace_root` normalization.
   Route handlers now either derive the owning suite through `WorkspaceContext`
   or deliberately use the requested workspace root for file operations scoped
   to the selected workspace.
-- Moontown: remaining Phase 5 work should focus on any product-owned residual
-  writers discovered by new smoke coverage; the programmatic Rabbita/Moondesk
+- MoonTown: remaining Phase 5 work should focus on any product-owned residual
+  writers discovered by new smoke coverage; the programmatic Rabbita/MoonDesk
   contract, full Desk browser smoke, Lepusa-native fresh-books smoke, and
   launchd product-home script path are now covered. The MoonCode sidecar
   processed-result ledger and MoonBook fallback checkout path are now
   product-home based, and the active MoonClaw command/book-quality/preseed,
   run polling, plus PlanBook repair/editor feature-selection MoonClaw home
   flows now use MoonLib-backed MoonClaw product homes instead of `.moonclaw`.
-  The storage facade now derives Moontown product state, service, and temp
+  The storage facade now derives MoonTown product state, service, and temp
   paths from MoonLib `ProductHome`; the PlanBook runtime adapter and
   book-quality MoonClaw homes now also derive through MoonLib `ProductHome`
   fields. PlanBook runtime operator/display strings now use the storage-owned
-  product display helper for Moontown product artifacts. Native cookbook,
+  product display helper for MoonTown product artifacts. Native cookbook,
   civic, book-quality, PlanBook/editor template, and Rabbita-town UI display
   strings also route through MoonLib-backed storage-owned or package-local
   display helpers. Civic service result routing now delegates suite-hosted
   MoonBook detection to a storage helper backed by MoonLib workspace-root
   normalization instead of matching raw `books/` substrings inside the civic
   package.
-  Moontown CLI writers now honor `MOONTOWN_SUITE_ROOT`, default MoonBook roots
+  MoonTown CLI writers now honor `MOONTOWN_SUITE_ROOT`, default MoonBook roots
   derive from that active suite root, and a fresh-suite writer smoke gate covers
   representative product-owned PlanBook, course, cookbook, book-quality, and
-  live-autonomy outputs. Remaining Moontown work should focus on newly
+  live-autonomy outputs. Remaining MoonTown work should focus on newly
   discovered product-owned residuals from deeper smoke coverage, not local
   product-home display formula cleanup.
   The MoonClaw run polling store now uses the MoonLib workspace-root

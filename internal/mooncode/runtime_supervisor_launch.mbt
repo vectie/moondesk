@@ -221,14 +221,14 @@ pub fn runtime_supervisor_launch_packet(
           host_base_url,
           "/api/mooncode/sessions/\{session_id}/readiness",
         ),
-        "purpose": "Fetch session readiness telemetry after replay/eval/package evidence so the runtime and Moondesk agree on remaining blockers.",
+        "purpose": "Fetch session readiness telemetry after replay/eval/package evidence so the runtime and MoonDesk agree on remaining blockers.",
       },
     ],
     "turn_packet": turn_packet,
     "runtime_consumer": runtime_consumer,
     "tool_contract": tool_contract_json(),
     "tool_call_contract": tool_call_contract_json(),
-    "safety_boundary": "This launch packet is declarative. Moondesk may expose it and persist it, but MoonClaw must own model calls, tool execution, path policy, approvals, tests, diffs, packaging, cancellation, and final acknowledgement.",
+    "safety_boundary": "This launch packet is declarative. MoonDesk may expose it and persist it, but MoonClaw must own model calls, tool execution, path policy, approvals, tests, diffs, packaging, cancellation, and final acknowledgement.",
     "standalone_component": "mooncode",
   }
   rq_json_with_field(

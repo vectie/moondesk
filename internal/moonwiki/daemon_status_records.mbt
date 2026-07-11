@@ -18,11 +18,11 @@ async fn daemon_status_record(root : String, action : String) -> Json {
     status~,
     running~,
     message=if running {
-      "Moontown daemon is running"
+      "MoonTown daemon is running"
     } else if pid > 0 {
-      "Moontown daemon is not running"
+      "MoonTown daemon is not running"
     } else {
-      "Moontown daemon has not been started by Moondesk"
+      "MoonTown daemon has not been started by MoonDesk"
     },
     pid~,
     command=json_string(

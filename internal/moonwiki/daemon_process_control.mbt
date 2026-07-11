@@ -10,7 +10,7 @@ async fn start_managed_daemon(
       action,
       ok=false,
       status="not-configured",
-      message="Moontown daemon service is not configured for this workspace",
+      message="MoonTown daemon service is not configured for this workspace",
     )
   }
   let current = daemon_status_record(root, "status")
@@ -21,7 +21,7 @@ async fn start_managed_daemon(
       ok=true,
       status="already-running",
       running=true,
-      message="Moontown daemon is already running",
+      message="MoonTown daemon is already running",
       pid=json_int(current, "pid", default=0),
       started_at=json_string(current, "started_at", default=""),
       stdout_path=json_string(current, "stdout_path", default=""),
@@ -89,7 +89,7 @@ async fn start_managed_daemon(
         action,
         ok=false,
         status="failed",
-        message="Could not start Moontown daemon: \{error}",
+        message="Could not start MoonTown daemon: \{error}",
       )
   }
   @async.sleep(150)
@@ -101,9 +101,9 @@ async fn start_managed_daemon(
     status=if running { "running" } else { "exited" },
     running~,
     message=if running {
-      "Moontown daemon started"
+      "MoonTown daemon started"
     } else {
-      "Moontown daemon exited immediately"
+      "MoonTown daemon exited immediately"
     },
     pid~,
     command~,
@@ -131,7 +131,7 @@ async fn stop_managed_daemon(
       "stop",
       ok=true,
       status="stopped",
-      message="Moontown daemon is not running",
+      message="MoonTown daemon is not running",
       pid~,
       command=json_string(
         current,
@@ -172,12 +172,12 @@ async fn stop_managed_daemon(
       if running {
         "Stop signal sent; daemon is still shutting down"
       } else if escalated {
-        "Moontown daemon stopped after SIGKILL"
+        "MoonTown daemon stopped after SIGKILL"
       } else {
-        "Moontown daemon stopped"
+        "MoonTown daemon stopped"
       }
     } else {
-      "Could not signal Moontown daemon"
+      "Could not signal MoonTown daemon"
     },
     pid~,
     command=json_string(

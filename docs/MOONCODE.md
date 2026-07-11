@@ -9,11 +9,11 @@ MoonCode = edit what the book can do
 ```
 
 Both modes operate on the same MoonBook. MoonCode should not become a separate
-truth store, an automation console, or a hidden runtime inside Moondesk.
+truth store, an automation console, or a hidden runtime inside MoonDesk.
 
 ## Product Boundary
 
-Moondesk owns the desktop experience:
+MoonDesk owns the desktop experience:
 
 - select the MoonBook and MoonCode session
 - render chat, streams, diffs, tests, packages, and review controls
@@ -29,10 +29,10 @@ MoonClaw owns execution:
 - durable runtime sidecars under the selected MoonSuite root's MoonClaw product
   home
 
-MoonClaw must remain a standalone agent runtime. Moondesk should be able to
+MoonClaw must remain a standalone agent runtime. MoonDesk should be able to
 start, probe, and render it, but the runtime must also be useful to a CLI,
-Moontown worker, or future standalone `mooncode` app without importing
-Moondesk internals.
+MoonTown worker, or future standalone `mooncode` app without importing
+MoonDesk internals.
 
 MoonBook owns durable outputs:
 
@@ -58,7 +58,7 @@ internal/mooncode
   command, stream, runtime, readiness, review, package, and session contracts
 
 internal/moonwiki
-  Moondesk HTTP surface, local file IO, MoonClaw probes, and persistence
+  MoonDesk HTTP surface, local file IO, MoonClaw probes, and persistence
 
 ui/rabbita-desk/main
   MoonCode screens and operator controls
@@ -66,7 +66,7 @@ ui/rabbita-desk/main
 
 This split is the standalone path. A standalone `mooncode` project should be
 able to reuse the protocol/runtime contracts without taking MoonWiki, Rabbita,
-or Moondesk desktop packaging.
+or MoonDesk desktop packaging.
 
 `mooncode/core` owns the stable event-lane vocabulary:
 
@@ -159,14 +159,14 @@ Final closure rule:
   numbered phase loop.
 - The native command execution/result contract now lives in `mooncode/core`
   because MoonClaw consumes that policy to execute commands without importing
-  Moondesk.
+  MoonDesk.
 - The runtime proof/evidence contract now lives in `mooncode/core` because
   MoonClaw, runtime replay, action plans, and standalone MoonCode all need the
   same proof vocabulary.
 - Keep stream/checkpoint responses, readiness/action-plan/session summaries,
   tool-authorization previews, engine status, runtime handoff packets, and
   conversation projection internals in `internal/mooncode`; they aggregate
-  Moondesk/MoonBook state or host-specific copy around core contracts.
+  MoonDesk/MoonBook state or host-specific copy around core contracts.
 - Do not add Phase 59 by default. Future shared-boundary work must first edit
   the final closure checklist in
   `docs/MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md`.
@@ -180,7 +180,7 @@ lifecycle, and model/tool loops. They should not share one vague task/chat API.
 - `MoonCode`: coding lane for executable book code, diffs, tests, packages, and
   proof artifacts.
 - `MoonWiki`: book-editing lane for human-language wiki/source/review changes.
-- `Moontown`: coordination lane for scheduling, book-to-book messages, and
+- `MoonTown`: coordination lane for scheduling, book-to-book messages, and
   standing goals.
 - Generic MoonClaw tasks: bounded background jobs for automation.
 
@@ -194,13 +194,13 @@ behind these contracts, not inside them.
 
 `mooncode/core` must stay source-path neutral. It may name stable component ids
 such as `mooncode.projection`, `moonwiki.host`, and `moonclaw.runtime`, but it
-must not name Moondesk internals, MoonWiki implementation packages, or a sibling
+must not name MoonDesk internals, MoonWiki implementation packages, or a sibling
 MoonClaw checkout path. Host-specific package paths belong in host projections
 such as `internal/mooncode/capabilities.mbt`.
 
 ## Desktop API
 
-Moondesk exposes MoonCode through `/api/mooncode`. This namespace is a desktop
+MoonDesk exposes MoonCode through `/api/mooncode`. This namespace is a desktop
 projection shell, not the runtime engine. Read routes accept both `GET` and
 `HEAD`; the route contract in `internal/mooncode/route_contracts.mbt` owns the
 full path and method surface. MoonCode router dispatch and `405 Method Not
@@ -288,7 +288,7 @@ GET  /v1/code/sessions/<id>/package-result
 POST /v1/code/sessions/<id>/package-result
 ```
 
-Moondesk may probe these endpoints and render their state. It should not expose
+MoonDesk may probe these endpoints and render their state. It should not expose
 MoonClaw's noninteractive automation API as the MoonCode product path.
 Durable runtime settlement is represented by claim/turn receipts in
 `runtime-receipts.jsonl`, not a separate runtime API.
@@ -296,7 +296,7 @@ Durable runtime settlement is represented by claim/turn receipts in
 The `/v1/code/sessions/<id>/commands` payload is part of the shared
 `mooncode/core` protocol. `native_command_body_required_fields()` and
 `native_command_body_supported_fields()` define the stable top-level command
-envelope so Moondesk producers and MoonClaw intake validation stay aligned
+envelope so MoonDesk producers and MoonClaw intake validation stay aligned
 from the same field contract.
 
 ## Durable Layout
@@ -334,7 +334,7 @@ books/<book-id>/
 ```
 
 MoonClaw may write runtime sidecars. MoonBook owns accepted review/package
-artifacts. Moondesk only joins paths, displays state, and persists desktop-side
+artifacts. MoonDesk only joins paths, displays state, and persists desktop-side
 records when needed.
 
 ## Command Model
@@ -363,7 +363,7 @@ GET /api/mooncode/sessions/<id>/readiness
 
 The response lists checks, evidence, first blocker, next action, and next
 owner. Missing evidence keeps a session blocked until MoonClaw, MoonBook, or
-Moondesk supplies the responsible artifact.
+MoonDesk supplies the responsible artifact.
 
 Chat readiness is proven by the backend canonical conversation projection, not
 by raw transcript-lane events. The `canonical_conversation` check passes only
@@ -415,7 +415,7 @@ MoonCode is complete when a user can:
    portable app-tools.
 10. Resume from durable session, command, and event logs.
 11. Extract the MoonCode protocol/runtime contracts without breaking MoonWiki
-    or Moondesk.
+    or MoonDesk.
 12. Prove every step in `mooncode-executable-book-lifecycle.v1` without relying
     on a specific desktop framework.
 

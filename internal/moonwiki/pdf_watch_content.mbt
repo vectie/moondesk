@@ -37,7 +37,7 @@ fn tool_watch_skill_markdown(topic : String) -> String {
     "",
     "Use this tool-watch skill to keep generated \{topic} miniapps synchronized with accepted Bookkeeper results.",
     "",
-    "- Treat `tool-manifest.json` as the Moontown-facing ToolBook manifest.",
+    "- Treat `tool-manifest.json` as the MoonTown-facing ToolBook manifest.",
     "- Rebuild `book/site/generated/tool.html` and `app/index.html` only from accepted source-screen, validation, and analysis artifacts.",
     "- Keep every visible record linked to its source URL.",
     "- Mark missing or mismatched extracted text explicitly; do not reuse unrelated source text.",
@@ -207,13 +207,13 @@ fn pdf_watch_handoff_record(
     "purpose": purpose,
     "book_root": book_root,
     "standing_goal": goal,
-    "created_by": "Moondesk",
+    "created_by": "MoonDesk",
     "output_contract": pdf_watch_output_contract_handoff(pattern_id),
     "expected_outputs": json_from_string_array(
       book_pattern_output_files(pattern_id),
     ),
     "handoff": {
-      "owner": "Moontown",
+      "owner": "MoonTown",
       "action": "schedule standing watch and dispatch bounded MoonClaw runs",
     },
   }

@@ -12,7 +12,7 @@ fn desktop_api_capabilities_json() -> Json {
     @desk.desktop_api_capability_contract().to_json(),
     ok=true,
     status="ready",
-    message="Moondesk desktop API route contract is published",
+    message="MoonDesk desktop API route contract is published",
     next_action="use_desktop_route_contract",
   )
 }

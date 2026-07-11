@@ -111,7 +111,7 @@ fn update_inbox_actions(
       )
     LoadSelectionIntoInbox => load_selection_into_inbox_action(model)
     SaveInboxNote => {
-      let title = trimmed_or(model.inbox_title, "Moondesk inbox note")
+      let title = trimmed_or(model.inbox_title, "MoonDesk inbox note")
       let content = trimmed_or(model.inbox_content, "Empty operator note.")
       (
         save_inbox_cmd(dispatch, model, title, content),
@@ -162,7 +162,7 @@ fn stage_selected_link_action(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   let title = "Context link - \{@desk.display_name(model.selected_path)}"
-  let content = "Linked Moondesk context\n\n" +
+  let content = "Linked MoonDesk context\n\n" +
     "- Workspace: \{workspace_name(model)}\n" +
     "- Path: \{model.selected_path}\n" +
     "- Layer: \{selected_layer(model)}\n"

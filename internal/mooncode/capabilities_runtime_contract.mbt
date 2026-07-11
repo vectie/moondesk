@@ -10,7 +10,7 @@ pub fn runtime_contract_json() -> Json {
     "standalone_component": "mooncode",
     "namespace_roles": [
       namespace_role(
-        "workspace_mode", "Moondesk MoonCode", "Human-facing coding/chat workspace beside MoonWiki; owns navigation, context selection, review controls, and status projection.",
+        "workspace_mode", "MoonDesk MoonCode", "Human-facing coding/chat workspace beside MoonWiki; owns navigation, context selection, review controls, and status projection.",
       ),
       namespace_role(
         "standalone_protocol", "mooncode.v1", "Portable command, session, stream, tool, review, and package contracts that can move out as a shared MoonCode protocol package.",
@@ -95,7 +95,7 @@ pub fn runtime_contract_json() -> Json {
         "finish produces a terminal review summary",
       ],
       "native_eval_report": native_eval_report_contract_json(),
-      "current_gap": "Moondesk exposes readiness gates and MoonClaw reports native baseline harness evidence; the remaining engine gap is broader autonomous model-backed planning across multi-turn coding work.",
+      "current_gap": "MoonDesk exposes readiness gates and MoonClaw reports native baseline harness evidence; the remaining engine gap is broader autonomous model-backed planning across multi-turn coding work.",
     },
   }
 }

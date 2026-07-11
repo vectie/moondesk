@@ -19,7 +19,7 @@ recovery behavior agree.
 ## User And Product Assumptions
 
 Primary user: a person who understands files, folders, and common desktop file
-managers but does not know Moondesk's storage layout, virtual source layers,
+managers but does not know MoonDesk's storage layout, virtual source layers,
 daemon names, product registry, or route contracts.
 
 Primary job: find, inspect, add, organize, and recover MoonBook material without

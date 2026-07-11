@@ -692,7 +692,7 @@ test "mooncode core owns runtime control contract" {
     ownership.contains("Unscoped runtime/progress/assistant/failure events"),
   )
   assert_true(
-    ownership.contains("Moondesk chat renders only mooncode_conversation turns"),
+    ownership.contains("MoonDesk chat renders only mooncode_conversation turns"),
   )
   assert_true(ownership.contains("must not rebuild visible chat rows"))
   assert_false(ownership.contains("internal/mooncode"))

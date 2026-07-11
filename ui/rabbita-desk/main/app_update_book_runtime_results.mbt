@@ -97,7 +97,7 @@ fn update_created_book_from_pattern(
       preview: None,
       preview_status: "loading published book",
       book_pattern_last_book_id: result.book_id,
-      book_pattern_status: "published \{result.book_id}; Moontown \{publish_status} via \{publish_config}; editable config \{operator_config}\{output_summary}; registered standing watch",
+      book_pattern_status: "published \{result.book_id}; MoonTown \{publish_status} via \{publish_config}; editable config \{operator_config}\{output_summary}; registered standing watch",
       dispatch_status: "created \{goal_id}",
     },
   )

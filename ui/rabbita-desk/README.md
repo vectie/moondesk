@@ -1,6 +1,6 @@
-# Moondesk Rabbita UI
+# MoonDesk Rabbita UI
 
-Browser-mode desktop shell for Moondesk. The shell includes Explorer, Search,
+Browser-mode desktop shell for MoonDesk. The shell includes Explorer, Search,
 Inbox, MoonCode, Town, Runs, and Settings activities. MoonCode talks to
 `/api/mooncode/*` for book-scoped coding sessions, while daemon/model inspection
 uses the host `/api/moonclaw/*` routes.

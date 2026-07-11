@@ -13,7 +13,7 @@ Raw MoonClaw events, command queues, receipts, runtime service lifecycle
 records, proof manifests, and stream checkpoints are diagnostic evidence. They
 must not be rendered as the chat transcript.
 
-The Rabbita/Moondesk browser path does not fetch, parse, checkpoint, or merge
+The Rabbita/MoonDesk browser path does not fetch, parse, checkpoint, or merge
 stream data into chat. It renders only the backend canonical session
 conversation plus unacknowledged local optimistic user turns.
 
@@ -38,7 +38,7 @@ MoonCode's stable behavior comes from one append path:
 - the renderer appends semantic transcript items instead of rebuilding order
   from multiple logs
 
-The backend owns durable canonical turns and Moondesk renders those turns.
+The backend owns durable canonical turns and MoonDesk renders those turns.
 
 ```json
 {
@@ -227,7 +227,7 @@ Exit tests:
 
 ## Phase 6 - Delete Stale Frontend Implementation
 
-Status: complete for the main Moondesk MoonCode frontend path; expanded by the
+Status: complete for the main MoonDesk MoonCode frontend path; expanded by the
 clean rebuild phase to remove the old pending-prompt model entirely.
 
 Work:
@@ -352,8 +352,8 @@ Work:
 
 - Move stable conversation DTOs into MoonLib.
 - Keep MoonCode-specific event normalization in MoonCode.
-- Keep MoonStat focused on analytics and health metrics, not chat ownership.
-- Publish the contract for MoonClaw, MoonCode, Moondesk, MoonRobo, MoonMoon,
+- Keep MoonGate focused on analytics and health metrics, not chat ownership.
+- Publish the contract for MoonClaw, MoonCode, MoonDesk, MoonRobo, MoonMoon,
   MoonFish, MoonTown, and future MoonSuite products.
 
 Current coverage:
@@ -361,11 +361,11 @@ Current coverage:
 - MoonLib `0.1.8` exposes `vectie/moonlib/conversation`.
 - The shared contract owns role order, required turn fields, identity fields,
   diagnostics rules, and the contract JSON envelope.
-- Moondesk imports MoonLib `0.1.8`.
+- MoonDesk imports MoonLib `0.1.8`.
 - `mooncode/core` delegates shared conversation contract data to MoonLib while
   keeping MoonCode-specific protocol/owner names local.
 - `scripts/validate_conversation_contract_rollout.sh` now guards the source
-  boundary across MoonLib, Moondesk, MoonRobo, MoonTown, MoonClaw, MoonStat,
+  boundary across MoonLib, MoonDesk, MoonRobo, MoonTown, MoonClaw, MoonGate,
   MoonBook, MoonFish, MoonMoon, MoonChat, MoonVis, and Lepusa.
 - `scripts/phase9_cutover_gates.sh full` now runs the shared-contract guard
   after the full migration wall, API smoke, browser smoke, and cross-product
@@ -429,14 +429,14 @@ Current coverage:
 
 ## Phase 12 - Canonical Native Event Ingestion
 
-Status: complete for the Moondesk backend projection path.
+Status: complete for the MoonDesk backend projection path.
 
 Work:
 
-- Import MoonClaw native sidecar/runtime evidence into Moondesk's append log
+- Import MoonClaw native sidecar/runtime evidence into MoonDesk's append log
   before projection.
 - Read session listing, event, stream, stream-state, preflight, and command
-  responses from Moondesk's canonical log.
+  responses from MoonDesk's canonical log.
 - Strip response-only projection DTOs from persisted session records.
 - Remove direct sidecar-as-transcript projection.
 
@@ -444,7 +444,7 @@ Current coverage:
 
 - sidecar events do not affect chat before import
 - repeated sync does not duplicate imported events
-- projection reads from the durable Moondesk event log
+- projection reads from the durable MoonDesk event log
 - persisted records do not cache `mooncode_events`, `mooncode_summary`, or
   `mooncode_conversation`
 
@@ -525,7 +525,7 @@ Status: complete for the backend normalization boundary.
 
 Work:
 
-- Classify accepted MoonClaw native runtime events after Moondesk normalization.
+- Classify accepted MoonClaw native runtime events after MoonDesk normalization.
 - Require chat/progress eligible native events to be command-scoped before they
   can be considered projection-safe.
 - Keep service lifecycle, watcher, usage, and runtime-loop records diagnostic.
@@ -543,7 +543,7 @@ Current coverage:
 
 ## Current Direction
 
-Phase 17 cuts normal Moondesk synchronization over to the native MoonClaw
+Phase 17 cuts normal MoonDesk synchronization over to the native MoonClaw
 runtime-events API. Direct product-home JSONL reads are no longer part of the
 regular app path; they are replaced by a daemon-owned `/v1/code/*` contract.
 
@@ -555,21 +555,21 @@ Current coverage:
   canonical append log
 - unsafe unscoped transcript/progress records stay in the diagnostic
   runtime-events report and cannot become durable chat
-- deterministic browser testing posts runtime evidence through Moondesk's public
+- deterministic browser testing posts runtime evidence through MoonDesk's public
   runtime-events route
 - the live smoke starts MoonClaw, posts native runtime evidence through
-  MoonClaw's endpoint, and verifies the Moondesk projection contract
+  MoonClaw's endpoint, and verifies the MoonDesk projection contract
 
 Phase 18 turns explicit tool-call execution into a deterministic native runtime
 gate. `runtime_tool_calls` now belongs to the durable command packet and the
-native MoonClaw command body, so Moondesk can ask MoonClaw to execute concrete
+native MoonClaw command body, so MoonDesk can ask MoonClaw to execute concrete
 work without relying on fallback prompt interpretation before the first
 assistant reply appears. The canonical conversation projection also treats a
 command-scoped native `finish` tool call with an `answer` as the assistant
 reply, then uses the generic finish result only to close the turn.
 
 Phase 19 adds the live multiturn service gate. It runs first, second, and third
-prompt turns through one Moondesk session and one real MoonClaw service path,
+prompt turns through one MoonDesk session and one real MoonClaw service path,
 then proves the canonical conversation remains append-only with distinct
 command ids and stable replies after each turn.
 
@@ -596,7 +596,7 @@ MoonClaw replies. A live failure smoke proves the first prompt remains queued on
 submit, the runtime-service call returns an error, and the next session fetch
 shows the same command id as a failed turn.
 
-Phase 23 makes runtime-service recovery event-backed. Moondesk still uses a
+Phase 23 makes runtime-service recovery event-backed. MoonDesk still uses a
 local `runtime-service.lease.json` file to single-flight duplicate starts, but
 that lease is now released by terminal runtime evidence instead of only by a
 timeout. Startup failures release it when `runtime_unavailable` is recorded, and
@@ -610,7 +610,7 @@ chat turns are now prompt-owned only; explicit `steer` and `cancel` remain
 durable control evidence surfaced by runtime-control and steering lifecycle
 projections. The runtime-control contract now names the native scheduler
 boundary: controls settle when MoonClaw reaches a runtime boundary or emits real
-abort evidence, not when Moondesk fabricates a chat row. The live
+abort evidence, not when MoonDesk fabricates a chat row. The live
 control-boundary smoke proves prompt -> deferred steer -> prompt -> dropped
 cancel leaves only the two prompt turns in `mooncode_conversation`.
 
@@ -690,7 +690,7 @@ The next scheduled phases are now explicit:
   the published route contract whether a method is accepted, instead of keeping
   raw method policy in every branch. Contract-backed 405 responses expose the
   same allowed-method list through `Allow` and JSON `allowed_methods`.
-- Phase 36: host-visible method contract. A fresh Moondesk HTTP smoke now
+- Phase 36: host-visible method contract. A fresh MoonDesk HTTP smoke now
   creates a real MoonCode session and verifies accepted `HEAD` behavior plus
   rejected read-only, POST-only, and mixed-route methods through the actual
   `405` response boundary.
@@ -719,7 +719,7 @@ The next scheduled phases are now explicit:
   use a shared backend helper for method checks and `405 Allow` responses. The
   stale `/api/town/control` branch is removed; the active route is
   `/api/town/dispatch`.
-- Phase 42: host-visible desktop API contract publication. Moondesk now serves
+- Phase 42: host-visible desktop API contract publication. MoonDesk now serves
   `GET/HEAD /api/desktop/capabilities` from the public core desktop API route
   contract, publishes generic `desktop_route_contracts` and
   `required_endpoints`, and the migration wall runs a live HTTP smoke that

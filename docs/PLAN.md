@@ -1,23 +1,23 @@
-# Moondesk Product Plan
+# MoonDesk Product Plan
 
 The canonical model is in
-[Executable Book Architecture](EXECUTABLE_BOOK_ARCHITECTURE.md). Moondesk is a
+[Executable Book Architecture](EXECUTABLE_BOOK_ARCHITECTURE.md). MoonDesk is a
 native human workspace for one selected executable MoonBook at a time.
 
 ```text
 MoonBook = durable executable book
 MoonWiki = edit what the book says
 MoonCode = edit what the book can do
-Moontown = coordinate books and scheduled work
+MoonTown = coordinate books and scheduled work
 MoonClaw = execute bounded runs and code sessions
 MoonLib = define shared MoonSuite filesystem contracts
-MoonStat = validate/report workspace health and contract drift
+MoonGate = validate/report workspace health and contract drift
 Bookkeeper = accept or reject proposed truth
 ```
 
 ## Thesis
 
-Moondesk should feel like a local research/coding studio: book files on the
+MoonDesk should feel like a local research/coding studio: book files on the
 left, active work in the center, run/context state on the right, and durable
 outputs at the bottom. It is a shell and projection layer, not another runtime.
 
@@ -26,17 +26,17 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 1. Select or create a MoonBook.
 2. Work in MoonWiki for prose, evidence, methods, reviews, and generated pages.
 3. Switch to MoonCode for interactive coding/chat on the same book.
-4. Route scheduled or cross-book work through Moontown.
+4. Route scheduled or cross-book work through MoonTown.
 5. Let MoonClaw execute bounded work and emit evidence.
 6. Review proposals through Bookkeeper before they become durable book truth.
 7. Publish generated pages, reports, tools, miniapps, or portable app-tools.
 
 ## Non-Goals
 
-- Do not hardcode domain-specific research workflows into Moondesk.
-- Do not make Moondesk own the MoonClaw runtime or model loop.
-- Do not hide MoonBook, Moontown, MoonClaw, and Bookkeeper ownership.
-- Do not make MoonStat the source of truth for filesystem contracts; shared
+- Do not hardcode domain-specific research workflows into MoonDesk.
+- Do not make MoonDesk own the MoonClaw runtime or model loop.
+- Do not hide MoonBook, MoonTown, MoonClaw, and Bookkeeper ownership.
+- Do not make MoonGate the source of truth for filesystem contracts; shared
   MoonSuite layout contracts belong in MoonLib.
 - Do not keep obsolete routes after the current contract replaces them.
 - Do not expose platform concepts as the primary navigation when Book, Wiki,
@@ -89,19 +89,19 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 
 - show standing goals, request ledger, town messages, progress, review queue,
   and notifications
-- submit recurring or one-shot book work to Moontown
+- submit recurring or one-shot book work to MoonTown
 - keep book-to-book communication and idea routing visible
 
 ### Daemon And Native Shell
 
 - run as a native window app
-- supervise the local Moondesk host and configured MoonClaw/Moontown daemons
+- supervise the local MoonDesk host and configured MoonClaw/MoonTown daemons
 - expose LaunchAgent/install/status controls where appropriate
 - keep browser development in `serve`/`desktop`; app packaging is Lepusa-only
 
 ## Data Contracts
 
-Keep Moondesk-facing records small and stable:
+Keep MoonDesk-facing records small and stable:
 
 ```text
 DeskWorkspace
@@ -124,16 +124,16 @@ Detailed protocol contracts belong in [MoonCode Workspace](MOONCODE.md) and
 package-generated `.mbti` files. The code-mode end-to-end testing strategy is
 tracked in [Code Mode Test Plan](CODE_MODE_TEST_PLAN.md).
 
-MoonSuite filesystem contracts belong in MoonLib. Moondesk should use MoonLib
+MoonSuite filesystem contracts belong in MoonLib. MoonDesk should use MoonLib
 for suite root discovery, product registry records, product-home paths, suite
 temp paths, and book path construction. During migration, local helpers may
-exist only as thin adapters over MoonLib. MoonStat should consume the same
+exist only as thin adapters over MoonLib. MoonGate should consume the same
 MoonLib contracts to audit workspace health and legacy-path drift; it should
 not define the contract.
 
 Contract ownership rule: any MoonSuite path, registry, manifest, artifact
 class, or book-root constructor that more than one product needs must be added
-to MoonLib first. MoonStat may validate that the constructor is being followed,
+to MoonLib first. MoonGate may validate that the constructor is being followed,
 report drift, and project health/status, but it must not become a required
 dependency for products that only need filesystem contracts.
 
@@ -142,19 +142,19 @@ dependency for products that only need filesystem contracts.
 - reads stay under configured roots
 - writes stay under selected book/workspace roots
 - imports land in inbox/staging first
-- execution is delegated to MoonClaw or Moontown
+- execution is delegated to MoonClaw or MoonTown
 - accepted durable truth requires Bookkeeper review
 - destructive actions require explicit operator intent
 
 ## Engineering Bar
 
-Moondesk is good when it is boring to operate:
+MoonDesk is good when it is boring to operate:
 
 - boundaries are visible and hard to confuse
 - MoonSuite paths come from the shared MoonLib contract layer
-- MoonStat observes MoonLib contract compliance instead of owning path schemas
+- MoonGate observes MoonLib contract compliance instead of owning path schemas
 - stale domain packs live outside the desktop core
-- generated app-tools can leave Moondesk as standalone artifacts
+- generated app-tools can leave MoonDesk as standalone artifacts
 - native app startup, preview, routing, and daemon controls are reliable
 - MoonCode can be extracted without dragging MoonWiki or desktop code with it
 - tests cover protocol contracts, routing, packaging, preview, and runtime

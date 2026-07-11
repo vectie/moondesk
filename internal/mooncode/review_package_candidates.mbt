@@ -69,7 +69,7 @@ pub fn package_candidates_projection(
     "last_package_manifest": last_package,
     "last_package_index_manifest": index_manifest,
     "owner": package_artifact_owner(),
-    "rule": "Package candidates are MoonBook-owned manifests. Moondesk only renders package readiness and sends operator commands; MoonClaw must assemble verified bundles and emit package_built or package_verified runtime proof events.",
+    "rule": "Package candidates are MoonBook-owned manifests. MoonDesk only renders package readiness and sends operator commands; MoonClaw must assemble verified bundles and emit package_built or package_verified runtime proof events.",
   }
 }
 
