@@ -248,6 +248,11 @@ fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
     } else {
       div(class="flow-attempt-meta", [
         small("Request " + item.request_id),
+        if item.operation.is_empty() {
+          @html.nothing
+        } else {
+          small("Operation " + item.operation)
+        },
         if item.result_id.is_empty() {
           small("Result pending")
         } else {
@@ -261,6 +266,22 @@ fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
         } else {
           small("Error " + item.error_kind)
         },
+      ])
+    },
+    if item.acceptance_review_id.is_empty() {
+      @html.nothing
+    } else {
+      div(class="flow-review-receipt", [
+        strong(
+          if item.status == "accepted" {
+            "Acceptance review"
+          } else {
+            "Review decision"
+          },
+        ),
+        small(item.acceptance_review_id),
+        small("Authority " + item.acceptance_reviewer_id),
+        small("Receipt " + item.acceptance_review_artifact),
       ])
     },
     if item.acceptance_criteria.is_empty() {

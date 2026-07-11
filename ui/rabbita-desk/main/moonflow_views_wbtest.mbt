@@ -43,6 +43,11 @@ fn flow_test_item(status : String) -> MoonFlowItemProjection {
     } else {
       status
     },
+    operation: if status == "ready" {
+      ""
+    } else {
+      "build-evidence-bundle"
+    },
     input_digest: if status == "ready" {
       ""
     } else {
@@ -60,6 +65,21 @@ fn flow_test_item(status : String) -> MoonFlowItemProjection {
     } else {
       ""
     },
+    acceptance_review_id: if status == "accepted" {
+      "review-r1"
+    } else {
+      ""
+    },
+    acceptance_review_artifact: if status == "accepted" {
+      "books/book-r1/reviews/review-r1.json"
+    } else {
+      ""
+    },
+    acceptance_reviewer_id: if status == "accepted" {
+      "book-owner-review"
+    } else {
+      ""
+    },
     artifacts: if status == "review" {
       ["artifact://research"]
     } else {
@@ -67,6 +87,17 @@ fn flow_test_item(status : String) -> MoonFlowItemProjection {
     },
     approvals: [],
   }
+}
+
+///|
+test "accepted MoonFlow item exposes its typed review receipt" {
+  let item = flow_test_item("accepted")
+  assert_eq(item.acceptance_review_id, "review-r1")
+  assert_eq(item.acceptance_reviewer_id, "book-owner-review")
+  assert_eq(
+    item.acceptance_review_artifact,
+    "books/book-r1/reviews/review-r1.json",
+  )
 }
 
 ///|

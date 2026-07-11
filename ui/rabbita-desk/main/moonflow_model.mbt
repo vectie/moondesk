@@ -14,11 +14,15 @@ struct MoonFlowItemProjection {
   idempotency_key : String
   external_job_id : String
   attempt_status : String
+  operation : String
   input_digest : String
   output_digest : String
   error_kind : String
   compensable : Bool
   blocker : String
+  acceptance_review_id : String
+  acceptance_review_artifact : String
+  acceptance_reviewer_id : String
   artifacts : Array[String]
   approvals : Array[String]
 } derive(FromJson)
