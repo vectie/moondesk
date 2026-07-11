@@ -88,7 +88,7 @@ pub fn eval_harness_contract_json() -> Json {
     },
     "standalone_boundary": {
       "future_package": "mooncode/eval",
-      "rule": "The contract must not depend on Moondesk UI state; MoonClaw can implement the harness and Moondesk only renders the report.",
+      "rule": "The contract must not depend on MoonDesk UI state; MoonClaw can implement the harness and MoonDesk only renders the report.",
     },
   }
 }
@@ -106,6 +106,6 @@ pub fn native_eval_report_contract_json() -> Json {
       "passed_count", "failed_count", "evidence",
     ],
     "status_values": ["native-ready", "native-partial", "failed", "missing"],
-    "normalization_rule": "Moondesk treats native eval evidence as ready only when all required native harnesses are present and each harness reports status=passed. Older boolean shortcut fields are ignored and stripped during normalization; accepted status is not proof. Moondesk annotates source=moonclaw-native-runtime and endpoint before persisting wiki/reviews/mooncode/<session-id>/eval-report.json.",
+    "normalization_rule": "MoonDesk treats native eval evidence as ready only when all required native harnesses are present and each harness reports status=passed. Older boolean shortcut fields are ignored and stripped during normalization; accepted status is not proof. MoonDesk annotates source=moonclaw-native-runtime and endpoint before persisting wiki/reviews/mooncode/<session-id>/eval-report.json.",
   }
 }

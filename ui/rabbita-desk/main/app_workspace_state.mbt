@@ -164,7 +164,7 @@ fn workspace_service_status_items(
     Some(progress) =>
       items.push(
         (
-          "Moontown",
+          "MoonTown",
           if progress.daemon_running {
             "ready"
           } else {
@@ -177,7 +177,7 @@ fn workspace_service_status_items(
           },
         ),
       )
-    None => items.push(("Moontown", "unknown", "checking"))
+    None => items.push(("MoonTown", "unknown", "checking"))
   }
   items
 }

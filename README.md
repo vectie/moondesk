@@ -1,10 +1,10 @@
-# Moondesk
+# MoonDesk
 
-Moondesk is the human desktop companion for the Moon system.
+MoonDesk is the human desktop companion for the Moon system.
 
 It is not an agent runtime and it is not a domain-analysis product. It is a
 Finder/Codex-like workspace shell for real human users to inspect MoonBook
-workspaces, review MoonClaw artifacts, submit work to Moontown, and manage files
+workspaces, review MoonClaw artifacts, submit work to MoonTown, and manage files
 without dropping into a terminal.
 
 The implementation should stay pure MoonBit:
@@ -12,10 +12,10 @@ The implementation should stay pure MoonBit:
 - MoonBit owns domain models, workspace contracts, adapters, and Rabbita UI.
 - Rabbita provides the desktop web UI.
 - A MoonBit local host process provides file and workspace APIs.
-- `../tauri` is only a reference for desktop architecture concepts; Moondesk
+- `../tauri` is only a reference for desktop architecture concepts; MoonDesk
   must not contain Rust, Cargo, `src-tauri`, or Tauri runtime code.
 - MoonBook remains the durable knowledge/workspace owner.
-- Moontown remains the always-on agent town, scheduling layer, and cross-book
+- MoonTown remains the always-on agent town, scheduling layer, and cross-book
   coordination surface.
 - MoonClaw remains the worker/runtime/artifact layer.
 
@@ -32,12 +32,12 @@ Start here:
 
 ## Current Status
 
-Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
+MoonDesk currently has a pure MoonBit host plus a live Rabbita desk:
 
 - Desk virtual filesystem, cross-book search, favorites, saved views, tags, recent
   context, markdown/html/json/image previews, raw links, scoped Finder reveal,
   and inbox note/import staging.
-- Moontown request ledger, standing-watch creation, town messages, live
+- MoonTown request ledger, standing-watch creation, town messages, live
   progress/events/review summaries, daemon tick dispatch, cadence summaries,
   calendar-like due-tick view, ICS export, outcome analytics, and daemon plus
   LaunchAgent lifecycle controls.
@@ -47,22 +47,22 @@ Moondesk currently has a pure MoonBit host plus a live Rabbita desk:
 - Reusable PDF Evidence Watch book creation. The wizard creates a
   `research-book` with source websites, cadence, notification rule, method page,
   `pdf-watch`/`pdf-analysis` skills, schemas, generated site placeholders, and
-  a Moontown standing-watch registration.
+  a MoonTown standing-watch registration.
 - Portable app-tool export for books that carry generated miniapps/tools.
 - Lepusa-hosted macOS bundle creation with a bundled Lepusa runtime,
-  supervised Moondesk localhost sidecar, release/update metadata, DMG creation,
+  supervised MoonDesk localhost sidecar, release/update metadata, DMG creation,
   and optional signing/notarization.
 
-Domain-specific workflows are not part of Moondesk core. They should live as
-standalone MoonBook/MoonClaw skill or tool packs that Moondesk can create,
+Domain-specific workflows are not part of MoonDesk core. They should live as
+standalone MoonBook/MoonClaw skill or tool packs that MoonDesk can create,
 configure, inspect, export, and run through generic book/tool interfaces. Export
 produces a served `portable/app-tool/` bundle with local launch scripts so
-generated JavaScript apps can run outside Moondesk without being built into the
-desktop shell. This keeps Moondesk from hardcoding stale markets, schemas,
+generated JavaScript apps can run outside MoonDesk without being built into the
+desktop shell. This keeps MoonDesk from hardcoding stale markets, schemas,
 workbooks, or source lists.
 
 See [Current Status](docs/STATUS.md) for the honest completion picture.
-Moondesk is a usable local single-user Lepusa-hosted native-window alpha. Production
+MoonDesk is a usable local single-user Lepusa-hosted native-window alpha. Production
 distribution still needs credentialed signing/notarization, update hosting,
 clean-machine validation, and long-running reliability proof.
 
@@ -74,7 +74,7 @@ Build the UI:
 npm --prefix ui/rabbita-desk run build
 ```
 
-Serve Moondesk against a Moontown workspace:
+Serve MoonDesk against a MoonTown workspace:
 
 ```sh
 moon run cmd/main -- serve <workspace-root> --ui ui/rabbita-desk/dist --port 4199
@@ -119,10 +119,10 @@ Browser dev mode opens at:
 http://127.0.0.1:4199/
 ```
 
-## Optional Moontown Service
+## Optional MoonTown Service
 
-Moondesk can browse and edit a workspace without sibling source checkouts.
-Starting or ticking the Moontown daemon is optional and requires an explicit
+MoonDesk can browse and edit a workspace without sibling source checkouts.
+Starting or ticking the MoonTown daemon is optional and requires an explicit
 MoonSuite product-home descriptor at
 `.moonsuite/products/moontown/service.json`:
 
@@ -142,7 +142,7 @@ MoonSuite product-home descriptor at
 ```
 
 Without that file, daemon start/tick and town LaunchAgent creation return
-`not-configured` instead of assuming the workspace is a Moontown source tree.
+`not-configured` instead of assuming the workspace is a MoonTown source tree.
 
 MoonCode can also launch MoonClaw from an explicit MoonSuite product-home
 descriptor at `.moonsuite/products/moonclaw/service.json`, or from an explicit
@@ -159,7 +159,7 @@ descriptor at `.moonsuite/products/moonclaw/service.json`, or from an explicit
 }
 ```
 
-Without that file or env override, Moondesk can still report an already-running
+Without that file or env override, MoonDesk can still report an already-running
 MoonClaw daemon from its daemon-info file, but it will not discover, build, or
 launch a sibling or home-directory MoonClaw source checkout.
 

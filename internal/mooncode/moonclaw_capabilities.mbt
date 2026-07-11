@@ -175,7 +175,7 @@ pub fn moonclaw_native_capabilities_readiness(capabilities : Json) -> Json {
         for item in missing_tools => Json::string(item)
       ],
     ),
-    "rule": "Moondesk may use MoonClaw native MoonCode runtime only when the daemon advertises the current protocol, capability surface object, endpoint set, and tool-execution set owned by the MoonCode boundary.",
+    "rule": "MoonDesk may use MoonClaw native MoonCode runtime only when the daemon advertises the current protocol, capability surface object, endpoint set, and tool-execution set owned by the MoonCode boundary.",
   }
 }
 
@@ -192,7 +192,7 @@ pub fn moonclaw_native_capabilities_unavailable(error : String) -> Json {
     "ok": false,
     "status": "native-runtime-unavailable",
     "error": error,
-    "rule": "Moondesk may use MoonClaw native MoonCode runtime only when the daemon advertises the current protocol, capability surface object, endpoint set, and tool-execution set owned by the MoonCode boundary.",
+    "rule": "MoonDesk may use MoonClaw native MoonCode runtime only when the daemon advertises the current protocol, capability surface object, endpoint set, and tool-execution set owned by the MoonCode boundary.",
   }
 }
 

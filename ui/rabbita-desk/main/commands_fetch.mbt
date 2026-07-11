@@ -59,6 +59,15 @@ fn fetch_runs_cmd(
 }
 
 ///|
+fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @http.get("/api/moonflow/runs").expect_json(result => {
+    dispatch(
+      LoadedMoonFlowRuns(http_result(result, "Invalid MoonFlow run listing")),
+    )
+  })
+}
+
+///|
 fn fetch_messages_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @http.get(@desk.town_endpoint_url("messages")).expect_json(result => {
     dispatch(

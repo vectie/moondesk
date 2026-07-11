@@ -1,8 +1,8 @@
-# Moondesk UI Design
+# MoonDesk UI Design
 
 ## Visual Goal
 
-Moondesk should feel like a focused desktop workbench:
+MoonDesk should feel like a focused desktop workbench:
 
 - Codex-like professional shell
 - Finder-like file navigation
@@ -10,10 +10,10 @@ Moondesk should feel like a focused desktop workbench:
 - MoonCode activity visible but not dominant
 
 It should not look like the Wenyu Valley game viewport. The town viewport is a
-linked visualization, while Moondesk is the practical human workspace.
+linked visualization, while MoonDesk is the practical human workspace.
 
 See [Desk Mode Design](DESK_MODE_DESIGN.md) for the current product decision:
-Moondesk's primary mode is a read-only virtual filesystem desk, with MoonWiki
+MoonDesk's primary mode is a read-only virtual filesystem desk, with MoonWiki
 and MoonCode as activities on the selected book/path context.
 
 ## Shell Layout
@@ -47,7 +47,7 @@ The title bar exposes three first-class modes for the selected book:
 
 The switch is a product boundary, not a visual shortcut. Desk owns navigation
 context. MoonWiki and MoonCode operate on that selected context. MoonCode can
-later be extracted as a standalone component while Moondesk remains the native
+later be extracted as a standalone component while MoonDesk remains the native
 host.
 
 ### Activity Rail
@@ -117,7 +117,7 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
 - visible runtime mode for the selected session, distinguishing native
   `/v1/code/sessions/<id>/commands` intake from recorded or failed commands
 - visible stream source for the selected session/live tail, distinguishing
-  native `/v1/code/sessions/<id>/stream` events from Moondesk's
+  native `/v1/code/sessions/<id>/stream` events from MoonDesk's
   append-log projection
 - MoonCode readiness/eval checklist for book scope, MoonCode session attachment,
   transcript, tool, diff, test, artifact, review, append-log, typed command
@@ -132,13 +132,13 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
 - MoonCode Runtime Handoff panel in the center pane that exposes the resumable
   `wiki/reviews/mooncode/<session-id>/runtime-handoff.json` artifact, ordered
   session snapshot, command/event log paths, runtime command feed path,
-  Moondesk session-store, stream, command, and runtime-feed endpoints, native
+  MoonDesk session-store, stream, command, and runtime-feed endpoints, native
   MoonClaw endpoints, output roots, runtime mode, and next runtime step for an
   standalone `mooncode` backend
 - MoonCode Runtime Supervisor panel in the same handoff board that shows
   whether the next turn is launchable, the replay/native mode, scheduler
   effect, command/action, claim/ack/event/session endpoints, MoonClaw root, and
-  ordered supervisor loop without making Moondesk execute tools. It also shows
+  ordered supervisor loop without making MoonDesk execute tools. It also shows
   the embedded readiness status and missing launch requirements, so blocked
   turns are diagnosable without opening JSON.
 - MoonCode session header at the top of the coding workspace that shows the
@@ -186,7 +186,7 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
 - MoonCode Eval Report and primary command surfaces have Run Eval controls that
   enqueue a typed `run_eval` command through the ordered runtime queue, asking
   MoonClaw for `tool_harness` and `file_edit` native
-  proof instead of executing harnesses inside Moondesk
+  proof instead of executing harnesses inside MoonDesk
 - MoonCode runtime-feed visibility in the center pane, sourced from
   `.moonsuite/products/mooncode/sessions/<session-id>/runtime-commands.jsonl`, so the
   MoonClaw-facing feed is visible even before runtime receipts or runtime
@@ -199,7 +199,7 @@ The MoonCode surface is the first coding/chat workspace slice. It should support
 - MoonCode runtime-claim controls in the Runtime Claims panel, sourced from
   `POST /api/mooncode/sessions/<session-id>/runtime-claim`, with Claim Next and
   Force Claim buttons that lease one runtime command for the
-  `moondesk-ui-inspector` consumer without executing tools in Moondesk
+  `moondesk-ui-inspector` consumer without executing tools in MoonDesk
 - MoonCode runtime-replay acknowledgement controls on claimed Runtime Claims
   rows, sourced from `POST /api/mooncode/sessions/<session-id>/runtime-replay`,
   with Ack, Complete, and Fail buttons that record operator/debug receipts and
@@ -308,7 +308,7 @@ The composer should support:
 - one-shot or standing-watch cadence
 - review policy
 - source policy
-- submit to Moontown
+- submit to MoonTown
 - create or update standing-watch records in `.moonsuite/products/moontown/standing-goals.json`
 - run a single daemon tick through the scoped host action
 - start, stop, restart, supervise, and inspect the background daemon loop

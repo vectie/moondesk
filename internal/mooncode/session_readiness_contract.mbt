@@ -81,6 +81,6 @@ pub fn readiness_contract_json() -> Json {
     "check_count": checks.length(),
     "checks": checks,
     "readiness_contract": "readiness_summary(checks) returns ready, passed and blocked counts, first blocker, next action, next owner, and blocking check ids.",
-    "owner_rule": "MoonCode owns the readiness projection; Moondesk renders status and blockers, MoonClaw provides execution evidence, and MoonBook owns accepted artifacts and review state.",
+    "owner_rule": "MoonCode owns the readiness projection; MoonDesk renders status and blockers, MoonClaw provides execution evidence, and MoonBook owns accepted artifacts and review state.",
   }
 }

@@ -9,7 +9,7 @@ fn pdf_watch_contract_markdown(pattern_id : String, topic : String) -> String {
     "- Source adapter: configured websites",
     "- Extractor: PDF full text and tables",
     "- Analysis skill: book-local method and skills",
-    "- Standing watch: Moontown recurring goal",
+    "- Standing watch: MoonTown recurring goal",
     "",
     "The watcher may add raw evidence and review candidates, but accepted knowledge requires Bookkeeper review.",
   ].join("\n")

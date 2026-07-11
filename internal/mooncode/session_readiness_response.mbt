@@ -42,7 +42,7 @@ pub fn readiness_summary(checks : Array[Json]) -> Json {
         }
       ],
     ),
-    "rule": "Readiness is derived from MoonCode protocol evidence and MoonBook artifacts. Moondesk renders this summary; MoonClaw still owns execution.",
+    "rule": "Readiness is derived from MoonCode protocol evidence and MoonBook artifacts. MoonDesk renders this summary; MoonClaw still owns execution.",
   }
 }
 
@@ -111,7 +111,7 @@ pub fn session_readiness_response(session : Json) -> Json {
     } else {
       "/api/mooncode/sessions/\{session_id}/readiness"
     },
-    "rule": "This response is session readiness telemetry for Moondesk dashboards and protocol audits. It is derived from projected MoonCode events plus MoonBook review/runtime artifacts, not from UI-only state.",
+    "rule": "This response is session readiness telemetry for MoonDesk dashboards and protocol audits. It is derived from projected MoonCode events plus MoonBook review/runtime artifacts, not from UI-only state.",
   }
 }
 

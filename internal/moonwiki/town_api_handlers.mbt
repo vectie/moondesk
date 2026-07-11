@@ -105,7 +105,7 @@ async fn handle_town_calendar(
   let daemon = read_json_file_or_object(town_daemon_path(root))
   let daemon_tick = json_int(daemon, "tick_sequence", default=0)
   let goals = read_json_array_file(town_standing_goals_path(root))
-  let mut body = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Vectie//Moondesk//EN\r\n"
+  let mut body = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Vectie//MoonDesk//EN\r\n"
   for goal in goals {
     if !json_bool(goal, "enabled", default=true) {
       continue
@@ -118,7 +118,7 @@ async fn handle_town_calendar(
         json_string(goal, "title", default="watch"),
       ),
     )
-    let title = json_string(goal, "title", default="Moondesk watch")
+    let title = json_string(goal, "title", default="MoonDesk watch")
     let next_due = json_int(goal, "next_due_tick", default=0)
     let delta = next_due - daemon_tick
     body = body +

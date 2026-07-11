@@ -26,12 +26,12 @@ async fn build_moondesk_sidecar(repo_root : String) -> Bool {
     cwd=repo_root,
   ) catch {
     error => {
-      println("lepusa failed: could not build Moondesk sidecar: \{error}")
+      println("lepusa failed: could not build MoonDesk sidecar: \{error}")
       return false
     }
   }
   if build_code != 0 {
-    println("lepusa failed: Moondesk sidecar build exited with \{build_code}")
+    println("lepusa failed: MoonDesk sidecar build exited with \{build_code}")
     false
   } else {
     true
@@ -58,7 +58,7 @@ async fn copy_moondesk_sidecar(
   }
   let data = @fs.read_file(source) catch {
     error => {
-      println("lepusa failed: could not read Moondesk sidecar: \{error}")
+      println("lepusa failed: could not read MoonDesk sidecar: \{error}")
       return false
     }
   }
@@ -69,14 +69,14 @@ async fn copy_moondesk_sidecar(
     permission=0o755,
   ) catch {
     error => {
-      println("lepusa failed: could not write Moondesk sidecar: \{error}")
+      println("lepusa failed: could not write MoonDesk sidecar: \{error}")
       return false
     }
   }
   @fs.chmod(destination, 0o755) catch {
     error => {
       println(
-        "lepusa failed: could not make Moondesk sidecar executable: \{error}",
+        "lepusa failed: could not make MoonDesk sidecar executable: \{error}",
       )
       return false
     }

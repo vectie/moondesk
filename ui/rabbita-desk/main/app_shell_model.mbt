@@ -13,6 +13,7 @@ enum WorkspaceMode {
   Desk
   MoonWiki
   MoonCode
+  MoonFlow
 } derive(Eq)
 
 ///|

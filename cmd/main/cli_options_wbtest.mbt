@@ -6,9 +6,9 @@ test "default workspace root uses explicit override before home moonsuite" {
   )
   assert_eq(
     default_workspace_root_from_env_and_home(
-      "/Volumes/Data/Moondesk", "/Users/alice",
+      "/Volumes/Data/MoonDesk", "/Users/alice",
     ),
-    "/Volumes/Data/Moondesk",
+    "/Volumes/Data/MoonDesk",
   )
   assert_eq(
     default_workspace_root_from_env_and_home(

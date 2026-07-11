@@ -64,12 +64,246 @@ body {
 }
 
 .workspace-mode-toggle {
-  grid-template-columns: repeat(3, 76px);
+  grid-template-columns: repeat(4, 68px);
   order: -1;
   background: #eef2f6;
   border-color: var(--line);
   border-radius: 999px;
   padding: 4px;
+}
+
+.flow-shell {
+  grid-template-rows: 52px minmax(0, 1fr);
+}
+
+.flow-main {
+  min-height: 0;
+  overflow: auto;
+  padding: 28px clamp(18px, 4vw, 56px) 64px;
+  background: #f6f8fb;
+}
+
+.flow-hero {
+  width: min(1120px, 100%);
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 auto 22px;
+}
+
+.flow-hero h1 {
+  margin: 2px 0 8px;
+  font-size: 30px;
+}
+
+.flow-hero .lead {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.flow-empty,
+.flow-run-card {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(16, 24, 40, 0.06);
+}
+
+.flow-empty {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 28px;
+}
+
+.flow-empty p,
+.flow-empty small {
+  margin: 0;
+  color: var(--muted);
+}
+
+.flow-run-list {
+  display: grid;
+  gap: 18px;
+}
+
+.flow-run-card {
+  padding: 22px;
+}
+
+.flow-run-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.flow-run-head h2 {
+  margin: 2px 0 0;
+  font-size: 19px;
+  overflow-wrap: anywhere;
+}
+
+.flow-state,
+.flow-item-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 9px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 720;
+  text-transform: uppercase;
+}
+
+.flow-state.ready,
+.flow-item-status.ready,
+.flow-item-status.accepted {
+  border-color: rgba(22, 131, 95, 0.34);
+  background: rgba(22, 131, 95, 0.08);
+  color: var(--green);
+}
+
+.flow-state.blocked,
+.flow-item-status.blocked,
+.flow-item-status.failed {
+  border-color: rgba(194, 65, 59, 0.34);
+  background: rgba(194, 65, 59, 0.07);
+  color: var(--red);
+}
+
+.flow-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.flow-metrics > div {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.flow-metrics strong {
+  font-size: 20px;
+}
+
+.flow-metrics span,
+.flow-item small,
+.flow-action span,
+.flow-quiet {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.flow-outcome {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--green);
+  background: rgba(22, 131, 95, 0.06);
+  line-height: 1.5;
+}
+
+.flow-outcome.pending {
+  border-color: var(--line-strong);
+  background: #f8fafc;
+  color: var(--muted);
+}
+
+.flow-section {
+  margin-top: 18px;
+}
+
+.flow-section h3 {
+  margin: 0 0 9px;
+  font-size: 14px;
+}
+
+.flow-action-list,
+.flow-item-list {
+  display: grid;
+  gap: 7px;
+}
+
+.flow-action,
+.flow-item {
+  min-width: 0;
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.flow-action {
+  grid-template-columns: minmax(0, 1fr) auto;
+  border-color: rgba(37, 99, 235, 0.25);
+  background: rgba(37, 99, 235, 0.035);
+}
+
+.flow-blockers .flow-action {
+  border-color: rgba(194, 65, 59, 0.26);
+  background: rgba(194, 65, 59, 0.035);
+}
+
+.flow-item-list {
+  margin-top: 18px;
+}
+
+.flow-item {
+  grid-template-columns: minmax(180px, 1fr) auto minmax(150px, auto);
+}
+
+.flow-item > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.flow-item strong,
+.flow-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .workspace-mode-toggle {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .flow-shell {
+    grid-template-rows: 56px minmax(0, 1fr);
+  }
+
+  .flow-main {
+    padding: 18px 12px 40px;
+  }
+
+  .flow-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flow-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .flow-item > small {
+    grid-column: 1 / -1;
+  }
 }
 
 .mode-button {
@@ -1423,5 +1657,19 @@ details[open] > .desk-disclosure-summary::after {
   .inspector-pane,
   .preview-center {
     min-height: 0;
+  }
+}
+
+/* Flow is a fourth first-class workspace mode. These final overrides follow
+   the legacy three-mode responsive shell rules. */
+.flow-state.complete {
+  border-color: rgba(22, 131, 95, 0.34);
+  background: rgba(22, 131, 95, 0.08);
+  color: var(--green);
+}
+
+@media (max-width: 760px) {
+  .workspace-mode-toggle {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

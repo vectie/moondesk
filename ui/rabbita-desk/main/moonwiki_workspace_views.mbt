@@ -94,7 +94,7 @@ fn render_wiki_bootstrap(
 ) -> @rabbita.Html {
   main_(class="bootstrap-center", [
     section(class="bootstrap-panel", [
-      p(class="eyebrow", "Moondesk"),
+      p(class="eyebrow", "MoonDesk"),
       h1("Start with a MoonBook"),
       p(class="lead", "Choose a book to read, create, or make executable."),
       render_wiki_bootstrap_suite_summary(model),

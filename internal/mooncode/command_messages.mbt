@@ -24,7 +24,7 @@ pub fn command_message(action : String, payload : Json) -> String {
     "run_build" =>
       "Run the relevant build checks for \{target}. Prefer the structured MoonBit build command when available, report the exact command, result, failures, and next fix."
     "run_eval" =>
-      "Run the MoonCode eval harnesses for \{target}, especially tool_harness and file_edit. Publish the native eval report to `/v1/code/sessions/<id>/eval-report?book_root=<path>` or POST equivalent proof to Moondesk's eval-report ingest endpoint, including harness ids, pass/fail counts, evidence, and failure details."
+      "Run the MoonCode eval harnesses for \{target}, especially tool_harness and file_edit. Publish the native eval report to `/v1/code/sessions/<id>/eval-report?book_root=<path>` or POST equivalent proof to MoonDesk's eval-report ingest endpoint, including harness ids, pass/fail counts, evidence, and failure details."
     "package" =>
       "Package the current accepted executable output for \{target} as a reusable tool, miniapp, generated site, or app-tool artifact. Preserve paths, emit a `package_verified` runtime proof event after bundle checks pass, and report the artifact location."
     "commit" =>

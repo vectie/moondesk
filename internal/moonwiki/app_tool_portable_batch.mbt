@@ -191,7 +191,7 @@ fn app_tool_portable_all_status_message(status : String) -> String {
     "export_required" =>
       "One or more app-tool MoonBooks are exportable but do not have a generated portable bundle yet."
     "portable_ready" =>
-      "Every discovered app-tool MoonBook has a portable bundle with no detected Moondesk API dependency."
+      "Every discovered app-tool MoonBook has a portable bundle with no detected MoonDesk API dependency."
     "portable_with_api_warnings" =>
       "Every discovered app-tool MoonBook was exported, but at least one generated app still calls APIs outside the generic read-only snapshot and needs an external runtime adapter before launch."
     "partial_failure" => "Some app-tool MoonBooks could not be exported."

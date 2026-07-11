@@ -8,7 +8,7 @@ if (app) {
   app.innerHTML = `
     <div class="boot-shell">
       <div class="boot-panel">
-        <p class="eyebrow">Moondesk</p>
+        <p class="eyebrow">MoonDesk</p>
         <h1>Loading workspace</h1>
         <p>Preparing the explorer, previews, inspector, and activity drawer.</p>
       </div>

@@ -74,7 +74,7 @@ fi
 require_file "${moondesk_root}/moon.mod"
 require_file "${moondesk_core_pkg}"
 require_file "${moondesk_protocol}"
-require_contains "${moondesk_root}/moon.mod" "\"vectie/moonlib@${EXPECTED_MOONLIB_VERSION}\"" "Moondesk MoonLib ${EXPECTED_MOONLIB_VERSION} dependency"
+require_contains "${moondesk_root}/moon.mod" "\"vectie/moonlib@${EXPECTED_MOONLIB_VERSION}\"" "MoonDesk MoonLib ${EXPECTED_MOONLIB_VERSION} dependency"
 require_contains "${moondesk_core_pkg}" "\"vectie/moonlib/conversation\"" "MoonCode core conversation import"
 require_contains "${moondesk_protocol}" "@conversation.contract_id()" "MoonCode contract id delegation"
 require_contains "${moondesk_protocol}" "@conversation.conversation_kind" "MoonCode conversation kind delegation"

@@ -15,9 +15,9 @@ Completed on 2026-07-10:
   JSONL records with append mode instead of rewriting the full file. Every
   append now takes an exclusive file lock and repairs a crash-torn final
   fragment before writing the next complete record.
-- Moondesk rejects stale, cross-session, or pre-v2 conversation payloads and
+- MoonDesk rejects stale, cross-session, or pre-v2 conversation payloads and
   never rebuilds chat from its command/event logs.
-- the former Moondesk conversation projector and its replay tests were deleted.
+- the former MoonDesk conversation projector and its replay tests were deleted.
 - session-list polling uses listing rows; selected-session polling hydrates one
   canonical conversation.
 - the UI renders one producer-owned work disclosure per turn and suppresses
@@ -39,9 +39,9 @@ Passing automated gates:
 - MoonClaw core tests: 15/15
 - MoonClaw daemon tests: 93/93
 - MoonClaw full repository tests: 1,028/1,028
-- Moondesk MoonCode core tests: 281/281
-- Moondesk HTTP/backend tests: 160/160
-- Moondesk UI model tests: 177/177
+- MoonDesk MoonCode core tests: 281/281
+- MoonDesk HTTP/backend tests: 160/160
+- MoonDesk UI model tests: 177/177
 - production Rabbita/Vite build
 
 The isolated HTTP workflows now run with an in-process MoonClaw v2 contract
@@ -52,7 +52,7 @@ conversation projector.
 
 ### Real UI Closure Record
 
-The final test used one fresh Moondesk server, one MoonClaw daemon, and the
+The final test used one fresh MoonDesk server, one MoonClaw daemon, and the
 in-app browser. Prompts were entered through the visible textarea and sent with
 Enter; no internal message injection was used.
 
@@ -111,7 +111,7 @@ The architectural decision is:
 
 - MoonClaw is the sole durable owner of the canonical MoonCode conversation.
 - MoonLib owns the shared typed conversation contract.
-- Moondesk proxies and renders MoonClaw's canonical conversation. It does not
+- MoonDesk proxies and renders MoonClaw's canonical conversation. It does not
   rebuild a competing conversation from command, event, receipt, or stream
   logs.
 - The browser owns only an unacknowledged optimistic user turn and local
@@ -126,12 +126,12 @@ they are not descriptions of the current production path.
 ### 1. There are two canonical conversation projectors
 
 MoonClaw builds `mooncode_conversation` in
-`cmd/daemon/mooncode_conversation_projection.mbt`. Moondesk separately builds
+`cmd/daemon/mooncode_conversation_projection.mbt`. MoonDesk separately builds
 the same shape in `internal/mooncode/conversation_projection.mbt`.
 
 `internal/mooncode/session_summary.mbt` accepts MoonClaw's supplied
-conversation only when Moondesk's local projection has no turns. If local
-events produce a turn, Moondesk overwrites the MoonClaw conversation. This
+conversation only when MoonDesk's local projection has no turns. If local
+events produce a turn, MoonDesk overwrites the MoonClaw conversation. This
 makes ownership conditional on timing and available data rather than explicit.
 
 The existing test named "lets durable events override incomplete supplied
@@ -139,7 +139,7 @@ conversation" encodes this dual-owner behavior. That test should be removed;
 the new contract should reject or diagnose an invalid MoonClaw conversation,
 not silently replace it with a second implementation.
 
-### 2. Moondesk merges sources, not one ordered log
+### 2. MoonDesk merges sources, not one ordered log
 
 `internal/mooncode/event_log.mbt` merges arrays in source-group order:
 
@@ -297,7 +297,7 @@ Contract rules:
   lifecycle records stay outside user-facing copy.
 
 MoonLib should own concrete MoonBit DTO types for this contract, not only arrays
-of role and field-name strings. MoonClaw and Moondesk both inspect and construct
+of role and field-name strings. MoonClaw and MoonDesk both inspect and construct
 these values, so the public concrete types belong in the shared public package.
 
 ## Canonical Reducer Rules
@@ -330,7 +330,7 @@ normalized as a structured planner-step summary because it is not a text delta.
 
 Work:
 
-- Add a short architecture test that fails if both MoonClaw and Moondesk remain
+- Add a short architecture test that fails if both MoonClaw and MoonDesk remain
   production owners of `mooncode_conversation`.
 - Add a browser trace sampler that records ordered `turn_id`, `item_id`, status,
   and visible text after every DOM change during first, second, and third sends.
@@ -427,7 +427,7 @@ Exit gate:
 - replay after restart returns identical ids, ordinals, revision, and content
 - same-content prompts remain separate turns by identity
 
-### Stage 4 - Cut Moondesk Back To A Proxy And Listing Consumer
+### Stage 4 - Cut MoonDesk Back To A Proxy And Listing Consumer
 
 Work:
 
@@ -438,12 +438,12 @@ Work:
   contract validation.
 - Remove the rule that lets local durable events override a supplied native
   conversation.
-- Remove native chat projection from Moondesk command/event/receipt merges.
+- Remove native chat projection from MoonDesk command/event/receipt merges.
 - Keep raw event endpoints and projections only for explicit diagnostics,
   readiness, and operator evidence.
 - Split rail refresh cadence from selected-conversation refresh cadence.
 
-Primary Moondesk files:
+Primary MoonDesk files:
 
 - `internal/moonwiki/mooncode_sessions.mbt`
 - `internal/moonwiki/mooncode_session_projection.mbt`
@@ -454,16 +454,16 @@ Primary Moondesk files:
 
 Deletion target:
 
-- delete the Moondesk production conversation projector after local-only
+- delete the MoonDesk production conversation projector after local-only
   fixtures are moved to MoonClaw/shared contract tests
-- delete tests that authorize Moondesk to repair or override MoonClaw chat
+- delete tests that authorize MoonDesk to repair or override MoonClaw chat
 - retain event-log utilities only where diagnostics still consume them
 
 Exit gate:
 
 - the rail request never hydrates conversation turns
 - the selected chat request performs one MoonClaw canonical read
-- Moondesk cannot produce a different assistant/work order from MoonClaw
+- MoonDesk cannot produce a different assistant/work order from MoonClaw
 - MoonClaw unavailable is shown as a factual error, not a locally fabricated
   working state
 
@@ -488,7 +488,7 @@ Work:
 - Announce live-status changes through a polite ARIA live region without
   repeatedly reading the entire transcript.
 
-Primary Moondesk files:
+Primary MoonDesk files:
 
 - `ui/rabbita-desk/main/mooncode_model.mbt`
 - `ui/rabbita-desk/main/mooncode_canonical_transcript.mbt`
@@ -539,7 +539,7 @@ Run the final gate from a fresh MoonSuite test area under
 
 Real UI workflow:
 
-1. start a fresh MoonClaw and Moondesk
+1. start a fresh MoonClaw and MoonDesk
 2. open Code mode in the in-app browser
 3. click New chat
 4. type and send the first prompt with the keyboard
@@ -569,13 +569,13 @@ Coverage layers:
 - MoonLib contract round trips and invalid-contract rejection
 - MoonClaw store locking, sequence, idempotency, and torn-tail recovery
 - MoonClaw reducer state transitions and replay
-- Moondesk route pass-through and listing/detail separation
+- MoonDesk route pass-through and listing/detail separation
 - frontend optimistic acknowledgement and stale-revision rejection
 - real browser keyboard/mouse timeline sampler
 - desktop screenshots at wide desktop, narrow desktop, and mobile width
 - reduced-motion and keyboard-focus checks for the work disclosure
 
-After each implementation stage, rebuild and reopen the latest Moondesk app in
+After each implementation stage, rebuild and reopen the latest MoonDesk app in
 the in-app browser so the user can inspect the actual surface.
 
 ## Quantitative Completion Metrics
@@ -623,11 +623,11 @@ Durability:
 
 Implement Stage 0 and Stage 1 first so every later change is checked against a
 shared invariant. Then land MoonClaw storage and reducer work together before
-deleting the Moondesk projector. Cut the host and UI over in one bounded
+deleting the MoonDesk projector. Cut the host and UI over in one bounded
 vertical slice, and finish with the real browser/restart gate before removing
 the old tests and files.
 
 The critical dependency chain is:
 
-`MoonLib v2 contract -> MoonClaw ordered store -> MoonClaw reducer -> Moondesk
+`MoonLib v2 contract -> MoonClaw ordered store -> MoonClaw reducer -> MoonDesk
 proxy -> keyed UI -> real browser gate -> stale-code deletion`.

@@ -38,10 +38,10 @@ case "${MODE}" in
     ;;
 esac
 
-run_repo_step "Moondesk moon fmt" "${ROOT}" "${MOON_BIN}" fmt
-run_repo_step "Moondesk moon info" "${ROOT}" "${MOON_BIN}" info
-run_repo_step "Moondesk native check" "${ROOT}" "${MOON_BIN}" check --target native --diagnostic-limit 120
-run_repo_step "Moondesk native tests" "${ROOT}" "${MOON_BIN}" test --target native
+run_repo_step "MoonDesk moon fmt" "${ROOT}" "${MOON_BIN}" fmt
+run_repo_step "MoonDesk moon info" "${ROOT}" "${MOON_BIN}" info
+run_repo_step "MoonDesk native check" "${ROOT}" "${MOON_BIN}" check --target native --diagnostic-limit 120
+run_repo_step "MoonDesk native tests" "${ROOT}" "${MOON_BIN}" test --target native
 
 run_repo_step "Rabbita JS check" "${ROOT}/ui/rabbita-desk" "${MOON_BIN}" check --target js --diagnostic-limit 120
 run_repo_step "Rabbita JS tests" "${ROOT}/ui/rabbita-desk" "${MOON_BIN}" test --target js
@@ -79,7 +79,7 @@ run_step "Fresh-suite residual scan" bash "${ROOT}/scripts/validate_fresh_suite_
 run_step "Core boundary validation" bash "${ROOT}/scripts/validate-core-boundaries.sh"
 
 if [[ "${MODE}" == "full" ]]; then
-  run_step "Moondesk API smoke" bash "${ROOT}/scripts/desk_mode_api_smoke.sh"
+  run_step "MoonDesk API smoke" bash "${ROOT}/scripts/desk_mode_api_smoke.sh"
   run_step "Desk browser smoke" bash "${ROOT}/scripts/desk_mode_browser_smoke.sh"
   run_step "Fresh-suite product smoke" bash "${ROOT}/scripts/fresh_suite_product_smoke.sh"
 fi

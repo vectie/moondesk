@@ -16,7 +16,7 @@ pub fn tool_authorization_contract(
     "request_fields": [
       "tool_call_id", "tool_name", "name", "arguments", "path", "command", "tool_call",
     ],
-    "rule": "MoonClaw asks before executing a tool. Moondesk records gated shell/write/edit/package previews as pending approval rows and returns the current decision; MoonClaw enforces the decision.",
+    "rule": "MoonClaw asks before executing a tool. MoonDesk records gated shell/write/edit/package previews as pending approval rows and returns the current decision; MoonClaw enforces the decision.",
     "current_tool_approvals": manifest,
   }
 }

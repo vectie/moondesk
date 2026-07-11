@@ -14,7 +14,7 @@ fn standing_goal_record_from_payload(
   payload : Json,
   daemon_tick~ : Int,
 ) -> Json {
-  let title = json_string(payload, "title", default="Moondesk standing watch")
+  let title = json_string(payload, "title", default="MoonDesk standing watch")
   let id = json_string(payload, "id", default=@desk.stable_id("watch", title))
   let cadence = clamp_int(
     json_int(payload, "cadence_ticks", default=60),

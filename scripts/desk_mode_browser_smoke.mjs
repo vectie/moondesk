@@ -1885,7 +1885,7 @@ async function run() {
     );
     assert(
       fs.existsSync(path.join(fixtureRoot, ".moonsuite/products/moondesk/trash/files")),
-      "Desk trash directory was not created in the Moondesk product home",
+      "Desk trash directory was not created in the MoonDesk product home",
     );
     assert(
       !fs.existsSync(path.join(fixtureRoot, "books/research-alpha/.moontown/trash")),
@@ -1893,7 +1893,7 @@ async function run() {
     );
     assert(
       !fs.existsSync(path.join(fixtureRoot, "books/research-alpha/.moonsuite/products/moondesk/trash")),
-      "Desk trash should not create nested book-local Moondesk product trash",
+      "Desk trash should not create nested book-local MoonDesk product trash",
     );
     await waitFor(
       session,

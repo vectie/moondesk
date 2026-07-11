@@ -481,7 +481,7 @@ test "mooncode runtime consumer execution plan exposes next claimable command" {
   )
   assert_true(
     rq_json_string(packet, "safety_boundary", default="").contains(
-      "Moondesk does not execute",
+      "MoonDesk does not execute",
     ),
   )
   let supervisor = runtime_supervisor_launch_packet(
@@ -635,7 +635,7 @@ test "mooncode runtime supervisor launch explains idle state" {
   )
   assert_true(
     rq_json_string(readiness, "safety_boundary", default="").contains(
-      "does not mean Moondesk may execute tools",
+      "does not mean MoonDesk may execute tools",
     ),
   )
 }

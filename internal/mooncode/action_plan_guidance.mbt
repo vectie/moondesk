@@ -57,7 +57,7 @@ pub fn action_plan_item_next_step(_action : String, state : String) -> String {
     "runtime-retry" => "retry runtime and preserve the failed receipt"
     "awaiting-proof" => "wait for MoonClaw to emit typed proof events"
     "blocked" => "resolve blocking gates before continuing"
-    "ready-for-review" => "operator can review this action in Moondesk"
+    "ready-for-review" => "operator can review this action in MoonDesk"
     "completed" => "no immediate operator action"
     _ => "inspect command"
   }

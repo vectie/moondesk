@@ -109,10 +109,10 @@ pub fn stream_state_record(
       "cursor_rule": "Use response.next_since as the next ?since value; sequence numbers are 1-based event positions and ?since means already seen.",
     },
     "live_tail_boundary": {
-      "current": "bounded live append-log tail over the Moondesk projection, falling back to MoonClaw native /v1/code stream when available",
+      "current": "bounded live append-log tail over the MoonDesk projection, falling back to MoonClaw native /v1/code stream when available",
       "moondesk_live_endpoint": moondesk_live_endpoint,
       "native_blocking_tail": native_blocking_tail,
-      "rule": "Moondesk owns resumable cursor state and live-tail projection; MoonClaw owns event production and native blocking runtime streams.",
+      "rule": "MoonDesk owns resumable cursor state and live-tail projection; MoonClaw owns event production and native blocking runtime streams.",
     },
     "owner": stream_owner_record(),
   }

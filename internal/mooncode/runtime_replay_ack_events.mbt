@@ -91,7 +91,7 @@ fn runtime_replay_ack_event_summary(
       ],
     ),
     "normalized_events": Json::array(normalized),
-    "evidence_policy": "Runtime replay acknowledgements may include streamed runtime events; Moondesk normalizes them into lanes so completed commands carry visible proof, not only a terminal receipt.",
+    "evidence_policy": "Runtime replay acknowledgements may include streamed runtime events; MoonDesk normalizes them into lanes so completed commands carry visible proof, not only a terminal receipt.",
   }
 }
 

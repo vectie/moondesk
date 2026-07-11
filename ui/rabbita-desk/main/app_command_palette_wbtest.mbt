@@ -1,10 +1,11 @@
 ///|
 test "desk command palette stays navigation only" {
   let titles = palette_commands_for_mode(Desk).map(command => command.0)
-  assert_eq(titles.length(), 3)
+  assert_eq(titles.length(), 4)
   assert_true(titles.contains("Browse Desk"))
   assert_true(titles.contains("Open in Wiki"))
   assert_true(titles.contains("Open MoonCode"))
+  assert_true(titles.contains("Open MoonFlow"))
   assert_false(titles.contains("Create Inbox Note"))
   assert_false(titles.contains("Import URL"))
   assert_false(titles.contains("Submit to Town"))
@@ -15,13 +16,14 @@ test "desk command palette stays navigation only" {
 ///|
 test "wiki command palette exposes user jobs without runtime controls" {
   let titles = palette_commands_for_mode(MoonWiki).map(command => command.0)
-  assert_eq(titles.length(), 7)
+  assert_eq(titles.length(), 8)
   assert_true(titles.contains("Open Library"))
   assert_true(titles.contains("Search Books"))
   assert_true(titles.contains("New Inbox Note"))
   assert_true(titles.contains("Open Activity"))
   assert_true(titles.contains("Open Review"))
   assert_true(titles.contains("More"))
+  assert_true(titles.contains("Open MoonFlow"))
   assert_false(titles.contains("Submit to Town"))
   assert_false(titles.contains("Run Daemon Tick"))
   assert_false(titles.contains("Start Daemon"))
@@ -53,7 +55,18 @@ test "command palette filters titles and details" {
   })
   assert_eq(code_titles.length(), 1)
   assert_true(code_titles.contains("Open MoonCode"))
-  assert_eq(filtered_palette_commands_for_mode(Desk, "  ").length(), 3)
+  assert_eq(filtered_palette_commands_for_mode(Desk, "  ").length(), 4)
+}
+
+///|
+test "MoonFlow palette keeps orchestration separate from editing" {
+  let titles = palette_commands_for_mode(MoonFlow).map(command => command.0)
+  assert_eq(titles.length(), 4)
+  assert_true(titles.contains("Refresh MoonFlow"))
+  assert_true(titles.contains("Open in Wiki"))
+  assert_true(titles.contains("Open MoonCode"))
+  assert_true(titles.contains("Browse Desk"))
+  assert_false(titles.contains("Run Daemon Tick"))
 }
 
 ///|

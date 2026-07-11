@@ -133,7 +133,7 @@ pub fn session_resume_lifecycle(session : Json, events : Array[Json]) -> Json {
       "session_store": "mooncode",
       "standalone_component": "mooncode",
     },
-    "rule": "Resume lifecycle is computed from the typed MoonCode session snapshot plus runtime command and receipt logs. Moondesk renders resumability; MoonClaw consumes the ordered runtime queue.",
+    "rule": "Resume lifecycle is computed from the typed MoonCode session snapshot plus runtime command and receipt logs. MoonDesk renders resumability; MoonClaw consumes the ordered runtime queue.",
   }
 }
 

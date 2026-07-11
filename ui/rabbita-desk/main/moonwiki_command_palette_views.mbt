@@ -87,6 +87,11 @@ fn palette_commands_for_mode(
           "Use the selected book context in MoonCode",
           SelectWorkspaceMode(MoonCode),
         ),
+        (
+          "Open MoonFlow",
+          "Track outcomes, blockers, evidence, and next actions",
+          SelectWorkspaceMode(MoonFlow),
+        ),
       ]
     MoonWiki =>
       [
@@ -121,6 +126,11 @@ fn palette_commands_for_mode(
           "Open a book-scoped coding session",
           SelectWorkspaceMode(MoonCode),
         ),
+        (
+          "Open MoonFlow",
+          "Track executable work across Moon Suite",
+          SelectWorkspaceMode(MoonFlow),
+        ),
       ]
     MoonCode =>
       [
@@ -141,7 +151,7 @@ fn palette_commands_for_mode(
           "Open a book-scoped MoonCode coding session",
           SelectWorkspaceMode(MoonCode),
         ),
-        ("Submit to Town", "Send selected context to Moontown", SubmitRequest),
+        ("Submit to Town", "Send selected context to MoonTown", SubmitRequest),
         (
           "New Book Pattern",
           "Publish a research-book from a registered source, analysis, and standing-watch pattern",
@@ -149,22 +159,50 @@ fn palette_commands_for_mode(
         ),
         (
           "Run Daemon Tick",
-          "Control one Moontown scheduler tick",
+          "Control one MoonTown scheduler tick",
           ControlDaemonTick,
         ),
-        ("Start Daemon", "Start the managed Moontown daemon loop", StartDaemon),
+        ("Start Daemon", "Start the managed MoonTown daemon loop", StartDaemon),
         (
           "Enable Supervision",
           "Restart the daemon when the policy says it should run",
           EnableDaemonSupervision,
         ),
-        ("Stop Daemon", "Stop the managed Moontown daemon loop", StopDaemon),
+        ("Stop Daemon", "Stop the managed MoonTown daemon loop", StopDaemon),
         (
           "Show Run Artifacts",
           "Open MoonClaw run projection",
           SelectActivity(Runs),
         ),
         ("Daily Surface", "Open operating summary", SelectActivity(Settings)),
+        (
+          "Open MoonFlow",
+          "Track executable work across Moon Suite",
+          SelectWorkspaceMode(MoonFlow),
+        ),
+      ]
+    MoonFlow =>
+      [
+        (
+          "Refresh MoonFlow",
+          "Reload outcomes, blockers, evidence, and next actions",
+          SelectWorkspaceMode(MoonFlow),
+        ),
+        (
+          "Open in Wiki",
+          "Inspect the executable document behind this work",
+          SelectWorkspaceMode(MoonWiki),
+        ),
+        (
+          "Open MoonCode",
+          "Build helpers in the current book context",
+          SelectWorkspaceMode(MoonCode),
+        ),
+        (
+          "Browse Desk",
+          "Inspect MoonBook files and generated artifacts",
+          SelectWorkspaceMode(Desk),
+        ),
       ]
   }
 }
@@ -225,10 +263,23 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         on_click=dispatch(SelectWorkspaceMode(MoonCode)),
         "Code",
       ),
+      button(
+        class=workspace_mode_button_class(model, MoonFlow),
+        attrs=@html.Attrs::build().aria_pressed(
+          if model.workspace_mode == MoonFlow {
+            "true"
+          } else {
+            "false"
+          },
+        ),
+        title="Switch to MoonFlow mode",
+        on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
+        "Flow",
+      ),
     ]),
     div(class="title-copy", [
       span(class="app-dot", ""),
-      h1("Moondesk"),
+      h1("MoonDesk"),
       span(class="workspace-switcher", workspace_name(model)),
       span(class="mode-caption", workspace_mode_summary(model.workspace_mode)),
     ]),

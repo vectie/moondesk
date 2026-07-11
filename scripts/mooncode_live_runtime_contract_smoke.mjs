@@ -42,7 +42,7 @@ async function runSmoke() {
   const commandId = acceptedCommandId(created);
   assert(sessionId && commandId, `Created session did not return ids: ${JSON.stringify(created)}`);
 
-  const runtimeState = await waitFor("Moondesk native runtime contract import", async () => {
+  const runtimeState = await waitFor("MoonDesk native runtime contract import", async () => {
     const state = await requestJson(
       `${moondesk.base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/runtime-events`,
     );
@@ -54,7 +54,7 @@ async function runSmoke() {
   }, 20000);
 
   const session = await fetchCanonicalSession(moondesk.base, sessionId);
-  assert(session?.id === sessionId, `Moondesk session missing after native import: ${JSON.stringify(session)}`);
+  assert(session?.id === sessionId, `MoonDesk session missing after native import: ${JSON.stringify(session)}`);
   const turns = session.mooncode_conversation?.turns || [];
   const turn = turns.find(item => item.command_id === commandId);
   assert(turn?.assistant?.content === reply, `Native reply was not canonical conversation output: ${JSON.stringify(turns)}`);

@@ -1,5 +1,5 @@
 ///|
-async test "book pattern discovery reads Moontown template registry" {
+async test "book pattern discovery reads MoonTown template registry" {
   let root = "/tmp/moondesk-template-registry-wbtest"
   let template_root = @pathx.join(root, "templates/books/pdf-evidence-watch")
   let tool_template_root = @pathx.join(root, "templates/books/app-tool-book")
@@ -15,7 +15,7 @@ async test "book pattern discovery reads Moontown template registry" {
             "book_type": "research-book",
             "specialization": "pdf-evidence-watch",
             "title": "Registry PDF Evidence Watch",
-            "purpose": "Loaded from the local Moontown registry.",
+            "purpose": "Loaded from the local MoonTown registry.",
             "root": "templates/books/pdf-evidence-watch",
             "install_example": "templates/books/pdf-evidence-watch/install.example.json",
             "install_command": "moon run cmd/main -- books template install pdf-evidence-watch <config.json>",
@@ -32,7 +32,7 @@ async test "book pattern discovery reads Moontown template registry" {
             "book_type": "toolbook",
             "specialization": "app-tool-book",
             "title": "Registry App ToolBook",
-            "purpose": "Loaded from the current Moontown app toolbook registry.",
+            "purpose": "Loaded from the current MoonTown app toolbook registry.",
             "root": "templates/books/app-tool-book",
             "install_example": "templates/books/app-tool-book/install.example.json",
             "install_command": "moon run cmd/main -- books template install app-tool-book <config.json>",

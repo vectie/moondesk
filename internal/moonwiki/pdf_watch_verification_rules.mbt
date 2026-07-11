@@ -51,7 +51,7 @@ fn pdf_watch_base_type_selection_valid_for_book(
     "/api/books/base-types",
   ) &&
   json_string(selection, "base_type_owner", default="") == "MoonBook" &&
-  json_string(selection, "handoff_target", default="") == "Moontown" &&
+  json_string(selection, "handoff_target", default="") == "MoonTown" &&
   json_bool(selection, "selected_from_catalog", default=false) &&
   json_bool(selection, "supported_pattern", default=false) &&
   json_string(selection, "build_contract", default="") ==

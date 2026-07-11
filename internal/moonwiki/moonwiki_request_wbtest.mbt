@@ -80,7 +80,7 @@ test "workspace path resolver maps MoonClaw job paths to owning suite" {
 }
 
 ///|
-test "Moondesk product paths use owning suite for book workspaces" {
+test "MoonDesk product paths use owning suite for book workspaces" {
   let suite_root = "/tmp/moondesk-product-paths-suite"
   let book_root = @pathx.join(suite_root, "books/research-desk")
   assert_eq(

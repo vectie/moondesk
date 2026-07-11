@@ -33,6 +33,7 @@ fn bootstrap_cmd(
     fetch_moonclaw_daemon_cmd(dispatch),
     fetch_moonclaw_models_cmd(dispatch),
     fetch_mooncode_sessions_cmd(dispatch, ""),
+    fetch_moonflow_runs_cmd(dispatch),
     fetch_book_base_types_cmd(dispatch),
     fetch_book_patterns_cmd(dispatch),
     schedule_mooncode_poll(dispatch, mooncode_poll_generation),

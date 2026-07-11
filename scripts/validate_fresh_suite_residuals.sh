@@ -14,7 +14,7 @@ is_allowed_hit() {
 
   case "${hit}" in
     moonstat:./suite.mbt:*)
-      # MoonStat is the drift detector. These strings are probe signatures,
+      # MoonGate is the drift detector. These strings are probe signatures,
       # paired with canonical MoonLib paths in the same records.
       return 0
       ;;

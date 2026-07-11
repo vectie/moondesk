@@ -91,7 +91,7 @@ pub fn runtime_turn_packet(
     "tool_call_contract": tool_call_contract_json(),
     "completion_rule": rq_json_string(plan, "completion_rule", default=""),
     "next_step": rq_json_string(plan, "next_step", default=""),
-    "safety_boundary": "This packet is a self-contained turn handoff for MoonClaw. Moondesk does not execute it; the runtime must enforce the embedded runtime control, tool, approval, path, test, and package contracts, stream events, then acknowledge through runtime-replay.",
+    "safety_boundary": "This packet is a self-contained turn handoff for MoonClaw. MoonDesk does not execute it; the runtime must enforce the embedded runtime control, tool, approval, path, test, and package contracts, stream events, then acknowledge through runtime-replay.",
     "owner": runtime_owner_record(),
   }
 }
@@ -213,6 +213,6 @@ pub fn runtime_supervisor_readiness_report(supervisor : Json) -> Json {
     runtime_supervisor_has_loop_step(loop_steps, "acknowledge") &&
     runtime_supervisor_has_loop_step(loop_steps, "report-eval") &&
     runtime_supervisor_has_loop_step(loop_steps, "check-readiness"),
-    "safety_boundary": "Readiness means the launch packet is well formed for a MoonClaw consumer. It does not mean Moondesk may execute tools.",
+    "safety_boundary": "Readiness means the launch packet is well formed for a MoonClaw consumer. It does not mean MoonDesk may execute tools.",
   }
 }

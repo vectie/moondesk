@@ -5,7 +5,7 @@ fn run_doctor(args : Array[String]) -> Unit {
     _ => ".."
   }
   let config = @host.default_config(root)
-  println("Moondesk doctor")
+  println("MoonDesk doctor")
   println("configured root: \{config.roots[0].path}")
   println("ui package: ui/rabbita-desk")
   println("host mode: scoped local reads and inbox writes only")
@@ -15,7 +15,7 @@ fn run_doctor(args : Array[String]) -> Unit {
 fn print_usage() -> Unit {
   println(
     (
-      #|Moondesk
+      #|MoonDesk
       #|
       #|Usage:
       #|  moon run cmd/main -- doctor [root]

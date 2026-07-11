@@ -1,6 +1,6 @@
 # Reuse Map
 
-## From Moontown
+## From MoonTown
 
 Use:
 
@@ -12,7 +12,7 @@ Use:
 
 Do not copy:
 
-- town simulation/game viewport as the main Moondesk UI
+- town simulation/game viewport as the main MoonDesk UI
 - Mayor reasoning logic
 - scheduler ownership
 
@@ -29,7 +29,7 @@ Use:
 
 Do not copy:
 
-- durable wiki promotion logic into Moondesk
+- durable wiki promotion logic into MoonDesk
 - research-specific procedures into the desktop UI
 
 ## From MoonClaw

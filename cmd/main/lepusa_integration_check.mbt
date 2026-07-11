@@ -39,7 +39,7 @@ async fn lepusa_integration_live_bundle_problems(
   )
   lepusa_integration_require_file(
     lepusa_integration_sidecar_path(options.target, out_dir),
-    "Moondesk sidecar",
+    "MoonDesk sidecar",
     problems,
   )
   lepusa_integration_require_file(paths.manifest, "runtime manifest", problems)
@@ -69,7 +69,7 @@ async fn lepusa_integration_live_bundle_problems(
     }
     if !manifest.contains("moondesk-sidecar") || !manifest.contains("\"serve\"") {
       problems.push(
-        "runtime manifest does not include bundled Moondesk sidecar serve command",
+        "runtime manifest does not include bundled MoonDesk sidecar serve command",
       )
     }
     let bundled_ui_dir = lepusa_integration_bundled_ui_dir(
@@ -141,7 +141,7 @@ async fn lepusa_integration_bundle_problems(
   )
   lepusa_integration_require_file(
     lepusa_integration_sidecar_path(options.target, out_dir),
-    "Moondesk sidecar",
+    "MoonDesk sidecar",
     problems,
   )
   lepusa_integration_require_file(paths.manifest, "runtime manifest", problems)

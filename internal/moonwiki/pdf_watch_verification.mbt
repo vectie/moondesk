@@ -80,13 +80,13 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "book.json records MoonBook/Moontown base-type provenance",
+    "book.json records MoonBook/MoonTown base-type provenance",
     pdf_watch_base_type_provenance_valid(base_type_provenance),
   )
   record_contract_check(
     checks,
     missing,
-    "book records durable base-type selection from Moondesk catalog",
+    "book records durable base-type selection from MoonDesk catalog",
     @fs.exists(base_type_selection_path) &&
     pdf_watch_base_type_selection_valid_for_book(book_json, base_type_selection) &&
     json_bool(base_type_selection, "verified", default=false),
@@ -178,7 +178,7 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "Moontown standing watch handoff targets this book",
+    "MoonTown standing watch handoff targets this book",
     global_standing_goal_ready || standing_goal_registration_ready,
   )
   let global_goal = json_record_by_id(
@@ -190,7 +190,7 @@ async fn pdf_watch_contract_verification(
       record_contract_check(
         checks,
         missing,
-        "Moontown standing goal uses the PDF Evidence Watch pipeline prompt",
+        "MoonTown standing goal uses the PDF Evidence Watch pipeline prompt",
         json_string(goal, "target_book_id", default="") == book_id &&
         json_string(goal, "prompt", default="").contains(
           "Watch configured websites for new relevant PDFs",
@@ -205,17 +205,17 @@ async fn pdf_watch_contract_verification(
       )
     None =>
       record_contract_check(
-        checks, missing, "Moontown standing goal uses the PDF Evidence Watch pipeline prompt",
+        checks, missing, "MoonTown standing goal uses the PDF Evidence Watch pipeline prompt",
         false,
       )
   }
   record_contract_check(
-    checks, missing, "Moontown standing goal registration receipt is durable", standing_goal_registration_ready,
+    checks, missing, "MoonTown standing goal registration receipt is durable", standing_goal_registration_ready,
   )
   record_contract_check(
     checks,
     missing,
-    "Moontown book-template request exists",
+    "MoonTown book-template request exists",
     request is Some(_),
   )
   match request {
@@ -223,7 +223,7 @@ async fn pdf_watch_contract_verification(
       record_contract_check(
         checks,
         missing,
-        "Moontown book-template request is queued or installed",
+        "MoonTown book-template request is queued or installed",
         pdf_watch_moontown_template_request_status_ready(
           json_string(request, "status", default=""),
         ),
@@ -233,7 +233,7 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "Moontown template publish receipt is durable and queued or installed",
+    "MoonTown template publish receipt is durable and queued or installed",
     @fs.exists(publish_receipt_path) &&
     json_bool(publish_receipt, "ok", default=false) &&
     pdf_watch_moontown_template_request_status_ready(
@@ -243,7 +243,7 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "Moontown publish receipt preserves the reusable research-book handoff",
+    "MoonTown publish receipt preserves the reusable research-book handoff",
     json_string(publish_receipt, "book_ownership_contract", default="") ==
     "research-book + source adapter + extractor + analysis skill + standing watch" &&
     json_string(publish_receipt, "target_book_id", default="") == book_id &&
@@ -255,7 +255,7 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "Moontown publish receipt records accepted-knowledge-only notification",
+    "MoonTown publish receipt records accepted-knowledge-only notification",
     json_string(
       json_object_field_or_empty(publish_receipt, "standing_goal_contract"),
       "notify_rule",
@@ -266,7 +266,7 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "Moontown publish receipt preserves base-type provenance",
+    "MoonTown publish receipt preserves base-type provenance",
     pdf_watch_base_type_provenance_valid(
       json_object_field_or_empty(publish_receipt, "base_type_provenance"),
     ),
@@ -274,7 +274,7 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "Moontown publish receipt preserves output contract handoff",
+    "MoonTown publish receipt preserves output contract handoff",
     json_string(
       json_object_field_or_empty(publish_receipt, "output_contract"),
       "output_contract",
@@ -289,7 +289,7 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "Moontown install config uses latest flat PdfEvidenceWatchInstallSpec fields",
+    "MoonTown install config uses latest flat PdfEvidenceWatchInstallSpec fields",
     json_string(install_config, "book_id", default="") == book_id &&
     json_string(install_config, "title", default="") != "" &&
     json_string_array_items(install_config, "websites").length() > 0 &&
@@ -301,7 +301,7 @@ async fn pdf_watch_contract_verification(
   record_contract_check(
     checks,
     missing,
-    "Moontown install config preserves output contract handoff",
+    "MoonTown install config preserves output contract handoff",
     json_string(
       json_object_field_or_empty(install_config, "output_contract"),
       "output_contract",

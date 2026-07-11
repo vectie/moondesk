@@ -103,7 +103,7 @@ async function runSmoke() {
   );
   assert(
     restartEvent?.status === "running",
-    `Terminal native service events should release the Moondesk runtime-service lease: ${JSON.stringify(restarted)}`,
+    `Terminal native service events should release the MoonDesk runtime-service lease: ${JSON.stringify(restarted)}`,
   );
   console.log(JSON.stringify({
     ok: true,

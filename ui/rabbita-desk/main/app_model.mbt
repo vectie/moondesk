@@ -97,6 +97,8 @@ struct Model {
   review_decision_status : String
   town_messages : Array[TownMessage]
   runs : Array[@desk.DeskRunProjection]
+  moonflow_runs : Array[MoonFlowRunProjection]
+  moonflow_status : String
   inbox_title : String
   inbox_content : String
   import_url : String
@@ -142,6 +144,7 @@ enum Msg {
   LoadedEntries(Result[Array[@desk.DeskFileEntry], String])
   LoadedPreview(Result[@desk.DeskPreview, String])
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
+  LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
   LoadedTownMessages(Result[Array[TownMessage], String])
   LoadedRequests(Result[Array[RequestRecord], String])
   LoadedStandingGoals(Result[Array[StandingGoalRecord], String])

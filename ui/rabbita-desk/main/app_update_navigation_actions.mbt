@@ -606,6 +606,7 @@ fn select_workspace_mode_action(
   let activity = match mode {
     Desk => Files
     MoonCode => Files
+    MoonFlow => Files
     MoonWiki => model.activity
   }
   let desk_directory = desk_context_directory(model)
@@ -625,6 +626,8 @@ fn select_workspace_mode_action(
     )
   } else if mode == MoonCode {
     sync_shell_batch(mode, activity, fetch_mooncode_sessions_cmd(dispatch, ""))
+  } else if mode == MoonFlow {
+    sync_shell_batch(mode, activity, fetch_moonflow_runs_cmd(dispatch))
   } else {
     sync_shell_cmd(mode, activity)
   }

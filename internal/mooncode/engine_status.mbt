@@ -99,7 +99,7 @@ pub fn engine_status_projection_json(
           "missing"
         },
         if runtime_contract_ready {
-          "Moondesk sends prompt/steer/cancel/test/package/review commands through /v1/code/sessions/<id>/commands"
+          "MoonDesk sends prompt/steer/cancel/test/package/review commands through /v1/code/sessions/<id>/commands"
         } else {
           "Native /v1/code command ingestion is required before MoonCode can run coding work."
         },
@@ -108,13 +108,13 @@ pub fn engine_status_projection_json(
         "append_only_session_log",
         "Append-only session log",
         "ready",
-        "MoonClaw owns \{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions/<session-id>/events.jsonl")} sidecars and exposes /v1/code/sessions?book_root=<path> for cold discovery; Moondesk stores only desktop projection records",
+        "MoonClaw owns \{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions/<session-id>/events.jsonl")} sidecars and exposes /v1/code/sessions?book_root=<path> for cold discovery; MoonDesk stores only desktop projection records",
       ),
       engine_check_json(
         "append_only_command_queue",
         "Append-only command queue",
         "ready",
-        "MoonClaw owns \{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions/<session-id>/commands.jsonl")} sidecars and reports command counts from the native session show endpoint; Moondesk stores only desktop projection records",
+        "MoonClaw owns \{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions/<session-id>/commands.jsonl")} sidecars and reports command counts from the native session show endpoint; MoonDesk stores only desktop projection records",
       ),
       engine_check_json(
         "typed_runtime_contract",

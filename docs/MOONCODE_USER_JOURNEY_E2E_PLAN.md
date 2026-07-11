@@ -185,8 +185,8 @@ books/code-lab/wiki/index.md
 .tmp/
 ```
 
-Start exactly one MoonClaw daemon and one Moondesk server. Before and after the
-run, inspect processes to ensure stale Lepusa, MoonClaw, or Moondesk instances
+Start exactly one MoonClaw daemon and one MoonDesk server. Before and after the
+run, inspect processes to ensure stale Lepusa, MoonClaw, or MoonDesk instances
 cannot influence results.
 
 ### 2. Test Layers
@@ -195,9 +195,9 @@ Run the layers in this order:
 
 1. **Static contract checks**: source validators and warning-enabled MoonBit
    checks catch duplicated ownership and route drift.
-2. **Deterministic unit/integration suites**: MoonLib/MoonClaw/Moondesk tests
+2. **Deterministic unit/integration suites**: MoonLib/MoonClaw/MoonDesk tests
    prove exact JSON, reducer, storage, and host behavior without UI timing.
-3. **Live HTTP integration**: start real MoonClaw and Moondesk processes and
+3. **Live HTTP integration**: start real MoonClaw and MoonDesk processes and
    prove multi-turn canonical state, runtime control, and storage boundaries.
 4. **Real UI journeys**: use the visible app with mouse clicks and keyboard
    typing. Do not inject chat messages into browser state.

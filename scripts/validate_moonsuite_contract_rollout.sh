@@ -97,7 +97,7 @@ fi
 require_file "${moondesk_root}/moon.mod"
 require_file "${moondesk_layout}"
 require_file "${moondesk_core_paths}"
-require_contains "${moondesk_root}/moon.mod" "\"vectie/moonlib@${EXPECTED_MOONLIB_VERSION}\"" "Moondesk MoonLib ${EXPECTED_MOONLIB_VERSION} dependency"
+require_contains "${moondesk_root}/moon.mod" "\"vectie/moonlib@${EXPECTED_MOONLIB_VERSION}\"" "MoonDesk MoonLib ${EXPECTED_MOONLIB_VERSION} dependency"
 require_contains "${moondesk_layout}" "@moonsuite.suite_root_for_workspace_root" "MoonWiki suite-root delegation"
 require_contains "${moondesk_layout}" "@moonsuite.product_home_for_workspace_root" "MoonWiki ProductHome delegation"
 require_contains "${moondesk_layout}" "@moonsuite.product_artifact_for_workspace_root" "MoonWiki product artifact delegation"

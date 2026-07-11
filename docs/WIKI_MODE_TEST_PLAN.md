@@ -1,6 +1,6 @@
 # Wiki Mode Test Plan
 
-Moondesk currently exposes three workspace modes:
+MoonDesk currently exposes three workspace modes:
 
 - `Desk`: scoped virtual filesystem navigation.
 - `Wiki`: human-language MoonBook knowledge work.
@@ -19,7 +19,7 @@ Forward run:
 ```text
 inbox/source/method/wiki input
   -> Wiki request or book-pattern action
-  -> Moontown/MoonClaw bounded run when execution is needed
+  -> MoonTown/MoonClaw bounded run when execution is needed
   -> raw evidence, progress, events, generated pages, review rows, receipts
   -> accepted wiki update
 ```
@@ -35,21 +35,21 @@ generated page, run artifact, review row, or finding
 ```
 
 The strongest coverage should be end-to-end: a seeded MoonBook, the native
-Moondesk host, the built Rabbita UI, browser interaction, route assertions, and
+MoonDesk host, the built Rabbita UI, browser interaction, route assertions, and
 filesystem assertions all running together.
 
 Wiki fixtures and route tests must derive MoonSuite paths from MoonLib
-`@moonsuite` helpers, or from Moondesk's tested thin adapter over those helpers.
+`@moonsuite` helpers, or from MoonDesk's tested thin adapter over those helpers.
 Wiki may assert that `.moonsuite/products/moontown` and
 `.moonsuite/products/moonclaw` records are displayed correctly, but it should
 not define an independent suite root, product-home, temp, or product-registry
-contract. MoonStat validates drift against MoonLib instead of defining alternate
+contract. MoonGate validates drift against MoonLib instead of defining alternate
 Wiki paths.
 
 Contract boundary rule for Wiki tests: if Wiki needs a reusable path class for
 requests, reviews, generated pages, product records, or temp artifacts, the
-shared constructor belongs in MoonLib. Wiki tests can verify MoonStat drift
-reports as output, but they must not use MoonStat as the path-building layer.
+shared constructor belongs in MoonLib. Wiki tests can verify MoonGate drift
+reports as output, but they must not use MoonGate as the path-building layer.
 
 ## Non-Goals
 
@@ -60,7 +60,7 @@ Wiki tests should not validate:
   evidence except where Wiki displays MoonBook review artifacts.
 - Real external crawling, scraping, model calls, or network-dependent source
   discovery.
-- Domain-specific research packs in Moondesk core.
+- Domain-specific research packs in MoonDesk core.
 - Destructive file operations such as delete, rename, or move unless Wiki gains
   those operations deliberately.
 
@@ -101,7 +101,7 @@ Coverage:
   local browser import staging, and context-link actions.
 - Review diff helpers classify unchanged, added-only, removed-only, mixed
   changed, missing base, missing head, and bounded long diff body cases.
-- Run/event projection normalizes Moontown and MoonClaw progress records without
+- Run/event projection normalizes MoonTown and MoonClaw progress records without
   leaking runtime-only terminology into the main Wiki user flow.
 - Command palette in Wiki keeps operating actions visible but does not start
   Code sessions implicitly.
@@ -278,7 +278,7 @@ Edge fixtures:
 - Security fixture with sibling `outside.md` next to the book root to test
   traversal rejection.
 - Contract fixture generated through MoonLib helpers that proves Wiki request,
-  review, event, and run projections read MoonClaw/Moontown product-home records
+  review, event, and run projections read MoonClaw/MoonTown product-home records
   without recreating old `.moontown`, `.moonclaw`, repo-local runtime, or global
   temp paths.
 
@@ -461,7 +461,7 @@ Assert:
 
 Steps:
 
-1. Start with no live Moontown daemon.
+1. Start with no live MoonTown daemon.
 2. Start with no live MoonClaw daemon.
 3. Open Wiki Files, Inbox, Search, Town, Runs, Settings, and generated site
    preview.
@@ -547,7 +547,7 @@ Wiki mode is sufficiently tested when:
 - Markdown editing is covered at reducer, route, and browser levels.
 - Search, inbox, town request, run projection, review diff, generated-site
   preview, and path-security behavior are covered end to end.
-- Tests prove Wiki mode works without live MoonClaw or Moontown daemons for
+- Tests prove Wiki mode works without live MoonClaw or MoonTown daemons for
   local book editing and inspection.
 - Mode-boundary tests prove Wiki preserves context across Desk and Code without
   accidentally starting Code execution.

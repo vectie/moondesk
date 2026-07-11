@@ -56,7 +56,7 @@ fn app_tool_portable_all_status_summary(result : Json) -> String {
 
 ///|
 fn request_title(record : RequestRecord) -> String {
-  json_field_string(record.request, "title", default="Moondesk request")
+  json_field_string(record.request, "title", default="MoonDesk request")
 }
 
 ///|

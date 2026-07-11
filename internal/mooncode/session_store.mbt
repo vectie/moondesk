@@ -89,7 +89,7 @@ pub fn session_snapshot(
         "diff", "command", "exit_code", "command_packet",
       ],
       "text_policy": "detail and diff are trimmed and capped before persistence or streaming",
-      "consumer_note": "MoonClaw can resume this snapshot from the durable event log without depending on Moondesk HTTP projection logic for sparse runtime events.",
+      "consumer_note": "MoonClaw can resume this snapshot from the durable event log without depending on MoonDesk HTTP projection logic for sparse runtime events.",
     },
     "owner": {
       "ui": "moondesk",
