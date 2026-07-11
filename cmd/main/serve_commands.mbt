@@ -23,12 +23,12 @@ async fn run_desktop(args : Array[String]) -> Unit {
 }
 
 ///|
-fn moonstat_startup_ready_message(base_url : String) -> String {
+fn moongate_startup_ready_message(base_url : String) -> String {
   "MoonGate available at \{base_url}; usage/statistics panels enabled"
 }
 
 ///|
-fn moonstat_startup_unavailable_message(
+fn moongate_startup_unavailable_message(
   base_url : String,
   error : String,
 ) -> String {
@@ -36,12 +36,12 @@ fn moonstat_startup_unavailable_message(
 }
 
 ///|
-async fn print_moonstat_startup_status() -> Unit {
-  let client = @moonstat.discover()
+async fn print_moongate_startup_status() -> Unit {
+  let client = @moongate.discover()
   match client.health() {
-    Ok(_) => println(moonstat_startup_ready_message(client.base_url()))
+    Ok(_) => println(moongate_startup_ready_message(client.base_url()))
     Err(error) =>
-      println(moonstat_startup_unavailable_message(client.base_url(), error))
+      println(moongate_startup_unavailable_message(client.base_url(), error))
   }
 }
 
@@ -69,7 +69,7 @@ async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
   if options.open_browser {
     open_browser_url(url)
   }
-  print_moonstat_startup_status()
+  print_moongate_startup_status()
   server.serve_desk(options.ui_dir, workspace_root)
 }
 

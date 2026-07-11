@@ -22,7 +22,7 @@ MoonSuiteRoot/
       mooncode/
       moonclaw/
       moontown/
-      moonstat/
+      moongate/
       moonfish/
       moonmoon/
       moonrobo/
@@ -66,7 +66,7 @@ Default products:
 - `mooncode`
 - `moonclaw`
 - `moontown`
-- `moonstat`
+- `moongate`
 - `moonfish`
 - `moonmoon`
 - `moonrobo`
@@ -82,14 +82,14 @@ drift reporting over live workspaces. Putting the contract in MoonGate would
 make every product depend on an analytics/status product just to construct
 paths, which is the wrong dependency direction.
 
-MoonSuite filesystem contracts should be defined in `moonlib`, not `moonstat`.
+MoonSuite filesystem contracts should be defined in `moonlib`, not `moongate`.
 `moonlib` is the shared source of truth for low-level suite layout contracts:
 suite root discovery, product registry schema, product state paths, suite temp
 paths, book paths, artifact classes, and typed path constructors. It must stay
 dependency-light and deterministic so every Moon product can use it without
 pulling in status, analytics, or daemon behavior.
 
-`moonstat` should consume the `moonlib` contract layer. Its responsibility is to
+`moongate` should consume the `moonlib` contract layer. Its responsibility is to
 audit live workspaces, report drift, index metrics/snapshots, and surface health
 views. It can enforce that products follow the contract, but it should not own
 the contract itself.
@@ -101,7 +101,7 @@ alongside the remaining product-home migration:
 2. Move shared product ids, registry schema, and path constructors into that
    package.
 3. Replace product-local string helpers with `moonlib` contract calls.
-4. Make `moonstat` validate workspaces against `moonlib` contracts and report
+4. Make `moongate` validate workspaces against `moonlib` contracts and report
    legacy-path drift.
 
 This extraction is a migration requirement, not an optional cleanup. Product
@@ -122,7 +122,7 @@ service paths. Remaining product-local helpers should follow the same wrapper
 pattern instead of carrying independent string contracts.
 - MoonGate now depends on MoonLib `0.1.2` and consumes `@moonsuite` for its
   home `.moonsuite` state directory plus MoonClaw product-home provider, model,
-  and config manifest paths. MoonGate also exposes `moonstat suite drift` and
+  and config manifest paths. MoonGate also exposes `moongate suite drift` and
   `/suite/drift` as a MoonLib-derived drift report over legacy `.moontown`,
   `.moonclaw`, repo-local runtime, old MoonGate state paths, MoonRobo product
   runtime paths, old global SDK E1 temp files, and book-local
@@ -537,7 +537,7 @@ Product state should be isolated by owner:
 - `mooncode`: sessions, command queues, handoff, evals.
 - `moonclaw`: daemon config, runtime jobs, logs, sandboxes, tool state.
 - `moontown`: standing goals, town messages, events, routing, scheduler state.
-- `moonstat`: metrics DB, snapshots, analytics, embeddings and indexes.
+- `moongate`: metrics DB, snapshots, analytics, embeddings and indexes.
 - `moonfish`: workflows, market-data cache, chart state, reports, planning runs.
 - `moonmoon`: terrain, scenes, simulations, generated clips, evidence.
 - `moonrobo`: robot profiles, URDF indexes, mesh refs, gait, telemetry, sim runs.
@@ -1187,12 +1187,12 @@ Completed slices:
 - MoonGate commit `0428848` splits the active suite-status and product-state
   defaults: suite discovery now writes `.moonsuite/suite-status.json`, while
   MoonGate-owned usage request logs, session sync offsets, and editable model
-  pricing now default under `.moonsuite/products/moonstat`. Help text, README
+  pricing now default under `.moonsuite/products/moongate`. Help text, README
   copy, and white-box coverage assert the fresh suite-root/product-home
   boundary. Validation passed in MoonGate with `moon fmt`, `moon info`,
   `moon check`, `moon test` (774/774), and `git diff --check`.
 - MoonGate commit `62d9ebb` moves the app config default from suite state into
-  `.moonsuite/products/moonstat/config.json`. Config backups and skill
+  `.moonsuite/products/moongate/config.json`. Config backups and skill
   state/backups/install directories follow MoonGate's product-home config root,
   with README copy and white-box coverage asserting the new path. Validation
   passed in MoonGate with `moon fmt`, `moon info`, `moon check`, `moon test`
@@ -1616,7 +1616,7 @@ Completed slices:
   report now carries explicit probe paths and scopes, exposes MoonRobo
   canonical product-home and suite-temp paths, and treats legacy `.moontown`,
   `.moonclaw`, `.moontown/moondesk-daemon`, `moonclaw-jobs`, root-local
-  `moonstat`, MoonRobo `runs/gateway-commands`, `runs/robo-loops`,
+  `moongate`, MoonRobo `runs/gateway-commands`, `runs/robo-loops`,
   `runs/proof-sessions`, and old global SDK E1 bridge temp files as drift
   candidates. Tests use an injectable `global_tmp_root` so production can still
   inspect `/tmp` while the suite stays deterministic. Validation passed with
@@ -1942,7 +1942,7 @@ Completed slices:
   untracked `.moonsuite` runtime output; and `git diff --check`.
 - MoonGate OpenClaw standalone workspace state now belongs to MoonGate's
   product home. The `/workspace/files...` and `/workspace/memory...` helpers
-  derive `.moonsuite/products/moonstat/openclaw/workspace` through MoonLib's
+  derive `.moonsuite/products/moongate/openclaw/workspace` through MoonLib's
   workspace-root product-artifact constructor instead of writing directly to
   `~/.moonsuite/openclaw/workspace`; white-box coverage now asserts the
   product-owned workspace and memory paths and rejects the old standalone
@@ -1952,7 +1952,7 @@ Completed slices:
 - MoonGate-owned auth and gateway token stores now live under MoonGate's
   product home. Codex OAuth credentials, Copilot credentials, and the Claude
   Desktop gateway token derive
-  `.moonsuite/products/moonstat/auth/...` through MoonLib workspace-root
+  `.moonsuite/products/moongate/auth/...` through MoonLib workspace-root
   product-artifact constructors instead of using top-level `~/.moonsuite`
   files; the external Codex CLI source credential at `.codex/auth.json`
   remains an external source-of-truth reader. Validation for this slice:
@@ -1989,7 +1989,7 @@ Completed slices:
   `moon info` with no generated `.mbti` changes, `moon check`, `moon test`
   with `200/200` tests passing, and `git diff --check`. The MoonBook push also
   reconciled Gitee's older divergent `main` without keeping legacy
-  `moon.mod.json` or the stale singular `plugin/moonstat` directory.
+  `moon.mod.json` or the stale singular `plugin/moongate` directory.
 - MoonFish suite-status references now use structured path construction for
   the active MoonSuite state file. The model helper derives
   `.moonsuite/suite-status.json` with MoonLib `state_dir` plus `pathx.join`
@@ -2311,7 +2311,7 @@ Remaining high-priority product slices:
 - MoonGate commit `7edaf0d` removes the remaining cwd-local Warp temporary
   launch script pattern. Warp resume scripts now derive their directory from
   MoonLib's workspace-root MoonGate product home and are written under
-  `.tmp/products/moonstat/warp`, including when the selected cwd is
+  `.tmp/products/moongate/warp`, including when the selected cwd is
   `books/<book-id>`. Validation passed with MoonGate `moon fmt`, `moon info`,
   `moon check --target native --diagnostic-limit 80`, full
   `moon test --target native` (`780/780`), `git diff --check`, the MoonDesk

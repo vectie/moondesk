@@ -144,7 +144,7 @@ construction dependency for product repos.
 
 Done:
 
-- MoonSuite v2 plan identifies `moonlib` as contract owner and `moonstat` as
+- MoonSuite v2 plan identifies `moonlib` as contract owner and `moongate` as
   validator/reporter.
 - MoonLib publishes `vectie/moonlib/moonsuite` in MoonLib `0.1.1` with suite
   root, book root, artifact class, product-home, suite temp, external-tool

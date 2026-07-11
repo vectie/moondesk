@@ -39,7 +39,7 @@ is_allowed_hit() {
       # Phase 8 residual scan has its own legacy-string detector and allowlist.
       return 0
       ;;
-    moonstat:./suite.mbt:*)
+    moongate:./suite.mbt:*)
       # MoonGate is the drift detector for legacy product-home candidates.
       return 0
       ;;

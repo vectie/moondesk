@@ -11,7 +11,7 @@ import {
   "vectie/moondesk/internal/mooncore",
   "vectie/moondesk/internal/moonwiki",
   "vectie/moondesk/internal/pathx",
-  "vectie/moondesk/plugin/moonstat",
+  "vectie/moondesk/plugin/moongate",
 }
 
 supported_targets = "native"

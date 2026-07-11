@@ -59,7 +59,7 @@ async test "serve prepares MoonSuite workspace directories" {
   })
   for
     product_id in [
-      "moondesk", "moonbook", "moonwiki", "mooncode", "moonclaw", "moontown", "moonstat",
+      "moondesk", "moonbook", "moonwiki", "mooncode", "moonclaw", "moontown", "moongate",
       "moonfish", "moonmoon", "moonchat", "moonvis", "moonrobo", "bookkeeper", "lepusa",
       "rabbita",
     ] {
@@ -71,7 +71,7 @@ async test "serve prepares MoonSuite workspace directories" {
   for
     legacy_home in [
       ".moondesk", ".moonbook", ".moonwiki", ".mooncode", ".moonclaw", ".moontown",
-      ".moonstat", ".moonfish", ".moonmoon", ".moonchat", ".moonvis", ".bookkeeper",
+      ".moongate", ".moonfish", ".moonmoon", ".moonchat", ".moonvis", ".bookkeeper",
       ".lepusa", ".rabbita",
     ] {
     assert_false(@fs.exists(@pathx.join(root, legacy_home)))

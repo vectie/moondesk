@@ -1,41 +1,41 @@
 ///|
-test "moonstat client resolves manifest base url" {
+test "moongate client resolves manifest base url" {
   let status = {
     "contract": Json::string("moon.suite.status.v2"),
-    "service": Json::string("moonstat"),
+    "service": Json::string("moongate"),
     "manifest": {
       "contract": Json::string("moon.suite.service.v1"),
-      "service": Json::string("moonstat"),
+      "service": Json::string("moongate"),
       "baseUrl": Json::string("http://127.0.0.1:18081"),
     }.to_json(),
   }.to_json()
   assert_true(
-    moonstat_base_url_from_status(status) == Some("http://127.0.0.1:18081"),
+    moongate_base_url_from_status(status) == Some("http://127.0.0.1:18081"),
   )
 }
 
 ///|
-test "moonstat client rejects legacy suite status shortcuts" {
+test "moongate client rejects legacy suite status shortcuts" {
   let health_only = { "health_url": "http://127.0.0.1:18082/health" }.to_json()
   let root_base = { "base_url": "http://127.0.0.1:18082" }.to_json()
   let manifest_only = {
     "manifest": { "base_url": "http://127.0.0.1:18082" }.to_json(),
   }.to_json()
-  assert_true(moonstat_base_url_from_status(health_only) is None)
-  assert_true(moonstat_base_url_from_status(root_base) is None)
-  assert_true(moonstat_base_url_from_status(manifest_only) is None)
+  assert_true(moongate_base_url_from_status(health_only) is None)
+  assert_true(moongate_base_url_from_status(root_base) is None)
+  assert_true(moongate_base_url_from_status(manifest_only) is None)
 }
 
 ///|
-test "moonstat client reads suite status from workspace moonsuite state" {
+test "moongate client reads suite status from workspace moonsuite state" {
   let root = "/tmp/moonsuite/books/research-demo"
-  let path = moonstat_suite_status_path_for_workspace_root(root)
+  let path = moongate_suite_status_path_for_workspace_root(root)
   assert_eq(path, "/tmp/moonsuite/.moonsuite/suite-status.json")
   assert_false(path.contains("/.moonsuite/.moonsuite/suite-status.json"))
 }
 
 ///|
-test "moonstat client builds openclaw route url" {
+test "moongate client builds openclaw route url" {
   let client = { base_url: "http://127.0.0.1:18081" }
   assert_eq(
     client.route_openclaw_chat_url(),
@@ -44,7 +44,7 @@ test "moonstat client builds openclaw route url" {
 }
 
 ///|
-test "moonstat client parses typed models" {
+test "moongate client parses typed models" {
   let catalog = {
     "models": [
       {
@@ -55,7 +55,7 @@ test "moonstat client parses typed models" {
       { "id": Json::string("moon/local") },
     ],
   }.to_json()
-  guard moonstat_models_from_json(catalog) is Ok(models) else {
+  guard moongate_models_from_json(catalog) is Ok(models) else {
     fail("expected parsed models")
   }
   assert_eq(models.length(), 2)
@@ -66,7 +66,7 @@ test "moonstat client parses typed models" {
 }
 
 ///|
-test "moonstat client parses typed usage summary" {
+test "moongate client parses typed usage summary" {
   let summary = {
     "totalRequests": Json::number(3.0),
     "totalCost": Json::string("0.000300"),
@@ -78,7 +78,7 @@ test "moonstat client parses typed usage summary" {
     "realTotalTokens": Json::number(127.0),
     "cacheHitRate": Json::number(12.5),
   }.to_json()
-  guard MoonstatUsageSummary::from_json(summary) is Ok(parsed) else {
+  guard MoonGateUsageSummary::from_json(summary) is Ok(parsed) else {
     fail("expected parsed usage summary")
   }
   assert_eq(parsed.total_requests, 3)
