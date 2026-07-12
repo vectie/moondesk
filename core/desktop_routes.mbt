@@ -170,6 +170,12 @@ pub fn workspace_site_route() -> String {
 }
 
 ///|
+pub fn workspace_site_url(workspace_id : String, asset_path : String) -> String {
+  desktop_api_path(["api", "workspaces", workspace_id, "site"]) +
+  (if asset_path == "" { "" } else { "/" + url_path(asset_path) })
+}
+
+///|
 pub fn moonclaw_endpoint_url(endpoint : String) -> String {
   desktop_api_path(["api", "moonclaw"]) + "/" + url_path(endpoint)
 }

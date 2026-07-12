@@ -52,6 +52,7 @@ options(
     "app_tool_portable_status.mbt": [ "native" ],
     "app_tool_portable_wbtest.mbt": [ "native" ],
     "binary_helpers.mbt": [ "native" ],
+    "browser_security_wbtest.mbt": [ "native" ],
     "book_base_types.mbt": [ "native" ],
     "book_contract_handlers.mbt": [ "native" ],
     "book_creation_handlers.mbt": [ "native" ],

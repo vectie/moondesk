@@ -45,6 +45,10 @@ test "workspace desktop routes live in core boundary" {
     ),
     "/api/workspaces/book-demo/file/book/site/generated/assets/site%20%231.css",
   )
+  assert_eq(
+    @core.workspace_site_url("book demo", "assets/site #1.css"),
+    "/api/workspaces/book%20demo/site/assets/site%20%231.css",
+  )
 }
 
 ///|

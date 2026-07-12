@@ -156,7 +156,7 @@ async fn handle_workspace_site_asset(
   match resolve_workspace_path(workspace.root_path, relative) {
     Some((absolute, _)) =>
       if @fs.exists(absolute) && !is_directory(absolute) {
-        send_file(conn, method_, absolute, 200, "OK")
+        send_isolated_preview_file(conn, method_, absolute, 200, "OK")
       } else {
         send_api_error(conn, method_, 404, "Not Found", "Site asset not found")
       }

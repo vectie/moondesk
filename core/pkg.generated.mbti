@@ -13,6 +13,16 @@ pub fn books_endpoint_url(String) -> String
 
 pub fn books_route(String) -> String
 
+pub fn browser_action(action_id~ : String, session_id~ : String, actor~ : BrowserActor, operation~ : BrowserOperation, target~ : String, value_redacted? : String, expected_observation? : String, code_revision? : String, authority_envelope_id? : String, created_at? : String) -> BrowserAction
+
+pub fn browser_action_is_secret_safe(BrowserAction) -> Bool
+
+pub fn browser_action_matches_scope(BrowserAction, BrowserSessionScope) -> Bool
+
+pub fn browser_external_navigation_requires_authority(StringView) -> Bool
+
+pub fn browser_local_preview_path_allowed(StringView) -> Bool
+
 pub fn desktop_api_capability_contract() -> DesktopApiCapabilities
 
 pub fn desktop_api_path(Array[String]) -> String
@@ -93,6 +103,8 @@ pub fn moonsuite_tmp_display_dir() -> String
 
 pub fn normalize_review_policy(String) -> String
 
+pub fn opaque_local_browser_scope(session_id~ : String, workspace_id~ : String, book_revision? : String, code_revision? : String, run_id? : String, authority_envelope_id? : String) -> BrowserSessionScope
+
 pub fn preferences_tags_route() -> String
 
 pub fn preferences_views_route() -> String
@@ -157,6 +169,8 @@ pub fn workspace_raw_url(String, String) -> String
 
 pub fn workspace_site_route() -> String
 
+pub fn workspace_site_url(String, String) -> String
+
 pub fn workspaces_route() -> String
 
 pub fn workspaces_url() -> String
@@ -164,6 +178,91 @@ pub fn workspaces_url() -> String
 // Errors
 
 // Types and methods
+pub struct BrowserAction {
+  action_id : String
+  session_id : String
+  actor : BrowserActor
+  operation : BrowserOperation
+  target : String
+  value_redacted : String
+  expected_observation : String
+  code_revision : String
+  authority_envelope_id : String
+  created_at : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct BrowserActionReceipt {
+  action_id : String
+  session_id : String
+  actor : BrowserActor
+  operation : BrowserOperation
+  outcome : String
+  observations : Array[String]
+  authority_envelope_id : String
+  code_revision : String
+  completed_at : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) enum BrowserActor {
+  User
+  Agent
+  Replay
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) enum BrowserNetworkPolicy {
+  LocalAssetsOnly
+  ApprovedOrigins(Array[String])
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct BrowserObservation {
+  observation_id : String
+  session_id : String
+  action_id : String?
+  kind : String
+  summary : String
+  artifact_path : String?
+  code_revision : String
+  captured_at : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) enum BrowserOperation {
+  Navigate
+  Reload
+  Stop
+  Click
+  TypeText
+  PressKey
+  SelectOption
+  SetViewport
+  CaptureScreenshot
+  CaptureDiagnostics
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) enum BrowserOriginClass {
+  OpaqueLocalPreview
+  ApprovedExternalOrigin(String)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct BrowserSessionScope {
+  session_id : String
+  workspace_id : String
+  book_revision : String
+  code_revision : String
+  run_id : String
+  authority_envelope_id : String
+  origin_class : BrowserOriginClass
+  network_policy : BrowserNetworkPolicy
+  storage_lifetime : BrowserStorageLifetime
+  download_root : String
+  upload_sources : Array[String]
+  permitted_effects : Array[String]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) enum BrowserStorageLifetime {
+  Ephemeral
+  RunScoped
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
 pub struct DeskFileEntry {
   id : String
   workspace_id : String
