@@ -101,18 +101,20 @@ soak remains an honest pending gate.
 Earlier real soaks were intentionally superseded whenever qualification changed
 the runtime boundary. The last superseded run completed two clean cycles and is
 marked `superseded`, not passed; its elapsed time is excluded. The definitive
-soak uses `qualification/unattended-soak/runtime-c066ea2b`, whose installed
+soak uses `qualification/unattended-soak/runtime-9fd437f1`, whose installed
 runtime manifest SHA-256 is
-`c066ea2bd925f54529109f5cbdf9d21acd1260affdcaeb7d3198da2fa9e61c7e`.
-It binds MoonFlow commit `254962a`, MoonBook `aaab16c`, and MoonClaw `dc73a989`.
-Every 15-minute cycle runs five checks: the three-crash restart sequence,
+`9fd437f13c4e212873e0010c96f9ef6e3f2b8bc8ede21fdde858098fc9c13aa8`.
+It binds MoonFlow commit `3e5f1a9`, MoonBook `aaab16c`, MoonClaw `dc73a989`,
+and MoonGate `8335b0f`. Every 15-minute cycle runs nine checks: the three-crash restart sequence,
 seeded review-rejection/automatic revision, native bounded-helper execution, a
-combined crash/delay/duplicate/immutable-revision lineage, and a seeded
-product-adapter crash followed by bounded child recovery. State
+missing-model refusal, combined crash/delay/duplicate/immutable-revision
+lineage, evidence-source mutation refusal, operator pause/resume, real MoonGate
+budget exhaustion, and a seeded product-adapter crash followed by bounded
+child recovery. State
 and receipts are under
-`qualification/unattended-soak/run-20260712-c066ea2b`; cycle 1 passed all five
+`qualification/unattended-soak/run-20260712-9fd437f1`; cycle 1 passed all nine
 checks with zero failures. The 72-hour clock began at epoch
-`1783848947.0090082`. An hourly task continuation monitors this exact path.
+`1783849556.1028988`. An hourly task continuation monitors this exact path.
 
 The combined lineage returns `[-9, -9, -9, 0, 0]`, delays the child result,
 replays a duplicate terminal delivery as a no-op, retains distinct rejected
@@ -120,6 +122,11 @@ parent and accepted child evidence, invalidates exactly one checkpoint, and
 charges exactly two attempts. A signal preflight also exposed that the runner's
 sleep delayed SIGTERM completion; it now uses an interruptible event wait and
 persists `interrupted` immediately.
+
+All recurring harness work now lives under
+`~/moonsuite/qualification/harness-work`. This replaced the operating system
+temporary directory after macOS `/var` and `/private/var` aliases masked the
+intended source-digest refusal behind a workspace-identity refusal.
 
 ## Automatic revision trial
 
@@ -174,7 +181,7 @@ Latest focused/full evidence after the final changes:
 |---|---:|
 | MoonGate | 813/813 |
 | MoonBook / MoonWiki / Bookkeeper | 255/255 |
-| MoonFlow | 40/40 plus five-check soak and signal preflights |
+| MoonFlow | 40/40 plus nine-check soak and signal preflights |
 | MoonClaw / MoonCode | 1087/1087 |
 | MoonTown | 983/983 |
 | MoonRobo | 552/552 |
@@ -217,6 +224,9 @@ Latest focused/full evidence after the final changes:
 10. **Supervisor stop could appear hung.** The first soak runner recorded the
     stop request but remained in its interval sleep. Signal handling now wakes
     the wait immediately and persists an honest interrupted terminal state.
+11. **Temporary roots obscured identity and escaped the suite workspace.** The
+    harness now uses `~/moonsuite/qualification/harness-work`; source mutation
+    consequently produces the intended durable `source_digest` rejection.
 
 Desktop and narrow-width Flow layouts were inspected. Control buttons wrap,
 long identities truncate, and the physical-readiness boundary remains visible.
@@ -252,8 +262,6 @@ long identities truncate, and the physical-readiness boundary remains visible.
 - One accepted repeat demonstrating bounded procedure transfer in a live
   lineage (the compiler and Bookkeeper transfer policy are already qualified
   offline).
-- Temporary model loss, budget exhaustion, evidence mutation, and operator
-  pause/resume qualification.
 - A real 72-hour supervisor soak; this cannot be replaced by accelerated unit
   time while still honestly claiming a 72-hour observation.
 - Final evidence bundle, rerating, main-branch merge, publication, and remote
