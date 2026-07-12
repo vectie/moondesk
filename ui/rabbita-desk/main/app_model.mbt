@@ -306,4 +306,8 @@ enum Msg {
   DecideReviewItem(ReviewItem, String)
   NotifyDaily
   RefreshAll
+  ReloadBrowserPreview
+  SetBrowserPreviewViewport(String)
+  CaptureBrowserPreviewEvidence
+  FixBrowserPreviewInMoonCode
 }

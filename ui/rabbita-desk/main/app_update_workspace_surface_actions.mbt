@@ -5,6 +5,25 @@ fn update_workspace_surface_actions(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
+    ReloadBrowserPreview => (reload_browser_preview_cmd(), model)
+    SetBrowserPreviewViewport(viewport) =>
+      (set_browser_preview_viewport_cmd(viewport), model)
+    CaptureBrowserPreviewEvidence =>
+      (capture_browser_preview_evidence_cmd(), model)
+    FixBrowserPreviewInMoonCode => {
+      let (cmd, next) = select_workspace_mode_action(dispatch, MoonCode, model)
+      (
+        cmd,
+        {
+          ..next,
+          mooncode_new_chat_active: true,
+          mooncode_prompt: "Fix the executable preview for " +
+          model.selected_path +
+          ". Use the attached browser diagnostics and preserve its current behavior unless the evidence shows a defect.",
+          mooncode_composer_status: "Preview diagnostics attached",
+        },
+      )
+    }
     SetNewBookName(name) =>
       (
         @rabbita.none,

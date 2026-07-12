@@ -120,24 +120,104 @@ fn render_preview_body(
     Some(preview) =>
       match preview.renderer {
         Html =>
-          div(class="site-preview", [
-            div(class="site-toolbar", [
-              span(class="quiet-path", model.selected_path),
-              a(
-                class="secondary-button link-button",
-                href=html_preview_url(model, model.selected_path),
-                target=Blank,
-                rel="noreferrer",
-                "Open",
-              ),
-            ]),
-            iframe(
-              class="site-iframe",
-              src=html_preview_url(model, model.selected_path),
-              title=preview.title,
-              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads",
-            ),
-          ])
+          div(
+            class="site-preview embedded-browser",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "browser-preview-host")
+              .data_set("viewport", "desktop"),
+            [
+              div(class="site-toolbar browser-toolbar", [
+                div(class="browser-location", [
+                  span(class="browser-security-badge", "Isolated"),
+                  span(class="quiet-path", model.selected_path),
+                ]),
+                div(class="browser-toolbar-actions", [
+                  button(
+                    class="secondary-button browser-tool-button",
+                    attrs=@html.Attrs::build()
+                      .data_set("browser-viewport", "desktop")
+                      .aria_pressed("true"),
+                    on_click=dispatch(SetBrowserPreviewViewport("desktop")),
+                    "Desktop",
+                  ),
+                  button(
+                    class="secondary-button browser-tool-button",
+                    attrs=@html.Attrs::build()
+                      .data_set("browser-viewport", "tablet")
+                      .aria_pressed("false"),
+                    on_click=dispatch(SetBrowserPreviewViewport("tablet")),
+                    "Tablet",
+                  ),
+                  button(
+                    class="secondary-button browser-tool-button",
+                    attrs=@html.Attrs::build()
+                      .data_set("browser-viewport", "mobile")
+                      .aria_pressed("false"),
+                    on_click=dispatch(SetBrowserPreviewViewport("mobile")),
+                    "Mobile",
+                  ),
+                  button(
+                    class="secondary-button browser-tool-button",
+                    on_click=dispatch(ReloadBrowserPreview),
+                    "Reload",
+                  ),
+                ]),
+              ]),
+              div(class="browser-frame-stage", [
+                iframe(
+                  class="site-iframe",
+                  src=html_preview_url(model, model.selected_path),
+                  title=preview.title,
+                  sandbox="allow-scripts",
+                  attrs=@html.Attrs::build().data_set(
+                    "testid", "browser-preview-frame",
+                  ),
+                ),
+              ]),
+              div(class="browser-observation-bar", [
+                span(
+                  class="browser-preview-status",
+                  attrs=@html.Attrs::build().data_set(
+                    "testid", "browser-preview-status",
+                  ),
+                  "Loading isolated preview",
+                ),
+                div(class="browser-observation-actions", [
+                  button(
+                    class="secondary-button",
+                    on_click=dispatch(CaptureBrowserPreviewEvidence),
+                    "Capture evidence",
+                  ),
+                  button(
+                    class="primary-button",
+                    on_click=dispatch(FixBrowserPreviewInMoonCode),
+                    "Fix in MoonCode",
+                  ),
+                ]),
+              ]),
+              details(class="browser-diagnostics", [
+                summary("Diagnostics"),
+                div(class="browser-diagnostics-grid", [
+                  browser_diagnostic_panel(
+                    "Console", "browser-console-output", "No console output observed",
+                  ),
+                  browser_diagnostic_panel(
+                    "Runtime", "browser-runtime-output", "No runtime errors observed",
+                  ),
+                  browser_diagnostic_panel(
+                    "Network", "browser-network-output", "Local assets only",
+                  ),
+                  browser_diagnostic_panel(
+                    "Accessibility", "browser-accessibility-output", "Capture evidence to inspect semantics",
+                  ),
+                ]),
+                p(
+                  class="browser-diagnostics-note",
+                  "Page observations are untrusted until the host captures and accepts their evidence receipt.",
+                ),
+              ]),
+            ],
+          )
         Image =>
           div(class="image-preview", [img(src=preview.body, alt=preview.title)])
         DirectoryListing =>
@@ -160,6 +240,18 @@ fn render_preview_body(
           ])
       }
   }
+}
+
+///|
+fn browser_diagnostic_panel(
+  title : String,
+  testid : String,
+  empty : String,
+) -> @rabbita.Html {
+  section(class="browser-diagnostic-panel", [
+    strong(title),
+    pre(attrs=@html.Attrs::build().data_set("testid", testid), code(empty)),
+  ])
 }
 
 ///|

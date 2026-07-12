@@ -204,6 +204,14 @@ fn update(
       update_workspace_surface_actions(dispatch, msg, model)
     NotifyDaily => update_workspace_surface_actions(dispatch, msg, model)
     RefreshAll => update_workspace_surface_actions(dispatch, msg, model)
+    ReloadBrowserPreview =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    SetBrowserPreviewViewport(_) =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    CaptureBrowserPreviewEvidence =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    FixBrowserPreviewInMoonCode =>
+      update_workspace_surface_actions(dispatch, msg, model)
   }
 }
 

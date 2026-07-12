@@ -45,5 +45,6 @@ fn bootstrap_cmd(
     install_desk_location_enter_cmd(),
     install_mooncode_enter_send_cmd(),
     install_mooncode_disclosures_cmd(),
+    install_browser_preview_observer_cmd(),
   ])
 }

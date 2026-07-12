@@ -25,3 +25,21 @@ test "preview observer is observation-only and parent-scoped" {
   assert_false(bridge.contains("localStorage"))
   assert_false(bridge.contains("document.cookie"))
 }
+
+///|
+test "browser host and origin validation reject rebinding and opaque API calls" {
+  for host in ["localhost", "localhost:4199", "127.0.0.1:4199", "[::1]:4199"] {
+    assert_true(moondesk_browser_host_allowed(host))
+  }
+  for host in ["", "0.0.0.0:4199", "evil.test", "127.0.0.1.evil.test"] {
+    assert_false(moondesk_browser_host_allowed(host))
+  }
+  assert_true(
+    moondesk_browser_origin_allowed("http://127.0.0.1:4199", "127.0.0.1:4199"),
+  )
+  assert_true(moondesk_browser_origin_allowed("", "127.0.0.1:4199"))
+  assert_false(moondesk_browser_origin_allowed("null", "127.0.0.1:4199"))
+  assert_false(
+    moondesk_browser_origin_allowed("http://evil.test", "127.0.0.1:4199"),
+  )
+}

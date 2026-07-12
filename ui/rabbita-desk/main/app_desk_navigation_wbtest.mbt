@@ -2048,6 +2048,41 @@ test "desk preview tabs preserve generated site primary context" {
 }
 
 ///|
+test "generated executable preview uses isolated site projection" {
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    selected_path: "book/site/generated/tool.html",
+  }
+  assert_eq(
+    html_preview_url(model, model.selected_path),
+    "/api/workspaces/book-demo/site/tool.html",
+  )
+  assert_eq(
+    html_preview_url(model, "book/site/generated/assets/app #1.js"),
+    "/api/workspaces/book-demo/site/assets/app%20%231.js",
+  )
+}
+
+///|
+test "Fix in MoonCode carries selected executable artifact context" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    selected_path: "book/site/generated/tool.html",
+  }
+  let (_, next) = update_workspace_surface_actions(
+    dispatch,
+    FixBrowserPreviewInMoonCode,
+    model,
+  )
+  assert_true(next.workspace_mode is MoonCode)
+  assert_true(next.mooncode_prompt.contains("book/site/generated/tool.html"))
+  assert_true(next.mooncode_prompt.contains("browser diagnostics"))
+}
+
+///|
 test "search hit focuses Desk on containing directory" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let (_, next) = update_navigation_actions(

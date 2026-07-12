@@ -7,6 +7,102 @@ fn sync_activity_cmd(activity : Activity) -> @rabbita.Cmd {
 }
 
 ///|
+#cfg(target="js")
+extern "js" fn browser_reload_preview() =
+  #| () => {
+  #|   const frame = document.querySelector('[data-testid="browser-preview-frame"]');
+  #|   if (!(frame instanceof HTMLIFrameElement)) return;
+  #|   const url = new URL(frame.src, globalThis.location?.href);
+  #|   url.searchParams.set('_preview_reload', String(Date.now()));
+  #|   frame.src = url.toString();
+  #|   const status = document.querySelector('[data-testid="browser-preview-status"]');
+  #|   if (status) status.textContent = 'Reloading isolated preview';
+  #| }
+
+///|
+fn reload_browser_preview_cmd() -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_reload_preview(), kind=AfterRender)
+}
+
+///|
+#cfg(target="js")
+extern "js" fn browser_set_preview_viewport(viewport : String) =
+  #| (viewport) => {
+  #|   const host = document.querySelector('[data-testid="browser-preview-host"]');
+  #|   if (!(host instanceof HTMLElement)) return;
+  #|   const allowed = new Set(['desktop', 'tablet', 'mobile']);
+  #|   host.dataset.viewport = allowed.has(viewport) ? viewport : 'desktop';
+  #|   for (const button of host.querySelectorAll('[data-browser-viewport]')) {
+  #|     button.setAttribute('aria-pressed', String(button.getAttribute('data-browser-viewport') === host.dataset.viewport));
+  #|   }
+  #| }
+
+///|
+fn set_browser_preview_viewport_cmd(viewport : String) -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_set_preview_viewport(viewport), kind=AfterRender)
+}
+
+///|
+#cfg(target="js")
+extern "js" fn browser_capture_preview_evidence() =
+  #| () => {
+  #|   const frame = document.querySelector('[data-testid="browser-preview-frame"]');
+  #|   const status = document.querySelector('[data-testid="browser-preview-status"]');
+  #|   if (!(frame instanceof HTMLIFrameElement) || !frame.contentWindow) {
+  #|     if (status) status.textContent = 'Preview is not ready';
+  #|     return;
+  #|   }
+  #|   frame.contentWindow.postMessage({ protocol: 'moondesk-preview-v1', type: 'snapshot-request' }, '*');
+  #|   if (status) status.textContent = 'Collecting DOM, accessibility, console, and network evidence';
+  #| }
+
+///|
+fn capture_browser_preview_evidence_cmd() -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_capture_preview_evidence(), kind=AfterRender)
+}
+
+///|
+#cfg(target="js")
+extern "js" fn browser_install_preview_observer() =
+  #| () => {
+  #|   if (window.__moondeskPreviewObserverInstalled) return;
+  #|   window.__moondeskPreviewObserverInstalled = true;
+  #|   const acceptedSources = () => new Set(
+  #|     Array.from(document.querySelectorAll('[data-testid="browser-preview-frame"]'))
+  #|       .map((frame) => frame instanceof HTMLIFrameElement ? frame.contentWindow : null)
+  #|       .filter(Boolean)
+  #|   );
+  #|   window.addEventListener('message', (event) => {
+  #|     if (!acceptedSources().has(event.source)) return;
+  #|     const data = event.data;
+  #|     if (!data || data.protocol !== 'moondesk-preview-v1') return;
+  #|     const status = document.querySelector('[data-testid="browser-preview-status"]');
+  #|     const consoleOut = document.querySelector('[data-testid="browser-console-output"]');
+  #|     const runtimeOut = document.querySelector('[data-testid="browser-runtime-output"]');
+  #|     const networkOut = document.querySelector('[data-testid="browser-network-output"]');
+  #|     const accessibilityOut = document.querySelector('[data-testid="browser-accessibility-output"]');
+  #|     if (data.type === 'ready') {
+  #|       if (status) status.textContent = 'Ready · isolated local preview';
+  #|     } else if (data.type === 'console' && consoleOut) {
+  #|       consoleOut.textContent = `${data.level || 'log'}: ${data.message || ''}`;
+  #|     } else if (data.type === 'runtime' && runtimeOut) {
+  #|       runtimeOut.textContent = data.message || 'Runtime error';
+  #|     } else if (data.type === 'snapshot') {
+  #|       if (status) status.textContent = 'Evidence captured for this visible revision';
+  #|       if (networkOut) networkOut.textContent = (data.resources || []).join('\n') || 'No loaded subresources';
+  #|       if (accessibilityOut) accessibilityOut.textContent = data.accessibility || 'No accessibility summary';
+  #|       if (runtimeOut && !runtimeOut.textContent) runtimeOut.textContent = 'No runtime errors observed';
+  #|       if (consoleOut && !consoleOut.textContent) consoleOut.textContent = 'No console output observed';
+  #|     }
+  #|   });
+  #| }
+
+///|
+fn install_browser_preview_observer_cmd() -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_install_preview_observer(), kind=AfterRender)
+}
+
+///|
 fn sync_shell_cmd(mode : WorkspaceMode, activity : Activity) -> @rabbita.Cmd {
   @cmd.custom_cmd(
     _ => {

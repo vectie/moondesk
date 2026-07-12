@@ -92,6 +92,16 @@ async fn handle_desk_request(
   body : &@io.Reader,
   conn : @http.ServerConnection,
 ) -> Unit {
+  let host = request.headers.get("host").unwrap_or("")
+  if !moondesk_browser_host_allowed(host) {
+    send_status(conn, 421, "Misdirected Request", "Unapproved MoonDesk host\n")
+    return
+  }
+  let origin = request.headers.get("origin").unwrap_or("")
+  if !moondesk_browser_origin_allowed(origin, host) {
+    send_status(conn, 403, "Forbidden", "Unapproved MoonDesk origin\n")
+    return
+  }
   let path = strip_query(request.path)
   if path == moondesk_health_path() {
     handle_health_request(ui_root, workspace_root, request.meth, conn)
@@ -100,6 +110,31 @@ async fn handle_desk_request(
   } else {
     handle_file_request(ui_root, request.meth, path, conn)
   }
+}
+
+///|
+fn moondesk_browser_host_allowed(host : StringView) -> Bool {
+  let value = host.to_owned().trim().to_owned().to_lower()
+  value == "localhost" ||
+  value.has_prefix("localhost:") ||
+  value == "127.0.0.1" ||
+  value.has_prefix("127.0.0.1:") ||
+  value == "[::1]" ||
+  value.has_prefix("[::1]:")
+}
+
+///|
+fn moondesk_browser_origin_allowed(
+  origin : StringView,
+  host : StringView,
+) -> Bool {
+  let origin = origin.to_owned().trim().to_owned().to_lower()
+  let host = host.to_owned().trim().to_owned().to_lower()
+  origin == "" ||
+  (
+    moondesk_browser_host_allowed(host) &&
+    (origin == "http://" + host || origin == "https://" + host)
+  )
 }
 
 ///|
