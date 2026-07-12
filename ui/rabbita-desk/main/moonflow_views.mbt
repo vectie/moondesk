@@ -18,15 +18,31 @@ fn moonflow_item_by_id(
 
 ///|
 fn moonflow_run_state(run : MoonFlowRunProjection) -> String {
-  if run.outcome != "" {
+  if run.outcome == "accepted" {
     "complete"
-  } else if moonflow_count_status(run, "blocked") > 0 {
+  } else if run.outcome == "blocked" || run.outcome == "failed" {
     "blocked"
+  } else if run.outcome == "active" || run.outcome == "review" {
+    "in-progress"
   } else if !run.runnable_item_ids.is_empty() {
     "ready"
   } else {
     "in-progress"
   }
+}
+
+///|
+fn moonflow_budget_label(used : Int, limit : Int) -> String {
+  if limit <= 0 {
+    "not granted"
+  } else {
+    "\{used} / \{limit}"
+  }
+}
+
+///|
+fn moonflow_product_accepted(run : MoonFlowRunProjection, product : String) -> Bool {
+  run.items.any(item => item.product_id == product && item.status == "accepted")
 }
 
 ///|
@@ -136,13 +152,17 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
       div([strong("\{blocked}"), span("blocked")]),
       div([strong("\{run.items.length()}"), span("total")]),
     ]),
-    if run.outcome == "" {
+    render_moonflow_authority(run),
+    if run.outcome != "accepted" &&
+      run.outcome != "blocked" &&
+      run.outcome != "failed" {
       p(class="flow-outcome pending", "Outcome pending")
     } else {
       p(class="flow-outcome", run.outcome)
     },
     render_moonflow_next_actions(run),
     render_moonflow_blockers(run),
+    render_moonflow_readiness(run),
     section(class="flow-section flow-contract", [
       h3("Executable document contract"),
       div(class="flow-contract-grid", [
@@ -163,10 +183,119 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
 }
 
 ///|
+fn render_moonflow_authority(run : MoonFlowRunProjection) -> @rabbita.Html {
+  let binding = run.autonomy_binding
+  let envelope = binding.envelope
+  let scorecard = run.intervention_scorecard
+  let authority_state = if envelope.envelope_id == "" {
+    "Not bound"
+  } else if envelope.revoked {
+    "Revoked"
+  } else {
+    "Bound · " + envelope.mode
+  }
+  section(class="flow-section flow-authority", [
+    div(class="flow-section-heading", [
+      div([h3("Autonomy envelope"), small(authority_state)]),
+      span(
+        class="flow-state " +
+        (if scorecard.unattended_qualified { "complete" } else { "in-progress" }),
+        if scorecard.unattended_qualified {
+          "unattended qualified"
+        } else {
+          "qualification pending"
+        },
+      ),
+    ]),
+    div(class="flow-authority-grid", [
+      div([span("Envelope"), strong(moonflow_short_identity(envelope.envelope_id))]),
+      div([
+        span("Effects"),
+        strong(
+          if envelope.external_effects_allowed || envelope.physical_effects_allowed {
+            "Expanded authority"
+          } else {
+            "Workspace + simulation only"
+          },
+        ),
+      ]),
+      div([
+        span("Model tokens"),
+        strong(
+          moonflow_budget_label(
+            binding.usage.model_tokens,
+            envelope.budget.model_tokens,
+          ),
+        ),
+      ]),
+      div([
+        span("Tool calls"),
+        strong(
+          moonflow_budget_label(
+            binding.usage.tool_calls,
+            envelope.budget.tool_calls,
+          ),
+        ),
+      ]),
+      div([
+        span("Attempts"),
+        strong(
+          moonflow_budget_label(
+            binding.usage.attempts,
+            envelope.budget.attempts,
+          ),
+        ),
+      ]),
+      div([
+        span("Human interventions"),
+        strong("\{scorecard.required_intervention_count}"),
+      ]),
+    ]),
+    if scorecard.finalization_findings.is_empty() {
+      @html.nothing
+    } else {
+      p(
+        class="flow-authority-finding",
+        scorecard.finalization_findings.join(" · "),
+      )
+    },
+  ])
+}
+
+///|
+fn render_moonflow_readiness(run : MoonFlowRunProjection) -> @rabbita.Html {
+  let stages : Array[(String, Bool)] = [
+    ("Evidence", moonflow_product_accepted(run, "moonwiki")),
+    ("Deliberated", moonflow_product_accepted(run, "moontown")),
+    ("Digital model", moonflow_product_accepted(run, "moonrobo")),
+    ("Scenario", moonflow_product_accepted(run, "moonmoon")),
+    ("Bookkeeper", moonflow_product_accepted(run, "moonbook")),
+    ("Physical", false),
+  ]
+  section(class="flow-section", [
+    h3("Claim and readiness ladder"),
+    div(
+      class="flow-readiness",
+      stages.map(stage => {
+        let (label, achieved) = stage
+        div(class=if achieved { "achieved" } else { "" }, [
+          span(if achieved { "✓" } else { "·" }),
+          strong(label),
+        ])
+      }),
+    ),
+    small(
+      class="flow-quiet",
+      "Physical construction, launch, deployment, and physical readiness remain outside this envelope.",
+    ),
+  ])
+}
+
+///|
 fn render_moonflow_next_actions(run : MoonFlowRunProjection) -> @rabbita.Html {
   section(class="flow-section", [
     h3("Next actions"),
-    if run.outcome != "" {
+    if run.outcome == "accepted" {
       p(
         class="flow-quiet",
         "Run complete. Every work item reached accepted state.",

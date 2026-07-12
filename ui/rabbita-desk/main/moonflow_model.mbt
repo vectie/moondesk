@@ -23,6 +23,48 @@ struct MoonFlowItemProjection {
 } derive(FromJson)
 
 ///|
+struct MoonFlowBudget {
+  model_tokens : Int
+  tool_calls : Int
+  storage_bytes : Int
+  attempts : Int
+  concurrency : Int
+} derive(FromJson)
+
+///|
+struct MoonFlowEnvelopeSummary {
+  envelope_id : String
+  mode : String
+  expires_at : String
+  revoked : Bool
+  external_effects_allowed : Bool
+  physical_effects_allowed : Bool
+  budget : MoonFlowBudget
+} derive(FromJson)
+
+///|
+struct MoonFlowAutonomyBinding {
+  contract_id : String
+  run_id : String
+  envelope : MoonFlowEnvelopeSummary
+  usage_ref : String
+  usage : MoonFlowBudget
+  recorded_at : String
+} derive(FromJson)
+
+///|
+struct MoonFlowInterventionScorecard {
+  contract_id : String
+  run_id : String
+  required_intervention_count : Int
+  hidden_orchestration_count : Int
+  normal_path_manual_count : Int
+  unattended_qualified : Bool
+  finalization_findings : Array[String]
+  recorded_at : String
+} derive(FromJson)
+
+///|
 struct MoonFlowRunProjection {
   protocol : String
   run_id : String
@@ -33,4 +75,6 @@ struct MoonFlowRunProjection {
   outcome : String
   runnable_item_ids : Array[String]
   items : Array[MoonFlowItemProjection]
+  autonomy_binding : MoonFlowAutonomyBinding
+  intervention_scorecard : MoonFlowInterventionScorecard
 } derive(FromJson)

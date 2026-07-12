@@ -25,6 +25,74 @@ async fn moonflow_projection(path : String) -> Json? {
 }
 
 ///|
+async fn moonflow_json_or(path : String, fallback : Json) -> Json {
+  match moonflow_projection(path) {
+    Some(value) => value
+    None => fallback
+  }
+}
+
+///|
+async fn moonflow_enriched_projection(
+  run_root : String,
+  projection : Json,
+) -> Json {
+  let fields : Map[String, Json] = {}
+  match projection {
+    Object(existing) =>
+      for key, value in existing {
+        fields[key] = value
+      }
+    _ => return projection
+  }
+  fields["autonomy_binding"] = moonflow_json_or(
+    @pathx.join(run_root, "autonomy-binding.json"),
+    {
+      "contract_id": "moonflow.autonomy-binding.v1",
+      "run_id": json_string(projection, "run_id", default=""),
+      "envelope": {
+        "envelope_id": "",
+        "mode": "not-bound",
+        "expires_at": "",
+        "revoked": false,
+        "external_effects_allowed": false,
+        "physical_effects_allowed": false,
+        "budget": {
+          "model_tokens": 0,
+          "tool_calls": 0,
+          "storage_bytes": 0,
+          "attempts": 0,
+          "concurrency": 0,
+        },
+      },
+      "usage_ref": "",
+      "usage": {
+        "model_tokens": 0,
+        "tool_calls": 0,
+        "storage_bytes": 0,
+        "attempts": 0,
+        "concurrency": 0,
+      },
+      "recorded_at": "",
+    },
+  )
+  fields["intervention_scorecard"] = moonflow_json_or(
+    @pathx.join(run_root, "intervention-scorecard.json"),
+    {
+      "contract_id": "moonflow.intervention-scorecard.v1",
+      "run_id": json_string(projection, "run_id", default=""),
+      "required_intervention_count": 0,
+      "hidden_orchestration_count": 0,
+      "normal_path_manual_count": 0,
+      "unattended_qualified": false,
+      "finalization_findings": [],
+      "recorded_at": "",
+    },
+  )
+  Json::object(fields)
+}
+
+///|
 fn sort_moonflow_projections(projections : Array[Json]) -> Unit {
   projections.sort_by(fn(left, right) {
     let right_revision = json_string(right, "declaration_revision", default="")
@@ -59,7 +127,10 @@ async fn handle_moonflow_runs(
       moonflow_projection(
         @pathx.join(@pathx.join(root, run_id), "projection.json"),
       ) {
-      Some(projection) => projections.push(projection)
+      Some(projection) =>
+        projections.push(
+          moonflow_enriched_projection(@pathx.join(root, run_id), projection),
+        )
       None => ()
     }
   }
@@ -83,7 +154,15 @@ async fn handle_moonflow_run(
     "projection.json",
   )
   match moonflow_projection(path) {
-    Some(projection) => send_json(conn, method_, projection)
+    Some(projection) =>
+      send_json(
+        conn,
+        method_,
+        moonflow_enriched_projection(
+          @pathx.join(moonflow_runs_root(workspace_root), run_id),
+          projection,
+        ),
+      )
     None =>
       send_api_error(conn, method_, 404, "Not Found", "MoonFlow run not found")
   }
