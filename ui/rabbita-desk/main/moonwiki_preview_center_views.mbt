@@ -484,13 +484,17 @@ fn render_document_more_menu(
           "Add favorite"
         },
       ),
-      a(
-        class="secondary-button link-button full",
-        href=raw_url(model, model.selected_path),
-        target=Blank,
-        rel="noreferrer",
-        "Open original",
-      ),
+      if model.preview is Some({ renderer: Html, .. }) {
+        @html.nothing
+      } else {
+        a(
+          class="secondary-button link-button full",
+          href=raw_url(model, model.selected_path),
+          target=Blank,
+          rel="noreferrer",
+          "Open original",
+        )
+      },
       button(
         class="secondary-button full",
         on_click=dispatch(RevealSelection),
