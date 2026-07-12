@@ -137,3 +137,12 @@ The heavy evidence exporter also attempted diagnostics before loading the
 adapter runtime; it now initializes that runtime explicitly. The repaired gate
 passes 24 gait/Moonphys frames, 38 loaded contacts, 24 driven motor frames, 25
 STL references, compiled suite review, bridge freshness, and production build.
+
+The final active-source scan removed two more historical leaks. MoonClaw had
+17 MiB of tracked runtime conversations, jobs, checkpoints, artifacts, and logs
+containing old absolute paths; runtime state is now ignored and its 1,096 tests
+remain green. MoonTown reference metadata and its fresh-suite writer smoke used
+`~/Workspace`, `~/Downloads`, and `/tmp`; they now use logical asset identities,
+the sibling MoonBook clone, and suite-local `.tmp`. MoonTown remains green at
+986 native and 367 UI tests, six server tests, fresh-suite smoke, and production
+artifact verification.
