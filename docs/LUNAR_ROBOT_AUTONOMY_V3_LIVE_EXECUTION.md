@@ -118,3 +118,12 @@ test workspace, while MoonLib tracked 48 `_build` artifacts. Both boundaries
 were corrected and the affected suites were rerun successfully with clean Git
 status. Broad formatter drift in vendored legacy MoonClaw code was discarded as
 an unrelated stale-compatibility migration.
+
+The relocated UI surfaces also passed production qualification: MoonDesk
+510/510 JavaScript tests, MoonMoon 200/200, MoonRobo 550/550, and MoonTown
+367/367, with all four Vite production builds accepted. MoonTown additionally
+passed server, user-workflow, and book-projection smoke tests plus artifact
+verification. This pass found and fixed one product defect: MoonRobo's portable
+suite executed a native disk-capacity assertion. The test now preserves the
+native positive assertion and independently requires the typed
+`disk-space-unsupported` outcome on non-native targets.
