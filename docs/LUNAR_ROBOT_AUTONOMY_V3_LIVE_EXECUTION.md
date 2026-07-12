@@ -146,3 +146,11 @@ remain green. MoonTown reference metadata and its fresh-suite writer smoke used
 the sibling MoonBook clone, and suite-local `.tmp`. MoonTown remains green at
 986 native and 367 UI tests, six server tests, fresh-suite smoke, and production
 artifact verification.
+
+Publication is also executable and fail-closed. A guarded preflight proves all
+remote ancestry without pushing. A deliberate early publish attempt stopped at
+the running-soak audit, created no success receipt, and journaled start,
+command-failure, and failed-attempt events. The successful path must run every
+native/UI declaration, verify clean repositories, use only fast-forward pushes,
+fetch every remote afterward, and pass a post-publication audit binding the
+receipt, journal, local `main`, and every remote `main` to the audited heads.
