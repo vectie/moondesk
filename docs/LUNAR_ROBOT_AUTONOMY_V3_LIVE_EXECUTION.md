@@ -108,3 +108,13 @@ They were moved and then converted into independent clones under
 All nine clones passed Git object verification, and the obsolete temporary
 worktrees, symlinks, and imported scratch source were removed. The frozen soak
 was not restarted or modified by this repair.
+
+Native verification from the relocated clones passed MoonBook 257/257,
+MoonClaw 1,096/1,096, MoonDesk 536/536, MoonFlow 41/41, MoonGate 813/813,
+MoonLib 58/58, MoonMoon 201/201, MoonRobo 552/552, and MoonTown 986/986.
+The clean-after-test gate exposed two repository-hygiene defects: MoonClaw
+tracked a pre-build-generated version file and did not ignore its `.moonsuite`
+test workspace, while MoonLib tracked 48 `_build` artifacts. Both boundaries
+were corrected and the affected suites were rerun successfully with clean Git
+status. Broad formatter drift in vendored legacy MoonClaw code was discarded as
+an unrelated stale-compatibility migration.
