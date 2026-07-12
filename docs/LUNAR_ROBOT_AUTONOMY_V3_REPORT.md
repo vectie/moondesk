@@ -101,17 +101,25 @@ soak remains an honest pending gate.
 Earlier real soaks were intentionally superseded whenever qualification changed
 the runtime boundary. The last superseded run completed two clean cycles and is
 marked `superseded`, not passed; its elapsed time is excluded. The definitive
-soak uses `qualification/unattended-soak/runtime-13371ba6`, whose installed
+soak uses `qualification/unattended-soak/runtime-c066ea2b`, whose installed
 runtime manifest SHA-256 is
-`13371ba67ed73c5664e2caddcdd7471cba6ee346df7c99233b4714a4cdbf22f8`.
-It binds MoonFlow commit `8124ab8`, MoonBook `aaab16c`, and MoonClaw `dc73a989`.
-Every 15-minute cycle runs four checks: the three-crash restart sequence,
-seeded review-rejection/automatic revision, native bounded-helper execution,
-and a seeded product-adapter crash followed by bounded child recovery. State
+`c066ea2bd925f54529109f5cbdf9d21acd1260affdcaeb7d3198da2fa9e61c7e`.
+It binds MoonFlow commit `254962a`, MoonBook `aaab16c`, and MoonClaw `dc73a989`.
+Every 15-minute cycle runs five checks: the three-crash restart sequence,
+seeded review-rejection/automatic revision, native bounded-helper execution, a
+combined crash/delay/duplicate/immutable-revision lineage, and a seeded
+product-adapter crash followed by bounded child recovery. State
 and receipts are under
-`qualification/unattended-soak/run-20260712-13371ba6`; cycle 1 passed all four
+`qualification/unattended-soak/run-20260712-c066ea2b`; cycle 1 passed all five
 checks with zero failures. The 72-hour clock began at epoch
-`1783847861.8125389`. An hourly task continuation monitors this exact path.
+`1783848947.0090082`. An hourly task continuation monitors this exact path.
+
+The combined lineage returns `[-9, -9, -9, 0, 0]`, delays the child result,
+replays a duplicate terminal delivery as a no-op, retains distinct rejected
+parent and accepted child evidence, invalidates exactly one checkpoint, and
+charges exactly two attempts. A signal preflight also exposed that the runner's
+sleep delayed SIGTERM completion; it now uses an interruptible event wait and
+persists `interrupted` immediately.
 
 ## Automatic revision trial
 
@@ -166,7 +174,7 @@ Latest focused/full evidence after the final changes:
 |---|---:|
 | MoonGate | 813/813 |
 | MoonBook / MoonWiki / Bookkeeper | 255/255 |
-| MoonFlow | 40/40 plus four-check soak preflight |
+| MoonFlow | 40/40 plus five-check soak and signal preflights |
 | MoonClaw / MoonCode | 1087/1087 |
 | MoonTown | 983/983 |
 | MoonRobo | 552/552 |
@@ -206,6 +214,9 @@ Latest focused/full evidence after the final changes:
    `helper-tools`, and MoonRobo's digital build depends on both the accepted
    MoonTown concept and accepted MoonCode helper evidence. r1 remains archived
    under `flow/revisions/r1-pre-helper-upgrade`.
+10. **Supervisor stop could appear hung.** The first soak runner recorded the
+    stop request but remained in its interval sleep. Signal handling now wakes
+    the wait immediately and persists an honest interrupted terminal state.
 
 Desktop and narrow-width Flow layouts were inspected. Control buttons wrap,
 long identities truncate, and the physical-readiness boundary remains visible.

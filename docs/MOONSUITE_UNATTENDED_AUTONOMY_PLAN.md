@@ -42,13 +42,14 @@ search and fetch provenance; helper logic is executed by a native allowlisted
 DSL attestor rather than accepted from model-authored build claims.
 
 The definitive runtime manifest is frozen at SHA-256
-`13371ba67ed73c5664e2caddcdd7471cba6ee346df7c99233b4714a4cdbf22f8`.
+`c066ea2bd925f54529109f5cbdf9d21acd1260affdcaeb7d3198da2fa9e61c7e`.
 The 72-hour soak at
-`/Users/kq/moonsuite/qualification/unattended-soak/run-20260712-13371ba6`
-runs crash recovery, automatic revision, native helper execution, and product
-restart each cycle. Earlier clocks are preserved as superseded and do not
-count. Phase 11 remains active; Phase 12 remains gated by the live run, the
-wall-clock duration, final audit, merge, publication, and remote verification.
+`/Users/kq/moonsuite/qualification/unattended-soak/run-20260712-c066ea2b`
+runs crash recovery, automatic revision, native helper execution, a combined
+same-lineage crash/delay/duplicate/revision trial, and product restart each
+cycle. Earlier clocks are preserved as superseded and do not count. Phase 11
+remains active; Phase 12 remains gated by the live run, the wall-clock duration,
+final audit, merge, publication, and remote verification.
 
 ## 2. Boundary of “fully unattended”
 
