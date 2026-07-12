@@ -70,3 +70,41 @@ The live product matrix is qualified, but the project is not yet complete. The
 immutable frozen-runtime soak must reach 72 wall-clock hours with no failed
 cycles. Only then may the final audit, rerating, merges, publication, and
 remote-head verification proceed. No physical-readiness claim is authorized.
+
+## Repeatable final audit
+
+The suite workspace now contains one fail-closed gate at
+`qualification/final_audit.py`. It verifies:
+
+- all nine source repositories are clean, self-contained clones under
+  `~/moonsuite/development/sources` at their audited heads and have only
+  non-local publication remotes;
+- installed binary digests and source commits match the live-runtime manifest;
+- r24 and the r25 recovery child each have seven accepted stages and zero
+  required, hidden, or normal-path manual interventions;
+- r25 reused research, invalidated six incomplete descendants, and retained
+  the unchanged source digest;
+- all seven structural procedures are accepted and contain r24 and r25
+  reflection evidence;
+- all 11 constitutional product boundaries accept while both forbidden
+  physical-authority probes reject;
+- the frozen runtime and both soak harnesses retain their recorded digests;
+- every soak cycle contains exactly the required nine status-zero checks and
+  the combined recovery assertion; and
+- active binaries, runtime metadata, source repositories, and symlink targets
+  remain within `~/moonsuite`.
+
+`--allow-running` produces a preparation result only. Without that flag, the
+command returns failure until the soak state is `completed` after at least 72
+wall-clock hours. This prevents a green functional run or an early partial soak
+from authorizing merge and publication.
+
+## Workspace-boundary repair
+
+The upgrade branches initially lived in clean Git worktrees under
+`/private/tmp`, whose common Git directories still pointed to `~/Workspace`.
+They were moved and then converted into independent clones under
+`~/moonsuite/development/sources`, preserving every branch, commit, and remote.
+All nine clones passed Git object verification, and the obsolete temporary
+worktrees, symlinks, and imported scratch source were removed. The frozen soak
+was not restarted or modified by this repair.
