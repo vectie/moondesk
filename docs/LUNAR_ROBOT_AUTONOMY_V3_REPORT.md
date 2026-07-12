@@ -1,5 +1,10 @@
 # Lunar Robot Autonomy v3 — Unattended Preparation Record
 
+> **Live update (2026-07-12):** This preparation snapshot is superseded by the
+> accepted r24 normal-path run and r25 automatic-recovery repeat. See
+> `LUNAR_ROBOT_AUTONOMY_V3_LIVE_EXECUTION.md` for current evidence, product
+> fixes, learning results, and remaining gates.
+
 **Prepared:** 2026-07-12  
 **Workspace:** `/Users/kq/moonsuite`  
 **Run:** `flow-lunar-robot-autonomy-v3-r2`  

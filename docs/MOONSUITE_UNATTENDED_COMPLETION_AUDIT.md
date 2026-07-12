@@ -1,5 +1,12 @@
 # Moon Suite Unattended Autonomy — Completion Audit
 
+> **Current-state addendum (2026-07-12):** The live and repeat gates described
+> as pending below are now proved by r24 and `r25-auto-recovery-14`. Seven
+> structural procedures are accepted with evidence from both runs. This file's
+> older tables remain a historical pre-live snapshot; use
+> `LUNAR_ROBOT_AUTONOMY_V3_LIVE_EXECUTION.md` and the workspace
+> `qualification/COMPLETION_AUDIT.md` for the authoritative current audit.
+
 **Audit date:** 2026-07-12  
 **Goal lineage:** `flow-lunar-robot-autonomy-v3-r2`  
 **Audit rule:** absence of a known failure is not completion; every completed

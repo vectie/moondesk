@@ -1,5 +1,12 @@
 # Moon Suite Third Update Plan — Fully Unattended, Constitutionally Bounded Autonomy
 
+> **Live update (2026-07-12):** r24 completed all seven stages with an
+> unattended-qualified scorecard. The r25 automatic-recovery child repeated
+> the journey and promoted seven structural Bookkeeper procedures with r24 and
+> r25 evidence. See `LUNAR_ROBOT_AUTONOMY_V3_LIVE_EXECUTION.md`. The only
+> remaining qualification gate before final audit/publication is the honest
+> 72-hour frozen-runtime soak.
+
 **Date:** 2026-07-12  
 **Status:** Feature-frozen runtime in 72-hour qualification; r2 live run awaits explicit external-data approval  
 **Baseline:** Accepted fresh lunar-work-robot r2 run  

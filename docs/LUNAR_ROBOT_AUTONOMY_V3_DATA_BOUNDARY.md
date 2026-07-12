@@ -1,5 +1,10 @@
 # Lunar Robot Autonomy v3 — External Data Boundary
 
+> **Live update (2026-07-12):** External `gpt-5.6-sol` capsules and scoped
+> MoonWiki public search/fetch were explicitly approved and exercised under
+> fresh r24/r25 MoonGate envelopes. Both envelopes kept external and physical
+> effects false. The older r2-only text below is retained as approval history.
+
 **Status:** external GPT approved; public search/fetch still awaiting explicit approval
 **Applies to:** `flow-lunar-robot-autonomy-v3-r2` only
 
