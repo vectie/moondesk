@@ -33,6 +33,19 @@ async fn moonflow_json_or(path : String, fallback : Json) -> Json {
 }
 
 ///|
+fn moonflow_authority_rank(authority : String) -> Int? {
+  match authority {
+    "observe" => Some(0)
+    "cognitive-maintenance" => Some(1)
+    "sandbox-execution" => Some(2)
+    "workspace-mutation" => Some(3)
+    "external-effect" => Some(4)
+    "physical-effect" => Some(5)
+    _ => None
+  }
+}
+
+///|
 async fn moonflow_enriched_projection(
   run_root : String,
   projection : Json,
@@ -89,7 +102,147 @@ async fn moonflow_enriched_projection(
       "recorded_at": "",
     },
   )
+  fields["run_control"] = moonflow_json_or(
+    @pathx.join(run_root, "control.json"),
+    {
+      "contract_id": "moonflow.run-control.v1",
+      "run_id": json_string(projection, "run_id", default=""),
+      "state": "running",
+      "authority_ceiling": "",
+      "reason": "",
+      "recorded_at": "",
+    },
+  )
   Json::object(fields)
+}
+
+///|
+async fn handle_moonflow_control(
+  workspace_root : String,
+  run_id : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  if !moonflow_safe_run_id(run_id) {
+    send_api_error(conn, method_, 400, "Bad Request", "Invalid MoonFlow run id")
+    return
+  }
+  let run_root = @pathx.join(moonflow_runs_root(workspace_root), run_id)
+  let projection_path = @pathx.join(run_root, "projection.json")
+  if !@fs.exists(projection_path) {
+    send_api_error(conn, method_, 404, "Not Found", "MoonFlow run not found")
+    return
+  }
+  let projection = @json.parse(@fs.read_file(projection_path).text()) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 409, "Conflict", "Invalid MoonFlow projection",
+      )
+      return
+    }
+  }
+  if ["accepted", "blocked", "failed"].contains(
+      json_string(projection, "outcome", default=""),
+    ) {
+    send_api_error(
+      conn, method_, 409, "Conflict", "Terminal runs cannot be controlled",
+    )
+    return
+  }
+  let payload = match read_json_body(body) {
+    Some(value) => value
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid JSON body")
+      return
+    }
+  }
+  let action = json_string(payload, "action", default="")
+  let detail = json_string(payload, "detail", default="")
+  let recorded_at = json_string(payload, "recorded_at", default="")
+  if recorded_at.trim().is_empty() {
+    send_api_error(conn, method_, 400, "Bad Request", "recorded_at is required")
+    return
+  }
+  let control_path = @pathx.join(run_root, "control.json")
+  let existing = moonflow_json_or(control_path, {
+    "contract_id": "moonflow.run-control.v1",
+    "run_id": run_id,
+    "state": "running",
+    "authority_ceiling": "",
+    "reason": "",
+    "recorded_at": recorded_at,
+  })
+  let existing_fields = match existing {
+    Object(values) => values
+    _ => {
+      send_api_error(
+        conn, method_, 409, "Conflict", "Invalid run control state",
+      )
+      return
+    }
+  }
+  let mut state = json_string(existing, "state", default="running")
+  let mut ceiling = json_string(existing, "authority_ceiling", default="")
+  match action {
+    "pause" => state = "paused"
+    "resume" =>
+      if state == "cancelled" {
+        send_api_error(
+          conn, method_, 409, "Conflict", "Cancelled runs cannot resume",
+        )
+        return
+      } else {
+        state = "running"
+      }
+    "cancel" => state = "cancelled"
+    "narrow-authority" => {
+      let proposed_rank = match moonflow_authority_rank(detail) {
+        Some(value) => value
+        None => {
+          send_api_error(
+            conn, method_, 400, "Bad Request", "Invalid authority ceiling",
+          )
+          return
+        }
+      }
+      if !ceiling.is_empty() {
+        let current_rank = moonflow_authority_rank(ceiling).unwrap_or(-1)
+        if current_rank < proposed_rank {
+          send_api_error(
+            conn, method_, 409, "Conflict", "Authority may only be narrowed",
+          )
+          return
+        }
+      }
+      ceiling = detail
+    }
+    _ => {
+      send_api_error(
+        conn, method_, 400, "Bad Request", "Unsupported control action",
+      )
+      return
+    }
+  }
+  ignore(existing_fields)
+  let control : Json = {
+    "contract_id": "moonflow.run-control.v1",
+    "run_id": run_id,
+    "state": state,
+    "authority_ceiling": ceiling,
+    "reason": if action == "narrow-authority" {
+      ""
+    } else {
+      detail
+    },
+    "recorded_at": recorded_at,
+  }
+  @fsx.write_to_file(
+    control_path,
+    control.stringify(indent=2) + "\n",
+    create=0o644,
+  )
+  send_json(conn, method_, control)
 }
 
 ///|

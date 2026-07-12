@@ -123,6 +123,11 @@ fn update_workspace_surface_actions(
     SetViewTitle(title) => (@rabbita.none, { ..model, view_title: title })
     SaveCurrentView =>
       (save_view_cmd(dispatch, model), { ..model, host_status: "saving view" })
+    ControlMoonFlow(run_id, action, detail) =>
+      (
+        control_moonflow_cmd(dispatch, run_id, action, detail),
+        { ..model, moonflow_status: "Applying " + action + "…" },
+      )
     SetReviewDecisionNote(note) =>
       (@rabbita.none, { ..model, review_decision_note: note })
     DecideReviewItem(item, decision) =>

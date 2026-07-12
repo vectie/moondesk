@@ -11,6 +11,7 @@ fn update_app_results(
     | LoadedPreview(_)
     | LoadedRuns(_)
     | LoadedMoonFlowRuns(_)
+    | ControlledMoonFlow(_)
     | LoadedSavedViews(_)
     | LoadedSearch(_)
     | LoadedDeskTrash(_)

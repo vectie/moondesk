@@ -436,6 +436,32 @@ fn decide_review_item_cmd(
 }
 
 ///|
+extern "js" fn moonflow_control_recorded_at() -> String =
+  #| () => new Date().toISOString()
+
+///|
+fn control_moonflow_cmd(
+  dispatch : Dispatch[Msg],
+  run_id : String,
+  action : String,
+  detail : String,
+) -> @rabbita.Cmd {
+  @http.post("/api/moonflow/runs/" + run_id + "/control")
+  .with_json({
+    "action": action,
+    "detail": detail,
+    "recorded_at": moonflow_control_recorded_at(),
+  })
+  .expect_json(result => {
+    dispatch(
+      ControlledMoonFlow(
+        http_result(result, "Could not update MoonFlow control"),
+      ),
+    )
+  })
+}
+
+///|
 fn submit_request_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   @http.post(@desk.town_endpoint_url("requests"))
   .with_json(request_submission_body(model))

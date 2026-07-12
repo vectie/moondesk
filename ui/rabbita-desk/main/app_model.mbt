@@ -145,6 +145,7 @@ enum Msg {
   LoadedPreview(Result[@desk.DeskPreview, String])
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
   LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
+  ControlledMoonFlow(Result[MoonFlowRunControl, String])
   LoadedTownMessages(Result[Array[TownMessage], String])
   LoadedRequests(Result[Array[RequestRecord], String])
   LoadedStandingGoals(Result[Array[StandingGoalRecord], String])
@@ -193,6 +194,7 @@ enum Msg {
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)
+  ControlMoonFlow(String, String, String)
   SelectActivity(Activity)
   SelectMoonCodeSession(String)
   NewMoonCodeSession

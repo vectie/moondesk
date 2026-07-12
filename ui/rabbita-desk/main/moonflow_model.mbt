@@ -65,6 +65,16 @@ struct MoonFlowInterventionScorecard {
 } derive(FromJson)
 
 ///|
+struct MoonFlowRunControl {
+  contract_id : String
+  run_id : String
+  state : String
+  authority_ceiling : String
+  reason : String
+  recorded_at : String
+} derive(FromJson)
+
+///|
 struct MoonFlowRunProjection {
   protocol : String
   run_id : String
@@ -77,4 +87,5 @@ struct MoonFlowRunProjection {
   items : Array[MoonFlowItemProjection]
   autonomy_binding : MoonFlowAutonomyBinding
   intervention_scorecard : MoonFlowInterventionScorecard
+  run_control : MoonFlowRunControl
 } derive(FromJson)

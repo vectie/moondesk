@@ -286,6 +286,27 @@ body {
   font-size: 11px;
 }
 
+.flow-controls {
+  display: grid;
+  gap: 12px;
+}
+
+.flow-control-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.danger-button {
+  border-color: color-mix(in srgb, var(--red) 45%, var(--line));
+  color: var(--red);
+}
+
+.danger-button:hover {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 8%, var(--bg-panel));
+}
+
 .flow-authority-grid strong {
   overflow: hidden;
   font-size: 12px;

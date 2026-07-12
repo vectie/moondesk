@@ -41,7 +41,10 @@ fn moonflow_budget_label(used : Int, limit : Int) -> String {
 }
 
 ///|
-fn moonflow_product_accepted(run : MoonFlowRunProjection, product : String) -> Bool {
+fn moonflow_product_accepted(
+  run : MoonFlowRunProjection,
+  product : String,
+) -> Bool {
   run.items.any(item => item.product_id == product && item.status == "accepted")
 }
 
@@ -118,14 +121,17 @@ fn render_moonflow_workspace(
     } else {
       section(
         class="flow-run-list",
-        model.moonflow_runs.map(run => render_moonflow_run(run)),
+        model.moonflow_runs.map(run => render_moonflow_run(dispatch, run)),
       )
     },
   ])
 }
 
 ///|
-fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
+fn render_moonflow_run(
+  dispatch : Dispatch[Msg],
+  run : MoonFlowRunProjection,
+) -> @rabbita.Html {
   let accepted = moonflow_count_status(run, "accepted")
   let blocked = moonflow_count_status(run, "blocked")
   section(class="flow-run-card", [
@@ -153,6 +159,7 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
       div([strong("\{run.items.length()}"), span("total")]),
     ]),
     render_moonflow_authority(run),
+    render_moonflow_controls(dispatch, run),
     if run.outcome != "accepted" &&
       run.outcome != "blocked" &&
       run.outcome != "failed" {
@@ -183,6 +190,88 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
 }
 
 ///|
+fn render_moonflow_controls(
+  dispatch : Dispatch[Msg],
+  run : MoonFlowRunProjection,
+) -> @rabbita.Html {
+  let control = run.run_control
+  let terminal = run.outcome == "accepted" ||
+    run.outcome == "blocked" ||
+    run.outcome == "failed" ||
+    control.state == "cancelled"
+  section(class="flow-section flow-controls", [
+    div(class="flow-section-heading", [
+      div([
+        h3("Bounded intervention"),
+        small("Current state · " + control.state),
+      ]),
+      span(
+        class="flow-state " +
+          (if control.state == "paused" { "blocked" } else { "in-progress" }),
+        if control.authority_ceiling.is_empty() {
+          "envelope ceiling"
+        } else {
+          "≤ " + control.authority_ceiling
+        },
+      ),
+    ]),
+    div(class="flow-control-actions", [
+      if terminal {
+        @html.nothing
+      } else if control.state == "paused" {
+        button(
+          class="secondary-button",
+          on_click=dispatch(ControlMoonFlow(run.run_id, "resume", "")),
+          "Resume",
+        )
+      } else {
+        button(
+          class="secondary-button",
+          on_click=dispatch(
+            ControlMoonFlow(
+              run.run_id,
+              "pause",
+              "operator requested inspection",
+            ),
+          ),
+          "Pause",
+        )
+      },
+      if terminal || control.authority_ceiling == "observe" {
+        @html.nothing
+      } else {
+        button(
+          class="secondary-button",
+          on_click=dispatch(
+            ControlMoonFlow(run.run_id, "narrow-authority", "observe"),
+          ),
+          "Narrow to observe",
+        )
+      },
+      if terminal {
+        @html.nothing
+      } else {
+        button(
+          class="secondary-button danger-button",
+          on_click=dispatch(
+            ControlMoonFlow(
+              run.run_id,
+              "cancel",
+              "operator cancelled from MoonDesk",
+            ),
+          ),
+          "Cancel run",
+        )
+      },
+    ]),
+    small(
+      class="flow-quiet",
+      "Controls cannot widen the envelope. Cancel is terminal; pause and narrowed authority are durable across restarts.",
+    ),
+  ])
+}
+
+///|
 fn render_moonflow_authority(run : MoonFlowRunProjection) -> @rabbita.Html {
   let binding = run.autonomy_binding
   let envelope = binding.envelope
@@ -199,7 +288,11 @@ fn render_moonflow_authority(run : MoonFlowRunProjection) -> @rabbita.Html {
       div([h3("Autonomy envelope"), small(authority_state)]),
       span(
         class="flow-state " +
-        (if scorecard.unattended_qualified { "complete" } else { "in-progress" }),
+          (if scorecard.unattended_qualified {
+            "complete"
+          } else {
+            "in-progress"
+          }),
         if scorecard.unattended_qualified {
           "unattended qualified"
         } else {
@@ -208,11 +301,15 @@ fn render_moonflow_authority(run : MoonFlowRunProjection) -> @rabbita.Html {
       ),
     ]),
     div(class="flow-authority-grid", [
-      div([span("Envelope"), strong(moonflow_short_identity(envelope.envelope_id))]),
+      div([
+        span("Envelope"),
+        strong(moonflow_short_identity(envelope.envelope_id)),
+      ]),
       div([
         span("Effects"),
         strong(
-          if envelope.external_effects_allowed || envelope.physical_effects_allowed {
+          if envelope.external_effects_allowed ||
+            envelope.physical_effects_allowed {
             "Expanded authority"
           } else {
             "Workspace + simulation only"

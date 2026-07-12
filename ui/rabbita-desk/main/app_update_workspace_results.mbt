@@ -147,6 +147,16 @@ fn update_workspace_results(
       )
     LoadedMoonFlowRuns(Err(error)) =>
       (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
+    ControlledMoonFlow(Ok(control)) =>
+      (
+        fetch_moonflow_runs_cmd(dispatch),
+        {
+          ..model,
+          moonflow_status: "Run " + control.run_id + " is " + control.state,
+        },
+      )
+    ControlledMoonFlow(Err(error)) =>
+      (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
     LoadedSavedViews(Ok(saved_views)) =>
       (@rabbita.none, { ..model, saved_views, })
     LoadedSavedViews(Err(error)) =>

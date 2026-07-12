@@ -3,6 +3,7 @@ async fn route_moonflow_api(
   workspace_root : String,
   segments : Array[String],
   method_ : @http.RequestMethod,
+  body : &@io.Reader,
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
@@ -19,6 +20,14 @@ async fn route_moonflow_api(
         handle_moonflow_run(workspace_root, run_id, method_, conn)
       } else {
         send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])
+      }
+      true
+    }
+    ["api", "moonflow", "runs", run_id, "control"] => {
+      if method_ is Post {
+        handle_moonflow_control(workspace_root, run_id, body, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
       }
       true
     }
