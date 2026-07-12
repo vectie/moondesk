@@ -30,6 +30,42 @@ fn moonflow_run_state(run : MoonFlowRunProjection) -> String {
 }
 
 ///|
+fn moonflow_item_explanation(item : MoonFlowItemProjection) -> String {
+  if item.status == "blocked" || item.status == "failed" {
+    if item.blocker != "" {
+      item.blocker
+    } else if item.error_kind != "" {
+      "Execution reported " + item.error_kind
+    } else {
+      "No blocker evidence was recorded"
+    }
+  } else if item.status == "accepted" {
+    if item.acceptance_review_id != "" && item.output_digest != "" {
+      "Accepted by explicit review with bound output evidence"
+    } else {
+      "Accepted state is missing visible review or output identity"
+    }
+  } else if item.status == "ready" {
+    "Dependencies are accepted; the declared product may execute now"
+  } else if item.status == "review" {
+    "Execution finished and awaits criterion-by-criterion review"
+  } else {
+    "Waiting for its next governed state transition"
+  }
+}
+
+///|
+fn moonflow_short_identity(value : String) -> String {
+  if value == "" {
+    "not recorded"
+  } else if value.length() <= 16 {
+    value
+  } else {
+    value[0:12].to_owned() + "…"
+  }
+}
+
+///|
 fn render_moonflow_workspace(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -41,7 +77,7 @@ fn render_moonflow_workspace(
         h1("MoonFlow"),
         p(
           class="lead",
-          "Outcomes first. Work advances only through explicit evidence and acceptance.",
+          "An executable document in motion: declarations become governed work, evidence, review, and reusable learning.",
         ),
       ]),
       button(
@@ -81,7 +117,13 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
       div([
         p(class="eyebrow", "Run · sequence \{run.last_sequence}"),
         h2(run.run_id),
-        small(run.protocol),
+        small(
+          run.book_id +
+          " · revision " +
+          run.declaration_revision +
+          " · source " +
+          moonflow_short_identity(run.source_digest),
+        ),
       ]),
       span(
         class="flow-state " + moonflow_run_state(run),
@@ -101,6 +143,18 @@ fn render_moonflow_run(run : MoonFlowRunProjection) -> @rabbita.Html {
     },
     render_moonflow_next_actions(run),
     render_moonflow_blockers(run),
+    section(class="flow-section flow-contract", [
+      h3("Executable document contract"),
+      div(class="flow-contract-grid", [
+        div([span("Protocol"), strong(run.protocol)]),
+        div([span("MoonBook"), strong(run.book_id)]),
+        div([span("Declaration revision"), strong(run.declaration_revision)]),
+        div([
+          span("Source identity"),
+          strong(moonflow_short_identity(run.source_digest)),
+        ]),
+      ]),
+    ]),
     div(
       class="flow-item-list",
       run.items.map(item => render_moonflow_item(item)),
@@ -180,23 +234,70 @@ fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
     "\{item.approvals.length()} approval(s)"
   }
   div(class="flow-item", [
-    div([
-      strong(item.work_item_id),
+    div(class="flow-item-main", [
+      div(class="flow-item-title", [
+        strong(item.work_item_id),
+        span(class="flow-item-status " + item.status, item.status),
+      ]),
       small(
         item.product_id +
+        " owns " +
+        (if item.operation == "" { "declared work" } else { item.operation }) +
         " · " +
         relationship +
         " · attempt \{item.attempt_count} · " +
         validation,
       ),
+      p(class="flow-item-why", moonflow_item_explanation(item)),
+      div(class="flow-item-contract", [
+        span("Declaration " + item.declaration_id),
+        span("Authority " + item.requested_authority),
+        span(
+          "\{item.acceptance_criteria.length()} acceptance criterion/criteria",
+        ),
+      ]),
     ]),
-    span(class="flow-item-status " + item.status, item.status),
-    small(
-      if item.artifacts.is_empty() {
-        "No evidence attached"
-      } else {
-        "\{item.artifacts.length()} evidence artifact(s)"
-      },
-    ),
+    div(class="flow-evidence-lane", [
+      span("Evidence"),
+      strong(
+        if item.artifacts.is_empty() {
+          "None attached"
+        } else {
+          "\{item.artifacts.length()} artifact(s)"
+        },
+      ),
+      small("input " + moonflow_short_identity(item.input_digest)),
+      small("output " + moonflow_short_identity(item.output_digest)),
+      small(
+        "attempt " +
+        (if item.attempt_status == "" {
+          "not started"
+        } else {
+          item.attempt_status
+        }) +
+        (if item.compensable { " · reversible" } else { "" }),
+      ),
+      small(
+        if item.acceptance_review_id == "" {
+          "review not recorded"
+        } else {
+          "review " + item.acceptance_review_id
+        },
+      ),
+      small(
+        if item.acceptance_reviewer_id == "" {
+          "review authority not recorded"
+        } else {
+          "by " + item.acceptance_reviewer_id
+        },
+      ),
+      small(
+        if item.acceptance_review_artifact == "" {
+          "review evidence not attached"
+        } else {
+          item.acceptance_review_artifact
+        },
+      ),
+    ]),
   ])
 }
