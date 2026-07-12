@@ -257,8 +257,6 @@ long identities truncate, and the physical-readiness boundary remains visible.
   services. Credentials, private repository contents, absolute host paths, and
   unrelated workspace files are excluded.
 - One uninterrupted goal-to-audit lunar robot run with native product finals.
-- One delayed-result, one duplicate, one crash, and one immutable revision in
-  the same qualification lineage.
 - One accepted repeat demonstrating bounded procedure transfer in a live
   lineage (the compiler and Bookkeeper transfer policy are already qualified
   offline).
