@@ -222,6 +222,15 @@ fn render_moonflow_blockers(run : MoonFlowRunProjection) -> @rabbita.Html {
 }
 
 ///|
+fn moonflow_item_execution_label(item : MoonFlowItemProjection) -> String {
+  if item.attempt_status == "checkpoint-reused" {
+    "checkpoint reused"
+  } else {
+    "attempt \{item.attempt_count}"
+  }
+}
+
+///|
 fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
   let relationship = if item.depends_on.is_empty() {
     "No dependencies"
@@ -233,6 +242,7 @@ fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
   } else {
     "\{item.approvals.length()} approval(s)"
   }
+  let execution = moonflow_item_execution_label(item)
   div(class="flow-item", [
     div(class="flow-item-main", [
       div(class="flow-item-title", [
@@ -245,7 +255,9 @@ fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
         (if item.operation == "" { "declared work" } else { item.operation }) +
         " · " +
         relationship +
-        " · attempt \{item.attempt_count} · " +
+        " · " +
+        execution +
+        " · " +
         validation,
       ),
       p(class="flow-item-why", moonflow_item_explanation(item)),

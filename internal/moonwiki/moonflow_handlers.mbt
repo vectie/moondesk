@@ -25,6 +25,25 @@ async fn moonflow_projection(path : String) -> Json? {
 }
 
 ///|
+fn sort_moonflow_projections(projections : Array[Json]) -> Unit {
+  projections.sort_by(fn(left, right) {
+    let right_revision = json_string(right, "declaration_revision", default="")
+    let left_revision = json_string(left, "declaration_revision", default="")
+    let by_length = right_revision.length().compare(left_revision.length())
+    if by_length != 0 {
+      return by_length
+    }
+    let by_revision = right_revision.compare(left_revision)
+    if by_revision != 0 {
+      return by_revision
+    }
+    json_string(right, "run_id", default="").compare(
+      json_string(left, "run_id", default=""),
+    )
+  })
+}
+
+///|
 async fn handle_moonflow_runs(
   workspace_root : String,
   method_ : @http.RequestMethod,
@@ -44,6 +63,7 @@ async fn handle_moonflow_runs(
       None => ()
     }
   }
+  sort_moonflow_projections(projections)
   send_json(conn, method_, Json::array(projections))
 }
 

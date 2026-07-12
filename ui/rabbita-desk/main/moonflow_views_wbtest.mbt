@@ -51,3 +51,13 @@ test "Flow exposes failure reasons instead of a status-only dead end" {
     "Execution reported tool-timeout",
   )
 }
+
+///|
+test "Flow describes migrated checkpoints without a zero-attempt implication" {
+  let item = {
+    ..flow_test_item("accepted"),
+    attempt_count: 0,
+    attempt_status: "checkpoint-reused",
+  }
+  assert_eq(moonflow_item_execution_label(item), "checkpoint reused")
+}

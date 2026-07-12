@@ -13,3 +13,14 @@ test "MoonFlow runtime state remains under the suite root" {
     "/Users/kq/moonsuite/.moonsuite/products/moonflow/runs",
   )
 }
+
+///|
+test "MoonFlow lists the newest declaration revision first" {
+  let projections : Array[Json] = [
+    { "run_id": "flow-robot-r1", "declaration_revision": "r1" },
+    { "run_id": "flow-robot-r2", "declaration_revision": "r2" },
+    { "run_id": "flow-robot-r10", "declaration_revision": "r10" },
+  ]
+  sort_moonflow_projections(projections)
+  assert_eq(json_string(projections[0], "run_id", default=""), "flow-robot-r10")
+}
