@@ -1,7 +1,12 @@
 # Lunar Robot Autonomy v3 — External Data Boundary
 
-**Status:** awaiting explicit user approval  
+**Status:** external GPT approved; public search/fetch still awaiting explicit approval
 **Applies to:** `flow-lunar-robot-autonomy-v3-r2` only
+
+The user explicitly approved `gpt-5.6-sol` on 2026-07-12. That approval covers
+the isolated model capsules described below. It does not by itself name or
+approve transmission of search queries and selected URLs to public Web
+services, so the first MoonWiki dispatch remains paused.
 
 The live run will remain paused until the user approves both outbound classes
 below. Preparing the graph, runtime, tests, and soak does not exercise either
@@ -34,8 +39,8 @@ communication, purchase, physical command, launch, or deployment is allowed.
 
 ## Approval semantics
 
-Approval authorizes this r2 run's bounded model and public-research data
-transmission. It does not authorize broader repository export, secrets,
+Approval is recorded independently for the bounded model capsules and the
+public-research requests. It does not authorize broader repository export, secrets,
 external publication, physical work, or a future run. MoonGate will issue a
 new expiring digital-only envelope after approval; the expired r1 envelope is
 never extended or reused.
