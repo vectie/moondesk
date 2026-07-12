@@ -127,3 +127,13 @@ verification. This pass found and fixed one product defect: MoonRobo's portable
 suite executed a native disk-capacity assertion. The test now preserves the
 native positive assertion and independently requires the typed
 `disk-space-unsupported` outcome on non-native targets.
+
+The stronger MoonMoon gait gate then exposed two integration defects hidden by
+the ordinary production build. Its E1 visualization depended on an ignored
+mesh extraction in `~/Workspace/moonrobo` and an archive in `~/Downloads`; the
+audited archive is now under `~/moonsuite/inputs/noetix-e1`, generated caches
+remain ignored, and evidence uses logical `moonsuite-input://` identities.
+The heavy evidence exporter also attempted diagnostics before loading the
+adapter runtime; it now initializes that runtime explicitly. The repaired gate
+passes 24 gait/Moonphys frames, 38 loaded contacts, 24 driven motor frames, 25
+STL references, compiled suite review, bridge freshness, and production build.
