@@ -1494,8 +1494,8 @@ async function run() {
     );
     await waitFor(
       session,
-      `document.querySelector('[data-testid="desk-preview"] a')?.href.includes('/api/workspaces/book-research-alpha/file/book/site/generated/index.html')`,
-      "generated-site preview link uses fresh MoonBook file route",
+      `document.querySelector('[data-testid="desk-open-embedded-preview"]')?.textContent.includes('Preview / Run here') && !document.querySelector('[data-testid="desk-preview"] a[target="_blank"]')`,
+      "generated-site preview stays inside MoonDesk",
     );
     await clickTestId(session, "desk-root");
     await waitFor(session, rowExistsExpression("wiki"), "generated-site smoke returned to root");

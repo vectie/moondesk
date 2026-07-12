@@ -1284,7 +1284,7 @@ fn render_desk_details(
                   info_row("Writable", yes_no(entry.writable)),
                 ],
               ),
-              render_desk_inline_preview(model),
+              render_desk_inline_preview(dispatch, model),
               div(class="desk-detail-actions", [
                 input(
                   class="line-input",
@@ -1311,11 +1311,15 @@ fn render_desk_details(
                   on_click=dispatch(RevealSelection),
                   "Reveal in File Manager",
                 ),
-                button(
-                  class="secondary-button full",
-                  on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-                  "Open in Wiki",
-                ),
+                if entry.kind is Html {
+                  @html.nothing
+                } else {
+                  button(
+                    class="secondary-button full",
+                    on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+                    "Open in Wiki",
+                  )
+                },
                 render_desk_single_selection_more_actions(
                   dispatch, model, entry,
                 ),
@@ -1504,7 +1508,10 @@ fn render_desk_single_selection_more_actions(
 }
 
 ///|
-fn render_desk_inline_preview(model : Model) -> @rabbita.Html {
+fn render_desk_inline_preview(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
   section(
     class="desk-inline-preview",
     attrs=@html.Attrs::build().data_set("testid", "desk-preview"),
@@ -1526,11 +1533,17 @@ fn render_desk_inline_preview(model : Model) -> @rabbita.Html {
           Html =>
             [
               strong(preview.title),
-              a(
-                class="mini-link",
-                href=html_preview_url(model, model.selected_path),
-                target=Blank,
-                "Open preview",
+              p(
+                class="status-line",
+                "Run this executable artifact in MoonDesk's isolated preview.",
+              ),
+              button(
+                class="primary-button full",
+                attrs=@html.Attrs::build().data_set(
+                  "testid", "desk-open-embedded-preview",
+                ),
+                on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+                "Preview / Run here",
               ),
             ]
         }
