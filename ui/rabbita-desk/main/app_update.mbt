@@ -212,6 +212,8 @@ fn update(
       update_workspace_surface_actions(dispatch, msg, model)
     FixBrowserPreviewInMoonCode =>
       update_workspace_surface_actions(dispatch, msg, model)
+    RequestBrowserHostControl(_) =>
+      update_workspace_surface_actions(dispatch, msg, model)
   }
 }
 

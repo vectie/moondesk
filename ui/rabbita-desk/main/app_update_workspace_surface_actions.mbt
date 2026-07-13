@@ -10,6 +10,8 @@ fn update_workspace_surface_actions(
       (set_browser_preview_viewport_cmd(viewport), model)
     CaptureBrowserPreviewEvidence =>
       (capture_browser_preview_evidence_cmd(), model)
+    RequestBrowserHostControl(control) =>
+      (request_browser_host_control_cmd(control), model)
     FixBrowserPreviewInMoonCode => {
       let (cmd, next) = select_workspace_mode_action(dispatch, MoonCode, model)
       (

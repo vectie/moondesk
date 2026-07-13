@@ -63,6 +63,30 @@ fn capture_browser_preview_evidence_cmd() -> @rabbita.Cmd {
 
 ///|
 #cfg(target="js")
+extern "js" fn browser_request_host_control(control : String) =
+  #| (control) => {
+  #|   const allowed = new Set(['pause', 'stop', 'takeover']);
+  #|   if (!allowed.has(control)) return;
+  #|   const banner = document.querySelector('[data-testid="browser-operation-banner"]');
+  #|   if (!(banner instanceof HTMLElement) || banner.dataset.hostAttached !== 'true') {
+  #|     const status = document.querySelector('[data-testid="browser-operation-status"]');
+  #|     if (status) status.textContent = 'No browser host is attached';
+  #|     return;
+  #|   }
+  #|   globalThis.dispatchEvent(new CustomEvent('moondesk-browser-control', {
+  #|     detail: { protocol: 'moondesk-browser-host-v1', control },
+  #|   }));
+  #|   const status = document.querySelector('[data-testid="browser-operation-status"]');
+  #|   if (status) status.textContent = `${control} requested`;
+  #| }
+
+///|
+fn request_browser_host_control_cmd(control : String) -> @rabbita.Cmd {
+  @cmd.custom_cmd(_ => browser_request_host_control(control), kind=AfterRender)
+}
+
+///|
+#cfg(target="js")
 extern "js" fn browser_install_preview_observer() =
   #| () => {
   #|   if (window.__moondeskPreviewObserverInstalled) return;
@@ -93,6 +117,19 @@ extern "js" fn browser_install_preview_observer() =
   #|       if (accessibilityOut) accessibilityOut.textContent = data.accessibility || 'No accessibility summary';
   #|       if (runtimeOut && !runtimeOut.textContent) runtimeOut.textContent = 'No runtime errors observed';
   #|       if (consoleOut && !consoleOut.textContent) consoleOut.textContent = 'No console output observed';
+  #|     }
+  #|   });
+  #|   globalThis.addEventListener('moondesk-browser-host-status', (event) => {
+  #|     const detail = event instanceof CustomEvent ? event.detail : null;
+  #|     if (!detail || detail.protocol !== 'moondesk-browser-host-v1') return;
+  #|     const banner = document.querySelector('[data-testid="browser-operation-banner"]');
+  #|     const status = document.querySelector('[data-testid="browser-operation-status"]');
+  #|     if (!(banner instanceof HTMLElement)) return;
+  #|     banner.dataset.hostAttached = 'true';
+  #|     banner.dataset.operationState = String(detail.state || 'unknown');
+  #|     if (status) status.textContent = String(detail.label || detail.state || 'Browser host attached');
+  #|     for (const button of banner.querySelectorAll('button[data-browser-control]')) {
+  #|       if (button instanceof HTMLButtonElement) button.disabled = false;
   #|     }
   #|   });
   #| }

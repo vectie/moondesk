@@ -195,6 +195,33 @@ fn render_preview_body(
                   ),
                 ]),
               ]),
+              div(
+                class="browser-operation-banner",
+                attrs=@html.Attrs::build()
+                  .data_set("testid", "browser-operation-banner")
+                  .data_set("host-attached", "false")
+                  .data_set("operation-state", "user-control"),
+                [
+                  div(class="browser-operation-copy", [
+                    strong("User control"),
+                    span(
+                      attrs=@html.Attrs::build().data_set(
+                        "testid", "browser-operation-status",
+                      ),
+                      "No agent operation is attached",
+                    ),
+                  ]),
+                  div(class="browser-operation-controls", [
+                    browser_host_control_button(
+                      dispatch, "pause", "Pause agent",
+                    ),
+                    browser_host_control_button(dispatch, "stop", "Stop agent"),
+                    browser_host_control_button(
+                      dispatch, "takeover", "Take over",
+                    ),
+                  ]),
+                ],
+              ),
               details(class="browser-diagnostics", [
                 summary("Diagnostics"),
                 div(class="browser-diagnostics-grid", [
@@ -240,6 +267,22 @@ fn render_preview_body(
           ])
       }
   }
+}
+
+///|
+fn browser_host_control_button(
+  dispatch : Dispatch[Msg],
+  control : String,
+  label : String,
+) -> @rabbita.Html {
+  button(
+    class="secondary-button",
+    attrs=@html.Attrs::build()
+      .data_set("browser-control", control)
+      .disabled(true),
+    on_click=dispatch(RequestBrowserHostControl(control)),
+    label,
+  )
 }
 
 ///|

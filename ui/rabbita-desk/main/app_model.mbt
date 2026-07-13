@@ -310,4 +310,5 @@ enum Msg {
   SetBrowserPreviewViewport(String)
   CaptureBrowserPreviewEvidence
   FixBrowserPreviewInMoonCode
+  RequestBrowserHostControl(String)
 }

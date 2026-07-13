@@ -1954,6 +1954,49 @@ button {
   background: var(--bg-panel);
 }
 
+.browser-operation-banner {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  background: #f8fafc;
+}
+
+.browser-operation-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.browser-operation-copy strong {
+  font-size: 12px;
+}
+
+.browser-operation-copy span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.browser-operation-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.browser-operation-controls button:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+
+.browser-operation-banner[data-operation-state="agent-operating"] {
+  border-color: rgba(37, 99, 235, .34);
+  background: rgba(37, 99, 235, .06);
+}
+
 .browser-preview-status {
   color: var(--muted);
   font-size: 12px;
@@ -2018,12 +2061,14 @@ button {
 
 @media (max-width: 760px) {
   .browser-toolbar-actions,
-  .browser-observation-actions {
+  .browser-observation-actions,
+  .browser-operation-controls {
     width: 100%;
   }
 
   .browser-toolbar-actions > *,
-  .browser-observation-actions > * {
+  .browser-observation-actions > *,
+  .browser-operation-controls > * {
     min-height: 44px;
     flex: 1 1 auto;
   }
