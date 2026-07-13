@@ -1756,10 +1756,10 @@ details[open] > .desk-disclosure-summary::after {
 
 @media (max-width: 760px) {
   .desk-shell {
-    height: 100dvh;
-    min-height: 0;
-    grid-template-rows: 56px minmax(0, 1fr);
-    overflow: hidden;
+    height: auto;
+    min-height: 100dvh;
+    grid-template-rows: 56px auto;
+    overflow: visible;
   }
 
   .title-bar {
@@ -1792,6 +1792,8 @@ details[open] > .desk-disclosure-summary::after {
     display: flex;
     flex-direction: column;
     grid-template-columns: 1fr;
+    min-height: auto;
+    overflow: visible;
   }
 
   .file-desk-main > .desk-browser {
@@ -1802,10 +1804,12 @@ details[open] > .desk-disclosure-summary::after {
   .file-desk-main > .desk-details {
     order: 2;
     max-height: none;
+    min-height: 180px;
   }
 
   .file-desk-main > .desk-sidebar {
     order: 3;
+    min-height: 240px;
   }
 
   .desk-file-row {
