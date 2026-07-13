@@ -5,6 +5,20 @@ fn update_mooncode_session_results(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
+    ManagedMoonClaw(Ok(status)) =>
+      (
+        @rabbita.batch([
+          fetch_moonclaw_daemon_cmd(dispatch),
+          fetch_moonclaw_models_cmd(dispatch),
+        ]),
+        {
+          ..model,
+          moonclaw_daemon: Some(status),
+          mooncode_composer_status: status.message,
+        },
+      )
+    ManagedMoonClaw(Err(error)) =>
+      (@rabbita.none, { ..model, mooncode_composer_status: error })
     LoadedMoonClawDaemon(Ok(status)) =>
       (
         @rabbita.none,

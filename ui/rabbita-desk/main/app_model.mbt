@@ -145,6 +145,7 @@ enum Msg {
   LoadedPreview(Result[@desk.DeskPreview, String])
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
   LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
+  ImportedMoonFlow(Result[MoonFlowImportResult, String])
   ControlledMoonFlow(Result[MoonFlowRunControl, String])
   LoadedTownMessages(Result[Array[TownMessage], String])
   LoadedRequests(Result[Array[RequestRecord], String])
@@ -186,6 +187,7 @@ enum Msg {
   LoadedLaunchAgent(Result[LaunchAgentResult, String])
   ManagedLaunchAgent(Result[LaunchAgentResult, String])
   LoadedMoonClawDaemon(Result[MoonClawDaemonStatus, String])
+  ManagedMoonClaw(Result[MoonClawDaemonStatus, String])
   LoadedMoonClawModels(Result[MoonClawModelsResult, String])
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
   LoadedMoonCodeSession(String, Result[MoonCodeSession, String])
@@ -195,11 +197,14 @@ enum Msg {
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)
   ControlMoonFlow(String, String, String)
+  PrepareMoonFlow
+  MoonFlowPrepareTimedOut(String)
   SelectActivity(Activity)
   SelectMoonCodeSession(String)
   NewMoonCodeSession
   SetMoonCodePrompt(String)
   SendMoonCodeMessage
+  ManageMoonClaw(String)
   PollMoonCodeSessions(Int)
   SelectWorkspace(String)
   SelectPath(String)

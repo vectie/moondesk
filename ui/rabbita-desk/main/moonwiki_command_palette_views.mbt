@@ -226,52 +226,64 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     div(class="workspace-mode-toggle", [
       button(
         class=workspace_mode_button_class(model, Desk),
-        attrs=@html.Attrs::build().aria_pressed(
-          if model.workspace_mode == Desk {
-            "true"
-          } else {
-            "false"
-          },
-        ),
+        attrs=@html.Attrs::build()
+          .aria_keyshortcuts("Meta+1 Control+1")
+          .aria_pressed(
+            if model.workspace_mode == Desk {
+              "true"
+            } else {
+              "false"
+            },
+          )
+          .data_set("testid", "mode-desk"),
         title="Switch to Desk mode",
         on_click=dispatch(SelectWorkspaceMode(Desk)),
         "Desk",
       ),
       button(
         class=workspace_mode_button_class(model, MoonWiki),
-        attrs=@html.Attrs::build().aria_pressed(
-          if model.workspace_mode == MoonWiki {
-            "true"
-          } else {
-            "false"
-          },
-        ),
+        attrs=@html.Attrs::build()
+          .aria_keyshortcuts("Meta+2 Control+2")
+          .aria_pressed(
+            if model.workspace_mode == MoonWiki {
+              "true"
+            } else {
+              "false"
+            },
+          )
+          .data_set("testid", "mode-wiki"),
         title="Switch to Wiki mode",
         on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
         "Wiki",
       ),
       button(
         class=workspace_mode_button_class(model, MoonCode),
-        attrs=@html.Attrs::build().aria_pressed(
-          if model.workspace_mode == MoonCode {
-            "true"
-          } else {
-            "false"
-          },
-        ),
+        attrs=@html.Attrs::build()
+          .aria_keyshortcuts("Meta+3 Control+3")
+          .aria_pressed(
+            if model.workspace_mode == MoonCode {
+              "true"
+            } else {
+              "false"
+            },
+          )
+          .data_set("testid", "mode-code"),
         title="Switch to Code mode",
         on_click=dispatch(SelectWorkspaceMode(MoonCode)),
         "Code",
       ),
       button(
         class=workspace_mode_button_class(model, MoonFlow),
-        attrs=@html.Attrs::build().aria_pressed(
-          if model.workspace_mode == MoonFlow {
-            "true"
-          } else {
-            "false"
-          },
-        ),
+        attrs=@html.Attrs::build()
+          .aria_keyshortcuts("Meta+4 Control+4")
+          .aria_pressed(
+            if model.workspace_mode == MoonFlow {
+              "true"
+            } else {
+              "false"
+            },
+          )
+          .data_set("testid", "mode-flow"),
         title="Switch to MoonFlow mode",
         on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
         "Flow",
@@ -285,6 +297,9 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     ]),
     button(
       class="command-button",
+      attrs=@html.Attrs::build()
+        .aria_keyshortcuts("Meta+K Control+K")
+        .data_set("testid", "command-palette-toggle"),
       title=if model.loading { "Workspace is loading" } else { "Open commands" },
       on_click=dispatch(ToggleCommand),
       "Commands",

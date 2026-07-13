@@ -15,6 +15,97 @@ fn moonflow_safe_run_id(run_id : String) -> Bool {
 }
 
 ///|
+async fn handle_moonflow_import_selected(
+  workspace_root : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let payload = match read_json_body(body) {
+    Some(value) => value
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid JSON body")
+      return
+    }
+  }
+  let workspace_id = json_string(payload, "workspace_id", default="")
+  let workspace = match find_workspace(workspace_root, workspace_id) {
+    Some(value) => value
+    None => {
+      send_api_error(conn, method_, 404, "Not Found", "Select a MoonBook first")
+      return
+    }
+  }
+  let candidates = ["flow/draft-work-graph.json", "flow/work-graph.json"]
+  let mut graph_path = ""
+  for candidate in candidates {
+    let path = @pathx.join(workspace.root_path, candidate)
+    if graph_path == "" && @fs.exists(path) {
+      graph_path = path
+    }
+  }
+  if graph_path == "" {
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        { "book_id": workspace_id, "run_id": "" },
+        ok=false,
+        status="declaration_missing",
+        message="This MoonBook has no executable Work graph yet",
+        next_action="create_executable_document_in_wiki",
+      ),
+    )
+    return
+  }
+  let moonflow_root = @sys.get_env_var("MOONFLOW_ROOT").unwrap_or("")
+  if moonflow_root == "" || !@fs.exists(@pathx.join(moonflow_root, "moon.mod")) {
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        { "book_id": workspace_id, "run_id": "" },
+        ok=false,
+        status="moonflow_service_missing",
+        message="MoonFlow is installed but its workspace service is not enabled",
+        next_action="enable_moonflow_in_moongate",
+      ),
+    )
+    return
+  }
+  let graph = @json.parse(@fs.read_file(graph_path).text()) catch {
+    _ => Json::object({})
+  }
+  let run_id = json_string(graph, "run_id", default="")
+  let moon = moonclaw_default_moon_command()
+  let code = run_process_quiet(moon, [
+    "-C",
+    moonflow_root,
+    "run",
+    "cmd/main",
+    "--",
+    "import-graph",
+    workspace_context(workspace_root).suite_root,
+    graph_path,
+  ])
+  send_json(
+    conn,
+    method_,
+    api_contract_response(
+      { "book_id": workspace_id, "run_id": run_id },
+      ok=code == 0,
+      status=if code == 0 { "imported" } else { "import_failed" },
+      message=if code == 0 {
+        "Executable document imported into MoonFlow"
+      } else {
+        "MoonFlow could not import this Work graph"
+      },
+      next_action=if code == 0 { "open_run" } else { "review_work_graph" },
+    ),
+  )
+}
+
+///|
 async fn moonflow_projection(path : String) -> Json? {
   if !@fs.exists(path) {
     return None

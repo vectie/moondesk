@@ -23,7 +23,9 @@ async fn handle_api_request(
     ) {
     return
   }
-  if route_moonclaw_api(workspace_root, segments, method_, request_path, conn) {
+  if route_moonclaw_api(
+      workspace_root, segments, method_, request_path, body, conn,
+    ) {
     return
   }
   if route_moonflow_api(workspace_root, segments, method_, body, conn) {

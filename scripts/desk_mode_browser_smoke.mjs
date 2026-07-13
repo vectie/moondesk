@@ -280,6 +280,35 @@ async function clickTestId(session, testId) {
   assert(ok, `Missing clickable test id ${testId}`);
 }
 
+async function pointerClickTestId(session, testId) {
+  const point = await session.evaluate(`(() => {
+    const el = document.querySelector('[data-testid=${JSON.stringify(testId)}]');
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  })()`);
+  assert(point && Number.isFinite(point.x) && Number.isFinite(point.y), `Missing pointer target ${testId}`);
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: point.x,
+    y: point.y,
+  });
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x: point.x,
+    y: point.y,
+    button: "left",
+    clickCount: 1,
+  });
+  await session.send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    x: point.x,
+    y: point.y,
+    button: "left",
+    clickCount: 1,
+  });
+}
+
 async function openDetailsTestId(session, testId) {
   const opened = await session.evaluate(`(() => {
     const el = document.querySelector('[data-testid=${JSON.stringify(testId)}]');
@@ -1949,6 +1978,11 @@ async function runEmptyLibrary() {
       `document.querySelectorAll('[data-testid="desk-workspace-row"]').length === 0`,
       "empty MoonBook library rows",
     );
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="desk-workspace-list"]')?.textContent.includes('No MoonBooks in this workspace')`,
+      "empty MoonBook library message",
+    );
     const libraryState = await session.evaluate(`(() => {
       const root = document.querySelector('[data-testid="desk-library-root"]');
       const summary = root?.querySelector(':scope > .desk-library-summary');
@@ -1970,11 +2004,6 @@ async function runEmptyLibrary() {
         !libraryState.diagnosticsOpen &&
         !libraryState.addBookOpen,
       `Empty Desk should hide implementation details by default: ${JSON.stringify(libraryState)}`,
-    );
-    await waitFor(
-      session,
-      `document.querySelector('[data-testid="desk-workspace-list"]')?.textContent.includes('No MoonBooks in this workspace')`,
-      "empty MoonBook library message",
     );
     const disabledEmptyActions = await session.evaluate(`(() => {
       const ids = [
@@ -2054,6 +2083,50 @@ async function runEmptyLibrary() {
     );
     await closeDetailsTestId(session, "desk-add-moonbook");
     screenshots.push(await captureDeskViewport(session, "empty-created", 1440, 900));
+    await session.send("Page.navigate", {
+      url: `${baseUrl}/?activity=desk&workspace=book-empty-library-created`,
+    });
+    await waitFor(
+      session,
+      `document.readyState === 'complete' && ` +
+        `document.querySelector('[data-testid="mode-desk"]')?.getAttribute('aria-pressed') === 'true' && ` +
+        `document.querySelectorAll('[data-testid="desk-workspace-row"]').length === 1`,
+      "loaded Desk before MoonGate recovery",
+    );
+    await clickTestId(session, "mode-code");
+    await waitFor(
+      session,
+      `document.readyState === 'complete' && !!document.querySelector('[data-testid="mooncode-open-moongate"]')`,
+      "MoonGate recovery control",
+    );
+    const moonGateControlDebug = await session.evaluate(`(() => {
+      const el = document.querySelector('[data-testid="mooncode-open-moongate"]');
+      const rect = el?.getBoundingClientRect();
+      const hit = rect ? document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2) : null;
+      return {
+        html: el?.outerHTML ?? '',
+        rect: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null,
+        hit: hit?.outerHTML ?? '',
+        disabled: el?.disabled === true,
+      };
+    })()`);
+    assert(
+      moonGateControlDebug.rect &&
+        moonGateControlDebug.rect.width > 0 &&
+        moonGateControlDebug.rect.height > 0 &&
+        moonGateControlDebug.hit.includes('mooncode-open-moongate') &&
+        !moonGateControlDebug.disabled,
+      `MoonGate recovery control is not a visible pointer target: ${JSON.stringify(moonGateControlDebug)}`,
+    );
+    console.log(`MoonGate recovery pointer target: ${JSON.stringify(moonGateControlDebug)}`);
+    await pointerClickTestId(session, "mooncode-open-moongate");
+    await waitFor(
+      session,
+      `location.search.includes('activity=desk') && ` +
+        `location.search.includes('workspace=book-empty-library-created') && ` +
+        `document.querySelector('[data-testid="mode-desk"]')?.getAttribute('aria-pressed') === 'true'`,
+      "MoonGate recovery Desk action",
+    );
     console.log(`Desk empty-library screenshots: ${screenshots.join(", ")}`);
     session.assertNoPageProblems("Desk empty-library smoke");
   } finally {

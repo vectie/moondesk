@@ -90,6 +90,22 @@ type MoonCodeTranscriptItem
 
 type MoonCodeTranscriptRow
 
+type MoonFlowAutonomyBinding derive(@json.FromJson)
+
+type MoonFlowBudget derive(@json.FromJson)
+
+type MoonFlowEnvelopeSummary derive(@json.FromJson)
+
+type MoonFlowImportResult derive(@json.FromJson)
+
+type MoonFlowInterventionScorecard derive(@json.FromJson)
+
+type MoonFlowItemProjection derive(@json.FromJson)
+
+type MoonFlowRunControl derive(@json.FromJson)
+
+type MoonFlowRunProjection derive(@json.FromJson)
+
 type MoonSuiteProduct derive(@json.FromJson)
 
 type MoonclawProgress derive(@json.FromJson)

@@ -109,19 +109,38 @@ fn render_moonflow_workspace(
       section(class="flow-empty", [
         strong("No executable work yet"),
         p(
-          "Compile an executable MoonBook document, then import its Work graph into MoonFlow.",
+          "Prepare the selected MoonBook's executable document and import its Work graph into MoonFlow.",
         ),
         button(
           class="primary-button",
-          on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-          "Open Wiki",
+          attrs=@html.Attrs::build().data_set(
+            "testid", "moonflow-prepare-selected",
+          ),
+          disabled=model.selected_workspace_id == "",
+          on_click=dispatch(PrepareMoonFlow),
+          "Prepare selected MoonBook",
         ),
         small(model.moonflow_status),
+        if model.moonflow_status.contains("no executable Work graph") {
+          button(
+            class="secondary-button",
+            on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+            "Create executable document in Wiki",
+          )
+        } else {
+          @html.nothing
+        },
+        render_moonflow_handoffs(
+          dispatch,
+          model,
+          "not started",
+          model.selected_workspace_id,
+        ),
       ])
     } else {
       section(
         class="flow-run-list",
-        model.moonflow_runs.map(run => render_moonflow_run(dispatch, run)),
+        model.moonflow_runs.map(run => render_moonflow_run(dispatch, model, run)),
       )
     },
   ])
@@ -130,6 +149,7 @@ fn render_moonflow_workspace(
 ///|
 fn render_moonflow_run(
   dispatch : Dispatch[Msg],
+  model : Model,
   run : MoonFlowRunProjection,
 ) -> @rabbita.Html {
   let accepted = moonflow_count_status(run, "accepted")
@@ -138,13 +158,12 @@ fn render_moonflow_run(
     header(class="flow-run-head", [
       div([
         p(class="eyebrow", "Run · sequence \{run.last_sequence}"),
-        h2(run.run_id),
+        h2(run.book_id),
         small(
-          run.book_id +
-          " · revision " +
+          "Executable revision " +
           run.declaration_revision +
-          " · source " +
-          moonflow_short_identity(run.source_digest),
+          " · " +
+          moonflow_run_state(run),
         ),
       ]),
       span(
@@ -158,8 +177,6 @@ fn render_moonflow_run(
       div([strong("\{blocked}"), span("blocked")]),
       div([strong("\{run.items.length()}"), span("total")]),
     ]),
-    render_moonflow_authority(run),
-    render_moonflow_controls(dispatch, run),
     if run.outcome != "accepted" &&
       run.outcome != "blocked" &&
       run.outcome != "failed" {
@@ -170,22 +187,196 @@ fn render_moonflow_run(
     render_moonflow_next_actions(run),
     render_moonflow_blockers(run),
     render_moonflow_readiness(run),
-    section(class="flow-section flow-contract", [
-      h3("Executable document contract"),
-      div(class="flow-contract-grid", [
-        div([span("Protocol"), strong(run.protocol)]),
-        div([span("MoonBook"), strong(run.book_id)]),
-        div([span("Declaration revision"), strong(run.declaration_revision)]),
-        div([
-          span("Source identity"),
-          strong(moonflow_short_identity(run.source_digest)),
-        ]),
+    render_moonflow_handoffs(dispatch, model, run.run_id, run.book_id),
+    details(class="flow-disclosure flow-operator-disclosure", [
+      summary("Operator controls"),
+      div(class="flow-disclosure-body", [
+        render_moonflow_authority(run),
+        render_moonflow_controls(dispatch, run),
       ]),
     ]),
-    div(
-      class="flow-item-list",
-      run.items.map(item => render_moonflow_item(item)),
-    ),
+    details(class="flow-disclosure flow-developer-disclosure", [
+      summary("Technical evidence"),
+      div(class="flow-disclosure-body", [
+        section(class="flow-section flow-contract", [
+          h3("Executable document contract"),
+          div(class="flow-contract-grid", [
+            div([span("Run"), strong(run.run_id)]),
+            div([span("Protocol"), strong(run.protocol)]),
+            div([span("MoonBook"), strong(run.book_id)]),
+            div([span("Declaration revision"), strong(run.declaration_revision)]),
+            div([
+              span("Source identity"),
+              strong(moonflow_short_identity(run.source_digest)),
+            ]),
+          ]),
+        ]),
+        render_moonflow_runtime_evidence(run),
+        div(
+          class="flow-item-list",
+          run.items.map(item => render_moonflow_item(item)),
+        ),
+      ]),
+    ]),
+  ])
+}
+
+///|
+fn moonsuite_product_available(model : Model, product_name : String) -> Bool {
+  model.moonsuite_products.any(product => {
+    product.name.to_lower() == product_name.to_lower() &&
+    (product.status == "installed" || product.status == "enabled")
+  })
+}
+
+///|
+fn render_moonflow_handoffs(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  run_id : String,
+  book_id : String,
+) -> @rabbita.Html {
+  let book_label = if book_id == "" { "not selected" } else { book_id }
+  let town_available = moonsuite_product_available(model, "MoonTown")
+  section(
+    class="flow-handoff-section",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "flow-capability-handoffs")
+      .data_set("book-id", book_id)
+      .data_set("run-id", run_id),
+    [
+      div(class="flow-section-heading", [
+        h3("Continue across the suite"),
+        small("MoonBook " + book_label + " · run " + run_id),
+      ]),
+      div(class="flow-handoff-grid", [
+        render_flow_handoff_card(
+          "MoonTown",
+          "Deliberate, compare proposals, and promote implementation criteria.",
+          if town_available {
+            "Available"
+          } else {
+            "Adapter pending"
+          },
+          button(
+            class="secondary-button compact-button",
+            disabled=book_id == "" || !town_available,
+            on_click=dispatch(SelectActivity(Town)),
+            if town_available {
+              "Open Town"
+            } else {
+              "Town adapter pending"
+            },
+          ),
+        ),
+        render_flow_handoff_card(
+          "MoonRobo",
+          "Build and validate against the accepted run criteria.",
+          if moonsuite_product_available(model, "MoonRobo") {
+            "Installed · handoff pending"
+          } else {
+            "Adapter pending"
+          },
+          span(
+            class="flow-handoff-note",
+            "Keeps this MoonBook and run selected",
+          ),
+        ),
+        render_flow_handoff_card(
+          "MoonMoon",
+          "Simulate the accepted robot and return uncertainty evidence.",
+          if moonsuite_product_available(model, "MoonMoon") {
+            "Installed · handoff pending"
+          } else {
+            "Adapter pending"
+          },
+          span(class="flow-handoff-note", "No deployment authority granted"),
+        ),
+        render_flow_handoff_card(
+          "MoonMold",
+          "Create governed 3D artifacts for Town, Robo, simulation, or fabrication.",
+          if moonsuite_product_available(model, "MoonMold") {
+            "Installed · handoff pending"
+          } else {
+            "Adapter pending"
+          },
+          span(
+            class="flow-handoff-note",
+            "Physical export remains approval-gated",
+          ),
+        ),
+      ]),
+    ],
+  )
+}
+
+///|
+fn render_flow_handoff_card(
+  name : String,
+  description : String,
+  status : String,
+  action : @rabbita.Html,
+) -> @rabbita.Html {
+  section(class="flow-handoff-card", [
+    div([strong(name), span(class="flow-handoff-status", status)]),
+    p(description),
+    action,
+  ])
+}
+
+///|
+fn render_moonflow_runtime_evidence(
+  run : MoonFlowRunProjection,
+) -> @rabbita.Html {
+  let binding = run.autonomy_binding
+  let envelope = binding.envelope
+  let scorecard = run.intervention_scorecard
+  let control = run.run_control
+  section(class="flow-section flow-contract", [
+    h3("Runtime evidence"),
+    div(class="flow-contract-grid", [
+      div([span("Autonomy binding"), strong(binding.contract_id)]),
+      div([span("Bound run"), strong(binding.run_id)]),
+      div([span("Usage evidence"), strong(binding.usage_ref)]),
+      div([span("Binding recorded"), strong(binding.recorded_at)]),
+      div([span("Envelope expires"), strong(envelope.expires_at)]),
+      div([
+        span("Storage budget"),
+        strong(
+          moonflow_budget_label(
+            binding.usage.storage_bytes,
+            envelope.budget.storage_bytes,
+          ),
+        ),
+      ]),
+      div([
+        span("Concurrency"),
+        strong(
+          moonflow_budget_label(
+            binding.usage.concurrency,
+            envelope.budget.concurrency,
+          ),
+        ),
+      ]),
+      div([span("Intervention record"), strong(scorecard.contract_id)]),
+      div([span("Intervention run"), strong(scorecard.run_id)]),
+      div([
+        span("Hidden orchestration"),
+        strong(scorecard.hidden_orchestration_count.to_string()),
+      ]),
+      div([
+        span("Normal-path manual work"),
+        strong(scorecard.normal_path_manual_count.to_string()),
+      ]),
+      div([span("Scorecard recorded"), strong(scorecard.recorded_at)]),
+      div([span("Control record"), strong(control.contract_id)]),
+      div([span("Control run"), strong(control.run_id)]),
+      div([
+        span("Control reason"),
+        strong(if control.reason == "" { "none" } else { control.reason }),
+      ]),
+      div([span("Control recorded"), strong(control.recorded_at)]),
+    ]),
   ])
 }
 

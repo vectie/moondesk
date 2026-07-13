@@ -128,6 +128,34 @@ fn update_workspace_surface_actions(
         control_moonflow_cmd(dispatch, run_id, action, detail),
         { ..model, moonflow_status: "Applying " + action + "…" },
       )
+    PrepareMoonFlow =>
+      if model.selected_workspace_id == "" {
+        (@rabbita.none, { ..model, moonflow_status: "Select a MoonBook first" })
+      } else {
+        (
+          @rabbita.batch([
+            import_selected_moonflow_cmd(dispatch, model.selected_workspace_id),
+            @rabbita.delay(
+              dispatch(MoonFlowPrepareTimedOut(model.selected_workspace_id)),
+              5000,
+            ),
+          ]),
+          { ..model, moonflow_status: "Preparing executable work…" },
+        )
+      }
+    MoonFlowPrepareTimedOut(workspace_id) =>
+      if workspace_id == model.selected_workspace_id &&
+        model.moonflow_status == "Preparing executable work…" {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            moonflow_status: "MoonFlow did not respond in 5 seconds · next: check MoonGate service setup or open Wiki to review the Work graph",
+          },
+        )
+      } else {
+        (@rabbita.none, model)
+      }
     SetReviewDecisionNote(note) =>
       (@rabbita.none, { ..model, review_decision_note: note })
     DecideReviewItem(item, decision) =>
@@ -847,6 +875,7 @@ fn search_now_action(
 ///|
 fn refresh_all_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   @rabbita.batch([
+    fetch_workspace_metadata_cmd(dispatch),
     fetch_workspaces_cmd(dispatch),
     if model.selected_workspace_id == "" {
       @rabbita.none
@@ -886,5 +915,7 @@ fn refresh_all_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     fetch_review_items_cmd(dispatch, model.selected_workspace_id),
     fetch_saved_views_cmd(dispatch),
     fetch_book_patterns_cmd(dispatch),
+    fetch_book_base_types_cmd(dispatch),
+    fetch_moonflow_runs_cmd(dispatch),
   ])
 }

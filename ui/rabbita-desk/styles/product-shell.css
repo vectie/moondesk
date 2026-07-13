@@ -1876,3 +1876,96 @@ details[open] > .desk-disclosure-summary::after {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+.flow-disclosure {
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.flow-disclosure > summary {
+  cursor: pointer;
+  padding: 12px 14px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.flow-disclosure > summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  outline-offset: -3px;
+}
+
+.flow-disclosure-body {
+  display: grid;
+  gap: 12px;
+  padding: 0 12px 12px;
+}
+
+.moongate-card {
+  margin: 10px 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 92%, var(--accent) 8%);
+}
+
+.moongate-card.ready {
+  border-color: color-mix(in srgb, var(--success) 45%, var(--line));
+}
+
+.moongate-card-head,
+.flow-section-heading,
+.flow-handoff-card > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.moongate-card p,
+.flow-handoff-card p {
+  margin: 7px 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.moongate-next-step {
+  margin-top: 9px;
+}
+
+.moongate-details {
+  margin-top: 9px;
+  font-size: 0.85rem;
+}
+
+.flow-handoff-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.flow-handoff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.flow-handoff-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.flow-handoff-status,
+.flow-handoff-note {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.flow-disclosure-body > .flow-section,
+.flow-disclosure-body > .flow-item-list {
+  margin: 0;
+}

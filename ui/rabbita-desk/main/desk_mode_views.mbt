@@ -22,11 +22,13 @@ fn render_desk_workspace_sidebar(
       button(
         class="secondary-button compact-button",
         title="Refresh",
+        attrs=@html.Attrs::build().data_set("testid", "desk-refresh-workspaces"),
         on_click=dispatch(RefreshAll),
         "Refresh",
       ),
     ]),
     render_desk_library_location(model),
+    render_moongate_setup(dispatch, model),
     render_new_moonbook_panel(dispatch, model),
     div(
       class="desk-workspace-list",
@@ -34,8 +36,8 @@ fn render_desk_workspace_sidebar(
       if model.workspaces.length() == 0 {
         [
           div(class="desk-empty-state", [
-            strong("No MoonBooks in this workspace"),
-            p("Create or import a MoonBook and it will appear here."),
+            strong(desk_empty_library_title(model)),
+            p(desk_empty_library_message(model)),
           ]),
         ]
       } else {
@@ -77,6 +79,90 @@ fn render_desk_workspace_sidebar(
     },
     render_desk_folder_outline(dispatch, model),
   ])
+}
+
+///|
+fn render_moongate_setup(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  let daemon = model.moonclaw_daemon
+  let ready = daemon.map(item => item.running).unwrap_or(false)
+  section(
+    id="moongate-summary",
+    class=if ready { "moongate-card ready" } else { "moongate-card blocked" },
+    attrs=@html.Attrs::build()
+      .data_set("testid", "moongate-summary")
+      .role("status"),
+    [
+      div(class="moongate-card-head", [
+        div([p(class="eyebrow", "AI boundary"), strong("MoonGate")]),
+        span(
+          class=if ready { "status-pill ready" } else { "status-pill" },
+          if ready {
+            "Ready"
+          } else {
+            "Setup"
+          },
+        ),
+      ]),
+      p(
+        if ready {
+          "AI is available through the workspace's governed MoonClaw service. External and physical effects still require their own authority."
+        } else {
+          "AI is not available yet. MoonGate will only enable the installed workspace service; it does not grant external or physical effects."
+        },
+      ),
+      match daemon {
+        Some(status) if !status.running && status.service_configured =>
+          button(
+            class="primary-button full",
+            attrs=@html.Attrs::build().data_set(
+              "testid", "moongate-start-moonclaw",
+            ),
+            on_click=dispatch(ManageMoonClaw("start")),
+            "Enable AI for this workspace",
+          )
+        Some(status) if !status.running =>
+          div(class="moongate-next-step", [
+            strong("MoonClaw needs setup"),
+            p(
+              "Enable the installed MoonClaw product for this workspace, then check again.",
+            ),
+            button(
+              class="secondary-button full",
+              on_click=dispatch(RefreshAll),
+              "Check installed products",
+            ),
+          ])
+        _ => @html.nothing
+      },
+      details(class="moongate-details", [
+        summary("Authority details"),
+        p(
+          "Current UI authority: workspace-local AI only. Network, publication, physical action, and new credentials are not implied.",
+        ),
+      ]),
+    ],
+  )
+}
+
+///|
+fn desk_empty_library_title(model : Model) -> String {
+  if model.loading {
+    "Connecting to your MoonBooks…"
+  } else {
+    "No MoonBooks in this workspace"
+  }
+}
+
+///|
+fn desk_empty_library_message(model : Model) -> String {
+  if model.loading {
+    "This normally takes a moment. If it does not finish, choose Refresh to retry without losing your place."
+  } else {
+    "Create or import a MoonBook and it will appear here."
+  }
 }
 
 ///|

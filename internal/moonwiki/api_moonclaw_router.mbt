@@ -4,6 +4,7 @@ async fn route_moonclaw_api(
   segments : Array[String],
   method_ : @http.RequestMethod,
   request_path : String,
+  body : &@io.Reader,
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
@@ -49,6 +50,15 @@ async fn route_moonclaw_api(
         handle_moonclaw_daemon(workspace_root, method_, conn)
       } else {
         send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "daemon", action] => {
+      if method_ is Post && ["start", "retry"].contains(action) {
+        ignore(body)
+        handle_moonclaw_daemon_action(workspace_root, action, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
       }
       true
     }

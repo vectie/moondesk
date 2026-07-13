@@ -19,3 +19,15 @@ fn fetch_moonclaw_models_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
     )
   })
 }
+
+///|
+fn manage_moonclaw_cmd(
+  dispatch : Dispatch[Msg],
+  action : String,
+) -> @rabbita.Cmd {
+  @http.post(@desk.moonclaw_endpoint_url("daemon/" + action))
+  .with_json(Json::object({}))
+  .expect_json(result => {
+    dispatch(ManagedMoonClaw(http_result(result, "Could not start MoonClaw")))
+  })
+}

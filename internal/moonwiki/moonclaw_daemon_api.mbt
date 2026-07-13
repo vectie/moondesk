@@ -67,6 +67,20 @@ async fn handle_moonclaw_models(
 }
 
 ///|
+async fn handle_moonclaw_daemon_action(
+  workspace_root : String,
+  action : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let result = ensure_moonclaw_daemon_running(
+    workspace_root,
+    action=if action == "retry" { "restart" } else { "start" },
+  )
+  send_json(conn, method_, result)
+}
+
+///|
 async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let context = workspace_context(workspace_root)
   let root = context.suite_root

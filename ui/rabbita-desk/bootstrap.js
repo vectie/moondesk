@@ -16,7 +16,54 @@ if (app) {
   `
 }
 
-await import('/main.js')
+function installMoonDeskShellStartup() {
+  if (globalThis.__moondeskShellStartupInstalled) return
+  globalThis.__moondeskShellStartupInstalled = true
+
+  const clickWhenReady = (testId, attempt = 0) => {
+    const button = document.querySelector(`[data-testid="${testId}"]`)
+    if (button && typeof button.click === 'function') {
+      button.click()
+      const loaded = document.querySelector('[data-testid="desk-workspace-row"]')
+      const empty = document.body.textContent?.includes('No MoonBooks in this workspace')
+      if (loaded || (empty && attempt > 3)) return
+    }
+    if (attempt < 30) {
+      setTimeout(() => clickWhenReady(testId, attempt + 1), 300)
+    }
+  }
+
+  // Lepusa's WKWebView may not start Rabbita subscriptions until the first
+  // interaction. Use the product's ordinary Refresh control so native users
+  // arrive at the same loaded state as browser users without a mystery click.
+  setTimeout(() => clickWhenReady('desk-refresh-workspaces'), 150)
+
+  document.addEventListener('keydown', (event) => {
+    if (!(event.metaKey || event.ctrlKey) || event.shiftKey) return
+    const target = {
+      '1': 'mode-desk',
+      '2': 'mode-wiki',
+      '3': 'mode-code',
+      '4': 'mode-flow',
+      'k': 'command-palette-toggle',
+    }[String(event.key || '').toLowerCase()]
+    if (!target) return
+
+    const button = document.querySelector(`[data-testid="${target}"]`)
+    if (!button || typeof button.click !== 'function') return
+    event.preventDefault()
+    event.stopPropagation()
+    button.click()
+  }, true)
+
+}
+
+installMoonDeskShellStartup()
+
+// Do not await the long-lived Rabbita entrypoint. WKWebView defers timers owned
+// by a module whose top-level await never settles, which would suppress native
+// startup recovery and shell shortcuts until the first manual interaction.
+void import('/main.js')
 
 let mooncodeTranscript = null
 let mooncodeTranscriptKey = ''

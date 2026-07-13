@@ -34,9 +34,82 @@ fn code_mode_test_session(
     model: "deepseek-v4-flash",
     status,
     queued_count,
+    last_message: None,
+    mooncode_runtime_detail: None,
     mooncode_conversation: None,
     mooncode_summary: code_mode_test_summary(),
   }
+}
+
+///|
+test "failed MoonCode session explains the user state before technical evidence" {
+  let session = {
+    ..code_mode_test_session("session-failed", status="failed"),
+    mooncode_runtime_detail: Some("MoonClaw daemon is not running"),
+  }
+  assert_eq(mooncode_user_state_title(session), "MoonCode couldn't start")
+  assert_eq(
+    mooncode_user_state_message(session),
+    "Your request was saved, but no coding work ran.",
+  )
+  assert_eq(
+    mooncode_user_state_reason(session),
+    "MoonClaw daemon is not running",
+  )
+  assert_eq(
+    mooncode_user_next_action(session),
+    "Next: connect or start MoonClaw for this workspace, then send the request again.",
+  )
+  assert_eq(mooncode_empty_transcript_title(session), "No coding result yet")
+  assert_eq(
+    mooncode_empty_transcript_message(session),
+    "Resolve the issue above, then send the request again.",
+  )
+}
+
+///|
+test "MoonCode user state remains quiet for completed sessions" {
+  let session = code_mode_test_session("session-ready", status="done")
+  assert_eq(mooncode_user_state_title(session), "")
+  assert_eq(mooncode_user_state_message(session), "")
+  assert_eq(mooncode_user_next_action(session), "")
+}
+
+///|
+test "MoonCode session decodes optional runtime explanation" {
+  let session : MoonCodeSession = @json.from_json({
+    "id": "session-json",
+    "workspace_id": "book-demo",
+    "workspace_name": "Demo Book",
+    "cwd": "/workspace/book",
+    "title": "MoonCode - Demo Book",
+    "model": "codex/gpt-5",
+    "status": "failed",
+    "queued_count": 0,
+    "last_message": "Build the helper",
+    "mooncode_runtime_detail": "MoonClaw daemon is not running",
+    "mooncode_summary": {
+      "event_count": 2,
+      "verified_test_count": 0,
+      "pending_diff_count": 0,
+    },
+  })
+  assert_true(session.last_message is Some("Build the helper"))
+  assert_true(
+    session.mooncode_runtime_detail is Some("MoonClaw daemon is not running"),
+  )
+}
+
+///|
+test "Desk loading empty state offers a visible retry without diagnostics" {
+  let loading = init_model()
+  assert_eq(
+    desk_empty_library_title(loading),
+    "Connecting to your MoonBooks…",
+  )
+  assert_true(desk_empty_library_message(loading).contains("choose Refresh"))
+  let empty = { ..loading, loading: false }
+  assert_eq(desk_empty_library_title(empty), "No MoonBooks in this workspace")
 }
 
 ///|
@@ -1648,7 +1721,12 @@ test "code mode daemon and model polling preserve new session draft" {
   let (_, daemon_next) = update_mooncode_session_results(
     code_mode_test_dispatch,
     LoadedMoonClawDaemon(
-      Ok({ running: true, port: 1515, message: "daemon running" }),
+      Ok({
+        running: true,
+        port: 1515,
+        message: "daemon running",
+        service_configured: true,
+      }),
     ),
     model,
   )
@@ -1662,7 +1740,12 @@ test "code mode daemon and model polling preserve new session draft" {
     LoadedMoonClawModels(
       Ok({
         ok: true,
-        daemon: { running: true, port: 1515, message: "daemon running" },
+        daemon: {
+          running: true,
+          port: 1515,
+          message: "daemon running",
+          service_configured: true,
+        },
         models: [{ name: "deepseek-v4-flash" }],
       }),
     ),
@@ -1698,7 +1781,12 @@ test "code mode model polling defaults empty model list to codex runtime model" 
     LoadedMoonClawModels(
       Ok({
         ok: true,
-        daemon: { running: true, port: 1515, message: "daemon running" },
+        daemon: {
+          running: true,
+          port: 1515,
+          message: "daemon running",
+          service_configured: true,
+        },
         models: [],
       }),
     ),
@@ -1866,4 +1954,60 @@ test "code mode polling cannot regroup an existing session" {
   assert_eq(sessions[0].workspace_name, "Demo Book")
   assert_eq(sessions[0].cwd, "/tmp/moonsuite/books/book-demo")
   assert_eq(sessions[0].status, "done")
+}
+
+///|
+test "MoonClaw setup action stays visible as a user operation" {
+  let model = { ..init_model(), mooncode_composer_status: "idle" }
+  let (_, next) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    ManageMoonClaw("start"),
+    model,
+  )
+  assert_eq(next.mooncode_composer_status, "Starting MoonClaw…")
+}
+
+///|
+test "MoonClaw lifecycle result refreshes service and model state" {
+  let model = init_model()
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonClaw(
+      Ok({
+        running: true,
+        port: 1515,
+        message: "MoonClaw daemon started",
+        service_configured: true,
+      }),
+    ),
+    model,
+  )
+  assert_true(next.moonclaw_daemon.unwrap().running)
+  assert_eq(next.mooncode_composer_status, "MoonClaw daemon started")
+}
+
+///|
+test "MoonGate setup handoff uses the proven Desk mode action" {
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "book-demo",
+  }
+  let (_, next) = update_navigation_actions(
+    code_mode_test_dispatch,
+    SelectWorkspaceMode(Desk),
+    model,
+  )
+  assert_true(next.workspace_mode is Desk)
+  assert_true(
+    mooncode_center_class({
+      ..model,
+      moonclaw_daemon: Some({
+        running: false,
+        port: 0,
+        message: "not running",
+        service_configured: false,
+      }),
+    }).contains("runtime-setup-visible"),
+  )
 }

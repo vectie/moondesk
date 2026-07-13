@@ -61,3 +61,67 @@ test "Flow describes migrated checkpoints without a zero-attempt implication" {
   }
   assert_eq(moonflow_item_execution_label(item), "checkpoint reused")
 }
+
+///|
+test "Flow first-run action requires a selected MoonBook" {
+  let (_, missing) = update_workspace_surface_actions(
+    code_mode_test_dispatch,
+    PrepareMoonFlow,
+    init_model(),
+  )
+  assert_eq(missing.moonflow_status, "Select a MoonBook first")
+  let (_, selected) = update_workspace_surface_actions(
+    code_mode_test_dispatch,
+    PrepareMoonFlow,
+    { ..init_model(), selected_workspace_id: "book-demo" },
+  )
+  assert_eq(selected.moonflow_status, "Preparing executable work…")
+  let (_, timed_out) = update_workspace_surface_actions(
+    code_mode_test_dispatch,
+    MoonFlowPrepareTimedOut("book-demo"),
+    selected,
+  )
+  assert_true(
+    timed_out.moonflow_status.contains("did not respond in 5 seconds"),
+  )
+  assert_true(timed_out.moonflow_status.contains("next:"))
+}
+
+///|
+test "Flow import status keeps the durable run or next action visible" {
+  assert_eq(
+    moonflow_import_status({
+      ok: true,
+      status: "imported",
+      message: "Executable document imported into MoonFlow",
+      next_action: "open_run",
+      book_id: "book-demo",
+      run_id: "run-demo-r1",
+    }),
+    "Executable document imported into MoonFlow · run run-demo-r1",
+  )
+  assert_eq(
+    moonflow_import_status({
+      ok: false,
+      status: "declaration_missing",
+      message: "This MoonBook has no executable Work graph yet",
+      next_action: "create_executable_document_in_wiki",
+      book_id: "book-demo",
+      run_id: "",
+    }),
+    "This MoonBook has no executable Work graph yet · next: create executable document in wiki",
+  )
+}
+
+///|
+test "Flow handoff availability follows the product registry" {
+  let model = {
+    ..init_model(),
+    moonsuite_products: [
+      { name: "MoonTown", status: "installed" },
+      { name: "MoonRobo", status: "missing" },
+    ],
+  }
+  assert_true(moonsuite_product_available(model, "moontown"))
+  assert_false(moonsuite_product_available(model, "MoonRobo"))
+}

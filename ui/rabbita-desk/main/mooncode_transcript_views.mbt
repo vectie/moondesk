@@ -21,8 +21,8 @@ fn render_mooncode_transcript(
   let items = mooncode_transcript_items(model, session)
   if items.length() == 0 {
     div(class="mooncode-empty", [
-      h1(session.title),
-      p(class="lead", "Start a MoonCode prompt to begin the conversation."),
+      h1(mooncode_empty_transcript_title(session)),
+      p(class="lead", mooncode_empty_transcript_message(session)),
     ])
   } else {
     let children : Array[@rabbita.Html] = []
@@ -37,6 +37,32 @@ fn render_mooncode_transcript(
       }
     }
     div(class="mooncode-transcript-list mooncode-transcript", children)
+  }
+}
+
+///|
+fn mooncode_empty_transcript_title(session : MoonCodeSession) -> String {
+  if session.status == "failed" {
+    "No coding result yet"
+  } else if session.status == "queued" || session.queued_count > 0 {
+    "Request saved"
+  } else if session.status == "running" {
+    "MoonCode is working"
+  } else {
+    session.title
+  }
+}
+
+///|
+fn mooncode_empty_transcript_message(session : MoonCodeSession) -> String {
+  if session.status == "failed" {
+    "Resolve the issue above, then send the request again."
+  } else if session.status == "queued" || session.queued_count > 0 {
+    "The conversation will appear here when the worker begins."
+  } else if session.status == "running" {
+    "The first verified update will appear here."
+  } else {
+    "Start a MoonCode prompt to begin the conversation."
   }
 }
 

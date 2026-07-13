@@ -3,7 +3,11 @@ fn app_subscriptions(dispatch : Dispatch[Msg], model : Model) -> @sub.Sub {
   if model.bootstrapped {
     @sub.none
   } else {
-    @sub.every(1, dispatch(Bootstrap))
+    // Give the native WebView and its supervised localhost sidecar a moment to
+    // finish attaching before the first request batch. A 1 ms interval could
+    // race the initial mount in Lepusa and leave the visible shell waiting
+    // until the user guessed to press Refresh.
+    @sub.every(150, dispatch(Bootstrap))
   }
 }
 

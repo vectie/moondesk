@@ -75,6 +75,16 @@ struct MoonFlowRunControl {
 } derive(FromJson)
 
 ///|
+struct MoonFlowImportResult {
+  ok : Bool
+  status : String
+  message : String
+  next_action : String
+  book_id : String
+  run_id : String
+} derive(FromJson)
+
+///|
 struct MoonFlowRunProjection {
   protocol : String
   run_id : String

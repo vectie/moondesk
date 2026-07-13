@@ -64,6 +64,8 @@ fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
     model: mooncode_selected_runtime_model(model, None),
     status: "queued",
     queued_count: 1,
+    last_message: None,
+    mooncode_runtime_detail: None,
     mooncode_conversation: None,
     mooncode_summary: {
       event_count: 0,
@@ -299,6 +301,16 @@ fn mooncode_merge_selected_listing_session(
       listed.status
     },
     queued_count: listed.queued_count,
+    last_message: if listed.last_message is Some(_) {
+      listed.last_message
+    } else {
+      existing.last_message
+    },
+    mooncode_runtime_detail: if listed.mooncode_runtime_detail is Some(_) {
+      listed.mooncode_runtime_detail
+    } else {
+      existing.mooncode_runtime_detail
+    },
     mooncode_summary: listed.mooncode_summary,
   }
 }

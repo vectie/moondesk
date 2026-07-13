@@ -68,6 +68,20 @@ fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+fn import_selected_moonflow_cmd(
+  dispatch : Dispatch[Msg],
+  workspace_id : String,
+) -> @rabbita.Cmd {
+  @http.post("/api/moonflow/runs/import-selected")
+  .with_json({ "workspace_id": workspace_id })
+  .expect_json(result => {
+    dispatch(
+      ImportedMoonFlow(http_result(result, "Could not prepare MoonFlow")),
+    )
+  })
+}
+
+///|
 fn fetch_messages_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @http.get(@desk.town_endpoint_url("messages")).expect_json(result => {
     dispatch(

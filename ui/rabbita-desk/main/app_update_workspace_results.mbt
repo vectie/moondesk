@@ -1,4 +1,16 @@
 ///|
+fn moonflow_import_status(result : MoonFlowImportResult) -> String {
+  let detail = if result.run_id != "" {
+    " · run " + result.run_id
+  } else if result.next_action != "" {
+    " · next: " + result.next_action.replace_all(old="_", new=" ")
+  } else {
+    " · " + result.status
+  }
+  result.message + detail
+}
+
+///|
 fn update_workspace_results(
   dispatch : Dispatch[Msg],
   msg : Msg,
@@ -147,6 +159,25 @@ fn update_workspace_results(
       )
     LoadedMoonFlowRuns(Err(error)) =>
       (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
+    ImportedMoonFlow(Ok(result)) =>
+      (
+        if result.ok {
+          fetch_moonflow_runs_cmd(dispatch)
+        } else {
+          @rabbita.none
+        },
+        {
+          ..model,
+          moonflow_status: moonflow_import_status(result),
+          selected_workspace_id: if result.book_id == "" {
+            model.selected_workspace_id
+          } else {
+            result.book_id
+          },
+        },
+      )
+    ImportedMoonFlow(Err(error)) =>
+      (@rabbita.none, { ..model, moonflow_status: error })
     ControlledMoonFlow(Ok(control)) =>
       (
         fetch_moonflow_runs_cmd(dispatch),

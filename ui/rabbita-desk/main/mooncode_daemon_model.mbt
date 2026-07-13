@@ -3,6 +3,7 @@ struct MoonClawDaemonStatus {
   running : Bool
   port : Int
   message : String
+  service_configured : Bool
 } derive(FromJson)
 
 ///|

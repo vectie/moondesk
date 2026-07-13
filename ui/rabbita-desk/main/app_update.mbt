@@ -12,6 +12,7 @@ fn update(
     LoadedPreview(_) => update_app_results(dispatch, msg, model)
     LoadedRuns(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowRuns(_) => update_app_results(dispatch, msg, model)
+    ImportedMoonFlow(_) => update_app_results(dispatch, msg, model)
     ControlledMoonFlow(_) => update_app_results(dispatch, msg, model)
     LoadedTownMessages(_) => update_app_results(dispatch, msg, model)
     LoadedRequests(_) => update_app_results(dispatch, msg, model)
@@ -55,6 +56,7 @@ fn update(
     RevealedSelection(_) => update_app_results(dispatch, msg, model)
     LocalFilesPicked(_) => update_app_results(dispatch, msg, model)
     LoadedMoonClawDaemon(_) => update_mooncode_results(dispatch, msg, model)
+    ManagedMoonClaw(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonClawModels(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeSessions(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeSession(_, _) => update_mooncode_results(dispatch, msg, model)
@@ -62,6 +64,9 @@ fn update(
     CompletedMoonCodeCommand(_) => update_mooncode_results(dispatch, msg, model)
     SelectWorkspaceMode(_) => update_navigation_actions(dispatch, msg, model)
     ControlMoonFlow(_, _, _) =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    PrepareMoonFlow => update_workspace_surface_actions(dispatch, msg, model)
+    MoonFlowPrepareTimedOut(_) =>
       update_workspace_surface_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)
     SelectWorkspace(_) => update_navigation_actions(dispatch, msg, model)
@@ -97,6 +102,7 @@ fn update(
     NewMoonCodeSession => update_mooncode_actions(dispatch, msg, model)
     SetMoonCodePrompt(_) => update_mooncode_actions(dispatch, msg, model)
     SendMoonCodeMessage => update_mooncode_actions(dispatch, msg, model)
+    ManageMoonClaw(_) => update_mooncode_actions(dispatch, msg, model)
     PollMoonCodeSessions(_) => update_mooncode_actions(dispatch, msg, model)
     SetGoalTitle(_) => update_book_builder_actions(dispatch, msg, model)
     SetGoalCadenceTicks(_) => update_book_builder_actions(dispatch, msg, model)
