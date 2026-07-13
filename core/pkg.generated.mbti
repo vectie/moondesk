@@ -210,8 +210,8 @@ pub(all) enum BrowserActor {
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum BrowserNetworkPolicy {
-  LocalAssetsOnly
-  ApprovedOrigins(Array[String])
+  Offline
+  ApprovedOriginsOnly
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct BrowserObservation {
@@ -240,7 +240,8 @@ pub(all) enum BrowserOperation {
 
 pub(all) enum BrowserOriginClass {
   OpaqueLocalPreview
-  ApprovedExternalOrigin(String)
+  IsolatedLoopback
+  ExternalOrigin
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct BrowserSessionScope {
@@ -253,6 +254,7 @@ pub struct BrowserSessionScope {
   origin_class : BrowserOriginClass
   network_policy : BrowserNetworkPolicy
   storage_lifetime : BrowserStorageLifetime
+  allowed_origins : Array[String]
   download_root : String
   upload_sources : Array[String]
   permitted_effects : Array[String]

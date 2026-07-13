@@ -8,13 +8,14 @@ pub(all) enum BrowserActor {
 ///|
 pub(all) enum BrowserOriginClass {
   OpaqueLocalPreview
-  ApprovedExternalOrigin(String)
+  IsolatedLoopback
+  ExternalOrigin
 } derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum BrowserNetworkPolicy {
-  LocalAssetsOnly
-  ApprovedOrigins(Array[String])
+  Offline
+  ApprovedOriginsOnly
 } derive(Debug, Eq, ToJson, FromJson)
 
 ///|
@@ -48,6 +49,7 @@ pub struct BrowserSessionScope {
   origin_class : BrowserOriginClass
   network_policy : BrowserNetworkPolicy
   storage_lifetime : BrowserStorageLifetime
+  allowed_origins : Array[String]
   download_root : String
   upload_sources : Array[String]
   permitted_effects : Array[String]
@@ -109,8 +111,9 @@ pub fn opaque_local_browser_scope(
     run_id,
     authority_envelope_id,
     origin_class: OpaqueLocalPreview,
-    network_policy: LocalAssetsOnly,
+    network_policy: Offline,
     storage_lifetime: Ephemeral,
+    allowed_origins: [],
     download_root: "",
     upload_sources: [],
     permitted_effects: [

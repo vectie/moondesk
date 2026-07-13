@@ -17,6 +17,8 @@ extern "js" fn browser_reload_preview() =
   #|   frame.src = url.toString();
   #|   const status = document.querySelector('[data-testid="browser-preview-status"]');
   #|   if (status) status.textContent = 'Reloading isolated preview';
+  #|   const host = document.querySelector('[data-testid="browser-preview-host"]');
+  #|   if (host instanceof HTMLElement) host.dataset.evidenceState = 'not-persisted';
   #| }
 
 ///|
@@ -53,7 +55,9 @@ extern "js" fn browser_capture_preview_evidence() =
   #|     return;
   #|   }
   #|   frame.contentWindow.postMessage({ protocol: 'moondesk-preview-v1', type: 'snapshot-request' }, '*');
-  #|   if (status) status.textContent = 'Collecting DOM, accessibility, console, and network evidence';
+  #|   const host = document.querySelector('[data-testid="browser-preview-host"]');
+  #|   if (host instanceof HTMLElement) host.dataset.evidenceState = 'prepared';
+  #|   if (status) status.textContent = 'Preparing observations · not persisted';
   #| }
 
 ///|
@@ -91,6 +95,15 @@ extern "js" fn browser_install_preview_observer() =
   #| () => {
   #|   if (window.__moondeskPreviewObserverInstalled) return;
   #|   window.__moondeskPreviewObserverInstalled = true;
+  #|   const nativeCapabilities = globalThis.__lepusaCapabilities;
+  #|   const operationBanner = document.querySelector('[data-testid="browser-operation-banner"]');
+  #|   if (operationBanner instanceof HTMLElement &&
+  #|       nativeCapabilities?.protocol === 'lepusa-native-capabilities-v1' &&
+  #|       nativeCapabilities.frameTargetedBridgeReplies === true) {
+  #|     operationBanner.dataset.nativeFrameTransport = 'true';
+  #|     const operationStatus = document.querySelector('[data-testid="browser-operation-status"]');
+  #|     if (operationStatus) operationStatus.textContent = 'Native visible-frame transport available · no agent worker attached';
+  #|   }
   #|   const acceptedSources = () => new Set(
   #|     Array.from(document.querySelectorAll('[data-testid="browser-preview-frame"]'))
   #|       .map((frame) => frame instanceof HTMLIFrameElement ? frame.contentWindow : null)
@@ -112,11 +125,36 @@ extern "js" fn browser_install_preview_observer() =
   #|     } else if (data.type === 'runtime' && runtimeOut) {
   #|       runtimeOut.textContent = data.message || 'Runtime error';
   #|     } else if (data.type === 'snapshot') {
-  #|       if (status) status.textContent = 'Evidence captured for this visible revision';
+  #|       const host = document.querySelector('[data-testid="browser-preview-host"]');
+  #|       if (host instanceof HTMLElement) host.dataset.evidenceState = 'prepared';
+  #|       if (status) status.textContent = 'Evidence request prepared · waiting for host receipt and persistence';
   #|       if (networkOut) networkOut.textContent = (data.resources || []).join('\n') || 'No loaded subresources';
   #|       if (accessibilityOut) accessibilityOut.textContent = data.accessibility || 'No accessibility summary';
   #|       if (runtimeOut && !runtimeOut.textContent) runtimeOut.textContent = 'No runtime errors observed';
   #|       if (consoleOut && !consoleOut.textContent) consoleOut.textContent = 'No console output observed';
+  #|     }
+  #|   });
+  #|   globalThis.addEventListener('moondesk-browser-evidence-status', (event) => {
+  #|     const detail = event instanceof CustomEvent ? event.detail : null;
+  #|     if (!detail || detail.protocol !== 'moondesk-browser-host-v1') return;
+  #|     const host = document.querySelector('[data-testid="browser-preview-host"]');
+  #|     const status = document.querySelector('[data-testid="browser-preview-status"]');
+  #|     if (!(host instanceof HTMLElement)) return;
+  #|     const persisted = detail.state === 'persisted'
+  #|       && typeof detail.hostReceiptId === 'string' && detail.hostReceiptId.length > 0
+  #|       && typeof detail.evidenceRef === 'string' && detail.evidenceRef.length > 0;
+  #|     if (persisted) {
+  #|       host.dataset.evidenceState = 'persisted';
+  #|       host.dataset.hostReceiptId = detail.hostReceiptId;
+  #|       host.dataset.evidenceRef = detail.evidenceRef;
+  #|       if (status) status.textContent = 'Evidence persisted · host receipt accepted';
+  #|     } else {
+  #|       host.dataset.evidenceState = detail.state === 'failed' ? 'failed' : 'prepared';
+  #|       delete host.dataset.hostReceiptId;
+  #|       delete host.dataset.evidenceRef;
+  #|       if (status) status.textContent = detail.state === 'failed'
+  #|         ? `Evidence not persisted${detail.reason ? ` · ${detail.reason}` : ''}`
+  #|         : 'Evidence request prepared · not persisted';
   #|     }
   #|   });
   #|   globalThis.addEventListener('moondesk-browser-host-status', (event) => {
@@ -127,6 +165,16 @@ extern "js" fn browser_install_preview_observer() =
   #|     if (!(banner instanceof HTMLElement)) return;
   #|     banner.dataset.hostAttached = 'true';
   #|     banner.dataset.operationState = String(detail.state || 'unknown');
+  #|     if (detail.state === 'restarted' || detail.state === 'disconnected') {
+  #|       const previewHost = document.querySelector('[data-testid="browser-preview-host"]');
+  #|       const previewStatus = document.querySelector('[data-testid="browser-preview-status"]');
+  #|       if (previewHost instanceof HTMLElement) {
+  #|         previewHost.dataset.evidenceState = 'not-persisted';
+  #|         delete previewHost.dataset.hostReceiptId;
+  #|         delete previewHost.dataset.evidenceRef;
+  #|       }
+  #|       if (previewStatus) previewStatus.textContent = 'Host restarted · evidence is not persisted';
+  #|     }
   #|     if (status) status.textContent = String(detail.label || detail.state || 'Browser host attached');
   #|     for (const button of banner.querySelectorAll('button[data-browser-control]')) {
   #|       if (button instanceof HTMLButtonElement) button.disabled = false;

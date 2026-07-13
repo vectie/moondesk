@@ -185,8 +185,11 @@ fn render_preview_body(
                 div(class="browser-observation-actions", [
                   button(
                     class="secondary-button",
+                    attrs=@html.Attrs::build().data_set(
+                      "testid", "browser-prepare-evidence",
+                    ),
                     on_click=dispatch(CaptureBrowserPreviewEvidence),
-                    "Capture evidence",
+                    "Prepare evidence",
                   ),
                   button(
                     class="primary-button",
@@ -235,12 +238,12 @@ fn render_preview_body(
                     "Network", "browser-network-output", "Local assets only",
                   ),
                   browser_diagnostic_panel(
-                    "Accessibility", "browser-accessibility-output", "Capture evidence to inspect semantics",
+                    "Accessibility", "browser-accessibility-output", "Prepare evidence to inspect semantics",
                   ),
                 ]),
                 p(
                   class="browser-diagnostics-note",
-                  "Page observations are untrusted until the host captures and accepts their evidence receipt.",
+                  "Prepared observations remain untrusted until a host receipt is accepted and durable evidence persistence succeeds.",
                 ),
               ]),
             ],

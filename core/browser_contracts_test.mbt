@@ -7,7 +7,8 @@ test "opaque preview scope is local, ephemeral, and evidence capable" {
     code_revision="code-a91",
   )
   assert_true(scope.origin_class is OpaqueLocalPreview)
-  assert_true(scope.network_policy is LocalAssetsOnly)
+  assert_true(scope.network_policy is Offline)
+  assert_eq(scope.allowed_origins.length(), 0)
   assert_true(scope.storage_lifetime is Ephemeral)
   assert_true(scope.permitted_effects.contains("capture_screenshot"))
   assert_eq(scope.download_root, "")

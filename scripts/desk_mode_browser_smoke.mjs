@@ -1497,6 +1497,58 @@ async function run() {
       `document.querySelector('[data-testid="desk-open-embedded-preview"]')?.textContent.includes('Preview / Run here') && !document.querySelector('[data-testid="desk-preview"] a[target="_blank"]')`,
       "generated-site preview stays inside MoonDesk",
     );
+    await clickTestId(session, "desk-open-embedded-preview");
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="browser-preview-host"]') && document.querySelector('[data-testid="browser-prepare-evidence"]')?.textContent.includes('Prepare evidence')`,
+      "embedded browser evidence preparation UI",
+    );
+    await clickTestId(session, "browser-prepare-evidence");
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState === 'prepared'`,
+      "browser evidence request prepared",
+    );
+    const preparedLabel = await session.evaluate(
+      `document.querySelector('[data-testid="browser-preview-status"]')?.textContent || ''`,
+    );
+    assert(!/captured|persisted/i.test(preparedLabel), `Unpersisted evidence overclaimed completion: ${preparedLabel}`);
+    await session.evaluate(`globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
+      detail: { protocol: 'moondesk-browser-host-v1', state: 'persisted' }
+    }))`);
+    assert(
+      await session.evaluate(`document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState !== 'persisted'`),
+      "Evidence became persisted without host receipt and durable reference",
+    );
+    await session.evaluate(`globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
+      detail: { protocol: 'moondesk-browser-host-v1', state: 'failed', reason: 'fixture persistence failure' }
+    }))`);
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="browser-preview-status"]')?.textContent.includes('Evidence not persisted')`,
+      "browser evidence persistence failure",
+    );
+    await session.evaluate(`globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
+      detail: {
+        protocol: 'moondesk-browser-host-v1', state: 'persisted',
+        hostReceiptId: 'fixture-host-receipt', evidenceRef: 'book://evidence/browser/fixture.json'
+      }
+    }))`);
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState === 'persisted'`,
+      "browser evidence persisted receipt",
+    );
+    await session.evaluate(`globalThis.dispatchEvent(new CustomEvent('moondesk-browser-host-status', {
+      detail: { protocol: 'moondesk-browser-host-v1', state: 'restarted', label: 'Browser host restarted' }
+    }))`);
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState === 'not-persisted' && document.querySelector('[data-testid="browser-preview-status"]')?.textContent.includes('not persisted')`,
+      "browser evidence reset after host restart",
+    );
+    await session.evaluate(`Array.from(document.querySelectorAll('button')).find(button => button.textContent?.trim() === 'Desk')?.click()`);
+    await waitFor(session, `document.querySelector('[data-testid="desk-mode"]')`, "return to Desk after embedded preview evidence test");
     await clickTestId(session, "desk-root");
     await waitFor(session, rowExistsExpression("wiki"), "generated-site smoke returned to root");
     await waitFor(
