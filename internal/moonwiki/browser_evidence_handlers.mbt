@@ -64,17 +64,21 @@ async fn persist_browser_evidence(
     "captured_at": @async.now().to_string(),
     "snapshot": payload,
   }
-  if !@fs.exists(absolute) {
-    @fsx.make_directory(
-      @pathx.dirname(absolute), recursive=true, exists_ok=true,
-    ) catch {
-      _ => return Err("Could not create browser evidence directory")
+  if @fs.exists(absolute) {
+    let stored = @json.parse(@fs.read_file(absolute).text()) catch {
+      _ => return Err("Stored browser evidence receipt is unreadable")
     }
-    @fsx.write_to_file(
-      absolute, receipt.stringify(indent=2) + "\n", create=0o644,
-    ) catch {
-      _ => return Err("Could not persist browser evidence receipt")
-    }
+    return Ok(stored)
+  }
+  @fsx.make_directory(
+    @pathx.dirname(absolute), recursive=true, exists_ok=true,
+  ) catch {
+    _ => return Err("Could not create browser evidence directory")
+  }
+  @fsx.write_to_file(
+    absolute, receipt.stringify(indent=2) + "\n", create=0o644,
+  ) catch {
+    _ => return Err("Could not persist browser evidence receipt")
   }
   Ok(receipt)
 }
