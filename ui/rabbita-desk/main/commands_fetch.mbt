@@ -68,16 +68,74 @@ fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+struct MoonFlowBrowserResponse {
+  ok : Bool
+  body : String
+  error : String
+} derive(FromJson)
+
+///|
+#cfg(target="js")
+extern "js" fn browser_import_selected_moonflow(
+  workspace_id : String,
+) -> @js.Promise =
+  #| async (workspaceId) => {
+  #|   const controller = new AbortController();
+  #|   const timeout = setTimeout(() => controller.abort(), 30000);
+  #|   try {
+  #|     const response = await fetch('/api/moonflow/runs/import-selected', {
+  #|       method: 'POST',
+  #|       headers: { 'content-type': 'application/json' },
+  #|       body: JSON.stringify({ workspace_id: workspaceId }),
+  #|       signal: controller.signal,
+  #|     });
+  #|     const body = await response.text();
+  #|     let payload = null;
+  #|     try { payload = JSON.parse(body); } catch {}
+  #|     if (response.ok && payload?.ok === true) {
+  #|       setTimeout(() => {
+  #|         const flow = document.querySelector('[data-testid="mode-flow"]');
+  #|         if (flow instanceof HTMLButtonElement) flow.click();
+  #|       }, 0);
+  #|     }
+  #|     return JSON.stringify({
+  #|       ok: response.ok,
+  #|       body,
+  #|       error: response.ok ? '' : `MoonFlow request failed with HTTP ${response.status}`,
+  #|     });
+  #|   } catch (error) {
+  #|     const message = error?.name === 'AbortError'
+  #|       ? 'MoonFlow preparation exceeded 30 seconds'
+  #|       : `Could not prepare MoonFlow: ${String(error)}`;
+  #|     return JSON.stringify({ ok: false, body: '', error: message });
+  #|   } finally {
+  #|     clearTimeout(timeout);
+  #|   }
+  #| }
+
+///|
 fn import_selected_moonflow_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
 ) -> @rabbita.Cmd {
-  @http.post("/api/moonflow/runs/import-selected")
-  .with_json({ "workspace_id": workspace_id })
-  .expect_json(result => {
-    dispatch(
-      ImportedMoonFlow(http_result(result, "Could not prepare MoonFlow")),
-    )
+  @rabbita.perform(fn(result) { dispatch(ImportedMoonFlow(result)) }, async fn() noraise {
+    let text : String = browser_import_selected_moonflow(workspace_id)
+      .wait()
+      .cast() catch {
+        error => return Err("Could not prepare MoonFlow: \{error}")
+      }
+    let envelope : MoonFlowBrowserResponse = @json.from_json(@json.parse(text)) catch {
+      error => return Err("Invalid MoonFlow transport response: \{error}")
+    }
+    if !envelope.ok {
+      return Err(envelope.error)
+    }
+    let result : MoonFlowImportResult = @json.from_json(
+      @json.parse(envelope.body),
+    ) catch {
+      error => return Err("Invalid MoonFlow import response: \{error}")
+    }
+    Ok(result)
   })
 }
 

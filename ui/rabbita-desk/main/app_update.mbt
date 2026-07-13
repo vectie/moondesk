@@ -66,8 +66,6 @@ fn update(
     ControlMoonFlow(_, _, _) =>
       update_workspace_surface_actions(dispatch, msg, model)
     PrepareMoonFlow => update_workspace_surface_actions(dispatch, msg, model)
-    MoonFlowPrepareTimedOut(_) =>
-      update_workspace_surface_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)
     SelectWorkspace(_) => update_navigation_actions(dispatch, msg, model)
     SelectPath(_) => update_navigation_actions(dispatch, msg, model)

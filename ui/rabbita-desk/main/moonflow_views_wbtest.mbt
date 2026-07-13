@@ -75,20 +75,21 @@ test "Flow first-run action requires a selected MoonBook" {
     PrepareMoonFlow,
     { ..init_model(), selected_workspace_id: "book-demo" },
   )
-  assert_eq(selected.moonflow_status, "Preparing executable work…")
-  let (_, timed_out) = update_workspace_surface_actions(
-    code_mode_test_dispatch,
-    MoonFlowPrepareTimedOut("book-demo"),
-    selected,
-  )
-  assert_true(
-    timed_out.moonflow_status.contains("did not respond in 5 seconds"),
-  )
-  assert_true(timed_out.moonflow_status.contains("next:"))
+  assert_true(selected.moonflow_status.contains("up to 30 seconds"))
 }
 
 ///|
 test "Flow import status keeps the durable run or next action visible" {
+  let decoded : MoonFlowImportResult = @json.from_json({
+    "book_id": "book-demo",
+    "run_id": "run-demo-r1",
+    "ok": true,
+    "status": "imported",
+    "message": "Executable document imported into MoonFlow",
+    "api_contract": "moonsuite.phase6.v1",
+    "next_action": "open_run",
+  })
+  assert_eq(decoded.run_id, "run-demo-r1")
   assert_eq(
     moonflow_import_status({
       ok: true,

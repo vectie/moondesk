@@ -198,7 +198,6 @@ enum Msg {
   SelectWorkspaceMode(WorkspaceMode)
   ControlMoonFlow(String, String, String)
   PrepareMoonFlow
-  MoonFlowPrepareTimedOut(String)
   SelectActivity(Activity)
   SelectMoonCodeSession(String)
   NewMoonCodeSession

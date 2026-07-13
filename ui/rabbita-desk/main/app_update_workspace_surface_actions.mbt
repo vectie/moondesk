@@ -154,28 +154,12 @@ fn update_workspace_surface_actions(
         (@rabbita.none, { ..model, moonflow_status: "Select a MoonBook first" })
       } else {
         (
-          @rabbita.batch([
-            import_selected_moonflow_cmd(dispatch, model.selected_workspace_id),
-            @rabbita.delay(
-              dispatch(MoonFlowPrepareTimedOut(model.selected_workspace_id)),
-              5000,
-            ),
-          ]),
-          { ..model, moonflow_status: "Preparing executable work…" },
-        )
-      }
-    MoonFlowPrepareTimedOut(workspace_id) =>
-      if workspace_id == model.selected_workspace_id &&
-        model.moonflow_status == "Preparing executable work…" {
-        (
-          @rabbita.none,
+          import_selected_moonflow_cmd(dispatch, model.selected_workspace_id),
           {
             ..model,
-            moonflow_status: "MoonFlow did not respond in 5 seconds · next: check MoonGate service setup or open Wiki to review the Work graph",
+            moonflow_status: "Preparing executable work… this may take up to 30 seconds",
           },
         )
-      } else {
-        (@rabbita.none, model)
       }
     SetReviewDecisionNote(note) =>
       (@rabbita.none, { ..model, review_decision_note: note })

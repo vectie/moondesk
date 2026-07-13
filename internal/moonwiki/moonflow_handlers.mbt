@@ -15,6 +15,15 @@ fn moonflow_safe_run_id(run_id : String) -> Bool {
 }
 
 ///|
+fn moonflow_graph_run_id(graph : Json) -> String {
+  json_string(
+    graph,
+    "graph_id",
+    default=json_string(graph, "run_id", default=""),
+  )
+}
+
+///|
 async fn handle_moonflow_import_selected(
   workspace_root : String,
   body : &@io.Reader,
@@ -76,31 +85,47 @@ async fn handle_moonflow_import_selected(
   let graph = @json.parse(@fs.read_file(graph_path).text()) catch {
     _ => Json::object({})
   }
-  let run_id = json_string(graph, "run_id", default="")
+  let run_id = moonflow_graph_run_id(graph)
   let moon = moonclaw_default_moon_command()
-  let code = run_process_quiet(moon, [
-    "-C",
-    moonflow_root,
-    "run",
-    "cmd/main",
-    "--",
-    "import-graph",
-    workspace_context(workspace_root).suite_root,
-    graph_path,
-  ])
+  let code = @async.with_timeout_opt(30000, () => {
+    run_process_quiet(moon, [
+      "-C",
+      moonflow_root,
+      "run",
+      "cmd/main",
+      "--",
+      "import-graph",
+      workspace_context(workspace_root).suite_root,
+      graph_path,
+    ])
+  }).unwrap_or(-2)
   send_json(
     conn,
     method_,
     api_contract_response(
       { "book_id": workspace_id, "run_id": run_id },
       ok=code == 0,
-      status=if code == 0 { "imported" } else { "import_failed" },
+      status=if code == 0 {
+        "imported"
+      } else if code == -2 {
+        "import_timed_out"
+      } else {
+        "import_failed"
+      },
       message=if code == 0 {
         "Executable document imported into MoonFlow"
+      } else if code == -2 {
+        "MoonFlow preparation exceeded 30 seconds"
       } else {
         "MoonFlow could not import this Work graph"
       },
-      next_action=if code == 0 { "open_run" } else { "review_work_graph" },
+      next_action=if code == 0 {
+        "open_run"
+      } else if code == -2 {
+        "check_moonflow_service"
+      } else {
+        "review_work_graph"
+      },
     ),
   )
 }

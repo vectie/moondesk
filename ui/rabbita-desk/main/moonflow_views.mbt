@@ -85,6 +85,17 @@ fn moonflow_short_identity(value : String) -> String {
 }
 
 ///|
+fn moonflow_earlier_runs(
+  runs : Array[MoonFlowRunProjection],
+) -> Array[MoonFlowRunProjection] {
+  let earlier : Array[MoonFlowRunProjection] = []
+  for index = 1; index < runs.length(); index = index + 1 {
+    earlier.push(runs[index])
+  }
+  earlier
+}
+
+///|
 fn render_moonflow_workspace(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -138,11 +149,53 @@ fn render_moonflow_workspace(
         ),
       ])
     } else {
-      section(
-        class="flow-run-list",
-        model.moonflow_runs.map(run => render_moonflow_run(dispatch, model, run)),
-      )
+      let latest = model.moonflow_runs[0]
+      let earlier = moonflow_earlier_runs(model.moonflow_runs)
+      let run_children : Array[@rabbita.Html] = [
+        render_moonflow_run(dispatch, model, latest),
+      ]
+      if !earlier.is_empty() {
+        run_children.push(
+          details(class="flow-history", [
+            summary("Earlier revisions (\{earlier.length()})"),
+            div(
+              class="flow-history-list",
+              earlier.map(run => render_moonflow_history_row(run)),
+            ),
+          ]),
+        )
+      }
+      div([
+        section(class="flow-revision-toolbar", [
+          div([
+            strong("Executable work exists"),
+            p(
+              "Prepare the selected MoonBook again after its declarations change. Existing runs remain immutable.",
+            ),
+          ]),
+          button(
+            class="secondary-button",
+            attrs=@html.Attrs::build().data_set(
+              "testid", "moonflow-prepare-selected",
+            ),
+            disabled=model.selected_workspace_id == "" ||
+              model.moonflow_status.contains("Preparing executable work"),
+            on_click=dispatch(PrepareMoonFlow),
+            "Prepare latest MoonBook revision",
+          ),
+          small(model.moonflow_status),
+        ]),
+        section(class="flow-run-list", run_children),
+      ])
     },
+  ])
+}
+
+///|
+fn render_moonflow_history_row(run : MoonFlowRunProjection) -> @rabbita.Html {
+  div(class="flow-history-row", [
+    div([strong("Revision " + run.declaration_revision), small(run.run_id)]),
+    span(class="flow-state " + moonflow_run_state(run), moonflow_run_state(run)),
   ])
 }
 

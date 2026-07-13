@@ -132,8 +132,72 @@ body {
   gap: 18px;
 }
 
+.flow-revision-toolbar {
+  width: min(1120px, 100%);
+  margin: 0 auto 14px;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 18px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.flow-revision-toolbar p,
+.flow-revision-toolbar small {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.flow-revision-toolbar small {
+  grid-column: 1 / -1;
+}
+
 .flow-run-card {
   padding: 22px;
+}
+
+.flow-history {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.flow-history > summary {
+  padding: 14px 18px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.flow-history-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.flow-history-row {
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.flow-history-row:last-child {
+  border-bottom: 0;
+}
+
+.flow-history-row div {
+  display: grid;
+  gap: 3px;
+}
+
+.flow-history-row small {
+  color: var(--muted);
 }
 
 .flow-run-head {
@@ -480,6 +544,14 @@ body {
 
   .flow-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flow-revision-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-revision-toolbar .secondary-button {
+    justify-self: start;
   }
 
   .flow-contract-grid {

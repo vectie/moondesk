@@ -15,6 +15,18 @@ test "MoonFlow authority controls have a monotonic constitutional order" {
 }
 
 ///|
+test "MoonFlow import reports canonical Work graph identity" {
+  assert_eq(
+    moonflow_graph_run_id({
+      "graph_id": "robot-r2",
+      "run_id": "legacy-wrong-value",
+    }),
+    "robot-r2",
+  )
+  assert_eq(moonflow_graph_run_id({ "run_id": "legacy-r1" }), "legacy-r1")
+}
+
+///|
 async test "MoonFlow projections expose safe default run controls" {
   let root = "/tmp/moondesk-moonflow-control-projection"
   if !@fs.exists(root) {
