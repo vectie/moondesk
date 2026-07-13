@@ -96,9 +96,8 @@ extern "js" fn browser_set_workspace_context(
 
 ///|
 fn main {
-  let initial_model = { ..init_model(), bootstrapped: true }
   let (_, cell) = @rabbita.cell_with_emit(
-    model=initial_model,
+    model=init_model(),
     update~,
     view=(dispatch, model) => render_app(dispatch, model),
     subscriptions=app_subscriptions,
