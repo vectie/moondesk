@@ -96,10 +96,33 @@ fn moonflow_earlier_runs(
 }
 
 ///|
+fn moonflow_book_root_matches(book_root : String, book_id : String) -> Bool {
+  let normalized = book_root.replace(old="\\", new="/").trim_end(chars="/")
+  normalized == book_id || normalized.has_suffix("/" + book_id)
+}
+
+///|
+fn moonflow_selected_runs(model : Model) -> Array[MoonFlowRunProjection] {
+  let mut selected_root = ""
+  for workspace in model.workspaces {
+    if workspace.id == model.selected_workspace_id {
+      selected_root = workspace.root_path
+    }
+  }
+  if selected_root == "" {
+    return []
+  }
+  model.moonflow_runs.filter(run => {
+    moonflow_book_root_matches(selected_root, run.book_id)
+  })
+}
+
+///|
 fn render_moonflow_workspace(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
+  let selected_runs = moonflow_selected_runs(model)
   main_(class="flow-main", [
     section(class="flow-hero", [
       div([
@@ -116,7 +139,7 @@ fn render_moonflow_workspace(
         "Refresh",
       ),
     ]),
-    if model.moonflow_runs.is_empty() {
+    if selected_runs.is_empty() {
       section(class="flow-empty", [
         strong("No executable work yet"),
         p(
@@ -149,8 +172,8 @@ fn render_moonflow_workspace(
         ),
       ])
     } else {
-      let latest = model.moonflow_runs[0]
-      let earlier = moonflow_earlier_runs(model.moonflow_runs)
+      let latest = selected_runs[0]
+      let earlier = moonflow_earlier_runs(selected_runs)
       let run_children : Array[@rabbita.Html] = [
         render_moonflow_run(dispatch, model, latest),
       ]
@@ -183,7 +206,7 @@ fn render_moonflow_workspace(
             on_click=dispatch(PrepareMoonFlow),
             "Prepare latest MoonBook revision",
           ),
-          small(model.moonflow_status),
+          small("\{selected_runs.length()} revision(s) for this MoonBook"),
         ]),
         section(class="flow-run-list", run_children),
       ])

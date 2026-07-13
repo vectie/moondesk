@@ -126,3 +126,18 @@ test "Flow handoff availability follows the product registry" {
   assert_true(moonsuite_product_available(model, "moontown"))
   assert_false(moonsuite_product_available(model, "MoonRobo"))
 }
+
+///|
+test "Flow scopes suite-wide runs to the selected MoonBook root" {
+  assert_true(
+    moonflow_book_root_matches(
+      "/Users/kq/moonsuite/books/unified-lunar-robot", "unified-lunar-robot",
+    ),
+  )
+  assert_false(
+    moonflow_book_root_matches(
+      "/Users/kq/moonsuite/books/unified-lunar-robot", "lunar-robot-autonomy-v3",
+    ),
+  )
+  assert_true(moonflow_book_root_matches("books\\demo", "demo"))
+}
