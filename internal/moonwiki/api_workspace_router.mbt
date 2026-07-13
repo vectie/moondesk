@@ -74,6 +74,16 @@ async fn route_workspace_api(
       }
       true
     }
+    ["api", "workspaces", workspace_id, "browser-evidence"] => {
+      if method_ is Post {
+        handle_browser_evidence_persistence(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
     ["api", "workspaces", workspace_id, "raw"] => {
       let endpoint = @desk.workspace_action_route("raw")
       if desktop_api_route_accepts_read(endpoint, method_) {

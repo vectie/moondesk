@@ -56,7 +56,11 @@ extern "js" fn browser_capture_preview_evidence() =
   #|   }
   #|   frame.contentWindow.postMessage({ protocol: 'moondesk-preview-v1', type: 'snapshot-request' }, '*');
   #|   const host = document.querySelector('[data-testid="browser-preview-host"]');
-  #|   if (host instanceof HTMLElement) host.dataset.evidenceState = 'prepared';
+  #|   if (host instanceof HTMLElement) {
+  #|     host.dataset.evidenceState = 'prepared';
+  #|     host.dataset.evidenceRequestId = globalThis.crypto?.randomUUID?.()
+  #|       || `browser-evidence-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  #|   }
   #|   if (status) status.textContent = 'Preparing observations · not persisted';
   #| }
 
@@ -132,6 +136,43 @@ extern "js" fn browser_install_preview_observer() =
   #|       if (accessibilityOut) accessibilityOut.textContent = data.accessibility || 'No accessibility summary';
   #|       if (runtimeOut && !runtimeOut.textContent) runtimeOut.textContent = 'No runtime errors observed';
   #|       if (consoleOut && !consoleOut.textContent) consoleOut.textContent = 'No console output observed';
+  #|       const workspaceId = host instanceof HTMLElement ? host.dataset.workspaceId || '' : '';
+  #|       const sourcePath = host instanceof HTMLElement ? host.dataset.sourcePath || '' : '';
+  #|       const requestId = host instanceof HTMLElement ? host.dataset.evidenceRequestId || '' : '';
+  #|       if (workspaceId && sourcePath && requestId) {
+  #|         fetch(`/api/workspaces/${encodeURIComponent(workspaceId)}/browser-evidence`, {
+  #|           method: 'POST',
+  #|           headers: { 'Content-Type': 'application/json' },
+  #|           body: JSON.stringify({
+  #|             protocol: 'moondesk-preview-evidence-v1',
+  #|             request_id: requestId,
+  #|             source_path: sourcePath,
+  #|             accessibility: String(data.accessibility || ''),
+  #|             resources: Array.isArray(data.resources) ? data.resources.map(String) : [],
+  #|             console: consoleOut?.textContent || '',
+  #|             runtime: runtimeOut?.textContent || '',
+  #|           }),
+  #|         }).then(async (response) => {
+  #|           const receipt = await response.json().catch(() => ({}));
+  #|           if (!response.ok || receipt.status !== 'persisted') {
+  #|             throw new Error(receipt.message || `HTTP ${response.status}`);
+  #|           }
+  #|           globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
+  #|             detail: {
+  #|               protocol: 'moondesk-browser-host-v1', state: 'persisted',
+  #|               hostReceiptId: receipt.host_receipt_id,
+  #|               evidenceRef: receipt.evidence_ref,
+  #|             },
+  #|           }));
+  #|         }).catch((error) => {
+  #|           globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
+  #|             detail: {
+  #|               protocol: 'moondesk-browser-host-v1', state: 'failed',
+  #|               reason: String(error?.message || error || 'persistence failed'),
+  #|             },
+  #|           }));
+  #|         });
+  #|       }
   #|     }
   #|   });
   #|   globalThis.addEventListener('moondesk-browser-evidence-status', (event) => {
@@ -147,7 +188,7 @@ extern "js" fn browser_install_preview_observer() =
   #|       host.dataset.evidenceState = 'persisted';
   #|       host.dataset.hostReceiptId = detail.hostReceiptId;
   #|       host.dataset.evidenceRef = detail.evidenceRef;
-  #|       if (status) status.textContent = 'Evidence persisted · host receipt accepted';
+  #|       if (status) status.textContent = 'Evidence persisted · awaiting Bookkeeper review';
   #|     } else {
   #|       host.dataset.evidenceState = detail.state === 'failed' ? 'failed' : 'prepared';
   #|       delete host.dataset.hostReceiptId;

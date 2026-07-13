@@ -1506,13 +1506,17 @@ async function run() {
     await clickTestId(session, "browser-prepare-evidence");
     await waitFor(
       session,
-      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState === 'prepared'`,
-      "browser evidence request prepared",
+      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState === 'persisted'`,
+      "browser evidence host receipt persisted",
     );
-    const preparedLabel = await session.evaluate(
-      `document.querySelector('[data-testid="browser-preview-status"]')?.textContent || ''`,
+    const durableEvidenceRef = await session.evaluate(
+      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceRef || ''`,
     );
-    assert(!/captured|persisted/i.test(preparedLabel), `Unpersisted evidence overclaimed completion: ${preparedLabel}`);
+    assert(
+      durableEvidenceRef.startsWith("book/evidence/browser/") &&
+        fs.existsSync(path.join(fixtureRoot, "books/research-alpha", durableEvidenceRef)),
+      `Browser evidence receipt did not resolve to durable book evidence: ${durableEvidenceRef}`,
+    );
     await session.evaluate(`globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
       detail: { protocol: 'moondesk-browser-host-v1', state: 'persisted' }
     }))`);

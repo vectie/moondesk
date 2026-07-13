@@ -124,7 +124,9 @@ fn render_preview_body(
             class="site-preview embedded-browser",
             attrs=@html.Attrs::build()
               .data_set("testid", "browser-preview-host")
-              .data_set("viewport", "desktop"),
+              .data_set("viewport", "desktop")
+              .data_set("workspace-id", model.selected_workspace_id)
+              .data_set("source-path", model.selected_path),
             [
               div(class="site-toolbar browser-toolbar", [
                 div(class="browser-location", [
