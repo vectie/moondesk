@@ -58,8 +58,8 @@ test "action receipt inputs remain scoped and secret safe" {
   let action = @core.browser_action(
     action_id="action-1",
     session_id="browser-book-demo-r7",
-    actor=@core.User,
-    operation=@core.TypeText,
+    actor=User,
+    operation=TypeText,
     target="label=Search",
     value_redacted="[redacted]",
     expected_observation="results visible",
@@ -72,8 +72,8 @@ test "action receipt inputs remain scoped and secret safe" {
       @core.browser_action(
         action_id="action-1",
         session_id="other-session",
-        actor=@core.User,
-        operation=@core.TypeText,
+        actor=User,
+        operation=TypeText,
         target="label=Search",
         value_redacted="[redacted]",
         code_revision="code-a91",
@@ -86,8 +86,8 @@ test "action receipt inputs remain scoped and secret safe" {
       @core.browser_action(
         action_id="action-1",
         session_id="browser-book-demo-r7",
-        actor=@core.User,
-        operation=@core.TypeText,
+        actor=User,
+        operation=TypeText,
         target="label=Search",
         value_redacted="a-secret",
         code_revision="code-a91",
