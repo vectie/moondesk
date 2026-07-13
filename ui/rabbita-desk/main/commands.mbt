@@ -97,17 +97,36 @@ fn request_browser_host_control_cmd(control : String) -> @rabbita.Cmd {
 #cfg(target="js")
 extern "js" fn browser_install_preview_observer() =
   #| () => {
+  #|   const attachNativeCapability = () => {
+  #|     const nativeCapabilities = globalThis.__lepusaCapabilities;
+  #|     const operationBanner = document.querySelector('[data-testid="browser-operation-banner"]');
+  #|     if (!(operationBanner instanceof HTMLElement) ||
+  #|         nativeCapabilities?.protocol !== 'lepusa-native-capabilities-v1' ||
+  #|         nativeCapabilities.frameTargetedBridgeReplies !== true ||
+  #|         nativeCapabilities.browserHostRouteAvailable !== true) return;
+  #|     operationBanner.dataset.nativeFrameTransport = 'true';
+  #|     operationBanner.dataset.browserHostRoute = 'available';
+  #|     const operationStatus = document.querySelector('[data-testid="browser-operation-status"]');
+  #|     if (operationStatus && operationBanner.dataset.hostAttached !== 'true') {
+  #|       operationStatus.textContent = 'Native visible-frame transport available · no agent worker attached';
+  #|     }
+  #|   };
+  #|   attachNativeCapability();
   #|   if (window.__moondeskPreviewObserverInstalled) return;
   #|   window.__moondeskPreviewObserverInstalled = true;
-  #|   const nativeCapabilities = globalThis.__lepusaCapabilities;
-  #|   const operationBanner = document.querySelector('[data-testid="browser-operation-banner"]');
-  #|   if (operationBanner instanceof HTMLElement &&
-  #|       nativeCapabilities?.protocol === 'lepusa-native-capabilities-v1' &&
-  #|       nativeCapabilities.frameTargetedBridgeReplies === true) {
-  #|     operationBanner.dataset.nativeFrameTransport = 'true';
-  #|     const operationStatus = document.querySelector('[data-testid="browser-operation-status"]');
-  #|     if (operationStatus) operationStatus.textContent = 'Native visible-frame transport available · no agent worker attached';
-  #|   }
+  #|   globalThis.addEventListener('moondesk-browser-host-command', (event) => {
+  #|     const detail = event instanceof CustomEvent ? event.detail : null;
+  #|     const frame = document.querySelector('[data-testid="browser-preview-frame"]');
+  #|     const banner = document.querySelector('[data-testid="browser-operation-banner"]');
+  #|     if (!detail || detail.protocol !== 'moondesk-browser-host-v1' ||
+  #|         !(frame instanceof HTMLIFrameElement) || !frame.contentWindow ||
+  #|         !(banner instanceof HTMLElement) || banner.dataset.browserHostRoute !== 'available') {
+  #|       return;
+  #|     }
+  #|     frame.contentWindow.postMessage({
+  #|       protocol: 'moondesk-preview-v1', type: 'host-command', command: detail.command,
+  #|     }, '*');
+  #|   });
   #|   const acceptedSources = () => new Set(
   #|     Array.from(document.querySelectorAll('[data-testid="browser-preview-frame"]'))
   #|       .map((frame) => frame instanceof HTMLIFrameElement ? frame.contentWindow : null)
@@ -169,6 +188,55 @@ extern "js" fn browser_install_preview_observer() =
   #|             detail: {
   #|               protocol: 'moondesk-browser-host-v1', state: 'failed',
   #|               reason: String(error?.message || error || 'persistence failed'),
+  #|             },
+  #|           }));
+  #|         });
+  #|       }
+  #|     } else if (data.type === 'host-result') {
+  #|       globalThis.dispatchEvent(new CustomEvent('moondesk-browser-host-result', {
+  #|         detail: {
+  #|           protocol: 'moondesk-browser-host-v1',
+  #|           ok: data.ok === true,
+  #|           receipt: data.receipt || null,
+  #|           error: String(data.error || ''),
+  #|         },
+  #|       }));
+  #|       const operationStatus = document.querySelector('[data-testid="browser-operation-status"]');
+  #|       if (operationStatus) operationStatus.textContent = data.ok
+  #|         ? 'Native browser action completed in visible frame'
+  #|         : `Native browser action failed · ${String(data.error || 'unknown error')}`;
+  #|       const host = document.querySelector('[data-testid="browser-preview-host"]');
+  #|       const nativeResult = data.receipt?.result;
+  #|       if (data.ok === true && host instanceof HTMLElement && nativeResult?.screenshot_png_base64) {
+  #|         fetch(`/api/workspaces/${encodeURIComponent(host.dataset.workspaceId || '')}/browser-evidence`, {
+  #|           method: 'POST',
+  #|           headers: { 'Content-Type': 'application/json' },
+  #|           body: JSON.stringify({
+  #|             protocol: 'moondesk-preview-evidence-v1',
+  #|             request_id: `native-${String(nativeResult.request_id || Date.now())}`,
+  #|             source_path: host.dataset.sourcePath || '',
+  #|             native_host_receipt: data.receipt,
+  #|             native_screenshot_png_base64: nativeResult.screenshot_png_base64,
+  #|             accessibility: 'Native browser action completed in exact visible frame',
+  #|             resources: [],
+  #|           }),
+  #|         }).then(async (response) => {
+  #|           const receipt = await response.json().catch(() => ({}));
+  #|           if (!response.ok || receipt.status !== 'persisted' || !receipt.screenshot_ref) {
+  #|             throw new Error(receipt.message || `HTTP ${response.status}`);
+  #|           }
+  #|           globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
+  #|             detail: {
+  #|               protocol: 'moondesk-browser-host-v1', state: 'persisted',
+  #|               hostReceiptId: receipt.host_receipt_id,
+  #|               evidenceRef: receipt.evidence_ref,
+  #|             },
+  #|           }));
+  #|         }).catch((error) => {
+  #|           globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
+  #|             detail: {
+  #|               protocol: 'moondesk-browser-host-v1', state: 'failed',
+  #|               reason: String(error?.message || error || 'native evidence persistence failed'),
   #|             },
   #|           }));
   #|         });

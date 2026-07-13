@@ -92,12 +92,19 @@ fn lepusa_integration_live_project_json(
         },
       },
     },
-    "plugins": [{ "name": "localhost" }, { "name": "serviceDiscovery" }],
+    "plugins": [
+      { "name": "localhost" },
+      { "name": "serviceDiscovery" },
+      { "name": "browserHost" },
+    ],
     "capabilities": [
       {
         "name": "main",
         "windows": ["main"],
-        "permissions": ["localhost", "service-discovery"],
+        "permissions": [
+          "localhost", "service-discovery", "custom:browserHost.execute", "custom:browserHost.complete",
+          "custom:browserHost.captureScreenshot", "custom:browserHost.status",
+        ],
       },
     ],
   }

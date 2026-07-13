@@ -73,8 +73,73 @@ fn isolated_preview_observer_bridge() -> String {
     #|  addEventListener('unhandledrejection', (event) => send('runtime', {
     #|    message: String(event.reason || 'Unhandled promise rejection').slice(0, 4000),
     #|  }));
+    #|  const digest = async (value) => {
+    #|    const bytes = new TextEncoder().encode(String(value));
+    #|    const hash = await crypto.subtle.digest('SHA-256', bytes);
+    #|    return Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    #|  };
+    #|  const invokeBrowserHost = async (command, payload) => {
+    #|    if (globalThis.__lepusaCapabilities?.protocol !== 'lepusa-native-capabilities-v1' ||
+    #|        globalThis.__lepusaCapabilities?.frameTargetedBridgeReplies !== true ||
+    #|        globalThis.__lepusaCapabilities?.browserHostRouteAvailable !== true ||
+    #|        typeof globalThis.__lepusaInvoke !== 'function') {
+    #|      throw new Error('native browser host route unavailable');
+    #|    }
+    #|    const response = await globalThis.__lepusaInvoke({
+    #|      id: `browser-host-${command}-${crypto.randomUUID?.() || Date.now()}`,
+    #|      window_label: 'main',
+    #|      plugin: 'browserHost',
+    #|      command,
+    #|      payload: JSON.stringify(payload),
+    #|    });
+    #|    return JSON.parse(String(response?.payload || '{}'));
+    #|  };
+    #|  const resolveSemanticTarget = (target) => {
+    #|    const roleName = /^role=([a-zA-Z0-9_-]+)\[name='([^']+)'\]$/.exec(String(target || ''));
+    #|    if (!roleName) return null;
+    #|    const [, role, name] = roleName;
+    #|    const candidates = role === 'button'
+    #|      ? Array.from(document.querySelectorAll('button,[role="button"],input[type="button"],input[type="submit"]'))
+    #|      : Array.from(document.querySelectorAll(`[role="${CSS.escape(role)}"]`));
+    #|    return candidates.find((node) => String(node.getAttribute('aria-label') || node.textContent || node.value || '').trim() === name) || null;
+    #|  };
+    #|  const executeHostCommand = async (command) => {
+    #|    const ready = await invokeBrowserHost('execute', command);
+    #|    if (ready.status !== 'ready-in-originating-frame') throw new Error('native host did not authorize command');
+    #|    const before_state_digest = await digest(document.documentElement.outerHTML);
+    #|    const target = resolveSemanticTarget(command.semantic_target);
+    #|    if (!target) throw new Error('semantic target not found');
+    #|    if (command.operation !== 'Click') throw new Error(`unsupported native browser operation: ${command.operation}`);
+    #|    target.click();
+    #|    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    #|    const after_state_digest = await digest(document.documentElement.outerHTML);
+    #|    const screenshot = await invokeBrowserHost('captureScreenshot', {});
+    #|    const completed = await invokeBrowserHost('complete', {
+    #|      request_id: command.request_id,
+    #|      session_id: command.session_id,
+    #|      action_id: command.action_id,
+    #|      code_revision: command.code_revision,
+    #|      authority_envelope_id: command.authority_envelope_id,
+    #|      capability_digest: command.capability_digest,
+    #|      before_state_digest,
+    #|      after_state_digest,
+    #|      target_resolved: true,
+    #|      observations: ['executed in exact originating Lepusa frame'],
+    #|      screenshot_kind: screenshot.kind,
+    #|      screenshot_byte_length: screenshot.byte_length,
+    #|      screenshot_png_base64: screenshot.png_base64,
+    #|    });
+    #|    send('host-result', { ok: true, receipt: completed });
+    #|  };
     #|  addEventListener('message', (event) => {
-    #|    if (event.source !== parent || event.data?.protocol !== protocol || event.data?.type !== 'snapshot-request') return;
+    #|    if (event.source !== parent || event.data?.protocol !== protocol) return;
+    #|    if (event.data?.type === 'host-command') {
+    #|      executeHostCommand(event.data.command).catch((error) => {
+    #|        send('host-result', { ok: false, error: String(error?.message || error) });
+    #|      });
+    #|      return;
+    #|    }
+    #|    if (event.data?.type !== 'snapshot-request') return;
     #|    const resources = performance.getEntriesByType('resource').map((entry) => {
     #|      try { return new URL(entry.name).pathname; } catch { return '[unparseable resource]'; }
     #|    }).slice(0, 100);

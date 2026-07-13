@@ -113,6 +113,7 @@ async fn collect_review_items(
     for
       review_root in [
         "wiki/reviews", "wiki/review", "reviews", "review", "book/reviews", "book/review",
+        "book/evidence/browser",
       ] {
       collect_review_directory(
         workspace, review_root, decided_paths, items, limit,

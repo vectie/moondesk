@@ -16,13 +16,20 @@
     "source": { "packaged": "dist" }
   },
   "plugins": [
-    { "name": "opener" }
+    { "name": "opener" },
+    { "name": "browserHost" }
   ],
   "capabilities": [
     {
       "name": "main",
       "windows": ["main"],
-      "permissions": ["opener"]
+      "permissions": [
+        "opener",
+        "custom:browserHost.execute",
+        "custom:browserHost.complete",
+        "custom:browserHost.captureScreenshot",
+        "custom:browserHost.status"
+      ]
     }
   ]
 }

@@ -13,7 +13,8 @@ async test "browser evidence persistence is scoped durable and idempotent" {
     "{\"id\":\"browser-book\",\"name\":\"Browser Book\"}\n",
   )
   @fsx.write_to_file(
-    @pathx.join(book_root, "book/site/generated/index.html"), "<main>robot</main>",
+    @pathx.join(book_root, "book/site/generated/index.html"),
+    "<main>robot</main>",
   )
   let payload : Json = {
     "protocol": "moondesk-preview-evidence-v1",
@@ -37,6 +38,31 @@ async test "browser evidence persistence is scoped durable and idempotent" {
   )
   assert_true(second.stringify().contains("main Robot design"))
   assert_false(second.stringify().contains("changed after terminal delivery"))
+  let native_payload : Json = {
+    "protocol": "moondesk-preview-evidence-v1",
+    "request_id": "request-native-1",
+    "source_path": "book/site/generated/index.html",
+    "native_screenshot_png_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "native_host_receipt": {
+      "protocol": "lepusa-browser-host-v1",
+      "status": "completed-in-originating-frame",
+    },
+  }
+  let native = persist_browser_evidence(
+    root, "book-browser-book", native_payload,
+  ).unwrap()
+  let native_ref = json_string(native, "evidence_ref", default="")
+  let screenshot_ref = json_string(native, "screenshot_ref", default="")
+  assert_false(native_ref.contains("{"))
+  assert_true(native.stringify().contains("completed-in-originating-frame"))
+  assert_true(@fs.exists(@pathx.join(book_root, native_ref)))
+  assert_true(@fs.exists(@pathx.join(book_root, screenshot_ref)))
+  let review_items = collect_review_items(root, Some("book-browser-book"), 10)
+  assert_true(
+    review_items.any(fn(item) {
+      json_string(item, "path", default="") == native_ref
+    }),
+  )
   let evidence_ref = json_string(first, "evidence_ref", default="")
   assert_true(evidence_ref.has_prefix("book/evidence/browser/"))
   assert_true(@fs.exists(@pathx.join(book_root, evidence_ref)))
@@ -52,15 +78,43 @@ async test "browser evidence persistence is scoped durable and idempotent" {
   assert_true(
     persist_browser_evidence(root, "book-browser-book", outside) is Err(_),
   )
-  @fs.remove(@pathx.join(book_root, evidence_ref)) catch { _ => () }
-  @fs.remove(@pathx.join(book_root, "book/evidence/browser")) catch { _ => () }
-  @fs.remove(@pathx.join(book_root, "book/evidence")) catch { _ => () }
-  @fs.remove(@pathx.join(book_root, "book/site/generated/index.html")) catch { _ => () }
-  @fs.remove(@pathx.join(book_root, "book/site/generated")) catch { _ => () }
-  @fs.remove(@pathx.join(book_root, "book/site")) catch { _ => () }
-  @fs.remove(@pathx.join(book_root, "book.json")) catch { _ => () }
-  @fs.remove(@pathx.join(book_root, "book")) catch { _ => () }
-  @fs.remove(book_root) catch { _ => () }
-  @fs.remove(@pathx.join(root, "books")) catch { _ => () }
-  @fs.remove(root) catch { _ => () }
+  @fs.remove(@pathx.join(book_root, evidence_ref)) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, native_ref)) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, screenshot_ref)) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, "book/evidence/browser")) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, "book/evidence")) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, "book/site/generated/index.html")) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, "book/site/generated")) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, "book/site")) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, "book.json")) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(book_root, "book")) catch {
+    _ => ()
+  }
+  @fs.remove(book_root) catch {
+    _ => ()
+  }
+  @fs.remove(@pathx.join(root, "books")) catch {
+    _ => ()
+  }
+  @fs.remove(root) catch {
+    _ => ()
+  }
 }
