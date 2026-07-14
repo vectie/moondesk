@@ -38,6 +38,7 @@ fn code_mode_test_session(
     mooncode_runtime_detail: None,
     mooncode_conversation: None,
     mooncode_summary: code_mode_test_summary(),
+    canonical_unchanged: None,
   }
 }
 
@@ -1628,6 +1629,41 @@ test "code mode ignores unchanged canonical conversation revisions" {
     unchanged,
   )
   assert_eq(preserved[0].title, "Stable title")
+  let regressed = {
+    ..unchanged,
+    title: "Regressed title",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [turn]),
+      revision: 3,
+    }),
+  }
+  let still_preserved = mooncode_upsert_session_if_revision_changed(
+    preserved, regressed,
+  )
+  assert_eq(still_preserved[0].title, "Stable title")
+  assert_eq(mooncode_session_conversation_revision(still_preserved[0]), 4)
+  let transport_unchanged = {
+    ..unchanged,
+    title: "Transport replacement",
+    mooncode_conversation: None,
+    canonical_unchanged: Some(true),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: still_preserved,
+  }
+  let (_, unchanged_model) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSession("session-a", Ok(transport_unchanged)),
+    model,
+  )
+  assert_eq(unchanged_model.mooncode_sessions[0].title, "Stable title")
+  assert_eq(
+    mooncode_session_conversation_revision(unchanged_model.mooncode_sessions[0]),
+    4,
+  )
   let advanced = {
     ..unchanged,
     title: "Advanced title",
@@ -1638,6 +1674,33 @@ test "code mode ignores unchanged canonical conversation revisions" {
   }
   let updated = mooncode_upsert_session_if_revision_changed(preserved, advanced)
   assert_eq(updated[0].title, "Advanced title")
+}
+
+///|
+test "code mode delayed command response cannot replace a newer turn" {
+  let turn = code_mode_test_turn("command-first", "Prompt", assistant="Answer")
+  let existing = {
+    ..code_mode_test_session("session-a", status="done"),
+    title: "Current title",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [turn]),
+      revision: 8,
+    }),
+  }
+  let delayed = {
+    ..existing,
+    title: "Delayed title",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [turn]),
+      revision: 6,
+    }),
+  }
+  let other = code_mode_test_session("session-b", status="done")
+  let updated = mooncode_upsert_session_at_top([other, existing], delayed)
+  assert_eq(updated[0].id, "session-a")
+  assert_eq(updated[0].title, "Current title")
+  assert_eq(mooncode_session_conversation_revision(updated[0]), 8)
+  assert_eq(updated[1].id, "session-b")
 }
 
 ///|
@@ -1668,7 +1731,7 @@ test "code mode stale full session response is ignored" {
 }
 
 ///|
-test "code mode session polling accepts backend conversation order without frontend repair" {
+test "code mode listing refresh cannot roll back selected conversation" {
   let current = {
     ..code_mode_test_session("session-a", status="running"),
     mooncode_conversation: Some(
@@ -1701,9 +1764,10 @@ test "code mode session polling accepts backend conversation order without front
   )
   let session = selected_mooncode_session(next).unwrap()
   let rows = code_mode_test_transcript_rows(next, session)
-  assert_eq(rows.length(), 2)
+  assert_eq(rows.length(), 3)
   assert_eq(rows[0].content, "First prompt")
   assert_eq(rows[1].content, "Second prompt")
+  assert_eq(rows[2].content, "Third prompt")
 }
 
 ///|

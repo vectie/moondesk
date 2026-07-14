@@ -72,6 +72,7 @@ fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
       verified_test_count: 0,
       pending_diff_count: 0,
     },
+    canonical_unchanged: None,
   })
 }
 
@@ -257,7 +258,11 @@ fn mooncode_should_preserve_selected_conversation(
   listed : MoonCodeSession,
 ) -> Bool {
   mooncode_session_has_conversation(existing) &&
-  !mooncode_session_has_conversation(listed)
+  (
+    !mooncode_session_has_conversation(listed) ||
+    mooncode_session_conversation_revision(listed) <=
+    mooncode_session_conversation_revision(existing)
+  )
 }
 
 ///|

@@ -29,6 +29,23 @@ pub fn mooncode_session_url(session_id : String) -> String {
 }
 
 ///|
+pub fn mooncode_session_chat_url(
+  session_id : String,
+  since_revision : Int,
+) -> String {
+  if since_revision > 0 {
+    desktop_api_url(["api", "mooncode", "sessions", session_id], query=[
+      ("format", "chat"),
+      ("since_revision", since_revision.to_string()),
+    ])
+  } else {
+    desktop_api_url(["api", "mooncode", "sessions", session_id], query=[
+      ("format", "chat"),
+    ])
+  }
+}
+
+///|
 pub fn mooncode_session_stream_url(session_id : String, since : Int) -> String {
   mooncode_session_url(session_id) +
   "/stream?format=jsonl&since=\{since}&live=true&timeout_ms=1000&poll_ms=100"

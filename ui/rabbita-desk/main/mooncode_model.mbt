@@ -53,4 +53,5 @@ struct MoonCodeSession {
   mooncode_runtime_detail : String?
   mooncode_conversation : MoonCodeConversation?
   mooncode_summary : MoonCodeSummary
+  canonical_unchanged : Bool?
 } derive(FromJson)

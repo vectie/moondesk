@@ -435,51 +435,6 @@ fn install_mooncode_enter_send_cmd() -> @rabbita.Cmd {
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_install_mooncode_disclosures() =
-  #| () => {
-  #|   if (window.__moondeskMoonCodeDisclosuresInstalled) return;
-  #|   window.__moondeskMoonCodeDisclosuresInstalled = true;
-  #|   const sync = (summary) => {
-  #|     if (!(summary instanceof HTMLElement)) return;
-  #|     const details = summary.closest("details");
-  #|     if (!(details instanceof HTMLDetailsElement)) return;
-  #|     summary.setAttribute("aria-expanded", details.open ? "true" : "false");
-  #|   };
-  #|   const syncAll = () => {
-  #|     document.querySelectorAll(".mooncode-activity-summary").forEach(sync);
-  #|   };
-  #|   document.addEventListener("keydown", (event) => {
-  #|     if (event.key !== "Enter" && event.key !== " ") return;
-  #|     const summary = event.target instanceof Element
-  #|       ? event.target.closest(".mooncode-activity-summary")
-  #|       : null;
-  #|     if (!(summary instanceof HTMLElement)) return;
-  #|     const details = summary.closest("details");
-  #|     if (!(details instanceof HTMLDetailsElement)) return;
-  #|     event.preventDefault();
-  #|     details.open = !details.open;
-  #|     sync(summary);
-  #|   }, true);
-  #|   document.addEventListener("click", (event) => {
-  #|     const summary = event.target instanceof Element
-  #|       ? event.target.closest(".mooncode-activity-summary")
-  #|       : null;
-  #|     if (summary) queueMicrotask(() => sync(summary));
-  #|   }, true);
-  #|   new MutationObserver(syncAll).observe(document.body, {
-  #|     childList: true,
-  #|     subtree: true,
-  #|   });
-  #|   syncAll();
-  #| }
-
-///|
-fn install_mooncode_disclosures_cmd() -> @rabbita.Cmd {
-  @cmd.custom_cmd(_ => browser_install_mooncode_disclosures(), kind=AfterRender)
-}
-
-///|
-#cfg(target="js")
 extern "js" fn browser_copy_text_to_clipboard(text : String) =
   #| (text) => {
   #|   const fallback = () => {

@@ -150,6 +150,8 @@ fn update_mooncode_session_results(
     LoadedMoonCodeSession(session_id, Ok(session)) =>
       if session_id != model.selected_mooncode_session_id {
         (@rabbita.none, model)
+      } else if mooncode_session_canonical_unchanged(session) {
+        (@rabbita.none, model)
       } else {
         (
           @rabbita.none,
@@ -373,13 +375,32 @@ fn mooncode_upsert_session_if_revision_changed(
 ) -> Array[MoonCodeSession] {
   for existing in sessions {
     if existing.id == session.id &&
-      mooncode_session_conversation_revision(existing) ==
-      mooncode_session_conversation_revision(session) &&
-      mooncode_session_conversation_revision(session) > 0 {
+      mooncode_session_response_cannot_replace(existing, session) {
       return sessions
     }
   }
   mooncode_upsert_session(sessions, session)
+}
+
+///|
+fn mooncode_session_response_cannot_replace(
+  existing : MoonCodeSession,
+  incoming : MoonCodeSession,
+) -> Bool {
+  if mooncode_session_canonical_unchanged(incoming) {
+    return true
+  }
+  let existing_revision = mooncode_session_conversation_revision(existing)
+  existing_revision > 0 &&
+  mooncode_session_conversation_revision(incoming) <= existing_revision
+}
+
+///|
+fn mooncode_session_canonical_unchanged(session : MoonCodeSession) -> Bool {
+  match session.canonical_unchanged {
+    Some(true) => true
+    _ => false
+  }
 }
 
 ///|
@@ -396,7 +417,12 @@ fn mooncode_upsert_session_at_top(
   session : MoonCodeSession,
 ) -> Array[MoonCodeSession] {
   let stable = match mooncode_find_session(sessions, session.id) {
-    Some(existing) => mooncode_session_with_stable_identity(existing, session)
+    Some(existing) =>
+      if mooncode_session_response_cannot_replace(existing, session) {
+        existing
+      } else {
+        mooncode_session_with_stable_identity(existing, session)
+      }
     None => session
   }
   let next : Array[MoonCodeSession] = [stable]

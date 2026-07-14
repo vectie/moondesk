@@ -71,6 +71,8 @@ pub fn moonclaw_run_artifacts_route() -> String
 
 pub fn moonclaw_workspace_url(String, String) -> String
 
+pub fn mooncode_session_chat_url(String, Int) -> String
+
 pub fn mooncode_session_commands_url(String) -> String
 
 pub fn mooncode_session_listing_url(String) -> String

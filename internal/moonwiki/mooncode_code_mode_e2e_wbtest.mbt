@@ -924,7 +924,7 @@ async test "mooncode code mode HTTP routes create canonical session and checkpoi
     )
     assert_true(json_object_field(created, "api_contract") is None)
     assert_true(json_object_field(created, "accepted") is None)
-    assert_eq(json_string(created, "status", default=""), "running")
+    assert_eq(json_string(created, "status", default=""), "done")
     assert_mooncode_http_current_turn(
       created,
       "Create parser tests",

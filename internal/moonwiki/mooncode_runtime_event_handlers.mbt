@@ -137,11 +137,47 @@ async fn sync_mooncode_native_canonical_conversation(
   )
   if json_string(native_conversation, "kind", default="") ==
     @mooncode.conversation_kind() {
-    mooncode_session_with_field(
+    let with_conversation = mooncode_session_with_field(
       session, "mooncode_conversation", native_conversation,
     )
+    let canonical_status = mooncode_canonical_conversation_status(
+      native_conversation,
+      fallback=json_string(session, "status", default=""),
+    )
+    let synced = mooncode_session_with_field(
+      with_conversation,
+      "status",
+      canonical_status.to_json(),
+    )
+    if canonical_status != json_string(session, "status", default="") {
+      write_mooncode_session_record(workspace_root, synced) catch {
+        _ => ()
+      }
+    }
+    synced
   } else {
     session
+  }
+}
+
+///|
+fn mooncode_canonical_conversation_status(
+  conversation : Json,
+  fallback~ : String,
+) -> String {
+  let turns = json_array_items(conversation, "turns")
+  if turns.length() == 0 {
+    return fallback
+  }
+  let status = json_string(turns[turns.length() - 1], "status", default="")
+  if status == "queued" ||
+    status == "running" ||
+    status == "done" ||
+    status == "failed" ||
+    status == "cancelled" {
+    status
+  } else {
+    fallback
   }
 }
 

@@ -67,11 +67,7 @@ fn render_mooncode_activity_disclosure(
   @html.node("details", @html.Attrs::build().class(disclosure_class), [
     @html.node(
       "summary",
-      @html.Attrs::build()
-      .class("mooncode-activity-summary")
-      .role("button")
-      .tabindex(0)
-      .aria_expanded("false"),
+      @html.Attrs::build().class("mooncode-activity-summary"),
       [
         span(class="mooncode-activity-summary-text", row.title),
         span(

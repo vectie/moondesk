@@ -133,6 +133,30 @@ async test "mooncode command response stays compact for chat mutations" {
   assert_eq(json_int(summary, "event_count", default=-1), 0)
   assert_eq(json_int(summary, "verified_test_count", default=-1), 0)
   assert_eq(json_int(summary, "pending_diff_count", default=-1), 0)
+  assert_eq(json_int(compact, "canonical_revision", default=0), 2)
+  assert_false(json_bool(compact, "canonical_unchanged", default=true))
+  let unchanged = compact_mooncode_session_revision_response(
+    root,
+    {
+      "id": "s1",
+      "workspace_id": "book",
+      "workspace_name": "Book",
+      "workspace_root": root,
+      "cwd": root,
+      "title": "MoonCode - Book",
+      "model": "codex/gpt-5.4",
+      "status": "done",
+      "queued_count": 0,
+      "mooncode_conversation": conversation,
+    },
+    Json::object({}),
+    2,
+  )
+  assert_true(json_bool(unchanged, "canonical_unchanged", default=false))
+  assert_true(
+    json_object_field(unchanged, "mooncode_conversation") is Some(Null),
+  )
+  assert_true(json_object_field(unchanged, "mooncode_turn") is Some(Null))
 }
 
 ///|
@@ -244,5 +268,32 @@ test "mooncode native full session preserves MoonClaw canonical conversation" {
       default="",
     ),
     "hello reply",
+  )
+}
+
+///|
+test "mooncode session status follows the canonical last turn" {
+  assert_eq(
+    mooncode_canonical_conversation_status({ "turns": [] }, fallback="running"),
+    "running",
+  )
+  assert_eq(
+    mooncode_canonical_conversation_status(
+      {
+        "turns": [
+          { "turn_id": "turn-1", "status": "done" },
+          { "turn_id": "turn-2", "status": "failed" },
+        ],
+      },
+      fallback="running",
+    ),
+    "failed",
+  )
+  assert_eq(
+    mooncode_canonical_conversation_status(
+      { "turns": [{ "turn_id": "turn-1", "status": "unexpected" }] },
+      fallback="running",
+    ),
+    "running",
   )
 }

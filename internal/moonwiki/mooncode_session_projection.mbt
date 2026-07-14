@@ -95,6 +95,29 @@ fn compact_mooncode_session_command_response(
     "mooncode_turn": current_turn,
     "mooncode_conversation": conversation,
     "mooncode_summary": compact_mooncode_summary(summary),
+    "canonical_revision": json_int(conversation, "revision", default=0),
+    "canonical_unchanged": false,
+  }
+}
+
+///|
+fn compact_mooncode_session_revision_response(
+  workspace_root : String,
+  session : Json,
+  command_packet : Json,
+  since_revision : Int,
+) -> Json {
+  let response = compact_mooncode_session_command_response(
+    workspace_root, session, command_packet,
+  )
+  let revision = json_int(response, "canonical_revision", default=0)
+  if since_revision > 0 && revision == since_revision {
+    response
+    |> mooncode_session_with_field("mooncode_conversation", Json::null())
+    |> mooncode_session_with_field("mooncode_turn", Json::null())
+    |> mooncode_session_with_field("canonical_unchanged", true.to_json())
+  } else {
+    response
   }
 }
 

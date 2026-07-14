@@ -47,6 +47,11 @@ async fn handle_mooncode_session(
   conn : @http.ServerConnection,
 ) -> Unit {
   let response_format = query_value(request_path, "format").unwrap_or("full")
+  let since_revision = @string.parse_int(
+    query_value(request_path, "since_revision").unwrap_or("0"),
+  ) catch {
+    _ => 0
+  }
   match read_mooncode_session_record(workspace_root, session_id) {
     Some(session) =>
       if response_format == "chat" || response_format == "compact" {
@@ -56,10 +61,11 @@ async fn handle_mooncode_session(
         send_json(
           conn,
           method_,
-          compact_mooncode_session_command_response(
+          compact_mooncode_session_revision_response(
             workspace_root,
             session,
             Json::object({}),
+            since_revision,
           ),
         )
       } else {
@@ -85,10 +91,11 @@ async fn handle_mooncode_session(
           send_json(
             conn,
             method_,
-            compact_mooncode_session_command_response(
+            compact_mooncode_session_revision_response(
               workspace_root,
               native,
               Json::object({}),
+              since_revision,
             ),
           )
         } else {
