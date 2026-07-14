@@ -135,17 +135,9 @@ fn mooncode_context_path(model : Model) -> String {
 }
 
 ///|
-fn schedule_mooncode_poll(
+fn schedule_mooncode_metadata_refresh(
   dispatch : Dispatch[Msg],
   generation : Int,
 ) -> @rabbita.Cmd {
-  @rabbita.delay(dispatch(PollMoonCodeSessions(generation)), 5000)
-}
-
-///|
-fn schedule_mooncode_fast_poll(
-  dispatch : Dispatch[Msg],
-  generation : Int,
-) -> @rabbita.Cmd {
-  @rabbita.delay(dispatch(PollMoonCodeSessions(generation)), 500)
+  @rabbita.delay(dispatch(RefreshMoonCodeMetadata(generation)), 5000)
 }

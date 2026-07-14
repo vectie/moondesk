@@ -34,6 +34,10 @@ test "mooncode desktop routes live in core boundary" {
     "/api/mooncode/sessions/session%20one%2F%232/stream-state",
   )
   assert_eq(
+    @core.mooncode_session_watch_url("session one/#2", 7, 11),
+    "/api/mooncode/sessions/session%20one%2F%232/watch?since_revision=7&since_sequence=11&wait_ms=15000&poll_ms=100",
+  )
+  assert_eq(
     @core.mooncode_session_stream_url("session one/#2", 7),
     "/api/mooncode/sessions/session%20one%2F%232/stream?format=jsonl&since=7&live=true&timeout_ms=1000&poll_ms=100",
   )

@@ -795,6 +795,32 @@ async test "mooncode code mode HTTP routes preserve three prompt conversation or
       selected, prompts, client_turn_ids, replies,
     )
 
+    let watch = test_http_get_json(
+      base +
+      "/api/mooncode/sessions/\{session_id}/watch?since_revision=0&since_sequence=0&wait_ms=1000&poll_ms=25",
+      200,
+    )
+    assert_eq(
+      json_string(watch, "kind", default=""),
+      @mooncode.conversation_watch_kind(),
+    )
+    assert_eq(
+      json_string(watch, "contract_id", default=""),
+      @mooncode.conversation_watch_contract_id(),
+    )
+    assert_eq(json_string(watch, "session_id", default=""), session_id)
+    assert_true(json_bool(watch, "changed", default=false))
+    assert_false(json_bool(watch, "heartbeat", default=true))
+    assert_true(json_int(watch, "revision", default=0) > 0)
+    assert_true(json_int(watch, "next_sequence", default=0) > 0)
+    let watched_session = json_object_field_or_empty(watch, "snapshot")
+    assert_eq(json_string(watched_session, "id", default=""), session_id)
+    assert_mooncode_http_assistant_replies(
+      watched_session, prompts, client_turn_ids, replies,
+    )
+    assert_true(json_object_field(watch, "events") is None)
+    assert_true(json_object_field(watch, "tail_events") is None)
+
     let commands = test_http_get_json(
       base + "/api/mooncode/sessions/\{session_id}/commands",
       200,

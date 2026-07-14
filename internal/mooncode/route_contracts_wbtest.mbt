@@ -39,6 +39,7 @@ test "desktop projection endpoint contract covers runtime and review controls" {
   assert_true(endpoints.contains(desktop_capabilities_endpoint()))
   assert_true(endpoints.contains(desktop_sessions_endpoint()))
   assert_true(endpoints.contains(desktop_session_endpoint()))
+  assert_true(endpoints.contains(desktop_session_watch_endpoint()))
   assert_true(endpoints.contains(desktop_session_events_endpoint()))
   assert_true(endpoints.contains(desktop_session_change_set_endpoint()))
   assert_true(endpoints.contains(desktop_session_patch_set_endpoint()))

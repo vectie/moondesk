@@ -44,6 +44,44 @@ pub fn conversation_contract_json() -> Json {
 }
 
 ///|
+pub fn conversation_watch_contract_id() -> String {
+  @mooncode_core.conversation_watch_contract_id()
+}
+
+///|
+pub fn conversation_watch_kind() -> String {
+  @mooncode_core.conversation_watch_kind()
+}
+
+///|
+pub fn conversation_watch_contract_json() -> Json {
+  @mooncode_core.conversation_watch_contract_json()
+}
+
+///|
+pub fn conversation_watch_response(
+  session_id~ : String,
+  revision~ : Int,
+  next_sequence~ : Int,
+  changed~ : Bool,
+  heartbeat~ : Bool,
+  terminal~ : Bool,
+  retry_after_ms~ : Int,
+  snapshot~ : Json,
+) -> Json {
+  @mooncode_core.conversation_watch_response(
+    session_id~,
+    revision~,
+    next_sequence~,
+    changed~,
+    heartbeat~,
+    terminal~,
+    retry_after_ms~,
+    snapshot~,
+  )
+}
+
+///|
 pub fn native_capability_required_endpoints() -> Array[String] {
   @mooncode_core.native_capability_required_endpoints()
 }

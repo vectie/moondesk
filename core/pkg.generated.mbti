@@ -85,6 +85,8 @@ pub fn mooncode_session_stream_url(String, Int) -> String
 
 pub fn mooncode_session_url(String) -> String
 
+pub fn mooncode_session_watch_url(String, Int, Int) -> String
+
 pub fn mooncode_sessions_url(String) -> String
 
 pub fn moonsuite_books_root(String) -> String

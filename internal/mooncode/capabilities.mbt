@@ -36,6 +36,8 @@ pub fn capabilities_json() -> Json {
       "preferred_stream": "jsonl-or-sse-incremental",
       "stream_endpoint": desktop_session_stream_endpoint(),
       "stream_state_endpoint": desktop_session_stream_state_endpoint(),
+      "canonical_watch_endpoint": desktop_session_watch_endpoint(),
+      "canonical_watch_contract": conversation_watch_contract_json(),
       "eval_harness_contract_endpoint": desktop_eval_harness_endpoint(),
       "standalone_boundary_endpoint": desktop_standalone_boundary_endpoint(),
       "readiness_contract_endpoint": desktop_readiness_contract_endpoint(),

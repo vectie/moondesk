@@ -57,6 +57,20 @@ pub fn mooncode_session_stream_state_url(session_id : String) -> String {
 }
 
 ///|
+pub fn mooncode_session_watch_url(
+  session_id : String,
+  since_revision : Int,
+  since_sequence : Int,
+) -> String {
+  desktop_api_url(["api", "mooncode", "sessions", session_id, "watch"], query=[
+    ("since_revision", since_revision.to_string()),
+    ("since_sequence", since_sequence.to_string()),
+    ("wait_ms", "15000"),
+    ("poll_ms", "100"),
+  ])
+}
+
+///|
 pub fn mooncode_session_commands_url(session_id : String) -> String {
   mooncode_session_url(session_id) + "/commands"
 }

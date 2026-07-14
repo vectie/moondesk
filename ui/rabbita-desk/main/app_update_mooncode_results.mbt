@@ -9,7 +9,7 @@ fn update_mooncode_results(
     | ManagedMoonClaw(_)
     | LoadedMoonClawModels(_)
     | LoadedMoonCodeSessions(_)
-    | LoadedMoonCodeSession(_, _) =>
+    | LoadedMoonCodeWatch(_, _, _) =>
       update_mooncode_session_results(dispatch, msg, model)
     CreatedMoonCodeSession(_) | CompletedMoonCodeCommand(_) =>
       update_mooncode_session_results(dispatch, msg, model)

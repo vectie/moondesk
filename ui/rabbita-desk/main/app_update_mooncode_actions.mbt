@@ -15,8 +15,8 @@ fn update_mooncode_actions(
         manage_moonclaw_cmd(dispatch, action),
         { ..model, mooncode_composer_status: "Starting MoonClaw…" },
       )
-    PollMoonCodeSessions(_) =>
-      update_mooncode_poll_actions(dispatch, msg, model)
+    RefreshMoonCodeMetadata(_) | ResumeMoonCodeWatch(_, _) =>
+      update_mooncode_transport_actions(dispatch, msg, model)
     _ => (@rabbita.none, model)
   }
 }

@@ -43,6 +43,45 @@ fn code_mode_test_session(
 }
 
 ///|
+fn code_mode_test_watch_snapshot(
+  session : MoonCodeSession,
+  sequence : Int,
+) -> MoonCodeWatchResponse {
+  {
+    kind: "moonsuite-conversation-watch",
+    contract_id: "moonsuite-conversation-watch.v1",
+    session_id: session.id,
+    revision: mooncode_session_conversation_revision(session),
+    next_sequence: sequence,
+    changed: true,
+    heartbeat: false,
+    terminal: session.status == "done" || session.status == "failed",
+    retry_after_ms: 0,
+    snapshot: Some(session),
+  }
+}
+
+///|
+fn code_mode_test_watch_heartbeat(
+  session_id : String,
+  revision : Int,
+  sequence : Int,
+) -> MoonCodeWatchResponse {
+  {
+    kind: "moonsuite-conversation-watch",
+    contract_id: "moonsuite-conversation-watch.v1",
+    session_id,
+    revision,
+    next_sequence: sequence,
+    changed: false,
+    heartbeat: true,
+    terminal: false,
+    retry_after_ms: 100,
+    snapshot: None,
+  }
+}
+
+///|
 test "failed MoonCode session explains the user state before technical evidence" {
   let session = {
     ..code_mode_test_session("session-failed", status="failed"),
@@ -604,6 +643,9 @@ test "code mode selecting loaded session keeps selection" {
     ..init_model(),
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
+    mooncode_watch_generation: 4,
+    mooncode_watch_revision: 9,
+    mooncode_watch_sequence: 11,
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
@@ -612,6 +654,44 @@ test "code mode selecting loaded session keeps selection" {
   )
   assert_eq(next.selected_mooncode_session_id, "session-a")
   assert_false(next.mooncode_new_chat_active)
+  assert_eq(next.mooncode_watch_generation, 5)
+  assert_eq(next.mooncode_watch_revision, 0)
+  assert_eq(next.mooncode_watch_sequence, 0)
+}
+
+///|
+test "code mode empty selection never reconstructs the first session" {
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "book-demo",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [
+      code_mode_test_session("old-session", workspace_id="book-demo"),
+    ],
+  }
+  assert_true(selected_mooncode_session(model) is None)
+}
+
+///|
+test "code mode metadata refresh never invents a post-bootstrap selection" {
+  let old_session = code_mode_test_session(
+    "old-session", workspace_id="book-demo",
+  )
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "book-demo",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [old_session],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([old_session])),
+    model,
+  )
+  assert_eq(next.selected_mooncode_session_id, "")
+  assert_true(selected_mooncode_session(next) is None)
 }
 
 ///|
@@ -1302,7 +1382,7 @@ test "code mode explicit new session draft is not replaced by existing sessions"
 }
 
 ///|
-test "code mode status copy alone does not force new chat routing" {
+test "code mode status copy cannot reconstruct an empty selection" {
   let session = code_mode_test_session("existing")
   let model = {
     ..init_model(),
@@ -1312,14 +1392,12 @@ test "code mode status copy alone does not force new chat routing" {
     mooncode_sessions: [session],
     mooncode_composer_status: "new session draft",
   }
-  let selected = selected_mooncode_session(model).unwrap()
-  assert_eq(selected.id, "existing")
+  assert_true(selected_mooncode_session(model) is None)
   let with_validation_copy = {
     ..model,
     mooncode_composer_status: "enter a message",
   }
-  let selected_after_copy = selected_mooncode_session(with_validation_copy).unwrap()
-  assert_eq(selected_after_copy.id, "existing")
+  assert_true(selected_mooncode_session(with_validation_copy) is None)
 }
 
 ///|
@@ -1535,7 +1613,7 @@ test "code mode native listing refresh preserves selected hydrated conversation"
 }
 
 ///|
-test "code mode selected full session hydrates listing row" {
+test "code mode selected canonical watch hydrates listing row" {
   let listing = {
     ..code_mode_test_session("session-a", status="done"),
     source: Some("mooncode-session-listing"),
@@ -1561,7 +1639,11 @@ test "code mode selected full session hydrates listing row" {
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeSession("session-a", Ok(hydrated)),
+    LoadedMoonCodeWatch(
+      0,
+      "session-a",
+      Ok(code_mode_test_watch_snapshot(hydrated, 2)),
+    ),
     model,
   )
   let session = selected_mooncode_session(next).unwrap()
@@ -1573,7 +1655,7 @@ test "code mode selected full session hydrates listing row" {
 }
 
 ///|
-test "code mode selected full session hydration keeps rail order" {
+test "code mode selected canonical watch keeps rail order" {
   let newer = code_mode_test_session("newer", status="done")
   let listing = {
     ..code_mode_test_session("session-a", status="done"),
@@ -1596,7 +1678,11 @@ test "code mode selected full session hydration keeps rail order" {
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeSession("session-a", Ok(hydrated)),
+    LoadedMoonCodeWatch(
+      0,
+      "session-a",
+      Ok(code_mode_test_watch_snapshot(hydrated, 1)),
+    ),
     model,
   )
   assert_eq(next.mooncode_sessions.length(), 2)
@@ -1642,12 +1728,6 @@ test "code mode ignores unchanged canonical conversation revisions" {
   )
   assert_eq(still_preserved[0].title, "Stable title")
   assert_eq(mooncode_session_conversation_revision(still_preserved[0]), 4)
-  let transport_unchanged = {
-    ..unchanged,
-    title: "Transport replacement",
-    mooncode_conversation: None,
-    canonical_unchanged: Some(true),
-  }
   let model = {
     ..init_model(),
     workspace_mode: MoonCode,
@@ -1656,7 +1736,11 @@ test "code mode ignores unchanged canonical conversation revisions" {
   }
   let (_, unchanged_model) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeSession("session-a", Ok(transport_unchanged)),
+    LoadedMoonCodeWatch(
+      0,
+      "session-a",
+      Ok(code_mode_test_watch_heartbeat("session-a", 4, 2)),
+    ),
     model,
   )
   assert_eq(unchanged_model.mooncode_sessions[0].title, "Stable title")
@@ -1704,7 +1788,7 @@ test "code mode delayed command response cannot replace a newer turn" {
 }
 
 ///|
-test "code mode stale full session response is ignored" {
+test "code mode stale canonical watch response is ignored" {
   let selected = code_mode_test_session("session-a", status="done")
   let stale = {
     ..code_mode_test_session("session-b", status="done"),
@@ -1722,12 +1806,167 @@ test "code mode stale full session response is ignored" {
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeSession("session-b", Ok(stale)),
+    LoadedMoonCodeWatch(
+      0,
+      "session-b",
+      Ok(code_mode_test_watch_snapshot(stale, 1)),
+    ),
     model,
   )
   let session = selected_mooncode_session(next).unwrap()
   assert_eq(session.id, "session-a")
   assert_true(session.mooncode_conversation is None)
+}
+
+///|
+test "code mode canonical watch heartbeat preserves the last good transcript" {
+  let turn = code_mode_test_turn("turn-a", "Stable prompt", assistant="Stable answer")
+  let session = {
+    ..code_mode_test_session("session-a", status="done"),
+    title: "Stable title",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [turn]),
+      revision: 8,
+    }),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [session],
+    mooncode_watch_generation: 4,
+    mooncode_watch_revision: 8,
+    mooncode_watch_sequence: 11,
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeWatch(
+      4,
+      "session-a",
+      Ok(code_mode_test_watch_heartbeat("session-a", 8, 9)),
+    ),
+    model,
+  )
+  assert_eq(next.mooncode_sessions[0].title, "Stable title")
+  assert_eq(mooncode_session_conversation_revision(next.mooncode_sessions[0]), 8)
+  assert_eq(next.mooncode_watch_revision, 8)
+  assert_eq(next.mooncode_watch_sequence, 11)
+  assert_eq(next.mooncode_watch_status, "watching")
+  let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].content, "Stable prompt")
+  assert_eq(rows[1].content, "Stable answer")
+}
+
+///|
+test "code mode canonical watch cannot roll back revision but advances wake cursor" {
+  let current = {
+    ..code_mode_test_session("session-a", status="done"),
+    title: "Current title",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [
+        code_mode_test_turn("turn-a", "Current prompt", assistant="Current answer"),
+      ]),
+      revision: 8,
+    }),
+  }
+  let stale = {
+    ..current,
+    title: "Stale title",
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("session-a", [
+        code_mode_test_turn("turn-a", "Old prompt", assistant="Old answer"),
+      ]),
+      revision: 6,
+    }),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [current],
+    mooncode_watch_generation: 3,
+    mooncode_watch_revision: 8,
+    mooncode_watch_sequence: 5,
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeWatch(
+      3,
+      "session-a",
+      Ok(code_mode_test_watch_snapshot(stale, 12)),
+    ),
+    model,
+  )
+  assert_eq(next.mooncode_sessions[0].title, "Current title")
+  assert_eq(mooncode_session_conversation_revision(next.mooncode_sessions[0]), 8)
+  assert_eq(next.mooncode_watch_revision, 8)
+  assert_eq(next.mooncode_watch_sequence, 12)
+}
+
+///|
+test "code mode watch disconnect preserves transcript while reconnecting" {
+  let session = {
+    ..code_mode_test_session("session-a", status="running"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn("turn-a", "Keep me", status="running"),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [session],
+    mooncode_watch_generation: 9,
+    mooncode_watch_sequence: 4,
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeWatch(9, "session-a", Err("connection reset")),
+    model,
+  )
+  assert_eq(next.mooncode_watch_status, "reconnecting")
+  assert_eq(next.mooncode_watch_sequence, 4)
+  assert_eq(next.mooncode_sessions.length(), 1)
+  let items = mooncode_transcript_items(next, next.mooncode_sessions[0])
+  assert_eq(items.length(), 2)
+  let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
+  assert_eq(rows.length(), 1)
+  assert_eq(rows[0].content, "Keep me")
+}
+
+///|
+test "code mode ignores a completed watch from an older generation" {
+  let selected = code_mode_test_session("session-a", status="done")
+  let stale = {
+    ..selected,
+    title: "Wrong generation",
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn("turn-a", "Wrong prompt"),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [selected],
+    mooncode_watch_generation: 5,
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeWatch(
+      4,
+      "session-a",
+      Ok(code_mode_test_watch_snapshot(stale, 2)),
+    ),
+    model,
+  )
+  assert_eq(next.mooncode_sessions[0].title, selected.title)
+  assert_true(next.mooncode_sessions[0].mooncode_conversation is None)
 }
 
 ///|

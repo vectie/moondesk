@@ -90,7 +90,11 @@ struct Model {
   mooncode_composer_status : String
   mooncode_next_client_turn_index : Int
   mooncode_optimistic_rows : Array[MoonCodeOptimisticRow]
-  mooncode_poll_generation : Int
+  mooncode_metadata_generation : Int
+  mooncode_watch_generation : Int
+  mooncode_watch_revision : Int
+  mooncode_watch_sequence : Int
+  mooncode_watch_status : String
   events : Array[DeskEvent]
   review_items : Array[ReviewItem]
   review_decision_note : String
@@ -190,7 +194,7 @@ enum Msg {
   ManagedMoonClaw(Result[MoonClawDaemonStatus, String])
   LoadedMoonClawModels(Result[MoonClawModelsResult, String])
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
-  LoadedMoonCodeSession(String, Result[MoonCodeSession, String])
+  LoadedMoonCodeWatch(Int, String, Result[MoonCodeWatchResponse, String])
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
   RevealedSelection(Result[RevealResult, String])
@@ -204,7 +208,8 @@ enum Msg {
   SetMoonCodePrompt(String)
   SendMoonCodeMessage
   ManageMoonClaw(String)
-  PollMoonCodeSessions(Int)
+  RefreshMoonCodeMetadata(Int)
+  ResumeMoonCodeWatch(Int, String)
   SelectWorkspace(String)
   SelectPath(String)
   OpenDirectory(String)

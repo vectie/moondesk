@@ -55,3 +55,17 @@ struct MoonCodeSession {
   mooncode_summary : MoonCodeSummary
   canonical_unchanged : Bool?
 } derive(FromJson)
+
+///|
+struct MoonCodeWatchResponse {
+  kind : String
+  contract_id : String
+  session_id : String
+  revision : Int
+  next_sequence : Int
+  changed : Bool
+  heartbeat : Bool
+  terminal : Bool
+  retry_after_ms : Int
+  snapshot : MoonCodeSession?
+} derive(FromJson)

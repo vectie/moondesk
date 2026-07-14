@@ -107,7 +107,7 @@ fn update_mooncode_session_results(
           model.selected_mooncode_session_id,
         ) {
         model.selected_mooncode_session_id
-      } else if draft_active {
+      } else if draft_active || model.mooncode_sessions.length() > 0 {
         ""
       } else {
         first_mooncode_session_id(
@@ -120,21 +120,43 @@ fn update_mooncode_session_results(
       } else {
         mooncode_workspace_id_for_selected_session(session_model, selected)
       }
-      (
-        mooncode_listing_hydration_cmd(dispatch, model, selected),
-        {
-          ..model,
-          mooncode_sessions,
-          mooncode_optimistic_rows: optimistic_rows,
-          selected_workspace_id,
-          selected_mooncode_session_id: selected,
-          mooncode_new_chat_active: selected == "" && draft_active,
-          mooncode_composer_status: if draft_active {
-            model.mooncode_composer_status
-          } else {
-            "\{mooncode_sessions.length()} MoonCode session(s)"
-          },
+      let selection_changed = selected != model.selected_mooncode_session_id
+      let next = {
+        ..model,
+        mooncode_sessions,
+        mooncode_optimistic_rows: optimistic_rows,
+        selected_workspace_id,
+        selected_mooncode_session_id: selected,
+        mooncode_new_chat_active: selected == "" && draft_active,
+        mooncode_watch_generation: if selection_changed {
+          model.mooncode_watch_generation + 1
+        } else {
+          model.mooncode_watch_generation
         },
+        mooncode_watch_revision: if selection_changed {
+          0
+        } else {
+          model.mooncode_watch_revision
+        },
+        mooncode_watch_sequence: if selection_changed {
+          0
+        } else {
+          model.mooncode_watch_sequence
+        },
+        mooncode_watch_status: if selection_changed {
+          if selected == "" { "idle" } else { "connecting" }
+        } else {
+          model.mooncode_watch_status
+        },
+        mooncode_composer_status: if draft_active {
+          model.mooncode_composer_status
+        } else {
+          "\{mooncode_sessions.length()} MoonCode session(s)"
+        },
+      }
+      (
+        mooncode_listing_watch_cmd(dispatch, model, next),
+        next,
       )
     }
     LoadedMoonCodeSessions(Err(error)) =>
@@ -147,43 +169,23 @@ fn update_mooncode_session_results(
           ),
         },
       )
-    LoadedMoonCodeSession(session_id, Ok(session)) =>
-      if session_id != model.selected_mooncode_session_id {
+    LoadedMoonCodeWatch(generation, session_id, Ok(response)) =>
+      if generation != model.mooncode_watch_generation ||
+        session_id != model.selected_mooncode_session_id {
         (@rabbita.none, model)
-      } else if mooncode_session_canonical_unchanged(session) {
-        (@rabbita.none, model)
-      } else {
-        (
-          @rabbita.none,
-          {
-            ..model,
-            mooncode_sessions: mooncode_upsert_session_if_revision_changed(
-              model.mooncode_sessions,
-              session,
-            ),
-            mooncode_composer_status: if mooncode_new_session_draft_active(
-                model,
-              ) {
-              model.mooncode_composer_status
-            } else {
-              "MoonCode session loaded"
-            },
-          },
+      } else if !mooncode_watch_response_is_valid(response, session_id) {
+        mooncode_watch_failed(
+          dispatch, model, generation, session_id, "Invalid MoonCode watch contract",
         )
+      } else {
+        mooncode_watch_succeeded(dispatch, model, response)
       }
-    LoadedMoonCodeSession(session_id, Err(error)) =>
-      if session_id != model.selected_mooncode_session_id {
+    LoadedMoonCodeWatch(generation, session_id, Err(error)) =>
+      if generation != model.mooncode_watch_generation ||
+        session_id != model.selected_mooncode_session_id {
         (@rabbita.none, model)
       } else {
-        (
-          @rabbita.none,
-          {
-            ..model,
-            mooncode_composer_status: mooncode_background_status_unless_draft(
-              model, error,
-            ),
-          },
-        )
+        mooncode_watch_failed(dispatch, model, generation, session_id, error)
       }
     CreatedMoonCodeSession(Ok(session)) =>
       mooncode_created_session_succeeded(dispatch, model, session)
@@ -220,56 +222,129 @@ fn mooncode_current_composer_session_id(model : Model) -> String {
 }
 
 ///|
+fn mooncode_watch_response_is_valid(
+  response : MoonCodeWatchResponse,
+  session_id : String,
+) -> Bool {
+  response.kind == "moonsuite-conversation-watch" &&
+  response.contract_id == "moonsuite-conversation-watch.v1" &&
+  response.session_id == session_id &&
+  response.revision >= 0 &&
+  response.next_sequence >= 0 &&
+  response.changed != response.heartbeat &&
+  (!response.changed || response.snapshot is Some(_))
+}
+
+///|
+fn mooncode_watch_succeeded(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  response : MoonCodeWatchResponse,
+) -> (@rabbita.Cmd, Model) {
+  let sessions = match response.snapshot {
+    Some(snapshot) if response.changed =>
+      mooncode_upsert_session_if_revision_changed(
+        model.mooncode_sessions, snapshot,
+      )
+    _ => model.mooncode_sessions
+  }
+  let optimistic_rows = match response.snapshot {
+    Some(snapshot) if response.changed =>
+      mooncode_drop_acknowledged_optimistic_rows(
+        model.mooncode_optimistic_rows, snapshot,
+      )
+    _ => model.mooncode_optimistic_rows
+  }
+  let next_sequence = if response.next_sequence > model.mooncode_watch_sequence {
+    response.next_sequence
+  } else {
+    model.mooncode_watch_sequence
+  }
+  let next_revision = if response.revision > model.mooncode_watch_revision {
+    response.revision
+  } else {
+    model.mooncode_watch_revision
+  }
+  let next = {
+    ..model,
+    mooncode_sessions: sessions,
+    mooncode_optimistic_rows: optimistic_rows,
+    mooncode_watch_revision: next_revision,
+    mooncode_watch_sequence: next_sequence,
+    mooncode_watch_status: if response.terminal {
+      "watching-terminal"
+    } else if response.heartbeat {
+      "watching"
+    } else {
+      "watching-active"
+    },
+  }
+  let cmd = if response.retry_after_ms > 0 {
+    schedule_mooncode_watch_resume(
+      dispatch,
+      next.mooncode_watch_generation,
+      next.selected_mooncode_session_id,
+      response.retry_after_ms,
+    )
+  } else {
+    mooncode_watch_cmd(dispatch, next)
+  }
+  (cmd, next)
+}
+
+///|
+fn mooncode_watch_failed(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  generation : Int,
+  session_id : String,
+  error : String,
+) -> (@rabbita.Cmd, Model) {
+  (
+    schedule_mooncode_watch_resume(
+      dispatch, generation, session_id, 1000,
+    ),
+    {
+      ..model,
+      mooncode_watch_status: "reconnecting",
+      mooncode_composer_status: if error == "MoonCode watch replaced" {
+        model.mooncode_composer_status
+      } else {
+        "Reconnecting to MoonCode"
+      },
+    },
+  )
+}
+
+///|
 fn mooncode_created_session_succeeded(
   dispatch : Dispatch[Msg],
   model : Model,
   session : MoonCodeSession,
 ) -> (@rabbita.Cmd, Model) {
-  if model.selected_mooncode_session_id == session.id {
-    let optimistic_rows = mooncode_drop_acknowledged_optimistic_rows(
-      model.mooncode_optimistic_rows,
-      session,
-    )
-    (
-      @rabbita.none,
-      {
-        ..model,
-        mooncode_sessions: mooncode_upsert_session_at_top(
-          model.mooncode_sessions,
-          session,
-        ),
-        mooncode_new_chat_active: false,
-        mooncode_optimistic_rows: optimistic_rows,
-        mooncode_composer_status: "MoonCode session started",
-      },
-    )
-  } else {
-    mooncode_session_mutation_succeeded(
-      dispatch, model, session, "MoonCode session started",
-    )
-  }
+  mooncode_session_mutation_succeeded(
+    dispatch, model, session, "MoonCode session started",
+  )
 }
 
 ///|
-fn mooncode_listing_hydration_cmd(
+fn mooncode_listing_watch_cmd(
   dispatch : Dispatch[Msg],
-  model : Model,
-  selected : String,
+  previous : Model,
+  next : Model,
 ) -> @rabbita.Cmd {
-  if selected == "" {
-    return @rabbita.none
-  }
-  if selected == model.selected_mooncode_session_id {
-    match mooncode_find_session(model.mooncode_sessions, selected) {
-      Some(session) =>
-        match session.mooncode_conversation {
-          Some(_) => return @rabbita.none
-          None => ()
-        }
-      None => ()
+  if next.selected_mooncode_session_id == "" {
+    if previous.selected_mooncode_session_id != "" {
+      stop_mooncode_watch_cmd()
+    } else {
+      @rabbita.none
     }
+  } else if next.selected_mooncode_session_id !=
+    previous.selected_mooncode_session_id || previous.mooncode_watch_status == "idle" {
+    mooncode_watch_cmd(dispatch, next)
+  } else {
+    @rabbita.none
   }
-  fetch_mooncode_session_cmd(dispatch, selected)
 }
 
 ///|
@@ -299,21 +374,39 @@ fn mooncode_session_mutation_succeeded(
   let optimistic_rows = mooncode_drop_acknowledged_optimistic_rows(
     optimistic_rows, session,
   )
-  (
-    mooncode_after_session_mutation_cmd(dispatch, model, session.id),
-    {
-      ..model,
-      workspace_mode: MoonCode,
-      mooncode_sessions: mooncode_upsert_session_at_top(
-        model.mooncode_sessions,
-        session,
-      ),
-      selected_mooncode_session_id: session.id,
-      mooncode_new_chat_active: false,
-      mooncode_prompt: "",
-      mooncode_optimistic_rows: optimistic_rows,
-      mooncode_composer_status: status,
+  let selection_changed = model.selected_mooncode_session_id != session.id
+  let next = {
+    ..model,
+    workspace_mode: MoonCode,
+    mooncode_sessions: mooncode_upsert_session_at_top(
+      model.mooncode_sessions,
+      session,
+    ),
+    selected_mooncode_session_id: session.id,
+    mooncode_new_chat_active: false,
+    mooncode_prompt: "",
+    mooncode_optimistic_rows: optimistic_rows,
+    mooncode_watch_generation: if selection_changed {
+      model.mooncode_watch_generation + 1
+    } else {
+      model.mooncode_watch_generation
     },
+    mooncode_watch_revision: if selection_changed {
+      0
+    } else {
+      model.mooncode_watch_revision
+    },
+    mooncode_watch_sequence: if selection_changed {
+      0
+    } else {
+      model.mooncode_watch_sequence
+    },
+    mooncode_watch_status: "connecting",
+    mooncode_composer_status: status,
+  }
+  (
+    mooncode_after_session_mutation_cmd(dispatch, next, session.id),
+    next,
   )
 }
 

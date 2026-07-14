@@ -12,17 +12,7 @@ fn selected_mooncode_session(model : Model) -> MoonCodeSession? {
       Some(session) => return Some(session)
       None => ()
     }
-    if mooncode_new_session_draft_active(model) {
-      return None
-    }
-  }
-  for session in model.mooncode_sessions {
-    if mooncode_session_matches_workspace_id(
-        session,
-        model.selected_workspace_id,
-      ) {
-      return Some(session)
-    }
+    return None
   }
   None
 }

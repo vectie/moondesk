@@ -2,10 +2,8 @@
 enum MoonCodeSessionEffect {
   MoonCodeFetchDaemon
   MoonCodeFetchSessions(String)
-  MoonCodeFetchSelectedSession
-  MoonCodeFetchSession(String)
-  MoonCodeScheduleFastPoll(Int)
-  MoonCodeSchedulePoll(Int)
+  MoonCodeStartWatch
+  MoonCodeScheduleMetadataRefresh(Int)
   MoonCodeSyncShell
 }
 
@@ -46,32 +44,16 @@ fn mooncode_session_effect_cmd(
     MoonCodeFetchDaemon => fetch_moonclaw_daemon_cmd(dispatch)
     MoonCodeFetchSessions(workspace_id) =>
       fetch_mooncode_sessions_cmd(dispatch, workspace_id)
-    MoonCodeFetchSelectedSession =>
-      fetch_selected_mooncode_session_cmd(dispatch, model)
-    MoonCodeFetchSession(session_id) =>
-      fetch_mooncode_session_cmd(dispatch, session_id)
-    MoonCodeScheduleFastPoll(generation) =>
-      schedule_mooncode_fast_poll(dispatch, generation)
-    MoonCodeSchedulePoll(generation) =>
-      schedule_mooncode_poll(dispatch, generation)
+    MoonCodeStartWatch => mooncode_watch_cmd(dispatch, model)
+    MoonCodeScheduleMetadataRefresh(generation) =>
+      schedule_mooncode_metadata_refresh(dispatch, generation)
     MoonCodeSyncShell => sync_shell_cmd(MoonCode, model.activity)
   }
 }
 
 ///|
-fn mooncode_user_submit_effects(
-  model : Model,
-  generation : Int,
-) -> Array[MoonCodeSessionEffect] {
-  let effects : Array[MoonCodeSessionEffect] = []
-  if model.selected_mooncode_session_id == "" {
-    effects.push(MoonCodeFetchSessions(""))
-  } else {
-    effects.push(MoonCodeFetchSelectedSession)
-  }
-  effects.push(MoonCodeScheduleFastPoll(generation))
-  effects.push(MoonCodeSyncShell)
-  effects
+fn mooncode_user_submit_effects() -> Array[MoonCodeSessionEffect] {
+  [MoonCodeSyncShell]
 }
 
 ///|
@@ -79,27 +61,18 @@ fn mooncode_after_user_submit_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
   primary : @rabbita.Cmd,
-  generation : Int,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_with_primary_cmd(
     dispatch,
     model,
     @rabbita.batch([primary, clear_mooncode_composer_cmd()]),
-    mooncode_user_submit_effects(model, generation),
+    mooncode_user_submit_effects(),
   )
 }
 
 ///|
-fn mooncode_session_mutation_effects(
-  _model : Model,
-  session_id : String,
-) -> Array[MoonCodeSessionEffect] {
-  let effects : Array[MoonCodeSessionEffect] = []
-  if session_id != "" {
-    effects.push(MoonCodeFetchSession(session_id))
-  }
-  effects.push(MoonCodeSyncShell)
-  effects
+fn mooncode_session_mutation_effects() -> Array[MoonCodeSessionEffect] {
+  [MoonCodeFetchSessions(""), MoonCodeStartWatch, MoonCodeSyncShell]
 }
 
 ///|
@@ -110,9 +83,7 @@ fn mooncode_after_session_mutation_cmd(
 ) -> @rabbita.Cmd {
   @rabbita.batch([
     mooncode_session_effects_cmd(
-      dispatch,
-      model,
-      mooncode_session_mutation_effects(model, session_id),
+      dispatch, model, mooncode_session_mutation_effects(),
     ),
     sync_mooncode_context_cmd(model.selected_workspace_id, session_id),
     clear_mooncode_composer_cmd(),
@@ -120,70 +91,38 @@ fn mooncode_after_session_mutation_cmd(
 }
 
 ///|
-fn mooncode_poll_effects(
-  model : Model,
+fn mooncode_metadata_refresh_effects(
   generation : Int,
 ) -> Array[MoonCodeSessionEffect] {
-  let effects : Array[MoonCodeSessionEffect] = []
-  if mooncode_should_fast_poll(model) {
-    if model.selected_mooncode_session_id == "" {
-      effects.push(MoonCodeFetchSessions(""))
-    } else {
-      effects.push(MoonCodeFetchSelectedSession)
-    }
-    effects.push(MoonCodeScheduleFastPoll(generation))
-  } else {
-    effects.push(MoonCodeFetchDaemon)
-    effects.push(MoonCodeFetchSessions(""))
-    effects.push(MoonCodeFetchSelectedSession)
-    effects.push(MoonCodeSchedulePoll(generation))
-  }
-  effects
+  [
+    MoonCodeFetchDaemon,
+    MoonCodeFetchSessions(""),
+    MoonCodeScheduleMetadataRefresh(generation),
+  ]
 }
 
 ///|
-fn mooncode_poll_cmd(
+fn mooncode_metadata_refresh_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
   generation : Int,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_cmd(
-    dispatch,
-    model,
-    mooncode_poll_effects(model, generation),
+    dispatch, model, mooncode_metadata_refresh_effects(generation),
   )
 }
 
 ///|
-fn mooncode_should_fast_poll(model : Model) -> Bool {
-  if model.selected_mooncode_session_id == "" {
-    return mooncode_optimistic_rows_have_session(
-      model.mooncode_optimistic_rows,
-      mooncode_draft_session_id(model),
-    )
-  }
-  mooncode_selected_session_has_inflight_state(
-    model,
-    model.selected_mooncode_session_id,
-  )
-}
-
-///|
-fn mooncode_selected_session_effects(
-  session_id : String,
-) -> Array[MoonCodeSessionEffect] {
-  [MoonCodeFetchSession(session_id)]
+fn mooncode_selected_session_effects() -> Array[MoonCodeSessionEffect] {
+  [MoonCodeStartWatch]
 }
 
 ///|
 fn mooncode_selected_session_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
-  session_id : String,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_cmd(
-    dispatch,
-    model,
-    mooncode_selected_session_effects(session_id),
+    dispatch, model, mooncode_selected_session_effects(),
   )
 }

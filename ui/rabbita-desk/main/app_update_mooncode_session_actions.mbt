@@ -5,23 +5,26 @@ fn update_mooncode_session_actions(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    SelectMoonCodeSession(session_id) =>
+    SelectMoonCodeSession(session_id) => {
+      let next = mooncode_select_session_model(model, session_id)
       (
         @rabbita.batch([
-          mooncode_selected_session_cmd(dispatch, model, session_id),
+          mooncode_selected_session_cmd(dispatch, next),
           sync_mooncode_context_cmd(
             mooncode_workspace_id_for_selected_session(model, session_id),
             session_id,
           ),
         ]),
-        mooncode_select_session_model(model, session_id),
+        next,
       )
+    }
     NewMoonCodeSession =>
       (
         @rabbita.batch([
           sync_shell_cmd(MoonCode, model.activity),
           sync_mooncode_context_cmd(model.selected_workspace_id, ""),
           clear_mooncode_composer_cmd(),
+          stop_mooncode_watch_cmd(),
         ]),
         {
           ..model,
@@ -30,6 +33,10 @@ fn update_mooncode_session_actions(
           selected_mooncode_session_id: "",
           mooncode_new_chat_active: true,
           mooncode_prompt: "",
+          mooncode_watch_generation: model.mooncode_watch_generation + 1,
+          mooncode_watch_revision: 0,
+          mooncode_watch_sequence: 0,
+          mooncode_watch_status: "idle",
           mooncode_composer_status: "new session draft",
         },
       )
@@ -62,6 +69,10 @@ fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
     selected_workspace_id: workspace_id,
     selected_mooncode_session_id: session_id,
     mooncode_new_chat_active: session_id == "",
+    mooncode_watch_generation: model.mooncode_watch_generation + 1,
+    mooncode_watch_revision: 0,
+    mooncode_watch_sequence: 0,
+    mooncode_watch_status: if session_id == "" { "idle" } else { "connecting" },
   }
 }
 
@@ -106,7 +117,7 @@ fn mooncode_send_composer(
         let prompt = model.mooncode_prompt.trim().to_owned()
         if mooncode_selected_session_has_inflight_state(model, session.id) {
           return (
-            fetch_mooncode_session_cmd(dispatch, session.id),
+            mooncode_watch_cmd(dispatch, model),
             {
               ..model,
               workspace_mode: MoonCode,
@@ -122,13 +133,11 @@ fn mooncode_send_composer(
           )
         }
         let client_turn_id = mooncode_client_turn_id(model, session.id, prompt)
-        let poll_generation = model.mooncode_poll_generation + 1
         (
           mooncode_after_user_submit_cmd(
             dispatch,
             model,
             send_mooncode_composer_cmd(dispatch, model, session),
-            poll_generation,
           ),
           {
             ..model,
@@ -144,7 +153,6 @@ fn mooncode_send_composer(
             ),
             mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
             1,
-            mooncode_poll_generation: poll_generation,
             mooncode_composer_status: "message queued for MoonCode",
           },
         )
@@ -170,13 +178,11 @@ fn mooncode_send_composer(
         let client_turn_id = mooncode_client_turn_id(
           model, draft_session_id, prompt,
         )
-        let poll_generation = model.mooncode_poll_generation + 1
         (
           mooncode_after_user_submit_cmd(
             dispatch,
             model,
             create_mooncode_session_cmd(dispatch, model),
-            poll_generation,
           ),
           {
             ..model,
@@ -192,7 +198,6 @@ fn mooncode_send_composer(
             ),
             mooncode_next_client_turn_index: model.mooncode_next_client_turn_index +
             1,
-            mooncode_poll_generation: poll_generation,
             mooncode_composer_status: "message queued for MoonCode",
           },
         )

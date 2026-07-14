@@ -59,7 +59,8 @@ fn update(
     ManagedMoonClaw(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonClawModels(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeSessions(_) => update_mooncode_results(dispatch, msg, model)
-    LoadedMoonCodeSession(_, _) => update_mooncode_results(dispatch, msg, model)
+    LoadedMoonCodeWatch(_, _, _) =>
+      update_mooncode_results(dispatch, msg, model)
     CreatedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     CompletedMoonCodeCommand(_) => update_mooncode_results(dispatch, msg, model)
     SelectWorkspaceMode(_) => update_navigation_actions(dispatch, msg, model)
@@ -101,7 +102,10 @@ fn update(
     SetMoonCodePrompt(_) => update_mooncode_actions(dispatch, msg, model)
     SendMoonCodeMessage => update_mooncode_actions(dispatch, msg, model)
     ManageMoonClaw(_) => update_mooncode_actions(dispatch, msg, model)
-    PollMoonCodeSessions(_) => update_mooncode_actions(dispatch, msg, model)
+    RefreshMoonCodeMetadata(_) =>
+      update_mooncode_actions(dispatch, msg, model)
+    ResumeMoonCodeWatch(_, _) =>
+      update_mooncode_actions(dispatch, msg, model)
     SetGoalTitle(_) => update_book_builder_actions(dispatch, msg, model)
     SetGoalCadenceTicks(_) => update_book_builder_actions(dispatch, msg, model)
     SetGoalReviewPolicy(_) => update_book_builder_actions(dispatch, msg, model)
@@ -237,7 +241,6 @@ test {
   ignore(fetch_moonclaw_daemon_cmd)
   ignore(fetch_moonclaw_models_cmd)
   ignore(fetch_mooncode_sessions_cmd)
-  ignore(fetch_mooncode_session_cmd)
   ignore(fetch_book_patterns_cmd)
   ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
@@ -265,7 +268,7 @@ test {
   ignore(set_daemon_supervision_cmd)
   ignore(manage_launch_agent_cmd)
   ignore(create_mooncode_session_cmd)
-  ignore(schedule_mooncode_poll)
+  ignore(schedule_mooncode_metadata_refresh)
   ignore(install_desk_location_enter_cmd)
   ignore(pick_import_files_cmd)
   ignore(pick_import_folder_cmd)

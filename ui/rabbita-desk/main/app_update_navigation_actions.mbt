@@ -177,11 +177,16 @@ fn select_workspace_action(
       fetch_mooncode_sessions_cmd(dispatch, ""),
       sync_workspace_context_cmd(workspace_id, ""),
       sync_mooncode_context_cmd(workspace_id, ""),
+      stop_mooncode_watch_cmd(),
     ]),
     clear_markdown_editor({
       ..model,
       selected_workspace_id: workspace_id,
       selected_mooncode_session_id: "",
+      mooncode_watch_generation: model.mooncode_watch_generation + 1,
+      mooncode_watch_revision: 0,
+      mooncode_watch_sequence: 0,
+      mooncode_watch_status: "idle",
       mooncode_new_chat_active: false,
       mooncode_prompt: "",
       request_material_paths: [],
@@ -631,55 +636,85 @@ fn select_workspace_mode_action(
   } else {
     sync_shell_cmd(mode, activity)
   }
-  (
-    base_cmd,
-    {
-      ..clear_if_switching_out_of_markdown_editor(model, mode),
-      workspace_mode: mode,
-      activity,
-      command_open: false,
-      command_query: "",
-      current_directory: if mode == Desk {
-        desk_directory
-      } else {
-        model.current_directory
-      },
-      desk_location_input: if mode == Desk {
-        desk_directory
-      } else {
-        model.desk_location_input
-      },
-      desk_filter_query: if mode == Desk {
-        ""
-      } else {
-        model.desk_filter_query
-      },
-      preview: if mode == Desk {
-        None
-      } else {
-        model.preview
-      },
-      preview_status: if mode == Desk && model.selected_workspace_id != "" {
-        "loading desk context"
-      } else {
-        model.preview_status
-      },
-      mooncode_prompt: if mode == MoonCode {
-        ""
-      } else {
-        model.mooncode_prompt
-      },
-      mooncode_new_chat_active: if mode == MoonCode {
-        false
-      } else {
-        model.mooncode_new_chat_active
-      },
-      mooncode_composer_status: if mode == MoonCode {
-        "MoonCode workspace ready"
-      } else {
-        model.mooncode_composer_status
-      },
+  let mode_changed = mode != model.workspace_mode
+  let next = {
+    ..clear_if_switching_out_of_markdown_editor(model, mode),
+    workspace_mode: mode,
+    activity,
+    command_open: false,
+    command_query: "",
+    current_directory: if mode == Desk {
+      desk_directory
+    } else {
+      model.current_directory
     },
+    desk_location_input: if mode == Desk {
+      desk_directory
+    } else {
+      model.desk_location_input
+    },
+    desk_filter_query: if mode == Desk {
+      ""
+    } else {
+      model.desk_filter_query
+    },
+    preview: if mode == Desk { None } else { model.preview },
+    preview_status: if mode == Desk && model.selected_workspace_id != "" {
+      "loading desk context"
+    } else {
+      model.preview_status
+    },
+    mooncode_prompt: if mode == MoonCode {
+      ""
+    } else {
+      model.mooncode_prompt
+    },
+    mooncode_new_chat_active: if mode == MoonCode {
+      false
+    } else {
+      model.mooncode_new_chat_active
+    },
+    mooncode_watch_generation: if mode_changed {
+      model.mooncode_watch_generation + 1
+    } else {
+      model.mooncode_watch_generation
+    },
+    mooncode_watch_revision: if mode_changed {
+      0
+    } else {
+      model.mooncode_watch_revision
+    },
+    mooncode_watch_sequence: if mode_changed {
+      0
+    } else {
+      model.mooncode_watch_sequence
+    },
+    mooncode_watch_status: if mode == MoonCode &&
+      model.selected_mooncode_session_id != "" {
+      "connecting"
+    } else if mode == MoonCode {
+      "idle"
+    } else {
+      "paused"
+    },
+    mooncode_composer_status: if mode == MoonCode {
+      "MoonCode workspace ready"
+    } else {
+      model.mooncode_composer_status
+    },
+  }
+  let transport_cmd = if !mode_changed {
+    @rabbita.none
+  } else if mode == MoonCode && next.selected_mooncode_session_id != "" {
+    mooncode_watch_cmd(dispatch, next)
+  } else if model.workspace_mode == MoonCode {
+    stop_mooncode_watch_cmd()
+  } else {
+    @rabbita.none
+  }
+  (
+    @rabbita.batch([base_cmd, transport_cmd]),
+    next,
   )
 }
 

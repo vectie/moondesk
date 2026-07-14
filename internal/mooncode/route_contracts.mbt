@@ -64,6 +64,11 @@ pub fn desktop_session_stream_state_endpoint() -> String {
 }
 
 ///|
+pub fn desktop_session_watch_endpoint() -> String {
+  "/api/mooncode/sessions/<session-id>/watch?since_revision=<revision>&since_sequence=<sequence>"
+}
+
+///|
 pub fn desktop_session_commands_endpoint() -> String {
   "/api/mooncode/sessions/<session-id>/commands"
 }
@@ -201,6 +206,7 @@ pub fn desktop_projection_route_contracts() -> Array[Json] {
     desktop_route_contract(desktop_session_stream_state_endpoint(), [
       "GET", "HEAD", "POST",
     ]),
+    desktop_route_contract(desktop_session_watch_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_commands_endpoint(), [
       "GET", "HEAD", "POST",
     ]),
