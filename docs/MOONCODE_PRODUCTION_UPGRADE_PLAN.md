@@ -288,6 +288,19 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   Moondesk tests, both native builds, and a visible browser journey with mouse
   submission, Enter submission, live factual work, two ordered answers, daemon
   restart, hard reload, stable MoonBook grouping, and exact command accounting.
+- 2026-07-15: The first Milestone E vertical slice added safe assistant
+  Markdown, code-block and answer copy actions, canonical file/command/output/
+  test evidence, reviewable diffs, one turn-owned Retry action, and real Stop
+  commands. MoonClaw now publishes owner-curated evidence and completes every
+  model-selected tool call in a batch before asking the model to continue,
+  including when one call fails. Moondesk sends file context only for a real
+  selected file, never for a synthetic wiki path.
+- 2026-07-15: This slice passed 1,125 MoonClaw tests, 463 Moondesk core tests,
+  539 Moondesk UI tests, both native builds, the production browser build, and
+  a visible real-daemon journey. Browser evidence covered immediate mouse and
+  Enter submission, factual work updates, honest failed-tool evidence, Retry,
+  a successful second turn, native disclosure toggling, exact clipboard copy,
+  append-only order, and hard-reload persistence.
 
 ## Current Completion And Remaining Order
 
@@ -306,9 +319,14 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   remaining work is a single documented journal sequence contract plus
   concurrent-writer, torn-tail, duplicate-delivery, crash-point, and replay
   equivalence testing.
-- Milestone E is the next major product upgrade: Markdown and code rendering,
-  reviewable diffs, approvals, cancel/retry, actionable failure recovery, and
-  durable model/web-search preferences.
+- Milestone E is partially complete. Safe Markdown and code rendering,
+  answer/code/evidence copy, canonical file diffs, command/output/test evidence,
+  Retry, and Stop command wiring are implemented. The remaining work is the
+  approval decision workflow, confirmation that cancellation interrupts a real
+  long-running tool, richer permission/context-loss recovery, durable
+  model/web-search preferences, and stronger agent planning so explicit file
+  inspection and project scaffolding are executed correctly instead of merely
+  producing an honest failure.
 - Milestone F has its grouping and selection foundation. Rename, archive,
   delete, search, history virtualization, and large-catalog performance remain.
 - Milestone G is partially complete through local native, production-build, and

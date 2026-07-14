@@ -447,6 +447,78 @@ test "code mode canonical work stays folded between user and assistant" {
 }
 
 ///|
+test "code mode canonical work exposes typed edit and test evidence in its turn" {
+  let session = {
+    ..code_mode_test_session("session-evidence", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-evidence", [
+        code_mode_test_turn(
+          "command-evidence",
+          "Update the parser and run tests",
+          assistant="Updated and verified.",
+          steps=[
+            {
+              "item_id": "edit-parser",
+              "title": "Updated files",
+              "summary": "Updated `src/parser.mbt`.",
+              "status": "done",
+              "evidence": {
+                "kind": "edit",
+                "state": "applied",
+                "path": "src/parser.mbt",
+                "diff": "--- a/src/parser.mbt\n+++ b/src/parser.mbt\n-old\n+new\n",
+                "command": "",
+                "output": "",
+                "exit_code": -1,
+                "truncated": false,
+              },
+            },
+            {
+              "item_id": "test-parser",
+              "title": "Checked result",
+              "summary": "Finished checking the result.",
+              "status": "done",
+              "evidence": {
+                "kind": "test",
+                "state": "passed",
+                "path": "",
+                "diff": "",
+                "command": "moon test",
+                "output": "Total tests: 4, passed: 4",
+                "exit_code": 0,
+                "truncated": false,
+              },
+            },
+          ],
+        ),
+      ]),
+    ),
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  match items[1].activity {
+    Some(row) => {
+      assert_true(row.folded)
+      assert_eq(row.session_id, "session-evidence")
+      assert_eq(row.retry_prompt, "Update the parser and run tests")
+      assert_eq(row.evidence.length(), 2)
+      assert_eq(row.evidence[0].kind, "edit")
+      assert_eq(row.evidence[0].state, "applied")
+      assert_eq(row.evidence[0].path, "src/parser.mbt")
+      assert_true(row.evidence[0].diff.contains("+new"))
+      assert_eq(row.evidence[1].kind, "test")
+      assert_eq(row.evidence[1].state, "passed")
+      assert_eq(row.evidence[1].command, "moon test")
+      assert_eq(row.evidence[1].exit_code, 0)
+    }
+    None => fail("expected canonical work evidence")
+  }
+  match items[2].message {
+    Some(row) => assert_eq(row.role, "assistant")
+    None => fail("expected assistant result")
+  }
+}
+
+///|
 test "code mode folded work renders producer-owned user-facing wording" {
   let session = {
     ..code_mode_test_session("session-a", status="done"),
@@ -1460,6 +1532,75 @@ test "code mode command error shows failed assistant row and unblocks composer" 
 }
 
 ///|
+test "code mode direct retry appends a new canonical prompt request" {
+  let session = code_mode_test_session("session-retry", status="failed")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: session.id,
+    mooncode_sessions: [session],
+  }
+  let (_, retried) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    RetryMoonCodeTurn(session.id, "Run the failed check again"),
+    model,
+  )
+  assert_eq(retried.mooncode_prompt, "")
+  assert_eq(retried.mooncode_optimistic_rows.length(), 1)
+  assert_eq(
+    retried.mooncode_optimistic_rows[0].content,
+    "Run the failed check again",
+  )
+  assert_eq(retried.mooncode_composer_status, "message queued for MoonCode")
+}
+
+///|
+test "code mode cancel is available only while canonical work is active" {
+  let running = code_mode_test_session("session-running", status="running")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: running.id,
+    mooncode_sessions: [running],
+  }
+  let (_, cancelling) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    CancelMoonCodeWork(running.id),
+    model,
+  )
+  assert_eq(cancelling.mooncode_composer_status, "Cancellation requested")
+  let done = { ..running, status: "done" }
+  let (_, unchanged) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    CancelMoonCodeWork(done.id),
+    { ..model, mooncode_sessions: [done] },
+  )
+  assert_eq(unchanged.mooncode_composer_status, "MoonCode is not running")
+}
+
+///|
+test "code mode copy feedback clears only the matching item" {
+  let (_, copied) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    CopyMoonCodeText("answer-1", "answer"),
+    init_model(),
+  )
+  assert_eq(copied.mooncode_copied_item_id, "answer-1")
+  let (_, stale_clear) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    ClearMoonCodeCopy("answer-2"),
+    copied,
+  )
+  assert_eq(stale_clear.mooncode_copied_item_id, "answer-1")
+  let (_, cleared) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    ClearMoonCodeCopy("answer-1"),
+    stale_clear,
+  )
+  assert_eq(cleared.mooncode_copied_item_id, "")
+}
+
+///|
 test "code mode explicit new session draft is not replaced by existing sessions" {
   let session = code_mode_test_session("existing")
   let model = {
@@ -2310,6 +2451,27 @@ test "code mode composer always queues a prompt from the chat input" {
     "Prompt",
   )
   assert_eq(mooncode_composer_button_label(model, None), "Start")
+}
+
+///|
+test "code mode only sends a context path for a real selected file" {
+  let missing = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    selected_path: "wiki/index.md",
+    entries: [
+      @desk.file_entry(workspace_id="book-demo", path="wiki", is_directory=true),
+    ],
+  }
+  assert_eq(mooncode_context_path(missing), "")
+  let selected = {
+    ..missing,
+    selected_path: "tools/parser.mbt",
+    entries: [
+      @desk.file_entry(workspace_id="book-demo", path="tools/parser.mbt"),
+    ],
+  }
+  assert_eq(mooncode_context_path(selected), "tools/parser.mbt")
 }
 
 ///|

@@ -8,8 +8,24 @@ fn update_mooncode_actions(
     SelectMoonCodeSession(_)
     | NewMoonCodeSession
     | SetMoonCodePrompt(_)
-    | SendMoonCodeMessage(_) =>
+    | SendMoonCodeMessage(_)
+    | RetryMoonCodeTurn(_, _)
+    | CancelMoonCodeWork(_) =>
       update_mooncode_session_actions(dispatch, msg, model)
+    CopyMoonCodeText(item_id, text) =>
+      (
+        @rabbita.batch([
+          copy_text_to_clipboard_cmd(text),
+          @rabbita.delay(dispatch(ClearMoonCodeCopy(item_id)), 1500),
+        ]),
+        { ..model, mooncode_copied_item_id: item_id },
+      )
+    ClearMoonCodeCopy(item_id) =>
+      if model.mooncode_copied_item_id == item_id {
+        (@rabbita.none, { ..model, mooncode_copied_item_id: "" })
+      } else {
+        (@rabbita.none, model)
+      }
     ManageMoonClaw(action) =>
       (
         manage_moonclaw_cmd(dispatch, action),

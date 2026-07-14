@@ -56,7 +56,79 @@ fn update_mooncode_session_actions(
       )
     SendMoonCodeMessage(prompt) =>
       mooncode_send_composer(dispatch, { ..model, mooncode_prompt: prompt })
+    RetryMoonCodeTurn(session_id, prompt) =>
+      mooncode_retry_turn(dispatch, model, session_id, prompt)
+    CancelMoonCodeWork(session_id) =>
+      mooncode_cancel_work(dispatch, model, session_id)
     _ => (@rabbita.none, model)
+  }
+}
+
+///|
+fn mooncode_retry_turn(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session_id : String,
+  prompt : String,
+) -> (@rabbita.Cmd, Model) {
+  let prompt = prompt.trim().to_owned()
+  if prompt == "" {
+    return (
+      @rabbita.none,
+      { ..model, mooncode_composer_status: "Nothing to retry" },
+    )
+  }
+  match mooncode_find_session(model.mooncode_sessions, session_id) {
+    Some(_) => {
+      let selected = if model.selected_mooncode_session_id == session_id {
+        model
+      } else {
+        mooncode_select_session_model(model, session_id)
+      }
+      mooncode_send_composer(dispatch, {
+        ..selected,
+        mooncode_prompt: prompt,
+        mooncode_composer_status: "retrying",
+      })
+    }
+    None =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_composer_status: "This MoonCode session is no longer available",
+        },
+      )
+  }
+}
+
+///|
+fn mooncode_cancel_work(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session_id : String,
+) -> (@rabbita.Cmd, Model) {
+  match mooncode_find_session(model.mooncode_sessions, session_id) {
+    Some(session) if session.status == "running" ||
+      session.status == "queued" ||
+      session.queued_count > 0 =>
+      (
+        mooncode_session_command_cmd(dispatch, model, session, "cancel"),
+        { ..model, mooncode_composer_status: "Cancellation requested" },
+      )
+    Some(_) =>
+      (
+        @rabbita.none,
+        { ..model, mooncode_composer_status: "MoonCode is not running" },
+      )
+    None =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_composer_status: "This MoonCode session is no longer available",
+        },
+      )
   }
 }
 

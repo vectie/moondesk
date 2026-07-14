@@ -88,6 +88,7 @@ struct Model {
   mooncode_model : String
   mooncode_web_search : Bool
   mooncode_composer_status : String
+  mooncode_copied_item_id : String
   mooncode_next_client_turn_index : Int
   mooncode_optimistic_rows : Array[MoonCodeOptimisticRow]
   mooncode_metadata_generation : Int
@@ -207,6 +208,10 @@ enum Msg {
   NewMoonCodeSession
   SetMoonCodePrompt(String)
   SendMoonCodeMessage(String)
+  CopyMoonCodeText(String, String)
+  ClearMoonCodeCopy(String)
+  RetryMoonCodeTurn(String, String)
+  CancelMoonCodeWork(String)
   ManageMoonClaw(String)
   RefreshMoonCodeMetadata(Int)
   ResumeMoonCodeWatch(Int, String)

@@ -1,0 +1,403 @@
+.mooncode-message.assistant {
+  position: relative;
+}
+
+.mooncode-markdown {
+  display: block;
+  overflow: visible;
+  color: var(--mooncode-ink);
+  font-family: Inter, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.58;
+  white-space: normal;
+}
+
+.mooncode-markdown > :first-child {
+  margin-top: 0;
+}
+
+.mooncode-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.mooncode-markdown p,
+.mooncode-markdown ul,
+.mooncode-markdown ol,
+.mooncode-markdown blockquote,
+.mooncode-markdown table {
+  margin: 0 0 12px;
+}
+
+.mooncode-markdown h1,
+.mooncode-markdown h2,
+.mooncode-markdown h3,
+.mooncode-markdown h4,
+.mooncode-markdown h5,
+.mooncode-markdown h6 {
+  margin: 18px 0 8px;
+  color: var(--mooncode-ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.mooncode-markdown h1 {
+  font-size: 19px;
+}
+
+.mooncode-markdown h2 {
+  font-size: 17px;
+}
+
+.mooncode-markdown ul,
+.mooncode-markdown ol {
+  padding-left: 22px;
+}
+
+.mooncode-markdown li + li {
+  margin-top: 4px;
+}
+
+.mooncode-markdown blockquote {
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--mooncode-line-strong);
+  color: var(--mooncode-muted);
+}
+
+.mooncode-markdown a {
+  color: var(--mooncode-accent-hover);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.mooncode-markdown a:focus-visible,
+.mooncode-copy-button:focus-visible,
+.mooncode-inline-action:focus-visible,
+.mooncode-evidence-summary:focus-visible {
+  border-radius: 5px;
+  outline: 3px solid var(--mooncode-focus);
+  outline-offset: 2px;
+}
+
+.mooncode-markdown .mooncode-inline-code {
+  display: inline;
+  padding: 1px 5px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 5px;
+  background: #f1f5f9;
+  color: #7f1d1d;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  line-height: inherit;
+  white-space: break-spaces;
+}
+
+.mooncode-code-block,
+.mooncode-evidence-text,
+.mooncode-diff-shell {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 7px;
+  background: #f8fafc;
+}
+
+.mooncode-code-block {
+  margin: 12px 0;
+}
+
+.mooncode-code-toolbar,
+.mooncode-evidence-toolbar {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 8px 5px 10px;
+  border-bottom: 1px solid var(--mooncode-line);
+  background: #eef2f7;
+  color: var(--mooncode-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.mooncode-copy-button,
+.mooncode-inline-action {
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--mooncode-muted);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mooncode-copy-button:hover,
+.mooncode-inline-action:hover {
+  border-color: var(--mooncode-line-strong);
+  color: var(--mooncode-ink);
+}
+
+.mooncode-inline-action.stop {
+  border-color: rgba(185, 28, 28, 0.25);
+  color: #991b1b;
+}
+
+.mooncode-inline-action.retry {
+  border-color: rgba(37, 99, 235, 0.26);
+  color: var(--mooncode-accent-hover);
+}
+
+.mooncode-code-block pre,
+.mooncode-evidence-text pre {
+  max-height: 420px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  background: #111827;
+  color: #e5edf7;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.mooncode-code-block pre code {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  white-space: inherit;
+}
+
+.mooncode-markdown table {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.mooncode-markdown th,
+.mooncode-markdown td {
+  padding: 7px 9px;
+  border: 1px solid var(--mooncode-line);
+  text-align: left;
+}
+
+.mooncode-markdown th {
+  background: #f1f5f9;
+  font-weight: 700;
+}
+
+.mooncode-message-actions {
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.mooncode-message.assistant .mooncode-message-actions {
+  opacity: 0.62;
+}
+
+.mooncode-message.assistant:hover .mooncode-message-actions,
+.mooncode-message.assistant:focus-within .mooncode-message-actions {
+  opacity: 1;
+}
+
+.mooncode-activity-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.mooncode-activity-controls > span {
+  color: var(--mooncode-subtle);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.mooncode-evidence-list {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding: 0;
+  color: var(--mooncode-ink);
+  font-size: 12px;
+}
+
+.mooncode-evidence {
+  min-width: 0;
+  border-top: 1px solid var(--mooncode-line);
+}
+
+.mooncode-evidence:first-child {
+  border-top: 0;
+}
+
+.mooncode-evidence-summary {
+  min-height: 32px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  color: var(--mooncode-muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.mooncode-evidence-summary::-webkit-details-marker {
+  display: none;
+}
+
+.mooncode-evidence-summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  position: absolute;
+  margin-left: -12px;
+  border-right: 1.5px solid var(--mooncode-subtle);
+  border-bottom: 1.5px solid var(--mooncode-subtle);
+  transform: rotate(-45deg);
+}
+
+.mooncode-evidence[open] > .mooncode-evidence-summary::before {
+  transform: rotate(45deg);
+}
+
+.mooncode-evidence.summary-only > .mooncode-evidence-summary::before {
+  display: none;
+}
+
+.mooncode-evidence-kind {
+  color: var(--mooncode-muted);
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.mooncode-evidence-kind.edit {
+  color: #6d28d9;
+}
+
+.mooncode-evidence-kind.test {
+  color: #047857;
+}
+
+.mooncode-evidence-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mooncode-ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mooncode-evidence-state {
+  color: var(--mooncode-subtle);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+.mooncode-evidence-state.applied,
+.mooncode-evidence-state.passed {
+  color: #047857;
+}
+
+.mooncode-evidence-state.failed,
+.mooncode-evidence-state.cancelled {
+  color: #b91c1c;
+}
+
+.mooncode-evidence-detail {
+  margin: 0 0 7px;
+  color: var(--mooncode-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.mooncode-evidence-text,
+.mooncode-diff-shell {
+  margin: 5px 0 8px;
+}
+
+.mooncode-diff {
+  max-height: 360px;
+  overflow: auto;
+  padding: 5px 0;
+  background: #f8fafc;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.mooncode-diff-line {
+  min-width: max-content;
+  padding: 0 9px;
+  white-space: pre;
+}
+
+.mooncode-diff-line.add {
+  background: rgba(5, 150, 105, 0.1);
+  color: #065f46;
+}
+
+.mooncode-diff-line.delete {
+  background: rgba(220, 38, 38, 0.08);
+  color: #991b1b;
+}
+
+.mooncode-diff-line.meta {
+  color: #6d28d9;
+}
+
+.mooncode-markdown-fallback,
+.mooncode-raw-html {
+  overflow: auto;
+  margin: 0;
+  color: var(--mooncode-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 760px) {
+  .mooncode-markdown {
+    font-size: 14px;
+  }
+
+  .mooncode-evidence-summary {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .mooncode-evidence-state {
+    grid-column: 2;
+  }
+
+  .mooncode-code-block pre,
+  .mooncode-evidence-text pre {
+    max-height: 300px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mooncode-message.assistant .mooncode-message-actions {
+    transition: none;
+  }
+}

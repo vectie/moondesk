@@ -1,5 +1,6 @@
 ///|
 struct MoonCodeTranscriptRow {
+  item_id : String
   role : String
   content : String
   status : String
@@ -15,6 +16,7 @@ struct MoonCodeTranscriptItem {
 
 ///|
 fn render_mooncode_transcript(
+  dispatch : Dispatch[Msg],
   model : Model,
   session : MoonCodeSession,
 ) -> @rabbita.Html {
@@ -28,10 +30,12 @@ fn render_mooncode_transcript(
     let children : Array[@rabbita.Html] = []
     for item in items {
       match item.message {
-        Some(row) => children.push(render_mooncode_transcript_row(row))
+        Some(row) =>
+          children.push(render_mooncode_transcript_row(dispatch, model, row))
         None =>
           match item.activity {
-            Some(row) => children.push(render_mooncode_activity_row(row))
+            Some(row) =>
+              children.push(render_mooncode_activity_row(dispatch, model, row))
             None => ()
           }
       }
@@ -92,7 +96,28 @@ fn mooncode_transcript_activity_item(
 }
 
 ///|
-fn render_mooncode_transcript_row(row : MoonCodeTranscriptRow) -> @rabbita.Html {
+fn render_mooncode_transcript_row(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  row : MoonCodeTranscriptRow,
+) -> @rabbita.Html {
+  let message_id = if row.item_id == "" {
+    @desk.stable_id("mooncode-message", row.client_turn_id + ":" + row.content)
+  } else {
+    row.item_id
+  }
+  let body = if row.role == "assistant" {
+    div(
+      class="mooncode-message-body mooncode-markdown",
+      mooncode_markdown_nodes(
+        dispatch,
+        model.mooncode_copied_item_id,
+        row.content,
+      ),
+    )
+  } else {
+    pre(class="mooncode-message-body", row.content)
+  }
   div(
     class="mooncode-message " + row.role + " " + row.status,
     attrs=@html.Attrs::build()
@@ -101,7 +126,33 @@ fn render_mooncode_transcript_row(row : MoonCodeTranscriptRow) -> @rabbita.Html 
       .data_set("status", row.status)
       .data_set("command-id", row.command_id)
       .data_set("client-turn-id", row.client_turn_id),
-    [pre(class="mooncode-message-body", row.content)],
+    [
+      body,
+      if row.role == "assistant" {
+        div(class="mooncode-message-actions", [
+          button(
+            class="mooncode-inline-action",
+            attrs=@html.Attrs::build()
+              .aria_label(
+                if model.mooncode_copied_item_id == message_id {
+                  "Copied answer"
+                } else {
+                  "Copy answer"
+                },
+              )
+              .data_set("testid", "mooncode-copy-answer"),
+            on_click=dispatch(CopyMoonCodeText(message_id, row.content)),
+            if model.mooncode_copied_item_id == message_id {
+              "Copied"
+            } else {
+              "Copy"
+            },
+          ),
+        ])
+      } else {
+        @html.nothing
+      },
+    ],
   )
 }
 

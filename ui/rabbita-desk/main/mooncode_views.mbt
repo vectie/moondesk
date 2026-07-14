@@ -324,7 +324,7 @@ fn render_mooncode_center(
             Some(session) =>
               div(class="mooncode-session-surface", [
                 render_mooncode_session_state(session),
-                render_mooncode_transcript(model, session),
+                render_mooncode_transcript(dispatch, model, session),
               ])
             None =>
               div(class="mooncode-empty", [

@@ -45,15 +45,21 @@ fn mooncode_canonical_turns_from_backend_conversation(
         mooncode_canonical_note_turn_metadata(backend_turn)
         let turn = mooncode_canonical_empty_turn()
         turn.client_turn_id = backend_turn.client_turn_id
+        let mut retry_prompt = ""
         match mooncode_canonical_message_row_from_json(backend_turn.user) {
-          Some(row) => turn.user = Some(row)
+          Some(row) => {
+            retry_prompt = row.content
+            turn.user = Some(row)
+          }
           None => ()
         }
         match
           mooncode_canonical_work_item_from_json(
             backend_turn.work,
+            session.id,
             backend_turn.command_id,
             backend_turn.client_turn_id,
+            retry_prompt,
           ) {
           Some(item) => turn.body_items.push(item)
           None => ()
@@ -113,10 +119,12 @@ fn mooncode_canonical_message_row_from_json(
   if content == "" {
     return None
   }
+  let role = mooncode_transcript_message_role(
+    json_field_string(value, "role", default="assistant"),
+  )
   Some({
-    role: mooncode_transcript_message_role(
-      json_field_string(value, "role", default="assistant"),
-    ),
+    item_id: json_field_string(value, "item_id", default=""),
+    role,
     content,
     status: json_field_string(value, "status", default="done"),
     command_id: json_field_string(value, "command_id", default=""),
@@ -127,8 +135,10 @@ fn mooncode_canonical_message_row_from_json(
 ///|
 fn mooncode_canonical_work_item_from_json(
   work : Json,
+  session_id : String,
   command_id : String,
   client_turn_id : String,
+  retry_prompt : String,
 ) -> MoonCodeTranscriptItem? {
   let summary = json_field_string(work, "summary", default="").trim().to_owned()
   let status = json_field_string(work, "status", default="queued")
@@ -155,6 +165,9 @@ fn mooncode_canonical_work_item_from_json(
       folded: status == "done" || status == "failed" || status == "cancelled",
       command_id,
       client_turn_id,
+      session_id,
+      retry_prompt,
+      evidence: mooncode_canonical_work_evidence(work),
     }),
   )
 }
@@ -178,6 +191,36 @@ fn mooncode_canonical_work_detail(work : Json) -> String {
     lines.push(live_summary)
   }
   lines.join("\n")
+}
+
+///|
+fn mooncode_canonical_work_evidence(work : Json) -> Array[MoonCodeEvidenceRow] {
+  let rows : Array[MoonCodeEvidenceRow] = []
+  for step in json_field_json_array_items(work, "steps") {
+    let evidence = mooncode_canonical_json_object_field(step, "evidence")
+    let kind = json_field_string(evidence, "kind", default="")
+    let path = json_field_string(evidence, "path", default="")
+    let diff = json_field_string(evidence, "diff", default="")
+    let command = json_field_string(evidence, "command", default="")
+    let output = json_field_string(evidence, "output", default="")
+    if kind == "" || (path == "" && diff == "" && command == "" && output == "") {
+      continue
+    }
+    rows.push({
+      item_id: json_field_string(step, "item_id", default=""),
+      kind,
+      state: json_field_string(evidence, "state", default="recorded"),
+      title: json_field_string(step, "title", default="Work evidence"),
+      path,
+      detail: json_field_string(step, "summary", default=""),
+      diff,
+      command,
+      output,
+      exit_code: json_field_int(evidence, "exit_code", default=-1),
+      truncated: json_field_bool(evidence, "truncated", default=false),
+    })
+  }
+  rows
 }
 
 ///|
@@ -220,6 +263,7 @@ fn mooncode_canonical_append_optimistic_rows(
       let turn = mooncode_canonical_empty_turn()
       turn.client_turn_id = row.key
       turn.user = Some({
+        item_id: row.key,
         role: "user",
         content,
         status: row.status,
@@ -229,6 +273,7 @@ fn mooncode_canonical_append_optimistic_rows(
       turns.push(turn)
     } else if role == "assistant" {
       let message = {
+        item_id: row.key,
         role: "assistant",
         content,
         status: row.status,

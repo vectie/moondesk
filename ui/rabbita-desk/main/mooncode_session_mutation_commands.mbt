@@ -143,7 +143,10 @@ fn mooncode_context_path(model : Model) -> String {
   if model.selected_workspace_id == "" {
     ""
   } else {
-    model.selected_path
+    match find_entry(model, model.selected_path) {
+      Some(entry) => if entry.kind is Directory { "" } else { entry.path }
+      _ => ""
+    }
   }
 }
 
