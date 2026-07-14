@@ -79,10 +79,6 @@ pub fn mooncode_session_listing_url(String) -> String
 
 pub fn mooncode_session_runtime_service_url(String) -> String
 
-pub fn mooncode_session_stream_state_url(String) -> String
-
-pub fn mooncode_session_stream_url(String, Int) -> String
-
 pub fn mooncode_session_url(String) -> String
 
 pub fn mooncode_session_watch_url(String, Int, Int) -> String

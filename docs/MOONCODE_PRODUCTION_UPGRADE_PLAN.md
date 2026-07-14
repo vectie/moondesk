@@ -301,6 +301,26 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   Enter submission, factual work updates, honest failed-tool evidence, Retry,
   a successful second turn, native disclosure toggling, exact clipboard copy,
   append-only order, and hard-reload persistence.
+- 2026-07-15: The selected-session watcher now has one generation-owned
+  lifecycle. Ordinary command completion no longer aborts and recreates a
+  healthy watch; selection changes create one replacement, and stale responses
+  or delayed retry timers cannot revive an older generation. Consecutive
+  failures use bounded 500/1,000/2,000/4,000/8,000 ms retry delays, while a
+  successful heartbeat resets the failure count and resumes from the last
+  accepted revision.
+- 2026-07-15: Session-listing transport failure is no longer represented as a
+  successful empty catalog. Moondesk returns `503 Service Unavailable` when
+  MoonClaw cannot supply the canonical listing, so the UI preserves its last
+  good selected transcript and session metadata during an outage. The obsolete
+  Moondesk `/stream` and `/stream-state` route constructors were removed; the
+  selected conversation uses only the canonical watch contract.
+- 2026-07-15: The watcher slice passed 463 Moondesk core tests and 542 UI tests,
+  including single-owner, stale-generation, selection replacement, heartbeat,
+  bounded-backoff, and outage-preservation coverage. A visible real-daemon
+  browser journey submitted with the keyboard, switched sessions with the
+  mouse, killed and restarted MoonClaw, and submitted another turn after
+  recovery. Every sampled frame retained the optimistic and committed turns;
+  no transcript blanking, duplicate answer, or reorder occurred.
 
 ## Current Completion And Remaining Order
 
@@ -310,10 +330,13 @@ transition, after idle refresh, after hard reload, and after daemon restart.
 - Milestone B is complete for the core transcript: optimistic user rows are
   immediate, work is event-backed and turn-owned, completed work folds in
   place, and answers append once below it.
-- Milestone C is partially complete. Canonical reads, revision resumes, compact
-  unchanged responses, and native stream forwarding exist. The remaining work
-  is one explicit selected-session watcher lifecycle with cancellation,
-  reconnect failure injection, heartbeat/backoff UX, and measured idle cost.
+- Milestone C is complete for the production selected-session path. Canonical
+  reads, revision resumes, compact unchanged responses, one generation-owned
+  watcher, cancellation by replacement, heartbeat recovery, bounded backoff,
+  stale-response rejection, and transcript-preserving daemon restart are
+  covered. Remaining transport hardening belongs to Milestone G: measure idle
+  request cost, add a long-soak fault matrix, and automate the real-daemon
+  restart journey in the local release gate.
 - Milestone D is partially complete. Atomic turn submission, one runtime
   service per session, canonical replay, and durable snapshots exist. The
   remaining work is a single documented journal sequence contract plus

@@ -70,8 +70,15 @@ fn mooncode_after_user_submit_cmd(
 }
 
 ///|
-fn mooncode_session_mutation_effects() -> Array[MoonCodeSessionEffect] {
-  [MoonCodeFetchSessions(""), MoonCodeStartWatch, MoonCodeSyncShell]
+fn mooncode_session_mutation_effects(
+  start_watch : Bool,
+) -> Array[MoonCodeSessionEffect] {
+  let effects = [MoonCodeFetchSessions("")]
+  if start_watch {
+    effects.push(MoonCodeStartWatch)
+  }
+  effects.push(MoonCodeSyncShell)
+  effects
 }
 
 ///|
@@ -79,12 +86,13 @@ fn mooncode_after_session_mutation_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
   session_id : String,
+  start_watch : Bool,
 ) -> @rabbita.Cmd {
   @rabbita.batch([
     mooncode_session_effects_cmd(
       dispatch,
       model,
-      mooncode_session_mutation_effects(),
+      mooncode_session_mutation_effects(start_watch),
     ),
     sync_mooncode_context_cmd(model.selected_workspace_id, session_id),
     clear_mooncode_composer_cmd(),

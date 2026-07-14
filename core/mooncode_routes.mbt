@@ -46,17 +46,6 @@ pub fn mooncode_session_chat_url(
 }
 
 ///|
-pub fn mooncode_session_stream_url(session_id : String, since : Int) -> String {
-  mooncode_session_url(session_id) +
-  "/stream?format=jsonl&since=\{since}&live=true&timeout_ms=1000&poll_ms=100"
-}
-
-///|
-pub fn mooncode_session_stream_state_url(session_id : String) -> String {
-  mooncode_session_url(session_id) + "/stream-state"
-}
-
-///|
 pub fn mooncode_session_watch_url(
   session_id : String,
   since_revision : Int,

@@ -780,6 +780,45 @@ test "code mode session listing failure also advances metadata generation" {
 }
 
 ///|
+test "code mode listing outage preserves selected terminal conversation" {
+  let session = {
+    ..code_mode_test_session("session-stable", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-stable", [
+        code_mode_test_turn(
+          "turn-stable",
+          "Keep this prompt",
+          assistant="Keep this answer",
+        ),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: session.id,
+    mooncode_sessions: [session],
+    mooncode_watch_generation: 4,
+    mooncode_watch_revision: 2,
+    mooncode_watch_status: "reconnecting",
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Err("MoonClaw unavailable")),
+    model,
+  )
+  assert_eq(next.selected_mooncode_session_id, session.id)
+  assert_eq(next.mooncode_sessions.length(), 1)
+  assert_eq(next.mooncode_watch_generation, 4)
+  assert_eq(next.mooncode_watch_revision, 2)
+  assert_eq(next.mooncode_watch_status, "reconnecting")
+  let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].content, "Keep this prompt")
+  assert_eq(rows[1].content, "Keep this answer")
+}
+
+///|
 test "code mode selecting moonbook session updates active scope" {
   let general = code_mode_test_session("general-a", workspace_id="")
   let book = code_mode_test_session("book-a", workspace_id="book-a")
@@ -1211,6 +1250,9 @@ test "code mode created session adopts draft prompt rows" {
   )
   assert_eq(next.selected_mooncode_session_id, "session-created")
   assert_false(next.mooncode_new_chat_active)
+  assert_eq(next.mooncode_watch_generation, 1)
+  assert_eq(next.mooncode_watch_status, "connecting")
+  assert_eq(next.mooncode_watch_failure_count, 0)
   assert_eq(next.mooncode_optimistic_rows.length(), 1)
   assert_eq(next.mooncode_optimistic_rows[0].session_id, "session-created")
   assert_eq(
@@ -1413,6 +1455,9 @@ test "code mode command result keeps optimistic prompt until canonical turn arri
     workspace_mode: MoonCode,
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
+    mooncode_watch_generation: 7,
+    mooncode_watch_status: "watching",
+    mooncode_watch_failure_count: 2,
     mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
       [],
       "session-a",
@@ -1427,6 +1472,9 @@ test "code mode command result keeps optimistic prompt until canonical turn arri
   )
   assert_eq(next.mooncode_optimistic_rows.length(), 1)
   assert_eq(next.mooncode_optimistic_rows[0].content, "Stable order please")
+  assert_eq(next.mooncode_watch_generation, 7)
+  assert_eq(next.mooncode_watch_status, "watching")
+  assert_eq(next.mooncode_watch_failure_count, 2)
 }
 
 ///|
@@ -2080,6 +2128,7 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
     mooncode_watch_generation: 4,
     mooncode_watch_revision: 8,
     mooncode_watch_sequence: 11,
+    mooncode_watch_failure_count: 4,
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
@@ -2098,6 +2147,7 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
   assert_eq(next.mooncode_watch_revision, 8)
   assert_eq(next.mooncode_watch_sequence, 11)
   assert_eq(next.mooncode_watch_status, "watching")
+  assert_eq(next.mooncode_watch_failure_count, 0)
   let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
   assert_eq(rows.length(), 2)
   assert_eq(rows[0].content, "Stable prompt")
@@ -2181,6 +2231,7 @@ test "code mode watch disconnect preserves transcript while reconnecting" {
     model,
   )
   assert_eq(next.mooncode_watch_status, "reconnecting")
+  assert_eq(next.mooncode_watch_failure_count, 1)
   assert_eq(next.mooncode_watch_sequence, 4)
   assert_eq(next.mooncode_sessions.length(), 1)
   let items = mooncode_transcript_items(next, next.mooncode_sessions[0])
@@ -2188,6 +2239,19 @@ test "code mode watch disconnect preserves transcript while reconnecting" {
   let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
   assert_eq(rows.length(), 1)
   assert_eq(rows[0].content, "Keep me")
+  let (_, failed_again) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeWatch(9, "session-a", Err("connection reset again")),
+    next,
+  )
+  assert_eq(failed_again.mooncode_watch_failure_count, 2)
+  assert_eq(mooncode_watch_retry_delay_ms(0), 500)
+  assert_eq(mooncode_watch_retry_delay_ms(1), 500)
+  assert_eq(mooncode_watch_retry_delay_ms(2), 1000)
+  assert_eq(mooncode_watch_retry_delay_ms(3), 2000)
+  assert_eq(mooncode_watch_retry_delay_ms(4), 4000)
+  assert_eq(mooncode_watch_retry_delay_ms(5), 8000)
+  assert_eq(mooncode_watch_retry_delay_ms(50), 8000)
 }
 
 ///|
@@ -2202,6 +2266,7 @@ test "code mode replaced watch leaves the healthy replacement alone" {
     mooncode_watch_revision: 8,
     mooncode_watch_sequence: 4,
     mooncode_watch_status: "connecting",
+    mooncode_watch_failure_count: 3,
     mooncode_composer_status: "message queued for MoonCode",
   }
   let (_, next) = update_mooncode_session_results(
@@ -2213,6 +2278,7 @@ test "code mode replaced watch leaves the healthy replacement alone" {
   assert_eq(next.mooncode_watch_revision, 8)
   assert_eq(next.mooncode_watch_sequence, 4)
   assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
+  assert_eq(next.mooncode_watch_failure_count, 3)
   assert_eq(next.mooncode_sessions.length(), 1)
 }
 

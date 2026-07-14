@@ -7,8 +7,16 @@ async fn handle_mooncode_sessions(
 ) -> Unit {
   let workspace_filter = query_value(request_path, "workspace").unwrap_or("")
   let list_format = query_value(request_path, "format").unwrap_or("full")
+  let listing_rows = match
+    moonclaw_runtime_session_listing_result(workspace_root) {
+    Ok(rows) => rows
+    Err(error) => {
+      send_api_error(conn, method_, 503, "Service Unavailable", error)
+      return
+    }
+  }
   let rows : Array[Json] = []
-  for row in moonclaw_runtime_session_listing_rows(workspace_root) {
+  for row in listing_rows {
     if workspace_filter == "" ||
       json_string(row, "workspace_id", default="") == workspace_filter {
       rows.push(row)
@@ -291,24 +299,42 @@ fn moonclaw_runtime_record_storage_path(
 async fn moonclaw_runtime_session_listing_rows(
   workspace_root : String,
 ) -> Array[Json] {
+  match moonclaw_runtime_session_listing_result(workspace_root) {
+    Ok(rows) => rows
+    Err(_) => []
+  }
+}
+
+///|
+async fn moonclaw_runtime_session_listing_result(
+  workspace_root : String,
+) -> Result[Array[Json], String] {
   let daemon = ensure_moonclaw_daemon_running(
     workspace_root,
     action="list-sessions",
   )
   if !json_bool(daemon, "running", default=false) {
-    return []
+    return Err(
+      json_string(
+        daemon,
+        "message",
+        default="MoonClaw session listing is unavailable",
+      ),
+    )
   }
   let endpoint = @mooncode.moonclaw_native_session_listing_endpoint(
     workspace_root,
   )
   let native_rows = match moonclaw_get_json(daemon, endpoint) {
     Ok(payload) => @mooncode.runtime_session_listing_rows(payload)
-    Err(_) => return []
+    Err(error) => return Err(error)
   }
   let workspaces = discover_workspaces(workspace_root)
-  native_rows.map(row => {
-    moonclaw_runtime_listing_row_with_workspace(row, workspaces)
-  })
+  Ok(
+    native_rows.map(row => {
+      moonclaw_runtime_listing_row_with_workspace(row, workspaces)
+    }),
+  )
 }
 
 ///|

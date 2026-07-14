@@ -87,6 +87,7 @@ fn init_model() -> Model {
     mooncode_watch_revision: 0,
     mooncode_watch_sequence: 0,
     mooncode_watch_status: "idle",
+    mooncode_watch_failure_count: 0,
     events: [],
     review_items: [],
     review_decision_note: "",

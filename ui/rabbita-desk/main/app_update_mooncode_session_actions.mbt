@@ -37,6 +37,7 @@ fn update_mooncode_session_actions(
           mooncode_watch_revision: 0,
           mooncode_watch_sequence: 0,
           mooncode_watch_status: "idle",
+          mooncode_watch_failure_count: 0,
           mooncode_composer_status: "new session draft",
         },
       )
@@ -150,6 +151,7 @@ fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
     } else {
       "connecting"
     },
+    mooncode_watch_failure_count: 0,
   }
 }
 

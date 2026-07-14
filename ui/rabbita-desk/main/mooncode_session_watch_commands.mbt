@@ -112,6 +112,18 @@ fn mooncode_watch_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
 }
 
 ///|
+fn mooncode_watch_is_current(
+  model : Model,
+  generation : Int,
+  session_id : String,
+) -> Bool {
+  model.workspace_mode == MoonCode &&
+  generation == model.mooncode_watch_generation &&
+  session_id != "" &&
+  session_id == model.selected_mooncode_session_id
+}
+
+///|
 fn stop_mooncode_watch_cmd() -> @rabbita.Cmd {
   @cmd.custom_cmd(_ => browser_stop_mooncode_watch(), kind=AfterRender)
 }

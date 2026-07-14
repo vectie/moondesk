@@ -12,9 +12,7 @@ fn update_mooncode_transport_actions(
         (mooncode_metadata_refresh_cmd(dispatch, model, generation), model)
       }
     ResumeMoonCodeWatch(generation, session_id) =>
-      if generation != model.mooncode_watch_generation ||
-        session_id != model.selected_mooncode_session_id ||
-        model.workspace_mode != MoonCode {
+      if !mooncode_watch_is_current(model, generation, session_id) {
         (@rabbita.none, model)
       } else {
         (mooncode_watch_cmd(dispatch, model), model)

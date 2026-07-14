@@ -154,6 +154,11 @@ fn update_mooncode_session_results(
         } else {
           model.mooncode_watch_status
         },
+        mooncode_watch_failure_count: if selection_changed {
+          0
+        } else {
+          model.mooncode_watch_failure_count
+        },
         mooncode_composer_status: if draft_active {
           model.mooncode_composer_status
         } else {
@@ -179,8 +184,7 @@ fn update_mooncode_session_results(
         ),
       )
     LoadedMoonCodeWatch(generation, session_id, Ok(response)) =>
-      if generation != model.mooncode_watch_generation ||
-        session_id != model.selected_mooncode_session_id {
+      if !mooncode_watch_is_current(model, generation, session_id) {
         (@rabbita.none, model)
       } else if !mooncode_watch_response_is_valid(response, session_id) {
         mooncode_watch_failed(
@@ -190,8 +194,7 @@ fn update_mooncode_session_results(
         mooncode_watch_succeeded(dispatch, model, response)
       }
     LoadedMoonCodeWatch(generation, session_id, Err(error)) =>
-      if generation != model.mooncode_watch_generation ||
-        session_id != model.selected_mooncode_session_id {
+      if !mooncode_watch_is_current(model, generation, session_id) {
         (@rabbita.none, model)
       } else {
         mooncode_watch_failed(dispatch, model, generation, session_id, error)
@@ -305,6 +308,7 @@ fn mooncode_watch_succeeded(
     } else {
       "watching-active"
     },
+    mooncode_watch_failure_count: 0,
   }
   let cmd = if response.retry_after_ms > 0 {
     schedule_mooncode_watch_resume(
@@ -330,14 +334,36 @@ fn mooncode_watch_failed(
   if error == "MoonCode watch replaced" {
     return (@rabbita.none, model)
   }
+  let failure_count = model.mooncode_watch_failure_count + 1
   (
-    schedule_mooncode_watch_resume(dispatch, generation, session_id, 1000),
+    schedule_mooncode_watch_resume(
+      dispatch,
+      generation,
+      session_id,
+      mooncode_watch_retry_delay_ms(failure_count),
+    ),
     {
       ..model,
       mooncode_watch_status: "reconnecting",
+      mooncode_watch_failure_count: failure_count,
       mooncode_composer_status: "Reconnecting to MoonCode",
     },
   )
+}
+
+///|
+fn mooncode_watch_retry_delay_ms(failure_count : Int) -> Int {
+  if failure_count <= 1 {
+    500
+  } else if failure_count == 2 {
+    1000
+  } else if failure_count == 3 {
+    2000
+  } else if failure_count == 4 {
+    4000
+  } else {
+    8000
+  }
 }
 
 ///|
@@ -410,6 +436,9 @@ fn mooncode_session_mutation_succeeded(
     optimistic_rows, session,
   )
   let selection_changed = model.selected_mooncode_session_id != session.id
+  let start_watch = selection_changed ||
+    model.workspace_mode != MoonCode ||
+    model.mooncode_watch_status == "idle"
   let next = {
     ..model,
     workspace_mode: MoonCode,
@@ -421,7 +450,7 @@ fn mooncode_session_mutation_succeeded(
     mooncode_new_chat_active: false,
     mooncode_prompt: "",
     mooncode_optimistic_rows: optimistic_rows,
-    mooncode_watch_generation: if selection_changed {
+    mooncode_watch_generation: if start_watch {
       model.mooncode_watch_generation + 1
     } else {
       model.mooncode_watch_generation
@@ -436,10 +465,22 @@ fn mooncode_session_mutation_succeeded(
     } else {
       model.mooncode_watch_sequence
     },
-    mooncode_watch_status: "connecting",
+    mooncode_watch_status: if start_watch {
+      "connecting"
+    } else {
+      model.mooncode_watch_status
+    },
+    mooncode_watch_failure_count: if start_watch {
+      0
+    } else {
+      model.mooncode_watch_failure_count
+    },
     mooncode_composer_status: status,
   }
-  (mooncode_after_session_mutation_cmd(dispatch, next, session.id), next)
+  (
+    mooncode_after_session_mutation_cmd(dispatch, next, session.id, start_watch),
+    next,
+  )
 }
 
 ///|

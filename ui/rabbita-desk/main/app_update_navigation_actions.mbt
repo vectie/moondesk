@@ -187,6 +187,7 @@ fn select_workspace_action(
       mooncode_watch_revision: 0,
       mooncode_watch_sequence: 0,
       mooncode_watch_status: "idle",
+      mooncode_watch_failure_count: 0,
       mooncode_new_chat_active: false,
       mooncode_prompt: "",
       request_material_paths: [],
@@ -700,6 +701,11 @@ fn select_workspace_mode_action(
       "idle"
     } else {
       "paused"
+    },
+    mooncode_watch_failure_count: if mode_changed {
+      0
+    } else {
+      model.mooncode_watch_failure_count
     },
     mooncode_composer_status: if mode == MoonCode {
       "MoonCode workspace ready"

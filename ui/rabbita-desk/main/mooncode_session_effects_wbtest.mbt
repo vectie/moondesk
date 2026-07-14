@@ -29,9 +29,19 @@ test "mooncode submit does not create a second selected-session fetch loop" {
 }
 
 ///|
-test "mooncode mutation resumes one watch and refreshes metadata" {
+test "mooncode ordinary mutation preserves the selected session watch" {
   assert_eq(
-    mooncode_session_effect_labels(mooncode_session_mutation_effects()).join(
+    mooncode_session_effect_labels(mooncode_session_mutation_effects(false)).join(
+      "|",
+    ),
+    "fetch-sessions:|sync-shell",
+  )
+}
+
+///|
+test "mooncode first session mutation starts exactly one watch" {
+  assert_eq(
+    mooncode_session_effect_labels(mooncode_session_mutation_effects(true)).join(
       "|",
     ),
     "fetch-sessions:|start-watch|sync-shell",
@@ -55,5 +65,26 @@ test "mooncode selection starts exactly one canonical watch" {
       "|",
     ),
     "start-watch",
+  )
+}
+
+///|
+test "mooncode watch ownership rejects stale timers and inactive modes" {
+  let current = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_watch_generation: 7,
+  }
+  assert_true(mooncode_watch_is_current(current, 7, "session-a"))
+  assert_false(mooncode_watch_is_current(current, 6, "session-a"))
+  assert_false(mooncode_watch_is_current(current, 7, "session-b"))
+  assert_false(mooncode_watch_is_current(current, 7, ""))
+  assert_false(
+    mooncode_watch_is_current(
+      { ..current, workspace_mode: MoonWiki },
+      7,
+      "session-a",
+    ),
   )
 }

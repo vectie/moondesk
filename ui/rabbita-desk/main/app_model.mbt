@@ -96,6 +96,7 @@ struct Model {
   mooncode_watch_revision : Int
   mooncode_watch_sequence : Int
   mooncode_watch_status : String
+  mooncode_watch_failure_count : Int
   events : Array[DeskEvent]
   review_items : Array[ReviewItem]
   review_decision_note : String
