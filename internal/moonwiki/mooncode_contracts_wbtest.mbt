@@ -48,6 +48,34 @@ test "mooncode http contract delegates static capability shape to mooncode packa
 }
 
 ///|
+test "mooncode model readiness requires a listed executable default" {
+  assert_true(
+    moonclaw_models_response_ready({
+      "ready": true,
+      "default_model": "codex/gpt-5.4",
+      "models": [
+        { "name": "codex/gpt-5.4", "default": true },
+        { "name": "gpt-5.6-sol", "default": false },
+      ],
+    }),
+  )
+  assert_false(
+    moonclaw_models_response_ready({
+      "ready": true,
+      "default_model": "phantom",
+      "models": [{ "name": "codex/gpt-5.4" }],
+    }),
+  )
+  assert_false(
+    moonclaw_models_response_ready({
+      "ready": false,
+      "default_model": "",
+      "models": [],
+    }),
+  )
+}
+
+///|
 async test "mooncode engine status requires native runtime readiness" {
   let status = mooncode_engine_status_json(
     "/tmp/moondesk-mooncode-engine-status-wbtest",

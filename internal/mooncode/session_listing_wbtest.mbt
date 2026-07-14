@@ -13,7 +13,7 @@ test "mooncode session listing row follows machine session picker shape" {
   }
   let row = session_listing_row(session, Json::number(1781580000000.0))
   assert_eq(json_string(row, "id", default=""), "s1")
-  assert_eq(json_string(row, "title", default=""), "build a miniapp")
+  assert_eq(json_string(row, "title", default=""), "Fallback title")
   assert_eq(json_string(row, "workspace_root", default=""), "/tmp/book-a")
   assert_eq(json_string(row, "cwd", default=""), "/tmp/book-a")
   assert_eq(json_string(row, "status", default=""), "running")
@@ -31,19 +31,25 @@ test "mooncode session listing row follows machine session picker shape" {
 }
 
 ///|
-test "mooncode session listing title falls back without first prompt" {
+test "mooncode session listing keeps canonical title across later messages" {
   let session : Json = {
     "id": "s2",
     "title": "Fallback title",
     "last_message": "  last message\twith spaces\nextra",
   }
-  assert_eq(session_listing_title(session), "last message with spaces")
+  assert_eq(session_listing_title(session), "Fallback title")
   let title_only : Json = {
     "id": "s3",
     "title": "Title only",
     "last_message": "",
   }
   assert_eq(session_listing_title(title_only), "Title only")
+  let message_only : Json = {
+    "id": "s4",
+    "title": "",
+    "last_message": "  last message\twith spaces\nextra",
+  }
+  assert_eq(session_listing_title(message_only), "last message with spaces")
 }
 
 ///|
@@ -64,6 +70,18 @@ test "mooncode session listing title prefers stored first prompt fields" {
     session_listing_title(from_snapshot),
     "resume package work carefully",
   )
+  let from_conversation : Json = {
+    "id": "s6",
+    "title": "MoonCode - Demo",
+    "last_message": "latest follow-up",
+    "mooncode_conversation": {
+      "turns": [
+        { "user": { "content": "  canonical first prompt\nsecond line" } },
+        { "user": { "content": "latest follow-up" } },
+      ],
+    },
+  }
+  assert_eq(session_listing_title(from_conversation), "canonical first prompt")
 }
 
 ///|

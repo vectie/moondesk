@@ -67,8 +67,21 @@ async fn MoonCodeHttpFakeRuntime::handle(
   conn : @http.ServerConnection,
 ) -> Unit {
   let segments = path_segments(strip_query(request.path))
+  if request.meth is Get && segments == ["v1", "health"] {
+    send_json(conn, request.meth, {
+      "ok": true,
+      "status": "ready",
+      "service": "moonclaw",
+      "port": self.port,
+    })
+    return
+  }
   if request.meth is Get && segments == ["v1", "models"] {
-    send_json(conn, request.meth, { "models": [] })
+    send_json(conn, request.meth, {
+      "ready": true,
+      "default_model": "test/fake-model",
+      "models": [{ "name": "test/fake-model", "default": true }],
+    })
     return
   }
   if request.meth is Get && segments == ["v1", "code", "capabilities"] {

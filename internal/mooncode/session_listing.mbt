@@ -250,15 +250,15 @@ pub fn session_listing_title(session : Json) -> String {
   if explicit_first_prompt != "" {
     return explicit_first_prompt
   }
+  let title = compact_listing_line(json_string(session, "title", default=""))
+  if title != "" {
+    return title
+  }
   let last_message = compact_listing_line(
     json_string(session, "last_message", default=""),
   )
   if last_message != "" {
     return last_message
-  }
-  let title = compact_listing_line(json_string(session, "title", default=""))
-  if title != "" {
-    return title
   }
   json_string(session, "id", default="")
 }
@@ -276,6 +276,23 @@ fn first_prompt_field_line(session : Json) -> String {
     let line = compact_listing_line(json_string(snapshot, key, default=""))
     if line != "" {
       return line
+    }
+  }
+  for source in [session, snapshot] {
+    let conversation = session_listing_object_field_or_empty(
+      source, "mooncode_conversation",
+    )
+    match json_array_items(conversation, "turns").get(0) {
+      Some(turn) => {
+        let user = session_listing_object_field_or_empty(turn, "user")
+        let line = compact_listing_line(
+          json_string(user, "content", default=""),
+        )
+        if line != "" {
+          return line
+        }
+      }
+      None => ()
     }
   }
   ""

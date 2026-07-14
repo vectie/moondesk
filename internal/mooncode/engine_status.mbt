@@ -19,7 +19,8 @@ pub fn engine_status_projection_json(
   model_evidence~ : String,
   runtime_evidence~ : String,
 ) -> Json {
-  let ready = running && runtime_contract_ready
+  let native_ready = running && runtime_contract_ready
+  let ready = native_ready && models_ready
   let runtime_readiness = moonclaw_runtime_readiness(
     running, runtime_contract_ready,
   )
@@ -30,6 +31,8 @@ pub fn engine_status_projection_json(
   )
   let status = if ready {
     "native-ready"
+  } else if native_ready {
+    "model-unavailable"
   } else if running {
     "native-runtime-missing"
   } else if checkout_ready {
@@ -41,12 +44,13 @@ pub fn engine_status_projection_json(
     "ok": ready,
     "status": status,
     "ready": ready,
-    "runtime_mode": if runtime_contract_ready {
+    "runtime_mode": if native_ready {
       "native-mooncode-runtime"
     } else {
       "runtime-unavailable"
     },
-    "native_runtime_ready": runtime_contract_ready,
+    "native_runtime_ready": native_ready,
+    "model_runtime_ready": ready,
     "runtime_status": runtime_status,
     "moonclaw_runtime": runtime_readiness,
     "moonclaw_root": moonclaw_root,

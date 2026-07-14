@@ -37,17 +37,28 @@ async fn handle_moonclaw_models(
     return
   }
   match moonclaw_get_json(daemon, "/v1/models") {
-    Ok(payload) =>
+    Ok(payload) => {
+      let ready = moonclaw_models_response_ready(payload)
       send_json(
         conn,
         method_,
         api_contract_response(
-          { "daemon": daemon, "models": json_array(payload, "models") },
-          ok=true,
-          status="ready",
-          message="MoonClaw models are available",
+          {
+            "daemon": daemon,
+            "models": json_array(payload, "models"),
+            "default_model": json_string(payload, "default_model", default=""),
+          },
+          ok=ready,
+          status=if ready { "ready" } else { "moonclaw_models_unavailable" },
+          message=if ready {
+            "MoonClaw models are available"
+          } else {
+            "MoonClaw has no executable default model"
+          },
+          next_action=if ready { "use_moonclaw" } else { "configure_model" },
         ),
       )
+    }
     Err(message) =>
       send_json(
         conn,
@@ -418,10 +429,15 @@ async fn process_is_alive(pid : Int) -> Bool {
 
 ///|
 async fn moonclaw_port_reachable(port : Int) -> Bool {
-  let (response, _) = @http.get("http://localhost:\{port}/v1/models") catch {
+  let (response, body) = @http.get("http://localhost:\{port}/v1/health") catch {
     _ => return false
   }
-  response.code >= 200 && response.code <= 499
+  if response.code != 200 {
+    return false
+  }
+  let health = @json.parse(body.text()) catch { _ => return false }
+  json_bool(health, "ok", default=false) &&
+  json_string(health, "service", default="") == "moonclaw"
 }
 
 ///|

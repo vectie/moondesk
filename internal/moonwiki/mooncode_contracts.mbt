@@ -14,7 +14,15 @@ async fn handle_mooncode_status(
   conn : @http.ServerConnection,
 ) -> Unit {
   let engine = mooncode_engine_status_json(workspace_root)
-  let ready = json_bool(engine, "runtime_contract_ready", default=false)
+  let ready = json_bool(engine, "ready", default=false)
+  let native_ready = json_bool(engine, "native_runtime_ready", default=false)
+  let status = if ready {
+    "ready"
+  } else if native_ready {
+    "model_unavailable"
+  } else {
+    "runtime_unavailable"
+  }
   send_json(
     conn,
     method_,
@@ -24,14 +32,18 @@ async fn handle_mooncode_status(
         "session_count": read_mooncode_session_records(workspace_root).length(),
       },
       ok=ready,
-      status=if ready { "ready" } else { "runtime_unavailable" },
+      status~,
       message=if ready {
         "MoonCode runtime is ready"
+      } else if native_ready {
+        "MoonCode model is not available"
       } else {
         "MoonCode runtime is not available"
       },
       next_action=if ready {
         "send_mooncode_prompt"
+      } else if native_ready {
+        "configure_or_start_model_provider"
       } else {
         "inspect_moonclaw_status"
       },
@@ -93,7 +105,10 @@ async fn mooncode_engine_status_json(workspace_root : String) -> Json {
       @mooncode.moonclaw_native_capabilities_readiness(capabilities)
     Err(error) => @mooncode.moonclaw_native_capabilities_unavailable(error)
   }
-  let models_ready = models_probe is Ok(_)
+  let models_ready = match models_probe {
+    Ok(payload) => moonclaw_models_response_ready(payload)
+    Err(_) => false
+  }
   let runtime_contract_ready = json_bool(native_readiness, "ok", default=false)
   mooncode_session_with_field(
     @mooncode.engine_status_projection_json(
@@ -104,7 +119,12 @@ async fn mooncode_engine_status_json(workspace_root : String) -> Json {
       models_ready~,
       runtime_contract_ready~,
       model_evidence=match models_probe {
-        Ok(_) => "/v1/models responded"
+        Ok(payload) =>
+          if models_ready {
+            "/v1/models advertised executable default `\{json_string(payload, "default_model", default="")}`"
+          } else {
+            "/v1/models returned no executable default model"
+          }
         Err(error) => error
       },
       runtime_evidence=match runtime_probe {
@@ -121,4 +141,14 @@ async fn mooncode_engine_status_json(workspace_root : String) -> Json {
     "native_capabilities_readiness",
     native_readiness,
   )
+}
+
+///|
+fn moonclaw_models_response_ready(payload : Json) -> Bool {
+  let default_model = json_string(payload, "default_model", default="")
+  default_model != "" &&
+  json_bool(payload, "ready", default=false) &&
+  json_array_items(payload, "models").any(model => {
+    json_string(model, "name", default="") == default_model
+  })
 }

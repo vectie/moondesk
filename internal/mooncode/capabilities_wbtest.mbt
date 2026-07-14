@@ -301,11 +301,30 @@ test "mooncode engine status projection is standalone from http probing" {
   assert_true(json_bool(ready, "ok", default=false))
   assert_true(json_bool(ready, "ready", default=false))
   assert_true(json_bool(ready, "native_runtime_ready", default=false))
+  assert_true(json_bool(ready, "model_runtime_ready", default=false))
   let ready_payload = ready.stringify()
   assert_true(ready_payload.contains("patch_review"))
   assert_true(ready_payload.contains("command_execution"))
   assert_true(ready_payload.contains("package_output"))
   assert_false(ready_payload.contains("tool_harness/file_edit eval slice"))
+
+  let model_missing = engine_status_projection_json(
+    daemon={ "running": true, "message": "running" },
+    moonclaw_root="/tmp/moonclaw",
+    checkout_ready=true,
+    running=true,
+    models_ready=false,
+    runtime_contract_ready=true,
+    model_evidence="no executable model",
+    runtime_evidence="/v1/code/capabilities responded",
+  )
+  assert_eq(
+    json_string(model_missing, "status", default=""),
+    "model-unavailable",
+  )
+  assert_false(json_bool(model_missing, "ready", default=true))
+  assert_true(json_bool(model_missing, "native_runtime_ready", default=false))
+  assert_false(json_bool(model_missing, "model_runtime_ready", default=true))
 }
 
 ///|
