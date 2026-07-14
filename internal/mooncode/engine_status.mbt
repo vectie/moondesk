@@ -109,16 +109,10 @@ pub fn engine_status_projection_json(
         },
       ),
       engine_check_json(
-        "append_only_session_log",
-        "Append-only session log",
+        "transactional_session_journal",
+        "Transactional session journal",
         "ready",
-        "MoonClaw owns \{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions/<session-id>/events.jsonl")} sidecars and exposes /v1/code/sessions?book_root=<path> for cold discovery; MoonDesk stores only desktop projection records",
-      ),
-      engine_check_json(
-        "append_only_command_queue",
-        "Append-only command queue",
-        "ready",
-        "MoonClaw owns \{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions/<session-id>/commands.jsonl")} sidecars and reports command counts from the native session show endpoint; MoonDesk stores only desktop projection records",
+        "MoonClaw owns \{@moonsuite.product_display_artifact("moonclaw", "mooncode/sessions/<session-id>/journal.jsonl")} under moonsuite-conversation-journal.v1 and exposes /v1/code/sessions?book_root=<path> for cold discovery; MoonDesk stores only desktop projection records",
       ),
       engine_check_json(
         "typed_runtime_contract",

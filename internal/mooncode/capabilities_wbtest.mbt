@@ -29,6 +29,21 @@ test "mooncode capability publishes canonical ownership and transport" {
   assert_true(
     json_string(protocol, "durability", default="").contains("sole durable"),
   )
+  let runtime_contract = summary_json_object_field_or_empty(
+    capability, "runtime_contract",
+  )
+  let session_store = summary_json_object_field_or_empty(
+    runtime_contract, "session_store",
+  )
+  assert_eq(
+    json_string(session_store, "journal_contract_id", default=""),
+    @mooncode_core.journal_contract_id(),
+  )
+  let serialized = capability.stringify()
+  assert_true(serialized.contains("journal.jsonl"))
+  assert_false(serialized.contains("commands.jsonl"))
+  assert_false(serialized.contains("events.jsonl"))
+  assert_false(serialized.contains("runtime-receipts.jsonl"))
 }
 
 ///|
@@ -90,4 +105,9 @@ test "mooncode engine status projection remains independent of HTTP" {
   assert_true(endpoints.contains("/v1/code/sessions/<id>/turns"))
   assert_true(endpoints.contains(desktop_session_watch_endpoint()))
   assert_false(endpoints.contains(desktop_session_runtime_service_endpoint()))
+  let serialized = missing.stringify()
+  assert_true(serialized.contains("transactional_session_journal"))
+  assert_true(serialized.contains("journal.jsonl"))
+  assert_false(serialized.contains("commands.jsonl"))
+  assert_false(serialized.contains("events.jsonl"))
 }

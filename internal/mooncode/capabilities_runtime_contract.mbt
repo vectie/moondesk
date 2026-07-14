@@ -19,7 +19,7 @@ pub fn runtime_contract_json() -> Json {
         "runtime_owner", "MoonClaw", "Executes model planning, tool calls, filesystem edits, test/build commands, packaging, streaming, steering, and cancellation.",
       ),
       namespace_role(
-        "artifact_owner", "MoonBook", "Stores accepted code artifacts, miniapps, app-tool packages, reviews, command logs, and durable session evidence.",
+        "artifact_owner", "MoonBook", "Stores accepted code artifacts, miniapps, app-tool packages, and reviews; MoonClaw owns runtime session evidence.",
       ),
     ],
     "status": "contract-specified",
@@ -31,8 +31,8 @@ pub fn runtime_contract_json() -> Json {
         "observe runtime state and render progress; do not execute tools directly",
       ),
       runtime_component(
-        "mooncode_session", "mooncode/session + mooncode/session_store", "Typed durable coding conversation with append-only JSONL event storage and resumable session ids.",
-        "select, list, resume, and project sessions for the native UI",
+        "mooncode_session", "mooncode/session", "Typed canonical coding conversation projected from one MoonClaw-owned transactional journal.",
+        "select, list, resume, and render canonical sessions without rebuilding runtime logs",
       ),
       runtime_component(
         "mooncode_tool",
@@ -73,10 +73,11 @@ pub fn runtime_contract_json() -> Json {
       "ordering_rule": "one ordered command queue per session; prompts, steer, cancel, turn-done, and shutdown are serialized; idle steer is persisted as deferred steering context for the next eligible turn",
     },
     "session_store": {
-      "owner": "moonclaw-or-mooncode",
-      "shape": "session header plus append-only commands.jsonl and events.jsonl",
+      "owner": "moonclaw",
+      "journal_contract_id": @mooncode_core.journal_contract_id(),
+      "shape": "replaceable session.json checkpoint plus authoritative journal.jsonl",
       "resume_modes": ["list", "show", "continue", "session-id"],
-      "moondesk_projection": "MoonCode session list, canonical conversation, event-lane evidence, review queue, live tail, and readiness evidence",
+      "moondesk_projection": "MoonCode session list, canonical conversation, review controls, and selected-session watch state",
     },
     "tool_contract": tool_contract_json(),
     "eval_contract": {

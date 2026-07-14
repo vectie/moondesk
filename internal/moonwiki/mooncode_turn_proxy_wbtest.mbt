@@ -5,6 +5,10 @@ fn canonical_test_record() -> Json {
     "owner": "moonclaw",
     "session_id": "session-canonical",
     "book_root": "/tmp/moonsuite/books/code-lab",
+    "journal_sequence": 5,
+    "storage": {
+      "journal_jsonl": "/tmp/moonsuite/.moonsuite/products/moonclaw/mooncode/sessions/session-canonical/journal.jsonl",
+    },
     "snapshot": {
       "first_user_prompt": "Fix the parser",
       "last_updated": "2026-07-15T10:00:00Z",
@@ -86,6 +90,15 @@ test "canonical conversation repairs incomplete lightweight listing metadata" {
   )
   assert_eq(json_string(session, "workspace_id", default=""), "book-code-lab")
   assert_eq(json_string(session, "workspace_name", default=""), "Code Lab")
+  assert_eq(json_int(session, "mooncode_journal_sequence", default=0), 5)
+  assert_eq(
+    json_string(session, "mooncode_journal_path", default=""),
+    "/tmp/moonsuite/.moonsuite/products/moonclaw/mooncode/sessions/session-canonical/journal.jsonl",
+  )
+  let conversation = json_object_field_or_empty(
+    session, "mooncode_conversation",
+  )
+  assert_eq(json_int(conversation, "revision", default=0), 5)
 }
 
 ///|

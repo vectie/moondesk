@@ -199,6 +199,8 @@ pub fn executable_book_lifecycle_contract_json() -> Json
 
 pub fn executable_book_lifecycle_steps() -> Array[String]
 
+pub fn journal_contract_id() -> String
+
 pub fn model_planner_command_action_is_supported(String) -> Bool
 
 pub fn model_planner_command_actions() -> Array[String]

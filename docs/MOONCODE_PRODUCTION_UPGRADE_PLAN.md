@@ -321,6 +321,22 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   mouse, killed and restarted MoonClaw, and submitted another turn after
   recovery. Every sampled frame retained the optimistic and committed turns;
   no transcript blanking, duplicate answer, or reorder occurred.
+- 2026-07-15: Milestone D replaced MoonClaw's split command, receipt, event,
+  package, and MoonBook result logs with one locked `journal.jsonl` per
+  session. MoonLib `0.1.15` now owns the
+  `moonsuite-conversation-journal.v1` envelope and sequence rules; MoonClaw
+  owns append, repair, replay, and checkpointing; Moondesk consumes the
+  canonical session record without rebuilding logs. Regression coverage now
+  includes 1,000-record replay, 64 concurrent cross-lane writers, duplicate
+  delivery, torn-tail repair, complete-record corruption and sequence-gap
+  rejection, corrupt-checkpoint recovery, and deterministic replay. Final
+  gates passed with 1,129 MoonClaw tests, 463 Moondesk native tests, 542
+  Moondesk UI tests, both native builds, the production UI bundle, and a
+  synchronized MoonCode core interface. A real five-turn keyboard journey
+  then proved immediate optimistic insertion, ordered work and answers,
+  disclosure behavior, hard-reload persistence, two daemon restarts, and a
+  stable first-prompt session title. Its on-disk session contained only
+  `session.json` and a 60-record journal with contiguous unique sequences.
 
 ## Current Completion And Remaining Order
 
@@ -337,11 +353,12 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   covered. Remaining transport hardening belongs to Milestone G: measure idle
   request cost, add a long-soak fault matrix, and automate the real-daemon
   restart journey in the local release gate.
-- Milestone D is partially complete. Atomic turn submission, one runtime
-  service per session, canonical replay, and durable snapshots exist. The
-  remaining work is a single documented journal sequence contract plus
-  concurrent-writer, torn-tail, duplicate-delivery, crash-point, and replay
-  equivalence testing.
+- Milestone D is complete. One MoonLib-defined sequence contract, one
+  MoonClaw-owned transactional journal, deterministic canonical replay,
+  replaceable checkpoints, concurrent-writer serialization, idempotent
+  delivery, torn-tail repair, corruption rejection, and recovery tests are in
+  place. Moondesk's production adapter exposes only the journal path and
+  sequence and does not reconstruct conversation from storage artifacts.
 - Milestone E is partially complete. Safe Markdown and code rendering,
   answer/code/evidence copy, canonical file diffs, command/output/test evidence,
   Retry, and Stop command wiring are implemented. The remaining work is the

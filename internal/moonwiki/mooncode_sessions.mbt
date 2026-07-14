@@ -115,29 +115,23 @@ fn moonclaw_runtime_full_session_from_record(
   let session = moonclaw_runtime_full_session_base(
     workspace_root, listing, record,
   )
-  @mooncode.session_projection_response(
-    mooncode_session_response_defaults(session),
-    [],
-    event_log_path=moonclaw_runtime_record_storage_path(
-      record, "events_jsonl", "",
-    ),
-    append_log_count=json_int(record, "event_log_count", default=0),
-    command_log_path=moonclaw_runtime_record_storage_path(
-      record, "commands_jsonl", "",
-    ),
-    command_log_count=json_int(record, "command_log_count", default=0),
-    runtime_command_log_path=moonclaw_runtime_record_storage_path(
-      record, "commands_jsonl", "",
-    ),
-    runtime_command_log_count=json_int(record, "command_log_count", default=0),
-    runtime_receipt_log_path=moonclaw_runtime_record_storage_path(
-      record, "runtime_receipts_jsonl", "",
-    ),
-    runtime_receipt_log_count=json_int(
-      record,
-      "runtime_receipt_log_count",
-      default=0,
-    ),
+  mooncode_session_response_defaults(session)
+  |> mooncode_session_with_field("mooncode_summary", {
+    "event_count": json_int(record, "event_log_count", default=0),
+    "verified_test_count": 0,
+    "pending_diff_count": 0,
+  })
+  |> mooncode_session_with_field(
+    "mooncode_journal_path",
+    json_string(
+      json_object_field_or_empty(record, "storage"),
+      "journal_jsonl",
+      default="",
+    ).to_json(),
+  )
+  |> mooncode_session_with_field(
+    "mooncode_journal_sequence",
+    json_int(record, "journal_sequence", default=0).to_json(),
   )
 }
 
@@ -280,19 +274,6 @@ fn moonclaw_runtime_record_conversation_belongs_to_session(
   json_string(conversation, "kind", default="") == @mooncode.conversation_kind() &&
   session_id != "" &&
   json_string(conversation, "session_id", default="") == session_id
-}
-
-///|
-fn moonclaw_runtime_record_storage_path(
-  record : Json,
-  key : String,
-  fallback : String,
-) -> String {
-  json_string(
-    json_object_field_or_empty(record, "storage"),
-    key,
-    default=fallback,
-  )
 }
 
 ///|
