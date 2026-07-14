@@ -51,6 +51,6 @@ async test "mooncode engine status fails closed without MoonClaw" {
   assert_true(endpoints.contains("/v1/code/sessions/<id>/turns"))
   assert_true(endpoints.contains(@mooncode.desktop_session_watch_endpoint()))
   assert_false(
-    endpoints.contains(@mooncode.desktop_session_runtime_service_endpoint()),
+    endpoints.contains("/api/mooncode/sessions/<session-id>/runtime-service"),
   )
 }

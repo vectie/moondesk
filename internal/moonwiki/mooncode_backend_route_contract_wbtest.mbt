@@ -14,7 +14,7 @@ test "mooncode backend method checks match the canonical route surface" {
   assert_true(mooncode_route_accepts_post(commands, Post))
   assert_eq(mooncode_route_allowed_methods(commands).join(", "), "POST")
 
-  let removed = @mooncode.desktop_session_runtime_service_endpoint()
+  let removed = "/api/mooncode/sessions/<session-id>/runtime-service"
   assert_false(mooncode_route_accepts_read(removed, Get))
   assert_false(mooncode_route_accepts_post(removed, Post))
   assert_eq(mooncode_route_allowed_methods(removed).length(), 0)
