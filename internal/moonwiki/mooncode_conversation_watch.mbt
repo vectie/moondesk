@@ -100,13 +100,7 @@ async fn mooncode_watch_session_snapshot(
   workspace_root : String,
   session_id : String,
 ) -> Json {
-  match read_mooncode_session_record(workspace_root, session_id) {
-    Some(session) =>
-      sync_mooncode_native_canonical_conversation(
-        workspace_root, session_id, session,
-      )
-    None => moonclaw_runtime_session_by_id(workspace_root, session_id)
-  }
+  moonclaw_runtime_session_by_id(workspace_root, session_id)
 }
 
 ///|

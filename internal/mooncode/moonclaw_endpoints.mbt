@@ -7,6 +7,11 @@ pub fn moonclaw_native_command_endpoint(session_id : String) -> String {
 }
 
 ///|
+pub fn moonclaw_native_turn_endpoint(session_id : String) -> String {
+  @mooncode_core.native_session_turns_endpoint(session_id)
+}
+
+///|
 pub fn moonclaw_native_runtime_loop_endpoint(
   session_id : String,
   book_root : String,

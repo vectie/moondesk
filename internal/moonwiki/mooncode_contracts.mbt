@@ -29,7 +29,7 @@ async fn handle_mooncode_status(
     api_contract_response(
       {
         "engine_status": engine,
-        "session_count": read_mooncode_session_records(workspace_root).length(),
+        "session_count": moonclaw_runtime_session_listing_rows(workspace_root).length(),
       },
       ok=ready,
       status~,
@@ -49,30 +49,6 @@ async fn handle_mooncode_status(
       },
     ),
   )
-}
-
-///|
-async fn handle_mooncode_eval_harness_contract(
-  method_ : @http.RequestMethod,
-  conn : @http.ServerConnection,
-) -> Unit {
-  send_json(conn, method_, @mooncode.eval_harness_contract_json())
-}
-
-///|
-async fn handle_mooncode_standalone_boundary_contract(
-  method_ : @http.RequestMethod,
-  conn : @http.ServerConnection,
-) -> Unit {
-  send_json(conn, method_, @mooncode.standalone_boundary_json())
-}
-
-///|
-async fn handle_mooncode_readiness_contract(
-  method_ : @http.RequestMethod,
-  conn : @http.ServerConnection,
-) -> Unit {
-  send_json(conn, method_, @mooncode.readiness_contract_json())
 }
 
 ///|

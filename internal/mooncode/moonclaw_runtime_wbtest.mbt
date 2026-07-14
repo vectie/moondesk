@@ -21,7 +21,7 @@ test "mooncode moonclaw runtime maps moonclaw tools to mooncode tools" {
   assert_true(
     contract
     .stringify()
-    .contains("/v1/code/sessions?book_root=<path>&format=json"),
+    .contains("/v1/code/sessions?book_root=<path>&format=listing"),
   )
   assert_true(
     contract
@@ -415,11 +415,15 @@ test "mooncode moonclaw runtime owns native runtime request bodies" {
   )
   assert_eq(
     moonclaw_native_session_listing_endpoint("/tmp/moon book"),
-    "/v1/code/sessions?book_root=%2Ftmp%2Fmoon%20book&format=json",
+    "/v1/code/sessions?book_root=%2Ftmp%2Fmoon%20book&format=listing",
   )
   assert_eq(
     moonclaw_native_command_endpoint("session one"),
     "/v1/code/sessions/session%20one/commands",
+  )
+  assert_eq(
+    moonclaw_native_turn_endpoint("session one"),
+    "/v1/code/sessions/session%20one/turns",
   )
   assert_eq(
     moonclaw_native_runtime_loop_endpoint("session one", "/tmp/moon book"),

@@ -273,6 +273,49 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   The browser evidence confirmed immediate optimistic rows, factual work,
   stable user/work/assistant order, native disclosure behavior, and canonical
   completion status in the session rail.
+- 2026-07-15: The C/D ownership cutover added MoonClaw's atomic
+  `/v1/code/sessions/<id>/turns` transaction and a per-session single-flight
+  runtime service. Moondesk now creates, mutates, reads, lists, and watches
+  sessions only through MoonClaw canonical records. Its active MoonCode backend
+  surface is six routes, and the stale local command, event, session, replay,
+  runtime-supervisor, and artifact persistence handlers were deleted.
+- 2026-07-15: Cold session listings now retain exact MoonBook identity from a
+  durable MoonClaw snapshot and are normalized against Moondesk's actual
+  MoonBook catalog. Canonical conversation metadata wins over incomplete
+  listing metadata, unbound rows remain in General, and one accepted command is
+  counted once across queue and runtime completion.
+- 2026-07-15: The ownership cutover gate passed 1,124 MoonClaw tests and 463
+  Moondesk tests, both native builds, and a visible browser journey with mouse
+  submission, Enter submission, live factual work, two ordered answers, daemon
+  restart, hard reload, stable MoonBook grouping, and exact command accounting.
 
-The next implementation target after this slice is Milestone C. Milestone D is
-a MoonClaw storage migration and must not be mixed into renderer work.
+## Current Completion And Remaining Order
+
+- Milestone A is complete for the production path: one monotonic canonical
+  conversation is accepted by one UI boundary, and stale local merge/replay
+  paths are gone.
+- Milestone B is complete for the core transcript: optimistic user rows are
+  immediate, work is event-backed and turn-owned, completed work folds in
+  place, and answers append once below it.
+- Milestone C is partially complete. Canonical reads, revision resumes, compact
+  unchanged responses, and native stream forwarding exist. The remaining work
+  is one explicit selected-session watcher lifecycle with cancellation,
+  reconnect failure injection, heartbeat/backoff UX, and measured idle cost.
+- Milestone D is partially complete. Atomic turn submission, one runtime
+  service per session, canonical replay, and durable snapshots exist. The
+  remaining work is a single documented journal sequence contract plus
+  concurrent-writer, torn-tail, duplicate-delivery, crash-point, and replay
+  equivalence testing.
+- Milestone E is the next major product upgrade: Markdown and code rendering,
+  reviewable diffs, approvals, cancel/retry, actionable failure recovery, and
+  durable model/web-search preferences.
+- Milestone F has its grouping and selection foundation. Rename, archive,
+  delete, search, history virtualization, and large-catalog performance remain.
+- Milestone G is partially complete through local native, production-build, and
+  visible browser gates. A single release command, latency/correctness metrics,
+  accessibility/responsive journeys, deterministic fault fixtures, and the
+  explicit hosted-CI decision remain.
+
+No remaining milestone may add a Moondesk conversation store or merge raw
+MoonClaw events into chat. New work extends the canonical owner, transport, or
+renderer boundary already established here.

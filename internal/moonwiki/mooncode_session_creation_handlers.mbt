@@ -76,77 +76,12 @@ async fn handle_create_mooncode_session(
     last_message=message,
     initial_context_path=context_path,
   )
-  let command_packet = @mooncode.projected_command_packet(
-    base, payload, "prompt", message, now, context_path,
-  )
-  let runtime_command = @mooncode.runtime_command_record(
-    base, payload, message, command_packet,
-  )
-  append_mooncode_command_log(
-    root,
-    json_string(base, "id", default=""),
-    command_packet,
-  ) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not append MoonCode command queue",
-      )
-      return
-    }
-  }
-  append_mooncode_runtime_command_log(
-    root,
-    json_string(base, "id", default=""),
-    runtime_command,
-  ) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not append MoonCode runtime command feed",
-      )
-      return
-    }
-  }
-  let queued = mooncode_immediate_queued_session(
-    base,
-    action="prompt",
-    message~,
-    context_path~,
-    command_packet~,
-    created_at=now,
-  )
-  ignore(runtime_command)
-  write_mooncode_session_record(root, queued) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not save MoonCode session",
-      )
-      return
-    }
-  }
-  append_new_mooncode_command_events(root, base, queued) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not append MoonCode event log",
-      )
-      return
-    }
-  }
   match
-    mooncode_command_response_after_enqueue(
-      root, queued, command_packet, payload,
+    submit_mooncode_turn(
+      root, base, payload, "prompt", message, now, context_path,
     ) {
     Ok(response) => send_json(conn, method_, response)
-    Err(error) => {
-      ignore(
-        record_mooncode_runtime_service_failure(
-          root,
-          json_string(queued, "id", default=""),
-          queued,
-          error,
-        ),
-      ) catch {
-        _ => ()
-      }
+    Err(error) =>
       send_api_error(
         conn,
         method_,
@@ -158,6 +93,5 @@ async fn handle_create_mooncode_session(
           default="Could not start MoonCode runtime",
         ),
       )
-    }
   }
 }

@@ -532,6 +532,8 @@ pub fn moonclaw_native_session_show_endpoint(String, String) -> String
 
 pub fn moonclaw_native_stream_endpoint(String, String, String, Int, wait_ms? : Int, poll_ms? : Int) -> String
 
+pub fn moonclaw_native_turn_endpoint(String) -> String
+
 pub fn moonclaw_runtime_contract_json() -> Json
 
 pub fn moonclaw_runtime_loop_request(String, String, consumer_id? : String, max_turns? : Int, live_wait_ms? : Int, poll_ms? : Int) -> Json

@@ -1,54 +1,15 @@
 ///|
-// MoonCode session event and summary projection.
+fn mooncode_session_with_field(
+  session : Json,
+  key : String,
+  value : Json,
+) -> Json {
+  @mooncode.session_with_field(session, key, value)
+}
 
 ///|
-async fn attach_mooncode_session_projection(
-  workspace_root : String,
-  session : Json,
-) -> Json {
-  let session_id = json_string(session, "id", default="")
-  let durable_events = read_mooncode_event_log(workspace_root, session_id)
-  let durable_commands = read_mooncode_command_log(workspace_root, session_id)
-  let durable_runtime_commands = read_mooncode_runtime_command_log(
-    workspace_root, session_id,
-  )
-  let durable_runtime_receipts = read_mooncode_runtime_receipt_log(
-    workspace_root, session_id,
-  )
-  let command_events = mooncode_command_log_events(durable_commands)
-  let events = project_mooncode_events(session, command_events, durable_events)
-  let log_path = if session_id == "" {
-    ""
-  } else {
-    mooncode_event_log_path(workspace_root, session_id)
-  }
-  let command_log_path = if session_id == "" {
-    ""
-  } else {
-    mooncode_command_log_path(workspace_root, session_id)
-  }
-  let runtime_command_log_path = if session_id == "" {
-    ""
-  } else {
-    mooncode_runtime_command_log_path(workspace_root, session_id)
-  }
-  let runtime_receipt_log_path = if session_id == "" {
-    ""
-  } else {
-    mooncode_runtime_receipt_log_path(workspace_root, session_id)
-  }
-  @mooncode.session_projection_response(
-    session,
-    events,
-    event_log_path=log_path,
-    append_log_count=durable_events.length(),
-    command_log_path~,
-    command_log_count=durable_commands.length(),
-    runtime_command_log_path~,
-    runtime_command_log_count=durable_runtime_commands.length(),
-    runtime_receipt_log_path~,
-    runtime_receipt_log_count=durable_runtime_receipts.length(),
-  )
+fn mooncode_session_response_defaults(session : Json) -> Json {
+  @mooncode.session_response_defaults(session)
 }
 
 ///|
@@ -139,11 +100,7 @@ fn compact_mooncode_current_turn(
       return turn
     }
   }
-  if turns.length() > 0 {
-    turns[turns.length() - 1]
-  } else {
-    Json::object({})
-  }
+  turns.last().unwrap_or(Json::object({}))
 }
 
 ///|
@@ -153,45 +110,4 @@ fn compact_mooncode_summary(summary : Json) -> Json {
     "verified_test_count": json_int(summary, "verified_test_count", default=0),
     "pending_diff_count": json_int(summary, "pending_diff_count", default=0),
   }
-}
-
-///|
-fn project_mooncode_events(
-  session : Json,
-  raw_events : Array[Json],
-  durable_events : Array[Json],
-) -> Array[Json] {
-  @mooncode.project_session_events_for_session(
-    session,
-    raw_events,
-    durable_events,
-    projected_created_at=@async.now().to_string(),
-  )
-}
-
-///|
-fn mooncode_command_log_events(commands : Array[Json]) -> Array[Json] {
-  let events : Array[Json] = []
-  for command in commands {
-    let command_id = json_string(command, "command_id", default="")
-    if command_id == "" {
-      continue
-    }
-    let action = json_string(command, "action", default="prompt")
-    let message = json_string(command, "message", default="")
-    let created_at = json_string(command, "created_at", default="")
-    let context_path = json_string(command, "context_path", default="")
-    events.push(
-      @mooncode.command_event(
-        action~,
-        status="queued",
-        detail=message,
-        created_at~,
-        path=context_path,
-        command_packet=command,
-        event_id=command_id,
-      ),
-    )
-  }
-  events
 }

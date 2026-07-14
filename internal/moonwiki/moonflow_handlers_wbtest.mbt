@@ -8,9 +8,9 @@ test "MoonFlow run ids reject path escapes" {
 
 ///|
 test "MoonFlow authority controls have a monotonic constitutional order" {
-  assert_eq(moonflow_authority_rank("observe"), Some(0))
-  assert_eq(moonflow_authority_rank("sandbox-execution"), Some(2))
-  assert_eq(moonflow_authority_rank("physical-effect"), Some(5))
+  assert_true(moonflow_authority_rank("observe") == Some(0))
+  assert_true(moonflow_authority_rank("sandbox-execution") == Some(2))
+  assert_true(moonflow_authority_rank("physical-effect") == Some(5))
   assert_true(moonflow_authority_rank("invented-authority") is None)
 }
 

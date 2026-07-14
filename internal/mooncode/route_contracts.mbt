@@ -188,79 +188,10 @@ pub fn desktop_projection_route_contracts() -> Array[Json] {
   [
     desktop_route_contract(desktop_status_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_capabilities_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_eval_harness_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_standalone_boundary_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_readiness_contract_endpoint(), [
-      "GET", "HEAD",
-    ]),
     desktop_route_contract(desktop_sessions_endpoint(), ["GET", "HEAD", "POST"]),
     desktop_route_contract(desktop_session_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_session_events_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_session_change_set_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_patch_set_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_session_stream_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_session_stream_state_endpoint(), [
-      "GET", "HEAD", "POST",
-    ]),
     desktop_route_contract(desktop_session_watch_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_session_commands_endpoint(), [
-      "GET", "HEAD", "POST",
-    ]),
-    desktop_route_contract(desktop_session_tool_approvals_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_tool_authorization_endpoint(), [
-      "GET", "HEAD", "POST",
-    ]),
-    desktop_route_contract(desktop_session_test_runs_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_session_package_candidates_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_action_plan_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_readiness_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_session_eval_report_endpoint(), [
-      "GET", "HEAD", "POST",
-    ]),
-    desktop_route_contract(desktop_session_package_result_endpoint(), ["POST"]),
-    desktop_route_contract(desktop_session_runtime_handoff_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_store_endpoint(), ["GET", "HEAD"]),
-    desktop_route_contract(desktop_session_runtime_commands_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_command_jsonl_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_runtime_events_endpoint(), [
-      "GET", "HEAD", "POST",
-    ]),
-    desktop_route_contract(desktop_session_runtime_claim_endpoint(), [
-      "GET", "HEAD", "POST",
-    ]),
-    desktop_route_contract(desktop_session_runtime_execution_plan_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_runtime_supervisor_endpoint(), [
-      "GET", "HEAD", "POST",
-    ]),
-    desktop_route_contract(desktop_session_runtime_service_endpoint(), ["POST"]),
-    desktop_route_contract(desktop_session_runtime_control_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_runtime_replay_endpoint(), [
-      "GET", "HEAD", "POST",
-    ]),
-    desktop_route_contract(desktop_session_runtime_evidence_endpoint(), [
-      "GET", "HEAD",
-    ]),
-    desktop_route_contract(desktop_session_preflight_endpoint(), ["GET", "HEAD"]),
+    desktop_route_contract(desktop_session_commands_endpoint(), ["POST"]),
   ]
 }
 
