@@ -8,7 +8,7 @@ fn update_mooncode_actions(
     SelectMoonCodeSession(_)
     | NewMoonCodeSession
     | SetMoonCodePrompt(_)
-    | SendMoonCodeMessage =>
+    | SendMoonCodeMessage(_) =>
       update_mooncode_session_actions(dispatch, msg, model)
     ManageMoonClaw(action) =>
       (

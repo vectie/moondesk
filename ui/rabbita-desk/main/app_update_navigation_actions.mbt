@@ -658,7 +658,11 @@ fn select_workspace_mode_action(
     } else {
       model.desk_filter_query
     },
-    preview: if mode == Desk { None } else { model.preview },
+    preview: if mode == Desk {
+      None
+    } else {
+      model.preview
+    },
     preview_status: if mode == Desk && model.selected_workspace_id != "" {
       "loading desk context"
     } else {
@@ -712,10 +716,7 @@ fn select_workspace_mode_action(
   } else {
     @rabbita.none
   }
-  (
-    @rabbita.batch([base_cmd, transport_cmd]),
-    next,
-  )
+  (@rabbita.batch([base_cmd, transport_cmd]), next)
 }
 
 ///|

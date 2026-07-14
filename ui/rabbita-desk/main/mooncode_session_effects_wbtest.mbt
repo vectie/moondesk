@@ -2,10 +2,9 @@
 fn mooncode_session_effect_label(effect : MoonCodeSessionEffect) -> String {
   match effect {
     MoonCodeFetchDaemon => "fetch-daemon"
+    MoonCodeFetchModels => "fetch-models"
     MoonCodeFetchSessions(workspace_id) => "fetch-sessions:\{workspace_id}"
     MoonCodeStartWatch => "start-watch"
-    MoonCodeScheduleMetadataRefresh(generation) =>
-      "metadata-refresh:\{generation}"
     MoonCodeSyncShell => "sync-shell"
   }
 }
@@ -42,10 +41,10 @@ test "mooncode mutation resumes one watch and refreshes metadata" {
 ///|
 test "mooncode metadata refresh never hydrates selected conversation" {
   assert_eq(
-    mooncode_session_effect_labels(mooncode_metadata_refresh_effects(7)).join(
+    mooncode_session_effect_labels(mooncode_metadata_refresh_effects()).join(
       "|",
     ),
-    "fetch-daemon|fetch-sessions:|metadata-refresh:7",
+    "fetch-daemon|fetch-models|fetch-sessions:",
   )
 }
 

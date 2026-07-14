@@ -676,7 +676,8 @@ test "code mode empty selection never reconstructs the first session" {
 ///|
 test "code mode metadata refresh never invents a post-bootstrap selection" {
   let old_session = code_mode_test_session(
-    "old-session", workspace_id="book-demo",
+    "old-session",
+    workspace_id="book-demo",
   )
   let model = {
     ..init_model(),
@@ -692,6 +693,18 @@ test "code mode metadata refresh never invents a post-bootstrap selection" {
   )
   assert_eq(next.selected_mooncode_session_id, "")
   assert_true(selected_mooncode_session(next) is None)
+  assert_eq(next.mooncode_metadata_generation, 1)
+}
+
+///|
+test "code mode session listing failure also advances metadata generation" {
+  let model = { ..init_model(), mooncode_metadata_generation: 7 }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Err("listing unavailable")),
+    model,
+  )
+  assert_eq(next.mooncode_metadata_generation, 8)
 }
 
 ///|
@@ -792,7 +805,7 @@ test "code mode prompt action adds optimistic prompt before runtime reply" {
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(model.mooncode_prompt),
     model,
   )
   assert_eq(next.mooncode_prompt, "")
@@ -809,7 +822,35 @@ test "code mode prompt action adds optimistic prompt before runtime reply" {
 }
 
 ///|
-test "code mode prompt action waits while selected turn is pending" {
+test "code mode keeps the first prompt as the stable new session title" {
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    mooncode_prompt: "  Explain the failing integration test  ",
+  }
+  assert_eq(
+    mooncode_new_session_title(model),
+    "Explain the failing integration test",
+  )
+  let draft_session_id = mooncode_draft_session_id(model)
+  let optimistic = {
+    ..model,
+    mooncode_prompt: "",
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
+      [],
+      draft_session_id,
+      "Explain the failing integration test",
+      client_turn_id="title-turn",
+    ),
+  }
+  assert_eq(
+    mooncode_new_session_title(optimistic),
+    "Explain the failing integration test",
+  )
+}
+
+///|
+test "code mode prompt action queues behind an optimistic pending turn" {
   let session = code_mode_test_session("session-a", status="running")
   let model = {
     ..init_model(),
@@ -826,19 +867,17 @@ test "code mode prompt action waits while selected turn is pending" {
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(model.mooncode_prompt),
     model,
   )
-  assert_eq(next.mooncode_prompt, "Do not lose this prompt")
-  assert_eq(next.mooncode_optimistic_rows.length(), 1)
-  assert_eq(
-    next.mooncode_composer_status,
-    "waiting for previous MoonCode reply",
-  )
+  assert_eq(next.mooncode_prompt, "")
+  assert_eq(next.mooncode_optimistic_rows.length(), 2)
+  assert_eq(next.mooncode_optimistic_rows[1].content, "Do not lose this prompt")
+  assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
 }
 
 ///|
-test "code mode prompt action waits while canonical session is running" {
+test "code mode prompt action queues behind a canonical running turn" {
   let session = {
     ..code_mode_test_session("session-a", status="running"),
     mooncode_conversation: Some(
@@ -869,15 +908,13 @@ test "code mode prompt action waits while canonical session is running" {
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(model.mooncode_prompt),
     model,
   )
-  assert_eq(next.mooncode_prompt, "Do not race ahead")
-  assert_eq(next.mooncode_optimistic_rows.length(), 0)
-  assert_eq(
-    next.mooncode_composer_status,
-    "waiting for previous MoonCode reply",
-  )
+  assert_eq(next.mooncode_prompt, "")
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows[0].content, "Do not race ahead")
+  assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
 }
 
 ///|
@@ -904,7 +941,7 @@ test "code mode prompt action accepts stale running session after completed turn
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(model.mooncode_prompt),
     model,
   )
   assert_eq(next.mooncode_prompt, "")
@@ -929,7 +966,7 @@ test "code mode new chat send appends local prompt immediately" {
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(model.mooncode_prompt),
     model,
   )
   let draft_id = mooncode_draft_session_id(model)
@@ -975,7 +1012,7 @@ test "code mode new chat keeps prompt while draft turn is pending" {
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(model.mooncode_prompt),
     model,
   )
   assert_eq(next.mooncode_prompt, "Second draft prompt")
@@ -1000,7 +1037,7 @@ test "code mode draft transcript survives background status refresh" {
   }
   let (_, pending) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(base.mooncode_prompt),
     base,
   )
   let refreshed = {
@@ -1018,6 +1055,67 @@ test "code mode draft transcript survives background status refresh" {
 }
 
 ///|
+test "code mode send uses the atomic click payload before draft state catches up" {
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [],
+    mooncode_prompt: "",
+    mooncode_composer_status: "new session draft",
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage("Fast click"),
+    model,
+  )
+  assert_eq(next.mooncode_prompt, "")
+  assert_true(next.mooncode_new_chat_active)
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows[0].content, "Fast click")
+  assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
+}
+
+///|
+test "code mode canonical completion clears a stale optimistic gate before second send" {
+  let first_turn = code_mode_test_turn(
+    "command-first",
+    "First prompt",
+    client_turn_id="client-turn-first",
+  )
+  let session = {
+    ..code_mode_test_session("session-second-turn", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-second-turn", [first_turn]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: session.id,
+    mooncode_sessions: [session],
+    mooncode_prompt: "",
+    mooncode_optimistic_rows: mooncode_append_optimistic_user_prompt(
+      [],
+      session.id,
+      "First prompt",
+      client_turn_id="client-turn-first",
+    ),
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage("Second prompt"),
+    model,
+  )
+  assert_eq(next.mooncode_prompt, "")
+  assert_eq(next.mooncode_optimistic_rows.length(), 1)
+  assert_eq(next.mooncode_optimistic_rows[0].content, "Second prompt")
+  assert_true(next.mooncode_optimistic_rows[0].key != "client-turn-first")
+  assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
+}
+
+///|
 test "code mode created session adopts draft prompt rows" {
   let draft_model = {
     ..init_model(),
@@ -1030,7 +1128,7 @@ test "code mode created session adopts draft prompt rows" {
   }
   let (_, pending) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(draft_model.mooncode_prompt),
     draft_model,
   )
   let real_session = code_mode_test_session("session-created", workspace_id="")
@@ -1117,7 +1215,7 @@ test "code mode stale session listing keeps new chat draft selected" {
   }
   let (_, pending) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(draft_model.mooncode_prompt),
     draft_model,
   )
   let newer_listing = code_mode_test_session("older", workspace_id="")
@@ -1148,7 +1246,7 @@ test "code mode session listing adopts acknowledged new chat draft" {
   }
   let (_, pending) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(draft_model.mooncode_prompt),
     draft_model,
   )
   let client_turn_id = pending.mooncode_optimistic_rows[0].key
@@ -1201,7 +1299,7 @@ test "code mode compact session listing does not adopt draft by prompt title" {
   }
   let (_, pending) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(draft_model.mooncode_prompt),
     draft_model,
   )
   let compact = {
@@ -1352,7 +1450,7 @@ test "code mode command error shows failed assistant row and unblocks composer" 
   )
   let (_, retried) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(model.mooncode_prompt),
     failed,
   )
   assert_eq(retried.mooncode_composer_status, "message queued for MoonCode")
@@ -1820,7 +1918,11 @@ test "code mode stale canonical watch response is ignored" {
 
 ///|
 test "code mode canonical watch heartbeat preserves the last good transcript" {
-  let turn = code_mode_test_turn("turn-a", "Stable prompt", assistant="Stable answer")
+  let turn = code_mode_test_turn(
+    "turn-a",
+    "Stable prompt",
+    assistant="Stable answer",
+  )
   let session = {
     ..code_mode_test_session("session-a", status="done"),
     title: "Stable title",
@@ -1848,7 +1950,10 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
     model,
   )
   assert_eq(next.mooncode_sessions[0].title, "Stable title")
-  assert_eq(mooncode_session_conversation_revision(next.mooncode_sessions[0]), 8)
+  assert_eq(
+    mooncode_session_conversation_revision(next.mooncode_sessions[0]),
+    8,
+  )
   assert_eq(next.mooncode_watch_revision, 8)
   assert_eq(next.mooncode_watch_sequence, 11)
   assert_eq(next.mooncode_watch_status, "watching")
@@ -1865,7 +1970,11 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
     title: "Current title",
     mooncode_conversation: Some({
       ..code_mode_test_conversation("session-a", [
-        code_mode_test_turn("turn-a", "Current prompt", assistant="Current answer"),
+        code_mode_test_turn(
+          "turn-a",
+          "Current prompt",
+          assistant="Current answer",
+        ),
       ]),
       revision: 8,
     }),
@@ -1899,7 +2008,10 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
     model,
   )
   assert_eq(next.mooncode_sessions[0].title, "Current title")
-  assert_eq(mooncode_session_conversation_revision(next.mooncode_sessions[0]), 8)
+  assert_eq(
+    mooncode_session_conversation_revision(next.mooncode_sessions[0]),
+    8,
+  )
   assert_eq(next.mooncode_watch_revision, 8)
   assert_eq(next.mooncode_watch_sequence, 12)
 }
@@ -1935,6 +2047,32 @@ test "code mode watch disconnect preserves transcript while reconnecting" {
   let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
   assert_eq(rows.length(), 1)
   assert_eq(rows[0].content, "Keep me")
+}
+
+///|
+test "code mode replaced watch leaves the healthy replacement alone" {
+  let session = code_mode_test_session("session-a", status="running")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: "session-a",
+    mooncode_sessions: [session],
+    mooncode_watch_generation: 9,
+    mooncode_watch_revision: 8,
+    mooncode_watch_sequence: 4,
+    mooncode_watch_status: "connecting",
+    mooncode_composer_status: "message queued for MoonCode",
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeWatch(9, "session-a", Err("MoonCode watch replaced")),
+    model,
+  )
+  assert_eq(next.mooncode_watch_status, "connecting")
+  assert_eq(next.mooncode_watch_revision, 8)
+  assert_eq(next.mooncode_watch_sequence, 4)
+  assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
+  assert_eq(next.mooncode_sessions.length(), 1)
 }
 
 ///|
@@ -2073,7 +2211,7 @@ test "code mode enables web search by default" {
 }
 
 ///|
-test "code mode model polling defaults empty model list to codex runtime model" {
+test "code mode model polling leaves selection empty without executable models" {
   let model = {
     ..init_model(),
     workspace_mode: MoonCode,
@@ -2095,15 +2233,15 @@ test "code mode model polling defaults empty model list to codex runtime model" 
     ),
     model,
   )
-  assert_eq(next.mooncode_model, "codex/gpt-5.4")
+  assert_eq(next.mooncode_model, "")
 }
 
 ///|
-test "code mode command payload model falls back to codex runtime model" {
+test "code mode command payload lets MoonClaw own an empty default selection" {
   let empty_session = { ..code_mode_test_session("session-a"), model: "" }
   assert_eq(
     mooncode_selected_runtime_model(init_model(), Some(empty_session)),
-    "codex/gpt-5.4",
+    "",
   )
   assert_eq(
     mooncode_selected_runtime_model(
@@ -2111,6 +2249,28 @@ test "code mode command payload model falls back to codex runtime model" {
       Some(empty_session),
     ),
     "deepseek-v4-flash",
+  )
+}
+
+///|
+test "code mode model refresh replaces a stale unavailable selection" {
+  let result : MoonClawModelsResult = {
+    ok: true,
+    daemon: {
+      running: true,
+      port: 1515,
+      message: "daemon running",
+      service_configured: true,
+    },
+    models: [{ name: "codex/gpt-5.4" }],
+  }
+  assert_eq(
+    mooncode_reconcile_runtime_model("gpt-5.6-sol", result),
+    "codex/gpt-5.4",
+  )
+  assert_eq(
+    mooncode_reconcile_runtime_model("codex/gpt-5.4", result),
+    "codex/gpt-5.4",
   )
 }
 
@@ -2125,7 +2285,7 @@ test "code mode empty composer is rejected before creating a session" {
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    SendMoonCodeMessage,
+    SendMoonCodeMessage(model.mooncode_prompt),
     model,
   )
   assert_true(next.workspace_mode is MoonCode)

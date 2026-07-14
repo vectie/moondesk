@@ -1,9 +1,9 @@
 ///|
 enum MoonCodeSessionEffect {
   MoonCodeFetchDaemon
+  MoonCodeFetchModels
   MoonCodeFetchSessions(String)
   MoonCodeStartWatch
-  MoonCodeScheduleMetadataRefresh(Int)
   MoonCodeSyncShell
 }
 
@@ -42,11 +42,10 @@ fn mooncode_session_effect_cmd(
 ) -> @rabbita.Cmd {
   match effect {
     MoonCodeFetchDaemon => fetch_moonclaw_daemon_cmd(dispatch)
+    MoonCodeFetchModels => fetch_moonclaw_models_cmd(dispatch)
     MoonCodeFetchSessions(workspace_id) =>
       fetch_mooncode_sessions_cmd(dispatch, workspace_id)
     MoonCodeStartWatch => mooncode_watch_cmd(dispatch, model)
-    MoonCodeScheduleMetadataRefresh(generation) =>
-      schedule_mooncode_metadata_refresh(dispatch, generation)
     MoonCodeSyncShell => sync_shell_cmd(MoonCode, model.activity)
   }
 }
@@ -83,7 +82,9 @@ fn mooncode_after_session_mutation_cmd(
 ) -> @rabbita.Cmd {
   @rabbita.batch([
     mooncode_session_effects_cmd(
-      dispatch, model, mooncode_session_mutation_effects(),
+      dispatch,
+      model,
+      mooncode_session_mutation_effects(),
     ),
     sync_mooncode_context_cmd(model.selected_workspace_id, session_id),
     clear_mooncode_composer_cmd(),
@@ -91,24 +92,20 @@ fn mooncode_after_session_mutation_cmd(
 }
 
 ///|
-fn mooncode_metadata_refresh_effects(
-  generation : Int,
-) -> Array[MoonCodeSessionEffect] {
-  [
-    MoonCodeFetchDaemon,
-    MoonCodeFetchSessions(""),
-    MoonCodeScheduleMetadataRefresh(generation),
-  ]
+fn mooncode_metadata_refresh_effects() -> Array[MoonCodeSessionEffect] {
+  [MoonCodeFetchDaemon, MoonCodeFetchModels, MoonCodeFetchSessions("")]
 }
 
 ///|
 fn mooncode_metadata_refresh_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
-  generation : Int,
+  _generation : Int,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_cmd(
-    dispatch, model, mooncode_metadata_refresh_effects(generation),
+    dispatch,
+    model,
+    mooncode_metadata_refresh_effects(),
   )
 }
 
@@ -123,6 +120,8 @@ fn mooncode_selected_session_cmd(
   model : Model,
 ) -> @rabbita.Cmd {
   mooncode_session_effects_cmd(
-    dispatch, model, mooncode_selected_session_effects(),
+    dispatch,
+    model,
+    mooncode_selected_session_effects(),
   )
 }

@@ -206,7 +206,7 @@ enum Msg {
   SelectMoonCodeSession(String)
   NewMoonCodeSession
   SetMoonCodePrompt(String)
-  SendMoonCodeMessage
+  SendMoonCodeMessage(String)
   ManageMoonClaw(String)
   RefreshMoonCodeMetadata(Int)
   ResumeMoonCodeWatch(Int, String)

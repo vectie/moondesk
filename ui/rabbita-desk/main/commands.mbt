@@ -396,6 +396,7 @@ extern "js" fn browser_install_desk_location_enter() =
   #|   if (window.__moondeskDeskLocationEnterInstalled) return;
   #|   window.__moondeskDeskLocationEnterInstalled = true;
   #|   document.addEventListener("keydown", (event) => {
+  #|     if (event.isComposing) return;
   #|     if (event.key !== "Enter") return;
   #|     const target = event.target;
   #|     if (!(target instanceof HTMLElement)) return;
@@ -418,6 +419,7 @@ extern "js" fn browser_install_mooncode_enter_send() =
   #|   if (window.__moondeskMoonCodeEnterSendInstalled) return;
   #|   window.__moondeskMoonCodeEnterSendInstalled = true;
   #|   document.addEventListener("keydown", (event) => {
+  #|     if (event.isComposing) return;
   #|     if (event.key !== "Enter" || event.shiftKey) return;
   #|     const target = event.target;
   #|     if (!(target instanceof HTMLElement)) return;
@@ -427,6 +429,10 @@ extern "js" fn browser_install_mooncode_enter_send() =
   #|     document.querySelector('[data-testid="mooncode-send"]')?.click();
   #|   }, true);
   #| }
+
+///|
+extern "js" fn browser_mooncode_prompt_value() -> String =
+  #| () => document.querySelector('[data-testid="mooncode-input"]')?.value ?? ""
 
 ///|
 fn install_mooncode_enter_send_cmd() -> @rabbita.Cmd {

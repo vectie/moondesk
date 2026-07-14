@@ -54,7 +54,8 @@ fn update_mooncode_session_actions(
           mooncode_composer_status: "draft",
         },
       )
-    SendMoonCodeMessage => mooncode_send_composer(dispatch, model)
+    SendMoonCodeMessage(prompt) =>
+      mooncode_send_composer(dispatch, { ..model, mooncode_prompt: prompt })
     _ => (@rabbita.none, model)
   }
 }
@@ -72,7 +73,11 @@ fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
     mooncode_watch_generation: model.mooncode_watch_generation + 1,
     mooncode_watch_revision: 0,
     mooncode_watch_sequence: 0,
-    mooncode_watch_status: if session_id == "" { "idle" } else { "connecting" },
+    mooncode_watch_status: if session_id == "" {
+      "idle"
+    } else {
+      "connecting"
+    },
   }
 }
 
@@ -112,26 +117,33 @@ fn mooncode_send_composer(
       },
     )
   } else {
+    let draft_session_id = mooncode_draft_session_id(model)
+    if model.selected_mooncode_session_id == "" &&
+      mooncode_optimistic_rows_have_session(
+        model.mooncode_optimistic_rows,
+        draft_session_id,
+      ) {
+      return (
+        fetch_mooncode_sessions_cmd(dispatch, ""),
+        {
+          ..model,
+          workspace_mode: MoonCode,
+          command_open: false,
+          mooncode_new_chat_active: true,
+          mooncode_composer_status: "waiting for previous MoonCode reply",
+        },
+      )
+    }
     match selected_mooncode_session(model) {
       Some(session) => {
-        let prompt = model.mooncode_prompt.trim().to_owned()
-        if mooncode_selected_session_has_inflight_state(model, session.id) {
-          return (
-            mooncode_watch_cmd(dispatch, model),
-            {
-              ..model,
-              workspace_mode: MoonCode,
-              command_open: false,
-              mooncode_new_chat_active: if model.selected_mooncode_session_id ==
-                "" {
-                true
-              } else {
-                model.mooncode_new_chat_active
-              },
-              mooncode_composer_status: "waiting for previous MoonCode reply",
-            },
-          )
+        let model = {
+          ..model,
+          mooncode_optimistic_rows: mooncode_drop_acknowledged_optimistic_rows(
+            model.mooncode_optimistic_rows,
+            session,
+          ),
         }
+        let prompt = model.mooncode_prompt.trim().to_owned()
         let client_turn_id = mooncode_client_turn_id(model, session.id, prompt)
         (
           mooncode_after_user_submit_cmd(
@@ -159,22 +171,6 @@ fn mooncode_send_composer(
       }
       None => {
         let prompt = model.mooncode_prompt.trim().to_owned()
-        let draft_session_id = mooncode_draft_session_id(model)
-        if mooncode_optimistic_rows_have_session(
-            model.mooncode_optimistic_rows,
-            draft_session_id,
-          ) {
-          return (
-            fetch_mooncode_sessions_cmd(dispatch, ""),
-            {
-              ..model,
-              workspace_mode: MoonCode,
-              command_open: false,
-              mooncode_new_chat_active: true,
-              mooncode_composer_status: "waiting for previous MoonCode reply",
-            },
-          )
-        }
         let client_turn_id = mooncode_client_turn_id(
           model, draft_session_id, prompt,
         )

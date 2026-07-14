@@ -104,11 +104,24 @@ fn mooncode_selected_runtime_model(
     Some(session) => session.model
     None => ""
   }
-  trimmed_or(trimmed_or(model.mooncode_model, session_model), "codex/gpt-5.4")
+  trimmed_or(model.mooncode_model, session_model)
 }
 
 ///|
 fn mooncode_new_session_title(model : Model) -> String {
+  let prompt = model.mooncode_prompt.trim().to_owned()
+  if prompt != "" {
+    return prompt
+  }
+  let draft_session_id = mooncode_draft_session_id(model)
+  for row in model.mooncode_optimistic_rows {
+    if row.session_id == draft_session_id && row.role == "user" {
+      let content = row.content.trim().to_owned()
+      if content != "" {
+        return content
+      }
+    }
+  }
   if model.selected_workspace_id == "" {
     "MoonCode - General"
   } else {

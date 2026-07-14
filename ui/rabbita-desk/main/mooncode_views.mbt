@@ -356,8 +356,13 @@ fn render_mooncode_center(
             div(class="composer-footer", [
               button(
                 class="primary-button",
-                attrs=@html.Attrs::build().data_set("testid", "mooncode-send"),
-                on_click=dispatch(SendMoonCodeMessage),
+                attrs=@html.Attrs::build()
+                  .data_set("testid", "mooncode-send")
+                  .on_click(_ => {
+                    dispatch(
+                      SendMoonCodeMessage(browser_mooncode_prompt_value()),
+                    )
+                  }),
                 mooncode_composer_button_label(model, session),
               ),
             ]),

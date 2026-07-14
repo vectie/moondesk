@@ -71,10 +71,7 @@ extern "js" fn browser_stop_mooncode_watch() =
   #| }
 
 ///|
-fn mooncode_watch_cmd(
-  dispatch : Dispatch[Msg],
-  model : Model,
-) -> @rabbita.Cmd {
+fn mooncode_watch_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   let session_id = model.selected_mooncode_session_id
   if model.workspace_mode != MoonCode || session_id == "" {
     return @rabbita.none
@@ -84,17 +81,15 @@ fn mooncode_watch_cmd(
   let sequence = model.mooncode_watch_sequence
   let url = @desk.mooncode_session_watch_url(session_id, revision, sequence)
   @rabbita.perform(
-    fn(result) {
-      dispatch(LoadedMoonCodeWatch(generation, session_id, result))
-    },
+    fn(result) { dispatch(LoadedMoonCodeWatch(generation, session_id, result)) },
     async fn() noraise {
       let text : String = browser_watch_mooncode_session(
-        url, generation, session_id,
-      )
-      .wait()
-      .cast() catch {
-        error => return Err("MoonCode watch failed: \{error}")
-      }
+          url, generation, session_id,
+        )
+        .wait()
+        .cast() catch {
+          error => return Err("MoonCode watch failed: \{error}")
+        }
       let envelope : MoonCodeBrowserWatchEnvelope = @json.from_json(
         @json.parse(text),
       ) catch {
@@ -130,6 +125,10 @@ fn schedule_mooncode_watch_resume(
 ) -> @rabbita.Cmd {
   @rabbita.delay(
     dispatch(ResumeMoonCodeWatch(generation, session_id)),
-    if after_ms < 100 { 100 } else { after_ms },
+    if after_ms < 100 {
+      100
+    } else {
+      after_ms
+    },
   )
 }

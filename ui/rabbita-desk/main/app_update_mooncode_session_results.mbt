@@ -53,11 +53,10 @@ fn update_mooncode_session_results(
         @rabbita.none,
         {
           ..model,
-          mooncode_model: if model.mooncode_model == "" {
-            mooncode_default_runtime_model(result)
-          } else {
-            model.mooncode_model
-          },
+          mooncode_model: mooncode_reconcile_runtime_model(
+            model.mooncode_model,
+            result,
+          ),
           mooncode_composer_status: if mooncode_new_session_draft_active(model) {
             model.mooncode_composer_status
           } else if result.ok {
@@ -96,8 +95,11 @@ fn update_mooncode_session_results(
           session_model, mooncode_sessions,
         ) {
         Some(session) =>
-          return mooncode_session_mutation_succeeded(
-            dispatch, session_model, session, "MoonCode session started",
+          return mooncode_after_session_listing_result(
+            dispatch,
+            mooncode_session_mutation_succeeded(
+              dispatch, session_model, session, "MoonCode session started",
+            ),
           )
         None => ()
       }
@@ -144,7 +146,11 @@ fn update_mooncode_session_results(
           model.mooncode_watch_sequence
         },
         mooncode_watch_status: if selection_changed {
-          if selected == "" { "idle" } else { "connecting" }
+          if selected == "" {
+            "idle"
+          } else {
+            "connecting"
+          }
         } else {
           model.mooncode_watch_status
         },
@@ -154,20 +160,23 @@ fn update_mooncode_session_results(
           "\{mooncode_sessions.length()} MoonCode session(s)"
         },
       }
-      (
-        mooncode_listing_watch_cmd(dispatch, model, next),
-        next,
+      mooncode_after_session_listing_result(
+        dispatch,
+        (mooncode_listing_watch_cmd(dispatch, model, next), next),
       )
     }
     LoadedMoonCodeSessions(Err(error)) =>
-      (
-        @rabbita.none,
-        {
-          ..model,
-          mooncode_composer_status: mooncode_background_status_unless_draft(
-            model, error,
-          ),
-        },
+      mooncode_after_session_listing_result(
+        dispatch,
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_composer_status: mooncode_background_status_unless_draft(
+              model, error,
+            ),
+          },
+        ),
       )
     LoadedMoonCodeWatch(generation, session_id, Ok(response)) =>
       if generation != model.mooncode_watch_generation ||
@@ -213,6 +222,22 @@ fn update_mooncode_session_results(
 }
 
 ///|
+fn mooncode_after_session_listing_result(
+  dispatch : Dispatch[Msg],
+  result : (@rabbita.Cmd, Model),
+) -> (@rabbita.Cmd, Model) {
+  let (cmd, model) = result
+  let generation = model.mooncode_metadata_generation + 1
+  (
+    @rabbita.batch([
+      cmd,
+      schedule_mooncode_metadata_refresh(dispatch, generation),
+    ]),
+    { ..model, mooncode_metadata_generation: generation },
+  )
+}
+
+///|
 fn mooncode_current_composer_session_id(model : Model) -> String {
   if model.selected_mooncode_session_id != "" {
     model.selected_mooncode_session_id
@@ -244,14 +269,16 @@ fn mooncode_watch_succeeded(
   let sessions = match response.snapshot {
     Some(snapshot) if response.changed =>
       mooncode_upsert_session_if_revision_changed(
-        model.mooncode_sessions, snapshot,
+        model.mooncode_sessions,
+        snapshot,
       )
     _ => model.mooncode_sessions
   }
   let optimistic_rows = match response.snapshot {
     Some(snapshot) if response.changed =>
       mooncode_drop_acknowledged_optimistic_rows(
-        model.mooncode_optimistic_rows, snapshot,
+        model.mooncode_optimistic_rows,
+        snapshot,
       )
     _ => model.mooncode_optimistic_rows
   }
@@ -300,18 +327,15 @@ fn mooncode_watch_failed(
   session_id : String,
   error : String,
 ) -> (@rabbita.Cmd, Model) {
+  if error == "MoonCode watch replaced" {
+    return (@rabbita.none, model)
+  }
   (
-    schedule_mooncode_watch_resume(
-      dispatch, generation, session_id, 1000,
-    ),
+    schedule_mooncode_watch_resume(dispatch, generation, session_id, 1000),
     {
       ..model,
       mooncode_watch_status: "reconnecting",
-      mooncode_composer_status: if error == "MoonCode watch replaced" {
-        model.mooncode_composer_status
-      } else {
-        "Reconnecting to MoonCode"
-      },
+      mooncode_composer_status: "Reconnecting to MoonCode",
     },
   )
 }
@@ -340,7 +364,8 @@ fn mooncode_listing_watch_cmd(
       @rabbita.none
     }
   } else if next.selected_mooncode_session_id !=
-    previous.selected_mooncode_session_id || previous.mooncode_watch_status == "idle" {
+    previous.selected_mooncode_session_id ||
+    previous.mooncode_watch_status == "idle" {
     mooncode_watch_cmd(dispatch, next)
   } else {
     @rabbita.none
@@ -351,10 +376,20 @@ fn mooncode_listing_watch_cmd(
 fn mooncode_default_runtime_model(result : MoonClawModelsResult) -> String {
   if result.models.length() > 0 {
     result.models[0].name
-  } else if result.ok {
-    "codex/gpt-5.4"
   } else {
     ""
+  }
+}
+
+///|
+fn mooncode_reconcile_runtime_model(
+  current : String,
+  result : MoonClawModelsResult,
+) -> String {
+  if current != "" && result.models.any(model => model.name == current) {
+    current
+  } else {
+    mooncode_default_runtime_model(result)
   }
 }
 
@@ -404,10 +439,7 @@ fn mooncode_session_mutation_succeeded(
     mooncode_watch_status: "connecting",
     mooncode_composer_status: status,
   }
-  (
-    mooncode_after_session_mutation_cmd(dispatch, next, session.id),
-    next,
-  )
+  (mooncode_after_session_mutation_cmd(dispatch, next, session.id), next)
 }
 
 ///|

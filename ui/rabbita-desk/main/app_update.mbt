@@ -100,12 +100,10 @@ fn update(
     SelectMoonCodeSession(_) => update_mooncode_actions(dispatch, msg, model)
     NewMoonCodeSession => update_mooncode_actions(dispatch, msg, model)
     SetMoonCodePrompt(_) => update_mooncode_actions(dispatch, msg, model)
-    SendMoonCodeMessage => update_mooncode_actions(dispatch, msg, model)
+    SendMoonCodeMessage(_) => update_mooncode_actions(dispatch, msg, model)
     ManageMoonClaw(_) => update_mooncode_actions(dispatch, msg, model)
-    RefreshMoonCodeMetadata(_) =>
-      update_mooncode_actions(dispatch, msg, model)
-    ResumeMoonCodeWatch(_, _) =>
-      update_mooncode_actions(dispatch, msg, model)
+    RefreshMoonCodeMetadata(_) => update_mooncode_actions(dispatch, msg, model)
+    ResumeMoonCodeWatch(_, _) => update_mooncode_actions(dispatch, msg, model)
     SetGoalTitle(_) => update_book_builder_actions(dispatch, msg, model)
     SetGoalCadenceTicks(_) => update_book_builder_actions(dispatch, msg, model)
     SetGoalReviewPolicy(_) => update_book_builder_actions(dispatch, msg, model)
