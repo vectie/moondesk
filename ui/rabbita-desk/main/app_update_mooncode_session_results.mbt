@@ -183,6 +183,16 @@ fn update_mooncode_session_results(
           },
         ),
       )
+    LoadedMoonCodeArchivedSessions(Ok(sessions)) =>
+      (
+        @rabbita.none,
+        { ..model, mooncode_archived_sessions: sessions },
+      )
+    LoadedMoonCodeArchivedSessions(Err(error)) =>
+      (
+        @rabbita.none,
+        { ..model, mooncode_session_management_status: error },
+      )
     LoadedMoonCodeWatch(generation, session_id, Ok(response)) =>
       if !mooncode_watch_is_current(model, generation, session_id) {
         (@rabbita.none, model)
@@ -220,6 +230,8 @@ fn update_mooncode_session_results(
           mooncode_composer_status: error,
         },
       )
+    ManagedMoonCodeSession(result) =>
+      mooncode_session_management_result(dispatch, model, result)
     _ => (@rabbita.none, model)
   }
 }

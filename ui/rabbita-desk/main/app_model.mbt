@@ -82,7 +82,13 @@ struct Model {
   launch_agent : LaunchAgentResult?
   moonclaw_daemon : MoonClawDaemonStatus?
   mooncode_sessions : Array[MoonCodeSession]
+  mooncode_archived_sessions : Array[MoonCodeSession]
   selected_mooncode_session_id : String
+  mooncode_session_query : String
+  mooncode_session_editing_id : String
+  mooncode_session_title_draft : String
+  mooncode_session_delete_id : String
+  mooncode_session_management_status : String
   mooncode_new_chat_active : Bool
   mooncode_prompt : String
   mooncode_model : String
@@ -196,9 +202,11 @@ enum Msg {
   ManagedMoonClaw(Result[MoonClawDaemonStatus, String])
   LoadedMoonClawModels(Result[MoonClawModelsResult, String])
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
+  LoadedMoonCodeArchivedSessions(Result[Array[MoonCodeSession], String])
   LoadedMoonCodeWatch(Int, String, Result[MoonCodeWatchResponse, String])
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
+  ManagedMoonCodeSession(Result[MoonCodeSessionLifecycleResult, String])
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)
@@ -207,6 +215,16 @@ enum Msg {
   SelectActivity(Activity)
   SelectMoonCodeSession(String)
   NewMoonCodeSession
+  SetMoonCodeSessionQuery(String)
+  BeginMoonCodeSessionRename(String)
+  SetMoonCodeSessionTitleDraft(String)
+  CancelMoonCodeSessionRename
+  SaveMoonCodeSessionRename(String)
+  ArchiveMoonCodeSession(String)
+  RestoreMoonCodeSession(String)
+  RequestDeleteMoonCodeSession(String)
+  CancelDeleteMoonCodeSession
+  ConfirmDeleteMoonCodeSession(String)
   SetMoonCodePrompt(String)
   SendMoonCodeMessage(String)
   CopyMoonCodeText(String, String)

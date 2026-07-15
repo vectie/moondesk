@@ -46,6 +46,7 @@ struct MoonCodeSession {
   source : String?
   mooncode_runtime_session_id : String?
   title : String
+  updated_at : String?
   model : String
   status : String
   queued_count : Int
@@ -54,6 +55,19 @@ struct MoonCodeSession {
   mooncode_conversation : MoonCodeConversation?
   mooncode_summary : MoonCodeSummary
   canonical_unchanged : Bool?
+  archived : Bool
+} derive(FromJson)
+
+///|
+struct MoonCodeSessionLifecycleResult {
+  kind : String
+  protocol : String
+  owner : String
+  action : String
+  session_id : String
+  title : String
+  archived : Bool
+  deleted : Bool
 } derive(FromJson)
 
 ///|

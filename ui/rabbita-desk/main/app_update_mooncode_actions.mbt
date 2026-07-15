@@ -11,7 +11,17 @@ fn update_mooncode_actions(
     | SendMoonCodeMessage(_)
     | RetryMoonCodeTurn(_, _)
     | CancelMoonCodeWork(_, _)
-    | DecideMoonCodeTool(_, _, _, _, _) =>
+    | DecideMoonCodeTool(_, _, _, _, _)
+    | SetMoonCodeSessionQuery(_)
+    | BeginMoonCodeSessionRename(_)
+    | SetMoonCodeSessionTitleDraft(_)
+    | CancelMoonCodeSessionRename
+    | SaveMoonCodeSessionRename(_)
+    | ArchiveMoonCodeSession(_)
+    | RestoreMoonCodeSession(_)
+    | RequestDeleteMoonCodeSession(_)
+    | CancelDeleteMoonCodeSession
+    | ConfirmDeleteMoonCodeSession(_) =>
       update_mooncode_session_actions(dispatch, msg, model)
     CopyMoonCodeText(item_id, text) =>
       (

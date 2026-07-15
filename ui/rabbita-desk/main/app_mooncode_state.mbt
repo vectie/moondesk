@@ -51,6 +51,7 @@ fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
     source: Some("mooncode-draft"),
     mooncode_runtime_session_id: None,
     title: mooncode_new_session_title(model),
+    updated_at: None,
     model: mooncode_selected_runtime_model(model, None),
     status: "queued",
     queued_count: 1,
@@ -63,6 +64,7 @@ fn mooncode_draft_session(model : Model) -> MoonCodeSession? {
       pending_diff_count: 0,
     },
     canonical_unchanged: None,
+    archived: false,
   })
 }
 

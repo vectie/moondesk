@@ -31,6 +31,7 @@ fn code_mode_test_session(
     source: None,
     mooncode_runtime_session_id: Some("runtime-" + id),
     title: "MoonCode - " + id,
+    updated_at: None,
     model: "deepseek-v4-flash",
     status,
     queued_count,
@@ -39,6 +40,7 @@ fn code_mode_test_session(
     mooncode_conversation: None,
     mooncode_summary: code_mode_test_summary(),
     canonical_unchanged: None,
+    archived: false,
   }
 }
 
@@ -58,6 +60,26 @@ fn code_mode_test_watch_snapshot(
     terminal: session.status == "done" || session.status == "failed",
     retry_after_ms: 0,
     snapshot: Some(session),
+  }
+}
+
+///|
+fn code_mode_test_lifecycle_result(
+  action : String,
+  session_id : String,
+  title? : String = "",
+  archived? : Bool = false,
+  deleted? : Bool = false,
+) -> MoonCodeSessionLifecycleResult {
+  {
+    kind: "mooncode-session-lifecycle-result",
+    protocol: "mooncode.v1",
+    owner: "moonclaw",
+    action,
+    session_id,
+    title,
+    archived,
+    deleted,
   }
 }
 
@@ -107,6 +129,7 @@ test "MoonCode session decodes optional runtime explanation" {
     "queued_count": 0,
     "last_message": "Build the helper",
     "mooncode_runtime_detail": "MoonClaw daemon is not running",
+    "archived": false,
     "mooncode_summary": {
       "event_count": 2,
       "verified_test_count": 0,
@@ -881,6 +904,120 @@ test "code mode session rail groups general separately from moonbooks" {
   assert_eq(groups[1].workspace_id, "book-a")
   assert_eq(groups[1].sessions.length(), 1)
   assert_eq(groups[1].sessions[0].id, "book-a")
+}
+
+///|
+test "code mode session search filters metadata without reordering matches" {
+  let first = {
+    ..code_mode_test_session("first", workspace_id=""),
+    title: "Parser plan",
+  }
+  let second = {
+    ..code_mode_test_session("second", workspace_id="book-a"),
+    title: "Parser implementation",
+  }
+  let hidden = {
+    ..code_mode_test_session("hidden", workspace_id="book-a"),
+    title: "Release notes",
+  }
+  let model = {
+    ..init_model(),
+    mooncode_sessions: [first, second, hidden],
+    mooncode_session_query: "parser",
+  }
+  let groups = mooncode_session_groups(model)
+  assert_eq(groups.length(), 2)
+  assert_eq(groups[0].sessions[0].id, "first")
+  assert_eq(groups[1].sessions[0].id, "second")
+}
+
+///|
+test "code mode rename updates one stable row in place" {
+  let first = code_mode_test_session("first")
+  let target = code_mode_test_session("target")
+  let last = code_mode_test_session("last")
+  let model = {
+    ..init_model(),
+    mooncode_sessions: [first, target, last],
+    mooncode_session_editing_id: target.id,
+    mooncode_session_title_draft: "Durable title",
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonCodeSession(
+      Ok(
+        code_mode_test_lifecycle_result(
+          "rename", target.id, title="Durable title",
+        ),
+      ),
+    ),
+    model,
+  )
+  assert_eq(next.mooncode_sessions.length(), 3)
+  assert_eq(next.mooncode_sessions[0].id, "first")
+  assert_eq(next.mooncode_sessions[1].id, "target")
+  assert_eq(next.mooncode_sessions[1].title, "Durable title")
+  assert_eq(next.mooncode_sessions[2].id, "last")
+  assert_eq(next.mooncode_session_editing_id, "")
+}
+
+///|
+test "code mode archive clears selected chat and restore returns metadata" {
+  let session = code_mode_test_session("managed")
+  let model = {
+    ..init_model(),
+    mooncode_sessions: [session],
+    selected_mooncode_session_id: session.id,
+    mooncode_watch_status: "watching",
+  }
+  let (_, archived) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonCodeSession(
+      Ok(
+        code_mode_test_lifecycle_result(
+          "archive", session.id, archived=true,
+        ),
+      ),
+    ),
+    model,
+  )
+  assert_eq(archived.mooncode_sessions.length(), 0)
+  assert_eq(archived.mooncode_archived_sessions.length(), 1)
+  assert_true(archived.mooncode_archived_sessions[0].archived)
+  assert_eq(archived.selected_mooncode_session_id, "")
+  assert_eq(archived.mooncode_watch_status, "idle")
+  let (_, restored) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonCodeSession(
+      Ok(code_mode_test_lifecycle_result("restore", session.id)),
+    ),
+    archived,
+  )
+  assert_eq(restored.mooncode_archived_sessions.length(), 0)
+  assert_eq(restored.mooncode_sessions.length(), 1)
+  assert_false(restored.mooncode_sessions[0].archived)
+  assert_eq(restored.selected_mooncode_session_id, "")
+}
+
+///|
+test "code mode delete requires confirmation and running storage stays locked" {
+  let running = code_mode_test_session("running", status="running")
+  let model = { ..init_model(), mooncode_sessions: [running] }
+  let (_, confirmation) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    RequestDeleteMoonCodeSession(running.id),
+    model,
+  )
+  assert_eq(confirmation.mooncode_session_delete_id, running.id)
+  let (_, blocked) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    ConfirmDeleteMoonCodeSession(running.id),
+    confirmation,
+  )
+  assert_true(
+    blocked.mooncode_session_management_status.contains("finish"),
+  )
+  assert_eq(blocked.mooncode_sessions.length(), 1)
 }
 
 ///|

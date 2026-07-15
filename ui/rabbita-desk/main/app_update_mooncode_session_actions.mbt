@@ -77,6 +77,61 @@ fn update_mooncode_session_actions(
         target_command_id,
         tool_call_id,
       )
+    SetMoonCodeSessionQuery(query) =>
+      (@rabbita.none, { ..model, mooncode_session_query: query })
+    BeginMoonCodeSessionRename(session_id) =>
+      match mooncode_session_for_management(model, session_id) {
+        Some(session) =>
+          (
+            @rabbita.none,
+            {
+              ..model,
+              mooncode_session_editing_id: session_id,
+              mooncode_session_title_draft: session.title,
+              mooncode_session_delete_id: "",
+              mooncode_session_management_status: "",
+            },
+          )
+        None => (@rabbita.none, model)
+      }
+    SetMoonCodeSessionTitleDraft(title) =>
+      (@rabbita.none, { ..model, mooncode_session_title_draft: title })
+    CancelMoonCodeSessionRename =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_session_editing_id: "",
+          mooncode_session_title_draft: "",
+        },
+      )
+    SaveMoonCodeSessionRename(session_id) =>
+      mooncode_save_session_rename(dispatch, model, session_id)
+    ArchiveMoonCodeSession(session_id) =>
+      mooncode_start_session_storage_action(
+        dispatch, model, session_id, "archive",
+      )
+    RestoreMoonCodeSession(session_id) =>
+      mooncode_start_session_storage_action(
+        dispatch, model, session_id, "restore",
+      )
+    RequestDeleteMoonCodeSession(session_id) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_session_delete_id: session_id,
+          mooncode_session_editing_id: "",
+          mooncode_session_title_draft: "",
+          mooncode_session_management_status: "",
+        },
+      )
+    CancelDeleteMoonCodeSession =>
+      (@rabbita.none, { ..model, mooncode_session_delete_id: "" })
+    ConfirmDeleteMoonCodeSession(session_id) =>
+      mooncode_start_session_storage_action(
+        dispatch, model, session_id, "delete",
+      )
     _ => (@rabbita.none, model)
   }
 }

@@ -59,10 +59,13 @@ fn update(
     ManagedMoonClaw(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonClawModels(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeSessions(_) => update_mooncode_results(dispatch, msg, model)
+    LoadedMoonCodeArchivedSessions(_) =>
+      update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeWatch(_, _, _) =>
       update_mooncode_results(dispatch, msg, model)
     CreatedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     CompletedMoonCodeCommand(_) => update_mooncode_results(dispatch, msg, model)
+    ManagedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     SelectWorkspaceMode(_) => update_navigation_actions(dispatch, msg, model)
     ControlMoonFlow(_, _, _) =>
       update_workspace_surface_actions(dispatch, msg, model)
@@ -99,6 +102,23 @@ fn update(
     SubmitRequest => update_town_actions(dispatch, msg, model)
     SelectMoonCodeSession(_) => update_mooncode_actions(dispatch, msg, model)
     NewMoonCodeSession => update_mooncode_actions(dispatch, msg, model)
+    SetMoonCodeSessionQuery(_) => update_mooncode_actions(dispatch, msg, model)
+    BeginMoonCodeSessionRename(_) =>
+      update_mooncode_actions(dispatch, msg, model)
+    SetMoonCodeSessionTitleDraft(_) =>
+      update_mooncode_actions(dispatch, msg, model)
+    CancelMoonCodeSessionRename =>
+      update_mooncode_actions(dispatch, msg, model)
+    SaveMoonCodeSessionRename(_) =>
+      update_mooncode_actions(dispatch, msg, model)
+    ArchiveMoonCodeSession(_) => update_mooncode_actions(dispatch, msg, model)
+    RestoreMoonCodeSession(_) => update_mooncode_actions(dispatch, msg, model)
+    RequestDeleteMoonCodeSession(_) =>
+      update_mooncode_actions(dispatch, msg, model)
+    CancelDeleteMoonCodeSession =>
+      update_mooncode_actions(dispatch, msg, model)
+    ConfirmDeleteMoonCodeSession(_) =>
+      update_mooncode_actions(dispatch, msg, model)
     SetMoonCodePrompt(_) => update_mooncode_actions(dispatch, msg, model)
     SendMoonCodeMessage(_) => update_mooncode_actions(dispatch, msg, model)
     CopyMoonCodeText(_, _) => update_mooncode_actions(dispatch, msg, model)

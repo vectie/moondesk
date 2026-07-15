@@ -9,9 +9,12 @@ fn update_mooncode_results(
     | ManagedMoonClaw(_)
     | LoadedMoonClawModels(_)
     | LoadedMoonCodeSessions(_)
+    | LoadedMoonCodeArchivedSessions(_)
     | LoadedMoonCodeWatch(_, _, _) =>
       update_mooncode_session_results(dispatch, msg, model)
-    CreatedMoonCodeSession(_) | CompletedMoonCodeCommand(_) =>
+    CreatedMoonCodeSession(_)
+    | CompletedMoonCodeCommand(_)
+    | ManagedMoonCodeSession(_) =>
       update_mooncode_session_results(dispatch, msg, model)
     _ => (@rabbita.none, model)
   }

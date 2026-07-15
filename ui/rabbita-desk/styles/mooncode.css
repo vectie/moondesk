@@ -101,8 +101,14 @@
 }
 
 .mooncode-new-session:focus-visible,
+.mooncode-session-search-input:focus-visible,
+.mooncode-session-search-clear:focus-visible,
 .mooncode-session-group-heading:focus-visible,
 .mooncode-session:focus-visible,
+.mooncode-session-menu-trigger:focus-visible,
+.mooncode-session-menu-popover button:focus-visible,
+.mooncode-session-title-input:focus-visible,
+.mooncode-session-inline-actions button:focus-visible,
 .web-toggle:focus-visible,
 .starter-chip:focus-visible,
 .composer-footer .primary-button:focus-visible {
@@ -110,11 +116,62 @@
   outline-offset: 2px;
 }
 
+.mooncode-session-search {
+  position: relative;
+  margin: 0 10px 4px;
+}
+
+.mooncode-session-search-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 32px 0 10px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 8px;
+  background: var(--mooncode-field);
+  color: var(--mooncode-ink);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.mooncode-session-search-input::placeholder {
+  color: var(--mooncode-subtle);
+}
+
+.mooncode-session-search-clear {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mooncode-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.mooncode-session-search-clear:hover {
+  background: rgba(15, 23, 42, 0.07);
+  color: var(--mooncode-ink);
+}
+
 .mooncode-session-list {
+  min-height: 0;
+  flex: 1 1 auto;
   display: grid;
+  align-content: start;
   gap: 3px;
   margin: 0;
   padding: 8px 8px 14px;
+  overflow-y: auto;
+}
+
+.mooncode-session-search-empty {
+  margin: 12px 10px;
+  text-align: center;
 }
 
 .mooncode-session-group-heading {
@@ -211,6 +268,38 @@
   box-shadow: none;
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 120ms ease;
+  color: var(--mooncode-ink);
+  text-align: left;
+}
+
+.mooncode-session-row {
+  position: relative;
+  width: calc(100% - 26px);
+  min-width: 0;
+  margin-left: 26px;
+}
+
+.mooncode-session-line {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 2px;
+}
+
+.mooncode-session-row .mooncode-session {
+  width: 100%;
+  min-width: 0;
+  margin-left: 0;
+}
+
+.mooncode-session.archived {
+  cursor: default;
+  opacity: 0.78;
+}
+
+.mooncode-session.archived:hover {
+  transform: none;
 }
 
 .mooncode-session:hover,
@@ -245,6 +334,179 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.mooncode-session-menu {
+  position: relative;
+  z-index: 2;
+}
+
+.mooncode-session-menu[open] {
+  z-index: 20;
+}
+
+.mooncode-session-menu-trigger {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0 0 7px;
+  border-radius: 6px;
+  color: var(--mooncode-muted);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  list-style: none;
+  opacity: 0;
+}
+
+.mooncode-session-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.mooncode-session-row:hover .mooncode-session-menu-trigger,
+.mooncode-session-row:focus-within .mooncode-session-menu-trigger,
+.mooncode-session-menu[open] .mooncode-session-menu-trigger {
+  opacity: 1;
+}
+
+.mooncode-session-menu-trigger:hover,
+.mooncode-session-menu[open] .mooncode-session-menu-trigger {
+  background: rgba(15, 23, 42, 0.07);
+  color: var(--mooncode-ink);
+}
+
+.mooncode-session-menu-popover {
+  position: absolute;
+  top: 31px;
+  right: 0;
+  width: 128px;
+  display: grid;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 8px;
+  background: var(--mooncode-panel);
+  box-shadow: var(--mooncode-shadow-tight);
+}
+
+.mooncode-session-menu-popover button,
+.mooncode-session-inline-actions button {
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mooncode-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-align: left;
+}
+
+.mooncode-session-menu-popover button:hover,
+.mooncode-session-inline-actions button:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+.mooncode-session-menu-popover button:disabled,
+.mooncode-session-inline-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.mooncode-session-menu-popover button.danger,
+.mooncode-session-inline-actions button.danger {
+  color: #b42318;
+}
+
+.mooncode-session-inline-editor,
+.mooncode-session-delete-confirmation {
+  display: grid;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 8px;
+  background: var(--mooncode-panel);
+}
+
+.mooncode-session-title-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 6px;
+  background: var(--mooncode-field);
+  color: var(--mooncode-ink);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.mooncode-session-inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.mooncode-session-inline-actions button {
+  text-align: center;
+}
+
+.mooncode-session-inline-actions button.primary {
+  background: var(--mooncode-primary);
+  color: #ffffff;
+}
+
+.mooncode-session-inline-actions button.primary:hover {
+  background: var(--mooncode-primary-hover);
+}
+
+.mooncode-session-delete-confirmation {
+  margin-top: 4px;
+  border-color: rgba(180, 35, 24, 0.24);
+  color: var(--mooncode-ink);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mooncode-archived-sessions {
+  margin-top: 10px;
+  border-top: 1px solid var(--mooncode-line);
+}
+
+.mooncode-archived-sessions > summary {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  color: var(--mooncode-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.mooncode-archived-list {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 8px;
+}
+
+.mooncode-archived-list .mooncode-session-menu-popover {
+  top: auto;
+  bottom: 31px;
+}
+
+.mooncode-session-management-status {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--mooncode-line);
+  color: var(--mooncode-muted);
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .mooncode-context-bar {
@@ -840,6 +1102,8 @@
 @media (prefers-reduced-motion: reduce) {
   .mooncode-new-session,
   .mooncode-session,
+  .mooncode-session-menu-trigger,
+  .mooncode-session-menu-popover,
   .mooncode-composer,
   .option-chip,
   .web-toggle,
@@ -899,7 +1163,7 @@
     height: 100%;
     min-height: 0;
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(148px, 210px) minmax(0, 1fr);
+    grid-template-rows: clamp(240px, 32dvh, 280px) minmax(0, 1fr);
     overflow: hidden;
   }
 
@@ -923,6 +1187,10 @@
     margin: 8px 10px;
   }
 
+  .mooncode-session-search {
+    margin-bottom: 6px;
+  }
+
   .mooncode-session-list {
     min-height: 0;
     max-height: none;
@@ -934,6 +1202,16 @@
   .mooncode-session-group-heading,
   .mooncode-session {
     min-height: 44px;
+  }
+
+  .mooncode-session-menu-trigger {
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+  }
+
+  .mooncode-session-line {
+    grid-template-columns: minmax(0, 1fr) 40px;
   }
 
   .mooncode-center,

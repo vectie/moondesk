@@ -20,11 +20,44 @@ fn render_mooncode_pane(
         on_click=dispatch(NewMoonCodeSession),
         "New chat",
       ),
+      div(class="mooncode-session-search", [
+        input(
+          class="mooncode-session-search-input",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "mooncode-session-search")
+            .aria_label("Search MoonCode sessions"),
+          value=model.mooncode_session_query,
+          placeholder="Search chats",
+          on_input=fn(value) { dispatch(SetMoonCodeSessionQuery(value)) },
+        ),
+        if model.mooncode_session_query.trim().to_owned() == "" {
+          @html.nothing
+        } else {
+          button(
+            class="mooncode-session-search-clear",
+            attrs=@html.Attrs::build().data_set(
+              "testid", "mooncode-session-search-clear",
+            ),
+            title="Clear search",
+            on_click=dispatch(SetMoonCodeSessionQuery("")),
+            "x",
+          )
+        },
+      ]),
       div(
         class="mooncode-session-list",
         attrs=@html.Attrs::build().data_set("testid", "mooncode-session-list"),
         mooncode_session_list_children(dispatch, model),
       ),
+      if model.mooncode_session_management_status == "" {
+        @html.nothing
+      } else {
+        p(
+          class="mooncode-session-management-status",
+          attrs=@html.Attrs::build().role("status").aria_live("polite"),
+          model.mooncode_session_management_status,
+        )
+      },
     ],
   )
 }
@@ -63,32 +96,54 @@ fn mooncode_session_list_children(
       )
     }
     for session in group.sessions {
-      children["session:" + session.id] = render_mooncode_session_button(
+      children["session:" + session.id] = render_mooncode_session_row(
         dispatch,
+        model,
         session,
         selected_id == session.id,
+        archived=false,
       )
     }
+  }
+  if groups.length() == 0 && model.mooncode_session_query.trim().to_owned() != "" {
+    children["search-empty"] = p(
+      class="status-line empty-list mooncode-session-search-empty",
+      "No matching chats",
+    )
+  }
+  if model.mooncode_archived_sessions.length() > 0 {
+    children["archived"] = render_mooncode_archived_sessions(dispatch, model)
   }
   children
 }
 
 ///|
 fn mooncode_session_groups(model : Model) -> Array[MoonCodeSessionGroup] {
-  let group_order : Array[String] = ["general"]
-  let group_labels : Map[String, String] = { "general": "General" }
-  let group_workspaces : Map[String, String] = { "general": "" }
-  let group_sessions : Map[String, Array[MoonCodeSession]] = { "general": [] }
-  for workspace in model.workspaces {
-    let group_id = "workspace:" + workspace.id
-    if !mooncode_group_order_has(group_order, group_id) {
-      group_order.push(group_id)
-      group_labels[group_id] = workspace.name
-      group_workspaces[group_id] = workspace.id
-      group_sessions[group_id] = []
+  let query = model.mooncode_session_query.trim().to_owned().to_lower()
+  let searching = query != ""
+  let group_order : Array[String] = []
+  let group_labels : Map[String, String] = {}
+  let group_workspaces : Map[String, String] = {}
+  let group_sessions : Map[String, Array[MoonCodeSession]] = {}
+  if !searching {
+    group_order.push("general")
+    group_labels["general"] = "General"
+    group_workspaces["general"] = ""
+    group_sessions["general"] = []
+    for workspace in model.workspaces {
+      let group_id = "workspace:" + workspace.id
+      if !mooncode_group_order_has(group_order, group_id) {
+        group_order.push(group_id)
+        group_labels[group_id] = workspace.name
+        group_workspaces[group_id] = workspace.id
+        group_sessions[group_id] = []
+      }
     }
   }
   for session in model.mooncode_sessions {
+    if searching && !mooncode_session_matches_query(session, query) {
+      continue
+    }
     let group_id = mooncode_session_group_id(session)
     if !mooncode_group_order_has(group_order, group_id) {
       group_order.push(group_id)
@@ -104,7 +159,7 @@ fn mooncode_session_groups(model : Model) -> Array[MoonCodeSessionGroup] {
     sessions.push(session)
     group_sessions[group_id] = sessions
   }
-  if model.selected_workspace_id != "" {
+  if !searching && model.selected_workspace_id != "" {
     let selected_group_id = "workspace:" + model.selected_workspace_id
     if !mooncode_group_order_has(group_order, selected_group_id) {
       group_order.push(selected_group_id)
@@ -126,6 +181,17 @@ fn mooncode_session_groups(model : Model) -> Array[MoonCodeSessionGroup] {
     })
   }
   groups
+}
+
+///|
+fn mooncode_session_matches_query(
+  session : MoonCodeSession,
+  query : String,
+) -> Bool {
+  query == "" ||
+  session.title.to_lower().contains(query) ||
+  session.workspace_name.to_lower().contains(query) ||
+  session.id.to_lower().contains(query)
 }
 
 ///|
@@ -224,22 +290,216 @@ fn render_mooncode_session_group_heading(
 }
 
 ///|
-fn render_mooncode_session_button(
+fn render_mooncode_session_row(
   dispatch : Dispatch[Msg],
+  model : Model,
   session : MoonCodeSession,
   selected : Bool,
+  archived~ : Bool,
 ) -> @rabbita.Html {
-  button(
-    class=if selected { "mooncode-session active" } else { "mooncode-session" },
+  let editing = model.mooncode_session_editing_id == session.id
+  let confirming_delete = model.mooncode_session_delete_id == session.id
+  div(
+    class=if archived {
+      "mooncode-session-row archived"
+    } else {
+      "mooncode-session-row"
+    },
     attrs=@html.Attrs::build()
-      .data_set("testid", "mooncode-session")
       .data_set("session-id", session.id)
-      .data_set("workspace-id", session.workspace_id)
-      .data_set("status", session.status)
-      .aria_current(if selected { "page" } else { "false" }),
-    title=mooncode_session_accessibility_title(session),
-    on_click=dispatch(SelectMoonCodeSession(session.id)),
-    [strong(session.title), small(mooncode_session_status_line(session))],
+      .data_set("archived", session.archived.to_string()),
+    [
+      if editing {
+        render_mooncode_session_rename_editor(dispatch, model, session)
+      } else {
+        div(class="mooncode-session-line", [
+          if archived {
+            div(
+              class="mooncode-session archived",
+              attrs=@html.Attrs::build()
+                .data_set("testid", "mooncode-archived-session")
+                .data_set("session-id", session.id),
+              [
+                strong(session.title),
+                small(mooncode_session_project_line(session)),
+              ],
+            )
+          } else {
+            button(
+              class=if selected {
+                "mooncode-session active"
+              } else {
+                "mooncode-session"
+              },
+              attrs=@html.Attrs::build()
+                .data_set("testid", "mooncode-session")
+                .data_set("session-id", session.id)
+                .data_set("workspace-id", session.workspace_id)
+                .data_set("status", session.status)
+                .aria_current(if selected { "page" } else { "false" }),
+              title=mooncode_session_accessibility_title(session),
+              on_click=dispatch(SelectMoonCodeSession(session.id)),
+              [
+                strong(session.title),
+                small(mooncode_session_status_line(session)),
+              ],
+            )
+          },
+          if confirming_delete {
+            @html.nothing
+          } else {
+            render_mooncode_session_menu(dispatch, session, archived~)
+          },
+        ])
+      },
+      if confirming_delete {
+        render_mooncode_session_delete_confirmation(dispatch, session)
+      } else {
+        @html.nothing
+      },
+    ],
+  )
+}
+
+///|
+fn render_mooncode_session_menu(
+  dispatch : Dispatch[Msg],
+  session : MoonCodeSession,
+  archived~ : Bool,
+) -> @rabbita.Html {
+  details(class="mooncode-session-menu", [
+    summary(
+      class="mooncode-session-menu-trigger",
+      attrs=@html.Attrs::build()
+        .data_set("testid", "mooncode-session-menu")
+        .aria_label("Session actions"),
+      title="Session actions",
+      "...",
+    ),
+    div(class="mooncode-session-menu-popover", [
+      button(
+        attrs=@html.Attrs::build().data_set(
+          "testid", "mooncode-session-rename",
+        ),
+        on_click=dispatch(BeginMoonCodeSessionRename(session.id)),
+        "Rename",
+      ),
+      if archived {
+        button(
+          attrs=@html.Attrs::build().data_set(
+            "testid", "mooncode-session-restore",
+          ),
+          on_click=dispatch(RestoreMoonCodeSession(session.id)),
+          "Restore",
+        )
+      } else {
+        button(
+          attrs=@html.Attrs::build()
+            .data_set("testid", "mooncode-session-archive")
+            .disabled(mooncode_session_storage_locked(session)),
+          title=if mooncode_session_storage_locked(session) {
+            "Wait for MoonCode to finish"
+          } else {
+            "Archive session"
+          },
+          on_click=dispatch(ArchiveMoonCodeSession(session.id)),
+          "Archive",
+        )
+      },
+      button(
+        class="danger",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "mooncode-session-delete")
+          .disabled(
+            !archived && mooncode_session_storage_locked(session),
+          ),
+        on_click=dispatch(RequestDeleteMoonCodeSession(session.id)),
+        "Delete",
+      ),
+    ]),
+  ])
+}
+
+///|
+fn render_mooncode_session_rename_editor(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session : MoonCodeSession,
+) -> @rabbita.Html {
+  div(
+    class="mooncode-session-inline-editor",
+    attrs=@html.Attrs::build().data_set("testid", "mooncode-session-editor"),
+    [
+      input(
+        class="mooncode-session-title-input",
+        attrs=@html.Attrs::build().aria_label("Session title"),
+        value=model.mooncode_session_title_draft,
+        on_input=fn(value) { dispatch(SetMoonCodeSessionTitleDraft(value)) },
+      ),
+      div(class="mooncode-session-inline-actions", [
+        button(
+          class="primary",
+          disabled=model.mooncode_session_title_draft.trim().to_owned() == "",
+          on_click=dispatch(SaveMoonCodeSessionRename(session.id)),
+          "Save",
+        ),
+        button(
+          on_click=dispatch(CancelMoonCodeSessionRename),
+          "Cancel",
+        ),
+      ]),
+    ],
+  )
+}
+
+///|
+fn render_mooncode_session_delete_confirmation(
+  dispatch : Dispatch[Msg],
+  session : MoonCodeSession,
+) -> @rabbita.Html {
+  div(
+    class="mooncode-session-delete-confirmation",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "mooncode-session-delete-confirmation")
+      .role("alert"),
+    [
+      span("Delete this chat permanently?"),
+      div(class="mooncode-session-inline-actions", [
+        button(
+          class="danger",
+          on_click=dispatch(ConfirmDeleteMoonCodeSession(session.id)),
+          "Delete",
+        ),
+        button(on_click=dispatch(CancelDeleteMoonCodeSession), "Cancel"),
+      ]),
+    ],
+  )
+}
+
+///|
+fn render_mooncode_archived_sessions(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  let children : Map[String, @rabbita.Html] = {}
+  for session in model.mooncode_archived_sessions {
+    if mooncode_session_matches_query(
+        session, model.mooncode_session_query.trim().to_owned().to_lower(),
+      ) {
+      children[session.id] = render_mooncode_session_row(
+        dispatch, model, session, false, archived=true,
+      )
+    }
+  }
+  details(
+    class="mooncode-archived-sessions",
+    attrs=@html.Attrs::build().data_set("testid", "mooncode-archived-sessions"),
+    [
+      summary(
+        "Archived (\{model.mooncode_archived_sessions.length()})",
+      ),
+      div(class="mooncode-archived-list", children),
+    ],
   )
 }
 
@@ -280,7 +540,10 @@ fn mooncode_session_status_line(session : MoonCodeSession) -> String {
   } else if session.status == "failed" {
     "Needs attention"
   } else {
-    "Ready"
+    match session.updated_at {
+      Some(value) if value != "" => browser_mooncode_relative_time(value)
+      _ => "Ready"
+    }
   }
 }
 
@@ -307,7 +570,7 @@ fn render_mooncode_center(
     [
       div(class="mooncode-context-bar", [
         div([
-          strong(mooncode_workspace_label(model)),
+          strong(mooncode_context_title(model, session)),
           span(mooncode_context_path_label(model, session)),
         ]),
       ]),
@@ -371,6 +634,37 @@ fn render_mooncode_center(
     ],
   )
 }
+
+///|
+fn mooncode_context_title(
+  model : Model,
+  session : MoonCodeSession?,
+) -> String {
+  ignore(model)
+  match session {
+    Some(session) => session.title
+    None => "New chat"
+  }
+}
+
+///|
+#cfg(target="js")
+extern "js" fn browser_mooncode_relative_time(value : String) -> String =
+  #| (value) => {
+  #|   const timestamp = Date.parse(value);
+  #|   if (!Number.isFinite(timestamp)) return "Ready";
+  #|   const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  #|   if (seconds < 60) return "now";
+  #|   const minutes = Math.floor(seconds / 60);
+  #|   if (minutes < 60) return `${minutes}m`;
+  #|   const hours = Math.floor(minutes / 60);
+  #|   if (hours < 24) return `${hours}h`;
+  #|   const days = Math.floor(hours / 24);
+  #|   if (days < 7) return `${days}d`;
+  #|   const weeks = Math.floor(days / 7);
+  #|   if (weeks < 5) return `${weeks}w`;
+  #|   return `${Math.floor(days / 30)}mo`;
+  #| }
 
 ///|
 fn mooncode_center_class(model : Model) -> String {

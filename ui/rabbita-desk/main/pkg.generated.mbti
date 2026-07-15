@@ -70,11 +70,15 @@ type MoonClawModelsResult derive(@json.FromJson)
 
 type MoonCodeActivityRow
 
+type MoonCodeBrowserWatchEnvelope derive(@json.FromJson)
+
 type MoonCodeCanonicalTurn
 
 type MoonCodeConversation derive(@json.FromJson)
 
 type MoonCodeConversationTurn derive(@json.FromJson)
+
+type MoonCodeEvidenceRow
 
 type MoonCodeOptimisticRow
 
@@ -90,7 +94,11 @@ type MoonCodeTranscriptItem
 
 type MoonCodeTranscriptRow
 
+type MoonCodeWatchResponse derive(@json.FromJson)
+
 type MoonFlowAutonomyBinding derive(@json.FromJson)
+
+type MoonFlowBrowserResponse derive(@json.FromJson)
 
 type MoonFlowBudget derive(@json.FromJson)
 
