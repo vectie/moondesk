@@ -1,5 +1,12 @@
 # Code Mode Test Plan
 
+Historical broad test inventory. Current acceptance methodology and active
+routes are defined by `MOONCODE.md` and
+`MOONCODE_PRODUCTION_UPGRADE_PLAN.md`. Scenarios below that depend on local
+commands/events JSONL, runtime-service, replay, claim, or MoonDesk-owned
+projection endpoints are retained only as migration history and must not be
+restored as product behavior.
+
 MoonDesk currently has three workspace modes in `ui/rabbita-desk/main`:
 `Desk`, `MoonWiki`, and `MoonCode`. This plan focuses only on `MoonCode`, the
 code mode. The goal is to prove that coding functionality works end to end with

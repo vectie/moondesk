@@ -984,17 +984,6 @@
     min-height: 44px;
   }
 }
-.mooncode-user-state {
-  align-self: start;
-  margin: 18px auto 0;
-  width: min(760px, calc(100% - 32px));
-  border: 1px solid var(--mooncode-line);
-  border-radius: 14px;
-  background: var(--mooncode-panel);
-  box-shadow: var(--mooncode-shadow-tight);
-  overflow: hidden;
-}
-
 .mooncode-runtime-setup {
   display: flex;
   align-items: center;
@@ -1010,73 +999,4 @@
 .mooncode-runtime-setup p {
   margin: 3px 0 0;
   color: var(--muted);
-}
-
-
-.mooncode-user-state.failed {
-  border-color: color-mix(in srgb, var(--red) 34%, var(--mooncode-line));
-}
-
-.mooncode-user-state.queued {
-  border-color: color-mix(in srgb, var(--mooncode-accent) 30%, var(--mooncode-line));
-}
-
-.mooncode-user-state-copy {
-  padding: 16px 18px 12px;
-}
-
-.mooncode-user-state-copy h2 {
-  margin: 0 0 5px;
-  font-size: 16px;
-}
-
-.mooncode-user-state-copy p,
-.mooncode-why-body p {
-  margin: 0;
-  color: var(--mooncode-muted);
-  line-height: 1.5;
-}
-
-.mooncode-why-disclosure,
-.mooncode-technical-disclosure {
-  border-top: 1px solid var(--mooncode-line);
-}
-
-.mooncode-why-disclosure > summary,
-.mooncode-technical-disclosure > summary {
-  cursor: pointer;
-  padding: 10px 18px;
-  color: var(--mooncode-muted);
-  font-weight: 650;
-}
-
-.mooncode-why-disclosure > summary:focus-visible,
-.mooncode-technical-disclosure > summary:focus-visible {
-  outline: 3px solid var(--mooncode-focus);
-  outline-offset: -2px;
-}
-
-.mooncode-why-body {
-  display: grid;
-  gap: 10px;
-  padding: 0 18px 14px;
-}
-
-.mooncode-next-action {
-  font-weight: 650;
-  color: var(--mooncode-ink) !important;
-}
-
-.mooncode-technical-disclosure {
-  margin-top: 2px;
-}
-
-.mooncode-technical-disclosure > summary {
-  padding-inline: 0;
-}
-
-.mooncode-technical-evidence {
-  display: grid;
-  gap: 6px;
-  padding: 0 0 6px;
 }

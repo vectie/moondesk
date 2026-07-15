@@ -82,37 +82,16 @@ fn code_mode_test_watch_heartbeat(
 }
 
 ///|
-test "failed MoonCode session explains the user state before technical evidence" {
+test "failed MoonCode session keeps failure copy inside the transcript" {
   let session = {
     ..code_mode_test_session("session-failed", status="failed"),
     mooncode_runtime_detail: Some("MoonClaw daemon is not running"),
   }
-  assert_eq(mooncode_user_state_title(session), "MoonCode couldn't start")
-  assert_eq(
-    mooncode_user_state_message(session),
-    "Your request was saved, but no coding work ran.",
-  )
-  assert_eq(
-    mooncode_user_state_reason(session),
-    "MoonClaw daemon is not running",
-  )
-  assert_eq(
-    mooncode_user_next_action(session),
-    "Next: connect or start MoonClaw for this workspace, then send the request again.",
-  )
   assert_eq(mooncode_empty_transcript_title(session), "No coding result yet")
   assert_eq(
     mooncode_empty_transcript_message(session),
     "Resolve the issue above, then send the request again.",
   )
-}
-
-///|
-test "MoonCode user state remains quiet for completed sessions" {
-  let session = code_mode_test_session("session-ready", status="done")
-  assert_eq(mooncode_user_state_title(session), "")
-  assert_eq(mooncode_user_state_message(session), "")
-  assert_eq(mooncode_user_next_action(session), "")
 }
 
 ///|

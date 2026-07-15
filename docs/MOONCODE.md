@@ -1,423 +1,241 @@
 # MoonCode Workspace
 
-MoonCode is the code/chat editing mode for a selected executable MoonBook. It
-sits beside MoonWiki:
+MoonCode is the coding conversation mode for a MoonBook. The product has one
+ordered conversation, one durable owner, and one desktop projection:
 
 ```text
-MoonWiki = edit what the book says
-MoonCode = edit what the book can do
+MoonDesk UI -> MoonDesk adapter -> MoonClaw canonical session -> MoonBook files
 ```
 
-Both modes operate on the same MoonBook. MoonCode should not become a separate
-truth store, an automation console, or a hidden runtime inside MoonDesk.
+MoonDesk does not reconstruct chat from runtime events, local command queues,
+receipts, or artifact logs.
 
 ## Product Boundary
 
 MoonDesk owns the desktop experience:
 
-- select the MoonBook and MoonCode session
-- render chat, streams, diffs, tests, packages, and review controls
-- route operator commands to the configured MoonClaw runtime
-- project durable MoonBook and MoonClaw sidecars into a native UI
-- package generated tools and miniapps for the selected book
+- select a MoonBook or General session
+- append an optimistic user row immediately after submit
+- render the canonical turn list returned by MoonClaw
+- keep local presentation state such as the selected session and disclosure
+  openness
+- proxy session mutations and selected-session watches
 
-MoonClaw owns execution:
+MoonClaw owns execution and durable conversation state:
 
-- model loop and tool execution
-- prompt, steer, cancel, runtime loop, and runtime service behavior
-- file edits, tests, builds, package generation, and event streaming
-- durable runtime sidecars under the selected MoonSuite root's MoonClaw product
-  home
+- session identity and metadata
+- command intake, model loops, and tool execution
+- ordered user, work, and assistant records
+- cancellation, failure, and recovery state
+- the authoritative per-session journal and replaceable checkpoint
 
-MoonClaw must remain a standalone agent runtime. MoonDesk should be able to
-start, probe, and render it, but the runtime must also be useful to a CLI,
-MoonTown worker, or future standalone `mooncode` app without importing
-MoonDesk internals.
+MoonBook owns the files and accepted outputs changed by a coding session.
+MoonLib owns the shared, versioned MoonSuite and conversation-journal
+contracts. MoonGate may measure those contracts but does not own them.
 
-MoonBook owns durable outputs:
+## Non-Negotiable Rules
 
-- `tools/`, `apps/`, `schemas/`, `book/site/generated/`
-- `wiki/reviews/mooncode/`
-- `portable/app-tool/`
-- accepted code, review receipts, package manifests, and generated artifacts
+1. MoonClaw is the only durable session and conversation owner.
+2. The UI renders `mooncode_conversation.turns` in canonical order.
+3. A listing refresh updates metadata; it never replaces a newer selected
+   conversation with a compact row.
+4. A lower or unchanged revision cannot replace the displayed revision.
+5. The optimistic user row is local only until a canonical turn acknowledges
+   its `client_turn_id` or content identity.
+6. A queued command is not evidence of active work. Work UI begins only after
+   MoonClaw publishes a command-owned work signal.
+7. Runtime events are inputs to MoonClaw's reducer. MoonDesk never merges raw
+   events into chat.
+8. Reconnect preserves the last accepted conversation and resumes from the
+   last accepted revision and sequence.
+9. Session rail ordering comes from the MoonClaw listing and remains stable
+   while a selected session is hydrated.
+10. New features must extend the canonical contract or renderer; they must not
+    add a second store, replay engine, or projection reducer in MoonDesk.
 
-`internal/mooncode` must stay UI-free and filesystem-neutral where practical.
-It owns protocol/data projection. `internal/moonwiki` owns HTTP routing and host
-IO. The Rabbita UI renders the result.
-
-## Core Packages
+## Source Layout
 
 ```text
 mooncode/core
-  shared protocol constants, command-action contract, event-lane contract,
-  runtime event-name contract, runtime-control contract, runtime-consumer
-  contract, package/review flow contract, runtime-tool registry contract, and
-  capability surface
+  Shared protocol, action, tool, capability, watch, and journal contracts.
 
 internal/mooncode
-  command, stream, runtime, readiness, review, package, and session contracts
+  Thin, filesystem-neutral adapter:
+  - adapter_protocol.mbt
+  - adapter_capabilities.mbt
+  - adapter_commands.mbt
+  - adapter_sessions.mbt
+  - adapter_json.mbt
 
 internal/moonwiki
-  MoonDesk HTTP surface, local file IO, MoonClaw probes, and persistence
+  HTTP routing, MoonClaw process/probe integration, workspace lookup, and
+  canonical response shaping.
 
 ui/rabbita-desk/main
-  MoonCode screens and operator controls
+  Session rail, canonical transcript, optimistic rows, selected-session watch,
+  composer, and presentation state.
 ```
 
-This split is the standalone path. A standalone `mooncode` project should be
-able to reuse the protocol/runtime contracts without taking MoonWiki, Rabbita,
-or MoonDesk desktop packaging.
-
-`mooncode/core` owns the stable event-lane vocabulary:
-
-```text
-transcript, runtime, tool, diff, test, artifact, review
-```
-
-Those lanes classify runtime evidence. They do not own chat rendering. Chat is
-rendered from canonical conversation turns; event lanes feed progress,
-diagnostics, readiness, review, and package evidence after they are normalized
-through the core contract.
-
-`mooncode/core` also owns the runtime event-name vocabulary accepted from
-MoonClaw. The accepted event list and command-output event list are published
-through `runtime_event_name_contract_json()` and embedded in the native
-capability surface. Internal MoonCode may normalize concrete records, but it
-must not publish its own second accepted-event or output-event list.
-
-`mooncode/core` also owns the native event projection policy for MoonClaw
-evidence. The native event projection contract publishes the MoonClaw event
-mapping, accepted command-scope keys, diagnostic-only source/title allowlists,
-projection-safety predicates, unsafe-event report shape, and canonical
-projection filter. Internal MoonCode may parse concrete payloads, but it must
-not publish its own second event mapping or decide locally which native events
-may affect chat/progress.
-
-`mooncode/core` also owns the MoonCode command-action vocabulary:
-
-```text
-prompt, steer, run_tests, run_build, run_eval, package, commit, accept, reject,
-approve_tool, reject_tool, apply_patch, revert_patch, cancel
-```
-
-`note` is supported for internal records but is not advertised as an operator
-command. The command-action contract owns turn-control actions, approval policy,
-lane policy, proof predicates, review-receipt policy, and tool hints. Internal
-MoonCode may execute action-specific behavior, but it must not publish its own
-second command list or grouped action ownership.
-
-`mooncode/core` also owns the runtime tool vocabulary accepted from MoonClaw and
-advertised through MoonCode capabilities:
-
-```text
-shell, read, edit, write, moon_ide, moon_cmd, moon_check, finish, apply_patch,
-revert_patch, package_app_tool, glob, grep, todo_write, web_fetch, web_search
-```
-
-The runtime-tool registry contract owns supported tools, capability-only tools
-such as `eval_harness`, native-required tools, accepted package-style aliases,
-MoonClaw-to-MoonCode tool mappings, tool-call decode policy, mutation/review
-predicates, authorization-snapshot policy, detailed tool-contract JSON, and
-capability tool specs. Internal MoonCode may execute and project tool evidence,
-but it must not publish its own second tool list, alias table, capability spec
-list, or MoonClaw mapping table.
-
-`mooncode/core` also owns the model-planner evidence contract for model-backed
-turns. The contract defines model-planned actions, planner event kinds,
-model-tool-call mode, statuses, missing-evidence reasons, and the rule that a
-queued command is not active work until MoonClaw emits command-scoped planner,
-runtime, assistant, or failure evidence. Internal MoonCode may aggregate
-concrete events into reports, but it must not publish a second planner-evidence
-policy.
-
-`mooncode/core` also owns the conversation-ownership and runtime-control
-contracts. The runtime-control contract defines active/terminal/blocked
-statuses, decision effects, target states, turn-start predicates, settlement
-events, and the scheduler-boundary rule for steer/cancel. Internal MoonCode may
-assemble per-session control projections from command logs and lifecycle
-evidence, but it must not publish a second effect list or locally decide which
-effects allow native runtime execution.
-
-`mooncode/core` also owns the runtime-consumer contract used by MoonClaw claim
-and replay loops. The contract defines runtime receipt statuses, claim statuses,
-replay statuses, replay acknowledgement statuses, ordering rules, duplicate
-guards, lease policy, and claim/replay endpoint formatting. Internal MoonCode
-may aggregate command queues and receipt logs into claim/replay projections, but
-it must not publish a second consumer policy.
-
-`mooncode/core` also owns the package/review model-flow contract for
-model-backed package turns. The contract defines package/review statuses, stale
-evidence reasons, missing-step names, event predicates, accepted/rejected/failed
-sequences, and the command-scope rule that package readiness must come from the
-same package command owner. Internal MoonCode may aggregate concrete package,
-review, test, readiness, and assistant events into reports, but it must not
-publish a second package/review policy.
-
-Final closure rule:
-
-- The remaining shared-boundary extraction list is finite, not an open-ended
-  numbered phase loop.
-- The native command execution/result contract now lives in `mooncode/core`
-  because MoonClaw consumes that policy to execute commands without importing
-  MoonDesk.
-- The runtime proof/evidence contract now lives in `mooncode/core` because
-  MoonClaw, runtime replay, action plans, and standalone MoonCode all need the
-  same proof vocabulary.
-- Keep stream/checkpoint responses, readiness/action-plan/session summaries,
-  tool-authorization previews, engine status, runtime handoff packets, and
-  conversation projection internals in `internal/mooncode`; they aggregate
-  MoonDesk/MoonBook state or host-specific copy around core contracts.
-- Do not add Phase 59 by default. Future shared-boundary work must first edit
-  the final closure checklist in
-  `docs/MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md`.
-
-## Shared Runtime, Separate Lanes
-
-MoonCode, MoonWiki, and generic automation can share MoonClaw's runtime
-substrate: sessions, event logs, tool execution, cancellation, process
-lifecycle, and model/tool loops. They should not share one vague task/chat API.
-
-- `MoonCode`: coding lane for executable book code, diffs, tests, packages, and
-  proof artifacts.
-- `MoonWiki`: book-editing lane for human-language wiki/source/review changes.
-- `MoonTown`: coordination lane for scheduling, book-to-book messages, and
-  standing goals.
-- Generic MoonClaw tasks: bounded background jobs for automation.
-
-Each lane may call the same MoonClaw standalone runtime, but each keeps its own
-typed protocol, durable evidence, and product vocabulary.
-
-The visual shell is intentionally deferred while Lepusa settles. Until then,
-MoonCode work should stay in the backend contracts, durable book layout,
-MoonClaw runtime API, and host projections. New UI-specific behavior belongs
-behind these contracts, not inside them.
-
-`mooncode/core` must stay source-path neutral. It may name stable component ids
-such as `mooncode.projection`, `moonwiki.host`, and `moonclaw.runtime`, but it
-must not name MoonDesk internals, MoonWiki implementation packages, or a sibling
-MoonClaw checkout path. Host-specific package paths belong in host projections
-such as `internal/mooncode/capabilities.mbt`.
+`internal/mooncode` deliberately does not contain a session store, command or
+event JSONL writer, runtime supervisor, replay queue, receipt reducer, action
+plan engine, or chat merger. Those responsibilities were retired after the
+MoonClaw journal cutover.
 
 ## Desktop API
 
-MoonDesk exposes MoonCode through `/api/mooncode`. This namespace is a desktop
-projection shell, not the runtime engine. Read routes accept both `GET` and
-`HEAD`; the route contract in `internal/mooncode/route_contracts.mbt` owns the
-full path and method surface. MoonCode router dispatch and `405 Method Not
-Allowed` responses consume that contract, and contract-backed 405s return an
-`Allow` header plus `allowed_methods` in the JSON error payload.
-
-Top-level:
+The active desktop surface contains six route contracts:
 
 ```text
-GET /api/mooncode/status
-GET /api/mooncode/capabilities
-GET /api/mooncode/eval-harness
-GET /api/mooncode/standalone-boundary
-GET /api/mooncode/readiness-contract
-GET /api/mooncode/sessions
+GET|HEAD  /api/mooncode/status
+GET|HEAD  /api/mooncode/capabilities
+GET|HEAD  /api/mooncode/sessions
+POST      /api/mooncode/sessions
+GET|HEAD  /api/mooncode/sessions/<session-id>
+GET|HEAD  /api/mooncode/sessions/<session-id>/watch
+POST      /api/mooncode/sessions/<session-id>/commands
+```
+
+The watch query carries `since_revision` and `since_sequence`. The endpoint
+returns a snapshot only when canonical state changed; heartbeats and retry
+guidance do not mutate the transcript.
+
+The listing form is metadata-only:
+
+```text
 GET /api/mooncode/sessions?format=listing
-POST /api/mooncode/sessions
 ```
 
-Session routes:
+Every listing row is a complete compact `MoonCodeSession` record. Required
+fields include identity, MoonBook identity, cwd, title, model, status,
+`queued_count`, runtime session identity, and a compact `mooncode_summary`.
+Malformed rows are filtered at the adapter boundary. A transport or decode
+failure is not converted to a successful empty catalog.
+
+## Native MoonClaw API
+
+MoonDesk consumes MoonClaw's capability-advertised native routes. The current
+session flow is:
 
 ```text
-GET  /api/mooncode/sessions/<id>/events
-GET  /api/mooncode/sessions/<id>/stream
-GET  /api/mooncode/sessions/<id>/stream-state
-POST /api/mooncode/sessions/<id>/stream-state
-GET  /api/mooncode/sessions/<id>/commands
-POST /api/mooncode/sessions/<id>/commands
-GET  /api/mooncode/sessions/<id>/preflight
-GET  /api/mooncode/sessions/<id>/action-plan
-GET  /api/mooncode/sessions/<id>/readiness
-GET  /api/mooncode/sessions/<id>/change-set
-GET  /api/mooncode/sessions/<id>/patch-set
-GET  /api/mooncode/sessions/<id>/tool-approvals
-GET  /api/mooncode/sessions/<id>/tool-authorization
-POST /api/mooncode/sessions/<id>/tool-authorization
-GET  /api/mooncode/sessions/<id>/test-runs
-GET  /api/mooncode/sessions/<id>/package-candidates
-GET  /api/mooncode/sessions/<id>/eval-report
-POST /api/mooncode/sessions/<id>/eval-report
-POST /api/mooncode/sessions/<id>/package-result
-GET  /api/mooncode/sessions/<id>/runtime-handoff
-GET  /api/mooncode/sessions/<id>/session-store
-GET  /api/mooncode/sessions/<id>/runtime-commands
-GET  /api/mooncode/sessions/<id>/command-jsonl
-GET  /api/mooncode/sessions/<id>/runtime-events
-POST /api/mooncode/sessions/<id>/runtime-events
-GET  /api/mooncode/sessions/<id>/runtime-claim
-POST /api/mooncode/sessions/<id>/runtime-claim
-GET  /api/mooncode/sessions/<id>/runtime-replay
-POST /api/mooncode/sessions/<id>/runtime-replay
-GET  /api/mooncode/sessions/<id>/runtime-execution-plan
-GET  /api/mooncode/sessions/<id>/runtime-supervisor
-POST /api/mooncode/sessions/<id>/runtime-supervisor
-POST /api/mooncode/sessions/<id>/runtime-service
-GET  /api/mooncode/sessions/<id>/runtime-control
-GET  /api/mooncode/sessions/<id>/runtime-evidence
+list sessions   -> native session listing
+read session    -> native session show
+submit turn     -> /v1/code/sessions/<id>/turns
+watch progress  -> native canonical stream/session record
 ```
 
-These routes are intentionally projections and operator controls. They should
-not reimplement MoonClaw execution or generic background-job chat.
+A desktop command body contains only canonical fields consumed by MoonClaw:
+protocol, action, text, model, session id, book root, context path, payload,
+packet, web-search choice, and runtime tool calls. MoonDesk does not send a
+second result contract, replay policy, or local tool-authorization document.
 
-## Runtime API
+## Canonical Conversation
 
-MoonClaw owns the native executable-code API under `/v1/code`:
+Each session exposes one `moonsuite-conversation.v2` conversation. A turn has
+stable command, client-turn, and turn identities plus three ordered slots:
 
 ```text
-GET  /v1/code/capabilities
-GET  /v1/code/sessions
-GET  /v1/code/sessions/<id>
-GET  /v1/code/sessions/<id>/stream
-POST /v1/code/sessions/<id>/commands
-GET  /v1/code/sessions/<id>/runtime-control
-GET  /v1/code/sessions/<id>/runtime-claim
-POST /v1/code/sessions/<id>/runtime-claim
-POST /v1/code/sessions/<id>/runtime-turn
-POST /v1/code/sessions/<id>/runtime-loop
-GET  /v1/code/sessions/<id>/runtime-service
-POST /v1/code/sessions/<id>/runtime-service
-GET  /v1/code/sessions/<id>/runtime-events
-POST /v1/code/sessions/<id>/runtime-events
-POST /v1/code/sessions/<id>/tool-exec
-GET  /v1/code/sessions/<id>/eval-report
-GET  /v1/code/sessions/<id>/package-result
-POST /v1/code/sessions/<id>/package-result
+user -> work -> assistant
 ```
 
-MoonDesk may probe these endpoints and render their state. It should not expose
-MoonClaw's noninteractive automation API as the MoonCode product path.
-Durable runtime settlement is represented by claim/turn receipts in
-`runtime-receipts.jsonl`, not a separate runtime API.
+Slots may be absent until MoonClaw commits them. The UI never moves a slot to a
+different turn and never sorts transient records independently from the
+canonical turn array.
 
-The `/v1/code/sessions/<id>/commands` payload is part of the shared
-`mooncode/core` protocol. `native_command_body_required_fields()` and
-`native_command_body_supported_fields()` define the stable top-level command
-envelope so MoonDesk producers and MoonClaw intake validation stay aligned
-from the same field contract.
-
-## Durable Layout
-
-MoonCode native session state is product-home scoped under the selected
-MoonSuite root:
+The selected-session state machine is:
 
 ```text
-<MoonSuiteRoot>/
-  .moonsuite/
-    products/
-      moonclaw/
-        mooncode/
-          sessions/<session-id>/
-            session.json
-            events.jsonl
-            commands.jsonl
-            runtime-commands.jsonl
-            runtime-receipts.jsonl
-            package-results.jsonl
-books/<book-id>/
-  wiki/
-    reviews/
-      mooncode/<session-id>/
-        action-plan.json
-        change-set.json
-        patch-set.json
-        tool-approvals.json
-        test-runs.json
-        eval-report.json
-        runtime-handoff.json
-  portable/
-    app-tool/
-      mooncode/<session-id>/
+submit
+  -> append optimistic user row
+  -> send one durable turn mutation
+  -> watch selected canonical revision
+  -> reconcile acknowledged optimistic row
+  -> render canonical work and assistant slots in place
 ```
 
-MoonClaw may write runtime sidecars. MoonBook owns accepted review/package
-artifacts. MoonDesk only joins paths, displays state, and persists desktop-side
-records when needed.
+Completed work remains between the user message and assistant answer and uses
+native disclosure semantics. The collapsed summary is concise user-facing
+progress; low-level protocol diagnostics stay outside ordinary chat.
 
-## Command Model
+## Session Rail
 
-MoonCode commands are typed:
+Sessions are grouped by durable MoonBook identity. Sessions without a known
+MoonBook belong to General. The listing order supplied by MoonClaw is preserved
+within each group, with stable identity used as the tie breaker at the source.
 
-- `prompt`: start or queue a coding turn
-- `steer`: guide the active or next turn
-- `cancel`: stop active or pending work
-- `run_tests`, `run_build`, `run_eval`: request verification
-- `apply_patch`, `revert_patch`: modify files with reviewable evidence
-- `accept`, `reject`: record review decisions
-- `package`: produce a reusable book-owned artifact
+Selecting a rail row hydrates that session without changing rail order. A
+metadata refresh cannot clear an active draft, replace a selected transcript
+with a compact row, or manufacture a new selection. A fresh browser load must
+decode the listing before showing a zero-session empty state.
 
-Every command should produce durable evidence: command records, stream events,
-tool events, diffs, test results, package manifests, or review receipts.
+## Durability
 
-## Readiness
-
-Readiness is an evidence summary, not a ranked assessment. The contract is:
+Each MoonClaw session has one authoritative journal:
 
 ```text
-GET /api/mooncode/readiness-contract
-GET /api/mooncode/sessions/<id>/readiness
+<moonclaw-product-home>/sessions/<session-id>/
+  journal.jsonl
+  session.json
 ```
 
-The response lists checks, evidence, first blocker, next action, and next
-owner. Missing evidence keeps a session blocked until MoonClaw, MoonBook, or
-MoonDesk supplies the responsible artifact.
+`journal.jsonl` uses the MoonLib
+`moonsuite-conversation-journal.v1` envelope and owns total order.
+`session.json` is a replaceable checkpoint. MoonDesk may display the journal
+path and sequence for diagnostics, but it cannot read storage artifacts to
+rebuild a conversation.
 
-Chat readiness is proven by the backend canonical conversation projection, not
-by raw transcript-lane events. The `canonical_conversation` check passes only
-after the append-only projection contains at least one turn.
-The same canonical conversation proof is used by eval checks, session summary
-telemetry, and resume lifecycle telemetry.
+## Failure Behavior
 
-## Executable-Book Lifecycle
+- MoonClaw unavailable: keep the last good transcript and show an actionable
+  connection state.
+- Listing unavailable: preserve the last good rail; do not display zero as a
+  successful result.
+- Watch interruption: retain the accepted revision and reconnect with bounded
+  backoff.
+- Mutation failure: mark the matching optimistic row failed without removing
+  prior turns.
+- Stale response: ignore it.
+- Unknown or malformed session: reject it at the boundary and expose a
+  diagnosable error rather than silently changing selection.
 
-The portable lifecycle contract lives in `mooncode/core` as
-`executable_book_lifecycle_contract_json()`. It is intentionally independent of
-any desktop framework. The required path is:
+## Validation
 
-```text
-select_book
--> start_session
--> propose_change
--> edit_code
--> verify_code
--> review_diff
--> accept_result
--> package_output
--> resume_session
+Code changes must pass:
+
+```sh
+moon fmt
+moon info
+moon check --target all --warn-list +73
+moon test --target native
+(cd ui/rabbita-desk && moon test --target js)
+npm --prefix ui/rabbita-desk run build
+git diff --check
 ```
 
-MoonClaw owns runtime evidence, MoonBook owns accepted artifacts, and
-Bookkeeper owns acceptance. A host may render or select, but completion is
-proved only by current evidence for the same `book_root` and `session_id`.
+Acceptance also requires a visible browser journey using real keyboard and
+mouse input:
 
-`internal/mooncode` derives
-`mooncode-executable-book-lifecycle-report` from the same readiness evidence
-and attaches it to `session_summary` as `executable_book_lifecycle`. This keeps
-the executable-book proof backend-owned and reusable by Rabbita, Lepusa, a CLI,
-or another host without changing the runtime protocol.
+1. Open a fresh Code view and confirm persisted sessions hydrate.
+2. Start or select a MoonBook-bound session.
+3. Submit with the mouse and with Enter.
+4. Confirm the user row appears immediately without a fabricated work state.
+5. Confirm factual work appears only after MoonClaw signals it.
+6. Confirm every turn remains `user, work, assistant` in append order.
+7. Continue for at least four turns.
+8. Hard reload and verify the same rail selection and conversation.
+9. Repeat across MoonClaw restart and network interruption for release gates.
 
-## Completion Criteria
+## Remaining Product Work
 
-MoonCode is complete when a user can:
+The storage and conversation ownership migration is complete. Remaining work
+is product capability, not another architecture rewrite:
 
-1. Select a MoonBook.
-2. Switch between MoonWiki and MoonCode.
-3. Start or resume a durable coding session.
-4. Chat with MoonClaw through the MoonCode UI.
-5. Generate or modify executable book code.
-6. See live reasoning, progress, tool calls, diffs, tests, and artifacts.
-7. Review and accept or reject changes.
-8. Run tests/builds/evals from the UI.
-9. Package results as MoonBook-owned tools, miniapps, generated sites, or
-   portable app-tools.
-10. Resume from durable session, command, and event logs.
-11. Extract the MoonCode protocol/runtime contracts without breaking MoonWiki
-    or MoonDesk.
-12. Prove every step in `mooncode-executable-book-lifecycle.v1` without relying
-    on a specific desktop framework.
+- approval decisions and verified cancellation of long-running tools
+- richer permission, context-loss, and offline recovery
+- durable per-session model and web-search preferences
+- session rename, archive, delete, and search
+- large-history virtualization and performance metrics
+- automated latency, duplicate-row, rollback, reconnect, accessibility, and
+  responsive release gates
 
-The focused test strategy for this completion path lives in
-[Code Mode Test Plan](CODE_MODE_TEST_PLAN.md).
+The finite delivery order and evidence are tracked in
+`MOONCODE_PRODUCTION_UPGRADE_PLAN.md`.

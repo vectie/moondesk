@@ -337,6 +337,22 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   disclosure behavior, hard-reload persistence, two daemon restarts, and a
   stable first-prompt session title. Its on-disk session contained only
   `session.json` and a 60-record journal with contiguous unique sequences.
+- 2026-07-15: The Moondesk closure pass removed the retired local MoonCode
+  implementation and reduced `internal/mooncode` from roughly 34,400 lines in
+  166 files to six focused adapter source/test files plus package metadata.
+  Local command/event stores, replay and receipt reducers, runtime supervisors,
+  review projections, action-plan engines, and their compatibility routes are
+  no longer compiled. The public adapter surface now contains only protocol,
+  capabilities, native command, compact session, and readiness helpers used by
+  MoonWiki and the UI.
+- 2026-07-15: A fresh-tab regression exposed an adapter contract gap hidden by
+  live in-memory mutation responses: native listing rows omitted the UI's
+  required `queued_count` and `mooncode_summary`, causing all-or-nothing array
+  decoding to appear as zero sessions. The adapter now emits complete compact
+  rows and preserves MoonClaw order. A visible browser journey hydrated all 18
+  sessions, restored three persisted turns, appended a fourth user row in 11
+  ms without synthetic queue/work UI, rendered the canonical work and answer
+  in place, and retained all four turns after a fresh reload.
 
 ## Current Completion And Remaining Order
 
@@ -359,6 +375,10 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   delivery, torn-tail repair, corruption rejection, and recovery tests are in
   place. Moondesk's production adapter exposes only the journal path and
   sequence and does not reconstruct conversation from storage artifacts.
+- The architecture closure is complete for Moondesk. `internal/mooncode` is a
+  thin adapter rather than a second runtime, current docs describe only the
+  six active desktop routes, and the compact listing boundary is directly
+  covered. Further work must not restore deleted compatibility surfaces.
 - Milestone E is partially complete. Safe Markdown and code rendering,
   answer/code/evidence copy, canonical file diffs, command/output/test evidence,
   Retry, and Stop command wiring are implemented. The remaining work is the

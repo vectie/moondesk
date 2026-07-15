@@ -61,9 +61,9 @@ MoonCode
 - `internal/moonwiki/`: MoonWiki HTTP routes, desktop persistence, book/wiki
   adapters, workspace, search, town, and book-pattern APIs, PDF Evidence Watch scaffolding,
   app-tool portable export, daemon/session support, and host-side IO.
-- `internal/mooncode/`: MoonCode protocol, command, runtime, review, package,
-  readiness, stream, and session contracts. This package should remain
-  standalone from the desktop shell.
+- `internal/mooncode/`: thin, filesystem-neutral adapters for the shared
+  MoonCode protocol, capabilities, native command packets, and compact
+  MoonClaw session records. It owns no durable store or conversation reducer.
 - `cmd/main/`: CLI entrypoint for serving, desktop launch, bundle, release, and
   LaunchAgent actions.
 - `ui/rabbita-desk/main/`: Rabbita UI package for Desk, Files, Search, Inbox,
@@ -89,9 +89,9 @@ The host exposes scoped local routes. Important families:
   queue, analytics, and daemon coordination.
 - `/api/books/*`: base-type/pattern registry, PDF Evidence Watch creation,
   standing-goal sync, template registry reads, and portable app-tool export.
-- `/api/mooncode/*`: book-scoped coding sessions, stream checkpoints, runtime
-  queues, tool approval/readiness, changes, tests, package/readiness reports,
-  and MoonClaw handoff records.
+- `/api/mooncode/*`: six-route desktop projection for status, capabilities,
+  session listing/creation, selected-session reads/watches, and command submit.
+  MoonClaw remains the session, journal, and conversation owner.
 - `/api/moonclaw/*`: MoonClaw daemon/model status needed by the MoonCode UI.
 - `/api/daemon/*`: local MoonDesk daemon and LaunchAgent lifecycle controls.
 

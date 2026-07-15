@@ -323,7 +323,6 @@ fn render_mooncode_center(
           match session {
             Some(session) =>
               div(class="mooncode-session-surface", [
-                render_mooncode_session_state(session),
                 render_mooncode_transcript(dispatch, model, session),
               ])
             None =>
@@ -434,105 +433,6 @@ fn render_mooncode_runtime_setup(
         ],
       )
     _ => @html.nothing
-  }
-}
-
-///|
-fn render_mooncode_session_state(session : MoonCodeSession) -> @rabbita.Html {
-  let title = mooncode_user_state_title(session)
-  if title == "" {
-    @html.nothing
-  } else {
-    section(
-      class="mooncode-user-state " + session.status,
-      attrs=@html.Attrs::build()
-        .data_set("testid", "mooncode-user-state")
-        .data_set("status", session.status)
-        .role("status")
-        .aria_live("polite"),
-      [
-        div(class="mooncode-user-state-copy", [
-          h2(title),
-          p(mooncode_user_state_message(session)),
-        ]),
-        details(class="mooncode-why-disclosure", [
-          summary("Why?"),
-          div(class="mooncode-why-body", [
-            p(mooncode_user_state_reason(session)),
-            p(class="mooncode-next-action", mooncode_user_next_action(session)),
-            details(class="mooncode-technical-disclosure", [
-              summary("Technical evidence"),
-              div(class="mooncode-technical-evidence", [
-                info_row("Session", session.id),
-                info_row("State", session.status),
-                info_row(
-                  "Runtime",
-                  match session.mooncode_runtime_session_id {
-                    Some(id) if id != "" => id
-                    _ => "not attached"
-                  },
-                ),
-                info_row(
-                  "Evidence",
-                  "\{session.mooncode_summary.event_count} events · \{session.mooncode_summary.pending_diff_count} pending diffs · \{session.mooncode_summary.verified_test_count} verified tests",
-                ),
-              ]),
-            ]),
-          ]),
-        ]),
-      ],
-    )
-  }
-}
-
-///|
-fn mooncode_user_state_title(session : MoonCodeSession) -> String {
-  if session.status == "failed" {
-    "MoonCode couldn't start"
-  } else if session.status == "queued" || session.queued_count > 0 {
-    "Your request is queued"
-  } else if session.status == "running" {
-    "MoonCode is working"
-  } else {
-    ""
-  }
-}
-
-///|
-fn mooncode_user_state_message(session : MoonCodeSession) -> String {
-  if session.status == "failed" {
-    "Your request was saved, but no coding work ran."
-  } else if session.status == "queued" || session.queued_count > 0 {
-    "MoonCode will begin when its worker is ready."
-  } else if session.status == "running" {
-    "You can keep working in MoonDesk while this continues."
-  } else {
-    ""
-  }
-}
-
-///|
-fn mooncode_user_state_reason(session : MoonCodeSession) -> String {
-  match session.mooncode_runtime_detail {
-    Some(detail) if detail != "" => detail
-    _ if session.status == "failed" =>
-      "The runtime reported a failure without a specific reason."
-    _ => "MoonCode is waiting for its governed worker."
-  }
-}
-
-///|
-fn mooncode_user_next_action(session : MoonCodeSession) -> String {
-  match session.mooncode_runtime_detail {
-    Some("MoonClaw daemon is not running") =>
-      "Next: connect or start MoonClaw for this workspace, then send the request again."
-    Some(_) if session.status == "failed" =>
-      "Next: resolve the reason above, then send the request again."
-    _ if session.status == "queued" || session.queued_count > 0 =>
-      "Next: wait, or open Why? to verify what MoonCode is waiting for."
-    _ if session.status == "running" =>
-      "Next: review the result when MoonCode asks for attention."
-    _ => ""
   }
 }
 

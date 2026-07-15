@@ -1,5 +1,10 @@
 # MoonCode Canonical Conversation Architecture
 
+Historical implementation record. The active contract and remaining work are
+defined by `MOONCODE.md` and `MOONCODE_PRODUCTION_UPGRADE_PLAN.md`. References
+below to local runtime-service, split logs, replay, or compatibility phases
+describe retired intermediate designs and are not current implementation.
+
 ## Decision
 
 MoonCode is a chat product first. The user-facing conversation is an

@@ -2,354 +2,167 @@
 
 ## Visual Goal
 
-MoonDesk should feel like a focused desktop workbench:
+MoonDesk is a quiet, dense desktop workbench. It combines Finder-like project
+navigation with focused MoonWiki and MoonCode workspaces. The interface should
+make the selected MoonSuite root, MoonBook, mode, session, and current content
+obvious without turning diagnostics into the primary experience.
 
-- Codex-like professional shell
-- Finder-like file navigation
-- research-studio previews
-- MoonCode activity visible but not dominant
+Use restrained neutral surfaces, clear selected states, familiar icons,
+compact controls, readable code and paths, and stable split-pane dimensions.
+Avoid marketing composition, decorative cards, gradients, nested panels, and
+status copy that claims work without evidence.
 
-It should not look like the Wenyu Valley game viewport. The town viewport is a
-linked visualization, while MoonDesk is the practical human workspace.
+## Shell
 
-See [Desk Mode Design](DESK_MODE_DESIGN.md) for the current product decision:
-MoonDesk's primary mode is a read-only virtual filesystem desk, with MoonWiki
-and MoonCode as activities on the selected book/path context.
+The persistent shell contains:
 
-## Shell Layout
+- a mode switcher for Desk, MoonWiki, MoonCode, and Flow
+- the active MoonBook or General scope
+- a stable navigation rail
+- one primary work surface
+- optional contextual actions that do not displace the primary content
 
-```text
-┌────────────────────────────────────────────────────────────────────┐
-│ title bar / command palette / active workspace / sync status        │
-├────┬──────────────────────┬──────────────────────────────┬─────────┤
-│rail│ files                │ editor / preview tabs         │inspector│
-│    │ books/files/inbox    │ markdown/html/json/images     │MoonCode │
-│    │                      │ generated outputs             │metadata │
-├────┴──────────────────────┴──────────────────────────────┴─────────┤
-│ bottom drawer: logs, artifacts, requests, search results            │
-└────────────────────────────────────────────────────────────────────┘
-```
+The shell must not flash a different mode, empty front page, or previous
+session during asynchronous hydration. Route state and selected product state
+must converge before an empty state is committed.
 
-## Main Surfaces
+## Desk
 
-### Workspace Mode Switcher
+Desk is the read-only virtual filesystem view. It supports book-first browsing,
+directory navigation, file selection, preview, search, inbox, generated output,
+and artifact inspection. MoonWiki and MoonCode inherit the selected MoonBook
+and real file context; synthetic paths are never sent as code context.
 
-The title bar exposes three first-class modes for the selected book:
+## MoonWiki
 
-- `Desk` is the Finder/File Explorer style virtual filesystem browser for
-  MoonBook projects, directories, files, and metadata. It is read-only in the
-  first implementation.
-- `MoonWiki` keeps the existing book/wiki workspace for files, previews,
-  inbox, publishing, town status, and review.
-- `MoonCode` switches the same book into a coding/chat workspace with the
-  session list, transcript, composer, runtime status, and code-oriented review
-  panels.
+MoonWiki owns durable knowledge editing, preview, publish, review, and source
+workflows. It shares the shell and MoonBook selection but does not share a chat
+projection with MoonCode.
 
-The switch is a product boundary, not a visual shortcut. Desk owns navigation
-context. MoonWiki and MoonCode operate on that selected context. MoonCode can
-later be extracted as a standalone component while MoonDesk remains the native
-host.
+## MoonCode
 
-### Activity Rail
+MoonCode answers one user question: what coding conversation am I having in
+this MoonBook?
 
-- Files
-- Search
-- Inbox
-- Town
-- Runs
-- Settings
+The surface has three stable regions:
 
-### Desk Files
+1. Session rail: MoonBook groups and session titles.
+2. Transcript: one canonical append-ordered conversation.
+3. Composer: model-aware prompt input and a clear submit action.
 
-Book-first navigation:
+### Session Rail
 
-- All Books
-- Favorites
-- Recent
-- Inbox
-- Generated Outputs
-- Run Artifacts
+- Group sessions by MoonBook; use General for unbound sessions.
+- Preserve the durable listing order inside each group.
+- Show the active group and session without moving them during hydration.
+- Keep session rows compact: title plus one factual status or relative time.
+- A listing transport/decode failure preserves the last good rail and exposes a
+  retry state; it must not look like a real zero-session catalog.
+- New Chat creates a draft surface. Typing into that draft cannot switch back
+  to an existing session.
+- Future rename, archive, delete, and search actions belong in row menus or a
+  compact rail toolbar, not in the transcript.
 
-Each book expands into:
+### Transcript
 
-- Wiki
-- Raw Evidence
-- Reviews
-- Generated Site
-- Journal
-- MoonClaw Runs
+- Render only the selected MoonClaw canonical turn list plus local optimistic
+  user rows that have not yet been acknowledged.
+- A turn is visually ordered as user message, factual work, assistant answer.
+- The user row appears immediately after mouse submit or Enter.
+- Do not show a spinner, work row, or "working" text until MoonClaw emits a
+  turn-owned signal.
+- Update live work in place. Never prepend work to the session or reorder prior
+  turns.
+- Completed work remains between its user message and answer and folds with
+  native disclosure behavior.
+- The folded summary describes user-relevant progress. Raw event names,
+  protocol messages, process logs, and debugging detail stay out of ordinary
+  chat.
+- Render assistant Markdown safely. Code blocks and answers have familiar copy
+  actions; diffs and test evidence identify their file or command source.
+- Empty, loading, reconnecting, failed, cancelled, and completed states are
+  distinct and factual.
 
-### Preview Tabs
+### Composer
 
-The central area should support:
+- Enter submits; Shift+Enter inserts a newline.
+- Submit clears the input only after the optimistic user row has been appended.
+- The control remains associated with the visible selected session or draft.
+- Stop is available only when MoonClaw reports cancellable work.
+- Model and web-search choices are compact and must eventually persist per
+  session.
+- Background daemon/model metadata cannot overwrite an active draft's composer
+  state.
 
-- Markdown source/preview split
-- HTML preview
-- JSON tree inspector
-- image preview
-- report reader
-- generated site iframe
-- artifact summary
-- diff/review view
+### Accessibility
 
-### MoonCode
+- Native buttons, textboxes, and `details`/`summary` controls are required.
+- Keyboard order matches visual order.
+- Focus remains in the composer after submit unless the user navigates away.
+- Factual asynchronous status changes use a polite live region without moving
+  focus.
+- Selected state is conveyed semantically and not by color alone.
+- Touch targets remain usable at narrow widths; text wraps without overlap.
+- Reduced motion removes nonessential transitions while preserving state
+  changes.
 
-The MoonCode surface is the first coding/chat workspace slice. It should support:
+## Information Hierarchy
 
-- per-book MoonClaw session list
-- selected-path prompt composer
-- visible daemon/model/run state
-- model and web-search controls
-- send/cancel/refresh actions
-- MoonCode review controls for run tests, run build, run eval, package,
-  accept, reject, and cancel commands
-- MoonCode contract inspector for protocol, command specs, display tool specs,
-  executable tool contract, approval policy, expected event lanes, tool hints,
-  output roots, native/MoonCode tool-call contract shapes, unknown-tool rejection
-  policy, and the MoonCode runtime contract for agent runtime, session
-  store, tool registry, loop, command protocol, eval harness ownership,
-  the `/api/mooncode/eval-harness` contract endpoint, and MoonCode eval
-  reference paths
-- MoonCode engine-readiness panel that shows the configured MoonClaw service,
-  daemon state, safe `/v1/models` probe, native `/v1/code/capabilities`
-  contract state, sidecar append-only log, missing MoonClaw runtime contract endpoint,
-  and missing MoonCode eval evidence
-- visible runtime mode for the selected session, distinguishing native
-  `/v1/code/sessions/<id>/commands` intake from recorded or failed commands
-- visible stream source for the selected session/live tail, distinguishing
-  native `/v1/code/sessions/<id>/stream` events from MoonDesk's
-  append-log projection
-- MoonCode readiness/eval checklist for book scope, MoonCode session attachment,
-  transcript, tool, diff, test, artifact, review, append-log, typed command
-  packets, typed session snapshot, verified test results, MoonBook review
-  receipts, source-bound package manifests, and live-stream coverage, including
-  the current incremental stream cursor endpoint
-- MoonCode Eval Report panel in the center pane that exposes passed/missing
-  checks, required native harnesses, persisted
-  `wiki/reviews/mooncode/<session-id>/eval-report.json` path, native eval
-  source/endpoint, native proof ingest endpoint, and the MoonClaw-owned eval
-  proof gap before raw event lanes
-- MoonCode Runtime Handoff panel in the center pane that exposes the resumable
-  `wiki/reviews/mooncode/<session-id>/runtime-handoff.json` artifact, ordered
-  session snapshot, command/event log paths, runtime command feed path,
-  MoonDesk session-store, stream, command, and runtime-feed endpoints, native
-  MoonClaw endpoints, output roots, runtime mode, and next runtime step for an
-  standalone `mooncode` backend
-- MoonCode Runtime Supervisor panel in the same handoff board that shows
-  whether the next turn is launchable, the replay/native mode, scheduler
-  effect, command/action, claim/ack/event/session endpoints, MoonClaw root, and
-  ordered supervisor loop without making MoonDesk execute tools. It also shows
-  the embedded readiness status and missing launch requirements, so blocked
-  turns are diagnosable without opening JSON.
-- MoonCode session header at the top of the coding workspace that shows the
-  selected book/session, next required action, stream source, runtime state,
-  event/diff/test/tool/package counts, eval evidence, and durable resume/log paths
-  before the transcript and review panels
-- MoonCode preflight gates panel that reads the server-side package, accept,
-  commit, and selected-path apply/revert patch gates before command intake,
-  showing exact selected file/hunk blockers for tests, diffs, source-bound
-  packages, runtime patch proof, and tool approvals
-- MoonCode Action Plan rows show command-scoped runtime evidence status,
-  required/proven event counts, and exact missing/failed MoonClaw/MoonCode event
-  names so operators can tell whether a command is merely delivered, running, or
-  actually proven by typed runtime events
-- MoonCode code-review queue that promotes diff-lane events into open,
-  file-targeted accept/reject, and package controls before the broader
-  tool/event lane grid
-- MoonBook receipt visibility for accepted/rejected/packaged coding results,
-  sourced from `wiki/reviews/mooncode/<session-id>/...json`
-- MoonBook change-set visibility for the current session, sourced from
-  `wiki/reviews/mooncode/<session-id>/change-set.json`, so the operator can see
-  whether diff/test/artifact/review evidence has a durable book-owned review
-  object
-- MoonBook patch-set visibility for the current session, sourced from
-  `wiki/reviews/mooncode/<session-id>/patch-set.json`, so file diffs have a
-  durable pending/accepted/rejected/applied/reverted staging object with
-  stable hunk targets, compact hunk counts, gate status, next action,
-  per-file Open/Accept/Reject/Apply/Revert/Package controls, and per-hunk
-  Accept/Reject/Apply/Revert commands before MoonClaw owns true patch execution
-- MoonCode command-queue visibility in the center pane and readiness/contract
-  surfaces, sourced from
-  `.moonsuite/products/mooncode/sessions/<session-id>/commands.jsonl`, so operator
-  intent is auditable as ordered `mooncode.v1` packets separately from rendered
-  transcript and event progress, with latest packet rows and target-aware Test
-  and Package controls
-- MoonCode composer semantics match the ordered MoonCode command protocol: no selected session
-  starts a session, an idle selected session sends the text as a typed `prompt`
-  command, and a running or queued selected session sends the text as a typed
-  `steer` command through the MoonCode command route
-- MoonCode pending-steer feedback in the session header and command queue,
-  computed from durable `steer` commands minus `steer_applied`/`steer_dropped`
-  runtime events, with `steer_deferred` shown separately as saved next-turn
-  context, so a sent steer is visible while MoonClaw
-  has not yet confirmed whether it was applied or dropped
-- MoonCode Eval Report and primary command surfaces have Run Eval controls that
-  enqueue a typed `run_eval` command through the ordered runtime queue, asking
-  MoonClaw for `tool_harness` and `file_edit` native
-  proof instead of executing harnesses inside MoonDesk
-- MoonCode runtime-feed visibility in the center pane, sourced from
-  `.moonsuite/products/mooncode/sessions/<session-id>/runtime-commands.jsonl`, so the
-  MoonClaw-facing feed is visible even before runtime receipts or runtime
-  leases exist, with compact execution summaries for planned tools, expected
-  events, required outputs, and replay/event sinks
-- MoonCode runtime-replay visibility in the center pane, sourced from
-  `/api/mooncode/sessions/<session-id>/runtime-replay`, so operators can inspect
-  pending MoonCode JSONL protocol commands, replay readiness, delivered/claimed/
-  invalid counts, and per-command decode status before MoonClaw executes the queue
-- MoonCode runtime-claim controls in the Runtime Claims panel, sourced from
-  `POST /api/mooncode/sessions/<session-id>/runtime-claim`, with Claim Next and
-  Force Claim buttons that lease one runtime command for the
-  `moondesk-ui-inspector` consumer without executing tools in MoonDesk
-- MoonCode runtime-replay acknowledgement controls on claimed Runtime Claims
-  rows, sourced from `POST /api/mooncode/sessions/<session-id>/runtime-replay`,
-  with Ack, Complete, and Fail buttons that record operator/debug receipts and
-  refresh replay, receipt, event, handoff, and action-plan state
-- MoonCode runtime-event sink visibility in the center pane, sourced from
-  `/api/mooncode/sessions/<session-id>/runtime-events`, so operators can inspect
-  the event log path, event count, POST endpoint, accepted MoonClaw/MoonCode
-  payload shapes, normalization rule, and latest normalized runtime events
-  before they are projected into lanes, plans, evals, and review artifacts
-- MoonCode live-tail visibility keeps a bounded, id-deduped recent stream
-  buffer across successive polls, so the operator sees stable coding progress
-  even when the latest poll returns no new event rows
-- MoonCode action-plan visibility for the current execution/review state,
-  sourced from `wiki/reviews/mooncode/<session-id>/action-plan.json`, with
-  compact acceptance gates, `next_required_action`, command state rows, and
-  target-aware Test/Package/Accept/Reject controls
-- MoonCode runtime-evidence visibility, sourced from
-  `GET /api/mooncode/sessions/<session-id>/runtime-evidence`, with aggregate
-  command proof counts, runtime/event log paths, and per-command missing or
-  failed required runtime events so operators can distinguish queued intent
-  from MoonClaw-proven execution
-- MoonCode tool-authorization probes for the selected session/path, sourced
-  from `POST /api/mooncode/sessions/<session-id>/tool-authorization`, with
-  explicit Read/Write/Shell probe buttons, current decision, approval state,
-  target, reason, and matching approval row before MoonClaw executes a gated
-  tool
-- MoonCode runtime execution summaries that render the ordered claim/tool/event/
-  output/ack checklist from each command's `result_contract`, so operators can
-  compare MoonClaw progress against machine-readable execution requirements
-- MoonCode tool-approval visibility for policy/review-gated shell, write/edit,
-  diff, and artifact work, sourced from
-  `wiki/reviews/mooncode/<session-id>/tool-approvals.json`, with per-row Open,
-  Approve, and Reject controls
-- MoonCode test-run visibility for test/build evidence, sourced from
-  `wiki/reviews/mooncode/<session-id>/test-runs.json`, with passed/failed,
-  running/queued counts and per-row Open, Rerun, and Package controls
-- MoonBook package-manifest visibility for package candidates, sourced from
-  `portable/app-tool/mooncode/<session-id>/package-...json`, including
-  source-bound/missing status, manifest/receipt paths, source inventory, file
-  hash evidence, and Open/Test/Accept/Package controls
-- persisted transcript/status records plus saved MoonClaw assistant/tool/failure
-  event projection and bounded workspace-log progress projection
-- MoonCode lanes for tools, diffs, tests, artifacts, and review decisions
-- MoonCode live-tail panel driven by the bounded
-  `/stream?format=jsonl&live=true` cursor for the selected session
-- bottom-drawer summary for the selected session
-
-### Right Inspector
-
-Context for the selected file or workspace:
-
-- file metadata
-- citations/source info
-- owning book
-- current standing goal
-- related runs
-- keeper decisions
-- available actions
-
-### Bottom Drawer
-
-Operational visibility:
-
-- request ledger
-- town messages
-- MoonClaw run events
-- build output
-- validation warnings
-- latest daemon and standing-watch summary
+Ordinary users see conversation and code outcomes first. Diagnostics are
+progressively disclosed and must answer an actionable question. Do not surface
+internal command queues, replay receipts, runtime claims, raw journals, or
+adapter contracts in the main transcript. Those belong in developer tooling or
+an explicit diagnostics view.
 
 ## Command Palette
 
-Required commands:
+The palette should expose clear product commands such as:
 
-- Open Book
-- Create Book Inbox Note
-- Import Files
-- Import URL
+- Open MoonBook
 - Open MoonCode
-- Submit to Town
-- Run Daemon Tick
-- Start Daemon
-- Stop Daemon
-- Restart Daemon
-- Enable Daemon Supervision
-- Disable Daemon Supervision
-- View Cadence Calendar
-- Open Calendar Export
-- Review Outcome Analytics
-- Save Current View
-- Tag Selection
-- Build Book Site
-- Open Generated Site
-- Show Run Artifacts
+- New MoonCode Chat
+- Search All MoonBooks
+- Import Files or URL
+- Build MoonBook Site
 - Reveal in Finder
-- Search All Books
-- Toggle Inspector
+- Start, Stop, or Restart managed services
+- Show generated outputs or run artifacts
 
-## Request Composer
-
-The composer should support:
-
-- selected files/pages as context
-- free-form prompt
-- target book
-- one-shot or standing-watch cadence
-- review policy
-- source policy
-- submit to MoonTown
-- create or update standing-watch records in `.moonsuite/products/moontown/standing-goals.json`
-- run a single daemon tick through the scoped host action
-- start, stop, restart, supervise, and inspect the background daemon loop
+Palette results must use icons from the existing icon system, preserve keyboard
+focus, and avoid duplicating controls already visible next to the active object.
 
 ## Desktop Interactions
 
-Phase 1 browser mode:
+Browser development uses the local MoonDesk server. The Lepusa production host
+provides native file selection, reveal, drag/drop, clipboard, notifications,
+service supervision, and packaged asset behavior. Both hosts must render the
+same route and conversation contracts.
 
-- drag files into inbox using browser APIs where available
-- click previews
-- local API writes staged inbox files
-- URL import writes staged inbox/import notes
+## Responsive Behavior
 
-Phase 2 MoonBit host mode:
+- Desktop: persistent session rail and full transcript.
+- Narrow desktop/tablet: collapsible rail that preserves selection.
+- Phone-sized validation: transcript and composer remain usable even if the
+  full desktop shell is not a shipping target.
+- Fixed controls must use stable dimensions so loading, labels, and status
+  changes do not shift surrounding content.
+- Long session titles truncate in the rail and remain available through an
+  accessible name or tooltip.
 
-- host-backed open/import flows
-- scoped reveal in Finder
-- open with external app
-- drag/drop from Finder
-- clipboard images
-- desktop notifications
-- signed self-contained `.app` bundle created through `cmd/main bundle`
-- release manifest/notarization path through `cmd/main release`
-- LaunchAgent template generation for login startup policy
+## Validation Matrix
 
-## Codex Outlook Matching
+Every UI release must inspect these states in a real browser:
 
-Use these visual principles:
+- cold load with persisted sessions
+- no sessions, listing failure, and MoonClaw unavailable
+- new General chat and MoonBook-bound chat
+- first through fifth turn
+- immediate optimistic row before any runtime signal
+- factual live work, completion, failure, retry, and cancellation
+- session switch during an active watch
+- hard reload and MoonClaw restart
+- long Markdown, code blocks, diffs, tests, and long session titles
+- keyboard-only, reduced-motion, narrow, and desktop layouts
 
-- dense split-pane shell
-- subdued neutral background
-- blue/teal accent for active states
-- small caps/status pills for state
-- high-contrast active tab
-- monospace for paths/logs
-- clear empty states
-- keyboard-first navigation
-
-Avoid:
-
-- game-style map as primary UI
-- random gradients
-- generic dashboard cards only
-- hiding files behind marketing copy
+Acceptance requires stable order, no blank-page flash, no duplicate rows, no
+revision rollback, no unexplained working state, and no overlapping content.

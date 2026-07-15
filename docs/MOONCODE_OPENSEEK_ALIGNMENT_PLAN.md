@@ -1,8 +1,9 @@
 # MoonCode OpenSeek Alignment Update Plan
 
-Status: canonical conversation upgrade implemented and the three-turn real UI
-closure gate passed on 2026-07-10. This is a finite architecture correction,
-not Phase 59.
+Status: historical comparison and migration record. The canonical conversation
+upgrade and adapter closure are complete. Use `MOONCODE.md` for the current
+contract and `MOONCODE_PRODUCTION_UPGRADE_PLAN.md` for remaining work. File and
+route references below may describe retired intermediate implementations.
 
 ## Implementation Record
 

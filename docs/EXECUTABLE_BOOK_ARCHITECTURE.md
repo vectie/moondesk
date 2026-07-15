@@ -189,25 +189,28 @@ MoonDesk-facing routes may retain `/api/mooncode` as the desktop API namespace,
 because it is a MoonDesk UI projection shell:
 
 ```text
+/api/mooncode/status
+/api/mooncode/capabilities
 /api/mooncode/sessions
+/api/mooncode/sessions/<id>
+/api/mooncode/sessions/<id>/watch
 /api/mooncode/sessions/<id>/commands
-/api/mooncode/sessions/<id>/stream
-/api/mooncode/sessions/<id>/review...
 ```
 
-MoonClaw-owned native runtime routes should use the generic executable-code
-namespace:
+MoonClaw owns the larger generic executable-code capability surface. MoonDesk's
+ordinary conversation path consumes only capability discovery, session
+listing/show, atomic turn submit, and the canonical stream/session record:
 
 ```text
 /v1/code/capabilities
-/v1/code/sessions
-/v1/code/sessions/<id>/commands
-/v1/code/sessions/<id>/runtime-turn
-/v1/code/sessions/<id>/runtime-loop
-/v1/code/sessions/<id>/runtime-service
+/v1/code/sessions?book_root=<path>&format=listing
+/v1/code/sessions/<id>?book_root=<path>
+/v1/code/sessions/<id>/turns
 /v1/code/sessions/<id>/stream
-/v1/code/sessions/<id>/tool-exec
 ```
+
+MoonDesk does not expose MoonClaw runtime-service, replay, claim, or raw-event
+routes as a second desktop conversation protocol.
 
 MoonClaw noninteractive runs remain separate from MoonCode. Their exact routes
 belong to MoonClaw's service contract, not to MoonDesk's desktop API. Rule:
@@ -225,7 +228,7 @@ actually expose matching concepts.
 
 | Codebase | Evidence | Alignment | Gaps |
 | --- | --- | --- | --- |
-| MoonDesk | `mooncode/core/protocol.mbt` advertises `/v1/code/*` and `mooncode-executable-book-lifecycle.v1`; `internal/mooncode/session_executable_lifecycle.mbt` verifies ordered lifecycle evidence from readiness checks; `internal/moonwiki/mooncode_command_handlers.mbt` probes `/v1/code/capabilities`; the desktop API remains `/api/mooncode/sessions`. | Aligned as shell/projection and MoonCode session surface. | Keep MoonDesk thin while future desktop frameworks render the same backend contracts. |
+| MoonDesk | `mooncode/core` owns shared protocol and journal contracts; `internal/mooncode` is a six-file adapter; `internal/moonwiki` proxies six desktop routes to MoonClaw canonical sessions; Rabbita renders canonical turns without replaying logs. | Aligned as a thin shell/projection and MoonCode session surface. | Extend coding workflows and release evidence without adding a second conversation owner. |
 | MoonClaw | `cmd/daemon` has automation endpoints plus MoonCode session binding, runtime turn/loop/service files, and MoonCode sidecar persistence behind `/v1/code/*`. | Correct owner for agent/session/runtime and Code execution. | Implement the full executable-book lifecycle contract end to end: select/start/propose/edit/verify/review/accept/package/resume, plus stronger coding eval coverage. |
 | MoonBook | README/docs show `wiki init`, `wiki ingest`, `wiki review`, `wiki lint`, `raw/bootstrap`, `wiki/reviews`, seeded skills, standing-watch decisions, and an agent-agnostic workspace. | Aligned as durable book/wiki/source/review owner. | Make executable-code directories, package manifests, MoonCode review artifacts, and lifecycle evidence first-class MoonBook templates. |
 | MoonTown | README and `src/*` expose daemon ticks, standing goals, target book ids, town synthesis, runtime status, worker routing, and book repair loops. | Aligned as scheduler plus coordination network for MoonBooks. | The “communication and new ideas” role exists in pieces, but should be made explicit as town messages/events and cross-book proposal routing rather than only scheduling language. |

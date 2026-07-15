@@ -1,5 +1,10 @@
 # MoonCode Clean Architecture Upgrade
 
+Historical migration record. The migration closed on 2026-07-15 with MoonClaw
+as the sole session/journal/conversation owner and `internal/mooncode` reduced
+to a thin adapter. Use `MOONCODE.md` for current architecture and
+`MOONCODE_PRODUCTION_UPGRADE_PLAN.md` for the finite remaining product work.
+
 ## Goal
 
 MoonCode should behave like a simple chat product:
