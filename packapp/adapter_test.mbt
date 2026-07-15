@@ -21,4 +21,7 @@ test "projection binds app entrypoints without domain imports" {
   }
   assert_eq(binding.path, "apps/console")
   assert_eq(binding.audience, "operator")
+  let twice = reconcile(reconcile(empty_registry(), projection), projection)
+  assert_eq(twice.entrypoints.length(), 1)
+  assert_eq(remove_pack(twice, "fixture").entrypoints.length(), 0)
 }
