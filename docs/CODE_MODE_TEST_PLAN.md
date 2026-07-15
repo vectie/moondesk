@@ -533,17 +533,21 @@ around existing core contracts.
 
 ### Tool Authorization
 
-Prove mutating tools are blocked until approved and safe previews remain cheap.
+Prove risky tools are blocked until a durable decision, the decision stays in
+the owning canonical turn, and ordinary reads remain cheap.
 
 Flow:
 
 ```text
 runtime proposes read tool
--> authorization preview auto-approves read
-runtime proposes edit/shell/package tool
--> GET /tool-authorization shows pending gate
--> POST /tool-authorization approves or rejects
--> runtime claim/evidence reflects decision
+-> tool executes without a review gate
+runtime proposes an approval-gated shell/package tool
+-> MoonClaw appends a pending approval work step
+-> MoonDesk renders Approve and Reject inside the owning turn
+-> operator clicks a decision
+-> hidden approve_tool/reject_tool control is persisted
+-> the same MoonClaw task resumes or skips the tool
+-> canonical work and assistant output settle without reordering
 ```
 
 Assertions:
@@ -553,6 +557,37 @@ Assertions:
 - repeated tool calls are isolated by tool call id.
 - rejected tools remain visible as durable evidence.
 - approval records include enough context for a human review surface.
+- approval controls never create user or assistant chat rows.
+- hard reload preserves the pending or settled decision at the same position.
+
+### Live Cancellation
+
+Prove Stop interrupts actual work instead of changing only presentation state.
+
+Flow:
+
+```text
+runtime starts a long child process
+-> canonical work becomes unfinished and Stop appears
+-> operator clicks Stop
+-> cancel names the canonical target command id
+-> MoonClaw cancels and awaits the active task
+-> child process is terminated
+-> target command receives runtime-cancelled settlement
+-> canonical turn becomes cancelled and Stop disappears
+```
+
+Assertions:
+
+- Stop is absent for queued work that has no canonical working signal.
+- a stale or mismatched target command id is rejected before any task is
+  interrupted.
+- the cancel control does not appear as a conversation turn.
+- no post-cancellation output file or late assistant reply is produced.
+- a subsequent prompt can run in the same session.
+- a lagging compact session listing cannot navigate away from the selected
+  canonical session after cancellation settles.
+- reload preserves the cancelled turn and append order.
 
 ### Patch, Test, Review, And Readiness
 
@@ -836,9 +871,10 @@ scripts/validate_mooncode_runtime_control_contract.sh
 This deterministic Phase 27 gate protects append-only turn ownership. It fails
 if visible conversation rows lack command/turn/run owner fields, if unscoped
 runtime failures attach to the latest active turn, if prompt-scoped
-`runtime_aborted` does not close the owning turn as cancelled, if cancel-scoped
-abort evidence leaks into chat, or if steer/cancel runtime-control decisions do
-not advertise their required MoonClaw settlement events.
+`runtime_aborted` does not close the owning turn as cancelled, if control
+commands leak into chat, or if runtime-control decisions lack their required
+MoonClaw settlement events. Product acceptance additionally requires the live
+child-process cancellation journey above.
 
 Phase 56 moves the reusable conversation-ownership and runtime-control
 vocabulary into `mooncode/core`. The validator fails if production internal

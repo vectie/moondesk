@@ -908,8 +908,10 @@ Problem:
 - That kept a stale implementation path where explicit runtime controls could
   leak into the same transcript surface as ordinary user prompts and assistant
   replies.
-- MoonClaw settles steer/cancel at native scheduler boundaries; MoonDesk should
-  not pretend control commands are chat messages or mid-tool interruption.
+- MoonClaw settles controls at its native runtime boundary; MoonDesk must not
+  pretend control commands are chat messages. Historical cancel support was
+  scheduler-boundary-only; the durable runtime-controls milestone below adds
+  real active-task and child-process interruption.
 
 Work:
 
@@ -2544,6 +2546,44 @@ Closure rule:
 - No migration just because an internal report contains display strings.
 - Migrate only data-only policy that MoonClaw, standalone MoonCode, or another
   MoonSuite product must consume without importing MoonDesk internals.
+
+## Milestone E - Durable Runtime Controls
+
+Status: implemented. This is a finite product milestone, not another numbered
+architecture phase.
+
+Ownership:
+
+- MoonLib owns `moonsuite-conversation-control.v1`, control kinds, states,
+  required identifiers, ordering rules, and resume/cancellation semantics.
+- MoonClaw owns approval policy, durable requests and decisions, task/process
+  cancellation, command settlement, and canonical projection.
+- MoonDesk owns only inline presentation and decision submission from stable
+  canonical evidence.
+
+Runtime behavior:
+
+1. A risky tool call emits one approval step keyed by stable approval id.
+2. MoonClaw waits in the same runtime task so model plan and tool context are
+   not reconstructed by the desktop.
+3. `approve_tool` executes the original call; `reject_tool` records a skipped
+   result and lets the model finish without claiming execution.
+4. Stop cancels and awaits the active task, terminates its child process, and
+   writes command-scoped cancellation settlement.
+5. Approval and cancel commands remain hidden from canonical chat turns.
+
+Exit evidence:
+
+- MoonLib contract unit tests cover identifiers, states, ordering, and resume
+  rules.
+- MoonClaw integration tests cover approve/resume/write, reject/no-write, and
+  command-owned cancellation of a real long-running child process, including
+  rejection of a stale target command before interruption.
+- MoonDesk tests cover canonical pending/settled approval parsing, inline
+  actions, canonical Stop eligibility despite stale listing metadata, and
+  selected-session retention when a post-cancel listing is late.
+- Browser acceptance covers real keyboard submit, mouse decisions, Stop,
+  append order, hard reload, and a later turn in the same session.
 
 ## Non-Goals
 

@@ -11,6 +11,10 @@ struct MoonCodeEvidenceRow {
   output : String
   exit_code : Int
   truncated : Bool
+  approval_id : String
+  target_command_id : String
+  tool_call_id : String
+  arguments : String
 }
 
 ///|
@@ -64,7 +68,9 @@ fn render_mooncode_activity_row(
                 attrs=@html.Attrs::build()
                   .aria_label("Stop this MoonCode request")
                   .data_set("testid", "mooncode-stop"),
-                on_click=dispatch(CancelMoonCodeWork(row.session_id)),
+                on_click=dispatch(
+                  CancelMoonCodeWork(row.session_id, row.command_id),
+                ),
                 "Stop",
               )
             } else if (row.status == "failed" || row.status == "cancelled") &&
@@ -106,7 +112,12 @@ fn render_mooncode_activity_body(
       } else {
         pre(class="mooncode-activity-detail", row.detail)
       },
-      render_mooncode_evidence_list(dispatch, model, row.evidence),
+      render_mooncode_evidence_list(
+        dispatch,
+        model,
+        row.session_id,
+        row.evidence,
+      ),
     ])
   }
 }
@@ -141,7 +152,12 @@ fn render_mooncode_activity_disclosure(
     } else {
       pre(class="mooncode-activity-detail", row.detail)
     },
-    render_mooncode_evidence_list(dispatch, model, row.evidence),
+    render_mooncode_evidence_list(
+      dispatch,
+      model,
+      row.session_id,
+      row.evidence,
+    ),
   ])
 }
 
@@ -149,6 +165,7 @@ fn render_mooncode_activity_disclosure(
 fn render_mooncode_evidence_list(
   dispatch : Dispatch[Msg],
   model : Model,
+  session_id : String,
   evidence : Array[MoonCodeEvidenceRow],
 ) -> @rabbita.Html {
   if evidence.length() == 0 {
@@ -156,7 +173,7 @@ fn render_mooncode_evidence_list(
   }
   let children : Array[@rabbita.Html] = []
   for row in evidence {
-    children.push(render_mooncode_evidence(dispatch, model, row))
+    children.push(render_mooncode_evidence(dispatch, model, session_id, row))
   }
   div(class="mooncode-evidence-list", children)
 }
@@ -165,8 +182,12 @@ fn render_mooncode_evidence_list(
 fn render_mooncode_evidence(
   dispatch : Dispatch[Msg],
   model : Model,
+  session_id : String,
   row : MoonCodeEvidenceRow,
 ) -> @rabbita.Html {
+  if row.kind == "approval" {
+    return render_mooncode_approval(dispatch, session_id, row)
+  }
   let has_detail = row.diff != "" ||
     row.command != "" ||
     row.output != "" ||
@@ -246,8 +267,77 @@ fn mooncode_evidence_label(row : MoonCodeEvidenceRow) -> String {
     "edit" => "Edit"
     "test" => "Test"
     "artifact" => "Output"
+    "approval" => "Approval"
     _ => "Tool"
   }
+}
+
+///|
+fn render_mooncode_approval(
+  dispatch : Dispatch[Msg],
+  session_id : String,
+  row : MoonCodeEvidenceRow,
+) -> @rabbita.Html {
+  let pending = row.state == "pending"
+  div(
+    class="mooncode-approval " + row.state,
+    attrs=@html.Attrs::build()
+      .data_set("testid", "mooncode-approval")
+      .data_set("approval-id", row.approval_id)
+      .data_set("state", row.state),
+    [
+      div(class="mooncode-approval-copy", [
+        strong(if pending { "Approval needed" } else { row.title }),
+        p(row.detail),
+        if row.arguments == "" {
+          @html.nothing
+        } else {
+          @html.node("details", @html.Attrs::build().class("mooncode-approval-detail"), [
+            @html.node("summary", @html.Attrs::build(), [span("Review operation")]),
+            pre(row.arguments),
+          ])
+        },
+      ]),
+      if pending {
+        div(class="mooncode-approval-actions", [
+          button(
+            class="mooncode-inline-action reject",
+            attrs=@html.Attrs::build()
+              .aria_label("Reject this MoonCode tool call")
+              .data_set("testid", "mooncode-reject-tool"),
+            on_click=dispatch(
+              DecideMoonCodeTool(
+                session_id,
+                "reject_tool",
+                row.approval_id,
+                row.target_command_id,
+                row.tool_call_id,
+              ),
+            ),
+            "Reject",
+          ),
+          button(
+            class="mooncode-inline-action approve",
+            attrs=@html.Attrs::build()
+              .aria_label("Approve this MoonCode tool call")
+              .data_set("testid", "mooncode-approve-tool"),
+            on_click=dispatch(
+              DecideMoonCodeTool(
+                session_id,
+                "approve_tool",
+                row.approval_id,
+                row.target_command_id,
+                row.tool_call_id,
+              ),
+            ),
+            "Approve",
+          ),
+        ])
+      } else {
+        span(class="mooncode-approval-state " + row.state, row.state)
+      },
+    ],
+  )
 }
 
 ///|

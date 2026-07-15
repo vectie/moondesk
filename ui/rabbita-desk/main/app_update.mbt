@@ -104,7 +104,9 @@ fn update(
     CopyMoonCodeText(_, _) => update_mooncode_actions(dispatch, msg, model)
     ClearMoonCodeCopy(_) => update_mooncode_actions(dispatch, msg, model)
     RetryMoonCodeTurn(_, _) => update_mooncode_actions(dispatch, msg, model)
-    CancelMoonCodeWork(_) => update_mooncode_actions(dispatch, msg, model)
+    CancelMoonCodeWork(_, _) => update_mooncode_actions(dispatch, msg, model)
+    DecideMoonCodeTool(_, _, _, _, _) =>
+      update_mooncode_actions(dispatch, msg, model)
     ManageMoonClaw(_) => update_mooncode_actions(dispatch, msg, model)
     RefreshMoonCodeMetadata(_) => update_mooncode_actions(dispatch, msg, model)
     ResumeMoonCodeWatch(_, _) => update_mooncode_actions(dispatch, msg, model)

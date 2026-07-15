@@ -26,7 +26,8 @@ MoonClaw owns execution and durable conversation state:
 - session identity and metadata
 - command intake, model loops, and tool execution
 - ordered user, work, and assistant records
-- cancellation, failure, and recovery state
+- durable tool-approval decisions, live task cancellation, failure, and
+  recovery state
 - the authoritative per-session journal and replaceable checkpoint
 
 MoonBook owns the files and accepted outputs changed by a coding session.
@@ -52,6 +53,34 @@ contracts. MoonGate may measure those contracts but does not own them.
    while a selected session is hydrated.
 10. New features must extend the canonical contract or renderer; they must not
     add a second store, replay engine, or projection reducer in MoonDesk.
+11. Approval and cancellation commands are control-plane records, not chat
+    turns. Approval renders as a stable work step inside its owning turn.
+12. Stop is offered only for canonical unfinished work and must interrupt the
+    MoonClaw task; desktop timers or optimistic state cannot claim cancellation.
+13. Stop names the canonical target command. A stale listing cannot retarget
+    cancellation or navigate away from the selected canonical conversation.
+
+## Runtime Controls
+
+MoonLib publishes `moonsuite-conversation-control.v1`. MoonClaw consumes that
+contract and owns the complete control lifecycle:
+
+```text
+tool proposed
+-> durable approval request in the owning turn
+-> operator approves or rejects
+-> the same runtime task resumes with the original plan and tool call
+
+Stop
+-> hidden cancel command naming the canonical target command
+-> active task and child process are cancelled
+-> durable turn-cancelled event and terminal receipt
+```
+
+MoonDesk renders pending approval between the user message and final assistant
+reply. It submits the decision using the stable approval, command, and tool-call
+identifiers already present in canonical evidence. It does not execute tools,
+infer decisions, create a separate approval conversation, or reorder turns.
 
 ## Source Layout
 
@@ -226,10 +255,10 @@ mouse input:
 
 ## Remaining Product Work
 
-The storage and conversation ownership migration is complete. Remaining work
-is product capability, not another architecture rewrite:
+The storage, conversation ownership, approval, and live-cancellation upgrades
+are complete. Remaining work is product capability, not another architecture
+rewrite:
 
-- approval decisions and verified cancellation of long-running tools
 - richer permission, context-loss, and offline recovery
 - durable per-session model and web-search preferences
 - session rename, archive, delete, and search

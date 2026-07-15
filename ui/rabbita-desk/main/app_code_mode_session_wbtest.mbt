@@ -1272,6 +1272,27 @@ test "code mode stale session listing preserves selected in-flight session" {
 }
 
 ///|
+test "code mode stale listing preserves selected settled session" {
+  let selected = code_mode_test_session("session-settled", status="done")
+  let older = code_mode_test_session("session-old", status="done")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "book-demo",
+    selected_mooncode_session_id: selected.id,
+    mooncode_sessions: [selected],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSessions(Ok([older])),
+    model,
+  )
+  assert_eq(next.selected_mooncode_session_id, selected.id)
+  assert_eq(next.mooncode_sessions.length(), 2)
+  assert_eq(next.mooncode_sessions[0].id, selected.id)
+}
+
+///|
 test "code mode create response is idempotent after listing adoption" {
   let session = code_mode_test_session("session-created", workspace_id="")
   let model = {
@@ -1592,17 +1613,135 @@ test "code mode cancel is available only while canonical work is active" {
   }
   let (_, cancelling) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    CancelMoonCodeWork(running.id),
+    CancelMoonCodeWork(running.id, "command-running"),
     model,
   )
   assert_eq(cancelling.mooncode_composer_status, "Cancellation requested")
   let done = { ..running, status: "done" }
   let (_, unchanged) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    CancelMoonCodeWork(done.id),
+    CancelMoonCodeWork(done.id, ""),
     { ..model, mooncode_sessions: [done] },
   )
   assert_eq(unchanged.mooncode_composer_status, "MoonCode is not running")
+}
+
+///|
+test "code mode canonical running turn overrides stale session status for cancel" {
+  let session = {
+    ..code_mode_test_session("session-canonical-running", status="done"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-canonical-running", [
+        code_mode_test_turn(
+          "command-running",
+          "Keep working",
+          status="running",
+          steps=[
+            {
+              "title": "Running command",
+              "summary": "The command is still active.",
+              "status": "running",
+            },
+          ],
+        ),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: session.id,
+    mooncode_sessions: [session],
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    CancelMoonCodeWork(session.id, "command-running"),
+    model,
+  )
+  assert_eq(next.mooncode_composer_status, "Cancellation requested")
+}
+
+///|
+test "code mode owned cancellation does not silently depend on listing status" {
+  let session = code_mode_test_session("session-owned-cancel", status="done")
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: session.id,
+    mooncode_sessions: [session],
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    CancelMoonCodeWork(session.id, "command-visible-running"),
+    model,
+  )
+  assert_eq(next.mooncode_composer_status, "Cancellation requested")
+}
+
+///|
+test "code mode renders a pending approval inside its canonical work turn" {
+  let approval_id = "mooncode-approval-test"
+  let session = {
+    ..code_mode_test_session("session-approval", status="running"),
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-approval", [
+        code_mode_test_turn(
+          "command-approval",
+          "Publish the package",
+          status="running",
+          steps=[
+            {
+              "item_id": "turn:command-approval:work:approval:\{approval_id}",
+              "title": "Approval needed",
+              "summary": "Review `shell` before MoonClaw continues.",
+              "status": "running",
+              "evidence": {
+                "kind": "approval",
+                "state": "pending",
+                "approval_id": approval_id,
+                "target_command_id": "command-approval",
+                "tool_call_id": "tool-publish",
+                "arguments": "{\"cmd\":\"moon publish\"}",
+              },
+            },
+          ],
+        ),
+      ]),
+    ),
+  }
+  let items = mooncode_transcript_items(init_model(), session)
+  assert_eq(items.length(), 2)
+  match items[1].activity {
+    Some(activity) => {
+      assert_false(activity.folded)
+      assert_eq(activity.evidence.length(), 1)
+      let approval = activity.evidence[0]
+      assert_eq(approval.kind, "approval")
+      assert_eq(approval.state, "pending")
+      assert_eq(approval.approval_id, approval_id)
+      assert_eq(approval.target_command_id, "command-approval")
+      assert_eq(approval.tool_call_id, "tool-publish")
+    }
+    None => fail("expected canonical approval work row")
+  }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_mooncode_session_id: session.id,
+    mooncode_sessions: [session],
+  }
+  let (_, approved) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    DecideMoonCodeTool(
+      session.id,
+      "approve_tool",
+      approval_id,
+      "command-approval",
+      "tool-publish",
+    ),
+    model,
+  )
+  assert_eq(approved.mooncode_composer_status, "Approval sent to MoonClaw")
 }
 
 ///|

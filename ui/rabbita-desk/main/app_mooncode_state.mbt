@@ -177,9 +177,10 @@ fn mooncode_preserve_selected_inflight_session(
   if mooncode_session_exists(incoming, selected) {
     return incoming
   }
-  if !selected_inflight {
-    return incoming
-  }
+  // A listing request can start before the selected session is created or
+  // mutated and return after that turn settles. Keep the selected canonical
+  // session until the user explicitly changes selection; a stale listing must
+  // never navigate the transcript.
   match mooncode_find_session(model.mooncode_sessions, selected) {
     Some(session) =>
       if mooncode_session_matches_selected_workspace(model, session) {

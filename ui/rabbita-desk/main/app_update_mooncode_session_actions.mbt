@@ -59,8 +59,24 @@ fn update_mooncode_session_actions(
       mooncode_send_composer(dispatch, { ..model, mooncode_prompt: prompt })
     RetryMoonCodeTurn(session_id, prompt) =>
       mooncode_retry_turn(dispatch, model, session_id, prompt)
-    CancelMoonCodeWork(session_id) =>
-      mooncode_cancel_work(dispatch, model, session_id)
+    CancelMoonCodeWork(session_id, target_command_id) =>
+      mooncode_cancel_work(dispatch, model, session_id, target_command_id)
+    DecideMoonCodeTool(
+      session_id,
+      action,
+      approval_id,
+      target_command_id,
+      tool_call_id,
+    ) =>
+      mooncode_decide_tool(
+        dispatch,
+        model,
+        session_id,
+        action,
+        approval_id,
+        target_command_id,
+        tool_call_id,
+      )
     _ => (@rabbita.none, model)
   }
 }
@@ -108,19 +124,86 @@ fn mooncode_cancel_work(
   dispatch : Dispatch[Msg],
   model : Model,
   session_id : String,
+  target_command_id : String,
 ) -> (@rabbita.Cmd, Model) {
+  let session_id = if session_id.trim().to_owned() == "" {
+    model.selected_mooncode_session_id
+  } else {
+    session_id
+  }
   match mooncode_find_session(model.mooncode_sessions, session_id) {
-    Some(session) if session.status == "running" ||
+    Some(session) if target_command_id != "" ||
+      mooncode_conversation_has_unfinished_turn(session) ||
+      session.status == "running" ||
       session.status == "queued" ||
       session.queued_count > 0 =>
       (
-        mooncode_session_command_cmd(dispatch, model, session, "cancel"),
+        mooncode_session_command_cmd(
+          dispatch,
+          model,
+          session,
+          "cancel",
+          target_command_id~,
+        ),
         { ..model, mooncode_composer_status: "Cancellation requested" },
       )
     Some(_) =>
       (
         @rabbita.none,
         { ..model, mooncode_composer_status: "MoonCode is not running" },
+      )
+    None =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_composer_status: "This MoonCode session is no longer available",
+        },
+      )
+  }
+}
+
+///|
+fn mooncode_decide_tool(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session_id : String,
+  action : String,
+  approval_id : String,
+  target_command_id : String,
+  tool_call_id : String,
+) -> (@rabbita.Cmd, Model) {
+  if action != "approve_tool" && action != "reject_tool" {
+    return (
+      @rabbita.none,
+      { ..model, mooncode_composer_status: "Unsupported approval decision" },
+    )
+  }
+  match mooncode_find_session(model.mooncode_sessions, session_id) {
+    Some(session) if approval_id != "" && target_command_id != "" =>
+      (
+        mooncode_session_command_cmd(
+          dispatch,
+          model,
+          session,
+          action,
+          approval_id~,
+          target_command_id~,
+          tool_call_id~,
+        ),
+        {
+          ..model,
+          mooncode_composer_status: if action == "approve_tool" {
+            "Approval sent to MoonClaw"
+          } else {
+            "Rejection sent to MoonClaw"
+          },
+        },
+      )
+    Some(_) =>
+      (
+        @rabbita.none,
+        { ..model, mooncode_composer_status: "Approval target is unavailable" },
       )
     None =>
       (

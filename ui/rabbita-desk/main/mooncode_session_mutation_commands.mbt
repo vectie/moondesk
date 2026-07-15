@@ -50,9 +50,12 @@ fn mooncode_session_command_cmd(
   model : Model,
   session : MoonCodeSession,
   action : String,
+  approval_id? : String = "",
   context_path? : String = "",
   message? : String = "",
   force_preflight? : Bool = false,
+  target_command_id? : String = "",
+  tool_call_id? : String = "",
 ) -> @rabbita.Cmd {
   let target_path = if context_path == "" {
     mooncode_context_path(model)
@@ -69,6 +72,9 @@ fn mooncode_session_command_cmd(
     "web_search": model.mooncode_web_search,
     "context_path": target_path,
     "force_preflight": force_preflight,
+    "approval_id": approval_id,
+    "target_command_id": target_command_id,
+    "tool_call_id": tool_call_id,
   }
   @http.post(@desk.mooncode_session_commands_url(session.id))
   .with_json(body)

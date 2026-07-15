@@ -10,7 +10,8 @@ fn update_mooncode_actions(
     | SetMoonCodePrompt(_)
     | SendMoonCodeMessage(_)
     | RetryMoonCodeTurn(_, _)
-    | CancelMoonCodeWork(_) =>
+    | CancelMoonCodeWork(_, _)
+    | DecideMoonCodeTool(_, _, _, _, _) =>
       update_mooncode_session_actions(dispatch, msg, model)
     CopyMoonCodeText(item_id, text) =>
       (

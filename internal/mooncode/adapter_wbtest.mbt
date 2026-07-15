@@ -76,6 +76,36 @@ test "turn adapter keeps stable ownership and omits retired replay contracts" {
 }
 
 ///|
+test "cancel adapter preserves the visible turn target" {
+  let session : Json = {
+    "id": "session-cancel",
+    "workspace_id": "book-one",
+    "workspace_name": "Book One",
+    "workspace_root": "/tmp/book-one",
+  }
+  let payload : Json = {
+    "client_turn_id": "client-cancel",
+    "target_command_id": "command-visible-running",
+  }
+  let packet = projected_command_packet(
+    session, payload, "cancel", "Cancel the visible request", "2026-07-15T00:00:00Z",
+    "",
+  )
+  let body = native_command_body(
+    session, payload, "Cancel the visible request", packet,
+  )
+  assert_eq(json_string(body, "command", default=""), "cancel")
+  assert_eq(
+    json_string(
+      json_object_field_or_empty(body, "payload"),
+      "target_command_id",
+      default="",
+    ),
+    "command-visible-running",
+  )
+}
+
+///|
 test "listing adapter preserves MoonClaw order and canonical identity" {
   let rows = runtime_session_listing_rows({
     "sessions": [

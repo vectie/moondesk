@@ -203,7 +203,13 @@ fn mooncode_canonical_work_evidence(work : Json) -> Array[MoonCodeEvidenceRow] {
     let diff = json_field_string(evidence, "diff", default="")
     let command = json_field_string(evidence, "command", default="")
     let output = json_field_string(evidence, "output", default="")
-    if kind == "" || (path == "" && diff == "" && command == "" && output == "") {
+    let approval_id = json_field_string(evidence, "approval_id", default="")
+    if kind == "" ||
+      (path == "" &&
+      diff == "" &&
+      command == "" &&
+      output == "" &&
+      approval_id == "") {
       continue
     }
     rows.push({
@@ -218,6 +224,18 @@ fn mooncode_canonical_work_evidence(work : Json) -> Array[MoonCodeEvidenceRow] {
       output,
       exit_code: json_field_int(evidence, "exit_code", default=-1),
       truncated: json_field_bool(evidence, "truncated", default=false),
+      approval_id,
+      target_command_id: json_field_string(
+        evidence,
+        "target_command_id",
+        default="",
+      ),
+      tool_call_id: json_field_string(
+        evidence,
+        "tool_call_id",
+        default="",
+      ),
+      arguments: json_field_string(evidence, "arguments", default=""),
     })
   }
   rows
