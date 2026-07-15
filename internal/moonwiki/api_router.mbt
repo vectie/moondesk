@@ -7,7 +7,7 @@ async fn handle_api_request(
   conn : @http.ServerConnection,
 ) -> Unit {
   let segments = path_segments(strip_query(request_path))
-  if route_desktop_api(segments, method_, conn) {
+  if route_desktop_api(workspace_root, segments, method_, conn) {
     return
   }
   if route_workspace_api(
