@@ -60,8 +60,9 @@ The surface has three stable regions:
   retry state; it must not look like a real zero-session catalog.
 - New Chat creates a draft surface. Typing into that draft cannot switch back
   to an existing session.
-- Future rename, archive, delete, and search actions belong in row menus or a
-  compact rail toolbar, not in the transcript.
+- Search belongs in the compact rail toolbar. Rename, archive, restore, and
+  guarded delete belong in row menus, never in the transcript. Archived
+  sessions remain in a separate disclosure below active MoonBook groups.
 
 ### Transcript
 

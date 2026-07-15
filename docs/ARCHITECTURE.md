@@ -89,9 +89,10 @@ The host exposes scoped local routes. Important families:
   queue, analytics, and daemon coordination.
 - `/api/books/*`: base-type/pattern registry, PDF Evidence Watch creation,
   standing-goal sync, template registry reads, and portable app-tool export.
-- `/api/mooncode/*`: six-route desktop projection for status, capabilities,
-  session listing/creation, selected-session reads/watches, and command submit.
-  MoonClaw remains the session, journal, and conversation owner.
+- `/api/mooncode/*`: seven-route-family desktop projection for status,
+  capabilities, active/archived session listing and creation, selected-session
+  reads/watches, command submit, and lifecycle mutation. MoonClaw remains the
+  session, journal, conversation, title, and archive owner.
 - `/api/moonclaw/*`: MoonClaw daemon/model status needed by the MoonCode UI.
 - `/api/daemon/*`: local MoonDesk daemon and LaunchAgent lifecycle controls.
 

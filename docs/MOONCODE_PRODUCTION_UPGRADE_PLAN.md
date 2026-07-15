@@ -193,6 +193,9 @@ Exit criteria:
 
 Goal: make projects and conversation history predictable.
 
+Status: core product path complete on 2026-07-15. Large-history
+virtualization and catalog performance gates remain release hardening work.
+
 Deliverables:
 
 - Group sessions under their MoonBook; place unbound sessions in General.
@@ -209,6 +212,8 @@ Exit criteria:
 - The user always knows the active MoonBook and selected session.
 - Rail refresh never changes selection, flashes groups, or moves unchanged
   sessions.
+- Rename, archive, restore, and permanent delete survive reload and preserve
+  MoonBook contents outside the session storage root.
 
 ## Milestone G: Release Evidence And Operations
 
@@ -277,7 +282,7 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   `/v1/code/sessions/<id>/turns` transaction and a per-session single-flight
   runtime service. Moondesk now creates, mutates, reads, lists, and watches
   sessions only through MoonClaw canonical records. Its active MoonCode backend
-  surface is six routes, and the stale local command, event, session, replay,
+  surface is seven route families, and the stale local command, event, session, replay,
   runtime-supervisor, and artifact persistence handlers were deleted.
 - 2026-07-15: Cold session listings now retain exact MoonBook identity from a
   durable MoonClaw snapshot and are normalized against Moondesk's actual
@@ -353,6 +358,21 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   sessions, restored three persisted turns, appended a fourth user row in 11
   ms without synthetic queue/work UI, rendered the canonical work and answer
   in place, and retained all four turns after a fresh reload.
+- 2026-07-15: Milestone F added MoonClaw-owned durable titles and
+  archive/restore/delete storage transitions, plus active and archived
+  metadata-only listings. Moondesk now provides MoonBook-grouped active rows,
+  a General group for unbound sessions, stable source ordering, search, inline
+  rename, guarded delete, and a separate archived disclosure without hydrating
+  rail conversations. Lifecycle changes are rejected while a session is
+  running, and permanent delete removes only the session directory.
+- 2026-07-15: A visible keyboard-and-mouse lifecycle journey started a real
+  session, observed the optimistic user row and first factual work within one
+  browser sample, waited for the canonical answer, filtered and renamed the
+  session, reloaded to prove title durability, archived it, restored it, and
+  permanently deleted it. Storage inspection proved the MoonBook remained
+  intact. The same pass fixed numeric timestamp normalization, compact-create
+  archive defaults, literal archived counts, inaccessible archived menus,
+  delete-confirmation hit targeting, and narrow-layout rail sizing.
 
 ## Current Completion And Remaining Order
 
@@ -377,7 +397,7 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   sequence and does not reconstruct conversation from storage artifacts.
 - The architecture closure is complete for Moondesk. `internal/mooncode` is a
   thin adapter rather than a second runtime, current docs describe only the
-  six active desktop routes, and the compact listing boundary is directly
+  seven active desktop route families, and the compact listing boundary is directly
   covered. Further work must not restore deleted compatibility surfaces.
 - Milestone E is partially complete. Safe Markdown and code rendering,
   answer/code/evidence copy, canonical file diffs, command/output/test evidence,
@@ -387,8 +407,11 @@ transition, after idle refresh, after hard reload, and after daemon restart.
   model/web-search preferences, and stronger agent planning so explicit file
   inspection and project scaffolding are executed correctly instead of merely
   producing an honest failure.
-- Milestone F has its grouping and selection foundation. Rename, archive,
-  delete, search, history virtualization, and large-catalog performance remain.
+- Milestone F is complete for ordinary catalogs: grouping, General fallback,
+  stable selection, metadata-only active/archived listings, search, durable
+  rename, archive, restore, and permanent delete are implemented and covered.
+  History virtualization, explicit recent-history pruning, and measured
+  large-catalog performance remain release hardening work.
 - Milestone G is partially complete through local native, production-build, and
   visible browser gates. A single release command, latency/correctness metrics,
   accessibility/responsive journeys, deterministic fault fixtures, and the

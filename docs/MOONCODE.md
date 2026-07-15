@@ -116,7 +116,7 @@ MoonClaw journal cutover.
 
 ## Desktop API
 
-The active desktop surface contains six route contracts:
+The active desktop surface contains seven route families:
 
 ```text
 GET|HEAD  /api/mooncode/status
@@ -126,6 +126,7 @@ POST      /api/mooncode/sessions
 GET|HEAD  /api/mooncode/sessions/<session-id>
 GET|HEAD  /api/mooncode/sessions/<session-id>/watch
 POST      /api/mooncode/sessions/<session-id>/commands
+POST      /api/mooncode/sessions/<session-id>/lifecycle
 ```
 
 The watch query carries `since_revision` and `since_sequence`. The endpoint
@@ -143,6 +144,19 @@ fields include identity, MoonBook identity, cwd, title, model, status,
 `queued_count`, runtime session identity, and a compact `mooncode_summary`.
 Malformed rows are filtered at the adapter boundary. A transport or decode
 failure is not converted to a successful empty catalog.
+
+Active and archived catalogs are separate metadata-only reads:
+
+```text
+GET /api/mooncode/sessions?format=listing&scope=active
+GET /api/mooncode/sessions?format=listing&scope=archived
+```
+
+Lifecycle mutations use one typed command boundary. Supported actions are
+`rename`, `archive`, `restore`, and `delete`. MoonClaw owns every storage
+transition, persists custom titles in the session snapshot, rejects destructive
+changes while work is running, and never deletes MoonBook content when a
+session is deleted.
 
 ## Native MoonClaw API
 
@@ -199,6 +213,12 @@ Selecting a rail row hydrates that session without changing rail order. A
 metadata refresh cannot clear an active draft, replace a selected transcript
 with a compact row, or manufacture a new selection. A fresh browser load must
 decode the listing before showing a zero-session empty state.
+
+Search filters the already-loaded metadata catalog without fetching or
+reordering conversations. Rename is inline. Archive removes an active row and
+clears selection when necessary; restore returns it to its durable source
+order. Permanent delete requires explicit confirmation. Archived sessions live
+in a separate disclosure and are never mixed into the active groups.
 
 ## Durability
 
@@ -265,7 +285,6 @@ rewrite:
 
 - richer permission, context-loss, and offline recovery
 - durable per-session model and web-search preferences
-- session rename, archive, delete, and search
 - large-history virtualization and performance metrics
 - automated latency, duplicate-row, rollback, reconnect, accessibility, and
   responsive release gates
