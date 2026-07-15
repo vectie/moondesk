@@ -22,7 +22,8 @@ with this contract:
 {
   "contract": "moonsuite.pack-app-runtime.v1",
   "pack_id": "example-pack",
-  "app_url": "http://127.0.0.1:4300/apps/example-pack/studio"
+  "app_url": "http://127.0.0.1:4300/apps/example-pack/studio",
+  "service_url": "http://127.0.0.1:4300"
 }
 ```
 
@@ -31,6 +32,12 @@ and runtime configuration. It publishes only entries whose pack ids match,
 whose manifest declares at least one `app_entrypoints` item, and whose URL uses
 HTTP or HTTPS. The generic MoonDesk launcher renders the returned catalog; it
 does not know any pack id, domain route, provider, credential, or business rule.
+
+The launcher opens the same-origin `/pack-apps/<pack-id>/` route. MoonDesk
+proxies only to an explicitly configured loopback `service_url`; this prevents
+the desktop browser from navigating to a different origin and avoids exposing a
+general-purpose server-side request proxy. Pack UIs use relative API/media URLs
+so their subresources remain under the mounted route.
 
 The runtime file is deliberately not part of pack installation. Ports and URLs
 are environment/deployment concerns and can change without reinstalling a pack.

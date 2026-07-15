@@ -15,6 +15,23 @@ fn is_safe_pack_app_url(url : String) -> Bool {
 }
 
 ///|
+fn is_safe_local_pack_service_url(url : String) -> Bool {
+  let value = url.trim().to_owned().to_lower()
+  let prefix = if value.has_prefix("http://127.0.0.1:") {
+    "http://127.0.0.1:"
+  } else if value.has_prefix("http://localhost:") {
+    "http://localhost:"
+  } else if value.has_prefix("http://[::1]:") {
+    "http://[::1]:"
+  } else {
+    return false
+  }
+  let port_text = value[prefix.length():].to_owned()
+  let port = @string.parse_int(port_text) catch { _ => return false }
+  port > 0 && port < 65536
+}
+
+///|
 fn pack_app_runtime_record(
   active : Json,
   manifest : Json,
@@ -24,8 +41,12 @@ fn pack_app_runtime_record(
   let manifest_id = json_string(manifest, "id", default="").trim().to_owned()
   let runtime_id = json_string(runtime, "pack_id", default="").trim().to_owned()
   let app_url = json_string(runtime, "app_url", default="").trim().to_owned()
+  let service_url = json_string(
+    runtime, "service_url", default="",
+  ).trim().to_owned()
   if pack_id == "" || manifest_id != pack_id || runtime_id != pack_id ||
-    !is_safe_pack_app_url(app_url) {
+    !is_safe_pack_app_url(app_url) ||
+    !is_safe_local_pack_service_url(service_url) {
     return None
   }
   let entrypoints = json_array_items(manifest, "app_entrypoints")
@@ -45,10 +66,118 @@ fn pack_app_runtime_record(
       "entrypoint_path": json_string(first, "path", default="/"),
       "audience": json_string(first, "audience", default="operator"),
       "app_url": app_url,
+      "service_url": service_url,
+      "launch_url": "/pack-apps/" + pack_id + "/",
       "runtime_contract": json_string(runtime, "contract", default=""),
       "status": "configured",
     },
   )
+}
+
+///|
+async fn configured_pack_app(
+  workspace_root : String,
+  pack_id : String,
+) -> Json? {
+  if pack_id == "" || pack_id == "." || pack_id == ".." ||
+    pack_id.contains("/") {
+    return None
+  }
+  let active_path = @pathx.join(active_packs_root(workspace_root), pack_id + ".json")
+  let runtime_path = @pathx.join(pack_apps_state_root(workspace_root), pack_id + ".json")
+  if !@fs.exists(active_path) || !@fs.exists(runtime_path) {
+    return None
+  }
+  let active = read_json_file_or_object(active_path)
+  let installed_root = json_string(
+    active, "installed_root", default="",
+  ).trim().to_owned()
+  if installed_root == "" {
+    return None
+  }
+  let manifest_path = @pathx.join(installed_root, "pack.json")
+  if !@fs.exists(manifest_path) {
+    return None
+  }
+  pack_app_runtime_record(
+    active,
+    read_json_file_or_object(manifest_path),
+    read_json_file_or_object(runtime_path),
+  )
+}
+
+///|
+async fn handle_pack_app_proxy(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  request_path : String,
+  body : &@io.Reader,
+  conn : @http.ServerConnection,
+) -> Unit {
+  guard method_ is Get || method_ is Head || method_ is Post else {
+    send_status(conn, 405, "Method Not Allowed", "Method Not Allowed\n")
+    return
+  }
+  let segments = path_segments(strip_query(request_path))
+  guard segments is ["pack-apps", pack_id, .. rest] else {
+    send_status(conn, 404, "Not Found", "Pack application not found\n")
+    return
+  }
+  guard configured_pack_app(workspace_root, pack_id) is Some(app) else {
+    send_status(conn, 404, "Not Found", "Pack application not configured\n")
+    return
+  }
+  let service_url = json_string(app, "service_url", default="")
+  let target_path = if rest.length() == 0 {
+    json_string(app, "entrypoint_path", default="/")
+  } else {
+    "/" + rest.join("/")
+  }
+  let target = service_url + target_path
+  let upstream = if method_ is Post {
+    let payload = body.read_all().text()
+    let json_payload = @json.parse(payload) catch {
+      _ => {
+        send_status(conn, 400, "Bad Request", "Pack application POST requires JSON\n")
+        return
+      }
+    }
+    @http.post(target, json_payload, headers={
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    }) catch {
+      _ => {
+        send_status(conn, 502, "Bad Gateway", "Pack application unavailable\n")
+        return
+      }
+    }
+  } else {
+    @http.get(target) catch {
+      _ => {
+        send_status(conn, 502, "Bad Gateway", "Pack application unavailable\n")
+        return
+      }
+    }
+  }
+  let (response, data) = upstream
+  let response_type = if rest.length() == 0 {
+    "text/html; charset=utf-8"
+  } else if rest[0] == "api" || rest[0].has_prefix("health") {
+    "application/json; charset=utf-8"
+  } else {
+    content_type(target_path)
+  }
+  conn.send_response(response.code, "Upstream", extra_headers={
+    "content-type": response_type,
+    "cache-control": "no-store",
+    "x-content-type-options": "nosniff",
+  })
+  if method_ is Head {
+    conn.end_response()
+    return
+  }
+  conn.write(data.binary())
+  conn.end_response()
 }
 
 ///|

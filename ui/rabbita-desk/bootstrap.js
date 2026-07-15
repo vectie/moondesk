@@ -86,8 +86,8 @@ function renderPackAppLauncher(catalog) {
   const list = document.createElement('div')
   list.className = 'pack-app-launcher-list'
   for (const app of apps) {
-    const url = packAppText(app?.app_url)
-    if (!/^https?:\/\//i.test(url)) continue
+    const url = packAppText(app?.launch_url)
+    if (!/^\/pack-apps\/[a-zA-Z0-9._-]+\/$/.test(url)) continue
     const link = document.createElement('a')
     link.className = 'pack-app-launcher-link'
     link.dataset.testid = 'open-pack-app'
