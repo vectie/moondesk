@@ -546,18 +546,24 @@ runtime proposes an approval-gated shell/package tool
 -> MoonDesk renders Approve and Reject inside the owning turn
 -> operator clicks a decision
 -> hidden approve_tool/reject_tool control is persisted
--> the same MoonClaw task resumes or skips the tool
+-> the live MoonClaw task or a fresh daemon resumes or skips the tool from the
+   command-owned continuation checkpoint
 -> canonical work and assistant output settle without reordering
 ```
 
 Assertions:
 
 - read-only previews do not create review gates.
-- edit/write/shell/package previews require approval.
+- explicitly approval-gated edits/writes and policy-sensitive shell/package
+  operations require approval; read-only previews do not.
 - repeated tool calls are isolated by tool call id.
 - rejected tools remain visible as durable evidence.
 - approval records include enough context for a human review surface.
 - approval controls never create user or assistant chat rows.
+- restart between request and decision preserves the approval id, selected
+  plan, completed tool results, planner position, and tool position.
+- restart recovery does not replan or execute a completed pre-approval tool a
+  second time.
 - hard reload preserves the pending or settled decision at the same position.
 
 ### Live Cancellation

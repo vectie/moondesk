@@ -68,8 +68,10 @@ contract and owns the complete control lifecycle:
 ```text
 tool proposed
 -> durable approval request in the owning turn
+-> hidden MoonClaw continuation checkpoint stores plan and completed results
 -> operator approves or rejects
--> the same runtime task resumes with the original plan and tool call
+-> the live task or a fresh MoonClaw daemon resumes the original plan and tool
+   call
 
 Stop
 -> hidden cancel command naming the canonical target command
@@ -81,6 +83,8 @@ MoonDesk renders pending approval between the user message and final assistant
 reply. It submits the decision using the stable approval, command, and tool-call
 identifiers already present in canonical evidence. It does not execute tools,
 infer decisions, create a separate approval conversation, or reorder turns.
+Daemon restart recovery requires no desktop replay state: MoonDesk retains the
+last canonical list and submits the same visible decision after MoonClaw returns.
 
 ## Source Layout
 

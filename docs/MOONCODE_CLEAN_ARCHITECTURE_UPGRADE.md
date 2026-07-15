@@ -2565,7 +2565,9 @@ Runtime behavior:
 
 1. A risky tool call emits one approval step keyed by stable approval id.
 2. MoonClaw waits in the same runtime task so model plan and tool context are
-   not reconstructed by the desktop.
+   not reconstructed by the desktop. Before waiting, it persists a hidden
+   command-owned continuation checkpoint so a fresh daemon can resume the same
+   plan, prior results, planner step, and tool index.
 3. `approve_tool` executes the original call; `reject_tool` records a skipped
    result and lets the model finish without claiming execution.
 4. Stop cancels and awaits the active task, terminates its child process, and
@@ -2583,7 +2585,8 @@ Exit evidence:
   actions, canonical Stop eligibility despite stale listing metadata, and
   selected-session retention when a post-cancel listing is late.
 - Browser acceptance covers real keyboard submit, mouse decisions, Stop,
-  append order, hard reload, and a later turn in the same session.
+  append order, hard reload, a later turn in the same session, and approval
+  completion after a full MoonClaw process restart.
 
 ## Non-Goals
 
