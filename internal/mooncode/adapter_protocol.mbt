@@ -72,6 +72,11 @@ pub fn desktop_session_commands_endpoint() -> String {
 }
 
 ///|
+pub fn desktop_session_lifecycle_endpoint() -> String {
+  "/api/mooncode/sessions/<session-id>/lifecycle"
+}
+
+///|
 fn desktop_route_contract(path : String, methods : Array[String]) -> Json {
   { "path": path, "methods": string_array_json(methods) }
 }
@@ -85,6 +90,7 @@ pub fn desktop_projection_route_contracts() -> Array[Json] {
     desktop_route_contract(desktop_session_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_watch_endpoint(), ["GET", "HEAD"]),
     desktop_route_contract(desktop_session_commands_endpoint(), ["POST"]),
+    desktop_route_contract(desktop_session_lifecycle_endpoint(), ["POST"]),
   ]
 }
 
@@ -96,6 +102,20 @@ pub fn moonclaw_native_turn_endpoint(session_id : String) -> String {
 ///|
 pub fn moonclaw_native_session_listing_endpoint(book_root : String) -> String {
   @mooncode_core.native_session_listing_endpoint(book_root)
+}
+
+///|
+pub fn moonclaw_native_archived_session_listing_endpoint(
+  book_root : String,
+) -> String {
+  @mooncode_core.native_archived_session_listing_endpoint(book_root)
+}
+
+///|
+pub fn moonclaw_native_session_lifecycle_endpoint(
+  session_id : String,
+) -> String {
+  @mooncode_core.native_session_lifecycle_endpoint(session_id)
 }
 
 ///|

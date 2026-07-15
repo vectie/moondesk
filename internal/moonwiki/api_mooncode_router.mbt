@@ -59,6 +59,17 @@ async fn route_mooncode_api(
       }
       true
     }
+    ["api", "mooncode", "sessions", session_id, "lifecycle"] => {
+      let endpoint = @mooncode.desktop_session_lifecycle_endpoint()
+      if mooncode_route_accepts_post(endpoint, method_) {
+        handle_mooncode_session_lifecycle(
+          workspace_root, session_id, body, method_, conn,
+        )
+      } else {
+        send_mooncode_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "mooncode", "sessions", session_id, "watch"] => {
       let endpoint = @mooncode.desktop_session_watch_endpoint()
       if mooncode_route_accepts_read(endpoint, method_) {

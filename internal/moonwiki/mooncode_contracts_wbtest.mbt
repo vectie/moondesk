@@ -8,8 +8,9 @@ test "mooncode HTTP capability reports MoonClaw ownership" {
     "moonclaw",
   )
   let routes = json_array_items(capability, "desktop_route_contracts")
-  assert_eq(routes.length(), 6)
+  assert_eq(routes.length(), 7)
   let payload = Json::array(routes).stringify()
+  assert_true(payload.contains("/lifecycle"))
   assert_false(payload.contains("runtime-service"))
   assert_false(payload.contains("runtime-replay"))
   assert_false(payload.contains("session-store"))

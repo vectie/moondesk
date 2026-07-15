@@ -24,6 +24,14 @@ pub fn mooncode_session_listing_url(workspace_id : String) -> String {
 }
 
 ///|
+pub fn mooncode_archived_session_listing_url() -> String {
+  desktop_api_url(["api", "mooncode", "sessions"], query=[
+    ("format", "listing"),
+    ("scope", "archived"),
+  ])
+}
+
+///|
 pub fn mooncode_session_url(session_id : String) -> String {
   desktop_api_url(["api", "mooncode", "sessions", session_id])
 }
@@ -62,6 +70,11 @@ pub fn mooncode_session_watch_url(
 ///|
 pub fn mooncode_session_commands_url(session_id : String) -> String {
   mooncode_session_url(session_id) + "/commands"
+}
+
+///|
+pub fn mooncode_session_lifecycle_url(session_id : String) -> String {
+  mooncode_session_url(session_id) + "/lifecycle"
 }
 
 ///|

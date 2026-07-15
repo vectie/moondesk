@@ -64,6 +64,7 @@ pub fn native_runtime_session_projection(
     "source": "moonclaw-canonical-session",
     "component": "mooncode",
     "protocol": protocol_version(),
+    "archived": false,
   }
 }
 
@@ -71,7 +72,11 @@ pub fn native_runtime_session_projection(
 pub fn session_response_defaults(session : Json) -> Json {
   json_without_field(
     @mooncore.session_response_defaults(
-      session,
+      json_with_field(
+        session,
+        "archived",
+        json_bool(session, "archived", default=false).to_json(),
+      ),
       default_title="MoonCode Session",
     ),
     "transcript",
@@ -121,12 +126,20 @@ fn normalized_listing_row(row : Json) -> Json? {
       json_string(row, "status", default="durable").to_json(),
     )
     |> json_with_field(
+      "updated_at",
+      listing_scalar_text(row, "updated_at").to_json(),
+    )
+    |> json_with_field(
       "queued_count",
       json_int(row, "queued_count", default=0).to_json(),
     )
     |> json_with_field(
       "mooncode_runtime_session_id",
       json_string(row, "mooncode_runtime_session_id", default=session_id).to_json(),
+    )
+    |> json_with_field(
+      "archived",
+      json_bool(row, "archived", default=false).to_json(),
     )
     |> json_with_field("mooncode_summary", {
       "event_count": json_int(
@@ -138,6 +151,15 @@ fn normalized_listing_row(row : Json) -> Json? {
       "pending_diff_count": json_int(summary, "pending_diff_count", default=0),
     }),
   )
+}
+
+///|
+fn listing_scalar_text(row : Json, key : String) -> String {
+  match @mooncore.json_object_field(row, key) {
+    Some(String(value)) => value
+    Some(value) => value.stringify()
+    None => ""
+  }
 }
 
 ///|

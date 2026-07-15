@@ -7,8 +7,24 @@ async fn handle_mooncode_sessions(
 ) -> Unit {
   let workspace_filter = query_value(request_path, "workspace").unwrap_or("")
   let list_format = query_value(request_path, "format").unwrap_or("full")
+  let scope = query_value(request_path, "scope").unwrap_or("active")
+  if scope != "active" && scope != "archived" {
+    send_api_error(
+      conn, method_, 400, "Bad Request", "Unsupported MoonCode session scope",
+    )
+    return
+  }
+  if scope == "archived" && list_format != "listing" {
+    send_api_error(
+      conn, method_, 400, "Bad Request", "Archived MoonCode sessions are available as metadata listings only",
+    )
+    return
+  }
   let listing_rows = match
-    moonclaw_runtime_session_listing_result(workspace_root) {
+    moonclaw_runtime_session_listing_result(
+      workspace_root,
+      archived=scope == "archived",
+    ) {
     Ok(rows) => rows
     Err(error) => {
       send_api_error(conn, method_, 503, "Service Unavailable", error)
@@ -148,9 +164,17 @@ fn moonclaw_runtime_listing_row_from_record(
   let latest = turns.last().unwrap_or(Json::object({}))
   let user = json_object_field_or_empty(latest, "user")
   let first_prompt = json_string(snapshot, "first_user_prompt", default="")
+  let custom_title = json_string(record, "custom_title", default="")
   {
     "id": session_id,
-    "title": trimmed_text(first_prompt, fallback=session_id),
+    "title": trimmed_text(
+      if custom_title == "" {
+        first_prompt
+      } else {
+        custom_title
+      },
+      fallback=session_id,
+    ),
     "updated_at": json_string(
       latest,
       "updated_at",
@@ -289,6 +313,7 @@ async fn moonclaw_runtime_session_listing_rows(
 ///|
 async fn moonclaw_runtime_session_listing_result(
   workspace_root : String,
+  archived? : Bool = false,
 ) -> Result[Array[Json], String] {
   let daemon = ensure_moonclaw_daemon_running(
     workspace_root,
@@ -303,9 +328,11 @@ async fn moonclaw_runtime_session_listing_result(
       ),
     )
   }
-  let endpoint = @mooncode.moonclaw_native_session_listing_endpoint(
-    workspace_root,
-  )
+  let endpoint = if archived {
+    @mooncode.moonclaw_native_archived_session_listing_endpoint(workspace_root)
+  } else {
+    @mooncode.moonclaw_native_session_listing_endpoint(workspace_root)
+  }
   let native_rows = match moonclaw_get_json(daemon, endpoint) {
     Ok(payload) => @mooncode.runtime_session_listing_rows(payload)
     Err(error) => return Err(error)

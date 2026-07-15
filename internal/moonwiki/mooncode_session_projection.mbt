@@ -42,6 +42,7 @@ fn compact_mooncode_session_command_response(
     "model": json_string(projected, "model", default=""),
     "status": json_string(projected, "status", default="done"),
     "queued_count": json_int(projected, "queued_count", default=0),
+    "archived": json_bool(projected, "archived", default=false),
     "created_at": json_string(projected, "created_at", default=""),
     "updated_at": json_string(projected, "updated_at", default=""),
     "last_message": json_string(projected, "last_message", default=""),

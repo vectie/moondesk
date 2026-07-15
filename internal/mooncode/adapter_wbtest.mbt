@@ -1,9 +1,10 @@
 ///|
 test "adapter exposes only the canonical desktop route surface" {
   let routes = desktop_projection_route_contracts()
-  assert_eq(routes.length(), 6)
+  assert_eq(routes.length(), 7)
   let payload = Json::array(routes).stringify()
   assert_true(payload.contains(desktop_session_watch_endpoint()))
+  assert_true(payload.contains(desktop_session_lifecycle_endpoint()))
   assert_false(payload.contains("runtime-service"))
   assert_false(payload.contains("runtime-replay"))
   assert_false(payload.contains("session-store"))
@@ -113,9 +114,15 @@ test "listing adapter preserves MoonClaw order and canonical identity" {
         "id": "newer",
         "book_root": "/tmp/newer",
         "source": "moonclaw",
+        "updated_at": 1784093903397,
         "event_count": 9,
+        "archived": true,
       },
-      { "id": "older", "workspace_root": "/tmp/older" },
+      {
+        "id": "older",
+        "workspace_root": "/tmp/older",
+        "updated_at": "2026-07-15T10:00:00Z",
+      },
       { "title": "invalid" },
     ],
   })
@@ -127,11 +134,17 @@ test "listing adapter preserves MoonClaw order and canonical identity" {
     "newer",
   )
   assert_eq(json_string(rows[0], "title", default=""), "newer")
+  assert_eq(json_string(rows[0], "updated_at", default=""), "1784093903397")
+  assert_eq(
+    json_string(rows[1], "updated_at", default=""),
+    "2026-07-15T10:00:00Z",
+  )
   assert_eq(json_int(rows[0], "queued_count", default=-1), 0)
   let summary = json_object_field_or_empty(rows[0], "mooncode_summary")
   assert_eq(json_int(summary, "event_count", default=-1), 9)
   assert_eq(json_int(summary, "verified_test_count", default=-1), 0)
   assert_eq(json_int(summary, "pending_diff_count", default=-1), 0)
+  assert_true(json_bool(rows[0], "archived", default=false))
 }
 
 ///|
@@ -143,4 +156,5 @@ test "session defaults never expose a second transcript" {
   })
   assert_true(@mooncore.json_object_field(session, "transcript") is None)
   assert_eq(json_string(session, "cwd", default=""), "/tmp/book-one")
+  assert_false(json_bool(session, "archived", default=true))
 }

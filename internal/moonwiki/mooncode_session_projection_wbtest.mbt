@@ -30,6 +30,7 @@ test "canonical session response selects its owning turn" {
   )
   assert_eq(json_string(response, "turn_id", default=""), "turn-2")
   assert_eq(json_int(response, "canonical_revision", default=0), 4)
+  assert_false(json_bool(response, "archived", default=true))
   assert_eq(
     json_string(
       json_object_field_or_empty(response, "mooncode_turn"),
