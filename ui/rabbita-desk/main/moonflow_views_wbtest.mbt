@@ -9,6 +9,11 @@ fn flow_test_item(status : String) -> MoonFlowItemProjection {
     depends_on: [],
     status,
     attempt_count: 1,
+    request_id: "request-1",
+    result_id: "result-1",
+    active_attempt_id: "attempt-1",
+    idempotency_key: "retry-1",
+    external_job_id: "job-1",
     attempt_status: "completed",
     operation: "research",
     input_digest: "input-digest",
@@ -22,6 +27,16 @@ fn flow_test_item(status : String) -> MoonFlowItemProjection {
     artifacts: ["evidence/research.json"],
     approvals: ["reviewer-1"],
   }
+}
+
+///|
+test "Flow exposes durable execution identities" {
+  let item = flow_test_item("review")
+  assert_eq(item.request_id, "request-1")
+  assert_eq(item.result_id, "result-1")
+  assert_eq(item.active_attempt_id, "attempt-1")
+  assert_eq(item.idempotency_key, "retry-1")
+  assert_eq(item.external_job_id, "job-1")
 }
 
 ///|

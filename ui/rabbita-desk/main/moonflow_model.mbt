@@ -8,6 +8,11 @@ struct MoonFlowItemProjection {
   depends_on : Array[String]
   status : String
   attempt_count : Int
+  request_id : String
+  result_id : String
+  active_attempt_id : String
+  idempotency_key : String
+  external_job_id : String
   attempt_status : String
   operation : String
   input_digest : String

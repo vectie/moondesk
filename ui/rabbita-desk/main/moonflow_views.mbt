@@ -789,6 +789,36 @@ fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
         (if item.compensable { " · reversible" } else { "" }),
       ),
       small(
+        if item.request_id == "" {
+          "request not submitted"
+        } else {
+          "request " + moonflow_short_identity(item.request_id)
+        },
+      ),
+      small(
+        if item.result_id == "" {
+          "result pending"
+        } else {
+          "result " + moonflow_short_identity(item.result_id)
+        },
+      ),
+      small(
+        if item.external_job_id != "" {
+          "external job " + moonflow_short_identity(item.external_job_id)
+        } else if item.active_attempt_id != "" {
+          "active attempt " + moonflow_short_identity(item.active_attempt_id)
+        } else {
+          "attempt identity not recorded"
+        },
+      ),
+      small(
+        if item.idempotency_key == "" {
+          "retry identity not recorded"
+        } else {
+          "retry " + moonflow_short_identity(item.idempotency_key)
+        },
+      ),
+      small(
         if item.acceptance_review_id == "" {
           "review not recorded"
         } else {
