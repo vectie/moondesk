@@ -229,6 +229,10 @@ async fn moonflow_enriched_projection(
       "recorded_at": "",
     },
   )
+  fields["operator_surface"] = moonflow_operator_surface_projection(
+    run_root,
+    json_string(projection, "run_id", default=""),
+  )
   Json::object(fields)
 }
 

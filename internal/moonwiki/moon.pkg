@@ -87,6 +87,7 @@ options(
     "moonclaw_progress_handlers.mbt": [ "native" ],
     "moonclaw_service_config.mbt": [ "native" ],
     "moonclaw_service_config_wbtest.mbt": [ "native" ],
+    "moonflow_operator_actions.mbt": [ "native" ],
     "moontown_paths.mbt": [ "native" ],
     "json_helpers.mbt": [ "native" ],
     "pdf_watch_builder.mbt": [ "native" ],
