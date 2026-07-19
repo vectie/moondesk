@@ -68,6 +68,22 @@ fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_moonflow_operator_actions_cmd(
+  dispatch : Dispatch[Msg],
+  run_id : String,
+) -> @rabbita.Cmd {
+  @http.get("/api/moonflow/runs/" + run_id + "/actions")
+  .expect_json(result => {
+    dispatch(
+      LoadedMoonFlowOperatorActions(
+        run_id,
+        http_result(result, "Invalid MoonFlow operator action catalog"),
+      ),
+    )
+  })
+}
+
+///|
 struct MoonFlowBrowserResponse {
   ok : Bool
   body : String

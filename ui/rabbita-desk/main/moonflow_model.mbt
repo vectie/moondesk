@@ -85,6 +85,32 @@ struct MoonFlowImportResult {
 } derive(FromJson)
 
 ///|
+struct MoonFlowOperatorAction {
+  action_id : String
+  label : String
+  summary : String
+  status : String
+  enabled : Bool
+} derive(FromJson)
+
+///|
+struct MoonFlowOperatorActions {
+  run_id : String
+  status : String
+  actions : Array[MoonFlowOperatorAction]
+} derive(FromJson)
+
+///|
+struct MoonFlowOperatorActionReceipt {
+  run_id : String
+  action_id : String
+  operation : String
+  status : String
+  record_persisted : Bool
+  source_digest : String
+} derive(FromJson)
+
+///|
 struct MoonFlowRunProjection {
   protocol : String
   run_id : String
@@ -98,4 +124,5 @@ struct MoonFlowRunProjection {
   autonomy_binding : MoonFlowAutonomyBinding
   intervention_scorecard : MoonFlowInterventionScorecard
   run_control : MoonFlowRunControl
+  operator_surface : MoonFlowOperatorSurface?
 } derive(FromJson)

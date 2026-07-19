@@ -111,6 +111,10 @@ struct Model {
   runs : Array[@desk.DeskRunProjection]
   moonflow_runs : Array[MoonFlowRunProjection]
   moonflow_status : String
+  moonflow_operator_actions : Array[MoonFlowOperatorActions]
+  moonflow_operator_action_receipt : MoonFlowOperatorActionReceipt?
+  moonflow_operator_action_status : String
+  moonflow_operator_action_pending : String
   inbox_title : String
   inbox_content : String
   import_url : String
@@ -157,8 +161,16 @@ enum Msg {
   LoadedPreview(Result[@desk.DeskPreview, String])
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
   LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
+  LoadedMoonFlowOperatorActions(
+    String,
+    Result[MoonFlowOperatorActions, String],
+  )
   ImportedMoonFlow(Result[MoonFlowImportResult, String])
   ControlledMoonFlow(Result[MoonFlowRunControl, String])
+  ExecutedMoonFlowOperatorAction(
+    String,
+    Result[MoonFlowOperatorActionReceipt, String],
+  )
   LoadedTownMessages(Result[Array[TownMessage], String])
   LoadedRequests(Result[Array[RequestRecord], String])
   LoadedStandingGoals(Result[Array[StandingGoalRecord], String])
@@ -211,6 +223,7 @@ enum Msg {
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)
   ControlMoonFlow(String, String, String)
+  ExecuteMoonFlowOperatorAction(String, String)
   PrepareMoonFlow
   SelectActivity(Activity)
   SelectMoonCodeSession(String)

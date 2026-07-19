@@ -462,6 +462,27 @@ fn control_moonflow_cmd(
 }
 
 ///|
+fn execute_moonflow_operator_action_cmd(
+  dispatch : Dispatch[Msg],
+  run_id : String,
+  action_id : String,
+) -> @rabbita.Cmd {
+  let body : Json = {}
+  @http.post(
+    "/api/moonflow/runs/" + run_id + "/actions/" + action_id,
+  )
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      ExecutedMoonFlowOperatorAction(
+        run_id,
+        http_result(result, "MoonFlow operator action was not committed"),
+      ),
+    )
+  })
+}
+
+///|
 fn submit_request_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   @http.post(@desk.town_endpoint_url("requests"))
   .with_json(request_submission_body(model))

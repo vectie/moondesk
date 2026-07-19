@@ -143,7 +143,7 @@ fn render_moonflow_workspace(
       section(class="flow-empty", [
         strong("No executable work yet"),
         p(
-          "Prepare the selected MoonBook's executable document and import its Work graph into MoonFlow.",
+          "Start with the selected MoonBook's executable document. MoonFlow creates the run, then publishes authority-bound handoffs for every governed decision.",
         ),
         button(
           class="primary-button",
@@ -152,7 +152,7 @@ fn render_moonflow_workspace(
           ),
           disabled=model.selected_workspace_id == "",
           on_click=dispatch(PrepareMoonFlow),
-          "Prepare selected MoonBook",
+          "Start governed run",
         ),
         small(model.moonflow_status),
         if model.moonflow_status.contains("no executable Work graph") {
@@ -193,7 +193,7 @@ fn render_moonflow_workspace(
           div([
             strong("Executable work exists"),
             p(
-              "Prepare the selected MoonBook again after its declarations change. Existing runs remain immutable.",
+              "Ingest a new revision after the selected MoonBook changes. Existing runs and their evidence remain immutable.",
             ),
           ]),
           button(
@@ -204,7 +204,7 @@ fn render_moonflow_workspace(
             disabled=model.selected_workspace_id == "" ||
               model.moonflow_status.contains("Preparing executable work"),
             on_click=dispatch(PrepareMoonFlow),
-            "Prepare latest MoonBook revision",
+            "Ingest latest revision",
           ),
           small("\{selected_runs.length()} revision(s) for this MoonBook"),
         ]),
@@ -260,9 +260,15 @@ fn render_moonflow_run(
     } else {
       p(class="flow-outcome", run.outcome)
     },
-    render_moonflow_next_actions(run),
-    render_moonflow_blockers(run),
-    render_moonflow_readiness(run),
+    render_moonflow_operator_surface(dispatch, model, run),
+    details(class="flow-disclosure flow-work-declaration-disclosure", [
+      summary("Executable document work · \{run.items.length()} item(s)"),
+      div(class="flow-disclosure-body", [
+        render_moonflow_next_actions(run),
+        render_moonflow_blockers(run),
+        render_moonflow_readiness(run),
+      ]),
+    ]),
     render_moonflow_handoffs(dispatch, model, run.run_id, run.book_id),
     details(class="flow-disclosure flow-operator-disclosure", [
       summary("Operator controls"),
