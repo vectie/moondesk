@@ -105,6 +105,10 @@ async fn handle_desk_request(
   let path = strip_query(request.path)
   if path == moondesk_health_path() {
     handle_health_request(ui_root, workspace_root, request.meth, conn)
+  } else if path.has_prefix("/pack-apps/") {
+    handle_pack_app_proxy(
+      workspace_root, request.meth, request.path, body, conn,
+    )
   } else if path == "/api" || path.has_prefix("/api/") {
     handle_api_request(workspace_root, request.meth, request.path, body, conn)
   } else {

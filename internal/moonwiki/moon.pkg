@@ -100,6 +100,8 @@ options(
     "pdf_watch_seed_documents.mbt": [ "native" ],
     "pdf_watch_verification.mbt": [ "native" ],
     "pdf_watch_verification_rules.mbt": [ "native" ],
+    "pack_app_runtime.mbt": [ "native" ],
+    "pack_app_runtime_wbtest.mbt": [ "native" ],
     "process_helpers.mbt": [ "native" ],
     "runtime_support.mbt": [ "native" ],
     "review_diff_handlers.mbt": [ "native" ],

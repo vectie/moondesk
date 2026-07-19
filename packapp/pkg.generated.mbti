@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/packapp"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "vectie/moonlib/pack/host",
+}
+
+// Values
+pub fn bindings(@host.HostActivationProjection) -> Array[AppBinding] raise
+
+pub fn empty_registry() -> AppRegistry
+
+pub fn reconcile(AppRegistry, @host.HostActivationProjection) -> AppRegistry raise
+
+pub fn remove_pack(AppRegistry, String) -> AppRegistry
+
+pub fn resolve(Array[AppBinding], String) -> AppBinding?
+
+// Errors
+
+// Types and methods
+pub(all) struct AppBinding {
+  pack_id : String
+  product_id : String
+  version : String
+  entrypoint_id : String
+  path : String
+  audience : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct AppRegistry {
+  entrypoints : Array[AppBinding]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+// Type aliases
+
+// Traits
+
