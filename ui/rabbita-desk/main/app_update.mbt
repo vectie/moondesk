@@ -12,8 +12,12 @@ fn update(
     LoadedPreview(_) => update_app_results(dispatch, msg, model)
     LoadedRuns(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowRuns(_) => update_app_results(dispatch, msg, model)
+    LoadedMoonFlowOperatorActions(_, _) =>
+      update_app_results(dispatch, msg, model)
     ImportedMoonFlow(_) => update_app_results(dispatch, msg, model)
     ControlledMoonFlow(_) => update_app_results(dispatch, msg, model)
+    ExecutedMoonFlowOperatorAction(_, _) =>
+      update_app_results(dispatch, msg, model)
     LoadedTownMessages(_) => update_app_results(dispatch, msg, model)
     LoadedRequests(_) => update_app_results(dispatch, msg, model)
     LoadedStandingGoals(_) => update_app_results(dispatch, msg, model)
@@ -68,6 +72,8 @@ fn update(
     ManagedMoonCodeSession(_) => update_mooncode_results(dispatch, msg, model)
     SelectWorkspaceMode(_) => update_navigation_actions(dispatch, msg, model)
     ControlMoonFlow(_, _, _) =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    ExecuteMoonFlowOperatorAction(_, _) =>
       update_workspace_surface_actions(dispatch, msg, model)
     PrepareMoonFlow => update_workspace_surface_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)

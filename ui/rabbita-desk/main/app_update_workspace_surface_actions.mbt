@@ -149,6 +149,16 @@ fn update_workspace_surface_actions(
         control_moonflow_cmd(dispatch, run_id, action, detail),
         { ..model, moonflow_status: "Applying " + action + "…" },
       )
+    ExecuteMoonFlowOperatorAction(run_id, action_id) =>
+      (
+        execute_moonflow_operator_action_cmd(dispatch, run_id, action_id),
+        {
+          ..model,
+          moonflow_operator_action_receipt: None,
+          moonflow_operator_action_status: "Applying \{action_id}…",
+          moonflow_operator_action_pending: action_id,
+        },
+      )
     PrepareMoonFlow =>
       if model.selected_workspace_id == "" {
         (@rabbita.none, { ..model, moonflow_status: "Select a MoonBook first" })

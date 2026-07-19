@@ -11,6 +11,16 @@ fn moonflow_import_status(result : MoonFlowImportResult) -> String {
 }
 
 ///|
+fn upsert_moonflow_operator_actions(
+  existing : Array[MoonFlowOperatorActions],
+  next : MoonFlowOperatorActions,
+) -> Array[MoonFlowOperatorActions] {
+  let values = existing.filter(value => value.run_id != next.run_id)
+  values.push(next)
+  values
+}
+
+///|
 fn update_workspace_results(
   dispatch : Dispatch[Msg],
   msg : Msg,
@@ -146,10 +156,16 @@ fn update_workspace_results(
     LoadedRuns(Err(error)) => (@rabbita.none, { ..model, host_status: error })
     LoadedMoonFlowRuns(Ok(runs)) =>
       (
-        @rabbita.none,
+        @rabbita.batch([
+          for run in runs =>
+            fetch_moonflow_operator_actions_cmd(dispatch, run.run_id)
+        ]),
         {
           ..model,
           moonflow_runs: runs,
+          moonflow_operator_actions: model.moonflow_operator_actions.filter(
+            actions => runs.any(run => run.run_id == actions.run_id),
+          ),
           moonflow_status: if runs.is_empty() {
             "No MoonFlow runs yet"
           } else {
@@ -159,6 +175,30 @@ fn update_workspace_results(
       )
     LoadedMoonFlowRuns(Err(error)) =>
       (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
+    LoadedMoonFlowOperatorActions(_, Ok(actions)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_operator_actions: upsert_moonflow_operator_actions(
+            model.moonflow_operator_actions,
+            actions,
+          ),
+          moonflow_operator_action_status: if actions.status == "available" {
+            "\{actions.actions.length()} operator action(s) available for \{actions.run_id}"
+          } else {
+            "Operator actions \{actions.status} for \{actions.run_id}"
+          },
+        },
+      )
+    LoadedMoonFlowOperatorActions(run_id, Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_operator_action_status: "\{run_id}: \{error}",
+        },
+      )
     ImportedMoonFlow(Ok(result)) =>
       (
         if result.ok {
@@ -188,6 +228,31 @@ fn update_workspace_results(
       )
     ControlledMoonFlow(Err(error)) =>
       (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
+    ExecutedMoonFlowOperatorAction(run_id, Ok(receipt)) =>
+      (
+        @rabbita.batch([
+          fetch_moonflow_runs_cmd(dispatch),
+          fetch_moonflow_operator_actions_cmd(dispatch, run_id),
+        ]),
+        {
+          ..model,
+          moonflow_operator_action_receipt: Some(receipt),
+          moonflow_operator_action_status: "\{receipt.action_id}: \{receipt.status}",
+          moonflow_operator_action_pending: "",
+        },
+      )
+    ExecutedMoonFlowOperatorAction(run_id, Err(error)) =>
+      (
+        @rabbita.batch([
+          fetch_moonflow_runs_cmd(dispatch),
+          fetch_moonflow_operator_actions_cmd(dispatch, run_id),
+        ]),
+        {
+          ..model,
+          moonflow_operator_action_status: "\{run_id}: \{error}",
+          moonflow_operator_action_pending: "",
+        },
+      )
     LoadedSavedViews(Ok(saved_views)) =>
       (@rabbita.none, { ..model, saved_views, })
     LoadedSavedViews(Err(error)) =>
