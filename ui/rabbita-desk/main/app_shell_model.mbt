@@ -10,6 +10,7 @@ enum Activity {
 
 ///|
 enum WorkspaceMode {
+  PackHome
   Desk
   MoonWiki
   MoonCode

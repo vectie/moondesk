@@ -1,7 +1,8 @@
 ///|
 test "desk command palette stays navigation only" {
   let titles = palette_commands_for_mode(Desk).map(command => command.0)
-  assert_eq(titles.length(), 4)
+  assert_eq(titles.length(), 5)
+  assert_true(titles.contains("Open Pack Home"))
   assert_true(titles.contains("Browse Desk"))
   assert_true(titles.contains("Open in Wiki"))
   assert_true(titles.contains("Open MoonCode"))
@@ -55,7 +56,16 @@ test "command palette filters titles and details" {
   })
   assert_eq(code_titles.length(), 1)
   assert_true(code_titles.contains("Open MoonCode"))
-  assert_eq(filtered_palette_commands_for_mode(Desk, "  ").length(), 4)
+  assert_eq(filtered_palette_commands_for_mode(Desk, "  ").length(), 5)
+}
+
+///|
+test "Pack Home command palette keeps normal work ahead of internals" {
+  let titles = palette_commands_for_mode(PackHome).map(command => command.0)
+  assert_eq(titles.length(), 3)
+  assert_true(titles.contains("Open Pack Home"))
+  assert_true(titles.contains("Inspect composition"))
+  assert_true(titles.contains("Browse Desk"))
 }
 
 ///|

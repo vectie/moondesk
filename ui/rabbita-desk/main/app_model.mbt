@@ -27,6 +27,8 @@ struct Model {
   workspace_library_path : String
   workspace_books_root_path : String
   moonsuite_products : Array[MoonSuiteProduct]
+  pack_apps : Array[PackAppRecord]
+  pack_apps_status : String
   workspaces : Array[@desk.DeskWorkspace]
   selected_workspace_id : String
   new_book_name : String
@@ -160,6 +162,7 @@ struct Model {
 enum Msg {
   Bootstrap
   LoadedWorkspaceMetadata(Result[WorkspaceMetadata, String])
+  LoadedPackApps(Result[PackAppCatalog, String])
   LoadedWorkspaces(Result[Array[@desk.DeskWorkspace], String])
   LoadedEntries(Result[Array[@desk.DeskFileEntry], String])
   LoadedPreview(Result[@desk.DeskPreview, String])

@@ -154,6 +154,12 @@ work. MoonBook owns accepted durable knowledge and generated outputs.
 
 ## Domain Packs
 
+MoonDesk exposes installed domain packs through Pack Home. A pack appears as a
+product card whether its app runtime is ready, missing, invalid, or intentionally
+absent. "Open pack" enters the pack-owned Rabbita application; "Inspect current
+composition" is an advanced route to the selected MoonBook's generic MoonFlow
+graph. See [Pack app runtime discovery](PACK_APP_RUNTIME.md).
+
 Domain-specific discovery workflows are experiments for testing information
 discovery and app-tool generation. They are no longer built into MoonDesk.
 

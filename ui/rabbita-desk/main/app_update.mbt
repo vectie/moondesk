@@ -7,6 +7,7 @@ fn update(
   match msg {
     Bootstrap => bootstrap_action(dispatch, model)
     LoadedWorkspaceMetadata(_) => update_app_results(dispatch, msg, model)
+    LoadedPackApps(_) => update_app_results(dispatch, msg, model)
     LoadedWorkspaces(_) => update_app_results(dispatch, msg, model)
     LoadedEntries(_) => update_app_results(dispatch, msg, model)
     LoadedPreview(_) => update_app_results(dispatch, msg, model)

@@ -6,6 +6,7 @@ fn update_app_results(
 ) -> (@rabbita.Cmd, Model) {
   match msg {
     LoadedWorkspaceMetadata(_)
+    | LoadedPackApps(_)
     | LoadedWorkspaces(_)
     | LoadedEntries(_)
     | LoadedPreview(_)

@@ -14,6 +14,8 @@ fn init_model() -> Model {
     workspace_library_path: "",
     workspace_books_root_path: "",
     moonsuite_products: [],
+    pack_apps: [],
+    pack_apps_status: "loading installed packs",
     workspaces: [],
     selected_workspace_id: browser_initial_workspace(),
     new_book_name: "Untitled MoonBook",

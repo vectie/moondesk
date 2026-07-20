@@ -943,6 +943,7 @@ fn search_now_action(
 fn refresh_all_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   @rabbita.batch([
     fetch_workspace_metadata_cmd(dispatch),
+    fetch_pack_apps_cmd(dispatch),
     fetch_workspaces_cmd(dispatch),
     if model.selected_workspace_id == "" {
       @rabbita.none

@@ -64,12 +64,345 @@ body {
 }
 
 .workspace-mode-toggle {
-  grid-template-columns: repeat(4, 68px);
+  grid-template-columns: repeat(5, 68px);
   order: -1;
   background: #eef2f6;
   border-color: var(--line);
   border-radius: 999px;
   padding: 4px;
+}
+
+.pack-home-shell {
+  grid-template-rows: 56px minmax(0, 1fr);
+}
+
+.pack-home-main {
+  min-height: 0;
+  overflow: auto;
+  padding: 34px clamp(18px, 5vw, 72px) 72px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(37, 99, 235, 0.08), transparent 28%),
+    var(--bg);
+}
+
+.pack-home-hero,
+.pack-runtime-strip,
+.pack-product-grid,
+.pack-home-empty,
+.pack-home-footnote {
+  width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.pack-home-hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+
+.pack-home-hero h1 {
+  margin: 4px 0 9px;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.pack-home-hero .lead {
+  max-width: 760px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.pack-home-summary {
+  min-width: 190px;
+  display: grid;
+  gap: 5px;
+  justify-items: end;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pack-home-summary strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.pack-runtime-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 26px;
+  padding: 13px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.pack-runtime-strip > div {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+.pack-runtime-strip small,
+.pack-runtime-strip > span {
+  color: var(--muted);
+}
+
+.pack-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 18px;
+}
+
+.pack-product-card {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr;
+  gap: 17px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--bg-raised);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.05);
+}
+
+.pack-product-card.ready {
+  border-top-color: var(--accent);
+}
+
+.pack-product-card.blocked {
+  border-top-color: var(--red);
+}
+
+.pack-product-card.workflow {
+  border-top-color: var(--green);
+}
+
+.pack-product-card.setup {
+  border-top-color: var(--yellow);
+}
+
+.pack-card-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.pack-card-identity {
+  min-width: 0;
+  display: flex;
+  align-items: start;
+  gap: 12px;
+}
+
+.pack-card-identity h2 {
+  margin: 1px 0 5px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.pack-card-identity small {
+  color: var(--muted);
+}
+
+.pack-mark {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 6px;
+  border-radius: 11px;
+  background: var(--bg-panel-strong);
+  color: var(--accent-strong);
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.pack-state-label {
+  flex: 0 0 auto;
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.pack-state-label.ready {
+  border-color: rgba(22, 131, 95, 0.35);
+  color: var(--green);
+}
+
+.pack-state-label.blocked {
+  border-color: rgba(194, 65, 59, 0.35);
+  color: var(--red);
+}
+
+.pack-state-label.setup {
+  border-color: rgba(183, 121, 31, 0.35);
+  color: var(--yellow);
+}
+
+.pack-description,
+.pack-configuration-message {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.pack-configuration-message {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--bg-panel-strong);
+  font-size: 12px;
+}
+
+.pack-capability-counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pack-capability-counts li {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: #fafbfc;
+}
+
+.pack-capability-counts strong {
+  font-size: 16px;
+}
+
+.pack-capability-counts span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.pack-card-actions {
+  align-self: end;
+  display: grid;
+  gap: 10px;
+}
+
+.pack-open-action {
+  min-height: 44px;
+  width: 100%;
+  justify-content: center;
+}
+
+.pack-advanced-actions {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 10px;
+}
+
+.pack-advanced-actions summary {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.pack-advanced-body {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0 2px;
+}
+
+.pack-advanced-body small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.pack-home-empty,
+.pack-home-footnote {
+  margin-top: 18px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-raised);
+}
+
+.pack-home-empty {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.pack-home-empty p,
+.pack-home-footnote p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.pack-home-footnote {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 18px;
+}
+
+@media (max-width: 920px) {
+  .pack-home-hero {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .pack-home-summary {
+    justify-items: start;
+  }
+
+  .pack-runtime-strip {
+    justify-content: start;
+    overflow-x: auto;
+  }
+
+  .pack-runtime-strip > div {
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 620px) {
+  .pack-home-main {
+    padding: 24px 14px 48px;
+  }
+
+  .pack-card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pack-state-label {
+    align-self: start;
+  }
+
+  .pack-home-footnote {
+    grid-template-columns: 1fr;
+  }
 }
 
 .flow-shell {
@@ -688,7 +1021,7 @@ body {
 
 @media (max-width: 760px) {
   .workspace-mode-toggle {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 
   .flow-shell {
@@ -2121,8 +2454,7 @@ details[open] > .desk-disclosure-summary::after {
   }
 }
 
-/* Flow is a fourth first-class workspace mode. These final overrides follow
-   the legacy three-mode responsive shell rules. */
+/* Pack Home and Flow are first-class workspace modes. */
 .flow-state.complete {
   border-color: rgba(22, 131, 95, 0.34);
   background: rgba(22, 131, 95, 0.08);
@@ -2131,7 +2463,7 @@ details[open] > .desk-disclosure-summary::after {
 
 @media (max-width: 760px) {
   .workspace-mode-toggle {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 .flow-disclosure {

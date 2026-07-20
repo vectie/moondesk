@@ -120,6 +120,10 @@ type MoonclawProgress derive(@json.FromJson)
 
 type Msg
 
+type PackAppCatalog derive(@json.FromJson)
+
+type PackAppRecord derive(@json.FromJson)
+
 type PendingMarkdownNavigation derive(Eq)
 
 type PreviewTab

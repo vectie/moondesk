@@ -610,13 +610,16 @@ fn select_workspace_mode_action(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   let activity = match mode {
+    PackHome => Files
     Desk => Files
     MoonCode => Files
     MoonFlow => Files
     MoonWiki => model.activity
   }
   let desk_directory = desk_context_directory(model)
-  let base_cmd = if mode == Desk && model.selected_workspace_id != "" {
+  let base_cmd = if mode == PackHome {
+    sync_shell_batch(mode, activity, fetch_pack_apps_cmd(dispatch))
+  } else if mode == Desk && model.selected_workspace_id != "" {
     sync_shell_batch(
       mode,
       activity,

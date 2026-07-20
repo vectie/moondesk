@@ -70,8 +70,31 @@ fn palette_commands_for_mode(
   mode : WorkspaceMode,
 ) -> Array[(String, String, Msg)] {
   match mode {
+    PackHome =>
+      [
+        (
+          "Open Pack Home",
+          "Launch installed domain applications",
+          SelectWorkspaceMode(PackHome),
+        ),
+        (
+          "Inspect composition",
+          "See the selected MoonBook's executable product graph",
+          SelectWorkspaceMode(MoonFlow),
+        ),
+        (
+          "Browse Desk",
+          "Open MoonBooks and pack-owned artifacts",
+          SelectWorkspaceMode(Desk),
+        ),
+      ]
     Desk =>
       [
+        (
+          "Open Pack Home",
+          "Launch installed domain applications",
+          SelectWorkspaceMode(PackHome),
+        ),
         (
           "Browse Desk",
           "Open the virtual filesystem for MoonBooks",
@@ -225,9 +248,25 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   header(class="title-bar", [
     div(class="workspace-mode-toggle", [
       button(
-        class=workspace_mode_button_class(model, Desk),
+        class=workspace_mode_button_class(model, PackHome),
         attrs=@html.Attrs::build()
           .aria_keyshortcuts("Meta+1 Control+1")
+          .aria_pressed(
+            if model.workspace_mode == PackHome {
+              "true"
+            } else {
+              "false"
+            },
+          )
+          .data_set("testid", "mode-packs"),
+        title="Open installed packs",
+        on_click=dispatch(SelectWorkspaceMode(PackHome)),
+        "Packs",
+      ),
+      button(
+        class=workspace_mode_button_class(model, Desk),
+        attrs=@html.Attrs::build()
+          .aria_keyshortcuts("Meta+2 Control+2")
           .aria_pressed(
             if model.workspace_mode == Desk {
               "true"
@@ -243,7 +282,7 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       button(
         class=workspace_mode_button_class(model, MoonWiki),
         attrs=@html.Attrs::build()
-          .aria_keyshortcuts("Meta+2 Control+2")
+          .aria_keyshortcuts("Meta+3 Control+3")
           .aria_pressed(
             if model.workspace_mode == MoonWiki {
               "true"
@@ -259,7 +298,7 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       button(
         class=workspace_mode_button_class(model, MoonCode),
         attrs=@html.Attrs::build()
-          .aria_keyshortcuts("Meta+3 Control+3")
+          .aria_keyshortcuts("Meta+4 Control+4")
           .aria_pressed(
             if model.workspace_mode == MoonCode {
               "true"
@@ -275,7 +314,7 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       button(
         class=workspace_mode_button_class(model, MoonFlow),
         attrs=@html.Attrs::build()
-          .aria_keyshortcuts("Meta+4 Control+4")
+          .aria_keyshortcuts("Meta+5 Control+5")
           .aria_pressed(
             if model.workspace_mode == MoonFlow {
               "true"

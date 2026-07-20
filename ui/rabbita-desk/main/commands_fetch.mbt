@@ -17,6 +17,15 @@ fn fetch_workspace_metadata_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_pack_apps_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @http.get("/api/desktop/pack-apps").expect_json(result => {
+    dispatch(
+      LoadedPackApps(http_result(result, "Invalid installed pack catalog")),
+    )
+  })
+}
+
+///|
 fn fetch_entries_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,

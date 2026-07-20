@@ -27,6 +27,21 @@ fn update_workspace_results(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
+    LoadedPackApps(Ok(catalog)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          pack_apps: catalog.apps,
+          pack_apps_status: if catalog.apps.is_empty() {
+            "No domain packs installed"
+          } else {
+            "\{catalog.configured_count} ready · \{catalog.app_count} installed"
+          },
+        },
+      )
+    LoadedPackApps(Err(error)) =>
+      (@rabbita.none, { ..model, pack_apps_status: error })
     LoadedWorkspaceMetadata(Ok(metadata)) =>
       (
         @rabbita.none,

@@ -613,6 +613,7 @@ test "desk F2 starts inline rename and Escape cancels editing" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let base = {
     ..init_model(),
+    workspace_mode: Desk,
     selected_workspace_id: "book-demo",
     selected_path: "wiki/old.md",
     desk_selected_paths: ["wiki/old.md"],
@@ -648,6 +649,7 @@ test "desk inline rename blocks multi selection" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let (_, blocked) = desk_keydown_action(dispatch, "F2", false, false, {
     ..init_model(),
+    workspace_mode: Desk,
     selected_workspace_id: "book-demo",
     selected_path: "wiki/alpha.md",
     desk_selected_paths: ["wiki/alpha.md", "wiki/beta.md"],

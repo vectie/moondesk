@@ -1,6 +1,12 @@
 ///|
 fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   match model.workspace_mode {
+    PackHome =>
+      div(class="desk-shell pack-home-shell", [
+        render_title_bar(dispatch, model),
+        render_pack_home(dispatch, model),
+        render_command_palette(dispatch, model),
+      ])
     Desk =>
       div(class="desk-shell file-desk-shell", [
         render_title_bar(dispatch, model),

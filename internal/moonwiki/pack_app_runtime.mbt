@@ -41,10 +41,12 @@ fn pack_app_runtime_record(
   let manifest_id = json_string(manifest, "id", default="").trim().to_owned()
   let runtime_id = json_string(runtime, "pack_id", default="").trim().to_owned()
   let app_url = json_string(runtime, "app_url", default="").trim().to_owned()
-  let service_url = json_string(
-    runtime, "service_url", default="",
-  ).trim().to_owned()
-  if pack_id == "" || manifest_id != pack_id || runtime_id != pack_id ||
+  let service_url = json_string(runtime, "service_url", default="")
+    .trim()
+    .to_owned()
+  if pack_id == "" ||
+    manifest_id != pack_id ||
+    runtime_id != pack_id ||
     !is_safe_pack_app_url(app_url) ||
     !is_safe_local_pack_service_url(service_url) {
     return None
@@ -54,24 +56,105 @@ fn pack_app_runtime_record(
     return None
   }
   let first = entrypoints[0]
-  Some(
-    {
-      "pack_id": pack_id,
-      "version": json_string(active, "version", default=""),
-      "display_name": json_string(
-        manifest, "display_name", default=pack_id,
-      ),
-      "kind": json_string(manifest, "kind", default=""),
-      "entrypoint_id": json_string(first, "id", default="app"),
-      "entrypoint_path": json_string(first, "path", default="/"),
-      "audience": json_string(first, "audience", default="operator"),
-      "app_url": app_url,
-      "service_url": service_url,
-      "launch_url": "/pack-apps/" + pack_id + "/",
-      "runtime_contract": json_string(runtime, "contract", default=""),
-      "status": "configured",
-    },
-  )
+  Some({
+    "pack_id": pack_id,
+    "version": json_string(active, "version", default=""),
+    "display_name": json_string(manifest, "display_name", default=pack_id),
+    "kind": json_string(manifest, "kind", default=""),
+    "entrypoint_id": json_string(first, "id", default="app"),
+    "entrypoint_path": json_string(first, "path", default="/"),
+    "audience": json_string(first, "audience", default="operator"),
+    "app_url": app_url,
+    "service_url": service_url,
+    "launch_url": "/pack-apps/" + pack_id + "/",
+    "runtime_contract": json_string(runtime, "contract", default=""),
+    "status": "configured",
+  })
+}
+
+///|
+fn pack_app_catalog_record(
+  active : Json,
+  manifest : Json,
+  runtime : Json?,
+) -> Json? {
+  let pack_id = json_string(active, "pack_id", default="").trim().to_owned()
+  let manifest_id = json_string(manifest, "id", default="").trim().to_owned()
+  if pack_id == "" || manifest_id != pack_id {
+    return None
+  }
+  let entrypoints = json_array_items(manifest, "app_entrypoints")
+  let configured = match runtime {
+    Some(runtime) => pack_app_runtime_record(active, manifest, runtime)
+    None => None
+  }
+  match configured {
+    Some(app) =>
+      Some({
+        "pack_id": json_string(app, "pack_id", default=pack_id),
+        "version": json_string(app, "version", default=""),
+        "display_name": json_string(app, "display_name", default=pack_id),
+        "description": json_string(manifest, "description", default=""),
+        "kind": json_string(app, "kind", default="DomainPack"),
+        "entrypoint_id": json_string(app, "entrypoint_id", default="app"),
+        "entrypoint_path": json_string(app, "entrypoint_path", default="/"),
+        "audience": json_string(app, "audience", default="operator"),
+        "app_url": json_string(app, "app_url", default=""),
+        "service_url": json_string(app, "service_url", default=""),
+        "launch_url": json_string(app, "launch_url", default=""),
+        "runtime_contract": json_string(app, "runtime_contract", default=""),
+        "status": "configured",
+        "entrypoint_count": entrypoints.length(),
+        "workflow_count": json_array_items(manifest, "workflows").length(),
+        "tool_count": json_array_items(manifest, "tools").length(),
+        "configuration_message": "Ready to open",
+      })
+    None => {
+      let has_runtime = runtime is Some(_)
+      let status = if entrypoints.is_empty() {
+        "workflow_only"
+      } else if has_runtime {
+        "configuration_invalid"
+      } else {
+        "configuration_required"
+      }
+      let message = if status == "workflow_only" {
+        "This pack contributes workflows and contracts without a standalone app."
+      } else if status == "configuration_invalid" {
+        "The local app runtime configuration is invalid or unsafe."
+      } else {
+        "Install or start the pack app service to open its domain workspace."
+      }
+      let first = if entrypoints.is_empty() {
+        Json::object({})
+      } else {
+        entrypoints[0]
+      }
+      Some({
+        "pack_id": pack_id,
+        "version": json_string(
+          active,
+          "version",
+          default=json_string(manifest, "version", default=""),
+        ),
+        "display_name": json_string(manifest, "display_name", default=pack_id),
+        "description": json_string(manifest, "description", default=""),
+        "kind": json_string(manifest, "kind", default="DomainPack"),
+        "entrypoint_id": json_string(first, "id", default=""),
+        "entrypoint_path": json_string(first, "path", default=""),
+        "audience": json_string(first, "audience", default="operator"),
+        "app_url": "",
+        "service_url": "",
+        "launch_url": "",
+        "runtime_contract": "",
+        "status": status,
+        "entrypoint_count": entrypoints.length(),
+        "workflow_count": json_array_items(manifest, "workflows").length(),
+        "tool_count": json_array_items(manifest, "tools").length(),
+        "configuration_message": message,
+      })
+    }
+  }
 }
 
 ///|
@@ -79,19 +162,24 @@ async fn configured_pack_app(
   workspace_root : String,
   pack_id : String,
 ) -> Json? {
-  if pack_id == "" || pack_id == "." || pack_id == ".." ||
-    pack_id.contains("/") {
+  if pack_id == "" || pack_id == "." || pack_id == ".." || pack_id.contains("/") {
     return None
   }
-  let active_path = @pathx.join(active_packs_root(workspace_root), pack_id + ".json")
-  let runtime_path = @pathx.join(pack_apps_state_root(workspace_root), pack_id + ".json")
+  let active_path = @pathx.join(
+    active_packs_root(workspace_root),
+    pack_id + ".json",
+  )
+  let runtime_path = @pathx.join(
+    pack_apps_state_root(workspace_root),
+    pack_id + ".json",
+  )
   if !@fs.exists(active_path) || !@fs.exists(runtime_path) {
     return None
   }
   let active = read_json_file_or_object(active_path)
-  let installed_root = json_string(
-    active, "installed_root", default="",
-  ).trim().to_owned()
+  let installed_root = json_string(active, "installed_root", default="")
+    .trim()
+    .to_owned()
   if installed_root == "" {
     return None
   }
@@ -138,7 +226,9 @@ async fn handle_pack_app_proxy(
     let payload = body.read_all().text()
     let json_payload = @json.parse(payload) catch {
       _ => {
-        send_status(conn, 400, "Bad Request", "Pack application POST requires JSON\n")
+        send_status(
+          conn, 400, "Bad Request", "Pack application POST requires JSON\n",
+        )
         return
       }
     }
@@ -183,6 +273,7 @@ async fn handle_pack_app_proxy(
 ///|
 async fn installed_pack_apps(workspace_root : String) -> Json {
   let apps : Array[Json] = []
+  let mut configured_count = 0
   let active_root = active_packs_root(workspace_root)
   for name in read_directory_names(active_root, include_hidden=false) {
     if !name.has_suffix(".json") {
@@ -190,23 +281,37 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
     }
     let active = read_json_file_or_object(@pathx.join(active_root, name))
     let pack_id = json_string(active, "pack_id", default="").trim().to_owned()
-    let installed_root = json_string(
-      active, "installed_root", default="",
-    ).trim().to_owned()
+    let installed_root = json_string(active, "installed_root", default="")
+      .trim()
+      .to_owned()
     if pack_id == "" || installed_root == "" {
       continue
     }
     let manifest_path = @pathx.join(installed_root, "pack.json")
-    let runtime_path = @pathx.join(pack_apps_state_root(workspace_root), pack_id + ".json")
-    if !@fs.exists(manifest_path) || !@fs.exists(runtime_path) {
+    let runtime_path = @pathx.join(
+      pack_apps_state_root(workspace_root),
+      pack_id + ".json",
+    )
+    if !@fs.exists(manifest_path) {
       continue
     }
-    match pack_app_runtime_record(
-      active,
-      read_json_file_or_object(manifest_path),
-      read_json_file_or_object(runtime_path),
-    ) {
-      Some(app) => apps.push(app)
+    let runtime = if @fs.exists(runtime_path) {
+      Some(read_json_file_or_object(runtime_path))
+    } else {
+      None
+    }
+    match
+      pack_app_catalog_record(
+        active,
+        read_json_file_or_object(manifest_path),
+        runtime,
+      ) {
+      Some(app) => {
+        if json_string(app, "status", default="") == "configured" {
+          configured_count = configured_count + 1
+        }
+        apps.push(app)
+      }
       None => ()
     }
   }
@@ -214,12 +319,17 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
     {
       "contract": "moonsuite.pack-app-catalog.v1",
       "app_count": apps.length(),
+      "configured_count": configured_count,
       "apps": Json::array(apps),
       "runtime_config_root": pack_apps_state_root(workspace_root),
     },
     ok=true,
     status="ready",
     message="Installed pack applications are ready",
-    next_action=if apps.length() > 0 { "open_pack_app" } else { "configure_pack_app_runtime" },
+    next_action=if apps.length() > 0 {
+      "open_pack_app"
+    } else {
+      "configure_pack_app_runtime"
+    },
   )
 }

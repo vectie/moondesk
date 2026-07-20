@@ -301,7 +301,9 @@ fn sync_shell_cmd(mode : WorkspaceMode, activity : Activity) -> @rabbita.Cmd {
   @cmd.custom_cmd(
     _ => {
       browser_set_activity(
-        if mode == Desk {
+        if mode == PackHome {
+          "packs"
+        } else if mode == Desk {
           "desk"
         } else if mode == MoonCode {
           "code"
