@@ -171,6 +171,58 @@ fn update_workspace_surface_actions(
           },
         )
       }
+    ToggleMoonFlowCompositionItem(item_id) =>
+      match model.moonflow_composition {
+        None => (@rabbita.none, model)
+        Some(composition) => {
+          let selected = if composition.selected_item_ids.contains(item_id) {
+            composition.selected_item_ids.filter(id => id != item_id)
+          } else {
+            let next = composition.selected_item_ids.copy()
+            next.push(item_id)
+            next
+          }
+          (
+            @rabbita.none,
+            {
+              ..model,
+              moonflow_composition: Some({ ..composition, selected_item_ids: selected }),
+              moonflow_composition_status: "Unsaved product selection",
+            },
+          )
+        }
+      }
+    SaveMoonFlowComposition =>
+      match model.moonflow_composition {
+        None => (@rabbita.none, model)
+        Some(composition) =>
+          (
+            save_moonflow_composition_cmd(
+              dispatch,
+              model.selected_workspace_id,
+              composition.selected_item_ids,
+            ),
+            {
+              ..model,
+              moonflow_composition_saving: true,
+              moonflow_composition_status: "Saving composition…",
+            },
+          )
+      }
+    SetMoonFlowCanvasZoom(zoom) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_canvas_zoom: if zoom < 75 {
+            75
+          } else if zoom > 125 {
+            125
+          } else {
+            zoom
+          },
+        },
+      )
     SetReviewDecisionNote(note) =>
       (@rabbita.none, { ..model, review_decision_note: note })
     DecideReviewItem(item, decision) =>

@@ -440,6 +440,29 @@ extern "js" fn moonflow_control_recorded_at() -> String =
   #| () => new Date().toISOString()
 
 ///|
+fn save_moonflow_composition_cmd(
+  dispatch : Dispatch[Msg],
+  workspace_id : String,
+  selected_item_ids : Array[String],
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "action": "save",
+    "workspace_id": workspace_id,
+    "selected_item_ids": selected_item_ids,
+    "recorded_at": moonflow_control_recorded_at(),
+  }
+  @http.post("/api/moonflow/composition")
+  .with_json(body)
+  .expect_json(result => {
+    dispatch(
+      SavedMoonFlowComposition(
+        http_result(result, "Could not save executable composition"),
+      ),
+    )
+  })
+}
+
+///|
 fn control_moonflow_cmd(
   dispatch : Dispatch[Msg],
   run_id : String,

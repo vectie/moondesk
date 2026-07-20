@@ -68,6 +68,22 @@ fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_moonflow_composition_cmd(
+  dispatch : Dispatch[Msg],
+  workspace_id : String,
+) -> @rabbita.Cmd {
+  @http.post("/api/moonflow/composition")
+  .with_json({ "action": "load", "workspace_id": workspace_id })
+  .expect_json(result => {
+    dispatch(
+      LoadedMoonFlowComposition(
+        http_result(result, "Executable composition is not available"),
+      ),
+    )
+  })
+}
+
+///|
 fn fetch_moonflow_operator_actions_cmd(
   dispatch : Dispatch[Msg],
   run_id : String,

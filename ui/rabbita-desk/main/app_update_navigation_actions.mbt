@@ -633,7 +633,18 @@ fn select_workspace_mode_action(
   } else if mode == MoonCode {
     sync_shell_batch(mode, activity, fetch_mooncode_sessions_cmd(dispatch, ""))
   } else if mode == MoonFlow {
-    sync_shell_batch(mode, activity, fetch_moonflow_runs_cmd(dispatch))
+    sync_shell_batch(
+      mode,
+      activity,
+      @rabbita.batch([
+        fetch_moonflow_runs_cmd(dispatch),
+        if model.selected_workspace_id == "" {
+          @rabbita.none
+        } else {
+          fetch_moonflow_composition_cmd(dispatch, model.selected_workspace_id)
+        },
+      ]),
+    )
   } else {
     sync_shell_cmd(mode, activity)
   }

@@ -139,6 +139,7 @@ fn render_moonflow_workspace(
         "Refresh",
       ),
     ]),
+    render_moonflow_composition_canvas(dispatch, model),
     if selected_runs.is_empty() {
       section(class="flow-empty", [
         strong("No executable work yet"),

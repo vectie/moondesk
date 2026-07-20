@@ -12,6 +12,8 @@ fn update(
     LoadedPreview(_) => update_app_results(dispatch, msg, model)
     LoadedRuns(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowRuns(_) => update_app_results(dispatch, msg, model)
+    LoadedMoonFlowComposition(_) => update_app_results(dispatch, msg, model)
+    SavedMoonFlowComposition(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowOperatorActions(_, _) =>
       update_app_results(dispatch, msg, model)
     ImportedMoonFlow(_) => update_app_results(dispatch, msg, model)
@@ -76,6 +78,12 @@ fn update(
     ExecuteMoonFlowOperatorAction(_, _) =>
       update_workspace_surface_actions(dispatch, msg, model)
     PrepareMoonFlow => update_workspace_surface_actions(dispatch, msg, model)
+    ToggleMoonFlowCompositionItem(_) =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    SaveMoonFlowComposition =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    SetMoonFlowCanvasZoom(_) =>
+      update_workspace_surface_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)
     SelectWorkspace(_) => update_navigation_actions(dispatch, msg, model)
     SelectPath(_) => update_navigation_actions(dispatch, msg, model)

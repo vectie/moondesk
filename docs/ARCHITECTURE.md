@@ -1,5 +1,10 @@
 # MoonDesk Architecture
 
+The graph-first cross-product control surface is specified in
+[`SUITE_COMPOSITION_CANVAS.md`](SUITE_COMPOSITION_CANVAS.md). MoonDesk persists
+only a generic, source-bound composition overlay; MoonFlow executes the graph
+and product packs retain all domain semantics.
+
 See [Executable Book Architecture](EXECUTABLE_BOOK_ARCHITECTURE.md) for the
 canonical product boundary: MoonBook is the executable book, MoonDesk is the
 desktop shell, MoonClaw owns execution, and MoonTown coordinates books. See

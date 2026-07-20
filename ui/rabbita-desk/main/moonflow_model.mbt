@@ -131,3 +131,32 @@ struct MoonFlowRunProjection {
   run_control : MoonFlowRunControl
   operator_surface : MoonFlowOperatorSurface?
 } derive(FromJson)
+
+///|
+struct MoonFlowCompositionItem {
+  work_item_id : String
+  declaration_id : String
+  product_id : String
+  requested_authority : String
+  acceptance_criteria : Array[String]
+  depends_on : Array[String]
+  operation : String
+  input_contracts : Array[String]
+  output_contracts : Array[String]
+  required_claim : String
+  input_artifacts : Array[String]
+  timeout_ms : Int
+} derive(FromJson)
+
+///|
+struct MoonFlowComposition {
+  contract_id : String
+  workspace_id : String
+  source_graph_id : String
+  book_id : String
+  declaration_revision : String
+  source_digest : String
+  status : String
+  selected_item_ids : Array[String]
+  items : Array[MoonFlowCompositionItem]
+} derive(FromJson)

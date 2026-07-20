@@ -45,14 +45,7 @@ async fn handle_moonflow_import_selected(
       return
     }
   }
-  let candidates = ["flow/draft-work-graph.json", "flow/work-graph.json"]
-  let mut graph_path = ""
-  for candidate in candidates {
-    let path = @pathx.join(workspace.root_path, candidate)
-    if graph_path == "" && @fs.exists(path) {
-      graph_path = path
-    }
-  }
+  let mut graph_path = moonflow_source_graph_path(workspace.root_path)
   if graph_path == "" {
     send_json(
       conn,
@@ -81,6 +74,22 @@ async fn handle_moonflow_import_selected(
       ),
     )
     return
+  }
+  graph_path = moonflow_compile_composition(
+    workspace_context(workspace_root).suite_root,
+    workspace.root_path,
+    graph_path,
+  ) catch {
+    error => {
+      send_api_error(
+        conn,
+        method_,
+        409,
+        "Conflict",
+        "MoonFlow composition could not be compiled: \{error}",
+      )
+      return
+    }
   }
   let graph = @json.parse(@fs.read_file(graph_path).text()) catch {
     _ => Json::object({})

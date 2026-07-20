@@ -23,6 +23,14 @@ async fn route_moonflow_api(
       }
       true
     }
+    ["api", "moonflow", "composition"] => {
+      if method_ is Post {
+        handle_moonflow_composition(workspace_root, body, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
     ["api", "moonflow", "runs", run_id] => {
       if is_read_method(method_) {
         handle_moonflow_run(workspace_root, run_id, method_, conn)

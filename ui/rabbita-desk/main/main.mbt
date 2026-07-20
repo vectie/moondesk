@@ -2,6 +2,7 @@
 using @html {
   a,
   aside,
+  article,
   button,
   code,
   details,

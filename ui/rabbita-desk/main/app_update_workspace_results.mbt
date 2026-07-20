@@ -175,6 +175,45 @@ fn update_workspace_results(
       )
     LoadedMoonFlowRuns(Err(error)) =>
       (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
+    LoadedMoonFlowComposition(Ok(composition)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_composition: Some(composition),
+          moonflow_composition_status: "Composition loaded",
+          moonflow_composition_saving: false,
+        },
+      )
+    LoadedMoonFlowComposition(Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_composition: None,
+          moonflow_composition_status: error,
+          moonflow_composition_saving: false,
+        },
+      )
+    SavedMoonFlowComposition(Ok(composition)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_composition: Some(composition),
+          moonflow_composition_status: "Composition saved · next run uses this selection",
+          moonflow_composition_saving: false,
+        },
+      )
+    SavedMoonFlowComposition(Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_composition_status: error,
+          moonflow_composition_saving: false,
+        },
+      )
     LoadedMoonFlowOperatorActions(_, Ok(actions)) =>
       (
         @rabbita.none,

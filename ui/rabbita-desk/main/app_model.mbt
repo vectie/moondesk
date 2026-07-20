@@ -111,6 +111,10 @@ struct Model {
   runs : Array[@desk.DeskRunProjection]
   moonflow_runs : Array[MoonFlowRunProjection]
   moonflow_status : String
+  moonflow_composition : MoonFlowComposition?
+  moonflow_composition_status : String
+  moonflow_composition_saving : Bool
+  moonflow_canvas_zoom : Int
   moonflow_operator_actions : Array[MoonFlowOperatorActions]
   moonflow_operator_action_receipt : MoonFlowOperatorActionReceipt?
   moonflow_operator_action_status : String
@@ -161,6 +165,8 @@ enum Msg {
   LoadedPreview(Result[@desk.DeskPreview, String])
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
   LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
+  LoadedMoonFlowComposition(Result[MoonFlowComposition, String])
+  SavedMoonFlowComposition(Result[MoonFlowComposition, String])
   LoadedMoonFlowOperatorActions(
     String,
     Result[MoonFlowOperatorActions, String],
@@ -225,6 +231,9 @@ enum Msg {
   ControlMoonFlow(String, String, String)
   ExecuteMoonFlowOperatorAction(String, String)
   PrepareMoonFlow
+  ToggleMoonFlowCompositionItem(String)
+  SaveMoonFlowComposition
+  SetMoonFlowCanvasZoom(Int)
   SelectActivity(Activity)
   SelectMoonCodeSession(String)
   NewMoonCodeSession
