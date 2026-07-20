@@ -50,8 +50,20 @@ the desktop browser from navigating to a different origin and avoids exposing a
 general-purpose server-side request proxy. Pack UIs use relative API/media URLs
 so their subresources remain under the mounted route.
 
+Runtime discovery is fail-closed. MoonDesk accepts only the exact
+`moonsuite.pack-app-runtime.v1` contract, normalized lowercase pack ids, an
+absolute traversal-free manifest entrypoint, and a loopback `app_url` that is
+exactly `service_url + entrypoint_path`. Encoded path separators, dot segments,
+userinfo-shaped authorities, remote hosts, and mismatched active-pointer file
+names are rejected before proxying.
+
 The runtime file is deliberately not part of pack installation. Ports and URLs
 are environment/deployment concerns and can change without reinstalling a pack.
+It is durable workspace state rather than daemon memory: MoonDesk rereads the
+active pointer, manifest, and runtime file for every launch request. After a
+MoonDesk restart it therefore recovers the same configuration, while an edited,
+removed, stale, or newly unsafe record fails closed instead of being retained in
+an in-memory cache.
 
 ## Visible operator flow
 

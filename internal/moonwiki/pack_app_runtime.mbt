@@ -9,9 +9,20 @@ fn active_packs_root(workspace_root : String) -> String {
 }
 
 ///|
-fn is_safe_pack_app_url(url : String) -> Bool {
-  let value = url.trim().to_owned().to_lower()
-  value.has_prefix("http://") || value.has_prefix("https://")
+fn is_safe_pack_id(pack_id : String) -> Bool {
+  let value = pack_id.trim().to_owned()
+  if value == "" || value.length() > 64 || value != value.to_lower() {
+    return false
+  }
+  for ch in value {
+    if !(ch.is_ascii_lowercase() ||
+      ch.is_ascii_digit() ||
+      ch == '-' ||
+      ch == '_') {
+      return false
+    }
+  }
+  true
 }
 
 ///|
@@ -32,6 +43,41 @@ fn is_safe_local_pack_service_url(url : String) -> Bool {
 }
 
 ///|
+fn is_safe_pack_route_path(path : String) -> Bool {
+  let value = path.trim().to_owned()
+  if !value.has_prefix("/") ||
+    value.contains("//") ||
+    value.contains("\\") ||
+    value.contains("%") ||
+    value.contains("?") ||
+    value.contains("#") {
+    return false
+  }
+  for ch in value {
+    if ch.is_control() || ch.is_whitespace() {
+      return false
+    }
+  }
+  for segment in path_segments(value) {
+    if segment == "." || segment == ".." {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn is_matching_pack_app_url(
+  app_url : String,
+  service_url : String,
+  entrypoint_path : String,
+) -> Bool {
+  is_safe_local_pack_service_url(service_url) &&
+  is_safe_pack_route_path(entrypoint_path) &&
+  app_url == service_url + entrypoint_path
+}
+
+///|
 fn pack_app_runtime_record(
   active : Json,
   manifest : Json,
@@ -44,30 +90,34 @@ fn pack_app_runtime_record(
   let service_url = json_string(runtime, "service_url", default="")
     .trim()
     .to_owned()
-  if pack_id == "" ||
+  let runtime_contract = json_string(runtime, "contract", default="")
+    .trim()
+    .to_owned()
+  let entrypoints = json_array_items(manifest, "app_entrypoints")
+  if !is_safe_pack_id(pack_id) ||
     manifest_id != pack_id ||
     runtime_id != pack_id ||
-    !is_safe_pack_app_url(app_url) ||
-    !is_safe_local_pack_service_url(service_url) {
-    return None
-  }
-  let entrypoints = json_array_items(manifest, "app_entrypoints")
-  if entrypoints.length() == 0 {
+    runtime_contract != "moonsuite.pack-app-runtime.v1" ||
+    entrypoints.length() == 0 {
     return None
   }
   let first = entrypoints[0]
+  let entrypoint_path = json_string(first, "path", default="").trim().to_owned()
+  if !is_matching_pack_app_url(app_url, service_url, entrypoint_path) {
+    return None
+  }
   Some({
     "pack_id": pack_id,
     "version": json_string(active, "version", default=""),
     "display_name": json_string(manifest, "display_name", default=pack_id),
     "kind": json_string(manifest, "kind", default=""),
     "entrypoint_id": json_string(first, "id", default="app"),
-    "entrypoint_path": json_string(first, "path", default="/"),
+    "entrypoint_path": entrypoint_path,
     "audience": json_string(first, "audience", default="operator"),
     "app_url": app_url,
     "service_url": service_url,
     "launch_url": "/pack-apps/" + pack_id + "/",
-    "runtime_contract": json_string(runtime, "contract", default=""),
+    "runtime_contract": runtime_contract,
     "status": "configured",
   })
 }
@@ -80,7 +130,7 @@ fn pack_app_catalog_record(
 ) -> Json? {
   let pack_id = json_string(active, "pack_id", default="").trim().to_owned()
   let manifest_id = json_string(manifest, "id", default="").trim().to_owned()
-  if pack_id == "" || manifest_id != pack_id {
+  if !is_safe_pack_id(pack_id) || manifest_id != pack_id {
     return None
   }
   let entrypoints = json_array_items(manifest, "app_entrypoints")
@@ -162,7 +212,7 @@ async fn configured_pack_app(
   workspace_root : String,
   pack_id : String,
 ) -> Json? {
-  if pack_id == "" || pack_id == "." || pack_id == ".." || pack_id.contains("/") {
+  if !is_safe_pack_id(pack_id) {
     return None
   }
   let active_path = @pathx.join(
@@ -206,9 +256,18 @@ async fn handle_pack_app_proxy(
     send_status(conn, 405, "Method Not Allowed", "Method Not Allowed\n")
     return
   }
-  let segments = path_segments(strip_query(request_path))
+  let request_route = strip_query(request_path)
+  if !is_safe_pack_route_path(request_route) {
+    send_status(conn, 400, "Bad Request", "Invalid pack application path\n")
+    return
+  }
+  let segments = path_segments(request_route)
   guard segments is ["pack-apps", pack_id, .. rest] else {
     send_status(conn, 404, "Not Found", "Pack application not found\n")
+    return
+  }
+  if !is_safe_pack_id(pack_id) {
+    send_status(conn, 400, "Bad Request", "Invalid pack application path\n")
     return
   }
   guard configured_pack_app(workspace_root, pack_id) is Some(app) else {
@@ -284,7 +343,9 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
     let installed_root = json_string(active, "installed_root", default="")
       .trim()
       .to_owned()
-    if pack_id == "" || installed_root == "" {
+    if !is_safe_pack_id(pack_id) ||
+      name != pack_id + ".json" ||
+      installed_root == "" {
       continue
     }
     let manifest_path = @pathx.join(installed_root, "pack.json")

@@ -39,6 +39,7 @@ test "pack app runtime rejects mismatched ids and unsafe URLs" {
   }
   assert_true(
     pack_app_runtime_record({ "pack_id": "sample" }, manifest, {
+      "contract": "moonsuite.pack-app-runtime.v1",
       "pack_id": "other",
       "app_url": "http://127.0.0.1:4300/app",
       "service_url": "http://127.0.0.1:4300",
@@ -47,6 +48,7 @@ test "pack app runtime rejects mismatched ids and unsafe URLs" {
   )
   assert_true(
     pack_app_runtime_record({ "pack_id": "sample" }, manifest, {
+      "contract": "moonsuite.pack-app-runtime.v1",
       "pack_id": "sample",
       "app_url": "javascript:alert(1)",
       "service_url": "http://127.0.0.1:4300",
@@ -55,6 +57,7 @@ test "pack app runtime rejects mismatched ids and unsafe URLs" {
   )
   assert_true(
     pack_app_runtime_record({ "pack_id": "sample" }, manifest, {
+      "contract": "moonsuite.pack-app-runtime.v1",
       "pack_id": "sample",
       "app_url": "http://127.0.0.1:4300/app",
       "service_url": "http://169.254.169.254:80",
@@ -65,6 +68,58 @@ test "pack app runtime rejects mismatched ids and unsafe URLs" {
     is_safe_local_pack_service_url("http://127.0.0.1:4300@attacker.invalid"),
   )
   assert_false(is_safe_local_pack_service_url("http://127.0.0.1:4300/private"))
+}
+
+///|
+test "pack app runtime pins the contract and app URL to the declared route" {
+  let active : Json = { "pack_id": "sample" }
+  let manifest : Json = {
+    "id": "sample",
+    "app_entrypoints": [{ "id": "app", "path": "/apps/sample" }],
+  }
+  assert_true(
+    pack_app_runtime_record(active, manifest, {
+      "contract": "moonsuite.pack-app-runtime.v2",
+      "pack_id": "sample",
+      "app_url": "http://127.0.0.1:4300/apps/sample",
+      "service_url": "http://127.0.0.1:4300",
+    })
+    is None,
+  )
+  assert_true(
+    pack_app_runtime_record(active, manifest, {
+      "contract": "moonsuite.pack-app-runtime.v1",
+      "pack_id": "sample",
+      "app_url": "http://localhost:4300/apps/sample",
+      "service_url": "http://127.0.0.1:4300",
+    })
+    is None,
+  )
+  assert_true(
+    pack_app_runtime_record(active, manifest, {
+      "contract": "moonsuite.pack-app-runtime.v1",
+      "pack_id": "sample",
+      "app_url": "http://127.0.0.1:4300/admin",
+      "service_url": "http://127.0.0.1:4300",
+    })
+    is None,
+  )
+}
+
+///|
+test "pack app runtime rejects traversal and ambiguous identifiers" {
+  assert_true(is_safe_pack_id("mooncast"))
+  assert_true(is_safe_pack_id("research_pack-2"))
+  assert_false(is_safe_pack_id("../mooncast"))
+  assert_false(is_safe_pack_id("Mooncast"))
+  assert_false(is_safe_pack_id("mooncast%2fadmin"))
+  assert_true(is_safe_pack_route_path("/apps/mooncast/studio"))
+  assert_true(is_safe_pack_route_path("/assets/main.js"))
+  assert_false(is_safe_pack_route_path("//attacker.invalid/app"))
+  assert_false(is_safe_pack_route_path("/apps//admin"))
+  assert_false(is_safe_pack_route_path("/apps/../admin"))
+  assert_false(is_safe_pack_route_path("/apps/%2e%2e/admin"))
+  assert_false(is_safe_pack_route_path("/apps/moon cast"))
 }
 
 ///|
