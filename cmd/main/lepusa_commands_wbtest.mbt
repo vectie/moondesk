@@ -168,6 +168,14 @@ test "lepusa integration bundle paths describe standalone app artifacts" {
 }
 
 ///|
+test "lepusa integration uses the runtime built for release" {
+  assert_eq(
+    lepusa_runtime_build_output("/tmp/lepusa"),
+    "/tmp/lepusa/_build/native/release/build/cmd/runtime/runtime.exe",
+  )
+}
+
+///|
 test "lepusa integration launcher check requires bundled runtime preference" {
   assert_true(
     lepusa_integration_launcher_uses_bundled_runtime(

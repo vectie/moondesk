@@ -85,6 +85,59 @@ async fn copy_moondesk_sidecar(
 }
 
 ///|
+fn lepusa_runtime_build_output(lepusa_root : String) -> String {
+  @pathx.join(
+    lepusa_root, "_build/native/release/build/cmd/runtime/runtime.exe",
+  )
+}
+
+///|
+async fn copy_lepusa_runtime(
+  lepusa_root : String,
+  target : String,
+  out_dir : String,
+) -> Bool {
+  let source = lepusa_runtime_build_output(lepusa_root)
+  let destination = lepusa_integration_bundle_paths(target, out_dir).runtime_executable
+  @fsx.make_directory(
+    @pathx.dirname(destination).to_owned(),
+    recursive=true,
+    exists_ok=true,
+  ) catch {
+    error => {
+      println("lepusa failed: could not create runtime directory: \{error}")
+      return false
+    }
+  }
+  let data = @fs.read_file(source) catch {
+    error => {
+      println("lepusa failed: could not read built Lepusa runtime: \{error}")
+      return false
+    }
+  }
+  @fs.write_file(
+    destination,
+    data,
+    create_mode=CreateOrTruncate,
+    permission=0o755,
+  ) catch {
+    error => {
+      println("lepusa failed: could not bundle Lepusa runtime: \{error}")
+      return false
+    }
+  }
+  @fs.chmod(destination, 0o755) catch {
+    error => {
+      println(
+        "lepusa failed: could not make Lepusa runtime executable: \{error}",
+      )
+      return false
+    }
+  }
+  true
+}
+
+///|
 async fn copy_moondesk_ui_bundle(
   ui_dir : String,
   target : String,
@@ -180,9 +233,11 @@ fn lepusa_integration_bundled_ui_dir(
 ///|
 async fn copy_moondesk_live_bundle_files(
   repo_root : String,
+  lepusa_root : String,
   options : LepusaIntegrationOptions,
   out_dir : String,
 ) -> Bool {
+  copy_lepusa_runtime(lepusa_root, options.target, out_dir) &&
   copy_moondesk_sidecar(repo_root, options.target, out_dir) &&
   copy_moondesk_ui_bundle(options.ui_dir, options.target, out_dir)
 }
@@ -222,7 +277,10 @@ async fn run_lepusa_integration_smoke(
       return
     }
     if step.name == "bundle-write" &&
-      !copy_moondesk_sidecar(repo_root, options.target, out_dir) {
+      (
+        !copy_lepusa_runtime(lepusa_root, options.target, out_dir) ||
+        !copy_moondesk_sidecar(repo_root, options.target, out_dir)
+      ) {
       return
     }
   }
@@ -251,7 +309,7 @@ async fn run_lepusa_integration_live_smoke(
       return
     }
     if step.name == "bundle-write" &&
-      !copy_moondesk_live_bundle_files(repo_root, options, out_dir) {
+      !copy_moondesk_live_bundle_files(repo_root, lepusa_root, options, out_dir) {
       return
     }
   }
@@ -280,7 +338,7 @@ async fn run_lepusa_integration_live_build(
       return
     }
     if step.name == "bundle-write" &&
-      !copy_moondesk_live_bundle_files(repo_root, options, out_dir) {
+      !copy_moondesk_live_bundle_files(repo_root, lepusa_root, options, out_dir) {
       return
     }
   }
@@ -311,7 +369,7 @@ async fn run_lepusa_integration_live_runtime(
       return
     }
     if step.name == "bundle-write" &&
-      !copy_moondesk_live_bundle_files(repo_root, options, out_dir) {
+      !copy_moondesk_live_bundle_files(repo_root, lepusa_root, options, out_dir) {
       return
     }
   }
