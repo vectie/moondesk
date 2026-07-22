@@ -1,11 +1,16 @@
 ///|
 fn bundle_app_root(options : BundleOptions) -> String {
-  @pathx.join(options.out_dir, "moondesk-lepusa.app")
+  @pathx.join(options.out_dir, "MoonDesk.app")
+}
+
+///|
+fn bundle_generated_app_root(options : BundleOptions) -> String {
+  @pathx.join(options.out_dir, "moondesk.app")
 }
 
 ///|
 fn bundle_archive_path(options : BundleOptions) -> String {
-  @pathx.join(options.out_dir, "moondesk-lepusa.app.zip")
+  @pathx.join(options.out_dir, "MoonDesk.app.zip")
 }
 
 ///|

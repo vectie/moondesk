@@ -3,8 +3,9 @@ test "bundle defaults to lepusa native shell" {
   let options = default_bundle_options()
   assert_eq(options.lepusa_root, ".mooncakes/vectie/lepusa")
   assert_eq(bundle_shell_policy(), "lepusa")
-  assert_eq(bundle_app_root(options), "dist/moondesk-lepusa.app")
-  assert_eq(bundle_archive_path(options), "dist/moondesk-lepusa.app.zip")
+  assert_eq(bundle_app_root(options), "dist/MoonDesk.app")
+  assert_eq(bundle_generated_app_root(options), "dist/moondesk.app")
+  assert_eq(bundle_archive_path(options), "dist/MoonDesk.app.zip")
 }
 
 ///|
@@ -17,11 +18,12 @@ test "bundle parser rejects stale shell flags" {
 ///|
 test "bundle paths use lepusa app artifacts" {
   let lepusa = default_bundle_options()
-  assert_eq(bundle_app_root(lepusa), "dist/moondesk-lepusa.app")
-  assert_eq(bundle_archive_path(lepusa), "dist/moondesk-lepusa.app.zip")
+  assert_eq(bundle_app_root(lepusa), "dist/MoonDesk.app")
+  assert_eq(bundle_generated_app_root(lepusa), "dist/moondesk.app")
+  assert_eq(bundle_archive_path(lepusa), "dist/MoonDesk.app.zip")
   assert_eq(
     bundle_runtime_manifest_path(lepusa),
-    "dist/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+    "dist/MoonDesk.app/Contents/Resources/lepusa/runtime.json",
   )
 }
 
@@ -33,11 +35,8 @@ test "lepusa bundle is a native window bundle" {
 
 ///|
 test "bundle path leaf extracts app bundle name" {
-  assert_eq(
-    bundle_path_leaf("/tmp/release/moondesk-lepusa.app"),
-    "moondesk-lepusa.app",
-  )
-  assert_eq(bundle_path_leaf("dist/moondesk-lepusa.app"), "moondesk-lepusa.app")
+  assert_eq(bundle_path_leaf("/tmp/release/MoonDesk.app"), "MoonDesk.app")
+  assert_eq(bundle_path_leaf("dist/MoonDesk.app"), "MoonDesk.app")
 }
 
 ///|

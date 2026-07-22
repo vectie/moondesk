@@ -243,16 +243,58 @@ async fn create_release_dmg(app_root : String, dmg_path : String) -> Bool {
   @fs.remove(dmg_path) catch {
     _ => ()
   }
+  let staging = release_dmg_staging_dir(dmg_path)
+  @fs.rmdir(staging, recursive=true) catch {
+    _ => ()
+  }
+  @fsx.make_directory(staging, recursive=true, exists_ok=true) catch {
+    error => {
+      println("release warning: could not create DMG staging: \{error}")
+      return false
+    }
+  }
+  let staged_app = @pathx.join(staging, bundle_path_leaf(app_root))
+  let copy_code = @process.run("ditto", [app_root, staged_app]) catch {
+    _ => -1
+  }
+  if copy_code != 0 {
+    println("release warning: ditto exited with \{copy_code}")
+    @fs.rmdir(staging, recursive=true) catch {
+      _ => ()
+    }
+    return false
+  }
+  @fs.symlink(
+    target="/Applications",
+    @pathx.join(staging, "Applications"),
+    force_symlink=true,
+  ) catch {
+    error => {
+      println("release warning: could not add Applications shortcut: \{error}")
+      @fs.rmdir(staging, recursive=true) catch {
+        _ => ()
+      }
+      return false
+    }
+  }
   let code = @process.run("hdiutil", [
-    "create", "-volname", "MoonDesk", "-srcfolder", app_root, "-ov", "-format", "UDZO",
+    "create", "-volname", "MoonDesk", "-srcfolder", staging, "-ov", "-format", "UDZO",
     dmg_path,
   ]) catch {
     _ => -1
+  }
+  @fs.rmdir(staging, recursive=true) catch {
+    _ => ()
   }
   if code != 0 {
     println("release warning: hdiutil exited with \{code}")
   }
   code == 0
+}
+
+///|
+fn release_dmg_staging_dir(dmg_path : String) -> String {
+  dmg_path + ".staging"
 }
 
 ///|

@@ -28,7 +28,7 @@ test "lepusa integration args default to strict-free macos verify" {
   assert_string_array_eq(
     lepusa_integration_process_args(
       options, "/repo/desktop/lepusa/moondesk/lepusa.json", "/repo/_build/lepusa/moondesk",
-      "/repo/_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+      "/repo/_build/lepusa/moondesk/moondesk.app/Contents/Resources/lepusa/runtime.json",
     ),
     [
       "run", "cmd/main", "--target", "native", "--", "verify", "macos", "--project",
@@ -51,7 +51,7 @@ test "lepusa integration args accept strict verify with custom roots" {
   assert_eq(options.strict, true)
   assert_string_array_eq(
     lepusa_integration_process_args(
-      options, "/tmp/app/lepusa.json", "/tmp/moondesk-build", "/tmp/moondesk-build/moondesk-lepusa/lepusa/runtime.json",
+      options, "/tmp/app/lepusa.json", "/tmp/moondesk-build", "/tmp/moondesk-build/moondesk/lepusa/runtime.json",
     ),
     [
       "run", "cmd/main", "--target", "native", "--", "verify", "linux", "--strict",
@@ -69,7 +69,7 @@ test "lepusa integration launch maps to Lepusa run launch mode" {
       parsed.unwrap(),
       "/tmp/moondesk/lepusa.json",
       "/tmp/moondesk-build",
-      "/tmp/moondesk-build/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+      "/tmp/moondesk-build/moondesk.app/Contents/Resources/lepusa/runtime.json",
     ),
     [
       "run", "cmd/main", "--target", "native", "--", "run", "macos", "--launch",
@@ -88,7 +88,7 @@ test "lepusa integration doctor skips project arguments" {
       parsed.unwrap(),
       "/ignored/lepusa.json",
       "/tmp/moondesk-build",
-      "/tmp/moondesk-build/moondesk-lepusa/lepusa/runtime.json",
+      "/tmp/moondesk-build/moondesk/lepusa/runtime.json",
     ),
     ["run", "cmd/main", "--target", "native", "--", "doctor", "windows"],
   )
@@ -97,20 +97,20 @@ test "lepusa integration doctor skips project arguments" {
 ///|
 test "lepusa integration build writes the configured output directory" {
   let parsed = parse_lepusa_integration_args([
-    "build", "macos", "--out", "/tmp/moondesk-lepusa-build",
+    "build", "macos", "--out", "/tmp/moondesk-build",
   ])
   assert_true(parsed is Some(_))
   let options = parsed.unwrap()
   assert_eq(options.command, "build")
   assert_eq(options.target, "macos")
-  assert_eq(options.out_dir, "/tmp/moondesk-lepusa-build")
+  assert_eq(options.out_dir, "/tmp/moondesk-build")
   assert_string_array_eq(
     lepusa_integration_process_args(
-      options, "/repo/desktop/lepusa/moondesk/lepusa.json", "/tmp/moondesk-lepusa-build",
-      "/tmp/moondesk-lepusa-build/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+      options, "/repo/desktop/lepusa/moondesk/lepusa.json", "/tmp/moondesk-build",
+      "/tmp/moondesk-build/moondesk.app/Contents/Resources/lepusa/runtime.json",
     ),
     [
-      "run", "cmd/main", "--target", "native", "--", "build", "macos", "/tmp/moondesk-lepusa-build",
+      "run", "cmd/main", "--target", "native", "--", "build", "macos", "/tmp/moondesk-build",
       "--project", "/repo/desktop/lepusa/moondesk/lepusa.json",
     ],
   )
@@ -145,32 +145,26 @@ test "lepusa integration live commands use generated localhost project" {
 ///|
 test "lepusa integration bundle paths describe standalone app artifacts" {
   let macos = lepusa_integration_bundle_paths("macos", "/tmp/out")
-  assert_eq(macos.app_root, "/tmp/out/moondesk-lepusa.app")
-  assert_eq(
-    macos.launcher,
-    "/tmp/out/moondesk-lepusa.app/Contents/MacOS/moondesk-lepusa",
-  )
+  assert_eq(macos.app_root, "/tmp/out/moondesk.app")
+  assert_eq(macos.launcher, "/tmp/out/moondesk.app/Contents/MacOS/moondesk")
   assert_eq(
     macos.runtime_executable,
-    "/tmp/out/moondesk-lepusa.app/Contents/MacOS/lepusa-runtime",
+    "/tmp/out/moondesk.app/Contents/MacOS/lepusa-runtime",
   )
   assert_eq(
     macos.manifest,
-    "/tmp/out/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+    "/tmp/out/moondesk.app/Contents/Resources/lepusa/runtime.json",
   )
   assert_eq(
     macos.entrypoint,
-    "/tmp/out/moondesk-lepusa.app/Contents/Resources/lepusa/assets/main/index.html",
+    "/tmp/out/moondesk.app/Contents/Resources/lepusa/assets/main/index.html",
   )
   let linux = lepusa_integration_bundle_paths("linux", "/tmp/out")
-  assert_eq(linux.launcher, "/tmp/out/moondesk-lepusa/moondesk-lepusa")
-  assert_eq(linux.runtime_executable, "/tmp/out/moondesk-lepusa/lepusa-runtime")
+  assert_eq(linux.launcher, "/tmp/out/moondesk/moondesk")
+  assert_eq(linux.runtime_executable, "/tmp/out/moondesk/lepusa-runtime")
   let windows = lepusa_integration_bundle_paths("windows", "/tmp/out")
-  assert_eq(windows.launcher, "/tmp/out/moondesk-lepusa/moondesk-lepusa.cmd")
-  assert_eq(
-    windows.runtime_executable,
-    "/tmp/out/moondesk-lepusa/lepusa-runtime.exe",
-  )
+  assert_eq(windows.launcher, "/tmp/out/moondesk/moondesk.cmd")
+  assert_eq(windows.runtime_executable, "/tmp/out/moondesk/lepusa-runtime.exe")
 }
 
 ///|
@@ -200,8 +194,7 @@ test "lepusa integration launcher check requires bundled runtime preference" {
 ///|
 test "lepusa integration smoke runs verify bundle and runtime checks" {
   let parsed = parse_lepusa_integration_args([
-    "smoke", "macos", "--strict", "--out", "/tmp/moondesk-lepusa-build", "--asset",
-    "lepusa://packaged/main/app.css",
+    "smoke", "macos", "--strict", "--out", "/tmp/moondesk-build", "--asset", "lepusa://packaged/main/app.css",
   ])
   assert_true(parsed is Some(_))
   let options = parsed.unwrap()
@@ -210,8 +203,8 @@ test "lepusa integration smoke runs verify bundle and runtime checks" {
   assert_eq(options.strict, true)
   assert_eq(options.asset_url, "lepusa://packaged/main/app.css")
   let steps = lepusa_integration_smoke_steps(
-    options, "/repo/desktop/lepusa/moondesk/lepusa.json", "/tmp/moondesk-lepusa-build",
-    "/tmp/moondesk-lepusa-build/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+    options, "/repo/desktop/lepusa/moondesk/lepusa.json", "/tmp/moondesk-build",
+    "/tmp/moondesk-build/moondesk.app/Contents/Resources/lepusa/runtime.json",
   )
   assert_eq(steps.length(), 4)
   assert_eq(steps[0].name, "verify")
@@ -221,18 +214,18 @@ test "lepusa integration smoke runs verify bundle and runtime checks" {
   ])
   assert_eq(steps[1].name, "bundle-write")
   assert_string_array_eq(steps[1].args, [
-    "run", "cmd/main", "--target", "native", "--", "bundle-write", "macos", "/tmp/moondesk-lepusa-build",
+    "run", "cmd/main", "--target", "native", "--", "bundle-write", "macos", "/tmp/moondesk-build",
     "--project", "/repo/desktop/lepusa/moondesk/lepusa.json",
   ])
   assert_eq(steps[2].name, "runtime-session")
   assert_string_array_eq(steps[2].args, [
     "run", "cmd/runtime", "--target", "native", "--", "launch-session", "--manifest",
-    "/tmp/moondesk-lepusa-build/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+    "/tmp/moondesk-build/moondesk.app/Contents/Resources/lepusa/runtime.json",
   ])
   assert_eq(steps[3].name, "runtime-asset")
   assert_string_array_eq(steps[3].args, [
     "run", "cmd/runtime", "--target", "native", "--", "asset", "lepusa://packaged/main/app.css",
-    "--manifest", "/tmp/moondesk-lepusa-build/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+    "--manifest", "/tmp/moondesk-build/moondesk.app/Contents/Resources/lepusa/runtime.json",
   ])
 }
 
@@ -311,7 +304,7 @@ async test "lepusa integration live project honors custom workspace and ui paths
 async test "lepusa integration live project protects source checkout workspace" {
   let repo_root = @pathx.join(
     "/tmp",
-    "moondesk-lepusa-source-root-wbtest-" + @async.now().to_string(),
+    "moondesk-source-root-wbtest-" + @async.now().to_string(),
   )
   @fsx.make_directory(repo_root, recursive=true, exists_ok=true)
   @fsx.write_to_file(@pathx.join(repo_root, "moon.mod"), "name = \"demo\"\n")
@@ -339,7 +332,7 @@ test "lepusa integration live smoke runs generated manifest checks" {
   assert_true(parsed is Some(_))
   let options = parsed.unwrap()
   let steps = lepusa_integration_live_smoke_steps(
-    options, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk-lepusa/lepusa/runtime.json",
+    options, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk/lepusa/runtime.json",
   )
   assert_eq(steps.length(), 3)
   assert_eq(steps[0].name, "verify")
@@ -355,7 +348,7 @@ test "lepusa integration live smoke runs generated manifest checks" {
   assert_eq(steps[2].name, "runtime-session")
   assert_string_array_eq(steps[2].args, [
     "run", "cmd/runtime", "--target", "native", "--", "launch-session", "--manifest",
-    "/tmp/out/moondesk-lepusa/lepusa/runtime.json",
+    "/tmp/out/moondesk/lepusa/runtime.json",
   ])
 }
 
@@ -371,7 +364,7 @@ test "lepusa integration live build writes generated localhost bundle" {
   assert_eq(options.target, "macos")
   assert_eq(options.serve_port, 4514)
   let steps = lepusa_integration_live_build_steps(
-    options, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+    options, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk.app/Contents/Resources/lepusa/runtime.json",
   )
   assert_eq(steps.length(), 2)
   assert_eq(steps[0].name, "verify")
@@ -393,24 +386,24 @@ test "lepusa integration live session and launch use generated runtime manifest"
     "/tmp/out",
   ]).unwrap()
   let session_steps = lepusa_integration_live_runtime_steps(
-    session, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk-lepusa/lepusa/runtime.json",
+    session, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk/lepusa/runtime.json",
   )
   assert_eq(session_steps.length(), 3)
   assert_eq(session_steps[2].name, "runtime-session")
   assert_string_array_eq(session_steps[2].args, [
     "run", "cmd/runtime", "--target", "native", "--", "launch-session", "--manifest",
-    "/tmp/out/moondesk-lepusa/lepusa/runtime.json",
+    "/tmp/out/moondesk/lepusa/runtime.json",
   ])
   let launch = parse_lepusa_integration_args([
     "live-launch", "macos", "--workspace-root", "/tmp/moondesk-suite", "--out", "/tmp/out",
   ]).unwrap()
   let launch_steps = lepusa_integration_live_runtime_steps(
-    launch, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+    launch, "/tmp/out/live-project/lepusa.json", "/tmp/out", "/tmp/out/moondesk.app/Contents/Resources/lepusa/runtime.json",
   )
   assert_eq(launch_steps.length(), 3)
   assert_eq(launch_steps[2].name, "runtime-launch")
   assert_string_array_eq(launch_steps[2].args, [
-    "run", "cmd/runtime", "--target", "native", "--", "launch", "--manifest", "/tmp/out/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+    "run", "cmd/runtime", "--target", "native", "--", "launch", "--manifest", "/tmp/out/moondesk.app/Contents/Resources/lepusa/runtime.json",
   ])
 }
 
@@ -424,7 +417,7 @@ test "lepusa integration asset resolves the packaged entrypoint by default" {
   assert_string_array_eq(
     lepusa_integration_process_args(
       options, "/repo/desktop/lepusa/moondesk/lepusa.json", "/repo/_build/lepusa/moondesk",
-      "/repo/_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+      "/repo/_build/lepusa/moondesk/moondesk.app/Contents/Resources/lepusa/runtime.json",
     ),
     [
       "run", "cmd/main", "--target", "native", "--", "asset", "lepusa://packaged/main/index.html",
@@ -442,11 +435,11 @@ test "lepusa integration runtime session uses the generated bundle manifest" {
       parsed.unwrap(),
       "/repo/desktop/lepusa/moondesk/lepusa.json",
       "/repo/_build/lepusa/moondesk",
-      "/repo/_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+      "/repo/_build/lepusa/moondesk/moondesk.app/Contents/Resources/lepusa/runtime.json",
     ),
     [
       "run", "cmd/runtime", "--target", "native", "--", "launch-session", "--manifest",
-      "/repo/_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+      "/repo/_build/lepusa/moondesk/moondesk.app/Contents/Resources/lepusa/runtime.json",
     ],
   )
 }
@@ -460,10 +453,10 @@ test "lepusa integration runtime launch opens the generated bundle manifest" {
       parsed.unwrap(),
       "/repo/desktop/lepusa/moondesk/lepusa.json",
       "/repo/_build/lepusa/moondesk",
-      "/repo/_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+      "/repo/_build/lepusa/moondesk/moondesk.app/Contents/Resources/lepusa/runtime.json",
     ),
     [
-      "run", "cmd/runtime", "--target", "native", "--", "launch", "--manifest", "/repo/_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
+      "run", "cmd/runtime", "--target", "native", "--", "launch", "--manifest", "/repo/_build/lepusa/moondesk/moondesk.app/Contents/Resources/lepusa/runtime.json",
     ],
   )
 }

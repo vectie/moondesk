@@ -189,10 +189,10 @@ fn lepusa_integration_bundle_paths(
   out_dir : String,
 ) -> LepusaIntegrationBundlePaths {
   if target == "macos" {
-    let app_root = @pathx.join(out_dir, "moondesk-lepusa.app")
+    let app_root = @pathx.join(out_dir, "moondesk.app")
     {
       app_root,
-      launcher: @pathx.join(app_root, "Contents/MacOS/moondesk-lepusa"),
+      launcher: @pathx.join(app_root, "Contents/MacOS/moondesk"),
       runtime_executable: @pathx.join(app_root, "Contents/MacOS/lepusa-runtime"),
       manifest: @pathx.join(app_root, "Contents/Resources/lepusa/runtime.json"),
       entrypoint: @pathx.join(
@@ -201,24 +201,24 @@ fn lepusa_integration_bundle_paths(
       platform_metadata: @pathx.join(app_root, "Contents/Info.plist"),
     }
   } else if target == "windows" {
-    let app_root = @pathx.join(out_dir, "moondesk-lepusa")
+    let app_root = @pathx.join(out_dir, "moondesk")
     {
       app_root,
-      launcher: @pathx.join(app_root, "moondesk-lepusa.cmd"),
+      launcher: @pathx.join(app_root, "moondesk.cmd"),
       runtime_executable: @pathx.join(app_root, "lepusa-runtime.exe"),
       manifest: @pathx.join(app_root, "lepusa/runtime.json"),
       entrypoint: @pathx.join(app_root, "lepusa/assets/main/index.html"),
       platform_metadata: @pathx.join(app_root, "app.manifest.xml"),
     }
   } else {
-    let app_root = @pathx.join(out_dir, "moondesk-lepusa")
+    let app_root = @pathx.join(out_dir, "moondesk")
     {
       app_root,
-      launcher: @pathx.join(app_root, "moondesk-lepusa"),
+      launcher: @pathx.join(app_root, "moondesk"),
       runtime_executable: @pathx.join(app_root, "lepusa-runtime"),
       manifest: @pathx.join(app_root, "lepusa/runtime.json"),
       entrypoint: @pathx.join(app_root, "lepusa/assets/main/index.html"),
-      platform_metadata: @pathx.join(app_root, "moondesk-lepusa.desktop"),
+      platform_metadata: @pathx.join(app_root, "moondesk.desktop"),
     }
   }
 }

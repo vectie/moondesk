@@ -208,7 +208,7 @@ MoonDesk code.
 ## Native App
 
 `cmd/main bundle` now defaults to the Lepusa-native host path. It creates
-`moondesk-lepusa.app` with:
+`MoonDesk.app` with:
 
 - a bundled Lepusa runtime
 - a generated `lepusa/runtime.json`

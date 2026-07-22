@@ -55,7 +55,7 @@ fn lepusa_integration_live_project_json(
   let icon = @pathx.join(repo_root, "assets/moondesk.icns")
   {
     "identifier": "app.vectie.moondesk.lepusa.live",
-    "productName": "MoonDesk Lepusa",
+    "productName": "MoonDesk",
     "version": "0.1.0",
     "icon": icon,
     "signing": { "identity": "-" },

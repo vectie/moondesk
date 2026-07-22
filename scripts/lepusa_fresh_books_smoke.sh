@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(CDPATH= cd -- "${SCRIPT_DIR}/.." && pwd)"
-ROOT="$(mktemp -d "${TMPDIR:-/tmp}/moondesk-lepusa-books.XXXXXX")"
+ROOT="$(mktemp -d "${TMPDIR:-/tmp}/moondesk-books.XXXXXX")"
 MOON_BIN="${MOON:-moon}"
 SCENARIO="${1:-all}"
 UI_DIST="${REPO_ROOT}/ui/rabbita-desk/dist"
@@ -50,8 +50,8 @@ run_lepusa_smoke() {
   port="$(random_port)"
   out="${suite_root}/lepusa"
   live_project="${out}/live-project/lepusa.json"
-  manifest="${out}/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json"
-  sidecar="${out}/moondesk-lepusa.app/Contents/MacOS/moondesk-sidecar"
+  manifest="${out}/moondesk.app/Contents/Resources/lepusa/runtime.json"
+  sidecar="${out}/moondesk.app/Contents/MacOS/moondesk-sidecar"
 
   mkdir -p "${suite_root}"
 

@@ -542,10 +542,8 @@ fn lepusa_integration_runtime_manifest_path(
   out_dir : String,
 ) -> String {
   if target == "macos" {
-    @pathx.join(
-      out_dir, "moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
-    )
+    @pathx.join(out_dir, "moondesk.app/Contents/Resources/lepusa/runtime.json")
   } else {
-    @pathx.join(out_dir, "moondesk-lepusa/lepusa/runtime.json")
+    @pathx.join(out_dir, "moondesk/lepusa/runtime.json")
   }
 }

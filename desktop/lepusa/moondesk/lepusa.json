@@ -1,6 +1,6 @@
 {
   "identifier": "app.vectie.moondesk.lepusa",
-  "productName": "MoonDesk Lepusa",
+  "productName": "MoonDesk",
   "version": "0.1.0",
   "runtime": {
     "backend": "system-webview",

@@ -19,11 +19,23 @@ async fn run_bundle(args : Array[String]) -> Unit {
     lepusa_root: absolute_path(options.lepusa_root, repo_root),
   }
   let app_root = bundle_app_root(options)
+  let generated_app_root = bundle_generated_app_root(options)
   @fs.rmdir(app_root, recursive=true) catch {
+    _ => ()
+  }
+  @fs.rmdir(generated_app_root, recursive=true) catch {
     _ => ()
   }
   let args = bundle_lepusa_args(options)
   run_lepusa_integration(args)
+  if @fsx.exists(generated_app_root) {
+    @fs.rename(generated_app_root, app_root, replace=true) catch {
+      error => {
+        println("bundle failed: could not name app MoonDesk.app: \{error}")
+        return
+      }
+    }
+  }
   if !@fsx.exists(app_root) {
     println("bundle failed: Lepusa app bundle was not created at \{app_root}")
     return

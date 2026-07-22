@@ -50,7 +50,7 @@ root:
 scripts/lepusa_fresh_books_smoke.sh
 ```
 
-`bundle` is Lepusa-only. It builds `moondesk-lepusa.app` under the selected
+`bundle` is Lepusa-only. It builds `MoonDesk.app` under the selected
 `--out` directory, starts from the generated localhost manifest, and forwards
 the bundle workspace/UI choices into that manifest:
 
@@ -126,7 +126,7 @@ moon run cmd/main --target native -- lepusa verify macos --lepusa /path/to/lepus
 `_build/lepusa/moondesk`, which stays out of source control. Override it with:
 
 ```bash
-moon run cmd/main --target native -- lepusa live-build macos --workspace-root /path/to/moonsuite --out /tmp/moondesk-lepusa
+moon run cmd/main --target native -- lepusa live-build macos --workspace-root /path/to/moonsuite --out /tmp/moondesk
 ```
 
 `asset` resolves the packaged integration entrypoint by default:
@@ -146,13 +146,13 @@ After `build` or `live-build`, `runtime-session`, `runtime-launch`, and
 path is:
 
 ```text
-_build/lepusa/moondesk/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json
+_build/lepusa/moondesk/moondesk.app/Contents/Resources/lepusa/runtime.json
 ```
 
 Override it with `--manifest` when checking another built bundle.
 
 `build` first builds Lepusa's `cmd/runtime` binary, then writes the packaged
-static MoonDesk Lepusa app. `live-build` builds the same native bundle shape but
+static MoonDesk app. `live-build` builds the same native bundle shape but
 uses the generated localhost manifest so the app opens the current MoonDesk
 workspace server. On macOS the generated `.app` includes
 `Contents/MacOS/lepusa-runtime`, so the launcher no longer depends on a globally
@@ -163,7 +163,7 @@ Run the generated app executable directly when you want to open the native
 window without going through the wrapper:
 
 ```bash
-_build/lepusa/moondesk/moondesk-lepusa.app/Contents/MacOS/moondesk-lepusa
+_build/lepusa/moondesk/moondesk.app/Contents/MacOS/moondesk
 ```
 
 Equivalent wrapper command:
@@ -178,6 +178,6 @@ This is a standalone adapter, not a UI migration:
 
 - MoonDesk owns the product workflow and existing server/runtime.
 - Lepusa owns native WebView planning, launch readiness, and bundle contracts.
-- The MoonDesk Lepusa app is app-neutral and contains no MoonBook or domain-specific
+- The MoonDesk app is app-neutral and contains no MoonBook or domain-specific
   logic.
 - The existing Rabbita UI package is not modified by this integration.
