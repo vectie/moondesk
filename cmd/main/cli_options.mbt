@@ -35,20 +35,26 @@ fn default_serve_options() -> ServeOptions {
 
 ///|
 fn default_workspace_root() -> String {
-  default_workspace_root_from_env_and_home(
+  default_workspace_root_from_environment(
     @sys.get_env_var("MOONDESK_WORKSPACE_ROOT").unwrap_or(""),
+    @sys.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
     @sys.get_env_var("HOME").unwrap_or(""),
   )
 }
 
 ///|
-fn default_workspace_root_from_env_and_home(
+fn default_workspace_root_from_environment(
   override_root : String,
+  app_data_root : String,
   home_root : String,
 ) -> String {
   let override_root = override_root.trim().to_owned()
   if override_root != "" {
     return @pathx.normalize(override_root)
+  }
+  let app_data_root = app_data_root.trim().to_owned()
+  if app_data_root != "" {
+    return @pathx.join(app_data_root, "workspace")
   }
   default_moonsuite_workspace_root_from_home(home_root)
 }

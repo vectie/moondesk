@@ -14,7 +14,7 @@ async test "release manifest describes lepusa runtime artifact" {
     "/tmp/release/moondesk-lepusa.app",
     "/tmp/release/moondesk-lepusa.app.zip",
     "/tmp/release/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
-    "/tmp/release/MoonDesk-1.2.3.dmg",
+    "/tmp/release/moondesk-1.2.3-macos-arm64.dmg",
     "/tmp/release/updates.json",
     "",
     signed=false,
@@ -41,7 +41,7 @@ async test "update manifest includes runtime manifest artifact" {
     options,
     "/tmp/release/moondesk-lepusa.app.zip",
     "/tmp/release/moondesk-lepusa.app/Contents/Resources/lepusa/runtime.json",
-    "/tmp/release/MoonDesk-1.2.3.dmg",
+    "/tmp/release/moondesk-1.2.3-macos-arm64.dmg",
     dmg_created=false,
     notarized=false,
   )
@@ -50,4 +50,9 @@ async test "update manifest includes runtime manifest artifact" {
   assert_true(text.contains("\"native_window\":true"))
   assert_true(text.contains("\"kind\":\"runtime-manifest\""))
   assert_true(text.contains("Contents/Resources/lepusa/runtime.json"))
+}
+
+///|
+test "release DMG name includes platform and architecture" {
+  assert_eq(release_dmg_file_name("0.1.0"), "moondesk-0.1.0-macos-arm64.dmg")
 }

@@ -51,16 +51,18 @@ fn lepusa_integration_live_project_json(
   repo_root : String,
 ) -> Json {
   let host = "127.0.0.1"
-  let out_dir = absolute_path(options.out_dir, repo_root)
-  let sidecar = lepusa_integration_sidecar_path(options.target, out_dir)
-  let bundled_ui_dir = lepusa_integration_bundled_ui_dir(
-    options.target,
-    out_dir,
-  )
+  let sidecar = moondesk_sidecar_build_output(repo_root)
+  let icon = @pathx.join(repo_root, "assets/moondesk.icns")
   {
     "identifier": "app.vectie.moondesk.lepusa.live",
     "productName": "MoonDesk Lepusa",
     "version": "0.1.0",
+    "icon": icon,
+    "signing": { "identity": "-" },
+    "bundleResources": [
+      { "source": sidecar, "path": "moondesk-sidecar", "executable": true },
+      { "source": options.ui_dir, "path": "lepusa/assets/main" },
+    ],
     "runtime": {
       "backend": "system-webview",
       "assetProtocol": "lepusa",
@@ -79,11 +81,10 @@ fn lepusa_integration_live_project_json(
           "path": "/",
           "readinessPath": @moonwiki.moondesk_health_path(),
           "command": [
-            sidecar,
+            "moondesk-sidecar",
             "serve",
-            options.workspace_root,
             "--ui",
-            bundled_ui_dir,
+            "lepusa/assets/main",
             "--host",
             host,
             "--port",

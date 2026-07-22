@@ -52,7 +52,7 @@ async fn run_release(args : Array[String]) -> Unit {
   let app_root = bundle_app_root(parsed)
   let archive_path = bundle_archive_path(parsed)
   let runtime_manifest_path = bundle_runtime_manifest_path(parsed)
-  let dmg_path = @pathx.join(out_dir, "MoonDesk-\{parsed.version}.dmg")
+  let dmg_path = @pathx.join(out_dir, release_dmg_file_name(parsed.version))
   let update_manifest_path = @pathx.join(out_dir, "updates.json")
   if !@fsx.exists(app_root) {
     println("release failed: app bundle was not created")
@@ -133,6 +133,11 @@ async fn run_release(args : Array[String]) -> Unit {
   println(
     "release complete: \{app_root} (\{bundle_shell_policy()}, signed=\{signed}, notarized=\{notarized}, dmg=\{dmg_created})",
   )
+}
+
+///|
+fn release_dmg_file_name(version : String) -> String {
+  "moondesk-\{version}-macos-arm64.dmg"
 }
 
 ///|

@@ -1,18 +1,18 @@
 ///|
 test "default workspace root uses explicit override before home moonsuite" {
   assert_eq(
-    default_workspace_root_from_env_and_home("", "/Users/alice"),
+    default_workspace_root_from_environment("", "", "/Users/alice"),
     "/Users/alice/moonsuite",
   )
   assert_eq(
-    default_workspace_root_from_env_and_home(
-      "/Volumes/Data/MoonDesk", "/Users/alice",
+    default_workspace_root_from_environment(
+      "/Volumes/Data/MoonDesk", "", "/Users/alice",
     ),
     "/Volumes/Data/MoonDesk",
   )
   assert_eq(
-    default_workspace_root_from_env_and_home(
-      "  /tmp/moondesk-library  ", "/Users/alice",
+    default_workspace_root_from_environment(
+      "  /tmp/moondesk-library  ", "", "/Users/alice",
     ),
     "/tmp/moondesk-library",
   )
@@ -22,12 +22,29 @@ test "default workspace root uses explicit override before home moonsuite" {
 }
 
 ///|
+test "default workspace root uses Lepusa app data for installed desktop app" {
+  assert_eq(
+    default_workspace_root_from_environment(
+      "", "/Users/alice/Library/Application Support/app.vectie.moondesk", "/Users/alice",
+    ),
+    "/Users/alice/Library/Application Support/app.vectie.moondesk/workspace",
+  )
+  assert_eq(
+    default_workspace_root_from_environment(
+      "/Users/alice/moonsuite", "/Users/alice/Library/Application Support/app.vectie.moondesk",
+      "/Users/alice",
+    ),
+    "/Users/alice/moonsuite",
+  )
+}
+
+///|
 async test "first initialization creates default MoonSuite root" {
   let home = @pathx.join(
     "/tmp",
     "moondesk-default-home-wbtest-" + @async.now().to_string(),
   )
-  let root = default_workspace_root_from_env_and_home("", home)
+  let root = default_workspace_root_from_environment("", "", home)
   assert_eq(root, @pathx.join(home, "moonsuite"))
   assert_false(@fs.exists(root))
   assert_true(prepare_moondesk_workspace_root(root))

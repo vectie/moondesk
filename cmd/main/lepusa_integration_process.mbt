@@ -2,7 +2,7 @@
 async fn build_lepusa_runtime(lepusa_root : String) -> Bool {
   let build_code = @process.run(
     "moon",
-    ["build", "cmd/runtime", "--target", "native"],
+    ["build", "cmd/runtime", "--target", "native", "--release"],
     cwd=lepusa_root,
   ) catch {
     error => {
@@ -22,7 +22,7 @@ async fn build_lepusa_runtime(lepusa_root : String) -> Bool {
 async fn build_moondesk_sidecar(repo_root : String) -> Bool {
   let build_code = @process.run(
     "moon",
-    ["build", "cmd/main", "--target", "native"],
+    ["build", "cmd/main", "--target", "native", "--release"],
     cwd=repo_root,
   ) catch {
     error => {
@@ -189,7 +189,7 @@ async fn copy_moondesk_live_bundle_files(
 
 ///|
 fn moondesk_sidecar_build_output(repo_root : String) -> String {
-  @pathx.join(repo_root, "_build/native/debug/build/cmd/main/main.exe")
+  @pathx.join(repo_root, "_build/native/release/build/cmd/main/main.exe")
 }
 
 ///|
