@@ -194,7 +194,6 @@ fn render_wiki_bootstrap_suite_summary(model : Model) -> @rabbita.Html {
       ]),
       small(workspace_library_count_label(model)),
       code(workspace_books_display_label(model)),
-      render_desk_product_summary(model),
     ],
   )
 }

@@ -98,11 +98,11 @@ fn render_moongate_setup(
       div(class="moongate-card-head", [
         div([p(class="eyebrow", "AI boundary"), strong("MoonGate")]),
         span(
-          class=if ready { "status-pill ready" } else { "status-pill" },
+          class=if ready { "status-pill ready" } else { "status-pill warning" },
           if ready {
             "Ready"
           } else {
-            "Setup"
+            "Setup needed"
           },
         ),
       ]),

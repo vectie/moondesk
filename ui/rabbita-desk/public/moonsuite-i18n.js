@@ -670,6 +670,10 @@ function translate(root) {
   }
 }
 
+function systemLanguageLabel() {
+  return selectedLocale() === "zh-Hans" ? "系统语言" : "System language";
+}
+
 function installSelector() {
   if (document.getElementById("moonsuite-language")) return;
   const label = document.createElement("label");
@@ -684,7 +688,7 @@ function installSelector() {
   const select = document.createElement("select");
   select.setAttribute("aria-label", languageLabel);
   select.style.cssText = "border:0;background:transparent;color:#0f172a;font:600 13px system-ui;cursor:pointer";
-  select.innerHTML = '<option value="system">System / 跟随系统</option><option value="en-US">English</option><option value="zh-Hans">简体中文</option>';
+  select.innerHTML = `<option value="system">${systemLanguageLabel()}</option><option value="en-US">English</option><option value="zh-Hans">简体中文</option>`;
   select.value = selectedPreference();
   select.addEventListener("change", () => storeLocale(select.value));
   label.append(select);

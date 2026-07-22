@@ -2503,6 +2503,35 @@ details[open] > .desk-disclosure-summary::after {
   border-color: color-mix(in srgb, var(--success) 45%, var(--line));
 }
 
+.moongate-card.blocked {
+  border-color: color-mix(in srgb, var(--yellow) 52%, var(--line));
+  background: color-mix(in srgb, var(--bg-panel) 92%, var(--yellow) 8%);
+}
+
+.moongate-card.blocked .eyebrow {
+  color: var(--yellow);
+}
+
+.status-pill {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.status-pill.ready {
+  border-color: color-mix(in srgb, var(--green) 38%, var(--line));
+  color: var(--green);
+}
+
+.status-pill.warning {
+  border-color: color-mix(in srgb, var(--yellow) 42%, var(--line));
+  background: color-mix(in srgb, var(--bg-panel) 88%, var(--yellow) 12%);
+  color: var(--yellow);
+}
+
 .moongate-card-head,
 .flow-section-heading,
 .flow-handoff-card > div:first-child {

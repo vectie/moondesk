@@ -92,6 +92,8 @@
   touch-action: none;
   background: #f7f9fb;
   outline: none;
+  -webkit-app-region: no-drag;
+  user-select: none;
 }
 
 .flow-viewport:active {
@@ -105,6 +107,7 @@
   width: 4800px;
   height: 3200px;
   transform-origin: 0 0;
+  will-change: transform;
   background-image: radial-gradient(circle, #dde4ec 1.2px, transparent 1.2px);
   background-size: 26px 26px;
 }
@@ -144,6 +147,8 @@
   flex-direction: column;
   gap: 6px;
   transition: box-shadow 0.15s ease, opacity 0.15s ease;
+  -webkit-app-region: no-drag;
+  will-change: left, top;
 }
 
 .flow-node.excluded {
@@ -154,6 +159,7 @@
 .flow-node.dragging {
   box-shadow: 0 14px 34px rgba(23, 38, 63, 0.22);
   z-index: 6;
+  transition: none;
 }
 
 .flow-node-grip {
@@ -300,6 +306,36 @@
 
 .flow-canvas-hint button {
   pointer-events: auto;
+}
+
+/* Keep the language preference aligned with the title-bar command control. */
+#moonsuite-language {
+  top: 13px !important;
+  right: 132px !important;
+  bottom: auto !important;
+  height: 30px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#moonsuite-language select {
+  height: 30px;
+  min-height: 30px;
+  max-width: 132px;
+  padding: 0 28px 0 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: var(--bg-panel) !important;
+  color: var(--muted) !important;
+  font: 600 12px var(--font-ui) !important;
+}
+
+#moonsuite-language select:hover {
+  border-color: var(--line-strong) !important;
+  color: var(--ink) !important;
 }
 
 /* ---------- Wiki library pane ---------- */

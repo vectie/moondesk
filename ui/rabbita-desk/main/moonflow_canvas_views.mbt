@@ -143,24 +143,19 @@ fn render_flow_canvas_node(
     style=["left: " + flow_px(x), "top: " + flow_px(y)],
     attrs=@html.Attrs::build()
       .data_set("work-item-id", item.work_item_id)
-      .data_set("product-id", item.product_id),
+      .data_set("product-id", item.product_id)
+      .on_mousedown(fn(event) {
+        event.stop_propagation()
+        @rabbita.none
+      }),
     [
       div(
         class="flow-node-grip",
         title="Drag to move this node",
         attrs=@html.Attrs::build()
           .aria_label("Move node " + item.work_item_id)
-          .draggable("true")
           .on_mousedown(fn(event) {
-            dispatch(
-              FlowNodeDragStart(
-                item.work_item_id,
-                event.get_client_x(),
-                event.get_client_y(),
-              ),
-            )
-          })
-          .on_dragstart(fn(event) {
+            event.prevent_default()
             event.stop_propagation()
             dispatch(
               FlowNodeDragStart(
@@ -169,8 +164,7 @@ fn render_flow_canvas_node(
                 event.get_client_y(),
               ),
             )
-          })
-          .on_dragend(fn(_event) { dispatch(FlowPanEnd) }),
+          }),
         [span("⠿")],
       ),
       div(class="flow-node-head", [
@@ -368,7 +362,6 @@ fn render_flow_canvas_viewport(
       .role("region")
       .aria_label("MoonFlow infinite composition canvas")
       .data_set("testid", "moonflow-composition-canvas")
-      .draggable("true")
       .on_wheel(fn(event) {
         event.prevent_default()
         dispatch(
@@ -380,16 +373,9 @@ fn render_flow_canvas_viewport(
         )
       })
       .on_mousedown(fn(event) {
-        dispatch(FlowPanStart(event.get_client_x(), event.get_client_y()))
-      })
-      .on_dragstart(fn(event) {
-        dispatch(FlowPanStart(event.get_client_x(), event.get_client_y()))
-      })
-      .on_dragover(fn(event) {
         event.prevent_default()
-        dispatch(FlowPanMove(event.get_client_x(), event.get_client_y()))
+        dispatch(FlowPanStart(event.get_client_x(), event.get_client_y()))
       })
-      .on_dragend(fn(_event) { dispatch(FlowPanEnd) })
       .on_mousemove(fn(event) {
         dispatch(FlowPanMove(event.get_client_x(), event.get_client_y()))
       })

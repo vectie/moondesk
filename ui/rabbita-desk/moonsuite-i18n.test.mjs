@@ -5,7 +5,7 @@ import vm from "node:vm";
 
 const source = fs.readFileSync(new URL("./public/moonsuite-i18n.js", import.meta.url), "utf8");
 
-function runtime() {
+function runtime(search = "?locale=zh-Hans") {
   const context = {
     URLSearchParams,
     document: {
@@ -17,13 +17,13 @@ function runtime() {
       getItem() { return null; },
       setItem() {},
     },
-    location: { search: "?locale=zh-Hans", reload() {} },
+    location: { search, reload() {} },
     navigator: { language: "en-US", languages: ["en-US"] },
     window: { name: "" },
   };
   vm.createContext(context);
   vm.runInContext(
-    `${source}\nglobalThis.translateTextForTest = translateText;\nglobalThis.translateAttributeForTest = translateAttribute;`,
+    `${source}\nglobalThis.translateTextForTest = translateText;\nglobalThis.translateAttributeForTest = translateAttribute;\nglobalThis.systemLanguageLabelForTest = systemLanguageLabel;`,
     context,
   );
   return context;
@@ -41,4 +41,9 @@ test("accessibility attributes only use exact translations", () => {
     context.translateAttributeForTest("Search MoonCode sessions"),
     "Search MoonCode sessions",
   );
+});
+
+test("system language choice uses one locale instead of a bilingual label", () => {
+  assert.equal(runtime("?locale=en-US").systemLanguageLabelForTest(), "System language");
+  assert.equal(runtime("?locale=zh-Hans").systemLanguageLabelForTest(), "系统语言");
 });

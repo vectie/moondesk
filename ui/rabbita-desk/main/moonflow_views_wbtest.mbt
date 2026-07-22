@@ -105,6 +105,49 @@ test "Flow canvas drag pans by the pointer delta" {
 }
 
 ///|
+test "Flow node drag exclusively claims the canvas gesture" {
+  let item : MoonFlowCompositionItem = {
+    work_item_id: "research",
+    declaration_id: "decl-research",
+    product_id: "moonwiki",
+    requested_authority: "knowledge-write",
+    acceptance_criteria: ["sources are reviewed"],
+    depends_on: [],
+    operation: "research",
+    input_contracts: [],
+    output_contracts: [],
+    required_claim: "",
+    input_artifacts: [],
+    timeout_ms: 30000,
+  }
+  let model = {
+    ..init_model(),
+    moonflow_composition: Some({
+      contract_id: "composition-v1",
+      workspace_id: "book-demo",
+      source_graph_id: "graph-1",
+      book_id: "demo",
+      declaration_revision: "1",
+      source_digest: "digest",
+      status: "draft",
+      selected_item_ids: ["research"],
+      items: [item],
+    }),
+  }
+  let (_, dragging) = flow_node_drag_start_action(model, "research", 100, 80)
+  assert_eq(dragging.flow_drag_node_id, "research")
+  assert_false(dragging.flow_pan_dragging)
+  let (_, still_dragging) = flow_pan_start_action(dragging, 100, 80)
+  assert_eq(still_dragging.flow_drag_node_id, "research")
+  assert_false(still_dragging.flow_pan_dragging)
+  let (old_x, old_y) = flow_item_position(model, [item][0:1], "research")
+  let (_, moved) = flow_pointer_move_action(still_dragging, 132, 104)
+  let (new_x, new_y) = flow_item_position(moved, [item][0:1], "research")
+  assert_eq(new_x, old_x + 32.0)
+  assert_eq(new_y, old_y + 24.0)
+}
+
+///|
 test "Flow import status keeps the durable run or next action visible" {
   let decoded : MoonFlowImportResult = @json.from_json({
     "book_id": "book-demo",

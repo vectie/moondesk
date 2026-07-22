@@ -44,11 +44,11 @@ function installMoonDeskShellStartup() {
   document.addEventListener('keydown', (event) => {
     if (!(event.metaKey || event.ctrlKey) || event.shiftKey) return
     const target = {
-      '1': 'mode-packs',
-      '2': 'mode-desk',
-      '3': 'mode-wiki',
-      '4': 'mode-code',
-      '5': 'mode-flow',
+      '1': 'mode-desk',
+      '2': 'mode-wiki',
+      '3': 'mode-code',
+      '4': 'mode-flow',
+      '5': 'mode-packs',
       'k': 'command-palette-toggle',
     }[String(event.key || '').toLowerCase()]
     if (!target) return
