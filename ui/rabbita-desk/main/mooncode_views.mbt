@@ -698,7 +698,7 @@ fn render_mooncode_runtime_setup(
               if daemon.service_configured {
                 "Start the installed workspace worker, then retry your saved request."
               } else {
-                "Enable the installed MoonClaw product from MoonGate; no path or service file editing is required here."
+                "Install MoonClaw directly with MoonDesk. Connect MoonGate separately when you want to use a provider managed there."
               },
             ),
           ]),
@@ -712,14 +712,32 @@ fn render_mooncode_runtime_setup(
               "Start and retry",
             )
           } else {
-            button(
-              class="secondary-button compact-button",
-              attrs=@html.Attrs::build().data_set(
-                "testid", "mooncode-open-moongate",
+            div(class="mooncode-runtime-install", [
+              button(
+                class="primary-button compact-button",
+                attrs=@html.Attrs::build().data_set(
+                  "testid", "mooncode-install-moonclaw",
+                ),
+                disabled=model.moonclaw_installing,
+                on_click=dispatch(ManageMoonClaw("install")),
+                if model.moonclaw_installing {
+                  "Installing MoonClaw…"
+                } else {
+                  "Install MoonClaw"
+                },
               ),
-              on_click=dispatch(SelectWorkspaceMode(Desk)),
-              "Open MoonGate setup",
-            )
+              if model.moonclaw_installing {
+                progress(
+                  class="moonclaw-install-progress-bar",
+                  attrs=@html.Attrs::build().data_set(
+                    "testid", "mooncode-install-progress",
+                  ),
+                  "Installing MoonClaw",
+                )
+              } else {
+                @html.nothing
+              },
+            ])
           },
         ],
       )

@@ -1278,3 +1278,9 @@
   margin: 3px 0 0;
   color: var(--muted);
 }
+
+.mooncode-runtime-install {
+  display: grid;
+  min-width: min(220px, 100%);
+  gap: 8px;
+}

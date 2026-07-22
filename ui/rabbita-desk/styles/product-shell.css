@@ -2552,6 +2552,35 @@ details[open] > .desk-disclosure-summary::after {
   margin-top: 9px;
 }
 
+.moonclaw-install-progress {
+  display: grid;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.moonclaw-install-progress-bar {
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  accent-color: var(--accent);
+}
+
+.moonclaw-install-progress-bar::-webkit-progress-bar {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 72%, transparent);
+}
+
+.moonclaw-install-progress-bar:indeterminate::-webkit-progress-value {
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--blue));
+}
+
+.status-line.success {
+  color: var(--success);
+}
+
 .moongate-details {
   margin-top: 9px;
   font-size: 0.85rem;

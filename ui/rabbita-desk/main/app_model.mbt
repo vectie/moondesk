@@ -85,6 +85,7 @@ struct Model {
   launch_agent : LaunchAgentResult?
   moonclaw_daemon : MoonClawDaemonStatus?
   moonclaw_installing : Bool
+  moonclaw_install_feedback : String
   mooncode_sessions : Array[MoonCodeSession]
   mooncode_archived_sessions : Array[MoonCodeSession]
   selected_mooncode_session_id : String

@@ -114,6 +114,14 @@ fn render_moongate_setup(
         },
       ),
       match daemon {
+        Some(status) if status.running && model.moonclaw_install_feedback != "" =>
+          p(
+            class="status-line success",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "moonclaw-install-success")
+              .aria_live("polite"),
+            model.moonclaw_install_feedback,
+          )
         Some(status) if !status.running && status.service_configured =>
           button(
             class="primary-button full",
@@ -147,6 +155,24 @@ fn render_moongate_setup(
                 "Install MoonClaw"
               },
             ),
+            if model.moonclaw_installing {
+              div(class="moonclaw-install-progress", [
+                progress(
+                  class="moonclaw-install-progress-bar",
+                  attrs=@html.Attrs::build().data_set(
+                    "testid", "moonclaw-install-progress",
+                  ),
+                  "Installing MoonClaw",
+                ),
+                p(
+                  class="status-line",
+                  attrs=@html.Attrs::build().aria_live("polite"),
+                  model.moonclaw_install_feedback,
+                ),
+              ])
+            } else {
+              @html.nothing
+            },
           ])
         _ => @html.nothing
       },

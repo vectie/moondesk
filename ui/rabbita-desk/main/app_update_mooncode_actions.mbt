@@ -43,8 +43,13 @@ fn update_mooncode_actions(
         {
           ..model,
           moonclaw_installing: action == "install",
+          moonclaw_install_feedback: if action == "install" {
+            "Downloading, verifying, and installing MoonClaw…"
+          } else {
+            model.moonclaw_install_feedback
+          },
           mooncode_composer_status: if action == "install" {
-            "Downloading and verifying MoonClaw…"
+            "Downloading, verifying, and installing MoonClaw…"
           } else {
             "Starting MoonClaw…"
           },

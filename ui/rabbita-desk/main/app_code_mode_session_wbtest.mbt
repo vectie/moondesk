@@ -2957,7 +2957,11 @@ test "MoonClaw install action exposes progress until lifecycle result" {
   assert_true(installing.moonclaw_installing)
   assert_eq(
     installing.mooncode_composer_status,
-    "Downloading and verifying MoonClaw…",
+    "Downloading, verifying, and installing MoonClaw…",
+  )
+  assert_eq(
+    installing.moonclaw_install_feedback,
+    "Downloading, verifying, and installing MoonClaw…",
   )
   let (_, ready) = update_mooncode_session_results(
     code_mode_test_dispatch,
@@ -2973,6 +2977,19 @@ test "MoonClaw install action exposes progress until lifecycle result" {
   )
   assert_false(ready.moonclaw_installing)
   assert_true(ready.moonclaw_daemon.unwrap().running)
+  assert_eq(
+    ready.moonclaw_install_feedback,
+    "MoonClaw 0.1.2 is installed and running",
+  )
+}
+
+///|
+test "MoonDesk opens on Desk unless a product route is explicit" {
+  assert_true(workspace_mode_from_initial_activity("") is Desk)
+  assert_true(workspace_mode_from_initial_activity("home") is Desk)
+  assert_true(workspace_mode_from_initial_activity("desk") is Desk)
+  assert_true(workspace_mode_from_initial_activity("packs") is PackHome)
+  assert_true(workspace_mode_from_initial_activity("mooncode") is MoonCode)
 }
 
 ///|

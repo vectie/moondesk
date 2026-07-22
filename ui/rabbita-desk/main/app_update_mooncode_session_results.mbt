@@ -15,13 +15,27 @@ fn update_mooncode_session_results(
           ..model,
           moonclaw_daemon: Some(status),
           moonclaw_installing: false,
+          moonclaw_install_feedback: if model.moonclaw_installing {
+            status.message
+          } else {
+            model.moonclaw_install_feedback
+          },
           mooncode_composer_status: status.message,
         },
       )
     ManagedMoonClaw(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, moonclaw_installing: false, mooncode_composer_status: error },
+        {
+          ..model,
+          moonclaw_installing: false,
+          moonclaw_install_feedback: if model.moonclaw_installing {
+            error
+          } else {
+            model.moonclaw_install_feedback
+          },
+          mooncode_composer_status: error,
+        },
       )
     LoadedMoonClawDaemon(Ok(status)) =>
       (

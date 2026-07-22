@@ -5,12 +5,16 @@ fn initial_activity() -> Activity {
 
 ///|
 fn initial_workspace_mode() -> WorkspaceMode {
-  match browser_initial_activity() {
-    "packs" | "home" => PackHome
+  workspace_mode_from_initial_activity(browser_initial_activity())
+}
+
+///|
+fn workspace_mode_from_initial_activity(activity : String) -> WorkspaceMode {
+  match activity {
+    "packs" => PackHome
     "code" | "mooncode" => MoonCode
     "flow" | "moonflow" => MoonFlow
-    "desk" => Desk
-    "" => PackHome
+    "desk" | "home" | "" => Desk
     _ => MoonWiki
   }
 }
