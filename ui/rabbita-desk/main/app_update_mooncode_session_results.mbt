@@ -208,7 +208,18 @@ fn update_mooncode_session_results(
     CreatedMoonCodeSession(Ok(session)) =>
       mooncode_created_session_succeeded(dispatch, model, session)
     CreatedMoonCodeSession(Err(error)) =>
-      (@rabbita.none, { ..model, mooncode_composer_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          mooncode_optimistic_rows: mooncode_fail_pending_optimistic_rows_for_session(
+            model.mooncode_optimistic_rows,
+            mooncode_draft_session_id(model),
+            "MoonCode could not start this chat: \{error}",
+          ),
+          mooncode_composer_status: error,
+        },
+      )
     CompletedMoonCodeCommand(Ok(session)) =>
       mooncode_session_mutation_succeeded(
         dispatch, model, session, "MoonCode message sent",

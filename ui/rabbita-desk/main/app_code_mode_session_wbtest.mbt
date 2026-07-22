@@ -1379,6 +1379,43 @@ test "code mode created session adopts draft prompt rows" {
 }
 
 ///|
+test "code mode failed session creation releases the draft prompt gate" {
+  let draft_model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    selected_workspace_id: "",
+    selected_mooncode_session_id: "",
+    mooncode_sessions: [],
+    mooncode_prompt: "Start a new chat",
+  }
+  let (_, pending) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage(draft_model.mooncode_prompt),
+    draft_model,
+  )
+  let (_, failed) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    CreatedMoonCodeSession(Err("model unavailable")),
+    pending,
+  )
+  let draft_id = mooncode_draft_session_id(failed)
+  assert_false(
+    mooncode_optimistic_rows_have_session(
+      failed.mooncode_optimistic_rows,
+      draft_id,
+    ),
+  )
+  assert_true(
+    failed.mooncode_optimistic_rows.any(row => {
+      row.session_id == draft_id &&
+      row.role == "assistant" &&
+      row.status == "failed" &&
+      row.content.contains("model unavailable")
+    }),
+  )
+}
+
+///|
 test "code mode stale session listing preserves selected in-flight session" {
   let active = code_mode_test_session("session-created", workspace_id="")
   let older = code_mode_test_session("session-old", workspace_id="")
