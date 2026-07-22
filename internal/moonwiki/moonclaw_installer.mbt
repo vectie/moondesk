@@ -1,7 +1,7 @@
 ///|
 fn moonclaw_release_manifest_url() -> String {
   @sys.get_env_var("MOONCLAW_RELEASE_MANIFEST_URL").unwrap_or(
-    "https://github.com/vectie/moonclaw/releases/download/v0.1.2/release-manifest.json",
+    "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.3/downloads/release-manifest-gitlab.json",
   )
 }
 
@@ -97,6 +97,10 @@ fn moonclaw_release_checksum_valid(value : String) -> Bool {
 fn moonclaw_release_url_allowed(url : String, manifest_url : String) -> Bool {
   url.has_prefix("https://") ||
   (
+    manifest_url.has_prefix("http://gl.vectie.xyz/") &&
+    url.has_prefix("http://gl.vectie.xyz/")
+  ) ||
+  (
     @sys.get_env_var("MOONCLAW_ALLOW_LOCAL_RELEASE").unwrap_or("") == "1" &&
     manifest_url.has_prefix("file://") &&
     url.has_prefix("file://")
@@ -177,7 +181,7 @@ async fn install_moonclaw_release(workspace_root : String) -> Json {
   let manifest_url = moonclaw_release_manifest_url()
   if !moonclaw_release_url_allowed(manifest_url, manifest_url) {
     return moonclaw_install_failure(
-      root, "release_url_rejected", "MoonClaw release metadata must use HTTPS",
+      root, "release_url_rejected", "MoonClaw release metadata must use HTTPS or the trusted GitLab mirror",
     )
   }
   let temp_dir = moonclaw_install_temp_dir()
