@@ -183,7 +183,7 @@ test "lepusa integration launcher exposes bundled services on PATH" {
   ).unwrap()
   assert_true(
     configured.contains(
-      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\nPATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\n",
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\nPATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\ncd \"$APP_DIR/Resources\" || exit 1\n",
     ),
   )
   assert_eq(

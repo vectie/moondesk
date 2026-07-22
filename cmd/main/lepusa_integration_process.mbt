@@ -144,11 +144,11 @@ fn moondesk_launcher_with_bundled_service_path(
 ) -> String? {
   let (marker, path_export) = if target == "macos" {
     (
-      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\n", "PATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\n",
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\n", "PATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\ncd \"$APP_DIR/Resources\" || exit 1\n",
     )
   } else if target == "linux" {
     (
-      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\n", "PATH=\"$APP_DIR:$PATH\"\nexport PATH\n",
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\n", "PATH=\"$APP_DIR:$PATH\"\nexport PATH\ncd \"$APP_DIR\" || exit 1\n",
     )
   } else {
     return Some(launcher)
