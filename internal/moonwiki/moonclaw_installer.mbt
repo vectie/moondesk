@@ -1,7 +1,7 @@
 ///|
 fn moonclaw_release_manifest_url() -> String {
   @sys.get_env_var("MOONCLAW_RELEASE_MANIFEST_URL").unwrap_or(
-    "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.3/downloads/release-manifest-gitlab.json",
+    "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.4/downloads/release-manifest-gitlab.json",
   )
 }
 

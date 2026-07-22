@@ -482,7 +482,7 @@ fn process_status_is_alive(status : String) -> Bool {
 
 ///|
 async fn moonclaw_port_reachable(port : Int) -> Bool {
-  let (response, body) = @http.get("http://localhost:\{port}/v1/health") catch {
+  let (response, body) = @http.get("http://127.0.0.1:\{port}/v1/health") catch {
     _ => return false
   }
   if response.code != 200 {
@@ -518,7 +518,7 @@ async fn moonclaw_get_json(
   if port <= 0 {
     return Err("MoonClaw daemon port is not available")
   }
-  let (response, data) = @http.get("http://localhost:\{port}\{path}") catch {
+  let (response, data) = @http.get("http://127.0.0.1:\{port}\{path}") catch {
     error => return Err("MoonClaw GET \{path} failed: \{error}")
   }
   let text = data.text() catch { _ => "" }
@@ -537,7 +537,7 @@ async fn moonclaw_get_text(
   if port <= 0 {
     return Err("MoonClaw daemon port is not available")
   }
-  let (response, data) = @http.get("http://localhost:\{port}\{path}") catch {
+  let (response, data) = @http.get("http://127.0.0.1:\{port}\{path}") catch {
     error => return Err("MoonClaw GET \{path} failed: \{error}")
   }
   let text = data.text() catch { _ => "" }
@@ -557,7 +557,7 @@ async fn moonclaw_post_json(
   if port <= 0 {
     return Err("MoonClaw daemon port is not available")
   }
-  let (response, data) = @http.post("http://localhost:\{port}\{path}", body, headers={
+  let (response, data) = @http.post("http://127.0.0.1:\{port}\{path}", body, headers={
     "Content-Type": "application/json",
   }) catch {
     error => return Err("MoonClaw POST \{path} failed: \{error}")

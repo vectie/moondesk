@@ -5,19 +5,19 @@ test "moonclaw release asset selects exact platform" {
       {
         "platform": "macos",
         "architecture": "arm64",
-        "name": "moonclaw-0.1.3-macos-arm64.tar.gz",
+        "name": "moonclaw-0.1.4-macos-arm64.tar.gz",
       },
       {
         "platform": "linux",
         "architecture": "x86_64",
-        "name": "moonclaw-0.1.3-linux-x86_64.tar.gz",
+        "name": "moonclaw-0.1.4-linux-x86_64.tar.gz",
       },
     ],
   }
   let selected = moonclaw_release_asset(manifest, "macos", "arm64").unwrap()
   assert_eq(
     json_string(selected, "name", default=""),
-    "moonclaw-0.1.3-macos-arm64.tar.gz",
+    "moonclaw-0.1.4-macos-arm64.tar.gz",
   )
   assert_true(moonclaw_release_asset(manifest, "macos", "x86_64") is None)
 }
@@ -42,7 +42,7 @@ test "moonclaw runtime root follows the packaged app data directory" {
 ///|
 test "moonclaw release declarations reject unsafe paths and checksums" {
   assert_true(
-    moonclaw_release_segment_valid("moonclaw-0.1.3-macos-arm64.tar.gz"),
+    moonclaw_release_segment_valid("moonclaw-0.1.4-macos-arm64.tar.gz"),
   )
   assert_false(moonclaw_release_segment_valid("../moonclaw.tar.gz"))
   assert_false(moonclaw_release_segment_valid("moonclaw/asset.tar.gz"))
@@ -56,17 +56,17 @@ test "moonclaw release declarations reject unsafe paths and checksums" {
 
 ///|
 test "moonclaw release URLs temporarily trust only the GitLab HTTP origin" {
-  let manifest = "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.3/downloads/release-manifest-gitlab.json"
+  let manifest = "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.4/downloads/release-manifest-gitlab.json"
   assert_true(moonclaw_release_url_allowed(manifest, manifest))
   assert_true(
     moonclaw_release_url_allowed(
-      "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.3/downloads/moonclaw-0.1.3-macos-arm64.tar.gz",
+      "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.4/downloads/moonclaw-0.1.4-macos-arm64.tar.gz",
       manifest,
     ),
   )
   assert_false(
     moonclaw_release_url_allowed(
-      "http://example.com/moonclaw-0.1.3-macos-arm64.tar.gz", manifest,
+      "http://example.com/moonclaw-0.1.4-macos-arm64.tar.gz", manifest,
     ),
   )
   assert_false(
