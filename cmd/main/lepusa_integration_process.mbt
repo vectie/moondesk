@@ -138,6 +138,65 @@ async fn copy_lepusa_runtime(
 }
 
 ///|
+fn moondesk_launcher_with_bundled_service_path(
+  target : String,
+  launcher : String,
+) -> String? {
+  let (marker, path_export) = if target == "macos" {
+    (
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\n", "PATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\n",
+    )
+  } else if target == "linux" {
+    (
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd)\n", "PATH=\"$APP_DIR:$PATH\"\nexport PATH\n",
+    )
+  } else {
+    return Some(launcher)
+  }
+  if launcher.contains(path_export) {
+    Some(launcher)
+  } else if launcher.contains(marker) {
+    Some(launcher.replace(old=marker, new=marker + path_export))
+  } else {
+    None
+  }
+}
+
+///|
+async fn configure_moondesk_launcher_service_path(
+  target : String,
+  out_dir : String,
+) -> Bool {
+  let launcher_path = lepusa_integration_bundle_paths(target, out_dir).launcher
+  let launcher = @fs.read_file(launcher_path).text() catch {
+    error => {
+      println("lepusa failed: could not read generated launcher: \{error}")
+      return false
+    }
+  }
+  guard moondesk_launcher_with_bundled_service_path(target, launcher)
+    is Some(configured) else {
+    println("lepusa failed: generated launcher has an unsupported layout")
+    return false
+  }
+  @fsx.write_to_file(launcher_path, configured, create=0o755) catch {
+    error => {
+      println("lepusa failed: could not configure generated launcher: \{error}")
+      return false
+    }
+  }
+  @fs.chmod(launcher_path, 0o755) catch {
+    error => {
+      println(
+        "lepusa failed: could not make generated launcher executable: \{error}",
+      )
+      return false
+    }
+  }
+  true
+}
+
+///|
 async fn copy_moondesk_ui_bundle(
   ui_dir : String,
   target : String,
@@ -239,7 +298,8 @@ async fn copy_moondesk_live_bundle_files(
 ) -> Bool {
   copy_lepusa_runtime(lepusa_root, options.target, out_dir) &&
   copy_moondesk_sidecar(repo_root, options.target, out_dir) &&
-  copy_moondesk_ui_bundle(options.ui_dir, options.target, out_dir)
+  copy_moondesk_ui_bundle(options.ui_dir, options.target, out_dir) &&
+  configure_moondesk_launcher_service_path(options.target, out_dir)
 }
 
 ///|
@@ -279,7 +339,8 @@ async fn run_lepusa_integration_smoke(
     if step.name == "bundle-write" &&
       (
         !copy_lepusa_runtime(lepusa_root, options.target, out_dir) ||
-        !copy_moondesk_sidecar(repo_root, options.target, out_dir)
+        !copy_moondesk_sidecar(repo_root, options.target, out_dir) ||
+        !configure_moondesk_launcher_service_path(options.target, out_dir)
       ) {
       return
     }

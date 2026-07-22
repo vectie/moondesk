@@ -176,6 +176,23 @@ test "lepusa integration uses the runtime built for release" {
 }
 
 ///|
+test "lepusa integration launcher exposes bundled services on PATH" {
+  let launcher = "#!/bin/sh\nAPP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\nRUNTIME=\"$APP_DIR/MacOS/lepusa-runtime\"\n"
+  let configured = moondesk_launcher_with_bundled_service_path(
+    "macos", launcher,
+  ).unwrap()
+  assert_true(
+    configured.contains(
+      "APP_DIR=$(CDPATH= cd -- \"$(dirname -- \"$0\")/..\" && pwd)\nPATH=\"$APP_DIR/MacOS:$PATH\"\nexport PATH\n",
+    ),
+  )
+  assert_eq(
+    moondesk_launcher_with_bundled_service_path("macos", configured).unwrap(),
+    configured,
+  )
+}
+
+///|
 test "lepusa integration launcher check requires bundled runtime preference" {
   assert_true(
     lepusa_integration_launcher_uses_bundled_runtime(
