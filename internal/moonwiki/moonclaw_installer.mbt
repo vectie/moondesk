@@ -7,18 +7,31 @@ fn moonclaw_release_manifest_url() -> String {
 
 ///|
 fn moonclaw_runtime_root() -> String {
-  match @sys.get_env_var("MOONDESK_RUNTIME_ROOT") {
-    Some(path) if path.trim().length() > 0 => @pathx.normalize(path)
-    _ => {
-      let home = @sys.get_env_var("HOME").unwrap_or("")
-      if home == "" {
-        ""
-      } else {
-        @pathx.join(
-          home, "Library/Application Support/app.vectie.moondesk/runtimes",
-        )
-      }
-    }
+  moonclaw_runtime_root_from_environment(
+    @sys.get_env_var("MOONDESK_RUNTIME_ROOT").unwrap_or(""),
+    @sys.get_env_var("LEPUSA_APP_DATA_DIR").unwrap_or(""),
+    @sys.get_env_var("HOME").unwrap_or(""),
+  )
+}
+
+///|
+fn moonclaw_runtime_root_from_environment(
+  override_root : String,
+  app_data_root : String,
+  home_root : String,
+) -> String {
+  if override_root.trim().length() > 0 {
+    return @pathx.normalize(override_root)
+  }
+  if app_data_root.trim().length() > 0 {
+    return @pathx.join(@pathx.normalize(app_data_root), "runtimes")
+  }
+  if home_root.trim().length() == 0 {
+    ""
+  } else {
+    @pathx.join(
+      home_root, "Library/Application Support/app.vectie.moondesk/runtimes",
+    )
   }
 }
 
@@ -366,6 +379,16 @@ async fn install_moonclaw_release_from_temp(
         root, "service_config_failed", "MoonDesk installed MoonClaw but could not configure its service",
       )
   }
+  let stopped = stop_existing_moonclaw_daemon(root)
+  if !stopped {
+    return moonclaw_install_failure(
+      root,
+      "existing_daemon_stop_failed",
+      "MoonClaw " +
+      version +
+      " was installed, but MoonDesk could not stop the previously running MoonClaw service",
+    )
+  }
   let started = ensure_moonclaw_daemon_running(root, action="install")
   if json_bool(started, "running", default=false) {
     let fields = match started {
@@ -380,4 +403,41 @@ async fn install_moonclaw_release_from_temp(
   } else {
     started
   }
+}
+
+///|
+async fn stop_existing_moonclaw_daemon(root : String) -> Bool {
+  let info_path = moonclaw_daemon_info_path(root)
+  if !@fsx.exists(info_path) {
+    return true
+  }
+  let info = read_json_file_or_object(info_path)
+  let pid = json_int(info, "pid", default=0)
+  if pid <= 0 || !process_is_alive(pid) {
+    ignore(run_process_quiet("rm", ["-f", info_path]))
+    return true
+  }
+  let port = json_int(info, "port", default=0)
+  if port <= 0 || !moonclaw_port_reachable(port) {
+    return false
+  }
+  ignore(run_process_quiet("kill", ["-TERM", pid.to_string()]))
+  let mut checks = 0
+  while checks < 50 && process_is_alive(pid) {
+    @async.sleep(100)
+    checks += 1
+  }
+  if process_is_alive(pid) {
+    ignore(run_process_quiet("kill", ["-KILL", pid.to_string()]))
+    checks = 0
+    while checks < 20 && process_is_alive(pid) {
+      @async.sleep(100)
+      checks += 1
+    }
+    if process_is_alive(pid) {
+      return false
+    }
+  }
+  ignore(run_process_quiet("rm", ["-f", info_path]))
+  true
 }

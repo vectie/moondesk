@@ -23,6 +23,23 @@ test "moonclaw release asset selects exact platform" {
 }
 
 ///|
+test "moonclaw runtime root follows the packaged app data directory" {
+  assert_eq(
+    moonclaw_runtime_root_from_environment(
+      "", "/tmp/MoonDesk Application Support", "/Users/demo",
+    ),
+    "/tmp/MoonDesk Application Support/runtimes",
+  )
+  assert_eq(
+    moonclaw_runtime_root_from_environment(
+      "/tmp/explicit-runtime", "/tmp/app-data", "/Users/demo",
+    ),
+    "/tmp/explicit-runtime",
+  )
+  assert_eq(moonclaw_runtime_root_from_environment("", "", ""), "")
+}
+
+///|
 test "moonclaw release declarations reject unsafe paths and checksums" {
   assert_true(
     moonclaw_release_segment_valid("moonclaw-0.1.3-macos-arm64.tar.gz"),

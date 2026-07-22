@@ -11,6 +11,7 @@ async fn moonclaw_service_config(root : String) -> Json {
 ///|
 async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
   let config = moonclaw_service_config(root)
+  let version = json_string(config, "version", default="")
   let section = json_object_field_or_empty(config, action)
   let configured_command = first_non_empty([
     json_string(section, "command", default=""),
@@ -43,6 +44,20 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
     json_string(fallback, "cwd", default=""),
   ])
   let cwd = if cwd == "" { root } else { cwd }
+  let managed_binary = if version == "" {
+    ""
+  } else {
+    @pathx.join(
+      moonclaw_runtime_root(),
+      "moonclaw/" + version + "/bin/moonclaw",
+    )
+  }
+  let managed_install = moonclaw_managed_service_matches(
+    version,
+    command,
+    managed_binary,
+    @fsx.exists(managed_binary),
+  )
   {
     "configured": command != "",
     "kind": "moondesk-moonclaw-service.v1",
@@ -50,6 +65,8 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
     "command": command,
     "args": json_from_string_array(args),
     "cwd": cwd,
+    "version": version,
+    "managed_install": managed_install,
     "config_path": moonclaw_service_config_path(root),
     "source": if configured_command != "" {
       "config"
@@ -64,6 +81,16 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
       command + " " + args.join(" ")
     },
   }
+}
+
+///|
+fn moonclaw_managed_service_matches(
+  version : String,
+  command : String,
+  managed_binary : String,
+  binary_exists : Bool,
+) -> Bool {
+  version != "" && command == managed_binary && binary_exists
 }
 
 ///|

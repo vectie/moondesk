@@ -88,9 +88,19 @@ fn render_moongate_setup(
 ) -> @rabbita.Html {
   let daemon = model.moonclaw_daemon
   let ready = daemon.map(item => item.running).unwrap_or(false)
+  let managed = daemon
+    .map(item => item.managed_install.unwrap_or(false))
+    .unwrap_or(false)
+  let managed_ready = daemon
+    .map(item => item.managed_running.unwrap_or(false))
+    .unwrap_or(false)
   section(
     id="moongate-summary",
-    class=if ready { "moongate-card ready" } else { "moongate-card blocked" },
+    class=if managed_ready {
+      "moongate-card ready"
+    } else {
+      "moongate-card blocked"
+    },
     attrs=@html.Attrs::build()
       .data_set("testid", "moongate-summary")
       .role("status"),
@@ -98,38 +108,72 @@ fn render_moongate_setup(
       div(class="moongate-card-head", [
         div([p(class="eyebrow", "AI boundary"), strong("MoonGate")]),
         span(
-          class=if ready { "status-pill ready" } else { "status-pill warning" },
-          if ready {
-            "Ready"
+          class=if managed_ready {
+            "status-pill ready"
+          } else {
+            "status-pill warning"
+          },
+          if managed_ready {
+            "Installed"
+          } else if ready {
+            "External service"
           } else {
             "Setup needed"
           },
         ),
       ]),
       p(
-        if ready {
+        if managed_ready {
           "AI is available through the workspace's governed MoonClaw service. External and physical effects still require their own authority."
+        } else if ready {
+          "AI is available from an external MoonClaw service, but MoonClaw is not installed and managed by MoonDesk yet."
+        } else if managed {
+          "MoonClaw is installed for this workspace but needs to be started before AI is available."
         } else {
           "AI is not available yet. MoonGate will only enable the installed workspace service; it does not grant external or physical effects."
         },
       ),
       match daemon {
-        Some(status) if status.running && model.moonclaw_install_feedback != "" =>
+        Some(status) if status.managed_running.unwrap_or(false) =>
           p(
             class="status-line success",
             attrs=@html.Attrs::build()
               .data_set("testid", "moonclaw-install-success")
               .aria_live("polite"),
-            model.moonclaw_install_feedback,
+            status.message,
           )
-        Some(status) if !status.running && status.service_configured =>
+        Some(status) if status.running =>
+          div(class="moongate-next-step", [
+            p(
+              class="status-line warning",
+              attrs=@html.Attrs::build()
+                .data_set("testid", "moonclaw-external-service")
+                .aria_live("polite"),
+              status.message,
+            ),
+            button(
+              class="primary-button full",
+              attrs=@html.Attrs::build().data_set(
+                "testid", "moongate-install-moonclaw",
+              ),
+              disabled=model.moonclaw_installing,
+              on_click=dispatch(ManageMoonClaw("install")),
+              if model.moonclaw_installing {
+                "Installing managed MoonClaw…"
+              } else {
+                "Install managed MoonClaw"
+              },
+            ),
+            render_moonclaw_install_progress(model),
+          ])
+        Some(status) if status.managed_install.unwrap_or(false) =>
           button(
             class="primary-button full",
             attrs=@html.Attrs::build().data_set(
               "testid", "moongate-start-moonclaw",
             ),
             on_click=dispatch(ManageMoonClaw("start")),
-            "Enable AI for this workspace",
+            "Start installed MoonClaw",
           )
         Some(status) if !status.running =>
           div(class="moongate-next-step", [
@@ -137,7 +181,7 @@ fn render_moongate_setup(
             p(
               "MoonClaw is required for Code and AI actions. MoonDesk can download, verify, install, and start it for this workspace.",
             ),
-            if status.message != "MoonClaw daemon info was not found" {
+            if status.message != "MoonClaw is not installed" {
               p(class="status-line warning", status.message)
             } else {
               @html.nothing
@@ -155,24 +199,7 @@ fn render_moongate_setup(
                 "Install MoonClaw"
               },
             ),
-            if model.moonclaw_installing {
-              div(class="moonclaw-install-progress", [
-                progress(
-                  class="moonclaw-install-progress-bar",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "moonclaw-install-progress",
-                  ),
-                  "Installing MoonClaw",
-                ),
-                p(
-                  class="status-line",
-                  attrs=@html.Attrs::build().aria_live("polite"),
-                  model.moonclaw_install_feedback,
-                ),
-              ])
-            } else {
-              @html.nothing
-            },
+            render_moonclaw_install_progress(model),
           ])
         _ => @html.nothing
       },
@@ -184,6 +211,28 @@ fn render_moongate_setup(
       ]),
     ],
   )
+}
+
+///|
+fn render_moonclaw_install_progress(model : Model) -> @rabbita.Html {
+  if model.moonclaw_installing {
+    div(class="moonclaw-install-progress", [
+      progress(
+        class="moonclaw-install-progress-bar",
+        attrs=@html.Attrs::build().data_set(
+          "testid", "moonclaw-install-progress",
+        ),
+        "Installing MoonClaw",
+      ),
+      p(
+        class="status-line",
+        attrs=@html.Attrs::build().aria_live("polite"),
+        model.moonclaw_install_feedback,
+      ),
+    ])
+  } else {
+    @html.nothing
+  }
 }
 
 ///|

@@ -56,7 +56,11 @@ async fn serve_with_options(options : ServeOptions, label~ : String) -> Unit {
     println("failed to prepare workspace root: \{workspace_root}")
     return
   }
-  let server = @moonwiki.Server::new(options.host, options.port) catch {
+  let server = @moonwiki.Server::new(
+    options.host,
+    options.port,
+    reuse_addr=true,
+  ) catch {
     error => {
       println("failed to bind \{options.host}:\{options.port}: \{error}")
       return

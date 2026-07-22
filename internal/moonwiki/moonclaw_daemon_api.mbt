@@ -103,7 +103,23 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let descriptor = moonclaw_service_descriptor(root, "daemon")
   let service_cwd = json_string(descriptor, "cwd", default=root)
   let service_configured = json_bool(descriptor, "configured", default=false)
+  let managed_install = json_bool(descriptor, "managed_install", default=false)
+  let installed_version = json_string(descriptor, "version", default="")
+  let service_source = if managed_install {
+    "managed"
+  } else if service_configured {
+    "external"
+  } else {
+    "missing"
+  }
   if !@fsx.exists(info_path) {
+    let message = if managed_install {
+      "MoonClaw " + installed_version + " is installed but not running"
+    } else if service_configured {
+      "An external MoonClaw service is configured but not running"
+    } else {
+      "MoonClaw is not installed"
+    }
     return api_contract_response(
       {
         "ok": false,
@@ -119,23 +135,29 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
           default="",
         ),
         "service_command": json_string(descriptor, "display", default=""),
+        "managed_install": managed_install,
+        "managed_running": false,
+        "installed_version": installed_version,
+        "running_version": "",
+        "service_source": service_source,
         "service_path": moonsuite_product_artifact_for_workspace_root(
           root, "moonclaw", "",
         ),
       },
       ok=false,
       status="daemon_info_missing",
-      message="MoonClaw daemon info was not found",
-      next_action=if service_configured {
+      message~,
+      next_action=if managed_install || service_configured {
         "start_moonclaw"
       } else {
-        "configure_moonclaw_service"
+        "install_moonclaw"
       },
     )
   }
   let info = read_json_file_or_object(info_path)
   let port = json_int(info, "port", default=0)
   let pid = json_int(info, "pid", default=0)
+  let running_version = json_string(info, "version", default="")
   let alive = pid > 0 && process_is_alive(pid)
   let port_reachable = port > 0 && moonclaw_port_reachable(port)
   let existing_allowed = service_configured ||
@@ -143,6 +165,28 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   let reachable = moonclaw_existing_daemon_reachable(
     alive, port, port_reachable, existing_allowed,
   )
+  let managed_running = reachable &&
+    managed_install &&
+    running_version.has_prefix(installed_version)
+  let message = if managed_running {
+    "MoonClaw " + installed_version + " is installed and running"
+  } else if reachable && managed_install {
+    "MoonClaw " +
+    installed_version +
+    " is installed, but a different MoonClaw service is running"
+  } else if reachable {
+    "MoonClaw is running from an external service; a MoonDesk-managed installation is not installed"
+  } else if managed_install {
+    "MoonClaw " + installed_version + " is installed but not running"
+  } else if service_configured {
+    "An external MoonClaw service is configured but not running"
+  } else if alive && port > 0 && !existing_allowed {
+    "MoonClaw daemon info exists but this temporary workspace needs an explicit service config"
+  } else if alive && port > 0 {
+    "MoonClaw daemon info exists but the HTTP port is not reachable"
+  } else {
+    "MoonClaw is not installed"
+  }
   api_contract_response(
     {
       "ok": reachable,
@@ -154,22 +198,14 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
       "service_configured": service_configured,
       "service_config_path": json_string(descriptor, "config_path", default=""),
       "service_command": json_string(descriptor, "display", default=""),
+      "managed_install": managed_install,
+      "managed_running": managed_running,
+      "installed_version": installed_version,
+      "running_version": running_version,
+      "service_source": service_source,
       "service_path": moonsuite_product_artifact_for_workspace_root(
         root, "moonclaw", "",
       ),
-      "message": if reachable {
-        if service_configured {
-          "MoonClaw daemon is running"
-        } else {
-          "MoonClaw daemon is running without a MoonSuite service config"
-        }
-      } else if alive && port > 0 && !existing_allowed {
-        "MoonClaw daemon info exists but this temporary workspace needs an explicit service config"
-      } else if alive && port > 0 {
-        "MoonClaw daemon info exists but the HTTP port is not reachable"
-      } else {
-        "MoonClaw daemon info exists but the process is not reachable"
-      },
     },
     ok=reachable,
     status=if reachable {
@@ -181,13 +217,11 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
     } else {
       "process_unreachable"
     },
-    message=if reachable {
-      "MoonClaw daemon is running"
-    } else {
-      "MoonClaw daemon is not reachable"
-    },
-    next_action=if reachable {
+    message~,
+    next_action=if managed_running {
       "use_moonclaw"
+    } else if reachable {
+      "install_moonclaw"
     } else if service_configured {
       "restart_moonclaw"
     } else {

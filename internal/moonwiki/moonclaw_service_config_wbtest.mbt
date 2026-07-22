@@ -44,6 +44,21 @@ async test "moonclaw service descriptor is explicit and workspace local" {
     json_string(configured, "display", default=""),
     "/usr/local/bin/moonclaw daemon --port 0",
   )
+  assert_false(json_bool(configured, "managed_install", default=true))
+  assert_eq(json_string(configured, "version", default="missing"), "")
+}
+
+///|
+test "managed MoonClaw service requires version path and installed binary" {
+  let binary = "/tmp/runtime/moonclaw/0.1.3/bin/moonclaw"
+  assert_true(moonclaw_managed_service_matches("0.1.3", binary, binary, true))
+  assert_false(moonclaw_managed_service_matches("", binary, binary, true))
+  assert_false(
+    moonclaw_managed_service_matches(
+      "0.1.3", "/Users/demo/Workspace/moonclaw", binary, true,
+    ),
+  )
+  assert_false(moonclaw_managed_service_matches("0.1.3", binary, binary, false))
 }
 
 ///|
@@ -134,5 +149,10 @@ async test "moonclaw daemon probe uses MoonSuite product home" {
   assert_eq(
     json_string(status, "info_path", default=""),
     @pathx.join(suite_root, ".moonsuite/products/moonclaw/daemon.json"),
+  )
+  assert_false(json_bool(status, "managed_install", default=true))
+  assert_eq(
+    json_string(status, "message", default=""),
+    "MoonClaw is not installed",
   )
 }

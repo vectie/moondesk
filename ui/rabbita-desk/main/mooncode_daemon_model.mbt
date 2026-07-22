@@ -4,6 +4,8 @@ struct MoonClawDaemonStatus {
   port : Int
   message : String
   service_configured : Bool
+  managed_install : Bool?
+  managed_running : Bool?
 } derive(FromJson)
 
 ///|
