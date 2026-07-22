@@ -347,6 +347,12 @@ test "desk create moonbook action tracks draft and opens created book" {
   )
   assert_eq(named.new_book_name, "Field Notes")
   assert_eq(named.new_book_id, "research-field-notes")
+  let (_, custom_id) = update_workspace_surface_actions(
+    dispatch,
+    SetNewBookId("field-notes"),
+    named,
+  )
+  assert_eq(custom_id.new_book_id, "field-notes")
   assert_false(desk_create_book_disabled(named))
   let (_, creating) = update_workspace_surface_actions(
     dispatch,

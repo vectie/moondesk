@@ -85,6 +85,14 @@ fn update(
       update_workspace_surface_actions(dispatch, msg, model)
     SetMoonFlowCanvasZoom(_) =>
       update_workspace_surface_actions(dispatch, msg, model)
+    FlowCanvasWheel(_, _, _) =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    FlowPanStart(_, _) => update_workspace_surface_actions(dispatch, msg, model)
+    FlowPanMove(_, _) => update_workspace_surface_actions(dispatch, msg, model)
+    FlowPanEnd => update_workspace_surface_actions(dispatch, msg, model)
+    FlowNodeDragStart(_, _, _) =>
+      update_workspace_surface_actions(dispatch, msg, model)
+    FlowCanvasReset => update_workspace_surface_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)
     SelectWorkspace(_) => update_navigation_actions(dispatch, msg, model)
     SelectPath(_) => update_navigation_actions(dispatch, msg, model)
@@ -122,16 +130,14 @@ fn update(
       update_mooncode_actions(dispatch, msg, model)
     SetMoonCodeSessionTitleDraft(_) =>
       update_mooncode_actions(dispatch, msg, model)
-    CancelMoonCodeSessionRename =>
-      update_mooncode_actions(dispatch, msg, model)
+    CancelMoonCodeSessionRename => update_mooncode_actions(dispatch, msg, model)
     SaveMoonCodeSessionRename(_) =>
       update_mooncode_actions(dispatch, msg, model)
     ArchiveMoonCodeSession(_) => update_mooncode_actions(dispatch, msg, model)
     RestoreMoonCodeSession(_) => update_mooncode_actions(dispatch, msg, model)
     RequestDeleteMoonCodeSession(_) =>
       update_mooncode_actions(dispatch, msg, model)
-    CancelDeleteMoonCodeSession =>
-      update_mooncode_actions(dispatch, msg, model)
+    CancelDeleteMoonCodeSession => update_mooncode_actions(dispatch, msg, model)
     ConfirmDeleteMoonCodeSession(_) =>
       update_mooncode_actions(dispatch, msg, model)
     SetMoonCodePrompt(_) => update_mooncode_actions(dispatch, msg, model)

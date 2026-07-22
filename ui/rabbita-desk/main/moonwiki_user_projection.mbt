@@ -100,7 +100,11 @@ fn wiki_editor_status_label(model : Model) -> String {
   } else if value.contains("saved") {
     "Saved"
   } else if value.contains("editing") {
-    "Unsaved changes"
+    if markdown_editor_dirty(model) {
+      "Unsaved changes"
+    } else {
+      "Editing"
+    }
   } else if model.markdown_editor_path != "" {
     "Could not save. Your draft is still here."
   } else {

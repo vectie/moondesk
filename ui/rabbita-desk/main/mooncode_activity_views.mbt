@@ -152,12 +152,7 @@ fn render_mooncode_activity_disclosure(
     } else {
       pre(class="mooncode-activity-detail", row.detail)
     },
-    render_mooncode_evidence_list(
-      dispatch,
-      model,
-      row.session_id,
-      row.evidence,
-    ),
+    render_mooncode_evidence_list(dispatch, model, row.session_id, row.evidence),
   ])
 }
 
@@ -292,10 +287,16 @@ fn render_mooncode_approval(
         if row.arguments == "" {
           @html.nothing
         } else {
-          @html.node("details", @html.Attrs::build().class("mooncode-approval-detail"), [
-            @html.node("summary", @html.Attrs::build(), [span("Review operation")]),
-            pre(row.arguments),
-          ])
+          @html.node(
+            "details",
+            @html.Attrs::build().class("mooncode-approval-detail"),
+            [
+              @html.node("summary", @html.Attrs::build(), [
+                span("Review operation"),
+              ]),
+              pre(row.arguments),
+            ],
+          )
         },
       ]),
       if pending {

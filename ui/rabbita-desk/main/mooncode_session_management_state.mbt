@@ -26,10 +26,7 @@ fn mooncode_save_session_rename(
   if title == "" {
     return (
       @rabbita.none,
-      {
-        ..model,
-        mooncode_session_management_status: "Enter a session title",
-      },
+      { ..model, mooncode_session_management_status: "Enter a session title" },
     )
   }
   if title.length() > 160 {
@@ -55,7 +52,8 @@ fn mooncode_start_session_storage_action(
   action : String,
 ) -> (@rabbita.Cmd, Model) {
   match mooncode_session_for_management(model, session_id) {
-    Some(session) if action != "restore" && mooncode_session_storage_locked(session) =>
+    Some(session) if action != "restore" &&
+      mooncode_session_storage_locked(session) =>
       (
         @rabbita.none,
         {
@@ -94,7 +92,11 @@ fn mooncode_sessions_with_title(
   title : String,
 ) -> Array[MoonCodeSession] {
   sessions.map(session => {
-    if session.id == session_id { { ..session, title } } else { session }
+    if session.id == session_id {
+      { ..session, title, }
+    } else {
+      session
+    }
   })
 }
 
@@ -128,10 +130,7 @@ fn mooncode_session_management_result(
 ) -> (@rabbita.Cmd, Model) {
   match result {
     Err(error) =>
-      (
-        @rabbita.none,
-        { ..model, mooncode_session_management_status: error },
-      )
+      (@rabbita.none, { ..model, mooncode_session_management_status: error })
     Ok(result) => {
       if result.kind != "mooncode-session-lifecycle-result" ||
         result.protocol == "" ||
@@ -153,18 +152,25 @@ fn mooncode_session_management_result(
       let mut archived = model.mooncode_archived_sessions
       match result.action {
         "rename" => {
-          active = mooncode_sessions_with_title(active, session_id, result.title)
+          active = mooncode_sessions_with_title(
+            active,
+            session_id,
+            result.title,
+          )
           archived = mooncode_sessions_with_title(
-            archived, session_id, result.title,
+            archived,
+            session_id,
+            result.title,
           )
         }
         "archive" => {
           active = mooncode_sessions_without(active, session_id)
           match current {
             Some(session) =>
-              archived = mooncode_sessions_prepend(
-                archived, { ..session, archived: true },
-              )
+              archived = mooncode_sessions_prepend(archived, {
+                ..session,
+                archived: true,
+              })
             None => ()
           }
         }
@@ -172,9 +178,10 @@ fn mooncode_session_management_result(
           archived = mooncode_sessions_without(archived, session_id)
           match current {
             Some(session) =>
-              active = mooncode_sessions_prepend(
-                active, { ..session, archived: false },
-              )
+              active = mooncode_sessions_prepend(active, {
+                ..session,
+                archived: false,
+              })
             None => ()
           }
         }

@@ -25,6 +25,7 @@ fn render_mooncode_pane(
           class="mooncode-session-search-input",
           attrs=@html.Attrs::build()
             .data_set("testid", "mooncode-session-search")
+            .data_set("i18n-aria-label", "code.search_chats")
             .aria_label("Search MoonCode sessions"),
           value=model.mooncode_session_query,
           placeholder="Search chats",
@@ -105,7 +106,8 @@ fn mooncode_session_list_children(
       )
     }
   }
-  if groups.length() == 0 && model.mooncode_session_query.trim().to_owned() != "" {
+  if groups.length() == 0 &&
+    model.mooncode_session_query.trim().to_owned() != "" {
     children["search-empty"] = p(
       class="status-line empty-list mooncode-session-search-empty",
       "No matching chats",
@@ -378,9 +380,7 @@ fn render_mooncode_session_menu(
     ),
     div(class="mooncode-session-menu-popover", [
       button(
-        attrs=@html.Attrs::build().data_set(
-          "testid", "mooncode-session-rename",
-        ),
+        attrs=@html.Attrs::build().data_set("testid", "mooncode-session-rename"),
         on_click=dispatch(BeginMoonCodeSessionRename(session.id)),
         "Rename",
       ),
@@ -410,9 +410,7 @@ fn render_mooncode_session_menu(
         class="danger",
         attrs=@html.Attrs::build()
           .data_set("testid", "mooncode-session-delete")
-          .disabled(
-            !archived && mooncode_session_storage_locked(session),
-          ),
+          .disabled(!archived && mooncode_session_storage_locked(session)),
         on_click=dispatch(RequestDeleteMoonCodeSession(session.id)),
         "Delete",
       ),
@@ -443,10 +441,7 @@ fn render_mooncode_session_rename_editor(
           on_click=dispatch(SaveMoonCodeSessionRename(session.id)),
           "Save",
         ),
-        button(
-          on_click=dispatch(CancelMoonCodeSessionRename),
-          "Cancel",
-        ),
+        button(on_click=dispatch(CancelMoonCodeSessionRename), "Cancel"),
       ]),
     ],
   )
@@ -484,10 +479,15 @@ fn render_mooncode_archived_sessions(
   let children : Map[String, @rabbita.Html] = {}
   for session in model.mooncode_archived_sessions {
     if mooncode_session_matches_query(
-        session, model.mooncode_session_query.trim().to_owned().to_lower(),
+        session,
+        model.mooncode_session_query.trim().to_owned().to_lower(),
       ) {
       children[session.id] = render_mooncode_session_row(
-        dispatch, model, session, false, archived=true,
+        dispatch,
+        model,
+        session,
+        false,
+        archived=true,
       )
     }
   }
@@ -495,9 +495,7 @@ fn render_mooncode_archived_sessions(
     class="mooncode-archived-sessions",
     attrs=@html.Attrs::build().data_set("testid", "mooncode-archived-sessions"),
     [
-      summary(
-        "Archived (\{model.mooncode_archived_sessions.length()})",
-      ),
+      summary("Archived (\{model.mooncode_archived_sessions.length()})"),
       div(class="mooncode-archived-list", children),
     ],
   )
@@ -607,6 +605,8 @@ fn render_mooncode_center(
                 class="mooncode-input",
                 attrs=@html.Attrs::build()
                   .data_set("testid", "mooncode-input")
+                  .data_set("i18n-aria-label", "code.ask")
+                  .data_set("i18n-placeholder", "code.ask_placeholder")
                   .aria_label("Message MoonCode"),
                 rows=1,
                 value=model.mooncode_prompt,
@@ -636,10 +636,7 @@ fn render_mooncode_center(
 }
 
 ///|
-fn mooncode_context_title(
-  model : Model,
-  session : MoonCodeSession?,
-) -> String {
+fn mooncode_context_title(model : Model, session : MoonCodeSession?) -> String {
   ignore(model)
   match session {
     Some(session) => session.title

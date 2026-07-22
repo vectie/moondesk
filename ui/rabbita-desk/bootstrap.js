@@ -2,6 +2,7 @@ import '/styles.css'
 import '/styles/product-shell.css'
 import '/styles/mooncode-workflow.css'
 import '/styles/mooncode.css'
+import '/styles/moondesk-ux.css'
 
 const app = document.getElementById('app')
 

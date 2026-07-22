@@ -184,15 +184,11 @@ fn update_mooncode_session_results(
         ),
       )
     LoadedMoonCodeArchivedSessions(Ok(sessions)) =>
-      (
-        @rabbita.none,
-        { ..model, mooncode_archived_sessions: sessions },
-      )
-    LoadedMoonCodeArchivedSessions(Err(error)) =>
-      (
-        @rabbita.none,
-        { ..model, mooncode_session_management_status: error },
-      )
+      (@rabbita.none, { ..model, mooncode_archived_sessions: sessions })
+    LoadedMoonCodeArchivedSessions(Err(_)) =>
+      // Archived history is optional; never surface its listing failure as
+      // a blocking error in the session pane.
+      (@rabbita.none, { ..model, mooncode_archived_sessions: [] })
     LoadedMoonCodeWatch(generation, session_id, Ok(response)) =>
       if !mooncode_watch_is_current(model, generation, session_id) {
         (@rabbita.none, model)

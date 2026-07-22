@@ -124,17 +124,16 @@ fn render_moonflow_workspace(
 ) -> @rabbita.Html {
   let selected_runs = moonflow_selected_runs(model)
   main_(class="flow-main", [
-    section(class="flow-hero", [
+    section(class="flow-hero flow-hero-compact", [
       div([
-        p(class="eyebrow", "Executable work"),
         h1("MoonFlow"),
         p(
           class="lead",
-          "An executable document in motion: declarations become governed work, evidence, review, and reusable learning.",
+          "Executable work for the selected MoonBook: compose, run, review.",
         ),
       ]),
       button(
-        class="secondary-button",
+        class="secondary-button compact-button",
         on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
         "Refresh",
       ),

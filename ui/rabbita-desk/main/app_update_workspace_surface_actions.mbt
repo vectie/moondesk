@@ -186,7 +186,10 @@ fn update_workspace_surface_actions(
             @rabbita.none,
             {
               ..model,
-              moonflow_composition: Some({ ..composition, selected_item_ids: selected }),
+              moonflow_composition: Some({
+                ..composition,
+                selected_item_ids: selected,
+              }),
               moonflow_composition_status: "Unsaved product selection",
             },
           )
@@ -223,6 +226,13 @@ fn update_workspace_surface_actions(
           },
         },
       )
+    FlowCanvasWheel(_, _, delta_y) => flow_canvas_wheel_action(model, delta_y)
+    FlowPanStart(x, y) => flow_pan_start_action(model, x, y)
+    FlowPanMove(x, y) => flow_pointer_move_action(model, x, y)
+    FlowPanEnd => flow_pointer_end_action(model)
+    FlowNodeDragStart(item_id, x, y) =>
+      flow_node_drag_start_action(model, item_id, x, y)
+    FlowCanvasReset => flow_canvas_reset_action(model)
     SetReviewDecisionNote(note) =>
       (@rabbita.none, { ..model, review_decision_note: note })
     DecideReviewItem(item, decision) =>
@@ -244,6 +254,7 @@ fn update_workspace_surface_actions(
           ..model,
           markdown_editor_path: "",
           markdown_editor_content: "",
+          markdown_editor_original: "",
           markdown_editor_status: "editor idle",
         },
       )
@@ -912,6 +923,7 @@ fn start_markdown_edit_action(model : Model) -> (@rabbita.Cmd, Model) {
         ..model,
         markdown_editor_path: model.selected_path,
         markdown_editor_content: content,
+        markdown_editor_original: content,
         markdown_editor_status: "editing \{model.selected_path}",
       },
     )

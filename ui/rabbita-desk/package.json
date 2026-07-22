@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:i18n": "node --test moonsuite-i18n.test.mjs",
     "predev": "moon build --target js --debug && node prepare-rabbita-build.mjs debug",
     "dev": "vite --host 127.0.0.1 --port 5188",
     "prebuild": "moon build --target js --release && node prepare-rabbita-build.mjs release",

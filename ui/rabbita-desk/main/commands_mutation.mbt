@@ -491,9 +491,7 @@ fn execute_moonflow_operator_action_cmd(
   action_id : String,
 ) -> @rabbita.Cmd {
   let body : Json = {}
-  @http.post(
-    "/api/moonflow/runs/" + run_id + "/actions/" + action_id,
-  )
+  @http.post("/api/moonflow/runs/" + run_id + "/actions/" + action_id)
   .with_json(body)
   .expect_json(result => {
     dispatch(

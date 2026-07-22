@@ -28,8 +28,9 @@ fn moonflow_composition_depth(
       let mut depth = 0
       for dependency in item.depends_on {
         let candidate = moonflow_composition_depth(
-          items, dependency, next_trail,
-        ) + 1
+            items, dependency, next_trail,
+          ) +
+          1
         if candidate > depth {
           depth = candidate
         }
@@ -44,10 +45,12 @@ fn moonflow_composition_dependents(
   composition : MoonFlowComposition,
   item_id : String,
 ) -> Array[String] {
-  composition.items.filter(item => {
+  composition.items
+  .filter(item => {
     composition.selected_item_ids.contains(item.work_item_id) &&
     item.depends_on.contains(item_id)
-  }).map(item => item.work_item_id)
+  })
+  .map(item => item.work_item_id)
 }
 
 ///|
@@ -89,173 +92,325 @@ fn moonflow_product_selected(
 }
 
 ///|
-fn render_moonflow_canvas_node(
+fn flow_px(value : Double) -> String {
+  value.to_int().to_string() + "px"
+}
+
+///|
+fn flow_coord(value : Double) -> String {
+  value.to_int().to_string()
+}
+
+///|
+fn flow_zoom_text(zoom : Double) -> String {
+  let scaled = (zoom * 100.0 + 0.5).to_int()
+  let whole = scaled / 100
+  let frac = scaled % 100
+  if frac == 0 {
+    whole.to_string()
+  } else if frac % 10 == 0 {
+    "\{whole}.\{frac / 10}"
+  } else if frac < 10 {
+    "\{whole}.0\{frac}"
+  } else {
+    "\{whole}.\{frac}"
+  }
+}
+
+///|
+fn flow_zoom_percent(model : Model) -> String {
+  (model.flow_zoom * 100.0 + 0.5).to_int().to_string() + "%"
+}
+
+///|
+fn render_flow_canvas_node(
   dispatch : Dispatch[Msg],
+  model : Model,
   composition : MoonFlowComposition,
   item : MoonFlowCompositionItem,
 ) -> @rabbita.Html {
   let selected = composition.selected_item_ids.contains(item.work_item_id)
   let can_toggle = moonflow_composition_can_toggle(composition, item)
-  let dependents = moonflow_composition_dependents(
-    composition, item.work_item_id,
+  let (x, y) = flow_item_position(
+    model,
+    composition.items[:],
+    item.work_item_id,
   )
+  let dragging = model.flow_drag_node_id == item.work_item_id
+  let state_class = if selected { "included" } else { "excluded" }
   article(
-    class="flow-canvas-node " + (if selected { "included" } else { "excluded" }),
+    class="flow-node " + state_class + (if dragging { " dragging" } else { "" }),
+    style=["left: " + flow_px(x), "top: " + flow_px(y)],
     attrs=@html.Attrs::build()
       .data_set("work-item-id", item.work_item_id)
       .data_set("product-id", item.product_id),
     [
-      div(class="flow-canvas-node-head", [
+      div(
+        class="flow-node-grip",
+        title="Drag to move this node",
+        attrs=@html.Attrs::build()
+          .aria_label("Move node " + item.work_item_id)
+          .draggable("true")
+          .on_mousedown(fn(event) {
+            dispatch(
+              FlowNodeDragStart(
+                item.work_item_id,
+                event.get_client_x(),
+                event.get_client_y(),
+              ),
+            )
+          })
+          .on_dragstart(fn(event) {
+            event.stop_propagation()
+            dispatch(
+              FlowNodeDragStart(
+                item.work_item_id,
+                event.get_client_x(),
+                event.get_client_y(),
+              ),
+            )
+          })
+          .on_dragend(fn(_event) { dispatch(FlowPanEnd) }),
+        [span("⠿")],
+      ),
+      div(class="flow-node-head", [
         span(class="flow-canvas-product", item.product_id),
         span(
-          class="flow-item-status " + (if selected { "ready" } else { "blocked" }),
-          if selected { "included" } else { "excluded" },
+          class="flow-item-status " + state_class,
+          if selected {
+            "Included"
+          } else {
+            "Excluded"
+          },
         ),
       ]),
       strong(item.work_item_id),
       small(item.operation + " · " + item.requested_authority),
-      if item.depends_on.is_empty() {
-        small(class="flow-canvas-root", "Starts this branch")
-      } else {
-        div(
-          class="flow-canvas-connections",
-          item.depends_on.map(dependency => span("← " + dependency)),
-        )
-      },
       button(
         class="secondary-button compact-button flow-node-toggle",
         attrs=@html.Attrs::build()
           .aria_pressed(if selected { "true" } else { "false" })
           .aria_label(
             (if selected { "Exclude " } else { "Include " }) +
-            item.product_id + " work item " + item.work_item_id,
+            item.product_id +
+            " work item " +
+            item.work_item_id,
           ),
         disabled=!can_toggle,
         on_click=dispatch(ToggleMoonFlowCompositionItem(item.work_item_id)),
-        if selected { "Exclude from job" } else { "Include in job" },
+        if selected {
+          "Exclude"
+        } else {
+          "Include"
+        },
       ),
-      if can_toggle {
-        @html.nothing
-      } else if selected {
-        small(
-          class="flow-canvas-lock",
-          "Required by " + dependents.join(", "),
-        )
-      } else {
-        small(
-          class="flow-canvas-lock",
-          "Include dependencies first: " + item.depends_on.join(", "),
-        )
-      },
     ],
   )
 }
 
 ///|
-fn render_moonflow_canvas_columns(
-  dispatch : Dispatch[Msg],
+fn render_flow_canvas_edges(
+  model : Model,
   composition : MoonFlowComposition,
-) -> Array[@rabbita.Html] {
-  let max_depth = composition.items.fold(init=0, fn(maximum, item) {
-    let depth = moonflow_composition_depth(
-      composition.items, item.work_item_id, [],
+) -> @rabbita.Html {
+  let paths : Array[@svg.Svg] = []
+  for item in composition.items {
+    if item.depends_on.is_empty() {
+      continue
+    }
+    let (tx, ty) = flow_item_position(
+      model,
+      composition.items[:],
+      item.work_item_id,
     )
-    if depth > maximum { depth } else { maximum }
-  })
-  let columns : Array[@rabbita.Html] = []
-  for depth = 0; depth <= max_depth; depth = depth + 1 {
-    let at_depth = composition.items.filter(item => {
-      moonflow_composition_depth(composition.items, item.work_item_id, []) == depth
-    })
-    columns.push(
-      section(class="flow-canvas-column", [
-        header([
-          span("Stage \{depth + 1}"),
-          small("\{at_depth.length()} node(s)"),
-        ]),
-        div(
-          class="flow-canvas-column-nodes",
-          at_depth.map(item => {
-            render_moonflow_canvas_node(dispatch, composition, item)
-          }),
+    let target_x = tx
+    let target_y = ty + flow_node_height / 2.0
+    for dependency in item.depends_on {
+      let (sx, sy) = flow_item_position(model, composition.items[:], dependency)
+      let source_x = sx + flow_node_width
+      let source_y = sy + flow_node_height / 2.0
+      let bend = 96.0
+      let d = "M " +
+        flow_coord(source_x) +
+        " " +
+        flow_coord(source_y) +
+        " C " +
+        flow_coord(source_x + bend) +
+        " " +
+        flow_coord(source_y) +
+        ", " +
+        flow_coord(target_x - bend) +
+        " " +
+        flow_coord(target_y) +
+        ", " +
+        flow_coord(target_x) +
+        " " +
+        flow_coord(target_y)
+      let active = composition.selected_item_ids.contains(item.work_item_id) &&
+        composition.selected_item_ids.contains(dependency)
+      paths.push(
+        @svg.path(
+          class="flow-edge " + (if active { "active" } else { "muted" }),
+          d~,
+          fill="none",
         ),
-      ]),
-    )
+      )
+    }
   }
-  columns
+  @svg.svg(class="flow-edge-layer", width=4800, height=3200, paths)
 }
 
 ///|
-fn render_moonflow_product_palette(
+fn render_flow_product_palette(
   model : Model,
   composition : MoonFlowComposition,
 ) -> @rabbita.Html {
   let declared = moonflow_composition_products(composition)
   let rows : Array[@rabbita.Html] = []
-  for product in model.moonsuite_products {
-    let id = product.name.to_lower()
-    let in_graph = declared.any(value => value.to_lower() == id)
-    let selected = declared.any(value => {
-      value.to_lower() == id && moonflow_product_selected(composition, value)
-    })
-    rows.push(
-      li([
-        div([strong(product.name), small(product.status)]),
-        span(
-          class="flow-palette-state " + (if selected { "included" } else { "" }),
-          if selected {
-            "In this job"
-          } else if in_graph {
-            "Available, excluded"
-          } else {
-            "Not declared by this pack"
-          },
-        ),
-      ]),
-    )
-  }
   for product_id in declared {
     let registered = model.moonsuite_products.any(product => {
       product.name.to_lower() == product_id.to_lower()
     })
-    if !registered {
-      let selected = moonflow_product_selected(composition, product_id)
-      rows.push(
-        li([
-          div([strong(product_id), small("adapter not installed")]),
-          span(
-            class="flow-palette-state " + (if selected { "included" } else { "" }),
-            if selected {
-              "In job · adapter missing"
+    let selected = moonflow_product_selected(composition, product_id)
+    rows.push(
+      li([
+        span(class="status-dot " + (if selected { "live" } else { "idle" }), ""),
+        div([
+          strong(product_id),
+          small(
+            if !registered {
+              "Adapter missing"
+            } else if selected {
+              "In this job"
             } else {
-              "Declared · adapter missing"
+              "Available, excluded"
             },
           ),
         ]),
-      )
-    }
+      ]),
+    )
   }
-  aside(class="flow-product-palette", [
-    div(class="flow-section-heading", [
-      h3("Products"),
-      small("\{composition.selected_item_ids.length()} / \{composition.items.length()} nodes"),
-    ]),
-    p(
-      "The pack declares what each node can do. You decide which declared nodes enter the next run.",
+  details(class="flow-palette-floating", [
+    summary(
+      "Products · \{composition.selected_item_ids.length()} / \{composition.items.length()} nodes",
     ),
-    ul(rows),
+    div(class="flow-palette-body", [
+      p(
+        "The pack declares what each node can do. You decide which declared nodes enter the next run.",
+      ),
+      ul(rows),
+    ]),
   ])
 }
 
 ///|
-fn render_moonflow_control_plane() -> @rabbita.Html {
-  section(class="flow-control-plane", [
-    div([strong("MoonDesk"), small("canvas + operator control")]),
-    span("→"),
-    div([strong("MoonFlow"), small("durable graph executor")]),
-    span("→"),
-    div([strong("MoonClaw"), small("single agent runtime")]),
+fn render_flow_canvas_chrome(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  div(class="flow-canvas-chrome", [
+    div(class="flow-canvas-title", [
+      strong("Composition canvas"),
+      small(model.moonflow_composition_status),
+    ]),
+    div(class="flow-canvas-tools", [
+      button(
+        class="secondary-button compact-button",
+        attrs=@html.Attrs::build().aria_label("Zoom out composition canvas"),
+        disabled=model.flow_zoom <= flow_zoom_min + 0.001,
+        on_click=dispatch(FlowCanvasWheel(0, 0, 1.0)),
+        "−",
+      ),
+      span(class="flow-zoom-readout", flow_zoom_percent(model)),
+      button(
+        class="secondary-button compact-button",
+        attrs=@html.Attrs::build().aria_label("Zoom in composition canvas"),
+        disabled=model.flow_zoom >= flow_zoom_max - 0.001,
+        on_click=dispatch(FlowCanvasWheel(0, 0, -1.0)),
+        "+",
+      ),
+      button(
+        class="secondary-button compact-button",
+        title="Reset pan, zoom and node positions",
+        on_click=dispatch(FlowCanvasReset),
+        "Reset view",
+      ),
+      match model.moonflow_composition {
+        Some(composition) =>
+          button(
+            class="primary-button compact-button",
+            disabled=model.moonflow_composition_saving ||
+              composition.selected_item_ids.is_empty(),
+            on_click=dispatch(SaveMoonFlowComposition),
+            if model.moonflow_composition_saving {
+              "Saving…"
+            } else {
+              "Save composition"
+            },
+          )
+        None => @html.nothing
+      },
+    ]),
   ])
+}
+
+///|
+fn render_flow_canvas_viewport(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  children : Array[@rabbita.Html],
+) -> @rabbita.Html {
+  let surface_children : Array[@rabbita.Html] = children
+  div(
+    class="flow-viewport",
+    attrs=@html.Attrs::build()
+      .tabindex(0)
+      .role("region")
+      .aria_label("MoonFlow infinite composition canvas")
+      .data_set("testid", "moonflow-composition-canvas")
+      .draggable("true")
+      .on_wheel(fn(event) {
+        event.prevent_default()
+        dispatch(
+          FlowCanvasWheel(
+            event.get_client_x(),
+            event.get_client_y(),
+            event.get_delta_y(),
+          ),
+        )
+      })
+      .on_mousedown(fn(event) {
+        dispatch(FlowPanStart(event.get_client_x(), event.get_client_y()))
+      })
+      .on_dragstart(fn(event) {
+        dispatch(FlowPanStart(event.get_client_x(), event.get_client_y()))
+      })
+      .on_dragover(fn(event) {
+        event.prevent_default()
+        dispatch(FlowPanMove(event.get_client_x(), event.get_client_y()))
+      })
+      .on_dragend(fn(_event) { dispatch(FlowPanEnd) })
+      .on_mousemove(fn(event) {
+        dispatch(FlowPanMove(event.get_client_x(), event.get_client_y()))
+      })
+      .on_mouseup(fn(_event) { dispatch(FlowPanEnd) })
+      .on_mouseleave(fn(_event) { dispatch(FlowPanEnd) }),
+    [
+      div(
+        class="flow-canvas-surface",
+        style=[
+          "transform: translate(" +
+          flow_px(model.flow_pan_x) +
+          ", " +
+          flow_px(model.flow_pan_y) +
+          ") scale(" +
+          flow_zoom_text(model.flow_zoom) +
+          ")",
+        ],
+        surface_children,
+      ),
+    ],
+  )
 }
 
 ///|
@@ -263,107 +418,49 @@ fn render_moonflow_composition_canvas(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  match model.moonflow_composition {
-    None =>
-      section(class="flow-composer-empty", [
-        div([strong("Composition canvas"), small(model.moonflow_composition_status)]),
-        p(
-          "Add a typed Work graph to this MoonBook. MoonDesk will visualize every product and connection here without absorbing its domain logic.",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-          "Open executable document",
-        ),
-      ])
-    Some(composition) => {
-      let zoom_class = "zoom-" + model.moonflow_canvas_zoom.to_string()
-      section(
-        class="flow-composer",
-        attrs=@html.Attrs::build().data_set("testid", "moonflow-composition-canvas"),
-        [
-          header(class="flow-composer-head", [
-            div([
-              p(class="eyebrow", "Suite composition"),
-              h2("Job canvas"),
+  section(class="flow-composer flow-composer-infinite", [
+    render_flow_canvas_chrome(dispatch, model),
+    match model.moonflow_composition {
+      None =>
+        div(class="flow-composer-stage", [
+          render_flow_canvas_viewport(dispatch, model, [
+            div(class="flow-canvas-empty", [
+              strong("No executable Work graph yet"),
               p(
-                "Select products, inspect typed connections, then save a digest-bound composition for the next run.",
-              ),
-            ]),
-            div(class="flow-canvas-toolbar", [
-              button(
-                class="secondary-button compact-button",
-                attrs=@html.Attrs::build().aria_label("Zoom out composition canvas"),
-                disabled=model.moonflow_canvas_zoom <= 75,
-                on_click=dispatch(SetMoonFlowCanvasZoom(model.moonflow_canvas_zoom - 25)),
-                "−",
-              ),
-              span("\{model.moonflow_canvas_zoom}%"),
-              button(
-                class="secondary-button compact-button",
-                attrs=@html.Attrs::build().aria_label("Zoom in composition canvas"),
-                disabled=model.moonflow_canvas_zoom >= 125,
-                on_click=dispatch(SetMoonFlowCanvasZoom(model.moonflow_canvas_zoom + 25)),
-                "+",
+                "Add a typed Work graph to this MoonBook. Every product and connection will appear on this canvas.",
               ),
               button(
-                class="primary-button compact-button",
-                disabled=model.moonflow_composition_saving ||
-                  composition.selected_item_ids.is_empty(),
-                on_click=dispatch(SaveMoonFlowComposition),
-                if model.moonflow_composition_saving {
-                  "Saving…"
-                } else {
-                  "Save composition"
-                },
+                class="secondary-button",
+                on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+                "Open executable document",
               ),
             ]),
           ]),
-          render_moonflow_control_plane(),
-          div(class="flow-composer-layout", [
-            render_moonflow_product_palette(model, composition),
-            div(
-              class="flow-canvas-viewport",
-              attrs=@html.Attrs::build()
-                .tabindex(0)
-                .role("region")
-                .aria_label("Scrollable MoonSuite job composition canvas"),
-              [
-                div(
-                  class="flow-canvas-surface " + zoom_class,
-                  render_moonflow_canvas_columns(dispatch, composition),
-                ),
-              ],
-            ),
-          ]),
-          div(class="flow-composer-foot", [
-            small(
-              attrs=@html.Attrs::build().role("status").aria_live("polite"),
-              model.moonflow_composition_status,
+        ])
+      Some(composition) => {
+        let nodes : Array[@rabbita.Html] = [
+          render_flow_canvas_edges(model, composition),
+        ]
+        for item in composition.items {
+          nodes.push(
+            render_flow_canvas_node(dispatch, model, composition, item),
+          )
+        }
+        div(class="flow-composer-stage", [
+          render_flow_canvas_viewport(dispatch, model, nodes),
+          render_flow_product_palette(model, composition),
+          div(class="flow-canvas-hint", [
+            span(
+              "Drag empty space to pan · Scroll to zoom · Drag a node handle to rearrange",
             ),
             button(
               class="quiet-button",
               on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-              "Edit node contracts and connections in MoonWiki",
+              "Edit node contracts in Wiki",
             ),
           ]),
-          details(class="flow-canvas-list-alternative", [
-            summary("Accessible connection list"),
-            ul(
-              composition.items.map(item => {
-                li(
-                  item.product_id + " / " + item.work_item_id +
-                  (if item.depends_on.is_empty() {
-                    " starts a branch"
-                  } else {
-                    " depends on " + item.depends_on.join(", ")
-                  }),
-                )
-              }),
-            ),
-          ]),
-        ],
-      )
-    }
-  }
+        ])
+      }
+    },
+  ])
 }

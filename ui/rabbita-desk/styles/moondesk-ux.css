@@ -1,0 +1,424 @@
+/* MoonDesk UX overhaul — layered on top of product-shell.css.
+   Covers: MoonFlow infinite canvas, Wiki library pane, Pack home trim. */
+
+/* ---------- MoonFlow infinite canvas ---------- */
+
+.flow-hero-compact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px 10px;
+}
+
+.flow-hero-compact h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.flow-hero-compact .lead {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted, #6b7684);
+}
+
+.flow-composer-infinite {
+  display: flex;
+  flex-direction: column;
+  margin: 0 24px 24px;
+  border: 1px solid #e3e8ee;
+  border-radius: 16px;
+  background: #fbfcfd;
+  overflow: hidden;
+  height: 64vh;
+  min-height: 520px;
+}
+
+.flow-canvas-chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e8edf2;
+  background: #ffffff;
+  z-index: 12;
+}
+
+.flow-canvas-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.flow-canvas-title strong {
+  font-size: 14px;
+}
+
+.flow-canvas-title small {
+  color: #8a94a0;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flow-canvas-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flow-zoom-readout {
+  min-width: 46px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: #5b6470;
+}
+
+.flow-composer-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.flow-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  background: #f7f9fb;
+  outline: none;
+}
+
+.flow-viewport:active {
+  cursor: grabbing;
+}
+
+.flow-canvas-surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4800px;
+  height: 3200px;
+  transform-origin: 0 0;
+  background-image: radial-gradient(circle, #dde4ec 1.2px, transparent 1.2px);
+  background-size: 26px 26px;
+}
+
+.flow-edge-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.flow-edge {
+  stroke: #c7d1dc;
+  stroke-width: 2;
+}
+
+.flow-edge.active {
+  stroke: #6b93e8;
+}
+
+.flow-edge.muted {
+  stroke-dasharray: 6 6;
+  opacity: 0.55;
+}
+
+.flow-node {
+  position: absolute;
+  width: 244px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #dfe6ee;
+  border-radius: 12px;
+  padding: 12px 14px 12px;
+  box-shadow: 0 4px 14px rgba(23, 38, 63, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.flow-node.excluded {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.flow-node.dragging {
+  box-shadow: 0 14px 34px rgba(23, 38, 63, 0.22);
+  z-index: 6;
+}
+
+.flow-node-grip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  cursor: grab;
+  color: #a5b0bd;
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
+  padding: 2px;
+}
+
+.flow-node-grip:hover {
+  color: #5b6470;
+}
+
+.flow-node-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-left: 20px;
+}
+
+.flow-node strong {
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.flow-node small {
+  color: #7a8593;
+  font-size: 12px;
+}
+
+.flow-node .flow-node-toggle {
+  align-self: flex-start;
+}
+
+.flow-canvas-empty {
+  position: absolute;
+  left: 480px;
+  top: 200px;
+  width: 380px;
+  background: #ffffff;
+  border: 1px dashed #cfd8e2;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(23, 38, 63, 0.06);
+}
+
+.flow-canvas-empty strong {
+  font-size: 15px;
+}
+
+.flow-canvas-empty p {
+  margin: 0;
+  color: #6b7684;
+  font-size: 13px;
+}
+
+.flow-palette-floating {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e3e8ee;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(23, 38, 63, 0.1);
+  max-width: 300px;
+  font-size: 13px;
+}
+
+.flow-palette-floating summary {
+  cursor: pointer;
+  padding: 9px 14px;
+  font-weight: 600;
+  list-style: none;
+}
+
+.flow-palette-floating summary::-webkit-details-marker {
+  display: none;
+}
+
+.flow-palette-floating summary::before {
+  content: "▸ ";
+  color: #8a94a0;
+}
+
+.flow-palette-floating[open] summary::before {
+  content: "▾ ";
+}
+
+.flow-palette-body {
+  border-top: 1px solid #edf1f5;
+  padding: 10px 14px 12px;
+}
+
+.flow-palette-body p {
+  margin: 0 0 8px;
+  color: #7a8593;
+  font-size: 12px;
+}
+
+.flow-palette-body ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flow-palette-body li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flow-palette-body li small {
+  display: block;
+  color: #8a94a0;
+}
+
+.flow-canvas-hint {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 10px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: #98a2ae;
+  pointer-events: none;
+}
+
+.flow-canvas-hint button {
+  pointer-events: auto;
+}
+
+/* ---------- Wiki library pane ---------- */
+
+.wiki-book-switcher {
+  margin: 4px 0 10px;
+}
+
+.wiki-book-switcher-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a94a0;
+  margin-bottom: 6px;
+}
+
+.wiki-book-switcher .workspace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wiki-book-switcher .workspace-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.wiki-book-switcher .workspace-row:hover {
+  background: #f1f4f8;
+}
+
+.wiki-book-switcher .workspace-row.active {
+  background: #eef3fc;
+  border-color: #cfddf5;
+  font-weight: 600;
+}
+
+.wiki-new-note {
+  margin: 2px 0 10px;
+}
+
+.user-pane .activity-section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.status-dot.idle {
+  background: #c9d2dc;
+}
+
+/* ---------- Pack home trim ---------- */
+
+.pack-runtime-details {
+  margin: 18px 0 0;
+  border-top: 1px solid #e8edf2;
+  padding-top: 12px;
+}
+
+.pack-runtime-details summary {
+  cursor: pointer;
+  color: #6b7684;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pack-runtime-details .pack-runtime-strip {
+  margin: 12px 0 8px;
+}
+
+.pack-runtime-details p {
+  color: #7a8593;
+  font-size: 13px;
+  max-width: 720px;
+}
+
+/* ---------- Wiki book home ---------- */
+
+.wiki-book-home {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.wiki-home-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid #e3e8ee;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.wiki-home-card:hover {
+  border-color: #c4d3ec;
+  background: #f6f9fe;
+}
+
+.wiki-home-card strong {
+  font-size: 13px;
+}
+
+.wiki-home-card small {
+  color: #7a8593;
+  font-size: 12px;
+  line-height: 1.4;
+}

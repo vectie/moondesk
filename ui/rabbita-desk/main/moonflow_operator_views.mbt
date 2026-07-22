@@ -45,12 +45,26 @@ fn moonflow_operator_parts(parts : Array[String]) -> String {
 ///|
 fn moonflow_operator_state_class(state : String) -> String {
   match state.to_lower() {
-    "accepted" | "adopted" | "complete" | "completed" | "delivered" |
-    "resolved" | "succeeded" => "accepted"
-    "blocked" | "escalated" | "exhausted" | "failed" | "overdue" |
-    "quarantined" | "rejected" => "blocked"
-    "active" | "evaluating" | "in_progress" | "pending" | "review" |
-    "revising" => "review"
+    "accepted"
+    | "adopted"
+    | "complete"
+    | "completed"
+    | "delivered"
+    | "resolved"
+    | "succeeded" => "accepted"
+    "blocked"
+    | "escalated"
+    | "exhausted"
+    | "failed"
+    | "overdue"
+    | "quarantined"
+    | "rejected" => "blocked"
+    "active"
+    | "evaluating"
+    | "in_progress"
+    | "pending"
+    | "review"
+    | "revising" => "review"
     _ => ""
   }
 }
@@ -119,34 +133,41 @@ fn moonflow_recovery_operator_rows(
       [
         {
           identity: "Recovery · " +
-            moonflow_operator_text(value.claim_id, "no active claim"),
+          moonflow_operator_text(value.claim_id, "no active claim"),
           state: moonflow_operator_text(value.state, "not recorded"),
           primary: moonflow_operator_parts([
             "owner " + moonflow_operator_text(value.owner, "not recorded"),
-            "attempt " + moonflow_operator_int(value.attempt_count, "not recorded"),
-            if manual { "manual intervention required" } else { "" },
+            "attempt " +
+            moonflow_operator_int(value.attempt_count, "not recorded"),
+            if manual {
+              "manual intervention required"
+            } else {
+              ""
+            },
             moonflow_operator_text(value.blocker, ""),
           ]),
           secondary: moonflow_operator_parts([
-            "next due " + moonflow_operator_text(value.next_due_at, "not recorded"),
+            "next due " +
+            moonflow_operator_text(value.next_due_at, "not recorded"),
             "deadline " + moonflow_operator_text(value.deadline, "not recorded"),
-            "expires " + moonflow_operator_text(value.expires_at, "not recorded"),
+            "expires " +
+            moonflow_operator_text(value.expires_at, "not recorded"),
             "epoch " + moonflow_operator_int(value.epoch, "not recorded"),
             "fence " + moonflow_operator_int(value.fence, "not recorded"),
             "unknown since " +
-              moonflow_operator_text(value.unknown_since, "not recorded"),
+            moonflow_operator_text(value.unknown_since, "not recorded"),
             "reconciliation age " +
-              moonflow_operator_int(
-                value.reconciliation_age_seconds,
-                "not recorded",
-              ),
+            moonflow_operator_int(
+              value.reconciliation_age_seconds,
+              "not recorded",
+            ),
             "provider observation " +
-              moonflow_operator_text(
-                value.last_provider_observation_digest,
-                "not recorded",
-              ),
+            moonflow_operator_text(
+              value.last_provider_observation_digest,
+              "not recorded",
+            ),
             "recorded " +
-              moonflow_operator_text(value.recorded_at, "not recorded"),
+            moonflow_operator_text(value.recorded_at, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
           needs_attention: manual || value.blocker.unwrap_or("") != "",
@@ -179,7 +200,7 @@ fn moonflow_due_operator_rows(
           ]),
           secondary: moonflow_operator_parts([
             "authority " +
-              moonflow_operator_text(value.authority_ref, "not recorded"),
+            moonflow_operator_text(value.authority_ref, "not recorded"),
             "source " + moonflow_operator_text(value.source_ref, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
@@ -207,10 +228,10 @@ fn moonflow_callback_operator_rows(
           ]),
           secondary: moonflow_operator_parts([
             "provider event " +
-              moonflow_operator_text(value.provider_event_id, "not recorded"),
+            moonflow_operator_text(value.provider_event_id, "not recorded"),
             "source " + moonflow_operator_text(value.source_at, "not recorded"),
             "received " +
-              moonflow_operator_text(value.received_at, "not recorded"),
+            moonflow_operator_text(value.received_at, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
           needs_attention: state == "conflict" || state == "stale",
@@ -227,19 +248,20 @@ fn moonflow_quarantine_operator_rows(
     None => []
     Some(entries) =>
       entries.map(value => {
-        {
-          identity: moonflow_operator_text(value.quarantine_id, "Quarantined evidence"),
-          state: moonflow_operator_text(value.state, "quarantined"),
-          primary: moonflow_operator_text(value.reason, "No reason published"),
-          secondary: moonflow_operator_parts([
-            "callback " +
-              moonflow_operator_text(value.callback_ref, "not recorded"),
-            "quarantined " +
-              moonflow_operator_text(value.quarantined_at, "not recorded"),
-          ]),
-          evidence_refs: moonflow_operator_refs(value.evidence_refs),
-          needs_attention: true,
-        }
+        identity: moonflow_operator_text(
+          value.quarantine_id,
+          "Quarantined evidence",
+        ),
+        state: moonflow_operator_text(value.state, "quarantined"),
+        primary: moonflow_operator_text(value.reason, "No reason published"),
+        secondary: moonflow_operator_parts([
+          "callback " +
+          moonflow_operator_text(value.callback_ref, "not recorded"),
+          "quarantined " +
+          moonflow_operator_text(value.quarantined_at, "not recorded"),
+        ]),
+        evidence_refs: moonflow_operator_refs(value.evidence_refs),
+        needs_attention: true,
       })
   }
 }
@@ -254,9 +276,13 @@ fn moonflow_intervention_operator_rows(
       interventions.map(value => {
         let state = moonflow_operator_text(value.state, "open")
         let resolved = value.resolved_at.unwrap_or("") != "" ||
-          state == "resolved" || state == "closed"
+          state == "resolved" ||
+          state == "closed"
         {
-          identity: moonflow_operator_text(value.intervention_id, "Manual intervention"),
+          identity: moonflow_operator_text(
+            value.intervention_id,
+            "Manual intervention",
+          ),
           state,
           primary: moonflow_operator_parts([
             moonflow_operator_text(value.required_action, "Action not recorded"),
@@ -266,9 +292,9 @@ fn moonflow_intervention_operator_rows(
             "owner " + moonflow_operator_text(value.owner, "not assigned"),
             "opened " + moonflow_operator_text(value.opened_at, "not recorded"),
             "resolved " +
-              moonflow_operator_text(value.resolved_at, "not recorded"),
+            moonflow_operator_text(value.resolved_at, "not recorded"),
             "authority " +
-              moonflow_operator_text(value.authority_ref, "not recorded"),
+            moonflow_operator_text(value.authority_ref, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
           needs_attention: !resolved,
@@ -288,33 +314,42 @@ fn moonflow_deliverable_operator_rows(
         let state = moonflow_operator_text(value.state, "submitted")
         let review_required = value.human_review_required.unwrap_or(false)
         {
-          identity: moonflow_operator_text(value.candidate_id, "Deliverable candidate"),
+          identity: moonflow_operator_text(
+            value.candidate_id,
+            "Deliverable candidate",
+          ),
           state,
           primary: moonflow_operator_parts([
             "decision " + moonflow_operator_text(value.decision, "not recorded"),
             moonflow_operator_text(value.blocker, ""),
-            if review_required { "named human review required" } else { "" },
+            if review_required {
+              "named human review required"
+            } else {
+              ""
+            },
           ]),
           secondary: moonflow_operator_parts([
             "producer " +
-              moonflow_operator_text(value.producer_version, "not recorded"),
+            moonflow_operator_text(value.producer_version, "not recorded"),
             "ability " +
-              moonflow_operator_text(value.ability_version, "not recorded"),
+            moonflow_operator_text(value.ability_version, "not recorded"),
             "policy " +
-              moonflow_operator_text(value.policy_version, "not recorded"),
+            moonflow_operator_text(value.policy_version, "not recorded"),
             "reviewer " +
-              moonflow_operator_text(value.reviewer_id, "not recorded"),
+            moonflow_operator_text(value.reviewer_id, "not recorded"),
             "terminal source " +
-              moonflow_operator_text(value.source_terminal_ref, "not recorded"),
+            moonflow_operator_text(value.source_terminal_ref, "not recorded"),
             "submitted " +
-              moonflow_operator_text(value.submitted_at, "not recorded"),
+            moonflow_operator_text(value.submitted_at, "not recorded"),
             "decided " +
-              moonflow_operator_text(value.decided_at, "not recorded"),
+            moonflow_operator_text(value.decided_at, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
-          needs_attention: (review_required &&
-            value.reviewer_id.unwrap_or("") == "") || state == "escalated" ||
-            state == "revise",
+          needs_attention: (
+            review_required && value.reviewer_id.unwrap_or("") == ""
+          ) ||
+          state == "escalated" ||
+          state == "revise",
         }
       })
   }
@@ -328,26 +363,24 @@ fn moonflow_artifact_operator_rows(
     None => []
     Some(artifacts) =>
       artifacts.map(value => {
-        {
-          identity: moonflow_operator_text(value.artifact_id, "Artifact"),
-          state: moonflow_operator_text(value.state, "recorded"),
-          primary: moonflow_operator_parts([
-            "revision " + moonflow_operator_int(value.revision, "not recorded"),
-            moonflow_operator_text(value.media_type, "media type not recorded"),
-            moonflow_operator_text(value.locator, "locator not published"),
-          ]),
-          secondary: moonflow_operator_parts([
-            "digest " + moonflow_short_identity(value.digest.unwrap_or("")),
-            "lineage " +
-              moonflow_operator_text(value.lineage_root_ref, "not recorded"),
-            "previous " +
-              moonflow_operator_text(value.previous_revision_ref, "none recorded"),
-            "accepted " +
-              moonflow_operator_text(value.accepted_at, "not recorded"),
-          ]),
-          evidence_refs: moonflow_operator_refs(value.evidence_refs),
-          needs_attention: false,
-        }
+        identity: moonflow_operator_text(value.artifact_id, "Artifact"),
+        state: moonflow_operator_text(value.state, "recorded"),
+        primary: moonflow_operator_parts([
+          "revision " + moonflow_operator_int(value.revision, "not recorded"),
+          moonflow_operator_text(value.media_type, "media type not recorded"),
+          moonflow_operator_text(value.locator, "locator not published"),
+        ]),
+        secondary: moonflow_operator_parts([
+          "digest " + moonflow_short_identity(value.digest.unwrap_or("")),
+          "lineage " +
+          moonflow_operator_text(value.lineage_root_ref, "not recorded"),
+          "previous " +
+          moonflow_operator_text(value.previous_revision_ref, "none recorded"),
+          "accepted " +
+          moonflow_operator_text(value.accepted_at, "not recorded"),
+        ]),
+        evidence_refs: moonflow_operator_refs(value.evidence_refs),
+        needs_attention: false,
       })
   }
 }
@@ -367,21 +400,26 @@ fn moonflow_delivery_operator_rows(
           state,
           primary: moonflow_operator_parts([
             "destination " +
-              moonflow_operator_text(value.destination, "not recorded"),
-            if authorized { "authority recorded" } else { "authority not confirmed" },
+            moonflow_operator_text(value.destination, "not recorded"),
+            if authorized {
+              "authority recorded"
+            } else {
+              "authority not confirmed"
+            },
           ]),
           secondary: moonflow_operator_parts([
             "artifact " +
-              moonflow_operator_text(value.artifact_ref, "not recorded"),
+            moonflow_operator_text(value.artifact_ref, "not recorded"),
             "authority " +
-              moonflow_operator_text(value.authority_ref, "not recorded"),
+            moonflow_operator_text(value.authority_ref, "not recorded"),
             "receipt " +
-              moonflow_operator_text(value.receipt_ref, "not recorded"),
+            moonflow_operator_text(value.receipt_ref, "not recorded"),
             "delivered " +
-              moonflow_operator_text(value.delivered_at, "not recorded"),
+            moonflow_operator_text(value.delivered_at, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
-          needs_attention: (state == "pending" && !authorized) || state == "failed",
+          needs_attention: (state == "pending" && !authorized) ||
+          state == "failed",
         }
       })
   }
@@ -397,26 +435,32 @@ fn moonflow_outcome_operator_rows(
       outcomes.map(value => {
         let state = moonflow_operator_text(value.state, "observed")
         {
-          identity: moonflow_operator_text(value.observation_id, "Outcome observation"),
+          identity: moonflow_operator_text(
+            value.observation_id,
+            "Outcome observation",
+          ),
           state,
           primary: moonflow_operator_text(value.summary, "No summary published"),
           secondary: moonflow_operator_parts([
             "artifact " +
-              moonflow_operator_text(value.artifact_ref, "not recorded"),
+            moonflow_operator_text(value.artifact_ref, "not recorded"),
             "source " + moonflow_operator_text(value.source, "not recorded"),
-            "window " + moonflow_operator_text(value.window_start, "not recorded") +
-              " → " + moonflow_operator_text(value.window_end, "not recorded"),
+            "window " +
+            moonflow_operator_text(value.window_start, "not recorded") +
+            " → " +
+            moonflow_operator_text(value.window_end, "not recorded"),
             "effective " +
-              moonflow_operator_text(value.effective_at, "not recorded"),
+            moonflow_operator_text(value.effective_at, "not recorded"),
             "retrieved " +
-              moonflow_operator_text(value.retrieved_at, "not recorded"),
+            moonflow_operator_text(value.retrieved_at, "not recorded"),
             "digest " + moonflow_operator_text(value.digest, "not recorded"),
             "corrects " +
-              moonflow_operator_text(value.corrects_observation_ref, "none"),
+            moonflow_operator_text(value.corrects_observation_ref, "none"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
-          needs_attention: state == "conflicting" || state == "late" ||
-            state == "missing",
+          needs_attention: state == "conflicting" ||
+          state == "late" ||
+          state == "missing",
         }
       })
   }
@@ -432,7 +476,10 @@ fn moonflow_proposal_operator_rows(
       proposals.map(value => {
         let state = moonflow_operator_text(value.state, "proposed")
         {
-          identity: moonflow_operator_text(value.proposal_id, "Improvement proposal"),
+          identity: moonflow_operator_text(
+            value.proposal_id,
+            "Improvement proposal",
+          ),
           state,
           primary: moonflow_operator_parts([
             moonflow_operator_text(value.scope, "Scope not recorded"),
@@ -442,18 +489,14 @@ fn moonflow_proposal_operator_rows(
           secondary: moonflow_operator_parts([
             "owner " + moonflow_operator_text(value.owner_kind, "not routed"),
             "evaluation " +
-              moonflow_operator_text(value.evaluation_method, "not recorded"),
+            moonflow_operator_text(value.evaluation_method, "not recorded"),
             "expires " +
-              moonflow_operator_text(value.expires_at, "not recorded"),
-            "rollback " +
-              moonflow_operator_text(value.rollback, "not recorded"),
+            moonflow_operator_text(value.expires_at, "not recorded"),
+            "rollback " + moonflow_operator_text(value.rollback, "not recorded"),
             "policy " +
-              moonflow_operator_text(value.policy_version, "not recorded"),
+            moonflow_operator_text(value.policy_version, "not recorded"),
             "assessment " +
-              moonflow_operator_text(
-                value.source_assessment_ref,
-                "not recorded",
-              ),
+            moonflow_operator_text(value.source_assessment_ref, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
           needs_attention: state == "pending_review" || state == "proposed",
@@ -472,22 +515,25 @@ fn moonflow_evaluation_operator_rows(
       evaluations.map(value => {
         let state = moonflow_operator_text(value.state, "not started")
         {
-          identity: moonflow_operator_text(value.evaluation_id, "Offline evaluation"),
+          identity: moonflow_operator_text(
+            value.evaluation_id,
+            "Offline evaluation",
+          ),
           state,
           primary: moonflow_operator_parts([
             moonflow_operator_text(value.result, "No result recorded"),
             "regression gate " +
-              moonflow_operator_text(value.regression_gate, "not recorded"),
+            moonflow_operator_text(value.regression_gate, "not recorded"),
           ]),
           secondary: moonflow_operator_parts([
             "proposal " +
-              moonflow_operator_text(value.proposal_ref, "not recorded"),
+            moonflow_operator_text(value.proposal_ref, "not recorded"),
             "baseline " +
-              moonflow_operator_text(value.baseline_version, "not recorded"),
+            moonflow_operator_text(value.baseline_version, "not recorded"),
             "proposed " +
-              moonflow_operator_text(value.proposed_version, "not recorded"),
+            moonflow_operator_text(value.proposed_version, "not recorded"),
             "completed " +
-              moonflow_operator_text(value.completed_at, "not recorded"),
+            moonflow_operator_text(value.completed_at, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
           needs_attention: state == "failed" || state == "blocked",
@@ -506,7 +552,10 @@ fn moonflow_adoption_operator_rows(
       decisions.map(value => {
         let state = moonflow_operator_text(value.state, "pending")
         {
-          identity: moonflow_operator_text(value.decision_id, "Human adoption decision"),
+          identity: moonflow_operator_text(
+            value.decision_id,
+            "Human adoption decision",
+          ),
           state,
           primary: moonflow_operator_parts([
             "decision " + moonflow_operator_text(value.decision, "not recorded"),
@@ -514,23 +563,28 @@ fn moonflow_adoption_operator_rows(
           ]),
           secondary: moonflow_operator_parts([
             "proposal " +
-              moonflow_operator_text(value.proposal_ref, "not recorded"),
+            moonflow_operator_text(value.proposal_ref, "not recorded"),
             "reviewer " +
-              moonflow_operator_text(value.reviewer_id, "not assigned"),
-            "version " + moonflow_operator_text(value.old_version, "not recorded") +
-              " → " + moonflow_operator_text(value.new_version, "not recorded"),
+            moonflow_operator_text(value.reviewer_id, "not assigned"),
+            "version " +
+            moonflow_operator_text(value.old_version, "not recorded") +
+            " → " +
+            moonflow_operator_text(value.new_version, "not recorded"),
             "decided " +
-              moonflow_operator_text(value.decided_at, "not recorded"),
+            moonflow_operator_text(value.decided_at, "not recorded"),
           ]),
           evidence_refs: moonflow_operator_refs(value.evidence_refs),
-          needs_attention: state == "pending" || value.reviewer_id.unwrap_or("") == "",
+          needs_attention: state == "pending" ||
+          value.reviewer_id.unwrap_or("") == "",
         }
       })
   }
 }
 
 ///|
-fn moonflow_operator_rows_total(groups : Array[Array[MoonFlowOperatorRowView]]) -> Int {
+fn moonflow_operator_rows_total(
+  groups : Array[Array[MoonFlowOperatorRowView]],
+) -> Int {
   groups.fold(init=0, fn(total, rows) { total + rows.length() })
 }
 
@@ -538,12 +592,9 @@ fn moonflow_operator_rows_total(groups : Array[Array[MoonFlowOperatorRowView]]) 
 fn moonflow_operator_attention_total(
   groups : Array[Array[MoonFlowOperatorRowView]],
 ) -> Int {
-  groups.fold(
-    init=0,
-    fn(total, rows) {
-      total + rows.filter(row => row.needs_attention).length()
-    },
-  )
+  groups.fold(init=0, fn(total, rows) {
+    total + rows.filter(row => row.needs_attention).length()
+  })
 }
 
 ///|
@@ -570,10 +621,7 @@ fn render_moonflow_lifecycle_stage(
 ) -> @rabbita.Html {
   div(class="flow-lifecycle-stage " + state, [
     span(class="flow-lifecycle-index", ordinal),
-    div([
-      strong(title),
-      small(detail),
-    ]),
+    div([strong(title), small(detail)]),
     span(class="flow-lifecycle-state", state.replace(old="_", new=" ")),
   ])
 }
@@ -589,10 +637,7 @@ fn render_moonflow_lifecycle(
 ) -> @rabbita.Html {
   div(class="flow-lifecycle", [
     render_moonflow_lifecycle_stage(
-      "1",
-      "Authorized intake",
-      "complete",
-      "Run and source identity recorded",
+      "1", "Authorized intake", "complete", "Run and source identity recorded",
     ),
     render_moonflow_lifecycle_stage(
       "2",
@@ -661,7 +706,8 @@ fn render_moonflow_action_button(
       div(class="flow-item-title", [
         strong(action.label),
         span(
-          class="flow-item-status " + moonflow_operator_state_class(action.status),
+          class="flow-item-status " +
+            moonflow_operator_state_class(action.status),
           action.status,
         ),
       ]),
@@ -669,11 +715,10 @@ fn render_moonflow_action_button(
     ]),
     button(
       class=if dominant { "primary-button" } else { "secondary-button" },
-      disabled=!action.enabled || action.status != "available" ||
+      disabled=!action.enabled ||
+        action.status != "available" ||
         pending_action_id != "",
-      on_click=dispatch(
-        ExecuteMoonFlowOperatorAction(run_id, action.action_id),
-      ),
+      on_click=dispatch(ExecuteMoonFlowOperatorAction(run_id, action.action_id)),
       if applying {
         "Applying…"
       } else if another_action_applying {
@@ -738,7 +783,8 @@ fn render_moonflow_operator_actions(
   })
   let primary = if enabled.is_empty() { None } else { Some(enabled[0]) }
   let secondary = match primary {
-    Some(value) => catalog.actions.filter(action => action.action_id != value.action_id)
+    Some(value) =>
+      catalog.actions.filter(action => action.action_id != value.action_id)
     None => catalog.actions
   }
   section(class="flow-section", [
@@ -758,21 +804,23 @@ fn render_moonflow_operator_actions(
       ),
     ]),
     match primary {
-      Some(action) => render_moonflow_action_button(
-        dispatch,
-        run_id,
-        action,
-        true,
-        model.moonflow_operator_action_pending,
-      )
-      None => p(
-        class="flow-quiet",
-        if catalog.status == "unavailable" {
-          "MoonFlow has not published authority-bound handoffs for this run."
-        } else {
-          "No action is executable. Stale, rejected, and unavailable actions remain visible below."
-        },
-      )
+      Some(action) =>
+        render_moonflow_action_button(
+          dispatch,
+          run_id,
+          action,
+          true,
+          model.moonflow_operator_action_pending,
+        )
+      None =>
+        p(
+          class="flow-quiet",
+          if catalog.status == "unavailable" {
+            "MoonFlow has not published authority-bound handoffs for this run."
+          } else {
+            "No action is executable. Stale, rejected, and unavailable actions remain visible below."
+          },
+        )
     },
     if secondary.is_empty() {
       @html.nothing
@@ -812,10 +860,7 @@ fn render_moonflow_operator_surface(
     None =>
       return section(class="flow-operator-workspace", [
         div(class="flow-workspace-head", [
-          div([
-            p(class="eyebrow", "Run workspace"),
-            h3("Operate this run"),
-          ]),
+          div([p(class="eyebrow", "Run workspace"), h3("Operate this run")]),
           span(class="flow-state blocked", "projection unavailable"),
         ]),
         div(class="flow-workspace-grid", [
@@ -828,14 +873,13 @@ fn render_moonflow_operator_surface(
       ])
   }
   if !surface.available.unwrap_or(false) {
-    let status = moonflow_operator_text(surface.status, "unavailable")
-      .replace(old="_", new=" ")
+    let status = moonflow_operator_text(surface.status, "unavailable").replace(
+      old="_",
+      new=" ",
+    )
     return section(class="flow-operator-workspace", [
       div(class="flow-workspace-head", [
-        div([
-          p(class="eyebrow", "Run workspace"),
-          h3("Operate this run"),
-        ]),
+        div([p(class="eyebrow", "Run workspace"), h3("Operate this run")]),
         span(class="flow-state blocked", status),
       ]),
       div(class="flow-workspace-grid", [
@@ -867,18 +911,8 @@ fn render_moonflow_operator_surface(
   let finalization_groups = [deliverables, artifacts, deliveries]
   let learning_groups = [outcomes, proposals, evaluations, adoptions]
   let all_groups = [
-    recovery,
-    due,
-    callbacks,
-    quarantine,
-    interventions,
-    deliverables,
-    artifacts,
-    deliveries,
-    outcomes,
-    proposals,
-    evaluations,
-    adoptions,
+    recovery, due, callbacks, quarantine, interventions, deliverables, artifacts,
+    deliveries, outcomes, proposals, evaluations, adoptions,
   ]
   let record_count = moonflow_operator_rows_total(all_groups)
   let attention_count = moonflow_operator_attention_total(all_groups)
@@ -891,12 +925,7 @@ fn render_moonflow_operator_surface(
   )
   let learning_attention = moonflow_operator_attention_total(learning_groups)
   let attention_rows = moonflow_operator_attention_rows([
-    recovery,
-    callbacks,
-    quarantine,
-    interventions,
-    deliverables,
-    deliveries,
+    recovery, callbacks, quarantine, interventions, deliverables, deliveries,
   ])
   section(class="flow-operator-workspace", [
     div(class="flow-workspace-head", [
@@ -914,16 +943,16 @@ fn render_moonflow_operator_surface(
       span(
         class="flow-state " +
           (if attention_count > 0 { "blocked" } else { "in-progress" }),
-        if attention_count > 0 { "attention" } else { "observed" },
+        if attention_count > 0 {
+          "attention"
+        } else {
+          "observed"
+        },
       ),
     ]),
     render_moonflow_lifecycle(
-      execution_count,
-      execution_attention,
-      finalization_count,
-      finalization_attention,
-      learning_count,
-      learning_attention,
+      execution_count, execution_attention, finalization_count, finalization_attention,
+      learning_count, learning_attention,
     ),
     div(class="flow-workspace-grid", [
       div(class="flow-workspace-primary", [
@@ -954,8 +983,7 @@ fn render_moonflow_operator_surface(
           div(class="flow-item-list", [
             render_moonflow_operator_category("Due now and upcoming", due),
             render_moonflow_operator_category(
-              "Needs a decision",
-              attention_rows,
+              "Needs a decision", attention_rows,
             ),
           ])
         },
@@ -992,16 +1020,13 @@ fn render_moonflow_operator_surface(
           render_moonflow_operator_category("Learning proposals", proposals),
           render_moonflow_operator_category("Offline evaluation", evaluations),
           render_moonflow_operator_category(
-            "Bookkeeper adoption decisions",
-            adoptions,
+            "Bookkeeper adoption decisions", adoptions,
           ),
         ])
       },
     ]),
     details(class="flow-disclosure", [
-      summary(
-        "Execution evidence · " + execution_count.to_string(),
-      ),
+      summary("Execution evidence · " + execution_count.to_string()),
       div(class="flow-disclosure-body", [
         render_moonflow_operator_category("Recovery", recovery),
         render_moonflow_operator_category("Due actions and deadlines", due),
@@ -1012,8 +1037,7 @@ fn render_moonflow_operator_surface(
     ]),
     details(class="flow-disclosure", [
       summary(
-        "Final deliverable and delivery · " +
-        finalization_count.to_string(),
+        "Final deliverable and delivery · " + finalization_count.to_string(),
       ),
       div(class="flow-disclosure-body", [
         render_moonflow_operator_category("Final deliverable", deliverables),
@@ -1028,7 +1052,8 @@ fn render_moonflow_operator_surface(
     small(
       class="flow-quiet",
       moonflow_operator_text(surface.contract_id, "moonflow operator surface") +
-      " · run " + moonflow_operator_text(surface.run_id, run.run_id) +
+      " · run " +
+      moonflow_operator_text(surface.run_id, run.run_id) +
       " · recorded " +
       moonflow_operator_text(surface.recorded_at, "not recorded"),
     ),

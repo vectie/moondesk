@@ -107,7 +107,7 @@ fn markdown_navigation_needs_confirmation(
   model : Model,
   leaves_editor : Bool,
 ) -> Bool {
-  markdown_editor_active(model) && leaves_editor
+  markdown_editor_dirty(model) && leaves_editor
 }
 
 ///|

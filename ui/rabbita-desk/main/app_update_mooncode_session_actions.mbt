@@ -66,16 +66,10 @@ fn update_mooncode_session_actions(
       action,
       approval_id,
       target_command_id,
-      tool_call_id,
+      tool_call_id
     ) =>
       mooncode_decide_tool(
-        dispatch,
-        model,
-        session_id,
-        action,
-        approval_id,
-        target_command_id,
-        tool_call_id,
+        dispatch, model, session_id, action, approval_id, target_command_id, tool_call_id,
       )
     SetMoonCodeSessionQuery(query) =>
       (@rabbita.none, { ..model, mooncode_session_query: query })

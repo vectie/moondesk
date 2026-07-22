@@ -94,6 +94,17 @@ test "Flow first-run action requires a selected MoonBook" {
 }
 
 ///|
+test "Flow canvas drag pans by the pointer delta" {
+  let (_, started) = flow_pan_start_action(init_model(), 120, 80)
+  assert_true(started.flow_pan_dragging)
+  let (_, moved) = flow_pointer_move_action(started, 165, 105)
+  assert_eq(moved.flow_pan_x, started.flow_pan_x + 45.0)
+  assert_eq(moved.flow_pan_y, started.flow_pan_y + 25.0)
+  let (_, ended) = flow_pointer_end_action(moved)
+  assert_false(ended.flow_pan_dragging)
+}
+
+///|
 test "Flow import status keeps the durable run or next action visible" {
   let decoded : MoonFlowImportResult = @json.from_json({
     "book_id": "book-demo",

@@ -1,8 +1,13 @@
 ///|
 fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
+  let directory = if model.current_directory == "" {
+    "wiki"
+  } else {
+    model.current_directory
+  }
   aside(class="activity-pane user-pane", [
     div(class="pane-heading", [
-      div([p(class="eyebrow", "Current book"), h2("Library")]),
+      div([h2("Wiki")]),
       button(
         class="secondary-button compact-button",
         title="Refresh",
@@ -10,7 +15,14 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "Refresh",
       ),
     ]),
-    render_workspace_card(dispatch, model),
+    render_wiki_book_switcher(dispatch, model),
+    button(
+      class="primary-button full wiki-new-note",
+      attrs=@html.Attrs::build().data_set("testid", "wiki-new-note"),
+      title="Capture a note in this book's inbox",
+      on_click=dispatch(SelectActivity(Inbox)),
+      "+ New note",
+    ),
     div(class="activity-section-tabs", [
       button(
         class=if model.current_directory == "" {
@@ -19,10 +31,10 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           "section-pill"
         },
         on_click=dispatch(OpenDirectory("")),
-        "Overview",
+        "Home",
       ),
       button(
-        class=if model.current_directory == "wiki" {
+        class=if directory == "wiki" && model.current_directory != "" {
           "section-pill active"
         } else {
           "section-pill"
@@ -31,7 +43,16 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "Pages",
       ),
       button(
-        class=if model.current_directory == "inbox" {
+        class=if directory == "raw" {
+          "section-pill active"
+        } else {
+          "section-pill"
+        },
+        on_click=dispatch(OpenDirectory("raw")),
+        "Sources",
+      ),
+      button(
+        class=if directory == "inbox" {
           "section-pill active"
         } else {
           "section-pill"
@@ -40,7 +61,7 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "Inbox",
       ),
       button(
-        class=if model.current_directory == "book/site/generated" {
+        class=if directory == "book/site/generated" {
           "section-pill active"
         } else {
           "section-pill"
@@ -49,23 +70,47 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         "Published",
       ),
     ]),
-    render_tree(dispatch, model),
+    if model.current_directory == "" {
+      render_wiki_book_home(dispatch, model)
+    } else {
+      render_tree(dispatch, model)
+    },
   ])
 }
 
 ///|
-fn render_workspace_card(
+fn render_wiki_book_home(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  div(class="workspace-stack", [
-    div(class="workspace-card", [
-      span(class="status-dot live", ""),
-      div([
-        h3(workspace_name(model)),
-        p(class="workspace-root-muted", workspace_visible_location_label(model)),
-      ]),
-    ]),
+  let cards : Array[(String, String, String, String)] = [
+    ("wiki", "Pages", "Notes and documents written for people", "wiki"),
+    ("raw", "Sources", "Original material and evidence", "raw"),
+    ("inbox", "Inbox", "Draft notes waiting to be organized", "inbox"),
+    (
+      "book/site/generated", "Published", "The generated site for this book", "book/site/generated",
+    ),
+  ]
+  div(
+    class="wiki-book-home",
+    cards.map(card => {
+      let (_, title, detail, directory) = card
+      button(
+        class="wiki-home-card",
+        on_click=dispatch(OpenDirectory(directory)),
+        [strong(title), small(detail)],
+      )
+    }),
+  )
+}
+
+///|
+fn render_wiki_book_switcher(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  div(class="workspace-stack wiki-book-switcher", [
+    span(class="wiki-book-switcher-label", "MoonBook"),
     div(
       class="workspace-list",
       model.workspaces.map(workspace => {
@@ -80,7 +125,18 @@ fn render_workspace_card(
             " / " +
             workspace_display_book_location(model, workspace),
           on_click=dispatch(SelectWorkspace(workspace.id)),
-          [span(workspace.name)],
+          [
+            span(
+              class="status-dot " +
+                (if workspace.id == model.selected_workspace_id {
+                  "live"
+                } else {
+                  "idle"
+                }),
+              "",
+            ),
+            span(workspace.name),
+          ],
         )
       }),
     ),

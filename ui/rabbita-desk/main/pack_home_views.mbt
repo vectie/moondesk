@@ -131,7 +131,7 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           h1("What do you want to run?"),
           p(
             class="lead",
-            "Open a domain pack for normal work. Use composition controls only when you need to inspect or change which MoonSuite products participate.",
+            "Packs are applications: open one for domain work, or inspect its composition in Flow.",
           ),
         ]),
         div(class="pack-home-summary", [
@@ -144,15 +144,6 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
             "Refresh",
           ),
         ]),
-      ]),
-      section(class="pack-runtime-strip", [
-        div([strong("Pack"), small("domain UI + contracts")]),
-        span("→"),
-        div([strong("MoonDesk"), small("operator control")]),
-        span("→"),
-        div([strong("MoonFlow"), small("durable execution")]),
-        span("→"),
-        div([strong("MoonClaw"), small("single agent runtime")]),
       ]),
       if model.pack_apps.is_empty() {
         section(class="pack-home-empty", [
@@ -173,8 +164,17 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           model.pack_apps.map(pack => render_pack_card(dispatch, model, pack)),
         )
       },
-      section(class="pack-home-footnote", [
-        strong("Packs are applications, not extra runtimes."),
+      details(class="pack-runtime-details", [
+        summary("How packs run"),
+        div(class="pack-runtime-strip", [
+          div([strong("Pack"), small("domain UI + contracts")]),
+          span("→"),
+          div([strong("MoonDesk"), small("operator control")]),
+          span("→"),
+          div([strong("MoonFlow"), small("durable execution")]),
+          span("→"),
+          div([strong("MoonClaw"), small("single agent runtime")]),
+        ]),
         p(
           "Each pack owns its domain screens, schemas, policies, providers, and workflows. MoonDesk supplies generic launch, authority, evidence, review, and composition controls.",
         ),

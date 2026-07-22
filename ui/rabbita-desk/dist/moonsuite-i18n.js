@@ -88,7 +88,77 @@ const catalogs = {
     "desk.book_count": "{count} MoonBooks",
     "desk.product_count": "{count} products installed",
     "desk.item_counts": "{items} items, {folders} folders, {files} files",
-    "desk.sorted_name": "Name {direction}"
+    "desk.sorted_name": "Name {direction}",
+    "pack.eyebrow": "MoonSuite applications",
+    "pack.hero_title": "What do you want to run?",
+    "pack.hero_lead": "Packs are applications: open one for domain work, or inspect its composition in Flow.",
+    "pack.installed_count": "{count} installed",
+    "pack.how_runs": "How packs run",
+    "pack.empty_title": "No domain packs are installed",
+    "pack.empty_body": "Install a pack into this MoonSuite workspace. MoonDesk will discover its manifest without importing domain code.",
+    "pack.browse_books": "Browse MoonBooks",
+    "pack.open": "Open pack",
+    "pack.footnote": "Each pack owns its domain screens, schemas, policies, providers, and workflows. MoonDesk supplies generic launch, authority, evidence, review, and composition controls.",
+    "pack.runtime_pack": "domain UI + contracts",
+    "pack.runtime_desk": "operator control",
+    "pack.runtime_flow": "durable execution",
+    "pack.runtime_claw": "single agent runtime",
+    "flow.hero_lead": "Executable work for the selected MoonBook: compose, run, review.",
+    "flow.canvas": "Composition canvas",
+    "flow.save": "Save composition",
+    "flow.saving": "Saving…",
+    "flow.reset_view": "Reset view",
+    "flow.palette_count": "Products · {selected} / {total} nodes",
+    "flow.palette_intro": "The pack declares what each node can do. You decide which declared nodes enter the next run.",
+    "flow.hint": "Drag empty space to pan · Scroll to zoom · Drag a node handle to rearrange",
+    "flow.edit_in_wiki": "Edit node contracts in Wiki",
+    "flow.empty_title": "No executable Work graph yet",
+    "flow.empty_body": "Add a typed Work graph to this MoonBook. Every product and connection will appear on this canvas.",
+    "flow.open_document": "Open executable document",
+    "flow.included": "Included",
+    "flow.excluded": "Excluded",
+    "flow.include": "Include",
+    "flow.exclude": "Exclude",
+    "flow.in_job": "In this job",
+    "flow.available_excluded": "Available, excluded",
+    "flow.adapter_missing": "Adapter missing",
+    "flow.start_run": "Start governed run",
+    "flow.no_work": "No executable work yet",
+    "flow.composition_unavailable": "Executable composition is not available",
+    "wiki.new_note": "+ New note",
+    "wiki.pages": "Pages",
+    "wiki.sources": "Sources",
+    "wiki.published": "Published",
+    "wiki.home_pages": "Notes and documents written for people",
+    "wiki.home_sources": "Original material and evidence",
+    "wiki.home_inbox": "Draft notes waiting to be organized",
+    "wiki.home_published": "The generated site for this book",
+    "wiki.editing": "Editing",
+    "wiki.unsaved": "Unsaved changes",
+    "wiki.saved": "Saved",
+    "wiki.choose_page": "Choose a page",
+    "wiki.choose_page_lead": "Select a page from the library to read it here.",
+    "wiki.nothing": "Nothing here yet",
+    "wiki.nothing_lead": "Choose another section or add a note.",
+    "wiki.create_first": "Create first note",
+    "wiki.discard_title": "Discard unsaved changes?",
+    "wiki.keep_editing": "Keep editing",
+    "wiki.discard": "Discard changes",
+    "wiki.sources_history": "Sources and history",
+    "wiki.more": "More",
+    "wiki.current_book": "Current book",
+    "wiki.overview": "Overview",
+    "pack.none_installed": "No domain packs installed",
+    "code.claw_setup": "MoonClaw needs setup",
+    "code.claw_setup_body": "Enable the installed MoonClaw product from MoonGate; no path or service file editing is required here.",
+    "code.open_moongate": "Open MoonGate setup",
+    "code.ask": "Ask MoonCode",
+    "code.ask_lead": "Describe the code change you want in this MoonBook.",
+    "code.ask_placeholder": "Ask MoonCode…",
+    "code.no_chats": "No chats in this MoonBook",
+    "code.search_chats": "Search chats",
+    "code.sessions": "{count} sessions",
+    "code.new_chat_title": "New chat"
   },
   "zh-Hans": {
     "common.refresh": "刷新",
@@ -178,7 +248,77 @@ const catalogs = {
     "desk.book_count": "{count} 个 MoonBook",
     "desk.product_count": "已安装 {count} 个产品",
     "desk.item_counts": "{items} 项、{folders} 个文件夹、{files} 个文件",
-    "desk.sorted_name": "名称 {direction}"
+    "desk.sorted_name": "名称 {direction}",
+    "pack.eyebrow": "MoonSuite 应用",
+    "pack.hero_title": "你想运行什么？",
+    "pack.hero_lead": "Pack 即应用：打开一个进入领域工作，或在 Flow 中查看其组合。",
+    "pack.installed_count": "已安装 {count} 个",
+    "pack.how_runs": "Pack 如何运行",
+    "pack.empty_title": "尚未安装任何领域 Pack",
+    "pack.empty_body": "将 Pack 安装到此 MoonSuite 工作区，MoonDesk 会发现其清单，而不会引入领域代码。",
+    "pack.browse_books": "浏览 MoonBook",
+    "pack.open": "打开 Pack",
+    "pack.footnote": "每个 Pack 拥有自己的领域界面、模式、策略、提供方与工作流；MoonDesk 提供通用的启动、授权、证据、审核与组合控制。",
+    "pack.runtime_pack": "领域界面与契约",
+    "pack.runtime_desk": "操作员控制",
+    "pack.runtime_flow": "持久化执行",
+    "pack.runtime_claw": "单智能体运行时",
+    "flow.hero_lead": "当前 MoonBook 的可执行工作：组合、运行、审核。",
+    "flow.canvas": "组合画布",
+    "flow.save": "保存组合",
+    "flow.saving": "保存中…",
+    "flow.reset_view": "重置视图",
+    "flow.palette_count": "产品 · {selected} / {total} 个节点",
+    "flow.palette_intro": "Pack 声明每个节点的能力，由你决定哪些声明的节点进入下一次运行。",
+    "flow.hint": "拖拽空白处平移 · 滚轮缩放 · 拖动节点手柄重新排列",
+    "flow.edit_in_wiki": "在知识库中编辑节点契约",
+    "flow.empty_title": "还没有可执行的 Work 图",
+    "flow.empty_body": "为此 MoonBook 添加类型化的 Work 图，每个产品与连接都会呈现在这块画布上。",
+    "flow.open_document": "打开可执行文档",
+    "flow.included": "已纳入",
+    "flow.excluded": "已排除",
+    "flow.include": "纳入",
+    "flow.exclude": "排除",
+    "flow.in_job": "在本次任务中",
+    "flow.available_excluded": "可用，未纳入",
+    "flow.adapter_missing": "适配器缺失",
+    "flow.start_run": "启动治理运行",
+    "flow.no_work": "还没有可执行的工作",
+    "flow.composition_unavailable": "可执行组合不可用",
+    "wiki.new_note": "+ 新建笔记",
+    "wiki.pages": "页面",
+    "wiki.sources": "素材",
+    "wiki.published": "已发布",
+    "wiki.home_pages": "写给人看的笔记与文档",
+    "wiki.home_sources": "原始材料与证据",
+    "wiki.home_inbox": "等待整理的草稿笔记",
+    "wiki.home_published": "本书生成的站点",
+    "wiki.editing": "编辑中",
+    "wiki.unsaved": "未保存的修改",
+    "wiki.saved": "已保存",
+    "wiki.choose_page": "选择一个页面",
+    "wiki.choose_page_lead": "从左侧书库选择一个页面开始阅读。",
+    "wiki.nothing": "这里还没有内容",
+    "wiki.nothing_lead": "切换到其他分区，或新增一条笔记。",
+    "wiki.create_first": "创建第一条笔记",
+    "wiki.discard_title": "放弃未保存的修改？",
+    "wiki.keep_editing": "继续编辑",
+    "wiki.discard": "放弃修改",
+    "wiki.sources_history": "来源与历史",
+    "wiki.more": "更多",
+    "wiki.current_book": "当前书籍",
+    "wiki.overview": "概览",
+    "pack.none_installed": "未安装任何领域 Pack",
+    "code.claw_setup": "MoonClaw 需要初始化",
+    "code.claw_setup_body": "在 MoonGate 中启用已安装的 MoonClaw 产品即可，无需编辑任何路径或服务文件。",
+    "code.open_moongate": "打开 MoonGate 设置",
+    "code.ask": "询问 MoonCode",
+    "code.ask_lead": "描述你想在这个 MoonBook 中完成的代码改动。",
+    "code.ask_placeholder": "询问 MoonCode…",
+    "code.no_chats": "此 MoonBook 还没有对话",
+    "code.search_chats": "搜索对话",
+    "code.sessions": "{count} 个会话",
+    "code.new_chat_title": "新建对话"
   }
 };
 const zhHans = {
@@ -269,7 +409,76 @@ const zhHans = {
   "{count} MoonBooks": "{count} 个 MoonBook",
   "{count} products installed": "已安装 {count} 个产品",
   "{items} items, {folders} folders, {files} files": "{items} 项、{folders} 个文件夹、{files} 个文件",
-  "Name {direction}": "名称 {direction}"
+  "Name {direction}": "名称 {direction}",
+  "MoonSuite applications": "MoonSuite 应用",
+  "What do you want to run?": "你想运行什么？",
+  "Packs are applications: open one for domain work, or inspect its composition in Flow.": "Pack 即应用：打开一个进入领域工作，或在 Flow 中查看其组合。",
+  "{count} installed": "已安装 {count} 个",
+  "How packs run": "Pack 如何运行",
+  "No domain packs are installed": "尚未安装任何领域 Pack",
+  "Install a pack into this MoonSuite workspace. MoonDesk will discover its manifest without importing domain code.": "将 Pack 安装到此 MoonSuite 工作区，MoonDesk 会发现其清单，而不会引入领域代码。",
+  "Browse MoonBooks": "浏览 MoonBook",
+  "Open pack": "打开 Pack",
+  "Each pack owns its domain screens, schemas, policies, providers, and workflows. MoonDesk supplies generic launch, authority, evidence, review, and composition controls.": "每个 Pack 拥有自己的领域界面、模式、策略、提供方与工作流；MoonDesk 提供通用的启动、授权、证据、审核与组合控制。",
+  "domain UI + contracts": "领域界面与契约",
+  "operator control": "操作员控制",
+  "durable execution": "持久化执行",
+  "single agent runtime": "单智能体运行时",
+  "Executable work for the selected MoonBook: compose, run, review.": "当前 MoonBook 的可执行工作：组合、运行、审核。",
+  "Composition canvas": "组合画布",
+  "Save composition": "保存组合",
+  "Saving…": "保存中…",
+  "Reset view": "重置视图",
+  "Products · {selected} / {total} nodes": "产品 · {selected} / {total} 个节点",
+  "The pack declares what each node can do. You decide which declared nodes enter the next run.": "Pack 声明每个节点的能力，由你决定哪些声明的节点进入下一次运行。",
+  "Drag empty space to pan · Scroll to zoom · Drag a node handle to rearrange": "拖拽空白处平移 · 滚轮缩放 · 拖动节点手柄重新排列",
+  "Edit node contracts in Wiki": "在知识库中编辑节点契约",
+  "No executable Work graph yet": "还没有可执行的 Work 图",
+  "Add a typed Work graph to this MoonBook. Every product and connection will appear on this canvas.": "为此 MoonBook 添加类型化的 Work 图，每个产品与连接都会呈现在这块画布上。",
+  "Open executable document": "打开可执行文档",
+  "Included": "已纳入",
+  "Excluded": "已排除",
+  "Include": "纳入",
+  "Exclude": "排除",
+  "In this job": "在本次任务中",
+  "Available, excluded": "可用，未纳入",
+  "Adapter missing": "适配器缺失",
+  "Start governed run": "启动治理运行",
+  "No executable work yet": "还没有可执行的工作",
+  "Executable composition is not available": "可执行组合不可用",
+  "+ New note": "+ 新建笔记",
+  "Pages": "页面",
+  "Sources": "素材",
+  "Published": "已发布",
+  "Notes and documents written for people": "写给人看的笔记与文档",
+  "Original material and evidence": "原始材料与证据",
+  "Draft notes waiting to be organized": "等待整理的草稿笔记",
+  "The generated site for this book": "本书生成的站点",
+  "Editing": "编辑中",
+  "Unsaved changes": "未保存的修改",
+  "Saved": "已保存",
+  "Choose a page": "选择一个页面",
+  "Select a page from the library to read it here.": "从左侧书库选择一个页面开始阅读。",
+  "Nothing here yet": "这里还没有内容",
+  "Choose another section or add a note.": "切换到其他分区，或新增一条笔记。",
+  "Create first note": "创建第一条笔记",
+  "Discard unsaved changes?": "放弃未保存的修改？",
+  "Keep editing": "继续编辑",
+  "Discard changes": "放弃修改",
+  "Sources and history": "来源与历史",
+  "More": "更多",
+  "Current book": "当前书籍",
+  "Overview": "概览",
+  "No domain packs installed": "未安装任何领域 Pack",
+  "MoonClaw needs setup": "MoonClaw 需要初始化",
+  "Enable the installed MoonClaw product from MoonGate; no path or service file editing is required here.": "在 MoonGate 中启用已安装的 MoonClaw 产品即可，无需编辑任何路径或服务文件。",
+  "Open MoonGate setup": "打开 MoonGate 设置",
+  "Ask MoonCode": "询问 MoonCode",
+  "Describe the code change you want in this MoonBook.": "描述你想在这个 MoonBook 中完成的代码改动。",
+  "Ask MoonCode…": "询问 MoonCode…",
+  "No chats in this MoonBook": "此 MoonBook 还没有对话",
+  "Search chats": "搜索对话",
+  "{count} sessions": "{count} 个会话"
 };
 const zhHansTemplates = [
   {
@@ -287,6 +496,18 @@ const zhHansTemplates = [
   {
     "source": "Name {direction}",
     "target": "名称 {direction}"
+  },
+  {
+    "source": "{count} installed",
+    "target": "已安装 {count} 个"
+  },
+  {
+    "source": "Products · {selected} / {total} nodes",
+    "target": "产品 · {selected} / {total} 个节点"
+  },
+  {
+    "source": "{count} sessions",
+    "target": "{count} 个会话"
   }
 ];
 
@@ -397,6 +618,13 @@ function translateText(text) {
   return text;
 }
 
+function translateAttribute(text) {
+  const leading = text.match(/^\s*/)?.[0] || "";
+  const trailing = text.match(/\s*$/)?.[0] || "";
+  const core = text.slice(leading.length, text.length - trailing.length);
+  return core in zhHans ? leading + zhHans[core] + trailing : text;
+}
+
 function translate(root) {
   if (root.closest?.('[data-i18n-scope="content"],[data-i18n-scope="technical"],[translate="no"]')) return;
   for (const element of root.querySelectorAll?.("[data-i18n],[data-i18n-placeholder],[data-i18n-title],[data-i18n-aria-label]") || []) {
@@ -427,7 +655,7 @@ function translate(root) {
   for (const element of root.querySelectorAll?.("[placeholder],[title],[aria-label]") || []) {
     for (const attribute of ["placeholder", "title", "aria-label"]) {
       if (element.hasAttribute(attribute)) {
-        const translated = translateText(element.getAttribute(attribute) || "");
+        const translated = translateAttribute(element.getAttribute(attribute) || "");
         if (element.getAttribute(attribute) !== translated) element.setAttribute(attribute, translated);
       }
     }
@@ -435,7 +663,7 @@ function translate(root) {
   if (root.matches?.("[placeholder],[title],[aria-label]")) {
     for (const attribute of ["placeholder", "title", "aria-label"]) {
       if (root.hasAttribute(attribute)) {
-        const translated = translateText(root.getAttribute(attribute) || "");
+        const translated = translateAttribute(root.getAttribute(attribute) || "");
         if (root.getAttribute(attribute) !== translated) root.setAttribute(attribute, translated);
       }
     }

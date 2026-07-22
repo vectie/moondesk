@@ -298,11 +298,18 @@ fn markdown_editor_active(model : Model) -> Bool {
 }
 
 ///|
+fn markdown_editor_dirty(model : Model) -> Bool {
+  model.markdown_editor_path != "" &&
+  model.markdown_editor_content != model.markdown_editor_original
+}
+
+///|
 fn clear_markdown_editor(model : Model) -> Model {
   {
     ..model,
     markdown_editor_path: "",
     markdown_editor_content: "",
+    markdown_editor_original: "",
     markdown_editor_status: "editor idle",
   }
 }

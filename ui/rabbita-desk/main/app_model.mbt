@@ -69,6 +69,7 @@ struct Model {
   preview_status : String
   markdown_editor_path : String
   markdown_editor_content : String
+  markdown_editor_original : String
   markdown_editor_status : String
   pending_markdown_navigation : PendingMarkdownNavigation
   request_prompt : String
@@ -117,6 +118,14 @@ struct Model {
   moonflow_composition_status : String
   moonflow_composition_saving : Bool
   moonflow_canvas_zoom : Int
+  flow_pan_x : Double
+  flow_pan_y : Double
+  flow_zoom : Double
+  flow_pan_dragging : Bool
+  flow_drag_last_x : Double
+  flow_drag_last_y : Double
+  flow_drag_node_id : String
+  flow_node_positions : Array[(String, Double, Double)]
   moonflow_operator_actions : Array[MoonFlowOperatorActions]
   moonflow_operator_action_receipt : MoonFlowOperatorActionReceipt?
   moonflow_operator_action_status : String
@@ -170,15 +179,12 @@ enum Msg {
   LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
   LoadedMoonFlowComposition(Result[MoonFlowComposition, String])
   SavedMoonFlowComposition(Result[MoonFlowComposition, String])
-  LoadedMoonFlowOperatorActions(
-    String,
-    Result[MoonFlowOperatorActions, String],
-  )
+  LoadedMoonFlowOperatorActions(String, Result[MoonFlowOperatorActions, String])
   ImportedMoonFlow(Result[MoonFlowImportResult, String])
   ControlledMoonFlow(Result[MoonFlowRunControl, String])
   ExecutedMoonFlowOperatorAction(
     String,
-    Result[MoonFlowOperatorActionReceipt, String],
+    Result[MoonFlowOperatorActionReceipt, String]
   )
   LoadedTownMessages(Result[Array[TownMessage], String])
   LoadedRequests(Result[Array[RequestRecord], String])
@@ -237,6 +243,12 @@ enum Msg {
   ToggleMoonFlowCompositionItem(String)
   SaveMoonFlowComposition
   SetMoonFlowCanvasZoom(Int)
+  FlowCanvasWheel(Int, Int, Double)
+  FlowPanStart(Int, Int)
+  FlowPanMove(Int, Int)
+  FlowPanEnd
+  FlowNodeDragStart(String, Int, Int)
+  FlowCanvasReset
   SelectActivity(Activity)
   SelectMoonCodeSession(String)
   NewMoonCodeSession

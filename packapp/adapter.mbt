@@ -58,13 +58,18 @@ pub fn reconcile(
 ) -> AppRegistry raise {
   let incoming = bindings(projection)
   let ids = incoming.map(binding => binding.entrypoint_id)
-  let retained = registry.entrypoints.filter(binding =>
-    binding.pack_id != projection.pack_id || !ids.contains(binding.entrypoint_id)
-  )
+  let retained = registry.entrypoints.filter(binding => {
+    binding.pack_id != projection.pack_id ||
+    !ids.contains(binding.entrypoint_id)
+  })
   { entrypoints: retained + incoming }
 }
 
 ///|
 pub fn remove_pack(registry : AppRegistry, pack_id : String) -> AppRegistry {
-  { entrypoints: registry.entrypoints.filter(binding => binding.pack_id != pack_id) }
+  {
+    entrypoints: registry.entrypoints.filter(binding => {
+      binding.pack_id != pack_id
+    }),
+  }
 }

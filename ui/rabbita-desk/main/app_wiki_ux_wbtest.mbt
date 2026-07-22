@@ -301,9 +301,19 @@ test "wiki editor feedback reports user save state" {
   let editing = {
     ..init_model(),
     markdown_editor_path: "wiki/index.md",
+    markdown_editor_content: "# changed draft\n",
+    markdown_editor_original: "",
     markdown_editor_status: "editing wiki/index.md",
   }
   assert_eq(wiki_editor_status_label(editing), "Unsaved changes")
+  assert_eq(
+    wiki_editor_status_label({
+      ..editing,
+      markdown_editor_content: "",
+      markdown_editor_original: "",
+    }),
+    "Editing",
+  )
   assert_eq(
     wiki_editor_status_label({
       ..editing,

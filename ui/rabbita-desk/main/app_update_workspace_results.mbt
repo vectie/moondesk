@@ -171,16 +171,19 @@ fn update_workspace_results(
     LoadedRuns(Err(error)) => (@rabbita.none, { ..model, host_status: error })
     LoadedMoonFlowRuns(Ok(runs)) =>
       (
-        @rabbita.batch([
-          for run in runs =>
-            fetch_moonflow_operator_actions_cmd(dispatch, run.run_id)
-        ]),
+        @rabbita.batch(
+          [
+            for run in runs => {
+              fetch_moonflow_operator_actions_cmd(dispatch, run.run_id)
+            }
+          ],
+        ),
         {
           ..model,
           moonflow_runs: runs,
-          moonflow_operator_actions: model.moonflow_operator_actions.filter(
-            actions => runs.any(run => run.run_id == actions.run_id),
-          ),
+          moonflow_operator_actions: model.moonflow_operator_actions.filter(actions => {
+            runs.any(run => run.run_id == actions.run_id)
+          }),
           moonflow_status: if runs.is_empty() {
             "No MoonFlow runs yet"
           } else {
@@ -248,10 +251,7 @@ fn update_workspace_results(
     LoadedMoonFlowOperatorActions(run_id, Err(error)) =>
       (
         @rabbita.none,
-        {
-          ..model,
-          moonflow_operator_action_status: "\{run_id}: \{error}",
-        },
+        { ..model, moonflow_operator_action_status: "\{run_id}: \{error}" },
       )
     ImportedMoonFlow(Ok(result)) =>
       (
@@ -762,6 +762,7 @@ fn update_workspace_results(
           desk_location_input: parent_path(result.path),
           markdown_editor_path: "",
           markdown_editor_content: "",
+          markdown_editor_original: "",
           markdown_editor_status: "saved \{result.path}",
           preview: None,
           preview_status: "loading saved markdown",

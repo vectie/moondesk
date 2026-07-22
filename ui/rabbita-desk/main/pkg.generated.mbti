@@ -88,6 +88,8 @@ type MoonCodeSessionEffect
 
 type MoonCodeSessionGroup
 
+type MoonCodeSessionLifecycleResult derive(@json.FromJson)
+
 type MoonCodeSummary derive(@json.FromJson)
 
 type MoonCodeTranscriptItem
@@ -96,19 +98,57 @@ type MoonCodeTranscriptRow
 
 type MoonCodeWatchResponse derive(@json.FromJson)
 
+type MoonFlowArtifactOperatorProjection derive(@json.FromJson)
+
 type MoonFlowAutonomyBinding derive(@json.FromJson)
 
 type MoonFlowBrowserResponse derive(@json.FromJson)
 
 type MoonFlowBudget derive(@json.FromJson)
 
+type MoonFlowCallbackOperatorProjection derive(@json.FromJson)
+
+type MoonFlowComposition derive(@json.FromJson)
+
+type MoonFlowCompositionItem derive(@json.FromJson)
+
+type MoonFlowDeliveryOperatorProjection derive(@json.FromJson)
+
+type MoonFlowDueActionOperatorProjection derive(@json.FromJson)
+
 type MoonFlowEnvelopeSummary derive(@json.FromJson)
+
+type MoonFlowEvaluationOperatorProjection derive(@json.FromJson)
+
+type MoonFlowFinalDeliverableOperatorProjection derive(@json.FromJson)
+
+type MoonFlowHumanAdoptionOperatorProjection derive(@json.FromJson)
 
 type MoonFlowImportResult derive(@json.FromJson)
 
 type MoonFlowInterventionScorecard derive(@json.FromJson)
 
 type MoonFlowItemProjection derive(@json.FromJson)
+
+type MoonFlowManualInterventionOperatorProjection derive(@json.FromJson)
+
+type MoonFlowOperatorAction derive(@json.FromJson)
+
+type MoonFlowOperatorActionReceipt derive(@json.FromJson)
+
+type MoonFlowOperatorActions derive(@json.FromJson)
+
+type MoonFlowOperatorRowView
+
+type MoonFlowOperatorSurface derive(@json.FromJson)
+
+type MoonFlowOutcomeOperatorProjection derive(@json.FromJson)
+
+type MoonFlowProposalOperatorProjection derive(@json.FromJson)
+
+type MoonFlowQuarantineOperatorProjection derive(@json.FromJson)
+
+type MoonFlowRecoveryOperatorProjection derive(@json.FromJson)
 
 type MoonFlowRunControl derive(@json.FromJson)
 

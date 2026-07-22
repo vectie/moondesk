@@ -947,7 +947,9 @@ test "code mode rename updates one stable row in place" {
     ManagedMoonCodeSession(
       Ok(
         code_mode_test_lifecycle_result(
-          "rename", target.id, title="Durable title",
+          "rename",
+          target.id,
+          title="Durable title",
         ),
       ),
     ),
@@ -973,11 +975,7 @@ test "code mode archive clears selected chat and restore returns metadata" {
   let (_, archived) = update_mooncode_session_results(
     code_mode_test_dispatch,
     ManagedMoonCodeSession(
-      Ok(
-        code_mode_test_lifecycle_result(
-          "archive", session.id, archived=true,
-        ),
-      ),
+      Ok(code_mode_test_lifecycle_result("archive", session.id, archived=true)),
     ),
     model,
   )
@@ -1014,9 +1012,7 @@ test "code mode delete requires confirmation and running storage stays locked" {
     ConfirmDeleteMoonCodeSession(running.id),
     confirmation,
   )
-  assert_true(
-    blocked.mooncode_session_management_status.contains("finish"),
-  )
+  assert_true(blocked.mooncode_session_management_status.contains("finish"))
   assert_eq(blocked.mooncode_sessions.length(), 1)
 }
 
