@@ -84,10 +84,14 @@ async fn handle_moonclaw_daemon_action(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let result = ensure_moonclaw_daemon_running(
-    workspace_root,
-    action=if action == "retry" { "restart" } else { "start" },
-  )
+  let result = if action == "install" {
+    install_moonclaw_release(workspace_root)
+  } else {
+    ensure_moonclaw_daemon_running(
+      workspace_root,
+      action=if action == "retry" { "restart" } else { "start" },
+    )
+  }
   send_json(conn, method_, result)
 }
 

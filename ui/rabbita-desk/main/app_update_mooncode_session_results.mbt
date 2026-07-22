@@ -14,11 +14,15 @@ fn update_mooncode_session_results(
         {
           ..model,
           moonclaw_daemon: Some(status),
+          moonclaw_installing: false,
           mooncode_composer_status: status.message,
         },
       )
     ManagedMoonClaw(Err(error)) =>
-      (@rabbita.none, { ..model, mooncode_composer_status: error })
+      (
+        @rabbita.none,
+        { ..model, moonclaw_installing: false, mooncode_composer_status: error },
+      )
     LoadedMoonClawDaemon(Ok(status)) =>
       (
         @rabbita.none,

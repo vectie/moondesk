@@ -40,6 +40,8 @@ options(
     "api_town_router.mbt": [ "native" ],
     "api_workspace_router.mbt": [ "native" ],
     "moonclaw_daemon_api.mbt": [ "native" ],
+    "moonclaw_installer.mbt": [ "native" ],
+    "moonclaw_installer_wbtest.mbt": [ "native" ],
     "app_tool_portable.mbt": [ "native" ],
     "app_tool_portable_api.mbt": [ "native" ],
     "app_tool_portable_assets.mbt": [ "native" ],

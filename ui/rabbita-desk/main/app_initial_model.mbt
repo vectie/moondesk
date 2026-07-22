@@ -75,6 +75,7 @@ fn init_model() -> Model {
     daemon_lifecycle: None,
     launch_agent: None,
     moonclaw_daemon: None,
+    moonclaw_installing: false,
     mooncode_sessions: [],
     mooncode_archived_sessions: [],
     selected_mooncode_session_id: browser_initial_mooncode_session(),

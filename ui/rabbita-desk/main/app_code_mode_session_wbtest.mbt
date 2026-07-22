@@ -2947,6 +2947,35 @@ test "MoonClaw setup action stays visible as a user operation" {
 }
 
 ///|
+test "MoonClaw install action exposes progress until lifecycle result" {
+  let model = { ..init_model(), mooncode_composer_status: "idle" }
+  let (_, installing) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    ManageMoonClaw("install"),
+    model,
+  )
+  assert_true(installing.moonclaw_installing)
+  assert_eq(
+    installing.mooncode_composer_status,
+    "Downloading and verifying MoonClaw…",
+  )
+  let (_, ready) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonClaw(
+      Ok({
+        running: true,
+        port: 1515,
+        message: "MoonClaw 0.1.2 is installed and running",
+        service_configured: true,
+      }),
+    ),
+    installing,
+  )
+  assert_false(ready.moonclaw_installing)
+  assert_true(ready.moonclaw_daemon.unwrap().running)
+}
+
+///|
 test "MoonClaw lifecycle result refreshes service and model state" {
   let model = init_model()
   let (_, next) = update_mooncode_session_results(

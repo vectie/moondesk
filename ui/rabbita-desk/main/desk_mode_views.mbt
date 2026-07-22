@@ -125,14 +125,27 @@ fn render_moongate_setup(
           )
         Some(status) if !status.running =>
           div(class="moongate-next-step", [
-            strong("MoonClaw needs setup"),
+            strong("MoonClaw is not installed"),
             p(
-              "Enable the installed MoonClaw product for this workspace, then check again.",
+              "MoonClaw is required for Code and AI actions. MoonDesk can download, verify, install, and start it for this workspace.",
             ),
+            if status.message != "MoonClaw daemon info was not found" {
+              p(class="status-line warning", status.message)
+            } else {
+              @html.nothing
+            },
             button(
-              class="secondary-button full",
-              on_click=dispatch(RefreshAll),
-              "Check installed products",
+              class="primary-button full",
+              attrs=@html.Attrs::build().data_set(
+                "testid", "moongate-install-moonclaw",
+              ),
+              disabled=model.moonclaw_installing,
+              on_click=dispatch(ManageMoonClaw("install")),
+              if model.moonclaw_installing {
+                "Installing MoonClaw…"
+              } else {
+                "Install MoonClaw"
+              },
             ),
           ])
         _ => @html.nothing

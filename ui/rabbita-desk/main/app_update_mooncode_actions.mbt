@@ -40,7 +40,15 @@ fn update_mooncode_actions(
     ManageMoonClaw(action) =>
       (
         manage_moonclaw_cmd(dispatch, action),
-        { ..model, mooncode_composer_status: "Starting MoonClaw…" },
+        {
+          ..model,
+          moonclaw_installing: action == "install",
+          mooncode_composer_status: if action == "install" {
+            "Downloading and verifying MoonClaw…"
+          } else {
+            "Starting MoonClaw…"
+          },
+        },
       )
     RefreshMoonCodeMetadata(_) | ResumeMoonCodeWatch(_, _) =>
       update_mooncode_transport_actions(dispatch, msg, model)

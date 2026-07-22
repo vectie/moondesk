@@ -54,7 +54,7 @@ async fn route_moonclaw_api(
       true
     }
     ["api", "moonclaw", "daemon", action] => {
-      if method_ is Post && ["start", "retry"].contains(action) {
+      if method_ is Post && ["install", "start", "retry"].contains(action) {
         ignore(body)
         handle_moonclaw_daemon_action(workspace_root, action, method_, conn)
       } else {
