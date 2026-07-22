@@ -2994,6 +2994,35 @@ test "MoonClaw install action exposes progress until lifecycle result" {
 }
 
 ///|
+test "MoonClaw failed start keeps the installed state and exact failure" {
+  let model = {
+    ..init_model(),
+    moonclaw_installing: true,
+    moonclaw_install_feedback: "Downloading, verifying, and installing MoonClaw…",
+  }
+  let (_, stopped) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonClaw(
+      Ok({
+        running: false,
+        port: 0,
+        message: "MoonClaw 0.1.3 was installed, but could not be started: daemon exited",
+        service_configured: true,
+        managed_install: Some(true),
+        managed_running: Some(false),
+      }),
+    ),
+    model,
+  )
+  assert_false(stopped.moonclaw_installing)
+  assert_true(stopped.moonclaw_daemon.unwrap().managed_install.unwrap())
+  assert_eq(
+    stopped.moonclaw_install_feedback,
+    "MoonClaw 0.1.3 was installed, but could not be started: daemon exited",
+  )
+}
+
+///|
 test "MoonDesk opens on Desk unless a product route is explicit" {
   assert_true(workspace_mode_from_initial_activity("") is Desk)
   assert_true(workspace_mode_from_initial_activity("home") is Desk)

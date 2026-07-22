@@ -156,3 +156,12 @@ async test "moonclaw daemon probe uses MoonSuite product home" {
     "MoonClaw is not installed",
   )
 }
+
+///|
+test "zombie MoonClaw process is not considered alive" {
+  assert_false(process_status_is_alive("Z"))
+  assert_false(process_status_is_alive("Z+\n"))
+  assert_false(process_status_is_alive(""))
+  assert_true(process_status_is_alive("S+"))
+  assert_true(process_status_is_alive("R"))
+}

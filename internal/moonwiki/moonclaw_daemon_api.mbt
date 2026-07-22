@@ -462,7 +462,22 @@ fn moonclaw_allows_unconfigured_existing_daemon(
 ///|
 async fn process_is_alive(pid : Int) -> Bool {
   let code = run_process_quiet("kill", ["-0", pid.to_string()])
-  code == 0
+  if code != 0 {
+    return false
+  }
+  let (status_code, stdout, _) = run_process_capture("ps", [
+    "-p",
+    pid.to_string(),
+    "-o",
+    "stat=",
+  ])
+  status_code == 0 && process_status_is_alive(stdout)
+}
+
+///|
+fn process_status_is_alive(status : String) -> Bool {
+  let status = status.trim().to_owned()
+  status != "" && !status.has_prefix("Z")
 }
 
 ///|

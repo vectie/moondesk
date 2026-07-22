@@ -726,17 +726,7 @@ fn render_mooncode_runtime_setup(
                   "Install MoonClaw"
                 },
               ),
-              if model.moonclaw_installing {
-                progress(
-                  class="moonclaw-install-progress-bar",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "mooncode-install-progress",
-                  ),
-                  "Installing MoonClaw",
-                )
-              } else {
-                @html.nothing
-              },
+              render_moonclaw_install_progress(model),
             ])
           },
         ],

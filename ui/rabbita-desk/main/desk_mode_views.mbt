@@ -167,14 +167,25 @@ fn render_moongate_setup(
             render_moonclaw_install_progress(model),
           ])
         Some(status) if status.managed_install.unwrap_or(false) =>
-          button(
-            class="primary-button full",
-            attrs=@html.Attrs::build().data_set(
-              "testid", "moongate-start-moonclaw",
+          div(class="moongate-next-step", [
+            strong("MoonClaw is installed"),
+            p(
+              class="status-line warning",
+              attrs=@html.Attrs::build()
+                .data_set("testid", "moonclaw-installed-not-running")
+                .aria_live("polite"),
+              status.message,
             ),
-            on_click=dispatch(ManageMoonClaw("start")),
-            "Start installed MoonClaw",
-          )
+            render_moonclaw_install_feedback(model, status.message),
+            button(
+              class="primary-button full",
+              attrs=@html.Attrs::build().data_set(
+                "testid", "moongate-start-moonclaw",
+              ),
+              on_click=dispatch(ManageMoonClaw("start")),
+              "Retry starting MoonClaw",
+            ),
+          ])
         Some(status) if !status.running =>
           div(class="moongate-next-step", [
             strong("MoonClaw is not installed"),
@@ -186,6 +197,7 @@ fn render_moongate_setup(
             } else {
               @html.nothing
             },
+            render_moonclaw_install_feedback(model, status.message),
             button(
               class="primary-button full",
               attrs=@html.Attrs::build().data_set(
@@ -217,12 +229,12 @@ fn render_moongate_setup(
 fn render_moonclaw_install_progress(model : Model) -> @rabbita.Html {
   if model.moonclaw_installing {
     div(class="moonclaw-install-progress", [
-      progress(
+      div(
         class="moonclaw-install-progress-bar",
-        attrs=@html.Attrs::build().data_set(
-          "testid", "moonclaw-install-progress",
-        ),
-        "Installing MoonClaw",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "moonclaw-install-progress")
+          .role("progressbar"),
+        [span(class="moonclaw-install-progress-value", "")],
       ),
       p(
         class="status-line",
@@ -230,6 +242,26 @@ fn render_moonclaw_install_progress(model : Model) -> @rabbita.Html {
         model.moonclaw_install_feedback,
       ),
     ])
+  } else {
+    @html.nothing
+  }
+}
+
+///|
+fn render_moonclaw_install_feedback(
+  model : Model,
+  current_message : String,
+) -> @rabbita.Html {
+  if !model.moonclaw_installing &&
+    model.moonclaw_install_feedback != "" &&
+    model.moonclaw_install_feedback != current_message {
+    p(
+      class="status-line warning",
+      attrs=@html.Attrs::build()
+        .data_set("testid", "moonclaw-install-feedback")
+        .aria_live("polite"),
+      model.moonclaw_install_feedback,
+    )
   } else {
     @html.nothing
   }

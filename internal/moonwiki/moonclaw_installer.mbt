@@ -174,6 +174,15 @@ async fn moonclaw_install_failure(
         "service_config_path",
         default="",
       ),
+      "managed_install": json_bool(current, "managed_install", default=false),
+      "managed_running": json_bool(current, "managed_running", default=false),
+      "installed_version": json_string(current, "installed_version", default=""),
+      "running_version": json_string(current, "running_version", default=""),
+      "service_source": json_string(
+        current,
+        "service_source",
+        default="missing",
+      ),
     },
     ok=false,
     status~,
@@ -401,7 +410,18 @@ async fn install_moonclaw_release_from_temp(
     fields["message"] = ("MoonClaw " + version + " is installed and running").to_json()
     Json::object(fields)
   } else {
-    started
+    moonclaw_install_failure(
+      root,
+      json_string(started, "status", default="daemon_start_failed"),
+      "MoonClaw " +
+      version +
+      " was installed, but could not be started: " +
+      json_string(
+        started,
+        "message",
+        default="the daemon did not become reachable",
+      ),
+    )
   }
 }
 

@@ -18,7 +18,6 @@ using @html {
   main_,
   p,
   pre,
-  progress,
   section,
   small,
   span,
