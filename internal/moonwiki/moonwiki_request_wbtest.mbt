@@ -1649,6 +1649,21 @@ async test "review item collection keeps only undecided proposals" {
 }
 
 ///|
+async fn test_http_head(
+  base : String,
+  path : String,
+  expected_code : Int,
+) -> Unit {
+  let client = @http.Client(base)
+  defer client.close()
+  client.request(Head, path)
+  let response = client.end_request()
+  let body = client.read_all().text()
+  assert_eq(response.code, expected_code)
+  assert_eq(body, "")
+}
+
+///|
 async test "desk server routes work end to end and reject path escapes" {
   let root = @pathx.join(
     "/tmp",
@@ -1692,6 +1707,36 @@ async test "desk server routes work end to end and reject path escapes" {
     "# Imported HTTP\n",
   )
   @fsx.write_to_file(@pathx.join(root, "outside.txt"), "outside-secret\n")
+  let valid_content = "héllo moon\n"
+  @fs.write_file(
+    @pathx.join(book_root, "valid.txt"),
+    @encoding/utf8.encode(valid_content),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  @fs.write_file(
+    @pathx.join(book_root, "invalid.bin"),
+    Bytes::from_array([0xff]),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  @fs.write_file(
+    @pathx.join(book_root, "control.bin"),
+    Bytes::from_array([0x01]),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  @fs.write_file(
+    @pathx.join(book_root, "oversized.txt"),
+    Bytes::make(moonedit_max_document_bytes + 1, b'a'),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  @fs.mkdir(@pathx.join(book_root, "docs-dir"))
+  @fs.symlink(
+    target=@pathx.join(root, "outside.txt"),
+    @pathx.join(book_root, "linked-out"),
+  )
 
   let server = Server::new("127.0.0.1", 0, reuse_addr=true)
   defer server.close()
@@ -1866,6 +1911,86 @@ async test "desk server routes work end to end and reject path escapes" {
       200,
     )
     assert_true(preview.stringify().contains("# Desk"))
+
+    let document = test_http_get_json(
+      base + "/api/workspaces/" + workspace_id + "/document?path=valid.txt",
+      200,
+    )
+    assert_eq(json_string(document, "workspace_id", default=""), workspace_id)
+    assert_eq(json_string(document, "path", default=""), "valid.txt")
+    assert_eq(
+      json_string(document, "provider_id", default=""),
+      "moonedit.plain-text.v1",
+    )
+    assert_eq(
+      json_string(document, "media_type", default=""),
+      "text/plain;charset=utf-8",
+    )
+    assert_eq(json_string(document, "content", default=""), valid_content)
+    assert_eq(
+      json_string(document, "revision", default=""),
+      moonedit_revision(@encoding/utf8.encode(valid_content)),
+    )
+    assert_false(json_bool(document, "writable", default=true))
+    assert_eq(json_array_items(document, "warnings").length(), 0)
+    ignore(
+      test_http_head(
+        base,
+        "/api/workspaces/" + workspace_id + "/document?path=valid.txt",
+        200,
+      ),
+    )
+    ignore(
+      test_http_get(base + "/api/workspaces/" + workspace_id + "/document", 400),
+    )
+    ignore(
+      test_http_get(
+        base +
+        "/api/workspaces/" +
+        workspace_id +
+        "/document?path=%2e%2e%2Foutside.txt",
+        400,
+      ),
+    )
+    ignore(
+      test_http_get(
+        base + "/api/workspaces/" + workspace_id + "/document?path=missing.txt",
+        404,
+      ),
+    )
+    ignore(
+      test_http_get(
+        base + "/api/workspaces/" + workspace_id + "/document?path=docs-dir",
+        404,
+      ),
+    )
+    ignore(
+      test_http_get(
+        base + "/api/workspaces/" + workspace_id + "/document?path=linked-out",
+        400,
+      ),
+    )
+    ignore(
+      test_http_get(
+        base +
+        "/api/workspaces/" +
+        workspace_id +
+        "/document?path=oversized.txt",
+        413,
+      ),
+    )
+    ignore(
+      test_http_get(
+        base + "/api/workspaces/" + workspace_id + "/document?path=invalid.bin",
+        415,
+      ),
+    )
+    ignore(
+      test_http_get(
+        base + "/api/workspaces/" + workspace_id + "/document?path=control.bin",
+        415,
+      ),
+    )
 
     let image_preview = test_http_get_json(
       base + "/api/workspaces/\{workspace_id}/preview?path=images%2Flogo.png",

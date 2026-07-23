@@ -151,6 +151,8 @@ pub fn workspace(id~ : String, name~ : String, root_path~ : String, kind~ : Work
 
 pub fn workspace_action_route(String) -> String
 
+pub fn workspace_document_url(String, String) -> String
+
 pub fn workspace_endpoint_url(String, String) -> String
 
 pub fn workspace_entries_url(String, String) -> String
