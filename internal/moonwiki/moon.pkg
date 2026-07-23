@@ -13,6 +13,7 @@ import {
   "moonbitlang/x/sys",
   "moonbitlang/x/time",
   "moonbitlang/x/crypto",
+  "moonbitlang/x/fs" @nativefs,
   "vectie/moonlib/fsx" @moonlib/fsx,
   "vectie/moonlib/moonsuite",
   "vectie/moondesk/adapters/moonbook",

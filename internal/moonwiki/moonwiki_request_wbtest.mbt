@@ -8,7 +8,7 @@ test "resolve request path rejects traversal" {
 }
 
 ///|
-test "api path helpers handle queries and traversal" {
+async test "api path helpers handle queries and traversal" {
   assert_eq(
     strip_query("/api/workspaces/book/entries?path=wiki"),
     "/api/workspaces/book/entries",
@@ -31,52 +31,204 @@ test "api path helpers handle queries and traversal" {
   assert_true(
     clean_relative_path("wiki/../raw/README.md") is Some("raw/README.md"),
   )
-  assert_true(
-    resolve_workspace_path("/tmp/book", "docs%20with%20spaces")
-    is Some(("/tmp/book/docs%20with%20spaces", "docs%20with%20spaces")),
-  )
+  @moonlib/fsx.with_temporary_directory("moondesk-api-path-", book => {
+    let existing_path = @pathx.join(book, "docs%20with%20spaces")
+    @fs.mkdir(existing_path, recursive=true)
+    match resolve_workspace_path(book, "docs%20with%20spaces") {
+      Some((absolute, clean)) => {
+        assert_eq(absolute, existing_path)
+        assert_eq(clean, "docs%20with%20spaces")
+      }
+      None => fail("expected docs%20with%20spaces to resolve")
+    }
+  })
   assert_true(clean_relative_path("../secret") is None)
   assert_true(clean_relative_path("/tmp/secret") is None)
   assert_true(clean_relative_path("%2e%2e/secret") is Some("%2e%2e/secret"))
-  assert_true(
-    resolve_workspace_path("/tmp/book", decode_query_value("%2e%2e/secret"))
-    is None,
-  )
+  @moonlib/fsx.with_temporary_directory("moondesk-encoded-traversal-", book => {
+    assert_true(
+      resolve_workspace_path(book, decode_query_value("%2e%2e/secret")) is None,
+    )
+  })
 }
 
 ///|
-test "workspace path resolver maps MoonClaw job paths to owning suite" {
-  let suite_root = "/tmp/moondesk-resolve-suite"
-  let book_root = @pathx.join(suite_root, "books/research-resolve")
-  match
-    resolve_workspace_path(
-      book_root, ".moonsuite/products/moonclaw/jobs/run-001/result.json",
-    ) {
-    Some((absolute, clean)) => {
-      assert_eq(
-        absolute,
-        @pathx.join(
-          suite_root, ".moonsuite/products/moonclaw/jobs/run-001/result.json",
-        ),
-      )
-      assert_eq(clean, ".moonsuite/products/moonclaw/jobs/run-001/result.json")
+async test "resolve_workspace_path rejects FIFO special nodes" {
+  @moonlib/fsx.with_temporary_directory("moondesk-resolve-fifo-", workspace_root => {
+    let fifo = @pathx.join(workspace_root, "document.pipe")
+    let exit_code = @process.run("mkfifo", [fifo]) catch { _ => -1 }
+    if exit_code != 0 {
+      fail("mkfifo failed")
     }
-    None => fail("expected product-home MoonClaw run artifact path")
-  }
-  match resolve_workspace_path(book_root, ".moonsuite/products/moonclaw/jobs") {
-    Some((absolute, clean)) => {
-      assert_eq(
-        absolute,
-        @pathx.join(suite_root, ".moonsuite/products/moonclaw/jobs"),
-      )
-      assert_eq(clean, ".moonsuite/products/moonclaw/jobs")
+    let kind = @fs.kind(fifo, follow_symlink=false)
+    let resolved = resolve_workspace_path(workspace_root, "document.pipe")
+    @fs.remove(fifo)
+    assert_true(kind is Pipe)
+    assert_true(resolved is None)
+  })
+}
+
+///|
+test "canonical_path_is_within rejects empty canonical paths" {
+  assert_false(canonical_path_is_within("", ""))
+}
+
+///|
+async test "resolve_workspace_path rejects native symlink escapes and accepts contained paths" {
+  @moonlib/fsx.with_temporary_directory("moondesk-resolve-symlink-", test_root => {
+    let workspace_root = @pathx.join(test_root, "workspace")
+    let outside_root = @pathx.join(test_root, "outside")
+    let real_parent = @pathx.join(workspace_root, "real")
+    let outside_file = @pathx.join(outside_root, "secret.txt")
+    let normal_file = @pathx.join(real_parent, "normal.txt")
+    @fs.mkdir(real_parent, recursive=true)
+    @fs.mkdir(outside_root, recursive=true)
+    @fs.write_file(
+      outside_file,
+      "outside",
+      create_mode=CreateOrTruncate,
+      permission=0o644,
+    )
+    @fs.write_file(
+      normal_file,
+      "inside",
+      create_mode=CreateOrTruncate,
+      permission=0o644,
+    )
+    @fs.symlink(target=outside_file, @pathx.join(workspace_root, "linked-file"))
+    @fs.symlink(target=outside_root, @pathx.join(workspace_root, "linked-dir"))
+    @fs.symlink(
+      target=@pathx.join(outside_root, "new.txt"),
+      @pathx.join(workspace_root, "dangling"),
+    )
+    assert_true(resolve_workspace_path(workspace_root, "dangling") is None)
+    assert_true(
+      resolve_workspace_path(workspace_root, "dangling/child") is None,
+    )
+    assert_true(resolve_workspace_path(workspace_root, "linked-file") is None)
+    assert_true(resolve_workspace_path(workspace_root, "linked-dir") is None)
+    assert_true(
+      resolve_workspace_path(workspace_root, "linked-dir/missing.txt") is None,
+    )
+    match resolve_workspace_path(workspace_root, "real/normal.txt") {
+      Some((resolved, relative)) => {
+        assert_eq(resolved, normal_file)
+        assert_eq(relative, "real/normal.txt")
+      }
+      None => fail("expected real/normal.txt to resolve")
     }
-    None => fail("expected product-home MoonClaw jobs path")
-  }
-  assert_true(
-    resolve_workspace_path(book_root, ".moonsuite/products/moonclaw/../secret")
-    is None,
-  )
+    match resolve_workspace_path(workspace_root, "real/new.txt") {
+      Some((resolved, relative)) => {
+        assert_eq(resolved, @pathx.join(real_parent, "new.txt"))
+        assert_eq(relative, "real/new.txt")
+      }
+      None => fail("expected real/new.txt to resolve")
+    }
+  })
+}
+
+///|
+async test "workspace path resolver maps MoonClaw job paths to owning suite" {
+  @moonlib/fsx.with_temporary_directory("moondesk-resolve-suite-", suite_root => {
+    let book_root = @pathx.join(suite_root, "books/research-resolve")
+    let jobs_root = @pathx.join(suite_root, ".moonsuite/products/moonclaw/jobs")
+    @moonlib/fsx.with_temporary_directory("moondesk-resolve-outside-", outside_root => {
+      @fs.mkdir(book_root, recursive=true)
+      @fs.mkdir(@pathx.dirname(jobs_root), recursive=true)
+      @fs.symlink(target=outside_root, jobs_root)
+      assert_true(
+        resolve_workspace_path(
+          book_root, ".moonsuite/products/moonclaw/jobs/run-001",
+        )
+        is None,
+      )
+      @fs.remove(jobs_root)
+      let sibling_root = @pathx.join(suite_root, "jobs-sibling")
+      @fs.mkdir(sibling_root, recursive=true)
+      @fs.symlink(target=sibling_root, jobs_root)
+      assert_true(
+        resolve_workspace_path(book_root, ".moonsuite/products/moonclaw/jobs")
+        is None,
+      )
+      @fs.remove(jobs_root)
+      @fs.mkdir(jobs_root, recursive=true)
+      match
+        resolve_workspace_path(
+          book_root, ".moonsuite/products/moonclaw/jobs/run-001/result.json",
+        ) {
+        Some((absolute, clean)) => {
+          assert_eq(absolute, @pathx.join(jobs_root, "run-001/result.json"))
+          assert_eq(
+            clean, ".moonsuite/products/moonclaw/jobs/run-001/result.json",
+          )
+        }
+        None => fail("expected MoonClaw job result path to resolve")
+      }
+      match
+        resolve_workspace_path(book_root, ".moonsuite/products/moonclaw/jobs") {
+        Some((absolute, clean)) => {
+          assert_eq(absolute, jobs_root)
+          assert_eq(clean, ".moonsuite/products/moonclaw/jobs")
+        }
+        None => fail("expected MoonClaw jobs root to resolve")
+      }
+      assert_true(
+        resolve_workspace_path(
+          book_root, ".moonsuite/products/moonclaw/../secret",
+        )
+        is None,
+      )
+    })
+  })
+}
+
+///|
+async test "workspace path resolver rejects every symlinked MoonClaw authority component" {
+  @moonlib/fsx.with_temporary_directory("moondesk-moonclaw-authority-", test_root => {
+    let suite_root = @pathx.join(test_root, "suite")
+    let outside_root = @pathx.join(test_root, "outside")
+    let book_root = @pathx.join(suite_root, "books/research")
+    let relative = ".moonsuite/products/moonclaw/jobs/run-001"
+    @fs.mkdir(book_root, recursive=true)
+    let components : ReadOnlyArray[String] = [
+      ".moonsuite", "products", "moonclaw", "jobs",
+    ]
+    for index = 0; index < components.length(); index = index + 1 {
+      let component = components[index]
+      let link_parent = Ref(suite_root)
+      for parent_index = 0
+          parent_index < index
+          parent_index = parent_index + 1 {
+        link_parent.val = @pathx.join(link_parent.val, components[parent_index])
+      }
+      if !@fs.exists(link_parent.val) {
+        @fs.mkdir(link_parent.val, recursive=true)
+      }
+      let link = @pathx.join(link_parent.val, component)
+      let outside_target = @pathx.join(outside_root, component + "-target")
+      let sibling_target = @pathx.join(suite_root, component + "-sibling")
+      @fs.mkdir(outside_target, recursive=true)
+      @fs.mkdir(sibling_target, recursive=true)
+      @fs.symlink(target=outside_target, link)
+      assert_true(resolve_workspace_path(book_root, relative) is None)
+      @fs.remove(link)
+      @fs.symlink(target=sibling_target, link)
+      assert_true(resolve_workspace_path(book_root, relative) is None)
+      @fs.remove(link)
+      @fs.mkdir(link, recursive=true)
+    }
+    match resolve_workspace_path(book_root, relative) {
+      Some((absolute, clean)) => {
+        assert_eq(
+          absolute,
+          @pathx.join(suite_root, ".moonsuite/products/moonclaw/jobs/run-001"),
+        )
+        assert_eq(clean, relative)
+      }
+      None =>
+        fail("expected real authority directories and missing leaf to resolve")
+    }
+  })
 }
 
 ///|
