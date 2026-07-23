@@ -30,6 +30,37 @@ fn pack_default_description(pack : PackAppRecord) -> String {
 }
 
 ///|
+fn pack_area_value(value : String?) -> String {
+  match value {
+    Some(value) => value.trim().to_owned()
+    None => ""
+  }
+}
+
+///|
+fn pack_has_declared_area(pack : PackAppRecord) -> Bool {
+  pack_area_value(pack.area_id) != "" &&
+  pack_area_value(pack.area_category) != "" &&
+  pack_area_value(pack.area_label) != ""
+}
+
+///|
+fn render_pack_area(pack : PackAppRecord) -> @rabbita.Html {
+  if pack_has_declared_area(pack) {
+    span(
+      class="pack-area-label",
+      attrs=@html.Attrs::build()
+        .data_set("testid", "pack-area")
+        .data_set("area-id", pack_area_value(pack.area_id))
+        .data_set("area-category", pack_area_value(pack.area_category)),
+      pack_area_value(pack.area_label),
+    )
+  } else {
+    @html.nothing
+  }
+}
+
+///|
 fn render_pack_primary_action(pack : PackAppRecord) -> @rabbita.Html {
   if pack.status == "configured" && pack.launch_url != "" {
     a(
@@ -68,13 +99,16 @@ fn render_pack_card(
     attrs=@html.Attrs::build()
       .data_set("testid", "pack-product-card")
       .data_set("pack-id", pack.pack_id)
-      .data_set("pack-status", pack.status),
+      .data_set("pack-status", pack.status)
+      .data_set("area-id", pack_area_value(pack.area_id))
+      .data_set("area-category", pack_area_value(pack.area_category)),
     [
       header(class="pack-card-header", [
         div(class="pack-card-identity", [
           span(class="pack-mark", pack.pack_id),
           div([
             h2(pack.display_name),
+            render_pack_area(pack),
             small("v" + pack.version + " · " + pack.kind),
           ]),
         ]),

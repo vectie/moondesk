@@ -44,6 +44,47 @@ id, domain route, provider, credential, or business rule. It also reports
 manifest-declared workflow, tool, and app-surface counts so operators can tell
 what was installed without opening implementation files.
 
+Packs may also declare a generic Pack Home area in `pack.json`:
+
+```json
+{
+  "app_area": {
+    "id": "finance.example",
+    "category": "finance",
+    "label": "Finance"
+  }
+}
+```
+
+All three fields are required when `app_area` is present. `id` is a normalized
+lowercase identifier that may use dots for namespacing, `category` is a
+normalized lowercase pack-style identifier, and `label` is operator-facing
+text. Pack Home displays the label and exposes the identifiers as generic data
+attributes; it does not branch on known categories or pack ids. Existing
+manifests may omit `app_area`. A malformed declaration fails closed and the
+affected pack is excluded from the catalog rather than being silently assigned
+to a guessed area.
+
+Until the shared pack manifest codec preserves `app_area` during installation,
+packs that need the area after installation also declare one evaluation
+artifact:
+
+```json
+{
+  "id": "moondesk-app-area",
+  "version": "1.0.0",
+  "path": "apps/app-area.json"
+}
+```
+
+The referenced file uses the exact `moonsuite.pack-app-area.v1` contract and
+contains the same `app_area` object. MoonDesk resolves this generically from the
+installed pack root. The path must be normalized and relative, the resolved file
+must remain inside that root, and duplicate, missing, malformed, or wrong-version
+declarations fail closed. A preserved top-level `app_area` takes precedence, so
+the compatibility artifact can be removed after the shared codec carries the
+field end to end.
+
 The launcher opens the same-origin `/pack-apps/<pack-id>/` route. MoonDesk
 proxies only to an explicitly configured loopback `service_url`; this prevents
 the desktop browser from navigating to a different origin and avoids exposing a

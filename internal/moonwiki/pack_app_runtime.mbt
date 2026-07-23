@@ -26,6 +26,70 @@ fn is_safe_pack_id(pack_id : String) -> Bool {
 }
 
 ///|
+fn is_safe_pack_app_area_id(area_id : String) -> Bool {
+  let value = area_id.trim().to_owned()
+  if value == "" ||
+    value.length() > 96 ||
+    value != value.to_lower() ||
+    value.has_prefix(".") ||
+    value.has_suffix(".") ||
+    value.contains("..") {
+    return false
+  }
+  for ch in value {
+    if !(ch.is_ascii_lowercase() ||
+      ch.is_ascii_digit() ||
+      ch == '-' ||
+      ch == '_' ||
+      ch == '.') {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn is_safe_pack_app_area_label(label : String) -> Bool {
+  let value = label.trim().to_owned()
+  if value == "" || value.length() > 64 {
+    return false
+  }
+  for ch in value {
+    if ch.is_control() {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn pack_app_manifest_area(
+  manifest : Json,
+  area_override : Json?,
+) -> (Bool, String, String, String) {
+  let declared = match area_override {
+    Some(area) => Some(area)
+    None => json_object_field(manifest, "app_area")
+  }
+  match declared {
+    None => (true, "", "", "")
+    Some(Object(_) as area) => {
+      let id = json_string(area, "id", default="").trim().to_owned()
+      let category = json_string(area, "category", default="").trim().to_owned()
+      let label = json_string(area, "label", default="").trim().to_owned()
+      if is_safe_pack_app_area_id(id) &&
+        is_safe_pack_id(category) &&
+        is_safe_pack_app_area_label(label) {
+        (true, id, category, label)
+      } else {
+        (false, "", "", "")
+      }
+    }
+    Some(_) => (false, "", "", "")
+  }
+}
+
+///|
 fn is_safe_local_pack_service_url(url : String) -> Bool {
   let value = url.trim().to_owned().to_lower()
   let prefix = if value.has_prefix("http://127.0.0.1:") {
@@ -78,10 +142,11 @@ fn is_matching_pack_app_url(
 }
 
 ///|
-fn pack_app_runtime_record(
+fn pack_app_runtime_record_resolved(
   active : Json,
   manifest : Json,
   runtime : Json,
+  area_override : Json?,
 ) -> Json? {
   let pack_id = json_string(active, "pack_id", default="").trim().to_owned()
   let manifest_id = json_string(manifest, "id", default="").trim().to_owned()
@@ -94,10 +159,14 @@ fn pack_app_runtime_record(
     .trim()
     .to_owned()
   let entrypoints = json_array_items(manifest, "app_entrypoints")
+  let (area_valid, area_id, area_category, area_label) = pack_app_manifest_area(
+    manifest, area_override,
+  )
   if !is_safe_pack_id(pack_id) ||
     manifest_id != pack_id ||
     runtime_id != pack_id ||
     runtime_contract != "moonsuite.pack-app-runtime.v1" ||
+    !area_valid ||
     entrypoints.length() == 0 {
     return None
   }
@@ -114,6 +183,9 @@ fn pack_app_runtime_record(
     "entrypoint_id": json_string(first, "id", default="app"),
     "entrypoint_path": entrypoint_path,
     "audience": json_string(first, "audience", default="operator"),
+    "area_id": area_id,
+    "area_category": area_category,
+    "area_label": area_label,
     "app_url": app_url,
     "service_url": service_url,
     "launch_url": "/pack-apps/" + pack_id + "/",
@@ -123,19 +195,42 @@ fn pack_app_runtime_record(
 }
 
 ///|
-fn pack_app_catalog_record(
+fn pack_app_runtime_record(
+  active : Json,
+  manifest : Json,
+  runtime : Json,
+) -> Json? {
+  pack_app_runtime_record_resolved(active, manifest, runtime, None)
+}
+
+///|
+fn pack_app_catalog_record_resolved(
   active : Json,
   manifest : Json,
   runtime : Json?,
+  area_override : Json?,
 ) -> Json? {
   let pack_id = json_string(active, "pack_id", default="").trim().to_owned()
   let manifest_id = json_string(manifest, "id", default="").trim().to_owned()
-  if !is_safe_pack_id(pack_id) || manifest_id != pack_id {
+  let (area_valid, area_id, area_category, area_label) = pack_app_manifest_area(
+    manifest, area_override,
+  )
+  if !is_safe_pack_id(pack_id) || manifest_id != pack_id || !area_valid {
     return None
   }
   let entrypoints = json_array_items(manifest, "app_entrypoints")
   let configured = match runtime {
-    Some(runtime) => pack_app_runtime_record(active, manifest, runtime)
+    Some(runtime) =>
+      match area_override {
+        Some(area) =>
+          pack_app_runtime_record_resolved(
+            active,
+            manifest,
+            runtime,
+            Some(area),
+          )
+        None => pack_app_runtime_record(active, manifest, runtime)
+      }
     None => None
   }
   match configured {
@@ -149,6 +244,9 @@ fn pack_app_catalog_record(
         "entrypoint_id": json_string(app, "entrypoint_id", default="app"),
         "entrypoint_path": json_string(app, "entrypoint_path", default="/"),
         "audience": json_string(app, "audience", default="operator"),
+        "area_id": json_string(app, "area_id", default=""),
+        "area_category": json_string(app, "area_category", default=""),
+        "area_label": json_string(app, "area_label", default=""),
         "app_url": json_string(app, "app_url", default=""),
         "service_url": json_string(app, "service_url", default=""),
         "launch_url": json_string(app, "launch_url", default=""),
@@ -193,6 +291,9 @@ fn pack_app_catalog_record(
         "entrypoint_id": json_string(first, "id", default=""),
         "entrypoint_path": json_string(first, "path", default=""),
         "audience": json_string(first, "audience", default="operator"),
+        "area_id": area_id,
+        "area_category": area_category,
+        "area_label": area_label,
         "app_url": "",
         "service_url": "",
         "launch_url": "",
@@ -204,6 +305,83 @@ fn pack_app_catalog_record(
         "configuration_message": message,
       })
     }
+  }
+}
+
+///|
+fn pack_app_catalog_record(
+  active : Json,
+  manifest : Json,
+  runtime : Json?,
+) -> Json? {
+  pack_app_catalog_record_resolved(active, manifest, runtime, None)
+}
+
+///|
+fn is_safe_installed_pack_artifact_path(path : String) -> Bool {
+  let value = path.trim().to_owned()
+  if value == "" ||
+    value != path ||
+    value.contains("\\") ||
+    value.contains("%") ||
+    @pathx.is_absolute(value) {
+    return false
+  }
+  for ch in value {
+    if ch.is_control() {
+      return false
+    }
+  }
+  match clean_relative_path(value) {
+    Some(normalized) => normalized == value
+    None => false
+  }
+}
+
+///|
+async fn resolve_installed_pack_app_area(
+  installed_root : String,
+  manifest : Json,
+) -> (Bool, Json?) {
+  if json_object_field(manifest, "app_area") is Some(_) {
+    return (true, None)
+  }
+  let mut artifact : Json? = None
+  for evaluation in json_array_items(manifest, "evaluations") {
+    if json_string(evaluation, "id", default="") == "moondesk-app-area" {
+      if artifact is Some(_) {
+        return (false, None)
+      }
+      artifact = Some(evaluation)
+    }
+  }
+  guard artifact is Some(artifact) else { return (true, None) }
+  if json_string(artifact, "version", default="") != "1.0.0" {
+    return (false, None)
+  }
+  let relative = json_string(artifact, "path", default="")
+  if !is_safe_installed_pack_artifact_path(relative) {
+    return (false, None)
+  }
+  let root = @fs.realpath(installed_root) catch { _ => return (false, None) }
+  let candidate = @pathx.join(root, relative)
+  if !@fs.exists(candidate) {
+    return (false, None)
+  }
+  let resolved = @fs.realpath(candidate) catch { _ => return (false, None) }
+  if !resolved.has_prefix(root + "/") {
+    return (false, None)
+  }
+  let payload = @json.parse(@fs.read_file(resolved).text()) catch {
+    _ => return (false, None)
+  }
+  if json_string(payload, "contract", default="") !=
+    "moonsuite.pack-app-area.v1" {
+    return (false, None)
+  }
+  match json_object_field(payload, "app_area") {
+    Some(Object(_) as area) => (true, Some(area))
+    _ => (false, None)
   }
 }
 
@@ -237,11 +415,19 @@ async fn configured_pack_app(
   if !@fs.exists(manifest_path) {
     return None
   }
-  pack_app_runtime_record(
-    active,
-    read_json_file_or_object(manifest_path),
-    read_json_file_or_object(runtime_path),
+  let manifest = read_json_file_or_object(manifest_path)
+  let (area_contract_valid, area_override) = resolve_installed_pack_app_area(
+    installed_root, manifest,
   )
+  if !area_contract_valid {
+    return None
+  }
+  let runtime = read_json_file_or_object(runtime_path)
+  match area_override {
+    Some(area) =>
+      pack_app_runtime_record_resolved(active, manifest, runtime, Some(area))
+    None => pack_app_runtime_record(active, manifest, runtime)
+  }
 }
 
 ///|
@@ -356,17 +542,24 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
     if !@fs.exists(manifest_path) {
       continue
     }
+    let manifest = read_json_file_or_object(manifest_path)
+    let (area_contract_valid, area_override) = resolve_installed_pack_app_area(
+      installed_root, manifest,
+    )
+    if !area_contract_valid {
+      continue
+    }
     let runtime = if @fs.exists(runtime_path) {
       Some(read_json_file_or_object(runtime_path))
     } else {
       None
     }
-    match
-      pack_app_catalog_record(
-        active,
-        read_json_file_or_object(manifest_path),
-        runtime,
-      ) {
+    let projected = match area_override {
+      Some(area) =>
+        pack_app_catalog_record_resolved(active, manifest, runtime, Some(area))
+      None => pack_app_catalog_record(active, manifest, runtime)
+    }
+    match projected {
       Some(app) => {
         if json_string(app, "status", default="") == "configured" {
           configured_count = configured_count + 1

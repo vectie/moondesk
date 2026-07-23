@@ -5,6 +5,9 @@ struct PackAppRecord {
   display_name : String
   description : String
   kind : String
+  area_id : String?
+  area_category : String?
+  area_label : String?
   launch_url : String
   status : String
   entrypoint_count : Int
