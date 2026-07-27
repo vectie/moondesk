@@ -83,8 +83,11 @@ stage 'UI tests' sh -c 'cd "$1" && moon test --target js --warn-list +unnecessar
 if [ "$MODE" = full ]; then
   stage 'UI localization tests' npm --prefix "$UI_DIR" run test:i18n
   stage 'Release artifact verifier tests' node --test "$SCRIPT_DIR/verify_release.test.mjs"
-  # The production build may update tracked generated dist output; review it.
-  stage 'UI production build' npm --prefix "$UI_DIR" run build
+  build_output=$(mktemp -d "${TMPDIR:-/tmp}/moondesk-ui-build.XXXXXX")
+  trap 'rm -rf "$build_output"' EXIT HUP INT TERM
+  stage 'UI production build' npm --prefix "$UI_DIR" run build -- --outDir "$build_output"
+  rm -rf "$build_output"
+  trap - EXIT HUP INT TERM
   stage 'Generated-interface verification' verify_generated_interfaces
   run_boundary_validators
   stage 'Whitespace errors' git -C "$REPO_ROOT" diff --check
