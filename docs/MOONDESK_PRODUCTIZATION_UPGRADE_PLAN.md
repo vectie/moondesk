@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In progress |
+| Status | In progress — implementation evidence is tracked per phase below; external-proof blockers do not block independent repository-local work |
 | Owner | MoonDesk |
 | Last updated | 2026-07-27 |
 
@@ -352,8 +352,8 @@ closure/focus, and Flow/Packs header rows. Its four real-VoiceOver transcript
 rows remain explicitly pending because the user asked to skip the blocked
 system-caption capture; automated DOM/accessibility-tree evidence is not
 reclassified as spoken output. These bounded slices contribute to the completed
-Phase 1 user-facing gate; they do not claim or advance the broader Phase 7 and
-Phase 8 gates.
+Phase 1 user-facing gate; they do not claim or advance the broader Phase 8 and
+Phase 9 gates.
 
 ## Current Baseline
 
@@ -409,32 +409,37 @@ Phase 5  Harden workspace and generated-content security
    ↓
 Phase 6  Unify runtime observability and operator evidence
    ↓
-Phase 7  Finish UX consistency, localization, and accessibility
+Phase 7  Complete first-class document and code editing
    ↓
-Phase 8  Prove native distribution and long-running operation
+Phase 8  Finish UX consistency, localization, and accessibility
    ↓
-Phase 9  Close the program with release-readiness evidence
+Phase 9  Prove native distribution and long-running operation
+   ↓
+Phase 10 Close the program with release-readiness evidence
 ```
 
 Phase 3 requires Phase 2's CI gate. Phases 3 and 4 may overlap only after the
-target contract ownership map is approved. Phases 6 and 7 may overlap only when
-the underlying typed projection contract is stable. Phase 8 must not begin as a
-release claim until Phases 2 through 7 have passed their exit gates.
+target contract ownership map is approved. Phase 7 begins only after the file
+authority and runtime-evidence boundaries from Phases 5 and 6 are stable.
+Phases 7 and 8 may overlap only after the edit/save contracts are executable.
+Phase 9 must not begin as a release claim until Phases 2 through 8 have passed
+their exit gates.
 
 ### Phase overview
 
 | Phase | Current state | Depends on | Primary result | Next gate evidence |
 | --- | --- | --- | --- | --- |
 | [0. Current truth](#phase-0-establish-one-source-of-current-truth) | Complete locally | — | One current source of truth and reproducible local baseline | Retain proof; correct drift when later phases change facts |
-| [1. Product clarity](#phase-1-simplify-the-product-story-and-first-run-experience) | Complete locally | Phase 0 | Understandable first run and honest capability setup | Retain the closure journey; later matrices remain in Phases 7 and 8 |
+| [1. Product clarity](#phase-1-simplify-the-product-story-and-first-run-experience) | Complete locally | Phase 0 | Understandable first run and honest capability setup | Retain the closure journey; later matrices remain in Phases 8 and 9 |
 | [2. CI and release evidence](#phase-2-make-ci-and-release-evidence-mandatory) | CI and unsigned preview pipeline proven locally; remote evidence open | Phase 0 | Mandatory quality gates and reproducible preview releases | Passing pull-request, push, and preview-tag runs retained as remote evidence |
 | [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Inventory and target complete; implementation not started | Phase 2 | Small typed public protocol and one serialization boundary | Phase 2 passes, then one typed vertical slice replaces one string/JSON path |
 | [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | Not started | Phase 3 ownership map | Narrower packages, state ownership, and decomposed tests | Approved dependency graph and first behavior-preserving extraction |
 | [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Not started | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Threat-model tests prove canonical confinement and denial paths |
 | [6. Observability](#phase-6-unify-runtime-observability-and-operator-evidence) | Not started | Phases 3–5 | Evidence-backed turns, approvals, traces, and recovery | One canonical evidence projection answers the operator questions |
-| [7. UX quality](#phase-7-finish-ux-consistency-localization-and-accessibility) | Shared-shell semantic slice plus partial local evidence | Stable Phase 3 projection | Shared shell, explicit localization, and accessibility proof | Full keyboard, focused manual screen-reader, locale, reduced-motion, and responsive state matrix |
-| [8. Native distribution](#phase-8-prove-native-distribution-and-long-running-operation) | Unsigned local macOS evidence only | Phases 2–7 | Notarized release, update proof, and reliability evidence | Credentialed clean-machine install/update/rollback and soak transcripts |
-| [9. Closure](#phase-9-program-closure-and-release-readiness) | Not started | Phases 0–8 | Finite release-readiness decision | All prior exit gates pass or explicit no-go exceptions are recorded |
+| [7. Editing workspaces](#phase-7-complete-first-class-document-and-code-editing) | Not started | Phases 3–6 | Working DOCX, XLSX, PPTX, and direct Code editing | Reopen/save fidelity and prompt-to-edit integration journeys pass |
+| [8. UX quality](#phase-8-finish-ux-consistency-localization-and-accessibility) | Shared-shell semantic slice plus partial local evidence | Stable Phase 7 editing contracts | Shared shell, explicit localization, and accessibility proof | Full keyboard, focused manual screen-reader, locale, reduced-motion, and responsive state matrix |
+| [9. Native distribution](#phase-9-prove-native-distribution-and-long-running-operation) | Unsigned local macOS evidence only | Phases 2–8 | Notarized release, update proof, and reliability evidence | Credentialed clean-machine install/update/rollback and soak transcripts |
+| [10. Closure](#phase-10-program-closure-and-release-readiness) | Not started | Phases 0–9 | Finite release-readiness decision | All prior exit gates pass or explicit no-go exceptions are recorded |
 
 ## Phase 0: Establish One Source Of Current Truth
 
@@ -602,9 +607,9 @@ Work previously listed here as “remaining Phase 1 acceptance” is reassigned 
 its owning gate:
 
 - exhaustive localization, reduced-motion, responsive-state, page-level
-  keyboard, and focused manual assistive-technology coverage belong to Phase 7
+  keyboard, and focused manual assistive-technology coverage belong to Phase 8
 - other-platform picker journeys, packaged-native keyboard behavior, signing,
-  installation, update, rollback, and soak evidence belong to Phase 8
+  installation, update, rollback, and soak evidence belong to Phase 9
 - further typed surface adoption may continue when it supports a concrete
   later-phase requirement, but it is not an open-ended Phase 1 quota
 
@@ -891,7 +896,7 @@ Phase 2 is complete when:
 
 ### Non-goals
 
-- production notarization is not claimed until Phase 8
+- production notarization is not claimed until Phase 9
 - credentialed live-model tests may remain separately gated
 - CI does not require sibling source checkouts unless roots are explicit
 
@@ -1537,7 +1542,149 @@ Phase 6 is complete when:
 - no runtime-specific raw journal in the ordinary transcript
 - no unsupported cost or evaluation claims
 
-## Phase 7: Finish UX Consistency, Localization, And Accessibility
+## Phase 7: Complete First-Class Document And Code Editing
+
+### Outcome
+
+A user can work with DOCX, XLSX, and PPTX artifacts and directly edit source
+files from Code without leaving MoonDesk or relying on an unverified agent-only
+path.
+
+### Why this phase belongs here
+
+This is product capability, not visual polish. It follows the typed contract,
+package-boundary, filesystem-authority, and runtime-evidence phases because
+binary document writes and concurrent user/agent source edits need those
+boundaries. It precedes UX quality so Phase 8 validates real editors rather than
+mockups or read-only placeholders.
+
+### Current baseline
+
+- XLSX has raw-file and portable-export transport, but no workbook renderer or
+  editor.
+- DOCX and PPTX are treated as unsupported binary files.
+- Code renders a conversation composer. Its source-pane state is read-only and
+  is not a direct file editor.
+- MoonClaw can perform bounded file mutations and MoonDesk can present typed
+  edit/test evidence, but there is no current browser journey proving direct
+  user editing and agent editing share one safe file state.
+
+### Workstreams
+
+#### 7.1 Editing contract
+
+Define one internal contract for:
+
+- open
+- editable content or structured model
+- dirty state
+- save
+- save failure
+- external change detection
+- reopen verification
+- export or download
+
+The contract must distinguish first-class editing from raw download or
+read-only preview. Unsupported features must remain explicit.
+
+#### 7.2 DOCX integration
+
+Implement:
+
+- document open and readable rendering
+- paragraph and basic inline-style editing
+- save to a valid DOCX package
+- reopen verification
+- preservation of content outside the supported edit subset
+
+#### 7.3 XLSX integration
+
+Implement:
+
+- workbook and worksheet navigation
+- cell value and basic formula editing
+- save to a valid XLSX package
+- reopen verification with formulas and sheet identity intact
+- honest handling of unsupported workbook features
+
+#### 7.4 PPTX integration
+
+Implement:
+
+- slide navigation and readable rendering
+- text and basic object-property editing
+- save to a valid PPTX package
+- reopen verification with slide order and supported content intact
+- honest handling of unsupported presentation features
+
+#### 7.5 Direct Code editor
+
+Replace the read-only source-pane foundation with a visible editor that
+supports:
+
+- workspace-scoped source tree and file opening
+- text editing with line and selection state
+- dirty-state indication and navigation protection
+- explicit save and save-failure recovery
+- reload after external change
+- diff and diagnostics alongside the active file
+
+#### 7.6 User and agent edit coordination
+
+Define one conflict rule for direct edits and MoonCode mutations:
+
+- an agent cannot silently overwrite an unsaved user draft
+- an external or agent change is detected before save
+- the user can reload, compare, or deliberately replace
+- accepted agent changes appear as reviewable file evidence
+- saved direct edits become the next MoonCode source truth
+
+#### 7.7 Executable acceptance
+
+Add product-level journeys that prove:
+
+1. open, change, save, close, and reopen one DOCX
+2. open, change, save, close, and reopen one XLSX
+3. open, change, save, close, and reopen one PPTX
+4. open, edit, save, and verify one source file in Code
+5. submit one MoonCode change, observe the resulting file and diff, then edit
+   and save that file directly
+6. preserve an unsaved direct edit when an agent or external process changes
+   the same file
+
+Fixture-only render tests do not satisfy this gate. Each journey must verify the
+saved bytes by reopening through an independent reader or parser.
+
+### Deliverables
+
+- shared editor state and save contract
+- first-class DOCX, XLSX, and PPTX integrations
+- visible direct Code editor
+- user/agent edit-conflict behavior
+- reopen/fidelity fixtures and browser journeys
+- honest unsupported-feature messages
+
+### Exit gate
+
+Phase 7 is complete when:
+
+- each Office format passes open/edit/save/reopen acceptance
+- saved files remain valid and retain supported content
+- raw binary transport is no longer reported as Office integration
+- Code supports direct file editing and durable save
+- MoonCode mutations and unsaved direct edits cannot silently overwrite each
+  other
+- one current browser journey proves prompt-to-edit evidence and subsequent
+  direct editing of the same file
+
+### Non-goals
+
+- no claim of complete feature parity with dedicated Office applications
+- no macro execution
+- no real-time multi-user collaboration
+- no silent conversion that loses unsupported content
+
+## Phase 8: Finish UX Consistency, Localization, And Accessibility
 
 ### Outcome
 
@@ -1596,7 +1743,7 @@ usability in a manual assistive-technology session.
 
 ### Workstreams
 
-#### 7.1 Shared shell
+#### 8.1 Shared shell
 
 Standardize:
 
@@ -1612,7 +1759,7 @@ Standardize:
 Avoid duplicate navigation to the same action in rail, toolbar, hero, and
 empty state.
 
-#### 7.2 Surface-specific primary questions
+#### 8.2 Surface-specific primary questions
 
 Each surface must have one primary question:
 
@@ -1628,7 +1775,7 @@ Each surface must have one primary question:
 
 Remove or move content that does not help answer the primary question.
 
-#### 7.3 Localization architecture
+#### 8.3 Localization architecture
 
 Replace fragile runtime text matching over rendered English strings with
 explicit localization keys at the source of UI construction.
@@ -1643,7 +1790,7 @@ Requirements:
 - missing keys fail tests
 - internal errors are translated into user-facing categories before rendering
 
-#### 7.4 Accessibility
+#### 8.4 Accessibility
 
 Verify:
 
@@ -1664,7 +1811,7 @@ Verify:
 Add a skip-to-content mechanism if the persistent desktop navigation creates a
 long keyboard path.
 
-#### 7.5 Responsive behavior
+#### 8.5 Responsive behavior
 
 Validate:
 
@@ -1678,7 +1825,7 @@ Phone-sized support is a resilience target, not necessarily a distribution
 target. The primary action, current object, and recovery path must remain
 reachable.
 
-#### 7.6 Visual consistency
+#### 8.6 Visual consistency
 
 Consolidate:
 
@@ -1706,7 +1853,7 @@ remain quiet, dense, and scannable.
 
 ### Exit gate
 
-Phase 7 is complete when:
+Phase 8 is complete when:
 
 - all primary surfaces use the shared shell rules
 - no known mixed-language or template-collision bug remains
@@ -1722,7 +1869,7 @@ Phase 7 is complete when:
 - no conversion-focused landing patterns inside the app
 - no mobile application commitment
 
-## Phase 8: Prove Native Distribution And Long-Running Operation
+## Phase 9: Prove Native Distribution And Long-Running Operation
 
 ### Outcome
 
@@ -1731,7 +1878,7 @@ supported Mac through a documented and reproducible release path.
 
 ### Workstreams
 
-#### 8.1 Credentialed release
+#### 9.1 Credentialed release
 
 Establish:
 
@@ -1743,7 +1890,7 @@ Establish:
 - credential isolation in CI
 - auditable release identity and version
 
-#### 8.2 Clean-machine matrix
+#### 9.2 Clean-machine matrix
 
 Test on clean systems covering:
 
@@ -1757,7 +1904,7 @@ Test on clean systems covering:
 - offline first launch
 - optional services absent and present
 
-#### 8.3 Installation and update
+#### 9.3 Installation and update
 
 Verify:
 
@@ -1770,7 +1917,7 @@ Verify:
 - preservation of user libraries and settings
 - removal without deleting user data
 
-#### 8.4 Long-running lifecycle
+#### 9.4 Long-running lifecycle
 
 Run reliability tests for:
 
@@ -1788,7 +1935,7 @@ Run reliability tests for:
 
 Define soak-test durations and acceptable resource thresholds before testing.
 
-#### 8.5 Update hosting and channels
+#### 9.5 Update hosting and channels
 
 Provide:
 
@@ -1811,7 +1958,7 @@ Provide:
 
 ### Exit gate
 
-Phase 8 is complete when:
+Phase 9 is complete when:
 
 - a clean Mac installs and launches MoonDesk without development tools
 - Gatekeeper accepts the application normally
@@ -1827,7 +1974,7 @@ Phase 8 is complete when:
 - no remote hosted MoonDesk service
 - no claim beyond tested macOS architectures
 
-## Phase 9: Program Closure And Release Readiness
+## Phase 10: Program Closure And Release Readiness
 
 ### Outcome
 
@@ -1847,8 +1994,9 @@ Audit every prior phase:
 | 4 | package graph and boundary tests |
 | 5 | security suite and authority matrix |
 | 6 | runtime evidence, approval, and recovery journeys |
-| 7 | localization, accessibility, and responsive evidence |
-| 8 | notarized clean-machine release and soak report |
+| 7 | DOCX/XLSX/PPTX and direct Code edit/save/reopen journeys |
+| 8 | localization, accessibility, and responsive evidence |
+| 9 | notarized clean-machine release and soak report |
 
 Every incomplete item must be:
 
@@ -1869,6 +2017,7 @@ MoonDesk is release-ready when:
 - package ownership is documented and enforced
 - workspace and preview security tests pass
 - runtime progress and approvals are evidence-backed
+- DOCX, XLSX, PPTX, and direct Code edit/save/reopen gates pass
 - localization and accessibility gates pass
 - a signed, notarized artifact passes clean-machine installation and update
 - current status and release notes describe limitations honestly
@@ -1883,7 +2032,7 @@ MoonDesk is release-ready when:
 
 ### Exit gate
 
-Phase 9 is complete when the project records one of two decisions:
+Phase 10 is complete when the project records one of two decisions:
 
 1. **Ready**: every release criterion has evidence.
 2. **Not ready**: remaining blockers, owners, and target dates are explicit.
@@ -2040,19 +2189,21 @@ Result:
 - evidence-backed runtime operation
 - coherent approvals, traces, and recovery
 
-### Milestone E: Product-quality interface
+### Milestone E: First-class editing and product-quality interface
 
-Includes Phase 7.
+Includes Phases 7 and 8.
 
 Result:
 
+- working Office artifact editors
+- direct Code editing with user/agent conflict handling
 - consistent shell
 - explicit localization
 - accessibility and responsive proof
 
 ### Milestone F: Native release readiness
 
-Includes Phases 8 and 9.
+Includes Phases 9 and 10.
 
 Result:
 
@@ -2074,8 +2225,9 @@ Continue with:
 2. Begin Phase 3 with the approved public-contract inventory and one typed
    vertical slice.
 
-The broader UX matrix remains owned by Phase 7. Cross-platform packaged-app and
-picker evidence remains owned by Phase 8. Security design remains owned by
+The first-class Office and Code editors are owned by Phase 7. The broader UX
+matrix remains owned by Phase 8. Cross-platform packaged-app and picker
+evidence remains owned by Phase 9. Security design remains owned by
 Phase 5; do not pull those workstreams into the next phase by inference.
 
 Do not begin broad UI restructuring or package movement before the required

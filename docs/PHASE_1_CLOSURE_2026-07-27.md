@@ -67,9 +67,10 @@ counts are recorded in `docs/STATUS.md`.
 ## Deferred to owning phases
 
 - Phase 2 owns retained remote CI and preview-tag evidence.
-- Phase 7 owns exhaustive localization, reduced-motion, responsive-state,
+- Phase 7 owns first-class Office and direct Code editing.
+- Phase 8 owns exhaustive localization, reduced-motion, responsive-state,
   page-level keyboard, and focused manual assistive-technology matrices.
-- Phase 8 owns other-platform packaged picker proof, packaged-native keyboard
+- Phase 9 owns other-platform packaged picker proof, packaged-native keyboard
   behavior, signing, installation, update, rollback, and soak evidence.
 
 These are not Phase 1 blockers and must not reopen Phase 1 unless the

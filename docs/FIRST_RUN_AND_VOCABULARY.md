@@ -68,7 +68,7 @@ an older host preserves the earlier structured behavior.
 The Phase 1 user-facing gate is complete. Its clean-workspace, capability,
 navigation, and durability evidence is mapped in
 `PHASE_1_CLOSURE_2026-07-27.md`. Exhaustive responsive, localization, and
-assistive-technology matrices remain owned by Phase 7.
+assistive-technology matrices remain owned by Phase 8.
 
 ## Implemented bounded cold-start evidence
 
@@ -749,7 +749,7 @@ This bounded migration followed five explicit phases:
 5. **Keep the later UX gate open.** This slice does not prove every literal in
    every rendered state, manual assistive output, or packaged-native locale
    behavior. Complete source/catalog/generated-output inventory and rendered
-   browser coverage remain Phase 7 work and do not reopen Phase 1.
+   browser coverage remain Phase 8 work and do not reopen Phase 1.
 
 ## Command 046 — explicit localization-key ownership
 

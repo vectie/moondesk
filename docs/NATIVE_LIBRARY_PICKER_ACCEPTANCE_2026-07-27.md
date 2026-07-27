@@ -15,7 +15,7 @@ static contract proof, native interaction, host validation, persistence, and
 restart restoration so that one passing layer cannot hide a failure in another.
 
 It does not claim signing, notarization, clean-machine installation, another
-desktop platform or the broader Phase 8 distribution gate.
+desktop platform or the broader Phase 9 distribution gate.
 
 ## Phase-by-phase acceptance
 
