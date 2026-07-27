@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   validate:
+    name: Required repository validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -25,10 +26,11 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: ui/rabbita-desk/package-lock.json
-      - name: Update MoonBit dependencies
+      - name: Verify pinned MoonBit dependencies
         run: |
           moon version --all
-          moon update
+          moon check --target all --warn-list +unnecessary_annotation
+          git diff --exit-code -- moon.mod.json moon.pkg.json moon.lock
       - name: Install UI dependencies
         run: npm ci
         working-directory: ui/rabbita-desk
