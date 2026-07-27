@@ -75,6 +75,9 @@ jobs:
           moon version --all
           moon update
 
+      - name: Normalize manifests for the installed MoonBit toolchain
+        run: moon fmt
+
       - name: Install UI dependencies
         run: npm ci
         working-directory: ui/rabbita-desk

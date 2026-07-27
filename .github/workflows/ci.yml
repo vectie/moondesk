@@ -32,6 +32,8 @@ jobs:
           moon update
           moon check --target all --warn-list +unnecessary_annotation
           git diff --exit-code -- moon.mod moon.pkg.json moon.lock
+      - name: Normalize manifests for the installed MoonBit toolchain
+        run: moon fmt
       - name: Install UI dependencies
         run: npm ci
         working-directory: ui/rabbita-desk
