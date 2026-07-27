@@ -269,15 +269,7 @@ async fn import_moonbook_from_uploaded_files(
         Err(message) =>
           return Err(workspace_create_error(400, "Bad Request", message))
       }
-      let (target, _) = match resolve_workspace_path(source_root, relative) {
-        Some(pair) => pair
-        None =>
-          return Err(
-            workspace_create_error(
-              400, "Bad Request", "MoonBook folder upload path is not allowed",
-            ),
-          )
-      }
+      let target = @pathx.join(source_root, relative)
       @fsx.make_directory(
         @pathx.dirname(target).to_owned(),
         recursive=true,
