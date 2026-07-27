@@ -27,12 +27,12 @@ verify_generated_interfaces() {
   trap 'rm -f "$before" "$after"' EXIT HUP INT TERM
   (
     cd "$REPO_ROOT"
-    find . -type f -name '*.mbti' -not -path './target/*' -print0 | sort -z |
+    git ls-files -z -- '*.mbti' | sort -z |
       xargs -0 shasum >"$before"
     moon info --target native
     moon info --target js
     (cd "$UI_DIR" && moon info --target js)
-    find . -type f -name '*.mbti' -not -path './target/*' -print0 | sort -z |
+    git ls-files -z -- '*.mbti' | sort -z |
       xargs -0 shasum >"$after"
   )
   if ! cmp -s "$before" "$after"; then
