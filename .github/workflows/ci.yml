@@ -30,7 +30,7 @@ jobs:
         run: |
           moon version --all
           moon check --target all --warn-list +unnecessary_annotation
-          git diff --exit-code -- moon.mod.json moon.pkg.json moon.lock
+          git diff --exit-code -- moon.mod moon.pkg.json moon.lock
       - name: Install UI dependencies
         run: npm ci
         working-directory: ui/rabbita-desk
