@@ -87,13 +87,22 @@ fn update_created_book_from_pattern(
       ..model,
       activity: Town,
       command_open: false,
+      workspace_catalog_state: Some(Loading),
+      workspace_catalog_error: "",
       selected_workspace_id: result.workspace_id,
       selected_path: "wiki/index.md",
       desk_selected_paths: ["wiki/index.md"],
       desk_selection_anchor: "wiki/index.md",
       primary_preview_path: "wiki/index.md",
-      current_directory: "",
-      desk_location_input: "",
+      current_directory: "wiki",
+      desk_location_input: "wiki",
+      entries: desk_entries_rows_while_loading(
+        model,
+        result.workspace_id,
+        "wiki",
+      ),
+      desk_entries_state: Some(Loading),
+      desk_entries_error: "",
       preview: None,
       preview_status: "loading published book",
       book_pattern_last_book_id: result.book_id,
@@ -143,6 +152,8 @@ fn update_exported_app_tool_portable(
     {
       ..model,
       activity: Town,
+      workspace_catalog_state: Some(Loading),
+      workspace_catalog_error: "",
       selected_workspace_id: if standalone_ready {
         workspace_id
       } else {
@@ -167,6 +178,33 @@ fn update_exported_app_tool_portable(
         "portable/app-tool/index.html"
       } else {
         model.primary_preview_path
+      },
+      current_directory: if standalone_ready {
+        "portable/app-tool"
+      } else {
+        model.current_directory
+      },
+      desk_location_input: if standalone_ready {
+        "portable/app-tool"
+      } else {
+        model.desk_location_input
+      },
+      entries: if standalone_ready {
+        desk_entries_rows_while_loading(
+          model, workspace_id, "portable/app-tool",
+        )
+      } else {
+        model.entries
+      },
+      desk_entries_state: if standalone_ready {
+        Some(Loading)
+      } else {
+        model.desk_entries_state
+      },
+      desk_entries_error: if standalone_ready {
+        ""
+      } else {
+        model.desk_entries_error
       },
       preview: if standalone_ready {
         None
@@ -211,6 +249,8 @@ fn update_exported_all_app_tool_portable(
     {
       ..model,
       activity: Town,
+      workspace_catalog_state: Some(Loading),
+      workspace_catalog_error: "",
       selected_workspace_id: workspace_id,
       selected_path: if has_open_book {
         "portable/app-tool/index.html"
@@ -231,6 +271,33 @@ fn update_exported_all_app_tool_portable(
         "portable/app-tool/index.html"
       } else {
         model.primary_preview_path
+      },
+      current_directory: if has_open_book {
+        "portable/app-tool"
+      } else {
+        model.current_directory
+      },
+      desk_location_input: if has_open_book {
+        "portable/app-tool"
+      } else {
+        model.desk_location_input
+      },
+      entries: if has_open_book {
+        desk_entries_rows_while_loading(
+          model, workspace_id, "portable/app-tool",
+        )
+      } else {
+        model.entries
+      },
+      desk_entries_state: if has_open_book {
+        Some(Loading)
+      } else {
+        model.desk_entries_state
+      },
+      desk_entries_error: if has_open_book {
+        ""
+      } else {
+        model.desk_entries_error
       },
       preview: if has_open_book {
         None

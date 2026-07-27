@@ -13,8 +13,14 @@ fn workspace_mode_from_initial_activity(activity : String) -> WorkspaceMode {
   match activity {
     "packs" => PackHome
     "code" | "mooncode" => MoonCode
+    "requests" => RequestsWorkspace
+    "runs" => RunsWorkspace
+    "review" => ReviewWorkspace
+    "publish" => PublishWorkspace
     "flow" | "moonflow" => MoonFlow
     "desk" | "home" | "" => Desk
+    "activity" | "town" => RequestsWorkspace
+    "pages" | "library" | "files" | "wiki" | "more" | "settings" => MoonWiki
     _ => MoonWiki
   }
 }
@@ -47,13 +53,7 @@ fn activity_slug(activity : Activity) -> String {
 
 ///|
 fn workspace_mode_summary(mode : WorkspaceMode) -> String {
-  match mode {
-    PackHome => "Pack Home"
-    Desk => "Desk workspace"
-    MoonWiki => "Wiki workspace"
-    MoonCode => "Code workspace"
-    MoonFlow => "MoonFlow workspace"
-  }
+  workspace_mode_label(mode) + " workspace"
 }
 
 ///|
@@ -64,14 +64,10 @@ fn workspace_mode_for_activity(activity : Activity) -> WorkspaceMode {
 
 ///|
 fn activities() -> Array[ActivityButton] {
-  [
-    { key: Files, label: "Library" },
-    { key: Search, label: "Search" },
-    { key: Inbox, label: "Inbox" },
-    { key: Town, label: "Activity" },
-    { key: Runs, label: "Review" },
-    { key: Settings, label: "More" },
-  ]
+  [Files, Search, Inbox, Settings].map(key => {
+    key,
+    label: activity_title(key),
+  })
 }
 
 ///|

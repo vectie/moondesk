@@ -105,31 +105,60 @@ test "Flow canvas drag pans by the pointer delta" {
 }
 
 ///|
+test "Flow canvas wheel keeps the active double-precision zoom path" {
+  let (_, zoomed) = update_workspace_surface_actions(
+    code_mode_test_dispatch,
+    FlowCanvasWheel(-1.0),
+    init_model(),
+  )
+  assert_true(zoomed.flow_zoom > 1.0)
+}
+
+///|
+test "Flow composition decoder ignores unused server metadata" {
+  let composition : MoonFlowComposition = @json.from_json({
+    "contract_id": "composition-v1",
+    "workspace_id": "book-demo",
+    "source_graph_id": "graph-1",
+    "book_id": "demo",
+    "declaration_revision": "1",
+    "source_digest": "digest",
+    "status": "draft",
+    "selected_item_ids": ["research"],
+    "items": [
+      {
+        "work_item_id": "research",
+        "declaration_id": "decl-research",
+        "product_id": "moonwiki",
+        "requested_authority": "knowledge-write",
+        "acceptance_criteria": ["sources are reviewed"],
+        "depends_on": [],
+        "operation": "research",
+        "input_contracts": [],
+        "output_contracts": [],
+        "required_claim": "",
+        "input_artifacts": [],
+        "timeout_ms": 30000,
+      },
+    ],
+  })
+  assert_true(composition.selected_item_ids == ["research"])
+  assert_eq(composition.items[0].work_item_id, "research")
+  assert_eq(composition.items[0].operation, "research")
+}
+
+///|
 test "Flow node drag exclusively claims the canvas gesture" {
   let item : MoonFlowCompositionItem = {
     work_item_id: "research",
-    declaration_id: "decl-research",
     product_id: "moonwiki",
     requested_authority: "knowledge-write",
-    acceptance_criteria: ["sources are reviewed"],
     depends_on: [],
     operation: "research",
-    input_contracts: [],
-    output_contracts: [],
-    required_claim: "",
-    input_artifacts: [],
-    timeout_ms: 30000,
   }
   let model = {
     ..init_model(),
     moonflow_composition: Some({
-      contract_id: "composition-v1",
-      workspace_id: "book-demo",
-      source_graph_id: "graph-1",
-      book_id: "demo",
-      declaration_revision: "1",
-      source_digest: "digest",
-      status: "draft",
       selected_item_ids: ["research"],
       items: [item],
     }),
@@ -167,6 +196,7 @@ test "Flow import status keeps the durable run or next action visible" {
       next_action: "open_run",
       book_id: "book-demo",
       run_id: "run-demo-r1",
+      capability_evidence: None,
     }),
     "Executable document imported into MoonFlow · run run-demo-r1",
   )
@@ -178,6 +208,7 @@ test "Flow import status keeps the durable run or next action visible" {
       next_action: "create_executable_document_in_wiki",
       book_id: "book-demo",
       run_id: "",
+      capability_evidence: None,
     }),
     "This MoonBook has no executable Work graph yet · next: create executable document in wiki",
   )

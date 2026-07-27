@@ -9,9 +9,33 @@ fn update_town_results(
       (@rabbita.none, { ..model, town_messages, })
     LoadedTownMessages(Err(error)) =>
       (@rabbita.none, { ..model, host_status: error })
-    LoadedRequests(Ok(requests)) => (@rabbita.none, { ..model, requests, })
+    LoadedRequests(Ok(requests)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          requests,
+          requests_state: if requests.length() == 0 {
+            Some(LegitimateZero)
+          } else {
+            None
+          },
+          requests_error: "",
+        },
+      )
     LoadedRequests(Err(error)) =>
-      (@rabbita.none, { ..model, request_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          requests_state: if model.requests.length() == 0 {
+            Some(RecoverableError)
+          } else {
+            Some(Stale)
+          },
+          requests_error: error,
+        },
+      )
     LoadedStandingGoals(Ok(standing_goals)) =>
       (@rabbita.none, { ..model, standing_goals, })
     LoadedStandingGoals(Err(error)) =>
@@ -32,9 +56,43 @@ fn update_town_results(
     LoadedEvents(Err(error)) =>
       (@rabbita.none, { ..model, dispatch_status: error })
     LoadedReviewItems(Ok(review_items)) =>
-      (@rabbita.none, { ..model, review_items, })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          review_items,
+          review_state: if review_items.length() == 0 {
+            Some(LegitimateZero)
+          } else {
+            None
+          },
+          publish_state: if review_items.length() == 0 {
+            Some(LegitimateZero)
+          } else {
+            None
+          },
+          publish_error: "",
+        },
+      )
     LoadedReviewItems(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          host_status: error,
+          review_state: if model.review_items.length() == 0 {
+            Some(RecoverableError)
+          } else {
+            Some(Stale)
+          },
+          publish_state: if model.review_items.length() == 0 {
+            Some(RecoverableError)
+          } else {
+            Some(Stale)
+          },
+          publish_error: error,
+        },
+      )
     SubmittedRequest(Ok(record)) =>
       (
         sync_activity_batch(
@@ -52,6 +110,8 @@ fn update_town_results(
           activity: Town,
           request_status: "staged \{record.id}",
           request_prompt: "",
+          requests_state: Some(Loading),
+          requests_error: "",
           request_material_paths: [],
           request_material_status: "",
           import_url: "",
@@ -92,6 +152,8 @@ fn update_town_results(
           host_status: "\{result.decision} review decision recorded for \{result.workspace_id}",
           review_decision_note: "",
           review_decision_status: "\{result.status} \{result.source_path} -> \{result.receipt_path}",
+          publish_state: Some(Loading),
+          publish_error: "",
           inbox_status: if result.note == "" {
             model.inbox_status
           } else {

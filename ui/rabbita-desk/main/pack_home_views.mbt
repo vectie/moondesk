@@ -157,7 +157,7 @@ fn render_pack_card(
 fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   main_(
     class="pack-home-main",
-    attrs=@html.Attrs::build().data_set("testid", "pack-home"),
+    attrs=main_content_attrs(PackHome).data_set("testid", "pack-home"),
     [
       section(class="pack-home-hero", [
         div([

@@ -75,10 +75,22 @@ pub async fn Server::serve_desk(
   workspace_root : String,
 ) -> Unit {
   let ui_root = @pathx.normalize(ui_root)
-  let workspace_root = workspace_context(workspace_root).requested_root
+  // Keep the bootstrap root separate: it remains the stable owner of desktop
+  // preferences even after the process activates another library.
+  let bootstrap_root = workspace_context(workspace_root).requested_root
+  let restored_root = restore_library_root(bootstrap_root)
+  let initial_root = if prepare_moonsuite_workspace_root(restored_root) {
+    restored_root
+  } else {
+    ignore(prepare_moonsuite_workspace_root(bootstrap_root))
+    bootstrap_root
+  }
+  let active_root = @ref.new(initial_root)
   self.server.run_forever(
     (request, body, conn) => {
-      handle_desk_request(ui_root, workspace_root, request, body, conn)
+      handle_desk_request(
+        ui_root, bootstrap_root, active_root, request, body, conn,
+      )
     },
     allow_failure=true,
   )
@@ -87,7 +99,8 @@ pub async fn Server::serve_desk(
 ///|
 async fn handle_desk_request(
   ui_root : String,
-  workspace_root : String,
+  bootstrap_root : String,
+  active_root : Ref[String],
   request : @http.Request,
   body : &@io.Reader,
   conn : @http.ServerConnection,
@@ -103,8 +116,17 @@ async fn handle_desk_request(
     return
   }
   let path = strip_query(request.path)
+  let workspace_root = active_root.val
   if path == moondesk_health_path() {
     handle_health_request(ui_root, workspace_root, request.meth, conn)
+  } else if path == "/api/desktop/library" {
+    handle_desktop_library_request(
+      bootstrap_root,
+      active_root,
+      request.meth,
+      body,
+      conn,
+    )
   } else if path.has_prefix("/pack-apps/") {
     handle_pack_app_proxy(
       workspace_root,

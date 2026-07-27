@@ -7,10 +7,7 @@ fn update_mooncode_session_results(
   match msg {
     ManagedMoonClaw(Ok(status)) =>
       (
-        @rabbita.batch([
-          fetch_moonclaw_daemon_cmd(dispatch),
-          fetch_moonclaw_models_cmd(dispatch),
-        ]),
+        fetch_moonclaw_daemon_cmd(dispatch),
         {
           ..model,
           moonclaw_daemon: Some(status),
@@ -39,7 +36,14 @@ fn update_mooncode_session_results(
       )
     LoadedMoonClawDaemon(Ok(status)) =>
       (
-        @rabbita.none,
+        if status.running {
+          @rabbita.batch([
+            fetch_moonclaw_models_cmd(dispatch),
+            fetch_mooncode_sessions_cmd(dispatch, ""),
+          ])
+        } else {
+          @rabbita.none
+        },
         {
           ..model,
           moonclaw_daemon: Some(status),
@@ -106,6 +110,12 @@ fn update_mooncode_session_results(
         ..model,
         mooncode_sessions,
         mooncode_optimistic_rows: optimistic_rows,
+        mooncode_sessions_state: if mooncode_sessions.length() == 0 {
+          Some(LegitimateZero)
+        } else {
+          None
+        },
+        mooncode_sessions_error: "",
       }
       let draft_active = mooncode_new_session_draft_active(session_model)
       match
@@ -145,6 +155,12 @@ fn update_mooncode_session_results(
         ..model,
         mooncode_sessions,
         mooncode_optimistic_rows: optimistic_rows,
+        mooncode_sessions_state: if mooncode_sessions.length() == 0 {
+          Some(LegitimateZero)
+        } else {
+          None
+        },
+        mooncode_sessions_error: "",
         selected_workspace_id,
         selected_mooncode_session_id: selected,
         mooncode_new_chat_active: selected == "" && draft_active,
@@ -195,6 +211,12 @@ fn update_mooncode_session_results(
           @rabbita.none,
           {
             ..model,
+            mooncode_sessions_state: if model.mooncode_sessions.length() == 0 {
+              Some(RecoverableError)
+            } else {
+              Some(Stale)
+            },
+            mooncode_sessions_error: error,
             mooncode_composer_status: mooncode_background_status_unless_draft(
               model, error,
             ),

@@ -6,6 +6,7 @@ CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 MOON_BIN="${MOON:-moon}"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MOONCLAW_ROOT="${MOONCLAW_ROOT:-$(cd "${REPO_ROOT}/.." && pwd)/moonclaw}"
+UI_DIST="${UI_DIST:-ui/rabbita-desk/dist}"
 ROOT="$(mktemp -d "${TMPDIR:-/tmp}/moondesk-desk-browser.XXXXXX")"
 SCENARIO="${1:-all}"
 PIDS=()
@@ -21,10 +22,10 @@ cleanup() {
 trap cleanup EXIT
 
 case "${SCENARIO}" in
-  all | full | empty)
+  all | full | empty | quickstart | keyboard | keyboard-transients | accessibility | screen-reader | capability | capability-responsive | capability-scale)
     ;;
   *)
-    echo "usage: $0 [all|full|empty]" >&2
+    echo "usage: $0 [all|full|empty|quickstart|keyboard|keyboard-transients|accessibility|screen-reader|capability|capability-responsive|capability-scale]" >&2
     exit 2
     ;;
 esac
@@ -162,11 +163,11 @@ run_browser_scenario() {
   local pid=""
   local chrome_pid=""
 
-  if [[ "${scenario}" == "full" ]]; then
+  if [[ "${scenario}" == "full" || "${scenario}" == "quickstart" || "${scenario}" == "keyboard-transients" || "${scenario}" == "accessibility" || "${scenario}" == "screen-reader" || "${scenario}" == "capability" || "${scenario}" == "capability-responsive" || "${scenario}" == "capability-scale" ]]; then
     start_moonclaw_for_fixture "${fixture_root}"
   fi
 
-  "${MOON_BIN}" run cmd/main -- serve "${fixture_root}" --ui ui/rabbita-desk/dist --host "${HOST}" --port "${port}" >"${log}" 2>&1 &
+  "${MOON_BIN}" run cmd/main -- serve "${fixture_root}" --ui "${UI_DIST}" --host "${HOST}" --port "${port}" >"${log}" 2>&1 &
   pid="$!"
   PIDS+=("${pid}")
 
@@ -188,6 +189,7 @@ run_browser_scenario() {
     --disable-gpu \
     --no-first-run \
     --no-default-browser-check \
+    --lang=en-US \
     --user-data-dir="${chrome_profile}" \
     --remote-debugging-address="${HOST}" \
     --remote-debugging-port="${cdp_port}" \
@@ -208,7 +210,37 @@ run_browser_scenario() {
     exit 1
   fi
 
-  node scripts/desk_mode_browser_smoke.mjs "${base}" "${cdp_port}" "${fixture_root}" "${scenario}"
+  if [[ "${scenario}" == "quickstart" ]]; then
+    node scripts/desk_mode_browser_smoke.mjs \
+      "${base}" "${cdp_port}" "${fixture_root}" quickstart-before-restart
+
+    if kill -0 "${pid}" 2>/dev/null; then
+      kill "${pid}" 2>/dev/null || true
+      wait "${pid}" 2>/dev/null || true
+    fi
+
+    : >"${log}"
+    "${MOON_BIN}" run cmd/main -- serve "${fixture_root}" --ui "${UI_DIST}" --host "${HOST}" --port "${port}" >"${log}" 2>&1 &
+    pid="$!"
+    PIDS+=("${pid}")
+
+    for _ in {1..200}; do
+      if curl -fsS "${base}/__moondesk_health" >/dev/null 2>&1; then
+        break
+      fi
+      sleep 0.1
+    done
+    if ! curl -fsS "${base}/__moondesk_health" >/dev/null 2>&1; then
+      echo "server did not recover for quickstart relaunch; log follows" >&2
+      cat "${log}" >&2
+      exit 1
+    fi
+
+    node scripts/desk_mode_browser_smoke.mjs \
+      "${base}" "${cdp_port}" "${fixture_root}" quickstart-after-restart
+  else
+    node scripts/desk_mode_browser_smoke.mjs "${base}" "${cdp_port}" "${fixture_root}" "${scenario}"
+  fi
   echo "Desk browser ${scenario} smoke passed on ${base}"
 
   if kill -0 "${chrome_pid}" 2>/dev/null; then
@@ -221,14 +253,101 @@ run_browser_scenario() {
   fi
 }
 
-if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "full" ]]; then
+if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "full" || "${SCENARIO}" == "keyboard" ]]; then
   FULL_ROOT="${ROOT}/full"
   create_full_fixture "${FULL_ROOT}"
   run_browser_scenario "full" "${FULL_ROOT}"
+fi
+
+if [[ "${SCENARIO}" == "keyboard-transients" ]]; then
+  KEYBOARD_TRANSIENTS_ROOT="${ROOT}/keyboard-transients"
+  create_full_fixture "${KEYBOARD_TRANSIENTS_ROOT}"
+  run_browser_scenario "keyboard-transients" "${KEYBOARD_TRANSIENTS_ROOT}"
+fi
+
+if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "accessibility" ]]; then
+  ACCESSIBILITY_ROOT="${ROOT}/accessibility"
+  create_full_fixture "${ACCESSIBILITY_ROOT}"
+  run_browser_scenario "accessibility" "${ACCESSIBILITY_ROOT}"
+fi
+
+# Screen-reader proof must never reuse another scenario's daemon, browser, or
+# mutated fixture: run_browser_scenario owns a fresh runtime for this full fixture.
+if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "screen-reader" ]]; then
+  SCREEN_READER_ROOT="${ROOT}/screen-reader"
+  create_full_fixture "${SCREEN_READER_ROOT}"
+  run_browser_scenario "screen-reader" "${SCREEN_READER_ROOT}"
+fi
+
+if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "capability" ]]; then
+  CAPABILITY_ROOT="${ROOT}/capability"
+  create_full_fixture "${CAPABILITY_ROOT}"
+  run_browser_scenario "capability" "${CAPABILITY_ROOT}"
+fi
+
+if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "capability-responsive" ]]; then
+  CAPABILITY_RESPONSIVE_ROOT="${ROOT}/capability-responsive"
+  create_full_fixture "${CAPABILITY_RESPONSIVE_ROOT}"
+  run_browser_scenario "capability-responsive" "${CAPABILITY_RESPONSIVE_ROOT}"
+fi
+
+if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "capability-scale" ]]; then
+  CAPABILITY_SCALE_ROOT="${ROOT}/capability-scale"
+  create_full_fixture "${CAPABILITY_SCALE_ROOT}"
+  run_browser_scenario "capability-scale" "${CAPABILITY_SCALE_ROOT}"
 fi
 
 if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "empty" ]]; then
   EMPTY_ROOT="${ROOT}/empty"
   mkdir -p "${EMPTY_ROOT}"
   run_browser_scenario "empty" "${EMPTY_ROOT}"
+fi
+
+if [[ "${SCENARIO}" == "quickstart" || "${SCENARIO}" == "keyboard" ]]; then
+  QUICKSTART_ROOT="${ROOT}/quickstart"
+  mkdir -p "${QUICKSTART_ROOT}"
+  run_browser_scenario "quickstart" "${QUICKSTART_ROOT}"
+fi
+
+if [[ "${SCENARIO}" == "keyboard" ]]; then
+  KEYBOARD_PROOF="${ROOT}/desk-workspace-keyboard-matrix-proof.json"
+  node -e '
+const fs = require("node:fs");
+const [onePath, manyPath, outputPath] = process.argv.slice(1);
+const one = JSON.parse(fs.readFileSync(onePath, "utf8"));
+const many = JSON.parse(fs.readFileSync(manyPath, "utf8"));
+const cases = [...one.cases, ...many.cases];
+if (one.cardinality !== "one" || many.cardinality !== "many") {
+  throw new Error("keyboard proof cardinalities do not agree");
+}
+if (one.caseCount !== 4 || many.caseCount !== 4 || cases.length !== 8) {
+  throw new Error(`keyboard proof requires four one-book and four many-book cases: ${cases.length}`);
+}
+const expected = new Set([
+  "one:1440x900", "one:1024x768", "one:390x844", "one:320x700",
+  "many:1440x900", "many:1024x768", "many:390x844", "many:320x700"
+]);
+for (const item of cases) {
+  expected.delete(`${item.cardinality}:${item.viewport.width}x${item.viewport.height}`);
+}
+if (expected.size !== 0) {
+  throw new Error(`keyboard proof is missing cases: ${[...expected].join(", ")}`);
+}
+fs.writeFileSync(outputPath, `${JSON.stringify({
+  kind: "moondesk-workspace-keyboard-matrix-proof.v1",
+  caseCount: cases.length,
+  cardinalities: ["one", "many"],
+  viewports: [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 768 },
+    { width: 390, height: 844 },
+    { width: 320, height: 700 }
+  ],
+  cases
+}, null, 2)}\n`);
+' \
+    "${QUICKSTART_ROOT}/desk-workspace-keyboard-one-proof.json" \
+    "${FULL_ROOT}/desk-workspace-keyboard-many-proof.json" \
+    "${KEYBOARD_PROOF}"
+  echo "Desk workspace keyboard matrix proof: ${KEYBOARD_PROOF}"
 fi

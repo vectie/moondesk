@@ -301,16 +301,21 @@ fn sync_shell_cmd(mode : WorkspaceMode, activity : Activity) -> @rabbita.Cmd {
   @cmd.custom_cmd(
     _ => {
       browser_set_activity(
-        if mode == PackHome {
-          "packs"
-        } else if mode == Desk {
-          "desk"
-        } else if mode == MoonCode {
-          "code"
-        } else if mode == MoonFlow {
-          "flow"
-        } else {
-          activity_slug(activity)
+        match mode {
+          PackHome => "packs"
+          Desk => "home"
+          MoonWiki =>
+            if activity == Files {
+              "pages"
+            } else {
+              activity_slug(activity)
+            }
+          MoonCode => "code"
+          RequestsWorkspace => "requests"
+          RunsWorkspace => "runs"
+          ReviewWorkspace => "review"
+          PublishWorkspace => "publish"
+          MoonFlow => "flow"
         },
       )
     },
@@ -519,6 +524,47 @@ extern "js" fn browser_pick_import_files() -> @js.Promise =
 
 ///|
 #cfg(target="js")
+extern "js" fn browser_pick_library_folder() -> @js.Promise =
+  #| async () => {
+  #|   const bridge = globalThis.lepusa;
+  #|   if (!bridge || typeof bridge.invoke !== "function") {
+  #|     return JSON.stringify({
+  #|       ok: false,
+  #|       path: "",
+  #|       cancelled: false,
+  #|       error: "Choose library folder is available in the desktop app",
+  #|     });
+  #|   }
+  #|   try {
+  #|     let response = await bridge.invoke("fileDialog.openDirectory", {});
+  #|     if (typeof response === "string") {
+  #|       response = JSON.parse(response);
+  #|     }
+  #|     const cancelled =
+  #|       response?.cancelled === true || response?.status === "cancelled";
+  #|     const path =
+  #|       typeof response?.path === "string" ? response.path.trim() : "";
+  #|     return JSON.stringify({
+  #|       ok: !cancelled && path.length > 0,
+  #|       path,
+  #|       cancelled,
+  #|       error:
+  #|         cancelled || path.length > 0
+  #|           ? ""
+  #|           : "The desktop folder picker did not return a folder",
+  #|     });
+  #|   } catch (error) {
+  #|     return JSON.stringify({
+  #|       ok: false,
+  #|       path: "",
+  #|       cancelled: false,
+  #|       error: `Could not choose a library folder: ${String(error)}`,
+  #|     });
+  #|   }
+  #| }
+
+///|
+#cfg(target="js")
 extern "js" fn browser_pick_import_folder() -> @js.Promise =
   #| async () => {
   #|   const readFile = async (file, source) => {
@@ -687,6 +733,43 @@ fn parse_browser_import_batch(
         Err("Local file import failed")
       }
   }
+}
+
+///|
+priv struct BrowserLibrarySelection {
+  ok : Bool
+  path : String
+  cancelled : Bool
+  error : String
+} derive(FromJson)
+
+///|
+fn parse_browser_library_selection(text : String) -> Result[String, String] {
+  let json = @json.parse(text) catch {
+    error => return Err("Failed to read the selected library folder: \{error}")
+  }
+  let selection : BrowserLibrarySelection = @json.from_json(json) catch {
+    error => return Err("Invalid library folder response: \{error}")
+  }
+  if selection.cancelled {
+    Ok("")
+  } else if selection.ok && selection.path.trim().to_owned() != "" {
+    Ok(selection.path)
+  } else if selection.error != "" {
+    Err(selection.error)
+  } else {
+    Err("The desktop folder picker did not return a folder")
+  }
+}
+
+///|
+fn pick_library_folder_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @rabbita.perform(fn(result) { dispatch(LibraryFolderPicked(result)) }, async fn() noraise {
+    let text : String = browser_pick_library_folder().wait().cast() catch {
+        error => return Err("Could not choose a library folder: \{error}")
+      }
+    parse_browser_library_selection(text)
+  })
 }
 
 ///|

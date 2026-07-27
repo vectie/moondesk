@@ -1,4 +1,109 @@
 ///|
+fn town_platform_evidence_from_values(
+  platform : String,
+  architecture : String,
+) -> Json {
+  let normalized_platform = match platform.trim().to_lower() {
+    "darwin" | "macos" => "macos"
+    "linux" => "linux"
+    value => value.to_owned()
+  }
+  let normalized_architecture = match architecture.trim().to_lower() {
+    "aarch64" | "arm64" => "arm64"
+    "amd64" | "x86_64" => "x86_64"
+    value => value.to_owned()
+  }
+  {
+    "supported": (
+      normalized_platform == "macos" || normalized_platform == "linux"
+    ) &&
+    (normalized_architecture == "arm64" || normalized_architecture == "x86_64"),
+    "platform": normalized_platform,
+    "architecture": normalized_architecture,
+  }
+}
+
+///|
+async fn town_platform_evidence() -> Json {
+  let (_, system, _) = run_process_capture("uname", ["-s"])
+  let (_, machine, _) = run_process_capture("uname", ["-m"])
+  town_platform_evidence_from_values(system, machine)
+}
+
+///|
+fn town_installation_evidence_from_values(
+  configured : Bool,
+  launch_agent_matches : Bool,
+) -> Json {
+  {
+    "installed": configured || launch_agent_matches,
+    "source": if configured {
+      "service-configured"
+    } else if launch_agent_matches {
+      "launch-agent"
+    } else {
+      "none"
+    },
+  }
+}
+
+///|
+fn town_configuration_evidence_from_values(
+  installed : Bool,
+  configured : Bool,
+  configuration_valid? : Bool = true,
+  configuration_reason? : String = "",
+) -> Json {
+  {
+    "configured": configured,
+    "valid": !installed || (configured && configuration_valid),
+    "reason": if !installed {
+      "not-installed"
+    } else if !configured {
+      "service-configuration-missing"
+    } else if configuration_reason != "" {
+      configuration_reason
+    } else if configuration_valid {
+      "service-configured"
+    } else {
+      "command-unavailable"
+    },
+  }
+}
+
+///|
+fn town_configuration_evidence_from_descriptor(
+  installed : Bool,
+  descriptor : Json,
+) -> Json {
+  let configured = json_bool(descriptor, "configured", default=false)
+  let valid = json_bool(descriptor, "configuration_valid", default=configured)
+  town_configuration_evidence_from_values(
+    installed,
+    configured,
+    configuration_valid=valid,
+    configuration_reason=json_string(
+      descriptor,
+      "configuration_reason",
+      default=if valid { "configuration-valid" } else { "command-unavailable" },
+    ),
+  )
+}
+
+///|
+async fn town_installation_evidence(root : String, descriptor : Json) -> Json {
+  let configured = json_bool(descriptor, "configured", default=false)
+  let plist_path = launch_agent_plist_path(root)
+  let launch_agent_matches = if @fsx.exists(plist_path) {
+    let contents = @fs.read_file(plist_path).text() catch { _ => "" }
+    contents.contains("<string>\{xml_escape(root)}</string>")
+  } else {
+    false
+  }
+  town_installation_evidence_from_values(configured, launch_agent_matches)
+}
+
+///|
 async fn daemon_status_record(root : String, action : String) -> Json {
   let current = read_daemon_lifecycle_state(root)
   let descriptor = town_service_descriptor(root, "daemon")
@@ -92,6 +197,11 @@ async fn daemon_result(
 async fn daemon_result_with_policy(root : String, record : Json) -> Json {
   let policy = read_daemon_policy(root)
   let descriptor = town_service_descriptor(root, "daemon")
+  let installation_evidence = town_installation_evidence(root, descriptor)
+  let configuration_evidence = town_configuration_evidence_from_descriptor(
+    json_bool(installation_evidence, "installed", default=false),
+    descriptor,
+  )
   {
     "ok": json_bool(record, "ok", default=false),
     "action": json_string(record, "action", default="status"),
@@ -122,6 +232,9 @@ async fn daemon_result_with_policy(root : String, record : Json) -> Json {
     "service_configured": json_bool(descriptor, "configured", default=false),
     "service_config_path": json_string(descriptor, "config_path", default=""),
     "service_cwd": json_string(descriptor, "cwd", default=root),
+    "platform_evidence": town_platform_evidence(),
+    "installation_evidence": installation_evidence,
+    "configuration_evidence": configuration_evidence,
   }
 }
 
@@ -129,6 +242,11 @@ async fn daemon_result_with_policy(root : String, record : Json) -> Json {
 async fn daemon_policy_record(root : String, action~ : String) -> Json {
   let policy = read_daemon_policy(root)
   let descriptor = town_service_descriptor(root, "daemon")
+  let installation_evidence = town_installation_evidence(root, descriptor)
+  let configuration_evidence = town_configuration_evidence_from_descriptor(
+    json_bool(installation_evidence, "installed", default=false),
+    descriptor,
+  )
   {
     "ok": true,
     "action": action,
@@ -179,5 +297,8 @@ async fn daemon_policy_record(root : String, action~ : String) -> Json {
     "service_configured": json_bool(descriptor, "configured", default=false),
     "service_config_path": json_string(descriptor, "config_path", default=""),
     "service_cwd": json_string(descriptor, "cwd", default=root),
+    "platform_evidence": town_platform_evidence(),
+    "installation_evidence": installation_evidence,
+    "configuration_evidence": configuration_evidence,
   }
 }

@@ -2,10 +2,17 @@
 package "vectie/moondesk-rabbita/main"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "vectie/moondesk/core",
 }
 
 // Values
+pub fn init_source_pane(String, String) -> SourcePaneState
+
+pub fn source_pane_identity(SourcePaneState) -> SourcePaneRequestIdentity
+
+pub fn update_source_pane(SourcePaneState, SourcePaneMsg) -> SourcePaneState
 
 // Errors
 
@@ -108,6 +115,8 @@ type MoonFlowBudget derive(@json.FromJson)
 
 type MoonFlowCallbackOperatorProjection derive(@json.FromJson)
 
+type MoonFlowCapabilityEvidence derive(@json.FromJson)
+
 type MoonFlowComposition derive(@json.FromJson)
 
 type MoonFlowCompositionItem derive(@json.FromJson)
@@ -164,6 +173,8 @@ type PackAppCatalog derive(@json.FromJson)
 
 type PackAppRecord derive(@json.FromJson)
 
+type PagesSearchResponse derive(@json.FromJson)
+
 type PendingMarkdownNavigation derive(Eq)
 
 type PreviewTab
@@ -180,7 +191,43 @@ type SavedViewRecord derive(@json.FromJson)
 
 type SearchHit derive(@json.FromJson)
 
+pub(all) enum SourcePaneContent {
+  Empty
+  Loading
+  Ready(@core.DeskPreview)
+  Unsupported(String)
+  Failed(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum SourcePaneMsg {
+  SetOpen(Bool)
+  SetCollapsed(Bool)
+  Rebind(String, String)
+  RequestSource(String)
+  PreviewResult(SourcePaneRequestIdentity, Result[@core.DeskPreview, String])
+  PreviewUnsupported(SourcePaneRequestIdentity, String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SourcePaneRequestIdentity {
+  generation : Int
+  workspace_id : String
+  session_id : String
+  path : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SourcePaneState {
+  open : Bool
+  collapsed : Bool
+  workspace_id : String
+  session_id : String
+  requested_path : String
+  request_generation : Int
+  content : SourcePaneContent
+} derive(Eq, @debug.Debug)
+
 type StandingGoalRecord derive(@json.FromJson)
+
+type SurfaceState derive(Eq)
 
 type TownAnalytics derive(@json.FromJson)
 
@@ -195,3 +242,4 @@ type WorkspaceMode derive(Eq)
 // Type aliases
 
 // Traits
+

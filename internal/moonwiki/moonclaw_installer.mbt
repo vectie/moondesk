@@ -36,6 +36,44 @@ fn moonclaw_runtime_root_from_environment(
 }
 
 ///|
+/// Explicit host evidence shared by installation and daemon-status reporting.
+/// `supported` describes the host platform/architecture contract only; it does
+/// not imply that a release is available or that the network is reachable.
+priv struct MoonClawPlatformSupport {
+  supported : Bool
+  platform : String
+  architecture : String
+}
+
+///|
+fn moonclaw_platform_support_from_values(
+  platform : String,
+  architecture : String,
+) -> MoonClawPlatformSupport {
+  {
+    supported: (platform == "macos" || platform == "linux") &&
+    (architecture == "arm64" || architecture == "x86_64"),
+    platform,
+    architecture,
+  }
+}
+
+///|
+async fn moonclaw_platform_support() -> MoonClawPlatformSupport {
+  let (platform, architecture) = moonclaw_install_platform()
+  moonclaw_platform_support_from_values(platform, architecture)
+}
+
+///|
+fn moonclaw_platform_support_json(evidence : MoonClawPlatformSupport) -> Json {
+  {
+    "supported": evidence.supported,
+    "platform": evidence.platform,
+    "architecture": evidence.architecture,
+  }
+}
+
+///|
 async fn moonclaw_install_platform() -> (String, String) {
   let forced_platform = @sys.get_env_var("MOONCLAW_INSTALL_PLATFORM").unwrap_or(
     "",
@@ -176,6 +214,8 @@ async fn moonclaw_install_failure(
       ),
       "managed_install": json_bool(current, "managed_install", default=false),
       "managed_running": json_bool(current, "managed_running", default=false),
+      "platform_evidence": json_object_field(current, "platform_evidence").unwrap_or({},
+      ),
       "installed_version": json_string(current, "installed_version", default=""),
       "running_version": json_string(current, "running_version", default=""),
       "service_source": json_string(
@@ -194,6 +234,24 @@ async fn moonclaw_install_failure(
 ///|
 async fn install_moonclaw_release(workspace_root : String) -> Json {
   let root = workspace_context(workspace_root).suite_root
+  install_moonclaw_release_for_platform(root, moonclaw_platform_support())
+}
+
+///|
+async fn install_moonclaw_release_for_platform(
+  root : String,
+  platform_support : MoonClawPlatformSupport,
+) -> Json {
+  if !platform_support.supported {
+    return moonclaw_install_failure(
+      root,
+      "platform_unsupported",
+      "MoonClaw installation is not supported for " +
+      platform_support.platform +
+      " " +
+      platform_support.architecture,
+    )
+  }
   let runtime_root = moonclaw_runtime_root()
   if runtime_root == "" {
     return moonclaw_install_failure(
@@ -213,7 +271,7 @@ async fn install_moonclaw_release(workspace_root : String) -> Json {
     )
   }
   let result = install_moonclaw_release_from_temp(
-    root, runtime_root, manifest_url, temp_dir,
+    root, runtime_root, manifest_url, temp_dir, platform_support,
   )
   moonclaw_remove_install_temp(temp_dir)
   result
@@ -225,6 +283,7 @@ async fn install_moonclaw_release_from_temp(
   runtime_root : String,
   manifest_url : String,
   temp_dir : String,
+  platform_support : MoonClawPlatformSupport,
 ) -> Json {
   let manifest_path = @pathx.join(temp_dir, "release-manifest.json")
   let (manifest_code, _, manifest_error) = run_process_capture("curl", [
@@ -263,12 +322,19 @@ async fn install_moonclaw_release_from_temp(
       root, "version_invalid", "MoonClaw release metadata contains an invalid version",
     )
   }
-  let (platform, architecture) = moonclaw_install_platform()
-  guard moonclaw_release_asset(manifest, platform, architecture) is Some(asset) else {
+  guard moonclaw_release_asset(
+      manifest,
+      platform_support.platform,
+      platform_support.architecture,
+    )
+    is Some(asset) else {
     return moonclaw_install_failure(
       root,
       "platform_unsupported",
-      "No MoonClaw release is available for " + platform + " " + architecture,
+      "No MoonClaw release is available for " +
+      platform_support.platform +
+      " " +
+      platform_support.architecture,
     )
   }
   let asset_name = json_string(asset, "name", default="")

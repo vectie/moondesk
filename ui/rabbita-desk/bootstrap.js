@@ -22,6 +22,71 @@ function installMoonDeskShellStartup() {
   if (globalThis.__moondeskShellStartupInstalled) return
   globalThis.__moondeskShellStartupInstalled = true
 
+  let commandPalette = null
+  let commandPaletteReturnFocus = null
+
+  const isVisibleControl = (element) => {
+    if (!(element instanceof HTMLElement) || !element.isConnected) return false
+    const rect = element.getBoundingClientRect()
+    const style = getComputedStyle(element)
+    return rect.width > 0 &&
+      rect.height > 0 &&
+      style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      element.getAttribute('aria-hidden') !== 'true' &&
+      !element.matches(':disabled')
+  }
+
+  const isEditableTarget = (element) =>
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLTextAreaElement ||
+    element instanceof HTMLSelectElement ||
+    (element instanceof HTMLElement && element.isContentEditable)
+
+  const rememberCommandPaletteTrigger = (fallback = null) => {
+    const focused = document.activeElement
+    const candidate = isVisibleControl(focused) ? focused : fallback
+    if (isVisibleControl(candidate)) commandPaletteReturnFocus = candidate
+  }
+
+  const commandPaletteFocusables = (panel) =>
+    [...panel.querySelectorAll(
+      'a[href], button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
+    )].filter(isVisibleControl)
+
+  const syncCommandPaletteFocus = () => {
+    const next = document.querySelector('[data-testid="command-palette-panel"]')
+    if (next === commandPalette) return
+
+    const previous = commandPalette
+    commandPalette = next instanceof HTMLElement ? next : null
+    if (commandPalette) {
+      if (!commandPaletteReturnFocus) rememberCommandPaletteTrigger()
+      requestAnimationFrame(() => {
+        const input = commandPalette?.querySelector(
+          '[data-testid="command-palette-input"]'
+        )
+        if (isVisibleControl(input)) input.focus()
+      })
+      return
+    }
+
+    if (previous) {
+      const restore = isVisibleControl(commandPaletteReturnFocus)
+        ? commandPaletteReturnFocus
+        : [...document.querySelectorAll(
+            '[data-testid="command-palette-toggle"], [data-testid="primary-nav-summary"]'
+          )].find(isVisibleControl)
+      commandPaletteReturnFocus = null
+      if (restore instanceof HTMLElement) requestAnimationFrame(() => restore.focus())
+    }
+  }
+
+  new MutationObserver(syncCommandPaletteFocus).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  })
+
   const clickWhenReady = (testId, attempt = 0) => {
     const button = document.querySelector(`[data-testid="${testId}"]`)
     if (button && typeof button.click === 'function') {
@@ -36,19 +101,94 @@ function installMoonDeskShellStartup() {
     }
   }
 
+  document.addEventListener('click', (event) => {
+    const trigger = event.target instanceof Element
+      ? event.target.closest('[data-testid="command-palette-toggle"]')
+      : null
+    if (trigger) rememberCommandPaletteTrigger(trigger)
+
+    const compactDestination = event.target instanceof Element
+      ? event.target.closest('[data-testid^="compact-mode-"]')
+      : null
+    const compactNavigation = compactDestination?.closest(
+      'details.primary-nav-compact'
+    )
+    if (
+      compactDestination instanceof HTMLElement &&
+      compactNavigation instanceof HTMLDetailsElement &&
+      compactNavigation.open
+    ) {
+      compactNavigation.open = false
+      requestAnimationFrame(() => {
+        const summary = document.querySelector(
+          '[data-testid="primary-nav-summary"]'
+        )
+        if (isVisibleControl(summary)) summary.focus()
+      })
+    }
+  }, true)
+
   // Lepusa's WKWebView may not start Rabbita subscriptions until the first
   // interaction. Use the product's ordinary Refresh control so native users
   // arrive at the same loaded state as browser users without a mystery click.
   setTimeout(() => clickWhenReady('pack-home-refresh'), 150)
 
   document.addEventListener('keydown', (event) => {
+    const palette = document.querySelector(
+      '[data-testid="command-palette-panel"]'
+    )
+    if (palette instanceof HTMLElement && event.key === 'Tab') {
+      const focusables = commandPaletteFocusables(palette)
+      if (focusables.length === 0) {
+        event.preventDefault()
+        return
+      }
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      const focused = document.activeElement
+      if (!palette.contains(focused) ||
+          (!event.shiftKey && focused === last) ||
+          (event.shiftKey && focused === first)) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first).focus()
+      }
+      return
+    }
+
+    if (event.key === 'Escape') {
+      if (palette instanceof HTMLElement) {
+        const close = palette.querySelector(
+          '[data-testid="command-palette-close"]'
+        )
+        if (!(close instanceof HTMLElement)) return
+        event.preventDefault()
+        event.stopPropagation()
+        close.click()
+        return
+      }
+
+      const focused = document.activeElement
+      const disclosure = focused instanceof Element ? focused.closest('details[open]') : null
+      const summary = disclosure?.querySelector(':scope > summary')
+      if (!disclosure || !summary) return
+
+      event.preventDefault()
+      event.stopPropagation()
+      disclosure.open = false
+      summary.focus()
+      return
+    }
+
     if (!(event.metaKey || event.ctrlKey) || event.shiftKey) return
+    if (isEditableTarget(event.target)) return
     const target = {
       '1': 'mode-desk',
       '2': 'mode-wiki',
       '3': 'mode-code',
-      '4': 'mode-flow',
-      '5': 'mode-packs',
+      '4': 'mode-requests',
+      '5': 'mode-runs',
+      '6': 'mode-review',
+      '7': 'mode-publish',
       'k': 'command-palette-toggle',
     }[String(event.key || '').toLowerCase()]
     if (!target) return
@@ -57,6 +197,9 @@ function installMoonDeskShellStartup() {
     if (!button || typeof button.click !== 'function') return
     event.preventDefault()
     event.stopPropagation()
+    if (target === 'command-palette-toggle') {
+      rememberCommandPaletteTrigger(button)
+    }
     button.click()
   }, true)
 

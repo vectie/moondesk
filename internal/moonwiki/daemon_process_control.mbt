@@ -13,6 +13,15 @@ async fn start_managed_daemon(
       message="MoonTown daemon service is not configured for this workspace",
     )
   }
+  if !json_bool(descriptor, "configuration_valid", default=true) {
+    return daemon_result(
+      root,
+      action,
+      ok=false,
+      status="misconfigured",
+      message="MoonTown daemon service configuration is not usable",
+    )
+  }
   let current = daemon_status_record(root, "status")
   if json_bool(current, "running", default=false) {
     return daemon_result(

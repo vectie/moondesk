@@ -5,84 +5,89 @@ fn render_files_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   } else {
     model.current_directory
   }
-  aside(class="activity-pane user-pane", [
-    div(class="pane-heading", [
-      div([h2("Wiki")]),
+  aside(
+    class="activity-pane user-pane",
+    attrs=@html.Attrs::build().aria_label("Page browser"),
+    [
+      div(class="pane-heading", [
+        div([h2(workspace_mode_title(MoonWiki))]),
+        button(
+          class="secondary-button compact-button",
+          title="Refresh",
+          on_click=dispatch(RefreshAll),
+          "Refresh",
+        ),
+      ]),
+      render_wiki_book_switcher(dispatch, model),
       button(
-        class="secondary-button compact-button",
-        title="Refresh",
-        on_click=dispatch(RefreshAll),
-        "Refresh",
+        class="primary-button full wiki-new-note",
+        attrs=@html.Attrs::build().data_set("testid", "wiki-new-note"),
+        title="Capture a note in this book's inbox",
+        on_click=dispatch(SelectActivity(Inbox)),
+        "+ New note",
       ),
-    ]),
-    render_wiki_book_switcher(dispatch, model),
-    button(
-      class="primary-button full wiki-new-note",
-      attrs=@html.Attrs::build().data_set("testid", "wiki-new-note"),
-      title="Capture a note in this book's inbox",
-      on_click=dispatch(SelectActivity(Inbox)),
-      "+ New note",
-    ),
-    div(class="activity-section-tabs", [
-      button(
-        class=if model.current_directory == "" {
-          "section-pill active"
-        } else {
-          "section-pill"
-        },
-        on_click=dispatch(OpenDirectory("")),
-        "Home",
-      ),
-      button(
-        class=if directory == "wiki" && model.current_directory != "" {
-          "section-pill active"
-        } else {
-          "section-pill"
-        },
-        on_click=dispatch(OpenDirectory("wiki")),
-        "Pages",
-      ),
-      button(
-        class=if directory == "raw" {
-          "section-pill active"
-        } else {
-          "section-pill"
-        },
-        on_click=dispatch(OpenDirectory("raw")),
-        "Sources",
-      ),
-      button(
-        class=if directory == "inbox" {
-          "section-pill active"
-        } else {
-          "section-pill"
-        },
-        on_click=dispatch(OpenDirectory("inbox")),
-        "Inbox",
-      ),
-      button(
-        class=if directory == "book/site/generated" {
-          "section-pill active"
-        } else {
-          "section-pill"
-        },
-        on_click=dispatch(OpenDirectory("book/site/generated")),
-        "Published",
-      ),
-    ]),
-    if model.current_directory == "" {
-      render_wiki_book_home(dispatch, model)
-    } else {
-      render_tree(dispatch, model)
-    },
-  ])
+      div(class="activity-section-tabs", [
+        button(
+          class=if model.current_directory == "" {
+            "section-pill active"
+          } else {
+            "section-pill"
+          },
+          on_click=dispatch(OpenDirectory("")),
+          "Home",
+        ),
+        button(
+          class=if directory == "wiki" && model.current_directory != "" {
+            "section-pill active"
+          } else {
+            "section-pill"
+          },
+          on_click=dispatch(OpenDirectory("wiki")),
+          "Pages",
+        ),
+        button(
+          class=if directory == "raw" {
+            "section-pill active"
+          } else {
+            "section-pill"
+          },
+          on_click=dispatch(OpenDirectory("raw")),
+          "Sources",
+        ),
+        button(
+          class=if directory == "inbox" {
+            "section-pill active"
+          } else {
+            "section-pill"
+          },
+          attrs=@html.Attrs::build().data_set("testid", "wiki-section-inbox"),
+          on_click=dispatch(OpenDirectory("inbox")),
+          "Inbox",
+        ),
+        button(
+          class=if directory == "book/site/generated" {
+            "section-pill active"
+          } else {
+            "section-pill"
+          },
+          attrs=@html.Attrs::build().data_set(
+            "testid", "wiki-section-published",
+          ),
+          on_click=dispatch(OpenDirectory("book/site/generated")),
+          "Published",
+        ),
+      ]),
+      if model.current_directory == "" {
+        render_wiki_book_home(dispatch)
+      } else {
+        render_tree(dispatch, model)
+      },
+    ],
+  )
 }
 
 ///|
-fn render_wiki_book_home(
-  dispatch : Dispatch[Msg],
-  model : Model,
-) -> @rabbita.Html {
+fn render_wiki_book_home(dispatch : Dispatch[Msg]) -> @rabbita.Html {
   let cards : Array[(String, String, String, String)] = [
     ("wiki", "Pages", "Notes and documents written for people", "wiki"),
     ("raw", "Sources", "Original material and evidence", "raw"),
@@ -148,7 +153,7 @@ fn render_wiki_bootstrap(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  main_(class="bootstrap-center", [
+  section(class="bootstrap-center", [
     section(class="bootstrap-panel", [
       p(class="eyebrow", "MoonDesk"),
       h1("Start with a MoonBook"),
@@ -229,10 +234,17 @@ fn render_tree(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       entries.map(entry => {
         let selected = entry.path == model.selected_path
         let class_name = if selected { "tree-row selected" } else { "tree-row" }
-        li(class=class_name, on_click=dispatch(SelectPath(entry.path)), [
-          span(class="tree-indent depth-0", ""),
-          span(class="tree-label", entry.display_name),
-        ])
+        li(
+          class=class_name,
+          attrs=@html.Attrs::build()
+            .data_set("testid", "wiki-tree-row")
+            .data_set("path", entry.path),
+          on_click=dispatch(SelectPath(entry.path)),
+          [
+            span(class="tree-indent depth-0", ""),
+            span(class="tree-label", entry.display_name),
+          ],
+        )
       }),
     )
   }
@@ -240,14 +252,9 @@ fn render_tree(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 
 ///|
 fn wiki_book_is_empty(model : Model) -> Bool {
-  let preview_unavailable = match model.preview {
-    None => model.preview_status.to_lower().contains("not available")
-    Some(_) => false
-  }
   model.selected_workspace_id != "" &&
   model.entries.length() == 0 &&
-  model.host_status == "workspace indexed" &&
-  preview_unavailable
+  model.desk_entries_state == Some(LegitimateZero)
 }
 
 ///|

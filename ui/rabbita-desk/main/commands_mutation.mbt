@@ -1,4 +1,38 @@
 ///|
+fn library_selection_http_result(
+  result : Result[Json, Error],
+) -> Result[WorkspaceMetadata, String] {
+  match result {
+    Err(_) => Err("Could not select the library")
+    Ok(payload) => {
+      let metadata : WorkspaceMetadata = @json.from_json(payload) catch {
+        _ => {
+          let message = json_field_string(payload, "message", default="")
+          return if message == "" {
+            Err("Could not select the library")
+          } else {
+            Err(message)
+          }
+        }
+      }
+      Ok(metadata)
+    }
+  }
+}
+
+///|
+fn select_library_cmd(
+  dispatch : Dispatch[Msg],
+  root_path : String,
+) -> @rabbita.Cmd {
+  @http.post("/api/desktop/library")
+  .with_json(({ "root_path": root_path } : Json))
+  .expect_json(result => {
+    dispatch(SelectedLibrary(library_selection_http_result(result)))
+  })
+}
+
+///|
 fn save_inbox_cmd(
   dispatch : Dispatch[Msg],
   model : Model,

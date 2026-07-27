@@ -87,6 +87,17 @@ struct MoonFlowImportResult {
   next_action : String
   book_id : String
   run_id : String
+  capability_evidence : MoonFlowCapabilityEvidence?
+} derive(FromJson)
+
+///|
+struct MoonFlowCapabilityEvidence {
+  available : Bool
+  reason : String
+  root : String
+  platform_evidence : CapabilityPlatformEvidence?
+  installation_evidence : CapabilityInstallationEvidence?
+  configuration_evidence : CapabilityConfigurationEvidence?
 } derive(FromJson)
 
 ///|
@@ -135,28 +146,14 @@ struct MoonFlowRunProjection {
 ///|
 struct MoonFlowCompositionItem {
   work_item_id : String
-  declaration_id : String
   product_id : String
   requested_authority : String
-  acceptance_criteria : Array[String]
   depends_on : Array[String]
   operation : String
-  input_contracts : Array[String]
-  output_contracts : Array[String]
-  required_claim : String
-  input_artifacts : Array[String]
-  timeout_ms : Int
 } derive(FromJson)
 
 ///|
 struct MoonFlowComposition {
-  contract_id : String
-  workspace_id : String
-  source_graph_id : String
-  book_id : String
-  declaration_revision : String
-  source_digest : String
-  status : String
   selected_item_ids : Array[String]
   items : Array[MoonFlowCompositionItem]
 } derive(FromJson)

@@ -23,6 +23,45 @@ test "moonclaw release asset selects exact platform" {
 }
 
 ///|
+test "platform support is explicit and independent of string validity" {
+  let macos = moonclaw_platform_support_from_values("macos", "arm64")
+  assert_true(macos.supported)
+  assert_eq(macos.platform, "macos")
+  assert_eq(macos.architecture, "arm64")
+  assert_true(
+    moonclaw_platform_support_from_values("linux", "x86_64").supported,
+  )
+  assert_false(
+    moonclaw_platform_support_from_values("unsupported", "x86_64").supported,
+  )
+  assert_false(
+    moonclaw_platform_support_from_values("macos", "unsupported").supported,
+  )
+  assert_false(
+    moonclaw_platform_support_from_values("windows", "x86_64").supported,
+  )
+  let json = moonclaw_platform_support_json(macos)
+  assert_true(json_bool(json, "supported", default=false))
+  assert_eq(json_string(json, "platform", default=""), "macos")
+  assert_eq(json_string(json, "architecture", default=""), "arm64")
+}
+
+///|
+async test "unsupported platform installation fails before release lookup" {
+  let result = install_moonclaw_release_for_platform(
+    "/tmp/moondesk-moonclaw-unsupported-install-wbtest",
+    moonclaw_platform_support_from_values("unsupported", "unsupported"),
+  )
+  assert_false(json_bool(result, "ok", default=true))
+  assert_eq(json_string(result, "status", default=""), "platform_unsupported")
+  assert_true(
+    json_string(result, "message", default="").contains(
+      "not supported for unsupported unsupported",
+    ),
+  )
+}
+
+///|
 test "moonclaw runtime root follows the packaged app data directory" {
   assert_eq(
     moonclaw_runtime_root_from_environment(

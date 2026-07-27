@@ -23,6 +23,7 @@ fn update_daemon_actions(
           activity: Town,
           command_open: false,
           daemon_status: "checking daemon",
+          town_capability_probe_available: false,
         },
       )
     StartDaemon =>
@@ -33,6 +34,7 @@ fn update_daemon_actions(
           activity: Town,
           command_open: false,
           daemon_status: "starting daemon",
+          town_capability_probe_available: false,
         },
       )
     StopDaemon =>

@@ -60,19 +60,27 @@ MoonCode
 
 ## Source Ownership
 
-- `core/`: product-neutral desktop records and host-facing DTOs.
-- `internal/mooncore/`: reusable JSON field, durable record-file, session, and
-  transcript primitives shared by request, agent, and code surfaces.
-- `internal/moonwiki/`: MoonWiki HTTP routes, desktop persistence, book/wiki
-  adapters, workspace, search, town, and book-pattern APIs, PDF Evidence Watch scaffolding,
-  app-tool portable export, daemon/session support, and host-side IO.
-- `internal/mooncode/`: thin, filesystem-neutral adapters for the shared
-  MoonCode protocol, capabilities, native command packets, and compact
-  MoonClaw session records. It owns no durable store or conversation reducer.
-- `cmd/main/`: CLI entrypoint for serving, desktop launch, bundle, release, and
-  LaunchAgent actions.
-- `ui/rabbita-desk/main/`: Rabbita UI package for Desk, Files, Search, Inbox,
-  MoonWiki, MoonCode, Town, Runs, and Settings surfaces.
+| Concern | One owner | Boundary / primary source |
+| --- | --- | --- |
+| Desk/file APIs | MoonDesk | `internal/moonwiki/` host routes, adapters, and scoped file IO |
+| Wiki projection | MoonDesk | `internal/moonwiki/` and the MoonWiki UI project durable book state without owning it |
+| Code presentation | MoonDesk | `internal/mooncode/` adapters and the MoonCode UI present MoonClaw activity |
+| Host/CLI/release | MoonDesk | `cmd/main/` owns serving, desktop launch, bundle, release, and LaunchAgent actions |
+| Shared DTOs | MoonDesk | `core/` owns product-neutral desktop records and host-facing DTOs |
+| Shared helper primitives | MoonDesk | `internal/mooncore/` owns reusable JSON, record-file, session, and transcript helpers |
+| Durable book truth | **MoonBook (external)** | Book files, history, review queue, accepted knowledge, and generated artifacts |
+| Execution | **MoonClaw (external)** | Agent loop, workers, tools, bounded execution, artifacts, and logs |
+| Scheduling | **MoonTown (external)** | Standing goals, daemon scheduling, coordination, and town state |
+| Shared paths | **MoonLib (external)** | Suite root, product registry/home, temporary, and book path contracts |
+| Health reporting | **MoonGate (external)** | Metrics, snapshots, analytics, and contract-drift audits |
+| Acceptance/review | **Bookkeeper (external)** | Owns acceptance policy and durable receipts; MoonDesk presents review UI and evidence but does not own acceptance truth |
+
+Cross-product owners in bold are external to MoonDesk. This table assigns a
+single accountable owner without moving product boundaries or implying that
+MoonDesk owns the external products it projects.
+
+The UI implementation lives in `ui/rabbita-desk/main/` and covers Desk, Files,
+Search, Inbox, MoonWiki, MoonCode, Town, Runs, and Settings surfaces.
 
 MoonDesk path construction should call the MoonLib MoonSuite contract package
 instead of carrying product-local string helpers for `.moonsuite`, `.tmp`,

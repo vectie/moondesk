@@ -14,7 +14,7 @@ fn render_diagnostics_disclosure(
       render_event_panel(model),
       render_runtime_diagnostics(model),
       render_standing_goal_list(model),
-      render_request_list(model),
+      render_request_diagnostics(model),
       render_daemon_lifecycle_panel(dispatch, model),
     ]),
   ])

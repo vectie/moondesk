@@ -60,21 +60,26 @@ async fn handle_moonflow_import_selected(
     )
     return
   }
-  let moonflow_root = @sys.get_env_var("MOONFLOW_ROOT").unwrap_or("")
-  if moonflow_root == "" || !@fs.exists(@pathx.join(moonflow_root, "moon.mod")) {
+  let capability_evidence = moonflow_capability_evidence()
+  if !json_bool(capability_evidence, "available", default=false) {
     send_json(
       conn,
       method_,
       api_contract_response(
-        { "book_id": workspace_id, "run_id": "" },
+        {
+          "book_id": workspace_id,
+          "run_id": "",
+          "capability_evidence": capability_evidence,
+        },
         ok=false,
         status="moonflow_service_missing",
-        message="MoonFlow is installed but its workspace service is not enabled",
-        next_action="enable_moonflow_in_moongate",
+        message="Flow preparation is not available in the current setup",
+        next_action="review_flow_setup",
       ),
     )
     return
   }
+  let moonflow_root = json_string(capability_evidence, "root", default="")
   graph_path = moonflow_compile_composition(
     workspace_context(workspace_root).suite_root,
     workspace.root_path,

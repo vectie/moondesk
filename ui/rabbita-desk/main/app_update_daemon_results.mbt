@@ -12,10 +12,18 @@ fn update_daemon_results(
           ..model,
           daemon_lifecycle: Some(result),
           daemon_status: daemon_lifecycle_label(result),
+          town_capability_probe_available: true,
         },
       )
     LoadedDaemonLifecycle(Err(error)) =>
-      (@rabbita.none, { ..model, daemon_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          daemon_status: error,
+          town_capability_probe_available: false,
+        },
+      )
     DispatchedDaemon(Ok(result)) =>
       (
         sync_activity_batch(
@@ -64,11 +72,20 @@ fn update_daemon_results(
           command_open: false,
           daemon_lifecycle: Some(result),
           daemon_status: daemon_lifecycle_label(result),
+          town_capability_probe_available: true,
           dispatch_status: result.message,
         },
       )
     ManagedDaemon(Err(error)) =>
-      (@rabbita.none, { ..model, daemon_status: error, dispatch_status: error })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          daemon_status: error,
+          dispatch_status: error,
+          town_capability_probe_available: false,
+        },
+      )
     LoadedLaunchAgent(Ok(result)) =>
       (
         @rabbita.none,

@@ -17,7 +17,8 @@
   },
   "plugins": [
     { "name": "opener" },
-    { "name": "browserHost" }
+    { "name": "browserHost" },
+    { "name": "fileDialog" }
   ],
   "capabilities": [
     {
@@ -25,6 +26,7 @@
       "windows": ["main"],
       "permissions": [
         "opener",
+        "file-dialog",
         "custom:browserHost.execute",
         "custom:browserHost.complete",
         "custom:browserHost.captureScreenshot",

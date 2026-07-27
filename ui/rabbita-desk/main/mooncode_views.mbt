@@ -5,7 +5,9 @@ fn render_mooncode_pane(
 ) -> @rabbita.Html {
   aside(
     class="activity-pane mooncode-rail",
-    attrs=@html.Attrs::build().data_set("testid", "mooncode-rail"),
+    attrs=@html.Attrs::build()
+      .aria_label("Code sessions")
+      .data_set("testid", "mooncode-rail"),
     [
       div(class="pane-heading", [
         div([
@@ -45,6 +47,7 @@ fn render_mooncode_pane(
           )
         },
       ]),
+      mooncode_sessions_state_panel(dispatch, model),
       div(
         class="mooncode-session-list",
         attrs=@html.Attrs::build().data_set("testid", "mooncode-session-list"),
@@ -86,7 +89,8 @@ fn mooncode_session_list_children(
       dispatch, model, group,
     )
     if group.sessions.length() == 0 &&
-      mooncode_session_group_active(model, group) {
+      mooncode_session_group_active(model, group) &&
+      model.mooncode_sessions_state is Some(LegitimateZero) {
       children["group-empty:" + group.id] = p(
         class="status-line empty-list mooncode-session-group-empty",
         if group.workspace_id == "" {
@@ -107,6 +111,7 @@ fn mooncode_session_list_children(
     }
   }
   if groups.length() == 0 &&
+    mooncode_sessions_listing_succeeded(model.mooncode_sessions_state) &&
     model.mooncode_session_query.trim().to_owned() != "" {
     children["search-empty"] = p(
       class="status-line empty-list mooncode-session-search-empty",
@@ -562,7 +567,7 @@ fn render_mooncode_center(
 ) -> @rabbita.Html {
   let session = selected_mooncode_session(model)
   let empty = session is None
-  main_(
+  section(
     class=mooncode_center_class(model),
     attrs=@html.Attrs::build().data_set("testid", "mooncode-center"),
     [
@@ -665,10 +670,9 @@ extern "js" fn browser_mooncode_relative_time(value : String) -> String =
 
 ///|
 fn mooncode_center_class(model : Model) -> String {
-  match model.moonclaw_daemon {
-    Some(daemon) if !daemon.running =>
-      "preview-center mooncode-center runtime-setup-visible"
-    _ => "preview-center mooncode-center"
+  match moonclaw_capability_state(model.moonclaw_daemon) {
+    DetectedRunning => "preview-center mooncode-center"
+    _ => "preview-center mooncode-center runtime-setup-visible"
   }
 }
 
@@ -677,61 +681,83 @@ fn render_mooncode_runtime_setup(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  match model.moonclaw_daemon {
-    Some(daemon) if !daemon.running =>
+  let state = moonclaw_capability_state(model.moonclaw_daemon)
+  match state {
+    DetectedRunning => @html.nothing
+    _ => {
+      let action = code_capability_primary_action(state)
       section(
         class="mooncode-runtime-setup",
         attrs=@html.Attrs::build()
           .data_set("testid", "mooncode-runtime-setup")
+          .data_set("state", capability_state_key(state))
           .role("status")
           .aria_live("polite"),
         [
-          div([
-            strong(
-              if daemon.service_configured {
-                "MoonClaw is ready to start"
-              } else {
-                "MoonClaw needs setup"
-              },
-            ),
-            p(
-              if daemon.service_configured {
-                "Start the installed workspace worker, then retry your saved request."
-              } else {
-                "Install MoonClaw directly with MoonDesk. Connect MoonGate separately when you want to use a provider managed there."
-              },
-            ),
-          ]),
-          if daemon.service_configured {
-            button(
-              class="primary-button compact-button",
-              attrs=@html.Attrs::build().data_set(
-                "testid", "mooncode-start-moonclaw",
-              ),
-              on_click=dispatch(ManageMoonClaw("retry")),
-              "Start and retry",
-            )
-          } else {
-            div(class="mooncode-runtime-install", [
+          render_code_capability_summary(state),
+          match action {
+            StartCapability =>
+              button(
+                class="primary-button compact-button",
+                attrs=@html.Attrs::build()
+                  .data_set("testid", "mooncode-start-moonclaw")
+                  .data_set(
+                    "i18n",
+                    code_capability_primary_action_i18n_key(action),
+                  ),
+                on_click=dispatch(ManageMoonClaw("retry")),
+                code_capability_primary_action_label(action),
+              )
+            InstallCapability =>
+              div(class="mooncode-runtime-install", [
+                button(
+                  class="primary-button compact-button",
+                  attrs=@html.Attrs::build()
+                    .data_set("testid", "mooncode-install-moonclaw")
+                    .data_set(
+                      "i18n",
+                      if model.moonclaw_installing {
+                        "code.assistance_installing"
+                      } else {
+                        code_capability_primary_action_i18n_key(action)
+                      },
+                    ),
+                  disabled=model.moonclaw_installing,
+                  on_click=dispatch(ManageMoonClaw("install")),
+                  if model.moonclaw_installing {
+                    "Installing Code assistance…"
+                  } else {
+                    code_capability_primary_action_label(action)
+                  },
+                ),
+                render_moonclaw_install_progress(model),
+              ])
+            OpenConfiguration =>
               button(
                 class="primary-button compact-button",
                 attrs=@html.Attrs::build().data_set(
-                  "testid", "mooncode-install-moonclaw",
+                  "i18n",
+                  code_capability_primary_action_i18n_key(action),
                 ),
-                disabled=model.moonclaw_installing,
-                on_click=dispatch(ManageMoonClaw("install")),
-                if model.moonclaw_installing {
-                  "Installing MoonClaw…"
-                } else {
-                  "Install MoonClaw"
-                },
-              ),
-              render_moonclaw_install_progress(model),
-            ])
+                on_click=dispatch(SelectActivity(Settings)),
+                code_capability_primary_action_label(action),
+              )
+            RetryCapabilityCheck =>
+              button(
+                class="primary-button compact-button",
+                attrs=@html.Attrs::build().data_set(
+                  "i18n",
+                  code_capability_primary_action_i18n_key(action),
+                ),
+                on_click=dispatch(ManageMoonClaw("retry")),
+                code_capability_primary_action_label(action),
+              )
+            NoPrimaryAction => @html.nothing
           },
+          render_code_assistance_technical_details(model),
         ],
       )
-    _ => @html.nothing
+    }
   }
 }
 
@@ -765,5 +791,53 @@ fn mooncode_composer_button_label(
   match session {
     Some(_) => "Prompt"
     None => "Start"
+  }
+}
+
+///|
+fn mooncode_sessions_state_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  match model.mooncode_sessions_state {
+    None => @html.nothing
+    Some(state) =>
+      section(
+        class="surface-state-panel mooncode-sessions-state-panel",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "mooncode-sessions-state-panel")
+          .data_set("state", mooncode_sessions_state_key(state)),
+        [
+          p(class="eyebrow", "Chat history"),
+          render_polite_state_announcement(
+            "mooncode-sessions-state-announcement",
+            mooncode_sessions_state_title(state),
+            mooncode_sessions_state_detail(
+              state,
+              model.mooncode_sessions.length() > 0,
+            ),
+          ),
+          if mooncode_sessions_state_shows_details(state) &&
+            model.mooncode_sessions_error != "" {
+            details(class="technical-details", [
+              summary("Technical details"),
+              p(model.mooncode_sessions_error),
+            ])
+          } else {
+            @html.nothing
+          },
+          match mooncode_sessions_state_action(state) {
+            Some(label) =>
+              button(
+                attrs=@html.Attrs::build().data_set(
+                  "testid", "mooncode-sessions-state-action",
+                ),
+                on_click=dispatch(SelectWorkspaceMode(MoonCode)),
+                label,
+              )
+            None => @html.nothing
+          },
+        ],
+      )
   }
 }

@@ -10,6 +10,13 @@ fn assert_string_array_eq(
 }
 
 ///|
+async test "packaged desktop grants the native directory picker" {
+  let manifest = @fs.read_file("desktop/lepusa/moondesk/lepusa.json").text()
+  assert_true(manifest.contains("\"name\": \"fileDialog\""))
+  assert_true(manifest.contains("\"file-dialog\""))
+}
+
+///|
 test "lepusa integration args default to strict-free macos verify" {
   let parsed = parse_lepusa_integration_args([])
   assert_true(parsed is Some(_))
@@ -286,6 +293,8 @@ async test "lepusa integration live project uses localhost sidecar service" {
   assert_true(manifest.contains("\"identity\":\"-\""))
   assert_true(manifest.contains("\"localhost\""))
   assert_true(manifest.contains("\"serviceDiscovery\""))
+  assert_true(manifest.contains("\"fileDialog\""))
+  assert_true(manifest.contains("\"file-dialog\""))
 }
 
 ///|

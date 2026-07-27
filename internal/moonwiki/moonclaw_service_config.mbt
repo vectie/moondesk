@@ -58,8 +58,15 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
     managed_binary,
     @fsx.exists(managed_binary),
   )
+  let integrity = service_configuration_integrity(command, cwd)
   {
     "configured": command != "",
+    "configuration_valid": json_bool(integrity, "valid", default=false),
+    "configuration_reason": json_string(
+      integrity,
+      "reason",
+      default="not-configured",
+    ),
     "kind": "moondesk-moonclaw-service.v1",
     "action": action,
     "command": command,

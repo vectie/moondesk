@@ -1907,6 +1907,36 @@ async test "wiki server routes cover forward and backward book runs" {
     assert_true(search_text.contains("wiki/findings/forward-seed.md"))
     assert_true(search_text.contains("\"source_layer\":\"Wiki\""))
 
+    let search_evidence = test_http_get_json(
+      base +
+      "/api/search?workspace=\{workspace_id}&query=Promote%20this%20into%20Wiki%20knowledge&contract=pages-search.v1",
+      200,
+    )
+    assert_true(json_bool(search_evidence, "ok", default=false))
+    assert_eq(json_string(search_evidence, "status", default=""), "ready")
+    assert_eq(
+      json_string(search_evidence, "contract", default=""),
+      "pages-search.v1",
+    )
+    assert_true(search_evidence.stringify().contains("forward-seed.md"))
+
+    let legacy_unknown = test_http_get_json(
+      base + "/api/search?workspace=unknown-book&query=knowledge",
+      200,
+    )
+    assert_eq(legacy_unknown.stringify(), "[]")
+    let unknown_evidence = test_http_get_json(
+      base +
+      "/api/search?workspace=unknown-book&query=knowledge&contract=pages-search.v1",
+      200,
+    )
+    assert_false(json_bool(unknown_evidence, "ok", default=true))
+    assert_eq(
+      json_string(unknown_evidence, "status", default=""),
+      "workspace-not-found",
+    )
+    assert_eq(json_array_items(unknown_evidence, "hits").length(), 0)
+
     let review_diff = test_http_get_json(
       base +
       "/api/workspaces/\{workspace_id}/review-diff?path=wiki%2Ffindings%2Fopen.md",
@@ -2082,6 +2112,63 @@ async test "wiki server routes cover forward and backward book runs" {
     assert_eq(
       @fs.read_file(@pathx.join(root, "outside.md")).text(),
       "outside\n",
+    )
+  })
+}
+
+///|
+async test "desk library endpoint switches active roots and rejects source checkouts" {
+  let stamp = @async.now().to_string()
+  let bootstrap = @pathx.join("/tmp", "moondesk-library-http-owner-" + stamp)
+  let selected = @pathx.join("/tmp", "moondesk-library-http-selected-" + stamp)
+  let source = @pathx.join("/tmp", "moondesk-library-http-source-" + stamp)
+  let ui_root = @pathx.join(bootstrap, "ui")
+  let book_root = @pathx.join(selected, "books/selected-book")
+  @fsx.make_directory(ui_root, recursive=true, exists_ok=true)
+  @fsx.make_directory(book_root, recursive=true, exists_ok=true)
+  @fsx.make_directory(source, recursive=true, exists_ok=true)
+  @fsx.write_to_file(@pathx.join(ui_root, "index.html"), "<main>ui</main>")
+  @fsx.write_to_file(
+    @pathx.join(book_root, "book.json"),
+    "{\"name\":\"Selected Book\"}\n",
+  )
+  @fsx.write_to_file(@pathx.join(source, "moon.mod"), "{}\n")
+
+  let server = Server::new("127.0.0.1", 0, reuse_addr=true)
+  defer server.close()
+  @async.with_task_group(group => {
+    group.spawn_bg(
+      () => server.serve_desk(ui_root, bootstrap),
+      no_wait=true,
+      allow_failure=true,
+    )
+    @async.sleep(20)
+    let base = "http://127.0.0.1:\{server.port()}"
+    let initial = test_http_get_json(base + "/api/desktop/library", 200)
+    assert_eq(json_string(initial, "root_path", default=""), bootstrap)
+    let activated = test_http_post_json(
+      base + "/api/desktop/library",
+      { "root_path": selected },
+      200,
+    )
+    let canonical_selected = @fs.realpath(selected)
+    assert_eq(
+      json_string(activated, "root_path", default=""),
+      canonical_selected,
+    )
+    assert_true(@fsx.exists(library_selection_path(bootstrap)))
+    let workspaces = test_http_get_json(base + "/api/workspaces", 200)
+    assert_true(workspaces.stringify().contains("Selected Book"))
+    let rejected = test_http_post_json(
+      base + "/api/desktop/library",
+      { "root_path": source },
+      400,
+    )
+    assert_true(rejected.stringify().contains("source checkout"))
+    let still_active = test_http_get_json(base + "/api/desktop/library", 200)
+    assert_eq(
+      json_string(still_active, "root_path", default=""),
+      canonical_selected,
     )
   })
 }

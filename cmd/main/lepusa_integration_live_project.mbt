@@ -97,14 +97,16 @@ fn lepusa_integration_live_project_json(
       { "name": "localhost" },
       { "name": "serviceDiscovery" },
       { "name": "browserHost" },
+      { "name": "fileDialog" },
     ],
     "capabilities": [
       {
         "name": "main",
         "windows": ["main"],
         "permissions": [
-          "localhost", "service-discovery", "custom:browserHost.execute", "custom:browserHost.complete",
-          "custom:browserHost.captureScreenshot", "custom:browserHost.status",
+          "localhost", "service-discovery", "file-dialog", "custom:browserHost.execute",
+          "custom:browserHost.complete", "custom:browserHost.captureScreenshot",
+          "custom:browserHost.status",
         ],
       },
     ],

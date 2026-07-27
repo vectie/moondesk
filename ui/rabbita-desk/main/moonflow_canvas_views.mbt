@@ -312,7 +312,7 @@ fn render_flow_canvas_chrome(
         class="secondary-button compact-button",
         attrs=@html.Attrs::build().aria_label("Zoom out composition canvas"),
         disabled=model.flow_zoom <= flow_zoom_min + 0.001,
-        on_click=dispatch(FlowCanvasWheel(0, 0, 1.0)),
+        on_click=dispatch(FlowCanvasWheel(1.0)),
         "−",
       ),
       span(class="flow-zoom-readout", flow_zoom_percent(model)),
@@ -320,7 +320,7 @@ fn render_flow_canvas_chrome(
         class="secondary-button compact-button",
         attrs=@html.Attrs::build().aria_label("Zoom in composition canvas"),
         disabled=model.flow_zoom >= flow_zoom_max - 0.001,
-        on_click=dispatch(FlowCanvasWheel(0, 0, -1.0)),
+        on_click=dispatch(FlowCanvasWheel(-1.0)),
         "+",
       ),
       button(
@@ -364,13 +364,7 @@ fn render_flow_canvas_viewport(
       .data_set("testid", "moonflow-composition-canvas")
       .on_wheel(fn(event) {
         event.prevent_default()
-        dispatch(
-          FlowCanvasWheel(
-            event.get_client_x(),
-            event.get_client_y(),
-            event.get_delta_y(),
-          ),
-        )
+        dispatch(FlowCanvasWheel(event.get_delta_y()))
       })
       .on_mousedown(fn(event) {
         event.prevent_default()
