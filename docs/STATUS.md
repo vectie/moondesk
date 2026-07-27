@@ -15,8 +15,9 @@ No production release has been published and no branch has been merged by this e
 Repository-local work is complete only when its phase gate passes. Hosted CI,
 signing, notarization, clean-machine, update/rollback, and soak claims remain
 external evidence until their actual artifacts or URLs are recorded; missing
-external proof does not block independent repository-local work in later
-phases.
+external proof does not block repository-local work that the authoritative
+plan explicitly marks independent, but it does block dependency gates such as
+Phase 2 to Phase 3.
 
 Primary navigation remains exactly **Desk, Wiki, Code, Flow, Packs**, with
 **Requests, Runs, Review, Publish** below Wiki.
