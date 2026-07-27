@@ -4,9 +4,9 @@ The authoritative scope and phase gates are defined in `docs/MOONDESK_PRODUCTIZA
 
 ## Current execution
 
-The full Phase 2–10 repository-local implementation is present on the current branch. Canonical validation passes with 239/239 native tests and 402/402 UI tests, along with format, MoonBit check, UI check, generated-interface, localization, production-build, contract-boundary, and credential-free smoke coverage. The active CI and preview-release workflows, typed MoonCode boundary, ownership splits, path and authority controls, unified evidence surfaces, Office document editing, direct Code editing, localization/accessibility work, and release verification are retained in code and their focused suites.
+Phase 2 is the current phase. Its local baseline and CI workflow improvement are present, but the required remote CI evidence is still open. The previous execution ran `bash scripts/validate.sh` in its default fast mode; it therefore did not run or prove the full-only localization, release-verifier, production-build, generated-interface, contract-boundary, diff, and clean-tree gates.
 
-Repository-local gates are closed. Remaining irreducible evidence is external: a clean hosted pull-request CI run; a tag-driven hosted preview artifact reproduction; signed and notarized macOS artifacts; clean-machine install/launch, update, rollback, and uninstall proofs on supported operating systems; 24-hour idle and 8-hour active soak reports; a completed release-candidate bug bash; and production credential/operator approval. These are not claimed by local validation and do not conceal an independently reachable repository deliverable.
+Phase 2 must be closed with the plan's required remote evidence before beginning the first Phase 3 typed slice. Phase 3 implementation has not started; Phases 4–7 and 10 have not started; Phase 8 is partial; and Phase 9 has unsigned-local evidence only. These repository-local requirements remain open where the plan says they are open and are not reclassified as external. Later external release evidence—including signing/notarization, clean-machine lifecycle proof, soak reports, bug-bash completion, and production approval—also remains unproven.
 
 No production release has been published and no branch has been merged by this execution.
 

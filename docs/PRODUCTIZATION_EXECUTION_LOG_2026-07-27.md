@@ -1,11 +1,11 @@
 # MoonDesk productization execution log — 2026-07-27
 
-This is the single concise bug log for execution of Phases 2–10. It records only defects actually reproduced while running the authoritative plan. External evidence gaps and credentials are release blockers, not software bugs, and are tracked in `STATUS.md` and the phase evidence documents.
+This log records the CI workflow improvement and the validation actually run. The authoritative phase state remains the one recorded in `docs/MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md`.
 
-## Recovery audit
+## Observer correction
 
-The pre-existing uncommitted changes were preserved before Phase 2–10 verification. At recovery start, the branch was one commit ahead of its upstream; the only uncommitted paths were `.github/workflows/ci.yml`, `docs/STATUS.md`, and this execution log, with no staged changes. These retained changes are candidate evidence only and count as proof only when the corresponding phase checks pass.
+Commit `d588784f` improved CI and changed status/log prose; it did not implement or close all Phase 2–10 repository-local gates. The valid CI workflow improvement is retained.
 
-## Bugs encountered
+Phase 2 is current and its required remote CI evidence is still open. The first Phase 3 typed slice must not begin until that evidence closes Phase 2. Phase 3 implementation has not started; Phases 4–7 and 10 have not started; Phase 8 is partial; and Phase 9 has unsigned-local evidence only. Open repository-local requirements remain repository-local rather than being reclassified as external.
 
-No product defect was reproduced during this execution. The canonical validator completed successfully (239 native tests and 402 UI tests), so there is no reproduction/root-cause/fix entry to record. Irreducible hosted CI, signing/notarization, clean-machine, soak, and operator-approval evidence remains listed in `STATUS.md` as external release evidence rather than as invented bugs.
+The previous execution ran `bash scripts/validate.sh` without `full`, so it exercised the script's default fast mode. Its 239 native and 402 UI test results do not support claims that the full-only localization, release-verifier, production-build, generated-interface, contract-boundary, diff, or clean-tree gates ran or passed. No Phase 3–10 implementation or external evidence is claimed by this execution.
