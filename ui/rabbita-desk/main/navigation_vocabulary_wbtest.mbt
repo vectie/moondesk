@@ -1,7 +1,7 @@
 ///|
 test "workspace modes use stable user-facing labels and summaries" {
-  assert_eq(workspace_mode_label(Desk), "Home")
-  assert_eq(workspace_mode_label(MoonWiki), "Pages")
+  assert_eq(workspace_mode_label(Desk), "Desk")
+  assert_eq(workspace_mode_label(MoonWiki), "Wiki")
   assert_eq(workspace_mode_label(MoonCode), "Code")
   assert_eq(workspace_mode_label(RequestsWorkspace), "Requests")
   assert_eq(workspace_mode_label(RunsWorkspace), "Runs")
@@ -9,8 +9,8 @@ test "workspace modes use stable user-facing labels and summaries" {
   assert_eq(workspace_mode_label(PublishWorkspace), "Publish")
   assert_eq(workspace_mode_label(MoonFlow), "Flow")
   assert_eq(workspace_mode_label(PackHome), "Packs")
-  assert_eq(workspace_mode_summary(Desk), "Home workspace")
-  assert_eq(workspace_mode_summary(MoonWiki), "Pages workspace")
+  assert_eq(workspace_mode_summary(Desk), "Desk workspace")
+  assert_eq(workspace_mode_summary(MoonWiki), "Wiki workspace")
   assert_eq(workspace_mode_summary(MoonCode), "Code workspace")
 }
 
@@ -64,12 +64,13 @@ test "current and legacy navigation slugs remain compatible" {
 ///|
 test "palette high-level navigation uses user vocabulary" {
   let home = palette_commands_for_mode(Desk).map(command => command.0)
-  assert_true(home.contains("Open Home"))
-  assert_true(home.contains("Open Pages"))
+  assert_true(home.contains("Open Desk"))
+  assert_true(home.contains("Open Wiki"))
   assert_true(home.contains("Open Code"))
-  assert_false(home.contains("Browse Desk"))
+  assert_false(home.contains("Browse Home"))
   assert_false(home.contains("Open in Wiki"))
   let pages = palette_commands_for_mode(MoonWiki).map(command => command.0)
+  assert_true(pages.contains("Open Wiki"))
   assert_true(pages.contains("Open Pages"))
   assert_true(pages.contains("Open Requests"))
   assert_true(pages.contains("Open Settings"))

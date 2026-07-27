@@ -114,8 +114,9 @@ An operator should be able to distinguish:
 
 ## Current Program Action
 
-Phase 1 design inventory is complete in
-`docs/FIRST_RUN_AND_VOCABULARY.md`; Phase 1 implementation remains open. The
+Phase 1 is complete locally. Its design inventory is recorded in
+`docs/FIRST_RUN_AND_VOCABULARY.md`, and its exit-gate evidence is recorded in
+`docs/PHASE_1_CLOSURE_2026-07-27.md`. The
 first bounded capability slices now supply the private six-state model,
 capability-owned labels and actions, and deterministic mappings backed only by
 host evidence. Code covers all six states. Requests automation covers running,
@@ -153,10 +154,11 @@ six-state cold-start classifier and Desk first-use
 presentation are also implemented with focused tests, including deterministic
 one/many-book selection and a catalog-unavailable state that cannot masquerade
 as an empty library. The primary-navigation slice is now implemented:
-Home, Pages, Code, Requests, Runs, Review, and Publish have distinct modes and
-exact routes; Pages retains only Pages, Search, Inbox, and Settings; Flow and
-Packs are secondary Commands destinations; and a compact disclosure replaces
-the strip at narrow widths. Legacy aliases remain accepted. Focused
+Desk, Wiki, Code, Flow, and Packs are the five primary destinations. Wiki owns
+second-level Pages, Requests, Runs, Review, and Publish tabs with exact routes;
+its Pages activity retains Pages, Search, Inbox, and Settings. A compact
+disclosure replaces the primary strip at narrow widths. Legacy aliases remain
+accepted. Focused
 navigation/destination tests and desktop, compact, populated, empty-library,
 and quickstart browser journeys pass. The shared eight-state surface contract
 now has eleven typed consumers. Workspace catalog loading is owned separately
@@ -349,8 +351,9 @@ preview-tab fallback naming, decorative glyph exposure, compact navigation
 closure/focus, and Flow/Packs header rows. Its four real-VoiceOver transcript
 rows remain explicitly pending because the user asked to skip the blocked
 system-caption capture; automated DOM/accessibility-tree evidence is not
-reclassified as spoken output. Existing phase dependencies and exit gates are
-unchanged; these slices do not complete Phase 1 or advance a later phase.
+reclassified as spoken output. These bounded slices contribute to the completed
+Phase 1 user-facing gate; they do not claim or advance the broader Phase 7 and
+Phase 8 gates.
 
 ## Current Baseline
 
@@ -423,7 +426,7 @@ release claim until Phases 2 through 7 have passed their exit gates.
 | Phase | Current state | Depends on | Primary result | Next gate evidence |
 | --- | --- | --- | --- | --- |
 | [0. Current truth](#phase-0-establish-one-source-of-current-truth) | Complete locally | — | One current source of truth and reproducible local baseline | Retain proof; correct drift when later phases change facts |
-| [1. Product clarity](#phase-1-simplify-the-product-story-and-first-run-experience) | In progress | Phase 0 | Understandable first run and honest capability setup | Cross-platform picker, remaining typed surfaces, complete keyboard/zoom/copy matrix |
+| [1. Product clarity](#phase-1-simplify-the-product-story-and-first-run-experience) | Complete locally | Phase 0 | Understandable first run and honest capability setup | Retain the closure journey; later matrices remain in Phases 7 and 8 |
 | [2. CI and release evidence](#phase-2-make-ci-and-release-evidence-mandatory) | CI and unsigned preview pipeline proven locally; remote evidence open | Phase 0 | Mandatory quality gates and reproducible preview releases | Passing pull-request, push, and preview-tag runs retained as remote evidence |
 | [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Inventory and target complete; implementation not started | Phase 2 | Small typed public protocol and one serialization boundary | Phase 2 passes, then one typed vertical slice replaces one string/JSON path |
 | [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | Not started | Phase 3 ownership map | Narrower packages, state ownership, and decomposed tests | Approved dependency graph and first behavior-preserving extraction |
@@ -561,7 +564,7 @@ Phase 0 is complete when:
 A first-time user can reach useful work without understanding MoonSuite
 internals or manually editing service descriptors.
 
-### Current gate state — 2026-07-27
+### Current gate state — complete locally, 2026-07-27
 
 Implementation is complete for five bounded foundations:
 
@@ -572,8 +575,8 @@ Implementation is complete for five bounded foundations:
    preview, Pages search, Review, Requests, Runs, Publish, Code session listing,
    Flow run listing, the saved-view catalog, and the workspace catalog as typed
    consumers
-5. distinct primary navigation and destination shells for Home, Pages, Code,
-   Requests, Runs, Review, and Publish
+5. restored primary navigation for Desk, Wiki, Code, Flow, and Packs, with
+   Requests, Runs, Review, and Publish retained as second-level Wiki tabs
 
 The native library-selection path is also implemented, focused-tested, and
 exercised in a fresh packaged macOS build. A stable bootstrap location owns the
@@ -590,31 +593,20 @@ pipeline now sequences bundle copies before launcher
 configuration, propagates integration failure to the outer command, and has
 both a clean positive build and an exit-1 negative build as local evidence.
 
-This does not close Phase 1. Remaining acceptance evidence is:
+The Phase 1 exit gate is closed by the clean-workspace first-use journey, the
+structured capability journey, the restored five-destination navigation, and
+the focused state/navigation tests. The exact criterion-to-evidence map is
+recorded in `docs/PHASE_1_CLOSURE_2026-07-27.md`.
 
-- an equivalent real picker exercise on every other supported desktop platform
-- adoption of typed surface states beyond the eleven bounded consumers already
-  integrated
-- complete platform/misconfiguration evidence for optional capabilities beyond
-  the implemented Code-assistance, Requests-automation, and Flow-preparation
-  slices
-- keyboard acceptance beyond the completed browser-host subsets; the
-  configured-empty-library first useful task, one/many-book selection,
-  capability disclosures, primary navigation, and the 18-case responsive
-  setup/transient matrix are now proven with real CDP key events and exact
-  focus restoration. Command 062 now proves exact DOM/accessibility-tree
-  semantics and announcement order/deduplication across 22 cases; its four
-  user-skipped real-VoiceOver transcript rows, packaged-native input, and other
-  desktop platforms remain open
-- responsive state-matrix beyond the bounded populated Home path; viewport
-  geometry passes at 1440×900, 1024×768, 390×844, and 320×700, browser-zoom
-  reflow passes at 720×450, text-only 200% passes at 1440×900 and 320×700, and
-  the six-state Code/Requests plus two-state Flow capability rendering now
-  passes at ordinary scale across all four release viewports plus 200%
-  browser-zoom equivalence and text-only 200% at desktop/narrow viewports
-- the remaining rendered-literal and localization audit beyond the proven
-  Code/Requests/Flow capability-state slice, including every other primary
-  surface and transient state
+Work previously listed here as “remaining Phase 1 acceptance” is reassigned to
+its owning gate:
+
+- exhaustive localization, reduced-motion, responsive-state, page-level
+  keyboard, and focused manual assistive-technology coverage belong to Phase 7
+- other-platform picker journeys, packaged-native keyboard behavior, signing,
+  installation, update, rollback, and soak evidence belong to Phase 8
+- further typed surface adoption may continue when it supports a concrete
+  later-phase requirement, but it is not an open-ended Phase 1 quota
 
 The browser-host clean-workspace quickstart is complete. It is not evidence for
 packaged-app launch, native picker interaction, signing, or clean-machine
@@ -655,18 +647,17 @@ Advanced setup details remain available behind an explicit disclosure.
 
 Audit global navigation and visible copy.
 
-Primary navigation should be expressed in user language:
+Primary navigation is expressed in user language:
 
-- Books or Desk
+- Desk
 - Wiki
 - Code
-- Runs
-- Review
-- Publish
+- Flow
+- Packs
 
-Flow, Packs, services, and diagnostics should appear only where their role is
-clear. If they remain top-level destinations, each must answer one distinct
-user question and avoid duplicating actions from another surface.
+Requests, Runs, Review, and Publish remain attached to the selected book as
+second-level Wiki tabs. Services and diagnostics appear only where their role
+is clear, with technical detail behind explicit disclosure.
 
 #### 1.3 Empty, loading, offline, and error states
 
@@ -752,6 +743,9 @@ Phase 1 is complete when a new user can:
 - edit and save durable content
 - understand why Code or Town features are unavailable
 - recover from setup failure without opening repository documentation
+
+**Gate result:** passed locally. See
+`docs/PHASE_1_CLOSURE_2026-07-27.md`.
 
 ### Non-goals
 
@@ -1570,9 +1564,10 @@ This is not evidence for complete page-level focus order, announcements in a
 screen reader, every data/capability state, or packaged native keyboard input.
 
 The persistent shell now has one native skip link and exactly one named `main`
-landmark for each of Home, Pages, Code, Requests, Runs, Review, Publish, Flow,
-and Packs. Both rendered primary-navigation forms are named, and one predicate
-drives visual selection, `aria-pressed`, and `aria-current`. Destination changes
+landmark for each of Desk, Wiki, Code, Requests, Runs, Review, Publish, Flow,
+and Packs. Both rendered primary-navigation forms and the Wiki tab navigation
+are named. One predicate drives visual selection, `aria-pressed`, and
+`aria-current`. Destination changes
 publish a factual polite/atomic status. Home/Desk file listing, selected
 preview, Pages search, Review, Requests, Runs, Publish, and Code session
 listing use the same isolated polite/atomic announcement helper; technical
@@ -1583,8 +1578,8 @@ The retained `moondesk-shared-shell-accessibility-proof.v1` evidence covers:
 - skip-link focus, visible focus indication, Enter activation, main focus
   transfer, and a non-trapping reverse/forward traversal at 1440×900, 1024×768,
   390×844, and 320×700
-- seven primary destinations in a 1440×900 desktop group and a 390×844 compact
-  group, for 14 keyboard-activated route cases
+- five primary destinations plus four nested Wiki destinations in a 1440×900
+  desktop group and a 390×844 compact group
 - matching DOM and CDP accessibility-tree navigation, current-state, main, and
   status semantics
 - a deterministic Pages Loading → RecoverableError → LegitimateZero sequence,
@@ -2074,30 +2069,14 @@ remain governed by the phase exit criteria above.
 
 Continue with:
 
-1. Obtain pull-request, push, and unsigned-preview tag-run evidence, then
-   independently reproduce the retained tag artifact.
-2. Repeat the packaged native-picker journey on every other supported desktop
-   platform. macOS launch, app-owned interaction, cancellation, rejection,
-   valid selection, active-root switching, saved-preference, and no-Refresh
-   relaunch restoration evidence are retained.
-3. Extend typed surface states beyond Home file listing, selected file/page
-   preview, Pages search, Review, Requests, Runs, Publish, Code session listing,
-   and Flow run listing. Requests and Code now have explicit
-   installation/configuration evidence, and Flow preparation has independent
-   structured readiness evidence that preserves durable run history. Add
-   equivalent evidence for remaining optional capabilities and unsupported-host
-   evidence on each supported desktop. Configured Town and Code service
-   executable/working-directory integrity is now proven before lifecycle writes
-   or process spawn.
-4. Extend the passing configured-empty-library journey, one/many-book
-   four-viewport selection matrix, bounded 320×700 layout, 200% browser-zoom
-   reflow, text-only 200% populated-Home proof, shared-shell landmark/live-region
-   proof, Command 062's 22-case screen-reader semantics/announcement proof, and
-   disclosure/focus proof into complete responsive page-level focus-order, the
-   four pending real-VoiceOver transcript rows, reduced-motion, and packaged
-   native keyboard cases.
-5. Draft the host/UI package dependency graph.
-6. Specify canonical, symlink-aware path APIs before changing file operations.
+1. Close Phase 2 by retaining pull-request, push, and unsigned-preview tag-run
+   evidence, then independently reproduce the retained tag artifact.
+2. Begin Phase 3 with the approved public-contract inventory and one typed
+   vertical slice.
+
+The broader UX matrix remains owned by Phase 7. Cross-platform packaged-app and
+picker evidence remains owned by Phase 8. Security design remains owned by
+Phase 5; do not pull those workstreams into the next phase by inference.
 
 Do not begin broad UI restructuring or package movement before the required
 Phase 0–3 gates establish the truth, CI evidence, and target contract.

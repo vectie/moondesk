@@ -185,10 +185,8 @@ function installMoonDeskShellStartup() {
       '1': 'mode-desk',
       '2': 'mode-wiki',
       '3': 'mode-code',
-      '4': 'mode-requests',
-      '5': 'mode-runs',
-      '6': 'mode-review',
-      '7': 'mode-publish',
+      '4': 'mode-flow',
+      '5': 'mode-packs',
       'k': 'command-palette-toggle',
     }[String(event.key || '').toLowerCase()]
     if (!target) return

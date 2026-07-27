@@ -4,7 +4,9 @@ Last updated: 2026-07-27.
 
 The active finite productization program is
 [`MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md`](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md).
-Phase 0 is complete locally. Its validation entrypoint, baseline metrics,
+Phases 0 and 1 are complete locally. Phase 1 closure evidence is recorded in
+[`PHASE_1_CLOSURE_2026-07-27.md`](PHASE_1_CLOSURE_2026-07-27.md). Phase 0's
+validation entrypoint, baseline metrics,
 source-ownership inventory, contradiction audit, and retained clean-checkout
 `scripts/validate.sh full` proof are complete. The proof and its explicit
 cross-product/remote-evidence boundary are recorded in
@@ -30,7 +32,8 @@ counts are retained in
 This is local artifact evidence only: no remote workflow or hosted release
 evidence is claimed.
 
-Phase 1 implementation now includes a private six-state capability model,
+Phase 1 is complete locally. Its implementation includes a private six-state
+capability model,
 honest daemon-to-state mapping, explicit host platform evidence,
 plain-language capability-owned setup copy and actions, and structured Requests
 automation mapping for running, configured/stopped, misconfigured, and
@@ -69,11 +72,11 @@ rendered-literal and localization audit. The phase also
 includes a private five-state cold-start classifier and honest Desk
 first-use presentation, and 4/4 focused tests. A single navigation-vocabulary
 source now drives the title bar, Pages activity rail, workspace summaries, and
-high-level command palette. The seven primary destinations are distinct and
-ordered Home, Pages, Code, Requests, Runs, Review, Publish; Flow and Packs are
-secondary Commands destinations. Pages retains only Pages, Search, Inbox, and
-Settings. Exact primary deep links, legacy aliases, Meta/Control+1 through +7,
-and the compact disclosure are covered. A real
+high-level command palette. The five primary destinations are restored and
+ordered Desk, Wiki, Code, Flow, Packs. Wiki contains Pages, Requests, Runs,
+Review, and Publish as second-level tabs. Pages retains Pages, Search, Inbox,
+and Settings. Exact primary and nested deep links, legacy aliases,
+Meta/Control+1 through +5, and the compact disclosure are covered. A real
 choose-library contract is now implemented with native manifest grants,
 validated/persisted host activation, cancellation/error handling, and focused
 host/UI tests. The browser-host clean-workspace quickstart now passes creation,
@@ -119,14 +122,14 @@ one selected predicate shared by visual state, `aria-pressed`, and
 `aria-current`. Destination changes have a factual polite/atomic announcement.
 The eight typed state surfaces use isolated polite/atomic announcements whose
 technical disclosures remain outside the live node. The current isolated
-screen-reader proof covers 18 route cases—Home, Pages, Code, Requests, Runs,
+screen-reader proof covers 18 route cases—Desk, Wiki, Code, Requests, Runs,
 Review, Publish, Flow, and Packs at 1440×900 and 390×844—plus the Commands
 dialog at both viewports and two exact live-region sequences. Every route
 requires one named main, one visible named primary navigation, coherent
 selected/current state, an H1-led heading sequence, no unnamed actions or
 exposed decorative glyphs, no duplicate role/name landmarks, and no shifted or
 overflowing viewport. The nine-change destination trace is exact and ignores
-Home Refresh; Pages emits exactly Loading → RecoverableError → Loading →
+Desk Refresh; Pages emits exactly Loading → RecoverableError → Loading →
 LegitimateZero without mutating the destination live region. Eight retained
 PNGs were inspected. That work found and fixed unnamed complementary
 landmarks, missing route H1s, an unnamed directory preview tab, exposed

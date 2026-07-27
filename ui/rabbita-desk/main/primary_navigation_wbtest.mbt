@@ -1,41 +1,50 @@
 ///|
 test "primary navigation order, hooks, and shortcuts are stable" {
   let items = primary_navigation_items()
-  assert_eq(items.length(), 7)
-  assert_eq(items[0].1, "Home")
-  assert_eq(items[1].1, "Pages")
+  assert_eq(items.length(), 5)
+  assert_eq(items[0].1, "Desk")
+  assert_eq(items[1].1, "Wiki")
   assert_eq(items[2].1, "Code")
-  assert_eq(items[3].1, "Requests")
-  assert_eq(items[4].1, "Runs")
-  assert_eq(items[5].1, "Review")
-  assert_eq(items[6].1, "Publish")
+  assert_eq(items[3].1, "Flow")
+  assert_eq(items[4].1, "Packs")
   assert_eq(items[0].2, "mode-desk")
   assert_eq(items[1].2, "mode-wiki")
   assert_eq(items[2].2, "mode-code")
-  assert_eq(items[3].2, "mode-requests")
-  assert_eq(items[4].2, "mode-runs")
-  assert_eq(items[5].2, "mode-review")
-  assert_eq(items[6].2, "mode-publish")
+  assert_eq(items[3].2, "mode-flow")
+  assert_eq(items[4].2, "mode-packs")
   assert_eq(items[0].3, "Meta+1 Control+1")
-  assert_eq(items[6].3, "Meta+7 Control+7")
+  assert_eq(items[4].3, "Meta+5 Control+5")
 }
 
 ///|
 #warnings("-alert_unstable")
-test "title bar renders desktop and compact navigation with unique hooks" {
+test "title bar restores primary modes and nests Wiki work as tabs" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let markup = @rabbita.render_to_string(
-    @rabbita.static_cell(render_title_bar(dispatch, init_model())),
+    @rabbita.static_cell(
+      render_title_bar(dispatch, {
+        ..init_model(),
+        workspace_mode: RequestsWorkspace,
+      }),
+    ),
   )
-  assert_true(markup.contains("data-testid=\"mode-requests\""))
-  assert_true(markup.contains("data-testid=\"mode-publish\""))
+  assert_true(markup.contains("data-testid=\"mode-flow\""))
+  assert_true(markup.contains("data-testid=\"mode-packs\""))
   assert_true(markup.contains("data-testid=\"primary-nav-summary\""))
-  assert_true(markup.contains("data-testid=\"compact-mode-requests\""))
-  assert_true(markup.contains("data-testid=\"compact-mode-publish\""))
-  assert_true(markup.contains("aria-keyshortcuts=\"Meta+7 Control+7\""))
-  assert_eq(markup.split("role=\"navigation\"").length(), 3)
+  assert_true(markup.contains("data-testid=\"compact-mode-flow\""))
+  assert_true(markup.contains("data-testid=\"compact-mode-packs\""))
+  assert_true(markup.contains("data-testid=\"wiki-tab-pages\""))
+  assert_true(markup.contains("data-testid=\"wiki-tab-requests\""))
+  assert_true(markup.contains("data-testid=\"wiki-tab-runs\""))
+  assert_true(markup.contains("data-testid=\"wiki-tab-review\""))
+  assert_true(markup.contains("data-testid=\"wiki-tab-publish\""))
+  assert_false(markup.contains("data-testid=\"mode-requests\""))
+  assert_false(markup.contains("data-testid=\"compact-mode-publish\""))
+  assert_true(markup.contains("aria-keyshortcuts=\"Meta+5 Control+5\""))
+  assert_eq(markup.split("role=\"navigation\"").length(), 4)
   assert_eq(markup.split("aria-label=\"Primary destinations\"").length(), 3)
-  assert_eq(markup.split("aria-current=\"page\"").length(), 3)
+  assert_eq(markup.split("aria-label=\"Wiki sections\"").length(), 2)
+  assert_eq(markup.split("aria-current=\"page\"").length(), 4)
 }
 
 ///|
@@ -61,7 +70,7 @@ test "primary destination selection enters typed loading states" {
 }
 
 ///|
-test "every primary destination palette retains secondary tools" {
+test "every workspace palette retains primary modes and Wiki tabs" {
   for
     mode in [
       Desk,
@@ -73,8 +82,8 @@ test "every primary destination palette retains secondary tools" {
       PublishWorkspace,
     ] {
     let titles = palette_commands_for_mode(mode).map(command => command.0)
-    assert_true(titles.contains("Open Home"))
-    assert_true(titles.contains("Open Pages"))
+    assert_true(titles.contains("Open Desk"))
+    assert_true(titles.contains("Open Wiki"))
     assert_true(titles.contains("Open Code"))
     assert_true(titles.contains("Open Requests"))
     assert_true(titles.contains("Open Runs"))

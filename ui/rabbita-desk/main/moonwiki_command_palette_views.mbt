@@ -97,9 +97,9 @@ fn palette_commands_for_mode(
 ///|
 fn primary_palette_commands() -> Array[(String, String, Msg)] {
   [
-    ("Open Home", "Browse books and outputs", SelectWorkspaceMode(Desk)),
+    ("Open Desk", "Browse books and outputs", SelectWorkspaceMode(Desk)),
     (
-      "Open Pages",
+      "Open Wiki",
       "Read and organize the selected book",
       SelectWorkspaceMode(MoonWiki),
     ),
@@ -108,32 +108,6 @@ fn primary_palette_commands() -> Array[(String, String, Msg)] {
       "Work with code in the selected book",
       SelectWorkspaceMode(MoonCode),
     ),
-    (
-      "Open Requests",
-      "Start and follow requested work",
-      SelectWorkspaceMode(RequestsWorkspace),
-    ),
-    (
-      "Open Runs",
-      "Inspect execution history and results",
-      SelectWorkspaceMode(RunsWorkspace),
-    ),
-    (
-      "Open Review",
-      "Decide proposed changes",
-      SelectWorkspaceMode(ReviewWorkspace),
-    ),
-    (
-      "Open Publish",
-      "Check readiness and open published output",
-      SelectWorkspaceMode(PublishWorkspace),
-    ),
-  ]
-}
-
-///|
-fn secondary_tool_palette_commands() -> Array[(String, String, Msg)] {
-  [
     (
       "Open Flow",
       "Track outcomes, blockers, evidence, and next actions",
@@ -148,10 +122,36 @@ fn secondary_tool_palette_commands() -> Array[(String, String, Msg)] {
 }
 
 ///|
+fn secondary_tool_palette_commands() -> Array[(String, String, Msg)] {
+  [
+    (
+      "Open Requests",
+      "Open the Requests tab under Wiki",
+      SelectWorkspaceMode(RequestsWorkspace),
+    ),
+    (
+      "Open Runs",
+      "Open the Runs tab under Wiki",
+      SelectWorkspaceMode(RunsWorkspace),
+    ),
+    (
+      "Open Review",
+      "Open the Review tab under Wiki",
+      SelectWorkspaceMode(ReviewWorkspace),
+    ),
+    (
+      "Open Publish",
+      "Open the Publish tab under Wiki",
+      SelectWorkspaceMode(PublishWorkspace),
+    ),
+  ]
+}
+
+///|
 fn shared_palette_command_title(title : String) -> Bool {
-  title == "Open Home" ||
-  title == "Browse Home" ||
-  title == "Open Pages" ||
+  title == "Open Desk" ||
+  title == "Browse Desk" ||
+  title == "Open Wiki" ||
   title == "Open Code" ||
   title == "Open Requests" ||
   title == "Open Runs" ||
@@ -180,7 +180,7 @@ fn secondary_palette_commands_for_mode(
           SelectWorkspaceMode(MoonFlow),
         ),
         (
-          "Browse Home",
+          "Browse Desk",
           "Open MoonBooks and pack-owned artifacts",
           SelectWorkspaceMode(Desk),
         ),
@@ -193,12 +193,12 @@ fn secondary_palette_commands_for_mode(
           SelectWorkspaceMode(PackHome),
         ),
         (
-          "Browse Home",
+          "Browse Desk",
           "Open the virtual filesystem for MoonBooks",
           SelectWorkspaceMode(Desk),
         ),
         (
-          "Open Pages",
+          "Open Wiki",
           "Open pages for the selected book",
           SelectWorkspaceMode(MoonWiki),
         ),
@@ -251,7 +251,7 @@ fn secondary_palette_commands_for_mode(
     MoonCode =>
       [
         (
-          "Browse Home",
+          "Browse Desk",
           "Open the virtual filesystem for MoonBooks",
           SelectWorkspaceMode(Desk),
         ),
@@ -305,7 +305,7 @@ fn secondary_palette_commands_for_mode(
           SelectWorkspaceMode(MoonFlow),
         ),
         (
-          "Open Pages",
+          "Open Wiki",
           "Inspect the executable document behind this work",
           SelectWorkspaceMode(MoonWiki),
         ),
@@ -315,7 +315,7 @@ fn secondary_palette_commands_for_mode(
           SelectWorkspaceMode(MoonCode),
         ),
         (
-          "Browse Home",
+          "Browse Desk",
           "Inspect MoonBook files and generated artifacts",
           SelectWorkspaceMode(Desk),
         ),
@@ -367,10 +367,12 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
             .data_set("testid", "primary-nav-summary")
             .aria_label(
               "Current destination: " +
-              workspace_mode_label(model.workspace_mode) +
+              workspace_mode_label(
+                primary_navigation_mode(model.workspace_mode),
+              ) +
               ". Choose a destination",
             ),
-          workspace_mode_label(model.workspace_mode),
+          workspace_mode_label(primary_navigation_mode(model.workspace_mode)),
         ),
         div(
           class="primary-nav-compact-menu",
@@ -387,6 +389,7 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         ),
       ],
     ),
+    render_wiki_workspace_tabs(dispatch, model),
     div(class="title-copy", [
       span(class="app-dot", ""),
       h1("MoonDesk"),
@@ -416,14 +419,60 @@ fn render_title_bar(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
 ///|
 fn primary_navigation_items() -> Array[(WorkspaceMode, String, String, String)] {
   [
-    (Desk, "Home", "mode-desk", "Meta+1 Control+1"),
-    (MoonWiki, "Pages", "mode-wiki", "Meta+2 Control+2"),
+    (Desk, "Desk", "mode-desk", "Meta+1 Control+1"),
+    (MoonWiki, "Wiki", "mode-wiki", "Meta+2 Control+2"),
     (MoonCode, "Code", "mode-code", "Meta+3 Control+3"),
-    (RequestsWorkspace, "Requests", "mode-requests", "Meta+4 Control+4"),
-    (RunsWorkspace, "Runs", "mode-runs", "Meta+5 Control+5"),
-    (ReviewWorkspace, "Review", "mode-review", "Meta+6 Control+6"),
-    (PublishWorkspace, "Publish", "mode-publish", "Meta+7 Control+7"),
+    (MoonFlow, "Flow", "mode-flow", "Meta+4 Control+4"),
+    (PackHome, "Packs", "mode-packs", "Meta+5 Control+5"),
   ]
+}
+
+///|
+fn primary_navigation_mode(mode : WorkspaceMode) -> WorkspaceMode {
+  match mode {
+    RequestsWorkspace | RunsWorkspace | ReviewWorkspace | PublishWorkspace =>
+      MoonWiki
+    _ => mode
+  }
+}
+
+///|
+fn wiki_workspace_tab_items() -> Array[(WorkspaceMode, String, String)] {
+  [
+    (MoonWiki, "Pages", "wiki-tab-pages"),
+    (RequestsWorkspace, "Requests", "wiki-tab-requests"),
+    (RunsWorkspace, "Runs", "wiki-tab-runs"),
+    (ReviewWorkspace, "Review", "wiki-tab-review"),
+    (PublishWorkspace, "Publish", "wiki-tab-publish"),
+  ]
+}
+
+///|
+fn render_wiki_workspace_tabs(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  if primary_navigation_mode(model.workspace_mode) != MoonWiki {
+    return @html.nothing
+  }
+  div(
+    class="workspace-tab-nav",
+    attrs=@html.Attrs::build().role("navigation").aria_label("Wiki sections"),
+    wiki_workspace_tab_items().map(item => {
+      let (mode, label, test_id) = item
+      let selected = model.workspace_mode == mode
+      button(
+        class=if selected { "workspace-tab active" } else { "workspace-tab" },
+        attrs=@html.Attrs::build()
+          .aria_pressed(if selected { "true" } else { "false" })
+          .aria_current(if selected { "page" } else { "false" })
+          .data_set("testid", test_id),
+        title="Open " + label,
+        on_click=dispatch(SelectWorkspaceMode(mode)),
+        label,
+      )
+    }),
+  )
 }
 
 ///|
@@ -434,7 +483,7 @@ fn render_primary_navigation_button(
   test_id : String,
   shortcut : String,
 ) -> @rabbita.Html {
-  let selected = model.workspace_mode == mode
+  let selected = primary_navigation_mode(model.workspace_mode) == mode
   button(
     class=if selected { "mode-button active" } else { "mode-button" },
     attrs=@html.Attrs::build()

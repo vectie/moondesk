@@ -2613,16 +2613,22 @@ async function runQuickstartBeforeRestart() {
     );
 
     await runQuickstartMoonCode(session);
-    await clickTestId(session, "mode-review");
+    await clickTestId(session, "mode-wiki");
     await waitFor(
       session,
-      `document.querySelector('[data-testid="mode-review"]')?.getAttribute('aria-pressed') === 'true' && ` +
+      `!!document.querySelector('[data-testid="wiki-tab-review"]')`,
+      "quickstart Wiki tabs after Code",
+    );
+    await clickTestId(session, "wiki-tab-review");
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="wiki-tab-review"]')?.getAttribute('aria-pressed') === 'true' && ` +
         `location.search.includes('activity=review') && ` +
         `document.querySelector('[data-testid="review-state-panel"]')?.dataset.state === 'legitimate-zero' && ` +
         `document.querySelector('[data-testid="review-state-panel"]')?.textContent.includes('Nothing needs review')`,
       "quickstart honest Review result",
     );
-    await clickTestId(session, "mode-publish");
+    await clickTestId(session, "wiki-tab-publish");
     await waitFor(
       session,
       `location.search.includes('activity=publish') && ` +
@@ -3040,27 +3046,20 @@ const sharedShellAccessibilityViewports = [
 ];
 
 const sharedShellDestinations = [
-  { label: "Home", testid: "mode-desk", compactTestid: "compact-mode-desk", activity: "home" },
-  { label: "Pages", testid: "mode-wiki", compactTestid: "compact-mode-wiki", activity: "pages" },
+  { label: "Desk", testid: "mode-desk", compactTestid: "compact-mode-desk", activity: "home" },
+  { label: "Wiki", testid: "mode-wiki", compactTestid: "compact-mode-wiki", activity: "pages" },
   { label: "Code", testid: "mode-code", compactTestid: "compact-mode-code", activity: "code" },
   {
-    label: "Requests",
-    testid: "mode-requests",
-    compactTestid: "compact-mode-requests",
-    activity: "requests",
-  },
-  { label: "Runs", testid: "mode-runs", compactTestid: "compact-mode-runs", activity: "runs" },
-  {
-    label: "Review",
-    testid: "mode-review",
-    compactTestid: "compact-mode-review",
-    activity: "review",
+    label: "Flow",
+    testid: "mode-flow",
+    compactTestid: "compact-mode-flow",
+    activity: "flow",
   },
   {
-    label: "Publish",
-    testid: "mode-publish",
-    compactTestid: "compact-mode-publish",
-    activity: "publish",
+    label: "Packs",
+    testid: "mode-packs",
+    compactTestid: "compact-mode-packs",
+    activity: "packs",
   },
 ];
 
@@ -3075,7 +3074,7 @@ async function navigateToAccessibilityHome(session, viewport) {
     session,
     `document.readyState === 'complete' && ` +
       `document.querySelector('[data-testid="mode-desk"]')?.getAttribute('aria-current') === 'page' && ` +
-      `document.querySelector('#moondesk-main-content')?.getAttribute('aria-label') === 'Home workspace' && ` +
+      `document.querySelector('#moondesk-main-content')?.getAttribute('aria-label') === 'Desk workspace' && ` +
       `document.querySelectorAll('[data-testid="desk-workspace-row"]').length === 4 && ` +
       `document.activeElement === document.body`,
     `fresh accessibility Home at ${viewport.width}x${viewport.height}`,
@@ -3232,7 +3231,7 @@ async function runSkipLandmarkAccessibilityCase(session, viewport) {
     '[data-testid="destination-announcement"]',
   );
   assert(
-    mainAx.role === "main" && mainAx.name === "Home workspace",
+    mainAx.role === "main" && mainAx.name === "Desk workspace",
     `${label} main AX contract mismatch: ${JSON.stringify(mainAx)}`,
   );
   assertAxPoliteAtomicStatus(destinationAx, `${label} destination`);
@@ -3389,8 +3388,10 @@ async function assertDestinationAccessibility(
       state.announcement?.atomic === "true",
     `${destination.label} announcement mismatch: ${JSON.stringify(state)}`,
   );
+  const expectedVisibleNavigationCount =
+    destination.label === "Wiki" ? 2 : 1;
   assert(
-    state.visibleNavigationCount === 1 &&
+    state.visibleNavigationCount === expectedVisibleNavigationCount &&
       !state.horizontalOverflow &&
       state.overlaps.length === 0,
     `${destination.label} shell geometry mismatch: ${JSON.stringify(state)}`,
@@ -3591,6 +3592,9 @@ async function runDestinationAccessibilityCase(session, viewport) {
   const routes = [];
   for (let index = 0; index < sharedShellDestinations.length; index += 1) {
     const destination = sharedShellDestinations[index];
+    const flowComposition = destination.label === "Flow"
+      ? await installScreenReaderFlowComposition(session)
+      : null;
     await activateDestinationByKeyboard(
       session,
       viewport,
@@ -3605,11 +3609,12 @@ async function runDestinationAccessibilityCase(session, viewport) {
     );
     if (
       viewport.width === 1440 &&
-      destination.label === "Pages"
+      destination.label === "Wiki"
     ) {
       route.stateTransitions = await proveSearchStateAnnouncements(session);
     }
     routes.push(route);
+    await flowComposition?.close();
   }
   const screenshot = await captureDeskScreenshot(
     session,
@@ -5072,8 +5077,8 @@ async function runAccessibility() {
     assert(skipCases.length === 4, "Accessibility proof requires four skip cases");
     assert(
       destinationCases.length === 2 &&
-        destinationCases.every(item => item.routeCount === 7),
-      "Accessibility proof requires two seven-destination cases",
+        destinationCases.every(item => item.routeCount === 5),
+      "Accessibility proof requires two five-destination cases",
     );
     assert(
       stateTransitionCount === 3,
@@ -6195,11 +6200,17 @@ async function runEmptyLibrary() {
         `document.querySelectorAll('[data-testid="desk-workspace-row"]').length === 1`,
       "loaded Desk before MoonGate recovery",
     );
-    await clickTestId(session, "mode-requests");
+    await clickTestId(session, "mode-wiki");
+    await waitFor(
+      session,
+      `!!document.querySelector('[data-testid="wiki-tab-requests"]')`,
+      "Wiki tabs after empty-library creation",
+    );
+    await clickTestId(session, "wiki-tab-requests");
     await waitFor(
       session,
       `location.search.includes('activity=requests') && ` +
-        `document.querySelector('[data-testid="mode-requests"]')?.getAttribute('aria-pressed') === 'true'`,
+        `document.querySelector('[data-testid="wiki-tab-requests"]')?.getAttribute('aria-pressed') === 'true'`,
       "Requests navigation after empty-library creation",
     );
     await waitFor(
@@ -6226,7 +6237,7 @@ async function runEmptyLibrary() {
       `document.querySelector('[data-testid="requests-submit"]')?.disabled === false`,
       "Requests composer remains enabled without automation",
     );
-    await clickTestId(session, "mode-runs");
+    await clickTestId(session, "wiki-tab-runs");
     await waitFor(
       session,
       `location.search.includes('activity=runs') && ` +
@@ -6235,14 +6246,14 @@ async function runEmptyLibrary() {
         `document.querySelector('[data-testid="runs-state-panel"]')?.textContent.includes('No runs yet')`,
       "honest empty Runs destination",
     );
-    await clickTestId(session, "mode-review");
+    await clickTestId(session, "wiki-tab-review");
     await waitFor(
       session,
       `location.search.includes('activity=review') && ` +
         `document.querySelector('[data-testid="review-state-panel"]')?.dataset.state === 'legitimate-zero'`,
       "honest empty Review destination",
     );
-    await clickTestId(session, "mode-publish");
+    await clickTestId(session, "wiki-tab-publish");
     await waitFor(
       session,
       `location.search.includes('activity=publish') && ` +
@@ -6259,7 +6270,7 @@ async function runEmptyLibrary() {
         `document.querySelectorAll('.rail-buttons .rail-button').length === 4 && ` +
         `!document.querySelector('[data-testid="activity-activity"]') && ` +
         `!document.querySelector('[data-testid="activity-review"]')`,
-      "Pages rail excludes primary destinations",
+      "Wiki page rail excludes workflow tabs",
     );
     await setViewport(session, 320, 700);
     await waitFor(
@@ -6282,17 +6293,30 @@ async function runEmptyLibrary() {
       "keyboard-opened compact primary navigation",
     );
     const compactRequestsFocused = await session.evaluate(`(() => {
-      const button = document.querySelector('[data-testid="compact-mode-requests"]');
+      const button = document.querySelector('[data-testid="compact-mode-wiki"]');
       button?.focus();
       return document.activeElement === button;
     })()`);
-    assert(compactRequestsFocused, "Compact Requests action cannot receive focus");
+    assert(compactRequestsFocused, "Compact Wiki action cannot receive focus");
+    await dispatchKey(session, " ", "Space");
+    await waitFor(
+      session,
+      `location.search.includes('activity=pages') && ` +
+        `!!document.querySelector('[data-testid="wiki-tab-requests"]')`,
+      "keyboard-operated compact Wiki destination",
+    );
+    const compactRequestsTabFocused = await session.evaluate(`(() => {
+      const button = document.querySelector('[data-testid="wiki-tab-requests"]');
+      button?.focus();
+      return document.activeElement === button;
+    })()`);
+    assert(compactRequestsTabFocused, "Compact Requests tab cannot receive focus");
     await dispatchKey(session, " ", "Space");
     await waitFor(
       session,
       `location.search.includes('activity=requests') && ` +
         `!!document.querySelector('[data-testid="requests-state-panel"]')`,
-      "keyboard-operated compact Requests destination",
+      "keyboard-operated compact Requests tab",
     );
     await setViewport(session, 1440, 900);
     await clickTestId(session, "mode-desk");
@@ -6976,15 +7000,15 @@ async function proveCompactNavigationTransient(session, viewport, index) {
   );
   const destination = await tabToTestId(
     session,
-    "compact-mode-requests",
+    "compact-mode-wiki",
     trace,
     label,
   );
-  assertUsableKeyboardFocus(destination, `${label} Requests destination`);
+  assertUsableKeyboardFocus(destination, `${label} Wiki destination`);
   assert(
     destination.detailsSummaryTestid === "primary-nav-summary" &&
       destination.detailsOpen,
-    `${label} Requests destination escaped the open navigation: ` +
+    `${label} Wiki destination escaped the open navigation: ` +
       `${JSON.stringify(destination)}`,
   );
   const screenshot = await captureDeskScreenshot(
@@ -7181,16 +7205,28 @@ const screenReaderDestinations = [
     source: "primary-navigation",
   })),
   {
-    label: "Flow",
-    activity: "flow",
+    label: "Requests",
+    activity: "requests",
     source: "command-palette",
-    command: "Open Flow",
+    command: "Open Requests",
   },
   {
-    label: "Packs",
-    activity: "packs",
+    label: "Runs",
+    activity: "runs",
     source: "command-palette",
-    command: "Open Packs",
+    command: "Open Runs",
+  },
+  {
+    label: "Review",
+    activity: "review",
+    source: "command-palette",
+    command: "Open Review",
+  },
+  {
+    label: "Publish",
+    activity: "publish",
+    source: "command-palette",
+    command: "Open Publish",
   },
 ];
 
@@ -7545,8 +7581,7 @@ async function proveScreenReaderRouteCase(
   const headingSkips = dom.headings.slice(1).filter((heading, headingIndex) =>
     heading.level > dom.headings[headingIndex].level + 1
   );
-  const expectedPrimarySelection =
-    destination.source === "primary-navigation" ? 1 : 0;
+  const expectedPrimarySelection = 1;
   assert(
     dom.mainCount === 1 &&
       dom.mainIdCount === 1 &&
@@ -7617,7 +7652,7 @@ async function proveScreenReaderRouteCase(
       `${JSON.stringify({ dom: dom.announcement, ax: announcement })}`,
   );
   let screenshot = "";
-  if (["Home", "Flow"].includes(destination.label)) {
+  if (["Desk", "Flow"].includes(destination.label)) {
     screenshot = await captureDeskScreenshot(
       session,
       `desk-screen-reader-${destination.activity}-${viewport.width}x${viewport.height}`,
@@ -7913,14 +7948,7 @@ async function proveDestinationAnnouncementSequence(session) {
     traceKey,
     '[data-testid="destination-announcement"]',
   );
-  const expectedLabels = [
-    "Pages",
-    "Code",
-    "Requests",
-    "Runs",
-    "Review",
-    "Publish",
-  ];
+  const expectedLabels = ["Wiki", "Code", "Flow", "Packs"];
   for (let index = 0; index < expectedLabels.length; index += 1) {
     const destination = sharedShellDestinations[index + 1];
     await dispatchKey(
@@ -7937,7 +7965,10 @@ async function proveDestinationAnnouncementSequence(session) {
     );
     await waitTwoAnimationFrames(session);
   }
-  for (const destination of screenReaderDestinations.slice(7)) {
+  const nestedWikiDestinations = screenReaderDestinations.filter(
+    destination => destination.source === "command-palette",
+  );
+  for (const destination of nestedWikiDestinations) {
     await activateScreenReaderPaletteCommand(
       session,
       destination.command,
@@ -7955,8 +7986,8 @@ async function proveDestinationAnnouncementSequence(session) {
   await waitFor(
     session,
     `document.querySelector('#moondesk-main-content')?.getAttribute(` +
-      `'aria-label') === "Home workspace"`,
-    "Home destination sequence",
+      `'aria-label') === "Desk workspace"`,
+    "Desk destination sequence",
   );
   await waitTwoAnimationFrames(session);
   const beforeUnrelated = await session.evaluate(`(() => {
@@ -7981,9 +8012,8 @@ async function proveDestinationAnnouncementSequence(session) {
   const result = await stopScreenReaderLiveTrace(session, traceKey);
   const expectedAnnouncements = [
     ...expectedLabels,
-    "Flow",
-    "Packs",
-    "Home",
+    ...nestedWikiDestinations.map(destination => destination.label),
+    "Desk",
   ].map(label =>
     `${label} destination. Selected book: Research Alpha.`
   );
@@ -8111,7 +8141,7 @@ async function provePagesSearchAnnouncementSequence(session) {
     session,
     `document.readyState === "complete" && ` +
       `document.querySelector('#moondesk-main-content')?.` +
-        `getAttribute('aria-label') === "Pages workspace" && ` +
+        `getAttribute('aria-label') === "Wiki workspace" && ` +
       `document.activeElement === document.body`,
     "Pages search announcement baseline",
   );

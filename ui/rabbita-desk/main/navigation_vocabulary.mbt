@@ -3,8 +3,8 @@
 fn workspace_mode_label(mode : WorkspaceMode) -> String {
   match mode {
     PackHome => "Packs"
-    Desk => "Home"
-    MoonWiki => "Pages"
+    Desk => "Desk"
+    MoonWiki => "Wiki"
     MoonCode => "Code"
     RequestsWorkspace => "Requests"
     RunsWorkspace => "Runs"

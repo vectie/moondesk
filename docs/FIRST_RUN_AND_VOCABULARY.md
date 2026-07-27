@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Phase 1 quickstart executable; broader Phase 1 acceptance open |
+| Status | Phase 1 complete locally |
 | Evidence | Current MoonBit views, state, and tests in `ui/rabbita-desk/main/`; `ui/rabbita-desk/DEVELOPMENT.md` |
 
 This document deliberately separates **current evidence** from **target behavior**. “Target” rows are requirements, not claims that the product already implements them.
@@ -13,11 +13,11 @@ MoonDesk helps you open or create a MoonBook and keeps its pages, files, convers
 
 ## Current evidence
 
-The shell now presents Home, Pages, Code, Requests, Runs, Review, and Publish
-as distinct primary destinations. The Pages activity rail contains Pages,
-Search, Inbox, and Settings; it no longer duplicates Requests or Review. Flow
-and Packs remain secondary Commands destinations. Exact primary routes and
-legacy aliases are both covered. Home renders a `MoonBooks` workspace list,
+The shell presents Desk, Wiki, Code, Flow, and Packs as its five primary
+destinations. Wiki owns second-level Pages, Requests, Runs, Review, and Publish
+tabs. The Pages activity rail contains Pages, Search, Inbox, and Settings.
+Exact primary and nested routes and legacy aliases are covered. Desk renders a
+`MoonBooks` workspace list,
 library location, refresh control, capability setup, new-book panel, file
 browser, details, quick access, and folder outline. Code has session,
 transcript, activity, service, package/test/review, loading, retry, and error
@@ -65,9 +65,10 @@ history remains visible when preparation is explicitly unavailable; only
 also refuses a dispatched preparation action. Missing readiness evidence from
 an older host preserves the earlier structured behavior.
 
-Responsive and keyboard behavior exists in parts of the UI, but
-the four acceptance sizes below are not comprehensively proven by source tests.
-This is evidence for a bounded Phase 1 slice, not a Phase 1 completion claim.
+The Phase 1 user-facing gate is complete. Its clean-workspace, capability,
+navigation, and durability evidence is mapped in
+`PHASE_1_CLOSURE_2026-07-27.md`. Exhaustive responsive, localization, and
+assistive-technology matrices remain owned by Phase 7.
 
 ## Implemented bounded cold-start evidence
 
@@ -327,8 +328,8 @@ acceptance.
 
 | Current | Target label | Target destination contract |
 | --- | --- | --- |
-| Desk | Home | Book choice, files, recent work, first-run setup |
-| Wiki | Pages | Read, create, find, and edit book pages |
+| Desk | Desk | Book choice, files, recent work, first-run setup |
+| Wiki | Wiki | Read, create, find, and edit book pages |
 | Code | Code | Conversations and code-oriented work for the selected book |
 | Town | Requests | Queued/scheduled requests without service topology |
 | Runs | Runs | Evidence-backed current and historical execution |
@@ -336,22 +337,22 @@ acceptance.
 | Publish | Publish | Validate, package/export, and locate output |
 | Settings | Settings | Library, appearance, keyboard, and capabilities |
 
-Implemented primary order: **Home, Pages, Code, Requests, Runs, Review,
-Publish**; Settings is a Pages utility destination.
+Implemented primary order: **Desk, Wiki, Code, Flow, Packs**. Wiki contains
+**Pages, Requests, Runs, Review, Publish**; Settings is a Pages utility.
 
 ### Implemented bounded navigation evidence
 
-Command 013 introduced the shared vocabulary source. Command 026 completes the
-bounded primary-navigation structure: the desktop order is **Home**, **Pages**,
-**Code**, **Requests**, **Runs**, **Review**, **Publish**; Meta/Control+1 through
-+7 select those destinations; and every command palette exposes the same seven
-entries. Flow and Packs remain secondary Commands destinations.
+Command 013 introduced the shared vocabulary source. The corrected bounded
+navigation structure restores **Desk**, **Wiki**, **Code**, **Flow**, and
+**Packs** as the desktop order; Meta/Control+1 through +5 select those
+destinations. **Requests**, **Runs**, **Review**, and **Publish** remain
+available as Wiki tabs and through Commands.
 
 At 760 pixels and below, one native disclosure replaces the desktop strip. Its
-summary names the current destination, its seven actions have unique hooks, and
-real browser key events prove opening and selection at 320×700 without
-horizontal document overflow. Pages now owns only **Pages**, **Search**,
-**Inbox**, and **Settings** in its internal rail.
+summary names the current primary destination, its five actions have unique
+hooks, and the Wiki tab row provides the second level without horizontal
+document overflow. Pages owns **Pages**, **Search**, **Inbox**, and
+**Settings** in its internal rail.
 
 Exact routes `home`, `pages`, `code`, `requests`, `runs`, `review`, and
 `publish` select distinct workspace identities. Legacy aliases such as `desk`,
@@ -674,9 +675,9 @@ The machine-readable proof covers:
 - skip-link Tab/Enter, a visible three-pixel focus indicator, main-landmark
   focus transfer, and non-trapping Shift+Tab/Tab at 1440×900, 1024×768,
   390×844, and 320×700
-- all seven primary destinations in one desktop and one narrow route group,
-  using real keyboard activation and checking DOM state against the CDP
-  accessibility tree
+- all five primary destinations and four nested Wiki destinations in desktop
+  and narrow route groups, using real keyboard activation and checking DOM
+  state against the CDP accessibility tree
 - exactly one main landmark and one current destination per route, without
   horizontal overflow or pane overlap
 - deterministic Pages Loading, RecoverableError, and LegitimateZero
@@ -745,10 +746,10 @@ This bounded migration followed five explicit phases:
    dynamic template translation, exact accessibility-attribute behavior, and
    the single-language system option. Generated JavaScript syntax and
    byte-for-byte regeneration must also pass.
-5. **Keep the larger gate open.** This slice does not prove every literal in
+5. **Keep the later UX gate open.** This slice does not prove every literal in
    every rendered state, manual assistive output, or packaged-native locale
    behavior. Complete source/catalog/generated-output inventory and rendered
-   browser coverage remain required before Phase 1 can close.
+   browser coverage remain Phase 7 work and do not reopen Phase 1.
 
 ## Command 046 — explicit localization-key ownership
 

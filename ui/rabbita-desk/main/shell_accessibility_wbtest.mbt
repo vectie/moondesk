@@ -151,13 +151,15 @@ test "navigation selection and destination announcement share current mode" {
     ],
   }
   let markup = render_accessibility_test_html(render_title_bar(dispatch, model))
-  assert_eq(markup.split("role=\"navigation\"").length(), 3)
+  assert_eq(markup.split("role=\"navigation\"").length(), 4)
   assert_eq(markup.split("aria-label=\"Primary destinations\"").length(), 3)
-  assert_eq(markup.split("aria-current=\"page\"").length(), 3)
-  assert_eq(markup.split("aria-pressed=\"true\"").length(), 3)
+  assert_eq(markup.split("aria-label=\"Wiki sections\"").length(), 2)
+  assert_eq(markup.split("aria-current=\"page\"").length(), 4)
+  assert_eq(markup.split("aria-pressed=\"true\"").length(), 4)
   assert_eq(markup.split("aria-current=\"false\"").length(), 13)
   assert_eq(markup.split("class=\"mode-button active\"").length(), 3)
-  assert_true(markup.contains("data-testid=\"mode-runs\""))
+  assert_eq(markup.split("class=\"workspace-tab active\"").length(), 2)
+  assert_true(markup.contains("data-testid=\"wiki-tab-runs\""))
   assert_true(markup.contains("aria-keyshortcuts=\"Meta+5 Control+5\""))
   assert_true(
     markup.contains("Runs destination. Selected book: Research Alpha."),

@@ -1,10 +1,10 @@
 ///|
-test "desk command palette exposes every primary destination" {
+test "desk command palette exposes primary modes and Wiki tabs" {
   let titles = palette_commands_for_mode(Desk).map(command => command.0)
   assert_eq(titles.length(), 9)
   assert_true(titles.contains("Open Packs"))
-  assert_true(titles.contains("Open Home"))
-  assert_true(titles.contains("Open Pages"))
+  assert_true(titles.contains("Open Desk"))
+  assert_true(titles.contains("Open Wiki"))
   assert_true(titles.contains("Open Code"))
   assert_true(titles.contains("Open Flow"))
   assert_true(titles.contains("Open Requests"))
@@ -19,10 +19,11 @@ test "desk command palette exposes every primary destination" {
 }
 
 ///|
-test "wiki command palette exposes user jobs without runtime controls" {
+test "wiki command palette exposes its tabs without runtime controls" {
   let titles = palette_commands_for_mode(MoonWiki).map(command => command.0)
-  assert_eq(titles.length(), 12)
-  assert_true(titles.contains("Open Home"))
+  assert_eq(titles.length(), 13)
+  assert_true(titles.contains("Open Desk"))
+  assert_true(titles.contains("Open Wiki"))
   assert_true(titles.contains("Open Pages"))
   assert_true(titles.contains("Search Books"))
   assert_true(titles.contains("New Inbox Note"))
@@ -70,7 +71,7 @@ test "Pack Home command palette keeps normal work ahead of internals" {
   assert_eq(titles.length(), 9)
   assert_true(titles.contains("Open Packs"))
   assert_true(titles.contains("Open Flow"))
-  assert_true(titles.contains("Open Home"))
+  assert_true(titles.contains("Open Desk"))
 }
 
 ///|
@@ -78,9 +79,9 @@ test "MoonFlow palette keeps orchestration separate from editing" {
   let titles = palette_commands_for_mode(MoonFlow).map(command => command.0)
   assert_eq(titles.length(), 10)
   assert_true(titles.contains("Refresh Flow"))
-  assert_true(titles.contains("Open Pages"))
+  assert_true(titles.contains("Open Wiki"))
   assert_true(titles.contains("Open Code"))
-  assert_true(titles.contains("Open Home"))
+  assert_true(titles.contains("Open Desk"))
   assert_true(titles.contains("Open Packs"))
   assert_false(titles.contains("Run Daemon Tick"))
 }
