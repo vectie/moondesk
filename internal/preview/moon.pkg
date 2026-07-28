@@ -1,0 +1,5 @@
+import {
+  "vectie/moondesk/internal/pathx",
+}
+
+supported_targets = "native"

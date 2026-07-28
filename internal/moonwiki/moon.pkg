@@ -23,6 +23,7 @@ import {
   "vectie/moondesk/internal/mooncore",
   "vectie/moondesk/internal/mooncode",
   "vectie/moondesk/internal/pathx",
+  "vectie/moondesk/internal/preview",
   "vectie/moondesk/internal/review",
 }
 
