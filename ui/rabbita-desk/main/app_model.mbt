@@ -330,7 +330,7 @@ enum Msg {
   CancelMoonCodeWork(String, String)
   DecideMoonCodeTool(
     @mooncode_core.MoonCodeApproval,
-    @mooncode_core.MoonCodeApprovalDecision,
+    @mooncode_core.MoonCodeApprovalDecision
   )
   ManageMoonClaw(String)
   StartMoonClawAuth(String)

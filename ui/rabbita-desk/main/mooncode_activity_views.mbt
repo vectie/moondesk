@@ -310,7 +310,8 @@ fn render_mooncode_approval(
               .data_set("testid", "mooncode-reject-tool"),
             on_click=dispatch(
               DecideMoonCodeTool(
-                approval, @mooncode_core.MoonCodeApprovalDecision::Reject,
+                approval,
+                @mooncode_core.MoonCodeApprovalDecision::Reject,
               ),
             ),
             "Reject",
@@ -322,7 +323,8 @@ fn render_mooncode_approval(
               .data_set("testid", "mooncode-approve-tool"),
             on_click=dispatch(
               DecideMoonCodeTool(
-                approval, @mooncode_core.MoonCodeApprovalDecision::Approve,
+                approval,
+                @mooncode_core.MoonCodeApprovalDecision::Approve,
               ),
             ),
             "Approve",

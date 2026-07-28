@@ -95,11 +95,17 @@ fn update_mooncode_session_actions(
       mooncode_save_session_rename(dispatch, model, session_id)
     ArchiveMoonCodeSession(session_id) =>
       mooncode_start_session_storage_action(
-        dispatch, model, session_id, Archive,
+        dispatch,
+        model,
+        session_id,
+        Archive,
       )
     RestoreMoonCodeSession(session_id) =>
       mooncode_start_session_storage_action(
-        dispatch, model, session_id, Restore,
+        dispatch,
+        model,
+        session_id,
+        Restore,
       )
     RequestDeleteMoonCodeSession(session_id) =>
       (
@@ -118,9 +124,7 @@ fn update_mooncode_session_actions(
         @mooncode_core.CancelledBeforeRequest,
       )
     ConfirmDeleteMoonCodeSession(session_id) =>
-      mooncode_start_session_storage_action(
-        dispatch, model, session_id, Delete,
-      )
+      mooncode_start_session_storage_action(dispatch, model, session_id, Delete)
     _ => (@rabbita.none, model)
   }
 }

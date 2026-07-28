@@ -204,7 +204,10 @@ fn code_mode_test_turn(
   for step in steps {
     let evidence = mooncode_canonical_json_object_field(step, "evidence")
     if json_field_string(evidence, "kind", default="") == "approval" {
-      match @mooncode_core.decode_mooncode_approval(evidence, "session-approval", id) {
+      match
+        @mooncode_core.decode_mooncode_approval(
+          evidence, "session-approval", id,
+        ) {
         Ok(approval) => approvals.push(approval)
         Err(_) => ()
       }
@@ -2037,7 +2040,9 @@ test "code mode renders a pending approval inside its canonical work turn" {
               "item_id": "edit-before-approval",
               "title": "Edited manifest",
               "evidence": {
-                "kind": "edit", "path": "moon.pkg", "diff": "+ dependency",
+                "kind": "edit",
+                "path": "moon.pkg",
+                "diff": "+ dependency",
               },
             },
             {
@@ -2058,7 +2063,9 @@ test "code mode renders a pending approval inside its canonical work turn" {
               "item_id": "test-after-approval",
               "title": "Ran tests",
               "evidence": {
-                "kind": "test", "command": "moon test", "output": "ok",
+                "kind": "test",
+                "command": "moon test",
+                "output": "ok",
               },
             },
           ],
@@ -2099,7 +2106,8 @@ test "code mode renders a pending approval inside its canonical work turn" {
   let (_, approved) = update_mooncode_session_actions(
     code_mode_test_dispatch,
     DecideMoonCodeTool(
-      approval, @mooncode_core.MoonCodeApprovalDecision::Approve,
+      approval,
+      @mooncode_core.MoonCodeApprovalDecision::Approve,
     ),
     model,
   )
@@ -2107,7 +2115,8 @@ test "code mode renders a pending approval inside its canonical work turn" {
   let (_, rejected) = update_mooncode_session_actions(
     code_mode_test_dispatch,
     DecideMoonCodeTool(
-      approval, @mooncode_core.MoonCodeApprovalDecision::Reject,
+      approval,
+      @mooncode_core.MoonCodeApprovalDecision::Reject,
     ),
     model,
   )

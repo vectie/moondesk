@@ -135,7 +135,10 @@ fn typed_mooncode_command_body(submission : Json) -> Result[Json, String] {
 }
 
 ///|
-fn mooncode_command_body_with_creation_fields(encoded : Json, source : Json) -> Json {
+fn mooncode_command_body_with_creation_fields(
+  encoded : Json,
+  source : Json,
+) -> Json {
   guard encoded is Object(encoded_fields) && source is Object(source_fields) else {
     return encoded
   }

@@ -114,14 +114,19 @@ fn mooncode_start_session_storage_action(
                 },
               )
             Err(Conflict) =>
-              mooncode_cancel_delete_session(model, @mooncode_core.SessionActive)
+              mooncode_cancel_delete_session(
+                model,
+                @mooncode_core.SessionActive,
+              )
             Err(_) => (@rabbita.none, model)
             Ok(_) =>
               (
                 manage_mooncode_session_cmd(dispatch, session_id, action),
                 {
                   ..model,
-                  mooncode_session_management_status: mooncode_lifecycle_progress_copy(action),
+                  mooncode_session_management_status: mooncode_lifecycle_progress_copy(
+                    action,
+                  ),
                 },
               )
           }
@@ -130,7 +135,9 @@ fn mooncode_start_session_storage_action(
             manage_mooncode_session_cmd(dispatch, session_id, action),
             {
               ..model,
-              mooncode_session_management_status: mooncode_lifecycle_progress_copy(action),
+              mooncode_session_management_status: mooncode_lifecycle_progress_copy(
+                action,
+              ),
             },
           )
       }

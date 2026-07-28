@@ -210,11 +210,17 @@ fn mooncode_canonical_work_evidence(
         Some(approval) => {
           rows.push({
             item_id: json_field_string(step, "item_id", default=""),
-            kind: "approval", state: "",
+            kind: "approval",
+            state: "",
             title: json_field_string(step, "title", default="Approval"),
-            path: "", detail: json_field_string(step, "summary", default=""),
-            diff: "", command: "", output: "", exit_code: -1,
-            truncated: false, approval: Some(approval),
+            path: "",
+            detail: json_field_string(step, "summary", default=""),
+            diff: "",
+            command: "",
+            output: "",
+            exit_code: -1,
+            truncated: false,
+            approval: Some(approval),
           })
           approval_index += 1
         }
@@ -226,13 +232,7 @@ fn mooncode_canonical_work_evidence(
     let diff = json_field_string(evidence, "diff", default="")
     let command = json_field_string(evidence, "command", default="")
     let output = json_field_string(evidence, "output", default="")
-    if kind == "" ||
-      (
-        path == "" &&
-        diff == "" &&
-        command == "" &&
-        output == ""
-      ) {
+    if kind == "" || (path == "" && diff == "" && command == "" && output == "") {
       continue
     }
     rows.push({
