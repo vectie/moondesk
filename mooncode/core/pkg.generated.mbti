@@ -177,6 +177,10 @@ pub fn decode_mooncode_command(Json) -> Result[MoonCodeCommand, String]
 
 pub fn decode_mooncode_conversation(Json, current_revision? : Int) -> MoonCodeConversationDecodeResult
 
+pub fn decode_mooncode_lifecycle_action(Json) -> Result[MoonCodeLifecycleAction, MoonCodeLifecycleFailure]
+
+pub fn decode_mooncode_lifecycle_result(Json, expected_session_id~ : MoonCodeSessionId) -> Result[MoonCodeLifecycleResult, MoonCodeLifecycleFailure]
+
 pub fn decode_mooncode_selected_session(Json) -> MoonCodeSelectedSessionDecodeResult
 
 pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
@@ -192,6 +196,8 @@ pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
 pub fn encode_mooncode_command(MoonCodeCommand) -> Result[Json, String]
 
 pub fn encode_mooncode_conversation(MoonCodeConversation) -> Json
+
+pub fn encode_mooncode_lifecycle_action(MoonCodeLifecycleAction, book_root? : String) -> Json
 
 pub fn encode_mooncode_session_summary(MoonCodeSessionSummary) -> Json
 
@@ -288,6 +294,8 @@ pub fn model_planner_working_evidence_rule() -> String
 pub fn moonclaw_event_mapping_json() -> Json
 
 pub fn mooncode_capability() -> MoonCodeCapability
+
+pub fn mooncode_lifecycle_transition(MoonCodeLifecycleAction, MoonCodeSessionStatus, archived~ : Bool) -> Result[Unit, MoonCodeLifecycleFailure]
 
 pub fn mooncode_watch_cursor(Int, String) -> MoonCodeWatchCursor raise
 
@@ -1140,6 +1148,41 @@ pub(all) enum MoonCodeConversationDecodeResult {
   UnsupportedContract(String)
   Stale(revision~ : Int, current_revision~ : Int)
   Malformed(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeLifecycleAction {
+  Rename(String)
+  Archive
+  Restore
+  Delete
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeLifecycleFailure {
+  MalformedAction
+  UnsupportedAction(String)
+  InvalidTitle
+  TitleTooLong
+  NotFound
+  Conflict
+  RuntimeUnavailable
+  RuntimeFailure
+  InvalidResult(String)
+  UnsupportedProtocol(String)
+  WrongOwner(String)
+  WrongSession(expected~ : String, actual~ : String)
+} derive(Eq, @debug.Debug)
+
+pub struct MoonCodeLifecycleResult {
+  action : MoonCodeLifecycleAction
+  session_id : MoonCodeSessionId
+  title : String
+  archived : Bool
+  deleted : Bool
+}
+
+pub(all) enum MoonCodeLifecycleStopReason {
+  CancelledBeforeRequest
+  SessionActive
 } derive(Eq, @debug.Debug)
 
 pub(all) struct MoonCodeMessage {

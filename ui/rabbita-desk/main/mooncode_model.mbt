@@ -27,15 +27,3 @@ struct MoonCodeSession {
   canonical_unchanged : Bool?
   archived : Bool
 } derive(FromJson)
-
-///|
-struct MoonCodeSessionLifecycleResult {
-  kind : String
-  protocol : String
-  owner : String
-  action : String
-  session_id : String
-  title : String
-  archived : Bool
-  deleted : Bool
-} derive(FromJson)

@@ -99,15 +99,11 @@ type MoonCodeSessionEffect
 
 type MoonCodeSessionGroup
 
-type MoonCodeSessionLifecycleResult derive(@json.FromJson)
-
 type MoonCodeSummary derive(@json.FromJson)
 
 type MoonCodeTranscriptItem
 
 type MoonCodeTranscriptRow
-
-type MoonCodeWatchResponse derive(@json.FromJson)
 
 type MoonFlowArtifactOperatorProjection derive(@json.FromJson)
 
