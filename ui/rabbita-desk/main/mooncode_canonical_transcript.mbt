@@ -60,6 +60,7 @@ fn mooncode_canonical_turns_from_backend_conversation(
             backend_turn.command_id,
             backend_turn.client_turn_id,
             retry_prompt,
+            backend_turn.approvals,
           ) {
           Some(item) => turn.body_items.push(item)
           None => ()
@@ -139,11 +140,12 @@ fn mooncode_canonical_work_item_from_json(
   command_id : String,
   client_turn_id : String,
   retry_prompt : String,
+  approvals : Array[@mooncode_core.MoonCodeApproval],
 ) -> MoonCodeTranscriptItem? {
   let summary = json_field_string(work, "summary", default="").trim().to_owned()
   let status = json_field_string(work, "status", default="queued")
   let detail = mooncode_canonical_work_detail(work)
-  if summary == "" && detail == "" {
+  if summary == "" && detail == "" && approvals.length() == 0 {
     return None
   }
   Some(
@@ -167,7 +169,7 @@ fn mooncode_canonical_work_item_from_json(
       client_turn_id,
       session_id,
       retry_prompt,
-      evidence: mooncode_canonical_work_evidence(work),
+      evidence: mooncode_canonical_work_evidence(work, approvals),
     }),
   )
 }
@@ -194,23 +196,42 @@ fn mooncode_canonical_work_detail(work : Json) -> String {
 }
 
 ///|
-fn mooncode_canonical_work_evidence(work : Json) -> Array[MoonCodeEvidenceRow] {
+fn mooncode_canonical_work_evidence(
+  work : Json,
+  approvals : Array[@mooncode_core.MoonCodeApproval],
+) -> Array[MoonCodeEvidenceRow] {
   let rows : Array[MoonCodeEvidenceRow] = []
+  let mut approval_index = 0
   for step in json_field_json_array_items(work, "steps") {
     let evidence = mooncode_canonical_json_object_field(step, "evidence")
     let kind = json_field_string(evidence, "kind", default="")
+    if kind == "approval" {
+      match approvals.get(approval_index) {
+        Some(approval) => {
+          rows.push({
+            item_id: json_field_string(step, "item_id", default=""),
+            kind: "approval", state: "",
+            title: json_field_string(step, "title", default="Approval"),
+            path: "", detail: json_field_string(step, "summary", default=""),
+            diff: "", command: "", output: "", exit_code: -1,
+            truncated: false, approval: Some(approval),
+          })
+          approval_index += 1
+        }
+        None => ()
+      }
+      continue
+    }
     let path = json_field_string(evidence, "path", default="")
     let diff = json_field_string(evidence, "diff", default="")
     let command = json_field_string(evidence, "command", default="")
     let output = json_field_string(evidence, "output", default="")
-    let approval_id = json_field_string(evidence, "approval_id", default="")
     if kind == "" ||
       (
         path == "" &&
         diff == "" &&
         command == "" &&
-        output == "" &&
-        approval_id == ""
+        output == ""
       ) {
       continue
     }
@@ -226,14 +247,7 @@ fn mooncode_canonical_work_evidence(work : Json) -> Array[MoonCodeEvidenceRow] {
       output,
       exit_code: json_field_int(evidence, "exit_code", default=-1),
       truncated: json_field_bool(evidence, "truncated", default=false),
-      approval_id,
-      target_command_id: json_field_string(
-        evidence,
-        "target_command_id",
-        default="",
-      ),
-      tool_call_id: json_field_string(evidence, "tool_call_id", default=""),
-      arguments: json_field_string(evidence, "arguments", default=""),
+      approval: None,
     })
   }
   rows

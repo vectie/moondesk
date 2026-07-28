@@ -11,10 +11,7 @@ struct MoonCodeEvidenceRow {
   output : String
   exit_code : Int
   truncated : Bool
-  approval_id : String
-  target_command_id : String
-  tool_call_id : String
-  arguments : String
+  approval : @mooncode_core.MoonCodeApproval?
 }
 
 ///|
@@ -168,7 +165,7 @@ fn render_mooncode_evidence_list(
   }
   let children : Array[@rabbita.Html] = []
   for row in evidence {
-    children.push(render_mooncode_evidence(dispatch, model, session_id, row))
+    children.push(render_mooncode_evidence(dispatch, model, row))
   }
   div(class="mooncode-evidence-list", children)
 }
@@ -177,11 +174,10 @@ fn render_mooncode_evidence_list(
 fn render_mooncode_evidence(
   dispatch : Dispatch[Msg],
   model : Model,
-  session_id : String,
   row : MoonCodeEvidenceRow,
 ) -> @rabbita.Html {
-  if row.kind == "approval" {
-    return render_mooncode_approval(dispatch, session_id, row)
+  if row.approval is Some(_) {
+    return render_mooncode_approval(dispatch, row)
   }
   let has_detail = row.diff != "" ||
     row.command != "" ||
@@ -270,21 +266,27 @@ fn mooncode_evidence_label(row : MoonCodeEvidenceRow) -> String {
 ///|
 fn render_mooncode_approval(
   dispatch : Dispatch[Msg],
-  session_id : String,
   row : MoonCodeEvidenceRow,
 ) -> @rabbita.Html {
-  let pending = row.state == "pending"
+  guard row.approval is Some(approval) else { return @html.nothing }
+  let state = approval.state()
+  let pending = state is @mooncode_core.MoonCodeApprovalState::Pending
+  let state_name = match state {
+    @mooncode_core.MoonCodeApprovalState::Pending => "pending"
+    @mooncode_core.MoonCodeApprovalState::Approved => "approved"
+    @mooncode_core.MoonCodeApprovalState::Rejected => "rejected"
+  }
   div(
-    class="mooncode-approval " + row.state,
+    class="mooncode-approval " + state_name,
     attrs=@html.Attrs::build()
       .data_set("testid", "mooncode-approval")
-      .data_set("approval-id", row.approval_id)
-      .data_set("state", row.state),
+      .data_set("approval-id", approval.approval_id())
+      .data_set("state", state_name),
     [
       div(class="mooncode-approval-copy", [
         strong(if pending { "Approval needed" } else { row.title }),
         p(row.detail),
-        if row.arguments == "" {
+        if approval.arguments() == "" {
           @html.nothing
         } else {
           @html.node(
@@ -294,7 +296,7 @@ fn render_mooncode_approval(
               @html.node("summary", @html.Attrs::build(), [
                 span("Review operation"),
               ]),
-              pre(row.arguments),
+              pre(approval.arguments()),
             ],
           )
         },
@@ -308,11 +310,7 @@ fn render_mooncode_approval(
               .data_set("testid", "mooncode-reject-tool"),
             on_click=dispatch(
               DecideMoonCodeTool(
-                session_id,
-                "reject_tool",
-                row.approval_id,
-                row.target_command_id,
-                row.tool_call_id,
+                approval, @mooncode_core.MoonCodeApprovalDecision::Reject,
               ),
             ),
             "Reject",
@@ -324,11 +322,7 @@ fn render_mooncode_approval(
               .data_set("testid", "mooncode-approve-tool"),
             on_click=dispatch(
               DecideMoonCodeTool(
-                session_id,
-                "approve_tool",
-                row.approval_id,
-                row.target_command_id,
-                row.tool_call_id,
+                approval, @mooncode_core.MoonCodeApprovalDecision::Approve,
               ),
             ),
             "Approve",

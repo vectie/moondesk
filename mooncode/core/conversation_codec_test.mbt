@@ -22,7 +22,25 @@ fn conversation_fixture() -> Json {
           "status": "done",
           "future_message": true,
         },
-        "work": {},
+        "work": {
+          "steps": [
+            {
+              "kind": "tool",
+              "evidence": {
+                "kind": "approval",
+                "state": "pending",
+                "approval_id": "approval-a",
+                "target_command_id": "command-a",
+                "tool_call_id": "call-a",
+                "arguments": "{\"path\":\"src/main.mbt\"}",
+              },
+            },
+            {
+              "kind": "tool",
+              "evidence": { "kind": "result", "content": "ignored" },
+            },
+          ],
+        },
         "assistant": {
           "item_id": "turn-a:assistant",
           "role": "assistant",
@@ -49,6 +67,11 @@ test "canonical conversation codec decodes visible turns and messages" {
   assert_eq(turn.turn_id, "turn-a")
   assert_true(turn.user is Some(message) && message.content == "Fix it")
   assert_true(turn.assistant is Some(message) && message.content == "Fixed")
+  assert_eq(turn.approvals.length(), 1)
+  let approval = turn.approvals[0]
+  assert_eq(approval.approval_id(), "approval-a")
+  assert_eq(approval.state(), @core.MoonCodeApprovalState::Pending)
+  assert_eq(approval.arguments(), "{\"path\":\"src/main.mbt\"}")
 }
 
 ///|
@@ -90,6 +113,52 @@ test "canonical conversation codec distinguishes absence and malformed fields" {
     })
     is Malformed(_),
   )
+}
+
+///|
+test "canonical conversation codec rejects malformed, unsupported, and wrong-owner approvals" {
+  let cases : Array[Json] = [
+    {
+      "kind": "approval",
+      "state": "pending",
+      "approval_id": "",
+      "target_command_id": "command-a",
+      "tool_call_id": "call-a",
+      "arguments": "{}",
+    },
+    {
+      "kind": "approval",
+      "state": "expired",
+      "approval_id": "approval-a",
+      "target_command_id": "command-a",
+      "tool_call_id": "call-a",
+      "arguments": "{}",
+    },
+    {
+      "kind": "approval",
+      "state": "pending",
+      "approval_id": "approval-a",
+      "target_command_id": "command-b",
+      "tool_call_id": "call-a",
+      "arguments": "{}",
+    },
+  ]
+  for evidence in cases {
+    let fixture = conversation_fixture()
+    guard fixture is Object(fields) &&
+      fields.get("turns") is Some(Array(turns)) &&
+      turns[0] is Object(turn_fields) else {
+      fail("fixture shape changed")
+    }
+    let next_turn = turn_fields.copy()
+    next_turn["work"] = { "steps": [{ "evidence": evidence }] }
+    let next_fields = fields.copy()
+    next_fields["turns"] = [Json::object(next_turn)].to_json()
+    assert_true(
+      @core.decode_mooncode_conversation(Json::object(next_fields))
+      is Malformed(_),
+    )
+  }
 }
 
 ///|

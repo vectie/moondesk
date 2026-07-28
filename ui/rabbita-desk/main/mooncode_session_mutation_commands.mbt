@@ -98,6 +98,35 @@ fn mooncode_session_command_cmd(
 }
 
 ///|
+fn mooncode_session_approval_cmd(
+  dispatch : Dispatch[Msg],
+  session : MoonCodeSession,
+  approval : @mooncode_core.MoonCodeApproval,
+  decision : @mooncode_core.MoonCodeApprovalDecision,
+) -> @rabbita.Cmd {
+  let body = match approval.decision_wire(decision, session.id) {
+    Ok(wire) =>
+      match typed_mooncode_command_body(wire) {
+        Ok(value) => value
+        Err(error) => return dispatch(CompletedMoonCodeCommand(Err(error)))
+      }
+    Err(_) =>
+      return dispatch(
+        CompletedMoonCodeCommand(Err("Approval target is unavailable")),
+      )
+  }
+  @http.post(@desk.mooncode_session_commands_url(session.id))
+  .with_json(body)
+  .expect_json(result => {
+    let decoded = match result {
+      Ok(payload) => decode_mooncode_selected_session(payload)
+      Err(error) => Err(error.to_string())
+    }
+    dispatch(CompletedMoonCodeCommand(decoded))
+  })
+}
+
+///|
 fn typed_mooncode_command_body(submission : Json) -> Result[Json, String] {
   match @mooncode_core.decode_mooncode_command(submission) {
     Ok(command) => @mooncode_core.encode_mooncode_command(command)

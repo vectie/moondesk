@@ -328,7 +328,10 @@ enum Msg {
   ClearMoonCodeCopy(String)
   RetryMoonCodeTurn(String, String)
   CancelMoonCodeWork(String, String)
-  DecideMoonCodeTool(String, String, String, String, String)
+  DecideMoonCodeTool(
+    @mooncode_core.MoonCodeApproval,
+    @mooncode_core.MoonCodeApprovalDecision,
+  )
   ManageMoonClaw(String)
   StartMoonClawAuth(String)
   CheckMoonClawSetup

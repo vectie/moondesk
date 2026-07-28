@@ -21,6 +21,7 @@ pub(all) struct MoonCodeTurn {
   updated_at : String
   user : MoonCodeMessage?
   work : Json
+  approvals : Array[MoonCodeApproval]
   assistant : MoonCodeMessage?
   extensions : Map[String, Json]
 } derive(Debug, Eq)
@@ -150,7 +151,38 @@ fn decode_conversation_message(
 }
 
 ///|
-fn decode_conversation_turn(value : Json) -> Result[MoonCodeTurn, String] {
+fn decode_conversation_approvals(
+  work : Json,
+  session_id : String,
+  command_id : String,
+) -> Result[Array[MoonCodeApproval], String] {
+  let approvals : Array[MoonCodeApproval] = []
+  guard work is Object(work_fields) else { return Ok(approvals) }
+  guard work_fields.get("steps") is Some(Array(steps)) else {
+    return Ok(approvals)
+  }
+  for step in steps {
+    guard step is Object(step_fields) else { continue }
+    guard step_fields.get("evidence") is Some(evidence) else { continue }
+    guard evidence is Object(evidence_fields) else { continue }
+    guard evidence_fields.get("kind") is Some(String("approval")) else {
+      continue
+    }
+    match decode_mooncode_approval(evidence, session_id, command_id) {
+      Ok(approval) => approvals.push(approval)
+      Err(Malformed(message)) => return Err(message)
+      Err(UnsupportedState(state)) =>
+        return Err("unsupported approval state: \{state}")
+    }
+  }
+  Ok(approvals)
+}
+
+///|
+fn decode_conversation_turn(
+  value : Json,
+  session_id : String,
+) -> Result[MoonCodeTurn, String] {
   guard value is Object(fields) else {
     return Err("conversation turn must be an object")
   }
@@ -198,6 +230,11 @@ fn decode_conversation_turn(value : Json) -> Result[MoonCodeTurn, String] {
   guard work is Object(_) else {
     return Err("conversation turn work must be an object")
   }
+  let approvals = match
+    decode_conversation_approvals(work, session_id, values[3]) {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
   Ok({
     kind: values[0],
     turn_id: values[1],
@@ -209,6 +246,7 @@ fn decode_conversation_turn(value : Json) -> Result[MoonCodeTurn, String] {
     updated_at,
     user,
     work,
+    approvals,
     assistant,
     extensions: conversation_extensions(fields, [
       "kind", "turn_id", "client_turn_id", "command_id", "ordinal", "status", "started_at",
@@ -281,7 +319,7 @@ pub fn decode_mooncode_conversation(
   }
   let turns : Array[MoonCodeTurn] = []
   for value in raw_turns {
-    match decode_conversation_turn(value) {
+    match decode_conversation_turn(value, session_id) {
       Ok(turn) => turns.push(turn)
       Err(error) => return Malformed(error)
     }

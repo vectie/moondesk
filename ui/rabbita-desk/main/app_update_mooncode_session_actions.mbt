@@ -61,16 +61,8 @@ fn update_mooncode_session_actions(
       mooncode_retry_turn(dispatch, model, session_id, prompt)
     CancelMoonCodeWork(session_id, target_command_id) =>
       mooncode_cancel_work(dispatch, model, session_id, target_command_id)
-    DecideMoonCodeTool(
-      session_id,
-      action,
-      approval_id,
-      target_command_id,
-      tool_call_id
-    ) =>
-      mooncode_decide_tool(
-        dispatch, model, session_id, action, approval_id, target_command_id, tool_call_id,
-      )
+    DecideMoonCodeTool(approval, decision) =>
+      mooncode_decide_tool(dispatch, model, approval, decision)
     SetMoonCodeSessionQuery(query) =>
       (@rabbita.none, { ..model, mooncode_session_query: query })
     BeginMoonCodeSessionRename(session_id) =>
@@ -216,43 +208,23 @@ fn mooncode_cancel_work(
 fn mooncode_decide_tool(
   dispatch : Dispatch[Msg],
   model : Model,
-  session_id : String,
-  action : String,
-  approval_id : String,
-  target_command_id : String,
-  tool_call_id : String,
+  approval : @mooncode_core.MoonCodeApproval,
+  decision : @mooncode_core.MoonCodeApprovalDecision,
 ) -> (@rabbita.Cmd, Model) {
-  if action != "approve_tool" && action != "reject_tool" {
-    return (
-      @rabbita.none,
-      { ..model, mooncode_composer_status: "Unsupported approval decision" },
-    )
-  }
+  let session_id = model.selected_mooncode_session_id
   match mooncode_find_session(model.mooncode_sessions, session_id) {
-    Some(session) if approval_id != "" && target_command_id != "" =>
+    Some(session) =>
       (
-        mooncode_session_command_cmd(
-          dispatch,
-          model,
-          session,
-          action,
-          approval_id~,
-          target_command_id~,
-          tool_call_id~,
-        ),
+        mooncode_session_approval_cmd(dispatch, session, approval, decision),
         {
           ..model,
-          mooncode_composer_status: if action == "approve_tool" {
-            "Approval sent to MoonClaw"
-          } else {
-            "Rejection sent to MoonClaw"
+          mooncode_composer_status: match decision {
+            @mooncode_core.MoonCodeApprovalDecision::Approve =>
+              "Approval sent to MoonClaw"
+            @mooncode_core.MoonCodeApprovalDecision::Reject =>
+              "Rejection sent to MoonClaw"
           },
         },
-      )
-    Some(_) =>
-      (
-        @rabbita.none,
-        { ..model, mooncode_composer_status: "Approval target is unavailable" },
       )
     None =>
       (
