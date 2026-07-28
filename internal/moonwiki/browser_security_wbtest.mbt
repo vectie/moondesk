@@ -1,6 +1,6 @@
 ///|
 test "isolated preview headers deny ambient browser capabilities" {
-  let headers = isolated_preview_headers("generated/index.html")
+  let headers = @preview.isolated_preview_headers("generated/index.html")
   let csp = headers["content-security-policy"]
   assert_true(csp.contains("default-src 'none'"))
   assert_true(csp.contains("connect-src 'none'"))

@@ -500,7 +500,7 @@ async fn handle_pack_app_proxy(
   } else if rest[0] == "api" || rest[0].has_prefix("health") {
     "application/json; charset=utf-8"
   } else {
-    content_type(target_path)
+    @preview.content_type(target_path)
   }
   conn.send_response(response.code, "Upstream", extra_headers={
     "content-type": response_type,
