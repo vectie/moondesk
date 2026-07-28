@@ -432,7 +432,7 @@ their exit gates.
 | [0. Current truth](#phase-0-establish-one-source-of-current-truth) | Complete locally | — | One current source of truth and reproducible local baseline | Retain proof; correct drift when later phases change facts |
 | [1. Product clarity](#phase-1-simplify-the-product-story-and-first-run-experience) | Complete locally | Phase 0 | Understandable first run and honest capability setup | Retain the closure journey; later matrices remain in Phases 8 and 9 |
 | [2. CI and release evidence](#phase-2-make-ci-and-release-evidence-mandatory) | Complete | Phase 0 | Mandatory quality gates and reproducible preview releases | Retain the immutable runs, artifact verification, and bounded rebuild proof |
-| [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Capability, session-listing, and selected-session slices complete; later slices open | Phase 2 | Small typed public protocol and one serialization boundary | Migrate canonical conversation handling through the same typed boundary |
+| [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Capability, session-listing, selected-session, and canonical-conversation slices complete; later slices open | Phase 2 | Small typed public protocol and one serialization boundary | Migrate command submission through the same typed boundary |
 | [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | Ownership map, two production extractions, and the first behavior-named test split complete; broader gate open | Phase 3 ownership map | Narrower packages, state ownership, and decomposed tests | Continue one documented ownership boundary at a time; begin explicit UI state ownership |
 | [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Not started | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Threat-model tests prove canonical confinement and denial paths |
 | [6. Observability](#phase-6-unify-runtime-observability-and-operator-evidence) | Not started | Phases 3–5 | Evidence-backed turns, approvals, traces, and recovery | One canonical evidence projection answers the operator questions |
@@ -2250,9 +2250,9 @@ Continue with:
 
 1. Retain the completed Phase 2 pull-request, push, immutable preview-run,
    downloaded-artifact, and clean-checkout rebuild evidence.
-2. Continue Phase 3 with the canonical-conversation vertical slice;
-   capabilities, session listing, and selected-session fetch now use the typed
-   boundary.
+2. Continue Phase 3 with the command-submission vertical slice; capabilities,
+   session listing, selected-session fetch, and canonical conversation now use
+   the typed boundary.
 3. Continue Phase 4 only through ownership directions already recorded in the
    package map; review calculation and preview response policy are the first
    accepted production extractions, and workspace preview is the first large
