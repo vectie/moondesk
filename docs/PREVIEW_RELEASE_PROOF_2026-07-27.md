@@ -152,10 +152,92 @@ verified 6 files for 0.1.0-preview.4 (preview)
 This proves repeat verification is read-only and both supported release entry
 points refuse silent artifact replacement.
 
-## Phase F — next gate
+## Phase F — retained Preview 11 evidence
 
-The local implementation slice is complete. Phase 2 remains open until the
-workflow exists on the remote default branch and retained pull-request, push,
-and preview-tag runs pass. The tag artifact must then be downloaded, verified,
-and reproduced independently. Credentialed and clean-machine qualification
-remain later gates.
+The immutable annotated tag `v0.1.0-preview.11` peels to source commit
+`01e5b4d0ed468d12cea8271011dd3147c079f2fb`. GitHub retained successful push
+run [`30335949331`](https://github.com/vectie/moondesk/actions/runs/30335949331)
+for that exact SHA. Its `preview` job is
+[`90200737627`](https://github.com/vectie/moondesk/actions/runs/30335949331/job/90200737627),
+ran from 2026-07-28 06:46:37 through 06:50:09 UTC, and completed successfully.
+The API reports runner `GitHub Actions 1000001278`, runner group
+`GitHub Actions`, and labels `["macos-14"]`; the workflow also declares
+`macos-14`. No more specific hosted image version was retained, so none is
+claimed here.
+
+The non-overwriting uploaded artifact is:
+
+| Field | Retained value |
+| --- | --- |
+| Artifact ID | `8679181026` |
+| Name | `moondesk-0.1.0-preview.11-01e5b4d0ed468d12cea8271011dd3147c079f2fb-macos-arm64-unsigned` |
+| API size | 18,011,747 bytes |
+| Created | 2026-07-28 06:50:01 UTC |
+| Expiration recorded by API | 2026-08-11 06:49:58 UTC |
+
+The unchanged download is retained in ignored lane
+`.moonsuite/phase2-preview11/download`. The repository-defined read-only
+command
+
+```sh
+node scripts/verify_release.mjs .moonsuite/phase2-preview11/download
+```
+
+reported `verified 6 files for 0.1.0-preview.11 (preview)`. An independent
+`shasum -a 256 -c SHA256SUMS` pass reported all six entries `OK`.
+
+## Phase G — clean-checkout rebuild and comparison
+
+The exact tagged source was materialized beneath the ignored rebuild lane, and
+all output remained inside that checkout. No `..` segment was used. The
+effective commands were:
+
+```sh
+rm -rf .moonsuite/phase2-preview11-rebuild
+mkdir -p .moonsuite/phase2-preview11-rebuild/checkout
+git archive 01e5b4d0ed468d12cea8271011dd3147c079f2fb |
+  tar -x -C .moonsuite/phase2-preview11-rebuild/checkout
+cd .moonsuite/phase2-preview11-rebuild/checkout
+npm ci --prefix ui/rabbita-desk
+scripts/validate.sh full
+sh scripts/preview_release.sh \
+  --version 0.1.0-preview.11 \
+  --notes docs/releases/0.1.0-preview.11.md \
+  --out "$PWD/.moonsuite/rebuild-output"
+node scripts/verify_release.mjs .moonsuite/rebuild-output
+```
+
+The clean full validator passed with 260 native tests, 422 UI tests, five
+localization tests, eight release-verifier fixtures, and its remaining build,
+interface, smoke, and cleanliness gates. The preview wrapper and final
+read-only verifier also passed.
+
+The stable release contract compares as follows:
+
+- exact equality: version `0.1.0-preview.11`, channel `preview`, manifest kinds,
+  declared artifact names and paths, unsigned/notarized/DMG state, install
+  instructions, and `RELEASE_NOTES.md` bytes (SHA-256
+  `e3c796ef78273d2a8e886d1c35a45f0b667f87632d42c2f5285ff928ce6c7430`)
+- exact differences: runtime-manifest digest
+  `0d98e7099df3519e3fcb7f5e6a9e7a78be343355f3af8d7e03240cb21bdfac1e`
+  became `4fce392e6167c9dbdf05bd69ee9c51958c0993175b22810f83124610ca7e24d3`;
+  ZIP `6efeeb75d7b376467c60170dab757cd7dd1845e9a0ccc6a008584aaf3ad32a28`
+  became `f155acfc5d58172a88614c3d6dd92e3a22392910d44926aabb3987c50c1f9902`;
+  DMG `3ec47f3c12b383f98b2f3a13ff544077b818c432fc8e8b55fab002829612bfe9`
+  became `53db176a53bbb422d8ae9a0e2c34827da5a6c6f5233e502fbc55789db0af2df7`
+- those embedded digests also change `release-manifest.json`, `updates.json`,
+  and `SHA256SUMS`; downloaded/rebuilt ZIP sizes are 2,956,919/2,951,978 bytes
+  and DMG sizes are 3,643,529/3,636,873 bytes
+- the runtime manifest contains build-host absolute source paths, so its hosted
+  and local macOS 26.2 forms differ; ZIP/DMG packaging also carries
+  host/toolchain and timestamp-sensitive bytes
+
+Both outputs independently satisfy the strict repository verifier, but this is
+contract reproducibility, not byte identity. It does not establish signing,
+notarization, stapling, clean-machine installation, update/rollback, or soak
+evidence; those remain Phase 9 work.
+
+**Phase 2 gate result:** complete. The retained pull-request and default-branch
+CI runs, immutable Preview 11 run and artifact, downloaded-artifact
+verification, and clean-checkout rebuild close the Phase 2 evidence gate
+without claiming byte-for-byte reproducibility.
