@@ -47,20 +47,31 @@ fn code_mode_test_session(
 ///|
 fn code_mode_test_watch_snapshot(
   session : MoonCodeSession,
-  sequence : Int,
-) -> MoonCodeWatchResponse {
-  {
-    kind: "moonsuite-conversation-watch",
-    contract_id: "moonsuite-conversation-watch.v1",
-    session_id: session.id,
-    revision: mooncode_session_conversation_revision(session),
-    next_sequence: sequence,
-    changed: true,
-    heartbeat: false,
-    terminal: session.status == "done" || session.status == "failed",
-    retry_after_ms: 0,
-    snapshot: Some(session),
+  sequence : String,
+) -> @mooncode_core.MoonCodeWatchResult raise {
+  let conversation = session.mooncode_conversation.unwrap()
+  let summary : @mooncode_core.MoonCodeSessionSummary = {
+    id: @mooncode_core.MoonCodeSessionId::parse(session.id).unwrap(),
+    workspace_id: session.workspace_id,
+    workspace_name: session.workspace_name,
+    cwd: session.cwd,
+    source: session.source,
+    runtime_session_id: session.mooncode_runtime_session_id,
+    title: session.title,
+    updated_at: session.updated_at,
+    model: session.model,
+    status: @mooncode_core.MoonCodeSessionStatus::parse(session.status).unwrap(),
+    queued_count: session.queued_count,
+    last_message: session.last_message,
+    archived: session.archived,
+    extensions: Map([]),
   }
+  @mooncode_core.Snapshot(
+    cursor=@mooncode_core.mooncode_watch_cursor(conversation.revision, sequence),
+    session=summary,
+    conversation~,
+    terminal=session.status == "done" || session.status == "failed",
+  )
 }
 
 ///|
@@ -87,20 +98,14 @@ fn code_mode_test_lifecycle_result(
 fn code_mode_test_watch_heartbeat(
   session_id : String,
   revision : Int,
-  sequence : Int,
-) -> MoonCodeWatchResponse {
-  {
-    kind: "moonsuite-conversation-watch",
-    contract_id: "moonsuite-conversation-watch.v1",
-    session_id,
-    revision,
-    next_sequence: sequence,
-    changed: false,
-    heartbeat: true,
-    terminal: false,
-    retry_after_ms: 100,
-    snapshot: None,
-  }
+  sequence : String,
+) -> @mooncode_core.MoonCodeWatchResult raise {
+  @mooncode_core.Heartbeat(
+    cursor=@mooncode_core.mooncode_watch_cursor(revision, sequence),
+    session_id~,
+    retry_after_ms=100,
+    terminal=false,
+  )
 }
 
 ///|
@@ -729,8 +734,7 @@ test "code mode selecting loaded session keeps selection" {
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
     mooncode_watch_generation: 4,
-    mooncode_watch_revision: 9,
-    mooncode_watch_sequence: 11,
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(9, "11"),
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
@@ -740,8 +744,8 @@ test "code mode selecting loaded session keeps selection" {
   assert_eq(next.selected_mooncode_session_id, "session-a")
   assert_false(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_watch_generation, 5)
-  assert_eq(next.mooncode_watch_revision, 0)
-  assert_eq(next.mooncode_watch_sequence, 0)
+  assert_eq(next.mooncode_watch_cursor.revision(), 0)
+  assert_eq(next.mooncode_watch_cursor.sequence(), "0")
 }
 
 ///|
@@ -894,7 +898,7 @@ test "code mode listing outage preserves selected terminal conversation" {
     selected_mooncode_session_id: session.id,
     mooncode_sessions: [session],
     mooncode_watch_generation: 4,
-    mooncode_watch_revision: 2,
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(2, "0"),
     mooncode_watch_status: "reconnecting",
   }
   let (_, next) = update_mooncode_session_results(
@@ -905,7 +909,7 @@ test "code mode listing outage preserves selected terminal conversation" {
   assert_eq(next.selected_mooncode_session_id, session.id)
   assert_eq(next.mooncode_sessions.length(), 1)
   assert_eq(next.mooncode_watch_generation, 4)
-  assert_eq(next.mooncode_watch_revision, 2)
+  assert_eq(next.mooncode_watch_cursor.revision(), 2)
   assert_eq(next.mooncode_watch_status, "reconnecting")
   let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
   assert_eq(rows.length(), 2)
@@ -2304,18 +2308,28 @@ test "code mode selected canonical watch hydrates listing row" {
     workspace_mode: MoonCode,
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [listing],
+    mooncode_optimistic_rows: [
+      {
+        session_id: "session-a",
+        role: "user",
+        content: "Loaded prompt",
+        status: "queued",
+        key: "turn-a",
+      },
+    ],
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
     LoadedMoonCodeWatch(
       0,
       "session-a",
-      Ok(code_mode_test_watch_snapshot(hydrated, 2)),
+      code_mode_test_watch_snapshot(hydrated, "2"),
     ),
     model,
   )
   let session = selected_mooncode_session(next).unwrap()
   assert_true(session.mooncode_conversation is Some(_))
+  assert_true(next.mooncode_optimistic_rows.is_empty())
   let rows = code_mode_test_transcript_rows(next, session)
   assert_eq(rows.length(), 2)
   assert_eq(rows[0].content, "Loaded prompt")
@@ -2349,7 +2363,7 @@ test "code mode selected canonical watch keeps rail order" {
     LoadedMoonCodeWatch(
       0,
       "session-a",
-      Ok(code_mode_test_watch_snapshot(hydrated, 1)),
+      code_mode_test_watch_snapshot(hydrated, "1"),
     ),
     model,
   )
@@ -2407,7 +2421,7 @@ test "code mode ignores unchanged canonical conversation revisions" {
     LoadedMoonCodeWatch(
       0,
       "session-a",
-      Ok(code_mode_test_watch_heartbeat("session-a", 4, 2)),
+      code_mode_test_watch_heartbeat("session-a", 4, "2"),
     ),
     model,
   )
@@ -2477,7 +2491,11 @@ test "code mode stale canonical watch response is ignored" {
     LoadedMoonCodeWatch(
       0,
       "session-b",
-      Ok(code_mode_test_watch_snapshot(stale, 1)),
+      @mooncode_core.Rollback(
+        cursor=@mooncode_core.mooncode_watch_cursor(4, "1"),
+        session_id="session-a",
+        received_revision=2,
+      ),
     ),
     model,
   )
@@ -2507,8 +2525,7 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
     mooncode_watch_generation: 4,
-    mooncode_watch_revision: 8,
-    mooncode_watch_sequence: 11,
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(8, "11"),
     mooncode_watch_failure_count: 4,
   }
   let (_, next) = update_mooncode_session_results(
@@ -2516,7 +2533,7 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
     LoadedMoonCodeWatch(
       4,
       "session-a",
-      Ok(code_mode_test_watch_heartbeat("session-a", 8, 9)),
+      code_mode_test_watch_heartbeat("session-a", 8, "11"),
     ),
     model,
   )
@@ -2525,8 +2542,8 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
     mooncode_session_conversation_revision(next.mooncode_sessions[0]),
     8,
   )
-  assert_eq(next.mooncode_watch_revision, 8)
-  assert_eq(next.mooncode_watch_sequence, 11)
+  assert_eq(next.mooncode_watch_cursor.revision(), 8)
+  assert_eq(next.mooncode_watch_cursor.sequence(), "11")
   assert_eq(next.mooncode_watch_status, "watching")
   assert_eq(next.mooncode_watch_failure_count, 0)
   let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
@@ -2567,15 +2584,18 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [current],
     mooncode_watch_generation: 3,
-    mooncode_watch_revision: 8,
-    mooncode_watch_sequence: 5,
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(8, "5"),
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
     LoadedMoonCodeWatch(
       3,
       "session-a",
-      Ok(code_mode_test_watch_snapshot(stale, 12)),
+      @mooncode_core.Rollback(
+        cursor=@mooncode_core.mooncode_watch_cursor(8, "12"),
+        session_id="session-a",
+        received_revision=4,
+      ),
     ),
     model,
   )
@@ -2584,8 +2604,8 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
     mooncode_session_conversation_revision(next.mooncode_sessions[0]),
     8,
   )
-  assert_eq(next.mooncode_watch_revision, 8)
-  assert_eq(next.mooncode_watch_sequence, 12)
+  assert_eq(next.mooncode_watch_cursor.revision(), 8)
+  assert_eq(next.mooncode_watch_cursor.sequence(), "12")
 }
 
 ///|
@@ -2604,16 +2624,23 @@ test "code mode watch disconnect preserves transcript while reconnecting" {
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
     mooncode_watch_generation: 9,
-    mooncode_watch_sequence: 4,
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(2, "4"),
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeWatch(9, "session-a", Err("connection reset")),
+    LoadedMoonCodeWatch(
+      9,
+      "session-a",
+      @mooncode_core.Disconnected(
+        cursor=model.mooncode_watch_cursor,
+        reason="connection reset",
+      ),
+    ),
     model,
   )
   assert_eq(next.mooncode_watch_status, "reconnecting")
   assert_eq(next.mooncode_watch_failure_count, 1)
-  assert_eq(next.mooncode_watch_sequence, 4)
+  assert_eq(next.mooncode_watch_cursor.sequence(), "4")
   assert_eq(next.mooncode_sessions.length(), 1)
   let items = mooncode_transcript_items(next, next.mooncode_sessions[0])
   assert_eq(items.length(), 2)
@@ -2622,7 +2649,14 @@ test "code mode watch disconnect preserves transcript while reconnecting" {
   assert_eq(rows[0].content, "Keep me")
   let (_, failed_again) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeWatch(9, "session-a", Err("connection reset again")),
+    LoadedMoonCodeWatch(
+      9,
+      "session-a",
+      @mooncode_core.Disconnected(
+        cursor=next.mooncode_watch_cursor,
+        reason="connection reset again",
+      ),
+    ),
     next,
   )
   assert_eq(failed_again.mooncode_watch_failure_count, 2)
@@ -2644,20 +2678,26 @@ test "code mode replaced watch leaves the healthy replacement alone" {
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
     mooncode_watch_generation: 9,
-    mooncode_watch_revision: 8,
-    mooncode_watch_sequence: 4,
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(8, "4"),
     mooncode_watch_status: "connecting",
     mooncode_watch_failure_count: 3,
     mooncode_composer_status: "message queued for MoonCode",
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
-    LoadedMoonCodeWatch(9, "session-a", Err("MoonCode watch replaced")),
+    LoadedMoonCodeWatch(
+      9,
+      "session-a",
+      @mooncode_core.Disconnected(
+        cursor=model.mooncode_watch_cursor,
+        reason="MoonCode watch replaced",
+      ),
+    ),
     model,
   )
   assert_eq(next.mooncode_watch_status, "connecting")
-  assert_eq(next.mooncode_watch_revision, 8)
-  assert_eq(next.mooncode_watch_sequence, 4)
+  assert_eq(next.mooncode_watch_cursor.revision(), 8)
+  assert_eq(next.mooncode_watch_cursor.sequence(), "4")
   assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
   assert_eq(next.mooncode_watch_failure_count, 3)
   assert_eq(next.mooncode_sessions.length(), 1)
@@ -2687,7 +2727,7 @@ test "code mode ignores a completed watch from an older generation" {
     LoadedMoonCodeWatch(
       4,
       "session-a",
-      Ok(code_mode_test_watch_snapshot(stale, 2)),
+      code_mode_test_watch_snapshot(stale, "2"),
     ),
     model,
   )

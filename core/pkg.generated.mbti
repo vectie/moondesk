@@ -85,7 +85,7 @@ pub fn mooncode_session_runtime_service_url(String) -> String
 
 pub fn mooncode_session_url(String) -> String
 
-pub fn mooncode_session_watch_url(String, Int, Int) -> String
+pub fn mooncode_session_watch_url(String, Int, String) -> String
 
 pub fn mooncode_sessions_url(String) -> String
 

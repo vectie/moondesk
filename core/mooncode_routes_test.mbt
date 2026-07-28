@@ -38,7 +38,7 @@ test "mooncode desktop routes live in core boundary" {
     "/api/mooncode/sessions/session%20one%2F%232/runtime-service",
   )
   assert_eq(
-    @core.mooncode_session_watch_url("session one/#2", 7, 11),
+    @core.mooncode_session_watch_url("session one/#2", 7, "11"),
     "/api/mooncode/sessions/session%20one%2F%232/watch?since_revision=7&since_sequence=11&wait_ms=15000&poll_ms=100",
   )
 }

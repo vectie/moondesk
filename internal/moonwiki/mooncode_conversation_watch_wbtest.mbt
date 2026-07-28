@@ -15,7 +15,7 @@ test "canonical watch returns a snapshot only when revision advances" {
     },
   }
   let changed = mooncode_conversation_watch_response(
-    "session-a", snapshot, 3, 3,
+    "session-a", snapshot, 3, "3",
   )
   assert_eq(
     json_string(changed, "contract_id", default=""),
@@ -34,7 +34,7 @@ test "canonical watch returns a snapshot only when revision advances" {
   )
   assert_true(json_object_field(changed, "events") is None)
   let heartbeat = mooncode_conversation_watch_response(
-    "session-a", snapshot, 4, 3,
+    "session-a", snapshot, 4, "3",
   )
   assert_false(json_bool(heartbeat, "changed", default=true))
   assert_true(json_bool(heartbeat, "heartbeat", default=false))
@@ -55,4 +55,48 @@ test "canonical watch clamps bounded long poll options" {
   assert_true(mooncode_watch_status_is_terminal("done"))
   assert_true(mooncode_watch_status_is_terminal("failed"))
   assert_false(mooncode_watch_status_is_terminal("running"))
+}
+
+///|
+test "watch query rejects invalid cursor input and preserves large sequence" {
+  assert_true(
+    mooncode_watch_query_nonnegative_int(
+      "?since_revision=-1",
+      "since_revision",
+      default=0,
+    )
+    is Err(_),
+  )
+  assert_true(
+    mooncode_watch_query_nonnegative_int(
+      "?since_revision=nope",
+      "since_revision",
+      default=0,
+    )
+    is Err(_),
+  )
+  assert_true(
+    mooncode_watch_query_sequence(
+      "?since_sequence=-1",
+      "since_sequence",
+      default="0",
+    )
+    is Err(_),
+  )
+  assert_true(
+    mooncode_watch_query_sequence(
+      "?since_sequence=01",
+      "since_sequence",
+      default="0",
+    )
+    is Err(_),
+  )
+  assert_eq(
+    mooncode_watch_query_sequence(
+      "?since_sequence=9223372036854775810",
+      "since_sequence",
+      default="0",
+    ),
+    Ok("9223372036854775810"),
+  )
 }

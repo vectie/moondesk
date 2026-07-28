@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "vectie/moondesk/internal/mooncode"
 
+import {
+  "vectie/moondesk/mooncode/core",
+}
+
 // Values
 pub fn capabilities_json() -> Json
 
@@ -19,6 +23,8 @@ pub fn conversation_kind() -> String
 pub fn conversation_watch_contract_id() -> String
 
 pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_sequence~ : Int, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
+
+pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : @core.MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
 
 pub fn desktop_capabilities_endpoint() -> String
 
@@ -50,7 +56,7 @@ pub fn moonclaw_native_session_listing_endpoint(String) -> String
 
 pub fn moonclaw_native_session_show_endpoint(String, String) -> String
 
-pub fn moonclaw_native_stream_endpoint(String, String, String, Int, wait_ms? : Int, poll_ms? : Int) -> String
+pub fn moonclaw_native_stream_endpoint(String, String, String, @core.MoonCodeWatchCursor, wait_ms? : Int, poll_ms? : Int) -> String
 
 pub fn moonclaw_native_turn_endpoint(String) -> String
 

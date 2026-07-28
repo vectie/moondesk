@@ -42,6 +42,27 @@ pub fn conversation_watch_response(
 }
 
 ///|
+pub fn conversation_watch_response_for_cursor(
+  session_id~ : String,
+  cursor~ : @mooncode_core.MoonCodeWatchCursor,
+  changed~ : Bool,
+  heartbeat~ : Bool,
+  terminal~ : Bool,
+  retry_after_ms~ : Int,
+  snapshot~ : Json,
+) -> Json {
+  @mooncode_core.conversation_watch_response_for_cursor(
+    session_id~,
+    cursor~,
+    changed~,
+    heartbeat~,
+    terminal~,
+    retry_after_ms~,
+    snapshot~,
+  )
+}
+
+///|
 pub fn desktop_capabilities_endpoint() -> String {
   "/api/mooncode/capabilities"
 }
@@ -131,15 +152,15 @@ pub fn moonclaw_native_stream_endpoint(
   session_id : String,
   book_root : String,
   format : String,
-  since : Int,
+  cursor : @mooncode_core.MoonCodeWatchCursor,
   wait_ms? : Int = 0,
   poll_ms? : Int = 100,
 ) -> String {
-  @mooncode_core.native_stream_endpoint(
+  @mooncode_core.native_stream_endpoint_for_cursor(
     session_id,
     book_root,
     format,
-    since,
+    cursor,
     wait_ms~,
     poll_ms~,
   )

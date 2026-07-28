@@ -128,8 +128,16 @@ test "session listing joins MoonClaw rows to the actual MoonBook catalog" {
 ///|
 test "canonical stream resumes from the greatest durable sequence" {
   let stream = [
-    "{\"type\":\"meta\",\"next_since\":8}", "{\"type\":\"event\",\"sequence\":9}",
-    "{\"type\":\"done\",\"sequence\":11}", "not-json",
+    "{\"type\":\"meta\",\"next_since\":\"8\"}", "{\"type\":\"event\",\"sequence\":\"9\"}",
+    "{\"type\":\"done\",\"sequence\":\"9223372036854775810\",\"next_since\":\"9223372036854775810\"}",
   ].join("\n")
-  assert_eq(mooncode_native_stream_latest_sequence(stream), 11)
+  let current = @mooncode_core.mooncode_watch_cursor(4, "2")
+  let decoded = mooncode_native_stream_cursor(stream, current)
+  match decoded {
+    @mooncode_core.Advanced(cursor) => {
+      assert_eq(cursor.revision(), 4)
+      assert_eq(cursor.sequence(), "9223372036854775810")
+    }
+    _ => fail("expected advanced native stream cursor")
+  }
 }

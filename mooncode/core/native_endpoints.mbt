@@ -248,21 +248,40 @@ pub fn native_runtime_claim_endpoint(
 }
 
 ///|
-pub fn native_stream_endpoint(
+fn native_stream_endpoint_raw(
   session_id : String,
   book_root : String,
   format : String,
-  since : Int,
+  since : String,
   wait_ms? : Int = 0,
   poll_ms? : Int = 100,
 ) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "stream"], query=[
     ("book_root", book_root),
     ("format", format),
-    ("since", "\{since}"),
+    ("since", since),
     ("wait_ms", "\{wait_ms}"),
     ("poll_ms", "\{poll_ms}"),
   ])
+}
+
+///|
+pub fn native_stream_endpoint_for_cursor(
+  session_id : String,
+  book_root : String,
+  format : String,
+  cursor : MoonCodeWatchCursor,
+  wait_ms? : Int = 0,
+  poll_ms? : Int = 100,
+) -> String {
+  native_stream_endpoint_raw(
+    session_id,
+    book_root,
+    format,
+    cursor.sequence(),
+    wait_ms~,
+    poll_ms~,
+  )
 }
 
 ///|

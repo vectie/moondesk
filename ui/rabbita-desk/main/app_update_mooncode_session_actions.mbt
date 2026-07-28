@@ -35,8 +35,7 @@ fn update_mooncode_session_actions(
           mooncode_new_chat_active: true,
           mooncode_prompt: "",
           mooncode_watch_generation: model.mooncode_watch_generation + 1,
-          mooncode_watch_revision: 0,
-          mooncode_watch_sequence: 0,
+          mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
           mooncode_watch_status: "idle",
           mooncode_watch_failure_count: 0,
           mooncode_composer_status: "new session draft",
@@ -277,8 +276,7 @@ fn mooncode_select_session_model(model : Model, session_id : String) -> Model {
     selected_mooncode_session_id: session_id,
     mooncode_new_chat_active: session_id == "",
     mooncode_watch_generation: model.mooncode_watch_generation + 1,
-    mooncode_watch_revision: 0,
-    mooncode_watch_sequence: 0,
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
     mooncode_watch_status: if session_id == "" {
       "idle"
     } else {

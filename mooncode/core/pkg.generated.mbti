@@ -163,6 +163,8 @@ pub fn conversation_watch_kind() -> String
 
 pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_sequence~ : Int, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
 
+pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
+
 pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
 
 pub fn decode_mooncode_conversation(Json, current_revision? : Int) -> MoonCodeConversationDecodeResult
@@ -170,6 +172,12 @@ pub fn decode_mooncode_conversation(Json, current_revision? : Int) -> MoonCodeCo
 pub fn decode_mooncode_selected_session(Json) -> MoonCodeSelectedSessionDecodeResult
 
 pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
+
+pub fn decode_mooncode_stream_cursor(String, current~ : MoonCodeWatchCursor) -> MoonCodeStreamCursorDecodeResult
+
+pub fn decode_mooncode_watch_result(Json, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
+
+pub fn decode_mooncode_watch_text(String, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
 
 pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
 
@@ -270,6 +278,12 @@ pub fn model_planner_working_evidence_rule() -> String
 pub fn moonclaw_event_mapping_json() -> Json
 
 pub fn mooncode_capability() -> MoonCodeCapability
+
+pub fn mooncode_watch_cursor(Int, String) -> MoonCodeWatchCursor raise
+
+pub fn mooncode_watch_disconnected(current~ : MoonCodeWatchCursor, reason~ : String) -> MoonCodeWatchResult
+
+pub fn mooncode_watch_origin_cursor() -> MoonCodeWatchCursor
 
 pub fn native_archived_session_listing_endpoint(String) -> String
 
@@ -413,7 +427,10 @@ pub fn native_session_show_endpoint(String, String) -> String
 
 pub fn native_session_turns_endpoint(String) -> String
 
+#deprecated
 pub fn native_stream_endpoint(String, String, String, Int, wait_ms? : Int, poll_ms? : Int) -> String
+
+pub fn native_stream_endpoint_for_cursor(String, String, String, MoonCodeWatchCursor, wait_ms? : Int, poll_ms? : Int) -> String
 
 pub fn native_tool_exec_endpoint(String, String) -> String
 
@@ -1105,6 +1122,12 @@ pub(all) struct MoonCodeSessionSummary {
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
 
+pub(all) enum MoonCodeStreamCursorDecodeResult {
+  Advanced(MoonCodeWatchCursor)
+  Unchanged(MoonCodeWatchCursor)
+  Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
+} derive(Eq, @debug.Debug)
+
 pub(all) struct MoonCodeTurn {
   kind : String
   turn_id : String
@@ -1119,6 +1142,24 @@ pub(all) struct MoonCodeTurn {
   assistant : MoonCodeMessage?
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
+
+pub struct MoonCodeWatchCursor {
+  revision : Int
+  sequence : String
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeWatchCursor::advance_sequence(Self, String) -> Self raise
+pub fn MoonCodeWatchCursor::revision(Self) -> Int
+pub fn MoonCodeWatchCursor::sequence(Self) -> String
+
+pub(all) enum MoonCodeWatchResult {
+  Snapshot(cursor~ : MoonCodeWatchCursor, session~ : MoonCodeSessionSummary, conversation~ : MoonCodeConversation, terminal~ : Bool)
+  Heartbeat(cursor~ : MoonCodeWatchCursor, session_id~ : String, retry_after_ms~ : Int, terminal~ : Bool)
+  Duplicate(cursor~ : MoonCodeWatchCursor, session_id~ : String)
+  Rollback(cursor~ : MoonCodeWatchCursor, session_id~ : String, received_revision~ : Int)
+  Disconnected(cursor~ : MoonCodeWatchCursor, reason~ : String)
+  Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeWatchResult::cursor(Self) -> MoonCodeWatchCursor
 
 pub(all) struct NativeCapabilityEndpoints {
   capabilities : String
