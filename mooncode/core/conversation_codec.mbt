@@ -20,7 +20,7 @@ pub(all) struct MoonCodeTurn {
   started_at : String
   updated_at : String
   user : MoonCodeMessage?
-  work : Json
+  work : MoonCodeWork
   approvals : Array[MoonCodeApproval]
   assistant : MoonCodeMessage?
   extensions : Map[String, Json]
@@ -227,14 +227,11 @@ fn decode_conversation_turn(
     Ok(message) => message
     Err(error) => return Err(error)
   }
-  guard work is Object(_) else {
-    return Err("conversation turn work must be an object")
-  }
-  let approvals = match
-    decode_conversation_approvals(work, session_id, values[3]) {
+  let work_codec = match decode_work_codec(work, session_id, values[3]) {
     Ok(value) => value
     Err(message) => return Err(message)
   }
+  let approvals = work_codec.value.evidence.filter_map(item => item.approval)
   Ok({
     kind: values[0],
     turn_id: values[1],
@@ -245,7 +242,7 @@ fn decode_conversation_turn(
     started_at,
     updated_at,
     user,
-    work,
+    work: work_codec.value,
     approvals,
     assistant,
     extensions: conversation_extensions(fields, [
@@ -376,7 +373,7 @@ pub fn encode_mooncode_conversation(
     fields["started_at"] = turn.started_at.to_json()
     fields["updated_at"] = turn.updated_at.to_json()
     fields["user"] = encode_mooncode_message(turn.user)
-    fields["work"] = turn.work
+    fields["work"] = encode_mooncode_work(turn.work)
     fields["assistant"] = encode_mooncode_message(turn.assistant)
     turns.push(Json::object(fields))
   }

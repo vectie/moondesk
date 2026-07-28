@@ -199,69 +199,69 @@ fn code_mode_test_turn(
   steps? : Array[Json] = [],
   status? : String = "done",
 ) -> @mooncode_core.MoonCodeTurn {
-  let approvals : Array[@mooncode_core.MoonCodeApproval] = []
   let turn_client_id = if client_turn_id == "" { id } else { client_turn_id }
-  for step in steps {
-    let evidence = mooncode_canonical_json_object_field(step, "evidence")
-    if json_field_string(evidence, "kind", default="") == "approval" {
-      match
-        @mooncode_core.decode_mooncode_approval(
-          evidence, "session-approval", id,
-        ) {
-        Ok(approval) => approvals.push(approval)
-        Err(_) => ()
-      }
-    }
-  }
-  {
-    kind: "mooncode-conversation-turn",
-    turn_id: id,
-    client_turn_id: turn_client_id,
-    command_id: id,
-    ordinal: 0,
-    status,
-    started_at: "2026-06-30T00:00:00Z",
-    updated_at: "2026-06-30T00:00:01Z",
-    user: Some({
-      item_id: "",
-      role: "user",
-      content: user,
-      status: "done",
-      command_id: id,
-      client_turn_id: turn_client_id,
-      extensions: {},
-    }),
-    work: {
-      "item_id": "turn:\{id}:work",
+  let payload : Json = {
+    "kind": "mooncode-conversation",
+    "protocol": "mooncode.v1",
+    "contract_id": "moonsuite-conversation.v2",
+    "session_id": "session-approval",
+    "workspace_id": "book-demo",
+    "workspace_name": "Demo Book",
+    "turn_count": 1,
+    "revision": 2,
+    "last_sequence": 2,
+    "source_event_count": 2,
+    "turns": [{
+      "kind": "mooncode-conversation-turn",
+      "turn_id": id,
+      "client_turn_id": turn_client_id,
+      "command_id": id,
+      "ordinal": 0,
       "status": status,
-      "summary": if steps.length() > 0 {
-        json_field_string(
-          steps[steps.length() - 1],
-          "title",
-          default="Completed work",
-        )
-      } else {
-        "Completed work"
+      "started_at": "2026-06-30T00:00:00Z",
+      "updated_at": "2026-06-30T00:00:01Z",
+      "user": {
+        "item_id": "",
+        "role": "user",
+        "content": user,
+        "status": "done",
+        "command_id": id,
+        "client_turn_id": turn_client_id,
       },
-      "steps": Json::array(steps),
-      "live": {},
-    },
-    approvals,
-    assistant: if assistant == "" {
-      None
-    } else {
-      Some({
-        item_id: "",
-        role: "assistant",
-        content: assistant,
-        status,
-        command_id: id,
-        client_turn_id: turn_client_id,
-        extensions: {},
-      })
-    },
-    extensions: {},
+      "work": {
+        "item_id": "turn:\{id}:work",
+        "status": status,
+        "summary": if steps.length() > 0 {
+          json_field_string(
+            steps[steps.length() - 1],
+            "title",
+            default="Completed work",
+          )
+        } else {
+          "Completed work"
+        },
+        "steps": Json::array(steps),
+        "live": {},
+      },
+      "assistant": if assistant == "" {
+        Json::null()
+      } else {
+        {
+          "item_id": "",
+          "role": "assistant",
+          "content": assistant,
+          "status": status,
+          "command_id": id,
+          "client_turn_id": turn_client_id,
+        }
+      },
+    }],
   }
+  guard @mooncode_core.decode_mooncode_conversation(payload)
+    is Supported(conversation) else {
+    abort("expected canonical test conversation to decode")
+  }
+  conversation.turns[0]
 }
 
 ///|

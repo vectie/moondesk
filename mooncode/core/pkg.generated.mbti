@@ -454,104 +454,6 @@ pub fn native_stream_endpoint_for_cursor(String, String, String, MoonCodeWatchCu
 
 pub fn native_tool_exec_endpoint(String, String) -> String
 
-pub fn package_review_flow_accept_kinds() -> Array[String]
-
-pub fn package_review_flow_accepted_sequence() -> Array[String]
-
-pub fn package_review_flow_assistant_summary_kinds() -> Array[String]
-
-pub fn package_review_flow_command_kinds() -> Array[String]
-
-pub fn package_review_flow_contract_id() -> String
-
-pub fn package_review_flow_contract_json() -> Json
-
-pub fn package_review_flow_contract_kind() -> String
-
-pub fn package_review_flow_diff_review_kinds() -> Array[String]
-
-pub fn package_review_flow_event_failed(Json) -> Bool
-
-pub fn package_review_flow_event_is_accept(Json) -> Bool
-
-pub fn package_review_flow_event_is_assistant_summary(Json) -> Bool
-
-pub fn package_review_flow_event_is_diff_review(Json) -> Bool
-
-pub fn package_review_flow_event_is_evidence(Json) -> Bool
-
-pub fn package_review_flow_event_is_failure(Json) -> Bool
-
-pub fn package_review_flow_event_is_failure_eligible(Json) -> Bool
-
-pub fn package_review_flow_event_is_package_built(Json) -> Bool
-
-pub fn package_review_flow_event_is_package_command(Json) -> Bool
-
-pub fn package_review_flow_event_is_package_manifest(Json) -> Bool
-
-pub fn package_review_flow_event_is_package_readiness(Json) -> Bool
-
-pub fn package_review_flow_event_is_package_verified(Json) -> Bool
-
-pub fn package_review_flow_event_is_reject(Json) -> Bool
-
-pub fn package_review_flow_event_is_test_result(Json) -> Bool
-
-pub fn package_review_flow_failed_sequence() -> Array[String]
-
-pub fn package_review_flow_failure_kinds() -> Array[String]
-
-pub fn package_review_flow_manifest_kinds() -> Array[String]
-
-pub fn package_review_flow_missing_step_assistant_summary() -> String
-
-pub fn package_review_flow_missing_step_package_manifest() -> String
-
-pub fn package_review_flow_missing_step_package_verified() -> String
-
-pub fn package_review_flow_missing_step_review_accept_receipt() -> String
-
-pub fn package_review_flow_missing_step_test_evidence() -> String
-
-pub fn package_review_flow_readiness_kinds() -> Array[String]
-
-pub fn package_review_flow_reason_evidence_without_package_command() -> String
-
-pub fn package_review_flow_reason_missing_command_owner() -> String
-
-pub fn package_review_flow_reject_kinds() -> Array[String]
-
-pub fn package_review_flow_rejected_sequence() -> Array[String]
-
-pub fn package_review_flow_report_kind() -> String
-
-pub fn package_review_flow_status_accepted() -> String
-
-pub fn package_review_flow_status_empty() -> String
-
-pub fn package_review_flow_status_failed() -> String
-
-pub fn package_review_flow_status_is_terminal(String) -> Bool
-
-pub fn package_review_flow_status_rejected() -> String
-
-pub fn package_review_flow_status_running() -> String
-
-pub fn package_review_flow_status_stale() -> String
-
-pub fn package_review_flow_status_waiting_for_assistant() -> String
-
-pub fn package_review_flow_status_waiting_for_manifest() -> String
-
-pub fn package_review_flow_status_waiting_for_readiness() -> String
-
-pub fn package_review_flow_status_waiting_for_review() -> String
-
-pub fn package_review_flow_status_waiting_for_tests() -> String
-
-pub fn package_review_flow_terminal_statuses() -> Array[String]
-
 pub fn protocol_version() -> String
 
 pub fn runtime_claim_authorization_rule() -> String
@@ -1186,6 +1088,50 @@ pub(all) enum MoonCodeConversationDecodeResult {
   Malformed(String)
 } derive(Eq, @debug.Debug)
 
+pub(all) struct MoonCodeEvidence {
+  item_id : String
+  command_id : String
+  kind : MoonCodeEvidenceKind
+  state : MoonCodeEvidenceState
+  title : String
+  detail : String
+  path : String
+  diff : String
+  command : String
+  output : String
+  exit_code : Int
+  truncated : Bool
+  approval : MoonCodeApproval?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeEvidenceKind {
+  Edit
+  Test
+  PackageManifest
+  ReviewAccept
+  ReviewReject
+  PackageBuilt
+  PackageVerified
+  Artifact
+  AssistantSummary
+  Approval
+  Tool
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeEvidenceState {
+  Recorded
+  Applied
+  Passed
+  Reverted
+  Cancelled
+  Pending
+  Approved
+  Accepted
+  Rejected
+  Failed
+  Stale
+} derive(Eq, @debug.Debug)
+
 pub(all) enum MoonCodeLifecycleAction {
   Rename(String)
   Archive
@@ -1293,7 +1239,7 @@ pub(all) struct MoonCodeTurn {
   started_at : String
   updated_at : String
   user : MoonCodeMessage?
-  work : Json
+  work : MoonCodeWork
   approvals : Array[MoonCodeApproval]
   assistant : MoonCodeMessage?
   extensions : Map[String, Json]
@@ -1316,6 +1262,23 @@ pub(all) enum MoonCodeWatchResult {
   Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
 } derive(Eq, @debug.Debug)
 pub fn MoonCodeWatchResult::cursor(Self) -> MoonCodeWatchCursor
+
+pub(all) struct MoonCodeWork {
+  item_id : String
+  status : MoonCodeWorkStatus
+  summary : String
+  detail : String
+  evidence : Array[MoonCodeEvidence]
+  // private fields
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeWorkStatus {
+  Queued
+  Running
+  Done
+  Failed
+  Cancelled
+} derive(Eq, @debug.Debug)
 
 pub(all) struct NativeCapabilityEndpoints {
   capabilities : String
