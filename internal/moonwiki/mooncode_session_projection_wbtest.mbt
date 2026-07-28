@@ -64,3 +64,11 @@ test "equal canonical revision returns metadata-only unchanged response" {
   )
   assert_true(json_object_field(response, "mooncode_turn") is Some(Null))
 }
+
+///|
+test "chat and compact formats bypass malformed selected-session validation" {
+  assert_true(mooncode_session_uses_compact_response("chat"))
+  assert_true(mooncode_session_uses_compact_response("compact"))
+  assert_false(mooncode_session_uses_compact_response("full"))
+  assert_true(@mooncode.selected_session_response({ "status": 1 }) is Err(_))
+}
