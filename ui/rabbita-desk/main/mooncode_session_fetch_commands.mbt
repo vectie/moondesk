@@ -40,14 +40,34 @@ fn decode_mooncode_selected_session(
   payload : Json,
 ) -> Result[MoonCodeSession, String] {
   match @mooncode_core.decode_mooncode_selected_session(payload) {
-    Supported(summary) =>
+    Supported(summary) => {
+      let conversation_payload = match payload {
+        Object(fields) =>
+          fields.get("mooncode_conversation").unwrap_or(Json::null())
+        _ => Json::null()
+      }
+      let conversation = match
+        @mooncode_core.decode_mooncode_conversation(conversation_payload) {
+        Absent => None
+        Supported(value) => Some(value)
+        UnsupportedProtocol(protocol) =>
+          return Err("Unsupported MoonCode conversation protocol \{protocol}")
+        UnsupportedContract(contract) =>
+          return Err("Unsupported MoonCode conversation contract \{contract}")
+        Stale(revision~, current_revision~) =>
+          return Err(
+            "Stale MoonCode conversation revision \{revision} < \{current_revision}",
+          )
+        Malformed(error) => return Err(error)
+      }
       try
         @json.from_json(@mooncode_core.encode_mooncode_session_summary(summary))
       catch {
         _ => Err("Invalid MoonCode selected session")
       } noraise {
-        session => Ok(session)
+        session => Ok({ ..session, mooncode_conversation: conversation })
       }
+    }
     UnsupportedVersion(version) =>
       Err("Unsupported MoonCode selected session contract version \{version}")
     Malformed(error) => Err(error)

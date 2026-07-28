@@ -354,17 +354,20 @@ fn mooncode_conversation_has_unfinished_turn(session : MoonCodeSession) -> Bool 
 }
 
 ///|
-fn mooncode_turn_is_unfinished(turn : MoonCodeConversationTurn) -> Bool {
+fn mooncode_turn_is_unfinished(turn : @mooncode_core.MoonCodeTurn) -> Bool {
   let status = turn.status
   if status != "queued" && status != "running" {
     return false
   }
-  let assistant_status = json_field_string(turn.assistant, "status", default="")
-  if assistant_status == "queued" || assistant_status == "running" {
-    return true
+  match turn.assistant {
+    Some(assistant) => {
+      if assistant.status == "queued" || assistant.status == "running" {
+        return true
+      }
+      assistant.content.trim().to_owned() == ""
+    }
+    None => true
   }
-  json_field_string(turn.assistant, "content", default="").trim().to_owned() ==
-  ""
 }
 
 ///|

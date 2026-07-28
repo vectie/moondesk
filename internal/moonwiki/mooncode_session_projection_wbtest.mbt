@@ -2,20 +2,33 @@
 test "canonical session response selects its owning turn" {
   let conversation : Json = {
     "kind": @mooncode.conversation_kind(),
+    "protocol": @mooncode.protocol_version(),
+    "contract_id": @mooncode.conversation_contract_id(),
     "session_id": "session-a",
     "revision": 4,
+    "last_sequence": 4,
     "turns": [
       {
+        "kind": @mooncode_core.conversation_turn_kind(),
         "turn_id": "turn-1",
         "command_id": "command-1",
         "client_turn_id": "client-1",
+        "ordinal": 0,
         "status": "done",
+        "user": null,
+        "work": {},
+        "assistant": null,
       },
       {
+        "kind": @mooncode_core.conversation_turn_kind(),
         "turn_id": "turn-2",
         "command_id": "command-2",
         "client_turn_id": "client-2",
+        "ordinal": 1,
         "status": "running",
+        "user": null,
+        "work": {},
+        "assistant": null,
       },
     ],
   }
@@ -50,8 +63,11 @@ test "equal canonical revision returns metadata-only unchanged response" {
       "workspace_root": "/tmp/book",
       "mooncode_conversation": {
         "kind": @mooncode.conversation_kind(),
+        "protocol": @mooncode.protocol_version(),
+        "contract_id": @mooncode.conversation_contract_id(),
         "session_id": "session-a",
         "revision": 7,
+        "last_sequence": 7,
         "turns": [],
       },
     },

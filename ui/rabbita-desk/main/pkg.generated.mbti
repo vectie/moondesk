@@ -89,10 +89,6 @@ type MoonCodeBrowserWatchEnvelope derive(@json.FromJson)
 
 type MoonCodeCanonicalTurn
 
-type MoonCodeConversation derive(@json.FromJson)
-
-type MoonCodeConversationTurn derive(@json.FromJson)
-
 type MoonCodeEvidenceRow
 
 type MoonCodeOptimisticRow

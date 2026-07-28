@@ -46,7 +46,7 @@ fn mooncode_canonical_turns_from_backend_conversation(
         let turn = mooncode_canonical_empty_turn()
         turn.client_turn_id = backend_turn.client_turn_id
         let mut retry_prompt = ""
-        match mooncode_canonical_message_row_from_json(backend_turn.user) {
+        match mooncode_canonical_message_row(backend_turn.user) {
           Some(row) => {
             retry_prompt = row.content
             turn.user = Some(row)
@@ -64,7 +64,7 @@ fn mooncode_canonical_turns_from_backend_conversation(
           Some(item) => turn.body_items.push(item)
           None => ()
         }
-        match mooncode_canonical_message_row_from_json(backend_turn.assistant) {
+        match mooncode_canonical_message_row(backend_turn.assistant) {
           Some(row) =>
             turn.body_items.push(mooncode_transcript_message_item(row))
           None => ()
@@ -81,7 +81,7 @@ fn mooncode_canonical_turns_from_backend_conversation(
 
 ///|
 fn mooncode_canonical_note_conversation_metadata(
-  conversation : MoonCodeConversation,
+  conversation : @mooncode_core.MoonCodeConversation,
 ) -> Unit {
   ignore(conversation.kind)
   ignore(conversation.protocol)
@@ -97,7 +97,7 @@ fn mooncode_canonical_note_conversation_metadata(
 
 ///|
 fn mooncode_canonical_note_turn_metadata(
-  turn : MoonCodeConversationTurn,
+  turn : @mooncode_core.MoonCodeTurn,
 ) -> Unit {
   ignore(turn.kind)
   ignore(turn.turn_id)
@@ -110,25 +110,25 @@ fn mooncode_canonical_note_turn_metadata(
 }
 
 ///|
-fn mooncode_canonical_message_row_from_json(
-  value : Json,
+fn mooncode_canonical_message_row(
+  message : @mooncode_core.MoonCodeMessage?,
 ) -> MoonCodeTranscriptRow? {
-  let content = json_field_string(value, "content", default="")
-    .trim()
-    .to_owned()
+  guard message is Some(message) else { return None }
+  let content = message.content.trim().to_owned()
   if content == "" {
     return None
   }
-  let role = mooncode_transcript_message_role(
-    json_field_string(value, "role", default="assistant"),
-  )
   Some({
-    item_id: json_field_string(value, "item_id", default=""),
-    role,
+    item_id: message.item_id,
+    role: mooncode_transcript_message_role(message.role),
     content,
-    status: json_field_string(value, "status", default="done"),
-    command_id: json_field_string(value, "command_id", default=""),
-    client_turn_id: json_field_string(value, "client_turn_id", default=""),
+    status: if message.status == "" {
+      "done"
+    } else {
+      message.status
+    },
+    command_id: message.command_id,
+    client_turn_id: message.client_turn_id,
   })
 }
 

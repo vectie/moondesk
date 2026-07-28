@@ -162,8 +162,8 @@ test "Desk loading empty state offers a visible retry without diagnostics" {
 ///|
 fn code_mode_test_conversation(
   session_id : String,
-  turns : Array[MoonCodeConversationTurn],
-) -> MoonCodeConversation {
+  turns : Array[@mooncode_core.MoonCodeTurn],
+) -> @mooncode_core.MoonCodeConversation {
   {
     kind: "mooncode-conversation",
     protocol: "mooncode.v1",
@@ -176,6 +176,7 @@ fn code_mode_test_conversation(
     last_sequence: turns.length() * 2,
     source_event_count: turns.length() * 2,
     turns,
+    extensions: {},
   }
 }
 
@@ -187,7 +188,7 @@ fn code_mode_test_turn(
   assistant? : String = "",
   steps? : Array[Json] = [],
   status? : String = "done",
-) -> MoonCodeConversationTurn {
+) -> @mooncode_core.MoonCodeTurn {
   let turn_client_id = if client_turn_id == "" { id } else { client_turn_id }
   {
     kind: "mooncode-conversation-turn",
@@ -198,13 +199,15 @@ fn code_mode_test_turn(
     status,
     started_at: "2026-06-30T00:00:00Z",
     updated_at: "2026-06-30T00:00:01Z",
-    user: {
-      "role": "user",
-      "content": user,
-      "status": "done",
-      "command_id": id,
-      "client_turn_id": turn_client_id,
-    },
+    user: Some({
+      item_id: "",
+      role: "user",
+      content: user,
+      status: "done",
+      command_id: id,
+      client_turn_id: turn_client_id,
+      extensions: {},
+    }),
     work: {
       "item_id": "turn:\{id}:work",
       "status": status,
@@ -221,16 +224,19 @@ fn code_mode_test_turn(
       "live": {},
     },
     assistant: if assistant == "" {
-      Json::object({})
+      None
     } else {
-      {
-        "role": "assistant",
-        "content": assistant,
-        "status": status,
-        "command_id": id,
-        "client_turn_id": turn_client_id,
-      }
+      Some({
+        item_id: "",
+        role: "assistant",
+        content: assistant,
+        status,
+        command_id: id,
+        client_turn_id: turn_client_id,
+        extensions: {},
+      })
     },
+    extensions: {},
   }
 }
 

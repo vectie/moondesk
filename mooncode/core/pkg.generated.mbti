@@ -165,11 +165,15 @@ pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_s
 
 pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
 
+pub fn decode_mooncode_conversation(Json, current_revision? : Int) -> MoonCodeConversationDecodeResult
+
 pub fn decode_mooncode_selected_session(Json) -> MoonCodeSelectedSessionDecodeResult
 
 pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
 
 pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
+
+pub fn encode_mooncode_conversation(MoonCodeConversation) -> Json
 
 pub fn encode_mooncode_session_summary(MoonCodeSessionSummary) -> Json
 
@@ -1020,6 +1024,41 @@ pub(all) enum MoonCodeCapabilityDecodeResult {
   Malformed(String)
 } derive(Eq, @debug.Debug)
 
+pub(all) struct MoonCodeConversation {
+  kind : String
+  protocol : String
+  contract_id : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  turn_count : Int
+  revision : Int
+  last_sequence : Int
+  source_event_count : Int
+  turns : Array[MoonCodeTurn]
+  extensions : Map[String, Json]
+} derive(Eq, @debug.Debug)
+pub impl @json.FromJson for MoonCodeConversation
+
+pub(all) enum MoonCodeConversationDecodeResult {
+  Absent
+  Supported(MoonCodeConversation)
+  UnsupportedProtocol(String)
+  UnsupportedContract(String)
+  Stale(revision~ : Int, current_revision~ : Int)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct MoonCodeMessage {
+  item_id : String
+  role : String
+  content : String
+  status : String
+  command_id : String
+  client_turn_id : String
+  extensions : Map[String, Json]
+} derive(Eq, @debug.Debug)
+
 pub(all) enum MoonCodeSelectedSessionDecodeResult {
   Supported(MoonCodeSessionSummary)
   UnsupportedVersion(Int)
@@ -1063,6 +1102,21 @@ pub(all) struct MoonCodeSessionSummary {
   queued_count : Int
   last_message : String?
   archived : Bool
+  extensions : Map[String, Json]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct MoonCodeTurn {
+  kind : String
+  turn_id : String
+  client_turn_id : String
+  command_id : String
+  ordinal : Int
+  status : String
+  started_at : String
+  updated_at : String
+  user : MoonCodeMessage?
+  work : Json
+  assistant : MoonCodeMessage?
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
 

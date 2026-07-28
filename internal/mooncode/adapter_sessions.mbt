@@ -86,9 +86,36 @@ pub fn session_response_defaults(session : Json) -> Json {
 ///|
 pub fn selected_session_response(session : Json) -> Result[Json, String] {
   let projected = session_response_defaults(session)
+  let conversation = match projected {
+    Object(fields) =>
+      fields.get("mooncode_conversation").unwrap_or(Json::null())
+    _ => Json::null()
+  }
+  let typed_conversation = match
+    @mooncode_core.decode_mooncode_conversation(conversation) {
+    Absent => None
+    Supported(value) => Some(@mooncode_core.encode_mooncode_conversation(value))
+    UnsupportedProtocol(protocol) =>
+      return Err("Unsupported MoonCode conversation protocol \{protocol}")
+    UnsupportedContract(contract) =>
+      return Err("Unsupported MoonCode conversation contract \{contract}")
+    Stale(revision~, current_revision~) =>
+      return Err(
+        "Stale MoonCode conversation revision \{revision} < \{current_revision}",
+      )
+    Malformed(error) => return Err(error)
+  }
   match @mooncode_core.decode_mooncode_selected_session(projected) {
-    Supported(summary) =>
-      Ok(@mooncode_core.encode_mooncode_session_summary(summary))
+    Supported(summary) => {
+      let encoded = @mooncode_core.encode_mooncode_session_summary(summary)
+      Ok(
+        match typed_conversation {
+          Some(value) =>
+            json_with_field(encoded, "mooncode_conversation", value)
+          None => encoded
+        },
+      )
+    }
     UnsupportedVersion(version) =>
       Err("Unsupported MoonCode selected session contract version \{version}")
     Malformed(error) => Err(error)
