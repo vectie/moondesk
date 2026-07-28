@@ -37,7 +37,23 @@ fn capability_setup_markup(
 ) -> String {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let daemon = if running {
-    Some({ running: true, port: 4545, message: "running", service_configured: true, managed_install: None, installation_evidence: None, configuration_evidence: None, managed_running: Some(true), platform_evidence: None })
+    Some({
+      ok: Some(true),
+      status: Some("running"),
+      next_action: None,
+      model_ready: Some(true),
+      model_readiness: None,
+      repair_available: Some(false),
+      running: true,
+      port: 4545,
+      message: "running",
+      service_configured: true,
+      managed_install: None,
+      installation_evidence: None,
+      configuration_evidence: None,
+      managed_running: Some(true),
+      platform_evidence: None,
+    })
   } else {
     None
   }
