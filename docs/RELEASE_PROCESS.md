@@ -138,6 +138,26 @@ canonical wrapper, an independent final verification, and a uniquely named
 artifact containing the version and commit SHA. Artifact overwrite is disabled
 and retention is bounded.
 
+The workflow's immutable-input resolution can be exercised locally without
+creating a tag or contacting GitHub. From the repository root, substitute any
+existing preview release-note version:
+
+```sh
+version=<preview-version>
+scripts/resolve_preview_inputs.sh \
+  --event push \
+  --tag-or-version "v$version" \
+  --notes "" \
+  --output-root "${TMPDIR:-/tmp}"
+```
+
+This runs the same resolver as the tag-triggered workflow and proves only the
+deterministic mapping from a matching tag name to version, checked-in release
+notes, and fresh output path. `sh scripts/resolve_preview_inputs.test.sh`
+covers tag and manual dispatch plus invalid refs, events, paths, missing notes,
+and relative output roots. Neither command proves that GitHub received a tag,
+ran the workflow, or retained an artifact.
+
 The workflow does not create, edit, or replace a hosted release. Its first
 successful tag run must be retained before the local Phase 2 implementation can
 be called active remote evidence.
@@ -173,12 +193,25 @@ After a clean pull request and push are green:
 2. Retain the workflow run URL, source commit, runner image, and uploaded
    artifact identifier.
 3. Download the artifact into a fresh verification root.
-4. Run `node scripts/verify_release.mjs <root>` without generating or replacing
-   checksums.
+4. Run `node scripts/verify_release.mjs "$downloaded_root"` without generating
+   or replacing checksums.
 5. Rebuild the same version from the tagged source in an independent clean
-   checkout.
-6. Compare the contract, declared artifacts, and reproducible portions. Record
-   any platform-container bytes that are expected to vary.
+   checkout into `$rebuilt_root`.
+6. Verify the clean-checkout output, then compare the stable portable contract
+   fields and release notes repeatably. At minimum compare kind, version,
+   channel, relative paths, signing/notarization state, installer, runtime
+   policy, artifact kinds, and artifact paths in `release-manifest.json` and
+   `updates.json`:
+
+   ```sh
+   node scripts/verify_release.mjs "$rebuilt_root"
+   diff -u "$downloaded_root/RELEASE_NOTES.md" "$rebuilt_root/RELEASE_NOTES.md"
+   ```
+
+   Classify every payload hash and `SHA256SUMS` entry as equal or as expected
+   platform-container variance. Archive, runtime, and DMG hashes embedded in
+   the manifests are not assumed reproducible. Record every variance rather
+   than weakening either artifact's strict read-only verifier checks.
 7. If any check fails, preserve the failed output for diagnosis and issue a new
    preview number. Never replace the tag or artifact.
 
