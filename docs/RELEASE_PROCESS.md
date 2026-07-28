@@ -1,14 +1,24 @@
 # MoonDesk Release Process
 
-Last updated: 2026-07-27.
+Last updated: 2026-07-28.
 
 ## Status and evidence boundary
 
-The repository contains a local CI workflow and an unsigned-preview workflow.
-Local validation and release-fixture evidence do not prove that either workflow
-has run on the remote default branch. Phase 2 remains open until clean
-pull-request, push, and version-tag runs are retained and a tag artifact is
-reproduced independently.
+The repository contains active CI and unsigned-preview workflows. GitHub
+retains successful `Required repository validation` jobs for:
+
+- pull request run [`30314186808`](https://github.com/vectie/moondesk/actions/runs/30314186808)
+  at commit `faebef38bf9d0e732089d7d9e0f8ccf1023a71f3`; the run was created at
+  2026-07-27 23:27:13 UTC, and its job ran from 23:27:15 through 23:28:13 UTC
+- default-branch push run [`30316790583`](https://github.com/vectie/moondesk/actions/runs/30316790583)
+  at merge commit `083e1729e5602146071c06fc5992c74acf608547`; the run was created at
+  2026-07-28 00:15:54 UTC, and its job ran from 00:16:03 through 00:17:12 UTC
+
+The unsigned-preview workflow has no retained run. Phase 2 remains open until
+a successful immutable preview-tag run retains its source commit, runner image,
+URL, and artifact identifier; the downloaded artifact passes read-only
+verification; and the same tagged version is rebuilt and compared from an
+independent clean checkout.
 
 The exact disposable-candidate commands, sizes, hashes, refusal checks, and
 test counts are retained in
@@ -128,6 +138,26 @@ canonical wrapper, an independent final verification, and a uniquely named
 artifact containing the version and commit SHA. Artifact overwrite is disabled
 and retention is bounded.
 
+The workflow's immutable-input resolution can be exercised locally without
+creating a tag or contacting GitHub. From the repository root, substitute any
+existing preview release-note version:
+
+```sh
+version=<preview-version>
+scripts/resolve_preview_inputs.sh \
+  --event push \
+  --tag-or-version "v$version" \
+  --notes "" \
+  --output-root "${TMPDIR:-/tmp}"
+```
+
+This runs the same resolver as the tag-triggered workflow and proves only the
+deterministic mapping from a matching tag name to version, checked-in release
+notes, and fresh output path. `sh scripts/resolve_preview_inputs.test.sh`
+covers tag and manual dispatch plus invalid refs, events, paths, missing notes,
+and relative output roots. Neither command proves that GitHub received a tag,
+ran the workflow, or retained an artifact.
+
 The workflow does not create, edit, or replace a hosted release. Its first
 successful tag run must be retained before the local Phase 2 implementation can
 be called active remote evidence.
@@ -163,12 +193,25 @@ After a clean pull request and push are green:
 2. Retain the workflow run URL, source commit, runner image, and uploaded
    artifact identifier.
 3. Download the artifact into a fresh verification root.
-4. Run `node scripts/verify_release.mjs <root>` without generating or replacing
-   checksums.
+4. Run `node scripts/verify_release.mjs "$downloaded_root"` without generating
+   or replacing checksums.
 5. Rebuild the same version from the tagged source in an independent clean
-   checkout.
-6. Compare the contract, declared artifacts, and reproducible portions. Record
-   any platform-container bytes that are expected to vary.
+   checkout into `$rebuilt_root`.
+6. Verify the clean-checkout output, then compare the stable portable contract
+   fields and release notes repeatably. At minimum compare kind, version,
+   channel, relative paths, signing/notarization state, installer, runtime
+   policy, artifact kinds, and artifact paths in `release-manifest.json` and
+   `updates.json`:
+
+   ```sh
+   node scripts/verify_release.mjs "$rebuilt_root"
+   diff -u "$downloaded_root/RELEASE_NOTES.md" "$rebuilt_root/RELEASE_NOTES.md"
+   ```
+
+   Classify every payload hash and `SHA256SUMS` entry as equal or as expected
+   platform-container variance. Archive, runtime, and DMG hashes embedded in
+   the manifests are not assumed reproducible. Record every variance rather
+   than weakening either artifact's strict read-only verifier checks.
 7. If any check fails, preserve the failed output for diagnosis and issue a new
    preview number. Never replace the tag or artifact.
 

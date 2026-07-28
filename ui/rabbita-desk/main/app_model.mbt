@@ -100,6 +100,7 @@ struct Model {
   town_capability_probe_available : Bool
   launch_agent : LaunchAgentResult?
   moonclaw_daemon : MoonClawDaemonStatus?
+  mooncode_capability : MoonCodeCapabilityState
   moonclaw_installing : Bool
   moonclaw_install_feedback : String
   moonclaw_operation : String
@@ -280,6 +281,8 @@ enum Msg {
   LoadedLaunchAgent(Result[LaunchAgentResult, String])
   ManagedLaunchAgent(Result[LaunchAgentResult, String])
   LoadedMoonClawDaemon(Result[MoonClawDaemonStatus, String])
+  LoadedMoonCodeCapability(MoonCodeCapabilityState)
+  RefreshMoonCodeCapability
   ManagedMoonClaw(Result[MoonClawDaemonStatus, String])
   LoadedMoonClawModels(Result[MoonClawModelsResult, String])
   LoadedMoonClawAuth(Result[MoonClawAuthStatus, String])

@@ -670,9 +670,12 @@ extern "js" fn browser_mooncode_relative_time(value : String) -> String =
 
 ///|
 fn mooncode_center_class(model : Model) -> String {
-  match moonclaw_capability_state(model.moonclaw_daemon) {
-    DetectedRunning => "preview-center mooncode-center"
-    _ => "preview-center mooncode-center runtime-setup-visible"
+  if moonclaw_capability_state(model.moonclaw_daemon) is DetectedRunning &&
+    (model.mooncode_capability is CapabilityPending ||
+      mooncode_capability_available(model.mooncode_capability)) {
+    "preview-center mooncode-center"
+  } else {
+    "preview-center mooncode-center runtime-setup-visible"
   }
 }
 
@@ -681,6 +684,43 @@ fn render_mooncode_runtime_setup(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
+  let explicit_capability_failure = match model.mooncode_capability {
+    CapabilityUnsupportedVersion(_) | CapabilityMalformed(_) | CapabilityUnavailable(_) => true
+    CapabilityPending | CapabilitySupported(_) => false
+  }
+  if explicit_capability_failure {
+    let title = mooncode_capability_title(model.mooncode_capability)
+    return section(
+      class="mooncode-runtime-setup",
+      attrs=@html.Attrs::build()
+        .data_set("testid", "mooncode-runtime-setup")
+        .data_set("state", mooncode_capability_state_key(model.mooncode_capability))
+        .role("status")
+        .aria_live("polite"),
+      [
+        h3(title),
+        match model.mooncode_capability {
+          CapabilityUnsupportedVersion(_) =>
+            p("Update MoonDesk or MoonClaw so their capability contracts are compatible.")
+          CapabilityMalformed(_) =>
+            button(
+              class="primary-button compact-button",
+              attrs=@html.Attrs::build().data_set("testid", "mooncode-capability-refetch"),
+              on_click=dispatch(RefreshMoonCodeCapability),
+              "Refetch capability",
+            )
+          CapabilityUnavailable(_) =>
+            button(
+              class="primary-button compact-button",
+              attrs=@html.Attrs::build().data_set("testid", "mooncode-capability-retry-daemon"),
+              on_click=dispatch(ManageMoonClaw("retry")),
+              "Retry Code runtime",
+            )
+          CapabilityPending | CapabilitySupported(_) => @html.nothing
+        },
+      ],
+    )
+  }
   let state = moonclaw_capability_state(model.moonclaw_daemon)
   match state {
     DetectedRunning => @html.nothing

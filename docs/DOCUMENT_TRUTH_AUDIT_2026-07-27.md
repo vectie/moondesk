@@ -14,16 +14,23 @@ Confirmed local evidence is deliberately bounded:
 - The baseline metrics and source-ownership inventory are complete.
 - The MoonCode public-surface inventory and typed-contract target are complete;
   implementation of that target has **not started**.
-- [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) exists in this
-  checkout, is configured for pull requests and pushes, and invokes
-  `scripts/validate.sh full`. There is no retained pull-request or push run
-  evidence, so Phase 2 is not complete.
+- [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) is active for pull
+  requests and pushes and invokes `scripts/validate.sh full`. GitHub retains a
+  successful `Required repository validation` pull-request job in run
+  [`30314186808`](https://github.com/vectie/moondesk/actions/runs/30314186808)
+  at commit `faebef38bf9d0e732089d7d9e0f8ccf1023a71f3`, followed by a successful
+  default-branch push job in run
+  [`30316790583`](https://github.com/vectie/moondesk/actions/runs/30316790583)
+  at merge commit `083e1729e5602146071c06fc5992c74acf608547`.
 - A clean-checkout `scripts/validate.sh full` transcript is now retained in
   [`FULL_VALIDATION_PROOF_2026-07-27.md`](FULL_VALIDATION_PROOF_2026-07-27.md).
   It closes local Phase 0 without claiming cross-product or remote evidence.
 
-No remote CI, clean-machine, signing, notarization, hosted-update, or release
-evidence is claimed.
+No unsigned-preview workflow run is retained. Phase 2 remains open for an
+immutable preview-tag run and uploaded artifact, read-only verification of the
+downloaded artifact, and independent clean-checkout reproduction/comparison of
+the tagged version. No clean-machine, signing, notarization, hosted-update, or
+release evidence is claimed.
 
 ## Active reading-order audit
 

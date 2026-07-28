@@ -17,6 +17,8 @@ fn update_mooncode_session_results(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
+    LoadedMoonCodeCapability(capability) =>
+      (@rabbita.none, { ..model, mooncode_capability: capability })
     ManagedMoonClaw(Ok(status)) => {
       let failed = status.ok is Some(false) ||
         (
@@ -69,6 +71,7 @@ fn update_mooncode_session_results(
       if status.running {
         commands.push(fetch_moonclaw_models_cmd(dispatch))
         commands.push(fetch_moonclaw_auth_cmd(dispatch))
+        commands.push(fetch_mooncode_capability_cmd(dispatch))
         if moonclaw_model_readiness_allows_sessions(ready) {
           commands.push(fetch_mooncode_sessions_cmd(dispatch, ""))
         }

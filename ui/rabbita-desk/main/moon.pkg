@@ -10,6 +10,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/core/string",
   "vectie/moondesk/core" @desk,
+  "vectie/moondesk/mooncode/core" @mooncode_core,
 }
 
 supported_targets = "js"
