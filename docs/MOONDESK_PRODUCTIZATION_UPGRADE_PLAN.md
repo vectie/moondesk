@@ -766,7 +766,7 @@ Phase 1 is complete when a new user can:
 Every change is checked by the same quality gates used for release, and every
 release artifact is produced from a reproducible pipeline.
 
-### Current bounded evidence — 2026-07-27
+### Current bounded evidence — 2026-07-28
 
 Local CI runs the canonical full validator. A separate unsigned-preview
 workflow now uses a pinned macOS runner, read-only repository permission,
@@ -800,9 +800,24 @@ release path refuse the populated output without changing its file snapshot.
 Exact commands, counts, sizes, hashes, and the evidence boundary are retained
 in
 [`PREVIEW_RELEASE_PROOF_2026-07-27.md`](PREVIEW_RELEASE_PROOF_2026-07-27.md).
-This closes a local unsigned-preview implementation slice only. The workflow
-is not on the remote default branch, and no pull-request, push, tag, hosted
-artifact, or reproduction run is claimed.
+This closes a local unsigned-preview implementation slice only.
+
+GitHub now retains two clean CI runs for the same reviewed change:
+
+- pull request run [`30314186808`](https://github.com/vectie/moondesk/actions/runs/30314186808),
+  commit `faebef38bf9d0e732089d7d9e0f8ccf1023a71f3`, completed successfully as
+  job `Required repository validation`; the run was created at 2026-07-27
+  23:27:13 UTC, and the job ran from 23:27:15 through 23:28:13 UTC
+- default-branch push run [`30316790583`](https://github.com/vectie/moondesk/actions/runs/30316790583),
+  merge commit `083e1729e5602146071c06fc5992c74acf608547`, completed successfully as
+  job `Required repository validation`; the run was created at 2026-07-28
+  00:15:54 UTC, and the job ran from 00:16:03 through 00:17:12 UTC
+
+The unsigned-preview workflow has no retained run. Phase 2 therefore remains
+open specifically for a successful immutable preview-tag run with its source
+commit, runner image, URL, and uploaded artifact identifier retained, followed
+by read-only verification of the downloaded artifact and an independent clean-
+checkout rebuild/comparison of the same tagged version.
 
 ### Workstreams
 
