@@ -739,6 +739,88 @@ test "code mode selecting loaded session keeps selection" {
 }
 
 ///|
+test "selected session typed decode preserves opaque IDs and rejects malformed contracts" {
+  let raw_id = "session /resume:1\\branch"
+  guard decode_mooncode_selected_session({
+      "protocol": "mooncode.v1",
+      "id": raw_id,
+      "status": "running",
+      "mooncode_summary": {
+        "event_count": 2,
+        "verified_test_count": 0,
+        "pending_diff_count": 0,
+      },
+      "future_optional": true,
+    })
+    is Ok(session) else {
+    fail("expected typed selected session")
+  }
+  assert_eq(session.id, raw_id)
+  assert_true(
+    decode_mooncode_selected_session({ "id": raw_id, "status": 1 }) is Err(_),
+  )
+  assert_true(
+    decode_mooncode_selected_session({
+      "protocol": "mooncode.v9",
+      "id": raw_id,
+      "status": "idle",
+    })
+    is Err(message) &&
+    message.contains("version 9"),
+  )
+}
+
+///|
+test "selected session result replaces only the current selection" {
+  let listing = code_mode_test_session("session-a")
+  let selected = { ..listing, title: "Fetched title" }
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: listing.id,
+    mooncode_sessions: [listing],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSelectedSession(listing.id, Ok(selected)),
+    model,
+  )
+  guard selected_mooncode_session(next) is Some(session) else {
+    fail("expected selected session")
+  }
+  assert_eq(session.title, "Fetched title")
+}
+
+///|
+test "late selected session summary preserves a newer canonical conversation" {
+  let summary = code_mode_test_session("session-a")
+  let canonical = {
+    ..summary,
+    mooncode_conversation: Some(
+      code_mode_test_conversation("session-a", [
+        code_mode_test_turn("turn-a", "Prompt", assistant="Answer"),
+      ]),
+    ),
+  }
+  let model = {
+    ..init_model(),
+    selected_mooncode_session_id: summary.id,
+    mooncode_sessions: [canonical],
+  }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonCodeSelectedSession(summary.id, Ok(summary)),
+    model,
+  )
+  guard selected_mooncode_session(next) is Some(session) else {
+    fail("expected selected session")
+  }
+  guard session.mooncode_conversation is Some(conversation) else {
+    fail("late summary erased canonical conversation")
+  }
+  assert_eq(conversation.turn_count, 1)
+}
+
+///|
 test "code mode empty selection never reconstructs the first session" {
   let model = {
     ..init_model(),

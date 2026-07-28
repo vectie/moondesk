@@ -72,6 +72,8 @@ pub fn runtime_session_listing_rows(Json) -> Result[Array[Json], String]
 
 pub fn runtime_tool_names() -> Array[String]
 
+pub fn selected_session_response(Json) -> Result[Json, String]
+
 pub fn session_response_defaults(Json) -> Json
 
 pub fn session_with_field(Json, String, Json) -> Json

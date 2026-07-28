@@ -14,6 +14,7 @@ fn update_mooncode_results(
     | StartedMoonClawCopilotAuth(_)
     | SavedMoonClawOpenRouterKey(_)
     | LoadedMoonCodeSessions(_)
+    | LoadedMoonCodeSelectedSession(_, _)
     | LoadedMoonCodeArchivedSessions(_)
     | LoadedMoonCodeWatch(_, _, _) =>
       update_mooncode_session_results(dispatch, msg, model)

@@ -118,3 +118,51 @@ test "session listing codec tolerates the legacy archived array envelope" {
     summary.archived,
   )
 }
+
+///|
+test "selected session codec preserves opaque IDs and unknown optional fields" {
+  let raw_id = "session /resume:1\\branch"
+  guard @core.decode_mooncode_selected_session({
+      "protocol": "mooncode.v1",
+      "id": raw_id,
+      "status": "running",
+      "mooncode_summary": { "event_count": 9 },
+    })
+    is Supported(summary) else {
+    fail("expected supported selected session")
+  }
+  assert_eq(summary.id.to_string(), raw_id)
+  guard @core.encode_mooncode_session_summary(summary)
+    is { "mooncode_summary": { "event_count": 9, .. }, .. } else {
+    fail("unknown optional selected-session fields were not preserved")
+  }
+}
+
+///|
+test "selected session codec distinguishes defaults, malformed fields, and versions" {
+  guard @core.decode_mooncode_selected_session({
+      "id": "session-one",
+      "status": "idle",
+    })
+    is Supported(summary) else {
+    fail("expected absent optional fields to retain defaults")
+  }
+  assert_eq(summary.title, "session-one")
+  assert_true(summary.updated_at is None)
+  assert_true(
+    @core.decode_mooncode_selected_session({
+      "id": "session-one",
+      "status": "idle",
+      "updated_at": 1,
+    })
+    is Malformed(_),
+  )
+  assert_true(
+    @core.decode_mooncode_selected_session({
+      "protocol": "mooncode.v7",
+      "id": "session-one",
+      "status": "idle",
+    })
+    is UnsupportedVersion(7),
+  )
+}

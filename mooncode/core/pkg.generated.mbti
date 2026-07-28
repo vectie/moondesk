@@ -165,6 +165,8 @@ pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_s
 
 pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
 
+pub fn decode_mooncode_selected_session(Json) -> MoonCodeSelectedSessionDecodeResult
+
 pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
 
 pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
@@ -1014,6 +1016,12 @@ pub(all) struct MoonCodeCapability {
 
 pub(all) enum MoonCodeCapabilityDecodeResult {
   Supported(MoonCodeCapability)
+  UnsupportedVersion(Int)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeSelectedSessionDecodeResult {
+  Supported(MoonCodeSessionSummary)
   UnsupportedVersion(Int)
   Malformed(String)
 } derive(Eq, @debug.Debug)

@@ -71,6 +71,13 @@ async fn handle_mooncode_session(
     send_api_error(conn, method_, 404, "Not Found", "Unknown MoonCode session")
     return
   }
+  let selected_session = match @mooncode.selected_session_response(session) {
+    Ok(value) => value
+    Err(error) => {
+      send_api_error(conn, method_, 502, "Bad Gateway", error)
+      return
+    }
+  }
   if response_format == "chat" || response_format == "compact" {
     send_json(
       conn,
@@ -83,7 +90,7 @@ async fn handle_mooncode_session(
       ),
     )
   } else {
-    send_json(conn, method_, session)
+    send_json(conn, method_, selected_session)
   }
 }
 

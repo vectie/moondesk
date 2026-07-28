@@ -167,3 +167,30 @@ test "session defaults never expose a second transcript" {
   assert_eq(json_string(session, "cwd", default=""), "/tmp/book-one")
   assert_false(json_bool(session, "archived", default=true))
 }
+
+///|
+test "selected session adapter validates known fields and preserves extensions" {
+  let raw_id = "session /resume:1\\branch"
+  guard selected_session_response({
+      "id": raw_id,
+      "status": "running",
+      "mooncode_summary": { "event_count": 9 },
+    })
+    is Ok(session) else {
+    fail("expected selected session response")
+  }
+  assert_eq(json_string(session, "id", default=""), raw_id)
+  assert_true(session.stringify().contains("mooncode_summary"))
+  assert_true(
+    selected_session_response({ "id": raw_id, "status": 1 }) is Err(_),
+  )
+  assert_true(
+    selected_session_response({
+      "protocol": "mooncode.v8",
+      "id": raw_id,
+      "status": "idle",
+    })
+    is Err(message) &&
+    message.contains("version 8"),
+  )
+}

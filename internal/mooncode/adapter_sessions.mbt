@@ -84,6 +84,18 @@ pub fn session_response_defaults(session : Json) -> Json {
 }
 
 ///|
+pub fn selected_session_response(session : Json) -> Result[Json, String] {
+  let projected = session_response_defaults(session)
+  match @mooncode_core.decode_mooncode_selected_session(projected) {
+    Supported(summary) =>
+      Ok(@mooncode_core.encode_mooncode_session_summary(summary))
+    UnsupportedVersion(version) =>
+      Err("Unsupported MoonCode selected session contract version \{version}")
+    Malformed(error) => Err(error)
+  }
+}
+
+///|
 fn normalized_listing_row(row : Json) -> Json? {
   guard json_string(row, "id", default="") != "" else { return None }
   let session_id = json_string(row, "id", default="")
