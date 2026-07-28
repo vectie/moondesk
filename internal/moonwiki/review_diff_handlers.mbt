@@ -26,17 +26,17 @@ async fn handle_workspace_review_diff(
             }
           None => ""
         }
-        let diff = line_diff_summary(base_text, current)
+        let diff = @review.line_diff_summary(base_text, current)
         send_json(conn, method_, {
           "ok": true,
           "workspace_id": workspace.id,
           "path": clean,
           "base_path": base_path.unwrap_or(""),
           "comparison_path": clean,
-          "added": json_int(diff, "added", default=0),
-          "removed": json_int(diff, "removed", default=0),
-          "changed": json_bool(diff, "changed", default=false),
-          "body": json_string(diff, "body", default=""),
+          "added": diff.added(),
+          "removed": diff.removed(),
+          "changed": diff.changed(),
+          "body": diff.body(),
         })
       } else {
         send_json(conn, method_, empty_review_diff(workspace.id, clean))
@@ -84,71 +84,4 @@ async fn review_base_path(
     }
   }
   None
-}
-
-///|
-fn line_diff_summary(base_text : String, current_text : String) -> Json {
-  let base_lines = review_diff_lines(base_text)
-  let current_lines = review_diff_lines(current_text)
-  let mut added = 0
-  let mut removed = 0
-  let body_lines : Array[String] = []
-  for line in current_lines {
-    if !has_line(base_lines, line) {
-      added += 1
-      if body_lines.length() < 80 {
-        body_lines.push(diff_body_line("+ ", line))
-      }
-    }
-  }
-  for line in base_lines {
-    if !has_line(current_lines, line) {
-      removed += 1
-      if body_lines.length() < 80 {
-        body_lines.push(diff_body_line("- ", line))
-      }
-    }
-  }
-  {
-    "added": added,
-    "removed": removed,
-    "changed": added > 0 || removed > 0,
-    "body": if body_lines.length() == 0 {
-      "No line-level difference against the nearest review base."
-    } else {
-      body_lines.join("\n")
-    },
-  }
-}
-
-///|
-fn review_diff_lines(text : String) -> Array[String] {
-  let lines : Array[String] = []
-  for line in text.split("\n") {
-    let line = line.to_owned()
-    if line.trim().to_owned() != "" {
-      lines.push(line)
-    }
-  }
-  lines
-}
-
-///|
-fn diff_body_line(prefix : String, line : String) -> String {
-  let compact = line.trim().to_owned()
-  if compact.length() > 240 {
-    prefix + compact[:240].to_owned() + "..."
-  } else {
-    prefix + compact
-  }
-}
-
-///|
-fn has_line(lines : Array[String], line : String) -> Bool {
-  for item in lines {
-    if item == line {
-      return true
-    }
-  }
-  false
 }

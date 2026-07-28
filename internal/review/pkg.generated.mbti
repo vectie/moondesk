@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/internal/review"
+
+// Values
+pub fn line_diff_summary(String, String) -> ReviewDiffSummary
+
+// Errors
+
+// Types and methods
+pub struct ReviewDiffSummary {
+  added : Int
+  removed : Int
+  changed : Bool
+  body : String
+}
+pub fn ReviewDiffSummary::added(Self) -> Int
+pub fn ReviewDiffSummary::body(Self) -> String
+pub fn ReviewDiffSummary::changed(Self) -> Bool
+pub fn ReviewDiffSummary::removed(Self) -> Int
+
+// Type aliases
+
+// Traits
+
