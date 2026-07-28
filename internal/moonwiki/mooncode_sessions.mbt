@@ -71,14 +71,7 @@ async fn handle_mooncode_session(
     send_api_error(conn, method_, 404, "Not Found", "Unknown MoonCode session")
     return
   }
-  let selected_session = match @mooncode.selected_session_response(session) {
-    Ok(value) => value
-    Err(error) => {
-      send_api_error(conn, method_, 502, "Bad Gateway", error)
-      return
-    }
-  }
-  if response_format == "chat" || response_format == "compact" {
+  if mooncode_session_uses_compact_response(response_format) {
     send_json(
       conn,
       method_,
@@ -90,8 +83,20 @@ async fn handle_mooncode_session(
       ),
     )
   } else {
+    let selected_session = match @mooncode.selected_session_response(session) {
+      Ok(value) => value
+      Err(error) => {
+        send_api_error(conn, method_, 502, "Bad Gateway", error)
+        return
+      }
+    }
     send_json(conn, method_, selected_session)
   }
+}
+
+///|
+fn mooncode_session_uses_compact_response(response_format : String) -> Bool {
+  response_format == "chat" || response_format == "compact"
 }
 
 ///|
