@@ -431,7 +431,7 @@ their exit gates.
 | --- | --- | --- | --- | --- |
 | [0. Current truth](#phase-0-establish-one-source-of-current-truth) | Complete locally | — | One current source of truth and reproducible local baseline | Retain proof; correct drift when later phases change facts |
 | [1. Product clarity](#phase-1-simplify-the-product-story-and-first-run-experience) | Complete locally | Phase 0 | Understandable first run and honest capability setup | Retain the closure journey; later matrices remain in Phases 8 and 9 |
-| [2. CI and release evidence](#phase-2-make-ci-and-release-evidence-mandatory) | CI and unsigned preview pipeline proven locally; remote evidence open | Phase 0 | Mandatory quality gates and reproducible preview releases | Passing pull-request, push, and preview-tag runs retained as remote evidence |
+| [2. CI and release evidence](#phase-2-make-ci-and-release-evidence-mandatory) | Complete | Phase 0 | Mandatory quality gates and reproducible preview releases | Retain the immutable runs, artifact verification, and bounded rebuild proof |
 | [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Inventory and target complete; implementation not started | Phase 2 | Small typed public protocol and one serialization boundary | Phase 2 passes, then one typed vertical slice replaces one string/JSON path |
 | [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | Not started | Phase 3 ownership map | Narrower packages, state ownership, and decomposed tests | Approved dependency graph and first behavior-preserving extraction |
 | [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Not started | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Threat-model tests prove canonical confinement and denial paths |
@@ -813,11 +813,24 @@ GitHub now retains two clean CI runs for the same reviewed change:
   job `Required repository validation`; the run was created at 2026-07-28
   00:15:54 UTC, and the job ran from 00:16:03 through 00:17:12 UTC
 
-The unsigned-preview workflow has no retained run. Phase 2 therefore remains
-open specifically for a successful immutable preview-tag run with its source
-commit, runner image, URL, and uploaded artifact identifier retained, followed
-by read-only verification of the downloaded artifact and an independent clean-
-checkout rebuild/comparison of the same tagged version.
+The immutable `v0.1.0-preview.11` source
+`01e5b4d0ed468d12cea8271011dd3147c079f2fb` now has successful hosted run
+[`30335949331`](https://github.com/vectie/moondesk/actions/runs/30335949331)
+and job
+[`90200737627`](https://github.com/vectie/moondesk/actions/runs/30335949331/job/90200737627).
+The API retained runner `GitHub Actions 1000001278`, group `GitHub Actions`,
+label `macos-14`, and artifact `8679181026`, named
+`moondesk-0.1.0-preview.11-01e5b4d0ed468d12cea8271011dd3147c079f2fb-macos-arm64-unsigned`
+at 18,011,747 bytes. The unchanged download passed the repository read-only
+verifier and checksum check. An independent descendant-only clean checkout
+passed `scripts/validate.sh full`, rebuilt and verified the same portable
+contract, and recorded exact matching fields plus host/toolchain/timestamp-
+sensitive digest and size differences. See
+[`PREVIEW_RELEASE_PROOF_2026-07-27.md`](PREVIEW_RELEASE_PROOF_2026-07-27.md).
+
+**Gate result:** passed. Phase 2 is complete; byte identity, signing,
+notarization, clean-machine installation, update/rollback, and soak proof are
+not claimed here and remain later Phase 9 qualification.
 
 ### Workstreams
 
