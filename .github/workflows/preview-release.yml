@@ -47,28 +47,10 @@ jobs:
           TAG_OR_VERSION: ${{ inputs.version || github.ref_name }}
           REQUESTED_NOTES: ${{ inputs.release_notes }}
         run: |
-          version="$TAG_OR_VERSION"
-          if [ "$EVENT_NAME" = push ]; then
-            version=${version#v}
-          fi
-          printf '%s\n' "$version" |
-            grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+-preview\.[0-9]+$'
-          notes="$REQUESTED_NOTES"
-          if [ -z "$notes" ]; then
-            notes="docs/releases/$version.md"
-          fi
-          case "$notes" in
-            /*|*".."*)
-              printf 'Unsafe release-note path: %s\n' "$notes" >&2
-              exit 1
-              ;;
-          esac
-          test -s "$notes"
-          {
-            printf 'version=%s\n' "$version"
-            printf 'notes=%s\n' "$notes"
-            printf 'output=%s/moondesk-%s\n' "$RUNNER_TEMP" "$version"
-          } >> "$GITHUB_OUTPUT"
+          scripts/resolve_preview_inputs.sh \
+            --event "$EVENT_NAME" --tag-or-version "$TAG_OR_VERSION" \
+            --notes "$REQUESTED_NOTES" --output-root "$RUNNER_TEMP" \
+            >> "$GITHUB_OUTPUT"
 
       - name: Update MoonBit dependencies
         run: |
