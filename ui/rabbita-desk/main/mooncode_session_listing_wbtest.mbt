@@ -69,3 +69,35 @@ test "MoonCode typed archived listing tolerates array envelope" {
   }
   assert_true(session.archived)
 }
+
+///|
+test "MoonCode typed listing preserves opaque IDs" {
+  guard decode_mooncode_session_listing([
+      {
+        "id": "session/resume:1\\branch",
+        "status": "idle",
+        "mooncode_summary": {
+          "event_count": 0,
+          "verified_test_count": 0,
+          "pending_diff_count": 0,
+        },
+      },
+    ])
+    is Ok([session]) else {
+    fail("expected opaque session ID to survive direct decoding")
+  }
+  assert_eq(session.id, "session/resume:1\\branch")
+}
+
+///|
+test "MoonCode typed listing rejects malformed known fields" {
+  assert_true(
+    decode_mooncode_session_listing({ "protocol": 1, "sessions": [] }) is Err(_),
+  )
+  assert_true(
+    decode_mooncode_session_listing([
+      { "id": "session-one", "status": "idle", "updated_at": 1 },
+    ])
+    is Err(_),
+  )
+}
