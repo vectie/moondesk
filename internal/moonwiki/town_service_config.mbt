@@ -26,8 +26,15 @@ pub async fn town_service_descriptor(root : String, action : String) -> Json {
     json_string(config, "cwd", default=""),
   ])
   let cwd = if cwd == "" { root } else { cwd }
+  let integrity = service_configuration_integrity(command, cwd)
   {
     "configured": command != "",
+    "configuration_valid": json_bool(integrity, "valid", default=false),
+    "configuration_reason": json_string(
+      integrity,
+      "reason",
+      default="not-configured",
+    ),
     "kind": "moondesk-town-service.v1",
     "action": action,
     "command": command,

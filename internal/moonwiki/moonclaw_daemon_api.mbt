@@ -97,6 +97,93 @@ async fn handle_moonclaw_daemon_action(
 
 ///|
 async fn moonclaw_daemon_status(workspace_root : String) -> Json {
+  moonclaw_daemon_status_with_platform(
+    workspace_root,
+    moonclaw_platform_support(),
+  )
+}
+
+///|
+fn moonclaw_installation_evidence_from_values(
+  managed_install : Bool,
+  service_configured : Bool,
+  daemon_observed : Bool,
+) -> Json {
+  if managed_install {
+    {
+      "installed": true,
+      "source": "managed-service",
+      "reason": "managed-service-present",
+    }
+  } else if service_configured {
+    {
+      "installed": true,
+      "source": "external-configured-service",
+      "reason": "external-service-configured",
+    }
+  } else if daemon_observed {
+    {
+      "installed": true,
+      "source": "observed-daemon-info",
+      "reason": "daemon-info-present",
+    }
+  } else {
+    {
+      "installed": false,
+      "source": "none",
+      "reason": "no-installation-evidence",
+    }
+  }
+}
+
+///|
+fn moonclaw_configuration_evidence_from_values(
+  installed : Bool,
+  service_configured : Bool,
+  configuration_valid? : Bool = true,
+  configuration_reason? : String = "",
+) -> Json {
+  {
+    "configured": service_configured,
+    "valid": !installed || (service_configured && configuration_valid),
+    "reason": if !installed {
+      "not-installed"
+    } else if !service_configured {
+      "service-configuration-missing"
+    } else if configuration_reason != "" {
+      configuration_reason
+    } else if configuration_valid {
+      "service-configuration-valid"
+    } else {
+      "command-unavailable"
+    },
+  }
+}
+
+///|
+fn moonclaw_configuration_evidence_from_descriptor(
+  installed : Bool,
+  descriptor : Json,
+) -> Json {
+  let configured = json_bool(descriptor, "configured", default=false)
+  let valid = json_bool(descriptor, "configuration_valid", default=configured)
+  moonclaw_configuration_evidence_from_values(
+    installed,
+    configured,
+    configuration_valid=valid,
+    configuration_reason=json_string(
+      descriptor,
+      "configuration_reason",
+      default=if valid { "configuration-valid" } else { "command-unavailable" },
+    ),
+  )
+}
+
+///|
+async fn moonclaw_daemon_status_with_platform(
+  workspace_root : String,
+  platform_support : MoonClawPlatformSupport,
+) -> Json {
   let context = workspace_context(workspace_root)
   let root = context.suite_root
   let info_path = moonclaw_daemon_info_path(root)
@@ -112,6 +199,15 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
   } else {
     "missing"
   }
+  let installation_evidence = moonclaw_installation_evidence_from_values(
+    managed_install,
+    service_configured,
+    @fsx.exists(info_path),
+  )
+  let configuration_evidence = moonclaw_configuration_evidence_from_descriptor(
+    json_bool(installation_evidence, "installed", default=false),
+    descriptor,
+  )
   if !@fsx.exists(info_path) {
     let message = if managed_install {
       "MoonClaw " + installed_version + " is installed but not running"
@@ -137,6 +233,9 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
         "service_command": json_string(descriptor, "display", default=""),
         "managed_install": managed_install,
         "managed_running": false,
+        "platform_evidence": moonclaw_platform_support_json(platform_support),
+        "installation_evidence": installation_evidence,
+        "configuration_evidence": configuration_evidence,
         "installed_version": installed_version,
         "running_version": "",
         "service_source": service_source,
@@ -200,6 +299,9 @@ async fn moonclaw_daemon_status(workspace_root : String) -> Json {
       "service_command": json_string(descriptor, "display", default=""),
       "managed_install": managed_install,
       "managed_running": managed_running,
+      "platform_evidence": moonclaw_platform_support_json(platform_support),
+      "installation_evidence": installation_evidence,
+      "configuration_evidence": configuration_evidence,
       "installed_version": installed_version,
       "running_version": running_version,
       "service_source": service_source,
@@ -263,6 +365,13 @@ async fn start_moonclaw_daemon(
       ok=false,
       status="not-configured",
       message="MoonClaw daemon service is not configured for this workspace",
+    )
+  }
+  if !json_bool(descriptor, "configuration_valid", default=true) {
+    return moonclaw_daemon_configuration_failure(
+      root,
+      action~,
+      message="MoonClaw daemon service configuration is not usable",
     )
   }
   let state_dir = moonsuite_product_artifact_for_workspace_root(
@@ -383,6 +492,26 @@ async fn start_moonclaw_daemon(
     stdout_path~,
     stderr_path~,
   )
+}
+
+///|
+async fn moonclaw_daemon_configuration_failure(
+  root : String,
+  action~ : String,
+  message~ : String,
+) -> Json {
+  let status = moonclaw_daemon_status(root)
+  let fields = match status {
+    Object(fields) => fields.copy()
+    _ => {}
+  }
+  fields["action"] = action.to_json()
+  fields["ok"] = false.to_json()
+  fields["running"] = false.to_json()
+  fields["status"] = "misconfigured".to_json()
+  fields["message"] = message.to_json()
+  fields["next_action"] = "configure_moonclaw".to_json()
+  Json::object(fields)
 }
 
 ///|

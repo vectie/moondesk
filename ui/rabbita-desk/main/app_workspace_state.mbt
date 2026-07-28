@@ -111,11 +111,6 @@ fn workspace_books_display_label(model : Model) -> String {
 }
 
 ///|
-fn workspace_visible_location_label(model : Model) -> String {
-  "MoonSuite: " + workspace_suite_display_name(model)
-}
-
-///|
 fn workspace_display_book_location(
   model : Model,
   workspace : @desk.DeskWorkspace,
@@ -141,44 +136,25 @@ fn workspace_service_status_items(
   items.push(("MoonSuite", "ready", workspace_suite_display_name(model)))
   items.push(("MoonBooks", "ready", workspace_library_count_label(model)))
   items.push(("Products", "ready", workspace_product_count_label(model)))
-  match model.moonclaw_daemon {
-    Some(daemon) =>
-      items.push(
-        (
-          "MoonClaw",
-          if daemon.running {
-            "ready"
-          } else {
-            "missing"
-          },
-          if daemon.running {
-            "running"
-          } else {
-            "not running"
-          },
-        ),
-      )
-    None => items.push(("MoonClaw", "unknown", "checking"))
-  }
-  match model.town_progress {
-    Some(progress) =>
-      items.push(
-        (
-          "MoonTown",
-          if progress.daemon_running {
-            "ready"
-          } else {
-            "missing"
-          },
-          if progress.daemon_running {
-            progress.daemon_status
-          } else {
-            "not running"
-          },
-        ),
-      )
-    None => items.push(("MoonTown", "unknown", "checking"))
-  }
+  let code_state = moonclaw_capability_state(model.moonclaw_daemon)
+  items.push(
+    (
+      "Code assistance",
+      capability_status_key(code_state),
+      capability_status_label(code_state),
+    ),
+  )
+  let requests_state = requests_capability_state(
+    model.daemon_lifecycle,
+    model.town_capability_probe_available,
+  )
+  items.push(
+    (
+      "Requests",
+      capability_status_key(requests_state),
+      capability_status_label(requests_state),
+    ),
+  )
   items
 }
 

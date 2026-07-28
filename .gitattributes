@@ -1,1 +1,2 @@
 ui/rabbita-desk/dist/assets/*.js -whitespace
+*.mbti whitespace=-blank-at-eof

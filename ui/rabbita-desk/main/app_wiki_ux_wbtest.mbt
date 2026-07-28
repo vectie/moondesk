@@ -1,13 +1,11 @@
 ///|
 test "wiki navigation uses normal user language and compatible slugs" {
   let items = activities()
-  assert_eq(items.length(), 6)
-  assert_eq(items[0].label, "Library")
+  assert_eq(items.length(), 4)
+  assert_eq(items[0].label, "Pages")
   assert_eq(items[1].label, "Search")
   assert_eq(items[2].label, "Inbox")
-  assert_eq(items[3].label, "Activity")
-  assert_eq(items[4].label, "Review")
-  assert_eq(items[5].label, "More")
+  assert_eq(items[3].label, "Settings")
   assert_true(activity_from_slug("library") is Files)
   assert_true(activity_from_slug("files") is Files)
   assert_true(activity_from_slug("activity") is Town)
@@ -35,23 +33,48 @@ test "wiki library overview keeps operational roots out of the default tree" {
 }
 
 ///|
-test "wiki empty-book detection waits for an indexed root" {
+#warnings("-alert_unstable")
+test "wiki tree exposes stable path hooks for executable user journeys" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_tree(dispatch, {
+        ..init_model(),
+        selected_workspace_id: "book-demo",
+        current_directory: "inbox",
+        entries: [
+          @desk.file_entry(
+            workspace_id="book-demo",
+            path="inbox/note-durable.md",
+          ),
+        ],
+      }),
+    ),
+  )
+  assert_true(markup.contains("data-testid=\"wiki-tree-row\""))
+  assert_true(markup.contains("data-path=\"inbox/note-durable.md\""))
+}
+
+///|
+test "wiki empty-book detection uses successful typed listing evidence" {
   let empty_book = {
     ..init_model(),
     selected_workspace_id: "book-empty",
-    host_status: "workspace indexed",
     current_directory: "",
     selected_path: "",
     entries: [],
     preview: None,
-    preview_status: "Preview is not available",
+    desk_entries_state: Some(LegitimateZero),
   }
   assert_true(wiki_book_is_empty(empty_book))
   assert_false(
-    wiki_book_is_empty({ ..empty_book, host_status: "loading workspace" }),
+    wiki_book_is_empty({ ..empty_book, desk_entries_state: Some(Loading) }),
   )
   assert_false(
-    wiki_book_is_empty({ ..empty_book, preview_status: "loading preview" }),
+    wiki_book_is_empty({
+      ..empty_book,
+      desk_entries_state: Some(RecoverableError),
+    }),
   )
   assert_false(
     wiki_book_is_empty({
@@ -69,6 +92,20 @@ test "wiki capture and task composers start without accidental content" {
   assert_eq(model.inbox_content, "")
   assert_eq(model.request_prompt, "")
   assert_eq(model.request_material_paths.length(), 0)
+}
+
+///|
+#warnings("-alert_unstable")
+test "Inbox note composer has stable accessible keyboard targets" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_inbox_pane(dispatch, init_model())),
+  )
+  assert_true(markup.contains("data-testid=\"wiki-inbox-title\""))
+  assert_true(markup.contains("aria-label=\"Inbox note title\""))
+  assert_true(markup.contains("data-testid=\"wiki-inbox-body\""))
+  assert_true(markup.contains("aria-label=\"Inbox note body\""))
+  assert_true(markup.contains("data-testid=\"wiki-save-note\""))
 }
 
 ///|

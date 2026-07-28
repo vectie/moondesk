@@ -53,6 +53,12 @@ fn first_run_report_path(model : Model) -> String? {
 }
 
 ///|
+fn preview_tab_accessible_name(tab : PreviewTab) -> String {
+  let title = if tab.title == "" { "Current preview" } else { tab.title }
+  title + ", " + renderer_label(tab.renderer)
+}
+
+///|
 fn render_tabs(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
   div(
     class="tab-strip",
@@ -65,6 +71,7 @@ fn render_tabs(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       button(
         class=class_name,
         title=tab.path,
+        attrs=@html.Attrs::build().aria_label(preview_tab_accessible_name(tab)),
         on_click=dispatch(OpenQuickPath(tab.path)),
         [
           span(class="tab-title", tab.title),
@@ -105,17 +112,11 @@ fn render_preview_body(
             ),
           ]),
         ])
-      } else if model.preview_status.to_lower().contains("loading") ||
-        model.preview_status.to_lower().contains("waiting") {
-        div(class="markdown-preview", [
-          h1("Opening page"),
-          p(class="lead", "Please wait."),
-        ])
       } else {
-        div(class="markdown-preview", [
-          h1("Choose a page"),
-          p(class="lead", "Select a page from the library to read it here."),
-        ])
+        match model.preview_state {
+          Some(state) => render_preview_state_panel(dispatch, model, state)
+          None => render_preview_state_panel(dispatch, model, FirstUseEmpty)
+        }
       }
     Some(preview) =>
       match preview.renderer {
@@ -386,7 +387,7 @@ fn render_preview_center(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  main_(class="preview-center", [
+  section(class="preview-center", [
     render_tabs(dispatch, model),
     div(class="preview-toolbar", [
       span(class="path-pill quiet-path", model.selected_path),
@@ -433,7 +434,14 @@ fn render_preview_center(
         },
       ]),
     ]),
-    section(class="preview-surface", [render_preview_body(dispatch, model)]),
+    section(class="preview-surface", [
+      match (model.preview, model.preview_state) {
+        (Some(_), Some(state)) =>
+          render_preview_state_panel(dispatch, model, state)
+        _ => @html.nothing
+      },
+      render_preview_body(dispatch, model),
+    ]),
   ])
 }
 

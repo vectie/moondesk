@@ -63,7 +63,18 @@ fn update_workspace_surface_actions(
         { ..model, import_book_status: "choose a MoonBook .zip archive" },
       )
     SetSearchQuery(query) =>
-      (@rabbita.none, { ..model, search_query: query, search_status: "draft" })
+      (
+        @rabbita.none,
+        {
+          ..model,
+          search_query: query,
+          search_status: "draft",
+          search_state: Some(FirstUseEmpty),
+          search_error: "",
+          search_evidence_query: "",
+          search_hits: [],
+        },
+      )
     SearchNow => search_now_action(dispatch, model)
     SetDeskSort(key) =>
       (
@@ -141,9 +152,21 @@ fn update_workspace_surface_actions(
         @rabbita.none,
         { ..model, favorites: toggle_string(model.favorites, path) },
       )
-    SetViewTitle(title) => (@rabbita.none, { ..model, view_title: title })
+    SetViewTitle(title) =>
+      (
+        @rabbita.none,
+        { ..model, view_title: title, saved_view_action_status: "" },
+      )
+    RefreshSavedViews =>
+      (
+        fetch_saved_views_cmd(dispatch),
+        { ..model, saved_views_state: Some(Loading), saved_views_error: "" },
+      )
     SaveCurrentView =>
-      (save_view_cmd(dispatch, model), { ..model, host_status: "saving view" })
+      (
+        save_view_cmd(dispatch, model),
+        { ..model, saved_view_action_status: "Saving view" },
+      )
     ControlMoonFlow(run_id, action, detail) =>
       (
         control_moonflow_cmd(dispatch, run_id, action, detail),
@@ -162,12 +185,25 @@ fn update_workspace_surface_actions(
     PrepareMoonFlow =>
       if model.selected_workspace_id == "" {
         (@rabbita.none, { ..model, moonflow_status: "Select a MoonBook first" })
+      } else if (match model.moonflow_capability_evidence {
+          Some(evidence) => !evidence.available
+          None => false
+        }) {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            moonflow_status: "Flow preparation is not available in the current setup",
+            moonflow_ingest_preparing: false,
+          },
+        )
       } else {
         (
           import_selected_moonflow_cmd(dispatch, model.selected_workspace_id),
           {
             ..model,
             moonflow_status: "Preparing executable work… this may take up to 30 seconds",
+            moonflow_ingest_preparing: true,
           },
         )
       }
@@ -212,21 +248,7 @@ fn update_workspace_surface_actions(
             },
           )
       }
-    SetMoonFlowCanvasZoom(zoom) =>
-      (
-        @rabbita.none,
-        {
-          ..model,
-          moonflow_canvas_zoom: if zoom < 75 {
-            75
-          } else if zoom > 125 {
-            125
-          } else {
-            zoom
-          },
-        },
-      )
-    FlowCanvasWheel(_, _, delta_y) => flow_canvas_wheel_action(model, delta_y)
+    FlowCanvasWheel(delta_y) => flow_canvas_wheel_action(model, delta_y)
     FlowPanStart(x, y) => flow_pan_start_action(model, x, y)
     FlowPanMove(x, y) => flow_pointer_move_action(model, x, y)
     FlowPanEnd => flow_pointer_end_action(model)
@@ -284,7 +306,17 @@ fn update_workspace_surface_actions(
         {
           ..model,
           host_status: "refreshing",
+          workspace_catalog_state: Some(Loading),
+          workspace_catalog_error: "",
           desk_new_item_status: "Refreshing folder...",
+          desk_entries_state: if model.selected_workspace_id == "" {
+            Some(FirstUseEmpty)
+          } else {
+            Some(Loading)
+          },
+          desk_entries_error: "",
+          saved_views_state: Some(Loading),
+          saved_views_error: "",
         },
       )
     _ => (@rabbita.none, model)
@@ -937,8 +969,19 @@ fn search_now_action(
 ) -> (@rabbita.Cmd, Model) {
   let query = model.search_query.trim().to_owned()
   if query == "" {
-    (@rabbita.none, { ..model, search_status: "enter a query" })
+    (
+      @rabbita.none,
+      {
+        ..model,
+        search_status: "enter a query",
+        search_state: Some(FirstUseEmpty),
+        search_error: "",
+        search_evidence_query: "",
+        search_hits: [],
+      },
+    )
   } else {
+    let keep_prior_hits = pages_search_can_keep_prior_hits(model, query)
     (
       sync_activity_batch(Search, fetch_search_cmd(dispatch, query)),
       {
@@ -946,6 +989,13 @@ fn search_now_action(
         activity: Search,
         command_open: false,
         search_status: "searching",
+        search_state: Some(Loading),
+        search_error: "",
+        search_hits: if keep_prior_hits {
+          model.search_hits
+        } else {
+          []
+        },
       },
     )
   }
@@ -990,12 +1040,11 @@ fn refresh_all_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     fetch_daemon_lifecycle_cmd(dispatch),
     fetch_launch_agent_cmd(dispatch),
     fetch_moonclaw_daemon_cmd(dispatch),
-    fetch_moonclaw_models_cmd(dispatch),
-    fetch_mooncode_sessions_cmd(dispatch, ""),
     fetch_review_items_cmd(dispatch, model.selected_workspace_id),
     fetch_saved_views_cmd(dispatch),
     fetch_book_patterns_cmd(dispatch),
     fetch_book_base_types_cmd(dispatch),
+    fetch_moonflow_capability_cmd(dispatch),
     fetch_moonflow_runs_cmd(dispatch),
   ])
 }

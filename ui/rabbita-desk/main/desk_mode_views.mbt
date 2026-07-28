@@ -1,9 +1,10 @@
 ///|
 fn render_desk_mode(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  div(
+  main_(
     class="desk-main file-desk-main",
-    attrs=@html.Attrs::build().data_set("testid", "desk-mode"),
+    attrs=main_content_attrs(Desk).data_set("testid", "desk-mode"),
     [
+      h1(class="visually-hidden", "Home"),
       render_desk_workspace_sidebar(dispatch, model),
       render_desk_file_browser(dispatch, model),
       render_desk_details(dispatch, model),
@@ -16,69 +17,186 @@ fn render_desk_workspace_sidebar(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  aside(class="desk-sidebar", [
-    div(class="pane-heading", [
-      div([h2("MoonBooks")]),
-      button(
-        class="secondary-button compact-button",
-        title="Refresh",
-        attrs=@html.Attrs::build().data_set("testid", "desk-refresh-workspaces"),
-        on_click=dispatch(RefreshAll),
-        "Refresh",
-      ),
-    ]),
-    render_desk_library_location(model),
-    render_moongate_setup(dispatch, model),
-    render_new_moonbook_panel(dispatch, model),
-    div(
-      class="desk-workspace-list",
-      attrs=@html.Attrs::build().data_set("testid", "desk-workspace-list"),
-      if model.workspaces.length() == 0 {
-        [
-          div(class="desk-empty-state", [
-            strong(desk_empty_library_title(model)),
-            p(desk_empty_library_message(model)),
-          ]),
-        ]
-      } else {
-        model.workspaces.map(workspace => {
-          let class_name = if workspace.id == model.selected_workspace_id {
-            "desk-workspace-row active " +
-            workspace_status_class(workspace.status)
-          } else {
-            "desk-workspace-row " + workspace_status_class(workspace.status)
-          }
-          let row_children : Array[@rabbita.Html] = [strong(workspace.name)]
-          if workspace.status != Ready {
-            row_children.push(
-              span(
-                class="desk-workspace-status",
-                workspace_status_label(workspace.status),
-              ),
-            )
-          }
-          button(
-            class=class_name,
-            title=workspace.name +
-              " / " +
-              workspace_display_book_location(model, workspace),
-            attrs=@html.Attrs::build()
-              .data_set("testid", "desk-workspace-row")
-              .data_set("workspace-id", workspace.id)
-              .data_set("status", workspace_status_key(workspace.status)),
-            on_click=dispatch(SelectWorkspace(workspace.id)),
-            row_children,
-          )
-        })
+  let cold_start = classify_cold_start(model)
+  aside(
+    class="desk-sidebar",
+    attrs=@html.Attrs::build().aria_label("MoonBook library"),
+    [
+      div(class="pane-heading", [
+        div([h2("MoonBooks")]),
+        button(
+          class="secondary-button compact-button",
+          title="Refresh",
+          attrs=@html.Attrs::build().data_set(
+            "testid", "desk-refresh-workspaces",
+          ),
+          on_click=dispatch(RefreshAll),
+          "Refresh",
+        ),
+      ]),
+      render_desk_library_location(dispatch, model),
+      render_moongate_setup(dispatch, model),
+      match cold_start {
+        EmptyLibrary => render_new_moonbook_panel_open(dispatch, model)
+        OneBook | ManyBooks => render_new_moonbook_panel(dispatch, model)
+        Connecting | LibraryUnavailable | CatalogUnavailable => @html.nothing
       },
-    ),
-    if model.favorites.length() > 0 || model.recent_paths.length() > 0 {
-      render_desk_quick_access(dispatch, model)
+      div(
+        class="desk-workspace-list",
+        attrs=@html.Attrs::build().data_set("testid", "desk-workspace-list"),
+        render_desk_workspace_rows(dispatch, model, cold_start),
+      ),
+      if model.favorites.length() > 0 || model.recent_paths.length() > 0 {
+        render_desk_quick_access(dispatch, model)
+      } else {
+        div(class="desk-quick-access-empty", [@html.nothing])
+      },
+      render_desk_folder_outline(dispatch, model),
+    ],
+  )
+}
+
+///|
+fn render_desk_workspace_rows(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  cold_start : ColdStartState,
+) -> Array[@rabbita.Html] {
+  if model.workspaces.is_empty() {
+    let content : Array[@rabbita.Html] = [
+      render_polite_state_announcement(
+        "workspace-catalog-state-announcement",
+        desk_empty_library_title(model),
+        desk_empty_library_message(model),
+      ),
+      strong(desk_empty_library_title(model)),
+      p(desk_empty_library_message(model)),
+      render_desk_cold_start_action(dispatch, cold_start),
+    ]
+    if cold_start is CatalogUnavailable && model.workspace_catalog_error != "" {
+      content.push(
+        details(class="technical-details", [
+          summary("Technical details"),
+          code(model.workspace_catalog_error),
+        ]),
+      )
+    }
+    let state_content = if cold_start is CatalogUnavailable {
+      div(
+        class="workspace-catalog-state",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "workspace-catalog-state-panel")
+          .data_set("state", surface_state_key(RecoverableError)),
+        content,
+      )
     } else {
-      div(class="desk-quick-access-empty", [@html.nothing])
-    },
-    render_desk_folder_outline(dispatch, model),
-  ])
+      @html.fragment(content)
+    }
+    return [
+      div(
+        class="desk-empty-state",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "desk-cold-start")
+          .data_set("state", cold_start_state_key(cold_start)),
+        [state_content],
+      ),
+    ]
+  }
+  let rows : Array[@rabbita.Html] = []
+  match model.workspace_catalog_state {
+    Some(Loading) =>
+      rows.push(render_workspace_catalog_state_panel(dispatch, model, Loading))
+    Some(Stale) =>
+      rows.push(render_workspace_catalog_state_panel(dispatch, model, Stale))
+    _ => ()
+  }
+  for workspace in model.workspaces {
+    rows.push(render_desk_workspace_row(dispatch, model, workspace))
+  }
+  rows
+}
+
+///|
+fn render_workspace_catalog_state_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  state : SurfaceState,
+) -> @rabbita.Html {
+  let children : Array[@rabbita.Html] = [
+    render_polite_state_announcement(
+      "workspace-catalog-state-announcement",
+      workspace_catalog_state_title(state),
+      workspace_catalog_state_detail(state),
+    ),
+    strong(workspace_catalog_state_title(state)),
+    p(workspace_catalog_state_detail(state)),
+  ]
+  match workspace_catalog_state_action(state) {
+    Some(label) =>
+      children.push(
+        button(
+          class="secondary-button compact-button",
+          attrs=@html.Attrs::build().data_set(
+            "testid", "workspace-catalog-state-action",
+          ),
+          on_click=dispatch(RefreshAll),
+          label,
+        ),
+      )
+    None => ()
+  }
+  if workspace_catalog_state_shows_technical_details(state) &&
+    model.workspace_catalog_error != "" {
+    children.push(
+      details(class="technical-details", [
+        summary("Technical details"),
+        code(model.workspace_catalog_error),
+      ]),
+    )
+  }
+  div(
+    class="workspace-catalog-state",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "workspace-catalog-state-panel")
+      .data_set("state", surface_state_key(state)),
+    children,
+  )
+}
+
+///|
+fn render_desk_workspace_row(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  workspace : @desk.DeskWorkspace,
+) -> @rabbita.Html {
+  let selected = workspace.id == model.selected_workspace_id
+  let class_name = if selected {
+    "desk-workspace-row active " + workspace_status_class(workspace.status)
+  } else {
+    "desk-workspace-row " + workspace_status_class(workspace.status)
+  }
+  let row_children : Array[@rabbita.Html] = [strong(workspace.name)]
+  if workspace.status != Ready {
+    row_children.push(
+      span(
+        class="desk-workspace-status",
+        workspace_status_label(workspace.status),
+      ),
+    )
+  }
+  button(
+    class=class_name,
+    title=workspace.name +
+      " / " +
+      workspace_display_book_location(model, workspace),
+    attrs=@html.Attrs::build()
+      .data_set("testid", "desk-workspace-row")
+      .data_set("workspace-id", workspace.id)
+      .data_set("status", workspace_status_key(workspace.status))
+      .aria_pressed(if selected { "true" } else { "false" }),
+    on_click=dispatch(SelectWorkspace(workspace.id)),
+    row_children,
+  )
 }
 
 ///|
@@ -86,202 +204,269 @@ fn render_moongate_setup(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  let daemon = model.moonclaw_daemon
-  let ready = daemon.map(item => item.running).unwrap_or(false)
-  let managed = daemon
-    .map(item => item.managed_install.unwrap_or(false))
-    .unwrap_or(false)
-  let managed_ready = daemon
-    .map(item => item.managed_running.unwrap_or(false))
-    .unwrap_or(false)
+  let state = moonclaw_capability_state(model.moonclaw_daemon)
+  let action = code_capability_primary_action(state)
   section(
     id="moongate-summary",
-    class=if managed_ready {
+    class=if state is DetectedRunning {
       "moongate-card ready"
     } else {
       "moongate-card blocked"
     },
     attrs=@html.Attrs::build()
       .data_set("testid", "moongate-summary")
+      .data_set("state", capability_state_key(state))
+      .aria_live("polite")
       .role("status"),
     [
       div(class="moongate-card-head", [
-        div([p(class="eyebrow", "AI boundary"), strong("MoonGate")]),
+        div([
+          p(
+            class="eyebrow",
+            attrs=@html.Attrs::build().data_set(
+              "i18n", "code.assistance_eyebrow",
+            ),
+            "Optional capability",
+          ),
+          strong(
+            attrs=@html.Attrs::build().data_set(
+              "i18n", "code.assistance_heading",
+            ),
+            "Code assistance",
+          ),
+        ]),
         span(
-          class=if managed_ready {
+          class=if state is DetectedRunning {
             "status-pill ready"
           } else {
             "status-pill warning"
           },
-          if managed_ready {
-            "Installed"
-          } else if ready {
-            "External service"
-          } else {
-            "Setup needed"
-          },
+          attrs=@html.Attrs::build().data_set(
+            "i18n",
+            code_capability_status_i18n_key(state),
+          ),
+          capability_status_label(state),
         ),
       ]),
-      p(
-        if managed_ready {
-          "AI is available through the workspace's governed MoonClaw service. External and physical effects still require their own authority."
-        } else if ready {
-          "AI is available from an external MoonClaw service, but MoonClaw is not installed and managed by MoonDesk yet."
-        } else if managed {
-          "MoonClaw is installed for this workspace but needs to be started before AI is available."
-        } else {
-          "AI is not available yet. MoonGate will only enable the installed workspace service; it does not grant external or physical effects."
-        },
+      render_home_code_assistance_public(dispatch, model, state, action),
+      render_code_assistance_technical_details(model),
+    ],
+  )
+}
+
+///|
+fn render_code_capability_summary(state : CapabilityState) -> @rabbita.Html {
+  div(class="code-capability-summary", [
+    strong(
+      attrs=@html.Attrs::build().data_set(
+        "i18n",
+        code_capability_title_i18n_key(state),
       ),
-      match daemon {
-        Some(status) if status.managed_running.unwrap_or(false) =>
-          p(
-            class="status-line success",
+      code_capability_title(state),
+    ),
+    p(
+      attrs=@html.Attrs::build().data_set(
+        "i18n",
+        code_capability_detail_i18n_key(state),
+      ),
+      code_capability_detail(state),
+    ),
+  ])
+}
+
+///|
+fn render_home_code_assistance_public(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  state : CapabilityState,
+  action : CodeCapabilityPrimaryAction,
+) -> @rabbita.Html {
+  div(
+    class="moongate-next-step",
+    attrs=@html.Attrs::build().data_set(
+      "testid", "code-assistance-public-summary",
+    ),
+    [
+      render_code_capability_summary(state),
+      match action {
+        StartCapability =>
+          button(
+            class="primary-button full",
             attrs=@html.Attrs::build()
-              .data_set("testid", "moonclaw-install-success")
-              .aria_live("polite"),
-            status.message,
+              .data_set("testid", "moongate-start-moonclaw")
+              .data_set("i18n", code_capability_primary_action_i18n_key(action)),
+            on_click=dispatch(ManageMoonClaw("retry")),
+            code_capability_primary_action_label(action),
           )
-        Some(status) if status.running =>
-          div(class="moongate-next-step", [
-            p(
-              class="status-line warning",
-              attrs=@html.Attrs::build()
-                .data_set("testid", "moonclaw-external-service")
-                .aria_live("polite"),
-              status.message,
-            ),
+        InstallCapability =>
+          div([
             button(
               class="primary-button full",
-              attrs=@html.Attrs::build().data_set(
-                "testid", "moongate-install-moonclaw",
-              ),
+              attrs=@html.Attrs::build()
+                .data_set("testid", "moongate-install-moonclaw")
+                .data_set(
+                  "i18n",
+                  if model.moonclaw_installing {
+                    "code.assistance_installing"
+                  } else {
+                    code_capability_primary_action_i18n_key(action)
+                  },
+                ),
               disabled=model.moonclaw_installing,
               on_click=dispatch(ManageMoonClaw("install")),
               if model.moonclaw_installing {
-                "Installing managed MoonClaw…"
+                "Installing Code assistance…"
               } else {
-                "Install managed MoonClaw"
+                code_capability_primary_action_label(action)
               },
             ),
             render_moonclaw_install_progress(model),
           ])
-        Some(status) if status.managed_install.unwrap_or(false) =>
-          div(class="moongate-next-step", [
-            strong("MoonClaw is installed"),
-            p(
-              class="status-line warning",
-              attrs=@html.Attrs::build()
-                .data_set("testid", "moonclaw-installed-not-running")
-                .aria_live("polite"),
-              status.message,
-            ),
-            render_moonclaw_install_feedback(model, status.message),
-            button(
-              class="primary-button full",
-              attrs=@html.Attrs::build().data_set(
-                "testid", "moongate-start-moonclaw",
-              ),
-              on_click=dispatch(ManageMoonClaw("start")),
-              "Retry starting MoonClaw",
-            ),
-          ])
-        Some(status) if !status.running =>
-          div(class="moongate-next-step", [
-            strong("MoonClaw is not installed"),
-            p(
-              "MoonClaw is required for Code and AI actions. MoonDesk can download, verify, install, and start it for this workspace.",
-            ),
-            if status.message != "MoonClaw is not installed" {
-              p(class="status-line warning", status.message)
-            } else {
-              @html.nothing
-            },
-            render_moonclaw_install_feedback(model, status.message),
-            button(
-              class="primary-button full",
-              attrs=@html.Attrs::build().data_set(
-                "testid", "moongate-install-moonclaw",
-              ),
-              disabled=model.moonclaw_installing,
-              on_click=dispatch(ManageMoonClaw("install")),
-              if model.moonclaw_installing {
-                "Installing MoonClaw…"
-              } else {
-                "Install MoonClaw"
-              },
-            ),
-            render_moonclaw_install_progress(model),
-          ])
-        _ => @html.nothing
+        OpenConfiguration =>
+          button(
+            class="primary-button full",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "moongate-review-code-configuration")
+              .data_set("i18n", code_capability_primary_action_i18n_key(action)),
+            on_click=dispatch(SelectActivity(Settings)),
+            code_capability_primary_action_label(action),
+          )
+        RetryCapabilityCheck =>
+          button(
+            class="primary-button full",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "moongate-retry-code-assistance")
+              .data_set("i18n", code_capability_primary_action_i18n_key(action)),
+            on_click=dispatch(ManageMoonClaw("retry")),
+            code_capability_primary_action_label(action),
+          )
+        NoPrimaryAction => @html.nothing
       },
-      details(class="moongate-details", [
-        summary("Authority details"),
-        p(
-          "Current UI authority: workspace-local AI only. Network, publication, physical action, and new credentials are not implied.",
-        ),
-      ]),
+    ],
+  )
+}
+
+///|
+fn render_code_assistance_technical_details(model : Model) -> @rabbita.Html {
+  details(
+    class="moongate-details technical-details",
+    attrs=@html.Attrs::build().data_set(
+      "testid", "code-assistance-technical-details",
+    ),
+    [
+      summary("Technical details"),
+      info_row("Service", "MoonClaw"),
+      match model.moonclaw_daemon {
+        Some(daemon) =>
+          @html.fragment([
+            info_row("Running", if daemon.running { "yes" } else { "no" }),
+            info_row(
+              "Managed installation",
+              match daemon.managed_install {
+                Some(true) => "present"
+                Some(false) => "absent"
+                None => "not reported"
+              },
+            ),
+            info_row(
+              "Managed process",
+              match daemon.managed_running {
+                Some(true) => "running"
+                Some(false) => "stopped"
+                None => "not reported"
+              },
+            ),
+            if daemon.message == "" {
+              @html.nothing
+            } else {
+              info_row("Service message", daemon.message)
+            },
+            match capability_platform_technical_detail(daemon) {
+              Some(detail) => p(detail)
+              None => @html.nothing
+            },
+            match daemon.installation_evidence {
+              Some(evidence) =>
+                @html.fragment([
+                  info_row("Installation source", evidence.source),
+                  info_row("Installation reason", evidence.reason),
+                ])
+              None => @html.nothing
+            },
+            match daemon.configuration_evidence {
+              Some(evidence) =>
+                info_row("Configuration reason", evidence.reason)
+              None => @html.nothing
+            },
+          ])
+        None => p("No daemon status response was available.")
+      },
+      if model.moonclaw_install_feedback == "" {
+        @html.nothing
+      } else {
+        info_row("Installation detail", model.moonclaw_install_feedback)
+      },
+      p(
+        "Authority: workspace-local assistance only. Network, publication, physical action, and new credentials require separate authority.",
+      ),
     ],
   )
 }
 
 ///|
 fn render_moonclaw_install_progress(model : Model) -> @rabbita.Html {
-  if model.moonclaw_installing {
-    div(class="moonclaw-install-progress", [
-      div(
-        class="moonclaw-install-progress-bar",
-        attrs=@html.Attrs::build()
-          .data_set("testid", "moonclaw-install-progress")
-          .role("progressbar"),
-        [span(class="moonclaw-install-progress-value", "")],
-      ),
-      p(
-        class="status-line",
-        attrs=@html.Attrs::build().aria_live("polite"),
-        model.moonclaw_install_feedback,
-      ),
-    ])
-  } else {
-    @html.nothing
+  if !model.moonclaw_installing {
+    return @html.nothing
   }
-}
-
-///|
-fn render_moonclaw_install_feedback(
-  model : Model,
-  current_message : String,
-) -> @rabbita.Html {
-  if !model.moonclaw_installing &&
-    model.moonclaw_install_feedback != "" &&
-    model.moonclaw_install_feedback != current_message {
-    p(
-      class="status-line warning",
+  div(class="moonclaw-install-progress", [
+    div(
+      class="moonclaw-install-progress-bar",
       attrs=@html.Attrs::build()
-        .data_set("testid", "moonclaw-install-feedback")
+        .data_set("testid", "moonclaw-install-progress")
+        .role("progressbar"),
+      [span(class="moonclaw-install-progress-value", "")],
+    ),
+    p(
+      class="status-line",
+      attrs=@html.Attrs::build()
+        .data_set("i18n", "code.assistance_install_progress")
         .aria_live("polite"),
-      model.moonclaw_install_feedback,
-    )
-  } else {
-    @html.nothing
-  }
+      "Preparing Code assistance. This can take a moment.",
+    ),
+  ])
 }
 
 ///|
 fn desk_empty_library_title(model : Model) -> String {
-  if model.loading {
-    "Connecting to your MoonBooks…"
-  } else {
-    "No MoonBooks in this workspace"
-  }
+  cold_start_title(classify_cold_start(model))
 }
 
 ///|
 fn desk_empty_library_message(model : Model) -> String {
-  if model.loading {
-    "This normally takes a moment. If it does not finish, choose Refresh to retry without losing your place."
-  } else {
-    "Create or import a MoonBook and it will appear here."
+  cold_start_detail(classify_cold_start(model))
+}
+
+///|
+fn render_desk_cold_start_action(
+  dispatch : Dispatch[Msg],
+  state : ColdStartState,
+) -> @rabbita.Html {
+  match cold_start_primary_action(state) {
+    Refresh =>
+      button(
+        class="secondary-button compact-button",
+        attrs=@html.Attrs::build().data_set("testid", "desk-cold-start-primary"),
+        on_click=dispatch(RefreshAll),
+        cold_start_primary_action_label(Refresh),
+      )
+    ChooseLibrary =>
+      button(
+        class="primary-button compact-button",
+        attrs=@html.Attrs::build().data_set("testid", "desk-cold-start-primary"),
+        on_click=dispatch(PickLibraryFolder),
+        cold_start_primary_action_label(ChooseLibrary),
+      )
+    AddMoonBook | OpenMoonBook | ChooseMoonBook => @html.nothing
   }
 }
 
@@ -370,7 +555,10 @@ fn quick_path_kind(model : Model, path : String) -> @desk.EntryKind {
 }
 
 ///|
-fn render_desk_library_location(model : Model) -> @rabbita.Html {
+fn render_desk_library_location(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
   section(
     class="desk-library-location",
     attrs=@html.Attrs::build().data_set("testid", "desk-library-root"),
@@ -379,13 +567,16 @@ fn render_desk_library_location(model : Model) -> @rabbita.Html {
         div([p(class="eyebrow", "Library"), strong("My MoonBooks")]),
         span(class="desk-library-count", workspace_library_count_label(model)),
       ]),
-      render_desk_library_diagnostics(model),
+      render_desk_library_diagnostics(dispatch, model),
     ],
   )
 }
 
 ///|
-fn render_desk_library_diagnostics(model : Model) -> @rabbita.Html {
+fn render_desk_library_diagnostics(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
   desk_disclosure(
     "desk-library-diagnostics",
     "desk-library-storage-details",
@@ -395,6 +586,22 @@ fn render_desk_library_diagnostics(model : Model) -> @rabbita.Html {
         info_row("Library", workspace_moonbook_library_path(model)),
         info_row("Suite", workspace_library_root(model)),
       ]),
+      button(
+        class="secondary-button compact-button",
+        attrs=@html.Attrs::build().data_set(
+          "testid", "desk-change-library-folder",
+        ),
+        title="Choose a different MoonBook library folder",
+        on_click=dispatch(PickLibraryFolder),
+        "Change library folder",
+      ),
+      p(
+        class="status-line",
+        attrs=@html.Attrs::build().data_set(
+          "testid", "desk-library-selection-status",
+        ),
+        model.host_status,
+      ),
       render_desk_service_status(model),
       render_desk_product_summary(model),
     ],
@@ -408,9 +615,20 @@ fn desk_disclosure(
   label : String,
   children : Array[@rabbita.Html],
 ) -> @rabbita.Html {
+  desk_disclosure_with_open(class_name, testid, label, false, children)
+}
+
+///|
+fn desk_disclosure_with_open(
+  class_name : String,
+  testid : String,
+  label : String,
+  open : Bool,
+  children : Array[@rabbita.Html],
+) -> @rabbita.Html {
   @html.node(
     "details",
-    @html.Attrs::build().class(class_name).data_set("testid", testid),
+    @html.Attrs::build().class(class_name).data_set("testid", testid).open(open),
     [
       @html.node(
         "summary",
@@ -491,24 +709,46 @@ fn render_new_moonbook_panel(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  desk_disclosure(
+  render_new_moonbook_panel_with_open(dispatch, model, false)
+}
+
+///|
+fn render_new_moonbook_panel_open(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  render_new_moonbook_panel_with_open(dispatch, model, true)
+}
+
+///|
+fn render_new_moonbook_panel_with_open(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  open : Bool,
+) -> @rabbita.Html {
+  desk_disclosure_with_open(
     "desk-add-book-disclosure",
     "desk-add-moonbook",
     "Add MoonBook",
+    open,
     [
       section(class="desk-new-book-panel", [
         div(class="desk-library-action", [
           strong("Create new"),
           input(
             class="line-input",
-            attrs=@html.Attrs::build().data_set("testid", "desk-new-book-name"),
+            attrs=@html.Attrs::build()
+              .data_set("testid", "desk-new-book-name")
+              .aria_label("MoonBook name"),
             value=model.new_book_name,
             placeholder="MoonBook name",
             on_input=fn(value) { dispatch(SetNewBookName(value)) },
           ),
           input(
             class="line-input",
-            attrs=@html.Attrs::build().data_set("testid", "desk-new-book-id"),
+            attrs=@html.Attrs::build()
+              .data_set("testid", "desk-new-book-id")
+              .aria_label("Optional folder name"),
             value=model.new_book_id,
             placeholder="Optional folder name",
             on_input=fn(value) { dispatch(SetNewBookId(value)) },
@@ -748,23 +988,104 @@ fn render_desk_file_browser(
           .aria_label("Desk file list")
           .aria_multiselectable("true"),
         on_keydown=fn(keyboard) { dispatch(desk_keyboard_msg(keyboard)) },
-        if model.entries.length() == 0 {
-          render_desk_empty_folder_state(model)
-        } else if visible_entries.length() == 0 {
-          [
-            div(class="desk-empty", [
-              strong("No matching files"),
-              p("Clear the filter to show all items in this folder."),
-            ]),
-          ]
-        } else {
-          visible_entries.map(entry => {
-            render_desk_file_row(dispatch, model, entry)
-          })
-        },
+        render_desk_file_rows(dispatch, model, visible_entries),
       ),
     ]),
   ])
+}
+
+///|
+fn render_desk_file_rows(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  visible_entries : Array[@desk.DeskFileEntry],
+) -> Array[@rabbita.Html] {
+  let rows : Array[@rabbita.Html] = []
+  match model.desk_entries_state {
+    Some(state) => {
+      rows.push(render_desk_entries_state_panel(dispatch, model, state))
+      if (state is Loading || state is Stale) && !visible_entries.is_empty() {
+        for entry in visible_entries {
+          rows.push(render_desk_file_row(dispatch, model, entry))
+        }
+      }
+    }
+    None =>
+      if model.entries.is_empty() {
+        rows.push(
+          render_desk_entries_state_panel(dispatch, model, RecoverableError),
+        )
+      } else if visible_entries.is_empty() {
+        rows.push(
+          div(class="desk-empty", [
+            strong("No matching files"),
+            p("Clear the filter to show all items in this folder."),
+          ]),
+        )
+      } else {
+        for entry in visible_entries {
+          rows.push(render_desk_file_row(dispatch, model, entry))
+        }
+      }
+  }
+  rows
+}
+
+///|
+fn render_desk_entries_state_panel(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  state : SurfaceState,
+) -> @rabbita.Html {
+  let children : Array[@rabbita.Html] = if state is LegitimateZero {
+    [
+      div(attrs=@html.Attrs::build().data_set("testid", "desk-empty-folder"), [
+        render_polite_state_announcement(
+          "desk-entries-state-announcement",
+          desk_entries_state_title(state, model),
+          desk_entries_state_detail(state, model),
+        ),
+      ]),
+    ]
+  } else {
+    [
+      render_polite_state_announcement(
+        "desk-entries-state-announcement",
+        desk_entries_state_title(state, model),
+        desk_entries_state_detail(state, model),
+      ),
+    ]
+  }
+  match desk_entries_state_action(state) {
+    Some(label) =>
+      children.push(
+        button(
+          class="secondary-button compact-button",
+          attrs=@html.Attrs::build().data_set(
+            "testid", "desk-entries-state-action",
+          ),
+          on_click=dispatch(RefreshAll),
+          label,
+        ),
+      )
+    None => ()
+  }
+  if desk_entries_state_shows_technical_detail(state) &&
+    model.desk_entries_error != "" {
+    children.push(
+      details(class="desk-state-technical", [
+        summary("Technical details"),
+        code(model.desk_entries_error),
+      ]),
+    )
+  }
+  div(
+    class="desk-empty desk-entries-state",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "desk-entries-state-panel")
+      .data_set("state", desk_entries_state_key(state)),
+    children,
+  )
 }
 
 ///|
@@ -826,20 +1147,6 @@ fn render_desk_import_disclosure(
       "Folder",
     ),
   ])
-}
-
-///|
-fn render_desk_empty_folder_state(model : Model) -> Array[@rabbita.Html] {
-  [
-    div(
-      class="desk-empty",
-      attrs=@html.Attrs::build().data_set("testid", "desk-empty-folder"),
-      [
-        strong(desk_empty_folder_title(model)),
-        p(desk_empty_folder_message(model)),
-      ],
-    ),
-  ]
 }
 
 ///|
@@ -1371,7 +1678,9 @@ fn render_desk_details(
 ) -> @rabbita.Html {
   aside(
     class="desk-details",
-    attrs=@html.Attrs::build().data_set("testid", "desk-details"),
+    attrs=@html.Attrs::build()
+      .aria_label("Selection details")
+      .data_set("testid", "desk-details"),
     [
       div(class="pane-heading", [
         div([p(class="eyebrow", "selection"), h2("Details")]),
@@ -1637,7 +1946,13 @@ fn render_desk_inline_preview(
     attrs=@html.Attrs::build().data_set("testid", "desk-preview"),
     match model.preview {
       Some(preview) =>
-        match preview.renderer {
+        [
+          match model.preview_state {
+            Some(state) => render_preview_state_panel(dispatch, model, state)
+            None => @html.nothing
+          },
+        ] +
+        (match preview.renderer {
           Markdown
           | Text
           | Json
@@ -1666,8 +1981,14 @@ fn render_desk_inline_preview(
                 "Preview / Run here",
               ),
             ]
-        }
-      None => [p(class="status-line", model.preview_status)]
+        })
+      None =>
+        [
+          match model.preview_state {
+            Some(state) => render_preview_state_panel(dispatch, model, state)
+            None => render_preview_state_panel(dispatch, model, FirstUseEmpty)
+          },
+        ]
     },
   )
 }
@@ -1929,10 +2250,31 @@ fn desk_entry_count_label_for_model(
   counts : (Int, Int, Int),
   visible_count : Int,
 ) -> String {
-  if model.desk_filter_query.trim().to_owned() == "" {
-    desk_entry_count_label(counts)
-  } else {
-    "\{visible_count} of \{model.entries.length()} shown"
+  match model.desk_entries_state {
+    Some(FirstUseEmpty) => "No MoonBook selected"
+    Some(Loading) =>
+      if model.entries.is_empty() {
+        "Loading items"
+      } else {
+        "Refreshing \{count_noun(model.entries.length(), "item")}"
+      }
+    Some(Stale) =>
+      if model.entries.is_empty() {
+        "Item count unavailable"
+      } else {
+        "\{count_noun(model.entries.length(), "retained item")}"
+      }
+    Some(Disconnected)
+    | Some(CapabilityLimited)
+    | Some(RecoverableError)
+    | Some(TerminalError) => "Item count unavailable"
+    Some(LegitimateZero) => desk_entry_count_label(counts)
+    None =>
+      if model.desk_filter_query.trim().to_owned() == "" {
+        desk_entry_count_label(counts)
+      } else {
+        "\{visible_count} of \{model.entries.length()} shown"
+      }
   }
 }
 

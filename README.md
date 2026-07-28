@@ -113,6 +113,19 @@ Apple keychain profile:
 moon run cmd/main -- release <workspace-root> --ui ui/rabbita-desk/dist --out dist --port 4199 --notary-profile <profile>
 ```
 
+For a fresh, immutable unsigned preview with portable manifests, release notes,
+sorted checksums, and read-only verification:
+
+```sh
+sh scripts/preview_release.sh \
+  --version 0.1.0-preview.4 \
+  --notes docs/releases/0.1.0-preview.4.md \
+  --out /absolute/fresh/path/moondesk-0.1.0-preview.4
+```
+
+See [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) for the version policy,
+artifact contract, verifier exits, unsigned boundary, and remote evidence gate.
+
 Browser dev mode opens at:
 
 ```text

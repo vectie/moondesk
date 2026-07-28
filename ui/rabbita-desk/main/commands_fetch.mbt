@@ -31,8 +31,25 @@ fn fetch_entries_cmd(
   workspace_id : String,
   path : String,
 ) -> @rabbita.Cmd {
+  @rabbita.delay(dispatch(RequestEntries(workspace_id, path)), 0)
+}
+
+///|
+fn perform_fetch_entries_cmd(
+  dispatch : Dispatch[Msg],
+  workspace_id : String,
+  path : String,
+  generation : Int,
+) -> @rabbita.Cmd {
   @http.get(workspace_entries_url(workspace_id, path)).expect_json(result => {
-    dispatch(LoadedEntries(http_result(result, "Invalid entry listing")))
+    dispatch(
+      LoadedEntries(
+        workspace_id,
+        path,
+        generation,
+        http_result(result, "Invalid entry listing"),
+      ),
+    )
   })
 }
 
@@ -42,9 +59,45 @@ fn fetch_preview_cmd(
   workspace_id : String,
   path : String,
 ) -> @rabbita.Cmd {
+  @rabbita.delay(dispatch(RequestPreview(workspace_id, path)), 0)
+}
+
+///|
+fn perform_fetch_preview_cmd(
+  dispatch : Dispatch[Msg],
+  workspace_id : String,
+  path : String,
+  generation : Int,
+) -> @rabbita.Cmd {
   @http.get(workspace_preview_url(workspace_id, path)).expect_json(result => {
-    dispatch(LoadedPreview(http_result(result, "Preview is not available")))
+    dispatch(
+      LoadedPreview(
+        workspace_id,
+        path,
+        generation,
+        http_result(result, "Preview is not available"),
+      ),
+    )
   })
+}
+
+///| Fetch a preview for the source pane while preserving the complete request
+
+///| identity captured when the command was created. The source-pane reducer uses
+
+///|
+/// that identity to discard stale responses.
+fn fetch_source_pane_preview_cmd(
+  dispatch : Dispatch[Msg],
+  identity : SourcePaneRequestIdentity,
+) -> @rabbita.Cmd {
+  @http.get(workspace_preview_url(identity.workspace_id, identity.path)).expect_json(result => {
+      let preview : Result[@desk.DeskPreview, String] = http_result(
+        result, "Preview is not available",
+      )
+      dispatch(SourcePane(PreviewResult(identity, preview)))
+    },
+  )
 }
 
 ///|
@@ -72,6 +125,17 @@ fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @http.get("/api/moonflow/runs").expect_json(result => {
     dispatch(
       LoadedMoonFlowRuns(http_result(result, "Invalid MoonFlow run listing")),
+    )
+  })
+}
+
+///|
+fn fetch_moonflow_capability_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @http.get("/api/moonflow/capability").expect_json(result => {
+    dispatch(
+      LoadedMoonFlowCapability(
+        http_result(result, "Flow readiness is unavailable"),
+      ),
     )
   })
 }
@@ -287,8 +351,12 @@ fn fetch_launch_agent_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 
 ///|
 fn fetch_search_cmd(dispatch : Dispatch[Msg], query : String) -> @rabbita.Cmd {
-  @http.get(@desk.search_url(query)).expect_json(result => {
-    dispatch(LoadedSearch(http_result(result, "Invalid search results")))
+  @http.get(@desk.search_url(query) + "&contract=pages-search.v1").expect_json(result => {
+    dispatch(
+      LoadedPagesSearch(
+        http_result(result, "The search response could not be read"),
+      ),
+    )
   })
 }
 

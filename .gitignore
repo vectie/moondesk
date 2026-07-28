@@ -5,4 +5,5 @@ target
 .mooncakes/
 .repos/
 .moonagent/
+.moonsuite/
 node_modules/

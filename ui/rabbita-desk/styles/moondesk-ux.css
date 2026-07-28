@@ -7,8 +7,14 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 14px 24px 10px;
+}
+
+.flow-hero-compact > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .flow-hero-compact h1 {
@@ -70,6 +76,40 @@
   gap: 6px;
 }
 
+@media (max-width: 520px) {
+  .flow-hero-compact {
+    align-items: flex-start;
+    padding-inline: 12px;
+  }
+
+  .flow-hero-compact > div {
+    flex: 1 1 180px;
+  }
+
+  .flow-composer-infinite {
+    margin-inline: 12px;
+  }
+
+  .flow-canvas-chrome {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .flow-canvas-title,
+  .flow-canvas-tools {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .flow-canvas-title {
+    justify-content: space-between;
+  }
+
+  .flow-canvas-tools {
+    flex-wrap: wrap;
+  }
+}
+
 .flow-zoom-readout {
   min-width: 46px;
   text-align: center;
@@ -98,6 +138,11 @@
 
 .flow-viewport:active {
   cursor: grabbing;
+}
+
+.flow-viewport:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
 }
 
 .flow-canvas-surface {
@@ -308,10 +353,11 @@
   pointer-events: auto;
 }
 
-/* Keep the language preference aligned with the title-bar command control. */
+/* The selector is mounted into the header host once Rabbita renders it. */
 #moonsuite-language {
-  top: 13px !important;
-  right: 132px !important;
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
   bottom: auto !important;
   height: 30px;
   padding: 0 !important;

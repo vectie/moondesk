@@ -71,29 +71,134 @@ async fn handle_search(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
+  let evidence_contract = query_value(request_path, "contract")
+    is Some("pages-search.v1")
   let query = decode_query_value(
       query_value(request_path, "query").unwrap_or(""),
     )
     .trim()
     .to_owned()
   if query == "" {
-    send_json(conn, method_, Json::array([]))
+    send_search_response(
+      conn,
+      method_,
+      evidence_contract,
+      [],
+      query,
+      "",
+      ok=true,
+      status="ready",
+      message="Search completed",
+    )
     return
   }
-  let workspace_filter = query_value(request_path, "workspace")
+  let workspace_filter = decode_query_value(
+      query_value(request_path, "workspace").unwrap_or(""),
+    )
+    .trim()
+    .to_owned()
   let query_lower = query.to_lower()
-  let hits : Array[Json] = []
-  for workspace in discover_workspaces(workspace_root) {
-    match workspace_filter {
-      Some(id) if id != workspace.id => continue
-      _ => ()
+  let discovered = discover_workspaces(workspace_root)
+  let selected : Array[@desk.DeskWorkspace] = []
+  for workspace in discovered {
+    if workspace_filter == "" || workspace_filter == workspace.id {
+      selected.push(workspace)
     }
+  }
+  if workspace_filter != "" && selected.is_empty() && evidence_contract {
+    send_search_response(
+      conn,
+      method_,
+      true,
+      [],
+      query,
+      workspace_filter,
+      ok=false,
+      status="workspace-not-found",
+      message="The selected book is no longer available",
+    )
+    return
+  }
+  if evidence_contract {
+    for workspace in selected {
+      if !search_scope_available(workspace.root_path) {
+        send_search_response(
+          conn,
+          method_,
+          true,
+          [],
+          query,
+          workspace_filter,
+          ok=false,
+          status="scope-unavailable",
+          message="The selected search scope cannot be read",
+        )
+        return
+      }
+    }
+  }
+  let hits : Array[Json] = []
+  for workspace in selected {
     collect_search_hits(workspace, "", query_lower, hits, 0, 80)
     if hits.length() >= 80 {
       break
     }
   }
-  send_json(conn, method_, Json::array(hits))
+  send_search_response(
+    conn,
+    method_,
+    evidence_contract,
+    hits,
+    query,
+    workspace_filter,
+    ok=true,
+    status="ready",
+    message="Search completed",
+  )
+}
+
+///|
+async fn search_scope_available(path : String) -> Bool {
+  if !is_directory(path) {
+    return false
+  }
+  let dir = @fs.opendir(path) catch { _ => return false }
+  defer dir.close()
+  ignore(dir.read_all(include_hidden=true) catch { _ => return false })
+  true
+}
+
+///|
+async fn send_search_response(
+  conn : @http.ServerConnection,
+  method_ : @http.RequestMethod,
+  evidence_contract : Bool,
+  hits : Array[Json],
+  query : String,
+  workspace_id : String,
+  ok~ : Bool,
+  status~ : String,
+  message~ : String,
+) -> Unit {
+  if !evidence_contract {
+    send_json(conn, method_, Json::array(hits))
+    return
+  }
+  send_json(
+    conn,
+    method_,
+    api_contract_response(
+      {
+        "contract": "pages-search.v1",
+        "query": query,
+        "workspace_id": workspace_id,
+        "hits": Json::array(hits),
+      },
+      ok~,
+      status~,
+      message~,
+    ),
+  )
 }
 
 ///|

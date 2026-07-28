@@ -10,6 +10,20 @@ struct DaemonControlResult {
 } derive(FromJson)
 
 ///|
+priv struct TownInstallationEvidence {
+  installed : Bool
+  source : String
+} derive(FromJson)
+
+///|
+// Host configuration evidence is optional for compatibility with older lifecycle responses.
+priv struct DaemonConfigurationEvidence {
+  configured : Bool
+  valid : Bool
+  reason : String
+} derive(FromJson)
+
+///|
 struct DaemonLifecycleResult {
   ok : Bool
   action : String
@@ -29,6 +43,12 @@ struct DaemonLifecycleResult {
   restart_count : Int
   last_health_check : String
   policy_file : String
+  service_configured : Bool
+  service_config_path : String
+  service_cwd : String
+  platform_evidence : CapabilityPlatformEvidence?
+  installation_evidence : TownInstallationEvidence?
+  configuration_evidence : DaemonConfigurationEvidence?
 } derive(FromJson)
 
 ///|

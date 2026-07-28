@@ -296,9 +296,15 @@ async fn copy_moondesk_live_bundle_files(
   options : LepusaIntegrationOptions,
   out_dir : String,
 ) -> Bool {
-  copy_lepusa_runtime(lepusa_root, options.target, out_dir) &&
-  copy_moondesk_sidecar(repo_root, options.target, out_dir) &&
-  copy_moondesk_ui_bundle(options.ui_dir, options.target, out_dir) &&
+  if !copy_lepusa_runtime(lepusa_root, options.target, out_dir) {
+    return false
+  }
+  if !copy_moondesk_sidecar(repo_root, options.target, out_dir) {
+    return false
+  }
+  if !copy_moondesk_ui_bundle(options.ui_dir, options.target, out_dir) {
+    return false
+  }
   configure_moondesk_launcher_service_path(options.target, out_dir)
 }
 
@@ -327,29 +333,33 @@ async fn run_lepusa_integration_smoke(
   project : String,
   out_dir : String,
   manifest_path : String,
-) -> Unit {
+) -> Bool {
   for
     step in lepusa_integration_smoke_steps(
       options, project, out_dir, manifest_path,
     ) {
     if !run_lepusa_integration_step(step, lepusa_root) {
       println("lepusa smoke \{options.target}: failed at \{step.name}")
-      return
+      return false
     }
-    if step.name == "bundle-write" &&
-      (
-        !copy_lepusa_runtime(lepusa_root, options.target, out_dir) ||
-        !copy_moondesk_sidecar(repo_root, options.target, out_dir) ||
-        !configure_moondesk_launcher_service_path(options.target, out_dir)
-      ) {
-      return
+    if step.name == "bundle-write" {
+      if !copy_lepusa_runtime(lepusa_root, options.target, out_dir) {
+        return false
+      }
+      if !copy_moondesk_sidecar(repo_root, options.target, out_dir) {
+        return false
+      }
+      if !configure_moondesk_launcher_service_path(options.target, out_dir) {
+        return false
+      }
     }
   }
   if !run_lepusa_integration_bundle_check(options, out_dir, manifest_path) {
     println("lepusa smoke \{options.target}: failed at bundle-check")
-    return
+    return false
   }
   println("lepusa smoke \{options.target}: ok")
+  true
 }
 
 ///|
@@ -360,25 +370,29 @@ async fn run_lepusa_integration_live_smoke(
   project : String,
   out_dir : String,
   manifest_path : String,
-) -> Unit {
+) -> Bool {
   for
     step in lepusa_integration_live_smoke_steps(
       options, project, out_dir, manifest_path,
     ) {
     if !run_lepusa_integration_step(step, lepusa_root) {
       println("lepusa live-smoke \{options.target}: failed at \{step.name}")
-      return
+      return false
     }
-    if step.name == "bundle-write" &&
-      !copy_moondesk_live_bundle_files(repo_root, lepusa_root, options, out_dir) {
-      return
+    if step.name == "bundle-write" {
+      if !copy_moondesk_live_bundle_files(
+          repo_root, lepusa_root, options, out_dir,
+        ) {
+        return false
+      }
     }
   }
   if !run_lepusa_integration_live_bundle_check(options, out_dir, manifest_path) {
     println("lepusa live-smoke \{options.target}: failed at bundle-check")
-    return
+    return false
   }
   println("lepusa live-smoke \{options.target}: ok")
+  true
 }
 
 ///|
@@ -389,25 +403,29 @@ async fn run_lepusa_integration_live_build(
   project : String,
   out_dir : String,
   manifest_path : String,
-) -> Unit {
+) -> Bool {
   for
     step in lepusa_integration_live_build_steps(
       options, project, out_dir, manifest_path,
     ) {
     if !run_lepusa_integration_step(step, lepusa_root) {
       println("lepusa live-build \{options.target}: failed at \{step.name}")
-      return
+      return false
     }
-    if step.name == "bundle-write" &&
-      !copy_moondesk_live_bundle_files(repo_root, lepusa_root, options, out_dir) {
-      return
+    if step.name == "bundle-write" {
+      if !copy_moondesk_live_bundle_files(
+          repo_root, lepusa_root, options, out_dir,
+        ) {
+        return false
+      }
     }
   }
   if !run_lepusa_integration_live_bundle_check(options, out_dir, manifest_path) {
     println("lepusa live-build \{options.target}: failed at bundle-check")
-    return
+    return false
   }
   println("lepusa live-build \{options.target}: ok")
+  true
 }
 
 ///|
@@ -418,7 +436,7 @@ async fn run_lepusa_integration_live_runtime(
   project : String,
   out_dir : String,
   manifest_path : String,
-) -> Unit {
+) -> Bool {
   for
     step in lepusa_integration_live_runtime_steps(
       options, project, out_dir, manifest_path,
@@ -427,19 +445,23 @@ async fn run_lepusa_integration_live_runtime(
       println(
         "lepusa \{options.command} \{options.target}: failed at \{step.name}",
       )
-      return
+      return false
     }
-    if step.name == "bundle-write" &&
-      !copy_moondesk_live_bundle_files(repo_root, lepusa_root, options, out_dir) {
-      return
+    if step.name == "bundle-write" {
+      if !copy_moondesk_live_bundle_files(
+          repo_root, lepusa_root, options, out_dir,
+        ) {
+        return false
+      }
     }
   }
   if options.command == "live-launch" &&
     !run_lepusa_integration_live_bundle_check(options, out_dir, manifest_path) {
     println("lepusa live-launch \{options.target}: failed at bundle-check")
-    return
+    return false
   }
   println("lepusa \{options.command} \{options.target}: ok")
+  true
 }
 
 ///|

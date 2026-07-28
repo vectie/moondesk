@@ -1531,7 +1531,12 @@ test "desk filter narrows visible entries by name or path" {
   assert_eq(path_filtered[0].path, "raw/evidence.txt")
   assert_eq(
     desk_entry_count_label_for_model(
-      { ..init_model(), entries, desk_filter_query: "raw" },
+      {
+        ..init_model(),
+        entries,
+        desk_filter_query: "raw",
+        desk_entries_state: None,
+      },
       desk_entry_counts(path_filtered),
       path_filtered.length(),
     ),
@@ -1867,15 +1872,14 @@ test "desk directory history resets when switching MoonBooks" {
 ///|
 test "desk folder refresh reports recoverable connection feedback" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
-  let (_, refreshing) = update_workspace_surface_actions(
-    dispatch,
-    RefreshAll,
-    init_model(),
-  )
+  let (_, refreshing) = update_workspace_surface_actions(dispatch, RefreshAll, {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+  })
   assert_eq(refreshing.desk_new_item_status, "Refreshing folder...")
   let (_, failed) = update_workspace_results(
     dispatch,
-    LoadedEntries(Err("Invalid Desk entries response")),
+    LoadedEntries("book-demo", "", 0, Err("Invalid Desk entries response")),
     refreshing,
   )
   assert_eq(
@@ -1884,7 +1888,7 @@ test "desk folder refresh reports recoverable connection feedback" {
   )
   let (_, recovered) = update_workspace_results(
     dispatch,
-    LoadedEntries(Ok([])),
+    LoadedEntries("book-demo", "", 0, Ok([])),
     failed,
   )
   assert_eq(recovered.desk_new_item_status, "")

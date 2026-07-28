@@ -3,28 +3,36 @@ fn render_activity_rail(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  aside(class="activity-rail", [
-    div(class="rail-mark", "Wiki"),
-    div(
-      class="rail-buttons",
-      activities().map(item => {
-        let class_name = if item.key == model.activity {
-          "rail-button active"
-        } else {
-          "rail-button"
-        }
-        button(
-          class=class_name,
-          title=item.label,
-          on_click=dispatch(SelectActivity(item.key)),
-          [
-            span(class="rail-label", item.label),
-            render_activity_attention(model, item.key),
-          ],
-        )
-      }),
-    ),
-  ])
+  aside(
+    class="activity-rail",
+    attrs=@html.Attrs::build().aria_label("Pages activities"),
+    [
+      div(class="rail-mark", workspace_mode_label(MoonWiki)),
+      div(
+        class="rail-buttons",
+        activities().map(item => {
+          let class_name = if item.key == model.activity {
+            "rail-button active"
+          } else {
+            "rail-button"
+          }
+          button(
+            class=class_name,
+            attrs=@html.Attrs::build().data_set(
+              "testid",
+              "activity-\{activity_slug(item.key)}",
+            ),
+            title=item.label,
+            on_click=dispatch(SelectActivity(item.key)),
+            [
+              span(class="rail-label", item.label),
+              render_activity_attention(model, item.key),
+            ],
+          )
+        }),
+      ),
+    ],
+  )
 }
 
 ///|

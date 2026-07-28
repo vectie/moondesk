@@ -118,12 +118,63 @@ fn moonflow_selected_runs(model : Model) -> Array[MoonFlowRunProjection] {
 }
 
 ///|
+fn render_moonflow_runs_state(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  selected_runs : Array[MoonFlowRunProjection],
+) -> @rabbita.Html {
+  match model.moonflow_runs_state {
+    None | Some(LegitimateZero) => @html.nothing
+    Some(state) =>
+      section(
+        class="surface-state-panel flow-runs-state",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "moonflow-runs-state-panel")
+          .data_set("state", moonflow_runs_state_key(model.moonflow_runs_state)),
+        [
+          render_polite_state_announcement(
+            "moonflow-runs-state-announcement",
+            moonflow_runs_state_title(state, !selected_runs.is_empty()),
+            moonflow_runs_state_detail(state, !selected_runs.is_empty()),
+          ),
+          strong(moonflow_runs_state_title(state, !selected_runs.is_empty())),
+          p(moonflow_runs_state_detail(state, !selected_runs.is_empty())),
+          match moonflow_runs_state_action(state) {
+            Some(label) =>
+              button(
+                class="secondary-button",
+                on_click=dispatch(SelectWorkspaceMode(MoonFlow)),
+                label,
+              )
+            None => @html.nothing
+          },
+          if moonflow_runs_state_shows_details(state) {
+            details(class="technical-details", [
+              summary("Technical details"),
+              code(
+                if state == CapabilityLimited {
+                  moonflow_capability_technical_detail(model)
+                } else {
+                  model.moonflow_runs_error.unwrap_or("")
+                },
+              ),
+            ])
+          } else {
+            @html.nothing
+          },
+        ],
+      )
+  }
+}
+
+///|
 fn render_moonflow_workspace(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
   let selected_runs = moonflow_selected_runs(model)
-  main_(class="flow-main", [
+  let runs_state = moonflow_effective_runs_state(model)
+  main_(class="flow-main", attrs=main_content_attrs(MoonFlow), [
     section(class="flow-hero flow-hero-compact", [
       div([
         h1("MoonFlow"),
@@ -138,40 +189,61 @@ fn render_moonflow_workspace(
         "Refresh",
       ),
     ]),
-    render_moonflow_composition_canvas(dispatch, model),
-    if selected_runs.is_empty() {
-      section(class="flow-empty", [
-        strong("No executable work yet"),
-        p(
-          "Start with the selected MoonBook's executable document. MoonFlow creates the run, then publishes authority-bound handoffs for every governed decision.",
-        ),
-        button(
-          class="primary-button",
-          attrs=@html.Attrs::build().data_set(
-            "testid", "moonflow-prepare-selected",
+    render_moonflow_runs_state(
+      dispatch,
+      { ..model, moonflow_runs_state: runs_state },
+      selected_runs,
+    ),
+    if selected_runs.is_empty() &&
+      moonflow_runs_state_shows_empty_action(runs_state) {
+      section(
+        class="flow-empty",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "moonflow-runs-state-panel")
+          .data_set("state", moonflow_runs_state_key(model.moonflow_runs_state)),
+        [
+          strong("No executable work yet"),
+          p(
+            "Start with the selected MoonBook's executable document. MoonFlow creates the run, then publishes authority-bound handoffs for every governed decision.",
           ),
-          disabled=model.selected_workspace_id == "",
-          on_click=dispatch(PrepareMoonFlow),
-          "Start governed run",
-        ),
-        small(model.moonflow_status),
-        if model.moonflow_status.contains("no executable Work graph") {
           button(
-            class="secondary-button",
-            on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-            "Create executable document in Wiki",
-          )
-        } else {
-          @html.nothing
-        },
-        render_moonflow_handoffs(
-          dispatch,
-          model,
-          "not started",
-          model.selected_workspace_id,
-        ),
-      ])
+            class="primary-button",
+            attrs=@html.Attrs::build().data_set(
+              "testid", "moonflow-prepare-selected",
+            ),
+            disabled=model.selected_workspace_id == "",
+            on_click=dispatch(PrepareMoonFlow),
+            "Start governed run",
+          ),
+          small(model.moonflow_status),
+          if model.moonflow_status.contains("no executable Work graph") {
+            button(
+              class="secondary-button",
+              on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+              "Create executable document in Wiki",
+            )
+          } else {
+            @html.nothing
+          },
+        ],
+      )
     } else {
+      @html.nothing
+    },
+    render_moonflow_composition_canvas(dispatch, model),
+    if selected_runs.is_empty() &&
+      moonflow_runs_state_shows_empty_action(runs_state) {
+      render_moonflow_handoffs(
+        dispatch,
+        model,
+        "not started",
+        model.selected_workspace_id,
+      )
+    } else {
+      @html.nothing
+    },
+    if !selected_runs.is_empty() &&
+      moonflow_runs_state_keeps_records(runs_state) {
       let latest = selected_runs[0]
       let earlier = moonflow_earlier_runs(selected_runs)
       let run_children : Array[@rabbita.Html] = [
@@ -196,20 +268,26 @@ fn render_moonflow_workspace(
               "Ingest a new revision after the selected MoonBook changes. Existing runs and their evidence remain immutable.",
             ),
           ]),
-          button(
-            class="secondary-button",
-            attrs=@html.Attrs::build().data_set(
-              "testid", "moonflow-prepare-selected",
-            ),
-            disabled=model.selected_workspace_id == "" ||
-              model.moonflow_status.contains("Preparing executable work"),
-            on_click=dispatch(PrepareMoonFlow),
-            "Ingest latest revision",
-          ),
+          if runs_state is Some(CapabilityLimited) {
+            @html.nothing
+          } else {
+            button(
+              class="secondary-button",
+              attrs=@html.Attrs::build().data_set(
+                "testid", "moonflow-prepare-selected",
+              ),
+              disabled=model.selected_workspace_id == "" ||
+                model.moonflow_ingest_preparing,
+              on_click=dispatch(PrepareMoonFlow),
+              "Ingest latest revision",
+            )
+          },
           small("\{selected_runs.length()} revision(s) for this MoonBook"),
         ]),
         section(class="flow-run-list", run_children),
       ])
+    } else {
+      @html.nothing
     },
   ])
 }

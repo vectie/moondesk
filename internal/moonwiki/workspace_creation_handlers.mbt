@@ -240,86 +240,89 @@ async fn import_moonbook_from_uploaded_files(
   payload : Json,
   files : Array[Json],
 ) -> Result[Json, Json] {
-  @moonlib/fsx.with_temporary_directory("moondesk-moonbook-folder-upload-", temp_root => {
-    let source_root = @pathx.join(temp_root, "source")
-    @fsx.make_directory(source_root, recursive=true, exists_ok=true) catch {
-      _ =>
-        return Err(
-          workspace_create_error(
-            500, "Internal Server Error", "Could not stage folder upload",
-          ),
-        )
-    }
-    let staged_paths : Array[String] = []
-    for file in files {
-      let relative = match import_uploaded_moonbook_file_path(file) {
-        Ok(path) => path
-        Err(message) =>
-          return Err(workspace_create_error(400, "Bad Request", message))
+  @moonlib/fsx.with_temporary_directory(
+    "moondesk-moonbook-folder-upload-XXXXXX",
+    temp_root => {
+      let source_root = @pathx.join(temp_root, "source")
+      @fsx.make_directory(source_root, recursive=true, exists_ok=true) catch {
+        error =>
+          return Err(
+            workspace_create_error(
+              500,
+              "Internal Server Error",
+              "Could not create folder-upload staging directory: \{error}",
+            ),
+          )
       }
-      if staged_paths.contains(relative) {
-        return Err(
-          workspace_create_error(
-            400, "Bad Request", "MoonBook folder upload contains duplicate paths",
-          ),
-        )
+      let staged_paths : Array[String] = []
+      for file in files {
+        let relative = match import_uploaded_moonbook_file_path(file) {
+          Ok(path) => path
+          Err(message) =>
+            return Err(workspace_create_error(400, "Bad Request", message))
+        }
+        if staged_paths.contains(relative) {
+          return Err(
+            workspace_create_error(
+              400, "Bad Request", "MoonBook folder upload contains duplicate paths",
+            ),
+          )
+        }
+        let bytes = match import_file_bytes(file) {
+          Ok(bytes) => bytes
+          Err(message) =>
+            return Err(workspace_create_error(400, "Bad Request", message))
+        }
+        let target = @pathx.join(source_root, relative)
+        @fsx.make_directory(
+          @pathx.dirname(target).to_owned(),
+          recursive=true,
+          exists_ok=true,
+        ) catch {
+          error =>
+            return Err(
+              workspace_create_error(
+                500,
+                "Internal Server Error",
+                "Could not create uploaded-file parent directory: \{error}",
+              ),
+            )
+        }
+        write_bytes_file(target, bytes, create=0o644) catch {
+          error =>
+            return Err(
+              workspace_create_error(
+                500,
+                "Internal Server Error",
+                "Could not stage folder upload: \{error}",
+              ),
+            )
+        }
+        staged_paths.push(relative)
       }
-      let bytes = match import_file_bytes(file) {
-        Ok(bytes) => bytes
-        Err(message) =>
-          return Err(workspace_create_error(400, "Bad Request", message))
-      }
-      let (target, _) = match resolve_workspace_path(source_root, relative) {
-        Some(pair) => pair
+      let source_dir = match import_archive_source_dir(source_root) {
+        Some(path) => path
         None =>
           return Err(
             workspace_create_error(
-              400, "Bad Request", "MoonBook folder upload path is not allowed",
+              400, "Bad Request", "MoonBook folder upload must contain book.json",
             ),
           )
       }
-      @fsx.make_directory(
-        @pathx.dirname(target).to_owned(),
-        recursive=true,
-        exists_ok=true,
-      ) catch {
-        _ =>
-          return Err(
-            workspace_create_error(
-              500, "Internal Server Error", "Could not stage folder upload",
-            ),
-          )
-      }
-      write_bytes_file(target, bytes, create=0o644) catch {
-        _ =>
-          return Err(
-            workspace_create_error(
-              500, "Internal Server Error", "Could not stage folder upload",
-            ),
-          )
-      }
-      staged_paths.push(relative)
-    }
-    let source_dir = match import_archive_source_dir(source_root) {
-      Some(path) => path
-      None =>
-        return Err(
-          workspace_create_error(
-            400, "Bad Request", "MoonBook folder upload must contain book.json",
-          ),
-        )
-    }
-    import_moonbook_from_source_dir(
-      workspace_root,
-      payload,
-      source_dir,
-      @desk.display_name(source_dir),
-    )
-  }) catch {
-    _ =>
+      import_moonbook_from_source_dir(
+        workspace_root,
+        payload,
+        source_dir,
+        @desk.display_name(source_dir),
+      )
+    },
+  ) catch {
+    error =>
       Err(
         workspace_create_error(
-          500, "Internal Server Error", "Could not stage folder upload",
+          500,
+          "Internal Server Error",
+          "Could not create temporary folder-upload workspace: \{error}",
         ),
       )
   }

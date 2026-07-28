@@ -1,83 +1,194 @@
 ///|
 fn render_town_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
-  aside(class="activity-pane user-pane", [
-    div(class="pane-heading", [
-      div([p(class="eyebrow", "Knowledge work"), h2("Activity")]),
-      button(
-        class="secondary-button compact-button",
-        title="Refresh activity",
-        on_click=dispatch(RefreshAll),
-        "Refresh",
-      ),
-    ]),
-    section(class="side-section task-composer", [
-      h3("Build or update this book"),
-      textarea(
-        class="side-textarea",
-        attrs=@html.Attrs::build().aria_label("Describe the book task"),
-        rows=5,
-        value=model.request_prompt,
-        placeholder="Describe what to research, organize, or produce.",
-        on_input=fn(value) { dispatch(SetRequestPrompt(value)) },
-        "",
-      ),
-      render_request_materials(dispatch, model),
-      div(class="task-material-inputs", [
-        input(
-          class="line-input",
-          value=model.import_url,
-          placeholder="Add a link",
-          on_input=fn(value) { dispatch(SetImportUrl(value)) },
+  aside(
+    class="activity-pane user-pane",
+    attrs=@html.Attrs::build().aria_label("Book requests"),
+    [
+      div(class="pane-heading", [
+        div([p(class="eyebrow", "Knowledge work"), h2("Requests")]),
+        button(
+          class="secondary-button compact-button",
+          title="Refresh requests",
+          on_click=dispatch(SelectWorkspaceMode(RequestsWorkspace)),
+          "Refresh",
         ),
+      ]),
+      render_requests_capability(dispatch, model),
+      render_request_list(dispatch, model),
+      section(class="side-section task-composer", [
+        h3("Build or update this book"),
         textarea(
-          class="side-textarea compact-textarea",
-          attrs=@html.Attrs::build().aria_label("Material note"),
-          rows=2,
-          value=model.import_note,
-          placeholder="Optional note about the materials",
-          on_input=fn(value) { dispatch(SetImportNote(value)) },
+          class="side-textarea",
+          attrs=@html.Attrs::build()
+            .aria_label("Describe the book task")
+            .data_set("testid", "requests-prompt"),
+          rows=5,
+          value=model.request_prompt,
+          placeholder="Describe what to research, organize, or produce.",
+          on_input=fn(value) { dispatch(SetRequestPrompt(value)) },
           "",
         ),
-        div(class="task-material-actions", [
-          button(
-            class="secondary-button",
-            disabled=model.import_url.trim().is_empty(),
-            on_click=dispatch(ImportUrlToInbox),
-            "Add link",
+        render_request_materials(dispatch, model),
+        div(class="task-material-inputs", [
+          input(
+            class="line-input",
+            value=model.import_url,
+            placeholder="Add a link",
+            on_input=fn(value) { dispatch(SetImportUrl(value)) },
           ),
-          button(
-            class="secondary-button",
-            on_click=dispatch(ImportLocalFiles),
-            "Add files",
+          textarea(
+            class="side-textarea compact-textarea",
+            attrs=@html.Attrs::build().aria_label("Material note"),
+            rows=2,
+            value=model.import_note,
+            placeholder="Optional note about the materials",
+            on_input=fn(value) { dispatch(SetImportNote(value)) },
+            "",
           ),
+          div(class="task-material-actions", [
+            button(
+              class="secondary-button",
+              disabled=model.import_url.trim().is_empty(),
+              on_click=dispatch(ImportUrlToInbox),
+              "Add link",
+            ),
+            button(
+              class="secondary-button",
+              on_click=dispatch(ImportLocalFiles),
+              "Add files",
+            ),
+          ]),
+          if wiki_task_material_status(model.request_material_status) == "" {
+            @html.nothing
+          } else {
+            p(
+              class="status-line task-material-status",
+              wiki_task_material_status(model.request_material_status),
+            )
+          },
         ]),
-        if wiki_task_material_status(model.request_material_status) == "" {
-          @html.nothing
-        } else {
-          p(
-            class="status-line task-material-status",
-            wiki_task_material_status(model.request_material_status),
+        button(
+          class="primary-button full",
+          attrs=@html.Attrs::build().data_set("testid", "requests-submit"),
+          disabled=wiki_task_start_disabled(model),
+          on_click=dispatch(SubmitRequest),
+          "Start building",
+        ),
+        p(class="status-line", wiki_request_status_label(model.request_status)),
+      ]),
+      if requests_have_visible_activity(model) {
+        section(class="side-section activity-list-section", [
+          div(class="section-heading-row", [
+            h3("Recent work"),
+            small("Tasks and results"),
+          ]),
+          render_user_activity_list(dispatch, model),
+        ])
+      } else {
+        @html.nothing
+      },
+      render_automation_disclosure(dispatch, model),
+      render_book_creation_disclosure(dispatch, model),
+    ],
+  )
+}
+
+///|
+fn render_requests_capability(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  let state = requests_capability_state(
+    model.daemon_lifecycle,
+    model.town_capability_probe_available,
+  )
+  let action = requests_capability_primary_action(state)
+  section(
+    class="side-section surface-state-panel requests-capability",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "requests-capability")
+      .data_set("state", capability_state_key(state))
+      .role("status")
+      .aria_live("polite"),
+    [
+      strong(requests_capability_title(state)),
+      p(requests_capability_detail(state)),
+      match action {
+        StartRequestsAutomation =>
+          button(
+            class="primary-button full",
+            on_click=dispatch(StartDaemon),
+            requests_capability_primary_action_label(action),
           )
-        },
-      ]),
-      button(
-        class="primary-button full",
-        disabled=wiki_task_start_disabled(model),
-        on_click=dispatch(SubmitRequest),
-        "Start building",
-      ),
-      p(class="status-line", wiki_request_status_label(model.request_status)),
-    ]),
-    section(class="side-section activity-list-section", [
-      div(class="section-heading-row", [
-        h3("Recent work"),
-        small("Tasks and results"),
-      ]),
-      render_user_activity_list(dispatch, model),
-    ]),
-    render_automation_disclosure(dispatch, model),
-    render_book_creation_disclosure(dispatch, model),
-  ])
+        ReviewRequestsSetup =>
+          button(
+            class="primary-button full",
+            on_click=dispatch(SelectActivity(Settings)),
+            requests_capability_primary_action_label(action),
+          )
+        RetryRequestsCapabilityCheck =>
+          button(
+            class="primary-button full",
+            on_click=dispatch(FetchDaemonLifecycle),
+            requests_capability_primary_action_label(action),
+          )
+        NoRequestsCapabilityAction => @html.nothing
+      },
+      match model.daemon_lifecycle {
+        Some(result) =>
+          details(class="technical-details", [
+            summary("Technical details"),
+            info_row(
+              "Configuration",
+              if result.service_configured {
+                "configured"
+              } else {
+                "needs setup"
+              },
+            ),
+            match result.configuration_evidence {
+              Some(evidence) =>
+                info_row("Configuration reason", evidence.reason)
+              None => @html.nothing
+            },
+            info_row("Configuration file", result.service_config_path),
+            info_row("Working directory", result.service_cwd),
+            match result.platform_evidence {
+              Some(evidence) =>
+                @html.fragment([
+                  info_row("Platform", evidence.platform),
+                  info_row("Architecture", evidence.architecture),
+                  info_row(
+                    "Platform support",
+                    if evidence.supported {
+                      "supported"
+                    } else {
+                      "unsupported"
+                    },
+                  ),
+                ])
+              None => @html.nothing
+            },
+            match result.installation_evidence {
+              Some(evidence) =>
+                @html.fragment([
+                  info_row(
+                    "Automation installation",
+                    if evidence.installed {
+                      "installed"
+                    } else {
+                      "not installed"
+                    },
+                  ),
+                  info_row("Installation evidence", evidence.source),
+                ])
+              None => @html.nothing
+            },
+          ])
+        None => @html.nothing
+      },
+    ],
+  )
 }
 
 ///|
@@ -151,25 +262,31 @@ fn render_user_activity_list(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  if model.requests.length() == 0 && model.runs.length() == 0 {
-    div(class="quiet-empty-state", [
-      strong("No activity yet"),
-      p("Start a task when you want help researching or updating this book."),
-    ])
-  } else {
-    div(class="user-activity-list", [
+  div(class="user-activity-list", [
+    if requests_state_keeps_items(model.requests_state) {
       @html.fragment(
         model.requests[:wiki_request_limit(model.requests)].map(record => {
           render_user_request(record)
         }),
-      ),
-      @html.fragment(
-        model.runs[:wiki_run_limit(model.runs)].map(run => {
-          render_user_run(dispatch, run)
-        }),
-      ),
-    ])
-  }
+      )
+    } else {
+      @html.nothing
+    },
+    @html.fragment(
+      model.runs[:wiki_run_limit(model.runs)].map(run => {
+        render_user_run(dispatch, run)
+      }),
+    ),
+  ])
+}
+
+///|
+fn requests_have_visible_activity(model : Model) -> Bool {
+  (
+    requests_state_keeps_items(model.requests_state) &&
+    model.requests.length() > 0
+  ) ||
+  model.runs.length() > 0
 }
 
 ///|

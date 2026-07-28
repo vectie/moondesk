@@ -1,5 +1,7 @@
 # MoonSuite Layout Migration Plan
 
+**Historical status:** This document records the MoonSuite layout migration history; it is not the active MoonDesk productization program.
+
 This plan makes MoonSuite v2 the fresh default filesystem contract. There is no
 legacy compatibility target for new writes: MoonDesk should initialize and use a
 MoonSuite root directly.

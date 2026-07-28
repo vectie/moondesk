@@ -15,6 +15,7 @@ enum DeskDensity {
 
 ///|
 struct Model {
+  source_pane : SourcePaneState
   bootstrapped : Bool
   workspace_mode : WorkspaceMode
   activity : Activity
@@ -30,6 +31,8 @@ struct Model {
   pack_apps : Array[PackAppRecord]
   pack_apps_status : String
   workspaces : Array[@desk.DeskWorkspace]
+  workspace_catalog_state : SurfaceState?
+  workspace_catalog_error : String
   selected_workspace_id : String
   new_book_name : String
   new_book_id : String
@@ -42,6 +45,9 @@ struct Model {
   desk_back_stack : Array[String]
   desk_forward_stack : Array[String]
   entries : Array[@desk.DeskFileEntry]
+  desk_entries_state : SurfaceState?
+  desk_entries_error : String
+  desk_entries_request_generation : Int
   desk_sort_key : DeskSortKey
   desk_sort_desc : Bool
   desk_density : DeskDensity
@@ -66,6 +72,11 @@ struct Model {
   selected_path : String
   primary_preview_path : String
   preview : @desk.DeskPreview?
+  preview_state : SurfaceState?
+  preview_error : String
+  preview_request_workspace_id : String
+  preview_request_path : String
+  preview_request_generation : Int
   preview_status : String
   markdown_editor_path : String
   markdown_editor_content : String
@@ -77,16 +88,23 @@ struct Model {
   request_material_paths : Array[String]
   request_material_status : String
   requests : Array[RequestRecord]
+  requests_state : SurfaceState?
+  requests_error : String
+  runs_state : SurfaceState?
+  runs_error : String
   standing_goals : Array[StandingGoalRecord]
   analytics : TownAnalytics?
   town_progress : TownProgress?
   moonclaw_progress : MoonclawProgress?
   daemon_lifecycle : DaemonLifecycleResult?
+  town_capability_probe_available : Bool
   launch_agent : LaunchAgentResult?
   moonclaw_daemon : MoonClawDaemonStatus?
   moonclaw_installing : Bool
   moonclaw_install_feedback : String
   mooncode_sessions : Array[MoonCodeSession]
+  mooncode_sessions_state : SurfaceState?
+  mooncode_sessions_error : String
   mooncode_archived_sessions : Array[MoonCodeSession]
   selected_mooncode_session_id : String
   mooncode_session_query : String
@@ -110,16 +128,24 @@ struct Model {
   mooncode_watch_failure_count : Int
   events : Array[DeskEvent]
   review_items : Array[ReviewItem]
+  review_state : SurfaceState?
+  publish_state : SurfaceState?
+  publish_error : String
   review_decision_note : String
   review_decision_status : String
   town_messages : Array[TownMessage]
   runs : Array[@desk.DeskRunProjection]
   moonflow_runs : Array[MoonFlowRunProjection]
   moonflow_status : String
+  // Listing transport truth is owned separately from operation feedback.
+  moonflow_runs_state : SurfaceState?
+  moonflow_runs_error : String?
+  moonflow_capability_evidence : MoonFlowCapabilityEvidence?
+  moonflow_capability_error : String?
+  moonflow_ingest_preparing : Bool
   moonflow_composition : MoonFlowComposition?
   moonflow_composition_status : String
   moonflow_composition_saving : Bool
-  moonflow_canvas_zoom : Int
   flow_pan_x : Double
   flow_pan_y : Double
   flow_zoom : Double
@@ -140,9 +166,15 @@ struct Model {
   inbox_status : String
   search_query : String
   search_status : String
+  search_state : SurfaceState?
+  search_error : String
+  search_evidence_query : String
   search_hits : Array[SearchHit]
   favorites : Array[String]
   saved_views : Array[SavedViewRecord]
+  saved_views_state : SurfaceState?
+  saved_views_error : String
+  saved_view_action_status : String
   recent_paths : Array[String]
   view_title : String
   goal_title : String
@@ -171,13 +203,21 @@ struct Model {
 
 ///|
 enum Msg {
+  SourcePane(SourcePaneMsg)
   Bootstrap
+  RetryBootstrap
   LoadedWorkspaceMetadata(Result[WorkspaceMetadata, String])
+  PickLibraryFolder
+  LibraryFolderPicked(Result[String, String])
+  SelectedLibrary(Result[WorkspaceMetadata, String])
   LoadedPackApps(Result[PackAppCatalog, String])
   LoadedWorkspaces(Result[Array[@desk.DeskWorkspace], String])
-  LoadedEntries(Result[Array[@desk.DeskFileEntry], String])
-  LoadedPreview(Result[@desk.DeskPreview, String])
+  RequestEntries(String, String)
+  LoadedEntries(String, String, Int, Result[Array[@desk.DeskFileEntry], String])
+  RequestPreview(String, String)
+  LoadedPreview(String, String, Int, Result[@desk.DeskPreview, String])
   LoadedRuns(Result[Array[@desk.DeskRunProjection], String])
+  LoadedMoonFlowCapability(Result[MoonFlowCapabilityEvidence, String])
   LoadedMoonFlowRuns(Result[Array[MoonFlowRunProjection], String])
   LoadedMoonFlowComposition(Result[MoonFlowComposition, String])
   SavedMoonFlowComposition(Result[MoonFlowComposition, String])
@@ -197,7 +237,7 @@ enum Msg {
   LoadedEvents(Result[Array[DeskEvent], String])
   LoadedReviewItems(Result[Array[ReviewItem], String])
   LoadedSavedViews(Result[Array[SavedViewRecord], String])
-  LoadedSearch(Result[Array[SearchHit], String])
+  LoadedPagesSearch(Result[PagesSearchResponse, String])
   LoadedDeskTrash(Result[Array[DeskTrashEntry], String])
   LoadedBookBaseTypes(Result[Array[BookBaseTypeRecord], String])
   LoadedBookPatterns(Result[Array[BookPatternRecord], String])
@@ -244,8 +284,7 @@ enum Msg {
   PrepareMoonFlow
   ToggleMoonFlowCompositionItem(String)
   SaveMoonFlowComposition
-  SetMoonFlowCanvasZoom(Int)
-  FlowCanvasWheel(Int, Int, Double)
+  FlowCanvasWheel(Double)
   FlowPanStart(Int, Int)
   FlowPanMove(Int, Int)
   FlowPanEnd
@@ -369,6 +408,7 @@ enum Msg {
   RestoreDeskTrashEntry(String)
   ToggleFavorite(String)
   SetViewTitle(String)
+  RefreshSavedViews
   SaveCurrentView
   SetReviewDecisionNote(String)
   DecideReviewItem(ReviewItem, String)

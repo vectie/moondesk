@@ -65,7 +65,14 @@ fn update_workspace_results(
         },
       )
     LoadedWorkspaceMetadata(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
+      (
+        if model.workspace_root_path == "" {
+          @rabbita.delay(dispatch(RetryBootstrap), 350)
+        } else {
+          @rabbita.none
+        },
+        { ..model, host_status: error },
+      )
     LoadedWorkspaces(Ok(workspaces)) => {
       let selected_known = has_workspace(
         workspaces,
@@ -76,6 +83,8 @@ fn update_workspace_results(
       } else {
         first_workspace_id(workspaces)
       }
+      let selected_workspace_changed = selected_workspace_id !=
+        model.selected_workspace_id
       let selected_path = if model.workspace_mode == Desk {
         if selected_known {
           model.selected_path
@@ -87,6 +96,11 @@ fn update_workspace_results(
       } else {
         model.selected_path
       }
+      let entries_directory = if selected_path == "" {
+        ""
+      } else {
+        parent_path(selected_path)
+      }
       (
         reload_workspace_cmds(dispatch, selected_workspace_id, selected_path),
         {
@@ -94,43 +108,159 @@ fn update_workspace_results(
           loading: false,
           host_status: "local host ready",
           workspaces,
+          workspace_catalog_state: if workspaces.is_empty() {
+            Some(LegitimateZero)
+          } else {
+            None
+          },
+          workspace_catalog_error: "",
           selected_workspace_id,
           selected_path,
+          current_directory: entries_directory,
+          desk_location_input: entries_directory,
+          entries: desk_entries_rows_while_loading(
+            model, selected_workspace_id, entries_directory,
+          ),
+          desk_entries_state: if selected_workspace_id == "" {
+            Some(FirstUseEmpty)
+          } else {
+            Some(Loading)
+          },
+          desk_entries_error: "",
+          preview: if selected_workspace_changed {
+            None
+          } else {
+            model.preview
+          },
+          preview_state: if selected_workspace_id == "" {
+            Some(FirstUseEmpty)
+          } else {
+            Some(Loading)
+          },
+          preview_error: "",
+          preview_request_workspace_id: if selected_workspace_changed {
+            ""
+          } else {
+            model.preview_request_workspace_id
+          },
+          preview_request_path: if selected_workspace_changed {
+            ""
+          } else {
+            model.preview_request_path
+          },
           preview_status: "loading preview",
+          runs: if selected_workspace_changed {
+            []
+          } else {
+            model.runs
+          },
+          review_items: if selected_workspace_changed {
+            []
+          } else {
+            model.review_items
+          },
+          review_state: if selected_workspace_id == "" {
+            Some(FirstUseEmpty)
+          } else {
+            Some(Loading)
+          },
+          publish_state: if selected_workspace_id == "" {
+            Some(FirstUseEmpty)
+          } else {
+            Some(Loading)
+          },
+          publish_error: "",
+          runs_state: if selected_workspace_id == "" {
+            Some(FirstUseEmpty)
+          } else {
+            Some(Loading)
+          },
+          runs_error: "",
         },
       )
     }
     LoadedWorkspaces(Err(error)) =>
       (
         @rabbita.none,
-        { ..model, loading: false, host_status: error, preview_status: error },
-      )
-    LoadedEntries(Ok(entries)) =>
-      (
-        @rabbita.none,
         {
           ..model,
-          entries,
-          host_status: "workspace indexed",
-          desk_new_item_status: if model.desk_new_item_status ==
-            "Refreshing folder..." ||
-            model.desk_new_item_status ==
-            "Couldn't refresh this folder. Check the connection and try Refresh again." {
-            ""
+          loading: false,
+          host_status: if model.workspaces.is_empty() {
+            "Couldn’t check this MoonBook library"
           } else {
-            model.desk_new_item_status
+            "Showing MoonBooks from the last successful check"
           },
+          workspace_catalog_state: if model.workspaces.is_empty() {
+            Some(RecoverableError)
+          } else {
+            Some(Stale)
+          },
+          workspace_catalog_error: error,
         },
       )
-    LoadedEntries(Err(error)) =>
-      (
-        @rabbita.none,
-        {
-          ..model,
-          host_status: error,
-          desk_new_item_status: "Couldn't refresh this folder. Check the connection and try Refresh again.",
-        },
-      )
+    RequestEntries(workspace_id, directory) =>
+      if !desk_entries_request_is_current(model, workspace_id, directory) {
+        (@rabbita.none, model)
+      } else {
+        let generation = model.desk_entries_request_generation + 1
+        (
+          perform_fetch_entries_cmd(
+            dispatch, workspace_id, directory, generation,
+          ),
+          {
+            ..model,
+            entries: desk_entries_rows_while_loading(
+              model, workspace_id, directory,
+            ),
+            desk_entries_state: Some(Loading),
+            desk_entries_error: "",
+            desk_entries_request_generation: generation,
+          },
+        )
+      }
+    LoadedEntries(workspace_id, directory, generation, result) =>
+      if !desk_entries_response_is_current(
+          model, workspace_id, directory, generation,
+        ) {
+        (@rabbita.none, model)
+      } else {
+        match result {
+          Ok(entries) =>
+            (
+              @rabbita.none,
+              {
+                ..model,
+                entries,
+                desk_entries_state: if entries.is_empty() {
+                  Some(LegitimateZero)
+                } else {
+                  None
+                },
+                desk_entries_error: "",
+                host_status: "workspace indexed",
+                desk_new_item_status: if model.desk_new_item_status ==
+                  "Refreshing folder..." ||
+                  model.desk_new_item_status ==
+                  "Couldn't refresh this folder. Check the connection and try Refresh again." {
+                  ""
+                } else {
+                  model.desk_new_item_status
+                },
+              },
+            )
+          Err(error) =>
+            (
+              @rabbita.none,
+              {
+                ..model,
+                desk_entries_state: Some(desk_entries_failure_state(model)),
+                desk_entries_error: error,
+                host_status: "Couldn’t refresh this folder",
+                desk_new_item_status: "Couldn't refresh this folder. Check the connection and try Refresh again.",
+              },
+            )
+        }
+      }
     LoadedDeskTrash(Ok(entries)) =>
       (
         @rabbita.none,
@@ -150,26 +280,106 @@ fn update_workspace_results(
       )
     LoadedDeskTrash(Err(error)) =>
       (@rabbita.none, { ..model, desk_trash_status: error, host_status: error })
-    LoadedPreview(Ok(preview)) =>
+    RequestPreview(workspace_id, path) =>
+      if !preview_request_is_current_selection(model, workspace_id, path) {
+        (@rabbita.none, model)
+      } else {
+        let generation = model.preview_request_generation + 1
+        let keep_content = preview_request_keeps_content(
+          model, workspace_id, path,
+        )
+        (
+          perform_fetch_preview_cmd(dispatch, workspace_id, path, generation),
+          {
+            ..model,
+            preview: if keep_content {
+              model.preview
+            } else {
+              None
+            },
+            preview_state: Some(Loading),
+            preview_error: "",
+            preview_request_workspace_id: workspace_id,
+            preview_request_path: path,
+            preview_request_generation: generation,
+          },
+        )
+      }
+    LoadedPreview(workspace_id, path, generation, result) =>
+      if !preview_response_is_current(model, workspace_id, path, generation) {
+        (@rabbita.none, model)
+      } else {
+        match result {
+          Ok(preview) =>
+            (
+              @rabbita.none,
+              {
+                ..model,
+                preview: Some(preview),
+                preview_state: None,
+                preview_error: "",
+                preview_status: "preview ready",
+                recent_paths: remember_path(model.recent_paths, path),
+                inbox_content: if should_load_preview_into_inbox(model, preview) {
+                  preview.body
+                } else {
+                  model.inbox_content
+                },
+              },
+            )
+          Err(error) =>
+            (
+              @rabbita.none,
+              {
+                ..model,
+                preview_state: Some(preview_failure_state(model)),
+                preview_error: error,
+                preview_status: "Preview couldn’t be refreshed",
+              },
+            )
+        }
+      }
+    LoadedRuns(Ok(runs)) =>
       (
         @rabbita.none,
         {
           ..model,
-          preview: Some(preview),
-          preview_status: "preview ready",
-          recent_paths: remember_path(model.recent_paths, model.selected_path),
-          inbox_content: if should_load_preview_into_inbox(model, preview) {
-            preview.body
+          runs,
+          runs_state: if runs.is_empty() {
+            Some(LegitimateZero)
           } else {
-            model.inbox_content
+            None
           },
+          runs_error: "",
         },
       )
-    LoadedPreview(Err(error)) =>
-      (@rabbita.none, { ..model, preview: None, preview_status: error })
-    LoadedRuns(Ok(runs)) => (@rabbita.none, { ..model, runs, })
-    LoadedRuns(Err(error)) => (@rabbita.none, { ..model, host_status: error })
-    LoadedMoonFlowRuns(Ok(runs)) =>
+    LoadedRuns(Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          runs_state: if model.runs.is_empty() {
+            Some(RecoverableError)
+          } else {
+            Some(Stale)
+          },
+          runs_error: error,
+        },
+      )
+    LoadedMoonFlowCapability(Ok(evidence)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_capability_evidence: Some(evidence),
+          moonflow_capability_error: None,
+        },
+      )
+    LoadedMoonFlowCapability(Err(error)) =>
+      (@rabbita.none, { ..model, moonflow_capability_error: Some(error) })
+    LoadedMoonFlowRuns(Ok(runs)) => {
+      let next = { ..model, moonflow_runs: runs }
+      let matching = moonflow_selected_runs(next)
       (
         @rabbita.batch(
           [
@@ -179,20 +389,38 @@ fn update_workspace_results(
           ],
         ),
         {
-          ..model,
-          moonflow_runs: runs,
+          ..next,
+          moonflow_runs_state: if model.selected_workspace_id == "" {
+            Some(FirstUseEmpty)
+          } else if matching.is_empty() {
+            Some(LegitimateZero)
+          } else {
+            None
+          },
+          moonflow_runs_error: None,
           moonflow_operator_actions: model.moonflow_operator_actions.filter(actions => {
             runs.any(run => run.run_id == actions.run_id)
           }),
-          moonflow_status: if runs.is_empty() {
-            "No MoonFlow runs yet"
-          } else {
-            "\{runs.length()} MoonFlow run(s)"
-          },
         },
       )
-    LoadedMoonFlowRuns(Err(error)) =>
-      (@rabbita.none, { ..model, moonflow_status: error, host_status: error })
+    }
+    LoadedMoonFlowRuns(Err(error)) => {
+      let matching = moonflow_selected_runs(model)
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonflow_runs_state: if model.selected_workspace_id == "" {
+            Some(FirstUseEmpty)
+          } else if matching.is_empty() {
+            Some(RecoverableError)
+          } else {
+            Some(Stale)
+          },
+          moonflow_runs_error: Some(error),
+        },
+      )
+    }
     LoadedMoonFlowComposition(Ok(composition)) =>
       (
         @rabbita.none,
@@ -263,6 +491,21 @@ fn update_workspace_results(
         {
           ..model,
           moonflow_status: moonflow_import_status(result),
+          moonflow_ingest_preparing: false,
+          moonflow_capability_evidence: match result.capability_evidence {
+            Some(evidence) => Some(evidence)
+            None => model.moonflow_capability_evidence
+          },
+          moonflow_runs_state: if result.ok {
+            Some(Loading)
+          } else {
+            model.moonflow_runs_state
+          },
+          moonflow_runs_error: if result.ok {
+            None
+          } else {
+            model.moonflow_runs_error
+          },
           selected_workspace_id: if result.book_id == "" {
             model.selected_workspace_id
           } else {
@@ -271,13 +514,18 @@ fn update_workspace_results(
         },
       )
     ImportedMoonFlow(Err(error)) =>
-      (@rabbita.none, { ..model, moonflow_status: error })
+      (
+        @rabbita.none,
+        { ..model, moonflow_status: error, moonflow_ingest_preparing: false },
+      )
     ControlledMoonFlow(Ok(control)) =>
       (
         fetch_moonflow_runs_cmd(dispatch),
         {
           ..model,
           moonflow_status: "Run " + control.run_id + " is " + control.state,
+          moonflow_runs_state: Some(Loading),
+          moonflow_runs_error: None,
         },
       )
     ControlledMoonFlow(Err(error)) =>
@@ -293,6 +541,8 @@ fn update_workspace_results(
           moonflow_operator_action_receipt: Some(receipt),
           moonflow_operator_action_status: "\{receipt.action_id}: \{receipt.status}",
           moonflow_operator_action_pending: "",
+          moonflow_runs_state: Some(Loading),
+          moonflow_runs_error: None,
         },
       )
     ExecutedMoonFlowOperatorAction(run_id, Err(error)) =>
@@ -305,29 +555,106 @@ fn update_workspace_results(
           ..model,
           moonflow_operator_action_status: "\{run_id}: \{error}",
           moonflow_operator_action_pending: "",
+          moonflow_runs_state: Some(Loading),
+          moonflow_runs_error: None,
         },
       )
     LoadedSavedViews(Ok(saved_views)) =>
-      (@rabbita.none, { ..model, saved_views, })
-    LoadedSavedViews(Err(error)) =>
-      (@rabbita.none, { ..model, host_status: error })
-    LoadedSearch(Ok(search_hits)) =>
       (
         @rabbita.none,
         {
           ..model,
-          search_hits,
-          search_status: "\{search_hits.length()} results",
+          saved_views,
+          saved_views_state: saved_views_state_after_success(
+            saved_views.length(),
+          ),
+          saved_views_error: "",
         },
       )
-    LoadedSearch(Err(error)) =>
-      (@rabbita.none, { ..model, search_status: error })
+    LoadedSavedViews(Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          saved_views_state: saved_views_state_after_failure(
+            !model.saved_views.is_empty(),
+          ),
+          saved_views_error: error,
+        },
+      )
+    LoadedPagesSearch(Ok(response)) => {
+      let can_keep_prior_hits = pages_search_can_keep_prior_hits(
+        model,
+        response.query,
+      )
+      let state = pages_search_response_state(response, can_keep_prior_hits)
+      let keep_prior_hits = state is Some(Stale)
+      (
+        @rabbita.none,
+        {
+          ..model,
+          search_hits: if response.ok {
+            response.hits
+          } else if keep_prior_hits {
+            model.search_hits
+          } else {
+            []
+          },
+          search_status: match state {
+            None => "\{response.hits.length()} results"
+            Some(LegitimateZero) => "0 results"
+            Some(state) => pages_search_failure_status(state)
+          },
+          search_state: state,
+          search_error: if response.ok {
+            ""
+          } else {
+            response.message
+          },
+          search_evidence_query: if response.ok || keep_prior_hits {
+            response.query
+          } else {
+            ""
+          },
+        },
+      )
+    }
+    LoadedPagesSearch(Err(error)) => {
+      let query = model.search_query.trim().to_owned()
+      let can_keep_prior_hits = pages_search_can_keep_prior_hits(model, query)
+      let state = if can_keep_prior_hits { Stale } else { RecoverableError }
+      (
+        @rabbita.none,
+        {
+          ..model,
+          search_status: pages_search_failure_status(state),
+          search_state: Some(state),
+          search_error: error,
+          search_evidence_query: if can_keep_prior_hits {
+            query
+          } else {
+            ""
+          },
+          search_hits: if can_keep_prior_hits {
+            model.search_hits
+          } else {
+            []
+          },
+        },
+      )
+    }
     SavedView(Ok(view)) =>
       (
         fetch_saved_views_cmd(dispatch),
-        { ..model, host_status: "saved view \{view.title}" },
+        {
+          ..model,
+          saved_views_state: Some(Loading),
+          saved_views_error: "",
+          saved_view_action_status: "Saved \{view.title}",
+        },
       )
-    SavedView(Err(error)) => (@rabbita.none, { ..model, host_status: error })
+    SavedView(Err(error)) =>
+      (@rabbita.none, { ..model, saved_view_action_status: error })
     CreatedDeskEntry(Ok(result)) =>
       (
         @rabbita.batch([
@@ -347,6 +674,13 @@ fn update_workspace_results(
           ),
           current_directory: result.directory,
           desk_location_input: result.directory,
+          entries: desk_entries_rows_while_loading(
+            model,
+            result.workspace_id,
+            result.directory,
+          ),
+          desk_entries_state: Some(Loading),
+          desk_entries_error: "",
           preview: None,
           preview_status: "loading created item",
           desk_new_item_name: "Untitled",
@@ -380,6 +714,13 @@ fn update_workspace_results(
           ),
           current_directory: result.directory,
           desk_location_input: result.directory,
+          entries: desk_entries_rows_while_loading(
+            model,
+            result.workspace_id,
+            result.directory,
+          ),
+          desk_entries_state: Some(Loading),
+          desk_entries_error: "",
           preview: None,
           preview_status: "loading renamed item",
           host_status: "renamed \{result.path}",
@@ -443,6 +784,13 @@ fn update_workspace_results(
           ),
           current_directory: result.directory,
           desk_location_input: result.directory,
+          entries: desk_entries_rows_while_loading(
+            model,
+            result.workspace_id,
+            result.directory,
+          ),
+          desk_entries_state: Some(Loading),
+          desk_entries_error: "",
           preview: None,
           preview_status: if is_cut_paste {
             "loading moved clipboard item"
@@ -507,6 +855,13 @@ fn update_workspace_results(
           ),
           current_directory: result.directory,
           desk_location_input: result.directory,
+          entries: desk_entries_rows_while_loading(
+            model,
+            result.workspace_id,
+            result.directory,
+          ),
+          desk_entries_state: Some(Loading),
+          desk_entries_error: "",
           preview: None,
           preview_status: if is_paste {
             "loading pasted item"
@@ -559,6 +914,13 @@ fn update_workspace_results(
           desk_last_trash_path: result.trash_path,
           current_directory: result.directory,
           desk_location_input: result.directory,
+          entries: desk_entries_rows_while_loading(
+            model,
+            result.workspace_id,
+            result.directory,
+          ),
+          desk_entries_state: Some(Loading),
+          desk_entries_error: "",
           preview: None,
           preview_status: "selection moved to trash",
           host_status: "moved to trash \{result.path}",
@@ -589,6 +951,13 @@ fn update_workspace_results(
           ),
           current_directory: result.directory,
           desk_location_input: result.directory,
+          entries: desk_entries_rows_while_loading(
+            model,
+            result.workspace_id,
+            result.directory,
+          ),
+          desk_entries_state: Some(Loading),
+          desk_entries_error: "",
           preview: None,
           preview_status: "loading restored item",
           host_status: "restored \{result.path}",
@@ -623,6 +992,13 @@ fn update_workspace_results(
           ),
           current_directory: result.directory,
           desk_location_input: result.directory,
+          entries: desk_entries_rows_while_loading(
+            model,
+            result.workspace_id,
+            result.directory,
+          ),
+          desk_entries_state: Some(Loading),
+          desk_entries_error: "",
           preview: None,
           preview_status: "loading imported file",
           desk_new_item_status: if result.imported_count > 1 {
@@ -760,6 +1136,13 @@ fn update_workspace_results(
           desk_selection_anchor: result.path,
           current_directory: parent_path(result.path),
           desk_location_input: parent_path(result.path),
+          entries: desk_entries_rows_while_loading(
+            model,
+            result.workspace_id,
+            parent_path(result.path),
+          ),
+          desk_entries_state: Some(Loading),
+          desk_entries_error: "",
           markdown_editor_path: "",
           markdown_editor_content: "",
           markdown_editor_original: "",
@@ -814,10 +1197,14 @@ fn open_created_or_imported_workspace(
         fetch_preview_cmd(dispatch, result.workspace_id, selected_path)
       },
       fetch_runs_cmd(dispatch, result.workspace_id),
+      sync_workspace_context_cmd(result.workspace_id, selected_path),
+      sync_mooncode_context_cmd(result.workspace_id, ""),
     ]),
     {
       ..model,
       workspace_mode: Desk,
+      workspace_catalog_state: Some(Loading),
+      workspace_catalog_error: "",
       selected_workspace_id: result.workspace_id,
       selected_path,
       desk_selected_paths: if selected_path == "" {
@@ -833,6 +1220,13 @@ fn open_created_or_imported_workspace(
       },
       current_directory: parent_path(selected_path),
       desk_location_input: parent_path(selected_path),
+      entries: desk_entries_rows_while_loading(
+        model,
+        result.workspace_id,
+        parent_path(selected_path),
+      ),
+      desk_entries_state: Some(Loading),
+      desk_entries_error: "",
       preview: None,
       preview_status: status,
       new_book_name,

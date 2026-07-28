@@ -96,13 +96,16 @@ extern "js" fn browser_set_workspace_context(
   #| }
 
 ///|
+#warnings("-alert_unstable")
 fn main {
-  let (_, cell) = @rabbita.cell_with_emit(
-    model=init_model(),
-    update~,
-    view=(dispatch, model) => render_app(dispatch, model),
-    subscriptions=app_subscriptions,
-  )
+  let (dispatch, cell) = @rabbita.cell_with_emit(model=init_model(), update~, view=(
+    dispatch,
+    model,
+  ) => render_app(dispatch, model))
   let app = @rabbita.new(cell)
+  // Queue the first message after mount initialization. Running the message
+  // synchronously from `with_init` can start the command batch before the
+  // root cell has completed its first runtime initialization.
+  app.with_init(@rabbita.delay(dispatch(Bootstrap), 0))
   app.mount("app")
 }

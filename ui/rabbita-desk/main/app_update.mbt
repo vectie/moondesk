@@ -1,17 +1,39 @@
 ///|
+fn sync_source_pane_context(model : Model) -> Model {
+  {
+    ..model,
+    source_pane: update_source_pane(
+      model.source_pane,
+      Rebind(model.selected_workspace_id, model.selected_mooncode_session_id),
+    ),
+  }
+}
+
+///| Every root transition passes through this boundary, so identity-changing
+
+///|
+/// actions cannot forget to invalidate source requests.
 fn update(
   dispatch : Dispatch[Msg],
   msg : Msg,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
-  match msg {
+  let (command, next) = match msg {
+    SourcePane(source_msg) => source_pane_action(dispatch, source_msg, model)
     Bootstrap => bootstrap_action(dispatch, model)
+    RetryBootstrap => bootstrap_retry_action(dispatch, model)
     LoadedWorkspaceMetadata(_) => update_app_results(dispatch, msg, model)
+    PickLibraryFolder => update_library_selection(dispatch, msg, model)
+    LibraryFolderPicked(_) => update_library_selection(dispatch, msg, model)
+    SelectedLibrary(_) => update_library_selection(dispatch, msg, model)
     LoadedPackApps(_) => update_app_results(dispatch, msg, model)
     LoadedWorkspaces(_) => update_app_results(dispatch, msg, model)
-    LoadedEntries(_) => update_app_results(dispatch, msg, model)
-    LoadedPreview(_) => update_app_results(dispatch, msg, model)
+    RequestEntries(_, _) => update_app_results(dispatch, msg, model)
+    LoadedEntries(_, _, _, _) => update_app_results(dispatch, msg, model)
+    RequestPreview(_, _) => update_app_results(dispatch, msg, model)
+    LoadedPreview(_, _, _, _) => update_app_results(dispatch, msg, model)
     LoadedRuns(_) => update_app_results(dispatch, msg, model)
+    LoadedMoonFlowCapability(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowRuns(_) => update_app_results(dispatch, msg, model)
     LoadedMoonFlowComposition(_) => update_app_results(dispatch, msg, model)
     SavedMoonFlowComposition(_) => update_app_results(dispatch, msg, model)
@@ -31,7 +53,7 @@ fn update(
     LoadedReviewItems(_) => update_app_results(dispatch, msg, model)
     LoadedSavedViews(_) => update_app_results(dispatch, msg, model)
     LoadedDaemonLifecycle(_) => update_app_results(dispatch, msg, model)
-    LoadedSearch(_) => update_app_results(dispatch, msg, model)
+    LoadedPagesSearch(_) => update_app_results(dispatch, msg, model)
     LoadedDeskTrash(_) => update_app_results(dispatch, msg, model)
     LoadedBookBaseTypes(_) => update_app_results(dispatch, msg, model)
     LoadedBookPatterns(_) => update_app_results(dispatch, msg, model)
@@ -83,10 +105,7 @@ fn update(
       update_workspace_surface_actions(dispatch, msg, model)
     SaveMoonFlowComposition =>
       update_workspace_surface_actions(dispatch, msg, model)
-    SetMoonFlowCanvasZoom(_) =>
-      update_workspace_surface_actions(dispatch, msg, model)
-    FlowCanvasWheel(_, _, _) =>
-      update_workspace_surface_actions(dispatch, msg, model)
+    FlowCanvasWheel(_) => update_workspace_surface_actions(dispatch, msg, model)
     FlowPanStart(_, _) => update_workspace_surface_actions(dispatch, msg, model)
     FlowPanMove(_, _) => update_workspace_surface_actions(dispatch, msg, model)
     FlowPanEnd => update_workspace_surface_actions(dispatch, msg, model)
@@ -244,6 +263,7 @@ fn update(
       update_workspace_surface_actions(dispatch, msg, model)
     ToggleFavorite(_) => update_workspace_surface_actions(dispatch, msg, model)
     SetViewTitle(_) => update_workspace_surface_actions(dispatch, msg, model)
+    RefreshSavedViews => update_workspace_surface_actions(dispatch, msg, model)
     SaveCurrentView => update_workspace_surface_actions(dispatch, msg, model)
     SetReviewDecisionNote(_) =>
       update_workspace_surface_actions(dispatch, msg, model)
@@ -262,6 +282,7 @@ fn update(
     RequestBrowserHostControl(_) =>
       update_workspace_surface_actions(dispatch, msg, model)
   }
+  (command, sync_source_pane_context(next))
 }
 
 ///|
@@ -280,7 +301,6 @@ test {
   ignore(fetch_moonclaw_progress_cmd)
   ignore(fetch_town_events_cmd)
   ignore(fetch_events_cmd)
-  ignore(fetch_review_items_cmd)
   ignore(fetch_saved_views_cmd)
   ignore(fetch_launch_agent_cmd)
   ignore(fetch_moonclaw_daemon_cmd)

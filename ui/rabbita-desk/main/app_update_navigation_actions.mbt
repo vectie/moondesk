@@ -161,6 +161,54 @@ fn select_activity_action(
       activity,
       command_open: false,
       command_query: "",
+      entries: if activity == Files && model.selected_workspace_id != "" {
+        desk_entries_rows_while_loading(
+          model,
+          model.selected_workspace_id,
+          model.current_directory,
+        )
+      } else {
+        model.entries
+      },
+      desk_entries_state: if activity == Files {
+        if model.selected_workspace_id == "" {
+          Some(FirstUseEmpty)
+        } else {
+          Some(Loading)
+        }
+      } else {
+        model.desk_entries_state
+      },
+      desk_entries_error: if activity == Files {
+        ""
+      } else {
+        model.desk_entries_error
+      },
+      review_state: if activity == Runs && model.selected_workspace_id != "" {
+        Some(Loading)
+      } else {
+        model.review_state
+      },
+      requests_state: if activity == Town && model.selected_workspace_id != "" {
+        Some(Loading)
+      } else {
+        model.requests_state
+      },
+      requests_error: if activity == Town {
+        ""
+      } else {
+        model.requests_error
+      },
+      saved_views_state: if activity == Settings {
+        Some(Loading)
+      } else {
+        model.saved_views_state
+      },
+      saved_views_error: if activity == Settings {
+        ""
+      } else {
+        model.saved_views_error
+      },
     }),
   )
 }
@@ -174,7 +222,6 @@ fn select_workspace_action(
   (
     @rabbita.batch([
       reload_workspace_cmds(dispatch, workspace_id, ""),
-      fetch_mooncode_sessions_cmd(dispatch, ""),
       sync_workspace_context_cmd(workspace_id, ""),
       sync_mooncode_context_cmd(workspace_id, ""),
       stop_mooncode_watch_cmd(),
@@ -218,8 +265,41 @@ fn select_workspace_action(
       desk_location_input: "",
       desk_filter_query: "",
       preview: None,
+      preview_state: if workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      },
+      preview_error: "",
+      preview_request_workspace_id: "",
+      preview_request_path: "",
       preview_status: "loading workspace",
       entries: [],
+      desk_entries_state: if workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      },
+      desk_entries_error: "",
+      runs: [],
+      runs_state: if workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      },
+      runs_error: "",
+      review_items: [],
+      review_state: if workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      },
+      publish_state: if workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      },
+      publish_error: "",
     }),
   )
 }
@@ -264,6 +344,17 @@ fn open_quick_path_action(
         parent_path(path)
       },
       primary_preview_path: remember_primary_preview_path(model, path),
+      entries: desk_entries_rows_while_loading(
+        model,
+        model.selected_workspace_id,
+        parent_path(path),
+      ),
+      desk_entries_state: if model.selected_workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      },
+      desk_entries_error: "",
       preview: None,
       preview_status: "loading preview",
     },
@@ -327,6 +418,13 @@ fn select_search_hit_action(
       current_directory: directory,
       desk_location_input: directory,
       desk_filter_query: "",
+      entries: desk_entries_rows_while_loading(model, workspace_id, directory),
+      desk_entries_state: if workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      },
+      desk_entries_error: "",
       preview: None,
       preview_status: "loading search result",
     }),
@@ -434,6 +532,17 @@ fn open_directory_with_history(
       desk_back_stack: back_stack,
       desk_forward_stack: forward_stack,
       primary_preview_path: remember_primary_preview_path(model, path),
+      entries: desk_entries_rows_while_loading(
+        model,
+        model.selected_workspace_id,
+        path,
+      ),
+      desk_entries_state: if model.selected_workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      },
+      desk_entries_error: "",
       preview: None,
       preview_status: status,
     }),
@@ -580,6 +689,7 @@ fn activity_refresh_cmds(
         @rabbita.none
       } else {
         @rabbita.batch([
+          fetch_review_items_cmd(dispatch, model.selected_workspace_id),
           fetch_runs_cmd(dispatch, model.selected_workspace_id),
           fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
           fetch_events_cmd(dispatch, model.selected_workspace_id),
@@ -613,10 +723,19 @@ fn select_workspace_mode_action(
     PackHome => Files
     Desk => Files
     MoonCode => Files
+    RequestsWorkspace => Town
+    RunsWorkspace => Files
+    ReviewWorkspace => Runs
+    PublishWorkspace => Files
     MoonFlow => Files
     MoonWiki => model.activity
   }
   let desk_directory = desk_context_directory(model)
+  let mooncode_listing_issued = mode == MoonCode &&
+    (match model.moonclaw_daemon {
+      Some(daemon) => daemon.running
+      None => false
+    })
   let base_cmd = if mode == PackHome {
     sync_shell_batch(mode, activity, fetch_pack_apps_cmd(dispatch))
   } else if mode == Desk && model.selected_workspace_id != "" {
@@ -634,12 +753,51 @@ fn select_workspace_mode_action(
       ]),
     )
   } else if mode == MoonCode {
-    sync_shell_batch(mode, activity, fetch_mooncode_sessions_cmd(dispatch, ""))
+    sync_shell_batch(
+      mode,
+      activity,
+      match model.moonclaw_daemon {
+        Some(daemon) if daemon.running =>
+          fetch_mooncode_sessions_cmd(dispatch, "")
+        _ => @rabbita.none
+      },
+    )
+  } else if mode == RequestsWorkspace {
+    sync_shell_batch(
+      mode,
+      activity,
+      activity_refresh_cmds(dispatch, Town, model),
+    )
+  } else if mode == RunsWorkspace {
+    sync_shell_batch(
+      mode,
+      activity,
+      if model.selected_workspace_id == "" {
+        @rabbita.none
+      } else {
+        @rabbita.batch([
+          fetch_runs_cmd(dispatch, model.selected_workspace_id),
+          fetch_moonclaw_progress_cmd(dispatch, model.selected_workspace_id),
+          fetch_events_cmd(dispatch, model.selected_workspace_id),
+        ])
+      },
+    )
+  } else if mode == ReviewWorkspace || mode == PublishWorkspace {
+    sync_shell_batch(
+      mode,
+      activity,
+      if model.selected_workspace_id == "" {
+        @rabbita.none
+      } else {
+        fetch_review_items_cmd(dispatch, model.selected_workspace_id)
+      },
+    )
   } else if mode == MoonFlow {
     sync_shell_batch(
       mode,
       activity,
       @rabbita.batch([
+        fetch_moonflow_capability_cmd(dispatch),
         fetch_moonflow_runs_cmd(dispatch),
         if model.selected_workspace_id == "" {
           @rabbita.none
@@ -673,6 +831,29 @@ fn select_workspace_mode_action(
     } else {
       model.desk_filter_query
     },
+    entries: if mode == Desk {
+      desk_entries_rows_while_loading(
+        model,
+        model.selected_workspace_id,
+        desk_directory,
+      )
+    } else {
+      model.entries
+    },
+    desk_entries_state: if mode == Desk {
+      if model.selected_workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      }
+    } else {
+      model.desk_entries_state
+    },
+    desk_entries_error: if mode == Desk {
+      ""
+    } else {
+      model.desk_entries_error
+    },
     preview: if mode == Desk {
       None
     } else {
@@ -682,6 +863,16 @@ fn select_workspace_mode_action(
       "loading desk context"
     } else {
       model.preview_status
+    },
+    mooncode_sessions_state: if mooncode_listing_issued {
+      Some(Loading)
+    } else {
+      model.mooncode_sessions_state
+    },
+    mooncode_sessions_error: if mooncode_listing_issued {
+      ""
+    } else {
+      model.mooncode_sessions_error
     },
     mooncode_prompt: if mode == MoonCode {
       ""
@@ -725,6 +916,58 @@ fn select_workspace_mode_action(
       "MoonCode workspace ready"
     } else {
       model.mooncode_composer_status
+    },
+    requests_state: if mode == RequestsWorkspace &&
+      model.selected_workspace_id != "" {
+      Some(Loading)
+    } else {
+      model.requests_state
+    },
+    requests_error: if mode == RequestsWorkspace {
+      ""
+    } else {
+      model.requests_error
+    },
+    runs_state: if mode == RunsWorkspace && model.selected_workspace_id != "" {
+      Some(Loading)
+    } else {
+      model.runs_state
+    },
+    runs_error: if mode == RunsWorkspace {
+      ""
+    } else {
+      model.runs_error
+    },
+    moonflow_runs_state: if mode == MoonFlow {
+      if model.selected_workspace_id == "" {
+        Some(FirstUseEmpty)
+      } else {
+        Some(Loading)
+      }
+    } else {
+      model.moonflow_runs_state
+    },
+    moonflow_runs_error: if mode == MoonFlow {
+      None
+    } else {
+      model.moonflow_runs_error
+    },
+    review_state: if mode == ReviewWorkspace &&
+      model.selected_workspace_id != "" {
+      Some(Loading)
+    } else {
+      model.review_state
+    },
+    publish_state: if mode == PublishWorkspace &&
+      model.selected_workspace_id != "" {
+      Some(Loading)
+    } else {
+      model.publish_state
+    },
+    publish_error: if mode == PublishWorkspace {
+      ""
+    } else {
+      model.publish_error
     },
   }
   let transport_cmd = if !mode_changed {
@@ -796,6 +1039,29 @@ fn select_path_action(
         path
       } else {
         model.current_directory
+      },
+      entries: if is_directory {
+        desk_entries_rows_while_loading(
+          model,
+          model.selected_workspace_id,
+          path,
+        )
+      } else {
+        model.entries
+      },
+      desk_entries_state: if is_directory {
+        if model.selected_workspace_id == "" {
+          Some(FirstUseEmpty)
+        } else {
+          Some(Loading)
+        }
+      } else {
+        model.desk_entries_state
+      },
+      desk_entries_error: if is_directory {
+        ""
+      } else {
+        model.desk_entries_error
       },
       desk_location_input: if is_directory {
         path

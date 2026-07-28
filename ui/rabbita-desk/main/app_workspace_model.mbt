@@ -21,6 +21,17 @@ struct SearchHit {
 } derive(FromJson)
 
 ///|
+struct PagesSearchResponse {
+  contract : String
+  ok : Bool
+  status : String
+  message : String
+  query : String
+  workspace_id : String
+  hits : Array[SearchHit]
+} derive(FromJson)
+
+///|
 struct CreatedWorkspace {
   workspace_id : String
   book_id : String

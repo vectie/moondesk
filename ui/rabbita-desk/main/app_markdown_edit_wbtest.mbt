@@ -205,7 +205,9 @@ test "search results keep wiki hit metadata" {
   }
   let (_, next) = update_workspace_results(
     dispatch,
-    LoadedSearch(Ok([hit])),
+    LoadedPagesSearch(
+      Ok(pages_search_test_response([hit], query="Wiki knowledge")),
+    ),
     init_model(),
   )
   assert_eq(next.search_status, "1 results")
@@ -225,12 +227,13 @@ test "failed search reports status without clearing context" {
   }
   let (_, next) = update_workspace_results(
     dispatch,
-    LoadedSearch(Err("search unavailable")),
+    LoadedPagesSearch(Err("search unavailable")),
     model,
   )
   assert_eq(next.selected_workspace_id, "book-demo")
   assert_eq(next.selected_path, "wiki/index.md")
-  assert_eq(next.search_status, "search unavailable")
+  assert_eq(next.search_status, "Search couldn’t be completed")
+  assert_eq(next.search_error, "search unavailable")
 }
 
 ///|

@@ -27,19 +27,40 @@ contracts come from MoonLib.
 2. [ARCHITECTURE.md](ARCHITECTURE.md): package ownership, HTTP surface, and
    cross-product boundaries.
 3. [DESK_MODE_DESIGN.md](DESK_MODE_DESIGN.md): file/workspace mode behavior.
-4. [WIKI_MODE_UX_PLAN.md](WIKI_MODE_UX_PLAN.md): normal-user Wiki information
+4. [FIRST_RUN_AND_VOCABULARY.md](FIRST_RUN_AND_VOCABULARY.md): evidence-backed
+   first-run inventory, target vocabulary, state matrix, and capability setup.
+5. [NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md](NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md):
+   packaged macOS picker phases, defects, interaction evidence, persistence,
+   and remaining restart/platform boundary.
+6. [WIKI_MODE_UX_PLAN.md](WIKI_MODE_UX_PLAN.md): normal-user Wiki information
    hierarchy, progressive disclosure, implementation phases, and UX E2E gates.
-5. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
+7. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
    journeys, rationale, expected behavior, methodology, and acceptance evidence.
-6. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
-7. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
+8. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
+9. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
    canonical conversation/runtime upgrade plan.
-8. [MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md):
+10. [MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md):
    finite single-owner conversation, thinking, and live-update correction.
-9. [STATUS.md](STATUS.md): current implementation state and known gaps.
-10. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
-11. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
-   historical migration plan and validation record.
+11. [MOONCODE_TYPED_CONTRACT_TARGET.md](MOONCODE_TYPED_CONTRACT_TARGET.md):
+   Phase 3.1 public-surface inventory, typed target, decisions, and migration slices.
+12. [STATUS.md](STATUS.md): current implementation state and known gaps.
+13. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): reproducible Phase 0
+    starting/current evidence, repository metrics, and explicitly unmeasured gaps.
+14. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
+    active-document contradiction audit, evidence boundary, and Phase 0 gate state.
+15. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
+    retained clean-checkout full-validation transcript and evidence boundary.
+16. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): phase-by-phase preview and
+    credentialed release procedure, immutable-output policy, and remote gate.
+17. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
+    exact local unsigned-candidate commands, checksums, refusal tests, and
+    evidence boundary.
+18. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
+19. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
+   phased plan for product clarity, typed contracts, package boundaries,
+   security, observability, release discipline, and operational proof.
+20. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
+   historical migration plan and validation record; it is not a current plan.
 
 ## Implementation Map
 
@@ -55,6 +76,25 @@ contracts come from MoonLib.
 
 New code should land in the narrowest owning package. Do not put product-pack
 logic in MoonDesk because a UI needs to display it.
+
+## Canonical Validation
+
+Run the Phase 0 gate from any working directory:
+
+```sh
+/path/to/moondesk/scripts/validate.sh fast
+/path/to/moondesk/scripts/validate.sh full
+```
+
+`fast` runs root formatting/check/native tests and UI checks/tests without a
+production build. `full` additionally runs localization, release-verifier
+positive/negative fixtures, the production build, generated-interface
+verification, opt-in boundary validation, and `git diff --check`. Set
+`MOONCLAW_ROOT`, `MOONBOOK_ROOT`, and `MOONTOWN_ROOT` together to explicit
+checkout roots to enable the core boundary validator; if none are set it is
+skipped, and a partial set is an error. The full production build can update
+tracked generated `dist` artifacts; review those changes and do not run full
+mode merely as an authoring check in a dirty worktree.
 
 ## Testing Guidance
 

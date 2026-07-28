@@ -7,6 +7,14 @@ async fn route_moonflow_api(
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
+    ["api", "moonflow", "capability"] => {
+      if is_read_method(method_) {
+        handle_moonflow_capability(method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])
+      }
+      true
+    }
     ["api", "moonflow", "runs"] => {
       if is_read_method(method_) {
         handle_moonflow_runs(workspace_root, method_, conn)

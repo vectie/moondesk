@@ -1,4 +1,25 @@
 ///|
+priv struct CapabilityPlatformEvidence {
+  supported : Bool
+  platform : String
+  architecture : String
+} derive(FromJson)
+
+///|
+priv struct CapabilityInstallationEvidence {
+  installed : Bool
+  source : String
+  reason : String
+} derive(FromJson)
+
+///|
+priv struct CapabilityConfigurationEvidence {
+  configured : Bool
+  valid : Bool
+  reason : String
+} derive(FromJson)
+
+///|
 struct MoonClawDaemonStatus {
   running : Bool
   port : Int
@@ -6,6 +27,9 @@ struct MoonClawDaemonStatus {
   service_configured : Bool
   managed_install : Bool?
   managed_running : Bool?
+  platform_evidence : CapabilityPlatformEvidence?
+  installation_evidence : CapabilityInstallationEvidence?
+  configuration_evidence : CapabilityConfigurationEvidence?
 } derive(FromJson)
 
 ///|

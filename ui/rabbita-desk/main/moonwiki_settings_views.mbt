@@ -3,60 +3,64 @@ fn render_settings_pane(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  aside(class="activity-pane user-pane more-pane", [
-    div(class="pane-heading", [
-      div([p(class="eyebrow", "Book tools"), h2("More")]),
-    ]),
-    section(class="side-section attention-summary", [
-      h3("Needs your attention"),
-      div(class="attention-counts", [
-        div([
-          strong(model.review_items.length().to_string()),
-          span("Waiting for review"),
+  aside(
+    class="activity-pane user-pane more-pane",
+    attrs=@html.Attrs::build().aria_label("Pages settings"),
+    [
+      div(class="pane-heading", [
+        div([p(class="eyebrow", "Book tools"), h2("More")]),
+      ]),
+      section(class="side-section attention-summary", [
+        h3("Needs your attention"),
+        div(class="attention-counts", [
+          div([
+            strong(model.review_items.length().to_string()),
+            span("Waiting for review"),
+          ]),
+          div([strong(model.runs.length().to_string()), span("Recent results")]),
+          div([
+            strong(model.standing_goals.length().to_string()),
+            span("Automations"),
+          ]),
         ]),
-        div([strong(model.runs.length().to_string()), span("Recent results")]),
-        div([
-          strong(model.standing_goals.length().to_string()),
-          span("Automations"),
+        div(class="toolbar-actions stack-actions", [
+          button(
+            class="secondary-button",
+            on_click=dispatch(SelectActivity(Runs)),
+            "Open review",
+          ),
+          button(
+            class="secondary-button",
+            on_click=dispatch(SelectActivity(Town)),
+            "Open activity",
+          ),
         ]),
       ]),
-      div(class="toolbar-actions stack-actions", [
-        button(
-          class="secondary-button",
-          on_click=dispatch(SelectActivity(Runs)),
-          "Open review",
-        ),
-        button(
-          class="secondary-button",
-          on_click=dispatch(SelectActivity(Town)),
-          "Open activity",
-        ),
+      render_saved_views_panel(dispatch, model),
+      details(class="wiki-disclosure", [
+        summary(class="wiki-disclosure-summary", "Calendar and notifications"),
+        div(class="wiki-disclosure-body", [
+          button(
+            class="secondary-button full",
+            on_click=dispatch(NotifyDaily),
+            "Send activity summary",
+          ),
+          p(
+            class="status-line",
+            wiki_notification_status(model.notification_status),
+          ),
+          a(
+            class="secondary-button link-button full",
+            href=@desk.town_calendar_url(),
+            target=Blank,
+            rel="noreferrer",
+            "Open calendar export",
+          ),
+        ]),
       ]),
-    ]),
-    render_saved_views_panel(dispatch, model),
-    details(class="wiki-disclosure", [
-      summary(class="wiki-disclosure-summary", "Calendar and notifications"),
-      div(class="wiki-disclosure-body", [
-        button(
-          class="secondary-button full",
-          on_click=dispatch(NotifyDaily),
-          "Send activity summary",
-        ),
-        p(
-          class="status-line",
-          wiki_notification_status(model.notification_status),
-        ),
-        a(
-          class="secondary-button link-button full",
-          href=@desk.town_calendar_url(),
-          target=Blank,
-          rel="noreferrer",
-          "Open calendar export",
-        ),
-      ]),
-    ]),
-    render_diagnostics_disclosure(dispatch, model),
-  ])
+      render_diagnostics_disclosure(dispatch, model),
+    ],
+  )
 }
 
 ///|
@@ -72,13 +76,52 @@ fn render_saved_views_panel(
       dispatch(SetViewTitle(value))
     }),
     button(
-      class="secondary-button full",
+      class="primary-button full",
       on_click=dispatch(SaveCurrentView),
       "Save current view",
     ),
-    if model.saved_views.length() == 0 {
-      p(class="status-line", "No saved views yet.")
+    if model.saved_view_action_status == "" {
+      @html.nothing
     } else {
+      p(class="status-line", model.saved_view_action_status)
+    },
+    match model.saved_views_state {
+      Some(state) =>
+        div(
+          class="surface-state-panel",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "saved-views-state-panel")
+            .data_set("state", saved_views_state_key(Some(state))),
+          [
+            render_polite_state_announcement(
+              "saved-views-state-announcement",
+              saved_views_state_title(Some(state)),
+              saved_views_state_detail(Some(state)),
+            ),
+            match saved_views_state_action(Some(state)) {
+              Some(label) =>
+                button(
+                  class="secondary-button full",
+                  on_click=dispatch(RefreshSavedViews),
+                  label,
+                )
+              None => @html.nothing
+            },
+            if saved_views_state_shows_technical_details(Some(state)) &&
+              model.saved_views_error != "" {
+              details(class="wiki-disclosure", [
+                summary("Technical details"),
+                p(class="technical-detail", model.saved_views_error),
+              ])
+            } else {
+              @html.nothing
+            },
+          ],
+        )
+      None => @html.nothing
+    },
+    if saved_views_state_keeps_rows(model.saved_views_state) &&
+      !model.saved_views.is_empty() {
       div(
         class="saved-view-list",
         model.saved_views.map(view => {
@@ -99,6 +142,8 @@ fn render_saved_views_panel(
           )
         }),
       )
+    } else {
+      @html.nothing
     },
   ])
 }

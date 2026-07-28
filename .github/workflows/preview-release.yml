@@ -1,0 +1,107 @@
+name: Unsigned preview release
+
+on:
+  push:
+    tags:
+      - "v*.*.*-preview.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version without the leading v
+        required: true
+        type: string
+      release_notes:
+        description: Repository-relative release-note Markdown path
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/rabbita-desk/package-lock.json
+
+      - name: Resolve immutable preview inputs
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TAG_OR_VERSION: ${{ inputs.version || github.ref_name }}
+          REQUESTED_NOTES: ${{ inputs.release_notes }}
+        run: |
+          version="$TAG_OR_VERSION"
+          if [ "$EVENT_NAME" = push ]; then
+            version=${version#v}
+          fi
+          printf '%s\n' "$version" |
+            grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+-preview\.[0-9]+$'
+          notes="$REQUESTED_NOTES"
+          if [ -z "$notes" ]; then
+            notes="docs/releases/$version.md"
+          fi
+          case "$notes" in
+            /*|*".."*)
+              printf 'Unsafe release-note path: %s\n' "$notes" >&2
+              exit 1
+              ;;
+          esac
+          test -s "$notes"
+          {
+            printf 'version=%s\n' "$version"
+            printf 'notes=%s\n' "$notes"
+            printf 'output=%s/moondesk-%s\n' "$RUNNER_TEMP" "$version"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update MoonBit dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Normalize manifests for the installed MoonBit toolchain
+        run: moon fmt
+
+      - name: Install UI dependencies
+        run: npm ci
+        working-directory: ui/rabbita-desk
+
+      - name: Run mandatory validation
+        run: scripts/validate.sh full
+
+      - name: Build unsigned preview
+        run: |
+          sh scripts/preview_release.sh \
+            --version "${{ steps.release.outputs.version }}" \
+            --notes "${{ steps.release.outputs.notes }}" \
+            --out "${{ steps.release.outputs.output }}"
+
+      - name: Reverify immutable artifact
+        run: |
+          node scripts/verify_release.mjs "${{ steps.release.outputs.output }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: moondesk-${{ steps.release.outputs.version }}-${{ github.sha }}-macos-arm64-unsigned
+          path: ${{ steps.release.outputs.output }}
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+          overwrite: false
+          include-hidden-files: false

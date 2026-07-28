@@ -145,13 +145,18 @@ test "MoonCode session decodes optional runtime explanation" {
 ///|
 test "Desk loading empty state offers a visible retry without diagnostics" {
   let loading = init_model()
+  assert_eq(desk_empty_library_title(loading), "Connecting to your library")
+  assert_true(desk_empty_library_message(loading).contains("checking"))
+  let catalog_still_loading = { ..loading, loading: false }
   assert_eq(
-    desk_empty_library_title(loading),
-    "Connecting to your MoonBooks…",
+    desk_empty_library_title(catalog_still_loading),
+    "Connecting to your library",
   )
-  assert_true(desk_empty_library_message(loading).contains("choose Refresh"))
-  let empty = { ..loading, loading: false }
-  assert_eq(desk_empty_library_title(empty), "No MoonBooks in this workspace")
+  let unavailable = { ..catalog_still_loading, workspace_catalog_state: None }
+  assert_eq(
+    desk_empty_library_title(unavailable),
+    "MoonBook library unavailable",
+  )
 }
 
 ///|
@@ -2664,6 +2669,9 @@ test "code mode daemon and model polling preserve new session draft" {
         service_configured: true,
         managed_install: None,
         managed_running: None,
+        installation_evidence: None,
+        configuration_evidence: None,
+        platform_evidence: None,
       }),
     ),
     model,
@@ -2685,6 +2693,9 @@ test "code mode daemon and model polling preserve new session draft" {
           service_configured: true,
           managed_install: None,
           managed_running: None,
+          installation_evidence: None,
+          configuration_evidence: None,
+          platform_evidence: None,
         },
         models: [{ name: "deepseek-v4-flash" }],
       }),
@@ -2728,6 +2739,9 @@ test "code mode model polling leaves selection empty without executable models" 
           service_configured: true,
           managed_install: None,
           managed_running: None,
+          installation_evidence: None,
+          configuration_evidence: None,
+          platform_evidence: None,
         },
         models: [],
       }),
@@ -2764,6 +2778,9 @@ test "code mode model refresh replaces a stale unavailable selection" {
       service_configured: true,
       managed_install: None,
       managed_running: None,
+      installation_evidence: None,
+      configuration_evidence: None,
+      platform_evidence: None,
     },
     models: [{ name: "codex/gpt-5.4" }],
   }
@@ -2981,6 +2998,9 @@ test "MoonClaw install action exposes progress until lifecycle result" {
         service_configured: true,
         managed_install: Some(true),
         managed_running: Some(true),
+        installation_evidence: None,
+        configuration_evidence: None,
+        platform_evidence: None,
       }),
     ),
     installing,
@@ -3010,6 +3030,9 @@ test "MoonClaw failed start keeps the installed state and exact failure" {
         service_configured: true,
         managed_install: Some(true),
         managed_running: Some(false),
+        installation_evidence: None,
+        configuration_evidence: None,
+        platform_evidence: None,
       }),
     ),
     model,
@@ -3044,6 +3067,9 @@ test "MoonClaw lifecycle result refreshes service and model state" {
         service_configured: true,
         managed_install: Some(true),
         managed_running: Some(true),
+        installation_evidence: None,
+        configuration_evidence: None,
+        platform_evidence: None,
       }),
     ),
     model,
@@ -3075,6 +3101,9 @@ test "MoonGate setup handoff uses the proven Desk mode action" {
         service_configured: false,
         managed_install: None,
         managed_running: None,
+        installation_evidence: None,
+        configuration_evidence: None,
+        platform_evidence: None,
       }),
     }).contains("runtime-setup-visible"),
   )

@@ -1,5 +1,5 @@
 ///|
-async fn run_release(args : Array[String]) -> Unit {
+async fn run_release(args : Array[String]) -> Bool {
   let bundle_args : Array[String] = []
   let mut notary_profile = ""
   let mut staple = true
@@ -13,7 +13,7 @@ async fn run_release(args : Array[String]) -> Unit {
           index += 2
         } else {
           print_usage()
-          return
+          return false
         }
       "--no-staple" => {
         staple = false
@@ -33,12 +33,29 @@ async fn run_release(args : Array[String]) -> Unit {
     Some(options) => options
     None => {
       print_usage()
-      return
+      return false
     }
   }
-  run_bundle(bundle_args)
   let repo_root = @pathx.normalize(@env.current_dir().unwrap_or("."))
   let out_dir = absolute_path(parsed.out_dir, repo_root)
+  if @fsx.exists(out_dir) {
+    let entries = @fsx.list_directory(out_dir) catch {
+      error => {
+        println("release failed: could not inspect output directory: \{error}")
+        return false
+      }
+    }
+    if !entries.is_empty() {
+      println(
+        "release failed: output directory is not empty; refusing overwrite: \{out_dir}",
+      )
+      return false
+    }
+  }
+  if !run_bundle(bundle_args) {
+    println("release failed: bundle prerequisite did not complete")
+    return false
+  }
   let parsed = {
     ..parsed,
     workspace_root: resolve_user_workspace_root(
@@ -56,7 +73,7 @@ async fn run_release(args : Array[String]) -> Unit {
   let update_manifest_path = @pathx.join(out_dir, "updates.json")
   if !@fsx.exists(app_root) {
     println("release failed: app bundle was not created")
-    return
+    return false
   }
   let signed = verify_codesign(app_root)
   let dmg_created = if create_dmg {
@@ -64,8 +81,16 @@ async fn run_release(args : Array[String]) -> Unit {
   } else {
     false
   }
+  if create_dmg && !dmg_created {
+    println("release failed: requested DMG was not created")
+    return false
+  }
   let mut notarized = false
-  if notary_profile != "" && @fsx.exists(archive_path) {
+  if notary_profile != "" {
+    if !signed {
+      println("release failed: notarization requires a valid signed app")
+      return false
+    }
     let notary_code = @process.run("xcrun", [
       "notarytool", "submit", archive_path, "--keychain-profile", notary_profile,
       "--wait",
@@ -73,7 +98,8 @@ async fn run_release(args : Array[String]) -> Unit {
       _ => -1
     }
     if notary_code != 0 {
-      println("release warning: notarytool exited with \{notary_code}")
+      println("release failed: notarytool exited with \{notary_code}")
+      return false
     } else {
       notarized = true
       if staple {
@@ -81,8 +107,8 @@ async fn run_release(args : Array[String]) -> Unit {
           _ => -1
         }
         if staple_code != 0 {
-          println("release warning: stapler exited with \{staple_code}")
-          notarized = false
+          println("release failed: stapler exited with \{staple_code}")
+          return false
         }
       }
     }
@@ -90,49 +116,71 @@ async fn run_release(args : Array[String]) -> Unit {
     println(
       "release ready: add --notary-profile <profile> to submit the archive with xcrun notarytool",
     )
-  } else {
-    println(
-      "release warning: archive not found at \{archive_path}; notarization skipped",
-    )
+  }
+  let archive_sha256 = file_sha256(archive_path)
+  let runtime_manifest_sha256 = file_sha256(runtime_manifest_path)
+  let dmg_sha256 = if dmg_created { file_sha256(dmg_path) } else { "" }
+  let problems = release_artifact_problems(
+    app_exists=@fsx.exists(app_root),
+    archive_exists=@fsx.exists(archive_path),
+    archive_sha256~,
+    runtime_manifest_exists=@fsx.exists(runtime_manifest_path),
+    runtime_manifest_sha256~,
+    dmg_requested=create_dmg,
+    dmg_created~,
+    dmg_sha256~,
+    signing_required=!parsed.skip_sign,
+    signed~,
+    notarization_requested=notary_profile != "",
+    notarized~,
+  )
+  if !problems.is_empty() {
+    for problem in problems {
+      println("release failed: \{problem}")
+    }
+    return false
   }
   let manifest = release_manifest_json(
     parsed,
     app_root,
     archive_path,
-    runtime_manifest_path,
     dmg_path,
     update_manifest_path,
-    notary_profile,
+    archive_sha256,
+    runtime_manifest_sha256,
+    dmg_sha256,
+    notary_profile_supplied=notary_profile != "",
     signed~,
     dmg_created~,
     notarized~,
   )
-  @fsx.write_to_file(
-    @pathx.join(out_dir, "release-manifest.json"),
-    manifest.stringify(indent=2) + "\n",
-    create=0o644,
-  ) catch {
-    error => println("release warning: could not write manifest: \{error}")
+  let release_manifest_path = @pathx.join(out_dir, "release-manifest.json")
+  if !write_release_json(release_manifest_path, manifest) {
+    return false
   }
-  @fsx.write_to_file(
-    update_manifest_path,
-    update_manifest_json(
-      parsed,
-      archive_path,
-      runtime_manifest_path,
-      dmg_path,
-      dmg_created~,
-      notarized~,
-    ).stringify(indent=2) +
-    "\n",
-    create=0o644,
-  ) catch {
-    error =>
-      println("release warning: could not write update manifest: \{error}")
+  if !write_release_json(
+      update_manifest_path,
+      update_manifest_json(
+        parsed,
+        archive_path,
+        dmg_path,
+        archive_sha256,
+        runtime_manifest_sha256,
+        dmg_sha256,
+        dmg_created~,
+        notarized~,
+      ),
+    ) {
+    return false
+  }
+  if !@fsx.exists(release_manifest_path) || !@fsx.exists(update_manifest_path) {
+    println("release failed: public release metadata was not created")
+    return false
   }
   println(
     "release complete: \{app_root} (\{bundle_shell_policy()}, signed=\{signed}, notarized=\{notarized}, dmg=\{dmg_created})",
   )
+  true
 }
 
 ///|
@@ -141,43 +189,51 @@ fn release_dmg_file_name(version : String) -> String {
 }
 
 ///|
-async fn release_manifest_json(
+fn release_manifest_json(
   options : BundleOptions,
   app_root : String,
   archive_path : String,
-  runtime_manifest_path : String,
   dmg_path : String,
   update_manifest_path : String,
-  notary_profile : String,
+  archive_sha256 : String,
+  runtime_manifest_sha256 : String,
+  dmg_sha256 : String,
+  notary_profile_supplied~ : Bool,
   signed~ : Bool,
   dmg_created~ : Bool,
   notarized~ : Bool,
 ) -> Json {
+  let app = bundle_path_leaf(app_root)
   {
-    "app": app_root,
-    "app_name": bundle_path_leaf(app_root),
-    "archive": archive_path,
-    "archive_sha256": file_sha256(archive_path),
-    "runtime_manifest": runtime_manifest_path,
-    "runtime_manifest_sha256": file_sha256(runtime_manifest_path),
-    "dmg": dmg_path,
+    "kind": "moondesk-release-manifest.v1",
+    "app": app,
+    "app_name": app,
+    "archive": bundle_path_leaf(archive_path),
+    "archive_sha256": archive_sha256,
+    "runtime_manifest": release_runtime_manifest_relative_path(app),
+    "runtime_manifest_sha256": runtime_manifest_sha256,
+    "dmg": if dmg_created {
+      bundle_path_leaf(dmg_path)
+    } else {
+      ""
+    },
     "dmg_created": dmg_created,
-    "dmg_sha256": file_sha256(dmg_path),
-    "update_manifest": update_manifest_path,
-    "workspace_root": options.workspace_root,
-    "ui_dir": options.ui_dir,
-    "lepusa_root": options.lepusa_root,
-    "host": options.host,
-    "port": options.port,
+    "dmg_sha256": if dmg_created {
+      dmg_sha256
+    } else {
+      ""
+    },
+    "update_manifest": bundle_path_leaf(update_manifest_path),
+    "release_notes": "RELEASE_NOTES.md",
+    "serve_host": options.host,
     "version": options.version,
     "channel": options.channel,
     "distribution_mode": "self-contained-local-app",
     "shell_policy": bundle_shell_policy(),
     "native_host": bundle_native_host_name(),
     "native_window": bundle_has_native_window(),
-    "sign_identity": options.sign_identity,
     "signed": signed,
-    "notary_profile": notary_profile,
+    "notary_profile_supplied": notary_profile_supplied,
     "notarized": notarized,
     "installer": if dmg_created {
       "dmg"
@@ -188,33 +244,37 @@ async fn release_manifest_json(
 }
 
 ///|
-async fn update_manifest_json(
+fn update_manifest_json(
   options : BundleOptions,
   archive_path : String,
-  runtime_manifest_path : String,
   dmg_path : String,
+  archive_sha256 : String,
+  runtime_manifest_sha256 : String,
+  dmg_sha256 : String,
   dmg_created~ : Bool,
   notarized~ : Bool,
 ) -> Json {
+  let app = bundle_path_leaf(bundle_app_root(options))
   let artifacts : Array[Json] = []
   artifacts.push({
     "kind": "zip",
-    "path": archive_path,
-    "sha256": file_sha256(archive_path),
+    "path": bundle_path_leaf(archive_path),
+    "sha256": archive_sha256,
   })
   artifacts.push({
     "kind": "runtime-manifest",
-    "path": runtime_manifest_path,
-    "sha256": file_sha256(runtime_manifest_path),
+    "path": release_runtime_manifest_relative_path(app),
+    "sha256": runtime_manifest_sha256,
   })
   if dmg_created {
     artifacts.push({
       "kind": "dmg",
-      "path": dmg_path,
-      "sha256": file_sha256(dmg_path),
+      "path": bundle_path_leaf(dmg_path),
+      "sha256": dmg_sha256,
     })
   }
   {
+    "kind": "moondesk-update-manifest.v1",
     "name": "MoonDesk",
     "version": options.version,
     "channel": options.channel,
@@ -222,12 +282,85 @@ async fn update_manifest_json(
     "native_host": bundle_native_host_name(),
     "native_window": bundle_has_native_window(),
     "notarized": notarized,
+    "release_notes": "RELEASE_NOTES.md",
     "artifacts": Json::array(artifacts),
     "install": {
       "macos": "Open the DMG or unzip the app bundle, then drag it to Applications.",
       "daemon": "Use the in-app daemon panel to install or remove the MoonTown LaunchAgent.",
     },
   }
+}
+
+///|
+fn release_runtime_manifest_relative_path(app : String) -> String {
+  app + "/Contents/Resources/lepusa/runtime.json"
+}
+
+///|
+fn release_sha256_present(value : String) -> Bool {
+  if value.length() != 64 {
+    return false
+  }
+  for char in value {
+    if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f')) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn release_artifact_problems(
+  app_exists~ : Bool,
+  archive_exists~ : Bool,
+  archive_sha256~ : String,
+  runtime_manifest_exists~ : Bool,
+  runtime_manifest_sha256~ : String,
+  dmg_requested~ : Bool,
+  dmg_created~ : Bool,
+  dmg_sha256~ : String,
+  signing_required~ : Bool,
+  signed~ : Bool,
+  notarization_requested~ : Bool,
+  notarized~ : Bool,
+) -> Array[String] {
+  let problems : Array[String] = []
+  if !app_exists {
+    problems.push("app bundle is missing")
+  }
+  if !archive_exists {
+    problems.push("zip archive is missing")
+  } else if !release_sha256_present(archive_sha256) {
+    problems.push("zip archive SHA-256 is missing or invalid")
+  }
+  if !runtime_manifest_exists {
+    problems.push("runtime manifest is missing")
+  } else if !release_sha256_present(runtime_manifest_sha256) {
+    problems.push("runtime manifest SHA-256 is missing or invalid")
+  }
+  if dmg_requested && !dmg_created {
+    problems.push("requested DMG is missing")
+  } else if dmg_created && !release_sha256_present(dmg_sha256) {
+    problems.push("DMG SHA-256 is missing or invalid")
+  }
+  if signing_required && !signed {
+    problems.push("required code signature is invalid")
+  }
+  if notarization_requested && !notarized {
+    problems.push("requested notarization did not complete")
+  }
+  problems
+}
+
+///|
+async fn write_release_json(path : String, value : Json) -> Bool {
+  @fsx.write_to_file(path, value.stringify(indent=2) + "\n", create=0o644) catch {
+    error => {
+      println("release failed: could not write \{path}: \{error}")
+      return false
+    }
+  }
+  true
 }
 
 ///|
