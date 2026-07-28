@@ -444,6 +444,36 @@ fn update_mooncode_session_results(
           },
         ),
       )
+    LoadedMoonCodeSelectedSession(session_id, Ok(session)) =>
+      if model.selected_mooncode_session_id != session_id ||
+        session.id != session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_sessions: mooncode_upsert_session_if_revision_changed(
+              model.mooncode_sessions,
+              session,
+            ),
+            mooncode_sessions_error: "",
+          },
+        )
+      }
+    LoadedMoonCodeSelectedSession(session_id, Err(error)) =>
+      if model.selected_mooncode_session_id != session_id {
+        (@rabbita.none, model)
+      } else {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_sessions_error: error,
+            mooncode_composer_status: error,
+          },
+        )
+      }
     LoadedMoonCodeArchivedSessions(Ok(sessions)) =>
       (@rabbita.none, { ..model, mooncode_archived_sessions: sessions })
     LoadedMoonCodeArchivedSessions(Err(_)) =>

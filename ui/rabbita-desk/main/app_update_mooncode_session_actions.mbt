@@ -9,6 +9,7 @@ fn update_mooncode_session_actions(
       let next = mooncode_select_session_model(model, session_id)
       (
         @rabbita.batch([
+          fetch_mooncode_selected_session_cmd(dispatch, session_id),
           mooncode_selected_session_cmd(dispatch, next),
           sync_mooncode_context_cmd(
             mooncode_workspace_id_for_selected_session(model, session_id),

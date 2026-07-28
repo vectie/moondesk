@@ -290,6 +290,7 @@ enum Msg {
   StartedMoonClawCopilotAuth(Result[MoonClawCopilotAuthFlow, String])
   SavedMoonClawOpenRouterKey(Result[MoonClawSetupResult, String])
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
+  LoadedMoonCodeSelectedSession(String, Result[MoonCodeSession, String])
   LoadedMoonCodeArchivedSessions(Result[Array[MoonCodeSession], String])
   LoadedMoonCodeWatch(Int, String, Result[MoonCodeWatchResponse, String])
   CreatedMoonCodeSession(Result[MoonCodeSession, String])

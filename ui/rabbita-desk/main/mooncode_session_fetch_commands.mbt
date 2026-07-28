@@ -36,6 +36,39 @@ fn decode_mooncode_session_listing(
 }
 
 ///|
+fn decode_mooncode_selected_session(
+  payload : Json,
+) -> Result[MoonCodeSession, String] {
+  match @mooncode_core.decode_mooncode_selected_session(payload) {
+    Supported(summary) =>
+      try
+        @json.from_json(@mooncode_core.encode_mooncode_session_summary(summary))
+      catch {
+        _ => Err("Invalid MoonCode selected session")
+      } noraise {
+        session => Ok(session)
+      }
+    UnsupportedVersion(version) =>
+      Err("Unsupported MoonCode selected session contract version \{version}")
+    Malformed(error) => Err(error)
+  }
+}
+
+///|
+fn fetch_mooncode_selected_session_cmd(
+  dispatch : Dispatch[Msg],
+  session_id : String,
+) -> @rabbita.Cmd {
+  @http.get(@desk.mooncode_session_url(session_id)).expect_json(result => {
+    let decoded = match result {
+      Ok(payload) => decode_mooncode_selected_session(payload)
+      Err(error) => Err(error.to_string())
+    }
+    dispatch(LoadedMoonCodeSelectedSession(session_id, decoded))
+  })
+}
+
+///|
 fn fetch_active_mooncode_sessions_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,

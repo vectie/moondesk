@@ -83,6 +83,13 @@ pub(all) enum MoonCodeSessionListingDecodeResult {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum MoonCodeSelectedSessionDecodeResult {
+  Supported(MoonCodeSessionSummary)
+  UnsupportedVersion(Int)
+  Malformed(String)
+} derive(Debug, Eq)
+
+///|
 fn listing_string(fields : Map[String, Json], key : String) -> String? {
   match fields.get(key) {
     Some(String(value)) => Some(value)
@@ -187,6 +194,33 @@ fn decode_listing_row(row : Json) -> Result[MoonCodeSessionSummary, String] {
     archived,
     extensions,
   })
+}
+
+///|
+pub fn decode_mooncode_selected_session(
+  payload : Json,
+) -> MoonCodeSelectedSessionDecodeResult {
+  guard payload is Object(fields) else {
+    return Malformed("selected session payload must be an object")
+  }
+  match fields.get("protocol") {
+    None => ()
+    Some(String(protocol)) => {
+      guard listing_version(protocol) is Some(version) else {
+        return Malformed(
+          "selected session protocol must identify a MoonCode version",
+        )
+      }
+      if version != 1 {
+        return UnsupportedVersion(version)
+      }
+    }
+    _ => return Malformed("selected session protocol must be a string")
+  }
+  match decode_listing_row(payload) {
+    Ok(summary) => Supported(summary)
+    Err(error) => Malformed(error)
+  }
 }
 
 ///|
