@@ -102,6 +102,18 @@ struct Model {
   moonclaw_daemon : MoonClawDaemonStatus?
   moonclaw_installing : Bool
   moonclaw_install_feedback : String
+  moonclaw_operation : String
+  moonclaw_operation_status : String
+  moonclaw_operation_failed : Bool
+  moonclaw_auth : MoonClawAuthStatus?
+  moonclaw_codex_auth_flow : MoonClawCodexAuthFlow?
+  moonclaw_copilot_auth_flow : MoonClawCopilotAuthFlow?
+  moonclaw_auth_pending : String
+  moonclaw_auth_status : String
+  moonclaw_auth_feedback : String
+  moonclaw_auth_failed : Bool
+  moonclaw_setup_started : Bool
+  moonclaw_openrouter_key : String
   mooncode_sessions : Array[MoonCodeSession]
   mooncode_sessions_state : SurfaceState?
   mooncode_sessions_error : String
@@ -270,6 +282,10 @@ enum Msg {
   LoadedMoonClawDaemon(Result[MoonClawDaemonStatus, String])
   ManagedMoonClaw(Result[MoonClawDaemonStatus, String])
   LoadedMoonClawModels(Result[MoonClawModelsResult, String])
+  LoadedMoonClawAuth(Result[MoonClawAuthStatus, String])
+  StartedMoonClawCodexAuth(Result[MoonClawCodexAuthFlow, String])
+  StartedMoonClawCopilotAuth(Result[MoonClawCopilotAuthFlow, String])
+  SavedMoonClawOpenRouterKey(Result[MoonClawSetupResult, String])
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
   LoadedMoonCodeArchivedSessions(Result[Array[MoonCodeSession], String])
   LoadedMoonCodeWatch(Int, String, Result[MoonCodeWatchResponse, String])
@@ -311,6 +327,10 @@ enum Msg {
   CancelMoonCodeWork(String, String)
   DecideMoonCodeTool(String, String, String, String, String)
   ManageMoonClaw(String)
+  StartMoonClawAuth(String)
+  CheckMoonClawSetup
+  SetMoonClawOpenRouterKey(String)
+  SaveMoonClawOpenRouterKey
   RefreshMoonCodeMetadata(Int)
   ResumeMoonCodeWatch(Int, String)
   SelectWorkspace(String)

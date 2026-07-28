@@ -56,6 +56,14 @@ test "capability copy is exact for every state" {
     "Start Code assistance before beginning a conversation.",
   )
   assert_eq(
+    code_capability_title(InstalledNeedsConfiguration),
+    "Code assistance needs an account or model",
+  )
+  assert_eq(
+    code_capability_detail(InstalledNeedsConfiguration),
+    "Connect Codex, GitHub Copilot, or OpenRouter to finish setup.",
+  )
+  assert_eq(
     code_capability_title(NotInstalled),
     "Code assistance is not installed",
   )
@@ -97,6 +105,10 @@ test "every capability primary action and label is exact" {
   assert_true(
     code_capability_primary_action(InstalledStopped) is StartCapability,
   )
+  assert_true(
+    code_capability_primary_action(InstalledNeedsConfiguration)
+    is ConfigureCapability,
+  )
   assert_true(code_capability_primary_action(NotInstalled) is InstallCapability)
   assert_true(
     code_capability_primary_action(Misconfigured) is OpenConfiguration,
@@ -116,6 +128,10 @@ test "every capability primary action and label is exact" {
   assert_eq(
     code_capability_primary_action_label(InstallCapability),
     "Install Code assistance",
+  )
+  assert_eq(
+    code_capability_primary_action_label(ConfigureCapability),
+    "Connect Codex",
   )
   assert_eq(
     code_capability_primary_action_label(OpenConfiguration),
@@ -138,6 +154,12 @@ fn capability_test_daemon(
   evidence_valid? : Bool,
 ) -> MoonClawDaemonStatus {
   {
+    ok: None,
+    status: None,
+    next_action: None,
+    model_ready: None,
+    model_readiness: None,
+    repair_available: None,
     running,
     port: 0,
     message: "",
@@ -197,7 +219,7 @@ test "daemon evidence maps without parsing status messages" {
     moonclaw_capability_state(
       Some(capability_test_daemon(true, false, Some(false))),
     )
-    is DetectedRunning,
+    is TemporarilyUnavailable,
   )
   assert_true(
     moonclaw_capability_state(
@@ -215,7 +237,7 @@ test "daemon evidence maps without parsing status messages" {
     moonclaw_capability_state(
       Some(capability_test_daemon(false, false, Some(true))),
     )
-    is Misconfigured,
+    is InstalledNeedsConfiguration,
   )
   assert_true(
     moonclaw_capability_state(Some(capability_test_daemon(false, false, None)))
@@ -270,6 +292,134 @@ test "daemon evidence maps without parsing status messages" {
 }
 
 ///|
+#warnings("-alert_unstable")
+test "fresh and copied clean-Mac evidence remains installable or repairable" {
+  let fresh = {
+    ..capability_test_daemon(
+      false,
+      false,
+      Some(false),
+      platform_supported=true,
+      evidence_installed=false,
+      evidence_configured=false,
+      evidence_valid=true,
+    ),
+    ok: Some(false),
+    status: Some("daemon_info_missing"),
+    next_action: Some("install_moonclaw"),
+  }
+  assert_true(moonclaw_capability_state(Some(fresh)) is NotInstalled)
+  let repair = {
+    ..fresh,
+    status: Some("repair_available"),
+    repair_available: Some(true),
+  }
+  assert_true(moonclaw_capability_state(Some(repair)) is NotInstalled)
+  let markup = home_code_capability_public_markup({
+    ..init_model(),
+    moonclaw_daemon: Some(repair),
+  })
+  assert_true(markup.contains(">Repair Code assistance<"))
+  assert_code_assistance_i18n_key(markup, "code.assistance_action_repair")
+  assert_false(markup.contains(">Review configuration<"))
+  let repairing = {
+    ..init_model(),
+    moonclaw_daemon: Some(repair),
+    moonclaw_installing: true,
+  }
+  let repairing_markup = home_code_capability_public_markup(repairing)
+  assert_true(repairing_markup.contains(">Repairing Code assistance…<"))
+  assert_code_assistance_i18n_key(repairing_markup, "code.assistance_repairing")
+  let dispatch : Dispatch[Msg] = fn(_) { @rabbita.none }
+  let runtime_markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_mooncode_runtime_setup(dispatch, repairing)),
+  )
+  assert_true(runtime_markup.contains(">Repairing Code assistance…<"))
+  assert_code_assistance_i18n_key(runtime_markup, "code.assistance_repairing")
+}
+
+///|
+test "model readiness distinguishes running setup from ready and stopped" {
+  let running = capability_test_daemon(true, true, Some(true))
+  assert_true(
+    moonclaw_capability_state(Some({ ..running, model_ready: Some(false) }))
+    is InstalledNeedsConfiguration,
+  )
+  assert_true(
+    moonclaw_capability_state(
+      Some({
+        ..running,
+        model_readiness: Some({
+          known: true,
+          ready: false,
+          status: "needs_configuration",
+          reason: "default-model-unavailable",
+          default_model: "",
+        }),
+      }),
+    )
+    is InstalledNeedsConfiguration,
+  )
+  assert_true(
+    moonclaw_capability_state(Some({ ..running, model_ready: Some(true) }))
+    is DetectedRunning,
+  )
+  assert_true(
+    moonclaw_capability_state(
+      Some({
+        ..capability_test_daemon(false, true, Some(true)),
+        model_ready: Some(true),
+      }),
+    )
+    is InstalledStopped,
+  )
+}
+
+///|
+test "sessions require positively confirmed model readiness" {
+  assert_true(moonclaw_model_readiness_allows_sessions(Some(true)))
+  assert_false(moonclaw_model_readiness_allows_sessions(Some(false)))
+  assert_false(moonclaw_model_readiness_allows_sessions(None))
+}
+
+///|
+test "MoonClaw DTOs decode readiness and actionable auth failures" {
+  let daemon : MoonClawDaemonStatus = @json.from_json({
+    "ok": true,
+    "status": "running_needs_configuration",
+    "next_action": "configure_model",
+    "repair_available": false,
+    "running": true,
+    "port": 1515,
+    "message": "MoonClaw is running but no default model is available",
+    "service_configured": true,
+    "managed_install": true,
+    "managed_running": true,
+    "model_readiness": {
+      "known": true,
+      "ready": false,
+      "status": "needs_configuration",
+      "reason": "default-model-unavailable",
+      "default_model": "",
+      "models": [{ "name": "codex/gpt-5.4", "default": false }],
+    },
+  })
+  assert_true(
+    moonclaw_capability_state(Some(daemon)) is InstalledNeedsConfiguration,
+  )
+  assert_eq(daemon.status, Some("running_needs_configuration"))
+  let auth_failure : MoonClawCodexAuthFlow = @json.from_json({
+    "ok": false,
+    "status": "auth_start_failed",
+    "message": "callback port unavailable",
+    "next_action": "retry_auth",
+    "model_ready": false,
+  })
+  assert_true(auth_failure.auth_url is None)
+  assert_eq(auth_failure.status, Some("auth_start_failed"))
+}
+
+///|
 test "platform evidence remains optional and technical" {
   let missing = capability_test_daemon(false, true, Some(true))
   assert_true(capability_platform_technical_detail(missing) is None)
@@ -291,6 +441,10 @@ test "platform evidence remains optional and technical" {
 test "capability status projection is exact" {
   assert_eq(capability_state_key(DetectedRunning), "detected-running")
   assert_eq(capability_state_key(InstalledStopped), "installed-stopped")
+  assert_eq(
+    capability_state_key(InstalledNeedsConfiguration),
+    "installed-needs-configuration",
+  )
   assert_eq(capability_state_key(NotInstalled), "not-installed")
   assert_eq(capability_state_key(Misconfigured), "misconfigured")
   assert_eq(capability_state_key(UnsupportedPlatform), "unsupported-platform")
@@ -303,6 +457,10 @@ test "capability status projection is exact" {
   assert_eq(capability_status_key(Misconfigured), "missing")
   assert_eq(capability_status_label(DetectedRunning), "running")
   assert_eq(capability_status_label(InstalledStopped), "installed, stopped")
+  assert_eq(
+    capability_status_label(InstalledNeedsConfiguration),
+    "setup needed",
+  )
   assert_eq(capability_status_label(NotInstalled), "not installed")
   assert_eq(capability_status_label(Misconfigured), "needs configuration")
   assert_eq(capability_status_label(UnsupportedPlatform), "not supported")
@@ -682,10 +840,10 @@ fn assert_only_home_code_action(
 ) -> Unit raise {
   for
     label in [
-      "Start Code assistance", "Install Code assistance", "Review configuration",
-      "Check again",
+      "Start Code assistance", "Install Code assistance", "Repair Code assistance",
+      "Connect Codex", "Review configuration", "Check again",
     ] {
-    assert_eq(markup.contains(label), label == expected)
+    assert_eq(markup.contains(">\{label}<"), label == expected)
   }
 }
 
@@ -708,6 +866,12 @@ test "Code assistance localization mappings use only authoritative keys" {
       "code.assistance_title_installed_stopped",
       "code.assistance_detail_installed_stopped",
       "code.assistance_status_installed_stopped",
+    ),
+    (
+      InstalledNeedsConfiguration,
+      "code.assistance_title_installed_needs_configuration",
+      "code.assistance_detail_installed_needs_configuration",
+      "code.assistance_status_installed_needs_configuration",
     ),
     (
       NotInstalled,
@@ -744,6 +908,7 @@ test "Code assistance localization mappings use only authoritative keys" {
     (NoPrimaryAction, ""),
     (StartCapability, "code.assistance_action_start"),
     (InstallCapability, "code.assistance_action_install"),
+    (ConfigureCapability, "code.assistance_action_connect"),
     (OpenConfiguration, "code.assistance_action_open_configuration"),
     (RetryCapabilityCheck, "code.assistance_action_retry"),
   ]
@@ -754,12 +919,15 @@ test "Code assistance localization mappings use only authoritative keys" {
 }
 
 ///|
-test "Home Code assistance renders all six evidence states and action allowlists" {
+test "Home Code assistance renders every evidence state and action allowlist" {
   let cases : Array[(Model, String, String, String)] = [
     (
       {
         ..init_model(),
-        moonclaw_daemon: Some(capability_test_daemon(true, true, Some(true))),
+        moonclaw_daemon: Some({
+          ..capability_test_daemon(true, true, Some(true)),
+          model_ready: Some(true),
+        }),
       },
       "detected-running",
       "Code assistance is ready",
@@ -787,6 +955,23 @@ test "Home Code assistance renders all six evidence states and action allowlists
       {
         ..init_model(),
         moonclaw_daemon: Some(capability_test_daemon(false, false, Some(true))),
+      },
+      "installed-needs-configuration",
+      "Code assistance needs an account or model",
+      "Connect Codex",
+    ),
+    (
+      {
+        ..init_model(),
+        moonclaw_daemon: Some(
+          capability_test_daemon(
+            false,
+            false,
+            Some(true),
+            evidence_configured=false,
+            evidence_valid=false,
+          ),
+        ),
       },
       "misconfigured",
       "Code assistance needs configuration",
@@ -940,13 +1125,109 @@ test "exact Code assistance diagnostics remain in one closed disclosure" {
 
 ///|
 #warnings("-alert_unstable")
+test "repair and install failures stay actionable beside the setup action" {
+  let daemon = {
+    ..capability_test_daemon(false, false, Some(false)),
+    ok: Some(false),
+    status: Some("unsupported_platform"),
+    next_action: Some("install_moonclaw"),
+    repair_available: Some(true),
+    message: "No MoonClaw artifact supports macos/x86_64",
+  }
+  let model = {
+    ..init_model(),
+    moonclaw_daemon: Some(daemon),
+    moonclaw_operation_status: "unsupported_platform",
+    moonclaw_operation_failed: true,
+    moonclaw_install_feedback: "No MoonClaw artifact supports macos/x86_64",
+  }
+  let markup = home_code_capability_public_markup(model)
+  assert_true(markup.contains(">Repair Code assistance<"))
+  assert_true(
+    markup.contains("data-testid=\"code-assistance-operation-error\""),
+  )
+  assert_true(markup.contains("role=\"alert\""))
+  assert_true(markup.contains("<code>unsupported_platform</code>"))
+  assert_true(markup.contains("No MoonClaw artifact supports macos/x86_64"))
+  assert_true(markup.contains("<code>install_moonclaw</code>"))
+}
+
+///|
+#warnings("-alert_unstable")
+test "first-run setup renders provider handoffs and an advanced secret input" {
+  let daemon = {
+    ..capability_test_daemon(true, true, Some(true)),
+    model_ready: Some(false),
+  }
+  let initial_markup = home_code_capability_public_markup({
+    ..init_model(),
+    moonclaw_daemon: Some(daemon),
+  })
+  assert_true(
+    initial_markup.contains("data-testid=\"code-assistance-first-run\""),
+  )
+  assert_true(initial_markup.contains(">Connect Codex<"))
+  assert_true(initial_markup.contains(">Connect GitHub Copilot<"))
+  assert_true(initial_markup.contains(">Use OpenRouter API key<"))
+  assert_true(initial_markup.contains("for=\"moonclaw-openrouter-key\""))
+  assert_true(initial_markup.contains("type=\"password\""))
+
+  let codex_markup = home_code_capability_public_markup({
+    ..init_model(),
+    moonclaw_daemon: Some(daemon),
+    moonclaw_setup_started: true,
+    moonclaw_codex_auth_flow: Some({
+      ok: Some(true),
+      status: Some("auth_started"),
+      message: Some("Codex authorization started"),
+      next_action: Some("open_authorization_url"),
+      model_ready: Some(false),
+      auth_url: Some("https://example.test/codex"),
+      state: Some("state-1"),
+    }),
+  })
+  assert_true(codex_markup.contains("data-testid=\"moonclaw-open-codex-auth\""))
+  assert_true(codex_markup.contains("href=\"https://example.test/codex\""))
+  assert_true(codex_markup.contains(">Open Codex sign-in<"))
+  assert_true(codex_markup.contains("secondary-button full"))
+  assert_true(codex_markup.contains(">Check setup<"))
+
+  let copilot_markup = home_code_capability_public_markup({
+    ..init_model(),
+    moonclaw_daemon: Some(daemon),
+    moonclaw_setup_started: true,
+    moonclaw_copilot_auth_flow: Some({
+      ok: Some(true),
+      status: Some("auth_started"),
+      message: Some("GitHub device authorization started"),
+      next_action: Some("complete_device_authorization"),
+      model_ready: Some(false),
+      user_code: Some("ABCD-EFGH"),
+      verification_uri: Some("https://github.com/login/device"),
+      expires_in: Some(900),
+      interval: Some(5),
+    }),
+  })
+  assert_true(
+    copilot_markup.contains("data-testid=\"moonclaw-open-copilot-auth\""),
+  )
+  assert_true(copilot_markup.contains("ABCD-EFGH"))
+  assert_true(copilot_markup.contains("https://github.com/login/device"))
+  assert_true(copilot_markup.contains(">Check setup<"))
+}
+
+///|
+#warnings("-alert_unstable")
 test "Code setup renders every non-ready typed state including unavailable" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let cases : Array[(Model, String, String)] = [
     (
       {
         ..init_model(),
-        moonclaw_daemon: Some(capability_test_daemon(true, true, Some(true))),
+        moonclaw_daemon: Some({
+          ..capability_test_daemon(true, true, Some(true)),
+          model_ready: Some(true),
+        }),
       },
       "detected-running",
       "",
@@ -971,6 +1252,22 @@ test "Code setup renders every non-ready typed state including unavailable" {
       {
         ..init_model(),
         moonclaw_daemon: Some(capability_test_daemon(false, false, Some(true))),
+      },
+      "installed-needs-configuration",
+      "Connect Codex",
+    ),
+    (
+      {
+        ..init_model(),
+        moonclaw_daemon: Some(
+          capability_test_daemon(
+            false,
+            false,
+            Some(true),
+            evidence_configured=false,
+            evidence_valid=false,
+          ),
+        ),
       },
       "misconfigured",
       "Review configuration",

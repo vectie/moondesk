@@ -2663,6 +2663,12 @@ test "code mode daemon and model polling preserve new session draft" {
     code_mode_test_dispatch,
     LoadedMoonClawDaemon(
       Ok({
+        ok: None,
+        status: None,
+        next_action: None,
+        model_ready: None,
+        model_readiness: None,
+        repair_available: None,
         running: true,
         port: 1515,
         message: "daemon running",
@@ -2687,6 +2693,12 @@ test "code mode daemon and model polling preserve new session draft" {
       Ok({
         ok: true,
         daemon: {
+          ok: None,
+          status: None,
+          next_action: None,
+          model_ready: None,
+          model_readiness: None,
+          repair_available: None,
           running: true,
           port: 1515,
           message: "daemon running",
@@ -2733,6 +2745,12 @@ test "code mode model polling leaves selection empty without executable models" 
       Ok({
         ok: true,
         daemon: {
+          ok: None,
+          status: None,
+          next_action: None,
+          model_ready: None,
+          model_readiness: None,
+          repair_available: None,
           running: true,
           port: 1515,
           message: "daemon running",
@@ -2749,6 +2767,49 @@ test "code mode model polling leaves selection empty without executable models" 
     model,
   )
   assert_eq(next.mooncode_model, "")
+  assert_false(
+    moonclaw_models_result_allows_sessions({
+      ok: true,
+      daemon: next.moonclaw_daemon.unwrap(),
+      models: [],
+    }),
+  )
+}
+
+///|
+test "successful model polling confirms readiness before loading sessions" {
+  let daemon : MoonClawDaemonStatus = {
+    ok: Some(true),
+    status: Some("running"),
+    next_action: Some("use_moonclaw"),
+    model_ready: None,
+    model_readiness: None,
+    repair_available: None,
+    running: true,
+    port: 1515,
+    message: "daemon running",
+    service_configured: true,
+    managed_install: Some(true),
+    managed_running: Some(true),
+    installation_evidence: None,
+    configuration_evidence: None,
+    platform_evidence: None,
+  }
+  let result : MoonClawModelsResult = {
+    ok: true,
+    daemon,
+    models: [{ name: "codex/gpt-5.6-sol" }],
+  }
+  assert_true(moonclaw_models_result_allows_sessions(result))
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonClawModels(Ok(result)),
+    { ..init_model(), moonclaw_daemon: Some(daemon) },
+  )
+  assert_true(next.moonclaw_daemon.unwrap().model_ready is Some(true))
+  assert_true(
+    moonclaw_capability_state(next.moonclaw_daemon) is DetectedRunning,
+  )
 }
 
 ///|
@@ -2772,6 +2833,12 @@ test "code mode model refresh replaces a stale unavailable selection" {
   let result : MoonClawModelsResult = {
     ok: true,
     daemon: {
+      ok: None,
+      status: None,
+      next_action: None,
+      model_ready: None,
+      model_readiness: None,
+      repair_available: None,
       running: true,
       port: 1515,
       message: "daemon running",
@@ -2992,6 +3059,12 @@ test "MoonClaw install action exposes progress until lifecycle result" {
     code_mode_test_dispatch,
     ManagedMoonClaw(
       Ok({
+        ok: None,
+        status: None,
+        next_action: None,
+        model_ready: None,
+        model_readiness: None,
+        repair_available: None,
         running: true,
         port: 1515,
         message: "MoonClaw 0.1.2 is installed and running",
@@ -3018,12 +3091,19 @@ test "MoonClaw failed start keeps the installed state and exact failure" {
   let model = {
     ..init_model(),
     moonclaw_installing: true,
+    moonclaw_operation: "install",
     moonclaw_install_feedback: "Downloading, verifying, and installing MoonClaw…",
   }
   let (_, stopped) = update_mooncode_session_results(
     code_mode_test_dispatch,
     ManagedMoonClaw(
       Ok({
+        ok: None,
+        status: None,
+        next_action: None,
+        model_ready: None,
+        model_readiness: None,
+        repair_available: None,
         running: false,
         port: 0,
         message: "MoonClaw 0.1.3 was installed, but could not be started: daemon exited",
@@ -3039,10 +3119,113 @@ test "MoonClaw failed start keeps the installed state and exact failure" {
   )
   assert_false(stopped.moonclaw_installing)
   assert_true(stopped.moonclaw_daemon.unwrap().managed_install.unwrap())
+  assert_true(stopped.moonclaw_operation_failed)
+  assert_eq(stopped.moonclaw_operation_status, "operation_failed")
   assert_eq(
     stopped.moonclaw_install_feedback,
     "MoonClaw 0.1.3 was installed, but could not be started: daemon exited",
   )
+}
+
+///|
+test "MoonClaw auth status treats fresh setup as guidance, not failure" {
+  let model = { ..init_model(), moonclaw_auth_pending: "check" }
+  let (_, next) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    LoadedMoonClawAuth(
+      Ok({
+        ok: Some(false),
+        status: Some("authentication_required"),
+        message: Some("Connect a model provider"),
+        next_action: Some("configure_model"),
+        model_ready: Some(false),
+        codex: Some({ authenticated: Some(false), email: None, plan: None }),
+        copilot: Some({ authenticated: Some(false), email: None, plan: None }),
+      }),
+    ),
+    model,
+  )
+  assert_false(next.moonclaw_auth_failed)
+  assert_eq(
+    next.moonclaw_auth_feedback,
+    "Sign-in is not complete yet. Finish setup, then check again.",
+  )
+  assert_eq(next.moonclaw_auth_status, "authentication_required")
+}
+
+///|
+test "MoonClaw auth actions retain returned handoff state through failure" {
+  let (_, starting) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    StartMoonClawAuth("codex"),
+    init_model(),
+  )
+  assert_eq(starting.moonclaw_auth_pending, "codex")
+  assert_true(starting.moonclaw_setup_started)
+  let flow : MoonClawCodexAuthFlow = {
+    ok: Some(true),
+    status: Some("auth_started"),
+    message: Some("Codex authorization started"),
+    next_action: Some("open_authorization_url"),
+    model_ready: Some(false),
+    auth_url: Some("https://example.test/codex"),
+    state: Some("state-1"),
+  }
+  let (_, handed_off) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    StartedMoonClawCodexAuth(Ok(flow)),
+    starting,
+  )
+  assert_true(handed_off.moonclaw_codex_auth_flow is Some(_))
+  let (_, failed) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    StartedMoonClawCodexAuth(Err("callback port unavailable")),
+    handed_off,
+  )
+  assert_true(failed.moonclaw_codex_auth_flow is Some(_))
+  assert_true(failed.moonclaw_auth_failed)
+  assert_eq(failed.moonclaw_auth_feedback, "callback port unavailable")
+}
+
+///|
+test "OpenRouter key clears only after a successful save" {
+  let model = {
+    ..init_model(),
+    moonclaw_openrouter_key: "sk-or-test",
+    moonclaw_setup_started: true,
+  }
+  let (_, failed) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    SavedMoonClawOpenRouterKey(
+      Ok({
+        ok: false,
+        status: "openrouter_key_invalid",
+        message: "OpenRouter rejected this API key",
+        next_action: "review_api_key",
+        model_ready: false,
+      }),
+    ),
+    model,
+  )
+  assert_eq(failed.moonclaw_openrouter_key, "sk-or-test")
+  assert_true(failed.moonclaw_auth_failed)
+  assert_eq(failed.moonclaw_auth_status, "openrouter_key_invalid")
+  let (_, saved) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    SavedMoonClawOpenRouterKey(
+      Ok({
+        ok: true,
+        status: "openrouter_key_configured",
+        message: "OpenRouter API key saved",
+        next_action: "check_model",
+        model_ready: false,
+      }),
+    ),
+    model,
+  )
+  assert_eq(saved.moonclaw_openrouter_key, "")
+  assert_false(saved.moonclaw_auth_failed)
+  assert_eq(saved.moonclaw_auth_feedback, "OpenRouter API key saved")
 }
 
 ///|
@@ -3061,6 +3244,12 @@ test "MoonClaw lifecycle result refreshes service and model state" {
     code_mode_test_dispatch,
     ManagedMoonClaw(
       Ok({
+        ok: None,
+        status: None,
+        next_action: None,
+        model_ready: None,
+        model_readiness: None,
+        repair_available: None,
         running: true,
         port: 1515,
         message: "MoonClaw daemon started",
@@ -3095,6 +3284,12 @@ test "MoonGate setup handoff uses the proven Desk mode action" {
     mooncode_center_class({
       ..model,
       moonclaw_daemon: Some({
+        ok: None,
+        status: None,
+        next_action: None,
+        model_ready: None,
+        model_readiness: None,
+        repair_available: None,
         running: false,
         port: 0,
         message: "not running",

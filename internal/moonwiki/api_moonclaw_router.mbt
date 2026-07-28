@@ -54,9 +54,14 @@ async fn route_moonclaw_api(
       true
     }
     ["api", "moonclaw", "daemon", action] => {
-      if method_ is Post && ["install", "start", "retry"].contains(action) {
-        ignore(body)
-        handle_moonclaw_daemon_action(workspace_root, action, method_, conn)
+      let endpoint = @desk.moonclaw_route("daemon/" + action)
+      if ["install", "start", "retry"].contains(action) {
+        if desktop_api_route_accepts_post(endpoint, method_) {
+          ignore(body)
+          handle_moonclaw_daemon_action(workspace_root, action, method_, conn)
+        } else {
+          send_desktop_api_method_not_allowed(conn, method_, endpoint)
+        }
       } else {
         send_method_not_allowed_with_methods(conn, method_, ["POST"])
       }
@@ -66,6 +71,44 @@ async fn route_moonclaw_api(
       let endpoint = @desk.moonclaw_route("models")
       if desktop_api_route_accepts_read(endpoint, method_) {
         handle_moonclaw_models(workspace_root, method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "auth", "status"] => {
+      let endpoint = @desk.moonclaw_route("auth/status")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_moonclaw_auth_status(workspace_root, method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "auth", "codex", "start"] => {
+      let endpoint = @desk.moonclaw_route("auth/codex/start")
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        ignore(body)
+        handle_moonclaw_auth_start(workspace_root, "codex", method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "auth", "copilot", "start"] => {
+      let endpoint = @desk.moonclaw_route("auth/copilot/start")
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        ignore(body)
+        handle_moonclaw_auth_start(workspace_root, "copilot", method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "config", "openrouter-key"] => {
+      let endpoint = @desk.moonclaw_route("config/openrouter-key")
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_moonclaw_openrouter_key(workspace_root, body, method_, conn)
       } else {
         send_desktop_api_method_not_allowed(conn, method_, endpoint)
       }

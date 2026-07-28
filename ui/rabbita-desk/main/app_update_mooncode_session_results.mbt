@@ -1,18 +1,47 @@
 ///|
+fn moonclaw_model_readiness_allows_sessions(ready : Bool?) -> Bool {
+  ready is Some(true)
+}
+
+///|
+fn moonclaw_models_result_allows_sessions(
+  result : MoonClawModelsResult,
+) -> Bool {
+  result.ok && !result.models.is_empty()
+}
+
+///|
 fn update_mooncode_session_results(
   dispatch : Dispatch[Msg],
   msg : Msg,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    ManagedMoonClaw(Ok(status)) =>
+    ManagedMoonClaw(Ok(status)) => {
+      let failed = status.ok is Some(false) ||
+        (
+          status.ok is None &&
+          model.moonclaw_operation != "" &&
+          !status.running &&
+          !(moonclaw_model_ready(Some(status)) is Some(false))
+        )
       (
         fetch_moonclaw_daemon_cmd(dispatch),
         {
           ..model,
           moonclaw_daemon: Some(status),
           moonclaw_installing: false,
-          moonclaw_install_feedback: if model.moonclaw_installing {
+          moonclaw_operation: "",
+          moonclaw_operation_status: status.status.unwrap_or(
+            if failed {
+              "operation_failed"
+            } else {
+              ""
+            },
+          ),
+          moonclaw_operation_failed: failed,
+          moonclaw_install_feedback: if model.moonclaw_operation != "" ||
+            model.moonclaw_installing {
             status.message
           } else {
             model.moonclaw_install_feedback
@@ -20,30 +49,32 @@ fn update_mooncode_session_results(
           mooncode_composer_status: status.message,
         },
       )
+    }
     ManagedMoonClaw(Err(error)) =>
       (
         @rabbita.none,
         {
           ..model,
           moonclaw_installing: false,
-          moonclaw_install_feedback: if model.moonclaw_installing {
-            error
-          } else {
-            model.moonclaw_install_feedback
-          },
+          moonclaw_operation: "",
+          moonclaw_operation_status: "request_failed",
+          moonclaw_operation_failed: true,
+          moonclaw_install_feedback: error,
           mooncode_composer_status: error,
         },
       )
-    LoadedMoonClawDaemon(Ok(status)) =>
+    LoadedMoonClawDaemon(Ok(status)) => {
+      let ready = moonclaw_model_ready(Some(status))
+      let commands : Array[@rabbita.Cmd] = []
+      if status.running {
+        commands.push(fetch_moonclaw_models_cmd(dispatch))
+        commands.push(fetch_moonclaw_auth_cmd(dispatch))
+        if moonclaw_model_readiness_allows_sessions(ready) {
+          commands.push(fetch_mooncode_sessions_cmd(dispatch, ""))
+        }
+      }
       (
-        if status.running {
-          @rabbita.batch([
-            fetch_moonclaw_models_cmd(dispatch),
-            fetch_mooncode_sessions_cmd(dispatch, ""),
-          ])
-        } else {
-          @rabbita.none
-        },
+        @rabbita.batch(commands),
         {
           ..model,
           moonclaw_daemon: Some(status),
@@ -60,6 +91,7 @@ fn update_mooncode_session_results(
           },
         },
       )
+    }
     LoadedMoonClawDaemon(Err(error)) =>
       (
         @rabbita.none,
@@ -70,11 +102,22 @@ fn update_mooncode_session_results(
           ),
         },
       )
-    LoadedMoonClawModels(Ok(result)) =>
+    LoadedMoonClawModels(Ok(result)) => {
+      let ready = moonclaw_models_result_allows_sessions(result)
+      let daemon = if ready {
+        { ..result.daemon, model_ready: Some(true) }
+      } else {
+        result.daemon
+      }
       (
-        @rabbita.none,
+        if ready {
+          fetch_mooncode_sessions_cmd(dispatch, "")
+        } else {
+          @rabbita.none
+        },
         {
           ..model,
+          moonclaw_daemon: Some(daemon),
           mooncode_model: mooncode_reconcile_runtime_model(
             model.mooncode_model,
             result,
@@ -88,6 +131,7 @@ fn update_mooncode_session_results(
           },
         },
       )
+    }
     LoadedMoonClawModels(Err(error)) =>
       (
         @rabbita.none,
@@ -96,6 +140,180 @@ fn update_mooncode_session_results(
           mooncode_composer_status: mooncode_background_status_unless_draft(
             model, error,
           ),
+        },
+      )
+    LoadedMoonClawAuth(Ok(status)) => {
+      let authentication_required = status.status
+        is Some("authentication_required")
+      let failed = status.ok is Some(false) && !authentication_required
+      let checked = model.moonclaw_auth_pending == "check"
+      let setup_ready = status.model_ready is Some(true) ||
+        moonclaw_auth_has_connected_provider(Some(status))
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonclaw_auth: Some(status),
+          moonclaw_codex_auth_flow: if moonclaw_provider_is_connected(
+              status.codex,
+            ) {
+            None
+          } else {
+            model.moonclaw_codex_auth_flow
+          },
+          moonclaw_copilot_auth_flow: if moonclaw_provider_is_connected(
+              status.copilot,
+            ) {
+            None
+          } else {
+            model.moonclaw_copilot_auth_flow
+          },
+          moonclaw_auth_pending: "",
+          moonclaw_auth_status: status.status.unwrap_or(""),
+          moonclaw_auth_feedback: if failed {
+            status.message.unwrap_or("Could not check Code assistance setup")
+          } else if checked && setup_ready {
+            "Setup found. Code assistance is checking available models."
+          } else if checked {
+            "Sign-in is not complete yet. Finish setup, then check again."
+          } else if authentication_required && !model.moonclaw_setup_started {
+            ""
+          } else {
+            status.message.unwrap_or("")
+          },
+          moonclaw_auth_failed: failed,
+          moonclaw_setup_started: model.moonclaw_setup_started ||
+          moonclaw_auth_has_connected_provider(Some(status)),
+        },
+      )
+    }
+    LoadedMoonClawAuth(Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonclaw_auth_pending: "",
+          moonclaw_auth_status: "auth_status_request_failed",
+          moonclaw_auth_feedback: error,
+          moonclaw_auth_failed: true,
+        },
+      )
+    StartedMoonClawCodexAuth(Ok(flow)) => {
+      let failed = flow.ok is Some(false)
+      let started = flow.auth_url is Some(_)
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonclaw_codex_auth_flow: if started {
+            Some(flow)
+          } else {
+            model.moonclaw_codex_auth_flow
+          },
+          moonclaw_copilot_auth_flow: if started {
+            None
+          } else {
+            model.moonclaw_copilot_auth_flow
+          },
+          moonclaw_auth_pending: "",
+          moonclaw_auth_status: flow.status.unwrap_or(""),
+          moonclaw_auth_feedback: if failed {
+            flow.message.unwrap_or("Could not start Codex setup")
+          } else {
+            flow.message.unwrap_or(
+              "Open the Codex sign-in page, then return here to check setup.",
+            )
+          },
+          moonclaw_auth_failed: failed,
+        },
+      )
+    }
+    StartedMoonClawCodexAuth(Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonclaw_auth_pending: "",
+          moonclaw_auth_status: "request_failed",
+          moonclaw_auth_feedback: error,
+          moonclaw_auth_failed: true,
+        },
+      )
+    StartedMoonClawCopilotAuth(Ok(flow)) => {
+      let failed = flow.ok is Some(false)
+      let started = flow.user_code is Some(_) &&
+        flow.verification_uri is Some(_)
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonclaw_copilot_auth_flow: if started {
+            Some(flow)
+          } else {
+            model.moonclaw_copilot_auth_flow
+          },
+          moonclaw_codex_auth_flow: if started {
+            None
+          } else {
+            model.moonclaw_codex_auth_flow
+          },
+          moonclaw_auth_pending: "",
+          moonclaw_auth_status: flow.status.unwrap_or(""),
+          moonclaw_auth_feedback: if failed {
+            flow.message.unwrap_or("Could not start GitHub Copilot setup")
+          } else {
+            flow.message.unwrap_or(
+              "Enter the device code on GitHub, then return here to check setup.",
+            )
+          },
+          moonclaw_auth_failed: failed,
+        },
+      )
+    }
+    StartedMoonClawCopilotAuth(Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonclaw_auth_pending: "",
+          moonclaw_auth_status: "request_failed",
+          moonclaw_auth_feedback: error,
+          moonclaw_auth_failed: true,
+        },
+      )
+    SavedMoonClawOpenRouterKey(Ok(result)) =>
+      (
+        if result.ok {
+          @rabbita.batch([
+            fetch_moonclaw_auth_cmd(dispatch),
+            fetch_moonclaw_daemon_cmd(dispatch),
+          ])
+        } else {
+          @rabbita.none
+        },
+        {
+          ..model,
+          moonclaw_openrouter_key: if result.ok {
+            ""
+          } else {
+            model.moonclaw_openrouter_key
+          },
+          moonclaw_auth_pending: "",
+          moonclaw_auth_status: result.status,
+          moonclaw_auth_feedback: result.message,
+          moonclaw_auth_failed: !result.ok,
+          moonclaw_setup_started: model.moonclaw_setup_started || result.ok,
+        },
+      )
+    SavedMoonClawOpenRouterKey(Err(error)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          moonclaw_auth_pending: "",
+          moonclaw_auth_status: "request_failed",
+          moonclaw_auth_feedback: error,
+          moonclaw_auth_failed: true,
         },
       )
     LoadedMoonCodeSessions(Ok(mooncode_sessions)) => {

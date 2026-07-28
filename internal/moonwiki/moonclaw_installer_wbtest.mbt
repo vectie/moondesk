@@ -28,8 +28,14 @@ test "platform support is explicit and independent of string validity" {
   assert_true(macos.supported)
   assert_eq(macos.platform, "macos")
   assert_eq(macos.architecture, "arm64")
-  assert_true(
+  assert_false(
+    moonclaw_platform_support_from_values("linux", "arm64").supported,
+  )
+  assert_false(
     moonclaw_platform_support_from_values("linux", "x86_64").supported,
+  )
+  assert_false(
+    moonclaw_platform_support_from_values("macos", "x86_64").supported,
   )
   assert_false(
     moonclaw_platform_support_from_values("unsupported", "x86_64").supported,
@@ -44,6 +50,51 @@ test "platform support is explicit and independent of string validity" {
   assert_true(json_bool(json, "supported", default=false))
   assert_eq(json_string(json, "platform", default=""), "macos")
   assert_eq(json_string(json, "architecture", default=""), "arm64")
+}
+
+///|
+test "installer succeeds with a running daemon that still needs a model" {
+  let result = moonclaw_install_success(
+    {
+      "ok": true,
+      "running": true,
+      "status": "running_needs_configuration",
+      "model_readiness": {
+        "known": true,
+        "ready": false,
+        "status": "needs_configuration",
+      },
+    },
+    "0.1.5",
+    "/tmp/runtime/moonclaw/0.1.5/bin/moonclaw",
+  )
+  assert_true(json_bool(result, "ok", default=false))
+  assert_true(json_bool(result, "running", default=false))
+  assert_eq(
+    json_string(result, "status", default=""),
+    "installed_needs_configuration",
+  )
+  assert_eq(json_string(result, "next_action", default=""), "configure_model")
+  assert_true(
+    json_string(result, "message", default="").contains(
+      "model must be configured",
+    ),
+  )
+}
+
+///|
+test "installer preserves compatibility when model readiness is unknown" {
+  let result = moonclaw_install_success(
+    {
+      "ok": true,
+      "running": true,
+      "model_readiness": { "known": false, "ready": false },
+    },
+    "0.1.4",
+    "/tmp/runtime/moonclaw/0.1.4/bin/moonclaw",
+  )
+  assert_eq(json_string(result, "status", default=""), "installed_and_running")
+  assert_eq(json_string(result, "next_action", default=""), "use_moonclaw")
 }
 
 ///|
@@ -76,6 +127,13 @@ test "moonclaw runtime root follows the packaged app data directory" {
     "/tmp/explicit-runtime",
   )
   assert_eq(moonclaw_runtime_root_from_environment("", "", ""), "")
+}
+
+///|
+test "installer initializes MoonClaw in the canonical suite root" {
+  assert_eq(moonclaw_onboard_init_args("/tmp/moonsuite"), [
+    "onboard", "init", "--home", "/tmp/moonsuite", "--cwd", "/tmp/moonsuite", "--json",
+  ])
 }
 
 ///|

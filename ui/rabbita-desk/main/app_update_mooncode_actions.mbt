@@ -43,18 +43,84 @@ fn update_mooncode_actions(
         {
           ..model,
           moonclaw_installing: action == "install",
+          moonclaw_operation: action,
+          moonclaw_operation_status: "",
+          moonclaw_operation_failed: false,
           moonclaw_install_feedback: if action == "install" {
-            "Downloading, verifying, and installing MoonClaw…"
+            if moonclaw_repair_available(model.moonclaw_daemon) {
+              "Repairing the MoonClaw installation…"
+            } else {
+              "Downloading, verifying, and installing MoonClaw…"
+            }
           } else {
-            model.moonclaw_install_feedback
+            ""
           },
           mooncode_composer_status: if action == "install" {
-            "Downloading, verifying, and installing MoonClaw…"
+            if moonclaw_repair_available(model.moonclaw_daemon) {
+              "Repairing MoonClaw…"
+            } else {
+              "Downloading, verifying, and installing MoonClaw…"
+            }
           } else {
             "Starting MoonClaw…"
           },
         },
       )
+    StartMoonClawAuth(provider) =>
+      (
+        start_moonclaw_auth_cmd(dispatch, provider),
+        {
+          ..model,
+          moonclaw_auth_pending: provider,
+          moonclaw_auth_status: "",
+          moonclaw_auth_feedback: "",
+          moonclaw_auth_failed: false,
+          moonclaw_setup_started: true,
+        },
+      )
+    CheckMoonClawSetup =>
+      (
+        @rabbita.batch([
+          fetch_moonclaw_auth_cmd(dispatch),
+          fetch_moonclaw_daemon_cmd(dispatch),
+        ]),
+        {
+          ..model,
+          moonclaw_auth_pending: "check",
+          moonclaw_auth_status: "",
+          moonclaw_auth_feedback: "Checking Code assistance setup…",
+          moonclaw_auth_failed: false,
+        },
+      )
+    SetMoonClawOpenRouterKey(value) =>
+      (@rabbita.none, { ..model, moonclaw_openrouter_key: value })
+    SaveMoonClawOpenRouterKey =>
+      if model.moonclaw_openrouter_key.trim().to_owned() == "" {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            moonclaw_auth_status: "api_key_required",
+            moonclaw_auth_feedback: "OpenRouter API key is required.",
+            moonclaw_auth_failed: true,
+          },
+        )
+      } else {
+        (
+          save_moonclaw_openrouter_key_cmd(
+            dispatch,
+            model.moonclaw_openrouter_key.trim().to_owned(),
+          ),
+          {
+            ..model,
+            moonclaw_auth_pending: "openrouter",
+            moonclaw_auth_status: "",
+            moonclaw_auth_feedback: "",
+            moonclaw_auth_failed: false,
+            moonclaw_setup_started: true,
+          },
+        )
+      }
     RefreshMoonCodeMetadata(_) | ResumeMoonCodeWatch(_, _) =>
       update_mooncode_transport_actions(dispatch, msg, model)
     _ => (@rabbita.none, model)

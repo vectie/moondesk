@@ -87,6 +87,12 @@ fn update(
     LoadedMoonClawDaemon(_) => update_mooncode_results(dispatch, msg, model)
     ManagedMoonClaw(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonClawModels(_) => update_mooncode_results(dispatch, msg, model)
+    LoadedMoonClawAuth(_) => update_mooncode_results(dispatch, msg, model)
+    StartedMoonClawCodexAuth(_) => update_mooncode_results(dispatch, msg, model)
+    StartedMoonClawCopilotAuth(_) =>
+      update_mooncode_results(dispatch, msg, model)
+    SavedMoonClawOpenRouterKey(_) =>
+      update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeSessions(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeArchivedSessions(_) =>
       update_mooncode_results(dispatch, msg, model)
@@ -168,6 +174,10 @@ fn update(
     DecideMoonCodeTool(_, _, _, _, _) =>
       update_mooncode_actions(dispatch, msg, model)
     ManageMoonClaw(_) => update_mooncode_actions(dispatch, msg, model)
+    StartMoonClawAuth(_) => update_mooncode_actions(dispatch, msg, model)
+    CheckMoonClawSetup => update_mooncode_actions(dispatch, msg, model)
+    SetMoonClawOpenRouterKey(_) => update_mooncode_actions(dispatch, msg, model)
+    SaveMoonClawOpenRouterKey => update_mooncode_actions(dispatch, msg, model)
     RefreshMoonCodeMetadata(_) => update_mooncode_actions(dispatch, msg, model)
     ResumeMoonCodeWatch(_, _) => update_mooncode_actions(dispatch, msg, model)
     SetGoalTitle(_) => update_book_builder_actions(dispatch, msg, model)

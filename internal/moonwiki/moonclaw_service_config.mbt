@@ -52,30 +52,40 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
       "moonclaw/" + version + "/bin/moonclaw",
     )
   }
+  let managed_config = json_string(config, "kind", default="") ==
+    "moondesk-moonclaw-service.v1" &&
+    version != ""
   let managed_install = moonclaw_managed_service_matches(
     version,
     command,
     managed_binary,
     @fsx.exists(managed_binary),
   )
+  let repair_available = managed_config && !managed_install
   let integrity = service_configuration_integrity(command, cwd)
   {
-    "configured": command != "",
-    "configuration_valid": json_bool(integrity, "valid", default=false),
-    "configuration_reason": json_string(
-      integrity,
-      "reason",
-      default="not-configured",
-    ),
+    "configured": command != "" && !repair_available,
+    "configuration_present": command != "",
+    "configuration_valid": !repair_available &&
+    json_bool(integrity, "valid", default=false),
+    "configuration_reason": if repair_available {
+      "stale-managed-service-config"
+    } else {
+      json_string(integrity, "reason", default="not-configured")
+    },
     "kind": "moondesk-moonclaw-service.v1",
     "action": action,
     "command": command,
     "args": json_from_string_array(args),
     "cwd": cwd,
     "version": version,
+    "managed_config": managed_config,
     "managed_install": managed_install,
+    "repair_available": repair_available,
     "config_path": moonclaw_service_config_path(root),
-    "source": if configured_command != "" {
+    "source": if repair_available {
+      "stale-managed"
+    } else if configured_command != "" {
       "config"
     } else {
       json_string(fallback, "source", default="missing")

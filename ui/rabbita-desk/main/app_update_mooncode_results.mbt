@@ -8,6 +8,10 @@ fn update_mooncode_results(
     LoadedMoonClawDaemon(_)
     | ManagedMoonClaw(_)
     | LoadedMoonClawModels(_)
+    | LoadedMoonClawAuth(_)
+    | StartedMoonClawCodexAuth(_)
+    | StartedMoonClawCopilotAuth(_)
+    | SavedMoonClawOpenRouterKey(_)
     | LoadedMoonCodeSessions(_)
     | LoadedMoonCodeArchivedSessions(_)
     | LoadedMoonCodeWatch(_, _, _) =>

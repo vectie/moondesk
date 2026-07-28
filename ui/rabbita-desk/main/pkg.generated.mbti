@@ -69,11 +69,19 @@ type MarkdownEditResult derive(@json.FromJson)
 
 type Model
 
+type MoonClawAuthStatus derive(@json.FromJson)
+
+type MoonClawCodexAuthFlow derive(@json.FromJson)
+
+type MoonClawCopilotAuthFlow derive(@json.FromJson)
+
 type MoonClawDaemonStatus derive(@json.FromJson)
 
 type MoonClawModel derive(@json.FromJson)
 
 type MoonClawModelsResult derive(@json.FromJson)
+
+type MoonClawSetupResult derive(@json.FromJson)
 
 type MoonCodeActivityRow
 

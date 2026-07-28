@@ -32,6 +32,12 @@ test "MoonCode list selection enters loading only with running evidence" {
     {
       ..first_use,
       moonclaw_daemon: Some({
+        ok: None,
+        status: None,
+        next_action: None,
+        model_ready: None,
+        model_readiness: None,
+        repair_available: None,
         running: true,
         port: 4545,
         message: "running",

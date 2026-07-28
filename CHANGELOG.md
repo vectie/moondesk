@@ -6,6 +6,11 @@ version.
 
 ## Unreleased
 
+- Made MoonClaw first-run installation initialize its canonical configuration
+  before starting the daemon, with explicit install, repair, authentication,
+  model-readiness, and retry states.
+- Added MoonGate-managed MoonClaw provider binding without replacing unrelated
+  MoonClaw providers or taking ownership of the user's primary model.
 - Added a shared accessible application shell with skip-to-content,
   destination landmarks, semantic current navigation, and typed live status.
 - Made release metadata portable and added strict artifact verification,
@@ -21,6 +26,7 @@ version.
 
 ## Released previews
 
+- [0.1.0-preview.11](docs/releases/0.1.0-preview.11.md)
 - [0.1.0-preview.3](docs/releases/0.1.0-preview.3.md)
 - [0.1.0-preview.2](docs/releases/0.1.0-preview.2.md)
 - [0.1.0-preview.1](docs/releases/0.1.0-preview.1.md)

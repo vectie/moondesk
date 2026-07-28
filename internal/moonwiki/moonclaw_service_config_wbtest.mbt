@@ -66,6 +66,68 @@ test "managed MoonClaw service requires version path and installed binary" {
 }
 
 ///|
+async test "copied managed MoonClaw config is repairable and not installed" {
+  let root = "/tmp/moondesk-moonclaw-stale-managed-wbtest-" +
+    @desk.stable_id("moonclaw-stale-managed", @async.now().to_string())
+  @fsx.make_directory(
+    moonsuite_product_dir(root, "moonclaw"),
+    recursive=true,
+    exists_ok=true,
+  )
+  @fsx.write_to_file(
+    moonclaw_service_config_path(root),
+    (
+      {
+        "kind": "moondesk-moonclaw-service.v1",
+        "version": "0.1.4",
+        "cwd": "/Users/other/Library/Application Support/app.vectie.moondesk/runtimes/moonclaw/0.1.4",
+        "daemon": {
+          "command": "/Users/other/Library/Application Support/app.vectie.moondesk/runtimes/moonclaw/0.1.4/bin/moonclaw",
+          "args": ["daemon", "--port", "0", "--serve", root],
+        },
+      } : Json).stringify(indent=2) +
+    "\n",
+    create=0o644,
+  )
+  let descriptor = moonclaw_service_descriptor(root, "daemon")
+  assert_false(json_bool(descriptor, "configured", default=true))
+  assert_true(json_bool(descriptor, "configuration_present", default=false))
+  assert_true(json_bool(descriptor, "managed_config", default=false))
+  assert_false(json_bool(descriptor, "managed_install", default=true))
+  assert_true(json_bool(descriptor, "repair_available", default=false))
+  assert_eq(
+    json_string(descriptor, "configuration_reason", default=""),
+    "stale-managed-service-config",
+  )
+  assert_eq(json_string(descriptor, "source", default=""), "stale-managed")
+
+  let status = moonclaw_daemon_status_with_platform(
+    root,
+    moonclaw_platform_support_from_values("macos", "arm64"),
+  )
+  assert_false(json_bool(status, "ok", default=true))
+  assert_false(json_bool(status, "running", default=true))
+  assert_false(json_bool(status, "service_configured", default=true))
+  assert_false(json_bool(status, "managed_install", default=true))
+  assert_true(json_bool(status, "repair_available", default=false))
+  assert_eq(json_string(status, "status", default=""), "repair_available")
+  assert_eq(json_string(status, "next_action", default=""), "install_moonclaw")
+  let installation = json_object_field(status, "installation_evidence").unwrap()
+  assert_false(json_bool(installation, "installed", default=true))
+  assert_eq(
+    json_string(installation, "reason", default=""),
+    "stale-managed-service-config",
+  )
+  let configuration = json_object_field(status, "configuration_evidence").unwrap()
+  assert_false(json_bool(configuration, "configured", default=true))
+  assert_true(json_bool(configuration, "valid", default=false))
+  assert_eq(
+    json_string(configuration, "reason", default=""),
+    "stale-managed-service-config",
+  )
+}
+
+///|
 test "MoonClaw capability evidence separates ownership and installation" {
   let managed = moonclaw_installation_evidence_from_values(true, true, false)
   assert_true(json_bool(managed, "installed", default=false))
@@ -81,6 +143,17 @@ test "MoonClaw capability evidence separates ownership and installation" {
   assert_eq(json_string(observed, "source", default=""), "observed-daemon-info")
   let absent = moonclaw_installation_evidence_from_values(false, false, false)
   assert_false(json_bool(absent, "installed", default=true))
+  let repair = moonclaw_installation_evidence_from_values(
+    false,
+    false,
+    true,
+    repair_available=true,
+  )
+  assert_false(json_bool(repair, "installed", default=true))
+  assert_eq(
+    json_string(repair, "reason", default=""),
+    "stale-managed-service-config",
+  )
   let valid = moonclaw_configuration_evidence_from_values(true, true)
   assert_true(json_bool(valid, "valid", default=false))
   let invalid = moonclaw_configuration_evidence_from_values(true, false)
@@ -233,9 +306,14 @@ async test "moonclaw daemon probe uses MoonSuite product home" {
     "MoonClaw is not installed",
   )
   let platform_evidence = json_object_field(status, "platform_evidence").unwrap()
-  assert_true(json_bool(platform_evidence, "supported", default=false))
-  assert_true(json_string(platform_evidence, "platform", default="") != "")
-  assert_true(json_string(platform_evidence, "architecture", default="") != "")
+  let platform = json_string(platform_evidence, "platform", default="")
+  let architecture = json_string(platform_evidence, "architecture", default="")
+  assert_true(platform != "")
+  assert_true(architecture != "")
+  assert_eq(
+    json_bool(platform_evidence, "supported", default=false),
+    platform == "macos" && architecture == "arm64",
+  )
 }
 
 ///|

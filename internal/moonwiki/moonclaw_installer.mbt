@@ -1,7 +1,7 @@
 ///|
 fn moonclaw_release_manifest_url() -> String {
   @sys.get_env_var("MOONCLAW_RELEASE_MANIFEST_URL").unwrap_or(
-    "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.4/downloads/release-manifest-gitlab.json",
+    "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.5/downloads/release-manifest-gitlab.json",
   )
 }
 
@@ -51,8 +51,7 @@ fn moonclaw_platform_support_from_values(
   architecture : String,
 ) -> MoonClawPlatformSupport {
   {
-    supported: (platform == "macos" || platform == "linux") &&
-    (architecture == "arm64" || architecture == "x86_64"),
+    supported: platform == "macos" && architecture == "arm64",
     platform,
     architecture,
   }
@@ -214,7 +213,21 @@ async fn moonclaw_install_failure(
       ),
       "managed_install": json_bool(current, "managed_install", default=false),
       "managed_running": json_bool(current, "managed_running", default=false),
-      "platform_evidence": json_object_field(current, "platform_evidence").unwrap_or({},
+      "repair_available": json_bool(current, "repair_available", default=false),
+      "platform_evidence": json_object_field(current, "platform_evidence").unwrap_or(
+        Json::empty_object(),
+      ),
+      "installation_evidence": json_object_field(
+        current, "installation_evidence",
+      ).unwrap_or(Json::empty_object()),
+      "configuration_evidence": json_object_field(
+        current, "configuration_evidence",
+      ).unwrap_or(Json::empty_object()),
+      "model_readiness": json_object_field(current, "model_readiness").unwrap_or(
+        Json::empty_object(),
+      ),
+      "auth_readiness": json_object_field(current, "auth_readiness").unwrap_or(
+        Json::empty_object(),
       ),
       "installed_version": json_string(current, "installed_version", default=""),
       "running_version": json_string(current, "running_version", default=""),
@@ -235,6 +248,40 @@ async fn moonclaw_install_failure(
 async fn install_moonclaw_release(workspace_root : String) -> Json {
   let root = workspace_context(workspace_root).suite_root
   install_moonclaw_release_for_platform(root, moonclaw_platform_support())
+}
+
+///|
+fn moonclaw_onboard_init_args(root : String) -> Array[String] {
+  ["onboard", "init", "--home", root, "--cwd", root, "--json"]
+}
+
+///|
+async fn initialize_installed_moonclaw(
+  installed_binary : String,
+  root : String,
+) -> Result[Unit, String] {
+  let (code, stdout, stderr) = run_process_capture(
+    installed_binary,
+    moonclaw_onboard_init_args(root),
+  )
+  if code == 0 {
+    Ok(())
+  } else {
+    let detail = trim_for_record(
+      if stderr.trim() != "" {
+        stderr
+      } else {
+        stdout
+      },
+    )
+    Err(
+      if detail == "" {
+        "MoonClaw onboarding exited with status \{code}"
+      } else {
+        detail
+      },
+    )
+  }
 }
 
 ///|
@@ -435,6 +482,16 @@ async fn install_moonclaw_release_from_temp(
         root, "service_directory_failed", "MoonDesk could not create the MoonClaw product directory",
       )
   }
+  match initialize_installed_moonclaw(installed_binary, root) {
+    Err(error) =>
+      return moonclaw_install_failure(
+        root,
+        "onboarding_init_failed",
+        "MoonDesk installed MoonClaw but could not initialize its configuration: " +
+        error,
+      )
+    Ok(_) => ()
+  }
   let service_config : Json = {
     "kind": "moondesk-moonclaw-service.v1",
     "version": version,
@@ -466,15 +523,7 @@ async fn install_moonclaw_release_from_temp(
   }
   let started = ensure_moonclaw_daemon_running(root, action="install")
   if json_bool(started, "running", default=false) {
-    let fields = match started {
-      Object(fields) => fields.copy()
-      _ => {}
-    }
-    fields["installed_version"] = version.to_json()
-    fields["installed_binary"] = installed_binary.to_json()
-    fields["status"] = "installed_and_running".to_json()
-    fields["message"] = ("MoonClaw " + version + " is installed and running").to_json()
-    Json::object(fields)
+    moonclaw_install_success(started, version, installed_binary)
   } else {
     moonclaw_install_failure(
       root,
@@ -489,6 +538,44 @@ async fn install_moonclaw_release_from_temp(
       ),
     )
   }
+}
+
+///|
+fn moonclaw_install_success(
+  started : Json,
+  version : String,
+  installed_binary : String,
+) -> Json {
+  let fields = match started {
+    Object(fields) => fields.copy()
+    _ => Map([])
+  }
+  let model_readiness = json_object_field_or_empty(started, "model_readiness")
+  let model_known = json_bool(model_readiness, "known", default=false)
+  let model_ready = json_bool(model_readiness, "ready", default=false)
+  let needs_configuration = model_known && !model_ready
+  fields["ok"] = true.to_json()
+  fields["running"] = true.to_json()
+  fields["installed_version"] = version.to_json()
+  fields["installed_binary"] = installed_binary.to_json()
+  fields["status"] = if needs_configuration {
+    "installed_needs_configuration".to_json()
+  } else {
+    "installed_and_running".to_json()
+  }
+  fields["message"] = if needs_configuration {
+    ("MoonClaw " +
+    version +
+    " is installed and running, but a model must be configured").to_json()
+  } else {
+    ("MoonClaw " + version + " is installed and running").to_json()
+  }
+  fields["next_action"] = if needs_configuration {
+    "configure_model".to_json()
+  } else {
+    "use_moonclaw".to_json()
+  }
+  Json::object(fields)
 }
 
 ///|

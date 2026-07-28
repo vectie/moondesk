@@ -2,6 +2,7 @@
 priv enum CapabilityState {
   DetectedRunning
   InstalledStopped
+  InstalledNeedsConfiguration
   NotInstalled
   Misconfigured
   UnsupportedPlatform
@@ -13,6 +14,7 @@ priv enum CodeCapabilityPrimaryAction {
   NoPrimaryAction
   StartCapability
   InstallCapability
+  ConfigureCapability
   OpenConfiguration
   RetryCapabilityCheck
 }
@@ -55,6 +57,13 @@ fn moonclaw_capability_state(daemon : MoonClawDaemonStatus?) -> CapabilityState 
   match daemon {
     None => TemporarilyUnavailable
     Some(daemon) => {
+      let supported = match daemon.platform_evidence {
+        Some(evidence) => evidence.supported
+        None => true
+      }
+      if !supported {
+        return UnsupportedPlatform
+      }
       let installed = match daemon.installation_evidence {
         Some(evidence) => evidence.installed
         None =>
@@ -67,17 +76,59 @@ fn moonclaw_capability_state(daemon : MoonClawDaemonStatus?) -> CapabilityState 
         Some(evidence) => evidence.configured && evidence.valid
         None => daemon.service_configured || daemon.running
       }
-      classify_capability(
-        match daemon.platform_evidence {
-          Some(evidence) => evidence.supported
-          None => true
-        },
-        true,
-        daemon.running,
-        installed,
-        configured,
-      )
+      let configuration_invalid = match daemon.configuration_evidence {
+        Some(evidence) => !evidence.configured || !evidence.valid
+        None => false
+      }
+      let model_ready = moonclaw_model_ready(Some(daemon))
+      if daemon.running {
+        return match model_ready {
+          Some(false) => InstalledNeedsConfiguration
+          Some(true) => DetectedRunning
+          None => TemporarilyUnavailable
+        }
+      }
+      if !installed {
+        return NotInstalled
+      }
+      if configuration_invalid {
+        return Misconfigured
+      }
+      match model_ready {
+        Some(false) => InstalledNeedsConfiguration
+        Some(true) => InstalledStopped
+        None =>
+          if !configured {
+            InstalledNeedsConfiguration
+          } else {
+            InstalledStopped
+          }
+      }
     }
+  }
+}
+
+///|
+fn moonclaw_model_ready(daemon : MoonClawDaemonStatus?) -> Bool? {
+  match daemon {
+    None => None
+    Some(daemon) =>
+      match daemon.model_ready {
+        Some(ready) => Some(ready)
+        None =>
+          match daemon.model_readiness {
+            Some(readiness) if readiness.known => Some(readiness.ready)
+            _ => None
+          }
+      }
+  }
+}
+
+///|
+fn moonclaw_repair_available(daemon : MoonClawDaemonStatus?) -> Bool {
+  match daemon {
+    Some(daemon) => daemon.repair_available is Some(true)
+    None => false
   }
 }
 
@@ -86,6 +137,8 @@ fn code_capability_title_i18n_key(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "code.assistance_title_detected_running"
     InstalledStopped => "code.assistance_title_installed_stopped"
+    InstalledNeedsConfiguration =>
+      "code.assistance_title_installed_needs_configuration"
     NotInstalled => "code.assistance_title_not_installed"
     Misconfigured => "code.assistance_title_misconfigured"
     UnsupportedPlatform => "code.assistance_title_unsupported_platform"
@@ -98,6 +151,8 @@ fn code_capability_detail_i18n_key(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "code.assistance_detail_detected_running"
     InstalledStopped => "code.assistance_detail_installed_stopped"
+    InstalledNeedsConfiguration =>
+      "code.assistance_detail_installed_needs_configuration"
     NotInstalled => "code.assistance_detail_not_installed"
     Misconfigured => "code.assistance_detail_misconfigured"
     UnsupportedPlatform => "code.assistance_detail_unsupported_platform"
@@ -110,6 +165,8 @@ fn code_capability_status_i18n_key(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "code.assistance_status_running"
     InstalledStopped => "code.assistance_status_installed_stopped"
+    InstalledNeedsConfiguration =>
+      "code.assistance_status_installed_needs_configuration"
     NotInstalled => "code.assistance_status_not_installed"
     Misconfigured => "code.assistance_status_needs_configuration"
     UnsupportedPlatform => "code.assistance_status_not_supported"
@@ -122,6 +179,7 @@ fn code_capability_title(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "Code assistance is ready"
     InstalledStopped => "Code assistance is stopped"
+    InstalledNeedsConfiguration => "Code assistance needs an account or model"
     NotInstalled => "Code assistance is not installed"
     Misconfigured => "Code assistance needs configuration"
     UnsupportedPlatform => "Code assistance is not supported here"
@@ -134,6 +192,7 @@ fn capability_state_key(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "detected-running"
     InstalledStopped => "installed-stopped"
+    InstalledNeedsConfiguration => "installed-needs-configuration"
     NotInstalled => "not-installed"
     Misconfigured => "misconfigured"
     UnsupportedPlatform => "unsupported-platform"
@@ -146,8 +205,11 @@ fn capability_status_key(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "ready"
     TemporarilyUnavailable => "unknown"
-    InstalledStopped | NotInstalled | Misconfigured | UnsupportedPlatform =>
-      "missing"
+    InstalledStopped
+    | InstalledNeedsConfiguration
+    | NotInstalled
+    | Misconfigured
+    | UnsupportedPlatform => "missing"
   }
 }
 
@@ -156,6 +218,7 @@ fn capability_status_label(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "running"
     InstalledStopped => "installed, stopped"
+    InstalledNeedsConfiguration => "setup needed"
     NotInstalled => "not installed"
     Misconfigured => "needs configuration"
     UnsupportedPlatform => "not supported"
@@ -168,6 +231,8 @@ fn code_capability_detail(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "You can start or continue Code conversations."
     InstalledStopped => "Start Code assistance before beginning a conversation."
+    InstalledNeedsConfiguration =>
+      "Connect Codex, GitHub Copilot, or OpenRouter to finish setup."
     NotInstalled => "Install Code assistance to use Code conversations."
     Misconfigured => "Review the configuration before using Code assistance."
     UnsupportedPlatform =>
@@ -184,6 +249,7 @@ fn code_capability_primary_action(
   match state {
     DetectedRunning => NoPrimaryAction
     InstalledStopped => StartCapability
+    InstalledNeedsConfiguration => ConfigureCapability
     NotInstalled => InstallCapability
     Misconfigured => OpenConfiguration
     UnsupportedPlatform => NoPrimaryAction
@@ -199,6 +265,7 @@ fn code_capability_primary_action_i18n_key(
     NoPrimaryAction => ""
     StartCapability => "code.assistance_action_start"
     InstallCapability => "code.assistance_action_install"
+    ConfigureCapability => "code.assistance_action_connect"
     OpenConfiguration => "code.assistance_action_open_configuration"
     RetryCapabilityCheck => "code.assistance_action_retry"
   }
@@ -212,6 +279,7 @@ fn code_capability_primary_action_label(
     NoPrimaryAction => ""
     StartCapability => "Start Code assistance"
     InstallCapability => "Install Code assistance"
+    ConfigureCapability => "Connect Codex"
     OpenConfiguration => "Review configuration"
     RetryCapabilityCheck => "Check again"
   }
@@ -261,7 +329,8 @@ fn requests_capability_title(state : CapabilityState) -> String {
   match state {
     DetectedRunning => "Request automation is ready"
     InstalledStopped => "Request automation is stopped"
-    NotInstalled | Misconfigured => "Request automation needs setup"
+    InstalledNeedsConfiguration | NotInstalled | Misconfigured =>
+      "Request automation needs setup"
     UnsupportedPlatform => "Request automation is not supported here"
     TemporarilyUnavailable => "Request automation status is unavailable"
   }
@@ -274,7 +343,7 @@ fn requests_capability_detail(state : CapabilityState) -> String {
       "Requests can be saved now and automation can process scheduled work."
     InstalledStopped =>
       "Requests can still be saved. Start automation for scheduled work."
-    NotInstalled | Misconfigured =>
+    InstalledNeedsConfiguration | NotInstalled | Misconfigured =>
       "Requests can still be saved. Review setup before using scheduled work."
     UnsupportedPlatform =>
       "Requests can still be saved without local scheduled automation."
@@ -290,7 +359,8 @@ fn requests_capability_primary_action(
   match state {
     DetectedRunning | UnsupportedPlatform => NoRequestsCapabilityAction
     InstalledStopped => StartRequestsAutomation
-    NotInstalled | Misconfigured => ReviewRequestsSetup
+    InstalledNeedsConfiguration | NotInstalled | Misconfigured =>
+      ReviewRequestsSetup
     TemporarilyUnavailable => RetryRequestsCapabilityCheck
   }
 }

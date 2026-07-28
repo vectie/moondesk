@@ -29,8 +29,10 @@ viewports.
 
 Current evidence is uneven: individual surfaces contain empty/loading/error copy
 and runtime status, but there is not yet one exhaustive state contract covering
-every surface. Command 011 adds the first bounded UI slice: a private six-case
-`CapabilityState`, a deterministic pure classifier with explicit precedence,
+every surface. Command 011 adds the first bounded UI slice; the current private
+enum has seven cases, including an installed-and-running state that still needs
+model-provider setup. `CapabilityState` has a deterministic pure classifier
+with explicit precedence,
 exact plain-language title/detail and primary-action mappings, and focused
 tests for every state, precedence edge, action, label, and current daemon
 mapping. Code setup and workspace service summaries now consume that mapping
@@ -48,8 +50,9 @@ false; older responses without the optional evidence records retain their
 structured-field compatibility behavior. Platform, architecture, evidence
 sources, and stable reasons stay inside the Code technical disclosure.
 
-Requests uses the same six-state vocabulary over its separate Town lifecycle
-DTO. The host reports platform support plus installation evidence from a
+Requests uses the same enum over its separate Town lifecycle DTO, but does not
+currently produce the Code-only `InstalledNeedsConfiguration` case. The host
+reports platform support plus installation evidence from a
 configured service or a matching-root LaunchAgent. Explicit false evidence can
 therefore select NotInstalled or UnsupportedPlatform; a configured stopped
 service selects InstalledStopped; an installed but invalid setup selects
@@ -175,7 +178,7 @@ capability card led with internal authority and service names, selected state
 through a second boolean branch, and rendered raw daemon and installation
 messages outside disclosure.
 
-Home and Code now share the same six-state classifier, plain-language
+Home and Code now share the same seven-state classifier, plain-language
 title/detail mapping, and action allowlist. Home exposes the stable capability
 state key and offers only Start, Install, Review configuration, Check again, or
 no action. Its ordinary summary and generic installation progress are separate
@@ -184,10 +187,10 @@ render functions that never receive or render raw diagnostic text. One closed
 installation messages, platform/architecture/support evidence, managed
 installation/process facts, and authority boundary.
 
-Fifteen focused capability tests cover all six Home state keys, their rendered
+Focused capability tests cover all seven Home state keys, their rendered
 action allowlists, independently rendered ordinary and technical markup, closed
 disclosure, generic install progress, and the shared Code summary. They also
-render the actual Code setup for all six typed states. Running alone hides
+render the actual Code setup for all seven typed states. Running alone hides
 setup; every non-ready state owns the setup layout row and stable state key.
 In particular, a missing daemon-status response now renders
 `temporarily-unavailable`, **Check again**, and a closed diagnostic disclosure
@@ -532,6 +535,7 @@ Every cell gives **primary action; optional technical disclosure**. None of this
 CapabilityState =
   DetectedRunning
   InstalledStopped
+  InstalledNeedsConfiguration
   NotInstalled
   Misconfigured
   UnsupportedPlatform
@@ -539,7 +543,9 @@ CapabilityState =
 ```
 
 The UI now implements this as a private shared MoonBit enum. Code and Requests
-automation map all six states from explicit host evidence. Requests
+automation map their states from explicit host evidence. Code distinguishes a
+reachable daemon with no usable default model from a stopped or broken
+installation. Requests
 installation evidence distinguishes a configured service, a matching-root
 supervisor, and absence; its platform evidence is normalized independently of
 runtime reachability; and its configuration evidence distinguishes absence
@@ -553,12 +559,32 @@ absent, misconfigured, unsupported, or temporarily unavailable.
 | --- | --- | --- | --- | --- |
 | DetectedRunning | Capability is detected and responding | Continue | Recheck, stop only when safely managed, technical details | Do not show setup as required |
 | InstalledStopped | Installation detected, process not running | Start | Recheck, open Settings, details | Do not claim connected/running |
+| InstalledNeedsConfiguration | Service is running but has no usable model | Connect Codex | Connect GitHub Copilot, save an OpenRouter key, recheck, details | Do not claim conversations are ready or reinstall a healthy service |
 | NotInstalled | No supported installation detected | Install | Choose existing installation, details | Do not offer Start |
 | Misconfigured | Installation exists but config/credentials/path is invalid | Fix configuration | Recheck, open file/system settings, details | Do not silently reinstall or execute |
 | UnsupportedPlatform | Capability cannot run on this platform | Continue without capability | Learn more, export diagnostics | Do not offer install/start/retry loops |
 | TemporarilyUnavailable | Previously/configurably available but probe/service failed transiently | Retry | Continue offline where safe, details | Do not convert to “not installed” or erase last evidence |
 
 Dependent controls must be disabled or replaced with the one allowed setup action. Detection is read-only; install, start, configuration, and permission changes require explicit user action.
+
+### Clean-Mac MoonClaw bootstrap
+
+On macOS arm64, MoonDesk can now install and start MoonClaw before any model
+credentials exist. A reachable unconfigured daemon reports
+`running_needs_configuration`; MoonDesk then offers Codex OAuth, GitHub
+Copilot device authorization, or a securely stored OpenRouter key and withholds
+Code sessions until model readiness is confirmed. A copied service descriptor
+that points at a missing managed runtime reports `repair_available` and offers
+an explicit repair install. Other platform/architecture pairs are reported as
+unsupported because the current release manifest contains only a macOS arm64
+asset.
+
+OpenRouter keys are merged into the product configuration without replacing
+unrelated fields, the file is constrained to mode `0600`, redirected paths are
+rejected, updates replace the file atomically, and the key is never returned in
+API responses. OAuth handoff links are accepted only for the expected OpenAI
+and GitHub destinations. Release transport remains on the existing trusted
+manifest origin; HTTPS migration is intentionally outside this change.
 
 ## Command 019 executable clean-workspace quickstart smoke
 

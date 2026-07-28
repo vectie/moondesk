@@ -56,6 +56,10 @@ test "product and system desktop routes live in core boundary" {
   assert_eq(@core.desktop_capabilities_url(), "/api/desktop/capabilities")
   assert_eq(@core.moonclaw_endpoint_url("daemon"), "/api/moonclaw/daemon")
   assert_eq(
+    @core.moonclaw_endpoint_url("auth/codex/start"),
+    "/api/moonclaw/auth/codex/start",
+  )
+  assert_eq(
     @core.moonclaw_run_artifacts_route(),
     "/api/moonclaw/runs/<run-id>/artifacts",
   )
@@ -114,6 +118,48 @@ test "desktop api route contracts own active backend method policy" {
     @core.desktop_api_route_allowed_methods(@core.books_route("from-pattern")).join(
       ", ",
     ),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(@core.moonclaw_route("auth/status")).join(
+      ", ",
+    ),
+    "GET, HEAD",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_route("daemon/install"),
+    ).join(", "),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_route("daemon/start"),
+    ).join(", "),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_route("daemon/retry"),
+    ).join(", "),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_route("auth/codex/start"),
+    ).join(", "),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_route("auth/copilot/start"),
+    ).join(", "),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_route("config/openrouter-key"),
+    ).join(", "),
     "POST",
   )
   assert_true(

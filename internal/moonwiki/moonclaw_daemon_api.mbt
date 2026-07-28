@@ -78,6 +78,630 @@ async fn handle_moonclaw_models(
 }
 
 ///|
+fn moonclaw_model_readiness_unknown(
+  reason : String,
+  error? : String = "",
+) -> Json {
+  {
+    "known": false,
+    "ready": false,
+    "status": "unknown",
+    "reason": reason,
+    "default_model": "",
+    "models": [],
+    "error": error,
+  }
+}
+
+///|
+fn moonclaw_model_readiness_from_probe(probe : Result[Json, String]) -> Json {
+  match probe {
+    Ok(payload) => {
+      let ready = moonclaw_models_response_ready(payload)
+      {
+        "known": true,
+        "ready": ready,
+        "status": if ready {
+          "ready"
+        } else {
+          "needs_configuration"
+        },
+        "reason": if ready {
+          "default-model-available"
+        } else {
+          "default-model-unavailable"
+        },
+        "default_model": json_string(payload, "default_model", default=""),
+        "models": json_array(payload, "models"),
+        "error": "",
+      }
+    }
+    Err(error) => moonclaw_model_readiness_unknown("route-unavailable", error~)
+  }
+}
+
+///|
+fn moonclaw_provider_auth_readiness(payload : Json, provider : String) -> Json {
+  match json_object_field(payload, provider) {
+    Some(status) =>
+      {
+        "known": true,
+        "authenticated": json_bool(status, "authenticated", default=false),
+        "email": json_string(status, "email", default=""),
+        "plan": json_string(status, "plan", default=""),
+      }
+    None => { "known": false, "authenticated": false, "email": "", "plan": "" }
+  }
+}
+
+///|
+fn moonclaw_auth_readiness_unknown(
+  reason : String,
+  error? : String = "",
+) -> Json {
+  {
+    "known": false,
+    "ready": false,
+    "status": "unknown",
+    "reason": reason,
+    "codex": moonclaw_provider_auth_readiness(Json::empty_object(), "codex"),
+    "copilot": moonclaw_provider_auth_readiness(Json::empty_object(), "copilot"),
+    "error": error,
+  }
+}
+
+///|
+fn moonclaw_auth_readiness_from_probe(probe : Result[Json, String]) -> Json {
+  match probe {
+    Ok(payload) => {
+      let codex = moonclaw_provider_auth_readiness(payload, "codex")
+      let copilot = moonclaw_provider_auth_readiness(payload, "copilot")
+      let known = json_bool(codex, "known", default=false) ||
+        json_bool(copilot, "known", default=false)
+      let ready = json_bool(codex, "authenticated", default=false) ||
+        json_bool(copilot, "authenticated", default=false)
+      {
+        "known": known,
+        "ready": ready,
+        "status": if !known {
+          "unknown"
+        } else if ready {
+          "ready"
+        } else {
+          "authentication_required"
+        },
+        "reason": if !known {
+          "provider-status-unavailable"
+        } else if ready {
+          "provider-authenticated"
+        } else {
+          "provider-authentication-required"
+        },
+        "codex": codex,
+        "copilot": copilot,
+        "error": "",
+      }
+    }
+    Err(error) => moonclaw_auth_readiness_unknown("route-unavailable", error~)
+  }
+}
+
+///|
+fn moonclaw_daemon_model_ready(daemon : Json) -> Bool? {
+  if json_object_field(daemon, "model_readiness") is Some(readiness) &&
+    json_bool(readiness, "known", default=false) {
+    Some(json_bool(readiness, "ready", default=false))
+  } else {
+    None
+  }
+}
+
+///|
+fn moonclaw_auth_status_response_from_probe(
+  daemon : Json,
+  probe : Result[Json, String],
+) -> Json {
+  match probe {
+    Ok(payload) => {
+      let auth_readiness = moonclaw_auth_readiness_from_probe(Ok(payload))
+      let auth_known = json_bool(auth_readiness, "known", default=false)
+      let auth_ready = json_bool(auth_readiness, "ready", default=false)
+      let model_ready = moonclaw_daemon_model_ready(daemon).unwrap_or(false)
+      let ready = auth_ready || model_ready
+      let fields = match payload {
+        Object(fields) => fields.copy()
+        _ => Map([])
+      }
+      fields["daemon"] = daemon
+      fields["auth_readiness"] = auth_readiness
+      if moonclaw_daemon_model_ready(daemon) is Some(model_ready) {
+        fields["model_ready"] = model_ready.to_json()
+      }
+      api_contract_response(
+        Json::object(fields),
+        ok=ready,
+        status=if ready {
+          "ready"
+        } else if !auth_known {
+          "auth_status_unknown"
+        } else {
+          "authentication_required"
+        },
+        message=if model_ready {
+          "A MoonClaw model is configured and ready"
+        } else if auth_ready {
+          "A MoonClaw model provider is authenticated"
+        } else if !auth_known {
+          "MoonClaw did not provide provider authentication status"
+        } else {
+          "Authenticate Codex or GitHub Copilot, or configure an OpenRouter API key"
+        },
+        next_action=if ready {
+          "use_moonclaw"
+        } else if !auth_known {
+          "inspect_or_upgrade_moonclaw"
+        } else {
+          "authenticate_model_provider"
+        },
+      )
+    }
+    Err(error) =>
+      api_contract_response(
+        {
+          "daemon": daemon,
+          "auth_readiness": moonclaw_auth_readiness_unknown(
+            "route-unavailable",
+            error~,
+          ),
+          "upstream_error": error,
+        },
+        ok=false,
+        status="auth_status_unknown",
+        message=error,
+        next_action="inspect_or_upgrade_moonclaw",
+      )
+  }
+}
+
+///|
+async fn handle_moonclaw_auth_status(
+  workspace_root : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let daemon = moonclaw_daemon_status(workspace_root)
+  let probe = if json_bool(daemon, "running", default=false) {
+    moonclaw_get_json(daemon, "/v1/auth/status")
+  } else {
+    Err(
+      json_string(daemon, "message", default="MoonClaw daemon is not running"),
+    )
+  }
+  send_json(
+    conn,
+    method_,
+    moonclaw_auth_status_response_from_probe(daemon, probe),
+  )
+}
+
+///|
+fn moonclaw_auth_start_response_from_probe(
+  daemon : Json,
+  provider : String,
+  probe : Result[Json, String],
+) -> Json {
+  match probe {
+    Ok(payload) => {
+      let payload_error = if provider == "codex" {
+        let auth_url = json_string(payload, "auth_url", default="")
+        if auth_url == "" || json_string(payload, "state", default="") == "" {
+          Some(
+            "MoonClaw Codex authentication response did not include auth_url and state",
+          )
+        } else if !moonclaw_auth_destination_allowed(provider, auth_url) {
+          Some(
+            "MoonClaw Codex authentication response used an untrusted authorization destination",
+          )
+        } else {
+          None
+        }
+      } else {
+        let verification_uri = json_string(
+          payload,
+          "verification_uri",
+          default="",
+        )
+        if json_string(payload, "user_code", default="") == "" ||
+          verification_uri == "" {
+          Some(
+            "MoonClaw GitHub Copilot authentication response did not include user_code and verification_uri",
+          )
+        } else if !moonclaw_auth_destination_allowed(provider, verification_uri) {
+          Some(
+            "MoonClaw GitHub Copilot authentication response used an untrusted verification destination",
+          )
+        } else {
+          None
+        }
+      }
+      if payload_error is Some(error) {
+        return moonclaw_auth_start_failure_response(daemon, provider, error)
+      }
+      let fields = match payload {
+        Object(fields) => fields.copy()
+        _ => Map([])
+      }
+      fields["daemon"] = daemon
+      fields["provider"] = provider.to_json()
+      if moonclaw_daemon_model_ready(daemon) is Some(model_ready) {
+        fields["model_ready"] = model_ready.to_json()
+      }
+      api_contract_response(
+        Json::object(fields),
+        ok=true,
+        status="auth_started",
+        message=if provider == "codex" {
+          "Codex authorization started"
+        } else {
+          "GitHub Copilot device authorization started"
+        },
+        next_action=if provider == "codex" {
+          "open_authorization_url"
+        } else {
+          "complete_device_authorization"
+        },
+      )
+    }
+    Err(error) => moonclaw_auth_start_failure_response(daemon, provider, error)
+  }
+}
+
+///|
+fn moonclaw_auth_destination_allowed(
+  provider : String,
+  destination : String,
+) -> Bool {
+  if provider == "codex" {
+    destination.has_prefix("https://auth.openai.com/oauth/authorize?")
+  } else if provider == "copilot" {
+    destination == "https://github.com/login/device"
+  } else {
+    false
+  }
+}
+
+///|
+fn moonclaw_auth_start_failure_response(
+  daemon : Json,
+  provider : String,
+  error : String,
+) -> Json {
+  api_contract_response(
+    { "daemon": daemon, "provider": provider, "upstream_error": error },
+    ok=false,
+    status="auth_start_failed",
+    message=error,
+    next_action="inspect_moonclaw_auth",
+  )
+}
+
+///|
+async fn handle_moonclaw_auth_start(
+  workspace_root : String,
+  provider : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let daemon = moonclaw_daemon_status(workspace_root)
+  let probe = if json_bool(daemon, "running", default=false) {
+    moonclaw_post_json(
+      daemon,
+      "/v1/auth/\{provider}/start",
+      Json::empty_object(),
+    )
+  } else {
+    Err(
+      json_string(daemon, "message", default="MoonClaw daemon is not running"),
+    )
+  }
+  send_json(
+    conn,
+    method_,
+    moonclaw_auth_start_response_from_probe(daemon, provider, probe),
+  )
+}
+
+///|
+fn moonclaw_openrouter_key_from_payload(
+  payload : Json,
+) -> Result[String, String] {
+  guard json_string_opt(payload, "api_key") is Some(value) else {
+    return Err("api_key must be a JSON string")
+  }
+  let value = value.trim().to_owned()
+  if value == "" {
+    return Err("api_key must not be empty")
+  }
+  if value.length() > 4096 {
+    return Err("api_key must be at most 4096 characters")
+  }
+  Ok(value)
+}
+
+///|
+fn moonclaw_config_with_openrouter_key(
+  existing : Json,
+  api_key : String,
+) -> Json {
+  let fields = match existing {
+    Object(fields) => fields.copy()
+    _ => Map([])
+  }
+  fields["api_key"] = api_key.to_json()
+  Json::object(fields)
+}
+
+///|
+async fn moonclaw_secure_product_directory(
+  root : String,
+  product_dir : String,
+) -> Result[Unit, String] {
+  let canonical_root = @fs.realpath(root) catch {
+    _ => return Err("MoonDesk could not verify the MoonClaw workspace root")
+  }
+  let canonical_product_dir = @fs.realpath(product_dir) catch {
+    _ =>
+      return Err(
+        "MoonDesk could not verify the MoonClaw configuration directory",
+      )
+  }
+  let expected_product_dir = moonsuite_product_artifact_for_workspace_root(
+    canonical_root, "moonclaw", "",
+  )
+  if canonical_product_dir != expected_product_dir {
+    return Err("MoonDesk refused a redirected MoonClaw configuration directory")
+  }
+  Ok(())
+}
+
+///|
+async fn moonclaw_existing_config_is_safe(
+  config_path : String,
+) -> Result[Bool, String] {
+  if !@fs.exists(config_path) {
+    return Ok(false)
+  }
+  let kind = @fs.kind(config_path, follow_symlink=false) catch {
+    _ => return Err("MoonDesk could not inspect the MoonClaw configuration")
+  }
+  match kind {
+    Regular => Ok(true)
+    SymLink => Err("MoonDesk refused a redirected MoonClaw configuration file")
+    _ => Err("The existing MoonClaw configuration is not a regular file")
+  }
+}
+
+///|
+async fn moonclaw_remove_config_temp(path : String) -> Unit {
+  @fs.remove(path) catch {
+    _ => ()
+  }
+}
+
+///|
+async fn moonclaw_write_config_atomically(
+  config_path : String,
+  content : String,
+) -> Result[Unit, String] {
+  let temp_path = @pathx.join(
+    @pathx.dirname(config_path),
+    ".moonclaw.json." +
+    @desk.stable_id("openrouter-config", @async.now().to_string()) +
+    ".tmp",
+  )
+  @fs.write_file(
+    temp_path,
+    @encoding/utf8.encode(content),
+    create_mode=CreateNew,
+    permission=0o600,
+    sync=Full,
+  ) catch {
+    _ =>
+      return Err(
+        "MoonDesk could not create a private MoonClaw configuration update",
+      )
+  }
+  @fs.chmod(temp_path, 0o600) catch {
+    _ => {
+      moonclaw_remove_config_temp(temp_path)
+      return Err("MoonDesk could not secure the MoonClaw configuration update")
+    }
+  }
+  @fs.rename(temp_path, config_path, replace=true) catch {
+    _ => {
+      moonclaw_remove_config_temp(temp_path)
+      return Err("MoonDesk could not replace the MoonClaw configuration")
+    }
+  }
+  @fs.chmod(config_path, 0o600) catch {
+    _ => return Err("MoonDesk could not secure the MoonClaw configuration")
+  }
+  Ok(())
+}
+
+///|
+async fn moonclaw_write_openrouter_key(
+  workspace_root : String,
+  api_key : String,
+) -> Result[String, String] {
+  let root = workspace_context(workspace_root).suite_root
+  let product_dir = moonsuite_product_artifact_for_workspace_root(
+    root, "moonclaw", "",
+  )
+  @fsx.make_directory(product_dir, recursive=true, exists_ok=true) catch {
+    _ =>
+      return Err(
+        "MoonDesk could not prepare the MoonClaw configuration directory",
+      )
+  }
+  match moonclaw_secure_product_directory(root, product_dir) {
+    Err(message) => return Err(message)
+    Ok(_) => ()
+  }
+  let config_path = moonsuite_product_artifact_for_workspace_root(
+    root, "moonclaw", "moonclaw.json",
+  )
+  let config_exists = match moonclaw_existing_config_is_safe(config_path) {
+    Ok(exists) => exists
+    Err(message) => return Err(message)
+  }
+  let existing = if config_exists {
+    let text = @fs.read_file(config_path).text() catch {
+      _ =>
+        return Err(
+          "MoonDesk could not read the existing MoonClaw configuration",
+        )
+    }
+    let json = @json.parse(text) catch {
+      _ => return Err("The existing MoonClaw configuration is not valid JSON")
+    }
+    guard json is Object(_) else {
+      return Err("The existing MoonClaw configuration must be a JSON object")
+    }
+    json
+  } else {
+    Json::empty_object()
+  }
+  let config = moonclaw_config_with_openrouter_key(existing, api_key)
+  match moonclaw_secure_product_directory(root, product_dir) {
+    Err(message) => return Err(message)
+    Ok(_) => ()
+  }
+  match
+    moonclaw_write_config_atomically(
+      config_path,
+      config.stringify(indent=2) + "\n",
+    ) {
+    Err(message) => return Err(message)
+    Ok(_) => ()
+  }
+  Ok(config_path)
+}
+
+///|
+fn moonclaw_openrouter_key_success_response(
+  config_path : String,
+  daemon : Json,
+  model_readiness : Json,
+) -> Json {
+  let ready = json_bool(model_readiness, "ready", default=false)
+  api_contract_response(
+    {
+      "configured": true,
+      "config_path": config_path,
+      "daemon": daemon,
+      "model_ready": ready,
+      "model_readiness": model_readiness,
+    },
+    ok=true,
+    status="openrouter_key_configured",
+    message=if ready {
+      "OpenRouter API key saved securely and a model is ready"
+    } else {
+      "OpenRouter API key saved securely; MoonClaw model readiness is not confirmed yet"
+    },
+    next_action=if ready { "use_moonclaw" } else { "inspect_moonclaw_models" },
+  )
+}
+
+///|
+fn moonclaw_openrouter_key_failure_response(
+  status : String,
+  message : String,
+  next_action : String,
+) -> Json {
+  api_contract_response(
+    { "model_ready": false },
+    ok=false,
+    status~,
+    message~,
+    next_action~,
+  )
+}
+
+///|
+async fn handle_moonclaw_openrouter_key(
+  workspace_root : String,
+  body : &@io.Reader,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let payload = match read_json_body(body) {
+    Some(payload) => payload
+    None => {
+      send_json(
+        conn,
+        method_,
+        moonclaw_openrouter_key_failure_response(
+          "invalid_api_key", "Request body must be valid JSON", "enter_openrouter_api_key",
+        ),
+      )
+      return
+    }
+  }
+  let api_key = match moonclaw_openrouter_key_from_payload(payload) {
+    Ok(api_key) => api_key
+    Err(message) => {
+      send_json(
+        conn,
+        method_,
+        moonclaw_openrouter_key_failure_response(
+          "invalid_api_key", message, "enter_openrouter_api_key",
+        ),
+      )
+      return
+    }
+  }
+  let config_path = match
+    moonclaw_write_openrouter_key(workspace_root, api_key) {
+    Ok(config_path) => config_path
+    Err(message) => {
+      send_json(
+        conn,
+        method_,
+        moonclaw_openrouter_key_failure_response(
+          "openrouter_key_write_failed", message, "inspect_moonclaw_configuration",
+        ),
+      )
+      return
+    }
+  }
+  let daemon = ensure_moonclaw_daemon_running(
+    workspace_root,
+    action="configure",
+  )
+  let model_readiness = if json_bool(daemon, "running", default=false) {
+    moonclaw_model_readiness_from_probe(moonclaw_get_json(daemon, "/v1/models"))
+  } else {
+    moonclaw_model_readiness_unknown(
+      "daemon-not-running",
+      error=json_string(
+        daemon,
+        "message",
+        default="MoonClaw daemon is not running",
+      ),
+    )
+  }
+  send_json(
+    conn,
+    method_,
+    moonclaw_openrouter_key_success_response(
+      config_path, daemon, model_readiness,
+    ),
+  )
+}
+
+///|
 async fn handle_moonclaw_daemon_action(
   workspace_root : String,
   action : String,
@@ -108,12 +732,19 @@ fn moonclaw_installation_evidence_from_values(
   managed_install : Bool,
   service_configured : Bool,
   daemon_observed : Bool,
+  repair_available? : Bool = false,
 ) -> Json {
   if managed_install {
     {
       "installed": true,
       "source": "managed-service",
       "reason": "managed-service-present",
+    }
+  } else if repair_available {
+    {
+      "installed": false,
+      "source": "none",
+      "reason": "stale-managed-service-config",
     }
   } else if service_configured {
     {
@@ -142,11 +773,16 @@ fn moonclaw_configuration_evidence_from_values(
   service_configured : Bool,
   configuration_valid? : Bool = true,
   configuration_reason? : String = "",
+  repair_available? : Bool = false,
 ) -> Json {
   {
     "configured": service_configured,
-    "valid": !installed || (service_configured && configuration_valid),
-    "reason": if !installed {
+    "valid": repair_available ||
+    !installed ||
+    (service_configured && configuration_valid),
+    "reason": if repair_available {
+      "stale-managed-service-config"
+    } else if !installed {
       "not-installed"
     } else if !service_configured {
       "service-configuration-missing"
@@ -167,6 +803,11 @@ fn moonclaw_configuration_evidence_from_descriptor(
 ) -> Json {
   let configured = json_bool(descriptor, "configured", default=false)
   let valid = json_bool(descriptor, "configuration_valid", default=configured)
+  let repair_available = json_bool(
+    descriptor,
+    "repair_available",
+    default=false,
+  )
   moonclaw_configuration_evidence_from_values(
     installed,
     configured,
@@ -176,6 +817,7 @@ fn moonclaw_configuration_evidence_from_descriptor(
       "configuration_reason",
       default=if valid { "configuration-valid" } else { "command-unavailable" },
     ),
+    repair_available~,
   )
 }
 
@@ -191,9 +833,16 @@ async fn moonclaw_daemon_status_with_platform(
   let service_cwd = json_string(descriptor, "cwd", default=root)
   let service_configured = json_bool(descriptor, "configured", default=false)
   let managed_install = json_bool(descriptor, "managed_install", default=false)
+  let repair_available = json_bool(
+    descriptor,
+    "repair_available",
+    default=false,
+  )
   let installed_version = json_string(descriptor, "version", default="")
   let service_source = if managed_install {
     "managed"
+  } else if repair_available {
+    "stale-managed"
   } else if service_configured {
     "external"
   } else {
@@ -203,13 +852,16 @@ async fn moonclaw_daemon_status_with_platform(
     managed_install,
     service_configured,
     @fsx.exists(info_path),
+    repair_available~,
   )
   let configuration_evidence = moonclaw_configuration_evidence_from_descriptor(
     json_bool(installation_evidence, "installed", default=false),
     descriptor,
   )
   if !@fsx.exists(info_path) {
-    let message = if managed_install {
+    let message = if repair_available {
+      "A copied MoonClaw service configuration points to an unavailable managed runtime; reinstall MoonClaw to repair it"
+    } else if managed_install {
       "MoonClaw " + installed_version + " is installed but not running"
     } else if service_configured {
       "An external MoonClaw service is configured but not running"
@@ -233,9 +885,14 @@ async fn moonclaw_daemon_status_with_platform(
         "service_command": json_string(descriptor, "display", default=""),
         "managed_install": managed_install,
         "managed_running": false,
+        "repair_available": repair_available,
         "platform_evidence": moonclaw_platform_support_json(platform_support),
         "installation_evidence": installation_evidence,
         "configuration_evidence": configuration_evidence,
+        "model_readiness": moonclaw_model_readiness_unknown(
+          "daemon-not-running",
+        ),
+        "auth_readiness": moonclaw_auth_readiness_unknown("daemon-not-running"),
         "installed_version": installed_version,
         "running_version": "",
         "service_source": service_source,
@@ -244,9 +901,15 @@ async fn moonclaw_daemon_status_with_platform(
         ),
       },
       ok=false,
-      status="daemon_info_missing",
+      status=if repair_available {
+        "repair_available"
+      } else {
+        "daemon_info_missing"
+      },
       message~,
-      next_action=if managed_install || service_configured {
+      next_action=if repair_available {
+        "install_moonclaw"
+      } else if managed_install || service_configured {
         "start_moonclaw"
       } else {
         "install_moonclaw"
@@ -259,20 +922,49 @@ async fn moonclaw_daemon_status_with_platform(
   let running_version = json_string(info, "version", default="")
   let alive = pid > 0 && process_is_alive(pid)
   let port_reachable = port > 0 && moonclaw_port_reachable(port)
-  let existing_allowed = service_configured ||
-    moonclaw_allows_unconfigured_existing_daemon(context)
+  let existing_allowed = !repair_available &&
+    (
+      service_configured ||
+      moonclaw_allows_unconfigured_existing_daemon(context)
+    )
   let reachable = moonclaw_existing_daemon_reachable(
     alive, port, port_reachable, existing_allowed,
   )
   let managed_running = reachable &&
     managed_install &&
     running_version.has_prefix(installed_version)
-  let message = if managed_running {
+  let probe_daemon : Json = { "port": port }
+  let model_readiness = if reachable {
+    moonclaw_model_readiness_from_probe(
+      moonclaw_get_json(probe_daemon, "/v1/models"),
+    )
+  } else {
+    moonclaw_model_readiness_unknown("daemon-not-reachable")
+  }
+  let auth_readiness = if reachable {
+    moonclaw_auth_readiness_from_probe(
+      moonclaw_get_json(probe_daemon, "/v1/auth/status"),
+    )
+  } else {
+    moonclaw_auth_readiness_unknown("daemon-not-reachable")
+  }
+  let model_known = json_bool(model_readiness, "known", default=false)
+  let model_ready = json_bool(model_readiness, "ready", default=false)
+  let needs_configuration = reachable && model_known && !model_ready
+  let message = if repair_available {
+    "A copied MoonClaw service configuration points to an unavailable managed runtime; reinstall MoonClaw to repair it"
+  } else if managed_running && needs_configuration {
+    "MoonClaw " +
+    installed_version +
+    " is installed and running, but a model must be configured"
+  } else if managed_running {
     "MoonClaw " + installed_version + " is installed and running"
   } else if reachable && managed_install {
     "MoonClaw " +
     installed_version +
     " is installed, but a different MoonClaw service is running"
+  } else if reachable && needs_configuration {
+    "MoonClaw is running from an external service, but a model must be configured"
   } else if reachable {
     "MoonClaw is running from an external service; a MoonDesk-managed installation is not installed"
   } else if managed_install {
@@ -299,9 +991,12 @@ async fn moonclaw_daemon_status_with_platform(
       "service_command": json_string(descriptor, "display", default=""),
       "managed_install": managed_install,
       "managed_running": managed_running,
+      "repair_available": repair_available,
       "platform_evidence": moonclaw_platform_support_json(platform_support),
       "installation_evidence": installation_evidence,
       "configuration_evidence": configuration_evidence,
+      "model_readiness": model_readiness,
+      "auth_readiness": auth_readiness,
       "installed_version": installed_version,
       "running_version": running_version,
       "service_source": service_source,
@@ -310,7 +1005,11 @@ async fn moonclaw_daemon_status_with_platform(
       ),
     },
     ok=reachable,
-    status=if reachable {
+    status=if repair_available {
+      "repair_available"
+    } else if needs_configuration {
+      "running_needs_configuration"
+    } else if reachable {
       "running"
     } else if alive && port > 0 && !existing_allowed {
       "service_config_required"
@@ -320,7 +1019,11 @@ async fn moonclaw_daemon_status_with_platform(
       "process_unreachable"
     },
     message~,
-    next_action=if managed_running {
+    next_action=if repair_available {
+      "install_moonclaw"
+    } else if needs_configuration {
+      "configure_model"
+    } else if managed_running {
       "use_moonclaw"
     } else if reachable {
       "install_moonclaw"
@@ -654,7 +1357,10 @@ async fn moonclaw_get_json(
   if response.code < 200 || response.code > 299 {
     return Err("MoonClaw GET \{path} returned \{response.code}: \{text}")
   }
-  Ok(@json.parse(text) catch { _ => Json::object({}) })
+  let payload = @json.parse(text) catch {
+    _ => return Err("MoonClaw GET \{path} returned invalid JSON")
+  }
+  Ok(payload)
 }
 
 ///|
@@ -695,7 +1401,10 @@ async fn moonclaw_post_json(
   if response.code < 200 || response.code > 299 {
     return Err("MoonClaw POST \{path} returned \{response.code}: \{text}")
   }
-  Ok(@json.parse(text) catch { _ => Json::object({}) })
+  let payload = @json.parse(text) catch {
+    _ => return Err("MoonClaw POST \{path} returned invalid JSON")
+  }
+  Ok(payload)
 }
 
 ///|

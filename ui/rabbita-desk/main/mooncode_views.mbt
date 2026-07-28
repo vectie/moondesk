@@ -717,7 +717,13 @@ fn render_mooncode_runtime_setup(
                     .data_set(
                       "i18n",
                       if model.moonclaw_installing {
-                        "code.assistance_installing"
+                        if moonclaw_repair_available(model.moonclaw_daemon) {
+                          "code.assistance_repairing"
+                        } else {
+                          "code.assistance_installing"
+                        }
+                      } else if moonclaw_repair_available(model.moonclaw_daemon) {
+                        "code.assistance_action_repair"
                       } else {
                         code_capability_primary_action_i18n_key(action)
                       },
@@ -725,13 +731,21 @@ fn render_mooncode_runtime_setup(
                   disabled=model.moonclaw_installing,
                   on_click=dispatch(ManageMoonClaw("install")),
                   if model.moonclaw_installing {
-                    "Installing Code assistance…"
+                    if moonclaw_repair_available(model.moonclaw_daemon) {
+                      "Repairing Code assistance…"
+                    } else {
+                      "Installing Code assistance…"
+                    }
+                  } else if moonclaw_repair_available(model.moonclaw_daemon) {
+                    "Repair Code assistance"
                   } else {
                     code_capability_primary_action_label(action)
                   },
                 ),
                 render_moonclaw_install_progress(model),
               ])
+            ConfigureCapability =>
+              render_moonclaw_first_run_setup(dispatch, model)
             OpenConfiguration =>
               button(
                 class="primary-button compact-button",
@@ -754,6 +768,7 @@ fn render_mooncode_runtime_setup(
               )
             NoPrimaryAction => @html.nothing
           },
+          render_code_assistance_operation_alert(model),
           render_code_assistance_technical_details(model),
         ],
       )
