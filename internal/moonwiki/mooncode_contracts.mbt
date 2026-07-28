@@ -85,8 +85,6 @@ async fn mooncode_capabilities_response_json(workspace_root : String) -> Json {
 async fn mooncode_engine_status_json(workspace_root : String) -> Json {
   let daemon = moonclaw_daemon_status(workspace_root)
   let running = json_bool(daemon, "running", default=false)
-  let root = json_string(daemon, "moonclaw_root", default="")
-  let checkout_ready = json_bool(daemon, "service_configured", default=false)
   let models_probe = if running {
     moonclaw_get_json(daemon, "/v1/models")
   } else {
