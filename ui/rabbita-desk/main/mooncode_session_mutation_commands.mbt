@@ -9,7 +9,8 @@ fn create_mooncode_session_cmd(
     mooncode_draft_session_id(model),
     prompt,
   )
-  let body : Json = {
+  let submission : Json = {
+    "action": "prompt",
     "workspace_id": model.selected_workspace_id,
     "title": mooncode_new_session_title(model),
     "message": prompt,
@@ -18,14 +19,19 @@ fn create_mooncode_session_cmd(
     "web_search": model.mooncode_web_search,
     "context_path": mooncode_context_path(model),
   }
+  let encoded = match typed_mooncode_command_body(submission) {
+    Ok(value) => value
+    Err(error) => return dispatch(CreatedMoonCodeSession(Err(error)))
+  }
+  let body = mooncode_command_body_with_creation_fields(encoded, submission)
   @http.post(@desk.mooncode_sessions_url(""))
   .with_json(body)
   .expect_json(result => {
-    dispatch(
-      CreatedMoonCodeSession(
-        http_result(result, "Could not create MoonCode session"),
-      ),
-    )
+    let decoded = match result {
+      Ok(payload) => decode_mooncode_selected_session(payload)
+      Err(error) => Err(error.to_string())
+    }
+    dispatch(CreatedMoonCodeSession(decoded))
   })
 }
 
@@ -64,7 +70,7 @@ fn mooncode_session_command_cmd(
   }
   let selected_model = mooncode_selected_runtime_model(model, Some(session))
   let client_turn_id = mooncode_client_turn_id(model, session.id, message)
-  let body : Json = {
+  let submission : Json = {
     "action": action,
     "message": message,
     "client_turn_id": client_turn_id,
@@ -76,15 +82,42 @@ fn mooncode_session_command_cmd(
     "target_command_id": target_command_id,
     "tool_call_id": tool_call_id,
   }
+  let body = match typed_mooncode_command_body(submission) {
+    Ok(value) => value
+    Err(error) => return dispatch(CompletedMoonCodeCommand(Err(error)))
+  }
   @http.post(@desk.mooncode_session_commands_url(session.id))
   .with_json(body)
   .expect_json(result => {
-    dispatch(
-      CompletedMoonCodeCommand(
-        http_result(result, "Could not run MoonCode command"),
-      ),
-    )
+    let decoded = match result {
+      Ok(payload) => decode_mooncode_selected_session(payload)
+      Err(error) => Err(error.to_string())
+    }
+    dispatch(CompletedMoonCodeCommand(decoded))
   })
+}
+
+///|
+fn typed_mooncode_command_body(submission : Json) -> Result[Json, String] {
+  match @mooncode_core.decode_mooncode_command(submission) {
+    Ok(command) => @mooncode_core.encode_mooncode_command(command)
+    Err(error) => Err(error)
+  }
+}
+
+///|
+fn mooncode_command_body_with_creation_fields(encoded : Json, source : Json) -> Json {
+  guard encoded is Object(encoded_fields) && source is Object(source_fields) else {
+    return encoded
+  }
+  let fields = encoded_fields.copy()
+  for key in ["workspace_id", "title"] {
+    match source_fields.get(key) {
+      Some(value) => fields[key] = value
+      None => ()
+    }
+  }
+  Json::object(fields)
 }
 
 ///|

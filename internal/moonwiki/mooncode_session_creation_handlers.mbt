@@ -64,7 +64,22 @@ async fn handle_create_mooncode_session(
     json_string(payload, "title", default="MoonCode - \{workspace.name}"),
     fallback="MoonCode - \{workspace.name}",
   )
-  let context_path = @mooncode.command_context_path(payload)
+  let command_payload = match payload {
+    Object(fields) => {
+      let values = fields.copy()
+      values["action"] = "prompt".to_json()
+      Json::object(values)
+    }
+    _ => payload
+  }
+  let command = match @mooncode.decode_command_submission(command_payload) {
+    Ok(value) => value
+    Err(error) => {
+      send_api_error(conn, method_, 400, "Bad Request", error)
+      return
+    }
+  }
+  let context_path = @mooncode.command_context_path(command)
   let base = @mooncode.projected_session_record(
     workspace_id=workspace.id,
     workspace_name=workspace.name,
@@ -76,10 +91,7 @@ async fn handle_create_mooncode_session(
     last_message=message,
     initial_context_path=context_path,
   )
-  match
-    submit_mooncode_turn(
-      root, base, payload, "prompt", message, now, context_path,
-    ) {
+  match submit_mooncode_turn(root, base, command, payload, now) {
     Ok(response) => send_json(conn, method_, response)
     Err(error) =>
       send_api_error(

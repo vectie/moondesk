@@ -88,3 +88,46 @@ test "mooncode watch ownership rejects stale timers and inactive modes" {
     ),
   )
 }
+
+///|
+test "typed selected-session response decoder accepts command result" {
+  let payload : Json = {
+    "id": "session-ui",
+    "workspace_id": "book-demo",
+    "workspace_name": "Demo",
+    "workspace_root": "/tmp/demo",
+    "cwd": "/tmp/demo",
+    "source": "moonclaw-canonical-session",
+    "mooncode_runtime_session_id": "session-ui",
+    "title": "Demo",
+    "model": "codex/gpt-5",
+    "status": "running",
+    "queued_count": 0,
+    "archived": false,
+    "created_at": "2026-07-28T00:00:00Z",
+    "updated_at": "2026-07-28T00:00:00Z",
+    "last_message": "Fix it",
+    "component": "mooncode",
+    "protocol": "mooncode.v1",
+    "client_turn_id": "client-ui",
+    "turn_id": "turn-ui",
+    "mooncode_turn": null,
+    "mooncode_conversation": null,
+    "mooncode_summary": {
+      "event_count": 0,
+      "verified_test_count": 0,
+      "pending_diff_count": 0,
+    },
+    "canonical_revision": 0,
+    "canonical_unchanged": false,
+  }
+  guard decode_mooncode_selected_session(payload) is Ok(session) else {
+    fail("expected typed selected-session response")
+  }
+  assert_eq(session.id, "session-ui")
+}
+
+///|
+test "typed selected-session response decoder rejects malformed response" {
+  assert_true(decode_mooncode_selected_session({ "id": 42 }) is Err(_))
+}
