@@ -222,15 +222,10 @@ fn mooncode_session_management_result(
         } else {
           model.mooncode_watch_generation
         },
-        mooncode_watch_revision: if clears_selection {
-          0
+        mooncode_watch_cursor: if clears_selection {
+          @mooncode_core.mooncode_watch_origin_cursor()
         } else {
-          model.mooncode_watch_revision
-        },
-        mooncode_watch_sequence: if clears_selection {
-          0
-        } else {
-          model.mooncode_watch_sequence
+          model.mooncode_watch_cursor
         },
         mooncode_watch_status: if clears_selection {
           "idle"

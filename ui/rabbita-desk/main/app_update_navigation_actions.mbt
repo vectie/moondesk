@@ -231,8 +231,7 @@ fn select_workspace_action(
       selected_workspace_id: workspace_id,
       selected_mooncode_session_id: "",
       mooncode_watch_generation: model.mooncode_watch_generation + 1,
-      mooncode_watch_revision: 0,
-      mooncode_watch_sequence: 0,
+      mooncode_watch_cursor: @mooncode_core.mooncode_watch_origin_cursor(),
       mooncode_watch_status: "idle",
       mooncode_watch_failure_count: 0,
       mooncode_new_chat_active: false,
@@ -889,15 +888,10 @@ fn select_workspace_mode_action(
     } else {
       model.mooncode_watch_generation
     },
-    mooncode_watch_revision: if mode_changed {
-      0
+    mooncode_watch_cursor: if mode_changed {
+      @mooncode_core.mooncode_watch_origin_cursor()
     } else {
-      model.mooncode_watch_revision
-    },
-    mooncode_watch_sequence: if mode_changed {
-      0
-    } else {
-      model.mooncode_watch_sequence
+      model.mooncode_watch_cursor
     },
     mooncode_watch_status: if mode == MoonCode &&
       model.selected_mooncode_session_id != "" {

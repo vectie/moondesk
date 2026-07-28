@@ -135,8 +135,7 @@ struct Model {
   mooncode_optimistic_rows : Array[MoonCodeOptimisticRow]
   mooncode_metadata_generation : Int
   mooncode_watch_generation : Int
-  mooncode_watch_revision : Int
-  mooncode_watch_sequence : Int
+  mooncode_watch_cursor : @mooncode_core.MoonCodeWatchCursor
   mooncode_watch_status : String
   mooncode_watch_failure_count : Int
   events : Array[DeskEvent]
@@ -292,7 +291,7 @@ enum Msg {
   LoadedMoonCodeSessions(Result[Array[MoonCodeSession], String])
   LoadedMoonCodeSelectedSession(String, Result[MoonCodeSession, String])
   LoadedMoonCodeArchivedSessions(Result[Array[MoonCodeSession], String])
-  LoadedMoonCodeWatch(Int, String, Result[MoonCodeWatchResponse, String])
+  LoadedMoonCodeWatch(Int, String, @mooncode_core.MoonCodeWatchResult)
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
   ManagedMoonCodeSession(Result[MoonCodeSessionLifecycleResult, String])

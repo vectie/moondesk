@@ -76,9 +76,10 @@ fn mooncode_watch_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   if model.workspace_mode != MoonCode || session_id == "" {
     return @rabbita.none
   }
-  let revision = model.mooncode_watch_revision
+  let cursor = model.mooncode_watch_cursor
+  let revision = cursor.revision()
   let generation = model.mooncode_watch_generation
-  let sequence = model.mooncode_watch_sequence
+  let sequence = cursor.sequence()
   let url = @desk.mooncode_session_watch_url(session_id, revision, sequence)
   @rabbita.perform(
     fn(result) { dispatch(LoadedMoonCodeWatch(generation, session_id, result)) },
@@ -88,25 +89,38 @@ fn mooncode_watch_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
         )
         .wait()
         .cast() catch {
-          error => return Err("MoonCode watch failed: \{error}")
+          error =>
+            return @mooncode_core.mooncode_watch_disconnected(
+              current=cursor,
+              reason="MoonCode watch failed: \{error}",
+            )
         }
       let envelope : MoonCodeBrowserWatchEnvelope = @json.from_json(
         @json.parse(text),
       ) catch {
-        error => return Err("Invalid MoonCode watch transport: \{error}")
+        error =>
+          return @mooncode_core.mooncode_watch_disconnected(
+            current=cursor,
+            reason="Invalid MoonCode watch transport: \{error}",
+          )
       }
       if envelope.aborted {
-        return Err("MoonCode watch replaced")
+        return @mooncode_core.mooncode_watch_disconnected(
+          current=cursor,
+          reason="MoonCode watch replaced",
+        )
       }
       if !envelope.ok {
-        return Err(envelope.error)
+        return @mooncode_core.mooncode_watch_disconnected(
+          current=cursor,
+          reason=envelope.error,
+        )
       }
-      let response : MoonCodeWatchResponse = @json.from_json(
-        @json.parse(envelope.body),
-      ) catch {
-        error => return Err("Invalid MoonCode watch response: \{error}")
-      }
-      Ok(response)
+      @mooncode_core.decode_mooncode_watch_text(
+        envelope.body,
+        current=cursor,
+        expected_session_id=session_id,
+      )
     },
   )
 }

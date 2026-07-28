@@ -390,15 +390,10 @@ fn update_mooncode_session_results(
         } else {
           model.mooncode_watch_generation
         },
-        mooncode_watch_revision: if selection_changed {
-          0
+        mooncode_watch_cursor: if selection_changed {
+          @mooncode_core.mooncode_watch_origin_cursor()
         } else {
-          model.mooncode_watch_revision
-        },
-        mooncode_watch_sequence: if selection_changed {
-          0
-        } else {
-          model.mooncode_watch_sequence
+          model.mooncode_watch_cursor
         },
         mooncode_watch_status: if selection_changed {
           if selected == "" {
@@ -480,21 +475,11 @@ fn update_mooncode_session_results(
       // Archived history is optional; never surface its listing failure as
       // a blocking error in the session pane.
       (@rabbita.none, { ..model, mooncode_archived_sessions: [] })
-    LoadedMoonCodeWatch(generation, session_id, Ok(response)) =>
-      if !mooncode_watch_is_current(model, generation, session_id) {
-        (@rabbita.none, model)
-      } else if !mooncode_watch_response_is_valid(response, session_id) {
-        mooncode_watch_failed(
-          dispatch, model, generation, session_id, "Invalid MoonCode watch contract",
-        )
-      } else {
-        mooncode_watch_succeeded(dispatch, model, response)
-      }
-    LoadedMoonCodeWatch(generation, session_id, Err(error)) =>
+    LoadedMoonCodeWatch(generation, session_id, result) =>
       if !mooncode_watch_is_current(model, generation, session_id) {
         (@rabbita.none, model)
       } else {
-        mooncode_watch_failed(dispatch, model, generation, session_id, error)
+        mooncode_watch_succeeded(dispatch, model, result)
       }
     CreatedMoonCodeSession(Ok(session)) =>
       mooncode_created_session_succeeded(dispatch, model, session)
@@ -560,72 +545,89 @@ fn mooncode_current_composer_session_id(model : Model) -> String {
 }
 
 ///|
-fn mooncode_watch_response_is_valid(
-  response : MoonCodeWatchResponse,
-  session_id : String,
-) -> Bool {
-  response.kind == "moonsuite-conversation-watch" &&
-  response.contract_id == "moonsuite-conversation-watch.v1" &&
-  response.session_id == session_id &&
-  response.revision >= 0 &&
-  response.next_sequence >= 0 &&
-  response.changed != response.heartbeat &&
-  (!response.changed || response.snapshot is Some(_))
+fn mooncode_session_from_watch_snapshot(
+  existing : MoonCodeSession,
+  summary : @mooncode_core.MoonCodeSessionSummary,
+  conversation : @mooncode_core.MoonCodeConversation,
+) -> MoonCodeSession {
+  {
+    ..existing,
+    workspace_id: summary.workspace_id,
+    workspace_name: summary.workspace_name,
+    cwd: summary.cwd,
+    source: summary.source,
+    mooncode_runtime_session_id: summary.runtime_session_id,
+    title: summary.title,
+    updated_at: summary.updated_at,
+    model: summary.model,
+    status: summary.status.to_string(),
+    queued_count: summary.queued_count,
+    last_message: summary.last_message,
+    mooncode_conversation: Some(conversation),
+    archived: summary.archived,
+  }
 }
 
 ///|
 fn mooncode_watch_succeeded(
   dispatch : Dispatch[Msg],
   model : Model,
-  response : MoonCodeWatchResponse,
+  result : @mooncode_core.MoonCodeWatchResult,
 ) -> (@rabbita.Cmd, Model) {
-  let sessions = match response.snapshot {
-    Some(snapshot) if response.changed =>
-      mooncode_upsert_session_if_revision_changed(
-        model.mooncode_sessions,
-        snapshot,
+  let mut sessions = model.mooncode_sessions
+  let mut optimistic_rows = model.mooncode_optimistic_rows
+  let mut status = "watching"
+  let mut retry_after_ms = 0
+  match result {
+    Snapshot(cursor~, session=summary, conversation~, terminal~) => {
+      match
+        mooncode_find_session(model.mooncode_sessions, summary.id.to_string()) {
+        Some(existing) => {
+          let snapshot = mooncode_session_from_watch_snapshot(
+            existing, summary, conversation,
+          )
+          sessions = mooncode_upsert_session_if_revision_changed(
+            sessions, snapshot,
+          )
+          optimistic_rows = mooncode_drop_acknowledged_optimistic_rows(
+            optimistic_rows, snapshot,
+          )
+        }
+        None => ()
+      }
+      status = if terminal { "watching-terminal" } else { "watching-active" }
+      ignore(cursor)
+    }
+    Heartbeat(retry_after_ms=delay, terminal~, ..) => {
+      retry_after_ms = delay
+      status = if terminal { "watching-terminal" } else { "watching" }
+    }
+    Duplicate(..) => status = "watching"
+    Rollback(received_revision~, ..) =>
+      status = "watch rollback \{received_revision}"
+    Disconnected(reason~, ..) | Malformed(reason~, ..) =>
+      return mooncode_watch_failed(
+        dispatch,
+        model,
+        model.mooncode_watch_generation,
+        model.selected_mooncode_session_id,
+        reason,
       )
-    _ => model.mooncode_sessions
-  }
-  let optimistic_rows = match response.snapshot {
-    Some(snapshot) if response.changed =>
-      mooncode_drop_acknowledged_optimistic_rows(
-        model.mooncode_optimistic_rows,
-        snapshot,
-      )
-    _ => model.mooncode_optimistic_rows
-  }
-  let next_sequence = if response.next_sequence > model.mooncode_watch_sequence {
-    response.next_sequence
-  } else {
-    model.mooncode_watch_sequence
-  }
-  let next_revision = if response.revision > model.mooncode_watch_revision {
-    response.revision
-  } else {
-    model.mooncode_watch_revision
   }
   let next = {
     ..model,
     mooncode_sessions: sessions,
     mooncode_optimistic_rows: optimistic_rows,
-    mooncode_watch_revision: next_revision,
-    mooncode_watch_sequence: next_sequence,
-    mooncode_watch_status: if response.terminal {
-      "watching-terminal"
-    } else if response.heartbeat {
-      "watching"
-    } else {
-      "watching-active"
-    },
+    mooncode_watch_cursor: result.cursor(),
+    mooncode_watch_status: status,
     mooncode_watch_failure_count: 0,
   }
-  let cmd = if response.retry_after_ms > 0 {
+  let cmd = if retry_after_ms > 0 {
     schedule_mooncode_watch_resume(
       dispatch,
       next.mooncode_watch_generation,
       next.selected_mooncode_session_id,
-      response.retry_after_ms,
+      retry_after_ms,
     )
   } else {
     mooncode_watch_cmd(dispatch, next)
@@ -765,15 +767,10 @@ fn mooncode_session_mutation_succeeded(
     } else {
       model.mooncode_watch_generation
     },
-    mooncode_watch_revision: if selection_changed {
-      0
+    mooncode_watch_cursor: if selection_changed {
+      @mooncode_core.mooncode_watch_origin_cursor()
     } else {
-      model.mooncode_watch_revision
-    },
-    mooncode_watch_sequence: if selection_changed {
-      0
-    } else {
-      model.mooncode_watch_sequence
+      model.mooncode_watch_cursor
     },
     mooncode_watch_status: if start_watch {
       "connecting"
