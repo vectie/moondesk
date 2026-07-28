@@ -71,15 +71,57 @@ fn mooncode_session_from_native_record(
 }
 
 ///|
+fn mooncode_existing_command_response(
+  workspace_root : String,
+  session : Json,
+  command : @mooncode_core.MoonCodeCommand,
+) -> Result[Json?, Json] {
+  let client_turn_id = command.client_turn_id()
+  let conversation = json_object_field_or_empty(
+    session, "mooncode_conversation",
+  )
+  let turns = json_array_items(conversation, "turns")
+  let expected = @mooncode.accepted_command_packet(session, command, "").command_id()
+  for turn in turns {
+    if json_string(turn, "client_turn_id", default="") == client_turn_id {
+      let stored = json_string(turn, "command_id", default="")
+      if stored != expected {
+        return Err(
+          mooncode_turn_proxy_error(
+            409, "Conflict", "client_turn_id was already used for a different MoonCode command",
+          ),
+        )
+      }
+      let packet : Json = {
+        "command_id": json_string(turn, "command_id", default=""),
+        "client_turn_id": client_turn_id,
+      }
+      return Some(
+          compact_mooncode_session_command_response(
+            workspace_root, session, packet,
+          ),
+        )
+        |> Ok
+    }
+  }
+  Ok(None)
+}
+
+///|
 async fn submit_mooncode_turn(
   workspace_root : String,
   session : Json,
-  payload : Json,
-  action : String,
-  message : String,
+  command : @mooncode_core.MoonCodeCommand,
+  runtime_passthrough : Json,
   created_at : String,
-  context_path : String,
 ) -> Result[Json, Json] {
+  match mooncode_existing_command_response(workspace_root, session, command) {
+    Ok(Some(response)) => return Ok(response)
+    Err(error) => return Err(error)
+    Ok(None) => ()
+  }
+  let action = @mooncode.command_action(command)
+  let message = @mooncode.command_message(command)
   let daemon = ensure_moonclaw_daemon_running(
     workspace_root,
     action="submit-turn",
@@ -98,12 +140,11 @@ async fn submit_mooncode_turn(
       ),
     )
   }
-  let command_packet = @mooncode.projected_command_packet(
-    session, payload, action, message, created_at, context_path,
-  )
+  let accepted = @mooncode.accepted_command_packet(session, command, created_at)
   let native_body = @mooncode.native_command_body(
-    session, payload, message, command_packet,
+    session, command, accepted, runtime_passthrough,
   )
+  let command_packet = json_object_field_or_empty(native_body, "packet")
   let session_id = json_string(session, "id", default="")
   let response = match
     moonclaw_post_json(

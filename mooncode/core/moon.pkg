@@ -6,3 +6,7 @@ import {
   "vectie/moonlib/conversation",
   "vectie/moonlib/moonsuite",
 }
+
+import {
+  "vectie/moondesk/mooncode/core",
+} for "test"

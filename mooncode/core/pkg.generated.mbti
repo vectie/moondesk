@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn accept_mooncode_command(MoonCodeCommand, String, String, String, String, String, String) -> MoonCodeAcceptedCommand
+
 pub fn action_plan_next_await_commit_proof() -> String
 
 pub fn action_plan_next_await_runtime_proof() -> String
@@ -55,12 +57,14 @@ pub fn action_plan_status_waiting_for_proof() -> String
 
 pub fn command_accept() -> String
 
+#deprecated
 pub fn command_action_approval(String) -> String
 
 pub fn command_action_contract_id() -> String
 
 pub fn command_action_contract_json() -> Json
 
+#deprecated
 pub fn command_action_control(String) -> String
 
 pub fn command_action_expected_lanes(String) -> Array[String]
@@ -81,6 +85,7 @@ pub fn command_action_is_prompt_or_steer(String) -> Bool
 
 pub fn command_action_is_review_decision(String) -> Bool
 
+#deprecated
 pub fn command_action_is_supported(String) -> Bool
 
 pub fn command_action_is_test(String) -> Bool
@@ -101,6 +106,7 @@ pub fn command_action_tool_hints(String) -> Array[String]
 
 pub fn command_action_writes_review_receipt(String) -> Bool
 
+#deprecated
 pub fn command_advertised_actions() -> Array[String]
 
 pub fn command_apply_patch() -> String
@@ -165,6 +171,8 @@ pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_s
 
 pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
 
+pub fn decode_mooncode_command(Json) -> Result[MoonCodeCommand, String]
+
 pub fn decode_mooncode_conversation(Json, current_revision? : Int) -> MoonCodeConversationDecodeResult
 
 pub fn decode_mooncode_selected_session(Json) -> MoonCodeSelectedSessionDecodeResult
@@ -172,6 +180,8 @@ pub fn decode_mooncode_selected_session(Json) -> MoonCodeSelectedSessionDecodeRe
 pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
 
 pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
+
+pub fn encode_mooncode_command(MoonCodeCommand) -> Result[Json, String]
 
 pub fn encode_mooncode_conversation(MoonCodeConversation) -> Json
 
@@ -1006,6 +1016,26 @@ pub fn tool_harness_status_no_tools() -> String
 // Errors
 
 // Types and methods
+pub struct MoonCodeAcceptedCommand {
+  command : MoonCodeCommand
+  status : MoonCodeCommandStatus
+  command_id : String
+  created_at : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  workspace_root : String
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeAcceptedCommand::client_turn_id(Self) -> String
+pub fn MoonCodeAcceptedCommand::command(Self) -> MoonCodeCommand
+pub fn MoonCodeAcceptedCommand::command_id(Self) -> String
+pub fn MoonCodeAcceptedCommand::created_at(Self) -> String
+pub fn MoonCodeAcceptedCommand::session_id(Self) -> String
+pub fn MoonCodeAcceptedCommand::status(Self) -> MoonCodeCommandStatus
+pub fn MoonCodeAcceptedCommand::workspace_id(Self) -> String
+pub fn MoonCodeAcceptedCommand::workspace_name(Self) -> String
+pub fn MoonCodeAcceptedCommand::workspace_root(Self) -> String
+
 pub(all) struct MoonCodeCapability {
   component : String
   provider : String
@@ -1023,6 +1053,52 @@ pub(all) enum MoonCodeCapabilityDecodeResult {
   UnsupportedVersion(Int)
   Malformed(String)
 } derive(Eq, @debug.Debug)
+
+pub struct MoonCodeCommand {
+  kind : MoonCodeCommandKind
+  client_turn_id : String
+  context_path : String
+  message : String
+  model : String
+  web_search : Bool
+  planner_max_steps : Int?
+  approval_id : String
+  target_command_id : String
+  tool_call_id : String
+  force_preflight : Bool
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeCommand::client_turn_id(Self) -> String
+pub fn MoonCodeCommand::context_path(Self) -> String
+pub fn MoonCodeCommand::force_preflight(Self) -> Bool
+pub fn MoonCodeCommand::kind(Self) -> MoonCodeCommandKind
+pub fn MoonCodeCommand::message(Self) -> String
+pub fn MoonCodeCommand::model(Self) -> String
+pub fn MoonCodeCommand::planner_max_steps(Self) -> Int?
+pub fn MoonCodeCommand::web_search(Self) -> Bool
+
+pub enum MoonCodeCommandKind {
+  Prompt
+  Steer
+  RunTests
+  RunBuild
+  RunEval
+  Package
+  Commit
+  Accept
+  Reject
+  ApproveTool
+  RejectTool
+  ApplyPatch
+  RevertPatch
+  Cancel
+  Note
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeCommandKind::to_string(Self) -> String
+
+pub enum MoonCodeCommandStatus {
+  Accepted
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeCommandStatus::to_string(Self) -> String
 
 pub(all) struct MoonCodeConversation {
   kind : String

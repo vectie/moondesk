@@ -1,16 +1,20 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "vectie/moondesk/internal/mooncode"
 
+import {
+  "vectie/moondesk/mooncode/core",
+}
+
 // Values
+pub fn accepted_command_packet(Json, @core.MoonCodeCommand, String) -> @core.MoonCodeAcceptedCommand
+
 pub fn capabilities_json() -> Json
 
-pub fn command_action(Json) -> String
+pub fn command_action(@core.MoonCodeCommand) -> String
 
-pub fn command_context_path(Json) -> String
+pub fn command_context_path(@core.MoonCodeCommand) -> String
 
-pub fn command_is_supported(String) -> Bool
-
-pub fn command_message(String, Json) -> String
+pub fn command_message(@core.MoonCodeCommand) -> String
 
 pub fn conversation_contract_id() -> String
 
@@ -19,6 +23,8 @@ pub fn conversation_kind() -> String
 pub fn conversation_watch_contract_id() -> String
 
 pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_sequence~ : Int, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
+
+pub fn decode_command_submission(Json) -> Result[@core.MoonCodeCommand, String]
 
 pub fn desktop_capabilities_endpoint() -> String
 
@@ -56,13 +62,11 @@ pub fn moonclaw_native_turn_endpoint(String) -> String
 
 pub fn mooncode_negotiated_runtime_readiness(Json) -> Json
 
-pub fn native_command_body(Json, Json, String, Json) -> Json
+pub fn native_command_body(Json, @core.MoonCodeCommand, @core.MoonCodeAcceptedCommand, Json) -> Json
 
 pub fn native_runtime_session_projection(String, String) -> Json
 
 pub fn negotiate_capabilities_json(Json) -> Json
-
-pub fn projected_command_packet(Json, Json, String, String, String, String) -> Json
 
 pub fn projected_session_record(workspace_id~ : String, workspace_name~ : String, workspace_root~ : String, runtime~ : Json, title~ : String, created_at~ : String, updated_at~ : String, last_message~ : String, initial_context_path~ : String) -> Json
 
