@@ -5,6 +5,8 @@ fn update_mooncode_session_results(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
+    LoadedMoonCodeCapability(capability) =>
+      (@rabbita.none, { ..model, mooncode_capability: capability })
     ManagedMoonClaw(Ok(status)) =>
       (
         fetch_moonclaw_daemon_cmd(dispatch),
@@ -40,6 +42,7 @@ fn update_mooncode_session_results(
           @rabbita.batch([
             fetch_moonclaw_models_cmd(dispatch),
             fetch_mooncode_sessions_cmd(dispatch, ""),
+            fetch_mooncode_capability_cmd(dispatch),
           ])
         } else {
           @rabbita.none

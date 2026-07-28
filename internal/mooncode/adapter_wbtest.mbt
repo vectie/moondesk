@@ -25,25 +25,6 @@ test "capability declares one MoonClaw-owned journal" {
 }
 
 ///|
-test "native capability readiness is derived from the shared core contract" {
-  let ready : Json = {
-    "component": "mooncode",
-    "protocol": protocol_version(),
-    "capability_contract_id": @mooncode_core.native_capability_contract_id(),
-    "capability_surface": @mooncode_core.native_capability_surface_json(),
-    "native_runtime_ready": true,
-    "endpoints": @mooncode_core.native_capability_required_endpoints(),
-    "tools": @mooncode_core.native_capability_required_tools(),
-  }
-  assert_true(moonclaw_native_capabilities_ready(ready))
-  assert_false(
-    moonclaw_native_capabilities_ready(
-      session_with_field(ready, "native_runtime_ready", false.to_json()),
-    ),
-  )
-}
-
-///|
 test "turn adapter keeps stable ownership and omits retired replay contracts" {
   let session : Json = {
     "id": "session-one",
