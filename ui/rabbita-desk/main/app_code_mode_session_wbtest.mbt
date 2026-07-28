@@ -81,17 +81,22 @@ fn code_mode_test_lifecycle_result(
   title? : String = "",
   archived? : Bool = false,
   deleted? : Bool = false,
-) -> MoonCodeSessionLifecycleResult {
-  {
-    kind: "mooncode-session-lifecycle-result",
-    protocol: "mooncode.v1",
-    owner: "moonclaw",
-    action,
-    session_id,
-    title,
-    archived,
-    deleted,
+) -> @mooncode_core.MoonCodeLifecycleResult {
+  let payload : Json = {
+    "kind": "mooncode-session-lifecycle-result",
+    "protocol": "mooncode.v1",
+    "owner": "moonclaw",
+    "action": action,
+    "session_id": session_id,
+    "title": title,
+    "archived": archived,
+    "deleted": deleted,
   }
+  let expected = @mooncode_core.MoonCodeSessionId::parse(session_id).unwrap()
+  @mooncode_core.decode_mooncode_lifecycle_result(
+    payload,
+    expected_session_id=expected,
+  ).unwrap()
 }
 
 ///|
@@ -1103,6 +1108,66 @@ test "code mode archive clears selected chat and restore returns metadata" {
   assert_eq(restored.mooncode_sessions.length(), 1)
   assert_false(restored.mooncode_sessions[0].archived)
   assert_eq(restored.selected_mooncode_session_id, "")
+}
+
+///|
+test "code mode cancel delete stops before request and preserves session state" {
+  let session = code_mode_test_session("cancel-delete")
+  let model = {
+    ..init_model(),
+    mooncode_sessions: [session],
+    mooncode_session_delete_id: session.id,
+  }
+  let (_, cancelled) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    CancelDeleteMoonCodeSession,
+    model,
+  )
+  assert_eq(cancelled.mooncode_session_delete_id, "")
+  assert_eq(cancelled.mooncode_sessions.length(), 1)
+  assert_eq(cancelled.mooncode_sessions[0].id, session.id)
+  assert_eq(cancelled.mooncode_archived_sessions.length(), 0)
+}
+
+///|
+test "code mode lifecycle failure rolls back and archive replay is idempotent" {
+  let session = {
+    ..code_mode_test_session("rollback"),
+    title: "Preserved title",
+  }
+  let model = {
+    ..init_model(),
+    mooncode_sessions: [session],
+    selected_mooncode_session_id: session.id,
+  }
+  let (_, failed) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonCodeSession(Err("storage move failed")),
+    model,
+  )
+  assert_eq(failed.mooncode_sessions.length(), 1)
+  assert_eq(failed.mooncode_sessions[0].title, "Preserved title")
+  assert_eq(failed.mooncode_archived_sessions.length(), 0)
+  assert_eq(failed.selected_mooncode_session_id, session.id)
+  let result = code_mode_test_lifecycle_result(
+    "archive",
+    session.id,
+    archived=true,
+  )
+  let (_, archived) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonCodeSession(Ok(result)),
+    model,
+  )
+  let (_, replayed) = update_mooncode_session_results(
+    code_mode_test_dispatch,
+    ManagedMoonCodeSession(Ok(result)),
+    archived,
+  )
+  assert_eq(replayed.mooncode_sessions.length(), 0)
+  assert_eq(replayed.mooncode_archived_sessions.length(), 1)
+  assert_eq(replayed.mooncode_archived_sessions[0].id, session.id)
+  assert_eq(replayed.mooncode_archived_sessions[0].title, "Preserved title")
 }
 
 ///|

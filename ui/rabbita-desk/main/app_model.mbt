@@ -294,7 +294,7 @@ enum Msg {
   LoadedMoonCodeWatch(Int, String, @mooncode_core.MoonCodeWatchResult)
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
-  ManagedMoonCodeSession(Result[MoonCodeSessionLifecycleResult, String])
+  ManagedMoonCodeSession(Result[@mooncode_core.MoonCodeLifecycleResult, String])
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)
