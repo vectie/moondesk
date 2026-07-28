@@ -165,7 +165,11 @@ pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_s
 
 pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
 
+pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
+
 pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
+
+pub fn encode_mooncode_session_summary(MoonCodeSessionSummary) -> Json
 
 pub fn event_lane_artifact() -> String
 
@@ -1012,6 +1016,46 @@ pub(all) enum MoonCodeCapabilityDecodeResult {
   Supported(MoonCodeCapability)
   UnsupportedVersion(Int)
   Malformed(String)
+} derive(Eq, @debug.Debug)
+
+pub struct MoonCodeSessionId(String) derive(Eq, @debug.Debug)
+pub fn MoonCodeSessionId::parse(String) -> Self?
+pub fn MoonCodeSessionId::to_string(Self) -> String
+
+pub(all) enum MoonCodeSessionListingDecodeResult {
+  Supported(Array[MoonCodeSessionSummary])
+  UnsupportedVersion(Int)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeSessionStatus {
+  Created
+  Queued
+  Running
+  Idle
+  Done
+  Failed
+  Cancelled
+  Durable
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeSessionStatus::parse(String) -> Self?
+pub fn MoonCodeSessionStatus::to_string(Self) -> String
+
+pub(all) struct MoonCodeSessionSummary {
+  id : MoonCodeSessionId
+  workspace_id : String
+  workspace_name : String
+  cwd : String
+  source : String?
+  runtime_session_id : String?
+  title : String
+  updated_at : String?
+  model : String
+  status : MoonCodeSessionStatus
+  queued_count : Int
+  last_message : String?
+  archived : Bool
+  extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
 
 pub(all) struct NativeCapabilityEndpoints {

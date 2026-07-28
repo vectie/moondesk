@@ -334,7 +334,11 @@ async fn moonclaw_runtime_session_listing_result(
     @mooncode.moonclaw_native_session_listing_endpoint(workspace_root)
   }
   let native_rows = match moonclaw_get_json(daemon, endpoint) {
-    Ok(payload) => @mooncode.runtime_session_listing_rows(payload)
+    Ok(payload) =>
+      match @mooncode.runtime_session_listing_rows(payload) {
+        Ok(rows) => rows
+        Err(error) => return Err(error)
+      }
     Err(error) => return Err(error)
   }
   let workspaces = discover_workspaces(workspace_root)

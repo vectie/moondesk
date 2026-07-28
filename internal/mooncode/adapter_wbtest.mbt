@@ -89,24 +89,26 @@ test "cancel adapter preserves the visible turn target" {
 
 ///|
 test "listing adapter preserves MoonClaw order and canonical identity" {
-  let rows = runtime_session_listing_rows({
-    "sessions": [
-      {
-        "id": "newer",
-        "book_root": "/tmp/newer",
-        "source": "moonclaw",
-        "updated_at": 1784093903397,
-        "event_count": 9,
-        "archived": true,
-      },
-      {
-        "id": "older",
-        "workspace_root": "/tmp/older",
-        "updated_at": "2026-07-15T10:00:00Z",
-      },
-      { "title": "invalid" },
-    ],
-  })
+  guard runtime_session_listing_rows({
+      "sessions": [
+        {
+          "id": "newer",
+          "book_root": "/tmp/newer",
+          "source": "moonclaw",
+          "updated_at": 1784093903397,
+          "event_count": 9,
+          "archived": true,
+        },
+        {
+          "id": "older",
+          "workspace_root": "/tmp/older",
+          "updated_at": "2026-07-15T10:00:00Z",
+        },
+      ],
+    })
+    is Ok(rows) else {
+    fail("expected supported listing")
+  }
   assert_eq(rows.length(), 2)
   assert_eq(json_string(rows[0], "id", default=""), "newer")
   assert_eq(json_string(rows[1], "id", default=""), "older")
@@ -126,6 +128,32 @@ test "listing adapter preserves MoonClaw order and canonical identity" {
   assert_eq(json_int(summary, "verified_test_count", default=-1), 0)
   assert_eq(json_int(summary, "pending_diff_count", default=-1), 0)
   assert_true(json_bool(rows[0], "archived", default=false))
+}
+
+///|
+test "listing adapter reports malformed IDs and unsupported versions" {
+  assert_true(
+    runtime_session_listing_rows({ "sessions": [{ "title": "invalid" }] })
+    is Err(_),
+  )
+  assert_true(runtime_session_listing_rows(true) is Err(_))
+  assert_true(runtime_session_listing_rows({}) is Err(_))
+  assert_true(
+    runtime_session_listing_rows({ "sessions": "not-an-array" }) is Err(_),
+  )
+  assert_true(
+    runtime_session_listing_rows({ "protocol": 1, "sessions": [] }) is Err(_),
+  )
+  assert_true(
+    runtime_session_listing_rows({
+      "protocol": "mooncode.v9",
+      "sessions": [
+        { "id": "future", "workspace_root": "/tmp/future", "status": "durable" },
+      ],
+    })
+    is Err(message) &&
+    message.contains("version 9"),
+  )
 }
 
 ///|
