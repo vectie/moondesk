@@ -93,6 +93,7 @@ fn init_model() -> Model {
     town_capability_probe_available: false,
     launch_agent: None,
     moonclaw_daemon: None,
+    mooncode_capability: CapabilityPending,
     moonclaw_installing: false,
     moonclaw_install_feedback: "",
     mooncode_sessions: [],

@@ -17,6 +17,18 @@ test "mooncode HTTP capability reports MoonClaw ownership" {
 }
 
 ///|
+async test "capability host response does not fabricate runtime support" {
+  let response = mooncode_capabilities_response_json(
+    "/tmp/moondesk-capability-route-test",
+  )
+  assert_false(json_bool(response, "ok", default=true))
+  assert_eq(
+    json_string(response, "capability_status", default=""),
+    "unavailable",
+  )
+}
+
+///|
 test "mooncode model readiness requires a listed executable default" {
   assert_true(
     moonclaw_models_response_ready({
@@ -39,6 +51,93 @@ test "mooncode model readiness requires a listed executable default" {
       "models": [],
     }),
   )
+}
+
+///|
+test "capability and engine status agree for supported v2 subset probe" {
+  let probe : Json = {
+    "component": "mooncode",
+    "provider": "moonclaw",
+    "protocol": "mooncode.v2",
+    "capability_contract_id": "mooncode-native-capability-surface.v2",
+    "capability_surface_fingerprint": "subset-fingerprint",
+    "native_runtime_ready": true,
+    "runtime_owner": "moonclaw",
+    "session_owner": "moonclaw",
+    "endpoints": [
+      "/v1/code/capabilities", "/v1/code/sessions?book_root=<path>", "/v1/code/sessions/<id>/turns",
+      "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
+    ],
+    "tools": ["read", "edit", "write", "shell"],
+    "capability_surface": {
+      "component": "mooncode",
+      "capability_contract_id": "mooncode-native-capability-surface.v2",
+      "capability_surface_fingerprint": "subset-fingerprint",
+    },
+  }
+  let negotiated = @mooncode.negotiate_capabilities_json(probe)
+  let engine = mooncode_engine_status_projection_json(
+    {
+      "running": true,
+      "moonclaw_root": "/tmp/moonclaw",
+      "service_configured": true,
+    },
+    Ok({ "ready": false, "default_model": "", "models": [] }),
+    Ok(probe),
+  )
+  let native = json_object_field_or_empty(
+    engine, "native_capabilities_readiness",
+  )
+  assert_true(json_bool(negotiated, "ok", default=false))
+  assert_true(json_bool(native, "ok", default=false))
+  assert_true(json_bool(engine, "native_runtime_ready", default=false))
+  assert_eq(json_string(native, "status", default=""), "native-runtime-ready")
+}
+
+///|
+test "capability and engine status agree for incompatible probe" {
+  let probe : Json = {
+    "component": "mooncode",
+    "provider": "moonclaw",
+    "protocol": "mooncode.v2",
+    "capability_contract_id": "mooncode-native-capability-surface.v7",
+    "capability_surface_fingerprint": "subset-fingerprint",
+    "native_runtime_ready": true,
+    "runtime_owner": "moonclaw",
+    "session_owner": "moonclaw",
+    "endpoints": [
+      "/v1/code/capabilities", "/v1/code/sessions?book_root=<path>", "/v1/code/sessions/<id>/turns",
+      "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
+    ],
+    "tools": ["read", "edit", "write", "shell"],
+    "capability_surface": {
+      "component": "mooncode",
+      "capability_contract_id": "mooncode-native-capability-surface.v7",
+      "capability_surface_fingerprint": "subset-fingerprint",
+    },
+  }
+  let negotiated = @mooncode.negotiate_capabilities_json(probe)
+  let engine = mooncode_engine_status_projection_json(
+    {
+      "running": true,
+      "moonclaw_root": "/tmp/moonclaw",
+      "service_configured": true,
+    },
+    Ok({ "ready": false, "default_model": "", "models": [] }),
+    Ok(probe),
+  )
+  let native = json_object_field_or_empty(
+    engine, "native_capabilities_readiness",
+  )
+  assert_eq(
+    json_string(negotiated, "capability_status", default=""),
+    json_string(native, "status", default=""),
+  )
+  assert_eq(
+    json_bool(negotiated, "ok", default=true),
+    json_bool(native, "ok", default=true),
+  )
+  assert_false(json_bool(engine, "native_runtime_ready", default=true))
 }
 
 ///|

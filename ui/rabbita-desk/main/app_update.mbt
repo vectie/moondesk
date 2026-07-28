@@ -85,6 +85,8 @@ fn update(
     RevealedSelection(_) => update_app_results(dispatch, msg, model)
     LocalFilesPicked(_) => update_app_results(dispatch, msg, model)
     LoadedMoonClawDaemon(_) => update_mooncode_results(dispatch, msg, model)
+    RefreshMoonCodeCapability => (fetch_mooncode_capability_cmd(dispatch), model)
+    LoadedMoonCodeCapability(_) => update_mooncode_results(dispatch, msg, model)
     ManagedMoonClaw(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonClawModels(_) => update_mooncode_results(dispatch, msg, model)
     LoadedMoonCodeSessions(_) => update_mooncode_results(dispatch, msg, model)

@@ -6,6 +6,7 @@ fn update_mooncode_results(
 ) -> (@rabbita.Cmd, Model) {
   match msg {
     LoadedMoonClawDaemon(_)
+    | LoadedMoonCodeCapability(_)
     | ManagedMoonClaw(_)
     | LoadedMoonClawModels(_)
     | LoadedMoonCodeSessions(_)

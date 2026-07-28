@@ -163,6 +163,10 @@ pub fn conversation_watch_kind() -> String
 
 pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_sequence~ : Int, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
 
+pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
+
+pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
+
 pub fn event_lane_artifact() -> String
 
 pub fn event_lane_contract_id() -> String
@@ -254,6 +258,8 @@ pub fn model_planner_terminal_event_kinds() -> Array[String]
 pub fn model_planner_working_evidence_rule() -> String
 
 pub fn moonclaw_event_mapping_json() -> Json
+
+pub fn mooncode_capability() -> MoonCodeCapability
 
 pub fn native_archived_session_listing_endpoint(String) -> String
 
@@ -990,6 +996,24 @@ pub fn tool_harness_status_no_tools() -> String
 // Errors
 
 // Types and methods
+pub(all) struct MoonCodeCapability {
+  component : String
+  provider : String
+  protocol : String
+  capability_contract_id : String
+  native_runtime_ready : Bool
+  runtime_owner : String
+  session_owner : String
+  extensions : Map[String, Json]
+  ownership_extensions : Map[String, Json]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeCapabilityDecodeResult {
+  Supported(MoonCodeCapability)
+  UnsupportedVersion(Int)
+  Malformed(String)
+} derive(Eq, @debug.Debug)
+
 pub(all) struct NativeCapabilityEndpoints {
   capabilities : String
   session_list : String

@@ -40,8 +40,6 @@ pub fn engine_status_projection_json(daemon~ : Json, moonclaw_root~ : String, ch
 
 pub fn moonclaw_native_archived_session_listing_endpoint(String) -> String
 
-pub fn moonclaw_native_capabilities_readiness(Json) -> Json
-
 pub fn moonclaw_native_capabilities_ready(Json) -> Bool
 
 pub fn moonclaw_native_capabilities_unavailable(String) -> Json
@@ -56,9 +54,13 @@ pub fn moonclaw_native_stream_endpoint(String, String, String, Int, wait_ms? : I
 
 pub fn moonclaw_native_turn_endpoint(String) -> String
 
+pub fn mooncode_negotiated_runtime_readiness(Json) -> Json
+
 pub fn native_command_body(Json, Json, String, Json) -> Json
 
 pub fn native_runtime_session_projection(String, String) -> Json
+
+pub fn negotiate_capabilities_json(Json) -> Json
 
 pub fn projected_command_packet(Json, Json, String, String, String, String) -> Json
 
