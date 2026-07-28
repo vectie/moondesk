@@ -176,7 +176,7 @@ fn update(
     ClearMoonCodeCopy(_) => update_mooncode_actions(dispatch, msg, model)
     RetryMoonCodeTurn(_, _) => update_mooncode_actions(dispatch, msg, model)
     CancelMoonCodeWork(_, _) => update_mooncode_actions(dispatch, msg, model)
-    DecideMoonCodeTool(_, _, _, _, _) =>
+    DecideMoonCodeTool(_, _) =>
       update_mooncode_actions(dispatch, msg, model)
     ManageMoonClaw(_) => update_mooncode_actions(dispatch, msg, model)
     StartMoonClawAuth(_) => update_mooncode_actions(dispatch, msg, model)

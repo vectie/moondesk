@@ -11,7 +11,7 @@ fn update_mooncode_actions(
     | SendMoonCodeMessage(_)
     | RetryMoonCodeTurn(_, _)
     | CancelMoonCodeWork(_, _)
-    | DecideMoonCodeTool(_, _, _, _, _)
+    | DecideMoonCodeTool(_, _)
     | SetMoonCodeSessionQuery(_)
     | BeginMoonCodeSessionRename(_)
     | SetMoonCodeSessionTitleDraft(_)

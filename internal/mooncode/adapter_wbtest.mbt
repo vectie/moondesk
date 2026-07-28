@@ -108,6 +108,51 @@ test "cancel adapter preserves the visible turn target" {
 }
 
 ///|
+test "typed approval command keeps adapter and runtime packet wire parity" {
+  let session : Json = {
+    "id": "session-approval",
+    "workspace_id": "book-one",
+    "workspace_name": "Book One",
+    "workspace_root": "/tmp/book-one",
+  }
+  let payload : Json = {
+    "action": "approve_tool",
+    "client_turn_id": "approval-client-one",
+    "approval_id": "approval-one",
+    "target_command_id": "command-one",
+    "tool_call_id": "call-one",
+  }
+  guard decode_command_submission(payload) is Ok(command) else {
+    fail("typed approval command must decode")
+  }
+  guard @mooncode_core.encode_mooncode_command(command) is Ok(encoded) else {
+    fail("typed approval command must encode")
+  }
+  assert_true(
+    encoded
+    is {
+      "action": "approve_tool",
+      "client_turn_id": "approval-client-one",
+      "approval_id": "approval-one",
+      "target_command_id": "command-one",
+      "tool_call_id": "call-one",
+      ..
+    },
+  )
+  let accepted = accepted_command_packet(
+    session, command, "2026-07-29T00:00:00Z",
+  )
+  let packet = json_object_field_or_empty(
+    native_command_body(session, command, accepted, Json::empty_object()),
+    "packet",
+  )
+  assert_eq(json_string(packet, "action", default=""), "approve_tool")
+  assert_eq(json_string(packet, "approval_id", default=""), "approval-one")
+  assert_eq(json_string(packet, "target_command_id", default=""), "command-one")
+  assert_eq(json_string(packet, "tool_call_id", default=""), "call-one")
+}
+
+///|
 test "typed adapter conflicting idempotency payload derives a distinct identity" {
   let session : Json = { "id": "session-one" }
   guard decode_command_submission(

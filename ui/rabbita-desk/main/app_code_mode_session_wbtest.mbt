@@ -194,7 +194,17 @@ fn code_mode_test_turn(
   steps? : Array[Json] = [],
   status? : String = "done",
 ) -> @mooncode_core.MoonCodeTurn {
+  let approvals : Array[@mooncode_core.MoonCodeApproval] = []
   let turn_client_id = if client_turn_id == "" { id } else { client_turn_id }
+  for step in steps {
+    let evidence = mooncode_canonical_json_object_field(step, "evidence")
+    if json_field_string(evidence, "kind", default="") == "approval" {
+      match @mooncode_core.decode_mooncode_approval(evidence, "session-approval", id) {
+        Ok(approval) => approvals.push(approval)
+        Err(_) => ()
+      }
+    }
+  }
   {
     kind: "mooncode-conversation-turn",
     turn_id: id,
@@ -228,6 +238,7 @@ fn code_mode_test_turn(
       "steps": Json::array(steps),
       "live": {},
     },
+    approvals,
     assistant: if assistant == "" {
       None
     } else {
@@ -1958,6 +1969,13 @@ test "code mode renders a pending approval inside its canonical work turn" {
           status="running",
           steps=[
             {
+              "item_id": "edit-before-approval",
+              "title": "Edited manifest",
+              "evidence": {
+                "kind": "edit", "path": "moon.pkg", "diff": "+ dependency",
+              },
+            },
+            {
               "item_id": "turn:command-approval:work:approval:\{approval_id}",
               "title": "Approval needed",
               "summary": "Review `shell` before MoonClaw continues.",
@@ -1971,6 +1989,13 @@ test "code mode renders a pending approval inside its canonical work turn" {
                 "arguments": "{\"cmd\":\"moon publish\"}",
               },
             },
+            {
+              "item_id": "test-after-approval",
+              "title": "Ran tests",
+              "evidence": {
+                "kind": "test", "command": "moon test", "output": "ok",
+              },
+            },
           ],
         ),
       ]),
@@ -1981,13 +2006,18 @@ test "code mode renders a pending approval inside its canonical work turn" {
   match items[1].activity {
     Some(activity) => {
       assert_false(activity.folded)
-      assert_eq(activity.evidence.length(), 1)
-      let approval = activity.evidence[0]
-      assert_eq(approval.kind, "approval")
-      assert_eq(approval.state, "pending")
-      assert_eq(approval.approval_id, approval_id)
-      assert_eq(approval.target_command_id, "command-approval")
-      assert_eq(approval.tool_call_id, "tool-publish")
+      assert_eq(activity.evidence.length(), 3)
+      assert_eq(activity.evidence[0].kind, "edit")
+      let row = activity.evidence[1]
+      assert_eq(row.kind, "approval")
+      assert_eq(row.title, "Approval needed")
+      assert_eq(row.detail, "Review `shell` before MoonClaw continues.")
+      assert_eq(activity.evidence[2].kind, "test")
+      guard row.approval is Some(approval) else {
+        fail("expected typed approval snapshot")
+      }
+      assert_eq(approval.approval_id(), approval_id)
+      assert_eq(approval.state(), @mooncode_core.MoonCodeApprovalState::Pending)
     }
     None => fail("expected canonical approval work row")
   }
@@ -1997,18 +2027,26 @@ test "code mode renders a pending approval inside its canonical work turn" {
     selected_mooncode_session_id: session.id,
     mooncode_sessions: [session],
   }
+  let approval = match mooncode_transcript_items(model, session)[1].activity {
+    Some(activity) if activity.evidence[1].approval is Some(value) => value
+    _ => fail("expected typed approval snapshot")
+  }
   let (_, approved) = update_mooncode_session_actions(
     code_mode_test_dispatch,
     DecideMoonCodeTool(
-      session.id,
-      "approve_tool",
-      approval_id,
-      "command-approval",
-      "tool-publish",
+      approval, @mooncode_core.MoonCodeApprovalDecision::Approve,
     ),
     model,
   )
   assert_eq(approved.mooncode_composer_status, "Approval sent to MoonClaw")
+  let (_, rejected) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    DecideMoonCodeTool(
+      approval, @mooncode_core.MoonCodeApprovalDecision::Reject,
+    ),
+    model,
+  )
+  assert_eq(rejected.mooncode_composer_status, "Rejection sent to MoonClaw")
 }
 
 ///|

@@ -171,6 +171,8 @@ pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_s
 
 pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
 
+pub fn decode_mooncode_approval(Json, String, String) -> Result[MoonCodeApproval, MoonCodeApprovalDecodeFailure]
+
 pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
 
 pub fn decode_mooncode_command(Json) -> Result[MoonCodeCommand, String]
@@ -1053,6 +1055,40 @@ pub fn MoonCodeAcceptedCommand::workspace_id(Self) -> String
 pub fn MoonCodeAcceptedCommand::workspace_name(Self) -> String
 pub fn MoonCodeAcceptedCommand::workspace_root(Self) -> String
 
+pub struct MoonCodeApproval {
+  session_id : String
+  approval_id : String
+  target_command_id : String
+  tool_call_id : String
+  arguments : String
+  state : MoonCodeApprovalState
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeApproval::approval_id(Self) -> String
+pub fn MoonCodeApproval::arguments(Self) -> String
+pub fn MoonCodeApproval::decision_wire(Self, MoonCodeApprovalDecision, String) -> Result[Json, MoonCodeApprovalDecisionFailure]
+pub fn MoonCodeApproval::state(Self) -> MoonCodeApprovalState
+
+pub(all) enum MoonCodeApprovalDecision {
+  Approve
+  Reject
+} derive(Eq, @debug.Debug)
+
+pub enum MoonCodeApprovalDecisionFailure {
+  Stale
+  WrongSessionOwnership(expected~ : String, actual~ : String)
+} derive(Eq, @debug.Debug)
+
+pub enum MoonCodeApprovalDecodeFailure {
+  Malformed(String)
+  UnsupportedState(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeApprovalState {
+  Pending
+  Approved
+  Rejected
+} derive(Eq, @debug.Debug)
+
 pub(all) struct MoonCodeCapability {
   component : String
   provider : String
@@ -1215,6 +1251,7 @@ pub(all) struct MoonCodeTurn {
   updated_at : String
   user : MoonCodeMessage?
   work : Json
+  approvals : Array[MoonCodeApproval]
   assistant : MoonCodeMessage?
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
