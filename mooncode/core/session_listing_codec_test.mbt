@@ -35,16 +35,22 @@ test "session listing codec accepts the authoritative envelope" {
 }
 
 ///|
-test "session listing codec rejects malformed rows IDs and statuses" {
+test "session IDs preserve opaque protocol values exactly" {
+  let raw_id = "session/resume:1\\branch"
+  guard @core.MoonCodeSessionId::parse(raw_id) is Some(id) else {
+    fail("expected opaque session ID to be accepted")
+  }
+  assert_eq(id.to_string(), raw_id)
+  assert_true(@core.MoonCodeSessionId::parse("") is None)
+  assert_true(@core.MoonCodeSessionId::parse(" \t\n") is None)
+}
+
+///|
+test "session listing codec rejects malformed rows and statuses" {
   assert_true(
     @core.decode_mooncode_session_listing({ "protocol": "mooncode.v1" })
     is Malformed(_),
   )
-  let invalid_id : Json = {
-    "protocol": "mooncode.v1",
-    "sessions": [{ "id": "../bad", "status": "idle" }],
-  }
-  assert_true(@core.decode_mooncode_session_listing(invalid_id) is Malformed(_))
   let invalid_status : Json = {
     "protocol": "mooncode.v1",
     "sessions": [{ "id": "session-one", "status": "future-status" }],
@@ -52,6 +58,31 @@ test "session listing codec rejects malformed rows IDs and statuses" {
   assert_true(
     @core.decode_mooncode_session_listing(invalid_status) is Malformed(_),
   )
+}
+
+///|
+test "session listing codec distinguishes absent and malformed known fields" {
+  assert_true(
+    @core.decode_mooncode_session_listing({ "protocol": 1, "sessions": [] })
+    is Malformed(_),
+  )
+  assert_true(
+    @core.decode_mooncode_session_listing({ "sessions": [] }) is Supported([]),
+  )
+  assert_true(
+    @core.decode_mooncode_session_listing([
+      { "id": "session-one", "status": "idle", "updated_at": 1 },
+    ])
+    is Malformed(_),
+  )
+  guard @core.decode_mooncode_session_listing([
+      { "id": "session-one", "status": "idle" },
+    ])
+    is Supported([summary]) else {
+    fail("expected absent optional fields to retain defaults")
+  }
+  assert_true(summary.updated_at is None)
+  assert_eq(summary.title, "session-one")
 }
 
 ///|

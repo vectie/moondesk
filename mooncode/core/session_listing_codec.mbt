@@ -3,8 +3,7 @@ pub struct MoonCodeSessionId(String) derive(Debug, Eq)
 
 ///|
 pub fn MoonCodeSessionId::parse(value : String) -> MoonCodeSessionId? {
-  let value = value.trim().to_owned()
-  if value == "" || value.contains("/") || value.contains("\\") {
+  if value.trim() == "" {
     None
   } else {
     Some(MoonCodeSessionId(value))
@@ -92,14 +91,6 @@ fn listing_string(fields : Map[String, Json], key : String) -> String? {
 }
 
 ///|
-fn listing_optional_string(fields : Map[String, Json], key : String) -> String? {
-  match fields.get(key) {
-    Some(String(value)) => Some(value)
-    _ => None
-  }
-}
-
-///|
 fn listing_int(fields : Map[String, Json], key : String, default : Int) -> Int? {
   match fields.get(key) {
     None => Some(default)
@@ -149,21 +140,27 @@ fn decode_listing_row(row : Json) -> Result[MoonCodeSessionSummary, String] {
   guard MoonCodeSessionStatus::parse(raw_status) is Some(status) else {
     return Err("session status is invalid")
   }
+  let string_fields = [
+    "workspace_id", "workspace_name", "cwd", "source", "mooncode_runtime_session_id",
+    "title", "updated_at", "model", "last_message",
+  ]
+  for key in string_fields {
+    match fields.get(key) {
+      None | Some(String(_)) => ()
+      _ => return Err("\{key} must be a string")
+    }
+  }
   guard listing_int(fields, "queued_count", 0) is Some(queued_count) else {
     return Err("queued_count must be an integer")
   }
   guard listing_bool(fields, "archived", false) is Some(archived) else {
     return Err("archived must be a boolean")
   }
-  let workspace_id = listing_optional_string(fields, "workspace_id").unwrap_or(
-    "",
-  )
-  let workspace_name = listing_optional_string(fields, "workspace_name").unwrap_or(
-    "",
-  )
-  let cwd = listing_optional_string(fields, "cwd").unwrap_or("")
-  let title = listing_optional_string(fields, "title").unwrap_or(raw_id)
-  let model = listing_optional_string(fields, "model").unwrap_or("")
+  let workspace_id = listing_string(fields, "workspace_id").unwrap_or("")
+  let workspace_name = listing_string(fields, "workspace_name").unwrap_or("")
+  let cwd = listing_string(fields, "cwd").unwrap_or("")
+  let title = listing_string(fields, "title").unwrap_or(raw_id)
+  let model = listing_string(fields, "model").unwrap_or("")
   let extensions : Map[String, Json] = Map([])
   for key, value in fields {
     if ![
@@ -179,16 +176,14 @@ fn decode_listing_row(row : Json) -> Result[MoonCodeSessionSummary, String] {
     workspace_id,
     workspace_name,
     cwd,
-    source: listing_optional_string(fields, "source"),
-    runtime_session_id: listing_optional_string(
-      fields, "mooncode_runtime_session_id",
-    ),
+    source: listing_string(fields, "source"),
+    runtime_session_id: listing_string(fields, "mooncode_runtime_session_id"),
     title,
-    updated_at: listing_optional_string(fields, "updated_at"),
+    updated_at: listing_string(fields, "updated_at"),
     model,
     status,
     queued_count,
-    last_message: listing_optional_string(fields, "last_message"),
+    last_message: listing_string(fields, "last_message"),
     archived,
     extensions,
   })
@@ -208,13 +203,18 @@ pub fn decode_mooncode_session_listing(
     }
     _ => return Malformed("listing payload must be an array or object")
   }
-  if payload is Object(fields) &&
-    listing_string(fields, "protocol") is Some(protocol) {
-    guard listing_version(protocol) is Some(version) else {
-      return Malformed("listing protocol must identify a MoonCode version")
-    }
-    if version != 1 {
-      return UnsupportedVersion(version)
+  if payload is Object(fields) {
+    match fields.get("protocol") {
+      None => ()
+      Some(String(protocol)) => {
+        guard listing_version(protocol) is Some(version) else {
+          return Malformed("listing protocol must identify a MoonCode version")
+        }
+        if version != 1 {
+          return UnsupportedVersion(version)
+        }
+      }
+      _ => return Malformed("listing protocol must be a string")
     }
   }
   let summaries : Array[MoonCodeSessionSummary] = []
