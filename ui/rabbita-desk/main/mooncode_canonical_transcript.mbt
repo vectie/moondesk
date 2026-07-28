@@ -54,7 +54,7 @@ fn mooncode_canonical_turns_from_backend_conversation(
           None => ()
         }
         match
-          mooncode_canonical_work_item_from_json(
+          mooncode_canonical_work_item(
             backend_turn.work,
             session.id,
             backend_turn.command_id,
@@ -134,23 +134,23 @@ fn mooncode_canonical_message_row(
 }
 
 ///|
-fn mooncode_canonical_work_item_from_json(
-  work : Json,
+fn mooncode_canonical_work_item(
+  work : @mooncode_core.MoonCodeWork,
   session_id : String,
   command_id : String,
   client_turn_id : String,
   retry_prompt : String,
   approvals : Array[@mooncode_core.MoonCodeApproval],
 ) -> MoonCodeTranscriptItem? {
-  let summary = json_field_string(work, "summary", default="").trim().to_owned()
-  let status = json_field_string(work, "status", default="queued")
-  let detail = mooncode_canonical_work_detail(work)
+  let summary = work.summary
+  let status = mooncode_work_status_name(work.status)
+  let detail = work.detail
   if summary == "" && detail == "" && approvals.length() == 0 {
     return None
   }
   Some(
     mooncode_transcript_activity_item({
-      item_id: json_field_string(work, "item_id", default=""),
+      item_id: work.item_id,
       tone: if status == "failed" {
         "failed"
       } else {
@@ -175,94 +175,62 @@ fn mooncode_canonical_work_item_from_json(
 }
 
 ///|
-fn mooncode_canonical_work_detail(work : Json) -> String {
-  let lines : Array[String] = []
-  for step in json_field_json_array_items(work, "steps") {
-    let summary = json_field_string(step, "summary", default="")
-      .trim()
-      .to_owned()
-    if summary != "" && !lines.contains(summary) {
-      lines.push(summary)
-    }
+fn mooncode_work_status_name(status : @mooncode_core.MoonCodeWorkStatus) -> String {
+  match status {
+    @mooncode_core.Queued => "queued"
+    @mooncode_core.Running => "running"
+    @mooncode_core.Done => "done"
+    @mooncode_core.Failed => "failed"
+    @mooncode_core.Cancelled => "cancelled"
   }
-  let live = mooncode_canonical_json_object_field(work, "live")
-  let live_summary = json_field_string(live, "summary", default="")
-    .trim()
-    .to_owned()
-  if live_summary != "" && !lines.contains(live_summary) {
-    lines.push(live_summary)
-  }
-  lines.join("\n")
 }
 
 ///|
 fn mooncode_canonical_work_evidence(
-  work : Json,
+  work : @mooncode_core.MoonCodeWork,
   approvals : Array[@mooncode_core.MoonCodeApproval],
 ) -> Array[MoonCodeEvidenceRow] {
   let rows : Array[MoonCodeEvidenceRow] = []
   let mut approval_index = 0
-  for step in json_field_json_array_items(work, "steps") {
-    let evidence = mooncode_canonical_json_object_field(step, "evidence")
-    let kind = json_field_string(evidence, "kind", default="")
-    if kind == "approval" {
-      match approvals.get(approval_index) {
-        Some(approval) => {
-          rows.push({
-            item_id: json_field_string(step, "item_id", default=""),
-            kind: "approval",
-            state: "",
-            title: json_field_string(step, "title", default="Approval"),
-            path: "",
-            detail: json_field_string(step, "summary", default=""),
-            diff: "",
-            command: "",
-            output: "",
-            exit_code: -1,
-            truncated: false,
-            approval: Some(approval),
-          })
-          approval_index += 1
-        }
-        None => ()
-      }
-      continue
+  for evidence in work.evidence {
+    let kind = match evidence.kind {
+      @mooncode_core.Edit => "edit"
+      @mooncode_core.Test => "test"
+      @mooncode_core.Approval => "approval"
+      @mooncode_core.Tool => "tool"
+      _ => "artifact"
     }
-    let path = json_field_string(evidence, "path", default="")
-    let diff = json_field_string(evidence, "diff", default="")
-    let command = json_field_string(evidence, "command", default="")
-    let output = json_field_string(evidence, "output", default="")
-    if kind == "" || (path == "" && diff == "" && command == "" && output == "") {
+    let state = match evidence.state {
+      @mooncode_core.Recorded => "recorded"; @mooncode_core.Pending => "pending"
+      @mooncode_core.Applied => "applied"; @mooncode_core.Passed => "passed"
+      @mooncode_core.Reverted => "reverted"; @mooncode_core.Cancelled => "cancelled"
+      @mooncode_core.Approved => "approved"
+      @mooncode_core.Accepted => "accepted"; @mooncode_core.Rejected => "rejected"
+      @mooncode_core.Failed => "failed"; @mooncode_core.Stale => "stale"
+    }
+    let approval = match evidence.approval {
+      Some(value) => Some(value)
+      None if evidence.kind is @mooncode_core.Approval => {
+        let value = approvals.get(approval_index)
+        if value is Some(_) { approval_index += 1 }
+        value
+      }
+      None => None
+    }
+    let state = if evidence.kind is @mooncode_core.Approval { "" } else { state }
+    if !(evidence.kind is @mooncode_core.Approval) && evidence.path == "" &&
+      evidence.diff == "" && evidence.command == "" && evidence.output == "" {
       continue
     }
     rows.push({
-      item_id: json_field_string(step, "item_id", default=""),
-      kind,
-      state: json_field_string(evidence, "state", default="recorded"),
-      title: json_field_string(step, "title", default="Work evidence"),
-      path,
-      detail: json_field_string(step, "summary", default=""),
-      diff,
-      command,
-      output,
-      exit_code: json_field_int(evidence, "exit_code", default=-1),
-      truncated: json_field_bool(evidence, "truncated", default=false),
-      approval: None,
+      item_id: evidence.item_id, kind, state, title: evidence.title,
+      path: evidence.path, detail: evidence.detail, diff: evidence.diff,
+      command: evidence.command, output: evidence.output,
+      exit_code: evidence.exit_code, truncated: evidence.truncated,
+      approval,
     })
   }
   rows
-}
-
-///|
-fn mooncode_canonical_json_object_field(value : Json, key : String) -> Json {
-  match value {
-    Object(fields) =>
-      match fields.get(key) {
-        Some(object) => object
-        None => Json::object({})
-      }
-    _ => Json::object({})
-  }
 }
 
 ///|

@@ -1,75 +1,75 @@
 ///|
-pub fn package_review_flow_contract_id() -> String {
+fn package_review_flow_contract_id() -> String {
   "mooncode-package-review-model-flow.v1"
 }
 
 ///|
-pub fn package_review_flow_contract_kind() -> String {
+fn package_review_flow_contract_kind() -> String {
   "mooncode-package-review-model-flow-contract"
 }
 
 ///|
-pub fn package_review_flow_report_kind() -> String {
+fn package_review_flow_report_kind() -> String {
   "mooncode-package-review-model-flow-report"
 }
 
 ///|
-pub fn package_review_flow_status_accepted() -> String {
+fn package_review_flow_status_accepted() -> String {
   "accepted"
 }
 
 ///|
-pub fn package_review_flow_status_rejected() -> String {
+fn package_review_flow_status_rejected() -> String {
   "rejected"
 }
 
 ///|
-pub fn package_review_flow_status_failed() -> String {
+fn package_review_flow_status_failed() -> String {
   "failed"
 }
 
 ///|
-pub fn package_review_flow_status_running() -> String {
+fn package_review_flow_status_running() -> String {
   "running"
 }
 
 ///|
-pub fn package_review_flow_status_stale() -> String {
+fn package_review_flow_status_stale() -> String {
   "stale"
 }
 
 ///|
-pub fn package_review_flow_status_empty() -> String {
+fn package_review_flow_status_empty() -> String {
   "empty"
 }
 
 ///|
-pub fn package_review_flow_status_waiting_for_manifest() -> String {
+fn package_review_flow_status_waiting_for_manifest() -> String {
   "waiting-for-manifest"
 }
 
 ///|
-pub fn package_review_flow_status_waiting_for_review() -> String {
+fn package_review_flow_status_waiting_for_review() -> String {
   "waiting-for-review"
 }
 
 ///|
-pub fn package_review_flow_status_waiting_for_tests() -> String {
+fn package_review_flow_status_waiting_for_tests() -> String {
   "waiting-for-tests"
 }
 
 ///|
-pub fn package_review_flow_status_waiting_for_readiness() -> String {
+fn package_review_flow_status_waiting_for_readiness() -> String {
   "waiting-for-readiness"
 }
 
 ///|
-pub fn package_review_flow_status_waiting_for_assistant() -> String {
+fn package_review_flow_status_waiting_for_assistant() -> String {
   "waiting-for-assistant"
 }
 
 ///|
-pub fn package_review_flow_terminal_statuses() -> Array[String] {
+fn package_review_flow_terminal_statuses() -> Array[String] {
   [
     package_review_flow_status_accepted(),
     package_review_flow_status_rejected(),
@@ -78,52 +78,52 @@ pub fn package_review_flow_terminal_statuses() -> Array[String] {
 }
 
 ///|
-pub fn package_review_flow_status_is_terminal(status : String) -> Bool {
+fn package_review_flow_status_is_terminal(status : String) -> Bool {
   package_review_flow_terminal_statuses().contains(status)
 }
 
 ///|
-pub fn package_review_flow_reason_missing_command_owner() -> String {
+fn package_review_flow_reason_missing_command_owner() -> String {
   "missing-command-owner"
 }
 
 ///|
-pub fn package_review_flow_reason_evidence_without_package_command() -> String {
+fn package_review_flow_reason_evidence_without_package_command() -> String {
   "evidence-without-package-command"
 }
 
 ///|
-pub fn package_review_flow_missing_step_assistant_summary() -> String {
+fn package_review_flow_missing_step_assistant_summary() -> String {
   "assistant_summary"
 }
 
 ///|
-pub fn package_review_flow_missing_step_package_manifest() -> String {
+fn package_review_flow_missing_step_package_manifest() -> String {
   "package_manifest"
 }
 
 ///|
-pub fn package_review_flow_missing_step_review_accept_receipt() -> String {
+fn package_review_flow_missing_step_review_accept_receipt() -> String {
   "review_accept_receipt"
 }
 
 ///|
-pub fn package_review_flow_missing_step_test_evidence() -> String {
+fn package_review_flow_missing_step_test_evidence() -> String {
   "test_evidence"
 }
 
 ///|
-pub fn package_review_flow_missing_step_package_verified() -> String {
+fn package_review_flow_missing_step_package_verified() -> String {
   "package_verified"
 }
 
 ///|
-pub fn package_review_flow_command_kinds() -> Array[String] {
+fn package_review_flow_command_kinds() -> Array[String] {
   ["command.package"]
 }
 
 ///|
-pub fn package_review_flow_manifest_kinds() -> Array[String] {
+fn package_review_flow_manifest_kinds() -> Array[String] {
   [
     runtime_event_package_manifest(),
     runtime_event_package_index(),
@@ -135,7 +135,7 @@ pub fn package_review_flow_manifest_kinds() -> Array[String] {
 }
 
 ///|
-pub fn package_review_flow_diff_review_kinds() -> Array[String] {
+fn package_review_flow_diff_review_kinds() -> Array[String] {
   [
     "diff",
     "file_change",
@@ -147,17 +147,17 @@ pub fn package_review_flow_diff_review_kinds() -> Array[String] {
 }
 
 ///|
-pub fn package_review_flow_accept_kinds() -> Array[String] {
+fn package_review_flow_accept_kinds() -> Array[String] {
   [runtime_event_receipt_accept()]
 }
 
 ///|
-pub fn package_review_flow_reject_kinds() -> Array[String] {
+fn package_review_flow_reject_kinds() -> Array[String] {
   [runtime_event_receipt_reject()]
 }
 
 ///|
-pub fn package_review_flow_readiness_kinds() -> Array[String] {
+fn package_review_flow_readiness_kinds() -> Array[String] {
   [
     runtime_event_package_built(),
     runtime_event_package_verified(),
@@ -167,12 +167,12 @@ pub fn package_review_flow_readiness_kinds() -> Array[String] {
 }
 
 ///|
-pub fn package_review_flow_assistant_summary_kinds() -> Array[String] {
+fn package_review_flow_assistant_summary_kinds() -> Array[String] {
   ["assistant", "finish"]
 }
 
 ///|
-pub fn package_review_flow_failure_kinds() -> Array[String] {
+fn package_review_flow_failure_kinds() -> Array[String] {
   [
     runtime_event_command_error(),
     runtime_event_turn_failed(),
@@ -183,7 +183,7 @@ pub fn package_review_flow_failure_kinds() -> Array[String] {
 }
 
 ///|
-pub fn package_review_flow_accepted_sequence() -> Array[String] {
+fn package_review_flow_accepted_sequence() -> Array[String] {
   [
     "command.package",
     "package.manifest",
@@ -195,19 +195,19 @@ pub fn package_review_flow_accepted_sequence() -> Array[String] {
 }
 
 ///|
-pub fn package_review_flow_rejected_sequence() -> Array[String] {
+fn package_review_flow_rejected_sequence() -> Array[String] {
   ["command.package", runtime_event_receipt_reject(), "assistant summary"]
 }
 
 ///|
-pub fn package_review_flow_failed_sequence() -> Array[String] {
+fn package_review_flow_failed_sequence() -> Array[String] {
   [
     "command.package", "command-scoped failed test_result, package proof, planner failure, command_error, turn_failed, or max_steps_exhausted",
   ]
 }
 
 ///|
-pub fn package_review_flow_event_is_package_command(event : Json) -> Bool {
+fn package_review_flow_event_is_package_command(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   let action = package_review_flow_event_action(event)
   kind == "command.package" ||
@@ -215,28 +215,28 @@ pub fn package_review_flow_event_is_package_command(event : Json) -> Bool {
 }
 
 ///|
-pub fn package_review_flow_event_is_package_manifest(event : Json) -> Bool {
+fn package_review_flow_event_is_package_manifest(event : Json) -> Bool {
   package_review_flow_manifest_kinds().contains(
     package_review_flow_event_kind(event),
   )
 }
 
 ///|
-pub fn package_review_flow_event_is_accept(event : Json) -> Bool {
+fn package_review_flow_event_is_accept(event : Json) -> Bool {
   package_review_flow_accept_kinds().contains(
     package_review_flow_event_kind(event),
   )
 }
 
 ///|
-pub fn package_review_flow_event_is_reject(event : Json) -> Bool {
+fn package_review_flow_event_is_reject(event : Json) -> Bool {
   package_review_flow_reject_kinds().contains(
     package_review_flow_event_kind(event),
   )
 }
 
 ///|
-pub fn package_review_flow_event_is_diff_review(event : Json) -> Bool {
+fn package_review_flow_event_is_diff_review(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   let lane = package_review_flow_json_string(event, "lane", default="")
   lane == event_lane_diff() ||
@@ -244,38 +244,38 @@ pub fn package_review_flow_event_is_diff_review(event : Json) -> Bool {
 }
 
 ///|
-pub fn package_review_flow_event_is_test_result(event : Json) -> Bool {
+fn package_review_flow_event_is_test_result(event : Json) -> Bool {
   package_review_flow_event_kind(event) == runtime_event_test_result()
 }
 
 ///|
-pub fn package_review_flow_event_is_package_readiness(event : Json) -> Bool {
+fn package_review_flow_event_is_package_readiness(event : Json) -> Bool {
   package_review_flow_readiness_kinds().contains(
     package_review_flow_event_kind(event),
   )
 }
 
 ///|
-pub fn package_review_flow_event_is_package_built(event : Json) -> Bool {
+fn package_review_flow_event_is_package_built(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   kind == runtime_event_package_built() || kind == "runtime.package_built"
 }
 
 ///|
-pub fn package_review_flow_event_is_package_verified(event : Json) -> Bool {
+fn package_review_flow_event_is_package_verified(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   kind == runtime_event_package_verified() || kind == "runtime.package_verified"
 }
 
 ///|
-pub fn package_review_flow_event_is_assistant_summary(event : Json) -> Bool {
+fn package_review_flow_event_is_assistant_summary(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   let lane = package_review_flow_json_string(event, "lane", default="")
   kind == "assistant" || (kind == "finish" && lane == event_lane_review())
 }
 
 ///|
-pub fn package_review_flow_event_is_failure(event : Json) -> Bool {
+fn package_review_flow_event_is_failure(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   package_review_flow_failure_kinds().contains(kind) ||
   (
@@ -285,13 +285,13 @@ pub fn package_review_flow_event_is_failure(event : Json) -> Bool {
 }
 
 ///|
-pub fn package_review_flow_event_is_failure_eligible(event : Json) -> Bool {
+fn package_review_flow_event_is_failure_eligible(event : Json) -> Bool {
   package_review_flow_event_is_test_result(event) ||
   package_review_flow_event_is_package_readiness(event)
 }
 
 ///|
-pub fn package_review_flow_event_is_evidence(event : Json) -> Bool {
+fn package_review_flow_event_is_evidence(event : Json) -> Bool {
   package_review_flow_event_is_package_manifest(event) ||
   package_review_flow_event_is_diff_review(event) ||
   package_review_flow_event_is_test_result(event) ||
@@ -301,13 +301,13 @@ pub fn package_review_flow_event_is_evidence(event : Json) -> Bool {
 }
 
 ///|
-pub fn package_review_flow_event_failed(event : Json) -> Bool {
+fn package_review_flow_event_failed(event : Json) -> Bool {
   package_review_flow_json_string(event, "status", default="") == "failed" ||
   package_review_flow_json_int(event, "exit_code", default=0) != 0
 }
 
 ///|
-pub fn package_review_flow_contract_json() -> Json {
+fn package_review_flow_contract_json() -> Json {
   {
     "kind": package_review_flow_contract_kind(),
     "protocol": protocol_version(),
