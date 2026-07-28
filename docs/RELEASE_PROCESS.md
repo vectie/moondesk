@@ -1,14 +1,24 @@
 # MoonDesk Release Process
 
-Last updated: 2026-07-27.
+Last updated: 2026-07-28.
 
 ## Status and evidence boundary
 
-The repository contains a local CI workflow and an unsigned-preview workflow.
-Local validation and release-fixture evidence do not prove that either workflow
-has run on the remote default branch. Phase 2 remains open until clean
-pull-request, push, and version-tag runs are retained and a tag artifact is
-reproduced independently.
+The repository contains active CI and unsigned-preview workflows. GitHub
+retains successful `Required repository validation` jobs for:
+
+- pull request run [`30314186808`](https://github.com/vectie/moondesk/actions/runs/30314186808)
+  at commit `faebef38bf9d0e732089d7d9e0f8ccf1023a71f3`; the run was created at
+  2026-07-27 23:27:13 UTC, and its job ran from 23:27:15 through 23:28:13 UTC
+- default-branch push run [`30316790583`](https://github.com/vectie/moondesk/actions/runs/30316790583)
+  at merge commit `083e1729e5602146071c06fc5992c74acf608547`; the run was created at
+  2026-07-28 00:15:54 UTC, and its job ran from 00:16:03 through 00:17:12 UTC
+
+The unsigned-preview workflow has no retained run. Phase 2 remains open until
+a successful immutable preview-tag run retains its source commit, runner image,
+URL, and artifact identifier; the downloaded artifact passes read-only
+verification; and the same tagged version is rebuilt and compared from an
+independent clean checkout.
 
 The exact disposable-candidate commands, sizes, hashes, refusal checks, and
 test counts are retained in
