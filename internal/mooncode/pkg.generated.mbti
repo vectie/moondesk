@@ -68,7 +68,7 @@ pub fn projected_session_record(workspace_id~ : String, workspace_name~ : String
 
 pub fn protocol_version() -> String
 
-pub fn runtime_session_listing_rows(Json) -> Array[Json]
+pub fn runtime_session_listing_rows(Json) -> Result[Array[Json], String]
 
 pub fn runtime_tool_names() -> Array[String]
 
