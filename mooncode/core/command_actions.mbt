@@ -1,152 +1,152 @@
 ///|
-pub fn command_action_contract_id() -> String {
+fn command_action_contract_id() -> String {
   "mooncode-command-actions.v1"
 }
 
 ///|
-pub fn command_prompt() -> String {
+fn command_prompt() -> String {
   "prompt"
 }
 
 ///|
-pub fn command_steer() -> String {
+fn command_steer() -> String {
   "steer"
 }
 
 ///|
-pub fn command_run_tests() -> String {
+fn command_run_tests() -> String {
   "run_tests"
 }
 
 ///|
-pub fn command_run_build() -> String {
+fn command_run_build() -> String {
   "run_build"
 }
 
 ///|
-pub fn command_run_eval() -> String {
+fn command_run_eval() -> String {
   "run_eval"
 }
 
 ///|
-pub fn command_package() -> String {
+fn command_package() -> String {
   "package"
 }
 
 ///|
-pub fn command_commit() -> String {
+fn command_commit() -> String {
   "commit"
 }
 
 ///|
-pub fn command_accept() -> String {
+fn command_accept() -> String {
   "accept"
 }
 
 ///|
-pub fn command_reject() -> String {
+fn command_reject() -> String {
   "reject"
 }
 
 ///|
-pub fn command_approve_tool() -> String {
+fn command_approve_tool() -> String {
   "approve_tool"
 }
 
 ///|
-pub fn command_reject_tool() -> String {
+fn command_reject_tool() -> String {
   "reject_tool"
 }
 
 ///|
-pub fn command_apply_patch() -> String {
+fn command_apply_patch() -> String {
   "apply_patch"
 }
 
 ///|
-pub fn command_revert_patch() -> String {
+fn command_revert_patch() -> String {
   "revert_patch"
 }
 
 ///|
-pub fn command_cancel() -> String {
+fn command_cancel() -> String {
   "cancel"
 }
 
 ///|
-pub fn command_note() -> String {
+fn command_note() -> String {
   "note"
 }
 
 ///|
-pub fn command_turn_actions() -> Array[String] {
+fn command_turn_actions() -> Array[String] {
   [command_prompt(), command_steer(), command_cancel()]
 }
 
 ///|
-pub fn command_supported_actions() -> Array[String] {
+fn command_supported_actions() -> Array[String] {
   let actions = command_advertised_actions()
   actions.push(command_note())
   actions
 }
 
 ///|
-pub fn command_action_is_advertised(action : String) -> Bool {
+fn command_action_is_advertised(action : String) -> Bool {
   command_advertised_actions().contains(action)
 }
 
 ///|
-pub fn command_action_is_turn(action : String) -> Bool {
+fn command_action_is_turn(action : String) -> Bool {
   command_turn_actions().contains(action)
 }
 
 ///|
-pub fn command_action_is_prompt_or_steer(action : String) -> Bool {
+fn command_action_is_prompt_or_steer(action : String) -> Bool {
   action == command_prompt() || action == command_steer()
 }
 
 ///|
-pub fn command_action_is_cancel(action : String) -> Bool {
+fn command_action_is_cancel(action : String) -> Bool {
   action == command_cancel()
 }
 
 ///|
-pub fn command_action_is_test(action : String) -> Bool {
+fn command_action_is_test(action : String) -> Bool {
   action == command_run_tests() || action == command_run_build()
 }
 
 ///|
-pub fn command_action_is_eval(action : String) -> Bool {
+fn command_action_is_eval(action : String) -> Bool {
   action == command_run_eval()
 }
 
 ///|
-pub fn command_action_is_package(action : String) -> Bool {
+fn command_action_is_package(action : String) -> Bool {
   action == command_package()
 }
 
 ///|
-pub fn command_action_is_commit(action : String) -> Bool {
+fn command_action_is_commit(action : String) -> Bool {
   action == command_commit()
 }
 
 ///|
-pub fn command_action_is_review_decision(action : String) -> Bool {
+fn command_action_is_review_decision(action : String) -> Bool {
   action == command_accept() || action == command_reject()
 }
 
 ///|
-pub fn command_action_is_tool_approval(action : String) -> Bool {
+fn command_action_is_tool_approval(action : String) -> Bool {
   action == command_approve_tool() || action == command_reject_tool()
 }
 
 ///|
-pub fn command_action_is_patch(action : String) -> Bool {
+fn command_action_is_patch(action : String) -> Bool {
   action == command_apply_patch() || action == command_revert_patch()
 }
 
 ///|
-pub fn command_action_requires_tool_harness(action : String) -> Bool {
+fn command_action_requires_tool_harness(action : String) -> Bool {
   command_action_is_prompt_or_steer(action) ||
   action == command_run_tests() ||
   command_action_is_eval(action) ||
@@ -157,7 +157,7 @@ pub fn command_action_requires_tool_harness(action : String) -> Bool {
 }
 
 ///|
-pub fn command_action_requires_runtime_completion_proof(
+fn command_action_requires_runtime_completion_proof(
   action : String,
 ) -> Bool {
   action == command_run_tests() ||
@@ -170,7 +170,7 @@ pub fn command_action_requires_runtime_completion_proof(
 }
 
 ///|
-pub fn command_action_writes_review_receipt(action : String) -> Bool {
+fn command_action_writes_review_receipt(action : String) -> Bool {
   command_action_is_review_decision(action) ||
   command_action_is_package(action) ||
   command_action_is_commit(action) ||
@@ -179,7 +179,7 @@ pub fn command_action_writes_review_receipt(action : String) -> Bool {
 }
 
 ///|
-pub fn command_action_tool_hints(action : String) -> Array[String] {
+fn command_action_tool_hints(action : String) -> Array[String] {
   if command_action_is_test(action) {
     [
       runtime_tool_moon_ide(),
@@ -257,7 +257,7 @@ pub fn command_action_tool_hints(action : String) -> Array[String] {
 }
 
 ///|
-pub fn command_action_expected_lanes(action : String) -> Array[String] {
+fn command_action_expected_lanes(action : String) -> Array[String] {
   if command_action_is_test(action) {
     [event_lane_test(), event_lane_tool(), event_lane_runtime()]
   } else if command_action_is_eval(action) {
@@ -282,7 +282,7 @@ pub fn command_action_expected_lanes(action : String) -> Array[String] {
 }
 
 ///|
-pub fn command_action_lane(action : String) -> String {
+fn command_action_lane(action : String) -> String {
   if command_action_is_test(action) || command_action_is_eval(action) {
     event_lane_test()
   } else if command_action_is_package(action) {
@@ -298,7 +298,7 @@ pub fn command_action_lane(action : String) -> String {
 }
 
 ///|
-pub fn command_action_title(action : String, status : String) -> String {
+fn command_action_title(action : String, status : String) -> String {
   let label = if action == command_run_tests() {
     "Run tests"
   } else if action == command_run_build() {
@@ -334,7 +334,7 @@ pub fn command_action_title(action : String, status : String) -> String {
 }
 
 ///|
-pub fn command_action_contract_json() -> Json {
+fn command_action_contract_json() -> Json {
   {
     "kind": "mooncode-command-action-contract",
     "protocol": protocol_version(),

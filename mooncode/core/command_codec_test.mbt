@@ -70,8 +70,8 @@ test "public command codec preserves opaque identity and content across round tr
   guard @core.decode_mooncode_command(payload) is Ok(first) else {
     fail("command must decode")
   }
-  assert_eq(first.client_turn_id(), " client-one ")
-  assert_eq(first.message(), "  preserve content exactly  ")
+  assert_eq(first.client_turn_id, " client-one ")
+  assert_eq(first.message, "  preserve content exactly  ")
   guard @core.encode_mooncode_command(first) is Ok(encoded) else {
     fail("command must encode")
   }
@@ -142,7 +142,7 @@ test "public command codec omits absent planner limit and preserves positive int
   guard @core.decode_mooncode_command(explicit) is Ok(command) else {
     fail("positive integer limit must decode")
   }
-  assert_eq(command.planner_max_steps(), Some(13))
+  assert_eq(command.planner_max_steps, Some(13))
   guard @core.encode_mooncode_command(command) is Ok(encoded) else {
     fail("positive integer limit must encode")
   }

@@ -14,24 +14,16 @@ fn decode_mooncode_session_listing(
   payload : Json,
 ) -> Result[Array[MoonCodeSession], String] {
   match @mooncode_core.decode_mooncode_session_listing(payload) {
-    Supported(summaries) => {
-      let sessions : Array[MoonCodeSession] = []
-      for summary in summaries {
-        try
-          @json.from_json(
-            @mooncode_core.encode_mooncode_session_summary(summary),
-          )
-        catch {
-          _ => return Err("Invalid MoonCode session listing")
-        } noraise {
-          session => sessions.push(session)
-        }
-      }
-      Ok(sessions)
-    }
-    UnsupportedVersion(version) =>
+    Ok(summaries) =>
+      Ok(
+        summaries.map(summary => {
+          mooncode_local_session_from_summary(summary, None)
+        }),
+      )
+    Err(UnsupportedVersion(version)) =>
       Err("Unsupported MoonCode session listing contract version \{version}")
-    Malformed(error) => Err(error)
+    Err(Malformed(error)) => Err(error)
+    Err(_) => Err("Invalid MoonCode session listing")
   }
 }
 
@@ -42,7 +34,7 @@ fn mooncode_local_session_from_summary(
 ) -> MoonCodeSession {
   let local_summary = match summary.extensions.get("mooncode_summary") {
     Some(value) =>
-      try @json.from_json(value) catch {
+      @json.from_json(value) catch {
         _ => { event_count: 0, verified_test_count: 0, pending_diff_count: 0 }
       }
     None => { event_count: 0, verified_test_count: 0, pending_diff_count: 0 }
@@ -51,7 +43,8 @@ fn mooncode_local_session_from_summary(
     Some(String(value)) => Some(value)
     _ => None
   }
-  let canonical_unchanged = match summary.extensions.get("canonical_unchanged") {
+  let canonical_unchanged = match
+    summary.extensions.get("canonical_unchanged") {
     Some(True) => Some(true)
     Some(False) => Some(false)
     _ => None
@@ -82,7 +75,7 @@ fn decode_mooncode_selected_session(
   payload : Json,
 ) -> Result[MoonCodeSession, String] {
   match @mooncode_core.decode_mooncode_selected_session(payload) {
-    Supported(summary) => {
+    Ok(summary) => {
       let conversation_payload = match payload {
         Object(fields) =>
           fields.get("mooncode_conversation").unwrap_or(Json::null())
@@ -90,23 +83,26 @@ fn decode_mooncode_selected_session(
       }
       let conversation = match
         @mooncode_core.decode_mooncode_conversation(conversation_payload) {
-        Absent => None
-        Supported(value) => Some(value)
-        UnsupportedProtocol(protocol) =>
+        Err(Absent) => None
+        Ok(value) => Some(value)
+        Err(UnsupportedProtocol(protocol)) =>
           return Err("Unsupported MoonCode conversation protocol \{protocol}")
-        UnsupportedContract(contract) =>
+        Err(UnsupportedContract(contract)) =>
           return Err("Unsupported MoonCode conversation contract \{contract}")
-        Stale(revision~, current_revision~) =>
+        Err(Stale(revision~, current_revision~)) =>
           return Err(
             "Stale MoonCode conversation revision \{revision} < \{current_revision}",
           )
-        Malformed(error) => return Err(error)
+        Err(Malformed(error)) => return Err(error)
+        Err(UnsupportedVersion(version)) =>
+          return Err("Unsupported MoonCode version \{version}")
       }
       Ok(mooncode_local_session_from_summary(summary, conversation))
     }
-    UnsupportedVersion(version) =>
+    Err(UnsupportedVersion(version)) =>
       Err("Unsupported MoonCode selected session contract version \{version}")
-    Malformed(error) => Err(error)
+    Err(Malformed(error)) => Err(error)
+    Err(_) => Err("Invalid MoonCode selected session")
   }
 }
 

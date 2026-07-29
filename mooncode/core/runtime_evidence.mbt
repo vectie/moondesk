@@ -2,212 +2,212 @@
 // Runtime evidence and proof-gate vocabulary shared by MoonDesk and MoonClaw.
 
 ///|
-pub fn runtime_evidence_contract_id() -> String {
+fn runtime_evidence_contract_id() -> String {
   "mooncode-runtime-evidence.v1"
 }
 
 ///|
-pub fn command_runtime_evidence_kind() -> String {
+fn command_runtime_evidence_kind() -> String {
   "mooncode-command-runtime-evidence"
 }
 
 ///|
-pub fn session_runtime_evidence_kind() -> String {
+fn session_runtime_evidence_kind() -> String {
   "mooncode-session-runtime-evidence"
 }
 
 ///|
-pub fn tool_harness_evidence_kind() -> String {
+fn tool_harness_evidence_kind() -> String {
   "mooncode-tool-harness-evidence"
 }
 
 ///|
-pub fn runtime_completion_proof_gate_kind() -> String {
+fn runtime_completion_proof_gate_kind() -> String {
   "mooncode-runtime-completion-proof-gate"
 }
 
 ///|
-pub fn runtime_evidence_status_proven() -> String {
+fn runtime_evidence_status_proven() -> String {
   "proven"
 }
 
 ///|
-pub fn runtime_evidence_status_failed() -> String {
+fn runtime_evidence_status_failed() -> String {
   "failed"
 }
 
 ///|
-pub fn runtime_evidence_status_missing() -> String {
+fn runtime_evidence_status_missing() -> String {
   "missing-evidence"
 }
 
 ///|
-pub fn runtime_evidence_status_no_required_events() -> String {
+fn runtime_evidence_status_no_required_events() -> String {
   "no-required-events"
 }
 
 ///|
-pub fn runtime_evidence_status_no_commands() -> String {
+fn runtime_evidence_status_no_commands() -> String {
   "no-commands"
 }
 
 ///|
-pub fn runtime_required_event_status_proven() -> String {
+fn runtime_required_event_status_proven() -> String {
   "proven"
 }
 
 ///|
-pub fn runtime_required_event_status_failed() -> String {
+fn runtime_required_event_status_failed() -> String {
   "failed"
 }
 
 ///|
-pub fn runtime_required_event_status_missing() -> String {
+fn runtime_required_event_status_missing() -> String {
   "missing"
 }
 
 ///|
-pub fn tool_harness_status_no_tools() -> String {
+fn tool_harness_status_no_tools() -> String {
   "no-tools"
 }
 
 ///|
-pub fn runtime_completion_gate_status_blocked() -> String {
+fn runtime_completion_gate_status_blocked() -> String {
   "blocked"
 }
 
 ///|
-pub fn runtime_completion_gate_status_passed() -> String {
+fn runtime_completion_gate_status_passed() -> String {
   "passed"
 }
 
 ///|
-pub fn runtime_completion_gate_status_not_required() -> String {
+fn runtime_completion_gate_status_not_required() -> String {
   "not-required"
 }
 
 ///|
-pub fn action_plan_state_blocked() -> String {
+fn action_plan_state_blocked() -> String {
   "blocked"
 }
 
 ///|
-pub fn action_plan_state_queued_for_runtime() -> String {
+fn action_plan_state_queued_for_runtime() -> String {
   "queued-for-runtime"
 }
 
 ///|
-pub fn action_plan_state_runtime_retry() -> String {
+fn action_plan_state_runtime_retry() -> String {
   "runtime-retry"
 }
 
 ///|
-pub fn action_plan_state_running() -> String {
+fn action_plan_state_running() -> String {
   "running"
 }
 
 ///|
-pub fn action_plan_state_awaiting_proof() -> String {
+fn action_plan_state_awaiting_proof() -> String {
   "awaiting-proof"
 }
 
 ///|
-pub fn action_plan_state_ready_for_review() -> String {
+fn action_plan_state_ready_for_review() -> String {
   "ready-for-review"
 }
 
 ///|
-pub fn action_plan_state_completed() -> String {
+fn action_plan_state_completed() -> String {
   "completed"
 }
 
 ///|
-pub fn action_plan_status_blocked() -> String {
+fn action_plan_status_blocked() -> String {
   "blocked"
 }
 
 ///|
-pub fn action_plan_status_running() -> String {
+fn action_plan_status_running() -> String {
   "running"
 }
 
 ///|
-pub fn action_plan_status_queued() -> String {
+fn action_plan_status_queued() -> String {
   "queued"
 }
 
 ///|
-pub fn action_plan_status_review_ready() -> String {
+fn action_plan_status_review_ready() -> String {
   "review-ready"
 }
 
 ///|
-pub fn action_plan_status_complete() -> String {
+fn action_plan_status_complete() -> String {
   "complete"
 }
 
 ///|
-pub fn action_plan_status_waiting_for_proof() -> String {
+fn action_plan_status_waiting_for_proof() -> String {
   "waiting-for-proof"
 }
 
 ///|
-pub fn action_plan_status_empty() -> String {
+fn action_plan_status_empty() -> String {
   "empty"
 }
 
 ///|
-pub fn action_plan_next_run_or_replay_runtime_commands() -> String {
+fn action_plan_next_run_or_replay_runtime_commands() -> String {
   "run_or_replay_runtime_commands"
 }
 
 ///|
-pub fn action_plan_next_retry_failed_runtime_receipt() -> String {
+fn action_plan_next_retry_failed_runtime_receipt() -> String {
   "retry_failed_runtime_receipt"
 }
 
 ///|
-pub fn action_plan_next_await_runtime_proof() -> String {
+fn action_plan_next_await_runtime_proof() -> String {
   "await_runtime_proof"
 }
 
 ///|
-pub fn action_plan_next_await_commit_proof() -> String {
+fn action_plan_next_await_commit_proof() -> String {
   "await_commit_proof"
 }
 
 ///|
-pub fn action_plan_next_start_or_resume_session() -> String {
+fn action_plan_next_start_or_resume_session() -> String {
   "start_or_resume_session"
 }
 
 ///|
-pub fn action_plan_next_ready_for_book_review() -> String {
+fn action_plan_next_ready_for_book_review() -> String {
   "ready_for_book_review"
 }
 
 ///|
-pub fn runtime_evidence_command_rule() -> String {
+fn runtime_evidence_command_rule() -> String {
   "Required runtime events are proven only by command-scoped MoonCode events. Unscoped events may still render in the transcript, but they do not satisfy this command-level proof."
 }
 
 ///|
-pub fn tool_harness_evidence_rule() -> String {
+fn tool_harness_evidence_rule() -> String {
   "MoonClaw must run each expected tool through the typed tool boundary and emit command-scoped tool_call/tool_result proof. MoonDesk records and renders the verdict; it does not execute tools."
 }
 
 ///|
-pub fn runtime_completion_proof_gate_rule() -> String {
+fn runtime_completion_proof_gate_rule() -> String {
   "Proof-sensitive actions may not be marked runtime-completed until command-scoped required runtime events and typed tool-harness proof are present either in the prior append log or in this acknowledgement payload."
 }
 
 ///|
-pub fn session_runtime_evidence_rule() -> String {
+fn session_runtime_evidence_rule() -> String {
   "This projection is the session-level proof contract. MoonDesk records and displays it, while MoonClaw must satisfy it with command-scoped runtime events."
 }
 
 ///|
-pub fn runtime_evidence_required_events(
+fn runtime_evidence_required_events(
   action : String,
   summary_required_events : Array[String],
 ) -> Array[String] {
@@ -219,7 +219,7 @@ pub fn runtime_evidence_required_events(
 }
 
 ///|
-pub fn runtime_evidence_required_outputs(
+fn runtime_evidence_required_outputs(
   action : String,
   summary_required_outputs : Array[String],
 ) -> Array[String] {
@@ -231,7 +231,7 @@ pub fn runtime_evidence_required_outputs(
 }
 
 ///|
-pub fn runtime_evidence_status_for_required_events(
+fn runtime_evidence_status_for_required_events(
   required_event_count : Int,
   missing_count : Int,
   failed_count : Int,
@@ -248,7 +248,7 @@ pub fn runtime_evidence_status_for_required_events(
 }
 
 ///|
-pub fn runtime_evidence_is_proven(
+fn runtime_evidence_is_proven(
   required_event_count : Int,
   missing_count : Int,
   failed_count : Int,
@@ -257,7 +257,7 @@ pub fn runtime_evidence_is_proven(
 }
 
 ///|
-pub fn tool_harness_status_for_counts(
+fn tool_harness_status_for_counts(
   expected_tool_count : Int,
   failed_tool_count : Int,
   missing_tool_count : Int,
@@ -274,7 +274,7 @@ pub fn tool_harness_status_for_counts(
 }
 
 ///|
-pub fn tool_harness_is_proven(
+fn tool_harness_is_proven(
   expected_tool_count : Int,
   failed_tool_count : Int,
   missing_tool_count : Int,
@@ -283,7 +283,7 @@ pub fn tool_harness_is_proven(
 }
 
 ///|
-pub fn tool_harness_expected_tools(
+fn tool_harness_expected_tools(
   action : String,
   summary_tool_sequence : Array[String],
 ) -> Array[String] {
@@ -295,7 +295,7 @@ pub fn tool_harness_expected_tools(
 }
 
 ///|
-pub fn tool_harness_case_status(
+fn tool_harness_case_status(
   failed_seen : Bool,
   call_seen : Bool,
   result_seen : Bool,
@@ -310,7 +310,7 @@ pub fn tool_harness_case_status(
 }
 
 ///|
-pub fn session_runtime_evidence_status_for_counts(
+fn session_runtime_evidence_status_for_counts(
   command_count : Int,
   failed_count : Int,
   failed_required_event_count : Int,
@@ -332,7 +332,7 @@ pub fn session_runtime_evidence_status_for_counts(
 }
 
 ///|
-pub fn runtime_evidence_required_event_result(
+fn runtime_evidence_required_event_result(
   required : String,
   status : String,
   event : Json,
@@ -355,7 +355,7 @@ pub fn runtime_evidence_required_event_result(
 }
 
 ///|
-pub fn runtime_evidence_event_satisfies(
+fn runtime_evidence_event_satisfies(
   required : String,
   event : Json,
 ) -> Bool {
@@ -381,7 +381,7 @@ pub fn runtime_evidence_event_satisfies(
 }
 
 ///|
-pub fn runtime_evidence_event_fails_required(
+fn runtime_evidence_event_fails_required(
   required : String,
   event : Json,
 ) -> Bool {
@@ -409,7 +409,7 @@ pub fn runtime_evidence_event_fails_required(
 }
 
 ///|
-pub fn runtime_evidence_events_with_status(
+fn runtime_evidence_events_with_status(
   event_results : Array[Json],
   status : String,
 ) -> Array[String] {
@@ -425,12 +425,12 @@ pub fn runtime_evidence_events_with_status(
 }
 
 ///|
-pub fn runtime_completion_requires_proof(action : String) -> Bool {
+fn runtime_completion_requires_proof(action : String) -> Bool {
   command_action_requires_runtime_completion_proof(action)
 }
 
 ///|
-pub fn runtime_completion_tool_harness_blocked(
+fn runtime_completion_tool_harness_blocked(
   proof_required : Bool,
   expected_tool_count : Int,
   tool_harness_status : String,
@@ -442,7 +442,7 @@ pub fn runtime_completion_tool_harness_blocked(
 }
 
 ///|
-pub fn runtime_completion_blocked(
+fn runtime_completion_blocked(
   proof_required : Bool,
   evidence_status : String,
   tool_harness_blocked : Bool,
@@ -452,7 +452,7 @@ pub fn runtime_completion_blocked(
 }
 
 ///|
-pub fn runtime_completion_proof_gate_status(
+fn runtime_completion_proof_gate_status(
   proof_required : Bool,
   completion_blocked : Bool,
 ) -> String {
@@ -466,7 +466,7 @@ pub fn runtime_completion_proof_gate_status(
 }
 
 ///|
-pub fn runtime_replay_ack_effective_status(
+fn runtime_replay_ack_effective_status(
   requested_status : String,
   completion_blocked : Bool,
 ) -> String {
@@ -479,7 +479,7 @@ pub fn runtime_replay_ack_effective_status(
 }
 
 ///|
-pub fn runtime_completion_proof_gate(
+fn runtime_completion_proof_gate(
   action : String,
   evidence : Json,
   prior_event_count : Int,
@@ -566,7 +566,7 @@ pub fn runtime_completion_proof_gate(
 }
 
 ///|
-pub fn action_plan_status_for_counts(
+fn action_plan_status_for_counts(
   pending_runtime_count : Int,
   running_count : Int,
   blocked_count : Int,
@@ -592,7 +592,7 @@ pub fn action_plan_status_for_counts(
 }
 
 ///|
-pub fn action_plan_runtime_state_precondition_state(
+fn action_plan_runtime_state_precondition_state(
   runtime_state : String,
 ) -> String {
   if runtime_state == runtime_receipt_status_failed() ||
@@ -609,7 +609,7 @@ pub fn action_plan_runtime_state_precondition_state(
 }
 
 ///|
-pub fn action_plan_state_with_tool_harness(
+fn action_plan_state_with_tool_harness(
   action : String,
   runtime_state : String,
   state : String,
@@ -636,7 +636,7 @@ pub fn action_plan_state_with_tool_harness(
 }
 
 ///|
-pub fn runtime_evidence_contract_json() -> Json {
+fn runtime_evidence_contract_json() -> Json {
   {
     "kind": "mooncode-runtime-evidence-contract",
     "protocol": protocol_version(),

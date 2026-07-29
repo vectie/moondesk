@@ -1,5 +1,5 @@
 ///|
-pub(all) enum MoonCodeEvidenceKind {
+priv enum EvidenceKind {
   Edit
   Test
   PackageManifest
@@ -14,7 +14,7 @@ pub(all) enum MoonCodeEvidenceKind {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum MoonCodeEvidenceState {
+priv enum EvidenceState {
   Recorded
   Applied
   Passed
@@ -29,7 +29,7 @@ pub(all) enum MoonCodeEvidenceState {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum MoonCodeWorkStatus {
+priv enum WorkStatus {
   Queued
   Running
   Done
@@ -41,8 +41,8 @@ pub(all) enum MoonCodeWorkStatus {
 pub(all) struct MoonCodeEvidence {
   item_id : String
   command_id : String
-  kind : MoonCodeEvidenceKind
-  state : MoonCodeEvidenceState
+  kind : String
+  state : String
   title : String
   detail : String
   path : String
@@ -57,7 +57,7 @@ pub(all) struct MoonCodeEvidence {
 ///|
 pub(all) struct MoonCodeWork {
   item_id : String
-  status : MoonCodeWorkStatus
+  status : String
   summary : String
   detail : String
   evidence : Array[MoonCodeEvidence]
@@ -99,7 +99,7 @@ fn work_bool(fields : Map[String, Json], key : String, default : Bool) -> Bool {
 }
 
 ///|
-fn work_status(value : String) -> MoonCodeWorkStatus {
+fn work_status(value : String) -> WorkStatus {
   match value {
     "running" => Running
     "done" => Done
@@ -110,10 +110,52 @@ fn work_status(value : String) -> MoonCodeWorkStatus {
 }
 
 ///|
-fn evidence_kind(
-  source_kind : String,
-  raw_kind : String,
-) -> MoonCodeEvidenceKind? {
+fn WorkStatus::canonical(self : WorkStatus) -> String {
+  match self {
+    Queued => "queued"
+    Running => "running"
+    Done => "done"
+    Failed => "failed"
+    Cancelled => "cancelled"
+  }
+}
+
+///|
+fn EvidenceKind::canonical(self : EvidenceKind) -> String {
+  match self {
+    Edit => "edit"
+    Test => "test"
+    PackageManifest => "package_manifest"
+    ReviewAccept => "review_accept"
+    ReviewReject => "review_reject"
+    PackageBuilt => "package_built"
+    PackageVerified => "package_verified"
+    Artifact => "artifact"
+    AssistantSummary => "assistant_summary"
+    Approval => "approval"
+    Tool => "tool"
+  }
+}
+
+///|
+fn EvidenceState::canonical(self : EvidenceState) -> String {
+  match self {
+    Recorded => "recorded"
+    Applied => "applied"
+    Passed => "passed"
+    Reverted => "reverted"
+    Cancelled => "cancelled"
+    Pending => "pending"
+    Approved => "approved"
+    Accepted => "accepted"
+    Rejected => "rejected"
+    Failed => "failed"
+    Stale => "stale"
+  }
+}
+
+///|
+fn evidence_kind(source_kind : String, raw_kind : String) -> EvidenceKind? {
   match source_kind {
     "package_manifest" | "package_index" => Some(PackageManifest)
     "receipt.accept" => Some(ReviewAccept)
@@ -137,9 +179,9 @@ fn evidence_kind(
 ///|
 fn evidence_state(
   value : String,
-  kind : MoonCodeEvidenceKind,
+  kind : EvidenceKind,
   exit_code : Int,
-) -> Result[MoonCodeEvidenceState, String] {
+) -> Result[EvidenceState, String] {
   if exit_code > 0 {
     return Ok(Failed)
   }
@@ -205,8 +247,7 @@ fn decode_work_codec(
             ) {
             Ok(item) => Some(item)
             Err(Malformed(message)) => return Err(message)
-            Err(UnsupportedState(state)) =>
-              return Err("unsupported approval state: \{state}")
+            Err(_) => return Err("approval evidence is invalid")
           }
         } else {
           None
@@ -223,8 +264,8 @@ fn decode_work_codec(
         rows.push({
           item_id: work_string(step_fields, "item_id", ""),
           command_id,
-          kind,
-          state,
+          kind: kind.canonical(),
+          state: state.canonical(),
           title: work_string(
             step_fields,
             "title",
@@ -260,7 +301,7 @@ fn decode_work_codec(
   Ok({
     value: {
       item_id: work_string(fields, "item_id", ""),
-      status: work_status(work_string(fields, "status", "queued")),
+      status: work_status(work_string(fields, "status", "queued")).canonical(),
       summary: work_string(fields, "summary", "").trim().to_owned(),
       detail: lines.join("\n"),
       evidence: rows,
@@ -291,7 +332,7 @@ priv enum MoonCodePackageReviewStatus {
 priv struct MoonCodePackageReview {
   command_id : String
   status : MoonCodePackageReviewStatus
-  missing_proof : Array[MoonCodeEvidenceKind]
+  missing_proof : Array[EvidenceKind]
   failed_proof : MoonCodeEvidence?
   evidence : Array[MoonCodeEvidence]
 } derive(Debug, Eq)
@@ -308,20 +349,22 @@ fn project_package_review_evidence(
   })
   let mut failed : MoonCodeEvidence? = None
   for item in owned {
-    if failed is None && (item.state is Failed || item.exit_code > 0) {
+    if failed is None && (item.state == "failed" || item.exit_code > 0) {
       failed = Some(item)
     }
   }
-  let rejected = owned.any(item => item.kind is ReviewReject)
-  let manifest = owned.any(item => item.kind is PackageManifest)
+  let rejected = owned.any(item => item.kind == ReviewReject.canonical())
+  let manifest = owned.any(item => item.kind == PackageManifest.canonical())
   let tested = owned.any(item => {
-    item.kind is Test && !(item.state is Failed) && item.exit_code == 0
+    item.kind == Test.canonical() &&
+    item.state != "failed" &&
+    item.exit_code == 0
   })
-  let accepted = owned.any(item => item.kind is ReviewAccept)
-  let verified = owned.any(item => item.kind is PackageVerified)
+  let accepted = owned.any(item => item.kind == ReviewAccept.canonical())
+  let verified = owned.any(item => item.kind == PackageVerified.canonical())
   let assistant = assistant_present ||
-    owned.any(item => item.kind is AssistantSummary)
-  let missing : Array[MoonCodeEvidenceKind] = []
+    owned.any(item => item.kind == AssistantSummary.canonical())
+  let missing : Array[EvidenceKind] = []
   if !manifest {
     missing.push(PackageManifest)
   }
@@ -376,6 +419,6 @@ fn project_package_review(turn : MoonCodeTurn) -> MoonCodePackageReview {
     turn.command_id,
     turn.work.evidence,
     assistant_present,
-    work_failed=turn.work.status is MoonCodeWorkStatus::Failed,
+    work_failed=turn.work.status == "failed",
   )
 }

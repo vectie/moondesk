@@ -52,7 +52,7 @@ test "capability codec rejects an incomplete capability surface contract" {
   fields["capability_surface"] = {
     "capability_contract_id": "mooncode-native-capability-surface.v2",
   }
-  assert_true(@core.decode_mooncode_capability(payload) is Malformed(_))
+  assert_true(@core.decode_mooncode_capability(payload) is Err(Malformed(_)))
 }
 
 ///|
@@ -63,7 +63,7 @@ test "capability codec rejects a non-moonclaw lifecycle runtime owner" {
     fail("fixture")
   }
   contract["runtime_owner"] = "moondesk"
-  assert_true(@core.decode_mooncode_capability(payload) is Malformed(_))
+  assert_true(@core.decode_mooncode_capability(payload) is Err(Malformed(_)))
 }
 
 ///|
@@ -72,7 +72,7 @@ test "capability codec accepts only the canonical v1 wire protocol" {
     @core.decode_mooncode_capability(
       supported_capability_codec_fixture("mooncode.v1"),
     )
-    is Supported(value) &&
+    is Ok(value) &&
     value.protocol == "mooncode.v1" &&
     value.native_runtime_ready,
   )
@@ -80,7 +80,7 @@ test "capability codec accepts only the canonical v1 wire protocol" {
     @core.decode_mooncode_capability(
       supported_capability_codec_fixture("mooncode.v2"),
     )
-    is UnsupportedVersion(2),
+    is Err(UnsupportedVersion(2)),
   )
 }
 
@@ -90,7 +90,7 @@ test "capability codec reports explicit incompatible runtime versions" {
     @core.decode_mooncode_capability(
       supported_capability_codec_fixture("mooncode.v9"),
     )
-    is UnsupportedVersion(9),
+    is Err(UnsupportedVersion(9)),
   )
   let incompatible : Json = {
     "component": "mooncode",
@@ -102,11 +102,11 @@ test "capability codec reports explicit incompatible runtime versions" {
     "session_owner": "moonclaw",
   }
   assert_true(
-    @core.decode_mooncode_capability(incompatible) is UnsupportedVersion(7),
+    @core.decode_mooncode_capability(incompatible) is Err(UnsupportedVersion(7)),
   )
   assert_true(
     @core.decode_mooncode_capability({ "component": "mooncode" })
-    is Malformed(_),
+    is Err(Malformed(_)),
   )
 }
 
@@ -116,7 +116,7 @@ test "capability codec preserves root and optional ownership extensions" {
   guard future is Object(fields) else { fail("fixture") }
   fields["future_root"] = { "enabled": true }
   fields["ownership"] = { "future_owner": "future-product" }
-  guard @core.decode_mooncode_capability(future) is Supported(capability) else {
+  guard @core.decode_mooncode_capability(future) is Ok(capability) else {
     fail("expected supported capability")
   }
   let encoded = @core.encode_mooncode_capability(capability)

@@ -85,6 +85,8 @@ type MoonClawSetupResult derive(@json.FromJson)
 
 type MoonCodeActivityRow
 
+type MoonCodeApprovalIntent
+
 type MoonCodeBrowserWatchEnvelope derive(@json.FromJson)
 
 type MoonCodeCanonicalTurn
@@ -93,7 +95,7 @@ type MoonCodeEvidenceRow
 
 type MoonCodeOptimisticRow
 
-type MoonCodeSession derive(@json.FromJson)
+type MoonCodeSession
 
 type MoonCodeSessionEffect
 

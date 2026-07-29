@@ -21,14 +21,14 @@ test "canonical conversation codec round trips an explicit null message slot" {
       },
     ],
   }
-  guard @core.decode_mooncode_conversation(payload) is Supported(conversation) else {
+  guard @core.decode_mooncode_conversation(payload) is Ok(conversation) else {
     fail("expected supported conversation")
   }
   assert_true(
     @core.decode_mooncode_conversation(
       @core.encode_mooncode_conversation(conversation),
     )
-    is Supported(round_trip) &&
+    is Ok(round_trip) &&
     round_trip.turns[0].assistant is None,
   )
 }

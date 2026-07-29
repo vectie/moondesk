@@ -1,50 +1,50 @@
 ///|
-pub fn event_lane_contract_id() -> String {
+fn event_lane_contract_id() -> String {
   "mooncode-event-lanes.v1"
 }
 
 ///|
-pub fn event_lane_transcript() -> String {
+fn event_lane_transcript() -> String {
   "transcript"
 }
 
 ///|
-pub fn event_lane_runtime() -> String {
+fn event_lane_runtime() -> String {
   "runtime"
 }
 
 ///|
-pub fn event_lane_tool() -> String {
+fn event_lane_tool() -> String {
   "tool"
 }
 
 ///|
-pub fn event_lane_diff() -> String {
+fn event_lane_diff() -> String {
   "diff"
 }
 
 ///|
-pub fn event_lane_test() -> String {
+fn event_lane_test() -> String {
   "test"
 }
 
 ///|
-pub fn event_lane_artifact() -> String {
+fn event_lane_artifact() -> String {
   "artifact"
 }
 
 ///|
-pub fn event_lane_review() -> String {
+fn event_lane_review() -> String {
   "review"
 }
 
 ///|
-pub fn event_lane_default() -> String {
+fn event_lane_default() -> String {
   event_lane_runtime()
 }
 
 ///|
-pub fn event_lanes() -> Array[String] {
+fn event_lanes() -> Array[String] {
   [
     event_lane_transcript(),
     event_lane_runtime(),
@@ -57,7 +57,7 @@ pub fn event_lanes() -> Array[String] {
 }
 
 ///|
-pub fn event_progress_lanes() -> Array[String] {
+fn event_progress_lanes() -> Array[String] {
   [
     event_lane_runtime(),
     event_lane_tool(),
@@ -69,17 +69,17 @@ pub fn event_progress_lanes() -> Array[String] {
 }
 
 ///|
-pub fn event_lane_is_supported(lane : String) -> Bool {
+fn event_lane_is_supported(lane : String) -> Bool {
   event_lanes().contains(lane)
 }
 
 ///|
-pub fn event_lane_is_progress(lane : String) -> Bool {
+fn event_lane_is_progress(lane : String) -> Bool {
   event_progress_lanes().contains(lane)
 }
 
 ///|
-pub fn event_lane_normalize(lane : String) -> String {
+fn event_lane_normalize(lane : String) -> String {
   if event_lane_is_supported(lane) {
     lane
   } else {
@@ -88,7 +88,7 @@ pub fn event_lane_normalize(lane : String) -> String {
 }
 
 ///|
-pub fn event_lane_contract_json() -> Json {
+fn event_lane_contract_json() -> Json {
   {
     "kind": "mooncode-event-lane-contract",
     "protocol": protocol_version(),

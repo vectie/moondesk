@@ -253,8 +253,11 @@ fn mooncode_should_preserve_selected_conversation(
   mooncode_session_has_conversation(existing) &&
   (
     !mooncode_session_has_conversation(listed) ||
-    mooncode_session_conversation_revision(listed) <=
-    mooncode_session_conversation_revision(existing)
+    mooncode_decimal_compare(
+      mooncode_session_conversation_revision(listed),
+      mooncode_session_conversation_revision(existing),
+    ) <=
+    0
   )
 }
 

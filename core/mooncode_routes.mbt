@@ -56,11 +56,11 @@ pub fn mooncode_session_chat_url(
 ///|
 pub fn mooncode_session_watch_url(
   session_id : String,
-  since_revision : Int,
+  since_revision : String,
   since_sequence : String,
 ) -> String {
   desktop_api_url(["api", "mooncode", "sessions", session_id, "watch"], query=[
-    ("since_revision", since_revision.to_string()),
+    ("since_revision", since_revision),
     ("since_sequence", since_sequence),
     ("wait_ms", "15000"),
     ("poll_ms", "100"),

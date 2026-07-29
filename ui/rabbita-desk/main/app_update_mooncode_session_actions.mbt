@@ -118,11 +118,7 @@ fn update_mooncode_session_actions(
           mooncode_session_management_status: "",
         },
       )
-    CancelDeleteMoonCodeSession =>
-      mooncode_cancel_delete_session(
-        model,
-        @mooncode_core.CancelledBeforeRequest,
-      )
+    CancelDeleteMoonCodeSession => mooncode_cancel_delete_session(model)
     ConfirmDeleteMoonCodeSession(session_id) =>
       mooncode_start_session_storage_action(dispatch, model, session_id, Delete)
     _ => (@rabbita.none, model)
@@ -216,7 +212,7 @@ fn mooncode_decide_tool(
   dispatch : Dispatch[Msg],
   model : Model,
   approval : @mooncode_core.MoonCodeApproval,
-  decision : @mooncode_core.MoonCodeApprovalDecision,
+  decision : MoonCodeApprovalIntent,
 ) -> (@rabbita.Cmd, Model) {
   let session_id = model.selected_mooncode_session_id
   match mooncode_find_session(model.mooncode_sessions, session_id) {
@@ -226,10 +222,8 @@ fn mooncode_decide_tool(
         {
           ..model,
           mooncode_composer_status: match decision {
-            @mooncode_core.MoonCodeApprovalDecision::Approve =>
-              "Approval sent to MoonClaw"
-            @mooncode_core.MoonCodeApprovalDecision::Reject =>
-              "Rejection sent to MoonClaw"
+            ApproveMoonCodeTool => "Approval sent to MoonClaw"
+            RejectMoonCodeTool => "Rejection sent to MoonClaw"
           },
         },
       )

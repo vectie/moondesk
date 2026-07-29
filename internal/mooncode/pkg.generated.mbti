@@ -6,8 +6,6 @@ import {
 }
 
 // Values
-pub fn accepted_command_packet(Json, @core.MoonCodeCommand, String) -> @core.MoonCodeAcceptedCommand
-
 pub fn capabilities_json() -> Json
 
 pub fn command_action(@core.MoonCodeCommand) -> String
@@ -20,11 +18,9 @@ pub fn conversation_contract_id() -> String
 
 pub fn conversation_kind() -> String
 
+pub fn conversation_turn_kind() -> String
+
 pub fn conversation_watch_contract_id() -> String
-
-pub fn conversation_watch_response(session_id~ : String, revision~ : String, next_sequence~ : String, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
-
-pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : @core.MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
 
 pub fn decode_command_submission(Json) -> Result[@core.MoonCodeCommand, String]
 
@@ -64,7 +60,7 @@ pub fn moonclaw_native_turn_endpoint(String) -> String
 
 pub fn mooncode_negotiated_runtime_readiness(Json) -> Json
 
-pub fn native_command_body(Json, @core.MoonCodeCommand, @core.MoonCodeAcceptedCommand, Json) -> Json
+pub fn native_command_body(Json, @core.MoonCodeCommand, String, Json) -> Json
 
 pub fn native_runtime_session_projection(String, String) -> Json
 

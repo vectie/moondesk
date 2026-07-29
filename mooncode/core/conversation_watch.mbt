@@ -176,7 +176,7 @@ fn watch_required_bool(
 }
 
 ///|
-pub fn decode_mooncode_watch_result(
+fn decode_mooncode_watch_result(
   payload : Json,
   current~ : MoonCodeWatchCursor,
   expected_session_id? : String = "",
@@ -284,13 +284,18 @@ pub fn decode_mooncode_watch_result(
         )
       Some(snapshot) => {
         let session = match decode_mooncode_selected_session(snapshot) {
-          Supported(session) => session
-          UnsupportedVersion(version) =>
+          Ok(session) => session
+          Err(UnsupportedVersion(version)) =>
             return Malformed(
               cursor=current,
               reason="watch snapshot uses unsupported session version \{version}",
             )
-          Malformed(reason) => return Malformed(cursor=current, reason~)
+          Err(Malformed(reason)) => return Malformed(cursor=current, reason~)
+          Err(_) =>
+            return Malformed(
+              cursor=current,
+              reason="watch snapshot decode failed",
+            )
         }
         if session.id.to_string() != session_id {
           return Malformed(
@@ -304,14 +309,14 @@ pub fn decode_mooncode_watch_result(
           _ => Json::null()
         }
         match decode_mooncode_conversation(conversation_payload) {
-          Supported(conversation) if conversation.session_id == session_id &&
+          Ok(conversation) if conversation.session_id == session_id &&
             conversation.revision == revision =>
             if revision == current.revision {
               Duplicate(cursor=next_cursor, session_id~)
             } else {
               Snapshot(cursor=next_cursor, session~, conversation~, terminal~)
             }
-          Malformed(reason) =>
+          Err(Malformed(reason)) =>
             Malformed(cursor=current, reason="watch snapshot \{reason}")
           _ =>
             Malformed(
@@ -348,60 +353,35 @@ pub fn decode_mooncode_watch_text(
 }
 
 ///|
-pub fn mooncode_watch_disconnected(
-  current~ : MoonCodeWatchCursor,
-  reason~ : String,
-) -> MoonCodeWatchResult {
-  Disconnected(cursor=current, reason~)
-}
-
-///|
-pub(all) enum MoonCodeStreamCursorDecodeResult {
-  Advanced(MoonCodeWatchCursor)
-  Unchanged(MoonCodeWatchCursor)
-  Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
-} derive(Debug, Eq)
-
-///|
 pub fn decode_mooncode_stream_cursor(
   text : String,
   current~ : MoonCodeWatchCursor,
-) -> MoonCodeStreamCursorDecodeResult {
+) -> Result[MoonCodeWatchCursor, MoonCodeFailure] {
   let mut next = current
   for line in text.split("\n") {
     let trimmed = line.trim().to_owned()
     if trimmed != "" {
       let record = @json.parse(trimmed) catch {
-        error =>
-          return Malformed(
-            cursor=current,
-            reason="invalid stream record: \{error}",
-          )
+        error => return Err(Malformed("invalid stream record: \{error}"))
       }
       guard record is Object(fields) else {
-        return Malformed(
-          cursor=current,
-          reason="stream record must be an object",
-        )
+        return Err(Malformed("stream record must be an object"))
       }
       let type_ = match watch_required_string(fields, "type") {
         Ok(value) => value
-        Err(reason) => return Malformed(cursor=current, reason~)
+        Err(reason) => return Err(Malformed(reason))
       }
       let sequence_key = if type_ == "meta" { "next_since" } else { "sequence" }
       if type_ == "meta" || type_ == "event" || type_ == "done" {
         let sequence = match fields.get(sequence_key) {
           Some(String(value)) if watch_sequence_is_canonical(value) => value
           Some(_) =>
-            return Malformed(
-              cursor=current,
-              reason="stream \{sequence_key} must be a canonical nonnegative decimal string",
+            return Err(
+              Malformed(
+                "stream \{sequence_key} must be a canonical nonnegative decimal string",
+              ),
             )
-          None =>
-            return Malformed(
-              cursor=current,
-              reason="stream \{sequence_key} is required",
-            )
+          None => return Err(Malformed("stream \{sequence_key} is required"))
         }
         next = watch_advance_cursor(
           next,
@@ -410,19 +390,15 @@ pub fn decode_mooncode_stream_cursor(
           accept_revision=false,
         )
       } else {
-        return Malformed(cursor=current, reason="stream type is unsupported")
+        return Err(Malformed("stream type is unsupported"))
       }
     }
   }
-  if watch_sequence_compare(next.sequence, current.sequence) == 0 {
-    Unchanged(next)
-  } else {
-    Advanced(next)
-  }
+  Ok(next)
 }
 
 ///|
-pub fn conversation_watch_response_for_cursor(
+fn conversation_watch_response_for_cursor(
   session_id~ : String,
   cursor~ : MoonCodeWatchCursor,
   changed~ : Bool,
@@ -445,17 +421,17 @@ pub fn conversation_watch_response_for_cursor(
 }
 
 ///|
-pub fn conversation_watch_contract_id() -> String {
+fn conversation_watch_contract_id() -> String {
   "moonsuite-conversation-watch.v2"
 }
 
 ///|
-pub fn conversation_watch_kind() -> String {
+fn conversation_watch_kind() -> String {
   @conversation.watch_kind()
 }
 
 ///|
-pub fn conversation_watch_contract_json() -> Json {
+fn conversation_watch_contract_json() -> Json {
   {
     "kind": "moonsuite-conversation-watch-contract",
     "contract_id": conversation_watch_contract_id(),
@@ -472,7 +448,24 @@ pub fn conversation_watch_contract_json() -> Json {
 }
 
 ///|
-pub fn conversation_watch_response(
+fn encode_mooncode_watch_snapshot(
+  session : MoonCodeSessionSummary,
+  conversation : MoonCodeConversation,
+) -> Result[Json, MoonCodeFailure] {
+  if session.id.to_string() != conversation.session_id {
+    return Err(Malformed("MoonCode watch snapshot session mismatch"))
+  }
+  guard encode_mooncode_session_summary(session) is Object(fields) else {
+    return Err(
+      Malformed("MoonCode session summary encoder must return an object"),
+    )
+  }
+  fields["mooncode_conversation"] = encode_mooncode_conversation(conversation)
+  Ok(fields.to_json())
+}
+
+///|
+fn conversation_watch_response(
   session_id~ : String,
   revision~ : String,
   next_sequence~ : String,
@@ -493,5 +486,51 @@ pub fn conversation_watch_response(
     "terminal": terminal,
     "retry_after_ms": @conversation.watch_retry_after_ms_value(retry_after_ms),
     "snapshot": snapshot,
+  }
+}
+
+///|
+pub fn encode_mooncode_watch_result(
+  result : MoonCodeWatchResult,
+) -> Result[Json, MoonCodeFailure] {
+  match result {
+    Snapshot(cursor~, session~, conversation~, terminal~) =>
+      match encode_mooncode_watch_snapshot(session, conversation) {
+        Ok(snapshot) =>
+          Ok(
+            conversation_watch_response(
+              session_id=session.id.to_string(),
+              revision=cursor.revision,
+              next_sequence=cursor.sequence,
+              changed=true,
+              heartbeat=false,
+              terminal~,
+              retry_after_ms=0,
+              snapshot~,
+            ),
+          )
+        Err(error) => Err(error)
+      }
+    Heartbeat(cursor~, session_id~, retry_after_ms~, terminal~) =>
+      Ok(
+        conversation_watch_response(
+          session_id~,
+          revision=cursor.revision,
+          next_sequence=cursor.sequence,
+          changed=false,
+          heartbeat=true,
+          terminal~,
+          retry_after_ms~,
+          snapshot=Json::null(),
+        ),
+      )
+    Duplicate(..) =>
+      Err(Malformed("MoonCode duplicate watch result is not encodable"))
+    Rollback(..) =>
+      Err(Malformed("MoonCode rollback watch result is not encodable"))
+    Disconnected(..) =>
+      Err(Malformed("MoonCode disconnected watch result is not encodable"))
+    Malformed(..) =>
+      Err(Malformed("MoonCode malformed watch result is not encodable"))
   }
 }

@@ -31,19 +31,18 @@ fn mooncode_session_storage_locked(session : MoonCodeSession) -> Bool {
 ///|
 fn mooncode_cancel_delete_session(
   model : Model,
-  reason : @mooncode_core.MoonCodeLifecycleStopReason,
+  session_active? : Bool = false,
 ) -> (@rabbita.Cmd, Model) {
-  match reason {
-    CancelledBeforeRequest =>
-      (@rabbita.none, { ..model, mooncode_session_delete_id: "" })
-    SessionActive =>
-      (
-        @rabbita.none,
-        {
-          ..model,
-          mooncode_session_management_status: "Wait for MoonCode to finish before changing this session",
-        },
-      )
+  if session_active {
+    (
+      @rabbita.none,
+      {
+        ..model,
+        mooncode_session_management_status: "Wait for MoonCode to finish before changing this session",
+      },
+    )
+  } else {
+    (@rabbita.none, { ..model, mooncode_session_delete_id: "" })
   }
 }
 
@@ -105,7 +104,7 @@ fn mooncode_start_session_storage_action(
               status,
               archived=session.archived,
             ) {
-            Err(NotFound) =>
+            Err(Absent) =>
               (
                 @rabbita.none,
                 {
@@ -113,11 +112,8 @@ fn mooncode_start_session_storage_action(
                   mooncode_session_management_status: "This MoonCode session is no longer available",
                 },
               )
-            Err(Conflict) =>
-              mooncode_cancel_delete_session(
-                model,
-                @mooncode_core.SessionActive,
-              )
+            Err(Malformed("MoonCode session lifecycle conflict")) =>
+              mooncode_cancel_delete_session(model, session_active=true)
             Err(_) => (@rabbita.none, model)
             Ok(_) =>
               (
@@ -194,28 +190,29 @@ fn mooncode_sessions_prepend(
 fn mooncode_session_management_result(
   dispatch : Dispatch[Msg],
   model : Model,
-  result : Result[@mooncode_core.MoonCodeLifecycleResult, String],
+  result : Result[
+    (
+      @mooncode_core.MoonCodeLifecycleAction,
+      @mooncode_core.MoonCodeSessionId,
+      String,
+      Bool,
+      Bool,
+    ),
+    String,
+  ],
 ) -> (@rabbita.Cmd, Model) {
   match result {
     Err(error) =>
       (@rabbita.none, { ..model, mooncode_session_management_status: error })
-    Ok(result) => {
-      let session_id = result.session_id.to_string()
+    Ok((action, session_id_value, title, _archived, _deleted)) => {
+      let session_id = session_id_value.to_string()
       let current = mooncode_session_for_management(model, session_id)
       let mut active = model.mooncode_sessions
       let mut archived = model.mooncode_archived_sessions
-      match result.action {
+      match action {
         Rename(_) => {
-          active = mooncode_sessions_with_title(
-            active,
-            session_id,
-            result.title,
-          )
-          archived = mooncode_sessions_with_title(
-            archived,
-            session_id,
-            result.title,
-          )
+          active = mooncode_sessions_with_title(active, session_id, title)
+          archived = mooncode_sessions_with_title(archived, session_id, title)
         }
         Archive => {
           active = mooncode_sessions_without(active, session_id)
@@ -245,7 +242,7 @@ fn mooncode_session_management_result(
         }
       }
       let clears_selection = model.selected_mooncode_session_id == session_id &&
-        (result.action is Archive || result.action is Delete)
+        (action is Archive || action is Delete)
       let next = {
         ..model,
         mooncode_sessions: active,
@@ -263,7 +260,7 @@ fn mooncode_session_management_result(
         mooncode_session_editing_id: "",
         mooncode_session_title_draft: "",
         mooncode_session_delete_id: "",
-        mooncode_session_management_status: match result.action {
+        mooncode_session_management_status: match action {
           Rename(_) => "Session renamed"
           Archive => "Session archived"
           Restore => "Session restored"

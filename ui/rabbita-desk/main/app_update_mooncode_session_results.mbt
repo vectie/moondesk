@@ -864,8 +864,34 @@ fn mooncode_session_response_cannot_replace(
     return true
   }
   let existing_revision = mooncode_session_conversation_revision(existing)
-  existing_revision > 0 &&
-  mooncode_session_conversation_revision(incoming) <= existing_revision
+  existing_revision != "0" &&
+  mooncode_decimal_compare(
+    mooncode_session_conversation_revision(incoming),
+    existing_revision,
+  ) <=
+  0
+}
+
+///|
+fn mooncode_decimal_normalize(value : String) -> String {
+  let mut index = 0
+  while index + 1 < value.length() && value[index] == '0' {
+    index += 1
+  }
+  value[index:].to_string()
+}
+
+///|
+fn mooncode_decimal_compare(left : String, right : String) -> Int {
+  let left = mooncode_decimal_normalize(left)
+  let right = mooncode_decimal_normalize(right)
+  if left.length() < right.length() {
+    -1
+  } else if left.length() > right.length() {
+    1
+  } else {
+    left.compare(right)
+  }
 }
 
 ///|
@@ -877,10 +903,10 @@ fn mooncode_session_canonical_unchanged(session : MoonCodeSession) -> Bool {
 }
 
 ///|
-fn mooncode_session_conversation_revision(session : MoonCodeSession) -> Int {
+fn mooncode_session_conversation_revision(session : MoonCodeSession) -> String {
   match session.mooncode_conversation {
     Some(conversation) => conversation.revision
-    None => 0
+    None => "0"
   }
 }
 

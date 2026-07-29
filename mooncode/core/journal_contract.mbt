@@ -1,6 +1,6 @@
 ///|
 /// Shared identity of the authoritative MoonCode session journal contract.
-pub fn journal_contract_id() -> String {
+fn journal_contract_id() -> String {
   "moonsuite-conversation-journal.v2"
 }
 

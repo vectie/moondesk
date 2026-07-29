@@ -7,37 +7,6 @@ pub(all) enum MoonCodeLifecycleAction {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum MoonCodeLifecycleStopReason {
-  CancelledBeforeRequest
-  SessionActive
-} derive(Debug, Eq)
-
-///|
-pub(all) enum MoonCodeLifecycleFailure {
-  MalformedAction
-  UnsupportedAction(String)
-  InvalidTitle
-  TitleTooLong
-  NotFound
-  Conflict
-  RuntimeUnavailable
-  RuntimeFailure
-  InvalidResult(String)
-  UnsupportedProtocol(String)
-  WrongOwner(String)
-  WrongSession(expected~ : String, actual~ : String)
-} derive(Debug, Eq)
-
-///|
-pub struct MoonCodeLifecycleResult {
-  action : MoonCodeLifecycleAction
-  session_id : MoonCodeSessionId
-  title : String
-  archived : Bool
-  deleted : Bool
-}
-
-///|
 fn MoonCodeLifecycleAction::name(self : MoonCodeLifecycleAction) -> String {
   match self {
     Rename(_) => "rename"
@@ -50,21 +19,23 @@ fn MoonCodeLifecycleAction::name(self : MoonCodeLifecycleAction) -> String {
 ///|
 pub fn decode_mooncode_lifecycle_action(
   payload : Json,
-) -> Result[MoonCodeLifecycleAction, MoonCodeLifecycleFailure] {
-  guard payload is Object(fields) else { return Err(MalformedAction) }
+) -> Result[MoonCodeLifecycleAction, MoonCodeFailure] {
+  guard payload is Object(fields) else {
+    return Err(Malformed("Unsupported MoonCode session lifecycle action"))
+  }
   guard fields.get("action") is Some(String(action)) else {
-    return Err(MalformedAction)
+    return Err(Malformed("Unsupported MoonCode session lifecycle action"))
   }
   match action {
     "rename" => {
       guard fields.get("title") is Some(String(raw_title)) else {
-        return Err(InvalidTitle)
+        return Err(Malformed("A non-empty session title is required"))
       }
       let title = raw_title.trim().to_owned()
       if title == "" {
-        Err(InvalidTitle)
+        Err(Malformed("A non-empty session title is required"))
       } else if title.length() > 160 {
-        Err(TitleTooLong)
+        Err(Malformed("Session titles may not exceed 160 characters"))
       } else {
         Ok(Rename(title))
       }
@@ -72,7 +43,7 @@ pub fn decode_mooncode_lifecycle_action(
     "archive" => Ok(Archive)
     "restore" => Ok(Restore)
     "delete" => Ok(Delete)
-    unsupported => Err(UnsupportedAction(unsupported))
+    _ => Err(Malformed("Unsupported MoonCode session lifecycle action"))
   }
 }
 
@@ -97,16 +68,18 @@ pub fn mooncode_lifecycle_transition(
   action : MoonCodeLifecycleAction,
   status : MoonCodeSessionStatus,
   archived~ : Bool,
-) -> Result[Unit, MoonCodeLifecycleFailure] {
+) -> Result[Unit, MoonCodeFailure] {
   match action {
-    Rename(_) if archived => Err(NotFound)
+    Rename(_) if archived => Err(Absent)
     Rename(_) => Ok(())
-    Archive if archived => Err(NotFound)
-    Archive if status is Running || status is Queued => Err(Conflict)
+    Archive if archived => Err(Absent)
+    Archive if status is Running || status is Queued =>
+      Err(Malformed("MoonCode session lifecycle conflict"))
     Archive => Ok(())
-    Restore if !archived => Err(NotFound)
+    Restore if !archived => Err(Absent)
     Restore => Ok(())
-    Delete if status is Running || status is Queued => Err(Conflict)
+    Delete if status is Running || status is Queued =>
+      Err(Malformed("MoonCode session lifecycle conflict"))
     Delete => Ok(())
   }
 }
@@ -132,42 +105,44 @@ fn lifecycle_bool(fields : Map[String, Json], key : String) -> Bool? {
 pub fn decode_mooncode_lifecycle_result(
   payload : Json,
   expected_session_id~ : MoonCodeSessionId,
-) -> Result[MoonCodeLifecycleResult, MoonCodeLifecycleFailure] {
+) -> Result[
+  (MoonCodeLifecycleAction, MoonCodeSessionId, String, Bool, Bool),
+  MoonCodeFailure,
+] {
   guard payload is Object(fields) else {
-    return Err(InvalidResult("Lifecycle result must be an object"))
+    return Err(Malformed("Lifecycle result must be an object"))
   }
   guard lifecycle_string(fields, "kind")
     is Some("mooncode-session-lifecycle-result") else {
-    return Err(InvalidResult("Invalid lifecycle result kind"))
+    return Err(Malformed("Invalid lifecycle result kind"))
   }
   guard lifecycle_string(fields, "protocol") is Some(protocol) else {
-    return Err(InvalidResult("Lifecycle protocol must be a string"))
+    return Err(Malformed("Lifecycle protocol must be a string"))
   }
   if protocol != protocol_version() {
     return Err(UnsupportedProtocol(protocol))
   }
   guard lifecycle_string(fields, "owner") is Some(owner) else {
-    return Err(InvalidResult("Lifecycle owner must be a string"))
+    return Err(Malformed("Lifecycle owner must be a string"))
   }
   if owner != "moonclaw" {
-    return Err(WrongOwner(owner))
+    return Err(Malformed("Unexpected MoonCode lifecycle owner \{owner}"))
   }
   guard lifecycle_string(fields, "session_id") is Some(raw_session_id) else {
-    return Err(InvalidResult("Lifecycle session_id is invalid"))
+    return Err(Malformed("Lifecycle session_id is invalid"))
   }
   guard MoonCodeSessionId::parse(raw_session_id) is Some(session_id) else {
-    return Err(InvalidResult("Lifecycle session_id is invalid"))
+    return Err(Malformed("Lifecycle session_id is invalid"))
   }
   if expected_session_id != session_id {
     return Err(
-      WrongSession(
-        expected=expected_session_id.to_string(),
-        actual=session_id.to_string(),
+      Malformed(
+        "MoonCode lifecycle session mismatch: expected \{expected_session_id.to_string()}, got \{session_id.to_string()}",
       ),
     )
   }
   guard lifecycle_string(fields, "action") is Some(raw_action) else {
-    return Err(MalformedAction)
+    return Err(Malformed("Unsupported MoonCode session lifecycle action"))
   }
   let action_payload : Json = match lifecycle_string(fields, "title") {
     Some(title) => { "action": raw_action, "title": title }
@@ -178,18 +153,18 @@ pub fn decode_mooncode_lifecycle_result(
     Err(error) => return Err(error)
   }
   guard lifecycle_string(fields, "title") is Some(title) else {
-    return Err(InvalidResult("Lifecycle title must be a string"))
+    return Err(Malformed("Lifecycle title must be a string"))
   }
   guard lifecycle_bool(fields, "archived") is Some(archived) else {
-    return Err(InvalidResult("Lifecycle archived state must be a boolean"))
+    return Err(Malformed("Lifecycle archived state must be a boolean"))
   }
   guard lifecycle_bool(fields, "deleted") is Some(deleted) else {
-    return Err(InvalidResult("Lifecycle deleted state must be a boolean"))
+    return Err(Malformed("Lifecycle deleted state must be a boolean"))
   }
   if (action is Archive && !archived) ||
     (action is Restore && archived) ||
     (action is Delete && !deleted) {
-    return Err(InvalidResult("Lifecycle result state contradicts action"))
+    return Err(Malformed("Lifecycle result state contradicts action"))
   }
-  Ok({ action, session_id, title, archived, deleted })
+  Ok((action, session_id, title, archived, deleted))
 }

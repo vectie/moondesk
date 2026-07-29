@@ -3,193 +3,24 @@ package "vectie/moondesk/mooncode/core"
 
 import {
   "moonbitlang/core/debug",
-  "moonbitlang/core/json",
 }
 
 // Values
-pub fn accept_mooncode_command(MoonCodeCommand, String, String, String, String, String, String) -> MoonCodeAcceptedCommand
-
-pub fn action_plan_next_await_commit_proof() -> String
-
-pub fn action_plan_next_await_runtime_proof() -> String
-
-pub fn action_plan_next_ready_for_book_review() -> String
-
-pub fn action_plan_next_retry_failed_runtime_receipt() -> String
-
-pub fn action_plan_next_run_or_replay_runtime_commands() -> String
-
-pub fn action_plan_next_start_or_resume_session() -> String
-
-pub fn action_plan_runtime_state_precondition_state(String) -> String
-
-pub fn action_plan_state_awaiting_proof() -> String
-
-pub fn action_plan_state_blocked() -> String
-
-pub fn action_plan_state_completed() -> String
-
-pub fn action_plan_state_queued_for_runtime() -> String
-
-pub fn action_plan_state_ready_for_review() -> String
-
-pub fn action_plan_state_running() -> String
-
-pub fn action_plan_state_runtime_retry() -> String
-
-pub fn action_plan_state_with_tool_harness(String, String, String, Int, String) -> String
-
-pub fn action_plan_status_blocked() -> String
-
-pub fn action_plan_status_complete() -> String
-
-pub fn action_plan_status_empty() -> String
-
-pub fn action_plan_status_for_counts(Int, Int, Int, Int, Int, Int) -> String
-
-pub fn action_plan_status_queued() -> String
-
-pub fn action_plan_status_review_ready() -> String
-
-pub fn action_plan_status_running() -> String
-
-pub fn action_plan_status_waiting_for_proof() -> String
-
-pub fn command_accept() -> String
-
-#deprecated
-pub fn command_action_approval(String) -> String
-
-pub fn command_action_contract_id() -> String
-
-pub fn command_action_contract_json() -> Json
-
-#deprecated
-pub fn command_action_control(String) -> String
-
-pub fn command_action_expected_lanes(String) -> Array[String]
-
-pub fn command_action_is_advertised(String) -> Bool
-
-pub fn command_action_is_cancel(String) -> Bool
-
-pub fn command_action_is_commit(String) -> Bool
-
-pub fn command_action_is_eval(String) -> Bool
-
-pub fn command_action_is_package(String) -> Bool
-
-pub fn command_action_is_patch(String) -> Bool
-
-pub fn command_action_is_prompt_or_steer(String) -> Bool
-
-pub fn command_action_is_review_decision(String) -> Bool
-
-#deprecated
-pub fn command_action_is_supported(String) -> Bool
-
-pub fn command_action_is_test(String) -> Bool
-
-pub fn command_action_is_tool_approval(String) -> Bool
-
-pub fn command_action_is_turn(String) -> Bool
-
-pub fn command_action_lane(String) -> String
-
-pub fn command_action_requires_runtime_completion_proof(String) -> Bool
-
-pub fn command_action_requires_tool_harness(String) -> Bool
-
-pub fn command_action_title(String, String) -> String
-
-pub fn command_action_tool_hints(String) -> Array[String]
-
-pub fn command_action_writes_review_receipt(String) -> Bool
-
-#deprecated
-pub fn command_advertised_actions() -> Array[String]
-
-pub fn command_apply_patch() -> String
-
-pub fn command_approve_tool() -> String
-
-pub fn command_cancel() -> String
-
-pub fn command_commit() -> String
-
-pub fn command_note() -> String
-
-pub fn command_package() -> String
-
-pub fn command_prompt() -> String
-
-pub fn command_reject() -> String
-
-pub fn command_reject_tool() -> String
-
-pub fn command_revert_patch() -> String
-
-pub fn command_run_build() -> String
-
-pub fn command_run_eval() -> String
-
-pub fn command_run_tests() -> String
-
-pub fn command_runtime_evidence_kind() -> String
-
-pub fn command_steer() -> String
-
-pub fn command_supported_actions() -> Array[String]
-
-pub fn command_turn_actions() -> Array[String]
-
-pub fn conversation_contract_id() -> String
-
-pub fn conversation_contract_json() -> Json
-
-pub fn conversation_kind() -> String
-
-pub fn conversation_message_roles() -> Array[String]
-
-pub fn conversation_ownership_contract_id() -> String
-
-pub fn conversation_ownership_contract_json() -> Json
-
-pub fn conversation_ownership_contract_kind() -> String
-
-pub fn conversation_turn_kind() -> String
-
-pub fn conversation_turn_required_fields() -> Array[String]
-
-pub fn conversation_watch_contract_id() -> String
-
-pub fn conversation_watch_contract_json() -> Json
-
-pub fn conversation_watch_kind() -> String
-
-pub fn conversation_watch_response(session_id~ : String, revision~ : String, next_sequence~ : String, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
-
-pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
-
-pub fn decode_mooncode_approval(Json, String, String) -> Result[MoonCodeApproval, MoonCodeApprovalDecodeFailure]
-
-pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
+pub fn decode_mooncode_capability(Json) -> Result[MoonCodeCapability, MoonCodeFailure]
 
 pub fn decode_mooncode_command(Json) -> Result[MoonCodeCommand, String]
 
-pub fn decode_mooncode_conversation(Json, current_revision? : String) -> MoonCodeConversationDecodeResult
+pub fn decode_mooncode_conversation(Json, current_revision? : String) -> Result[MoonCodeConversation, MoonCodeFailure]
 
-pub fn decode_mooncode_lifecycle_action(Json) -> Result[MoonCodeLifecycleAction, MoonCodeLifecycleFailure]
+pub fn decode_mooncode_lifecycle_action(Json) -> Result[MoonCodeLifecycleAction, MoonCodeFailure]
 
-pub fn decode_mooncode_lifecycle_result(Json, expected_session_id~ : MoonCodeSessionId) -> Result[MoonCodeLifecycleResult, MoonCodeLifecycleFailure]
+pub fn decode_mooncode_lifecycle_result(Json, expected_session_id~ : MoonCodeSessionId) -> Result[(MoonCodeLifecycleAction, MoonCodeSessionId, String, Bool, Bool), MoonCodeFailure]
 
-pub fn decode_mooncode_selected_session(Json) -> MoonCodeSelectedSessionDecodeResult
+pub fn decode_mooncode_selected_session(Json) -> Result[MoonCodeSessionSummary, MoonCodeFailure]
 
-pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
+pub fn decode_mooncode_session_listing(Json) -> Result[Array[MoonCodeSessionSummary], MoonCodeFailure]
 
-pub fn decode_mooncode_stream_cursor(String, current~ : MoonCodeWatchCursor) -> MoonCodeStreamCursorDecodeResult
-
-pub fn decode_mooncode_watch_result(Json, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
+pub fn decode_mooncode_stream_cursor(String, current~ : MoonCodeWatchCursor) -> Result[MoonCodeWatchCursor, MoonCodeFailure]
 
 pub fn decode_mooncode_watch_text(String, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
 
@@ -203,800 +34,25 @@ pub fn encode_mooncode_lifecycle_action(MoonCodeLifecycleAction, book_root? : St
 
 pub fn encode_mooncode_session_summary(MoonCodeSessionSummary) -> Json
 
-pub fn event_lane_artifact() -> String
-
-pub fn event_lane_contract_id() -> String
-
-pub fn event_lane_contract_json() -> Json
-
-pub fn event_lane_default() -> String
-
-pub fn event_lane_diff() -> String
-
-pub fn event_lane_is_progress(String) -> Bool
-
-pub fn event_lane_is_supported(String) -> Bool
-
-pub fn event_lane_normalize(String) -> String
-
-pub fn event_lane_review() -> String
-
-pub fn event_lane_runtime() -> String
-
-pub fn event_lane_test() -> String
-
-pub fn event_lane_tool() -> String
-
-pub fn event_lane_transcript() -> String
-
-pub fn event_lanes() -> Array[String]
-
-pub fn event_progress_lanes() -> Array[String]
-
-pub fn executable_book_lifecycle_contract_id() -> String
-
-pub fn executable_book_lifecycle_contract_json() -> Json
-
-pub fn executable_book_lifecycle_steps() -> Array[String]
-
-pub fn journal_contract_id() -> String
-
-pub fn model_planner_command_action_is_supported(String) -> Bool
-
-pub fn model_planner_command_actions() -> Array[String]
-
-pub fn model_planner_command_event_kind_is_supported(String) -> Bool
-
-pub fn model_planner_command_event_kinds() -> Array[String]
-
-pub fn model_planner_contract_failure_rule() -> String
-
-pub fn model_planner_event_is_planner_evidence(String, String) -> Bool
-
-pub fn model_planner_evidence_contract_id() -> String
-
-pub fn model_planner_evidence_contract_json() -> Json
-
-pub fn model_planner_evidence_contract_kind() -> String
-
-pub fn model_planner_evidence_report_kind() -> String
-
-pub fn model_planner_missing_evidence_reason() -> String
-
-pub fn model_planner_mode_model_tool_calls() -> String
-
-pub fn model_planner_planner_event_kinds() -> Array[String]
-
-pub fn model_planner_queued_rule() -> String
-
-pub fn model_planner_status_contract_failed() -> String
-
-pub fn model_planner_status_is_contract_failure(String) -> Bool
-
-pub fn model_planner_status_is_running(String) -> Bool
-
-pub fn model_planner_status_no_model_planned_commands() -> String
-
-pub fn model_planner_status_pending() -> String
-
-pub fn model_planner_status_planner_failed() -> String
-
-pub fn model_planner_status_running() -> String
-
-pub fn model_planner_status_satisfied() -> String
-
-pub fn model_planner_status_service_started() -> String
-
-pub fn model_planner_stray_evidence_reason() -> String
-
-pub fn model_planner_terminal_event_kinds() -> Array[String]
-
-pub fn model_planner_working_evidence_rule() -> String
-
-pub fn moonclaw_event_mapping_json() -> Json
+pub fn encode_mooncode_watch_result(MoonCodeWatchResult) -> Result[Json, MoonCodeFailure]
 
 pub fn mooncode_capability() -> MoonCodeCapability
 
-pub fn mooncode_lifecycle_transition(MoonCodeLifecycleAction, MoonCodeSessionStatus, archived~ : Bool) -> Result[Unit, MoonCodeLifecycleFailure]
+pub fn mooncode_lifecycle_transition(MoonCodeLifecycleAction, MoonCodeSessionStatus, archived~ : Bool) -> Result[Unit, MoonCodeFailure]
 
 pub fn mooncode_watch_cursor(String, String) -> MoonCodeWatchCursor raise
 
-pub fn mooncode_watch_disconnected(current~ : MoonCodeWatchCursor, reason~ : String) -> MoonCodeWatchResult
-
 pub fn mooncode_watch_origin_cursor() -> MoonCodeWatchCursor
 
-pub fn native_archived_session_listing_endpoint(String) -> String
-
-pub fn native_capabilities_endpoint() -> String
-
-pub fn native_capability_contract_id() -> String
-
-pub fn native_capability_endpoints() -> NativeCapabilityEndpoints
-
-pub fn native_capability_required_endpoints() -> Array[String]
-
-pub fn native_capability_required_tools() -> Array[String]
-
-pub fn native_capability_runtime_loop_options() -> Json
-
-pub fn native_capability_stream_options() -> Json
-
-pub fn native_capability_surface_fingerprint() -> String
-
-pub fn native_capability_surface_json() -> Json
-
-pub fn native_capability_target_description() -> String
-
-pub fn native_command_allowed_tool_sequence(String, Bool) -> Array[String]
-
-pub fn native_command_body_field_is_supported(String) -> Bool
-
-pub fn native_command_body_required_fields() -> Array[String]
-
-pub fn native_command_body_supported_fields() -> Array[String]
-
-pub fn native_command_contract_id() -> String
-
-pub fn native_command_default_package_kind(String) -> String
-
-pub fn native_command_eval_report_manifest_event() -> String
-
-pub fn native_command_eval_report_sink() -> String
-
-pub fn native_command_execution_checklist(String, Array[String], Array[String], String, String, String) -> Array[Json]
-
-pub fn native_command_execution_contract_json() -> Json
-
-pub fn native_command_execution_plan(String, String, String, String, String, String, Bool) -> Json
-
-pub fn native_command_execution_plan_kind() -> String
-
-pub fn native_command_expected_events(String) -> Array[String]
-
-pub fn native_command_package_index_event() -> String
-
-pub fn native_command_package_manifest_event() -> String
-
-pub fn native_command_recommended_commands(String, String) -> Array[String]
-
-pub fn native_command_required_outputs(String) -> Array[String]
-
-pub fn native_command_result_contract(String) -> Json
-
-pub fn native_command_result_contract_kind() -> String
-
-pub fn native_command_review_receipt_event() -> String
-
-pub fn native_command_runtime_claim_sink() -> String
-
-pub fn native_command_runtime_event_sink() -> String
-
-pub fn native_command_runtime_replay_sink() -> String
-
-pub fn native_command_tool_authorization_event() -> String
-
-pub fn native_command_tool_contract(String) -> Json
-
-pub fn native_command_tool_contract_for_command(String, Bool) -> Json
-
-pub fn native_command_tool_contract_kind() -> String
-
-pub fn native_command_tool_policies(String, String) -> Array[Json]
-
-pub fn native_command_tool_policy(String, String, String) -> Json
-
-pub fn native_command_tool_sequence(String) -> Array[String]
-
-pub fn native_endpoint_component(String) -> String
-
-pub fn native_eval_report_endpoint(String, String) -> String
-
-pub fn native_event_has_command_scope(Json) -> Bool
-
-pub fn native_event_is_diagnostic_only(Json) -> Bool
-
-pub fn native_event_is_progress(Json) -> Bool
-
-pub fn native_event_is_transcript(Json) -> Bool
-
-pub fn native_event_projection_command_scope_keys() -> Array[String]
-
-pub fn native_event_projection_contract_id() -> String
-
-pub fn native_event_projection_contract_json() -> Json
-
-pub fn native_event_projection_contract_kind() -> String
-
-pub fn native_event_projection_diagnostic_sources() -> Array[String]
-
-pub fn native_event_projection_diagnostic_titles() -> Array[String]
-
-pub fn native_event_projection_problem(Json, reason~ : String) -> Json
-
-pub fn native_event_projection_report(Json, session_id~ : String, observed_at~ : String) -> Json
-
-pub fn native_event_projection_report_kind() -> String
-
-pub fn native_event_requires_command_scope(Json) -> Bool
-
-pub fn native_events_for_canonical_projection(Json) -> Array[Json]
-
-pub fn native_package_result_endpoint(String, String) -> String
-
-pub fn native_runtime_claim_endpoint(String, String) -> String
-
-pub fn native_runtime_control_endpoint(String, String) -> String
-
-pub fn native_runtime_events_endpoint(String, String) -> String
-
-pub fn native_runtime_loop_endpoint(String, String) -> String
-
-pub fn native_runtime_service_endpoint(String, String) -> String
-
-pub fn native_runtime_turn_endpoint(String, String) -> String
-
-pub fn native_session_commands_endpoint(String) -> String
-
-pub fn native_session_lifecycle_endpoint(String) -> String
-
-pub fn native_session_list_endpoint(String) -> String
-
-pub fn native_session_listing_endpoint(String) -> String
-
-pub fn native_session_show_endpoint(String, String) -> String
-
-pub fn native_session_turns_endpoint(String) -> String
-
-#deprecated
-pub fn native_stream_endpoint(String, String, String, Int, wait_ms? : Int, poll_ms? : Int) -> String
-
-pub fn native_stream_endpoint_for_cursor(String, String, String, MoonCodeWatchCursor, wait_ms? : Int, poll_ms? : Int) -> String
-
-pub fn native_tool_exec_endpoint(String, String) -> String
-
 pub fn protocol_version() -> String
-
-pub fn runtime_claim_authorization_rule() -> String
-
-pub fn runtime_claim_base_status(Bool, String, Bool, Bool) -> String
-
-pub fn runtime_claim_consumer_contract_json(String) -> Json
-
-pub fn runtime_claim_consumer_ordering_rule() -> String
-
-pub fn runtime_claim_duplicate_guard() -> String
-
-pub fn runtime_claim_endpoint(String) -> String
-
-pub fn runtime_claim_lease_policy() -> String
-
-pub fn runtime_claim_mode() -> String
-
-pub fn runtime_claim_ordering_rule() -> String
-
-pub fn runtime_claim_response_kind() -> String
-
-pub fn runtime_claim_state_kind() -> String
-
-pub fn runtime_claim_status_blocked_by_prior_command() -> String
-
-pub fn runtime_claim_status_blocked_tool_authorization() -> String
-
-pub fn runtime_claim_status_blocks_following(String) -> Bool
-
-pub fn runtime_claim_status_claimable() -> String
-
-pub fn runtime_claim_status_claimed() -> String
-
-pub fn runtime_claim_status_delivered() -> String
-
-pub fn runtime_claim_status_invalid() -> String
-
-pub fn runtime_claim_status_with_order_blocker(String, String) -> String
-
-pub fn runtime_claim_statuses() -> Array[String]
-
-pub fn runtime_command_output_event_names() -> Array[String]
-
-pub fn runtime_completion_blocked(Bool, String, Bool) -> Bool
-
-pub fn runtime_completion_gate_status_blocked() -> String
-
-pub fn runtime_completion_gate_status_not_required() -> String
-
-pub fn runtime_completion_gate_status_passed() -> String
-
-pub fn runtime_completion_proof_gate(String, Json, Int, Int, Array[Json], Array[Json]) -> Json
-
-pub fn runtime_completion_proof_gate_kind() -> String
-
-pub fn runtime_completion_proof_gate_rule() -> String
-
-pub fn runtime_completion_proof_gate_status(Bool, Bool) -> String
-
-pub fn runtime_completion_requires_proof(String) -> Bool
-
-pub fn runtime_completion_tool_harness_blocked(Bool, Int, String) -> Bool
-
-pub fn runtime_consumer_contract_id() -> String
-
-pub fn runtime_consumer_contract_json(String) -> Json
-
-pub fn runtime_consumer_contract_kind() -> String
-
-pub fn runtime_control_action_starts_turn(String) -> Bool
-
-pub fn runtime_control_active_statuses() -> Array[String]
-
-pub fn runtime_control_blocked_statuses() -> Array[String]
-
-pub fn runtime_control_contract_id() -> String
-
-pub fn runtime_control_contract_json() -> Json
-
-pub fn runtime_control_contract_kind() -> String
-
-pub fn runtime_control_effect_active_turn() -> String
-
-pub fn runtime_control_effect_allows_turn(String) -> Bool
-
-pub fn runtime_control_effect_already_completed() -> String
-
-pub fn runtime_control_effect_blocked() -> String
-
-pub fn runtime_control_effect_cancel_active() -> String
-
-pub fn runtime_control_effect_defer_steer() -> String
-
-pub fn runtime_control_effect_deliver_steer() -> String
-
-pub fn runtime_control_effect_drop_cancel() -> String
-
-pub fn runtime_control_effect_failed() -> String
-
-pub fn runtime_control_effect_is_terminal(String) -> Bool
-
-pub fn runtime_control_effect_queue_steer() -> String
-
-pub fn runtime_control_effect_queue_turn() -> String
-
-pub fn runtime_control_effect_record_note() -> String
-
-pub fn runtime_control_effect_start_turn() -> String
-
-pub fn runtime_control_effect_wait_for_proof() -> String
-
-pub fn runtime_control_effect_withdraw_pending() -> String
-
-pub fn runtime_control_effects() -> Array[String]
-
-pub fn runtime_control_scheduler_boundary_unit() -> String
-
-pub fn runtime_control_settlement_events(String, String) -> Array[String]
-
-pub fn runtime_control_settlement_required(String, String) -> Bool
-
-pub fn runtime_control_state_kind() -> String
-
-pub fn runtime_control_status_blocked_invalid() -> String
-
-pub fn runtime_control_status_blocked_missing_proof() -> String
-
-pub fn runtime_control_status_blocked_tool_authorization() -> String
-
-pub fn runtime_control_status_completed() -> String
-
-pub fn runtime_control_status_failed() -> String
-
-pub fn runtime_control_status_is_active(String) -> Bool
-
-pub fn runtime_control_status_is_blocked(String) -> Bool
-
-pub fn runtime_control_status_is_pending(String) -> Bool
-
-pub fn runtime_control_status_is_terminal(String) -> Bool
-
-pub fn runtime_control_status_pending() -> String
-
-pub fn runtime_control_status_running() -> String
-
-pub fn runtime_control_status_runtime_started() -> String
-
-pub fn runtime_control_target_state_active() -> String
-
-pub fn runtime_control_target_state_blocked() -> String
-
-pub fn runtime_control_target_state_idle() -> String
-
-pub fn runtime_control_target_state_pending() -> String
-
-pub fn runtime_control_target_state_recorded() -> String
-
-pub fn runtime_control_target_state_terminal() -> String
-
-pub fn runtime_control_target_states() -> Array[String]
-
-pub fn runtime_control_terminal_statuses() -> Array[String]
-
-pub fn runtime_diagnostic_event_name_is_supported(String) -> Bool
-
-pub fn runtime_diagnostic_event_names() -> Array[String]
-
-pub fn runtime_event_artifact() -> String
-
-pub fn runtime_event_assistant_delta() -> String
-
-pub fn runtime_event_assistant_message() -> String
-
-pub fn runtime_event_cancel_dropped() -> String
-
-pub fn runtime_event_command_error() -> String
-
-pub fn runtime_event_commit_created() -> String
-
-pub fn runtime_event_diff() -> String
-
-pub fn runtime_event_file_change() -> String
-
-pub fn runtime_event_max_steps_exhausted() -> String
-
-pub fn runtime_event_name_contract_id() -> String
-
-pub fn runtime_event_name_contract_json() -> Json
-
-pub fn runtime_event_name_is_supported(String) -> Bool
-
-pub fn runtime_event_names() -> Array[String]
-
-pub fn runtime_event_package_built() -> String
-
-pub fn runtime_event_package_index() -> String
-
-pub fn runtime_event_package_manifest() -> String
-
-pub fn runtime_event_package_verified() -> String
-
-pub fn runtime_event_patch_applied() -> String
-
-pub fn runtime_event_patch_reverted() -> String
-
-pub fn runtime_event_planner_failed() -> String
-
-pub fn runtime_event_planner_selected() -> String
-
-pub fn runtime_event_planner_started() -> String
-
-pub fn runtime_event_reasoning_delta() -> String
-
-pub fn runtime_event_reasoning_message() -> String
-
-pub fn runtime_event_receipt_accept() -> String
-
-pub fn runtime_event_receipt_reject() -> String
-
-pub fn runtime_event_review_receipt() -> String
-
-pub fn runtime_event_runtime_aborted() -> String
-
-pub fn runtime_event_runtime_finished() -> String
-
-pub fn runtime_event_runtime_loop() -> String
-
-pub fn runtime_event_runtime_step() -> String
-
-pub fn runtime_event_runtime_unavailable() -> String
-
-pub fn runtime_event_runtime_update() -> String
-
-pub fn runtime_event_service_failed() -> String
-
-pub fn runtime_event_service_finished() -> String
-
-pub fn runtime_event_service_started() -> String
-
-pub fn runtime_event_steer_applied() -> String
-
-pub fn runtime_event_steer_deferred() -> String
-
-pub fn runtime_event_steer_dropped() -> String
-
-pub fn runtime_event_test_result() -> String
-
-pub fn runtime_event_tool_call() -> String
-
-pub fn runtime_event_tool_call_decode_error() -> String
-
-pub fn runtime_event_tool_result() -> String
-
-pub fn runtime_event_tool_started() -> String
-
-pub fn runtime_event_turn_failed() -> String
-
-pub fn runtime_event_turn_finished() -> String
-
-pub fn runtime_event_turn_started() -> String
-
-pub fn runtime_event_usage() -> String
-
-pub fn runtime_evidence_command_rule() -> String
-
-pub fn runtime_evidence_contract_id() -> String
-
-pub fn runtime_evidence_contract_json() -> Json
-
-pub fn runtime_evidence_event_fails_required(String, Json) -> Bool
-
-pub fn runtime_evidence_event_satisfies(String, Json) -> Bool
-
-pub fn runtime_evidence_events_with_status(Array[Json], String) -> Array[String]
-
-pub fn runtime_evidence_is_proven(Int, Int, Int) -> Bool
-
-pub fn runtime_evidence_required_event_result(String, String, Json) -> Json
-
-pub fn runtime_evidence_required_events(String, Array[String]) -> Array[String]
-
-pub fn runtime_evidence_required_outputs(String, Array[String]) -> Array[String]
-
-pub fn runtime_evidence_status_failed() -> String
-
-pub fn runtime_evidence_status_for_required_events(Int, Int, Int) -> String
-
-pub fn runtime_evidence_status_missing() -> String
-
-pub fn runtime_evidence_status_no_commands() -> String
-
-pub fn runtime_evidence_status_no_required_events() -> String
-
-pub fn runtime_evidence_status_proven() -> String
-
-pub fn runtime_failure_event_name_is_supported(String) -> Bool
-
-pub fn runtime_failure_event_names() -> Array[String]
-
-pub fn runtime_receipt_delivered_statuses() -> Array[String]
-
-pub fn runtime_receipt_status_accepted() -> String
-
-pub fn runtime_receipt_status_acknowledged() -> String
-
-pub fn runtime_receipt_status_claimed() -> String
-
-pub fn runtime_receipt_status_completed() -> String
-
-pub fn runtime_receipt_status_failed() -> String
-
-pub fn runtime_receipt_status_is_claimed(String) -> Bool
-
-pub fn runtime_receipt_status_is_delivered(String) -> Bool
-
-pub fn runtime_receipt_status_missing() -> String
-
-pub fn runtime_receipt_status_proof_missing() -> String
-
-pub fn runtime_receipt_status_recorded() -> String
-
-pub fn runtime_receipt_status_skipped() -> String
-
-pub fn runtime_replay_ack_allowed_statuses() -> Array[String]
-
-pub fn runtime_replay_ack_detail(String) -> String
-
-pub fn runtime_replay_ack_effective_status(String, Bool) -> String
-
-pub fn runtime_replay_ack_order_status_already_delivered() -> String
-
-pub fn runtime_replay_ack_order_status_consumer_mismatch() -> String
-
-pub fn runtime_replay_ack_order_status_matching_claim() -> String
-
-pub fn runtime_replay_ack_order_status_retry_after_failed_receipt() -> String
-
-pub fn runtime_replay_ack_order_status_unclaimed_ack() -> String
-
-pub fn runtime_replay_ack_order_statuses() -> Array[String]
-
-pub fn runtime_replay_ack_status(String, ok~ : Bool) -> String
-
-pub fn runtime_replay_ack_status_is_allowed(String) -> Bool
-
-pub fn runtime_replay_authorization_rule() -> String
-
-pub fn runtime_replay_base_status(Bool, String, Bool, Bool) -> String
-
-pub fn runtime_replay_consumer_contract_json(String) -> Json
-
-pub fn runtime_replay_duplicate_guard() -> String
-
-pub fn runtime_replay_endpoint(String) -> String
-
-pub fn runtime_replay_mode() -> String
-
-pub fn runtime_replay_ordering_rule() -> String
-
-pub fn runtime_replay_policy() -> String
-
-pub fn runtime_replay_state_kind() -> String
-
-pub fn runtime_replay_status_blocked_by_prior_command() -> String
-
-pub fn runtime_replay_status_blocked_invalid() -> String
-
-pub fn runtime_replay_status_blocked_tool_authorization() -> String
-
-pub fn runtime_replay_status_blocks_following(String) -> Bool
-
-pub fn runtime_replay_status_claimed() -> String
-
-pub fn runtime_replay_status_delivered() -> String
-
-pub fn runtime_replay_status_expired_claim_pending_retry() -> String
-
-pub fn runtime_replay_status_failed_pending_retry() -> String
-
-pub fn runtime_replay_status_is_pending(String) -> Bool
-
-pub fn runtime_replay_status_missing_proof_pending_retry() -> String
-
-pub fn runtime_replay_status_pending() -> String
-
-pub fn runtime_replay_status_with_order_blocker(String, String) -> String
-
-pub fn runtime_replay_statuses() -> Array[String]
-
-pub fn runtime_required_event_status_failed() -> String
-
-pub fn runtime_required_event_status_missing() -> String
-
-pub fn runtime_required_event_status_proven() -> String
-
-pub fn runtime_tool_alias_rows() -> Array[Json]
-
-pub fn runtime_tool_apply_patch() -> String
-
-pub fn runtime_tool_call_contract_json() -> Json
-
-pub fn runtime_tool_call_contract_kind() -> String
-
-pub fn runtime_tool_canonical_name(String) -> String
-
-pub fn runtime_tool_capability_names() -> Array[String]
-
-pub fn runtime_tool_capability_specs() -> Array[Json]
-
-pub fn runtime_tool_contract_id() -> String
-
-pub fn runtime_tool_contract_json() -> Json
-
-pub fn runtime_tool_contract_kind() -> String
-
-pub fn runtime_tool_contract_tool_ids(Json) -> Array[String]
-
-pub fn runtime_tool_edit() -> String
-
-pub fn runtime_tool_eval_harness() -> String
-
-pub fn runtime_tool_finish() -> String
-
-pub fn runtime_tool_from_moonclaw_tool(String) -> String
-
-pub fn runtime_tool_glob() -> String
-
-pub fn runtime_tool_grep() -> String
-
-pub fn runtime_tool_is_supported(String) -> Bool
-
-pub fn runtime_tool_moon_check() -> String
-
-pub fn runtime_tool_moon_cmd() -> String
-
-pub fn runtime_tool_moon_ide() -> String
-
-pub fn runtime_tool_moonclaw_mapping_rows() -> Array[Json]
-
-pub fn runtime_tool_mutates_files(String) -> Bool
-
-pub fn runtime_tool_names() -> Array[String]
-
-pub fn runtime_tool_native_required_tools() -> Array[String]
-
-pub fn runtime_tool_package_app_tool() -> String
-
-pub fn runtime_tool_read() -> String
-
-pub fn runtime_tool_requires_authorization_snapshot(String) -> Bool
-
-pub fn runtime_tool_requires_review(String) -> Bool
-
-pub fn runtime_tool_revert_patch() -> String
-
-pub fn runtime_tool_shell() -> String
-
-pub fn runtime_tool_todo_write() -> String
-
-pub fn runtime_tool_web_fetch() -> String
-
-pub fn runtime_tool_web_search() -> String
-
-pub fn runtime_tool_write() -> String
-
-pub fn session_runtime_evidence_kind() -> String
-
-pub fn session_runtime_evidence_rule() -> String
-
-pub fn session_runtime_evidence_status_for_counts(Int, Int, Int, Int, Int, Int) -> String
-
-pub fn standalone_boundary_json() -> Json
-
-pub fn tool_harness_case_status(Bool, Bool, Bool) -> String
-
-pub fn tool_harness_evidence_kind() -> String
-
-pub fn tool_harness_evidence_rule() -> String
-
-pub fn tool_harness_expected_tools(String, Array[String]) -> Array[String]
-
-pub fn tool_harness_is_proven(Int, Int, Int) -> Bool
-
-pub fn tool_harness_status_for_counts(Int, Int, Int) -> String
-
-pub fn tool_harness_status_no_tools() -> String
 
 // Errors
 
 // Types and methods
-pub struct MoonCodeAcceptedCommand {
-  command : MoonCodeCommand
-  status : MoonCodeCommandStatus
-  command_id : String
-  created_at : String
-  session_id : String
-  workspace_id : String
-  workspace_name : String
-  workspace_root : String
-} derive(Eq, @debug.Debug)
-pub fn MoonCodeAcceptedCommand::client_turn_id(Self) -> String
-pub fn MoonCodeAcceptedCommand::command(Self) -> MoonCodeCommand
-pub fn MoonCodeAcceptedCommand::command_id(Self) -> String
-pub fn MoonCodeAcceptedCommand::created_at(Self) -> String
-pub fn MoonCodeAcceptedCommand::session_id(Self) -> String
-pub fn MoonCodeAcceptedCommand::status(Self) -> MoonCodeCommandStatus
-pub fn MoonCodeAcceptedCommand::workspace_id(Self) -> String
-pub fn MoonCodeAcceptedCommand::workspace_name(Self) -> String
-pub fn MoonCodeAcceptedCommand::workspace_root(Self) -> String
-
-pub struct MoonCodeApproval {
-  session_id : String
-  approval_id : String
-  target_command_id : String
-  tool_call_id : String
-  arguments : String
-  state : MoonCodeApprovalState
-} derive(Eq, @debug.Debug)
-pub fn MoonCodeApproval::approval_id(Self) -> String
-pub fn MoonCodeApproval::arguments(Self) -> String
-pub fn MoonCodeApproval::decision_wire(Self, MoonCodeApprovalDecision, String) -> Result[Json, MoonCodeApprovalDecisionFailure]
-pub fn MoonCodeApproval::state(Self) -> MoonCodeApprovalState
-
-pub(all) enum MoonCodeApprovalDecision {
-  Approve
-  Reject
-} derive(Eq, @debug.Debug)
-
-pub enum MoonCodeApprovalDecisionFailure {
-  Stale
-  WrongSessionOwnership(expected~ : String, actual~ : String)
-} derive(Eq, @debug.Debug)
-
-pub enum MoonCodeApprovalDecodeFailure {
-  Malformed(String)
-  UnsupportedState(String)
-} derive(Eq, @debug.Debug)
-
-pub(all) enum MoonCodeApprovalState {
-  Pending
-  Approved
-  Rejected
+pub(all) enum MoonCodeApproval {
+  Pending(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
+  Approved(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
+  Rejected(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct MoonCodeCapability {
@@ -1011,13 +67,7 @@ pub(all) struct MoonCodeCapability {
   ownership_extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
 
-pub(all) enum MoonCodeCapabilityDecodeResult {
-  Supported(MoonCodeCapability)
-  UnsupportedVersion(Int)
-  Malformed(String)
-} derive(Eq, @debug.Debug)
-
-pub struct MoonCodeCommand {
+pub(all) struct MoonCodeCommand {
   kind : MoonCodeCommandKind
   client_turn_id : String
   context_path : String
@@ -1030,16 +80,8 @@ pub struct MoonCodeCommand {
   tool_call_id : String
   force_preflight : Bool
 } derive(Eq, @debug.Debug)
-pub fn MoonCodeCommand::client_turn_id(Self) -> String
-pub fn MoonCodeCommand::context_path(Self) -> String
-pub fn MoonCodeCommand::force_preflight(Self) -> Bool
-pub fn MoonCodeCommand::kind(Self) -> MoonCodeCommandKind
-pub fn MoonCodeCommand::message(Self) -> String
-pub fn MoonCodeCommand::model(Self) -> String
-pub fn MoonCodeCommand::planner_max_steps(Self) -> Int?
-pub fn MoonCodeCommand::web_search(Self) -> Bool
 
-pub enum MoonCodeCommandKind {
+pub(all) enum MoonCodeCommandKind {
   Prompt
   Steer
   RunTests
@@ -1077,22 +119,12 @@ pub(all) struct MoonCodeConversation {
   turns : Array[MoonCodeTurn]
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
-pub impl @json.FromJson for MoonCodeConversation
-
-pub(all) enum MoonCodeConversationDecodeResult {
-  Absent
-  Supported(MoonCodeConversation)
-  UnsupportedProtocol(String)
-  UnsupportedContract(String)
-  Stale(revision~ : String, current_revision~ : String)
-  Malformed(String)
-} derive(Eq, @debug.Debug)
 
 pub(all) struct MoonCodeEvidence {
   item_id : String
   command_id : String
-  kind : MoonCodeEvidenceKind
-  state : MoonCodeEvidenceState
+  kind : String
+  state : String
   title : String
   detail : String
   path : String
@@ -1104,32 +136,13 @@ pub(all) struct MoonCodeEvidence {
   approval : MoonCodeApproval?
 } derive(Eq, @debug.Debug)
 
-pub(all) enum MoonCodeEvidenceKind {
-  Edit
-  Test
-  PackageManifest
-  ReviewAccept
-  ReviewReject
-  PackageBuilt
-  PackageVerified
-  Artifact
-  AssistantSummary
-  Approval
-  Tool
-} derive(Eq, @debug.Debug)
-
-pub(all) enum MoonCodeEvidenceState {
-  Recorded
-  Applied
-  Passed
-  Reverted
-  Cancelled
-  Pending
-  Approved
-  Accepted
-  Rejected
-  Failed
-  Stale
+pub(all) enum MoonCodeFailure {
+  Absent
+  UnsupportedVersion(Int)
+  UnsupportedProtocol(String)
+  UnsupportedContract(String)
+  Stale(revision~ : String, current_revision~ : String)
+  Malformed(String)
 } derive(Eq, @debug.Debug)
 
 pub(all) enum MoonCodeLifecycleAction {
@@ -1137,34 +150,6 @@ pub(all) enum MoonCodeLifecycleAction {
   Archive
   Restore
   Delete
-} derive(Eq, @debug.Debug)
-
-pub(all) enum MoonCodeLifecycleFailure {
-  MalformedAction
-  UnsupportedAction(String)
-  InvalidTitle
-  TitleTooLong
-  NotFound
-  Conflict
-  RuntimeUnavailable
-  RuntimeFailure
-  InvalidResult(String)
-  UnsupportedProtocol(String)
-  WrongOwner(String)
-  WrongSession(expected~ : String, actual~ : String)
-} derive(Eq, @debug.Debug)
-
-pub struct MoonCodeLifecycleResult {
-  action : MoonCodeLifecycleAction
-  session_id : MoonCodeSessionId
-  title : String
-  archived : Bool
-  deleted : Bool
-}
-
-pub(all) enum MoonCodeLifecycleStopReason {
-  CancelledBeforeRequest
-  SessionActive
 } derive(Eq, @debug.Debug)
 
 pub(all) struct MoonCodeMessage {
@@ -1177,21 +162,9 @@ pub(all) struct MoonCodeMessage {
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
 
-pub(all) enum MoonCodeSelectedSessionDecodeResult {
-  Supported(MoonCodeSessionSummary)
-  UnsupportedVersion(Int)
-  Malformed(String)
-} derive(Eq, @debug.Debug)
-
 pub struct MoonCodeSessionId(String) derive(Eq, @debug.Debug)
 pub fn MoonCodeSessionId::parse(String) -> Self?
 pub fn MoonCodeSessionId::to_string(Self) -> String
-
-pub(all) enum MoonCodeSessionListingDecodeResult {
-  Supported(Array[MoonCodeSessionSummary])
-  UnsupportedVersion(Int)
-  Malformed(String)
-} derive(Eq, @debug.Debug)
 
 pub(all) enum MoonCodeSessionStatus {
   Created
@@ -1221,12 +194,6 @@ pub(all) struct MoonCodeSessionSummary {
   last_message : String?
   archived : Bool
   extensions : Map[String, Json]
-} derive(Eq, @debug.Debug)
-
-pub(all) enum MoonCodeStreamCursorDecodeResult {
-  Advanced(MoonCodeWatchCursor)
-  Unchanged(MoonCodeWatchCursor)
-  Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct MoonCodeTurn {
@@ -1265,41 +232,12 @@ pub fn MoonCodeWatchResult::cursor(Self) -> MoonCodeWatchCursor
 
 pub(all) struct MoonCodeWork {
   item_id : String
-  status : MoonCodeWorkStatus
+  status : String
   summary : String
   detail : String
   evidence : Array[MoonCodeEvidence]
   // private fields
 } derive(Eq, @debug.Debug)
-
-pub(all) enum MoonCodeWorkStatus {
-  Queued
-  Running
-  Done
-  Failed
-  Cancelled
-} derive(Eq, @debug.Debug)
-
-pub(all) struct NativeCapabilityEndpoints {
-  capabilities : String
-  session_list : String
-  session_listing : String
-  session_show : String
-  session_commands : String
-  session_turns : String
-  session_lifecycle : String
-  runtime_control : String
-  runtime_claim : String
-  stream : String
-  runtime_turn : String
-  runtime_loop : String
-  runtime_service : String
-  runtime_events : String
-  tool_exec : String
-  eval_report : String
-  package_result : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-pub fn NativeCapabilityEndpoints::required_endpoints(Self) -> Array[String]
 
 // Type aliases
 

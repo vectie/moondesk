@@ -86,15 +86,126 @@ fn typed_evidence_fixture() -> Json {
 }
 
 ///|
+fn typed_evidence_matrix_fixture(steps : Array[Json]) -> Json {
+  {
+    "kind": "mooncode-conversation",
+    "protocol": "mooncode.v1",
+    "contract_id": "moonsuite-conversation.v3",
+    "session_id": "session-matrix",
+    "revision": "1",
+    "last_sequence": "1",
+    "turns": [
+      {
+        "kind": "mooncode-conversation-turn",
+        "turn_id": "turn-matrix",
+        "client_turn_id": "client-matrix",
+        "command_id": "command-matrix",
+        "ordinal": 0,
+        "status": "done",
+        "user": null,
+        "work": { "steps": steps },
+        "assistant": null,
+      },
+    ],
+  }
+}
+
+///|
+fn typed_matrix_step(
+  source_kind : String,
+  raw_kind : String,
+  state? : String = "recorded",
+  exit_code? : Int = 0,
+) -> Json {
+  {
+    "command_id": "command-matrix",
+    "source_kind": source_kind,
+    "evidence": { "kind": raw_kind, "state": state, "exit_code": exit_code },
+  }
+}
+
+///|
+test "typed evidence canonical kind precedence and fallback matrix" {
+  let steps = [
+    typed_matrix_step("package_manifest", "tool"),
+    typed_matrix_step("package_index", "edit"),
+    typed_matrix_step("receipt.accept", "test"),
+    typed_matrix_step("receipt.reject", "artifact"),
+    typed_matrix_step("package_built", "approval"),
+    typed_matrix_step("runtime.package_built", "tool"),
+    typed_matrix_step("package_verified", "edit"),
+    typed_matrix_step("runtime.package_verified", "test"),
+    typed_matrix_step("assistant", "approval"),
+    typed_matrix_step("finish", "tool"),
+    typed_matrix_step("test_result", "edit"),
+    typed_matrix_step("unknown", "edit"),
+    typed_matrix_step("unknown", "test"),
+    typed_matrix_step("unknown", "artifact"),
+    {
+      "command_id": "command-matrix",
+      "source_kind": "unknown",
+      "evidence": {
+        "kind": "approval",
+        "state": "pending",
+        "approval_id": "approval-matrix",
+        "target_command_id": "command-matrix",
+        "tool_call_id": "tool-matrix",
+        "arguments": "{}",
+      },
+    },
+    typed_matrix_step("unknown", "tool"),
+    typed_matrix_step("unknown", "future"),
+  ]
+  guard @core.decode_mooncode_conversation(typed_evidence_matrix_fixture(steps))
+    is Ok(conversation) else {
+    fail("decode")
+  }
+  assert_eq(conversation.turns[0].work.evidence.map(item => item.kind), [
+    "package_manifest", "package_manifest", "review_accept", "review_reject", "package_built",
+    "package_built", "package_verified", "package_verified", "assistant_summary",
+    "assistant_summary", "test", "edit", "test", "artifact", "approval", "tool",
+  ])
+}
+
+///|
+test "typed evidence canonical state validation and defaults" {
+  let allowed = [
+    "applied", "passed", "reverted", "cancelled", "pending", "accepted", "approved",
+    "recorded", "rejected", "failed", "stale",
+  ]
+  let steps = allowed.map(state => typed_matrix_step("unknown", "tool", state~))
+  steps.push(typed_matrix_step("receipt.accept", "artifact", state=""))
+  steps.push(typed_matrix_step("receipt.reject", "artifact", state=""))
+  steps.push(typed_matrix_step("unknown", "tool", state=""))
+  steps.push(typed_matrix_step("unknown", "tool", state="passed", exit_code=1))
+  guard @core.decode_mooncode_conversation(typed_evidence_matrix_fixture(steps))
+    is Ok(conversation) else {
+    fail("decode")
+  }
+  assert_eq(
+    conversation.turns[0].work.evidence.map(item => item.state),
+    allowed + ["accepted", "rejected", "recorded", "failed"],
+  )
+  assert_true(
+    @core.decode_mooncode_conversation(
+      typed_evidence_matrix_fixture([
+        typed_matrix_step("unknown", "tool", state="unsupported"),
+      ]),
+    )
+    is Err(Malformed(_)),
+  )
+}
+
+///|
 test "typed package review is exact, ordered, and lossless at the codec boundary" {
   guard @core.decode_mooncode_conversation(typed_evidence_fixture())
-    is Supported(conversation) else {
+    is Ok(conversation) else {
     fail("decode")
   }
   let turn = conversation.turns[0]
   assert_eq(turn.work.evidence.length(), 7)
-  assert_true(turn.work.evidence[0].kind is @core.PackageManifest)
-  assert_true(turn.work.evidence[1].kind is @core.Artifact)
+  assert_eq(turn.work.evidence[0].kind, "package_manifest")
+  assert_eq(turn.work.evidence[1].kind, "artifact")
   let encoded = @core.encode_mooncode_conversation(conversation).stringify()
   assert_true(encoded.contains("\"future_work\":true"))
   assert_true(encoded.contains("\"future\":true"))

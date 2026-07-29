@@ -6,17 +6,19 @@ test "canonical watch returns a snapshot only when revision advances" {
     "canonical_revision": 4,
     "mooncode_conversation": {
       "kind": @mooncode.conversation_kind(),
+      "protocol": @mooncode.protocol_version(),
       "contract_id": @mooncode.conversation_contract_id(),
       "session_id": "session-a",
-      "revision": 4,
-      "last_sequence": 7,
+      "revision": "4",
+      "last_sequence": "7",
       "source_event_count": 3,
       "turns": [],
     },
   }
-  let changed = mooncode_conversation_watch_response(
-    "session-a", snapshot, 3, "3",
-  )
+  guard mooncode_conversation_watch_response("session-a", snapshot, 3, "3")
+    is Ok(changed) else {
+    fail("expected changed watch response")
+  }
   assert_eq(
     json_string(changed, "contract_id", default=""),
     @mooncode.conversation_watch_contract_id(),
@@ -33,9 +35,10 @@ test "canonical watch returns a snapshot only when revision advances" {
     "session-a",
   )
   assert_true(json_object_field(changed, "events") is None)
-  let heartbeat = mooncode_conversation_watch_response(
-    "session-a", snapshot, 4, "3",
-  )
+  guard mooncode_conversation_watch_response("session-a", snapshot, 4, "3")
+    is Ok(heartbeat) else {
+    fail("expected heartbeat watch response")
+  }
   assert_false(json_bool(heartbeat, "changed", default=true))
   assert_true(json_bool(heartbeat, "heartbeat", default=false))
   assert_eq(json_int(heartbeat, "revision", default=0), 4)

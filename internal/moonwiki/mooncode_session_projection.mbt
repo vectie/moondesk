@@ -24,10 +24,9 @@ fn compact_mooncode_session_command_response(
   )
   let conversation = match
     @mooncode_core.decode_mooncode_conversation(raw_conversation) {
-    Supported(value) => @mooncode_core.encode_mooncode_conversation(value)
-    Absent => Json::null()
-    UnsupportedProtocol(_) | UnsupportedContract(_) | Stale(_) | Malformed(_) =>
-      Json::null()
+    Ok(value) => @mooncode_core.encode_mooncode_conversation(value)
+    Err(Absent) => Json::null()
+    Err(_) => Json::null()
   }
   let summary = json_object_field_or_empty(projected, "mooncode_summary")
   let current_turn = if conversation is Null {

@@ -1,131 +1,64 @@
 ///|
-fn approval_evidence(
-  state : String,
-  approval_id? : String = "approval-one",
-  target_command_id? : String = "command-one",
-  tool_call_id? : String = "call-one",
-) -> Json {
+fn approval_conversation(state : String) -> Json {
   {
-    "kind": "approval",
-    "state": state,
-    "approval_id": approval_id,
-    "target_command_id": target_command_id,
-    "tool_call_id": tool_call_id,
-    "arguments": "{\"path\":\"src/main.mbt\"}",
+    "kind": "mooncode-conversation",
+    "protocol": "mooncode.v1",
+    "contract_id": "moonsuite-conversation.v3",
+    "session_id": "session-one",
+    "revision": "1",
+    "last_sequence": "1",
+    "turns": [
+      {
+        "kind": "mooncode-conversation-turn",
+        "turn_id": "turn-one",
+        "client_turn_id": "client-one",
+        "command_id": "command-one",
+        "ordinal": 1,
+        "status": "running",
+        "user": null,
+        "work": {
+          "steps": [
+            {
+              "kind": "tool",
+              "evidence": {
+                "kind": "approval",
+                "state": state,
+                "approval_id": "approval-one",
+                "target_command_id": "command-one",
+                "tool_call_id": "call-one",
+                "arguments": "{\"path\":\"src/main.mbt\"}",
+              },
+            },
+          ],
+        },
+        "assistant": null,
+      },
+    ],
   }
 }
 
 ///|
-test "projected approval evidence decodes pending and settled real shapes" {
+test "approval evidence decodes retained aggregate variants" {
   for state in ["pending", "approved", "rejected"] {
-    guard @core.decode_mooncode_approval(
-        approval_evidence(state),
-        "session-one",
-        "command-one",
-      )
-      is Ok(approval) else {
+    guard decode_mooncode_conversation(approval_conversation(state))
+      is Ok(conversation) else {
       fail("approval evidence must decode")
     }
-    assert_eq(approval.approval_id(), "approval-one")
-    let expected = match state {
-      "pending" => @core.MoonCodeApprovalState::Pending
-      "approved" => @core.MoonCodeApprovalState::Approved
-      _ => @core.MoonCodeApprovalState::Rejected
-    }
-    assert_eq(approval.state(), expected)
-    assert_eq(approval.arguments(), "{\"path\":\"src/main.mbt\"}")
-  }
-}
-
-///|
-test "pending snapshot encodes accept and reject with immutable ownership" {
-  guard @core.decode_mooncode_approval(
-      approval_evidence("pending"),
-      "session-one",
-      "command-one",
-    )
-    is Ok(approval) else {
-    fail("approval evidence must decode")
-  }
-  let decisions : Array[(@core.MoonCodeApprovalDecision, String)] = [
-    (@core.MoonCodeApprovalDecision::Approve, "approve_tool"),
-    (@core.MoonCodeApprovalDecision::Reject, "reject_tool"),
-  ]
-  for pair in decisions {
-    let (decision, action) = pair
-    guard approval.decision_wire(decision, "session-one") is Ok(wire) else {
-      fail("current approval must encode")
-    }
+    let approval = conversation.turns[0].approvals[0]
     assert_true(
-      wire
-      is {
-        "action": String(actual),
-        "approval_id": "approval-one",
-        "target_command_id": "command-one",
-        "tool_call_id": "call-one",
-        ..
-      } &&
-      actual == action,
+      match state {
+        "pending" => approval is MoonCodeApproval::Pending(..)
+        "approved" => approval is MoonCodeApproval::Approved(..)
+        _ => approval is MoonCodeApproval::Rejected(..)
+      },
     )
-    let text = wire.stringify()
-    assert_false(text.contains("session_id"))
-    assert_false(text.contains("revision"))
   }
 }
 
 ///|
-test "approval decoder distinguishes unsupported state and ownership mismatch" {
+test "approval decoder rejects unsupported state" {
   assert_true(
-    @core.decode_mooncode_approval(
-      approval_evidence("expired"),
-      "session-one",
-      "command-one",
-    )
-    is Err(UnsupportedState("expired")),
-  )
-  assert_true(
-    @core.decode_mooncode_approval([], "session-one", "command-one")
-    is Err(Malformed(_)),
-  )
-  assert_true(
-    @core.decode_mooncode_approval(
-      approval_evidence("pending", approval_id=""),
-      "session-one",
-      "command-one",
-    )
-    is Err(Malformed(_)),
-  )
-  assert_true(
-    @core.decode_mooncode_approval(
-      approval_evidence("pending", target_command_id="command-two"),
-      "session-one",
-      "command-one",
-    )
-    is Err(Malformed(_)),
-  )
-}
-
-///|
-test "decision encoding rejects settled and wrong endpoint session" {
-  guard @core.decode_mooncode_approval(
-      approval_evidence("approved"),
-      "session-one",
-      "command-one",
-    )
-    is Ok(settled) else {
-    fail("settled evidence must decode")
-  }
-  assert_true(settled.decision_wire(Approve, "session-one") is Err(Stale))
-  guard @core.decode_mooncode_approval(
-      approval_evidence("pending"),
-      "session-one",
-      "command-one",
-    )
-    is Ok(pending) else {
-    fail("pending evidence must decode")
-  }
-  assert_true(
-    pending.decision_wire(Approve, "session-two")
-    is Err(WrongSessionOwnership(..)),
+    decode_mooncode_conversation(approval_conversation("expired"))
+    is Err(Malformed("unsupported approval state: expired")),
   )
 }

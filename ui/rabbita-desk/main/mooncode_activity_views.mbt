@@ -269,24 +269,26 @@ fn render_mooncode_approval(
   row : MoonCodeEvidenceRow,
 ) -> @rabbita.Html {
   guard row.approval is Some(approval) else { return @html.nothing }
-  let state = approval.state()
-  let pending = state is @mooncode_core.MoonCodeApprovalState::Pending
-  let state_name = match state {
-    @mooncode_core.MoonCodeApprovalState::Pending => "pending"
-    @mooncode_core.MoonCodeApprovalState::Approved => "approved"
-    @mooncode_core.MoonCodeApprovalState::Rejected => "rejected"
+  let pending = approval is @mooncode_core.MoonCodeApproval::Pending(..)
+  let (state_name, approval_id, arguments) = match approval {
+    @mooncode_core.MoonCodeApproval::Pending(approval_id~, arguments~, ..) =>
+      ("pending", approval_id, arguments)
+    @mooncode_core.MoonCodeApproval::Approved(approval_id~, arguments~, ..) =>
+      ("approved", approval_id, arguments)
+    @mooncode_core.MoonCodeApproval::Rejected(approval_id~, arguments~, ..) =>
+      ("rejected", approval_id, arguments)
   }
   div(
     class="mooncode-approval " + state_name,
     attrs=@html.Attrs::build()
       .data_set("testid", "mooncode-approval")
-      .data_set("approval-id", approval.approval_id())
+      .data_set("approval-id", approval_id)
       .data_set("state", state_name),
     [
       div(class="mooncode-approval-copy", [
         strong(if pending { "Approval needed" } else { row.title }),
         p(row.detail),
-        if approval.arguments() == "" {
+        if arguments == "" {
           @html.nothing
         } else {
           @html.node(
@@ -296,7 +298,7 @@ fn render_mooncode_approval(
               @html.node("summary", @html.Attrs::build(), [
                 span("Review operation"),
               ]),
-              pre(approval.arguments()),
+              pre(arguments),
             ],
           )
         },
@@ -308,12 +310,7 @@ fn render_mooncode_approval(
             attrs=@html.Attrs::build()
               .aria_label("Reject this MoonCode tool call")
               .data_set("testid", "mooncode-reject-tool"),
-            on_click=dispatch(
-              DecideMoonCodeTool(
-                approval,
-                @mooncode_core.MoonCodeApprovalDecision::Reject,
-              ),
-            ),
+            on_click=dispatch(DecideMoonCodeTool(approval, RejectMoonCodeTool)),
             "Reject",
           ),
           button(
@@ -321,12 +318,7 @@ fn render_mooncode_approval(
             attrs=@html.Attrs::build()
               .aria_label("Approve this MoonCode tool call")
               .data_set("testid", "mooncode-approve-tool"),
-            on_click=dispatch(
-              DecideMoonCodeTool(
-                approval,
-                @mooncode_core.MoonCodeApprovalDecision::Approve,
-              ),
-            ),
+            on_click=dispatch(DecideMoonCodeTool(approval, ApproveMoonCodeTool)),
             "Approve",
           ),
         ])

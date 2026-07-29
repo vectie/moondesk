@@ -1,105 +1,105 @@
 ///|
-pub fn runtime_tool_contract_id() -> String {
+fn runtime_tool_contract_id() -> String {
   "mooncode-runtime-tools.v1"
 }
 
 ///|
-pub fn runtime_tool_contract_kind() -> String {
+fn runtime_tool_contract_kind() -> String {
   "mooncode-tool-contract"
 }
 
 ///|
-pub fn runtime_tool_call_contract_kind() -> String {
+fn runtime_tool_call_contract_kind() -> String {
   "mooncode-tool-call-contract"
 }
 
 ///|
-pub fn runtime_tool_read() -> String {
+fn runtime_tool_read() -> String {
   "read"
 }
 
 ///|
-pub fn runtime_tool_edit() -> String {
+fn runtime_tool_edit() -> String {
   "edit"
 }
 
 ///|
-pub fn runtime_tool_write() -> String {
+fn runtime_tool_write() -> String {
   "write"
 }
 
 ///|
-pub fn runtime_tool_apply_patch() -> String {
+fn runtime_tool_apply_patch() -> String {
   "apply_patch"
 }
 
 ///|
-pub fn runtime_tool_revert_patch() -> String {
+fn runtime_tool_revert_patch() -> String {
   "revert_patch"
 }
 
 ///|
-pub fn runtime_tool_shell() -> String {
+fn runtime_tool_shell() -> String {
   "shell"
 }
 
 ///|
-pub fn runtime_tool_moon_ide() -> String {
+fn runtime_tool_moon_ide() -> String {
   "moon_ide"
 }
 
 ///|
-pub fn runtime_tool_moon_cmd() -> String {
+fn runtime_tool_moon_cmd() -> String {
   "moon_cmd"
 }
 
 ///|
-pub fn runtime_tool_moon_check() -> String {
+fn runtime_tool_moon_check() -> String {
   "moon_check"
 }
 
 ///|
-pub fn runtime_tool_finish() -> String {
+fn runtime_tool_finish() -> String {
   "finish"
 }
 
 ///|
-pub fn runtime_tool_package_app_tool() -> String {
+fn runtime_tool_package_app_tool() -> String {
   "package_app_tool"
 }
 
 ///|
-pub fn runtime_tool_glob() -> String {
+fn runtime_tool_glob() -> String {
   "glob"
 }
 
 ///|
-pub fn runtime_tool_grep() -> String {
+fn runtime_tool_grep() -> String {
   "grep"
 }
 
 ///|
-pub fn runtime_tool_todo_write() -> String {
+fn runtime_tool_todo_write() -> String {
   "todo_write"
 }
 
 ///|
-pub fn runtime_tool_web_fetch() -> String {
+fn runtime_tool_web_fetch() -> String {
   "web_fetch"
 }
 
 ///|
-pub fn runtime_tool_web_search() -> String {
+fn runtime_tool_web_search() -> String {
   "web_search"
 }
 
 ///|
-pub fn runtime_tool_eval_harness() -> String {
+fn runtime_tool_eval_harness() -> String {
   "eval_harness"
 }
 
 ///|
-pub fn runtime_tool_names() -> Array[String] {
+fn runtime_tool_names() -> Array[String] {
   [
     runtime_tool_shell(),
     runtime_tool_read(),
@@ -121,14 +121,14 @@ pub fn runtime_tool_names() -> Array[String] {
 }
 
 ///|
-pub fn runtime_tool_capability_names() -> Array[String] {
+fn runtime_tool_capability_names() -> Array[String] {
   let tools = runtime_tool_names()
   tools.push(runtime_tool_eval_harness())
   tools
 }
 
 ///|
-pub fn runtime_tool_native_required_tools() -> Array[String] {
+fn runtime_tool_native_required_tools() -> Array[String] {
   [
     runtime_tool_read(),
     runtime_tool_edit(),
@@ -144,7 +144,7 @@ pub fn runtime_tool_native_required_tools() -> Array[String] {
 }
 
 ///|
-pub fn runtime_tool_alias_rows() -> Array[Json] {
+fn runtime_tool_alias_rows() -> Array[Json] {
   [
     runtime_tool_alias_row("Bash", runtime_tool_shell()),
     runtime_tool_alias_row("FileRead", runtime_tool_read()),
@@ -163,7 +163,7 @@ pub fn runtime_tool_alias_rows() -> Array[Json] {
 }
 
 ///|
-pub fn runtime_tool_moonclaw_mapping_rows() -> Array[Json] {
+fn runtime_tool_moonclaw_mapping_rows() -> Array[Json] {
   [
     runtime_tool_mapping_row("read_file", runtime_tool_read(), "native"),
     runtime_tool_mapping_row(
@@ -219,7 +219,7 @@ pub fn runtime_tool_moonclaw_mapping_rows() -> Array[Json] {
 }
 
 ///|
-pub fn runtime_tool_from_moonclaw_tool(tool_name : String) -> String {
+fn runtime_tool_from_moonclaw_tool(tool_name : String) -> String {
   match tool_name {
     "read_file" | "read_multiple_files" | "read_resource" => runtime_tool_read()
     "write_to_file" => runtime_tool_write()
@@ -234,7 +234,7 @@ pub fn runtime_tool_from_moonclaw_tool(tool_name : String) -> String {
 }
 
 ///|
-pub fn runtime_tool_canonical_name(tool_name : String) -> String {
+fn runtime_tool_canonical_name(tool_name : String) -> String {
   let normalized = tool_name.replace(old="-", new="_").to_lower()
   match normalized {
     "bash" => runtime_tool_shell()
@@ -250,12 +250,12 @@ pub fn runtime_tool_canonical_name(tool_name : String) -> String {
 }
 
 ///|
-pub fn runtime_tool_is_supported(tool_name : String) -> Bool {
+fn runtime_tool_is_supported(tool_name : String) -> Bool {
   runtime_tool_names().contains(tool_name)
 }
 
 ///|
-pub fn runtime_tool_mutates_files(tool_name : String) -> Bool {
+fn runtime_tool_mutates_files(tool_name : String) -> Bool {
   tool_name == runtime_tool_edit() ||
   tool_name == runtime_tool_write() ||
   tool_name == runtime_tool_moon_cmd() ||
@@ -265,14 +265,14 @@ pub fn runtime_tool_mutates_files(tool_name : String) -> Bool {
 }
 
 ///|
-pub fn runtime_tool_requires_review(tool_name : String) -> Bool {
+fn runtime_tool_requires_review(tool_name : String) -> Bool {
   runtime_tool_mutates_files(tool_name) ||
   tool_name == runtime_tool_shell() ||
   tool_name == runtime_tool_finish()
 }
 
 ///|
-pub fn runtime_tool_requires_authorization_snapshot(tool_name : String) -> Bool {
+fn runtime_tool_requires_authorization_snapshot(tool_name : String) -> Bool {
   tool_name == runtime_tool_edit() ||
   tool_name == runtime_tool_write() ||
   tool_name == runtime_tool_shell() ||
@@ -283,7 +283,7 @@ pub fn runtime_tool_requires_authorization_snapshot(tool_name : String) -> Bool 
 }
 
 ///|
-pub fn runtime_tool_call_contract_json() -> Json {
+fn runtime_tool_call_contract_json() -> Json {
   {
     "kind": runtime_tool_call_contract_kind(),
     "protocol": protocol_version(),
@@ -303,7 +303,7 @@ pub fn runtime_tool_call_contract_json() -> Json {
 }
 
 ///|
-pub fn runtime_tool_contract_json() -> Json {
+fn runtime_tool_contract_json() -> Json {
   {
     "kind": runtime_tool_contract_kind(),
     "protocol": protocol_version(),
@@ -329,7 +329,7 @@ pub fn runtime_tool_contract_json() -> Json {
 }
 
 ///|
-pub fn runtime_tool_contract_tool_ids(contract : Json) -> Array[String] {
+fn runtime_tool_contract_tool_ids(contract : Json) -> Array[String] {
   let ids : Array[String] = []
   match contract {
     { "tools": Array(tools), .. } =>
@@ -345,7 +345,7 @@ pub fn runtime_tool_contract_tool_ids(contract : Json) -> Array[String] {
 }
 
 ///|
-pub fn runtime_tool_capability_specs() -> Array[Json] {
+fn runtime_tool_capability_specs() -> Array[Json] {
   [
     runtime_tool_capability_spec(
       id=runtime_tool_read(),

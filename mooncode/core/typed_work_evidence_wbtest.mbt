@@ -1,15 +1,15 @@
 ///|
 fn typed_wb_evidence(
   command_id : String,
-  kind : MoonCodeEvidenceKind,
-  state? : MoonCodeEvidenceState = Recorded,
+  kind : EvidenceKind,
+  state? : EvidenceState = Recorded,
   exit_code? : Int = -1,
 ) -> MoonCodeEvidence {
   {
     item_id: command_id + ":evidence",
     command_id,
-    kind,
-    state,
+    kind: kind.canonical(),
+    state: state.canonical(),
     title: "Evidence",
     detail: "",
     path: "",
@@ -53,8 +53,8 @@ test "typed package review distinguishes stale, missing, failed, reject, readine
     is MoonCodePackageReviewStatus::Accepted,
   )
   let failed = base.map(item => {
-    if item.kind is Test {
-      { ..item, state: Failed, exit_code: 1 }
+    if item.kind == Test.canonical() {
+      { ..item, state: "failed", exit_code: 1 }
     } else {
       item
     }
@@ -64,8 +64,8 @@ test "typed package review distinguishes stale, missing, failed, reject, readine
     is MoonCodePackageReviewStatus::Failed,
   )
   let rejected = base.map(item => {
-    if item.kind is ReviewAccept {
-      { ..item, kind: ReviewReject, state: Rejected }
+    if item.kind == ReviewAccept.canonical() {
+      { ..item, kind: ReviewReject.canonical(), state: "rejected" }
     } else {
       item
     }

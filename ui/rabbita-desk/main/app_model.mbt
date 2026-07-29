@@ -1,4 +1,10 @@
 ///|
+enum MoonCodeApprovalIntent {
+  ApproveMoonCodeTool
+  RejectMoonCodeTool
+}
+
+///|
 enum DeskSortKey {
   SortByName
   SortByKind
@@ -294,7 +300,18 @@ enum Msg {
   LoadedMoonCodeWatch(Int, String, @mooncode_core.MoonCodeWatchResult)
   CreatedMoonCodeSession(Result[MoonCodeSession, String])
   CompletedMoonCodeCommand(Result[MoonCodeSession, String])
-  ManagedMoonCodeSession(Result[@mooncode_core.MoonCodeLifecycleResult, String])
+  ManagedMoonCodeSession(
+    Result[
+      (
+        @mooncode_core.MoonCodeLifecycleAction,
+        @mooncode_core.MoonCodeSessionId,
+        String,
+        Bool,
+        Bool,
+      ),
+      String,
+    ]
+  )
   RevealedSelection(Result[RevealResult, String])
   LocalFilesPicked(Result[Array[LocalImportFile], String])
   SelectWorkspaceMode(WorkspaceMode)
@@ -328,10 +345,7 @@ enum Msg {
   ClearMoonCodeCopy(String)
   RetryMoonCodeTurn(String, String)
   CancelMoonCodeWork(String, String)
-  DecideMoonCodeTool(
-    @mooncode_core.MoonCodeApproval,
-    @mooncode_core.MoonCodeApprovalDecision
-  )
+  DecideMoonCodeTool(@mooncode_core.MoonCodeApproval, MoonCodeApprovalIntent)
   ManageMoonClaw(String)
   StartMoonClawAuth(String)
   CheckMoonClawSetup

@@ -26,7 +26,7 @@ fn listing_fixture() -> Json {
 ///|
 test "session listing codec accepts the authoritative envelope" {
   guard @core.decode_mooncode_session_listing(listing_fixture())
-    is Supported([summary]) else {
+    is Ok([summary]) else {
     fail("expected supported listing")
   }
   assert_eq(summary.id.to_string(), "session-one")
@@ -49,14 +49,14 @@ test "session IDs preserve opaque protocol values exactly" {
 test "session listing codec rejects malformed rows and statuses" {
   assert_true(
     @core.decode_mooncode_session_listing({ "protocol": "mooncode.v1" })
-    is Malformed(_),
+    is Err(Malformed(_)),
   )
   let invalid_status : Json = {
     "protocol": "mooncode.v1",
     "sessions": [{ "id": "session-one", "status": "future-status" }],
   }
   assert_true(
-    @core.decode_mooncode_session_listing(invalid_status) is Malformed(_),
+    @core.decode_mooncode_session_listing(invalid_status) is Err(Malformed(_)),
   )
 }
 
@@ -64,21 +64,21 @@ test "session listing codec rejects malformed rows and statuses" {
 test "session listing codec distinguishes absent and malformed known fields" {
   assert_true(
     @core.decode_mooncode_session_listing({ "protocol": 1, "sessions": [] })
-    is Malformed(_),
+    is Err(Malformed(_)),
   )
   assert_true(
-    @core.decode_mooncode_session_listing({ "sessions": [] }) is Supported([]),
+    @core.decode_mooncode_session_listing({ "sessions": [] }) is Ok([]),
   )
   assert_true(
     @core.decode_mooncode_session_listing([
       { "id": "session-one", "status": "idle", "updated_at": 1 },
     ])
-    is Malformed(_),
+    is Err(Malformed(_)),
   )
   guard @core.decode_mooncode_session_listing([
       { "id": "session-one", "status": "idle" },
     ])
-    is Supported([summary]) else {
+    is Ok([summary]) else {
     fail("expected absent optional fields to retain defaults")
   }
   assert_true(summary.updated_at is None)
@@ -88,7 +88,7 @@ test "session listing codec distinguishes absent and malformed known fields" {
 ///|
 test "session listing codec preserves unknown optional fields" {
   guard @core.decode_mooncode_session_listing(listing_fixture())
-    is Supported([summary]) else {
+    is Ok([summary]) else {
     fail("expected supported listing")
   }
   guard @core.encode_mooncode_session_summary(summary)
@@ -104,7 +104,7 @@ test "session listing codec reports unsupported explicit versions" {
       "protocol": "mooncode.v7",
       "sessions": [],
     })
-    is UnsupportedVersion(7),
+    is Err(UnsupportedVersion(version)) && version == 7,
   )
 }
 
@@ -114,7 +114,7 @@ test "session listing codec tolerates the legacy archived array envelope" {
     @core.decode_mooncode_session_listing([
       { "id": "archived-one", "status": "done", "archived": true },
     ])
-    is Supported([summary]) &&
+    is Ok([summary]) &&
     summary.archived,
   )
 }
@@ -128,7 +128,7 @@ test "selected session codec preserves opaque IDs and unknown optional fields" {
       "status": "running",
       "mooncode_summary": { "event_count": 9 },
     })
-    is Supported(summary) else {
+    is Ok(summary) else {
     fail("expected supported selected session")
   }
   assert_eq(summary.id.to_string(), raw_id)
@@ -144,7 +144,7 @@ test "selected session codec distinguishes defaults, malformed fields, and versi
       "id": "session-one",
       "status": "idle",
     })
-    is Supported(summary) else {
+    is Ok(summary) else {
     fail("expected absent optional fields to retain defaults")
   }
   assert_eq(summary.title, "session-one")
@@ -155,7 +155,7 @@ test "selected session codec distinguishes defaults, malformed fields, and versi
       "status": "idle",
       "updated_at": 1,
     })
-    is Malformed(_),
+    is Err(Malformed(_)),
   )
   assert_true(
     @core.decode_mooncode_selected_session({
@@ -163,6 +163,6 @@ test "selected session codec distinguishes defaults, malformed fields, and versi
       "id": "session-one",
       "status": "idle",
     })
-    is UnsupportedVersion(7),
+    is Err(UnsupportedVersion(7)),
   )
 }

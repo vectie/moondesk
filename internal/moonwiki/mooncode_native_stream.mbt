@@ -2,7 +2,7 @@
 fn mooncode_native_stream_cursor(
   text : String,
   current : @mooncode_core.MoonCodeWatchCursor,
-) -> @mooncode_core.MoonCodeStreamCursorDecodeResult {
+) -> Result[@mooncode_core.MoonCodeWatchCursor, @mooncode_core.MoonCodeFailure] {
   @mooncode_core.decode_mooncode_stream_cursor(text, current~)
 }
 
