@@ -55,7 +55,7 @@ fn render_search_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
       section(class="side-section", [
         input(
           class="line-input",
-          value=model.search_query,
+          value=model.pages_search.query,
           placeholder="Search pages, notes, and sources",
           on_input=fn(value) { dispatch(SetSearchQuery(value)) },
         ),
@@ -64,23 +64,23 @@ fn render_search_pane(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html 
           attrs=@html.Attrs::build().data_set(
             "testid", "pages-search-state-action",
           ),
-          disabled=model.search_state is Some(Loading),
+          disabled=model.pages_search.surface is Some(Loading),
           on_click=dispatch(SearchNow),
-          search_action_label(model.search_state),
+          search_action_label(model.pages_search.surface),
         ),
-        p(class="status-line", model.search_status),
+        p(class="status-line", model.pages_search.status),
       ]),
-      match model.search_state {
+      match model.pages_search.surface {
         Some(state) =>
-          render_search_state_panel(state, error=model.search_error)
+          render_search_state_panel(state, error=model.pages_search.error)
         None => @html.nothing
       },
-      if model.search_hits.is_empty() {
+      if model.pages_search.hits.is_empty() {
         @html.nothing
       } else {
         div(
           class="search-results",
-          model.search_hits.map(hit => {
+          model.pages_search.hits.map(hit => {
             button(
               class="search-result",
               title=hit.path,

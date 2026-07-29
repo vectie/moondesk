@@ -75,7 +75,7 @@ fn pages_search_test_response(
 test "Pages search transitions use typed surface evidence" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let initial = init_model()
-  assert_true(initial.search_state is Some(FirstUseEmpty))
+  assert_true(initial.pages_search.surface is Some(FirstUseEmpty))
   let (_, loading) = update_workspace_surface_actions(
     dispatch,
     SetSearchQuery("moonbit"),
@@ -86,13 +86,13 @@ test "Pages search transitions use typed surface evidence" {
     SearchNow,
     loading,
   )
-  assert_true(loading.search_state is Some(Loading))
+  assert_true(loading.pages_search.surface is Some(Loading))
   let (_, empty) = update_workspace_results(
     dispatch,
     LoadedPagesSearch(Ok(pages_search_test_response([]))),
     loading,
   )
-  assert_true(empty.search_state is Some(LegitimateZero))
+  assert_true(empty.pages_search.surface is Some(LegitimateZero))
   let hit : SearchHit = {
     workspace_id: "book-demo",
     workspace_name: "Demo",
@@ -107,15 +107,51 @@ test "Pages search transitions use typed surface evidence" {
     LoadedPagesSearch(Ok(pages_search_test_response([hit]))),
     loading,
   )
-  assert_true(ready.search_state is None)
+  assert_true(ready.pages_search.surface is None)
   let (_, failed) = update_workspace_results(
     dispatch,
     LoadedPagesSearch(Err("search unavailable")),
     loading,
   )
-  assert_true(failed.search_state is Some(RecoverableError))
-  assert_eq(search_action_label(failed.search_state), "Retry")
-  assert_eq(search_action_label(ready.search_state), "Search")
+  assert_true(failed.pages_search.surface is Some(RecoverableError))
+  assert_eq(search_action_label(failed.pages_search.surface), "Retry")
+  assert_eq(search_action_label(ready.pages_search.surface), "Search")
+}
+
+///|
+test "Pages search begins a current query without rewriting older evidence" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let hit : SearchHit = {
+    workspace_id: "book-demo",
+    workspace_name: "Demo",
+    path: "wiki/older.md",
+    title: "older.md",
+    kind: Markdown,
+    source_layer: Wiki,
+    snippet: "Older evidence",
+  }
+  let (_, current) = update_workspace_surface_actions(
+    dispatch,
+    SetSearchQuery("current"),
+    init_model(),
+  )
+  let current = {
+    ..current,
+    pages_search: current.pages_search.typed_success(
+      pages_search_test_response([hit], query="older"),
+    ),
+  }
+  assert_eq(current.pages_search.query, "current")
+  assert_eq(current.pages_search.evidence_query, "older")
+  assert_eq(current.pages_search.hits.length(), 1)
+  let (_, loading) = update_workspace_surface_actions(
+    dispatch,
+    SearchNow,
+    current,
+  )
+  assert_true(loading.pages_search.surface is Some(Loading))
+  assert_eq(loading.pages_search.evidence_query, "older")
+  assert_true(loading.pages_search.hits.is_empty())
 }
 
 ///|
@@ -132,26 +168,26 @@ test "Pages search maps explicit scope evidence and preserves only same-query st
   }
   let cached = {
     ..init_model(),
-    search_query: "moonbit",
-    search_evidence_query: "moonbit",
-    search_hits: [hit],
+    pages_search: pages_search_initial_state()
+    .with_query("moonbit")
+    .typed_success(pages_search_test_response([hit])),
   }
   let (_, loading) = update_workspace_surface_actions(
     dispatch,
     SearchNow,
     cached,
   )
-  assert_true(loading.search_state is Some(Loading))
-  assert_eq(loading.search_hits.length(), 1)
+  assert_true(loading.pages_search.surface is Some(Loading))
+  assert_eq(loading.pages_search.hits.length(), 1)
   let (_, stale) = update_workspace_results(
     dispatch,
     LoadedPagesSearch(Err("host unavailable")),
     loading,
   )
-  assert_true(stale.search_state is Some(Stale))
-  assert_eq(stale.search_hits.length(), 1)
-  assert_eq(stale.search_status, "Showing earlier search results")
-  assert_eq(stale.search_error, "host unavailable")
+  assert_true(stale.pages_search.surface is Some(Stale))
+  assert_eq(stale.pages_search.hits.length(), 1)
+  assert_eq(stale.pages_search.status, "Showing earlier search results")
+  assert_eq(stale.pages_search.error, "host unavailable")
   let limited_response = pages_search_test_response(
     [],
     ok=false,
@@ -163,9 +199,9 @@ test "Pages search maps explicit scope evidence and preserves only same-query st
     LoadedPagesSearch(Ok(limited_response)),
     stale,
   )
-  assert_true(limited.search_state is Some(CapabilityLimited))
-  assert_true(limited.search_hits.is_empty())
-  assert_eq(limited.search_error, "scope cannot be read")
+  assert_true(limited.pages_search.surface is Some(CapabilityLimited))
+  assert_true(limited.pages_search.hits.is_empty())
+  assert_eq(limited.pages_search.error, "scope cannot be read")
   let terminal_response = pages_search_test_response(
     [],
     ok=false,
@@ -177,15 +213,15 @@ test "Pages search maps explicit scope evidence and preserves only same-query st
     LoadedPagesSearch(Ok(terminal_response)),
     limited,
   )
-  assert_true(terminal.search_state is Some(TerminalError))
-  assert_true(terminal.search_hits.is_empty())
+  assert_true(terminal.pages_search.surface is Some(TerminalError))
+  assert_true(terminal.pages_search.hits.is_empty())
   let (_, changed) = update_workspace_surface_actions(
     dispatch,
     SetSearchQuery("different"),
     stale,
   )
-  assert_true(changed.search_hits.is_empty())
-  assert_eq(changed.search_evidence_query, "")
+  assert_true(changed.pages_search.hits.is_empty())
+  assert_eq(changed.pages_search.evidence_query, "")
 }
 
 ///|

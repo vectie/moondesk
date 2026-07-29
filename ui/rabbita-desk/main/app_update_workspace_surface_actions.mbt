@@ -65,15 +65,7 @@ fn update_workspace_surface_actions(
     SetSearchQuery(query) =>
       (
         @rabbita.none,
-        {
-          ..model,
-          search_query: query,
-          search_status: "draft",
-          search_state: Some(FirstUseEmpty),
-          search_error: "",
-          search_evidence_query: "",
-          search_hits: [],
-        },
+        { ..model, pages_search: model.pages_search.with_query(query) },
       )
     SearchNow => search_now_action(dispatch, model)
     SetDeskSort(key) =>
@@ -967,36 +959,14 @@ fn search_now_action(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
-  let query = model.search_query.trim().to_owned()
+  let query = model.pages_search.query.trim().to_owned()
+  let pages_search = model.pages_search.begin_search()
   if query == "" {
-    (
-      @rabbita.none,
-      {
-        ..model,
-        search_status: "enter a query",
-        search_state: Some(FirstUseEmpty),
-        search_error: "",
-        search_evidence_query: "",
-        search_hits: [],
-      },
-    )
+    (@rabbita.none, { ..model, pages_search, })
   } else {
-    let keep_prior_hits = pages_search_can_keep_prior_hits(model, query)
     (
       sync_activity_batch(Search, fetch_search_cmd(dispatch, query)),
-      {
-        ..model,
-        activity: Search,
-        command_open: false,
-        search_status: "searching",
-        search_state: Some(Loading),
-        search_error: "",
-        search_hits: if keep_prior_hits {
-          model.search_hits
-        } else {
-          []
-        },
-      },
+      { ..model, activity: Search, command_open: false, pages_search },
     )
   }
 }

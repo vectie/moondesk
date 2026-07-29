@@ -37,10 +37,13 @@ fn pages_search_response_state(
 }
 
 ///|
-fn pages_search_can_keep_prior_hits(model : Model, query : String) -> Bool {
-  !model.search_hits.is_empty() &&
-  model.search_evidence_query != "" &&
-  model.search_evidence_query == query
+fn pages_search_can_keep_prior_hits(
+  search : PagesSearchState,
+  query : String,
+) -> Bool {
+  !search.hits.is_empty() &&
+  search.evidence_query != "" &&
+  search.evidence_query == query
 }
 
 ///|

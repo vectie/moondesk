@@ -349,7 +349,7 @@ fn import_local_file_cmd(
 fn save_view_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
   let body : Json = {
     "title": trimmed_or(model.view_title, "Current view"),
-    "query": model.search_query,
+    "query": model.pages_search.query,
     "workspace_id": model.selected_workspace_id,
     "path": model.selected_path,
   }
