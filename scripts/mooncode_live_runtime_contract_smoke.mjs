@@ -42,19 +42,17 @@ async function runSmoke() {
   const commandId = acceptedCommandId(created);
   assert(sessionId && commandId, `Created session did not return ids: ${JSON.stringify(created)}`);
 
-  const runtimeState = await waitFor("MoonDesk native runtime contract import", async () => {
+  const watched = await waitFor("MoonDesk typed watch contract", async () => {
     const watched = await requestJson(
       `${moondesk.base}/api/mooncode/sessions/${encodeURIComponent(sessionId)}/watch?since_revision=0&since_sequence=0`,
     );
-    const state = watched.snapshot;
-    const safe = state.native_runtime_contract_projection_safe === true &&
-      state.native_runtime_contract_status === "projection-safe" &&
-      state.native_runtime_contract_unscoped_projection_event_count === 0 &&
-      state.native_event_count >= 1 &&
-      state.mooncode_conversation?.turns?.some(
+    const valid = watched.changed === true &&
+      watched.session_id === sessionId &&
+      watched.snapshot != null &&
+      watched.snapshot.mooncode_conversation?.turns?.some(
         item => item.command_id === commandId && item.assistant?.content === reply,
       );
-    return safe ? watched : null;
+    return valid ? watched : null;
   }, 20000);
 
   const session = await fetchCanonicalSession(moondesk.base, sessionId);
@@ -73,7 +71,8 @@ async function runSmoke() {
     moonclaw: moonclaw.base,
     session_id: sessionId,
     command_id: commandId,
-    native_runtime_contract_status: runtimeState.snapshot.native_runtime_contract_status,
+    watch_contract_id: watched.watch_contract_id,
+    changed: watched.changed,
   }, null, 2));
 }
 
