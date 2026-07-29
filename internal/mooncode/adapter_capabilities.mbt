@@ -1,53 +1,239 @@
 ///|
-fn command_specs_json() -> Array[Json] {
-  @mooncode_core.command_advertised_actions().map(action => {
-    "action": action,
-    "control": @mooncode_core.command_action_control(action),
-    "approval": @mooncode_core.command_action_approval(action),
+fn adapter_capability_surface(
+  capability : @mooncode_core.MoonCodeCapability,
+) -> Json {
+  match capability.extensions.get("capability_surface") {
+    Some(surface) => surface
+    None => Json::empty_object()
+  }
+}
+
+///|
+fn adapter_surface_field(surface : Json, field : String) -> Json {
+  @mooncore.json_object_field(surface, field).unwrap_or(Json::empty_object())
+}
+
+///|
+fn adapter_surface_strings(surface : Json, field : String) -> Array[String] {
+  json_string_array_items(surface, field)
+}
+
+///|
+fn adapter_surface_command_actions(surface : Json) -> Array[Json] {
+  json_array_items(
+    adapter_surface_field(surface, "command_action_contract"),
+    "actions",
+  ).map(spec => {
+    "action": json_string(spec, "action", default=""),
+    "control": json_string(spec, "control", default=""),
+    "approval": json_string(spec, "approval", default=""),
   })
 }
 
 ///|
+fn adapter_surface_advertised_actions(surface : Json) -> Array[String] {
+  json_string_array_items(
+    adapter_surface_field(surface, "command_action_contract"),
+    "advertised_actions",
+  )
+}
+
+///|
+fn adapter_surface_tool_contract(surface : Json) -> Json {
+  adapter_surface_field(surface, "runtime_tool_contract")
+}
+
+///|
+fn adapter_surface_tool_call_contract(surface : Json) -> Json {
+  adapter_surface_field(surface, "runtime_tool_call_contract")
+}
+
+///|
+fn adapter_surface_tool_specs(surface : Json) -> Array[Json] {
+  json_array_items(surface, "runtime_tool_capability_specs")
+}
+
+///|
+fn adapter_surface_endpoint(surface : Json, fragment : String) -> String {
+  for endpoint in adapter_surface_strings(surface, "required_endpoints") {
+    if endpoint.contains(fragment) {
+      return endpoint
+    }
+  }
+  ""
+}
+
+///|
+fn adapter_journal_contract_id(surface : Json) -> String {
+  json_string(surface, "journal_write_contract_id", default="")
+}
+
+///|
 pub fn capabilities_json() -> Json {
-  let native = @mooncode_core.native_capability_endpoints()
-  {
+  capabilities_json_for(@mooncode_core.mooncode_capability())
+}
+
+///|
+fn capabilities_json_for(
+  capability : @mooncode_core.MoonCodeCapability,
+) -> Json {
+  let surface = adapter_capability_surface(capability)
+  let generated : Json = {
     "ok": true,
-    "component": "mooncode",
     "version": 3,
-    "ownership": {
-      "sessions": "moonclaw",
-      "canonical_conversation": "moonclaw",
-      "optimistic_rows": "moondesk",
-      "artifacts": "moonbook",
-    },
     "session_protocol": {
       "mutation_endpoint": desktop_session_commands_endpoint(),
       "canonical_watch_endpoint": desktop_session_watch_endpoint(),
-      "canonical_watch_contract": @mooncode_core.conversation_watch_contract_json(),
-      "native_submit_turn_endpoint": native.session_turns,
-      "native_session_listing_endpoint": native.session_listing,
-      "native_session_show_endpoint": native.session_show,
-      "native_stream_endpoint": native.stream,
+      "canonical_watch_contract": adapter_surface_field(
+        surface, "conversation_watch_write_contract",
+      ),
+      "native_submit_turn_endpoint": adapter_surface_endpoint(surface, "/turns"),
+      "native_session_listing_endpoint": adapter_surface_endpoint(
+        surface, "format=listing",
+      ),
+      "native_session_show_endpoint": adapter_surface_endpoint(
+        surface, "/sessions/<id>?",
+      ),
+      "native_stream_endpoint": adapter_surface_endpoint(surface, "/stream?"),
       "transport": "submit one durable turn, then watch the selected canonical session",
       "durability": "MoonClaw is the sole durable command, journal, session, and conversation owner.",
       "rendering": "MoonDesk renders canonical turns and never rebuilds chat from runtime logs.",
-      "commands": @mooncode_core.command_advertised_actions(),
+      "commands": adapter_surface_advertised_actions(surface),
     },
     "runtime_contract": {
       "owner": "moonclaw",
-      "journal_contract_id": @mooncode_core.journal_contract_id(),
+      "journal_contract_id": adapter_journal_contract_id(surface),
       "session_store": {
         "owner": "moonclaw",
-        "journal_contract_id": @mooncode_core.journal_contract_id(),
+        "journal_contract_id": adapter_journal_contract_id(surface),
         "shape": "replaceable session.json checkpoint plus authoritative journal.jsonl",
       },
     },
     "desktop_route_contracts": Json::array(desktop_projection_route_contracts()),
-    "tool_contract": tool_contract_json(),
-    "tool_call_contract": @mooncode_core.runtime_tool_call_contract_json(),
-    "commands": command_specs_json(),
-    "tools": @mooncode_core.runtime_tool_capability_names(),
-    "tool_specs": @mooncode_core.runtime_tool_capability_specs(),
+    "tool_contract": adapter_surface_tool_contract(surface),
+    "tool_call_contract": adapter_surface_tool_call_contract(surface),
+    "commands": adapter_surface_command_actions(surface),
+    "tools": adapter_surface_tool_specs(surface).map(spec => {
+      json_string(spec, "id", default="")
+    }),
+    "tool_specs": adapter_surface_tool_specs(surface),
+  }
+  let extra = capability.extensions.copy()
+  guard generated is Object(generated_fields) else {
+    return Json::empty_object()
+  }
+  for key, value in generated_fields {
+    extra[key] = value
+  }
+  let ownership_extensions = capability.ownership_extensions.copy()
+  ownership_extensions["sessions"] = capability.session_owner.to_json()
+  ownership_extensions["canonical_conversation"] = capability.session_owner.to_json()
+  ownership_extensions["optimistic_rows"] = "moondesk".to_json()
+  ownership_extensions["artifacts"] = "moonbook".to_json()
+  let enriched = { ..capability, extensions: extra, ownership_extensions }
+  @mooncode_core.encode_mooncode_capability(enriched)
+}
+
+///|
+fn mooncode_v2_consumer_readiness(payload : Json) -> Bool {
+  let surface = json_object_field_or_empty(payload, "capability_surface")
+  let endpoints = json_string_array_items(surface, "required_endpoints")
+  let tools = json_string_array_items(surface, "required_tools")
+  let required_endpoints = [
+    "/v1/code/capabilities", "/v1/code/sessions?book_root=<path>", "/v1/code/sessions/<id>/turns",
+    "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<n>&wait_ms=<ms>&poll_ms=<ms>",
+  ]
+  let required_tools = ["read", "edit", "write", "shell"]
+  let outer_fingerprint = json_string(
+    payload,
+    "capability_surface_fingerprint",
+    default="",
+  )
+  let surface_fingerprint = json_string(
+    surface,
+    "capability_surface_fingerprint",
+    default="",
+  )
+  outer_fingerprint != "" &&
+  outer_fingerprint == surface_fingerprint &&
+  @mooncore.json_object_field(payload, "capability_surface") is Some(Object(_)) &&
+  json_string(surface, "component", default="") == "mooncode" &&
+  json_string(surface, "capability_contract_id", default="") ==
+  json_string(payload, "capability_contract_id", default="") &&
+  missing_strings(required_endpoints, endpoints).is_empty() &&
+  missing_strings(required_tools, tools).is_empty()
+}
+
+///|
+pub fn mooncode_negotiated_runtime_readiness(payload : Json) -> Json {
+  match @mooncode_core.decode_mooncode_capability(payload) {
+    Ok(capability) => {
+      let owners_ok = capability.component == "mooncode" &&
+        capability.provider == "moonclaw" &&
+        capability.runtime_owner == "moonclaw" &&
+        capability.session_owner == "moonclaw" &&
+        capability.native_runtime_ready
+      {
+        "ok": owners_ok && mooncode_v2_consumer_readiness(payload),
+        "status": if owners_ok && mooncode_v2_consumer_readiness(payload) {
+          "native-runtime-ready"
+        } else {
+          "native-runtime-unavailable"
+        },
+      }
+    }
+    Err(UnsupportedVersion(version)) =>
+      {
+        "ok": false,
+        "status": "unsupported-version",
+        "capability_version": version,
+      }
+    Err(Malformed(reason)) =>
+      { "ok": false, "status": "malformed", "capability_error": reason }
+    Err(Absent) => abort("capability decoder does not return an absent result")
+    Err(UnsupportedProtocol(_)) =>
+      abort("capability decoder does not return UnsupportedProtocol")
+    Err(UnsupportedContract(_)) =>
+      abort("capability decoder does not return UnsupportedContract")
+    Err(Stale(_)) => abort("capability decoder does not return Stale")
+  }
+}
+
+///|
+pub fn negotiate_capabilities_json(payload : Json) -> Json {
+  match @mooncode_core.decode_mooncode_capability(payload) {
+    Ok(capability) =>
+      if json_bool(
+          mooncode_negotiated_runtime_readiness(payload),
+          "ok",
+          default=false,
+        ) {
+        capabilities_json_for(capability)
+      } else {
+        {
+          "ok": false,
+          "capability_status": "unavailable",
+          "capability_error": "MoonClaw native capability surface is not ready or compatible",
+        }
+      }
+    Err(UnsupportedVersion(version)) =>
+      {
+        "ok": false,
+        "capability_status": "unsupported-version",
+        "capability_version": version,
+      }
+    Err(Malformed(reason)) =>
+      {
+        "ok": false,
+        "capability_status": "malformed",
+        "capability_error": reason,
+      }
+    Err(Absent) => abort("capability decoder does not return an absent result")
+    Err(UnsupportedProtocol(_)) =>
+      abort("capability decoder does not return UnsupportedProtocol")
+    Err(UnsupportedContract(_)) =>
+      abort("capability decoder does not return UnsupportedContract")
+    Err(Stale(_)) => abort("capability decoder does not return Stale")
   }
 }
 
@@ -60,92 +246,15 @@ fn missing_strings(
 }
 
 ///|
-pub fn moonclaw_native_capabilities_readiness(capabilities : Json) -> Json {
-  let required_endpoints = @mooncode_core.native_capability_required_endpoints()
-  let required_tools = @mooncode_core.native_capability_required_tools()
-  let endpoints = json_string_array_items(capabilities, "endpoints")
-  let tools = json_string_array_items(capabilities, "tools")
-  let missing_endpoints = missing_strings(required_endpoints, endpoints)
-  let missing_tools = missing_strings(required_tools, tools)
-  let expected_contract_id = @mooncode_core.native_capability_contract_id()
-  let daemon_contract_id = json_string(
-    capabilities,
-    "capability_contract_id",
-    default="",
-  )
-  let surface = json_object_field_or_empty(capabilities, "capability_surface")
-  let surface_present = @mooncore.json_object_field(
-      capabilities, "capability_surface",
-    )
-    is Some(Object(_))
-  let expected_fingerprint = @mooncode_core.native_capability_surface_fingerprint()
-  let surface_missing_endpoints = missing_strings(
-    required_endpoints,
-    json_string_array_items(surface, "required_endpoints"),
-  )
-  let surface_missing_tools = missing_strings(
-    required_tools,
-    json_string_array_items(surface, "required_tools"),
-  )
-  let component_ok = json_string(capabilities, "component", default="") ==
-    "mooncode"
-  let protocol_ok = json_string(capabilities, "protocol", default="") ==
-    protocol_version()
-  let contract_ok = daemon_contract_id == expected_contract_id
-  let surface_ok = surface_present &&
-    json_string(surface, "component", default="") == "mooncode" &&
-    json_string(surface, "protocol", default="") == protocol_version() &&
-    json_string(surface, "capability_contract_id", default="") ==
-    expected_contract_id &&
-    json_string(surface, "capability_surface_fingerprint", default="") ==
-    expected_fingerprint &&
-    surface_missing_endpoints.is_empty() &&
-    surface_missing_tools.is_empty()
-  let runtime_ready = json_bool(
-    capabilities,
-    "native_runtime_ready",
-    default=false,
-  )
-  let ok = component_ok &&
-    protocol_ok &&
-    contract_ok &&
-    surface_ok &&
-    runtime_ready &&
-    missing_endpoints.is_empty() &&
-    missing_tools.is_empty()
-  {
-    "kind": "mooncode-moonclaw-native-capabilities-readiness",
-    "protocol": protocol_version(),
-    "ok": ok,
-    "status": if ok {
-      "native-runtime-ready"
-    } else {
-      "native-runtime-unavailable"
-    },
-    "component_ok": component_ok,
-    "protocol_ok": protocol_ok,
-    "capability_contract_id": expected_contract_id,
-    "daemon_capability_contract_id": daemon_contract_id,
-    "capability_contract_ok": contract_ok,
-    "expected_capability_surface": @mooncode_core.native_capability_surface_json(),
-    "daemon_capability_surface": surface,
-    "capability_surface_present": surface_present,
-    "capability_surface_ok": surface_ok,
-    "capability_surface_fingerprint": expected_fingerprint,
-    "native_runtime_ready": runtime_ready,
-    "missing_endpoints": string_array_json(missing_endpoints),
-    "missing_tools": string_array_json(missing_tools),
-  }
-}
-
-///|
 pub fn moonclaw_native_capabilities_unavailable(error : String) -> Json {
+  let capability = @mooncode_core.mooncode_capability()
+  let surface = adapter_capability_surface(capability)
   {
     "kind": "mooncode-moonclaw-native-capabilities-readiness",
     "protocol": protocol_version(),
-    "capability_contract_id": @mooncode_core.native_capability_contract_id(),
+    "capability_contract_id": capability.capability_contract_id,
     "capability_contract_ok": false,
-    "expected_capability_surface": @mooncode_core.native_capability_surface_json(),
+    "expected_capability_surface": surface,
     "capability_surface_present": false,
     "capability_surface_ok": false,
     "ok": false,
@@ -157,7 +266,7 @@ pub fn moonclaw_native_capabilities_unavailable(error : String) -> Json {
 ///|
 pub fn moonclaw_native_capabilities_ready(capabilities : Json) -> Bool {
   json_bool(
-    moonclaw_native_capabilities_readiness(capabilities),
+    mooncode_negotiated_runtime_readiness(capabilities),
     "ok",
     default=false,
   )
@@ -275,15 +384,28 @@ pub fn engine_status_projection_json(
 
 ///|
 pub fn runtime_tool_names() -> Array[String] {
-  @mooncode_core.runtime_tool_names()
+  let surface = adapter_capability_surface(@mooncode_core.mooncode_capability())
+  json_string_array_items(
+    adapter_surface_tool_contract(surface),
+    "supported_tools",
+  )
 }
 
 ///|
 pub fn tool_contract_json() -> Json {
-  @mooncode_core.runtime_tool_contract_json()
+  adapter_surface_tool_contract(
+    adapter_capability_surface(@mooncode_core.mooncode_capability()),
+  )
 }
 
 ///|
 pub fn tool_contract_tool_ids(contract : Json) -> Array[String] {
-  @mooncode_core.runtime_tool_contract_tool_ids(contract)
+  let ids : Array[String] = []
+  for tool in json_array_items(contract, "tools") {
+    let id = json_string(tool, "id", default="")
+    if id != "" {
+      ids.push(id)
+    }
+  }
+  ids
 }

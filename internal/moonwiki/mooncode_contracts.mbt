@@ -53,10 +53,31 @@ async fn handle_mooncode_status(
 
 ///|
 async fn mooncode_capabilities_response_json(workspace_root : String) -> Json {
+  let daemon = moonclaw_daemon_status(workspace_root)
+  let running = json_bool(daemon, "running", default=false)
+  let runtime_probe = if running {
+    moonclaw_get_json(daemon, "/v1/code/capabilities")
+  } else {
+    Err("MoonClaw daemon is not running")
+  }
+  let models_probe = if running {
+    moonclaw_get_json(daemon, "/v1/models")
+  } else {
+    Err("MoonClaw daemon is not running")
+  }
+  let negotiated = match runtime_probe {
+    Ok(payload) => @mooncode.negotiate_capabilities_json(payload)
+    Err(error) =>
+      {
+        "ok": false,
+        "capability_status": "unavailable",
+        "capability_error": error,
+      }
+  }
   mooncode_session_with_field(
-    @mooncode.capabilities_json(),
+    negotiated,
     "engine_status",
-    mooncode_engine_status_json(workspace_root),
+    mooncode_engine_status_projection_json(daemon, models_probe, runtime_probe),
   )
 }
 
@@ -64,8 +85,6 @@ async fn mooncode_capabilities_response_json(workspace_root : String) -> Json {
 async fn mooncode_engine_status_json(workspace_root : String) -> Json {
   let daemon = moonclaw_daemon_status(workspace_root)
   let running = json_bool(daemon, "running", default=false)
-  let root = json_string(daemon, "moonclaw_root", default="")
-  let checkout_ready = json_bool(daemon, "service_configured", default=false)
   let models_probe = if running {
     moonclaw_get_json(daemon, "/v1/models")
   } else {
@@ -76,9 +95,21 @@ async fn mooncode_engine_status_json(workspace_root : String) -> Json {
   } else {
     Err("MoonClaw daemon is not running")
   }
+  mooncode_engine_status_projection_json(daemon, models_probe, runtime_probe)
+}
+
+///|
+fn mooncode_engine_status_projection_json(
+  daemon : Json,
+  models_probe : Result[Json, String],
+  runtime_probe : Result[Json, String],
+) -> Json {
+  let running = json_bool(daemon, "running", default=false)
+  let root = json_string(daemon, "moonclaw_root", default="")
+  let checkout_ready = json_bool(daemon, "service_configured", default=false)
   let native_readiness : Json = match runtime_probe {
     Ok(capabilities) =>
-      @mooncode.moonclaw_native_capabilities_readiness(capabilities)
+      @mooncode.mooncode_negotiated_runtime_readiness(capabilities)
     Err(error) => @mooncode.moonclaw_native_capabilities_unavailable(error)
   }
   let models_ready = match models_probe {

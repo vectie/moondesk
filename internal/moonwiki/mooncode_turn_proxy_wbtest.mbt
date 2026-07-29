@@ -34,6 +34,129 @@ fn canonical_test_record() -> Json {
 }
 
 ///|
+fn idempotency_test_command(
+  message : String,
+) -> @mooncode_core.MoonCodeCommand raise {
+  match
+    @mooncode.decode_command_submission({
+      "action": "prompt",
+      "client_turn_id": "client-stable",
+      "message": message,
+    }) {
+    Ok(command) => command
+    Err(error) => fail(error)
+  }
+}
+
+///|
+fn idempotency_test_session(command : @mooncode_core.MoonCodeCommand) -> Json {
+  let base : Json = {
+    "id": "session-stable",
+    "workspace_id": "book-code-lab",
+    "workspace_name": "Code Lab",
+    "workspace_root": "/tmp/moonsuite/books/code-lab",
+  }
+  let packet = json_object_field_or_empty(
+    @mooncode.native_command_body(
+      base,
+      command,
+      "ignored",
+      Json::empty_object(),
+    ),
+    "packet",
+  )
+  let conversation : Json = {
+    "kind": @mooncode.conversation_kind(),
+    "protocol": @mooncode.protocol_version(),
+    "contract_id": @mooncode.conversation_contract_id(),
+    "session_id": "session-stable",
+    "workspace_id": "book-code-lab",
+    "workspace_name": "Code Lab",
+    "turn_count": 1,
+    "revision": "1",
+    "last_sequence": "1",
+    "source_event_count": 1,
+    "turns": [
+      {
+        "kind": @mooncode.conversation_turn_kind(),
+        "turn_id": "turn-stable",
+        "command_id": json_string(packet, "command_id", default=""),
+        "client_turn_id": command.client_turn_id,
+        "ordinal": 1,
+        "status": "running",
+        "started_at": "2026-07-28T00:00:00Z",
+        "updated_at": "2026-07-28T00:00:00Z",
+        "user": {
+          "item_id": "message-stable",
+          "role": "user",
+          "content": command.message,
+          "status": "completed",
+        },
+        "work": {},
+        "assistant": null,
+      },
+    ],
+  }
+  mooncode_session_with_field(base, "mooncode_conversation", conversation)
+}
+
+///|
+test "durable command id recognizes an identical idempotent retry" {
+  let command = idempotency_test_command("Fix the parser")
+  let result = mooncode_existing_command_response(
+    "/tmp/moonsuite",
+    idempotency_test_session(command),
+    command,
+  )
+  assert_true(result is Ok(Some(_)))
+}
+
+///|
+test "durable command id rejects conflicting client turn reuse" {
+  let original = idempotency_test_command("Fix the parser")
+  let conflicting = idempotency_test_command("Rewrite the parser")
+  let result = mooncode_existing_command_response(
+    "/tmp/moonsuite",
+    idempotency_test_session(original),
+    conflicting,
+  )
+  guard result is Err(error) else { fail("expected idempotency conflict") }
+  assert_eq(json_int(error, "code", default=0), 409)
+}
+
+///|
+async test "submit path idempotent retry short circuits before unavailable daemon" {
+  let command = idempotency_test_command("Fix the parser")
+  let result = submit_mooncode_turn(
+    "/definitely/unavailable/mooncode-idempotency-test",
+    idempotency_test_session(command),
+    command,
+    Json::empty_object(),
+    "later",
+  )
+  guard result is Ok(response) else { fail("expected idempotent response") }
+  assert_eq(
+    json_string(response, "client_turn_id", default=""),
+    "client-stable",
+  )
+  assert_eq(json_string(response, "turn_id", default=""), "turn-stable")
+}
+
+///|
+async test "submit path conflicting retry returns 409 before unavailable daemon" {
+  let original = idempotency_test_command("Fix the parser")
+  let result = submit_mooncode_turn(
+    "/definitely/unavailable/mooncode-idempotency-test",
+    idempotency_test_session(original),
+    idempotency_test_command("Rewrite the parser"),
+    Json::empty_object(),
+    "later",
+  )
+  guard result is Err(error) else { fail("expected idempotency conflict") }
+  assert_eq(json_int(error, "code", default=0), 409)
+}
+
+///|
 test "native record is the only canonical conversation projected into chat" {
   let base : Json = {
     "id": "session-canonical",
@@ -128,8 +251,16 @@ test "session listing joins MoonClaw rows to the actual MoonBook catalog" {
 ///|
 test "canonical stream resumes from the greatest durable sequence" {
   let stream = [
-    "{\"type\":\"meta\",\"next_since\":8}", "{\"type\":\"event\",\"sequence\":9}",
-    "{\"type\":\"done\",\"sequence\":11}", "not-json",
+    "{\"type\":\"meta\",\"next_since\":\"8\"}", "{\"type\":\"event\",\"sequence\":\"9\"}",
+    "{\"type\":\"done\",\"sequence\":\"9223372036854775810\",\"next_since\":\"9223372036854775810\"}",
   ].join("\n")
-  assert_eq(mooncode_native_stream_latest_sequence(stream), 11)
+  let current = @mooncode_core.mooncode_watch_cursor("4", "2")
+  let decoded = mooncode_native_stream_cursor(stream, current)
+  match decoded {
+    Ok(cursor) => {
+      assert_eq(cursor.revision(), "4")
+      assert_eq(cursor.sequence(), "9223372036854775810")
+    }
+    _ => fail("expected advanced native stream cursor")
+  }
 }

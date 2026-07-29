@@ -84,6 +84,48 @@ pub fn session_response_defaults(session : Json) -> Json {
 }
 
 ///|
+pub fn selected_session_response(session : Json) -> Result[Json, String] {
+  let projected = session_response_defaults(session)
+  let conversation = match projected {
+    Object(fields) =>
+      fields.get("mooncode_conversation").unwrap_or(Json::null())
+    _ => Json::null()
+  }
+  let typed_conversation = match
+    @mooncode_core.decode_mooncode_conversation(conversation) {
+    Err(Absent) => None
+    Ok(value) => Some(@mooncode_core.encode_mooncode_conversation(value))
+    Err(UnsupportedProtocol(protocol)) =>
+      return Err("Unsupported MoonCode conversation protocol \{protocol}")
+    Err(UnsupportedContract(contract)) =>
+      return Err("Unsupported MoonCode conversation contract \{contract}")
+    Err(Stale(revision~, current_revision~)) =>
+      return Err(
+        "Stale MoonCode conversation revision \{revision} < \{current_revision}",
+      )
+    Err(Malformed(error)) => return Err(error)
+    Err(UnsupportedVersion(version)) =>
+      return Err("Unsupported MoonCode version \{version}")
+  }
+  match @mooncode_core.decode_mooncode_selected_session(projected) {
+    Ok(summary) => {
+      let encoded = @mooncode_core.encode_mooncode_session_summary(summary)
+      Ok(
+        match typed_conversation {
+          Some(value) =>
+            json_with_field(encoded, "mooncode_conversation", value)
+          None => encoded
+        },
+      )
+    }
+    Err(UnsupportedVersion(version)) =>
+      Err("Unsupported MoonCode selected session contract version \{version}")
+    Err(Malformed(error)) => Err(error)
+    Err(_) => Err("Invalid MoonCode selected session")
+  }
+}
+
+///|
 fn normalized_listing_row(row : Json) -> Json? {
   guard json_string(row, "id", default="") != "" else { return None }
   let session_id = json_string(row, "id", default="")
@@ -163,18 +205,46 @@ fn listing_scalar_text(row : Json, key : String) -> String {
 }
 
 ///|
-pub fn runtime_session_listing_rows(payload : Json) -> Array[Json] {
-  let source = match payload {
-    Array(items) => [ for item in items => item ]
-    Object(_) => json_array_items(payload, "sessions")
-    _ => []
+pub fn runtime_session_listing_rows(
+  payload : Json,
+) -> Result[Array[Json], String] {
+  let (protocol, source) = match payload {
+    Array(items) => (None, [ for item in items => item ])
+    Object(fields) => {
+      let protocol = match fields.get("protocol") {
+        None => None
+        Some(String(protocol)) => Some(protocol)
+        Some(_) => return Err("listing protocol must be a string")
+      }
+      guard fields.get("sessions") is Some(Array(items)) else {
+        return Err("listing sessions must be an array")
+      }
+      (protocol, [ for item in items => item ])
+    }
+    _ => return Err("listing payload must be an array or object")
   }
   let rows : Array[Json] = []
   for row in source {
     match normalized_listing_row(row) {
       Some(normalized) => rows.push(normalized)
-      None => ()
+      None => return Err("session id is invalid")
     }
   }
-  rows
+  let normalized_payload : Json = match protocol {
+    Some(protocol) =>
+      Json::object({ "protocol": protocol, "sessions": Json::array(rows) })
+    None => Json::array(rows)
+  }
+  match @mooncode_core.decode_mooncode_session_listing(normalized_payload) {
+    Ok(summaries) =>
+      Ok(
+        summaries.map(summary => {
+          @mooncode_core.encode_mooncode_session_summary(summary)
+        }),
+      )
+    Err(UnsupportedVersion(version)) =>
+      Err("Unsupported MoonCode session listing contract version \{version}")
+    Err(Malformed(error)) => Err(error)
+    Err(_) => Err("Invalid MoonCode session listing")
+  }
 }

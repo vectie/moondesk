@@ -18,24 +18,15 @@ async fn handle_mooncode_session_command(
     send_api_error(conn, method_, 404, "Not Found", "Unknown MoonCode session")
     return
   }
-  let action = @mooncode.command_action(payload)
-  if !@mooncode.command_is_supported(action) {
-    send_api_error(
-      conn,
-      method_,
-      400,
-      "Bad Request",
-      "Unsupported MoonCode command: \{action}",
-    )
-    return
+  let command = match @mooncode.decode_command_submission(payload) {
+    Ok(value) => value
+    Err(message) => {
+      send_api_error(conn, method_, 400, "Bad Request", message)
+      return
+    }
   }
-  let context_path = @mooncode.command_context_path(payload)
-  let message = @mooncode.command_message(action, payload)
   let now = @async.now().to_string()
-  match
-    submit_mooncode_turn(
-      workspace_root, session, payload, action, message, now, context_path,
-    ) {
+  match submit_mooncode_turn(workspace_root, session, command, payload, now) {
     Ok(response) => send_json(conn, method_, response)
     Err(error) =>
       send_api_error(

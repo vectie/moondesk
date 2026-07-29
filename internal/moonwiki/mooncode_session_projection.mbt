@@ -19,11 +19,21 @@ fn compact_mooncode_session_command_response(
   command_packet : Json,
 ) -> Json {
   let projected = mooncode_session_response_defaults(session)
-  let conversation = json_object_field_or_empty(
-    projected, "mooncode_conversation",
+  let raw_conversation = json_object_field(projected, "mooncode_conversation").unwrap_or(
+    Json::null(),
   )
+  let conversation = match
+    @mooncode_core.decode_mooncode_conversation(raw_conversation) {
+    Ok(value) => @mooncode_core.encode_mooncode_conversation(value)
+    Err(Absent) => Json::null()
+    Err(_) => Json::null()
+  }
   let summary = json_object_field_or_empty(projected, "mooncode_summary")
-  let current_turn = compact_mooncode_current_turn(conversation, command_packet)
+  let current_turn = if conversation is Null {
+    Json::object({})
+  } else {
+    compact_mooncode_current_turn(conversation, command_packet)
+  }
   let command_id = json_string(command_packet, "command_id", default="")
   let client_turn_id = json_string(command_packet, "client_turn_id", default="")
   {
@@ -57,7 +67,11 @@ fn compact_mooncode_session_command_response(
     "mooncode_turn": current_turn,
     "mooncode_conversation": conversation,
     "mooncode_summary": compact_mooncode_summary(summary),
-    "canonical_revision": json_int(conversation, "revision", default=0),
+    "canonical_revision": if conversation is Null {
+      "0"
+    } else {
+      json_string(conversation, "revision", default="0")
+    },
     "canonical_unchanged": false,
   }
 }
@@ -67,13 +81,13 @@ fn compact_mooncode_session_revision_response(
   workspace_root : String,
   session : Json,
   command_packet : Json,
-  since_revision : Int,
+  since_revision : String,
 ) -> Json {
   let response = compact_mooncode_session_command_response(
     workspace_root, session, command_packet,
   )
-  let revision = json_int(response, "canonical_revision", default=0)
-  if since_revision > 0 && revision == since_revision {
+  let revision = json_string(response, "canonical_revision", default="0")
+  if since_revision != "0" && revision == since_revision {
     response
     |> mooncode_session_with_field("mooncode_conversation", Json::null())
     |> mooncode_session_with_field("mooncode_turn", Json::null())
