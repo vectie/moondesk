@@ -193,9 +193,11 @@ pub fn decode_mooncode_selected_session(
     None => ()
     Some(String(protocol)) => {
       guard listing_version(protocol) is Some(version) else {
-        return Err(Malformed(
-          "selected session protocol must identify a MoonCode version",
-        ))
+        return Err(
+          Malformed(
+            "selected session protocol must identify a MoonCode version",
+          ),
+        )
       }
       if version != 1 {
         return Err(UnsupportedVersion(version))
@@ -228,7 +230,9 @@ pub fn decode_mooncode_session_listing(
       None => ()
       Some(String(protocol)) => {
         guard listing_version(protocol) is Some(version) else {
-          return Err(Malformed("listing protocol must identify a MoonCode version"))
+          return Err(
+            Malformed("listing protocol must identify a MoonCode version"),
+          )
         }
         if version != 1 {
           return Err(UnsupportedVersion(version))

@@ -206,9 +206,7 @@ fn native_event_projection_report(
 }
 
 ///|
-fn native_events_for_canonical_projection(
-  native_report : Json,
-) -> Array[Json] {
+fn native_events_for_canonical_projection(native_report : Json) -> Array[Json] {
   let events = native_event_json_array_items(native_report, "events")
   let projected : Array[Json] = []
   for event in events {

@@ -3,12 +3,17 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CORE_FILE="${ROOT}/mooncode/core/native_command_execution.mbt"
-INTERNAL_FILES=(
-  "${ROOT}/internal/mooncode/native_command_action_metadata.mbt"
-  "${ROOT}/internal/mooncode/native_command_contracts.mbt"
-  "${ROOT}/internal/mooncode/native_command_result_contracts.mbt"
-  "${ROOT}/internal/mooncode/native_command_tool_policies.mbt"
-  "${ROOT}/internal/mooncode/command_protocol.mbt"
+CORE_INTERFACE="${ROOT}/mooncode/core/pkg.generated.mbti"
+CONSUMER_FILES=(
+  "${ROOT}/internal/mooncode/adapter_capabilities.mbt"
+  "${ROOT}/internal/mooncode/adapter_commands.mbt"
+  "${ROOT}/internal/mooncode/adapter_json.mbt"
+  "${ROOT}/internal/mooncode/adapter_protocol.mbt"
+  "${ROOT}/internal/mooncode/adapter_sessions.mbt"
+)
+BEHAVIOR_FILES=(
+  "${ROOT}/internal/mooncode/adapter_capabilities_wbtest.mbt"
+  "${ROOT}/internal/mooncode/adapter_wbtest.mbt"
 )
 
 required_core_symbols=(
@@ -33,78 +38,30 @@ required_core_symbols=(
 )
 
 for symbol in "${required_core_symbols[@]}"; do
-  if ! rg -n "pub fn ${symbol}\\(" "${CORE_FILE}" >/dev/null; then
-    echo "mooncode/core must own public ${symbol}()." >&2
+  if ! rg -n "fn ${symbol}\\(" "${CORE_FILE}" >/dev/null; then
+    echo "mooncode/core must own ${symbol}()." >&2
+    exit 1
+  fi
+  if rg -n "\\b${symbol}\\b" "${CORE_INTERFACE}" >/dev/null; then
+    echo "mooncode/core public interface must exclude raw/helper ${symbol}()." >&2
+    exit 1
+  fi
+  if rg -n "@mooncode_core\\.${symbol}\\b" "${CONSUMER_FILES[@]}" >/dev/null; then
+    echo "MoonCode adapters must not call private raw/helper ${symbol}()." >&2
     exit 1
   fi
 done
 
-stale_file="/tmp/moondesk-mooncode-native-command-stale.$$"
 if rg -n \
-  '"mooncode-native-command-execution-plan"|"mooncode-native-tool-contract"|"mooncode-native-result-contract"|"eval_report\.manifest"|"package\.manifest"|"package\.index"|"Claim the runtime command before execution"|"runtime must reject unknown tools before execution"|"accept argv arrays instead of raw shell strings"|native_command_tool_policy_entry\(|"run tool_harness eval fixtures"|POST /api/mooncode/sessions/<session-id>/runtime-events|POST /api/mooncode/sessions/<session-id>/runtime-claim' \
-  "${INTERNAL_FILES[@]}" \
-  >"${stale_file}"; then
-  echo "MoonCode native command execution/result policy must come from mooncode/core, not duplicated internal tables." >&2
-  cat "${stale_file}" >&2
-  rm -f "${stale_file}"
-  exit 1
-fi
-rm -f "${stale_file}"
-
-if ! rg -n '@mooncode_core\.native_command_tool_sequence\(' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
-  echo "native command tool sequence must delegate to mooncode/core." >&2
+  'mooncode\.native_command_(execution_plan|tool_contract|result_contract)\.v1|mooncode\.native_command_execution\.v1|"checkpoint", "apply_patch", "shell", "moon_check", "finish"' \
+  "${CONSUMER_FILES[@]}"; then
+  echo "MoonCode native command execution ownership must come from mooncode/core, not duplicated adapter literals." >&2
   exit 1
 fi
 
-if ! rg -n '@mooncode_core\.native_command_expected_events\(' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
-  echo "native command expected events must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_required_outputs\(' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
-  echo "native command required outputs must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_recommended_commands\(' "${ROOT}/internal/mooncode/native_command_action_metadata.mbt" >/dev/null; then
-  echo "native command recommended commands must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_execution_plan\(' "${ROOT}/internal/mooncode/native_command_contracts.mbt" >/dev/null; then
-  echo "native command execution plan must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_tool_contract_for_command\(' "${ROOT}/internal/mooncode/native_command_contracts.mbt" >/dev/null; then
-  echo "native command tool contract must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_result_contract\(' "${ROOT}/internal/mooncode/native_command_result_contracts.mbt" >/dev/null; then
-  echo "native command result contract must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_execution_checklist\(' "${ROOT}/internal/mooncode/native_command_result_contracts.mbt" >/dev/null; then
-  echo "native command execution checklist must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_tool_policies\(' "${ROOT}/internal/mooncode/native_command_tool_policies.mbt" >/dev/null; then
-  echo "native command tool policies must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_tool_policy\(' "${ROOT}/internal/mooncode/native_command_tool_policies.mbt" >/dev/null; then
-  echo "native command tool policy rows must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.native_command_allowed_tool_sequence\(' "${ROOT}/internal/mooncode/command_protocol.mbt" >/dev/null; then
-  echo "web-search tool expansion must delegate to mooncode/core native command policy." >&2
-  exit 1
-fi
+for file in "${BEHAVIOR_FILES[@]}"; do
+  [[ -f "${file}" ]] || { echo "missing adapter behavior proof: ${file}" >&2; exit 1; }
+done
 
 if ! rg -n '"native_command_execution_contract": native_command_execution_contract_json\(\)' "${ROOT}/mooncode/core/protocol.mbt" >/dev/null; then
   echo "native capability surface must embed native_command_execution_contract_json()." >&2

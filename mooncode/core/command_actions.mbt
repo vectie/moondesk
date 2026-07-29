@@ -157,9 +157,7 @@ fn command_action_requires_tool_harness(action : String) -> Bool {
 }
 
 ///|
-fn command_action_requires_runtime_completion_proof(
-  action : String,
-) -> Bool {
+fn command_action_requires_runtime_completion_proof(action : String) -> Bool {
   action == command_run_tests() ||
   command_action_is_eval(action) ||
   command_action_is_package(action) ||

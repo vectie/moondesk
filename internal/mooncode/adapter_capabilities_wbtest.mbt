@@ -70,6 +70,58 @@ test "adapter serializes current v1 capability with transport parity" {
     value.session_owner == "moonclaw",
   )
   assert_eq(json_int(payload, "version", default=0), 3)
+  let commands = json_array_items(payload, "commands")
+  for command in commands {
+    guard command is Object(fields) &&
+      fields.length() == 3 &&
+      fields.contains("action") &&
+      fields.contains("control") &&
+      fields.contains("approval") else {
+      fail("projected command row must have exactly action/control/approval")
+    }
+  }
+  assert_eq(commands, [
+    { "action": "prompt", "control": "prompt", "approval": "user" },
+    { "action": "steer", "control": "steer", "approval": "user" },
+    { "action": "run_tests", "control": "command", "approval": "auto" },
+    { "action": "run_build", "control": "command", "approval": "auto" },
+    { "action": "run_eval", "control": "command", "approval": "auto" },
+    { "action": "package", "control": "command", "approval": "operator" },
+    { "action": "commit", "control": "command", "approval": "operator" },
+    { "action": "accept", "control": "command", "approval": "operator" },
+    { "action": "reject", "control": "command", "approval": "operator" },
+    { "action": "approve_tool", "control": "command", "approval": "operator" },
+    { "action": "reject_tool", "control": "command", "approval": "operator" },
+    { "action": "apply_patch", "control": "command", "approval": "operator" },
+    { "action": "revert_patch", "control": "command", "approval": "operator" },
+    { "action": "cancel", "control": "cancel", "approval": "operator" },
+  ])
+  let tools = json_string_array_items(payload, "tools")
+  let tool_specs = json_array_items(payload, "tool_specs")
+  for spec in tool_specs {
+    guard spec is Object(fields) &&
+      fields.length() == 6 &&
+      fields.contains("id") &&
+      fields.contains("owner") &&
+      fields.contains("lane") &&
+      fields.contains("approval") &&
+      fields.contains("purpose") &&
+      fields.contains("outputs") else {
+      fail("projected tool spec must have the exact six-key schema")
+    }
+  }
+  let tool_spec_ids = tool_specs.map(spec => {
+    match spec {
+      { "id": String(id), .. } => id
+      _ => fail("projected tool spec must have a string id")
+    }
+  })
+  let expected_tools = [
+    "read", "edit", "write", "shell", "moon_ide", "glob", "grep", "todo_write", "web_fetch",
+    "web_search", "moon_cmd", "moon_check", "apply_patch", "revert_patch", "package_app_tool",
+    "eval_harness", "finish",
+  ]
+  assert_eq((tools, tool_spec_ids), (expected_tools, expected_tools))
 }
 
 ///|

@@ -104,7 +104,8 @@ test "session listing codec reports unsupported explicit versions" {
       "protocol": "mooncode.v7",
       "sessions": [],
     })
-    is Err(UnsupportedVersion(version)) && version == 7,
+    is Err(UnsupportedVersion(version)) &&
+    version == 7,
   )
 }
 
