@@ -3,10 +3,17 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CORE_FILE="${ROOT}/mooncode/core/model_planner_evidence.mbt"
-IMPLEMENTATION_FILES=(
-  "${ROOT}/internal/mooncode/model_planner_evidence.mbt"
-  "${ROOT}/internal/mooncode/runtime_protocol_contract.mbt"
-  "${ROOT}/internal/mooncode/runtime_handoff.mbt"
+CORE_INTERFACE="${ROOT}/mooncode/core/pkg.generated.mbti"
+CONSUMER_FILES=(
+  "${ROOT}/internal/mooncode/adapter_capabilities.mbt"
+  "${ROOT}/internal/mooncode/adapter_commands.mbt"
+  "${ROOT}/internal/mooncode/adapter_json.mbt"
+  "${ROOT}/internal/mooncode/adapter_protocol.mbt"
+  "${ROOT}/internal/mooncode/adapter_sessions.mbt"
+)
+BEHAVIOR_FILES=(
+  "${ROOT}/internal/mooncode/adapter_capabilities_wbtest.mbt"
+  "${ROOT}/internal/mooncode/adapter_wbtest.mbt"
 )
 
 required_core_symbols=(
@@ -36,62 +43,27 @@ required_core_symbols=(
 )
 
 for symbol in "${required_core_symbols[@]}"; do
-  if ! rg -n "pub fn ${symbol}\\(" "${CORE_FILE}" >/dev/null; then
-    echo "mooncode/core must own public ${symbol}()." >&2
+  if ! rg -n "fn ${symbol}\\(" "${CORE_FILE}" >/dev/null; then
+    echo "mooncode/core must own ${symbol}()." >&2
+    exit 1
+  fi
+  if rg -n "\\b${symbol}\\b" "${CORE_INTERFACE}" >/dev/null; then
+    echo "mooncode/core public interface must exclude raw/helper ${symbol}()." >&2
+    exit 1
+  fi
+  if rg -n "@mooncode_core\\.${symbol}\\b" "${CONSUMER_FILES[@]}" >/dev/null; then
+    echo "MoonCode adapters must not call private raw/helper ${symbol}()." >&2
     exit 1
   fi
 done
 
-stale_file="/tmp/moondesk-mooncode-model-planner-evidence-stale.$$"
 if rg -n \
   'runtime\.planner_started|runtime\.planner_selected|model-tool-calls|missing-model-planner-evidence-after-turn-start|planner-evidence-without-model-command|"pending" =>|"running" \| "service-started"|return "contract-failed"|return "planner-failed"|return "satisfied"|return "service-started"|action == "prompt" \|\| action == "steer" \|\| action == "package"' \
-  "${IMPLEMENTATION_FILES[@]}" \
-  >"${stale_file}"; then
-  echo "MoonCode model-planner evidence ownership must come from mooncode/core, not duplicated implementation policy." >&2
-  cat "${stale_file}" >&2
-  rm -f "${stale_file}"
-  exit 1
-fi
-rm -f "${stale_file}"
-
-if ! rg -n '@mooncode_core\.model_planner_evidence_contract_json\(\)' "${ROOT}/internal/mooncode/model_planner_evidence.mbt" >/dev/null; then
-  echo "internal model planner contract JSON must delegate to mooncode/core." >&2
+  "${CONSUMER_FILES[@]}"; then
+  echo "MoonCode model-planner evidence ownership must come from mooncode/core, not duplicated adapter policy." >&2
   exit 1
 fi
 
-if ! rg -n '@mooncode_core\.model_planner_command_event_kind_is_supported\(' "${ROOT}/internal/mooncode/model_planner_evidence.mbt" >/dev/null; then
-  echo "model-planned command kind policy must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.model_planner_event_is_planner_evidence\(' "${ROOT}/internal/mooncode/model_planner_evidence.mbt" >/dev/null; then
-  echo "planner evidence event policy must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.model_planner_command_action_is_supported\(' "${ROOT}/internal/mooncode/model_planner_evidence.mbt" >/dev/null; then
-  echo "model-planned command action policy must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '"model_planner_evidence_contract": model_planner_evidence_contract_json\(\)' "${ROOT}/internal/mooncode/runtime_protocol_contract.mbt" >/dev/null; then
-  echo "runtime protocol contract must expose model_planner_evidence_contract_json()." >&2
-  exit 1
-fi
-
-if ! rg -n '"model_planner_evidence_contract": model_planner_evidence_contract_json\(\)' "${ROOT}/internal/mooncode/runtime_handoff.mbt" >/dev/null; then
-  echo "runtime handoff must expose model_planner_evidence_contract_json()." >&2
-  exit 1
-fi
-
-if ! rg -n '"model_planner_evidence_contract": model_planner_evidence_contract_json\(\)' "${ROOT}/mooncode/core/protocol.mbt" >/dev/null; then
-  echo "native capability surface must embed model_planner_evidence_contract_json()." >&2
-  exit 1
-fi
-
-if ! rg -n 'model_planner_evidence_contract_id\(\)' "${ROOT}/mooncode/core/protocol.mbt" >/dev/null; then
-  echo "native capability fingerprint must include model_planner_evidence_contract_id()." >&2
-  exit 1
-fi
-
-echo "MoonCode model-planner evidence contract validation passed"
+for file in "${BEHAVIOR_FILES[@]}"; do
+  [[ -f "${file}" ]] || { echo "missing adapter behavior proof: ${file}" >&2; exit 1; }
+done

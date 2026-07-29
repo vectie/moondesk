@@ -3,19 +3,17 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CORE_FILE="${ROOT}/mooncode/core/runtime_consumer.mbt"
-INTERNAL_FILES=(
-  "${ROOT}/internal/mooncode/runtime_consumer_contracts.mbt"
-  "${ROOT}/internal/mooncode/runtime_queue_guards.mbt"
-  "${ROOT}/internal/mooncode/runtime_queue_claim_status.mbt"
-  "${ROOT}/internal/mooncode/runtime_queue_replay_status.mbt"
-  "${ROOT}/internal/mooncode/runtime_replay_ack_requests.mbt"
-  "${ROOT}/internal/mooncode/runtime_replay_ack_ordering.mbt"
-  "${ROOT}/internal/mooncode/runtime_claim_state.mbt"
-  "${ROOT}/internal/mooncode/runtime_replay_state.mbt"
-  "${ROOT}/internal/mooncode/runtime_claim.mbt"
-  "${ROOT}/internal/mooncode/runtime_replay_ack.mbt"
-  "${ROOT}/internal/mooncode/runtime_queue_items.mbt"
-  "${ROOT}/internal/mooncode/runtime_queue_helpers.mbt"
+CORE_INTERFACE="${ROOT}/mooncode/core/pkg.generated.mbti"
+CONSUMER_FILES=(
+  "${ROOT}/internal/mooncode/adapter_capabilities.mbt"
+  "${ROOT}/internal/mooncode/adapter_commands.mbt"
+  "${ROOT}/internal/mooncode/adapter_json.mbt"
+  "${ROOT}/internal/mooncode/adapter_protocol.mbt"
+  "${ROOT}/internal/mooncode/adapter_sessions.mbt"
+)
+BEHAVIOR_FILES=(
+  "${ROOT}/internal/mooncode/adapter_capabilities_wbtest.mbt"
+  "${ROOT}/internal/mooncode/adapter_wbtest.mbt"
 )
 
 required_core_symbols=(
@@ -66,64 +64,23 @@ required_core_symbols=(
 )
 
 for symbol in "${required_core_symbols[@]}"; do
-  if ! rg -n "pub fn ${symbol}\\(" "${CORE_FILE}" >/dev/null; then
-    echo "mooncode/core must own public ${symbol}()." >&2
-    exit 1
-  fi
+  if ! rg -n "fn ${symbol}\\(" "${CORE_FILE}" >/dev/null; then echo "mooncode/core must own ${symbol}()." >&2; exit 1; fi
+  if rg -n "\\b${symbol}\\b" "${CORE_INTERFACE}" >/dev/null; then echo "mooncode/core public interface must exclude raw/helper ${symbol}()." >&2; exit 1; fi
+  if rg -n "@mooncode_core\\.${symbol}\\b" "${CONSUMER_FILES[@]}" >/dev/null; then echo "MoonCode adapters must not call private raw/helper ${symbol}()." >&2; exit 1; fi
 done
 
-if ! rg -n '@mooncode_core\.runtime_claim_consumer_contract_json\(' \
-  "${ROOT}/internal/mooncode/runtime_consumer_contracts.mbt" >/dev/null; then
-  echo "internal runtime claim consumer contract must delegate to mooncode/core." >&2
+if rg -n \
+  '"runtime-accepted"|"runtime-acknowledged"|"runtime-completed"|"runtime-claimed"|"proof-missing"|"skipped"|"recorded"|"claimable"|"blocked-by-prior-command"|"expired-claim-pending-retry"|"missing-proof-pending-retry"|"failed-pending-retry"|"matching-claim"|"consumer-mismatch"|"already-delivered"|"retry-after-failed-receipt"|"unclaimed-ack"|"mooncode-runtime-claim-state"|"mooncode-runtime-replay"|"mooncode-runtime-claim"' \
+  "${CONSUMER_FILES[@]}"; then
+  echo "MoonCode runtime consumer ownership must come from mooncode/core, not duplicated adapter literals." >&2
   exit 1
 fi
 
-if ! rg -n '@mooncode_core\.runtime_replay_consumer_contract_json\(' \
-  "${ROOT}/internal/mooncode/runtime_consumer_contracts.mbt" >/dev/null; then
-  echo "internal runtime replay consumer contract must delegate to mooncode/core." >&2
-  exit 1
-fi
+for file in "${BEHAVIOR_FILES[@]}"; do [[ -f "${file}" ]] || { echo "missing adapter behavior proof: ${file}" >&2; exit 1; }; done
 
-if ! rg -n '@mooncode_core\.runtime_claim_base_status\(' \
-  "${ROOT}/internal/mooncode/runtime_queue_claim_status.mbt" >/dev/null; then
-  echo "runtime claim status policy must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.runtime_replay_base_status\(' \
-  "${ROOT}/internal/mooncode/runtime_queue_replay_status.mbt" >/dev/null; then
-  echo "runtime replay status policy must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '@mooncode_core\.runtime_replay_ack_status\(' \
-  "${ROOT}/internal/mooncode/runtime_replay_ack_requests.mbt" >/dev/null; then
-  echo "runtime replay ack status policy must delegate to mooncode/core." >&2
-  exit 1
-fi
-
-if ! rg -n '"runtime_consumer_contract": runtime_consumer_contract_json\(' \
-  "${ROOT}/mooncode/core/protocol.mbt" >/dev/null; then
+if ! rg -n '"runtime_consumer_contract": runtime_consumer_contract_json\(' "${ROOT}/mooncode/core/protocol.mbt" >/dev/null; then
   echo "native capability surface must embed runtime_consumer_contract_json()." >&2
   exit 1
 fi
 
-if ! rg -n 'runtime_consumer_contract_id\(\)' \
-  "${ROOT}/mooncode/core/protocol.mbt" >/dev/null; then
-  echo "native capability fingerprint must include runtime_consumer_contract_id()." >&2
-  exit 1
-fi
-
-stale_file="/tmp/moondesk-mooncode-runtime-consumer-stale.$$"
-if rg -n \
-  '"runtime-accepted"|"runtime-acknowledged"|"runtime-completed"|"runtime-claimed"|"proof-missing"|"skipped"|"missing"|"recorded"|"claimable"|"claimed"|"delivered"|"invalid"|"blocked-tool-authorization"|"blocked-by-prior-command"|"blocked-invalid"|"expired-claim-pending-retry"|"missing-proof-pending-retry"|"failed-pending-retry"|"pending"|"matching-claim"|"consumer-mismatch"|"already-delivered"|"retry-after-failed-receipt"|"unclaimed-ack"|"mooncode-runtime-claim-state"|"mooncode-runtime-replay"|"mooncode-runtime-claim"' \
-  "${INTERNAL_FILES[@]}" \
-  >"${stale_file}"; then
-  echo "MoonCode runtime consumer vocabulary must be owned by mooncode/core, not duplicated in runtime consumer projection files." >&2
-  cat "${stale_file}" >&2
-  rm -f "${stale_file}"
-  exit 1
-fi
-rm -f "${stale_file}"
-
-echo "MoonCode runtime consumer contract ownership validated"
+echo "MoonCode runtime consumer contract validation passed"

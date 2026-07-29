@@ -115,10 +115,7 @@ fn runtime_replay_ack_status_is_allowed(status : String) -> Bool {
 }
 
 ///|
-fn runtime_replay_ack_status(
-  requested_status : String,
-  ok~ : Bool,
-) -> String {
+fn runtime_replay_ack_status(requested_status : String, ok~ : Bool) -> String {
   if runtime_replay_ack_status_is_allowed(requested_status) {
     requested_status
   } else if ok {

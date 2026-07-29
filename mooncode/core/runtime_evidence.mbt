@@ -355,10 +355,7 @@ fn runtime_evidence_required_event_result(
 }
 
 ///|
-fn runtime_evidence_event_satisfies(
-  required : String,
-  event : Json,
-) -> Bool {
+fn runtime_evidence_event_satisfies(required : String, event : Json) -> Bool {
   let kind = runtime_evidence_json_string(event, "kind", default="")
   match required {
     "tool_call" =>

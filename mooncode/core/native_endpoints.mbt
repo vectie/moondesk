@@ -327,10 +327,7 @@ fn native_runtime_events_endpoint(
 }
 
 ///|
-fn native_tool_exec_endpoint(
-  session_id : String,
-  book_root : String,
-) -> String {
+fn native_tool_exec_endpoint(session_id : String, book_root : String) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "tool-exec"], query=[
     ("book_root", book_root),
   ])
