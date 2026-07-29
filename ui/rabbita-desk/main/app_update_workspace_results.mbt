@@ -582,67 +582,13 @@ fn update_workspace_results(
           saved_views_error: error,
         },
       )
-    LoadedPagesSearch(Ok(response)) => {
-      let can_keep_prior_hits = pages_search_can_keep_prior_hits(
-        model,
-        response.query,
-      )
-      let state = pages_search_response_state(response, can_keep_prior_hits)
-      let keep_prior_hits = state is Some(Stale)
+    LoadedPagesSearch(Ok(response)) =>
       (
         @rabbita.none,
-        {
-          ..model,
-          search_hits: if response.ok {
-            response.hits
-          } else if keep_prior_hits {
-            model.search_hits
-          } else {
-            []
-          },
-          search_status: match state {
-            None => "\{response.hits.length()} results"
-            Some(LegitimateZero) => "0 results"
-            Some(state) => pages_search_failure_status(state)
-          },
-          search_state: state,
-          search_error: if response.ok {
-            ""
-          } else {
-            response.message
-          },
-          search_evidence_query: if response.ok || keep_prior_hits {
-            response.query
-          } else {
-            ""
-          },
-        },
+        { ..model, pages_search: model.pages_search.typed_success(response) },
       )
-    }
-    LoadedPagesSearch(Err(error)) => {
-      let query = model.search_query.trim().to_owned()
-      let can_keep_prior_hits = pages_search_can_keep_prior_hits(model, query)
-      let state = if can_keep_prior_hits { Stale } else { RecoverableError }
-      (
-        @rabbita.none,
-        {
-          ..model,
-          search_status: pages_search_failure_status(state),
-          search_state: Some(state),
-          search_error: error,
-          search_evidence_query: if can_keep_prior_hits {
-            query
-          } else {
-            ""
-          },
-          search_hits: if can_keep_prior_hits {
-            model.search_hits
-          } else {
-            []
-          },
-        },
-      )
-    }
+    LoadedPagesSearch(Err(error)) =>
+      (@rabbita.none, { ..model, pages_search: model.pages_search.fail(error) })
     SavedView(Ok(view)) =>
       (
         fetch_saved_views_cmd(dispatch),

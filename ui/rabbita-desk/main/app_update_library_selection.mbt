@@ -74,7 +74,7 @@ fn update_library_selection(
           review_state: Some(FirstUseEmpty),
           publish_state: Some(FirstUseEmpty),
           publish_error: "",
-          search_hits: [],
+          pages_search: with_metadata.pages_search.clear_hits(),
         },
       )
     }

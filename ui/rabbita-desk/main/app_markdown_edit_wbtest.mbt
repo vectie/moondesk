@@ -210,10 +210,10 @@ test "search results keep wiki hit metadata" {
     ),
     init_model(),
   )
-  assert_eq(next.search_status, "1 results")
-  assert_eq(next.search_hits.length(), 1)
-  assert_eq(next.search_hits[0].path, "wiki/findings/forward-seed.md")
-  assert_true(next.search_hits[0].source_layer is Wiki)
+  assert_eq(next.pages_search.status, "1 results")
+  assert_eq(next.pages_search.hits.length(), 1)
+  assert_eq(next.pages_search.hits[0].path, "wiki/findings/forward-seed.md")
+  assert_true(next.pages_search.hits[0].source_layer is Wiki)
 }
 
 ///|
@@ -223,7 +223,9 @@ test "failed search reports status without clearing context" {
     ..init_model(),
     selected_workspace_id: "book-demo",
     selected_path: "wiki/index.md",
-    search_status: "loading",
+    pages_search: pages_search_initial_state()
+    .with_query("moonbit")
+    .begin_search(),
   }
   let (_, next) = update_workspace_results(
     dispatch,
@@ -232,8 +234,8 @@ test "failed search reports status without clearing context" {
   )
   assert_eq(next.selected_workspace_id, "book-demo")
   assert_eq(next.selected_path, "wiki/index.md")
-  assert_eq(next.search_status, "Search couldn’t be completed")
-  assert_eq(next.search_error, "search unavailable")
+  assert_eq(next.pages_search.status, "Search couldn’t be completed")
+  assert_eq(next.pages_search.error, "search unavailable")
 }
 
 ///|

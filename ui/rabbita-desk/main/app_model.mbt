@@ -175,12 +175,7 @@ struct Model {
   import_note : String
   editing_inbox_path : String
   inbox_status : String
-  search_query : String
-  search_status : String
-  search_state : SurfaceState?
-  search_error : String
-  search_evidence_query : String
-  search_hits : Array[SearchHit]
+  pages_search : PagesSearchState
   favorites : Array[String]
   saved_views : Array[SavedViewRecord]
   saved_views_state : SurfaceState?
