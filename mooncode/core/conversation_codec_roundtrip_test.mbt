@@ -3,10 +3,10 @@ test "canonical conversation codec round trips an explicit null message slot" {
   let payload : Json = {
     "kind": "mooncode-conversation",
     "protocol": "mooncode.v1",
-    "contract_id": "moonsuite-conversation.v2",
+    "contract_id": "moonsuite-conversation.v3",
     "session_id": "session-a",
-    "revision": 1,
-    "last_sequence": 1,
+    "revision": "1",
+    "last_sequence": "1",
     "turns": [
       {
         "kind": "mooncode-conversation-turn",

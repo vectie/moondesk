@@ -3,10 +3,10 @@ fn conversation_fixture() -> Json {
   {
     "kind": "mooncode-conversation",
     "protocol": "mooncode.v1",
-    "contract_id": "moonsuite-conversation.v2",
+    "contract_id": "moonsuite-conversation.v3",
     "session_id": "session-a",
-    "revision": 4,
-    "last_sequence": 4,
+    "revision": "4",
+    "last_sequence": "4",
     "turns": [
       {
         "kind": "mooncode-conversation-turn",
@@ -61,7 +61,7 @@ test "canonical conversation codec decodes visible turns and messages" {
     fail("expected supported conversation")
   }
   assert_eq(conversation.session_id, "session-a")
-  assert_eq(conversation.revision, 4)
+  assert_eq(conversation.revision, "4")
   assert_eq(conversation.turns.length(), 1)
   let turn = conversation.turns[0]
   assert_eq(turn.turn_id, "turn-a")
@@ -81,10 +81,10 @@ test "canonical conversation codec distinguishes absence and malformed fields" {
     @core.decode_mooncode_conversation({
       "kind": "mooncode-conversation",
       "protocol": "mooncode.v1",
-      "contract_id": "moonsuite-conversation.v2",
+      "contract_id": "moonsuite-conversation.v3",
       "session_id": "session-a",
       "revision": "four",
-      "last_sequence": 4,
+      "last_sequence": "4",
       "turns": [],
     })
     is Malformed(_),
@@ -93,10 +93,10 @@ test "canonical conversation codec distinguishes absence and malformed fields" {
     @core.decode_mooncode_conversation({
       "kind": "mooncode-conversation",
       "protocol": "mooncode.v1",
-      "contract_id": "moonsuite-conversation.v2",
+      "contract_id": "moonsuite-conversation.v3",
       "session_id": "session-a",
-      "revision": 1,
-      "last_sequence": 1,
+      "revision": "1",
+      "last_sequence": "1",
       "turns": [
         {
           "kind": "mooncode-conversation-turn",
@@ -212,9 +212,53 @@ test "canonical conversation codec reports stale revisions" {
   assert_true(
     @core.decode_mooncode_conversation(
       conversation_fixture(),
-      current_revision=5,
+      current_revision="5",
     )
-    is Stale(revision=4, current_revision=5),
+    is Stale(revision="4", current_revision="5"),
+  )
+}
+
+///|
+test "conversation v3 requires canonical exact decimal strings" {
+  for invalid in ["01", "+1", "-1", " 1", "1 "] {
+    let payload = conversation_fixture()
+    guard payload is Object(fields) else { fail("fixture") }
+    fields["revision"] = invalid.to_json()
+    assert_true(@core.decode_mooncode_conversation(payload) is Malformed(_))
+    fields["revision"] = "4".to_json()
+    fields["last_sequence"] = invalid.to_json()
+    assert_true(@core.decode_mooncode_conversation(payload) is Malformed(_))
+  }
+  for invalid in ([1, 1.5] : Array[Json]) {
+    let payload = conversation_fixture()
+    guard payload is Object(fields) else { fail("fixture") }
+    fields["revision"] = invalid
+    assert_true(@core.decode_mooncode_conversation(payload) is Malformed(_))
+    fields["revision"] = "4".to_json()
+    fields["last_sequence"] = invalid
+    assert_true(@core.decode_mooncode_conversation(payload) is Malformed(_))
+  }
+}
+
+///|
+test "conversation v3 compares arbitrary decimal magnitude exactly" {
+  let payload = conversation_fixture()
+  guard payload is Object(fields) else { fail("fixture") }
+  fields["revision"] = "100000000000000000000000000000000000000".to_json()
+  fields["last_sequence"] = "100000000000000000000000000000000000000".to_json()
+  assert_true(
+    @core.decode_mooncode_conversation(
+      payload,
+      current_revision="99999999999999999999999999999999999999",
+    )
+    is Supported(_),
+  )
+  assert_true(
+    @core.decode_mooncode_conversation(
+      payload,
+      current_revision="100000000000000000000000000000000000001",
+    )
+    is Stale(_),
   )
 }
 
@@ -224,9 +268,9 @@ test "canonical conversation codec rejects missing required known fields" {
     @core.decode_mooncode_conversation({
       "kind": "mooncode-conversation",
       "protocol": "mooncode.v1",
-      "contract_id": "moonsuite-conversation.v2",
+      "contract_id": "moonsuite-conversation.v3",
       "session_id": "session-a",
-      "revision": 1,
+      "revision": "1",
       "turns": [],
     })
     is Malformed(_),
@@ -235,10 +279,10 @@ test "canonical conversation codec rejects missing required known fields" {
     @core.decode_mooncode_conversation({
       "kind": "mooncode-conversation",
       "protocol": "mooncode.v1",
-      "contract_id": "moonsuite-conversation.v2",
+      "contract_id": "moonsuite-conversation.v3",
       "session_id": "session-a",
-      "revision": 1,
-      "last_sequence": 1,
+      "revision": "1",
+      "last_sequence": "1",
       "turns": [
         {
           "kind": "mooncode-conversation-turn",

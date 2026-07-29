@@ -1,8 +1,11 @@
 ///|
 fn supported_runtime_capability_subset(protocol : String) -> Json {
+  let native = @mooncode_core.native_capability_endpoints()
   let required_endpoints = [
-    "/v1/code/capabilities", "/v1/code/sessions?book_root=<path>", "/v1/code/sessions/<id>/turns",
-    "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
+    native.capabilities,
+    native.session_list,
+    native.session_turns,
+    native.stream,
   ]
   let required_tools = ["read", "edit", "write", "shell"]
   {
@@ -18,8 +21,32 @@ fn supported_runtime_capability_subset(protocol : String) -> Json {
       "capability_surface_fingerprint": "subset-fingerprint",
       "required_endpoints": required_endpoints,
       "required_tools": required_tools,
-      "conversation_contract_id": "moonsuite-conversation.v2",
-      "journal_contract_id": "moonsuite-conversation-journal.v2",
+      "conversation_contract": {
+        "contract_id": "moonsuite-conversation.v3",
+        "sequence_encoding": "canonical nonnegative decimal JSON string",
+      },
+      "conversation_watch_write_contract": {
+        "contract_id": "moonsuite-conversation-watch.v2",
+      },
+      "conversation_watch_read_contract_ids": [
+        "moonsuite-conversation-watch.v1", "moonsuite-conversation-watch.v2",
+      ],
+      "journal_write_contract_id": "moonsuite-conversation-journal.v2",
+      "journal_read_contract_ids": [
+        "moonsuite-conversation-journal.v1", "moonsuite-conversation-journal.v2",
+      ],
+      "session_contracts": {
+        "snapshot": "mooncode-session-snapshot.v2",
+        "record": "mooncode-session-record.v2",
+        "listing": "mooncode-session-listing.v2",
+      },
+    },
+    "executable_book_lifecycle_contract_id": "mooncode-executable-book-lifecycle.v2",
+    "executable_book_lifecycle_contract": {
+      "contract_id": "mooncode-executable-book-lifecycle.v2",
+      "runtime_owner": "moonclaw",
+      "artifact_owner": "moonbook",
+      "acceptance_owner": "bookkeeper",
     },
     "native_runtime_ready": true,
     "runtime_mode": "native",
@@ -44,22 +71,20 @@ test "adapter serializes current v1 capability with transport parity" {
 }
 
 ///|
-test "adapter negotiates the deliberate v1 and v2 consumer subset" {
-  for protocol in ["mooncode.v1", "mooncode.v2"] {
-    let negotiated = negotiate_capabilities_json(
-      supported_runtime_capability_subset(protocol),
-    )
-    assert_true(json_bool(negotiated, "native_runtime_ready", default=false))
-    assert_eq(json_string(negotiated, "protocol", default=""), protocol)
-    assert_eq(
-      json_string(negotiated, "capability_surface_fingerprint", default=""),
-      "subset-fingerprint",
-    )
-    assert_eq(
-      json_string(negotiated, "session_contract_id", default=""),
-      "mooncode-session.v2",
-    )
-  }
+test "adapter negotiates only the canonical v1 wire protocol" {
+  let negotiated = negotiate_capabilities_json(
+    supported_runtime_capability_subset("mooncode.v1"),
+  )
+  assert_true(json_bool(negotiated, "native_runtime_ready", default=false))
+  assert_eq(json_string(negotiated, "protocol", default=""), "mooncode.v1")
+  let unsupported = negotiate_capabilities_json(
+    supported_runtime_capability_subset("mooncode.v2"),
+  )
+  assert_false(json_bool(unsupported, "native_runtime_ready", default=false))
+  assert_eq(
+    json_string(unsupported, "capability_status", default=""),
+    "unsupported-version",
+  )
 }
 
 ///|
@@ -68,21 +93,34 @@ test "adapter rejects semantic incompatibility without calling it malformed" {
   for
     field in [
       "native_runtime_ready", "runtime_owner", "session_owner", "provider", "component",
-      "capability_surface_fingerprint", "capability_surface", "endpoints", "tools",
+      "capability_surface_fingerprint", "capability_surface",
     ] {
     let incompatible = json_without_field(base, field)
     let negotiated = negotiate_capabilities_json(incompatible)
     assert_eq(
       json_string(negotiated, "capability_status", default=""),
-      if field == "native_runtime_ready" ||
-        field == "runtime_owner" ||
-        field == "session_owner" ||
-        field == "provider" ||
-        field == "component" {
-        "malformed"
-      } else {
+      if field == "capability_surface_fingerprint" {
         "unavailable"
+      } else {
+        "malformed"
       },
+    )
+  }
+  for field in ["required_endpoints", "required_tools"] {
+    let capability_surface = json_without_field(
+      json_object_field_or_empty(base, "capability_surface"),
+      field,
+    )
+    let incompatible = session_with_field(
+      base, "capability_surface", capability_surface,
+    )
+    assert_eq(
+      json_string(
+        negotiate_capabilities_json(incompatible),
+        "capability_status",
+        default="",
+      ),
+      "unavailable",
     )
   }
   let not_ready = session_with_field(

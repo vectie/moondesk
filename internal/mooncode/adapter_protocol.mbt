@@ -21,8 +21,8 @@ pub fn conversation_watch_contract_id() -> String {
 ///|
 pub fn conversation_watch_response(
   session_id~ : String,
-  revision~ : Int,
-  next_sequence~ : Int,
+  revision~ : String,
+  next_sequence~ : String,
   changed~ : Bool,
   heartbeat~ : Bool,
   terminal~ : Bool,

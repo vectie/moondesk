@@ -167,7 +167,7 @@ pub fn conversation_watch_contract_json() -> Json
 
 pub fn conversation_watch_kind() -> String
 
-pub fn conversation_watch_response(session_id~ : String, revision~ : Int, next_sequence~ : Int, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
+pub fn conversation_watch_response(session_id~ : String, revision~ : String, next_sequence~ : String, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
 
 pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
 
@@ -177,7 +177,7 @@ pub fn decode_mooncode_capability(Json) -> MoonCodeCapabilityDecodeResult
 
 pub fn decode_mooncode_command(Json) -> Result[MoonCodeCommand, String]
 
-pub fn decode_mooncode_conversation(Json, current_revision? : Int) -> MoonCodeConversationDecodeResult
+pub fn decode_mooncode_conversation(Json, current_revision? : String) -> MoonCodeConversationDecodeResult
 
 pub fn decode_mooncode_lifecycle_action(Json) -> Result[MoonCodeLifecycleAction, MoonCodeLifecycleFailure]
 
@@ -299,7 +299,7 @@ pub fn mooncode_capability() -> MoonCodeCapability
 
 pub fn mooncode_lifecycle_transition(MoonCodeLifecycleAction, MoonCodeSessionStatus, archived~ : Bool) -> Result[Unit, MoonCodeLifecycleFailure]
 
-pub fn mooncode_watch_cursor(Int, String) -> MoonCodeWatchCursor raise
+pub fn mooncode_watch_cursor(String, String) -> MoonCodeWatchCursor raise
 
 pub fn mooncode_watch_disconnected(current~ : MoonCodeWatchCursor, reason~ : String) -> MoonCodeWatchResult
 
@@ -1071,8 +1071,8 @@ pub(all) struct MoonCodeConversation {
   workspace_id : String
   workspace_name : String
   turn_count : Int
-  revision : Int
-  last_sequence : Int
+  revision : String
+  last_sequence : String
   source_event_count : Int
   turns : Array[MoonCodeTurn]
   extensions : Map[String, Json]
@@ -1084,7 +1084,7 @@ pub(all) enum MoonCodeConversationDecodeResult {
   Supported(MoonCodeConversation)
   UnsupportedProtocol(String)
   UnsupportedContract(String)
-  Stale(revision~ : Int, current_revision~ : Int)
+  Stale(revision~ : String, current_revision~ : String)
   Malformed(String)
 } derive(Eq, @debug.Debug)
 
@@ -1246,18 +1246,18 @@ pub(all) struct MoonCodeTurn {
 } derive(Eq, @debug.Debug)
 
 pub struct MoonCodeWatchCursor {
-  revision : Int
+  revision : String
   sequence : String
 } derive(Eq, @debug.Debug)
 pub fn MoonCodeWatchCursor::advance_sequence(Self, String) -> Self raise
-pub fn MoonCodeWatchCursor::revision(Self) -> Int
+pub fn MoonCodeWatchCursor::revision(Self) -> String
 pub fn MoonCodeWatchCursor::sequence(Self) -> String
 
 pub(all) enum MoonCodeWatchResult {
   Snapshot(cursor~ : MoonCodeWatchCursor, session~ : MoonCodeSessionSummary, conversation~ : MoonCodeConversation, terminal~ : Bool)
   Heartbeat(cursor~ : MoonCodeWatchCursor, session_id~ : String, retry_after_ms~ : Int, terminal~ : Bool)
   Duplicate(cursor~ : MoonCodeWatchCursor, session_id~ : String)
-  Rollback(cursor~ : MoonCodeWatchCursor, session_id~ : String, received_revision~ : Int)
+  Rollback(cursor~ : MoonCodeWatchCursor, session_id~ : String, received_revision~ : String)
   Disconnected(cursor~ : MoonCodeWatchCursor, reason~ : String)
   Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
 } derive(Eq, @debug.Debug)

@@ -5,8 +5,8 @@ test "canonical session response selects its owning turn" {
     "protocol": @mooncode.protocol_version(),
     "contract_id": @mooncode.conversation_contract_id(),
     "session_id": "session-a",
-    "revision": 4,
-    "last_sequence": 4,
+    "revision": "4",
+    "last_sequence": "4",
     "turns": [
       {
         "kind": @mooncode_core.conversation_turn_kind(),
@@ -42,7 +42,7 @@ test "canonical session response selects its owning turn" {
     { "command_id": "command-2", "client_turn_id": "client-2" },
   )
   assert_eq(json_string(response, "turn_id", default=""), "turn-2")
-  assert_eq(json_int(response, "canonical_revision", default=0), 4)
+  assert_eq(json_string(response, "canonical_revision", default=""), "4")
   assert_false(json_bool(response, "archived", default=true))
   assert_eq(
     json_string(
@@ -66,13 +66,13 @@ test "equal canonical revision returns metadata-only unchanged response" {
         "protocol": @mooncode.protocol_version(),
         "contract_id": @mooncode.conversation_contract_id(),
         "session_id": "session-a",
-        "revision": 7,
-        "last_sequence": 7,
+        "revision": "7",
+        "last_sequence": "7",
         "turns": [],
       },
     },
     Json::object({}),
-    7,
+    "7",
   )
   assert_true(json_bool(response, "canonical_unchanged", default=false))
   assert_true(

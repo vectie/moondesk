@@ -1,15 +1,15 @@
 ///|
 test "mooncode core protocol surface is stable" {
   assert_eq(protocol_version(), "mooncode.v1")
-  assert_eq(conversation_contract_id(), "moonsuite-conversation.v2")
-  assert_eq(journal_contract_id(), "moonsuite-conversation-journal.v1")
+  assert_eq(conversation_contract_id(), "moonsuite-conversation.v3")
+  assert_eq(journal_contract_id(), "moonsuite-conversation-journal.v2")
   assert_eq(conversation_kind(), "mooncode-conversation")
   assert_eq(conversation_turn_kind(), "mooncode-conversation-turn")
   assert_true(conversation_message_roles().contains("work"))
   assert_true(conversation_turn_required_fields().contains("client_turn_id"))
   assert_eq(
     native_capability_contract_id(),
-    "mooncode-native-capability-surface.v1",
+    "mooncode-native-capability-surface.v2",
   )
   let endpoints = native_capability_endpoints()
   assert_eq(endpoints.capabilities, "/v1/code/capabilities")
@@ -463,7 +463,7 @@ test "mooncode core owns native command execution contract" {
 test "mooncode core exposes the MoonLib conversation v2 contract" {
   let payload = conversation_contract_json().stringify()
   assert_true(payload.contains("\"kind\":\"moonsuite-conversation-contract\""))
-  assert_true(payload.contains("\"contract_id\":\"moonsuite-conversation.v2\""))
+  assert_true(payload.contains("\"contract_id\":\"moonsuite-conversation.v3\""))
   assert_true(payload.contains("\"product_id\":\"mooncode\""))
   assert_true(
     payload.contains("\"conversation_kind\":\"mooncode-conversation\""),
@@ -474,7 +474,9 @@ test "mooncode core exposes the MoonLib conversation v2 contract" {
   assert_true(
     payload.contains("\"turn_order\":[\"user\",\"work\",\"assistant\"]"),
   )
-  assert_true(payload.contains("\"shared_contract_owner\":\"moonlib\""))
+  assert_true(payload.contains("\"contract_owner\":\"mooncode\""))
+  assert_true(payload.contains("\"base_contract_owner\":\"moonlib\""))
+  assert_false(payload.contains("shared_contract_owner"))
   assert_false(payload.contains("internal/mooncode"))
   assert_false(payload.contains("internal/moonwiki"))
   assert_false(payload.contains("Rabbita"))
@@ -1147,7 +1149,7 @@ fn native_event_projection_test_int(json : Json, key : String) -> Int {
 test "mooncode core defines executable book lifecycle contract" {
   assert_eq(
     executable_book_lifecycle_contract_id(),
-    "mooncode-executable-book-lifecycle.v1",
+    "mooncode-executable-book-lifecycle.v2",
   )
   let steps = executable_book_lifecycle_steps()
   assert_eq(steps.length(), 9)
@@ -1171,7 +1173,13 @@ test "mooncode core defines executable book lifecycle contract" {
     ),
   )
   assert_true(payload.contains("journal.jsonl"))
+  assert_true(
+    payload.contains(
+      "\"journal_write_contract_id\":\"moonsuite-conversation-journal.v2\"",
+    ),
+  )
   assert_true(payload.contains("moonsuite-conversation-journal.v1"))
+  assert_true(payload.contains("moonsuite-conversation-journal.v2"))
   assert_false(payload.contains("runtime-receipts.jsonl"))
   assert_true(payload.contains("package_verified"))
   assert_true(payload.contains("readiness projection"))

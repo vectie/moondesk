@@ -35,8 +35,8 @@ pub(all) struct MoonCodeConversation {
   workspace_id : String
   workspace_name : String
   turn_count : Int
-  revision : Int
-  last_sequence : Int
+  revision : String
+  last_sequence : String
   source_event_count : Int
   turns : Array[MoonCodeTurn]
   extensions : Map[String, Json]
@@ -48,7 +48,7 @@ pub(all) enum MoonCodeConversationDecodeResult {
   Supported(MoonCodeConversation)
   UnsupportedProtocol(String)
   UnsupportedContract(String)
-  Stale(revision~ : Int, current_revision~ : Int)
+  Stale(revision~ : String, current_revision~ : String)
   Malformed(String)
 } derive(Debug, Eq)
 
@@ -70,6 +70,33 @@ fn conversation_optional_string(
     None => Some(default)
     Some(String(value)) => Some(value)
     _ => None
+  }
+}
+
+///|
+fn canonical_decimal_is_valid(value : String) -> Bool {
+  if value == "0" {
+    return true
+  }
+  if value == "" || value[0] == '0' {
+    return false
+  }
+  for code in value {
+    if code < '0' || code > '9' {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn canonical_decimal_compare(left : String, right : String) -> Int {
+  if left.length() < right.length() {
+    -1
+  } else if left.length() > right.length() {
+    1
+  } else {
+    left.compare(right)
   }
 }
 
@@ -255,7 +282,7 @@ fn decode_conversation_turn(
 ///|
 pub fn decode_mooncode_conversation(
   payload : Json,
-  current_revision? : Int = 0,
+  current_revision? : String = "0",
 ) -> MoonCodeConversationDecodeResult {
   if payload is Null {
     return Absent
@@ -284,11 +311,11 @@ pub fn decode_mooncode_conversation(
   guard conversation_string(fields, "session_id") is Some(session_id) else {
     return Malformed("conversation session_id must be a string")
   }
-  guard fields.get("revision") is Some(Number(raw_revision, ..)) else {
-    return Malformed("conversation revision must be a number")
+  guard fields.get("revision") is Some(String(revision)) &&
+    canonical_decimal_is_valid(revision) else {
+    return Malformed("conversation revision must be a canonical decimal string")
   }
-  let revision = raw_revision.to_int()
-  if revision < current_revision {
+  if canonical_decimal_compare(revision, current_revision) < 0 {
     return Stale(revision~, current_revision~)
   }
   let optional_strings = ["workspace_id", "workspace_name"]
@@ -307,10 +334,12 @@ pub fn decode_mooncode_conversation(
     }
     int_values.push(value)
   }
-  guard fields.get("last_sequence") is Some(Number(raw_last_sequence, ..)) else {
-    return Malformed("conversation last_sequence must be a number")
+  guard fields.get("last_sequence") is Some(String(last_sequence)) &&
+    canonical_decimal_is_valid(last_sequence) else {
+    return Malformed(
+      "conversation last_sequence must be a canonical decimal string",
+    )
   }
-  let last_sequence = raw_last_sequence.to_int()
   guard fields.get("turns") is Some(Array(raw_turns)) else {
     return Malformed("conversation turns must be an array")
   }

@@ -66,7 +66,8 @@ async fn handle_mooncode_session_watch(
     initial_sequence.to_string(),
   )
   let resume_cursor = @mooncode_core.mooncode_watch_cursor(
-    since_revision, resume_sequence,
+    since_revision.to_string(),
+    resume_sequence,
   )
   let book_root = json_string(
     initial_response,
@@ -135,7 +136,10 @@ fn mooncode_conversation_watch_response(
   let changed = actual_revision > since_revision
   let revision = if changed { actual_revision } else { since_revision }
   let status = json_string(snapshot, "status", default="")
-  let cursor = @mooncode_core.mooncode_watch_cursor(revision, next_sequence)
+  let cursor = @mooncode_core.mooncode_watch_cursor(
+    revision.to_string(),
+    next_sequence,
+  )
   @mooncode.conversation_watch_response_for_cursor(
     session_id~,
     cursor~,
@@ -184,7 +188,7 @@ fn mooncode_watch_query_sequence(
   default~ : String,
 ) -> Result[String, String] {
   let raw = query_value(request_path, key).unwrap_or(default)
-  try @mooncode_core.mooncode_watch_cursor(0, raw) catch {
+  try @mooncode_core.mooncode_watch_cursor("0", raw) catch {
     _ => Err("MoonCode watch \{key} must be a canonical nonnegative decimal")
   } noraise {
     cursor => Ok(cursor.sequence())
@@ -193,7 +197,7 @@ fn mooncode_watch_query_sequence(
 
 ///|
 fn mooncode_max_sequence(left : String, right : String) -> String raise {
-  let cursor = @mooncode_core.mooncode_watch_cursor(0, left)
+  let cursor = @mooncode_core.mooncode_watch_cursor("0", left)
   cursor.advance_sequence(right).sequence()
 }
 
