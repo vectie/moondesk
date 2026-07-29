@@ -61,11 +61,9 @@ async fn handle_mooncode_session(
   conn : @http.ServerConnection,
 ) -> Unit {
   let response_format = query_value(request_path, "format").unwrap_or("full")
-  let since_revision = @string.parse_int(
-    query_value(request_path, "since_revision").unwrap_or("0"),
-  ) catch {
-    _ => 0
-  }
+  let since_revision = query_value(request_path, "since_revision").unwrap_or(
+    "0",
+  )
   let session = moonclaw_runtime_session_by_id(workspace_root, session_id)
   if json_string(session, "id", default="") != session_id {
     send_api_error(conn, method_, 404, "Not Found", "Unknown MoonCode session")

@@ -33,7 +33,21 @@ pub fn mooncode_capability() -> MoonCodeCapability {
     native_runtime_ready: true,
     runtime_owner: "moonclaw",
     session_owner: "moonclaw",
-    extensions: Map([]),
+    extensions: Map::from_array([
+      ("capability_surface", native_capability_surface_json()),
+      (
+        "capability_surface_fingerprint",
+        native_capability_surface_fingerprint().to_json(),
+      ),
+      (
+        "executable_book_lifecycle_contract_id",
+        executable_book_lifecycle_contract_id().to_json(),
+      ),
+      (
+        "executable_book_lifecycle_contract",
+        executable_book_lifecycle_contract_json(),
+      ),
+    ]),
     ownership_extensions: Map([]),
   }
 }
@@ -84,6 +98,74 @@ fn explicit_contract_version(value : String, prefix : String) -> Int? {
 }
 
 ///|
+fn capability_string_array_equals(
+  value : Json,
+  expected : Array[String],
+) -> Bool {
+  guard value is Array(items) && items.length() == expected.length() else {
+    return false
+  }
+  for index, expected_value in expected {
+    guard items[index] is String(actual) && actual == expected_value else {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn validate_nested_capability_contracts(fields : Map[String, Json]) -> String? {
+  guard fields.get("capability_surface") is Some(Object(surface)) else {
+    return Some("capability_surface must be an object")
+  }
+  guard surface.get("capability_contract_id")
+    is Some(String("mooncode-native-capability-surface.v2")) else {
+    return Some("capability_surface contract is unsupported")
+  }
+  guard surface.get("conversation_contract") is Some(Object(conversation)) &&
+    conversation.get("contract_id") is Some(String("moonsuite-conversation.v3")) &&
+    conversation.get("sequence_encoding")
+    is Some(String("canonical nonnegative decimal JSON string")) else {
+    return Some("conversation contract declaration is invalid")
+  }
+  guard surface.get("conversation_watch_write_contract") is Some(Object(watch)) &&
+    watch.get("contract_id") is Some(String("moonsuite-conversation-watch.v2")) else {
+    return Some("conversation watch write contract is invalid")
+  }
+  guard surface.get("conversation_watch_read_contract_ids") is Some(watch_reads) &&
+    capability_string_array_equals(watch_reads, [
+      "moonsuite-conversation-watch.v1", "moonsuite-conversation-watch.v2",
+    ]) else {
+    return Some("conversation watch read contracts are invalid")
+  }
+  guard surface.get("journal_write_contract_id")
+    is Some(String("moonsuite-conversation-journal.v2")) &&
+    surface.get("journal_read_contract_ids") is Some(journal_reads) &&
+    capability_string_array_equals(journal_reads, [
+      "moonsuite-conversation-journal.v1", "moonsuite-conversation-journal.v2",
+    ]) else {
+    return Some("journal contracts are invalid")
+  }
+  guard surface.get("session_contracts") is Some(Object(sessions)) &&
+    sessions.get("snapshot") is Some(String("mooncode-session-snapshot.v2")) &&
+    sessions.get("record") is Some(String("mooncode-session-record.v2")) &&
+    sessions.get("listing") is Some(String("mooncode-session-listing.v2")) else {
+    return Some("session contracts are invalid")
+  }
+  guard fields.get("executable_book_lifecycle_contract_id")
+    is Some(String("mooncode-executable-book-lifecycle.v2")) &&
+    fields.get("executable_book_lifecycle_contract") is Some(Object(lifecycle)) &&
+    lifecycle.get("contract_id")
+    is Some(String("mooncode-executable-book-lifecycle.v2")) &&
+    lifecycle.get("runtime_owner") is Some(String("moonclaw")) &&
+    lifecycle.get("artifact_owner") is Some(String("moonbook")) &&
+    lifecycle.get("acceptance_owner") is Some(String("bookkeeper")) else {
+    return Some("executable book lifecycle contract is invalid")
+  }
+  None
+}
+
+///|
 pub fn decode_mooncode_capability(
   payload : Json,
 ) -> MoonCodeCapabilityDecodeResult {
@@ -99,7 +181,7 @@ pub fn decode_mooncode_capability(
   guard capability_string_field(payload, "protocol") is Some(protocol) else {
     return Malformed("protocol must be a string")
   }
-  if protocol != "mooncode.v1" && protocol != "mooncode.v2" {
+  if protocol != "mooncode.v1" {
     guard explicit_contract_version(protocol, "mooncode.v") is Some(version) else {
       return Malformed("protocol must identify a MoonCode protocol version")
     }
@@ -119,6 +201,9 @@ pub fn decode_mooncode_capability(
       )
     }
     return UnsupportedVersion(version)
+  }
+  if validate_nested_capability_contracts(fields) is Some(reason) {
+    return Malformed(reason)
   }
   let native_runtime_ready = match fields.get("native_runtime_ready") {
     Some(True) => true

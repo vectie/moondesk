@@ -54,27 +54,8 @@ test "mooncode model readiness requires a listed executable default" {
 }
 
 ///|
-test "capability and engine status agree for supported v2 subset probe" {
-  let probe : Json = {
-    "component": "mooncode",
-    "provider": "moonclaw",
-    "protocol": "mooncode.v2",
-    "capability_contract_id": "mooncode-native-capability-surface.v2",
-    "capability_surface_fingerprint": "subset-fingerprint",
-    "native_runtime_ready": true,
-    "runtime_owner": "moonclaw",
-    "session_owner": "moonclaw",
-    "endpoints": [
-      "/v1/code/capabilities", "/v1/code/sessions?book_root=<path>", "/v1/code/sessions/<id>/turns",
-      "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
-    ],
-    "tools": ["read", "edit", "write", "shell"],
-    "capability_surface": {
-      "component": "mooncode",
-      "capability_contract_id": "mooncode-native-capability-surface.v2",
-      "capability_surface_fingerprint": "subset-fingerprint",
-    },
-  }
+test "capability and engine status agree for supported v1 capability" {
+  let probe = @mooncode.capabilities_json()
   let negotiated = @mooncode.negotiate_capabilities_json(probe)
   let engine = mooncode_engine_status_projection_json(
     {

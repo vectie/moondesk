@@ -69,9 +69,9 @@ fn compact_mooncode_session_command_response(
     "mooncode_conversation": conversation,
     "mooncode_summary": compact_mooncode_summary(summary),
     "canonical_revision": if conversation is Null {
-      0
+      "0"
     } else {
-      json_int(conversation, "revision", default=0)
+      json_string(conversation, "revision", default="0")
     },
     "canonical_unchanged": false,
   }
@@ -82,13 +82,13 @@ fn compact_mooncode_session_revision_response(
   workspace_root : String,
   session : Json,
   command_packet : Json,
-  since_revision : Int,
+  since_revision : String,
 ) -> Json {
   let response = compact_mooncode_session_command_response(
     workspace_root, session, command_packet,
   )
-  let revision = json_int(response, "canonical_revision", default=0)
-  if since_revision > 0 && revision == since_revision {
+  let revision = json_string(response, "canonical_revision", default="0")
+  if since_revision != "0" && revision == since_revision {
     response
     |> mooncode_session_with_field("mooncode_conversation", Json::null())
     |> mooncode_session_with_field("mooncode_turn", Json::null())

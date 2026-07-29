@@ -65,8 +65,8 @@ fn idempotency_test_session(command : @mooncode_core.MoonCodeCommand) -> Json {
     "workspace_id": "book-code-lab",
     "workspace_name": "Code Lab",
     "turn_count": 1,
-    "revision": 1,
-    "last_sequence": 1,
+    "revision": "1",
+    "last_sequence": "1",
     "source_event_count": 1,
     "turns": [
       {
@@ -246,11 +246,11 @@ test "canonical stream resumes from the greatest durable sequence" {
     "{\"type\":\"meta\",\"next_since\":\"8\"}", "{\"type\":\"event\",\"sequence\":\"9\"}",
     "{\"type\":\"done\",\"sequence\":\"9223372036854775810\",\"next_since\":\"9223372036854775810\"}",
   ].join("\n")
-  let current = @mooncode_core.mooncode_watch_cursor(4, "2")
+  let current = @mooncode_core.mooncode_watch_cursor("4", "2")
   let decoded = mooncode_native_stream_cursor(stream, current)
   match decoded {
     @mooncode_core.Advanced(cursor) => {
-      assert_eq(cursor.revision(), 4)
+      assert_eq(cursor.revision(), "4")
       assert_eq(cursor.sequence(), "9223372036854775810")
     }
     _ => fail("expected advanced native stream cursor")

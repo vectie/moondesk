@@ -1,15 +1,16 @@
 ///|
 pub struct MoonCodeWatchCursor {
-  revision : Int
+  revision : String
   sequence : String
 } derive(Debug, Eq)
 
 ///|
 pub fn mooncode_watch_cursor(
-  revision : Int,
+  revision : String,
   sequence : String,
 ) -> MoonCodeWatchCursor raise {
-  if revision < 0 || !watch_sequence_is_canonical(sequence) {
+  if !canonical_decimal_is_valid(revision) ||
+    !watch_sequence_is_canonical(sequence) {
     fail(
       "MoonCode watch cursor must have a nonnegative revision and canonical sequence",
     )
@@ -19,7 +20,7 @@ pub fn mooncode_watch_cursor(
 
 ///|
 pub fn mooncode_watch_origin_cursor() -> MoonCodeWatchCursor {
-  { revision: 0, sequence: "0" }
+  { revision: "0", sequence: "0" }
 }
 
 ///|
@@ -39,7 +40,7 @@ fn watch_sequence_is_canonical(value : String) -> Bool {
 }
 
 ///|
-pub fn MoonCodeWatchCursor::revision(self : MoonCodeWatchCursor) -> Int {
+pub fn MoonCodeWatchCursor::revision(self : MoonCodeWatchCursor) -> String {
   self.revision
 }
 
@@ -51,12 +52,13 @@ pub fn MoonCodeWatchCursor::sequence(self : MoonCodeWatchCursor) -> String {
 ///|
 fn watch_advance_cursor(
   current : MoonCodeWatchCursor,
-  revision : Int,
+  revision : String,
   sequence : String,
   accept_revision? : Bool = true,
 ) -> MoonCodeWatchCursor {
   {
-    revision: if accept_revision && revision > current.revision {
+    revision: if accept_revision &&
+      canonical_decimal_compare(revision, current.revision) > 0 {
       revision
     } else {
       current.revision
@@ -109,7 +111,7 @@ pub(all) enum MoonCodeWatchResult {
   Rollback(
     cursor~ : MoonCodeWatchCursor,
     session_id~ : String,
-    received_revision~ : Int
+    received_revision~ : String
   )
   Disconnected(cursor~ : MoonCodeWatchCursor, reason~ : String)
   Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
@@ -193,7 +195,8 @@ pub fn decode_mooncode_watch_result(
     Ok(value) => value
     Err(reason) => return Malformed(cursor=current, reason~)
   }
-  if contract_id != conversation_watch_contract_id() {
+  if contract_id != conversation_watch_contract_id() &&
+    contract_id != "moonsuite-conversation-watch.v1" {
     return Malformed(cursor=current, reason="watch contract_id is unsupported")
   }
   let session_id = match watch_required_string(fields, "session_id") {
@@ -203,19 +206,42 @@ pub fn decode_mooncode_watch_result(
   if expected_session_id != "" && session_id != expected_session_id {
     return Malformed(cursor=current, reason="watch session_id does not match")
   }
-  let revision = match watch_required_nonnegative_int(fields, "revision") {
-    Ok(value) => value
-    Err(reason) => return Malformed(cursor=current, reason~)
+  let revision = if contract_id == conversation_watch_contract_id() {
+    match fields.get("revision") {
+      Some(String(value)) if canonical_decimal_is_valid(value) => value
+      Some(_) =>
+        return Malformed(
+          cursor=current,
+          reason="watch revision must be a canonical nonnegative decimal string",
+        )
+      None =>
+        return Malformed(cursor=current, reason="watch revision is required")
+    }
+  } else {
+    match watch_required_nonnegative_int(fields, "revision") {
+      Ok(value) => value.to_string()
+      Err(reason) => return Malformed(cursor=current, reason~)
+    }
   }
-  let next_sequence = match fields.get("next_sequence") {
-    Some(String(value)) if watch_sequence_is_canonical(value) => value
-    Some(_) =>
-      return Malformed(
-        cursor=current,
-        reason="watch next_sequence must be a canonical nonnegative decimal",
-      )
-    None =>
-      return Malformed(cursor=current, reason="watch next_sequence is required")
+  let next_sequence = if contract_id == conversation_watch_contract_id() {
+    match fields.get("next_sequence") {
+      Some(String(value)) if canonical_decimal_is_valid(value) => value
+      Some(_) =>
+        return Malformed(
+          cursor=current,
+          reason="watch next_sequence must be a canonical nonnegative decimal string",
+        )
+      None =>
+        return Malformed(
+          cursor=current,
+          reason="watch next_sequence is required",
+        )
+    }
+  } else {
+    match watch_required_nonnegative_int(fields, "next_sequence") {
+      Ok(value) => value.to_string()
+      Err(reason) => return Malformed(cursor=current, reason~)
+    }
   }
   let changed = match watch_required_bool(fields, "changed") {
     Ok(value) => value
@@ -246,7 +272,7 @@ pub fn decode_mooncode_watch_result(
     next_sequence,
     accept_revision=changed,
   )
-  if revision < current.revision {
+  if canonical_decimal_compare(revision, current.revision) < 0 {
     return Rollback(cursor=next_cursor, session_id~, received_revision=revision)
   }
   if changed {
@@ -408,21 +434,19 @@ pub fn conversation_watch_response_for_cursor(
   let encoded = conversation_watch_response(
     session_id~,
     revision=cursor.revision(),
-    next_sequence=0,
+    next_sequence=cursor.sequence(),
     changed~,
     heartbeat~,
     terminal~,
     retry_after_ms~,
     snapshot~,
   )
-  guard encoded is Object(fields) else { return encoded }
-  fields["next_sequence"] = Json::string(cursor.sequence())
   encoded
 }
 
 ///|
 pub fn conversation_watch_contract_id() -> String {
-  @conversation.watch_contract_id()
+  "moonsuite-conversation-watch.v2"
 }
 
 ///|
@@ -432,28 +456,42 @@ pub fn conversation_watch_kind() -> String {
 
 ///|
 pub fn conversation_watch_contract_json() -> Json {
-  @conversation.watch_contract_json()
+  {
+    "kind": "moonsuite-conversation-watch-contract",
+    "contract_id": conversation_watch_contract_id(),
+    "required_fields": [
+      "contract_id", "session_id", "revision", "next_sequence", "changed", "heartbeat",
+      "terminal", "retry_after_ms", "snapshot",
+    ],
+    "cursor_encoding": "canonical nonnegative decimal JSON string",
+    "resume_rule": "Resume with the last accepted revision and next_sequence; arbitrary-precision cursors may advance but never move backward.",
+    "payload_rule": "Changed responses carry one canonical snapshot. Heartbeats carry no transcript rows, runtime events, or diagnostic records.",
+    "contract_owner": "mooncode",
+    "base_contract_owner": "moonlib",
+  }
 }
 
 ///|
 pub fn conversation_watch_response(
   session_id~ : String,
-  revision~ : Int,
-  next_sequence~ : Int,
+  revision~ : String,
+  next_sequence~ : String,
   changed~ : Bool,
   heartbeat~ : Bool,
   terminal~ : Bool,
   retry_after_ms~ : Int,
   snapshot~ : Json,
 ) -> Json {
-  @conversation.watch_response(
-    session_id~,
-    revision~,
-    next_sequence~,
-    changed~,
-    heartbeat~,
-    terminal~,
-    retry_after_ms~,
-    snapshot~,
-  )
+  {
+    "kind": conversation_watch_kind(),
+    "contract_id": conversation_watch_contract_id(),
+    "session_id": session_id,
+    "revision": revision,
+    "next_sequence": next_sequence,
+    "changed": changed,
+    "heartbeat": heartbeat,
+    "terminal": terminal,
+    "retry_after_ms": @conversation.watch_retry_after_ms_value(retry_after_ms),
+    "snapshot": snapshot,
+  }
 }

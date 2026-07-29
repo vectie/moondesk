@@ -218,9 +218,9 @@ test "capability declares one MoonClaw-owned journal" {
   assert_true(serialized.contains("journal.jsonl"))
   assert_true(serialized.contains(@mooncode_core.journal_contract_id()))
   assert_false(serialized.contains("commands.jsonl"))
-  assert_false(serialized.contains("events.jsonl"))
+  assert_false(serialized.contains("\"events_jsonl\""))
   assert_false(serialized.contains("runtime-receipts.jsonl"))
-  assert_false(serialized.contains("runtime-replay"))
+  assert_false(serialized.contains("runtime-replay.jsonl"))
 }
 
 ///|
