@@ -432,8 +432,8 @@ their exit gates.
 | [0. Current truth](#phase-0-establish-one-source-of-current-truth) | Complete locally | — | One current source of truth and reproducible local baseline | Retain proof; correct drift when later phases change facts |
 | [1. Product clarity](#phase-1-simplify-the-product-story-and-first-run-experience) | Complete locally | Phase 0 | Understandable first run and honest capability setup | Retain the closure journey; later matrices remain in Phases 8 and 9 |
 | [2. CI and release evidence](#phase-2-make-ci-and-release-evidence-mandatory) | Complete | Phase 0 | Mandatory quality gates and reproducible preview releases | Retain the immutable runs, artifact verification, and bounded rebuild proof |
-| [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Capability, session-listing, selected-session, and canonical-conversation slices complete; later slices open | Phase 2 | Small typed public protocol and one serialization boundary | Migrate command submission through the same typed boundary |
-| [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | Ownership map, two production extractions, and the first behavior-named test split complete; broader gate open | Phase 3 ownership map | Narrower packages, state ownership, and decomposed tests | Continue one documented ownership boundary at a time; begin explicit UI state ownership |
+| [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Complete | Phase 2 | Small typed public protocol and one serialization boundary | Retain the closed contract and validation evidence |
+| [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | In progress; immediate next phase | Phase 3 | Narrower packages, state ownership, and decomposed tests | Continue one documented ownership boundary at a time; begin explicit UI state ownership |
 | [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Not started | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Threat-model tests prove canonical confinement and denial paths |
 | [6. Observability](#phase-6-unify-runtime-observability-and-operator-evidence) | Not started | Phases 3–5 | Evidence-backed turns, approvals, traces, and recovery | One canonical evidence projection answers the operator questions |
 | [7. Editing workspaces](#phase-7-complete-first-class-document-and-code-editing) | Not started | Phases 3–6 | Working DOCX, XLSX, PPTX, and direct Code editing | Reopen/save fidelity and prompt-to-edit integration journeys pass |
@@ -1081,7 +1081,21 @@ the implementation.
 
 ### Exit gate
 
-Phase 3 is complete when:
+Phase 3 is complete. All nine slices are closed. Accepted evidence:
+
+- **17** public types, **30** public functions/methods, **0** public impl/raw
+  helpers, and **47** public declarations;
+- generated interface: **245 lines / 7,053 bytes**;
+- **11** ownership validators green;
+- `mooncode/core`: **61/61** on wasm, wasm-gc, js, and native;
+- `internal/mooncode`: **15/15** on all four targets;
+- MoonWiki: **155/155**; UI: **379/379**.
+
+Downstream consumer migration commit `716870857725abd5fb0853675cf5ee494a87bd2f`
+was validated but deliberately is not part of this integration. The immediate
+next phase is Phase 4 package boundaries.
+
+The closure gate required:
 
 - the UI no longer parses MoonCode runtime JSON throughout view/update files
 - closed state vocabularies are enums

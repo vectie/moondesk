@@ -2,19 +2,30 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Phase 3.1 inventory and target; implementation not started |
+| Status | Phase 3 complete; all nine slices closed |
 | Scope | `mooncode/core/pkg.generated.mbti` and its owning package |
-| Evidence date | 2026-07-27 |
+| Evidence date | 2026-07-29 |
 
 ## Purpose and evidence boundary
 
-This is Immediate Action 5 and the Phase 3.1 documentation inventory. It does
-not claim Phase 3 complete and changes no MoonBit code. The evidence set is the
-complete generated interface, all 17 package `.mbt` files in `mooncode/core/`
-(16 implementation files and one white-box test file), the package manifest,
-the direct consumer package in this repository, and a bounded sibling-checkout
-search outside generated `_build` output. Generated build copies are not
-independent consumers.
+This document records the Phase 3 inventory, target, and accepted closure. The
+evidence boundary covers the generated interface, its owning package, direct
+repository consumers, and the bounded downstream consumer validation.
+
+## Accepted Phase 3 closure
+
+All nine Phase 3 slices are closed. The final public surface has **17 public
+types**, **30 public functions/methods**, **0 public impl/raw helpers**, and
+**47 public declarations**. The generated interface is **245 lines / 7,053
+bytes**.
+
+All **11 ownership validators** are green. `mooncode/core` is **61/61** on
+wasm, wasm-gc, js, and native; `internal/mooncode` is **15/15** on all four
+targets; MoonWiki is **155/155**; and UI is **379/379**.
+
+Downstream consumer migration commit `716870857725abd5fb0853675cf5ee494a87bd2f`
+was validated but deliberately is not part of this integration. The immediate
+next phase is Phase 4 package boundaries.
 
 ## Exact baseline
 
@@ -178,7 +189,7 @@ state, and negotiates contract version/capabilities.
 
 ## Quantitative target
 
-Phase 3's generated-interface gate is:
+Phase 3's generated-interface gate was:
 
 - at most **17 public domain types** (the model above);
 - at most **30 public functions/methods** total;
@@ -238,9 +249,9 @@ both `internal/mooncode` and the sibling adapter, with parity tests and a
 reviewed interface diff. The 462 no-direct-consumer symbols are reviewed
 private-by-default in their owning slices.
 
-## Remaining Phase 3 gate
+## Phase 3 gate
 
-Phase 3 remains open until all nine slices are implemented, canonical ownership
-is agreed with the runtime owner, the single codec boundary is enforced, focused
-and product tests pass, downstream compatibility is checked, and the generated
-interface satisfies the quantitative limits.
+Closed. All nine slices are implemented, canonical ownership is agreed with the
+runtime owner, the single codec boundary is enforced, focused and product tests
+pass, downstream compatibility is checked, and the generated interface
+satisfies the quantitative limits. The accepted evidence is recorded above.
