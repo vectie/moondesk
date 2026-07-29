@@ -31,7 +31,7 @@ fn native_capability_endpoints() -> NativeCapabilityEndpoints {
     session_lifecycle: "/v1/code/sessions/<id>/lifecycle",
     runtime_control: "/v1/code/sessions/<id>/runtime-control?book_root=<path>",
     runtime_claim: "/v1/code/sessions/<id>/runtime-claim?book_root=<path>",
-    stream: "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<n>&wait_ms=<ms>&poll_ms=<ms>",
+    stream: "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
     runtime_turn: "/v1/code/sessions/<id>/runtime-turn?book_root=<path>",
     runtime_loop: "/v1/code/sessions/<id>/runtime-loop?book_root=<path>",
     runtime_service: "/v1/code/sessions/<id>/runtime-service?book_root=<path>",

@@ -142,6 +142,21 @@ test "adapter negotiates only the canonical v1 wire protocol" {
 }
 
 ///|
+test "adapter accepts the authoritative runtime watch endpoint" {
+  let payload = supported_runtime_capability_subset("mooncode.v1")
+  let surface = json_object_field_or_empty(payload, "capability_surface")
+  assert_true(
+    json_string_array_items(surface, "required_endpoints").contains(
+      "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
+    ),
+  )
+  assert_true(moonclaw_native_capabilities_ready(payload))
+  assert_true(
+    json_bool(negotiate_capabilities_json(payload), "ok", default=false),
+  )
+}
+
+///|
 test "adapter rejects semantic incompatibility without calling it malformed" {
   let base = supported_runtime_capability_subset("mooncode.v1")
   for

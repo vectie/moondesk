@@ -141,7 +141,7 @@ fn mooncode_v2_consumer_readiness(payload : Json) -> Bool {
   let tools = json_string_array_items(surface, "required_tools")
   let required_endpoints = [
     "/v1/code/capabilities", "/v1/code/sessions?book_root=<path>", "/v1/code/sessions/<id>/turns",
-    "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<n>&wait_ms=<ms>&poll_ms=<ms>",
+    "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
   ]
   let required_tools = ["read", "edit", "write", "shell"]
   let outer_fingerprint = json_string(
