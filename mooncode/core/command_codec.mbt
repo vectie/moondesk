@@ -1,6 +1,6 @@
 ///|
 /// The command actions accepted by the current MoonCode native runtime.
-pub enum MoonCodeCommandKind {
+pub(all) enum MoonCodeCommandKind {
   Prompt
   Steer
   RunTests
@@ -25,9 +25,9 @@ pub enum MoonCodeCommandStatus {
 } derive(Debug, Eq)
 
 ///|
-/// A validated caller-owned command submission. Its representation is opaque and
-/// contains neither daemon-owned acceptance fields nor transport JSON.
-pub struct MoonCodeCommand {
+/// A validated caller-owned command submission containing neither daemon-owned
+/// acceptance fields nor transport JSON.
+pub(all) struct MoonCodeCommand {
   kind : MoonCodeCommandKind
   client_turn_id : String
   context_path : String
@@ -39,19 +39,6 @@ pub struct MoonCodeCommand {
   target_command_id : String
   tool_call_id : String
   force_preflight : Bool
-} derive(Debug, Eq)
-
-///|
-/// A distinct daemon-accepted command packet.
-pub struct MoonCodeAcceptedCommand {
-  command : MoonCodeCommand
-  status : MoonCodeCommandStatus
-  command_id : String
-  created_at : String
-  session_id : String
-  workspace_id : String
-  workspace_name : String
-  workspace_root : String
 } derive(Debug, Eq)
 
 ///|
@@ -274,129 +261,4 @@ pub fn encode_mooncode_command(
       Ok(Json::object(fields))
     }
   }
-}
-
-///|
-pub fn MoonCodeCommand::kind(self : MoonCodeCommand) -> MoonCodeCommandKind {
-  self.kind
-}
-
-///|
-pub fn MoonCodeCommand::client_turn_id(self : MoonCodeCommand) -> String {
-  self.client_turn_id
-}
-
-///|
-pub fn MoonCodeCommand::message(self : MoonCodeCommand) -> String {
-  self.message
-}
-
-///|
-pub fn MoonCodeCommand::context_path(self : MoonCodeCommand) -> String {
-  self.context_path
-}
-
-///|
-pub fn MoonCodeCommand::model(self : MoonCodeCommand) -> String {
-  self.model
-}
-
-///|
-pub fn MoonCodeCommand::web_search(self : MoonCodeCommand) -> Bool {
-  self.web_search
-}
-
-///|
-pub fn MoonCodeCommand::force_preflight(self : MoonCodeCommand) -> Bool {
-  self.force_preflight
-}
-
-///|
-pub fn MoonCodeCommand::planner_max_steps(self : MoonCodeCommand) -> Int? {
-  self.planner_max_steps
-}
-
-///|
-pub fn accept_mooncode_command(
-  command : MoonCodeCommand,
-  command_id : String,
-  created_at : String,
-  session_id : String,
-  workspace_id : String,
-  workspace_name : String,
-  workspace_root : String,
-) -> MoonCodeAcceptedCommand {
-  MoonCodeAcceptedCommand::{
-    command,
-    status: Accepted,
-    command_id,
-    created_at,
-    session_id,
-    workspace_id,
-    workspace_name,
-    workspace_root,
-  }
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::command(
-  self : MoonCodeAcceptedCommand,
-) -> MoonCodeCommand {
-  self.command
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::status(
-  self : MoonCodeAcceptedCommand,
-) -> MoonCodeCommandStatus {
-  self.status
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::command_id(
-  self : MoonCodeAcceptedCommand,
-) -> String {
-  self.command_id
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::created_at(
-  self : MoonCodeAcceptedCommand,
-) -> String {
-  self.created_at
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::session_id(
-  self : MoonCodeAcceptedCommand,
-) -> String {
-  self.session_id
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::workspace_id(
-  self : MoonCodeAcceptedCommand,
-) -> String {
-  self.workspace_id
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::workspace_name(
-  self : MoonCodeAcceptedCommand,
-) -> String {
-  self.workspace_name
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::workspace_root(
-  self : MoonCodeAcceptedCommand,
-) -> String {
-  self.workspace_root
-}
-
-///|
-pub fn MoonCodeAcceptedCommand::client_turn_id(
-  self : MoonCodeAcceptedCommand,
-) -> String {
-  self.command.client_turn_id
 }

@@ -76,20 +76,6 @@ pub(all) struct MoonCodeSessionSummary {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum MoonCodeSessionListingDecodeResult {
-  Supported(Array[MoonCodeSessionSummary])
-  UnsupportedVersion(Int)
-  Malformed(String)
-} derive(Debug, Eq)
-
-///|
-pub(all) enum MoonCodeSelectedSessionDecodeResult {
-  Supported(MoonCodeSessionSummary)
-  UnsupportedVersion(Int)
-  Malformed(String)
-} derive(Debug, Eq)
-
-///|
 fn listing_string(fields : Map[String, Json], key : String) -> String? {
   match fields.get(key) {
     Some(String(value)) => Some(value)
@@ -199,66 +185,66 @@ fn decode_listing_row(row : Json) -> Result[MoonCodeSessionSummary, String] {
 ///|
 pub fn decode_mooncode_selected_session(
   payload : Json,
-) -> MoonCodeSelectedSessionDecodeResult {
+) -> Result[MoonCodeSessionSummary, MoonCodeFailure] {
   guard payload is Object(fields) else {
-    return Malformed("selected session payload must be an object")
+    return Err(Malformed("selected session payload must be an object"))
   }
   match fields.get("protocol") {
     None => ()
     Some(String(protocol)) => {
       guard listing_version(protocol) is Some(version) else {
-        return Malformed(
+        return Err(Malformed(
           "selected session protocol must identify a MoonCode version",
-        )
+        ))
       }
       if version != 1 {
-        return UnsupportedVersion(version)
+        return Err(UnsupportedVersion(version))
       }
     }
-    _ => return Malformed("selected session protocol must be a string")
+    _ => return Err(Malformed("selected session protocol must be a string"))
   }
   match decode_listing_row(payload) {
-    Ok(summary) => Supported(summary)
-    Err(error) => Malformed(error)
+    Ok(summary) => Ok(summary)
+    Err(error) => Err(Malformed(error))
   }
 }
 
 ///|
 pub fn decode_mooncode_session_listing(
   payload : Json,
-) -> MoonCodeSessionListingDecodeResult {
+) -> Result[Array[MoonCodeSessionSummary], MoonCodeFailure] {
   let rows = match payload {
     Array(rows) => rows
     Object(fields) => {
       guard fields.get("sessions") is Some(Array(rows)) else {
-        return Malformed("listing sessions must be an array")
+        return Err(Malformed("listing sessions must be an array"))
       }
       rows
     }
-    _ => return Malformed("listing payload must be an array or object")
+    _ => return Err(Malformed("listing payload must be an array or object"))
   }
   if payload is Object(fields) {
     match fields.get("protocol") {
       None => ()
       Some(String(protocol)) => {
         guard listing_version(protocol) is Some(version) else {
-          return Malformed("listing protocol must identify a MoonCode version")
+          return Err(Malformed("listing protocol must identify a MoonCode version"))
         }
         if version != 1 {
-          return UnsupportedVersion(version)
+          return Err(UnsupportedVersion(version))
         }
       }
-      _ => return Malformed("listing protocol must be a string")
+      _ => return Err(Malformed("listing protocol must be a string"))
     }
   }
   let summaries : Array[MoonCodeSessionSummary] = []
   for row in rows {
     match decode_listing_row(row) {
       Ok(summary) => summaries.push(summary)
-      Err(error) => return Malformed(error)
+      Err(error) => return Err(Malformed(error))
     }
   }
-  Supported(summaries)
+  Ok(summaries)
 }
 
 ///|

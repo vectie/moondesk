@@ -9,7 +9,7 @@ test "canonical session response selects its owning turn" {
     "last_sequence": "4",
     "turns": [
       {
-        "kind": @mooncode_core.conversation_turn_kind(),
+        "kind": @mooncode.conversation_turn_kind(),
         "turn_id": "turn-1",
         "command_id": "command-1",
         "client_turn_id": "client-1",
@@ -20,7 +20,7 @@ test "canonical session response selects its owning turn" {
         "assistant": null,
       },
       {
-        "kind": @mooncode_core.conversation_turn_kind(),
+        "kind": @mooncode.conversation_turn_kind(),
         "turn_id": "turn-2",
         "command_id": "command-2",
         "client_turn_id": "client-2",

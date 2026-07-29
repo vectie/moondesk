@@ -1,230 +1,230 @@
 ///|
-pub fn runtime_event_name_contract_id() -> String {
+fn runtime_event_name_contract_id() -> String {
   "mooncode-runtime-event-names.v1"
 }
 
 ///|
-pub fn runtime_event_runtime_step() -> String {
+fn runtime_event_runtime_step() -> String {
   "runtime_step"
 }
 
 ///|
-pub fn runtime_event_assistant_delta() -> String {
+fn runtime_event_assistant_delta() -> String {
   "assistant_delta"
 }
 
 ///|
-pub fn runtime_event_reasoning_delta() -> String {
+fn runtime_event_reasoning_delta() -> String {
   "reasoning_delta"
 }
 
 ///|
-pub fn runtime_event_reasoning_message() -> String {
+fn runtime_event_reasoning_message() -> String {
   "reasoning_message"
 }
 
 ///|
-pub fn runtime_event_assistant_message() -> String {
+fn runtime_event_assistant_message() -> String {
   "assistant_message"
 }
 
 ///|
-pub fn runtime_event_runtime_update() -> String {
+fn runtime_event_runtime_update() -> String {
   "runtime_update"
 }
 
 ///|
-pub fn runtime_event_tool_call() -> String {
+fn runtime_event_tool_call() -> String {
   "tool_call"
 }
 
 ///|
-pub fn runtime_event_tool_started() -> String {
+fn runtime_event_tool_started() -> String {
   "tool_started"
 }
 
 ///|
-pub fn runtime_event_tool_result() -> String {
+fn runtime_event_tool_result() -> String {
   "tool_result"
 }
 
 ///|
-pub fn runtime_event_tool_call_decode_error() -> String {
+fn runtime_event_tool_call_decode_error() -> String {
   "tool_call_decode_error"
 }
 
 ///|
-pub fn runtime_event_file_change() -> String {
+fn runtime_event_file_change() -> String {
   "file_change"
 }
 
 ///|
-pub fn runtime_event_diff() -> String {
+fn runtime_event_diff() -> String {
   "diff"
 }
 
 ///|
-pub fn runtime_event_patch_applied() -> String {
+fn runtime_event_patch_applied() -> String {
   "patch_applied"
 }
 
 ///|
-pub fn runtime_event_patch_reverted() -> String {
+fn runtime_event_patch_reverted() -> String {
   "patch_reverted"
 }
 
 ///|
-pub fn runtime_event_test_result() -> String {
+fn runtime_event_test_result() -> String {
   "test_result"
 }
 
 ///|
-pub fn runtime_event_package_manifest() -> String {
+fn runtime_event_package_manifest() -> String {
   "package_manifest"
 }
 
 ///|
-pub fn runtime_event_package_index() -> String {
+fn runtime_event_package_index() -> String {
   "package_index"
 }
 
 ///|
-pub fn runtime_event_package_built() -> String {
+fn runtime_event_package_built() -> String {
   "package_built"
 }
 
 ///|
-pub fn runtime_event_package_verified() -> String {
+fn runtime_event_package_verified() -> String {
   "package_verified"
 }
 
 ///|
-pub fn runtime_event_review_receipt() -> String {
+fn runtime_event_review_receipt() -> String {
   "review_receipt"
 }
 
 ///|
-pub fn runtime_event_receipt_accept() -> String {
+fn runtime_event_receipt_accept() -> String {
   "receipt.accept"
 }
 
 ///|
-pub fn runtime_event_receipt_reject() -> String {
+fn runtime_event_receipt_reject() -> String {
   "receipt.reject"
 }
 
 ///|
-pub fn runtime_event_commit_created() -> String {
+fn runtime_event_commit_created() -> String {
   "commit_created"
 }
 
 ///|
-pub fn runtime_event_artifact() -> String {
+fn runtime_event_artifact() -> String {
   "artifact"
 }
 
 ///|
-pub fn runtime_event_runtime_finished() -> String {
+fn runtime_event_runtime_finished() -> String {
   "runtime_finished"
 }
 
 ///|
-pub fn runtime_event_runtime_aborted() -> String {
+fn runtime_event_runtime_aborted() -> String {
   "runtime_aborted"
 }
 
 ///|
-pub fn runtime_event_max_steps_exhausted() -> String {
+fn runtime_event_max_steps_exhausted() -> String {
   "max_steps_exhausted"
 }
 
 ///|
-pub fn runtime_event_command_error() -> String {
+fn runtime_event_command_error() -> String {
   "command_error"
 }
 
 ///|
-pub fn runtime_event_turn_failed() -> String {
+fn runtime_event_turn_failed() -> String {
   "turn_failed"
 }
 
 ///|
-pub fn runtime_event_steer_applied() -> String {
+fn runtime_event_steer_applied() -> String {
   "steer_applied"
 }
 
 ///|
-pub fn runtime_event_steer_deferred() -> String {
+fn runtime_event_steer_deferred() -> String {
   "steer_deferred"
 }
 
 ///|
-pub fn runtime_event_steer_dropped() -> String {
+fn runtime_event_steer_dropped() -> String {
   "steer_dropped"
 }
 
 ///|
-pub fn runtime_event_cancel_dropped() -> String {
+fn runtime_event_cancel_dropped() -> String {
   "cancel_dropped"
 }
 
 ///|
-pub fn runtime_event_usage() -> String {
+fn runtime_event_usage() -> String {
   "usage"
 }
 
 ///|
-pub fn runtime_event_runtime_loop() -> String {
+fn runtime_event_runtime_loop() -> String {
   "runtime_loop"
 }
 
 ///|
-pub fn runtime_event_turn_started() -> String {
+fn runtime_event_turn_started() -> String {
   "runtime.turn_started"
 }
 
 ///|
-pub fn runtime_event_turn_finished() -> String {
+fn runtime_event_turn_finished() -> String {
   "runtime.turn_finished"
 }
 
 ///|
-pub fn runtime_event_runtime_unavailable() -> String {
+fn runtime_event_runtime_unavailable() -> String {
   "runtime_unavailable"
 }
 
 ///|
-pub fn runtime_event_planner_failed() -> String {
+fn runtime_event_planner_failed() -> String {
   "runtime.planner_failed"
 }
 
 ///|
-pub fn runtime_event_planner_started() -> String {
+fn runtime_event_planner_started() -> String {
   "runtime.planner_started"
 }
 
 ///|
-pub fn runtime_event_planner_selected() -> String {
+fn runtime_event_planner_selected() -> String {
   "runtime.planner_selected"
 }
 
 ///|
-pub fn runtime_event_service_started() -> String {
+fn runtime_event_service_started() -> String {
   "runtime.service_started"
 }
 
 ///|
-pub fn runtime_event_service_finished() -> String {
+fn runtime_event_service_finished() -> String {
   "runtime.service_finished"
 }
 
 ///|
-pub fn runtime_event_service_failed() -> String {
+fn runtime_event_service_failed() -> String {
   "runtime.service_failed"
 }
 
 ///|
-pub fn runtime_event_names() -> Array[String] {
+fn runtime_event_names() -> Array[String] {
   [
     runtime_event_runtime_step(),
     runtime_event_assistant_delta(),
@@ -268,7 +268,7 @@ pub fn runtime_event_names() -> Array[String] {
 }
 
 ///|
-pub fn runtime_command_output_event_names() -> Array[String] {
+fn runtime_command_output_event_names() -> Array[String] {
   [
     runtime_event_assistant_delta(),
     runtime_event_reasoning_delta(),
@@ -294,7 +294,7 @@ pub fn runtime_command_output_event_names() -> Array[String] {
 }
 
 ///|
-pub fn runtime_failure_event_names() -> Array[String] {
+fn runtime_failure_event_names() -> Array[String] {
   [
     runtime_event_command_error(),
     runtime_event_turn_failed(),
@@ -305,7 +305,7 @@ pub fn runtime_failure_event_names() -> Array[String] {
 }
 
 ///|
-pub fn runtime_diagnostic_event_names() -> Array[String] {
+fn runtime_diagnostic_event_names() -> Array[String] {
   [
     runtime_event_runtime_loop(),
     runtime_event_usage(),
@@ -316,22 +316,22 @@ pub fn runtime_diagnostic_event_names() -> Array[String] {
 }
 
 ///|
-pub fn runtime_event_name_is_supported(name : String) -> Bool {
+fn runtime_event_name_is_supported(name : String) -> Bool {
   runtime_event_names().contains(name)
 }
 
 ///|
-pub fn runtime_failure_event_name_is_supported(name : String) -> Bool {
+fn runtime_failure_event_name_is_supported(name : String) -> Bool {
   runtime_failure_event_names().contains(name)
 }
 
 ///|
-pub fn runtime_diagnostic_event_name_is_supported(name : String) -> Bool {
+fn runtime_diagnostic_event_name_is_supported(name : String) -> Bool {
   runtime_diagnostic_event_names().contains(name)
 }
 
 ///|
-pub fn runtime_event_name_contract_json() -> Json {
+fn runtime_event_name_contract_json() -> Json {
   {
     "kind": "mooncode-runtime-event-name-contract",
     "protocol": protocol_version(),

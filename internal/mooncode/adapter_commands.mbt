@@ -1,4 +1,16 @@
 ///|
+priv struct AcceptedCommandPacket {
+  command : @mooncode_core.MoonCodeCommand
+  status : String
+  command_id : String
+  created_at : String
+  session_id : String
+  workspace_id : String
+  workspace_name : String
+  workspace_root : String
+}
+
+///|
 pub fn decode_command_submission(
   payload : Json,
 ) -> Result[@mooncode_core.MoonCodeCommand, String] {
@@ -7,12 +19,12 @@ pub fn decode_command_submission(
 
 ///|
 pub fn command_action(command : @mooncode_core.MoonCodeCommand) -> String {
-  command.kind().to_string()
+  command.kind.to_string()
 }
 
 ///|
 pub fn command_message(command : @mooncode_core.MoonCodeCommand) -> String {
-  let explicit = command.message()
+  let explicit = command.message
   if explicit != "" {
     return explicit
   }
@@ -48,7 +60,7 @@ pub fn command_message(command : @mooncode_core.MoonCodeCommand) -> String {
 
 ///|
 pub fn command_context_path(command : @mooncode_core.MoonCodeCommand) -> String {
-  command.context_path()
+  command.context_path
 }
 
 ///|
@@ -70,7 +82,7 @@ fn stable_command_id(
 ) -> String {
   let seed = session_id +
     ":" +
-    command.client_turn_id() +
+    command.client_turn_id +
     ":" +
     command_submission_fingerprint(command)
   let digest = @crypto.bytes_to_hex_string(
@@ -80,29 +92,33 @@ fn stable_command_id(
 }
 
 ///|
-pub fn accepted_command_packet(
+fn accepted_command_packet(
   session : Json,
   command : @mooncode_core.MoonCodeCommand,
   created_at : String,
-) -> @mooncode_core.MoonCodeAcceptedCommand {
-  @mooncode_core.accept_mooncode_command(
+) -> AcceptedCommandPacket {
+  {
     command,
-    stable_command_id(json_string(session, "id", default=""), command),
+    status: "accepted",
+    command_id: stable_command_id(
+      json_string(session, "id", default=""),
+      command,
+    ),
     created_at,
-    json_string(session, "id", default=""),
-    json_string(session, "workspace_id", default=""),
-    json_string(session, "workspace_name", default=""),
-    json_string(session, "workspace_root", default=""),
-  )
+    session_id: json_string(session, "id", default=""),
+    workspace_id: json_string(session, "workspace_id", default=""),
+    workspace_name: json_string(session, "workspace_name", default=""),
+    workspace_root: json_string(session, "workspace_root", default=""),
+  }
 }
 
 ///|
 fn accepted_command_packet_json(
-  accepted : @mooncode_core.MoonCodeAcceptedCommand,
+  accepted : AcceptedCommandPacket,
   session : Json,
   runtime_passthrough : Json,
 ) -> Json {
-  let command = accepted.command()
+  let command = accepted.command
   let fields = match @mooncode_core.encode_mooncode_command(command) {
     Ok(Object(values)) => values.copy()
     _ => Map::new()
@@ -110,22 +126,30 @@ fn accepted_command_packet_json(
   let action = command_action(command)
   fields["protocol"] = protocol_version().to_json()
   fields["kind"] = "mooncode.command".to_json()
-  fields["status"] = accepted.status().to_string().to_json()
-  fields["command_id"] = accepted.command_id().to_json()
-  fields["created_at"] = accepted.created_at().to_json()
-  fields["session_id"] = accepted.session_id().to_json()
-  fields["workspace_id"] = accepted.workspace_id().to_json()
-  fields["workspace_name"] = accepted.workspace_name().to_json()
-  fields["workspace_root"] = accepted.workspace_root().to_json()
-  fields["control"] = @mooncode_core.command_action_control(action).to_json()
-  fields["approval"] = @mooncode_core.command_action_approval(action).to_json()
-  let model = if command.model() == "" {
+  fields["status"] = accepted.status.to_json()
+  fields["command_id"] = accepted.command_id.to_json()
+  fields["created_at"] = accepted.created_at.to_json()
+  fields["session_id"] = accepted.session_id.to_json()
+  fields["workspace_id"] = accepted.workspace_id.to_json()
+  fields["workspace_name"] = accepted.workspace_name.to_json()
+  fields["workspace_root"] = accepted.workspace_root.to_json()
+  fields["client_turn_id"] = command.client_turn_id.to_json()
+  fields["action"] = action.to_json()
+  let surface = adapter_capability_surface(@mooncode_core.mooncode_capability())
+  for row in adapter_surface_command_actions(surface) {
+    if json_string(row, "action", default="") == action {
+      fields["control"] = json_string(row, "control", default="").to_json()
+      fields["approval"] = json_string(row, "approval", default="").to_json()
+      break
+    }
+  }
+  let model = if command.model == "" {
     json_string(session, "model", default="")
   } else {
-    command.model()
+    command.model
   }
   fields["model"] = model.to_json()
-  fields["web_search"] = command.web_search().to_json()
+  fields["web_search"] = command.web_search.to_json()
   fields["runtime_tool_calls"] = Json::array(
     json_array_items(runtime_passthrough, "runtime_tool_calls"),
   )
@@ -151,7 +175,7 @@ fn native_payload(
     _ => Map::new()
   }
   fields["planner_guidance"] = planner_guidance()
-  match command.planner_max_steps() {
+  match command.planner_max_steps {
     Some(steps) => fields["planner_max_steps"] = steps.to_json()
     None => fields.remove("planner_max_steps")
   }
@@ -162,9 +186,10 @@ fn native_payload(
 pub fn native_command_body(
   session : Json,
   command : @mooncode_core.MoonCodeCommand,
-  accepted : @mooncode_core.MoonCodeAcceptedCommand,
+  created_at : String,
   runtime_passthrough : Json,
 ) -> Json {
+  let accepted = accepted_command_packet(session, command, created_at)
   let packet = accepted_command_packet_json(
     accepted, session, runtime_passthrough,
   )

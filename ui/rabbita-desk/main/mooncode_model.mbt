@@ -26,4 +26,4 @@ struct MoonCodeSession {
   mooncode_summary : MoonCodeSummary
   canonical_unchanged : Bool?
   archived : Bool
-} derive(FromJson)
+}

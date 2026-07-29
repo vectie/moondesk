@@ -93,20 +93,22 @@ pub fn selected_session_response(session : Json) -> Result[Json, String] {
   }
   let typed_conversation = match
     @mooncode_core.decode_mooncode_conversation(conversation) {
-    Absent => None
-    Supported(value) => Some(@mooncode_core.encode_mooncode_conversation(value))
-    UnsupportedProtocol(protocol) =>
+    Err(Absent) => None
+    Ok(value) => Some(@mooncode_core.encode_mooncode_conversation(value))
+    Err(UnsupportedProtocol(protocol)) =>
       return Err("Unsupported MoonCode conversation protocol \{protocol}")
-    UnsupportedContract(contract) =>
+    Err(UnsupportedContract(contract)) =>
       return Err("Unsupported MoonCode conversation contract \{contract}")
-    Stale(revision~, current_revision~) =>
+    Err(Stale(revision~, current_revision~)) =>
       return Err(
         "Stale MoonCode conversation revision \{revision} < \{current_revision}",
       )
-    Malformed(error) => return Err(error)
+    Err(Malformed(error)) => return Err(error)
+    Err(UnsupportedVersion(version)) =>
+      return Err("Unsupported MoonCode version \{version}")
   }
   match @mooncode_core.decode_mooncode_selected_session(projected) {
-    Supported(summary) => {
+    Ok(summary) => {
       let encoded = @mooncode_core.encode_mooncode_session_summary(summary)
       Ok(
         match typed_conversation {
@@ -116,9 +118,10 @@ pub fn selected_session_response(session : Json) -> Result[Json, String] {
         },
       )
     }
-    UnsupportedVersion(version) =>
+    Err(UnsupportedVersion(version)) =>
       Err("Unsupported MoonCode selected session contract version \{version}")
-    Malformed(error) => Err(error)
+    Err(Malformed(error)) => Err(error)
+    Err(_) => Err("Invalid MoonCode selected session")
   }
 }
 
@@ -233,14 +236,15 @@ pub fn runtime_session_listing_rows(
     None => Json::array(rows)
   }
   match @mooncode_core.decode_mooncode_session_listing(normalized_payload) {
-    Supported(summaries) =>
+    Ok(summaries) =>
       Ok(
         summaries.map(summary => {
           @mooncode_core.encode_mooncode_session_summary(summary)
         }),
       )
-    UnsupportedVersion(version) =>
+    Err(UnsupportedVersion(version)) =>
       Err("Unsupported MoonCode session listing contract version \{version}")
-    Malformed(error) => Err(error)
+    Err(Malformed(error)) => Err(error)
+    Err(_) => Err("Invalid MoonCode session listing")
   }
 }

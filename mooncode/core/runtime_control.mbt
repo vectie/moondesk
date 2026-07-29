@@ -1,75 +1,75 @@
 ///|
-pub fn runtime_control_contract_id() -> String {
+fn runtime_control_contract_id() -> String {
   "mooncode-runtime-control.v1"
 }
 
 ///|
-pub fn runtime_control_contract_kind() -> String {
+fn runtime_control_contract_kind() -> String {
   "mooncode-runtime-control-contract"
 }
 
 ///|
-pub fn runtime_control_state_kind() -> String {
+fn runtime_control_state_kind() -> String {
   "mooncode-runtime-control-state"
 }
 
 ///|
-pub fn runtime_control_scheduler_boundary_unit() -> String {
+fn runtime_control_scheduler_boundary_unit() -> String {
   "native-runtime-scheduler-boundary"
 }
 
 ///|
-pub fn runtime_control_status_pending() -> String {
+fn runtime_control_status_pending() -> String {
   "pending"
 }
 
 ///|
-pub fn runtime_control_status_running() -> String {
+fn runtime_control_status_running() -> String {
   "running"
 }
 
 ///|
-pub fn runtime_control_status_runtime_started() -> String {
+fn runtime_control_status_runtime_started() -> String {
   "runtime-started"
 }
 
 ///|
-pub fn runtime_control_status_completed() -> String {
+fn runtime_control_status_completed() -> String {
   "completed"
 }
 
 ///|
-pub fn runtime_control_status_failed() -> String {
+fn runtime_control_status_failed() -> String {
   "failed"
 }
 
 ///|
-pub fn runtime_control_status_blocked_invalid() -> String {
+fn runtime_control_status_blocked_invalid() -> String {
   "blocked-invalid"
 }
 
 ///|
-pub fn runtime_control_status_blocked_tool_authorization() -> String {
+fn runtime_control_status_blocked_tool_authorization() -> String {
   "blocked-tool-authorization"
 }
 
 ///|
-pub fn runtime_control_status_blocked_missing_proof() -> String {
+fn runtime_control_status_blocked_missing_proof() -> String {
   "blocked-missing-proof"
 }
 
 ///|
-pub fn runtime_control_active_statuses() -> Array[String] {
+fn runtime_control_active_statuses() -> Array[String] {
   [runtime_control_status_running(), runtime_control_status_runtime_started()]
 }
 
 ///|
-pub fn runtime_control_terminal_statuses() -> Array[String] {
+fn runtime_control_terminal_statuses() -> Array[String] {
   [runtime_control_status_completed(), runtime_control_status_failed()]
 }
 
 ///|
-pub fn runtime_control_blocked_statuses() -> Array[String] {
+fn runtime_control_blocked_statuses() -> Array[String] {
   [
     runtime_control_status_blocked_invalid(),
     runtime_control_status_blocked_tool_authorization(),
@@ -78,77 +78,77 @@ pub fn runtime_control_blocked_statuses() -> Array[String] {
 }
 
 ///|
-pub fn runtime_control_effect_start_turn() -> String {
+fn runtime_control_effect_start_turn() -> String {
   "start-turn"
 }
 
 ///|
-pub fn runtime_control_effect_active_turn() -> String {
+fn runtime_control_effect_active_turn() -> String {
   "active-turn"
 }
 
 ///|
-pub fn runtime_control_effect_queue_turn() -> String {
+fn runtime_control_effect_queue_turn() -> String {
   "queue-turn"
 }
 
 ///|
-pub fn runtime_control_effect_deliver_steer() -> String {
+fn runtime_control_effect_deliver_steer() -> String {
   "deliver-steer"
 }
 
 ///|
-pub fn runtime_control_effect_queue_steer() -> String {
+fn runtime_control_effect_queue_steer() -> String {
   "queue-steer"
 }
 
 ///|
-pub fn runtime_control_effect_defer_steer() -> String {
+fn runtime_control_effect_defer_steer() -> String {
   "defer-steer"
 }
 
 ///|
-pub fn runtime_control_effect_cancel_active() -> String {
+fn runtime_control_effect_cancel_active() -> String {
   "cancel-active"
 }
 
 ///|
-pub fn runtime_control_effect_withdraw_pending() -> String {
+fn runtime_control_effect_withdraw_pending() -> String {
   "withdraw-pending"
 }
 
 ///|
-pub fn runtime_control_effect_drop_cancel() -> String {
+fn runtime_control_effect_drop_cancel() -> String {
   "drop-cancel"
 }
 
 ///|
-pub fn runtime_control_effect_record_note() -> String {
+fn runtime_control_effect_record_note() -> String {
   "record-note"
 }
 
 ///|
-pub fn runtime_control_effect_wait_for_proof() -> String {
+fn runtime_control_effect_wait_for_proof() -> String {
   "wait-for-proof"
 }
 
 ///|
-pub fn runtime_control_effect_blocked() -> String {
+fn runtime_control_effect_blocked() -> String {
   "blocked"
 }
 
 ///|
-pub fn runtime_control_effect_already_completed() -> String {
+fn runtime_control_effect_already_completed() -> String {
   "already-completed"
 }
 
 ///|
-pub fn runtime_control_effect_failed() -> String {
+fn runtime_control_effect_failed() -> String {
   "failed"
 }
 
 ///|
-pub fn runtime_control_effects() -> Array[String] {
+fn runtime_control_effects() -> Array[String] {
   [
     runtime_control_effect_start_turn(),
     runtime_control_effect_active_turn(),
@@ -168,37 +168,37 @@ pub fn runtime_control_effects() -> Array[String] {
 }
 
 ///|
-pub fn runtime_control_target_state_active() -> String {
+fn runtime_control_target_state_active() -> String {
   "active"
 }
 
 ///|
-pub fn runtime_control_target_state_pending() -> String {
+fn runtime_control_target_state_pending() -> String {
   "pending"
 }
 
 ///|
-pub fn runtime_control_target_state_idle() -> String {
+fn runtime_control_target_state_idle() -> String {
   "idle"
 }
 
 ///|
-pub fn runtime_control_target_state_recorded() -> String {
+fn runtime_control_target_state_recorded() -> String {
   "recorded"
 }
 
 ///|
-pub fn runtime_control_target_state_terminal() -> String {
+fn runtime_control_target_state_terminal() -> String {
   "terminal"
 }
 
 ///|
-pub fn runtime_control_target_state_blocked() -> String {
+fn runtime_control_target_state_blocked() -> String {
   "blocked"
 }
 
 ///|
-pub fn runtime_control_target_states() -> Array[String] {
+fn runtime_control_target_states() -> Array[String] {
   [
     runtime_control_target_state_active(),
     runtime_control_target_state_pending(),
@@ -210,34 +210,34 @@ pub fn runtime_control_target_states() -> Array[String] {
 }
 
 ///|
-pub fn runtime_control_action_starts_turn(action : String) -> Bool {
+fn runtime_control_action_starts_turn(action : String) -> Bool {
   action != command_steer() &&
   action != command_cancel() &&
   action != command_note()
 }
 
 ///|
-pub fn runtime_control_status_is_pending(status : String) -> Bool {
+fn runtime_control_status_is_pending(status : String) -> Bool {
   status == runtime_control_status_pending()
 }
 
 ///|
-pub fn runtime_control_status_is_active(status : String) -> Bool {
+fn runtime_control_status_is_active(status : String) -> Bool {
   runtime_control_active_statuses().contains(status)
 }
 
 ///|
-pub fn runtime_control_status_is_terminal(status : String) -> Bool {
+fn runtime_control_status_is_terminal(status : String) -> Bool {
   runtime_control_terminal_statuses().contains(status)
 }
 
 ///|
-pub fn runtime_control_status_is_blocked(status : String) -> Bool {
+fn runtime_control_status_is_blocked(status : String) -> Bool {
   runtime_control_blocked_statuses().contains(status)
 }
 
 ///|
-pub fn runtime_control_effect_allows_turn(effect : String) -> Bool {
+fn runtime_control_effect_allows_turn(effect : String) -> Bool {
   effect == runtime_control_effect_start_turn() ||
   effect == runtime_control_effect_active_turn() ||
   effect == runtime_control_effect_deliver_steer() ||
@@ -248,14 +248,14 @@ pub fn runtime_control_effect_allows_turn(effect : String) -> Bool {
 }
 
 ///|
-pub fn runtime_control_effect_is_terminal(effect : String) -> Bool {
+fn runtime_control_effect_is_terminal(effect : String) -> Bool {
   effect == runtime_control_effect_already_completed() ||
   effect == runtime_control_effect_failed() ||
   effect == runtime_control_effect_blocked()
 }
 
 ///|
-pub fn runtime_control_settlement_required(
+fn runtime_control_settlement_required(
   action : String,
   effect : String,
 ) -> Bool {
@@ -264,7 +264,7 @@ pub fn runtime_control_settlement_required(
 }
 
 ///|
-pub fn runtime_control_settlement_events(
+fn runtime_control_settlement_events(
   action : String,
   effect : String,
 ) -> Array[String] {
@@ -286,7 +286,7 @@ pub fn runtime_control_settlement_events(
 }
 
 ///|
-pub fn runtime_control_contract_json() -> Json {
+fn runtime_control_contract_json() -> Json {
   {
     "kind": runtime_control_contract_kind(),
     "protocol": protocol_version(),

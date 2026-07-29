@@ -1,85 +1,85 @@
 ///|
-pub fn runtime_consumer_contract_id() -> String {
+fn runtime_consumer_contract_id() -> String {
   "mooncode-runtime-consumer.v1"
 }
 
 ///|
-pub fn runtime_consumer_contract_kind() -> String {
+fn runtime_consumer_contract_kind() -> String {
   "mooncode-runtime-consumer-contract"
 }
 
 ///|
-pub fn runtime_claim_state_kind() -> String {
+fn runtime_claim_state_kind() -> String {
   "mooncode-runtime-claim-state"
 }
 
 ///|
-pub fn runtime_claim_response_kind() -> String {
+fn runtime_claim_response_kind() -> String {
   "mooncode-runtime-claim"
 }
 
 ///|
-pub fn runtime_replay_state_kind() -> String {
+fn runtime_replay_state_kind() -> String {
   "mooncode-runtime-replay"
 }
 
 ///|
-pub fn runtime_claim_mode() -> String {
+fn runtime_claim_mode() -> String {
   "mooncode-runtime-claim"
 }
 
 ///|
-pub fn runtime_replay_mode() -> String {
+fn runtime_replay_mode() -> String {
   "mooncode-runtime-replay"
 }
 
 ///|
-pub fn runtime_receipt_status_accepted() -> String {
+fn runtime_receipt_status_accepted() -> String {
   "runtime-accepted"
 }
 
 ///|
-pub fn runtime_receipt_status_acknowledged() -> String {
+fn runtime_receipt_status_acknowledged() -> String {
   "runtime-acknowledged"
 }
 
 ///|
-pub fn runtime_receipt_status_completed() -> String {
+fn runtime_receipt_status_completed() -> String {
   "runtime-completed"
 }
 
 ///|
-pub fn runtime_receipt_status_claimed() -> String {
+fn runtime_receipt_status_claimed() -> String {
   "runtime-claimed"
 }
 
 ///|
-pub fn runtime_receipt_status_failed() -> String {
+fn runtime_receipt_status_failed() -> String {
   "failed"
 }
 
 ///|
-pub fn runtime_receipt_status_proof_missing() -> String {
+fn runtime_receipt_status_proof_missing() -> String {
   "proof-missing"
 }
 
 ///|
-pub fn runtime_receipt_status_skipped() -> String {
+fn runtime_receipt_status_skipped() -> String {
   "skipped"
 }
 
 ///|
-pub fn runtime_receipt_status_missing() -> String {
+fn runtime_receipt_status_missing() -> String {
   "missing"
 }
 
 ///|
-pub fn runtime_receipt_status_recorded() -> String {
+fn runtime_receipt_status_recorded() -> String {
   "recorded"
 }
 
 ///|
-pub fn runtime_receipt_delivered_statuses() -> Array[String] {
+fn runtime_receipt_delivered_statuses() -> Array[String] {
   [
     runtime_receipt_status_accepted(),
     runtime_receipt_status_acknowledged(),
@@ -88,17 +88,17 @@ pub fn runtime_receipt_delivered_statuses() -> Array[String] {
 }
 
 ///|
-pub fn runtime_receipt_status_is_delivered(status : String) -> Bool {
+fn runtime_receipt_status_is_delivered(status : String) -> Bool {
   runtime_receipt_delivered_statuses().contains(status)
 }
 
 ///|
-pub fn runtime_receipt_status_is_claimed(status : String) -> Bool {
+fn runtime_receipt_status_is_claimed(status : String) -> Bool {
   status == runtime_receipt_status_claimed()
 }
 
 ///|
-pub fn runtime_replay_ack_allowed_statuses() -> Array[String] {
+fn runtime_replay_ack_allowed_statuses() -> Array[String] {
   [
     runtime_receipt_status_acknowledged(),
     runtime_receipt_status_completed(),
@@ -110,12 +110,12 @@ pub fn runtime_replay_ack_allowed_statuses() -> Array[String] {
 }
 
 ///|
-pub fn runtime_replay_ack_status_is_allowed(status : String) -> Bool {
+fn runtime_replay_ack_status_is_allowed(status : String) -> Bool {
   runtime_replay_ack_allowed_statuses().contains(status)
 }
 
 ///|
-pub fn runtime_replay_ack_status(
+fn runtime_replay_ack_status(
   requested_status : String,
   ok~ : Bool,
 ) -> String {
@@ -129,7 +129,7 @@ pub fn runtime_replay_ack_status(
 }
 
 ///|
-pub fn runtime_replay_ack_detail(status : String) -> String {
+fn runtime_replay_ack_detail(status : String) -> String {
   if status == runtime_receipt_status_completed() {
     "Runtime replay consumer completed the command."
   } else if status == runtime_receipt_status_proof_missing() {
@@ -144,37 +144,37 @@ pub fn runtime_replay_ack_detail(status : String) -> String {
 }
 
 ///|
-pub fn runtime_claim_status_invalid() -> String {
+fn runtime_claim_status_invalid() -> String {
   "invalid"
 }
 
 ///|
-pub fn runtime_claim_status_delivered() -> String {
+fn runtime_claim_status_delivered() -> String {
   "delivered"
 }
 
 ///|
-pub fn runtime_claim_status_claimed() -> String {
+fn runtime_claim_status_claimed() -> String {
   "claimed"
 }
 
 ///|
-pub fn runtime_claim_status_blocked_tool_authorization() -> String {
+fn runtime_claim_status_blocked_tool_authorization() -> String {
   "blocked-tool-authorization"
 }
 
 ///|
-pub fn runtime_claim_status_claimable() -> String {
+fn runtime_claim_status_claimable() -> String {
   "claimable"
 }
 
 ///|
-pub fn runtime_claim_status_blocked_by_prior_command() -> String {
+fn runtime_claim_status_blocked_by_prior_command() -> String {
   "blocked-by-prior-command"
 }
 
 ///|
-pub fn runtime_claim_statuses() -> Array[String] {
+fn runtime_claim_statuses() -> Array[String] {
   [
     runtime_claim_status_invalid(),
     runtime_claim_status_delivered(),
@@ -186,7 +186,7 @@ pub fn runtime_claim_statuses() -> Array[String] {
 }
 
 ///|
-pub fn runtime_claim_base_status(
+fn runtime_claim_base_status(
   valid : Bool,
   receipt_status : String,
   expired_claim : Bool,
@@ -206,7 +206,7 @@ pub fn runtime_claim_base_status(
 }
 
 ///|
-pub fn runtime_claim_status_with_order_blocker(
+fn runtime_claim_status_with_order_blocker(
   base_claim_status : String,
   order_blocker_id : String,
 ) -> String {
@@ -219,59 +219,59 @@ pub fn runtime_claim_status_with_order_blocker(
 }
 
 ///|
-pub fn runtime_claim_status_blocks_following(status : String) -> Bool {
+fn runtime_claim_status_blocks_following(status : String) -> Bool {
   status == runtime_claim_status_invalid() ||
   status == runtime_claim_status_claimed() ||
   status == runtime_claim_status_blocked_tool_authorization()
 }
 
 ///|
-pub fn runtime_replay_status_blocked_invalid() -> String {
+fn runtime_replay_status_blocked_invalid() -> String {
   "blocked-invalid"
 }
 
 ///|
-pub fn runtime_replay_status_delivered() -> String {
+fn runtime_replay_status_delivered() -> String {
   "delivered"
 }
 
 ///|
-pub fn runtime_replay_status_blocked_tool_authorization() -> String {
+fn runtime_replay_status_blocked_tool_authorization() -> String {
   "blocked-tool-authorization"
 }
 
 ///|
-pub fn runtime_replay_status_expired_claim_pending_retry() -> String {
+fn runtime_replay_status_expired_claim_pending_retry() -> String {
   "expired-claim-pending-retry"
 }
 
 ///|
-pub fn runtime_replay_status_claimed() -> String {
+fn runtime_replay_status_claimed() -> String {
   "claimed"
 }
 
 ///|
-pub fn runtime_replay_status_missing_proof_pending_retry() -> String {
+fn runtime_replay_status_missing_proof_pending_retry() -> String {
   "missing-proof-pending-retry"
 }
 
 ///|
-pub fn runtime_replay_status_failed_pending_retry() -> String {
+fn runtime_replay_status_failed_pending_retry() -> String {
   "failed-pending-retry"
 }
 
 ///|
-pub fn runtime_replay_status_pending() -> String {
+fn runtime_replay_status_pending() -> String {
   "pending"
 }
 
 ///|
-pub fn runtime_replay_status_blocked_by_prior_command() -> String {
+fn runtime_replay_status_blocked_by_prior_command() -> String {
   "blocked-by-prior-command"
 }
 
 ///|
-pub fn runtime_replay_statuses() -> Array[String] {
+fn runtime_replay_statuses() -> Array[String] {
   [
     runtime_replay_status_blocked_invalid(),
     runtime_replay_status_delivered(),
@@ -286,7 +286,7 @@ pub fn runtime_replay_statuses() -> Array[String] {
 }
 
 ///|
-pub fn runtime_replay_base_status(
+fn runtime_replay_base_status(
   valid : Bool,
   receipt_status : String,
   expired_claim : Bool,
@@ -316,7 +316,7 @@ pub fn runtime_replay_base_status(
 }
 
 ///|
-pub fn runtime_replay_status_with_order_blocker(
+fn runtime_replay_status_with_order_blocker(
   base_replay_status : String,
   replay_blocker_id : String,
 ) -> String {
@@ -329,7 +329,7 @@ pub fn runtime_replay_status_with_order_blocker(
 }
 
 ///|
-pub fn runtime_replay_status_is_pending(status : String) -> Bool {
+fn runtime_replay_status_is_pending(status : String) -> Bool {
   status == runtime_replay_status_pending() ||
   status == runtime_replay_status_failed_pending_retry() ||
   status == runtime_replay_status_missing_proof_pending_retry() ||
@@ -337,39 +337,39 @@ pub fn runtime_replay_status_is_pending(status : String) -> Bool {
 }
 
 ///|
-pub fn runtime_replay_status_blocks_following(status : String) -> Bool {
+fn runtime_replay_status_blocks_following(status : String) -> Bool {
   status == runtime_replay_status_blocked_invalid() ||
   status == runtime_replay_status_claimed() ||
   status == runtime_replay_status_blocked_tool_authorization()
 }
 
 ///|
-pub fn runtime_replay_ack_order_status_matching_claim() -> String {
+fn runtime_replay_ack_order_status_matching_claim() -> String {
   "matching-claim"
 }
 
 ///|
-pub fn runtime_replay_ack_order_status_consumer_mismatch() -> String {
+fn runtime_replay_ack_order_status_consumer_mismatch() -> String {
   "consumer-mismatch"
 }
 
 ///|
-pub fn runtime_replay_ack_order_status_already_delivered() -> String {
+fn runtime_replay_ack_order_status_already_delivered() -> String {
   "already-delivered"
 }
 
 ///|
-pub fn runtime_replay_ack_order_status_retry_after_failed_receipt() -> String {
+fn runtime_replay_ack_order_status_retry_after_failed_receipt() -> String {
   "retry-after-failed-receipt"
 }
 
 ///|
-pub fn runtime_replay_ack_order_status_unclaimed_ack() -> String {
+fn runtime_replay_ack_order_status_unclaimed_ack() -> String {
   "unclaimed-ack"
 }
 
 ///|
-pub fn runtime_replay_ack_order_statuses() -> Array[String] {
+fn runtime_replay_ack_order_statuses() -> Array[String] {
   [
     runtime_claim_status_blocked_by_prior_command(),
     runtime_replay_ack_order_status_matching_claim(),
@@ -381,62 +381,62 @@ pub fn runtime_replay_ack_order_statuses() -> Array[String] {
 }
 
 ///|
-pub fn runtime_claim_endpoint(session_id : String) -> String {
+fn runtime_claim_endpoint(session_id : String) -> String {
   "/api/mooncode/sessions/\{native_endpoint_component(session_id)}/runtime-claim"
 }
 
 ///|
-pub fn runtime_replay_endpoint(session_id : String) -> String {
+fn runtime_replay_endpoint(session_id : String) -> String {
   "/api/mooncode/sessions/\{native_endpoint_component(session_id)}/runtime-replay"
 }
 
 ///|
-pub fn runtime_claim_ordering_rule() -> String {
+fn runtime_claim_ordering_rule() -> String {
   "MoonClaw claims valid command records in session-journal sequence order before executing them; active earlier claims and invalid earlier commands block later non-delivered rows until they are acknowledged, failed, expired, forced, or repaired."
 }
 
 ///|
-pub fn runtime_claim_lease_policy() -> String {
+fn runtime_claim_lease_policy() -> String {
   "runtime-claimed receipts hide commands from other consumers until lease_expires_at passes; expired claims and failed runtime receipts become claimable retry work without force, while delivered receipts remain protected."
 }
 
 ///|
-pub fn runtime_claim_authorization_rule() -> String {
+fn runtime_claim_authorization_rule() -> String {
   "commands whose tool_authorization snapshot has runtime_may_execute=false, pending approvals, or rejected approvals are not claimable and block later non-delivered rows until a later command record carries an approving snapshot"
 }
 
 ///|
-pub fn runtime_claim_consumer_ordering_rule() -> String {
+fn runtime_claim_consumer_ordering_rule() -> String {
   "claim returns pending valid commands in session-journal sequence order; delivered receipts are skipped, but active claimed, invalid, or tool-authorization-blocked earlier commands block later non-delivered rows unless the active claim expires; force=true is only for lease recovery and does not bypass tool authorization"
 }
 
 ///|
-pub fn runtime_claim_duplicate_guard() -> String {
+fn runtime_claim_duplicate_guard() -> String {
   "commands with delivered receipts are never claimable; active claimed receipts block later work unless force=true; expired claimed receipts and failed runtime receipts become claimable without force; blocked tool authorization never becomes claimable without an approving snapshot"
 }
 
 ///|
-pub fn runtime_replay_policy() -> String {
+fn runtime_replay_policy() -> String {
   "consume pending MoonCode command records in session-journal sequence order; skip delivered command ids and active leases; expired runtime-claimed leases are retryable pending work"
 }
 
 ///|
-pub fn runtime_replay_ordering_rule() -> String {
+fn runtime_replay_ordering_rule() -> String {
   "prompt, steer, and cancel records remain serialized in append order, matching the MoonCode command protocol's single ordered consumer"
 }
 
 ///|
-pub fn runtime_replay_authorization_rule() -> String {
+fn runtime_replay_authorization_rule() -> String {
   "do not consume pending_commands whose tool_authorization snapshot has runtime_may_execute=false; resolve tool approvals first"
 }
 
 ///|
-pub fn runtime_replay_duplicate_guard() -> String {
+fn runtime_replay_duplicate_guard() -> String {
   "skip command ids with runtime-accepted, runtime-acknowledged, runtime-completed, active runtime-claimed receipts, or blocked tool authorization; active earlier claims, invalid earlier commands, and tool-authorization-blocked earlier commands block later non-delivered rows; expired claims and failed runtime receipts are retryable"
 }
 
 ///|
-pub fn runtime_claim_consumer_contract_json(session_id : String) -> Json {
+fn runtime_claim_consumer_contract_json(session_id : String) -> Json {
   {
     "kind": runtime_consumer_contract_kind(),
     "contract_id": runtime_consumer_contract_id(),
@@ -471,7 +471,7 @@ pub fn runtime_claim_consumer_contract_json(session_id : String) -> Json {
 }
 
 ///|
-pub fn runtime_replay_consumer_contract_json(session_id : String) -> Json {
+fn runtime_replay_consumer_contract_json(session_id : String) -> Json {
   {
     "kind": runtime_consumer_contract_kind(),
     "contract_id": runtime_consumer_contract_id(),
@@ -498,7 +498,7 @@ pub fn runtime_replay_consumer_contract_json(session_id : String) -> Json {
 }
 
 ///|
-pub fn runtime_consumer_contract_json(session_id : String) -> Json {
+fn runtime_consumer_contract_json(session_id : String) -> Json {
   {
     "kind": runtime_consumer_contract_kind(),
     "contract_id": runtime_consumer_contract_id(),

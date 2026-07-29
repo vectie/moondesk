@@ -10,17 +10,30 @@ priv enum MoonCodeCapabilityState {
 ///|
 fn mooncode_capability_state(payload : Json) -> MoonCodeCapabilityState {
   match payload {
-    { "capability_status": "unsupported-version", "capability_version": Number(version, ..), .. } =>
-      CapabilityUnsupportedVersion(version.to_int())
+    {
+      "capability_status": "unsupported-version",
+      "capability_version": Number(version, ..),
+      ..
+    } => CapabilityUnsupportedVersion(version.to_int())
     { "capability_status": "malformed", "capability_error": String(reason), .. } =>
       CapabilityMalformed(reason)
-    { "capability_status": "unavailable", "capability_error": String(reason), .. } =>
-      CapabilityUnavailable(reason)
+    {
+      "capability_status": "unavailable",
+      "capability_error": String(reason),
+      ..
+    } => CapabilityUnavailable(reason)
     _ =>
       match @mooncode_core.decode_mooncode_capability(payload) {
-        Supported(capability) => CapabilitySupported(capability)
-        UnsupportedVersion(version) => CapabilityUnsupportedVersion(version)
-        Malformed(reason) => CapabilityMalformed(reason)
+        Ok(capability) => CapabilitySupported(capability)
+        Err(UnsupportedVersion(version)) =>
+          CapabilityUnsupportedVersion(version)
+        Err(Malformed(reason)) => CapabilityMalformed(reason)
+        Err(Absent) => abort("capability decoder does not return Absent")
+        Err(UnsupportedProtocol(_)) =>
+          abort("capability decoder does not return UnsupportedProtocol")
+        Err(UnsupportedContract(_)) =>
+          abort("capability decoder does not return UnsupportedContract")
+        Err(Stale(_)) => abort("capability decoder does not return Stale")
       }
   }
 }

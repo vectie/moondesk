@@ -102,18 +102,34 @@ fn mooncode_session_approval_cmd(
   dispatch : Dispatch[Msg],
   session : MoonCodeSession,
   approval : @mooncode_core.MoonCodeApproval,
-  decision : @mooncode_core.MoonCodeApprovalDecision,
+  decision : MoonCodeApprovalIntent,
 ) -> @rabbita.Cmd {
-  let body = match approval.decision_wire(decision, session.id) {
-    Ok(wire) =>
-      match typed_mooncode_command_body(wire) {
-        Ok(value) => value
-        Err(error) => return dispatch(CompletedMoonCodeCommand(Err(error)))
-      }
-    Err(_) =>
-      return dispatch(
-        CompletedMoonCodeCommand(Err("Approval target is unavailable")),
-      )
+  guard approval
+    is @mooncode_core.MoonCodeApproval::Pending(
+      session_id~,
+      approval_id~,
+      target_command_id~,
+      tool_call_id~,
+      ..
+    ) &&
+    session_id == session.id else {
+    return dispatch(
+      CompletedMoonCodeCommand(Err("Approval target is unavailable")),
+    )
+  }
+  let action = (match decision {
+    ApproveMoonCodeTool => @mooncode_core.MoonCodeCommandKind::ApproveTool
+    RejectMoonCodeTool => @mooncode_core.MoonCodeCommandKind::RejectTool
+  }).to_string()
+  let body = match
+    typed_mooncode_command_body({
+      "action": action,
+      "approval_id": approval_id,
+      "target_command_id": target_command_id,
+      "tool_call_id": tool_call_id,
+    }) {
+    Ok(value) => value
+    Err(error) => return dispatch(CompletedMoonCodeCommand(Err(error)))
   }
   @http.post(@desk.mooncode_session_commands_url(session.id))
   .with_json(body)

@@ -9,6 +9,88 @@ fn code_mode_test_summary() -> MoonCodeSummary {
 }
 
 ///|
+test "canonical work evidence preserves public strings and approval fallback" {
+  let steps : Array[Json] = []
+  for
+    row in [
+      ("edit", "applied", "edit.diff"),
+      ("test", "passed", "test.log"),
+      ("approval", "pending", ""),
+      ("tool", "recorded", "tool.log"),
+      ("package_manifest", "recorded", "package.json"),
+      ("artifact", "recorded", ""),
+    ] {
+    let (kind, state, path) = row
+    let evidence : Json = {
+      "kind": kind,
+      "state": state,
+      "path": path,
+      "approval_id": if kind == "approval" {
+        "approval-a"
+      } else {
+        ""
+      },
+      "target_command_id": "command-a",
+      "tool_call_id": "tool-a",
+      "arguments": "{}",
+    }
+    steps.push({
+      "item_id": kind,
+      "command_id": "command-a",
+      "source_kind": if kind == "package_manifest" {
+        "package_manifest"
+      } else {
+        "unknown"
+      },
+      "summary": kind,
+      "evidence": evidence,
+    })
+  }
+  let payload : Json = {
+    "kind": "mooncode-conversation",
+    "protocol": "mooncode.v1",
+    "contract_id": "moonsuite-conversation.v3",
+    "session_id": "session-a",
+    "revision": "1",
+    "last_sequence": "1",
+    "turns": [
+      {
+        "kind": "mooncode-conversation-turn",
+        "turn_id": "turn-a",
+        "client_turn_id": "client-a",
+        "command_id": "command-a",
+        "ordinal": 0,
+        "status": "done",
+        "user": null,
+        "work": { "item_id": "work-a", "status": "done", "steps": steps },
+        "assistant": null,
+      },
+    ],
+  }
+  let conversation = @mooncode_core.decode_mooncode_conversation(payload).unwrap()
+  let work = conversation.turns[0].work
+  work.evidence[2] = { ..work.evidence[2], approval: None }
+  let approval = @mooncode_core.MoonCodeApproval::Pending(
+    session_id="session-a",
+    approval_id="approval-a",
+    target_command_id="command-a",
+    tool_call_id="tool-a",
+    arguments="{}",
+  )
+  let rows = mooncode_canonical_work_evidence(work, [approval])
+  assert_eq(rows.map(row => row.kind), [
+    "edit", "test", "approval", "tool", "artifact",
+  ])
+  assert_eq(rows[2].state, "")
+  assert_true(
+    rows[2].approval
+    is Some(
+      @mooncode_core.MoonCodeApproval::Pending(approval_id="approval-a", ..)
+    ),
+  )
+}
+
+///|
 fn code_mode_test_session(
   id : String,
   workspace_id? : String = "book-demo",
@@ -81,7 +163,13 @@ fn code_mode_test_lifecycle_result(
   title? : String = "",
   archived? : Bool = false,
   deleted? : Bool = false,
-) -> @mooncode_core.MoonCodeLifecycleResult {
+) -> (
+  @mooncode_core.MoonCodeLifecycleAction,
+  @mooncode_core.MoonCodeSessionId,
+  String,
+  Bool,
+  Bool,
+) {
   let payload : Json = {
     "kind": "mooncode-session-lifecycle-result",
     "protocol": "mooncode.v1",
@@ -102,7 +190,7 @@ fn code_mode_test_lifecycle_result(
 ///|
 fn code_mode_test_watch_heartbeat(
   session_id : String,
-  revision : Int,
+  revision : String,
   sequence : String,
 ) -> @mooncode_core.MoonCodeWatchResult raise {
   @mooncode_core.Heartbeat(
@@ -128,7 +216,7 @@ test "failed MoonCode session keeps failure copy inside the transcript" {
 
 ///|
 test "MoonCode session decodes optional runtime explanation" {
-  let session : MoonCodeSession = @json.from_json({
+  let payload : Json = {
     "id": "session-json",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
@@ -145,7 +233,11 @@ test "MoonCode session decodes optional runtime explanation" {
       "verified_test_count": 0,
       "pending_diff_count": 0,
     },
-  })
+  }
+  guard @mooncode_core.decode_mooncode_selected_session(payload) is Ok(summary) else {
+    fail("expected typed MoonCode session")
+  }
+  let session = mooncode_local_session_from_summary(summary, None)
   assert_true(session.last_message is Some("Build the helper"))
   assert_true(
     session.mooncode_runtime_detail is Some("MoonClaw daemon is not running"),
@@ -182,8 +274,8 @@ fn code_mode_test_conversation(
     workspace_id: "book-demo",
     workspace_name: "Demo Book",
     turn_count: turns.length(),
-    revision: turns.length() * 2,
-    last_sequence: turns.length() * 2,
+    revision: (turns.length() * 2).to_string(),
+    last_sequence: (turns.length() * 2).to_string(),
     source_event_count: turns.length() * 2,
     turns,
     extensions: {},
@@ -203,62 +295,63 @@ fn code_mode_test_turn(
   let payload : Json = {
     "kind": "mooncode-conversation",
     "protocol": "mooncode.v1",
-    "contract_id": "moonsuite-conversation.v2",
+    "contract_id": "moonsuite-conversation.v3",
     "session_id": "session-approval",
     "workspace_id": "book-demo",
     "workspace_name": "Demo Book",
     "turn_count": 1,
-    "revision": 2,
-    "last_sequence": 2,
+    "revision": "2",
+    "last_sequence": "2",
     "source_event_count": 2,
-    "turns": [{
-      "kind": "mooncode-conversation-turn",
-      "turn_id": id,
-      "client_turn_id": turn_client_id,
-      "command_id": id,
-      "ordinal": 0,
-      "status": status,
-      "started_at": "2026-06-30T00:00:00Z",
-      "updated_at": "2026-06-30T00:00:01Z",
-      "user": {
-        "item_id": "",
-        "role": "user",
-        "content": user,
-        "status": "done",
-        "command_id": id,
+    "turns": [
+      {
+        "kind": "mooncode-conversation-turn",
+        "turn_id": id,
         "client_turn_id": turn_client_id,
-      },
-      "work": {
-        "item_id": "turn:\{id}:work",
+        "command_id": id,
+        "ordinal": 0,
         "status": status,
-        "summary": if steps.length() > 0 {
-          json_field_string(
-            steps[steps.length() - 1],
-            "title",
-            default="Completed work",
-          )
-        } else {
-          "Completed work"
-        },
-        "steps": Json::array(steps),
-        "live": {},
-      },
-      "assistant": if assistant == "" {
-        Json::null()
-      } else {
-        {
+        "started_at": "2026-06-30T00:00:00Z",
+        "updated_at": "2026-06-30T00:00:01Z",
+        "user": {
           "item_id": "",
-          "role": "assistant",
-          "content": assistant,
-          "status": status,
+          "role": "user",
+          "content": user,
+          "status": "done",
           "command_id": id,
           "client_turn_id": turn_client_id,
-        }
+        },
+        "work": {
+          "item_id": "turn:\{id}:work",
+          "status": status,
+          "summary": if steps.length() > 0 {
+            json_field_string(
+              steps[steps.length() - 1],
+              "title",
+              default="Completed work",
+            )
+          } else {
+            "Completed work"
+          },
+          "steps": Json::array(steps),
+          "live": {},
+        },
+        "assistant": if assistant == "" {
+          Json::null()
+        } else {
+          {
+            "item_id": "",
+            "role": "assistant",
+            "content": assistant,
+            "status": status,
+            "command_id": id,
+            "client_turn_id": turn_client_id,
+          }
+        },
       },
-    }],
+    ],
   }
-  guard @mooncode_core.decode_mooncode_conversation(payload)
-    is Supported(conversation) else {
+  guard @mooncode_core.decode_mooncode_conversation(payload) is Ok(conversation) else {
     abort("expected canonical test conversation to decode")
   }
   conversation.turns[0]
@@ -753,7 +846,7 @@ test "code mode selecting loaded session keeps selection" {
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
     mooncode_watch_generation: 4,
-    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(9, "11"),
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor("9", "11"),
   }
   let (_, next) = update_mooncode_session_actions(
     code_mode_test_dispatch,
@@ -763,7 +856,7 @@ test "code mode selecting loaded session keeps selection" {
   assert_eq(next.selected_mooncode_session_id, "session-a")
   assert_false(next.mooncode_new_chat_active)
   assert_eq(next.mooncode_watch_generation, 5)
-  assert_eq(next.mooncode_watch_cursor.revision(), 0)
+  assert_eq(next.mooncode_watch_cursor.revision(), "0")
   assert_eq(next.mooncode_watch_cursor.sequence(), "0")
 }
 
@@ -917,7 +1010,7 @@ test "code mode listing outage preserves selected terminal conversation" {
     selected_mooncode_session_id: session.id,
     mooncode_sessions: [session],
     mooncode_watch_generation: 4,
-    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(2, "0"),
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor("2", "0"),
     mooncode_watch_status: "reconnecting",
   }
   let (_, next) = update_mooncode_session_results(
@@ -928,7 +1021,7 @@ test "code mode listing outage preserves selected terminal conversation" {
   assert_eq(next.selected_mooncode_session_id, session.id)
   assert_eq(next.mooncode_sessions.length(), 1)
   assert_eq(next.mooncode_watch_generation, 4)
-  assert_eq(next.mooncode_watch_cursor.revision(), 2)
+  assert_eq(next.mooncode_watch_cursor.revision(), "2")
   assert_eq(next.mooncode_watch_status, "reconnecting")
   let rows = code_mode_test_transcript_rows(next, next.mooncode_sessions[0])
   assert_eq(rows.length(), 2)
@@ -2088,8 +2181,14 @@ test "code mode renders a pending approval inside its canonical work turn" {
       guard row.approval is Some(approval) else {
         fail("expected typed approval snapshot")
       }
-      assert_eq(approval.approval_id(), approval_id)
-      assert_eq(approval.state(), @mooncode_core.MoonCodeApprovalState::Pending)
+      assert_true(
+        approval
+        is @mooncode_core.MoonCodeApproval::Pending(
+          approval_id=actual_approval_id,
+          ..
+        ) &&
+        actual_approval_id == approval_id,
+      )
     }
     None => fail("expected canonical approval work row")
   }
@@ -2105,19 +2204,13 @@ test "code mode renders a pending approval inside its canonical work turn" {
   }
   let (_, approved) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    DecideMoonCodeTool(
-      approval,
-      @mooncode_core.MoonCodeApprovalDecision::Approve,
-    ),
+    DecideMoonCodeTool(approval, ApproveMoonCodeTool),
     model,
   )
   assert_eq(approved.mooncode_composer_status, "Approval sent to MoonClaw")
   let (_, rejected) = update_mooncode_session_actions(
     code_mode_test_dispatch,
-    DecideMoonCodeTool(
-      approval,
-      @mooncode_core.MoonCodeApprovalDecision::Reject,
-    ),
+    DecideMoonCodeTool(approval, RejectMoonCodeTool),
     model,
   )
   assert_eq(rejected.mooncode_composer_status, "Rejection sent to MoonClaw")
@@ -2493,7 +2586,7 @@ test "code mode ignores unchanged canonical conversation revisions" {
     title: "Stable title",
     mooncode_conversation: Some({
       ..code_mode_test_conversation("session-a", [turn]),
-      revision: 4,
+      revision: "4",
     }),
   }
   let unchanged = {
@@ -2501,7 +2594,7 @@ test "code mode ignores unchanged canonical conversation revisions" {
     title: "Polling replacement",
     mooncode_conversation: Some({
       ..code_mode_test_conversation("session-a", [turn]),
-      revision: 4,
+      revision: "4",
     }),
   }
   let preserved = mooncode_upsert_session_if_revision_changed(
@@ -2514,14 +2607,14 @@ test "code mode ignores unchanged canonical conversation revisions" {
     title: "Regressed title",
     mooncode_conversation: Some({
       ..code_mode_test_conversation("session-a", [turn]),
-      revision: 3,
+      revision: "3",
     }),
   }
   let still_preserved = mooncode_upsert_session_if_revision_changed(
     preserved, regressed,
   )
   assert_eq(still_preserved[0].title, "Stable title")
-  assert_eq(mooncode_session_conversation_revision(still_preserved[0]), 4)
+  assert_eq(mooncode_session_conversation_revision(still_preserved[0]), "4")
   let model = {
     ..init_model(),
     workspace_mode: MoonCode,
@@ -2533,25 +2626,49 @@ test "code mode ignores unchanged canonical conversation revisions" {
     LoadedMoonCodeWatch(
       0,
       "session-a",
-      code_mode_test_watch_heartbeat("session-a", 4, "2"),
+      code_mode_test_watch_heartbeat("session-a", "4", "2"),
     ),
     model,
   )
   assert_eq(unchanged_model.mooncode_sessions[0].title, "Stable title")
   assert_eq(
     mooncode_session_conversation_revision(unchanged_model.mooncode_sessions[0]),
-    4,
+    "4",
   )
   let advanced = {
     ..unchanged,
     title: "Advanced title",
     mooncode_conversation: Some({
       ..code_mode_test_conversation("session-a", [turn]),
-      revision: 5,
+      revision: "5",
     }),
   }
   let updated = mooncode_upsert_session_if_revision_changed(preserved, advanced)
   assert_eq(updated[0].title, "Advanced title")
+}
+
+///|
+test "canonical decimal revisions compare by magnitude" {
+  assert_true(mooncode_decimal_compare("10", "9") > 0)
+  assert_true(mooncode_decimal_compare("9", "10") < 0)
+  assert_eq(mooncode_decimal_compare("00010", "10"), 0)
+  assert_true(mooncode_decimal_compare("100000000000000000000", "9") > 0)
+  let turn = code_mode_test_turn("decimal-order", "Prompt")
+  let existing = {
+    ..code_mode_test_session("decimal-session"),
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("decimal-session", [turn]),
+      revision: "9",
+    }),
+  }
+  let listed = {
+    ..existing,
+    mooncode_conversation: Some({
+      ..code_mode_test_conversation("decimal-session", [turn]),
+      revision: "10",
+    }),
+  }
+  assert_false(mooncode_should_preserve_selected_conversation(existing, listed))
 }
 
 ///|
@@ -2562,7 +2679,7 @@ test "code mode delayed command response cannot replace a newer turn" {
     title: "Current title",
     mooncode_conversation: Some({
       ..code_mode_test_conversation("session-a", [turn]),
-      revision: 8,
+      revision: "8",
     }),
   }
   let delayed = {
@@ -2570,14 +2687,14 @@ test "code mode delayed command response cannot replace a newer turn" {
     title: "Delayed title",
     mooncode_conversation: Some({
       ..code_mode_test_conversation("session-a", [turn]),
-      revision: 6,
+      revision: "6",
     }),
   }
   let other = code_mode_test_session("session-b", status="done")
   let updated = mooncode_upsert_session_at_top([other, existing], delayed)
   assert_eq(updated[0].id, "session-a")
   assert_eq(updated[0].title, "Current title")
-  assert_eq(mooncode_session_conversation_revision(updated[0]), 8)
+  assert_eq(mooncode_session_conversation_revision(updated[0]), "8")
   assert_eq(updated[1].id, "session-b")
 }
 
@@ -2604,9 +2721,9 @@ test "code mode stale canonical watch response is ignored" {
       0,
       "session-b",
       @mooncode_core.Rollback(
-        cursor=@mooncode_core.mooncode_watch_cursor(4, "1"),
+        cursor=@mooncode_core.mooncode_watch_cursor("4", "1"),
         session_id="session-a",
-        received_revision=2,
+        received_revision="2",
       ),
     ),
     model,
@@ -2628,7 +2745,7 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
     title: "Stable title",
     mooncode_conversation: Some({
       ..code_mode_test_conversation("session-a", [turn]),
-      revision: 8,
+      revision: "8",
     }),
   }
   let model = {
@@ -2637,7 +2754,7 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
     mooncode_watch_generation: 4,
-    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(8, "11"),
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor("8", "11"),
     mooncode_watch_failure_count: 4,
   }
   let (_, next) = update_mooncode_session_results(
@@ -2645,16 +2762,16 @@ test "code mode canonical watch heartbeat preserves the last good transcript" {
     LoadedMoonCodeWatch(
       4,
       "session-a",
-      code_mode_test_watch_heartbeat("session-a", 8, "11"),
+      code_mode_test_watch_heartbeat("session-a", "8", "11"),
     ),
     model,
   )
   assert_eq(next.mooncode_sessions[0].title, "Stable title")
   assert_eq(
     mooncode_session_conversation_revision(next.mooncode_sessions[0]),
-    8,
+    "8",
   )
-  assert_eq(next.mooncode_watch_cursor.revision(), 8)
+  assert_eq(next.mooncode_watch_cursor.revision(), "8")
   assert_eq(next.mooncode_watch_cursor.sequence(), "11")
   assert_eq(next.mooncode_watch_status, "watching")
   assert_eq(next.mooncode_watch_failure_count, 0)
@@ -2677,7 +2794,7 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
           assistant="Current answer",
         ),
       ]),
-      revision: 8,
+      revision: "8",
     }),
   }
   let stale = {
@@ -2687,7 +2804,7 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
       ..code_mode_test_conversation("session-a", [
         code_mode_test_turn("turn-a", "Old prompt", assistant="Old answer"),
       ]),
-      revision: 6,
+      revision: "6",
     }),
   }
   let model = {
@@ -2696,7 +2813,7 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [current],
     mooncode_watch_generation: 3,
-    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(8, "5"),
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor("8", "5"),
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
@@ -2704,9 +2821,9 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
       3,
       "session-a",
       @mooncode_core.Rollback(
-        cursor=@mooncode_core.mooncode_watch_cursor(8, "12"),
+        cursor=@mooncode_core.mooncode_watch_cursor("8", "12"),
         session_id="session-a",
-        received_revision=4,
+        received_revision="4",
       ),
     ),
     model,
@@ -2714,9 +2831,9 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
   assert_eq(next.mooncode_sessions[0].title, "Current title")
   assert_eq(
     mooncode_session_conversation_revision(next.mooncode_sessions[0]),
-    8,
+    "8",
   )
-  assert_eq(next.mooncode_watch_cursor.revision(), 8)
+  assert_eq(next.mooncode_watch_cursor.revision(), "8")
   assert_eq(next.mooncode_watch_cursor.sequence(), "12")
 }
 
@@ -2736,7 +2853,7 @@ test "code mode watch disconnect preserves transcript while reconnecting" {
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
     mooncode_watch_generation: 9,
-    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(2, "4"),
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor("2", "4"),
   }
   let (_, next) = update_mooncode_session_results(
     code_mode_test_dispatch,
@@ -2790,7 +2907,7 @@ test "code mode replaced watch leaves the healthy replacement alone" {
     selected_mooncode_session_id: "session-a",
     mooncode_sessions: [session],
     mooncode_watch_generation: 9,
-    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor(8, "4"),
+    mooncode_watch_cursor: @mooncode_core.mooncode_watch_cursor("8", "4"),
     mooncode_watch_status: "connecting",
     mooncode_watch_failure_count: 3,
     mooncode_composer_status: "message queued for MoonCode",
@@ -2808,7 +2925,7 @@ test "code mode replaced watch leaves the healthy replacement alone" {
     model,
   )
   assert_eq(next.mooncode_watch_status, "connecting")
-  assert_eq(next.mooncode_watch_cursor.revision(), 8)
+  assert_eq(next.mooncode_watch_cursor.revision(), "8")
   assert_eq(next.mooncode_watch_cursor.sequence(), "4")
   assert_eq(next.mooncode_composer_status, "message queued for MoonCode")
   assert_eq(next.mooncode_watch_failure_count, 3)

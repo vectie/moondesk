@@ -1,11 +1,13 @@
 ///|
 fn supported_runtime_capability_subset(protocol : String) -> Json {
-  let native = @mooncode_core.native_capability_endpoints()
+  let capability = @mooncode_core.mooncode_capability()
+  let surface = adapter_capability_surface(capability)
+  let all_endpoints = json_string_array_items(surface, "required_endpoints")
   let required_endpoints = [
-    native.capabilities,
-    native.session_list,
-    native.session_turns,
-    native.stream,
+    all_endpoints[0],
+    all_endpoints[1],
+    all_endpoints[5],
+    all_endpoints[9],
   ]
   let required_tools = ["read", "edit", "write", "shell"]
   {
@@ -63,7 +65,7 @@ fn supported_runtime_capability_subset(protocol : String) -> Json {
 test "adapter serializes current v1 capability with transport parity" {
   let payload = capabilities_json()
   assert_true(
-    @mooncode_core.decode_mooncode_capability(payload) is Supported(value) &&
+    @mooncode_core.decode_mooncode_capability(payload) is Ok(value) &&
     value.protocol == "mooncode.v1" &&
     value.session_owner == "moonclaw",
   )

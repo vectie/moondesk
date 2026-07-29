@@ -1,5 +1,5 @@
 ///|
-pub(all) struct NativeCapabilityEndpoints {
+priv struct NativeCapabilityEndpoints {
   capabilities : String
   session_list : String
   session_listing : String
@@ -20,7 +20,7 @@ pub(all) struct NativeCapabilityEndpoints {
 } derive(Debug, Eq, ToJson, FromJson)
 
 ///|
-pub fn native_capability_endpoints() -> NativeCapabilityEndpoints {
+fn native_capability_endpoints() -> NativeCapabilityEndpoints {
   {
     capabilities: "/v1/code/capabilities",
     session_list: "/v1/code/sessions?book_root=<path>",
@@ -43,7 +43,7 @@ pub fn native_capability_endpoints() -> NativeCapabilityEndpoints {
 }
 
 ///|
-pub fn NativeCapabilityEndpoints::required_endpoints(
+fn NativeCapabilityEndpoints::required_endpoints(
   self : NativeCapabilityEndpoints,
 ) -> Array[String] {
   [
@@ -68,7 +68,7 @@ pub fn NativeCapabilityEndpoints::required_endpoints(
 }
 
 ///|
-pub fn native_capability_target_description() -> String {
+fn native_capability_target_description() -> String {
   let endpoints = native_capability_required_endpoints()
   if endpoints.length() == 0 {
     ""
@@ -85,7 +85,7 @@ pub fn native_capability_target_description() -> String {
 }
 
 ///|
-pub fn native_endpoint_component(value : String) -> String {
+fn native_endpoint_component(value : String) -> String {
   let pieces : Array[String] = []
   for byte in @encoding/utf8.encode(value) {
     if native_endpoint_unreserved_byte(byte) {
@@ -173,19 +173,19 @@ fn native_endpoint_url(
 }
 
 ///|
-pub fn native_capabilities_endpoint() -> String {
+fn native_capabilities_endpoint() -> String {
   native_endpoint_url(["v1", "code", "capabilities"])
 }
 
 ///|
-pub fn native_session_list_endpoint(book_root : String) -> String {
+fn native_session_list_endpoint(book_root : String) -> String {
   native_endpoint_url(["v1", "code", "sessions"], query=[
     ("book_root", book_root),
   ])
 }
 
 ///|
-pub fn native_session_listing_endpoint(book_root : String) -> String {
+fn native_session_listing_endpoint(book_root : String) -> String {
   native_endpoint_url(["v1", "code", "sessions"], query=[
     ("book_root", book_root),
     ("format", "listing"),
@@ -193,7 +193,7 @@ pub fn native_session_listing_endpoint(book_root : String) -> String {
 }
 
 ///|
-pub fn native_archived_session_listing_endpoint(book_root : String) -> String {
+fn native_archived_session_listing_endpoint(book_root : String) -> String {
   native_endpoint_url(["v1", "code", "sessions"], query=[
     ("book_root", book_root),
     ("format", "listing"),
@@ -202,7 +202,7 @@ pub fn native_archived_session_listing_endpoint(book_root : String) -> String {
 }
 
 ///|
-pub fn native_session_show_endpoint(
+fn native_session_show_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -212,22 +212,22 @@ pub fn native_session_show_endpoint(
 }
 
 ///|
-pub fn native_session_commands_endpoint(session_id : String) -> String {
+fn native_session_commands_endpoint(session_id : String) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "commands"])
 }
 
 ///|
-pub fn native_session_turns_endpoint(session_id : String) -> String {
+fn native_session_turns_endpoint(session_id : String) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "turns"])
 }
 
 ///|
-pub fn native_session_lifecycle_endpoint(session_id : String) -> String {
+fn native_session_lifecycle_endpoint(session_id : String) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "lifecycle"])
 }
 
 ///|
-pub fn native_runtime_control_endpoint(
+fn native_runtime_control_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -238,7 +238,7 @@ pub fn native_runtime_control_endpoint(
 }
 
 ///|
-pub fn native_runtime_claim_endpoint(
+fn native_runtime_claim_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -266,7 +266,7 @@ fn native_stream_endpoint_raw(
 }
 
 ///|
-pub fn native_stream_endpoint_for_cursor(
+fn native_stream_endpoint_for_cursor(
   session_id : String,
   book_root : String,
   format : String,
@@ -285,7 +285,7 @@ pub fn native_stream_endpoint_for_cursor(
 }
 
 ///|
-pub fn native_runtime_turn_endpoint(
+fn native_runtime_turn_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -295,7 +295,7 @@ pub fn native_runtime_turn_endpoint(
 }
 
 ///|
-pub fn native_runtime_loop_endpoint(
+fn native_runtime_loop_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -305,7 +305,7 @@ pub fn native_runtime_loop_endpoint(
 }
 
 ///|
-pub fn native_runtime_service_endpoint(
+fn native_runtime_service_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -316,7 +316,7 @@ pub fn native_runtime_service_endpoint(
 }
 
 ///|
-pub fn native_runtime_events_endpoint(
+fn native_runtime_events_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -327,7 +327,7 @@ pub fn native_runtime_events_endpoint(
 }
 
 ///|
-pub fn native_tool_exec_endpoint(
+fn native_tool_exec_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -337,7 +337,7 @@ pub fn native_tool_exec_endpoint(
 }
 
 ///|
-pub fn native_eval_report_endpoint(
+fn native_eval_report_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {
@@ -347,7 +347,7 @@ pub fn native_eval_report_endpoint(
 }
 
 ///|
-pub fn native_package_result_endpoint(
+fn native_package_result_endpoint(
   session_id : String,
   book_root : String,
 ) -> String {

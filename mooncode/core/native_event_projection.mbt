@@ -1,20 +1,20 @@
 ///|
-pub fn native_event_projection_contract_id() -> String {
+fn native_event_projection_contract_id() -> String {
   "mooncode-native-event-projection.v1"
 }
 
 ///|
-pub fn native_event_projection_contract_kind() -> String {
+fn native_event_projection_contract_kind() -> String {
   "mooncode-native-event-projection-contract"
 }
 
 ///|
-pub fn native_event_projection_report_kind() -> String {
+fn native_event_projection_report_kind() -> String {
   "mooncode-native-runtime-contract-report"
 }
 
 ///|
-pub fn moonclaw_event_mapping_json() -> Json {
+fn moonclaw_event_mapping_json() -> Json {
   {
     "AssistantMessageDelta": {
       "event": runtime_event_assistant_delta(),
@@ -50,22 +50,22 @@ pub fn moonclaw_event_mapping_json() -> Json {
 }
 
 ///|
-pub fn native_event_projection_command_scope_keys() -> Array[String] {
+fn native_event_projection_command_scope_keys() -> Array[String] {
   ["command_id", "commandId", "mooncode_command_id"]
 }
 
 ///|
-pub fn native_event_projection_diagnostic_sources() -> Array[String] {
+fn native_event_projection_diagnostic_sources() -> Array[String] {
   ["moonclaw-native-moon-check-watcher"]
 }
 
 ///|
-pub fn native_event_projection_diagnostic_titles() -> Array[String] {
+fn native_event_projection_diagnostic_titles() -> Array[String] {
   ["MoonCode moon_check update"]
 }
 
 ///|
-pub fn native_event_has_command_scope(event : Json) -> Bool {
+fn native_event_has_command_scope(event : Json) -> Bool {
   let packet = native_event_json_object_field_or_empty(event, "command_packet")
   native_event_json_string(packet, "command_id", default="") != "" ||
   native_event_first_string(
@@ -77,7 +77,7 @@ pub fn native_event_has_command_scope(event : Json) -> Bool {
 }
 
 ///|
-pub fn native_event_is_diagnostic_only(event : Json) -> Bool {
+fn native_event_is_diagnostic_only(event : Json) -> Bool {
   let kind = native_event_kind(event)
   let source = native_event_json_string(event, "source", default="")
   let title = native_event_json_string(event, "title", default="")
@@ -87,7 +87,7 @@ pub fn native_event_is_diagnostic_only(event : Json) -> Bool {
 }
 
 ///|
-pub fn native_event_requires_command_scope(event : Json) -> Bool {
+fn native_event_requires_command_scope(event : Json) -> Bool {
   let lane = native_event_json_string(
     event,
     "lane",
@@ -106,18 +106,18 @@ pub fn native_event_requires_command_scope(event : Json) -> Bool {
 }
 
 ///|
-pub fn native_event_is_transcript(event : Json) -> Bool {
+fn native_event_is_transcript(event : Json) -> Bool {
   native_event_json_string(event, "lane", default="") == event_lane_transcript()
 }
 
 ///|
-pub fn native_event_is_progress(event : Json) -> Bool {
+fn native_event_is_progress(event : Json) -> Bool {
   let lane = native_event_json_string(event, "lane", default="")
   event_lane_is_progress(lane)
 }
 
 ///|
-pub fn native_event_projection_problem(event : Json, reason~ : String) -> Json {
+fn native_event_projection_problem(event : Json, reason~ : String) -> Json {
   {
     "reason": reason,
     "id": native_event_json_string(event, "id", default=""),
@@ -134,7 +134,7 @@ pub fn native_event_projection_problem(event : Json, reason~ : String) -> Json {
 }
 
 ///|
-pub fn native_event_projection_report(
+fn native_event_projection_report(
   native_report : Json,
   session_id~ : String,
   observed_at~ : String,
@@ -206,7 +206,7 @@ pub fn native_event_projection_report(
 }
 
 ///|
-pub fn native_events_for_canonical_projection(
+fn native_events_for_canonical_projection(
   native_report : Json,
 ) -> Array[Json] {
   let events = native_event_json_array_items(native_report, "events")
@@ -221,7 +221,7 @@ pub fn native_events_for_canonical_projection(
 }
 
 ///|
-pub fn native_event_projection_contract_json() -> Json {
+fn native_event_projection_contract_json() -> Json {
   {
     "kind": native_event_projection_contract_kind(),
     "protocol": protocol_version(),

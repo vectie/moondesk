@@ -43,16 +43,6 @@ pub(all) struct MoonCodeConversation {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum MoonCodeConversationDecodeResult {
-  Absent
-  Supported(MoonCodeConversation)
-  UnsupportedProtocol(String)
-  UnsupportedContract(String)
-  Stale(revision~ : String, current_revision~ : String)
-  Malformed(String)
-} derive(Debug, Eq)
-
-///|
 fn conversation_string(fields : Map[String, Json], key : String) -> String? {
   match fields.get(key) {
     Some(String(value)) => Some(value)
@@ -198,8 +188,7 @@ fn decode_conversation_approvals(
     match decode_mooncode_approval(evidence, session_id, command_id) {
       Ok(approval) => approvals.push(approval)
       Err(Malformed(message)) => return Err(message)
-      Err(UnsupportedState(state)) =>
-        return Err("unsupported approval state: \{state}")
+      Err(_) => return Err("approval evidence is invalid")
     }
   }
   Ok(approvals)
@@ -283,46 +272,48 @@ fn decode_conversation_turn(
 pub fn decode_mooncode_conversation(
   payload : Json,
   current_revision? : String = "0",
-) -> MoonCodeConversationDecodeResult {
+) -> Result[MoonCodeConversation, MoonCodeFailure] {
   if payload is Null {
-    return Absent
+    return Err(Absent)
   }
   guard payload is Object(fields) else {
-    return Malformed("conversation must be an object or null")
+    return Err(Malformed("conversation must be an object or null"))
   }
   guard conversation_string(fields, "protocol") is Some(protocol) else {
-    return Malformed("conversation protocol must be a string")
+    return Err(Malformed("conversation protocol must be a string"))
   }
   if protocol != protocol_version() {
-    return UnsupportedProtocol(protocol)
+    return Err(UnsupportedProtocol(protocol))
   }
   guard conversation_string(fields, "contract_id") is Some(contract_id) else {
-    return Malformed("conversation contract_id must be a string")
+    return Err(Malformed("conversation contract_id must be a string"))
   }
   if contract_id != conversation_contract_id() {
-    return UnsupportedContract(contract_id)
+    return Err(UnsupportedContract(contract_id))
   }
   guard conversation_string(fields, "kind") is Some(kind) else {
-    return Malformed("conversation kind must be a string")
+    return Err(Malformed("conversation kind must be a string"))
   }
   guard kind == conversation_kind() else {
-    return Malformed("conversation kind is invalid")
+    return Err(Malformed("conversation kind is invalid"))
   }
   guard conversation_string(fields, "session_id") is Some(session_id) else {
-    return Malformed("conversation session_id must be a string")
+    return Err(Malformed("conversation session_id must be a string"))
   }
   guard fields.get("revision") is Some(String(revision)) &&
     canonical_decimal_is_valid(revision) else {
-    return Malformed("conversation revision must be a canonical decimal string")
+    return Err(
+      Malformed("conversation revision must be a canonical decimal string"),
+    )
   }
   if canonical_decimal_compare(revision, current_revision) < 0 {
-    return Stale(revision~, current_revision~)
+    return Err(Stale(revision~, current_revision~))
   }
   let optional_strings = ["workspace_id", "workspace_name"]
   let string_values : Array[String] = []
   for key in optional_strings {
     guard conversation_optional_string(fields, key, "") is Some(value) else {
-      return Malformed("conversation \{key} must be a string")
+      return Err(Malformed("conversation \{key} must be a string"))
     }
     string_values.push(value)
   }
@@ -330,27 +321,27 @@ pub fn decode_mooncode_conversation(
   let int_values : Array[Int] = []
   for key in optional_ints {
     guard conversation_optional_int(fields, key, 0) is Some(value) else {
-      return Malformed("conversation \{key} must be a number")
+      return Err(Malformed("conversation \{key} must be a number"))
     }
     int_values.push(value)
   }
   guard fields.get("last_sequence") is Some(String(last_sequence)) &&
     canonical_decimal_is_valid(last_sequence) else {
-    return Malformed(
-      "conversation last_sequence must be a canonical decimal string",
+    return Err(
+      Malformed("conversation last_sequence must be a canonical decimal string"),
     )
   }
   guard fields.get("turns") is Some(Array(raw_turns)) else {
-    return Malformed("conversation turns must be an array")
+    return Err(Malformed("conversation turns must be an array"))
   }
   let turns : Array[MoonCodeTurn] = []
   for value in raw_turns {
     match decode_conversation_turn(value, session_id) {
       Ok(turn) => turns.push(turn)
-      Err(error) => return Malformed(error)
+      Err(error) => return Err(Malformed(error))
     }
   }
-  Supported({
+  Ok({
     kind,
     protocol,
     contract_id,
@@ -419,26 +410,4 @@ pub fn encode_mooncode_conversation(
   fields["source_event_count"] = conversation.source_event_count.to_json()
   fields["turns"] = Json::array(turns)
   Json::object(fields)
-}
-
-///|
-pub impl FromJson for MoonCodeConversation with fn from_json(value, path) {
-  match decode_mooncode_conversation(value) {
-    Supported(conversation) => conversation
-    Absent =>
-      raise @json.JsonDecodeError((path, "canonical conversation is absent"))
-    UnsupportedProtocol(protocol) =>
-      raise @json.JsonDecodeError(
-        (path, "unsupported conversation protocol \{protocol}"),
-      )
-    UnsupportedContract(contract) =>
-      raise @json.JsonDecodeError(
-        (path, "unsupported conversation contract \{contract}"),
-      )
-    Stale(revision~, current_revision~) =>
-      raise @json.JsonDecodeError(
-        (path, "stale conversation revision \{revision} < \{current_revision}"),
-      )
-    Malformed(error) => raise @json.JsonDecodeError((path, error))
-  }
 }

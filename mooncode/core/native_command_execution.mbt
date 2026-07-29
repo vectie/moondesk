@@ -2,72 +2,72 @@
 // Native command execution, tool, and result contracts shared by MoonDesk and MoonClaw.
 
 ///|
-pub fn native_command_contract_id() -> String {
+fn native_command_contract_id() -> String {
   "mooncode-native-command-execution.v1"
 }
 
 ///|
-pub fn native_command_execution_plan_kind() -> String {
+fn native_command_execution_plan_kind() -> String {
   "mooncode-native-command-execution-plan"
 }
 
 ///|
-pub fn native_command_tool_contract_kind() -> String {
+fn native_command_tool_contract_kind() -> String {
   "mooncode-native-tool-contract"
 }
 
 ///|
-pub fn native_command_result_contract_kind() -> String {
+fn native_command_result_contract_kind() -> String {
   "mooncode-native-result-contract"
 }
 
 ///|
-pub fn native_command_eval_report_manifest_event() -> String {
+fn native_command_eval_report_manifest_event() -> String {
   "eval_report.manifest"
 }
 
 ///|
-pub fn native_command_package_manifest_event() -> String {
+fn native_command_package_manifest_event() -> String {
   "package.manifest"
 }
 
 ///|
-pub fn native_command_package_index_event() -> String {
+fn native_command_package_index_event() -> String {
   "package.index"
 }
 
 ///|
-pub fn native_command_review_receipt_event() -> String {
+fn native_command_review_receipt_event() -> String {
   "review.receipt"
 }
 
 ///|
-pub fn native_command_tool_authorization_event() -> String {
+fn native_command_tool_authorization_event() -> String {
   "tool_authorization"
 }
 
 ///|
-pub fn native_command_runtime_event_sink() -> String {
+fn native_command_runtime_event_sink() -> String {
   "POST /api/mooncode/sessions/<session-id>/runtime-events"
 }
 
 ///|
-pub fn native_command_eval_report_sink() -> String {
+fn native_command_eval_report_sink() -> String {
   "POST /api/mooncode/sessions/<session-id>/eval-report"
 }
 
 ///|
-pub fn native_command_runtime_replay_sink() -> String {
+fn native_command_runtime_replay_sink() -> String {
   "POST /api/mooncode/sessions/<session-id>/runtime-replay"
 }
 
 ///|
-pub fn native_command_runtime_claim_sink() -> String {
+fn native_command_runtime_claim_sink() -> String {
   "POST /api/mooncode/sessions/<session-id>/runtime-claim"
 }
 
 ///|
-pub fn native_command_tool_sequence(action : String) -> Array[String] {
+fn native_command_tool_sequence(action : String) -> Array[String] {
   if command_action_is_test(action) ||
     command_action_is_eval(action) ||
     action == command_commit() {
@@ -133,7 +133,7 @@ pub fn native_command_tool_sequence(action : String) -> Array[String] {
 }
 
 ///|
-pub fn native_command_allowed_tool_sequence(
+fn native_command_allowed_tool_sequence(
   action : String,
   web_search : Bool,
 ) -> Array[String] {
@@ -153,7 +153,7 @@ pub fn native_command_allowed_tool_sequence(
 }
 
 ///|
-pub fn native_command_expected_events(action : String) -> Array[String] {
+fn native_command_expected_events(action : String) -> Array[String] {
   if command_action_is_test(action) {
     [
       runtime_event_tool_call(),
@@ -233,7 +233,7 @@ pub fn native_command_expected_events(action : String) -> Array[String] {
 }
 
 ///|
-pub fn native_command_required_outputs(action : String) -> Array[String] {
+fn native_command_required_outputs(action : String) -> Array[String] {
   if action == command_run_tests() {
     ["test command", "exit code", "test_result event"]
   } else if action == command_run_build() {
@@ -276,7 +276,7 @@ pub fn native_command_required_outputs(action : String) -> Array[String] {
 }
 
 ///|
-pub fn native_command_recommended_commands(
+fn native_command_recommended_commands(
   action : String,
   context_path : String,
 ) -> Array[String] {
@@ -315,7 +315,7 @@ pub fn native_command_recommended_commands(
 }
 
 ///|
-pub fn native_command_default_package_kind(action : String) -> String {
+fn native_command_default_package_kind(action : String) -> String {
   if action == command_package() {
     "app-tool"
   } else {
@@ -324,7 +324,7 @@ pub fn native_command_default_package_kind(action : String) -> String {
 }
 
 ///|
-pub fn native_command_tool_policies(
+fn native_command_tool_policies(
   action : String,
   context_path : String,
 ) -> Array[Json] {
@@ -336,7 +336,7 @@ pub fn native_command_tool_policies(
 }
 
 ///|
-pub fn native_command_tool_policy(
+fn native_command_tool_policy(
   tool : String,
   action : String,
   context_path : String,
@@ -547,7 +547,7 @@ fn native_command_tool_policy_entry(
 }
 
 ///|
-pub fn native_command_execution_plan(
+fn native_command_execution_plan(
   action : String,
   context_path : String,
   package_kind : String,
@@ -594,12 +594,12 @@ pub fn native_command_execution_plan(
 }
 
 ///|
-pub fn native_command_tool_contract(action : String) -> Json {
+fn native_command_tool_contract(action : String) -> Json {
   native_command_tool_contract_for_command(action, false)
 }
 
 ///|
-pub fn native_command_tool_contract_for_command(
+fn native_command_tool_contract_for_command(
   action : String,
   web_search : Bool,
 ) -> Json {
@@ -616,7 +616,7 @@ pub fn native_command_tool_contract_for_command(
 }
 
 ///|
-pub fn native_command_result_contract(action : String) -> Json {
+fn native_command_result_contract(action : String) -> Json {
   let required_events = native_command_expected_events(action)
   let required_outputs = native_command_required_outputs(action)
   let event_sink = native_command_runtime_event_sink()
@@ -644,7 +644,7 @@ pub fn native_command_result_contract(action : String) -> Json {
 }
 
 ///|
-pub fn native_command_execution_checklist(
+fn native_command_execution_checklist(
   action : String,
   required_events : Array[String],
   required_outputs : Array[String],
@@ -731,7 +731,7 @@ pub fn native_command_execution_checklist(
 }
 
 ///|
-pub fn native_command_execution_contract_json() -> Json {
+fn native_command_execution_contract_json() -> Json {
   {
     "kind": "mooncode-native-command-execution-contract",
     "protocol": protocol_version(),

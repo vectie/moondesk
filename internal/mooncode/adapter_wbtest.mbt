@@ -27,16 +27,28 @@ test "typed adapter derives stable acceptance identity from caller submission" {
     is Ok(command) else {
     fail("submission must decode")
   }
-  let first = accepted_command_packet(session, command, "2026-07-15T00:00:00Z")
-  let retry = accepted_command_packet(session, command, "2026-07-16T00:00:00Z")
-  assert_eq(first.command_id(), retry.command_id())
-  assert_eq(first.client_turn_id(), "client-one")
-  let body = native_command_body(session, command, first, Json::empty_object())
+  let body = native_command_body(
+    session,
+    command,
+    "2026-07-15T00:00:00Z",
+    Json::empty_object(),
+  )
+  let retry = native_command_body(
+    session,
+    command,
+    "2026-07-16T00:00:00Z",
+    Json::empty_object(),
+  )
   let packet = json_object_field_or_empty(body, "packet")
+  let retry_packet = json_object_field_or_empty(retry, "packet")
+  assert_eq(
+    json_string(packet, "command_id", default=""),
+    json_string(retry_packet, "command_id", default=""),
+  )
+  assert_eq(command.client_turn_id, "client-one")
   assert_eq(json_string(packet, "protocol", default=""), protocol_version())
   assert_eq(json_string(packet, "kind", default=""), "mooncode.command")
   assert_eq(json_string(packet, "status", default=""), "accepted")
-  assert_eq(json_string(packet, "command_id", default=""), first.command_id())
   assert_eq(json_string(packet, "client_turn_id", default=""), "client-one")
   assert_eq(json_string(packet, "action", default=""), "prompt")
   assert_eq(json_string(packet, "control", default=""), "prompt")
@@ -92,10 +104,9 @@ test "cancel adapter preserves the visible turn target" {
   guard decode_command_submission(payload) is Ok(command) else {
     fail("cancel command must decode")
   }
-  let accepted = accepted_command_packet(
-    session, command, "2026-07-15T00:00:00Z",
+  let body = native_command_body(
+    session, command, "2026-07-15T00:00:00Z", payload,
   )
-  let body = native_command_body(session, command, accepted, payload)
   assert_eq(json_string(body, "command", default=""), "cancel")
   assert_eq(
     json_string(
@@ -139,14 +150,18 @@ test "typed approval command keeps adapter and runtime packet wire parity" {
       ..
     },
   )
-  let accepted = accepted_command_packet(
-    session, command, "2026-07-29T00:00:00Z",
-  )
   let packet = json_object_field_or_empty(
-    native_command_body(session, command, accepted, Json::empty_object()),
+    native_command_body(
+      session,
+      command,
+      "2026-07-29T00:00:00Z",
+      Json::empty_object(),
+    ),
     "packet",
   )
   assert_eq(json_string(packet, "action", default=""), "approve_tool")
+  assert_eq(json_string(packet, "control", default=""), "command")
+  assert_eq(json_string(packet, "approval", default=""), "operator")
   assert_eq(json_string(packet, "approval_id", default=""), "approval-one")
   assert_eq(json_string(packet, "target_command_id", default=""), "command-one")
   assert_eq(json_string(packet, "tool_call_id", default=""), "call-one")
@@ -169,9 +184,17 @@ test "typed adapter conflicting idempotency payload derives a distinct identity"
       "conflicting submission must decode before route evidence rejects reuse",
     )
   }
+  let first_packet = json_object_field_or_empty(
+    native_command_body(session, first, "one", Json::empty_object()),
+    "packet",
+  )
+  let conflict_packet = json_object_field_or_empty(
+    native_command_body(session, conflict, "two", Json::empty_object()),
+    "packet",
+  )
   assert_false(
-    accepted_command_packet(session, first, "one").command_id() ==
-    accepted_command_packet(session, conflict, "two").command_id(),
+    json_string(first_packet, "command_id", default="") ==
+    json_string(conflict_packet, "command_id", default=""),
   )
 }
 
@@ -187,8 +210,7 @@ test "adapter preserves explicit planner limit and private runtime passthrough" 
     fail("planner command must decode")
   }
   let session : Json = { "id": "session-limit", "workspace_root": "/tmp/book" }
-  let accepted = accepted_command_packet(session, command, "now")
-  let body = native_command_body(session, command, accepted, {
+  let body = native_command_body(session, command, "now", {
     "runtime_tool_calls": [{ "tool": "finish" }],
   })
   let nested = json_object_field_or_empty(body, "payload")
@@ -216,7 +238,8 @@ test "capability declares one MoonClaw-owned journal" {
   assert_eq(json_string(ownership, "sessions", default=""), "moonclaw")
   let serialized = capability.stringify()
   assert_true(serialized.contains("journal.jsonl"))
-  assert_true(serialized.contains(@mooncode_core.journal_contract_id()))
+  let surface = adapter_capability_surface(@mooncode_core.mooncode_capability())
+  assert_true(serialized.contains(adapter_journal_contract_id(surface)))
   assert_false(serialized.contains("commands.jsonl"))
   assert_false(serialized.contains("\"events_jsonl\""))
   assert_false(serialized.contains("runtime-receipts.jsonl"))

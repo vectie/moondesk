@@ -12,9 +12,12 @@ pub(all) struct MoonCodeCapability {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum MoonCodeCapabilityDecodeResult {
-  Supported(MoonCodeCapability)
+pub(all) enum MoonCodeFailure {
+  Absent
   UnsupportedVersion(Int)
+  UnsupportedProtocol(String)
+  UnsupportedContract(String)
+  Stale(revision~ : String, current_revision~ : String)
   Malformed(String)
 } derive(Debug, Eq)
 
@@ -168,53 +171,57 @@ fn validate_nested_capability_contracts(fields : Map[String, Json]) -> String? {
 ///|
 pub fn decode_mooncode_capability(
   payload : Json,
-) -> MoonCodeCapabilityDecodeResult {
+) -> Result[MoonCodeCapability, MoonCodeFailure] {
   guard payload is Object(fields) else {
-    return Malformed("capability payload must be an object")
+    return Err(Malformed("capability payload must be an object"))
   }
   guard capability_string_field(payload, "component") is Some(component) else {
-    return Malformed("component must be a string")
+    return Err(Malformed("component must be a string"))
   }
   guard capability_string_field(payload, "provider") is Some(provider) else {
-    return Malformed("provider must be a string")
+    return Err(Malformed("provider must be a string"))
   }
   guard capability_string_field(payload, "protocol") is Some(protocol) else {
-    return Malformed("protocol must be a string")
+    return Err(Malformed("protocol must be a string"))
   }
   if protocol != "mooncode.v1" {
     guard explicit_contract_version(protocol, "mooncode.v") is Some(version) else {
-      return Malformed("protocol must identify a MoonCode protocol version")
+      return Err(
+        Malformed("protocol must identify a MoonCode protocol version"),
+      )
     }
-    return UnsupportedVersion(version)
+    return Err(UnsupportedVersion(version))
   }
   guard capability_string_field(payload, "capability_contract_id")
     is Some(capability_contract_id) else {
-    return Malformed("capability_contract_id must be a string")
+    return Err(Malformed("capability_contract_id must be a string"))
   }
   if capability_contract_id != mooncode_capability_contract_id() {
     guard explicit_contract_version(
         capability_contract_id, "mooncode-native-capability-surface.v",
       )
       is Some(version) else {
-      return Malformed(
-        "capability_contract_id must identify the native capability surface",
+      return Err(
+        Malformed(
+          "capability_contract_id must identify the native capability surface",
+        ),
       )
     }
-    return UnsupportedVersion(version)
+    return Err(UnsupportedVersion(version))
   }
   if validate_nested_capability_contracts(fields) is Some(reason) {
-    return Malformed(reason)
+    return Err(Malformed(reason))
   }
   let native_runtime_ready = match fields.get("native_runtime_ready") {
     Some(True) => true
     Some(False) => false
-    _ => return Malformed("native_runtime_ready must be a boolean")
+    _ => return Err(Malformed("native_runtime_ready must be a boolean"))
   }
   guard capability_string_field(payload, "runtime_owner") is Some(runtime_owner) else {
-    return Malformed("runtime_owner must be a string")
+    return Err(Malformed("runtime_owner must be a string"))
   }
   guard capability_string_field(payload, "session_owner") is Some(session_owner) else {
-    return Malformed("session_owner must be a string")
+    return Err(Malformed("session_owner must be a string"))
   }
   let extensions : Map[String, Json] = Map([])
   for key, value in fields {
@@ -236,9 +243,9 @@ pub fn decode_mooncode_capability(
       for key, value in ownership {
         ownership_extensions[key] = value
       }
-    Some(_) => return Malformed("ownership must be an object when present")
+    Some(_) => return Err(Malformed("ownership must be an object when present"))
   }
-  Supported({
+  Ok({
     component,
     provider,
     protocol,

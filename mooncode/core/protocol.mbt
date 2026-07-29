@@ -9,27 +9,27 @@ fn product_id() -> String {
 }
 
 ///|
-pub fn conversation_contract_id() -> String {
+fn conversation_contract_id() -> String {
   "moonsuite-conversation.v3"
 }
 
 ///|
-pub fn conversation_kind() -> String {
+fn conversation_kind() -> String {
   @conversation.conversation_kind(product_id=product_id())
 }
 
 ///|
-pub fn conversation_turn_kind() -> String {
+fn conversation_turn_kind() -> String {
   @conversation.turn_kind(product_id=product_id())
 }
 
 ///|
-pub fn conversation_message_roles() -> Array[String] {
+fn conversation_message_roles() -> Array[String] {
   ["user", "work", "assistant"]
 }
 
 ///|
-pub fn conversation_turn_required_fields() -> Array[String] {
+fn conversation_turn_required_fields() -> Array[String] {
   [
     "kind", "turn_id", "client_turn_id", "command_id", "ordinal", "status", "user",
     "work", "assistant",
@@ -37,7 +37,7 @@ pub fn conversation_turn_required_fields() -> Array[String] {
 }
 
 ///|
-pub fn conversation_contract_json() -> Json {
+fn conversation_contract_json() -> Json {
   {
     "kind": "moonsuite-conversation-contract",
     "protocol": protocol_version(),
@@ -80,17 +80,17 @@ pub fn conversation_contract_json() -> Json {
 }
 
 ///|
-pub fn native_capability_contract_id() -> String {
+fn native_capability_contract_id() -> String {
   "mooncode-native-capability-surface.v2"
 }
 
 ///|
-pub fn executable_book_lifecycle_contract_id() -> String {
+fn executable_book_lifecycle_contract_id() -> String {
   "mooncode-executable-book-lifecycle.v2"
 }
 
 ///|
-pub fn executable_book_lifecycle_steps() -> Array[String] {
+fn executable_book_lifecycle_steps() -> Array[String] {
   [
     "select_book", "start_session", "propose_change", "edit_code", "verify_code",
     "review_diff", "accept_result", "package_output", "resume_session",
@@ -98,7 +98,7 @@ pub fn executable_book_lifecycle_steps() -> Array[String] {
 }
 
 ///|
-pub fn executable_book_lifecycle_contract_json() -> Json {
+fn executable_book_lifecycle_contract_json() -> Json {
   {
     "kind": "mooncode-executable-book-lifecycle",
     "protocol": protocol_version(),
@@ -214,22 +214,22 @@ fn executable_book_lifecycle_step(
 }
 
 ///|
-pub fn native_capability_required_endpoints() -> Array[String] {
+fn native_capability_required_endpoints() -> Array[String] {
   native_capability_endpoints().required_endpoints()
 }
 
 ///|
-pub fn native_capability_required_tools() -> Array[String] {
+fn native_capability_required_tools() -> Array[String] {
   runtime_tool_native_required_tools()
 }
 
 ///|
-pub fn native_command_body_required_fields() -> Array[String] {
+fn native_command_body_required_fields() -> Array[String] {
   ["protocol", "session_id", "book_root", "packet"]
 }
 
 ///|
-pub fn native_command_body_supported_fields() -> Array[String] {
+fn native_command_body_supported_fields() -> Array[String] {
   [
     "protocol", "command", "text", "model", "session_id", "book_root", "context_path",
     "payload", "packet", "execution_plan", "tool_authorization", "tool_contract",
@@ -238,12 +238,12 @@ pub fn native_command_body_supported_fields() -> Array[String] {
 }
 
 ///|
-pub fn native_command_body_field_is_supported(name : String) -> Bool {
+fn native_command_body_field_is_supported(name : String) -> Bool {
   native_command_body_supported_fields().contains(name)
 }
 
 ///|
-pub fn native_capability_runtime_loop_options() -> Json {
+fn native_capability_runtime_loop_options() -> Json {
   {
     "live_wait_ms": {
       "default": 0,
@@ -262,7 +262,7 @@ pub fn native_capability_runtime_loop_options() -> Json {
 }
 
 ///|
-pub fn native_capability_stream_options() -> Json {
+fn native_capability_stream_options() -> Json {
   {
     "wait_ms": {
       "default": 0,
@@ -331,7 +331,7 @@ fn native_capability_surface_fingerprint_source() -> String {
 }
 
 ///|
-pub fn native_capability_surface_fingerprint() -> String {
+fn native_capability_surface_fingerprint() -> String {
   @crypto.bytes_to_hex_string(
     @crypto.sha256(
       @encoding/utf8.encode(native_capability_surface_fingerprint_source()).to_fixedarray(),
@@ -340,7 +340,7 @@ pub fn native_capability_surface_fingerprint() -> String {
 }
 
 ///|
-pub fn native_capability_surface_json() -> Json {
+fn native_capability_surface_json() -> Json {
   {
     "kind": "mooncode-native-capability-surface",
     "component": "mooncode",
@@ -373,6 +373,7 @@ pub fn native_capability_surface_json() -> Json {
     "runtime_evidence_contract": runtime_evidence_contract_json(),
     "runtime_tool_contract": runtime_tool_contract_json(),
     "runtime_tool_call_contract": runtime_tool_call_contract_json(),
+    "runtime_tool_capability_specs": runtime_tool_capability_specs(),
     "required_endpoints": native_capability_required_endpoints(),
     "required_tools": native_capability_required_tools(),
     "command_body_required_fields": native_command_body_required_fields(),
@@ -383,7 +384,7 @@ pub fn native_capability_surface_json() -> Json {
 }
 
 ///|
-pub fn standalone_boundary_json() -> Json {
+fn standalone_boundary_json() -> Json {
   {
     "kind": "mooncode-standalone-boundary",
     "protocol": protocol_version(),

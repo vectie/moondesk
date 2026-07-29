@@ -143,7 +143,7 @@ fn mooncode_canonical_work_item(
   approvals : Array[@mooncode_core.MoonCodeApproval],
 ) -> MoonCodeTranscriptItem? {
   let summary = work.summary
-  let status = mooncode_work_status_name(work.status)
+  let status = work.status
   let detail = work.detail
   if summary == "" && detail == "" && approvals.length() == 0 {
     return None
@@ -175,17 +175,6 @@ fn mooncode_canonical_work_item(
 }
 
 ///|
-fn mooncode_work_status_name(status : @mooncode_core.MoonCodeWorkStatus) -> String {
-  match status {
-    @mooncode_core.Queued => "queued"
-    @mooncode_core.Running => "running"
-    @mooncode_core.Done => "done"
-    @mooncode_core.Failed => "failed"
-    @mooncode_core.Cancelled => "cancelled"
-  }
-}
-
-///|
 fn mooncode_canonical_work_evidence(
   work : @mooncode_core.MoonCodeWork,
   approvals : Array[@mooncode_core.MoonCodeApproval],
@@ -194,39 +183,44 @@ fn mooncode_canonical_work_evidence(
   let mut approval_index = 0
   for evidence in work.evidence {
     let kind = match evidence.kind {
-      @mooncode_core.Edit => "edit"
-      @mooncode_core.Test => "test"
-      @mooncode_core.Approval => "approval"
-      @mooncode_core.Tool => "tool"
+      "edit" => "edit"
+      "test" => "test"
+      "approval" => "approval"
+      "tool" => "tool"
       _ => "artifact"
     }
-    let state = match evidence.state {
-      @mooncode_core.Recorded => "recorded"; @mooncode_core.Pending => "pending"
-      @mooncode_core.Applied => "applied"; @mooncode_core.Passed => "passed"
-      @mooncode_core.Reverted => "reverted"; @mooncode_core.Cancelled => "cancelled"
-      @mooncode_core.Approved => "approved"
-      @mooncode_core.Accepted => "accepted"; @mooncode_core.Rejected => "rejected"
-      @mooncode_core.Failed => "failed"; @mooncode_core.Stale => "stale"
-    }
+    let state = evidence.state
     let approval = match evidence.approval {
       Some(value) => Some(value)
-      None if evidence.kind is @mooncode_core.Approval => {
+      None if evidence.kind == "approval" => {
         let value = approvals.get(approval_index)
-        if value is Some(_) { approval_index += 1 }
+        if value is Some(_) {
+          approval_index += 1
+        }
         value
       }
       None => None
     }
-    let state = if evidence.kind is @mooncode_core.Approval { "" } else { state }
-    if !(evidence.kind is @mooncode_core.Approval) && evidence.path == "" &&
-      evidence.diff == "" && evidence.command == "" && evidence.output == "" {
+    let state = if evidence.kind == "approval" { "" } else { state }
+    if evidence.kind != "approval" &&
+      evidence.path == "" &&
+      evidence.diff == "" &&
+      evidence.command == "" &&
+      evidence.output == "" {
       continue
     }
     rows.push({
-      item_id: evidence.item_id, kind, state, title: evidence.title,
-      path: evidence.path, detail: evidence.detail, diff: evidence.diff,
-      command: evidence.command, output: evidence.output,
-      exit_code: evidence.exit_code, truncated: evidence.truncated,
+      item_id: evidence.item_id,
+      kind,
+      state,
+      title: evidence.title,
+      path: evidence.path,
+      detail: evidence.detail,
+      diff: evidence.diff,
+      command: evidence.command,
+      output: evidence.output,
+      exit_code: evidence.exit_code,
+      truncated: evidence.truncated,
       approval,
     })
   }

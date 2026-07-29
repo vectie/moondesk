@@ -1,22 +1,13 @@
 ///|
 fn mooncode_session_lifecycle_failure_message(
-  failure : @mooncode_core.MoonCodeLifecycleFailure,
+  failure : @mooncode_core.MoonCodeFailure,
 ) -> String {
   match failure {
-    MalformedAction => "Unsupported MoonCode session lifecycle action"
-    UnsupportedAction(_) => "Unsupported MoonCode session lifecycle action"
-    InvalidTitle => "A non-empty session title is required"
-    TitleTooLong => "Session titles may not exceed 160 characters"
-    NotFound => "Unknown MoonCode session"
-    Conflict => "MoonCode session lifecycle conflict"
-    RuntimeUnavailable => "MoonClaw session management is unavailable"
-    RuntimeFailure => "MoonClaw session lifecycle failed"
-    InvalidResult(message) => message
+    Absent => "Unknown MoonCode session"
     UnsupportedProtocol(protocol) =>
       "Unsupported MoonCode lifecycle protocol \{protocol}"
-    WrongOwner(owner) => "Unexpected MoonCode lifecycle owner \{owner}"
-    WrongSession(expected~, actual~) =>
-      "MoonCode lifecycle session mismatch: expected \{expected}, got \{actual}"
+    Malformed(message) => message
+    _ => "MoonClaw session lifecycle failed"
   }
 }
 
@@ -42,11 +33,24 @@ fn mooncode_session_lifecycle_native_body(
 }
 
 ///|
+priv enum MoonCodeLifecycleRouteFailureKind {
+  NotFound
+  Conflict
+  RuntimeUnavailable
+  RuntimeFailure
+} derive(Debug, Eq)
+
+///|
+priv enum MoonCodeLifecycleRouteStopReason {
+  SessionActive
+} derive(Debug, Eq)
+
+///|
 priv struct MoonCodeLifecycleRouteFailure {
   code : Int
   title : String
-  failure : @mooncode_core.MoonCodeLifecycleFailure
-  stop_reason : @mooncode_core.MoonCodeLifecycleStopReason?
+  failure : MoonCodeLifecycleRouteFailureKind
+  stop_reason : MoonCodeLifecycleRouteStopReason?
   detail : String
 }
 
@@ -108,7 +112,16 @@ fn mooncode_session_lifecycle_proxy_failure(
 fn mooncode_session_lifecycle_result(
   payload : Json,
   session_id : String,
-) -> Result[@mooncode_core.MoonCodeLifecycleResult, String] {
+) -> Result[
+  (
+    @mooncode_core.MoonCodeLifecycleAction,
+    @mooncode_core.MoonCodeSessionId,
+    String,
+    Bool,
+    Bool,
+  ),
+  String,
+] {
   guard @mooncode_core.MoonCodeSessionId::parse(session_id) is Some(expected) else {
     return Err("Invalid MoonCode session identifier")
   }

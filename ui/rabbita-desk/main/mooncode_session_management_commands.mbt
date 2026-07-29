@@ -2,7 +2,16 @@
 fn decode_mooncode_lifecycle_result(
   payload : Json,
   session_id : String,
-) -> Result[@mooncode_core.MoonCodeLifecycleResult, String] {
+) -> Result[
+  (
+    @mooncode_core.MoonCodeLifecycleAction,
+    @mooncode_core.MoonCodeSessionId,
+    String,
+    Bool,
+    Bool,
+  ),
+  String,
+] {
   guard @mooncode_core.MoonCodeSessionId::parse(session_id) is Some(expected) else {
     return Err("Could not manage MoonCode session")
   }

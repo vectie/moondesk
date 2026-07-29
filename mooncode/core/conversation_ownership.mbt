@@ -1,15 +1,15 @@
 ///|
-pub fn conversation_ownership_contract_id() -> String {
+fn conversation_ownership_contract_id() -> String {
   "mooncode-conversation-ownership.v1"
 }
 
 ///|
-pub fn conversation_ownership_contract_kind() -> String {
+fn conversation_ownership_contract_kind() -> String {
   "mooncode-conversation-ownership-contract"
 }
 
 ///|
-pub fn conversation_ownership_contract_json() -> Json {
+fn conversation_ownership_contract_json() -> Json {
   {
     "kind": conversation_ownership_contract_kind(),
     "protocol": protocol_version(),

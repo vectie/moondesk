@@ -49,16 +49,16 @@ async fn handle_mooncode_session_watch(
   )
   let initial_sequence = mooncode_watch_snapshot_sequence(initial_response)
   if initial_revision > since_revision {
-    send_json(
-      conn,
-      method_,
+    match
       mooncode_conversation_watch_response(
         session_id,
         initial_response,
         since_revision,
         mooncode_max_sequence(since_sequence, initial_sequence.to_string()),
-      ),
-    )
+      ) {
+      Ok(payload) => send_json(conn, method_, payload)
+      Err(reason) => send_api_error(conn, method_, 502, "Bad Gateway", reason)
+    }
     return
   }
   let resume_sequence = mooncode_max_sequence(
@@ -91,10 +91,13 @@ async fn handle_mooncode_session_watch(
   }
   let next_sequence = match
     mooncode_native_stream_cursor(stream_text, resume_cursor) {
-    @mooncode_core.Advanced(cursor) | @mooncode_core.Unchanged(cursor) =>
-      cursor.sequence()
-    @mooncode_core.Malformed(reason~, ..) => {
+    Ok(cursor) => cursor.sequence()
+    Err(@mooncode_core.Malformed(reason)) => {
       send_api_error(conn, method_, 502, "Bad Gateway", reason)
+      return
+    }
+    Err(_) => {
+      send_api_error(conn, method_, 502, "Bad Gateway", "Invalid stream cursor")
       return
     }
   }
@@ -108,13 +111,13 @@ async fn handle_mooncode_session_watch(
     refreshed,
     Json::object({}),
   )
-  send_json(
-    conn,
-    method_,
+  match
     mooncode_conversation_watch_response(
       session_id, response, since_revision, next_sequence,
-    ),
-  )
+    ) {
+    Ok(payload) => send_json(conn, method_, payload)
+    Err(reason) => send_api_error(conn, method_, 502, "Bad Gateway", reason)
+  }
 }
 
 ///|
@@ -131,7 +134,7 @@ fn mooncode_conversation_watch_response(
   snapshot : Json,
   since_revision : Int,
   next_sequence : String,
-) -> Json raise {
+) -> Result[Json, String] {
   let actual_revision = json_int(snapshot, "canonical_revision", default=0)
   let changed = actual_revision > since_revision
   let revision = if changed { actual_revision } else { since_revision }
@@ -139,16 +142,42 @@ fn mooncode_conversation_watch_response(
   let cursor = @mooncode_core.mooncode_watch_cursor(
     revision.to_string(),
     next_sequence,
-  )
-  @mooncode.conversation_watch_response_for_cursor(
-    session_id~,
-    cursor~,
-    changed~,
-    heartbeat=!changed,
-    terminal=mooncode_watch_status_is_terminal(status),
-    retry_after_ms=if changed { 0 } else { 100 },
-    snapshot=if changed { snapshot } else { Json::null() },
-  )
+  ) catch {
+    _ => return Err("Invalid trusted MoonCode watch cursor")
+  }
+  let terminal = mooncode_watch_status_is_terminal(status)
+  let result = if changed {
+    let session = match
+      @mooncode_core.decode_mooncode_selected_session(snapshot) {
+      Ok(value) => value
+      Err(_) => return Err("Invalid trusted MoonCode watch session")
+    }
+    let conversation_json = @mooncore.json_object_field(
+      snapshot, "mooncode_conversation",
+    ).unwrap_or(Json::null())
+    let conversation = match
+      @mooncode_core.decode_mooncode_conversation(conversation_json) {
+      Ok(value) => value
+      Err(_) => return Err("Invalid trusted MoonCode watch conversation")
+    }
+    @mooncode_core.MoonCodeWatchResult::Snapshot(
+      cursor~,
+      session~,
+      conversation~,
+      terminal~,
+    )
+  } else {
+    @mooncode_core.MoonCodeWatchResult::Heartbeat(
+      cursor~,
+      session_id~,
+      retry_after_ms=100,
+      terminal~,
+    )
+  }
+  match @mooncode_core.encode_mooncode_watch_result(result) {
+    Ok(payload) => Ok(payload)
+    Err(_) => Err("Invalid trusted MoonCode watch response")
+  }
 }
 
 ///|

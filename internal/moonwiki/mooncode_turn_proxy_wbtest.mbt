@@ -56,7 +56,15 @@ fn idempotency_test_session(command : @mooncode_core.MoonCodeCommand) -> Json {
     "workspace_name": "Code Lab",
     "workspace_root": "/tmp/moonsuite/books/code-lab",
   }
-  let accepted = @mooncode.accepted_command_packet(base, command, "ignored")
+  let packet = json_object_field_or_empty(
+    @mooncode.native_command_body(
+      base,
+      command,
+      "ignored",
+      Json::empty_object(),
+    ),
+    "packet",
+  )
   let conversation : Json = {
     "kind": @mooncode.conversation_kind(),
     "protocol": @mooncode.protocol_version(),
@@ -70,10 +78,10 @@ fn idempotency_test_session(command : @mooncode_core.MoonCodeCommand) -> Json {
     "source_event_count": 1,
     "turns": [
       {
-        "kind": @mooncode_core.conversation_turn_kind(),
+        "kind": @mooncode.conversation_turn_kind(),
         "turn_id": "turn-stable",
-        "command_id": accepted.command_id(),
-        "client_turn_id": command.client_turn_id(),
+        "command_id": json_string(packet, "command_id", default=""),
+        "client_turn_id": command.client_turn_id,
         "ordinal": 1,
         "status": "running",
         "started_at": "2026-07-28T00:00:00Z",
@@ -81,7 +89,7 @@ fn idempotency_test_session(command : @mooncode_core.MoonCodeCommand) -> Json {
         "user": {
           "item_id": "message-stable",
           "role": "user",
-          "content": command.message(),
+          "content": command.message,
           "status": "completed",
         },
         "work": {},
@@ -249,7 +257,7 @@ test "canonical stream resumes from the greatest durable sequence" {
   let current = @mooncode_core.mooncode_watch_cursor("4", "2")
   let decoded = mooncode_native_stream_cursor(stream, current)
   match decoded {
-    @mooncode_core.Advanced(cursor) => {
+    Ok(cursor) => {
       assert_eq(cursor.revision(), "4")
       assert_eq(cursor.sequence(), "9223372036854775810")
     }
