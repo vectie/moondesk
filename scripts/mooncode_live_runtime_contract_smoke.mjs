@@ -71,7 +71,7 @@ async function runSmoke() {
     moonclaw: moonclaw.base,
     session_id: sessionId,
     command_id: commandId,
-    watch_contract_id: watched.watch_contract_id,
+    watch_contract_id: watched.contract_id,
     changed: watched.changed,
   }, null, 2));
 }
