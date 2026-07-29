@@ -52,7 +52,7 @@ fn flow_item_position(
   items : ArrayView[MoonFlowCompositionItem],
   item_id : String,
 ) -> (Double, Double) {
-  for entry in model.flow_node_positions {
+  for entry in model.flow_canvas.node_positions {
     let (id, x, y) = entry
     if id == item_id {
       return (x, y)
@@ -111,7 +111,7 @@ fn flow_set_node_position(
 ) -> Model {
   let positions : Array[(String, Double, Double)] = []
   let mut replaced = false
-  for entry in model.flow_node_positions {
+  for entry in model.flow_canvas.node_positions {
     let (id, old_x, old_y) = entry
     if id == item_id {
       positions.push((item_id, x, y))
@@ -123,7 +123,7 @@ fn flow_set_node_position(
   if !replaced {
     positions.push((item_id, x, y))
   }
-  { ..model, flow_node_positions: positions }
+  { ..model, flow_canvas: { ..model.flow_canvas, node_positions: positions } }
 }
 
 ///|
@@ -132,8 +132,8 @@ fn flow_canvas_wheel_action(
   delta_y : Double,
 ) -> (@rabbita.Cmd, Model) {
   let factor = if delta_y < 0.0 { 1.12 } else { 1.0 / 1.12 }
-  let next_zoom = flow_clamp_zoom(model.flow_zoom * factor)
-  if next_zoom == model.flow_zoom {
+  let next_zoom = flow_clamp_zoom(model.flow_canvas.zoom * factor)
+  if next_zoom == model.flow_canvas.zoom {
     return (@rabbita.none, model)
   }
   // Keep the content center stationary while zooming so the canvas never
@@ -147,9 +147,14 @@ fn flow_canvas_wheel_action(
     @rabbita.none,
     {
       ..model,
-      flow_zoom: next_zoom,
-      flow_pan_x: model.flow_pan_x + cx * (model.flow_zoom - next_zoom),
-      flow_pan_y: model.flow_pan_y + cy * (model.flow_zoom - next_zoom),
+      flow_canvas: {
+        ..model.flow_canvas,
+        zoom: next_zoom,
+        pan_x: model.flow_canvas.pan_x +
+        cx * (model.flow_canvas.zoom - next_zoom),
+        pan_y: model.flow_canvas.pan_y +
+        cy * (model.flow_canvas.zoom - next_zoom),
+      },
     },
   )
 }
@@ -160,7 +165,7 @@ fn flow_pan_start_action(
   x : Int,
   y : Int,
 ) -> (@rabbita.Cmd, Model) {
-  if model.flow_drag_node_id != "" {
+  if model.flow_canvas.drag_node_id != "" {
     // A node drag already claimed this pointer; do not also start a pan.
     return (@rabbita.none, model)
   }
@@ -168,9 +173,12 @@ fn flow_pan_start_action(
     @rabbita.none,
     {
       ..model,
-      flow_pan_dragging: true,
-      flow_drag_last_x: x.to_double(),
-      flow_drag_last_y: y.to_double(),
+      flow_canvas: {
+        ..model.flow_canvas,
+        pan_dragging: true,
+        drag_last_x: x.to_double(),
+        drag_last_y: y.to_double(),
+      },
     },
   )
 }
@@ -183,42 +191,59 @@ fn flow_pointer_move_action(
 ) -> (@rabbita.Cmd, Model) {
   let next_x = x.to_double()
   let next_y = y.to_double()
-  let dx = next_x - model.flow_drag_last_x
-  let dy = next_y - model.flow_drag_last_y
-  if model.flow_drag_node_id != "" {
+  let dx = next_x - model.flow_canvas.drag_last_x
+  let dy = next_y - model.flow_canvas.drag_last_y
+  if model.flow_canvas.drag_node_id != "" {
     match model.moonflow_composition {
       Some(composition) => {
         let (old_x, old_y) = flow_item_position(
           model,
           composition.items[:],
-          model.flow_drag_node_id,
+          model.flow_canvas.drag_node_id,
         )
         let moved = flow_set_node_position(
           model,
-          model.flow_drag_node_id,
-          old_x + dx / model.flow_zoom,
-          old_y + dy / model.flow_zoom,
+          model.flow_canvas.drag_node_id,
+          old_x + dx / model.flow_canvas.zoom,
+          old_y + dy / model.flow_canvas.zoom,
         )
         (
           @rabbita.none,
-          { ..moved, flow_drag_last_x: next_x, flow_drag_last_y: next_y },
+          {
+            ..moved,
+            flow_canvas: {
+              ..moved.flow_canvas,
+              drag_last_x: next_x,
+              drag_last_y: next_y,
+            },
+          },
         )
       }
       None =>
         (
           @rabbita.none,
-          { ..model, flow_drag_last_x: next_x, flow_drag_last_y: next_y },
+          {
+            ..model,
+            flow_canvas: {
+              ..model.flow_canvas,
+              drag_last_x: next_x,
+              drag_last_y: next_y,
+            },
+          },
         )
     }
-  } else if model.flow_pan_dragging {
+  } else if model.flow_canvas.pan_dragging {
     (
       @rabbita.none,
       {
         ..model,
-        flow_pan_x: model.flow_pan_x + dx,
-        flow_pan_y: model.flow_pan_y + dy,
-        flow_drag_last_x: next_x,
-        flow_drag_last_y: next_y,
+        flow_canvas: {
+          ..model.flow_canvas,
+          pan_x: model.flow_canvas.pan_x + dx,
+          pan_y: model.flow_canvas.pan_y + dy,
+          drag_last_x: next_x,
+          drag_last_y: next_y,
+        },
       },
     )
   } else {
@@ -228,7 +253,17 @@ fn flow_pointer_move_action(
 
 ///|
 fn flow_pointer_end_action(model : Model) -> (@rabbita.Cmd, Model) {
-  (@rabbita.none, { ..model, flow_pan_dragging: false, flow_drag_node_id: "" })
+  (
+    @rabbita.none,
+    {
+      ..model,
+      flow_canvas: {
+        ..model.flow_canvas,
+        pan_dragging: false,
+        drag_node_id: "",
+      },
+    },
+  )
 }
 
 ///|
@@ -242,26 +277,18 @@ fn flow_node_drag_start_action(
     @rabbita.none,
     {
       ..model,
-      flow_drag_node_id: item_id,
-      flow_pan_dragging: false,
-      flow_drag_last_x: x.to_double(),
-      flow_drag_last_y: y.to_double(),
+      flow_canvas: {
+        ..model.flow_canvas,
+        drag_node_id: item_id,
+        pan_dragging: false,
+        drag_last_x: x.to_double(),
+        drag_last_y: y.to_double(),
+      },
     },
   )
 }
 
 ///|
 fn flow_canvas_reset_action(model : Model) -> (@rabbita.Cmd, Model) {
-  (
-    @rabbita.none,
-    {
-      ..model,
-      flow_pan_x: 0.0,
-      flow_pan_y: 0.0,
-      flow_zoom: 1.0,
-      flow_node_positions: [],
-      flow_pan_dragging: false,
-      flow_drag_node_id: "",
-    },
-  )
+  (@rabbita.none, { ..model, flow_canvas: init_flow_canvas_state() })
 }

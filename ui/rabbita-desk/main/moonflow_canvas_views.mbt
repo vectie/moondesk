@@ -119,7 +119,7 @@ fn flow_zoom_text(zoom : Double) -> String {
 
 ///|
 fn flow_zoom_percent(model : Model) -> String {
-  (model.flow_zoom * 100.0 + 0.5).to_int().to_string() + "%"
+  (model.flow_canvas.zoom * 100.0 + 0.5).to_int().to_string() + "%"
 }
 
 ///|
@@ -136,7 +136,7 @@ fn render_flow_canvas_node(
     composition.items[:],
     item.work_item_id,
   )
-  let dragging = model.flow_drag_node_id == item.work_item_id
+  let dragging = model.flow_canvas.drag_node_id == item.work_item_id
   let state_class = if selected { "included" } else { "excluded" }
   article(
     class="flow-node " + state_class + (if dragging { " dragging" } else { "" }),
@@ -311,7 +311,7 @@ fn render_flow_canvas_chrome(
       button(
         class="secondary-button compact-button",
         attrs=@html.Attrs::build().aria_label("Zoom out composition canvas"),
-        disabled=model.flow_zoom <= flow_zoom_min + 0.001,
+        disabled=model.flow_canvas.zoom <= flow_zoom_min + 0.001,
         on_click=dispatch(FlowCanvasWheel(1.0)),
         "−",
       ),
@@ -319,7 +319,7 @@ fn render_flow_canvas_chrome(
       button(
         class="secondary-button compact-button",
         attrs=@html.Attrs::build().aria_label("Zoom in composition canvas"),
-        disabled=model.flow_zoom >= flow_zoom_max - 0.001,
+        disabled=model.flow_canvas.zoom >= flow_zoom_max - 0.001,
         on_click=dispatch(FlowCanvasWheel(-1.0)),
         "+",
       ),
@@ -380,11 +380,11 @@ fn render_flow_canvas_viewport(
         class="flow-canvas-surface",
         style=[
           "transform: translate(" +
-          flow_px(model.flow_pan_x) +
+          flow_px(model.flow_canvas.pan_x) +
           ", " +
-          flow_px(model.flow_pan_y) +
+          flow_px(model.flow_canvas.pan_y) +
           ") scale(" +
-          flow_zoom_text(model.flow_zoom) +
+          flow_zoom_text(model.flow_canvas.zoom) +
           ")",
         ],
         surface_children,

@@ -164,14 +164,7 @@ struct Model {
   moonflow_composition : MoonFlowComposition?
   moonflow_composition_status : String
   moonflow_composition_saving : Bool
-  flow_pan_x : Double
-  flow_pan_y : Double
-  flow_zoom : Double
-  flow_pan_dragging : Bool
-  flow_drag_last_x : Double
-  flow_drag_last_y : Double
-  flow_drag_node_id : String
-  flow_node_positions : Array[(String, Double, Double)]
+  flow_canvas : FlowCanvasState
   moonflow_operator_actions : Array[MoonFlowOperatorActions]
   moonflow_operator_action_receipt : MoonFlowOperatorActionReceipt?
   moonflow_operator_action_status : String
