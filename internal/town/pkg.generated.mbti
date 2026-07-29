@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/internal/town"
+
+// Values
+pub fn configuration_evidence_from_values(Bool, Bool, configuration_valid? : Bool, configuration_reason? : String) -> Json
+
+pub fn installation_evidence_from_values(Bool, Bool) -> Json
+
+pub fn platform_evidence_from_values(String, String) -> Json
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

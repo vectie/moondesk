@@ -1,0 +1,5 @@
+import {
+  "vectie/moondesk/internal/mooncore",
+} for "test"
+
+supported_targets = "native"

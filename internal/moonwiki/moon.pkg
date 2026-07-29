@@ -26,6 +26,7 @@ import {
   "vectie/moondesk/internal/pathx",
   "vectie/moondesk/internal/preview",
   "vectie/moondesk/internal/review",
+  "vectie/moondesk/internal/town",
 }
 
 import {
