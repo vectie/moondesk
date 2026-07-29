@@ -13,7 +13,16 @@ MoonWiki **155/155**; UI **379/379**.
 
 Downstream consumer migration commit `716870857725abd5fb0853675cf5ee494a87bd2f`
 was validated but deliberately is not part of this integration. The immediate
-next phase is Phase 4 package boundaries.
+repository-local phase completed is Phase 4 package boundaries.
+
+Phase 4 closes with reviewed `internal/review`, `internal/preview`, and
+`internal/town` leaf packages below the `internal/moonwiki` facade; private,
+generation-scoped Source Pane state; behavior-owned UI state and test suites;
+and generated interfaces that publish no Source Pane constructors, fields,
+variants, or reducer functions (only compiler-retained opaque private names). Warm measured gates were root native check 0.41 s, UI JS check 0.42
+s, review/preview/town focused tests 0.03/0.04/0.04 s, and Source Pane 11/11 in
+0.15 s. Full command and ownership evidence is in
+`docs/PHASE4_PACKAGE_OWNERSHIP_MAP.md`.
 
 Phases 5–7 and 10 have not started; Phase 8 is partial; and Phase 9 has
 unsigned-local evidence only. These repository-local requirements remain open

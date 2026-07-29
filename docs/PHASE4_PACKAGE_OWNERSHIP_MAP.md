@@ -1,6 +1,6 @@
 # Phase 4 Package Ownership and Dependency Map
 
-Status: prerequisite review deliverable only. This document does **not** complete Phase 4 and authorizes no extraction.
+Status: Phase 4 ownership record, updated after the reviewed extractions and exit-gate validation described below.
 
 Evidence date: 2026-07-28, clean `github/main` worktree on branch `codex/moondesk-phase4-ownership-map`, before this document was added. The authoritative scope is Phase 4 of `docs/MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md`.
 
@@ -135,3 +135,60 @@ This is the smallest useful first extraction because the four calculation helper
 ## Review gate
 
 Approval of this document permits only a separately reviewed implementation of the proposal above. It does not mark Phase 4 complete, approve other candidate packages, begin later phases, or authorize UI redesign, behavior changes, speculative hardening, or a broad backlog.
+
+## Implemented ownership and exit-gate evidence
+
+The reviewed work retained `internal/moonwiki` as the native HTTP route and
+workspace facade while moving cohesive leaf policy into packages that never
+import the facade:
+
+```text
+internal/moonwiki -> internal/review   (pure review diff policy)
+internal/moonwiki -> internal/preview  (content type and isolation headers)
+internal/moonwiki -> internal/town     (platform/install/config evidence)
+```
+
+`internal/review` owns `ReviewDiffSummary`; `internal/preview` and
+`internal/town` expose value-only policy functions. HTTP request/connection
+types, workspace DTOs, JSON response assembly, filesystem operations, and
+route assembly remain in `internal/moonwiki`. Its generated interface remains
+66 lines, and no extracted package imports `internal/moonwiki`, `cmd/main`, or
+UI rendering. This is the deliberately narrower facade boundary: three
+independently tested policy responsibilities no longer share its compilation
+unit.
+
+UI remains one package to avoid publishing the app model. Flow canvas and Pages
+search now own their state/reducers, and Source Pane owns a private reducer with
+generation, workspace, session, and path identity checks. Delayed results
+cannot mutate a rebound surface. The generated UI interface no longer publishes constructors, fields, variants,
+or reducer functions for Source Pane. MoonBit retains four opaque private type
+names because the package entry-point model references them; they expose no
+helper structure or callable API.
+
+The largest suites are organized by behavior through focused files including
+`moonclaw_setup_auth_wbtest.mbt`, `flow_canvas_state_wbtest.mbt`,
+`workspace_preview_contract_wbtest.mbt`, `source_pane_wbtest.mbt`, and the
+surface-specific state suites. The historical aggregate files remain owning
+integration suites; no test was duplicated merely to reduce a line count.
+
+Measured on 2026-07-30 with `moon 0.1.20260713` after a warm clean check:
+
+| Gate | Real time |
+| --- | ---: |
+| root native check | 0.41 s |
+| `internal/review` test | 0.03 s |
+| `internal/preview` test | 0.04 s |
+| `internal/town` test | 0.04 s |
+| UI JS check | 0.42 s |
+| Source Pane focused test (11/11) | 0.15 s |
+
+Owning validation passed with `internal/moonwiki` 152/152, UI main 381/381,
+repository native 319/319, and validation UI 486/486. The Desk API product
+smoke passed against a temporary suite. The full validator reached its final
+clean-tree assertion after checks, tests, localization, verifier tests, build,
+and interface verification; that assertion correctly reported the five
+intentional Phase 4 files as dirty before commit.
+
+The prerequisite baseline had no successful timing because its older toolchain
+rejected `pkgtype`; these successful sub-second measurements therefore replace,
+claimed or hidden.

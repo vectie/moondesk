@@ -4,7 +4,7 @@
 
 ///|
 /// promise.
-pub(all) enum SourcePaneContent {
+enum SourcePaneContent {
   Empty
   Loading
   Ready(@desk.DeskPreview)
@@ -13,7 +13,7 @@ pub(all) enum SourcePaneContent {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct SourcePaneRequestIdentity {
+struct SourcePaneRequestIdentity {
   generation : Int
   workspace_id : String
   session_id : String
@@ -21,7 +21,7 @@ pub(all) struct SourcePaneRequestIdentity {
 } derive(Eq, Debug)
 
 ///|
-pub(all) struct SourcePaneState {
+struct SourcePaneState {
   open : Bool
   collapsed : Bool
   workspace_id : String
@@ -32,7 +32,7 @@ pub(all) struct SourcePaneState {
 } derive(Eq, Debug)
 
 ///|
-pub(all) enum SourcePaneMsg {
+enum SourcePaneMsg {
   SetOpen(Bool)
   SetCollapsed(Bool)
   Rebind(String, String)
@@ -42,7 +42,7 @@ pub(all) enum SourcePaneMsg {
 } derive(Eq, Debug)
 
 ///|
-pub fn init_source_pane(
+fn init_source_pane(
   workspace_id : String,
   session_id : String,
 ) -> SourcePaneState {
@@ -58,9 +58,7 @@ pub fn init_source_pane(
 }
 
 ///|
-pub fn source_pane_identity(
-  state : SourcePaneState,
-) -> SourcePaneRequestIdentity {
+fn source_pane_identity(state : SourcePaneState) -> SourcePaneRequestIdentity {
   {
     generation: state.request_generation,
     workspace_id: state.workspace_id,
@@ -91,7 +89,7 @@ fn source_pane_path_is_unsafe(path : String) -> Bool {
 
 ///|
 /// never mutates the app's selected_path or prompt attachment/context.
-pub fn update_source_pane(
+fn update_source_pane(
   state : SourcePaneState,
   msg : SourcePaneMsg,
 ) -> SourcePaneState {
