@@ -1,5 +1,9 @@
 # MoonDesk
 
+> **Desktop operator application · local single-user alpha.** Read the
+> [product contract](docs/PRODUCT_CONTRACT.md) for capability-truth rules, pack
+> hosting, current limitations and release gates.
+
 MoonDesk is the human desktop companion for the Moon system.
 
 It is not an agent runtime and it is not a domain-analysis product. It is a

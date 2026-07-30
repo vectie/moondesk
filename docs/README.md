@@ -1,5 +1,8 @@
 # MoonDesk Documentation Guide
 
+Start with the [product contract](PRODUCT_CONTRACT.md) for current maturity,
+capability-truth rules, pack hosting and release gates.
+
 MoonDesk is the human desktop shell for MoonSuite. It should make books,
 files, Wiki work, Code work, town requests, runtime evidence, and app-tool
 packaging visible to an operator without taking ownership of the runtimes or

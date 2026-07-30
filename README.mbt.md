@@ -1,5 +1,9 @@
 # MoonDesk
 
+> **Desktop operator application · local single-user alpha.** Read the
+> [product contract](docs/PRODUCT_CONTRACT.md) for capability-truth rules, pack
+> hosting, current limitations and release gates.
+
 MoonDesk is a pure MoonBit desktop host and Rabbita UI for browsing MoonBook
 workspaces, staging inbox notes, submitting selected context to MoonTown, and
 inspecting MoonClaw run artifacts.

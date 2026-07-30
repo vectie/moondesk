@@ -35,11 +35,18 @@ placeholder operation for it. This makes missing integration explicit without
 putting robotics, finance, AIGC, or other domain semantics into the desktop or
 orchestration cores.
 
-For humanoid robotics, Moonfind publishes
-`workflows/humanoid-robotics-suite.v1.json`. It connects MoonWiki, Moonfind,
-MoonTown, MoonChat, MoonProj, MoonCode, MoonMini, MoonMold, MoonRobo, MoonMoon,
-MoonStat, MoonGate, MoonVis, MoonCast, and MoonBook. MoonDesk, MoonFlow, and MoonClaw appear as the control
-plane rather than pretending to be domain work products.
+For humanoid robotics, Moonfind currently publishes the design graph
+`workflows/humanoid-robotics-suite.v1.json`. The file still contains legacy
+MoonMini and MoonStat identities and operation names that are not uniformly
+backed by installed manifests. It is therefore a composition design until it is
+compiled against the capability registry, not proof that every node can run.
+
+The production graph uses Bunnia/Rabbita as application frameworks rather than
+a MoonMini product node, and uses MoonGate for evaluation/observability rather
+than a MoonStat product. MoonChat and MoonVis appear only when they publish a
+real compatible operation; repository existence does not create a node.
+MoonDesk, MoonFlow and MoonClaw remain the control plane rather than domain work
+products.
 
 Physical execution remains separate. A graph may contain a physical-effect
 node only when the owning adapter exists and MoonGate grants a bounded physical
