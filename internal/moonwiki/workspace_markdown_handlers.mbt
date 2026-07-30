@@ -40,7 +40,7 @@ async fn write_workspace_markdown(
   content : String,
 ) -> Result[String, String] {
   let relative = decode_query_value(path)
-  match resolve_workspace_path(workspace.root_path, relative) {
+  match resolve_workspace_write_path(workspace.root_path, relative) {
     Some((absolute, clean_relative)) =>
       if !is_editable_markdown_path(clean_relative) {
         return Err("Markdown edits must target wiki/*.md or inbox/*.md paths")

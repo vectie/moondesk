@@ -8,7 +8,15 @@ pub async fn list_directory(StringView) -> Array[String]
 
 pub async fn make_directory(StringView, recursive? : Bool, exists_ok? : Bool) -> Unit
 
+pub async fn read_confined_text(StringView, StringView) -> String?
+
 pub async fn read_file(StringView) -> String
+
+pub async fn resolve_confined_existing(StringView, StringView) -> String?
+
+pub async fn resolve_confined_write(StringView, StringView) -> String?
+
+pub async fn write_confined_text(StringView, StringView, StringView, create? : Int) -> Bool
 
 pub async fn write_to_file(StringView, StringView, create? : Int) -> Unit
 

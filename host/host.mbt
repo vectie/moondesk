@@ -32,10 +32,5 @@ pub fn is_path_under_root(root : String, candidate : String) -> Bool {
 
 ///|
 pub async fn read_scoped_text(root : String, relative_path : String) -> String? {
-  let candidate = @pathx.join(root, relative_path)
-  if !is_path_under_root(root, candidate) || !@fsx.exists(candidate) {
-    None
-  } else {
-    Some(@fsx.read_file(candidate))
-  }
+  @fsx.read_confined_text(root, relative_path)
 }

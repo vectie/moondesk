@@ -1,5 +1,23 @@
 ///|
-fn resolve_workspace_path(
+async fn resolve_workspace_existing_path(
+  workspace_root : String,
+  relative : String,
+) -> (String, String)? {
+  match resolve_workspace_path(workspace_root, relative) {
+    Some((_, clean)) => {
+      let authority_root = workspace_authority_root(workspace_root, clean)
+      let authority_relative = workspace_authority_relative(clean)
+      match @fsx.resolve_confined_existing(authority_root, authority_relative) {
+        Some(canonical) => Some((canonical, clean))
+        None => None
+      }
+    }
+    None => None
+  }
+}
+
+///|
+async fn resolve_workspace_write_path(
   workspace_root : String,
   relative : String,
 ) -> (String, String)? {
@@ -30,9 +48,66 @@ fn resolve_workspace_path(
     absolute.has_prefix(expected_prefix) ||
     absolute == moonclaw_root ||
     absolute.has_prefix(moonclaw_prefix) {
-    Some((absolute, clean))
+    let authority_root = workspace_authority_root(root, clean)
+    let authority_relative = workspace_authority_relative(clean)
+    match @fsx.resolve_confined_write(authority_root, authority_relative) {
+      Some(canonical) => Some((canonical, clean))
+      None => None
+    }
   } else {
     None
+  }
+}
+
+///|
+fn resolve_workspace_path(
+  workspace_root : String,
+  relative : String,
+) -> (String, String)? {
+  let context = workspace_context(workspace_root)
+  let root = context.requested_root
+  let clean = match clean_relative_path(relative) {
+    Some(path) => path
+    None => return None
+  }
+  if clean == "" {
+    Some((root, clean))
+  } else if clean == moonclaw_jobs_relative_root() ||
+    clean.has_prefix(moonclaw_jobs_relative_prefix()) {
+    Some(
+      (
+        @pathx.join(
+          workspace_authority_root(root, clean),
+          workspace_authority_relative(clean),
+        ),
+        clean,
+      ),
+    )
+  } else if @desk.moonsuite_internal_relative_path(clean) {
+    None
+  } else {
+    Some((@pathx.join(root, clean), clean))
+  }
+}
+
+///|
+fn workspace_authority_root(root : String, clean : String) -> String {
+  if clean == moonclaw_jobs_relative_root() ||
+    clean.has_prefix(moonclaw_jobs_relative_prefix()) {
+    moonclaw_jobs_root(root)
+  } else {
+    root
+  }
+}
+
+///|
+fn workspace_authority_relative(clean : String) -> String {
+  if clean == moonclaw_jobs_relative_root() {
+    ""
+  } else if clean.has_prefix(moonclaw_jobs_relative_prefix()) {
+    clean[moonclaw_jobs_relative_prefix().length():].to_owned()
+  } else {
+    clean
   }
 }
 

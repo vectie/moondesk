@@ -2,6 +2,15 @@
 
 Last updated: 2026-07-28.
 
+## Phase 5 security gate
+
+The repository security gate is documented in
+[`PHASE5_SECURITY_EVIDENCE.md`](PHASE5_SECURITY_EVIDENCE.md). CI runs the
+focused path-confinement, archive/import, generated-preview, browser-origin,
+route-authority, and durable action-receipt suites before full release
+validation. Unsigned, signed, and notarized artifacts do not weaken these
+local authority boundaries.
+
 ## Status and evidence boundary
 
 The repository contains active CI and unsigned-preview workflows. GitHub

@@ -16,7 +16,7 @@ async fn handle_workspace_entries(
   let relative = decode_query_value(
     query_value(request_path, "path").unwrap_or(""),
   )
-  match resolve_workspace_path(workspace.root_path, relative) {
+  match resolve_workspace_existing_path(workspace.root_path, relative) {
     Some((absolute, clean_relative)) =>
       if is_directory(absolute) {
         let entries = list_workspace_entries(
@@ -56,7 +56,7 @@ async fn handle_workspace_preview(
   let relative = decode_query_value(
     query_value(request_path, "path").unwrap_or(""),
   )
-  match resolve_workspace_path(workspace.root_path, relative) {
+  match resolve_workspace_existing_path(workspace.root_path, relative) {
     Some((absolute, clean_relative)) =>
       if is_directory(absolute) {
         let entries = list_workspace_entries(
@@ -119,7 +119,7 @@ async fn handle_workspace_raw(
   let relative = decode_query_value(
     query_value(request_path, "path").unwrap_or(""),
   )
-  match resolve_workspace_path(workspace.root_path, relative) {
+  match resolve_workspace_existing_path(workspace.root_path, relative) {
     Some((absolute, _)) =>
       if @fs.exists(absolute) && !is_directory(absolute) {
         send_file(conn, method_, absolute, 200, "OK")
@@ -153,7 +153,7 @@ async fn handle_workspace_site_asset(
     send_api_error(conn, method_, 400, "Bad Request", "Invalid path")
     return
   }
-  match resolve_workspace_path(workspace.root_path, relative) {
+  match resolve_workspace_existing_path(workspace.root_path, relative) {
     Some((absolute, _)) =>
       if @fs.exists(absolute) && !is_directory(absolute) {
         send_isolated_preview_file(conn, method_, absolute, 200, "OK")
@@ -180,7 +180,7 @@ async fn handle_workspace_file_asset(
     }
   }
   let relative = decode_query_value(asset_path)
-  match resolve_workspace_path(workspace.root_path, relative) {
+  match resolve_workspace_existing_path(workspace.root_path, relative) {
     Some((absolute, _)) =>
       if @fs.exists(absolute) && !is_directory(absolute) {
         send_file(conn, method_, absolute, 200, "OK")

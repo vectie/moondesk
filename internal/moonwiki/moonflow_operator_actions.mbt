@@ -415,5 +415,21 @@ async fn handle_moonflow_operator_action(
     )
     return
   }
+  let receipt_relative = ".moondesk/action-receipts/moonflow-" +
+    run_id +
+    "-" +
+    action_id +
+    ".json"
+  if !@fsx.write_confined_text(
+      run_root,
+      receipt_relative,
+      receipt.stringify(),
+      create=0o600,
+    ) {
+    send_api_error(
+      conn, method_, 500, "Internal Server Error", "Could not persist action receipt",
+    )
+    return
+  }
   send_json(conn, method_, receipt)
 }

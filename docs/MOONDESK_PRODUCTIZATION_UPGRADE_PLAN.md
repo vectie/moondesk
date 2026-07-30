@@ -434,7 +434,7 @@ their exit gates.
 | [2. CI and release evidence](#phase-2-make-ci-and-release-evidence-mandatory) | Complete | Phase 0 | Mandatory quality gates and reproducible preview releases | Retain the immutable runs, artifact verification, and bounded rebuild proof |
 | [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Complete | Phase 2 | Small typed public protocol and one serialization boundary | Retain the closed contract and validation evidence |
 | [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | Complete locally | Phase 3 | Narrower packages, state ownership, and decomposed tests | Retain ownership, interface, focused-test, timing, and product-smoke evidence |
-| [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Not started | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Threat-model tests prove canonical confinement and denial paths |
+| [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Complete locally | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Retain the confinement, denial-path, authority, receipt, and CI evidence |
 | [6. Observability](#phase-6-unify-runtime-observability-and-operator-evidence) | Not started | Phases 3–5 | Evidence-backed turns, approvals, traces, and recovery | One canonical evidence projection answers the operator questions |
 | [7. Editing workspaces](#phase-7-complete-first-class-document-and-code-editing) | Not started | Phases 3–6 | Working DOCX, XLSX, PPTX, and direct Code editing | Reopen/save fidelity and prompt-to-edit integration journeys pass |
 | [8. UX quality](#phase-8-finish-ux-consistency-localization-and-accessibility) | Shared-shell semantic slice plus partial local evidence | Stable Phase 7 editing contracts | Shared shell, explicit localization, and accessibility proof | Full keyboard, focused manual screen-reader, locale, reduced-motion, and responsive state matrix |
@@ -1406,6 +1406,14 @@ Phase 5 is complete when:
 - every mutating route has an explicit authority scope
 - every execution control produces a receipt
 - the security suite runs in CI
+
+**Status: complete (2026-07-30).** Repository evidence is recorded in
+[`PHASE5_SECURITY_EVIDENCE.md`](PHASE5_SECURITY_EVIDENCE.md). Archive extraction
+is deliberately unsupported: the real import boundary rejects archive entries
+before any write and returns the typed staging receipt. The focused security
+suite, all-target check, 326 native tests, 487 UI tests, interface generation,
+formatting, and the full product validator passed; the validator's final
+clean-tree assertion is completed after the Phase 5 commit.
 
 ### Non-goals
 

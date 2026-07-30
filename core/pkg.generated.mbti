@@ -25,6 +25,8 @@ pub fn browser_local_preview_path_allowed(StringView) -> Bool
 
 pub fn desktop_api_capability_contract() -> DesktopApiCapabilities
 
+pub fn desktop_api_mutating_routes_have_authority() -> Bool
+
 pub fn desktop_api_path(Array[String]) -> String
 
 pub fn desktop_api_query(Array[(String, String)]) -> String
@@ -34,6 +36,8 @@ pub fn desktop_api_required_endpoints() -> Array[String]
 pub fn desktop_api_route_accepts_method(String, String) -> Bool
 
 pub fn desktop_api_route_allowed_methods(String) -> Array[String]
+
+pub fn desktop_api_route_authority(String) -> String?
 
 pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract]
 
@@ -346,6 +350,7 @@ pub(all) struct DesktopApiCapabilities {
 pub(all) struct DesktopApiRouteContract {
   path : String
   methods : Array[String]
+  authority_scope : String
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum EntryKind {

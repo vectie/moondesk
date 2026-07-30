@@ -43,6 +43,7 @@ pub fn url_path(value : String) -> String {
 pub(all) struct DesktopApiRouteContract {
   path : String
   methods : Array[String]
+  authority_scope : String
 } derive(Debug, Eq, ToJson, FromJson)
 
 ///|
@@ -63,7 +64,38 @@ fn desktop_api_route_contract(
   path : String,
   methods : Array[String],
 ) -> DesktopApiRouteContract {
-  { path, methods }
+  {
+    path,
+    methods,
+    authority_scope: desktop_api_route_authority_scope(path, methods),
+  }
+}
+
+///|
+fn desktop_api_route_authority_scope(
+  path : String,
+  methods : Array[String],
+) -> String {
+  if !methods.any(verb => ["POST", "PUT", "PATCH", "DELETE"].contains(verb)) {
+    return "read-only"
+  }
+  match path {
+    p if p == workspaces_route() => "library-root"
+    p if p == workspace_import_route() => "import-staging"
+    p if p == workspace_action_route("entries") => "selected-book"
+    p if p == workspace_action_route("entries/import") => "import-staging"
+    p if p == workspace_action_route("inbox") => "selected-book"
+    p if p == workspace_action_route("markdown") => "selected-book"
+    p if p == workspace_action_route("rename") => "selected-book"
+    p if p == workspace_action_route("move") => "selected-book"
+    p if p == workspace_action_route("copy") => "selected-book"
+    p if p == workspace_action_route("trash") => "trash-restore"
+    p if p == workspace_action_route("restore") => "trash-restore"
+    p if p == workspace_action_route("import") => "import-staging"
+    p if p == workspace_action_route("reveal") => "selected-book"
+    p if p == workspace_action_route("review-diff") => "selected-book"
+    _ => "suite-product-home"
+  }
 }
 
 ///|
@@ -481,4 +513,23 @@ pub fn desktop_api_route_accepts_method(
 ) -> Bool {
   method_name != "" &&
   desktop_api_route_allowed_methods(endpoint).contains(method_name)
+}
+
+///|
+pub fn desktop_api_route_authority(endpoint : String) -> String? {
+  let path = desktop_api_contract_path(endpoint)
+  for route in desktop_api_route_contracts() {
+    if route.path == path {
+      return Some(route.authority_scope)
+    }
+  }
+  None
+}
+
+///|
+pub fn desktop_api_mutating_routes_have_authority() -> Bool {
+  desktop_api_route_contracts().all(route => {
+    !route.methods.any(verb => ["POST", "PUT", "PATCH", "DELETE"].contains(verb)) ||
+    route.authority_scope != "read-only"
+  })
 }

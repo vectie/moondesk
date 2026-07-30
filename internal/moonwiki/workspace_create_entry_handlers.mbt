@@ -69,12 +69,16 @@ async fn handle_workspace_import_files(
         method_,
         json_int(error, "code", default=400),
         json_string(error, "reason", default="Bad Request"),
-        {
-          "error": json_string(
-            error,
-            "message",
-            default="Could not import files",
-          ),
+        if error is { "receipt": _, .. } {
+          error
+        } else {
+          {
+            "error": json_string(
+              error,
+              "message",
+              default="Could not import files",
+            ),
+          }
         },
       )
   }
@@ -232,7 +236,8 @@ async fn create_workspace_entry(
       ),
     )
   }
-  let absolute = match resolve_workspace_path(workspace.root_path, relative) {
+  let absolute = match
+    resolve_workspace_write_path(workspace.root_path, relative) {
     Some((absolute, _)) => absolute
     None =>
       return Err(
@@ -303,6 +308,15 @@ async fn import_workspace_files(
   workspace : @desk.DeskWorkspace,
   payload : Json,
 ) -> Result[Json, Json] {
+  if payload is { "archive_entries": Array(entries), .. } {
+    let receipt = archive_entries_receipt(entries)
+    return Err({
+      "code": 415,
+      "reason": "Unsupported Media Type",
+      "message": "Archive extraction is unsupported; entries were rejected before staging",
+      "receipt": receipt,
+    })
+  }
   let target_directory = match import_target_directory(workspace, payload) {
     Ok(directory) => directory
     Err(error) => return Err(error)
@@ -338,7 +352,7 @@ async fn import_workspace_files(
       )
     }
     let target_absolute = match
-      resolve_workspace_path(workspace.root_path, target_relative) {
+      resolve_workspace_write_path(workspace.root_path, target_relative) {
       Some((absolute, _)) => absolute
       None =>
         return Err(

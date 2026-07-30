@@ -4,10 +4,18 @@ import {
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
 }
 
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/core/encoding/utf8" @encoding/utf8,
+  "vectie/moondesk/internal/pathx",
+} for "test"
+
 supported_targets = "native"
 
 options(
   targets: {
+    "confined_io.mbt": [ "native" ],
     "exists.mbt": [ "native" ],
     "list_directory.mbt": [ "native" ],
     "make_directory.mbt": [ "native" ],

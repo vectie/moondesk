@@ -35,5 +35,13 @@ jobs:
       - name: Install UI dependencies
         run: npm ci
         working-directory: ui/rabbita-desk
+      - name: Phase 5 security suite
+        run: |
+          moon test --target native internal/fsx
+          moon test --target native internal/preview
+          moon test --target native internal/moonwiki/archive_security_wbtest.mbt
+          moon test --target native internal/moonwiki/browser_security_wbtest.mbt
+          moon test --target native core/desktop_authority_test.mbt
+          moon test --target native internal/moonwiki/moonflow_action_receipt_wbtest.mbt
       - name: Validate
         run: scripts/validate.sh full

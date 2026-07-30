@@ -29,7 +29,7 @@ async fn handle_workspace_inbox(
   match json_string_opt(payload, "path") {
     Some(path) => {
       let relative = decode_query_value(path)
-      match resolve_workspace_path(workspace.root_path, relative) {
+      match resolve_workspace_write_path(workspace.root_path, relative) {
         Some((absolute, clean_relative)) =>
           if !is_writable_entry(clean_relative) {
             send_api_error(

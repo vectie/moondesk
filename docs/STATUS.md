@@ -24,7 +24,14 @@ s, review/preview/town focused tests 0.03/0.04/0.04 s, and Source Pane 11/11 in
 0.15 s. Full command and ownership evidence is in
 `docs/PHASE4_PACKAGE_OWNERSHIP_MAP.md`.
 
-Phases 5–7 and 10 have not started; Phase 8 is partial; and Phase 9 has
+Phase 5 is complete. Canonical symlink-aware IO is enforced at workspace read
+and write boundaries; unsupported archive inputs are rejected before writes
+with a typed staging receipt; generated scriptable previews remain opaque;
+the complete desktop route table carries explicit authority; MoonFlow action
+receipts are durably persisted through confined IO; and the focused security
+suite is part of CI. Exact evidence is in `docs/PHASE5_SECURITY_EVIDENCE.md`.
+
+Phases 6–7 and 10 have not started; Phase 8 is partial; and Phase 9 has
 unsigned-local evidence only. These repository-local requirements remain open
 where the plan says they are open and are not reclassified as external.
 

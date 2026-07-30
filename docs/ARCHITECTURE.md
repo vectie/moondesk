@@ -16,6 +16,12 @@ MoonSuite filesystem contracts are a shared foundation owned by MoonLib.
 MoonGate consumes those contracts to validate/report workspace health and
 legacy-path drift; it does not define product-home or book-layout paths.
 
+## Phase 5 security boundary
+
+Canonical path, route-authority, generated-content, archive-import, and durable
+action-receipt guarantees are specified with owning code and gate commands in
+[`PHASE5_SECURITY_EVIDENCE.md`](PHASE5_SECURITY_EVIDENCE.md).
+
 ## Boundary
 
 MoonDesk is a desktop shell over existing Moon workspaces. It should not absorb

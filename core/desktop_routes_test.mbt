@@ -254,6 +254,7 @@ test "desktop api capability schema lives in core boundary" {
     capability.desktop_route_contracts.contains({
       path: @core.desktop_capabilities_route(),
       methods: ["GET", "HEAD"],
+      authority_scope: "read-only",
     }),
   )
   assert_true(
