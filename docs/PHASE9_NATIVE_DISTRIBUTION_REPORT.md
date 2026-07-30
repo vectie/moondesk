@@ -38,4 +38,6 @@ The repository does not contain these values.
 | Install/update/interruption/rollback/removal | macOS QA | 2026-08-18 | schema-valid lifecycle evidence and before/after user-data hashes |
 | 24-hour lifecycle/resource soak | Reliability Engineering | 2026-08-21 | raw samples and schema-valid report against frozen thresholds |
 
-Phase 9 is not declared complete until these blockers are closed. Phase 10 has not started.
+Phase 9 is not declared complete until these blockers are closed. Phase 10
+records the resulting **Not ready** decision in
+[`FINAL_RELEASE_READINESS_2026-07-30.md`](FINAL_RELEASE_READINESS_2026-07-30.md).

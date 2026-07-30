@@ -4,52 +4,27 @@ The authoritative scope and phase gates are defined in `docs/MOONDESK_PRODUCTIZA
 
 ## Current execution
 
-Phase 3 is complete and all nine slices are closed. Accepted evidence: **17
-public types**; **30 public functions/methods**; **0 public impl/raw helpers**;
-**47 public declarations**; generated interface **245 lines / 7,053 bytes**;
-all **11 ownership validators** green; `mooncode/core` **61/61** on wasm,
-wasm-gc, js, and native; `internal/mooncode` **15/15** on all four targets;
-MoonWiki **155/155**; UI **379/379**.
+The productization program has reached its finite Phase 10 decision:
+**Not ready**. Phases 0–8 have passed their recorded repository or hosted gates.
+Phase 9's repository-owned distribution path is implemented and locally
+validated, but the Phase 9 external gate remains blocked.
 
-Downstream consumer migration commit `716870857725abd5fb0853675cf5ee494a87bd2f`
-was validated but deliberately is not part of this integration. The immediate
-repository-local phase completed is Phase 4 package boundaries.
+The consolidated audit, exact owners, target dates, and evidence required to
+change the decision are in
+[`FINAL_RELEASE_READINESS_2026-07-30.md`](FINAL_RELEASE_READINESS_2026-07-30.md).
+The distribution implementation and external proof boundaries are in
+[`PHASE9_NATIVE_DISTRIBUTION_REPORT.md`](PHASE9_NATIVE_DISTRIBUTION_REPORT.md).
 
-Phase 4 closes with reviewed `internal/review`, `internal/preview`, and
-`internal/town` leaf packages below the `internal/moonwiki` facade; private,
-generation-scoped Source Pane state; behavior-owned UI state and test suites;
-and generated interfaces that publish no Source Pane constructors, fields,
-variants, or reducer functions (only compiler-retained opaque private names). Warm measured gates were root native check 0.41 s, UI JS check 0.42
-s, review/preview/town focused tests 0.03/0.04/0.04 s, and Source Pane 11/11 in
-0.15 s. Full command and ownership evidence is in
-`docs/PHASE4_PACKAGE_OWNERSHIP_MAP.md`.
+The latest full local validation completed every functional stage before its
+clean-tree assertion: 338 native tests, 501 UI tests, 6 localization tests, 8
+release-verifier tests, the Phase 9 non-credentialed smoke, the production
+build, generated-interface verification, and whitespace checks passed. The
+root check still reports 331 warnings, so warning-clean release readiness is
+not claimed.
 
-Phase 5 is complete. Canonical symlink-aware IO is enforced at workspace read
-and write boundaries; unsupported archive inputs are rejected before writes
-with a typed staging receipt; generated scriptable previews remain opaque;
-the complete desktop route table carries explicit authority; MoonFlow action
-receipts are durably persisted through confined IO; and the focused security
-suite is part of CI. Exact evidence is in `docs/PHASE5_SECURITY_EVIDENCE.md`.
-
-Phase 6 is complete locally at commit `568ec7c3`. The bounded audit confirmed
-that canonical turn ordering, evidence-backed progress, reconnect/reload
-preservation, stale-event rejection, and progressively disclosed diagnostics
-already had owning tests. The only remaining user-visible gap was completed
-approval copy: it now identifies the owning command and tool call and exposes
-the durable decision receipt under Technical details. Exact exit-gate ownership
-and validation evidence is in `docs/PHASE6_OPERATOR_EVIDENCE.md`.
-
-Phase 7 is complete locally at product implementation commit `94f957a4`.
-First-class DOCX, XLSX, and PPTX package editing, direct Code editing,
-dirty-draft conflict preservation, real MoonCode-to-direct-edit coordination,
-honest backend state, and bounded paused-planner transport resume passed the
-repository-local exit gate. Exact retained evidence is in
-`docs/PHASE7_EDITING_EVIDENCE.md`. The compiler still reports pre-existing
-warnings; this phase does not claim warning-clean release readiness.
-
-Only Phases 8–10 remain. Phase 8 is partial, Phase 9 has unsigned-local evidence
-only, and Phase 10 has not started. No hosted, credentialed, or other external
-evidence is claimed by this Phase 7 closure.
+No current hosted-CI, Developer ID, notarization, Gatekeeper, hosted update,
+clean-machine, lifecycle, rollback, removal, or 24-hour soak result is inferred
+from local checks.
 
 ## Evidence policy and navigation contract
 

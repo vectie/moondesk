@@ -2,9 +2,9 @@
 
 | Field | Value |
 | --- | --- |
-| Status | In progress — implementation evidence is tracked per phase below; external-proof blockers do not block independent repository-local work |
+| Status | Program closed with a **Not ready** release decision; repository-owned work is implemented, but external distribution evidence, warning cleanup, and current hosted CI remain blockers |
 | Owner | MoonDesk |
-| Last updated | 2026-07-27 |
+| Last updated | 2026-07-30 |
 
 ## Purpose
 
@@ -437,9 +437,9 @@ their exit gates.
 | [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Complete locally | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Retain the confinement, denial-path, authority, receipt, and CI evidence |
 | [6. Observability](#phase-6-unify-runtime-observability-and-operator-evidence) | Complete locally | Phases 3–5 | Evidence-backed turns, approvals, traces, and recovery | Retain the canonical ordering, evidence, receipt, stale-event, and disclosure proof |
 | [7. Editing workspaces](#phase-7-complete-first-class-document-and-code-editing) | Complete locally | Phases 3–6 | Working DOCX, XLSX, PPTX, and direct Code editing | Retain reopen/save fidelity, conflict, and prompt-to-edit integration evidence |
-| [8. UX quality](#phase-8-finish-ux-consistency-localization-and-accessibility) | Shared-shell semantic slice plus partial local evidence | Stable Phase 7 editing contracts | Shared shell, explicit localization, and accessibility proof | Full keyboard, focused manual screen-reader, locale, reduced-motion, and responsive state matrix |
-| [9. Native distribution](#phase-9-prove-native-distribution-and-long-running-operation) | Unsigned local macOS evidence only | Phases 2–8 | Notarized release, update proof, and reliability evidence | Credentialed clean-machine install/update/rollback and soak transcripts |
-| [10. Closure](#phase-10-program-closure-and-release-readiness) | Not started | Phases 0–9 | Finite release-readiness decision | All prior exit gates pass or explicit no-go exceptions are recorded |
+| [8. UX quality](#phase-8-finish-ux-consistency-localization-and-accessibility) | Complete locally | Stable Phase 7 editing contracts | Shared shell, explicit localization, and accessibility proof | Retain automated evidence; spoken VoiceOver and packaged-native interaction remain manual/external boundaries |
+| [9. Native distribution](#phase-9-prove-native-distribution-and-long-running-operation) | Repository path complete; external gate blocked | Phases 2–8 | Credentialed release path, evidence contracts, and local smoke | Credentialed clean-machine install/update/rollback and soak transcripts |
+| [10. Closure](#phase-10-program-closure-and-release-readiness) | Complete — **Not ready** | Phases 0–9 | Finite release-readiness decision | Clear every dated blocker in the final readiness report before recording Ready |
 
 ## Phase 0: Establish One Source Of Current Truth
 
@@ -1985,6 +1985,19 @@ Phase 8 is complete when:
 MoonDesk can be installed, launched, updated, recovered, and removed on a clean
 supported Mac through a documented and reproducible release path.
 
+### Current gate state — repository path complete, external gate blocked, 2026-07-30
+
+The repository-owned release path, protected credential inputs, immutable
+identity/channel metadata, signing/notarization command order, evidence
+schemas/checklists, fixed soak thresholds, and non-credentialed smoke are
+implemented and locally validated. Exact operations and blockers are retained
+in [`PHASE9_NATIVE_DISTRIBUTION_REPORT.md`](PHASE9_NATIVE_DISTRIBUTION_REPORT.md)
+and [`PHASE9_RELEASE_OPERATIONS.md`](PHASE9_RELEASE_OPERATIONS.md).
+
+Phase 9 is not complete. No credentialed Apple, Gatekeeper, hosted-channel,
+clean-machine, lifecycle, or 24-hour soak evidence was available locally, and
+none is inferred from the repository-owned implementation.
+
 ### Workstreams
 
 #### 9.1 Credentialed release
@@ -2089,6 +2102,15 @@ Phase 9 is complete when:
 
 The productization program ends with a finite readiness decision, not an
 open-ended list of improvements.
+
+### Current gate state — complete with Not ready decision, 2026-07-30
+
+The closure audit is complete. The project records **Not ready**, with every
+remaining release blocker assigned an owner, target date, and required evidence
+in
+[`FINAL_RELEASE_READINESS_2026-07-30.md`](FINAL_RELEASE_READINESS_2026-07-30.md).
+This completes Phase 10's decision gate without reclassifying Phase 9's missing
+external proof as success.
 
 ### Closure audit
 
