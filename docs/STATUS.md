@@ -39,9 +39,17 @@ approval copy: it now identifies the owning command and tool call and exposes
 the durable decision receipt under Technical details. Exact exit-gate ownership
 and validation evidence is in `docs/PHASE6_OPERATOR_EVIDENCE.md`.
 
-Phase 7 and Phase 10 have not started; Phase 8 is partial; and Phase 9 has
-unsigned-local evidence only. These repository-local requirements remain open
-where the plan says they are open and are not reclassified as external.
+Phase 7 is complete locally at product implementation commit `94f957a4`.
+First-class DOCX, XLSX, and PPTX package editing, direct Code editing,
+dirty-draft conflict preservation, real MoonCode-to-direct-edit coordination,
+honest backend state, and bounded paused-planner transport resume passed the
+repository-local exit gate. Exact retained evidence is in
+`docs/PHASE7_EDITING_EVIDENCE.md`. The compiler still reports pre-existing
+warnings; this phase does not claim warning-clean release readiness.
+
+Only Phases 8–10 remain. Phase 8 is partial, Phase 9 has unsigned-local evidence
+only, and Phase 10 has not started. No hosted, credentialed, or other external
+evidence is claimed by this Phase 7 closure.
 
 ## Evidence policy and navigation contract
 

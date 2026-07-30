@@ -436,7 +436,7 @@ their exit gates.
 | [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | Complete locally | Phase 3 | Narrower packages, state ownership, and decomposed tests | Retain ownership, interface, focused-test, timing, and product-smoke evidence |
 | [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Complete locally | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Retain the confinement, denial-path, authority, receipt, and CI evidence |
 | [6. Observability](#phase-6-unify-runtime-observability-and-operator-evidence) | Complete locally | Phases 3–5 | Evidence-backed turns, approvals, traces, and recovery | Retain the canonical ordering, evidence, receipt, stale-event, and disclosure proof |
-| [7. Editing workspaces](#phase-7-complete-first-class-document-and-code-editing) | Not started | Phases 3–6 | Working DOCX, XLSX, PPTX, and direct Code editing | Reopen/save fidelity and prompt-to-edit integration journeys pass |
+| [7. Editing workspaces](#phase-7-complete-first-class-document-and-code-editing) | Complete locally | Phases 3–6 | Working DOCX, XLSX, PPTX, and direct Code editing | Retain reopen/save fidelity, conflict, and prompt-to-edit integration evidence |
 | [8. UX quality](#phase-8-finish-ux-consistency-localization-and-accessibility) | Shared-shell semantic slice plus partial local evidence | Stable Phase 7 editing contracts | Shared shell, explicit localization, and accessibility proof | Full keyboard, focused manual screen-reader, locale, reduced-motion, and responsive state matrix |
 | [9. Native distribution](#phase-9-prove-native-distribution-and-long-running-operation) | Unsigned local macOS evidence only | Phases 2–8 | Notarized release, update proof, and reliability evidence | Credentialed clean-machine install/update/rollback and soak transcripts |
 | [10. Closure](#phase-10-program-closure-and-release-readiness) | Not started | Phases 0–9 | Finite release-readiness decision | All prior exit gates pass or explicit no-go exceptions are recorded |
@@ -1616,16 +1616,33 @@ binary document writes and concurrent user/agent source edits need those
 boundaries. It precedes UX quality so Phase 8 validates real editors rather than
 mockups or read-only placeholders.
 
-### Current baseline
+### Current gate state — complete locally, 2026-07-30
 
-- XLSX has raw-file and portable-export transport, but no workbook renderer or
-  editor.
-- DOCX and PPTX are treated as unsupported binary files.
-- Code renders a conversation composer. Its source-pane state is read-only and
-  is not a direct file editor.
-- MoonClaw can perform bounded file mutations and MoonDesk can present typed
-  edit/test evidence, but there is no current browser journey proving direct
-  user editing and agent editing share one safe file state.
+Product implementation commit `94f957a4` closes the repository-local Phase 7
+gate. DOCX, XLSX, and PPTX valid ZIP packages can be opened, edited, saved,
+closed, reopened, and exported. Independent ZIP/member verification confirms
+valid saved packages and retention of unknown members. The supported model
+also retains XLSX formulas and sheet identity, plus PPTX slide order and
+geometry.
+
+Code now supports direct file open, edit, save, diff, reload, and deliberate
+replace. A baseline conflict preserves the dirty draft instead of silently
+overwriting it. The retained browser journey uses real MoonCode to edit a file
+and then directly edits that same file, while backend messages and errors stay
+honest.
+
+Automatic same-session runtime-turn resume is deliberately narrow: it applies
+only to paused planner transport and uses canonical session listing, the bound
+`book_root`, and repository-local daemon metadata. It does not replay a prompt
+and has no retry count or time/step ceiling.
+
+Closure evidence is retained in `docs/PHASE7_EDITING_EVIDENCE.md`: focused UI
+Office tests passed 7/7; `internal/moonwiki` passed 165/165; the Phase 7 browser
+smoke passed and emitted `moondesk-phase7-editing-proof.v1` for DOCX, XLSX, and
+PPTX with `conflictDraftPreserved: true` and MoonCode-edit-then-direct-edit
+proof; full fast validation passed 338/338 native and 500/500 UI. The compiler
+still reports pre-existing warnings, so Phase 7 does not claim warning-clean
+release readiness.
 
 ### Workstreams
 
