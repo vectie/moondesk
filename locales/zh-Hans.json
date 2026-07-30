@@ -1,4 +1,9 @@
 {
+  "nav.desk": "桌面",
+  "nav.wiki": "知识库",
+  "nav.code": "代码",
+  "nav.flow": "流程",
+  "nav.packs": "应用包",
   "common.refresh": "刷新",
   "common.save": "保存",
   "common.cancel": "取消",
@@ -152,6 +157,7 @@
   "code.ask_placeholder": "询问 MoonCode…",
   "code.no_chats": "此 MoonBook 还没有对话",
   "code.search_chats": "搜索对话",
+  "code.search_sessions": "搜索 MoonCode 会话",
   "code.sessions": "{count} 个会话",
   "code.new_chat_title": "新建对话",
   "code.assistance_eyebrow": "可选功能",

@@ -388,6 +388,10 @@ fn desktop_portable_api_workspace_content_route_supported(
 pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
   [
     desktop_api_route_contract(desktop_capabilities_route(), ["GET", "HEAD"]),
+    desktop_api_route_contract(
+      desktop_api_path(["api", "desktop", "pack-apps"]),
+      ["GET", "HEAD"],
+    ),
     desktop_api_route_contract(workspaces_route(), ["GET", "HEAD", "POST"]),
     desktop_api_route_contract(workspace_metadata_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(workspace_import_route(), ["POST"]),
@@ -422,6 +426,9 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(workspace_action_route("reveal"), ["POST"]),
     desktop_api_route_contract(workspace_action_route("review-diff"), [
       "GET", "HEAD",
+    ]),
+    desktop_api_route_contract(workspace_action_route("browser-evidence"), [
+      "POST",
     ]),
     desktop_api_route_contract(search_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(town_route("state"), ["GET", "HEAD"]),

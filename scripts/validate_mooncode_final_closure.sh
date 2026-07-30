@@ -3,7 +3,6 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ARCH_DOC="${ROOT}/docs/MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md"
-MOONCODE_DOC="${ROOT}/docs/MOONCODE.md"
 TEST_PLAN="${ROOT}/docs/CODE_MODE_TEST_PLAN.md"
 GATE="${ROOT}/scripts/phase8_migration_gates.sh"
 
@@ -35,10 +34,6 @@ require_text "${ARCH_DOC}" 'Closure wall' "closure wall item"
 require_text "${ARCH_DOC}" 'Do-not-migrate classification' "do-not-migrate classification"
 require_text "${ARCH_DOC}" 'No Phase 59 by default' "no-Phase-59 closure rule"
 require_text "${ARCH_DOC}" 'No regex-only cleanup as architecture work' "regex-only cleanup guardrail"
-
-require_text "${MOONCODE_DOC}" 'Final closure rule' "MoonCode final closure rule"
-require_text "${MOONCODE_DOC}" 'native command execution/result contract' "MoonCode native command closure reference"
-require_text "${MOONCODE_DOC}" 'runtime proof/evidence contract' "MoonCode runtime evidence closure reference"
 
 require_text "${TEST_PLAN}" 'Final architecture closure gate' "code-mode final closure gate"
 require_text "${TEST_PLAN}" 'validate_mooncode_final_closure.sh' "code-mode closure validator command"

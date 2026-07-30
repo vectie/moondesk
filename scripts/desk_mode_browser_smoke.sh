@@ -8,7 +8,10 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MOONCLAW_ROOT="${MOONCLAW_ROOT:-$(cd "${REPO_ROOT}/.." && pwd)/moonclaw}"
 MOONCLAW_BIN="${MOONCLAW_BIN:-}"
 UI_DIST="${UI_DIST:-ui/rabbita-desk/dist}"
-ROOT="$(mktemp -d "${TMPDIR:-/tmp}/moondesk-desk-browser.XXXXXX")"
+ARTIFACT_ROOT="${MOONDESK_BROWSER_ARTIFACT_ROOT:-${REPO_ROOT}/_build/phase8-browser}"
+mkdir -p "${ARTIFACT_ROOT}"
+ROOT="$(mktemp -d "${ARTIFACT_ROOT}/moondesk-desk-browser.XXXXXX")"
+export TMPDIR="${ARTIFACT_ROOT}"
 SCENARIO="${1:-all}"
 PIDS=()
 
@@ -23,10 +26,10 @@ cleanup() {
 trap cleanup EXIT
 
 case "${SCENARIO}" in
-  all | full | phase7-editing | empty | quickstart | keyboard | keyboard-transients | accessibility | screen-reader | capability | capability-responsive | capability-scale)
+  all | full | phase7-editing | empty | quickstart | keyboard | keyboard-transients | accessibility | phase8-layout | screen-reader | capability | capability-responsive | capability-scale)
     ;;
   *)
-    echo "usage: $0 [all|full|phase7-editing|empty|quickstart|keyboard|keyboard-transients|accessibility|screen-reader|capability|capability-responsive|capability-scale]" >&2
+    echo "usage: $0 [all|full|phase7-editing|empty|quickstart|keyboard|keyboard-transients|accessibility|phase8-layout|screen-reader|capability|capability-responsive|capability-scale]" >&2
     exit 2
     ;;
 esac
@@ -199,7 +202,7 @@ run_browser_scenario() {
   local pid=""
   local chrome_pid=""
 
-  if [[ "${scenario}" == "full" || "${scenario}" == "phase7-editing" || "${scenario}" == "quickstart" || "${scenario}" == "keyboard-transients" || "${scenario}" == "accessibility" || "${scenario}" == "screen-reader" || "${scenario}" == "capability" || "${scenario}" == "capability-responsive" || "${scenario}" == "capability-scale" ]]; then
+  if [[ "${scenario}" == "full" || "${scenario}" == "phase7-editing" || "${scenario}" == "quickstart" || "${scenario}" == "keyboard-transients" || "${scenario}" == "accessibility" || "${scenario}" == "phase8-layout" || "${scenario}" == "screen-reader" || "${scenario}" == "capability" || "${scenario}" == "capability-responsive" || "${scenario}" == "capability-scale" ]]; then
     start_moonclaw_for_fixture "${fixture_root}"
   fi
 
@@ -316,6 +319,12 @@ fi
 
 # Screen-reader proof must never reuse another scenario's daemon, browser, or
 # mutated fixture: run_browser_scenario owns a fresh runtime for this full fixture.
+if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "phase8-layout" ]]; then
+  PHASE8_LAYOUT_ROOT="${ROOT}/phase8-layout"
+  create_full_fixture "${PHASE8_LAYOUT_ROOT}"
+  run_browser_scenario "phase8-layout" "${PHASE8_LAYOUT_ROOT}"
+fi
+
 if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "screen-reader" ]]; then
   SCREEN_READER_ROOT="${ROOT}/screen-reader"
   create_full_fixture "${SCREEN_READER_ROOT}"

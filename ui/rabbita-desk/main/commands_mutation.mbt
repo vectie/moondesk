@@ -25,7 +25,7 @@ fn select_library_cmd(
   dispatch : Dispatch[Msg],
   root_path : String,
 ) -> @rabbita.Cmd {
-  @http.post("/api/desktop/library")
+  @http.post(@desk.desktop_api_url(["api", "desktop", "library"]))
   .with_json(({ "root_path": root_path } : Json))
   .expect_json(result => {
     dispatch(SelectedLibrary(library_selection_http_result(result)))
@@ -514,7 +514,7 @@ fn save_moonflow_composition_cmd(
     "selected_item_ids": selected_item_ids,
     "recorded_at": moonflow_control_recorded_at(),
   }
-  @http.post("/api/moonflow/composition")
+  @http.post(@desk.desktop_api_url(["api", "moonflow", "composition"]))
   .with_json(body)
   .expect_json(result => {
     dispatch(
@@ -532,7 +532,7 @@ fn control_moonflow_cmd(
   action : String,
   detail : String,
 ) -> @rabbita.Cmd {
-  @http.post("/api/moonflow/runs/" + run_id + "/control")
+  @http.post(@desk.desktop_api_url(["api", "moonflow", "runs", run_id, "control"]))
   .with_json({
     "action": action,
     "detail": detail,
@@ -554,7 +554,14 @@ fn execute_moonflow_operator_action_cmd(
   action_id : String,
 ) -> @rabbita.Cmd {
   let body : Json = {}
-  @http.post("/api/moonflow/runs/" + run_id + "/actions/" + action_id)
+  @http.post(@desk.desktop_api_url([
+      "api",
+      "moonflow",
+      "runs",
+      run_id,
+      "actions",
+      action_id,
+    ]))
   .with_json(body)
   .expect_json(result => {
     dispatch(

@@ -11,7 +11,8 @@ fn fetch_moonclaw_daemon_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 
 ///|
 fn fetch_mooncode_capability_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
-  @http.get("/api/mooncode/capabilities").expect_json(result => {
+  @http.get(@desk.desktop_api_url(["api", "mooncode", "capabilities"]))
+  .expect_json(result => {
     let state = match result {
       Ok(payload) => mooncode_capability_state(payload)
       Err(error) => CapabilityUnavailable(error.to_string())

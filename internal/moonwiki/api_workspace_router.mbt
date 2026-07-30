@@ -119,12 +119,13 @@ async fn route_workspace_api(
       true
     }
     ["api", "workspaces", workspace_id, "browser-evidence"] => {
-      if method_ is Post {
+      let endpoint = @desk.workspace_action_route("browser-evidence")
+      if desktop_api_route_accepts_post(endpoint, method_) {
         handle_browser_evidence_persistence(
           workspace_root, workspace_id, body, method_, conn,
         )
       } else {
-        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
       }
       true
     }

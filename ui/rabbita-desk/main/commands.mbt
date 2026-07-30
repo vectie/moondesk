@@ -95,8 +95,8 @@ fn request_browser_host_control_cmd(control : String) -> @rabbita.Cmd {
 
 ///|
 #cfg(target="js")
-extern "js" fn browser_install_preview_observer() =
-  #| () => {
+extern "js" fn browser_install_preview_observer(workspaces_url : String) =
+  #| (workspacesUrl) => {
   #|   const attachNativeCapability = () => {
   #|     const nativeCapabilities = globalThis.__lepusaCapabilities;
   #|     const operationBanner = document.querySelector('[data-testid="browser-operation-banner"]');
@@ -159,7 +159,7 @@ extern "js" fn browser_install_preview_observer() =
   #|       const sourcePath = host instanceof HTMLElement ? host.dataset.sourcePath || '' : '';
   #|       const requestId = host instanceof HTMLElement ? host.dataset.evidenceRequestId || '' : '';
   #|       if (workspaceId && sourcePath && requestId) {
-  #|         fetch(`/api/workspaces/${encodeURIComponent(workspaceId)}/browser-evidence`, {
+  #|         fetch(`${workspacesUrl}/${encodeURIComponent(workspaceId)}/browser-evidence`, {
   #|           method: 'POST',
   #|           headers: { 'Content-Type': 'application/json' },
   #|           body: JSON.stringify({
@@ -208,7 +208,7 @@ extern "js" fn browser_install_preview_observer() =
   #|       const host = document.querySelector('[data-testid="browser-preview-host"]');
   #|       const nativeResult = data.receipt?.result;
   #|       if (data.ok === true && host instanceof HTMLElement && nativeResult?.screenshot_png_base64) {
-  #|         fetch(`/api/workspaces/${encodeURIComponent(host.dataset.workspaceId || '')}/browser-evidence`, {
+  #|         fetch(`${workspacesUrl}/${encodeURIComponent(host.dataset.workspaceId || '')}/browser-evidence`, {
   #|           method: 'POST',
   #|           headers: { 'Content-Type': 'application/json' },
   #|           body: JSON.stringify({
@@ -293,7 +293,14 @@ extern "js" fn browser_install_preview_observer() =
 
 ///|
 fn install_browser_preview_observer_cmd() -> @rabbita.Cmd {
-  @cmd.custom_cmd(_ => browser_install_preview_observer(), kind=AfterRender)
+  @cmd.custom_cmd(
+    _ => {
+      browser_install_preview_observer(
+        @desk.desktop_api_url(["api", "workspaces"]),
+      )
+    },
+    kind=AfterRender,
+  )
 }
 
 ///|

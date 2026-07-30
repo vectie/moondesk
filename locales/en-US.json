@@ -1,4 +1,9 @@
 {
+  "nav.desk": "Desk",
+  "nav.wiki": "Wiki",
+  "nav.code": "Code",
+  "nav.flow": "Flow",
+  "nav.packs": "Packs",
   "common.refresh": "Refresh",
   "common.save": "Save",
   "common.cancel": "Cancel",
@@ -152,6 +157,7 @@
   "code.ask_placeholder": "Ask MoonCode…",
   "code.no_chats": "No chats in this MoonBook",
   "code.search_chats": "Search chats",
+  "code.search_sessions": "Search MoonCode sessions",
   "code.sessions": "{count} sessions",
   "code.new_chat_title": "New chat",
   "code.assistance_eyebrow": "Optional capability",

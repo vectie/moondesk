@@ -18,11 +18,12 @@ fn fetch_workspace_metadata_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 
 ///|
 fn fetch_pack_apps_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
-  @http.get("/api/desktop/pack-apps").expect_json(result => {
-    dispatch(
-      LoadedPackApps(http_result(result, "Invalid installed pack catalog")),
-    )
-  })
+  @http.get(@desk.desktop_api_url(["api", "desktop", "pack-apps"])).expect_json(result => {
+      dispatch(
+        LoadedPackApps(http_result(result, "Invalid installed pack catalog")),
+      )
+    },
+  )
 }
 
 ///|
@@ -122,7 +123,7 @@ fn fetch_runs_cmd(
 
 ///|
 fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
-  @http.get("/api/moonflow/runs").expect_json(result => {
+  @http.get(@desk.desktop_api_url(["api", "moonflow", "runs"])).expect_json(result => {
     dispatch(
       LoadedMoonFlowRuns(http_result(result, "Invalid MoonFlow run listing")),
     )
@@ -131,13 +132,14 @@ fn fetch_moonflow_runs_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 
 ///|
 fn fetch_moonflow_capability_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
-  @http.get("/api/moonflow/capability").expect_json(result => {
-    dispatch(
-      LoadedMoonFlowCapability(
-        http_result(result, "Flow readiness is unavailable"),
-      ),
-    )
-  })
+  @http.get(@desk.desktop_api_url(["api", "moonflow", "capability"])).expect_json(result => {
+      dispatch(
+        LoadedMoonFlowCapability(
+          http_result(result, "Flow readiness is unavailable"),
+        ),
+      )
+    },
+  )
 }
 
 ///|
@@ -145,7 +147,7 @@ fn fetch_moonflow_composition_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
 ) -> @rabbita.Cmd {
-  @http.post("/api/moonflow/composition")
+  @http.post(@desk.desktop_api_url(["api", "moonflow", "composition"]))
   .with_json({ "action": "load", "workspace_id": workspace_id })
   .expect_json(result => {
     dispatch(
@@ -161,7 +163,9 @@ fn fetch_moonflow_operator_actions_cmd(
   dispatch : Dispatch[Msg],
   run_id : String,
 ) -> @rabbita.Cmd {
-  @http.get("/api/moonflow/runs/" + run_id + "/actions").expect_json(result => {
+  @http.get(
+    @desk.desktop_api_url(["api", "moonflow", "runs", run_id, "actions"]),
+  ).expect_json(result => {
     dispatch(
       LoadedMoonFlowOperatorActions(
         run_id,
@@ -181,13 +185,14 @@ struct MoonFlowBrowserResponse {
 ///|
 #cfg(target="js")
 extern "js" fn browser_import_selected_moonflow(
+  url : String,
   workspace_id : String,
 ) -> @js.Promise =
-  #| async (workspaceId) => {
+  #| async (url, workspaceId) => {
   #|   const controller = new AbortController();
   #|   const timeout = setTimeout(() => controller.abort(), 30000);
   #|   try {
-  #|     const response = await fetch('/api/moonflow/runs/import-selected', {
+  #|     const response = await fetch(url, {
   #|       method: 'POST',
   #|       headers: { 'content-type': 'application/json' },
   #|       body: JSON.stringify({ workspace_id: workspaceId }),
@@ -223,7 +228,10 @@ fn import_selected_moonflow_cmd(
   workspace_id : String,
 ) -> @rabbita.Cmd {
   @rabbita.perform(fn(result) { dispatch(ImportedMoonFlow(result)) }, async fn() noraise {
-    let text : String = browser_import_selected_moonflow(workspace_id)
+    let text : String = browser_import_selected_moonflow(
+        @desk.desktop_api_url(["api", "moonflow", "runs", "import-selected"]),
+        workspace_id,
+      )
       .wait()
       .cast() catch {
         error => return Err("Could not prepare MoonFlow: \{error}")

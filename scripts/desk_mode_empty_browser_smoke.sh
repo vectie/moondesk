@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(mktemp -d "${TMPDIR:-/tmp}/moondesk-desk-empty-browser.XXXXXX")"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ARTIFACT_ROOT="${MOONDESK_BROWSER_ARTIFACT_ROOT:-${REPO_ROOT}/_build/phase8-browser}"
+mkdir -p "${ARTIFACT_ROOT}"
+ROOT="$(mktemp -d "${ARTIFACT_ROOT}/moondesk-desk-empty-browser.XXXXXX")"
+export TMPDIR="${ARTIFACT_ROOT}"
 PORT="${PORT:-$((5600 + RANDOM % 1000))}"
 CDP_PORT="${CDP_PORT:-$((9600 + RANDOM % 1000))}"
 HOST="127.0.0.1"

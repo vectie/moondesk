@@ -27,7 +27,7 @@ fn render_mooncode_pane(
           class="mooncode-session-search-input",
           attrs=@html.Attrs::build()
             .data_set("testid", "mooncode-session-search")
-            .data_set("i18n-aria-label", "code.search_chats")
+            .data_set("i18n-aria-label", "code.search_sessions")
             .aria_label("Search MoonCode sessions"),
           value=model.mooncode_session_query,
           placeholder="Search chats",

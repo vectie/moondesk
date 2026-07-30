@@ -87,7 +87,7 @@ async function runSmoke() {
   );
   const routeContracts = capabilities.desktop_route_contracts;
   assert(
-    Array.isArray(routeContracts) && routeContracts.length > 20,
+    Array.isArray(routeContracts) && routeContracts.length === 7,
     `Capabilities did not publish desktop route contracts: ${JSON.stringify(capabilities)}`,
   );
   const created = await requestJson(

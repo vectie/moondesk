@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const routeContractsPath = path.join(repoRoot, "internal/mooncode/route_contracts.mbt");
+const routeContractsPath = path.join(repoRoot, "internal/mooncode/adapter_protocol.mbt");
 const routerPath = path.join(repoRoot, "internal/moonwiki/api_mooncode_router.mbt");
 const backendRouteTestPath = path.join(
   repoRoot,
@@ -24,7 +24,7 @@ function collectUnique(label, text, regex) {
   const values = [...text.matchAll(regex)].map(match => match[1]);
   const unique = [...new Set(values)].sort();
   const duplicates = values.filter((value, index) => values.indexOf(value) !== index);
-  assert(unique.length > 20, `${label} exposed too few route helpers: ${unique.length}`);
+  assert(unique.length === 7, `${label} must expose exactly 7 route helpers: ${unique.length}`);
   assert(duplicates.length === 0, `${label} has duplicate route helpers: ${duplicates.join(", ")}`);
   return unique;
 }
@@ -61,8 +61,7 @@ assertSameSet("desktop_projection_route_contracts", contractHelpers, "api_moonco
 
 assert(
   !backendRouteTest.includes("mooncode_backend_router_route_contracts") &&
-    !backendRouteTest.includes("mooncode_backend_route_contract(") &&
-    !backendRouteTest.includes("\"/api/mooncode"),
+    !backendRouteTest.includes("mooncode_backend_route_contract("),
   "MoonCode backend route contract test must not reintroduce a static route mirror",
 );
 

@@ -7,7 +7,7 @@ const [baseUrl, cdpPort, fixtureRoot, scenario = "full"] = process.argv.slice(2)
 if (!baseUrl || !cdpPort || !fixtureRoot) {
   throw new Error(
     "usage: desk_mode_browser_smoke.mjs <base-url> <cdp-port> <fixture-root> " +
-      "[full|empty|accessibility|screen-reader|capability|capability-responsive|capability-scale|" +
+      "[full|empty|accessibility|phase8-layout|screen-reader|capability|capability-responsive|capability-scale|" +
       "keyboard-transients|phase7-editing|quickstart-before-restart|quickstart-after-restart]",
   );
 }
@@ -280,6 +280,26 @@ async function connect(cdpPort) {
     ws.addEventListener("error", reject, { once: true });
   });
   return new CdpSession(ws);
+}
+
+async function createPageSession(cdpPort) {
+  const target = await fetch(`http://127.0.0.1:${cdpPort}/json/new?about:blank`, {
+    method: "PUT",
+  }).then(response => response.json());
+  assert(target?.id, "Chrome did not create a page target");
+  assert(target?.webSocketDebuggerUrl, "New Chrome page target has no debugger URL");
+  const ws = new WebSocket(target.webSocketDebuggerUrl);
+  await new Promise((resolve, reject) => {
+    ws.addEventListener("open", resolve, { once: true });
+    ws.addEventListener("error", reject, { once: true });
+  });
+  return {
+    session: new CdpSession(ws),
+    close: async () => {
+      ws.close();
+      await fetch(`http://127.0.0.1:${cdpPort}/json/close/${target.id}`);
+    },
+  };
 }
 
 async function enablePageProblemCapture(session) {
@@ -5177,6 +5197,207 @@ async function runAccessibility() {
   }
 }
 
+async function runPhase8Layout() {
+  const viewport = { width: 844, height: 390, orientation: "short-landscape" };
+  const routes = [
+    { ...sharedShellDestinations[0], action: "[data-testid=desk-refresh]" },
+    { ...sharedShellDestinations[1], action: "[data-testid=wiki-new-note],[data-testid=pages-search-state-action],#moondesk-main-content button.secondary-button" },
+    { ...sharedShellDestinations[2], action: "[data-testid=mooncode-new-session]" },
+    { ...sharedShellDestinations[3], action: "[data-testid=moonflow-prepare-selected],#moondesk-main-content button.secondary-button" },
+    { ...sharedShellDestinations[4], action: "[data-testid=pack-open],[data-testid=pack-home-refresh]" },
+    { label: "Runs", activity: "runs", action: "[data-testid=runs-refresh],[data-testid=wiki-tab-runs]" },
+    { label: "Review", activity: "review", action: "[data-testid=review-state-panel] button.secondary-button,#moondesk-main-content button.secondary-button" },
+    { label: "Publish", activity: "publish", action: "[data-testid=publish-refresh],[data-testid=wiki-tab-publish]" },
+  ];
+  const cases = [];
+  for (const route of routes) {
+    const page = await createPageSession(cdpPort);
+    const session = page.session;
+    try {
+      const expectedLabel = route.label === "Wiki" ? "Wiki" : route.label;
+      await session.send("Page.bringToFront");
+      await enablePageProblemCapture(session);
+      await setEnglishLocale(session);
+      await session.send("Emulation.setEmulatedMedia", {
+        features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+      });
+      await setViewport(session, viewport.width, viewport.height, false);
+      await session.send("Page.navigate", {
+        url: `${baseUrl}/?locale=en-US&activity=${route.activity}&workspace=book-research-alpha`,
+      });
+      await waitFor(
+        session,
+        `document.readyState === 'complete' && ` +
+          `document.querySelector('#moondesk-main-content')?.getAttribute('aria-label') === ${JSON.stringify(expectedLabel + " workspace")} && ` +
+          `document.querySelectorAll('.primary-nav-desktop [data-testid^="mode-"]').length === 5 && ` +
+          `JSON.stringify([...document.querySelectorAll('.primary-nav-desktop [data-testid^="mode-"]')].map(node => node.textContent.trim())) === ` +
+            `${JSON.stringify(JSON.stringify(["Desk", "Wiki", "Code", "Flow", "Packs"]))} && ` +
+          `document.querySelector('[data-testid="destination-announcement"]')?.textContent.includes(${JSON.stringify(expectedLabel + " destination")})`,
+        `Phase 8 ${route.label} short-landscape route`,
+      );
+      const paintSettlement = await session.evaluate(`(async () => {
+        const expectedLabels = ["Desk", "Wiki", "Code", "Flow", "Packs"];
+        const snapshot = () => {
+          const main = document.querySelector('#moondesk-main-content');
+          const action = [...document.querySelectorAll(${JSON.stringify(route.action)})]
+            .find(element => element instanceof HTMLElement &&
+              element.getBoundingClientRect().width > 0 && element.getBoundingClientRect().height > 0);
+          const navigation = [...document.querySelectorAll('.primary-nav-desktop [data-testid^="mode-"]')]
+            .map(element => {
+              const box = element.getBoundingClientRect();
+              const style = getComputedStyle(element);
+              const label = element.querySelector('.primary-nav-label');
+              const labelBox = label?.getBoundingClientRect();
+              const labelStyle = label ? getComputedStyle(label) : null;
+              return {
+                text: element.textContent.trim(),
+                display: style.display,
+                visibility: style.visibility,
+                opacity: style.opacity,
+                color: style.color,
+                font: style.font,
+                rect: [box.left, box.top, box.width, box.height].map(value => Math.round(value * 100) / 100),
+                label: label && labelBox && labelStyle ? {
+                  text: label.textContent.trim(),
+                  display: labelStyle.display,
+                  visibility: labelStyle.visibility,
+                  opacity: labelStyle.opacity,
+                  color: labelStyle.color,
+                  font: labelStyle.font,
+                  fontWeight: labelStyle.fontWeight,
+                  rect: [labelBox.left, labelBox.top, labelBox.width, labelBox.height].map(value => Math.round(value * 100) / 100),
+                } : null,
+              };
+            });
+          const painted = navigation.length === expectedLabels.length && navigation.every((item, index) =>
+            item.text === expectedLabels[index] && item.display !== 'none' &&
+            item.visibility === 'visible' && Number(item.opacity) > 0 &&
+            item.rect[2] > 0 && item.rect[3] > 0 &&
+            item.label?.text === expectedLabels[index] &&
+            item.label.display !== 'none' && item.label.visibility === 'visible' &&
+            Number(item.label.opacity) > 0 &&
+            item.label.rect[2] > 0 && item.label.rect[3] > 0
+          );
+          return {
+            routeReady: main?.getAttribute('aria-label') === ${JSON.stringify(expectedLabel + " workspace")},
+            actionReady: Boolean(action),
+            painted,
+            navigation,
+          };
+        };
+        let previous = '';
+        let consistentFrames = 0;
+        let current = snapshot();
+        for (let frame = 0; frame < 120; frame += 1) {
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          current = snapshot();
+          const key = JSON.stringify(current.navigation);
+          consistentFrames = current.routeReady && current.actionReady && current.painted && key === previous
+            ? consistentFrames + 1
+            : 0;
+          previous = key;
+          if (consistentFrames >= 3) {
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            return { ...current, consistentFrames };
+          }
+        }
+        return { ...current, consistentFrames };
+      })()`);
+      assert(
+        paintSettlement.routeReady && paintSettlement.actionReady && paintSettlement.painted &&
+          paintSettlement.consistentFrames >= 3,
+        `${route.label} did not reach a stable painted frame: ${JSON.stringify(paintSettlement)}`,
+      );
+      const geometry = await session.evaluate(`(() => {
+        const visible = element => {
+          if (!(element instanceof HTMLElement)) return false;
+          const box = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          return box.width > 0 && box.height > 0 && style.display !== 'none' &&
+            style.visibility !== 'hidden' && box.bottom > 0 && box.top < innerHeight;
+        };
+        const rect = element => {
+          const box = element.getBoundingClientRect();
+          return { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
+        };
+        const main = document.querySelector('#moondesk-main-content');
+        const controls = [...document.querySelectorAll('button,a[href],input,select,textarea')]
+          .filter(element => visible(element) && element.closest('#moondesk-main-content') &&
+            !element.disabled && element.getAttribute('aria-disabled') !== 'true');
+        const preferred = [...document.querySelectorAll(${JSON.stringify(route.action)})]
+          .find(element => controls.includes(element));
+        const primary = preferred || controls.find(element =>
+          element.classList.contains('primary-button') || element.dataset.testid?.includes('primary')
+        );
+        const geometrySelectors = [
+          '[data-testid="source-editor"]', '[data-testid="source-path"]',
+          '[data-testid="source-open"]', '[data-testid="source-save"]',
+          '[data-testid="office-editor"]', '[data-testid="office-editor"] h3',
+          '[data-testid="office-path"]', '[data-testid="office-open"]',
+          '[data-testid="office-save"]'
+        ];
+        const items = geometrySelectors.flatMap(selector =>
+          [...document.querySelectorAll(selector)].filter(visible).map(element => ({ selector, rect: rect(element) }))
+        );
+        const overlaps = [];
+        for (let i = 0; i < items.length; i += 1) for (let j = i + 1; j < items.length; j += 1) {
+          const sameOwner = items[i].selector === '[data-testid="source-editor"]' && items[j].selector.startsWith('[data-testid="source-') ||
+            items[j].selector === '[data-testid="source-editor"]' && items[i].selector.startsWith('[data-testid="source-') ||
+            items[i].selector === '[data-testid="office-editor"]' && items[j].selector.startsWith('[data-testid="office-') ||
+            items[j].selector === '[data-testid="office-editor"]' && items[i].selector.startsWith('[data-testid="office-');
+          if (sameOwner) continue;
+          const a = items[i].rect, b = items[j].rect;
+          const width = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const height = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (width > 1 && height > 1) overlaps.push([items[i].selector, items[j].selector]);
+        }
+        const animated = [...document.querySelectorAll('*')].filter(element => {
+          const style = getComputedStyle(element);
+          return style.animationName !== 'none' ||
+            style.transitionDuration.split(',').some(value => parseFloat(value) > .001);
+        }).length;
+        return {
+          viewport: { width: innerWidth, height: innerHeight },
+          navigation: [...document.querySelectorAll('.primary-nav-desktop [data-testid^="mode-"]')].map(node => node.textContent.trim()),
+          documentWidth: document.documentElement.scrollWidth,
+          reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+          animated,
+          items,
+          overlaps,
+          primary: primary ? { tag: primary.tagName, text: primary.textContent.trim(), rect: rect(primary) } : null,
+        };
+      })()`);
+      assert(geometry.reducedMotion, `${route.label} did not emulate reduced motion`);
+      assert(geometry.animated === 0, `${route.label} retained animation/transition: ${JSON.stringify(geometry)}`);
+      assert(geometry.documentWidth <= viewport.width + 1, `${route.label} horizontally overflows: ${JSON.stringify(geometry)}`);
+      assert(geometry.overlaps.length === 0, `${route.label} panes overlap: ${JSON.stringify(geometry)}`);
+      assert(JSON.stringify(geometry.navigation) === JSON.stringify(["Desk", "Wiki", "Code", "Flow", "Packs"]), `${route.label} navigation was not stable: ${JSON.stringify(geometry)}`);
+      assert(
+        geometry.primary && geometry.primary.rect.top < viewport.height && geometry.primary.rect.bottom > 0,
+        `${route.label} has no reachable primary action: ${JSON.stringify(geometry)}`,
+      );
+      await session.send("Page.bringToFront");
+      await waitTwoAnimationFrames(session);
+      const screenshot = await captureDeskScreenshot(
+        session,
+        `phase8-${route.activity}-844x390-reduced-motion`,
+        844,
+        390,
+      );
+      cases.push({ route: route.label, activity: route.activity, paintSettlement, geometry, screenshot });
+      session.assertNoPageProblems(`Phase 8 ${route.label} reduced-motion short-landscape`);
+    } finally {
+      await page.close();
+    }
+  }
+  const proofPath = path.join(fixtureRoot, "desk-phase8-layout-proof.v1.json");
+  fs.writeFileSync(
+    proofPath,
+    `${JSON.stringify({ kind: "moondesk-phase8-layout-proof.v1", viewport, reducedMotion: true, caseCount: cases.length, cases }, null, 2)}\n`,
+  );
+  console.log(`Phase 8 layout proof: ${proofPath}`);
+}
+
 async function run() {
   verifyDeskStyleImports();
   const session = await connect(cdpPort);
@@ -8646,6 +8867,8 @@ const runner = scenario === "screen-reader"
   ? runEmptyLibrary
   : scenario === "accessibility"
     ? runAccessibility
+    : scenario === "phase8-layout"
+      ? runPhase8Layout
     : scenario === "capability"
       ? runCapabilityRenderedEvidence
       : scenario === "capability-responsive"

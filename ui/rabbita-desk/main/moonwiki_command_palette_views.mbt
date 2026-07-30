@@ -428,6 +428,23 @@ fn primary_navigation_items() -> Array[(WorkspaceMode, String, String, String)] 
 }
 
 ///|
+fn primary_navigation_i18n_keys() -> Array[String] {
+  ["nav.desk", "nav.wiki", "nav.code", "nav.flow", "nav.packs"]
+}
+
+///|
+fn primary_navigation_i18n_key(mode : WorkspaceMode) -> String {
+  match mode {
+    Desk => "nav.desk"
+    MoonWiki => "nav.wiki"
+    MoonCode => "nav.code"
+    MoonFlow => "nav.flow"
+    PackHome => "nav.packs"
+    _ => ""
+  }
+}
+
+///|
 fn primary_navigation_mode(mode : WorkspaceMode) -> WorkspaceMode {
   match mode {
     RequestsWorkspace | RunsWorkspace | ReviewWorkspace | PublishWorkspace =>
@@ -493,6 +510,13 @@ fn render_primary_navigation_button(
       .data_set("testid", test_id),
     title="Open " + workspace_mode_label(mode),
     on_click=dispatch(SelectWorkspaceMode(mode)),
-    workspace_mode_label(mode),
+    span(
+      class="primary-nav-label",
+      attrs=@html.Attrs::build().data_set(
+        "i18n",
+        primary_navigation_i18n_key(mode),
+      ),
+      workspace_mode_label(mode),
+    ),
   )
 }

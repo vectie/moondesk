@@ -17,6 +17,17 @@ test "primary navigation order, hooks, and shortcuts are stable" {
 }
 
 ///|
+test "primary navigation localization keys remain explicit and ordered" {
+  let keys = primary_navigation_i18n_keys()
+  assert_eq(keys.length(), 5)
+  assert_eq(keys[0], "nav.desk")
+  assert_eq(keys[1], "nav.wiki")
+  assert_eq(keys[2], "nav.code")
+  assert_eq(keys[3], "nav.flow")
+  assert_eq(keys[4], "nav.packs")
+}
+
+///|
 #warnings("-alert_unstable")
 test "title bar restores primary modes and nests Wiki work as tabs" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
@@ -33,6 +44,12 @@ test "title bar restores primary modes and nests Wiki work as tabs" {
   assert_true(markup.contains("data-testid=\"primary-nav-summary\""))
   assert_true(markup.contains("data-testid=\"compact-mode-flow\""))
   assert_true(markup.contains("data-testid=\"compact-mode-packs\""))
+  for key in primary_navigation_i18n_keys() {
+    assert_true(markup.contains("class=\"primary-nav-label\""))
+    assert_true(markup.contains("data-i18n=\"" + key + "\""))
+  }
+  assert_eq(markup.split("class=\"primary-nav-label\"").length(), 11)
+  assert_false(markup.contains("<button data-i18n=\"nav."))
   assert_true(markup.contains("data-testid=\"wiki-tab-pages\""))
   assert_true(markup.contains("data-testid=\"wiki-tab-requests\""))
   assert_true(markup.contains("data-testid=\"wiki-tab-runs\""))

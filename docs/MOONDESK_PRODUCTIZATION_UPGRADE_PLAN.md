@@ -1816,6 +1816,40 @@ This closes only the shared-shell semantic/interaction slice. CDP accessibility
 tree evidence does not establish spoken output, announcement timing, or
 usability in a manual assistive-technology session.
 
+### Current gate state — complete locally, 2026-07-30
+
+Phase 8 is complete for the repository-local product gate. The retained
+implementation and evidence now cover the primary Desk, Wiki, Code, Flow, and
+Packs shell plus the routed operational surfaces:
+
+- source-authored localization keys replace rendered-English matching for the
+  corrected Code/session states; English and Simplified Chinese catalogs have
+  parity tests and no known mixed-language collision remains
+- semantic primary-navigation labels, keyboard transient handling, skip/main
+  behavior, named landmarks, focus restoration, selected-state semantics, and
+  factual live regions pass the automated accessibility journeys
+- reduced-motion behavior, 44-pixel narrow controls, and the 844×390
+  short-landscape geometry matrix pass without pane overlap, clipped primary
+  actions, or hidden recovery controls
+- Code’s short-landscape session/search layout and the shared routed surfaces
+  retain one visible primary question/action without changing the five
+  top-level destinations
+- native MoonDesk tests pass 338/338, Rabbita JS tests pass 501/501, the
+  production bundle builds, and the focused MoonCode adapter suite passes
+  16/16 after the removed local-projection architecture was reflected in its
+  validators
+
+The retained browser evidence is repository-local under `_build`. DOM,
+geometry, keyboard, and accessibility-tree assertions are authoritative for
+the automated gate. Chromium’s headless raster capture intermittently omits
+already-painted top-navigation text even when the same nodes are present,
+visible, correctly sized, and exposed in the accessibility tree; this renderer
+artifact is not treated as a product overlap failure. Spoken VoiceOver timing
+and clean-machine packaged-native interaction remain manual/external evidence
+boundaries and are not reclassified as automated proof. The former belongs to
+the manual accessibility checklist; packaging, signing, installation, update,
+rollback, and soak evidence belong to Phase 9.
+
 ### Workstreams
 
 #### 8.1 Shared shell

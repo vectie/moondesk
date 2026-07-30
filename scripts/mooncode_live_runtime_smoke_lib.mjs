@@ -1,15 +1,17 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 
 export const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 export const workspaceRoot = path.resolve(repoRoot, "..");
 export const moonBin = process.env.MOON_BIN || process.env.MOON || "moon";
+export const moonclawBin = process.env.MOONCLAW_BIN || "";
 export const moonclawRoot = path.resolve(process.env.MOONCLAW_ROOT || path.join(workspaceRoot, "moonclaw"));
 export const uiDist = path.resolve(process.env.UI_DIST || path.join(repoRoot, "ui/rabbita-desk/dist"));
 export const host = "127.0.0.1";
-export const suiteRoot = fs.mkdtempSync(path.join(os.tmpdir(), "moondesk-mooncode-live-runtime-"));
+export const suiteRoot = fs.mkdtempSync(
+  path.join(repoRoot, "_build/mooncode-live-runtime-"),
+);
 
 const pids = [];
 
@@ -113,27 +115,35 @@ function readJsonFile(file) {
 function writeMoonClawServiceConfig() {
   const servicePath = suitePath(".moonsuite/products/moonclaw/service.json");
   fs.mkdirSync(path.dirname(servicePath), { recursive: true });
+  const portable = moonclawBin !== "";
   fs.writeFileSync(
     servicePath,
     `${JSON.stringify({
       kind: "moondesk-moonclaw-service.v1",
-      cwd: moonclawRoot,
+      cwd: portable ? suiteRoot : moonclawRoot,
       daemon: {
-        command: moonBin,
-        args: ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", suiteRoot],
+        command: portable ? moonclawBin : moonBin,
+        args: portable
+          ? ["daemon", "--port", "0", "--serve", suiteRoot]
+          : ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", suiteRoot],
       },
     }, null, 2)}\n`,
   );
 }
 
 export async function startMoonClaw() {
-  assert(fs.existsSync(path.join(moonclawRoot, "moon.mod")), `MoonClaw checkout not found: ${moonclawRoot}`);
+  const portable = moonclawBin !== "";
+  if (!portable) {
+    assert(fs.existsSync(path.join(moonclawRoot, "moon.mod")), `MoonClaw checkout not found: ${moonclawRoot}`);
+  }
   writeMoonClawServiceConfig();
   const child = spawnLogged(
     "moonclaw",
-    moonBin,
-    ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", suiteRoot],
-    moonclawRoot,
+    portable ? moonclawBin : moonBin,
+    portable
+      ? ["daemon", "--port", "0", "--serve", suiteRoot]
+      : ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", suiteRoot],
+    portable ? suiteRoot : moonclawRoot,
   );
   const infoPath = suitePath(".moonsuite/products/moonclaw/daemon.json");
   const info = await waitFor("MoonClaw daemon info", () => {

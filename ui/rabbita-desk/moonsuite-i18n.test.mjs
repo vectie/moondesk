@@ -36,24 +36,52 @@ function runtime(search = "?locale=zh-Hans") {
   };
   vm.createContext(context);
   vm.runInContext(
-    `${source}\nglobalThis.messageForTest = message;\nglobalThis.translateTextForTest = translateText;\nglobalThis.translateAttributeForTest = translateAttribute;\nglobalThis.systemLanguageLabelForTest = systemLanguageLabel;`,
+    `${source}\nglobalThis.messageForTest = message;\nglobalThis.translateTextForTest = translateText;\nglobalThis.translateAttributeForTest = translateText;\nglobalThis.systemLanguageLabelForTest = () => selectedLocale() === "zh-Hans" ? "系统语言" : "System language";`,
     context,
   );
   return context;
 }
+
+test("primary navigation uses explicit keys with catalog parity", () => {
+  const keys = ["nav.desk", "nav.wiki", "nav.code", "nav.flow", "nav.packs"];
+  assert.deepEqual(Object.keys(englishCatalog).sort(), Object.keys(chineseCatalog).sort());
+  for (const key of keys) {
+    assert.ok(englishCatalog[key], `missing English catalog key: ${key}`);
+    assert.ok(chineseCatalog[key], `missing Simplified Chinese catalog key: ${key}`);
+  }
+  const sourceText = fs.readFileSync(
+    new URL("main/moonwiki_command_palette_views.mbt", import.meta.url),
+    "utf8",
+  );
+  assert.match(sourceText, /class="primary-nav-label"/);
+  assert.match(
+    sourceText,
+    /span\([\s\S]*?\.data_set\([\s\S]*?"i18n",\s*primary_navigation_i18n_key\(mode\)/,
+  );
+  assert.doesNotMatch(sourceText, /\.data_set\("testid", test_id\)[\s\S]*?\.data_set\("i18n"/);
+  for (const key of keys) {
+    assert.match(sourceText, new RegExp(`"${key.replaceAll(".", "\\.")}"`));
+  }
+});
 
 test("text templates translate dynamic UI copy", () => {
   const context = runtime();
   assert.equal(context.translateTextForTest("3 sessions"), "3 个会话");
 });
 
-test("accessibility attributes only use exact translations", () => {
+test("accessibility attributes use explicit keys without mixed-language templates", () => {
   const context = runtime();
   assert.equal(context.translateAttributeForTest("Wiki"), "知识库");
-  assert.equal(
-    context.translateAttributeForTest("Search MoonCode sessions"),
-    "Search MoonCode sessions",
+  assert.equal(context.messageForTest("code.search_sessions"), "搜索 MoonCode 会话");
+  assert.notEqual(
+    context.messageForTest("code.search_sessions"),
+    "Search MoonCode 个会话",
   );
+  const sourceText = fs.readFileSync(
+    new URL("main/mooncode_views.mbt", import.meta.url),
+    "utf8",
+  );
+  assert.match(sourceText, /data_set\("i18n-aria-label", "code\.search_sessions"\)/);
 });
 
 test("system language choice uses one locale instead of a bilingual label", () => {
