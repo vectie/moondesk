@@ -2217,6 +2217,70 @@ test "code mode renders a pending approval inside its canonical work turn" {
 }
 
 ///|
+test "code mode approval copy identifies ownership and durable decisions" {
+  let base : MoonCodeEvidenceRow = {
+    item_id: "approval-evidence",
+    kind: "approval",
+    state: "approved",
+    title: "Approval",
+    path: "",
+    detail: "Write src/main.mbt",
+    diff: "",
+    command: "",
+    output: "",
+    exit_code: -1,
+    truncated: false,
+    approval: None,
+  }
+  let approved = {
+    ..base,
+    approval: Some(
+      @mooncode_core.MoonCodeApproval::Approved(
+        session_id="session-approval",
+        approval_id="receipt-allow",
+        target_command_id="command-approval",
+        tool_call_id="tool-call-approval",
+        arguments="{\"path\":\"src/main.mbt\"}",
+      ),
+    ),
+  }
+  let denied = {
+    ..base,
+    state: "rejected",
+    approval: Some(
+      @mooncode_core.MoonCodeApproval::Rejected(
+        session_id="session-approval",
+        approval_id="receipt-deny",
+        target_command_id="command-approval",
+        tool_call_id="tool-call-approval",
+        arguments="{\"path\":\"src/main.mbt\"}",
+      ),
+    ),
+  }
+  let allow_html = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_mooncode_approval(fn(_msg) { @rabbita.none }, approved),
+    ),
+  )
+  let deny_html = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_mooncode_approval(fn(_msg) { @rabbita.none }, denied),
+    ),
+  )
+  assert_true(allow_html.contains("Approval recorded"))
+  assert_true(deny_html.contains("Denial recorded"))
+  assert_true(allow_html.contains("Technical details"))
+  assert_true(allow_html.contains("Command command-approval"))
+  assert_true(allow_html.contains("Tool call tool-call-approval"))
+  assert_true(allow_html.contains("Receipt receipt-allow"))
+  assert_true(deny_html.contains("Receipt receipt-deny"))
+  assert_false(allow_html.contains("mooncode-approve-tool"))
+  assert_false(deny_html.contains("mooncode-reject-tool"))
+  assert_false(allow_html.contains("Requested by command command-approval"))
+  assert_false(allow_html.contains("Durable receipt receipt-allow"))
+}
+
+///|
 test "code mode copy feedback clears only the matching item" {
   let (_, copied) = update_mooncode_actions(
     code_mode_test_dispatch,

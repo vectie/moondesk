@@ -270,13 +270,29 @@ fn render_mooncode_approval(
 ) -> @rabbita.Html {
   guard row.approval is Some(approval) else { return @html.nothing }
   let pending = approval is @mooncode_core.MoonCodeApproval::Pending(..)
-  let (state_name, approval_id, arguments) = match approval {
-    @mooncode_core.MoonCodeApproval::Pending(approval_id~, arguments~, ..) =>
-      ("pending", approval_id, arguments)
-    @mooncode_core.MoonCodeApproval::Approved(approval_id~, arguments~, ..) =>
-      ("approved", approval_id, arguments)
-    @mooncode_core.MoonCodeApproval::Rejected(approval_id~, arguments~, ..) =>
-      ("rejected", approval_id, arguments)
+  let (state_name, approval_id, command_id, tool_call_id, arguments) = match
+    approval {
+    @mooncode_core.MoonCodeApproval::Pending(
+      approval_id~,
+      target_command_id~,
+      tool_call_id~,
+      arguments~,
+      ..
+    ) => ("pending", approval_id, target_command_id, tool_call_id, arguments)
+    @mooncode_core.MoonCodeApproval::Approved(
+      approval_id~,
+      target_command_id~,
+      tool_call_id~,
+      arguments~,
+      ..
+    ) => ("approved", approval_id, target_command_id, tool_call_id, arguments)
+    @mooncode_core.MoonCodeApproval::Rejected(
+      approval_id~,
+      target_command_id~,
+      tool_call_id~,
+      arguments~,
+      ..
+    ) => ("rejected", approval_id, target_command_id, tool_call_id, arguments)
   }
   div(
     class="mooncode-approval " + state_name,
@@ -286,7 +302,15 @@ fn render_mooncode_approval(
       .data_set("state", state_name),
     [
       div(class="mooncode-approval-copy", [
-        strong(if pending { "Approval needed" } else { row.title }),
+        strong(
+          if pending {
+            "Approval needed before this operation can run"
+          } else if state_name == "approved" {
+            "Approval recorded"
+          } else {
+            "Denial recorded"
+          },
+        ),
         p(row.detail),
         if arguments == "" {
           @html.nothing
@@ -296,8 +320,15 @@ fn render_mooncode_approval(
             @html.Attrs::build().class("mooncode-approval-detail"),
             [
               @html.node("summary", @html.Attrs::build(), [
-                span("Review operation"),
+                span("Technical details"),
               ]),
+              p("Command \{command_id}"),
+              p("Tool call \{tool_call_id}"),
+              if pending {
+                @html.nothing
+              } else {
+                p("Receipt \{approval_id}")
+              },
               pre(arguments),
             ],
           )
