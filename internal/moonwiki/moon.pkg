@@ -11,6 +11,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/core/ref",
   "moonbitlang/core/string",
+  "ivgtr/moonzip",
   "moonbitlang/x/sys",
   "moonbitlang/x/time",
   "moonbitlang/x/crypto",

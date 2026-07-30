@@ -7,9 +7,14 @@ fn source_pane_action(
   msg : SourcePaneMsg,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
-  let source_pane = update_source_pane(model.source_pane, msg)
+  let resolved_msg = if msg is OpenPathInput {
+    RequestSource(model.source_pane.path_input)
+  } else {
+    msg
+  }
+  let source_pane = update_source_pane(model.source_pane, resolved_msg)
   let next = { ..model, source_pane, }
-  match msg {
+  match resolved_msg {
     RequestSource(_) => {
       let identity = source_pane_identity(source_pane)
       if identity.workspace_id.trim() != "" &&
@@ -20,6 +25,19 @@ fn source_pane_action(
         (@rabbita.none, next)
       }
     }
+    Save =>
+      if source_pane.saving {
+        (save_source_pane_cmd(dispatch, source_pane), next)
+      } else {
+        (@rabbita.none, next)
+      }
+    ReplaceServer =>
+      if source_pane.saving {
+        (save_source_pane_cmd(dispatch, source_pane), next)
+      } else {
+        (@rabbita.none, next)
+      }
+    SaveResult(_) => (@rabbita.none, next)
     _ => (@rabbita.none, next)
   }
 }

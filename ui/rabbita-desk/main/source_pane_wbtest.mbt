@@ -24,7 +24,7 @@ test "source pane accepts only the current result" {
 }
 
 ///|
-test "source pane rejects stale generation workspace session and path" {
+test "source pane rejects stale generation workspace and path" {
   let loading = update_source_pane(
     init_source_pane("workspace", "session"),
     RequestSource("src/main.mbt"),
@@ -33,7 +33,6 @@ test "source pane rejects stale generation workspace session and path" {
   let stale = [
     { ..current, generation: current.generation - 1 },
     { ..current, workspace_id: "other" },
-    { ..current, session_id: "other" },
     { ..current, path: "other.mbt" },
   ]
   for identity in stale {

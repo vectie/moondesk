@@ -86,6 +86,9 @@ fn desktop_api_route_authority_scope(
     p if p == workspace_action_route("entries/import") => "import-staging"
     p if p == workspace_action_route("inbox") => "selected-book"
     p if p == workspace_action_route("markdown") => "selected-book"
+    p if p == workspace_action_route("source") => "selected-book"
+    p if p == workspace_action_route("office") => "selected-book"
+    p if p == workspace_action_route("office/save") => "selected-book"
     p if p == workspace_action_route("rename") => "selected-book"
     p if p == workspace_action_route("move") => "selected-book"
     p if p == workspace_action_route("copy") => "selected-book"
@@ -160,7 +163,9 @@ pub fn workspace_endpoint_url(
   workspace_id : String,
   endpoint : String,
 ) -> String {
-  desktop_api_url(["api", "workspaces", workspace_id, endpoint])
+  desktop_api_path(["api", "workspaces", workspace_id]) +
+  "/" +
+  url_path(endpoint)
 }
 
 ///|
@@ -400,6 +405,12 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(workspace_site_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(workspace_action_route("inbox"), ["POST"]),
     desktop_api_route_contract(workspace_action_route("markdown"), ["POST"]),
+    desktop_api_route_contract(workspace_action_route("source"), ["POST"]),
+    desktop_api_route_contract(workspace_action_route("office"), ["GET", "HEAD"]),
+    desktop_api_route_contract(workspace_action_route("office/save"), ["POST"]),
+    desktop_api_route_contract(workspace_action_route("office/export"), [
+      "GET", "HEAD",
+    ]),
     desktop_api_route_contract(workspace_action_route("rename"), ["POST"]),
     desktop_api_route_contract(workspace_action_route("move"), ["POST"]),
     desktop_api_route_contract(workspace_action_route("copy"), ["POST"]),

@@ -26,6 +26,10 @@ test "workspace desktop routes live in core boundary" {
     "/api/workspaces/book%20demo/trash",
   )
   assert_eq(
+    @core.workspace_endpoint_url("book demo", "office/save"),
+    "/api/workspaces/book%20demo/office/save",
+  )
+  assert_eq(
     @core.workspace_entries_url(
       "book-demo", "docs with spaces/encoded # name.md",
     ),

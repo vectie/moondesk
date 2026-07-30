@@ -578,6 +578,8 @@ fn render_mooncode_center(
         ]),
       ]),
       render_mooncode_runtime_setup(dispatch, model),
+      render_source_editor(dispatch, model.source_pane),
+      render_office_editor(dispatch, model.office_editor),
       section(
         class=if empty {
           "mooncode-chat-surface empty"
@@ -641,6 +643,104 @@ fn render_mooncode_center(
 }
 
 ///|
+fn render_source_editor(
+  dispatch : Dispatch[Msg],
+  source : SourcePaneState,
+) -> @rabbita.Html {
+  section(
+    class="source-editor",
+    attrs=@html.Attrs::build().data_set("testid", "source-editor"),
+    [
+      div(class="source-editor-toolbar", [
+        input(
+          attrs=@html.Attrs::build()
+            .data_set("testid", "source-path")
+            .aria_label("Workspace source path"),
+          value=source.path_input,
+          placeholder="src/main.mbt",
+          on_input=fn(value) { dispatch(SourcePane(SetPathInput(value))) },
+        ),
+        button(
+          class="secondary-button",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "source-open")
+            .on_click(_ => {
+              dispatch(SourcePane(RequestSource(browser_source_path_value())))
+            }),
+          "Open",
+        ),
+        button(
+          class="primary-button",
+          attrs=@html.Attrs::build().data_set("testid", "source-save"),
+          disabled=!source_pane_dirty(source) || source.saving,
+          on_click=dispatch(SourcePane(Save)),
+          if source.saving {
+            "Saving..."
+          } else {
+            "Save"
+          },
+        ),
+        button(
+          class="secondary-button",
+          attrs=@html.Attrs::build().data_set("testid", "source-reload"),
+          disabled=source.server_content is None,
+          on_click=dispatch(SourcePane(ReloadServer)),
+          "Reload external version",
+        ),
+      ]),
+      textarea(
+        class="source-editor-input",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "source-editor-input")
+          .aria_label("Source editor"),
+        rows=12,
+        value=source.draft,
+        on_input=fn(value) { dispatch(SourcePane(EditDraft(value))) },
+        "",
+      ),
+      p(
+        class="source-editor-status",
+        attrs=@html.Attrs::build()
+          .role("status")
+          .aria_live("polite")
+          .data_set("testid", "source-status"),
+        source.status,
+      ),
+      if source_pane_dirty(source) {
+        details(class="source-editor-diff", [
+          summary("Diff and diagnostics"),
+          pre(
+            "Saved baseline:\n" +
+            source.baseline +
+            "\n\nDraft:\n" +
+            source.draft,
+          ),
+          if source.server_content is Some(current) {
+            div([
+              pre("External version:\n" + current),
+              button(
+                class="secondary-button",
+                on_click=dispatch(SourcePane(ReloadServer)),
+                "Reload external",
+              ),
+              button(
+                class="primary-button",
+                on_click=dispatch(SourcePane(ReplaceServer)),
+                "Replace external",
+              ),
+            ])
+          } else {
+            @html.nothing
+          },
+        ])
+      } else {
+        @html.nothing
+      },
+    ],
+  )
+}
+
+///|
 fn mooncode_context_title(model : Model, session : MoonCodeSession?) -> String {
   ignore(model)
   match session {
@@ -671,8 +771,10 @@ extern "js" fn browser_mooncode_relative_time(value : String) -> String =
 ///|
 fn mooncode_center_class(model : Model) -> String {
   if moonclaw_capability_state(model.moonclaw_daemon) is DetectedRunning &&
-    (model.mooncode_capability is CapabilityPending ||
-      mooncode_capability_available(model.mooncode_capability)) {
+    (
+      model.mooncode_capability is CapabilityPending ||
+      mooncode_capability_available(model.mooncode_capability)
+    ) {
     "preview-center mooncode-center"
   } else {
     "preview-center mooncode-center runtime-setup-visible"
@@ -685,7 +787,9 @@ fn render_mooncode_runtime_setup(
   model : Model,
 ) -> @rabbita.Html {
   let explicit_capability_failure = match model.mooncode_capability {
-    CapabilityUnsupportedVersion(_) | CapabilityMalformed(_) | CapabilityUnavailable(_) => true
+    CapabilityUnsupportedVersion(_)
+    | CapabilityMalformed(_)
+    | CapabilityUnavailable(_) => true
     CapabilityPending | CapabilitySupported(_) => false
   }
   if explicit_capability_failure {
@@ -694,25 +798,34 @@ fn render_mooncode_runtime_setup(
       class="mooncode-runtime-setup",
       attrs=@html.Attrs::build()
         .data_set("testid", "mooncode-runtime-setup")
-        .data_set("state", mooncode_capability_state_key(model.mooncode_capability))
+        .data_set(
+          "state",
+          mooncode_capability_state_key(model.mooncode_capability),
+        )
         .role("status")
         .aria_live("polite"),
       [
         h3(title),
         match model.mooncode_capability {
           CapabilityUnsupportedVersion(_) =>
-            p("Update MoonDesk or MoonClaw so their capability contracts are compatible.")
+            p(
+              "Update MoonDesk or MoonClaw so their capability contracts are compatible.",
+            )
           CapabilityMalformed(_) =>
             button(
               class="primary-button compact-button",
-              attrs=@html.Attrs::build().data_set("testid", "mooncode-capability-refetch"),
+              attrs=@html.Attrs::build().data_set(
+                "testid", "mooncode-capability-refetch",
+              ),
               on_click=dispatch(RefreshMoonCodeCapability),
               "Refetch capability",
             )
           CapabilityUnavailable(_) =>
             button(
               class="primary-button compact-button",
-              attrs=@html.Attrs::build().data_set("testid", "mooncode-capability-retry-daemon"),
+              attrs=@html.Attrs::build().data_set(
+                "testid", "mooncode-capability-retry-daemon",
+              ),
               on_click=dispatch(ManageMoonClaw("retry")),
               "Retry Code runtime",
             )

@@ -20,6 +20,8 @@ fn update(
 ) -> (@rabbita.Cmd, Model) {
   let (command, next) = match msg {
     SourcePane(source_msg) => source_pane_action(dispatch, source_msg, model)
+    OfficeEditor(office_msg) =>
+      office_editor_action(dispatch, office_msg, model)
     Bootstrap => bootstrap_action(dispatch, model)
     RetryBootstrap => bootstrap_retry_action(dispatch, model)
     LoadedWorkspaceMetadata(_) => update_app_results(dispatch, msg, model)

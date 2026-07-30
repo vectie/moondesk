@@ -9,24 +9,35 @@ fn ui_capability_payload(protocol : String) -> Json {
 ///|
 test "UI consumes negotiated supported capability as typed value" {
   let state = mooncode_capability_state(ui_capability_payload("mooncode.v1"))
-  assert_true(state is CapabilitySupported(value) && value.session_owner == "moonclaw")
+  assert_true(
+    state is CapabilitySupported(value) && value.session_owner == "moonclaw",
+  )
   assert_true(mooncode_capability_available(state))
 }
 
 ///|
 test "UI maps negotiated unsupported malformed and unavailable states" {
-  assert_true(mooncode_capability_state({
-    "capability_status": "unsupported-version",
-    "capability_version": 7,
-  }) is CapabilityUnsupportedVersion(7))
-  assert_true(mooncode_capability_state({
-    "capability_status": "malformed",
-    "capability_error": "bad payload",
-  }) is CapabilityMalformed("bad payload"))
-  assert_true(mooncode_capability_state({
-    "capability_status": "unavailable",
-    "capability_error": "offline",
-  }) is CapabilityUnavailable("offline"))
+  assert_true(
+    mooncode_capability_state({
+      "capability_status": "unsupported-version",
+      "capability_version": 7,
+    })
+    is CapabilityUnsupportedVersion(7),
+  )
+  assert_true(
+    mooncode_capability_state({
+      "capability_status": "malformed",
+      "capability_error": "bad payload",
+    })
+    is CapabilityMalformed("bad payload"),
+  )
+  assert_true(
+    mooncode_capability_state({
+      "capability_status": "unavailable",
+      "capability_error": "offline",
+    })
+    is CapabilityUnavailable("offline"),
+  )
 }
 
 ///|
@@ -59,10 +70,11 @@ fn capability_setup_markup(
   }
   @rabbita.render_to_string(
     @rabbita.static_cell(
-      render_mooncode_runtime_setup(
-        dispatch,
-        { ..init_model(), mooncode_capability: state, moonclaw_daemon: daemon },
-      ),
+      render_mooncode_runtime_setup(dispatch, {
+        ..init_model(),
+        mooncode_capability: state,
+        moonclaw_daemon: daemon,
+      }),
     ),
   )
 }

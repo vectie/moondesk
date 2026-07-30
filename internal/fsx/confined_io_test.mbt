@@ -42,3 +42,50 @@ async test "confined IO creates only verified descendants and refuses final syml
   assert_false(@fsx.write_confined_text(root, "wiki/linked.md", "changed"))
   assert_eq(@fs.read_file(outside_file).text(), "outside")
 }
+
+///|
+async test "confined compare-write saves matching baseline and preserves conflict" {
+  let root = @fs.tmpdir(prefix="moondesk-confined-compare-")
+  let path = @pathx.join(root, "main.mbt")
+  @fs.write_file(
+    path,
+    @encoding/utf8.encode("fn old {}"),
+    create_mode=CreateOrTruncate,
+  )
+  assert_true(
+    @fsx.compare_and_write_confined_text(
+      root, "main.mbt", "fn old {}", "fn direct_edit {}",
+    )
+    is Saved,
+  )
+  assert_eq(@fs.read_file(path).text(), "fn direct_edit {}")
+  assert_true(
+    @fsx.compare_and_write_confined_text(
+      root, "main.mbt", "fn old {}", "fn overwritten {}",
+    )
+    is Conflict("fn direct_edit {}"),
+  )
+  assert_eq(@fs.read_file(path).text(), "fn direct_edit {}")
+}
+
+///|
+async test "confined compare-write rejects traversal and symlink escape" {
+  let root = @fs.tmpdir(prefix="moondesk-confined-compare-root-")
+  let outside = @fs.tmpdir(prefix="moondesk-confined-compare-outside-")
+  let target = @pathx.join(outside, "main.mbt")
+  @fs.write_file(
+    target,
+    @encoding/utf8.encode("outside"),
+    create_mode=CreateOrTruncate,
+  )
+  @fs.symlink(target~, @pathx.join(root, "linked.mbt"))
+  assert_true(
+    @fsx.compare_and_write_confined_text(root, "../main.mbt", "", "bad")
+    is InvalidTarget,
+  )
+  assert_true(
+    @fsx.compare_and_write_confined_text(root, "linked.mbt", "outside", "bad")
+    is InvalidTarget,
+  )
+  assert_eq(@fs.read_file(target).text(), "outside")
+}

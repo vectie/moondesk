@@ -69,6 +69,35 @@ fn save_markdown_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
 }
 
 ///|
+fn save_source_pane_cmd(
+  dispatch : Dispatch[Msg],
+  source : SourcePaneState,
+) -> @rabbita.Cmd {
+  let body : Json = {
+    "path": source.requested_path,
+    "content": source.draft,
+    "expected_content": source.baseline,
+  }
+  @http.post(@desk.workspace_endpoint_url(source.workspace_id, "source"))
+  .with_json(body)
+  .expect_json(result => {
+    let outcome = match result {
+      Ok(payload) =>
+        if json_field_string(payload, "current_content", default="") != "" {
+          SourceConflict(
+            json_field_string(payload, "current_content", default=""),
+          )
+        } else {
+          SourceSaved(payload)
+        }
+      Err(_) =>
+        SourceSaveFailed("Could not save source file; the draft is preserved")
+    }
+    dispatch(SourcePane(SaveResult(outcome)))
+  })
+}
+
+///|
 fn create_desk_entry_cmd(
   dispatch : Dispatch[Msg],
   model : Model,

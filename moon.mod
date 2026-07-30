@@ -13,6 +13,7 @@ import {
   "moonbitlang/x@0.4.40",
   "vectie/lepusa@0.1.0",
   "vectie/moonlib@0.1.17",
+  "ivgtr/moonzip@0.2.4",
 }
 
 name = "vectie/moondesk"

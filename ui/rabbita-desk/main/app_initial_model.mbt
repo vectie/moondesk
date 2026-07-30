@@ -5,6 +5,7 @@ fn init_model() -> Model {
   let initial_session_id = browser_initial_mooncode_session()
   {
     source_pane: init_source_pane(initial_workspace_id, initial_session_id),
+    office_editor: init_office_editor(initial_workspace_id),
     bootstrapped: false,
     workspace_mode: initial_workspace_mode(),
     activity: initial_activity(),

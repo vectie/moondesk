@@ -442,6 +442,10 @@ extern "js" fn browser_mooncode_prompt_value() -> String =
   #| () => document.querySelector('[data-testid="mooncode-input"]')?.value ?? ""
 
 ///|
+extern "js" fn browser_source_path_value() -> String =
+  #| () => document.querySelector('[data-testid="source-path"]')?.value ?? ""
+
+///|
 fn install_mooncode_enter_send_cmd() -> @rabbita.Cmd {
   @cmd.custom_cmd(_ => browser_install_mooncode_enter_send(), kind=AfterRender)
 }

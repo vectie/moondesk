@@ -46,7 +46,21 @@ pub async fn town_service_descriptor(String, String) -> Json
 // Errors
 
 // Types and methods
+type DocxParagraph derive(Eq, @debug.Debug)
+
+type DocxRun derive(Eq, @debug.Debug)
+
 type MoonClawCheckoutCandidate derive(Eq, @debug.Debug)
+
+type OfficeDocumentKind derive(Eq, @debug.Debug)
+
+type OfficeDocumentModel derive(@debug.Debug)
+
+type OfficeSupportedModel derive(Eq, @debug.Debug)
+
+type PptxSlide derive(Eq, @debug.Debug)
+
+type PptxTextObject derive(Eq, @debug.Debug)
 
 pub struct Server {
   server : @http.Server
@@ -59,6 +73,10 @@ pub async fn Server::serve_desk(Self, String, String) -> Unit
 pub async fn Server::serve_directory(Self, String) -> Unit
 
 type WorkspaceContext derive(Eq, @debug.Debug)
+
+type XlsxCell derive(Eq, @debug.Debug)
+
+type XlsxSheet derive(Eq, @debug.Debug)
 
 // Type aliases
 

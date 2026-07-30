@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const [baseUrl, cdpPort, fixtureRoot, scenario = "full"] = process.argv.slice(2);
 
@@ -7,7 +8,7 @@ if (!baseUrl || !cdpPort || !fixtureRoot) {
   throw new Error(
     "usage: desk_mode_browser_smoke.mjs <base-url> <cdp-port> <fixture-root> " +
       "[full|empty|accessibility|screen-reader|capability|capability-responsive|capability-scale|" +
-      "keyboard-transients|quickstart-before-restart|quickstart-after-restart]",
+      "keyboard-transients|phase7-editing|quickstart-before-restart|quickstart-after-restart]",
   );
 }
 
@@ -418,6 +419,72 @@ async function waitForStatePass(session, expression, label, timeoutMs = 12000) {
     await sleep(100);
   }
   throw new Error(`Timed out waiting for ${label}; last value: ${JSON.stringify(lastValue)}`);
+}
+
+function moonCodeTerminalDecision(state) {
+  if (state === true || state?.pass === true) return "complete";
+  const statuses = state?.summaries?.flatMap(summary => summary.statuses || []) || [];
+  if (statuses.some(status => ["failed", "aborted", "cancelled", "canceled"].includes(status))) {
+    return "terminal-failure";
+  }
+  const raw = state?.summaries?.map(summary => summary.raw || "").join("\n") || "";
+  return statuses.some(status => status === "paused") &&
+    raw.includes("planner-transport-interrupted")
+    ? "resume-transport"
+    : "wait";
+}
+
+function nestedMoonCodeSession(state) {
+  const paused = state?.summaries?.filter(summary =>
+    summary.statuses?.includes("paused") &&
+    (summary.raw || "").includes("planner-transport-interrupted")
+  ) || [];
+  assert(paused.length === 1, `Expected one paused transport session: ${JSON.stringify(state)}`);
+  assert(paused[0].id, `Paused transport session has no id: ${JSON.stringify(paused[0])}`);
+  return paused[0];
+}
+
+function readMoonClawDaemonEndpoint(root) {
+  const daemonPath = path.join(root, ".moonsuite", "products", "moonclaw", "daemon.json");
+  const daemon = JSON.parse(fs.readFileSync(daemonPath, "utf8"));
+  assert(Number.isInteger(daemon.port) && daemon.port > 0, `Invalid MoonClaw daemon endpoint: ${daemonPath}`);
+  return `http://localhost:${daemon.port}`;
+}
+
+async function resumeMoonCodeTransportPause(state) {
+  const paused = nestedMoonCodeSession(state);
+  const daemonEndpoint = readMoonClawDaemonEndpoint(fixtureRoot);
+  const listingResponse = await fetch(
+    `${daemonEndpoint}/v1/code/sessions?book_root=${encodeURIComponent(fixtureRoot)}&format=listing`,
+  );
+  assert(listingResponse.ok, `MoonClaw session listing failed: ${listingResponse.status}`);
+  const listing = await listingResponse.json();
+  const records = Array.isArray(listing) ? listing : listing.sessions;
+  assert(Array.isArray(records), `Invalid MoonClaw session listing: ${JSON.stringify(listing)}`);
+  const matches = records.filter(record => record?.session_id === paused.id);
+  assert(matches.length === 1, `Paused MoonCode session was not uniquely listed: ${paused.id}`);
+  const bookRoot = matches[0].book_root;
+  assert(typeof bookRoot === "string" && bookRoot !== "", `Paused MoonCode session has no bound book_root: ${paused.id}`);
+  const response = await fetch(
+    `${daemonEndpoint}/v1/code/sessions/${encodeURIComponent(paused.id)}/runtime-turn?book_root=${encodeURIComponent(bookRoot)}`,
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+  );
+  assert(response.ok, `MoonCode runtime resume failed: ${response.status} ${await response.text()}`);
+}
+
+async function waitForMoonCodeTerminal(session, expression, label) {
+  while (true) {
+    const state = await session.evaluate(expression);
+    const decision = moonCodeTerminalDecision(state);
+    if (decision === "complete") return state;
+    if (decision === "terminal-failure") {
+      throw new Error(`${label} reached terminal failure: ${JSON.stringify(state)}`);
+    }
+    if (decision === "resume-transport") {
+      await resumeMoonCodeTransportPause(state);
+    }
+    await sleep(250);
+  }
 }
 
 async function waitForFile(filePath, label, timeoutMs = 12000) {
@@ -8462,10 +8529,119 @@ async function runScreenReaderScenario() {
   }
 }
 
+async function runPhase7Editing() {
+  const session = await connect(cdpPort);
+  const workspaceRoot = path.join(fixtureRoot, "books", "research-alpha");
+  const packageCases = [
+    { extension: "docx", member: "word/document.xml", edited: "DOCX browser edited", preservedXml: "<w:body>", unknown: "preserve-docx" },
+    { extension: "xlsx", member: "xl/worksheets/sheet1.xml", edited: "42", preservedXml: 'custom="keep"', unknown: "preserve-xlsx" },
+    { extension: "pptx", member: "ppt/slides/slide1.xml", edited: "PPTX browser edited", preservedXml: 'name="keep-pptx"', unknown: "preserve-pptx" },
+  ];
+  const runHost = (command, args) => {
+    const result = spawnSync(command, args, { encoding: "utf8" });
+    assert(result.status === 0, `${command} ${args.join(" ")} failed: ${result.stderr}`);
+    return result.stdout;
+  };
+  try {
+    await session.send("Page.enable");
+    await enablePageProblemCapture(session);
+    await setEnglishLocale(session);
+    await setViewport(session, 1440, 900);
+    await session.send("Page.navigate", { url: `${baseUrl}/?activity=code&workspace=book-research-alpha&locale=en-US` });
+    await waitFor(session, `!!document.querySelector('[data-testid="office-editor"]')`, "Phase 7 editors visible");
+    for (const item of packageCases) {
+      const relative = `documents/browser.${item.extension}`;
+      const packagePath = path.join(workspaceRoot, relative);
+      await setInputByTestId(session, "office-path", relative);
+      await clickTestId(session, "office-open");
+      await waitFor(session, `document.querySelector('[data-testid="office-text"]')?.value !== undefined && !document.querySelector('[data-testid="office-status"]')?.textContent.includes('Opening')`, `${item.extension} open`);
+      await setInputByTestId(session, "office-text", item.edited);
+      await waitFor(session, `document.querySelector('[data-testid="office-text"]')?.value === ${jsString(item.edited)} && !document.querySelector('[data-testid="office-save"]')?.disabled`, `${item.extension} dirty edit`);
+      await clickTestId(session, "office-save");
+      await waitForStatePass(session, `(() => { const status = document.querySelector('[data-testid="office-status"]')?.textContent || ''; return status.includes('Saved Office bytes') ? true : { pass: false, status }; })()`, `${item.extension} save`);
+      const exported = await session.evaluate(`(() => {
+        const link = document.querySelector('[data-testid="office-export"]');
+        return { href: link?.href || '', download: link?.download || '' };
+      })()`);
+      assert(exported.href.includes("office/export") && exported.download === relative, `${item.extension} export unavailable: ${JSON.stringify(exported)}`);
+      await clickTestId(session, "office-close");
+      await waitFor(session, `document.querySelector('[data-testid="office-status"]')?.textContent.includes('Closed')`, `${item.extension} close`);
+      await clickTestId(session, "office-reopen");
+      await waitFor(session, `document.querySelector('[data-testid="office-text"]')?.value === ${jsString(item.edited)}`, `${item.extension} reopen`);
+      const integrity = runHost("unzip", ["-t", packagePath]);
+      const member = runHost("unzip", ["-p", packagePath, item.member]);
+      const unknown = runHost("unzip", ["-p", packagePath, "unknown.txt"]);
+      assert(integrity.includes("No errors detected"), `${item.extension} package integrity missing`);
+      assert(member.includes(item.edited) && member.includes(item.preservedXml), `${item.extension} edited/preserved XML missing: ${member}`);
+      assert(unknown.includes(item.unknown), `${item.extension} unknown member missing`);
+      await clickTestId(session, "office-close");
+    }
+
+    await setInputByTestId(session, "source-path", "main.mbt");
+    await clickTestId(session, "source-open");
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('before')`, "direct Code open");
+    await setInputByTestId(session, "source-editor-input", 'fn same_file() { println("direct first") }\n');
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('direct first') && !document.querySelector('[data-testid="source-save"]')?.disabled`, "direct Code dirty edit");
+    await clickTestId(session, "source-save");
+    await waitFor(session, `document.querySelector('[data-testid="source-status"]')?.textContent.includes('Saved')`, "direct Code save");
+    await setInputByTestId(session, "source-editor-input", 'fn same_file() { println("dirty preserved") }\n');
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('dirty preserved') && !document.querySelector('[data-testid="source-save"]')?.disabled`, "direct Code conflict edit");
+    fs.writeFileSync(path.join(workspaceRoot, "main.mbt"), 'fn same_file() { println("external") }\n');
+    await clickTestId(session, "source-save");
+    await waitFor(session, `document.querySelector('[data-testid="source-status"]')?.textContent.toLowerCase().includes('changed')`, "external-change conflict");
+    assert(await session.evaluate(`document.querySelector('[data-testid="source-editor-input"]')?.value.includes('dirty preserved')`), "conflict discarded dirty draft");
+    const expectedConflictProblems = session.pageProblems.filter(problem =>
+      problem.kind === "log.error" &&
+      problem.text.includes("409 (Conflict)") &&
+      problem.url.endsWith("/api/workspaces/book-research-alpha/source")
+    );
+    assert(
+      expectedConflictProblems.length === 1,
+      `direct source conflict produced unexpected diagnostics: ${JSON.stringify(session.pageProblems)}`,
+    );
+    session.pageProblems = session.pageProblems.filter(problem => !expectedConflictProblems.includes(problem));
+    await clickTestId(session, "source-reload");
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('external')`, "reload external source");
+
+    const prompt = 'Edit main.mbt so same_file prints "MoonCode edited". Make the change now.';
+    await setInputByTestId(session, "mooncode-input", prompt);
+    await clickTestId(session, "mooncode-send");
+    await waitForMoonCodeTerminal(session, mooncodeBackendTurnsStateExpression([prompt], [], true, true), "real MoonCode edit completes");
+    await waitFor(session, `document.querySelector('[data-testid="mooncode-evidence"]') !== null`, "MoonCode edit evidence", 20000);
+    const moonCodeBytes = fs.readFileSync(path.join(workspaceRoot, "main.mbt"), "utf8");
+    assert(moonCodeBytes.includes("MoonCode edited"), `MoonCode did not edit fixture main.mbt: ${moonCodeBytes}`);
+    await session.send("Page.navigate", { url: `${baseUrl}/?activity=code&workspace=book-research-alpha&locale=en-US` });
+    await waitFor(session, `!!document.querySelector('[data-testid="source-open"]')`, "same-file Code route visible");
+    await setInputByTestId(session, "source-path", "main.mbt");
+    await clickTestId(session, "source-open");
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('MoonCode edited')`, "same-file MoonCode result open");
+    const finalBytes = moonCodeBytes.replace("MoonCode edited", "MoonCode then direct edited");
+    await setInputByTestId(session, "source-editor-input", finalBytes);
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('MoonCode then direct edited') && !document.querySelector('[data-testid="source-save"]')?.disabled`, "same-file direct dirty edit");
+    await clickTestId(session, "source-save");
+    await waitFor(session, `document.querySelector('[data-testid="source-status"]')?.textContent.includes('Saved')`, "same-file direct save");
+    assert(fs.readFileSync(path.join(workspaceRoot, "main.mbt"), "utf8").includes("MoonCode then direct edited"), "same-file direct edit not persisted");
+    const proofPath = path.join(fixtureRoot, "phase7-editing-proof.json");
+    fs.writeFileSync(proofPath, `${JSON.stringify({
+      kind: "moondesk-phase7-editing-proof.v1",
+      packages: packageCases.map(item => item.extension),
+      conflictDraftPreserved: true,
+      moonCodeEdit: moonCodeBytes,
+      finalDirectEdit: finalBytes,
+    }, null, 2)}\n`);
+    console.log(`Phase 7 editing proof: ${proofPath}`);
+    session.assertNoPageProblems("Phase 7 editing");
+  } finally {
+    session.close();
+  }
+}
+
 const runner = scenario === "screen-reader"
   ? runScreenReaderScenario
   : scenario === "keyboard-transients"
   ? verifyKeyboardTransients
+  : scenario === "phase7-editing"
+  ? runPhase7Editing
   : scenario === "empty"
   ? runEmptyLibrary
   : scenario === "accessibility"

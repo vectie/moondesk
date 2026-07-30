@@ -165,6 +165,16 @@ type MoonclawProgress derive(@json.FromJson)
 
 type Msg
 
+type OfficeEditorDocument derive(Eq, @debug.Debug)
+
+type OfficeEditorItem derive(Eq, @debug.Debug)
+
+type OfficeEditorKind derive(Eq, @debug.Debug)
+
+type OfficeEditorMsg derive(Eq, @debug.Debug)
+
+type OfficeEditorState derive(Eq, @debug.Debug)
+
 type PackAppCatalog derive(@json.FromJson)
 
 type PackAppRecord derive(@json.FromJson)
@@ -194,6 +204,8 @@ type SourcePaneMsg derive(Eq, @debug.Debug)
 type SourcePaneRequestIdentity derive(Eq, @debug.Debug)
 
 type SourcePaneState derive(Eq, @debug.Debug)
+
+type SourceSaveOutcome derive(Eq, @debug.Debug)
 
 type StandingGoalRecord derive(@json.FromJson)
 

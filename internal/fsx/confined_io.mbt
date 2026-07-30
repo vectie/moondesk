@@ -113,6 +113,74 @@ pub async fn write_confined_text(
 }
 
 ///|
+pub(all) enum ConfinedWriteResult {
+  Saved
+  Conflict(String)
+  InvalidTarget
+  UnsupportedText
+  WriteFailed
+} derive(Eq, Debug)
+
+///|
+/// Compare and replace one existing UTF-8 file under the confined root. The
+/// current content is always returned so callers can offer reload or compare.
+pub async fn compare_and_write_confined_text(
+  root : StringView,
+  relative : StringView,
+  expected : StringView,
+  content : StringView,
+) -> ConfinedWriteResult {
+  let path = match resolve_confined_existing(root, relative) {
+    Some(path) => path
+    None => return InvalidTarget
+  }
+  let current = @fs.read_file(path).text() catch { _ => return UnsupportedText }
+  if current != expected.to_owned() {
+    return Conflict(current)
+  }
+  @fs.write_file(
+    path,
+    @encoding/utf8.encode(content),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  ) catch {
+    _ => return WriteFailed
+  }
+  Saved
+}
+
+///|
+pub(all) enum ConfinedBytesWriteResult {
+  SavedBytes
+  ConflictBytes(Bytes)
+  InvalidBytesTarget
+  BytesWriteFailed
+} derive(Eq, Debug)
+
+///|
+pub async fn compare_and_write_confined_bytes(
+  root : StringView,
+  relative : StringView,
+  expected : BytesView,
+  content : BytesView,
+) -> ConfinedBytesWriteResult {
+  let path = match resolve_confined_existing(root, relative) {
+    Some(path) => path
+    None => return InvalidBytesTarget
+  }
+  let current = @fs.read_file(path).binary() catch {
+    _ => return BytesWriteFailed
+  }
+  if current != expected.to_owned() {
+    return ConflictBytes(current)
+  }
+  @fs.write_file(path, content, create_mode=CreateOrTruncate, permission=0o644) catch {
+    _ => return BytesWriteFailed
+  }
+  SavedBytes
+}
+
+///|
 fn invalid_relative_path(relative : String) -> Bool {
   relative.has_prefix("/") ||
   @pathx.is_absolute(relative) ||

@@ -22,6 +22,7 @@ enum DeskDensity {
 ///|
 struct Model {
   source_pane : SourcePaneState
+  office_editor : OfficeEditorState
   bootstrapped : Bool
   workspace_mode : WorkspaceMode
   activity : Activity
@@ -210,6 +211,7 @@ struct Model {
 ///|
 enum Msg {
   SourcePane(SourcePaneMsg)
+  OfficeEditor(OfficeEditorMsg)
   Bootstrap
   RetryBootstrap
   LoadedWorkspaceMetadata(Result[WorkspaceMetadata, String])
