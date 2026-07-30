@@ -1,0 +1,6 @@
+{
+  "kind": "moondesk-supported-targets.v1",
+  "minimum_macos": "14.0",
+  "platform": "macos",
+  "architectures": ["arm64"]
+}

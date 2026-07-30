@@ -84,6 +84,7 @@ if [ "$MODE" = full ]; then
   stage 'UI localization tests' npm --prefix "$UI_DIR" run test:i18n
   stage 'Preview input resolver tests' sh "$SCRIPT_DIR/resolve_preview_inputs.test.sh"
   stage 'Release artifact verifier tests' node --test "$SCRIPT_DIR/verify_release.test.mjs"
+  stage 'Phase 9 non-credentialed release smoke' node "$SCRIPT_DIR/phase9_release_smoke.mjs"
   build_output=$(mktemp -d "${TMPDIR:-/tmp}/moondesk-ui-build.XXXXXX")
   trap 'rm -rf "$build_output"' EXIT HUP INT TERM
   stage 'UI production build' npm --prefix "$UI_DIR" run build -- --outDir "$build_output"

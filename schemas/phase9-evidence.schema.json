@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vectie.org/moondesk/schemas/phase9-evidence.schema.json",
+  "title": "MoonDesk Phase 9 Evidence",
+  "oneOf": [
+    { "$ref": "#/$defs/cleanMachine" },
+    { "$ref": "#/$defs/lifecycle" },
+    { "$ref": "#/$defs/soak" }
+  ],
+  "$defs": {
+    "proof": {
+      "type": "object",
+      "required": ["status", "owner", "target_date", "evidence"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "blocked", "not_run"] },
+        "owner": { "type": "string", "minLength": 1 },
+        "target_date": { "type": "string", "format": "date" },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "base": {
+      "type": "object",
+      "required": ["kind", "release_identity_sha256", "started_at", "completed_at", "operator", "results"],
+      "properties": {
+        "kind": { "type": "string" },
+        "release_identity_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "started_at": { "type": "string", "format": "date-time" },
+        "completed_at": { "type": "string", "format": "date-time" },
+        "operator": { "type": "string", "minLength": 1 },
+        "results": { "type": "object", "additionalProperties": { "$ref": "#/$defs/proof" } }
+      },
+      "additionalProperties": true
+    },
+    "cleanMachine": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "properties": { "kind": { "const": "moondesk-clean-machine-evidence.v1" }, "machine": { "type": "object" } }, "required": ["machine"] }
+      ]
+    },
+    "lifecycle": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "properties": { "kind": { "const": "moondesk-install-update-rollback-removal-evidence.v1" }, "user_data_before_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }, "user_data_after_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" } }, "required": ["user_data_before_sha256", "user_data_after_sha256"] }
+      ]
+    },
+    "soak": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        { "properties": { "kind": { "const": "moondesk-soak-evidence.v1" }, "thresholds": { "type": "object" }, "samples": { "type": "array" } }, "required": ["thresholds", "samples"] }
+      ]
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "kind": "moondesk-soak-thresholds.v1",
+  "defined_before_execution": "2026-07-30",
+  "duration_hours": 24,
+  "sample_interval_seconds": 300,
+  "minimum_samples": 288,
+  "maximum_unexpected_process_exits": 0,
+  "maximum_failed_lifecycle_scenarios": 0,
+  "maximum_rss_growth_mib": 256,
+  "maximum_rss_growth_percent": 25,
+  "maximum_file_descriptor_growth": 32,
+  "maximum_file_descriptor_count": 512,
+  "required_scenarios": [
+    "repeated-open-close",
+    "sleep-wake",
+    "network-loss-recovery",
+    "runtime-restart",
+    "sidecar-crash-supervision",
+    "service-port-collision",
+    "large-library",
+    "long-code-session",
+    "concurrent-file-changes",
+    "repeated-preview-generated-app"
+  ]
+}

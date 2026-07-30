@@ -9,20 +9,19 @@ VERSION=
 NOTES=
 OUTPUT=
 WORKSPACE=
-NOTARY_PROFILE=
-SIGN_IDENTITY=
 TEMP_WORKSPACE=
 TEMP_UI=
 
 usage() {
   printf '%s\n' \
     "Usage: $0 --version VERSION --notes FILE --out FRESH_DIR [--workspace DIR]" \
-    "          [--notary-profile PROFILE --sign-identity IDENTITY]" >&2
+    "          [--credentialed]" >&2
 }
 
+CREDENTIALED=false
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --version|--notes|--out|--workspace|--notary-profile|--sign-identity)
+    --version|--notes|--out|--workspace)
       [ "$#" -ge 2 ] || {
         usage
         exit 64
@@ -35,9 +34,11 @@ while [ "$#" -gt 0 ]; do
         --notes) NOTES=$value ;;
         --out) OUTPUT=$value ;;
         --workspace) WORKSPACE=$value ;;
-        --notary-profile) NOTARY_PROFILE=$value ;;
-        --sign-identity) SIGN_IDENTITY=$value ;;
       esac
+      ;;
+    --credentialed)
+      CREDENTIALED=true
+      shift
       ;;
     *)
       usage
@@ -76,12 +77,10 @@ if [ -e "$OUTPUT" ]; then
   exit 69
 fi
 
-if [ -n "$NOTARY_PROFILE" ] || [ -n "$SIGN_IDENTITY" ]; then
-  [ -n "$NOTARY_PROFILE" ] && [ -n "$SIGN_IDENTITY" ] || {
-    printf '%s\n' \
-      'preview release: notarization requires both profile and signing identity' >&2
-    exit 66
-  }
+if [ "$CREDENTIALED" = true ]; then
+  : "${MOONDESK_DEVELOPER_ID_APPLICATION:?preview release: protected Developer ID input is required}"
+  : "${MOONDESK_NOTARY_KEYCHAIN_PROFILE:?preview release: protected notary profile input is required}"
+  : "${MOONDESK_UPDATE_PRIVATE_KEY_FILE:?preview release: protected update signing key is required}"
 fi
 
 [ "$(uname -s)" = Darwin ] || {
@@ -100,7 +99,7 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 if [ -z "$WORKSPACE" ]; then
-  TEMP_WORKSPACE=$(mktemp -d "${TMPDIR:-/tmp}/moondesk-preview-workspace.XXXXXX")
+  TEMP_WORKSPACE=$(mktemp -d "${TMPDIR:?set TMPDIR beneath repository _build or .moonagent}/moondesk-preview-workspace.XXXXXX")
   WORKSPACE=$TEMP_WORKSPACE
   mkdir -p "$WORKSPACE/books"
 elif [ ! -d "$WORKSPACE" ]; then
@@ -108,7 +107,7 @@ elif [ ! -d "$WORKSPACE" ]; then
   exit 66
 fi
 
-TEMP_UI=$(mktemp -d "${TMPDIR:-/tmp}/moondesk-preview-ui.XXXXXX")
+TEMP_UI=$(mktemp -d "${TMPDIR:?set TMPDIR beneath repository _build or .moonagent}/moondesk-preview-ui.XXXXXX")
 mkdir -p "$(dirname -- "$OUTPUT")"
 
 npm --prefix "$UI_DIR" run build -- \
@@ -122,13 +121,7 @@ set -- \
   --version "$VERSION" \
   --channel preview
 
-if [ -n "$NOTARY_PROFILE" ]; then
-  set -- "$@" \
-    --sign-identity "$SIGN_IDENTITY" \
-    --notary-profile "$NOTARY_PROFILE"
-else
-  set -- "$@" --skip-sign
-fi
+set -- "$@" --skip-sign --no-dmg
 
 (
   cd "$REPO_ROOT"
@@ -140,8 +133,30 @@ fi
   exit 67
 }
 cp "$NOTES" "$OUTPUT/RELEASE_NOTES.md"
-node "$SCRIPT_DIR/verify_release.mjs" --write-checksums "$OUTPUT"
-node "$SCRIPT_DIR/verify_release.mjs" "$OUTPUT"
-node "$SCRIPT_DIR/verify_release.mjs" "$OUTPUT"
+
+if [ "$CREDENTIALED" = true ]; then
+  node "$SCRIPT_DIR/phase9_release.mjs" credentialed \
+    --app "$OUTPUT/MoonDesk.app" --archive "$OUTPUT/MoonDesk.app.zip" \
+    --dmg "$OUTPUT/moondesk-$VERSION-macos-arm64.dmg"
+else
+  node "$SCRIPT_DIR/verify_release.mjs" --write-checksums "$OUTPUT"
+  node "$SCRIPT_DIR/verify_release.mjs" "$OUTPUT"
+  node "$SCRIPT_DIR/verify_release.mjs" "$OUTPUT"
+fi
+
+node "$SCRIPT_DIR/phase9_release.mjs" identity \
+  --root "$OUTPUT" --source-commit "$(git -C "$REPO_ROOT" rev-parse HEAD)"
+node "$SCRIPT_DIR/phase9_release.mjs" channel \
+  --release-root "$OUTPUT" --channel preview \
+  --targets "$REPO_ROOT/config/phase9-supported-targets.json" \
+  --out "$OUTPUT/preview-channel.json"
+node "$SCRIPT_DIR/phase9_release.mjs" validate-channel \
+  "$OUTPUT/preview-channel.json"
+
+if [ "$CREDENTIALED" = true ]; then
+  node "$SCRIPT_DIR/phase9_release.mjs" sign-metadata \
+    --input "$OUTPUT/preview-channel.json" \
+    --out "$OUTPUT/preview-channel.json.signature.json"
+fi
 
 printf 'preview release verified: %s\n' "$OUTPUT"
