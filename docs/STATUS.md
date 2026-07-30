@@ -31,7 +31,15 @@ the complete desktop route table carries explicit authority; MoonFlow action
 receipts are durably persisted through confined IO; and the focused security
 suite is part of CI. Exact evidence is in `docs/PHASE5_SECURITY_EVIDENCE.md`.
 
-Phases 6–7 and 10 have not started; Phase 8 is partial; and Phase 9 has
+Phase 6 is complete locally at commit `568ec7c3`. The bounded audit confirmed
+that canonical turn ordering, evidence-backed progress, reconnect/reload
+preservation, stale-event rejection, and progressively disclosed diagnostics
+already had owning tests. The only remaining user-visible gap was completed
+approval copy: it now identifies the owning command and tool call and exposes
+the durable decision receipt under Technical details. Exact exit-gate ownership
+and validation evidence is in `docs/PHASE6_OPERATOR_EVIDENCE.md`.
+
+Phase 7 and Phase 10 have not started; Phase 8 is partial; and Phase 9 has
 unsigned-local evidence only. These repository-local requirements remain open
 where the plan says they are open and are not reclassified as external.
 

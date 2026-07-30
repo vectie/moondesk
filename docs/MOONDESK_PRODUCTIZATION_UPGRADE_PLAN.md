@@ -435,7 +435,7 @@ their exit gates.
 | [3. Typed MoonCode contract](#phase-3-establish-a-small-typed-mooncode-contract) | Complete | Phase 2 | Small typed public protocol and one serialization boundary | Retain the closed contract and validation evidence |
 | [4. Package boundaries](#phase-4-split-oversized-ownership-and-compilation-boundaries) | Complete locally | Phase 3 | Narrower packages, state ownership, and decomposed tests | Retain ownership, interface, focused-test, timing, and product-smoke evidence |
 | [5. Security](#phase-5-harden-workspace-and-generated-content-security) | Complete locally | Phases 2–4 | Symlink-aware IO, explicit authority, and isolated content | Retain the confinement, denial-path, authority, receipt, and CI evidence |
-| [6. Observability](#phase-6-unify-runtime-observability-and-operator-evidence) | Not started | Phases 3–5 | Evidence-backed turns, approvals, traces, and recovery | One canonical evidence projection answers the operator questions |
+| [6. Observability](#phase-6-unify-runtime-observability-and-operator-evidence) | Complete locally | Phases 3–5 | Evidence-backed turns, approvals, traces, and recovery | Retain the canonical ordering, evidence, receipt, stale-event, and disclosure proof |
 | [7. Editing workspaces](#phase-7-complete-first-class-document-and-code-editing) | Not started | Phases 3–6 | Working DOCX, XLSX, PPTX, and direct Code editing | Reopen/save fidelity and prompt-to-edit integration journeys pass |
 | [8. UX quality](#phase-8-finish-ux-consistency-localization-and-accessibility) | Shared-shell semantic slice plus partial local evidence | Stable Phase 7 editing contracts | Shared shell, explicit localization, and accessibility proof | Full keyboard, focused manual screen-reader, locale, reduced-motion, and responsive state matrix |
 | [9. Native distribution](#phase-9-prove-native-distribution-and-long-running-operation) | Unsigned local macOS evidence only | Phases 2–8 | Notarized release, update proof, and reliability evidence | Credentialed clean-machine install/update/rollback and soak transcripts |
@@ -1585,6 +1585,14 @@ Phase 6 is complete when:
 - reload and reconnect preserve canonical ordering
 - stale events cannot overwrite newer state
 - diagnostic detail remains available but progressively disclosed
+
+### Closure evidence
+
+Phase 6 is complete locally at commit `568ec7c3`. The bounded audit found one
+remaining user-visible gap: completed approval decisions did not identify their
+owning command/tool call or durable receipt. That copy and its focused regression
+test close the gap. Existing owning tests prove the other exit criteria; the
+exact mapping and validation record are in `docs/PHASE6_OPERATOR_EVIDENCE.md`.
 
 ### Non-goals
 
