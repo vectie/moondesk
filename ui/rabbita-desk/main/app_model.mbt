@@ -315,6 +315,7 @@ enum Msg {
   FlowPanMove(Int, Int)
   FlowPanEnd
   FlowNodeDragStart(String, Int, Int)
+  FlowCanvasFit
   FlowCanvasReset
   SelectActivity(Activity)
   SelectMoonCodeSession(String)

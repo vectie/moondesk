@@ -6,6 +6,10 @@ version.
 
 ## Unreleased
 
+- Replaced legacy Flow graph import with exact catalog validation and conformant
+  MoonFlow import, added digest-bound evidence and delegated controls, and made
+  the generic composition canvas fit and inspect the complete 63-stage
+  MoonFind reference graph.
 - Made MoonClaw first-run installation initialize its canonical configuration
   before starting the daemon, with explicit install, repair, authentication,
   model-readiness, and retry states.
@@ -26,6 +30,8 @@ version.
 
 ## Released previews
 
+- [0.1.0-preview.13](docs/releases/0.1.0-preview.13.md)
+- [0.1.0-preview.12](docs/releases/0.1.0-preview.12.md)
 - [0.1.0-preview.11](docs/releases/0.1.0-preview.11.md)
 - [0.1.0-preview.3](docs/releases/0.1.0-preview.3.md)
 - [0.1.0-preview.2](docs/releases/0.1.0-preview.2.md)

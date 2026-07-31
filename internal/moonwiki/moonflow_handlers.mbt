@@ -45,7 +45,7 @@ async fn handle_moonflow_import_selected(
       return
     }
   }
-  let mut graph_path = moonflow_source_graph_path(workspace.root_path)
+  let graph_path = moonflow_source_graph_path(workspace.root_path)
   if graph_path == "" {
     send_json(
       conn,
@@ -59,6 +59,22 @@ async fn handle_moonflow_import_selected(
       ),
     )
     return
+  }
+  let source_graph = moonflow_load_executable_graph(graph_path) catch {
+    error => {
+      send_json(
+        conn,
+        method_,
+        api_contract_response(
+          { "book_id": workspace_id, "run_id": "" },
+          ok=false,
+          status="declaration_invalid",
+          message="Executable Work graph rejected: \{error}",
+          next_action="review_work_graph",
+        ),
+      )
+      return
+    }
   }
   let capability_evidence = moonflow_capability_evidence()
   if !json_bool(capability_evidence, "available", default=false) {
@@ -80,8 +96,33 @@ async fn handle_moonflow_import_selected(
     return
   }
   let moonflow_root = json_string(capability_evidence, "root", default="")
-  graph_path = moonflow_compile_composition(
-    workspace_context(workspace_root).suite_root,
+  let suite_root = workspace_context(workspace_root).suite_root
+  let evaluated_at = moonflow_server_utc_timestamp()
+  let catalog = moonflow_resolve_capability_catalog(
+    workspace.root_path,
+    evaluated_at,
+  )
+  guard catalog.catalog is Some(_) else {
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        {
+          "book_id": workspace_id,
+          "run_id": "",
+          "capability_evidence": capability_evidence,
+          "catalog_evidence": catalog.evidence,
+        },
+        ok=false,
+        status="capability_catalog_unavailable",
+        message="The selected MoonBook has no valid MoonFlow capability catalog",
+        next_action="review_capability_catalog",
+      ),
+    )
+    return
+  }
+  let compiled_graph_path = moonflow_compile_composition(
+    suite_root,
     workspace.root_path,
     graph_path,
   ) catch {
@@ -96,50 +137,268 @@ async fn handle_moonflow_import_selected(
       return
     }
   }
-  let graph = @json.parse(@fs.read_file(graph_path).text()) catch {
-    _ => Json::object({})
+  let graph = moonflow_load_executable_graph(compiled_graph_path) catch {
+    error => {
+      send_api_error(
+        conn,
+        method_,
+        409,
+        "Conflict",
+        "Compiled MoonFlow graph rejected: \{error}",
+      )
+      return
+    }
   }
   let run_id = moonflow_graph_run_id(graph)
+  let source_catalog_path = json_string(
+    catalog.evidence,
+    "catalog_path",
+    default="",
+  )
+  let evidence_root = moonflow_import_evidence_relative_root(
+    graph,
+    catalog.evidence,
+    evaluated_at,
+  )
+  let catalog_path = moonflow_snapshot_capability_catalog(
+    suite_root,
+    evidence_root,
+    source_catalog_path,
+    json_string(catalog.evidence, "catalog_digest", default=""),
+  ) catch {
+    error => {
+      send_json(
+        conn,
+        method_,
+        api_contract_response(
+          {
+            "book_id": workspace_id,
+            "run_id": run_id,
+            "catalog_evidence": catalog.evidence,
+          },
+          ok=false,
+          status="capability_catalog_changed",
+          message="Capability catalog snapshot rejected: \{error}",
+          next_action="retry_import",
+        ),
+      )
+      return
+    }
+  }
   let moon = moonclaw_default_moon_command()
-  let code = @async.with_timeout_opt(30000, () => {
-    run_process_quiet(moon, [
-      "-C",
-      moonflow_root,
-      "run",
-      "cmd/main",
-      "--",
-      "import-graph",
-      workspace_context(workspace_root).suite_root,
-      graph_path,
-    ])
-  }).unwrap_or(-2)
+  let validation = @async.with_timeout_opt(30000, () => {
+    run_process_capture(
+      moon,
+      moonflow_validate_graph_cli_arguments(
+        moonflow_root, compiled_graph_path, catalog_path, evaluated_at,
+      ),
+    )
+  })
+  guard validation
+    is Some((validation_code, validation_stdout, validation_stderr)) else {
+    let receipt = moonflow_import_receipt(
+      graph,
+      catalog.evidence,
+      evaluated_at,
+      "validation_timed_out",
+      "",
+      "MoonFlow validation exceeded 30 seconds",
+    )
+    let receipt_ref = moonflow_persist_import_receipt(
+      suite_root, evidence_root, receipt,
+    )
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        {
+          "book_id": workspace_id,
+          "run_id": run_id,
+          "catalog_evidence": catalog.evidence,
+          "import_receipt_ref": receipt_ref,
+        },
+        ok=false,
+        status="validation_timed_out",
+        message="MoonFlow validation exceeded 30 seconds",
+        next_action="check_moonflow_service",
+      ),
+    )
+    return
+  }
+  let validation_report = @json.parse(validation_stdout.trim()) catch {
+    _ => Json::empty_object()
+  }
+  if validation_code != 0 ||
+    !moonflow_validation_report_matches(
+      validation_report,
+      graph,
+      catalog.evidence,
+    ) {
+    let detail = if validation_stderr.trim() == "" {
+      "MoonFlow returned no valid graph capability report"
+    } else {
+      validation_stderr.trim().to_owned()
+    }
+    let receipt = moonflow_import_receipt(
+      graph,
+      catalog.evidence,
+      evaluated_at,
+      "validation_failed",
+      "",
+      detail,
+    )
+    let receipt_ref = moonflow_persist_import_receipt(
+      suite_root, evidence_root, receipt,
+    )
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        {
+          "book_id": workspace_id,
+          "run_id": run_id,
+          "catalog_evidence": catalog.evidence,
+          "import_receipt_ref": receipt_ref,
+        },
+        ok=false,
+        status="validation_failed",
+        message="MoonFlow could not validate this Work graph",
+        next_action="review_work_graph",
+      ),
+    )
+    return
+  }
+  let validation_report_ref = moonflow_persist_validation_report(
+    suite_root, evidence_root, validation_report,
+  )
+  if !json_bool(validation_report, "accepted", default=false) {
+    let receipt = moonflow_import_receipt(
+      graph,
+      catalog.evidence,
+      evaluated_at,
+      "validation_rejected",
+      validation_report_ref,
+      "MoonFlow rejected at least one exact capability binding",
+    )
+    let receipt_ref = moonflow_persist_import_receipt(
+      suite_root, evidence_root, receipt,
+    )
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        {
+          "book_id": workspace_id,
+          "run_id": run_id,
+          "catalog_evidence": catalog.evidence,
+          "validation_report": validation_report,
+          "validation_report_ref": validation_report_ref,
+          "import_receipt_ref": receipt_ref,
+        },
+        ok=false,
+        status="validation_rejected",
+        message="The executable Work graph does not match installed capabilities",
+        next_action="review_capability_bindings",
+      ),
+    )
+    return
+  }
+  let imported = @async.with_timeout_opt(30000, () => {
+    run_process_capture(
+      moon,
+      moonflow_import_graph_cli_arguments(
+        moonflow_root, suite_root, compiled_graph_path, catalog_path, evaluated_at,
+      ),
+    )
+  })
+  guard imported is Some((import_code, import_stdout, import_stderr)) else {
+    let receipt = moonflow_import_receipt(
+      graph,
+      catalog.evidence,
+      evaluated_at,
+      "import_timed_out",
+      validation_report_ref,
+      "MoonFlow conformant import exceeded 30 seconds",
+    )
+    let receipt_ref = moonflow_persist_import_receipt(
+      suite_root, evidence_root, receipt,
+    )
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        {
+          "book_id": workspace_id,
+          "run_id": run_id,
+          "catalog_evidence": catalog.evidence,
+          "validation_report_ref": validation_report_ref,
+          "import_receipt_ref": receipt_ref,
+        },
+        ok=false,
+        status="import_timed_out",
+        message="MoonFlow conformant import exceeded 30 seconds",
+        next_action="check_moonflow_service",
+      ),
+    )
+    return
+  }
+  let projection = @json.parse(import_stdout.trim()) catch {
+    _ => Json::empty_object()
+  }
+  let import_ok = import_code == 0 &&
+    json_string(projection, "run_id", default="") == run_id
+  let import_detail = if import_ok {
+    "MoonFlow validated and imported the exact graph and catalog"
+  } else if import_stderr.trim() != "" {
+    import_stderr.trim().to_owned()
+  } else {
+    "MoonFlow returned no valid import projection"
+  }
+  let receipt = moonflow_import_receipt(
+    graph,
+    catalog.evidence,
+    evaluated_at,
+    if import_ok {
+      "imported"
+    } else {
+      "import_failed"
+    },
+    validation_report_ref,
+    import_detail,
+  )
+  let receipt_ref = moonflow_persist_import_receipt(
+    suite_root, evidence_root, receipt,
+  )
   send_json(
     conn,
     method_,
     api_contract_response(
-      { "book_id": workspace_id, "run_id": run_id },
-      ok=code == 0,
-      status=if code == 0 {
-        "imported"
-      } else if code == -2 {
-        "import_timed_out"
-      } else {
-        "import_failed"
+      {
+        "book_id": workspace_id,
+        "run_id": run_id,
+        "source_graph_id": moonflow_graph_run_id(source_graph),
+        "source_digest": json_string(source_graph, "source_digest", default=""),
+        "declaration_revision": json_string(
+          source_graph,
+          "declaration_revision",
+          default="",
+        ),
+        "capability_evidence": capability_evidence,
+        "catalog_evidence": catalog.evidence,
+        "validation_report": validation_report,
+        "validation_report_ref": validation_report_ref,
+        "import_receipt_ref": receipt_ref,
+        "projection": projection,
+        "evaluated_at": evaluated_at,
       },
-      message=if code == 0 {
-        "Executable document imported into MoonFlow"
-      } else if code == -2 {
-        "MoonFlow preparation exceeded 30 seconds"
+      ok=import_ok,
+      status=if import_ok { "imported" } else { "import_failed" },
+      message=if import_ok {
+        "Executable document validated and imported into MoonFlow"
       } else {
-        "MoonFlow could not import this Work graph"
+        "MoonFlow could not import this conformant Work graph"
       },
-      next_action=if code == 0 {
-        "open_run"
-      } else if code == -2 {
-        "check_moonflow_service"
-      } else {
-        "review_work_graph"
-      },
+      next_action=if import_ok { "open_run" } else { "review_work_graph" },
     ),
   )
 }
@@ -163,24 +422,11 @@ async fn moonflow_json_or(path : String, fallback : Json) -> Json {
 }
 
 ///|
-fn moonflow_authority_rank(authority : String) -> Int? {
-  match authority {
-    "observe" => Some(0)
-    "cognitive-maintenance" => Some(1)
-    "sandbox-execution" => Some(2)
-    "workspace-mutation" => Some(3)
-    "external-effect" => Some(4)
-    "physical-effect" => Some(5)
-    _ => None
-  }
-}
-
-///|
 async fn moonflow_enriched_projection(
   run_root : String,
   projection : Json,
 ) -> Json {
-  let fields : Map[String, Json] = {}
+  let fields : Map[String, Json] = Map([])
   match projection {
     Object(existing) =>
       for key, value in existing {
@@ -268,22 +514,6 @@ async fn handle_moonflow_control(
     send_api_error(conn, method_, 404, "Not Found", "MoonFlow run not found")
     return
   }
-  let projection = @json.parse(@fs.read_file(projection_path).text()) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 409, "Conflict", "Invalid MoonFlow projection",
-      )
-      return
-    }
-  }
-  if ["accepted", "blocked", "failed"].contains(
-      json_string(projection, "outcome", default=""),
-    ) {
-    send_api_error(
-      conn, method_, 409, "Conflict", "Terminal runs cannot be controlled",
-    )
-    return
-  }
   let payload = match read_json_body(body) {
     Some(value) => value
     None => {
@@ -293,89 +523,77 @@ async fn handle_moonflow_control(
   }
   let action = json_string(payload, "action", default="")
   let detail = json_string(payload, "detail", default="")
-  let recorded_at = json_string(payload, "recorded_at", default="")
-  if recorded_at.trim().is_empty() {
-    send_api_error(conn, method_, 400, "Bad Request", "recorded_at is required")
+  if !["pause", "resume", "cancel", "narrow-authority"].contains(action) {
+    send_api_error(
+      conn, method_, 400, "Bad Request", "Unsupported control action",
+    )
     return
   }
-  let control_path = @pathx.join(run_root, "control.json")
-  let existing = moonflow_json_or(control_path, {
-    "contract_id": "moonflow.run-control.v1",
-    "run_id": run_id,
-    "state": "running",
-    "authority_ceiling": "",
-    "reason": "",
-    "recorded_at": recorded_at,
+  let capability_evidence = moonflow_capability_evidence()
+  if !json_bool(capability_evidence, "available", default=false) {
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        { "run_id": run_id, "capability_evidence": capability_evidence },
+        ok=false,
+        status="moonflow_service_missing",
+        message="MoonFlow control is not available in the current setup",
+        next_action="review_flow_setup",
+      ),
+    )
+    return
+  }
+  let evaluated_at = moonflow_server_utc_timestamp()
+  let moonflow_root = json_string(capability_evidence, "root", default="")
+  let moon = moonclaw_default_moon_command()
+  let result = @async.with_timeout_opt(30000, () => {
+    run_process_capture(
+      moon,
+      moonflow_control_cli_arguments(
+        moonflow_root,
+        workspace_context(workspace_root).suite_root,
+        run_id,
+        action,
+        evaluated_at,
+        detail,
+      ),
+    )
   })
-  let existing_fields = match existing {
-    Object(values) => values
-    _ => {
-      send_api_error(
-        conn, method_, 409, "Conflict", "Invalid run control state",
-      )
-      return
-    }
+  guard result is Some((code, stdout, stderr)) else {
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        { "run_id": run_id, "evaluated_at": evaluated_at },
+        ok=false,
+        status="control_timed_out",
+        message="MoonFlow control exceeded 30 seconds",
+        next_action="check_moonflow_service",
+      ),
+    )
+    return
   }
-  let mut state = json_string(existing, "state", default="running")
-  let mut ceiling = json_string(existing, "authority_ceiling", default="")
-  match action {
-    "pause" => state = "paused"
-    "resume" =>
-      if state == "cancelled" {
-        send_api_error(
-          conn, method_, 409, "Conflict", "Cancelled runs cannot resume",
-        )
-        return
-      } else {
-        state = "running"
-      }
-    "cancel" => state = "cancelled"
-    "narrow-authority" => {
-      let proposed_rank = match moonflow_authority_rank(detail) {
-        Some(value) => value
-        None => {
-          send_api_error(
-            conn, method_, 400, "Bad Request", "Invalid authority ceiling",
-          )
-          return
-        }
-      }
-      if !ceiling.is_empty() {
-        let current_rank = moonflow_authority_rank(ceiling).unwrap_or(-1)
-        if current_rank < proposed_rank {
-          send_api_error(
-            conn, method_, 409, "Conflict", "Authority may only be narrowed",
-          )
-          return
-        }
-      }
-      ceiling = detail
-    }
-    _ => {
-      send_api_error(
-        conn, method_, 400, "Bad Request", "Unsupported control action",
-      )
-      return
-    }
+  let control = @json.parse(stdout.trim()) catch { _ => Json::empty_object() }
+  if code != 0 || !moonflow_control_receipt_matches(control, run_id) {
+    send_json(
+      conn,
+      method_,
+      api_contract_response(
+        {
+          "run_id": run_id,
+          "evaluated_at": evaluated_at,
+          "capability_evidence": capability_evidence,
+          "detail": stderr.trim().to_owned(),
+        },
+        ok=false,
+        status="control_rejected",
+        message="MoonFlow rejected the control request",
+        next_action="review_run_state",
+      ),
+    )
+    return
   }
-  ignore(existing_fields)
-  let control : Json = {
-    "contract_id": "moonflow.run-control.v1",
-    "run_id": run_id,
-    "state": state,
-    "authority_ceiling": ceiling,
-    "reason": if action == "narrow-authority" {
-      ""
-    } else {
-      detail
-    },
-    "recorded_at": recorded_at,
-  }
-  @fsx.write_to_file(
-    control_path,
-    control.stringify(indent=2) + "\n",
-    create=0o644,
-  )
   send_json(conn, method_, control)
 }
 

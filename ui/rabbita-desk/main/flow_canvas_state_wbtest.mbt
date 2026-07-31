@@ -23,16 +23,37 @@ test "Flow canvas wheel keeps the active double-precision zoom path" {
 test "Flow node drag exclusively claims the canvas gesture" {
   let item : MoonFlowCompositionItem = {
     work_item_id: "research",
+    declaration_id: "decl-research",
     product_id: "moonwiki",
     requested_authority: "knowledge-write",
+    acceptance_criteria: ["sources reviewed"],
     depends_on: [],
     operation: "research",
+    input_contracts: ["moonwiki/research-request@1.0.0"],
+    output_contracts: ["moonwiki/research-evidence@1.0.0"],
+    required_claim: "research-evidence",
+    input_artifacts: ["requests/research.json"],
+    timeout_ms: 30000,
+    adapter_id: Some("moonwiki-adapter"),
+    claim_ceiling: Some("accepted-knowledge"),
+    review_required: Some(true),
+    health_checked_at: Some("2026-07-31T00:00:00Z"),
+    health_valid_until: Some("2026-08-01T00:00:00Z"),
+    health_evidence_ref: Some("evidence/health.json"),
+    health_evidence_digest: Some(
+      "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    ),
   }
   let model = {
     ..init_model(),
     moonflow_composition: Some({
       selected_item_ids: ["research"],
       items: [item],
+      catalog_id: Some("catalog-1"),
+      catalog_status: Some("conformant"),
+      evaluated_at: Some("2026-07-31T12:00:00Z"),
+      validation_status: Some("accepted"),
+      validation_issues: Some([]),
     }),
   }
   let (_, dragging) = flow_node_drag_start_action(model, "research", 100, 80)
@@ -69,4 +90,75 @@ test "Flow pointer end releases gesture ownership without discarding canvas layo
   assert_eq(ended.flow_canvas.pan_y, canvas.pan_y)
   assert_eq(ended.flow_canvas.zoom, canvas.zoom)
   assert_eq(ended.flow_canvas.node_positions, canvas.node_positions)
+}
+
+///|
+fn flow_canvas_large_graph_item(
+  index : Int,
+  depends_on : Array[String],
+) -> MoonFlowCompositionItem {
+  {
+    work_item_id: "stage-\{index}",
+    declaration_id: "stage-\{index}-v1",
+    product_id: "product-\{index % 11}",
+    requested_authority: "workspace-mutation",
+    acceptance_criteria: ["typed output accepted"],
+    depends_on,
+    operation: "product/operation-\{index}@1.0.0",
+    input_contracts: ["product/input-\{index}@1.0.0"],
+    output_contracts: ["product/output-\{index}@1.0.0"],
+    required_claim: "digital-artifact",
+    input_artifacts: ["requests/stage-\{index}.json"],
+    timeout_ms: 30000,
+    adapter_id: Some("adapter-\{index % 11}"),
+    claim_ceiling: Some("digital-artifact"),
+    review_required: Some(true),
+    health_checked_at: Some("2026-07-31T00:00:00Z"),
+    health_valid_until: Some("2026-08-01T00:00:00Z"),
+    health_evidence_ref: Some("evidence/health-\{index % 11}.json"),
+    health_evidence_digest: Some(
+      "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    ),
+  }
+}
+
+///|
+test "Flow computes virtual extent and fits a 63-stage graph" {
+  let items : Array[MoonFlowCompositionItem] = []
+  let selected : Array[String] = []
+  for index in 0..<63 {
+    let item_id = "stage-\{index}"
+    selected.push(item_id)
+    items.push(
+      flow_canvas_large_graph_item(
+        index,
+        if index == 0 {
+          []
+        } else {
+          ["stage-\{index - 1}"]
+        },
+      ),
+    )
+  }
+  let model = {
+    ..init_model(),
+    moonflow_composition: Some({
+      selected_item_ids: selected,
+      items,
+      catalog_id: Some("catalog-large"),
+      catalog_status: Some("conformant"),
+      evaluated_at: Some("2026-07-31T12:00:00Z"),
+      validation_status: Some("accepted"),
+      validation_issues: Some([]),
+    }),
+  }
+  let (width, height) = flow_virtual_extent(model, items[:])
+  assert_true(width > 4800.0)
+  assert_true(height >= flow_canvas_fit_height)
+  let (_, fitted) = flow_canvas_fit_action(model)
+  assert_true(fitted.flow_canvas.zoom < 0.1)
+  assert_true(fitted.flow_canvas.zoom >= flow_zoom_min)
+  let (last_x, _) = flow_item_position(fitted, items[:], "stage-62")
+  let screen_x = fitted.flow_canvas.pan_x + last_x * fitted.flow_canvas.zoom
+  assert_true(screen_x < flow_canvas_fit_width)
 }

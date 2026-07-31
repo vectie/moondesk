@@ -8,8 +8,8 @@ MoonDesk is the human desktop companion for the Moon system.
 
 It is not an agent runtime and it is not a domain-analysis product. It is a
 Finder/Codex-like workspace shell for real human users to inspect MoonBook
-workspaces, review MoonClaw artifacts, submit work to MoonTown, and manage files
-without dropping into a terminal.
+workspaces, inspect MoonFind-authored work, review MoonClaw artifacts, and
+manage files without dropping into a terminal.
 
 The implementation should stay pure MoonBit:
 
@@ -18,10 +18,17 @@ The implementation should stay pure MoonBit:
 - A MoonBit local host process provides file and workspace APIs.
 - `../tauri` is only a reference for desktop architecture concepts; MoonDesk
   must not contain Rust, Cargo, `src-tauri`, or Tauri runtime code.
-- MoonBook remains the durable knowledge/workspace owner.
-- MoonTown remains the always-on agent town, scheduling layer, and cross-book
-  coordination surface.
-- MoonClaw remains the worker/runtime/artifact layer.
+- MoonBook owns durable book truth, MoonWiki functionality, and the Bookkeeper
+  role that closes reviewed outcomes.
+- MoonFind owns discovery and the desired capability graph; MoonDesk only
+  presents its nodes for operator selection and inspection.
+- MoonFlow validates, schedules, executes, reconciles, and recovers the durable
+  work graph.
+- MoonGate resolves exact capability and authority policy.
+- MoonClaw is the sole agent runtime. MoonCode is a MoonClaw role/profile, not
+  another runtime.
+- MoonTown owns civic coordination and reviewable cross-book synthesis, not
+  workflow execution.
 
 Start here:
 
@@ -46,8 +53,12 @@ MoonDesk currently has a pure MoonBit host plus a live Rabbita desk:
   calendar-like due-tick view, ICS export, outcome analytics, and daemon plus
   LaunchAgent lifecycle controls.
 - MoonCode/MoonWiki switchable workspace shell. MoonWiki is the human-language
-  book surface; MoonCode is the book-scoped coding/chat surface backed by
-  MoonClaw runtime/session APIs.
+  projection of MoonBook-owned knowledge; MoonCode is the book-scoped
+  coding/chat role backed by MoonClaw runtime/session APIs.
+- MoonFind-authored Work-graph inspection and composition. MoonDesk renders
+  exact operation, schema, authority, claim, review, catalog, and validation
+  evidence, then hands a dependency-closed selection to MoonFlow. Product
+  inventory alone never creates an executable node.
 - Reusable PDF Evidence Watch book creation. The wizard creates a
   `research-book` with source websites, cadence, notification rule, method page,
   `pdf-watch`/`pdf-analysis` skills, schemas, generated site placeholders, and
@@ -58,12 +69,20 @@ MoonDesk currently has a pure MoonBit host plus a live Rabbita desk:
   and optional signing/notarization.
 
 Domain-specific workflows are not part of MoonDesk core. They should live as
-standalone MoonBook/MoonClaw skill or tool packs that MoonDesk can create,
-configure, inspect, export, and run through generic book/tool interfaces. Export
-produces a served `portable/app-tool/` bundle with local launch scripts so
-generated JavaScript apps can run outside MoonDesk without being built into the
-desktop shell. This keeps MoonDesk from hardcoding stale markets, schemas,
-workbooks, or source lists.
+standalone product packs that publish typed operations and pack-owned
+applications. MoonDesk can create, configure, host, inspect, and export them
+through generic book, application, evidence, authority, and review interfaces.
+Export produces a served `portable/app-tool/` bundle with local launch scripts
+so generated JavaScript apps can run outside MoonDesk without being built into
+the desktop shell. This keeps MoonDesk from hardcoding finance, media,
+robotics, spatial, simulation, or other domain policy.
+
+The validated MoonFind robotics reference contains 63 stages and 43 exact
+operations across 11 domain products. MoonDesk does not carry a second copy of
+that product list: it renders the published graph and a compatible
+`moonflow.capability-catalog.v1`. MoonMini and MoonStat are not active graph
+products. Publication, trading, and physical robot commands remain separately
+authorized effects and are absent from the default robotics graph.
 
 See [Current Status](docs/STATUS.md) for the honest completion picture.
 MoonDesk is a usable local single-user Lepusa-hosted native-window alpha. Production

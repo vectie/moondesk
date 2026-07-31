@@ -20,10 +20,19 @@ let flow_origin_x : Double = 64.0
 let flow_origin_y : Double = 72.0
 
 ///|
-let flow_zoom_min : Double = 0.25
+let flow_zoom_min : Double = 0.05
 
 ///|
 let flow_zoom_max : Double = 2.5
+
+///|
+let flow_canvas_fit_width : Double = 1080.0
+
+///|
+let flow_canvas_fit_height : Double = 520.0
+
+///|
+let flow_canvas_padding : Double = 48.0
 
 ///|
 fn flow_item_default_position(
@@ -62,12 +71,17 @@ fn flow_item_position(
 }
 
 ///|
-fn flow_content_center(
+fn flow_content_bounds(
   model : Model,
   items : ArrayView[MoonFlowCompositionItem],
-) -> (Double, Double) {
+) -> (Double, Double, Double, Double) {
   if items.length() == 0 {
-    return (flow_origin_x + 400.0, flow_origin_y + 240.0)
+    return (
+      flow_origin_x,
+      flow_origin_y,
+      flow_origin_x + 800.0,
+      flow_origin_y + 480.0,
+    )
   }
   let mut min_x = 100000.0
   let mut min_y = 100000.0
@@ -88,7 +102,38 @@ fn flow_content_center(
       max_y = y + flow_node_height
     }
   }
+  (min_x, min_y, max_x, max_y)
+}
+
+///|
+fn flow_content_center(
+  model : Model,
+  items : ArrayView[MoonFlowCompositionItem],
+) -> (Double, Double) {
+  let (min_x, min_y, max_x, max_y) = flow_content_bounds(model, items)
   ((min_x + max_x) / 2.0, (min_y + max_y) / 2.0)
+}
+
+///|
+fn flow_virtual_extent(
+  model : Model,
+  items : ArrayView[MoonFlowCompositionItem],
+) -> (Double, Double) {
+  let (_, _, max_x, max_y) = flow_content_bounds(model, items)
+  let width = max_x + flow_canvas_padding
+  let height = max_y + flow_canvas_padding
+  (
+    if width < flow_canvas_fit_width {
+      flow_canvas_fit_width
+    } else {
+      width
+    },
+    if height < flow_canvas_fit_height {
+      flow_canvas_fit_height
+    } else {
+      height
+    },
+  )
 }
 
 ///|
@@ -291,4 +336,52 @@ fn flow_node_drag_start_action(
 ///|
 fn flow_canvas_reset_action(model : Model) -> (@rabbita.Cmd, Model) {
   (@rabbita.none, { ..model, flow_canvas: init_flow_canvas_state() })
+}
+
+///|
+fn flow_canvas_fit_action(model : Model) -> (@rabbita.Cmd, Model) {
+  match model.moonflow_composition {
+    None => flow_canvas_reset_action(model)
+    Some(composition) => {
+      let (min_x, min_y, max_x, max_y) = flow_content_bounds(
+        model,
+        composition.items[:],
+      )
+      let content_width = max_x - min_x
+      let content_height = max_y - min_y
+      let available_width = flow_canvas_fit_width - flow_canvas_padding * 2.0
+      let available_height = flow_canvas_fit_height - flow_canvas_padding * 2.0
+      let width_zoom = if content_width <= 0.0 {
+        1.0
+      } else {
+        available_width / content_width
+      }
+      let height_zoom = if content_height <= 0.0 {
+        1.0
+      } else {
+        available_height / content_height
+      }
+      let next_zoom = flow_clamp_zoom(
+        if width_zoom < height_zoom {
+          width_zoom
+        } else {
+          height_zoom
+        },
+      )
+      (
+        @rabbita.none,
+        {
+          ..model,
+          flow_canvas: {
+            ..model.flow_canvas,
+            pan_x: flow_canvas_padding - min_x * next_zoom,
+            pan_y: flow_canvas_padding - min_y * next_zoom,
+            zoom: next_zoom,
+            pan_dragging: false,
+            drag_node_id: "",
+          },
+        },
+      )
+    }
+  }
 }

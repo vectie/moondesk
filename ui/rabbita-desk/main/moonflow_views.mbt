@@ -41,14 +41,6 @@ fn moonflow_budget_label(used : Int, limit : Int) -> String {
 }
 
 ///|
-fn moonflow_product_accepted(
-  run : MoonFlowRunProjection,
-  product : String,
-) -> Bool {
-  run.items.any(item => item.product_id == product && item.status == "accepted")
-}
-
-///|
 fn moonflow_item_explanation(item : MoonFlowItemProjection) -> String {
   if item.status == "blocked" || item.status == "failed" {
     if item.blocker != "" {
@@ -233,12 +225,7 @@ fn render_moonflow_workspace(
     render_moonflow_composition_canvas(dispatch, model),
     if selected_runs.is_empty() &&
       moonflow_runs_state_shows_empty_action(runs_state) {
-      render_moonflow_handoffs(
-        dispatch,
-        model,
-        "not started",
-        model.selected_workspace_id,
-      )
+      render_moonflow_composition_continuation(model.moonflow_composition)
     } else {
       @html.nothing
     },
@@ -344,10 +331,10 @@ fn render_moonflow_run(
       div(class="flow-disclosure-body", [
         render_moonflow_next_actions(run),
         render_moonflow_blockers(run),
-        render_moonflow_readiness(run),
+        render_moonflow_claim_coverage(run),
       ]),
     ]),
-    render_moonflow_handoffs(dispatch, model, run.run_id, run.book_id),
+    render_moonflow_run_continuation(run),
     details(class="flow-disclosure flow-operator-disclosure", [
       summary("Operator controls"),
       div(class="flow-disclosure-body", [
@@ -382,162 +369,231 @@ fn render_moonflow_run(
 }
 
 ///|
-fn moonsuite_product_available(model : Model, product_name : String) -> Bool {
-  model.moonsuite_products.any(product => {
-    product.name.to_lower() == product_name.to_lower() &&
-    (product.status == "installed" || product.status == "enabled")
+fn moonflow_composition_entry_items(
+  composition : MoonFlowComposition,
+) -> Array[MoonFlowCompositionItem] {
+  composition.items.filter(item => {
+    composition.selected_item_ids.contains(item.work_item_id) &&
+    item.depends_on.all(dependency => {
+      !composition.selected_item_ids.contains(dependency)
+    })
   })
 }
 
 ///|
-fn render_moonflow_handoffs(
-  dispatch : Dispatch[Msg],
-  model : Model,
-  run_id : String,
-  book_id : String,
+fn render_flow_continuation_card(
+  product_id : String,
+  operation : String,
+  declaration_id : String,
+  status : String,
+  detail : String,
 ) -> @rabbita.Html {
-  let book_label = if book_id == "" { "not selected" } else { book_id }
-  let town_available = moonsuite_product_available(model, "MoonTown")
-  section(
-    class="flow-handoff-section",
-    attrs=@html.Attrs::build()
-      .data_set("testid", "flow-capability-handoffs")
-      .data_set("book-id", book_id)
-      .data_set("run-id", run_id),
-    [
-      div(class="flow-section-heading", [
-        h3("Continue across the suite"),
-        small("MoonBook " + book_label + " · run " + run_id),
-      ]),
-      div(class="flow-handoff-grid", [
-        render_flow_handoff_card(
-          "MoonTown",
-          "Deliberate, compare proposals, and promote implementation criteria.",
-          if town_available {
-            "Available"
-          } else {
-            "Adapter pending"
-          },
-          button(
-            class="secondary-button compact-button",
-            disabled=book_id == "" || !town_available,
-            on_click=dispatch(SelectActivity(Town)),
-            if town_available {
-              "Open Town"
-            } else {
-              "Town adapter pending"
-            },
-          ),
-        ),
-        render_flow_handoff_card(
-          "MoonRobo",
-          "Build and validate against the accepted run criteria.",
-          if moonsuite_product_available(model, "MoonRobo") {
-            "Installed · handoff pending"
-          } else {
-            "Adapter pending"
-          },
-          span(
-            class="flow-handoff-note",
-            "Keeps this MoonBook and run selected",
-          ),
-        ),
-        render_flow_handoff_card(
-          "MoonMoon",
-          "Simulate the accepted robot and return uncertainty evidence.",
-          if moonsuite_product_available(model, "MoonMoon") {
-            "Installed · handoff pending"
-          } else {
-            "Adapter pending"
-          },
-          span(class="flow-handoff-note", "No deployment authority granted"),
-        ),
-        render_flow_handoff_card(
-          "MoonMold",
-          "Create governed 3D artifacts for Town, Robo, simulation, or fabrication.",
-          if moonsuite_product_available(model, "MoonMold") {
-            "Installed · handoff pending"
-          } else {
-            "Adapter pending"
-          },
-          span(
-            class="flow-handoff-note",
-            "Physical export remains approval-gated",
-          ),
-        ),
-      ]),
-    ],
-  )
+  section(class="flow-handoff-card", [
+    div([strong(product_id), span(class="flow-handoff-status", status)]),
+    p(operation),
+    span(
+      class="flow-handoff-note",
+      "Declaration " + declaration_id + " · " + detail,
+    ),
+  ])
 }
 
 ///|
-fn render_flow_handoff_card(
-  name : String,
-  description : String,
-  status : String,
-  action : @rabbita.Html,
+fn render_moonflow_composition_continuation(
+  composition : MoonFlowComposition?,
 ) -> @rabbita.Html {
-  section(class="flow-handoff-card", [
-    div([strong(name), span(class="flow-handoff-status", status)]),
-    p(description),
-    action,
-  ])
+  match composition {
+    None => @html.nothing
+    Some(value) => {
+      let entries = moonflow_composition_entry_items(value)
+      section(
+        class="flow-handoff-section",
+        attrs=@html.Attrs::build().data_set("testid", "flow-graph-continuation"),
+        [
+          div(class="flow-section-heading", [
+            h3("Graph-derived continuation"),
+            small("Selected entry nodes · \{entries.length()}"),
+          ]),
+          if entries.is_empty() {
+            p(
+              class="flow-quiet",
+              "The selected graph publishes no entry node. Review its dependencies and validation evidence.",
+            )
+          } else {
+            div(
+              class="flow-handoff-grid",
+              entries.map(item => {
+                render_flow_continuation_card(
+                  item.product_id,
+                  item.operation,
+                  item.declaration_id,
+                  moonflow_composition_item_catalog_status(value, item),
+                  "authority " +
+                  item.requested_authority +
+                  " · claim " +
+                  item.required_claim,
+                )
+              }),
+            )
+          },
+        ],
+      )
+    }
+  }
+}
+
+///|
+fn render_moonflow_run_continuation(
+  run : MoonFlowRunProjection,
+) -> @rabbita.Html {
+  let runnable : Array[MoonFlowItemProjection] = []
+  for item_id in run.runnable_item_ids {
+    match moonflow_item_by_id(run, item_id) {
+      Some(item) => runnable.push(item)
+      None => ()
+    }
+  }
+  section(
+    class="flow-handoff-section",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "flow-graph-continuation")
+      .data_set("run-id", run.run_id),
+    [
+      div(class="flow-section-heading", [
+        h3("Graph-derived continuation"),
+        small("Runnable projection items · \{runnable.length()}"),
+      ]),
+      if runnable.is_empty() {
+        p(
+          class="flow-quiet",
+          if run.outcome == "accepted" {
+            "The projection is complete; it publishes no further runnable item."
+          } else {
+            "The projection publishes no runnable item. Review blockers and acceptance state."
+          },
+        )
+      } else {
+        div(
+          class="flow-handoff-grid",
+          runnable.map(item => {
+            render_flow_continuation_card(
+              item.product_id,
+              item.operation,
+              item.declaration_id,
+              item.status,
+              "authority " +
+              item.requested_authority +
+              " · claim " +
+              item.required_claim,
+            )
+          }),
+        )
+      },
+    ],
+  )
 }
 
 ///|
 fn render_moonflow_runtime_evidence(
   run : MoonFlowRunProjection,
 ) -> @rabbita.Html {
-  let binding = run.autonomy_binding
-  let envelope = binding.envelope
-  let scorecard = run.intervention_scorecard
-  let control = run.run_control
   section(class="flow-section flow-contract", [
     h3("Runtime evidence"),
-    div(class="flow-contract-grid", [
-      div([span("Autonomy binding"), strong(binding.contract_id)]),
-      div([span("Bound run"), strong(binding.run_id)]),
-      div([span("Usage evidence"), strong(binding.usage_ref)]),
-      div([span("Binding recorded"), strong(binding.recorded_at)]),
-      div([span("Envelope expires"), strong(envelope.expires_at)]),
-      div([
-        span("Storage budget"),
-        strong(
-          moonflow_budget_label(
-            binding.usage.storage_bytes,
-            envelope.budget.storage_bytes,
-          ),
-        ),
-      ]),
-      div([
-        span("Concurrency"),
-        strong(
-          moonflow_budget_label(
-            binding.usage.concurrency,
-            envelope.budget.concurrency,
-          ),
-        ),
-      ]),
-      div([span("Intervention record"), strong(scorecard.contract_id)]),
-      div([span("Intervention run"), strong(scorecard.run_id)]),
-      div([
-        span("Hidden orchestration"),
-        strong(scorecard.hidden_orchestration_count.to_string()),
-      ]),
-      div([
-        span("Normal-path manual work"),
-        strong(scorecard.normal_path_manual_count.to_string()),
-      ]),
-      div([span("Scorecard recorded"), strong(scorecard.recorded_at)]),
-      div([span("Control record"), strong(control.contract_id)]),
-      div([span("Control run"), strong(control.run_id)]),
-      div([
-        span("Control reason"),
-        strong(if control.reason == "" { "none" } else { control.reason }),
-      ]),
-      div([span("Control recorded"), strong(control.recorded_at)]),
-    ]),
+    match run.autonomy_binding {
+      Some(binding) if moonflow_autonomy_evidence_available(binding) => {
+        let envelope = binding.envelope
+        div(class="flow-contract-grid", [
+          div([span("Autonomy binding"), strong(binding.contract_id)]),
+          div([span("Bound run"), strong(binding.run_id)]),
+          div([span("Usage evidence"), strong(binding.usage_ref)]),
+          div([span("Binding recorded"), strong(binding.recorded_at)]),
+          div([span("Envelope expires"), strong(envelope.expires_at)]),
+          div([
+            span("Storage budget"),
+            strong(
+              moonflow_budget_label(
+                binding.usage.storage_bytes,
+                envelope.budget.storage_bytes,
+              ),
+            ),
+          ]),
+          div([
+            span("Concurrency"),
+            strong(
+              moonflow_budget_label(
+                binding.usage.concurrency,
+                envelope.budget.concurrency,
+              ),
+            ),
+          ]),
+        ])
+      }
+      _ =>
+        p(
+          class="flow-evidence-unavailable",
+          "Autonomy binding evidence unavailable.",
+        )
+    },
+    match run.intervention_scorecard {
+      Some(scorecard) if moonflow_scorecard_evidence_available(scorecard) =>
+        div(class="flow-contract-grid", [
+          div([span("Intervention record"), strong(scorecard.contract_id)]),
+          div([span("Intervention run"), strong(scorecard.run_id)]),
+          div([
+            span("Hidden orchestration"),
+            strong(scorecard.hidden_orchestration_count.to_string()),
+          ]),
+          div([
+            span("Normal-path manual work"),
+            strong(scorecard.normal_path_manual_count.to_string()),
+          ]),
+          div([span("Scorecard recorded"), strong(scorecard.recorded_at)]),
+        ])
+      _ =>
+        p(
+          class="flow-evidence-unavailable",
+          "Intervention scorecard evidence unavailable.",
+        )
+    },
+    match run.run_control {
+      Some(control) if moonflow_control_evidence_available(control) =>
+        div(class="flow-contract-grid", [
+          div([span("Control record"), strong(control.contract_id)]),
+          div([span("Control run"), strong(control.run_id)]),
+          div([
+            span("Control reason"),
+            strong(if control.reason == "" { "none" } else { control.reason }),
+          ]),
+          div([span("Control recorded"), strong(control.recorded_at)]),
+        ])
+      _ =>
+        p(
+          class="flow-evidence-unavailable",
+          "Run-control evidence unavailable.",
+        )
+    },
   ])
+}
+
+///|
+fn moonflow_autonomy_evidence_available(
+  binding : MoonFlowAutonomyBinding,
+) -> Bool {
+  !binding.contract_id.is_empty() &&
+  !binding.envelope.envelope_id.is_empty() &&
+  !binding.recorded_at.is_empty()
+}
+
+///|
+fn moonflow_scorecard_evidence_available(
+  scorecard : MoonFlowInterventionScorecard,
+) -> Bool {
+  !scorecard.contract_id.is_empty() && !scorecard.recorded_at.is_empty()
+}
+
+///|
+fn moonflow_control_evidence_available(control : MoonFlowRunControl) -> Bool {
+  !control.contract_id.is_empty() && !control.recorded_at.is_empty()
 }
 
 ///|
@@ -545,196 +601,254 @@ fn render_moonflow_controls(
   dispatch : Dispatch[Msg],
   run : MoonFlowRunProjection,
 ) -> @rabbita.Html {
-  let control = run.run_control
-  let terminal = run.outcome == "accepted" ||
-    run.outcome == "blocked" ||
-    run.outcome == "failed" ||
-    control.state == "cancelled"
-  section(class="flow-section flow-controls", [
-    div(class="flow-section-heading", [
-      div([
+  match run.run_control {
+    Some(control) if moonflow_control_evidence_available(control) => {
+      let terminal = run.outcome == "accepted" ||
+        run.outcome == "blocked" ||
+        run.outcome == "failed" ||
+        control.state == "cancelled"
+      section(class="flow-section flow-controls", [
+        div(class="flow-section-heading", [
+          div([
+            h3("Bounded intervention"),
+            small("Current state · " + control.state),
+          ]),
+          span(
+            class="flow-state " +
+              (if control.state == "paused" {
+                "blocked"
+              } else {
+                "in-progress"
+              }),
+            if control.authority_ceiling.is_empty() {
+              "ceiling unavailable"
+            } else {
+              "≤ " + control.authority_ceiling
+            },
+          ),
+        ]),
+        div(class="flow-control-actions", [
+          if terminal {
+            @html.nothing
+          } else if control.state == "paused" {
+            button(
+              class="secondary-button",
+              on_click=dispatch(ControlMoonFlow(run.run_id, "resume", "")),
+              "Resume",
+            )
+          } else {
+            button(
+              class="secondary-button",
+              on_click=dispatch(
+                ControlMoonFlow(
+                  run.run_id,
+                  "pause",
+                  "operator requested inspection",
+                ),
+              ),
+              "Pause",
+            )
+          },
+          if terminal || control.authority_ceiling == "observe" {
+            @html.nothing
+          } else {
+            button(
+              class="secondary-button",
+              on_click=dispatch(
+                ControlMoonFlow(run.run_id, "narrow-authority", "observe"),
+              ),
+              "Narrow to observe",
+            )
+          },
+          if terminal {
+            @html.nothing
+          } else {
+            button(
+              class="secondary-button danger-button",
+              on_click=dispatch(
+                ControlMoonFlow(
+                  run.run_id,
+                  "cancel",
+                  "operator cancelled from MoonDesk",
+                ),
+              ),
+              "Cancel run",
+            )
+          },
+        ]),
+        small(
+          class="flow-quiet",
+          "Controls cannot widen the envelope. Cancel is terminal; pause and narrowed authority are durable across restarts.",
+        ),
+      ])
+    }
+    _ =>
+      section(class="flow-section flow-controls", [
         h3("Bounded intervention"),
-        small("Current state · " + control.state),
-      ]),
-      span(
-        class="flow-state " +
-          (if control.state == "paused" { "blocked" } else { "in-progress" }),
-        if control.authority_ceiling.is_empty() {
-          "envelope ceiling"
-        } else {
-          "≤ " + control.authority_ceiling
-        },
-      ),
-    ]),
-    div(class="flow-control-actions", [
-      if terminal {
-        @html.nothing
-      } else if control.state == "paused" {
-        button(
-          class="secondary-button",
-          on_click=dispatch(ControlMoonFlow(run.run_id, "resume", "")),
-          "Resume",
-        )
-      } else {
-        button(
-          class="secondary-button",
-          on_click=dispatch(
-            ControlMoonFlow(
-              run.run_id,
-              "pause",
-              "operator requested inspection",
-            ),
-          ),
-          "Pause",
-        )
-      },
-      if terminal || control.authority_ceiling == "observe" {
-        @html.nothing
-      } else {
-        button(
-          class="secondary-button",
-          on_click=dispatch(
-            ControlMoonFlow(run.run_id, "narrow-authority", "observe"),
-          ),
-          "Narrow to observe",
-        )
-      },
-      if terminal {
-        @html.nothing
-      } else {
-        button(
-          class="secondary-button danger-button",
-          on_click=dispatch(
-            ControlMoonFlow(
-              run.run_id,
-              "cancel",
-              "operator cancelled from MoonDesk",
-            ),
-          ),
-          "Cancel run",
-        )
-      },
-    ]),
-    small(
-      class="flow-quiet",
-      "Controls cannot widen the envelope. Cancel is terminal; pause and narrowed authority are durable across restarts.",
-    ),
-  ])
+        p(
+          class="flow-evidence-unavailable",
+          "Run-control evidence unavailable. MoonDesk will not offer controls without a persisted control record.",
+        ),
+      ])
+  }
 }
 
 ///|
 fn render_moonflow_authority(run : MoonFlowRunProjection) -> @rabbita.Html {
-  let binding = run.autonomy_binding
-  let envelope = binding.envelope
-  let scorecard = run.intervention_scorecard
-  let authority_state = if envelope.envelope_id == "" {
-    "Not bound"
-  } else if envelope.revoked {
-    "Revoked"
-  } else {
-    "Bound · " + envelope.mode
-  }
-  section(class="flow-section flow-authority", [
-    div(class="flow-section-heading", [
-      div([h3("Autonomy envelope"), small(authority_state)]),
-      span(
-        class="flow-state " +
-          (if scorecard.unattended_qualified {
-            "complete"
-          } else {
-            "in-progress"
-          }),
-        if scorecard.unattended_qualified {
-          "unattended qualified"
-        } else {
-          "qualification pending"
-        },
-      ),
-    ]),
-    div(class="flow-authority-grid", [
-      div([
-        span("Envelope"),
-        strong(moonflow_short_identity(envelope.envelope_id)),
-      ]),
-      div([
-        span("Effects"),
-        strong(
-          if envelope.external_effects_allowed ||
-            envelope.physical_effects_allowed {
-            "Expanded authority"
-          } else {
-            "Workspace + simulation only"
+  match run.autonomy_binding {
+    Some(binding) if moonflow_autonomy_evidence_available(binding) => {
+      let envelope = binding.envelope
+      let authority_state = if envelope.revoked {
+        "Revoked"
+      } else {
+        "Bound · " + envelope.mode
+      }
+      let scorecard = match run.intervention_scorecard {
+        Some(value) if moonflow_scorecard_evidence_available(value) =>
+          Some(value)
+        _ => None
+      }
+      section(class="flow-section flow-authority", [
+        div(class="flow-section-heading", [
+          div([h3("Autonomy envelope"), small(authority_state)]),
+          match scorecard {
+            Some(value) =>
+              span(
+                class="flow-state " +
+                  (if value.unattended_qualified {
+                    "complete"
+                  } else {
+                    "in-progress"
+                  }),
+                if value.unattended_qualified {
+                  "unattended qualified"
+                } else {
+                  "not unattended-qualified"
+                },
+              )
+            None =>
+              span(
+                class="flow-state blocked",
+                "qualification evidence unavailable",
+              )
           },
+        ]),
+        div(class="flow-authority-grid", [
+          div([
+            span("Envelope"),
+            strong(moonflow_short_identity(envelope.envelope_id)),
+          ]),
+          div([
+            span("Effects"),
+            strong(
+              if envelope.external_effects_allowed ||
+                envelope.physical_effects_allowed {
+                "Expanded authority"
+              } else {
+                "Workspace + simulation only"
+              },
+            ),
+          ]),
+          div([
+            span("Model tokens"),
+            strong(
+              moonflow_budget_label(
+                binding.usage.model_tokens,
+                envelope.budget.model_tokens,
+              ),
+            ),
+          ]),
+          div([
+            span("Tool calls"),
+            strong(
+              moonflow_budget_label(
+                binding.usage.tool_calls,
+                envelope.budget.tool_calls,
+              ),
+            ),
+          ]),
+          div([
+            span("Attempts"),
+            strong(
+              moonflow_budget_label(
+                binding.usage.attempts,
+                envelope.budget.attempts,
+              ),
+            ),
+          ]),
+          div([
+            span("Human interventions"),
+            strong(
+              match scorecard {
+                Some(value) => value.required_intervention_count.to_string()
+                None => "Unavailable"
+              },
+            ),
+          ]),
+        ]),
+        match scorecard {
+          Some(value) if !value.finalization_findings.is_empty() =>
+            p(
+              class="flow-authority-finding",
+              value.finalization_findings.join(" · "),
+            )
+          Some(_) => @html.nothing
+          None =>
+            p(
+              class="flow-evidence-unavailable",
+              "Intervention scorecard evidence unavailable.",
+            )
+        },
+      ])
+    }
+    _ =>
+      section(class="flow-section flow-authority", [
+        div(class="flow-section-heading", [
+          div([h3("Autonomy envelope"), small("Unavailable")]),
+          span(class="flow-state blocked", "evidence unavailable"),
+        ]),
+        p(
+          class="flow-evidence-unavailable",
+          "No persisted autonomy binding was published for this run.",
         ),
-      ]),
-      div([
-        span("Model tokens"),
-        strong(
-          moonflow_budget_label(
-            binding.usage.model_tokens,
-            envelope.budget.model_tokens,
-          ),
-        ),
-      ]),
-      div([
-        span("Tool calls"),
-        strong(
-          moonflow_budget_label(
-            binding.usage.tool_calls,
-            envelope.budget.tool_calls,
-          ),
-        ),
-      ]),
-      div([
-        span("Attempts"),
-        strong(
-          moonflow_budget_label(
-            binding.usage.attempts,
-            envelope.budget.attempts,
-          ),
-        ),
-      ]),
-      div([
-        span("Human interventions"),
-        strong("\{scorecard.required_intervention_count}"),
-      ]),
-    ]),
-    if scorecard.finalization_findings.is_empty() {
-      @html.nothing
-    } else {
-      p(
-        class="flow-authority-finding",
-        scorecard.finalization_findings.join(" · "),
-      )
-    },
-  ])
+      ])
+  }
 }
 
 ///|
-fn render_moonflow_readiness(run : MoonFlowRunProjection) -> @rabbita.Html {
-  let stages : Array[(String, Bool)] = [
-    ("Evidence", moonflow_product_accepted(run, "moonwiki")),
-    ("Deliberated", moonflow_product_accepted(run, "moontown")),
-    ("Digital model", moonflow_product_accepted(run, "moonrobo")),
-    ("Scenario", moonflow_product_accepted(run, "moonmoon")),
-    ("Bookkeeper", moonflow_product_accepted(run, "moonbook")),
-    ("Physical", false),
-  ]
+fn render_moonflow_claim_coverage(run : MoonFlowRunProjection) -> @rabbita.Html {
+  let claims : Array[String] = []
+  for item in run.items {
+    if !item.required_claim.is_empty() && !claims.contains(item.required_claim) {
+      claims.push(item.required_claim)
+    }
+  }
   section(class="flow-section", [
-    h3("Claim and readiness ladder"),
-    div(
-      class="flow-readiness",
-      stages.map(stage => {
-        let (label, achieved) = stage
-        div(class=if achieved { "achieved" } else { "" }, [
-          span(if achieved { "✓" } else { "·" }),
-          strong(label),
-        ])
-      }),
-    ),
+    h3("Declared claim coverage"),
+    if claims.is_empty() {
+      p(class="flow-quiet", "Required claim evidence is unavailable.")
+    } else {
+      div(
+        class="flow-readiness",
+        claims.map(claim => {
+          let matching = run.items.filter(item => item.required_claim == claim)
+          let accepted = matching
+            .filter(item => item.status == "accepted")
+            .length()
+          div(
+            class=if accepted == matching.length() { "achieved" } else { "" },
+            [
+              span(if accepted == matching.length() { "✓" } else { "·" }),
+              strong(claim),
+              small("\{accepted} / \{matching.length()} accepted"),
+            ],
+          )
+        }),
+      )
+    },
     small(
       class="flow-quiet",
-      "Physical construction, launch, deployment, and physical readiness remain outside this envelope.",
+      "Claims come from the imported graph. A product name alone never establishes readiness.",
     ),
   ])
 }
@@ -808,13 +922,27 @@ fn moonflow_item_execution_label(item : MoonFlowItemProjection) -> String {
 }
 
 ///|
+fn moonflow_run_item_binding_status(item : MoonFlowItemProjection) -> String {
+  if moonflow_optional_evidence(item.adapter_id, "").is_empty() ||
+    moonflow_optional_evidence(item.claim_ceiling, "").is_empty() ||
+    item.review_required is None {
+    "Catalog binding unavailable"
+  } else if moonflow_optional_evidence(item.health_evidence_ref, "").is_empty() ||
+    moonflow_optional_evidence(item.health_evidence_digest, "").is_empty() {
+    "Catalog health unavailable"
+  } else {
+    "Catalog health published"
+  }
+}
+
+///|
 fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
   let relationship = if item.depends_on.is_empty() {
     "No dependencies"
   } else {
     "\{item.depends_on.length()} dependency item(s)"
   }
-  let validation = if item.approvals.is_empty() {
+  let review_evidence = if item.approvals.is_empty() {
     "no approval"
   } else {
     "\{item.approvals.length()} approval(s)"
@@ -835,12 +963,58 @@ fn render_moonflow_item(item : MoonFlowItemProjection) -> @rabbita.Html {
         " · " +
         execution +
         " · " +
-        validation,
+        review_evidence,
       ),
       p(class="flow-item-why", moonflow_item_explanation(item)),
       div(class="flow-item-contract", [
         span("Declaration " + item.declaration_id),
+        span("Operation " + item.operation),
+        span("Input " + moonflow_contract_refs(item.input_contracts)),
+        span("Output " + moonflow_contract_refs(item.output_contracts)),
         span("Authority " + item.requested_authority),
+        span("Required claim " + item.required_claim),
+        span(
+          "Request artifacts " + moonflow_contract_refs(item.input_artifacts),
+        ),
+        span("Timeout \{item.timeout_ms} ms"),
+        span(
+          "Claim ceiling " +
+          moonflow_optional_evidence(item.claim_ceiling, "Unavailable"),
+        ),
+        span(
+          if moonflow_optional_evidence(item.adapter_id, "").is_empty() {
+            "Review requirement unavailable"
+          } else {
+            match item.review_required {
+              Some(true) => "Named review required"
+              Some(false) => "No manifest review requirement"
+              None => "Review requirement unavailable"
+            }
+          },
+        ),
+        span(
+          "Adapter " +
+          moonflow_optional_evidence(item.adapter_id, "Unavailable"),
+        ),
+        span(moonflow_run_item_binding_status(item)),
+        span(
+          "Health checked " +
+          moonflow_optional_evidence(item.health_checked_at, "Unavailable"),
+        ),
+        span(
+          "Health valid until " +
+          moonflow_optional_evidence(item.health_valid_until, "Unavailable"),
+        ),
+        span(
+          "Health evidence " +
+          moonflow_optional_evidence(item.health_evidence_ref, "Unavailable"),
+        ),
+        span(
+          "Health digest " +
+          moonflow_short_identity(
+            moonflow_optional_evidence(item.health_evidence_digest, ""),
+          ),
+        ),
         span(
           "\{item.acceptance_criteria.length()} acceptance criterion/criteria",
         ),

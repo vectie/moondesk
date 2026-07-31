@@ -5,8 +5,8 @@
 > hosting, current limitations and release gates.
 
 MoonDesk is a pure MoonBit desktop host and Rabbita UI for browsing MoonBook
-workspaces, staging inbox notes, submitting selected context to MoonTown, and
-inspecting MoonClaw run artifacts.
+workspaces, staging inbox notes, inspecting MoonFind-authored work, and
+reviewing MoonClaw run artifacts.
 
 Current milestone slice:
 
@@ -24,16 +24,29 @@ Current milestone slice:
 - saved views, selected-path tags, daily cadence calendar, ICS export, and
   outcome analytics for standing goals and watcher decisions
 - switchable MoonWiki/MoonCode workspace shell: MoonWiki for human-language
-  book editing, MoonCode for book-scoped coding/chat sessions backed by
-  MoonClaw runtime APIs
+  projection of MoonBook-owned knowledge, MoonCode for book-scoped coding/chat
+  sessions backed by the sole MoonClaw runtime
+- MoonFind-authored Work-graph inspection and composition: MoonDesk shows exact
+  operation, schema, authority, claim, review, catalog, and validation evidence
+  and sends only dependency-closed selections to MoonFlow
 - MoonBit-only `desktop`, `bundle`, `release`, and `launch-agent` commands; the
   default app bundle uses Lepusa as the native WebView host and supervises the
   MoonDesk MoonBit server as a localhost sidecar, with no Tauri/Rust app shell
 
-Domain-specific examples are intentionally not MoonDesk core. They should be
-packaged as standalone MoonBook/MoonClaw skill or app-tool packs that MoonDesk
-can create, configure, inspect, export, and launch through generic book/tool
-interfaces.
+MoonDesk is the human control and hosting surface, not another orchestration or
+agent layer. MoonFind owns discovery and desired graph intent; MoonFlow owns
+validation, scheduling, execution, reconciliation, and recovery; MoonGate owns
+exact capability and authority resolution; MoonClaw is the sole agent runtime;
+MoonBook owns MoonWiki and Bookkeeper; MoonTown owns civic coordination and
+reviewable cross-book synthesis.
+
+Domain-specific examples are intentionally not MoonDesk core. They are
+standalone product packs that MoonDesk can create, configure, host, inspect,
+export, and launch through generic contracts. The validated MoonFind robotics
+reference has 63 stages and 43 exact operations across 11 domain products, but
+MoonDesk never hardcodes that inventory. MoonMini and MoonStat are not active
+graph products. Publication, trading, and physical robot commands require
+separate authority.
 
 See [`docs/STATUS.md`](docs/STATUS.md) for the current completeness assessment.
 Short version: it is a usable local single-user alpha with a Lepusa-hosted

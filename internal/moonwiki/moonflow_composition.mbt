@@ -5,14 +5,34 @@ fn moonflow_composition_contract() -> String {
 
 ///|
 async fn moonflow_source_graph_path(book_root : String) -> String {
-  let candidates = ["flow/draft-work-graph.json", "flow/work-graph.json"]
-  for candidate in candidates {
-    let path = @pathx.join(book_root, candidate)
-    if @fs.exists(path) {
-      return path
-    }
+  let path = @pathx.join(book_root, "flow/work-graph.json")
+  if !@fs.exists(path) {
+    return ""
   }
-  ""
+  let canonical_book = @fs.realpath(book_root) catch { _ => return "" }
+  let canonical_path = @fs.realpath(path) catch { _ => return "" }
+  if canonical_path.has_prefix(canonical_book + "/") {
+    path
+  } else {
+    ""
+  }
+}
+
+///|
+async fn moonflow_load_executable_graph(path : String) -> Json {
+  let graph = @json.parse(@fs.read_file(path).text())
+  guard json_string(graph, "contract_id", default="") ==
+    "moonsuite.work-model.v1" else {
+    fail("Executable Work graph contract must be moonsuite.work-model.v1")
+  }
+  guard moonflow_graph_run_id(graph) != "" &&
+    json_string(graph, "source_digest", default="") != "" &&
+    json_string(graph, "declaration_revision", default="") != "" else {
+    fail(
+      "Executable Work graph must bind graph_id, source_digest, and declaration_revision",
+    )
+  }
+  graph
 }
 
 ///|
@@ -80,11 +100,18 @@ fn moonflow_composition_selection_issues(
 fn moonflow_composition_digest(
   graph : Json,
   selected : Array[String],
+  compiled_items : Array[Json],
 ) -> String {
   let seed : Json = {
     "source_graph_id": moonflow_graph_run_id(graph),
     "source_digest": json_string(graph, "source_digest", default=""),
+    "declaration_revision": json_string(
+      graph,
+      "declaration_revision",
+      default="",
+    ),
     "selected_item_ids": selected,
+    "compiled_items": Json::array(compiled_items),
   }
   @crypto.bytes_to_hex_string(
     @crypto.sha256(@encoding/utf8.encode(seed.stringify()).to_fixedarray()),
@@ -97,7 +124,15 @@ fn moonflow_composition_response(
   graph : Json,
   selected : Array[String],
   status : String,
+  catalog : MoonFlowCapabilityCatalogResolution,
 ) -> Json {
+  let catalog_id = json_string(catalog.evidence, "catalog_id", default="")
+  let catalog_status = json_string(
+    catalog.evidence,
+    "catalog_status",
+    default="missing",
+  )
+  let evaluated_at = json_string(catalog.evidence, "evaluated_at", default="")
   {
     "contract_id": moonflow_composition_contract(),
     "workspace_id": workspace_id,
@@ -110,8 +145,14 @@ fn moonflow_composition_response(
     ),
     "source_digest": json_string(graph, "source_digest", default=""),
     "status": status,
+    "catalog_id": catalog_id,
+    "catalog_status": catalog_status,
+    "evaluated_at": evaluated_at,
+    "catalog_evidence": catalog.evidence,
     "selected_item_ids": selected,
-    "items": Json::array(moonflow_graph_items(graph)),
+    "items": Json::array(
+      moonflow_catalog_enriched_items(graph, catalog.catalog),
+    ),
   }
 }
 
@@ -130,7 +171,11 @@ async fn moonflow_saved_selection(
   if json_string(saved, "contract_id", default="") !=
     moonflow_composition_contract() ||
     json_string(saved, "source_graph_id", default="") !=
-    moonflow_graph_run_id(graph) {
+    moonflow_graph_run_id(graph) ||
+    json_string(saved, "source_digest", default="") !=
+    json_string(graph, "source_digest", default="") ||
+    json_string(saved, "declaration_revision", default="") !=
+    json_string(graph, "declaration_revision", default="") {
     return moonflow_graph_item_ids(graph)
   }
   let selected = json_string_array_items(saved, "selected_item_ids")
@@ -142,27 +187,74 @@ async fn moonflow_saved_selection(
 }
 
 ///|
-async fn moonflow_compile_composition(
+fn moonflow_path_is_inside(root : String, path : String) -> Bool {
+  path == root || path.has_prefix(root + "/")
+}
+
+///|
+async fn moonflow_rebased_artifact_ref(
   suite_root : String,
-  book_root : String,
-  graph_path : String,
+  graph_root : String,
+  artifact_ref : String,
 ) -> String {
-  let graph = @json.parse(@fs.read_file(graph_path).text())
-  let selection_path = moonflow_composition_path(book_root)
-  if !@fs.exists(selection_path) {
-    return graph_path
+  let clean = match clean_relative_path(artifact_ref) {
+    Some(value) if value != "" => value
+    _ => fail("MoonFlow input artifact must be a non-empty relative path")
   }
-  let selected = moonflow_saved_selection(book_root, graph)
-  let issues = moonflow_composition_selection_issues(graph, selected)
-  guard issues.is_empty() else {
-    fail("Invalid MoonFlow composition: " + issues.join("; "))
+  let canonical_suite = @fs.realpath(suite_root)
+  let candidates = [
+    @pathx.join(graph_root, clean),
+    @pathx.join(canonical_suite, clean),
+  ]
+  for candidate in candidates {
+    if !@fs.exists(candidate) {
+      continue
+    }
+    let canonical = @fs.realpath(candidate)
+    guard moonflow_path_is_inside(canonical_suite, canonical) else {
+      fail("MoonFlow input artifact resolves outside the suite root")
+    }
+    guard canonical != canonical_suite else {
+      fail("MoonFlow input artifact must resolve to an artifact")
+    }
+    return canonical[canonical_suite.length() + 1:].to_owned()
   }
-  if selected.length() == moonflow_graph_items(graph).length() {
-    return graph_path
+  fail("MoonFlow input artifact does not exist: " + artifact_ref)
+}
+
+///|
+async fn moonflow_rebase_graph_input_artifacts(
+  suite_root : String,
+  graph_path : String,
+  graph : Json,
+) -> Json {
+  let graph_root = @fs.realpath(@pathx.dirname(graph_path).to_owned())
+  let items : Array[Json] = []
+  for item in moonflow_graph_items(graph) {
+    let fields : Map[String, Json] = Map([])
+    match item {
+      Object(values) =>
+        for key, value in values {
+          fields[key] = value
+        }
+      _ => fail("MoonFlow Work graph item must be an object")
+    }
+    guard json_object_field(item, "input_artifacts") is Some(Array(artifacts)) else {
+      fail("MoonFlow Work graph item requires input_artifacts")
+    }
+    let rebased : Array[Json] = []
+    for artifact in artifacts {
+      guard artifact is String(reference) else {
+        fail("MoonFlow input artifact must be a string")
+      }
+      rebased.push(
+        moonflow_rebased_artifact_ref(suite_root, graph_root, reference).to_json(),
+      )
+    }
+    fields["input_artifacts"] = Json::array(rebased)
+    items.push(Json::object(fields))
   }
-  let digest = moonflow_composition_digest(graph, selected)
-  let suffix = digest[0:12].to_owned()
-  let fields : Map[String, Json] = {}
+  let fields : Map[String, Json] = Map([])
   match graph {
     Object(values) =>
       for key, value in values {
@@ -170,20 +262,58 @@ async fn moonflow_compile_composition(
       }
     _ => fail("MoonFlow Work graph must be an object")
   }
-  fields["graph_id"] = (moonflow_graph_run_id(graph) + "-selection-" + suffix).to_json()
+  fields["items"] = Json::array(items)
+  Json::object(fields)
+}
+
+///|
+async fn moonflow_compile_composition(
+  suite_root : String,
+  book_root : String,
+  graph_path : String,
+) -> String {
+  let graph = moonflow_load_executable_graph(graph_path)
+  let rebased = moonflow_rebase_graph_input_artifacts(
+    suite_root, graph_path, graph,
+  )
+  let selection_path = moonflow_composition_path(book_root)
+  let selected = moonflow_saved_selection(book_root, graph)
+  let issues = moonflow_composition_selection_issues(graph, selected)
+  guard issues.is_empty() else {
+    fail("Invalid MoonFlow composition: " + issues.join("; "))
+  }
+  let selection_applied = @fs.exists(selection_path) &&
+    selected.length() != moonflow_graph_items(graph).length()
+  let rebase_applied = rebased.stringify() != graph.stringify()
+  if !selection_applied && !rebase_applied {
+    return graph_path
+  }
+  let fields : Map[String, Json] = Map([])
+  match rebased {
+    Object(values) =>
+      for key, value in values {
+        fields[key] = value
+      }
+    _ => fail("MoonFlow Work graph must be an object")
+  }
+  let compiled_items = moonflow_graph_items(rebased).filter(item => {
+    selected.contains(moonflow_graph_item_id(item))
+  })
+  let compiled_digest = moonflow_composition_digest(
+    graph, selected, compiled_items,
+  )
+  let suffix = compiled_digest[0:12].to_owned()
+  fields["graph_id"] = (moonflow_graph_run_id(graph) + "-compiled-" + suffix).to_json()
   fields["declaration_revision"] = (json_string(
     graph,
     "declaration_revision",
     default="r0",
   ) +
-  "-selection-" +
+  "-compiled-" +
   suffix).to_json()
-  fields["source_digest"] = ("sha256:" + digest).to_json()
-  fields["items"] = Json::array(
-    moonflow_graph_items(graph).filter(item => {
-      selected.contains(moonflow_graph_item_id(item))
-    }),
-  )
+  fields["source_digest"] = ("sha256:" + compiled_digest).to_json()
+  fields["items"] = Json::array(compiled_items)
+  let compiled = Json::object(fields)
   let directory = @pathx.join(
     suite_root, ".moonsuite/products/moondesk/compositions",
   )
@@ -193,7 +323,7 @@ async fn moonflow_compile_composition(
   let compiled_path = @pathx.join(directory, suffix + ".json")
   @fsx.write_to_file(
     compiled_path,
-    Json::object(fields).stringify(indent=2) + "\n",
+    compiled.stringify(indent=2) + "\n",
     create=0o644,
   )
   compiled_path
@@ -228,19 +358,32 @@ async fn handle_moonflow_composition(
     )
     return
   }
-  let graph = @json.parse(@fs.read_file(graph_path).text()) catch {
-    _ => {
-      send_api_error(conn, method_, 409, "Conflict", "Invalid Work graph JSON")
+  let graph = moonflow_load_executable_graph(graph_path) catch {
+    error => {
+      send_api_error(
+        conn,
+        method_,
+        409,
+        "Conflict",
+        "Invalid executable Work graph: \{error}",
+      )
       return
     }
   }
+  let evaluated_at = moonflow_server_utc_timestamp()
+  let catalog = moonflow_resolve_capability_catalog(
+    workspace.root_path,
+    evaluated_at,
+  )
   let action = json_string(payload, "action", default="load")
   if action == "load" {
     let selected = moonflow_saved_selection(workspace.root_path, graph)
     send_json(
       conn,
       method_,
-      moonflow_composition_response(workspace_id, graph, selected, "loaded"),
+      moonflow_composition_response(
+        workspace_id, graph, selected, "loaded", catalog,
+      ),
     )
     return
   }
@@ -266,13 +409,20 @@ async fn handle_moonflow_composition(
     "workspace_id": workspace_id,
     "source_graph_id": moonflow_graph_run_id(graph),
     "source_digest": json_string(graph, "source_digest", default=""),
+    "declaration_revision": json_string(
+      graph,
+      "declaration_revision",
+      default="",
+    ),
     "selected_item_ids": selected,
-    "recorded_at": json_string(payload, "recorded_at", default=""),
+    "recorded_at": evaluated_at,
   }
   @fsx.write_to_file(path, record.stringify(indent=2) + "\n", create=0o644)
   send_json(
     conn,
     method_,
-    moonflow_composition_response(workspace_id, graph, selected, "saved"),
+    moonflow_composition_response(
+      workspace_id, graph, selected, "saved", catalog,
+    ),
   )
 }

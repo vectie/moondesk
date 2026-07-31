@@ -1,53 +1,129 @@
 # MoonSuite composition canvas
 
-MoonDesk owns the visual control surface, not orchestration. The MoonFlow
-workspace renders a pack-authored executable Work graph as a scrollable,
-zoomable canvas. Work nodes remain owned by their products and retain their
-typed operation, authority, evidence, acceptance, and dependency contracts.
+MoonFind owns discovery and desired-capability graph intent. MoonDesk owns the
+human desktop presentation: it renders the graph as a scrollable, zoomable
+canvas, lets the operator inspect exact contracts, and records an explicit
+selection. MoonFlow owns validation, scheduling, execution, reconciliation, and
+recovery. No domain or orchestration policy belongs in MoonDesk.
+
+## Accepted inputs
+
+Only `flow/work-graph.json` with contract `moonsuite.work-model.v1` is an
+executable source. MoonFind may also preserve
+`moonfind.desired-capability-graph.v2` as `flow/desired-graph.json` for human
+review, but MoonDesk never submits that intent artifact as if it were a
+MoonFlow Work model.
+
+Every executable node must resolve exactly against a
+`moonflow.capability-catalog.v1`. MoonDesk resolves the explicit
+`MOONFLOW_CAPABILITY_CATALOG` override first and otherwise uses the selected
+book's `flow/capability-catalog.json`; repository inventory and friendly
+product names are insufficient.
+
+The canvas presents, rather than guesses:
+
+- graph-local declaration ID and canonical operation reference;
+- exact input and output schema references;
+- requested authority, required claim, acceptance criteria, primary artifacts,
+  and timeout;
+- adapter claim ceiling, catalog/adapter identity, and validation status;
+- review requirement and health evidence timestamps, reference, and digest;
+- dependencies and typed primary request evidence.
+
+Missing, expired, incompatible, or unpublished evidence is visibly
+unavailable. A node cannot become executable because a similarly named product
+is installed.
+
+## Selection and execution
 
 The operator can include or exclude declared nodes before a run. MoonDesk
 persists only `flow/composition.json`, a generic selection overlay bound to the
-source graph identity. On import, the host validates dependency closure,
-compiles a content-digested graph, and gives it a distinct run and declaration
-revision. The source graph and earlier MoonFlow runs remain immutable.
+source graph identity. Dependency closure is mandatory. On preparation,
+MoonDesk compiles a content-digested selection with a distinct graph identity,
+rebases permitted graph-relative artifacts safely to suite-root references, and
+delegates catalog-backed validation and conformant import to MoonFlow using one
+server-UTC evaluation timestamp. The selected/rebased graph receives a
+deterministic compiled graph ID, declaration revision, and digest. Validation
+and import consume one digest-pinned catalog snapshot rather than re-reading a
+possibly changing catalog between commands.
 
 ```text
-pack-owned Work graph
-  → MoonDesk canvas + explicit node selection
-  → dependency-closed composition overlay
-  → digest-bound compiled graph
-  → MoonFlow durable execution
-  → product adapters / MoonClaw runtime
-  → evidence + review + Bookkeeper outcome
+MoonFind desired graph + typed requests
+  → executable moonsuite.work-model.v1
+  → MoonDesk inspection + explicit node selection
+  → dependency-closed, digest-bound composition
+  → MoonFlow validate-work-graph-capabilities
+  → MoonFlow import-conformant-graph
+  → product adapters / sole MoonClaw runtime
+  → evidence + named review
+  → MoonBook Bookkeeper outcome
 ```
 
-The canvas deliberately distinguishes the control plane from job nodes:
+The source graph and earlier MoonFlow runs remain immutable. MoonDesk presents
+run controls and receipts; pause, resume, cancel, and authority changes delegate
+to MoonFlow's `control` command. MoonDesk does not write or rank MoonFlow
+control state. Import evidence is retained at:
+
+```text
+.moonsuite/products/moondesk/moonflow-imports/<catalog-and-graph-digest>/
+  capability-catalog.json
+  validation-report.json
+  import-receipt.json
+```
+
+Run autonomy, intervention-scorecard, and control projections are optional.
+Missing persisted evidence appears as unavailable and does not enable controls.
+Publication, trading, physical commands, and policy activation remain separate
+authority decisions even if an operator starts the surrounding workflow from
+MoonDesk.
+
+## Canvas behavior
+
+Canvas bounds and virtual extent are computed from the published graph rather
+than fixed to a small example. Pan, zoom, node movement, reset, and Fit work for
+large graphs, including the 63-stage robotics reference.
+
+Continuation is derived only from graph dependencies and MoonFlow's
+`runnable_item_ids`. MoonDesk has no hardcoded MoonTown, MoonRobo, MoonMoon, or
+MoonMold continuation card. Catalog, validation, adapter, or health gaps remain
+visible as unavailable instead of being replaced by product-inventory guesses.
+
+## Product boundaries
 
 - MoonDesk visualizes, selects, invokes published actions, and inspects state.
-- MoonFlow validates and advances the durable graph.
-- MoonClaw is the single agent runtime used by product adapters.
-- MoonBook owns source intent and accepted Bookkeeper learning.
-- domain packs define meaningful operations and connections.
+- MoonFind owns discovery and desired graph/canvas intent.
+- MoonFlow validates, schedules, executes, reconciles, and recovers the graph.
+- MoonGate resolves exact capability and authority; it is not a workflow node.
+- MoonClaw is the sole agent runtime. MoonCode is a role/profile.
+- MoonBook owns MoonWiki functionality, durable truth, and Bookkeeper closure.
+- MoonTown owns civic coordination and reviewable cross-book synthesis.
+- Domain products own meaningful operations, schemas, policy, and applications.
 
-An installed product that is not declared by the current pack is visible in
-the product palette as “not declared by this pack.” MoonDesk does not invent a
-placeholder operation for it. This makes missing integration explicit without
-putting robotics, finance, AIGC, or other domain semantics into the desktop or
-orchestration cores.
+An installed product not declared by the current graph may appear in a generic
+product inventory, but it does not produce a canvas node or continuation
+action. This keeps finance, media, robotics, spatial, simulation, and other
+domain semantics out of desktop and orchestration cores.
 
-For humanoid robotics, Moonfind currently publishes the design graph
-`workflows/humanoid-robotics-suite.v1.json`. The file still contains legacy
-MoonMini and MoonStat identities and operation names that are not uniformly
-backed by installed manifests. It is therefore a composition design until it is
-compiled against the capability registry, not proof that every node can run.
+## Robotics reference
 
-The production graph uses Bunnia/Rabbita as application frameworks rather than
-a MoonMini product node, and uses MoonGate for evaluation/observability rather
-than a MoonStat product. MoonChat and MoonVis appear only when they publish a
-real compatible operation; repository existence does not create a node.
-MoonDesk, MoonFlow and MoonClaw remain the control plane rather than domain work
-products.
+MoonFind's locally validated humanoid-robotics reference contains:
 
-Physical execution remains separate. A graph may contain a physical-effect
-node only when the owning adapter exists and MoonGate grants a bounded physical
-authority envelope. Canvas inclusion is never authority.
+- 63 desired stages and 63 executable Work items;
+- 43 unique exact operations;
+- 63 typed primary request artifacts;
+- 11 domain-product owners: MoonBook, MoonCast, MoonChat, MoonClaw, MoonFind,
+  MoonMold, MoonMoon, MoonProj, MoonRobo, MoonTown, and MoonVis.
+
+MoonFlow, MoonGate, and MoonLib are visible support-plane dependencies.
+MoonEdit and MoonLeaf are reusable libraries where applicable. MoonFish is a
+separate financial domain and is not inserted into robotics. MoonMini and
+MoonStat are not active graph products; MoonStat is a retired identity whose
+authority role belongs to MoonGate.
+
+The local reference was accepted against a complete fixture catalog with 63
+bindings and zero issues. That proves typed graph compatibility, not live
+provider, customer, financial, or physical readiness. A production run still
+requires host-published unexpired adapter health, real credentials, named
+reviewers, rights/licensing evidence, calibrated simulation, safety evidence,
+and a separately granted physical authority envelope. The default graph
+contains no publication, trade/order, or physical robot-command operation.

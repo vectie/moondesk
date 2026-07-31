@@ -4,9 +4,9 @@ Start with the [product contract](PRODUCT_CONTRACT.md) for current maturity,
 capability-truth rules, pack hosting and release gates.
 
 MoonDesk is the human desktop shell for MoonSuite. It should make books,
-files, Wiki work, Code work, town requests, runtime evidence, and app-tool
-packaging visible to an operator without taking ownership of the runtimes or
-domain workflows it displays.
+files, Wiki work, Code work, MoonFind-authored graphs, town requests, runtime
+evidence, and app-tool packaging visible to an operator without taking
+ownership of the runtimes or domain workflows it displays.
 
 ## Scope And Boundary
 
@@ -15,54 +15,60 @@ MoonDesk owns the local desktop experience:
 - workspace and book discovery
 - scoped file browsing, preview, search, edit, import, and export
 - MoonWiki and MoonCode presentation for the selected book
+- catalog-backed Work-graph selection, inspection, and MoonFlow handoff
 - MoonTown request and daemon controls
 - MoonClaw status, stream, package, and review projections
 - Lepusa bundle/release integration for the native shell
 
-MoonDesk does not own durable book truth, agent execution, town scheduling,
-suite metrics, or domain-specific workflow logic. Those boundaries belong to
-MoonBook, MoonClaw, MoonTown, MoonGate, and product packs. Shared filesystem
-contracts come from MoonLib.
+MoonDesk does not own durable book truth, discovery intent, agent execution,
+workflow scheduling/recovery, exact authority policy, civic synthesis, or
+domain-specific workflow logic. MoonBook owns MoonWiki and Bookkeeper;
+MoonFind owns discovery and desired graph intent; MoonFlow owns workflow
+execution and recovery; MoonGate owns exact capability/authority resolution;
+MoonClaw is the sole agent runtime; MoonTown owns civic coordination and
+reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
 
 ## Reading Order
 
 1. [PLAN.md](PLAN.md): product model, user flow, non-goals, and engineering bar.
 2. [ARCHITECTURE.md](ARCHITECTURE.md): package ownership, HTTP surface, and
    cross-product boundaries.
-3. [DESK_MODE_DESIGN.md](DESK_MODE_DESIGN.md): file/workspace mode behavior.
-4. [FIRST_RUN_AND_VOCABULARY.md](FIRST_RUN_AND_VOCABULARY.md): evidence-backed
+3. [SUITE_COMPOSITION_CANVAS.md](SUITE_COMPOSITION_CANVAS.md): MoonFind intent,
+   catalog-backed selection, MoonFlow import, and effect-authority boundary.
+4. [DESK_MODE_DESIGN.md](DESK_MODE_DESIGN.md): file/workspace mode behavior.
+5. [FIRST_RUN_AND_VOCABULARY.md](FIRST_RUN_AND_VOCABULARY.md): evidence-backed
    first-run inventory, target vocabulary, state matrix, and capability setup.
-5. [NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md](NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md):
+6. [NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md](NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md):
    packaged macOS picker phases, defects, interaction evidence, persistence,
    and remaining restart/platform boundary.
-6. [WIKI_MODE_UX_PLAN.md](WIKI_MODE_UX_PLAN.md): normal-user Wiki information
+7. [WIKI_MODE_UX_PLAN.md](WIKI_MODE_UX_PLAN.md): normal-user Wiki information
    hierarchy, progressive disclosure, implementation phases, and UX E2E gates.
-7. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
+8. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
    journeys, rationale, expected behavior, methodology, and acceptance evidence.
-8. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
-9. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
+9. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
+10. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
    canonical conversation/runtime upgrade plan.
-10. [MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md):
+11. [MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md):
    finite single-owner conversation, thinking, and live-update correction.
-11. [MOONCODE_TYPED_CONTRACT_TARGET.md](MOONCODE_TYPED_CONTRACT_TARGET.md):
+12. [MOONCODE_TYPED_CONTRACT_TARGET.md](MOONCODE_TYPED_CONTRACT_TARGET.md):
    Phase 3.1 public-surface inventory, typed target, decisions, and migration slices.
-12. [STATUS.md](STATUS.md): current implementation state and known gaps.
-13. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): reproducible Phase 0
+13. [STATUS.md](STATUS.md): current implementation state and known gaps.
+14. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): reproducible Phase 0
     starting/current evidence, repository metrics, and explicitly unmeasured gaps.
-14. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
+15. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
     active-document contradiction audit, evidence boundary, and Phase 0 gate state.
-15. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
+16. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
     retained clean-checkout full-validation transcript and evidence boundary.
-16. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): phase-by-phase preview and
+17. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): phase-by-phase preview and
     credentialed release procedure, immutable-output policy, and remote gate.
-17. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
+18. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
     exact local unsigned-candidate commands, checksums, refusal tests, and
     evidence boundary.
-18. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
-19. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
+19. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
+20. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
    phased plan for product clarity, typed contracts, package boundaries,
    security, observability, release discipline, and operational proof.
-20. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
+21. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
    historical migration plan and validation record; it is not a current plan.
 
 ## Implementation Map
@@ -140,5 +146,6 @@ journeys, methodology, and release acceptance evidence.
 - Add longer fresh-root and reload UI smokes for Desk, Wiki, and Code.
 - Keep extracting path/layout helpers to MoonLib instead of growing local string
   utilities.
-- Keep domain workflows packaged as MoonBook/MoonClaw tools or app-tool packs.
+- Keep domain workflows in their owning product packs and expose only typed
+  operations and pack-owned applications to MoonDesk.
 - Prove clean-machine native install/update behavior with Lepusa bundles.

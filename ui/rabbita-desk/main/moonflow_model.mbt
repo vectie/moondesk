@@ -5,6 +5,11 @@ struct MoonFlowItemProjection {
   product_id : String
   requested_authority : String
   acceptance_criteria : Array[String]
+  input_contracts : Array[String]
+  output_contracts : Array[String]
+  required_claim : String
+  input_artifacts : Array[String]
+  timeout_ms : Int
   depends_on : Array[String]
   status : String
   attempt_count : Int
@@ -25,6 +30,13 @@ struct MoonFlowItemProjection {
   acceptance_reviewer_id : String
   artifacts : Array[String]
   approvals : Array[String]
+  adapter_id : String?
+  claim_ceiling : String?
+  review_required : Bool?
+  health_checked_at : String?
+  health_valid_until : String?
+  health_evidence_ref : String?
+  health_evidence_digest : String?
 } derive(FromJson)
 
 ///|
@@ -137,23 +149,42 @@ struct MoonFlowRunProjection {
   outcome : String
   runnable_item_ids : Array[String]
   items : Array[MoonFlowItemProjection]
-  autonomy_binding : MoonFlowAutonomyBinding
-  intervention_scorecard : MoonFlowInterventionScorecard
-  run_control : MoonFlowRunControl
+  autonomy_binding : MoonFlowAutonomyBinding?
+  intervention_scorecard : MoonFlowInterventionScorecard?
+  run_control : MoonFlowRunControl?
   operator_surface : MoonFlowOperatorSurface?
 } derive(FromJson)
 
 ///|
 struct MoonFlowCompositionItem {
   work_item_id : String
+  declaration_id : String
   product_id : String
   requested_authority : String
+  acceptance_criteria : Array[String]
   depends_on : Array[String]
   operation : String
+  input_contracts : Array[String]
+  output_contracts : Array[String]
+  required_claim : String
+  input_artifacts : Array[String]
+  timeout_ms : Int
+  adapter_id : String?
+  claim_ceiling : String?
+  review_required : Bool?
+  health_checked_at : String?
+  health_valid_until : String?
+  health_evidence_ref : String?
+  health_evidence_digest : String?
 } derive(FromJson)
 
 ///|
 struct MoonFlowComposition {
   selected_item_ids : Array[String]
   items : Array[MoonFlowCompositionItem]
+  catalog_id : String?
+  catalog_status : String?
+  evaluated_at : String?
+  validation_status : String?
+  validation_issues : Array[String]?
 } derive(FromJson)

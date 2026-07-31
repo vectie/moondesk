@@ -246,6 +246,7 @@ fn update_workspace_surface_actions(
     FlowPanEnd => flow_pointer_end_action(model)
     FlowNodeDragStart(item_id, x, y) =>
       flow_node_drag_start_action(model, item_id, x, y)
+    FlowCanvasFit => flow_canvas_fit_action(model)
     FlowCanvasReset => flow_canvas_reset_action(model)
     SetReviewDecisionNote(note) =>
       (@rabbita.none, { ..model, review_decision_note: note })

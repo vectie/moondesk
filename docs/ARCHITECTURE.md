@@ -2,19 +2,23 @@
 
 The graph-first cross-product control surface is specified in
 [`SUITE_COMPOSITION_CANVAS.md`](SUITE_COMPOSITION_CANVAS.md). MoonDesk persists
-only a generic, source-bound composition overlay; MoonFlow executes the graph
-and product packs retain all domain semantics.
+only a generic, source-bound composition overlay. MoonFind owns the discovery
+and desired graph, MoonFlow executes the conformant Work graph, MoonGate
+resolves capability and authority, and product packs retain all domain
+semantics.
 
 See [Executable Book Architecture](EXECUTABLE_BOOK_ARCHITECTURE.md) for the
 canonical product boundary: MoonBook is the executable book, MoonDesk is the
-desktop shell, MoonClaw owns execution, and MoonTown coordinates books. See
+desktop shell, MoonClaw is the sole agent runtime, MoonFlow owns workflow
+execution, and MoonTown coordinates books. See
 [Desk Mode Design](DESK_MODE_DESIGN.md) for the current UI decision: Desk is
 the read-only virtual filesystem mode, while MoonWiki and MoonCode are
 activities on the selected book/path context.
 
 MoonSuite filesystem contracts are a shared foundation owned by MoonLib.
-MoonGate consumes those contracts to validate/report workspace health and
-legacy-path drift; it does not define product-home or book-layout paths.
+MoonGate consumes those contracts to resolve exact capability and authority and
+to report workspace health and legacy-path drift; it does not define
+product-home or book-layout paths.
 
 ## Phase 5 security boundary
 
@@ -29,26 +33,34 @@ the responsibilities of the other projects.
 
 ```text
 MoonDesk
-  human desktop, MoonWiki workspace, MoonCode workspace, file browsing,
-  preview, editing, inbox, submissions, app-tool export
+  human control and hosting surface, file browsing, preview, editing, inbox,
+  review, pack-app hosting, graph selection and run inspection
 
 MoonBook
-  durable executable book, wiki, source files, generated site, code,
+  durable executable book, MoonWiki functionality, Bookkeeper, source files,
   history, review queue, accepted knowledge
 
+MoonFind
+  discovery, evidence intake, desired-capability graph and canvas intent
+
+MoonFlow
+  graph validation, scheduling, execution, reconciliation and restart recovery
+
 MoonTown
-  Mayor, daemon, standing goals, scheduling, coordination, notifications,
-  book-to-book communication, town state
+  civic coordination, cross-book communication, reviewable synthesis,
+  standing goals, notifications and town state
 
 MoonClaw
-  agent runtime, workers, tools, bounded execution, artifacts, logs
+  sole agent runtime, role profiles including MoonCode, workers, tools,
+  bounded execution, artifacts and logs
 
 MoonLib
   shared suite root, product registry, product-home, temp, and book path
   contracts
 
 MoonGate
-  health reporting, metrics, snapshots, analytics, and contract-drift audits
+  exact capability/authority resolution, claim ceilings, health projection,
+  metrics and contract-drift audits
 ```
 
 MoonDesk treats the selected book as a desk-centered workspace:
@@ -58,10 +70,11 @@ Desk
   browse MoonBooks, directories, files, source layers, and metadata
 
 MoonWiki
-  read/edit/preview/publish/review durable book knowledge
+  read/edit/preview/review MoonBook-owned durable knowledge
 
 MoonCode
-  chat with MoonClaw to create, modify, test, and package executable book code
+  MoonClaw role/profile for creating, modifying, testing, and packaging
+  executable book code
 ```
 
 ## Source Ownership
@@ -75,11 +88,13 @@ MoonCode
 | Shared DTOs | MoonDesk | `core/` owns product-neutral desktop records and host-facing DTOs |
 | Shared helper primitives | MoonDesk | `internal/mooncore/` owns reusable JSON, record-file, session, and transcript helpers |
 | Durable book truth | **MoonBook (external)** | Book files, history, review queue, accepted knowledge, and generated artifacts |
-| Execution | **MoonClaw (external)** | Agent loop, workers, tools, bounded execution, artifacts, and logs |
-| Scheduling | **MoonTown (external)** | Standing goals, daemon scheduling, coordination, and town state |
+| MoonWiki and Bookkeeper | **MoonBook (external)** | Human-language knowledge functionality, acceptance policy, outcome closure, durable receipts, and reviewed Three-Gap proposals |
+| Discovery and canvas intent | **MoonFind (external)** | Research discovery, desired-capability graph, typed requests, and reviewable topology |
+| Workflow execution | **MoonFlow (external)** | Graph validation, scheduling, durable execution, reconciliation, and restart recovery |
+| Agent execution | **MoonClaw (external)** | Sole agent loop/runtime, role profiles, workers, tools, bounded execution, artifacts, and logs |
+| Civic/cross-book coordination | **MoonTown (external)** | Standing goals, messages, notifications, participant-book synthesis, and coordination state |
 | Shared paths | **MoonLib (external)** | Suite root, product registry/home, temporary, and book path contracts |
-| Health reporting | **MoonGate (external)** | Metrics, snapshots, analytics, and contract-drift audits |
-| Acceptance/review | **Bookkeeper (external)** | Owns acceptance policy and durable receipts; MoonDesk presents review UI and evidence but does not own acceptance truth |
+| Capability and authority | **MoonGate (external)** | Exact operation resolution, authority policy, claim ceilings, health projection, metrics, and contract-drift audits |
 
 Cross-product owners in bold are external to MoonDesk. This table assigns a
 single accountable owner without moving product boundaries or implying that
@@ -93,10 +108,40 @@ instead of carrying product-local string helpers for `.moonsuite`, `.tmp`,
 `books`, or product registry paths. During migration, local helpers may remain
 only as thin compatibility adapters over MoonLib.
 
-MoonCode is intentionally standalone. MoonDesk renders the native shell and
-review surfaces, MoonClaw owns the agent loop and tool execution, and MoonBook
-owns generated code/artifacts. See [MoonCode Workspace](MOONCODE.md) for the
-contract.
+MoonCode is intentionally a MoonClaw role/profile, not a standalone runtime or
+product. MoonDesk renders the native shell and review surfaces, MoonClaw owns
+the agent loop and tool execution, and MoonBook owns generated code/artifacts.
+See [MoonCode Workspace](MOONCODE.md) for the contract.
+
+## Cross-product graph boundary
+
+MoonDesk accepts only the selected book's `flow/work-graph.json` when it
+declares `moonsuite.work-model.v1`. The reviewable MoonFind
+`flow/desired-graph.json` remains a distinct intent artifact.
+
+The executable graph is inspected against a
+`moonflow.capability-catalog.v1`, resolved from the explicit
+`MOONFLOW_CAPABILITY_CATALOG` override or the selected book's
+`flow/capability-catalog.json`. The desktop presents canonical operation and
+schema references, requested authority, required claim, acceptance criteria,
+primary artifacts, timeout, adapter claim ceiling, review requirement, health
+evidence, catalog identity, and validation status. It never creates an
+operation from a repository or product name.
+
+The host persists a source-bound, dependency-closed composition overlay and
+delegates `validate-work-graph-capabilities` followed by
+`import-conformant-graph` to MoonFlow using the same catalog and evaluation
+timestamp. It first pins the catalog by digest; selected and safely rebased
+artifact references receive a deterministic compiled graph identity, revision,
+and digest. The catalog snapshot, validation report, and import receipt are
+durable under
+`.moonsuite/products/moondesk/moonflow-imports/<digest>/`.
+
+MoonFlow remains the durable state owner. Run controls delegate to MoonFlow's
+`control` command, and absent persisted autonomy, intervention, or control
+evidence stays unavailable in the UI. MoonGate remains the exact
+capability/authority policy plane. External publication, trading, physical
+commands, and learning-policy activation remain separately authorized.
 
 ## HTTP Surface
 
@@ -163,8 +208,10 @@ books/research-<topic>/
 
 MoonDesk writes the operator-facing config, method document, skills, schemas,
 layout metadata, publish receipts, and standing-goal registration. MoonTown
-schedules the recurring watch. MoonClaw performs bounded fetch/extract/analyze
-work. MoonBook owns accepted durable knowledge and generated outputs.
+coordinates the standing-goal request and notifications; MoonFlow owns any
+durable executable schedule and recovery. MoonClaw performs bounded
+fetch/extract/analyze work. MoonBook owns accepted durable knowledge and
+generated outputs.
 
 ## Domain Packs
 

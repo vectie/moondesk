@@ -24,7 +24,7 @@ fn moonflow_runs_test_run(
     outcome: "active",
     runnable_item_ids: [],
     items: [],
-    autonomy_binding: {
+    autonomy_binding: Some({
       contract_id: "autonomy.v1",
       run_id,
       envelope: {
@@ -38,9 +38,9 @@ fn moonflow_runs_test_run(
       },
       usage_ref: "usage-1",
       usage: moonflow_runs_test_budget(),
-      recorded_at: "",
-    },
-    intervention_scorecard: {
+      recorded_at: "2026-07-31T00:00:00Z",
+    }),
+    intervention_scorecard: Some({
       contract_id: "intervention.v1",
       run_id,
       required_intervention_count: 0,
@@ -48,16 +48,16 @@ fn moonflow_runs_test_run(
       normal_path_manual_count: 0,
       unattended_qualified: true,
       finalization_findings: [],
-      recorded_at: "",
-    },
-    run_control: {
+      recorded_at: "2026-07-31T00:00:00Z",
+    }),
+    run_control: Some({
       contract_id: "control.v1",
       run_id,
       state: "active",
       authority_ceiling: "governed",
       reason: "",
-      recorded_at: "",
-    },
+      recorded_at: "2026-07-31T00:00:00Z",
+    }),
     operator_surface: None,
   }
 }
@@ -319,6 +319,32 @@ test "Flow capability probe failure preserves compatibility state" {
   assert_true(
     failed.moonflow_capability_error is Some("capability endpoint unavailable"),
   )
+}
+
+///|
+#warnings("-alert_unstable")
+test "Flow renders missing autonomy scorecard and control evidence unavailable" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let run = {
+    ..moonflow_runs_test_run("book-selected", "run-without-runtime-evidence"),
+    autonomy_binding: None,
+    intervention_scorecard: None,
+    run_control: None,
+  }
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_moonflow_run(dispatch, init_model(), run)),
+  )
+  assert_true(markup.contains("Autonomy binding evidence unavailable."))
+  assert_true(markup.contains("Intervention scorecard evidence unavailable."))
+  assert_true(markup.contains("Run-control evidence unavailable."))
+  assert_true(
+    markup.contains(
+      "MoonDesk will not offer controls without a persisted control record.",
+    ),
+  )
+  assert_false(markup.contains("unattended qualified"))
+  assert_false(markup.contains(">Pause</button>"))
+  assert_false(markup.contains(">Cancel run</button>"))
 }
 
 ///|

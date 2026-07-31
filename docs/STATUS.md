@@ -37,3 +37,40 @@ Phase 2 to Phase 3.
 
 Primary navigation remains exactly **Desk, Wiki, Code, Flow, Packs**, with
 **Requests, Runs, Review, Publish** below Wiki.
+
+## MoonSuite integration status
+
+MoonDesk now follows the suite's single-runtime, graph-first topology:
+
+- MoonFind owns discovery and desired-capability graph intent; MoonDesk presents
+  its executable Work model for selection and inspection.
+- MoonFlow owns validation, scheduling, execution, reconciliation, and restart
+  recovery.
+- MoonGate owns exact capability and authority resolution.
+- MoonClaw is the sole agent runtime; MoonCode is a role/profile.
+- MoonBook owns MoonWiki functionality, Bookkeeper outcome closure, and
+  reviewed Three-Gap proposals.
+- MoonTown owns civic coordination and reviewable cross-book synthesis.
+
+The composition boundary accepts `moonsuite.work-model.v1`, resolves nodes
+against `moonflow.capability-catalog.v1`, and keeps unsupported or unvalidated
+operations unavailable. Validation and import share one digest-pinned catalog
+snapshot and server-UTC evaluation time; their snapshot, report, and receipt
+are retained under MoonDesk product state. Controls delegate to MoonFlow, and
+missing runtime evidence disables rather than fabricates controls. Continuation
+comes from graph dependencies and runnable state rather than hardcoded product
+cards.
+
+The locally validated MoonFind robotics reference has 63 stages, 43 unique
+operations, 63 typed primary requests, and 11 domain-product owners. It
+contains no MoonMini or MoonStat node and no publication, trade/order, or
+physical robot command.
+
+This integration evidence does not change the Phase 10 release decision.
+MoonDesk still requires hosted-CI and warning-clean evidence, signing,
+notarization, clean-machine install/update/rollback/removal, and a 24-hour
+lifecycle/resource soak. A production suite run additionally requires
+host-published unexpired adapter health, real credentials, licensed providers
+and data, named reviewers, rights/customer evidence, calibrated robotics
+simulation, a safety case, and separately granted external or physical
+authority.

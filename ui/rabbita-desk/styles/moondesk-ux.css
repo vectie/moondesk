@@ -124,6 +124,33 @@
   min-height: 0;
 }
 
+.flow-composer-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.flow-composition-evidence {
+  padding: 8px 14px;
+  border-bottom: 1px solid #e8edf2;
+  background: #fff;
+  font-size: 12px;
+}
+
+.flow-composition-evidence summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.flow-composition-evidence .flow-contract-grid {
+  margin-top: 10px;
+}
+
+.flow-composition-evidence ul {
+  margin: 10px 0 0;
+}
+
 .flow-viewport {
   position: absolute;
   inset: 0;
@@ -149,8 +176,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 4800px;
-  height: 3200px;
+  min-width: 100%;
+  min-height: 100%;
   transform-origin: 0 0;
   will-change: transform;
   background-image: radial-gradient(circle, #dde4ec 1.2px, transparent 1.2px);
@@ -238,6 +265,49 @@
 
 .flow-node small {
   color: #7a8593;
+  font-size: 12px;
+}
+
+.flow-node-operation {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flow-node-contract {
+  font-size: 11px;
+}
+
+.flow-node-contract summary {
+  cursor: pointer;
+  color: #5b6470;
+  font-weight: 600;
+}
+
+.flow-node-contract > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid #e3e8ee;
+  border-radius: 8px;
+  background: #fff;
+  word-break: break-word;
+}
+
+.flow-node-contract[open] {
+  position: relative;
+  z-index: 8;
+}
+
+.flow-evidence-unavailable {
+  margin: 8px 0;
+  padding: 9px 11px;
+  border: 1px dashed #cfd8e2;
+  border-radius: 8px;
+  color: #6b7684;
+  background: #f8fafc;
   font-size: 12px;
 }
 

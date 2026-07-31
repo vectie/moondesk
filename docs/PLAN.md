@@ -6,13 +6,15 @@ native human workspace for one selected executable MoonBook at a time.
 
 ```text
 MoonBook = durable executable book
-MoonWiki = edit what the book says
-MoonCode = edit what the book can do
-MoonTown = coordinate books and scheduled work
-MoonClaw = execute bounded runs and code sessions
+MoonWiki = MoonBook functionality for editing what the book says
+Bookkeeper = MoonBook role for outcome closure and reviewed Three-Gap learning
+MoonCode = MoonClaw role/profile for editing what the book can do
+MoonFind = discover evidence and author desired-capability graph intent
+MoonFlow = validate, schedule, execute, reconcile and recover durable work
+MoonTown = coordinate books and produce reviewable cross-book synthesis
+MoonClaw = sole agent runtime for bounded runs and role sessions
 MoonLib = define shared MoonSuite filesystem contracts
-MoonGate = validate/report workspace health and contract drift
-Bookkeeper = accept or reject proposed truth
+MoonGate = resolve exact capability/authority and report contract drift
 ```
 
 ## Thesis
@@ -26,16 +28,26 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 1. Select or create a MoonBook.
 2. Work in MoonWiki for prose, evidence, methods, reviews, and generated pages.
 3. Switch to MoonCode for interactive coding/chat on the same book.
-4. Route scheduled or cross-book work through MoonTown.
-5. Let MoonClaw execute bounded work and emit evidence.
-6. Review proposals through Bookkeeper before they become durable book truth.
-7. Publish generated pages, reports, tools, miniapps, or portable app-tools.
+4. Inspect MoonFind-authored graph intent and select only declared,
+   catalog-compatible work.
+5. Let MoonFlow validate, schedule, execute, reconcile, and recover the durable
+   Work graph through exact MoonGate authority.
+6. Let MoonClaw execute bounded agent work and emit evidence; use MoonTown for
+   civic coordination and reviewable cross-book synthesis.
+7. Review proposals through MoonBook's Bookkeeper before they become durable
+   book truth.
+8. Separately authorize any publication, trading, physical command, or policy
+   activation.
 
 ## Non-Goals
 
 - Do not hardcode domain-specific research workflows into MoonDesk.
 - Do not make MoonDesk own the MoonClaw runtime or model loop.
-- Do not hide MoonBook, MoonTown, MoonClaw, and Bookkeeper ownership.
+- Do not make MoonDesk the graph author or orchestration state owner.
+- Do not hide MoonFind, MoonFlow, MoonGate, MoonBook, MoonTown, MoonClaw, and
+  Bookkeeper ownership.
+- Do not treat MoonWiki, MoonCode, MoonMini, or MoonStat as callable active
+  products.
 - Do not make MoonGate the source of truth for filesystem contracts; shared
   MoonSuite layout contracts belong in MoonLib.
 - Do not keep obsolete routes after the current contract replaces them.
@@ -90,7 +102,26 @@ outputs at the bottom. It is a shell and projection layer, not another runtime.
 - show standing goals, request ledger, town messages, progress, review queue,
   and notifications
 - submit recurring or one-shot book work to MoonTown
-- keep book-to-book communication and idea routing visible
+- keep book-to-book communication, participant synthesis, challenges, and idea
+  routing visible
+- leave executable scheduling and restart recovery to MoonFlow
+
+### Flow
+
+- render MoonFind-authored `moonsuite.work-model.v1` items without copying a
+  product list into MoonDesk
+- show exact operation/schema refs, requested authority, required claim,
+  acceptance criteria, artifacts, timeout, adapter claim ceiling, review
+  requirement, health evidence, catalog identity, and validation status
+- retain a source-bound, dependency-closed composition overlay
+- delegate catalog-backed validation and conformant import to MoonFlow
+- pin and retain the exact catalog snapshot, validation report, and import
+  receipt used for a run
+- present run state, evidence, review, controls, and recovery without becoming
+  the durable scheduler or runtime
+- derive continuation from graph dependencies and MoonFlow runnable state,
+  never from a hardcoded product list
+- fit and navigate large graphs without assuming a fixed canvas extent
 
 ### Daemon And Native Shell
 
@@ -142,23 +173,45 @@ dependency for products that only need filesystem contracts.
 - reads stay under configured roots
 - writes stay under selected book/workspace roots
 - imports land in inbox/staging first
-- execution is delegated to MoonClaw or MoonTown
-- accepted durable truth requires Bookkeeper review
+- workflow execution and recovery are delegated to MoonFlow
+- bounded agent execution is delegated to the sole MoonClaw runtime
+- cross-book synthesis and civic coordination are delegated to MoonTown
+- accepted durable truth requires MoonBook Bookkeeper review
 - destructive actions require explicit operator intent
+- publication, trading, physical effects, and policy activation require
+  separate authority
 
 ## Engineering Bar
 
 MoonDesk is good when it is boring to operate:
 
 - boundaries are visible and hard to confuse
+- graph nodes and continuation actions come only from the Work graph and
+  compatible catalog, never a hardcoded product inventory
 - MoonSuite paths come from the shared MoonLib contract layer
-- MoonGate observes MoonLib contract compliance instead of owning path schemas
+- MoonGate resolves exact capability/authority and observes MoonLib contract
+  compliance instead of owning path schemas
 - stale domain packs live outside the desktop core
 - generated app-tools can leave MoonDesk as standalone artifacts
 - native app startup, preview, routing, and daemon controls are reliable
 - MoonCode can be extracted without dragging MoonWiki or desktop code with it
 - tests cover protocol contracts, routing, packaging, preview, and runtime
   handoff behavior
+
+## Current integration reference
+
+The locally validated MoonFind humanoid-robotics graph contains 63 stages, 43
+unique exact operations, 63 typed primary requests, and 11 domain-product
+owners: MoonBook, MoonCast, MoonChat, MoonClaw, MoonFind, MoonMold, MoonMoon,
+MoonProj, MoonRobo, MoonTown, and MoonVis. MoonFlow, MoonGate, and MoonLib are
+support-plane dependencies. MoonFish remains a separate finance domain.
+MoonMini and MoonStat are absent.
+
+This reference proves local typed compatibility, not deployment readiness.
+Production still needs live unexpired adapter health, real credentials,
+licensed providers and data, named reviewers, media rights, customer
+acceptance, calibrated robotics simulation, safety evidence, and explicit
+external/physical authority.
 
 Use [STATUS.md](STATUS.md) for current implementation state and
 [ROADMAP.md](ROADMAP.md) for milestone tracking.

@@ -7,11 +7,18 @@ test "MoonFlow run ids reject path escapes" {
 }
 
 ///|
-test "MoonFlow authority controls have a monotonic constitutional order" {
-  assert_true(moonflow_authority_rank("observe") == Some(0))
-  assert_true(moonflow_authority_rank("sandbox-execution") == Some(2))
-  assert_true(moonflow_authority_rank("physical-effect") == Some(5))
-  assert_true(moonflow_authority_rank("invented-authority") is None)
+test "MoonFlow control is delegated to its exact CLI" {
+  let arguments = moonflow_control_cli_arguments(
+    "/suite-products/moonflow", "/suite", "flow-selene-r1", "narrow-authority", "2026-07-31T00:00:00Z",
+    "sandbox-execution",
+  )
+  assert_true(
+    arguments ==
+    [
+      "-C", "/suite-products/moonflow", "run", "cmd/main", "--", "control", "/suite",
+      "flow-selene-r1", "narrow-authority", "2026-07-31T00:00:00Z", "sandbox-execution",
+    ],
+  )
 }
 
 ///|

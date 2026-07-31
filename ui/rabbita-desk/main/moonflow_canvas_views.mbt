@@ -92,6 +92,70 @@ fn moonflow_product_selected(
 }
 
 ///|
+fn moonflow_optional_evidence(value : String?, fallback : String) -> String {
+  match value {
+    Some(text) if !text.trim().is_empty() => text
+    _ => fallback
+  }
+}
+
+///|
+fn moonflow_composition_validation_accepted(
+  composition : MoonFlowComposition,
+) -> Bool {
+  match composition.validation_status {
+    Some("accepted" | "conformant" | "ready" | "valid") => true
+    _ => false
+  }
+}
+
+///|
+fn moonflow_composition_item_catalog_status(
+  composition : MoonFlowComposition,
+  item : MoonFlowCompositionItem,
+) -> String {
+  if moonflow_optional_evidence(composition.catalog_id, "").is_empty() ||
+    moonflow_optional_evidence(composition.catalog_status, "").is_empty() ||
+    moonflow_optional_evidence(composition.validation_status, "").is_empty() {
+    "Catalog evidence unavailable"
+  } else if !moonflow_composition_validation_accepted(composition) {
+    "Graph validation " +
+    moonflow_optional_evidence(composition.validation_status, "unavailable")
+  } else if moonflow_optional_evidence(item.adapter_id, "").is_empty() ||
+    moonflow_optional_evidence(item.claim_ceiling, "").is_empty() ||
+    item.review_required is None {
+    "Adapter binding unavailable"
+  } else if moonflow_optional_evidence(item.health_evidence_ref, "").is_empty() ||
+    moonflow_optional_evidence(item.health_evidence_digest, "").is_empty() {
+    "Health evidence unavailable"
+  } else {
+    "Catalog validated"
+  }
+}
+
+///|
+fn moonflow_review_requirement(item : MoonFlowCompositionItem) -> String {
+  if moonflow_optional_evidence(item.adapter_id, "").is_empty() {
+    "Review requirement unavailable"
+  } else {
+    match item.review_required {
+      Some(true) => "Named review required"
+      Some(false) => "No manifest review requirement"
+      None => "Review requirement unavailable"
+    }
+  }
+}
+
+///|
+fn moonflow_contract_refs(values : Array[String]) -> String {
+  if values.is_empty() {
+    "Unavailable"
+  } else {
+    values.join(" · ")
+  }
+}
+
+///|
 fn flow_px(value : Double) -> String {
   value.to_int().to_string() + "px"
 }
@@ -179,7 +243,53 @@ fn render_flow_canvas_node(
         ),
       ]),
       strong(item.work_item_id),
-      small(item.operation + " · " + item.requested_authority),
+      small(class="flow-node-operation", item.operation),
+      small("Declaration " + item.declaration_id),
+      details(class="flow-node-contract", [
+        summary("Contract evidence"),
+        div([
+          small("Input · " + moonflow_contract_refs(item.input_contracts)),
+          small("Output · " + moonflow_contract_refs(item.output_contracts)),
+          small("Authority · " + item.requested_authority),
+          small("Required claim · " + item.required_claim),
+          small(
+            "Acceptance · \{item.acceptance_criteria.length()} criterion/criteria",
+          ),
+          small(
+            "Request artifacts · " +
+            moonflow_contract_refs(item.input_artifacts),
+          ),
+          small("Timeout · \{item.timeout_ms} ms"),
+          small(
+            "Claim ceiling · " +
+            moonflow_optional_evidence(item.claim_ceiling, "Unavailable"),
+          ),
+          small(moonflow_review_requirement(item)),
+          small(
+            "Adapter · " +
+            moonflow_optional_evidence(item.adapter_id, "Unavailable"),
+          ),
+          small(moonflow_composition_item_catalog_status(composition, item)),
+          small(
+            "Health checked · " +
+            moonflow_optional_evidence(item.health_checked_at, "Unavailable"),
+          ),
+          small(
+            "Health valid until · " +
+            moonflow_optional_evidence(item.health_valid_until, "Unavailable"),
+          ),
+          small(
+            "Health evidence · " +
+            moonflow_optional_evidence(item.health_evidence_ref, "Unavailable"),
+          ),
+          small(
+            "Health digest · " +
+            moonflow_short_identity(
+              moonflow_optional_evidence(item.health_evidence_digest, ""),
+            ),
+          ),
+        ]),
+      ]),
       button(
         class="secondary-button compact-button flow-node-toggle",
         attrs=@html.Attrs::build()
@@ -207,6 +317,10 @@ fn render_flow_canvas_edges(
   model : Model,
   composition : MoonFlowComposition,
 ) -> @rabbita.Html {
+  let (virtual_width, virtual_height) = flow_virtual_extent(
+    model,
+    composition.items[:],
+  )
   let paths : Array[@svg.Svg] = []
   for item in composition.items {
     if item.depends_on.is_empty() {
@@ -251,20 +365,29 @@ fn render_flow_canvas_edges(
       )
     }
   }
-  @svg.svg(class="flow-edge-layer", width=4800, height=3200, paths)
+  @svg.svg(
+    class="flow-edge-layer",
+    width=virtual_width.to_int(),
+    height=virtual_height.to_int(),
+    paths,
+  )
 }
 
 ///|
 fn render_flow_product_palette(
-  model : Model,
   composition : MoonFlowComposition,
 ) -> @rabbita.Html {
   let declared = moonflow_composition_products(composition)
   let rows : Array[@rabbita.Html] = []
   for product_id in declared {
-    let registered = model.moonsuite_products.any(product => {
-      product.name.to_lower() == product_id.to_lower()
+    let product_items = composition.items.filter(item => {
+      item.product_id == product_id
     })
+    let catalog_ready = !product_items.is_empty() &&
+      product_items.all(item => {
+        moonflow_composition_item_catalog_status(composition, item) ==
+        "Catalog validated"
+      })
     let selected = moonflow_product_selected(composition, product_id)
     rows.push(
       li([
@@ -272,12 +395,14 @@ fn render_flow_product_palette(
         div([
           strong(product_id),
           small(
-            if !registered {
-              "Adapter missing"
-            } else if selected {
-              "In this job"
+            if catalog_ready {
+              "Catalog validated · \{product_items.length()} node(s)" +
+              (if selected { " · selected" } else { " · excluded" })
             } else {
-              "Available, excluded"
+              moonflow_composition_item_catalog_status(
+                composition,
+                product_items[0],
+              )
             },
           ),
         ]),
@@ -290,7 +415,7 @@ fn render_flow_product_palette(
     ),
     div(class="flow-palette-body", [
       p(
-        "The pack declares what each node can do. You decide which declared nodes enter the next run.",
+        "Readiness comes from exact catalog bindings and validation evidence, not installed-product inventory.",
       ),
       ul(rows),
     ]),
@@ -325,6 +450,12 @@ fn render_flow_canvas_chrome(
       ),
       button(
         class="secondary-button compact-button",
+        title="Fit every graph node inside the canvas overview",
+        on_click=dispatch(FlowCanvasFit),
+        "Fit",
+      ),
+      button(
+        class="secondary-button compact-button",
         title="Reset pan, zoom and node positions",
         on_click=dispatch(FlowCanvasReset),
         "Reset view",
@@ -355,6 +486,10 @@ fn render_flow_canvas_viewport(
   children : Array[@rabbita.Html],
 ) -> @rabbita.Html {
   let surface_children : Array[@rabbita.Html] = children
+  let (virtual_width, virtual_height) = match model.moonflow_composition {
+    Some(composition) => flow_virtual_extent(model, composition.items[:])
+    None => (flow_canvas_fit_width, flow_canvas_fit_height)
+  }
   div(
     class="flow-viewport",
     attrs=@html.Attrs::build()
@@ -379,6 +514,8 @@ fn render_flow_canvas_viewport(
       div(
         class="flow-canvas-surface",
         style=[
+          "width: " + flow_px(virtual_width),
+          "height: " + flow_px(virtual_height),
           "transform: translate(" +
           flow_px(model.flow_canvas.pan_x) +
           ", " +
@@ -391,6 +528,61 @@ fn render_flow_canvas_viewport(
       ),
     ],
   )
+}
+
+///|
+fn render_flow_composition_evidence(
+  composition : MoonFlowComposition,
+) -> @rabbita.Html {
+  let issues = composition.validation_issues.unwrap_or([])
+  details(class="flow-composition-evidence", [
+    summary(
+      "Catalog · " +
+      moonflow_optional_evidence(composition.catalog_status, "Unavailable") +
+      " · validation " +
+      moonflow_optional_evidence(composition.validation_status, "Unavailable"),
+    ),
+    div(class="flow-contract-grid", [
+      div([
+        span("Catalog"),
+        strong(
+          moonflow_optional_evidence(composition.catalog_id, "Unavailable"),
+        ),
+      ]),
+      div([
+        span("Catalog status"),
+        strong(
+          moonflow_optional_evidence(composition.catalog_status, "Unavailable"),
+        ),
+      ]),
+      div([
+        span("Evaluated"),
+        strong(
+          moonflow_optional_evidence(composition.evaluated_at, "Unavailable"),
+        ),
+      ]),
+      div([
+        span("Validation"),
+        strong(
+          moonflow_optional_evidence(
+            composition.validation_status,
+            "Unavailable",
+          ),
+        ),
+      ]),
+    ]),
+    if issues.is_empty() {
+      small(
+        if moonflow_composition_validation_accepted(composition) {
+          "No validation issues were published."
+        } else {
+          "Validation issues are unavailable."
+        },
+      )
+    } else {
+      ul(issues.map(issue => li(issue)))
+    },
+  ])
 }
 
 ///|
@@ -426,18 +618,21 @@ fn render_moonflow_composition_canvas(
             render_flow_canvas_node(dispatch, model, composition, item),
           )
         }
-        div(class="flow-composer-stage", [
-          render_flow_canvas_viewport(dispatch, model, nodes),
-          render_flow_product_palette(model, composition),
-          div(class="flow-canvas-hint", [
-            span(
-              "Drag empty space to pan · Scroll to zoom · Drag a node handle to rearrange",
-            ),
-            button(
-              class="quiet-button",
-              on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-              "Edit node contracts in Wiki",
-            ),
+        div(class="flow-composer-content", [
+          render_flow_composition_evidence(composition),
+          div(class="flow-composer-stage", [
+            render_flow_canvas_viewport(dispatch, model, nodes),
+            render_flow_product_palette(composition),
+            div(class="flow-canvas-hint", [
+              span(
+                "Fit for an overview · drag empty space to pan · scroll to zoom · drag a node handle to rearrange",
+              ),
+              button(
+                class="quiet-button",
+                on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+                "Edit node contracts in Wiki",
+              ),
+            ]),
           ]),
         ])
       }
