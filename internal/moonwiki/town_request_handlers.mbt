@@ -32,31 +32,43 @@ async fn handle_town_requests(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let root = workspace_context(workspace_root).suite_root
-  let requests_root = town_moondesk_requests_root(root)
+  let owner_rows = match moontown_owner_get_json(
+    workspace_root,
+    "/api/operator-requests",
+  ) {
+    Ok(Array(rows)) => rows
+    Ok(_) => {
+      send_api_error(
+        conn,
+        method_,
+        502,
+        "Bad Gateway",
+        "MoonTown returned an invalid request ledger",
+      )
+      return
+    }
+    Err(error) => {
+      send_api_error(conn, method_, 503, "Service Unavailable", error)
+      return
+    }
+  }
   let requests : Array[Json] = []
-  let names = read_directory_names(requests_root, include_hidden=false)
-  let start = if names.length() > 80 { names.length() - 80 } else { 0 }
+  let start = if owner_rows.length() > 80 {
+    owner_rows.length() - 80
+  } else {
+    0
+  }
   let mut index = start
-  while index < names.length() {
-    let name = names[index]
+  while index < owner_rows.length() {
+    let record = owner_rows[index]
     index += 1
-    if !name.has_suffix(".json") {
-      continue
-    }
-    let absolute = @pathx.join(requests_root, name)
-    let record = @json.parse(@fs.read_file(absolute).text()) catch {
-      _ => {
-        let fallback : Json = {
-          "id": @desk.stable_id("request", name),
-          "status": "unreadable",
-          "path": town_moondesk_request_relative_path(name),
-          "request": { "title": name },
-        }
-        fallback
-      }
-    }
-    requests.push(town_request_listing_record(record, name))
+    let id = json_string(record, "id", default="owner-request")
+    requests.push({
+      "id": id,
+      "status": json_string(record, "status", default="accepted"),
+      "path": "moontown.api.v1:/api/operator-requests#" + id,
+      "request": town_request_payload_from_record(record, id),
+    })
   }
   send_json(conn, method_, Json::array(requests))
 }
@@ -187,34 +199,33 @@ async fn handle_town_request(
       return
     }
   }
-  let root = workspace_context(workspace_root).suite_root
-  let requests_root = town_moondesk_requests_root(root)
-  @fsx.make_directory(requests_root, recursive=true, exists_ok=true) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not create request ledger",
-      )
+  let receipt = match moontown_owner_post_json(
+    workspace_root,
+    "/api/operator-requests",
+    moontown_owner_watch_payload(payload),
+  ) {
+    Ok(value) => value
+    Err(error) => {
+      send_api_error(conn, method_, 503, "Service Unavailable", error)
       return
     }
   }
-  let title = json_string(payload, "title", default="MoonDesk request")
-  let id = @desk.stable_id("request", title + "-" + @async.now().to_string())
-  let file_name = id + ".json"
-  let relative = town_moondesk_request_relative_path(file_name)
-  let absolute = town_moondesk_request_path(root, file_name)
+  let id = json_string(receipt, "request_id", default="")
+  if id == "" {
+    send_api_error(
+      conn,
+      method_,
+      502,
+      "Bad Gateway",
+      "MoonTown accepted no versioned request identity",
+    )
+    return
+  }
   let record : Json = {
     "id": id,
-    "status": "staged",
-    "path": relative,
+    "status": json_string(receipt, "status", default="accepted"),
+    "path": "moontown.api.v1:/api/operator-requests#" + id,
     "request": payload,
-  }
-  @fsx.write_to_file(absolute, record.stringify(indent=2) + "\n", create=0o644) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not write request",
-      )
-      return
-    }
   }
   send_json(conn, method_, record)
 }

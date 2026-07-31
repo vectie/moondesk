@@ -100,51 +100,44 @@ async fn create_pdf_evidence_watch_book_from_payload(
     source_policy~,
     daemon_tick=json_int(daemon, "tick_sequence", default=0),
   )
-  let goals_path = town_standing_goals_path(root)
-  @fsx.make_directory(
-    moontown_product_root(root),
-    recursive=true,
-    exists_ok=true,
-  ) catch {
-    _ => {
+  let book_registration = match moontown_owner_post_json(
+    workspace_root,
+    "/api/book-registrations",
+    {
+      "book_id": book_id,
+      "title": book_pattern_title(pattern_id, topic),
+      "purpose": purpose,
+      "workspace_root": book_root,
+      "tags": json_from_string_array(["research", pattern_id]),
+      "skills": json_from_string_array(skill_pack),
+    },
+  ) {
+    Ok(value) => value
+    Err(error) => {
       send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not create town state",
+        conn,
+        method_,
+        503,
+        "Service Unavailable",
+        "MoonBook was created locally, but MoonTown registration is incomplete: " +
+        error,
       )
       return
     }
   }
-  let goals = upsert_record_by_id(read_json_array_file(goals_path), goal)
-  @fsx.write_to_file(
-    goals_path,
-    Json::array(goals).stringify(indent=2) + "\n",
-    create=0o644,
-  ) catch {
-    _ => {
+  let owner_goal_receipt = match moontown_owner_post_json(
+    workspace_root,
+    "/api/operator-requests",
+    moontown_owner_watch_payload(goal),
+  ) {
+    Ok(value) => value
+    Err(error) => {
       send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not register standing watch",
-      )
-      return
-    }
-  }
-  let moonbooks = upsert_record_by_id(
-    read_json_array_file(town_moonbooks_path(root)),
-    pdf_watch_catalog_entry(
-      book_id~,
-      topic~,
-      pattern_id~,
-      purpose~,
-      book_root~,
-      skill_pack~,
-    ),
-  )
-  @fsx.write_to_file(
-    town_moonbooks_path(root),
-    Json::array(moonbooks).stringify(indent=2) + "\n",
-    create=0o644,
-  ) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 500, "Internal Server Error", "Could not register book catalog entry",
+        conn,
+        method_,
+        503,
+        "Service Unavailable",
+        "MoonBook is registered, but its MoonTown watch is incomplete: " + error,
       )
       return
     }
@@ -155,6 +148,7 @@ async fn create_pdf_evidence_watch_book_from_payload(
     book_id~,
     pattern_id~,
     goal~,
+    owner_receipt=owner_goal_receipt,
   ) catch {
     _ =>
       {
@@ -162,28 +156,6 @@ async fn create_pdf_evidence_watch_book_from_payload(
         "status": "failed",
         "message": "Could not write MoonTown standing goal registration receipt",
       }
-  }
-  let handoff = pdf_watch_handoff_record(
-    book_id~,
-    topic~,
-    pattern_id~,
-    purpose~,
-    book_root~,
-    goal~,
-  )
-  @fsx.make_directory(
-    town_moondesk_requests_root(root),
-    recursive=true,
-    exists_ok=true,
-  ) catch {
-    _ => ()
-  }
-  @fsx.write_to_file(
-    @pathx.join(town_moondesk_requests_root(root), book_id + ".json"),
-    handoff.stringify(indent=2) + "\n",
-    create=0o644,
-  ) catch {
-    _ => ()
   }
   let template_publish = write_moontown_book_template_publish(
     root~,
@@ -206,7 +178,7 @@ async fn create_pdf_evidence_watch_book_from_payload(
       }
   }
   let readiness = pdf_watch_readiness(
-    root, book_root, book_id, pattern_id, goal,
+    workspace_root, book_root, book_id, pattern_id, goal,
   )
   let response : Json = {
     "ok": true,
@@ -221,7 +193,7 @@ async fn create_pdf_evidence_watch_book_from_payload(
     "standing_goal": goal,
     "moontown_standing_goal_registration": standing_goal_registration,
     "moontown_publish": template_publish,
-    "catalog_entry": true,
+    "catalog_entry": json_bool(book_registration, "ok", default=false),
     "readiness": readiness,
   }
   send_json(conn, method_, response)

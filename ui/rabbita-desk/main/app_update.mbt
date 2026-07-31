@@ -29,6 +29,8 @@ fn update(
     LibraryFolderPicked(_) => update_library_selection(dispatch, msg, model)
     SelectedLibrary(_) => update_library_selection(dispatch, msg, model)
     LoadedPackApps(_) => update_app_results(dispatch, msg, model)
+    LoadedMoonFlowCollaboration(_, _) =>
+      update_app_results(dispatch, msg, model)
     LoadedWorkspaces(_) => update_app_results(dispatch, msg, model)
     RequestEntries(_, _) => update_app_results(dispatch, msg, model)
     LoadedEntries(_, _, _, _) => update_app_results(dispatch, msg, model)

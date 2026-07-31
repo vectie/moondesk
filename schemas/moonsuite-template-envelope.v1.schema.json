@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vectie.github.io/moonsuite/contracts/moonsuite.template-envelope.v1.schema.json",
+  "title": "MoonSuite Template Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "template_id",
+    "owner_product",
+    "version",
+    "source_ref",
+    "source_digest",
+    "template_class",
+    "maturity",
+    "title",
+    "summary",
+    "primary_user",
+    "primary_action",
+    "completion_statement",
+    "icon",
+    "migration_policy",
+    "preview_ref",
+    "qualification_evidence_refs",
+    "requirements",
+    "ceilings",
+    "recovery",
+    "owner_payload"
+  ],
+  "properties": {
+    "contract_id": {"const": "moonsuite.template-envelope.v1"},
+    "template_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,95}$"},
+    "owner_product": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"},
+    "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"},
+    "source_ref": {"type": "string", "minLength": 1, "maxLength": 240},
+    "source_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "template_class": {
+      "enum": ["book", "civic_scenario", "cross_product_series", "domain_project"]
+    },
+    "maturity": {"enum": ["fixture", "local-qualified", "live-qualified", "production"]},
+    "title": {"type": "string", "minLength": 1, "maxLength": 96},
+    "summary": {"type": "string", "minLength": 1, "maxLength": 320},
+    "primary_user": {"type": "string", "minLength": 1, "maxLength": 120},
+    "primary_action": {"type": "string", "minLength": 1, "maxLength": 96},
+    "completion_statement": {"type": "string", "minLength": 1, "maxLength": 240},
+    "icon": {"type": "string", "minLength": 1, "maxLength": 16},
+    "migration_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "compatible_from", "note"],
+      "properties": {
+        "strategy": {"enum": ["immutable", "owner-reviewed", "automatic-compatible"]},
+        "compatible_from": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"},
+          "uniqueItems": true
+        },
+        "note": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    },
+    "preview_ref": {"type": "string", "minLength": 1, "maxLength": 240},
+    "qualification_evidence_refs": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "ref", "digest"],
+        "properties": {
+          "kind": {"enum": ["fixture", "test_receipt", "qualification_report", "live_acceptance", "production_release"]},
+          "ref": {"type": "string", "minLength": 1, "maxLength": 240},
+          "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operations", "schemas"],
+      "properties": {
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["operation_ref", "input_schema_ref", "output_schema_ref", "required"],
+            "properties": {
+              "operation_ref": {"type": "string", "minLength": 1, "maxLength": 180},
+              "input_schema_ref": {"type": "string", "minLength": 1, "maxLength": 180},
+              "output_schema_ref": {"type": "string", "minLength": 1, "maxLength": 180},
+              "required": {"type": "boolean"}
+            }
+          }
+        },
+        "schemas": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1, "maxLength": 180},
+          "uniqueItems": true
+        }
+      }
+    },
+    "ceilings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorities", "external_effect", "cost", "licensing", "review"],
+      "properties": {
+        "authorities": {
+          "type": "array",
+          "items": {"enum": ["observe", "workspace-mutation", "sandbox-execution", "external-effect"]},
+          "uniqueItems": true
+        },
+        "external_effect": {"type": "boolean"},
+        "cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "currency", "max_minor", "note"],
+          "properties": {
+            "status": {"enum": ["known", "estimate", "provider_dependent", "not_applicable"]},
+            "currency": {"type": "string", "pattern": "^[A-Z]{3}$|^N/A$"},
+            "max_minor": {"type": ["integer", "null"], "minimum": 0},
+            "note": {"type": "string", "maxLength": 240}
+          }
+        },
+        "licensing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "classes", "note"],
+          "properties": {
+            "status": {"enum": ["cleared", "review_required", "restricted", "unknown"]},
+            "classes": {"type": "array", "items": {"type": "string", "maxLength": 80}},
+            "note": {"type": "string", "maxLength": 240}
+          }
+        },
+        "review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["required", "authority", "gates"],
+          "properties": {
+            "required": {"type": "boolean"},
+            "authority": {"type": "string", "maxLength": 96},
+            "gates": {"type": "array", "items": {"type": "string", "maxLength": 96}}
+          }
+        }
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocked", "reason", "next_action"],
+      "properties": {
+        "blocked": {"type": "boolean"},
+        "reason": {"type": "string", "maxLength": 240},
+        "next_action": {"type": "string", "maxLength": 160}
+      }
+    },
+    "owner_payload": {"type": "object"}
+  }
+}

@@ -108,7 +108,7 @@ fn update_town_results(
         {
           ..model,
           activity: Town,
-          request_status: "staged \{record.id}",
+          request_status: "accepted by MoonTown · \{record.id}",
           request_prompt: "",
           requests_state: Some(Loading),
           requests_error: "",

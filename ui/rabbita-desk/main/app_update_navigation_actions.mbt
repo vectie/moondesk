@@ -736,7 +736,17 @@ fn select_workspace_mode_action(
       None => false
     })
   let base_cmd = if mode == PackHome {
-    sync_shell_batch(mode, activity, fetch_pack_apps_cmd(dispatch))
+    sync_shell_batch(
+      mode,
+      activity,
+      @rabbita.batch([
+        fetch_pack_apps_cmd(dispatch),
+        fetch_moonflow_collaboration_cmd(
+          dispatch,
+          model.selected_workspace_id,
+        ),
+      ]),
+    )
   } else if mode == Desk && model.selected_workspace_id != "" {
     sync_shell_batch(
       mode,

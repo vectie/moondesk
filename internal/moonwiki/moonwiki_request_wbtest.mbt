@@ -1979,27 +1979,16 @@ async test "wiki server routes cover forward and backward book runs" {
         "prompt": "Summarize source-a into accepted Wiki knowledge.",
         "book_id": "research-wiki",
       },
-      200,
+      503,
     )
-    assert_eq(json_string(town_request, "status", default=""), "staged")
-    let request_path = json_string(town_request, "path", default="")
+    assert_true(town_request.stringify().contains("MoonTown is not configured"))
     assert_true(
-      request_path.has_prefix(".moonsuite/products/moontown/moondesk-requests/"),
+      !@fs.exists(town_moondesk_requests_root(root)),
     )
-    let request_path_parts = request_path.split("/").to_array()
-    assert_true(
-      @fs.exists(
-        town_moondesk_request_path(
-          root,
-          request_path_parts[request_path_parts.length() - 1].to_owned(),
-        ),
-      ),
-    )
-
-    let requests = test_http_get_json(base + "/api/town/requests", 200)
-    assert_true(requests.stringify().contains("Forward Wiki run"))
+    let requests = test_http_get_json(base + "/api/town/requests", 503)
+    assert_true(requests.stringify().contains("MoonTown is not configured"))
     let town_events = test_http_get_json(base + "/api/town/events", 200)
-    assert_true(town_events.stringify().contains("Forward Wiki run"))
+    assert_false(town_events.stringify().contains("Forward Wiki run"))
 
     let moonclaw_events = test_http_get_json(
       base + "/api/moonclaw/events?workspace=\{workspace_id}",
@@ -2526,7 +2515,7 @@ test "pdf evidence watch pattern builds reusable book and goal ids" {
 }
 
 ///|
-async test "sync repairs pdf watch standing goals for UI decoder" {
+async test "bulk sync does not repair MoonTown owner ledgers" {
   let root = @pathx.join(
     "/tmp",
     "moondesk-standing-goal-repair-wbtest-" + @async.now().to_string(),
@@ -2587,12 +2576,14 @@ async test "sync repairs pdf watch standing goals for UI decoder" {
     create=0o644,
   )
   let result = sync_all_book_pattern_standing_goals(book_root)
-  assert_true(json_bool(result, "ok", default=false))
-  let repaired = read_json_array_file(town_standing_goals_path(root))[0]
-  assert_true(
-    json_string(repaired, "prompt", default="").contains("Bookkeeper"),
+  assert_false(json_bool(result, "ok", default=true))
+  assert_eq(
+    json_string(result, "status", default=""),
+    "legacy_bulk_repair_disabled",
   )
-  assert_eq(json_string(repaired, "target_book_id", default=""), book_id)
+  let unchanged = read_json_array_file(town_standing_goals_path(root))[0]
+  assert_eq(json_string(unchanged, "prompt", default=""), "")
+  assert_eq(json_string(unchanged, "target_book_id", default=""), book_id)
 }
 
 ///|

@@ -399,37 +399,37 @@ Executed-run root:
 Open:
 
 ```text
-http://127.0.0.1:17842/viewport.html?assets=generated&mode=view&v=wenyu
+http://127.0.0.1:17842/index.html?seed=20260727
 ```
 
 ### Visible actions
 
-1. In **View** mode, inspect the town map and visible building links.
-2. Select **Editor** in the **Viewport mode** control.
-3. Inspect module placement, entrance, runtime state, validation, and the
-   **MoonTown / MoonDesk Boundary**.
-4. Select **Output**.
-5. Inspect the MoonBook output/review surface and MoonDesk handoff context.
-6. Select **View** to return to the public town surface.
+1. Confirm the full-screen interactive Energy Valley map and town badge.
+2. Change the weather and simulation speed, then choose an authoring tool.
+3. Inspect a civic building's runtime/work projection.
+4. Open **看板** and inspect real MoonBook output/review and MoonDesk handoff
+   state.
+5. Return to the same map and confirm its seed and state remain stable.
 
 ### Acceptance assertions
 
-- One URL and one town projection drive all three modes.
-- Each selected mode has a visible selected state.
-- Editor mode describes town/module composition and does not pretend to be a
-  deep prompt, skill, file, or agent editor.
-- Output mode shows real empty/offline state when the fresh suite root contains
-  no accepted book outputs.
-- Returning to View removes editor/output chrome.
+- One canonical canvas owns map, simulation, authoring, building inspection,
+  runtime truth, and dashboard access.
+- Selected weather, speed, and authoring controls have visible pressed state.
+- Authoring controls do not pretend to be a deep prompt, skill, file, or agent
+  editor.
+- The dashboard shows real empty/offline state when the fresh suite root
+  contains no accepted book outputs.
+- Returning from the dashboard restores the same canonical canvas.
 - No missing runtime data is replaced with unlabelled sample success.
 
-### Executed result
+### Previous executed result — superseded
 
-The requested `viewport.html` URL remained in the address bar, but the shipped
-surface rendered the Energy Valley demo. It exposed no **View**, **Editor**, or
-**Output** control, so the first meaningful mode action could not be performed.
-The console contained no warning or error, but a clean console does not turn
-the wrong surface into a pass.
+The earlier case incorrectly targeted `viewport.html` and expected the retired
+View/Editor/Output shell. The shipped service rendered the newer Energy Valley
+canvas, so that obsolete case could not proceed. This historical failure is
+retained as evidence for why all current qualification starts at
+`index.html?seed=20260727`; it is not the current acceptance definition.
 
 Evidence:
 

@@ -1,6 +1,9 @@
 ///|
 fn pdf_watch_moontown_template_request_status_ready(status : String) -> Bool {
-  status == "pending" || status == "retry" || status == "installed"
+  status == "pending" ||
+  status == "retry" ||
+  status == "installed" ||
+  status == "owner_api_registered"
 }
 
 ///|

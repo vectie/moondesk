@@ -5,15 +5,23 @@ async fn write_moontown_standing_goal_registration(
   book_id~ : String,
   pattern_id~ : String,
   goal~ : Json,
+  owner_receipt? : Json = Json::object({}),
 ) -> Json {
-  let goal_id = json_string(goal, "id", default=pdf_watch_goal_id(book_id))
+  let goal_id = json_string(
+    owner_receipt,
+    "standing_goal_id",
+    default=json_string(goal, "id", default=pdf_watch_goal_id(book_id)),
+  )
   let target_book_id = json_string(goal, "target_book_id", default=book_id)
   let receipt : Json = {
     "ok": true,
     "status": "registered",
     "kind": "moontown-standing-goal-registration",
-    "registered_by": "MoonDesk",
+    "registered_by": "MoonTown",
+    "recorded_by": "MoonDesk",
     "owner": "MoonTown",
+    "owner_api_contract": "moontown.api.v1",
+    "owner_request_id": json_string(owner_receipt, "request_id", default=""),
     "goal_id": goal_id,
     "target_book_id": target_book_id,
     "pattern_id": pattern_id,
@@ -21,7 +29,7 @@ async fn write_moontown_standing_goal_registration(
     "cadence_ticks": json_int(goal, "cadence_ticks", default=0),
     "next_due_tick": json_int(goal, "next_due_tick", default=0),
     "source_policy": json_string(goal, "source_policy", default=""),
-    "standing_goal_path": town_standing_goals_path(root),
+    "standing_goal_path": "moontown.api.v1:/api/standing-goals#" + goal_id,
     "watcher_ledger_path": moonsuite_product_display_artifact(
       "moontown",
       "watchers/\{goal_id}.jsonl",
@@ -64,77 +72,36 @@ async fn write_moontown_book_template_publish(
   skill_pack~ : Array[String],
   goal~ : Json,
 ) -> Json {
-  let config_root = town_book_template_config_root(root)
-  @fsx.make_directory(config_root, recursive=true, exists_ok=true)
-  let config_name = book_id + ".json"
-  let config_path = @pathx.join(config_root, config_name)
-  let config_rel = "book-template-configs/" + config_name
-  @fsx.write_to_file(
-    config_path,
-    pdf_watch_moontown_install_config(
-      book_id~,
-      topic~,
-      pattern_id~,
-      purpose~,
-      book_root~,
-      cadence~,
-      websites~,
-      method_body~,
-      skill_pack~,
-    ).stringify(indent=2) +
-    "\n",
-    create=0o644,
-  )
-  let request = pdf_watch_moontown_template_request(
-    book_id~,
-    topic~,
-    pattern_id~,
-    config_rel~,
-    goal~,
-  )
-  let request_status = json_string(request, "status", default="")
+  ignore(root)
+  ignore(topic)
+  ignore(purpose)
+  ignore(cadence)
+  ignore(websites)
+  ignore(method_body)
+  ignore(skill_pack)
   let goal_id = json_string(goal, "id", default=pdf_watch_goal_id(book_id))
-  let request_path = town_book_template_request_path(root)
-  let existing = read_json_file_or_object(request_path)
-  let requests = upsert_record_by_id(
-    json_array_items(existing, "requests"),
-    request,
-  )
-  let ledger : Json = { "requests": Json::array(requests) }
-  @fsx.write_to_file(
-    request_path,
-    ledger.stringify(indent=2) + "\n",
-    create=0o644,
-  )
-  if request_status != "pending" {
-    let event = pdf_watch_moontown_template_event(
-      request~,
-      config_rel~,
-      status=request_status,
-    )
-    append_json_line(town_book_template_event_path(root), event)
-  }
   let receipt : Json = {
     "ok": true,
-    "status": request_status,
+    "status": "owner_api_registered",
     "template_id": "pdf-evidence-watch",
-    "publish_mode": pdf_watch_moontown_publish_mode(pattern_id),
+    "publish_mode": "moontown-owner-api",
     "processor": "moondesk-pattern-builder",
-    "reason": pdf_watch_moontown_publish_reason(pattern_id),
+    "reason": "MoonDesk created the MoonBook; MoonTown accepted its catalog registration and standing watch through moontown.api.v1.",
+    "legacy_town_ledger_write": "disabled",
     "book_ownership_contract": "research-book + source adapter + extractor + analysis skill + standing watch",
     "base_type_provenance": pdf_watch_base_type_provenance_json(),
-    "template_request_lifecycle": "already-installed-by-moondesk",
-    "moontown_processor_contract": "installed requests are reconciled into lifecycle events; pending requests are reserved for MoonTown template-installer ownership",
+    "template_request_lifecycle": "not-applicable-existing-book",
+    "moontown_processor_contract": "MoonTown owns catalog and standing-goal persistence; MoonDesk stores only this book-local receipt.",
     "standing_goal_id": goal_id,
     "target_book_id": book_id,
     "operator_config_path": pdf_watch_operator_config_relative_path(),
     "operator_config_shape": "nested watch/analysis config; editable without touching MoonTown JSON",
     "base_type_selection_path": pdf_watch_base_type_selection_relative_path(),
     "output_contract": pdf_watch_output_contract_handoff(pattern_id),
-    "config_path": config_path,
-    "config_relative_path": config_rel,
-    "request_path": request_path,
-    "event_path": town_book_template_event_path(root),
+    "config_path": "",
+    "config_relative_path": "",
+    "request_path": "moontown.api.v1:/api/operator-requests",
+    "event_path": "",
     "daemon_job": "standing-goal-dispatch",
     "standing_goal_contract": {
       "id": goal_id,
@@ -151,7 +118,7 @@ async fn write_moontown_book_template_publish(
       "moonclaw": "execute bounded browse/fetch/download/extract/analyze/package runs",
       "bookkeeper": "accept or reject candidate knowledge before notification",
     },
-    "request": request,
+    "request": Json::object({}),
   }
   @fsx.write_to_file(
     @pathx.join(book_root, pdf_watch_moontown_publish_receipt_relative_path()),
@@ -294,26 +261,8 @@ fn pdf_watch_moontown_template_event(
 }
 
 ///|
-async fn append_json_line(path : String, record : Json) -> Unit {
-  let existing = if @fs.exists(path) {
-    @fs.read_file(path).text() catch {
-      _ => ""
-    }
-  } else {
-    ""
-  }
-  let line = record.stringify()
-  let content = if existing.trim().is_empty() {
-    line + "\n"
-  } else {
-    existing.trim_end().to_owned() + "\n" + line + "\n"
-  }
-  @fsx.write_to_file(path, content, create=0o644)
-}
-
-///|
 async fn pdf_watch_readiness(
-  root : String,
+  workspace_root : String,
   book_root : String,
   book_id : String,
   pattern_id : String,
@@ -326,17 +275,21 @@ async fn pdf_watch_readiness(
       missing.push(path)
     }
   }
-  let goals = read_json_array_file(town_standing_goals_path(root))
-  let catalog = read_json_array_file(town_moonbooks_path(root))
+  let goals = match moontown_owner_get_json(
+    workspace_root,
+    "/api/standing-goals",
+  ) {
+    Ok(Array(values)) => values
+    _ => []
+  }
+  let catalog = match moontown_owner_get_json(
+    workspace_root,
+    "/api/book-registrations",
+  ) {
+    Ok(Array(values)) => values
+    _ => []
+  }
   let goal_id = json_string(goal, "id", default="")
-  let template_request_id = @desk.stable_id("book-template-request", book_id)
-  let template_request = json_record_by_id(
-    json_array_items(
-      read_json_file_or_object(town_book_template_request_path(root)),
-      "requests",
-    ),
-    template_request_id,
-  )
   let standing_goal_receipt_path = @pathx.join(
     book_root,
     pdf_watch_moontown_standing_goal_receipt_relative_path(),
@@ -355,20 +308,9 @@ async fn pdf_watch_readiness(
     "missing_count": missing.length(),
     "has_standing_goal": json_record_with_id_exists(goals, goal_id),
     "has_catalog_entry": json_record_with_id_exists(catalog, book_id),
-    "has_moontown_template_request": json_record_with_id_exists(
-      json_array_items(
-        read_json_file_or_object(town_book_template_request_path(root)),
-        "requests",
-      ),
-      template_request_id,
-    ),
-    "moontown_template_request_status": match template_request {
-      Some(request) => json_string(request, "status", default="")
-      None => ""
-    },
-    "has_moontown_template_config": @fs.exists(
-      @pathx.join(town_book_template_config_root(root), book_id + ".json"),
-    ),
+    "has_moontown_template_request": false,
+    "moontown_template_request_status": "not-applicable-existing-book",
+    "has_moontown_template_config": false,
     "has_moontown_standing_goal_registration": @fs.exists(
       standing_goal_receipt_path,
     ),
@@ -379,8 +321,12 @@ async fn pdf_watch_readiness(
     ),
     "output_template_path": "",
     "output_template_ready": true,
-    "contract_verification": book_contract_verification(
-      root, book_root, book_id, pattern_id,
-    ),
+    "contract_verification": {
+      "ok": missing.length() == 0 &&
+      json_record_with_id_exists(goals, goal_id) &&
+      json_record_with_id_exists(catalog, book_id),
+      "source": "moontown.api.v1",
+      "legacy_second_writer": false,
+    },
   }
 }

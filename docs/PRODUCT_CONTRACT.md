@@ -1,6 +1,7 @@
 # MoonDesk product contract
 
-Class: desktop operator application
+Class: application
+Form: desktop operator and pack-application host
 
 Maturity: local single-user alpha
 

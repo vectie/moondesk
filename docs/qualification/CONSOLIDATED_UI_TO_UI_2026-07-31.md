@@ -98,7 +98,7 @@ local URLs are:
 | MoonMoon | `http://127.0.0.1:8766/first_trusted_square.html` |
 | MoonProj | `http://127.0.0.1:4300/`, then internal **项目组合** navigation |
 | MoonRobo | `http://127.0.0.1:5290/` |
-| MoonTown | `http://127.0.0.1:17842/viewport.html` |
+| MoonTown | `http://127.0.0.1:17842/index.html?seed=20260727` |
 | MoonVis | `http://127.0.0.1:4198/` |
 
 Before the first click, enable browser Network log preservation, clear the

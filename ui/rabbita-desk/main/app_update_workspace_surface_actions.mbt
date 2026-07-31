@@ -313,6 +313,16 @@ fn update_workspace_surface_actions(
           desk_entries_error: "",
           saved_views_state: Some(Loading),
           saved_views_error: "",
+          collaboration_status: if model.selected_workspace_id == "" {
+            "not_selected"
+          } else {
+            "loading"
+          },
+          collaboration_message: if model.selected_workspace_id == "" {
+            "Select a MoonBook to load typed collaboration state."
+          } else {
+            "Asking MoonFlow to validate collaboration state…"
+          },
         },
       )
     _ => (@rabbita.none, model)
@@ -1020,5 +1030,6 @@ fn refresh_all_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
     fetch_book_base_types_cmd(dispatch),
     fetch_moonflow_capability_cmd(dispatch),
     fetch_moonflow_runs_cmd(dispatch),
+    fetch_moonflow_collaboration_cmd(dispatch, model.selected_workspace_id),
   ])
 }

@@ -740,20 +740,22 @@ moon run src/cmd/desktop_server --target native
 The current service binds to `127.0.0.1:17842`. Open:
 
 ```text
-http://127.0.0.1:17842/viewport.html?assets=generated&mode=view&v=wenyu
+http://127.0.0.1:17842/index.html?seed=20260727
 ```
 
 Case `MT-UI-001`:
 
-1. Inspect Wenyu Valley in **View**.
-2. Select **Editor** and inspect placement, entrance, runtime, validation, and
-   the MoonTown/MoonDesk boundary.
-3. Select **Output** and inspect the MoonBook output/review state.
-4. Return to **View**.
-5. Confirm each mode has a selected state and no empty state is replaced by
-   unlabelled sample success.
+1. Confirm the full-screen interactive Wenyu Valley canvas and the
+   **MoonTown · 能源谷** badge are visible.
+2. Exercise weather, simulation-speed, and tool controls without creating a
+   civic job.
+3. Select a civic building and inspect its runtime/work projection.
+4. Open **看板**, inspect stale/blocked and MoonBook review truth, then return
+   to the same map.
+5. Confirm no empty state is replaced by unlabelled sample success.
 
-Case `MT-UI-002` uses `http://127.0.0.1:17842/?demo=1`: open the full guide,
+Case `MT-UI-002` uses
+`http://127.0.0.1:17842/index.html?seed=20260727&demo=1`: open the full guide,
 start exploration, reopen the guide, and close it using the labelled control
 or `Escape`.
 

@@ -24,7 +24,7 @@ async fn handle_book_sync_standing_goal(
     send_api_error(conn, method_, 404, "Not Found", "Book not found")
     return
   }
-  let result = sync_book_standing_goal(context.suite_root, book_root, book_id) catch {
+  let result = sync_book_standing_goal(workspace_root, book_root, book_id) catch {
     error => {
       send_api_error(
         conn,
@@ -85,9 +85,15 @@ async fn sync_book_standing_goal(
       "standing_goal_registration_path": pdf_watch_moontown_standing_goal_receipt_relative_path(),
     }
   }
-  let goals_path = town_standing_goals_path(root)
+  let before_goals = match moontown_owner_get_json(
+    root,
+    "/api/standing-goals",
+  ) {
+    Ok(Array(values)) => values
+    _ => []
+  }
   let before_global_ready = json_record_with_target_book_exists(
-    read_json_array_file(goals_path),
+    before_goals,
     book_id,
   )
   let watch = json_object_field_or_empty(book_json, "watch")
@@ -127,24 +133,37 @@ async fn sync_book_standing_goal(
     source_policy~,
     daemon_tick~,
   )
-  @fsx.make_directory(
-    moontown_product_root(root),
-    recursive=true,
-    exists_ok=true,
-  )
-  let goals = upsert_record_by_id(read_json_array_file(goals_path), goal)
-  @fsx.write_to_file(
-    goals_path,
-    Json::array(goals).stringify(indent=2) + "\n",
-    create=0o644,
-  )
+  let owner_receipt = match moontown_owner_post_json(
+    root,
+    "/api/operator-requests",
+    moontown_owner_watch_payload(goal),
+  ) {
+    Ok(value) => value
+    Err(error) =>
+      return {
+        "ok": false,
+        "status": "owner_unavailable",
+        "book_id": book_id,
+        "pattern_id": pattern_id,
+        "message": error,
+      }
+  }
+  let after_goals = match moontown_owner_get_json(
+    root,
+    "/api/standing-goals",
+  ) {
+    Ok(Array(values)) => values
+    _ => []
+  }
   let after_global_ready = json_record_with_target_book_exists(
-    read_json_array_file(goals_path),
+    after_goals,
     book_id,
   )
-  let verification = book_contract_verification(
-    root, book_root, book_id, pattern_id,
-  )
+  let verification : Json = {
+    "ok": after_global_ready,
+    "source": "moontown.api.v1",
+    "legacy_second_writer": false,
+  }
   let run_health = Json::object({})
   {
     "ok": after_global_ready,
@@ -157,7 +176,8 @@ async fn sync_book_standing_goal(
     "pattern_id": pattern_id,
     "standing_goal": goal,
     "standing_goal_id": json_string(goal, "id", default=""),
-    "standing_goal_path": goals_path,
+    "standing_goal_path": "moontown.api.v1:/api/standing-goals#" +
+    json_string(owner_receipt, "standing_goal_id", default=""),
     "standing_goal_registration_path": pdf_watch_moontown_standing_goal_receipt_relative_path(),
     "standing_goal_registration_ready": receipt_ready,
     "global_standing_goal_ready_before": before_global_ready,
@@ -169,109 +189,18 @@ async fn sync_book_standing_goal(
 
 ///|
 async fn sync_all_book_pattern_standing_goals(root : String) -> Json {
-  let context = workspace_context(root)
-  let root = context.suite_root
-  let books_root = context.books_root
-  if !is_directory(books_root) {
-    return {
-      "ok": true,
-      "status": "no_books_root",
-      "synced_count": 0,
-      "already_synced_count": 0,
-      "failed_count": 0,
-      "goals": Json::array([]),
-      "failures": Json::array([]),
-    }
-  }
-  let goals_path = town_standing_goals_path(root)
-  let mut goals = read_json_array_file(goals_path)
-  let synced : Array[Json] = []
-  let skipped_books : Array[Json] = []
-  let mut synced_count = 0
-  let mut already_synced_count = 0
-  for book_id in read_directory_names(books_root, include_hidden=false) {
-    let book_root = context.book_root(book_id)
-    let book_json_path = @pathx.join(book_root, "book.json")
-    if !is_directory(book_root) || !@fs.exists(book_json_path) {
-      continue
-    }
-    let book_json = read_json_file_or_object(book_json_path)
-    let pattern_id = pdf_watch_pattern_id_from_book_json(book_json)
-    if !book_pattern_supports_standing_watch(pattern_id) {
-      continue
-    }
-    let receipt_path = @pathx.join(
-      book_root,
-      pdf_watch_moontown_standing_goal_receipt_relative_path(),
-    )
-    let receipt = read_json_file_or_object(receipt_path)
-    let receipt_ready = moontown_standing_goal_registration_ready(
-      receipt_path, receipt, book_id,
-    )
-    if !receipt_ready {
-      skipped_books.push({
-        "book_id": book_id,
-        "pattern_id": pattern_id,
-        "status": "missing_registration_receipt",
-        "standing_goal_registration_path": pdf_watch_moontown_standing_goal_receipt_relative_path(),
-      })
-      continue
-    }
-    let before_ready = json_record_with_target_book_exists(goals, book_id)
-    let goal = pdf_watch_standing_goal_from_book_state(
-      root, book_root, book_id, pattern_id, book_json, receipt,
-    )
-    goals = upsert_record_by_id(goals, goal)
-    if before_ready {
-      already_synced_count += 1
-    } else {
-      synced_count += 1
-    }
-    synced.push({
-      "book_id": book_id,
-      "pattern_id": pattern_id,
-      "standing_goal_id": json_string(goal, "id", default=""),
-      "global_standing_goal_ready_before": before_ready,
-    })
-  }
-  if synced_count > 0 || already_synced_count > 0 {
-    @fsx.make_directory(
-      moontown_product_root(root),
-      recursive=true,
-      exists_ok=true,
-    )
-    @fsx.write_to_file(
-      goals_path,
-      Json::array(goals).stringify(indent=2) + "\n",
-      create=0o644,
-    )
-  }
+  ignore(root)
   {
-    "ok": true,
-    "status": if synced_count > 0 {
-      if skipped_books.length() > 0 {
-        "synced_with_skips"
-      } else {
-        "synced"
-      }
-    } else if already_synced_count > 0 {
-      if skipped_books.length() > 0 {
-        "already_synced_with_skips"
-      } else {
-        "already_synced"
-      }
-    } else if skipped_books.length() > 0 {
-      "no_repairable_registered_standing_watch_books"
-    } else {
-      "no_standing_watch_books"
-    },
-    "standing_goal_path": goals_path,
-    "synced_count": synced_count,
-    "already_synced_count": already_synced_count,
-    "skipped_count": skipped_books.length(),
+    "ok": false,
+    "status": "legacy_bulk_repair_disabled",
+    "message": "MoonDesk no longer repairs MoonTown ledgers during reads. Use the explicit per-book owner API action.",
+    "standing_goal_path": "moontown.api.v1:/api/standing-goals",
+    "synced_count": 0,
+    "already_synced_count": 0,
+    "skipped_count": 0,
     "failed_count": 0,
-    "goals": Json::array(synced),
-    "skipped_books": Json::array(skipped_books),
+    "goals": Json::array([]),
+    "skipped_books": Json::array([]),
     "failures": Json::array([]),
   }
 }

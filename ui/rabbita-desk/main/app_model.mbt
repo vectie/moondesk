@@ -37,6 +37,10 @@ struct Model {
   moonsuite_products : Array[MoonSuiteProduct]
   pack_apps : Array[PackAppRecord]
   pack_apps_status : String
+  collaboration_surface : CollaborationSurfaceProjection
+  collaboration_status : String
+  collaboration_message : String
+  collaboration_next_action : String
   workspaces : Array[@desk.DeskWorkspace]
   workspace_catalog_state : SurfaceState?
   workspace_catalog_error : String
@@ -219,6 +223,7 @@ enum Msg {
   LibraryFolderPicked(Result[String, String])
   SelectedLibrary(Result[WorkspaceMetadata, String])
   LoadedPackApps(Result[PackAppCatalog, String])
+  LoadedMoonFlowCollaboration(String, Result[MoonFlowCollaborationReply, String])
   LoadedWorkspaces(Result[Array[@desk.DeskWorkspace], String])
   RequestEntries(String, String)
   LoadedEntries(String, String, Int, Result[Array[@desk.DeskFileEntry], String])

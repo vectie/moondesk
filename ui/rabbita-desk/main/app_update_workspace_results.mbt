@@ -42,6 +42,57 @@ fn update_workspace_results(
       )
     LoadedPackApps(Err(error)) =>
       (@rabbita.none, { ..model, pack_apps_status: error })
+    LoadedMoonFlowCollaboration(workspace_id, result) =>
+      if workspace_id != model.selected_workspace_id {
+        (@rabbita.none, model)
+      } else {
+        match result {
+          Ok(reply) =>
+            match reply.snapshot {
+              Some(snapshot) if reply.ok &&
+                reply.status == "ready" &&
+                reply.source_contract ==
+                "moonflow.collaboration-snapshot.v1" &&
+                snapshot.contract_id ==
+                "moonflow.collaboration-snapshot.v1" =>
+                (
+                  @rabbita.none,
+                  {
+                    ..model,
+                    collaboration_surface: collaboration_surface_from_snapshot(
+                      snapshot,
+                      reply.handover_catalog,
+                    ),
+                    collaboration_status: "ready",
+                    collaboration_message: reply.message,
+                    collaboration_next_action: reply.next_action.unwrap_or(""),
+                  },
+                )
+              _ =>
+                (
+                  @rabbita.none,
+                  {
+                    ..model,
+                    collaboration_surface: empty_collaboration_surface(),
+                    collaboration_status: reply.status,
+                    collaboration_message: reply.message,
+                    collaboration_next_action: reply.next_action.unwrap_or(""),
+                  },
+                )
+            }
+          Err(error) =>
+            (
+              @rabbita.none,
+              {
+                ..model,
+                collaboration_surface: empty_collaboration_surface(),
+                collaboration_status: "owner_unavailable",
+                collaboration_message: error,
+                collaboration_next_action: "review_flow_setup",
+              },
+            )
+        }
+      }
     LoadedWorkspaceMetadata(Ok(metadata)) =>
       (
         @rabbita.none,
@@ -106,6 +157,7 @@ fn update_workspace_results(
       (
         @rabbita.batch([
           reload_workspace_cmds(dispatch, selected_workspace_id, selected_path),
+          fetch_moonflow_collaboration_cmd(dispatch, selected_workspace_id),
           if restoring_moonflow {
             fetch_moonflow_composition_cmd(dispatch, selected_workspace_id)
           } else {
@@ -124,6 +176,26 @@ fn update_workspace_results(
           },
           workspace_catalog_error: "",
           selected_workspace_id,
+          collaboration_surface: if selected_workspace_changed {
+            empty_collaboration_surface()
+          } else {
+            model.collaboration_surface
+          },
+          collaboration_status: if selected_workspace_id == "" {
+            "not_selected"
+          } else {
+            "loading"
+          },
+          collaboration_message: if selected_workspace_id == "" {
+            "Select a MoonBook to load typed collaboration state."
+          } else {
+            "Asking MoonFlow to validate collaboration state…"
+          },
+          collaboration_next_action: if selected_workspace_id == "" {
+            "select_workspace"
+          } else {
+            ""
+          },
           selected_path,
           current_directory: entries_directory,
           desk_location_input: entries_directory,

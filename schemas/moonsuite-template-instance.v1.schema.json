@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vectie.github.io/moonsuite/contracts/moonsuite.template-instance.v1.schema.json",
+  "title": "MoonSuite Template Instance v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "instance_id",
+    "template",
+    "created_at",
+    "status",
+    "input_digest",
+    "owner_payload",
+    "launch",
+    "authority_grants",
+    "evidence_refs",
+    "review_refs"
+  ],
+  "properties": {
+    "contract_id": {"const": "moonsuite.template-instance.v1"},
+    "instance_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$"},
+    "template": {
+      "type": "object",
+      "description": "The template definition identity is the composite of catalog_id, catalog_version, catalog_digest, template_id, and version. source_digest independently binds owner source bytes.",
+      "additionalProperties": false,
+      "required": ["template_id", "owner_product", "version", "catalog_id", "catalog_version", "catalog_digest", "source_digest"],
+      "properties": {
+        "template_id": {"type": "string"},
+        "owner_product": {"type": "string"},
+        "version": {"type": "string"},
+        "catalog_id": {"type": "string"},
+        "catalog_version": {"type": "string"},
+        "catalog_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "source_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["draft", "owner_review", "ready", "active", "blocked", "completed", "cancelled"]},
+    "input_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "owner_payload": {"type": "object"},
+    "launch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pack_id", "path", "query"],
+      "properties": {
+        "pack_id": {"type": "string"},
+        "path": {"type": "string", "pattern": "^/"},
+        "query": {"type": "object"}
+      }
+    },
+    "authority_grants": {"type": "array", "items": {"type": "string"}},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "review_refs": {"type": "array", "items": {"type": "string"}}
+  }
+}

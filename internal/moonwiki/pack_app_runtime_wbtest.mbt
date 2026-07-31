@@ -40,6 +40,78 @@ test "pack app runtime accepts a matching installed app" {
 }
 
 ///|
+test "template catalog digest rejects tampered presentation and ceilings" {
+  let zero = "sha256:" +
+    "0000000000000000000000000000000000000000000000000000000000000000"
+  let unsigned = "{\"catalog_digest\":\"" +
+    zero +
+    "\",\"title\":\"Original\",\"ceilings\":{\"external_effect\":false}}"
+  let digest = "sha256:" +
+    @crypto.bytes_to_hex_string(
+      @crypto.sha256(@encoding/utf8.encode(unsigned).to_fixedarray()),
+    )
+  let signed = unsigned.replace(old=zero, new=digest)
+  let catalog = @json.parse(signed)
+  assert_true(template_catalog_digest_valid(signed, catalog))
+  let tampered = signed.replace(old="Original", new="Changed")
+  assert_false(
+    template_catalog_digest_valid(tampered, @json.parse(tampered)),
+  )
+}
+
+///|
+test "pack presentation keeps entrypoint safe and appends strict launch context" {
+  let record = pack_app_runtime_record(
+    { "pack_id": "sample", "version": "1.0.0" },
+    {
+      "id": "sample",
+      "app_presentation": {
+        "contract_id": "moonsuite.pack-presentation.v1",
+        "icon": "S",
+        "surface": "infinite-canvas",
+        "primary_action_label": "Open map",
+        "launch_query": [{ "key": "seed", "value": "20260727" }],
+      },
+      "app_entrypoints": [{ "id": "app", "path": "/index.html" }],
+    },
+    {
+      "contract": "moonsuite.pack-app-runtime.v1",
+      "pack_id": "sample",
+      "app_url": "http://127.0.0.1:4300/index.html",
+      "service_url": "http://127.0.0.1:4300",
+    },
+  )
+  guard record is Some(record) else { fail("expected configured app") }
+  assert_eq(
+    json_string(record, "launch_url", default=""),
+    "/pack-apps/sample/?seed=20260727",
+  )
+  assert_eq(json_string(record, "presentation_icon", default=""), "S")
+  assert_true(
+    pack_app_runtime_record(
+      { "pack_id": "sample" },
+      {
+        "id": "sample",
+        "app_presentation": {
+          "contract_id": "moonsuite.pack-presentation.v1",
+          "icon": "S",
+          "surface": "infinite-canvas",
+          "primary_action_label": "Open map",
+          "launch_query": [{ "key": "next", "value": "https://bad" }],
+        },
+        "app_entrypoints": [{ "id": "app", "path": "/index.html" }],
+      },
+      {
+        "contract": "moonsuite.pack-app-runtime.v1",
+        "pack_id": "sample",
+        "app_url": "http://127.0.0.1:4300/index.html",
+        "service_url": "http://127.0.0.1:4300",
+      },
+    ) is None,
+  )
+}
+
+///|
 test "pack app runtime rejects mismatched ids and unsafe URLs" {
   let manifest : Json = {
     "id": "sample",

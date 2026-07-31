@@ -63,6 +63,80 @@ fn is_safe_pack_app_area_label(label : String) -> Bool {
 }
 
 ///|
+fn is_safe_pack_presentation_text(value : String, max_length : Int) -> Bool {
+  let text = value.trim().to_owned()
+  if text == "" || text.length() > max_length {
+    return false
+  }
+  for ch in text {
+    if ch.is_control() {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn is_safe_launch_query_token(value : String, allow_uppercase : Bool) -> Bool {
+  if value == "" || value.length() > 96 {
+    return false
+  }
+  for ch in value {
+    if !(ch.is_ascii_lowercase() ||
+      (allow_uppercase && ch.is_ascii_uppercase()) ||
+      ch.is_ascii_digit() ||
+      ch == '-' ||
+      ch == '_' ||
+      ch == '.') {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn pack_app_manifest_presentation(
+  manifest : Json,
+) -> (Bool, String, String, String, String) {
+  guard json_object_field(manifest, "app_presentation") is Some(Object(_) as value) else {
+    return (true, "", "", "", "")
+  }
+  if json_string(value, "contract_id", default="") !=
+    "moonsuite.pack-presentation.v1" {
+    return (false, "", "", "", "")
+  }
+  let icon = json_string(value, "icon", default="").trim().to_owned()
+  let surface = json_string(value, "surface", default="").trim().to_owned()
+  let primary_action_label = json_string(
+    value,
+    "primary_action_label",
+    default="Open pack",
+  )
+  .trim()
+  .to_owned()
+  if !is_safe_pack_presentation_text(icon, 32) ||
+    !is_safe_pack_id(surface) ||
+    !is_safe_pack_presentation_text(primary_action_label, 48) {
+    return (false, "", "", "", "")
+  }
+  let query_parts : Array[String] = []
+  let seen : Map[String, Bool] = Map([])
+  for item in json_array_items(value, "launch_query") {
+    let key = json_string(item, "key", default="").trim().to_owned()
+    let query_value = json_string(item, "value", default="").trim().to_owned()
+    if !is_safe_launch_query_token(key, false) ||
+      !is_safe_launch_query_token(query_value, true) ||
+      seen.contains(key) ||
+      query_parts.length() >= 12 {
+      return (false, "", "", "", "")
+    }
+    seen[key] = true
+    query_parts.push(key + "=" + query_value)
+  }
+  (true, icon, surface, primary_action_label, query_parts.join("&"))
+}
+
+///|
 fn pack_app_manifest_area(
   manifest : Json,
   area_override : Json?,
@@ -162,11 +236,19 @@ fn pack_app_runtime_record_resolved(
   let (area_valid, area_id, area_category, area_label) = pack_app_manifest_area(
     manifest, area_override,
   )
+  let (
+    presentation_valid,
+    presentation_icon,
+    presentation_surface,
+    primary_action_label,
+    launch_query,
+  ) = pack_app_manifest_presentation(manifest)
   if !is_safe_pack_id(pack_id) ||
     manifest_id != pack_id ||
     runtime_id != pack_id ||
     runtime_contract != "moonsuite.pack-app-runtime.v1" ||
     !area_valid ||
+    !presentation_valid ||
     entrypoints.length() == 0 {
     return None
   }
@@ -174,6 +256,11 @@ fn pack_app_runtime_record_resolved(
   let entrypoint_path = json_string(first, "path", default="").trim().to_owned()
   if !is_matching_pack_app_url(app_url, service_url, entrypoint_path) {
     return None
+  }
+  let launch_suffix = if launch_query == "" {
+    ""
+  } else {
+    "?" + launch_query
   }
   Some({
     "pack_id": pack_id,
@@ -188,7 +275,10 @@ fn pack_app_runtime_record_resolved(
     "area_label": area_label,
     "app_url": app_url,
     "service_url": service_url,
-    "launch_url": "/pack-apps/" + pack_id + "/",
+    "launch_url": "/pack-apps/" + pack_id + "/" + launch_suffix,
+    "presentation_icon": presentation_icon,
+    "presentation_surface": presentation_surface,
+    "primary_action_label": primary_action_label,
     "runtime_contract": runtime_contract,
     "status": "configured",
   })
@@ -215,7 +305,17 @@ fn pack_app_catalog_record_resolved(
   let (area_valid, area_id, area_category, area_label) = pack_app_manifest_area(
     manifest, area_override,
   )
-  if !is_safe_pack_id(pack_id) || manifest_id != pack_id || !area_valid {
+  let (
+    presentation_valid,
+    presentation_icon,
+    presentation_surface,
+    primary_action_label,
+    _,
+  ) = pack_app_manifest_presentation(manifest)
+  if !is_safe_pack_id(pack_id) ||
+    manifest_id != pack_id ||
+    !area_valid ||
+    !presentation_valid {
     return None
   }
   let entrypoints = json_array_items(manifest, "app_entrypoints")
@@ -247,6 +347,21 @@ fn pack_app_catalog_record_resolved(
         "area_id": json_string(app, "area_id", default=""),
         "area_category": json_string(app, "area_category", default=""),
         "area_label": json_string(app, "area_label", default=""),
+        "presentation_icon": json_string(
+          app,
+          "presentation_icon",
+          default=presentation_icon,
+        ),
+        "presentation_surface": json_string(
+          app,
+          "presentation_surface",
+          default=presentation_surface,
+        ),
+        "primary_action_label": json_string(
+          app,
+          "primary_action_label",
+          default=primary_action_label,
+        ),
         "app_url": json_string(app, "app_url", default=""),
         "service_url": json_string(app, "service_url", default=""),
         "launch_url": json_string(app, "launch_url", default=""),
@@ -294,6 +409,9 @@ fn pack_app_catalog_record_resolved(
         "area_id": area_id,
         "area_category": area_category,
         "area_label": area_label,
+        "presentation_icon": presentation_icon,
+        "presentation_surface": presentation_surface,
+        "primary_action_label": primary_action_label,
         "app_url": "",
         "service_url": "",
         "launch_url": "",
@@ -336,6 +454,280 @@ fn is_safe_installed_pack_artifact_path(path : String) -> Bool {
     Some(normalized) => normalized == value
     None => false
   }
+}
+
+///|
+fn is_safe_template_version(value : String) -> Bool {
+  if value == "" || value.length() > 64 {
+    return false
+  }
+  for ch in value {
+    if !(ch.is_ascii_lowercase() ||
+      ch.is_ascii_uppercase() ||
+      ch.is_ascii_digit() ||
+      ch == '-' ||
+      ch == '+' ||
+      ch == '.') {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn is_sha256_digest(value : String) -> Bool {
+  if value.length() != 71 || !value.has_prefix("sha256:") {
+    return false
+  }
+  for ch in value[7:] {
+    if !(ch.is_ascii_digit() || (ch >= 'a' && ch <= 'f')) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn template_catalog_digest_valid(catalog_text : String, catalog : Json) -> Bool {
+  let catalog_digest = json_string(catalog, "catalog_digest", default="")
+  if !is_sha256_digest(catalog_digest) {
+    return false
+  }
+  let digest_parts = catalog_text.split(catalog_digest).to_array()
+  if digest_parts.length() != 2 {
+    return false
+  }
+  let unsigned_catalog = digest_parts[0] +
+    "sha256:" +
+    "0000000000000000000000000000000000000000000000000000000000000000" +
+    digest_parts[1]
+  let verified_catalog_digest = "sha256:" +
+    @crypto.bytes_to_hex_string(
+      @crypto.sha256(@encoding/utf8.encode(unsigned_catalog).to_fixedarray()),
+    )
+  verified_catalog_digest == catalog_digest
+}
+
+///|
+fn template_envelope_shape_valid(value : Json, owner_product : String) -> Bool {
+  let template_class = json_string(value, "template_class", default="")
+  let maturity = json_string(value, "maturity", default="")
+  let migration = json_object_field(value, "migration_policy")
+  let requirements = json_object_field(value, "requirements")
+  let ceilings = json_object_field(value, "ceilings")
+  let recovery = json_object_field(value, "recovery")
+  let owner_payload = json_object_field(value, "owner_payload")
+  let preview_ref = json_string(value, "preview_ref", default="")
+  let migration_valid = match migration {
+    Some(Object(_) as policy) => {
+      let strategy = json_string(policy, "strategy", default="")
+      (strategy == "immutable" ||
+      strategy == "owner-reviewed" ||
+      strategy == "automatic-compatible") &&
+      json_object_field(policy, "compatible_from") is Some(Array(_)) &&
+      json_array_items(policy, "compatible_from").all(version =>
+        version is String(value) && is_safe_template_version(value)
+      ) &&
+      is_safe_pack_presentation_text(
+        json_string(policy, "note", default=""),
+        240,
+      )
+    }
+    _ => false
+  }
+  json_string(value, "contract_id", default="") ==
+  "moonsuite.template-envelope.v1" &&
+  json_string(value, "owner_product", default="") == owner_product &&
+  is_safe_pack_app_area_id(json_string(value, "template_id", default="")) &&
+  is_safe_template_version(json_string(value, "version", default="")) &&
+  is_safe_installed_pack_artifact_path(
+    json_string(value, "source_ref", default=""),
+  ) &&
+  is_sha256_digest(json_string(value, "source_digest", default="")) &&
+  (template_class == "book" ||
+  template_class == "civic_scenario" ||
+  template_class == "cross_product_series" ||
+  template_class == "domain_project") &&
+  (maturity == "production" ||
+  maturity == "live-qualified" ||
+  maturity == "local-qualified" ||
+  maturity == "fixture") &&
+  is_safe_pack_presentation_text(json_string(value, "title", default=""), 96) &&
+  is_safe_pack_presentation_text(json_string(value, "summary", default=""), 320) &&
+  is_safe_pack_presentation_text(
+    json_string(value, "primary_user", default=""),
+    120,
+  ) &&
+  is_safe_pack_presentation_text(
+    json_string(value, "primary_action", default=""),
+    96,
+  ) &&
+  is_safe_pack_presentation_text(
+    json_string(value, "completion_statement", default=""),
+    240,
+  ) &&
+  is_safe_pack_presentation_text(json_string(value, "icon", default=""), 32) &&
+  migration_valid &&
+  (is_safe_pack_route_path(preview_ref) ||
+  is_safe_installed_pack_artifact_path(preview_ref)) &&
+  json_object_field(value, "qualification_evidence_refs") is Some(Array(_)) &&
+  requirements is Some(Object(_)) &&
+  ceilings is Some(Object(_)) &&
+  recovery is Some(Object(_)) &&
+  owner_payload is Some(Object(_))
+}
+
+///|
+fn template_qualification_kind_valid(kind : String) -> Bool {
+  kind == "fixture" ||
+  kind == "test_receipt" ||
+  kind == "qualification_report" ||
+  kind == "live_acceptance" ||
+  kind == "production_release"
+}
+
+///|
+async fn template_qualification_evidence_valid(
+  root : String,
+  envelope : Json,
+) -> Bool {
+  let maturity = json_string(envelope, "maturity", default="")
+  let evidence = json_array_items(envelope, "qualification_evidence_refs")
+  if evidence.length() > 16 || maturity != "fixture" && evidence.is_empty() {
+    return false
+  }
+  let mut has_local_qualification = false
+  let mut has_live_acceptance = false
+  let mut has_production_release = false
+  for item in evidence {
+    let kind = json_string(item, "kind", default="")
+    let relative = json_string(item, "ref", default="")
+    let declared_digest = json_string(item, "digest", default="")
+    if !template_qualification_kind_valid(kind) ||
+      !is_safe_installed_pack_artifact_path(relative) ||
+      !is_sha256_digest(declared_digest) {
+      return false
+    }
+    let candidate = @pathx.join(root, relative)
+    if !@fs.exists(candidate) {
+      return false
+    }
+    let resolved = @fs.realpath(candidate) catch { _ => return false }
+    if !resolved.has_prefix(root + "/") {
+      return false
+    }
+    let evidence_bytes = @fs.read_file(resolved).binary() catch {
+      _ => return false
+    }
+    let digest = "sha256:" +
+      @crypto.bytes_to_hex_string(@crypto.sha256(evidence_bytes))
+    if digest != declared_digest {
+      return false
+    }
+    if kind == "test_receipt" || kind == "qualification_report" {
+      has_local_qualification = true
+    }
+    if kind == "live_acceptance" {
+      has_live_acceptance = true
+    }
+    if kind == "production_release" {
+      has_production_release = true
+    }
+  }
+  match maturity {
+    "fixture" => true
+    "local-qualified" => has_local_qualification
+    "live-qualified" => has_live_acceptance || has_production_release
+    "production" => has_production_release
+    _ => false
+  }
+}
+
+///|
+async fn installed_pack_template_envelopes(
+  installed_root : String,
+  manifest : Json,
+  pack_id : String,
+) -> Array[Json] {
+  let templates : Array[Json] = []
+  let seen : Map[String, Bool] = Map([])
+  let root = @fs.realpath(installed_root) catch { _ => return templates }
+  for declared in json_array_items(manifest, "template_catalogs") {
+    if templates.length() >= 128 {
+      break
+    }
+    let declared_id = json_string(declared, "id", default="")
+    let declared_version = json_string(declared, "version", default="")
+    let relative = json_string(declared, "path", default="")
+    if !is_safe_pack_app_area_id(declared_id) ||
+      !is_safe_template_version(declared_version) ||
+      !is_safe_installed_pack_artifact_path(relative) {
+      continue
+    }
+    let candidate = @pathx.join(root, relative)
+    if !@fs.exists(candidate) {
+      continue
+    }
+    let resolved = @fs.realpath(candidate) catch { _ => continue }
+    if !resolved.has_prefix(root + "/") {
+      continue
+    }
+    let catalog_text = @fs.read_file(resolved).text() catch { _ => continue }
+    let catalog = @json.parse(catalog_text) catch {
+      _ => continue
+    }
+    if json_string(catalog, "contract_id", default="") !=
+      "moonsuite.template-catalog.v1" ||
+      json_string(catalog, "catalog_id", default="") != declared_id ||
+      json_string(catalog, "owner_product", default="") != pack_id ||
+      json_string(catalog, "version", default="") != declared_version ||
+      !template_catalog_digest_valid(catalog_text, catalog) {
+      continue
+    }
+    for envelope in json_array_items(catalog, "templates") {
+      if templates.length() >= 128 ||
+        !template_envelope_shape_valid(envelope, pack_id) {
+        continue
+      }
+      let template_id = json_string(envelope, "template_id", default="")
+      if seen.contains(template_id) {
+        continue
+      }
+      let source_ref = json_string(envelope, "source_ref", default="")
+      let source_candidate = @pathx.join(root, source_ref)
+      if !@fs.exists(source_candidate) {
+        continue
+      }
+      let source = @fs.realpath(source_candidate) catch { _ => continue }
+      if !source.has_prefix(root + "/") {
+        continue
+      }
+      let source_bytes = @fs.read_file(source).binary() catch { _ => continue }
+      let source_digest = "sha256:" +
+        @crypto.bytes_to_hex_string(@crypto.sha256(source_bytes))
+      if source_digest != json_string(envelope, "source_digest", default="") {
+        continue
+      }
+      if !template_qualification_evidence_valid(root, envelope) {
+        continue
+      }
+      match envelope {
+        Object(fields) => {
+          fields["catalog_id"] = declared_id.to_json()
+          fields["catalog_version"] = declared_version.to_json()
+          fields["catalog_digest"] = json_string(
+            catalog,
+            "catalog_digest",
+            default="",
+          ).to_json()
+        }
+        _ => continue
+      }
+      seen[template_id] = true
+      templates.push(envelope)
+    }
+  }
+  templates
 }
 
 ///|
@@ -519,6 +911,7 @@ async fn handle_pack_app_proxy(
 async fn installed_pack_apps(workspace_root : String) -> Json {
   let apps : Array[Json] = []
   let mut configured_count = 0
+  let mut template_count = 0
   let active_root = active_packs_root(workspace_root)
   for name in read_directory_names(active_root, include_hidden=false) {
     if !name.has_suffix(".json") {
@@ -561,6 +954,19 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
     }
     match projected {
       Some(app) => {
+        let templates = installed_pack_template_envelopes(
+          installed_root,
+          manifest,
+          pack_id,
+        )
+        match app {
+          Object(fields) => {
+            fields["templates"] = Json::array(templates)
+            fields["template_count"] = templates.length().to_json()
+          }
+          _ => ()
+        }
+        template_count = template_count + templates.length()
         if json_string(app, "status", default="") == "configured" {
           configured_count = configured_count + 1
         }
@@ -574,6 +980,7 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
       "contract": "moonsuite.pack-app-catalog.v1",
       "app_count": apps.length(),
       "configured_count": configured_count,
+      "template_count": template_count,
       "apps": Json::array(apps),
       "runtime_config_root": pack_apps_state_root(workspace_root),
     },

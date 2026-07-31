@@ -23,6 +23,19 @@ async fn route_moonflow_api(
       }
       true
     }
+    ["api", "moonflow", "collaboration", workspace_id] => {
+      if is_read_method(method_) {
+        handle_moonflow_collaboration(
+          workspace_root,
+          workspace_id,
+          method_,
+          conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])
+      }
+      true
+    }
     ["api", "moonflow", "runs", "import-selected"] => {
       if method_ is Post {
         handle_moonflow_import_selected(workspace_root, body, method_, conn)

@@ -27,6 +27,29 @@ fn fetch_pack_apps_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_moonflow_collaboration_cmd(
+  dispatch : Dispatch[Msg],
+  workspace_id : String,
+) -> @rabbita.Cmd {
+  if workspace_id == "" {
+    @rabbita.none
+  } else {
+    @http.get(
+      @desk.desktop_api_url([
+        "api", "moonflow", "collaboration", workspace_id,
+      ]),
+    ).expect_json(result => {
+      dispatch(
+        LoadedMoonFlowCollaboration(
+          workspace_id,
+          http_result(result, "Invalid MoonFlow collaboration response"),
+        ),
+      )
+    })
+  }
+}
+
+///|
 fn fetch_entries_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
