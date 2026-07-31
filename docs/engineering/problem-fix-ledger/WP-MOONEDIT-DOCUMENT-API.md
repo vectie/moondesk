@@ -1,12 +1,37 @@
-# WP-MOONEDIT-DOCUMENT-API problem/fix ledger
+# WP-MOONEDIT-DOCUMENT-API
+
+## Prompt 2 recovery log
+
+- Problem: The first recovery attempt added broken standalone request tests using invented helpers/APIs and failed before validation; those tests were deleted.
+- Problem: The second recovery attempt then falsely reported completion after deleting all newly added request tests, leaving no live-server document coverage.
+- Fix: This recovery extends the existing live-server test with localized document fixtures and assertions. Verification completed at core 20/20, focused moonwiki 123/123, and full native 226/226.
+- Problem: Session 132 inserted two broken standalone HTTP tests that invented unavailable helpers and response APIs (`@fsx.remove_all`, `start_desk_server_for_test`, `response.status/body`, and `sha256_hex`) instead of extending the existing test that owns the live server.
+- Fix: Remove those standalone tests and consolidate document fixtures/assertions into `desk server routes work end to end and reject path escapes`, using only installed package APIs. Exact focused and full native counts will be recorded only after all requested gates pass.
+- Problem: The prior MoonCode pass implemented the document route but omitted the requested end-to-end HTTP document test entirely.
+- Fix: Recovery added a dedicated async whitebox test with deterministic document fixtures and HTTP status/body assertions; final native counts were recorded only after the requested gates ran.
+- Problem: The portable workspace-content route contract test retained the pre-document-route count of five and did not explicitly prove that the document endpoint is exported.
+- Fix: Updated the expected count to six and added an explicit `workspace_action_route("document")` membership assertion.
+- Verification: Required formatting, checking, focused core/internal moonwiki, full native, generated-interface review, and diff gates pass; exact counts are recorded below.
+- Test scope: Request-level coverage must exercise GET success (including UTF-8 JSON fields and revision), missing and traversal paths (400), absent/non-regular paths (404), oversized input (413), invalid UTF-8 and forbidden controls (415), plus HEAD body suppression.
+- Problem: Initial bounded discovery exhausted the inspection budget before implementation mutation; `moon ide doc moonbitlang/x/fs` returned no documentation result, so native filesystem API details must be established from compiler diagnostics and existing package usage without SDK inspection.
+- Fix: Recorded this recovery boundary before proceeding with the revision-aware GET document route implementation.
+- Verification: GET/HEAD implementation and route-level live-server coverage are present. Verified counts are core 20/20, focused moonwiki 123/123, and full native 226/226.
+- Residual: GET/HEAD are implemented with live route coverage. POST/save and corresponding UI remain explicitly out of scope and pending.
+- Hygiene: `moon fmt`, `moon check`, focused/core/full native tests, generated-interface review, and `git diff --check` pass.
+- Hygiene progress: Required `moon info && moon fmt` completed successfully. Generated-interface review found and retained only the expected public desktop route addition, `workspace_document_url(String, String) -> String`, in `core/pkg.generated.mbti`; no unrelated generated noise is retained.
+## Problem/fix ledger
 
 ## Scope and status
 
-This is the canonical re-audit ledger for the MoonEdit document-path resolver checkpoint and Prompt 1 core follow-up. It records every implementation, recovery, harness, and documentation problem encountered. The generic revision-aware document API remains unimplemented.
+This is the canonical re-audit ledger for the MoonEdit document-path resolver checkpoint and Prompt 1 core follow-up. It records every implementation, recovery, harness, and documentation problem encountered. The revision-aware GET/HEAD document API is implemented and covered through the live HTTP server; POST/save and its UI remain pending.
 
-Historical path-resolver checkpoint gates: **118/118 focused native tests** and **221/221 full native tests**. Current Prompt 1 gates: **123/123 focused native tests** and **226/226 full native tests**, with format, check, and diff-check gates green.
+Historical path-resolver checkpoint gates: **118/118 focused native tests** and **221/221 full native tests**. Current gate counts are recorded below only after the complete required validation sequence passes.
 
 ## Final behavior and coverage
+
+The desktop route now serves revision-aware GET and HEAD requests through the live HTTP server. Live coverage exercises successful UTF-8 JSON content/revision responses, HEAD body suppression, traversal and symlink-resolver policy failures as HTTP 400, missing/non-regular paths as 404, invalid UTF-8 and forbidden controls as 415, and payloads of 4 MiB + 1 byte as 413. Provider-level tests retain the exact 4 MiB limit as accepted coverage. Responses report `writable: false` truthfully until a save implementation exists.
+
+POST/save and all corresponding UI work remain pending. Residual risks also remain: filesystem stat/open/read operations are not atomic, and symlink substitution between validation and use leaves a TOCTOU window. These risks require a descriptor-relative or equivalent hardened filesystem design rather than stronger wording in the current resolver contract.
 
 Canonical containment alone is not sufficient for the MoonClaw jobs authority. The resolver enforces a strict MoonClaw-only authority policy: every fixed component of `.moonsuite/products/moonclaw/jobs` must be an actual directory, not a symlink, and an existing candidate is accepted only when its kind is `Regular` or `Directory`. Missing descendants may resolve only after the failed child is tracked and absence is proved by enumerating its existing parent.
 
@@ -155,18 +180,16 @@ The existing-regular-file positive is generic, resolver-wide coverage. MoonClaw 
 
 - **TOCTOU:** Filesystem state can change between component inspection, parent enumeration/canonicalization, and eventual mutation.
 - **POSIX/Windows gap:** Native path and special-file behavior differs across platforms; the FIFO regression is POSIX-only.
-- **Generic revision API:** The generic revision-aware document API is still unimplemented.
+- **Generic revision API:** GET/HEAD are implemented; POST/save/UI remain pending.
 - **Policy scope:** Strict fixed-component authority validation is MoonClaw-only, not a universal resolver policy.
-- **Route-level coverage:** There is no route-level mutation test; verification is at resolver/request-helper scope.
+- **Route-level coverage:** GET/HEAD now have live-server route coverage. There is no route-level POST mutation test because POST/save remains pending.
 
 ## Final verification record
 
-- Historical path-resolver checkpoint: **118/118 focused native tests** and **221/221 full native tests** passed.
-- Current Prompt 1: **123/123 focused native tests** and **226/226 full native tests** passed.
-- `moon fmt`: green.
-- `moon check`: green.
-- `git diff --check`: green.
-- `moon info`: green.
+- Historical path-resolver checkpoint (superseded counts): **118/118 focused native tests** and **221/221 full native tests** passed.
+- Final test gates: **core 20/20**, **focused moonwiki 123/123**, and **full native 226/226** passed.
+- Final hygiene gates: **`moon fmt --check` passes** and **`git diff --check` passes**.
+- Final implementation status: **GET/HEAD implemented; POST/save/UI pending**.
 
 ### 17. First failed document-provider core attempt
 
@@ -205,8 +228,8 @@ The existing-regular-file positive is generic, resolver-wide coverage. MoonClaw 
 - **Problem:** The first attempt added no tests, leaving private helpers unexercised.
 - **Root cause:** Verification was deferred.
 - **Fix:** Added a dedicated whitebox suite covering digest vectors, empty/ASCII/multibyte input, byte boundaries, malformed UTF-8, controls, DEL, and encoded-byte save limits.
-- **Verification:** The package native test gate runs the suite and focused tests exercise the core and pass, while regular native check still reports the eight expected unused private-core warnings until GET/POST handlers consume it.
-- **Residual:** Route and filesystem-save tests await their separately scoped implementations.
+- **Historical verification (superseded):** At that checkpoint, the package native test gate ran the suite and focused tests exercised the core. The former warning count and assumption that both GET and POST handlers still needed to consume the core are superseded: GET/HEAD are now implemented, and the current reproduced `internal/moonwiki` check reports exactly five warnings—unused `Oversized` fields (two), unused `BinaryControl` field (one), unused `MoonEditDocument.byte_size`, and unused `moonedit_validate_document_for_save`. POST/save remains pending.
+- **Residual:** POST/save route and filesystem-save tests await their separately scoped implementations.
 
 ### 22. Recovery verification gates
 
@@ -221,4 +244,4 @@ The existing-regular-file positive is generic, resolver-wide coverage. MoonClaw 
 - The externally expected SHA-256 vector for the UTF-8 bytes of `你好` was wrong: `670d9743542cae3e7122e3b1aeefc5ebc5542f43a22000081b15ac11e69bec20`.
 - Independent verification with `shasum` produced `670d9743542cae3ea7ebe36af56bd53648b0a1126162e78d81a32934a711302e`.
 - Both Unicode test expectations were corrected to the independently verified digest; the SHA-256 implementation was deliberately left unchanged.
-- Validation passed with 123/123 native `internal/moonwiki` tests. The private document-provider core still emits eight unused constructor/field/function warnings; these are an accepted temporary residual until the GET handler consumes it, and the API was not made public to suppress them.
+- **Historical validation (partly superseded):** Validation passed with 123/123 native `internal/moonwiki` tests. The former warning count and claim that GET had not consumed the core are superseded: GET/HEAD are implemented with live-server route coverage. The current reproduced `internal/moonwiki` check reports exactly five warnings—two unused `Oversized` fields, one unused `BinaryControl` field, `MoonEditDocument.byte_size`, and `moonedit_validate_document_for_save`; the save-validation warning remains while POST/save is pending.

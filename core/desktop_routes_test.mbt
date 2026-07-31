@@ -36,6 +36,10 @@ test "workspace desktop routes live in core boundary" {
     "/api/workspaces/book-demo/preview?path=raw%2Fdata%3Fset%25.json",
   )
   assert_eq(
+    @core.workspace_document_url("book-demo", "wiki/日本語 #1.md"),
+    "/api/workspaces/book-demo/document?path=wiki%2F%E6%97%A5%E6%9C%AC%E8%AA%9E%20%231.md",
+  )
+  assert_eq(
     @core.workspace_raw_url("book-demo", "images/logo #1.png"),
     "/api/workspaces/book-demo/raw?path=images%2Flogo%20%231.png",
   )
@@ -85,6 +89,7 @@ test "desktop api route contracts own active backend method policy" {
   assert_eq(endpoints.length(), @core.desktop_api_route_contracts().length())
   assert_true(endpoints.contains(@core.desktop_capabilities_route()))
   assert_true(endpoints.contains(@core.workspace_action_route("entries")))
+  assert_true(endpoints.contains(@core.workspace_action_route("document")))
   assert_true(endpoints.contains(@core.workspace_file_route()))
   assert_true(endpoints.contains(@core.town_route("dispatch")))
   assert_false(endpoints.contains(@core.town_route("control")))
@@ -96,6 +101,12 @@ test "desktop api route contracts own active backend method policy" {
     @core.desktop_api_route_allowed_methods(@core.desktop_capabilities_route()).join(
       ", ",
     ),
+    "GET, HEAD",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.workspace_action_route("document"),
+    ).join(", "),
     "GET, HEAD",
   )
   assert_eq(
@@ -138,7 +149,8 @@ test "desktop portable api support derives from core desktop routes" {
   assert_false(snapshot_routes.contains(@core.town_route("dispatch")))
 
   let content_routes = @core.desktop_portable_api_workspace_content_routes()
-  assert_eq(content_routes.length(), 5)
+  assert_eq(content_routes.length(), 6)
+  assert_true(content_routes.contains(@core.workspace_action_route("document")))
   assert_true(content_routes.contains(@core.workspace_action_route("entries")))
   assert_true(content_routes.contains(@core.workspace_action_route("preview")))
   assert_true(content_routes.contains(@core.workspace_action_route("raw")))

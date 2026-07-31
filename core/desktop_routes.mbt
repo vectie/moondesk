@@ -146,6 +146,13 @@ pub fn workspace_preview_url(workspace_id : String, path : String) -> String {
 }
 
 ///|
+pub fn workspace_document_url(workspace_id : String, path : String) -> String {
+  desktop_api_url(["api", "workspaces", workspace_id, "document"], query=[
+    ("path", path),
+  ])
+}
+
+///|
 pub fn workspace_raw_url(workspace_id : String, path : String) -> String {
   desktop_api_url(["api", "workspaces", workspace_id, "raw"], query=[
     ("path", path),
@@ -286,6 +293,7 @@ pub fn desktop_portable_api_snapshot_routes() -> Array[String] {
 pub fn desktop_portable_api_workspace_content_routes() -> Array[String] {
   [
     workspace_action_route("entries"),
+    workspace_action_route("document"),
     workspace_action_route("preview"),
     workspace_action_route("raw"),
     workspace_file_route(),
@@ -339,6 +347,7 @@ fn desktop_portable_api_workspace_content_route_supported(
       let action_tail = tail[index + 1:].to_owned()
       action_tail.has_prefix("entries?path=") ||
       action_tail.has_prefix("preview?path=") ||
+      action_tail.has_prefix("document?path=") ||
       action_tail.has_prefix("raw?path=") ||
       action_tail.has_prefix("file/") ||
       action_tail.has_prefix("site/")
@@ -361,6 +370,9 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
       "POST",
     ]),
     desktop_api_route_contract(workspace_action_route("preview"), [
+      "GET", "HEAD",
+    ]),
+    desktop_api_route_contract(workspace_action_route("document"), [
       "GET", "HEAD",
     ]),
     desktop_api_route_contract(workspace_action_route("raw"), ["GET", "HEAD"]),
