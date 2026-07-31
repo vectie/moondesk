@@ -49,6 +49,7 @@ test "Flow node drag exclusively claims the canvas gesture" {
     moonflow_composition: Some({
       selected_item_ids: ["research"],
       items: [item],
+      node_positions: None,
       catalog_id: Some("catalog-1"),
       catalog_status: Some("conformant"),
       evaluated_at: Some("2026-07-31T12:00:00Z"),
@@ -90,6 +91,102 @@ test "Flow pointer end releases gesture ownership without discarding canvas layo
   assert_eq(ended.flow_canvas.pan_y, canvas.pan_y)
   assert_eq(ended.flow_canvas.zoom, canvas.zoom)
   assert_eq(ended.flow_canvas.node_positions, canvas.node_positions)
+}
+
+///|
+#warnings("-alert_unstable")
+test "Flow node grips expose keyboard movement and Arrow keys persist geometry" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let item = flow_canvas_large_graph_item(0, [])
+  let model = {
+    ..init_model(),
+    moonflow_composition: Some({
+      selected_item_ids: ["stage-0"],
+      items: [item],
+      node_positions: None,
+      catalog_id: Some("catalog-keyboard"),
+      catalog_status: Some("conformant"),
+      evaluated_at: Some("2026-07-31T12:00:00Z"),
+      validation_status: Some("accepted"),
+      validation_issues: Some([]),
+    }),
+  }
+  let (original_x, original_y) = flow_item_position(
+    model,
+    [item][0:1],
+    "stage-0",
+  )
+  let (_, nudged) = update_workspace_surface_actions(
+    dispatch,
+    FlowNodeKeyDown("stage-0", "ArrowRight", false),
+    model,
+  )
+  let (nudged_x, nudged_y) = flow_item_position(nudged, [item][0:1], "stage-0")
+  assert_eq(nudged_x, original_x + 8.0)
+  assert_eq(nudged_y, original_y)
+  let (_, shifted) = update_workspace_surface_actions(
+    dispatch,
+    FlowNodeKeyDown("stage-0", "ArrowDown", true),
+    nudged,
+  )
+  let (shifted_x, shifted_y) = flow_item_position(
+    shifted,
+    [item][0:1],
+    "stage-0",
+  )
+  assert_eq(shifted_x, original_x + 8.0)
+  assert_eq(shifted_y, original_y + 32.0)
+  assert_eq(
+    shifted.moonflow_composition_status,
+    "Unsaved node position · stage-0",
+  )
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_flow_canvas_node(
+        dispatch,
+        shifted,
+        shifted.moonflow_composition.unwrap(),
+        item,
+      ),
+    ),
+  )
+  assert_true(markup.contains("class=\"flow-node-grip\""))
+  assert_true(markup.contains("tabindex=\"0\""))
+  assert_true(markup.contains("role=\"button\""))
+  assert_true(
+    markup.contains(
+      "aria-label=\"Move node stage-0 with Arrow keys; hold Shift for a larger step\"",
+    ),
+  )
+  assert_true(markup.contains("data-testid=\"moonflow-node-grip\""))
+}
+
+///|
+test "Flow restores persisted node geometry without resetting the viewport" {
+  let canvas = {
+    ..init_flow_canvas_state(),
+    pan_x: 32.0,
+    pan_y: -18.0,
+    zoom: 1.25,
+    pan_dragging: true,
+    drag_node_id: "old",
+  }
+  let restored = flow_canvas_apply_composition_positions(canvas, {
+    selected_item_ids: [],
+    items: [],
+    node_positions: Some([{ work_item_id: "research", x: 512.5, y: 224.25 }]),
+    catalog_id: None,
+    catalog_status: None,
+    evaluated_at: None,
+    validation_status: None,
+    validation_issues: None,
+  })
+  assert_eq(restored.node_positions, [("research", 512.5, 224.25)])
+  assert_eq(restored.pan_x, canvas.pan_x)
+  assert_eq(restored.pan_y, canvas.pan_y)
+  assert_eq(restored.zoom, canvas.zoom)
+  assert_false(restored.pan_dragging)
+  assert_eq(restored.drag_node_id, "")
 }
 
 ///|
@@ -145,6 +242,7 @@ test "Flow computes virtual extent and fits a 63-stage graph" {
     moonflow_composition: Some({
       selected_item_ids: selected,
       items,
+      node_positions: None,
       catalog_id: Some("catalog-large"),
       catalog_status: Some("conformant"),
       evaluated_at: Some("2026-07-31T12:00:00Z"),

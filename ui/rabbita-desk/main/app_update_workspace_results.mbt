@@ -101,8 +101,17 @@ fn update_workspace_results(
       } else {
         parent_path(selected_path)
       }
+      let restoring_moonflow = model.workspace_mode == MoonFlow &&
+        selected_workspace_id != ""
       (
-        reload_workspace_cmds(dispatch, selected_workspace_id, selected_path),
+        @rabbita.batch([
+          reload_workspace_cmds(dispatch, selected_workspace_id, selected_path),
+          if restoring_moonflow {
+            fetch_moonflow_composition_cmd(dispatch, selected_workspace_id)
+          } else {
+            @rabbita.none
+          },
+        ]),
         {
           ..model,
           loading: false,
@@ -176,6 +185,38 @@ fn update_workspace_results(
             Some(Loading)
           },
           runs_error: "",
+          moonflow_runs_state: if restoring_moonflow {
+            Some(Loading)
+          } else {
+            model.moonflow_runs_state
+          },
+          moonflow_runs_error: if restoring_moonflow {
+            None
+          } else {
+            model.moonflow_runs_error
+          },
+          moonflow_composition: if restoring_moonflow &&
+            selected_workspace_changed {
+            None
+          } else {
+            model.moonflow_composition
+          },
+          moonflow_composition_status: if restoring_moonflow {
+            "Loading composition…"
+          } else {
+            model.moonflow_composition_status
+          },
+          moonflow_operator_actions: if restoring_moonflow &&
+            selected_workspace_changed {
+            []
+          } else {
+            model.moonflow_operator_actions
+          },
+          moonflow_operator_action_status: if restoring_moonflow {
+            "Loading operator actions…"
+          } else {
+            model.moonflow_operator_action_status
+          },
         },
       )
     }
@@ -427,6 +468,10 @@ fn update_workspace_results(
         {
           ..model,
           moonflow_composition: Some(composition),
+          flow_canvas: flow_canvas_apply_composition_positions(
+            model.flow_canvas,
+            composition,
+          ),
           moonflow_composition_status: "Composition loaded",
           moonflow_composition_saving: false,
         },
@@ -447,6 +492,10 @@ fn update_workspace_results(
         {
           ..model,
           moonflow_composition: Some(composition),
+          flow_canvas: flow_canvas_apply_composition_positions(
+            model.flow_canvas,
+            composition,
+          ),
           moonflow_composition_status: "Composition saved · next run uses this selection",
           moonflow_composition_saving: false,
         },

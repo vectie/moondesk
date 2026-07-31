@@ -692,8 +692,186 @@ fn moonflow_actions_for_run(
 }
 
 ///|
+fn moonflow_operator_actions_ready(model : Model, run_id : String) -> Bool {
+  match moonflow_actions_for_run(model, run_id) {
+    Some(catalog) =>
+      catalog.status == "available" &&
+      catalog.actions.any(action => {
+        action.enabled && ["available", "pending"].contains(action.status)
+      })
+    None => false
+  }
+}
+
+///|
+fn moonflow_action_is_navigation(action : MoonFlowOperatorAction) -> Bool {
+  moonflow_operator_text(action.action_kind, "operator-command") ==
+  "open-product"
+}
+
+///|
+fn moonflow_action_launch_url(
+  _model : Model,
+  action : MoonFlowOperatorAction,
+) -> String {
+  guard action.app_entrypoint is Some(entrypoint) &&
+    entrypoint.status == Some("configured") &&
+    entrypoint.launch_path is Some(path) &&
+    action.receiver is Some(receiver) else {
+    return ""
+  }
+  let prefix = "/pack-apps/" +
+    entrypoint.pack_id +
+    "/?moonflow_run=" +
+    moonflow_operator_text(action.run_id, "") +
+    "&moonflow_handoff="
+  if path == prefix + receiver.handoff_token {
+    path
+  } else {
+    ""
+  }
+}
+
+///|
+fn render_moonflow_action_handoff(
+  action : MoonFlowOperatorAction,
+) -> @rabbita.Html {
+  if !moonflow_action_is_navigation(action) {
+    return @html.nothing
+  }
+  let evidence = action.evidence_refs
+    .unwrap_or([])
+    .map(item => {
+      item.kind +
+      " " +
+      item.reference +
+      (if item.digest == "" {
+        ""
+      } else {
+        " " + moonflow_short_identity(item.digest)
+      })
+    })
+  details(class="flow-disclosure", [
+    summary(
+      moonflow_operator_text(action.product_id, "Product") +
+      " handoff · " +
+      moonflow_operator_text(action.work_item_id, "work item"),
+    ),
+    div(class="flow-disclosure-body", [
+      small(
+        moonflow_operator_parts([
+          "run " + moonflow_operator_text(action.run_id, "not recorded"),
+          "declaration " +
+          moonflow_operator_text(action.declaration_id, "not recorded"),
+          "operation " +
+          moonflow_operator_text(action.operation, "not recorded"),
+        ]),
+      ),
+      p(
+        "Authority " +
+        moonflow_operator_text(action.requested_authority, "not recorded") +
+        " · " +
+        moonflow_operator_text(action.authority_status, "not recorded") +
+        " · claim ceiling " +
+        moonflow_operator_text(action.claim_ceiling, "not recorded") +
+        " · capability " +
+        moonflow_operator_text(action.capability_status, "not declared"),
+      ),
+      p(
+        "Inputs: " +
+        moonflow_operator_refs(action.input_contracts).join(", ") +
+        " · Outputs: " +
+        moonflow_operator_refs(action.output_contracts).join(", "),
+      ),
+      p(
+        "Review " +
+        moonflow_operator_text(action.review_status, "not declared") +
+        " · " +
+        moonflow_operator_refs(action.acceptance_criteria).join("; "),
+      ),
+      p(
+        if evidence.is_empty() {
+          "No evidence references published"
+        } else {
+          "Evidence: " + evidence.join(" · ")
+        },
+      ),
+      small(
+        "Durable handoff " +
+        moonflow_operator_text(action.handoff_ref, "not recorded"),
+      ),
+      match action.receiver {
+        Some(receiver) =>
+          small(
+            "Receiver " +
+            receiver.status +
+            " · request " +
+            receiver.request_id +
+            " · attempt " +
+            receiver.attempt_id +
+            " · binding " +
+            moonflow_short_identity(receiver.handoff_digest),
+          )
+        None => @html.nothing
+      },
+    ]),
+  ])
+}
+
+///|
+fn render_moonflow_receiver_receipt(
+  action : MoonFlowOperatorAction,
+) -> @rabbita.Html {
+  guard action.receiver is Some(receiver) else { return @html.nothing }
+  let state = receiver.status
+  div(
+    class="flow-evidence-lane flow-receiver-receipt " +
+      moonflow_operator_state_class(state),
+    [
+      span(
+        if state == "pending" {
+          "Receiver receipt"
+        } else {
+          "Recovered receiver receipt"
+        },
+      ),
+      strong(
+        moonflow_operator_text(action.product_id, "Product") + " · " + state,
+      ),
+      small(
+        if state == "pending" {
+          "Waiting for the configured product to return the exact run-bound authority, evidence, outputs, and review receipt."
+        } else {
+          receiver.receipt_ref +
+          " · " +
+          moonflow_short_identity(receiver.receipt_digest) +
+          (if receiver.receipt_recorded_at == "" {
+            ""
+          } else {
+            " · " + receiver.receipt_recorded_at
+          })
+        },
+      ),
+      if state == "accepted" || state == "denied" {
+        a(
+          class="secondary-button",
+          href=receiver.return_path,
+          attrs=@html.Attrs::build()
+            .data_set("testid", "moonflow-return-to-flow")
+            .data_set("handoff-token", receiver.handoff_token),
+          "Return to Flow",
+        )
+      } else {
+        @html.nothing
+      },
+    ],
+  )
+}
+
+///|
 fn render_moonflow_action_button(
   dispatch : Dispatch[Msg],
+  model : Model,
   run_id : String,
   action : MoonFlowOperatorAction,
   dominant : Bool,
@@ -701,6 +879,52 @@ fn render_moonflow_action_button(
 ) -> @rabbita.Html {
   let applying = pending_action_id == action.action_id
   let another_action_applying = pending_action_id != "" && !applying
+  let available = action.enabled &&
+    ["available", "pending"].contains(action.status)
+  let launch_url = moonflow_action_launch_url(model, action)
+  let action_control = if moonflow_action_is_navigation(action) &&
+    available &&
+    launch_url != "" {
+    a(
+      class=if dominant { "primary-button" } else { "secondary-button" },
+      href=launch_url,
+      attrs=@html.Attrs::build()
+        .target(@html.Blank)
+        .rel("noopener noreferrer")
+        .data_set("testid", "moonflow-open-product")
+        .data_set("product-id", moonflow_operator_text(action.product_id, ""))
+        .data_set(
+          "work-item-id",
+          moonflow_operator_text(action.work_item_id, ""),
+        ),
+      action.label,
+    )
+  } else if moonflow_action_is_navigation(action) {
+    button(
+      class=if dominant { "primary-button" } else { "secondary-button" },
+      disabled=true,
+      if action.status == "unavailable" {
+        "Receiver unavailable"
+      } else {
+        action.status.replace(old="_", new=" ")
+      },
+    )
+  } else {
+    button(
+      class=if dominant { "primary-button" } else { "secondary-button" },
+      disabled=!available || pending_action_id != "",
+      on_click=dispatch(ExecuteMoonFlowOperatorAction(run_id, action.action_id)),
+      if applying {
+        "Applying…"
+      } else if another_action_applying {
+        "Waiting"
+      } else if available {
+        action.label
+      } else {
+        action.status.replace(old="_", new=" ")
+      },
+    )
+  }
   div(class="flow-item", [
     div(class="flow-item-main", [
       div(class="flow-item-title", [
@@ -713,22 +937,9 @@ fn render_moonflow_action_button(
       ]),
       p(class="flow-item-why", action.summary),
     ]),
-    button(
-      class=if dominant { "primary-button" } else { "secondary-button" },
-      disabled=!action.enabled ||
-        action.status != "available" ||
-        pending_action_id != "",
-      on_click=dispatch(ExecuteMoonFlowOperatorAction(run_id, action.action_id)),
-      if applying {
-        "Applying…"
-      } else if another_action_applying {
-        "Waiting"
-      } else if action.enabled && action.status == "available" {
-        action.label
-      } else {
-        action.status.replace(old="_", new=" ")
-      },
-    ),
+    render_moonflow_action_handoff(action),
+    render_moonflow_receiver_receipt(action),
+    action_control,
   ])
 }
 
@@ -779,7 +990,7 @@ fn render_moonflow_operator_actions(
     ])
   }
   let enabled = catalog.actions.filter(action => {
-    action.enabled && action.status == "available"
+    action.enabled && ["available", "pending"].contains(action.status)
   })
   let primary = if enabled.is_empty() { None } else { Some(enabled[0]) }
   let secondary = match primary {
@@ -807,6 +1018,7 @@ fn render_moonflow_operator_actions(
       Some(action) =>
         render_moonflow_action_button(
           dispatch,
+          model,
           run_id,
           action,
           true,
@@ -832,6 +1044,7 @@ fn render_moonflow_operator_actions(
           secondary.map(action => {
             render_moonflow_action_button(
               dispatch,
+              model,
               run_id,
               action,
               false,
@@ -844,7 +1057,7 @@ fn render_moonflow_operator_actions(
     render_moonflow_operator_action_receipt(model, run_id),
     small(
       class="flow-quiet",
-      "Choose only a published action. MoonDesk sends its opaque action ID; MoonFlow resolves the authority-bound handoff and records the receipt. Host configuration and templates never enter the browser.",
+      "Choose only a published action. Product navigation carries only the opaque run-bound handoff token; the configured receiver resolves its intake and returns a correlated receipt through MoonFlow. Missing or mismatched entrypoints stay disabled.",
     ),
   ])
 }
@@ -855,20 +1068,33 @@ fn render_moonflow_operator_surface(
   model : Model,
   run : MoonFlowRunProjection,
 ) -> @rabbita.Html {
+  let actions_ready = moonflow_operator_actions_ready(model, run.run_id)
   let surface = match run.operator_surface {
     Some(value) => value
     None =>
       return section(class="flow-operator-workspace", [
         div(class="flow-workspace-head", [
           div([p(class="eyebrow", "Run workspace"), h3("Operate this run")]),
-          span(class="flow-state blocked", "projection unavailable"),
+          span(
+            class="flow-state " +
+              (if actions_ready { "in-progress" } else { "blocked" }),
+            if actions_ready {
+              "actions ready"
+            } else {
+              "projection unavailable"
+            },
+          ),
         ]),
         div(class="flow-workspace-grid", [
           render_moonflow_operator_actions(dispatch, model, run.run_id),
-          p(
-            class="flow-workspace-empty",
-            "No closed-loop operator projection was included in this run response.",
-          ),
+          if actions_ready {
+            @html.nothing
+          } else {
+            p(
+              class="flow-workspace-empty",
+              "No closed-loop operator projection was included in this run response.",
+            )
+          },
         ]),
       ])
   }
@@ -880,14 +1106,26 @@ fn render_moonflow_operator_surface(
     return section(class="flow-operator-workspace", [
       div(class="flow-workspace-head", [
         div([p(class="eyebrow", "Run workspace"), h3("Operate this run")]),
-        span(class="flow-state blocked", status),
+        span(
+          class="flow-state " +
+            (if actions_ready { "in-progress" } else { "blocked" }),
+          if actions_ready {
+            "actions ready"
+          } else {
+            status
+          },
+        ),
       ]),
       div(class="flow-workspace-grid", [
         render_moonflow_operator_actions(dispatch, model, run.run_id),
-        p(
-          class="flow-workspace-empty",
-          "MoonFlow has not published a usable generic operator projection for this run.",
-        ),
+        if actions_ready {
+          @html.nothing
+        } else {
+          p(
+            class="flow-workspace-empty",
+            "MoonFlow has not published a usable generic operator projection for this run.",
+          )
+        },
       ]),
     ])
   }

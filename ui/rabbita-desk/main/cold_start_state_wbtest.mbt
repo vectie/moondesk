@@ -180,6 +180,39 @@ test "workspace result preserves known selection and falls back deterministicall
 }
 
 ///|
+#warnings("-alert_unstable")
+test "restored Flow workspace immediately hydrates its full operator state" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let workspace = cold_start_test_workspace("book-flow")
+  let (_, restored) = update_workspace_results(
+    dispatch,
+    LoadedWorkspaces(Ok([workspace])),
+    {
+      ..cold_start_test_model(false, "/tmp/moonsuite/books", []),
+      workspace_mode: MoonFlow,
+      selected_workspace_id: "book-flow",
+    },
+  )
+  assert_true(restored.moonflow_runs_state is Some(Loading))
+  assert_true(restored.moonflow_runs_error is None)
+  assert_eq(restored.moonflow_composition_status, "Loading composition…")
+  assert_eq(
+    restored.moonflow_operator_action_status,
+    "Loading operator actions…",
+  )
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_moonflow_composition_canvas(dispatch, restored)),
+  )
+  assert_true(markup.contains("Loading executable Work graph"))
+  assert_true(
+    markup.contains(
+      "Restoring the selected MoonBook composition, runs, and authorized actions.",
+    ),
+  )
+  assert_false(markup.contains("No executable Work graph yet"))
+}
+
+///|
 test "workspace catalog success failure and refresh own honest state" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let configured = cold_start_test_model(false, "/tmp/moonsuite/books", [])

@@ -348,6 +348,90 @@ test "Flow renders missing autonomy scorecard and control evidence unavailable" 
 }
 
 ///|
+#warnings("-alert_unstable")
+test "configured v2 receiver actions replace the unavailable operator projection fallback" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let token = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+  let endpoint = "/api/moonflow/runs/run-selected/handoffs/" + token
+  let catalog : MoonFlowOperatorActions = @json.from_json({
+    "run_id": "run-selected",
+    "status": "available",
+    "actions": [
+      {
+        "action_id": "open-moonbook",
+        "action_kind": "open-product",
+        "label": "Open moonbook",
+        "summary": "Continue in the correlated MoonBook.",
+        "status": "pending",
+        "enabled": true,
+        "run_id": "run-selected",
+        "work_item_id": "work-one",
+        "product_id": "moonbook",
+        "receiver": {
+          "handoff_token": token,
+          "handoff_digest": "sha256:" + token,
+          "request_id": "receiver-request-" + token[0:24].to_owned(),
+          "attempt_id": "receiver-attempt-" + token[0:24].to_owned(),
+          "idempotency_key": "receiver-" + token,
+          "intake_path": endpoint,
+          "status_path": endpoint + "/status",
+          "receipt_path": endpoint + "/receipt",
+          "return_path": "/?activity=flow",
+          "status": "pending",
+          "receipt_ref": "",
+          "receipt_digest": "",
+          "receipt_recorded_at": "",
+        },
+        "app_entrypoint": {
+          "kind": "pack-manifest",
+          "pack_id": "moonbook",
+          "entrypoint_id": "moonbook",
+          "path": "/pack-apps/moonbook/",
+          "fallback_path": "",
+          "status": "configured",
+          "launch_path": "/pack-apps/moonbook/?moonflow_run=run-selected&moonflow_handoff=" +
+          token,
+        },
+      },
+    ],
+  })
+  let surface : MoonFlowOperatorSurface = @json.from_json({
+    "contract_id": "moonsuite.operator-surface.v1",
+    "run_id": "run-selected",
+    "available": false,
+    "status": "unavailable",
+  })
+  let run = {
+    ..moonflow_runs_test_run("book-selected", "run-selected"),
+    operator_surface: Some(surface),
+  }
+  let (_, with_actions) = update_workspace_results(
+    dispatch,
+    LoadedMoonFlowOperatorActions("run-selected", Ok(catalog)),
+    {
+      ..moonflow_runs_test_model(),
+      moonflow_runs: [run],
+      moonflow_runs_state: None,
+    },
+  )
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_moonflow_operator_surface(dispatch, with_actions, run),
+    ),
+  )
+  assert_true(markup.contains("1 operator action(s) available"))
+  assert_true(markup.contains("Open moonbook"))
+  assert_true(markup.contains("actions ready"))
+  assert_true(markup.contains("Receiver receipt"))
+  assert_true(markup.contains("moonflow_handoff=" + token))
+  assert_false(
+    markup.contains(
+      "MoonFlow has not published a usable generic operator projection for this run.",
+    ),
+  )
+}
+
+///|
 test "Flow ingest busy state is explicit and settles on every result" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let (_, preparing) = update_workspace_surface_actions(

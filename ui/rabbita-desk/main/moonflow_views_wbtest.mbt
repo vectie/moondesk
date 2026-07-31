@@ -252,6 +252,7 @@ test "Flow adapter readiness requires catalog evidence, not product inventory" {
   let composition = {
     selected_item_ids: ["research"],
     items: [item],
+    node_positions: None,
     catalog_id: None,
     catalog_status: None,
     evaluated_at: None,

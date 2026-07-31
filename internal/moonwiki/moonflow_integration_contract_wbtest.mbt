@@ -83,6 +83,25 @@ async test "saved selection binds all three source identities" {
     create=0o644,
   )
   assert_true(moonflow_saved_selection(root, graph) == ["one"])
+  let positioned : Json = {
+    "contract_id": moonflow_composition_contract(),
+    "source_graph_id": "test-graph-r1",
+    "source_digest": "sha256:test-graph-r1",
+    "declaration_revision": "r1",
+    "selected_item_ids": ["one"],
+    "node_positions": [{ "work_item_id": "one", "x": 310.5, "y": -24.25 }],
+  }
+  @fsx.write_to_file(
+    moonflow_composition_path(root),
+    positioned.stringify(),
+    create=0o644,
+  )
+  let restored_positions = moonflow_saved_node_positions(root, graph)
+  assert_eq(restored_positions.length(), 1)
+  assert_eq(
+    json_string(restored_positions[0], "work_item_id", default=""),
+    "one",
+  )
   let drifted : Json = {
     "contract_id": moonflow_composition_contract(),
     "source_graph_id": "test-graph-r1",
@@ -96,6 +115,7 @@ async test "saved selection binds all three source identities" {
     create=0o644,
   )
   assert_true(moonflow_saved_selection(root, graph) == ["one", "two"])
+  assert_true(moonflow_saved_node_positions(root, graph).is_empty())
 }
 
 ///|
@@ -199,6 +219,7 @@ test "composition projects exact catalog evidence without dropping graph fields"
     "test-book",
     graph,
     ["one"],
+    [],
     "loaded",
     resolution,
   )

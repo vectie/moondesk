@@ -35,6 +35,18 @@ let flow_canvas_fit_height : Double = 520.0
 let flow_canvas_padding : Double = 48.0
 
 ///|
+fn flow_canvas_apply_composition_positions(
+  canvas : FlowCanvasState,
+  composition : MoonFlowComposition,
+) -> FlowCanvasState {
+  let positions : Array[(String, Double, Double)] = []
+  for position in composition.node_positions.unwrap_or([]) {
+    positions.push((position.work_item_id, position.x, position.y))
+  }
+  { ..canvas, pan_dragging: false, drag_node_id: "", node_positions: positions }
+}
+
+///|
 fn flow_item_default_position(
   items : ArrayView[MoonFlowCompositionItem],
   item_id : String,
@@ -329,6 +341,38 @@ fn flow_node_drag_start_action(
         drag_last_x: x.to_double(),
         drag_last_y: y.to_double(),
       },
+    },
+  )
+}
+
+///|
+fn flow_node_keydown_action(
+  model : Model,
+  item_id : String,
+  key : String,
+  shift : Bool,
+) -> (@rabbita.Cmd, Model) {
+  let step = if shift { 32.0 } else { 8.0 }
+  let (dx, dy) = match key {
+    "ArrowLeft" => (-step, 0.0)
+    "ArrowRight" => (step, 0.0)
+    "ArrowUp" => (0.0, -step)
+    "ArrowDown" => (0.0, step)
+    _ => return (@rabbita.none, model)
+  }
+  guard model.moonflow_composition is Some(composition) else {
+    return (@rabbita.none, model)
+  }
+  guard composition.items.any(item => item.work_item_id == item_id) else {
+    return (@rabbita.none, model)
+  }
+  let (x, y) = flow_item_position(model, composition.items[:], item_id)
+  let moved = flow_set_node_position(model, item_id, x + dx, y + dy)
+  (
+    @rabbita.none,
+    {
+      ..moved,
+      moonflow_composition_status: "Unsaved node position · " + item_id,
     },
   )
 }

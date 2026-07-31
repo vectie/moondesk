@@ -97,6 +97,78 @@ fn moonflow_composition_selection_issues(
 }
 
 ///|
+fn moonflow_saved_composition_matches(saved : Json, graph : Json) -> Bool {
+  json_string(saved, "contract_id", default="") ==
+  moonflow_composition_contract() &&
+  json_string(saved, "source_graph_id", default="") ==
+  moonflow_graph_run_id(graph) &&
+  json_string(saved, "source_digest", default="") ==
+  json_string(graph, "source_digest", default="") &&
+  json_string(saved, "declaration_revision", default="") ==
+  json_string(graph, "declaration_revision", default="")
+}
+
+///|
+fn moonflow_composition_position_number(
+  fields : Map[String, Json],
+  key : String,
+) -> Double? {
+  match fields.get(key) {
+    Some(Number(value, ..)) if !value.is_nan() &&
+      !value.is_inf() &&
+      value >= -10000000.0 &&
+      value <= 10000000.0 => Some(value)
+    _ => None
+  }
+}
+
+///|
+fn moonflow_composition_node_positions(
+  value : Json,
+  graph : Json,
+) -> (Array[Json], Array[String]) {
+  let positions : Array[Json] = []
+  let issues : Array[String] = []
+  let known = moonflow_graph_item_ids(graph)
+  let seen : Array[String] = []
+  let values = match json_object_field(value, "node_positions") {
+    None => return (positions, issues)
+    Some(Array(items)) => items
+    _ => {
+      issues.push("node_positions must be an array")
+      return (positions, issues)
+    }
+  }
+  for item in values {
+    guard item is Object(fields) else {
+      issues.push("Each node position must be an object")
+      continue
+    }
+    let work_item_id = match fields.get("work_item_id") {
+      Some(String(text)) => text.trim().to_owned()
+      _ => ""
+    }
+    let x = moonflow_composition_position_number(fields, "x")
+    let y = moonflow_composition_position_number(fields, "y")
+    if work_item_id == "" || !known.contains(work_item_id) {
+      issues.push("Unknown positioned work item: " + work_item_id)
+    } else if seen.contains(work_item_id) {
+      issues.push("Duplicate node position: " + work_item_id)
+    } else if x is None || y is None {
+      issues.push("Invalid node coordinates: " + work_item_id)
+    } else {
+      seen.push(work_item_id)
+      positions.push({
+        "work_item_id": work_item_id,
+        "x": x.unwrap(),
+        "y": y.unwrap(),
+      })
+    }
+  }
+  (positions, issues)
+}
+
+///|
 fn moonflow_composition_digest(
   graph : Json,
   selected : Array[String],
@@ -123,6 +195,7 @@ fn moonflow_composition_response(
   workspace_id : String,
   graph : Json,
   selected : Array[String],
+  node_positions : Array[Json],
   status : String,
   catalog : MoonFlowCapabilityCatalogResolution,
 ) -> Json {
@@ -150,6 +223,7 @@ fn moonflow_composition_response(
     "evaluated_at": evaluated_at,
     "catalog_evidence": catalog.evidence,
     "selected_item_ids": selected,
+    "node_positions": Json::array(node_positions),
     "items": Json::array(
       moonflow_catalog_enriched_items(graph, catalog.catalog),
     ),
@@ -168,14 +242,7 @@ async fn moonflow_saved_selection(
   let saved = @json.parse(@fs.read_file(path).text()) catch {
     _ => return moonflow_graph_item_ids(graph)
   }
-  if json_string(saved, "contract_id", default="") !=
-    moonflow_composition_contract() ||
-    json_string(saved, "source_graph_id", default="") !=
-    moonflow_graph_run_id(graph) ||
-    json_string(saved, "source_digest", default="") !=
-    json_string(graph, "source_digest", default="") ||
-    json_string(saved, "declaration_revision", default="") !=
-    json_string(graph, "declaration_revision", default="") {
+  if !moonflow_saved_composition_matches(saved, graph) {
     return moonflow_graph_item_ids(graph)
   }
   let selected = json_string_array_items(saved, "selected_item_ids")
@@ -183,6 +250,27 @@ async fn moonflow_saved_selection(
     selected
   } else {
     moonflow_graph_item_ids(graph)
+  }
+}
+
+///|
+async fn moonflow_saved_node_positions(
+  book_root : String,
+  graph : Json,
+) -> Array[Json] {
+  let path = moonflow_composition_path(book_root)
+  if !@fs.exists(path) {
+    return []
+  }
+  let saved = @json.parse(@fs.read_file(path).text()) catch { _ => return [] }
+  if !moonflow_saved_composition_matches(saved, graph) {
+    return []
+  }
+  let (positions, issues) = moonflow_composition_node_positions(saved, graph)
+  if issues.is_empty() {
+    positions
+  } else {
+    []
   }
 }
 
@@ -378,11 +466,15 @@ async fn handle_moonflow_composition(
   let action = json_string(payload, "action", default="load")
   if action == "load" {
     let selected = moonflow_saved_selection(workspace.root_path, graph)
+    let node_positions = moonflow_saved_node_positions(
+      workspace.root_path,
+      graph,
+    )
     send_json(
       conn,
       method_,
       moonflow_composition_response(
-        workspace_id, graph, selected, "loaded", catalog,
+        workspace_id, graph, selected, node_positions, "loaded", catalog,
       ),
     )
     return
@@ -395,8 +487,12 @@ async fn handle_moonflow_composition(
   }
   let selected = json_string_array_items(payload, "selected_item_ids")
   let issues = moonflow_composition_selection_issues(graph, selected)
-  if !issues.is_empty() {
-    send_api_error(conn, method_, 409, "Conflict", issues.join("; "))
+  let (node_positions, position_issues) = moonflow_composition_node_positions(
+    payload, graph,
+  )
+  let validation_issues = issues + position_issues
+  if !validation_issues.is_empty() {
+    send_api_error(conn, method_, 409, "Conflict", validation_issues.join("; "))
     return
   }
   let path = moonflow_composition_path(workspace.root_path)
@@ -415,6 +511,7 @@ async fn handle_moonflow_composition(
       default="",
     ),
     "selected_item_ids": selected,
+    "node_positions": Json::array(node_positions),
     "recorded_at": evaluated_at,
   }
   @fsx.write_to_file(path, record.stringify(indent=2) + "\n", create=0o644)
@@ -422,7 +519,7 @@ async fn handle_moonflow_composition(
     conn,
     method_,
     moonflow_composition_response(
-      workspace_id, graph, selected, "saved", catalog,
+      workspace_id, graph, selected, node_positions, "saved", catalog,
     ),
   )
 }

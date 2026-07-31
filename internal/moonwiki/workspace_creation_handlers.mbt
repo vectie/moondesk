@@ -305,7 +305,10 @@ async fn import_moonbook_from_uploaded_files(
         None =>
           return Err(
             workspace_create_error(
-              400, "Bad Request", "MoonBook folder upload must contain book.json",
+              400,
+              "Bad Request",
+              "MoonBook folder upload must contain " +
+              moonbook_metadata_requirement(),
             ),
           )
       }
@@ -370,16 +373,16 @@ async fn import_moonbook_from_source_dir(
   source_path : String,
   source_name : String,
 ) -> Result[Json, Json] {
-  let manifest_path = @pathx.join(source_path, "book.json")
-  if !@fs.exists(manifest_path) || is_directory(manifest_path) {
-    return Err(
-      workspace_create_error(
-        400, "Bad Request", "MoonBook source must contain book.json",
-      ),
-    )
-  }
-  let manifest = @json.parse(@fs.read_file(manifest_path).text()) catch {
-    _ => Json::object({})
+  let manifest = match moonbook_metadata(source_path) {
+    Some(value) => value
+    None =>
+      return Err(
+        workspace_create_error(
+          400,
+          "Bad Request",
+          "MoonBook source must contain " + moonbook_metadata_requirement(),
+        ),
+      )
   }
   let requested_id = json_first_string(payload, ["book_id", "id"], default="")
   let manifest_id = json_first_string(manifest, ["id", "book_id"], default="")
@@ -458,7 +461,9 @@ async fn import_moonbook_from_archive(
       None =>
         return Err(
           workspace_create_error(
-            400, "Bad Request", "MoonBook archive must contain book.json",
+            400,
+            "Bad Request",
+            "MoonBook archive must contain " + moonbook_metadata_requirement(),
           ),
         )
     }
@@ -528,7 +533,7 @@ async fn import_extract_zip_archive(
 
 ///|
 async fn import_archive_source_dir(extract_root : String) -> String? {
-  if @fs.exists(@pathx.join(extract_root, "book.json")) {
+  if moonbook_metadata_exists(extract_root) {
     return Some(extract_root)
   }
   let candidates : Array[String] = []
@@ -537,7 +542,7 @@ async fn import_archive_source_dir(extract_root : String) -> String? {
       continue
     }
     let child = @pathx.join(extract_root, name)
-    if is_directory(child) && @fs.exists(@pathx.join(child, "book.json")) {
+    if is_directory(child) && moonbook_metadata_exists(child) {
       candidates.push(child)
     }
   }

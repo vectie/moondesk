@@ -38,7 +38,7 @@ async fn validated_library_root(input : String) -> Result[String, String] {
   if !(kind is Directory) {
     return Err("The selected library path must be a folder")
   }
-  if @fsx.exists(@pathx.join(root, "book.json")) {
+  if moonbook_metadata_exists(root) {
     return Err("Choose a library folder, not one MoonBook")
   }
   if @fsx.exists(@pathx.join(root, "moon.mod")) ||

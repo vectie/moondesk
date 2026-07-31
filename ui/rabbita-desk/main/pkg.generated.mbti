@@ -117,6 +117,8 @@ type MoonFlowComposition derive(@json.FromJson)
 
 type MoonFlowCompositionItem derive(@json.FromJson)
 
+type MoonFlowCompositionNodePosition derive(ToJson, @json.FromJson)
+
 type MoonFlowDeliveryOperatorProjection derive(@json.FromJson)
 
 type MoonFlowDueActionOperatorProjection derive(@json.FromJson)
@@ -142,6 +144,12 @@ type MoonFlowOperatorAction derive(@json.FromJson)
 type MoonFlowOperatorActionReceipt derive(@json.FromJson)
 
 type MoonFlowOperatorActions derive(@json.FromJson)
+
+type MoonFlowOperatorAppEntrypoint derive(@json.FromJson)
+
+type MoonFlowOperatorEvidenceRef derive(@json.FromJson)
+
+type MoonFlowOperatorReceiver derive(@json.FromJson)
 
 type MoonFlowOperatorRowView
 

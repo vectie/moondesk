@@ -73,6 +73,36 @@ async fn route_moonflow_api(
       }
       true
     }
+    ["api", "moonflow", "runs", run_id, "handoffs", token] => {
+      if is_read_method(method_) {
+        handle_moonflow_receiver_intake(
+          workspace_root, run_id, token, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])
+      }
+      true
+    }
+    ["api", "moonflow", "runs", run_id, "handoffs", token, "status"] => {
+      if is_read_method(method_) {
+        handle_moonflow_receiver_status(
+          workspace_root, run_id, token, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])
+      }
+      true
+    }
+    ["api", "moonflow", "runs", run_id, "handoffs", token, "receipt"] => {
+      if method_ is Post {
+        handle_moonflow_receiver_receipt(
+          workspace_root, run_id, token, body, method_, conn,
+        )
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
     _ => false
   }
 }

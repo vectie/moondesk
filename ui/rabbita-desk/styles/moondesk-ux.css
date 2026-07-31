@@ -250,6 +250,13 @@
   color: #5b6470;
 }
 
+.flow-node-grip:focus-visible {
+  border-radius: 4px;
+  color: #334155;
+  outline: 3px solid rgba(37, 99, 235, 0.3);
+  outline-offset: 2px;
+}
+
 .flow-node-head {
   display: flex;
   align-items: center;

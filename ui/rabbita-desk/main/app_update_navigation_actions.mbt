@@ -946,6 +946,18 @@ fn select_workspace_mode_action(
     } else {
       model.moonflow_runs_error
     },
+    moonflow_composition_status: if mode == MoonFlow &&
+      model.selected_workspace_id != "" {
+      "Loading composition…"
+    } else {
+      model.moonflow_composition_status
+    },
+    moonflow_operator_action_status: if mode == MoonFlow &&
+      model.selected_workspace_id != "" {
+      "Loading operator actions…"
+    } else {
+      model.moonflow_operator_action_status
+    },
     review_state: if mode == ReviewWorkspace &&
       model.selected_workspace_id != "" {
       Some(Loading)

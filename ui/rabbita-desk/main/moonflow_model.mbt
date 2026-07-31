@@ -113,12 +113,66 @@ struct MoonFlowCapabilityEvidence {
 } derive(FromJson)
 
 ///|
+struct MoonFlowOperatorEvidenceRef {
+  kind : String
+  reference : String
+  digest : String
+} derive(FromJson)
+
+///|
+struct MoonFlowOperatorAppEntrypoint {
+  kind : String
+  pack_id : String
+  entrypoint_id : String
+  path : String
+  fallback_path : String
+  status : String?
+  launch_path : String?
+} derive(FromJson)
+
+///|
+struct MoonFlowOperatorReceiver {
+  handoff_token : String
+  handoff_digest : String
+  request_id : String
+  attempt_id : String
+  idempotency_key : String
+  intake_path : String
+  status_path : String
+  receipt_path : String
+  return_path : String
+  status : String
+  receipt_ref : String
+  receipt_digest : String
+  receipt_recorded_at : String
+} derive(FromJson)
+
+///|
 struct MoonFlowOperatorAction {
   action_id : String
+  action_kind : String?
   label : String
   summary : String
   status : String
   enabled : Bool
+  run_id : String?
+  work_item_id : String?
+  declaration_id : String?
+  product_id : String?
+  operation : String?
+  requested_authority : String?
+  authority_status : String?
+  claim_ceiling : String?
+  capability_status : String?
+  input_contracts : Array[String]?
+  output_contracts : Array[String]?
+  evidence_refs : Array[MoonFlowOperatorEvidenceRef]?
+  review_required : Bool?
+  review_status : String?
+  acceptance_criteria : Array[String]?
+  handoff_ref : String?
+  receiver : MoonFlowOperatorReceiver?
+  app_entrypoint : MoonFlowOperatorAppEntrypoint?
 } derive(FromJson)
 
 ///|
@@ -179,9 +233,17 @@ struct MoonFlowCompositionItem {
 } derive(FromJson)
 
 ///|
+struct MoonFlowCompositionNodePosition {
+  work_item_id : String
+  x : Double
+  y : Double
+} derive(FromJson, ToJson)
+
+///|
 struct MoonFlowComposition {
   selected_item_ids : Array[String]
   items : Array[MoonFlowCompositionItem]
+  node_positions : Array[MoonFlowCompositionNodePosition]?
   catalog_id : String?
   catalog_status : String?
   evaluated_at : String?

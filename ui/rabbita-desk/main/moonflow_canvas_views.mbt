@@ -187,6 +187,33 @@ fn flow_zoom_percent(model : Model) -> String {
 }
 
 ///|
+#cfg(target="js")
+fn flow_node_keyboard_cmd(
+  dispatch : Dispatch[Msg],
+  item_id : String,
+  keyboard : @dom.KeyboardEvent,
+) -> @rabbita.Cmd {
+  let key = keyboard.key()
+  match key {
+    "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown" => {
+      keyboard.prevent_default()
+      dispatch(FlowNodeKeyDown(item_id, key, keyboard.shift_key()))
+    }
+    _ => @rabbita.none
+  }
+}
+
+///|
+#cfg(not(target="js"))
+fn flow_node_keyboard_cmd(
+  _dispatch : Dispatch[Msg],
+  _item_id : String,
+  _keyboard : @dom.KeyboardEvent,
+) -> @rabbita.Cmd {
+  @rabbita.none
+}
+
+///|
 fn render_flow_canvas_node(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -215,9 +242,17 @@ fn render_flow_canvas_node(
     [
       div(
         class="flow-node-grip",
-        title="Drag to move this node",
+        title="Drag to move; use Arrow keys to nudge and Shift+Arrow for a larger step",
         attrs=@html.Attrs::build()
-          .aria_label("Move node " + item.work_item_id)
+          .tabindex(0)
+          .role("button")
+          .aria_label(
+            "Move node " +
+            item.work_item_id +
+            " with Arrow keys; hold Shift for a larger step",
+          )
+          .data_set("testid", "moonflow-node-grip")
+          .data_set("work-item-id", item.work_item_id)
           .on_mousedown(fn(event) {
             event.prevent_default()
             event.stop_propagation()
@@ -228,6 +263,9 @@ fn render_flow_canvas_node(
                 event.get_client_y(),
               ),
             )
+          })
+          .on_keydown(fn(keyboard) {
+            flow_node_keyboard_cmd(dispatch, item.work_item_id, keyboard)
           }),
         [span("⠿")],
       ),
@@ -597,15 +635,29 @@ fn render_moonflow_composition_canvas(
         div(class="flow-composer-stage", [
           render_flow_canvas_viewport(dispatch, model, [
             div(class="flow-canvas-empty", [
-              strong("No executable Work graph yet"),
+              strong(
+                if model.moonflow_composition_status == "Loading composition…" {
+                  "Loading executable Work graph"
+                } else {
+                  "No executable Work graph yet"
+                },
+              ),
               p(
-                "Add a typed Work graph to this MoonBook. Every product and connection will appear on this canvas.",
+                if model.moonflow_composition_status == "Loading composition…" {
+                  "Restoring the selected MoonBook composition, runs, and authorized actions."
+                } else {
+                  "Add a typed Work graph to this MoonBook. Every product and connection will appear on this canvas."
+                },
               ),
-              button(
-                class="secondary-button",
-                on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-                "Open executable document",
-              ),
+              if model.moonflow_composition_status == "Loading composition…" {
+                @html.nothing
+              } else {
+                button(
+                  class="secondary-button",
+                  on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+                  "Open executable document",
+                )
+              },
             ]),
           ]),
         ])

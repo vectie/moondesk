@@ -507,11 +507,18 @@ fn save_moonflow_composition_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,
   selected_item_ids : Array[String],
+  node_positions : Array[(String, Double, Double)],
 ) -> @rabbita.Cmd {
   let body : Json = {
     "action": "save",
     "workspace_id": workspace_id,
     "selected_item_ids": selected_item_ids,
+    "node_positions": Json::array(
+      node_positions.map(position => {
+        let (work_item_id, x, y) = position
+        ({ "work_item_id": work_item_id, "x": x, "y": y } : Json)
+      }),
+    ),
     "recorded_at": moonflow_control_recorded_at(),
   }
   @http.post(@desk.desktop_api_url(["api", "moonflow", "composition"]))
@@ -532,7 +539,9 @@ fn control_moonflow_cmd(
   action : String,
   detail : String,
 ) -> @rabbita.Cmd {
-  @http.post(@desk.desktop_api_url(["api", "moonflow", "runs", run_id, "control"]))
+  @http.post(
+    @desk.desktop_api_url(["api", "moonflow", "runs", run_id, "control"]),
+  )
   .with_json({
     "action": action,
     "detail": detail,
@@ -554,14 +563,11 @@ fn execute_moonflow_operator_action_cmd(
   action_id : String,
 ) -> @rabbita.Cmd {
   let body : Json = {}
-  @http.post(@desk.desktop_api_url([
-      "api",
-      "moonflow",
-      "runs",
-      run_id,
-      "actions",
-      action_id,
-    ]))
+  @http.post(
+    @desk.desktop_api_url([
+      "api", "moonflow", "runs", run_id, "actions", action_id,
+    ]),
+  )
   .with_json(body)
   .expect_json(result => {
     dispatch(

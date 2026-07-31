@@ -232,6 +232,7 @@ fn update_workspace_surface_actions(
               dispatch,
               model.selected_workspace_id,
               composition.selected_item_ids,
+              model.flow_canvas.node_positions,
             ),
             {
               ..model,
@@ -246,6 +247,8 @@ fn update_workspace_surface_actions(
     FlowPanEnd => flow_pointer_end_action(model)
     FlowNodeDragStart(item_id, x, y) =>
       flow_node_drag_start_action(model, item_id, x, y)
+    FlowNodeKeyDown(item_id, key, shift) =>
+      flow_node_keydown_action(model, item_id, key, shift)
     FlowCanvasFit => flow_canvas_fit_action(model)
     FlowCanvasReset => flow_canvas_reset_action(model)
     SetReviewDecisionNote(note) =>

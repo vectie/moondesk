@@ -63,8 +63,7 @@ async fn discover_workspaces(
 
 ///|
 async fn moonbook_workspace_status(book_root : String) -> @desk.WorkspaceStatus {
-  if @fs.exists(@pathx.join(book_root, "book.json")) ||
-    @fs.exists(@pathx.join(book_root, "book.toml")) {
+  if moonbook_metadata_exists(book_root) {
     Ready
   } else {
     NeedsAttention
@@ -76,16 +75,12 @@ async fn moonbook_workspace_display_name(
   book_root : String,
   fallback : String,
 ) -> String {
-  let book_json_path = @pathx.join(book_root, "book.json")
-  if !@fs.exists(book_json_path) {
-    return fallback
-  }
-  let book_json = read_json_file_or_object(book_json_path)
-  let title = json_string(book_json, "title", default="").trim().to_owned()
+  guard moonbook_metadata(book_root) is Some(metadata) else { return fallback }
+  let title = json_string(metadata, "title", default="").trim().to_owned()
   if title != "" {
     return title
   }
-  let name = json_string(book_json, "name", default="").trim().to_owned()
+  let name = json_string(metadata, "name", default="").trim().to_owned()
   if name != "" {
     return name
   }

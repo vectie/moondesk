@@ -124,6 +124,8 @@ fn update(
     FlowPanEnd => update_workspace_surface_actions(dispatch, msg, model)
     FlowNodeDragStart(_, _, _) =>
       update_workspace_surface_actions(dispatch, msg, model)
+    FlowNodeKeyDown(_, _, _) =>
+      update_workspace_surface_actions(dispatch, msg, model)
     FlowCanvasFit => update_workspace_surface_actions(dispatch, msg, model)
     FlowCanvasReset => update_workspace_surface_actions(dispatch, msg, model)
     SelectActivity(_) => update_navigation_actions(dispatch, msg, model)
