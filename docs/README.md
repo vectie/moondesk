@@ -37,43 +37,46 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
    catalog-backed selection, MoonFlow import, and effect-authority boundary.
 4. [MOONFLOW_RECEIVER_LOOP.md](MOONFLOW_RECEIVER_LOOP.md): generic
    manifest-owned app intake, receipt return, visible state, and recovery.
-5. [DESK_MODE_DESIGN.md](DESK_MODE_DESIGN.md): file/workspace mode behavior.
-6. [FIRST_RUN_AND_VOCABULARY.md](FIRST_RUN_AND_VOCABULARY.md): evidence-backed
+5. [SUPERVISOR_CLOSED_LOOP.md](SUPERVISOR_CLOSED_LOOP.md): first-agent
+   ownership, MoonDesk's narrow MoonClaw control proxy, Bookkeeper acceptance,
+   and the restart-safe cross-product call chain.
+6. [DESK_MODE_DESIGN.md](DESK_MODE_DESIGN.md): file/workspace mode behavior.
+7. [FIRST_RUN_AND_VOCABULARY.md](FIRST_RUN_AND_VOCABULARY.md): evidence-backed
    first-run inventory, target vocabulary, state matrix, and capability setup.
-7. [NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md](NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md):
+8. [NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md](NATIVE_LIBRARY_PICKER_ACCEPTANCE_2026-07-27.md):
    packaged macOS picker phases, defects, interaction evidence, persistence,
    and remaining restart/platform boundary.
-8. [WIKI_MODE_UX_PLAN.md](WIKI_MODE_UX_PLAN.md): normal-user Wiki information
+9. [WIKI_MODE_UX_PLAN.md](WIKI_MODE_UX_PLAN.md): normal-user Wiki information
    hierarchy, progressive disclosure, implementation phases, and UX E2E gates.
-9. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
+10. [WIKI_MODE_USER_E2E_PLAN.md](WIKI_MODE_USER_E2E_PLAN.md): user-visible Wiki
    journeys, rationale, expected behavior, methodology, and acceptance evidence.
-10. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
-11. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
+11. [MOONCODE.md](MOONCODE.md): code-mode contract and MoonClaw handoff.
+12. [MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md](MOONCODE_CLEAN_ARCHITECTURE_UPGRADE.md):
    canonical conversation/runtime upgrade plan.
-12. [MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md):
+13. [MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md](MOONCODE_OPENSEEK_ALIGNMENT_PLAN.md):
    finite single-owner conversation, thinking, and live-update correction.
-13. [MOONCODE_TYPED_CONTRACT_TARGET.md](MOONCODE_TYPED_CONTRACT_TARGET.md):
+14. [MOONCODE_TYPED_CONTRACT_TARGET.md](MOONCODE_TYPED_CONTRACT_TARGET.md):
    Phase 3.1 public-surface inventory, typed target, decisions, and migration slices.
-14. [STATUS.md](STATUS.md): current implementation state and known gaps.
-15. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): reproducible Phase 0
+15. [STATUS.md](STATUS.md): current implementation state and known gaps.
+16. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): reproducible Phase 0
     starting/current evidence, repository metrics, and explicitly unmeasured gaps.
-16. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
+17. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
     active-document contradiction audit, evidence boundary, and Phase 0 gate state.
-17. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
+18. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
     retained clean-checkout full-validation transcript and evidence boundary.
-18. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): phase-by-phase preview and
+19. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): phase-by-phase preview and
     credentialed release procedure, immutable-output policy, and remote gate.
-19. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
+20. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
     exact local unsigned-candidate commands, checksums, refusal tests, and
     evidence boundary.
-20. [qualification/README.md](qualification/README.md): genuine UI-to-UI
+21. [qualification/README.md](qualification/README.md): genuine UI-to-UI
     qualification rules, current case results, interproduct seams, retained
     evidence layout, and the detailed operator handbook.
-21. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
-22. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
+22. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
+23. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
    phased plan for product clarity, typed contracts, package boundaries,
    security, observability, release discipline, and operational proof.
-23. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
+24. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
    historical migration plan and validation record; it is not a current plan.
 
 ## Implementation Map

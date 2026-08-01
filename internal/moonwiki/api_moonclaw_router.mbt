@@ -114,6 +114,87 @@ async fn route_moonclaw_api(
       }
       true
     }
+    ["api", "moonclaw", "supervisors", "activate"] => {
+      let endpoint = @desk.moonclaw_supervisor_activation_route()
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_moonclaw_supervisor_activation(
+          workspace_root, body, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "supervisor-bridge"] => {
+      let endpoint = @desk.moonclaw_supervisor_bridge_route()
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_supervisor_bridge_status(workspace_root, method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "supervisor-bridge", "grant-and-sync"] => {
+      let endpoint = @desk.moonclaw_supervisor_bridge_route(
+        endpoint="grant-and-sync",
+      )
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_supervisor_bridge_sync(workspace_root, body, method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "supervisor-bridge", "receipts", kind, target_id] => {
+      let endpoint = @desk.moonclaw_supervisor_bridge_receipt_route()
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_supervisor_bridge_receipt(
+          workspace_root, kind, target_id, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "supervisors", supervisor_id, "status"] => {
+      let endpoint = @desk.moonclaw_supervisor_route("status")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_moonclaw_supervisor_read(
+          workspace_root, supervisor_id, "status", request_path, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "supervisors", supervisor_id, "events"] => {
+      let endpoint = @desk.moonclaw_supervisor_route("events")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_moonclaw_supervisor_read(
+          workspace_root, supervisor_id, "events", request_path, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "supervisors", supervisor_id, "commands", action] => {
+      let endpoint = @desk.moonclaw_supervisor_route("commands/" + action)
+      if moonclaw_supervisor_command_allowed(action) {
+        if desktop_api_route_accepts_post(endpoint, method_) {
+          handle_moonclaw_supervisor_command(
+            workspace_root, supervisor_id, action, body, method_, conn,
+          )
+        } else {
+          send_desktop_api_method_not_allowed(conn, method_, endpoint)
+        }
+      } else {
+        send_api_error(
+          conn, method_, 404, "Not Found", "Unknown supervisor command",
+        )
+      }
+      true
+    }
     _ => false
   }
 }

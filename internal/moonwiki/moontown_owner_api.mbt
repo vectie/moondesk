@@ -1,5 +1,7 @@
 ///| MoonDesk is a typed local proxy here. MoonTown remains the only writer of
-///| Town requests and standing-goal state.
+
+///|
+/// Town requests and standing-goal state.
 async fn moontown_owner_service_url(
   workspace_root : String,
 ) -> Result[String, String] {
@@ -43,10 +45,8 @@ async fn verified_moontown_owner_service_url(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let contract = match moontown_owner_get_raw_json(
-    service_url,
-    "/api/contract",
-  ) {
+  let contract = match
+    moontown_owner_get_raw_json(service_url, "/api/contract") {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -80,18 +80,27 @@ async fn moontown_owner_post_json(
     Ok(value) => value
     Err(error) => return Err(error)
   }
-  let (response, data) = @http.post(service_url + path, body, headers={
+  // MoonTown's owner boundary rejects chunked or unbounded writes. Encode the
+  // exact payload once so the trusted bridge can declare and send one bounded
+  // representation instead of relying on the high-level HTTP helper, which
+  // installs caller headers as connection headers and strips Content-Length.
+  let encoded = @encoding/utf8.encode(body.stringify())
+  let client = @http.Client(service_url)
+  defer client.close()
+  let response = client.post(path, encoded, extra_headers={
     "Content-Type": "application/json",
     "Accept": "application/json",
+    "Content-Length": encoded.length().to_string(),
   }) catch {
-    error => return Err("MoonTown is unavailable at {path}: {error}")
+    error => return Err("MoonTown is unavailable at \{path}: \{error}")
   }
+  let data = client.read_all()
   let text = data.text() catch { _ => "" }
   if response.code < 200 || response.code > 299 {
-    return Err("MoonTown returned {response.code} for {path}: {text}")
+    return Err("MoonTown returned \{response.code} for \{path}: \{text}")
   }
   let payload = @json.parse(text) catch {
-    _ => return Err("MoonTown returned invalid JSON for {path}")
+    _ => return Err("MoonTown returned invalid JSON for \{path}")
   }
   Ok(payload)
 }

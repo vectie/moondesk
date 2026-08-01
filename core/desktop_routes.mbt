@@ -228,6 +228,43 @@ pub fn moonclaw_run_artifacts_route() -> String {
 }
 
 ///|
+pub fn moonclaw_supervisor_activation_route() -> String {
+  moonclaw_route("supervisors/activate")
+}
+
+///|
+pub fn moonclaw_supervisor_route(endpoint : String) -> String {
+  desktop_api_path(["api", "moonclaw"]) +
+  "/supervisors/<supervisor-id>/" +
+  url_path(endpoint)
+}
+
+///|
+pub fn moonclaw_supervisor_endpoint_url(
+  supervisor_id : String,
+  endpoint : String,
+) -> String {
+  desktop_api_path(["api", "moonclaw", "supervisors", supervisor_id]) +
+  "/" +
+  url_path(endpoint)
+}
+
+///|
+pub fn moonclaw_supervisor_bridge_route(endpoint? : String = "") -> String {
+  let root = moonclaw_route("supervisor-bridge")
+  if endpoint == "" {
+    root
+  } else {
+    root + "/" + url_path(endpoint)
+  }
+}
+
+///|
+pub fn moonclaw_supervisor_bridge_receipt_route() -> String {
+  moonclaw_supervisor_bridge_route(endpoint="receipts/<kind>/<target-id>")
+}
+
+///|
 pub fn moonclaw_workspace_url(
   endpoint : String,
   workspace_id : String,
@@ -478,6 +515,58 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(moonclaw_route("auth/codex/start"), ["POST"]),
     desktop_api_route_contract(moonclaw_route("auth/copilot/start"), ["POST"]),
     desktop_api_route_contract(moonclaw_route("config/openrouter-key"), ["POST"]),
+    desktop_api_route_contract(moonclaw_supervisor_activation_route(), ["POST"]),
+    desktop_api_route_contract(moonclaw_supervisor_route("status"), [
+      "GET", "HEAD",
+    ]),
+    desktop_api_route_contract(moonclaw_supervisor_route("events"), [
+      "GET", "HEAD",
+    ]),
+    desktop_api_route_contract(moonclaw_supervisor_route("commands/message"), [
+      "POST",
+    ]),
+    desktop_api_route_contract(moonclaw_supervisor_route("commands/wake"), [
+      "POST",
+    ]),
+    desktop_api_route_contract(moonclaw_supervisor_route("commands/steer"), [
+      "POST",
+    ]),
+    desktop_api_route_contract(moonclaw_supervisor_route("commands/stop"), [
+      "POST",
+    ]),
+    desktop_api_route_contract(
+      moonclaw_supervisor_route("commands/retry-resume"),
+      ["POST"],
+    ),
+    desktop_api_route_contract(moonclaw_supervisor_route("commands/delegate"), [
+      "POST",
+    ]),
+    desktop_api_route_contract(
+      moonclaw_supervisor_route("commands/worker-steer"),
+      ["POST"],
+    ),
+    desktop_api_route_contract(
+      moonclaw_supervisor_route("commands/worker-stop"),
+      ["POST"],
+    ),
+    desktop_api_route_contract(
+      moonclaw_supervisor_route("commands/worker-retry-resume"),
+      ["POST"],
+    ),
+    desktop_api_route_contract(
+      moonclaw_supervisor_route("commands/outcome-evidence"),
+      ["POST"],
+    ),
+    desktop_api_route_contract(moonclaw_supervisor_bridge_route(), [
+      "GET", "HEAD",
+    ]),
+    desktop_api_route_contract(
+      moonclaw_supervisor_bridge_route(endpoint="grant-and-sync"),
+      ["POST"],
+    ),
+    desktop_api_route_contract(moonclaw_supervisor_bridge_receipt_route(), [
+      "GET", "HEAD",
+    ]),
     desktop_api_route_contract(review_items_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(review_decision_route(), ["POST"]),
     desktop_api_route_contract(preferences_views_route(), [

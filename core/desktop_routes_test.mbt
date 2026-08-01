@@ -68,6 +68,36 @@ test "product and system desktop routes live in core boundary" {
     "/api/moonclaw/runs/<run-id>/artifacts",
   )
   assert_eq(
+    @core.moonclaw_supervisor_activation_route(),
+    "/api/moonclaw/supervisors/activate",
+  )
+  assert_eq(
+    @core.moonclaw_supervisor_route("commands/retry-resume"),
+    "/api/moonclaw/supervisors/<supervisor-id>/commands/retry-resume",
+  )
+  assert_eq(
+    @core.moonclaw_supervisor_route("commands/delegate"),
+    "/api/moonclaw/supervisors/<supervisor-id>/commands/delegate",
+  )
+  assert_eq(
+    @core.moonclaw_supervisor_route("commands/worker-retry-resume"),
+    "/api/moonclaw/supervisors/<supervisor-id>/commands/worker-retry-resume",
+  )
+  assert_eq(
+    @core.moonclaw_supervisor_endpoint_url(
+      "supervisor demo/#one", "commands/message",
+    ),
+    "/api/moonclaw/supervisors/supervisor%20demo%2F%23one/commands/message",
+  )
+  assert_eq(
+    @core.moonclaw_supervisor_bridge_route(),
+    "/api/moonclaw/supervisor-bridge",
+  )
+  assert_eq(
+    @core.moonclaw_supervisor_bridge_route(endpoint="grant-and-sync"),
+    "/api/moonclaw/supervisor-bridge/grant-and-sync",
+  )
+  assert_eq(
     @core.moonclaw_workspace_url("runs", "book demo/#one"),
     "/api/moonclaw/runs?workspace=book%20demo%2F%23one",
   )
@@ -163,6 +193,36 @@ test "desktop api route contracts own active backend method policy" {
   assert_eq(
     @core.desktop_api_route_allowed_methods(
       @core.moonclaw_route("config/openrouter-key"),
+    ).join(", "),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_supervisor_activation_route(),
+    ).join(", "),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_supervisor_route("status"),
+    ).join(", "),
+    "GET, HEAD",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_supervisor_route("commands/message"),
+    ).join(", "),
+    "POST",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_supervisor_bridge_route(),
+    ).join(", "),
+    "GET, HEAD",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.moonclaw_supervisor_bridge_route(endpoint="grant-and-sync"),
     ).join(", "),
     "POST",
   )

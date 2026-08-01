@@ -86,14 +86,21 @@ pub async fn Server::serve_desk(
     bootstrap_root
   }
   let active_root = @ref.new(initial_root)
-  self.server.run_forever(
-    (request, body, conn) => {
-      handle_desk_request(
-        ui_root, bootstrap_root, active_root, request, body, conn,
-      )
-    },
-    allow_failure=true,
-  )
+  @async.with_task_group(group => {
+    group.spawn_bg(
+      () => supervisor_bridge_auto_pump(active_root),
+      no_wait=true,
+      allow_failure=true,
+    )
+    self.server.run_forever(
+      (request, body, conn) => {
+        handle_desk_request(
+          ui_root, bootstrap_root, active_root, request, body, conn,
+        )
+      },
+      allow_failure=true,
+    )
+  })
 }
 
 ///|
