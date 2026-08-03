@@ -71,6 +71,48 @@ fn mooncode_local_session_from_summary(
 }
 
 ///|
+fn mooncode_local_session_from_summary(
+  summary : @mooncode_core.MoonCodeSessionSummary,
+  conversation : @mooncode_core.MoonCodeConversation?,
+) -> MoonCodeSession {
+  let local_summary = match summary.extensions.get("mooncode_summary") {
+    Some(value) =>
+      try @json.from_json(value) catch {
+        _ => { event_count: 0, verified_test_count: 0, pending_diff_count: 0 }
+      }
+    None => { event_count: 0, verified_test_count: 0, pending_diff_count: 0 }
+  }
+  let runtime_detail = match summary.extensions.get("mooncode_runtime_detail") {
+    Some(String(value)) => Some(value)
+    _ => None
+  }
+  let canonical_unchanged = match summary.extensions.get("canonical_unchanged") {
+    Some(True) => Some(true)
+    Some(False) => Some(false)
+    _ => None
+  }
+  {
+    id: summary.id.to_string(),
+    workspace_id: summary.workspace_id,
+    workspace_name: summary.workspace_name,
+    cwd: summary.cwd,
+    source: summary.source,
+    mooncode_runtime_session_id: summary.runtime_session_id,
+    title: summary.title,
+    updated_at: summary.updated_at,
+    model: summary.model,
+    status: summary.status.to_string(),
+    queued_count: summary.queued_count,
+    last_message: summary.last_message,
+    mooncode_runtime_detail: runtime_detail,
+    mooncode_conversation: conversation,
+    mooncode_summary: local_summary,
+    canonical_unchanged,
+    archived: summary.archived,
+  }
+}
+
+///|
 fn decode_mooncode_selected_session(
   payload : Json,
 ) -> Result[MoonCodeSession, String] {

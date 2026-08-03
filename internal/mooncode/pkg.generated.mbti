@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn accepted_command_packet(Json, @core.MoonCodeCommand, String) -> @core.MoonCodeAcceptedCommand
+
 pub fn capabilities_json() -> Json
 
 pub fn command_action(@core.MoonCodeCommand) -> String
@@ -21,6 +23,8 @@ pub fn conversation_kind() -> String
 pub fn conversation_turn_kind() -> String
 
 pub fn conversation_watch_contract_id() -> String
+
+pub fn decode_command_submission(Json) -> Result[@core.MoonCodeCommand, String]
 
 pub fn decode_command_submission(Json) -> Result[@core.MoonCodeCommand, String]
 

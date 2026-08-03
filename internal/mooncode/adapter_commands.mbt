@@ -110,6 +110,29 @@ fn accepted_command_packet(
     workspace_name: json_string(session, "workspace_name", default=""),
     workspace_root: json_string(session, "workspace_root", default=""),
   }
+  let action = command_action(command)
+  fields["protocol"] = protocol_version().to_json()
+  fields["kind"] = "mooncode.command".to_json()
+  fields["status"] = accepted.status().to_string().to_json()
+  fields["command_id"] = accepted.command_id().to_json()
+  fields["created_at"] = accepted.created_at().to_json()
+  fields["session_id"] = accepted.session_id().to_json()
+  fields["workspace_id"] = accepted.workspace_id().to_json()
+  fields["workspace_name"] = accepted.workspace_name().to_json()
+  fields["workspace_root"] = accepted.workspace_root().to_json()
+  fields["control"] = @mooncode_core.command_action_control(action).to_json()
+  fields["approval"] = @mooncode_core.command_action_approval(action).to_json()
+  let model = if command.model() == "" {
+    json_string(session, "model", default="")
+  } else {
+    command.model()
+  }
+  fields["model"] = model.to_json()
+  fields["web_search"] = command.web_search().to_json()
+  fields["runtime_tool_calls"] = Json::array(
+    json_array_items(runtime_passthrough, "runtime_tool_calls"),
+  )
+  Json::object(fields)
 }
 
 ///|
