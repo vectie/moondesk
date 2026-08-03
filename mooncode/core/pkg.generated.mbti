@@ -24,6 +24,8 @@ pub fn decode_mooncode_stream_cursor(String, current~ : MoonCodeWatchCursor) -> 
 
 pub fn decode_mooncode_watch_text(String, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
 
+pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
+
 pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
 
 pub fn encode_mooncode_command(MoonCodeCommand) -> Result[Json, String]
