@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
+
 pub fn decode_mooncode_capability(Json) -> Result[MoonCodeCapability, MoonCodeFailure]
 
 pub fn decode_mooncode_command(Json) -> Result[MoonCodeCommand, String]
@@ -21,14 +23,6 @@ pub fn decode_mooncode_selected_session(Json) -> Result[MoonCodeSessionSummary, 
 pub fn decode_mooncode_session_listing(Json) -> Result[Array[MoonCodeSessionSummary], MoonCodeFailure]
 
 pub fn decode_mooncode_stream_cursor(String, current~ : MoonCodeWatchCursor) -> Result[MoonCodeWatchCursor, MoonCodeFailure]
-
-pub fn decode_mooncode_watch_text(String, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
-
-pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
-
-pub fn decode_mooncode_stream_cursor(String, current~ : MoonCodeWatchCursor) -> MoonCodeStreamCursorDecodeResult
-
-pub fn decode_mooncode_watch_result(Json, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
 
 pub fn decode_mooncode_watch_text(String, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
 
@@ -61,40 +55,6 @@ pub(all) enum MoonCodeApproval {
   Pending(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
   Approved(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
   Rejected(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
-} derive(Eq, @debug.Debug)
-
-pub struct MoonCodeApproval {
-  session_id : String
-  approval_id : String
-  target_command_id : String
-  tool_call_id : String
-  arguments : String
-  state : MoonCodeApprovalState
-} derive(Eq, @debug.Debug)
-pub fn MoonCodeApproval::approval_id(Self) -> String
-pub fn MoonCodeApproval::arguments(Self) -> String
-pub fn MoonCodeApproval::decision_wire(Self, MoonCodeApprovalDecision, String) -> Result[Json, MoonCodeApprovalDecisionFailure]
-pub fn MoonCodeApproval::state(Self) -> MoonCodeApprovalState
-
-pub(all) enum MoonCodeApprovalDecision {
-  Approve
-  Reject
-} derive(Eq, @debug.Debug)
-
-pub enum MoonCodeApprovalDecisionFailure {
-  Stale
-  WrongSessionOwnership(expected~ : String, actual~ : String)
-} derive(Eq, @debug.Debug)
-
-pub enum MoonCodeApprovalDecodeFailure {
-  Malformed(String)
-  UnsupportedState(String)
-} derive(Eq, @debug.Debug)
-
-pub(all) enum MoonCodeApprovalState {
-  Pending
-  Approved
-  Rejected
 } derive(Eq, @debug.Debug)
 
 pub(all) struct MoonCodeCapability {
@@ -187,50 +147,6 @@ pub(all) enum MoonCodeFailure {
   Malformed(String)
 } derive(Eq, @debug.Debug)
 
-pub(all) struct MoonCodeEvidence {
-  item_id : String
-  command_id : String
-  kind : MoonCodeEvidenceKind
-  state : MoonCodeEvidenceState
-  title : String
-  detail : String
-  path : String
-  diff : String
-  command : String
-  output : String
-  exit_code : Int
-  truncated : Bool
-  approval : MoonCodeApproval?
-} derive(Eq, @debug.Debug)
-
-pub(all) enum MoonCodeEvidenceKind {
-  Edit
-  Test
-  PackageManifest
-  ReviewAccept
-  ReviewReject
-  PackageBuilt
-  PackageVerified
-  Artifact
-  AssistantSummary
-  Approval
-  Tool
-} derive(Eq, @debug.Debug)
-
-pub(all) enum MoonCodeEvidenceState {
-  Recorded
-  Applied
-  Passed
-  Reverted
-  Cancelled
-  Pending
-  Approved
-  Accepted
-  Rejected
-  Failed
-  Stale
-} derive(Eq, @debug.Debug)
-
 pub(all) enum MoonCodeLifecycleAction {
   Rename(String)
   Archive
@@ -282,12 +198,6 @@ pub(all) struct MoonCodeSessionSummary {
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
 
-pub(all) enum MoonCodeStreamCursorDecodeResult {
-  Advanced(MoonCodeWatchCursor)
-  Unchanged(MoonCodeWatchCursor)
-  Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
-} derive(Eq, @debug.Debug)
-
 pub(all) struct MoonCodeTurn {
   kind : String
   turn_id : String
@@ -334,4 +244,3 @@ pub(all) struct MoonCodeWork {
 // Type aliases
 
 // Traits
-

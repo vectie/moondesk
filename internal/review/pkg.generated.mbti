@@ -21,4 +21,3 @@ pub fn ReviewDiffSummary::removed(Self) -> Int
 // Type aliases
 
 // Traits
-

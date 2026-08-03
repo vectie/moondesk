@@ -37,4 +37,3 @@ pub struct TownSnapshotRef {
 // Type aliases
 
 // Traits
-

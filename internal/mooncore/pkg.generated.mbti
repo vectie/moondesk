@@ -35,4 +35,3 @@ pub fn transcript_message_record_with_id(id~ : String, role~ : String, content~ 
 // Type aliases
 
 // Traits
-

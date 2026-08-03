@@ -73,6 +73,16 @@ pub fn moonclaw_route(String) -> String
 
 pub fn moonclaw_run_artifacts_route() -> String
 
+pub fn moonclaw_supervisor_activation_route() -> String
+
+pub fn moonclaw_supervisor_bridge_receipt_route() -> String
+
+pub fn moonclaw_supervisor_bridge_route(endpoint? : String) -> String
+
+pub fn moonclaw_supervisor_endpoint_url(String, String) -> String
+
+pub fn moonclaw_supervisor_route(String) -> String
+
 pub fn moonclaw_workspace_url(String, String) -> String
 
 pub fn mooncode_archived_session_listing_url() -> String
@@ -422,4 +432,3 @@ pub(all) enum WorkspaceStatus {
 // Type aliases
 
 // Traits
-

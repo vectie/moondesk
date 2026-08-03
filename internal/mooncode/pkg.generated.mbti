@@ -6,8 +6,6 @@ import {
 }
 
 // Values
-pub fn accepted_command_packet(Json, @core.MoonCodeCommand, String) -> @core.MoonCodeAcceptedCommand
-
 pub fn capabilities_json() -> Json
 
 pub fn command_action(@core.MoonCodeCommand) -> String
@@ -24,11 +22,9 @@ pub fn conversation_turn_kind() -> String
 
 pub fn conversation_watch_contract_id() -> String
 
-pub fn decode_command_submission(Json) -> Result[@core.MoonCodeCommand, String]
-
-pub fn decode_command_submission(Json) -> Result[@core.MoonCodeCommand, String]
-
 pub fn conversation_watch_response_for_cursor(session_id~ : String, cursor~ : @core.MoonCodeWatchCursor, changed~ : Bool, heartbeat~ : Bool, terminal~ : Bool, retry_after_ms~ : Int, snapshot~ : Json) -> Json
+
+pub fn decode_command_submission(Json) -> Result[@core.MoonCodeCommand, String]
 
 pub fn desktop_capabilities_endpoint() -> String
 
@@ -97,4 +93,3 @@ pub fn tool_contract_tool_ids(Json) -> Array[String]
 // Type aliases
 
 // Traits
-

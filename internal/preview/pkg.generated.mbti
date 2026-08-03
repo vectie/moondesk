@@ -13,4 +13,3 @@ pub fn isolated_preview_headers(String) -> Map[String, String]
 // Type aliases
 
 // Traits
-
