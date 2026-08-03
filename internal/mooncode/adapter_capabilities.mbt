@@ -284,7 +284,7 @@ fn mooncode_v2_consumer_readiness(payload : Json) -> Bool {
 ///|
 pub fn mooncode_negotiated_runtime_readiness(payload : Json) -> Json {
   match @mooncode_core.decode_mooncode_capability(payload) {
-    Supported(capability) => {
+    Ok(capability) => {
       let owners_ok = capability.component == "mooncode" &&
         capability.provider == "moonclaw" &&
         capability.runtime_owner == "moonclaw" &&
@@ -299,21 +299,27 @@ pub fn mooncode_negotiated_runtime_readiness(payload : Json) -> Json {
         },
       }
     }
-    UnsupportedVersion(version) =>
+    Err(UnsupportedVersion(version)) =>
       {
         "ok": false,
         "status": "unsupported-version",
         "capability_version": version,
       }
-    Malformed(reason) =>
+    Err(Malformed(reason)) =>
       { "ok": false, "status": "malformed", "capability_error": reason }
+    Err(Absent) => abort("capability decoder does not return an absent result")
+    Err(UnsupportedProtocol(_)) =>
+      abort("capability decoder does not return UnsupportedProtocol")
+    Err(UnsupportedContract(_)) =>
+      abort("capability decoder does not return UnsupportedContract")
+    Err(Stale(_)) => abort("capability decoder does not return Stale")
   }
 }
 
 ///|
 pub fn negotiate_capabilities_json(payload : Json) -> Json {
   match @mooncode_core.decode_mooncode_capability(payload) {
-    Supported(capability) =>
+    Ok(capability) =>
       if json_bool(
           mooncode_negotiated_runtime_readiness(payload),
           "ok",
@@ -327,18 +333,24 @@ pub fn negotiate_capabilities_json(payload : Json) -> Json {
           "capability_error": "MoonClaw native capability surface is not ready or compatible",
         }
       }
-    UnsupportedVersion(version) =>
+    Err(UnsupportedVersion(version)) =>
       {
         "ok": false,
         "capability_status": "unsupported-version",
         "capability_version": version,
       }
-    Malformed(reason) =>
+    Err(Malformed(reason)) =>
       {
         "ok": false,
         "capability_status": "malformed",
         "capability_error": reason,
       }
+    Err(Absent) => abort("capability decoder does not return an absent result")
+    Err(UnsupportedProtocol(_)) =>
+      abort("capability decoder does not return UnsupportedProtocol")
+    Err(UnsupportedContract(_)) =>
+      abort("capability decoder does not return UnsupportedContract")
+    Err(Stale(_)) => abort("capability decoder does not return Stale")
   }
 }
 
