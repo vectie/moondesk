@@ -23,6 +23,32 @@ type BookPatternRecord derive(@json.FromJson)
 
 type BrowserLocalImportBatch derive(@json.FromJson)
 
+type CollaborationAssignmentProjection
+
+type CollaborationBudgetCeilings derive(@json.FromJson)
+
+type CollaborationCommentProjection
+
+type CollaborationConflictReceiptProjection
+
+type CollaborationContractRef derive(@json.FromJson)
+
+type CollaborationCorrelationRef derive(@json.FromJson)
+
+type CollaborationHandoverProjection
+
+type CollaborationOperationRef derive(@json.FromJson)
+
+type CollaborationPersonProjection
+
+type CollaborationPrincipalRef derive(@json.FromJson)
+
+type CollaborationReviewProjection
+
+type CollaborationSurfaceProjection
+
+type CollaborationWorkspaceRef derive(@json.FromJson)
+
 type CreatedWorkspace derive(@json.FromJson)
 
 type DaemonControlResult derive(@json.FromJson)
@@ -113,6 +139,20 @@ type MoonFlowCallbackOperatorProjection derive(@json.FromJson)
 
 type MoonFlowCapabilityEvidence derive(@json.FromJson)
 
+type MoonFlowCollaborationAssignment derive(@json.FromJson)
+
+type MoonFlowCollaborationComment derive(@json.FromJson)
+
+type MoonFlowCollaborationMembership derive(@json.FromJson)
+
+type MoonFlowCollaborationPayload derive(@json.FromJson)
+
+type MoonFlowCollaborationReply derive(@json.FromJson)
+
+type MoonFlowCollaborationReview derive(@json.FromJson)
+
+type MoonFlowCollaborationSnapshot derive(@json.FromJson)
+
 type MoonFlowComposition derive(@json.FromJson)
 
 type MoonFlowCompositionItem derive(@json.FromJson)
@@ -128,6 +168,10 @@ type MoonFlowEnvelopeSummary derive(@json.FromJson)
 type MoonFlowEvaluationOperatorProjection derive(@json.FromJson)
 
 type MoonFlowFinalDeliverableOperatorProjection derive(@json.FromJson)
+
+type MoonFlowHandoverCatalog derive(@json.FromJson)
+
+type MoonFlowHandoverCatalogEntry derive(@json.FromJson)
 
 type MoonFlowHumanAdoptionOperatorProjection derive(@json.FromJson)
 
@@ -187,6 +231,26 @@ type PackAppCatalog derive(@json.FromJson)
 
 type PackAppRecord derive(@json.FromJson)
 
+type PackTemplateCeilings derive(@json.FromJson)
+
+type PackTemplateCostCeiling derive(@json.FromJson)
+
+type PackTemplateLicensingCeiling derive(@json.FromJson)
+
+type PackTemplateMigrationPolicy derive(@json.FromJson)
+
+type PackTemplateOperation derive(@json.FromJson)
+
+type PackTemplateQualificationEvidence derive(@json.FromJson)
+
+type PackTemplateRecord derive(@json.FromJson)
+
+type PackTemplateRecovery derive(@json.FromJson)
+
+type PackTemplateRequirements derive(@json.FromJson)
+
+type PackTemplateReviewCeiling derive(@json.FromJson)
+
 type PagesSearchResponse derive(@json.FromJson)
 
 type PendingMarkdownNavigation derive(Eq)
@@ -232,4 +296,3 @@ type WorkspaceMode derive(Eq)
 // Type aliases
 
 // Traits
-
