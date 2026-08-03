@@ -212,9 +212,6 @@ pub fn decode_mooncode_capability(
   if validate_nested_capability_contracts(fields) is Some(reason) {
     return Err(Malformed(reason))
   }
-  if validate_nested_capability_contracts(fields) is Some(reason) {
-    return Malformed(reason)
-  }
   let native_runtime_ready = match fields.get("native_runtime_ready") {
     Some(True) => true
     Some(False) => false

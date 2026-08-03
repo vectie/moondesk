@@ -339,9 +339,9 @@ fn supervisor_bridge_grant_from_runtime_command(
 
 ///|
 fn supervisor_bridge_installed_book_marker_exists(book_root : String) -> Bool {
-  @syncfs.path_exists(@pathx.join(book_root, "book.json")) ||
-  @syncfs.path_exists(@pathx.join(book_root, "book/book.json")) ||
-  @syncfs.path_exists(@pathx.join(book_root, "book/moonbook-ui-state.json"))
+  @nativefs.path_exists(@pathx.join(book_root, "book.json")) ||
+  @nativefs.path_exists(@pathx.join(book_root, "book/book.json")) ||
+  @nativefs.path_exists(@pathx.join(book_root, "book/moonbook-ui-state.json"))
 }
 
 ///|

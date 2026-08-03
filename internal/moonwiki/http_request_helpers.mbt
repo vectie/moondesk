@@ -60,7 +60,7 @@ async fn resolve_workspace_write_path(
 }
 
 ///|
-fn resolve_workspace_path(
+async fn resolve_workspace_path(
   workspace_root : String,
   relative : String,
 ) -> (String, String)? {
@@ -70,24 +70,107 @@ fn resolve_workspace_path(
     Some(path) => path
     None => return None
   }
-  if clean == "" {
-    Some((root, clean))
+  let absolute = if clean == "" {
+    root
   } else if clean == moonclaw_jobs_relative_root() ||
     clean.has_prefix(moonclaw_jobs_relative_prefix()) {
-    Some(
-      (
-        @pathx.join(
-          workspace_authority_root(root, clean),
-          workspace_authority_relative(clean),
-        ),
-        clean,
-      ),
+    @pathx.join(
+      workspace_authority_root(root, clean),
+      workspace_authority_relative(clean),
     )
   } else if @desk.moonsuite_internal_relative_path(clean) {
-    None
+    return None
   } else {
-    Some((@pathx.join(root, clean), clean))
+    @pathx.join(root, clean)
   }
+  let special_jobs = clean == moonclaw_jobs_relative_root() ||
+    clean.has_prefix(moonclaw_jobs_relative_prefix())
+  let canonical_suite_root = if special_jobs {
+    @fs.realpath(context.suite_root) catch {
+      _ => return None
+    }
+  } else {
+    ""
+  }
+  let authority_root = if special_jobs {
+    let mut component = canonical_suite_root
+    for name in [".moonsuite", "products", "moonclaw", "jobs"] {
+      component = @pathx.join(component, name)
+      let kind = @fs.kind(component, follow_symlink=false) catch {
+        _ => return None
+      }
+      if kind == SymLink || kind != Directory {
+        return None
+      }
+      let resolved = @fs.realpath(component) catch { _ => return None }
+      if !canonical_path_is_within(canonical_suite_root, resolved) {
+        return None
+      }
+    }
+    component
+  } else {
+    root
+  }
+  let canonical_root = @fs.realpath(authority_root) catch { _ => return None }
+  if special_jobs &&
+    !canonical_path_is_within(canonical_suite_root, canonical_root) {
+    return None
+  }
+  let canonical_target = canonical_existing_ancestor(absolute)
+  if canonical_path_is_within(canonical_root, canonical_target) {
+    Some((absolute, clean))
+  } else {
+    None
+  }
+}
+
+///|
+async fn canonical_existing_ancestor(path : String) -> String {
+  let mut failed_child = ""
+  for candidate = path {
+    let kind = @fs.kind(candidate, follow_symlink=false) catch {
+      _ => {
+        failed_child = candidate
+        let parent = @pathx.dirname(candidate).to_owned()
+        if parent == candidate {
+          break ""
+        }
+        continue parent
+      }
+    }
+    if kind != Regular && kind != Directory {
+      break ""
+    }
+    if failed_child != "" {
+      if kind != Directory {
+        break ""
+      }
+      let entries = @nativefs.read_dir(candidate) catch { _ => break "" }
+      let failed_name = match failed_child.rev_find("/") {
+        Some(index) => failed_child[index + 1:].to_owned()
+        None => failed_child
+      }
+      let mut absent = true
+      for entry in entries {
+        if entry == failed_name {
+          absent = false
+          break
+        }
+      }
+      if !absent {
+        break ""
+      }
+    }
+    let canonical = @fs.realpath(candidate) catch { _ => break "" }
+    break canonical
+  }
+}
+
+///|
+fn canonical_path_is_within(root : String, target : String) -> Bool {
+  root != "" &&
+  target != "" &&
+  (target == root || target.has_prefix(root + "/"))
 }
 
 ///|

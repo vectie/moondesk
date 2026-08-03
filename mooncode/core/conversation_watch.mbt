@@ -398,7 +398,7 @@ pub fn decode_mooncode_stream_cursor(
 }
 
 ///|
-fn conversation_watch_response_for_cursor(
+pub fn conversation_watch_response_for_cursor(
   session_id~ : String,
   cursor~ : MoonCodeWatchCursor,
   changed~ : Bool,

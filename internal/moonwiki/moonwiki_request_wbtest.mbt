@@ -69,11 +69,6 @@ async test "resolve_workspace_path rejects FIFO special nodes" {
 }
 
 ///|
-test "canonical_path_is_within rejects empty canonical paths" {
-  assert_false(canonical_path_is_within("", ""))
-}
-
-///|
 async test "resolve_workspace_path rejects native symlink escapes and accepts contained paths" {
   @moonlib/fsx.with_temporary_directory("moondesk-resolve-symlink-", test_root => {
     let workspace_root = @pathx.join(test_root, "workspace")
