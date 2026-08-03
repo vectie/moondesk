@@ -55,6 +55,40 @@ pub(all) enum MoonCodeApproval {
   Rejected(session_id~ : String, approval_id~ : String, target_command_id~ : String, tool_call_id~ : String, arguments~ : String)
 } derive(Eq, @debug.Debug)
 
+pub struct MoonCodeApproval {
+  session_id : String
+  approval_id : String
+  target_command_id : String
+  tool_call_id : String
+  arguments : String
+  state : MoonCodeApprovalState
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeApproval::approval_id(Self) -> String
+pub fn MoonCodeApproval::arguments(Self) -> String
+pub fn MoonCodeApproval::decision_wire(Self, MoonCodeApprovalDecision, String) -> Result[Json, MoonCodeApprovalDecisionFailure]
+pub fn MoonCodeApproval::state(Self) -> MoonCodeApprovalState
+
+pub(all) enum MoonCodeApprovalDecision {
+  Approve
+  Reject
+} derive(Eq, @debug.Debug)
+
+pub enum MoonCodeApprovalDecisionFailure {
+  Stale
+  WrongSessionOwnership(expected~ : String, actual~ : String)
+} derive(Eq, @debug.Debug)
+
+pub enum MoonCodeApprovalDecodeFailure {
+  Malformed(String)
+  UnsupportedState(String)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeApprovalState {
+  Pending
+  Approved
+  Rejected
+} derive(Eq, @debug.Debug)
+
 pub(all) struct MoonCodeCapability {
   component : String
   provider : String
