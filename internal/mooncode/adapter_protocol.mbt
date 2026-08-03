@@ -44,6 +44,27 @@ pub fn conversation_watch_contract_id() -> String {
 }
 
 ///|
+pub fn conversation_watch_response_for_cursor(
+  session_id~ : String,
+  cursor~ : @mooncode_core.MoonCodeWatchCursor,
+  changed~ : Bool,
+  heartbeat~ : Bool,
+  terminal~ : Bool,
+  retry_after_ms~ : Int,
+  snapshot~ : Json,
+) -> Json {
+  @mooncode_core.conversation_watch_response_for_cursor(
+    session_id~,
+    cursor~,
+    changed~,
+    heartbeat~,
+    terminal~,
+    retry_after_ms~,
+    snapshot~,
+  )
+}
+
+///|
 pub fn desktop_capabilities_endpoint() -> String {
   "/api/mooncode/capabilities"
 }

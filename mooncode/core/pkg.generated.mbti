@@ -26,6 +26,12 @@ pub fn decode_mooncode_watch_text(String, current~ : MoonCodeWatchCursor, expect
 
 pub fn decode_mooncode_session_listing(Json) -> MoonCodeSessionListingDecodeResult
 
+pub fn decode_mooncode_stream_cursor(String, current~ : MoonCodeWatchCursor) -> MoonCodeStreamCursorDecodeResult
+
+pub fn decode_mooncode_watch_result(Json, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
+
+pub fn decode_mooncode_watch_text(String, current~ : MoonCodeWatchCursor, expected_session_id? : String) -> MoonCodeWatchResult
+
 pub fn encode_mooncode_capability(MoonCodeCapability) -> Json
 
 pub fn encode_mooncode_command(MoonCodeCommand) -> Result[Json, String]
@@ -274,6 +280,12 @@ pub(all) struct MoonCodeSessionSummary {
   last_message : String?
   archived : Bool
   extensions : Map[String, Json]
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeStreamCursorDecodeResult {
+  Advanced(MoonCodeWatchCursor)
+  Unchanged(MoonCodeWatchCursor)
+  Malformed(cursor~ : MoonCodeWatchCursor, reason~ : String)
 } derive(Eq, @debug.Debug)
 
 pub(all) struct MoonCodeTurn {
