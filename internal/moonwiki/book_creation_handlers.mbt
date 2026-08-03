@@ -100,18 +100,15 @@ async fn create_pdf_evidence_watch_book_from_payload(
     source_policy~,
     daemon_tick=json_int(daemon, "tick_sequence", default=0),
   )
-  let book_registration = match moontown_owner_post_json(
-    workspace_root,
-    "/api/book-registrations",
-    {
+  let book_registration = match
+    moontown_owner_post_json(workspace_root, "/api/book-registrations", {
       "book_id": book_id,
       "title": book_pattern_title(pattern_id, topic),
       "purpose": purpose,
       "workspace_root": book_root,
       "tags": json_from_string_array(["research", pattern_id]),
       "skills": json_from_string_array(skill_pack),
-    },
-  ) {
+    }) {
     Ok(value) => value
     Err(error) => {
       send_api_error(
@@ -125,11 +122,12 @@ async fn create_pdf_evidence_watch_book_from_payload(
       return
     }
   }
-  let owner_goal_receipt = match moontown_owner_post_json(
-    workspace_root,
-    "/api/operator-requests",
-    moontown_owner_watch_payload(goal),
-  ) {
+  let owner_goal_receipt = match
+    moontown_owner_post_json(
+      workspace_root,
+      "/api/operator-requests",
+      moontown_owner_watch_payload(goal),
+    ) {
     Ok(value) => value
     Err(error) => {
       send_api_error(

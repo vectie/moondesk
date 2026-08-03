@@ -2259,9 +2259,7 @@ async test "wiki server routes cover forward and backward book runs" {
       503,
     )
     assert_true(town_request.stringify().contains("MoonTown is not configured"))
-    assert_true(
-      !@fs.exists(town_moondesk_requests_root(root)),
-    )
+    assert_true(!@fs.exists(town_moondesk_requests_root(root)))
     let requests = test_http_get_json(base + "/api/town/requests", 503)
     assert_true(requests.stringify().contains("MoonTown is not configured"))
     let town_events = test_http_get_json(base + "/api/town/events", 200)

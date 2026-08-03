@@ -275,17 +275,13 @@ async fn pdf_watch_readiness(
       missing.push(path)
     }
   }
-  let goals = match moontown_owner_get_json(
-    workspace_root,
-    "/api/standing-goals",
-  ) {
+  let goals = match
+    moontown_owner_get_json(workspace_root, "/api/standing-goals") {
     Ok(Array(values)) => values
     _ => []
   }
-  let catalog = match moontown_owner_get_json(
-    workspace_root,
-    "/api/book-registrations",
-  ) {
+  let catalog = match
+    moontown_owner_get_json(workspace_root, "/api/book-registrations") {
     Ok(Array(values)) => values
     _ => []
   }

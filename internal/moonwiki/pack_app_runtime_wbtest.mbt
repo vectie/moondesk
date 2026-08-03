@@ -54,9 +54,7 @@ test "template catalog digest rejects tampered presentation and ceilings" {
   let catalog = @json.parse(signed)
   assert_true(template_catalog_digest_valid(signed, catalog))
   let tampered = signed.replace(old="Original", new="Changed")
-  assert_false(
-    template_catalog_digest_valid(tampered, @json.parse(tampered)),
-  )
+  assert_false(template_catalog_digest_valid(tampered, @json.parse(tampered)))
 }
 
 ///|
@@ -107,7 +105,8 @@ test "pack presentation keeps entrypoint safe and appends strict launch context"
         "app_url": "http://127.0.0.1:4300/index.html",
         "service_url": "http://127.0.0.1:4300",
       },
-    ) is None,
+    )
+    is None,
   )
 }
 

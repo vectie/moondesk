@@ -32,18 +32,12 @@ async fn handle_town_requests(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let owner_rows = match moontown_owner_get_json(
-    workspace_root,
-    "/api/operator-requests",
-  ) {
+  let owner_rows = match
+    moontown_owner_get_json(workspace_root, "/api/operator-requests") {
     Ok(Array(rows)) => rows
     Ok(_) => {
       send_api_error(
-        conn,
-        method_,
-        502,
-        "Bad Gateway",
-        "MoonTown returned an invalid request ledger",
+        conn, method_, 502, "Bad Gateway", "MoonTown returned an invalid request ledger",
       )
       return
     }
@@ -199,11 +193,12 @@ async fn handle_town_request(
       return
     }
   }
-  let receipt = match moontown_owner_post_json(
-    workspace_root,
-    "/api/operator-requests",
-    moontown_owner_watch_payload(payload),
-  ) {
+  let receipt = match
+    moontown_owner_post_json(
+      workspace_root,
+      "/api/operator-requests",
+      moontown_owner_watch_payload(payload),
+    ) {
     Ok(value) => value
     Err(error) => {
       send_api_error(conn, method_, 503, "Service Unavailable", error)
@@ -213,11 +208,7 @@ async fn handle_town_request(
   let id = json_string(receipt, "request_id", default="")
   if id == "" {
     send_api_error(
-      conn,
-      method_,
-      502,
-      "Bad Gateway",
-      "MoonTown accepted no versioned request identity",
+      conn, method_, 502, "Bad Gateway", "MoonTown accepted no versioned request identity",
     )
     return
   }

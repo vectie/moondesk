@@ -36,18 +36,12 @@ async fn handle_town_standing_goals(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let rows = match moontown_owner_get_json(
-    workspace_root,
-    "/api/standing-goals",
-  ) {
+  let rows = match
+    moontown_owner_get_json(workspace_root, "/api/standing-goals") {
     Ok(Array(rows)) => rows
     Ok(_) => {
       send_api_error(
-        conn,
-        method_,
-        502,
-        "Bad Gateway",
-        "MoonTown returned an invalid standing-goal registry",
+        conn, method_, 502, "Bad Gateway", "MoonTown returned an invalid standing-goal registry",
       )
       return
     }
@@ -77,11 +71,12 @@ async fn handle_create_standing_goal(
       return
     }
   }
-  let receipt = match moontown_owner_post_json(
-    workspace_root,
-    "/api/operator-requests",
-    moontown_owner_watch_payload(payload),
-  ) {
+  let receipt = match
+    moontown_owner_post_json(
+      workspace_root,
+      "/api/operator-requests",
+      moontown_owner_watch_payload(payload),
+    ) {
     Ok(value) => value
     Err(error) => {
       send_api_error(conn, method_, 503, "Service Unavailable", error)
@@ -91,11 +86,7 @@ async fn handle_create_standing_goal(
   let goal_id = json_string(receipt, "standing_goal_id", default="")
   if goal_id == "" {
     send_api_error(
-      conn,
-      method_,
-      502,
-      "Bad Gateway",
-      "MoonTown accepted no standing-goal identity",
+      conn, method_, 502, "Bad Gateway", "MoonTown accepted no standing-goal identity",
     )
     return
   }
@@ -116,10 +107,6 @@ async fn handle_town_dispatch(
   ignore(body)
   ignore(workspace_root)
   send_api_error(
-    conn,
-    method_,
-    409,
-    "Conflict",
-    "Direct MoonTown ticks from MoonDesk are retired because they created a second Town dispatch ledger. Open MoonTown to run or recover its owner-managed daemon.",
+    conn, method_, 409, "Conflict", "Direct MoonTown ticks from MoonDesk are retired because they created a second Town dispatch ledger. Open MoonTown to run or recover its owner-managed daemon.",
   )
 }

@@ -26,10 +26,7 @@ async fn route_moonflow_api(
     ["api", "moonflow", "collaboration", workspace_id] => {
       if is_read_method(method_) {
         handle_moonflow_collaboration(
-          workspace_root,
-          workspace_id,
-          method_,
-          conn,
+          workspace_root, workspace_id, method_, conn,
         )
       } else {
         send_method_not_allowed_with_methods(conn, method_, ["GET", "HEAD"])

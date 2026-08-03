@@ -28,9 +28,7 @@ fn moonflow_handover_list_arguments(
   moonflow_root : String,
   workspace_path : String,
 ) -> Array[String] {
-  moonflow_cli_arguments(moonflow_root, [
-    "handover", "list", workspace_path,
-  ])
+  moonflow_cli_arguments(moonflow_root, ["handover", "list", workspace_path])
 }
 
 ///|
@@ -49,24 +47,16 @@ fn moonflow_handover_catalog_valid(catalog : Json) -> Bool {
     let valid = json_bool(handover, "valid", default=false)
     if !moonflow_safe_run_id(handover_id) ||
       ![
-        "draft",
-        "sealed",
-        "offered",
-        "accepted",
-        "rejected",
-        "expired",
-        "imported",
-        "resumed",
-        "completed",
-        "quarantined",
+        "draft", "sealed", "offered", "accepted", "rejected", "expired", "imported",
+        "resumed", "completed", "quarantined",
       ].contains(state) {
       return false
     }
     if valid &&
-      (!is_sha256_digest(json_string(handover, "head_digest", default="")) ||
-      !is_sha256_digest(
-        json_string(handover, "envelope_digest", default=""),
-      )) {
+      (
+        !is_sha256_digest(json_string(handover, "head_digest", default="")) ||
+        !is_sha256_digest(json_string(handover, "envelope_digest", default=""))
+      ) {
       return false
     }
     if !valid && state != "quarantined" {
@@ -120,10 +110,10 @@ fn moonflow_collaboration_reply(
   }
   api_contract_response(
     Json::object(fields),
-    ok=ok,
-    status=status,
-    message=message,
-    next_action=next_action,
+    ok~,
+    status~,
+    message~,
+    next_action~,
   )
 }
 
@@ -297,7 +287,7 @@ async fn handle_moonflow_collaboration(
       "ready",
       "Validated MoonFlow collaboration state is ready",
       "review_collaboration",
-      handover_catalog=handover_catalog,
+      handover_catalog~,
     ),
   )
 }

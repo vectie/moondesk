@@ -2,43 +2,23 @@
 test "collaboration inspection delegates validation to the MoonFlow owner CLI" {
   assert_eq(
     moonflow_collaboration_inspect_arguments(
-      "/suite/moonflow",
-      "/suite/books/research",
-      "book-research",
+      "/suite/moonflow", "/suite/books/research", "book-research",
     ),
     [
-      "-C",
-      "/suite/moonflow",
-      "run",
-      "cmd/main",
-      "--",
-      "collaboration",
-      "inspect",
-      "/suite/books/research",
-      "book-research",
+      "-C", "/suite/moonflow", "run", "cmd/main", "--", "collaboration", "inspect",
+      "/suite/books/research", "book-research",
     ],
   )
   assert_eq(
     moonflow_collaboration_snapshot_path(
-      "/suite/books/research",
-      "book-research",
+      "/suite/books/research", "book-research",
     ),
     "/suite/books/research/.moonsuite/products/moonflow/collaboration/book-research.json",
   )
   assert_eq(
-    moonflow_handover_list_arguments(
-      "/suite/moonflow",
-      "/suite/books/research",
-    ),
+    moonflow_handover_list_arguments("/suite/moonflow", "/suite/books/research"),
     [
-      "-C",
-      "/suite/moonflow",
-      "run",
-      "cmd/main",
-      "--",
-      "handover",
-      "list",
-      "/suite/books/research",
+      "-C", "/suite/moonflow", "run", "cmd/main", "--", "handover", "list", "/suite/books/research",
     ],
   )
 }

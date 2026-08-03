@@ -85,16 +85,13 @@ async fn sync_book_standing_goal(
       "standing_goal_registration_path": pdf_watch_moontown_standing_goal_receipt_relative_path(),
     }
   }
-  let before_goals = match moontown_owner_get_json(
-    root,
-    "/api/standing-goals",
-  ) {
+  let before_goals = match
+    moontown_owner_get_json(root, "/api/standing-goals") {
     Ok(Array(values)) => values
     _ => []
   }
   let before_global_ready = json_record_with_target_book_exists(
-    before_goals,
-    book_id,
+    before_goals, book_id,
   )
   let watch = json_object_field_or_empty(book_json, "watch")
   let title = json_string(book_json, "title", default="")
@@ -133,11 +130,12 @@ async fn sync_book_standing_goal(
     source_policy~,
     daemon_tick~,
   )
-  let owner_receipt = match moontown_owner_post_json(
-    root,
-    "/api/operator-requests",
-    moontown_owner_watch_payload(goal),
-  ) {
+  let owner_receipt = match
+    moontown_owner_post_json(
+      root,
+      "/api/operator-requests",
+      moontown_owner_watch_payload(goal),
+    ) {
     Ok(value) => value
     Err(error) =>
       return {
@@ -148,16 +146,12 @@ async fn sync_book_standing_goal(
         "message": error,
       }
   }
-  let after_goals = match moontown_owner_get_json(
-    root,
-    "/api/standing-goals",
-  ) {
+  let after_goals = match moontown_owner_get_json(root, "/api/standing-goals") {
     Ok(Array(values)) => values
     _ => []
   }
   let after_global_ready = json_record_with_target_book_exists(
-    after_goals,
-    book_id,
+    after_goals, book_id,
   )
   let verification : Json = {
     "ok": after_global_ready,

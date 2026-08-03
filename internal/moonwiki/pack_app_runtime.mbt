@@ -98,7 +98,8 @@ fn is_safe_launch_query_token(value : String, allow_uppercase : Bool) -> Bool {
 fn pack_app_manifest_presentation(
   manifest : Json,
 ) -> (Bool, String, String, String, String) {
-  guard json_object_field(manifest, "app_presentation") is Some(Object(_) as value) else {
+  guard json_object_field(manifest, "app_presentation")
+    is Some(Object(_) as value) else {
     return (true, "", "", "", "")
   }
   if json_string(value, "contract_id", default="") !=
@@ -108,12 +109,12 @@ fn pack_app_manifest_presentation(
   let icon = json_string(value, "icon", default="").trim().to_owned()
   let surface = json_string(value, "surface", default="").trim().to_owned()
   let primary_action_label = json_string(
-    value,
-    "primary_action_label",
-    default="Open pack",
-  )
-  .trim()
-  .to_owned()
+      value,
+      "primary_action_label",
+      default="Open pack",
+    )
+    .trim()
+    .to_owned()
   if !is_safe_pack_presentation_text(icon, 32) ||
     !is_safe_pack_id(surface) ||
     !is_safe_pack_presentation_text(primary_action_label, 48) {
@@ -257,11 +258,7 @@ fn pack_app_runtime_record_resolved(
   if !is_matching_pack_app_url(app_url, service_url, entrypoint_path) {
     return None
   }
-  let launch_suffix = if launch_query == "" {
-    ""
-  } else {
-    "?" + launch_query
-  }
+  let launch_suffix = if launch_query == "" { "" } else { "?" + launch_query }
   Some({
     "pack_id": pack_id,
     "version": json_string(active, "version", default=""),
@@ -521,13 +518,15 @@ fn template_envelope_shape_valid(value : Json, owner_product : String) -> Bool {
   let migration_valid = match migration {
     Some(Object(_) as policy) => {
       let strategy = json_string(policy, "strategy", default="")
-      (strategy == "immutable" ||
-      strategy == "owner-reviewed" ||
-      strategy == "automatic-compatible") &&
-      json_object_field(policy, "compatible_from") is Some(Array(_)) &&
-      json_array_items(policy, "compatible_from").all(version =>
-        version is String(value) && is_safe_template_version(value)
+      (
+        strategy == "immutable" ||
+        strategy == "owner-reviewed" ||
+        strategy == "automatic-compatible"
       ) &&
+      json_object_field(policy, "compatible_from") is Some(Array(_)) &&
+      json_array_items(policy, "compatible_from").all(version => {
+        version is String(value) && is_safe_template_version(value)
+      }) &&
       is_safe_pack_presentation_text(
         json_string(policy, "note", default=""),
         240,
@@ -544,14 +543,18 @@ fn template_envelope_shape_valid(value : Json, owner_product : String) -> Bool {
     json_string(value, "source_ref", default=""),
   ) &&
   is_sha256_digest(json_string(value, "source_digest", default="")) &&
-  (template_class == "book" ||
-  template_class == "civic_scenario" ||
-  template_class == "cross_product_series" ||
-  template_class == "domain_project") &&
-  (maturity == "production" ||
-  maturity == "live-qualified" ||
-  maturity == "local-qualified" ||
-  maturity == "fixture") &&
+  (
+    template_class == "book" ||
+    template_class == "civic_scenario" ||
+    template_class == "cross_product_series" ||
+    template_class == "domain_project"
+  ) &&
+  (
+    maturity == "production" ||
+    maturity == "live-qualified" ||
+    maturity == "local-qualified" ||
+    maturity == "fixture"
+  ) &&
   is_safe_pack_presentation_text(json_string(value, "title", default=""), 96) &&
   is_safe_pack_presentation_text(json_string(value, "summary", default=""), 320) &&
   is_safe_pack_presentation_text(
@@ -568,8 +571,10 @@ fn template_envelope_shape_valid(value : Json, owner_product : String) -> Bool {
   ) &&
   is_safe_pack_presentation_text(json_string(value, "icon", default=""), 32) &&
   migration_valid &&
-  (is_safe_pack_route_path(preview_ref) ||
-  is_safe_installed_pack_artifact_path(preview_ref)) &&
+  (
+    is_safe_pack_route_path(preview_ref) ||
+    is_safe_installed_pack_artifact_path(preview_ref)
+  ) &&
   json_object_field(value, "qualification_evidence_refs") is Some(Array(_)) &&
   requirements is Some(Object(_)) &&
   ceilings is Some(Object(_)) &&
@@ -593,7 +598,7 @@ async fn template_qualification_evidence_valid(
 ) -> Bool {
   let maturity = json_string(envelope, "maturity", default="")
   let evidence = json_array_items(envelope, "qualification_evidence_refs")
-  if evidence.length() > 16 || maturity != "fixture" && evidence.is_empty() {
+  if evidence.length() > 16 || (maturity != "fixture" && evidence.is_empty()) {
     return false
   }
   let mut has_local_qualification = false
@@ -673,9 +678,7 @@ async fn installed_pack_template_envelopes(
       continue
     }
     let catalog_text = @fs.read_file(resolved).text() catch { _ => continue }
-    let catalog = @json.parse(catalog_text) catch {
-      _ => continue
-    }
+    let catalog = @json.parse(catalog_text) catch { _ => continue }
     if json_string(catalog, "contract_id", default="") !=
       "moonsuite.template-catalog.v1" ||
       json_string(catalog, "catalog_id", default="") != declared_id ||
@@ -955,9 +958,7 @@ async fn installed_pack_apps(workspace_root : String) -> Json {
     match projected {
       Some(app) => {
         let templates = installed_pack_template_envelopes(
-          installed_root,
-          manifest,
-          pack_id,
+          installed_root, manifest, pack_id,
         )
         match app {
           Object(fields) => {
