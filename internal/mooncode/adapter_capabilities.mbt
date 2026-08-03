@@ -235,6 +235,111 @@ pub fn negotiate_capabilities_json(payload : Json) -> Json {
       abort("capability decoder does not return UnsupportedContract")
     Err(Stale(_)) => abort("capability decoder does not return Stale")
   }
+  let extra = capability.extensions.copy()
+  guard generated is Object(generated_fields) else {
+    return Json::empty_object()
+  }
+  for key, value in generated_fields {
+    extra[key] = value
+  }
+  let ownership_extensions = capability.ownership_extensions.copy()
+  ownership_extensions["sessions"] = capability.session_owner.to_json()
+  ownership_extensions["canonical_conversation"] = capability.session_owner.to_json()
+  ownership_extensions["optimistic_rows"] = "moondesk".to_json()
+  ownership_extensions["artifacts"] = "moonbook".to_json()
+  let enriched = { ..capability, extensions: extra, ownership_extensions }
+  @mooncode_core.encode_mooncode_capability(enriched)
+}
+
+///|
+fn mooncode_v2_consumer_readiness(payload : Json) -> Bool {
+  let surface = json_object_field_or_empty(payload, "capability_surface")
+  let endpoints = json_string_array_items(payload, "endpoints")
+  let tools = json_string_array_items(payload, "tools")
+  let required_endpoints = [
+    "/v1/code/capabilities", "/v1/code/sessions?book_root=<path>", "/v1/code/sessions/<id>/turns",
+    "/v1/code/sessions/<id>/stream?book_root=<path>&format=jsonl|sse&since=<canonical-decimal>&wait_ms=<ms>&poll_ms=<ms>",
+  ]
+  let required_tools = ["read", "edit", "write", "shell"]
+  let outer_fingerprint = json_string(
+    payload,
+    "capability_surface_fingerprint",
+    default="",
+  )
+  let surface_fingerprint = json_string(
+    surface,
+    "capability_surface_fingerprint",
+    default="",
+  )
+  outer_fingerprint != "" &&
+  outer_fingerprint == surface_fingerprint &&
+  @mooncore.json_object_field(payload, "capability_surface") is Some(Object(_)) &&
+  json_string(surface, "component", default="") == "mooncode" &&
+  json_string(surface, "capability_contract_id", default="") ==
+  json_string(payload, "capability_contract_id", default="") &&
+  missing_strings(required_endpoints, endpoints).is_empty() &&
+  missing_strings(required_tools, tools).is_empty()
+}
+
+///|
+pub fn mooncode_negotiated_runtime_readiness(payload : Json) -> Json {
+  match @mooncode_core.decode_mooncode_capability(payload) {
+    Supported(capability) => {
+      let owners_ok = capability.component == "mooncode" &&
+        capability.provider == "moonclaw" &&
+        capability.runtime_owner == "moonclaw" &&
+        capability.session_owner == "moonclaw" &&
+        capability.native_runtime_ready
+      {
+        "ok": owners_ok && mooncode_v2_consumer_readiness(payload),
+        "status": if owners_ok && mooncode_v2_consumer_readiness(payload) {
+          "native-runtime-ready"
+        } else {
+          "native-runtime-unavailable"
+        },
+      }
+    }
+    UnsupportedVersion(version) =>
+      {
+        "ok": false,
+        "status": "unsupported-version",
+        "capability_version": version,
+      }
+    Malformed(reason) =>
+      { "ok": false, "status": "malformed", "capability_error": reason }
+  }
+}
+
+///|
+pub fn negotiate_capabilities_json(payload : Json) -> Json {
+  match @mooncode_core.decode_mooncode_capability(payload) {
+    Supported(capability) =>
+      if json_bool(
+          mooncode_negotiated_runtime_readiness(payload),
+          "ok",
+          default=false,
+        ) {
+        capabilities_json_for(capability)
+      } else {
+        {
+          "ok": false,
+          "capability_status": "unavailable",
+          "capability_error": "MoonClaw native capability surface is not ready or compatible",
+        }
+      }
+    UnsupportedVersion(version) =>
+      {
+        "ok": false,
+        "capability_status": "unsupported-version",
+        "capability_version": version,
+      }
+    Malformed(reason) =>
+      {
+        "ok": false,
+        "capability_status": "malformed",
+        "capability_error": reason,
+      }
+  }
 }
 
 ///|
