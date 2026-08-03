@@ -291,7 +291,6 @@ fn code_mode_test_turn(
   steps? : Array[Json] = [],
   status? : String = "done",
 ) -> @mooncode_core.MoonCodeTurn {
-  let approvals : Array[@mooncode_core.MoonCodeApproval] = []
   let turn_client_id = if client_turn_id == "" { id } else { client_turn_id }
   let payload : Json = {
     "kind": "mooncode-conversation",

@@ -179,6 +179,50 @@ pub(all) enum MoonCodeFailure {
   Malformed(String)
 } derive(Eq, @debug.Debug)
 
+pub(all) struct MoonCodeEvidence {
+  item_id : String
+  command_id : String
+  kind : MoonCodeEvidenceKind
+  state : MoonCodeEvidenceState
+  title : String
+  detail : String
+  path : String
+  diff : String
+  command : String
+  output : String
+  exit_code : Int
+  truncated : Bool
+  approval : MoonCodeApproval?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeEvidenceKind {
+  Edit
+  Test
+  PackageManifest
+  ReviewAccept
+  ReviewReject
+  PackageBuilt
+  PackageVerified
+  Artifact
+  AssistantSummary
+  Approval
+  Tool
+} derive(Eq, @debug.Debug)
+
+pub(all) enum MoonCodeEvidenceState {
+  Recorded
+  Applied
+  Passed
+  Reverted
+  Cancelled
+  Pending
+  Approved
+  Accepted
+  Rejected
+  Failed
+  Stale
+} derive(Eq, @debug.Debug)
+
 pub(all) enum MoonCodeLifecycleAction {
   Rename(String)
   Archive
