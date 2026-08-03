@@ -63,6 +63,17 @@ async fn route_workspace_api(
       }
       true
     }
+    ["api", "workspaces", workspace_id, "document"] => {
+      let endpoint = @desk.workspace_action_route("document")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_workspace_document(
+          workspace_root, workspace_id, request_path, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "workspaces", workspace_id, "preview"] => {
       let endpoint = @desk.workspace_action_route("preview")
       if desktop_api_route_accepts_read(endpoint, method_) {

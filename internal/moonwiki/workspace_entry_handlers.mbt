@@ -39,6 +39,96 @@ async fn handle_workspace_entries(
 }
 
 ///|
+async fn handle_workspace_document(
+  workspace_root : String,
+  workspace_id : String,
+  request_path : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let workspace = match find_workspace(workspace_root, workspace_id) {
+    Some(workspace) => workspace
+    None => {
+      send_api_error(conn, method_, 404, "Not Found", "Unknown workspace")
+      return
+    }
+  }
+  let relative = decode_query_value(
+    query_value(request_path, "path").unwrap_or(""),
+  )
+  if relative == "" {
+    send_api_error(conn, method_, 400, "Bad Request", "Invalid path")
+    return
+  }
+  let (absolute, clean_relative) = match
+    resolve_workspace_path(workspace.root_path, relative) {
+    Some(resolved) => resolved
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid path")
+      return
+    }
+  }
+  let kind = @fs.kind(absolute, follow_symlink=false) catch {
+    _ => {
+      send_api_error(conn, method_, 404, "Not Found", "Document not found")
+      return
+    }
+  }
+  if kind != Regular {
+    send_api_error(conn, method_, 404, "Not Found", "Document not found")
+    return
+  }
+  let file = @fs.open(absolute, mode=ReadOnly) catch {
+    _ => {
+      send_api_error(conn, method_, 404, "Not Found", "Document not found")
+      return
+    }
+  }
+  defer file.close()
+  let size = file.size() catch {
+    _ => {
+      send_api_error(conn, method_, 404, "Not Found", "Document not found")
+      return
+    }
+  }
+  if size > moonedit_max_document_bytes.to_int64() {
+    send_api_error(
+      conn, method_, 413, "Content Too Large", "Document is too large",
+    )
+    return
+  }
+  let bytes = file.read_exactly(size.to_int()) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 404, "Not Found", "Document could not be read",
+      )
+      return
+    }
+  }
+  match moonedit_decode_document(bytes) {
+    Err(Oversized(_, _)) =>
+      send_api_error(
+        conn, method_, 413, "Content Too Large", "Document is too large",
+      )
+    Err(InvalidUtf8) | Err(BinaryControl(_)) =>
+      send_api_error(
+        conn, method_, 415, "Unsupported Media Type", "Document is not plain text",
+      )
+    Ok(document) =>
+      send_json(conn, method_, {
+        "workspace_id": workspace.id,
+        "path": clean_relative,
+        "provider_id": "moonedit.plain-text.v1",
+        "media_type": "text/plain;charset=utf-8",
+        "content": document.text,
+        "revision": document.revision,
+        "writable": false,
+        "warnings": ([] : Array[Json]),
+      })
+  }
+}
+
+///|
 async fn handle_workspace_preview(
   workspace_root : String,
   workspace_id : String,
