@@ -62,7 +62,9 @@ run_boundary_validators() {
 
   case "$set_count" in
     0)
-      printf '%s\n' 'Skipping core boundary validation: MOONCLAW_ROOT, MOONBOOK_ROOT, and MOONTOWN_ROOT are not set.'
+      printf '%s\n' 'Full validation requires MOONCLAW_ROOT, MOONBOOK_ROOT, and MOONTOWN_ROOT.' >&2
+      printf '%s\n' 'Use the checkouts declared in config/moonsuite-integration.json; cross-repo validation cannot be skipped.' >&2
+      return 1
       ;;
     3)
       stage 'Core boundary validation' "$SCRIPT_DIR/validate-core-boundaries.sh"
@@ -74,6 +76,8 @@ run_boundary_validators() {
   esac
 }
 
+stage 'Maturity manifest tests' node --test "$SCRIPT_DIR/verify_maturity_manifests.test.mjs"
+stage 'Maturity manifest validation' node "$SCRIPT_DIR/verify_maturity_manifests.mjs"
 stage 'MoonBit format check' sh -c 'cd "$1" && moon fmt --check' sh "$REPO_ROOT"
 stage 'MoonBit check' sh -c 'cd "$1" && moon check --target all --warn-list +unnecessary_annotation --diagnostic-limit 1000' sh "$REPO_ROOT"
 stage 'MoonBit native tests' sh -c 'cd "$1" && moon test --target native --warn-list +unnecessary_annotation --diagnostic-limit 1000' sh "$REPO_ROOT"

@@ -1,0 +1,36 @@
+{
+  "contract": "moonsuite-integration.v1",
+  "owner_module": "vectie/moondesk",
+  "development_ref_policy": "live-main",
+  "release_ref_policy": "full-commit-sha",
+  "repositories": [
+    {
+      "id": "moonclaw",
+      "repository": "vectie/moonclaw",
+      "ref": "main",
+      "checkout_path": "_integration/moonclaw",
+      "root_env": "MOONCLAW_ROOT",
+      "module": "vectie/moonclaw"
+    },
+    {
+      "id": "moonbook",
+      "repository": "vectie/moonbook",
+      "ref": "main",
+      "checkout_path": "_integration/moonbook",
+      "root_env": "MOONBOOK_ROOT",
+      "module": "vectie/moonbook"
+    },
+    {
+      "id": "moontown",
+      "repository": "vectie/moontown",
+      "ref": "main",
+      "checkout_path": "_integration/moontown",
+      "root_env": "MOONTOWN_ROOT",
+      "module": "vectie/moontown"
+    }
+  ],
+  "required_gates": [
+    "node scripts/verify_maturity_manifests.mjs",
+    "scripts/validate-core-boundaries.sh"
+  ]
+}

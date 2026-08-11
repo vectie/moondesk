@@ -1,0 +1,116 @@
+{
+  "contract": "moonsuite-capability-maturity.v1",
+  "product": "moondesk",
+  "stages": [
+    "declared",
+    "implemented",
+    "component_tested",
+    "integrated",
+    "journey_proved",
+    "packaged",
+    "release_qualified"
+  ],
+  "capabilities": [
+    {
+      "id": "suite-boundary-validation",
+      "owner": "moondesk",
+      "stage": "integrated",
+      "availability": "internal",
+      "evidence": [
+        {
+          "kind": "test",
+          "command": "node --test scripts/verify_maturity_manifests.test.mjs"
+        },
+        {
+          "kind": "integration",
+          "command": "scripts/validate-core-boundaries.sh"
+        }
+      ],
+      "blockers": [
+        "Release jobs must replace live-main refs with full commit SHAs."
+      ]
+    },
+    {
+      "id": "mooncode-producer-consumer-contract",
+      "owner": "moonclaw+moondesk",
+      "stage": "integrated",
+      "availability": "internal",
+      "evidence": [
+        {
+          "kind": "test",
+          "command": "moon test --target native mooncode/core"
+        },
+        {
+          "kind": "integration",
+          "command": "MOONCLAW_ROOT=<checkout> scripts/verify-mooncode-core-sync.sh"
+        }
+      ],
+      "blockers": [
+        "Move the shared wire types into one independently versioned protocol module."
+      ]
+    },
+    {
+      "id": "moonbook-native-suite",
+      "owner": "moonbook",
+      "stage": "component_tested",
+      "availability": "internal",
+      "evidence": [
+        {
+          "kind": "test",
+          "command": "moon test --target native",
+          "expected": "362 passed, 0 failed"
+        }
+      ],
+      "blockers": []
+    },
+    {
+      "id": "moonclaw-native-suite",
+      "owner": "moonclaw",
+      "stage": "component_tested",
+      "availability": "internal",
+      "evidence": [
+        {
+          "kind": "test",
+          "command": "moon test --target native",
+          "expected": "1754 passed, 0 failed"
+        }
+      ],
+      "blockers": []
+    },
+    {
+      "id": "moonbook-native-filesystem-watcher",
+      "owner": "moonbook",
+      "stage": "declared",
+      "availability": "hidden",
+      "evidence": [],
+      "blockers": [
+        "The native watcher option currently falls back to polling."
+      ]
+    },
+    {
+      "id": "moonbook-served-live-reload",
+      "owner": "moonbook",
+      "stage": "declared",
+      "availability": "hidden",
+      "evidence": [],
+      "blockers": [
+        "No served live-reload websocket is implemented."
+      ]
+    },
+    {
+      "id": "signed-notarized-clean-machine-release",
+      "owner": "moondesk",
+      "stage": "implemented",
+      "availability": "hidden",
+      "evidence": [
+        {
+          "kind": "implementation",
+          "command": "node scripts/phase9_release_smoke.mjs"
+        }
+      ],
+      "blockers": [
+        "Signing, notarization, clean-machine evidence, and external qualification remain incomplete."
+      ]
+    }
+  ]
+}

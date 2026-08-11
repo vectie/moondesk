@@ -2,6 +2,8 @@
 
 Start with the [product contract](PRODUCT_CONTRACT.md) for current maturity,
 capability-truth rules, pack hosting and release gates.
+Use [ENGINEERING_MATURITY.md](ENGINEERING_MATURITY.md) for the executable
+capability stages, integration manifest, and evidence-promotion rules.
 
 MoonDesk is the human desktop shell for MoonSuite. It should make books,
 files, Wiki work, Code work, MoonFind-authored graphs, town requests, runtime
@@ -148,7 +150,7 @@ journeys, methodology, and release acceptance evidence.
 
 ## Future Plan
 
-- Execute the finite MoonCode/OpenSeek alignment plan: one MoonClaw-owned
+- Execute the finite MoonCode consolidation plan: one MoonClaw-owned
   ordered conversation, one stable work disclosure per turn, and a thin
   MoonDesk renderer.
 - Add longer fresh-root and reload UI smokes for Desk, Wiki, and Code.

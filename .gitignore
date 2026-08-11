@@ -7,5 +7,6 @@ target
 .moonagent/
 .moonsuite/
 node_modules/
+/_integration/
 # Suite-local daemon runtime state; keep generated process artifacts isolated.
 .moonsuite/

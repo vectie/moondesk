@@ -17,6 +17,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - name: Checkout MoonClaw integration revision
+        uses: actions/checkout@v5
+        with:
+          repository: vectie/moonclaw
+          ref: main
+          path: _integration/moonclaw
+      - name: Checkout MoonBook integration revision
+        uses: actions/checkout@v5
+        with:
+          repository: vectie/moonbook
+          ref: main
+          path: _integration/moonbook
+      - name: Checkout MoonTown integration revision
+        uses: actions/checkout@v5
+        with:
+          repository: vectie/moontown
+          ref: main
+          path: _integration/moontown
       - name: Install MoonBit
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
@@ -45,3 +63,7 @@ jobs:
           moon test --target native internal/moonwiki/moonflow_action_receipt_wbtest.mbt
       - name: Validate
         run: scripts/validate.sh full
+        env:
+          MOONCLAW_ROOT: ${{ github.workspace }}/_integration/moonclaw
+          MOONBOOK_ROOT: ${{ github.workspace }}/_integration/moonbook
+          MOONTOWN_ROOT: ${{ github.workspace }}/_integration/moontown

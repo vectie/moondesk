@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vectie.example/schemas/moonsuite-capability-maturity.v1.schema.json",
+  "title": "MoonSuite capability maturity ledger",
+  "type": "object",
+  "required": ["contract", "product", "stages", "capabilities"],
+  "properties": {
+    "contract": { "const": "moonsuite-capability-maturity.v1" },
+    "product": { "type": "string", "minLength": 1 },
+    "stages": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 7,
+      "uniqueItems": true
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "owner", "stage", "availability", "evidence", "blockers"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "owner": { "type": "string", "minLength": 1 },
+          "stage": { "type": "string" },
+          "availability": {
+            "enum": ["hidden", "internal", "preview", "available"]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind", "command"],
+              "properties": {
+                "kind": {
+                  "enum": ["implementation", "test", "integration", "journey", "package", "release"]
+                },
+                "command": { "type": "string", "minLength": 1 },
+                "expected": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "blockers": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
