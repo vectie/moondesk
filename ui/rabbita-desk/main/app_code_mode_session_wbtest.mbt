@@ -9,6 +9,30 @@ fn code_mode_test_summary() -> MoonCodeSummary {
 }
 
 ///|
+test "Code workspace keeps source and Office editors in one disclosure" {
+  let model = init_model()
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_mooncode_workspace_editors(code_mode_test_dispatch, model),
+    ),
+  )
+  assert_true(markup.has_prefix("<details"))
+  assert_true(markup.contains("data-testid=\"mooncode-workspace-editors\""))
+  assert_true(markup.contains("Workspace editors · Source and Office"))
+  assert_true(markup.contains("data-testid=\"source-editor\""))
+  assert_true(markup.contains("data-testid=\"office-editor\""))
+  assert_true(markup.contains("data-testid=\"workspace-editor-splitter\""))
+  assert_true(markup.contains("role=\"separator\""))
+  assert_true(markup.contains("Source path"))
+  assert_true(markup.contains("Office path"))
+  assert_true(markup.contains("data-testid=\"source-discard\""))
+  assert_true(markup.contains("data-testid=\"office-discard\""))
+  assert_true(markup.contains("data-testid=\"source-find\""))
+  assert_true(markup.contains("data-testid=\"source-line-numbers\""))
+  assert_true(markup.contains("data-testid=\"source-cursor-position\""))
+}
+
+///|
 test "canonical work evidence preserves public strings and approval fallback" {
   let steps : Array[Json] = []
   for
@@ -3604,4 +3628,30 @@ test "MoonGate setup handoff uses the proven Desk mode action" {
       }),
     }).contains("runtime-setup-visible"),
   )
+}
+
+///|
+test "Code unavailable blocks submission and preserves the draft" {
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonCode,
+    mooncode_capability: CapabilityUnavailable("offline"),
+    mooncode_prompt: "Do not lose this draft",
+  }
+  let (_, next) = update_mooncode_session_actions(
+    code_mode_test_dispatch,
+    SendMoonCodeMessage(model.mooncode_prompt),
+    model,
+  )
+  assert_eq(next.mooncode_prompt, "Do not lose this draft")
+  assert_eq(next.mooncode_optimistic_rows.length(), 0)
+  assert_eq(
+    next.mooncode_composer_status,
+    "Code runtime is unavailable; draft preserved",
+  )
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_mooncode_center(code_mode_test_dispatch, next)),
+  )
+  assert_true(markup.contains("data-testid=\"mooncode-send\""))
+  assert_true(markup.contains("disabled"))
 }

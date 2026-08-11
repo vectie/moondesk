@@ -578,8 +578,7 @@ fn render_mooncode_center(
         ]),
       ]),
       render_mooncode_runtime_setup(dispatch, model),
-      render_source_editor(dispatch, model.source_pane),
-      render_office_editor(dispatch, model.office_editor),
+      render_mooncode_workspace_editors(dispatch, model),
       section(
         class=if empty {
           "mooncode-chat-surface empty"
@@ -631,13 +630,52 @@ fn render_mooncode_center(
                     dispatch(
                       SendMoonCodeMessage(browser_mooncode_prompt_value()),
                     )
-                  }),
+                  })
+                  .disabled(
+                    model.mooncode_prompt.trim().to_owned() == "" ||
+                    mooncode_capability_submission_blocker(
+                      model.mooncode_capability,
+                    )
+                    is Some(_),
+                  ),
                 mooncode_composer_button_label(model, session),
               ),
             ]),
           ]),
         ],
       ),
+    ],
+  )
+}
+
+///|
+fn render_mooncode_workspace_editors(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  details(
+    class="mooncode-workspace-editors",
+    attrs=@html.Attrs::build().data_set("testid", "mooncode-workspace-editors"),
+    [
+      summary(
+        class="mooncode-workspace-editors-summary",
+        "Workspace editors · Source and Office",
+      ),
+      div(class="mooncode-workspace-editors-body", [
+        render_source_editor(dispatch, model.source_pane),
+        @html.node(
+          "div",
+          @html.Attrs::build()
+          .class("workspace-editor-splitter")
+          .data_set("action", "resize-workspace-editors")
+          .data_set("testid", "workspace-editor-splitter")
+          .role("separator")
+          .tabindex(0)
+          .aria_label("Resize Source and Office editors"),
+          [span(class="workspace-editor-splitter-grip", "")],
+        ),
+        render_office_editor(dispatch, model.office_editor),
+      ]),
     ],
   )
 }
@@ -651,15 +689,20 @@ fn render_source_editor(
     class="source-editor",
     attrs=@html.Attrs::build().data_set("testid", "source-editor"),
     [
+      h3("Source editor"),
+      p("Open and save a source file in the selected MoonBook."),
       div(class="source-editor-toolbar", [
-        input(
-          attrs=@html.Attrs::build()
-            .data_set("testid", "source-path")
-            .aria_label("Workspace source path"),
-          value=source.path_input,
-          placeholder="src/main.mbt",
-          on_input=fn(value) { dispatch(SourcePane(SetPathInput(value))) },
-        ),
+        @html.label(class="editor-path-field", [
+          span("Source path"),
+          input(
+            attrs=@html.Attrs::build()
+              .data_set("testid", "source-path")
+              .aria_label("Workspace source path"),
+            value=source.path_input,
+            placeholder="src/main.mbt",
+            on_input=fn(value) { dispatch(SourcePane(SetPathInput(value))) },
+          ),
+        ]),
         button(
           class="secondary-button",
           attrs=@html.Attrs::build()
@@ -667,6 +710,7 @@ fn render_source_editor(
             .on_click(_ => {
               dispatch(SourcePane(RequestSource(browser_source_path_value())))
             }),
+          disabled=source.content is Loading || source.saving,
           "Open",
         ),
         button(
@@ -682,22 +726,104 @@ fn render_source_editor(
         ),
         button(
           class="secondary-button",
+          attrs=@html.Attrs::build().data_set("testid", "source-discard"),
+          disabled=!source_pane_dirty(source) || source.saving,
+          on_click=dispatch(SourcePane(DiscardDraft)),
+          "Discard",
+        ),
+        button(
+          class="secondary-button",
           attrs=@html.Attrs::build().data_set("testid", "source-reload"),
           disabled=source.server_content is None,
           on_click=dispatch(SourcePane(ReloadServer)),
           "Reload external version",
         ),
       ]),
-      textarea(
-        class="source-editor-input",
-        attrs=@html.Attrs::build()
-          .data_set("testid", "source-editor-input")
-          .aria_label("Source editor"),
-        rows=12,
-        value=source.draft,
-        on_input=fn(value) { dispatch(SourcePane(EditDraft(value))) },
-        "",
-      ),
+      div(class="source-editor-find", [
+        @html.label([
+          span("Find"),
+          input(
+            attrs=@html.Attrs::build()
+              .data_set("testid", "source-find")
+              .aria_label("Find in source file")
+              .disabled(!source_pane_editable(source)),
+            placeholder="Find in file",
+          ),
+        ]),
+        button(
+          class="secondary-button",
+          attrs=@html.Attrs::build()
+            .data_set("action", "source-find-previous")
+            .data_set("testid", "source-find-previous"),
+          disabled=!source_pane_editable(source),
+          "Previous",
+        ),
+        button(
+          class="secondary-button",
+          attrs=@html.Attrs::build()
+            .data_set("action", "source-find-next")
+            .data_set("testid", "source-find-next"),
+          disabled=!source_pane_editable(source),
+          "Next",
+        ),
+        span(
+          class="source-find-result",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "source-find-result")
+            .aria_live("polite"),
+          "No search",
+        ),
+      ]),
+      div(class="source-editor-workbench", [
+        pre(
+          class="source-editor-line-numbers",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "source-line-numbers")
+            .aria_hidden("true"),
+          source_pane_line_numbers(source),
+        ),
+        textarea(
+          class="source-editor-input",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "source-editor-input")
+            .aria_label("Source editor")
+            .wrap("off")
+            .spellcheck(false)
+            .autocapitalize("off")
+            .disabled(!source_pane_editable(source)),
+          rows=12,
+          value=source.draft,
+          placeholder=match source.content {
+            Empty => "Open a workspace source file to begin editing."
+            Loading => "Loading source..."
+            Unsupported(reason) | Failed(reason) => reason
+            Ready(_) => ""
+          },
+          on_input=fn(value) { dispatch(SourcePane(EditDraft(value))) },
+          "",
+        ),
+      ]),
+      div(class="source-editor-meta", [
+        span(
+          if source.requested_path == "" {
+            "No file open"
+          } else {
+            source.requested_path
+          },
+        ),
+        span(if source_pane_dirty(source) { "Modified" } else { "Saved" }),
+        span(
+          attrs=@html.Attrs::build().data_set("testid", "source-language"),
+          source_pane_language_label(source),
+        ),
+        span(
+          attrs=@html.Attrs::build().data_set(
+            "testid", "source-cursor-position",
+          ),
+          "Ln 1, Col 1",
+        ),
+        span("UTF-8 · LF"),
+      ]),
       p(
         class="source-editor-status",
         attrs=@html.Attrs::build()
