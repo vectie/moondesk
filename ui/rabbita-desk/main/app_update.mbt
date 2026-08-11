@@ -1,10 +1,14 @@
 ///|
-fn sync_source_pane_context(model : Model) -> Model {
+fn sync_workspace_editor_context(model : Model) -> Model {
   {
     ..model,
     source_pane: update_source_pane(
       model.source_pane,
       Rebind(model.selected_workspace_id, model.selected_mooncode_session_id),
+    ),
+    office_editor: update_office_editor(
+      model.office_editor,
+      OfficeRebind(model.selected_workspace_id),
     ),
   }
 }
@@ -303,7 +307,7 @@ fn update(
     RequestBrowserHostControl(_) =>
       update_workspace_surface_actions(dispatch, msg, model)
   }
-  (command, sync_source_pane_context(next))
+  (command, sync_workspace_editor_context(next))
 }
 
 ///|

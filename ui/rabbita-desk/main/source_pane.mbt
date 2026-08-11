@@ -51,6 +51,7 @@ enum SourcePaneMsg {
   PreviewResult(SourcePaneRequestIdentity, Result[@desk.DeskPreview, String])
   PreviewUnsupported(SourcePaneRequestIdentity, String)
   EditDraft(String)
+  DiscardDraft
   Save
   SaveResult(SourceSaveOutcome)
   ReloadServer
@@ -105,6 +106,51 @@ fn source_pane_dirty(state : SourcePaneState) -> Bool {
 }
 
 ///|
+fn source_pane_editable(state : SourcePaneState) -> Bool {
+  state.content is Ready(_) && !state.saving
+}
+
+///|
+fn source_pane_line_count(state : SourcePaneState) -> Int {
+  state.draft.split("\n").length()
+}
+
+///|
+fn source_pane_line_numbers(state : SourcePaneState) -> String {
+  let lines : Array[String] = []
+  for line in 1..<=source_pane_line_count(state) {
+    lines.push(line.to_string())
+  }
+  lines.join("\n")
+}
+
+///|
+fn source_pane_language_label(state : SourcePaneState) -> String {
+  let path = state.requested_path.to_lower()
+  if path.has_suffix(".mbt") || path.has_suffix(".mbti") {
+    "MoonBit"
+  } else if path.has_suffix(".md") || path.has_suffix(".mdx") {
+    "Markdown"
+  } else if path.has_suffix(".json") {
+    "JSON"
+  } else if path.has_suffix(".js") || path.has_suffix(".mjs") {
+    "JavaScript"
+  } else if path.has_suffix(".ts") || path.has_suffix(".tsx") {
+    "TypeScript"
+  } else if path.has_suffix(".css") {
+    "CSS"
+  } else if path.has_suffix(".html") || path.has_suffix(".htm") {
+    "HTML"
+  } else if path.has_suffix(".py") {
+    "Python"
+  } else if path.has_suffix(".sh") || path.has_suffix(".zsh") {
+    "Shell"
+  } else {
+    "Plain text"
+  }
+}
+
+///|
 fn source_pane_path_is_unsafe(path : String) -> Bool {
   path.has_prefix("/") ||
   path.has_prefix("\\") ||
@@ -142,10 +188,10 @@ fn update_source_pane(
     OpenPathInput => update_source_pane(state, RequestSource(state.path_input))
     RequestSource(path) => {
       let path = path.trim().to_owned()
-      if source_pane_dirty(state) && path != state.requested_path {
+      if source_pane_dirty(state) {
         {
           ..state,
-          status: "Save or discard the unsaved draft before opening another file",
+          status: "Save or discard the unsaved draft before opening a file",
         }
       } else {
         let content = if path == "" {
@@ -159,13 +205,19 @@ fn update_source_pane(
         } else {
           Loading
         }
+        let status = match content {
+          Failed(problem) => problem
+          _ => ""
+        }
         {
           ..state,
           path_input: path,
           requested_path: path,
           request_generation: state.request_generation + 1,
           content,
-          status: "",
+          baseline: "",
+          draft: "",
+          status,
           server_content: None,
         }
       }
@@ -193,9 +245,25 @@ fn update_source_pane(
       } else {
         state
       }
-    EditDraft(draft) => { ..state, draft, status: "Unsaved changes" }
-    Save =>
+    EditDraft(draft) =>
+      if source_pane_editable(state) {
+        { ..state, draft, status: "Unsaved changes" }
+      } else {
+        state
+      }
+    DiscardDraft =>
       if source_pane_dirty(state) {
+        {
+          ..state,
+          draft: state.baseline,
+          server_content: None,
+          status: "Discarded unsaved source changes",
+        }
+      } else {
+        state
+      }
+    Save =>
+      if source_pane_dirty(state) && source_pane_editable(state) {
         { ..state, saving: true, status: "Saving" }
       } else {
         { ..state, status: "No changes to save" }

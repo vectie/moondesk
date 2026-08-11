@@ -18,18 +18,21 @@ fn render_office_editor(
         "Supported subset only. Unsupported Office features remain in the saved package but are not editable.",
       ),
       div(class="office-editor-toolbar", [
-        input(
-          attrs=@html.Attrs::build()
-            .data_set("testid", "office-path")
-            .aria_label("Office workspace path"),
-          value=state.path_input,
-          placeholder="documents/report.docx",
-          on_input=fn(value) { dispatch(OfficeEditor(OfficeSetPath(value))) },
-        ),
+        @html.label(class="editor-path-field", [
+          span("Office path"),
+          input(
+            attrs=@html.Attrs::build()
+              .data_set("testid", "office-path")
+              .aria_label("Office workspace path"),
+            value=state.path_input,
+            placeholder="documents/report.docx",
+            on_input=fn(value) { dispatch(OfficeEditor(OfficeSetPath(value))) },
+          ),
+        ]),
         button(
           class="secondary-button",
           attrs=@html.Attrs::build().data_set("testid", "office-open"),
-          disabled=state.loading,
+          disabled=state.loading || state.saving,
           on_click=dispatch(OfficeEditor(OfficeOpen)),
           if state.loading {
             "Opening..."
@@ -50,15 +53,25 @@ fn render_office_editor(
         ),
         button(
           class="secondary-button",
+          attrs=@html.Attrs::build().data_set("testid", "office-discard"),
+          disabled=!office_editor_dirty(state) || state.saving,
+          on_click=dispatch(OfficeEditor(OfficeDiscard)),
+          "Discard",
+        ),
+        button(
+          class="secondary-button",
           attrs=@html.Attrs::build().data_set("testid", "office-close"),
-          disabled=office_editor_dirty(state),
+          disabled=office_editor_dirty(state) || state.loading || state.saving,
           on_click=dispatch(OfficeEditor(OfficeClose)),
           "Close",
         ),
         button(
           class="secondary-button",
           attrs=@html.Attrs::build().data_set("testid", "office-reopen"),
-          disabled=office_editor_dirty(state) || state.path == "",
+          disabled=office_editor_dirty(state) ||
+            state.path == "" ||
+            state.loading ||
+            state.saving,
           on_click=dispatch(OfficeEditor(OfficeReopen)),
           "Reopen saved bytes",
         ),
@@ -70,9 +83,11 @@ fn render_office_editor(
           href=if state.path == "" || office_editor_dirty(state) {
             "#"
           } else {
-            @desk.workspace_endpoint_url(state.workspace_id, "office/export") +
-            "?path=" +
-            state.path
+            office_editor_endpoint_url(
+              state.workspace_id,
+              "office/export",
+              state.path,
+            )
           },
           "Export saved Office bytes",
         ),
@@ -87,6 +102,8 @@ fn render_office_editor(
               "office-nav-item"
             },
             attrs=@html.Attrs::build().data_set("testid", "office-nav-\{index}"),
+            disabled=office_editor_selected_dirty(state) &&
+              index != state.selected,
             on_click=dispatch(OfficeEditor(OfficeSelect(index))),
             item.section + " · " + item.reference,
           )
@@ -103,7 +120,10 @@ fn render_office_editor(
             @html.label([
               span("Text or cell value"),
               input(
-                attrs=@html.Attrs::build().data_set("testid", "office-text"),
+                attrs=@html.Attrs::build()
+                  .data_set("testid", "office-text")
+                  .aria_label("Office item text")
+                  .disabled(state.loading || state.saving),
                 value=item.text,
                 on_input=fn(value) {
                   dispatch(OfficeEditor(OfficeEditText(value)))
@@ -146,9 +166,16 @@ fn render_office_editor(
                   OfficeXlsx =>
                     @html.label([
                       span("Formula"),
-                      input(value=item.formula, on_input=fn(value) {
-                        dispatch(OfficeEditor(OfficeEditFormula(value)))
-                      }),
+                      input(
+                        attrs=@html.Attrs::build()
+                          .aria_label("Spreadsheet cell formula")
+                          .data_set("testid", "office-formula")
+                          .disabled(state.loading || state.saving),
+                        value=item.formula,
+                        on_input=fn(value) {
+                          dispatch(OfficeEditor(OfficeEditFormula(value)))
+                        },
+                      ),
                     ])
                   OfficePptx =>
                     div(class="office-geometry", [
@@ -166,6 +193,11 @@ fn render_office_editor(
                       }),
                     ])
                 }
+              None => @html.nothing
+            },
+            match state.document {
+              Some(document) =>
+                render_office_supported_preview(document.kind, item)
               None => @html.nothing
             },
             match state.conflict_baseline {
@@ -191,10 +223,24 @@ fn render_office_editor(
       },
       match state.document {
         Some(document) =>
-          div(
-            class="office-warnings",
-            document.warnings.map(warning => p(warning)),
-          )
+          div(class="office-document-meta", [
+            span(
+              match document.kind {
+                OfficeDocx => "DOCX"
+                OfficeXlsx => "XLSX"
+                OfficePptx => "PPTX"
+              },
+            ),
+            span("\{document.items.length()} editable items"),
+            if document.warnings.is_empty() {
+              @html.nothing
+            } else {
+              div(
+                class="office-warnings",
+                document.warnings.map(warning => p(warning)),
+              )
+            },
+          ])
         None => @html.nothing
       },
       p(
@@ -209,6 +255,108 @@ fn render_office_editor(
           state.status
         },
       ),
+    ],
+  )
+}
+
+///|
+fn render_office_supported_preview(
+  kind : OfficeEditorKind,
+  item : OfficeEditorItem,
+) -> @rabbita.Html {
+  section(
+    class="office-supported-preview",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "office-supported-preview")
+      .aria_label("Live supported-subset preview"),
+    [
+      div(class="office-preview-heading", [
+        strong("Live supported-subset preview"),
+        span(
+          match kind {
+            OfficeDocx => "Text styling"
+            OfficeXlsx => "Cell and formula"
+            OfficePptx => "Content, not slide fidelity"
+          },
+        ),
+      ]),
+      match kind {
+        OfficeDocx => {
+          let text_class = "office-preview-docx-text" +
+            (if item.bold { " is-bold" } else { "" }) +
+            (if item.italic { " is-italic" } else { "" }) +
+            (if item.underline { " is-underlined" } else { "" })
+          div(
+            class="office-preview-docx",
+            attrs=@html.Attrs::build().data_set("testid", "office-docx-preview"),
+            [
+              div(class="office-preview-page", [
+                p(
+                  class=text_class,
+                  if item.text == "" {
+                    "Empty paragraph"
+                  } else {
+                    item.text
+                  },
+                ),
+              ]),
+            ],
+          )
+        }
+        OfficeXlsx =>
+          div(
+            class="office-preview-xlsx",
+            attrs=@html.Attrs::build().data_set("testid", "office-xlsx-preview"),
+            [
+              div(class="office-preview-formula", [
+                strong("fx"),
+                span(
+                  if item.formula == "" {
+                    "No formula"
+                  } else {
+                    item.formula
+                  },
+                ),
+              ]),
+              div(class="office-preview-sheet", [
+                span(class="office-preview-corner", ""),
+                span(class="office-preview-column", "A"),
+                span(class="office-preview-row", "1"),
+                div(
+                  class="office-preview-cell is-selected",
+                  if item.text == "" {
+                    "Empty cell"
+                  } else {
+                    item.text
+                  },
+                ),
+              ]),
+            ],
+          )
+        OfficePptx =>
+          div(
+            class="office-preview-pptx",
+            attrs=@html.Attrs::build().data_set("testid", "office-pptx-preview"),
+            [
+              div(class="office-preview-slide", [
+                div(
+                  class="office-preview-slide-object",
+                  if item.text == "" {
+                    "Empty text object"
+                  } else {
+                    item.text
+                  },
+                ),
+              ]),
+              div(class="office-preview-geometry", [
+                span("X \{item.x}"),
+                span("Y \{item.y}"),
+                span("W \{item.width}"),
+                span("H \{item.height}"),
+              ]),
+            ],
+          )
+      },
     ],
   )
 }

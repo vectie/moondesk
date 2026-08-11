@@ -225,6 +225,8 @@ type OfficeEditorKind derive(Eq, @debug.Debug)
 
 type OfficeEditorMsg derive(Eq, @debug.Debug)
 
+type OfficeEditorRequestIdentity derive(Eq, @debug.Debug)
+
 type OfficeEditorState derive(Eq, @debug.Debug)
 
 type PackAppCatalog derive(@json.FromJson)

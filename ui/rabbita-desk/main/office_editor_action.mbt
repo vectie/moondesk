@@ -9,13 +9,26 @@ fn office_editor_action(
   match msg {
     OfficeOpen | OfficeReopen | OfficeReloadConflict =>
       if office_editor.loading {
-        (open_office_editor_cmd(dispatch, office_editor), next)
+        (
+          open_office_editor_cmd(
+            dispatch,
+            office_editor_identity(office_editor),
+          ),
+          next,
+        )
       } else {
         (@rabbita.none, next)
       }
     OfficeSave | OfficeReplaceConflict =>
       if office_editor.saving {
-        (save_office_editor_cmd(dispatch, office_editor), next)
+        (
+          save_office_editor_cmd(
+            dispatch,
+            office_editor,
+            office_editor_identity(office_editor),
+          ),
+          next,
+        )
       } else {
         (@rabbita.none, next)
       }
@@ -26,14 +39,14 @@ fn office_editor_action(
 ///|
 fn open_office_editor_cmd(
   dispatch : Dispatch[Msg],
-  state : OfficeEditorState,
+  identity : OfficeEditorRequestIdentity,
 ) -> @rabbita.Cmd {
   @http.get(
-    @desk.workspace_endpoint_url(state.workspace_id, "office") +
-    "?path=" +
-    state.path,
+    office_editor_endpoint_url(identity.workspace_id, "office", identity.path),
   ).expect_json(result => {
-    dispatch(OfficeEditor(OfficeOpened(parse_office_editor_http(result))))
+    dispatch(
+      OfficeEditor(OfficeOpened(identity, parse_office_editor_http(result))),
+    )
   })
 }
 
@@ -41,6 +54,7 @@ fn open_office_editor_cmd(
 fn save_office_editor_cmd(
   dispatch : Dispatch[Msg],
   state : OfficeEditorState,
+  identity : OfficeEditorRequestIdentity,
 ) -> @rabbita.Cmd {
   let body = office_editor_save_body(state)
   @http.post(@desk.workspace_endpoint_url(state.workspace_id, "office/save"))
@@ -52,21 +66,37 @@ fn save_office_editor_cmd(
           dispatch(
             OfficeEditor(
               OfficeConflict(
+                identity,
                 json_field_string(payload, "current_baseline", default=""),
               ),
             ),
           )
         } else {
           dispatch(
-            OfficeEditor(OfficeSaved(parse_office_editor_http(Ok(payload)))),
+            OfficeEditor(
+              OfficeSaved(identity, parse_office_editor_http(Ok(payload))),
+            ),
           )
         }
       Err(error) =>
         dispatch(
-          OfficeEditor(OfficeSaved(parse_office_editor_http(Err(error)))),
+          OfficeEditor(
+            OfficeSaved(identity, parse_office_editor_http(Err(error))),
+          ),
         )
     }
   })
+}
+
+///|
+fn office_editor_endpoint_url(
+  workspace_id : String,
+  endpoint : String,
+  path : String,
+) -> String {
+  @desk.workspace_endpoint_url(workspace_id, endpoint) +
+  "?" +
+  @desk.desktop_api_query([("path", path)])
 }
 
 ///|

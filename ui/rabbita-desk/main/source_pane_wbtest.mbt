@@ -105,6 +105,7 @@ test "source pane rejects unsafe absolute and parent paths" {
       RequestSource(path),
     )
     assert_true(state.content is Failed(_))
+    assert_true(state.status.contains("parent-traversal"))
   }
 }
 
@@ -200,4 +201,62 @@ test "source pane rejects blank workspace but permits empty session" {
     RequestSource("src/main.mbt"),
   )
   assert_true(authorized.content is Loading)
+}
+
+///|
+test "source pane edits only a ready document and discards deliberately" {
+  let loading = update_source_pane(
+    init_source_pane("workspace", "session"),
+    RequestSource("src/main.mbt"),
+  )
+  assert_true(update_source_pane(loading, EditDraft("too early")) == loading)
+  let ready = update_source_pane(
+    loading,
+    PreviewResult(source_pane_identity(loading), Ok(source_pane_test_preview())),
+  )
+  let dirty = update_source_pane(ready, EditDraft("changed"))
+  assert_true(source_pane_dirty(dirty))
+  let blocked = update_source_pane(dirty, RequestSource("src/main.mbt"))
+  assert_eq(blocked.draft, "changed")
+  assert_true(blocked.status.contains("Save or discard"))
+  let discarded = update_source_pane(blocked, DiscardDraft)
+  assert_false(source_pane_dirty(discarded))
+  assert_eq(discarded.draft, "fn main {}")
+}
+
+///|
+test "source pane clears the previous buffer while another path loads" {
+  let loading = update_source_pane(
+    init_source_pane("workspace", "session"),
+    RequestSource("src/main.mbt"),
+  )
+  let ready = update_source_pane(
+    loading,
+    PreviewResult(source_pane_identity(loading), Ok(source_pane_test_preview())),
+  )
+  let next = update_source_pane(ready, RequestSource("src/other.mbt"))
+  assert_true(next.content is Loading)
+  assert_eq(next.baseline, "")
+  assert_eq(next.draft, "")
+  assert_false(source_pane_editable(next))
+}
+
+///|
+test "source pane derives editor language and line-number chrome" {
+  let moonbit = {
+    ..init_source_pane("workspace", "session"),
+    requested_path: "src/main.mbt",
+    draft: "fn main {\n  println(\"moon\")\n}\n",
+  }
+  assert_eq(source_pane_language_label(moonbit), "MoonBit")
+  assert_eq(source_pane_line_count(moonbit), 4)
+  assert_eq(source_pane_line_numbers(moonbit), "1\n2\n3\n4")
+  assert_eq(
+    source_pane_language_label({ ..moonbit, requested_path: "notes/readme.md" }),
+    "Markdown",
+  )
+  assert_eq(
+    source_pane_language_label({ ..moonbit, requested_path: "unknown.data" }),
+    "Plain text",
+  )
 }
