@@ -96,6 +96,39 @@ test "Office editor renders honest live previews for every supported kind" {
 }
 
 ///|
+test "Office preview renders every supported item and selected geometry" {
+  let first = { ..office_test_item("paragraph 0", "run 0", 0, 0), text: "First", }
+  let second = {
+    ..office_test_item("paragraph 1", "run 0", 1, 0),
+    text: "Second",
+    x: 20,
+    y: 30,
+    width: 40,
+    height: 50,
+  }
+  let initial = office_test_state(OfficePptx, first)
+  let document = match initial.document {
+    Some(document) => { ..document, items: [first, second], }
+    None => fail("office test document missing")
+  }
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_office_editor(office_view_test_dispatch, {
+        ..initial,
+        document: Some(document),
+        draft_items: [first, second],
+        selected: 1,
+      }),
+    ),
+  )
+  assert_true(markup.contains("First"))
+  assert_true(markup.contains("Second"))
+  assert_true(markup.contains("office-preview-slide-object is-selected"))
+  assert_true(markup.contains("left:"))
+  assert_true(markup.contains("width:"))
+}
+
+///|
 test "Office save uses the nested workspace route contract" {
   assert_eq(
     @desk.workspace_endpoint_url("book-research-alpha", "office/save"),

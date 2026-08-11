@@ -24,6 +24,16 @@ struct SourcePaneRequestIdentity {
 } derive(Eq, Debug)
 
 ///|
+struct SourcePaneBuffer {
+  path : String
+  content : SourcePaneContent
+  baseline : String
+  draft : String
+  server_content : String?
+  status : String
+} derive(Eq, Debug)
+
+///|
 struct SourcePaneState {
   open : Bool
   collapsed : Bool
@@ -38,6 +48,7 @@ struct SourcePaneState {
   server_content : String?
   saving : Bool
   status : String
+  buffers : Array[SourcePaneBuffer]
 } derive(Eq, Debug)
 
 ///|
@@ -56,6 +67,8 @@ enum SourcePaneMsg {
   SaveResult(SourceSaveOutcome)
   ReloadServer
   ReplaceServer
+  SwitchBuffer(String)
+  CloseBuffer(String)
 } derive(Eq, Debug)
 
 ///|
@@ -77,7 +90,86 @@ fn init_source_pane(
     server_content: None,
     saving: false,
     status: "",
+    buffers: [],
   }
+}
+
+///|
+fn source_pane_buffer_index(
+  buffers : Array[SourcePaneBuffer],
+  path : String,
+) -> Int? {
+  for index, buffer in buffers {
+    if buffer.path == path {
+      return Some(index)
+    }
+  }
+  None
+}
+
+///|
+fn source_pane_active_buffer(state : SourcePaneState) -> SourcePaneBuffer? {
+  if state.requested_path == "" ||
+    state.content is Empty ||
+    state.content is SourcePaneContent::Loading {
+    return None
+  }
+  Some({
+    path: state.requested_path,
+    content: state.content,
+    baseline: state.baseline,
+    draft: state.draft,
+    server_content: state.server_content,
+    status: state.status,
+  })
+}
+
+///|
+fn source_pane_capture_active(state : SourcePaneState) -> Array[SourcePaneBuffer] {
+  guard source_pane_active_buffer(state) is Some(active) else {
+    return state.buffers
+  }
+  match source_pane_buffer_index(state.buffers, active.path) {
+    Some(active_index) =>
+      state.buffers.mapi((index, buffer) =>
+        if index == active_index { active } else { buffer }
+      )
+    None => state.buffers + [active]
+  }
+}
+
+///|
+fn source_pane_commit_active(state : SourcePaneState) -> SourcePaneState {
+  { ..state, buffers: source_pane_capture_active(state), }
+}
+
+///|
+fn source_pane_activate_buffer(
+  state : SourcePaneState,
+  buffer : SourcePaneBuffer,
+) -> SourcePaneState {
+  {
+    ..state,
+    path_input: buffer.path,
+    requested_path: buffer.path,
+    content: buffer.content,
+    baseline: buffer.baseline,
+    draft: buffer.draft,
+    server_content: buffer.server_content,
+    status: buffer.status,
+  }
+}
+
+///|
+fn source_pane_any_dirty(state : SourcePaneState) -> Bool {
+  source_pane_capture_active(state).any(buffer =>
+    buffer.draft != buffer.baseline
+  )
+}
+
+///|
+fn source_pane_buffer_dirty(buffer : SourcePaneBuffer) -> Bool {
+  buffer.draft != buffer.baseline
 }
 
 ///|
@@ -171,7 +263,7 @@ fn update_source_pane(
     Rebind(workspace_id, session_id) =>
       if state.workspace_id == workspace_id {
         { ..state, session_id, }
-      } else if source_pane_dirty(state) {
+      } else if source_pane_any_dirty(state) {
         {
           ..state,
           status: "Save or discard the unsaved draft before changing workspace",
@@ -188,37 +280,38 @@ fn update_source_pane(
     OpenPathInput => update_source_pane(state, RequestSource(state.path_input))
     RequestSource(path) => {
       let path = path.trim().to_owned()
-      if source_pane_dirty(state) {
-        {
-          ..state,
-          status: "Save or discard the unsaved draft before opening a file",
-        }
-      } else {
-        let content = if path == "" {
-          Empty
-        } else if state.workspace_id.trim() == "" {
-          Failed("Cannot load source without workspace authority")
-        } else if source_pane_path_is_unsafe(path) {
-          Failed(
-            "Unsafe source path: absolute and parent-traversal paths are not allowed",
-          )
-        } else {
-          Loading
-        }
-        let status = match content {
-          Failed(problem) => problem
-          _ => ""
-        }
-        {
-          ..state,
-          path_input: path,
-          requested_path: path,
-          request_generation: state.request_generation + 1,
-          content,
-          baseline: "",
-          draft: "",
-          status,
-          server_content: None,
+      let buffers = source_pane_capture_active(state)
+      match source_pane_buffer_index(buffers, path) {
+        Some(index) if path != "" =>
+          source_pane_activate_buffer({ ..state, buffers, }, buffers[index])
+        _ => {
+          let content = if path == "" {
+            Empty
+          } else if state.workspace_id.trim() == "" {
+            Failed("Cannot load source without workspace authority")
+          } else if source_pane_path_is_unsafe(path) {
+            Failed(
+              "Unsafe source path: absolute and parent-traversal paths are not allowed",
+            )
+          } else {
+            Loading
+          }
+          let status = match content {
+            Failed(problem) => problem
+            _ => ""
+          }
+          {
+            ..state,
+            path_input: path,
+            requested_path: path,
+            request_generation: state.request_generation + 1,
+            content,
+            baseline: "",
+            draft: "",
+            status,
+            server_content: None,
+            buffers,
+          }
         }
       }
     }
@@ -226,14 +319,14 @@ fn update_source_pane(
       if source_pane_is_current(state, identity) {
         match result {
           Ok(preview) =>
-            {
+            source_pane_commit_active({
               ..state,
               content: Ready(preview),
               baseline: preview.body,
               draft: preview.body,
               server_content: None,
               status: "Ready",
-            }
+            })
           Err(problem) => { ..state, content: Failed(problem), status: problem }
         }
       } else {
@@ -247,18 +340,22 @@ fn update_source_pane(
       }
     EditDraft(draft) =>
       if source_pane_editable(state) {
-        { ..state, draft, status: "Unsaved changes" }
+        source_pane_commit_active({
+          ..state,
+          draft,
+          status: "Unsaved changes",
+        })
       } else {
         state
       }
     DiscardDraft =>
       if source_pane_dirty(state) {
-        {
+        source_pane_commit_active({
           ..state,
           draft: state.baseline,
           server_content: None,
           status: "Discarded unsaved source changes",
-        }
+        })
       } else {
         state
       }
@@ -272,46 +369,88 @@ fn update_source_pane(
       match outcome {
         SourceSaved(payload) => {
           let saved = json_field_string(payload, "content", default=state.draft)
-          {
+          source_pane_commit_active({
             ..state,
             baseline: saved,
             draft: saved,
             saving: false,
             server_content: None,
             status: "Saved",
-          }
+          })
         }
         SourceConflict(current) =>
-          {
+          source_pane_commit_active({
             ..state,
             saving: false,
             server_content: Some(current),
             status: "File changed after this draft was opened",
-          }
+          })
         SourceSaveFailed(problem) => { ..state, saving: false, status: problem }
       }
     ReloadServer =>
       match state.server_content {
         Some(current) =>
-          {
+          source_pane_commit_active({
             ..state,
             baseline: current,
             draft: current,
             server_content: None,
             status: "Reloaded external version",
-          }
+          })
         None => state
       }
     ReplaceServer =>
       match state.server_content {
         Some(current) =>
-          {
+          source_pane_commit_active({
             ..state,
             baseline: current,
             saving: true,
             status: "Replacing external version",
-          }
+          })
         None => state
       }
+    SwitchBuffer(path) => {
+      guard !state.saving else {
+        { ..state, status: "Wait for the current save before switching tabs" }
+      }
+      let buffers = source_pane_capture_active(state)
+      match source_pane_buffer_index(buffers, path) {
+        Some(index) =>
+          source_pane_activate_buffer({ ..state, buffers, }, buffers[index])
+        None => state
+      }
+    }
+    CloseBuffer(path) => {
+      guard !state.saving else {
+        { ..state, status: "Wait for the current save before closing tabs" }
+      }
+      let buffers = source_pane_capture_active(state)
+      guard source_pane_buffer_index(buffers, path) is Some(index) else {
+        state
+      }
+      if buffers[index].draft != buffers[index].baseline {
+        { ..state, status: "Save or discard the modified tab before closing it" }
+      } else {
+        let remaining = buffers.filter(buffer => buffer.path != path)
+        if state.requested_path != path {
+          { ..state, buffers: remaining, }
+        } else if remaining is [next, ..] {
+          source_pane_activate_buffer({ ..state, buffers: remaining, }, next)
+        } else {
+          {
+            ..state,
+            path_input: "",
+            requested_path: "",
+            content: Empty,
+            baseline: "",
+            draft: "",
+            server_content: None,
+            status: "Closed source tab",
+            buffers: [],
+          }
+        }
+      }
+    }
   }
 }

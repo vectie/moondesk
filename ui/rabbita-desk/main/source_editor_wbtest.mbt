@@ -45,7 +45,7 @@ test "different workspace rebind invalidates clean source response" {
 }
 
 ///|
-test "source draft blocks navigation and remains dirty after save failure" {
+test "source draft survives tab navigation and remains dirty after save failure" {
   let loading = update_source_pane(
     init_source_pane("workspace", "session"),
     RequestSource("src/main.mbt"),
@@ -56,10 +56,12 @@ test "source draft blocks navigation and remains dirty after save failure" {
   )
   let dirty = update_source_pane(ready, EditDraft("fn direct_edit {}"))
   assert_true(source_pane_dirty(dirty))
-  let blocked = update_source_pane(dirty, RequestSource("src/other.mbt"))
-  assert_eq(blocked.requested_path, "src/main.mbt")
+  let opening_other = update_source_pane(dirty, RequestSource("src/other.mbt"))
+  assert_eq(opening_other.requested_path, "src/other.mbt")
+  let restored = update_source_pane(opening_other, SwitchBuffer("src/main.mbt"))
+  assert_eq(restored.draft, "fn direct_edit {}")
   let failed = update_source_pane(
-    dirty,
+    restored,
     SaveResult(SourceConflict("fn external {}")),
   )
   assert_eq(failed.draft, "fn direct_edit {}")

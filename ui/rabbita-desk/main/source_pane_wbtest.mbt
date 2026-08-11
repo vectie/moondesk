@@ -204,7 +204,7 @@ test "source pane rejects blank workspace but permits empty session" {
 }
 
 ///|
-test "source pane edits only a ready document and discards deliberately" {
+test "source pane preserves a dirty buffer across tabs and discards deliberately" {
   let loading = update_source_pane(
     init_source_pane("workspace", "session"),
     RequestSource("src/main.mbt"),
@@ -216,10 +216,13 @@ test "source pane edits only a ready document and discards deliberately" {
   )
   let dirty = update_source_pane(ready, EditDraft("changed"))
   assert_true(source_pane_dirty(dirty))
-  let blocked = update_source_pane(dirty, RequestSource("src/main.mbt"))
-  assert_eq(blocked.draft, "changed")
-  assert_true(blocked.status.contains("Save or discard"))
-  let discarded = update_source_pane(blocked, DiscardDraft)
+  let opening_other = update_source_pane(dirty, RequestSource("src/other.mbt"))
+  assert_true(opening_other.content is Loading)
+  assert_eq(opening_other.draft, "")
+  let restored = update_source_pane(opening_other, SwitchBuffer("src/main.mbt"))
+  assert_eq(restored.draft, "changed")
+  assert_true(source_pane_dirty(restored))
+  let discarded = update_source_pane(restored, DiscardDraft)
   assert_false(source_pane_dirty(discarded))
   assert_eq(discarded.draft, "fn main {}")
 }
@@ -239,6 +242,49 @@ test "source pane clears the previous buffer while another path loads" {
   assert_eq(next.baseline, "")
   assert_eq(next.draft, "")
   assert_false(source_pane_editable(next))
+  assert_eq(next.buffers.length(), 1)
+  assert_eq(next.buffers[0].path, "src/main.mbt")
+}
+
+///|
+test "source pane closes only clean tabs and restores another buffer" {
+  let loading = update_source_pane(
+    init_source_pane("workspace", "session"),
+    RequestSource("src/main.mbt"),
+  )
+  let ready = update_source_pane(
+    loading,
+    PreviewResult(source_pane_identity(loading), Ok(source_pane_test_preview())),
+  )
+  let dirty = update_source_pane(ready, EditDraft("changed"))
+  let blocked = update_source_pane(dirty, CloseBuffer("src/main.mbt"))
+  assert_true(blocked.status.contains("modified tab"))
+  let clean = update_source_pane(blocked, DiscardDraft)
+  let closed = update_source_pane(clean, CloseBuffer("src/main.mbt"))
+  assert_true(closed.content is Empty)
+  assert_true(closed.buffers.is_empty())
+}
+
+///|
+test "source pane keeps tab identity stable while a save is pending" {
+  let loading = update_source_pane(
+    init_source_pane("workspace", "session"),
+    RequestSource("src/main.mbt"),
+  )
+  let ready = update_source_pane(
+    loading,
+    PreviewResult(source_pane_identity(loading), Ok(source_pane_test_preview())),
+  )
+  let saving = update_source_pane(
+    update_source_pane(ready, EditDraft("changed")),
+    Save,
+  )
+  let switched = update_source_pane(saving, SwitchBuffer("src/other.mbt"))
+  assert_eq(switched.requested_path, "src/main.mbt")
+  assert_true(switched.status.contains("current save"))
+  let closed = update_source_pane(saving, CloseBuffer("src/main.mbt"))
+  assert_eq(closed.requested_path, "src/main.mbt")
+  assert_true(closed.status.contains("current save"))
 }
 
 ///|

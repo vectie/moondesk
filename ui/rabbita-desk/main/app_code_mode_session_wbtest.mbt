@@ -30,6 +30,9 @@ test "Code workspace keeps source and Office editors in one disclosure" {
   assert_true(markup.contains("data-testid=\"source-find\""))
   assert_true(markup.contains("data-testid=\"source-line-numbers\""))
   assert_true(markup.contains("data-testid=\"source-cursor-position\""))
+  assert_true(markup.contains("data-testid=\"source-highlight\""))
+  assert_true(markup.contains("data-testid=\"source-completions\""))
+  assert_true(markup.contains("data-testid=\"source-local-diagnostics\""))
 }
 
 ///|

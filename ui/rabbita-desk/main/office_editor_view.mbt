@@ -197,7 +197,12 @@ fn render_office_editor(
             },
             match state.document {
               Some(document) =>
-                render_office_supported_preview(document.kind, item)
+                render_office_supported_preview(
+                  document.kind,
+                  item,
+                  state.draft_items,
+                  state.selected,
+                )
               None => @html.nothing
             },
             match state.conflict_baseline {
@@ -263,6 +268,8 @@ fn render_office_editor(
 fn render_office_supported_preview(
   kind : OfficeEditorKind,
   item : OfficeEditorItem,
+  items : Array[OfficeEditorItem],
+  selected : Int,
 ) -> @rabbita.Html {
   section(
     class="office-supported-preview",
@@ -282,22 +289,31 @@ fn render_office_supported_preview(
       ]),
       match kind {
         OfficeDocx => {
-          let text_class = "office-preview-docx-text" +
-            (if item.bold { " is-bold" } else { "" }) +
-            (if item.italic { " is-italic" } else { "" }) +
-            (if item.underline { " is-underlined" } else { "" })
           div(
             class="office-preview-docx",
             attrs=@html.Attrs::build().data_set("testid", "office-docx-preview"),
             [
               div(class="office-preview-page", [
-                p(
-                  class=text_class,
-                  if item.text == "" {
-                    "Empty paragraph"
-                  } else {
-                    item.text
-                  },
+                div(
+                  class="office-preview-docx-document",
+                  office_unique_sections(items).map(section =>
+                    p(
+                      class="office-preview-docx-paragraph",
+                      items
+                      .mapi((index, run) => (index, run))
+                      .filter(entry => entry.1.section == section)
+                      .map(entry => {
+                        let (index, run) = entry
+                        span(
+                          class=office_docx_run_class(
+                            run,
+                            selected=index == selected,
+                          ),
+                          if run.text == "" { " " } else { run.text },
+                        )
+                      }),
+                    )
+                  ),
                 ),
               ]),
             ],
@@ -318,19 +334,22 @@ fn render_office_supported_preview(
                   },
                 ),
               ]),
-              div(class="office-preview-sheet", [
-                span(class="office-preview-corner", ""),
-                span(class="office-preview-column", "A"),
-                span(class="office-preview-row", "1"),
-                div(
-                  class="office-preview-cell is-selected",
-                  if item.text == "" {
-                    "Empty cell"
-                  } else {
-                    item.text
-                  },
+              div(
+                class="office-preview-sheet office-preview-sheet-items",
+                items.mapi((index, cell) =>
+                  div(
+                    class=if index == selected {
+                      "office-preview-cell-card is-selected"
+                    } else {
+                      "office-preview-cell-card"
+                    },
+                    [
+                      strong(cell.reference),
+                      span(if cell.text == "" { "Empty cell" } else { cell.text }),
+                    ],
+                  )
                 ),
-              ]),
+              ),
             ],
           )
         OfficePptx =>
@@ -338,16 +357,20 @@ fn render_office_supported_preview(
             class="office-preview-pptx",
             attrs=@html.Attrs::build().data_set("testid", "office-pptx-preview"),
             [
-              div(class="office-preview-slide", [
-                div(
-                  class="office-preview-slide-object",
-                  if item.text == "" {
-                    "Empty text object"
-                  } else {
-                    item.text
-                  },
+              div(
+                class="office-preview-slide",
+                items.mapi((index, shape) =>
+                  div(
+                    class=if index == selected {
+                      "office-preview-slide-object is-selected"
+                    } else {
+                      "office-preview-slide-object"
+                    },
+                    attrs=office_pptx_shape_attrs(shape, items),
+                    if shape.text == "" { "Empty text object" } else { shape.text },
+                  )
                 ),
-              ]),
+              ),
               div(class="office-preview-geometry", [
                 span("X \{item.x}"),
                 span("Y \{item.y}"),
@@ -359,6 +382,63 @@ fn render_office_supported_preview(
       },
     ],
   )
+}
+
+///|
+fn office_unique_sections(items : Array[OfficeEditorItem]) -> Array[String] {
+  let sections : Array[String] = []
+  for item in items {
+    if !sections.contains(item.section) {
+      sections.push(item.section)
+    }
+  }
+  sections
+}
+
+///|
+fn office_docx_run_class(
+  item : OfficeEditorItem,
+  selected~ : Bool,
+) -> String {
+  "office-preview-docx-text" +
+  (if item.bold { " is-bold" } else { "" }) +
+  (if item.italic { " is-italic" } else { "" }) +
+  (if item.underline { " is-underlined" } else { "" }) +
+  (if selected { " is-selected" } else { "" })
+}
+
+///|
+fn office_pptx_extent(items : Array[OfficeEditorItem]) -> (Int, Int) {
+  let mut right = 1
+  let mut bottom = 1
+  for item in items {
+    if item.x + item.width > right {
+      right = item.x + item.width
+    }
+    if item.y + item.height > bottom {
+      bottom = item.y + item.height
+    }
+  }
+  (right, bottom)
+}
+
+///|
+fn office_percent(value : Int, extent : Int) -> String {
+  let bounded = if value < 0 { 0 } else { value }
+  "\{bounded * 100 / extent}%"
+}
+
+///|
+fn office_pptx_shape_attrs(
+  item : OfficeEditorItem,
+  items : Array[OfficeEditorItem],
+) -> @html.Attrs {
+  let (right, bottom) = office_pptx_extent(items)
+  @html.Attrs::build()
+  .style("left", office_percent(item.x, right))
+  .style("top", office_percent(item.y, bottom))
+  .style("width", office_percent(item.width, right))
+  .style("height", office_percent(item.height, bottom))
 }
 
 ///|

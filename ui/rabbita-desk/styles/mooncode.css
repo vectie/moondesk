@@ -675,6 +675,57 @@
   flex: 1 1 240px;
 }
 
+.source-editor-tabs {
+  min-width: 0;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.source-editor-tab {
+  min-width: 0;
+  display: flex;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 7px;
+  background: var(--mooncode-field);
+}
+
+.source-editor-tab.is-active {
+  border-color: var(--mooncode-line-strong);
+  box-shadow: inset 0 -2px 0 var(--mooncode-accent);
+}
+
+.source-editor-tab button {
+  min-height: 34px;
+  border: 0;
+  background: transparent;
+  color: var(--mooncode-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+}
+
+.source-editor-tab-select {
+  max-width: 220px;
+  overflow: hidden;
+  padding: 6px 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-editor-tab-close {
+  width: 32px;
+  padding: 0;
+}
+
+.source-editor-tab button:focus-visible {
+  outline: 2px solid var(--mooncode-focus);
+  outline-offset: -2px;
+}
+
 .editor-path-field {
   min-width: 180px;
   flex: 1 1 240px;
@@ -736,6 +787,37 @@
   background: var(--mooncode-field);
 }
 
+.source-editor-highlight,
+.source-editor-input {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.source-editor-highlight {
+  width: 100%;
+  min-height: 220px;
+  margin: 0;
+  overflow: hidden;
+  padding: 12px;
+  pointer-events: none;
+  white-space: pre;
+  color: var(--mooncode-ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.source-editor-highlight code {
+  font: inherit;
+}
+
+.source-token-keyword { color: #7c3aed; font-weight: 620; }
+.source-token-type { color: #0369a1; }
+.source-token-string { color: #047857; }
+.source-token-number { color: #b45309; }
+.source-token-comment { color: var(--mooncode-subtle); font-style: italic; }
+
 .source-editor-line-numbers {
   min-width: 42px;
   height: 100%;
@@ -768,6 +850,67 @@
   line-height: 1.55;
   outline: 0;
   tab-size: 2;
+}
+
+.source-editor.is-highlight-ready .source-editor-input:not(:disabled) {
+  background: transparent;
+  color: transparent;
+  caret-color: var(--mooncode-ink);
+  -webkit-text-fill-color: transparent;
+}
+
+.source-editor-input::selection {
+  background: rgba(37, 99, 235, 0.24);
+}
+
+.source-editor-assist {
+  position: relative;
+  min-width: 0;
+}
+
+.source-completions {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: calc(100% + 4px);
+  width: min(280px, 90%);
+  display: none;
+  overflow: hidden;
+  border: 1px solid var(--mooncode-line-strong);
+  border-radius: 7px;
+  background: var(--mooncode-panel);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+}
+
+.source-completions.is-open {
+  display: grid;
+}
+
+.source-completions button {
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--mooncode-ink);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  text-align: left;
+}
+
+.source-completions button:hover,
+.source-completions button.is-selected {
+  background: color-mix(in srgb, var(--mooncode-accent) 12%, var(--mooncode-panel));
+}
+
+.source-local-diagnostics {
+  min-height: 17px;
+  margin: 0;
+  color: var(--mooncode-muted);
+  font-size: 11px;
+}
+
+.source-local-diagnostics.has-problem {
+  color: #b45309;
 }
 
 .source-editor-input:focus {
@@ -959,6 +1102,24 @@
   line-height: 1.55;
 }
 
+.office-preview-docx-document {
+  display: grid;
+  gap: 8px;
+}
+
+.office-preview-docx-paragraph {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.office-preview-docx-text.is-selected {
+  background: rgba(37, 99, 235, 0.14);
+  outline: 1px solid rgba(37, 99, 235, 0.32);
+}
+
 .office-preview-docx-text.is-bold {
   font-weight: 700;
 }
@@ -1047,6 +1208,37 @@
   box-shadow: inset 0 0 0 2px #16a34a;
 }
 
+.office-preview-sheet-items {
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+  grid-template-rows: none;
+  border: 1px solid #cbd5e1;
+}
+
+.office-preview-cell-card {
+  min-height: 58px;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  overflow: hidden;
+  padding: 7px;
+  border-right: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
+  background: #ffffff;
+}
+
+.office-preview-cell-card strong {
+  color: #475569;
+  font-size: 10px;
+}
+
+.office-preview-cell-card span {
+  overflow-wrap: anywhere;
+}
+
+.office-preview-cell-card.is-selected {
+  box-shadow: inset 0 0 0 2px #16a34a;
+}
+
 .office-preview-pptx {
   min-width: 0;
   display: grid;
@@ -1055,10 +1247,9 @@
 
 .office-preview-slide {
   aspect-ratio: 16 / 9;
-  display: grid;
-  place-items: center;
+  position: relative;
   overflow: hidden;
-  padding: 12%;
+  padding: 0;
   border: 1px solid rgba(15, 23, 42, 0.16);
   border-radius: 4px;
   background: #ffffff;
@@ -1066,7 +1257,8 @@
 }
 
 .office-preview-slide-object {
-  width: 78%;
+  position: absolute;
+  min-width: 28px;
   min-height: 42px;
   display: grid;
   place-items: center;
@@ -1076,6 +1268,11 @@
   color: #1e293b;
   font-size: 12px;
   text-align: center;
+}
+
+.office-preview-slide-object.is-selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
 }
 
 .office-preview-geometry {

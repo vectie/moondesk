@@ -690,7 +690,52 @@ fn render_source_editor(
     attrs=@html.Attrs::build().data_set("testid", "source-editor"),
     [
       h3("Source editor"),
-      p("Open and save a source file in the selected MoonBook."),
+      p(
+        "Multi-file text editing with local syntax, structural diagnostics, completion, and same-buffer definition lookup.",
+      ),
+      if source.buffers.is_empty() {
+        @html.nothing
+      } else {
+        div(
+          class="source-editor-tabs",
+          attrs=@html.Attrs::build()
+            .role("tablist")
+            .aria_label("Open source files")
+            .data_set("testid", "source-tabs"),
+          source.buffers.map(buffer => {
+            let active = buffer.path == source.requested_path
+            div(
+              class=if active {
+                "source-editor-tab is-active"
+              } else {
+                "source-editor-tab"
+              },
+              [
+                button(
+                  class="source-editor-tab-select",
+                  attrs=@html.Attrs::build()
+                    .role("tab")
+                    .aria_selected(if active { "true" } else { "false" })
+                    .data_set("testid", "source-tab-" + buffer.path),
+                  on_click=dispatch(SourcePane(SwitchBuffer(buffer.path))),
+                  disabled=source.saving,
+                  buffer.path +
+                  (if source_pane_buffer_dirty(buffer) { " · modified" } else { "" }),
+                ),
+                button(
+                  class="source-editor-tab-close",
+                  attrs=@html.Attrs::build()
+                    .aria_label("Close " + buffer.path)
+                    .data_set("testid", "source-tab-close-" + buffer.path),
+                  on_click=dispatch(SourcePane(CloseBuffer(buffer.path))),
+                  disabled=source.saving,
+                  "×",
+                ),
+              ],
+            )
+          }),
+        )
+      },
       div(class="source-editor-toolbar", [
         @html.label(class="editor-path-field", [
           span("Source path"),
@@ -782,6 +827,13 @@ fn render_source_editor(
             .aria_hidden("true"),
           source_pane_line_numbers(source),
         ),
+        pre(
+          class="source-editor-highlight",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "source-highlight")
+            .aria_hidden("true"),
+          code(""),
+        ),
         textarea(
           class="source-editor-input",
           attrs=@html.Attrs::build()
@@ -803,6 +855,28 @@ fn render_source_editor(
           "",
         ),
       ]),
+      div(
+        class="source-editor-assist",
+        attrs=@html.Attrs::build().data_set("testid", "source-assist"),
+        [
+          div(
+            class="source-completions",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "source-completions")
+              .role("listbox")
+              .aria_label("Local source completions"),
+            [@html.nothing],
+          ),
+          p(
+            class="source-local-diagnostics",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "source-local-diagnostics")
+              .role("status")
+              .aria_live("polite"),
+            "Local diagnostics ready",
+          ),
+        ],
+      ),
       div(class="source-editor-meta", [
         span(
           if source.requested_path == "" {

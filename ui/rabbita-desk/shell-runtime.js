@@ -495,6 +495,28 @@ function installWorkspaceEditorInteractions() {
 
 installWorkspaceEditorInteractions()
 
+let sourceEditorRuntimeLoading = false
+
+function loadSourceEditorRuntime() {
+  if (sourceEditorRuntimeLoading || !document.querySelector('[data-testid="source-editor-input"]')) return
+  sourceEditorRuntimeLoading = true
+  void import('./source-editor-runtime.js').then(module => {
+    module.installSourceEditorRuntime()
+  }).catch(error => {
+    sourceEditorRuntimeLoading = false
+    console.error('Source editor assistance failed to load', error)
+  })
+}
+
+new MutationObserver(loadSourceEditorRuntime).observe(
+  document.getElementById('app') || document.body,
+  {
+  childList: true,
+  subtree: true,
+  },
+)
+loadSourceEditorRuntime()
+
 let mooncodeTranscript = null
 let mooncodeTranscriptKey = ''
 let mooncodeStickToBottom = true
