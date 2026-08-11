@@ -35,9 +35,7 @@ fn fetch_moonflow_collaboration_cmd(
     @rabbita.none
   } else {
     @http.get(
-      @desk.desktop_api_url([
-        "api", "moonflow", "collaboration", workspace_id,
-      ]),
+      @desk.desktop_api_url(["api", "moonflow", "collaboration", workspace_id]),
     ).expect_json(result => {
       dispatch(
         LoadedMoonFlowCollaboration(

@@ -283,6 +283,19 @@ fn mooncode_send_composer(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  match mooncode_capability_submission_blocker(model.mooncode_capability) {
+    Some(problem) if model.mooncode_prompt.trim().to_owned() != "" =>
+      return (
+        @rabbita.none,
+        {
+          ..model,
+          workspace_mode: MoonCode,
+          command_open: false,
+          mooncode_composer_status: problem,
+        },
+      )
+    _ => ()
+  }
   if model.mooncode_prompt.trim().to_owned() == "" {
     (
       sync_shell_cmd(MoonCode, model.activity),

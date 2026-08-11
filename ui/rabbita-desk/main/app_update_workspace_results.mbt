@@ -51,10 +51,8 @@ fn update_workspace_results(
             match reply.snapshot {
               Some(snapshot) if reply.ok &&
                 reply.status == "ready" &&
-                reply.source_contract ==
-                "moonflow.collaboration-snapshot.v1" &&
-                snapshot.contract_id ==
-                "moonflow.collaboration-snapshot.v1" =>
+                reply.source_contract == "moonflow.collaboration-snapshot.v1" &&
+                snapshot.contract_id == "moonflow.collaboration-snapshot.v1" =>
                 (
                   @rabbita.none,
                   {
@@ -790,6 +788,16 @@ fn update_workspace_results(
           desk_entries_error: "",
           preview: None,
           preview_status: "loading renamed item",
+          favorites: replace_remembered_path(
+            model.favorites,
+            model.selected_path,
+            result.path,
+          ),
+          recent_paths: replace_remembered_path(
+            model.recent_paths,
+            model.selected_path,
+            result.path,
+          ),
           host_status: "renamed \{result.path}",
         },
       )
@@ -864,6 +872,16 @@ fn update_workspace_results(
           } else {
             "loading moved item"
           },
+          favorites: replace_moved_remembered_paths(
+            model.favorites,
+            model.desk_selected_paths,
+            result.directory,
+          ),
+          recent_paths: replace_moved_remembered_paths(
+            model.recent_paths,
+            model.desk_selected_paths,
+            result.directory,
+          ),
           host_status: if is_cut_paste {
             "moved clipboard \{result.path}"
           } else {

@@ -305,6 +305,47 @@ fn remember_path(paths : Array[String], path : String) -> Array[String] {
 }
 
 ///|
+fn replace_remembered_path(
+  paths : Array[String],
+  old_path : String,
+  new_path : String,
+) -> Array[String] {
+  let next : Array[String] = []
+  for item in paths {
+    let candidate = if item == old_path { new_path } else { item }
+    if candidate != "" && !next.contains(candidate) {
+      next.push(candidate)
+    }
+  }
+  next
+}
+
+///|
+fn replace_moved_remembered_paths(
+  paths : Array[String],
+  moved_paths : Array[String],
+  directory : String,
+) -> Array[String] {
+  let next : Array[String] = []
+  for item in paths {
+    let candidate = if moved_paths.contains(item) {
+      let name = @desk.display_name(item)
+      if directory == "" {
+        name
+      } else {
+        directory + "/" + name
+      }
+    } else {
+      item
+    }
+    if candidate != "" && !next.contains(candidate) {
+      next.push(candidate)
+    }
+  }
+  next
+}
+
+///|
 fn has_string(items : Array[String], value : String) -> Bool {
   for item in items {
     if item == value {

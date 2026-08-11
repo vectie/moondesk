@@ -253,7 +253,8 @@ fn collaboration_surface_from_snapshot(
   handover_catalog : MoonFlowHandoverCatalog?,
 ) -> CollaborationSurfaceProjection {
   let payload = snapshot.payload
-  let handovers : Array[CollaborationHandoverProjection] = match handover_catalog {
+  let handovers : Array[CollaborationHandoverProjection] = match
+    handover_catalog {
     Some(catalog) if catalog.contract_id == "moonflow.handover-catalog.v1" =>
       catalog.handovers.map(handover => {
         handover_id: handover.handover_id,
@@ -298,7 +299,7 @@ fn collaboration_surface_from_snapshot(
       ),
       head_digest: payload.head_digest,
     }),
-    handovers: handovers,
+    handovers,
     conflicts: [],
   }
 }

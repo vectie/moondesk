@@ -89,7 +89,11 @@ fn pack_home_test_template(blocked : Bool) -> PackTemplateRecord {
     },
     recovery: {
       blocked,
-      reason: if blocked { "Missing capability" } else { "" },
+      reason: if blocked {
+        "Missing capability"
+      } else {
+        ""
+      },
       next_action: "Open the owner",
     },
     owner_payload: Json::object({}),
@@ -206,7 +210,11 @@ test "collaboration surface is honest and read only before a typed adapter publi
   assert_true(markup.contains("Collaboration is not initialized"))
   assert_true(markup.contains("Open MoonFlow"))
   assert_true(markup.contains("Read only in MoonDesk"))
-  assert_true(markup.contains("data-principal-contract=\"moonsuite.principal-ref.v1\""))
-  assert_true(markup.contains("data-handover-contract=\"moonsuite.handover-control.v1\""))
+  assert_true(
+    markup.contains("data-principal-contract=\"moonsuite.principal-ref.v1\""),
+  )
+  assert_true(
+    markup.contains("data-handover-contract=\"moonsuite.handover-control.v1\""),
+  )
   assert_true(markup.contains("data-testid=\"collaboration-open-moonflow\""))
 }

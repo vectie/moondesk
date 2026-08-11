@@ -223,7 +223,10 @@ enum Msg {
   LibraryFolderPicked(Result[String, String])
   SelectedLibrary(Result[WorkspaceMetadata, String])
   LoadedPackApps(Result[PackAppCatalog, String])
-  LoadedMoonFlowCollaboration(String, Result[MoonFlowCollaborationReply, String])
+  LoadedMoonFlowCollaboration(
+    String,
+    Result[MoonFlowCollaborationReply, String]
+  )
   LoadedWorkspaces(Result[Array[@desk.DeskWorkspace], String])
   RequestEntries(String, String)
   LoadedEntries(String, String, Int, Result[Array[@desk.DeskFileEntry], String])

@@ -1622,31 +1622,8 @@ fn desk_sort_header_label(
 
 ///|
 fn sorted_desk_entries(model : Model) -> Array[@desk.DeskFileEntry] {
-  let entries = filtered_desk_entries(model)
-  let sorted : Array[@desk.DeskFileEntry] = []
-  let added : Array[String] = []
-  while sorted.length() < entries.length() {
-    let mut best : @desk.DeskFileEntry? = None
-    for entry in entries {
-      if added.contains(entry.id) {
-        continue
-      }
-      match best {
-        Some(current) =>
-          if desk_entry_before(entry, current, model) {
-            best = Some(entry)
-          }
-        None => best = Some(entry)
-      }
-    }
-    match best {
-      Some(entry) => {
-        sorted.push(entry)
-        added.push(entry.id)
-      }
-      None => break
-    }
-  }
+  let sorted = filtered_desk_entries(model).copy()
+  sorted.sort_by((left, right) => desk_entry_compare(left, right, model))
   sorted
 }
 
@@ -1675,17 +1652,29 @@ fn desk_entry_before(
   right : @desk.DeskFileEntry,
   model : Model,
 ) -> Bool {
+  desk_entry_compare(left, right, model) < 0
+}
+
+///|
+fn desk_entry_compare(
+  left : @desk.DeskFileEntry,
+  right : @desk.DeskFileEntry,
+  model : Model,
+) -> Int {
   let left_directory = left.kind is Directory
   let right_directory = right.kind is Directory
   if left_directory && !right_directory {
-    return true
+    return -1
   }
   if !left_directory && right_directory {
-    return false
+    return 1
   }
   let order = desk_entry_sort_compare(left, right, model.desk_sort_key)
-  let directional = if model.desk_sort_desc { 0 - order } else { order }
-  directional < 0
+  if model.desk_sort_desc {
+    0 - order
+  } else {
+    order
+  }
 }
 
 ///|
@@ -1748,39 +1737,7 @@ fn desk_optional_int_compare(left : Int?, right : Int?) -> Int {
 
 ///|
 fn desk_string_compare(left : String, right : String) -> Int {
-  let left_chars = desk_string_chars(left.to_lower())
-  let right_chars = desk_string_chars(right.to_lower())
-  let limit = if left_chars.length() < right_chars.length() {
-    left_chars.length()
-  } else {
-    right_chars.length()
-  }
-  for index in 0..<limit {
-    let left_code = left_chars[index].to_int()
-    let right_code = right_chars[index].to_int()
-    if left_code < right_code {
-      return -1
-    }
-    if left_code > right_code {
-      return 1
-    }
-  }
-  if left_chars.length() < right_chars.length() {
-    -1
-  } else if left_chars.length() > right_chars.length() {
-    1
-  } else {
-    0
-  }
-}
-
-///|
-fn desk_string_chars(value : String) -> Array[Char] {
-  let chars : Array[Char] = []
-  for ch in value {
-    chars.push(ch)
-  }
-  chars
+  left.to_lower().lexical_compare(right.to_lower())
 }
 
 ///|

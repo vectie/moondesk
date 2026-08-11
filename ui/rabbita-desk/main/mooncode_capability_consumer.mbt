@@ -44,6 +44,21 @@ fn mooncode_capability_available(state : MoonCodeCapabilityState) -> Bool {
 }
 
 ///|
+fn mooncode_capability_submission_blocker(
+  state : MoonCodeCapabilityState,
+) -> String? {
+  match state {
+    CapabilityPending | CapabilitySupported(_) => None
+    CapabilityUnsupportedVersion(_) =>
+      Some("Code runtime version is incompatible; draft preserved")
+    CapabilityMalformed(_) =>
+      Some("Code runtime response is malformed; draft preserved")
+    CapabilityUnavailable(_) =>
+      Some("Code runtime is unavailable; draft preserved")
+  }
+}
+
+///|
 fn mooncode_capability_title(state : MoonCodeCapabilityState) -> String {
   match state {
     CapabilityPending => "Checking Code runtime"

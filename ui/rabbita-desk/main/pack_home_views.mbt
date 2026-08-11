@@ -146,15 +146,18 @@ fn render_template_action(
       class="template-recovery",
       attrs=@html.Attrs::build().role("status").aria_live("polite"),
       [
-      button(
-        class="primary-button template-start-action",
-        attrs=@html.Attrs::build()
-          .data_set("testid", "template-start-disabled")
-          .data_set("template-id", template.template_id),
-        disabled=true,
-        "Owner unavailable",
-      ),
-        small(pack.configuration_message + " Refresh after the owner service is available."),
+        button(
+          class="primary-button template-start-action",
+          attrs=@html.Attrs::build()
+            .data_set("testid", "template-start-disabled")
+            .data_set("template-id", template.template_id),
+          disabled=true,
+          "Owner unavailable",
+        ),
+        small(
+          pack.configuration_message +
+          " Refresh after the owner service is available.",
+        ),
       ],
     )
   }
@@ -175,13 +178,18 @@ fn render_template_card(
       .data_set("owner-product", template.owner_product),
     [
       header(class="template-card-header", [
-        span(class="template-icon", attrs=@html.Attrs::build().aria_hidden("true"), template.icon),
+        span(
+          class="template-icon",
+          attrs=@html.Attrs::build().aria_hidden("true"),
+          template.icon,
+        ),
         div([
           h3(template.title),
           small(pack.display_name + " · " + template.primary_user),
         ]),
         span(
-          class="template-maturity " + template_maturity_class(template.maturity),
+          class="template-maturity " +
+            template_maturity_class(template.maturity),
           template_maturity_label(template.maturity),
         ),
       ]),
@@ -465,7 +473,10 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
       } else {
         section(class="pack-app-section", [
           header(class="pack-section-heading", [
-            div([h2("Applications"), p("Open an owner workspace without starting a template.")]),
+            div([
+              h2("Applications"),
+              p("Open an owner workspace without starting a template."),
+            ]),
             span("\{model.pack_apps.length()} installed"),
           ]),
           section(

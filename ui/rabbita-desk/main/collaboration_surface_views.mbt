@@ -1,10 +1,14 @@
 ///|
-fn collaboration_principal_label(reference : CollaborationPrincipalRef) -> String {
+fn collaboration_principal_label(
+  reference : CollaborationPrincipalRef,
+) -> String {
   reference.principal_id + " · " + reference.kind
 }
 
 ///|
-fn collaboration_operation_label(reference : CollaborationOperationRef) -> String {
+fn collaboration_operation_label(
+  reference : CollaborationOperationRef,
+) -> String {
   reference.product_id + "/" + reference.tool_id + "@" + reference.pack_version
 }
 
@@ -47,7 +51,11 @@ fn render_collaboration_recovery(
       span(
         class="collaboration-icon",
         attrs=@html.Attrs::build().aria_hidden("true"),
-        if status == "quarantined" { "!" } else { "◎" },
+        if status == "quarantined" {
+          "!"
+        } else {
+          "◎"
+        },
       ),
       div([
         strong(
@@ -89,15 +97,18 @@ fn render_collaboration_people(
     @html.nothing
   } else {
     article(class="collaboration-lane", [
-      header([span(attrs=@html.Attrs::build().aria_hidden("true"), "◉"), h3("People")]),
+      header([
+        span(attrs=@html.Attrs::build().aria_hidden("true"), "◉"),
+        h3("People"),
+      ]),
       ul(
-        people.map(person =>
+        people.map(person => {
           li([
             strong(collaboration_principal_label(person.principal_ref)),
             span(person.status),
             small(person.roles.join(", ")),
           ])
-        ),
+        }),
       ),
     ])
   }
@@ -111,9 +122,12 @@ fn render_collaboration_assignments(
     @html.nothing
   } else {
     article(class="collaboration-lane", [
-      header([span(attrs=@html.Attrs::build().aria_hidden("true"), "↗"), h3("Assignments")]),
+      header([
+        span(attrs=@html.Attrs::build().aria_hidden("true"), "↗"),
+        h3("Assignments"),
+      ]),
       ul(
-        assignments.map(assignment =>
+        assignments.map(assignment => {
           li([
             strong(collaboration_operation_label(assignment.operation_ref)),
             span(
@@ -123,7 +137,7 @@ fn render_collaboration_assignments(
             ),
             small(assignment.assignment_id + " · " + assignment.head_digest),
           ])
-        ),
+        }),
       ),
     ])
   }
@@ -137,9 +151,12 @@ fn render_collaboration_reviews(
     @html.nothing
   } else {
     article(class="collaboration-lane", [
-      header([span(attrs=@html.Attrs::build().aria_hidden("true"), "✓"), h3("Review inbox")]),
+      header([
+        span(attrs=@html.Attrs::build().aria_hidden("true"), "✓"),
+        h3("Review inbox"),
+      ]),
       ul(
-        reviews.map(review =>
+        reviews.map(review => {
           li([
             strong(review.review_id),
             span(
@@ -155,7 +172,7 @@ fn render_collaboration_reviews(
               },
             ),
           ])
-        ),
+        }),
       ),
     ])
   }
@@ -169,15 +186,18 @@ fn render_collaboration_comments(
     @html.nothing
   } else {
     article(class="collaboration-lane", [
-      header([span(attrs=@html.Attrs::build().aria_hidden("true"), "◇"), h3("Anchored comments")]),
+      header([
+        span(attrs=@html.Attrs::build().aria_hidden("true"), "◇"),
+        h3("Anchored comments"),
+      ]),
       ul(
-        comments.map(comment =>
+        comments.map(comment => {
           li([
             strong(comment.anchor_ref),
             span(collaboration_principal_label(comment.author_principal)),
             small(comment.created_at + " · " + comment.body_digest),
           ])
-        ),
+        }),
       ),
     ])
   }
@@ -191,7 +211,10 @@ fn render_collaboration_handovers(
     @html.nothing
   } else {
     article(class="collaboration-lane collaboration-handover-lane", [
-      header([span(attrs=@html.Attrs::build().aria_hidden("true"), "⇄"), h3("Agent handovers")]),
+      header([
+        span(attrs=@html.Attrs::build().aria_hidden("true"), "⇄"),
+        h3("Agent handovers"),
+      ]),
       ul(
         handovers.map(handover => {
           let head_label = if handover.head_digest == "" {

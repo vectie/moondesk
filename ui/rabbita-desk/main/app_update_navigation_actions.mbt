@@ -741,10 +741,7 @@ fn select_workspace_mode_action(
       activity,
       @rabbita.batch([
         fetch_pack_apps_cmd(dispatch),
-        fetch_moonflow_collaboration_cmd(
-          dispatch,
-          model.selected_workspace_id,
-        ),
+        fetch_moonflow_collaboration_cmd(dispatch, model.selected_workspace_id),
       ]),
     )
   } else if mode == Desk && model.selected_workspace_id != "" {

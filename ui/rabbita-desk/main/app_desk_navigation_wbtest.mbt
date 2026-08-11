@@ -581,6 +581,8 @@ test "desk rename action validates selection and opens renamed entry" {
     desk_rename_editing_path: "wiki/old.md",
     desk_rename_name: "new",
     current_directory: "wiki",
+    favorites: ["wiki/old.md"],
+    recent_paths: ["wiki/other.md", "wiki/old.md"],
   }
   let (_, named) = update_workspace_surface_actions(
     dispatch,
@@ -612,6 +614,8 @@ test "desk rename action validates selection and opens renamed entry" {
   assert_eq(opened.desk_rename_editing_path, "")
   assert_eq(opened.desk_rename_name, "new-title.md")
   assert_eq(opened.desk_rename_status, "renamed wiki/new-title.md")
+  assert_true(opened.favorites == ["wiki/new-title.md"])
+  assert_true(opened.recent_paths == ["wiki/other.md", "wiki/new-title.md"])
 }
 
 ///|
@@ -691,6 +695,8 @@ test "desk move action validates target and opens moved entry" {
     desk_selected_paths: ["wiki/old.md"],
     desk_move_target_directory: "wiki/archive",
     current_directory: "wiki",
+    favorites: ["wiki/old.md"],
+    recent_paths: ["wiki/other.md", "wiki/old.md"],
   }
   let (_, targeted) = update_workspace_surface_actions(
     dispatch,
@@ -723,6 +729,8 @@ test "desk move action validates target and opens moved entry" {
   assert_eq(opened.desk_rename_name, "old.md")
   assert_eq(opened.desk_move_target_directory, "raw/archive")
   assert_eq(opened.desk_move_status, "moved raw/archive/old.md")
+  assert_true(opened.favorites == ["raw/archive/old.md"])
+  assert_true(opened.recent_paths == ["wiki/other.md", "raw/archive/old.md"])
 }
 
 ///|
@@ -1502,6 +1510,25 @@ test "desk sorted entries keep folders first and sort files by selected column" 
   })
   assert_eq(by_modified[1].path, "wiki/alpha.md")
   assert_eq(by_modified[3].path, "wiki/gamma.md")
+}
+
+///|
+test "desk sorting scales to a production-sized directory" {
+  let entries : Array[@desk.DeskFileEntry] = []
+  for index in 0..<1500 {
+    entries.push(
+      @desk.file_entry(
+        workspace_id="book-demo",
+        path="wiki/file-\{1500 - index}.md",
+      ),
+    )
+  }
+  let model = { ..init_model(), entries, }
+  let sorted = sorted_desk_entries(model)
+  assert_eq(sorted.length(), entries.length())
+  for index in 1..<sorted.length() {
+    assert_false(desk_entry_before(sorted[index], sorted[index - 1], model))
+  }
 }
 
 ///|
