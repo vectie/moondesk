@@ -26,10 +26,10 @@ cleanup() {
 trap cleanup EXIT
 
 case "${SCENARIO}" in
-  all | full | phase7-editing | empty | quickstart | keyboard | keyboard-transients | accessibility | phase8-layout | screen-reader | capability | capability-responsive | capability-scale)
+  all | full | phase7-editing | editor-ui | empty | quickstart | keyboard | keyboard-transients | accessibility | phase8-layout | screen-reader | capability | capability-responsive | capability-scale)
     ;;
   *)
-    echo "usage: $0 [all|full|phase7-editing|empty|quickstart|keyboard|keyboard-transients|accessibility|phase8-layout|screen-reader|capability|capability-responsive|capability-scale]" >&2
+    echo "usage: $0 [all|full|phase7-editing|editor-ui|empty|quickstart|keyboard|keyboard-transients|accessibility|phase8-layout|screen-reader|capability|capability-responsive|capability-scale]" >&2
     exit 2
     ;;
 esac
@@ -76,21 +76,21 @@ create_phase7_office_fixtures() {
     "$staging/pptx/_rels" "$staging/pptx/ppt/_rels" "$staging/pptx/ppt/slides"
   printf '<Types/>\n' >"$staging/docx/[Content_Types].xml"
   printf '<Relationships/>\n' >"$staging/docx/_rels/.rels"
-  printf '<w:document><w:body><w:p><w:r><w:t>DOCX browser before</w:t></w:r></w:p></w:body></w:document>\n' >"$staging/docx/word/document.xml"
+  printf '<w:document><w:body><w:p><w:r><w:t>DOCX browser before</w:t></w:r></w:p><w:p><w:r><w:t>DOCX second paragraph</w:t></w:r></w:p></w:body></w:document>\n' >"$staging/docx/word/document.xml"
   printf 'preserve-docx\n' >"$staging/docx/unknown.txt"
   (cd "$staging/docx" && zip -qr "$root/documents/browser report #1.docx" .)
   printf '<Types/>\n' >"$staging/xlsx/[Content_Types].xml"
   printf '<Relationships/>\n' >"$staging/xlsx/_rels/.rels"
   printf '<workbook><sheets><sheet name="Browser Sheet" r:id="sheet-browser"/></sheets></workbook>\n' >"$staging/xlsx/xl/workbook.xml"
   printf '<Relationships><Relationship Id="sheet-browser" Target="worksheets/sheet1.xml"/></Relationships>\n' >"$staging/xlsx/xl/_rels/workbook.xml.rels"
-  printf '<worksheet><unknown keep="xlsx"/><sheetData><row><c r="A1" custom="keep"><f>1+1</f><v>2</v></c></row></sheetData></worksheet>\n' >"$staging/xlsx/xl/worksheets/sheet1.xml"
+  printf '<worksheet><unknown keep="xlsx"/><sheetData><row><c r="A1" custom="keep"><f>1+1</f><v>2</v></c><c r="B1"><v>second cell</v></c></row></sheetData></worksheet>\n' >"$staging/xlsx/xl/worksheets/sheet1.xml"
   printf 'preserve-xlsx\n' >"$staging/xlsx/unknown.txt"
   (cd "$staging/xlsx" && zip -qr "$root/documents/browser.xlsx" .)
   printf '<Types/>\n' >"$staging/pptx/[Content_Types].xml"
   printf '<Relationships/>\n' >"$staging/pptx/_rels/.rels"
   printf '<p:presentation><p:sldIdLst><p:sldId r:id="slide-browser"/></p:sldIdLst></p:presentation>\n' >"$staging/pptx/ppt/presentation.xml"
   printf '<Relationships><Relationship Id="slide-browser" Target="slides/slide1.xml"/></Relationships>\n' >"$staging/pptx/ppt/_rels/presentation.xml.rels"
-  printf '<p:sld><p:cSld><p:spTree><p:sp><p:nvSpPr><p:cNvPr name="keep-pptx"/></p:nvSpPr><p:spPr><a:xfrm><a:off x="1" y="2"/><a:ext cx="3" cy="4"/></a:xfrm></p:spPr><p:txBody><a:p><a:r><a:t>PPTX browser before</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>\n' >"$staging/pptx/ppt/slides/slide1.xml"
+  printf '<p:sld><p:cSld><p:spTree><p:sp><p:nvSpPr><p:cNvPr name="keep-pptx"/></p:nvSpPr><p:spPr><a:xfrm><a:off x="1" y="2"/><a:ext cx="3" cy="4"/></a:xfrm></p:spPr><p:txBody><a:p><a:r><a:t>PPTX browser before</a:t></a:r></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr name="second-shape"/></p:nvSpPr><p:spPr><a:xfrm><a:off x="5" y="6"/><a:ext cx="7" cy="8"/></a:xfrm></p:spPr><p:txBody><a:p><a:r><a:t>PPTX second shape</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>\n' >"$staging/pptx/ppt/slides/slide1.xml"
   printf 'preserve-pptx\n' >"$staging/pptx/unknown.txt"
   (cd "$staging/pptx" && zip -qr "$root/documents/browser.pptx" .)
   printf 'fn same_file() { println("before") }\n' >"$root/main.mbt"
@@ -303,6 +303,13 @@ if [[ "${SCENARIO}" == "phase7-editing" ]]; then
   create_full_fixture "${PHASE7_ROOT}"
   create_phase7_office_fixtures "${PHASE7_ROOT}"
   run_browser_scenario "phase7-editing" "${PHASE7_ROOT}"
+fi
+
+if [[ "${SCENARIO}" == "editor-ui" ]]; then
+  EDITOR_UI_ROOT="${ROOT}/editor-ui"
+  create_full_fixture "${EDITOR_UI_ROOT}"
+  create_phase7_office_fixtures "${EDITOR_UI_ROOT}"
+  run_browser_scenario "editor-ui" "${EDITOR_UI_ROOT}"
 fi
 
 if [[ "${SCENARIO}" == "keyboard-transients" ]]; then

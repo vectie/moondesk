@@ -8,7 +8,7 @@ if (!baseUrl || !cdpPort || !fixtureRoot) {
   throw new Error(
     "usage: desk_mode_browser_smoke.mjs <base-url> <cdp-port> <fixture-root> " +
       "[full|empty|accessibility|phase8-layout|screen-reader|capability|capability-responsive|capability-scale|" +
-      "keyboard-transients|phase7-editing|quickstart-before-restart|quickstart-after-restart]",
+      "keyboard-transients|phase7-editing|editor-ui|quickstart-before-restart|quickstart-after-restart]",
   );
 }
 
@@ -8760,9 +8760,9 @@ async function runPhase7Editing() {
   const session = await connect(cdpPort);
   const workspaceRoot = path.join(fixtureRoot, "books", "research-alpha");
   const packageCases = [
-    { extension: "docx", relative: "documents/browser report #1.docx", member: "word/document.xml", edited: "DOCX browser edited", preservedXml: "<w:body>", unknown: "preserve-docx" },
-    { extension: "xlsx", member: "xl/worksheets/sheet1.xml", edited: "42", preservedXml: 'custom="keep"', unknown: "preserve-xlsx" },
-    { extension: "pptx", member: "ppt/slides/slide1.xml", edited: "PPTX browser edited", preservedXml: 'name="keep-pptx"', unknown: "preserve-pptx" },
+    { extension: "docx", relative: "documents/browser report #1.docx", member: "word/document.xml", preview: ".office-preview-docx-text", edited: "DOCX browser edited", preservedXml: "<w:body>", unknown: "preserve-docx" },
+    { extension: "xlsx", member: "xl/worksheets/sheet1.xml", preview: ".office-preview-cell-card", edited: "42", preservedXml: 'custom="keep"', unknown: "preserve-xlsx" },
+    { extension: "pptx", member: "ppt/slides/slide1.xml", preview: ".office-preview-slide-object", edited: "PPTX browser edited", preservedXml: 'name="keep-pptx"', unknown: "preserve-pptx" },
   ];
   const runHost = (command, args) => {
     const result = spawnSync(command, args, { encoding: "utf8" });
@@ -8807,6 +8807,7 @@ async function runPhase7Editing() {
       await setInputByTestId(session, "office-path", relative);
       await clickTestId(session, "office-open");
       await waitFor(session, `document.querySelector('[data-testid="office-text"]')?.value !== undefined && !document.querySelector('[data-testid="office-status"]')?.textContent.includes('Opening')`, `${item.extension} open`);
+      await waitFor(session, `document.querySelectorAll(${jsString(item.preview)}).length >= 2`, `${item.extension} all-item preview`);
       await setInputByTestId(session, "office-text", item.edited);
       await waitFor(session, `document.querySelector('[data-testid="office-text"]')?.value === ${jsString(item.edited)} && !document.querySelector('[data-testid="office-save"]')?.disabled`, `${item.extension} dirty edit`);
       await clickTestId(session, "office-save");
@@ -8832,7 +8833,11 @@ async function runPhase7Editing() {
     await setInputByTestId(session, "source-path", "main.mbt");
     await clickTestId(session, "source-open");
     await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('before')`, "direct Code open");
-    await waitFor(session, `document.querySelector('[data-testid="source-line-numbers"]')?.textContent.trim() === '1'`, "direct Code line-number gutter");
+    await waitFor(session, `(() => {
+      const editor = document.querySelector('[data-testid="source-editor-input"]');
+      const gutter = document.querySelector('[data-testid="source-line-numbers"]');
+      return editor && gutter && gutter.textContent.trim().split(/\\s+/).length === editor.value.split('\\n').length;
+    })()`, "direct Code line-number gutter");
     await setInputByTestId(session, "source-find", "same_file");
     await clickTestId(session, "source-find-next");
     await waitFor(session, `(() => { const editor = document.querySelector('[data-testid="source-editor-input"]'); return editor?.value.slice(editor.selectionStart, editor.selectionEnd) === 'same_file' && document.querySelector('[data-testid="source-find-result"]')?.textContent === '1/1'; })()`, "direct Code in-file search");
@@ -8851,7 +8856,7 @@ async function runPhase7Editing() {
       editor?.setSelectionRange(0, 0);
       editor?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     })()`);
-    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.startsWith('  fn same_file')`, "direct Code Tab insertion");
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.startsWith('  fn same_file') && !document.querySelector('[data-testid="source-discard"]')?.disabled`, "direct Code Tab insertion");
     await clickTestId(session, "source-discard");
     await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.startsWith('fn same_file')`, "direct Code discard");
     await setInputByTestId(session, "source-editor-input", 'fn same_file() { println("direct first") }\n');
@@ -8877,33 +8882,95 @@ async function runPhase7Editing() {
     await clickTestId(session, "source-reload");
     await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('external')`, "reload external source");
 
-    const prompt = 'Edit main.mbt so same_file prints "MoonCode edited". Make the change now.';
-    await setInputByTestId(session, "mooncode-input", prompt);
-    await clickTestId(session, "mooncode-send");
-    await waitForMoonCodeTerminal(session, mooncodeBackendTurnsStateExpression([prompt], [], true, true), "real MoonCode edit completes");
-    await waitFor(session, `document.querySelector('[data-testid="mooncode-evidence"]') !== null`, "MoonCode edit evidence", 20000);
-    const moonCodeBytes = fs.readFileSync(path.join(workspaceRoot, "main.mbt"), "utf8");
-    assert(moonCodeBytes.includes("MoonCode edited"), `MoonCode did not edit fixture main.mbt: ${moonCodeBytes}`);
-    await session.send("Page.navigate", { url: `${baseUrl}/?activity=code&workspace=book-research-alpha&locale=en-US` });
-    await waitFor(session, `!!document.querySelector('[data-testid="source-open"]')`, "same-file Code route visible");
-    await setInputByTestId(session, "source-path", "main.mbt");
+    await setInputByTestId(session, "source-path", "wiki/index.md");
     await clickTestId(session, "source-open");
-    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('MoonCode edited')`, "same-file MoonCode result open");
-    const finalBytes = moonCodeBytes.replace("MoonCode edited", "MoonCode then direct edited");
+    await waitFor(session, `document.querySelectorAll('[data-testid="source-tabs"] [role="tab"]').length === 2`, "source multi-buffer tabs");
+    await session.evaluate(`document.querySelector('[data-testid="source-tab-main.mbt"]')?.click()`);
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('external')`, "source tab restores main buffer");
+    await waitFor(session, `document.querySelector('[data-testid="source-highlight"] .source-token-keyword') !== null`, "source syntax highlight");
+
+    const assistedSource = 'fn helper() { println("ok") }\nfn main { hel }\n';
+    await setInputByTestId(session, "source-editor-input", assistedSource);
+    await session.evaluate(`(() => {
+      const editor = document.querySelector('[data-testid="source-editor-input"]');
+      const caret = editor.value.lastIndexOf('hel') + 3;
+      editor.focus();
+      editor.setSelectionRange(caret, caret);
+      editor.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', ctrlKey: true, bubbles: true }));
+    })()`);
+    await waitFor(session, `document.querySelector('[data-testid="source-completions"].is-open button')?.textContent === 'helper'`, "source local completion");
+    await session.evaluate(`document.querySelector('[data-testid="source-editor-input"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))`);
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('fn main { helper }')`, "source completion accepted");
+    await setInputByTestId(session, "source-editor-input", 'fn broken() {\n');
+    await waitFor(session, `document.querySelector('[data-testid="source-local-diagnostics"]')?.textContent.includes('unmatched')`, "source structural diagnostics");
+    await setInputByTestId(session, "source-editor-input", 'fn helper() { println("ok") }\nfn main { helper }\n');
+    await session.evaluate(`(() => {
+      const editor = document.querySelector('[data-testid="source-editor-input"]');
+      const call = editor.value.lastIndexOf('helper');
+      editor.focus();
+      editor.setSelectionRange(call, call + 6);
+      editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'F12', bubbles: true }));
+    })()`);
+    await waitFor(session, `(() => { const editor = document.querySelector('[data-testid="source-editor-input"]'); return editor?.selectionStart === editor?.value.indexOf('helper'); })()`, "source same-buffer definition");
+    await clickTestId(session, "source-discard");
+
+    let moonCodeBytes = null;
+    if (scenario === "phase7-editing") {
+      const prompt = 'Edit main.mbt so same_file prints "MoonCode edited". Make the change now.';
+      await setInputByTestId(session, "mooncode-input", prompt);
+      await clickTestId(session, "mooncode-send");
+      await waitForMoonCodeTerminal(session, mooncodeBackendTurnsStateExpression([prompt], [], true, true), "real MoonCode edit completes");
+      await waitFor(session, `document.querySelector('[data-testid="mooncode-evidence"]') !== null`, "MoonCode edit evidence", 20000);
+      moonCodeBytes = fs.readFileSync(path.join(workspaceRoot, "main.mbt"), "utf8");
+      assert(moonCodeBytes.includes("MoonCode edited"), `MoonCode did not edit fixture main.mbt: ${moonCodeBytes}`);
+      await session.send("Page.navigate", { url: `${baseUrl}/?activity=code&workspace=book-research-alpha&locale=en-US` });
+      await waitFor(session, `!!document.querySelector('[data-testid="source-open"]')`, "same-file Code route visible");
+      await setInputByTestId(session, "source-path", "main.mbt");
+      await clickTestId(session, "source-open");
+      await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('MoonCode edited')`, "same-file MoonCode result open");
+    } else {
+      moonCodeBytes = fs.readFileSync(path.join(workspaceRoot, "main.mbt"), "utf8");
+    }
+    const finalBytes = scenario === "phase7-editing"
+      ? moonCodeBytes.replace("MoonCode edited", "MoonCode then direct edited")
+      : 'fn same_file() { println("editor UI edited") }\n';
+    const expectedFinalText = scenario === "phase7-editing"
+      ? "MoonCode then direct edited"
+      : "editor UI edited";
     await setInputByTestId(session, "source-editor-input", finalBytes);
-    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('MoonCode then direct edited') && !document.querySelector('[data-testid="source-save"]')?.disabled`, "same-file direct dirty edit");
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes(${jsString(expectedFinalText)}) && !document.querySelector('[data-testid="source-save"]')?.disabled`, "same-file direct dirty edit");
     await clickTestId(session, "source-save");
     await waitFor(session, `document.querySelector('[data-testid="source-status"]')?.textContent.includes('Saved')`, "same-file direct save");
-    assert(fs.readFileSync(path.join(workspaceRoot, "main.mbt"), "utf8").includes("MoonCode then direct edited"), "same-file direct edit not persisted");
-    const proofPath = path.join(fixtureRoot, "phase7-editing-proof.json");
+    assert(fs.readFileSync(path.join(workspaceRoot, "main.mbt"), "utf8").includes(scenario === "phase7-editing" ? "MoonCode then direct edited" : "editor UI edited"), "same-file direct edit not persisted");
+    if (scenario === "editor-ui") {
+      await setViewport(session, 390, 844);
+      await waitFor(session, `document.documentElement.scrollWidth <= document.documentElement.clientWidth`, "editor UI narrow viewport containment");
+      await setViewport(session, 1440, 900);
+    }
+    const proofPath = path.join(
+      fixtureRoot,
+      scenario === "phase7-editing" ? "phase7-editing-proof.json" : "editor-ui-proof.json",
+    );
     fs.writeFileSync(proofPath, `${JSON.stringify({
-      kind: "moondesk-phase7-editing-proof.v1",
+      kind: scenario === "phase7-editing" ? "moondesk-phase7-editing-proof.v1" : "moondesk-editor-ui-proof.v1",
       packages: packageCases.map(item => item.extension),
       conflictDraftPreserved: true,
-      moonCodeEdit: moonCodeBytes,
+      moonCodeEdit: scenario === "phase7-editing" ? moonCodeBytes : null,
       finalDirectEdit: finalBytes,
     }, null, 2)}\n`);
     console.log(`Phase 7 editing proof: ${proofPath}`);
+    if (scenario === "editor-ui") {
+      const expectedUnavailable = session.pageProblems.filter(problem =>
+        problem.kind === "log.error" &&
+        problem.text.includes("503 (Service Unavailable)") &&
+        (problem.url.endsWith("/api/town/requests") || problem.url.endsWith("/api/town/standing-goals"))
+      );
+      assert(
+        expectedUnavailable.length === 2,
+        `editor-only journey produced unexpected runtime availability diagnostics: ${JSON.stringify(session.pageProblems)}`,
+      );
+      session.pageProblems = session.pageProblems.filter(problem => !expectedUnavailable.includes(problem));
+    }
     session.assertNoPageProblems("Phase 7 editing");
   } finally {
     session.close();
@@ -8914,7 +8981,7 @@ const runner = scenario === "screen-reader"
   ? runScreenReaderScenario
   : scenario === "keyboard-transients"
   ? verifyKeyboardTransients
-  : scenario === "phase7-editing"
+  : scenario === "phase7-editing" || scenario === "editor-ui"
   ? runPhase7Editing
   : scenario === "empty"
   ? runEmptyLibrary
