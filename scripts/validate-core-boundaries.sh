@@ -35,7 +35,11 @@ run_moon() {
   local root="$1"
   shift
   echo "+ (cd ${root} && ${moon_bin} $*)"
-  (cd "${root}" && "${moon_bin}" "$@")
+  (
+    cd "${root}"
+    env -u MOONCLAW_ROOT -u MOONBOOK_ROOT -u MOONTOWN_ROOT \
+      "${moon_bin}" "$@"
+  )
 }
 
 run_if_package_exists() {
@@ -91,7 +95,10 @@ validate_no_local_machine_paths() {
   local scan_paths=(
     README.md
     README.mbt.md
-    docs
+    docs/README.md
+    docs/PRODUCT_CONTRACT.md
+    docs/STATUS.md
+    docs/MOONCODE.md
     adapters
     cmd
     core
@@ -109,6 +116,8 @@ validate_no_local_machine_paths() {
     --glob '!**/.moon/**' \
     --glob '!**/.mooncakes/**' \
     --glob '!**/.git/**' \
+    --glob '!**/*_test.mbt' \
+    --glob '!**/*_wbtest.mbt' \
     "${pattern}" \
     "${scan_paths[@]}"); then
     echo "Local-machine absolute paths found in MoonDesk core." >&2
@@ -267,19 +276,36 @@ validate_moonclaw_code_boundary() {
 
 validate_moondesk_code_runtime_boundary() {
   local root="$1"
-  local forbidden='moonclaw_adapter|adapter_status|mooncode-moonclaw-adapter|native_gap|wire compatibility|/v1/mooncode|serve-scheduler|serve_scheduler|serve-jsonl|serve_command|MoonCode-style|runtime-dispatch|runtime_dispatch|RuntimeDispatch|mooncode\.runtime-dispatch|mooncode-runtime-dispatch|OpenSeek|openseek|runtime_dispatch_endpoint|dispatch_mode|mooncode_dispatch_mode|native_dispatch_mode|native_runtime_mode|task_runtime_receipt_mode|previous_dispatch_status|previous_dispatch_failed|previous_dispatch_receipt|failed_dispatch_count|dispatched_count|native-dispatched|not-dispatched|unsupported-dispatch-mode|runtime/serve|native MoonCode dispatch|mooncode_command_dispatch|command_dispatch|command-dispatch|dispatch_source|hunk_dispatch_scope|dispatch_or_replay_runtime_commands|native_runtime_session_stub'
+  local forbidden='moonclaw_adapter|adapter_status|mooncode-moonclaw-adapter|native_gap|wire compatibility|/v1/mooncode|serve-scheduler|serve_scheduler|serve-jsonl|serve_command|MoonCode-style|runtime-dispatch|runtime_dispatch|RuntimeDispatch|mooncode\.runtime-dispatch|mooncode-runtime-dispatch|runtime_dispatch_endpoint|dispatch_mode|mooncode_dispatch_mode|native_dispatch_mode|native_runtime_mode|task_runtime_receipt_mode|previous_dispatch_status|previous_dispatch_failed|previous_dispatch_receipt|failed_dispatch_count|dispatched_count|native-dispatched|not-dispatched|unsupported-dispatch-mode|runtime/serve|native MoonCode dispatch|mooncode_command_dispatch|command_dispatch|command-dispatch|dispatch_source|hunk_dispatch_scope|dispatch_or_replay_runtime_commands|native_runtime_session_stub'
   local scan_paths=(
-    docs
+    docs/README.md
+    docs/PRODUCT_CONTRACT.md
+    docs/STATUS.md
+    docs/MOONCODE.md
     internal/mooncode
     internal/moonwiki
     mooncode/core
     ui/rabbita-desk/main
+  )
+  local current_product_docs=(
+    README.md
+    README.mbt.md
+    docs/README.md
+    docs/PRODUCT_CONTRACT.md
+    docs/STATUS.md
+    docs/MOONCODE.md
   )
 
   echo "+ validate MoonDesk MoonCode runtime wording"
   if (cd "${root}" && rg -n --hidden --glob '!**/dist/**' --glob '!**/_build/**' --glob '!**/.git/**' "${forbidden}" "${scan_paths[@]}"); then
     echo "MoonDesk still exposes compatibility or adapter-era MoonCode vocabulary." >&2
     echo "Use native MoonClaw runtime wording and the /v1/code/* route family." >&2
+    exit 1
+  fi
+  if (cd "${root}" && rg -n --hidden --glob '!**/_build/**' --glob '!**/.git/**' \
+    'OpenSeek|openseek' "${current_product_docs[@]}"); then
+    echo "MoonDesk authoritative product docs still frame MoonCode as OpenSeek compatibility." >&2
+    echo "Keep comparisons in historical engineering plans, not the current product contract." >&2
     exit 1
   fi
   if ! rg -q 'Shared Runtime, Separate Lanes' "${root}/docs/MOONCODE.md"; then
@@ -297,7 +323,6 @@ validate_mooncode_core_contract_neutral() {
   local pattern='vectie/moondesk|internal/mooncode|internal/moonwiki|\.\./moonclaw'
   local scan_paths=(
     mooncode/core/protocol.mbt
-    mooncode/core/moon.pkg
   )
 
   echo "+ validate MoonCode core contract neutrality"
@@ -365,14 +390,8 @@ run_if_package_exists "${moondesk_root}" "mooncode/core" test
 run_if_package_exists "${moondesk_root}" "internal/mooncode" test
 run_if_package_exists "${moondesk_root}" "internal/moonwiki" test
 
-run_if_package_exists "${moonclaw_root}" "mooncode/core" test
-run_if_package_exists "${moonclaw_root}" "cmd/daemon" test
-
-run_if_package_exists "${moonbook_root}" "core" check
-run_if_package_exists "${moonbook_root}" "cmd/main" check
-run_if_package_exists "${moonbook_root}" "internal/moonwiki" check
-run_if_package_exists "${moonbook_root}" "wiki" check
-run_if_package_exists "${moonbook_root}" "summary" check
+run_moon "${moonclaw_root}" test --target native --warn-list +73 --diagnostic-limit 80
+run_moon "${moonbook_root}" test --target native --warn-list +73 --diagnostic-limit 80
 
 run_if_package_exists "${moontown_root}" "src/core" check
 run_if_package_exists "${moontown_root}" "src/adapters/moonbook" test

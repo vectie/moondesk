@@ -7,10 +7,11 @@ ordered conversation, one durable owner, and one desktop projection:
 MoonDesk UI -> MoonDesk adapter -> MoonClaw canonical session -> MoonBook files
 ```
 
-MoonDesk does not reconstruct chat from runtime events, local command queues,
-receipts, or artifact logs.
+MoonClaw must remain a standalone agent runtime; MoonDesk consumes its typed
+surface and does not make it desktop-private. MoonDesk does not reconstruct
+chat from runtime events, local command queues, receipts, or artifact logs.
 
-## Product Boundary
+## Shared Runtime, Separate Lanes
 
 MoonDesk owns the desktop experience:
 
