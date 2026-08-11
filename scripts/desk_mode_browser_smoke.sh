@@ -78,7 +78,7 @@ create_phase7_office_fixtures() {
   printf '<Relationships/>\n' >"$staging/docx/_rels/.rels"
   printf '<w:document><w:body><w:p><w:r><w:t>DOCX browser before</w:t></w:r></w:p></w:body></w:document>\n' >"$staging/docx/word/document.xml"
   printf 'preserve-docx\n' >"$staging/docx/unknown.txt"
-  (cd "$staging/docx" && zip -qr "$root/documents/browser.docx" .)
+  (cd "$staging/docx" && zip -qr "$root/documents/browser report #1.docx" .)
   printf '<Types/>\n' >"$staging/xlsx/[Content_Types].xml"
   printf '<Relationships/>\n' >"$staging/xlsx/_rels/.rels"
   printf '<workbook><sheets><sheet name="Browser Sheet" r:id="sheet-browser"/></sheets></workbook>\n' >"$staging/xlsx/xl/workbook.xml"

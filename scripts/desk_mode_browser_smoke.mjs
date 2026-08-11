@@ -492,9 +492,12 @@ async function resumeMoonCodeTransportPause(state) {
   assert(response.ok, `MoonCode runtime resume failed: ${response.status} ${await response.text()}`);
 }
 
-async function waitForMoonCodeTerminal(session, expression, label) {
-  while (true) {
+async function waitForMoonCodeTerminal(session, expression, label, timeoutMs = 180_000) {
+  const deadline = Date.now() + timeoutMs;
+  let lastState = null;
+  while (Date.now() < deadline) {
     const state = await session.evaluate(expression);
+    lastState = state;
     const decision = moonCodeTerminalDecision(state);
     if (decision === "complete") return state;
     if (decision === "terminal-failure") {
@@ -505,6 +508,9 @@ async function waitForMoonCodeTerminal(session, expression, label) {
     }
     await sleep(250);
   }
+  throw new Error(
+    `${label} did not reach a terminal state within ${timeoutMs}ms: ${JSON.stringify(lastState)}`,
+  );
 }
 
 async function waitForFile(filePath, label, timeoutMs = 12000) {
@@ -8754,7 +8760,7 @@ async function runPhase7Editing() {
   const session = await connect(cdpPort);
   const workspaceRoot = path.join(fixtureRoot, "books", "research-alpha");
   const packageCases = [
-    { extension: "docx", member: "word/document.xml", edited: "DOCX browser edited", preservedXml: "<w:body>", unknown: "preserve-docx" },
+    { extension: "docx", relative: "documents/browser report #1.docx", member: "word/document.xml", edited: "DOCX browser edited", preservedXml: "<w:body>", unknown: "preserve-docx" },
     { extension: "xlsx", member: "xl/worksheets/sheet1.xml", edited: "42", preservedXml: 'custom="keep"', unknown: "preserve-xlsx" },
     { extension: "pptx", member: "ppt/slides/slide1.xml", edited: "PPTX browser edited", preservedXml: 'name="keep-pptx"', unknown: "preserve-pptx" },
   ];
@@ -8770,8 +8776,33 @@ async function runPhase7Editing() {
     await setViewport(session, 1440, 900);
     await session.send("Page.navigate", { url: `${baseUrl}/?activity=code&workspace=book-research-alpha&locale=en-US` });
     await waitFor(session, `!!document.querySelector('[data-testid="office-editor"]')`, "Phase 7 editors visible");
+    await session.evaluate(`(() => {
+      const editors = document.querySelector('[data-testid="mooncode-workspace-editors"]');
+      if (editors instanceof HTMLDetailsElement) editors.open = true;
+    })()`);
+    await waitFor(session, `document.querySelector('[data-testid="source-editor"]')?.getBoundingClientRect().width > 280 && document.querySelector('[data-testid="office-editor"]')?.getBoundingClientRect().width > 280`, "Phase 7 two-column editors visible");
+    const splitGeometry = await session.evaluate(`(() => {
+      const source = document.querySelector('[data-testid="source-editor"]')?.getBoundingClientRect();
+      const splitter = document.querySelector('[data-testid="workspace-editor-splitter"]')?.getBoundingClientRect();
+      const office = document.querySelector('[data-testid="office-editor"]')?.getBoundingClientRect();
+      return source && splitter && office ? {
+        sourceRight: source.right,
+        splitterLeft: splitter.left,
+        splitterRight: splitter.right,
+        officeLeft: office.left,
+        sourceWidth: source.width,
+        officeWidth: office.width,
+      } : null;
+    })()`);
+    assert(splitGeometry && splitGeometry.sourceRight <= splitGeometry.splitterLeft + 1 && splitGeometry.splitterRight <= splitGeometry.officeLeft + 1, `Phase 7 editor split is invalid: ${JSON.stringify(splitGeometry)}`);
+    await session.evaluate(`(() => {
+      const splitter = document.querySelector('[data-testid="workspace-editor-splitter"]');
+      splitter?.focus();
+      splitter?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    })()`);
+    await waitFor(session, `document.querySelector('[data-testid="source-editor"]')?.getBoundingClientRect().width > ${Math.floor(splitGeometry.sourceWidth + 10)}`, "Phase 7 keyboard splitter resize");
     for (const item of packageCases) {
-      const relative = `documents/browser.${item.extension}`;
+      const relative = item.relative || `documents/browser.${item.extension}`;
       const packagePath = path.join(workspaceRoot, relative);
       await setInputByTestId(session, "office-path", relative);
       await clickTestId(session, "office-open");
@@ -8801,6 +8832,28 @@ async function runPhase7Editing() {
     await setInputByTestId(session, "source-path", "main.mbt");
     await clickTestId(session, "source-open");
     await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('before')`, "direct Code open");
+    await waitFor(session, `document.querySelector('[data-testid="source-line-numbers"]')?.textContent.trim() === '1'`, "direct Code line-number gutter");
+    await setInputByTestId(session, "source-find", "same_file");
+    await clickTestId(session, "source-find-next");
+    await waitFor(session, `(() => { const editor = document.querySelector('[data-testid="source-editor-input"]'); return editor?.value.slice(editor.selectionStart, editor.selectionEnd) === 'same_file' && document.querySelector('[data-testid="source-find-result"]')?.textContent === '1/1'; })()`, "direct Code in-file search");
+    await session.evaluate(`(() => {
+      const editor = document.querySelector('[data-testid="source-editor-input"]');
+      editor?.focus();
+      editor?.setSelectionRange(0, editor.value.length);
+      editor?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    })()`);
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.startsWith('  fn same_file')`, "direct Code selected indentation");
+    await session.evaluate(`document.querySelector('[data-testid="source-editor-input"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }))`);
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.startsWith('fn same_file')`, "direct Code selected outdent");
+    await session.evaluate(`(() => {
+      const editor = document.querySelector('[data-testid="source-editor-input"]');
+      editor?.focus();
+      editor?.setSelectionRange(0, 0);
+      editor?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    })()`);
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.startsWith('  fn same_file')`, "direct Code Tab insertion");
+    await clickTestId(session, "source-discard");
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.startsWith('fn same_file')`, "direct Code discard");
     await setInputByTestId(session, "source-editor-input", 'fn same_file() { println("direct first") }\n');
     await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('direct first') && !document.querySelector('[data-testid="source-save"]')?.disabled`, "direct Code dirty edit");
     await clickTestId(session, "source-save");
