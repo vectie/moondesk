@@ -12,6 +12,10 @@
   white-space: normal;
 }
 
+.mooncode-markdown-source {
+  display: none;
+}
+
 .mooncode-markdown > :first-child {
   margin-top: 0;
 }

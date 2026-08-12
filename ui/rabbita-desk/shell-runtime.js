@@ -517,6 +517,25 @@ new MutationObserver(loadSourceEditorRuntime).observe(
 )
 loadSourceEditorRuntime()
 
+let mooncodeMarkdownRuntimeLoading = false
+
+function loadMoonCodeMarkdownRuntime() {
+  if (mooncodeMarkdownRuntimeLoading || !document.querySelector('[data-testid="mooncode-markdown-source"]')) return
+  mooncodeMarkdownRuntimeLoading = true
+  void import('./mooncode-markdown-runtime.js').then(module => {
+    module.installMoonCodeMarkdownRuntime()
+  }).catch(error => {
+    mooncodeMarkdownRuntimeLoading = false
+    console.error('MoonCode Markdown route runtime failed to load', error)
+  })
+}
+
+new MutationObserver(loadMoonCodeMarkdownRuntime).observe(
+  document.getElementById('app') || document.body,
+  { childList: true, subtree: true },
+)
+loadMoonCodeMarkdownRuntime()
+
 let mooncodeTranscript = null
 let mooncodeTranscriptKey = ''
 let mooncodeStickToBottom = true

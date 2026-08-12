@@ -4,21 +4,27 @@ fn mooncode_markdown_test_dispatch(_msg : Msg) -> @rabbita.Cmd {
 }
 
 ///|
-test "MoonCode markdown renders useful block structure" {
+#warnings("-alert_unstable")
+test "MoonCode markdown exposes a route-runtime source boundary" {
   assert_eq(
     mooncode_markdown_nodes(mooncode_markdown_test_dispatch, "", "").length(),
     0,
   )
-  assert_eq(
-    mooncode_markdown_nodes(
-      mooncode_markdown_test_dispatch, "", "# Result\n\nUpdated the parser.\n\n```moonbit\nfn parse() {}\n```\n\n| Check | State |\n| - | - |\n| test | pass |",
-    ).length(),
-    4,
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      div(
+        mooncode_markdown_nodes(
+          mooncode_markdown_test_dispatch, "", "# Result\n\nUpdated the parser.\n\n```moonbit\nfn parse() {}\n```",
+        ),
+      ),
+    ),
   )
+  assert_true(markup.contains("data-testid=\"mooncode-markdown-source\""))
+  assert_true(markup.contains("fn parse()"))
 }
 
 ///|
-test "MoonCode markdown contains parser failures for streaming prefixes" {
+test "MoonCode markdown accepts every streaming prefix without parsing" {
   let answer = "Result:\n\n- first\n- second\n\n```moonbit\nfn main() {}\n```"
   let buffer = StringBuilder::new()
   for char in answer {
@@ -33,9 +39,13 @@ test "MoonCode markdown contains parser failures for streaming prefixes" {
 }
 
 ///|
-test "MoonCode markdown treats raw HTML and unsafe links as content" {
+#warnings("-alert_unstable")
+test "MoonCode markdown keeps raw HTML and unsafe links as inert text" {
   let nodes = mooncode_markdown_nodes(
     mooncode_markdown_test_dispatch, "", "<script>alert('no')</script>\n\n[unsafe](javascript:alert(1))",
   )
-  assert_eq(nodes.length(), 2)
+  assert_eq(nodes.length(), 1)
+  let markup = @rabbita.render_to_string(@rabbita.static_cell(div(nodes)))
+  assert_true(markup.contains("&lt;script&gt;"))
+  assert_false(markup.contains("href=\"javascript:"))
 }
