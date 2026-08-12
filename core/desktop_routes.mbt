@@ -87,6 +87,7 @@ fn desktop_api_route_authority_scope(
     p if p == workspace_action_route("inbox") => "selected-book"
     p if p == workspace_action_route("markdown") => "selected-book"
     p if p == workspace_action_route("source") => "selected-book"
+    p if p == workspace_action_route("source/semantics") => "selected-book"
     p if p == workspace_action_route("office") => "selected-book"
     p if p == workspace_action_route("office/save") => "selected-book"
     p if p == workspace_action_route("rename") => "selected-book"
@@ -459,6 +460,9 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(workspace_action_route("inbox"), ["POST"]),
     desktop_api_route_contract(workspace_action_route("markdown"), ["POST"]),
     desktop_api_route_contract(workspace_action_route("source"), ["POST"]),
+    desktop_api_route_contract(workspace_action_route("source/semantics"), [
+      "POST",
+    ]),
     desktop_api_route_contract(workspace_action_route("office"), ["GET", "HEAD"]),
     desktop_api_route_contract(workspace_action_route("office/save"), ["POST"]),
     desktop_api_route_contract(workspace_action_route("office/export"), [

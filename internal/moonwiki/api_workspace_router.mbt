@@ -96,6 +96,17 @@ async fn route_workspace_api(
       }
       true
     }
+    ["api", "workspaces", workspace_id, "source", "semantics"] => {
+      let endpoint = @desk.workspace_action_route("source/semantics")
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_workspace_source_semantics(
+          workspace_root, workspace_id, body, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "workspaces", workspace_id, "office"] => {
       let endpoint = @desk.workspace_action_route("office")
       if desktop_api_route_accepts_read(endpoint, method_) {

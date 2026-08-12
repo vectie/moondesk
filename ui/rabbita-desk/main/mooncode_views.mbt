@@ -79,7 +79,7 @@ fn mooncode_session_list_children(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> Map[String, @rabbita.Html] {
-  let children : Map[String, @rabbita.Html] = {}
+  let children : Map[String, @rabbita.Html] = Map([])
   let groups = mooncode_session_groups(model)
   let selected_id = selected_mooncode_session(model)
     .map(fn(item) { item.id })
@@ -129,9 +129,9 @@ fn mooncode_session_groups(model : Model) -> Array[MoonCodeSessionGroup] {
   let query = model.mooncode_session_query.trim().to_owned().to_lower()
   let searching = query != ""
   let group_order : Array[String] = []
-  let group_labels : Map[String, String] = {}
-  let group_workspaces : Map[String, String] = {}
-  let group_sessions : Map[String, Array[MoonCodeSession]] = {}
+  let group_labels : Map[String, String] = Map([])
+  let group_workspaces : Map[String, String] = Map([])
+  let group_sessions : Map[String, Array[MoonCodeSession]] = Map([])
   if !searching {
     group_order.push("general")
     group_labels["general"] = "General"
@@ -481,7 +481,7 @@ fn render_mooncode_archived_sessions(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  let children : Map[String, @rabbita.Html] = {}
+  let children : Map[String, @rabbita.Html] = Map([])
   for session in model.mooncode_archived_sessions {
     if mooncode_session_matches_query(
         session,
@@ -687,11 +687,22 @@ fn render_source_editor(
 ) -> @rabbita.Html {
   section(
     class="source-editor",
-    attrs=@html.Attrs::build().data_set("testid", "source-editor"),
+    attrs=@html.Attrs::build()
+      .data_set("testid", "source-editor")
+      .data_set("workspace-id", source.workspace_id)
+      .data_set("source-path", source.requested_path)
+      .data_set(
+        "source-dirty",
+        if source_pane_dirty(source) {
+          "true"
+        } else {
+          "false"
+        },
+      ),
     [
       h3("Source editor"),
       p(
-        "Multi-file text editing with local syntax, structural diagnostics, completion, and same-buffer definition lookup.",
+        "Multi-file editing with local syntax assistance plus MoonBit compiler diagnostics and workspace navigation.",
       ),
       if source.buffers.is_empty() {
         @html.nothing
@@ -720,7 +731,11 @@ fn render_source_editor(
                   on_click=dispatch(SourcePane(SwitchBuffer(buffer.path))),
                   disabled=source.saving,
                   buffer.path +
-                  (if source_pane_buffer_dirty(buffer) { " · modified" } else { "" }),
+                  (if source_pane_buffer_dirty(buffer) {
+                    " · modified"
+                  } else {
+                    ""
+                  }),
                 ),
                 button(
                   class="source-editor-tab-close",
@@ -859,6 +874,38 @@ fn render_source_editor(
         class="source-editor-assist",
         attrs=@html.Attrs::build().data_set("testid", "source-assist"),
         [
+          div(class="source-semantic-toolbar", [
+            button(
+              class="secondary-button",
+              attrs=@html.Attrs::build()
+                .data_set("action", "source-compiler-check")
+                .data_set("testid", "source-compiler-check"),
+              disabled=!source_pane_editable(source) ||
+                source_pane_dirty(source) ||
+                source_pane_language_label(source) != "MoonBit",
+              "Check workspace",
+            ),
+            button(
+              class="secondary-button",
+              attrs=@html.Attrs::build()
+                .data_set("action", "source-go-definition")
+                .data_set("testid", "source-go-definition"),
+              disabled=!source_pane_editable(source) ||
+                source_pane_dirty(source) ||
+                source_pane_language_label(source) != "MoonBit",
+              "Go to definition",
+            ),
+            button(
+              class="secondary-button",
+              attrs=@html.Attrs::build()
+                .data_set("action", "source-find-references")
+                .data_set("testid", "source-find-references"),
+              disabled=!source_pane_editable(source) ||
+                source_pane_dirty(source) ||
+                source_pane_language_label(source) != "MoonBit",
+              "Find references",
+            ),
+          ]),
           div(
             class="source-completions",
             attrs=@html.Attrs::build()
@@ -874,6 +921,13 @@ fn render_source_editor(
               .role("status")
               .aria_live("polite"),
             "Local diagnostics ready",
+          ),
+          div(
+            class="source-semantic-results",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "source-semantic-results")
+              .aria_live("polite"),
+            [@html.nothing],
           ),
         ],
       ),

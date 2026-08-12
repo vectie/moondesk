@@ -137,5 +137,7 @@ options(
     "workspace_entry_helpers.mbt": [ "native" ],
     "workspace_inbox_handlers.mbt": [ "native" ],
     "workspace_reveal_handlers.mbt": [ "native" ],
+    "workspace_source_semantics.mbt": [ "native" ],
+    "workspace_source_semantics_wbtest.mbt": [ "native" ],
   },
 )

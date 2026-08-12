@@ -128,6 +128,9 @@ test "desktop api route contracts own active backend method policy" {
   assert_true(endpoints.contains(@core.desktop_capabilities_route()))
   assert_true(endpoints.contains(@core.workspace_action_route("entries")))
   assert_true(endpoints.contains(@core.workspace_action_route("document")))
+  assert_true(
+    endpoints.contains(@core.workspace_action_route("source/semantics")),
+  )
   assert_true(endpoints.contains(@core.workspace_file_route()))
   assert_true(endpoints.contains(@core.town_route("dispatch")))
   assert_false(endpoints.contains(@core.town_route("control")))
@@ -146,6 +149,12 @@ test "desktop api route contracts own active backend method policy" {
       @core.workspace_action_route("document"),
     ).join(", "),
     "GET, HEAD",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.workspace_action_route("source/semantics"),
+    ).join(", "),
+    "POST",
   )
   assert_eq(
     @core.desktop_api_route_allowed_methods(

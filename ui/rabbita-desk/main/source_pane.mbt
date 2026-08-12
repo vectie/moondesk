@@ -125,22 +125,28 @@ fn source_pane_active_buffer(state : SourcePaneState) -> SourcePaneBuffer? {
 }
 
 ///|
-fn source_pane_capture_active(state : SourcePaneState) -> Array[SourcePaneBuffer] {
+fn source_pane_capture_active(
+  state : SourcePaneState,
+) -> Array[SourcePaneBuffer] {
   guard source_pane_active_buffer(state) is Some(active) else {
     return state.buffers
   }
   match source_pane_buffer_index(state.buffers, active.path) {
     Some(active_index) =>
-      state.buffers.mapi((index, buffer) =>
-        if index == active_index { active } else { buffer }
-      )
+      state.buffers.mapi((index, buffer) => {
+        if index == active_index {
+          active
+        } else {
+          buffer
+        }
+      })
     None => state.buffers + [active]
   }
 }
 
 ///|
 fn source_pane_commit_active(state : SourcePaneState) -> SourcePaneState {
-  { ..state, buffers: source_pane_capture_active(state), }
+  { ..state, buffers: source_pane_capture_active(state) }
 }
 
 ///|
@@ -162,9 +168,9 @@ fn source_pane_activate_buffer(
 
 ///|
 fn source_pane_any_dirty(state : SourcePaneState) -> Bool {
-  source_pane_capture_active(state).any(buffer =>
+  source_pane_capture_active(state).any(buffer => {
     buffer.draft != buffer.baseline
-  )
+  })
 }
 
 ///|
@@ -340,11 +346,7 @@ fn update_source_pane(
       }
     EditDraft(draft) =>
       if source_pane_editable(state) {
-        source_pane_commit_active({
-          ..state,
-          draft,
-          status: "Unsaved changes",
-        })
+        source_pane_commit_active({ ..state, draft, status: "Unsaved changes" })
       } else {
         state
       }
@@ -430,13 +432,16 @@ fn update_source_pane(
         state
       }
       if buffers[index].draft != buffers[index].baseline {
-        { ..state, status: "Save or discard the modified tab before closing it" }
+        {
+          ..state,
+          status: "Save or discard the modified tab before closing it",
+        }
       } else {
         let remaining = buffers.filter(buffer => buffer.path != path)
         if state.requested_path != path {
-          { ..state, buffers: remaining, }
+          { ..state, buffers: remaining }
         } else if remaining is [next, ..] {
-          source_pane_activate_buffer({ ..state, buffers: remaining, }, next)
+          source_pane_activate_buffer({ ..state, buffers: remaining }, next)
         } else {
           {
             ..state,

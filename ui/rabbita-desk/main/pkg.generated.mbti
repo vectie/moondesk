@@ -271,6 +271,8 @@ type SavedViewRecord derive(@json.FromJson)
 
 type SearchHit derive(@json.FromJson)
 
+type SourcePaneBuffer derive(Eq, @debug.Debug)
+
 type SourcePaneContent derive(Eq, @debug.Debug)
 
 type SourcePaneMsg derive(Eq, @debug.Debug)

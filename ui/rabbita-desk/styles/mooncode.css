@@ -866,6 +866,25 @@
 .source-editor-assist {
   position: relative;
   min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.source-semantic-toolbar {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.source-semantic-toolbar .secondary-button {
+  min-height: 34px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+
+.source-editor.is-semantic-loading .source-semantic-toolbar {
+  opacity: 0.72;
 }
 
 .source-completions {
@@ -911,6 +930,49 @@
 
 .source-local-diagnostics.has-problem {
   color: #b45309;
+}
+
+.source-semantic-results {
+  min-width: 0;
+  max-height: 190px;
+  display: grid;
+  gap: 3px;
+  overflow-y: auto;
+}
+
+.source-semantic-message {
+  margin: 0;
+  color: var(--mooncode-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.source-semantic-message.has-problem {
+  color: #b45309;
+}
+
+.source-semantic-result {
+  width: 100%;
+  min-height: 34px;
+  overflow: hidden;
+  padding: 6px 8px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 6px;
+  background: var(--mooncode-field);
+  color: var(--mooncode-ink);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-semantic-result:hover,
+.source-semantic-result:focus-visible {
+  border-color: var(--mooncode-line-strong);
+  background: color-mix(in srgb, var(--mooncode-accent) 8%, var(--mooncode-field));
 }
 
 .source-editor-input:focus {

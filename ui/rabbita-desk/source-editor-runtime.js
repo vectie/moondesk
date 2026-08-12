@@ -36,6 +36,7 @@ const DEFINITION_WORDS = new Set([
 
 let installed = false
 let completionState = null
+let pendingReveal = null
 const renderedHighlights = new WeakMap()
 
 function editorParts(element) {
@@ -158,6 +159,7 @@ function syncEditor(element) {
       : 'Local diagnostics: no structural issues'
     parts.diagnostics.classList.toggle('has-problem', Boolean(problem))
   }
+  applyPendingReveal(parts)
 }
 
 function wordRange(editor) {
@@ -255,6 +257,223 @@ function revealLocalDefinition(element) {
   return false
 }
 
+function semanticContext(parts) {
+  const workspaceId = parts.surface.dataset.workspaceId || ''
+  const path = parts.surface.dataset.sourcePath || ''
+  const dirty = parts.surface.dataset.sourceDirty === 'true'
+  return {
+    workspaceId,
+    path,
+    dirty,
+    available: parts.language === 'MoonBit' && workspaceId !== '' && path.endsWith('.mbt') && !dirty,
+  }
+}
+
+function sourcePosition(editor) {
+  const before = editor.value.slice(0, editor.selectionStart)
+  const lines = before.split('\n')
+  return { line: lines.length, column: lines[lines.length - 1].length + 1 }
+}
+
+function semanticResults(parts) {
+  return parts.surface.querySelector('[data-testid="source-semantic-results"]')
+}
+
+function setSemanticMessage(parts, message, problem = false) {
+  const results = semanticResults(parts)
+  if (!(results instanceof HTMLElement)) return
+  results.replaceChildren()
+  const text = document.createElement('p')
+  text.className = problem ? 'source-semantic-message has-problem' : 'source-semantic-message'
+  text.textContent = message
+  results.append(text)
+}
+
+function setSemanticBusy(parts, busy) {
+  parts.surface.classList.toggle('is-semantic-loading', busy)
+  const available = semanticContext(parts).available
+  for (const button of parts.surface.querySelectorAll('[data-action="source-compiler-check"], [data-action="source-go-definition"], [data-action="source-find-references"]')) {
+    if (button instanceof HTMLButtonElement) {
+      button.disabled = busy || !available
+    }
+  }
+}
+
+async function semanticRequest(parts, action) {
+  const context = semanticContext(parts)
+  if (!context.available) {
+    setSemanticMessage(parts, 'Save the MoonBit file before running compiler semantics.', true)
+    return null
+  }
+  const range = wordRange(parts.editor)
+  const position = sourcePosition(parts.editor)
+  const body = {
+    action,
+    path: context.path,
+    line: position.line,
+    column: position.column,
+  }
+  if (action !== 'diagnostics') body.symbol = range.word
+  setSemanticBusy(parts, true)
+  setSemanticMessage(parts, action === 'diagnostics' ? 'Running moon check…' : `Running moon ide for ${range.word || 'selection'}…`)
+  try {
+    const response = await fetch(`/api/workspaces/${encodeURIComponent(context.workspaceId)}/source/semantics`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.error || payload.message || `Compiler request failed (${response.status})`)
+    return payload
+  } catch (error) {
+    setSemanticMessage(parts, String(error.message || error), true)
+    return null
+  } finally {
+    setSemanticBusy(parts, false)
+  }
+}
+
+function diagnosticLocation(diagnostic) {
+  const match = String(diagnostic.loc || '').match(/^(\d+):(\d+)/)
+  return {
+    path: String(diagnostic.relative_path || diagnostic.path || ''),
+    line: Number(match?.[1] || 1),
+    column: Number(match?.[2] || 1),
+  }
+}
+
+function locationButton(location, label) {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'source-semantic-result'
+  button.dataset.semanticPath = location.path
+  button.dataset.semanticLine = String(location.line)
+  button.dataset.semanticColumn = String(location.column)
+  button.textContent = label
+  return button
+}
+
+function renderCompilerDiagnostics(parts, payload) {
+  const results = semanticResults(parts)
+  if (!(results instanceof HTMLElement)) return
+  const diagnostics = Array.isArray(payload.diagnostics) ? payload.diagnostics : []
+  results.replaceChildren()
+  const summary = document.createElement('p')
+  const errors = diagnostics.filter(item => item.level === 'error').length
+  const warnings = diagnostics.filter(item => item.level === 'warning').length
+  summary.className = errors > 0 ? 'source-semantic-message has-problem' : 'source-semantic-message'
+  summary.textContent = diagnostics.length === 0
+    ? 'MoonBit compiler: workspace check passed'
+    : `MoonBit compiler: ${errors} errors · ${warnings} warnings`
+  results.append(summary)
+  for (const diagnostic of diagnostics.slice(0, 50)) {
+    const location = diagnosticLocation(diagnostic)
+    results.append(locationButton(
+      location,
+      `${diagnostic.level || 'diagnostic'} · ${location.path}:${diagnostic.loc || location.line} · ${diagnostic.message || ''}`,
+    ))
+  }
+}
+
+function workspaceSemanticPath(path, modulePrefix) {
+  const value = String(path || '').replace(/^\.\//, '')
+  const prefix = String(modulePrefix || '')
+  return prefix && !value.startsWith(prefix) ? prefix + value : value
+}
+
+function definitionLocation(output, modulePrefix = '') {
+  const path = output.match(/^Definition found at file (.+)$/m)?.[1]?.trim()
+  const line = Number(output.match(/^\s*(\d+) \|/m)?.[1] || 1)
+  if (!path) return null
+  return { path: workspaceSemanticPath(path, modulePrefix), line, column: 1 }
+}
+
+function referenceLocations(output, modulePrefix = '') {
+  const locations = []
+  const seen = new Set()
+  const pattern = /^(.+?):(\d+):(\d+)-\d+:\d+:$/gm
+  for (const match of output.matchAll(pattern)) {
+    const path = workspaceSemanticPath(match[1], modulePrefix)
+    const key = `${path}:${match[2]}:${match[3]}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    locations.push({ path, line: Number(match[2]), column: Number(match[3]) })
+  }
+  return locations
+}
+
+function revealSourceLocation(parts, location) {
+  if (!location?.path) return
+  const context = semanticContext(parts)
+  if (context.path !== location.path) {
+    pendingReveal = location
+    const pathInput = parts.surface.querySelector('[data-testid="source-path"]')
+    const open = parts.surface.querySelector('[data-testid="source-open"]')
+    if (pathInput instanceof HTMLInputElement && open instanceof HTMLButtonElement) {
+      pathInput.value = location.path
+      pathInput.dispatchEvent(new Event('input', { bubbles: true }))
+      open.click()
+    }
+    return
+  }
+  const lines = parts.editor.value.split('\n')
+  const lineIndex = Math.max(0, Math.min(lines.length - 1, location.line - 1))
+  let offset = 0
+  for (let index = 0; index < lineIndex; index += 1) offset += lines[index].length + 1
+  const columnOffset = Math.max(0, Math.min(lines[lineIndex].length, location.column - 1))
+  const start = offset + columnOffset
+  parts.editor.focus()
+  parts.editor.setSelectionRange(start, start)
+  const lineHeight = Number.parseFloat(getComputedStyle(parts.editor).lineHeight) || 20
+  parts.editor.scrollTop = Math.max(0, lineIndex * lineHeight - lineHeight * 3)
+  pendingReveal = null
+  syncEditor(parts.editor)
+}
+
+function applyPendingReveal(parts) {
+  if (!pendingReveal) return
+  if (semanticContext(parts).path === pendingReveal.path) revealSourceLocation(parts, pendingReveal)
+}
+
+async function runCompilerDiagnostics(element) {
+  const parts = editorParts(element)
+  if (!parts) return
+  const payload = await semanticRequest(parts, 'diagnostics')
+  if (payload) renderCompilerDiagnostics(parts, payload)
+}
+
+async function runDefinitionLookup(element) {
+  const parts = editorParts(element)
+  if (!parts) return
+  const payload = await semanticRequest(parts, 'definition')
+  if (!payload) return
+  const location = definitionLocation(String(payload.output || ''), payload.module_prefix)
+  if (!location) {
+    setSemanticMessage(parts, `MoonBit definition not found for ${payload.symbol || 'selection'}`, true)
+    return
+  }
+  setSemanticMessage(parts, `MoonBit definition: ${location.path}:${location.line}`)
+  revealSourceLocation(parts, location)
+}
+
+async function runReferencesLookup(element) {
+  const parts = editorParts(element)
+  if (!parts) return
+  const payload = await semanticRequest(parts, 'references')
+  if (!payload) return
+  const results = semanticResults(parts)
+  if (!(results instanceof HTMLElement)) return
+  const locations = referenceLocations(String(payload.output || ''), payload.module_prefix)
+  results.replaceChildren()
+  const summary = document.createElement('p')
+  summary.className = 'source-semantic-message'
+  summary.textContent = `MoonBit references: ${locations.length}`
+  results.append(summary)
+  for (const location of locations.slice(0, 50)) {
+    results.append(locationButton(location, `${location.path}:${location.line}:${location.column}`))
+  }
+}
+
 export function installSourceEditorRuntime() {
   if (installed) return
   installed = true
@@ -269,7 +488,25 @@ export function installSourceEditorRuntime() {
   }, true)
   document.addEventListener('click', event => {
     const completion = event.target instanceof Element ? event.target.closest('[data-completion-index]') : null
-    if (completion instanceof HTMLElement) acceptCompletion(Number(completion.dataset.completionIndex))
+    if (completion instanceof HTMLElement) {
+      acceptCompletion(Number(completion.dataset.completionIndex))
+      return
+    }
+    const location = event.target instanceof Element ? event.target.closest('[data-semantic-path]') : null
+    if (location instanceof HTMLElement) {
+      const parts = editorParts(location)
+      if (parts) revealSourceLocation(parts, {
+        path: location.dataset.semanticPath || '',
+        line: Number(location.dataset.semanticLine || 1),
+        column: Number(location.dataset.semanticColumn || 1),
+      })
+      return
+    }
+    const action = event.target instanceof Element ? event.target.closest('[data-action]') : null
+    if (!(action instanceof HTMLElement)) return
+    if (action.dataset.action === 'source-compiler-check') void runCompilerDiagnostics(action)
+    else if (action.dataset.action === 'source-go-definition') void runDefinitionLookup(action)
+    else if (action.dataset.action === 'source-find-references') void runReferencesLookup(action)
   }, true)
   document.addEventListener('keydown', event => {
     const editor = event.target
@@ -277,9 +514,13 @@ export function installSourceEditorRuntime() {
     if ((event.metaKey || event.ctrlKey) && event.code === 'Space') {
       event.preventDefault()
       showCompletions(editor)
+    } else if (event.key === 'F12' && event.shiftKey) {
+      event.preventDefault()
+      if (semanticContext(editorParts(editor)).available) void runReferencesLookup(editor)
     } else if (event.key === 'F12') {
       event.preventDefault()
-      revealLocalDefinition(editor)
+      if (semanticContext(editorParts(editor)).available) void runDefinitionLookup(editor)
+      else revealLocalDefinition(editor)
     } else if (completionState && event.key === 'ArrowDown') {
       event.preventDefault()
       moveCompletion(1)

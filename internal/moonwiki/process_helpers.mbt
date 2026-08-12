@@ -24,6 +24,17 @@ async fn run_process_capture(
   cmd : String,
   args : Array[String],
 ) -> (Int, String, String) {
+  run_process_capture_in(cmd, args, cwd="")
+}
+
+///|
+/// Captures a child process under an explicit authority root. An empty cwd
+/// preserves the caller's current directory for compatibility.
+async fn run_process_capture_in(
+  cmd : String,
+  args : Array[String],
+  cwd~ : String,
+) -> (Int, String, String) {
   @async.with_task_group(group => {
     let (stdout_pipe, stdout_output) = @process.read_from_process()
     let (stderr_pipe, stderr_output) = @process.read_from_process()
@@ -39,13 +50,14 @@ async fn run_process_capture(
         _ => ""
       }
     })
-    let code = @process.run(
-      cmd,
-      args,
-      stdout=stdout_output,
-      stderr=stderr_output,
-    ) catch {
-      _ => -1
+    let code = if cwd == "" {
+      @process.run(cmd, args, stdout=stdout_output, stderr=stderr_output) catch {
+        _ => -1
+      }
+    } else {
+      @process.run(cmd, args, stdout=stdout_output, stderr=stderr_output, cwd~) catch {
+        _ => -1
+      }
     }
     (code, stdout_task.wait(), stderr_task.wait())
   }) catch {

@@ -13,6 +13,12 @@ test "every mutating desktop route declares an explicit authority scope" {
     @core.desktop_api_route_authority(@core.workspace_action_route("markdown"))
     is Some("selected-book"),
   )
+  assert_true(
+    @core.desktop_api_route_authority(
+      @core.workspace_action_route("source/semantics"),
+    )
+    is Some("selected-book"),
+  )
   for route in @core.desktop_api_route_contracts() {
     if route.methods.any(verb => {
         ["POST", "PUT", "PATCH", "DELETE"].contains(verb)
