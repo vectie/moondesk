@@ -28,11 +28,11 @@ fn desk_mouse_action(
   match find_entry(model, path) {
     Some(entry) =>
       if shift {
-        desk_select_mouse_entry(dispatch, model, entry, extend=true)
+        desk_select_mouse_entry(dispatch, model, entry, extend_selection=true)
       } else if accel {
         desk_toggle_mouse_entry(dispatch, model, entry)
       } else {
-        desk_select_mouse_entry(dispatch, model, entry, extend=false)
+        desk_select_mouse_entry(dispatch, model, entry, extend_selection=false)
       }
     None => (@rabbita.none, model)
   }
@@ -43,10 +43,14 @@ fn desk_select_mouse_entry(
   dispatch : Dispatch[Msg],
   model : Model,
   entry : @desk.DeskFileEntry,
-  extend~ : Bool,
+  extend_selection~ : Bool,
 ) -> (@rabbita.Cmd, Model) {
-  let selected_paths = desk_selection_paths_for_focus(model, entry.path, extend)
-  let anchor = if extend {
+  let selected_paths = desk_selection_paths_for_focus(
+    model,
+    entry.path,
+    extend_selection,
+  )
+  let anchor = if extend_selection {
     desk_selection_anchor_for_range(model, entry.path)
   } else {
     entry.path

@@ -4,7 +4,7 @@ async fn app_tool_portable_api_snapshot(
   book_id : String,
 ) -> Json {
   let routes = @desk.desktop_portable_api_snapshot_routes()
-  let responses : Map[String, Json] = {}
+  let responses : Map[String, Json] = Map([])
   responses[@desk.workspaces_route()] = discover_workspaces(root).to_json()
   responses[@desk.books_route("patterns")] = Json::array(
     book_pattern_records_for_workspace(root),

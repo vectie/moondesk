@@ -121,7 +121,7 @@ fn accepted_command_packet_json(
   let command = accepted.command
   let fields = match @mooncode_core.encode_mooncode_command(command) {
     Ok(Object(values)) => values.copy()
-    _ => Map::new()
+    _ => Map([])
   }
   let action = command_action(command)
   fields["protocol"] = protocol_version().to_json()
@@ -172,7 +172,7 @@ fn native_payload(
 ) -> Json {
   let fields = match runtime_passthrough {
     Object(values) => values.copy()
-    _ => Map::new()
+    _ => Map([])
   }
   fields["planner_guidance"] = planner_guidance()
   match command.planner_max_steps {

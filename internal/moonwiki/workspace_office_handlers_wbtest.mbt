@@ -62,11 +62,11 @@ async test "confined Office open save conflict and independent reopen" {
   })
   guard conflict is Err(error) else { fail("expected stale baseline conflict") }
   assert_eq(json_int(error, "code", default=0), 409)
-  let final = office_document_open_bytes(
+  let reopened = office_document_open_bytes(
     "sample.docx",
     @fs.read_file(path).binary().to_fixedarray(),
   ).unwrap()
-  guard final.supported is Word([final_paragraph, ..]) else {
+  guard reopened.supported is Word([final_paragraph, ..]) else {
     fail("expected final DOCX")
   }
   assert_eq(final_paragraph.runs[0].text, "Route saved DOCX")

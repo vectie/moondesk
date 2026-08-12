@@ -97,7 +97,10 @@ test "Office editor renders honest live previews for every supported kind" {
 
 ///|
 test "Office preview renders every supported item and selected geometry" {
-  let first = { ..office_test_item("paragraph 0", "run 0", 0, 0), text: "First", }
+  let first = {
+    ..office_test_item("paragraph 0", "run 0", 0, 0),
+    text: "First",
+  }
   let second = {
     ..office_test_item("paragraph 1", "run 0", 1, 0),
     text: "Second",
@@ -108,7 +111,7 @@ test "Office preview renders every supported item and selected geometry" {
   }
   let initial = office_test_state(OfficePptx, first)
   let document = match initial.document {
-    Some(document) => { ..document, items: [first, second], }
+    Some(document) => { ..document, items: [first, second] }
     None => fail("office test document missing")
   }
   let markup = @rabbita.render_to_string(

@@ -878,7 +878,7 @@ fn mooncode_decimal_normalize(value : String) -> String {
   while index + 1 < value.length() && value[index] == '0' {
     index += 1
   }
-  value[index:].to_string()
+  value[index:].to_owned()
 }
 
 ///|

@@ -70,12 +70,10 @@ test "structured XLSX edit changes value and formula and independently reopens s
 ///|
 test "structured PPTX edit changes text and basic object properties" {
   let opened = office_document_open_bytes("sample.pptx", valid_pptx_bytes()).unwrap()
-  guard opened.supported is Presentation([slide, ..]) else {
+  guard opened.supported is Presentation([_, ..]) else {
     fail("expected PPTX model")
   }
-  let current = slide.objects[0]
   let changed = {
-    ..current,
     text: "Edited slide",
     x: Some(200),
     y: Some(300),
@@ -172,7 +170,7 @@ test "XLSX workbook relationships define sheet order names and preserve attribut
   let rels = "<Relationships><Relationship Id=\"rel-A\" Target=\"worksheets/alpha.xml\"/><Relationship Id=\"rel-Z\" Target=\"worksheets/zeta.xml\"/></Relationships>"
   let alpha = "<worksheet><sheetData><row><c r=\"A1\" s=\"7\" custom=\"keep\"><extLst><ext uri=\"unknown\"/></extLst><f>1+1</f><v>2</v></c></row></sheetData></worksheet>"
   let zeta = "<worksheet><sheetData><row><c r=\"Z9\"><v>9</v></c></row></sheetData></worksheet>"
-  let package = @moonzip.zip_sync([
+  let archive_bytes = @moonzip.zip_sync([
     ("xl/worksheets/zeta.xml", office_xml(zeta)),
     ("[Content_Types].xml", office_xml("<Types/>")),
     ("_rels/.rels", office_xml("<Relationships/>")),
@@ -180,7 +178,7 @@ test "XLSX workbook relationships define sheet order names and preserve attribut
     ("xl/_rels/workbook.xml.rels", office_xml(rels)),
     ("xl/workbook.xml", office_xml(workbook)),
   ])
-  let opened = office_document_open_bytes("ordered.xlsx", package).unwrap()
+  let opened = office_document_open_bytes("ordered.xlsx", archive_bytes).unwrap()
   guard opened.supported is Spreadsheet(sheets) else {
     fail("expected spreadsheet")
   }
@@ -215,7 +213,7 @@ test "PPTX relationships define slide order and targeted shape edit preserves un
   let rels = "<Relationships><Relationship Id=\"slide-A\" Target=\"slides/alpha.xml\"/><Relationship Id=\"slide-B\" Target=\"slides/beta.xml\"/></Relationships>"
   let alpha = "<p:sld><p:cSld><p:spTree><p:sp><p:nvSpPr><p:cNvPr id=\"7\" name=\"Keep me\"/></p:nvSpPr><p:spPr><a:prstGeom prst=\"roundRect\"/><a:xfrm><a:off x=\"1\" y=\"2\"/><a:ext cx=\"3\" cy=\"4\"/></a:xfrm></p:spPr><p:txBody><a:p><a:r><a:t>alpha</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>"
   let beta = alpha.replace_all(old="alpha", new="beta")
-  let package = @moonzip.zip_sync([
+  let archive_bytes = @moonzip.zip_sync([
     ("ppt/slides/beta.xml", office_xml(beta)),
     ("[Content_Types].xml", office_xml("<Types/>")),
     ("_rels/.rels", office_xml("<Relationships/>")),
@@ -223,20 +221,18 @@ test "PPTX relationships define slide order and targeted shape edit preserves un
     ("ppt/_rels/presentation.xml.rels", office_xml(rels)),
     ("ppt/presentation.xml", office_xml(presentation)),
   ])
-  let opened = office_document_open_bytes("ordered.pptx", package).unwrap()
+  let opened = office_document_open_bytes("ordered.pptx", archive_bytes).unwrap()
   guard opened.supported is Presentation(slides) else {
     fail("expected presentation")
   }
   assert_eq(slides.map(slide => slide.part), [
     "ppt/slides/alpha.xml", "ppt/slides/beta.xml",
   ])
-  let current = slides[0].objects[0]
   let edited = office_document_set_pptx_object(
     opened,
     "ppt/slides/alpha.xml",
     0,
     {
-      ..current,
       text: "changed",
       x: Some(10),
       y: Some(20),

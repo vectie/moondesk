@@ -53,8 +53,10 @@ fn desk_keydown_action(
   match key {
     "ArrowDown" => desk_move_selection(dispatch, model, 1, shift)
     "ArrowUp" => desk_move_selection(dispatch, model, -1, shift)
-    "Home" => desk_move_to_edge(dispatch, model, first=true, extend=shift)
-    "End" => desk_move_to_edge(dispatch, model, first=false, extend=shift)
+    "Home" =>
+      desk_move_to_edge(dispatch, model, first=true, extend_selection=shift)
+    "End" =>
+      desk_move_to_edge(dispatch, model, first=false, extend_selection=shift)
     "F2" => update_workspace_surface_actions(dispatch, StartDeskRename, model)
     "F5" => update_workspace_surface_actions(dispatch, RefreshAll, model)
     "Enter" => desk_open_keyboard_selection(dispatch, model)
@@ -113,7 +115,7 @@ fn desk_move_selection(
   dispatch : Dispatch[Msg],
   model : Model,
   delta : Int,
-  extend : Bool,
+  extend_selection : Bool,
 ) -> (@rabbita.Cmd, Model) {
   let entries = sorted_desk_entries(model)
   if entries.length() == 0 {
@@ -129,7 +131,7 @@ fn desk_move_selection(
   } else {
     clamp_int(current + delta, 0, entries.length() - 1)
   }
-  desk_select_keyboard_entry(dispatch, model, entries[index], extend)
+  desk_select_keyboard_entry(dispatch, model, entries[index], extend_selection)
 }
 
 ///|
@@ -137,14 +139,14 @@ fn desk_move_to_edge(
   dispatch : Dispatch[Msg],
   model : Model,
   first~ : Bool,
-  extend~ : Bool,
+  extend_selection~ : Bool,
 ) -> (@rabbita.Cmd, Model) {
   let entries = sorted_desk_entries(model)
   if entries.length() == 0 {
     return (@rabbita.none, model)
   }
   let index = if first { 0 } else { entries.length() - 1 }
-  desk_select_keyboard_entry(dispatch, model, entries[index], extend)
+  desk_select_keyboard_entry(dispatch, model, entries[index], extend_selection)
 }
 
 ///|
@@ -179,10 +181,14 @@ fn desk_select_keyboard_entry(
   dispatch : Dispatch[Msg],
   model : Model,
   entry : @desk.DeskFileEntry,
-  extend : Bool,
+  extend_selection : Bool,
 ) -> (@rabbita.Cmd, Model) {
-  let selected_paths = desk_selection_paths_for_focus(model, entry.path, extend)
-  let anchor = if extend {
+  let selected_paths = desk_selection_paths_for_focus(
+    model,
+    entry.path,
+    extend_selection,
+  )
+  let anchor = if extend_selection {
     desk_selection_anchor_for_range(model, entry.path)
   } else {
     entry.path
@@ -229,11 +235,11 @@ fn desk_toggle_focused_selection(model : Model) -> (@rabbita.Cmd, Model) {
 fn desk_selection_paths_for_focus(
   model : Model,
   path : String,
-  extend : Bool,
+  extend_selection : Bool,
 ) -> Array[String] {
   if path == "" {
     []
-  } else if extend {
+  } else if extend_selection {
     desk_range_selection(
       model,
       desk_selection_anchor_for_range(model, path),

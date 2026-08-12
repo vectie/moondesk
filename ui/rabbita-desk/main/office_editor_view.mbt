@@ -288,7 +288,7 @@ fn render_office_supported_preview(
         ),
       ]),
       match kind {
-        OfficeDocx => {
+        OfficeDocx =>
           div(
             class="office-preview-docx",
             attrs=@html.Attrs::build().data_set("testid", "office-docx-preview"),
@@ -296,7 +296,7 @@ fn render_office_supported_preview(
               div(class="office-preview-page", [
                 div(
                   class="office-preview-docx-document",
-                  office_unique_sections(items).map(section =>
+                  office_unique_sections(items).map(section => {
                     p(
                       class="office-preview-docx-paragraph",
                       items
@@ -309,16 +309,19 @@ fn render_office_supported_preview(
                             run,
                             selected=index == selected,
                           ),
-                          if run.text == "" { " " } else { run.text },
+                          if run.text == "" {
+                            " "
+                          } else {
+                            run.text
+                          },
                         )
                       }),
                     )
-                  ),
+                  }),
                 ),
               ]),
             ],
           )
-        }
         OfficeXlsx =>
           div(
             class="office-preview-xlsx",
@@ -336,7 +339,7 @@ fn render_office_supported_preview(
               ]),
               div(
                 class="office-preview-sheet office-preview-sheet-items",
-                items.mapi((index, cell) =>
+                items.mapi((index, cell) => {
                   div(
                     class=if index == selected {
                       "office-preview-cell-card is-selected"
@@ -345,10 +348,16 @@ fn render_office_supported_preview(
                     },
                     [
                       strong(cell.reference),
-                      span(if cell.text == "" { "Empty cell" } else { cell.text }),
+                      span(
+                        if cell.text == "" {
+                          "Empty cell"
+                        } else {
+                          cell.text
+                        },
+                      ),
                     ],
                   )
-                ),
+                }),
               ),
             ],
           )
@@ -359,7 +368,7 @@ fn render_office_supported_preview(
             [
               div(
                 class="office-preview-slide",
-                items.mapi((index, shape) =>
+                items.mapi((index, shape) => {
                   div(
                     class=if index == selected {
                       "office-preview-slide-object is-selected"
@@ -367,9 +376,13 @@ fn render_office_supported_preview(
                       "office-preview-slide-object"
                     },
                     attrs=office_pptx_shape_attrs(shape, items),
-                    if shape.text == "" { "Empty text object" } else { shape.text },
+                    if shape.text == "" {
+                      "Empty text object"
+                    } else {
+                      shape.text
+                    },
                   )
-                ),
+                }),
               ),
               div(class="office-preview-geometry", [
                 span("X \{item.x}"),
@@ -396,10 +409,7 @@ fn office_unique_sections(items : Array[OfficeEditorItem]) -> Array[String] {
 }
 
 ///|
-fn office_docx_run_class(
-  item : OfficeEditorItem,
-  selected~ : Bool,
-) -> String {
+fn office_docx_run_class(item : OfficeEditorItem, selected~ : Bool) -> String {
   "office-preview-docx-text" +
   (if item.bold { " is-bold" } else { "" }) +
   (if item.italic { " is-italic" } else { "" }) +

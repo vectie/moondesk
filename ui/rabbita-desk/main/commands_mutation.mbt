@@ -562,7 +562,7 @@ fn execute_moonflow_operator_action_cmd(
   run_id : String,
   action_id : String,
 ) -> @rabbita.Cmd {
-  let body : Json = {}
+  let body : Json = Json::empty_object()
   @http.post(
     @desk.desktop_api_url([
       "api", "moonflow", "runs", run_id, "actions", action_id,

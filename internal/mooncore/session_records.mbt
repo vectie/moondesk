@@ -1,6 +1,6 @@
 ///|
 pub fn session_with_field(session : Json, key : String, value : Json) -> Json {
-  let object : Map[String, Json] = {}
+  let object : Map[String, Json] = Map([])
   match session {
     Object(fields) =>
       for existing_key, existing_value in fields {

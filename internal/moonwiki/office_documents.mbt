@@ -118,14 +118,14 @@ fn office_unescape_xml(text : String) -> String {
 ///|
 fn office_tag_ranges(
   xml : String,
-  local : String,
+  tag_name : String,
 ) -> Array[(Int, Int, String, String)] {
   let ranges : Array[(Int, Int, String, String)] = []
-  let open = "<" + local
-  let close = "</" + local + ">"
+  let open = "<" + tag_name
+  let close = "</" + tag_name + ">"
   let mut offset = 0
   while offset < xml.length() {
-    let tail = xml.substring(start=offset)
+    let tail = xml[offset:].to_owned()
     let relative_open = match tail.find(open) {
       Some(index) => index
       None => break
@@ -144,25 +144,25 @@ fn office_tag_ranges(
       }
     }
     let start = offset + relative_open
-    let after_open = xml.substring(start~)
+    let after_open = xml[start:].to_owned()
     let body_marker = match after_open.find(">") {
       Some(index) => index + 1
       None => break
     }
     let body_start = start + body_marker
-    let after_body = xml.substring(start=body_start)
+    let after_body = xml[body_start:].to_owned()
     let relative_close = match after_body.find(close) {
       Some(index) => index
       None => break
     }
     let end = body_start + relative_close + close.length()
-    let opening = xml.substring(start~, end=body_start)
+    let opening = xml[start:body_start].to_owned()
     ranges.push(
       (
         start,
         end,
         opening,
-        xml.substring(start=body_start, end=body_start + relative_close),
+        xml[body_start:body_start + relative_close].to_owned(),
       ),
     )
     offset = end
@@ -171,17 +171,17 @@ fn office_tag_ranges(
 }
 
 ///|
-fn office_tag_contents(xml : String, local : String) -> Array[String] {
-  office_tag_ranges(xml, local).map(range => range.3)
+fn office_tag_contents(xml : String, tag_name : String) -> Array[String] {
+  office_tag_ranges(xml, tag_name).map(range => range.3)
 }
 
 ///|
-fn office_opening_tags(xml : String, local : String) -> Array[String] {
+fn office_opening_tags(xml : String, tag_name : String) -> Array[String] {
   let tags : Array[String] = []
-  let open = "<" + local
+  let open = "<" + tag_name
   let mut offset = 0
   while offset < xml.length() {
-    let tail = xml.substring(start=offset)
+    let tail = xml[offset:].to_owned()
     let relative = match tail.find(open) {
       Some(index) => index
       None => break
@@ -200,20 +200,20 @@ fn office_opening_tags(xml : String, local : String) -> Array[String] {
       }
     }
     let start = offset + relative
-    let after = xml.substring(start~)
+    let after = xml[start:].to_owned()
     let relative_end = match after.find(">") {
       Some(index) => index + 1
       None => break
     }
-    tags.push(after.substring(start=0, end=relative_end))
+    tags.push(after[:relative_end].to_owned())
     offset = start + relative_end
   }
   tags
 }
 
 ///|
-fn office_first_tag_text(xml : String, local : String) -> String? {
-  match office_tag_contents(xml, local) {
+fn office_first_tag_text(xml : String, tag_name : String) -> String? {
+  match office_tag_contents(xml, tag_name) {
     [first, ..] => Some(office_unescape_xml(first))
     _ => None
   }
@@ -226,9 +226,9 @@ fn office_attribute(xml : String, name : String) -> String? {
     Some(index) => index + needle.length()
     None => return None
   }
-  let tail = xml.substring(start~)
+  let tail = xml[start:].to_owned()
   match tail.find("\"") {
-    Some(end) => Some(office_unescape_xml(tail.substring(start=0, end~)))
+    Some(end) => Some(office_unescape_xml(tail[:end].to_owned()))
     None => None
   }
 }
@@ -304,11 +304,11 @@ fn office_replace_ranges(
   let builder = StringBuilder::new()
   let mut offset = 0
   for index, range in ranges {
-    builder.write_string(xml.substring(start=offset, end=range.0))
+    builder.write_string(xml[offset:range.0].to_owned())
     builder.write_string(replacements[index])
     offset = range.1
   }
-  builder.write_string(xml.substring(start=offset))
+  builder.write_string(xml[offset:].to_owned())
   builder.to_string()
 }
 
@@ -353,11 +353,11 @@ fn render_xlsx_cell_into(
       match office_tag_ranges(original, "f") {
         [(start, end, opening, _), ..] =>
           Ok(
-            original.substring(start=0, end=start) +
+            original[:start].to_owned() +
             opening +
             office_escape_xml(value) +
             "</f>" +
-            original.substring(start=end),
+            original[end:].to_owned(),
           )
         _ => Err("Adding a formula is outside the supported XLSX subset")
       }
@@ -370,11 +370,11 @@ fn render_xlsx_cell_into(
   match office_tag_ranges(formula_xml, "v") {
     [(start, end, opening, _), ..] =>
       Ok(
-        formula_xml.substring(start=0, end=start) +
+        formula_xml[:start].to_owned() +
         opening +
         office_escape_xml(cell.value) +
         "</v>" +
-        formula_xml.substring(start=end),
+        formula_xml[end:].to_owned(),
       )
     _ => Err("Supported XLSX value node is missing")
   }
@@ -391,7 +391,7 @@ fn render_xlsx_into(
   }
   let replacements : Array[String] = []
   for index, range in ranges {
-    let current = original.substring(start=range.0, end=range.1)
+    let current = original[range.0:range.1].to_owned()
     match render_xlsx_cell_into(current, sheet.cells[index]) {
       Ok(value) => replacements.push(value)
       Err(error) => return Err(error)
@@ -431,21 +431,21 @@ fn parse_pptx_slide(part : String, xml : String) -> PptxSlide {
 ///|
 fn office_replace_first_tag_text(
   xml : String,
-  local : String,
+  tag_name : String,
   text : String,
 ) -> Result[String, String] {
-  match office_tag_ranges(xml, local) {
+  match office_tag_ranges(xml, tag_name) {
     [(start, end, _, _), ..] =>
       Ok(
-        xml.substring(start=0, end=start) +
+        xml[:start].to_owned() +
         "<" +
-        local +
+        tag_name +
         ">" +
         office_escape_xml(text) +
         "</" +
-        local +
+        tag_name +
         ">" +
-        xml.substring(start=end),
+        xml[end:].to_owned(),
       )
     _ => Err("Supported text node is missing")
   }
@@ -454,20 +454,20 @@ fn office_replace_first_tag_text(
 ///|
 fn office_replace_self_closing_tag(
   xml : String,
-  local : String,
+  tag_name : String,
   replacement : String,
 ) -> Result[String, String] {
-  let needle = "<" + local
+  let needle = "<" + tag_name
   let start = match xml.find(needle) {
     Some(index) => index
     None => return Err("Supported object property is missing")
   }
-  let tail = xml.substring(start~)
+  let tail = xml[start:].to_owned()
   let end = match tail.find(">") {
     Some(index) => start + index + 1
     None => return Err("Supported object property is malformed")
   }
-  Ok(xml.substring(start=0, end=start) + replacement + xml.substring(start=end))
+  Ok(xml[:start].to_owned() + replacement + xml[end:].to_owned())
 }
 
 ///|
@@ -511,7 +511,7 @@ fn render_pptx_into(
   }
   let replacements : Array[String] = []
   for index, range in ranges {
-    let full = original.substring(start=range.0, end=range.1)
+    let full = original[range.0:range.1].to_owned()
     match render_pptx_object_into(full, slide.objects[index]) {
       Ok(value) => replacements.push(value)
       Err(error) => return Err(error)
@@ -540,7 +540,7 @@ fn office_entry_text(
 
 ///|
 fn office_relationship_targets(xml : String) -> Map[String, String] {
-  let targets : Map[String, String] = {}
+  let targets : Map[String, String] = Map([])
   for tag in office_opening_tags(xml, "Relationship") {
     match (office_attribute(tag, "Id"), office_attribute(tag, "Target")) {
       (Some(id), Some(target)) => targets[id] = target
@@ -633,7 +633,7 @@ fn ordered_pptx_slides(
 fn office_supported_model(
   kind : OfficeDocumentKind,
   entries : Array[(String, FixedArray[Byte])],
-  editable_parts : Array[String],
+  _editable_parts : Array[String],
 ) -> Result[OfficeSupportedModel, String] {
   match kind {
     Docx =>
@@ -716,6 +716,7 @@ fn office_document_replace_part(
 }
 
 ///|
+#warnings("-unused_value")
 fn office_document_set_docx_paragraphs(
   document : OfficeDocumentModel,
   paragraphs : Array[DocxParagraph],
@@ -764,16 +765,13 @@ fn office_document_set_docx_run(
     return Err("DOCX paragraph XML is missing")
   }
   let paragraph_range = paragraph_ranges[paragraph_index]
-  let paragraph_xml = original.substring(
-    start=paragraph_range.0,
-    end=paragraph_range.1,
-  )
+  let paragraph_xml = original[paragraph_range.0:paragraph_range.1].to_owned()
   let run_ranges = office_tag_ranges(paragraph_xml, "w:r")
   if run_index >= run_ranges.length() {
     return Err("DOCX run XML is missing")
   }
   let run_range = run_ranges[run_index]
-  let run_xml = paragraph_xml.substring(start=run_range.0, end=run_range.1)
+  let run_xml = paragraph_xml[run_range.0:run_range.1].to_owned()
   if office_tag_ranges(run_xml, "w:t").length() != 1 {
     return Err("DOCX runs with zero or multiple text nodes are unsupported")
   }
@@ -791,12 +789,12 @@ fn office_document_set_docx_run(
         .replace_all(old="<w:b/>", new="")
         .replace_all(old="<w:i/>", new="")
         .replace_all(old="<w:u w:val=\"single\"/>", new="")
-      with_text.substring(start=0, end=start) +
+      with_text[:start].to_owned() +
       opening +
       unsupported +
       properties +
       "</w:rPr>" +
-      with_text.substring(start=end)
+      with_text[end:].to_owned()
     }
     _ =>
       with_text.replace(
@@ -804,12 +802,12 @@ fn office_document_set_docx_run(
         new="<w:r><w:rPr>" + properties + "</w:rPr>",
       )
   }
-  let edited_paragraph = paragraph_xml.substring(start=0, end=run_range.0) +
+  let edited_paragraph = paragraph_xml[:run_range.0].to_owned() +
     with_properties +
-    paragraph_xml.substring(start=run_range.1)
-  let edited_xml = original.substring(start=0, end=paragraph_range.0) +
+    paragraph_xml[run_range.1:].to_owned()
+  let edited_xml = original[:paragraph_range.0].to_owned() +
     edited_paragraph +
-    original.substring(start=paragraph_range.1)
+    original[paragraph_range.1:].to_owned()
   let next = paragraphs.mapi((p, paragraph) => {
     if p == paragraph_index {
       {

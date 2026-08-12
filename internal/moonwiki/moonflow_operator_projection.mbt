@@ -33,7 +33,7 @@ async fn moonflow_operator_surface_projection(
       run_id, "run_identity_mismatch",
     )
   }
-  let fields : Map[String, Json] = {}
+  let fields : Map[String, Json] = Map([])
   match projection {
     Object(existing) =>
       for key, value in existing {

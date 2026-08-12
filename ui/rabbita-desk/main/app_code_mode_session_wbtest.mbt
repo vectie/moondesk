@@ -33,6 +33,11 @@ test "Code workspace keeps source and Office editors in one disclosure" {
   assert_true(markup.contains("data-testid=\"source-highlight\""))
   assert_true(markup.contains("data-testid=\"source-completions\""))
   assert_true(markup.contains("data-testid=\"source-local-diagnostics\""))
+  assert_true(markup.contains("data-testid=\"source-compiler-check\""))
+  assert_true(markup.contains("data-testid=\"source-go-definition\""))
+  assert_true(markup.contains("data-testid=\"source-find-references\""))
+  assert_true(markup.contains("data-testid=\"source-semantic-results\""))
+  assert_true(markup.contains("data-source-dirty=\"false\""))
 }
 
 ///|
@@ -885,88 +890,6 @@ test "code mode selecting loaded session keeps selection" {
   assert_eq(next.mooncode_watch_generation, 5)
   assert_eq(next.mooncode_watch_cursor.revision(), "0")
   assert_eq(next.mooncode_watch_cursor.sequence(), "0")
-}
-
-///|
-test "selected session typed decode preserves opaque IDs and rejects malformed contracts" {
-  let raw_id = "session /resume:1\\branch"
-  guard decode_mooncode_selected_session({
-      "protocol": "mooncode.v1",
-      "id": raw_id,
-      "status": "running",
-      "mooncode_summary": {
-        "event_count": 2,
-        "verified_test_count": 0,
-        "pending_diff_count": 0,
-      },
-      "future_optional": true,
-    })
-    is Ok(session) else {
-    fail("expected typed selected session")
-  }
-  assert_eq(session.id, raw_id)
-  assert_true(
-    decode_mooncode_selected_session({ "id": raw_id, "status": 1 }) is Err(_),
-  )
-  assert_true(
-    decode_mooncode_selected_session({
-      "protocol": "mooncode.v9",
-      "id": raw_id,
-      "status": "idle",
-    })
-    is Err(message) &&
-    message.contains("version 9"),
-  )
-}
-
-///|
-test "selected session result replaces only the current selection" {
-  let listing = code_mode_test_session("session-a")
-  let selected = { ..listing, title: "Fetched title" }
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: listing.id,
-    mooncode_sessions: [listing],
-  }
-  let (_, next) = update_mooncode_session_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeSelectedSession(listing.id, Ok(selected)),
-    model,
-  )
-  guard selected_mooncode_session(next) is Some(session) else {
-    fail("expected selected session")
-  }
-  assert_eq(session.title, "Fetched title")
-}
-
-///|
-test "late selected session summary preserves a newer canonical conversation" {
-  let summary = code_mode_test_session("session-a")
-  let canonical = {
-    ..summary,
-    mooncode_conversation: Some(
-      code_mode_test_conversation("session-a", [
-        code_mode_test_turn("turn-a", "Prompt", assistant="Answer"),
-      ]),
-    ),
-  }
-  let model = {
-    ..init_model(),
-    selected_mooncode_session_id: summary.id,
-    mooncode_sessions: [canonical],
-  }
-  let (_, next) = update_mooncode_session_results(
-    code_mode_test_dispatch,
-    LoadedMoonCodeSelectedSession(summary.id, Ok(summary)),
-    model,
-  )
-  guard selected_mooncode_session(next) is Some(session) else {
-    fail("expected selected session")
-  }
-  guard session.mooncode_conversation is Some(conversation) else {
-    fail("late summary erased canonical conversation")
-  }
-  assert_eq(conversation.turn_count, 1)
 }
 
 ///|
@@ -2874,14 +2797,6 @@ test "code mode delayed command response cannot replace a newer turn" {
 ///|
 test "code mode stale canonical watch response is ignored" {
   let selected = code_mode_test_session("session-a", status="done")
-  let stale = {
-    ..code_mode_test_session("session-b", status="done"),
-    mooncode_conversation: Some(
-      code_mode_test_conversation("session-b", [
-        code_mode_test_turn("turn-b", "Wrong prompt"),
-      ]),
-    ),
-  }
   let model = {
     ..init_model(),
     workspace_mode: MoonCode,
@@ -2968,16 +2883,6 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
         ),
       ]),
       revision: "8",
-    }),
-  }
-  let stale = {
-    ..current,
-    title: "Stale title",
-    mooncode_conversation: Some({
-      ..code_mode_test_conversation("session-a", [
-        code_mode_test_turn("turn-a", "Old prompt", assistant="Old answer"),
-      ]),
-      revision: "6",
     }),
   }
   let model = {

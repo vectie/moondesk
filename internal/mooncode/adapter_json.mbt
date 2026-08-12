@@ -59,7 +59,7 @@ fn json_with_field(base : Json, key : String, value : Json) -> Json {
 fn json_without_field(base : Json, key : String) -> Json {
   match base {
     Object(fields) => {
-      let next : Map[String, Json] = {}
+      let next : Map[String, Json] = Map([])
       for existing_key, value in fields {
         if existing_key != key {
           next[existing_key] = value
