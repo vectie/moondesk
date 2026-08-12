@@ -8777,6 +8777,25 @@ async function runPhase7Editing() {
     await session.send("Page.navigate", { url: `${baseUrl}/?activity=code&workspace=book-research-alpha&locale=en-US` });
     await waitFor(session, `!!document.querySelector('[data-testid="office-editor"]')`, "Phase 7 editors visible");
     await session.evaluate(`(() => {
+      const fixture = document.createElement('div');
+      fixture.id = 'markdown-route-runtime-proof';
+      fixture.className = 'mooncode-markdown';
+      const source = document.createElement('pre');
+      source.dataset.testid = 'mooncode-markdown-source';
+      source.textContent = '# Runtime proof\\n\\n**safe** [unsafe](javascript:alert(1))\\n\\n\`\`\`moonbit\\nfn proof() {}\\n\`\`\`\\n\\n| Check | State |\\n| --- | --- |\\n| route | split |';
+      fixture.append(source);
+      document.querySelector('#app')?.append(fixture);
+    })()`);
+    await waitFor(session, `(() => {
+      const fixture = document.querySelector('#markdown-route-runtime-proof');
+      return fixture?.dataset.markdownEnhanced === 'true' &&
+        fixture.querySelector('h1')?.textContent === 'Runtime proof' &&
+        fixture.querySelector('[data-testid="mooncode-code-block"] code')?.textContent.includes('fn proof') &&
+        fixture.querySelector('table tbody td')?.textContent === 'route' &&
+        !fixture.querySelector('script, a[href^="javascript:"]');
+    })()`, "MoonCode Markdown route runtime");
+    await session.evaluate(`document.querySelector('#markdown-route-runtime-proof')?.remove()`);
+    await session.evaluate(`(() => {
       const editors = document.querySelector('[data-testid="mooncode-workspace-editors"]');
       if (editors instanceof HTMLDetailsElement) editors.open = true;
     })()`);
@@ -8833,6 +8852,27 @@ async function runPhase7Editing() {
     await setInputByTestId(session, "source-path", "main.mbt");
     await clickTestId(session, "source-open");
     await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('before')`, "direct Code open");
+    await clickTestId(session, "source-compiler-check");
+    await waitFor(session, `document.querySelector('[data-testid="source-semantic-results"]')?.textContent.includes('MoonBit compiler: 0 errors')`, "compiler-backed source diagnostics");
+    await session.evaluate(`(() => {
+      const editor = document.querySelector('[data-testid="source-editor-input"]');
+      const call = editor.value.indexOf('shared_helper');
+      editor.focus();
+      editor.setSelectionRange(call, call + 'shared_helper'.length);
+    })()`);
+    await clickTestId(session, "source-go-definition");
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('println("helper")') && document.querySelector('[data-testid="source-path"]')?.value === 'helper.mbt'`, "compiler cross-file definition navigation");
+    await session.evaluate(`(() => {
+      const editor = document.querySelector('[data-testid="source-editor-input"]');
+      const definition = editor.value.indexOf('shared_helper');
+      editor.focus();
+      editor.setSelectionRange(definition, definition + 'shared_helper'.length);
+    })()`);
+    await clickTestId(session, "source-find-references");
+    await waitFor(session, `document.querySelector('[data-testid="source-semantic-results"]')?.textContent.includes('main.mbt:')`, "compiler cross-file references");
+    await setInputByTestId(session, "source-path", "main.mbt");
+    await clickTestId(session, "source-open");
+    await waitFor(session, `document.querySelector('[data-testid="source-editor-input"]')?.value.includes('before')`, "return from compiler navigation");
     await waitFor(session, `(() => {
       const editor = document.querySelector('[data-testid="source-editor-input"]');
       const gutter = document.querySelector('[data-testid="source-line-numbers"]');

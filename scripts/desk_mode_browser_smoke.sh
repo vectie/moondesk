@@ -93,7 +93,10 @@ create_phase7_office_fixtures() {
   printf '<p:sld><p:cSld><p:spTree><p:sp><p:nvSpPr><p:cNvPr name="keep-pptx"/></p:nvSpPr><p:spPr><a:xfrm><a:off x="1" y="2"/><a:ext cx="3" cy="4"/></a:xfrm></p:spPr><p:txBody><a:p><a:r><a:t>PPTX browser before</a:t></a:r></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr name="second-shape"/></p:nvSpPr><p:spPr><a:xfrm><a:off x="5" y="6"/><a:ext cx="7" cy="8"/></a:xfrm></p:spPr><p:txBody><a:p><a:r><a:t>PPTX second shape</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld></p:sld>\n' >"$staging/pptx/ppt/slides/slide1.xml"
   printf 'preserve-pptx\n' >"$staging/pptx/unknown.txt"
   (cd "$staging/pptx" && zip -qr "$root/documents/browser.pptx" .)
-  printf 'fn same_file() { println("before") }\n' >"$root/main.mbt"
+  printf 'name = "fixture/editor"\nversion = "0.1.0"\n' >"$root/moon.mod"
+  printf '\n' >"$root/moon.pkg"
+  printf 'fn shared_helper() -> Unit { println("helper") }\n' >"$root/helper.mbt"
+  printf 'fn same_file() -> Unit {\n  shared_helper()\n  println("before")\n}\n' >"$root/main.mbt"
 }
 
 random_port() {
