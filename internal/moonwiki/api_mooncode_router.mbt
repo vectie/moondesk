@@ -81,6 +81,14 @@ async fn route_mooncode_api(
       }
       true
     }
+    ["api", "mooncode", "execution-sandbox", "promote"] => {
+      if method_ is Post {
+        handle_execution_sandbox_promotion(body, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
     _ => false
   }
 }

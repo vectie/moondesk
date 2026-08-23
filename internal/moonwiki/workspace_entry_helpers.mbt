@@ -19,6 +19,17 @@ fn is_binary_preview(kind : @desk.EntryKind) -> Bool {
 }
 
 ///|
+/// Artifact handles are SHA-256 digests, never arbitrary bearer strings.
+fn workspace_artifact_digest_matches(
+  expected : String,
+  actual : String,
+) -> Bool {
+  expected.length() == 71 &&
+  expected.has_prefix("sha256:") &&
+  expected == actual
+}
+
+///|
 async fn workspace_file_entry(
   workspace : @desk.DeskWorkspace,
   relative : String,

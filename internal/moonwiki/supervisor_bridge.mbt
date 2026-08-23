@@ -1872,26 +1872,19 @@ async fn supervisor_bridge_submit_bookkeeper(
       error => return Err("could not persist MoonBook adapter input: \{error}")
     }
   }
-  let moon = moonclaw_default_moon_command()
-  let captured = @async.with_timeout_opt(30000, () => {
-    run_process_capture(moon, [
-      "-C", installed_root, "run", "cmd/moonflow_adapter", "--", "submit-product-outcome",
-      "--workspace", suite_root, "--submission", relative,
-    ])
+  let submitted = execution_sandbox_client_submit({
+    operation: SupervisorSubmitBookkeeperOutcome,
+    input: {
+      "installed_root": installed_root,
+      "suite_root": suite_root,
+      "submission_ref": relative,
+      "target_id": target_id,
+    },
   })
-  guard captured is Some((code, stdout, stderr)) else {
-    return Err("MoonBook outcome adapter timed out")
-  }
-  if code != 0 {
-    let detail = if stderr.trim() == "" {
-      stdout.trim().to_owned()
-    } else {
-      stderr.trim().to_owned()
-    }
-    return Err("MoonBook outcome adapter failed: " + detail)
-  }
-  let receipt = @json.parse(stdout.trim()) catch {
-    _ => return Err("MoonBook outcome adapter returned invalid JSON")
+  let receipt = match submitted {
+    Ok(value) => value
+    Err(SandboxUnavailable) =>
+      return Err(execution_sandbox_unavailable_message())
   }
   if !supervisor_bridge_bookkeeper_receipt_matches(receipt, submission) {
     return Err("MoonBook outcome adapter returned a mismatched receipt")

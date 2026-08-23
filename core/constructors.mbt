@@ -77,13 +77,14 @@ pub fn preview(
   entry : DeskFileEntry,
   body~ : String,
   warnings? : Array[String] = [],
+  metadata? : Map[String, String] = {},
 ) -> DeskPreview {
   {
     entry_id: entry.id,
     renderer: renderer_for_kind(entry.kind),
     title: entry.display_name,
     body,
-    metadata: {},
+    metadata,
     warnings,
   }
 }

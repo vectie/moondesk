@@ -1,5 +1,5 @@
 ///|
-async test "moonclaw service descriptor is explicit and workspace local" {
+async test "moonclaw service descriptor rejects workspace-controlled execution" {
   let root = "/tmp/moondesk-moonclaw-service-config-wbtest-" +
     @desk.stable_id("moonclaw-service", @async.now().to_string())
   let missing = moonclaw_service_descriptor(root, "daemon")
@@ -16,7 +16,12 @@ async test "moonclaw service descriptor is explicit and workspace local" {
     exists_ok=true,
   )
   let service_command = @pathx.join(root, "moonclaw")
-  @fsx.write_to_file(service_command, "#!/bin/sh\nexit 0\n", create=0o755)
+  let marker = @pathx.join(root, "must-not-execute")
+  @fsx.write_to_file(
+    service_command,
+    "#!/bin/sh\ntouch '" + marker + "'\n",
+    create=0o755,
+  )
   @fsx.write_to_file(
     moonclaw_service_config_path(root),
     (
@@ -33,23 +38,22 @@ async test "moonclaw service descriptor is explicit and workspace local" {
   )
 
   let configured = moonclaw_service_descriptor(root, "daemon")
-  assert_true(json_bool(configured, "configured", default=false))
-  assert_eq(json_string(configured, "command", default=""), service_command)
-  assert_true(json_bool(configured, "configuration_valid", default=false))
+  assert_false(json_bool(configured, "configured", default=true))
+  assert_eq(json_string(configured, "command", default="missing"), "")
+  assert_false(json_bool(configured, "configuration_valid", default=true))
+  assert_true(json_bool(configured, "legacy_execution_rejected", default=false))
   assert_eq(
     json_string(configured, "configuration_reason", default=""),
-    "configuration-valid",
+    "legacy-workspace-execution-config-rejected",
   )
   assert_eq(json_string(configured, "cwd", default=""), root)
-  assert_true(
-    json_string_array_items(configured, "args") == ["daemon", "--port", "0"],
-  )
-  assert_eq(
-    json_string(configured, "display", default=""),
-    service_command + " daemon --port 0",
-  )
+  assert_true(json_string_array_items(configured, "args").is_empty())
+  assert_eq(json_string(configured, "display", default="missing"), "")
   assert_false(json_bool(configured, "managed_install", default=true))
   assert_eq(json_string(configured, "version", default="missing"), "")
+  let started = start_moonclaw_daemon(root)
+  assert_false(json_bool(started, "ok", default=true))
+  assert_false(@fsx.exists(marker))
 }
 
 ///|
@@ -97,9 +101,9 @@ async test "copied managed MoonClaw config is repairable and not installed" {
   assert_true(json_bool(descriptor, "repair_available", default=false))
   assert_eq(
     json_string(descriptor, "configuration_reason", default=""),
-    "stale-managed-service-config",
+    "legacy-workspace-execution-config-rejected",
   )
-  assert_eq(json_string(descriptor, "source", default=""), "stale-managed")
+  assert_eq(json_string(descriptor, "source", default=""), "legacy-rejected")
 
   let status = moonclaw_daemon_status_with_platform(
     root,
@@ -120,10 +124,10 @@ async test "copied managed MoonClaw config is repairable and not installed" {
   )
   let configuration = json_object_field(status, "configuration_evidence").unwrap()
   assert_false(json_bool(configuration, "configured", default=true))
-  assert_true(json_bool(configuration, "valid", default=false))
+  assert_false(json_bool(configuration, "valid", default=true))
   assert_eq(
     json_string(configuration, "reason", default=""),
-    "stale-managed-service-config",
+    "legacy-workspace-execution-config-rejected",
   )
 }
 
@@ -196,22 +200,6 @@ async test "moonclaw service descriptor ignores implicit checkout fallback" {
 }
 
 ///|
-test "moonclaw checkout candidates exclude stale home compatibility paths" {
-  let candidates = moonclaw_checkout_candidates("")
-  assert_eq(candidates.length(), 0)
-}
-
-///|
-test "moonclaw checkout candidates prefer explicit environment root" {
-  let candidates = moonclaw_checkout_candidates("/opt/moonclaw-runtime")
-  guard candidates.get(0) is Some(first) else {
-    fail("expected at least one MoonClaw candidate")
-  }
-  assert_eq(first.path, "/opt/moonclaw-runtime")
-  assert_eq(first.source, "env-moonclaw-root")
-}
-
-///|
 async test "MoonClaw start rejects unusable service before lifecycle writes" {
   let root = "/tmp/moondesk-moonclaw-service-invalid-wbtest-" +
     @desk.stable_id("moonclaw-service-invalid", @async.now().to_string())
@@ -246,11 +234,11 @@ async test "MoonClaw start rejects unusable service before lifecycle writes" {
     "configure_moonclaw",
   )
   let configuration = json_object_field(result, "configuration_evidence").unwrap()
-  assert_true(json_bool(configuration, "configured", default=false))
+  assert_false(json_bool(configuration, "configured", default=true))
   assert_false(json_bool(configuration, "valid", default=true))
   assert_eq(
     json_string(configuration, "reason", default=""),
-    "command-unavailable",
+    "legacy-workspace-execution-config-rejected",
   )
   assert_false(@fsx.exists(lifecycle_dir))
 }
@@ -333,13 +321,4 @@ async test "daemon status preserves explicit unsupported platform evidence" {
     json_string(platform_evidence, "architecture", default=""),
     "unsupported",
   )
-}
-
-///|
-test "zombie MoonClaw process is not considered alive" {
-  assert_false(process_status_is_alive("Z"))
-  assert_false(process_status_is_alive("Z+\n"))
-  assert_false(process_status_is_alive(""))
-  assert_true(process_status_is_alive("S+"))
-  assert_true(process_status_is_alive("R"))
 }

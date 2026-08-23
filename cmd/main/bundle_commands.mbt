@@ -44,15 +44,14 @@ async fn run_bundle(args : Array[String]) -> Bool {
     return false
   }
   if !options.skip_sign {
-    let sign_code = @process.run("codesign", [
-      "--force",
-      "--deep",
-      "--sign",
-      options.sign_identity,
-      app_root,
-    ]) catch {
-      _ => -1
+    let identity = match @trusted_host.signing_identity(options.sign_identity) {
+      Ok(identity) => identity
+      Err(message) => {
+        println("bundle failed: \{message}")
+        return false
+      }
     }
+    let sign_code = @trusted_host.sign_app(identity, app_root)
     if sign_code != 0 {
       println("bundle failed: codesign exited with \{sign_code}")
       return false
@@ -68,11 +67,7 @@ async fn run_bundle(args : Array[String]) -> Bool {
         }
       }
     }
-    let archive_code = @process.run("ditto", [
-      "-c", "-k", "--keepParent", app_root, archive_path,
-    ]) catch {
-      _ => -1
-    }
+    let archive_code = @trusted_host.archive_app(app_root, archive_path)
     if archive_code != 0 {
       println("bundle failed: archive creation exited with \{archive_code}")
       return false

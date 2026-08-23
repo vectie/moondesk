@@ -448,13 +448,16 @@ async fn import_moonbook_from_archive(
           ),
         )
     }
-    let extracted = import_extract_zip_archive(archive_path, extract_root)
-    if !extracted {
-      return Err(
-        workspace_create_error(
-          400, "Bad Request", "Could not extract MoonBook .zip archive",
-        ),
-      )
+    match import_extract_zip_archive(archive_path, extract_root) {
+      ArchiveExtracted => ()
+      ArchiveRejected(reason) =>
+        return Err(
+          workspace_create_error(
+            400,
+            "Bad Request",
+            "Could not extract MoonBook .zip archive: " + reason,
+          ),
+        )
     }
     let source_dir = match import_archive_source_dir(extract_root) {
       Some(path) => path
@@ -489,46 +492,113 @@ fn import_is_zip_archive(path : String) -> Bool {
 }
 
 ///|
+priv enum ImportArchiveExtractionResult {
+  ArchiveExtracted
+  ArchiveRejected(String)
+}
+
+///|
+/// Extracts only bounded, stored ZIP entries. Deflate is deliberately refused:
+/// the current in-process ZIP API accepts the entry size as a hint and may grow
+/// beyond it, so it cannot enforce a hard expansion limit for hostile input.
 async fn import_extract_zip_archive(
   archive_path : String,
   extract_root : String,
-) -> Bool {
-  let script =
-    #|import os
-    #|import pathlib
-    #|import stat
-    #|import sys
-    #|import zipfile
-    #|
-    #|archive_path = sys.argv[1]
-    #|extract_root = sys.argv[2]
-    #|extract_real = os.path.realpath(extract_root)
-    #|
-    #|with zipfile.ZipFile(archive_path) as archive:
-    #|    for info in archive.infolist():
-    #|        name = info.filename
-    #|        path = pathlib.PurePosixPath(name)
-    #|        parts = path.parts
-    #|        if not parts or name.startswith("/") or "\\" in name:
-    #|            sys.exit(2)
-    #|        if any(part in ("", ".", "..") for part in parts):
-    #|            sys.exit(2)
-    #|        mode = (info.external_attr >> 16) & 0o170000
-    #|        if mode == stat.S_IFLNK:
-    #|            sys.exit(3)
-    #|    for info in archive.infolist():
-    #|        target = os.path.realpath(os.path.join(extract_root, *pathlib.PurePosixPath(info.filename).parts))
-    #|        if target != extract_real and not target.startswith(extract_real + os.sep):
-    #|            sys.exit(4)
-    #|        archive.extract(info, extract_root)
-    #|
-  let args = ["-c", script, archive_path, extract_root]
-  let code = run_process_quiet("/usr/bin/python3", args)
-  if code == 0 {
-    true
-  } else {
-    run_process_quiet("python3", args) == 0
+) -> ImportArchiveExtractionResult {
+  let limits = archive_import_limits()
+  let archive_file = @fs.open(archive_path, mode=ReadOnly) catch {
+    _ => return ArchiveRejected("archive is unavailable")
   }
+  defer archive_file.close()
+  let archive_size = archive_file.size() catch {
+    _ => return ArchiveRejected("archive size is unavailable")
+  }
+  if archive_size <= 0L || archive_size > limits.max_archive_bytes.to_int64() {
+    return ArchiveRejected("archive exceeds the compressed-size limit")
+  }
+  let archive = archive_file.read_exactly(archive_size.to_int()).to_fixedarray() catch {
+      _ => return ArchiveRejected("archive could not be read")
+    }
+  let entries = @moonzip.unzip_list(archive) catch {
+    _ => return ArchiveRejected("archive directory is invalid")
+  }
+  if entries.length() == 0 || entries.length() > limits.max_entries {
+    return ArchiveRejected("archive entry limit exceeded")
+  }
+  let clean_paths : Array[String] = []
+  let directories : Array[Bool] = []
+  let collision_keys : Array[String] = []
+  let mut expanded_bytes = 0
+  for entry in entries {
+    let clean = match archive_entry_path(entry.name) {
+      Ok(path) => path
+      Err(_) => return ArchiveRejected("archive entry path is not confined")
+    }
+    let collision_key = clean.to_lower()
+    if collision_keys.contains(collision_key) {
+      return ArchiveRejected("archive contains a duplicate path")
+    }
+    collision_keys.push(collision_key)
+    let unix_kind = (entry.attrs >> 16) & 0xF000
+    if unix_kind != 0 && unix_kind != 0x4000 && unix_kind != 0x8000 {
+      return ArchiveRejected("archive contains an unsupported entry type")
+    }
+    let is_directory = entry.name.has_suffix("/") ||
+      unix_kind == 0x4000 ||
+      (entry.attrs & 0x10) != 0
+    if is_directory {
+      if entry.original_size != 0 {
+        return ArchiveRejected("archive directory contains payload bytes")
+      }
+    } else {
+      if entry.compression != 0 || entry.size != entry.original_size {
+        return ArchiveRejected(
+          "compressed archive entries require an execution sandbox",
+        )
+      }
+      if entry.original_size < 0 || entry.original_size > limits.max_file_bytes {
+        return ArchiveRejected("archive entry exceeds the expanded-size limit")
+      }
+      expanded_bytes += entry.original_size
+      if expanded_bytes > limits.max_total_bytes {
+        return ArchiveRejected("archive exceeds the expanded-size limit")
+      }
+    }
+    clean_paths.push(clean)
+    directories.push(is_directory)
+  }
+  let extracted = @moonzip.unzip_sync(archive) catch {
+    _ => return ArchiveRejected("archive payload is invalid")
+  }
+  if extracted.length() != entries.length() {
+    return ArchiveRejected("archive directory changed during extraction")
+  }
+  for index, item in extracted {
+    let (name, bytes) = item
+    if name != entries[index].name ||
+      bytes.length() != entries[index].original_size {
+      return ArchiveRejected("archive payload does not match its directory")
+    }
+    let target = @pathx.join(extract_root, clean_paths[index])
+    if directories[index] {
+      @fsx.make_directory(target, recursive=true, exists_ok=true) catch {
+        _ => return ArchiveRejected("archive directory could not be staged")
+      }
+      continue
+    }
+    @fsx.make_directory(@pathx.dirname(target), recursive=true, exists_ok=true) catch {
+      _ => return ArchiveRejected("archive entry directory could not be staged")
+    }
+    @fs.write_file(
+      target,
+      Bytes::makei(bytes.length(), index => bytes[index]),
+      create_mode=CreateNew,
+      permission=0o600,
+    ) catch {
+      _ => return ArchiveRejected("archive entry could not be staged")
+    }
+  }
+  ArchiveExtracted
 }
 
 ///|

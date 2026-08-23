@@ -179,9 +179,5 @@ async fn prepare_moondesk_workspace_root(workspace_root : String) -> Bool {
 
 ///|
 async fn open_browser_url(url : String) -> Unit {
-  let mac = @process.run("open", [url]) catch { _ => -1 }
-  if mac == 0 {
-    return
-  }
-  ignore(@process.run("xdg-open", [url]) catch { _ => -1 })
+  ignore(@trusted_host.open_browser_url(url))
 }

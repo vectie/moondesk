@@ -185,24 +185,23 @@ async fn handle_moonflow_import_selected(
       return
     }
   }
-  let moon = moonclaw_default_moon_command()
-  let validation = @async.with_timeout_opt(30000, () => {
-    run_process_capture(
-      moon,
-      moonflow_validate_graph_cli_arguments(
-        moonflow_root, compiled_graph_path, catalog_path, evaluated_at,
-      ),
-    )
+  let validation = execution_sandbox_client_submit({
+    operation: MoonFlowValidateGraph,
+    input: {
+      "moonflow_root": moonflow_root,
+      "graph_path": compiled_graph_path,
+      "catalog_path": catalog_path,
+      "evaluated_at": evaluated_at,
+    },
   })
-  guard validation
-    is Some((validation_code, validation_stdout, validation_stderr)) else {
+  guard validation is Ok(validation_report) else {
     let receipt = moonflow_import_receipt(
       graph,
       catalog.evidence,
       evaluated_at,
-      "validation_timed_out",
+      "sandbox_unavailable",
       "",
-      "MoonFlow validation exceeded 30 seconds",
+      execution_sandbox_unavailable_message(),
     )
     let receipt_ref = moonflow_persist_import_receipt(
       suite_root, evidence_root, receipt,
@@ -218,27 +217,19 @@ async fn handle_moonflow_import_selected(
           "import_receipt_ref": receipt_ref,
         },
         ok=false,
-        status="validation_timed_out",
-        message="MoonFlow validation exceeded 30 seconds",
-        next_action="check_moonflow_service",
+        status="sandbox_unavailable",
+        message=execution_sandbox_unavailable_message(),
+        next_action="configure_execution_sandbox",
       ),
     )
     return
   }
-  let validation_report = @json.parse(validation_stdout.trim()) catch {
-    _ => Json::empty_object()
-  }
-  if validation_code != 0 ||
-    !moonflow_validation_report_matches(
+  if !moonflow_validation_report_matches(
       validation_report,
       graph,
       catalog.evidence,
     ) {
-    let detail = if validation_stderr.trim() == "" {
-      "MoonFlow returned no valid graph capability report"
-    } else {
-      validation_stderr.trim().to_owned()
-    }
+    let detail = "Execution sandbox returned no valid graph capability report"
     let receipt = moonflow_import_receipt(
       graph,
       catalog.evidence,
@@ -303,22 +294,24 @@ async fn handle_moonflow_import_selected(
     )
     return
   }
-  let imported = @async.with_timeout_opt(30000, () => {
-    run_process_capture(
-      moon,
-      moonflow_import_graph_cli_arguments(
-        moonflow_root, suite_root, compiled_graph_path, catalog_path, evaluated_at,
-      ),
-    )
+  let imported = execution_sandbox_client_submit({
+    operation: MoonFlowImportGraph,
+    input: {
+      "moonflow_root": moonflow_root,
+      "suite_root": suite_root,
+      "graph_path": compiled_graph_path,
+      "catalog_path": catalog_path,
+      "evaluated_at": evaluated_at,
+    },
   })
-  guard imported is Some((import_code, import_stdout, import_stderr)) else {
+  guard imported is Ok(projection) else {
     let receipt = moonflow_import_receipt(
       graph,
       catalog.evidence,
       evaluated_at,
-      "import_timed_out",
+      "sandbox_unavailable",
       validation_report_ref,
-      "MoonFlow conformant import exceeded 30 seconds",
+      execution_sandbox_unavailable_message(),
     )
     let receipt_ref = moonflow_persist_import_receipt(
       suite_root, evidence_root, receipt,
@@ -335,24 +328,18 @@ async fn handle_moonflow_import_selected(
           "import_receipt_ref": receipt_ref,
         },
         ok=false,
-        status="import_timed_out",
-        message="MoonFlow conformant import exceeded 30 seconds",
-        next_action="check_moonflow_service",
+        status="sandbox_unavailable",
+        message=execution_sandbox_unavailable_message(),
+        next_action="configure_execution_sandbox",
       ),
     )
     return
   }
-  let projection = @json.parse(import_stdout.trim()) catch {
-    _ => Json::empty_object()
-  }
-  let import_ok = import_code == 0 &&
-    json_string(projection, "run_id", default="") == run_id
+  let import_ok = json_string(projection, "run_id", default="") == run_id
   let import_detail = if import_ok {
     "MoonFlow validated and imported the exact graph and catalog"
-  } else if import_stderr.trim() != "" {
-    import_stderr.trim().to_owned()
   } else {
-    "MoonFlow returned no valid import projection"
+    "Execution sandbox returned no valid MoonFlow import projection"
   }
   let receipt = moonflow_import_receipt(
     graph,
@@ -546,36 +533,32 @@ async fn handle_moonflow_control(
   }
   let evaluated_at = moonflow_server_utc_timestamp()
   let moonflow_root = json_string(capability_evidence, "root", default="")
-  let moon = moonclaw_default_moon_command()
-  let result = @async.with_timeout_opt(30000, () => {
-    run_process_capture(
-      moon,
-      moonflow_control_cli_arguments(
-        moonflow_root,
-        workspace_context(workspace_root).suite_root,
-        run_id,
-        action,
-        evaluated_at,
-        detail,
-      ),
-    )
+  let result = execution_sandbox_client_submit({
+    operation: MoonFlowControl,
+    input: {
+      "moonflow_root": moonflow_root,
+      "suite_root": workspace_context(workspace_root).suite_root,
+      "run_id": run_id,
+      "action": action,
+      "evaluated_at": evaluated_at,
+      "detail": detail,
+    },
   })
-  guard result is Some((code, stdout, stderr)) else {
+  guard result is Ok(control) else {
     send_json(
       conn,
       method_,
       api_contract_response(
         { "run_id": run_id, "evaluated_at": evaluated_at },
         ok=false,
-        status="control_timed_out",
-        message="MoonFlow control exceeded 30 seconds",
-        next_action="check_moonflow_service",
+        status="sandbox_unavailable",
+        message=execution_sandbox_unavailable_message(),
+        next_action="configure_execution_sandbox",
       ),
     )
     return
   }
-  let control = @json.parse(stdout.trim()) catch { _ => Json::empty_object() }
-  if code != 0 || !moonflow_control_receipt_matches(control, run_id) {
+  if !moonflow_control_receipt_matches(control, run_id) {
     send_json(
       conn,
       method_,
@@ -584,7 +567,7 @@ async fn handle_moonflow_control(
           "run_id": run_id,
           "evaluated_at": evaluated_at,
           "capability_evidence": capability_evidence,
-          "detail": stderr.trim().to_owned(),
+          "detail": "Execution sandbox returned an invalid control receipt",
         },
         ok=false,
         status="control_rejected",

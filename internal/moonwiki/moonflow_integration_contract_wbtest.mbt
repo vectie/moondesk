@@ -152,7 +152,7 @@ async test "graph-relative input artifacts compile to suite-relative refs" {
 }
 
 ///|
-test "catalog discovery and import commands remain generic and exact" {
+test "catalog discovery remains confined and exact" {
   assert_true(
     moonflow_capability_catalog_candidate("/suite/books/book", "") ==
     ("/suite/books/book/flow/capability-catalog.json", "book"),
@@ -162,26 +162,6 @@ test "catalog discovery and import commands remain generic and exact" {
       "/suite/books/book", "/host/catalog.json",
     ) ==
     ("/host/catalog.json", "environment"),
-  )
-  assert_true(
-    moonflow_validate_graph_cli_arguments(
-      "/moonflow", "/compiled/graph.json", "/book/flow/capability-catalog.json",
-      "2026-07-31T00:00:00Z",
-    ) ==
-    [
-      "-C", "/moonflow", "run", "cmd/main", "--", "validate-work-graph-capabilities",
-      "/compiled/graph.json", "/book/flow/capability-catalog.json", "2026-07-31T00:00:00Z",
-    ],
-  )
-  assert_true(
-    moonflow_import_graph_cli_arguments(
-      "/moonflow", "/suite", "/compiled/graph.json", "/book/flow/capability-catalog.json",
-      "2026-07-31T00:00:00Z",
-    ) ==
-    [
-      "-C", "/moonflow", "run", "cmd/main", "--", "import-conformant-graph", "/suite",
-      "/compiled/graph.json", "/book/flow/capability-catalog.json", "2026-07-31T00:00:00Z",
-    ],
   )
 }
 

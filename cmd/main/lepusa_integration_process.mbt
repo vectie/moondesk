@@ -1,15 +1,6 @@
 ///|
 async fn build_lepusa_runtime(lepusa_root : String) -> Bool {
-  let build_code = @process.run(
-    "moon",
-    ["build", "cmd/runtime", "--target", "native", "--release"],
-    cwd=lepusa_root,
-  ) catch {
-    error => {
-      println("lepusa failed: could not build Lepusa runtime: \{error}")
-      return false
-    }
-  }
+  let build_code = @trusted_host.build_lepusa_runtime(lepusa_root)
   if build_code != 0 {
     println("lepusa failed: Lepusa runtime build exited with \{build_code}")
     false
@@ -20,16 +11,7 @@ async fn build_lepusa_runtime(lepusa_root : String) -> Bool {
 
 ///|
 async fn build_moondesk_sidecar(repo_root : String) -> Bool {
-  let build_code = @process.run(
-    "moon",
-    ["build", "cmd/main", "--target", "native", "--release"],
-    cwd=repo_root,
-  ) catch {
-    error => {
-      println("lepusa failed: could not build MoonDesk sidecar: \{error}")
-      return false
-    }
-  }
+  let build_code = @trusted_host.build_moondesk_sidecar(repo_root)
   if build_code != 0 {
     println("lepusa failed: MoonDesk sidecar build exited with \{build_code}")
     false
@@ -469,12 +451,18 @@ async fn run_lepusa_integration_step(
   step : LepusaIntegrationProcessStep,
   lepusa_root : String,
 ) -> Bool {
-  let code = @process.run("moon", step.args, cwd=lepusa_root) catch {
-    error => {
-      println("lepusa failed: \{step.name} could not run: \{error}")
+  if step.args.is_empty() {
+    println("lepusa failed: \{step.name} has no reviewed command plan")
+    return false
+  }
+  let operation = match step.operation {
+    Ok(operation) => operation
+    Err(message) => {
+      println("lepusa failed: \{step.name} is invalid: \{message}")
       return false
     }
   }
+  let code = @trusted_host.run_lepusa_operation(lepusa_root, operation)
   if code != 0 {
     println("lepusa failed: \{step.name} exited with \{code}")
     false
@@ -499,16 +487,25 @@ fn lepusa_integration_live_smoke_steps(
       args: lepusa_integration_process_args(
         verify, project, out_dir, manifest_path,
       ),
+      operation: trusted_lepusa_operation(
+        verify, project, out_dir, manifest_path,
+      ),
     },
     {
       name: "bundle-write",
       args: lepusa_integration_process_args(
         bundle, project, out_dir, manifest_path,
       ),
+      operation: trusted_lepusa_operation(
+        bundle, project, out_dir, manifest_path,
+      ),
     },
     {
       name: "runtime-session",
       args: lepusa_integration_process_args(
+        session, project, out_dir, manifest_path,
+      ),
+      operation: trusted_lepusa_operation(
         session, project, out_dir, manifest_path,
       ),
     },
@@ -530,10 +527,16 @@ fn lepusa_integration_live_build_steps(
       args: lepusa_integration_process_args(
         verify, project, out_dir, manifest_path,
       ),
+      operation: trusted_lepusa_operation(
+        verify, project, out_dir, manifest_path,
+      ),
     },
     {
       name: "bundle-write",
       args: lepusa_integration_process_args(
+        bundle, project, out_dir, manifest_path,
+      ),
+      operation: trusted_lepusa_operation(
         bundle, project, out_dir, manifest_path,
       ),
     },
@@ -560,6 +563,9 @@ fn lepusa_integration_live_runtime_steps(
     args: lepusa_integration_process_args(
       runtime_command, project, out_dir, manifest_path,
     ),
+    operation: trusted_lepusa_operation(
+      runtime_command, project, out_dir, manifest_path,
+    ),
   })
   steps
 }
@@ -581,10 +587,16 @@ fn lepusa_integration_smoke_steps(
       args: lepusa_integration_process_args(
         verify, project, out_dir, manifest_path,
       ),
+      operation: trusted_lepusa_operation(
+        verify, project, out_dir, manifest_path,
+      ),
     },
     {
       name: "bundle-write",
       args: lepusa_integration_process_args(
+        bundle, project, out_dir, manifest_path,
+      ),
+      operation: trusted_lepusa_operation(
         bundle, project, out_dir, manifest_path,
       ),
     },
@@ -593,14 +605,51 @@ fn lepusa_integration_smoke_steps(
       args: lepusa_integration_process_args(
         session, project, out_dir, manifest_path,
       ),
+      operation: trusted_lepusa_operation(
+        session, project, out_dir, manifest_path,
+      ),
     },
     {
       name: "runtime-asset",
       args: lepusa_integration_process_args(
         asset, project, out_dir, manifest_path,
       ),
+      operation: trusted_lepusa_operation(
+        asset, project, out_dir, manifest_path,
+      ),
     },
   ]
+}
+
+///|
+fn trusted_lepusa_operation(
+  options : LepusaIntegrationOptions,
+  project : String,
+  out_dir : String,
+  manifest_path : String,
+) -> Result[@trusted_host.LepusaOperation, String] {
+  let target = match @trusted_host.lepusa_target(options.target) {
+    Ok(target) => target
+    Err(message) => return Err(message)
+  }
+  match options.command {
+    "doctor" => Ok(@trusted_host.lepusa_doctor(target))
+    "verify" =>
+      @trusted_host.lepusa_verify(target, project, strict=options.strict)
+    "run" => @trusted_host.lepusa_run(target, project)
+    "launch-session" => @trusted_host.lepusa_launch_session(target, project)
+    "bundle-plan" => @trusted_host.lepusa_bundle_plan(target, project)
+    "bundle-write" =>
+      @trusted_host.lepusa_bundle_write(target, project, out_dir)
+    "build" => @trusted_host.lepusa_build(target, project, out_dir)
+    "asset" => @trusted_host.lepusa_asset(project, options.asset_url)
+    "runtime-session" => @trusted_host.lepusa_runtime_session(manifest_path)
+    "runtime-launch" => @trusted_host.lepusa_runtime_launch(manifest_path)
+    "runtime-asset" =>
+      @trusted_host.lepusa_runtime_asset(manifest_path, options.asset_url)
+    "launch" => @trusted_host.lepusa_launch(target, project)
+    _ => Err("Lepusa operation is not supported")
+  }
 }
 
 ///|

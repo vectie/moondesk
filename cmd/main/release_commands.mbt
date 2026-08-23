@@ -91,21 +91,21 @@ async fn run_release(args : Array[String]) -> Bool {
       println("release failed: notarization requires a valid signed app")
       return false
     }
-    let notary_code = @process.run("xcrun", [
-      "notarytool", "submit", archive_path, "--keychain-profile", notary_profile,
-      "--wait",
-    ]) catch {
-      _ => -1
+    let profile = match @trusted_host.notary_profile(notary_profile) {
+      Ok(profile) => profile
+      Err(message) => {
+        println("release failed: \{message}")
+        return false
+      }
     }
+    let notary_code = @trusted_host.notarize_archive(profile, archive_path)
     if notary_code != 0 {
       println("release failed: notarytool exited with \{notary_code}")
       return false
     } else {
       notarized = true
       if staple {
-        let staple_code = @process.run("xcrun", ["stapler", "staple", app_root]) catch {
-          _ => -1
-        }
+        let staple_code = @trusted_host.staple_app(app_root)
         if staple_code != 0 {
           println("release failed: stapler exited with \{staple_code}")
           return false
@@ -365,10 +365,7 @@ async fn write_release_json(path : String, value : Json) -> Bool {
 
 ///|
 async fn verify_codesign(app_root : String) -> Bool {
-  (@process.run("codesign", ["--verify", "--deep", "--strict", app_root]) catch {
-    _ => -1
-  }) ==
-  0
+  @trusted_host.verify_app_signature(app_root) == 0
 }
 
 ///|
@@ -387,9 +384,7 @@ async fn create_release_dmg(app_root : String, dmg_path : String) -> Bool {
     }
   }
   let staged_app = @pathx.join(staging, bundle_path_leaf(app_root))
-  let copy_code = @process.run("ditto", [app_root, staged_app]) catch {
-    _ => -1
-  }
+  let copy_code = @trusted_host.copy_app(app_root, staged_app)
   if copy_code != 0 {
     println("release warning: ditto exited with \{copy_code}")
     @fs.rmdir(staging, recursive=true) catch {
@@ -410,12 +405,7 @@ async fn create_release_dmg(app_root : String, dmg_path : String) -> Bool {
       return false
     }
   }
-  let code = @process.run("hdiutil", [
-    "create", "-volname", "MoonDesk", "-srcfolder", staging, "-ov", "-format", "UDZO",
-    dmg_path,
-  ]) catch {
-    _ => -1
-  }
+  let code = @trusted_host.create_dmg(staging, dmg_path)
   @fs.rmdir(staging, recursive=true) catch {
     _ => ()
   }
@@ -435,15 +425,5 @@ async fn file_sha256(path : String) -> String {
   if !@fsx.exists(path) {
     return ""
   }
-  let output = @process.collect_output("shasum", ["-a", "256", path]) catch {
-    _ => return ""
-  }
-  if output.0 != 0 {
-    return ""
-  }
-  let text = (output.1.text() catch { _ => "" }).trim().to_owned()
-  match text.find(" ") {
-    Some(index) => text[:index].to_owned()
-    None => text
-  }
+  @trusted_host.sha256_file(path)
 }

@@ -162,6 +162,17 @@ async fn route_workspace_api(
       }
       true
     }
+    ["api", "workspaces", workspace_id, "artifact"] => {
+      let endpoint = @desk.workspace_action_route("artifact")
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_workspace_artifact(
+          workspace_root, workspace_id, request_path, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "workspaces", workspace_id, "file", .. asset_segments] => {
       let endpoint = @desk.workspace_file_route()
       if desktop_api_route_accepts_read(endpoint, method_) {

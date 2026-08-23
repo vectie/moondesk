@@ -41,6 +41,10 @@ test "mooncode desktop routes live in core boundary" {
     @core.mooncode_session_watch_url("session one/#2", "7", "11"),
     "/api/mooncode/sessions/session%20one%2F%232/watch?since_revision=7&since_sequence=11&wait_ms=15000&poll_ms=100",
   )
+  assert_eq(
+    @core.mooncode_sandbox_promotion_url(),
+    "/api/mooncode/execution-sandbox/promote",
+  )
 }
 
 ///|

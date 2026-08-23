@@ -13,25 +13,6 @@ fn moonflow_collaboration_snapshot_path(
 }
 
 ///|
-fn moonflow_collaboration_inspect_arguments(
-  moonflow_root : String,
-  workspace_path : String,
-  workspace_id : String,
-) -> Array[String] {
-  moonflow_cli_arguments(moonflow_root, [
-    "collaboration", "inspect", workspace_path, workspace_id,
-  ])
-}
-
-///|
-fn moonflow_handover_list_arguments(
-  moonflow_root : String,
-  workspace_path : String,
-) -> Array[String] {
-  moonflow_cli_arguments(moonflow_root, ["handover", "list", workspace_path])
-}
-
-///|
 fn moonflow_handover_catalog_valid(catalog : Json) -> Bool {
   if json_string(catalog, "contract_id", default="") !=
     "moonflow.handover-catalog.v1" {
@@ -67,19 +48,15 @@ fn moonflow_handover_catalog_valid(catalog : Json) -> Bool {
 }
 
 ///|
-async fn moonflow_validated_handover_catalog(
-  moon : String,
+fn moonflow_validated_handover_catalog(
   moonflow_root : String,
   workspace_path : String,
 ) -> Json? {
-  let captured = @async.with_timeout_opt(30000, () => {
-    run_process_capture(
-      moon,
-      moonflow_handover_list_arguments(moonflow_root, workspace_path),
-    )
+  let response = execution_sandbox_client_submit({
+    operation: MoonFlowListHandovers,
+    input: { "moonflow_root": moonflow_root, "workspace_path": workspace_path },
   })
-  guard captured is Some((0, stdout, _)) else { return None }
-  let catalog = @json.parse(stdout) catch { _ => return None }
+  guard response is Ok(catalog) else { return None }
   if moonflow_handover_catalog_valid(catalog) {
     Some(catalog)
   } else {
@@ -193,18 +170,15 @@ async fn handle_moonflow_collaboration(
     return
   }
   let moonflow_root = json_string(capability, "root", default="")
-  let moon = moonclaw_default_moon_command()
-  let captured = @async.with_timeout_opt(30000, () => {
-    run_process_capture(
-      moon,
-      moonflow_collaboration_inspect_arguments(
-        moonflow_root,
-        workspace.root_path,
-        workspace_id,
-      ),
-    )
+  let inspected = execution_sandbox_client_submit({
+    operation: MoonFlowInspectCollaboration,
+    input: {
+      "moonflow_root": moonflow_root,
+      "workspace_path": workspace.root_path,
+      "workspace_id": workspace_id,
+    },
   })
-  guard captured is Some((code, stdout, stderr)) else {
+  guard inspected is Ok(snapshot) else {
     send_json(
       conn,
       method_,
@@ -212,49 +186,12 @@ async fn handle_moonflow_collaboration(
         workspace_id,
         None,
         false,
-        "owner_timeout",
-        "MoonFlow did not validate collaboration within 30 seconds",
-        "retry_or_inspect_moonflow",
+        "sandbox_unavailable",
+        execution_sandbox_unavailable_message(),
+        "configure_execution_sandbox",
       ),
     )
     return
-  }
-  if code != 0 {
-    let rejection_detail = if stderr.trim().is_empty() {
-      ""
-    } else {
-      ": " + trim_for_record(stderr)
-    }
-    send_json(
-      conn,
-      method_,
-      moonflow_collaboration_reply(
-        workspace_id,
-        None,
-        false,
-        "quarantined",
-        "MoonFlow rejected the collaboration snapshot" + rejection_detail,
-        "inspect_or_recover_in_moonflow",
-      ),
-    )
-    return
-  }
-  let snapshot = @json.parse(stdout) catch {
-    _ => {
-      send_json(
-        conn,
-        method_,
-        moonflow_collaboration_reply(
-          workspace_id,
-          None,
-          false,
-          "quarantined",
-          "MoonFlow returned an unreadable collaboration projection",
-          "inspect_or_recover_in_moonflow",
-        ),
-      )
-      return
-    }
   }
   if json_string(snapshot, "contract_id", default="") !=
     "moonflow.collaboration-snapshot.v1" {
@@ -273,7 +210,6 @@ async fn handle_moonflow_collaboration(
     return
   }
   let handover_catalog = moonflow_validated_handover_catalog(
-    moon,
     moonflow_root,
     workspace.root_path,
   ).unwrap_or(Json::null())

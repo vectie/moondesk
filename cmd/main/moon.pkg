@@ -1,7 +1,6 @@
 import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
-  "moonbitlang/async/process",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
@@ -11,7 +10,10 @@ import {
   "vectie/moondesk/internal/mooncore",
   "vectie/moondesk/internal/moonwiki",
   "vectie/moondesk/internal/pathx",
+  "vectie/moondesk/internal/trusted_host_process" @trusted_host,
   "vectie/moondesk/plugin/moongate",
+  "vectie/moondesk/packstudio",
+  "vectie/moonlib/pack",
 }
 
 supported_targets = "native"

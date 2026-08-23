@@ -32,6 +32,7 @@ fn town_book_template_request_path(workspace_root : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn town_book_template_event_path(workspace_root : String) -> String {
   @pathx.join(
     moontown_product_root(workspace_root),
@@ -69,16 +70,19 @@ fn town_moondesk_request_relative_path(name : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn town_moondesk_dispatch_relative_path(name : String) -> String {
   @pathx.join(town_moondesk_dispatches_relative_root(), name)
 }
 
 ///|
+#warnings("-unused_value")
 fn town_moondesk_request_path(workspace_root : String, name : String) -> String {
   @pathx.join(town_moondesk_requests_root(workspace_root), name)
 }
 
 ///|
+#warnings("-unused_value")
 fn town_moondesk_dispatch_path(
   workspace_root : String,
   name : String,

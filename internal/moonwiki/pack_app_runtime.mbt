@@ -316,6 +316,28 @@ fn pack_app_catalog_record_resolved(
     return None
   }
   let entrypoints = json_array_items(manifest, "app_entrypoints")
+  let bridge_provider = json_array_items(manifest, "provider_ports").any(port => {
+    json_string(port, "id", default="") == "moontown-pack-projection" &&
+    json_string(port, "version", default="") == "1.0.0"
+  })
+  let bridge_schemas = json_array_items(manifest, "schemas")
+  let has_projection_schema = bridge_schemas.any(schema => {
+    json_string(schema, "id", default="") == "pack-town-projection"
+  })
+  let has_candidate_schema = bridge_schemas.any(schema => {
+    json_string(schema, "id", default="") == "town-pack-candidate"
+  })
+  let intake_operation_ids = json_array_items(manifest, "tools")
+    .filter(tool => {
+      json_string(tool, "input_schema_id", default="") == "town-pack-candidate" &&
+      json_bool(tool, "review_required", default=false)
+    })
+    .map(tool => json_string(tool, "id", default=""))
+    .filter(id => !id.is_empty())
+  let bridge_ready = bridge_provider &&
+    has_projection_schema &&
+    has_candidate_schema &&
+    !intake_operation_ids.is_empty()
   let configured = match runtime {
     Some(runtime) =>
       match area_override {
@@ -368,6 +390,8 @@ fn pack_app_catalog_record_resolved(
         "workflow_count": json_array_items(manifest, "workflows").length(),
         "tool_count": json_array_items(manifest, "tools").length(),
         "configuration_message": "Ready to open",
+        "bridge_ready": bridge_ready,
+        "intake_operation_ids": intake_operation_ids,
       })
     None => {
       let has_runtime = runtime is Some(_)
@@ -418,6 +442,8 @@ fn pack_app_catalog_record_resolved(
         "workflow_count": json_array_items(manifest, "workflows").length(),
         "tool_count": json_array_items(manifest, "tools").length(),
         "configuration_message": message,
+        "bridge_ready": bridge_ready,
+        "intake_operation_ids": intake_operation_ids,
       })
     }
   }

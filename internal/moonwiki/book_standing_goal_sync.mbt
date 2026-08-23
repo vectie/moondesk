@@ -182,7 +182,7 @@ async fn sync_book_standing_goal(
 }
 
 ///|
-async fn sync_all_book_pattern_standing_goals(root : String) -> Json {
+fn sync_all_book_pattern_standing_goals(root : String) -> Json {
   ignore(root)
   {
     "ok": false,
@@ -200,6 +200,7 @@ async fn sync_all_book_pattern_standing_goals(root : String) -> Json {
 }
 
 ///|
+#warnings("-unused_value")
 async fn pdf_watch_standing_goal_from_book_state(
   root : String,
   book_root : String,

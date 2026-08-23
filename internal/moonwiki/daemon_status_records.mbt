@@ -1,7 +1,7 @@
 ///|
 async fn town_platform_evidence() -> Json {
-  let (_, system, _) = run_process_capture("uname", ["-s"])
-  let (_, machine, _) = run_process_capture("uname", ["-m"])
+  let system = @trusted_host.system_name()
+  let machine = @trusted_host.machine_name()
   @town.platform_evidence_from_values(system, machine)
 }
 
@@ -10,6 +10,13 @@ fn town_configuration_evidence_from_descriptor(
   installed : Bool,
   descriptor : Json,
 ) -> Json {
+  if json_bool(descriptor, "legacy_execution_rejected", default=false) {
+    return {
+      "configured": false,
+      "valid": false,
+      "reason": "legacy-workspace-execution-config-rejected",
+    }
+  }
   let configured = json_bool(descriptor, "configured", default=false)
   let valid = json_bool(descriptor, "configuration_valid", default=configured)
   @town.configuration_evidence_from_values(

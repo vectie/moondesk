@@ -8,6 +8,7 @@ fn source_semantics_bounded_output(text : String, limit : Int) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn source_semantics_normalize_output(
   output : String,
   workspace_root : String,
@@ -19,6 +20,7 @@ fn source_semantics_normalize_output(
 }
 
 ///|
+#warnings("-unused_value")
 fn source_semantics_diagnostics(
   output : String,
   workspace_root : String,
@@ -32,9 +34,18 @@ fn source_semantics_diagnostics(
     }
     let next = fields.copy()
     if fields.get("path") is Some(String(path)) {
-      let relative = match path.strip_prefix(workspace_root + "/") {
-        Some(value) => value.to_owned()
-        None => path
+      let relative = if path.has_prefix("/") {
+        match path.strip_prefix(workspace_root + "/") {
+          Some(value) => value.to_owned()
+          // A sandbox scratch path is not a canonical MoonBook path and must
+          // not cross the desktop API boundary.
+          None => continue
+        }
+      } else {
+        match clean_relative_path(path) {
+          Some(value) => value
+          None => continue
+        }
       }
       next["relative_path"] = relative.to_json()
     }
@@ -87,6 +98,97 @@ fn source_semantics_module_prefix(
 }
 
 ///|
+priv enum SourceSemanticsSandboxAction {
+  Diagnostics
+  Definition(symbol~ : String, line~ : Int, column~ : Int)
+  References(symbol~ : String, line~ : Int, column~ : Int)
+}
+
+///|
+priv struct SourceSemanticsSandboxRequest {
+  workspace_root : String
+  module_root : String
+  module_path : String
+  action : SourceSemanticsSandboxAction
+}
+
+///|
+priv enum SourceSemanticsResultError {
+  InvalidRequest(String)
+  SandboxUnavailable
+}
+
+///|
+fn source_semantics_sandbox_request(
+  action : String,
+  symbol : String,
+  workspace_root : String,
+  module_root : String,
+  module_path : String,
+  line : Int,
+  column : Int,
+) -> Result[SourceSemanticsSandboxRequest, String] {
+  let sandbox_action = match action {
+    "diagnostics" => SourceSemanticsSandboxAction::Diagnostics
+    "definition" => {
+      match
+        source_semantics_ide_args(action, symbol, module_path, line, column) {
+        Ok(_) => ()
+        Err(problem) => return Err(problem)
+      }
+      Definition(symbol~, line~, column~)
+    }
+    "references" => {
+      match
+        source_semantics_ide_args(action, symbol, module_path, line, column) {
+        Ok(_) => ()
+        Err(problem) => return Err(problem)
+      }
+      References(symbol~, line~, column~)
+    }
+    _ => return Err("Unsupported source semantic action")
+  }
+  Ok({ workspace_root, module_root, module_path, action: sandbox_action })
+}
+
+///|
+async fn execute_source_semantics_sandbox(
+  request : SourceSemanticsSandboxRequest,
+) -> Result[Json, SourceSemanticsResultError] {
+  ignore(request.module_path)
+  match request.action {
+    Diagnostics =>
+      return match
+        source_semantics_sandbox_diagnostics(
+          request.workspace_root,
+          request.module_root,
+        ) {
+        Ok(result) => Ok(result)
+        Err(Unavailable | InvalidReceipt | Truncated) => Err(SandboxUnavailable)
+      }
+    Definition(symbol~, line~, column~) | References(symbol~, line~, column~) => {
+      ignore(symbol)
+      ignore(line)
+      ignore(column)
+    }
+  }
+  // Semantic navigation remains closed until it receives its own typed,
+  // receipt-bound capability. It must never fall back to a host process.
+  Err(SandboxUnavailable)
+}
+
+///|
+fn source_semantics_sandbox_error_message(
+  error : SourceSemanticsResultError,
+) -> String {
+  match error {
+    InvalidRequest(message) => message
+    SandboxUnavailable =>
+      "Source semantics sandbox is unavailable; host execution was refused"
+  }
+}
+
+///|
 fn source_semantics_ide_args(
   action : String,
   symbol : String,
@@ -119,89 +221,82 @@ fn source_semantics_ide_args(
 async fn source_semantics_result(
   workspace : @desk.DeskWorkspace,
   payload : Json,
-) -> Result[Json, String] {
+) -> Result[Json, SourceSemanticsResultError] {
   let action = json_string(payload, "action", default="")
   let requested_path = decode_query_value(
     json_string(payload, "path", default=""),
   )
   let clean_path = match clean_relative_path(requested_path) {
     Some(path) if path.has_suffix(".mbt") => path
-    _ => return Err("Compiler semantics require a confined MoonBit source path")
+    _ =>
+      return Err(
+        InvalidRequest(
+          "Compiler semantics require a confined MoonBit source path",
+        ),
+      )
   }
   let absolute_path = match
     @fsx.resolve_confined_existing(workspace.root_path, clean_path) {
     Some(path) => path
-    None => return Err("MoonBit source path does not exist in this workspace")
+    None =>
+      return Err(
+        InvalidRequest("MoonBit source path does not exist in this workspace"),
+      )
   }
   let canonical_workspace_root = @fs.realpath(workspace.root_path) catch {
-    _ => return Err("Workspace root is unavailable")
+    _ => return Err(InvalidRequest("Workspace root is unavailable"))
   }
   let module_root = match
     source_semantics_module_root(canonical_workspace_root, absolute_path) {
     Some(root) => root
-    None => return Err("No moon.mod was found for this source file")
+    None =>
+      return Err(InvalidRequest("No moon.mod was found for this source file"))
   }
   let module_path = match
     source_semantics_module_path(module_root, absolute_path) {
     Some(path) => path
-    None => return Err("Source path is outside its MoonBit module")
+    None =>
+      return Err(InvalidRequest("Source path is outside its MoonBit module"))
   }
   let module_prefix = match
     source_semantics_module_prefix(canonical_workspace_root, module_root) {
     Some(prefix) => prefix
-    None => return Err("MoonBit module is outside this workspace")
-  }
-  if action == "diagnostics" {
-    let (code, stdout, stderr) = run_process_capture_in(
-      "moon",
-      ["check", "--output-json", "--diagnostic-limit", "200"],
-      cwd=module_root,
-    )
-    if code == -1 {
-      return Err("MoonBit compiler is unavailable")
-    }
-    let combined = stdout + "\n" + stderr
-    let diagnostics = source_semantics_diagnostics(
-      combined, canonical_workspace_root,
-    )
-    return Ok({
-      "ok": code == 0,
-      "action": action,
-      "path": clean_path,
-      "module_prefix": module_prefix,
-      "exit_code": code,
-      "diagnostics": diagnostics,
-      "diagnostic_count": diagnostics.length(),
-    })
+    None =>
+      return Err(InvalidRequest("MoonBit module is outside this workspace"))
   }
   let symbol = json_string(payload, "symbol", default="")
   let line = json_int(payload, "line", default=1)
   let column = json_int(payload, "column", default=1)
-  let args = match
-    source_semantics_ide_args(action, symbol, module_path, line, column) {
-    Ok(args) => args
-    Err(problem) => return Err(problem)
+  let request = match
+    source_semantics_sandbox_request(
+      action, symbol, canonical_workspace_root, module_root, module_path, line, column,
+    ) {
+    Ok(request) => request
+    Err(problem) => return Err(InvalidRequest(problem))
   }
-  let (code, stdout, stderr) = run_process_capture_in(
-    "moon",
-    args,
-    cwd=module_root,
-  )
-  if code == -1 {
-    return Err("MoonBit IDE service is unavailable")
+  ignore(module_prefix)
+  ignore(clean_path)
+  match execute_source_semantics_sandbox(request) {
+    Ok(result) => {
+      guard request.action is Diagnostics else { return Ok(result) }
+      let output = json_string(result, "output", default="")
+      let exit_code = json_int(result, "exit_code", default=-1)
+      let diagnostics = source_semantics_diagnostics(
+        output, canonical_workspace_root,
+      )
+      Ok({
+        "ok": exit_code == 0,
+        "action": action,
+        "path": clean_path,
+        "module_prefix": module_prefix,
+        "exit_code": exit_code,
+        "diagnostics": diagnostics,
+        "diagnostic_count": diagnostics.length(),
+        "execution_sandbox": "moonfort",
+      })
+    }
+    Err(error) => Err(error)
   }
-  let combined = if stdout == "" { stderr } else { stdout + stderr }
-  Ok({
-    "ok": code == 0,
-    "action": action,
-    "path": clean_path,
-    "module_prefix": module_prefix,
-    "symbol": symbol,
-    "exit_code": code,
-    "output": source_semantics_normalize_output(
-      combined, canonical_workspace_root,
-    ),
-  })
 }
 
 ///|
@@ -228,7 +323,15 @@ async fn handle_workspace_source_semantics(
   }
   match source_semantics_result(workspace, payload) {
     Ok(result) => send_json(conn, method_, result)
-    Err(problem) =>
+    Err(InvalidRequest(problem)) =>
       send_api_error(conn, method_, 422, "Unprocessable Content", problem)
+    Err(SandboxUnavailable) =>
+      send_api_error(
+        conn,
+        method_,
+        503,
+        "Service Unavailable",
+        source_semantics_sandbox_error_message(SandboxUnavailable),
+      )
   }
 }

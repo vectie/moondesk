@@ -46,4 +46,20 @@ test "Flow capability evidence has stable precedence and separate facts" {
   let configuration = json_object_field(ready, "configuration_evidence").unwrap()
   assert_true(json_bool(configuration, "configured", default=false))
   assert_true(json_bool(configuration, "valid", default=false))
+  let sandbox_unavailable = moonflow_capability_evidence_from_values(
+    supported,
+    true,
+    true,
+    true,
+    "/runtime",
+    execution_sandbox_available=false,
+  )
+  assert_false(json_bool(sandbox_unavailable, "available", default=true))
+  assert_eq(
+    json_string(sandbox_unavailable, "reason", default=""),
+    "execution-sandbox-unavailable",
+  )
+  let boundary = json_object_field(sandbox_unavailable, "execution_boundary").unwrap()
+  assert_false(json_bool(boundary, "available", default=true))
+  assert_eq(json_string(boundary, "fallback", default=""), "deny")
 }

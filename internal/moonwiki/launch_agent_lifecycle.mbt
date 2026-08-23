@@ -29,8 +29,19 @@ async fn handle_launch_agent(
 }
 
 ///|
-async fn install_launch_agent(root : String) -> Json {
+async fn install_launch_agent(
+  root : String,
+  plist_path_override? : String = "",
+) -> Json {
   let descriptor = town_service_descriptor(root, "daemon")
+  if json_bool(descriptor, "legacy_execution_rejected", default=false) {
+    return launch_agent_record(
+      root,
+      action="install",
+      exit_code=-1,
+      message="MoonTown daemon service configuration is not trusted for host persistence",
+    )
+  }
   if !json_bool(descriptor, "configured", default=false) {
     return launch_agent_record(
       root,
@@ -39,10 +50,22 @@ async fn install_launch_agent(root : String) -> Json {
       message="MoonTown daemon service is not configured for this workspace",
     )
   }
+  if !json_bool(descriptor, "configuration_valid", default=false) {
+    return launch_agent_record(
+      root,
+      action="install",
+      exit_code=-1,
+      message="MoonTown daemon service configuration is not trusted for host persistence",
+    )
+  }
   @fsx.make_directory(moondesk_daemon_dir(root), recursive=true, exists_ok=true) catch {
     _ => ()
   }
-  let plist_path = launch_agent_plist_path(root)
+  let plist_path = if plist_path_override == "" {
+    launch_agent_plist_path(root)
+  } else {
+    plist_path_override
+  }
   @fsx.make_directory(
     @pathx.dirname(plist_path).to_owned(),
     recursive=true,
@@ -69,8 +92,12 @@ async fn install_launch_agent(root : String) -> Json {
         message="Could not write LaunchAgent plist",
       )
   }
-  ignore(launchctl_bootout(launch_agent_label(), plist_path))
-  let code = launchctl_bootstrap(launch_agent_label(), plist_path)
+  ignore(@trusted_host.bootout_launch_agent(MoonTown))
+  let code = if plist_path_override == "" {
+    @trusted_host.bootstrap_launch_agent(MoonTown)
+  } else {
+    -1
+  }
   launch_agent_record(
     root,
     action="install",
@@ -86,7 +113,7 @@ async fn install_launch_agent(root : String) -> Json {
 ///|
 async fn uninstall_launch_agent(root : String) -> Json {
   let plist_path = launch_agent_plist_path(root)
-  let code = launchctl_bootout(launch_agent_label(), plist_path)
+  let code = @trusted_host.bootout_launch_agent(MoonTown)
   @fs.remove(plist_path) catch {
     _ => ()
   }
@@ -144,8 +171,9 @@ async fn launch_agent_record(
 
 ///|
 async fn launch_agent_loaded_status(installed : Bool, label : String) -> Bool {
+  ignore(label)
   if installed {
-    launchctl_print(label) == 0
+    @trusted_host.launch_agent_is_loaded(MoonTown)
   } else {
     false
   }
@@ -218,54 +246,3 @@ fn xml_escape(text : String) -> String {
 }
 
 ///|
-async fn launchctl_target(label : String) -> String {
-  let uid = current_user_id()
-  if uid == "" {
-    "gui/0/" + label
-  } else {
-    "gui/\{uid}/\{label}"
-  }
-}
-
-///|
-async fn launchctl_domain_name() -> String {
-  let uid = current_user_id()
-  if uid == "" {
-    "gui/0"
-  } else {
-    "gui/\{uid}"
-  }
-}
-
-///|
-async fn current_user_id() -> String {
-  let output = @process.collect_output("id", ["-u"]) catch { _ => return "" }
-  if output.0 == 0 {
-    (output.1.text() catch { _ => "" }).trim().to_owned()
-  } else {
-    ""
-  }
-}
-
-///|
-async fn launchctl_bootstrap(label : String, plist_path : String) -> Int {
-  ignore(label)
-  @process.run("launchctl", ["bootstrap", launchctl_domain_name(), plist_path]) catch {
-    _ => -1
-  }
-}
-
-///|
-async fn launchctl_bootout(label : String, plist_path : String) -> Int {
-  ignore(plist_path)
-  @process.run("launchctl", ["bootout", launchctl_target(label)]) catch {
-    _ => -1
-  }
-}
-
-///|
-async fn launchctl_print(label : String) -> Int {
-  @process.run("launchctl", ["print", launchctl_target(label)]) catch {
-    _ => -1
-  }
-}

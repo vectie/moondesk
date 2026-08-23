@@ -23,30 +23,18 @@ async fn service_command_available(
   command : String,
   working_directory : String,
 ) -> Bool {
-  if command == "" {
+  if command == "" || !command.contains("/") {
     return false
   }
-  if command.contains("/") {
-    let executable = if @pathx.is_absolute(command) {
-      command
-    } else {
-      @pathx.join(working_directory, command)
-    }
-    @fsx.exists(executable) &&
-    !is_directory(executable) &&
-    @async.with_timeout_opt(2000, () => {
-      run_process_quiet("test", ["-x", executable])
-    }).unwrap_or(-2) ==
-    0
+  let executable = if @pathx.is_absolute(command) {
+    command
   } else {
-    let captured = @async.with_timeout_opt(2000, () => {
-      run_process_capture("which", [command])
-    })
-    match captured {
-      Some((code, stdout, _)) => code == 0 && stdout.trim() != ""
-      None => false
-    }
+    @pathx.join(working_directory, command)
   }
+  @fsx.exists(executable) &&
+  !is_directory(executable) &&
+  @fs.kind(executable, follow_symlink=false) is Regular &&
+  @fs.can_execute(executable)
 }
 
 ///|

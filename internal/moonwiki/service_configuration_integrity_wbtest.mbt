@@ -47,6 +47,10 @@ async test "service integrity inspects executability without running fixture" {
     "working-directory-unavailable",
   )
   let path_command = service_configuration_integrity("sh", root)
-  assert_true(json_bool(path_command, "valid", default=false))
+  assert_false(json_bool(path_command, "valid", default=true))
+  assert_eq(
+    json_string(path_command, "reason", default=""),
+    "command-unavailable",
+  )
   assert_false(@fsx.exists(marker))
 }

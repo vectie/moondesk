@@ -5,9 +5,7 @@ async fn handle_town_analytics(
   conn : @http.ServerConnection,
 ) -> Unit {
   let root = workspace_context(workspace_root).suite_root
-  let repair = sync_all_book_pattern_standing_goals(root) catch {
-    _ => Json::object({})
-  }
+  let repair = sync_all_book_pattern_standing_goals(root)
   let daemon = read_json_file_or_object(town_daemon_path(root))
   let daemon_tick = json_int(daemon, "tick_sequence", default=0)
   let goals = read_json_array_file(town_standing_goals_path(root))
@@ -54,9 +52,7 @@ async fn handle_town_progress(
   conn : @http.ServerConnection,
 ) -> Unit {
   let root = workspace_context(workspace_root).suite_root
-  let repair = sync_all_book_pattern_standing_goals(root) catch {
-    _ => Json::object({})
-  }
+  let repair = sync_all_book_pattern_standing_goals(root)
   let daemon = read_json_file_or_object(town_daemon_path(root))
   let lifecycle = daemon_status_record(root, "progress")
   let goals = read_json_array_file(town_standing_goals_path(root))
@@ -97,11 +93,7 @@ async fn handle_town_calendar(
   conn : @http.ServerConnection,
 ) -> Unit {
   let root = workspace_context(workspace_root).suite_root
-  ignore(
-    sync_all_book_pattern_standing_goals(root) catch {
-      _ => Json::object({})
-    },
-  )
+  ignore(sync_all_book_pattern_standing_goals(root))
   let daemon = read_json_file_or_object(town_daemon_path(root))
   let daemon_tick = json_int(daemon, "tick_sequence", default=0)
   let goals = read_json_array_file(town_standing_goals_path(root))

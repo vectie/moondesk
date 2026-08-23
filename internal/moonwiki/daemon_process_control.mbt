@@ -4,6 +4,15 @@ async fn start_managed_daemon(
   action? : String = "start",
 ) -> Json {
   let descriptor = town_service_descriptor(root, "daemon")
+  if json_bool(descriptor, "legacy_execution_rejected", default=false) {
+    return daemon_result(
+      root,
+      action,
+      ok=false,
+      status="misconfigured",
+      message="MoonTown daemon service configuration contains rejected host execution fields",
+    )
+  }
   if !json_bool(descriptor, "configured", default=false) {
     return daemon_result(
       root,
@@ -22,106 +31,13 @@ async fn start_managed_daemon(
       message="MoonTown daemon service configuration is not usable",
     )
   }
-  let current = daemon_status_record(root, "status")
-  if json_bool(current, "running", default=false) {
-    return daemon_result(
-      root,
-      action,
-      ok=true,
-      status="already-running",
-      running=true,
-      message="MoonTown daemon is already running",
-      pid=json_int(current, "pid", default=0),
-      started_at=json_string(current, "started_at", default=""),
-      stdout_path=json_string(current, "stdout_path", default=""),
-      stderr_path=json_string(current, "stderr_path", default=""),
-    )
-  }
-  let state_dir = moondesk_daemon_dir(root)
-  @fsx.make_directory(state_dir, recursive=true, exists_ok=true) catch {
-    _ =>
-      return daemon_result(
-        root,
-        action,
-        ok=false,
-        status="failed",
-        message="Could not create daemon state directory",
-      )
-  }
-  let id = @desk.stable_id("daemon", @async.now().to_string())
-  let stdout_path = @pathx.join(state_dir, id + ".out.log")
-  let stderr_path = @pathx.join(state_dir, id + ".err.log")
-  let stdout_file = @process.redirect_to_file(
-    stdout_path,
-    append=true,
-    create_mode=OpenOrCreate,
-    permission=0o644,
-  ) catch {
-    _ =>
-      return daemon_result(
-        root,
-        action,
-        ok=false,
-        status="failed",
-        message="Could not open daemon stdout log",
-      )
-  }
-  let stderr_file = @process.redirect_to_file(
-    stderr_path,
-    append=true,
-    create_mode=OpenOrCreate,
-    permission=0o644,
-  ) catch {
-    _ =>
-      return daemon_result(
-        root,
-        action,
-        ok=false,
-        status="failed",
-        message="Could not open daemon stderr log",
-      )
-  }
-  let command = json_string(descriptor, "display", default="")
-  let executable = json_string(descriptor, "command", default="")
-  let args = json_string_array_items(descriptor, "args")
-  let cwd = json_string(descriptor, "cwd", default=root)
-  let pid = @process.spawn_orphan(
-    executable,
-    args,
-    cwd~,
-    stdout=stdout_file,
-    stderr=stderr_file,
-  ) catch {
-    error =>
-      return daemon_result(
-        root,
-        action,
-        ok=false,
-        status="failed",
-        message="Could not start MoonTown daemon: \{error}",
-      )
-  }
-  @async.sleep(150)
-  let running = pid_is_running(pid)
-  let record = daemon_result(
+  daemon_result(
     root,
     action,
-    ok=running,
-    status=if running { "running" } else { "exited" },
-    running~,
-    message=if running {
-      "MoonTown daemon started"
-    } else {
-      "MoonTown daemon exited immediately"
-    },
-    pid~,
-    command~,
-    started_at=@async.now().to_string(),
-    stdout_path~,
-    stderr_path~,
+    ok=false,
+    status="trusted-binding-unavailable",
+    message="MoonTown daemon launch is refused because no trusted host binding is registered",
   )
-  write_daemon_lifecycle_state(root, record)
-  record
 }
 
 ///|
@@ -159,14 +75,12 @@ async fn stop_managed_daemon(
     write_daemon_lifecycle_state(root, record)
     return record
   }
-  let exit_code = @process.run("kill", ["-TERM", pid.to_string()]) catch {
-    _ => -1
-  }
+  let exit_code = @trusted_host.terminate_pid(pid)
   @async.sleep(500)
   let mut running = pid_is_running(pid)
   let mut escalated = false
   if exit_code == 0 && running {
-    ignore(@process.run("kill", ["-KILL", pid.to_string()]) catch { _ => -1 })
+    ignore(@trusted_host.force_kill_pid(pid))
     escalated = true
     @async.sleep(250)
     running = pid_is_running(pid)
@@ -209,40 +123,5 @@ async fn stop_managed_daemon(
 
 ///|
 async fn pid_is_running(pid : Int) -> Bool {
-  if pid <= 0 {
-    false
-  } else {
-    let alive = run_process_quiet("kill", ["-0", pid.to_string()]) == 0
-    if !alive {
-      false
-    } else {
-      !process_stat(pid).has_prefix("Z")
-    }
-  }
-}
-
-///|
-async fn process_stat(pid : Int) -> String {
-  @async.with_task_group(group => {
-    let (pipe, output) = @process.read_from_process()
-    let task = group.spawn(() => {
-      defer pipe.close()
-      @encoding/utf8.decode_lossy(pipe.read_all().binary()).trim().to_owned()
-    })
-    let code = @process.run(
-      "ps",
-      ["-p", pid.to_string(), "-o", "stat="],
-      stdout=output,
-    ) catch {
-      _ => -1
-    }
-    let stat = task.wait()
-    if code == 0 {
-      stat
-    } else {
-      ""
-    }
-  }) catch {
-    _ => ""
-  }
+  @trusted_host.pid_is_alive(pid)
 }

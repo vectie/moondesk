@@ -179,6 +179,11 @@ test "XLSX workbook relationships define sheet order names and preserve attribut
     ("xl/workbook.xml", office_xml(workbook)),
   ])
   let opened = office_document_open_bytes("ordered.xlsx", archive_bytes).unwrap()
+  assert_true(
+    opened.warnings.any(warning => {
+      warning.has_prefix("MoonLeaf could not validate")
+    }),
+  )
   guard opened.supported is Spreadsheet(sheets) else {
     fail("expected spreadsheet")
   }

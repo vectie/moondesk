@@ -48,6 +48,12 @@ test "workspace desktop routes live in core boundary" {
     "/api/workspaces/book-demo/raw?path=images%2Flogo%20%231.png",
   )
   assert_eq(
+    @core.workspace_artifact_url(
+      "book-demo", "images/logo #1.png", "sha256:abc",
+    ),
+    "/api/workspaces/book-demo/artifact?path=images%2Flogo%20%231.png&digest=sha256%3Aabc",
+  )
+  assert_eq(
     @core.workspace_file_url(
       "book-demo", "book/site/generated/assets/site #1.css",
     ),
@@ -70,6 +76,18 @@ test "product and system desktop routes live in core boundary" {
   assert_eq(
     @core.moonclaw_run_artifacts_route(),
     "/api/moonclaw/runs/<run-id>/artifacts",
+  )
+  assert_eq(
+    @core.moonclaw_task_events_url("task_123"),
+    "/api/moonclaw/tasks/task_123/events?cursor=start",
+  )
+  assert_eq(
+    @core.moonclaw_task_events_url("task_123", cursor="mct2.9.abc"),
+    "/api/moonclaw/tasks/task_123/events?cursor=mct2.9.abc",
+  )
+  assert_eq(
+    @core.moonclaw_task_events_route(),
+    "/api/moonclaw/tasks/<task-id>/events",
   )
   assert_eq(
     @core.moonclaw_supervisor_activation_route(),
@@ -179,6 +197,12 @@ test "desktop api route contracts own active backend method policy" {
       ", ",
     ),
     "GET, HEAD",
+  )
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(@core.moonclaw_route("chat")).join(
+      ", ",
+    ),
+    "POST",
   )
   assert_eq(
     @core.desktop_api_route_allowed_methods(

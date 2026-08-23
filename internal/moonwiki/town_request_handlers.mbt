@@ -68,6 +68,7 @@ async fn handle_town_requests(
 }
 
 ///|
+#warnings("-unused_value")
 fn town_request_listing_record(record : Json, name : String) -> Json {
   let path = json_string(
     record,

@@ -40,16 +40,10 @@ async fn handle_workspace_reveal(
 
 ///|
 async fn reveal_path(absolute : String) -> Int {
-  let mac = @process.run("open", ["-R", absolute]) catch { _ => -1 }
-  if mac == 0 {
-    return mac
-  }
   let target = if is_directory(absolute) {
     absolute
   } else {
     @pathx.dirname(absolute).to_owned()
   }
-  @process.run("xdg-open", [target]) catch {
-    _ => mac
-  }
+  @trusted_host.reveal_path(absolute, target)
 }

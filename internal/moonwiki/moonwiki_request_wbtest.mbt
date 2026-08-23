@@ -1936,7 +1936,32 @@ async test "desk server routes work end to end and reject path escapes" {
       .stringify()
       .contains("/api/workspaces/\{workspace_id}/raw?path=images/logo.png"),
     )
-
+    let image_digest = "sha256:" +
+      @crypto.bytes_to_hex_string(
+        @crypto.sha256(
+          @fs.read_file(@pathx.join(book_root, "images/logo.png")).binary(),
+        ),
+      )
+    let image_artifact_url = @desk.workspace_artifact_url(
+      workspace_id, "images/logo.png", image_digest,
+    )
+    assert_true(image_artifact_url.contains("/artifact?path="))
+    assert_true(image_artifact_url.contains("&digest="))
+    let (_, verified_image_body) = test_http_get(base + image_artifact_url, 200)
+    assert_eq(verified_image_body, "png-bytes")
+    ignore(
+      test_http_get(
+        base +
+        "/api/workspaces/\{workspace_id}/artifact?path=images%2Flogo.png&digest=stale",
+        409,
+      ),
+    )
+    ignore(
+      test_http_get(
+        base + "/api/workspaces/\{workspace_id}/artifact?path=images%2Flogo.png",
+        400,
+      ),
+    )
     let (_, raw_body) = test_http_get(
       base + "/api/workspaces/\{workspace_id}/raw?path=raw%2Fevidence.txt",
       200,

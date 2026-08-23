@@ -1,5 +1,5 @@
 ///|
-async test "town launch agent logs resolve through owning suite for book roots" {
+async test "town launch agent template rejects workspace-controlled execution config" {
   let suite_root = @pathx.join(
     "/tmp",
     "moondesk-town-launch-agent-wbtest-" + @async.now().to_string(),
@@ -24,26 +24,5 @@ async test "town launch agent logs resolve through owning suite for book roots" 
     "\n",
     create=0o644,
   )
-  let plist = match town_daemon_launch_agent_plist(book_root) {
-    Some(value) => value
-    None => {
-      fail("expected configured town launch agent")
-      ""
-    }
-  }
-  assert_true(
-    plist.contains(
-      @pathx.join(
-        suite_root, ".moonsuite/products/moondesk/daemon/launch-agent.out.log",
-      ),
-    ),
-  )
-  assert_true(
-    plist.contains(
-      @pathx.join(
-        suite_root, ".moonsuite/products/moondesk/daemon/launch-agent.err.log",
-      ),
-    ),
-  )
-  assert_false(plist.contains("/books/research-town/.moonsuite/"))
+  assert_true(town_daemon_launch_agent_plist(book_root) is None)
 }

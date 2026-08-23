@@ -1,6 +1,7 @@
 ///|
 test "source semantics keeps compiler diagnostics structured and confined" {
   let output = "{\"$message_type\":\"diagnostic\",\"level\":\"warning\",\"path\":\"/work/book/src/main.mbt\",\"start_line\":2,\"start_col\":3,\"message\":\"unused\"}\n" +
+    "{\"$message_type\":\"diagnostic\",\"path\":\"/private/tmp/sandbox/workspace/secret.mbt\",\"message\":\"must not leak\"}\n" +
     "{\"$message_type\":\"summary\",\"diagnostics\":1}\nnot-json"
   let diagnostics = source_semantics_diagnostics(output, "/work/book")
   assert_eq(diagnostics.length(), 1)
@@ -59,5 +60,53 @@ test "source semantics normalizes workspace paths in navigation output" {
   assert_eq(
     source_semantics_module_prefix("/work/book", "/work/book"),
     Some(""),
+  )
+}
+
+///|
+async test "source semantics refuses host fallback before package pre-build can execute" {
+  @moonlib/fsx.with_temporary_directory(
+    "moondesk-source-semantics-sandbox-wbtest-",
+    root => {
+      let marker = @pathx.join(root, "host-prebuild-marker")
+      @fsx.write_to_file(
+        @pathx.join(root, "moon.mod"),
+        "name = \"sandbox/refusal\"\npreferred_target = \"native\"\n",
+        create=0o600,
+      )
+      @fsx.write_to_file(
+        @pathx.join(root, "moon.pkg"),
+        "options(\n  \"pre-build\": [{ \"command\": \"touch " +
+        marker +
+        "\", \"input\": [], \"output\": \"generated.mbt\" }],\n)\n",
+        create=0o600,
+      )
+      @fsx.write_to_file(
+        @pathx.join(root, "main.mbt"),
+        "fn value() -> Int { 1 }\n",
+        create=0o600,
+      )
+      let workspace = @desk.workspace(
+        id="sandbox-refusal",
+        name="Sandbox Refusal",
+        root_path=root,
+        kind=MoonBook,
+      )
+      let result = source_semantics_result(workspace, {
+        "action": "diagnostics",
+        "path": "main.mbt",
+      })
+      guard result is Err(SandboxUnavailable) else {
+        fail(
+          "source semantics must refuse when the sandbox adapter is unavailable",
+        )
+      }
+      assert_eq(
+        source_semantics_sandbox_error_message(SandboxUnavailable),
+        "Source semantics sandbox is unavailable; host execution was refused",
+      )
+      assert_false(@fsx.exists(marker))
+      assert_false(@fsx.exists(@pathx.join(root, "generated.mbt")))
+    },
   )
 }

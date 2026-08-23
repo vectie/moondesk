@@ -33,6 +33,7 @@ fn mooncode_session_lifecycle_native_body(
 }
 
 ///|
+#warnings("-unused_value")
 priv enum MoonCodeLifecycleRouteFailureKind {
   NotFound
   Conflict
@@ -41,11 +42,13 @@ priv enum MoonCodeLifecycleRouteFailureKind {
 } derive(Debug, Eq)
 
 ///|
+#warnings("-unused_value")
 priv enum MoonCodeLifecycleRouteStopReason {
   SessionActive
 } derive(Debug, Eq)
 
 ///|
+#warnings("-unused_field")
 priv struct MoonCodeLifecycleRouteFailure {
   code : Int
   title : String

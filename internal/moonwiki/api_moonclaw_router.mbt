@@ -8,6 +8,26 @@ async fn route_moonclaw_api(
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
+    ["api", "moonclaw", "chat"] => {
+      let endpoint = @desk.moonclaw_route("chat")
+      if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_moonclaw_general_chat(workspace_root, body, method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
+    ["api", "moonclaw", "tasks", task_id, "events"] => {
+      let endpoint = @desk.moonclaw_task_events_route()
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_moonclaw_general_task_events(
+          workspace_root, task_id, request_path, method_, conn,
+        )
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "moonclaw", "runs"] => {
       let endpoint = @desk.moonclaw_route("runs")
       if desktop_api_route_accepts_read(endpoint, method_) {

@@ -7,6 +7,7 @@ fn mooncode_native_stream_cursor(
 }
 
 ///|
+#warnings("-unused_value")
 fn mooncode_max_int(left : Int, right : Int) -> Int {
   if left > right {
     left

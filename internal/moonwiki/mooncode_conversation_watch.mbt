@@ -92,7 +92,7 @@ async fn handle_mooncode_session_watch(
   let next_sequence = match
     mooncode_native_stream_cursor(stream_text, resume_cursor) {
     Ok(cursor) => cursor.sequence()
-    Err(@mooncode_core.Malformed(reason)) => {
+    Err(Malformed(reason)) => {
       send_api_error(conn, method_, 502, "Bad Gateway", reason)
       return
     }
@@ -160,19 +160,9 @@ fn mooncode_conversation_watch_response(
       Ok(value) => value
       Err(_) => return Err("Invalid trusted MoonCode watch conversation")
     }
-    @mooncode_core.MoonCodeWatchResult::Snapshot(
-      cursor~,
-      session~,
-      conversation~,
-      terminal~,
-    )
+    @mooncode_core.Snapshot(cursor~, session~, conversation~, terminal~)
   } else {
-    @mooncode_core.MoonCodeWatchResult::Heartbeat(
-      cursor~,
-      session_id~,
-      retry_after_ms=100,
-      terminal~,
-    )
+    Heartbeat(cursor~, session_id~, retry_after_ms=100, terminal~)
   }
   match @mooncode_core.encode_mooncode_watch_result(result) {
     Ok(payload) => Ok(payload)

@@ -127,8 +127,6 @@ async fn submit_mooncode_turn(
     Err(error) => return Err(error)
     Ok(None) => ()
   }
-  let action = @mooncode.command_action(command)
-  let message = @mooncode.command_message(command)
   let daemon = ensure_moonclaw_daemon_running(
     workspace_root,
     action="submit-turn",

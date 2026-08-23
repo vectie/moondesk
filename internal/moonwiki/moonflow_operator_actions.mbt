@@ -689,16 +689,15 @@ async fn moonflow_recover_receiver_receipts(
   if moonflow_root == "" || !@fs.exists(@pathx.join(moonflow_root, "moon.mod")) {
     return false
   }
-  let captured = @async.with_timeout_opt(30000, () => {
-    run_process_capture(
-      moonclaw_default_moon_command(),
-      moonflow_cli_arguments(moonflow_root, [
-        "recover-operator-receipts", workspace_root, run_id,
-      ]),
-    )
+  let recovered = execution_sandbox_client_submit({
+    operation: MoonFlowRecoverReceiverReceipts,
+    input: {
+      "moonflow_root": moonflow_root,
+      "workspace_root": workspace_root,
+      "run_id": run_id,
+    },
   })
-  guard captured is Some((0, stdout, _)) else { return false }
-  let response = @json.parse(stdout.trim()) catch { _ => return false }
+  guard recovered is Ok(response) else { return false }
   json_string(response, "contract_id", default="") ==
   "moonflow.receiver-recovery.v1" &&
   json_string(response, "run_id", default="") == run_id
@@ -1050,8 +1049,11 @@ fn moonflow_receiver_cli_status(
     moonflow_action_required_string(fields, "contract_id")
     is Some("moonflow.receiver-status.v1") &&
     moonflow_action_required_string(fields, "contract_version") is Some("1.0.0") &&
-    moonflow_action_required_string(fields, "run_id") is Some(run_id) &&
-    moonflow_action_required_string(fields, "handoff_token") is Some(token) &&
+    moonflow_action_required_string(fields, "run_id") is Some(candidate_run_id) &&
+    candidate_run_id == run_id &&
+    moonflow_action_required_string(fields, "handoff_token")
+    is Some(candidate_token) &&
+    candidate_token == token &&
     moonflow_action_required_string(fields, "handoff_digest")
     is Some(handoff_digest) &&
     handoff_digest == "sha256:" + token &&
@@ -1152,21 +1154,26 @@ async fn handle_moonflow_receiver_receipt(
     run_id +
     "/" +
     submission_relative
-  let captured = @async.with_timeout_opt(30000, () => {
-    run_process_capture(
-      moonclaw_default_moon_command(),
-      moonflow_cli_arguments(moonflow_root, [
-        "receive-operator-receipt", workspace_root, run_id, token, workspace_submission_ref,
-      ]),
-    )
+  let received = execution_sandbox_client_submit({
+    operation: MoonFlowReceiveOperatorReceipt,
+    input: {
+      "moonflow_root": moonflow_root,
+      "workspace_root": workspace_root,
+      "run_id": run_id,
+      "token": token,
+      "submission_ref": workspace_submission_ref,
+    },
   })
-  guard captured is Some((0, stdout, _)) else {
+  guard received is Ok(response) else {
     send_api_error(
-      conn, method_, 409, "Conflict", "MoonFlow rejected the receiver receipt",
+      conn,
+      method_,
+      503,
+      "Service Unavailable",
+      execution_sandbox_unavailable_message(),
     )
     return
   }
-  let response = @json.parse(stdout.trim()) catch { _ => Json::null() }
   guard moonflow_receiver_cli_status(response, run_id, token) is Some(status) else {
     send_api_error(
       conn, method_, 502, "Bad Gateway", "MoonFlow returned an invalid receiver status",
@@ -1327,32 +1334,25 @@ async fn handle_moonflow_operator_action(
     )
     return
   }
-  let moon = moonclaw_default_moon_command()
-  let captured = @async.with_timeout_opt(30000, () => {
-    run_process_capture(moon, [
-      "-C", moonflow_root, "run", "cmd/main", "--", "commit-pack-handoff", config_path,
-      handoff_path,
-    ])
+  let committed = execution_sandbox_client_submit({
+    operation: MoonFlowCommitPackHandoff,
+    input: {
+      "moonflow_root": moonflow_root,
+      "config_path": config_path,
+      "handoff_path": handoff_path,
+      "run_id": run_id,
+      "action_id": action_id,
+    },
   })
-  guard captured is Some((code, stdout, _)) else {
+  guard committed is Ok(receipt_json) else {
     send_api_error(
-      conn, method_, 504, "Gateway Timeout", "MoonFlow action timed out",
+      conn,
+      method_,
+      503,
+      "Service Unavailable",
+      execution_sandbox_unavailable_message(),
     )
     return
-  }
-  if code != 0 {
-    send_api_error(
-      conn, method_, 409, "Conflict", "MoonFlow rejected the action",
-    )
-    return
-  }
-  let receipt_json = @json.parse(stdout.trim()) catch {
-    _ => {
-      send_api_error(
-        conn, method_, 502, "Bad Gateway", "Invalid MoonFlow receipt",
-      )
-      return
-    }
   }
   guard moonflow_sanitized_receipt(run_id, action_id, receipt_json)
     is Some(receipt) else {

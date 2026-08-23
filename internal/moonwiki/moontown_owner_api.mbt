@@ -25,7 +25,7 @@ async fn moontown_owner_get_raw_json(
   path : String,
 ) -> Result[Json, String] {
   let (response, data) = @http.get(service_url + path) catch {
-    error => return Err("MoonTown is unavailable at {path}: {error}")
+    error => return Err("MoonTown is unavailable at \{path}: \{error}")
   }
   let text = data.text() catch { _ => "" }
   if response.code < 200 || response.code > 299 {

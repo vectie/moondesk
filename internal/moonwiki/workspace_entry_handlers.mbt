@@ -164,6 +164,19 @@ async fn handle_workspace_preview(
             _ => ""
           }
         }
+        let metadata = if is_binary_preview(entry.kind) {
+          let bytes = @fs.read_file(absolute).binary() catch { _ => b"" }
+          {
+            "artifact_digest": "sha256:\{@crypto.bytes_to_hex_string(@crypto.sha256(bytes))}",
+            "artifact_url": @desk.workspace_artifact_url(
+              workspace.id,
+              clean_relative,
+              "sha256:\{@crypto.bytes_to_hex_string(@crypto.sha256(bytes))}",
+            ),
+          }
+        } else {
+          {}
+        }
         let warnings = if !is_binary_preview(entry.kind) && body == "" {
           ["File could not be read as UTF-8 text."]
         } else {
@@ -172,7 +185,7 @@ async fn handle_workspace_preview(
         send_json(
           conn,
           method_,
-          @desk.preview(entry, body~, warnings~).to_json(),
+          @desk.preview(entry, body~, warnings~, metadata~).to_json(),
         )
       } else if moonbook_section_for_path(clean_relative) is Some(section) &&
         workspace.kind is MoonBook {
@@ -187,6 +200,75 @@ async fn handle_workspace_preview(
       } else {
         send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
       }
+    None => send_api_error(conn, method_, 400, "Bad Request", "Invalid path")
+  }
+}
+
+///|
+/// Serve a workspace artifact only after verifying the caller-provided
+/// digest against the confined file. This keeps image loads bounded to the
+/// selected workspace and makes stale preview handles fail closed.
+async fn handle_workspace_artifact(
+  workspace_root : String,
+  workspace_id : String,
+  request_path : String,
+  method_ : @http.RequestMethod,
+  conn : @http.ServerConnection,
+) -> Unit {
+  let workspace = match find_workspace(workspace_root, workspace_id) {
+    Some(workspace) => workspace
+    None => {
+      send_api_error(conn, method_, 404, "Not Found", "Unknown workspace")
+      return
+    }
+  }
+  let expected = decode_query_value(
+    query_value(request_path, "digest").unwrap_or(""),
+  )
+  if expected == "" {
+    send_api_error(
+      conn, method_, 400, "Bad Request", "Artifact digest is required",
+    )
+    return
+  }
+  let relative = decode_query_value(
+    query_value(request_path, "path").unwrap_or(""),
+  )
+  match resolve_workspace_existing_path(workspace.root_path, relative) {
+    Some((absolute, clean_relative)) => {
+      if !@fs.exists(absolute) || is_directory(absolute) {
+        send_api_error(conn, method_, 404, "Not Found", "Artifact not found")
+        return
+      }
+      let bytes = @fs.read_file(absolute).binary() catch {
+        _ => {
+          send_api_error(
+            conn, method_, 404, "Not Found", "Artifact could not be read",
+          )
+          return
+        }
+      }
+      let actual = "sha256:" +
+        @crypto.bytes_to_hex_string(@crypto.sha256(bytes))
+      if !workspace_artifact_digest_matches(expected, actual) {
+        send_api_error(
+          conn, method_, 409, "Conflict", "Artifact digest mismatch",
+        )
+        return
+      }
+      conn.send_response(200, "OK", extra_headers={
+        "content-type": @preview.content_type(clean_relative),
+        "cache-control": "private, max-age=60",
+        "x-content-type-options": "nosniff",
+        "x-artifact-digest": actual,
+      })
+      if method_ is Head {
+        conn.end_response()
+        return
+      }
+      conn.write(bytes)
+      conn.end_response()
+    }
     None => send_api_error(conn, method_, 400, "Bad Request", "Invalid path")
   }
 }

@@ -250,8 +250,11 @@ async test "OpenRouter key writer preserves config and enforces private mode" {
   assert_eq(json_string(stored, "api_key", default=""), "sk-secret-for-test")
   assert_eq(json_string(stored, "primary", default=""), "codex/gpt-5.6-sol")
   assert_true(json_object_field(stored, "models") is Some(_))
-  let (mode_code, mode_text, _) = run_process_capture("ls", ["-l", path])
+  let (mode_code, mode_data) = @process.collect_stdout("ls", ["-l", path]) catch {
+    error => fail("cannot inspect OpenRouter key permissions: \{error}")
+  }
   assert_eq(mode_code, 0)
+  let mode_text = mode_data.text()
   assert_true(mode_text.has_prefix("-rw-------"))
 
   let response = moonclaw_openrouter_key_success_response(

@@ -74,15 +74,15 @@ async fn run_lepusa_integration(args : Array[String]) -> Bool {
       options, repo_root, lepusa_root, project, out_dir, manifest_path,
     )
   }
-  let lepusa_args = lepusa_integration_process_args(
-    options, project, out_dir, manifest_path,
-  )
-  let code = @process.run("moon", lepusa_args, cwd=lepusa_root) catch {
-    error => {
-      println("lepusa failed: could not run Lepusa CLI: \{error}")
+  let operation = match
+    trusted_lepusa_operation(options, project, out_dir, manifest_path) {
+    Ok(operation) => operation
+    Err(message) => {
+      println("lepusa failed: \{message}")
       return false
     }
   }
+  let code = @trusted_host.run_lepusa_operation(lepusa_root, operation)
   if code == 0 {
     println("lepusa \{options.command} \{options.target}: ok")
     true

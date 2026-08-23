@@ -4,6 +4,7 @@
 let moonedit_max_document_bytes : Int = 4 * 1024 * 1024
 
 ///|
+#warnings("-unused_field")
 priv enum MoonEditDocumentError {
   Oversized(Int, Int)
   InvalidUtf8
@@ -11,6 +12,7 @@ priv enum MoonEditDocumentError {
 }
 
 ///|
+#warnings("-unused_field")
 priv struct MoonEditDocument {
   text : String
   byte_size : Int
@@ -59,7 +61,7 @@ fn moonedit_decode_document(
     return Err(Oversized(byte_size, moonedit_max_document_bytes))
   }
   let text = @encoding/utf8.decode(bytes) catch {
-    @encoding/utf8.Malformed(_) => return Err(InvalidUtf8)
+    Malformed(_) => return Err(InvalidUtf8)
   }
   match moonedit_validate_text_controls(text) {
     Err(error) => Err(error)
@@ -68,6 +70,7 @@ fn moonedit_decode_document(
 }
 
 ///|
+#warnings("-unused_value")
 fn moonedit_validate_document_for_save(
   text : String,
 ) -> Result[MoonEditDocument, MoonEditDocumentError] {

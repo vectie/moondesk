@@ -801,6 +801,13 @@ fn moonclaw_configuration_evidence_from_descriptor(
   installed : Bool,
   descriptor : Json,
 ) -> Json {
+  if json_bool(descriptor, "legacy_execution_rejected", default=false) {
+    return {
+      "configured": false,
+      "valid": false,
+      "reason": "legacy-workspace-execution-config-rejected",
+    }
+  }
   let configured = json_bool(descriptor, "configured", default=false)
   let valid = json_bool(descriptor, "configuration_valid", default=configured)
   let repair_available = json_bool(
@@ -1061,6 +1068,13 @@ async fn start_moonclaw_daemon(
   action? : String = "start",
 ) -> Json {
   let descriptor = moonclaw_service_descriptor(root, "daemon")
+  if json_bool(descriptor, "legacy_execution_rejected", default=false) {
+    return moonclaw_daemon_configuration_failure(
+      root,
+      action~,
+      message="MoonClaw daemon service configuration contains rejected host execution fields",
+    )
+  }
   if !json_bool(descriptor, "configured", default=false) {
     return moonclaw_daemon_lifecycle_result(
       root,
@@ -1077,75 +1091,34 @@ async fn start_moonclaw_daemon(
       message="MoonClaw daemon service configuration is not usable",
     )
   }
-  let state_dir = moonsuite_product_artifact_for_workspace_root(
-    root, "moonclaw", "moondesk-daemon-lifecycle",
-  )
-  @fsx.make_directory(state_dir, recursive=true, exists_ok=true) catch {
-    _ =>
+  let binding = match
+    @trusted_host.managed_moonclaw_binding(
+      json_string(descriptor, "version", default=""),
+    ) {
+    Ok(binding) => binding
+    Err(message) =>
       return moonclaw_daemon_lifecycle_result(
         root,
         action~,
         ok=false,
-        status="failed",
-        message="Could not create MoonClaw daemon lifecycle directory",
+        status="trusted-binding-unavailable",
+        message~,
       )
   }
-  let id = @desk.stable_id("moonclaw-daemon", @async.now().to_string())
-  let stdout_path = @pathx.join(state_dir, id + ".out.log")
-  let stderr_path = @pathx.join(state_dir, id + ".err.log")
-  let stdout_file = @process.redirect_to_file(
-    stdout_path,
-    append=true,
-    create_mode=OpenOrCreate,
-    permission=0o644,
-  ) catch {
-    _ =>
+  let started = match
+    @trusted_host.start_managed_moonclaw_daemon(binding, root) {
+    Ok(started) => started
+    Err(message) =>
       return moonclaw_daemon_lifecycle_result(
         root,
         action~,
         ok=false,
-        status="failed",
-        message="Could not open MoonClaw daemon stdout log",
+        status="trusted-binding-unavailable",
+        message~,
       )
   }
-  let stderr_file = @process.redirect_to_file(
-    stderr_path,
-    append=true,
-    create_mode=OpenOrCreate,
-    permission=0o644,
-  ) catch {
-    _ =>
-      return moonclaw_daemon_lifecycle_result(
-        root,
-        action~,
-        ok=false,
-        status="failed",
-        message="Could not open MoonClaw daemon stderr log",
-      )
-  }
-  let executable = json_string(descriptor, "command", default="")
-  let args = json_string_array_items(descriptor, "args")
-  let cwd = json_string(descriptor, "cwd", default=root)
-  let command = json_string(descriptor, "display", default="")
-  let pid = @process.spawn_orphan(
-    executable,
-    args,
-    cwd~,
-    stdout=stdout_file,
-    stderr=stderr_file,
-  ) catch {
-    error =>
-      return moonclaw_daemon_lifecycle_result(
-        root,
-        action~,
-        ok=false,
-        status="failed",
-        message="Could not start MoonClaw daemon: \{error}",
-        command~,
-        stdout_path~,
-        stderr_path~,
-      )
-  }
+  let pid = started.pid
+  let command = started.display
   let info_path = moonclaw_daemon_info_path(root)
   let mut reachable = false
   let mut exited = false
@@ -1163,11 +1136,6 @@ async fn start_moonclaw_daemon(
     }
     checks += 1
   }
-  let failure_detail = if exited {
-    moonclaw_startup_failure_detail(stderr_path, stdout_path)
-  } else {
-    ""
-  }
   moonclaw_daemon_lifecycle_result(
     root,
     action~,
@@ -1182,8 +1150,6 @@ async fn start_moonclaw_daemon(
     running=reachable,
     message=if reachable {
       "MoonClaw daemon started"
-    } else if exited && failure_detail != "" {
-      failure_detail
     } else if exited {
       "MoonClaw daemon exited before it became reachable"
     } else {
@@ -1192,8 +1158,6 @@ async fn start_moonclaw_daemon(
     pid~,
     command~,
     info_path~,
-    stdout_path~,
-    stderr_path~,
   )
 }
 
@@ -1215,24 +1179,6 @@ async fn moonclaw_daemon_configuration_failure(
   fields["message"] = message.to_json()
   fields["next_action"] = "configure_moonclaw".to_json()
   Json::object(fields)
-}
-
-///|
-async fn moonclaw_startup_failure_detail(
-  stderr_path : String,
-  stdout_path : String,
-) -> String {
-  let stderr_text = @fs.read_file(stderr_path).text() catch { _ => "" }
-  let stderr_text = stderr_text.trim().to_owned()
-  if stderr_text != "" {
-    return "MoonClaw daemon exited: " + stderr_text
-  }
-  let stdout_text = @fs.read_file(stdout_path).text() catch { _ => "" }
-  let stdout_text = stdout_text.trim().to_owned()
-  if stdout_text != "" {
-    return "MoonClaw daemon exited: " + stdout_text
-  }
-  ""
 }
 
 ///|
@@ -1293,23 +1239,7 @@ fn moonclaw_allows_unconfigured_existing_daemon(
 
 ///|
 async fn process_is_alive(pid : Int) -> Bool {
-  let code = run_process_quiet("kill", ["-0", pid.to_string()])
-  if code != 0 {
-    return false
-  }
-  let (status_code, stdout, _) = run_process_capture("ps", [
-    "-p",
-    pid.to_string(),
-    "-o",
-    "stat=",
-  ])
-  status_code == 0 && process_status_is_alive(stdout)
-}
-
-///|
-fn process_status_is_alive(status : String) -> Bool {
-  let status = status.trim().to_owned()
-  status != "" && !status.has_prefix("Z")
+  @trusted_host.pid_is_alive(pid)
 }
 
 ///|
@@ -1346,21 +1276,11 @@ async fn moonclaw_get_json(
   daemon : Json,
   path : String,
 ) -> Result[Json, String] {
-  let port = json_int(daemon, "port", default=0)
-  if port <= 0 {
-    return Err("MoonClaw daemon port is not available")
+  let config = match moonclaw_load_control_config(daemon) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
-  let (response, data) = @http.get("http://127.0.0.1:\{port}\{path}") catch {
-    error => return Err("MoonClaw GET \{path} failed: \{error}")
-  }
-  let text = data.text() catch { _ => "" }
-  if response.code < 200 || response.code > 299 {
-    return Err("MoonClaw GET \{path} returned \{response.code}: \{text}")
-  }
-  let payload = @json.parse(text) catch {
-    _ => return Err("MoonClaw GET \{path} returned invalid JSON")
-  }
-  Ok(payload)
+  moonclaw_get_json_with_control_config(daemon, path, config)
 }
 
 ///|
@@ -1368,18 +1288,11 @@ async fn moonclaw_get_text(
   daemon : Json,
   path : String,
 ) -> Result[String, String] {
-  let port = json_int(daemon, "port", default=0)
-  if port <= 0 {
-    return Err("MoonClaw daemon port is not available")
+  let config = match moonclaw_load_control_config(daemon) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
-  let (response, data) = @http.get("http://127.0.0.1:\{port}\{path}") catch {
-    error => return Err("MoonClaw GET \{path} failed: \{error}")
-  }
-  let text = data.text() catch { _ => "" }
-  if response.code < 200 || response.code > 299 {
-    return Err("MoonClaw GET \{path} returned \{response.code}: \{text}")
-  }
-  Ok(text)
+  moonclaw_get_text_with_control_config(daemon, path, config)
 }
 
 ///|
@@ -1388,23 +1301,11 @@ async fn moonclaw_post_json(
   path : String,
   body : Json,
 ) -> Result[Json, String] {
-  let port = json_int(daemon, "port", default=0)
-  if port <= 0 {
-    return Err("MoonClaw daemon port is not available")
+  let config = match moonclaw_load_control_config(daemon) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
-  let (response, data) = @http.post("http://127.0.0.1:\{port}\{path}", body, headers={
-    "Content-Type": "application/json",
-  }) catch {
-    error => return Err("MoonClaw POST \{path} failed: \{error}")
-  }
-  let text = data.text() catch { _ => "" }
-  if response.code < 200 || response.code > 299 {
-    return Err("MoonClaw POST \{path} returned \{response.code}: \{text}")
-  }
-  let payload = @json.parse(text) catch {
-    _ => return Err("MoonClaw POST \{path} returned invalid JSON")
-  }
-  Ok(payload)
+  moonclaw_post_json_with_control_config(daemon, path, body, config)
 }
 
 ///|

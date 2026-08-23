@@ -1,28 +1,4 @@
 ///|
-test "moonclaw release asset selects exact platform" {
-  let manifest : Json = {
-    "assets": [
-      {
-        "platform": "macos",
-        "architecture": "arm64",
-        "name": "moonclaw-0.1.4-macos-arm64.tar.gz",
-      },
-      {
-        "platform": "linux",
-        "architecture": "x86_64",
-        "name": "moonclaw-0.1.4-linux-x86_64.tar.gz",
-      },
-    ],
-  }
-  let selected = moonclaw_release_asset(manifest, "macos", "arm64").unwrap()
-  assert_eq(
-    json_string(selected, "name", default=""),
-    "moonclaw-0.1.4-macos-arm64.tar.gz",
-  )
-  assert_true(moonclaw_release_asset(manifest, "macos", "x86_64") is None)
-}
-
-///|
 test "platform support is explicit and independent of string validity" {
   let macos = moonclaw_platform_support_from_values("macos", "arm64")
   assert_true(macos.supported)
@@ -53,63 +29,56 @@ test "platform support is explicit and independent of string validity" {
 }
 
 ///|
-test "installer succeeds with a running daemon that still needs a model" {
-  let result = moonclaw_install_success(
-    {
-      "ok": true,
-      "running": true,
-      "status": "running_needs_configuration",
-      "model_readiness": {
-        "known": true,
-        "ready": false,
-        "status": "needs_configuration",
-      },
-    },
-    "0.1.5",
-    "/tmp/runtime/moonclaw/0.1.5/bin/moonclaw",
+async test "supported updater fails closed without a host fallback" {
+  let result = install_moonclaw_release_for_platform(
+    "/tmp/moondesk-moonclaw-updater-refusal-wbtest",
+    moonclaw_platform_support_from_values("macos", "arm64"),
   )
-  assert_true(json_bool(result, "ok", default=false))
-  assert_true(json_bool(result, "running", default=false))
+  assert_false(json_bool(result, "ok", default=true))
+  assert_false(json_bool(result, "repair_available", default=true))
   assert_eq(
     json_string(result, "status", default=""),
-    "installed_needs_configuration",
+    "updater_sandbox_unavailable",
   )
-  assert_eq(json_string(result, "next_action", default=""), "configure_model")
+  assert_eq(
+    json_string(result, "next_action", default=""),
+    "configure_execution_sandbox",
+  )
   assert_true(
     json_string(result, "message", default="").contains(
-      "model must be configured",
+      "refused to run the MoonClaw updater on the host",
     ),
   )
-}
-
-///|
-test "installer preserves compatibility when model readiness is unknown" {
-  let result = moonclaw_install_success(
-    {
-      "ok": true,
-      "running": true,
-      "model_readiness": { "known": false, "ready": false },
-    },
-    "0.1.4",
-    "/tmp/runtime/moonclaw/0.1.4/bin/moonclaw",
+  let boundary = json_object_field(result, "updater_boundary").unwrap()
+  assert_eq(
+    json_string(boundary, "kind", default=""),
+    "execution-sandbox-updater.v1",
   )
-  assert_eq(json_string(result, "status", default=""), "installed_and_running")
-  assert_eq(json_string(result, "next_action", default=""), "use_moonclaw")
+  assert_false(json_bool(boundary, "available", default=true))
+  assert_eq(json_string(boundary, "fallback", default=""), "deny")
+  assert_false(json_bool(boundary, "host_process_fallback", default=true))
 }
 
 ///|
-async test "unsupported platform installation fails before release lookup" {
+async test "unsupported platform keeps its specific refusal" {
   let result = install_moonclaw_release_for_platform(
     "/tmp/moondesk-moonclaw-unsupported-install-wbtest",
     moonclaw_platform_support_from_values("unsupported", "unsupported"),
   )
   assert_false(json_bool(result, "ok", default=true))
   assert_eq(json_string(result, "status", default=""), "platform_unsupported")
+  assert_eq(
+    json_string(result, "next_action", default=""),
+    "review_supported_platforms",
+  )
   assert_true(
     json_string(result, "message", default="").contains(
       "not supported for unsupported unsupported",
     ),
   )
+  let boundary = json_object_field(result, "updater_boundary").unwrap()
+  assert_false(json_bool(boundary, "available", default=true))
+  assert_eq(json_string(boundary, "fallback", default=""), "deny")
 }
 
 ///|
@@ -130,57 +99,11 @@ test "moonclaw runtime root follows the packaged app data directory" {
 }
 
 ///|
-test "installer initializes MoonClaw in the canonical suite root" {
-  assert_eq(moonclaw_onboard_init_args("/tmp/moonsuite"), [
-    "onboard", "init", "--home", "/tmp/moonsuite", "--cwd", "/tmp/moonsuite", "--json",
-  ])
-}
-
-///|
-test "moonclaw release declarations reject unsafe paths and checksums" {
-  assert_true(
-    moonclaw_release_segment_valid("moonclaw-0.1.4-macos-arm64.tar.gz"),
-  )
-  assert_false(moonclaw_release_segment_valid("../moonclaw.tar.gz"))
-  assert_false(moonclaw_release_segment_valid("moonclaw/asset.tar.gz"))
-  assert_true(
-    moonclaw_release_checksum_valid(
-      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-    ),
-  )
-  assert_false(moonclaw_release_checksum_valid("not-a-checksum"))
-}
-
-///|
-test "moonclaw release URLs temporarily trust only the GitLab HTTP origin" {
-  let manifest = "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.4/downloads/release-manifest-gitlab.json"
-  assert_true(moonclaw_release_url_allowed(manifest, manifest))
-  assert_true(
-    moonclaw_release_url_allowed(
-      "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.4/downloads/moonclaw-0.1.4-macos-arm64.tar.gz",
-      manifest,
-    ),
-  )
-  assert_false(
-    moonclaw_release_url_allowed(
-      "http://example.com/moonclaw-0.1.4-macos-arm64.tar.gz", manifest,
-    ),
-  )
-  assert_false(
-    moonclaw_release_url_allowed(
-      "http://gl.vectie.xyz.evil.example/moonclaw.tar.gz", manifest,
-    ),
-  )
-  assert_false(
-    moonclaw_release_url_allowed(
-      "http://gl.vectie.xyz/vectie/moonclaw/-/releases/v0.1.3/downloads/moonclaw-0.1.3-macos-arm64.tar.gz",
-      "http://example.com/release-manifest.json",
-    ),
-  )
-  assert_true(
-    moonclaw_release_url_allowed(
-      "https://github.com/vectie/moonclaw/releases/download/v0.1.3/moonclaw-0.1.3-macos-arm64.tar.gz",
-      "https://github.com/vectie/moonclaw/releases/download/v0.1.3/release-manifest.json",
-    ),
-  )
+test "managed release version rejects path and control injection" {
+  assert_true(moonclaw_release_segment_valid("0.1.5"))
+  assert_true(moonclaw_release_segment_valid("moonclaw-0.1.5_arm64"))
+  assert_false(moonclaw_release_segment_valid("../moonclaw"))
+  assert_false(moonclaw_release_segment_valid("moonclaw/runtime"))
+  assert_false(moonclaw_release_segment_valid("moonclaw\n0.1.5"))
+  assert_false(moonclaw_release_segment_valid(""))
 }

@@ -57,3 +57,11 @@ async test "workspace preview handles text image virtual and missing entries" {
     None => fail("missing schemas section")
   }
 }
+
+///|
+test "workspace artifact digest handles fail closed" {
+  let actual = "sha256:" + "a".repeat(64)
+  assert_true(workspace_artifact_digest_matches(actual, actual))
+  assert_false(workspace_artifact_digest_matches("stale", actual))
+  assert_false(workspace_artifact_digest_matches(actual + "x", actual))
+}

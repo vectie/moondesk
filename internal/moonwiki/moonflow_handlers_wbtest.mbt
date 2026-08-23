@@ -7,17 +7,11 @@ test "MoonFlow run ids reject path escapes" {
 }
 
 ///|
-test "MoonFlow control is delegated to its exact CLI" {
-  let arguments = moonflow_control_cli_arguments(
-    "/suite-products/moonflow", "/suite", "flow-selene-r1", "narrow-authority", "2026-07-31T00:00:00Z",
-    "sandbox-execution",
-  )
-  assert_true(
-    arguments ==
-    [
-      "-C", "/suite-products/moonflow", "run", "cmd/main", "--", "control", "/suite",
-      "flow-selene-r1", "narrow-authority", "2026-07-31T00:00:00Z", "sandbox-execution",
-    ],
+test "MoonFlow execution boundary is fail closed" {
+  assert_false(execution_sandbox_client_available())
+  assert_eq(
+    execution_sandbox_unavailable_message(),
+    "Execution sandbox is unavailable; MoonDesk refused host execution",
   )
 }
 

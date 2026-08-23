@@ -1,0 +1,76 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/packstudio"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "vectie/moonlib/pack",
+  "vectie/moonlib/pack/installer",
+}
+
+// Values
+pub async fn activate_pack_version(PackVersionRequest, String) -> @installer.ActivePackPointer
+
+pub async fn active_pack_catalog(String) -> Json
+
+pub async fn adopt_pack_bridge(PackBridgeAdoptionRequest, String) -> PackStudioInspection
+
+pub async fn create_domain_pack_scaffold(PackScaffoldRequest, String) -> PackStudioInspection
+
+pub async fn deactivate_pack(PackIdentityRequest, String) -> Bool
+
+pub async fn inspect_pack_source(String, String) -> PackStudioInspection
+
+pub async fn install_pack_source(PackInstallRequest, String) -> @installer.InstallationReceipt
+
+// Errors
+
+// Types and methods
+pub(all) struct PackBridgeAdoptionRequest {
+  source_root : String
+  intake_operation_id : String
+  output_schema_id : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct PackIdentityRequest {
+  pack_id : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct PackInstallRequest {
+  source_root : String
+  granted_authorities : Array[@pack.AuthorityClass]
+  runtime_extensions : Array[String]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct PackScaffoldRequest {
+  parent_root : String
+  pack_id : String
+  display_name : String
+  product_id : String
+  intake_operation_id : String
+  output_schema_id : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct PackStudioInspection {
+  source_root : String
+  pack_id : String
+  version : String
+  display_name : String
+  product_id : String
+  valid : Bool
+  install_ready : Bool
+  active : Bool
+  bridge_ready : Bool
+  intake_operation_ids : Array[String]
+  authorities : Array[String]
+  issues : Array[String]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct PackVersionRequest {
+  pack_id : String
+  version : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+// Type aliases
+
+// Traits

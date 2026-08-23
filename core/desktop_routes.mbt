@@ -198,6 +198,20 @@ pub fn workspace_raw_url(workspace_id : String, path : String) -> String {
 }
 
 ///|
+/// A digest-bound artifact URL. The server re-hashes the confined workspace
+/// file before serving it, so a stale or path-swapped preview cannot be loaded.
+pub fn workspace_artifact_url(
+  workspace_id : String,
+  path : String,
+  digest : String,
+) -> String {
+  desktop_api_url(["api", "workspaces", workspace_id, "artifact"], query=[
+    ("path", path),
+    ("digest", digest),
+  ])
+}
+
+///|
 pub fn workspace_file_url(workspace_id : String, path : String) -> String {
   desktop_api_path(["api", "workspaces", workspace_id, "file"]) +
   "/" +
@@ -233,6 +247,21 @@ pub fn moonclaw_route(endpoint : String) -> String {
 ///|
 pub fn moonclaw_run_artifacts_route() -> String {
   desktop_api_path(["api", "moonclaw"]) + "/runs/<run-id>/artifacts"
+}
+
+///|
+/// Browser-safe proxy for the general MoonClaw task event stream. The daemon
+/// credential never leaves the native MoonDesk host.
+pub fn moonclaw_task_events_url(
+  task_id : String,
+  cursor? : String = "start",
+) -> String {
+  moonclaw_endpoint_url("tasks/" + task_id + "/events") + "?cursor=" + cursor
+}
+
+///|
+pub fn moonclaw_task_events_route() -> String {
+  desktop_api_path(["api", "moonclaw"]) + "/tasks/<task-id>/events"
 }
 
 ///|
@@ -455,6 +484,9 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
       "GET", "HEAD",
     ]),
     desktop_api_route_contract(workspace_action_route("raw"), ["GET", "HEAD"]),
+    desktop_api_route_contract(workspace_action_route("artifact"), [
+      "GET", "HEAD",
+    ]),
     desktop_api_route_contract(workspace_file_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(workspace_site_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(workspace_action_route("inbox"), ["POST"]),
@@ -521,6 +553,8 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(moonclaw_route("runs"), ["GET", "HEAD"]),
     desktop_api_route_contract(moonclaw_route("progress"), ["GET", "HEAD"]),
     desktop_api_route_contract(moonclaw_route("events"), ["GET", "HEAD"]),
+    desktop_api_route_contract(moonclaw_route("chat"), ["POST"]),
+    desktop_api_route_contract(moonclaw_task_events_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(moonclaw_run_artifacts_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(moonclaw_route("daemon"), ["GET", "HEAD"]),
     desktop_api_route_contract(moonclaw_route("daemon/install"), ["POST"]),

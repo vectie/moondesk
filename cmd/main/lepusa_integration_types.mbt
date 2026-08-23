@@ -17,6 +17,7 @@ priv struct LepusaIntegrationOptions {
 priv struct LepusaIntegrationProcessStep {
   name : String
   args : Array[String]
+  operation : Result[@trusted_host.LepusaOperation, String]
 }
 
 ///|

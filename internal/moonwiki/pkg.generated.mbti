@@ -50,8 +50,6 @@ type DocxParagraph derive(Eq, @debug.Debug)
 
 type DocxRun derive(Eq, @debug.Debug)
 
-type MoonClawCheckoutCandidate derive(Eq, @debug.Debug)
-
 type OfficeDocumentKind derive(Eq, @debug.Debug)
 
 type OfficeDocumentModel derive(@debug.Debug)

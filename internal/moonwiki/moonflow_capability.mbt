@@ -5,6 +5,7 @@ fn moonflow_capability_evidence_from_values(
   root_configured : Bool,
   root_valid : Bool,
   root : String,
+  execution_sandbox_available? : Bool = true,
 ) -> Json {
   let platform_supported = json_bool(
     platform_evidence,
@@ -12,11 +13,16 @@ fn moonflow_capability_evidence_from_values(
     default=false,
   )
   let configuration_valid = root_configured && root_valid
-  let available = platform_supported && command_available && configuration_valid
+  let available = platform_supported &&
+    command_available &&
+    configuration_valid &&
+    execution_sandbox_available
   {
     "available": available,
     "reason": if !platform_supported {
       "unsupported-platform"
+    } else if !execution_sandbox_available {
+      "execution-sandbox-unavailable"
     } else if !command_available {
       "runtime-command-unavailable"
     } else if !root_configured {
@@ -27,6 +33,11 @@ fn moonflow_capability_evidence_from_values(
       "capability-ready"
     },
     "root": root,
+    "execution_boundary": {
+      "kind": "execution-sandbox-client.v1",
+      "available": execution_sandbox_available,
+      "fallback": "deny",
+    },
     "platform_evidence": platform_evidence,
     "installation_evidence": {
       "installed": command_available,
@@ -58,16 +69,16 @@ fn moonflow_capability_evidence_from_values(
 ///|
 async fn moonflow_capability_evidence() -> Json {
   let root = @sys.get_env_var("MOONFLOW_ROOT").unwrap_or("")
-  let moon = moonclaw_default_moon_command()
   let platform = town_platform_evidence()
   moonflow_capability_evidence_from_values(
     platform,
-    service_command_available(moon, if root == "" { "." } else { root }),
+    false,
     root != "",
     root != "" &&
     is_directory(root) &&
     @fsx.exists(@pathx.join(root, "moon.mod")),
     root,
+    execution_sandbox_available=execution_sandbox_client_available(),
   )
 }
 

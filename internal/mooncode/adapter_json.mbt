@@ -41,6 +41,7 @@ fn string_array_json(items : Array[String]) -> Json {
 }
 
 ///|
+#warnings("-unused_value")
 fn trimmed_or(value : String, fallback~ : String) -> String {
   let trimmed = value.trim().to_owned()
   if trimmed == "" {

@@ -183,8 +183,8 @@ async fn run_install_launch_agent(args : Array[String]) -> Unit {
       return
     }
   }
-  ignore(launchctl_unload(label, plist_path))
-  let code = launchctl_load(label, plist_path)
+  ignore(launchctl_unload(service))
+  let code = launchctl_load(service)
   println(
     "install-launch-agent \{service}: \{if code == 0 { "loaded" } else { "written" }} \{plist_path} (launchctl \{code})",
   )
@@ -206,7 +206,7 @@ async fn run_uninstall_launch_agent(args : Array[String]) -> Unit {
   }
   let label = launch_agent_label(service)
   let plist_path = launch_agent_user_path(label)
-  let code = launchctl_unload(label, plist_path)
+  let code = launchctl_unload(service)
   @fs.remove(plist_path) catch {
     _ => ()
   }
@@ -231,7 +231,7 @@ async fn run_launch_agent_status(args : Array[String]) -> Unit {
   }
   let label = launch_agent_label(service)
   let plist_path = launch_agent_user_path(label)
-  let loaded = launchctl_status(label) == 0
+  let loaded = launchctl_status(service)
   println(
     "\{service} agent installed=\{@fsx.exists(plist_path)} loaded=\{loaded} label=\{label} path=\{plist_path}",
   )
@@ -348,46 +348,27 @@ fn launch_agent_user_path(label : String) -> String {
 }
 
 ///|
-async fn current_uid() -> String {
-  let output = @process.collect_output("id", ["-u"]) catch { _ => return "" }
-  if output.0 == 0 {
-    (output.1.text() catch { _ => "" }).trim().to_owned()
+fn trusted_launch_agent(service : String) -> @trusted_host.ManagedLaunchAgent {
+  if service == "town" {
+    MoonTown
   } else {
-    ""
+    MoonDesk
   }
 }
 
 ///|
-async fn launchctl_domain() -> String {
-  let uid = current_uid()
-  if uid == "" {
-    "gui/0"
-  } else {
-    "gui/\{uid}"
-  }
+async fn launchctl_load(service : String) -> Int {
+  @trusted_host.bootstrap_launch_agent(trusted_launch_agent(service))
 }
 
 ///|
-async fn launchctl_load(label : String, plist_path : String) -> Int {
-  ignore(label)
-  @process.run("launchctl", ["bootstrap", launchctl_domain(), plist_path]) catch {
-    _ => -1
-  }
+async fn launchctl_unload(service : String) -> Int {
+  @trusted_host.bootout_launch_agent(trusted_launch_agent(service))
 }
 
 ///|
-async fn launchctl_unload(label : String, plist_path : String) -> Int {
-  ignore(plist_path)
-  @process.run("launchctl", ["bootout", launchctl_domain() + "/" + label]) catch {
-    _ => -1
-  }
-}
-
-///|
-async fn launchctl_status(label : String) -> Int {
-  @process.run("launchctl", ["print", launchctl_domain() + "/" + label]) catch {
-    _ => -1
-  }
+async fn launchctl_status(service : String) -> Bool {
+  @trusted_host.launch_agent_is_loaded(trusted_launch_agent(service))
 }
 
 ///|

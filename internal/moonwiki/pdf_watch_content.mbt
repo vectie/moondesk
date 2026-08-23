@@ -157,6 +157,7 @@ fn pdf_watch_goal_prompt(
 }
 
 ///|
+#warnings("-unused_value")
 fn pdf_watch_catalog_entry(
   book_id~ : String,
   topic~ : String,
@@ -189,6 +190,7 @@ fn pdf_watch_catalog_entry(
 }
 
 ///|
+#warnings("-unused_value")
 fn pdf_watch_handoff_record(
   book_id~ : String,
   topic~ : String,

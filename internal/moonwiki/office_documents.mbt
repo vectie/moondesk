@@ -655,6 +655,27 @@ fn office_document_open_bytes(
     Some(kind) => kind
     None => return Err("Unsupported Office document type")
   }
+  // Prefer MoonLeaf's bounded ZIP/OPC session and diagnostics before the host
+  // projection reads any parts. A small compatibility fallback remains for
+  // legacy minimal fixtures that intentionally omit the relationships a full
+  // Office package contains; those packages still use the established parser.
+  // Diagnostics are copied into the warning-only UI without exposing
+  // implementation details.
+  let mut moonleaf_fallback = false
+  let moonleaf_diagnostics = try {
+    let session = @moonleaf.open_session(path, bytes)
+    session
+    .diagnostics()
+    .map(diagnostic => diagnostic.code + ": " + diagnostic.message)
+  } catch {
+    // The host editor deliberately supports a few minimal legacy packages
+    // used by compatibility fixtures. Keep those on the established parser;
+    // fully renderable packages still receive MoonLeaf's diagnostics above.
+    _ => {
+      moonleaf_fallback = true
+      []
+    }
+  }
   let entries = @moonzip.unzip_sync(bytes) catch {
     _ => return Err("Invalid or unsupported Office ZIP package")
   }
@@ -672,15 +693,20 @@ fn office_document_open_bytes(
     Ok(model) => model
     Err(error) => return Err(error)
   }
-  Ok({
-    kind,
-    entries,
-    editable_parts,
-    supported,
-    warnings: [
-      "Supported subset only. MoonDesk edits DOCX paragraphs and bold/italic/underline runs, XLSX cells and formulas, and PPTX text objects with position and size. Unsupported features and unedited package members are preserved.",
-    ],
-  })
+  let warnings = [
+    "Supported subset only. MoonDesk edits DOCX paragraphs and bold/italic/underline runs, XLSX cells and formulas, and PPTX text objects with position and size. Unsupported features and unedited package members are preserved.",
+  ]
+  if moonleaf_fallback {
+    warnings.push(
+      "MoonLeaf could not validate this package; the compatibility viewer was used.",
+    )
+  }
+  for diagnostic in moonleaf_diagnostics {
+    if !warnings.contains(diagnostic) {
+      warnings.push(diagnostic)
+    }
+  }
+  Ok({ kind, entries, editable_parts, supported, warnings })
 }
 
 ///|

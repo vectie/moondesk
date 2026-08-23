@@ -6,59 +6,6 @@ fn moonflow_server_utc_timestamp() -> String raise {
 }
 
 ///|
-fn moonflow_cli_arguments(
-  moonflow_root : String,
-  command : Array[String],
-) -> Array[String] {
-  let arguments = ["-C", moonflow_root, "run", "cmd/main", "--"]
-  for value in command {
-    arguments.push(value)
-  }
-  arguments
-}
-
-///|
-fn moonflow_validate_graph_cli_arguments(
-  moonflow_root : String,
-  graph_path : String,
-  catalog_path : String,
-  evaluated_at : String,
-) -> Array[String] {
-  moonflow_cli_arguments(moonflow_root, [
-    "validate-work-graph-capabilities", graph_path, catalog_path, evaluated_at,
-  ])
-}
-
-///|
-fn moonflow_import_graph_cli_arguments(
-  moonflow_root : String,
-  suite_root : String,
-  graph_path : String,
-  catalog_path : String,
-  evaluated_at : String,
-) -> Array[String] {
-  moonflow_cli_arguments(moonflow_root, [
-    "import-conformant-graph", suite_root, graph_path, catalog_path, evaluated_at,
-  ])
-}
-
-///|
-fn moonflow_control_cli_arguments(
-  moonflow_root : String,
-  suite_root : String,
-  run_id : String,
-  action : String,
-  evaluated_at : String,
-  detail : String,
-) -> Array[String] {
-  let command = ["control", suite_root, run_id, action, evaluated_at]
-  if detail != "" {
-    command.push(detail)
-  }
-  moonflow_cli_arguments(moonflow_root, command)
-}
-
-///|
 fn moonflow_import_evidence_relative_root(
   graph : Json,
   catalog_evidence : Json,

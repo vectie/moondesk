@@ -3,12 +3,12 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/async/http",
   "moonbitlang/async/io",
-  "moonbitlang/async/process",
   "moonbitlang/async/socket",
   "moonbitlang/core/env",
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
   "moonbitlang/core/encoding/base64",
   "moonbitlang/core/json",
+  "moonbitlang/core/buffer",
   "moonbitlang/core/ref",
   "moonbitlang/core/string",
   "ivgtr/moonzip",
@@ -29,11 +29,18 @@ import {
   "vectie/moondesk/internal/preview",
   "vectie/moondesk/internal/review",
   "vectie/moondesk/internal/town",
+  "vectie/moondesk/internal/trusted_host_process" @trusted_host,
+  "vectie/moonleaf",
 }
 
 import {
   "moonbitlang/core/test",
 } for "test"
+
+import {
+  "ivgtr/moonzip/types" @zip_types,
+  "moonbitlang/async/process",
+} for "wbtest"
 
 supported_targets = "native"
 
@@ -83,6 +90,8 @@ options(
     "moonwiki_request_wbtest.mbt": [ "native" ],
     "http_request_helpers.mbt": [ "native" ],
     "event_feed_handlers.mbt": [ "native" ],
+    "execution_sandbox_promotion_handlers.mbt": [ "native" ],
+    "execution_sandbox_promotion_handlers_wbtest.mbt": [ "native" ],
     "launch_agent_lifecycle.mbt": [ "native" ],
     "library_selection.mbt": [ "native" ],
     "library_selection_wbtest.mbt": [ "native" ],
@@ -96,6 +105,8 @@ options(
     "mooncode_sessions.mbt": [ "native" ],
     "mooncode_tool_contracts.mbt": [ "native" ],
     "moonclaw_artifact_handlers.mbt": [ "native" ],
+    "moonclaw_general_chat_handlers.mbt": [ "native" ],
+    "moonclaw_general_chat_handlers_wbtest.mbt": [ "native" ],
     "moonclaw_progress_handlers.mbt": [ "native" ],
     "moonclaw_service_config.mbt": [ "native" ],
     "moonclaw_service_config_wbtest.mbt": [ "native" ],

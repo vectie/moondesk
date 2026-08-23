@@ -7,6 +7,7 @@ async fn write_moontown_standing_goal_registration(
   goal~ : Json,
   owner_receipt? : Json = Json::object({}),
 ) -> Json {
+  ignore(root)
   let goal_id = json_string(
     owner_receipt,
     "standing_goal_id",
@@ -129,6 +130,7 @@ async fn write_moontown_book_template_publish(
 }
 
 ///|
+#warnings("-unused_value")
 fn pdf_watch_moontown_install_config(
   book_id~ : String,
   topic~ : String,
@@ -186,6 +188,7 @@ fn pdf_watch_moontown_install_workspace_root(
 }
 
 ///|
+#warnings("-unused_value")
 fn pdf_watch_moontown_template_request(
   book_id~ : String,
   topic~ : String,
@@ -223,6 +226,7 @@ fn pdf_watch_moontown_publish_mode(pattern_id : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn pdf_watch_moontown_publish_reason(pattern_id : String) -> String {
   ignore(pattern_id)
   "MoonDesk created the reusable research-book pattern workspace, wrote the flat PdfEvidenceWatchInstallSpec for MoonTown visibility, and registered the standing watch directly. MoonTown's current generic `pdf-evidence-watch` installer should not re-run over this book because it still rewrites `book.json` into the narrower template-installer schema instead of preserving the research-book base type."
@@ -241,6 +245,7 @@ fn pdf_watch_moontown_template_request_summary(
 }
 
 ///|
+#warnings("-unused_value")
 fn pdf_watch_moontown_template_event(
   request~ : Json,
   config_rel~ : String,

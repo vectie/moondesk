@@ -83,6 +83,11 @@ pub fn mooncode_session_runtime_service_url(session_id : String) -> String {
 }
 
 ///|
+pub fn mooncode_sandbox_promotion_url() -> String {
+  desktop_api_url(["api", "mooncode", "execution-sandbox", "promote"])
+}
+
+///|
 pub fn url_component(value : String) -> String {
   let pieces : Array[String] = []
   for byte in @encoding/utf8.encode(value) {

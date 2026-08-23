@@ -9,66 +9,65 @@ async fn moonclaw_service_config(root : String) -> Json {
 }
 
 ///|
+fn moonclaw_service_config_has_legacy_execution(
+  config : Json,
+  action : String,
+) -> Bool {
+  let section = json_object_field_or_empty(config, action)
+  json_object_field(section, "command") is Some(_) ||
+  json_object_field(section, "args") is Some(_) ||
+  json_object_field(section, "cwd") is Some(_) ||
+  json_object_field(config, action + "_command") is Some(_) ||
+  json_object_field(config, action + "_args") is Some(_) ||
+  json_object_field(config, action + "_cwd") is Some(_) ||
+  json_object_field(config, "cwd") is Some(_)
+}
+
+///|
 async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
   let config = moonclaw_service_config(root)
   let version = json_string(config, "version", default="")
-  let section = json_object_field_or_empty(config, action)
-  let configured_command = first_non_empty([
-    json_string(section, "command", default=""),
-    json_string(config, action + "_command", default=""),
-  ])
-  let configured_args = first_non_empty_array([
-    json_string_array_items(section, "args"),
-    json_string_array_items(config, action + "_args"),
-  ])
-  let configured_cwd = first_non_empty([
-    json_string(section, "cwd", default=""),
-    json_string(config, action + "_cwd", default=""),
-    json_string(config, "cwd", default=""),
-  ])
-  let fallback = if configured_command == "" {
-    moonclaw_explicit_checkout_service_descriptor(root, action)
-  } else {
-    Json::object({})
-  }
-  let command = first_non_empty([
-    configured_command,
-    json_string(fallback, "command", default=""),
-  ])
-  let args = first_non_empty_array([
-    configured_args,
-    json_string_array_items(fallback, "args"),
-  ])
-  let cwd = first_non_empty([
-    configured_cwd,
-    json_string(fallback, "cwd", default=""),
-  ])
-  let cwd = if cwd == "" { root } else { cwd }
-  let managed_binary = if version == "" {
-    ""
-  } else {
-    @pathx.join(
-      moonclaw_runtime_root(),
-      "moonclaw/" + version + "/bin/moonclaw",
-    )
-  }
+  let legacy_execution_rejected = moonclaw_service_config_has_legacy_execution(
+    config, action,
+  )
   let managed_config = json_string(config, "kind", default="") ==
     "moondesk-moonclaw-service.v1" &&
-    version != ""
-  let managed_install = moonclaw_managed_service_matches(
-    version,
-    command,
-    managed_binary,
-    @fsx.exists(managed_binary),
-  )
-  let repair_available = managed_config && !managed_install
+    moonclaw_release_segment_valid(version)
+  let install_dir = if managed_config {
+    @pathx.join(moonclaw_runtime_root(), "moonclaw/" + version)
+  } else {
+    ""
+  }
+  let managed_binary = if install_dir == "" {
+    ""
+  } else {
+    @pathx.join(install_dir, "bin/moonclaw")
+  }
+  let managed_install = !legacy_execution_rejected &&
+    moonclaw_managed_service_matches(
+      version,
+      managed_binary,
+      managed_binary,
+      @fsx.exists(managed_binary),
+    )
+  let repair_available = managed_config &&
+    (legacy_execution_rejected || !managed_install)
+  let command = if managed_install { managed_binary } else { "" }
+  let args = if managed_install && action == "daemon" {
+    ["daemon", "--port", "0", "--serve", root]
+  } else {
+    []
+  }
+  let cwd = if managed_install { install_dir } else { root }
   let integrity = service_configuration_integrity(command, cwd)
   {
-    "configured": command != "" && !repair_available,
-    "configuration_present": command != "",
+    "configured": managed_install,
+    "configuration_present": managed_config || legacy_execution_rejected,
     "configuration_valid": !repair_available &&
     json_bool(integrity, "valid", default=false),
-    "configuration_reason": if repair_available {
+    "configuration_reason": if legacy_execution_rejected {
+      "legacy-workspace-execution-config-rejected"
+    } else if repair_available {
       "stale-managed-service-config"
     } else {
       json_string(integrity, "reason", default="not-configured")
@@ -82,13 +81,16 @@ async fn moonclaw_service_descriptor(root : String, action : String) -> Json {
     "managed_config": managed_config,
     "managed_install": managed_install,
     "repair_available": repair_available,
+    "legacy_execution_rejected": legacy_execution_rejected,
     "config_path": moonclaw_service_config_path(root),
-    "source": if repair_available {
+    "source": if legacy_execution_rejected {
+      "legacy-rejected"
+    } else if repair_available {
       "stale-managed"
-    } else if configured_command != "" {
-      "config"
+    } else if managed_install {
+      "managed-binding"
     } else {
-      json_string(fallback, "source", default="missing")
+      "missing"
     },
     "display": if command == "" {
       ""
@@ -108,91 +110,4 @@ fn moonclaw_managed_service_matches(
   binary_exists : Bool,
 ) -> Bool {
   version != "" && command == managed_binary && binary_exists
-}
-
-///|
-struct MoonClawCheckoutCandidate {
-  path : String
-  source : String
-} derive(Debug, Eq)
-
-///|
-async fn moonclaw_explicit_checkout_service_descriptor(
-  root : String,
-  action : String,
-) -> Json {
-  if action != "daemon" {
-    return Json::object({})
-  }
-  let candidates = moonclaw_checkout_candidates(
-    @sys.get_env_var("MOONCLAW_ROOT").unwrap_or(""),
-  )
-  for candidate in candidates {
-    if is_directory(candidate.path) &&
-      @fsx.exists(@pathx.join(candidate.path, "moon.mod")) {
-      return moonclaw_checkout_service_descriptor(
-        root,
-        candidate.path,
-        candidate.source,
-      )
-    }
-  }
-  Json::object({})
-}
-
-///|
-fn moonclaw_checkout_candidates(
-  configured_root : String,
-) -> Array[MoonClawCheckoutCandidate] {
-  let candidates : Array[MoonClawCheckoutCandidate] = []
-  push_moonclaw_checkout_candidate(
-    candidates, configured_root, "env-moonclaw-root",
-  )
-  candidates
-}
-
-///|
-fn push_moonclaw_checkout_candidate(
-  candidates : Array[MoonClawCheckoutCandidate],
-  path : String,
-  source : String,
-) -> Unit {
-  if path == "" {
-    return
-  }
-  let normalized = @pathx.normalize(path)
-  for candidate in candidates {
-    if candidate.path == normalized {
-      return
-    }
-  }
-  candidates.push({ path: normalized, source })
-}
-
-///|
-async fn moonclaw_checkout_service_descriptor(
-  root : String,
-  checkout : String,
-  source : String,
-) -> Json {
-  {
-    "command": moonclaw_default_moon_command(),
-    "args": json_from_string_array([
-      "run", "cmd/main", "--", "daemon", "--port", "0", "--serve", root,
-    ]),
-    "cwd": checkout,
-    "source": source,
-  }
-}
-
-///|
-async fn moonclaw_default_moon_command() -> String {
-  let home = @sys.get_env_var("HOME").unwrap_or("")
-  if home != "" {
-    let local_moon = @pathx.join(home, ".moon/bin/moon")
-    if @fsx.exists(local_moon) {
-      return local_moon
-    }
-  }
-  "moon"
 }

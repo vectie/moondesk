@@ -14,6 +14,7 @@ async fn main {
     ["launch-agent-status", .. rest] => run_launch_agent_status(rest.to_owned())
     ["lepusa", .. rest] => ignore(run_lepusa_integration(rest.to_owned()))
     ["doctor", .. rest] => run_doctor(rest.to_owned())
+    ["pack", .. rest] => run_pack_studio(rest.to_owned())
     [] => print_usage()
     _ => print_usage()
   }

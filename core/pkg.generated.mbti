@@ -83,9 +83,15 @@ pub fn moonclaw_supervisor_endpoint_url(String, String) -> String
 
 pub fn moonclaw_supervisor_route(String) -> String
 
+pub fn moonclaw_task_events_route() -> String
+
+pub fn moonclaw_task_events_url(String, cursor? : String) -> String
+
 pub fn moonclaw_workspace_url(String, String) -> String
 
 pub fn mooncode_archived_session_listing_url() -> String
+
+pub fn mooncode_sandbox_promotion_url() -> String
 
 pub fn mooncode_session_chat_url(String, Int) -> String
 
@@ -129,7 +135,7 @@ pub fn preferences_views_route() -> String
 
 pub fn preferences_views_url() -> String
 
-pub fn preview(DeskFileEntry, body~ : String, warnings? : Array[String]) -> DeskPreview
+pub fn preview(DeskFileEntry, body~ : String, warnings? : Array[String], metadata? : Map[String, String]) -> DeskPreview
 
 pub fn renderer_for_kind(EntryKind) -> PreviewRenderer
 
@@ -164,6 +170,8 @@ pub fn url_path(String) -> String
 pub fn workspace(id~ : String, name~ : String, root_path~ : String, kind~ : WorkspaceKind, status? : WorkspaceStatus, last_seen_at? : String?) -> DeskWorkspace
 
 pub fn workspace_action_route(String) -> String
+
+pub fn workspace_artifact_url(String, String, String) -> String
 
 pub fn workspace_document_url(String, String) -> String
 

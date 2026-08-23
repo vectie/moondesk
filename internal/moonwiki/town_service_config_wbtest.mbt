@@ -1,5 +1,5 @@
 ///|
-async test "town service descriptor is explicit and workspace local" {
+async test "town service descriptor rejects workspace-controlled execution and persistence" {
   let root = "/tmp/moondesk-town-service-config-wbtest-" +
     @desk.stable_id("town-service", @async.now().to_string())
   let daemon = town_service_descriptor(root, "daemon")
@@ -16,7 +16,13 @@ async test "town service descriptor is explicit and workspace local" {
     exists_ok=true,
   )
   let service_command = @pathx.join(root, "moontown")
-  @fsx.write_to_file(service_command, "#!/bin/sh\nexit 0\n", create=0o755)
+  let marker = @pathx.join(root, "must-not-execute")
+  let plist = @pathx.join(root, "must-not-persist.plist")
+  @fsx.write_to_file(
+    service_command,
+    "#!/bin/sh\ntouch '" + marker + "'\n",
+    create=0o755,
+  )
   @fsx.write_to_file(
     town_service_config_path(root),
     (
@@ -31,38 +37,40 @@ async test "town service descriptor is explicit and workspace local" {
   )
 
   let configured = town_service_descriptor(root, "daemon")
-  assert_true(json_bool(configured, "configured", default=false))
-  assert_eq(json_string(configured, "command", default=""), service_command)
-  assert_true(json_bool(configured, "configuration_valid", default=false))
+  assert_false(json_bool(configured, "configured", default=true))
+  assert_eq(json_string(configured, "command", default="missing"), "")
+  assert_false(json_bool(configured, "configuration_valid", default=true))
+  assert_true(json_bool(configured, "legacy_execution_rejected", default=false))
   assert_eq(
     json_string(configured, "configuration_reason", default=""),
-    "configuration-valid",
+    "legacy-workspace-execution-config-rejected",
   )
   assert_eq(json_string(configured, "cwd", default=""), root)
-  assert_true(json_string_array_items(configured, "args") == ["daemon", "run"])
-  assert_eq(
-    json_string(configured, "display", default=""),
-    service_command + " daemon run",
-  )
+  assert_true(json_string_array_items(configured, "args").is_empty())
+  assert_eq(json_string(configured, "display", default="missing"), "")
 
   let tick = town_service_descriptor(root, "tick")
-  assert_true(json_string_array_items(tick, "args") == ["daemon", "tick"])
+  assert_true(json_bool(tick, "legacy_execution_rejected", default=false))
+  let started = start_managed_daemon(root)
+  assert_false(json_bool(started, "ok", default=true))
+  assert_false(@fsx.exists(marker))
+  let persisted = install_launch_agent(root, plist_path_override=plist)
+  assert_false(json_bool(persisted, "ok", default=true))
+  assert_false(@fsx.exists(plist))
+  assert_false(@fsx.exists(marker))
   let status = daemon_status_record(root, "status")
   let platform = json_object_field(status, "platform_evidence").unwrap()
   assert_true(json_string(platform, "platform", default="") != "")
   assert_true(json_string(platform, "architecture", default="") != "")
   let installation = json_object_field(status, "installation_evidence").unwrap()
-  assert_true(json_bool(installation, "installed", default=false))
-  assert_eq(
-    json_string(installation, "source", default=""),
-    "service-configured",
-  )
+  assert_false(json_bool(installation, "installed", default=true))
+  assert_eq(json_string(installation, "source", default=""), "none")
   let configuration = json_object_field(status, "configuration_evidence").unwrap()
-  assert_true(json_bool(configuration, "configured", default=false))
-  assert_true(json_bool(configuration, "valid", default=false))
+  assert_false(json_bool(configuration, "configured", default=true))
+  assert_false(json_bool(configuration, "valid", default=true))
   assert_eq(
     json_string(configuration, "reason", default=""),
-    "configuration-valid",
+    "legacy-workspace-execution-config-rejected",
   )
 }
 
@@ -139,11 +147,11 @@ async test "managed daemon rejects unusable service before lifecycle writes" {
   assert_false(json_bool(result, "ok", default=true))
   assert_eq(json_string(result, "status", default=""), "misconfigured")
   let configuration = json_object_field(result, "configuration_evidence").unwrap()
-  assert_true(json_bool(configuration, "configured", default=false))
+  assert_false(json_bool(configuration, "configured", default=true))
   assert_false(json_bool(configuration, "valid", default=true))
   assert_eq(
     json_string(configuration, "reason", default=""),
-    "command-unavailable",
+    "legacy-workspace-execution-config-rejected",
   )
   assert_false(@fsx.exists(lifecycle_dir))
 }
