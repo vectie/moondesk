@@ -25,6 +25,7 @@ fn PagesSearchState::with_query(
   self : PagesSearchState,
   query : String,
 ) -> PagesSearchState {
+  ignore(self)
   {
     query,
     status: "draft",

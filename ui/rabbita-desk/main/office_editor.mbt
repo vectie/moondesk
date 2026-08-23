@@ -58,6 +58,7 @@ struct OfficeEditorState {
 enum OfficeEditorMsg {
   OfficeRebind(String)
   OfficeSetPath(String)
+  OfficeOpenPath(String)
   OfficeOpen
   OfficeOpened(
     OfficeEditorRequestIdentity,
@@ -81,6 +82,8 @@ enum OfficeEditorMsg {
   OfficeReplaceConflict
   OfficeClose
   OfficeReopen
+  OfficeRefresh
+  OfficeDispose
 } derive(Eq, Debug)
 
 ///|
@@ -170,6 +173,11 @@ fn update_office_editor(
         }
       }
     OfficeSetPath(path_input) => { ..state, path_input, }
+    OfficeOpenPath(path) =>
+      update_office_editor(
+        update_office_editor(state, OfficeSetPath(path)),
+        OfficeOpen,
+      )
     OfficeOpen =>
       if office_editor_dirty(state) {
         {
@@ -345,13 +353,42 @@ fn update_office_editor(
       if office_editor_dirty(state) {
         { ..state, status: "Save before closing this dirty Office draft" }
       } else {
+        let next = update_office_editor(state, OfficeDispose)
+        { ..next, status: "Closed" }
+      }
+    OfficeRefresh =>
+      if office_editor_dirty(state) {
+        {
+          ..state,
+          status: "Save or discard this Office draft before refreshing",
+        }
+      } else if state.path == "" || state.loading || state.saving {
+        state
+      } else {
+        {
+          ..state,
+          request_generation: state.request_generation + 1,
+          loading: true,
+          status: "Refreshing Office bytes...",
+        }
+      }
+    OfficeDispose =>
+      if office_editor_dirty(state) {
+        {
+          ..state,
+          status: "Save or discard this Office draft before disposing the viewer",
+        }
+      } else {
         {
           ..state,
           document: None,
           draft_items: [],
           selected: 0,
+          loading: false,
+          saving: false,
+          conflict_baseline: None,
           request_generation: state.request_generation + 1,
-          status: "Closed",
+          status: "Disposed",
         }
       }
     OfficeReopen =>

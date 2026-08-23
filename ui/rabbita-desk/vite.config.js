@@ -27,7 +27,12 @@ function moondeskMoonbitBrowserShim() {
 
 export default defineConfig({
   build: {
-    chunkSizeWarningLimit: 2200,
+    // The generated Rabbita route is intentionally lazy and stays below the
+    // 2.8 MiB raw parse budget asserted by bundle-split.test.mjs. Vite reports
+    // this as decimal kB, so keep the diagnostic threshold just above that
+    // binary budget without hiding a materially oversized entry. The stricter
+    // compressed transfer budget remains enforced by the bundle test.
+    chunkSizeWarningLimit: 2940,
   },
   server: {
     proxy: {

@@ -243,8 +243,6 @@ type PackTemplateMigrationPolicy derive(@json.FromJson)
 
 type PackTemplateOperation derive(@json.FromJson)
 
-type PackTemplateQualificationEvidence derive(@json.FromJson)
-
 type PackTemplateRecord derive(@json.FromJson)
 
 type PackTemplateRecovery derive(@json.FromJson)
@@ -292,6 +290,10 @@ type TownAnalytics derive(@json.FromJson)
 type TownMessage derive(@json.FromJson)
 
 type TownProgress derive(@json.FromJson)
+
+type WikiChatEntry derive(Eq, @debug.Debug)
+
+type WikiChatSubmission derive(Eq, @debug.Debug, @json.FromJson)
 
 type WorkspaceMetadata derive(@json.FromJson)
 

@@ -88,7 +88,7 @@ test "Home complementary landmarks have distinct names" {
 
 ///|
 #warnings("-alert_unstable")
-test "Pages and Code complementary landmarks have distinct names" {
+test "Pages and Code expose named workspace landmarks" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let pages = render_accessibility_test_html(
     render_app(dispatch, {
@@ -105,8 +105,8 @@ test "Pages and Code complementary landmarks have distinct names" {
       ],
     }),
   )
-  assert_eq(pages.split("aria-label=\"Pages activities\"").length(), 2)
-  assert_eq(pages.split("aria-label=\"Page browser\"").length(), 2)
+  assert_eq(pages.split("aria-label=\"Document chat\"").length(), 2)
+  assert_eq(pages.split("aria-label=\"Document viewer\"").length(), 2)
   let code = render_accessibility_test_html(
     render_app(dispatch, { ..init_model(), workspace_mode: MoonCode }),
   )

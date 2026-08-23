@@ -14,7 +14,7 @@ fn mooncode_effective_session_status(
   session : MoonCodeSession,
 ) -> @mooncode_core.MoonCodeSessionStatus? {
   if session.queued_count > 0 {
-    Some(@mooncode_core.Queued)
+    Some(Queued)
   } else {
     @mooncode_core.MoonCodeSessionStatus::parse(session.status)
   }

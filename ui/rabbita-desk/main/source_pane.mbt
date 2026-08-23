@@ -52,6 +52,7 @@ struct SourcePaneState {
 } derive(Eq, Debug)
 
 ///|
+#warnings("-unused_constructor")
 enum SourcePaneMsg {
   SetOpen(Bool)
   SetCollapsed(Bool)
@@ -111,7 +112,7 @@ fn source_pane_buffer_index(
 fn source_pane_active_buffer(state : SourcePaneState) -> SourcePaneBuffer? {
   if state.requested_path == "" ||
     state.content is Empty ||
-    state.content is SourcePaneContent::Loading {
+    state.content is Loading {
     return None
   }
   Some({

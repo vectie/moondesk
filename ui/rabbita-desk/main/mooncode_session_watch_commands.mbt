@@ -90,7 +90,7 @@ fn mooncode_watch_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
         .wait()
         .cast() catch {
           error =>
-            return @mooncode_core.MoonCodeWatchResult::Disconnected(
+            return Disconnected(
               cursor~,
               reason="MoonCode watch failed: \{error}",
             )
@@ -99,22 +99,16 @@ fn mooncode_watch_cmd(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Cmd {
         @json.parse(text),
       ) catch {
         error =>
-          return @mooncode_core.MoonCodeWatchResult::Disconnected(
+          return Disconnected(
             cursor~,
             reason="Invalid MoonCode watch transport: \{error}",
           )
       }
       if envelope.aborted {
-        return @mooncode_core.MoonCodeWatchResult::Disconnected(
-          cursor~,
-          reason="MoonCode watch replaced",
-        )
+        return Disconnected(cursor~, reason="MoonCode watch replaced")
       }
       if !envelope.ok {
-        return @mooncode_core.MoonCodeWatchResult::Disconnected(
-          cursor~,
-          reason=envelope.error,
-        )
+        return Disconnected(cursor~, reason=envelope.error)
       }
       @mooncode_core.decode_mooncode_watch_text(
         envelope.body,

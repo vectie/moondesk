@@ -329,6 +329,88 @@ fn render_pack_area(pack : PackAppRecord) -> @rabbita.Html {
 }
 
 ///|
+fn pack_bridge_ready(pack : PackAppRecord) -> Bool {
+  pack.bridge_ready.unwrap_or(false)
+}
+
+///|
+fn pack_intake_operation_ids(pack : PackAppRecord) -> Array[String] {
+  pack.intake_operation_ids.unwrap_or([])
+}
+
+///|
+fn render_pack_bridge_status(pack : PackAppRecord) -> @rabbita.Html {
+  span(
+    class=if pack_bridge_ready(pack) {
+      "pack-bridge-badge ready"
+    } else {
+      "pack-bridge-badge pending"
+    },
+    attrs=@html.Attrs::build()
+      .data_set("testid", "pack-bridge-status")
+      .data_set("bridge-ready", pack_bridge_ready(pack).to_string()),
+    if pack_bridge_ready(pack) {
+      "Town bridge ready"
+    } else {
+      "Bridge adoption needed"
+    },
+  )
+}
+
+///|
+fn render_pack_studio() -> @rabbita.Html {
+  section(
+    class="pack-studio-section",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "pack-studio")
+      .aria_label("Pack Studio lifecycle"),
+    [
+      header(class="pack-section-heading", [
+        div([
+          p(class="eyebrow", "Common lifecycle tooling"),
+          h2("Pack Studio"),
+          p(
+            "Create or adopt a domain pack through one contract, then validate, install, activate, project, and observe it without moving domain rules into MoonDesk or MoonTown.",
+          ),
+        ]),
+        span("reviewed operations"),
+      ]),
+      @html.node("ol", @html.Attrs::build().class("pack-studio-lifecycle"), [
+        li([
+          strong("1 · Author"),
+          span("Scaffold or adopt the bridge schemas, provider port, and reviewed intake."),
+          code("moondesk pack create …"),
+        ]),
+        li([
+          strong("2 · Qualify"),
+          span("Inspect source-tree validity, authorities, runtime dependencies, and bridge readiness."),
+          code("moondesk pack inspect …"),
+        ]),
+        li([
+          strong("3 · Activate"),
+          span("Install an immutable version, verify its receipt, and move the active pointer explicitly."),
+          code("moondesk pack install …"),
+        ]),
+        li([
+          strong("4 · Operate"),
+          span("MoonTown reconciles read-only projections and routes emergent candidates to review."),
+          code("draft → active → projecting"),
+        ]),
+      ]),
+      details(class="pack-studio-details", [
+        summary("Lifecycle commands and safety boundary"),
+        p(
+          "Pack Studio lifecycle mutations are explicit native commands. Browser views remain inspection and planning surfaces; candidate intake never authorizes downstream external or physical effects.",
+        ),
+        code(
+          "inspect · create · adopt-bridge · install · activate · deactivate · catalog",
+        ),
+      ]),
+    ],
+  )
+}
+
+///|
 fn render_pack_primary_action(pack : PackAppRecord) -> @rabbita.Html {
   if pack.status == "configured" && pack.launch_url != "" {
     a(
@@ -396,6 +478,16 @@ fn render_pack_card(
         ),
       ]),
       p(class="pack-description", pack_default_description(pack)),
+      div(class="pack-bridge-line", [
+        render_pack_bridge_status(pack),
+        small(
+          if pack_bridge_ready(pack) {
+            "Intake: " + pack_intake_operation_ids(pack).join(", ")
+          } else {
+            "Use Pack Studio to add the common projection and candidate lifecycle."
+          },
+        ),
+      ]),
       ul(class="pack-capability-counts", [
         li([strong(pack.workflow_count.to_string()), span("workflows")]),
         li([strong(pack.tool_count.to_string()), span("tools")]),
@@ -458,6 +550,7 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
         ]),
       ]),
       render_template_catalog(model),
+      render_pack_studio(),
       if model.pack_apps.is_empty() {
         section(class="pack-home-empty", [
           strong("No domain packs are installed"),

@@ -1647,6 +1647,7 @@ fn desk_entry_matches_filter(
 }
 
 ///|
+#warnings("-unused_value")
 fn desk_entry_before(
   left : @desk.DeskFileEntry,
   right : @desk.DeskFileEntry,
@@ -1805,32 +1806,35 @@ fn render_desk_file_row(
   } else {
     SelectPath(entry.path)
   }
-  div(
-    class=class_name,
-    title=entry.path,
-    attrs=@html.Attrs::build()
-      .data_set("testid", "desk-file-row")
-      .data_set("path", entry.path)
-      .role("option")
-      .aria_selected(selected_value)
-      .on_mousedown(fn(event) {
-        dispatch(desk_mouse_event_msg(entry.path, event))
-      })
-      .on_dblclick(fn(_) { dispatch(open_msg) }),
-    [
-      span(class="desk-file-name", [
-        span(class="tree-icon", icon_for_kind(entry.kind)),
-        if model.desk_rename_editing_path == entry.path {
-          desk_inline_rename_input(dispatch, model, entry)
-        } else {
-          strong(entry.display_name)
-        },
-      ]),
-      span(kind_label(entry.kind)),
-      span(optional_text(entry.modified_at, "unknown")),
-      span(size_label(entry.size_bytes)),
-    ],
-  )
+  let row_attrs = @html.Attrs::build()
+    .data_set("testid", "desk-file-row")
+    .data_set("path", entry.path)
+    .role("option")
+    .aria_selected(selected_value)
+    .on_mousedown(fn(event) {
+      dispatch(desk_mouse_event_msg(entry.path, event))
+    })
+    .on_dblclick(fn(_) { dispatch(open_msg) })
+  let row_attrs = if entry.kind is Directory {
+    row_attrs
+  } else {
+    row_attrs
+    .draggable("true")
+    .on_dragstart(fn(event) { wiki_chat_drag_start_cmd(entry.path, event) })
+  }
+  div(class=class_name, title=entry.path, attrs=row_attrs, [
+    span(class="desk-file-name", [
+      span(class="tree-icon", icon_for_kind(entry.kind)),
+      if model.desk_rename_editing_path == entry.path {
+        desk_inline_rename_input(dispatch, model, entry)
+      } else {
+        strong(entry.display_name)
+      },
+    ]),
+    span(kind_label(entry.kind)),
+    span(optional_text(entry.modified_at, "unknown")),
+    span(size_label(entry.size_bytes)),
+  ])
 }
 
 ///|
@@ -2266,7 +2270,14 @@ fn render_desk_inline_preview(
               pre(class="source-block compact", code(preview.body)),
             ]
           Image =>
-            [strong(preview.title), img(src=preview.body, alt=preview.title)]
+            [
+              strong(preview.title),
+              img(
+                src=desk_preview_image_source(preview),
+                alt=preview.title,
+                attrs=desk_preview_image_attrs(preview),
+              ),
+            ]
           Html =>
             [
               strong(preview.title),

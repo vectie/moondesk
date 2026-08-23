@@ -260,7 +260,8 @@ function revealLocalDefinition(element) {
 function semanticContext(parts) {
   const workspaceId = parts.surface.dataset.workspaceId || ''
   const path = parts.surface.dataset.sourcePath || ''
-  const dirty = parts.surface.dataset.sourceDirty === 'true'
+  const dirty = parts.surface.dataset.sourceDirty === 'true' ||
+    parts.surface.dataset.sourceRuntimeDirty === 'true'
   return {
     workspaceId,
     path,
@@ -479,6 +480,8 @@ export function installSourceEditorRuntime() {
   installed = true
   document.addEventListener('input', event => {
     if (event.target instanceof HTMLTextAreaElement && event.target.matches('[data-testid="source-editor-input"]')) {
+      const parts = editorParts(event.target)
+      if (parts) parts.surface.dataset.sourceRuntimeDirty = 'true'
       syncEditor(event.target)
       closeCompletions()
     }

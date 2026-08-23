@@ -7,7 +7,11 @@ fn office_editor_action(
   let office_editor = update_office_editor(model.office_editor, msg)
   let next = { ..model, office_editor, }
   match msg {
-    OfficeOpen | OfficeReopen | OfficeReloadConflict =>
+    OfficeOpenPath(_)
+    | OfficeOpen
+    | OfficeReopen
+    | OfficeRefresh
+    | OfficeReloadConflict =>
       if office_editor.loading {
         (
           open_office_editor_cmd(
@@ -33,6 +37,24 @@ fn office_editor_action(
         (@rabbita.none, next)
       }
     _ => (@rabbita.none, next)
+  }
+}
+
+///|
+fn open_office_path_transition(
+  dispatch : Dispatch[Msg],
+  state : OfficeEditorState,
+  path : String,
+) -> (@rabbita.Cmd, OfficeEditorState) {
+  if !office_editor_path_supported(path) ||
+    (state.path == path && state.document is Some(_) && !state.loading) {
+    return (@rabbita.none, state)
+  }
+  let next = update_office_editor(state, OfficeOpenPath(path))
+  if next.loading && next.request_generation != state.request_generation {
+    (open_office_editor_cmd(dispatch, office_editor_identity(next)), next)
+  } else {
+    (@rabbita.none, next)
   }
 }
 

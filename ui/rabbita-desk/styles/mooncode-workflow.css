@@ -2,6 +2,233 @@
   position: relative;
 }
 
+.mooncode-sandbox-receipt {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 4px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--line, #d8dee7) 78%, #2563eb);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface, #fff) 94%, #eff6ff);
+}
+
+.mooncode-sandbox-receipt.invalid {
+  border-color: #b45309;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.mooncode-sandbox-receipt.invalid p {
+  margin: 4px 0 0;
+}
+
+.mooncode-sandbox-receipt-header,
+.mooncode-sandbox-change-heading,
+.mooncode-sandbox-promotion-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mooncode-sandbox-receipt-header h3,
+.mooncode-sandbox-receipt-header .eyebrow {
+  margin: 0;
+}
+
+.mooncode-sandbox-enforcement,
+.mooncode-sandbox-change-kind {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mooncode-sandbox-enforcement.enforced {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.mooncode-sandbox-enforcement.degraded,
+.mooncode-sandbox-enforcement.refused {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.mooncode-sandbox-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin: 0;
+  padding: 10px 0;
+  border-block: 1px solid var(--line, #d8dee7);
+}
+
+.mooncode-sandbox-facts > div {
+  min-width: 0;
+}
+
+.mooncode-sandbox-fact-label {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted, #64748b);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.mooncode-sandbox-facts p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+
+.mooncode-sandbox-facts code {
+  font-size: 0.72rem;
+}
+
+.mooncode-sandbox-review-guidance {
+  margin: 0;
+  color: var(--muted, #475569);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.mooncode-sandbox-review-guidance.unavailable {
+  padding: 9px 10px;
+  border-left: 3px solid #b45309;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.mooncode-sandbox-change-list {
+  display: grid;
+  gap: 6px;
+}
+
+.mooncode-sandbox-change {
+  display: grid;
+  grid-template-columns: minmax(82px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 7px;
+  border: 1px solid var(--line, #d8dee7);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+}
+
+.mooncode-sandbox-file-toggle {
+  min-width: 82px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.mooncode-sandbox-file-toggle.selected {
+  border-color: #2563eb;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.mooncode-sandbox-file-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.mooncode-sandbox-file-toggle:focus-visible,
+.mooncode-sandbox-promotion-actions button:focus-visible {
+  outline: 3px solid color-mix(in srgb, #2563eb 45%, transparent);
+  outline-offset: 2px;
+}
+
+.mooncode-sandbox-change-copy {
+  min-width: 0;
+}
+
+.mooncode-sandbox-change-heading code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mooncode-sandbox-change-copy small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted, #64748b);
+}
+
+.mooncode-sandbox-change-kind.added {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.mooncode-sandbox-change-kind.modified {
+  color: #1e40af;
+  background: #dbeafe;
+}
+
+.mooncode-sandbox-change-kind.removed {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.mooncode-sandbox-artifacts summary {
+  min-height: 36px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.mooncode-sandbox-artifacts ul {
+  margin: 6px 0 0;
+  padding-left: 22px;
+}
+
+.mooncode-sandbox-selection-count,
+.mooncode-sandbox-promotion-status {
+  color: var(--muted, #475569);
+  font-size: 0.8rem;
+}
+
+.mooncode-sandbox-promotion-status {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .mooncode-sandbox-receipt-header,
+  .mooncode-sandbox-promotion-actions,
+  .mooncode-sandbox-change-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mooncode-sandbox-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mooncode-sandbox-change {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mooncode-sandbox-file-toggle,
+  .mooncode-sandbox-promotion-actions button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mooncode-sandbox-file-toggle,
+  .mooncode-sandbox-promotion-actions button {
+    transition: none;
+  }
+}
+
 .mooncode-markdown {
   display: block;
   overflow: visible;

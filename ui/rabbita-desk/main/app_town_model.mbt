@@ -4,6 +4,21 @@ struct TownMessage {
 } derive(FromJson)
 
 ///|
+struct WikiChatEntry {
+  role : String
+  content : String
+} derive(Eq, Debug)
+
+///|
+struct WikiChatSubmission {
+  task_id : String
+  status : String
+  message : String
+  queued : Bool
+  owner : String
+} derive(FromJson, Eq, Debug)
+
+///|
 struct RequestRecord {
   id : String
   status : String

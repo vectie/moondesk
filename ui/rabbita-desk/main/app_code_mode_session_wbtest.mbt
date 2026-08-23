@@ -9,6 +9,7 @@ fn code_mode_test_summary() -> MoonCodeSummary {
 }
 
 ///|
+#warnings("-alert_unstable")
 test "Code workspace keeps source and Office editors in one disclosure" {
   let model = init_model()
   let markup = @rabbita.render_to_string(
@@ -114,12 +115,7 @@ test "canonical work evidence preserves public strings and approval fallback" {
     "edit", "test", "approval", "tool", "artifact",
   ])
   assert_eq(rows[2].state, "")
-  assert_true(
-    rows[2].approval
-    is Some(
-      @mooncode_core.MoonCodeApproval::Pending(approval_id="approval-a", ..)
-    ),
-  )
+  assert_true(rows[2].approval is Some(Pending(approval_id="approval-a", ..)))
 }
 
 ///|
@@ -180,7 +176,7 @@ fn code_mode_test_watch_snapshot(
     archived: session.archived,
     extensions: Map([]),
   }
-  @mooncode_core.Snapshot(
+  Snapshot(
     cursor=@mooncode_core.mooncode_watch_cursor(conversation.revision, sequence),
     session=summary,
     conversation~,
@@ -225,7 +221,7 @@ fn code_mode_test_watch_heartbeat(
   revision : String,
   sequence : String,
 ) -> @mooncode_core.MoonCodeWatchResult raise {
-  @mooncode_core.Heartbeat(
+  Heartbeat(
     cursor=@mooncode_core.mooncode_watch_cursor(revision, sequence),
     session_id~,
     retry_after_ms=100,
@@ -2214,11 +2210,7 @@ test "code mode renders a pending approval inside its canonical work turn" {
         fail("expected typed approval snapshot")
       }
       assert_true(
-        approval
-        is @mooncode_core.MoonCodeApproval::Pending(
-          approval_id=actual_approval_id,
-          ..
-        ) &&
+        approval is Pending(approval_id=actual_approval_id, ..) &&
         actual_approval_id == approval_id,
       )
     }
@@ -2249,6 +2241,7 @@ test "code mode renders a pending approval inside its canonical work turn" {
 }
 
 ///|
+#warnings("-alert_unstable")
 test "code mode approval copy identifies ownership and durable decisions" {
   let base : MoonCodeEvidenceRow = {
     item_id: "approval-evidence",
@@ -2263,11 +2256,13 @@ test "code mode approval copy identifies ownership and durable decisions" {
     exit_code: -1,
     truncated: false,
     approval: None,
+    sandbox_receipt: None,
+    sandbox_receipt_invalid: false,
   }
   let approved = {
     ..base,
     approval: Some(
-      @mooncode_core.MoonCodeApproval::Approved(
+      Approved(
         session_id="session-approval",
         approval_id="receipt-allow",
         target_command_id="command-approval",
@@ -2280,7 +2275,7 @@ test "code mode approval copy identifies ownership and durable decisions" {
     ..base,
     state: "rejected",
     approval: Some(
-      @mooncode_core.MoonCodeApproval::Rejected(
+      Rejected(
         session_id="session-approval",
         approval_id="receipt-deny",
         target_command_id="command-approval",
@@ -2808,7 +2803,7 @@ test "code mode stale canonical watch response is ignored" {
     LoadedMoonCodeWatch(
       0,
       "session-b",
-      @mooncode_core.Rollback(
+      Rollback(
         cursor=@mooncode_core.mooncode_watch_cursor("4", "1"),
         session_id="session-a",
         received_revision="2",
@@ -2898,7 +2893,7 @@ test "code mode canonical watch cannot roll back revision but advances wake curs
     LoadedMoonCodeWatch(
       3,
       "session-a",
-      @mooncode_core.Rollback(
+      Rollback(
         cursor=@mooncode_core.mooncode_watch_cursor("8", "12"),
         session_id="session-a",
         received_revision="4",
@@ -2938,7 +2933,7 @@ test "code mode watch disconnect preserves transcript while reconnecting" {
     LoadedMoonCodeWatch(
       9,
       "session-a",
-      @mooncode_core.Disconnected(
+      Disconnected(
         cursor=model.mooncode_watch_cursor,
         reason="connection reset",
       ),
@@ -2959,7 +2954,7 @@ test "code mode watch disconnect preserves transcript while reconnecting" {
     LoadedMoonCodeWatch(
       9,
       "session-a",
-      @mooncode_core.Disconnected(
+      Disconnected(
         cursor=next.mooncode_watch_cursor,
         reason="connection reset again",
       ),
@@ -2995,7 +2990,7 @@ test "code mode replaced watch leaves the healthy replacement alone" {
     LoadedMoonCodeWatch(
       9,
       "session-a",
-      @mooncode_core.Disconnected(
+      Disconnected(
         cursor=model.mooncode_watch_cursor,
         reason="MoonCode watch replaced",
       ),
@@ -3539,6 +3534,7 @@ test "MoonGate setup handoff uses the proven Desk mode action" {
 }
 
 ///|
+#warnings("-alert_unstable")
 test "Code unavailable blocks submission and preserves the draft" {
   let model = {
     ..init_model(),

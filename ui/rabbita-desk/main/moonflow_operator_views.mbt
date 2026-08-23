@@ -889,7 +889,7 @@ fn render_moonflow_action_button(
       class=if dominant { "primary-button" } else { "secondary-button" },
       href=launch_url,
       attrs=@html.Attrs::build()
-        .target(@html.Blank)
+        .target(Blank)
         .rel("noopener noreferrer")
         .data_set("testid", "moonflow-open-product")
         .data_set("product-id", moonflow_operator_text(action.product_id, ""))

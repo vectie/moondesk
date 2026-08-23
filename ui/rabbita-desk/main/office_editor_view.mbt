@@ -75,6 +75,20 @@ fn render_office_editor(
           on_click=dispatch(OfficeEditor(OfficeReopen)),
           "Reopen saved bytes",
         ),
+        button(
+          class="secondary-button",
+          attrs=@html.Attrs::build().data_set("testid", "office-refresh"),
+          disabled=office_editor_dirty(state) ||
+            state.path == "" ||
+            state.loading ||
+            state.saving,
+          on_click=dispatch(OfficeEditor(OfficeRefresh)),
+          if state.loading {
+            "Refreshing..."
+          } else {
+            "Refresh"
+          },
+        ),
         a(
           class="secondary-button",
           attrs=@html.Attrs::build()

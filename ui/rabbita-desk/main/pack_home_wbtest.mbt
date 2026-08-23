@@ -22,12 +22,15 @@ fn pack_home_test_record(status : String) -> PackAppRecord {
     workflow_count: 2,
     tool_count: 4,
     configuration_message: "status detail",
+    bridge_ready: Some(true),
+    intake_operation_ids: Some(["sample.candidate.intake"]),
     template_count: None,
     templates: None,
   }
 }
 
 ///|
+#warnings("-reserved_keyword")
 fn pack_home_test_template(blocked : Bool) -> PackTemplateRecord {
   {
     contract_id: "moonsuite.template-envelope.v1",
@@ -55,9 +58,9 @@ fn pack_home_test_template(blocked : Bool) -> PackTemplateRecord {
     preview_ref: "/sample",
     qualification_evidence_refs: [
       {
-        kind: "qualification_report",
-        ref: "docs/sample.md",
-        digest: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "kind": "qualification_report",
+        "ref": "docs/sample.md",
+        "digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
       },
     ],
     requirements: {
@@ -150,6 +153,23 @@ test "Pack Home distinguishes installed state from runtime readiness" {
       "2 workflow(s)",
     ),
   )
+}
+
+///|
+#warnings("-alert_unstable")
+test "Pack Home exposes common lifecycle without absorbing domain rules" {
+  let pack_markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_pack_bridge_status(pack_home_test_record("configured"))),
+  )
+  assert_true(pack_markup.contains("Town bridge ready"))
+  assert_true(pack_markup.contains("data-bridge-ready=\"true\""))
+  let studio_markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_pack_studio()),
+  )
+  assert_true(studio_markup.contains("Pack Studio"))
+  assert_true(studio_markup.contains("moondesk pack create"))
+  assert_true(studio_markup.contains("draft → active → projecting"))
+  assert_true(studio_markup.contains("candidate intake never authorizes"))
 }
 
 ///|

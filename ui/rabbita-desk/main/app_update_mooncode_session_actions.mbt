@@ -41,7 +41,12 @@ fn update_mooncode_session_actions(
           mooncode_composer_status: "new session draft",
         },
       )
-    SetMoonCodePrompt(prompt) =>
+    SetMoonCodePrompt(prompt) => {
+      // Keep the user-facing composers on the same trigger grammar. The
+      // MoonCode surface does not currently expose workspace-file chips, but
+      // parsing here prevents its input behavior from drifting from Wiki chat
+      // as the shared completion menu evolves.
+      ignore(composer_trigger_query(prompt))
       (
         @rabbita.none,
         {
@@ -55,6 +60,7 @@ fn update_mooncode_session_actions(
           mooncode_composer_status: "draft",
         },
       )
+    }
     SendMoonCodeMessage(prompt) =>
       mooncode_send_composer(dispatch, { ..model, mooncode_prompt: prompt })
     RetryMoonCodeTurn(session_id, prompt) =>
@@ -63,6 +69,122 @@ fn update_mooncode_session_actions(
       mooncode_cancel_work(dispatch, model, session_id, target_command_id)
     DecideMoonCodeTool(approval, decision) =>
       mooncode_decide_tool(dispatch, model, approval, decision)
+    ToggleMoonCodeSandboxFile(receipt, path) => {
+      let key = receipt.review_key()
+      let allowed = receipt.promotion_ready() &&
+        !model.mooncode_sandbox_locked_review_keys.contains(key) &&
+        receipt.changes.any(change => {
+          change.promotable && change.relative_path == path
+        })
+      if !allowed {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_sandbox_promotion_status: "This file is not available for reviewed promotion",
+          },
+        )
+      } else {
+        let current = if model.mooncode_sandbox_review_key == key {
+          model.mooncode_sandbox_selected_paths.copy()
+        } else {
+          []
+        }
+        let selected = if current.contains(path) { [] } else { [path] }
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_sandbox_review_key: key,
+            mooncode_sandbox_selected_paths: selected,
+            mooncode_sandbox_promotion_status: "",
+          },
+        )
+      }
+    }
+    PromoteMoonCodeSandboxReceipt(receipt) => {
+      let key = receipt.review_key()
+      let selected = if model.mooncode_sandbox_review_key == key &&
+        !model.mooncode_sandbox_locked_review_keys.contains(key) {
+        model.mooncode_sandbox_selected_paths
+      } else {
+        []
+      }
+      match mooncode_sandbox_promotion_request(receipt, selected) {
+        Err(error) =>
+          (
+            @rabbita.none,
+            {
+              ..model,
+              mooncode_sandbox_review_key: key,
+              mooncode_sandbox_promotion_pending: false,
+              mooncode_sandbox_promotion_status: error,
+            },
+          )
+        Ok(_) =>
+          (
+            mooncode_sandbox_promotion_cmd(dispatch, receipt, selected),
+            {
+              ..model,
+              mooncode_sandbox_review_key: key,
+              mooncode_sandbox_promotion_pending: true,
+              mooncode_sandbox_promotion_status: "Promoting one reviewed file…",
+            },
+          )
+      }
+    }
+    CompletedMoonCodeSandboxPromotion(key, result) =>
+      if key != model.mooncode_sandbox_review_key {
+        (@rabbita.none, model)
+      } else {
+        match result {
+          Ok(receipt) => {
+            let locked = receipt.locks_receipt()
+            let locked_keys = model.mooncode_sandbox_locked_review_keys.copy()
+            if locked && !locked_keys.contains(key) {
+              locked_keys.push(key)
+            }
+            let status = match receipt.destination_outcome {
+              "applied-durable" if receipt.completed =>
+                "Promoted the reviewed file. This retention is now consumed."
+              "applied-durable" =>
+                "The reviewed file was promoted, but retention cleanup could not be verified. Retry is disabled; operator attention is required."
+              "not-applied" if receipt.recovery_required =>
+                "The file was not applied, but retention recovery is required. Retry is disabled pending operator recovery."
+              "not-applied" =>
+                "The file was not applied. Verify that its canonical destination parent already exists, then review and retry."
+              "recovery-required" =>
+                "The destination outcome is uncertain for " +
+                receipt.uncertain_paths[0] +
+                ". Retry is disabled pending operator recovery."
+              _ => "Promotion returned an invalid outcome"
+            }
+            (
+              @rabbita.none,
+              {
+                ..model,
+                mooncode_sandbox_selected_paths: if locked {
+                  []
+                } else {
+                  model.mooncode_sandbox_selected_paths
+                },
+                mooncode_sandbox_promotion_pending: false,
+                mooncode_sandbox_promotion_status: status,
+                mooncode_sandbox_locked_review_keys: locked_keys,
+              },
+            )
+          }
+          Err(error) =>
+            (
+              @rabbita.none,
+              {
+                ..model,
+                mooncode_sandbox_promotion_pending: false,
+                mooncode_sandbox_promotion_status: error,
+              },
+            )
+        }
+      }
     SetMoonCodeSessionQuery(query) =>
       (@rabbita.none, { ..model, mooncode_session_query: query })
     BeginMoonCodeSessionRename(session_id) =>

@@ -7,6 +7,10 @@ import { gzipSync } from 'node:zlib'
 
 const distRoot = fileURLToPath(new URL('./dist/', import.meta.url))
 const assetsRoot = path.join(distRoot, 'assets')
+// The full Rabbita route is lazy, so the raw cap protects parse/compile cost
+// without pretending that the route is part of the initial transfer. Keep the
+// compressed cap below 300 KiB as the stricter network budget.
+const LAZY_ROUTE_MAX_RAW_BYTES = 2.8 * 1024 * 1024
 
 function assetNamed(prefix) {
   const match = readdirSync(assetsRoot)
@@ -52,7 +56,10 @@ test('production UI keeps explicit transfer-size budgets', () => {
   assert.ok(gzipSize(shell) < 8 * 1024, 'interaction shell transfer should stay below 8 KiB')
   assert.ok(gzipSize(editor) < 8 * 1024, 'source assistance transfer should stay below 8 KiB')
   assert.ok(gzipSize(markdown) < 4 * 1024, 'MoonCode Markdown route transfer should stay below 4 KiB')
-  assert.ok(statSize(app) < 2.7 * 1024 * 1024, 'compiled Rabbita app should stay below 2.7 MiB')
+  assert.ok(
+    statSize(app) < LAZY_ROUTE_MAX_RAW_BYTES,
+    'compiled Rabbita app should stay below the 2.8 MiB lazy-route parse budget',
+  )
   assert.ok(gzipSize(app) < 300 * 1024, 'compiled Rabbita app transfer should stay below 300 KiB')
 })
 

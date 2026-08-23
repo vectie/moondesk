@@ -225,6 +225,7 @@ fn select_workspace_action(
       sync_workspace_context_cmd(workspace_id, ""),
       sync_mooncode_context_cmd(workspace_id, ""),
       stop_mooncode_watch_cmd(),
+      stop_wiki_chat_stream_cmd(),
     ]),
     clear_markdown_editor({
       ..model,
@@ -238,6 +239,11 @@ fn select_workspace_action(
       mooncode_prompt: "",
       request_material_paths: [],
       request_material_status: "",
+      wiki_agent_task_id: "",
+      wiki_chat_entries: [],
+      wiki_chat_file_paths: [],
+      wiki_chat_stream_task_id: "",
+      wiki_chat_stream_cursor: "start",
       selected_path: "",
       desk_selected_paths: [],
       desk_selection_anchor: "",
@@ -309,6 +315,11 @@ fn open_quick_path_action(
   path : String,
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
+  let (office_cmd, office_editor) = if model.workspace_mode == MoonWiki {
+    open_office_path_transition(dispatch, model.office_editor, path)
+  } else {
+    (@rabbita.none, model.office_editor)
+  }
   (
     @rabbita.batch([
       fetch_entries_cmd(
@@ -318,9 +329,11 @@ fn open_quick_path_action(
       ),
       fetch_preview_cmd(dispatch, model.selected_workspace_id, path),
       sync_workspace_context_cmd(model.selected_workspace_id, path),
+      office_cmd,
     ]),
     {
       ..clear_if_path_leaves_markdown_editor(model, path),
+      office_editor,
       selected_path: path,
       current_directory: parent_path(path),
       desk_location_input: parent_path(path),
@@ -992,7 +1005,19 @@ fn select_workspace_mode_action(
   } else {
     @rabbita.none
   }
-  (@rabbita.batch([base_cmd, transport_cmd]), next)
+  let (wiki_viewer_cmd, office_editor) = if mode == MoonWiki {
+    open_office_path_transition(
+      dispatch,
+      next.office_editor,
+      next.selected_path,
+    )
+  } else {
+    (@rabbita.none, next.office_editor)
+  }
+  (
+    @rabbita.batch([base_cmd, transport_cmd, wiki_viewer_cmd]),
+    { ..next, office_editor, },
+  )
 }
 
 ///|

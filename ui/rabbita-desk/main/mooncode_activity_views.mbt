@@ -12,6 +12,8 @@ struct MoonCodeEvidenceRow {
   exit_code : Int
   truncated : Bool
   approval : @mooncode_core.MoonCodeApproval?
+  sandbox_receipt : @mooncode_core.MoonCodeSandboxReceipt?
+  sandbox_receipt_invalid : Bool
 }
 
 ///|
@@ -165,7 +167,7 @@ fn render_mooncode_evidence_list(
   }
   let children : Array[@rabbita.Html] = []
   for row in evidence {
-    children.push(render_mooncode_evidence(dispatch, model, row))
+    children.push(render_mooncode_evidence(dispatch, model, session_id, row))
   }
   div(class="mooncode-evidence-list", children)
 }
@@ -174,6 +176,7 @@ fn render_mooncode_evidence_list(
 fn render_mooncode_evidence(
   dispatch : Dispatch[Msg],
   model : Model,
+  _session_id : String,
   row : MoonCodeEvidenceRow,
 ) -> @rabbita.Html {
   if row.approval is Some(_) {
@@ -237,6 +240,28 @@ fn render_mooncode_evidence(
       ),
     )
   }
+  if row.sandbox_receipt_invalid {
+    children.push(
+      div(
+        class="mooncode-sandbox-receipt invalid",
+        attrs=@html.Attrs::build()
+          .role("alert")
+          .data_set("testid", "sandbox-receipt-invalid"),
+        [
+          strong("Sandbox receipt could not be verified"),
+          p(
+            "Promotion is unavailable because the receipt contained missing, unsafe, or unsupported evidence.",
+          ),
+        ],
+      ),
+    )
+  } else {
+    match row.sandbox_receipt {
+      Some(receipt) =>
+        children.push(render_mooncode_sandbox_receipt(dispatch, model, receipt))
+      None => ()
+    }
+  }
   @html.node(
     "details",
     @html.Attrs::build()
@@ -269,30 +294,15 @@ fn render_mooncode_approval(
   row : MoonCodeEvidenceRow,
 ) -> @rabbita.Html {
   guard row.approval is Some(approval) else { return @html.nothing }
-  let pending = approval is @mooncode_core.MoonCodeApproval::Pending(..)
+  let pending = approval is Pending(..)
   let (state_name, approval_id, command_id, tool_call_id, arguments) = match
     approval {
-    @mooncode_core.MoonCodeApproval::Pending(
-      approval_id~,
-      target_command_id~,
-      tool_call_id~,
-      arguments~,
-      ..
-    ) => ("pending", approval_id, target_command_id, tool_call_id, arguments)
-    @mooncode_core.MoonCodeApproval::Approved(
-      approval_id~,
-      target_command_id~,
-      tool_call_id~,
-      arguments~,
-      ..
-    ) => ("approved", approval_id, target_command_id, tool_call_id, arguments)
-    @mooncode_core.MoonCodeApproval::Rejected(
-      approval_id~,
-      target_command_id~,
-      tool_call_id~,
-      arguments~,
-      ..
-    ) => ("rejected", approval_id, target_command_id, tool_call_id, arguments)
+    Pending(approval_id~, target_command_id~, tool_call_id~, arguments~, ..) =>
+      ("pending", approval_id, target_command_id, tool_call_id, arguments)
+    Approved(approval_id~, target_command_id~, tool_call_id~, arguments~, ..) =>
+      ("approved", approval_id, target_command_id, tool_call_id, arguments)
+    Rejected(approval_id~, target_command_id~, tool_call_id~, arguments~, ..) =>
+      ("rejected", approval_id, target_command_id, tool_call_id, arguments)
   }
   div(
     class="mooncode-approval " + state_name,

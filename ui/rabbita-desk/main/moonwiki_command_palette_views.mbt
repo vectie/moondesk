@@ -428,6 +428,7 @@ fn primary_navigation_items() -> Array[(WorkspaceMode, String, String, String)] 
 }
 
 ///|
+#warnings("-unused_value")
 fn primary_navigation_i18n_keys() -> Array[String] {
   ["nav.desk", "nav.wiki", "nav.code", "nav.flow", "nav.packs"]
 }
@@ -469,7 +470,8 @@ fn render_wiki_workspace_tabs(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  if primary_navigation_mode(model.workspace_mode) != MoonWiki {
+  if primary_navigation_mode(model.workspace_mode) != MoonWiki ||
+    model.workspace_mode == MoonWiki {
     return @html.nothing
   }
   div(

@@ -95,6 +95,301 @@ test "wiki capture and task composers start without accidental content" {
 }
 
 ///|
+fn wiki_focus_test_model(warnings : Array[String]) -> Model {
+  let item : OfficeEditorItem = {
+    section: "paragraph 0",
+    reference: "run 0",
+    section_index: 0,
+    item_index: 0,
+    text: "A document beside the conversation.",
+    formula: "",
+    bold: false,
+    italic: false,
+    underline: false,
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 40,
+  }
+  let document : OfficeEditorDocument = {
+    path: "documents/brief.docx",
+    kind: OfficeDocx,
+    items: [item],
+    warnings,
+    baseline: "baseline",
+  }
+  {
+    ..init_model(),
+    workspace_mode: MoonWiki,
+    activity: Town,
+    selected_workspace_id: "book-demo",
+    selected_path: document.path,
+    office_editor: {
+      ..init_office_editor("book-demo"),
+      path_input: document.path,
+      path: document.path,
+      document: Some(document),
+      draft_items: document.items,
+      status: "Opened supported Office subset",
+      saved_baseline: document.baseline,
+    },
+  }
+}
+
+///|
+#warnings("-alert_unstable")
+test "Wiki is a quiet chat and Office viewer without operator navigation" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_wiki_focus_workspace(dispatch, wiki_focus_test_model([])),
+    ),
+  )
+  assert_true(markup.contains("aria-label=\"Document chat\""))
+  assert_true(markup.contains("data-testid=\"wiki-chat-input\""))
+  assert_true(markup.contains("aria-label=\"Document viewer\""))
+  assert_true(markup.contains("data-testid=\"office-docx-preview\""))
+  assert_false(markup.contains("data-testid=\"wiki-warning-popup\""))
+  assert_false(markup.contains("activity-rail"))
+  assert_false(markup.contains("Automations"))
+  assert_false(markup.contains("stage"))
+  assert_false(markup.contains("MoonClaw"))
+  assert_false(markup.contains("MoonCode"))
+}
+
+///|
+#warnings("-alert_unstable")
+test "Wiki interrupts only when the document reports a warning" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let warning = "A linked chart could not be validated."
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_wiki_focus_workspace(dispatch, wiki_focus_test_model([warning])),
+    ),
+  )
+  assert_true(markup.contains("data-testid=\"wiki-warning-popup\""))
+  assert_true(markup.contains("role=\"alert\""))
+  assert_true(markup.contains("Needs attention"))
+  assert_true(markup.contains(warning))
+}
+
+///|
+test "Wiki does not interrupt for preserved Office compatibility notes" {
+  let model = wiki_focus_test_model([
+    "Supported subset only. Unsupported package members are preserved.",
+  ])
+  assert_true(wiki_document_warnings(model) == [])
+}
+
+///|
+test "Wiki Office open path stages a supported viewer request" {
+  let state = update_office_editor(
+    init_office_editor("book-demo"),
+    OfficeOpenPath("documents/forecast.xlsx"),
+  )
+  assert_true(state.loading)
+  assert_eq(state.path, "documents/forecast.xlsx")
+  assert_eq(state.path_input, "documents/forecast.xlsx")
+  assert_eq(state.request_generation, 1)
+}
+
+///|
+test "Wiki chat submits document context to the general agent endpoint" {
+  let model = {
+    ..wiki_focus_test_model([]),
+    request_prompt: "Check the totals and improve the conclusion.",
+    wiki_agent_task_id: "task-general-1",
+    wiki_chat_file_paths: ["documents/forecast.xlsx"],
+  }
+  let body = wiki_chat_submission_body(model)
+  assert_eq(@desk.moonclaw_endpoint_url("chat"), "/api/moonclaw/chat")
+  assert_eq(json_field_string(body, "workspace_id", default=""), "book-demo")
+  assert_eq(
+    json_field_string(body, "document_path", default=""),
+    "documents/brief.docx",
+  )
+  assert_eq(json_field_string(body, "task_id", default=""), "task-general-1")
+  assert_eq(json_field_string_array_items(body, "file_paths"), [
+    "documents/forecast.xlsx",
+  ])
+  assert_false(body.stringify().contains("/v1/code"))
+  assert_true(wiki_task_start_disabled({ ..model, request_status: "sending" }))
+}
+
+///|
+test "Wiki chat attaches existing files and projects MoonClaw deltas" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..wiki_focus_test_model([]),
+    selected_path: "documents/forecast.xlsx",
+  }
+  let (_, attached) = update_wiki_chat(
+    dispatch,
+    AttachWikiChatFile("documents/forecast.xlsx"),
+    model,
+  )
+  assert_eq(attached.wiki_chat_file_paths, ["documents/forecast.xlsx"])
+  let delta : Json = {
+    "contract": "moonclaw-task-stream.v2",
+    "kind": "answer_delta",
+    "content": "Checking",
+  }
+  let (after_delta, done) = wiki_chat_apply_stream_event(attached, delta)
+  assert_false(done)
+  assert_eq(after_delta.wiki_chat_entries, [
+    { role: "assistant-stream", content: "Checking" },
+  ])
+  let final_response : Json = {
+    "contract": "moonclaw-task-stream.v2",
+    "kind": "answer",
+    "content": "Checked.",
+  }
+  let (after_final, done) = wiki_chat_apply_stream_event(
+    after_delta, final_response,
+  )
+  assert_true(!done)
+  assert_eq(after_final.wiki_chat_entries, [
+    { role: "assistant", content: "Checked." },
+  ])
+  let (after_terminal, done) = wiki_chat_apply_stream_event(after_final, {
+    "contract": "moonclaw-task-stream.v2",
+    "kind": "terminal",
+    "state": "complete",
+  })
+  assert_true(done)
+  assert_eq(after_terminal.request_status, "complete")
+}
+
+///|
+test "Wiki chat file mentions use a shared trigger grammar" {
+  let trigger = ComposerTrigger::parse("Review the totals in @forecast")
+  match trigger {
+    Some(value) => {
+      assert_eq(value.query, "forecast")
+      assert_eq(value.draft_without_token, "Review the totals in ")
+    }
+    None => assert_true(false)
+  }
+  assert_true(ComposerTrigger::parse("embedded@word") is None)
+  assert_false(wiki_chat_path_is_attachable("file:///tmp/report.xlsx"))
+  assert_false(wiki_chat_path_is_attachable("../outside/report.xlsx"))
+}
+
+///|
+test "Wiki chat file search rejects stale replies and scopes results to the book" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    wiki_chat_file_picker_open: true,
+    wiki_chat_file_query: "forecast",
+    wiki_chat_file_search_generation: 4,
+  }
+  let good : SearchHit = {
+    workspace_id: "book-demo",
+    workspace_name: "Demo",
+    path: "documents/forecast.xlsx",
+    title: "forecast.xlsx",
+    kind: Artifact,
+    source_layer: Wiki,
+    snippet: "forecast totals",
+  }
+  let other : SearchHit = {
+    ..good,
+    workspace_id: "other-book",
+    path: "documents/other.xlsx",
+  }
+  let response = pages_search_test_response(
+    [good, other],
+    query="forecast",
+    workspace_id="",
+  )
+  let (_, loaded) = update_wiki_chat(
+    dispatch,
+    LoadedWikiChatFileSearch(4, Ok(response)),
+    model,
+  )
+  assert_eq(loaded.wiki_chat_file_results.map(hit => hit.path), [
+    "documents/forecast.xlsx",
+  ])
+  let (_, stale) = update_wiki_chat(
+    dispatch,
+    LoadedWikiChatFileSearch(3, Ok({ ..response, hits: [other] })),
+    loaded,
+  )
+  assert_eq(stale.wiki_chat_file_results.map(hit => hit.path), [
+    "documents/forecast.xlsx",
+  ])
+}
+
+///|
+#warnings("-alert_unstable")
+test "Wiki chat renders file search and a non-importing drop target" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_wiki_focus_workspace(dispatch, {
+        ..init_model(),
+        selected_workspace_id: "book-demo",
+        wiki_chat_file_picker_open: true,
+        wiki_chat_file_query: "forecast",
+        wiki_chat_file_search_status: "1 matching file",
+        wiki_chat_file_results: [
+          {
+            workspace_id: "book-demo",
+            workspace_name: "Demo",
+            path: "documents/forecast.xlsx",
+            title: "forecast.xlsx",
+            kind: Artifact,
+            source_layer: Wiki,
+            snippet: "forecast totals",
+          },
+        ],
+      }),
+    ),
+  )
+  assert_true(markup.contains("data-testid=\"wiki-chat-file-picker\""))
+  assert_true(markup.contains("data-testid=\"wiki-chat-file-search\""))
+  assert_true(markup.contains("data-testid=\"wiki-chat-dropzone\""))
+  assert_true(markup.contains("Nothing is imported"))
+}
+
+///|
+#warnings("-alert_unstable")
+test "Wiki chat keeps a general task conversation without exposing its id" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..wiki_focus_test_model([]),
+    request_prompt: "Validate this presentation.",
+  }
+  let (_, next) = update_wiki_chat(
+    dispatch,
+    SubmittedWikiChat(
+      "Validate this presentation.",
+      Ok({
+        task_id: "general-task-2",
+        status: "generating",
+        message: "working",
+        queued: false,
+        owner: "moonclaw-general-agent",
+      }),
+    ),
+    model,
+  )
+  assert_eq(next.wiki_agent_task_id, "general-task-2")
+  assert_eq(next.request_prompt, "")
+  assert_true(
+    next.wiki_chat_entries ==
+    [{ role: "user", content: "Validate this presentation." }],
+  )
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_wiki_focus_workspace(dispatch, next)),
+  )
+  assert_true(markup.contains("Validate this presentation."))
+  assert_false(markup.contains("general-task-2"))
+}
+
+///|
 #warnings("-alert_unstable")
 test "Inbox note composer has stable accessible keyboard targets" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }

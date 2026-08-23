@@ -232,7 +232,9 @@ fn render_request_materials(
 
 ///|
 fn wiki_task_start_disabled(model : Model) -> Bool {
-  model.selected_workspace_id == "" || model.request_prompt.trim().is_empty()
+  model.selected_workspace_id == "" ||
+  model.request_prompt.trim().is_empty() ||
+  model.request_status == "sending"
 }
 
 ///|

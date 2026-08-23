@@ -1,4 +1,5 @@
 ///|
+#warnings("-unused_field")
 priv enum MoonCodeCapabilityState {
   CapabilityPending
   CapabilitySupported(@mooncode_core.MoonCodeCapability)

@@ -57,6 +57,7 @@ fn office_view_test_dispatch(_msg : Msg) -> @rabbita.Cmd {
 }
 
 ///|
+#warnings("-alert_unstable")
 test "Office editor renders honest live previews for every supported kind" {
   let item = office_test_item("section", "item", 0, 0)
   let docx = @rabbita.render_to_string(
@@ -96,6 +97,7 @@ test "Office editor renders honest live previews for every supported kind" {
 }
 
 ///|
+#warnings("-alert_unstable")
 test "Office preview renders every supported item and selected geometry" {
   let first = {
     ..office_test_item("paragraph 0", "run 0", 0, 0),
@@ -242,6 +244,23 @@ test "Office failure preserves dirty draft and dirty state blocks close reopen" 
 }
 
 ///|
+test "Office viewer refresh and dispose are generation-safe lifecycle actions" {
+  let initial = office_test_state(
+    OfficeDocx,
+    office_test_item("paragraph 0", "run 0", 0, 0),
+  )
+  let refreshing = update_office_editor(initial, OfficeRefresh)
+  assert_true(refreshing.loading)
+  assert_eq(refreshing.request_generation, initial.request_generation + 1)
+  let disposed = update_office_editor(initial, OfficeDispose)
+  assert_true(disposed.document is None)
+  assert_eq(disposed.draft_items.length(), 0)
+  let disposed_again = update_office_editor(disposed, OfficeDispose)
+  assert_true(disposed_again.document is None)
+  assert_eq(disposed_again.draft_items.length(), 0)
+}
+
+///|
 test "Office conflict supports explicit reload and deliberate replacement without silent draft loss" {
   let initial = office_test_state(
     OfficeDocx,
@@ -335,12 +354,12 @@ test "Office open validates authority path safety and supported file type" {
   )
   assert_false(unbound.loading)
   assert_true(unbound.status.contains("Select a MoonBook"))
-  let unsafe = update_office_editor(
+  let unsafe_path = update_office_editor(
     { ..init_office_editor("book"), path_input: "../report.docx" },
     OfficeOpen,
   )
-  assert_false(unsafe.loading)
-  assert_true(unsafe.status.contains("Unsafe Office path"))
+  assert_false(unsafe_path.loading)
+  assert_true(unsafe_path.status.contains("Unsafe Office path"))
   let unsupported = update_office_editor(
     { ..init_office_editor("book"), path_input: "documents/report.pdf" },
     OfficeOpen,

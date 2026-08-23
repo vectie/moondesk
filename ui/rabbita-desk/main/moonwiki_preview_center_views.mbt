@@ -252,7 +252,13 @@ fn render_preview_body(
             ],
           )
         Image =>
-          div(class="image-preview", [img(src=preview.body, alt=preview.title)])
+          div(class="image-preview", [
+            img(
+              src=desk_preview_image_source(preview),
+              alt=preview.title,
+              attrs=desk_preview_image_attrs(preview),
+            ),
+          ])
         DirectoryListing =>
           div(class="markdown-preview", [
             h1(preview.title),

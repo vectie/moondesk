@@ -20,6 +20,7 @@ priv struct CapabilityConfigurationEvidence {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 priv struct MoonClawModelReadiness {
   known : Bool
   ready : Bool
@@ -48,6 +49,7 @@ struct MoonClawDaemonStatus {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 priv struct MoonClawProviderAuthStatus {
   authenticated : Bool?
   email : String?
@@ -55,6 +57,7 @@ priv struct MoonClawProviderAuthStatus {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonClawAuthStatus {
   ok : Bool?
   status : String?
@@ -66,6 +69,7 @@ struct MoonClawAuthStatus {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonClawCodexAuthFlow {
   ok : Bool?
   status : String?
@@ -77,6 +81,7 @@ struct MoonClawCodexAuthFlow {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonClawCopilotAuthFlow {
   ok : Bool?
   status : String?
@@ -90,6 +95,7 @@ struct MoonClawCopilotAuthFlow {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonClawSetupResult {
   ok : Bool
   status : String

@@ -120,6 +120,7 @@ struct MoonFlowOperatorEvidenceRef {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowOperatorAppEntrypoint {
   kind : String
   pack_id : String
@@ -131,6 +132,7 @@ struct MoonFlowOperatorAppEntrypoint {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowOperatorReceiver {
   handoff_token : String
   handoff_digest : String
@@ -148,6 +150,7 @@ struct MoonFlowOperatorReceiver {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowOperatorAction {
   action_id : String
   action_kind : String?

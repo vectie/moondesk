@@ -98,6 +98,16 @@ struct Model {
   request_status : String
   request_material_paths : Array[String]
   request_material_status : String
+  wiki_agent_task_id : String
+  wiki_chat_entries : Array[WikiChatEntry]
+  wiki_chat_file_paths : Array[String]
+  wiki_chat_file_picker_open : Bool
+  wiki_chat_file_query : String
+  wiki_chat_file_results : Array[SearchHit]
+  wiki_chat_file_search_status : String
+  wiki_chat_file_search_generation : Int
+  wiki_chat_stream_task_id : String
+  wiki_chat_stream_cursor : String
   requests : Array[RequestRecord]
   requests_state : SurfaceState?
   requests_error : String
@@ -149,6 +159,11 @@ struct Model {
   mooncode_watch_cursor : @mooncode_core.MoonCodeWatchCursor
   mooncode_watch_status : String
   mooncode_watch_failure_count : Int
+  mooncode_sandbox_review_key : String
+  mooncode_sandbox_selected_paths : Array[String]
+  mooncode_sandbox_promotion_pending : Bool
+  mooncode_sandbox_promotion_status : String
+  mooncode_sandbox_locked_review_keys : Array[String]
   events : Array[DeskEvent]
   review_items : Array[ReviewItem]
   review_state : SurfaceState?
@@ -273,6 +288,15 @@ enum Msg {
   ImportedInbox(Result[InboxImportResult, String])
   SavedView(Result[SavedViewRecord, String])
   SubmittedRequest(Result[RequestRecord, String])
+  SubmittedWikiChat(String, Result[WikiChatSubmission, String])
+  LoadedWikiChatEvents(String, String, Result[Array[Json], String])
+  ToggleWikiChatFilePicker
+  SetWikiChatPrompt(String)
+  SetWikiChatFileQuery(String)
+  RunWikiChatFileSearch(Int, String)
+  LoadedWikiChatFileSearch(Int, Result[PagesSearchResponse, String])
+  AttachWikiChatFile(String)
+  WikiChatDropPath(String)
   CreatedStandingGoal(Result[StandingGoalRecord, String])
   DecidedReviewItem(Result[ReviewDecisionResult, String])
   CreatedBookFromPattern(Result[BookPatternCreationResult, String])
@@ -346,6 +370,12 @@ enum Msg {
   RetryMoonCodeTurn(String, String)
   CancelMoonCodeWork(String, String)
   DecideMoonCodeTool(@mooncode_core.MoonCodeApproval, MoonCodeApprovalIntent)
+  ToggleMoonCodeSandboxFile(@mooncode_core.MoonCodeSandboxReceipt, String)
+  PromoteMoonCodeSandboxReceipt(@mooncode_core.MoonCodeSandboxReceipt)
+  CompletedMoonCodeSandboxPromotion(
+    String,
+    Result[@mooncode_core.MoonCodeSandboxPromotionResult, String]
+  )
   ManageMoonClaw(String)
   StartMoonClawAuth(String)
   CheckMoonClawSetup
@@ -375,7 +405,10 @@ enum Msg {
   SetCommandQuery(String)
   SetRequestPrompt(String)
   RemoveRequestMaterial(String)
+  RemoveWikiChatFile(String)
   SubmitRequest
+  SubmitWikiChat
+  PollWikiChatStream(String)
   SetGoalTitle(String)
   SetGoalCadenceTicks(String)
   SetGoalReviewPolicy(String)

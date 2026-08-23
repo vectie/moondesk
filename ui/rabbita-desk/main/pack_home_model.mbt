@@ -1,4 +1,5 @@
 ///|
+#warnings("-unused_field")
 struct PackTemplateOperation {
   operation_ref : String
   input_schema_ref : String
@@ -13,6 +14,7 @@ struct PackTemplateRequirements {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct PackTemplateCostCeiling {
   status : String
   currency : String
@@ -21,6 +23,7 @@ struct PackTemplateCostCeiling {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct PackTemplateLicensingCeiling {
   status : String
   classes : Array[String]
@@ -28,6 +31,7 @@ struct PackTemplateLicensingCeiling {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct PackTemplateReviewCeiling {
   required : Bool
   authority : String
@@ -35,6 +39,7 @@ struct PackTemplateReviewCeiling {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct PackTemplateCeilings {
   authorities : Array[String]
   external_effect : Bool
@@ -51,6 +56,7 @@ struct PackTemplateRecovery {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct PackTemplateMigrationPolicy {
   strategy : String
   compatible_from : Array[String]
@@ -58,13 +64,7 @@ struct PackTemplateMigrationPolicy {
 } derive(FromJson)
 
 ///|
-struct PackTemplateQualificationEvidence {
-  kind : String
-  ref : String
-  digest : String
-} derive(FromJson)
-
-///|
+#warnings("-unused_field")
 struct PackTemplateRecord {
   contract_id : String
   template_id : String
@@ -85,7 +85,7 @@ struct PackTemplateRecord {
   icon : String
   migration_policy : PackTemplateMigrationPolicy
   preview_ref : String
-  qualification_evidence_refs : Array[PackTemplateQualificationEvidence]
+  qualification_evidence_refs : Array[Json]
   requirements : PackTemplateRequirements
   ceilings : PackTemplateCeilings
   recovery : PackTemplateRecovery
@@ -93,6 +93,7 @@ struct PackTemplateRecord {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct PackAppRecord {
   pack_id : String
   version : String
@@ -111,11 +112,14 @@ struct PackAppRecord {
   workflow_count : Int
   tool_count : Int
   configuration_message : String
+  bridge_ready : Bool?
+  intake_operation_ids : Array[String]?
   template_count : Int?
   templates : Array[PackTemplateRecord]?
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct PackAppCatalog {
   app_count : Int
   configured_count : Int

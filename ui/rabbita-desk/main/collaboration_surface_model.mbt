@@ -12,6 +12,7 @@ struct CollaborationPrincipalRef {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct CollaborationWorkspaceRef {
   contract_id : String
   workspace_id : String
@@ -20,6 +21,7 @@ struct CollaborationWorkspaceRef {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct CollaborationCorrelationRef {
   contract_id : String
   run_id : String
@@ -30,6 +32,7 @@ struct CollaborationCorrelationRef {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct CollaborationOperationRef {
   contract_id : String
   product_id : String
@@ -38,6 +41,7 @@ struct CollaborationOperationRef {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct CollaborationContractRef {
   contract_id : String
   referenced_contract_id : String
@@ -45,6 +49,7 @@ struct CollaborationContractRef {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct CollaborationBudgetCeilings {
   max_cost_micros : Int64?
   max_runtime_ms : Int64?
@@ -53,6 +58,7 @@ struct CollaborationBudgetCeilings {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowCollaborationMembership {
   membership_id : String
   principal : CollaborationPrincipalRef
@@ -63,6 +69,7 @@ struct MoonFlowCollaborationMembership {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowCollaborationAssignment {
   assignment_id : String
   assignee : CollaborationPrincipalRef
@@ -77,6 +84,7 @@ struct MoonFlowCollaborationAssignment {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowCollaborationComment {
   comment_id : String
   author : CollaborationPrincipalRef
@@ -89,6 +97,7 @@ struct MoonFlowCollaborationComment {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowCollaborationReview {
   review_id : String
   subject_digest : String
@@ -102,6 +111,7 @@ struct MoonFlowCollaborationReview {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowCollaborationPayload {
   workspace_ref : CollaborationWorkspaceRef
   memberships : Array[MoonFlowCollaborationMembership]
@@ -114,6 +124,7 @@ struct MoonFlowCollaborationPayload {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowCollaborationSnapshot {
   contract_id : String
   payload : MoonFlowCollaborationPayload
@@ -136,6 +147,7 @@ struct MoonFlowHandoverCatalog {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct MoonFlowCollaborationReply {
   ok : Bool
   status : String
@@ -148,6 +160,7 @@ struct MoonFlowCollaborationReply {
 } derive(FromJson)
 
 ///|
+#warnings("-unused_field")
 struct CollaborationPersonProjection {
   principal_ref : CollaborationPrincipalRef
   workspace_ref : CollaborationWorkspaceRef
@@ -156,6 +169,7 @@ struct CollaborationPersonProjection {
 }
 
 ///|
+#warnings("-unused_field")
 struct CollaborationAssignmentProjection {
   assignment_id : String
   assignee_principal : CollaborationPrincipalRef
@@ -166,6 +180,7 @@ struct CollaborationAssignmentProjection {
 }
 
 ///|
+#warnings("-unused_field")
 struct CollaborationCommentProjection {
   comment_id : String
   author_principal : CollaborationPrincipalRef
@@ -176,6 +191,7 @@ struct CollaborationCommentProjection {
 }
 
 ///|
+#warnings("-unused_field")
 struct CollaborationReviewProjection {
   review_id : String
   subject_digest : String
@@ -195,6 +211,7 @@ struct CollaborationHandoverProjection {
 }
 
 ///|
+#warnings("-struct_never_constructed-unused_field")
 struct CollaborationConflictReceiptProjection {
   expected_head : String
   actual_head : String

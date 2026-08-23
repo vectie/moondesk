@@ -87,13 +87,11 @@ fn render_app(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           )
         } else {
           main_(
-            class="desk-main wiki-main",
+            class="desk-main wiki-focus-main",
             attrs=main_content_attrs(MoonWiki),
             [
-              h1(class="visually-hidden", "Pages"),
-              render_activity_rail(dispatch, model),
-              render_activity_pane(dispatch, model),
-              render_preview_center(dispatch, model),
+              h1(class="visually-hidden", "Document workspace"),
+              render_wiki_focus_workspace(dispatch, model),
             ],
           )
         },

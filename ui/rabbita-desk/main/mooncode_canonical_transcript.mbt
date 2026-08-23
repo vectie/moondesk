@@ -222,6 +222,8 @@ fn mooncode_canonical_work_evidence(
       exit_code: evidence.exit_code,
       truncated: evidence.truncated,
       approval,
+      sandbox_receipt: evidence.sandbox_receipt,
+      sandbox_receipt_invalid: evidence.sandbox_receipt_invalid,
     })
   }
   rows

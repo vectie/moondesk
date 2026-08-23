@@ -105,13 +105,7 @@ fn mooncode_session_approval_cmd(
   decision : MoonCodeApprovalIntent,
 ) -> @rabbita.Cmd {
   guard approval
-    is @mooncode_core.MoonCodeApproval::Pending(
-      session_id~,
-      approval_id~,
-      target_command_id~,
-      tool_call_id~,
-      ..
-    ) &&
+    is Pending(session_id~, approval_id~, target_command_id~, tool_call_id~, ..) &&
     session_id == session.id else {
     return dispatch(
       CompletedMoonCodeCommand(Err("Approval target is unavailable")),
@@ -119,7 +113,7 @@ fn mooncode_session_approval_cmd(
   }
   let action = (match decision {
     ApproveMoonCodeTool => @mooncode_core.MoonCodeCommandKind::ApproveTool
-    RejectMoonCodeTool => @mooncode_core.MoonCodeCommandKind::RejectTool
+    RejectMoonCodeTool => RejectTool
   }).to_string()
   let body = match
     typed_mooncode_command_body({
