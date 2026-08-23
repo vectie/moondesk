@@ -47,9 +47,9 @@ test "approval evidence decodes retained aggregate variants" {
     let approval = conversation.turns[0].approvals[0]
     assert_true(
       match state {
-        "pending" => approval is MoonCodeApproval::Pending(..)
-        "approved" => approval is MoonCodeApproval::Approved(..)
-        _ => approval is MoonCodeApproval::Rejected(..)
+        "pending" => approval is Pending(..)
+        "approved" => approval is Approved(..)
+        _ => approval is Rejected(..)
       },
     )
   }

@@ -134,6 +134,7 @@ fn native_event_projection_problem(event : Json, reason~ : String) -> Json {
 }
 
 ///|
+#warnings("-unused_value")
 fn native_event_projection_report(
   native_report : Json,
   session_id~ : String,
@@ -206,6 +207,7 @@ fn native_event_projection_report(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_events_for_canonical_projection(native_report : Json) -> Array[Json] {
   let events = native_event_json_array_items(native_report, "events")
   let projected : Array[Json] = []

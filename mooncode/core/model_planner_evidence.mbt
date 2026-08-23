@@ -9,6 +9,7 @@ fn model_planner_evidence_contract_kind() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_evidence_report_kind() -> String {
   "mooncode-model-planner-evidence-report"
 }
@@ -69,6 +70,7 @@ fn model_planner_command_actions() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_command_action_is_supported(action : String) -> Bool {
   model_planner_command_actions().contains(action)
 }
@@ -81,6 +83,7 @@ fn model_planner_command_event_kinds() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_command_event_kind_is_supported(kind : String) -> Bool {
   model_planner_command_event_kinds().contains(kind)
 }
@@ -107,6 +110,7 @@ fn model_planner_terminal_event_kinds() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_event_is_planner_evidence(
   kind : String,
   planner_mode : String,
@@ -116,27 +120,32 @@ fn model_planner_event_is_planner_evidence(
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_status_is_running(status : String) -> Bool {
   status == model_planner_status_running() ||
   status == model_planner_status_service_started()
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_status_is_contract_failure(status : String) -> Bool {
   status == model_planner_status_contract_failed()
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_contract_failure_rule() -> String {
   "MoonClaw started the model-planned turn but did not emit runtime.planner_started, runtime.planner_selected, model planner reasoning, model-planned tool calls, or runtime.planner_failed."
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_queued_rule() -> String {
   "The command is queued. The UI must not show a working state until MoonClaw emits command-scoped runtime evidence."
 }
 
 ///|
+#warnings("-unused_value")
 fn model_planner_working_evidence_rule() -> String {
   "The visible working state is backed by command-scoped MoonClaw planner/runtime evidence."
 }

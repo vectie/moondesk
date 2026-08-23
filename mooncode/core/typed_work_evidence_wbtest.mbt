@@ -19,6 +19,8 @@ fn typed_wb_evidence(
     exit_code,
     truncated: false,
     approval: None,
+    sandbox_receipt: None,
+    sandbox_receipt_invalid: false,
   }
 }
 
@@ -32,8 +34,7 @@ test "typed package review distinguishes stale, missing, failed, reject, readine
     typed_wb_evidence(command, PackageVerified),
   ]
   assert_true(
-    project_package_review_evidence("other", base, true).status
-    is MoonCodePackageReviewStatus::Stale,
+    project_package_review_evidence("other", base, true).status is Stale,
   )
   assert_true(
     project_package_review_evidence(command, base, false).status
@@ -45,12 +46,12 @@ test "typed package review distinguishes stale, missing, failed, reject, readine
     is WaitingForAssistant,
   )
   assert_true(
-    project_package_review_evidence(command, with_manifest[:4].to_array(), true).status
+    project_package_review_evidence(command, with_manifest[:4].to_owned(), true).status
     is WaitingForReadiness,
   )
   assert_true(
     project_package_review_evidence(command, with_manifest, true).status
-    is MoonCodePackageReviewStatus::Accepted,
+    is Accepted,
   )
   let failed = base.map(item => {
     if item.kind == Test.canonical() {
@@ -60,8 +61,7 @@ test "typed package review distinguishes stale, missing, failed, reject, readine
     }
   })
   assert_true(
-    project_package_review_evidence(command, failed, true).status
-    is MoonCodePackageReviewStatus::Failed,
+    project_package_review_evidence(command, failed, true).status is Failed,
   )
   let rejected = base.map(item => {
     if item.kind == ReviewAccept.canonical() {
@@ -71,8 +71,7 @@ test "typed package review distinguishes stale, missing, failed, reject, readine
     }
   })
   assert_true(
-    project_package_review_evidence(command, rejected, true).status
-    is MoonCodePackageReviewStatus::Rejected,
+    project_package_review_evidence(command, rejected, true).status is Rejected,
   )
 }
 
@@ -92,6 +91,6 @@ test "real emitted package shape lacks manifest and other-command receipt stays 
   assert_eq(review.evidence.length(), 3)
   assert_true(
     project_package_review_evidence(command, evidence, true, work_failed=true).status
-    is MoonCodePackageReviewStatus::Failed,
+    is Failed,
   )
 }

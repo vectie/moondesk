@@ -84,6 +84,7 @@ fn command_turn_actions() -> Array[String] {
 }
 
 ///|
+#warnings("-deprecated")
 fn command_supported_actions() -> Array[String] {
   let actions = command_advertised_actions()
   actions.push(command_note())
@@ -91,11 +92,13 @@ fn command_supported_actions() -> Array[String] {
 }
 
 ///|
+#warnings("-deprecated-unused_value")
 fn command_action_is_advertised(action : String) -> Bool {
   command_advertised_actions().contains(action)
 }
 
 ///|
+#warnings("-unused_value")
 fn command_action_is_turn(action : String) -> Bool {
   command_turn_actions().contains(action)
 }
@@ -296,6 +299,7 @@ fn command_action_lane(action : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn command_action_title(action : String, status : String) -> String {
   let label = if action == command_run_tests() {
     "Run tests"
@@ -332,6 +336,7 @@ fn command_action_title(action : String, status : String) -> String {
 }
 
 ///|
+#warnings("-deprecated")
 fn command_action_contract_json() -> Json {
   {
     "kind": "mooncode-command-action-contract",
@@ -354,6 +359,7 @@ fn command_action_contract_json() -> Json {
 }
 
 ///|
+#warnings("-deprecated")
 fn command_action_json(action : String) -> Json {
   {
     "action": action,

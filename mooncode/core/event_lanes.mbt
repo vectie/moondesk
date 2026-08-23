@@ -79,6 +79,7 @@ fn event_lane_is_progress(lane : String) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn event_lane_normalize(lane : String) -> String {
   if event_lane_is_supported(lane) {
     lane

@@ -3,6 +3,7 @@ package "vectie/moondesk/mooncode/core"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -17,6 +18,8 @@ pub fn decode_mooncode_conversation(Json, current_revision? : String) -> Result[
 pub fn decode_mooncode_lifecycle_action(Json) -> Result[MoonCodeLifecycleAction, MoonCodeFailure]
 
 pub fn decode_mooncode_lifecycle_result(Json, expected_session_id~ : MoonCodeSessionId) -> Result[(MoonCodeLifecycleAction, MoonCodeSessionId, String, Bool, Bool), MoonCodeFailure]
+
+pub fn decode_mooncode_sandbox_receipt(Json) -> Result[MoonCodeSandboxReceipt, String]
 
 pub fn decode_mooncode_selected_session(Json) -> Result[MoonCodeSessionSummary, MoonCodeFailure]
 
@@ -42,11 +45,17 @@ pub fn mooncode_capability() -> MoonCodeCapability
 
 pub fn mooncode_lifecycle_transition(MoonCodeLifecycleAction, MoonCodeSessionStatus, archived~ : Bool) -> Result[Unit, MoonCodeFailure]
 
+pub fn mooncode_sandbox_relative_path(String) -> Bool
+
 pub fn mooncode_watch_cursor(String, String) -> MoonCodeWatchCursor raise
 
 pub fn mooncode_watch_origin_cursor() -> MoonCodeWatchCursor
 
 pub fn protocol_version() -> String
+
+pub fn validate_mooncode_sandbox_promotion_request(MoonCodeSandboxPromotionRequest) -> Result[MoonCodeSandboxPromotionRequest, String]
+
+pub fn validate_mooncode_sandbox_promotion_result(MoonCodeSandboxPromotionResult, MoonCodeSandboxPromotionRequest) -> Result[MoonCodeSandboxPromotionResult, String]
 
 // Errors
 
@@ -136,6 +145,8 @@ pub(all) struct MoonCodeEvidence {
   exit_code : Int
   truncated : Bool
   approval : MoonCodeApproval?
+  sandbox_receipt : MoonCodeSandboxReceipt?
+  sandbox_receipt_invalid : Bool
 } derive(Eq, @debug.Debug)
 
 pub(all) enum MoonCodeFailure {
@@ -163,6 +174,67 @@ pub(all) struct MoonCodeMessage {
   client_turn_id : String
   extensions : Map[String, Json]
 } derive(Eq, @debug.Debug)
+
+pub(all) struct MoonCodeSandboxChange {
+  relative_path : String
+  change : String
+  before_fingerprint : String?
+  after_fingerprint : String?
+  after_size_bytes : Int64?
+  promotable : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct MoonCodeSandboxLimits {
+  wall_clock_ms : Int
+  cpu_seconds : Int
+  memory_mib : Int
+  disk_mib : Int
+  processes : Int
+  output_bytes : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct MoonCodeSandboxPromotionItem {
+  source_relative : String
+  destination_relative : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct MoonCodeSandboxPromotionRequest {
+  retention_id : String
+  approval_digest : String
+  command_digest : String
+  items : Array[MoonCodeSandboxPromotionItem]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct MoonCodeSandboxPromotionResult {
+  completed : Bool
+  retention_id : String
+  approval_digest : String
+  command_digest : String
+  promoted_paths : Array[String]
+  destination_outcome : String
+  uncertain_paths : Array[String]
+  recovery_required : Bool
+  error_code : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn MoonCodeSandboxPromotionResult::locks_receipt(Self) -> Bool
+
+pub(all) struct MoonCodeSandboxReceipt {
+  backend : String
+  enforcement : String
+  cleanup_verified : Bool
+  network : String
+  limits : MoonCodeSandboxLimits
+  unverified_limits : Array[String]
+  approval_digest : String
+  command_digest : String
+  profile_digest : String
+  changed_paths : Array[String]
+  changes : Array[MoonCodeSandboxChange]
+  artifacts : Array[String]
+  retention_id : String?
+} derive(Eq, @debug.Debug)
+pub fn MoonCodeSandboxReceipt::promotion_ready(Self) -> Bool
+pub fn MoonCodeSandboxReceipt::review_key(Self) -> String
 
 pub struct MoonCodeSessionId(String) derive(Eq, @debug.Debug)
 pub fn MoonCodeSessionId::parse(String) -> Self?

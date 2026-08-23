@@ -157,31 +157,37 @@ fn action_plan_status_empty() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_next_run_or_replay_runtime_commands() -> String {
   "run_or_replay_runtime_commands"
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_next_retry_failed_runtime_receipt() -> String {
   "retry_failed_runtime_receipt"
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_next_await_runtime_proof() -> String {
   "await_runtime_proof"
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_next_await_commit_proof() -> String {
   "await_commit_proof"
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_next_start_or_resume_session() -> String {
   "start_or_resume_session"
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_next_ready_for_book_review() -> String {
   "ready_for_book_review"
 }
@@ -207,6 +213,7 @@ fn session_runtime_evidence_rule() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_evidence_required_events(
   action : String,
   summary_required_events : Array[String],
@@ -219,6 +226,7 @@ fn runtime_evidence_required_events(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_evidence_required_outputs(
   action : String,
   summary_required_outputs : Array[String],
@@ -231,6 +239,7 @@ fn runtime_evidence_required_outputs(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_evidence_status_for_required_events(
   required_event_count : Int,
   missing_count : Int,
@@ -248,6 +257,7 @@ fn runtime_evidence_status_for_required_events(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_evidence_is_proven(
   required_event_count : Int,
   missing_count : Int,
@@ -257,6 +267,7 @@ fn runtime_evidence_is_proven(
 }
 
 ///|
+#warnings("-unused_value")
 fn tool_harness_status_for_counts(
   expected_tool_count : Int,
   failed_tool_count : Int,
@@ -274,6 +285,7 @@ fn tool_harness_status_for_counts(
 }
 
 ///|
+#warnings("-unused_value")
 fn tool_harness_is_proven(
   expected_tool_count : Int,
   failed_tool_count : Int,
@@ -283,6 +295,7 @@ fn tool_harness_is_proven(
 }
 
 ///|
+#warnings("-unused_value")
 fn tool_harness_expected_tools(
   action : String,
   summary_tool_sequence : Array[String],
@@ -295,6 +308,7 @@ fn tool_harness_expected_tools(
 }
 
 ///|
+#warnings("-unused_value")
 fn tool_harness_case_status(
   failed_seen : Bool,
   call_seen : Bool,
@@ -310,6 +324,7 @@ fn tool_harness_case_status(
 }
 
 ///|
+#warnings("-unused_value")
 fn session_runtime_evidence_status_for_counts(
   command_count : Int,
   failed_count : Int,
@@ -332,6 +347,7 @@ fn session_runtime_evidence_status_for_counts(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_evidence_required_event_result(
   required : String,
   status : String,
@@ -378,6 +394,7 @@ fn runtime_evidence_event_satisfies(required : String, event : Json) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_evidence_event_fails_required(
   required : String,
   event : Json,
@@ -406,6 +423,7 @@ fn runtime_evidence_event_fails_required(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_evidence_events_with_status(
   event_results : Array[Json],
   status : String,
@@ -463,6 +481,7 @@ fn runtime_completion_proof_gate_status(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_ack_effective_status(
   requested_status : String,
   completion_blocked : Bool,
@@ -476,6 +495,7 @@ fn runtime_replay_ack_effective_status(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_completion_proof_gate(
   action : String,
   evidence : Json,
@@ -563,6 +583,7 @@ fn runtime_completion_proof_gate(
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_status_for_counts(
   pending_runtime_count : Int,
   running_count : Int,
@@ -589,6 +610,7 @@ fn action_plan_status_for_counts(
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_runtime_state_precondition_state(
   runtime_state : String,
 ) -> String {
@@ -606,6 +628,7 @@ fn action_plan_runtime_state_precondition_state(
 }
 
 ///|
+#warnings("-unused_value")
 fn action_plan_state_with_tool_harness(
   action : String,
   runtime_state : String,

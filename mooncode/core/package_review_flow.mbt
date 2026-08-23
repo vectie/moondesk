@@ -9,6 +9,7 @@ fn package_review_flow_contract_kind() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_report_kind() -> String {
   "mooncode-package-review-model-flow-report"
 }
@@ -29,41 +30,49 @@ fn package_review_flow_status_failed() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_running() -> String {
   "running"
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_stale() -> String {
   "stale"
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_empty() -> String {
   "empty"
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_waiting_for_manifest() -> String {
   "waiting-for-manifest"
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_waiting_for_review() -> String {
   "waiting-for-review"
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_waiting_for_tests() -> String {
   "waiting-for-tests"
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_waiting_for_readiness() -> String {
   "waiting-for-readiness"
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_waiting_for_assistant() -> String {
   "waiting-for-assistant"
 }
@@ -78,6 +87,7 @@ fn package_review_flow_terminal_statuses() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_status_is_terminal(status : String) -> Bool {
   package_review_flow_terminal_statuses().contains(status)
 }
@@ -207,6 +217,7 @@ fn package_review_flow_failed_sequence() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_event_is_package_command(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   let action = package_review_flow_event_action(event)
@@ -222,6 +233,7 @@ fn package_review_flow_event_is_package_manifest(event : Json) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_event_is_accept(event : Json) -> Bool {
   package_review_flow_accept_kinds().contains(
     package_review_flow_event_kind(event),
@@ -229,6 +241,7 @@ fn package_review_flow_event_is_accept(event : Json) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_event_is_reject(event : Json) -> Bool {
   package_review_flow_reject_kinds().contains(
     package_review_flow_event_kind(event),
@@ -256,12 +269,14 @@ fn package_review_flow_event_is_package_readiness(event : Json) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_event_is_package_built(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   kind == runtime_event_package_built() || kind == "runtime.package_built"
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_event_is_package_verified(event : Json) -> Bool {
   let kind = package_review_flow_event_kind(event)
   kind == runtime_event_package_verified() || kind == "runtime.package_verified"
@@ -291,6 +306,7 @@ fn package_review_flow_event_is_failure_eligible(event : Json) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn package_review_flow_event_is_evidence(event : Json) -> Bool {
   package_review_flow_event_is_package_manifest(event) ||
   package_review_flow_event_is_diff_review(event) ||

@@ -1,5 +1,6 @@
 ///|
 priv struct ArchiveImportLimits {
+  max_archive_bytes : Int
   max_entries : Int
   max_file_bytes : Int
   max_total_bytes : Int
@@ -8,6 +9,7 @@ priv struct ArchiveImportLimits {
 ///|
 fn archive_import_limits() -> ArchiveImportLimits {
   {
+    max_archive_bytes: 40 * 1024 * 1024,
     max_entries: 256,
     max_file_bytes: 8 * 1024 * 1024,
     max_total_bytes: 32 * 1024 * 1024,

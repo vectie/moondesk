@@ -92,7 +92,7 @@ test "session listing codec preserves unknown optional fields" {
     fail("expected supported listing")
   }
   guard @core.encode_mooncode_session_summary(summary)
-    is { "mooncode_summary": { "event_count": 9 }, .. } else {
+    is { "mooncode_summary": { "event_count": 9, .. }, .. } else {
     fail("unknown optional fields were not preserved")
   }
 }

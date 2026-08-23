@@ -108,7 +108,7 @@ fn conversation_extensions(
   fields : Map[String, Json],
   known : Array[String],
 ) -> Map[String, Json] {
-  let extensions : Map[String, Json] = {}
+  let extensions : Map[String, Json] = Map([])
   for key, value in fields {
     if !known.contains(key) {
       extensions[key] = value
@@ -168,6 +168,7 @@ fn decode_conversation_message(
 }
 
 ///|
+#warnings("-unused_value")
 fn decode_conversation_approvals(
   work : Json,
   session_id : String,

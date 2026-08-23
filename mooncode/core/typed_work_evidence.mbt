@@ -14,6 +14,7 @@ priv enum EvidenceKind {
 } derive(Debug, Eq)
 
 ///|
+#warnings("-unused_value")
 priv enum EvidenceState {
   Recorded
   Applied
@@ -29,6 +30,7 @@ priv enum EvidenceState {
 } derive(Debug, Eq)
 
 ///|
+#warnings("-unused_value")
 priv enum WorkStatus {
   Queued
   Running
@@ -52,6 +54,8 @@ pub(all) struct MoonCodeEvidence {
   exit_code : Int
   truncated : Bool
   approval : MoonCodeApproval?
+  sandbox_receipt : MoonCodeSandboxReceipt?
+  sandbox_receipt_invalid : Bool
 } derive(Debug, Eq)
 
 ///|
@@ -65,6 +69,7 @@ pub(all) struct MoonCodeWork {
 } derive(Debug, Eq)
 
 ///|
+#warnings("-unused_value")
 priv struct MoonCodeWorkCodec {
   value : MoonCodeWork
 } derive(Debug, Eq)
@@ -261,6 +266,16 @@ fn decode_work_codec(
           Ok(value) => value
           Err(message) => return Err(message)
         }
+        let (sandbox_receipt, sandbox_receipt_invalid) = match
+          evidence_fields.get("sandbox_evidence") {
+          Some(Object(fields)) if fields.is_empty() => (None, false)
+          Some(value) =>
+            match decode_mooncode_sandbox_receipt(value) {
+              Ok(receipt) => (Some(receipt), false)
+              Err(_) => (None, true)
+            }
+          None => (None, false)
+        }
         rows.push({
           item_id: work_string(step_fields, "item_id", ""),
           command_id,
@@ -283,6 +298,8 @@ fn decode_work_codec(
           exit_code,
           truncated: work_bool(evidence_fields, "truncated", false),
           approval,
+          sandbox_receipt,
+          sandbox_receipt_invalid,
         })
       }
     Some(_) => return Err("conversation work steps must be an array")
@@ -329,6 +346,7 @@ priv enum MoonCodePackageReviewStatus {
 } derive(Debug, Eq)
 
 ///|
+#warnings("-unused_value")
 priv struct MoonCodePackageReview {
   command_id : String
   status : MoonCodePackageReviewStatus
@@ -410,6 +428,7 @@ fn project_package_review_evidence(
 }
 
 ///|
+#warnings("-unused_value")
 fn project_package_review(turn : MoonCodeTurn) -> MoonCodePackageReview {
   let assistant_present = match turn.assistant {
     Some(message) => message.content.trim() != ""

@@ -286,7 +286,7 @@ test "typed watch encoder emits canonical v2 snapshot heartbeat and rejects loca
       "snapshot": {
         "id": "session-a",
         "mooncode_runtime_session_id": "runtime-a",
-        "provider_metadata": { "region": "test-zone" },
+        "provider_metadata": { "region": "test-zone", .. },
         "mooncode_conversation": encoded_conversation,
         ..
       },

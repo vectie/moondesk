@@ -316,6 +316,7 @@ fn runtime_diagnostic_event_names() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_event_name_is_supported(name : String) -> Bool {
   runtime_event_names().contains(name)
 }

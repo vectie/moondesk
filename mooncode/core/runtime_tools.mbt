@@ -121,6 +121,7 @@ fn runtime_tool_names() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_tool_capability_names() -> Array[String] {
   let tools = runtime_tool_names()
   tools.push(runtime_tool_eval_harness())
@@ -219,6 +220,7 @@ fn runtime_tool_moonclaw_mapping_rows() -> Array[Json] {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_tool_from_moonclaw_tool(tool_name : String) -> String {
   match tool_name {
     "read_file" | "read_multiple_files" | "read_resource" => runtime_tool_read()
@@ -250,6 +252,7 @@ fn runtime_tool_canonical_name(tool_name : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_tool_is_supported(tool_name : String) -> Bool {
   runtime_tool_names().contains(tool_name)
 }
@@ -265,6 +268,7 @@ fn runtime_tool_mutates_files(tool_name : String) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_tool_requires_review(tool_name : String) -> Bool {
   runtime_tool_mutates_files(tool_name) ||
   tool_name == runtime_tool_shell() ||
@@ -272,6 +276,7 @@ fn runtime_tool_requires_review(tool_name : String) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_tool_requires_authorization_snapshot(tool_name : String) -> Bool {
   tool_name == runtime_tool_edit() ||
   tool_name == runtime_tool_write() ||
@@ -329,6 +334,7 @@ fn runtime_tool_contract_json() -> Json {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_tool_contract_tool_ids(contract : Json) -> Array[String] {
   let ids : Array[String] = []
   match contract {

@@ -238,6 +238,7 @@ fn native_command_body_supported_fields() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn native_command_body_field_is_supported(name : String) -> Bool {
   native_command_body_supported_fields().contains(name)
 }
@@ -384,6 +385,7 @@ fn native_capability_surface_json() -> Json {
 }
 
 ///|
+#warnings("-unused_value")
 fn standalone_boundary_json() -> Json {
   {
     "kind": "mooncode-standalone-boundary",

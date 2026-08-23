@@ -1,4 +1,5 @@
 ///|
+#warnings("-unused_value")
 priv struct NativeCapabilityEndpoints {
   capabilities : String
   session_list : String
@@ -68,6 +69,7 @@ fn NativeCapabilityEndpoints::required_endpoints(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_capability_target_description() -> String {
   let endpoints = native_capability_required_endpoints()
   if endpoints.length() == 0 {
@@ -173,11 +175,13 @@ fn native_endpoint_url(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_capabilities_endpoint() -> String {
   native_endpoint_url(["v1", "code", "capabilities"])
 }
 
 ///|
+#warnings("-unused_value")
 fn native_session_list_endpoint(book_root : String) -> String {
   native_endpoint_url(["v1", "code", "sessions"], query=[
     ("book_root", book_root),
@@ -185,6 +189,7 @@ fn native_session_list_endpoint(book_root : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn native_session_listing_endpoint(book_root : String) -> String {
   native_endpoint_url(["v1", "code", "sessions"], query=[
     ("book_root", book_root),
@@ -193,6 +198,7 @@ fn native_session_listing_endpoint(book_root : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn native_archived_session_listing_endpoint(book_root : String) -> String {
   native_endpoint_url(["v1", "code", "sessions"], query=[
     ("book_root", book_root),
@@ -202,6 +208,7 @@ fn native_archived_session_listing_endpoint(book_root : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn native_session_show_endpoint(
   session_id : String,
   book_root : String,
@@ -212,21 +219,25 @@ fn native_session_show_endpoint(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_session_commands_endpoint(session_id : String) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "commands"])
 }
 
 ///|
+#warnings("-unused_value")
 fn native_session_turns_endpoint(session_id : String) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "turns"])
 }
 
 ///|
+#warnings("-unused_value")
 fn native_session_lifecycle_endpoint(session_id : String) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "lifecycle"])
 }
 
 ///|
+#warnings("-unused_value")
 fn native_runtime_control_endpoint(
   session_id : String,
   book_root : String,
@@ -238,6 +249,7 @@ fn native_runtime_control_endpoint(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_runtime_claim_endpoint(
   session_id : String,
   book_root : String,
@@ -266,6 +278,7 @@ fn native_stream_endpoint_raw(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_stream_endpoint_for_cursor(
   session_id : String,
   book_root : String,
@@ -285,6 +298,7 @@ fn native_stream_endpoint_for_cursor(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_runtime_turn_endpoint(
   session_id : String,
   book_root : String,
@@ -295,6 +309,7 @@ fn native_runtime_turn_endpoint(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_runtime_loop_endpoint(
   session_id : String,
   book_root : String,
@@ -305,6 +320,7 @@ fn native_runtime_loop_endpoint(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_runtime_service_endpoint(
   session_id : String,
   book_root : String,
@@ -316,6 +332,7 @@ fn native_runtime_service_endpoint(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_runtime_events_endpoint(
   session_id : String,
   book_root : String,
@@ -327,6 +344,7 @@ fn native_runtime_events_endpoint(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_tool_exec_endpoint(session_id : String, book_root : String) -> String {
   native_endpoint_url(["v1", "code", "sessions", session_id, "tool-exec"], query=[
     ("book_root", book_root),
@@ -334,6 +352,7 @@ fn native_tool_exec_endpoint(session_id : String, book_root : String) -> String 
 }
 
 ///|
+#warnings("-unused_value")
 fn native_eval_report_endpoint(
   session_id : String,
   book_root : String,
@@ -344,6 +363,7 @@ fn native_eval_report_endpoint(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_package_result_endpoint(
   session_id : String,
   book_root : String,

@@ -1,0 +1,123 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/moondesk/internal/trusted_host_process"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub async fn archive_app(String, String) -> Int
+
+pub async fn bootout_launch_agent(ManagedLaunchAgent) -> Int
+
+pub async fn bootstrap_launch_agent(ManagedLaunchAgent) -> Int
+
+pub async fn build_lepusa_runtime(String) -> Int
+
+pub async fn build_moondesk_sidecar(String) -> Int
+
+pub async fn copy_app(String, String) -> Int
+
+pub async fn create_dmg(String, String) -> Int
+
+pub async fn force_kill_pid(Int) -> Int
+
+pub async fn launch_agent_is_loaded(ManagedLaunchAgent) -> Bool
+
+pub fn lepusa_asset(String, String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_build(LepusaTarget, String, String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_bundle_plan(LepusaTarget, String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_bundle_write(LepusaTarget, String, String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_doctor(LepusaTarget) -> LepusaOperation
+
+pub fn lepusa_launch(LepusaTarget, String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_launch_session(LepusaTarget, String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_run(LepusaTarget, String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_runtime_asset(String, String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_runtime_launch(String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_runtime_session(String) -> Result[LepusaOperation, String]
+
+pub fn lepusa_target(String) -> Result[LepusaTarget, String]
+
+pub fn lepusa_verify(LepusaTarget, String, strict~ : Bool) -> Result[LepusaOperation, String]
+
+pub async fn machine_name() -> String
+
+pub fn managed_moonclaw_binding(String) -> Result[ManagedMoonClawBinding, String]
+
+pub async fn notarize_archive(NotaryProfile, String) -> Int
+
+pub fn notary_profile(String) -> Result[NotaryProfile, String]
+
+pub async fn open_browser_url(String) -> Int
+
+pub async fn pid_is_alive(Int) -> Bool
+
+pub async fn reveal_path(String, String) -> Int
+
+pub async fn run_lepusa_operation(String, LepusaOperation) -> Int
+
+pub async fn sha256_file(String) -> String
+
+pub async fn sign_app(SigningIdentity, String) -> Int
+
+pub fn signing_identity(String) -> Result[SigningIdentity, String]
+
+pub async fn staple_app(String) -> Int
+
+pub async fn start_managed_moonclaw_daemon(ManagedMoonClawBinding, String) -> Result[ManagedDaemonStart, String]
+
+pub async fn system_name() -> String
+
+pub async fn terminate_pid(Int) -> Int
+
+pub async fn verify_app_signature(String) -> Int
+
+// Errors
+
+// Types and methods
+pub struct LepusaOperation {
+  args : Array[String]
+  needs_project : String?
+  output_directory : String?
+  manifest : String?
+}
+
+pub struct LepusaTarget {
+  value : String
+}
+
+pub(all) struct ManagedDaemonStart {
+  pid : Int
+  display : String
+}
+
+pub(all) enum ManagedLaunchAgent {
+  MoonDesk
+  MoonTown
+} derive(Eq, @debug.Debug)
+
+pub struct ManagedMoonClawBinding {
+  version : String
+}
+
+pub struct NotaryProfile {
+  value : String
+}
+
+pub struct SigningIdentity {
+  value : String
+}
+
+// Type aliases
+
+// Traits

@@ -122,7 +122,7 @@ test "capability codec preserves root and optional ownership extensions" {
   let encoded = @core.encode_mooncode_capability(capability)
   guard encoded
     is {
-      "future_root": { "enabled": true },
+      "future_root": { "enabled": true, .. },
       "ownership": { "future_owner": "future-product", .. },
       "capability_surface_fingerprint": "sha256:fixture",
       ..

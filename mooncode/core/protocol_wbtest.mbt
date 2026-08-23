@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated")
 test "mooncode core protocol surface is stable" {
   assert_eq(protocol_version(), "mooncode.v1")
   assert_eq(conversation_contract_id(), "moonsuite-conversation.v3")
@@ -1000,6 +1001,7 @@ test "mooncode core owns package review model flow contract" {
 }
 
 ///|
+#warnings("-deprecated")
 test "mooncode core owns command action contract" {
   assert_eq(command_prompt(), "prompt")
   assert_eq(command_steer(), "steer")

@@ -9,26 +9,31 @@ fn runtime_consumer_contract_kind() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_claim_state_kind() -> String {
   "mooncode-runtime-claim-state"
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_claim_response_kind() -> String {
   "mooncode-runtime-claim"
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_state_kind() -> String {
   "mooncode-runtime-replay"
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_claim_mode() -> String {
   "mooncode-runtime-claim"
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_mode() -> String {
   "mooncode-runtime-replay"
 }
@@ -69,11 +74,13 @@ fn runtime_receipt_status_skipped() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_receipt_status_missing() -> String {
   "missing"
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_receipt_status_recorded() -> String {
   "recorded"
 }
@@ -115,6 +122,7 @@ fn runtime_replay_ack_status_is_allowed(status : String) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_ack_status(requested_status : String, ok~ : Bool) -> String {
   if runtime_replay_ack_status_is_allowed(requested_status) {
     requested_status
@@ -126,6 +134,7 @@ fn runtime_replay_ack_status(requested_status : String, ok~ : Bool) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_ack_detail(status : String) -> String {
   if status == runtime_receipt_status_completed() {
     "Runtime replay consumer completed the command."
@@ -183,6 +192,7 @@ fn runtime_claim_statuses() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_claim_base_status(
   valid : Bool,
   receipt_status : String,
@@ -203,6 +213,7 @@ fn runtime_claim_base_status(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_claim_status_with_order_blocker(
   base_claim_status : String,
   order_blocker_id : String,
@@ -216,6 +227,7 @@ fn runtime_claim_status_with_order_blocker(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_claim_status_blocks_following(status : String) -> Bool {
   status == runtime_claim_status_invalid() ||
   status == runtime_claim_status_claimed() ||
@@ -283,6 +295,7 @@ fn runtime_replay_statuses() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_base_status(
   valid : Bool,
   receipt_status : String,
@@ -313,6 +326,7 @@ fn runtime_replay_base_status(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_status_with_order_blocker(
   base_replay_status : String,
   replay_blocker_id : String,
@@ -326,6 +340,7 @@ fn runtime_replay_status_with_order_blocker(
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_status_is_pending(status : String) -> Bool {
   status == runtime_replay_status_pending() ||
   status == runtime_replay_status_failed_pending_retry() ||
@@ -334,6 +349,7 @@ fn runtime_replay_status_is_pending(status : String) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_status_blocks_following(status : String) -> Bool {
   status == runtime_replay_status_blocked_invalid() ||
   status == runtime_replay_status_claimed() ||
@@ -388,11 +404,13 @@ fn runtime_replay_endpoint(session_id : String) -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_claim_ordering_rule() -> String {
   "MoonClaw claims valid command records in session-journal sequence order before executing them; active earlier claims and invalid earlier commands block later non-delivered rows until they are acknowledged, failed, expired, forced, or repaired."
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_claim_lease_policy() -> String {
   "runtime-claimed receipts hide commands from other consumers until lease_expires_at passes; expired claims and failed runtime receipts become claimable retry work without force, while delivered receipts remain protected."
 }
@@ -413,11 +431,13 @@ fn runtime_claim_duplicate_guard() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_policy() -> String {
   "consume pending MoonCode command records in session-journal sequence order; skip delivered command ids and active leases; expired runtime-claimed leases are retryable pending work"
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_replay_ordering_rule() -> String {
   "prompt, steer, and cancel records remain serialized in append order, matching the MoonCode command protocol's single ordered consumer"
 }

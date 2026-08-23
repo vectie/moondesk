@@ -547,6 +547,7 @@ fn native_command_tool_policy_entry(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_command_execution_plan(
   action : String,
   context_path : String,
@@ -594,6 +595,7 @@ fn native_command_execution_plan(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_command_tool_contract(action : String) -> Json {
   native_command_tool_contract_for_command(action, false)
 }
@@ -616,6 +618,7 @@ fn native_command_tool_contract_for_command(
 }
 
 ///|
+#warnings("-unused_value")
 fn native_command_result_contract(action : String) -> Json {
   let required_events = native_command_expected_events(action)
   let required_outputs = native_command_required_outputs(action)

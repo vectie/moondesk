@@ -38,6 +38,7 @@ fn approval_required_string(
 }
 
 ///|
+#warnings("-unnecessary_annotation")
 fn decode_mooncode_approval(
   payload : Json,
   session_id : String,

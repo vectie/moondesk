@@ -20,6 +20,7 @@ fn command_advertised_actions() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 #deprecated("Compatibility for document-provider. Remove in v0.3.0 on or after 2027-07-28 after document-provider migration.")
 fn command_action_is_supported(action : String) -> Bool {
   command_supported_actions().contains(action)
@@ -60,6 +61,7 @@ fn command_action_approval(action : String) -> String {
 
 ///|
 /// Deprecated since 2026-07-28: use `native_stream_endpoint_for_cursor`.
+#warnings("-unused_value")
 #deprecated("Use native_stream_endpoint_for_cursor with MoonCodeWatchCursor")
 fn native_stream_endpoint(
   session_id : String,

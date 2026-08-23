@@ -20,6 +20,7 @@ pub(all) enum MoonCodeCommandKind {
 
 ///|
 /// The daemon-owned status of an accepted command packet.
+#warnings("-unused_constructor")
 pub enum MoonCodeCommandStatus {
   Accepted
 } derive(Debug, Eq)

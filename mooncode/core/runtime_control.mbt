@@ -9,6 +9,7 @@ fn runtime_control_contract_kind() -> String {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_control_state_kind() -> String {
   "mooncode-runtime-control-state"
 }
@@ -210,6 +211,7 @@ fn runtime_control_target_states() -> Array[String] {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_control_action_starts_turn(action : String) -> Bool {
   action != command_steer() &&
   action != command_cancel() &&
@@ -217,26 +219,31 @@ fn runtime_control_action_starts_turn(action : String) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_control_status_is_pending(status : String) -> Bool {
   status == runtime_control_status_pending()
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_control_status_is_active(status : String) -> Bool {
   runtime_control_active_statuses().contains(status)
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_control_status_is_terminal(status : String) -> Bool {
   runtime_control_terminal_statuses().contains(status)
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_control_status_is_blocked(status : String) -> Bool {
   runtime_control_blocked_statuses().contains(status)
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_control_effect_allows_turn(effect : String) -> Bool {
   effect == runtime_control_effect_start_turn() ||
   effect == runtime_control_effect_active_turn() ||
@@ -255,6 +262,7 @@ fn runtime_control_effect_is_terminal(effect : String) -> Bool {
 }
 
 ///|
+#warnings("-unused_value")
 fn runtime_control_settlement_required(
   action : String,
   effect : String,

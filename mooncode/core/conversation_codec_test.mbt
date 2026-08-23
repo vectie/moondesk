@@ -71,7 +71,7 @@ test "canonical conversation codec decodes visible turns and messages" {
   let approval = turn.approvals[0]
   assert_true(
     approval
-    is @core.MoonCodeApproval::Pending(
+    is Pending(
       approval_id="approval-a",
       arguments="{\"path\":\"src/main.mbt\"}",
       ..
@@ -203,7 +203,7 @@ test "canonical conversation codec preserves unknown optional fields" {
   }
   guard @core.encode_mooncode_conversation(conversation)
     is {
-      "future_conversation": { "enabled": true },
+      "future_conversation": { "enabled": true, .. },
       "turns": [
         { "future_turn": 1, "user": { "future_message": true, .. }, .. },
       ],
