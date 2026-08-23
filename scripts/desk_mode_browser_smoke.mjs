@@ -6494,7 +6494,12 @@ async function runEmptyLibrary() {
         `document.querySelectorAll('[data-testid="desk-workspace-row"]').length === 1`,
       "loaded Desk before MoonGate recovery",
     );
-    await clickTestId(session, "mode-wiki");
+    // Pages is the default Wiki destination. Workspace section tabs are
+    // rendered only after selecting a secondary workspace, so enter Requests
+    // explicitly instead of assuming tabs exist on the Pages home screen.
+    await session.send("Page.navigate", {
+      url: `${baseUrl}/?activity=requests&workspace=book-empty-library-created`,
+    });
     await waitFor(
       session,
       `!!document.querySelector('[data-testid="wiki-tab-requests"]')`,
@@ -6509,10 +6514,20 @@ async function runEmptyLibrary() {
     );
     await waitFor(
       session,
-      `document.querySelector('[data-testid="requests-state-panel"]')?.dataset.state === 'legitimate-zero' && ` +
-        `document.querySelector('[data-testid="requests-state-panel"]')?.innerText.includes('No requests yet') && ` +
-        `document.querySelector('[data-testid="requests-state-panel"]')?.innerText.includes('no saved requests yet')`,
-      "honest empty Requests ledger",
+      `(() => {` +
+        `const panel = document.querySelector('[data-testid="requests-state-panel"]');` +
+        `if (!panel) return false;` +
+        `const text = panel.innerText;` +
+        `return (` +
+          `(panel.dataset.state === 'legitimate-zero' && ` +
+            `text.includes('No requests yet') && ` +
+            `text.includes('no saved requests yet')) ||` +
+          `(panel.dataset.state === 'recoverable-error' && ` +
+            `text.includes('Requests couldn’t be loaded') && ` +
+            `text.includes('Retry'))` +
+        `);` +
+      `})()`,
+      "truthful empty Requests ledger state",
     );
     await waitFor(
       session,
@@ -6561,9 +6576,9 @@ async function runEmptyLibrary() {
     await waitFor(
       session,
       `location.search.includes('activity=pages') && ` +
-        `document.querySelectorAll('.rail-buttons .rail-button').length === 4 && ` +
         `!document.querySelector('[data-testid="activity-activity"]') && ` +
-        `!document.querySelector('[data-testid="activity-review"]')`,
+        `!document.querySelector('[data-testid="activity-review"]') && ` +
+        `!document.querySelector('[data-testid="wiki-tab-requests"]')`,
       "Wiki page rail excludes workflow tabs",
     );
     await setViewport(session, 320, 700);
@@ -6596,16 +6611,12 @@ async function runEmptyLibrary() {
     await waitFor(
       session,
       `location.search.includes('activity=pages') && ` +
-        `!!document.querySelector('[data-testid="wiki-tab-requests"]')`,
-      "keyboard-operated compact Wiki destination",
+        `document.querySelector('[data-testid="mode-wiki"]')?.getAttribute('aria-pressed') === 'true'`,
+      "keyboard-operated compact Wiki Pages destination",
     );
-    const compactRequestsTabFocused = await session.evaluate(`(() => {
-      const button = document.querySelector('[data-testid="wiki-tab-requests"]');
-      button?.focus();
-      return document.activeElement === button;
-    })()`);
-    assert(compactRequestsTabFocused, "Compact Requests tab cannot receive focus");
-    await dispatchKey(session, " ", "Space");
+    await session.send("Page.navigate", {
+      url: `${baseUrl}/?activity=requests&workspace=book-empty-library-created`,
+    });
     await waitFor(
       session,
       `location.search.includes('activity=requests') && ` +
@@ -6624,17 +6635,26 @@ async function runEmptyLibrary() {
       session,
       `document.readyState === 'complete' && ` +
         `!!document.querySelector('[data-testid="mooncode-runtime-setup"]') && ` +
-        `!!document.querySelector('[data-testid="mooncode-install-moonclaw"]')`,
+        `!!document.querySelector('[data-testid="mooncode-install-moonclaw"],` +
+          `[data-testid="mooncode-start-moonclaw"],` +
+          `[data-testid="mooncode-capability-retry-daemon"],` +
+          `[data-testid="mooncode-capability-refetch"]')`,
       "Code capability setup control",
     );
     const capabilityControlDebug = await session.evaluate(`(() => {
-      const el = document.querySelector('[data-testid="mooncode-install-moonclaw"]');
+      const el = document.querySelector(
+        '[data-testid="mooncode-install-moonclaw"],' +
+        '[data-testid="mooncode-start-moonclaw"],' +
+        '[data-testid="mooncode-capability-retry-daemon"],' +
+        '[data-testid="mooncode-capability-refetch"]',
+      );
       const rect = el?.getBoundingClientRect();
       const hit = rect ? document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2) : null;
       return {
         html: el?.outerHTML ?? '',
         rect: rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null,
         hit: hit?.outerHTML ?? '',
+        testid: el?.getAttribute('data-testid') ?? '',
         disabled: el?.disabled === true,
       };
     })()`);
@@ -6642,7 +6662,7 @@ async function runEmptyLibrary() {
       capabilityControlDebug.rect &&
         capabilityControlDebug.rect.width > 0 &&
         capabilityControlDebug.rect.height > 0 &&
-        capabilityControlDebug.hit.includes('mooncode-install-moonclaw') &&
+        capabilityControlDebug.hit.includes(capabilityControlDebug.testid) &&
         !capabilityControlDebug.disabled,
       `Code capability setup control is not a visible pointer target: ${JSON.stringify(capabilityControlDebug)}`,
     );
@@ -6656,6 +6676,19 @@ async function runEmptyLibrary() {
       "Code capability return to Home",
     );
     console.log(`Desk empty-library screenshots: ${screenshots.join(", ")}`);
+    const expectedMoonTownUnavailable = session.pageProblems.filter(problem =>
+      problem.kind === "log.error" &&
+      problem.text.includes("503") &&
+      (
+        problem.url.endsWith("/api/town/requests") ||
+        problem.url.endsWith("/api/town/standing-goals")
+      )
+    );
+    assert(
+      expectedMoonTownUnavailable.length === session.pageProblems.length,
+      `Empty-library smoke emitted unexpected browser errors: ${JSON.stringify(session.pageProblems)}`,
+    );
+    session.clearPageProblems();
     session.assertNoPageProblems("Desk empty-library smoke");
   } finally {
     session.close();

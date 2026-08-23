@@ -29,6 +29,7 @@ for (const [name, expected] of Object.entries(budget.targets)) {
     'check',
     '--target', expected.target,
     '--warn-list', '+unnecessary_annotation',
+    '--deny-warn',
     '--output-json',
     '--diagnostic-limit', '2000',
   ], { cwd, encoding: 'utf8' })

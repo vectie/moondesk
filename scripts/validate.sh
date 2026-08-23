@@ -76,6 +76,8 @@ run_boundary_validators() {
   esac
 }
 
+stage 'Execution boundary audit self-test' "$SCRIPT_DIR/audit_execution_boundary_selftest.sh"
+stage 'Execution boundary audit' "$SCRIPT_DIR/audit_execution_boundary.sh" "$REPO_ROOT"
 stage 'Maturity manifest tests' node --test "$SCRIPT_DIR/verify_maturity_manifests.test.mjs"
 stage 'Maturity manifest validation' node "$SCRIPT_DIR/verify_maturity_manifests.mjs"
 stage 'MoonBit format check' sh -c 'cd "$1" && moon fmt --check' sh "$REPO_ROOT"
