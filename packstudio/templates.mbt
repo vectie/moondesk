@@ -9,10 +9,20 @@ fn town_candidate_schema_text() -> String {
 }
 
 ///|
+fn candidate_acknowledgement_schema_text() -> String {
+  "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"$id\":\"moontown.pack-candidate-acknowledgement.v1\",\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"contract_id\",\"candidate_ref\",\"pack_id\",\"operation_id\",\"decision\",\"occurred_at\",\"evidence_refs\"],\"properties\":{\"contract_id\":{\"const\":\"moontown.pack-candidate-acknowledgement.v1\"},\"candidate_ref\":{\"type\":\"string\",\"minLength\":1},\"pack_id\":{\"type\":\"string\",\"minLength\":1},\"operation_id\":{\"type\":\"string\",\"minLength\":1},\"decision\":{\"enum\":[\"received\",\"accepted\",\"rejected\",\"blocked\"]},\"occurred_at\":{\"type\":\"string\",\"minLength\":1},\"evidence_refs\":{\"type\":\"array\",\"uniqueItems\":true,\"items\":{\"type\":\"string\"}},\"issue\":{\"type\":\"string\",\"minLength\":1}}}\n"
+}
+
+///|
 fn provider_port_text(intake_operation_id : String) -> String {
   "# MoonTown pack projection provider\n\n" +
   "This domain pack publishes `moontown.pack-projection.v1` as a replaceable, read-only projection.\n\n" +
-  "Bottom-up candidates enter through `\{intake_operation_id}`. Intake creates a reviewable domain draft and grants no downstream execution authority.\n"
+  "Bottom-up candidates enter through `\{intake_operation_id}`. Intake creates a reviewable domain draft and grants no downstream execution authority.\n\n" +
+  "## Governed mailbox\n\n" +
+  "- Read delivered candidates from `pack-bridge/inbox/candidates/<candidate-key>.json`.\n" +
+  "- Publish the current replaceable projection to `pack-bridge/outbox/projection.json`.\n" +
+  "- Publish receipts to `pack-bridge/outbox/candidate-receipts/<candidate-key>.json`.\n" +
+  "- Use `received` after preparing a domain draft. `accepted`, `rejected`, and `blocked` are review decisions and must retain evidence.\n"
 }
 
 ///|

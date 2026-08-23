@@ -46,6 +46,7 @@ fn print_pack_studio_usage() -> Unit {
     "  pack install <workspace> <source> <authorities-csv> <runtime-extensions-csv>\n" +
     "  pack activate <workspace> <pack-id> <version>\n" +
     "  pack deactivate <workspace> <pack-id>\n" +
+    "  pack mailbox <workspace> <pack-id>\n" +
     "  pack catalog <workspace>",
   )
 }
@@ -97,6 +98,8 @@ async fn run_pack_studio(args : Array[String]) -> Unit {
         let deactivated = @packstudio.deactivate_pack({ pack_id, }, workspace)
         { "pack_id": pack_id, "deactivated": deactivated }
       }
+      ["mailbox", workspace, pack_id] =>
+        @packstudio.pack_bridge_mailbox_status(workspace, pack_id)
       ["catalog", workspace] => @packstudio.active_pack_catalog(workspace)
       _ => {
         print_pack_studio_usage()

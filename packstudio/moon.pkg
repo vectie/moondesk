@@ -2,6 +2,7 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
   "moonbitlang/core/json",
+  "moonbitlang/x/fs" @sync_fs,
   "moonbitlang/x/path",
   "vectie/moonlib/pack",
   "vectie/moonlib/pack/installer",

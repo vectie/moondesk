@@ -15,6 +15,12 @@ async test "Pack Studio scaffolds validates installs and deactivates a bridge pa
   )
   assert_true(created.valid)
   assert_true(created.bridge_ready)
+  assert_true(
+    @fs.exists(
+      created.source_root +
+      "/schemas/pack-candidate-acknowledgement.schema.json",
+    ),
+  )
   assert_eq(created.intake_operation_ids, ["mobility.candidate.intake"])
   let receipt = install_pack_source(
     {
@@ -29,6 +35,29 @@ async test "Pack Studio scaffolds validates installs and deactivates a bridge pa
   assert_true(installed.active)
   assert_true(deactivate_pack({ pack_id: "mobility-pack" }, workspace))
   @fs.rmdir(parent, recursive=true)
+  @fs.rmdir(workspace, recursive=true)
+}
+
+///|
+async test "Pack Studio reports governed mailbox lifecycle artifacts" {
+  let workspace = @fs.tmpdir(prefix="moondesk-pack-studio-mailbox")
+  let inbox = workspace +
+    "/.moonsuite/products/mobility-pack/pack-bridge/inbox/candidates"
+  let receipts = workspace +
+    "/.moonsuite/products/mobility-pack/pack-bridge/outbox/candidate-receipts"
+  ensure_directory(inbox)
+  ensure_directory(receipts)
+  write_text(inbox + "/one.json", "{}")
+  write_text(receipts + "/one.json", "{}")
+  write_text(
+    workspace +
+    "/.moonsuite/products/mobility-pack/pack-bridge/outbox/projection.json",
+    "{}",
+  )
+  let status = pack_bridge_mailbox_status(workspace, "mobility-pack")
+  assert_true(status.stringify().contains("\"delivered_candidates\":1"))
+  assert_true(status.stringify().contains("\"candidate_receipts\":1"))
+  assert_true(status.stringify().contains("\"projection_present\":true"))
   @fs.rmdir(workspace, recursive=true)
 }
 

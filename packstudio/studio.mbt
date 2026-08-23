@@ -58,6 +58,7 @@ fn bridge_ready(manifest : @pack.MoonPackManifest) -> Bool {
   }) &&
   manifest.schemas.any(schema => schema.id == "pack-town-projection") &&
   manifest.schemas.any(schema => schema.id == "town-pack-candidate") &&
+  manifest.schemas.any(schema => schema.id == "pack-candidate-acknowledgement") &&
   manifest.tools.any(tool => {
     tool.input_schema_id == "town-pack-candidate" &&
     tool.review_required &&
@@ -125,6 +126,10 @@ async fn write_bridge_artifacts(
     town_candidate_schema_text(),
   )
   write_text(
+    source_root + "/schemas/pack-candidate-acknowledgement.schema.json",
+    candidate_acknowledgement_schema_text(),
+  )
+  write_text(
     source_root + "/providers/moontown-pack-projection.port.md",
     provider_port_text(intake_operation_id),
   )
@@ -170,6 +175,9 @@ pub async fn create_domain_pack_scaffold(
       ),
       @pack.contract_ref(
         "town-pack-candidate", "1.0.0", "schemas/town-pack-candidate.schema.json",
+      ),
+      @pack.contract_ref(
+        "pack-candidate-acknowledgement", "1.0.0", "schemas/pack-candidate-acknowledgement.schema.json",
       ),
     ],
     tools: [
@@ -278,6 +286,9 @@ pub async fn adopt_pack_bridge(
     fields, "schemas", "town-pack-candidate", "schemas/town-pack-candidate.schema.json",
   )
   append_unique_contract(
+    fields, "schemas", "pack-candidate-acknowledgement", "schemas/pack-candidate-acknowledgement.schema.json",
+  )
+  append_unique_contract(
     fields, "provider_ports", "moontown-pack-projection", "providers/moontown-pack-projection.port.md",
   )
   guard fields.get("tools") is Some(Array(tools)) else {
@@ -346,5 +357,37 @@ pub async fn active_pack_catalog(workspace_root : String) -> Json {
   {
     "contract_id": "moondesk.pack-lifecycle-catalog.v1",
     "packs": @installer.list_active(workspace_root),
+  }
+}
+
+///|
+fn mailbox_entry_count(path : String) -> Int {
+  if !@sync_fs.path_exists(path) {
+    return 0
+  }
+  @sync_fs.read_dir(path).length() catch {
+    _ => 0
+  }
+}
+
+///|
+/// Inspect the shared bridge transport without executing pack-owned code.
+pub fn pack_bridge_mailbox_status(
+  workspace_root : String,
+  pack_id : String,
+) -> Json raise {
+  guard safe_identifier(pack_id) else {
+    fail("pack id must be a safe identifier")
+  }
+  let root = workspace_root + "/.moonsuite/products/\{pack_id}/pack-bridge"
+  let inbox = root + "/inbox/candidates"
+  let receipts = root + "/outbox/candidate-receipts"
+  {
+    "contract_id": "moondesk.pack-bridge-mailbox-status.v1",
+    "pack_id": pack_id,
+    "mailbox_root": root,
+    "delivered_candidates": mailbox_entry_count(inbox),
+    "candidate_receipts": mailbox_entry_count(receipts),
+    "projection_present": @sync_fs.path_exists(root + "/outbox/projection.json"),
   }
 }

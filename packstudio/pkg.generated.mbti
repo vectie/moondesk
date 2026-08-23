@@ -23,6 +23,8 @@ pub async fn inspect_pack_source(String, String) -> PackStudioInspection
 
 pub async fn install_pack_source(PackInstallRequest, String) -> @installer.InstallationReceipt
 
+pub fn pack_bridge_mailbox_status(String, String) -> Json raise
+
 // Errors
 
 // Types and methods
