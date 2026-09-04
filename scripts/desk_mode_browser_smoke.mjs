@@ -48,6 +48,24 @@ async function setTextOnlyScale(session, factor = 2) {
       element.style.fontSize =
         String(computedPixels * ${JSON.stringify(factor)}) + "px";
     }
+    const scaleAdded = element => {
+      if (!(element instanceof HTMLElement) || key in element.dataset) return;
+      const computedPixels = Number.parseFloat(getComputedStyle(element).fontSize);
+      if (!Number.isFinite(computedPixels)) return;
+      element.dataset[key] = element.style.fontSize;
+      element.style.fontSize = String(computedPixels * ${JSON.stringify(factor)}) + "px";
+    };
+    const observer = new MutationObserver(records => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          scaleAdded(node);
+          for (const element of node.querySelectorAll("*")) scaleAdded(element);
+        }
+      }
+    });
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    globalThis.__deskTextOnlyScaleObserver = observer;
     await new Promise(resolve => requestAnimationFrame(() =>
       requestAnimationFrame(resolve)));
     return { factor: ${JSON.stringify(factor)}, elementCount: elements.length,
@@ -58,6 +76,8 @@ async function setTextOnlyScale(session, factor = 2) {
 async function restoreTextOnlyScale(session) {
   return session.evaluate(`(async () => {
     const key = "__deskTextOnlyFontSize";
+    globalThis.__deskTextOnlyScaleObserver?.disconnect();
+    delete globalThis.__deskTextOnlyScaleObserver;
     let restored = 0;
     for (const element of document.querySelectorAll("[data-__desk-text-only-font-size]")) {
       if (!(element instanceof HTMLElement)) continue;
@@ -67,7 +87,10 @@ async function restoreTextOnlyScale(session) {
     }
     await new Promise(resolve => requestAnimationFrame(() =>
       requestAnimationFrame(resolve)));
-    return restored;
+    return {
+      restored,
+      remaining: document.querySelectorAll("[data-__desk-text-only-font-size]").length
+    };
   })()`);
 }
 
@@ -1360,7 +1383,7 @@ async function verifyKeyboardAcceptance(session) {
   );
   await waitFor(
     session,
-    `document.querySelector('[data-testid="activity-library"]') !== null`,
+    `document.querySelector('[data-testid="activity-library"], [data-testid="wiki-focus-workspace"]') !== null`,
     "Pages surface after keyboard navigation",
   );
 }
@@ -3481,8 +3504,9 @@ async function assertDestinationAccessibility(
       state.announcement?.atomic === "true",
     `${destination.label} announcement mismatch: ${JSON.stringify(state)}`,
   );
-  const expectedVisibleNavigationCount =
-    destination.label === "Wiki" ? 2 : 1;
+  // The focused Pages workspace deliberately omits its old operator activity
+  // rail; the shared primary destination navigation is the single landmark.
+  const expectedVisibleNavigationCount = 1;
   assert(
     state.visibleNavigationCount === expectedVisibleNavigationCount &&
       !state.horizontalOverflow &&
@@ -3542,35 +3566,23 @@ async function assertDestinationAccessibility(
 async function proveSearchStateAnnouncements(session) {
   const controller = await pauseNextRequest(session, "/api/search");
   const searchPaneReady = await session.evaluate(
-    `!!document.querySelector('.activity-pane input.line-input')`,
+    `!!document.querySelector('[data-testid="universal-search-input"]')`,
   );
   if (!searchPaneReady) {
     const opened = await session.evaluate(`(() => {
-      const toggle = document.querySelector('[data-testid="command-palette-toggle"]');
-      toggle?.click();
-      return !!toggle;
+      const button = document.querySelector('[data-testid="wiki-find"]');
+      button?.click();
+      return !!button;
     })()`);
-    assert(opened, "Pages command palette toggle is missing");
+    assert(opened, "Pages Find control is missing");
     await waitFor(
       session,
-      `!!document.querySelector('.command-palette')`,
-      "Pages command palette",
-    );
-    const selectedSearch = await session.evaluate(`(() => {
-      const command = Array.from(document.querySelectorAll('.palette-command'))
-        .find(button => button.querySelector('h3')?.textContent.trim() === 'Search Books');
-      command?.click();
-      return !!command;
-    })()`);
-    assert(selectedSearch, "Pages Search Books command is missing");
-    await waitFor(
-      session,
-      `!!document.querySelector('.activity-pane input.line-input')`,
-      "Pages search pane",
+      `!!document.querySelector('[data-testid="universal-search-input"]')`,
+      "Pages Find and Add search",
     );
   }
   const focused = await session.evaluate(`(() => {
-    const input = document.querySelector('.activity-pane input.line-input');
+    const input = document.querySelector('[data-testid="universal-search-input"]');
     if (!(input instanceof HTMLInputElement)) return false;
     input.focus();
     return true;
@@ -3579,7 +3591,7 @@ async function proveSearchStateAnnouncements(session) {
   await session.send("Input.insertText", { text: "command-040-no-results" });
   await waitFor(
     session,
-    `document.querySelector('.activity-pane input.line-input')?.value === 'command-040-no-results'`,
+    `document.querySelector('[data-testid="universal-search-input"]')?.value === 'command-040-no-results'`,
     "Pages search keyboard input",
   );
   await session.evaluate(
@@ -3835,6 +3847,7 @@ function capabilityCodeResponse(item) {
     running: item.running,
     port: item.running ? 4188 : 0,
     message: `command057-code-${item.id}-private`,
+    model_ready: item.configured,
     service_configured: item.configured,
     managed_install: item.installed,
     managed_running: item.running,
@@ -3925,9 +3938,18 @@ function capabilityFlowResponse(item) {
   };
 }
 
+function capabilityModelsResponse(item) {
+  return {
+    ok: true,
+    daemon: capabilityCodeResponse(item),
+    models: item.configured ? [{ name: "moongate/test-model" }] : [],
+  };
+}
+
 async function installCapabilityResponseSubstitution(session, item) {
   const routeForPath = pathname => {
     if (pathname === "/api/moonclaw/daemon") return "code";
+    if (pathname === "/api/moonclaw/models") return "code-models";
     if (pathname === "/api/town/daemon/status") return "requests";
     if (pathname === "/api/moonflow/capability") return "flow";
     return "";
@@ -3951,6 +3973,8 @@ async function installCapabilityResponseSubstitution(session, item) {
       const unavailable = item.unavailable && (route === "code" || route === "requests");
       const response = route === "code"
         ? capabilityCodeResponse(item)
+        : route === "code-models"
+          ? capabilityModelsResponse(item)
         : route === "requests"
           ? capabilityRequestsResponse(item)
           : capabilityFlowResponse(item);
@@ -3979,7 +4003,7 @@ async function installCapabilityResponseSubstitution(session, item) {
         responseCode,
         evidence: unavailable ? "http-unavailable" : "structured-json",
       });
-      seen.add(route);
+      if (route !== "code-models") seen.add(route);
       if (seen.size === 3) {
         firstSettleResolve();
       }
@@ -3992,6 +4016,7 @@ async function installCapabilityResponseSubstitution(session, item) {
   await session.send("Fetch.enable", {
     patterns: [
       { urlPattern: "*/api/moonclaw/daemon*", requestStage: "Request" },
+      { urlPattern: "*/api/moonclaw/models*", requestStage: "Request" },
       { urlPattern: "*/api/town/daemon/status*", requestStage: "Request" },
       { urlPattern: "*/api/moonflow/capability*", requestStage: "Request" },
     ],
@@ -4738,6 +4763,13 @@ async function runCapabilityScaleEvidence() {
             await waitFor(session,
               `document.querySelector(${JSON.stringify(panelSelector)})?.dataset.state === ${jsString(expectedState)}`,
               `${mode.id} ${surface} ${item.id}`);
+            // A route can first paint the previous typed state before its
+            // navigation command dispatches the new load. Require the same
+            // state again after that command has had time to settle.
+            await sleep(150);
+            await waitFor(session,
+              `document.querySelector(${JSON.stringify(panelSelector)})?.dataset.state === ${jsString(expectedState)}`,
+              `${mode.id} ${surface} ${item.id} settled`);
             const start = await session.evaluate(
               "({ scrollY, width: innerWidth, height: innerHeight })",
             );
@@ -4817,7 +4849,8 @@ async function runCapabilityScaleEvidence() {
                 const restored = await restoreTextOnlyScale(session);
                 const afterRestore = await textOnlyScaleCoverage(session);
                 assert(
-                  restored > 0 &&
+                  restored.restored > 0 &&
+                    restored.remaining === 0 &&
                     !afterRestore.active &&
                     afterRestore.markedCount === 0,
                   `${mode.id} ${surface} ${item.id} did not fully restore ` +
@@ -4827,7 +4860,7 @@ async function runCapabilityScaleEvidence() {
                       afterRestore,
                     })}`,
                 );
-                scaled.restoredCount = restored;
+                scaled.restoredCount = restored.restored;
                 scaled.afterRestore = afterRestore;
               }
             }
@@ -5529,10 +5562,12 @@ async function run() {
     })()`);
     const ordinaryInternalTerms = ["MoonClaw", "MoonGate", "daemon", "AI boundary"];
     assert(
-      codeAssistanceState.state === "detected-running" &&
-        codeAssistanceState.publicText.includes("Code assistance is ready") &&
+      codeAssistanceState.state === "temporarily-unavailable" &&
         codeAssistanceState.publicText.includes(
-          "You can start or continue Code conversations.",
+          "Code assistance status is unavailable",
+        ) &&
+        codeAssistanceState.publicText.includes(
+          "Check again when status information is available.",
         ) &&
         ordinaryInternalTerms.every(
           term => !codeAssistanceState.publicText.includes(term),
@@ -5541,7 +5576,8 @@ async function run() {
           term => !codeAssistanceState.cardVisibleText.includes(term),
         ) &&
         codeAssistanceState.technicalText.includes("MoonClaw") &&
-        codeAssistanceState.technicalText.includes("Platform:") &&
+        codeAssistanceState.technicalText.includes("Runningyes") &&
+        codeAssistanceState.technicalText.includes("Model readynot reported") &&
         !codeAssistanceState.technicalOpen,
       `Home Code assistance copy boundary mismatch: ${JSON.stringify(codeAssistanceState)}`,
     );
@@ -5735,23 +5771,45 @@ async function run() {
     );
     await waitFor(
       session,
-      `document.querySelector('[data-testid="desk-open-embedded-preview"]')?.textContent.includes('Preview / Run here') && !document.querySelector('[data-testid="desk-preview"] a[target="_blank"]')`,
-      "generated-site preview stays inside MoonDesk",
+      `document.querySelector('[data-testid="desk-open-embedded-preview"]')?.textContent.includes('Open in Code') && !document.querySelector('[data-testid="desk-preview"] a[target="_blank"]')`,
+      "generated-site preview routes to MoonCode without leaving MoonDesk",
     );
     await clickTestId(session, "desk-open-embedded-preview");
     await waitFor(
       session,
-      `document.querySelector('[data-testid="browser-preview-host"]') && document.querySelector('[data-testid="browser-prepare-evidence"]')?.textContent.includes('Prepare evidence')`,
-      "embedded browser evidence preparation UI",
+      `document.querySelector('[data-testid="mooncode-developer-tools"]')?.dataset.preferredTool === 'browser'`,
+      "MoonCode browser workspace handoff",
     );
-    await clickTestId(session, "browser-prepare-evidence");
     await waitFor(
       session,
-      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState === 'persisted'`,
-      "browser evidence host receipt persisted",
+      `document.querySelector('[data-testid="mooncode-developer-tools"]')?.open === true && document.querySelector('[data-developer-tool-panel="browser"]')?.classList.contains('active')`,
+      "MoonCode browser disclosure",
+    );
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="mooncode-developer-browser-frame"]')?.src !== 'about:blank'`,
+      "MoonCode browser non-empty workspace preview",
+    );
+    const moonCodeBrowserSource = await session.evaluate(
+      `document.querySelector('[data-testid="mooncode-developer-browser-frame"]')?.src || ''`,
+    );
+    assert(
+      moonCodeBrowserSource.includes('/api/workspaces/book-research-alpha/site/'),
+      `MoonCode browser preview is not bound to the selected generated site: ${moonCodeBrowserSource}`,
+    );
+    await waitFor(
+      session,
+      `(() => { const button = document.querySelector('[data-testid="mooncode-developer-browser-prepare-evidence"]'); return button?.dataset.evidenceReady === 'true' && button.disabled === false && button.textContent.includes('Prepare evidence'); })()`,
+      "MoonCode browser evidence preparation control",
+    );
+    await clickTestId(session, "mooncode-developer-browser-prepare-evidence");
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="mooncode-developer-browser"]')?.dataset.evidenceState === 'persisted'`,
+      "MoonCode browser evidence host receipt persisted",
     );
     const durableEvidenceRef = await session.evaluate(
-      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceRef || ''`,
+      `document.querySelector('[data-testid="mooncode-developer-browser"]')?.dataset.evidenceRef || ''`,
     );
     assert(
       durableEvidenceRef.startsWith("book/evidence/browser/") &&
@@ -5762,7 +5820,7 @@ async function run() {
       detail: { protocol: 'moondesk-browser-host-v1', state: 'persisted' }
     }))`);
     assert(
-      await session.evaluate(`document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState !== 'persisted'`),
+      await session.evaluate(`document.querySelector('[data-testid="mooncode-developer-browser"]')?.dataset.evidenceState !== 'persisted'`),
       "Evidence became persisted without host receipt and durable reference",
     );
     await session.evaluate(`globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
@@ -5770,7 +5828,7 @@ async function run() {
     }))`);
     await waitFor(
       session,
-      `document.querySelector('[data-testid="browser-preview-status"]')?.textContent.includes('Evidence not persisted')`,
+      `document.querySelector('[data-testid="mooncode-developer-browser-evidence-status"]')?.textContent.includes('Evidence not persisted')`,
       "browser evidence persistence failure",
     );
     await session.evaluate(`globalThis.dispatchEvent(new CustomEvent('moondesk-browser-evidence-status', {
@@ -5781,7 +5839,7 @@ async function run() {
     }))`);
     await waitFor(
       session,
-      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState === 'persisted'`,
+      `document.querySelector('[data-testid="mooncode-developer-browser"]')?.dataset.evidenceState === 'persisted'`,
       "browser evidence persisted receipt",
     );
     await session.evaluate(`globalThis.dispatchEvent(new CustomEvent('moondesk-browser-host-status', {
@@ -5789,8 +5847,40 @@ async function run() {
     }))`);
     await waitFor(
       session,
-      `document.querySelector('[data-testid="browser-preview-host"]')?.dataset.evidenceState === 'not-persisted' && document.querySelector('[data-testid="browser-preview-status"]')?.textContent.includes('not persisted')`,
+      `document.querySelector('[data-testid="mooncode-developer-browser"]')?.dataset.evidenceState === 'not-persisted' && document.querySelector('[data-testid="mooncode-developer-browser-evidence-status"]')?.textContent.includes('not persisted')`,
       "browser evidence reset after host restart",
+    );
+    const comparisonSeed = await session.evaluate(`fetch('/api/mooncode/comparisons', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        contract: 'moondesk.mooncode_comparison.v1',
+        id: 'comparison-browser-smoke',
+        workspace_id: 'book-research-alpha',
+        context_path: 'book/site/generated/index.html',
+        baseline_request_digest: 'sha256:${"b".repeat(64)}',
+        goal: 'Verify the durable comparison workspace',
+        sessions: [
+          { label: 'A', id: 'compare-session-a', status: 'running', event_count: 2 },
+          { label: 'B', id: 'compare-session-b', status: 'queued', event_count: 1 }
+        ],
+        selected_branch: ''
+      })
+    }).then(async response => ({ status: response.status, body: await response.json() }))`);
+    assert(
+      comparisonSeed.status === 200 && comparisonSeed.body?.revision === 1,
+      `MoonCode durable comparison seed failed: ${JSON.stringify(comparisonSeed)}`,
+    );
+    await session.evaluate(`document.querySelector('[data-developer-tool-tab="compare"]')?.click()`);
+    await waitFor(
+      session,
+      `document.querySelector('[data-testid="mooncode-developer-compare-submit"]')?.dataset.compareReady === 'true'`,
+      "MoonCode comparison lazy runtime readiness",
+    );
+    await waitFor(
+      session,
+      `document.querySelectorAll('.mooncode-compare-result').length === 2 && document.querySelector('[data-testid="mooncode-developer-compare-status"]')?.textContent.includes('durable comparison')`,
+      "MoonCode durable comparison restoration",
     );
     await clickTestId(session, "mode-desk");
     await waitFor(session, `document.querySelector('[data-testid="desk-mode"]')`, "return to Desk after embedded preview evidence test");
@@ -6316,8 +6406,8 @@ async function run() {
         textOnlyProof.push({ label, factor: 2, applied, geometry });
       } finally {
         const restored = await restoreTextOnlyScale(session);
-        assert(restored === applied.elementCount,
-          `text-only ${label} did not restore every element: ${restored}/${applied.elementCount}`);
+        assert(restored.restored > 0 && restored.remaining === 0,
+          `text-only ${label} left scaled elements behind: ${JSON.stringify({ restored, initial: applied.elementCount })}`);
       }
     }
     fs.writeFileSync(path.join(fixtureRoot, "desk-text-only-200-geometry-proof.json"),
@@ -8472,18 +8562,19 @@ async function provePagesSearchAnnouncementSequence(session) {
       `document.activeElement === document.body`,
     "Pages search announcement baseline",
   );
-  await activateScreenReaderPaletteCommand(
-    session,
-    "Search Books",
-    "Pages search announcement sequence",
-  );
+  const opened = await session.evaluate(`(() => {
+    const button = document.querySelector('[data-testid="wiki-find"]');
+    button?.click();
+    return !!button;
+  })()`);
+  assert(opened, "Pages Find control is missing from the screen-reader flow");
   await waitFor(
     session,
-    `!!document.querySelector('.activity-pane input.line-input')`,
-    "Pages search pane",
+    `!!document.querySelector('[data-testid="universal-search-input"]')`,
+    "Pages Find and Add search",
   );
   const focused = await session.evaluate(`(() => {
-    const input = document.querySelector('.activity-pane input.line-input');
+    const input = document.querySelector('[data-testid="universal-search-input"]');
     if (!(input instanceof HTMLInputElement)) return false;
     input.focus();
     return document.activeElement === input;
@@ -8493,7 +8584,7 @@ async function provePagesSearchAnnouncementSequence(session) {
   await session.send("Input.insertText", { text: query });
   await waitFor(
     session,
-    `document.querySelector('.activity-pane input.line-input')?.value === ` +
+    `document.querySelector('[data-testid="universal-search-input"]')?.value === ` +
       JSON.stringify(query),
     "Pages deterministic search query",
   );

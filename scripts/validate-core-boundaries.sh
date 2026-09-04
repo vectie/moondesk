@@ -384,6 +384,7 @@ validate_moondesk_code_runtime_boundary "${moondesk_root}"
 validate_mooncode_core_contract_neutral "${moondesk_root}"
 validate_mooncode_core_contract_neutral "${moonclaw_root}"
 validate_moontown_moonclaw_runtime_boundary "${moontown_root}"
+MOONCLAW_ROOT="${moonclaw_root}" "${script_dir}/validate-traffic-routing.sh"
 MOONCLAW_ROOT="${moonclaw_root}" "${script_dir}/verify-mooncode-core-sync.sh"
 
 run_if_package_exists "${moondesk_root}" "mooncode/core" test

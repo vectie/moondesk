@@ -35,14 +35,34 @@ SOURCE_LOG="${ROOT}/source-root-server.log"
 PID=""
 SOURCE_PID=""
 
+stop_process_tree() {
+  local parent_pid="$1"
+  local child_pid
+  while IFS= read -r child_pid; do
+    if [[ -n "${child_pid}" ]]; then
+      stop_process_tree "${child_pid}"
+    fi
+  done < <(pgrep -P "${parent_pid}" 2>/dev/null || true)
+  if kill -0 "${parent_pid}" 2>/dev/null; then
+    kill "${parent_pid}" 2>/dev/null || true
+  fi
+  for _ in {1..50}; do
+    if ! kill -0 "${parent_pid}" 2>/dev/null; then
+      wait "${parent_pid}" 2>/dev/null || true
+      return
+    fi
+    sleep 0.1
+  done
+  kill -9 "${parent_pid}" 2>/dev/null || true
+  wait "${parent_pid}" 2>/dev/null || true
+}
+
 cleanup() {
   if [[ -n "${SOURCE_PID}" ]] && kill -0 "${SOURCE_PID}" 2>/dev/null; then
-    kill "${SOURCE_PID}" 2>/dev/null || true
-    wait "${SOURCE_PID}" 2>/dev/null || true
+    stop_process_tree "${SOURCE_PID}"
   fi
   if [[ -n "${PID}" ]] && kill -0 "${PID}" 2>/dev/null; then
-    kill "${PID}" 2>/dev/null || true
-    wait "${PID}" 2>/dev/null || true
+    stop_process_tree "${PID}"
   fi
 }
 trap cleanup EXIT
@@ -164,8 +184,7 @@ if [[ -e "${SOURCE_ROOT}/books/source-selected-book/wiki/index.md" ]]; then
   echo "source-root launch wrote MoonBook into source checkout" >&2
   exit 1
 fi
-kill "${SOURCE_PID}" 2>/dev/null || true
-wait "${SOURCE_PID}" 2>/dev/null || true
+stop_process_tree "${SOURCE_PID}"
 SOURCE_PID=""
 
 moon run cmd/main -- serve "${ROOT}" --ui ui/rabbita-desk/dist --host "${HOST}" --port "${PORT}" >"${LOG}" 2>&1 &

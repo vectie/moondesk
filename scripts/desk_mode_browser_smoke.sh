@@ -15,15 +15,29 @@ export TMPDIR="${ARTIFACT_ROOT}"
 SCENARIO="${1:-all}"
 PIDS=()
 
+stop_pid() {
+  local pid="$1"
+  if [[ -z "${pid}" ]] || ! kill -0 "${pid}" 2>/dev/null; then
+    return
+  fi
+  kill "${pid}" 2>/dev/null || true
+  for _ in {1..100}; do
+    if ! kill -0 "${pid}" 2>/dev/null; then
+      wait "${pid}" 2>/dev/null || true
+      return
+    fi
+    sleep 0.05
+  done
+  kill -KILL "${pid}" 2>/dev/null || true
+  wait "${pid}" 2>/dev/null || true
+}
+
 cleanup() {
   for pid in "${PIDS[@]}"; do
-    if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
-      kill "${pid}" 2>/dev/null || true
-      wait "${pid}" 2>/dev/null || true
-    fi
+    stop_pid "${pid}"
   done
 }
-trap cleanup EXIT
+trap 'cleanup 2>/dev/null' EXIT
 
 case "${SCENARIO}" in
   all | full | phase7-editing | editor-ui | empty | quickstart | keyboard | keyboard-transients | accessibility | phase8-layout | screen-reader | capability | capability-responsive | capability-scale)
@@ -108,31 +122,41 @@ start_moonclaw_for_fixture() {
   local fixture_root="$1"
   local moonclaw_log="${fixture_root}/moonclaw.log"
   local product_dir="${fixture_root}/.moonsuite/products/moonclaw"
-  local service_path="${product_dir}/service.json"
   local daemon_path="${product_dir}/daemon.json"
+  local app_data_dir="${fixture_root}/app-data"
+  local control_dir="${app_data_dir}/control/execution-sandbox"
+  local control_path="${control_dir}/browser-smoke.json"
+  local control_headers="${control_dir}/browser-smoke.headers"
 
   if [[ ! -f "${MOONCLAW_ROOT}/moon.mod" ]]; then
     echo "MoonClaw checkout not found: ${MOONCLAW_ROOT}" >&2
     exit 1
   fi
 
-  mkdir -p "${product_dir}"
+  mkdir -p "${product_dir}" "${control_dir}"
+  chmod 700 "${control_dir}"
   node -e '
+const crypto = require("node:crypto");
 const fs = require("node:fs");
-const [servicePath, moonBin, moonclawRoot, fixtureRoot] = process.argv.slice(1);
-const moonclawBin = process.env.MOONCLAW_BIN || "";
-fs.writeFileSync(servicePath, `${JSON.stringify({
-  kind: "moondesk-moonclaw-service.v1",
-  cwd: moonclawBin ? fixtureRoot : moonclawRoot,
-  daemon: {
-    command: moonclawBin || moonBin,
-    args: moonclawBin
-      ? ["daemon", "--port", "0", "--serve", fixtureRoot]
-      : ["run", "cmd/main", "--", "daemon", "--port", "0", "--serve", fixtureRoot],
-  },
-}, null, 2)}\n`);
-' "${service_path}" "${MOON_BIN}" "${MOONCLAW_ROOT}" "${fixture_root}"
-
+const [configPath, headersPath, workspaceRoot] = process.argv.slice(1);
+const instanceId = crypto.randomBytes(16).toString("hex");
+const authToken = crypto.randomBytes(32).toString("hex");
+fs.writeFileSync(configPath, `${JSON.stringify({
+  protocol_version: 1,
+  instance_id: instanceId,
+  auth_token: authToken,
+  workspace_id: "moondesk-browser-smoke",
+  workspace_root: workspaceRoot,
+}, null, 2)}\n`, { mode: 0o600 });
+fs.writeFileSync(headersPath, [
+  `X-MoonClaw-Execution-Token: ${authToken}`,
+  `X-MoonClaw-Instance-ID: ${instanceId}`,
+  "",
+].join("\n"), { mode: 0o600 });
+' "${control_path}" "${control_headers}" "${fixture_root}"
+  chmod 600 "${control_path}" "${control_headers}"
+  export LEPUSA_APP_DATA_DIR="${app_data_dir}"
+  export MOONDESK_EXECUTION_SANDBOX_CONFIG="${control_path}"
   if [[ -n "${MOONCLAW_BIN}" ]]; then
     (cd "${fixture_root}" && "${MOONCLAW_BIN}" daemon --port 0 --serve "${fixture_root}") >"${moonclaw_log}" 2>&1 &
   else
@@ -175,7 +199,7 @@ try {
   local moonclaw_port
   moonclaw_port="$(node -e 'const fs = require("node:fs"); console.log(JSON.parse(fs.readFileSync(process.argv[1], "utf8")).port)' "${daemon_path}")"
   for _ in {1..600}; do
-    if curl -fsS "http://localhost:${moonclaw_port}/v1/code/capabilities" >/dev/null 2>&1; then
+    if curl -fsS -H @"${control_headers}" "http://localhost:${moonclaw_port}/v1/code/capabilities" >/dev/null 2>&1; then
       return
     fi
     sleep 0.1
@@ -256,10 +280,7 @@ run_browser_scenario() {
     node scripts/desk_mode_browser_smoke.mjs \
       "${base}" "${cdp_port}" "${fixture_root}" quickstart-before-restart
 
-    if kill -0 "${pid}" 2>/dev/null; then
-      kill "${pid}" 2>/dev/null || true
-      wait "${pid}" 2>/dev/null || true
-    fi
+    stop_pid "${pid}"
 
     : >"${log}"
     "${MOON_BIN}" run cmd/main -- serve "${fixture_root}" --ui "${UI_DIST}" --host "${HOST}" --port "${port}" >"${log}" 2>&1 &
@@ -285,14 +306,8 @@ run_browser_scenario() {
   fi
   echo "Desk browser ${scenario} smoke passed on ${base}"
 
-  if kill -0 "${chrome_pid}" 2>/dev/null; then
-    kill "${chrome_pid}" 2>/dev/null || true
-    wait "${chrome_pid}" 2>/dev/null || true
-  fi
-  if kill -0 "${pid}" 2>/dev/null; then
-    kill "${pid}" 2>/dev/null || true
-    wait "${pid}" 2>/dev/null || true
-  fi
+  stop_pid "${chrome_pid}"
+  stop_pid "${pid}"
 }
 
 if [[ "${SCENARIO}" == "all" || "${SCENARIO}" == "full" || "${SCENARIO}" == "keyboard" ]]; then
