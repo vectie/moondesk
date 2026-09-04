@@ -11,6 +11,7 @@ import {
   mergeFollowupQueues,
   modeLabel,
   officeReviewChanges,
+  reviewRoomProjection,
   typedLocationLabel,
   shouldAutoSendFollowup,
   shouldRestoreDocumentThread,
@@ -61,6 +62,18 @@ test('Source subscription transitions are immutable and preserve setup state', (
   assert.deepEqual(next.map(item => item.id), ['source-one', 'source-two'])
   assert.deepEqual(sourceSubscriptionCounts(next), { active: 2, needs_setup: 0 })
   assert.equal(current[0].status, 'needs_setup')
+})
+
+test('Review room projection pins decisions first and deduplicates participants', () => {
+  const records = [
+    { id: 'open', kind: 'thread', author: 'You', assigned_to: 'Alex', pinned: false },
+    { id: 'reply', kind: 'reply', author: 'Agent', assigned_to: '' },
+    { id: 'pinned', kind: 'thread', author: 'Alex', assigned_to: 'Agent', pinned: true },
+  ]
+  const room = reviewRoomProjection(records, ['You'])
+  assert.deepEqual(room.threads.map(item => item.id), ['pinned', 'open'])
+  assert.deepEqual(room.participants, ['You', 'Alex', 'Agent'])
+  assert.deepEqual(records.map(item => item.id), ['open', 'reply', 'pinned'])
 })
 
 test('chat projection fingerprint is constant-size and changes with streamed tails', () => {

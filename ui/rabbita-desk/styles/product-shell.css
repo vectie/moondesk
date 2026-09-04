@@ -827,6 +827,55 @@ body {
   border-top: 1px solid #dbe3ec;
 }
 
+.review-room-participants,
+.review-room-thread-heading,
+.review-room-thread-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.review-room-participants {
+  flex-wrap: wrap;
+  margin: -2px 0 12px;
+}
+
+.review-room-label {
+  color: #738092;
+  font-size: 9px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.review-room-participant,
+.review-room-thread-state {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #edf1f5;
+  color: #617083;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.review-room-thread-heading {
+  justify-content: space-between;
+}
+
+.review-room-thread-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.document-review-thread.pinned {
+  border-color: #9eb8d8;
+  background: #f7faff;
+}
+
+.document-review-thread.pinned .review-room-thread-state {
+  background: #e6f0fb;
+  color: #2e557f;
+}
+
 .pack-studio-section {
   width: min(1180px, 100%);
   margin-inline: auto;

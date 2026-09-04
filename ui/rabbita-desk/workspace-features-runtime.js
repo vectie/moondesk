@@ -52,7 +52,8 @@ const featureState = {
   source_subscription_status: '',
   source_subscription_draft: null,
   review_threads: [],
-  review_counts: { open: 0, unread: 0, required: 0 },
+  review_counts: { open: 0, unread: 0, required: 0, pinned: 0 },
+  review_participants: [],
   review_threads_loaded_for: '',
   review_thread_status: '',
   dismissed_fragments: new Set(),
@@ -170,6 +171,25 @@ function sourceSubscriptionCounts(records) {
 
 function shouldRestoreDocumentThread(taskId, chatCount, alreadyHandled) {
   return !String(taskId || '').trim() && Number(chatCount) === 0 && alreadyHandled !== true
+}
+
+function reviewRoomProjection(records, suppliedParticipants = []) {
+  const threads = records.filter(item => item.kind === 'thread')
+  const participants = []
+  for (const value of [
+    ...suppliedParticipants,
+    ...records.flatMap(item => [item.author, item.assigned_to]),
+  ]) {
+    const participant = String(value || '').trim()
+    if (participant && !participants.includes(participant)) participants.push(participant)
+  }
+  return {
+    participants,
+    threads: [
+      ...threads.filter(item => item.pinned === true),
+      ...threads.filter(item => item.pinned !== true),
+    ],
+  }
 }
 
 function conversationPersistenceFingerprint(taskId, documentPath, status, chat) {
@@ -775,7 +795,11 @@ function loadDocumentReviewThreads() {
         open: Number(payload.open_count) || 0,
         unread: Number(payload.unread_count) || 0,
         required: Number(payload.required_action_count) || 0,
+        pinned: Number(payload.pinned_count) || 0,
       }
+      featureState.review_participants = Array.isArray(payload.participants)
+        ? payload.participants
+        : []
       featureState.review_thread_status = ''
       render()
     })
@@ -1154,6 +1178,27 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
     case 'review-thread-resolve':
       saveDocumentReviewThread({ action: 'resolve', thread_id: first })
       return
+    case 'review-thread-pin':
+      saveDocumentReviewThread({
+        action: second === 'unpin' ? 'unpin' : 'pin',
+        thread_id: first,
+      })
+      return
+    case 'review-thread-ask': {
+      const thread = featureState.review_threads.find(item =>
+        item.kind === 'thread' && item.id === first)
+      if (!thread) return
+      featureState.toolbox_open = false
+      forward(
+        'submit-chat-prompt',
+        `Join the review discussion for ${thread.anchor_label || 'the current document'}. ` +
+        `Discussion: ${thread.detail || ''}. ` +
+        `${thread.assigned_to ? `It is assigned to ${thread.assigned_to}. ` : ''}` +
+        'Respond in the normal chat with a concise recommendation. Keep any document change reviewable before saving.',
+      )
+      render()
+      return
+    }
     case 'review-mark-read':
       markDocumentReviewsRead()
       return
@@ -1996,9 +2041,9 @@ function renderReviewTab(state) {
   const open = markers.filter(marker => !marker.reviewed)
   const intro = element('div', 'document-tool-intro')
   intro.append(
-    element('h3', '', 'Document review map'),
+    element('h3', '', 'Review room'),
     element('p', '', featureState.review_counts.open
-      ? `${featureState.review_counts.open} open discussion${featureState.review_counts.open === 1 ? '' : 's'}${featureState.review_counts.required ? ` · ${featureState.review_counts.required} assigned` : ''}${featureState.review_counts.unread ? ` · ${featureState.review_counts.unread} unread` : ''}.`
+      ? `${featureState.review_counts.open} open discussion${featureState.review_counts.open === 1 ? '' : 's'}${featureState.review_counts.required ? ` · ${featureState.review_counts.required} assigned` : ''}${featureState.review_counts.pinned ? ` · ${featureState.review_counts.pinned} pinned` : ''}${featureState.review_counts.unread ? ` · ${featureState.review_counts.unread} unread` : ''}.`
       : open.length
         ? `${open.length} open item${open.length === 1 ? '' : 's'} across this document.`
       : 'No open review items. MoonDesk will interrupt only for a material warning.'),
@@ -2007,6 +2052,18 @@ function renderReviewTab(state) {
     intro.append(button('secondary-button', 'Mark discussions read', 'review-mark-read'))
   }
   content.append(intro)
+  const room = reviewRoomProjection(
+    featureState.review_threads,
+    featureState.review_participants,
+  )
+  if (room.participants.length) {
+    const participants = element('div', 'review-room-participants')
+    participants.append(element('span', 'review-room-label', 'In this room'))
+    for (const participant of room.participants) {
+      participants.append(element('span', 'review-room-participant', participant))
+    }
+    content.append(participants)
+  }
   if (state.selected_document) {
     const form = element('form', 'document-review-thread-form')
     const anchor = featureState.active_anchor
@@ -2059,13 +2116,18 @@ function renderReviewTab(state) {
     }
     content.append(list)
   }
-  const threadRecords = featureState.review_threads.filter(item => item.kind === 'thread')
+  const threadRecords = room.threads
   if (threadRecords.length) {
     const discussions = element('div', 'document-review-thread-list')
     for (const thread of threadRecords) {
-      const row = element('article', `document-review-thread ${thread.status}${thread.anchor_status === 'stale' ? ' stale' : ''}`)
-      row.append(
+      const row = element('article', `document-review-thread ${thread.status}${thread.pinned ? ' pinned' : ''}${thread.anchor_status === 'stale' ? ' stale' : ''}`)
+      const threadHeading = element('div', 'review-room-thread-heading')
+      threadHeading.append(
         element('strong', '', thread.anchor_label || 'Document'),
+        element('span', 'review-room-thread-state', thread.pinned ? 'Pinned decision' : thread.status),
+      )
+      row.append(
+        threadHeading,
         element('p', '', thread.detail),
         element('small', '', `${thread.assigned_to ? `Assigned to ${thread.assigned_to} · ` : ''}${thread.anchor_status === 'stale' ? 'Anchor needs revalidation' : thread.status}`),
       )
@@ -2085,9 +2147,15 @@ function renderReviewTab(state) {
         saveDocumentReviewThread({ action: 'reply', thread_id: thread.id, detail: reply.value.trim() })
       })
       row.append(replyForm)
+      const actions = element('div', 'review-room-thread-actions')
+      actions.append(
+        button('secondary-button', thread.pinned ? 'Unpin' : 'Pin decision', 'review-thread-pin', [thread.id, thread.pinned ? 'unpin' : 'pin']),
+        button('secondary-button', 'Ask agent', 'review-thread-ask', [thread.id]),
+      )
       if (thread.status !== 'resolved') {
-        row.append(button('secondary-button', 'Resolve', 'review-thread-resolve', [thread.id]))
+        actions.append(button('secondary-button', 'Resolve', 'review-thread-resolve', [thread.id]))
       }
+      row.append(actions)
       discussions.append(row)
     }
     content.append(discussions)
@@ -3370,6 +3438,7 @@ export {
   modeLabel,
   officeReviewChanges,
   projectChatFromDom,
+  reviewRoomProjection,
   shouldAutoSendFollowup,
   shouldRestoreDocumentThread,
   sourceSubscriptionCounts,
