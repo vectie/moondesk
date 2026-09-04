@@ -47,6 +47,10 @@ const featureState = {
   task_recipes_loaded: false,
   task_recipe_selected: '',
   task_recipe_status: '',
+  source_subscriptions: [],
+  source_subscriptions_loaded_for: '',
+  source_subscription_status: '',
+  source_subscription_draft: null,
   review_threads: [],
   review_counts: { open: 0, unread: 0, required: 0 },
   review_threads_loaded_for: '',
@@ -150,6 +154,18 @@ function taskRecipeMissingFields(recipe, inputs) {
   return (recipe?.fields || [])
     .filter(field => field.required === true && !String(inputs?.[field.key] || '').trim())
     .map(field => field.key)
+}
+
+function sourceSubscriptionTransition(records, updated) {
+  if (!updated?.id) return records
+  return [updated, ...records.filter(item => item.id !== updated.id)]
+}
+
+function sourceSubscriptionCounts(records) {
+  return records.reduce((counts, item) => ({
+    ...counts,
+    [item.status]: (counts[item.status] || 0) + 1,
+  }), { active: 0, needs_setup: 0 })
 }
 
 function conversationPersistenceFingerprint(taskId, documentPath, status, chat) {
@@ -644,6 +660,101 @@ function startTaskRecipe(recipeId, inputs) {
     })
 }
 
+function loadSourceSubscriptions() {
+  const workspaceId = String(serverState.workspace_id || '').trim()
+  if (!workspaceId) {
+    featureState.source_subscriptions = []
+    featureState.source_subscriptions_loaded_for = ''
+    return
+  }
+  if (featureState.source_subscriptions_loaded_for === workspaceId) return
+  featureState.source_subscriptions = []
+  featureState.source_subscriptions_loaded_for = workspaceId
+  fetch(`/api/source-subscriptions?workspace_id=${encodeURIComponent(workspaceId)}`)
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('load failed')))
+    .then(payload => {
+      featureState.source_subscriptions = Array.isArray(payload.subscriptions)
+        ? payload.subscriptions
+        : []
+      featureState.source_subscription_status = ''
+      render()
+    })
+    .catch(() => {
+      featureState.source_subscriptions_loaded_for = ''
+      featureState.source_subscription_status = 'Subscriptions could not be loaded'
+      render()
+    })
+}
+
+function saveSourceSubscription(record) {
+  featureState.source_subscription_status = 'Saving source…'
+  fetch('/api/source-subscriptions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ workspace_id: serverState.workspace_id || '', ...record }),
+  })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('save failed')))
+    .then(saved => {
+      featureState.source_subscriptions = sourceSubscriptionTransition(
+        featureState.source_subscriptions,
+        saved,
+      )
+      featureState.source_subscription_draft = null
+      featureState.source_subscription_status = 'Source saved. Setting up background work…'
+      render()
+      setupSourceSubscription(saved)
+    })
+    .catch(() => {
+      featureState.source_subscription_status = 'This source could not be saved'
+      render()
+    })
+}
+
+function setupSourceSubscription(record) {
+  featureState.source_subscription_status = 'Setting up background work…'
+  fetch('/api/town/standing-goals', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      title: record.title || 'Keep source current',
+      prompt: record.prompt || '',
+      target_book_id: serverState.workspace_id || '',
+      cadence_ticks: Number(record.cadence_ticks) || 10080,
+      source_policy: record.source_kind === 'folder' ? 'workspace-first' : 'web-first',
+      review_policy: 'bookkeeper_review',
+      enabled: true,
+    }),
+  })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('setup failed')))
+    .then(goal => {
+      const standingGoalId = String(goal.id || goal.standing_goal_id || '').trim()
+      if (!standingGoalId) throw new Error('missing standing work identity')
+      return fetch('/api/source-subscriptions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: 'activate',
+          workspace_id: serverState.workspace_id || '',
+          id: record.id,
+          standing_goal_id: standingGoalId,
+        }),
+      })
+    })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('link failed')))
+    .then(active => {
+      featureState.source_subscriptions = sourceSubscriptionTransition(
+        featureState.source_subscriptions,
+        active,
+      )
+      featureState.source_subscription_status = 'This source will now be checked in the background'
+      render()
+    })
+    .catch(() => {
+      featureState.source_subscription_status = 'Source saved. Background setup needs MoonTown; you can retry here.'
+      render()
+    })
+}
+
 function loadDocumentReviewThreads() {
   const workspaceId = String(serverState.workspace_id || '').trim()
   const documentPath = String(serverState.selected_document || '').trim()
@@ -865,6 +976,7 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       if (first === 'preferences') loadAgentPreferences()
       if (first === 'learning') loadLearningProposals()
       if (first === 'tasks') loadTaskRecipes()
+      if (first === 'sources') loadSourceSubscriptions()
       if (first === 'review') loadDocumentReviewThreads()
       render()
       return
@@ -1002,6 +1114,35 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       featureState.task_recipe_status = ''
       render()
       return
+    case 'source-subscription-new':
+      featureState.source_subscription_draft = {
+        source_kind: 'website',
+        source: '',
+        title: '',
+        cadence: 'weekly',
+        change_rule: '',
+      }
+      featureState.source_subscription_status = ''
+      render()
+      return
+    case 'source-subscription-cancel':
+      featureState.source_subscription_draft = null
+      featureState.source_subscription_status = ''
+      render()
+      return
+    case 'source-subscription-retry': {
+      const subscription = featureState.source_subscriptions.find(item => item.id === first)
+      if (subscription) setupSourceSubscription(subscription)
+      return
+    }
+    case 'source-subscription-run': {
+      const subscription = featureState.source_subscriptions.find(item => item.id === first)
+      if (!subscription) return
+      featureState.toolbox_open = false
+      forward('start-recipe', subscription.prompt || '')
+      render()
+      return
+    }
     case 'review-thread-resolve':
       saveDocumentReviewThread({ action: 'resolve', thread_id: first })
       return
@@ -1987,11 +2128,113 @@ function renderThreadsTab() {
 
 function renderSourcesTab(state) {
   const content = element('div', 'document-tool-content')
-  content.append(element('div', 'document-tool-intro'))
+  loadSourceSubscriptions()
+  content.append(element('div', 'document-tool-intro with-action'))
+  const sourceIntro = element('div')
+  sourceIntro.append(
+    element('h3', '', 'Keep sources current'),
+    element('p', '', 'Save a source once and receive an update only when a meaningful change affects this book.'),
+  )
   content.firstChild.append(
+    sourceIntro,
+    button('primary-button', 'Keep a source current', 'source-subscription-new'),
+  )
+  if (featureState.source_subscription_draft) {
+    const form = element('form', 'source-subscription-form')
+    const kind = element('select')
+    for (const [value, label] of [
+      ['website', 'Website'], ['feed', 'Feed'], ['folder', 'Workspace folder'], ['repository', 'Repository'],
+    ]) {
+      const option = element('option', '', label)
+      option.value = value
+      kind.append(option)
+    }
+    const title = element('input')
+    title.required = true
+    title.maxLength = 160
+    title.placeholder = 'Name this source'
+    const source = element('input')
+    source.required = true
+    source.maxLength = 4096
+    source.placeholder = 'URL, feed, repository, or workspace folder'
+    const cadence = element('select')
+    for (const value of ['daily', 'weekly', 'monthly']) {
+      const option = element('option', '', value[0].toUpperCase() + value.slice(1))
+      option.value = value
+      cadence.append(option)
+    }
+    cadence.value = 'weekly'
+    const changeRule = element('textarea')
+    changeRule.maxLength = 2000
+    changeRule.placeholder = 'What change is important enough to report?'
+    const actions = element('div', 'source-subscription-actions')
+    const submit = element('button', 'primary-button', 'Save and set up')
+    submit.type = 'submit'
+    actions.append(
+      button('secondary-button', 'Cancel', 'source-subscription-cancel'),
+      submit,
+    )
+    form.append(
+      element('label', '', 'Source type'), kind,
+      element('label', '', 'Name'), title,
+      element('label', '', 'Source'), source,
+      element('label', '', 'Check'), cadence,
+      element('label', '', 'Meaningful change'), changeRule,
+      actions,
+    )
+    form.addEventListener('submit', event => {
+      event.preventDefault()
+      saveSourceSubscription({
+        action: 'create',
+        source_kind: kind.value,
+        source: source.value.trim(),
+        title: title.value.trim(),
+        cadence: cadence.value,
+        change_rule: changeRule.value.trim(),
+      })
+    })
+    content.append(form)
+  }
+  const counts = sourceSubscriptionCounts(featureState.source_subscriptions)
+  if (featureState.source_subscriptions.length) {
+    const summary = element('div', 'source-subscription-summary')
+    summary.append(
+      element('span', '', `${counts.active} active`),
+      element('span', '', `${counts.needs_setup} need setup`),
+    )
+    const subscriptions = element('div', 'source-subscription-list')
+    for (const item of featureState.source_subscriptions) {
+      const row = element('article', `source-subscription-row ${item.status || 'needs_setup'}`)
+      const heading = element('div', 'source-subscription-heading')
+      heading.append(
+        element('strong', '', item.title || 'Saved source'),
+        element('span', 'source-subscription-state', item.status === 'active' ? 'Active' : 'Needs setup'),
+      )
+      const actions = element('div', 'source-subscription-actions')
+      actions.append(button('secondary-button', 'Check now', 'source-subscription-run', [item.id]))
+      if (item.status !== 'active') {
+        actions.append(button('primary-button', 'Retry setup', 'source-subscription-retry', [item.id]))
+      }
+      row.append(
+        heading,
+        element('small', '', `${item.source_kind || 'source'} · ${item.cadence || 'weekly'}`),
+        element('p', '', item.source || ''),
+        element('p', 'source-subscription-rule', item.change_rule || 'Report only a material change that affects this book.'),
+        actions,
+      )
+      subscriptions.append(row)
+    }
+    content.append(summary, subscriptions)
+  }
+  if (featureState.source_subscription_status) {
+    content.append(element('p', 'status-line', featureState.source_subscription_status))
+  }
+  const evidenceIntro = element('div', 'document-tool-intro source-evidence-intro')
+  evidenceIntro.append(
     element('h3', '', 'Evidence'),
     element('p', '', 'Sources referenced by visible answers and pinned synthesis material.'),
   )
+  content.append(evidenceIntro)
   const sources = sourceEntries(state)
   if (!sources.length) {
     content.append(element('div', 'document-tool-empty', 'Citation chips appear after MoonDesk references workspace or web evidence.'))
@@ -3120,6 +3363,8 @@ export {
   officeReviewChanges,
   projectChatFromDom,
   shouldAutoSendFollowup,
+  sourceSubscriptionCounts,
+  sourceSubscriptionTransition,
   taskRecipeMissingFields,
   typedSourceEntries,
   typedLocationLabel,

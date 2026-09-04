@@ -726,6 +726,107 @@ body {
   background: #f7faff;
 }
 
+.source-subscription-form,
+.source-subscription-list,
+.source-subscription-row {
+  display: grid;
+  gap: 9px;
+}
+
+.source-subscription-form,
+.source-subscription-row {
+  padding: 12px;
+  border: 1px solid #dbe3ec;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.source-subscription-form label {
+  color: #4b5e73;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.source-subscription-form input,
+.source-subscription-form select,
+.source-subscription-form textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid #ccd8e5;
+  border-radius: 7px;
+  background: #fff;
+  color: #31475f;
+}
+
+.source-subscription-form textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+
+.source-subscription-summary,
+.source-subscription-heading,
+.source-subscription-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.source-subscription-summary {
+  flex-wrap: wrap;
+  margin-bottom: 9px;
+}
+
+.source-subscription-summary span,
+.source-subscription-state {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #edf1f5;
+  color: #617083;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.source-subscription-heading {
+  justify-content: space-between;
+}
+
+.source-subscription-row.active {
+  border-color: #9fc7b4;
+  background: #fbfffd;
+}
+
+.source-subscription-row.active .source-subscription-state {
+  background: #e4f3eb;
+  color: #2b6c50;
+}
+
+.source-subscription-row small,
+.source-subscription-row p {
+  margin: 0;
+  color: #69788a;
+  font-size: 10px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.source-subscription-rule {
+  padding: 7px 8px;
+  border-radius: 7px;
+  background: #f7faff;
+}
+
+.source-subscription-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.source-evidence-intro {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #dbe3ec;
+}
+
 .pack-studio-section {
   width: min(1180px, 100%);
   margin-inline: auto;

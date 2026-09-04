@@ -13,6 +13,8 @@ import {
   officeReviewChanges,
   typedLocationLabel,
   shouldAutoSendFollowup,
+  sourceSubscriptionCounts,
+  sourceSubscriptionTransition,
   taskRecipeMissingFields,
 } from './workspace-features-runtime.js'
 
@@ -45,6 +47,19 @@ test('Task recipe validation reports only missing required decisions', () => {
     taskRecipeMissingFields(recipe, { audience: 'Board', period: 'Q3' }),
     [],
   )
+})
+
+test('Source subscription transitions are immutable and preserve setup state', () => {
+  const pending = { id: 'source-one', status: 'needs_setup', title: 'Reports' }
+  const current = [pending, { id: 'source-two', status: 'active', title: 'Feed' }]
+  const next = sourceSubscriptionTransition(current, {
+    ...pending,
+    status: 'active',
+    standing_goal_id: 'goal-one',
+  })
+  assert.deepEqual(next.map(item => item.id), ['source-one', 'source-two'])
+  assert.deepEqual(sourceSubscriptionCounts(next), { active: 2, needs_setup: 0 })
+  assert.equal(current[0].status, 'needs_setup')
 })
 
 test('chat projection fingerprint is constant-size and changes with streamed tails', () => {
