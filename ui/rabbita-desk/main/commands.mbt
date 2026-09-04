@@ -692,7 +692,13 @@ extern "js" fn browser_take_dropped_import_files() -> String =
   #|       stop(event);
   #|       const files = Array.from(event.dataTransfer?.files || []);
   #|       Promise.all(files.map((file) => readFile(file, "drop")))
-  #|         .then((loaded) => { state.queue.push(...loaded); notify(); })
+  #|         .then((loaded) => {
+  #|           if (typeof globalThis.__moondeskCapturedFilesReady === "function" &&
+  #|               globalThis.__moondeskCapturedFilesReady(loaded) !== false) {
+  #|           } else {
+  #|             state.queue.push(...loaded); notify();
+  #|           }
+  #|         })
   #|         .catch((error) => { state.queue.push({
   #|           id: `drop-error:${Date.now()}`,
   #|           name: "drop-error.txt",
@@ -705,7 +711,13 @@ extern "js" fn browser_take_dropped_import_files() -> String =
   #|       const files = Array.from(event.clipboardData?.files || []);
   #|       if (files.length === 0) return;
   #|       Promise.all(files.map((file) => readFile(file, "paste")))
-  #|         .then((loaded) => { state.queue.push(...loaded); notify(); })
+  #|         .then((loaded) => {
+  #|           if (typeof globalThis.__moondeskCapturedFilesReady === "function" &&
+  #|               globalThis.__moondeskCapturedFilesReady(loaded) !== false) {
+  #|           } else {
+  #|             state.queue.push(...loaded); notify();
+  #|           }
+  #|         })
   #|         .catch((error) => { state.queue.push({
   #|           id: `paste-error:${Date.now()}`,
   #|           name: "paste-error.txt",

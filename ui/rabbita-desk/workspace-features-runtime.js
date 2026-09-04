@@ -1165,6 +1165,35 @@ function forward(action, first = '', second = '', third = '', fourth = '') {
   )
 }
 
+async function importCapturedFiles(files) {
+  const workspaceId = String(serverState.workspace_id || '').trim()
+  if (!workspaceId || !Array.isArray(files) || !files.length) return
+  for (const file of files) {
+    const content = String(file?.content || '')
+    const isDataUrl = content.startsWith('data:')
+    try {
+      const response = await fetch(`/api/workspaces/${encodeURIComponent(workspaceId)}/import`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          kind: file?.source === 'paste' ? 'paste' : 'file',
+          title: String(file?.name || 'Captured media'),
+          filename: String(file?.name || 'captured-media'),
+          browser_import_id: String(file?.id || ''),
+          content_type: String(file?.media_type || 'application/octet-stream'),
+          content: isDataUrl ? '' : content,
+          data_url: isDataUrl ? content : '',
+        }),
+      })
+      if (!response.ok) throw new Error(`capture import failed: ${response.status}`)
+      const imported = await response.json()
+      forward('attach-captured', imported.path || '', imported.data_path || '')
+    } catch (error) {
+      console.error('Captured media could not be added', error)
+    }
+  }
+}
+
 function pin(workspaceId, path, title, kind) {
   if (featureState.synthesis.some(item =>
     item.workspace_id === workspaceId && item.path === path)) {
@@ -3736,6 +3765,11 @@ ${section('Warnings', data.warnings, row => `<div class="row warning"><strong>${
 }
 
 if (typeof document !== 'undefined') {
+  globalThis.__moondeskCapturedFilesReady = files => {
+    if (!document.querySelector('.wiki-focus-workspace')) return false
+    void importCapturedFiles(files)
+    return true
+  }
   globalThis.addEventListener('moondesk-workspace-features-ready', render)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', install, { once: true })

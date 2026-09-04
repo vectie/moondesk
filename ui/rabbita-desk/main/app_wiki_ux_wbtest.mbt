@@ -695,6 +695,34 @@ test "normal Pages workspace captures imports for the visible general chat" {
 }
 
 ///|
+test "event-driven captured media transition adds note and binary once" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonWiki,
+    request_material_paths: ["inbox/imports/existing.md"],
+  }
+  let (_, next) = update_workspace_features(
+    dispatch,
+    workspace_feature_msg(
+      "attach-captured",
+      first="inbox/imports/capture.md",
+      second="inbox/imports/capture.png",
+    ),
+    model,
+  )
+  assert_true(
+    next.request_material_paths ==
+    [
+      "inbox/imports/existing.md",
+      "inbox/imports/capture.md",
+      "inbox/imports/capture.png",
+    ],
+  )
+  assert_eq(next.request_material_status, "captured media added")
+}
+
+///|
 test "wiki activity removes material and clears task state after submission" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {

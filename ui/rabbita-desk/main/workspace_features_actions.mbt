@@ -52,6 +52,22 @@ fn update_workspace_features(
       select_workspace_mode_action(dispatch, mode, model)
     }
     "import-files" => update_inbox_actions(dispatch, ImportLocalFiles, model)
+    "attach-captured" => {
+      let with_note = add_request_material(model.request_material_paths, first)
+      let paths = if second == "" {
+        with_note
+      } else {
+        add_request_material(with_note, second)
+      }
+      (
+        @rabbita.none,
+        {
+          ..model,
+          request_material_paths: paths,
+          request_material_status: "captured media added",
+        },
+      )
+    }
     "import-folder" =>
       update_workspace_surface_actions(dispatch, ImportLocalFolderToDesk, model)
     "export" =>
