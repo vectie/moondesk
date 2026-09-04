@@ -99,6 +99,7 @@ test('Review packages are bounded, grouped, and HTML escaped', () => {
   assert.equal(packageData.conversation.length, 1)
   assert.equal(packageData.discussions[0].replies[0].author, 'Alex')
   const html = reviewPackageHtml(packageData)
+  assert.equal(html.includes('moondesk.review-package.v1'), true)
   assert.equal(html.includes('<script>alert(1)</script>'), false)
   assert.equal(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'), true)
   assert.equal(html.includes('Pinned decisions'), true)
