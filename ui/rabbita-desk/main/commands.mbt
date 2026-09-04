@@ -842,6 +842,14 @@ fn take_dropped_imports_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+fn install_import_capture_cmd() -> @rabbita.Cmd {
+  @cmd.custom_cmd(
+    _ => browser_take_dropped_import_files() |> ignore,
+    kind=AfterRender,
+  )
+}
+
+///|
 fn schedule_import_drop_poll(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @rabbita.delay(dispatch(PollDroppedImports), 1200)
 }
