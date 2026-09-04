@@ -149,9 +149,7 @@ test "Wiki is a quiet chat and Office viewer without operator navigation" {
   assert_true(markup.contains("data-testid=\"wiki-focus-workspace\""))
   assert_true(markup.contains("data-testid=\"wiki-find\""))
   assert_true(markup.contains("data-testid=\"wiki-chat-input\""))
-  assert_true(
-    markup.contains("data-testid=\"wiki-import-capture-delivery\""),
-  )
+  assert_true(markup.contains("data-testid=\"wiki-import-capture-delivery\""))
   assert_true(markup.contains("aria-label=\"Document viewer\""))
   assert_true(markup.contains("data-testid=\"office-docx-preview\""))
   assert_false(markup.contains("data-testid=\"wiki-warning-popup\""))
@@ -604,9 +602,7 @@ test "wiki activity imports stay in activity and join the pending task" {
   assert_true(
     next.request_material_paths ==
     [
-      "inbox/imports/earlier.md",
-      "inbox/imports/report.md",
-      "inbox/imports/report.png",
+      "inbox/imports/earlier.md", "inbox/imports/report.md", "inbox/imports/report.png",
     ],
   )
   assert_eq(next.import_url, "")
@@ -630,12 +626,11 @@ test "captured media is visible and sent through normal document chat" {
   }
   assert_true(
     json_field_string_array_items(
-      wiki_chat_submission_body(model), "file_paths",
+      wiki_chat_submission_body(model),
+      "file_paths",
     ) ==
     [
-      "inbox/imports/whiteboard.md",
-      "inbox/imports/whiteboard.png",
-      "wiki/context.md",
+      "inbox/imports/whiteboard.md", "inbox/imports/whiteboard.png", "wiki/context.md",
     ],
   )
   let markup = @rabbita.render_to_string(
@@ -714,9 +709,7 @@ test "event-driven captured media transition adds note and binary once" {
   assert_true(
     next.request_material_paths ==
     [
-      "inbox/imports/existing.md",
-      "inbox/imports/capture.md",
-      "inbox/imports/capture.png",
+      "inbox/imports/existing.md", "inbox/imports/capture.md", "inbox/imports/capture.png",
     ],
   )
   assert_eq(next.request_material_status, "captured media added")

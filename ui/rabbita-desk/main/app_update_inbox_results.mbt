@@ -54,7 +54,8 @@ fn update_inbox_results(
             import_note: "",
             request_material_paths: if created.ok {
               let with_note = add_request_material(
-                model.request_material_paths, created.path,
+                model.request_material_paths,
+                created.path,
               )
               if created.data_path == "" {
                 with_note
