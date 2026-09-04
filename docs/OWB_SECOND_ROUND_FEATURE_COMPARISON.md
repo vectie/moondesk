@@ -54,10 +54,10 @@ experiments and comparisons without becoming user-facing concepts.
 
 ## Implementation status
 
-The first product slice is implemented on MoonDesk `main` as seven incremental
-commits. The implementation deliberately adds outcomes to the existing
-chat-and-document experience instead of exposing another internal control
-surface.
+The first two product slices are implemented on MoonDesk `main` as incremental,
+independently tested commits. The implementation deliberately adds outcomes to
+the existing chat-and-document experience instead of exposing another internal
+control surface.
 
 | Feature | Delivered now | Deliberately remaining |
 | --- | --- | --- |
@@ -66,11 +66,11 @@ surface.
 | Teach this book and Learning Review | Assistant answers can propose a typed lesson; proposals are durably stored; Learning Review supports accept/reject; only accepted lessons enter future MoonClaw context | Editing a proposal, replaying it against examples, evaluated capability adoption, version history, rollback, and portable-agent export |
 | Work Agenda | Settings presents human-oriented Due now, Upcoming, Paused, and Recent results projections over existing background work | Week/month views, direct natural-language schedule editing from the agenda, and user-selected notification destinations |
 | Try another version | A stable assistant answer can start a fresh alternative from the same bounded conversation context while preserving the original conversation | Proposed-document-change branching, side-by-side document-native comparison, selective merge, and branch visualization |
-| Review Rooms | Existing document-anchored review threads remain the local foundation | Shared rooms, guests, mentions, reactions, unread state, assignments, and live MoonFlow transport |
-| Living artifacts | Existing artifacts and pack applications remain the foundation | Direct create/edit/reopen/export workflow for book-scoped interactive artifacts |
+| Review Rooms | Review is now a local document room with participants, assignments, pinned decisions, replies, resolution, an **Ask agent** path to the general agent, and a bounded offline review package | Live guests, mentions, reactions, unread delivery, and cross-device MoonFlow transport |
+| Living artifacts | Users can create a checklist, tracker, or evidence table; open it beside chat in an isolated viewer; edit it directly; and reopen durable book-scoped state | Chat-directed edits, source citations per item, Office export, and promotion to a portable pack application |
 | Multimodal document work | Existing local files and Office selections remain the foundation | Screenshot, image, voice, transcription, generation/editing, and reviewed Office insertion journeys |
-| Subscribed sources | Existing URL imports, standing work, Inbox, and research recipe cover one-off and scheduled checks | A durable `Keep this current` subscription object with source state, meaningful-change results, and connector-backed sources |
-| Send for review and Share agent | Work Package export and MoonBook portable-agent contracts remain the foundation | Guest review return path and a complete inspect/install/update/share journey in MoonDesk |
+| Subscribed sources | Sources now has a durable **Keep a source current** workflow for websites, feeds, folders, and repositories, including cadence, meaningful-change rule, explicit MoonTown activation state, retry, and **Check now** through the general agent | Completed-check/result linkage, Inbox arrival, and connector-backed cloud sources |
+| Send for review and Share agent | Review Room prepares a bounded, escaped offline review package containing the selected document, conversation excerpt, pinned/open discussions, replies, and evidence. Work Package export and MoonBook portable-agent contracts remain available | Guest review return path and a complete inspect/install/update/share journey in MoonDesk |
 
 The delivered commits are:
 
@@ -83,6 +83,17 @@ The delivered commits are:
 | `9968aa51` | Reusable task recipes and durable launches |
 | `5602a6ea` | Try another version for normal document answers |
 | `4da53913` | Production UI bundle containing the complete slice |
+| `da6db4c4` | Durable source subscription model and HTTP boundary |
+| `0d3e305b` | Keep-source-current workflow in Sources |
+| `71e87e04` | Explicit new-conversation restore semantics |
+| `2cf1b19f` | Revisioned Review Room decisions and participant projection |
+| `48840eca` | Review Room UI with pinned-first threads and Ask agent |
+| `e3c8905c` | Bounded offline review package workflow |
+| `d4d1fa3d` | Persistent Living Artifact model and isolated shell |
+| `a32ff888` | Lazy Living Artifact studio and typed host bridge |
+| `86efb3bb` | Side-by-side isolated Living Artifact viewer |
+| `40eda21e` | Bounded, collision-resistant artifact identifiers |
+| `a06615dc` | Production UI bundle containing the second slice |
 
 ### Architectural shape of the delivered slice
 
@@ -107,12 +118,18 @@ bundle, and production-build boundaries:
 - MoonDesk native tests: 442 passing after the recipe implementation;
 - MoonDesk JavaScript tests: 115 passing;
 - nested Rabbita Desk tests: 461 JavaScript and 442 native passing;
-- workspace feature tests: 10 passing;
+- workspace feature tests: 17 passing;
 - production bundle-cap tests: 2 passing;
 - isolated 240-message workspace projection benchmark: 117.2 ms against a
   350 ms ceiling;
 - production UI build completed with the workspace feature code retained as a
-  lazy-loaded chunk.
+  lazy-loaded chunk;
+- Living Artifact browser journey passed create, isolated open, hydrate,
+  add-item, toggle-item, revision, persistence, and generated-shell checks;
+- source-subscription browser journey passed creation, durable cadence/rule
+  projection, honest `needs_setup` state, retry, and general-agent routing;
+- Review Room browser journey passed assigned discussion creation, pinning,
+  participant projection, general-agent routing, and review-package content.
 
 An earlier concurrent benchmark run measured 362.4 ms while multiple build and
 test processes competed for the same machine. The immediate isolated rerun
