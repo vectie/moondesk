@@ -3139,14 +3139,14 @@ test "code mode daemon and model polling preserve new session draft" {
           configuration_evidence: None,
           platform_evidence: None,
         },
-        models: [{ name: "deepseek-v4-flash" }],
+        models: [{ name: "moongate/deepseek-v4-flash" }],
       }),
     ),
     model,
   )
   assert_eq(models_next.selected_mooncode_session_id, "")
   assert_true(models_next.mooncode_new_chat_active)
-  assert_eq(models_next.mooncode_model, "deepseek-v4-flash")
+  assert_eq(models_next.mooncode_model, "moongate/deepseek-v4-flash")
   assert_eq(models_next.mooncode_composer_status, "new session draft")
   assert_true(selected_mooncode_session(models_next) is None)
 }
@@ -3228,7 +3228,7 @@ test "successful model polling confirms readiness before loading sessions" {
   let result : MoonClawModelsResult = {
     ok: true,
     daemon,
-    models: [{ name: "codex/gpt-5.6-sol" }],
+    models: [{ name: "moongate/gpt-5.6-sol" }],
   }
   assert_true(moonclaw_models_result_allows_sessions(result))
   let (_, next) = update_mooncode_session_results(
@@ -3243,7 +3243,7 @@ test "successful model polling confirms readiness before loading sessions" {
 }
 
 ///|
-test "code mode command payload lets MoonClaw own an empty default selection" {
+test "code mode command payload keeps only MoonGate model selections" {
   let empty_session = { ..code_mode_test_session("session-a"), model: "" }
   assert_eq(
     mooncode_selected_runtime_model(init_model(), Some(empty_session)),
@@ -3251,10 +3251,10 @@ test "code mode command payload lets MoonClaw own an empty default selection" {
   )
   assert_eq(
     mooncode_selected_runtime_model(
-      { ..init_model(), mooncode_model: "deepseek-v4-flash" },
+      { ..init_model(), mooncode_model: "moongate/deepseek-v4-flash" },
       Some(empty_session),
     ),
-    "deepseek-v4-flash",
+    "moongate/deepseek-v4-flash",
   )
 }
 
@@ -3279,15 +3279,15 @@ test "code mode model refresh replaces a stale unavailable selection" {
       configuration_evidence: None,
       platform_evidence: None,
     },
-    models: [{ name: "codex/gpt-5.4" }],
+    models: [{ name: "moongate/gpt-5.4" }],
   }
   assert_eq(
     mooncode_reconcile_runtime_model("gpt-5.6-sol", result),
-    "codex/gpt-5.4",
+    "moongate/gpt-5.4",
   )
   assert_eq(
-    mooncode_reconcile_runtime_model("codex/gpt-5.4", result),
-    "codex/gpt-5.4",
+    mooncode_reconcile_runtime_model("moongate/gpt-5.4", result),
+    "moongate/gpt-5.4",
   )
 }
 

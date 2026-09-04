@@ -2290,8 +2290,8 @@ fn render_desk_inline_preview(
                 attrs=@html.Attrs::build().data_set(
                   "testid", "desk-open-embedded-preview",
                 ),
-                on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
-                "Preview / Run here",
+                on_click=dispatch(SelectWorkspaceMode(MoonCode)),
+                "Open in Code",
               ),
             ]
         })

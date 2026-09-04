@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import rabbita from '@rabbita/vite'
 
+const LAZY_RABBITA_ROUTE_PARSE_BUDGET_KIB = 3 * 1024
+
 function moondeskMoonbitBrowserShim() {
   return {
     name: 'moondesk-moonbit-browser-shim',
@@ -27,12 +29,21 @@ function moondeskMoonbitBrowserShim() {
 
 export default defineConfig({
   build: {
-    // The generated Rabbita route is intentionally lazy and stays below the
-    // 2.8 MiB raw parse budget asserted by bundle-split.test.mjs. Vite reports
-    // this as decimal kB, so keep the diagnostic threshold just above that
-    // binary budget without hiding a materially oversized entry. The stricter
-    // compressed transfer budget remains enforced by the bundle test.
-    chunkSizeWarningLimit: 2940,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        passes: 4,
+        toplevel: true,
+        unsafe_arrows: true,
+        booleans_as_integers: true,
+      },
+      mangle: { toplevel: true },
+      format: { comments: false },
+    },
+    // The generated Rabbita route is intentionally lazy. Keep the build warning
+    // aligned with the named 3 MiB raw parse budget asserted by the bundle test;
+    // compressed transfer and focused lazy chunks have stricter independent caps.
+    chunkSizeWarningLimit: LAZY_RABBITA_ROUTE_PARSE_BUDGET_KIB,
   },
   server: {
     proxy: {

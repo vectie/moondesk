@@ -401,12 +401,9 @@ fn render_automation_disclosure(
         p(class="status-line", "No automations yet.")
       } else {
         div(
-          class="automation-list",
+          class="automation-list automation-card-list",
           model.standing_goals.map(goal => {
-            div(class="automation-row", [
-              strong(goal.title),
-              span(if goal.enabled { "Active" } else { "Paused" }),
-            ])
+            render_automation_card(dispatch, goal)
           }),
         )
       },
@@ -448,6 +445,32 @@ fn render_automation_disclosure(
       ]),
     ]),
   ])
+}
+
+///|
+fn render_automation_card(
+  _dispatch : Dispatch[Msg],
+  goal : StandingGoalRecord,
+) -> @rabbita.Html {
+  let payload : Json = {
+    "id": goal.id,
+    "title": goal.title,
+    "prompt": goal.prompt,
+    "book": goal.target_book_id,
+    "cadence": goal.cadence_ticks,
+    "next": goal.next_due_tick,
+    "last": goal.last_run_tick,
+    "enabled": goal.enabled,
+    "sources": goal.source_policy,
+    "review": goal.review_policy,
+  }
+  div(
+    class="automation-card-host",
+    attrs=@html.Attrs::build()
+      .data_set("testid", "automation-card-host")
+      .data_set("state", payload.stringify()),
+    ([] : Array[@rabbita.Html]),
+  )
 }
 
 ///|

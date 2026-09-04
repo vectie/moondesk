@@ -159,7 +159,9 @@ test "Pack Home distinguishes installed state from runtime readiness" {
 #warnings("-alert_unstable")
 test "Pack Home exposes common lifecycle without absorbing domain rules" {
   let pack_markup = @rabbita.render_to_string(
-    @rabbita.static_cell(render_pack_bridge_status(pack_home_test_record("configured"))),
+    @rabbita.static_cell(
+      render_pack_bridge_status(pack_home_test_record("configured")),
+    ),
   )
   assert_true(pack_markup.contains("Town bridge ready"))
   assert_true(pack_markup.contains("data-bridge-ready=\"true\""))

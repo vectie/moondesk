@@ -260,3 +260,18 @@ test "Flow computes virtual extent and fits a 63-stage graph" {
   let screen_x = fitted.flow_canvas.pan_x + last_x * fitted.flow_canvas.zoom
   assert_true(screen_x < flow_canvas_fit_width)
 }
+
+///|
+test "unavailable composition preserves the user-facing reason" {
+  let composition : MoonFlowComposition = @json.from_json({
+    "selected_item_ids": [],
+    "items": [],
+    "node_positions": [],
+    "validation_status": "unavailable",
+    "validation_issues": ["This MoonBook has no executable Work graph yet"],
+  })
+  assert_eq(
+    moonflow_unavailable_composition_message(composition),
+    Some("This MoonBook has no executable Work graph yet"),
+  )
+}

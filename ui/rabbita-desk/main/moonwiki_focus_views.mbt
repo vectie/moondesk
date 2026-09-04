@@ -3,10 +3,14 @@ fn render_wiki_focus_workspace(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  section(class="wiki-focus-workspace", [
-    render_wiki_chat(dispatch, model),
-    render_wiki_document_viewer(dispatch, model),
-  ])
+  section(
+    class="wiki-focus-workspace",
+    attrs=@html.Attrs::build().data_set("testid", "wiki-focus-workspace"),
+    [
+      render_wiki_chat(dispatch, model),
+      render_wiki_document_viewer(dispatch, model),
+    ],
+  )
 }
 
 ///|
@@ -17,25 +21,90 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
     [
       header(class="wiki-chat-header", [
         div([p(class="eyebrow", "Workspace"), h2("Chat")]),
-        if office_editor_path_supported(model.selected_path) {
-          span(
-            class="wiki-document-chip",
-            title=model.selected_path,
-            @desk.display_name(model.selected_path),
-          )
-        } else {
-          span(class="wiki-document-chip empty", "No document")
-        },
+        div(class="wiki-chat-header-actions", [
+          button(
+            class="wiki-header-action",
+            attrs=@html.Attrs::build().data_set("testid", "wiki-find"),
+            title="Search files, knowledge, code, and work",
+            on_click=dispatch(
+              workspace_feature_msg("open-search", first="open"),
+            ),
+            "Find",
+          ),
+          button(
+            class="wiki-header-action",
+            title="Combine material into a new deliverable",
+            on_click=if wiki_document_path_supported(model.selected_path) {
+              dispatch(
+                workspace_feature_msg(
+                  "pin",
+                  first=model.selected_workspace_id,
+                  second=model.selected_path,
+                  third=@desk.display_name(model.selected_path),
+                  fourth=wiki_document_kind_label(model.selected_path).unwrap_or(
+                    "Document",
+                  ),
+                ),
+              )
+            } else {
+              dispatch(workspace_feature_msg("open-synthesis"))
+            },
+            "Synthesize",
+          ),
+          button(
+            class="wiki-header-action",
+            title="Open document review, history, sources, checks, and Inbox",
+            on_click=dispatch(
+              workspace_feature_msg("open-toolbox", first="review"),
+            ),
+            "Review",
+          ),
+          if wiki_document_path_supported(model.selected_path) {
+            span(
+              class="wiki-document-chip",
+              title=model.selected_path,
+              @desk.display_name(model.selected_path),
+            )
+          } else {
+            span(class="wiki-document-chip empty", "No document")
+          },
+        ]),
       ]),
       render_wiki_warning_popup(model),
+      render_quiet_work_center(dispatch, model),
       div(
         class="wiki-chat-thread",
         attrs=@html.Attrs::build()
           .data_set("testid", "wiki-chat-thread")
           .aria_live("polite"),
-        wiki_chat_messages(model),
+        wiki_chat_messages(dispatch, model),
       ),
       div(class="wiki-chat-composer", [
+        if model.wiki_chat_context_items.is_empty() {
+          @html.nothing
+        } else {
+          div(
+            class="wiki-chat-context-chips",
+            [
+              span(class="wiki-chat-file-hint", "Context"),
+              ..model.wiki_chat_context_items.map(item => {
+                span(class="wiki-chat-context-chip " + item.kind, [
+                  span(item.label),
+                  button(
+                    class="wiki-chat-file-remove",
+                    attrs=@html.Attrs::build().aria_label(
+                      "Remove context " + item.label,
+                    ),
+                    on_click=dispatch(
+                      workspace_feature_msg("remove-context", first=item.id),
+                    ),
+                    "×",
+                  ),
+                ])
+              }),
+            ],
+          )
+        },
         if model.wiki_chat_file_paths.is_empty() {
           @html.nothing
         } else {
@@ -104,13 +173,11 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
                   "false"
                 },
               ),
-            title="Search this workspace for a file to attach",
-            on_click=dispatch(ToggleWikiChatFilePicker),
-            if model.wiki_chat_file_picker_open {
-              "Close file search"
-            } else {
-              "Attach workspace file"
-            },
+            title="Add a selection, file, conversation, artifact, Inbox item, or URL",
+            on_click=dispatch(
+              workspace_feature_msg("open-search", first="attach"),
+            ),
+            "Add context",
           ),
           button(
             class="primary-button",
@@ -204,23 +271,14 @@ fn render_wiki_chat_file_picker(
 }
 
 ///|
-fn wiki_chat_messages(model : Model) -> Array[@rabbita.Html] {
+fn wiki_chat_messages(
+  _dispatch : Dispatch[Msg],
+  model : Model,
+) -> Array[@rabbita.Html] {
   let messages : Array[@rabbita.Html] = []
   for entry in model.wiki_chat_entries {
     if entry.content.trim() != "" {
-      messages.push(
-        div(class="wiki-chat-message " + entry.role, [
-          span(
-            class="wiki-chat-speaker",
-            if entry.role == "user" {
-              "You"
-            } else {
-              "MoonDesk"
-            },
-          ),
-          p(entry.content),
-        ]),
-      )
+      messages.push(wiki_chat_entry_view(entry))
     }
   }
   if messages.length() == 0 {
@@ -234,6 +292,37 @@ fn wiki_chat_messages(model : Model) -> Array[@rabbita.Html] {
     )
   }
   messages
+}
+
+///|
+fn wiki_chat_entry_view(entry : WikiChatEntry) -> @rabbita.Html {
+  if [
+      "source_ref", "artifact_ref", "automation_suggestion", "preference_usage",
+      "background_result",
+    ].contains(entry.role) {
+    return div(
+      class="wiki-chat-fragment",
+      attrs=@html.Attrs::build()
+        .data_set("kind", entry.role)
+        .data_set("payload", entry.content),
+      ([] : Array[@rabbita.Html]),
+    )
+  }
+  div(
+    class="wiki-chat-message " + entry.role,
+    attrs=@html.Attrs::build().data_set("chat-role", entry.role),
+    [
+      span(
+        class="wiki-chat-speaker",
+        if entry.role == "user" {
+          "You"
+        } else {
+          "MoonDesk"
+        },
+      ),
+      p(entry.content),
+    ],
+  )
 }
 
 ///|
@@ -315,13 +404,13 @@ fn render_wiki_document_viewer(
       header(class="wiki-viewer-header", [
         div(class="wiki-viewer-title", [
           h2(
-            if office_editor_path_supported(model.selected_path) {
+            if wiki_document_path_supported(model.selected_path) {
               @desk.display_name(model.selected_path)
             } else {
               "Document"
             },
           ),
-          match wiki_office_kind_label(model.selected_path) {
+          match wiki_document_kind_label(model.selected_path) {
             Some(kind) => span(class="wiki-file-kind", kind)
             None => @html.nothing
           },
@@ -329,10 +418,12 @@ fn render_wiki_document_viewer(
         div(class="wiki-viewer-actions", [
           button(
             class="secondary-button",
-            on_click=dispatch(SelectWorkspaceMode(Desk)),
+            on_click=dispatch(
+              workspace_feature_msg("open-search", first="document"),
+            ),
             "Choose document",
           ),
-          if office_editor_path_supported(model.selected_path) {
+          if wiki_document_path_supported(model.selected_path) {
             a(
               class="secondary-button link-button",
               href=raw_url(model, model.selected_path),
@@ -355,13 +446,28 @@ fn render_wiki_office_document(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
+  if model.selected_path.to_lower().has_suffix(".pdf") {
+    return iframe(
+      class="pdf-preview-frame wiki-pdf-preview-frame",
+      src=@desk.workspace_raw_url(
+        model.selected_workspace_id,
+        model.selected_path,
+      ),
+      title=@desk.display_name(model.selected_path),
+      attrs=@html.Attrs::build()
+        .data_set("testid", "pdf-preview-frame")
+        .data_set("source-path", model.selected_path),
+    )
+  }
   if !office_editor_path_supported(model.selected_path) {
     return div(class="wiki-viewer-empty", [
       h3("Open a document"),
-      p("Choose a DOCX, XLSX, or PPTX file to view it beside the chat."),
+      p("Choose a DOCX, XLSX, PPTX, or PDF file to view it beside the chat."),
       button(
         class="primary-button",
-        on_click=dispatch(SelectWorkspaceMode(Desk)),
+        on_click=dispatch(
+          workspace_feature_msg("open-search", first="document"),
+        ),
         "Choose document",
       ),
     ])

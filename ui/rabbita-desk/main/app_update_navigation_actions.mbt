@@ -242,6 +242,7 @@ fn select_workspace_action(
       wiki_agent_task_id: "",
       wiki_chat_entries: [],
       wiki_chat_file_paths: [],
+      wiki_chat_context_items: [],
       wiki_chat_stream_task_id: "",
       wiki_chat_stream_cursor: "start",
       selected_path: "",
@@ -386,6 +387,15 @@ fn select_search_hit_action(
   } else {
     Desk
   }
+  let rebound_editor = update_office_editor(
+    model.office_editor,
+    OfficeRebind(workspace_id),
+  )
+  let (office_cmd, office_editor) = if target_mode == MoonWiki {
+    open_office_path_transition(dispatch, rebound_editor, path)
+  } else {
+    (@rabbita.none, rebound_editor)
+  }
   (
     sync_shell_batch(
       target_mode,
@@ -395,6 +405,7 @@ fn select_search_hit_action(
         fetch_preview_cmd(dispatch, workspace_id, path),
         fetch_runs_cmd(dispatch, workspace_id),
         sync_workspace_context_cmd(workspace_id, path),
+        office_cmd,
       ]),
     ),
     clear_markdown_editor({
@@ -404,6 +415,7 @@ fn select_search_hit_action(
       command_open: false,
       command_query: "",
       selected_workspace_id: workspace_id,
+      office_editor,
       selected_path: path,
       desk_selected_paths: if path == "" {
         []

@@ -379,14 +379,27 @@ fn fetch_launch_agent_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
-fn fetch_search_cmd(dispatch : Dispatch[Msg], query : String) -> @rabbita.Cmd {
-  @http.get(@desk.search_url(query) + "&contract=pages-search.v1").expect_json(result => {
-    dispatch(
-      LoadedPagesSearch(
-        http_result(result, "The search response could not be read"),
-      ),
-    )
-  })
+fn fetch_search_cmd(
+  dispatch : Dispatch[Msg],
+  query : String,
+  workspace_id? : String = "",
+  mode? : String = "files",
+) -> @rabbita.Cmd {
+  let options : Array[(String, String)] = [
+    ("contract", "pages-search.v1"),
+    ("mode", mode),
+  ]
+  if workspace_id != "" {
+    options.push(("workspace", workspace_id))
+  }
+  @http.get(@desk.search_url(query) + "&" + @desk.desktop_api_query(options)).expect_json(result => {
+      dispatch(
+        LoadedPagesSearch(
+          http_result(result, "The search response could not be read"),
+        ),
+      )
+    },
+  )
 }
 
 ///|

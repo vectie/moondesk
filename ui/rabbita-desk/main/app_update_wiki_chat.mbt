@@ -172,8 +172,7 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
   let mut next = model
   let mut terminal = false
   match kind {
-    "lifecycle" =>
-      next = { ..next, request_status: "working" }
+    "lifecycle" => next = { ..next, request_status: "working" }
     "answer_delta" => {
       let content = json_field_string(event, "content", default="")
       if content != "" {
@@ -212,6 +211,14 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
       }
       next = { ..next, wiki_chat_entries: entries }
     }
+    "source_ref" | "artifact_ref" | "automation_suggestion" => {
+      let content = event.stringify()
+      let entries = next.wiki_chat_entries.copy()
+      if !entries.any(entry => entry.role == kind && entry.content == content) {
+        entries.push({ role: kind, content })
+        next = { ..next, wiki_chat_entries: entries }
+      }
+    }
     "snapshot" => {
       let content = json_field_string(event, "answer", default="")
         .trim()
@@ -219,8 +226,10 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
       let entries = next.wiki_chat_entries.copy()
       if content != "" {
         if entries.length() > 0 &&
-          (entries[entries.length() - 1].role == "assistant-stream" ||
-          entries[entries.length() - 1].role == "assistant") {
+          (
+            entries[entries.length() - 1].role == "assistant-stream" ||
+            entries[entries.length() - 1].role == "assistant"
+          ) {
           entries[entries.length() - 1] = { role: "assistant", content }
         } else {
           entries.push({ role: "assistant", content })
@@ -228,7 +237,9 @@ fn wiki_chat_apply_stream_event(model : Model, event : Json) -> (Model, Bool) {
       }
       let state = json_field_string(event, "state", default="working")
       next = { ..next, wiki_chat_entries: entries, request_status: state }
-      terminal = state == "complete" || state == "cancelled" || state == "failed"
+      terminal = state == "complete" ||
+        state == "cancelled" ||
+        state == "failed"
     }
     "warning" => {
       let entries = next.wiki_chat_entries.copy()
@@ -264,34 +275,6 @@ fn update_wiki_chat(
   model : Model,
 ) -> (@rabbita.Cmd, Model) {
   match msg {
-    ToggleWikiChatFilePicker =>
-      if model.wiki_chat_file_picker_open {
-        (
-          @rabbita.none,
-          {
-            ..model,
-            wiki_chat_file_picker_open: false,
-            wiki_chat_file_query: "",
-            wiki_chat_file_results: [],
-            wiki_chat_file_search_status: "",
-            wiki_chat_file_search_generation: model.wiki_chat_file_search_generation +
-            1,
-          },
-        )
-      } else {
-        (
-          @rabbita.none,
-          {
-            ..model,
-            wiki_chat_file_picker_open: true,
-            wiki_chat_file_query: "",
-            wiki_chat_file_results: [],
-            wiki_chat_file_search_status: "Search this workspace by typing a file name",
-            wiki_chat_file_search_generation: model.wiki_chat_file_search_generation +
-            1,
-          },
-        )
-      }
     SetWikiChatPrompt(prompt) =>
       wiki_chat_prompt_update(dispatch, model, prompt)
     SetWikiChatFileQuery(query) =>
@@ -302,7 +285,15 @@ fn update_wiki_chat(
         query.trim() == "" {
         (@rabbita.none, model)
       } else {
-        (wiki_chat_file_search_cmd(dispatch, generation, query), model)
+        (
+          wiki_chat_file_search_cmd(
+            dispatch,
+            generation,
+            query,
+            model.selected_workspace_id,
+          ),
+          model,
+        )
       }
     LoadedWikiChatFileSearch(generation, Ok(response)) =>
       if generation != model.wiki_chat_file_search_generation {
@@ -387,16 +378,36 @@ fn update_wiki_chat(
         } else {
           "start"
         }
+        let entries = wiki_chat_append(
+          model.wiki_chat_entries,
+          "user",
+          submitted_message,
+        )
+        if submission.preferences_used > 0 {
+          let usage : Json = {
+            "kind": "preference_usage",
+            "count": submission.preferences_used,
+            "ids": Json::array(
+              submission.preference_ids.map(id => Json::string(id)),
+            ),
+          }
+          entries.push({ role: "preference_usage", content: usage.stringify() })
+        }
+        match submission.automation_suggestion {
+          Some(Object(_) as suggestion) =>
+            entries.push({
+              role: "automation_suggestion",
+              content: suggestion.stringify(),
+            })
+          _ => ()
+        }
         let next = {
           ..model,
           wiki_agent_task_id: submission.task_id,
           wiki_chat_stream_task_id: submission.task_id,
           wiki_chat_stream_cursor: stream_cursor,
-          wiki_chat_entries: wiki_chat_append(
-            model.wiki_chat_entries,
-            "user",
-            submitted_message,
-          ),
+          wiki_chat_entries: entries,
+          wiki_chat_context_items: [],
           request_prompt: "",
           request_status: if submission.queued {
             "queued"
@@ -405,17 +416,25 @@ fn update_wiki_chat(
           },
         }
         (
-          start_wiki_chat_stream_cmd(
-            dispatch,
-            submission.task_id,
-            stream_cursor,
-          ),
+          @rabbita.batch([
+            start_wiki_chat_stream_cmd(
+              dispatch,
+              submission.task_id,
+              stream_cursor,
+            ),
+            workspace_feature_signal_cmd(
+              "followup-submitted", submitted_message,
+            ),
+          ]),
           next,
         )
       }
-    SubmittedWikiChat(_, Err(error)) =>
+    SubmittedWikiChat(submitted_message, Err(error)) =>
       (
-        stop_wiki_chat_stream_cmd(),
+        @rabbita.batch([
+          stop_wiki_chat_stream_cmd(),
+          workspace_feature_signal_cmd("followup-failed", submitted_message),
+        ]),
         { ..model, wiki_chat_stream_task_id: "", request_status: error },
       )
     PollWikiChatStream(task_id) =>

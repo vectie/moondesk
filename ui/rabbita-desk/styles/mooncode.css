@@ -543,11 +543,11 @@
 }
 
 .mooncode-center {
-  grid-template-rows: 42px auto minmax(0, 1fr);
+  grid-template-rows: 42px auto auto minmax(0, 1fr);
 }
 
 .mooncode-center.runtime-setup-visible {
-  grid-template-rows: 42px auto auto minmax(0, 1fr);
+  grid-template-rows: 42px auto auto auto minmax(0, 1fr);
 }
 
 .mooncode-workspace-editors {

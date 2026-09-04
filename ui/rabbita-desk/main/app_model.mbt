@@ -101,6 +101,7 @@ struct Model {
   wiki_agent_task_id : String
   wiki_chat_entries : Array[WikiChatEntry]
   wiki_chat_file_paths : Array[String]
+  wiki_chat_context_items : Array[WikiChatContextItem]
   wiki_chat_file_picker_open : Bool
   wiki_chat_file_query : String
   wiki_chat_file_results : Array[SearchHit]
@@ -149,6 +150,8 @@ struct Model {
   mooncode_new_chat_active : Bool
   mooncode_prompt : String
   mooncode_model : String
+  mooncode_models : Array[String]
+  mooncode_reasoning_effort : String
   mooncode_web_search : Bool
   mooncode_composer_status : String
   mooncode_copied_item_id : String
@@ -290,13 +293,13 @@ enum Msg {
   SubmittedRequest(Result[RequestRecord, String])
   SubmittedWikiChat(String, Result[WikiChatSubmission, String])
   LoadedWikiChatEvents(String, String, Result[Array[Json], String])
-  ToggleWikiChatFilePicker
   SetWikiChatPrompt(String)
   SetWikiChatFileQuery(String)
   RunWikiChatFileSearch(Int, String)
   LoadedWikiChatFileSearch(Int, Result[PagesSearchResponse, String])
   AttachWikiChatFile(String)
   WikiChatDropPath(String)
+  WorkspaceFeature(String, String, String, String, String)
   CreatedStandingGoal(Result[StandingGoalRecord, String])
   DecidedReviewItem(Result[ReviewDecisionResult, String])
   CreatedBookFromPattern(Result[BookPatternCreationResult, String])
@@ -364,6 +367,8 @@ enum Msg {
   CancelDeleteMoonCodeSession
   ConfirmDeleteMoonCodeSession(String)
   SetMoonCodePrompt(String)
+  SetMoonCodeModel(String)
+  SetMoonCodeReasoningEffort(String)
   SendMoonCodeMessage(String)
   CopyMoonCodeText(String, String)
   ClearMoonCodeCopy(String)

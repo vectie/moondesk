@@ -3,52 +3,55 @@ fn render_command_palette(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
-  if !model.command_open {
-    @html.nothing
-  } else {
-    div(class="palette-backdrop", [
-      div(
-        class="command-palette",
-        attrs=@html.Attrs::build()
-          .role("dialog")
-          .aria_modal("true")
-          .aria_label("Commands")
-          .data_set("testid", "command-palette-panel"),
-        [
-          div(class="palette-head", [
-            input(
-              class="palette-input",
-              attrs=@html.Attrs::build()
-                .aria_label("Search commands")
-                .data_set("testid", "command-palette-input"),
-              value=model.command_query,
-              placeholder="Open Book, Import Files, Search, Submit...",
-              on_input=fn(value) { dispatch(SetCommandQuery(value)) },
+  div(class="global-overlay-root", [
+    if !model.command_open {
+      @html.nothing
+    } else {
+      div(class="palette-backdrop", [
+        div(
+          class="command-palette",
+          attrs=@html.Attrs::build()
+            .role("dialog")
+            .aria_modal("true")
+            .aria_label("Commands")
+            .data_set("testid", "command-palette-panel"),
+          [
+            div(class="palette-head", [
+              input(
+                class="palette-input",
+                attrs=@html.Attrs::build()
+                  .aria_label("Search commands")
+                  .data_set("testid", "command-palette-input"),
+                value=model.command_query,
+                placeholder="Open Book, Import Files, Search, Submit...",
+                on_input=fn(value) { dispatch(SetCommandQuery(value)) },
+              ),
+              button(
+                class="icon-button palette-close",
+                title="Close command palette",
+                attrs=@html.Attrs::build()
+                  .aria_label("Close command palette")
+                  .data_set("testid", "command-palette-close"),
+                on_click=dispatch(ToggleCommand),
+                span(attrs=@html.Attrs::build().aria_hidden("true"), "X"),
+              ),
+            ]),
+            div(
+              class="palette-list",
+              filtered_palette_commands_for_mode(
+                model.workspace_mode,
+                model.command_query,
+              ).map(command => {
+                let (title, detail, msg) = command
+                palette_command(dispatch, title, detail, msg)
+              }),
             ),
-            button(
-              class="icon-button palette-close",
-              title="Close command palette",
-              attrs=@html.Attrs::build()
-                .aria_label("Close command palette")
-                .data_set("testid", "command-palette-close"),
-              on_click=dispatch(ToggleCommand),
-              span(attrs=@html.Attrs::build().aria_hidden("true"), "X"),
-            ),
-          ]),
-          div(
-            class="palette-list",
-            filtered_palette_commands_for_mode(
-              model.workspace_mode,
-              model.command_query,
-            ).map(command => {
-              let (title, detail, msg) = command
-              palette_command(dispatch, title, detail, msg)
-            }),
-          ),
-        ],
-      ),
-    ])
-  }
+          ],
+        ),
+      ])
+    },
+    render_workspace_feature_overlays(dispatch, model),
+  ])
 }
 
 ///|
@@ -124,6 +127,21 @@ fn primary_palette_commands() -> Array[(String, String, Msg)] {
 ///|
 fn secondary_tool_palette_commands() -> Array[(String, String, Msg)] {
   [
+    (
+      "Search everything",
+      "Find files, code, knowledge, tasks, runs, and artifacts",
+      workspace_feature_msg("open-search", first="open"),
+    ),
+    (
+      "Open synthesis board",
+      "Combine pinned sources into a brief, report, sheet, or deck",
+      workspace_feature_msg("open-synthesis"),
+    ),
+    (
+      "Export Work Package",
+      "Download the answer, sources, results, reviews, and warnings",
+      workspace_feature_msg("export"),
+    ),
     (
       "Open Requests",
       "Open the Requests tab under Wiki",

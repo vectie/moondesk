@@ -7,7 +7,7 @@ fn moonclaw_model_readiness_allows_sessions(ready : Bool?) -> Bool {
 fn moonclaw_models_result_allows_sessions(
   result : MoonClawModelsResult,
 ) -> Bool {
-  result.ok && !result.models.is_empty()
+  result.ok && !mooncode_available_model_names(result).is_empty()
 }
 
 ///|
@@ -125,6 +125,7 @@ fn update_mooncode_session_results(
             model.mooncode_model,
             result,
           ),
+          mooncode_models: mooncode_available_model_names(result),
           mooncode_composer_status: if mooncode_new_session_draft_active(model) {
             model.mooncode_composer_status
           } else if result.ok {
@@ -711,23 +712,18 @@ fn mooncode_listing_watch_cmd(
 }
 
 ///|
-fn mooncode_default_runtime_model(result : MoonClawModelsResult) -> String {
-  if result.models.length() > 0 {
-    result.models[0].name
-  } else {
-    ""
-  }
-}
-
-///|
 fn mooncode_reconcile_runtime_model(
   current : String,
   result : MoonClawModelsResult,
 ) -> String {
-  if current != "" && result.models.any(model => model.name == current) {
+  let current = current.trim().to_owned()
+  let names = mooncode_available_model_names(result)
+  if current != "" && names.contains(current) {
     current
+  } else if names.length() > 0 {
+    names[0]
   } else {
-    mooncode_default_runtime_model(result)
+    ""
   }
 }
 

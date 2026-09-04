@@ -153,6 +153,20 @@ fn office_editor_path_supported(path : String) -> Bool {
 }
 
 ///|
+fn wiki_document_path_supported(path : String) -> Bool {
+  office_editor_path_supported(path) || path.to_lower().has_suffix(".pdf")
+}
+
+///|
+fn wiki_document_kind_label(path : String) -> String? {
+  if path.to_lower().has_suffix(".pdf") {
+    Some("PDF")
+  } else {
+    wiki_office_kind_label(path)
+  }
+}
+
+///|
 fn update_office_editor(
   state : OfficeEditorState,
   msg : OfficeEditorMsg,

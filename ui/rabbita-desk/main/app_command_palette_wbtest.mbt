@@ -1,7 +1,7 @@
 ///|
 test "desk command palette exposes primary modes and Wiki tabs" {
   let titles = palette_commands_for_mode(Desk).map(command => command.0)
-  assert_eq(titles.length(), 9)
+  assert_eq(titles.length(), 12)
   assert_true(titles.contains("Open Packs"))
   assert_true(titles.contains("Open Desk"))
   assert_true(titles.contains("Open Wiki"))
@@ -11,6 +11,9 @@ test "desk command palette exposes primary modes and Wiki tabs" {
   assert_true(titles.contains("Open Runs"))
   assert_true(titles.contains("Open Review"))
   assert_true(titles.contains("Open Publish"))
+  assert_true(titles.contains("Search everything"))
+  assert_true(titles.contains("Open synthesis board"))
+  assert_true(titles.contains("Export Work Package"))
   assert_false(titles.contains("Create Inbox Note"))
   assert_false(titles.contains("Import URL"))
   assert_false(titles.contains("Submit Request"))
@@ -21,7 +24,7 @@ test "desk command palette exposes primary modes and Wiki tabs" {
 ///|
 test "wiki command palette exposes its tabs without runtime controls" {
   let titles = palette_commands_for_mode(MoonWiki).map(command => command.0)
-  assert_eq(titles.length(), 13)
+  assert_eq(titles.length(), 16)
   assert_true(titles.contains("Open Desk"))
   assert_true(titles.contains("Open Wiki"))
   assert_true(titles.contains("Open Pages"))
@@ -31,6 +34,9 @@ test "wiki command palette exposes its tabs without runtime controls" {
   assert_true(titles.contains("Open Review"))
   assert_true(titles.contains("Open Settings"))
   assert_true(titles.contains("Open Flow"))
+  assert_true(titles.contains("Search everything"))
+  assert_true(titles.contains("Open synthesis board"))
+  assert_true(titles.contains("Export Work Package"))
   assert_false(titles.contains("Submit Request"))
   assert_false(titles.contains("Run Daemon Tick"))
   assert_false(titles.contains("Start Daemon"))
@@ -42,8 +48,9 @@ test "command palette filters titles and details" {
       command.0
     },
   )
-  assert_eq(search_titles.length(), 1)
+  assert_eq(search_titles.length(), 2)
   assert_true(search_titles.contains("Search Books"))
+  assert_true(search_titles.contains("Search everything"))
   let daemon_titles = filtered_palette_commands_for_mode(MoonWiki, "DAEMON").map(command => {
       command.0
     },
@@ -60,15 +67,16 @@ test "command palette filters titles and details" {
   let code_titles = filtered_palette_commands_for_mode(Desk, "code").map(command => {
     command.0
   })
-  assert_eq(code_titles.length(), 1)
+  assert_eq(code_titles.length(), 2)
   assert_true(code_titles.contains("Open Code"))
-  assert_eq(filtered_palette_commands_for_mode(Desk, "  ").length(), 9)
+  assert_true(code_titles.contains("Search everything"))
+  assert_eq(filtered_palette_commands_for_mode(Desk, "  ").length(), 12)
 }
 
 ///|
 test "Pack Home command palette keeps normal work ahead of internals" {
   let titles = palette_commands_for_mode(PackHome).map(command => command.0)
-  assert_eq(titles.length(), 9)
+  assert_eq(titles.length(), 12)
   assert_true(titles.contains("Open Packs"))
   assert_true(titles.contains("Open Flow"))
   assert_true(titles.contains("Open Desk"))
@@ -77,7 +85,7 @@ test "Pack Home command palette keeps normal work ahead of internals" {
 ///|
 test "MoonFlow palette keeps orchestration separate from editing" {
   let titles = palette_commands_for_mode(MoonFlow).map(command => command.0)
-  assert_eq(titles.length(), 10)
+  assert_eq(titles.length(), 13)
   assert_true(titles.contains("Refresh Flow"))
   assert_true(titles.contains("Open Wiki"))
   assert_true(titles.contains("Open Code"))

@@ -1,0 +1,456 @@
+.mooncode-developer-tools {
+  width: min(100%, var(--mooncode-chat-column, 760px));
+  margin: 0 auto 12px;
+  border: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+  border-radius: 10px;
+  background: var(--mooncode-panel, #fff);
+  overflow: clip;
+}
+
+.mooncode-developer-tools-summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 14px;
+  color: var(--mooncode-ink, #0f172a);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.mooncode-developer-tools-summary-note {
+  color: var(--mooncode-subtle, #64748b);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.mooncode-developer-tools-body {
+  border-top: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+}
+
+.mooncode-developer-tool-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px;
+  background: var(--mooncode-field, #f8fafc);
+  border-bottom: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+}
+
+.mooncode-developer-tool-tab,
+.mooncode-developer-browser-button,
+.mooncode-developer-browser-external,
+.mooncode-developer-browser-go,
+.mooncode-developer-terminal-submit {
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--mooncode-muted, #475569);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.mooncode-developer-tool-tab {
+  min-width: 86px;
+  padding: 0 12px;
+}
+
+.mooncode-developer-tool-tab.active {
+  border-color: var(--mooncode-line, rgba(15, 23, 42, 0.12));
+  background: var(--mooncode-panel, #fff);
+  color: var(--mooncode-ink, #0f172a);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.mooncode-developer-tool-panel {
+  display: none;
+}
+
+.mooncode-developer-tool-panel.active {
+  display: block;
+}
+
+.mooncode-developer-tool-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px 10px;
+}
+
+.mooncode-developer-tool-heading h3,
+.mooncode-developer-tool-heading p {
+  margin: 0;
+}
+
+.mooncode-developer-tool-heading h3 {
+  color: var(--mooncode-ink, #0f172a);
+  font-size: 13px;
+}
+
+.mooncode-developer-tool-heading p,
+.mooncode-developer-tool-footnote {
+  margin-top: 4px;
+  color: var(--mooncode-subtle, #64748b);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.mooncode-developer-tool-badge,
+.mooncode-developer-browser-isolation {
+  flex: none;
+  padding: 3px 7px;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--mooncode-accent-hover, #1d4ed8);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.mooncode-developer-terminal-output {
+  max-height: 310px;
+  overflow: auto;
+  margin: 0 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  background: #0b1020;
+  color: #dbeafe;
+  font: 12px/1.55 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+.mooncode-developer-terminal-empty {
+  margin: 0;
+  padding: 18px;
+  color: #94a3b8;
+}
+
+.mooncode-developer-terminal-entry {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.mooncode-developer-terminal-entry:last-child {
+  border-bottom: 0;
+}
+
+.mooncode-developer-terminal-command {
+  display: flex;
+  gap: 9px;
+  color: #f8fafc;
+}
+
+.mooncode-developer-terminal-prompt {
+  flex: none;
+  color: #60a5fa;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+.mooncode-developer-terminal-result {
+  margin: 8px 0 0 19px;
+  overflow: visible;
+  color: #cbd5e1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mooncode-developer-terminal-exit {
+  display: block;
+  margin: 7px 0 0 19px;
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.mooncode-developer-terminal-exit.passed,
+.mooncode-developer-terminal-exit.done,
+.mooncode-developer-terminal-exit.recorded {
+  color: #86efac;
+}
+
+.mooncode-developer-terminal-request {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 14px 0;
+  padding: 5px 5px 5px 11px;
+  border: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+  border-radius: 8px;
+  background: var(--mooncode-field, #f8fafc);
+}
+
+.mooncode-developer-terminal-input,
+.mooncode-developer-browser-address {
+  min-width: 0;
+  min-height: 34px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--mooncode-ink, #0f172a);
+  font: 12px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+.mooncode-developer-terminal-submit {
+  padding: 0 11px;
+  background: var(--mooncode-primary, #2563eb);
+  color: #fff;
+}
+
+.mooncode-developer-browser-go {
+  min-width: 38px;
+  padding: 0 9px;
+  background: var(--mooncode-primary, #2563eb);
+  color: #fff;
+}
+
+.mooncode-developer-tool-footnote {
+  margin: 8px 16px 14px;
+}
+
+.mooncode-developer-browser-toolbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+}
+
+.mooncode-developer-browser-navigation {
+  display: flex;
+  gap: 2px;
+}
+
+.mooncode-developer-browser-button {
+  width: 36px;
+  padding: 0;
+  font-size: 17px;
+}
+
+.mooncode-developer-browser-button:hover,
+.mooncode-developer-browser-external:hover {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--mooncode-ink, #0f172a);
+}
+
+.mooncode-developer-browser-button:disabled {
+  cursor: default;
+  opacity: 0.32;
+}
+
+.mooncode-developer-browser-address-form {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px;
+  border: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+  border-radius: 8px;
+  background: var(--mooncode-field, #f8fafc);
+}
+
+.mooncode-developer-browser-address {
+  width: 100%;
+}
+
+.mooncode-developer-browser-address[aria-invalid="true"] {
+  color: #b91c1c;
+}
+
+.mooncode-developer-browser-external {
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.mooncode-developer-browser-stage {
+  min-height: 360px;
+  display: grid;
+  place-items: stretch;
+  padding: 10px;
+  background: #e2e8f0;
+}
+
+.mooncode-developer-browser-frame {
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.mooncode-developer-browser-statusbar {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 12px;
+  border-top: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+  color: var(--mooncode-subtle, #64748b);
+  font-size: 10px;
+}
+
+.mooncode-developer-browser-statusbar
+  [data-testid="mooncode-developer-browser-prepare-evidence"] {
+  width: auto;
+  min-width: max-content;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.mooncode-developer-browser-evidence {
+  display: grid;
+  gap: 8px;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+  color: var(--mooncode-subtle, #64748b);
+  font-size: 11px;
+}
+
+.mooncode-developer-browser-evidence[data-evidence-state="persisted"]
+  > [role="status"] {
+  color: #166534;
+}
+
+.mooncode-developer-browser-evidence[data-evidence-state="failed"]
+  > [role="status"] {
+  color: #b91c1c;
+}
+
+.mooncode-developer-browser-evidence details {
+  border: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.mooncode-developer-browser-evidence summary {
+  cursor: pointer;
+  padding: 8px 10px;
+  color: var(--mooncode-ink, #0f172a);
+  font-weight: 650;
+}
+
+.mooncode-developer-browser-diagnostics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 10px 10px;
+}
+
+.mooncode-developer-browser-diagnostics-grid section {
+  min-width: 0;
+}
+
+.mooncode-developer-browser-diagnostics-grid pre {
+  max-height: 120px;
+  margin: 5px 0 0;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+.mooncode-compare-form,
+.mooncode-compare-form label,
+.mooncode-compare-field {
+  display: grid;
+  gap: 8px;
+}
+
+.mooncode-compare-form {
+  padding: 14px;
+}
+
+.mooncode-compare-form textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.mooncode-compare-branches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mooncode-compare-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+
+.mooncode-compare-run-heading,
+.mooncode-compare-refresh {
+  grid-column: 1 / -1;
+}
+
+.mooncode-compare-run-heading {
+  display: grid;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+
+.mooncode-compare-run-heading small {
+  color: var(--mooncode-subtle, #64748b);
+}
+
+.mooncode-compare-result {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--mooncode-line, rgba(15, 23, 42, 0.12));
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.mooncode-compare-result small {
+  overflow-wrap: anywhere;
+  color: var(--mooncode-subtle, #64748b);
+}
+
+.mooncode-developer-tool-tab:focus-visible,
+.mooncode-developer-browser-button:focus-visible,
+.mooncode-developer-browser-external:focus-visible,
+.mooncode-developer-terminal-submit:focus-visible,
+.mooncode-developer-terminal-input:focus-visible,
+.mooncode-developer-browser-address:focus-visible,
+.mooncode-developer-tools-summary:focus-visible {
+  outline: 3px solid var(--mooncode-focus, rgba(37, 99, 235, 0.18));
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .mooncode-compare-branches {
+    grid-template-columns: 1fr;
+  }
+  .mooncode-compare-results {
+    grid-template-columns: 1fr;
+  }
+  .mooncode-developer-browser-toolbar {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .mooncode-developer-browser-external {
+    grid-column: 1 / -1;
+  }
+
+  .mooncode-developer-browser-statusbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mooncode-developer-browser-diagnostics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mooncode-developer-tools *,
+  .mooncode-developer-tools *::before,
+  .mooncode-developer-tools *::after {
+    scroll-behavior: auto;
+    transition: none;
+  }
+}

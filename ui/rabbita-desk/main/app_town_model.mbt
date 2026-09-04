@@ -7,7 +7,16 @@ struct TownMessage {
 struct WikiChatEntry {
   role : String
   content : String
-} derive(Eq, Debug)
+} derive(FromJson, ToJson, Eq, Debug)
+
+///|
+struct WikiChatContextItem {
+  id : String
+  kind : String
+  label : String
+  value : String
+  detail : String
+} derive(FromJson, ToJson, Eq, Debug)
 
 ///|
 struct WikiChatSubmission {
@@ -16,6 +25,9 @@ struct WikiChatSubmission {
   message : String
   queued : Bool
   owner : String
+  automation_suggestion : Json?
+  preferences_used : Int
+  preference_ids : Array[String]
 } derive(FromJson, Eq, Debug)
 
 ///|

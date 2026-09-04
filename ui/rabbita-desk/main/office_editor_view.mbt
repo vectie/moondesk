@@ -219,6 +219,7 @@ fn render_office_editor(
                 )
               None => @html.nothing
             },
+            render_office_change_review(dispatch, state),
             match state.conflict_baseline {
               Some(_) =>
                 div(class="office-conflict", [
@@ -323,6 +324,11 @@ fn render_office_supported_preview(
                             run,
                             selected=index == selected,
                           ),
+                          attrs=@html.Attrs::build()
+                            .data_set("document-anchor", index.to_string())
+                            .data_set("anchor-kind", "text")
+                            .data_set("anchor-section", run.section)
+                            .data_set("anchor-reference", run.reference),
                           if run.text == "" {
                             " "
                           } else {
@@ -360,6 +366,11 @@ fn render_office_supported_preview(
                     } else {
                       "office-preview-cell-card"
                     },
+                    attrs=@html.Attrs::build()
+                      .data_set("document-anchor", index.to_string())
+                      .data_set("anchor-kind", "cell")
+                      .data_set("anchor-section", cell.section)
+                      .data_set("anchor-reference", cell.reference),
                     [
                       strong(cell.reference),
                       span(
@@ -389,7 +400,11 @@ fn render_office_supported_preview(
                     } else {
                       "office-preview-slide-object"
                     },
-                    attrs=office_pptx_shape_attrs(shape, items),
+                    attrs=office_pptx_shape_attrs(shape, items)
+                      .data_set("document-anchor", index.to_string())
+                      .data_set("anchor-kind", "shape")
+                      .data_set("anchor-section", shape.section)
+                      .data_set("anchor-reference", shape.reference),
                     if shape.text == "" {
                       "Empty text object"
                     } else {

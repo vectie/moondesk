@@ -579,6 +579,7 @@ fn render_mooncode_center(
       ]),
       render_mooncode_runtime_setup(dispatch, model),
       render_mooncode_workspace_editors(dispatch, model),
+      render_mooncode_developer_tools(model),
       section(
         class=if empty {
           "mooncode-chat-surface empty"
@@ -622,6 +623,7 @@ fn render_mooncode_center(
               ),
             ]),
             div(class="composer-footer", [
+              render_mooncode_composer_controls(dispatch, model),
               button(
                 class="primary-button",
                 attrs=@html.Attrs::build()

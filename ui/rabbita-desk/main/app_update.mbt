@@ -83,13 +83,14 @@ fn update(
     SubmittedRequest(_) => update_app_results(dispatch, msg, model)
     SubmittedWikiChat(_, _) => update_wiki_chat(dispatch, msg, model)
     LoadedWikiChatEvents(_, _, _) => update_wiki_chat(dispatch, msg, model)
-    ToggleWikiChatFilePicker => update_wiki_chat(dispatch, msg, model)
     SetWikiChatPrompt(_) => update_wiki_chat(dispatch, msg, model)
     SetWikiChatFileQuery(_) => update_wiki_chat(dispatch, msg, model)
     RunWikiChatFileSearch(_, _) => update_wiki_chat(dispatch, msg, model)
     LoadedWikiChatFileSearch(_, _) => update_wiki_chat(dispatch, msg, model)
     AttachWikiChatFile(_) => update_wiki_chat(dispatch, msg, model)
     WikiChatDropPath(_) => update_wiki_chat(dispatch, msg, model)
+    WorkspaceFeature(_, _, _, _, _) =>
+      update_workspace_features(dispatch, msg, model)
     CreatedStandingGoal(_) => update_app_results(dispatch, msg, model)
     DecidedReviewItem(_) => update_app_results(dispatch, msg, model)
     CreatedBookFromPattern(_) => update_app_results(dispatch, msg, model)
@@ -194,6 +195,9 @@ fn update(
     ConfirmDeleteMoonCodeSession(_) =>
       update_mooncode_actions(dispatch, msg, model)
     SetMoonCodePrompt(_) => update_mooncode_actions(dispatch, msg, model)
+    SetMoonCodeModel(_) => update_mooncode_actions(dispatch, msg, model)
+    SetMoonCodeReasoningEffort(_) =>
+      update_mooncode_actions(dispatch, msg, model)
     SendMoonCodeMessage(_) => update_mooncode_actions(dispatch, msg, model)
     CopyMoonCodeText(_, _) => update_mooncode_actions(dispatch, msg, model)
     ClearMoonCodeCopy(_) => update_mooncode_actions(dispatch, msg, model)
@@ -325,7 +329,10 @@ fn update(
     RequestBrowserHostControl(_) =>
       update_workspace_surface_actions(dispatch, msg, model)
   }
-  (command, sync_workspace_editor_context(next))
+  (
+    @rabbita.batch([command, workspace_features_bridge_cmd(dispatch)]),
+    sync_workspace_editor_context(next),
+  )
 }
 
 ///|
@@ -353,7 +360,6 @@ test {
   ignore(fetch_moonclaw_models_cmd)
   ignore(fetch_mooncode_sessions_cmd)
   ignore(fetch_book_patterns_cmd)
-  ignore(fetch_search_cmd)
   ignore(save_inbox_cmd)
   ignore(save_markdown_cmd)
   ignore(import_url_cmd)

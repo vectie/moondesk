@@ -1,4 +1,7 @@
 ///|
+const BootstrapRetryDelayMillis : Int = 5000
+
+///|
 fn bootstrap_action(
   dispatch : Dispatch[Msg],
   model : Model,

@@ -49,6 +49,8 @@ type CollaborationSurfaceProjection
 
 type CollaborationWorkspaceRef derive(@json.FromJson)
 
+type ComposerTrigger
+
 type CreatedWorkspace derive(@json.FromJson)
 
 type DaemonControlResult derive(@json.FromJson)
@@ -291,7 +293,11 @@ type TownMessage derive(@json.FromJson)
 
 type TownProgress derive(@json.FromJson)
 
-type WikiChatEntry derive(Eq, @debug.Debug)
+type WikiChatContextItem derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type WikiChatEntry derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type WikiChatStreamEnvelope derive(@json.FromJson)
 
 type WikiChatSubmission derive(Eq, @debug.Debug, @json.FromJson)
 

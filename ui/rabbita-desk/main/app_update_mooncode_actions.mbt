@@ -8,6 +8,8 @@ fn update_mooncode_actions(
     SelectMoonCodeSession(_)
     | NewMoonCodeSession
     | SetMoonCodePrompt(_)
+    | SetMoonCodeModel(_)
+    | SetMoonCodeReasoningEffort(_)
     | SendMoonCodeMessage(_)
     | RetryMoonCodeTurn(_, _)
     | CancelMoonCodeWork(_, _)

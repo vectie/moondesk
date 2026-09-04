@@ -972,14 +972,24 @@ fn start_markdown_edit_action(model : Model) -> (@rabbita.Cmd, Model) {
 fn search_now_action(
   dispatch : Dispatch[Msg],
   model : Model,
+  mode? : String = "",
+  scope_workspace? : Bool = false,
 ) -> (@rabbita.Cmd, Model) {
   let query = model.pages_search.query.trim().to_owned()
   let pages_search = model.pages_search.begin_search()
   if query == "" {
     (@rabbita.none, { ..model, pages_search, })
   } else {
+    let workspace_id = if scope_workspace {
+      model.selected_workspace_id
+    } else {
+      ""
+    }
     (
-      sync_activity_batch(Search, fetch_search_cmd(dispatch, query)),
+      sync_activity_batch(
+        Search,
+        fetch_search_cmd(dispatch, query, workspace_id~, mode~),
+      ),
       { ..model, activity: Search, command_open: false, pages_search },
     )
   }

@@ -16,6 +16,7 @@ fn create_mooncode_session_cmd(
     "message": prompt,
     "client_turn_id": client_turn_id,
     "model": mooncode_selected_runtime_model(model, None),
+    "planner_reasoning_effort": model.mooncode_reasoning_effort,
     "web_search": model.mooncode_web_search,
     "context_path": mooncode_context_path(model),
   }
@@ -75,6 +76,7 @@ fn mooncode_session_command_cmd(
     "message": message,
     "client_turn_id": client_turn_id,
     "model": selected_model,
+    "planner_reasoning_effort": model.mooncode_reasoning_effort,
     "web_search": model.mooncode_web_search,
     "context_path": target_path,
     "force_preflight": force_preflight,
@@ -185,7 +187,13 @@ fn mooncode_selected_runtime_model(
     Some(session) => session.model
     None => ""
   }
-  trimmed_or(model.mooncode_model, session_model)
+  let selected = trimmed_or(model.mooncode_model, session_model)
+  if selected.has_prefix("moongate/") &&
+    selected.length() > "moongate/".length() {
+    selected
+  } else {
+    ""
+  }
 }
 
 ///|

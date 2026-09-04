@@ -61,6 +61,32 @@ fn update_mooncode_session_actions(
         },
       )
     }
+    SetMoonCodeModel(value) =>
+      if model.mooncode_models.contains(value) {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_model: value,
+            mooncode_composer_status: "Model set to \{value}",
+          },
+        )
+      } else {
+        (@rabbita.none, model)
+      }
+    SetMoonCodeReasoningEffort(value) =>
+      if mooncode_reasoning_effort_is_supported(value) {
+        (
+          @rabbita.none,
+          {
+            ..model,
+            mooncode_reasoning_effort: value,
+            mooncode_composer_status: mooncode_reasoning_effort_status(value),
+          },
+        )
+      } else {
+        (@rabbita.none, model)
+      }
     SendMoonCodeMessage(prompt) =>
       mooncode_send_composer(dispatch, { ..model, mooncode_prompt: prompt })
     RetryMoonCodeTurn(session_id, prompt) =>

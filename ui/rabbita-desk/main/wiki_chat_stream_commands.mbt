@@ -129,7 +129,9 @@ fn poll_wiki_chat_stream_cmd(
           LoadedWikiChatEvents(task_id, envelope.cursor, Ok(envelope.events)),
         )
       } else {
-        dispatch(LoadedWikiChatEvents(task_id, envelope.cursor, Err(envelope.error)))
+        dispatch(
+          LoadedWikiChatEvents(task_id, envelope.cursor, Err(envelope.error)),
+        )
       }
     },
     fn() { browser_take_wiki_chat_events(task_id) },

@@ -21,6 +21,19 @@ fn upsert_moonflow_operator_actions(
 }
 
 ///|
+fn moonflow_unavailable_composition_message(
+  composition : MoonFlowComposition,
+) -> String? {
+  guard composition.validation_status == Some("unavailable") else {
+    return None
+  }
+  match composition.validation_issues {
+    Some(issues) if !issues.is_empty() => Some(issues[0])
+    _ => Some("This MoonBook has no executable Work graph yet")
+  }
+}
+
+///|
 fn update_workspace_results(
   dispatch : Dispatch[Msg],
   msg : Msg,
@@ -116,7 +129,7 @@ fn update_workspace_results(
     LoadedWorkspaceMetadata(Err(error)) =>
       (
         if model.workspace_root_path == "" {
-          @rabbita.delay(dispatch(RetryBootstrap), 350)
+          @rabbita.delay(dispatch(RetryBootstrap), BootstrapRetryDelayMillis)
         } else {
           @rabbita.none
         },
@@ -533,19 +546,32 @@ fn update_workspace_results(
       )
     }
     LoadedMoonFlowComposition(Ok(composition)) =>
-      (
-        @rabbita.none,
-        {
-          ..model,
-          moonflow_composition: Some(composition),
-          flow_canvas: flow_canvas_apply_composition_positions(
-            model.flow_canvas,
-            composition,
-          ),
-          moonflow_composition_status: "Composition loaded",
-          moonflow_composition_saving: false,
-        },
-      )
+      match moonflow_unavailable_composition_message(composition) {
+        Some(message) =>
+          (
+            @rabbita.none,
+            {
+              ..model,
+              moonflow_composition: None,
+              moonflow_composition_status: message,
+              moonflow_composition_saving: false,
+            },
+          )
+        None =>
+          (
+            @rabbita.none,
+            {
+              ..model,
+              moonflow_composition: Some(composition),
+              flow_canvas: flow_canvas_apply_composition_positions(
+                model.flow_canvas,
+                composition,
+              ),
+              moonflow_composition_status: "Composition loaded",
+              moonflow_composition_saving: false,
+            },
+          )
+      }
     LoadedMoonFlowComposition(Err(error)) =>
       (
         @rabbita.none,

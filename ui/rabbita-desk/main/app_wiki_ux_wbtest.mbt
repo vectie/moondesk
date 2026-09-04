@@ -146,6 +146,8 @@ test "Wiki is a quiet chat and Office viewer without operator navigation" {
     ),
   )
   assert_true(markup.contains("aria-label=\"Document chat\""))
+  assert_true(markup.contains("data-testid=\"wiki-focus-workspace\""))
+  assert_true(markup.contains("data-testid=\"wiki-find\""))
   assert_true(markup.contains("data-testid=\"wiki-chat-input\""))
   assert_true(markup.contains("aria-label=\"Document viewer\""))
   assert_true(markup.contains("data-testid=\"office-docx-preview\""))
@@ -261,6 +263,32 @@ test "Wiki chat attaches existing files and projects MoonClaw deltas" {
 }
 
 ///|
+#warnings("-alert_unstable")
+test "Wiki chat keeps typed sources artifacts and automation separate from answers" {
+  let model = wiki_focus_test_model([])
+  let source : Json = {
+    "contract": "moonclaw-task-stream.v2",
+    "kind": "source_ref",
+    "workspace_path": "documents/forecast.xlsx",
+    "sheet": "Revenue",
+    "cell_range": "B12:D12",
+    "label": "Revenue assumption",
+  }
+  let (with_source, _) = wiki_chat_apply_stream_event(model, source)
+  let (deduplicated, _) = wiki_chat_apply_stream_event(with_source, source)
+  assert_eq(deduplicated.wiki_chat_entries.length(), 1)
+  assert_eq(deduplicated.wiki_chat_entries[0].role, "source_ref")
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      wiki_chat_entry_view(deduplicated.wiki_chat_entries[0]),
+    ),
+  )
+  assert_true(markup.contains("wiki-chat-fragment"))
+  assert_true(markup.contains("data-kind=\"source_ref\""))
+  assert_true(markup.contains("Revenue assumption"))
+}
+
+///|
 test "Wiki chat file mentions use a shared trigger grammar" {
   let trigger = ComposerTrigger::parse("Review the totals in @forecast")
   match trigger {
@@ -372,6 +400,9 @@ test "Wiki chat keeps a general task conversation without exposing its id" {
         message: "working",
         queued: false,
         owner: "moonclaw-general-agent",
+        automation_suggestion: None,
+        preferences_used: 0,
+        preference_ids: [],
       }),
     ),
     model,
@@ -387,6 +418,81 @@ test "Wiki chat keeps a general task conversation without exposing its id" {
   )
   assert_true(markup.contains("Validate this presentation."))
   assert_false(markup.contains("general-task-2"))
+}
+
+///|
+#warnings("-alert_unstable")
+test "Wiki chat keeps removable typed context visible beside the composer" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = wiki_focus_test_model([])
+  let context : Json = {
+    "id": "selection:documents/sample.docx:2",
+    "kind": "selection",
+    "label": "sample.docx · paragraph 2",
+    "value": "documents/sample.docx",
+    "detail": "Selected evidence",
+  }
+  let (_, with_context) = update_workspace_features(
+    dispatch,
+    WorkspaceFeature(
+      "add-context",
+      context.stringify(),
+      "Ask about this selection.",
+      "draft",
+      "",
+    ),
+    { ..model, selected_path: "documents/sample.docx" },
+  )
+  assert_eq(with_context.wiki_chat_context_items.length(), 1)
+  assert_eq(
+    json_field_json_array_items(
+      wiki_chat_submission_body(with_context),
+      "context_items",
+    ).length(),
+    1,
+  )
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_wiki_focus_workspace(dispatch, with_context)),
+  )
+  assert_true(markup.contains("sample.docx · paragraph 2"))
+  assert_true(markup.contains("Remove context sample.docx · paragraph 2"))
+  let (_, removed) = update_workspace_features(
+    dispatch,
+    WorkspaceFeature(
+      "remove-context", "selection:documents/sample.docx:2", "", "", "",
+    ),
+    with_context,
+  )
+  assert_true(removed.wiki_chat_context_items.is_empty())
+}
+
+///|
+#warnings("-alert_unstable")
+test "Wiki chat reports approved preferences used without exposing prompt internals" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = { ..wiki_focus_test_model([]), request_prompt: "Summarize this." }
+  let (_, next) = update_wiki_chat(
+    dispatch,
+    SubmittedWikiChat(
+      "Summarize this.",
+      Ok({
+        task_id: "general-task-3",
+        status: "generating",
+        message: "working",
+        queued: false,
+        owner: "moonclaw-general-agent",
+        automation_suggestion: None,
+        preferences_used: 2,
+        preference_ids: ["pref-tone", "pref-term"],
+      }),
+    ),
+    model,
+  )
+  assert_true(
+    next.wiki_chat_entries.any(entry => {
+      entry.role == "preference_usage" && entry.content.contains("\"count\":2")
+    }),
+  )
 }
 
 ///|

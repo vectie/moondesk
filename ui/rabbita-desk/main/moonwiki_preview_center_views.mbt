@@ -119,164 +119,186 @@ fn render_preview_body(
         }
       }
     Some(preview) =>
-      match preview.renderer {
-        Html =>
-          div(
-            class="site-preview embedded-browser",
-            attrs=@html.Attrs::build()
-              .data_set("testid", "browser-preview-host")
-              .data_set("viewport", "desktop")
-              .data_set("workspace-id", model.selected_workspace_id)
-              .data_set("source-path", model.selected_path),
-            [
-              div(class="site-toolbar browser-toolbar", [
-                div(class="browser-location", [
-                  span(class="browser-security-badge", "Isolated"),
-                  span(class="quiet-path", model.selected_path),
-                ]),
-                div(class="browser-toolbar-actions", [
-                  button(
-                    class="secondary-button browser-tool-button",
-                    attrs=@html.Attrs::build()
-                      .data_set("browser-viewport", "desktop")
-                      .aria_pressed("true"),
-                    on_click=dispatch(SetBrowserPreviewViewport("desktop")),
-                    "Desktop",
-                  ),
-                  button(
-                    class="secondary-button browser-tool-button",
-                    attrs=@html.Attrs::build()
-                      .data_set("browser-viewport", "tablet")
-                      .aria_pressed("false"),
-                    on_click=dispatch(SetBrowserPreviewViewport("tablet")),
-                    "Tablet",
-                  ),
-                  button(
-                    class="secondary-button browser-tool-button",
-                    attrs=@html.Attrs::build()
-                      .data_set("browser-viewport", "mobile")
-                      .aria_pressed("false"),
-                    on_click=dispatch(SetBrowserPreviewViewport("mobile")),
-                    "Mobile",
-                  ),
-                  button(
-                    class="secondary-button browser-tool-button",
-                    on_click=dispatch(ReloadBrowserPreview),
-                    "Reload",
-                  ),
-                ]),
-              ]),
-              div(class="browser-frame-stage", [
-                iframe(
-                  class="site-iframe",
-                  src=html_preview_url(model, model.selected_path),
-                  title=preview.title,
-                  sandbox="allow-scripts",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "browser-preview-frame",
-                  ),
-                ),
-              ]),
-              div(class="browser-observation-bar", [
-                span(
-                  class="browser-preview-status",
-                  attrs=@html.Attrs::build().data_set(
-                    "testid", "browser-preview-status",
-                  ),
-                  "Loading isolated preview",
-                ),
-                div(class="browser-observation-actions", [
-                  button(
-                    class="secondary-button",
-                    attrs=@html.Attrs::build().data_set(
-                      "testid", "browser-prepare-evidence",
-                    ),
-                    on_click=dispatch(CaptureBrowserPreviewEvidence),
-                    "Prepare evidence",
-                  ),
-                  button(
-                    class="primary-button",
-                    on_click=dispatch(FixBrowserPreviewInMoonCode),
-                    "Fix in MoonCode",
-                  ),
-                ]),
-              ]),
-              div(
-                class="browser-operation-banner",
-                attrs=@html.Attrs::build()
-                  .data_set("testid", "browser-operation-banner")
-                  .data_set("host-attached", "false")
-                  .data_set("operation-state", "user-control"),
-                [
-                  div(class="browser-operation-copy", [
-                    strong("User control"),
-                    span(
-                      attrs=@html.Attrs::build().data_set(
-                        "testid", "browser-operation-status",
-                      ),
-                      "No agent operation is attached",
-                    ),
-                  ]),
-                  div(class="browser-operation-controls", [
-                    browser_host_control_button(
-                      dispatch, "pause", "Pause agent",
-                    ),
-                    browser_host_control_button(dispatch, "stop", "Stop agent"),
-                    browser_host_control_button(
-                      dispatch, "takeover", "Take over",
-                    ),
-                  ]),
-                ],
-              ),
-              details(class="browser-diagnostics", [
-                summary("Diagnostics"),
-                div(class="browser-diagnostics-grid", [
-                  browser_diagnostic_panel(
-                    "Console", "browser-console-output", "No console output observed",
-                  ),
-                  browser_diagnostic_panel(
-                    "Runtime", "browser-runtime-output", "No runtime errors observed",
-                  ),
-                  browser_diagnostic_panel(
-                    "Network", "browser-network-output", "Local assets only",
-                  ),
-                  browser_diagnostic_panel(
-                    "Accessibility", "browser-accessibility-output", "Prepare evidence to inspect semantics",
-                  ),
-                ]),
-                p(
-                  class="browser-diagnostics-note",
-                  "Prepared observations remain untrusted until a host receipt is accepted and durable evidence persistence succeeds.",
-                ),
-              ]),
-            ],
-          )
-        Image =>
-          div(class="image-preview", [
-            img(
-              src=desk_preview_image_source(preview),
-              alt=preview.title,
-              attrs=desk_preview_image_attrs(preview),
+      if model.selected_path.to_lower().has_suffix(".pdf") {
+        div(class="pdf-preview", [
+          div(class="site-toolbar", [
+            span(class="browser-security-badge", "Workspace PDF"),
+            span(class="quiet-path", model.selected_path),
+          ]),
+          iframe(
+            class="pdf-preview-frame",
+            src=@desk.workspace_raw_url(
+              model.selected_workspace_id,
+              model.selected_path,
             ),
-          ])
-        DirectoryListing =>
-          div(class="markdown-preview", [
-            h1(preview.title),
-            p(class="lead", "Choose an item from the left."),
-          ])
-        Markdown =>
-          section(class="document-preview", render_markdown_document(preview))
-        Text =>
-          section(class="document-preview", [
-            h1(preview.title),
-            p(class="lead", preview.body),
-          ])
-        _ =>
-          div(class="markdown-preview", [
-            h1(preview.title),
-            render_preview_warnings(preview),
-            pre(class="source-block", code(preview.body)),
-          ])
+            title=preview.title,
+            attrs=@html.Attrs::build()
+              .data_set("testid", "pdf-preview-frame")
+              .data_set("source-path", model.selected_path),
+          ),
+        ])
+      } else {
+        match preview.renderer {
+          Html =>
+            div(
+              class="site-preview embedded-browser",
+              attrs=@html.Attrs::build()
+                .data_set("testid", "browser-preview-host")
+                .data_set("viewport", "desktop")
+                .data_set("workspace-id", model.selected_workspace_id)
+                .data_set("source-path", model.selected_path),
+              [
+                div(class="site-toolbar browser-toolbar", [
+                  div(class="browser-location", [
+                    span(class="browser-security-badge", "Isolated"),
+                    span(class="quiet-path", model.selected_path),
+                  ]),
+                  div(class="browser-toolbar-actions", [
+                    button(
+                      class="secondary-button browser-tool-button",
+                      attrs=@html.Attrs::build()
+                        .data_set("browser-viewport", "desktop")
+                        .aria_pressed("true"),
+                      on_click=dispatch(SetBrowserPreviewViewport("desktop")),
+                      "Desktop",
+                    ),
+                    button(
+                      class="secondary-button browser-tool-button",
+                      attrs=@html.Attrs::build()
+                        .data_set("browser-viewport", "tablet")
+                        .aria_pressed("false"),
+                      on_click=dispatch(SetBrowserPreviewViewport("tablet")),
+                      "Tablet",
+                    ),
+                    button(
+                      class="secondary-button browser-tool-button",
+                      attrs=@html.Attrs::build()
+                        .data_set("browser-viewport", "mobile")
+                        .aria_pressed("false"),
+                      on_click=dispatch(SetBrowserPreviewViewport("mobile")),
+                      "Mobile",
+                    ),
+                    button(
+                      class="secondary-button browser-tool-button",
+                      on_click=dispatch(ReloadBrowserPreview),
+                      "Reload",
+                    ),
+                  ]),
+                ]),
+                div(class="browser-frame-stage", [
+                  iframe(
+                    class="site-iframe",
+                    src=html_preview_url(model, model.selected_path),
+                    title=preview.title,
+                    sandbox="allow-scripts",
+                    attrs=@html.Attrs::build().data_set(
+                      "testid", "browser-preview-frame",
+                    ),
+                  ),
+                ]),
+                div(class="browser-observation-bar", [
+                  span(
+                    class="browser-preview-status",
+                    attrs=@html.Attrs::build().data_set(
+                      "testid", "browser-preview-status",
+                    ),
+                    "Loading isolated preview",
+                  ),
+                  div(class="browser-observation-actions", [
+                    button(
+                      class="secondary-button",
+                      attrs=@html.Attrs::build().data_set(
+                        "testid", "browser-prepare-evidence",
+                      ),
+                      on_click=dispatch(CaptureBrowserPreviewEvidence),
+                      "Prepare evidence",
+                    ),
+                    button(
+                      class="primary-button",
+                      on_click=dispatch(FixBrowserPreviewInMoonCode),
+                      "Fix in MoonCode",
+                    ),
+                  ]),
+                ]),
+                div(
+                  class="browser-operation-banner",
+                  attrs=@html.Attrs::build()
+                    .data_set("testid", "browser-operation-banner")
+                    .data_set("host-attached", "false")
+                    .data_set("operation-state", "user-control"),
+                  [
+                    div(class="browser-operation-copy", [
+                      strong("User control"),
+                      span(
+                        attrs=@html.Attrs::build().data_set(
+                          "testid", "browser-operation-status",
+                        ),
+                        "No agent operation is attached",
+                      ),
+                    ]),
+                    div(class="browser-operation-controls", [
+                      browser_host_control_button(
+                        dispatch, "pause", "Pause agent",
+                      ),
+                      browser_host_control_button(
+                        dispatch, "stop", "Stop agent",
+                      ),
+                      browser_host_control_button(
+                        dispatch, "takeover", "Take over",
+                      ),
+                    ]),
+                  ],
+                ),
+                details(class="browser-diagnostics", [
+                  summary("Diagnostics"),
+                  div(class="browser-diagnostics-grid", [
+                    browser_diagnostic_panel(
+                      "Console", "browser-console-output", "No console output observed",
+                    ),
+                    browser_diagnostic_panel(
+                      "Runtime", "browser-runtime-output", "No runtime errors observed",
+                    ),
+                    browser_diagnostic_panel(
+                      "Network", "browser-network-output", "Local assets only",
+                    ),
+                    browser_diagnostic_panel(
+                      "Accessibility", "browser-accessibility-output", "Prepare evidence to inspect semantics",
+                    ),
+                  ]),
+                  p(
+                    class="browser-diagnostics-note",
+                    "Prepared observations remain untrusted until a host receipt is accepted and durable evidence persistence succeeds.",
+                  ),
+                ]),
+              ],
+            )
+          Image =>
+            div(class="image-preview", [
+              img(
+                src=desk_preview_image_source(preview),
+                alt=preview.title,
+                attrs=desk_preview_image_attrs(preview),
+              ),
+            ])
+          DirectoryListing =>
+            div(class="markdown-preview", [
+              h1(preview.title),
+              p(class="lead", "Choose an item from the left."),
+            ])
+          Markdown =>
+            section(class="document-preview", render_markdown_document(preview))
+          Text =>
+            section(class="document-preview", [
+              h1(preview.title),
+              p(class="lead", preview.body),
+            ])
+          _ =>
+            div(class="markdown-preview", [
+              h1(preview.title),
+              render_preview_warnings(preview),
+              pre(class="source-block", code(preview.body)),
+            ])
+        }
       }
   }
 }

@@ -148,6 +148,13 @@ fn render_mooncode_transcript_row(
               "Copy"
             },
           ),
+          button(
+            class="mooncode-inline-action",
+            attrs=@html.Attrs::build()
+              .data_set("mooncode-compare-from", "true")
+              .aria_label("Try another implementation approach from here"),
+            "Try another approach",
+          ),
         ])
       } else {
         @html.nothing

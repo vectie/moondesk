@@ -3,13 +3,16 @@ fn wiki_chat_submission_body(model : Model) -> Json {
   {
     "workspace_id": model.selected_workspace_id,
     "task_id": model.wiki_agent_task_id,
-    "document_path": if office_editor_path_supported(model.selected_path) {
+    "document_path": if wiki_document_path_supported(model.selected_path) {
       model.selected_path
     } else {
       ""
     },
     "file_paths": Json::array(
       model.wiki_chat_file_paths.map(path => Json::string(path)),
+    ),
+    "context_items": Json::array(
+      model.wiki_chat_context_items.map(item => item.to_json()),
     ),
     "message": model.request_prompt.trim().to_owned(),
   }
@@ -41,8 +44,17 @@ fn wiki_chat_file_search_cmd(
   dispatch : Dispatch[Msg],
   generation : Int,
   query : String,
+  workspace_id : String,
 ) -> @rabbita.Cmd {
-  @http.get(@desk.search_url(query) + "&contract=pages-search.v1").expect_json(result => {
+  @http.get(
+    @desk.search_url(query) +
+    "&" +
+    @desk.desktop_api_query([
+      ("contract", "pages-search.v1"),
+      ("workspace", workspace_id),
+      ("mode", "files"),
+    ]),
+  ).expect_json(result => {
     dispatch(
       LoadedWikiChatFileSearch(
         generation,

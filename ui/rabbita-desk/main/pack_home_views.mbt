@@ -378,22 +378,30 @@ fn render_pack_studio() -> @rabbita.Html {
       @html.node("ol", @html.Attrs::build().class("pack-studio-lifecycle"), [
         li([
           strong("1 · Author"),
-          span("Scaffold or adopt the bridge schemas, provider port, and reviewed intake."),
+          span(
+            "Scaffold or adopt the bridge schemas, provider port, and reviewed intake.",
+          ),
           code("moondesk pack create …"),
         ]),
         li([
           strong("2 · Qualify"),
-          span("Inspect source-tree validity, authorities, runtime dependencies, and bridge readiness."),
+          span(
+            "Inspect source-tree validity, authorities, runtime dependencies, and bridge readiness.",
+          ),
           code("moondesk pack inspect …"),
         ]),
         li([
           strong("3 · Activate"),
-          span("Install an immutable version, verify its receipt, and move the active pointer explicitly."),
+          span(
+            "Install an immutable version, verify its receipt, and move the active pointer explicitly.",
+          ),
           code("moondesk pack install …"),
         ]),
         li([
           strong("4 · Operate"),
-          span("MoonTown reconciles read-only projections and routes emergent candidates to review."),
+          span(
+            "MoonTown reconciles read-only projections and routes emergent candidates to review.",
+          ),
           code("draft → active → projecting"),
         ]),
       ]),

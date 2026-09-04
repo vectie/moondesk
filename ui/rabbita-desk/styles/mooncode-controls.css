@@ -1,0 +1,85 @@
+.mooncode-composer-controls {
+  min-width: 0;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.mooncode-composer-control-sync {
+  display: none;
+}
+
+.mooncode-composer-control {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--mooncode-muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.mooncode-composer-control-label {
+  white-space: nowrap;
+}
+
+.mooncode-composer-select {
+  min-width: 0;
+  max-width: 210px;
+  height: 30px;
+  padding: 0 25px 0 9px;
+  border: 1px solid var(--mooncode-line);
+  border-radius: 8px;
+  background: var(--mooncode-panel);
+  color: var(--mooncode-ink);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.mooncode-model-control .mooncode-composer-select {
+  max-width: 260px;
+}
+
+.mooncode-composer-select:hover:not(:disabled) {
+  border-color: var(--mooncode-line-strong);
+}
+
+.mooncode-composer-select:focus-visible {
+  border-color: var(--mooncode-primary);
+  outline: 3px solid var(--mooncode-focus);
+  outline-offset: 1px;
+}
+
+.mooncode-composer-select:disabled {
+  color: var(--mooncode-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+  .mooncode-composer .composer-footer {
+    flex-wrap: wrap;
+  }
+
+  .mooncode-composer-controls {
+    width: 100%;
+  }
+
+  .mooncode-composer-control {
+    flex: 1 1 140px;
+  }
+
+  .mooncode-composer-select,
+  .mooncode-model-control .mooncode-composer-select {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mooncode-composer-select {
+    transition: none;
+  }
+}
