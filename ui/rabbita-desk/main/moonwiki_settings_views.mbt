@@ -36,6 +36,7 @@ fn render_settings_pane(
           ),
         ]),
       ]),
+      render_work_agenda(dispatch, model),
       render_saved_views_panel(dispatch, model),
       details(class="wiki-disclosure", [
         summary(class="wiki-disclosure-summary", "Calendar and notifications"),

@@ -452,6 +452,118 @@ body {
   background: var(--bg-raised);
 }
 
+.work-agenda {
+  display: grid;
+  gap: 12px;
+}
+
+.work-agenda-heading,
+.work-agenda-results > header,
+.work-agenda-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.work-agenda-heading h3,
+.work-agenda-intro,
+.work-agenda-results > header strong {
+  margin: 0;
+}
+
+.work-agenda-intro,
+.work-agenda-empty small,
+.work-agenda-row small,
+.work-agenda-result small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.work-agenda-list,
+.work-agenda-results,
+.work-agenda-results > div {
+  display: grid;
+  gap: 7px;
+}
+
+.work-agenda-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.work-agenda-row > div,
+.work-agenda-result > div,
+.work-agenda-empty {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.work-agenda-row strong,
+.work-agenda-row small,
+.work-agenda-result strong,
+.work-agenda-result small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.work-agenda-row > span:last-child,
+.work-agenda-result > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.work-agenda-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--subtle);
+}
+
+.work-agenda-row.due .work-agenda-dot {
+  background: var(--yellow);
+}
+
+.work-agenda-row.upcoming .work-agenda-dot {
+  background: var(--accent);
+}
+
+.work-agenda-row.paused {
+  opacity: 0.65;
+}
+
+.work-agenda-results {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.work-agenda-result {
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.work-agenda-result:hover {
+  border-color: var(--line);
+  background: var(--bg);
+}
+
 .pack-studio-section {
   width: min(1180px, 100%);
   margin-inline: auto;

@@ -305,6 +305,10 @@ type WikiChatStreamEnvelope derive(@json.FromJson)
 
 type WikiChatSubmission derive(Eq, @debug.Debug, @json.FromJson)
 
+type WorkAgendaItem
+
+type WorkAgendaState derive(Eq, @debug.Debug)
+
 type WorkspaceMetadata derive(@json.FromJson)
 
 type WorkspaceMode derive(Eq)
