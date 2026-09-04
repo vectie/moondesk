@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "test:i18n": "node --test moonsuite-i18n.test.mjs",
-    "test:workspace-features": "node --test workspace-features-runtime.test.mjs",
+    "test:workspace-features": "node --test workspace-features-runtime.test.mjs living-artifacts-runtime.test.mjs",
     "test:workspace-performance": "node --test workspace-features-performance.test.mjs",
     "test:mooncode-devtools": "node --test mooncode-developer-tools-runtime.test.mjs",
     "test:bundle": "node --test bundle-split.test.mjs",

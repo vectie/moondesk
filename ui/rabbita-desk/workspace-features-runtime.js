@@ -8,6 +8,9 @@ const serverThreadLoads = new Set()
 const pendingConversationWrites = new Map()
 let pendingConversationWriteTimer = 0
 const chatEnhancementSignatures = new WeakMap()
+let livingArtifactRuntime = null
+let livingArtifactRuntimePromise = null
+let disposeLivingArtifactBridge = null
 const featureState = {
   search_open: false,
   purpose: 'open',
@@ -51,6 +54,10 @@ const featureState = {
   source_subscriptions_loaded_for: '',
   source_subscription_status: '',
   source_subscription_draft: null,
+  living_artifacts: [],
+  living_artifacts_loaded_for: '',
+  living_artifact_status: '',
+  living_artifact_draft: null,
   review_threads: [],
   review_counts: { open: 0, unread: 0, required: 0, pinned: 0 },
   review_participants: [],
@@ -111,6 +118,47 @@ const checkPacks = [
 
 const ReviewPackageMaxConversationEntries = 80
 const ReviewPackageEntryMaxChars = 48_000
+
+function isLivingArtifactPath(path) {
+  return /^book\/site\/generated\/living\/[^/]+\/index\.html$/.test(String(path || ''))
+}
+
+function ensureLivingArtifactRuntime() {
+  if (livingArtifactRuntimePromise) return livingArtifactRuntimePromise
+  livingArtifactRuntimePromise = import('./living-artifacts-runtime.js')
+    .then(module => {
+      livingArtifactRuntime = module
+      disposeLivingArtifactBridge?.()
+      disposeLivingArtifactBridge = module.installLivingArtifactBridge({
+        getState: () => ({
+          workspaceId: String(serverState.workspace_id || ''),
+          selectedPath: String(serverState.selected_document || ''),
+        }),
+        onSaved: artifact => {
+          featureState.living_artifacts = module.livingArtifactTransition(
+            featureState.living_artifacts,
+            artifact,
+          )
+          featureState.living_artifact_status = 'Saved in this MoonBook'
+          render()
+        },
+        onError: () => {
+          featureState.living_artifact_status = 'This artifact could not be synchronized'
+          render()
+        },
+      })
+      render()
+      return module
+    })
+    .catch(error => {
+      livingArtifactRuntimePromise = null
+      featureState.living_artifact_status = 'Living artifacts could not be loaded'
+      console.error(error)
+      render()
+      throw error
+    })
+  return livingArtifactRuntimePromise
+}
 
 function readStored(key, fallback) {
   try {
@@ -863,6 +911,62 @@ function setupSourceSubscription(record) {
     })
 }
 
+function loadLivingArtifacts() {
+  const workspaceId = String(serverState.workspace_id || '').trim()
+  if (!workspaceId) {
+    featureState.living_artifacts = []
+    featureState.living_artifacts_loaded_for = ''
+    return
+  }
+  ensureLivingArtifactRuntime().catch(() => {})
+  if (featureState.living_artifacts_loaded_for === workspaceId) return
+  featureState.living_artifacts = []
+  featureState.living_artifacts_loaded_for = workspaceId
+  featureState.living_artifact_status = 'Loading artifacts…'
+  fetch(`/api/living-artifacts?workspace_id=${encodeURIComponent(workspaceId)}`)
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('load failed')))
+    .then(payload => {
+      featureState.living_artifacts = Array.isArray(payload.artifacts)
+        ? payload.artifacts
+        : []
+      featureState.living_artifact_status = ''
+      render()
+    })
+    .catch(() => {
+      featureState.living_artifacts_loaded_for = ''
+      featureState.living_artifact_status = 'Living artifacts could not be loaded'
+      render()
+    })
+}
+
+function createLivingArtifact(record) {
+  featureState.living_artifact_status = 'Creating artifact…'
+  fetch('/api/living-artifacts', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      action: 'create',
+      workspace_id: serverState.workspace_id || '',
+      ...record,
+    }),
+  })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('create failed')))
+    .then(artifact => {
+      featureState.living_artifacts = livingArtifactRuntime
+        ? livingArtifactRuntime.livingArtifactTransition(featureState.living_artifacts, artifact)
+        : [artifact, ...featureState.living_artifacts.filter(item => item.id !== artifact.id)]
+      featureState.living_artifact_draft = null
+      featureState.living_artifact_status = 'Artifact created'
+      featureState.toolbox_open = false
+      forward('open-path', artifact.path || '')
+      render()
+    })
+    .catch(() => {
+      featureState.living_artifact_status = 'This artifact could not be created'
+      render()
+    })
+}
+
 function loadDocumentReviewThreads() {
   const workspaceId = String(serverState.workspace_id || '').trim()
   const documentPath = String(serverState.selected_document || '').trim()
@@ -1092,6 +1196,7 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       if (first === 'learning') loadLearningProposals()
       if (first === 'tasks') loadTaskRecipes()
       if (first === 'sources') loadSourceSubscriptions()
+      if (first === 'artifacts') loadLivingArtifacts()
       if (first === 'review') loadDocumentReviewThreads()
       render()
       return
@@ -1259,6 +1364,26 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       render()
       return
     }
+    case 'living-artifact-new':
+      featureState.living_artifact_draft = {
+        kind: 'checklist',
+        title: '',
+        purpose: '',
+        items: '',
+      }
+      featureState.living_artifact_status = ''
+      render()
+      return
+    case 'living-artifact-cancel':
+      featureState.living_artifact_draft = null
+      featureState.living_artifact_status = ''
+      render()
+      return
+    case 'living-artifact-open':
+      featureState.toolbox_open = false
+      forward('open-path', first)
+      render()
+      return
     case 'review-thread-resolve':
       saveDocumentReviewThread({ action: 'resolve', thread_id: first })
       return
@@ -2791,6 +2916,88 @@ function renderTaskRecipesTab() {
   return content
 }
 
+function renderLivingArtifactsTab() {
+  const content = element('div', 'document-tool-content living-artifacts')
+  loadLivingArtifacts()
+  const intro = element('div', 'document-tool-intro with-action')
+  const copy = element('div')
+  copy.append(
+    element('h3', '', 'Living artifacts'),
+    element('p', '', 'Create a book-scoped checklist, tracker, or evidence table that stays editable beside chat.'),
+  )
+  intro.append(copy, button('primary-button', 'Create artifact', 'living-artifact-new'))
+  content.append(intro)
+  if (featureState.living_artifact_draft) {
+    const form = element('form', 'living-artifact-form')
+    const kind = element('select')
+    for (const [value, label] of [
+      ['checklist', 'Checklist'], ['tracker', 'Tracker'], ['evidence-table', 'Evidence table'],
+    ]) {
+      const option = element('option', '', label)
+      option.value = value
+      kind.append(option)
+    }
+    const title = element('input')
+    title.required = true
+    title.maxLength = 160
+    title.placeholder = 'Artifact name'
+    const purpose = element('textarea')
+    purpose.maxLength = 2000
+    purpose.placeholder = 'What should this artifact help you maintain?'
+    const items = element('textarea')
+    items.placeholder = 'Optional starting items, one per line'
+    const actions = element('div', 'living-artifact-actions')
+    const submit = element('button', 'primary-button', 'Create and open')
+    submit.type = 'submit'
+    actions.append(
+      button('secondary-button', 'Cancel', 'living-artifact-cancel'),
+      submit,
+    )
+    form.append(
+      element('label', '', 'Type'), kind,
+      element('label', '', 'Name'), title,
+      element('label', '', 'Purpose'), purpose,
+      element('label', '', 'Starting items'), items,
+      actions,
+    )
+    form.addEventListener('submit', event => {
+      event.preventDefault()
+      createLivingArtifact({
+        kind: kind.value,
+        title: title.value.trim(),
+        purpose: purpose.value.trim(),
+        items: items.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean),
+      })
+    })
+    content.append(form)
+  }
+  if (!featureState.living_artifacts.length && !featureState.living_artifact_status) {
+    content.append(element('div', 'document-tool-empty', 'Create an artifact to keep a small working surface with this MoonBook.'))
+  } else if (featureState.living_artifacts.length) {
+    const list = element('div', 'living-artifact-list')
+    for (const artifact of featureState.living_artifacts) {
+      const card = element('article', 'living-artifact-card')
+      const heading = element('div', 'living-artifact-heading')
+      heading.append(
+        element('strong', '', artifact.title || 'Living artifact'),
+        element('span', 'living-artifact-kind', String(artifact.kind || 'artifact').replace('-', ' ')),
+      )
+      card.append(
+        heading,
+        element('p', '', artifact.purpose || 'An editable artifact for this book.'),
+        element('small', '', `${Array.isArray(artifact.items) ? artifact.items.length : 0} items · revision ${Number(artifact.revision) || 1}`),
+        button('secondary-button', 'Open beside chat', 'living-artifact-open', [artifact.path || '']),
+      )
+      list.append(card)
+    }
+    content.append(list)
+  }
+  if (featureState.living_artifact_status) {
+    content.append(element('p', 'status-line', featureState.living_artifact_status))
+  }
+  return content
+}
+
 function renderToolbox(state) {
   const backdrop = element('div', 'document-toolbox-backdrop')
   backdrop.addEventListener('click', () => emit('close-toolbox'))
@@ -2808,7 +3015,7 @@ function renderToolbox(state) {
   const tabs = element('div', 'document-toolbox-tabs')
   tabs.setAttribute('role', 'tablist')
   for (const [id, label] of [
-    ['review', 'Review'], ['tasks', 'Tasks'], ['threads', 'Conversations'], ['sources', 'Sources'],
+    ['review', 'Review'], ['tasks', 'Tasks'], ['artifacts', 'Artifacts'], ['threads', 'Conversations'], ['sources', 'Sources'],
     ['history', 'History'], ['packs', 'Check packs'], ['learning', 'Learning'],
     ['preferences', 'Preferences'], ['inbox', 'Inbox'],
   ]) {
@@ -2823,6 +3030,7 @@ function renderToolbox(state) {
   const body = ({
     review: () => renderReviewTab(state),
     tasks: renderTaskRecipesTab,
+    artifacts: renderLivingArtifactsTab,
     threads: renderThreadsTab,
     sources: () => renderSourcesTab(state),
     history: renderHistoryTab,
@@ -3272,6 +3480,9 @@ function render() {
   persistCurrentThread()
   persistOfficeHistory()
   const state = { ...serverState, ...featureState }
+  if (isLivingArtifactPath(state.selected_document)) {
+    ensureLivingArtifactRuntime().catch(() => {})
+  }
   if (state.mode === 'code') {
     state.hits = (state.hits || []).filter(hit =>
       /\.(mbt|js|mjs|ts|tsx)$/i.test(hit.path))
