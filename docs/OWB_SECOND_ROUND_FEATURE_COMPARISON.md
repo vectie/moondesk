@@ -54,7 +54,7 @@ experiments and comparisons without becoming user-facing concepts.
 
 ## Implementation status
 
-The first two product slices are implemented on MoonDesk `main` as incremental,
+The second-round feature wave is implemented on MoonDesk `main` as incremental,
 independently tested commits. The implementation deliberately adds outcomes to
 the existing chat-and-document experience instead of exposing another internal
 control surface.
@@ -68,7 +68,7 @@ control surface.
 | Try another version | A stable assistant answer can start a fresh alternative from the same bounded conversation context while preserving the original conversation | Proposed-document-change branching, side-by-side document-native comparison, selective merge, and branch visualization |
 | Review Rooms | Review is now a local document room with participants, assignments, pinned decisions, replies, resolution, an **Ask agent** path to the general agent, and a bounded offline review package | Live guests, mentions, reactions, unread delivery, and cross-device MoonFlow transport |
 | Living artifacts | Users can create a checklist, tracker, or evidence table; open it beside chat in an isolated viewer; edit it directly; and reopen durable book-scoped state | Chat-directed edits, source citations per item, Office export, and promotion to a portable pack application |
-| Multimodal document work | Existing local files and Office selections remain the foundation | Screenshot, image, voice, transcription, generation/editing, and reviewed Office insertion journeys |
+| Multimodal document work | Users can paste screenshots or drag/drop/choose media in Add Context; MoonDesk preserves the real bounded binary plus a readable capture note, shows both as task context, and sends both to the general MoonClaw document conversation | Direct microphone recording and transcription, image generation/editing, and reviewed Office insertion |
 | Subscribed sources | Sources now has a durable **Keep a source current** workflow for websites, feeds, folders, and repositories, including cadence, meaningful-change rule, explicit MoonTown activation state, retry, and **Check now** through the general agent | Completed-check/result linkage, Inbox arrival, and connector-backed cloud sources |
 | Send for review and Share agent | Review Room prepares a bounded, escaped offline review package containing the selected document, conversation excerpt, pinned/open discussions, replies, and evidence. Work Package export and MoonBook portable-agent contracts remain available | Guest review return path and a complete inspect/install/update/share journey in MoonDesk |
 
@@ -94,6 +94,13 @@ The delivered commits are:
 | `86efb3bb` | Side-by-side isolated Living Artifact viewer |
 | `40eda21e` | Bounded, collision-resistant artifact identifiers |
 | `a06615dc` | Production UI bundle containing the second slice |
+| `0249c373` | Real binary preservation for captured workspace media |
+| `e4a43bec` | Captured media attachment to normal document chat |
+| `a7cac5a0` | Capture listener installed before the first user input |
+| `2c7d21e5` | Event bridge for immediate captured-media delivery |
+| `0d89f064` | Pages capture routing through the general agent |
+| `3de45302` | Direct event-driven context attachment without polling delay |
+| `5d244d23` | Production UI bundle containing multimodal intake |
 
 ### Architectural shape of the delivered slice
 
@@ -115,12 +122,14 @@ The implementation follows a functional-core, imperative-shell split:
 The delivered slice was checked at the pure-model, HTTP, persistence, UI-state,
 bundle, and production-build boundaries:
 
-- MoonDesk native tests: 442 passing after the recipe implementation;
+- MoonDesk native tests: 451 passing;
 - MoonDesk JavaScript tests: 115 passing;
-- nested Rabbita Desk tests: 461 JavaScript and 442 native passing;
+- nested Rabbita Desk tests: 580 JavaScript and 451 native passing;
 - workspace feature tests: 17 passing;
+- internationalization contract tests: 6 passing;
+- MoonCode developer-tool contract tests: 9 passing;
 - production bundle-cap tests: 2 passing;
-- isolated 240-message workspace projection benchmark: 117.2 ms against a
+- isolated 240-message workspace projection benchmark: 82.6 ms against a
   350 ms ceiling;
 - production UI build completed with the workspace feature code retained as a
   lazy-loaded chunk;
@@ -130,11 +139,14 @@ bundle, and production-build boundaries:
   projection, honest `needs_setup` state, retry, and general-agent routing;
 - Review Room browser journey passed assigned discussion creation, pinning,
   participant projection, general-agent routing, and review-package content.
+- multimodal browser journey passed screenshot paste, real PNG signature and
+  content type preservation, context-chip projection, open-document retention,
+  and a general MoonClaw request containing both the capture note and binary.
 
 An earlier concurrent benchmark run measured 362.4 ms while multiple build and
-test processes competed for the same machine. The immediate isolated rerun
-measured 117.2 ms. This is recorded as test-host contention rather than hidden
-as a product regression.
+test processes competed for the same machine. Subsequent isolated runs measured
+117.2 ms and 82.6 ms. This is recorded as test-host contention rather than
+hidden as a product regression.
 
 The remaining acceptance journeys below are therefore a roadmap, not a claim
 that every feature named in this comparison is complete.
