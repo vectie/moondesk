@@ -419,6 +419,11 @@ pub fn task_recipes_route() -> String {
 }
 
 ///|
+pub fn source_subscriptions_route() -> String {
+  desktop_api_path(["api", "source-subscriptions"])
+}
+
+///|
 pub fn books_endpoint_url(endpoint : String) -> String {
   desktop_api_path(["api", "books"]) + "/" + url_path(endpoint)
 }
@@ -688,6 +693,9 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
       "GET", "HEAD", "POST",
     ]),
     desktop_api_route_contract(task_recipes_route(), ["GET", "HEAD", "POST"]),
+    desktop_api_route_contract(source_subscriptions_route(), [
+      "GET", "HEAD", "POST",
+    ]),
   ]
 }
 

@@ -171,6 +171,8 @@ pub fn search_route() -> String
 
 pub fn search_url(String) -> String
 
+pub fn source_subscriptions_route() -> String
+
 pub fn stable_id(String, String) -> String
 
 pub fn task_recipes_route() -> String

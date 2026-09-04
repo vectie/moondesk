@@ -155,6 +155,8 @@ options(
     "search_api_handlers.mbt": [ "native" ],
     "search_api_handlers_wbtest.mbt": [ "native" ],
     "server.mbt": [ "native" ],
+    "source_subscription_handlers.mbt": [ "native" ],
+    "source_subscription_handlers_wbtest.mbt": [ "native" ],
     "town_api_handlers.mbt": [ "native" ],
     "town_preferences_handlers.mbt": [ "native" ],
     "town_request_handlers.mbt": [ "native" ],
