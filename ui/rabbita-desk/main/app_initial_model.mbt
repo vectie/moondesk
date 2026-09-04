@@ -20,6 +20,8 @@ fn init_model() -> Model {
     moonsuite_products: [],
     pack_apps: [],
     pack_apps_status: "loading installed packs",
+    agent_passports: [],
+    agent_catalog_status: "loading agents",
     collaboration_surface: empty_collaboration_surface(),
     collaboration_status: "not_selected",
     collaboration_message: "Select a MoonBook to load typed collaboration state.",

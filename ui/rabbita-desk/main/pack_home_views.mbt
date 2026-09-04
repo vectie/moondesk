@@ -30,6 +30,135 @@ fn pack_default_description(pack : PackAppRecord) -> String {
 }
 
 ///|
+fn agent_status_label(status : String) -> String {
+  if status == "ready" {
+    "Ready"
+  } else {
+    "Needs attention"
+  }
+}
+
+///|
+fn render_agent_passport(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  agent : AgentPassportRecord,
+) -> @rabbita.Html {
+  let selected = model.selected_workspace_id == agent.workspace_id
+  article(
+    class="agent-passport-card " + (if selected { "selected" } else { "" }),
+    attrs=@html.Attrs::build()
+      .data_set("testid", "agent-passport")
+      .data_set("contract-id", agent.contract_id)
+      .data_set("agent-id", agent.agent_id)
+      .data_set("agent-status", agent.status),
+    [
+      header(class="agent-passport-header", [
+        div(class="agent-passport-identity", [
+          span(class="agent-passport-mark", "A"),
+          div([
+            h3(agent.name),
+            small(agent.source_kind + " agent · " + agent.version),
+          ]),
+        ]),
+        span(
+          class="agent-passport-state " + agent.status,
+          agent_status_label(agent.status),
+        ),
+      ]),
+      p(class="agent-passport-summary", agent.summary),
+      div(
+        class="agent-capability-list",
+        agent.capabilities.map(capability => span(capability)),
+      ),
+      ul(class="agent-passport-counts", [
+        li([strong(agent.knowledge_count.to_string()), span("knowledge")]),
+        li([strong(agent.skill_count.to_string()), span("skills")]),
+        li([strong(agent.schema_count.to_string()), span("schemas")]),
+        li([strong(agent.tool_count.to_string()), span("tools")]),
+        li([strong(agent.app_count.to_string()), span("apps")]),
+        li([strong(agent.recurring_work_count.to_string()), span("ongoing")]),
+      ]),
+      details(class="agent-passport-details", [
+        summary("View passport"),
+        div(class="agent-passport-detail-body", [
+          div([small("Identity"), strong(agent.book_id)]),
+          div([
+            small("Can help with"),
+            ul(agent.example_tasks.map(task => li(task))),
+          ]),
+          p(
+            "This agent is derived from the installed MoonBook. Its knowledge and behavior remain inspectable in the book.",
+          ),
+        ]),
+      ]),
+      div(class="agent-passport-actions", [
+        if selected {
+          button(
+            class="primary-button",
+            attrs=@html.Attrs::build().data_set("testid", "agent-open-chat"),
+            on_click=dispatch(SelectWorkspaceMode(MoonWiki)),
+            "Open chat",
+          )
+        } else {
+          button(
+            class="primary-button",
+            attrs=@html.Attrs::build().data_set("testid", "agent-select"),
+            on_click=dispatch(SelectWorkspace(agent.workspace_id)),
+            "Select agent",
+          )
+        },
+        small(
+          if selected {
+            "Selected for this workspace"
+          } else {
+            "Select, then open its chat"
+          },
+        ),
+      ]),
+    ],
+  )
+}
+
+///|
+fn render_agent_library(
+  dispatch : Dispatch[Msg],
+  model : Model,
+) -> @rabbita.Html {
+  section(
+    class="agent-library-section",
+    attrs=@html.Attrs::build().data_set("testid", "agent-library"),
+    [
+      header(class="pack-section-heading", [
+        div([
+          p(class="eyebrow", "Your reusable helpers"),
+          h2("Agents"),
+          p(
+            "Each agent carries one MoonBook's knowledge, skills, and ongoing work.",
+          ),
+        ]),
+        span(model.agent_catalog_status),
+      ]),
+      if model.agent_passports.is_empty() {
+        div(class="agent-library-empty", [
+          strong("No agents yet"),
+          p(
+            "Create or import a MoonBook. MoonDesk will turn it into a reusable, inspectable agent.",
+          ),
+        ])
+      } else {
+        div(
+          class="agent-passport-grid",
+          model.agent_passports.map(agent => {
+            render_agent_passport(dispatch, model, agent)
+          }),
+        )
+      },
+    ],
+  )
+}
+
+///|
 fn pack_presentation_value(value : String?) -> String {
   match value {
     Some(value) => value.trim().to_owned()
@@ -557,6 +686,7 @@ fn render_pack_home(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           ),
         ]),
       ]),
+      render_agent_library(dispatch, model),
       render_template_catalog(model),
       render_pack_studio(),
       if model.pack_apps.is_empty() {

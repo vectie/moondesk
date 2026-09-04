@@ -766,6 +766,7 @@ fn select_workspace_mode_action(
       activity,
       @rabbita.batch([
         fetch_pack_apps_cmd(dispatch),
+        fetch_agent_catalog_cmd(dispatch),
         fetch_moonflow_collaboration_cmd(dispatch, model.selected_workspace_id),
       ]),
     )

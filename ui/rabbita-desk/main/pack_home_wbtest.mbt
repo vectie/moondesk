@@ -195,6 +195,61 @@ test "Pack Home catalog result becomes the visible product list" {
 }
 
 ///|
+fn agent_passport_test_record() -> AgentPassportRecord {
+  {
+    contract_id: "moonsuite.agent-passport.v1",
+    agent_id: "book-research",
+    workspace_id: "book-research",
+    book_id: "research",
+    name: "Research Agent",
+    summary: "Explains trusted evidence.",
+    version: "1.0.0",
+    status: "ready",
+    source_kind: "moonbook",
+    capabilities: ["Evidence-backed answers", "Reviewed procedures"],
+    example_tasks: ["Compare sources", "Prepare a brief"],
+    knowledge_count: 4,
+    skill_count: 2,
+    schema_count: 1,
+    tool_count: 1,
+    app_count: 0,
+    recurring_work_count: 1,
+  }
+}
+
+///|
+test "agent catalog result becomes a typed immutable model transition" {
+  let catalog : AgentCatalog = {
+    agent_count: 1,
+    agents: [agent_passport_test_record()],
+  }
+  let (_, model) = update_workspace_results(
+    code_mode_test_dispatch,
+    LoadedAgentCatalog(Ok(catalog)),
+    init_model(),
+  )
+  assert_eq(model.agent_passports.length(), 1)
+  assert_eq(model.agent_catalog_status, "1 available")
+}
+
+///|
+#warnings("-alert_unstable")
+test "Agent Library presents readable passports without developer controls" {
+  let agent = agent_passport_test_record()
+  let model = { ..init_model(), agent_passports: [agent] }
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_agent_library(code_mode_test_dispatch, model)),
+  )
+  assert_true(markup.contains("Agents"))
+  assert_true(markup.contains("Research Agent"))
+  assert_true(markup.contains("Evidence-backed answers"))
+  assert_true(markup.contains("Compare sources"))
+  assert_true(markup.contains("data-testid=\"agent-select\""))
+  assert_false(markup.contains("reasoning"))
+  assert_false(markup.contains("terminal"))
+}
+
+///|
 #warnings("-alert_unstable")
 test "template launch preserves safe default context and states the owner boundary" {
   let pack = {

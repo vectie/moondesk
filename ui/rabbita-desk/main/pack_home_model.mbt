@@ -126,3 +126,30 @@ struct PackAppCatalog {
   template_count : Int?
   apps : Array[PackAppRecord]
 } derive(FromJson)
+
+///|
+struct AgentPassportRecord {
+  contract_id : String
+  agent_id : String
+  workspace_id : String
+  book_id : String
+  name : String
+  summary : String
+  version : String
+  status : String
+  source_kind : String
+  capabilities : Array[String]
+  example_tasks : Array[String]
+  knowledge_count : Int
+  skill_count : Int
+  schema_count : Int
+  tool_count : Int
+  app_count : Int
+  recurring_work_count : Int
+} derive(FromJson)
+
+///|
+struct AgentCatalog {
+  agent_count : Int
+  agents : Array[AgentPassportRecord]
+} derive(FromJson)

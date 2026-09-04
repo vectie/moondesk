@@ -37,6 +37,7 @@ fn bootstrap_fetch_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
   @rabbita.batch([
     fetch_workspace_metadata_cmd(dispatch),
     fetch_pack_apps_cmd(dispatch),
+    fetch_agent_catalog_cmd(dispatch),
     fetch_workspaces_cmd(dispatch),
     fetch_moonclaw_daemon_cmd(dispatch),
     fetch_moonflow_capability_cmd(dispatch),

@@ -15,6 +15,10 @@ type Activity derive(Eq)
 
 type ActivityButton
 
+type AgentCatalog derive(@json.FromJson)
+
+type AgentPassportRecord derive(@json.FromJson)
+
 type BookBaseTypeRecord derive(@json.FromJson)
 
 type BookPatternCreationResult derive(@json.FromJson)

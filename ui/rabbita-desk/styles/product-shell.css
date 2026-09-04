@@ -300,8 +300,156 @@ body {
 
 .pack-template-section,
 .pack-app-section,
-.pack-studio-section {
+.pack-studio-section,
+.agent-library-section {
   margin-block: 24px;
+}
+
+.agent-library-section {
+  width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.agent-passport-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+}
+
+.agent-passport-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bg-raised);
+}
+
+.agent-passport-card.selected {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+}
+
+.agent-passport-header,
+.agent-passport-identity,
+.agent-passport-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-passport-header {
+  justify-content: space-between;
+}
+
+.agent-passport-identity {
+  min-width: 0;
+}
+
+.agent-passport-identity h3,
+.agent-passport-summary,
+.agent-passport-detail-body p {
+  margin: 0;
+}
+
+.agent-passport-identity small,
+.agent-passport-actions small,
+.agent-passport-detail-body,
+.agent-library-empty p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.agent-passport-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--accent) 13%, white);
+  color: var(--accent);
+  font-weight: 850;
+}
+
+.agent-passport-state,
+.agent-capability-list span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--bg-panel-strong);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.agent-passport-state.ready {
+  background: color-mix(in srgb, var(--green) 12%, white);
+  color: var(--green);
+}
+
+.agent-passport-summary {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.agent-capability-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.agent-passport-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-passport-counts li {
+  display: grid;
+  gap: 2px;
+}
+
+.agent-passport-counts span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.agent-passport-details summary {
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.agent-passport-detail-body {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.agent-passport-detail-body > div {
+  display: grid;
+  gap: 4px;
+}
+
+.agent-passport-detail-body ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.agent-passport-actions {
+  flex-wrap: wrap;
+}
+
+.agent-library-empty {
+  padding: 20px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  background: var(--bg-raised);
 }
 
 .pack-studio-section {

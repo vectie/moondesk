@@ -27,6 +27,13 @@ fn fetch_pack_apps_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
 }
 
 ///|
+fn fetch_agent_catalog_cmd(dispatch : Dispatch[Msg]) -> @rabbita.Cmd {
+  @http.get(@desk.agent_catalog_url()).expect_json(result => {
+    dispatch(LoadedAgentCatalog(http_result(result, "Invalid agent catalog")))
+  })
+}
+
+///|
 fn fetch_moonflow_collaboration_cmd(
   dispatch : Dispatch[Msg],
   workspace_id : String,

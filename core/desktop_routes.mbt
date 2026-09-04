@@ -123,6 +123,16 @@ pub fn desktop_capabilities_route() -> String {
 }
 
 ///|
+pub fn agent_catalog_url() -> String {
+  desktop_api_url(["api", "desktop", "agents"])
+}
+
+///|
+pub fn agent_catalog_route() -> String {
+  desktop_api_path(["api", "desktop", "agents"])
+}
+
+///|
 pub fn workspaces_url() -> String {
   desktop_api_url(["api", "workspaces"])
 }
@@ -493,6 +503,7 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
       desktop_api_path(["api", "desktop", "pack-apps"]),
       ["GET", "HEAD"],
     ),
+    desktop_api_route_contract(agent_catalog_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(workspaces_route(), ["GET", "HEAD", "POST"]),
     desktop_api_route_contract(workspace_metadata_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(workspace_import_route(), ["POST"]),

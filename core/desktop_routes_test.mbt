@@ -68,6 +68,7 @@ test "workspace desktop routes live in core boundary" {
 ///|
 test "product and system desktop routes live in core boundary" {
   assert_eq(@core.desktop_capabilities_url(), "/api/desktop/capabilities")
+  assert_eq(@core.agent_catalog_url(), "/api/desktop/agents")
   assert_eq(@core.moonclaw_endpoint_url("daemon"), "/api/moonclaw/daemon")
   assert_eq(
     @core.moonclaw_endpoint_url("auth/codex/start"),

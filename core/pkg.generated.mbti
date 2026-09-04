@@ -7,6 +7,10 @@ import {
 }
 
 // Values
+pub fn agent_catalog_route() -> String
+
+pub fn agent_catalog_url() -> String
+
 pub fn agent_preferences_route() -> String
 
 pub fn artifact_entry(workspace_id~ : String, path~ : String) -> DeskFileEntry

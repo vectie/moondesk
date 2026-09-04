@@ -24,6 +24,15 @@ async fn route_desktop_api(
       }
       true
     }
+    ["api", "desktop", "agents"] => {
+      let endpoint = @desk.agent_catalog_route()
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        send_json(conn, method_, installed_agent_catalog(workspace_root))
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     ["api", "desktop", "capabilities"] => {
       let endpoint = @desk.desktop_capabilities_route()
       if desktop_api_route_accepts_read(endpoint, method_) {

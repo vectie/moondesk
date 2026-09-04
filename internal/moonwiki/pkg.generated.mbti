@@ -46,6 +46,8 @@ pub async fn town_service_descriptor(String, String) -> Json
 // Errors
 
 // Types and methods
+type AgentPassportInventory derive(Eq, @debug.Debug)
+
 type DocxParagraph derive(Eq, @debug.Debug)
 
 type DocxRun derive(Eq, @debug.Debug)

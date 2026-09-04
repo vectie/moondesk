@@ -30,6 +30,7 @@ fn update_library_selection(
       (
         @rabbita.batch([
           fetch_pack_apps_cmd(dispatch),
+          fetch_agent_catalog_cmd(dispatch),
           fetch_workspaces_cmd(dispatch),
           fetch_book_base_types_cmd(dispatch),
           fetch_book_patterns_cmd(dispatch),

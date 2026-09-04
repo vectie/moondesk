@@ -55,6 +55,21 @@ fn update_workspace_results(
       )
     LoadedPackApps(Err(error)) =>
       (@rabbita.none, { ..model, pack_apps_status: error })
+    LoadedAgentCatalog(Ok(catalog)) =>
+      (
+        @rabbita.none,
+        {
+          ..model,
+          agent_passports: catalog.agents,
+          agent_catalog_status: if catalog.agents.is_empty() {
+            "No agents yet"
+          } else {
+            "\{catalog.agent_count} available"
+          },
+        },
+      )
+    LoadedAgentCatalog(Err(error)) =>
+      (@rabbita.none, { ..model, agent_catalog_status: error })
     LoadedMoonFlowCollaboration(workspace_id, result) =>
       if workspace_id != model.selected_workspace_id {
         (@rabbita.none, model)

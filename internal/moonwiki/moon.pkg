@@ -55,6 +55,8 @@ options(
     "api_workspace_router.mbt": [ "native" ],
     "agent_preference_handlers.mbt": [ "native" ],
     "agent_preference_handlers_wbtest.mbt": [ "native" ],
+    "agent_library.mbt": [ "native" ],
+    "agent_library_wbtest.mbt": [ "native" ],
     "moonclaw_daemon_api.mbt": [ "native" ],
     "moonclaw_installer.mbt": [ "native" ],
     "moonclaw_installer_wbtest.mbt": [ "native" ],
