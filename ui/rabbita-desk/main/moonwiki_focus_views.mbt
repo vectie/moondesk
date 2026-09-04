@@ -105,13 +105,27 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
             ],
           )
         },
-        if model.wiki_chat_file_paths.is_empty() {
+        if model.wiki_chat_file_paths.is_empty() &&
+          model.request_material_paths.is_empty() {
           @html.nothing
         } else {
           div(
             class="wiki-chat-file-chips",
             [
               span(class="wiki-chat-file-hint", "Attached"),
+              ..model.request_material_paths.map(path => {
+                span(class="wiki-chat-file-chip captured", [
+                  span(path),
+                  button(
+                    class="wiki-chat-file-remove",
+                    attrs=@html.Attrs::build().aria_label(
+                      "Remove captured file " + path,
+                    ),
+                    on_click=dispatch(RemoveRequestMaterial(path)),
+                    "×",
+                  ),
+                ])
+              }),
               ..model.wiki_chat_file_paths.map(path => {
                 span(class="wiki-chat-file-chip", [
                   span(path),
@@ -173,7 +187,7 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
                   "false"
                 },
               ),
-            title="Add a selection, file, conversation, artifact, Inbox item, or URL",
+            title="Add a selection, screenshot, recording, file, conversation, artifact, Inbox item, or URL",
             on_click=dispatch(
               workspace_feature_msg("open-search", first="attach"),
             ),

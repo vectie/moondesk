@@ -1953,6 +1953,18 @@ function renderSearch(state) {
     })
     urlRow.append(urlInput, addUrl)
     panel.append(urlRow)
+
+    const media = element('div', 'universal-media-intake')
+    const copy = element('div')
+    copy.append(
+      element('strong', '', 'Add a screenshot, recording, or file'),
+      element('small', '', 'Paste an image, drop local media, or choose a file. MoonDesk keeps the captured source with this book.'),
+    )
+    media.append(copy, button(
+      'secondary-button', 'Choose media…', 'import-files', [],
+      { label: 'Choose image, audio, video, or document files' },
+    ))
+    panel.append(media)
   }
 
   const results = element('div', 'universal-search-results')
@@ -1991,7 +2003,9 @@ function renderSearch(state) {
   ))
   const actions = element('div')
   actions.append(
-    button('secondary-button', 'Import copies…', 'import-files'),
+    ...(state.purpose === 'attach'
+      ? []
+      : [button('secondary-button', 'Import copies…', 'import-files')]),
     button('secondary-button', 'Import folder…', 'import-folder'),
     button('secondary-button', 'New folder or book…', 'desk-intake'),
     button('secondary-button', 'Synthesis board', 'open-synthesis'),

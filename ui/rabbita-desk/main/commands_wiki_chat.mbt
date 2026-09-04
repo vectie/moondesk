@@ -1,5 +1,9 @@
 ///|
 fn wiki_chat_submission_body(model : Model) -> Json {
+  let paths = model.wiki_chat_file_paths.fold(
+    init=model.request_material_paths,
+    fn(paths, path) { add_request_material(paths, path) },
+  )
   {
     "workspace_id": model.selected_workspace_id,
     "task_id": model.wiki_agent_task_id,
@@ -8,9 +12,7 @@ fn wiki_chat_submission_body(model : Model) -> Json {
     } else {
       ""
     },
-    "file_paths": Json::array(
-      model.wiki_chat_file_paths.map(path => Json::string(path)),
-    ),
+    "file_paths": Json::array(paths.map(path => Json::string(path))),
     "context_items": Json::array(
       model.wiki_chat_context_items.map(item => item.to_json()),
     ),

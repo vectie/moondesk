@@ -2012,6 +2012,27 @@
   min-width: 0;
 }
 
+.universal-media-intake {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 1rem 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-subtle, rgba(127, 127, 127, 0.24));
+  border-radius: 0.75rem;
+  background: var(--surface-soft, rgba(127, 127, 127, 0.06));
+}
+
+.universal-media-intake > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.universal-media-intake small {
+  color: var(--text-muted, #667085);
+}
+
 .wiki-chat-followups {
   display: grid;
   gap: 0.55rem;

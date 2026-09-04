@@ -591,7 +591,7 @@ test "wiki activity imports stay in activity and join the pending task" {
         workspace_id: "book-demo",
         path: "inbox/imports/report.md",
         kind: "url",
-        data_path: "inbox/imports/report.data-url.txt",
+        data_path: "inbox/imports/report.png",
       }),
     ),
     model,
@@ -600,7 +600,11 @@ test "wiki activity imports stay in activity and join the pending task" {
   assert_eq(next.selected_path, "wiki/index.md")
   assert_true(
     next.request_material_paths ==
-    ["inbox/imports/earlier.md", "inbox/imports/report.md"],
+    [
+      "inbox/imports/earlier.md",
+      "inbox/imports/report.md",
+      "inbox/imports/report.png",
+    ],
   )
   assert_eq(next.import_url, "")
   assert_eq(next.import_note, "")
@@ -608,6 +612,35 @@ test "wiki activity imports stay in activity and join the pending task" {
     wiki_task_material_status(next.request_material_status),
     "Material added.",
   )
+}
+
+///|
+#warnings("-alert_unstable")
+test "captured media is visible and sent through normal document chat" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let model = {
+    ..wiki_focus_test_model([]),
+    request_material_paths: [
+      "inbox/imports/whiteboard.md", "inbox/imports/whiteboard.png",
+    ],
+    wiki_chat_file_paths: ["wiki/context.md"],
+  }
+  assert_true(
+    json_field_string_array_items(
+      wiki_chat_submission_body(model), "file_paths",
+    ) ==
+    [
+      "inbox/imports/whiteboard.md",
+      "inbox/imports/whiteboard.png",
+      "wiki/context.md",
+    ],
+  )
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_wiki_focus_workspace(dispatch, model)),
+  )
+  assert_true(markup.contains("inbox/imports/whiteboard.png"))
+  assert_true(markup.contains("Remove captured file"))
+  assert_true(markup.contains("screenshot, recording"))
 }
 
 ///|
