@@ -149,6 +149,9 @@ test "Wiki is a quiet chat and Office viewer without operator navigation" {
   assert_true(markup.contains("data-testid=\"wiki-focus-workspace\""))
   assert_true(markup.contains("data-testid=\"wiki-find\""))
   assert_true(markup.contains("data-testid=\"wiki-chat-input\""))
+  assert_true(
+    markup.contains("data-testid=\"wiki-import-capture-delivery\""),
+  )
   assert_true(markup.contains("aria-label=\"Document viewer\""))
   assert_true(markup.contains("data-testid=\"office-docx-preview\""))
   assert_false(markup.contains("data-testid=\"wiki-warning-popup\""))

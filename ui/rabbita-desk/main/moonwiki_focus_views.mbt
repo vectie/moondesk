@@ -211,6 +211,14 @@ fn render_wiki_chat(dispatch : Dispatch[Msg], model : Model) -> @rabbita.Html {
           None => @html.nothing
         },
       ]),
+      button(
+        class="visually-hidden",
+        attrs=@html.Attrs::build()
+          .data_set("testid", "wiki-import-capture-delivery")
+          .aria_label("Process captured files"),
+        on_click=dispatch(PollDroppedImports),
+        "Process captured files",
+      ),
     ],
   )
 }

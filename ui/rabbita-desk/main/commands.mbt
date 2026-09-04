@@ -658,6 +658,9 @@ extern "js" fn browser_take_dropped_import_files() -> String =
   #| () => {
   #|   const state =
   #|     (window.__moondeskImportState ||= { installed: false, queue: [] });
+  #|   const notify = () => queueMicrotask(() => {
+  #|     document.querySelector('[data-testid="wiki-import-capture-delivery"]')?.click();
+  #|   });
   #|   const readFile = async (file, source) => {
   #|     const textLike =
   #|       file.type.startsWith("text/") ||
@@ -689,27 +692,27 @@ extern "js" fn browser_take_dropped_import_files() -> String =
   #|       stop(event);
   #|       const files = Array.from(event.dataTransfer?.files || []);
   #|       Promise.all(files.map((file) => readFile(file, "drop")))
-  #|         .then((loaded) => state.queue.push(...loaded))
-  #|         .catch((error) => state.queue.push({
+  #|         .then((loaded) => { state.queue.push(...loaded); notify(); })
+  #|         .catch((error) => { state.queue.push({
   #|           id: `drop-error:${Date.now()}`,
   #|           name: "drop-error.txt",
   #|           media_type: "text/plain",
   #|           content: String(error),
   #|           source: "drop",
-  #|         }));
+  #|         }); notify(); });
   #|     });
   #|     window.addEventListener("paste", (event) => {
   #|       const files = Array.from(event.clipboardData?.files || []);
   #|       if (files.length === 0) return;
   #|       Promise.all(files.map((file) => readFile(file, "paste")))
-  #|         .then((loaded) => state.queue.push(...loaded))
-  #|         .catch((error) => state.queue.push({
+  #|         .then((loaded) => { state.queue.push(...loaded); notify(); })
+  #|         .catch((error) => { state.queue.push({
   #|           id: `paste-error:${Date.now()}`,
   #|           name: "paste-error.txt",
   #|           media_type: "text/plain",
   #|           content: String(error),
   #|           source: "paste",
-  #|         }));
+  #|         }); notify(); });
   #|     });
   #|     state.installed = true;
   #|   }
