@@ -19,10 +19,35 @@ test "living artifacts validate kinds and project initial items" {
   ).unwrap()
   assert_eq(json_string(artifact, "kind", default=""), "tracker")
   assert_eq(json_array_items(artifact, "items").length(), 2)
+  assert_true(json_string(artifact, "id", default="").length() < 64)
+  assert_true(
+    json_array_items(artifact, "items").all(item => {
+      json_string(item, "id", default="").length() < 64
+    }),
+  )
   assert_true(
     json_string(artifact, "path", default="").has_prefix(
       "book/site/generated/living/",
     ),
+  )
+}
+
+///|
+test "living artifact item identities stay unique for duplicate labels" {
+  let artifact = living_artifact_create(
+    {
+      "workspace_id": "book-one",
+      "title": "Repeatable checklist",
+      "kind": "checklist",
+      "items": ["Review", "Review"],
+    },
+    "2026-09-04T15:00:00Z",
+  ).unwrap()
+  let items = json_array_items(artifact, "items")
+  assert_eq(items.length(), 2)
+  assert_false(
+    json_string(items[0], "id", default="") ==
+    json_string(items[1], "id", default=""),
   )
 }
 

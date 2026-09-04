@@ -11,6 +11,14 @@ const LivingArtifactMaxItems : Int = 1_000
 let living_artifact_write_mutex : @async.Mutex = Mutex()
 
 ///|
+fn living_artifact_id(prefix : String, seed : String) -> String {
+  let digest = @crypto.bytes_to_hex_string(
+    @crypto.sha256(@encoding/utf8.encode(seed).to_fixedarray()),
+  )
+  prefix + "-" + digest[:20].to_owned()
+}
+
+///|
 fn living_artifacts_path(workspace_root : String) -> String {
   moonsuite_product_artifact_for_workspace_root(
     workspace_root, "moondesk", "artifacts/living.v1.json",
@@ -29,6 +37,7 @@ fn living_artifact_item(
   value : String,
   source : String,
   now : String,
+  ordinal : Int,
 ) -> Result[Json, String] {
   let label = label.trim().to_owned()
   let value = value.trim().to_owned()
@@ -40,9 +49,9 @@ fn living_artifact_item(
     return Err("invalid_living_artifact_item")
   }
   Ok({
-    "id": @desk.stable_id(
-      "living-artifact-item",
-      artifact_id + ":" + label + ":" + now,
+    "id": living_artifact_id(
+      "living-item",
+      artifact_id + ":" + label + ":" + now + ":" + ordinal.to_string(),
     ),
     "label": label,
     "value": value,
@@ -68,7 +77,7 @@ fn living_artifact_create(payload : Json, now : String) -> Result[Json, String] 
     purpose.length() > 2_000 {
     return Err("invalid_living_artifact")
   }
-  let artifact_id = @desk.stable_id(
+  let artifact_id = living_artifact_id(
     "living-artifact",
     workspace_id + ":" + kind + ":" + title + ":" + now,
   )
@@ -77,7 +86,8 @@ fn living_artifact_create(payload : Json, now : String) -> Result[Json, String] 
     if items.length() >= LivingArtifactMaxItems {
       break
     }
-    match living_artifact_item(artifact_id, label, "", "", now) {
+    match
+      living_artifact_item(artifact_id, label, "", "", now, items.length()) {
       Ok(item) => items.push(item)
       Err(_) => ()
     }
@@ -131,6 +141,7 @@ fn living_artifact_apply_command(
         json_string(payload, "value", default=""),
         json_string(payload, "source", default=""),
         now,
+        current_items.length(),
       )
       match item {
         Ok(value) => [value, ..current_items]
