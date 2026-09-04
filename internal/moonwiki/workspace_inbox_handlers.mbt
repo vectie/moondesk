@@ -1,4 +1,23 @@
 ///|
+const InboxImportAttachmentMaxBytes : Int = 25 * 1_024 * 1_024
+
+///|
+fn inbox_import_attachment_extension(content_type : String) -> String {
+  match content_type.trim().to_lower() {
+    "image/png" => ".png"
+    "image/jpeg" => ".jpg"
+    "image/webp" => ".webp"
+    "image/gif" => ".gif"
+    "audio/mpeg" => ".mp3"
+    "audio/mp4" | "audio/x-m4a" => ".m4a"
+    "audio/wav" | "audio/x-wav" => ".wav"
+    "video/mp4" => ".mp4"
+    "application/pdf" => ".pdf"
+    _ => ".bin"
+  }
+}
+
+///|
 async fn handle_workspace_inbox(
   workspace_root : String,
   workspace_id : String,
@@ -138,9 +157,45 @@ async fn handle_workspace_import(
   let id = @desk.stable_id("import", title + "-" + @async.now().to_string())
   let relative = "inbox/imports/" + id + ".md"
   let absolute = @pathx.join(workspace.root_path, relative)
+  let data_url = json_string(payload, "data_url", default="")
+  let data_path = if data_url == "" {
+    ""
+  } else {
+    let bytes = match decode_data_url_bytes(data_url) {
+      Ok(bytes) => bytes
+      Err(error) => {
+        send_api_error(conn, method_, 400, "Bad Request", error)
+        return
+      }
+    }
+    if bytes.length() > InboxImportAttachmentMaxBytes {
+      send_api_error(
+        conn, method_, 413, "Content Too Large", "Imported attachment is larger than 25 MB",
+      )
+      return
+    }
+    let data_relative = "inbox/imports/" +
+      id +
+      inbox_import_attachment_extension(
+        json_string(payload, "content_type", default=""),
+      )
+    write_bytes_file(
+      @pathx.join(workspace.root_path, data_relative),
+      bytes,
+      create=0o644,
+    ) catch {
+      _ => {
+        send_api_error(
+          conn, method_, 500, "Internal Server Error", "Could not write imported attachment",
+        )
+        return
+      }
+    }
+    data_relative
+  }
   @fsx.write_to_file(
     absolute,
-    import_markdown(payload, kind, title),
+    import_markdown(payload, kind, title, attachment_path=data_path),
     create=0o644,
   ) catch {
     _ => {
@@ -149,20 +204,6 @@ async fn handle_workspace_import(
       )
       return
     }
-  }
-  let data_url = json_string(payload, "data_url", default="")
-  let data_path = if data_url == "" {
-    ""
-  } else {
-    let data_relative = "inbox/imports/" + id + ".data-url.txt"
-    @fsx.write_to_file(
-      @pathx.join(workspace.root_path, data_relative),
-      data_url,
-      create=0o644,
-    ) catch {
-      _ => ()
-    }
-    data_relative
   }
   send_json(conn, method_, {
     "ok": true,
@@ -174,7 +215,12 @@ async fn handle_workspace_import(
 }
 
 ///|
-fn import_markdown(payload : Json, kind : String, title : String) -> String {
+fn import_markdown(
+  payload : Json,
+  kind : String,
+  title : String,
+  attachment_path? : String = "",
+) -> String {
   let url = json_string(payload, "url", default="")
   let filename = json_string(payload, "filename", default="")
   let content_type = json_string(payload, "content_type", default="")
@@ -201,10 +247,8 @@ fn import_markdown(payload : Json, kind : String, title : String) -> String {
   if content != "" {
     body = body + "\n## Content\n\n\{content}\n"
   }
-  let data_url = json_string(payload, "data_url", default="")
-  if data_url != "" {
-    body = body +
-      "\n## Attachment\n\nThe browser captured an attachment data URL next to this note as `.data-url.txt`.\n"
+  if attachment_path != "" {
+    body = body + "\n## Attachment\n\nWorkspace file: `\{attachment_path}`\n"
   }
   body
 }

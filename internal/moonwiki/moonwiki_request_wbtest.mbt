@@ -2188,9 +2188,10 @@ async test "wiki server routes cover forward and backward book runs" {
     let import_path = json_string(import_created, "path", default="")
     let data_path = json_string(import_created, "data_path", default="")
     assert_true(import_path.has_prefix("inbox/imports/"))
-    assert_true(data_path.has_suffix(".data-url.txt"))
+    assert_true(data_path.has_suffix(".bin"))
     assert_true(@fs.exists(@pathx.join(book_root, import_path)))
     assert_true(@fs.exists(@pathx.join(book_root, data_path)))
+    assert_eq(@fs.read_file(@pathx.join(book_root, data_path)).text(), "source")
 
     let markdown_saved = test_http_post_json(
       base + "/api/workspaces/\{workspace_id}/markdown",
@@ -2715,7 +2716,7 @@ test "moonclaw json parser tolerates log-prefixed pretty json" {
 }
 
 ///|
-test "import markdown records URL and attachment sidecar" {
+test "import markdown records URL and a usable workspace attachment" {
   let markdown = import_markdown(
     {
       "url": "https://example.com",
@@ -2724,11 +2725,15 @@ test "import markdown records URL and attachment sidecar" {
     },
     "url",
     "Example",
+    attachment_path="inbox/imports/example.png",
   )
   assert_true(markdown.contains("# Example"))
   assert_true(markdown.contains("- URL: https://example.com"))
   assert_true(markdown.contains("keep this"))
-  assert_true(markdown.contains(".data-url.txt"))
+  assert_true(markdown.contains("inbox/imports/example.png"))
+  assert_eq(inbox_import_attachment_extension("image/png"), ".png")
+  assert_eq(inbox_import_attachment_extension("audio/mpeg"), ".mp3")
+  assert_eq(inbox_import_attachment_extension("unknown/type"), ".bin")
 }
 
 ///|
