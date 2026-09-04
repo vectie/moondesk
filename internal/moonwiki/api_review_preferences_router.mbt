@@ -162,6 +162,17 @@ async fn route_review_preferences_api(
       }
       true
     }
+    ["api", "living-artifacts"] => {
+      let endpoint = @desk.living_artifacts_route()
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_living_artifacts(workspace_root, request_path, method_, conn)
+      } else if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_update_living_artifact(workspace_root, body, method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     _ => false
   }
 }

@@ -424,6 +424,11 @@ pub fn source_subscriptions_route() -> String {
 }
 
 ///|
+pub fn living_artifacts_route() -> String {
+  desktop_api_path(["api", "living-artifacts"])
+}
+
+///|
 pub fn books_endpoint_url(endpoint : String) -> String {
   desktop_api_path(["api", "books"]) + "/" + url_path(endpoint)
 }
@@ -696,6 +701,7 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     desktop_api_route_contract(source_subscriptions_route(), [
       "GET", "HEAD", "POST",
     ]),
+    desktop_api_route_contract(living_artifacts_route(), ["GET", "HEAD", "POST"]),
   ]
 }
 
