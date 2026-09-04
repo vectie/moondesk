@@ -81,6 +81,8 @@ pub fn infer_entry_kind(StringView, is_directory? : Bool) -> EntryKind
 
 pub fn infer_source_layer(StringView) -> SourceLayer
 
+pub fn learning_proposals_route() -> String
+
 pub fn moonclaw_endpoint_url(String) -> String
 
 pub fn moonclaw_route(String) -> String

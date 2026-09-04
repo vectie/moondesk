@@ -6,12 +6,29 @@ import {
   changeCategory,
   chatProjectionFingerprint,
   historyChanges,
+  learningProposalCounts,
+  learningProposalTransition,
   mergeFollowupQueues,
   modeLabel,
   officeReviewChanges,
   typedLocationLabel,
   shouldAutoSendFollowup,
 } from './workspace-features-runtime.js'
+
+test('Learning Review transitions are immutable and preserve decision counts', () => {
+  const current = [
+    { id: 'one', status: 'proposed', detail: 'First' },
+    { id: 'two', status: 'accepted', detail: 'Second' },
+  ]
+  const next = learningProposalTransition(current, {
+    id: 'one', status: 'accepted', detail: 'First',
+  })
+  assert.deepEqual(next.map(item => item.id), ['one', 'two'])
+  assert.deepEqual(learningProposalCounts(next), {
+    proposed: 0, accepted: 2, rejected: 0,
+  })
+  assert.equal(current[0].status, 'proposed')
+})
 
 test('chat projection fingerprint is constant-size and changes with streamed tails', () => {
   const first = chatProjectionFingerprint({

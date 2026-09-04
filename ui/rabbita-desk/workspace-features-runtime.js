@@ -39,6 +39,10 @@ const featureState = {
   preferences_loaded_for: '',
   preferences_status: '',
   preference_draft: null,
+  learning_proposals: [],
+  learning_loaded_for: '',
+  learning_status: '',
+  learning_draft: null,
   review_threads: [],
   review_counts: { open: 0, unread: 0, required: 0 },
   review_threads_loaded_for: '',
@@ -124,6 +128,18 @@ function reviewViewerId() {
 function boundedText(value, limit = 2400) {
   const text = String(value || '').replace(/\s+/g, ' ').trim()
   return text.length <= limit ? text : `${text.slice(0, limit - 1)}…`
+}
+
+function learningProposalTransition(records, updated) {
+  if (!updated?.id) return records
+  return [updated, ...records.filter(item => item.id !== updated.id)]
+}
+
+function learningProposalCounts(records) {
+  return records.reduce((counts, item) => ({
+    ...counts,
+    [item.status]: (counts[item.status] || 0) + 1,
+  }), { proposed: 0, accepted: 0, rejected: 0 })
 }
 
 function conversationPersistenceFingerprint(taskId, documentPath, status, chat) {
@@ -520,6 +536,54 @@ function saveAgentPreference(record) {
     })
 }
 
+function loadLearningProposals() {
+  const workspaceId = String(serverState.workspace_id || '').trim()
+  if (!workspaceId) {
+    featureState.learning_proposals = []
+    featureState.learning_loaded_for = ''
+    return
+  }
+  if (featureState.learning_loaded_for === workspaceId) return
+  featureState.learning_proposals = []
+  featureState.learning_loaded_for = workspaceId
+  fetch(`/api/learning-proposals?workspace_id=${encodeURIComponent(workspaceId)}`)
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('load failed')))
+    .then(payload => {
+      featureState.learning_proposals = Array.isArray(payload.proposals) ? payload.proposals : []
+      featureState.learning_status = ''
+      render()
+    })
+    .catch(() => {
+      featureState.learning_loaded_for = ''
+      featureState.learning_status = 'Learning Review could not be loaded'
+      render()
+    })
+}
+
+function saveLearningProposal(record) {
+  featureState.learning_status = record.action === 'propose' ? 'Saving proposal…' : 'Saving decision…'
+  fetch('/api/learning-proposals', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ workspace_id: serverState.workspace_id || '', ...record }),
+  })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('save failed')))
+    .then(saved => {
+      featureState.learning_proposals = learningProposalTransition(featureState.learning_proposals, saved)
+      featureState.learning_draft = null
+      featureState.learning_status = saved.status === 'accepted'
+        ? 'Learned for future work in this book'
+        : saved.status === 'rejected'
+          ? 'Proposal dismissed'
+          : 'Waiting for your review'
+      render()
+    })
+    .catch(() => {
+      featureState.learning_status = 'Learning proposal could not be saved'
+      render()
+    })
+}
+
 function loadDocumentReviewThreads() {
   const workspaceId = String(serverState.workspace_id || '').trim()
   const documentPath = String(serverState.selected_document || '').trim()
@@ -739,6 +803,7 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       featureState.toolbox_tab = first
       featureState.toolbox_open = true
       if (first === 'preferences') loadAgentPreferences()
+      if (first === 'learning') loadLearningProposals()
       if (first === 'review') loadDocumentReviewThreads()
       render()
       return
@@ -840,6 +905,31 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       return
     case 'preference-forget':
       saveAgentPreference({ action: 'forget', id: first })
+      return
+    case 'teach-answer':
+      featureState.learning_draft = {
+        kind: 'knowledge',
+        detail: '',
+        source: boundedText(decodeURIComponent(first), 8000),
+      }
+      featureState.toolbox_open = true
+      featureState.toolbox_tab = 'learning'
+      loadLearningProposals()
+      render()
+      return
+    case 'learning-new':
+      featureState.learning_draft = { kind: 'preference', detail: '', source: '' }
+      render()
+      return
+    case 'learning-cancel':
+      featureState.learning_draft = null
+      render()
+      return
+    case 'learning-accept':
+      saveLearningProposal({ action: 'accept', id: first })
+      return
+    case 'learning-reject':
+      saveLearningProposal({ action: 'reject', id: first })
       return
     case 'review-thread-resolve':
       saveDocumentReviewThread({ action: 'resolve', thread_id: first })
@@ -2064,6 +2154,101 @@ function renderPreferencesTab() {
   return content
 }
 
+function renderLearningTab() {
+  loadLearningProposals()
+  const content = element('div', 'document-tool-content learning-review')
+  const intro = element('div', 'document-tool-intro with-action')
+  const copy = element('div')
+  copy.append(
+    element('h3', '', 'Learning Review'),
+    element('p', '', 'Teach this book deliberately. Nothing becomes future guidance until you accept it.'),
+  )
+  intro.append(copy, button('secondary-button', 'Add learning', 'learning-new'))
+  content.append(intro)
+  const draft = featureState.learning_draft
+  if (draft) {
+    const form = element('form', 'learning-proposal-form')
+    const kind = element('select')
+    for (const [value, label] of [
+      ['knowledge', 'Knowledge'], ['preference', 'Preference'],
+      ['procedure', 'Way of working'], ['capability', 'Capability idea'],
+    ]) {
+      const option = element('option', '', label)
+      option.value = value
+      kind.append(option)
+    }
+    kind.value = draft.kind || 'knowledge'
+    const detail = element('textarea')
+    detail.placeholder = 'What should this book know or do next time?'
+    detail.required = true
+    detail.value = draft.detail || ''
+    if (draft.source) {
+      const source = element('details', 'learning-source')
+      source.append(element('summary', '', 'Answer that prompted this'), element('p', '', draft.source))
+      form.append(source)
+    }
+    const actions = element('div', 'learning-proposal-actions')
+    const submit = element('button', 'primary-button', 'Save for review')
+    submit.type = 'submit'
+    actions.append(button('secondary-button', 'Cancel', 'learning-cancel'), submit)
+    form.append(kind, detail, actions)
+    form.addEventListener('submit', event => {
+      event.preventDefault()
+      if (!detail.value.trim()) return
+      saveLearningProposal({
+        action: 'propose',
+        kind: kind.value,
+        detail: detail.value.trim(),
+        source: draft.source || '',
+      })
+    })
+    content.append(form)
+  }
+  const counts = learningProposalCounts(featureState.learning_proposals)
+  const summary = element('div', 'learning-review-summary')
+  summary.append(
+    element('span', '', `${counts.proposed} to review`),
+    element('span', '', `${counts.accepted} learned`),
+  )
+  content.append(summary)
+  const list = element('div', 'learning-proposal-list')
+  for (const item of featureState.learning_proposals) {
+    const row = element('article', `learning-proposal-row ${item.status || 'proposed'}`)
+    const heading = element('div', 'learning-proposal-heading')
+    heading.append(
+      element('strong', '', item.detail),
+      element('span', 'learning-proposal-state', item.status === 'proposed' ? 'Review' : item.status),
+    )
+    row.append(
+      heading,
+      element('small', '', item.kind === 'procedure' ? 'Way of working' : item.kind),
+    )
+    if (item.source) {
+      const source = element('details', 'learning-source')
+      source.append(element('summary', '', 'Original answer'), element('p', '', item.source))
+      row.append(source)
+    }
+    if (item.status === 'proposed') {
+      const actions = element('div', 'learning-proposal-actions')
+      actions.append(
+        button('secondary-button', 'Dismiss', 'learning-reject', [item.id]),
+        button('primary-button', 'Accept learning', 'learning-accept', [item.id]),
+      )
+      row.append(actions)
+    }
+    list.append(row)
+  }
+  if (!featureState.learning_proposals.length) {
+    list.append(element(
+      'p',
+      'document-tool-empty',
+      'No learning proposals yet. Use “Teach this book” on an answer, or add one directly.',
+    ))
+  }
+  content.append(list, element('p', 'status-line', featureState.learning_status))
+  return content
+}
+
 function renderToolbox(state) {
   const backdrop = element('div', 'document-toolbox-backdrop')
   backdrop.addEventListener('click', () => emit('close-toolbox'))
@@ -2082,7 +2267,8 @@ function renderToolbox(state) {
   tabs.setAttribute('role', 'tablist')
   for (const [id, label] of [
     ['review', 'Review'], ['threads', 'Conversations'], ['sources', 'Sources'],
-    ['history', 'History'], ['packs', 'Check packs'], ['preferences', 'Preferences'], ['inbox', 'Inbox'],
+    ['history', 'History'], ['packs', 'Check packs'], ['learning', 'Learning'],
+    ['preferences', 'Preferences'], ['inbox', 'Inbox'],
   ]) {
     const tab = button(
       `document-toolbox-tab${featureState.toolbox_tab === id ? ' active' : ''}`,
@@ -2098,6 +2284,7 @@ function renderToolbox(state) {
     sources: () => renderSourcesTab(state),
     history: renderHistoryTab,
     packs: renderPacksTab,
+    learning: renderLearningTab,
     preferences: renderPreferencesTab,
     inbox: () => renderInboxTab(state),
   })[featureState.toolbox_tab]?.() || renderReviewTab(state)
@@ -2436,6 +2623,7 @@ function enhanceChatMessages(state) {
       button('answer-action', 'Copy', 'copy-answer', [encoded], { label: 'Copy answer as Markdown' }),
       button('answer-action', 'Use in document', 'use-answer', [encoded]),
       button('answer-action', 'Pin', 'pin-answer', [encoded], { label: 'Pin answer to synthesis' }),
+      button('answer-action', 'Teach this book', 'teach-answer', [encoded]),
     )
     node.append(actions)
     const citations = sourceEntries({ ...state, chat: [entry] })
@@ -2785,6 +2973,8 @@ export {
   chatProjectionFingerprint,
   conversationPersistenceFingerprint,
   historyChanges,
+  learningProposalCounts,
+  learningProposalTransition,
   mergeFollowupQueues,
   modeLabel,
   officeReviewChanges,

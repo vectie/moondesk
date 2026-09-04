@@ -409,6 +409,11 @@ pub fn agent_preferences_route() -> String {
 }
 
 ///|
+pub fn learning_proposals_route() -> String {
+  desktop_api_path(["api", "learning-proposals"])
+}
+
+///|
 pub fn books_endpoint_url(endpoint : String) -> String {
   desktop_api_path(["api", "books"]) + "/" + url_path(endpoint)
 }
@@ -672,6 +677,9 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     ]),
     desktop_api_route_contract(preferences_tags_route(), ["GET", "HEAD", "POST"]),
     desktop_api_route_contract(agent_preferences_route(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_api_route_contract(learning_proposals_route(), [
       "GET", "HEAD", "POST",
     ]),
   ]

@@ -60,6 +60,12 @@ async fn moonclaw_preferences_for_prompt(
       }
     }
   }
+  for learned in accepted_learning_for_prompt(workspace_root, workspace_id) {
+    if lines.length() >= 40 {
+      break
+    }
+    lines.push(learned)
+  }
   {
     "context": lines.join("\n"),
     "count": lines.length(),

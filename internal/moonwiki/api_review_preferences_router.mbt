@@ -129,6 +129,17 @@ async fn route_review_preferences_api(
       }
       true
     }
+    ["api", "learning-proposals"] => {
+      let endpoint = @desk.learning_proposals_route()
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_learning_proposals(workspace_root, request_path, method_, conn)
+      } else if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_update_learning_proposal(workspace_root, body, method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     _ => false
   }
 }
