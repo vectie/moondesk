@@ -11,6 +11,8 @@ import {
   mergeFollowupQueues,
   modeLabel,
   officeReviewChanges,
+  reviewPackageFromState,
+  reviewPackageHtml,
   reviewRoomProjection,
   typedLocationLabel,
   shouldAutoSendFollowup,
@@ -74,6 +76,32 @@ test('Review room projection pins decisions first and deduplicates participants'
   assert.deepEqual(room.threads.map(item => item.id), ['pinned', 'open'])
   assert.deepEqual(room.participants, ['You', 'Alex', 'Agent'])
   assert.deepEqual(records.map(item => item.id), ['open', 'reply', 'pinned'])
+})
+
+test('Review packages are bounded, grouped, and HTML escaped', () => {
+  const packageData = reviewPackageFromState(
+    {
+      workspace: 'Board <Book>',
+      selected_document: 'documents/brief.docx',
+      chat: [
+        { role: 'tool', content: 'hidden' },
+        { role: 'user', content: 'Check <script>alert(1)</script>' },
+      ],
+    },
+    [
+      { id: 'decision', kind: 'thread', detail: 'Approve', pinned: true },
+      { id: 'reply', kind: 'reply', thread_id: 'decision', author: 'Alex', detail: 'Agreed' },
+    ],
+    [{ label: 'Forecast', type: 'workspace', value: 'data/forecast.xlsx' }],
+    '2026-09-04T15:00:00Z',
+  )
+  assert.equal(packageData.contract, 'moondesk.review-package.v1')
+  assert.equal(packageData.conversation.length, 1)
+  assert.equal(packageData.discussions[0].replies[0].author, 'Alex')
+  const html = reviewPackageHtml(packageData)
+  assert.equal(html.includes('<script>alert(1)</script>'), false)
+  assert.equal(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'), true)
+  assert.equal(html.includes('Pinned decisions'), true)
 })
 
 test('chat projection fingerprint is constant-size and changes with streamed tails', () => {

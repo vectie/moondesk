@@ -109,6 +109,9 @@ const checkPacks = [
   },
 ]
 
+const ReviewPackageMaxConversationEntries = 80
+const ReviewPackageEntryMaxChars = 48_000
+
 function readStored(key, fallback) {
   try {
     const value = JSON.parse(globalThis.localStorage?.getItem(key) || 'null')
@@ -190,6 +193,87 @@ function reviewRoomProjection(records, suppliedParticipants = []) {
       ...threads.filter(item => item.pinned !== true),
     ],
   }
+}
+
+function reviewPackageFromState(state, records, evidence, preparedAt) {
+  const room = reviewRoomProjection(records)
+  const replies = records.filter(item => item.kind === 'reply')
+  return {
+    contract: 'moondesk.review-package.v1',
+    title: `${state.workspace || 'MoonDesk workspace'} — Review Package`,
+    workspace: state.workspace || 'MoonDesk workspace',
+    document: state.selected_document || '',
+    prepared_at: preparedAt,
+    conversation: (state.chat || [])
+      .filter(entry => entry.role === 'user' || entry.role === 'assistant')
+      .slice(-ReviewPackageMaxConversationEntries)
+      .map(entry => ({
+        role: entry.role,
+        content: String(entry.content || '').slice(0, ReviewPackageEntryMaxChars),
+      })),
+    discussions: room.threads.map(thread => ({
+      id: thread.id,
+      anchor: thread.anchor_label || 'Document',
+      detail: boundedText(thread.detail, ReviewPackageEntryMaxChars),
+      assigned_to: thread.assigned_to || '',
+      status: thread.status || 'open',
+      pinned: thread.pinned === true,
+      replies: replies
+        .filter(reply => reply.thread_id === thread.id)
+        .map(reply => ({
+          author: reply.author || 'Reply',
+          detail: boundedText(reply.detail, ReviewPackageEntryMaxChars),
+        })),
+    })),
+    evidence: (evidence || []).map(item => ({
+      label: boundedText(item.label, 240),
+      type: item.type || 'source',
+      value: boundedText(item.value, 4_096),
+    })),
+  }
+}
+
+function htmlEscape(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character])
+}
+
+function reviewPackageHtml(data) {
+  const discussion = item => `<article class="discussion${item.pinned ? ' pinned' : ''}"><div class="discussion-heading"><strong>${htmlEscape(item.anchor)}</strong><span>${item.pinned ? 'Pinned decision' : htmlEscape(item.status)}</span></div><p>${htmlEscape(item.detail)}</p><div class="meta">${item.assigned_to ? `Assigned to ${htmlEscape(item.assigned_to)} · ` : ''}${htmlEscape(item.status)}</div>${(item.replies || []).map(reply => `<blockquote><strong>${htmlEscape(reply.author)}</strong><br>${htmlEscape(reply.detail)}</blockquote>`).join('')}</article>`
+  const section = (title, rows, renderRow) => rows?.length
+    ? `<section><h2>${htmlEscape(title)}</h2>${rows.map(renderRow).join('')}</section>`
+    : ''
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${htmlEscape(data.title)}</title><style>
+body{font:15px/1.55 Inter,system-ui,sans-serif;max-width:900px;margin:0 auto;padding:46px 26px;color:#1f2937;background:#fff}header{border-bottom:2px solid #dbe4ee;padding-bottom:20px;margin-bottom:28px}h1{font-size:28px;margin:0 0 8px}h2{font-size:18px;margin-top:32px}.meta{color:#667085;font-size:12px}.discussion,.message,.evidence{padding:12px;border:1px solid #e0e7ef;border-radius:9px;margin:8px 0}.discussion.pinned{border-color:#8baacb;background:#f5f9fe}.discussion-heading{display:flex;justify-content:space-between;gap:12px}.discussion-heading span{color:#58708a;font-size:11px;font-weight:700}blockquote{margin:10px 0 0 18px;padding-left:10px;border-left:2px solid #cbd8e6}.user{background:#f3f7fd}@media print{body{padding:18px}}</style></head><body>
+<header><div class="meta">MoonDesk Review Package · ${htmlEscape(data.prepared_at)}</div><h1>${htmlEscape(data.title)}</h1><div class="meta">Document: ${htmlEscape(data.document || 'Workspace')}</div><p>Review the pinned decisions and open discussions. Return comments with the document anchor and discussion wording so they can be resolved in the MoonDesk Review Room.</p></header>
+${section('Pinned decisions', data.discussions?.filter(item => item.pinned), discussion)}
+${section('Open discussions', data.discussions?.filter(item => !item.pinned), discussion)}
+${section('Conversation excerpt', data.conversation, item => `<article class="message ${item.role === 'user' ? 'user' : ''}"><strong>${item.role === 'user' ? 'You' : 'MoonDesk'}</strong><p>${htmlEscape(item.content).replace(/\n/g, '<br>')}</p></article>`)}
+${section('Evidence', data.evidence, item => `<div class="evidence"><strong>${htmlEscape(item.label)}</strong><div class="meta">${htmlEscape(item.type)} · ${htmlEscape(item.value)}</div></div>`)}
+</body></html>`
+}
+
+function downloadReviewPackage() {
+  const data = reviewPackageFromState(
+    serverState,
+    featureState.review_threads,
+    sourceEntries(serverState),
+    new Date().toISOString(),
+  )
+  const blob = new Blob([reviewPackageHtml(data)], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const stem = String(data.workspace || 'moondesk-review').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'moondesk-review'
+  link.href = url
+  link.download = `${stem}-review-package.html`
+  document.body.append(link)
+  link.click()
+  setTimeout(() => {
+    link.remove()
+    URL.revokeObjectURL(url)
+  }, 1000)
 }
 
 function conversationPersistenceFingerprint(taskId, documentPath, status, chat) {
@@ -1199,6 +1283,11 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       render()
       return
     }
+    case 'review-package':
+      downloadReviewPackage()
+      featureState.review_thread_status = 'Review package download started'
+      render()
+      return
     case 'review-mark-read':
       markDocumentReviewsRead()
       return
@@ -2039,8 +2128,9 @@ function renderReviewTab(state) {
   loadDocumentReviewThreads()
   const markers = reviewMarkers(state)
   const open = markers.filter(marker => !marker.reviewed)
-  const intro = element('div', 'document-tool-intro')
-  intro.append(
+  const intro = element('div', 'document-tool-intro with-action')
+  const introCopy = element('div')
+  introCopy.append(
     element('h3', '', 'Review room'),
     element('p', '', featureState.review_counts.open
       ? `${featureState.review_counts.open} open discussion${featureState.review_counts.open === 1 ? '' : 's'}${featureState.review_counts.required ? ` · ${featureState.review_counts.required} assigned` : ''}${featureState.review_counts.pinned ? ` · ${featureState.review_counts.pinned} pinned` : ''}${featureState.review_counts.unread ? ` · ${featureState.review_counts.unread} unread` : ''}.`
@@ -2048,9 +2138,12 @@ function renderReviewTab(state) {
         ? `${open.length} open item${open.length === 1 ? '' : 's'} across this document.`
       : 'No open review items. MoonDesk will interrupt only for a material warning.'),
   )
+  const introActions = element('div', 'review-room-header-actions')
   if (featureState.review_counts.unread) {
-    intro.append(button('secondary-button', 'Mark discussions read', 'review-mark-read'))
+    introActions.append(button('secondary-button', 'Mark read', 'review-mark-read'))
   }
+  introActions.append(button('secondary-button', 'Prepare review package', 'review-package'))
+  intro.append(introCopy, introActions)
   content.append(intro)
   const room = reviewRoomProjection(
     featureState.review_threads,
@@ -3438,6 +3531,8 @@ export {
   modeLabel,
   officeReviewChanges,
   projectChatFromDom,
+  reviewPackageFromState,
+  reviewPackageHtml,
   reviewRoomProjection,
   shouldAutoSendFollowup,
   shouldRestoreDocumentThread,

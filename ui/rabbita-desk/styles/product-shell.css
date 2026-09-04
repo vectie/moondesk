@@ -829,7 +829,8 @@ body {
 
 .review-room-participants,
 .review-room-thread-heading,
-.review-room-thread-actions {
+.review-room-thread-actions,
+.review-room-header-actions {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -862,6 +863,11 @@ body {
 }
 
 .review-room-thread-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.review-room-header-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
 }
