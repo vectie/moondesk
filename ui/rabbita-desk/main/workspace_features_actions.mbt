@@ -92,6 +92,18 @@ fn update_workspace_features(
       )
       (@rabbita.batch([mode_cmd, chat_cmd]), chatting)
     }
+    "try-another" => {
+      let fresh = {
+        ..model,
+        wiki_agent_task_id: "",
+        wiki_chat_entries: [],
+        wiki_chat_stream_task_id: "",
+        wiki_chat_stream_cursor: "start",
+        request_prompt: alternative_version_prompt(first),
+        request_status: "draft",
+      }
+      update_wiki_chat(dispatch, SubmitWikiChat, fresh)
+    }
     "add-context" =>
       add_wiki_chat_context(dispatch, model, first, second, third)
     "remove-context" =>
@@ -131,6 +143,20 @@ fn update_workspace_features(
     "run-goal" => run_standing_goal_now(dispatch, model, first)
     _ => (@rabbita.none, model)
   }
+}
+
+///|
+const AlternativeVersionContextMaxChars : Int = 48_000
+
+///|
+fn alternative_version_prompt(previous : String) -> String {
+  let bounded = if previous.length() > AlternativeVersionContextMaxChars {
+    previous[:AlternativeVersionContextMaxChars].to_owned()
+  } else {
+    previous
+  }
+  "Create a genuinely different version for the same selected document and goal. Preserve supported facts and source references, but change the structure or approach where that improves the result. Keep proposed document edits reviewable before saving.\n\nPrevious version:\n" +
+  bounded
 }
 
 ///|

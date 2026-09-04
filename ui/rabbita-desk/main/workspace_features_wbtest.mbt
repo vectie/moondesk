@@ -144,6 +144,32 @@ test "background results append once and reject malformed events" {
 }
 
 ///|
+test "Try another version starts a fresh general-agent conversation" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let base = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    wiki_agent_task_id: "task-original",
+    wiki_chat_stream_task_id: "task-original",
+    wiki_chat_stream_cursor: "42",
+    wiki_chat_entries: [
+      { role: "user", content: "Prepare the brief" },
+      { role: "assistant", content: "Original structure" },
+    ],
+  }
+  let (_, next) = update_workspace_features(
+    dispatch,
+    workspace_feature_msg("try-another", first="Original structure"),
+    base,
+  )
+  assert_eq(next.wiki_agent_task_id, "")
+  assert_eq(next.wiki_chat_stream_cursor, "start")
+  assert_eq(next.wiki_chat_entries.length(), 0)
+  assert_true(next.request_prompt.contains("genuinely different version"))
+  assert_true(next.request_prompt.contains("Original structure"))
+}
+
+///|
 #warnings("-alert_unstable")
 test "PDF preview uses the bounded workspace viewer surface" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }

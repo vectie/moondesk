@@ -2754,6 +2754,7 @@ function enhanceChatMessages(state) {
       button('answer-action', 'Copy', 'copy-answer', [encoded], { label: 'Copy answer as Markdown' }),
       button('answer-action', 'Use in document', 'use-answer', [encoded]),
       button('answer-action', 'Pin', 'pin-answer', [encoded], { label: 'Pin answer to synthesis' }),
+      button('answer-action', 'Try another version', 'try-another', [encoded]),
       button('answer-action', 'Teach this book', 'teach-answer', [encoded]),
     )
     node.append(actions)
