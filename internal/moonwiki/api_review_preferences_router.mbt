@@ -140,6 +140,17 @@ async fn route_review_preferences_api(
       }
       true
     }
+    ["api", "task-recipes"] => {
+      let endpoint = @desk.task_recipes_route()
+      if desktop_api_route_accepts_read(endpoint, method_) {
+        handle_task_recipe_catalog(method_, conn)
+      } else if desktop_api_route_accepts_post(endpoint, method_) {
+        handle_create_task_recipe_instance(workspace_root, body, method_, conn)
+      } else {
+        send_desktop_api_method_not_allowed(conn, method_, endpoint)
+      }
+      true
+    }
     _ => false
   }
 }

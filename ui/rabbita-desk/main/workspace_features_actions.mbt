@@ -18,6 +18,18 @@ fn update_workspace_features(
         workspace_feature_signal_cmd("open-toolbox", first),
         { ..model, command_open: false },
       )
+    "open-recipe" => {
+      let (select_cmd, selected) = select_workspace_action(
+        dispatch, first, model,
+      )
+      (
+        @rabbita.batch([
+          select_cmd,
+          workspace_feature_signal_cmd("open-recipe", ""),
+        ]),
+        { ..selected, command_open: false },
+      )
+    }
     "query" =>
       update_workspace_surface_actions(dispatch, SetSearchQuery(first), model)
     "search" =>
@@ -65,6 +77,20 @@ fn update_workspace_features(
     "submit-chat-prompt" => {
       let staged = { ..model, request_prompt: first, request_status: "draft" }
       update_wiki_chat(dispatch, SubmitWikiChat, staged)
+    }
+    "start-recipe" => {
+      let staged = { ..model, request_prompt: first, request_status: "draft" }
+      let (mode_cmd, in_wiki) = select_workspace_mode_action(
+        dispatch,
+        MoonWiki,
+        staged,
+      )
+      let (chat_cmd, chatting) = update_wiki_chat(
+        dispatch,
+        SubmitWikiChat,
+        in_wiki,
+      )
+      (@rabbita.batch([mode_cmd, chat_cmd]), chatting)
     }
     "add-context" =>
       add_wiki_chat_context(dispatch, model, first, second, third)

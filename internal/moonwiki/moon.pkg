@@ -161,6 +161,8 @@ options(
     "town_service_config.mbt": [ "native" ],
     "town_service_config_wbtest.mbt": [ "native" ],
     "town_standing_goal_handlers.mbt": [ "native" ],
+    "task_recipe_handlers.mbt": [ "native" ],
+    "task_recipe_handlers_wbtest.mbt": [ "native" ],
     "workspace_api_handlers.mbt": [ "native" ],
     "workspace_entry_handlers.mbt": [ "native" ],
     "workspace_entry_helpers.mbt": [ "native" ],

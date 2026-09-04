@@ -245,6 +245,7 @@ test "Agent Library presents readable passports without developer controls" {
   assert_true(markup.contains("Evidence-backed answers"))
   assert_true(markup.contains("Compare sources"))
   assert_true(markup.contains("data-testid=\"agent-select\""))
+  assert_true(markup.contains("data-testid=\"agent-start-task\""))
   assert_false(markup.contains("reasoning"))
   assert_false(markup.contains("terminal"))
 }

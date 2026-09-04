@@ -43,6 +43,10 @@ const featureState = {
   learning_loaded_for: '',
   learning_status: '',
   learning_draft: null,
+  task_recipes: [],
+  task_recipes_loaded: false,
+  task_recipe_selected: '',
+  task_recipe_status: '',
   review_threads: [],
   review_counts: { open: 0, unread: 0, required: 0 },
   review_threads_loaded_for: '',
@@ -140,6 +144,12 @@ function learningProposalCounts(records) {
     ...counts,
     [item.status]: (counts[item.status] || 0) + 1,
   }), { proposed: 0, accepted: 0, rejected: 0 })
+}
+
+function taskRecipeMissingFields(recipe, inputs) {
+  return (recipe?.fields || [])
+    .filter(field => field.required === true && !String(inputs?.[field.key] || '').trim())
+    .map(field => field.key)
 }
 
 function conversationPersistenceFingerprint(taskId, documentPath, status, chat) {
@@ -584,6 +594,56 @@ function saveLearningProposal(record) {
     })
 }
 
+function loadTaskRecipes() {
+  if (featureState.task_recipes_loaded) return
+  featureState.task_recipes_loaded = true
+  featureState.task_recipe_status = 'Loading tasks…'
+  fetch('/api/task-recipes')
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('load failed')))
+    .then(payload => {
+      featureState.task_recipes = Array.isArray(payload.recipes) ? payload.recipes : []
+      featureState.task_recipe_status = ''
+      render()
+    })
+    .catch(() => {
+      featureState.task_recipes_loaded = false
+      featureState.task_recipe_status = 'Task recipes could not be loaded'
+      render()
+    })
+}
+
+function startTaskRecipe(recipeId, inputs) {
+  const recipe = featureState.task_recipes.find(item => item.recipe_id === recipeId)
+  const missing = taskRecipeMissingFields(recipe, inputs)
+  if (missing.length) {
+    featureState.task_recipe_status = 'Complete the required fields'
+    render()
+    return
+  }
+  featureState.task_recipe_status = 'Preparing your task…'
+  fetch('/api/task-recipes', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      workspace_id: serverState.workspace_id || '',
+      recipe_id: recipeId,
+      inputs,
+    }),
+  })
+    .then(response => response.ok ? response.json() : Promise.reject(new Error('start failed')))
+    .then(instance => {
+      featureState.task_recipe_status = 'Starting in chat…'
+      featureState.toolbox_open = false
+      featureState.task_recipe_selected = ''
+      forward('start-recipe', instance.prompt || '')
+      render()
+    })
+    .catch(() => {
+      featureState.task_recipe_status = 'This task could not be prepared'
+      render()
+    })
+}
+
 function loadDocumentReviewThreads() {
   const workspaceId = String(serverState.workspace_id || '').trim()
   const documentPath = String(serverState.selected_document || '').trim()
@@ -804,6 +864,7 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       featureState.toolbox_open = true
       if (first === 'preferences') loadAgentPreferences()
       if (first === 'learning') loadLearningProposals()
+      if (first === 'tasks') loadTaskRecipes()
       if (first === 'review') loadDocumentReviewThreads()
       render()
       return
@@ -930,6 +991,16 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       return
     case 'learning-reject':
       saveLearningProposal({ action: 'reject', id: first })
+      return
+    case 'recipe-select':
+      featureState.task_recipe_selected = first
+      featureState.task_recipe_status = ''
+      render()
+      return
+    case 'recipe-back':
+      featureState.task_recipe_selected = ''
+      featureState.task_recipe_status = ''
+      render()
       return
     case 'review-thread-resolve':
       saveDocumentReviewThread({ action: 'resolve', thread_id: first })
@@ -2249,6 +2320,65 @@ function renderLearningTab() {
   return content
 }
 
+function renderTaskRecipesTab() {
+  loadTaskRecipes()
+  const content = element('div', 'document-tool-content task-recipes')
+  const selected = featureState.task_recipes.find(item =>
+    item.recipe_id === featureState.task_recipe_selected)
+  if (!selected) {
+    const intro = element('div', 'document-tool-intro')
+    intro.append(
+      element('h3', '', 'Start a task'),
+      element('p', '', 'Choose a repeatable task and answer only the decisions it needs.'),
+    )
+    content.append(intro)
+    const list = element('div', 'task-recipe-list')
+    for (const recipe of featureState.task_recipes) {
+      const card = element('article', 'task-recipe-card')
+      card.append(
+        element('strong', '', recipe.title),
+        element('p', '', recipe.summary),
+        element('small', '', recipe.deliverable),
+        button('primary-button', 'Use this task', 'recipe-select', [recipe.recipe_id]),
+      )
+      list.append(card)
+    }
+    if (!featureState.task_recipes.length && !featureState.task_recipe_status) {
+      list.append(element('p', 'document-tool-empty', 'No task recipes are available.'))
+    }
+    content.append(list, element('p', 'status-line', featureState.task_recipe_status))
+    return content
+  }
+  const intro = element('div', 'document-tool-intro with-action')
+  const copy = element('div')
+  copy.append(element('h3', '', selected.title), element('p', '', selected.summary))
+  intro.append(copy, button('secondary-button', 'Back', 'recipe-back'))
+  const form = element('form', 'task-recipe-form')
+  for (const field of selected.fields || []) {
+    const label = element('label', 'task-recipe-field')
+    const caption = element('span', '', field.label)
+    if (field.required === true) caption.append(element('em', '', 'Required'))
+    const input = element('input')
+    input.name = field.key
+    input.placeholder = field.placeholder || ''
+    input.required = field.required === true
+    label.append(caption, input)
+    form.append(label)
+  }
+  const deliverable = element('div', 'task-recipe-deliverable')
+  deliverable.append(element('strong', '', 'You will get'), element('p', '', selected.deliverable))
+  const submit = element('button', 'primary-button', 'Start in chat')
+  submit.type = 'submit'
+  form.append(deliverable, submit)
+  form.addEventListener('submit', event => {
+    event.preventDefault()
+    const inputs = Object.fromEntries(new FormData(form).entries())
+    startTaskRecipe(selected.recipe_id, inputs)
+  })
+  content.append(intro, form, element('p', 'status-line', featureState.task_recipe_status))
+  return content
+}
+
 function renderToolbox(state) {
   const backdrop = element('div', 'document-toolbox-backdrop')
   backdrop.addEventListener('click', () => emit('close-toolbox'))
@@ -2266,7 +2396,7 @@ function renderToolbox(state) {
   const tabs = element('div', 'document-toolbox-tabs')
   tabs.setAttribute('role', 'tablist')
   for (const [id, label] of [
-    ['review', 'Review'], ['threads', 'Conversations'], ['sources', 'Sources'],
+    ['review', 'Review'], ['tasks', 'Tasks'], ['threads', 'Conversations'], ['sources', 'Sources'],
     ['history', 'History'], ['packs', 'Check packs'], ['learning', 'Learning'],
     ['preferences', 'Preferences'], ['inbox', 'Inbox'],
   ]) {
@@ -2280,6 +2410,7 @@ function renderToolbox(state) {
   }
   const body = ({
     review: () => renderReviewTab(state),
+    tasks: renderTaskRecipesTab,
     threads: renderThreadsTab,
     sources: () => renderSourcesTab(state),
     history: renderHistoryTab,
@@ -2835,6 +2966,14 @@ globalThis.__moondeskWorkspaceFeatureSignal = (action, value = '') => {
     featureState.synthesis_open = false
     featureState.toolbox_open = true
     featureState.toolbox_tab = value || 'review'
+  } else if (action === 'open-recipe') {
+    featureState.search_open = false
+    featureState.synthesis_open = false
+    featureState.toolbox_open = true
+    featureState.toolbox_tab = 'tasks'
+    featureState.task_recipe_selected = ''
+    featureState.task_recipe_status = ''
+    loadTaskRecipes()
   } else if (action === 'synthesis-error') {
     featureState.synthesis_open = true
     featureState.synthesis_status = value
@@ -2980,6 +3119,7 @@ export {
   officeReviewChanges,
   projectChatFromDom,
   shouldAutoSendFollowup,
+  taskRecipeMissingFields,
   typedSourceEntries,
   typedLocationLabel,
 }

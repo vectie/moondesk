@@ -93,6 +93,14 @@ fn render_agent_passport(
         ]),
       ]),
       div(class="agent-passport-actions", [
+        button(
+          class="secondary-button",
+          attrs=@html.Attrs::build().data_set("testid", "agent-start-task"),
+          on_click=dispatch(
+            workspace_feature_msg("open-recipe", first=agent.workspace_id),
+          ),
+          "Start a task",
+        ),
         if selected {
           button(
             class="primary-button",

@@ -173,6 +173,8 @@ pub fn search_url(String) -> String
 
 pub fn stable_id(String, String) -> String
 
+pub fn task_recipes_route() -> String
+
 pub fn town_calendar_url() -> String
 
 pub fn town_endpoint_url(String) -> String

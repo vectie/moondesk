@@ -70,6 +70,7 @@ test "product and system desktop routes live in core boundary" {
   assert_eq(@core.desktop_capabilities_url(), "/api/desktop/capabilities")
   assert_eq(@core.agent_catalog_url(), "/api/desktop/agents")
   assert_eq(@core.learning_proposals_route(), "/api/learning-proposals")
+  assert_eq(@core.task_recipes_route(), "/api/task-recipes")
   assert_eq(@core.moonclaw_endpoint_url("daemon"), "/api/moonclaw/daemon")
   assert_eq(
     @core.moonclaw_endpoint_url("auth/codex/start"),

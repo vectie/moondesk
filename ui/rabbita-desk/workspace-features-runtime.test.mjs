@@ -13,6 +13,7 @@ import {
   officeReviewChanges,
   typedLocationLabel,
   shouldAutoSendFollowup,
+  taskRecipeMissingFields,
 } from './workspace-features-runtime.js'
 
 test('Learning Review transitions are immutable and preserve decision counts', () => {
@@ -28,6 +29,22 @@ test('Learning Review transitions are immutable and preserve decision counts', (
     proposed: 0, accepted: 2, rejected: 0,
   })
   assert.equal(current[0].status, 'proposed')
+})
+
+test('Task recipe validation reports only missing required decisions', () => {
+  const recipe = { fields: [
+    { key: 'audience', required: true },
+    { key: 'tone', required: false },
+    { key: 'period', required: true },
+  ] }
+  assert.deepEqual(
+    taskRecipeMissingFields(recipe, { audience: 'Board', tone: '' }),
+    ['period'],
+  )
+  assert.deepEqual(
+    taskRecipeMissingFields(recipe, { audience: 'Board', period: 'Q3' }),
+    [],
+  )
 })
 
 test('chat projection fingerprint is constant-size and changes with streamed tails', () => {
