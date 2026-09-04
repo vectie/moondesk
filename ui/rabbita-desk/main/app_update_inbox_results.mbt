@@ -45,10 +45,9 @@ fn update_inbox_results(
     ImportedInbox(Ok(created)) =>
       if task_material_capture_active(model) {
         (
-          sync_activity_cmd(Town),
+          sync_activity_cmd(model.activity),
           {
             ..model,
-            activity: Town,
             command_open: false,
             selected_workspace_id: created.workspace_id,
             import_url: "",
@@ -143,10 +142,9 @@ fn update_inbox_results(
         }
         if task_material_capture_active(model) {
           (
-            sync_activity_batch(Town, @rabbita.batch(cmds)),
+            sync_activity_batch(model.activity, @rabbita.batch(cmds)),
             {
               ..model,
-              activity: Town,
               command_open: false,
               request_material_status: "adding \{files.length()} file(s)",
             },

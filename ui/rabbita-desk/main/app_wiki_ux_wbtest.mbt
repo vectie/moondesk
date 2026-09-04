@@ -666,6 +666,35 @@ test "wiki activity file picker opens without navigating to Inbox" {
 }
 
 ///|
+test "normal Pages workspace captures imports for the visible general chat" {
+  let model = {
+    ..init_model(),
+    workspace_mode: MoonWiki,
+    activity: Files,
+    selected_workspace_id: "book-demo",
+  }
+  assert_true(task_material_capture_active(model))
+  let (_, next) = update_inbox_results(
+    fn(_msg) { @rabbita.none },
+    ImportedInbox(
+      Ok({
+        ok: true,
+        workspace_id: "book-demo",
+        path: "inbox/imports/capture.md",
+        kind: "paste",
+        data_path: "inbox/imports/capture.png",
+      }),
+    ),
+    model,
+  )
+  assert_true(next.activity is Files)
+  assert_true(
+    next.request_material_paths ==
+    ["inbox/imports/capture.md", "inbox/imports/capture.png"],
+  )
+}
+
+///|
 test "wiki activity removes material and clears task state after submission" {
   let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
   let model = {

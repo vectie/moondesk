@@ -78,13 +78,13 @@ fn update_inbox_actions(
         }
       } else {
         let target = if task_material_capture_active(model) {
-          Town
+          model.activity
         } else {
           Inbox
         }
         (
           sync_activity_batch(target, pick_import_files_cmd(dispatch)),
-          if target is Town {
+          if task_material_capture_active(model) {
             {
               ..model,
               activity: Town,
@@ -125,7 +125,7 @@ fn update_inbox_actions(
 
 ///|
 fn task_material_capture_active(model : Model) -> Bool {
-  model.workspace_mode == MoonWiki && model.activity == Town
+  model.workspace_mode == MoonWiki
 }
 
 ///|
