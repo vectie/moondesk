@@ -57,11 +57,57 @@ fn document_review_counts(
       json_string(record, "assigned_to", default="") != ""
     })
     .length()
+  let pinned_count = records
+    .filter(record => {
+      json_string(record, "kind", default="") == "thread" &&
+      json_bool(record, "pinned", default=false)
+    })
+    .length()
   {
     "open_count": open_count,
     "unread_count": unread_count,
     "required_action_count": required_action_count,
+    "pinned_count": pinned_count,
   }
+}
+
+///|
+fn document_review_participants(records : Array[Json]) -> Array[String] {
+  let participants : Array[String] = []
+  for record in records {
+    for
+      value in [
+        json_string(record, "author", default="").trim().to_owned(),
+        json_string(record, "assigned_to", default="").trim().to_owned(),
+      ] {
+      if value != "" && !participants.contains(value) {
+        participants.push(value)
+      }
+    }
+  }
+  participants
+}
+
+///|
+fn document_review_thread_decision(
+  record : Json,
+  action : String,
+  now : String,
+  revision : Int,
+) -> Json {
+  let decided = match action {
+    "resolve" =>
+      @mooncore.session_with_field(record, "status", "resolved".to_json())
+    "pin" => @mooncore.session_with_field(record, "pinned", true.to_json())
+    "unpin" => @mooncore.session_with_field(record, "pinned", false.to_json())
+    _ => record
+  }
+  let updated = @mooncore.session_with_field(
+    decided,
+    "updated_at",
+    now.to_json(),
+  )
+  @mooncore.session_with_field(updated, "revision", (revision + 1).to_json())
 }
 
 ///|
@@ -110,6 +156,7 @@ async fn handle_document_review_threads(
     })
     .map(record => document_review_record_with_anchor_state(record, baseline))
   let counts = document_review_counts(records, viewer_id, last_read_at)
+  let participants = document_review_participants(records)
   send_json(conn, method_, {
     "contract": "moondesk.document_review_threads.v1",
     "threads": Json::array(records),
@@ -119,6 +166,10 @@ async fn handle_document_review_threads(
       counts,
       "required_action_count",
       default=0,
+    ),
+    "pinned_count": json_int(counts, "pinned_count", default=0),
+    "participants": Json::array(
+      participants.map(participant => participant.to_json()),
     ),
   })
 }
@@ -150,7 +201,7 @@ async fn handle_save_document_review_thread(
     .to_owned()
   if workspace_id == "" ||
     document_path == "" ||
-    (!["resolve", "mark-read"].contains(action) && detail == "") {
+    (!["resolve", "pin", "unpin", "mark-read"].contains(action) && detail == "") {
     send_api_error(
       conn, method_, 400, "Bad Request", "Review thread fields are required",
     )
@@ -206,7 +257,7 @@ async fn handle_save_document_review_thread(
       break
     }
   }
-  if ["resolve", "reply"].contains(action) && parent is None {
+  if ["resolve", "reply", "pin", "unpin"].contains(action) && parent is None {
     send_api_error(conn, method_, 404, "Not Found", "Unknown review thread")
     return
   }
@@ -228,35 +279,27 @@ async fn handle_save_document_review_thread(
     })
     return
   }
-  if action == "resolve" {
+  if ["resolve", "pin", "unpin"].contains(action) {
     if thread_id == "" {
       send_api_error(conn, method_, 400, "Bad Request", "thread_id is required")
       return
     }
+    let now = @async.now().to_string()
+    let mut updated_thread : Json = Json::null()
     let next = records.map(record => {
       if json_string(record, "id", default="") == thread_id &&
         json_string(record, "kind", default="") == "thread" {
-        let value = @mooncore.session_with_field(
-          record,
-          "status",
-          "resolved".to_json(),
+        let updated = document_review_thread_decision(
+          record, action, now, parent_revision,
         )
-        let updated = @mooncore.session_with_field(
-          value,
-          "updated_at",
-          @async.now().to_string().to_json(),
-        )
-        @mooncore.session_with_field(
-          updated,
-          "revision",
-          (parent_revision + 1).to_json(),
-        )
+        updated_thread = updated
+        updated
       } else {
         record
       }
     })
     write_preference_records(path, next)
-    send_json(conn, method_, { "resolved": true, "thread_id": thread_id })
+    send_json(conn, method_, updated_thread)
     return
   }
   if action == "reply" && thread_id == "" {
@@ -304,6 +347,7 @@ async fn handle_save_document_review_thread(
     "author": json_string(payload, "author", default="You"),
     "author_id": json_string(payload, "author_id", default=""),
     "status": "open",
+    "pinned": false,
     "revision": if action == "reply" {
       1
     } else {
