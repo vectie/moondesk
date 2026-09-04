@@ -13,6 +13,7 @@ import {
   officeReviewChanges,
   typedLocationLabel,
   shouldAutoSendFollowup,
+  shouldRestoreDocumentThread,
   sourceSubscriptionCounts,
   sourceSubscriptionTransition,
   taskRecipeMissingFields,
@@ -158,4 +159,11 @@ test('follow-ups advance only after a real busy-to-idle transition', () => {
   assert.equal(shouldAutoSendFollowup(true, true, false), false)
   assert.equal(shouldAutoSendFollowup(true, false, false), true)
   assert.equal(shouldAutoSendFollowup(true, false, true), false)
+})
+
+test('explicit new conversations cannot be auto-restored over by document history', () => {
+  assert.equal(shouldRestoreDocumentThread('', 0, false), true)
+  assert.equal(shouldRestoreDocumentThread('', 0, true), false)
+  assert.equal(shouldRestoreDocumentThread('task-one', 0, false), false)
+  assert.equal(shouldRestoreDocumentThread('', 2, false), false)
 })

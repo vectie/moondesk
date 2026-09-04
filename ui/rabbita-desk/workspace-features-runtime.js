@@ -168,6 +168,10 @@ function sourceSubscriptionCounts(records) {
   }), { active: 0, needs_setup: 0 })
 }
 
+function shouldRestoreDocumentThread(taskId, chatCount, alreadyHandled) {
+  return !String(taskId || '').trim() && Number(chatCount) === 0 && alreadyHandled !== true
+}
+
 function conversationPersistenceFingerprint(taskId, documentPath, status, chat) {
   const last = chat[chat.length - 1] || {}
   const content = String(last.content || '')
@@ -924,10 +928,13 @@ function updateThread(threadId, update) {
 }
 
 function maybeRestoreCurrentThread() {
-  if (serverState.task_id || (serverState.chat || []).length) return
-  if (!globalThis.__moondeskWorkspaceFeaturesDispatch) return
   const key = documentKey()
-  if (restoredDocumentKeys.has(key)) return
+  if (!shouldRestoreDocumentThread(
+    serverState.task_id,
+    (serverState.chat || []).length,
+    restoredDocumentKeys.has(key),
+  )) return
+  if (!globalThis.__moondeskWorkspaceFeaturesDispatch) return
   restoredDocumentKeys.add(key)
   const thread = currentThreads().find(item =>
     !item.archived && (item.document || '') === (serverState.selected_document || ''))
@@ -981,6 +988,7 @@ function emit(action, first = '', second = '', third = '', fourth = '') {
       render()
       return
     case 'new-thread':
+      restoredDocumentKeys.add(documentKey())
       featureState.thread_status = 'Started a new document conversation'
       forward('new-thread')
       render()
@@ -3363,6 +3371,7 @@ export {
   officeReviewChanges,
   projectChatFromDom,
   shouldAutoSendFollowup,
+  shouldRestoreDocumentThread,
   sourceSubscriptionCounts,
   sourceSubscriptionTransition,
   taskRecipeMissingFields,
