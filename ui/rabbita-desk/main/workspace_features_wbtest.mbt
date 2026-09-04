@@ -200,3 +200,35 @@ test "PDF preview uses the bounded workspace viewer surface" {
     path,
   )
 }
+
+///|
+#warnings("-alert_unstable")
+test "living artifacts use the isolated workspace viewer surface" {
+  let dispatch : Dispatch[Msg] = fn(_msg) { @rabbita.none }
+  let path = "book/site/generated/living/decisions/index.html"
+  let model = {
+    ..init_model(),
+    selected_workspace_id: "book-demo",
+    selected_path: path,
+  }
+  let markup = @rabbita.render_to_string(
+    @rabbita.static_cell(render_wiki_document_viewer(dispatch, model)),
+  )
+  assert_true(wiki_living_artifact_path_supported(path))
+  assert_false(
+    wiki_living_artifact_path_supported(
+      "book/site/generated/other/decisions/index.html",
+    ),
+  )
+  assert_true(wiki_document_path_supported(path))
+  assert_eq(wiki_document_kind_label(path), Some("Artifact"))
+  assert_true(markup.contains("data-testid=\"browser-preview-frame\""))
+  assert_true(markup.contains("data-source-path=\"" + path + "\""))
+  assert_true(markup.contains("sandbox=\"allow-scripts\""))
+  assert_true(
+    markup.contains(
+      "/api/workspaces/book-demo/site/living/decisions/index.html",
+    ),
+  )
+  assert_false(markup.contains("Open original"))
+}

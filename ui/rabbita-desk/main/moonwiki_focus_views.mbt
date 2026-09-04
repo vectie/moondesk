@@ -423,7 +423,8 @@ fn render_wiki_document_viewer(
             ),
             "Choose document",
           ),
-          if wiki_document_path_supported(model.selected_path) {
+          if wiki_document_path_supported(model.selected_path) &&
+            !wiki_living_artifact_path_supported(model.selected_path) {
             a(
               class="secondary-button link-button",
               href=raw_url(model, model.selected_path),
@@ -446,6 +447,24 @@ fn render_wiki_office_document(
   dispatch : Dispatch[Msg],
   model : Model,
 ) -> @rabbita.Html {
+  if wiki_living_artifact_path_supported(model.selected_path) {
+    return div(
+      class="site-preview embedded-browser wiki-living-artifact-preview",
+      [
+        div(class="browser-frame-stage", [
+          iframe(
+            class="site-iframe",
+            src=html_preview_url(model, model.selected_path),
+            title=@desk.display_name(model.selected_path),
+            sandbox="allow-scripts",
+            attrs=@html.Attrs::build()
+              .data_set("testid", "browser-preview-frame")
+              .data_set("source-path", model.selected_path),
+          ),
+        ]),
+      ],
+    )
+  }
   if model.selected_path.to_lower().has_suffix(".pdf") {
     return iframe(
       class="pdf-preview-frame wiki-pdf-preview-frame",
@@ -462,7 +481,9 @@ fn render_wiki_office_document(
   if !office_editor_path_supported(model.selected_path) {
     return div(class="wiki-viewer-empty", [
       h3("Open a document"),
-      p("Choose a DOCX, XLSX, PPTX, or PDF file to view it beside the chat."),
+      p(
+        "Choose a DOCX, XLSX, PPTX, PDF, or living artifact to view it beside the chat.",
+      ),
       button(
         class="primary-button",
         on_click=dispatch(

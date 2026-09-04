@@ -153,13 +153,24 @@ fn office_editor_path_supported(path : String) -> Bool {
 }
 
 ///|
+fn wiki_living_artifact_path_supported(path : String) -> Bool {
+  let lower = path.to_lower()
+  lower.has_prefix("book/site/generated/living/") &&
+  lower.has_suffix("/index.html")
+}
+
+///|
 fn wiki_document_path_supported(path : String) -> Bool {
-  office_editor_path_supported(path) || path.to_lower().has_suffix(".pdf")
+  office_editor_path_supported(path) ||
+  path.to_lower().has_suffix(".pdf") ||
+  wiki_living_artifact_path_supported(path)
 }
 
 ///|
 fn wiki_document_kind_label(path : String) -> String? {
-  if path.to_lower().has_suffix(".pdf") {
+  if wiki_living_artifact_path_supported(path) {
+    Some("Artifact")
+  } else if path.to_lower().has_suffix(".pdf") {
     Some("PDF")
   } else {
     wiki_office_kind_label(path)
