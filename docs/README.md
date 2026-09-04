@@ -59,26 +59,31 @@ reviewable cross-book synthesis. Shared filesystem contracts come from MoonLib.
    finite single-owner conversation, thinking, and live-update correction.
 14. [MOONCODE_TYPED_CONTRACT_TARGET.md](MOONCODE_TYPED_CONTRACT_TARGET.md):
    Phase 3.1 public-surface inventory, typed target, decisions, and migration slices.
-15. [STATUS.md](STATUS.md): current implementation state and known gaps.
-16. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): reproducible Phase 0
+15. [AGENT_WORKSPACE_EVOLUTION.md](AGENT_WORKSPACE_EVOLUTION.md): implemented
+    document-agent workflows and portable MoonBook agent ownership.
+16. [OWB_SECOND_ROUND_FEATURE_COMPARISON.md](OWB_SECOND_ROUND_FEATURE_COMPARISON.md):
+    feature-only comparison and recommended Agent Library, learning, agenda,
+    collaboration, artifact, multimodal, and subscribed-source journeys.
+17. [STATUS.md](STATUS.md): current implementation state and known gaps.
+18. [BASELINE_2026-07-27.md](BASELINE_2026-07-27.md): reproducible Phase 0
     starting/current evidence, repository metrics, and explicitly unmeasured gaps.
-17. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
+19. [DOCUMENT_TRUTH_AUDIT_2026-07-27.md](DOCUMENT_TRUTH_AUDIT_2026-07-27.md):
     active-document contradiction audit, evidence boundary, and Phase 0 gate state.
-18. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
+20. [FULL_VALIDATION_PROOF_2026-07-27.md](FULL_VALIDATION_PROOF_2026-07-27.md):
     retained clean-checkout full-validation transcript and evidence boundary.
-19. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): phase-by-phase preview and
+21. [RELEASE_PROCESS.md](RELEASE_PROCESS.md): phase-by-phase preview and
     credentialed release procedure, immutable-output policy, and remote gate.
-20. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
+22. [PREVIEW_RELEASE_PROOF_2026-07-27.md](PREVIEW_RELEASE_PROOF_2026-07-27.md):
     exact local unsigned-candidate commands, checksums, refusal tests, and
     evidence boundary.
-21. [qualification/README.md](qualification/README.md): genuine UI-to-UI
+23. [qualification/README.md](qualification/README.md): genuine UI-to-UI
     qualification rules, current case results, interproduct seams, retained
     evidence layout, and the detailed operator handbook.
-22. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
-23. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
+24. [ROADMAP.md](ROADMAP.md): active product tracks and future gates.
+25. [MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md](MOONDESK_PRODUCTIZATION_UPGRADE_PLAN.md):
    phased plan for product clarity, typed contracts, package boundaries,
    security, observability, release discipline, and operational proof.
-24. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
+26. [MOONSUITE_LAYOUT_MIGRATION_PLAN.md](MOONSUITE_LAYOUT_MIGRATION_PLAN.md):
    historical migration plan and validation record; it is not a current plan.
 
 ## Implementation Map
