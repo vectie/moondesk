@@ -41,8 +41,11 @@ async fn handle_town_requests(
       )
       return
     }
-    Err(error) => {
-      send_api_error(conn, method_, 503, "Service Unavailable", error)
+    Err(_) => {
+      // These read feeds are polled by every MoonDesk surface. An optional
+      // MoonTown owner being offline is an empty/degraded feed, not a failed
+      // browser request; daemon status carries the actionable availability.
+      send_json(conn, method_, Json::array([]))
       return
     }
   }

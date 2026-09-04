@@ -45,3 +45,22 @@ test "managed MoonClaw daemon command and environment are fixed" {
   assert_false(environment.contains("MOONCLAW_RELEASE_MANIFEST_URL"))
   assert_false(environment.contains("OPENROUTER_API_KEY"))
 }
+
+///|
+test "managed MoonClaw receives only the explicit LunaNexa handoff settings" {
+  let environment = moonclaw_daemon_environment_from_values(
+    "/Users/test", " https://management.example ", " control-token ",
+  )
+  assert_eq(environment.length(), 7)
+  assert_eq(
+    environment["MOONDESK_LUNANEXA_ISSUER"],
+    "https://management.example",
+  )
+  assert_eq(environment["MOONGATE_CONTROL_TOKEN"], "control-token")
+  let rejected = moonclaw_daemon_environment_from_values(
+    "/Users/test", "https://management.example\nINJECTED=value", "token\rINJECTED=value",
+  )
+  assert_eq(rejected.length(), 5)
+  assert_false(rejected.contains("MOONDESK_LUNANEXA_ISSUER"))
+  assert_false(rejected.contains("MOONGATE_CONTROL_TOKEN"))
+}

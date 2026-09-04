@@ -16,15 +16,33 @@ fn tags_path(workspace_root : String) -> String {
 }
 
 ///|
+fn agent_preferences_path(workspace_root : String) -> String {
+  @pathx.join(preference_dir(workspace_root), "agent-memory.json")
+}
+
+///|
 async fn write_preference_records(path : String, records : Array[Json]) -> Unit {
-  @fsx.make_directory(
-    @pathx.dirname(path).to_owned(),
-    recursive=true,
-    exists_ok=true,
+  let content = Json::array(records).stringify(indent=2) + "\n"
+  if @fsx.exists(path) {
+    if @fsx.read_file(path) == content {
+      return
+    }
+  }
+  let parent = @pathx.dirname(path).to_owned()
+  @fsx.make_directory(parent, recursive=true, exists_ok=true)
+  let temp = @pathx.join(
+    parent,
+    ".preference-records." +
+    @desk.stable_id("preference-write", @async.now().to_string()) +
+    ".tmp",
   )
-  @fsx.write_to_file(
-    path,
-    Json::array(records).stringify(indent=2) + "\n",
-    create=0o644,
+  @fs.write_file(
+    temp,
+    @encoding/utf8.encode(content),
+    create_mode=CreateNew,
+    permission=0o600,
+    sync=Full,
   )
+  @fs.rename(temp, path, replace=true)
+  @fs.chmod(path, 0o600)
 }

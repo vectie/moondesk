@@ -179,6 +179,7 @@ fn native_payload(
     Some(steps) => fields["planner_max_steps"] = steps.to_json()
     None => fields.remove("planner_max_steps")
   }
+  fields["planner_reasoning_effort"] = command.planner_reasoning_effort.to_json()
   Json::object(fields)
 }
 

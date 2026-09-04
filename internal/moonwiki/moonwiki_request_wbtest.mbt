@@ -1700,6 +1700,80 @@ async test "desk server routes work end to end and reject path escapes" {
     assert_true(
       @fs.exists(@pathx.join(root, "books/desk-http-book/wiki/index.md")),
     )
+    let preferences = test_http_get_json(
+      base +
+      "/api/preferences/agent-memory?workspace_id=" +
+      created_workspace_id,
+      200,
+    )
+    assert_true(
+      preferences.stringify().contains("moondesk.agent_preferences.v1"),
+    )
+    let saved_preference = test_http_post_json(
+      base + "/api/preferences/agent-memory",
+      {
+        "workspace_id": created_workspace_id,
+        "scope": "workspace",
+        "kind": "preference",
+        "label": "HTTP tone",
+        "detail": "Keep conclusions concise",
+      },
+      200,
+    )
+    assert_eq(json_string(saved_preference, "label", default=""), "HTTP tone")
+    let conversations = test_http_get_json(
+      base +
+      "/api/document-conversations?workspace_id=" +
+      created_workspace_id +
+      "&document_path=wiki%2Findex.md",
+      200,
+    )
+    assert_true(
+      conversations.stringify().contains("moondesk.document_conversations.v1"),
+    )
+    let saved_conversation = test_http_post_json(
+      base + "/api/document-conversations",
+      {
+        "workspace_id": created_workspace_id,
+        "conversation_id": "http-conversation-1",
+        "document_path": "wiki/index.md",
+        "title": "HTTP conversation",
+        "entries": [
+          { "role": "user", "content": "Check this book" },
+          { "role": "assistant", "content": "Checked" },
+        ],
+      },
+      200,
+    )
+    assert_eq(
+      json_string(saved_conversation, "conversation_id", default=""),
+      "http-conversation-1",
+    )
+    let review_threads = test_http_get_json(
+      base +
+      "/api/document-review-threads?workspace_id=" +
+      created_workspace_id +
+      "&document_path=wiki%2Findex.md",
+      200,
+    )
+    assert_true(
+      review_threads.stringify().contains("moondesk.document_review_threads.v1"),
+    )
+    let saved_thread = test_http_post_json(
+      base + "/api/document-review-threads",
+      {
+        "workspace_id": created_workspace_id,
+        "document_path": "wiki/index.md",
+        "document_baseline": "baseline-http",
+        "anchor": "paragraph-1",
+        "anchor_kind": "paragraph",
+        "anchor_label": "Opening",
+        "detail": "Verify this claim",
+        "assigned_to": "Research agent",
+      },
+      200,
+    )
+    assert_eq(json_string(saved_thread, "anchor", default=""), "paragraph-1")
     let refreshed_workspaces = test_http_get_json(base + "/api/workspaces", 200)
     assert_true(
       refreshed_workspaces
@@ -2280,8 +2354,13 @@ async test "wiki server routes cover forward and backward book runs" {
     )
     assert_true(town_request.stringify().contains("MoonTown is not configured"))
     assert_true(!@fs.exists(town_moondesk_requests_root(root)))
-    let requests = test_http_get_json(base + "/api/town/requests", 503)
-    assert_true(requests.stringify().contains("MoonTown is not configured"))
+    let requests = test_http_get_json(base + "/api/town/requests", 200)
+    assert_eq(requests, Json::array([]))
+    let standing_goals = test_http_get_json(
+      base + "/api/town/standing-goals",
+      200,
+    )
+    assert_eq(standing_goals, Json::array([]))
     let town_events = test_http_get_json(base + "/api/town/events", 200)
     assert_false(town_events.stringify().contains("Forward Wiki run"))
 

@@ -33,6 +33,7 @@ async test "workspace preview handles text image virtual and missing entries" {
     @pathx.join(root, "images/logo.png"),
   )
   assert_true(is_binary_preview(image.kind))
+  assert_true(is_binary_preview(Unknown, path="documents/report.pdf"))
   let image_preview = @desk.preview(
     image,
     body="/api/workspaces/book-demo/raw?path=images/logo.png",

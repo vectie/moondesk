@@ -2,9 +2,10 @@
 test "MoonClaw model readiness distinguishes setup from unknown routes" {
   let ready = moonclaw_model_readiness_from_probe(
     Ok({
+      "contract": "moonclaw.moongate-route.v1",
       "ready": true,
-      "default_model": "codex/gpt-5.6-sol",
-      "models": [{ "name": "codex/gpt-5.6-sol", "default": true }],
+      "default_model": "moongate/gpt-5.6-sol",
+      "models": [{ "name": "moongate/gpt-5.6-sol", "default": true }],
     }),
   )
   assert_true(json_bool(ready, "known", default=false))
@@ -12,13 +13,18 @@ test "MoonClaw model readiness distinguishes setup from unknown routes" {
   assert_eq(json_string(ready, "status", default=""), "ready")
 
   let missing = moonclaw_model_readiness_from_probe(
-    Ok({ "ready": false, "default_model": "", "models": [] }),
+    Ok({
+      "contract": "moonclaw.moongate-route.v1",
+      "ready": false,
+      "default_model": "",
+      "models": [],
+    }),
   )
   assert_true(json_bool(missing, "known", default=false))
   assert_false(json_bool(missing, "ready", default=true))
   assert_eq(json_string(missing, "status", default=""), "needs_configuration")
 
-  let exact_error = "MoonClaw GET /v1/models returned 404: legacy route missing"
+  let exact_error = "MoonClaw GET /v1/moongate-route returned 404"
   let unknown = moonclaw_model_readiness_from_probe(Err(exact_error))
   assert_false(json_bool(unknown, "known", default=true))
   assert_eq(json_string(unknown, "status", default=""), "unknown")

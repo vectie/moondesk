@@ -14,8 +14,8 @@ fn is_writable_entry(path : String) -> Bool {
 }
 
 ///|
-fn is_binary_preview(kind : @desk.EntryKind) -> Bool {
-  kind is Image
+fn is_binary_preview(kind : @desk.EntryKind, path? : String = "") -> Bool {
+  kind is Image || path.to_lower().has_suffix(".pdf")
 }
 
 ///|

@@ -36,6 +36,7 @@ pub(all) struct MoonCodeCommand {
   model : String
   web_search : Bool
   planner_max_steps : Int?
+  planner_reasoning_effort : String
   approval_id : String
   target_command_id : String
   tool_call_id : String
@@ -130,6 +131,27 @@ fn command_codec_planner_max_steps(
 }
 
 ///|
+fn command_codec_planner_reasoning_effort(
+  fields : Map[String, Json],
+) -> Result[String, String] {
+  let value = match fields.get("planner_reasoning_effort") {
+    None => "none"
+    Some(String(value)) => value
+    Some(_) =>
+      return Err(
+        "planner_reasoning_effort must be none, minimal, low, medium, high, or xhigh",
+      )
+  }
+  match value {
+    "none" | "minimal" | "low" | "medium" | "high" | "xhigh" => Ok(value)
+    _ =>
+      Err(
+        "planner_reasoning_effort must be none, minimal, low, medium, high, or xhigh",
+      )
+  }
+}
+
+///|
 fn command_codec_requires_target(kind : MoonCodeCommandKind) -> Bool {
   kind is ApproveTool ||
   kind is RejectTool ||
@@ -185,6 +207,11 @@ pub fn decode_mooncode_command(
     Ok(value) => value
     Err(error) => return Err(error)
   }
+  let planner_reasoning_effort = match
+    command_codec_planner_reasoning_effort(fields) {
+    Ok(value) => value
+    Err(error) => return Err(error)
+  }
   let string_keys = [
     "client_turn_id", "context_path", "message", "model", "approval_id", "target_command_id",
     "tool_call_id",
@@ -212,6 +239,7 @@ pub fn decode_mooncode_command(
     model: strings[3],
     web_search,
     planner_max_steps,
+    planner_reasoning_effort,
     approval_id: strings[4],
     target_command_id: strings[5],
     tool_call_id: strings[6],
@@ -234,6 +262,7 @@ fn command_codec_submission_fields(
     "message": command.message.to_json(),
     "model": command.model.to_json(),
     "web_search": command.web_search.to_json(),
+    "planner_reasoning_effort": command.planner_reasoning_effort.to_json(),
     "approval_id": command.approval_id.to_json(),
     "target_command_id": command.target_command_id.to_json(),
     "tool_call_id": command.tool_call_id.to_json(),

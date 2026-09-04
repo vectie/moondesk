@@ -128,10 +128,21 @@ test "product and system desktop routes live in core boundary" {
     "/api/review/items?workspace=book%20demo%2F%23one",
   )
   assert_eq(@core.review_decision_url(), "/api/review/items/decision")
+  assert_eq(
+    @core.document_review_threads_route(),
+    "/api/document-review-threads",
+  )
+  assert_eq(@core.document_conversations_route(), "/api/document-conversations")
+  assert_eq(@core.document_followups_route(), "/api/document-followups")
+  assert_eq(
+    @core.document_automation_results_route(),
+    "/api/document-automation-results",
+  )
   assert_eq(@core.search_url("moon suite"), "/api/search?query=moon%20suite")
   assert_eq(@core.town_endpoint_url("daemon/status"), "/api/town/daemon/status")
   assert_eq(@core.town_calendar_url(), "/api/town/calendar.ics")
   assert_eq(@core.preferences_views_url(), "/api/preferences/views")
+  assert_eq(@core.agent_preferences_route(), "/api/preferences/agent-memory")
   assert_eq(
     @core.books_endpoint_url("app-tool-portable/all"),
     "/api/books/app-tool-portable/all",
@@ -275,6 +286,24 @@ test "desktop api route contracts own active backend method policy" {
       @core.preferences_views_route(),
       "HEAD",
     ),
+  )
+  for
+    endpoint in [
+      @core.document_review_threads_route(),
+      @core.document_conversations_route(),
+      @core.document_followups_route(),
+      @core.agent_preferences_route(),
+    ] {
+    assert_eq(
+      @core.desktop_api_route_allowed_methods(endpoint).join(", "),
+      "GET, HEAD, POST",
+    )
+  }
+  assert_eq(
+    @core.desktop_api_route_allowed_methods(
+      @core.document_automation_results_route(),
+    ).join(", "),
+    "GET, HEAD",
   )
   assert_false(
     @core.desktop_api_route_accepts_method(@core.town_route("control"), "POST"),

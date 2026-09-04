@@ -32,23 +32,34 @@ async test "capability host response does not fabricate runtime support" {
 test "mooncode model readiness requires a listed executable default" {
   assert_true(
     moonclaw_models_response_ready({
+      "contract": "moonclaw.moongate-route.v1",
       "ready": true,
-      "default_model": "codex/gpt-5.4",
-      "models": [{ "name": "codex/gpt-5.4", "default": true }],
+      "default_model": "moongate/gpt-5.4",
+      "models": [{ "name": "moongate/gpt-5.4", "default": true }],
     }),
   )
   assert_false(
     moonclaw_models_response_ready({
+      "contract": "moonclaw.moongate-route.v1",
       "ready": true,
       "default_model": "phantom",
-      "models": [{ "name": "codex/gpt-5.4" }],
+      "models": [{ "name": "moongate/gpt-5.4" }],
     }),
   )
   assert_false(
     moonclaw_models_response_ready({
+      "contract": "moonclaw.moongate-route.v1",
       "ready": false,
       "default_model": "",
       "models": [],
+    }),
+  )
+  assert_false(
+    moonclaw_models_response_ready({
+      "contract": "moonclaw.moongate-route.v1",
+      "ready": true,
+      "default_model": "codex/gpt-5.4",
+      "models": [{ "name": "codex/gpt-5.4" }],
     }),
   )
 }

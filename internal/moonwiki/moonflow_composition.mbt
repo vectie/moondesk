@@ -231,6 +231,35 @@ fn moonflow_composition_response(
 }
 
 ///|
+fn moonflow_unavailable_composition_response(
+  workspace_id : String,
+  message : String,
+  evaluated_at : String,
+) -> Json {
+  {
+    "contract_id": moonflow_composition_contract(),
+    "workspace_id": workspace_id,
+    "source_graph_id": "",
+    "book_id": workspace_id,
+    "declaration_revision": "",
+    "source_digest": "",
+    "status": "unavailable",
+    "catalog_id": "",
+    "catalog_status": "unavailable",
+    "evaluated_at": evaluated_at,
+    "catalog_evidence": {
+      "catalog_status": "unavailable",
+      "evaluated_at": evaluated_at,
+    },
+    "selected_item_ids": [],
+    "node_positions": [],
+    "items": [],
+    "validation_status": "unavailable",
+    "validation_issues": [message],
+  }
+}
+
+///|
 async fn moonflow_saved_selection(
   book_root : String,
   graph : Json,
@@ -441,8 +470,14 @@ async fn handle_moonflow_composition(
   }
   let graph_path = moonflow_source_graph_path(workspace.root_path)
   if graph_path == "" {
-    send_api_error(
-      conn, method_, 404, "Not Found", "This MoonBook has no executable Work graph",
+    send_json(
+      conn,
+      method_,
+      moonflow_unavailable_composition_response(
+        workspace_id,
+        "This MoonBook has no executable Work graph yet",
+        moonflow_server_utc_timestamp(),
+      ),
     )
     return
   }

@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn agent_preferences_route() -> String
+
 pub fn artifact_entry(workspace_id~ : String, path~ : String) -> DeskFileEntry
 
 pub fn books_endpoint_url(String) -> String
@@ -56,6 +58,14 @@ pub fn desktop_portable_api_supported_route_patterns() -> Array[String]
 pub fn desktop_portable_api_workspace_content_routes() -> Array[String]
 
 pub fn display_name(StringView) -> String
+
+pub fn document_automation_results_route() -> String
+
+pub fn document_conversations_route() -> String
+
+pub fn document_followups_route() -> String
+
+pub fn document_review_threads_route() -> String
 
 pub fn extension(StringView) -> String
 

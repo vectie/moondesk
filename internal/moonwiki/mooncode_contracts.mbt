@@ -61,7 +61,7 @@ async fn mooncode_capabilities_response_json(workspace_root : String) -> Json {
     Err("MoonClaw daemon is not running")
   }
   let models_probe = if running {
-    moonclaw_get_json(daemon, "/v1/models")
+    moonclaw_get_json(daemon, "/v1/moongate-route")
   } else {
     Err("MoonClaw daemon is not running")
   }
@@ -86,7 +86,7 @@ async fn mooncode_engine_status_json(workspace_root : String) -> Json {
   let daemon = moonclaw_daemon_status(workspace_root)
   let running = json_bool(daemon, "running", default=false)
   let models_probe = if running {
-    moonclaw_get_json(daemon, "/v1/models")
+    moonclaw_get_json(daemon, "/v1/moongate-route")
   } else {
     Err("MoonClaw daemon is not running")
   }
@@ -128,9 +128,9 @@ fn mooncode_engine_status_projection_json(
       model_evidence=match models_probe {
         Ok(payload) =>
           if models_ready {
-            "/v1/models advertised executable default `\{json_string(payload, "default_model", default="")}`"
+            "/v1/moongate-route verified live MoonClaw -> MoonGate routing with default `\{json_string(payload, "default_model", default="")}`"
           } else {
-            "/v1/models returned no executable default model"
+            "/v1/moongate-route returned no executable MoonGate model"
           }
         Err(error) => error
       },
@@ -152,10 +152,5 @@ fn mooncode_engine_status_projection_json(
 
 ///|
 fn moonclaw_models_response_ready(payload : Json) -> Bool {
-  let default_model = json_string(payload, "default_model", default="")
-  default_model != "" &&
-  json_bool(payload, "ready", default=false) &&
-  json_array_items(payload, "models").any(model => {
-    json_string(model, "name", default="") == default_model
-  })
+  moonclaw_moongate_route_ready(payload)
 }

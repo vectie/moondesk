@@ -16,21 +16,35 @@ async fn handle_workspace_entries(
   let relative = decode_query_value(
     query_value(request_path, "path").unwrap_or(""),
   )
+  let (candidate, clean_relative) = match
+    resolve_workspace_path(workspace.root_path, relative) {
+    Some(resolved) => resolved
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid path")
+      return
+    }
+  }
+  if !@fs.exists(candidate) {
+    if is_virtual_moonbook_section(workspace, clean_relative) {
+      send_json(conn, method_, ([] : Array[@desk.DeskFileEntry]).to_json())
+    } else {
+      send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
+    }
+    return
+  }
   match resolve_workspace_existing_path(workspace.root_path, relative) {
-    Some((absolute, clean_relative)) =>
+    Some((absolute, confined_relative)) =>
       if is_directory(absolute) {
         let entries = list_workspace_entries(
-          workspace, clean_relative, absolute,
+          workspace, confined_relative, absolute,
         )
         send_json(conn, method_, entries.to_json())
       } else if @fs.exists(absolute) {
         send_json(
           conn,
           method_,
-          [workspace_file_entry(workspace, clean_relative, absolute)].to_json(),
+          [workspace_file_entry(workspace, confined_relative, absolute)].to_json(),
         )
-      } else if is_virtual_moonbook_section(workspace, clean_relative) {
-        send_json(conn, method_, ([] : Array[@desk.DeskFileEntry]).to_json())
       } else {
         send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
       }
@@ -146,38 +160,67 @@ async fn handle_workspace_preview(
   let relative = decode_query_value(
     query_value(request_path, "path").unwrap_or(""),
   )
+  let (candidate, clean_relative) = match
+    resolve_workspace_path(workspace.root_path, relative) {
+    Some(resolved) => resolved
+    None => {
+      send_api_error(conn, method_, 400, "Bad Request", "Invalid path")
+      return
+    }
+  }
+  if !@fs.exists(candidate) {
+    match moonbook_section_for_path(clean_relative) {
+      Some(section) if workspace.kind is MoonBook => {
+        let entry = moonbook_section_entry(workspace, section, candidate)
+        send_json(
+          conn,
+          method_,
+          @desk.preview(entry, body="", warnings=[
+            "Virtual MoonBook section has no files yet.",
+          ]).to_json(),
+        )
+      }
+      _ =>
+        send_api_error(conn, method_, 404, "Not Found", "Entry path not found")
+    }
+    return
+  }
   match resolve_workspace_existing_path(workspace.root_path, relative) {
-    Some((absolute, clean_relative)) =>
+    Some((absolute, confined_relative)) =>
       if is_directory(absolute) {
         let entries = list_workspace_entries(
-          workspace, clean_relative, absolute,
+          workspace, confined_relative, absolute,
         )
         let body = entries.map(entry => entry.path).join("\n")
-        let entry = workspace_file_entry(workspace, clean_relative, absolute)
+        let entry = workspace_file_entry(workspace, confined_relative, absolute)
         send_json(conn, method_, @desk.preview(entry, body~).to_json())
       } else if @fs.exists(absolute) {
-        let entry = workspace_file_entry(workspace, clean_relative, absolute)
-        let body = if is_binary_preview(entry.kind) {
-          "/api/workspaces/\{workspace.id}/raw?path=\{clean_relative}"
+        let entry = workspace_file_entry(workspace, confined_relative, absolute)
+        let binary_preview = is_binary_preview(
+          entry.kind,
+          path=confined_relative,
+        )
+        let body = if binary_preview {
+          "/api/workspaces/\{workspace.id}/raw?path=\{confined_relative}"
         } else {
           @fs.read_file(absolute).text() catch {
             _ => ""
           }
         }
-        let metadata = if is_binary_preview(entry.kind) {
+        let metadata = if binary_preview {
           let bytes = @fs.read_file(absolute).binary() catch { _ => b"" }
           {
             "artifact_digest": "sha256:\{@crypto.bytes_to_hex_string(@crypto.sha256(bytes))}",
             "artifact_url": @desk.workspace_artifact_url(
               workspace.id,
-              clean_relative,
+              confined_relative,
               "sha256:\{@crypto.bytes_to_hex_string(@crypto.sha256(bytes))}",
             ),
           }
         } else {
           {}
         }
-        let warnings = if !is_binary_preview(entry.kind) && body == "" {
+        let warnings = if !binary_preview && body == "" {
           ["File could not be read as UTF-8 text."]
         } else {
           []
@@ -186,16 +229,6 @@ async fn handle_workspace_preview(
           conn,
           method_,
           @desk.preview(entry, body~, warnings~, metadata~).to_json(),
-        )
-      } else if moonbook_section_for_path(clean_relative) is Some(section) &&
-        workspace.kind is MoonBook {
-        let entry = moonbook_section_entry(workspace, section, absolute)
-        send_json(
-          conn,
-          method_,
-          @desk.preview(entry, body="", warnings=[
-            "Virtual MoonBook section has no files yet.",
-          ]).to_json(),
         )
       } else {
         send_api_error(conn, method_, 404, "Not Found", "Entry path not found")

@@ -124,6 +124,10 @@ fn isolated_preview_observer_bridge() -> String {
     #|  };
     #|  addEventListener('message', (event) => {
     #|    if (event.source !== parent || event.data?.protocol !== protocol) return;
+    #|    if (event.data?.type === 'ready-request') {
+    #|      send('ready', { title: document.title || '' });
+    #|      return;
+    #|    }
     #|    if (event.data?.type === 'host-command') {
     #|      executeHostCommand(event.data.command).catch((error) => {
     #|        send('host-result', { ok: false, error: String(error?.message || error) });

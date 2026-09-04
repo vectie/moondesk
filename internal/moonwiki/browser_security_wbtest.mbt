@@ -20,6 +20,7 @@ test "preview observer is observation-only and parent-scoped" {
   assert_true(bridge.contains("event.source !== parent"))
   assert_true(bridge.contains("moondesk-preview-v1"))
   assert_true(bridge.contains("snapshot-request"))
+  assert_true(bridge.contains("ready-request"))
   assert_true(bridge.contains("unnamed controls"))
   assert_false(bridge.contains("fetch("))
   assert_false(bridge.contains("localStorage"))

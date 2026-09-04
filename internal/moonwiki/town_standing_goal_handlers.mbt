@@ -45,8 +45,10 @@ async fn handle_town_standing_goals(
       )
       return
     }
-    Err(error) => {
-      send_api_error(conn, method_, 503, "Service Unavailable", error)
+    Err(_) => {
+      // Keep background polling quiet when MoonTown is not configured. The
+      // daemon endpoint remains the typed source of availability and recovery.
+      send_json(conn, method_, Json::array([]))
       return
     }
   }
@@ -94,6 +96,14 @@ async fn handle_create_standing_goal(
     @mooncore.session_with_field(payload, "id", goal_id.to_json()),
     daemon_tick=0,
   )
+  save_document_automation_binding(workspace_root, goal_id, payload) catch {
+    _ => {
+      send_api_error(
+        conn, method_, 500, "Internal Server Error", "The standing goal was created, but its conversation binding could not be saved",
+      )
+      return
+    }
+  }
   send_json(conn, method_, record)
 }
 

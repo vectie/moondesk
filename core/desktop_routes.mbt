@@ -334,6 +334,26 @@ pub fn review_decision_route() -> String {
 }
 
 ///|
+pub fn document_review_threads_route() -> String {
+  desktop_api_path(["api", "document-review-threads"])
+}
+
+///|
+pub fn document_conversations_route() -> String {
+  desktop_api_path(["api", "document-conversations"])
+}
+
+///|
+pub fn document_followups_route() -> String {
+  desktop_api_path(["api", "document-followups"])
+}
+
+///|
+pub fn document_automation_results_route() -> String {
+  desktop_api_path(["api", "document-automation-results"])
+}
+
+///|
 pub fn search_url(query : String) -> String {
   desktop_api_url(["api", "search"], query=[("query", query)])
 }
@@ -371,6 +391,11 @@ pub fn preferences_views_route() -> String {
 ///|
 pub fn preferences_tags_route() -> String {
   desktop_api_path(["api", "preferences", "tags"])
+}
+
+///|
+pub fn agent_preferences_route() -> String {
+  desktop_api_path(["api", "preferences", "agent-memory"])
 }
 
 ///|
@@ -619,10 +644,25 @@ pub fn desktop_api_route_contracts() -> Array[DesktopApiRouteContract] {
     ]),
     desktop_api_route_contract(review_items_route(), ["GET", "HEAD"]),
     desktop_api_route_contract(review_decision_route(), ["POST"]),
+    desktop_api_route_contract(document_review_threads_route(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_api_route_contract(document_conversations_route(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_api_route_contract(document_followups_route(), [
+      "GET", "HEAD", "POST",
+    ]),
+    desktop_api_route_contract(document_automation_results_route(), [
+      "GET", "HEAD",
+    ]),
     desktop_api_route_contract(preferences_views_route(), [
       "GET", "HEAD", "POST",
     ]),
     desktop_api_route_contract(preferences_tags_route(), ["GET", "HEAD", "POST"]),
+    desktop_api_route_contract(agent_preferences_route(), [
+      "GET", "HEAD", "POST",
+    ]),
   ]
 }
 

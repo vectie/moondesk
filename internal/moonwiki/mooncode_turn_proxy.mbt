@@ -127,6 +127,11 @@ async fn submit_mooncode_turn(
     Err(error) => return Err(error)
     Ok(None) => ()
   }
+  match validate_mooncode_command_model_route(command) {
+    Err(error) =>
+      return Err(mooncode_turn_proxy_error(400, "Bad Request", error))
+    Ok(_) => ()
+  }
   let daemon = ensure_moonclaw_daemon_running(
     workspace_root,
     action="submit-turn",

@@ -13,7 +13,7 @@ async fn handle_moonclaw_models(
   method_ : @http.RequestMethod,
   conn : @http.ServerConnection,
 ) -> Unit {
-  let daemon = moonclaw_daemon_status(workspace_root)
+  let daemon = moonclaw_model_route_daemon_candidate(workspace_root)
   if !json_bool(daemon, "running", default=false) {
     send_json(
       conn,
@@ -36,26 +36,28 @@ async fn handle_moonclaw_models(
     )
     return
   }
-  match moonclaw_get_json(daemon, "/v1/models") {
+  match moonclaw_get_json(daemon, "/v1/moongate-route") {
     Ok(payload) => {
       let ready = moonclaw_models_response_ready(payload)
+      let route = moonclaw_moongate_route_evidence(payload)
       send_json(
         conn,
         method_,
         api_contract_response(
           {
             "daemon": daemon,
-            "models": json_array(payload, "models"),
-            "default_model": json_string(payload, "default_model", default=""),
+            "models": moonclaw_moongate_models(payload),
+            "default_model": moonclaw_moongate_default_model(payload),
+            "route": route,
           },
           ok=ready,
           status=if ready { "ready" } else { "moonclaw_models_unavailable" },
           message=if ready {
-            "MoonClaw models are available"
+            "MoonClaw and MoonGate models are available"
           } else {
-            "MoonClaw has no executable default model"
+            "MoonClaw has no live MoonGate route"
           },
-          next_action=if ready { "use_moonclaw" } else { "configure_model" },
+          next_action=if ready { "use_moonclaw" } else { "start_moongate" },
         ),
       )
     }
@@ -74,6 +76,31 @@ async fn handle_moonclaw_models(
           next_action="inspect_moonclaw_daemon",
         ),
       )
+  }
+}
+
+///|
+async fn moonclaw_model_route_daemon_candidate(workspace_root : String) -> Json {
+  let context = workspace_context(workspace_root)
+  let root = context.suite_root
+  let info_path = moonclaw_daemon_info_path(root)
+  let info = read_json_file_or_object(info_path)
+  let port = json_int(info, "port", default=0)
+  let descriptor = moonclaw_service_descriptor(root, "daemon")
+  let configured = json_bool(descriptor, "configured", default=false)
+  {
+    "running": port > 0,
+    "port": port,
+    "message": if port > 0 {
+      "MoonClaw control route located"
+    } else {
+      "MoonClaw daemon is not running"
+    },
+    "service_configured": configured,
+    "managed_install": json_bool(descriptor, "managed_install", default=false),
+    "managed_running": false,
+    "info_path": info_path,
+    "moonclaw_root": json_string(descriptor, "cwd", default=""),
   }
 }
 
@@ -107,12 +134,12 @@ fn moonclaw_model_readiness_from_probe(probe : Result[Json, String]) -> Json {
           "needs_configuration"
         },
         "reason": if ready {
-          "default-model-available"
+          "moongate-route-ready"
         } else {
-          "default-model-unavailable"
+          "moongate-route-unavailable"
         },
-        "default_model": json_string(payload, "default_model", default=""),
-        "models": json_array(payload, "models"),
+        "default_model": moonclaw_moongate_default_model(payload),
+        "models": Json::array(moonclaw_moongate_models(payload)),
         "error": "",
       }
     }
@@ -681,7 +708,9 @@ async fn handle_moonclaw_openrouter_key(
     action="configure",
   )
   let model_readiness = if json_bool(daemon, "running", default=false) {
-    moonclaw_model_readiness_from_probe(moonclaw_get_json(daemon, "/v1/models"))
+    moonclaw_model_readiness_from_probe(
+      moonclaw_get_json(daemon, "/v1/moongate-route"),
+    )
   } else {
     moonclaw_model_readiness_unknown(
       "daemon-not-running",
@@ -943,7 +972,7 @@ async fn moonclaw_daemon_status_with_platform(
   let probe_daemon : Json = { "port": port }
   let model_readiness = if reachable {
     moonclaw_model_readiness_from_probe(
-      moonclaw_get_json(probe_daemon, "/v1/models"),
+      moonclaw_get_json(probe_daemon, "/v1/moongate-route"),
     )
   } else {
     moonclaw_model_readiness_unknown("daemon-not-reachable")
@@ -1311,11 +1340,6 @@ async fn moonclaw_post_json(
 ///|
 fn json_object_field(json : Json, key : String) -> Json? {
   @mooncore.json_object_field(json, key)
-}
-
-///|
-fn json_array(json : Json, key : String) -> Json {
-  Json::array(json_array_items(json, key))
 }
 
 ///|

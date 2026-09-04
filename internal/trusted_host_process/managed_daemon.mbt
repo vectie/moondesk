@@ -86,14 +86,42 @@ fn moonclaw_daemon_arguments(workspace_root : String) -> Array[String] {
 }
 
 ///|
-fn moonclaw_daemon_environment(home : String) -> Map[String, String] {
-  {
+fn moonclaw_daemon_environment_from_values(
+  home : String,
+  lunanexa_issuer : String,
+  moongate_control_token : String,
+) -> Map[String, String] {
+  let environment : Map[String, String] = {
     "HOME": home,
     "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin",
     "LANG": "C.UTF-8",
     "LC_ALL": "C.UTF-8",
     "TMPDIR": "/tmp",
   }
+  let issuer = lunanexa_issuer.trim().to_owned()
+  if issuer != "" &&
+    issuer.length() <= 2_048 &&
+    !issuer.contains_char('\n') &&
+    !issuer.contains_char('\r') {
+    environment["MOONDESK_LUNANEXA_ISSUER"] = issuer
+  }
+  let token = moongate_control_token.trim().to_owned()
+  if token != "" &&
+    token.length() <= 4_096 &&
+    !token.contains_char('\n') &&
+    !token.contains_char('\r') {
+    environment["MOONGATE_CONTROL_TOKEN"] = token
+  }
+  environment
+}
+
+///|
+fn moonclaw_daemon_environment(home : String) -> Map[String, String] {
+  moonclaw_daemon_environment_from_values(
+    home,
+    @sys.get_env_var("MOONDESK_LUNANEXA_ISSUER").unwrap_or(""),
+    @sys.get_env_var("MOONGATE_CONTROL_TOKEN").unwrap_or(""),
+  )
 }
 
 ///|

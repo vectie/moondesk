@@ -3,9 +3,18 @@ async fn route_desktop_api(
   workspace_root : String,
   segments : Array[String],
   method_ : @http.RequestMethod,
+  body : &@io.Reader,
   conn : @http.ServerConnection,
 ) -> Bool {
   match segments {
+    ["api", "desktop", "provider-handoff"] => {
+      if method_ is Post {
+        handle_desktop_provider_handoff(workspace_root, body, method_, conn)
+      } else {
+        send_method_not_allowed_with_methods(conn, method_, ["POST"])
+      }
+      true
+    }
     ["api", "desktop", "pack-apps"] => {
       let endpoint = @desk.desktop_api_path(["api", "desktop", "pack-apps"])
       if desktop_api_route_accepts_read(endpoint, method_) {

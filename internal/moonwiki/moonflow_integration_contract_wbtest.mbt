@@ -221,6 +221,28 @@ test "composition projects exact catalog evidence without dropping graph fields"
 }
 
 ///|
+test "missing executable graph is a typed quiet availability result" {
+  let response = moonflow_unavailable_composition_response(
+    "test-book", "This MoonBook has no executable Work graph yet", "2026-09-04T00:00:00Z",
+  )
+  assert_eq(json_string(response, "status", default=""), "unavailable")
+  assert_eq(
+    json_string(response, "validation_status", default=""),
+    "unavailable",
+  )
+  assert_true(
+    json_string_array_items(response, "validation_issues") ==
+    ["This MoonBook has no executable Work graph yet"],
+  )
+  assert_true(
+    match json_object_field(response, "items") {
+      Some(Array(items)) => items.is_empty()
+      _ => false
+    },
+  )
+}
+
+///|
 async test "catalog snapshot pins the exact bytes used by both CLI phases" {
   let suite = @fs.tmpdir(prefix="moondesk-moonflow-catalog-snapshot-")
   let source = @pathx.join(suite, "source-catalog.json")
