@@ -5,7 +5,7 @@ Form: desktop operator and pack-application host
 
 Maturity: local single-user alpha
 
-Last reviewed: 2026-07-31
+Last reviewed: 2026-08-26
 
 ## Outcome
 
@@ -50,6 +50,23 @@ The surrounding ownership is explicit:
 | Catalog-backed conformant MoonFlow import | available locally when a valid catalog and configured MoonFlow runtime are present |
 | Direct code editing | available locally, including save, reload, diff and conflict preservation |
 | Direct DOCX/XLSX/PPTX editing | available locally for the supported fidelity contract |
+| Universal Find & Add | available across files, code, book knowledge, tasks, runs, reviews and artifacts; importing remains explicit |
+| Meaning, structure and issue search | available as distinct bounded Find & Add providers with visible match explanations |
+| Selection-to-MoonClaw | available for anchored DOCX text, XLSX cells and PPTX objects; quick actions remain routed to the general agent |
+| Document conversations | server-owned, document-bound, resumable, renameable and archivable with browser-local offline recovery only |
+| Editable follow-up queue | available while MoonClaw is busy, preserving independent turns with edit, delete, reorder and send-now controls |
+| Typed sources and artifacts | available through explicit stream fragments and exact Office location navigation; hidden reasoning remains excluded |
+| Preferences and glossary | available at global or workspace scope with inspect, edit-by-replace, disable, enable and forget controls |
+| Anchored review discussions | available for document selections with assignment, reply, resolve and baseline-staleness detection |
+| MoonCode fork-and-compare | available with two durable branch identities, one shared baseline digest, server-owned comparison restoration, a typed MoonGate evaluation candidate and an explicit MoonFort promotion boundary |
+| Document review map and evidence lane | available for actionable warnings, proposed Office changes, review items and visible workspace/web references |
+| Office history and compare | available for bounded on-device saved/proposed snapshots with Content, Formatting, Formula and Layout filters |
+| Check packs | available as user-facing quality, spreadsheet, citation and presentation checks without exposing prompt internals |
+| MoonDesk Inbox | available as the selected MoonBook's user-visible `inbox/` folder with Finder reveal and explicit import alternatives |
+| Document-native change review | available for the supported DOCX/XLSX/PPTX subset with before/proposed comparison, semantic change labels, reject and validated apply |
+| Cross-document synthesis | available through pinned, path-preserving sources routed to the general MoonClaw agent |
+| Quiet background work and automation receipts | available with warning-only interruption, policy-aware automation cards and manual run controls |
+| Work Package export | available as a user-facing HTML evidence package containing conversation, results, reviews, sources and warnings without hidden reasoning |
 | Localization, keyboard, reduced-motion and responsive UX | repository-local automated gate complete |
 | Signed, notarized clean-machine release | not ready; external qualification remains blocked |
 
