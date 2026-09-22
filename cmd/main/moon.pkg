@@ -21,5 +21,6 @@ supported_targets = "native"
 pkgtype(kind: "executable")
 
 options(
+  link: { "native": { "cc-link-flags": "-pthread" } },
   targets: { "main.mbt": [ "native" ], "main_stub.mbt": [ "not", "native" ] },
 )
