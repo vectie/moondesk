@@ -78,3 +78,12 @@ test('production UI keeps explicit transfer-size budgets', () => {
 function statSize(name) {
   return statSync(path.join(assetsRoot, name)).size
 }
+test('production minification preserves JSON boolean contracts', async () => {
+  const { minify } = await import('terser')
+  const { default: config } = await import('./vite.config.js')
+  const result = await minify('globalThis.__moondeskBooleanProbe = JSON.stringify({ ok: true, running: false, files: [] });', config.build.terserOptions)
+  const vm = await import('node:vm')
+  const context = {}
+  vm.runInNewContext(result.code, context)
+  assert.deepEqual(JSON.parse(context.__moondeskBooleanProbe), { ok: true, running: false, files: [] })
+})

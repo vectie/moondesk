@@ -35,7 +35,8 @@ export default defineConfig({
         passes: 4,
         toplevel: true,
         unsafe_arrows: true,
-        booleans_as_integers: true,
+        // JSON passed to typed MoonBit decoders must retain boolean values.
+        booleans_as_integers: false,
       },
       mangle: { toplevel: true },
       format: { comments: false },
