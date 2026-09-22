@@ -969,7 +969,7 @@ async fn moonclaw_daemon_status_with_platform(
   let managed_running = reachable &&
     managed_install &&
     running_version.has_prefix(installed_version)
-  let probe_daemon : Json = { "port": port }
+  let probe_daemon = moonclaw_status_probe(port, reachable, info_path)
   let model_readiness = if reachable {
     moonclaw_model_readiness_from_probe(
       moonclaw_get_json(probe_daemon, "/v1/moongate-route"),

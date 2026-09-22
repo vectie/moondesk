@@ -1,4 +1,13 @@
 ///|
+fn moonclaw_status_probe(
+  port : Int,
+  running : Bool,
+  info_path : String,
+) -> Json {
+  { "port": port, "running": running, "info_path": info_path }
+}
+
+///|
 const MoonClawControlResponseChars : Int = 2_000_000
 
 ///|

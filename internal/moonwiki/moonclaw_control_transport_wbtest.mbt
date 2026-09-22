@@ -1,4 +1,33 @@
 ///|
+test "daemon readiness probes retain authenticated workspace binding" {
+  let config = moonclaw_control_test_config()
+  let probe = moonclaw_status_probe(
+    4444,
+    true,
+    moonclaw_daemon_info_path(config.workspace_root),
+  )
+  assert_true(moonclaw_control_config_for_daemon(probe, Some(config)) is Ok(_))
+  assert_true(
+    moonclaw_control_config_for_daemon(
+      moonclaw_status_probe(
+        4444,
+        false,
+        moonclaw_daemon_info_path(config.workspace_root),
+      ),
+      Some(config),
+    )
+    is Err(_),
+  )
+  assert_true(
+    moonclaw_control_config_for_daemon(
+      moonclaw_status_probe(4444, true, "/another/daemon-info.json"),
+      Some(config),
+    )
+    is Err(_),
+  )
+}
+
+///|
 fn moonclaw_control_test_config(
   workspace_root? : String = "/registered/book",
 ) -> SourceSemanticsSandboxClientConfig {
