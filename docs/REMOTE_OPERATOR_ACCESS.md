@@ -9,11 +9,14 @@ Set these server-side values before exposing a remote operator instance:
 ```text
 MOONDESK_ALLOWED_HOSTS=106.39.18.146:5001,192.168.2.175:5001
 MOONDESK_PUBLIC_SCHEME=http
-MOONDESK_IDENTITY_ENDPOINT=http://127.0.0.1:5003
+MOONDESK_IDENTITY_ENDPOINT=http://106.39.18.146:5003
 MOONDESK_IDENTITY_HOST=106.39.18.146:5003
 ```
 
 Allowed hosts are exact authorities including the port, not wildcard patterns.
+The identity endpoint authority must equal IDENTITY_HOST; the HTTP client owns
+the Host header. Do not configure a different connection authority and try to
+override it with a duplicate Host header.
 Public mode is enabled whenever ALLOWED_HOSTS is nonempty. In this mode every
 desktop/API request requires a LunaNexa cookie session whose authoritative
 account is Active and has PlatformOperator. This includes requests with a

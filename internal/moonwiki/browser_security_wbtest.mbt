@@ -85,3 +85,11 @@ test "remote desktop authority requires active PlatformOperator" {
   )
   assert_false(moondesk_active_operator({ "roles": ["PlatformOperator"] }))
 }
+
+///|
+test "identity authority cannot rely on duplicated Host headers" {
+  assert_true(moondesk_identity_authority_matches("http://106.39.18.146:5003", "106.39.18.146:5003"))
+  assert_false(moondesk_identity_authority_matches("http://127.0.0.1:5003", "106.39.18.146:5003"))
+  assert_false(moondesk_identity_authority_matches("http://106.39.18.146:5003/other", "106.39.18.146:5003"))
+  assert_false(moondesk_identity_authority_matches("http://*", "*"))
+}

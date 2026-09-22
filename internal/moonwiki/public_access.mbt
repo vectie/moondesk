@@ -61,6 +61,12 @@ fn moondesk_active_operator(value : Json) -> Bool {
 }
 
 ///|
+fn moondesk_identity_authority_matches(endpoint : String, host : String) -> Bool {
+  moondesk_valid_authority(host) &&
+  (endpoint == "http://" + host || endpoint == "https://" + host)
+}
+
+///|
 async fn moondesk_bounded_identity_text(
   reader : &@io.Reader,
   limit : Int,
@@ -88,19 +94,18 @@ async fn moondesk_operator_authorized(cookie : String) -> Bool {
   guard !cookie.is_empty() &&
     cookie.length() <= 16384 &&
     !endpoint.is_empty() &&
-    moondesk_valid_authority(host) else {
+    moondesk_identity_authority_matches(endpoint, host) else {
     return false
   }
   let client = @http.Client(endpoint, headers={
-    "Host": host,
     "Cookie": cookie,
-    "Origin": "http://" + host,
+    "Origin": endpoint,
     "Sec-Fetch-Site": "same-origin",
     "Sec-Fetch-Dest": "empty",
     "Accept": "application/json",
   })
   defer client.close()
-  let response = client.get("/auth/session", extra_headers={ "Host": host })
+  let response = client.get("/auth/session")
   guard response.code == 200 else { return false }
   guard moondesk_bounded_identity_text(client, 16384) is Some(text) else {
     return false
@@ -110,7 +115,6 @@ async fn moondesk_operator_authorized(cookie : String) -> Bool {
     return false
   }
   let response = client.get("/v1/auth/self", extra_headers={
-    "Host": host,
     "Authorization": "Bearer " + bearer,
   })
   guard response.code == 200 else { return false }
@@ -138,14 +142,13 @@ async fn moondesk_password_login(
   }
   let endpoint = moondesk_access_env("MOONDESK_IDENTITY_ENDPOINT")
   let host = moondesk_access_env("MOONDESK_IDENTITY_HOST")
-  guard !endpoint.is_empty() && moondesk_valid_authority(host) else {
+  guard moondesk_identity_authority_matches(endpoint, host) else {
     return send_status(
       conn, 503, "Service Unavailable", "Identity unavailable\n",
     )
   }
   let client = @http.Client(endpoint, headers={
-    "Host": host,
-    "Origin": "http://" + host,
+    "Origin": endpoint,
     "Content-Type": "application/json",
   })
   defer client.close()
@@ -157,7 +160,6 @@ async fn moondesk_password_login(
   let response = client.post(
     "/auth/password",
     @encoding/utf8.encode(payload.stringify()),
-    extra_headers={ "Host": host },
   )
   guard moondesk_bounded_identity_text(client, 16384) is Some(_) else {
     return send_status(
