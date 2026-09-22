@@ -10,11 +10,11 @@
 // }
 import {
   "moonbitlang/async@0.16.6",
-  "moonbitlang/x@0.4.40",
+  "moonbitlang/x@0.4.50",
   "vectie/lepusa@0.1.6",
   "vectie/moonlib@0.1.22",
   "ivgtr/moonzip@0.2.4",
-  "vectie/moonleaf@0.1.6",
+  "vectie/moonleaf@0.1.15",
 }
 
 name = "vectie/moondesk"
