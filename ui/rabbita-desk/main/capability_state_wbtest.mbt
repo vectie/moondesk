@@ -144,6 +144,19 @@ test "every capability primary action and label is exact" {
 }
 
 ///|
+test "Linux external running capability uses readiness without enabling installer" {
+  let daemon = {
+    ..capability_test_daemon(true, true, Some(true), platform_supported=false),
+    platform_evidence: Some({supported: false, platform: "linux", architecture: "x86_64"}),
+    model_ready: Some(true),
+  }
+  assert_true(moonclaw_capability_state(Some(daemon)) is DetectedRunning)
+  assert_true(moonclaw_capability_state(Some({..daemon, model_ready: Some(false)})) is InstalledNeedsConfiguration)
+  assert_true(moonclaw_capability_state(Some({..daemon, model_ready: None})) is TemporarilyUnavailable)
+  assert_true(moonclaw_capability_state(Some({..daemon, running: false})) is UnsupportedPlatform)
+}
+
+///|
 fn capability_test_daemon(
   running : Bool,
   configured : Bool,
@@ -249,7 +262,7 @@ test "daemon evidence maps without parsing status messages" {
         capability_test_daemon(true, true, Some(true), platform_supported=false),
       ),
     )
-    is UnsupportedPlatform,
+    is TemporarilyUnavailable,
   )
   assert_true(
     moonclaw_capability_state(

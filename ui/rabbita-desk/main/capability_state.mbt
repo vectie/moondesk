@@ -61,7 +61,9 @@ fn moonclaw_capability_state(daemon : MoonClawDaemonStatus?) -> CapabilityState 
         Some(evidence) => evidence.supported
         None => true
       }
-      if !supported {
+      // Installer support does not negate an independently managed, reachable
+      // runtime. Its actual model readiness still decides whether it is usable.
+      if !supported && !daemon.running {
         return UnsupportedPlatform
       }
       let installed = match daemon.installation_evidence {
