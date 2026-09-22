@@ -55,7 +55,7 @@ pub async fn Server::new(
     dual_stack~,
     reuse_addr~,
   )
-  { server, port: server.addr.port() }
+  { server, port: server.addr.port(), }
 }
 
 ///|
@@ -118,8 +118,17 @@ async fn handle_desk_request(
     return
   }
   let origin = request.headers.get("origin").unwrap_or("")
-  if !moondesk_browser_origin_allowed(origin, host) {
+  if !moondesk_browser_origin_allowed(origin, host, method_=request.meth) {
     send_status(conn, 403, "Forbidden", "Unapproved MoonDesk origin\n")
+    return
+  }
+  if !moondesk_access_env("MOONDESK_ALLOWED_HOSTS").is_empty() &&
+    strip_query(request.path) == moondesk_health_path() &&
+    is_read_method(request.meth) {
+    send_json(conn, request.meth, { "ok": true, "service": "moondesk" })
+    return
+  }
+  if moondesk_public_access_gate(request, body, conn) {
     return
   }
   let path = strip_query(request.path)
@@ -151,26 +160,26 @@ async fn handle_desk_request(
 
 ///|
 fn moondesk_browser_host_allowed(host : StringView) -> Bool {
-  let value = host.to_owned().trim().to_owned().to_lower()
-  value == "localhost" ||
-  value.has_prefix("localhost:") ||
-  value == "127.0.0.1" ||
-  value.has_prefix("127.0.0.1:") ||
-  value == "[::1]" ||
-  value.has_prefix("[::1]:")
+  moondesk_host_matches(
+    host.to_owned(),
+    moondesk_access_env("MOONDESK_ALLOWED_HOSTS"),
+  )
 }
 
 ///|
 fn moondesk_browser_origin_allowed(
   origin : StringView,
   host : StringView,
+  method_? : @http.RequestMethod = Get,
 ) -> Bool {
   let origin = origin.to_owned().trim().to_owned().to_lower()
   let host = host.to_owned().trim().to_owned().to_lower()
-  origin == "" ||
+  let scheme = @env.get_env_var("MOONDESK_PUBLIC_SCHEME").unwrap_or("http")
+  (origin == "" && is_read_method(method_)) ||
   (
     moondesk_browser_host_allowed(host) &&
-    (origin == "http://" + host || origin == "https://" + host)
+    (scheme == "http" || scheme == "https") &&
+    origin == scheme + "://" + host
   )
 }
 

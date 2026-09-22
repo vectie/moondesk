@@ -39,8 +39,49 @@ test "browser host and origin validation reject rebinding and opaque API calls" 
     moondesk_browser_origin_allowed("http://127.0.0.1:4199", "127.0.0.1:4199"),
   )
   assert_true(moondesk_browser_origin_allowed("", "127.0.0.1:4199"))
+  assert_false(
+    moondesk_browser_origin_allowed("", "127.0.0.1:4199", method_=Post),
+  )
   assert_false(moondesk_browser_origin_allowed("null", "127.0.0.1:4199"))
   assert_false(
     moondesk_browser_origin_allowed("http://evil.test", "127.0.0.1:4199"),
   )
+}
+
+///|
+test "remote hosts are exact authorities without wildcards or suffix matches" {
+  let allowed = "106.39.18.146:5001,192.168.2.175:5001"
+  assert_true(moondesk_host_matches("106.39.18.146:5001", allowed))
+  for
+    host in [
+      "106.39.18.146", "106.39.18.146:5002", "106.39.18.146.evil:5001", "x.test",
+      "localhost:abc", "localhost:0", "localhost:65536", "localhost:5001@evil",
+    ] {
+    assert_false(moondesk_host_matches(host, allowed))
+  }
+  assert_false(moondesk_host_matches("x.test", "*"))
+  assert_false(moondesk_host_matches("x.test", "*.test"))
+}
+
+///|
+test "remote desktop authority requires active PlatformOperator" {
+  assert_true(
+    moondesk_active_operator({
+      "state": "Active",
+      "roles": ["PlatformOperator"],
+    }),
+  )
+  assert_false(
+    moondesk_active_operator({
+      "state": "Disabled",
+      "roles": ["PlatformOperator"],
+    }),
+  )
+  assert_false(
+    moondesk_active_operator({ "state": "Active", "roles": ["Developer"] }),
+  )
+  assert_false(
+    moondesk_active_operator({ "state": "Active", "roles": "PlatformOperator" }),
+  )
+  assert_false(moondesk_active_operator({ "roles": ["PlatformOperator"] }))
 }

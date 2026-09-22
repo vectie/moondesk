@@ -2494,8 +2494,11 @@ async fn test_http_post_json(
   body : Json,
   expected_code : Int,
 ) -> Json {
+  let parts = url.split("/").to_array()
+  let origin = parts[0].to_owned() + "//" + parts[2].to_owned()
   let (response, data) = @http.post(url, body, headers={
     "Content-Type": "application/json",
+    "Origin": origin,
   })
   let text = data.text()
   assert_eq(response.code, expected_code)
