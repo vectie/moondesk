@@ -163,10 +163,27 @@ function composerControl(title, kind, options, selected, disabled = false) {
 }
 
 function installComposerControls(root) {
-  if (!(root instanceof HTMLElement) || root.dataset.controlsInstalled === 'true') return
-  root.dataset.controlsInstalled = 'true'
+  if (!(root instanceof HTMLElement)) return
   const models = String(root.dataset.models || '').split('\n').filter(Boolean)
   const modelOptions = models.length ? models.map(value => [value, value]) : [['', 'No models available']]
+  if (root.dataset.controlsInstalled === 'true') {
+    const modelSelect = root.querySelector('[data-testid="mooncode-model-select"]')
+    if (modelSelect instanceof HTMLSelectElement) {
+      const optionValues = Array.from(modelSelect.options, option => option.value)
+      if (optionValues.join('\n') !== modelOptions.map(([value]) => value).join('\n')) {
+        modelSelect.replaceChildren(...modelOptions.map(([value, text]) => {
+          const option = document.createElement('option')
+          option.value = value
+          option.textContent = text
+          return option
+        }))
+      }
+      modelSelect.disabled = models.length === 0
+      modelSelect.value = root.dataset.selectedModel || modelOptions[0][0]
+    }
+    return
+  }
+  root.dataset.controlsInstalled = 'true'
   root.prepend(
     composerControl('Model', 'model', modelOptions, root.dataset.selectedModel || '', models.length === 0),
     composerControl('Reasoning', 'reasoning', REASONING_OPTIONS, root.dataset.reasoning || 'none'),
@@ -412,5 +429,7 @@ if (typeof document !== 'undefined') {
   new MutationObserver(() => installMoonCodeDeveloperTools()).observe(document.documentElement, {
     childList: true,
     subtree: true,
+    attributes: true,
+    attributeFilter: ['data-models', 'data-selected-model'],
   })
 }

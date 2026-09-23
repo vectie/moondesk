@@ -25,6 +25,7 @@ export const connectedWorkspaceUrl = href => {
   const next = new URL(href)
   next.hash = ''
   next.searchParams.set('mode', 'mooncode')
+  next.searchParams.set('activity', 'code')
   return next.href
 }
 

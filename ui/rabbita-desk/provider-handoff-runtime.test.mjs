@@ -44,6 +44,7 @@ test('connected MoonCode URL drops every fragment capability', () => {
   ))
   assert.equal(result.hash, '')
   assert.equal(result.searchParams.get('mode'), 'mooncode')
+  assert.equal(result.searchParams.get('activity'), 'code')
   assert.equal(result.searchParams.get('source'), 'portal')
 })
 
