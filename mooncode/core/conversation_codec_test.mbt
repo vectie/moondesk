@@ -80,6 +80,21 @@ test "canonical conversation codec decodes visible turns and messages" {
 }
 
 ///|
+test "empty in-flight assistant slot remains visible as a pending turn" {
+  let payload = conversation_fixture()
+  guard payload is Object(fields) &&
+    fields.get("turns") is Some(Array(turns)) &&
+    turns[0] is Object(turn) else {
+    fail("fixture")
+  }
+  turn["assistant"] = Json::object({})
+  guard @core.decode_mooncode_conversation(payload) is Ok(conversation) else {
+    fail("empty in-flight slot must decode")
+  }
+  assert_true(conversation.turns[0].assistant is None)
+}
+
+///|
 test "canonical conversation codec distinguishes absence and malformed fields" {
   assert_true(@core.decode_mooncode_conversation(Json::null()) is Err(Absent))
   assert_true(

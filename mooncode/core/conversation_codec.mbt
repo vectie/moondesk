@@ -128,6 +128,12 @@ fn decode_conversation_message(
   guard value is Object(fields) else {
     return Err("conversation message must be an object or null")
   }
+  // MoonClaw v2 uses {} for a not-yet-emitted assistant slot while a model
+  // turn is running. Treat that exact empty placeholder as absent; a partial
+  // non-empty message still fails validation below.
+  if fields.is_empty() {
+    return Ok(None)
+  }
   guard conversation_string(fields, "item_id") is Some(item_id) else {
     return Err("conversation message item_id must be a string")
   }

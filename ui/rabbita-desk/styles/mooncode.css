@@ -544,6 +544,8 @@
 
 .mooncode-center {
   grid-template-rows: 42px auto auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .mooncode-center.runtime-setup-visible {
@@ -1375,7 +1377,7 @@
 }
 
 .mooncode-chat-surface:not(.empty) {
-  min-height: calc(100vh - 100px);
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -1385,7 +1387,7 @@
 }
 
 .mooncode-chat-surface.empty {
-  min-height: calc(100vh - 100px);
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
