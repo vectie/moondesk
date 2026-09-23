@@ -90,6 +90,7 @@ fn moonclaw_daemon_environment_from_values(
   home : String,
   lunanexa_issuer : String,
   moongate_control_token : String,
+  allow_public_http? : Bool = false,
 ) -> Map[String, String] {
   let environment : Map[String, String] = {
     "HOME": home,
@@ -112,6 +113,9 @@ fn moonclaw_daemon_environment_from_values(
     !token.contains_char('\r') {
     environment["MOONGATE_CONTROL_TOKEN"] = token
   }
+  if allow_public_http {
+    environment["MOONDESK_LUNANEXA_HTTP_ALLOWED"] = "true"
+  }
   environment
 }
 
@@ -121,6 +125,10 @@ fn moonclaw_daemon_environment(home : String) -> Map[String, String] {
     home,
     @sys.get_env_var("MOONDESK_LUNANEXA_ISSUER").unwrap_or(""),
     @sys.get_env_var("MOONGATE_CONTROL_TOKEN").unwrap_or(""),
+    allow_public_http=@sys.get_env_var("MOONDESK_LUNANEXA_HTTP_ALLOWED").unwrap_or(
+        "",
+      ) ==
+      "true",
   )
 }
 
@@ -257,5 +265,5 @@ pub async fn start_managed_moonclaw_daemon(
   ) catch {
     error => return Err("Could not start managed MoonClaw daemon: \{error}")
   }
-  Ok({ pid, display: moonclaw_daemon_display(executable, workspace_root) })
+  Ok({ pid, display: moonclaw_daemon_display(executable, workspace_root), })
 }
