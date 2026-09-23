@@ -77,6 +77,14 @@ button {
   color: var(--muted);
 }
 
+.handoff-panel { width: min(540px, calc(100vw - 40px)); }
+.handoff-meter { height: 10px; margin: 24px 0; overflow: hidden; border-radius: 999px; background: var(--line); }
+.handoff-meter span { display: block; height: 100%; width: 0; border-radius: inherit; background: #43c99c; transition: width .22s ease; }
+.handoff-steps { display: grid; gap: 11px; margin: 0; padding-left: 24px; color: var(--muted); }
+.handoff-steps li.is-complete { color: #43c99c; }
+.handoff-steps li.is-current { color: var(--ink); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .handoff-meter span { transition: none; } }
+
 .desk-shell {
   height: 100vh;
   display: grid;

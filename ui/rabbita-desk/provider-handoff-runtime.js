@@ -27,3 +27,16 @@ export const connectedWorkspaceUrl = href => {
   next.searchParams.set('mode', 'mooncode')
   return next.href
 }
+
+// Only advance these checkpoints after the corresponding observable result.
+// The redemption and MoonGate installation happen in one server request, so
+// the browser must not claim either has completed while that request is open.
+export const providerHandoffSteps = [
+  'Validate one-time link',
+  'Verify account and workspace lease',
+  'Connect the serving model through MoonGate',
+  'Open Code workspace',
+]
+
+export const providerHandoffPercent = completed =>
+  Math.max(0, Math.min(providerHandoffSteps.length, completed)) * 25

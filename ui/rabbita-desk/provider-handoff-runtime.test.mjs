@@ -3,7 +3,9 @@ import assert from 'node:assert/strict'
 import {
   connectedWorkspaceUrl,
   parseProviderHandoff,
+  providerHandoffPercent,
   providerHandoffRequest,
+  providerHandoffSteps,
 } from './provider-handoff-runtime.js'
 
 test('desktop fragment accepts one bounded code and never accepts an issuer', () => {
@@ -43,4 +45,18 @@ test('connected MoonCode URL drops every fragment capability', () => {
   assert.equal(result.hash, '')
   assert.equal(result.searchParams.get('mode'), 'mooncode')
   assert.equal(result.searchParams.get('source'), 'portal')
+})
+
+test('connection progress has four bounded, named checkpoints', () => {
+  assert.deepEqual(providerHandoffSteps, [
+    'Validate one-time link',
+    'Verify account and workspace lease',
+    'Connect the serving model through MoonGate',
+    'Open Code workspace',
+  ])
+  assert.equal(providerHandoffPercent(-1), 0)
+  assert.equal(providerHandoffPercent(1), 25)
+  assert.equal(providerHandoffPercent(3), 75)
+  assert.equal(providerHandoffPercent(4), 100)
+  assert.equal(providerHandoffPercent(99), 100)
 })
