@@ -52,6 +52,23 @@ fn send_mooncode_composer_cmd(
 }
 
 ///|
+fn send_mooncode_guidance_cmd(
+  dispatch : Dispatch[Msg],
+  model : Model,
+  session : MoonCodeSession,
+  message : String,
+) -> @rabbita.Cmd {
+  mooncode_session_command_cmd(
+    dispatch,
+    model,
+    session,
+    "steer",
+    message~,
+    guidance=true,
+  )
+}
+
+///|
 fn mooncode_session_command_cmd(
   dispatch : Dispatch[Msg],
   model : Model,
@@ -63,6 +80,7 @@ fn mooncode_session_command_cmd(
   force_preflight? : Bool = false,
   target_command_id? : String = "",
   tool_call_id? : String = "",
+  guidance? : Bool = false,
 ) -> @rabbita.Cmd {
   let target_path = if context_path == "" {
     mooncode_context_path(model)
@@ -86,7 +104,19 @@ fn mooncode_session_command_cmd(
   }
   let body = match typed_mooncode_command_body(submission) {
     Ok(value) => value
-    Err(error) => return dispatch(CompletedMoonCodeCommand(Err(error)))
+    Err(error) =>
+      return dispatch(
+        if guidance {
+          CompletedMoonCodeGuidance(
+            session.id,
+            message,
+            model.mooncode_draft_revision,
+            Err(error),
+          )
+        } else {
+          CompletedMoonCodeCommand(Err(error))
+        },
+      )
   }
   @http.post(@desk.mooncode_session_commands_url(session.id))
   .with_json(body)
@@ -95,7 +125,18 @@ fn mooncode_session_command_cmd(
       Ok(payload) => decode_mooncode_selected_session(payload)
       Err(error) => Err(error.to_string())
     }
-    dispatch(CompletedMoonCodeCommand(decoded))
+    dispatch(
+      if guidance {
+        CompletedMoonCodeGuidance(
+          session.id,
+          message,
+          model.mooncode_draft_revision,
+          decoded,
+        )
+      } else {
+        CompletedMoonCodeCommand(decoded)
+      },
+    )
   })
 }
 
@@ -170,13 +211,41 @@ fn mooncode_client_turn_id(
   session_id : String,
   content : String,
 ) -> String {
+  mooncode_client_turn_id_with_page_nonce(
+    browser_mooncode_page_nonce(),
+    model,
+    session_id,
+    content,
+  )
+}
+
+///|
+fn mooncode_client_turn_id_with_page_nonce(
+  page_nonce : String,
+  model : Model,
+  session_id : String,
+  content : String,
+) -> String {
   let seed = session_id +
+    ":" +
+    page_nonce +
     ":" +
     content.trim().to_owned() +
     ":" +
     model.mooncode_next_client_turn_index.to_string()
   @desk.stable_id("mooncode-client-turn", seed)
 }
+
+///|
+#cfg(target="js")
+extern "js" fn browser_mooncode_page_nonce() -> String =
+  #| () => {
+  #|   if (!globalThis.__moondeskMoonCodePageNonce) {
+  #|     globalThis.__moondeskMoonCodePageNonce = globalThis.crypto?.randomUUID?.()
+  #|       || `page-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  #|   }
+  #|   return globalThis.__moondeskMoonCodePageNonce;
+  #| }
 
 ///|
 fn mooncode_selected_runtime_model(

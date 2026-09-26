@@ -11,7 +11,7 @@ fn mooncode_markdown_nodes(
     []
   } else {
     [
-      pre(
+      div(
         class="mooncode-markdown-source",
         attrs=@html.Attrs::build()
           .data_set("testid", "mooncode-markdown-source")

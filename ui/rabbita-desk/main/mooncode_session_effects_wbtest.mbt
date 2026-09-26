@@ -29,6 +29,35 @@ test "mooncode submit does not create a second selected-session fetch loop" {
 }
 
 ///|
+test "MoonCode client turn IDs survive page reload without colliding" {
+  let model = { ..init_model(), mooncode_next_client_turn_index: 1, }
+  let first = mooncode_client_turn_id_with_page_nonce(
+    "page-one", model, "mooncode-session", "同一个提问",
+  )
+  let retry = mooncode_client_turn_id_with_page_nonce(
+    "page-one", model, "mooncode-session", "同一个提问",
+  )
+  let reloaded = mooncode_client_turn_id_with_page_nonce(
+    "page-two", model, "mooncode-session", "同一个提问",
+  )
+  assert_eq(first, retry)
+  assert_true(first != reloaded)
+}
+
+///|
+test "MoonCode shows the API error instead of a missing session ID" {
+  let result = decode_mooncode_selected_session({
+    "code": 409,
+    "reason": "Conflict",
+    "message": "client_turn_id was already used",
+  })
+  match result {
+    Err(message) => assert_eq(message, "client_turn_id was already used")
+    Ok(_) => fail("Expected the API error")
+  }
+}
+
+///|
 test "mooncode ordinary mutation preserves the selected session watch" {
   assert_eq(
     mooncode_session_effect_labels(mooncode_session_mutation_effects(false)).join(
@@ -82,7 +111,7 @@ test "mooncode watch ownership rejects stale timers and inactive modes" {
   assert_false(mooncode_watch_is_current(current, 7, ""))
   assert_false(
     mooncode_watch_is_current(
-      { ..current, workspace_mode: MoonWiki },
+      { ..current, workspace_mode: MoonWiki, },
       7,
       "session-a",
     ),

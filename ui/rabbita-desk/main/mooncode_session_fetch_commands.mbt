@@ -35,9 +35,9 @@ fn mooncode_local_session_from_summary(
   let local_summary = match summary.extensions.get("mooncode_summary") {
     Some(value) =>
       @json.from_json(value) catch {
-        _ => { event_count: 0, verified_test_count: 0, pending_diff_count: 0 }
+        _ => { event_count: 0, verified_test_count: 0, pending_diff_count: 0, }
       }
-    None => { event_count: 0, verified_test_count: 0, pending_diff_count: 0 }
+    None => { event_count: 0, verified_test_count: 0, pending_diff_count: 0, }
   }
   let runtime_detail = match summary.extensions.get("mooncode_runtime_detail") {
     Some(String(value)) => Some(value)
@@ -74,6 +74,14 @@ fn mooncode_local_session_from_summary(
 fn decode_mooncode_selected_session(
   payload : Json,
 ) -> Result[MoonCodeSession, String] {
+  match payload {
+    Object(fields) =>
+      match (fields.get("id"), fields.get("message")) {
+        (None, Some(String(message))) => return Err(message)
+        _ => ()
+      }
+    _ => ()
+  }
   match @mooncode_core.decode_mooncode_selected_session(payload) {
     Ok(summary) => {
       let conversation_payload = match payload {

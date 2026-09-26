@@ -1,4 +1,27 @@
 let installed = false
+const renderedSources = new WeakMap()
+
+// Rabbita owns the light DOM. Rendering into a shadow root keeps Markdown
+// enhancement from removing virtual-DOM children during the next chat update.
+const markdownStyle = `
+:host { display: block; white-space: normal; word-break: break-word; }
+:host > :first-child { margin-top: 0; }
+:host > :last-child { margin-bottom: 0; }
+p, ul, ol, blockquote, table { margin: 0 0 12px; }
+h1, h2, h3, h4, h5, h6 { margin: 16px 0 8px; line-height: 1.3; }
+h1 { font-size: 1.4em; } h2 { font-size: 1.25em; }
+ul, ol { padding-left: 24px; } li + li { margin-top: 4px; }
+blockquote { padding-left: 12px; border-left: 3px solid #a7b1c2; }
+a { color: #2563eb; overflow-wrap: anywhere; }
+a:focus-visible, button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.mooncode-inline-code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: .9em; }
+.mooncode-code-block { max-width: 100%; overflow: auto; border-radius: 8px; background: #101827; color: #f8fafc; }
+.mooncode-code-toolbar { display: flex; justify-content: space-between; padding: 6px 10px; }
+.mooncode-copy-button { border: 0; border-radius: 4px; cursor: pointer; }
+.mooncode-code-block pre { overflow: auto; margin: 0; padding: 10px; white-space: pre; }
+table { border-collapse: collapse; display: block; overflow-x: auto; }
+th, td { border: 1px solid #a7b1c2; padding: 4px 8px; }
+`
 
 function safeLink(value) {
   const href = String(value || '').trim()
@@ -233,13 +256,14 @@ function renderBlocks(source) {
 }
 
 function renderSource(source) {
-  if (!(source instanceof HTMLElement) || source.dataset.markdownRendered === 'true') return
-  source.dataset.markdownRendered = 'true'
-  const parent = source.parentElement
-  if (!parent) return
-  const fragment = renderBlocks(source.textContent || '')
-  parent.replaceChildren(fragment)
-  parent.dataset.markdownEnhanced = 'true'
+  if (!(source instanceof HTMLElement)) return
+  const content = source.textContent || ''
+  if (renderedSources.get(source) === content) return
+  const root = source.shadowRoot || source.attachShadow({ mode: 'open' })
+  const style = document.createElement('style')
+  style.textContent = markdownStyle
+  root.replaceChildren(style, renderBlocks(content))
+  renderedSources.set(source, content)
 }
 
 function renderPending(root = document) {
@@ -253,9 +277,16 @@ export function installMoonCodeMarkdownRuntime() {
   renderPending()
   new MutationObserver(records => {
     for (const record of records) {
+      const target = record.target instanceof Element ? record.target : record.target.parentElement
+      const source = target?.closest?.('[data-testid="mooncode-markdown-source"]')
+      if (source) renderSource(source)
       for (const node of record.addedNodes) {
         if (node instanceof Element) renderPending(node)
       }
     }
-  }).observe(document.getElementById('app') || document.body, { childList: true, subtree: true })
+  }).observe(document.getElementById('app') || document.body, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  })
 }
