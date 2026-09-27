@@ -19,6 +19,16 @@
       },
       "additionalProperties": false
     },
+    "soakSample": {
+      "type": "object",
+      "required": ["at", "rss_mib", "file_descriptors"],
+      "properties": {
+        "at": { "type": "string", "format": "date-time" },
+        "rss_mib": { "type": "number", "minimum": 0 },
+        "file_descriptors": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
     "base": {
       "type": "object",
       "required": ["kind", "release_identity_sha256", "started_at", "completed_at", "operator", "results"],
@@ -47,7 +57,7 @@
     "soak": {
       "allOf": [
         { "$ref": "#/$defs/base" },
-        { "properties": { "kind": { "const": "moondesk-soak-evidence.v1" }, "thresholds": { "type": "object" }, "samples": { "type": "array" } }, "required": ["thresholds", "samples"] }
+        { "properties": { "kind": { "const": "moondesk-soak-evidence.v1" }, "thresholds": { "type": "object" }, "samples": { "type": "array", "items": { "$ref": "#/$defs/soakSample" } }, "unexpected_process_exits": { "type": "integer", "minimum": 0 }, "failed_lifecycle_scenarios": { "type": "integer", "minimum": 0 } }, "required": ["thresholds", "samples", "unexpected_process_exits", "failed_lifecycle_scenarios"] }
       ]
     }
   }

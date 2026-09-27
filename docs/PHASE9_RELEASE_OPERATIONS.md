@@ -37,4 +37,11 @@ Use `schemas/phase9-evidence.schema.json` and the checklists in `checklists/`. V
 node scripts/validate_phase9_evidence.mjs _build/phase9-evidence/*.json
 ```
 
+For soak evidence, the validator requires the frozen threshold values, every
+required scenario marked passed, at least 24 hours of coverage, at least 288
+timestamped RSS and file-descriptor samples, no excessive sample gap, and
+resource and failure counts within policy. A schema-shaped short smoke fails.
+Retain the raw measurements and operator receipts; this local validator does
+not prove that an external run actually took place.
+
 Do not convert a local smoke or checklist into an external qualification claim.

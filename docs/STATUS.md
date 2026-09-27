@@ -41,10 +41,15 @@ received HTTP 200 from its health route, and saw the second instance refuse
 the occupied endpoint instead of displaying the first instance's UI. That
 check also found that the failed second launch returned process exit code 0.
 Lepusa [PR #2](https://github.com/vectie/lepusa/pull/2) now fixes that exit
-status at `55aa50e`; the first-instance and collision check against a
-temporary copy of the app with the rebuilt runtime produced exit code 1 for
-the failed second launch. The next MoonDesk preview pins this newer runtime;
-its hosted package needs separate exact-head verification.
+status at `55aa50e`. MoonDesk `865da2e7` pins that runtime; its hosted
+[push](https://github.com/vectie/moondesk/actions/runs/36310728005),
+[PR](https://github.com/vectie/moondesk/actions/runs/36310730691), and
+[unsigned preview](https://github.com/vectie/moondesk/actions/runs/36310732346)
+checks passed. Downloaded artifact `10929043534` passed five-file verification
+and identifies exact source `865da2e74f77178d49dcc2bfbfd9714f8cb2dc70`.
+The packaged app returned HTTP 200 for its first launch and exit code 1 for
+the refused second launch. Phase 9 soak evidence validation now enforces the
+frozen 24-hour policy; it does not supply the missing external soak run.
 
 The latest native coding-workflow checkpoint is in
 [`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md):

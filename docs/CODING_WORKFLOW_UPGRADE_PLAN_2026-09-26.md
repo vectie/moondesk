@@ -12,8 +12,10 @@ earlier cross-instance UI collision. A failed launch still returned process
 exit code 0; Lepusa `55aa50e` now maps failed and unsupported runtime status
 to a nonzero exit code. Its focused runtime CLI suite passed 20/20, and a
 temporary copy of the hosted app with the rebuilt runtime returned code 1
-for that collision. The next MoonDesk preview pins `55aa50e`; the hosted
-package for that new source head requires separate verification.
+for that collision. MoonDesk `865da2e7` pins `55aa50e`; both hosted CI runs
+and its unsigned `.21` preview passed. Downloaded artifact `10929043534`
+passed five-file verification, identified that exact source, and returned
+code 1 for a second launch while its first instance remained healthy.
 
 The repository-owned coding workflow is implemented across MoonDesk,
 MoonClaw, MoonTown, and the Lepusa macOS host. The Code surface now joins
