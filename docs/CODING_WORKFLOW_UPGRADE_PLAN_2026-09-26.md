@@ -16,6 +16,19 @@ The schedule owner is isolated in draft MoonTown
 [#2](https://github.com/vectie/moonclaw/pull/2), and Lepusa
 [#2](https://github.com/vectie/lepusa/pull/2).
 
+The current exact-commit unsigned `0.0.0-preview.21` package at `720cf267`
+passed five-file checksums, release identity, nonhosted channel validation,
+and byte-for-byte comparison with the committed production UI. In its native
+Mac window, PR #6 opened at that exact head in an isolated MoonBook and loaded
+270 files grouped by directory. Filtering to one source file preserved the
+selected diff. A new-file line in `.github/workflows/ci.yml` exposed a
+localized comment composer; a disposable line draft saved locally and was
+discarded without posting to GitHub. The source also gives a timed-out PR
+file load an in-place Retry action and localizes checkout failure while
+keeping exact-head retry available. The 626-test Code UI suite, bundle and
+localization checks, and strict 0/0 warning checks passed locally. Hosted
+validation for this revision is pending.
+
 The exact-commit unsigned `0.0.0-preview.17` package at `5b83c6b5` passed
 release-manifest and five-file checksum verification. Its packaged UI assets
 match the production bundle byte for byte. Both hosted MoonDesk validation
@@ -42,7 +55,7 @@ PR #5, which was closed after QA.
 Real provider media, operator-configured MoonFort execution, Developer ID
 signing and notarization, clean-machine update/rollback/removal, and the
 24-hour soak still need external infrastructure and evidence before release
-readiness can change. The `.17` package is unsigned and nonhosted.
+readiness can change. The local preview packages are unsigned and nonhosted.
 
 ## Implementation checkpoint
 

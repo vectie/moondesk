@@ -23,6 +23,17 @@ implementation order and gates.
 | Destructive/edit guards | `02c18d67`, `097e8bcd`, `ba7550d9`, `eb104202` added deletion approval and net-count safeguards | MoonCode has tool approvals and MoonFort promotion review. The native patch tool now refuses to delete a file if the applied hunks leave any content, and refuses a deletion target that does not exist. Focused native regressions passed for partial versus full deletion and reversing a creation after later content appeared. Approval and net-count equivalence across every tool remain unverified. | Audit shell and MoonFort deletion paths, and report guarded deletion reasons in ordinary language in Code. |
 | Terminal outcomes | `42ffcc95`, `8aafea96` distinguish context yield, exhaustion, and nonzero scheduled exit | MoonCode has canonical status and continuation evidence. UI coverage of each terminal cause is incomplete. | Project terminal reasons from MoonClaw receipts rather than infer success from a spinner or HTTP acceptance. |
 
+The exact-commit unsigned `0.0.0-preview.21` at `720cf267` passed release
+identity, five-file checksums, nonhosted channel verification, and packaged UI
+comparison. Its native Mac window opened PR #6 at that exact head in a new
+isolated MoonBook, loaded 270 files in directory groups, filtered to one
+source file, and selected a new-file line in the GitHub patch. A local line
+draft saved and was discarded without posting. The native review showed the
+grouped file list and selected diff at desktop size. A connected 390-pixel
+browser check had already shown no page overflow and a single-line Close
+control. The checkout failure localization and exact-head retry path pass a
+focused state test; a live checkout failure still needs a disposable PR run.
+
 ## Interface and editing detail
 
 After the failure-path check above, a separate disposable schedule reached a
@@ -57,7 +68,7 @@ session-root fix in the same fixture.
 The implemented request-to-local-review path is substantial, but the whole
 Phase 0–7 program is not complete. The exact open items are real-provider
 image proof, real-executor scheduled Code proof, live MoonFort navigation,
-complete accessibility/localization QA, native inspection of the latest
-grouped review and retry control, and the external distribution proofs in
+complete accessibility/localization QA, a live failure check for the PR retry
+controls, and the external distribution proofs in
 `STATUS.md`. A source-level check or fixture test is never presented as a
 live connected acceptance result.

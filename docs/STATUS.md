@@ -31,18 +31,20 @@ removal, and 24-hour soak results cannot be inferred from local checks.
 
 The latest native coding-workflow checkpoint is in
 [`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md):
-an exact-commit unsigned `0.0.0-preview.17` package at `5b83c6b5` passed
-release verification and five-file checksums, with packaged UI matching the
-production bundle. Its native Mac window opened PR #6 at the live head in
-an isolated worktree, displayed both successful GitHub checks, loaded all
-270 PR files, and showed Chinese conversation and exact-line review context.
-Local drafts saved and reopened; both disposable drafts were removed without
-posting to PR #6. Option-Tab and Return reached and activated the native
-line-draft Save control. Hosted [push](https://github.com/vectie/moondesk/actions/runs/36292356337)
+the exact-commit unsigned `0.0.0-preview.21` package at `720cf267` passed
+release identity, five-file checksums, nonhosted channel validation, and
+packaged UI comparison. Its native Mac window opened PR #6 at that exact
+head in an isolated worktree, loaded all 270 files in directory groups,
+filtered to one source file, and exposed a Chinese exact-line composer. A
+disposable draft saved locally and was discarded without posting to PR #6.
+The preceding `.17` native check also covered conversation drafts, an exact
+line anchor after reopening, and keyboard Save with Option-Tab and Return.
+Hosted [push](https://github.com/vectie/moondesk/actions/runs/36292356337)
 and [PR](https://github.com/vectie/moondesk/actions/runs/36292359047)
-validation passed at `5b83c6b5`. The MoonTown schedule owner has a separate
-draft [PR #1](https://github.com/vectie/moontown/pull/1). This evidence does
-not establish the external Phase 9 release gates.
+validation passed at `5b83c6b5`; the current revision's hosted checks are
+pending. The MoonTown schedule owner has a separate draft
+[PR #1](https://github.com/vectie/moontown/pull/1). This evidence does not
+establish the external Phase 9 release gates.
 
 The coding-workflow gap analysis and phase-by-phase implementation record are
 [`OPENSEEK_GAP_AUDIT_2026-09-26.md`](OPENSEEK_GAP_AUDIT_2026-09-26.md) and
