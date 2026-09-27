@@ -564,6 +564,18 @@ button.mooncode-git-line-number:focus-visible {
   color: var(--mooncode-danger, #b44d48);
 }
 
+.mooncode-git-review-recovery {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.mooncode-git-review-recovery p {
+  margin: 0;
+}
+
 .mooncode-github-context {
   display: grid;
   gap: 5px;

@@ -718,7 +718,21 @@ fn render_github_inline_review(
       } else if model.github_inline_error != "" &&
         model.github_inline_review is None &&
         model.github_inline_draft == "" {
-        p(class="mooncode-git-review-error", model.github_inline_error)
+        div(class="mooncode-git-review-recovery", [
+          p(
+            class="mooncode-git-review-error",
+            attrs=@html.Attrs::build().role("status").aria_live("polite"),
+            model.github_inline_error,
+          ),
+          button(
+            class="mooncode-git-open",
+            attrs=@html.Attrs::build().data_set("i18n", "code.retry"),
+            on_click=dispatch(
+              OpenGitHubInlineReview(model.github_inline_number),
+            ),
+            "Retry",
+          ),
+        ])
       } else {
         match model.github_inline_review {
           Some(review) if review.head_oid == head => {

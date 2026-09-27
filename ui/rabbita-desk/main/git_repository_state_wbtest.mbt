@@ -872,6 +872,27 @@ test "GitHub remote line review stays bound to exact PR head and retains failed 
     model,
   )
   assert_true(opened.github_inline_loading)
+  let (_, failed_load) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    LoadedGitHubInlineReview("book-a", 42, head, Err("GitHub timed out")),
+    opened,
+  )
+  let recovery_markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_github_inline_review(
+        code_mode_test_dispatch, failed_load, "book-a", head,
+      ),
+    ),
+  )
+  assert_true(recovery_markup.contains("GitHub timed out"))
+  assert_true(recovery_markup.contains("code.retry"))
+  let (_, retrying) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    OpenGitHubInlineReview(42),
+    failed_load,
+  )
+  assert_true(retrying.github_inline_loading)
+  assert_eq(retrying.github_inline_error, "")
   let remote : GitHubInlineReviewProjection = {
     state: "ready",
     repository: "owner/repo",
