@@ -26,15 +26,19 @@ No current hosted-CI, Developer ID, notarization, Gatekeeper, hosted update,
 clean-machine, lifecycle, rollback, removal, or 24-hour soak result is inferred
 from local checks.
 
-## Coding workflow checkpoint (2026-09-26)
+## Coding workflow checkpoint (2026-09-27)
 
 The latest native coding-workflow checkpoint is in
 [`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md):
-an exact-commit unsigned `0.0.0-preview.14` package passed its release
-verification, and its native PR review loaded 268 files at PR #6's live head.
+an exact-commit unsigned `0.0.0-preview.15` package at `fde7b4b4` passed its
+release verification and five-file checksums, and its packaged UI matches
+the production bundle. The preceding `.14` native PR review loaded 268 files
+at PR #6's then-live head.
 Local conversation and exact-line drafts survived navigation and were
 discarded after QA. The latest source also localizes contextual PR review
-copy exposed by this native check. The MoonTown schedule owner has a separate
+copy exposed by this native check. Browser QA against the latest PR head
+confirmed Chinese conversation and exact-line review context. The `.15`
+native window check awaits an unlocked Mac. The MoonTown schedule owner has a separate
 draft [PR #1](https://github.com/vectie/moontown/pull/1), with focused local
 tests passing. This evidence does not establish the external Phase 9 release
 gates.

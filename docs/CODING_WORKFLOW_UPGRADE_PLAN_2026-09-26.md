@@ -16,19 +16,23 @@ The schedule owner is isolated in draft MoonTown
 [#2](https://github.com/vectie/moonclaw/pull/2), and Lepusa
 [#2](https://github.com/vectie/lepusa/pull/2).
 
-The exact-commit unsigned `0.0.0-preview.14` package passed release-manifest
-and five-file checksum verification. In its native window, an isolated PR #6
+The exact-commit unsigned `0.0.0-preview.15` package at `fde7b4b4` passed
+release-manifest and five-file checksum verification. Its packaged UI assets
+match the production bundle byte for byte. The preceding `.14` package
+also passed verification. In its native window, an isolated PR #6
 worktree opened at the live head, loaded 268 changed files, filtered them by
 path, and showed a base-to-head diff. A conversation draft and an exact-line
 draft saved locally and survived review navigation; the unsaved line draft
 disabled Close until it was saved. Both disposable drafts were discarded.
 The connected publication path was already checked on disposable PR #5; no
 comment was posted to PR #6. Native QA exposed English contextual PR copy in
-the Chinese interface, which is now keyed for localization in source.
+the Chinese interface. The `.15` source localizes it, and browser QA against
+the exact PR head verified Chinese conversation context, file controls, and
+the selected new-file line comment context. The Mac locked before the `.15`
+native window check, so that check remains pending.
 
 Current native and Code UI MoonBit warning checks are both 0/0. Hosted CI on
-the final revision and an exact package including the latest localization
-change still need verification. Real provider media, operator-configured
+the final revision still needs verification. Real provider media, operator-configured
 MoonFort execution, Developer ID signing and notarization, clean-machine
 update/rollback/removal, and the 24-hour soak need external infrastructure
 and evidence before release readiness can change.
