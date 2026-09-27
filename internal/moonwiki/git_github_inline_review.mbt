@@ -222,9 +222,7 @@ async fn github_inline_review_snapshot(
     return Err("The Git branch is unavailable. Refresh repository changes.")
   }
   let pull = match
-    github_api_json(root, [
-      "repos/" + repository + "/pulls/" + number.to_string(),
-    ]) {
+    github_api_json(root, @trusted_host.github_get_pull(repository, number)) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -239,13 +237,11 @@ async fn github_inline_review_snapshot(
   let files : Array[Json] = []
   let mut truncated = false
   for page in 1..<=4 {
-    let endpoint = "repos/" +
-      repository +
-      "/pulls/" +
-      number.to_string() +
-      "/files?per_page=100&page=" +
-      page.to_string()
-    let response = match github_api_json(root, [endpoint]) {
+    let response = match
+      github_api_json(
+        root,
+        @trusted_host.github_get_pull_files(repository, number, page),
+      ) {
       Ok(value) => value
       Err(error) => return Err(error)
     }
@@ -270,9 +266,7 @@ async fn github_inline_review_snapshot(
     }
   }
   let confirmed = match
-    github_api_json(root, [
-      "repos/" + repository + "/pulls/" + number.to_string(),
-    ]) {
+    github_api_json(root, @trusted_host.github_get_pull(repository, number)) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -385,21 +379,18 @@ async fn publish_github_inline_comment(
     "RIGHT"
   }
   let posted = match
-    github_api_json(root, [
-      "--method",
-      "POST",
-      "repos/" + repository + "/pulls/" + number.to_string() + "/comments",
-      "-f",
-      "body=" + body,
-      "-f",
-      "commit_id=" + json_string(snapshot, "head_oid", default=""),
-      "-f",
-      "path=" + json_string(payload, "path", default=""),
-      "-f",
-      "side=" + side,
-      "-F",
-      "line=" + json_int(payload, "line", default=0).to_string(),
-    ]) {
+    github_api_json(
+      root,
+      @trusted_host.github_post_pr_line(
+        repository,
+        number,
+        json_string(snapshot, "head_oid", default=""),
+        json_string(payload, "path", default=""),
+        side,
+        json_int(payload, "line", default=0),
+        body,
+      ),
+    ) {
     Ok(value) => value
     Err(error) => return Err(error)
   }

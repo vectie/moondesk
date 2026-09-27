@@ -164,4 +164,20 @@ test "fixture" {
 EOF
 expect_pass "$test_only"
 
+# CI stages companion repositories under this external integration checkout.
+external=$fixture_root/external-integration-checkout
+new_fixture "$external"
+mkdir -p "$external/_integration/moonclaw/internal/agent_runner"
+cat >"$external/_integration/moonclaw/internal/agent_runner/moon.pkg" <<'EOF'
+import {
+  "moonbitlang/async/process",
+}
+EOF
+cat >"$external/_integration/moonclaw/internal/agent_runner/run.mbt" <<'EOF'
+fn run() -> Int {
+  @process.run("/usr/bin/true", [])
+}
+EOF
+expect_pass "$external"
+
 printf 'MoonDesk execution-boundary self-test: PASS\n'

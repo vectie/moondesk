@@ -51,7 +51,7 @@ async test "isolated PR worktree leaves dirty source files in place" {
       ).0,
       0,
     )
-    let head = git_projection_command(source, ["rev-parse", "HEAD"])
+    let head = git_projection_command(source, @trusted_host.git_head())
       .unwrap()
       .trim()
       .to_owned()
@@ -60,15 +60,9 @@ async test "isolated PR worktree leaves dirty source files in place" {
       "unsaved\n",
       create=0o600,
     )
-    assert_true(
-      github_checkout_git_write(
-        source,
-        ["worktree", "add", "--quiet", "--detach", target, head],
-        60000,
-      ),
-    )
+    assert_true(@trusted_host.git_add_pr_worktree(source, root, target, head))
     assert_eq(
-      git_projection_command(target, ["rev-parse", "HEAD"])
+      git_projection_command(target, @trusted_host.git_head())
       .unwrap()
       .trim()
       .to_owned(),
@@ -81,8 +75,8 @@ async test "isolated PR worktree leaves dirty source files in place" {
       ),
     )
     assert_eq(
-      git_projection_command(source, ["status", "--porcelain"]).unwrap(),
-      " M file.txt\n",
+      git_projection_command(source, @trusted_host.git_status()).unwrap(),
+      " M file.txt\u{0000}",
     )
   })
 }

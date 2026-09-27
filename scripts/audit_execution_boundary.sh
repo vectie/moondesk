@@ -53,8 +53,8 @@ is_trusted_host_process_path() {
 
 is_first_party_runtime_source() {
   case "$1" in
-    .git/*|.moonagent/*|.mooncakes/*|.repos/*|_build/*|build/*|dist/*|node_modules/*) return 1 ;;
-    */.git/*|*/.moonagent/*|*/.mooncakes/*|*/.repos/*|*/_build/*|*/build/*|*/dist/*|*/node_modules/*) return 1 ;;
+    .git/*|.moonagent/*|.mooncakes/*|.repos/*|_integration/*|_build/*|build/*|dist/*|node_modules/*) return 1 ;;
+    */.git/*|*/.moonagent/*|*/.mooncakes/*|*/.repos/*|*/_integration/*|*/_build/*|*/build/*|*/dist/*|*/node_modules/*) return 1 ;;
     third_party/*|vendor/*|integration/*|tests/*|test/*|*/tests/*|*/test/*) return 1 ;;
     */third_party/*|*/vendor/*|*/integration/*) return 1 ;;
     *_test.mbt|*_wbtest.mbt|*/test_*.mbt) return 1 ;;
@@ -215,7 +215,7 @@ while IFS= read -r -d '' absolute; do
 done < <(
   find "$root" \
     -type d \( \
-      -name .git -o -name .moonagent -o -name .mooncakes -o -name .repos -o -name _build -o \
+      -name .git -o -name .moonagent -o -name .mooncakes -o -name .repos -o -name _integration -o -name _build -o \
       -name build -o -name dist -o -name node_modules -o -name vendor -o \
       -name third_party -o -name integration -o -name tests -o -name test \
     \) -prune -o \

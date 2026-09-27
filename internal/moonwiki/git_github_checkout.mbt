@@ -45,21 +45,21 @@ async fn github_checkout_existing_worktree_matches(
   if !(@fs.kind(target, follow_symlink=false) is Directory) {
     return false
   }
-  let source_common = git_projection_command(book_root, [
-      "rev-parse", "--path-format=absolute", "--git-common-dir",
-    ])
+  let source_common = git_projection_command(
+      book_root,
+      @trusted_host.git_common_dir(),
+    )
     .unwrap_or("")
     .trim()
     .to_owned()
-  let target_common = git_projection_command(target, [
-      "rev-parse", "--path-format=absolute", "--git-common-dir",
-    ])
+  let target_common = git_projection_command(
+      target,
+      @trusted_host.git_common_dir(),
+    )
     .unwrap_or("")
     .trim()
     .to_owned()
-  let target_head = git_projection_command(target, [
-      "rev-parse", "--verify", "HEAD",
-    ])
+  let target_head = git_projection_command(target, @trusted_host.git_head())
     .unwrap_or("")
     .trim()
     .to_owned()
@@ -95,13 +95,15 @@ async fn github_remote_name_for_repository(
   root : String,
   repository : String,
 ) -> String? {
-  let names = git_projection_command(root, ["remote"]).unwrap_or("")
+  let names = git_projection_command(root, @trusted_host.git_remotes()).unwrap_or(
+    "",
+  )
   for raw_name in names.split("\n") {
     let name = raw_name.trim().to_owned()
     if !github_repository_component_valid(name) || name.has_prefix("-") {
       continue
     }
-    let url = git_projection_command(root, ["remote", "get-url", name]).unwrap_or(
+    let url = git_projection_command(root, @trusted_host.git_remote_url(name)).unwrap_or(
       "",
     )
     if github_repository_from_remote(url) == Some(repository) {
@@ -109,32 +111,6 @@ async fn github_remote_name_for_repository(
     }
   }
   None
-}
-
-///|
-async fn github_checkout_git_write(
-  root : String,
-  args : Array[String],
-  timeout_ms : Int,
-) -> Bool {
-  let output = @async.with_timeout(timeout_ms, () => {
-    @process.collect_output(
-      "/usr/bin/git",
-      [
-        "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "-c", "protocol.ext.allow=never",
-        ..args,
-      ],
-      extra_env={
-        "GIT_TERMINAL_PROMPT": "0",
-        "GIT_ASKPASS": "/usr/bin/false",
-        "GIT_PAGER": "cat",
-      },
-      cwd=root,
-    )
-  }) catch {
-    _ => return false
-  }
-  output.0 == 0
 }
 
 ///|
@@ -157,7 +133,10 @@ async fn github_checkout_pull_worktree(
   let number = json_int(payload, "number", default=0)
   let head_oid = json_string(payload, "head_oid", default="")
   let pull = match
-    github_api_json(book_root, ["repos/\{repository}/pulls/\{number}"]) {
+    github_api_json(
+      book_root,
+      @trusted_host.github_get_pull(repository, number),
+    ) {
     Ok(value) => value
     Err(error) => return Err((503, error))
   }
@@ -169,7 +148,8 @@ async fn github_checkout_pull_worktree(
     None => return Err((409, "The matching GitHub remote is unavailable"))
   }
   let name = github_checkout_folder_name(number, head_oid)
-  let target = @pathx.join(workspace_context(suite_root).books_root, name)
+  let books_root = workspace_context(suite_root).books_root
+  let target = @pathx.join(books_root, name)
   if @fsx.exists(target) {
     if !github_checkout_existing_worktree_matches(book_root, target, head_oid) {
       return Err((409, "A different folder already uses this PR worktree name"))
@@ -178,34 +158,23 @@ async fn github_checkout_pull_worktree(
       suite_root, target, repository, number, head_oid,
     )
   }
-  let private_ref = "refs/moondesk/pr/\{number}/\{head_oid}"
-  let refspec = "+refs/pull/\{number}/head:\{private_ref}"
-  if !github_checkout_git_write(
-      book_root,
-      ["fetch", "--quiet", "--no-tags", remote, refspec],
-      60000,
-    ) {
+  if !@trusted_host.git_fetch_pr(book_root, remote, number, head_oid) {
     return Err((503, "Could not fetch this PR from the matching GitHub remote"))
   }
-  let fetched = git_projection_command(book_root, [
-      "rev-parse", "--verify", private_ref,
-    ])
+  let fetched = git_projection_command(
+      book_root,
+      @trusted_host.git_pr_ref(number, head_oid),
+    )
     .unwrap_or("")
     .trim()
     .to_owned()
   if fetched != head_oid {
     return Err((409, "The PR head changed while fetching. Refresh and retry."))
   }
-  if !github_checkout_git_write(
-      book_root,
-      ["worktree", "add", "--quiet", "--detach", target, head_oid],
-      60000,
-    ) {
+  if !@trusted_host.git_add_pr_worktree(book_root, books_root, target, head_oid) {
     return Err((409, "Could not create an isolated PR worktree"))
   }
-  let checked_out = git_projection_command(target, [
-      "rev-parse", "--verify", "HEAD",
-    ])
+  let checked_out = git_projection_command(target, @trusted_host.git_head())
     .unwrap_or("")
     .trim()
     .to_owned()

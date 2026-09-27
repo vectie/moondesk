@@ -41,13 +41,15 @@ fn github_repository_from_remote(url : String) -> String? {
 
 ///|
 async fn github_repository_for_workspace(root : String) -> String? {
-  let remotes = git_projection_command(root, ["remote"]).unwrap_or("")
+  let remotes = git_projection_command(root, @trusted_host.git_remotes()).unwrap_or(
+    "",
+  )
   for name in remotes.split("\n") {
     let name = name.trim().to_owned()
     if name == "" || name.length() > 80 {
       continue
     }
-    let url = git_projection_command(root, ["remote", "get-url", name]).unwrap_or(
+    let url = git_projection_command(root, @trusted_host.git_remote_url(name)).unwrap_or(
       "",
     )
     match github_repository_from_remote(url) {
@@ -89,37 +91,15 @@ async fn github_pull_request_context(root : String) -> Json {
   }
   let drafts = github_comment_drafts(root, repository)
   let inline_drafts = github_inline_drafts(root, repository)
-  let output = @async.with_timeout(10000, () => {
-    @process.collect_output(
-      "/usr/bin/env",
-      [
-        "gh", "pr", "list", "--repo", repository, "--state", "open", "--limit", "20",
-        "--json", "number,title,url,headRefName,headRefOid,baseRefOid,isDraft,reviewDecision,statusCheckRollup,closingIssuesReferences",
-      ],
-      extra_env={
-        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
-        "GH_PROMPT_DISABLED": "1",
-        "GH_HOST": "github.com",
-        "GH_PAGER": "cat",
-        "GIT_TERMINAL_PROMPT": "0",
-      },
-      cwd=root,
-    )
-  }) catch {
-    _ =>
-      return {
-        "contract": "moondesk.github_context.v1",
-        "state": "unavailable",
-        "repository": repository,
-        "branch": git.branch,
-        "pull_requests": [],
-        "drafts": Json::array(drafts),
-        "inline_drafts": Json::array(inline_drafts),
-        "error": "GitHub did not respond in time",
-      }
+  let response = match
+    @trusted_host.github_request(
+      root,
+      @trusted_host.github_list_pulls(repository),
+    ) {
+    Ok(value) => value
+    Err(_) => ""
   }
-  let response = output.1.text() catch { _ => "" }
-  if output.0 != 0 || response.length() > 256 * 1024 || response == "" {
+  if response == "" {
     return {
       "contract": "moondesk.github_context.v1",
       "state": "unavailable",
@@ -412,29 +392,11 @@ fn github_pull_head_matches(
 ///|
 async fn github_api_json(
   root : String,
-  args : Array[String],
+  operation : @trusted_host.GitHubOperation,
 ) -> Result[Json, String] {
-  let output = @async.with_timeout(12000, () => {
-    @process.collect_output(
-      "/usr/bin/env",
-      ["gh", "api", ..args],
-      extra_env={
-        "PATH": "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin",
-        "GH_PROMPT_DISABLED": "1",
-        "GH_HOST": "github.com",
-        "GH_PAGER": "cat",
-        "GIT_TERMINAL_PROMPT": "0",
-      },
-      cwd=root,
-    )
-  }) catch {
-    _ => return Err("GitHub did not respond. Check the PR before retrying.")
-  }
-  if output.0 != 0 {
-    return Err("GitHub rejected the request. Check sign-in and PR permissions.")
-  }
-  let response = output.1.text() catch {
-    _ => return Err("GitHub response is unreadable")
+  let response = match @trusted_host.github_request(root, operation) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
   if response == "" || response.length() > 256 * 1024 {
     return Err("GitHub response exceeds the display limit")
@@ -464,8 +426,8 @@ async fn publish_github_pull_comment(
     )
   }
   let number = json_int(payload, "number", default=0)
-  let pull_path = "repos/" + repository + "/pulls/" + number.to_string()
-  let pull = match github_api_json(root, [pull_path]) {
+  let pull = match
+    github_api_json(root, @trusted_host.github_get_pull(repository, number)) {
     Ok(value) => value
     Err(error) => return Err(error)
   }
@@ -475,19 +437,11 @@ async fn publish_github_pull_comment(
     )
   }
   let body = json_string(payload, "body", default="").trim().to_owned()
-  let comment_path = "repos/" +
-    repository +
-    "/issues/" +
-    number.to_string() +
-    "/comments"
   let published = match
-    github_api_json(root, [
-      "--method",
-      "POST",
-      comment_path,
-      "-f",
-      "body=" + body,
-    ]) {
+    github_api_json(
+      root,
+      @trusted_host.github_post_pr_comment(repository, number, body),
+    ) {
     Ok(value) => value
     Err(error) => return Err(error)
   }

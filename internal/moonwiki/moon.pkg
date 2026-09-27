@@ -3,7 +3,6 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/async/http",
   "moonbitlang/async/io",
-  "moonbitlang/async/process",
   "moonbitlang/async/socket",
   "moonbitlang/core/env",
   "moonbitlang/core/debug",
@@ -36,6 +35,7 @@ import {
 
 import {
   "ivgtr/moonzip/types" @zip_types,
+  "moonbitlang/async/process",
 } for "wbtest"
 
 supported_targets = "native"

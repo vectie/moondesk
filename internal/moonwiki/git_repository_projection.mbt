@@ -45,47 +45,14 @@ fn empty_git_projection(
 }
 
 ///|
-fn git_projection_environment() -> Map[String, String] {
-  {
-    "HOME": "/dev/null",
-    "PATH": "/usr/bin:/bin",
-    "LANG": "C",
-    "LC_ALL": "C",
-    "GIT_CONFIG_NOSYSTEM": "1",
-    "GIT_CONFIG_GLOBAL": "/dev/null",
-    "GIT_TERMINAL_PROMPT": "0",
-    "GIT_OPTIONAL_LOCKS": "0",
-    "GIT_ASKPASS": "/usr/bin/false",
-    "GIT_PAGER": "cat",
-  }
-}
-
-///|
 async fn git_projection_command(
   root : String,
-  args : Array[String],
+  operation : @trusted_host.GitReadOperation,
   limit_error? : String = "Repository change list exceeds the display limit",
-  allow_diff_exit? : Bool = false,
 ) -> Result[String, String] {
-  let output = @async.with_timeout(8000, () => {
-    @process.collect_output(
-      "/usr/bin/git",
-      [
-        "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "-c", "diff.external=",
-        ..args,
-      ],
-      extra_env=git_projection_environment(),
-      inherit_env=false,
-      cwd=root,
-    )
-  }) catch {
-    _ => return Err("Git did not respond in time")
-  }
-  if output.0 != 0 && !(allow_diff_exit && output.0 == 1) {
-    return Err("Git could not read this repository")
-  }
-  let text = output.1.text() catch {
-    _ => return Err("Repository paths are not valid UTF-8")
+  let text = match @trusted_host.git_read(root, operation) {
+    Ok(value) => value
+    Err(error) => return Err(error)
   }
   if text.length() > 256 * 1024 {
     return Err(limit_error)
@@ -160,32 +127,16 @@ async fn read_git_diff_for_repository(
       error: "",
     }
   }
-  let args = if untracked {
-    [
-      "diff", "--no-index", "--no-ext-diff", "--no-textconv", "--no-color", "--unified=3",
-      "--", "/dev/null", path,
-    ]
+  let operation = if untracked {
+    @trusted_host.git_diff_untracked(path)
   } else {
-    [
-      "diff",
-      "--no-ext-diff",
-      "--no-textconv",
-      "--no-color",
-      "--unified=3",
-      "HEAD",
-      "--",
-      ":(literal)" + path,
-    ]
-  }
-  if !untracked && change.previous_path != "" {
-    args.push(":(literal)" + change.previous_path)
+    @trusted_host.git_diff_tracked(path, change.previous_path)
   }
   let body = match
     git_projection_command(
       root,
-      args,
+      operation,
       limit_error="File diff exceeds the 256 KiB review limit",
-      allow_diff_exit=untracked,
     ) {
     Ok(body) => body
     Err(error) =>
@@ -296,7 +247,7 @@ async fn read_git_repository_projection(
       return empty_git_projection("error", error="MoonBook path is unavailable")
   }
   let top_level = match
-    git_projection_command(canonical_root, ["rev-parse", "--show-toplevel"]) {
+    git_projection_command(canonical_root, @trusted_host.git_top_level()) {
     Ok(value) => value.trim().to_owned()
     Err(error) =>
       if @fs.exists(@pathx.join(canonical_root, ".git")) {
@@ -309,9 +260,7 @@ async fn read_git_repository_projection(
     return empty_git_projection("not_repository")
   }
   let status = match
-    git_projection_command(canonical_root, [
-      "status", "--porcelain=v1", "-z", "--untracked-files=all",
-    ]) {
+    git_projection_command(canonical_root, @trusted_host.git_status()) {
     Ok(value) => value
     Err(error) => return empty_git_projection("error", error~)
   }
@@ -319,19 +268,21 @@ async fn read_git_repository_projection(
     Ok(value) => value
     Err(error) => return empty_git_projection("error", error~)
   }
-  let branch = git_projection_command(canonical_root, [
-      "branch", "--show-current",
-    ])
+  let branch = git_projection_command(
+      canonical_root,
+      @trusted_host.git_branch(),
+    )
     .unwrap_or("")
     .trim()
     .to_owned()
-  let head = git_projection_command(canonical_root, [
-      "rev-parse", "--verify", "HEAD",
-    ])
+  let head = git_projection_command(canonical_root, @trusted_host.git_head())
     .unwrap_or("")
     .trim()
     .to_owned()
-  let remote = git_projection_command(canonical_root, ["remote"])
+  let remote = git_projection_command(
+      canonical_root,
+      @trusted_host.git_remotes(),
+    )
     .unwrap_or("")
     .trim()
     .to_owned()
