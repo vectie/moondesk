@@ -27,11 +27,30 @@ discarded without posting to GitHub. The source also gives a timed-out PR
 file load an in-place Retry action and localizes checkout failure while
 keeping exact-head retry available. The 626-test Code UI suite, bundle and
 localization checks, and strict 0/0 warning checks passed locally. Hosted
-validation for this revision is pending.
+validation for the final implementation commit is recorded below.
 The live native sidecar refused checkout of obsolete PR #6 head `720cf267`
 with 409 after the PR advanced, then accepted exact head `5f078004` into a
 new isolated MoonBook. Both worktrees retained their respective commits and
 the source branch stayed clean.
+
+At `4b1521b9`, the clean full validator passed 491 MoonDesk native tests,
+626 Code UI tests, 1,959 MoonClaw tests, 369 MoonBook tests, pinned MoonTown
+packages, and the core boundary checks. Hosted
+[push](https://github.com/vectie/moondesk/actions/runs/36306032740) and
+[PR](https://github.com/vectie/moondesk/actions/runs/36306036322) CI passed.
+The [unsigned `.21` workflow](https://github.com/vectie/moondesk/actions/runs/36306036498)
+completed full validation, focused Mac validation, packaging, re-verification,
+and artifact upload. A downloaded copy passed five-file verification and
+identified exact source `4b1521b9` with a nonhosted preview channel. Native
+tests now omit debug symbols; the
+[linker investigation](engineering/MOONBIT_NATIVE_LINKER_INVESTIGATION_2026-09-27.md)
+records the controlled 30.70-second link comparison and unchanged test counts.
+The preview helper builds Lepusa's runtime before creating the temporary
+MoonBit workspace, so a clean pinned Lepusa checkout packages successfully.
+Native inspection of that preview also exposed a false "workspace ready"
+composer status when Code assistance was not installed. Navigation now leaves
+that status empty until the daemon, capability, and model list are available;
+the setup card remains the actionable message in the unavailable state.
 
 The exact-commit unsigned `0.0.0-preview.17` package at `5b83c6b5` passed
 release-manifest and five-file checksum verification. Its packaged UI assets

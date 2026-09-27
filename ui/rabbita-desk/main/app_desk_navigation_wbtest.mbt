@@ -2304,7 +2304,7 @@ test "mode switches preserve selected desk context without starting code" {
   assert_eq(code.current_directory, "tools/demo")
   assert_eq(code.mooncode_prompt, "")
   assert_false(code.mooncode_new_chat_active)
-  assert_eq(code.mooncode_composer_status, "MoonCode workspace ready")
+  assert_eq(code.mooncode_composer_status, "")
 
   let (_, back_to_desk) = update_navigation_actions(
     dispatch,

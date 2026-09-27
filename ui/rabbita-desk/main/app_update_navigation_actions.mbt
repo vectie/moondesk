@@ -1007,8 +1007,13 @@ fn select_workspace_mode_action(
     } else {
       model.mooncode_watch_failure_count
     },
-    mooncode_composer_status: if mode == MoonCode {
+    mooncode_composer_status: if mode == MoonCode &&
+      moonclaw_capability_state(model.moonclaw_daemon) is DetectedRunning &&
+      mooncode_capability_available(model.mooncode_capability) &&
+      !model.mooncode_models.is_empty() {
       "MoonCode workspace ready"
+    } else if mode == MoonCode {
+      ""
     } else {
       model.mooncode_composer_status
     },

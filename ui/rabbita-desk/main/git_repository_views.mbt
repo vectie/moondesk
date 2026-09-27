@@ -1279,9 +1279,9 @@ fn render_github_context(
         }
         let failure_prefix = "PR checkout failed. "
         let status_params = if status_key == "code.github_checkout_failed" {
-          ({
-            "error": model.github_checkout_status[failure_prefix.length():],
-          } : Json).stringify()
+          (
+            { "error": model.github_checkout_status[failure_prefix.length():] } :
+            Json).stringify()
         } else {
           ""
         }

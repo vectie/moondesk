@@ -16,6 +16,19 @@ This report does not treat unsigned local output as evidence of Developer ID
 signing, Apple notarization, Gatekeeper acceptance, hosted updates,
 clean-machine behavior, lifecycle recovery, or a 24-hour soak.
 
+## Coding-workflow candidate addendum (2026-09-27)
+
+The warning-clean MoonDesk check and hosted-CI gaps listed below were closed
+for implementation commit `4b1521b9`: its native/UI warning budgets were 0/0,
+and both [push](https://github.com/vectie/moondesk/actions/runs/36306032740)
+and [PR](https://github.com/vectie/moondesk/actions/runs/36306036322)
+validation passed. The [unsigned preview](https://github.com/vectie/moondesk/actions/runs/36306036498)
+also built and passed immutable-artifact verification; its downloaded copy
+passed five-file verification and identifies that exact source commit.
+This evidence clears neither Apple signing and notarization nor Gatekeeper,
+hosted update, clean-machine lifecycle, or soak requirements. The **Not ready**
+decision remains in force for this candidate.
+
 ## Phase audit
 
 | Phase | Result | Retained evidence |

@@ -94,7 +94,9 @@ test "PR checkout uses exact remote head and exposes an isolated MoonBook" {
       render_github_context(code_mode_test_dispatch, failed, "main"),
     ),
   )
-  assert_true(failed_markup.contains("data-i18n=\"code.github_checkout_failed\""))
+  assert_true(
+    failed_markup.contains("data-i18n=\"code.github_checkout_failed\""),
+  )
   assert_true(failed_markup.contains("GitHub timed out"))
   assert_true(failed_markup.contains("Open isolated worktree"))
   let (_, retrying) = update_mooncode_actions(

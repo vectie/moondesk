@@ -42,9 +42,24 @@ line anchor after reopening, and keyboard Save with Option-Tab and Return.
 Hosted [push](https://github.com/vectie/moondesk/actions/runs/36292356337)
 and [PR](https://github.com/vectie/moondesk/actions/runs/36292359047)
 validation passed at `5b83c6b5`; the current revision's hosted checks are
-pending. The MoonTown schedule owner has a separate draft
+recorded below. The MoonTown schedule owner has a separate draft
 [PR #1](https://github.com/vectie/moontown/pull/1). This evidence does not
 establish the external Phase 9 release gates.
+
+At implementation commit `4b1521b9`, the clean full validator passed 491
+MoonDesk native tests, 626 Code UI tests, 1,959 MoonClaw tests, 369 MoonBook
+tests, the pinned MoonTown packages, localization, release verification,
+the production UI build, and the core boundary checks. The strict MoonDesk
+native and UI warning budgets remained 0/0. Hosted
+[push](https://github.com/vectie/moondesk/actions/runs/36306032740) and
+[PR](https://github.com/vectie/moondesk/actions/runs/36306036322) CI passed.
+The [unsigned `0.0.0-preview.21` workflow](https://github.com/vectie/moondesk/actions/runs/36306036498)
+passed full Linux validation, the focused macOS gate, package creation,
+artifact re-verification, and upload. Its downloaded artifact passed the
+five-file checksum verifier; release identity names `4b1521b9` and the
+preview channel declares `hosted: false`. The app contains arm64 Lepusa
+runtime and MoonDesk sidecar executables. The hosted artifact remains an
+unsigned QA preview, not a signed release or a hosted update channel.
 
 The coding-workflow gap analysis and phase-by-phase implementation record are
 [`OPENSEEK_GAP_AUDIT_2026-09-26.md`](OPENSEEK_GAP_AUDIT_2026-09-26.md) and
