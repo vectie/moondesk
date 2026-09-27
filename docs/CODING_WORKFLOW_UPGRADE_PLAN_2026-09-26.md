@@ -16,31 +16,33 @@ The schedule owner is isolated in draft MoonTown
 [#2](https://github.com/vectie/moonclaw/pull/2), and Lepusa
 [#2](https://github.com/vectie/lepusa/pull/2).
 
-The exact-commit unsigned `0.0.0-preview.15` package at `fde7b4b4` passed
+The exact-commit unsigned `0.0.0-preview.17` package at `5b83c6b5` passed
 release-manifest and five-file checksum verification. Its packaged UI assets
-match the production bundle byte for byte. The preceding `.14` package
-also passed verification. In its native window, an isolated PR #6
-worktree opened at the live head, loaded 268 changed files, filtered them by
-path, and showed a base-to-head diff. A conversation draft and an exact-line
-draft saved locally and survived review navigation; the unsaved line draft
-disabled Close until it was saved. Both disposable drafts were discarded.
-The connected publication path was already checked on disposable PR #5; no
-comment was posted to PR #6. Native QA exposed English contextual PR copy in
-the Chinese interface. The `.15` source localizes it, and browser QA against
-the exact PR head verified Chinese conversation context, file controls, and
-the selected new-file line comment context. The Mac locked before the `.15`
-native window check, so that check remains pending.
+match the production bundle byte for byte. Both hosted MoonDesk validation
+runs for that commit passed: [push](https://github.com/vectie/moondesk/actions/runs/36292356337)
+and [PR](https://github.com/vectie/moondesk/actions/runs/36292359047).
+The push run included 491 native and 625 Code UI tests, the full 1959-test
+MoonClaw suite, MoonBook's 369 tests, the MoonTown schedule packages, and
+core boundary validation. Current native and Code UI MoonBit warning checks
+are both 0/0. Companion draft PRs have no separate hosted checks reported.
 
-Current native and Code UI MoonBit warning checks are both 0/0. Hosted CI on
-the final revision still needs verification. Real provider media, operator-configured
-MoonFort execution, Developer ID signing and notarization, clean-machine
-update/rollback/removal, and the 24-hour soak need external infrastructure
-and evidence before release readiness can change.
-MoonDesk CI now pins the companion revisions, runs the MoonTown schedule
-packages, and keeps the full MoonClaw suite. The preceding hosted run reached
-MoonClaw but failed on path behavior under the current MoonBit dependency;
-MoonClaw's wrapper is fixed and its focused native/JS path tests pass. The
-new pinned-revision hosted result is pending.
+The `.17` native Mac app opened PR #6 in a fresh isolated worktree at the
+live `5b83c6b5` head. It displayed both successful GitHub checks, a Chinese
+conversation-comment context, and all 270 remote PR files. A transient
+GitHub timeout on the first file request recovered on retry. Path filtering
+and the selected new-file line 24 showed the localized exact-line context.
+The conversation and line drafts saved locally; the line draft reopened at
+its exact anchor after the review pane closed. An unsaved line draft disabled
+Close. Both disposable drafts were discarded, and no comment was posted to
+PR #6. With the default macOS WebKit keyboard setting, Option-Tab reached
+the Save control from the line composer and Return saved it. Connected
+publication and stale-head refusal were previously exercised on disposable
+PR #5, which was closed after QA.
+
+Real provider media, operator-configured MoonFort execution, Developer ID
+signing and notarization, clean-machine update/rollback/removal, and the
+24-hour soak still need external infrastructure and evidence before release
+readiness can change. The `.17` package is unsigned and nonhosted.
 
 ## Implementation checkpoint
 

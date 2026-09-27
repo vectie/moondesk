@@ -15,33 +15,34 @@ change the decision are in
 The distribution implementation and external proof boundaries are in
 [`PHASE9_NATIVE_DISTRIBUTION_REPORT.md`](PHASE9_NATIVE_DISTRIBUTION_REPORT.md).
 
-The last recorded full Phase 9 local validation completed every functional stage before its
+The earlier full Phase 9 local validation completed every functional stage before its
 clean-tree assertion: 338 native tests, 501 UI tests, 6 localization tests, 8
 release-verifier tests, the Phase 9 non-credentialed smoke, the production
 build, generated-interface verification, and whitespace checks passed. The
-root check still reports 331 warnings, so warning-clean release readiness is
-not claimed.
+root check then reported 331 warnings. The current coding-workflow source
+passes its native and Code UI warning checks at 0/0, but warning-clean release
+readiness is not inferred from that alone.
 
-No current hosted-CI, Developer ID, notarization, Gatekeeper, hosted update,
-clean-machine, lifecycle, rollback, removal, or 24-hour soak result is inferred
-from local checks.
+The coding-workflow hosted CI result is recorded below. Developer ID,
+notarization, Gatekeeper, hosted update, clean-machine, lifecycle, rollback,
+removal, and 24-hour soak results cannot be inferred from local checks.
 
 ## Coding workflow checkpoint (2026-09-27)
 
 The latest native coding-workflow checkpoint is in
 [`CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md`](CODING_WORKFLOW_UPGRADE_PLAN_2026-09-26.md):
-an exact-commit unsigned `0.0.0-preview.15` package at `fde7b4b4` passed its
-release verification and five-file checksums, and its packaged UI matches
-the production bundle. The preceding `.14` native PR review loaded 268 files
-at PR #6's then-live head.
-Local conversation and exact-line drafts survived navigation and were
-discarded after QA. The latest source also localizes contextual PR review
-copy exposed by this native check. Browser QA against the latest PR head
-confirmed Chinese conversation and exact-line review context. The `.15`
-native window check awaits an unlocked Mac. The MoonTown schedule owner has a separate
-draft [PR #1](https://github.com/vectie/moontown/pull/1), with focused local
-tests passing. This evidence does not establish the external Phase 9 release
-gates.
+an exact-commit unsigned `0.0.0-preview.17` package at `5b83c6b5` passed
+release verification and five-file checksums, with packaged UI matching the
+production bundle. Its native Mac window opened PR #6 at the live head in
+an isolated worktree, displayed both successful GitHub checks, loaded all
+270 PR files, and showed Chinese conversation and exact-line review context.
+Local drafts saved and reopened; both disposable drafts were removed without
+posting to PR #6. Option-Tab and Return reached and activated the native
+line-draft Save control. Hosted [push](https://github.com/vectie/moondesk/actions/runs/36292356337)
+and [PR](https://github.com/vectie/moondesk/actions/runs/36292359047)
+validation passed at `5b83c6b5`. The MoonTown schedule owner has a separate
+draft [PR #1](https://github.com/vectie/moontown/pull/1). This evidence does
+not establish the external Phase 9 release gates.
 
 The coding-workflow gap analysis and phase-by-phase implementation record are
 [`OPENSEEK_GAP_AUDIT_2026-09-26.md`](OPENSEEK_GAP_AUDIT_2026-09-26.md) and
@@ -63,8 +64,8 @@ MoonClaw daemon now serves the disposable MoonBook fixture. Its exact child
 MoonBook session listing, Code conversation link, skill catalog, failed-job
 history, and byte-free conversation export passed connected checks. The focused
 native daemon regression for child-MoonBook listing and guarded deletion passed.
-Real MoonFort navigation and executor-backed scheduled execution, native PR
-composer QA, connected phone-width schedule execution with a configured
+Real MoonFort navigation and executor-backed scheduled execution,
+connected phone-width schedule execution with a configured
 model, and the external release evidence above still require proof.
 The unsigned preview packaging check also exposed a current dependency issue:
 published `vectie/lepusa@0.1.6` resolves `moonbitlang/x@0.4.45`, whose path
@@ -137,8 +138,8 @@ An exact right-side line 4 review published as
 After the PR head advanced, the server refused a stale line draft, MoonDesk
 retained the text, and a reload showed the saved draft without a post action.
 The stale-request status and rejection decoding were corrected and passed the
-Code UI tests. The QA PR was closed and its remote branch removed. Native PR
-composer QA remains open.
+Code UI tests. The QA PR was closed and its remote branch removed. The later
+`.17` native composer check is recorded at the top of this section.
 The latest unsigned `0.0.0-preview.13` package contains the PR failure-status
 and rejection-message fixes. Its five-file checksums, release identity,
 non-hosted preview channel, and packaged UI asset match passed. It was built
@@ -154,13 +155,14 @@ The CI workflow now installs its required `ripgrep` tool; the unsigned preview
 workflow uses pinned companion checkouts and an exact Lepusa preview host
 revision. Local traffic-routing validation and the MoonClaw-producer to
 MoonDesk-consumer protocol probe pass with the current MoonBit dependency.
-Hosted validation of the final PR revision is still required before its status
-can be recorded as passing.
+Both hosted validation runs for the `5b83c6b5` PR revision passed,
+as linked at the top of this section.
 The current source tree now passes the strict MoonBit warning gate at 0/0
 warnings for native and Code UI JavaScript targets. Deprecated environment,
 string-builder, and byte-view calls were updated; derived trait methods are
 explicitly extended, and test-only experimental rendering is scoped at each
-affected test. The final PR revision still needs hosted release evidence.
+affected test. Hosted repository validation now passes; hosted distribution
+and credentialed release evidence remain open.
 The local checkout path is not a clean-checkout dependency fix or signing,
 notarization, and clean-machine evidence.
 
@@ -205,7 +207,8 @@ contains no MoonMini or MoonStat node and no publication, trade/order, or
 physical robot command.
 
 This integration evidence does not change the Phase 10 release decision.
-MoonDesk still requires hosted-CI and warning-clean evidence, signing,
+MoonDesk has current hosted repository CI and warning-clean coding-workflow
+checks. It still requires credentialed release evidence, signing,
 notarization, clean-machine install/update/rollback/removal, and a 24-hour
 lifecycle/resource soak. A production suite run additionally requires
 host-published unexpired adapter health, real credentials, licensed providers
