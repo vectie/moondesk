@@ -83,6 +83,27 @@ test "PR checkout uses exact remote head and exposes an isolated MoonBook" {
     pending,
   )
   assert_true(stale.github_checkout_pending)
+  let (_, failed) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    CheckedOutGitHubPull("book-a", 42, head, Err("GitHub timed out")),
+    pending,
+  )
+  assert_false(failed.github_checkout_pending)
+  let failed_markup = @rabbita.render_to_string(
+    @rabbita.static_cell(
+      render_github_context(code_mode_test_dispatch, failed, "main"),
+    ),
+  )
+  assert_true(failed_markup.contains("data-i18n=\"code.github_checkout_failed\""))
+  assert_true(failed_markup.contains("GitHub timed out"))
+  assert_true(failed_markup.contains("Open isolated worktree"))
+  let (_, retrying) = update_mooncode_actions(
+    code_mode_test_dispatch,
+    CheckoutGitHubPull(42),
+    failed,
+  )
+  assert_true(retrying.github_checkout_pending)
+  assert_eq(retrying.github_checkout_head_oid, head)
   let (_, ready) = update_mooncode_actions(
     code_mode_test_dispatch,
     CheckedOutGitHubPull("book-a", 42, head, Ok(receipt)),

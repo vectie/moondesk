@@ -1273,14 +1273,26 @@ fn render_github_context(
             "code.github_checkout_ready"
           "PR checkout response did not match the requested commit." =>
             "code.github_checkout_invalid"
+          status if status.has_prefix("PR checkout failed. ") =>
+            "code.github_checkout_failed"
           _ => ""
+        }
+        let failure_prefix = "PR checkout failed. "
+        let status_params = if status_key == "code.github_checkout_failed" {
+          ({
+            "error": model.github_checkout_status[failure_prefix.length():],
+          } : Json).stringify()
+        } else {
+          ""
         }
         div(
           class="mooncode-github-checkout-status",
           attrs=@html.Attrs::build().role("status").aria_live("polite"),
           [
             p(
-              attrs=@html.Attrs::build().data_set("i18n", status_key),
+              attrs=@html.Attrs::build()
+                .data_set("i18n", status_key)
+                .data_set("i18n-params", status_params),
               model.github_checkout_status,
             ),
             if model.github_checkout_target_workspace_id != "" {
